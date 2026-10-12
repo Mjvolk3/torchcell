@@ -47,12 +47,14 @@ The map from the release's batch-1 index to ``Number`` is the batch-1 rows of
 first 4,489 rows of its panel); L4 ``cis_concordance`` tests that map against a
 permutation null rather than assuming it.
 
-PHENOTYPE (``SingleCellExpressionPhenotype``): UMI counts over the 6,240 released genes,
-summed over the segregant's cells. The authors kept every feature "EXPRESSED IN AT LEAST
+PHENOTYPE (``SingleCellExpressionPhenotype``, the single-cell UMI-count leaf shared with
+Boocock 2025 and Jackson 2020, #1016): UMI counts over the 6,240 released genes, summed
+over the segregant's cells, with each summed cell's barcode, library and UMI total. The authors kept every feature "EXPRESSED IN AT LEAST
 1 CELL", so a dropped feature has zero UMIs in every cell and a cell's row sum is its UMI
 total over every feature (Table 1's median 5,158). No cell-cycle stage is released, so
 ``cell_cycle_stage_counts`` is a typed gap. Every barcode carries CellRanger's GEM-group
 suffix ``-1``, the single library, which is ``library_cell_counts``' one label. The
+released features are S288C CDS only, so ``marker_umi_count`` is a typed gap. The
 reference is the panel pseudobulk: every assigned cell summed, an absolute baseline.
 
 ENVIRONMENT. YPD (1% yeast extract, 2% peptone, 2% dextrose), library ``YPD_LIQUID``
@@ -517,6 +519,15 @@ CELL_CYCLE_GAP = ProvenanceGap(
     looked_in=_PAPER_PROVENANCE,
     note="the release assigns no cell-cycle stage to any cell; the paper controls for "
     "the cell cycle only by building consensus profiles",
+)
+MARKER_GAP = ProvenanceGap(
+    field="marker_umi_count",
+    reason=ProvenanceGapReason.not_reported_by_primary,
+    looked_in=_PAPER_PROVENANCE,
+    note="CellRanger 'mapped the scRNA-seq reads to the reference genome' with no "
+    "cassette sequence named, and the released feature table "
+    "(Table_expressed_genes.csv) lists 6,240 S288C CDS features and no drug-cassette "
+    "transcript, so no cassette is counted apart from the genes",
 )
 
 
@@ -1065,21 +1076,26 @@ def pseudobulk(
     release: ExpressionRelease, rows: Sequence[int], universe_sha256: str
 ) -> SingleCellExpressionPhenotype:
     """Sum the release ``rows`` (cells) into one phenotype."""
-    summed = np.asarray(release.counts[list(rows)].sum(axis=0)).ravel()
+    selected = release.counts[list(rows)]
+    summed = np.asarray(selected.sum(axis=0)).ravel()
     nonzero = np.flatnonzero(summed)
+    cell_libraries = [library_of(release.barcodes[row]) for row in rows]
     libraries: dict[str, int] = {}
-    for row in rows:
-        label = library_of(release.barcodes[row])
+    for label in cell_libraries:
         libraries[label] = libraries.get(label, 0) + 1
     return SingleCellExpressionPhenotype(
         umi_count={release.genes[j]: int(summed[j]) for j in nonzero},
+        marker_umi_count=None,
         total_umis=int(summed.sum()),
         n_features=len(release.genes),
         feature_universe_sha256=universe_sha256,
         n_cells=len(rows),
         cell_cycle_stage_counts=None,
         library_cell_counts=libraries,
-        provenance_gaps=[CELL_CYCLE_GAP],
+        cell_barcodes=[release.barcodes[row] for row in rows],
+        cell_libraries=cell_libraries,
+        cell_total_umis=[int(n) for n in np.asarray(selected.sum(axis=1)).ravel()],
+        provenance_gaps=[CELL_CYCLE_GAP, MARKER_GAP],
     )
 
 

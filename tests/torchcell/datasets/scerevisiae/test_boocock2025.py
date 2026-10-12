@@ -164,6 +164,11 @@ def test_de_novo_cell_blocks_carry_the_posterior_on_the_grid(
     assert dict(phenotype.umi_count) == {"YAL001C": 4}
     assert (phenotype.total_umis, phenotype.n_cells) == (6, 1)
     assert phenotype.cell_cycle_stage_counts == {"G2/M": 1}
+    # #1016: the one cell, named by its barcode and library, and its own nUMI.
+    assert (phenotype.cell_barcodes, phenotype.cell_libraries) == (["TTTA-1"], ["LD"])
+    assert phenotype.cell_total_umis == [6]
+    assert phenotype.marker_umi_count is None
+    assert phenotype.provenance_gaps == [m.MARKER_GAP]
 
 
 def test_environments_are_minimal_ynb_and_the_sheath_fluid_medium(
@@ -183,6 +188,8 @@ def test_reference_is_the_panel_pseudobulk(dataset: m.Boocock2025Dataset) -> Non
     assert dict(pooled.umi_count) == {"YAL001C": 3, "YAL002W": 4, "YBL001C": 1}
     assert (pooled.total_umis, pooled.n_cells) == (12, 3)
     assert pooled.cell_cycle_stage_counts == {"G1": 2, "S": 1}
+    assert len(pooled.cell_barcodes) == len(pooled.cell_libraries) == 3
+    assert sum(pooled.cell_total_umis) == 12
     de_novo = _ref(dataset, 3).phenotype_reference
     assert dict(de_novo.umi_count) == {"YAL001C": 5, "YCL001W": 2}
     assert (de_novo.total_umis, de_novo.n_cells) == (9, 2)

@@ -19,9 +19,9 @@ One streaming pass over the records re-reads the release from ``raw/`` and compa
   ``segregant_expression`` record.
 - L1 ``count``; ``segregant_uniqueness``; the shared rules of
   :mod:`torchcell.verification.common`.
-- L2 ``value_fidelity``: each record's counts, ``total_umis``, ``n_cells`` and library
-  partition equal the sum over its assigned cells, and the stage partition is a typed
-  gap; ``mosaic_round_trip``: every mosaic re-expands to the strain's released posterior
+- L2 ``value_fidelity``: each record's counts, ``total_umis``, ``n_cells``, library
+  partition and summed cells (barcodes, libraries, per-cell totals) equal its assigned
+  cells, and the stage partition and the cassette markers are typed gaps; ``mosaic_round_trip``: every mosaic re-expands to the strain's released posterior
   (called parent exact, an exact 0.5 a tie, posterior within half the grid step);
   ``reference_pseudobulk``: the shared reference is the sum of every assigned cell.
 - L3 ``release_numbers``: barcodes, median UMI and median genes per cell, mean cells per
@@ -159,6 +159,7 @@ def verify_reference_panel_expression_streaming(
     reference_mismatch = 0
     reference_sum: dict[str, int] = {}
     parents: list[dict[str, Any]] = []
+    cell_totals = [int(n) for n in panel.release.cell_totals]
 
     for i, rec in enumerate(records):
         exp = rec["experiment"]
@@ -192,18 +193,23 @@ def verify_reference_panel_expression_streaming(
         rows = panel.cells[index]
         expected = {
             "umi_count": panel.counts(rows),
-            "total_umis": int(panel.release.cell_totals[rows].sum()),
+            "marker_umi_count": None,
+            "total_umis": sum(cell_totals[r] for r in rows),
             "n_cells": len(rows),
             "library_cell_counts": {ng.LIBRARY_LABEL: len(rows)},
             "cell_cycle_stage_counts": None,
+            "cell_barcodes": [panel.release.barcodes[r] for r in rows],
+            "cell_libraries": [ng.LIBRARY_LABEL] * len(rows),
+            "cell_total_umis": [cell_totals[r] for r in rows],
         }
         for field, value in expected.items():
             if phenotype[field] != value:
                 value_failures.append(f"{key}: {field} differs from the release")
-        if "cell_cycle_stage_counts" not in {
-            g["field"] for g in phenotype["provenance_gaps"]
-        }:
+        gapped = {g["field"] for g in phenotype["provenance_gaps"]}
+        if "cell_cycle_stage_counts" not in gapped:
             value_failures.append(f"{key}: the stage partition carries no gap")
+        if "marker_umi_count" not in gapped:
+            value_failures.append(f"{key}: the cassette markers carry no gap")
         blocks = [HaplotypeBlock.model_validate(b) for b in genotype["blocks"]]
         n_blocks.append(len(blocks))
         try:
@@ -298,7 +304,9 @@ def verify_reference_panel_expression_streaming(
         and reference["umi_count"] == expected_reference
         and reference_sum == expected_reference
         and reference["n_cells"] == len(all_rows)
-        and reference["total_umis"] == int(panel.release.cell_totals[all_rows].sum())
+        and reference["total_umis"] == sum(cell_totals[r] for r in all_rows)
+        and reference["cell_barcodes"] == [panel.release.barcodes[r] for r in all_rows]
+        and reference["cell_total_umis"] == [cell_totals[r] for r in all_rows]
     )
     report.add(
         _result(

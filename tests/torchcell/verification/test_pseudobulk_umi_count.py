@@ -183,7 +183,8 @@ def test_an_edited_count_fails_release_fidelity_by_field(
     rows = _rows(_verify(root, library, records))
     assert rows["release_fidelity"].passed is False
     assert rows["release_fidelity"].message == (
-        "1 records differ from the re-summed release"
+        "1 records differ from the re-summed release; 1 totals differ from their gene "
+        "plus marker counts"
     )
     assert rows["release_fidelity"].details["mismatches"] == [
         "gat1_A5/YPD: ['umi_count']"
@@ -197,6 +198,26 @@ def test_an_edited_count_fails_release_fidelity_by_field(
         "WT(ho)_B1/YPD: ['cell_total_umis']"
     ]
     assert rows["structural"].passed is True
+
+
+def test_a_total_above_the_stored_counts_validates_but_fails_l2(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The shared leaf only bounds the total (#1016); Jackson stores every released
+    feature, so its L2 requires the total to equal the gene plus marker counts.
+    """
+    root, library = _store(tmp_path, monkeypatch)
+    records = _records(root)
+    phenotype = _find(records, "gat1_A5", "YPD")["experiment"]["phenotype"]
+    phenotype["total_umis"] += 1
+    phenotype["cell_total_umis"][0] += 1
+    rows = _rows(_verify(root, library, records))
+    assert rows["structural"].passed is True
+    assert rows["release_fidelity"].passed is False
+    assert rows["release_fidelity"].details["n_open_total"] == 1
+    assert rows["release_fidelity"].details["mismatches"] == [
+        "gat1_A5/YPD: ['total_umis', 'cell_total_umis']"
+    ]
 
 
 def test_a_dropped_or_repeated_record_fails_the_pair_rules(

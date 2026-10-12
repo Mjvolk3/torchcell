@@ -497,15 +497,18 @@ def test_real_schema_diagram(md: ModuleType) -> None:
     # `genotype member of`, and the new one-line edge `segregant background of`. 44 and
     # 72 since `microarray expression score phenotype` joined (issue #1022), 45 and 74
     # since `induction timecourse expression phenotype` (Hackett 2020) joined, the
-    # phenotype shape once more.
-    assert (len(gen.nodes), n_edges, n_data_lines) == (45, 14, 74)
+    # phenotype shape once more. 44 and 72 since `pseudobulk umi count phenotype` was
+    # merged into `single cell expression phenotype` (#1016): one node and one source
+    # on that two-target edge fewer.
+    assert (len(gen.nodes), n_edges, n_data_lines) == (44, 14, 72)
     # 182 = 158 + 4 + 4 + 4 + 4 + 4 + 4: one node is a declaration, an ``is_a`` line and
     # one data line per ``phenotype member of`` target, of which there are two. 186 =
     # 182 + 4 for Hale 2024: the node's declaration and ``is_a`` line, its ``genotype
     # member of`` line and the ``segregant background of`` line. 190 = 186 + 4 for the
     # microarray expression score phenotype, 194 = 190 + 4 for the induction timecourse
-    # expression phenotype.
-    assert len(lines) == 194
+    # expression phenotype, 190 = 194 - 4 since the pseudobulk umi count phenotype was
+    # merged into the single cell expression phenotype (#1016).
+    assert len(lines) == 190
     assert lines[2:9] == [
         "    %% Biolink Classes (Parent Entity Types)",
         '    BioticExposure["biotic exposure"]',

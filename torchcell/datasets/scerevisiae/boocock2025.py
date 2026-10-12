@@ -43,15 +43,20 @@ cell inherits from its MATa parent.
   (``gdata_42k.RData``, 1,012 segregants x 42,052 markers, -1 = BY, +1 = RM), run-length
   encoded with posterior 1.0, as Bloom 2019 encodes its hard calls.
 
-PHENOTYPE (``SingleCellExpressionPhenotype``): UMI counts over the panel's analysis
-transcripts (``Yr``, the transcripts with nonzero counts in at least 128 cells: 4,995 /
-5,435 / 5,556 / 4,696, Table S4 ``n_transcripts``), nonzero counts only against a pinned
-feature universe; ``total_umis`` is the release's ``nUMI`` over every feature
+PHENOTYPE (``SingleCellExpressionPhenotype``, the one single-cell UMI-count leaf it
+shares with Jackson 2020 since #1016): UMI counts over the panel's analysis transcripts
+(``Yr``, the transcripts with nonzero counts in at least 128 cells: 4,995 / 5,435 / 5,556
+/ 4,696, Table S4 ``n_transcripts``), nonzero counts only against a pinned feature
+universe; ``total_umis`` is the release's ``nUMI`` over every feature
 (``barcode.features``), the size factor the authors model; ``cell_cycle_stage_counts``
 is the authors' per-cell stage assignment (``cell.cycle.df``), the cell-cycle occupancy
 the growth/reproduction tradeoff is read from; ``library_cell_counts`` names the 10x
-library, the authors' batch. The reference of each panel is the panel pseudobulk (every
-cell summed), an absolute baseline as in Caudal 2024, not a centered zero.
+library, the authors' batch. ``cell_barcodes``, ``cell_libraries`` and
+``cell_total_umis`` name the summed cells (barcode, library and per-cell ``nUMI``): a
+barcode repeats across a panel's libraries, so the pair identifies the cell. No cassette
+transcript is counted apart from the genes (the alignment reference is SGD R64-2-1), so
+``marker_umi_count`` is a typed gap. The reference of each panel is the panel pseudobulk
+(every cell summed), an absolute baseline as in Caudal 2024, not a centered zero.
 
 ENVIRONMENT. Every culture grew at 30 C. The pooled panel grew in minimal YNB medium,
 the paper's own restatement of ``SM`` (the same sentence also names YPD for the
@@ -135,7 +140,11 @@ from torchcell.literature.manifest import (
 from torchcell.sequence import GeneSet
 from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 from torchcell.verification.report import Provenance
-from torchcell.verification.sourced import SourcedValue
+from torchcell.verification.sourced import (
+    ProvenanceGap,
+    ProvenanceGapReason,
+    SourcedValue,
+)
 
 log = logging.getLogger(__name__)
 
@@ -316,7 +325,25 @@ SOURCED: dict[str, SourcedValue] = {
         "We classified individual haploid yeast cells into five different cell-cycle "
         "stages (M/G1, G1, G1/S, S, and G2/M)",
     ),
+    "alignment_reference": _paper_sv(
+        "reads counted against SGD R64-2-1 with 3' UTRs amended; no cassette sequence",
+        "Sequencing reads were analyzed using Cellranger (version 5.01) using the S2888C "
+        "reference genome (SGD, R64-2-1)",
+    ),
 }
+
+#: No cassette transcript is counted apart from the genes: the alignment reference is the
+#: SGD genome (no cassette sequence named, where Jackson 2020 states adding its two), and
+#: ``segData.RDS`` releases per-feature counts only for the analysis transcripts.
+MARKER_GAP = ProvenanceGap(
+    field="marker_umi_count",
+    reason=ProvenanceGapReason.not_reported_by_primary,
+    looked_in=SOURCED["alignment_reference"].provenance,
+    note="reads were counted against the SGD R64-2-1 reference with 3' UTRs amended and "
+    "no cassette sequence named, so no drug-cassette transcript is counted apart from "
+    "the genes; segData.RDS releases per-feature counts only for the analysis "
+    "transcripts (Yr), every one an S288C gene",
+)
 
 PILOT_MEDIUM: Media = restated(SM, SOURCED["pilot_medium"])
 """Minimal YNB of the pooled panel: library ``SM`` (6.7 g/L YNB w/o amino acids + 2%
@@ -932,12 +959,17 @@ def counts_phenotype(
     nonzero = np.flatnonzero(summed)
     return SingleCellExpressionPhenotype(
         umi_count={release.transcripts[j]: int(summed[j]) for j in nonzero},
+        marker_umi_count=None,
         total_umis=sum(release.n_umi[r] for r in rows),
         n_features=len(release.transcripts),
         feature_universe_sha256=universe_sha256,
         n_cells=len(rows),
         cell_cycle_stage_counts=dict(Counter(release.stages[r] for r in rows)),
         library_cell_counts=dict(Counter(release.libraries[r] for r in rows)),
+        cell_barcodes=[release.barcodes[r] for r in rows],
+        cell_libraries=[release.libraries[r] for r in rows],
+        cell_total_umis=[release.n_umi[r] for r in rows],
+        provenance_gaps=[MARKER_GAP],
     )
 
 

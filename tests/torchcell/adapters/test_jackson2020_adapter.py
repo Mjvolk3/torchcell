@@ -34,7 +34,7 @@ _INIT_CASES = [
         TfDeletionPseudobulkJackson2020Adapter,
         "tf_deletion_pseudobulk_jackson2020_adapter.yaml",
         Shape(
-            "pseudobulk umi count phenotype", perturbation=True, env_perturbation=True
+            "single cell expression phenotype", perturbation=True, env_perturbation=True
         ),
         TfDeletionPseudobulkJackson2020Dataset,
     )

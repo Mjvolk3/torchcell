@@ -19,35 +19,46 @@ from tests.torchcell.adapters._adapter_init_harness import (
 from torchcell.adapters.boocock2025_adapter import Boocock2025Adapter
 from torchcell.adapters.cell_adapter import CellAdapter
 from torchcell.datamodels.schema import SingleCellExpressionPhenotype
-from torchcell.datasets.scerevisiae.boocock2025 import Boocock2025Dataset
+from torchcell.datasets.scerevisiae.boocock2025 import MARKER_GAP, Boocock2025Dataset
 
 
 def _phenotype() -> SingleCellExpressionPhenotype:
     return SingleCellExpressionPhenotype(
         umi_count={"YAL002W": 3, "YAL001C": 1},
+        marker_umi_count=None,
         total_umis=6,
         n_features=5435,
         feature_universe_sha256="b" * 64,
         n_cells=2,
         cell_cycle_stage_counts={"G1": 1, "S": 1},
         library_cell_counts={"04_ByxRM_51-": 2},
+        cell_barcodes=["AAAC-1", "GGGT-1"],
+        cell_libraries=["04_ByxRM_51-", "04_ByxRM_51-"],
+        cell_total_umis=[5, 1],
+        provenance_gaps=[MARKER_GAP],
     )
 
 
 def test_single_cell_expression_properties_project_every_field() -> None:
-    """Dicts become JSON strings in sorted key order; totals stay typed."""
+    """Dicts and lists become JSON strings (a gapped field is ``null``); totals stay
+    typed.
+    """
     props = CellAdapter._single_cell_expression_properties(_phenotype())
     assert props == {
         "graph_level": "node",
         "label_name": "umi_count",
         "label_statistic_name": None,
         "umi_count": '{"YAL001C": 1, "YAL002W": 3}',
+        "marker_umi_count": "null",
         "total_umis": 6,
         "n_features": 5435,
         "feature_universe_sha256": "b" * 64,
         "n_cells": 2,
         "cell_cycle_stage_counts": '{"G1": 1, "S": 1}',
         "library_cell_counts": '{"04_ByxRM_51-": 2}',
+        "cell_barcodes": '["AAAC-1", "GGGT-1"]',
+        "cell_libraries": '["04_ByxRM_51-", "04_ByxRM_51-"]',
+        "cell_total_umis": "[5, 1]",
         "measurement_type": "scrnaseq_umi_count",
     }
 

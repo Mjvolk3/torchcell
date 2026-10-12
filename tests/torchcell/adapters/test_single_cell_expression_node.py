@@ -1,12 +1,14 @@
-# tests/torchcell/adapters/test_pseudobulk_umi_count_node.py
-# [[tests.torchcell.adapters.test_pseudobulk_umi_count_node]]
-# https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/adapters/test_pseudobulk_umi_count_node.py
-"""The ``pseudobulk umi count phenotype`` node (Jackson 2020) the CellAdapter emits.
+# tests/torchcell/adapters/test_single_cell_expression_node.py
+# [[tests.torchcell.adapters.test_single_cell_expression_node]]
+# https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/adapters/test_single_cell_expression_node.py
+"""The ``single cell expression phenotype`` node in its Jackson 2020 shape (#1016).
 
-The two count dicts and the two per-cell lists are JSON strings, the totals, the cell
-count and the universe pin stay typed, the node id is the sha256 of the phenotype dump,
-the reference collector emits one node per distinct reference phenotype, and the
-emitted property set is exactly the schema config's declared set.
+Jackson 2020's records project through the one single-cell UMI-count node class they
+share with Boocock 2025 (whose shape is pinned in ``test_boocock2025_adapter.py``): the
+count dicts and the per-cell lists are JSON strings, a gapped field is the JSON ``null``,
+the totals, the cell count and the universe pin stay typed, the node id is the sha256 of
+the phenotype dump, the reference collector emits one node per distinct reference
+phenotype, and the emitted property set is exactly the schema config's declared set.
 """
 
 from __future__ import annotations
@@ -20,7 +22,8 @@ from typing import Any, cast
 import yaml
 
 from torchcell.adapters.cell_adapter import CellAdapter
-from torchcell.datamodels.schema import PseudobulkUmiCountPhenotype
+from torchcell.datamodels.schema import SingleCellExpressionPhenotype
+from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 SCHEMA = yaml.safe_load(
@@ -28,9 +31,10 @@ SCHEMA = yaml.safe_load(
         encoding="utf-8"
     )
 )
+NODE = "single cell expression phenotype"
 
 
-def _phenotype(**overrides: Any) -> PseudobulkUmiCountPhenotype:
+def _phenotype(**overrides: Any) -> SingleCellExpressionPhenotype:
     fields: dict[str, Any] = {
         "umi_count": {"YAL002W": 5, "YAL001C": 2},
         "marker_umi_count": {"NATMX": 1, "KANMX": 0},
@@ -38,11 +42,21 @@ def _phenotype(**overrides: Any) -> PseudobulkUmiCountPhenotype:
         "n_features": 3,
         "feature_universe_sha256": "f" * 64,
         "n_cells": 2,
+        "cell_cycle_stage_counts": None,
+        "library_cell_counts": {"YPD": 2},
         "cell_barcodes": ["GGGT", "AAAC"],
+        "cell_libraries": ["YPD", "YPD"],
         "cell_total_umis": [6, 2],
+        "measurement_type": "scrnaseq_pseudobulk_umi_count",
+        "provenance_gaps": [
+            ProvenanceGap(
+                field="cell_cycle_stage_counts",
+                reason=ProvenanceGapReason.not_reported_by_primary,
+            )
+        ],
     }
     fields.update(overrides)
-    return PseudobulkUmiCountPhenotype(**fields)
+    return SingleCellExpressionPhenotype(**fields)
 
 
 def _sha(model: Any) -> str:
@@ -51,16 +65,16 @@ def _sha(model: Any) -> str:
 
 def test_the_node_projects_dicts_and_lists_as_json_and_keeps_scalars_typed() -> None:
     phenotype = _phenotype()
-    method = cast(Any, CellAdapter._pseudobulk_umi_count_phenotype_node).__wrapped__
+    method = cast(Any, CellAdapter._single_cell_expression_phenotype_node).__wrapped__
     node = method(
         CellAdapter.__new__(CellAdapter),
         {"experiment": SimpleNamespace(phenotype=phenotype)},
-        "pseudobulk umi count phenotype (chunked)",
+        f"{NODE} (chunked)",
     )
     pid = _sha(phenotype)
     assert (node.get_id(), node.get_label(), node.get_preferred_id()) == (
         pid,
-        "pseudobulk umi count phenotype",
+        NODE,
         f"phenotype_{pid}",
     )
     assert node.get_properties() == {
@@ -75,16 +89,20 @@ def test_the_node_projects_dicts_and_lists_as_json_and_keeps_scalars_typed() -> 
         "n_features": 3,
         "feature_universe_sha256": "f" * 64,
         "n_cells": 2,
+        "cell_cycle_stage_counts": "null",
+        "library_cell_counts": '{"YPD": 2}',
         "cell_barcodes": '["GGGT", "AAAC"]',
+        "cell_libraries": '["YPD", "YPD"]',
         "cell_total_umis": "[6, 2]",
         "measurement_type": "scrnaseq_pseudobulk_umi_count",
     }
-    declared = set(SCHEMA["pseudobulk umi count phenotype"]["properties"])
+    declared = set(SCHEMA[NODE]["properties"])
     assert set(node.get_properties()) - {"id", "preferred_id"} == declared
-    assert declared == set(PseudobulkUmiCountPhenotype.model_fields) - {
+    assert declared == set(SingleCellExpressionPhenotype.model_fields) - {
         "provenance_gaps"
     }
-    assert "pseudobulk umi count phenotype" in SCHEMA["phenotype member of"]["source"]
+    assert NODE in SCHEMA["phenotype member of"]["source"]
+    assert "pseudobulk umi count phenotype" not in SCHEMA
 
 
 def test_the_reference_collector_emits_each_distinct_phenotype_once() -> None:
@@ -100,7 +118,7 @@ def test_the_reference_collector_emits_each_distinct_phenotype_once() -> None:
             ]
         ),
     )
-    nodes = adapter._get_pseudobulk_umi_count_phenotype_reference_nodes()
+    nodes = adapter._get_single_cell_expression_phenotype_reference_nodes()
     assert [n.get_id() for n in nodes] == [_sha(a), _sha(b)]
-    assert {n.get_preferred_id() for n in nodes} == {"pseudobulk umi count phenotype"}
+    assert {n.get_preferred_id() for n in nodes} == {NODE}
     assert nodes[1].get_properties()["cell_barcodes"] == '["AAAC", "GGGT"]'

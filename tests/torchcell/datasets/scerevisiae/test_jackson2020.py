@@ -418,11 +418,13 @@ def test_pseudobulk_phenotype_and_pooled_sum_exactly() -> None:
     a = j.StrainConditionSum(
         counts=np.array([1, 3, 0, 0, 1, 0, 0, 1, 1]),
         cell_barcodes=["BC01", "BC02"],
+        cell_libraries=["YPD", "YPD"],
         cell_total_umis=[3, 4],
     )
     b = j.StrainConditionSum(
         counts=np.array([3, 0, 1, 2, 0, 1, 0, 4, 2]),
         cell_barcodes=["AC10"],
+        cell_libraries=["YPD"],
         cell_total_umis=[13],
     )
     phenotype = j.pseudobulk_phenotype(j.pooled([a, b]), features)
@@ -434,11 +436,19 @@ def test_pseudobulk_phenotype_and_pooled_sum_exactly() -> None:
         "YIL168W": 1,
         "YIL167W": 1,
     }
+    assert phenotype.marker_umi_count is not None
     assert dict(phenotype.marker_umi_count) == {"KANMX": 5, "NATMX": 3}
     assert (phenotype.total_umis, phenotype.n_cells, phenotype.n_features) == (20, 3, 7)
     assert phenotype.cell_barcodes == ["BC01", "BC02", "AC10"]
+    assert phenotype.cell_libraries == ["YPD", "YPD", "YPD"]
+    assert phenotype.library_cell_counts == {"YPD": 3}
     assert phenotype.cell_total_umis == [3, 4, 13]
     assert phenotype.feature_universe_sha256 == features.universe_sha256
+    # One leaf for single-cell UMI counts (#1016): Jackson labels no cell-cycle stage.
+    assert type(phenotype).__name__ == "SingleCellExpressionPhenotype"
+    assert phenotype.cell_cycle_stage_counts is None
+    assert phenotype.provenance_gaps == [j.CELL_CYCLE_GAP]
+    assert phenotype.measurement_type == "scrnaseq_pseudobulk_umi_count"
 
 
 def test_strain_genotype_is_one_barcoded_homozygous_deletion(

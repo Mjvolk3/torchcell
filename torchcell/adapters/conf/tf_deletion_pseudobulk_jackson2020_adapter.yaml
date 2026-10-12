@@ -27,9 +27,9 @@ cell_adapter:
     - method_name: "environment perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "environment perturbation reference"
-    - method_name: "pseudobulk umi count phenotype (chunked)"
+    - method_name: "single cell expression phenotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "pseudobulk umi count phenotype reference"
+    - method_name: "single cell expression phenotype reference"
     - method_name: "dataset"
     - method_name: "publication (chunked)"
       memory_reduction_factor: 1.0

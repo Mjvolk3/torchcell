@@ -148,6 +148,30 @@ def test_a_changed_count_fails_value_fidelity(store: dict[str, Any]) -> None:
     assert results["mosaic_round_trip"].passed
 
 
+def test_the_summed_cells_and_the_marker_gap_are_checked(store: dict[str, Any]) -> None:
+    """#1016: a record names the cells it sums and gaps the markers it never counted."""
+
+    def tampered(edit: Any) -> dict[str, Any]:
+        records = copy.deepcopy(store["records"])
+        target = next(
+            r for r in records if r["experiment"]["genotype"]["segregant_id"] == "S1"
+        )
+        edit(target["experiment"]["phenotype"])
+        return _by_name(_verify(store, records))
+
+    results = tampered(
+        lambda p: p.update(cell_barcodes=["TTTT-9"] + p["cell_barcodes"][1:])
+    )
+    assert results["structural"].passed
+    assert results["value_fidelity"].details["failures"] == [
+        "('P', 'S1'): cell_barcodes differs from the release"
+    ]
+    results = tampered(lambda p: p.update(provenance_gaps=[]))
+    assert not results["structural"].passed
+    assert results["structural"].details["n_records"] == 4
+    assert len(results["structural"].details["failures"]) == 1
+
+
 def test_a_level_off_the_grid_fails_the_round_trip(store: dict[str, Any]) -> None:
     records = copy.deepcopy(store["records"])
     target = next(

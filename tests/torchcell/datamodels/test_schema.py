@@ -3161,17 +3161,24 @@ def test_mrna_fraction_family_is_in_every_union_and_map() -> None:
 
 
 # --------------------------------------------------------------------------- #
-# Boocock 2025: SingleCellExpressionPhenotype, UMI counts of a segregant's cells
+# Boocock 2025: SingleCellExpressionPhenotype, UMI counts of a segregant's cells (the
+# Jackson 2020 shape, cassette markers and one library per record, is pinned in
+# test_single_cell_expression_schema.py)
 # --------------------------------------------------------------------------- #
 def _single_cell(**kw: Any) -> s.SingleCellExpressionPhenotype:
     fields: dict[str, Any] = dict(
         umi_count={"YAL002W": 3, "YAL001C": 1},
+        marker_umi_count=None,
         total_umis=6,
         n_features=10,
         feature_universe_sha256="a" * 64,
         n_cells=2,
         cell_cycle_stage_counts={"G1": 1, "S": 1},
         library_cell_counts={"L1": 2},
+        cell_barcodes=["AAAC-1", "GGGT-1"],
+        cell_libraries=["L1", "L1"],
+        cell_total_umis=[4, 2],
+        provenance_gaps=[_gap("marker_umi_count")],
     )
     fields.update(kw)
     return s.SingleCellExpressionPhenotype(**fields)
@@ -3187,7 +3194,9 @@ def test_single_cell_counts_sort_and_the_total_may_exceed_the_stored_universe() 
         "umi_count",
         "scrnaseq_umi_count",
     )
-    assert _single_cell(total_umis=4).total_umis == 4
+    assert _single_cell(total_umis=4, cell_total_umis=[2, 2]).total_umis == 4
+    assert phenotype.marker_umi_count is None
+    assert phenotype.gapped_fields() == {"marker_umi_count"}
 
 
 @pytest.mark.parametrize(
@@ -3197,7 +3206,7 @@ def test_single_cell_counts_sort_and_the_total_may_exceed_the_stored_universe() 
         ({"umi_count": {}}, "umi_count cannot be empty"),
         ({"umi_count": {"YAL001C": 0}}, "zeros are omitted, not stored"),
         ({"umi_count": {"YAL001C": True}}, "must be a positive integer"),
-        ({"total_umis": 3}, "total_umis 3 is smaller than the sum of umi_count 4"),
+        ({"total_umis": 3}, "total_umis 3 is smaller than the stored counts 4"),
         ({"n_features": 1}, "n_features 1 is smaller than the 2 keyed features"),
         ({"feature_universe_sha256": "A" * 64}, "64 lowercase hex digits"),
         ({"n_cells": 0}, "n_cells must be a positive integer, got 0"),
@@ -3223,10 +3232,11 @@ def test_single_cell_refuses_what_a_count_record_cannot_be(
 def test_single_cell_stage_partition_may_be_a_typed_gap() -> None:
     """N'Guessan 2025 labels no cell-cycle stage: None, but only beside its gap."""
     phenotype = _single_cell(
-        cell_cycle_stage_counts=None, provenance_gaps=[_gap("cell_cycle_stage_counts")]
+        cell_cycle_stage_counts=None,
+        provenance_gaps=[_gap("cell_cycle_stage_counts"), _gap("marker_umi_count")],
     )
     assert phenotype.cell_cycle_stage_counts is None
-    assert phenotype.gapped_fields() == {"cell_cycle_stage_counts"}
+    assert phenotype.gapped_fields() == {"cell_cycle_stage_counts", "marker_umi_count"}
     assert phenotype.library_cell_counts == {"L1": 2}
 
 
@@ -3236,7 +3246,9 @@ def test_single_cell_refuses_an_absent_stage_partition_without_its_gap() -> None
     with pytest.raises(ValueError, match="sums to 0, not n_cells 2"):
         _single_cell(cell_cycle_stage_counts={})
     with pytest.raises(ValueError, match="cannot both store a value"):
-        _single_cell(provenance_gaps=[_gap("cell_cycle_stage_counts")])
+        _single_cell(
+            provenance_gaps=[_gap("cell_cycle_stage_counts"), _gap("marker_umi_count")]
+        )
 
 
 # --- end nguessan2025 ---

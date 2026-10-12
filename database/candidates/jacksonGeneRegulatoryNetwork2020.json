@@ -38,7 +38,7 @@
     {
       "gate": "G5",
       "outcome": "pass",
-      "reason": "PseudobulkUmiCountPhenotype exists; compounds resolve",
+      "reason": "SingleCellExpressionPhenotype exists; compounds resolve",
       "evidence": [],
       "issue": null,
       "blocked_kind": null
@@ -354,11 +354,11 @@
   },
   "g4_value": null,
   "g5": {
-    "phenotype_class": "PseudobulkUmiCountPhenotype",
+    "phenotype_class": "SingleCellExpressionPhenotype",
     "class_exists": true,
     "unresolved_compounds": [],
     "proposed_class": null
   },
   "decided_at": "2026-10-11",
-  "torchcell_commit": "3439dd4e3b8f920e1c99a0bd3334c85ce80683e2"
+  "torchcell_commit": "32bb760c12e9ec87f80a88809c5e50518e3b3bfc"
 }

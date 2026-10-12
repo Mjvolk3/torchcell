@@ -26,25 +26,34 @@ from torchcell.adapters.nguessan2025_adapter import Nguessan2025Adapter
 from torchcell.datamodels.schema import SingleCellExpressionPhenotype
 from torchcell.datasets.scerevisiae.nguessan2025 import (
     CELL_CYCLE_GAP,
+    MARKER_GAP,
     Nguessan2025Dataset,
 )
 
 
 def test_a_gapped_stage_partition_projects_as_json_null() -> None:
-    """A pooled segregant with no stage labels: the partition property is ``null``."""
+    """A pooled segregant with no stage labels and no cassette counted: both gapped
+    properties are ``null``.
+    """
     phenotype = SingleCellExpressionPhenotype(
         umi_count={"YAL001C": 2},
+        marker_umi_count=None,
         total_umis=2,
         n_features=6240,
         feature_universe_sha256="c" * 64,
         n_cells=3,
         cell_cycle_stage_counts=None,
         library_cell_counts={"1": 3},
-        provenance_gaps=[CELL_CYCLE_GAP],
+        cell_barcodes=["AAAC-1", "CCCG-1", "GGGT-1"],
+        cell_libraries=["1", "1", "1"],
+        cell_total_umis=[1, 0, 1],
+        provenance_gaps=[CELL_CYCLE_GAP, MARKER_GAP],
     )
     props = CellAdapter._single_cell_expression_properties(phenotype)
     assert props["cell_cycle_stage_counts"] == "null"
+    assert props["marker_umi_count"] == "null"
     assert props["library_cell_counts"] == '{"1": 3}'
+    assert props["cell_total_umis"] == "[1, 0, 1]"
     assert (props["n_cells"], props["total_umis"]) == (3, 2)
 
 

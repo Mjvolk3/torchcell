@@ -92,8 +92,18 @@ def test_a_record_sums_its_significantly_assigned_cells(
 def test_the_stage_partition_is_a_typed_gap(dataset: m.Nguessan2025Dataset) -> None:
     phenotype = _exp(dataset, 0).phenotype
     assert phenotype.cell_cycle_stage_counts is None
-    assert phenotype.gapped_fields() == {"cell_cycle_stage_counts"}
+    assert phenotype.marker_umi_count is None
+    assert phenotype.gapped_fields() == {"cell_cycle_stage_counts", "marker_umi_count"}
+    assert phenotype.provenance_gaps == [m.CELL_CYCLE_GAP, m.MARKER_GAP]
     assert phenotype.provenance_gaps[0].reason == "not_reported_by_primary"
+
+
+def test_a_record_names_the_cells_it_sums(dataset: m.Nguessan2025Dataset) -> None:
+    """Each summed cell's barcode, GEM-group library and own UMI total (#1016)."""
+    phenotype = _exp(dataset, 1).phenotype
+    assert len(phenotype.cell_barcodes) == phenotype.n_cells == 2
+    assert phenotype.cell_libraries == ["1", "1"]
+    assert sum(phenotype.cell_total_umis) == phenotype.total_umis == 7
 
 
 def test_genotype_blocks_carry_the_panel_posterior_on_the_grid(

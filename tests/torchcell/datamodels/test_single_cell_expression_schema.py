@@ -1,14 +1,19 @@
-# tests/torchcell/datamodels/test_pseudobulk_umi_count_schema.py
-# [[tests.torchcell.datamodels.test_pseudobulk_umi_count_schema]]
-# https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/datamodels/test_pseudobulk_umi_count_schema.py
-"""The pseudobulk UMI-count family (Jackson 2020): what the phenotype refuses, and the
-narrowed reference and environment types of its experiment pair.
+# tests/torchcell/datamodels/test_single_cell_expression_schema.py
+# [[tests.torchcell.datamodels.test_single_cell_expression_schema]]
+# https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/datamodels/test_single_cell_expression_schema.py
+"""The one single-cell UMI-count leaf (#1016) in its Jackson 2020 shape, and the
+narrowed reference and environment types of Jackson's experiment pair.
 
-Every invariant the phenotype states is pinned by the message it raises: the counts are
-positive integers (a zero is omitted, not stored), the markers non-negative, the per-cell
-totals and the two dicts each sum to ``total_umis``, the barcode and total lists are
-aligned and the barcodes distinct, the universe pin is a 64-hex digest at least as large
-as the keyed genes, and no feature is both a gene and a marker.
+``SingleCellExpressionPhenotype`` holds Boocock 2025's and Jackson 2020's records alike
+(Boocock's shape is pinned in ``test_schema.py``). Every invariant is pinned by the
+message it raises: the counts are positive integers (a zero is omitted, not stored), the
+markers non-negative or a typed gap, the stored counts never exceed ``total_umis`` (equal
+for Jackson, whose every released feature is stored; larger for Boocock, whose total
+covers features outside the analysis set), the per-cell totals sum to ``total_umis``, the
+three per-cell lists are aligned with ``n_cells``, a (library, barcode) pair names one
+cell, the library partition is the count of the per-cell libraries, the universe pin is a
+64-hex digest at least as large as the keyed genes, and no feature is both a gene and a
+marker.
 """
 
 from __future__ import annotations
@@ -31,18 +36,28 @@ from torchcell.datamodels.schema import (
     MatingType,
     PseudobulkUmiCountExperiment,
     PseudobulkUmiCountExperimentReference,
-    PseudobulkUmiCountPhenotype,
     ReferenceGenome,
+    SingleCellExpressionPhenotype,
     StrainBackground,
     StrainReferenceGenome,
 )
 from torchcell.verification.report import Provenance
-from torchcell.verification.sourced import SourcedValue
+from torchcell.verification.sourced import (
+    ProvenanceGap,
+    ProvenanceGapReason,
+    SourcedValue,
+)
 
 SHA = "0" * 64
 
 
-def _phenotype(**overrides: Any) -> PseudobulkUmiCountPhenotype:
+def _gap(field: str) -> ProvenanceGap:
+    return ProvenanceGap(
+        field=field, reason=ProvenanceGapReason.not_reported_by_primary
+    )
+
+
+def _phenotype(**overrides: Any) -> SingleCellExpressionPhenotype:
     kwargs: dict[str, Any] = {
         "umi_count": {"YAL002W": 5, "YAL001C": 2},
         "marker_umi_count": {"NATMX": 0, "KANMX": 3},
@@ -50,11 +65,16 @@ def _phenotype(**overrides: Any) -> PseudobulkUmiCountPhenotype:
         "n_features": 3,
         "feature_universe_sha256": SHA,
         "n_cells": 2,
+        "cell_cycle_stage_counts": None,
+        "library_cell_counts": {"YPD": 2},
         "cell_barcodes": ["AAAC", "GGGT"],
+        "cell_libraries": ["YPD", "YPD"],
         "cell_total_umis": [6, 4],
+        "measurement_type": "scrnaseq_pseudobulk_umi_count",
+        "provenance_gaps": [_gap("cell_cycle_stage_counts")],
     }
     kwargs.update(overrides)
-    return PseudobulkUmiCountPhenotype(**kwargs)
+    return SingleCellExpressionPhenotype(**kwargs)
 
 
 def _reference_genome() -> StrainReferenceGenome:
@@ -97,12 +117,50 @@ def _genotype() -> Genotype:
 def test_a_valid_phenotype_sorts_both_dicts_and_summarizes_itself() -> None:
     phenotype = _phenotype()
     assert list(phenotype.umi_count) == ["YAL001C", "YAL002W"]
+    assert phenotype.marker_umi_count is not None
     assert list(phenotype.marker_umi_count) == ["KANMX", "NATMX"]
     assert phenotype.label_name == "umi_count"
     assert phenotype.measurement_type == "scrnaseq_pseudobulk_umi_count"
+    assert phenotype.gapped_fields() == {"cell_cycle_stage_counts"}
     assert repr(phenotype) == (
-        "PseudobulkUmiCountPhenotype(genes=2, total_umis=10, n_cells=2)"
+        "SingleCellExpressionPhenotype(genes=2, total_umis=10, n_cells=2)"
     )
+
+
+def test_the_total_may_exceed_the_stored_counts_but_never_fall_below_them() -> None:
+    """Boocock's total covers features outside its analysis set; Jackson's equals."""
+    wider = _phenotype(total_umis=12, cell_total_umis=[7, 5])
+    assert wider.total_umis - 10 == 2
+    with pytest.raises(
+        ValidationError,
+        match=r"total_umis 9 is smaller than the stored counts 10 \(umi_count plus "
+        r"marker_umi_count\)",
+    ):
+        _phenotype(total_umis=9, cell_total_umis=[5, 4])
+
+
+def test_a_barcode_may_repeat_across_libraries_but_not_within_one() -> None:
+    """Boocock's panels reuse a 10x barcode across libraries: the pair names the cell."""
+    two_libraries = _phenotype(
+        cell_barcodes=["AAAC-1", "AAAC-1"],
+        cell_libraries=["lib_1", "lib_2"],
+        library_cell_counts={"lib_1": 1, "lib_2": 1},
+    )
+    assert two_libraries.cell_barcodes == ["AAAC-1", "AAAC-1"]
+    with pytest.raises(ValidationError, match=r"a \(library, barcode\) cell repeats"):
+        _phenotype(cell_barcodes=["AAAC-1", "AAAC-1"])
+
+
+def test_the_markers_may_be_a_typed_gap_and_only_with_one() -> None:
+    gapped = _phenotype(
+        marker_umi_count=None,
+        total_umis=10,
+        provenance_gaps=[_gap("cell_cycle_stage_counts"), _gap("marker_umi_count")],
+    )
+    assert gapped.marker_umi_count is None
+    assert gapped.gapped_fields() == {"cell_cycle_stage_counts", "marker_umi_count"}
+    with pytest.raises(ValidationError, match="marker_umi_count is unset"):
+        _phenotype(marker_umi_count=None)
 
 
 @pytest.mark.parametrize(
@@ -134,17 +192,25 @@ def test_a_valid_phenotype_sorts_both_dicts_and_summarizes_itself() -> None:
             {"n_cells": 0, "cell_barcodes": [], "cell_total_umis": []},
             "n_cells must be a positive integer, got 0",
         ),
-        ({"cell_barcodes": ["AAAC"]}, "1 cell barcodes for n_cells 2"),
-        ({"cell_barcodes": ["AAAC", "AAAC"]}, "cell_barcodes repeats a barcode"),
-        ({"cell_total_umis": [10]}, "1 per-cell totals for n_cells 2"),
+        ({"cell_barcodes": ["AAAC"]}, "cell_barcodes lists 1 cells for n_cells 2"),
+        ({"cell_libraries": ["YPD"]}, "cell_libraries lists 1 cells for n_cells 2"),
+        ({"cell_total_umis": [10]}, "cell_total_umis lists 1 cells for n_cells 2"),
+        (
+            {"cell_libraries": ["YPD", "MMD"]},
+            "library_cell_counts is not the count of cell_libraries",
+        ),
         (
             {"cell_total_umis": [11, -1]},
             "cell_total_umis holds a negative or boolean count",
         ),
         ({"cell_total_umis": [6, 5]}, "cell_total_umis sums to 11, not total_umis 10"),
         (
-            {"total_umis": 11, "cell_total_umis": [6, 5]},
-            "umi_count + marker_umi_count sum to 10, not total_umis 11",
+            {"library_cell_counts": {"YPD": 1}},
+            "library_cell_counts sums to 1, not n_cells 2",
+        ),
+        (
+            {"cell_cycle_stage_counts": {"G1": 2, "S": 0}, "provenance_gaps": []},
+            "cell_cycle_stage_counts holds a non-positive count",
         ),
         ({"n_features": 1}, "n_features 1 is smaller than the 2 keyed features"),
         (

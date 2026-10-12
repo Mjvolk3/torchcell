@@ -31,8 +31,11 @@ summed". The six constructions of a genotype stay six records (they are the repl
 structure). 784 records: 72 strains x 11 conditions is 792, and eight (strain, condition)
 pairs hold no cell in the release although the Results say "Each of the 72 strains is
 found in each of the 11 conditions"; the eight are listed in the release ledger. The
-phenotype keeps the per-cell barcodes and UMI totals, and the two cassette transcripts
-apart from the genes.
+phenotype is ``SingleCellExpressionPhenotype``, the one single-cell UMI-count leaf (#1016):
+it keeps the per-cell barcodes and UMI totals, and the two cassette transcripts apart from
+the genes. Each cell's library is its release ``Condition`` (the paper's "11 independent
+single-cell sequencing batches, each corresponding to a single shake flask"), and the
+release assigns no cell-cycle stage, so ``cell_cycle_stage_counts`` is a typed gap.
 
 REFERENCE. One per condition: the six HO-deletion control strains of that flask, their
 cells summed ("six biological replicates of the wild-type control in which we deleted
@@ -121,8 +124,8 @@ from torchcell.datamodels.schema import (
     PreCultureSource,
     PseudobulkUmiCountExperiment,
     PseudobulkUmiCountExperimentReference,
-    PseudobulkUmiCountPhenotype,
     Publication,
+    SingleCellExpressionPhenotype,
     SmallMoleculePerturbation,
     Solvent,
     StrainBackground,
@@ -991,6 +994,7 @@ class StrainConditionSum(BaseModel):
 
     counts: np.ndarray[Any, Any]
     cell_barcodes: list[str]
+    cell_libraries: list[str]
     cell_total_umis: list[int]
 
 
@@ -1054,11 +1058,15 @@ def read_release(
                 sums[key] = StrainConditionSum(
                     counts=np.zeros(len(features), dtype=np.int64),
                     cell_barcodes=[],
+                    cell_libraries=[],
                     cell_total_umis=[],
                 )
             entry = sums[key]
             entry.counts += counts[row]
             entry.cell_barcodes.append(str(barcode))
+            # One 10x library per condition (BATCH_QUOTE): the release's Condition
+            # column is the cell's library.
+            entry.cell_libraries.append(str(condition))
             entry.cell_total_umis.append(int(totals[row]))
         n_cells += len(chunk)
     if n_cells != PAPER_CELLS:
@@ -1070,27 +1078,45 @@ def read_release(
 # Records
 # --------------------------------------------------------------------------- #
 MEASUREMENT_TYPE = "scrnaseq_pseudobulk_umi_count"
+#: The release labels no cell with a cell-cycle stage: its five metadata columns are
+#: ``META_COLUMNS``, and the paper's cell-cycle reading (Figure 3) clusters cells by
+#: marker-gene expression without releasing a per-cell label.
+CELL_CYCLE_GAP = ProvenanceGap(
+    field="cell_cycle_stage_counts",
+    reason=ProvenanceGapReason.not_reported_by_primary,
+    looked_in=Provenance(
+        source_uri=MATRIX_REL, citation_key=CITATION_KEY, sha256=MATRIX_SHA256
+    ),
+    note="the release's metadata columns are Genotype, Genotype_Group, Replicate, "
+    "Condition and tenXBarcode; no cell carries a cell-cycle stage. Figure 3 clusters "
+    "cells within a condition by cell-cycle marker expression, which is not released "
+    "as a per-cell label",
+)
 
 
 def pseudobulk_phenotype(
     entry: StrainConditionSum, features: FeatureMap
-) -> PseudobulkUmiCountPhenotype:
+) -> SingleCellExpressionPhenotype:
     """One (strain, condition) sum as the phenotype the records store."""
     counts = entry.counts
     umi = {
         features.keys[i]: int(counts[i]) for i in features.gene_columns if counts[i] > 0
     }
     markers = {features.keys[i]: int(counts[i]) for i in features.marker_columns}
-    return PseudobulkUmiCountPhenotype(
+    return SingleCellExpressionPhenotype(
         umi_count=umi,
         marker_umi_count=markers,
         total_umis=int(counts.sum()),
         n_features=len(features.gene_columns),
         feature_universe_sha256=features.universe_sha256,
         n_cells=len(entry.cell_barcodes),
+        cell_cycle_stage_counts=None,
+        library_cell_counts=dict(Counter(entry.cell_libraries)),
         cell_barcodes=list(entry.cell_barcodes),
+        cell_libraries=list(entry.cell_libraries),
         cell_total_umis=list(entry.cell_total_umis),
         measurement_type=MEASUREMENT_TYPE,
+        provenance_gaps=[CELL_CYCLE_GAP],
     )
 
 
@@ -1099,6 +1125,7 @@ def pooled(entries: list[StrainConditionSum]) -> StrainConditionSum:
     return StrainConditionSum(
         counts=np.sum([e.counts for e in entries], axis=0),
         cell_barcodes=[b for e in entries for b in e.cell_barcodes],
+        cell_libraries=[b for e in entries for b in e.cell_libraries],
         cell_total_umis=[n for e in entries for n in e.cell_total_umis],
     )
 

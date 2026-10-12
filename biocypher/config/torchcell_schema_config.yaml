@@ -668,10 +668,12 @@ mrna number fraction phenotype:
         mrna_number_fraction: str
         n_libraries: int
         measurement_type: str
-# Single-cell UMI counts of a haplotype-mosaic segregant (SingleCellExpressionPhenotype,
-# Boocock 2025): nonzero counts only, against a pinned feature universe, summed over the
-# genotype's cells. Each dict serializes to a JSON string, the multi-valued phenotype
-# convention; every property is named by its field.
+# Single-cell UMI counts summed over a genotype's cells (SingleCellExpressionPhenotype:
+# Boocock 2025 segregants, Jackson 2020 deletion strains, N'Guessan 2025; one node class
+# since #1016): nonzero counts only, against a pinned feature universe, with the cassette
+# markers apart from the genes and the summed cells' barcodes, libraries and totals. Each
+# dict and list serializes to a JSON string (a gapped field is JSON null), the
+# multi-valued phenotype convention; every property is named by its field.
 single cell expression phenotype:
     is_a: phenotypic feature
     represented_as: node
@@ -680,12 +682,16 @@ single cell expression phenotype:
         label_name: str
         label_statistic_name: str
         umi_count: str
+        marker_umi_count: str
         total_umis: int
         n_features: int
         feature_universe_sha256: str
         n_cells: int
         cell_cycle_stage_counts: str
         library_cell_counts: str
+        cell_barcodes: str
+        cell_libraries: str
+        cell_total_umis: str
         measurement_type: str
 # A culture's life-cycle time course (LifeCyclePhenotype, De Chiara 2022): sporulation
 # efficiency, dyad fraction and stationary-phase viability as percentages keyed by
@@ -704,29 +710,6 @@ life cycle phenotype:
         sample_unit: str
         cells_per_sample: int
         cells_per_sample_is_minimum: bool
-# --- begin jackson2020 ---
-# Pseudobulk single-cell UMI counts of one barcoded strain in one culture
-# (PseudobulkUmiCountPhenotype, Jackson 2020): the per-gene and per-marker count dicts and
-# the per-cell barcode and total lists serialize to JSON strings, the multi-valued
-# phenotype convention; the totals, the cell count and the feature-universe pin stay
-# typed. A property is named by its field (the phenotype <-> node class bijection).
-pseudobulk umi count phenotype:
-    is_a: phenotypic feature
-    represented_as: node
-    properties:
-        graph_level: str
-        label_name: str
-        label_statistic_name: str
-        umi_count: str
-        marker_umi_count: str
-        total_umis: int
-        n_features: int
-        feature_universe_sha256: str
-        n_cells: int
-        cell_barcodes: str
-        cell_total_umis: str
-        measurement_type: str
-# --- end jackson2020 ---
 
 # ADDITIVE (Puddu 2019 genome architecture): the realized genome content of one
 # sequenced sample. The two maps are JSON strings keyed by the assay's own symbols, so
@@ -827,7 +810,6 @@ phenotype member of:
             mrna number fraction phenotype,
             single cell expression phenotype,
             life cycle phenotype,
-            pseudobulk umi count phenotype,
             genome architecture phenotype,
         ]
     target: [experiment, experiment reference]

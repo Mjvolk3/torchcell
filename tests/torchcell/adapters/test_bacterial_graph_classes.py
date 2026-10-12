@@ -1273,10 +1273,10 @@ def test_the_new_methods_are_registered_and_the_served_edges_name_the_new_classe
     assert SCHEMA["perturbation member of"]["input_label"] == "perturbation member of"
     assert SCHEMA["perturbation member of"]["target"] == "genotype"
     sources = SCHEMA["phenotype member of"]["source"]
-    # The yeast single-cell leaf (Boocock 2025), De Chiara 2022's yeast life cycle
-    # phenotype, Jackson 2020's pseudobulk UMI counts and Puddu 2019's genome
-    # architecture, joined after the bacterial ones.
-    assert sources[-11:] == [
+    # The yeast single-cell leaf (Boocock 2025; Jackson 2020's pseudobulk UMI counts
+    # merged into it, #1016), De Chiara 2022's yeast life cycle phenotype and Puddu
+    # 2019's genome architecture, joined after the bacterial ones.
+    assert sources[-10:] == [
         "product titer phenotype",
         "protein turnover phenotype",
         "protein synthesis rate phenotype",
@@ -1286,8 +1286,6 @@ def test_the_new_methods_are_registered_and_the_served_edges_name_the_new_classe
         "mrna number fraction phenotype",
         "single cell expression phenotype",
         "life cycle phenotype",
-        # jackson2020: a yeast class, appended after the bacterial ones
-        "pseudobulk umi count phenotype",
         "genome architecture phenotype",
     ]
 

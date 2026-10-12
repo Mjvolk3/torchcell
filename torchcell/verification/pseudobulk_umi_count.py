@@ -15,9 +15,12 @@ The rules:
   barcode and one deleted gene, the barcode is Table S2's and Source code 4's, six
   strains per gene), plus the shared census, canonical spellings, uncertainty, compound
   and media rules of :class:`~torchcell.verification.common.SharedRecordRules`.
-- L2 ``release_fidelity``: every record's gene and marker counts, total, cell barcodes and
-  per-cell totals equal a fresh sum of the released matrix, every (strain, condition)
-  holding a cell is stored, and the empty pairs are exactly the loader's ledger;
+- L2 ``release_fidelity``: every record's gene and marker counts, total, cell barcodes,
+  libraries and per-cell totals equal a fresh sum of the released matrix, every
+  record's total is exactly its gene plus marker counts (the release's every feature is
+  stored, an equality the shared ``SingleCellExpressionPhenotype`` only bounds), every
+  (strain, condition) holding a cell is stored, and the empty pairs are exactly the
+  loader's ledger;
   ``reference_fidelity``: each condition's reference equals the pooled sum of its
   HO-deletion control strains; ``release_totals``: the cells and counts the records sum to
   are the paper's 38,225 and 83,703,440.
@@ -90,7 +93,10 @@ _COMPARED_FIELDS = (
     "n_features",
     "feature_universe_sha256",
     "n_cells",
+    "cell_cycle_stage_counts",
+    "library_cell_counts",
     "cell_barcodes",
+    "cell_libraries",
     "cell_total_umis",
 )
 
@@ -277,6 +283,7 @@ def verify_pseudobulk_umi_count_streaming(
     universe_keys = set(features.gene_keys)
     total_cells = 0
     total_umis = 0
+    n_open_total = 0
 
     for i, rec in enumerate(records):
         n_records += 1
@@ -307,6 +314,10 @@ def verify_pseudobulk_umi_count_streaming(
         stray_keys.update(set(phenotype["umi_count"]) - universe_keys)
         total_cells += int(phenotype["n_cells"])
         total_umis += int(phenotype["total_umis"])
+        stored_umis = sum(phenotype["umi_count"].values()) + sum(
+            (phenotype["marker_umi_count"] or {}).values()
+        )
+        n_open_total += int(phenotype["total_umis"]) != stored_umis
         if abbreviation in conditions:
             key = (strain, conditions[abbreviation].release_label)
             if key not in sums:
@@ -419,17 +430,20 @@ def verify_pseudobulk_umi_count_streaming(
             wrong_gene=wrong_gene[:10],
         )
     )
-    release_ok = n_release_mismatch == 0 and unique_ok
+    release_ok = n_release_mismatch == 0 and unique_ok and n_open_total == 0
     report.add(
         _result(
             Level.L2,
             "release_fidelity",
             release_ok,
             f"{n_records} records equal a fresh sum of the released matrix (genes, "
-            "markers, totals, cell barcodes and per-cell totals)"
+            "markers, totals, cell barcodes, libraries and per-cell totals), each total "
+            "exactly its gene plus marker counts"
             if release_ok
-            else f"{n_release_mismatch} records differ from the re-summed release",
+            else f"{n_release_mismatch} records differ from the re-summed release; "
+            f"{n_open_total} totals differ from their gene plus marker counts",
             n_mismatched=n_release_mismatch,
+            n_open_total=n_open_total,
             mismatches=release_mismatches,
         )
     )

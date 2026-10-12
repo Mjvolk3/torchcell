@@ -8,6 +8,7 @@
 import math
 import posixpath
 import re
+from collections import Counter
 from collections.abc import Mapping
 from enum import StrEnum
 from typing import Any, Literal, Self, get_args
@@ -6260,206 +6261,6 @@ class PseudobulkExpressionExperiment(Experiment, ModelStrict):
     phenotype: PseudobulkExpressionPhenotype
 
 
-# --------------------------------------------------------------------------- #
-# --- begin jackson2020: pseudobulk UMI counts of barcoded deletion strains ---
-#
-# Jackson 2020 (eLife 9:e51254) releases a raw single-cell UMI count matrix of 72
-# transcriptionally barcoded diploid deletion strains pooled in 11 growth conditions
-# (Source code 2: "gene expression values are unmodified transcript counts after
-# deartifacting using UMIs"), and its own pseudobulk sums those raw counts per strain and
-# condition. No served expression leaf holds that quantity:
-# ``PseudobulkExpressionPhenotype`` is a log2 fold change the release does not contain,
-# ``RNASeqExpressionPhenotype`` requires TPM, which a 3' UMI assay does not produce, and
-# ``MrnaNumberFractionPhenotype`` is for a release without counts. The leaf below stores
-# the released counts summed exactly as the paper's pseudobulk sums them, with the
-# per-cell library sizes the sum came from and the two drug-marker transcripts kept
-# apart from the gene features. The experiment pair states the strain background on a
-# ``StrainReferenceGenome`` and the culture protocol on a ``CultureEnvironment``.
-# Additive: the new names appear only in their own bodies and the module-level unions
-# and maps, so no served dataset's schema closure moves.
-# --------------------------------------------------------------------------- #
-class PseudobulkUmiCountPhenotype(Phenotype, ModelStrict):
-    """Single-cell UMI counts per gene summed over the cells of one strain (pseudobulk).
-
-    ``umi_count`` holds every gene feature with a NONZERO summed count. The quantified
-    gene-feature universe is pinned by ``n_features`` and ``feature_universe_sha256``
-    (sha256 of the sorted feature ids joined by newlines), so a universe feature that is
-    not a key had zero UMIs in these cells, and a gene outside the universe was not
-    quantified at all.
-
-    ``marker_umi_count`` holds the drug-resistance cassette transcripts the release counts
-    beside the genes (Jackson 2020: ``KANMX`` and ``NATMX``), every marker keyed, zeros
-    included; they are not R64 features, so they never enter ``umi_count``.
-    ``total_umis`` is the UMI total over every released feature of the cells, gene and
-    marker alike, so it equals the sum of the two dicts. ``n_cells`` is the number of
-    cells summed; ``cell_barcodes`` and ``cell_total_umis`` are those cells' droplet
-    barcodes and per-cell UMI totals, aligned and in release row order, so each cell's
-    library size (the size factor any per-cell normalization needs) survives the sum.
-
-    Provenance: Jackson et al. 2020, eLife. See
-    ``[[torchcell.datasets.scerevisiae.jackson2020]]``.
-    """
-
-    graph_level: str = "node"
-    label_name: str = "umi_count"
-    label_statistic_name: str | None = None
-
-    umi_count: dict[str, int] = Field(
-        description=(
-            "SortedDict of per-gene UMI counts summed over the n_cells cells; only "
-            "nonzero sums are keys, a pinned-universe feature that is not a key had 0"
-        ),
-        repr=False,
-    )
-    marker_umi_count: dict[str, int] = Field(
-        description=(
-            "SortedDict of summed UMI counts of the cassette marker transcripts the "
-            "release counts beside the genes (e.g. KANMX, NATMX); every marker keyed, "
-            "zeros included"
-        ),
-        repr=False,
-    )
-    total_umis: int = Field(
-        description="UMI total over every released feature (genes and markers) of the "
-        "cells; equals the sum of umi_count plus the sum of marker_umi_count"
-    )
-    n_features: int = Field(
-        description="size of the quantified gene-feature universe the counts are over"
-    )
-    feature_universe_sha256: str = Field(
-        description="sha256 of the sorted gene-feature ids of that universe, "
-        "newline-joined"
-    )
-    n_cells: int = Field(description="number of cells the counts are summed over")
-    cell_barcodes: list[str] = Field(
-        description="the summed cells' droplet barcodes, in release row order",
-        repr=False,
-    )
-    cell_total_umis: list[int] = Field(
-        description="per-cell UMI totals over every released feature, aligned with "
-        "cell_barcodes; sums to total_umis",
-        repr=False,
-    )
-    measurement_type: str = Field(
-        default="scrnaseq_pseudobulk_umi_count",
-        description="assay tag: 10x 3' single-cell RNA-seq UMI counts summed per strain",
-    )
-
-    def __repr__(self) -> str:
-        """Summary repr instead of dumping the per-gene dict."""
-        return (
-            f"PseudobulkUmiCountPhenotype(genes={len(self.umi_count)}, "
-            f"total_umis={self.total_umis}, n_cells={self.n_cells})"
-        )
-
-    @field_validator("umi_count", mode="before")
-    @classmethod
-    def convert_and_validate_umi_count(cls, v: Any) -> Any:  # raw pre-validation input
-        """Coerce to a SortedDict; refuse empty input and any count that is not >= 1."""
-        if not isinstance(v, dict):
-            raise ValueError(
-                f"umi_count must be a per-gene dict, got {type(v).__name__}"
-            )
-        if not v:
-            raise ValueError("umi_count cannot be empty")
-        if not isinstance(v, SortedDict):
-            v = SortedDict(v)
-        for key, value in v.items():
-            if isinstance(value, bool) or not isinstance(value, int) or value < 1:
-                raise ValueError(
-                    f"umi_count for {key} must be a positive integer (zeros are "
-                    f"omitted, not stored), got {value!r}"
-                )
-        return v
-
-    @field_validator("marker_umi_count", mode="before")
-    @classmethod
-    def convert_marker_count(cls, v: Any) -> Any:  # raw pre-validation input
-        """Coerce to a SortedDict of non-negative integer counts."""
-        if not isinstance(v, dict):
-            raise ValueError(
-                f"marker_umi_count must be a per-marker dict, got {type(v).__name__}"
-            )
-        if not isinstance(v, SortedDict):
-            v = SortedDict(v)
-        for key, value in v.items():
-            if isinstance(value, bool) or not isinstance(value, int) or value < 0:
-                raise ValueError(
-                    f"marker_umi_count for {key} must be a non-negative integer, "
-                    f"got {value!r}"
-                )
-        return v
-
-    @model_validator(mode="after")
-    def _check_totals(self) -> "PseudobulkUmiCountPhenotype":
-        """Totals, cell lists and the universe pin agree with each other."""
-        if self.n_cells < 1:
-            raise ValueError(f"n_cells must be a positive integer, got {self.n_cells}")
-        if len(self.cell_barcodes) != self.n_cells:
-            raise ValueError(
-                f"{len(self.cell_barcodes)} cell barcodes for n_cells {self.n_cells}"
-            )
-        if len(set(self.cell_barcodes)) != self.n_cells:
-            raise ValueError("cell_barcodes repeats a barcode")
-        if len(self.cell_total_umis) != self.n_cells:
-            raise ValueError(
-                f"{len(self.cell_total_umis)} per-cell totals for n_cells "
-                f"{self.n_cells}"
-            )
-        if any(isinstance(n, bool) or n < 0 for n in self.cell_total_umis):
-            raise ValueError("cell_total_umis holds a negative or boolean count")
-        if sum(self.cell_total_umis) != self.total_umis:
-            raise ValueError(
-                f"cell_total_umis sums to {sum(self.cell_total_umis)}, not total_umis "
-                f"{self.total_umis}"
-            )
-        summed = sum(self.umi_count.values()) + sum(self.marker_umi_count.values())
-        if summed != self.total_umis:
-            raise ValueError(
-                f"umi_count + marker_umi_count sum to {summed}, not total_umis "
-                f"{self.total_umis}"
-            )
-        if self.n_features < len(self.umi_count):
-            raise ValueError(
-                f"n_features {self.n_features} is smaller than the {len(self.umi_count)} "
-                "keyed features"
-            )
-        if set(self.umi_count) & set(self.marker_umi_count):
-            raise ValueError("a feature is keyed as both a gene and a marker")
-        if not re.fullmatch(r"[0-9a-f]{64}", self.feature_universe_sha256):
-            raise ValueError("feature_universe_sha256 must be 64 lowercase hex digits")
-        if not self.measurement_type.strip():
-            raise ValueError("measurement_type cannot be blank")
-        return self
-
-
-class PseudobulkUmiCountExperimentReference(ExperimentReference, ModelStrict):
-    """Reference for a pseudobulk UMI-count experiment (typed strain background).
-
-    ``genome_reference`` is a ``StrainReferenceGenome`` (the background the deletion
-    strains were built in, mating type and alleles sourced or gapped);
-    ``environment_reference`` is a ``CultureEnvironment``.
-    """
-
-    experiment_reference_type: str = "pseudobulk_umi_count"
-    # Narrowed to subclasses: this family states its background and culture protocol.
-    genome_reference: StrainReferenceGenome
-    environment_reference: CultureEnvironment
-    phenotype_reference: PseudobulkUmiCountPhenotype
-
-
-class PseudobulkUmiCountExperiment(Experiment, ModelStrict):
-    """Pseudobulk single-cell UMI counts of one deletion strain in one culture."""
-
-    experiment_type: str = "pseudobulk_umi_count"
-    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
-    environment: CultureEnvironment  # narrowed: this family states its culture protocol
-    phenotype: PseudobulkUmiCountPhenotype
-
-
-# --- end jackson2020 ---
-
-
 class VisualScorePhenotype(Phenotype, ModelStrict):
     """Ordinal visual-inspection score as a proxy for a metabolite/product level.
 
@@ -7632,35 +7433,55 @@ class SegregantGrowthExperiment(Experiment, ModelStrict):
 # type, and a segregant panel has no wild type; ``RNASeqExpressionPhenotype`` requires
 # TPM, which a 3' UMI assay does not produce. The leaf below stores what the release
 # holds, absolute UMI counts, and the pair below is the expression sibling of
-# ``SegregantGrowthExperiment``. Additive: the new names appear only in their own bodies
-# and the module-level unions and maps, so no served dataset's schema closure moves.
+# ``SegregantGrowthExperiment``. Since #1016 the leaf is also Jackson 2020's and N'Guessan
+# 2025's: one class for single-cell UMI counts, its source-specific parts (cell-cycle
+# stages, cassette markers) required as a value or a typed gap.
 # --------------------------------------------------------------------------- #
 class SingleCellExpressionPhenotype(Phenotype, ModelStrict):
     """Single-cell RNA-seq UMI counts per gene, summed over the cells of one genotype.
 
-    ``umi_count`` holds every feature with a NONZERO count. The quantified feature
+    One leaf for every source that releases 10x UMI counts per cell (#1016): Boocock
+    2025 (segregant cells, alone or pooled per segregant), Jackson 2020 (barcoded
+    deletion strains pooled per strain and condition) and N'Guessan 2025 (segregant
+    strains). ``n_cells`` is how many cells the counts are summed over: 1 for a single
+    cell, more for a genotype observed in several cells (pseudobulk).
+
+    ``umi_count`` holds every gene feature with a NONZERO count. The quantified feature
     universe is pinned by ``n_features`` and ``feature_universe_sha256`` (sha256 of the
     sorted feature ids joined by newlines), so a feature of that universe that is not a
-    key had zero UMIs in these cells; a gene outside the universe was not quantified.
-    Storing only the nonzero counts keeps a single cell to its ~10^3 detected genes, and
-    the pin keeps a zero distinguishable from "not measured".
+    key had zero UMIs in these cells; a gene outside the universe is not stored (not
+    quantified, or outside the source's analysis set). Storing only the nonzero counts
+    keeps a single cell to its ~10^3 detected genes, and the pin keeps a zero
+    distinguishable from "not measured".
 
-    ``n_cells`` is how many cells the counts are summed over: 1 for a single cell, more
-    for a segregant observed in several cells (pseudobulk). ``total_umis`` is the UMI
-    total over EVERY feature of those cells' libraries, including features outside the
-    stored universe, so it is the size factor the source normalizes by and it is never
-    smaller than the sum of ``umi_count``. ``cell_cycle_stage_counts`` and
-    ``library_cell_counts`` partition the ``n_cells`` cells by the source's cell-cycle
-    stage label and by sequencing library, verbatim labels.
+    ``marker_umi_count`` holds the drug-resistance cassette transcripts a release counts
+    beside the genes (Jackson 2020: ``KANMX`` and ``NATMX``), every marker keyed, zeros
+    included; they are not R64 features, so they never enter ``umi_count``. A release
+    that counts no cassette feature apart from the genes stores ``None`` with a
+    ``ProvenanceGap``.
 
-    --- begin nguessan2025 ---
-    A source that assigns no cell-cycle stage (N'Guessan 2025) stores
-    ``cell_cycle_stage_counts=None`` with a ``ProvenanceGap`` on it; a missing partition
-    without the gap is refused, so a None is never a silent absence.
-    --- end nguessan2025 ---
+    ``total_umis`` is the UMI total over EVERY feature the source counted in these cells:
+    genes inside and outside the stored universe and cassette markers alike. It is the
+    size factor the source normalizes by, never smaller than the stored counts, and
+    equal to them exactly when the release's every feature is stored (Jackson 2020).
+    ``cell_barcodes``, ``cell_libraries`` and ``cell_total_umis`` say which cells were
+    summed: each cell's droplet barcode as released, the sequencing library (the
+    source's batch) it was captured in, and its own UMI total, aligned and in release
+    row order. A barcode is unique only within its library, so the (library, barcode)
+    pair identifies a cell; the per-cell totals sum to ``total_umis``.
 
-    Provenance: Boocock et al. 2025, eLife. See
-    ``[[torchcell.datasets.scerevisiae.boocock2025]]``.
+    ``cell_cycle_stage_counts`` and ``library_cell_counts`` partition the ``n_cells``
+    cells by the source's cell-cycle stage label and by library, verbatim labels; the
+    library partition is the count of ``cell_libraries``. A source that assigns no stage
+    (Jackson 2020, N'Guessan 2025) stores ``cell_cycle_stage_counts=None`` with a
+    ``ProvenanceGap``; a missing partition without the gap is refused, so a None is
+    never a silent absence.
+
+    ``measurement_type`` is the source's assay tag, kept as each loader wrote it.
+
+    Provenance: Boocock et al. 2025, eLife; Jackson et al. 2020, eLife. See
+    ``[[torchcell.datasets.scerevisiae.boocock2025]]`` and
+    ``[[torchcell.datasets.scerevisiae.jackson2020]]``.
     """
 
     graph_level: str = "node"
@@ -7669,15 +7490,24 @@ class SingleCellExpressionPhenotype(Phenotype, ModelStrict):
 
     umi_count: dict[str, int] = Field(
         description=(
-            "SortedDict of per-feature UMI counts summed over the n_cells cells; only "
+            "SortedDict of per-gene UMI counts summed over the n_cells cells; only "
             "nonzero counts are keys, a pinned-universe feature that is not a key had 0"
+        ),
+        repr=False,
+    )
+    marker_umi_count: dict[str, int] | None = Field(
+        description=(
+            "SortedDict of summed UMI counts of the cassette marker transcripts the "
+            "release counts beside the genes (e.g. KANMX, NATMX); every marker keyed, "
+            "zeros included. None only with a ProvenanceGap"
         ),
         repr=False,
     )
     total_umis: int = Field(
         description=(
-            "UMI total over every feature of the cells, including features outside the "
-            "stored universe (the size factor); never smaller than the sum of umi_count"
+            "UMI total over every feature the source counted in the cells (genes "
+            "inside and outside the stored universe, and markers); the size factor, "
+            "never smaller than umi_count plus marker_umi_count"
         )
     )
     n_features: int = Field(
@@ -7687,15 +7517,29 @@ class SingleCellExpressionPhenotype(Phenotype, ModelStrict):
         description="sha256 of the sorted feature ids of that universe, newline-joined"
     )
     n_cells: int = Field(description="number of cells the counts are summed over")
-    # --- begin nguessan2025: a source without stage labels gaps the partition --- #
     cell_cycle_stage_counts: dict[str, int] | None = Field(
         description="cells per source cell-cycle stage label; sums to n_cells. None "
         "only with a ProvenanceGap, for a source that labels no stage (required, so a "
         "loader states the partition or its absence, never inherits a default)"
     )
-    # --- end nguessan2025 ---
     library_cell_counts: dict[str, int] = Field(
-        description="cells per sequencing library (the source's batch); sums to n_cells"
+        description="cells per sequencing library (the source's batch); sums to "
+        "n_cells and equals the count of cell_libraries"
+    )
+    cell_barcodes: list[str] = Field(
+        description="the summed cells' droplet barcodes as released, in release row "
+        "order; unique within a library",
+        repr=False,
+    )
+    cell_libraries: list[str] = Field(
+        description="each summed cell's sequencing library, aligned with "
+        "cell_barcodes; the (library, barcode) pair identifies the cell",
+        repr=False,
+    )
+    cell_total_umis: list[int] = Field(
+        description="per-cell UMI totals over every feature the source counted, "
+        "aligned with cell_barcodes; sums to total_umis",
+        repr=False,
     )
     measurement_type: str = Field(
         default="scrnaseq_umi_count",
@@ -7729,15 +7573,40 @@ class SingleCellExpressionPhenotype(Phenotype, ModelStrict):
                 )
         return v
 
+    @field_validator("marker_umi_count", mode="before")
+    @classmethod
+    def convert_marker_count(cls, v: Any) -> Any:  # raw pre-validation input
+        """Coerce to a SortedDict of non-negative integer counts; None passes through."""
+        if v is None:
+            return v
+        if not isinstance(v, dict):
+            raise ValueError(
+                f"marker_umi_count must be a per-marker dict, got {type(v).__name__}"
+            )
+        if not isinstance(v, SortedDict):
+            v = SortedDict(v)
+        for key, value in v.items():
+            if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+                raise ValueError(
+                    f"marker_umi_count for {key} must be a non-negative integer, "
+                    f"got {value!r}"
+                )
+        return v
+
     @model_validator(mode="after")
     def _check_totals(self) -> "SingleCellExpressionPhenotype":
-        """Totals agree with the per-gene dict and both partitions sum to n_cells."""
+        """Totals, partitions, per-cell lists and the universe pin agree."""
         if self.n_cells < 1:
             raise ValueError(f"n_cells must be a positive integer, got {self.n_cells}")
-        if self.total_umis < sum(self.umi_count.values()):
+        _require_value_or_gap(self, ("cell_cycle_stage_counts", "marker_umi_count"))
+        markers = self.marker_umi_count or {}
+        if set(self.umi_count) & set(markers):
+            raise ValueError("a feature is keyed as both a gene and a marker")
+        stored = sum(self.umi_count.values()) + sum(markers.values())
+        if self.total_umis < stored:
             raise ValueError(
-                f"total_umis {self.total_umis} is smaller than the sum of umi_count "
-                f"{sum(self.umi_count.values())}"
+                f"total_umis {self.total_umis} is smaller than the stored counts "
+                f"{stored} (umi_count plus marker_umi_count)"
             )
         if self.n_features < len(self.umi_count):
             raise ValueError(
@@ -7746,13 +7615,10 @@ class SingleCellExpressionPhenotype(Phenotype, ModelStrict):
             )
         if not re.fullmatch(r"[0-9a-f]{64}", self.feature_universe_sha256):
             raise ValueError("feature_universe_sha256 must be 64 lowercase hex digits")
-        # --- begin nguessan2025: an absent stage partition must be a typed gap --- #
-        _require_value_or_gap(self, ("cell_cycle_stage_counts",))
         for field_name in ("cell_cycle_stage_counts", "library_cell_counts"):
             counts: dict[str, int] | None = getattr(self, field_name)
             if counts is None:
                 continue
-            # --- end nguessan2025 ---
             if any(n < 1 for n in counts.values()):
                 raise ValueError(f"{field_name} holds a non-positive count")
             if sum(counts.values()) != self.n_cells:
@@ -7760,6 +7626,24 @@ class SingleCellExpressionPhenotype(Phenotype, ModelStrict):
                     f"{field_name} sums to {sum(counts.values())}, not n_cells "
                     f"{self.n_cells}"
                 )
+        for list_name in ("cell_barcodes", "cell_libraries", "cell_total_umis"):
+            n_listed = len(getattr(self, list_name))
+            if n_listed != self.n_cells:
+                raise ValueError(
+                    f"{list_name} lists {n_listed} cells for n_cells {self.n_cells}"
+                )
+        cells = set(zip(self.cell_libraries, self.cell_barcodes, strict=True))
+        if len(cells) != self.n_cells:
+            raise ValueError("a (library, barcode) cell repeats")
+        if dict(Counter(self.cell_libraries)) != dict(self.library_cell_counts):
+            raise ValueError("library_cell_counts is not the count of cell_libraries")
+        if any(isinstance(n, bool) or n < 0 for n in self.cell_total_umis):
+            raise ValueError("cell_total_umis holds a negative or boolean count")
+        if sum(self.cell_total_umis) != self.total_umis:
+            raise ValueError(
+                f"cell_total_umis sums to {sum(self.cell_total_umis)}, not total_umis "
+                f"{self.total_umis}"
+            )
         if not self.measurement_type.strip():
             raise ValueError("measurement_type cannot be blank")
         return self
@@ -7781,6 +7665,47 @@ class SegregantExpressionExperiment(Experiment, ModelStrict):
 
 
 # --- end boocock2025 ---
+
+
+# --------------------------------------------------------------------------- #
+# --- begin jackson2020: pseudobulk UMI counts of barcoded deletion strains ---
+#
+# Jackson 2020 (eLife 9:e51254) releases a raw single-cell UMI count matrix of 72
+# transcriptionally barcoded diploid deletion strains pooled in 11 growth conditions
+# (Source code 2: "gene expression values are unmodified transcript counts after
+# deartifacting using UMIs"), and its own pseudobulk sums those raw counts per strain and
+# condition. The phenotype is ``SingleCellExpressionPhenotype``, the one single-cell
+# UMI-count leaf (#1016): Jackson's own leaf (``PseudobulkUmiCountPhenotype``) was merged
+# into it after every stored value of both dev stores was measured to round-trip, with
+# the cassette markers, the per-cell barcodes and totals kept. The experiment pair below
+# is Jackson's own because its genotype is gene-keyed: it states the strain background on
+# a ``StrainReferenceGenome`` and the culture protocol on a ``CultureEnvironment``.
+# --------------------------------------------------------------------------- #
+class PseudobulkUmiCountExperimentReference(ExperimentReference, ModelStrict):
+    """Reference for a pseudobulk UMI-count experiment (typed strain background).
+
+    ``genome_reference`` is a ``StrainReferenceGenome`` (the background the deletion
+    strains were built in, mating type and alleles sourced or gapped);
+    ``environment_reference`` is a ``CultureEnvironment``.
+    """
+
+    experiment_reference_type: str = "pseudobulk_umi_count"
+    # Narrowed to subclasses: this family states its background and culture protocol.
+    genome_reference: StrainReferenceGenome
+    environment_reference: CultureEnvironment
+    phenotype_reference: SingleCellExpressionPhenotype
+
+
+class PseudobulkUmiCountExperiment(Experiment, ModelStrict):
+    """Pseudobulk single-cell UMI counts of one deletion strain in one culture."""
+
+    experiment_type: str = "pseudobulk_umi_count"
+    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
+    environment: CultureEnvironment  # narrowed: this family states its culture protocol
+    phenotype: SingleCellExpressionPhenotype
+
+
+# --- end jackson2020 ---
 
 
 # --------------------------------------------------------------------------- #
@@ -9769,7 +9694,6 @@ PhenotypeType = (
     | MrnaNumberFractionPhenotype  # issue #854
     | SingleCellExpressionPhenotype  # boocock2025
     | LifeCyclePhenotype  # De Chiara 2022
-    | PseudobulkUmiCountPhenotype  # jackson2020
     # ADDITIVE (Puddu 2019 genome architecture)
     | GenomeArchitecturePhenotype
 )

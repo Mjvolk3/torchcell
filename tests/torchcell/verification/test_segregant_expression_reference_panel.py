@@ -118,11 +118,13 @@ def test_value_fidelity_catches_a_changed_count(
     phenotype = records[0]["experiment"]["phenotype"]
     phenotype["umi_count"]["YAL002W"] = 4
     phenotype["total_umis"] = 6  # still a valid phenotype, so it reaches L2
+    phenotype["cell_total_umis"] = [6]
     results = _by_name(_verify(built, tmp_path, records))
     assert results["structural"].passed
     assert results["value_fidelity"].details["failures"] == [
         "10: umi_count differs from the release",
         "10: total_umis differs from the release",
+        "10: cell_total_umis differs from the release",
     ]
     assert not results["reference_pseudobulk"].passed
 

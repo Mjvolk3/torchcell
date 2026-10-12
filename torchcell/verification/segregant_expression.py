@@ -17,11 +17,13 @@ panel's release from ``raw/`` and compares:
   :mod:`torchcell.verification.common` (gap census, compound identity, media
   membership, uncertainty sanity).
 - L2 ``value_fidelity``: every record's counts, ``total_umis``, cell-cycle and library
-  partitions equal the release's row (de novo) or the sum over the segregant's matched
-  cells (pooled); ``mosaic_round_trip``: de novo blocks re-expand to the released
-  posterior (called parent exact, posterior within half the grid step), pooled blocks to
-  the lookup calls exactly; ``reference_pseudobulk``: each panel's reference is the sum
-  of its records.
+  partitions, and summed cells (barcodes, libraries, per-cell ``nUMI``) equal the
+  release's row (de novo) or the segregant's matched cells (pooled), and every record
+  gaps ``marker_umi_count`` (no cassette is counted apart from the genes);
+  ``mosaic_round_trip``: de novo blocks re-expand to the released posterior (called
+  parent exact, posterior within half the grid step), pooled blocks to the lookup calls
+  exactly; ``reference_pseudobulk``: each panel's reference is the sum of its records
+  and lists every cell of the panel.
 - L3 ``table_s4``: cells, analysis transcripts and median UMI per panel equal Table S4;
   ``pooled_panel``: 393 segregants, median 17 cells, 277 with more than ten, and the
   median per-cell genotype agreement with whole-genome sequencing within a stated
@@ -186,6 +188,9 @@ def verify_segregant_expression_streaming(
                 and reference.get("umi_count") == expected_reference
                 and reference.get("n_cells") == len(all_rows)
                 and reference.get("total_umis") == sum(release.n_umi)
+                and reference.get("cell_barcodes") == release.barcodes
+                and reference.get("cell_libraries") == release.libraries
+                and reference.get("cell_total_umis") == release.n_umi
             ),
             "n_cells": len(release.barcodes),
             "n_transcripts": len(release.transcripts),
@@ -264,10 +269,14 @@ def verify_segregant_expression_streaming(
             continue
         expected = {
             "umi_count": _counts_row(release, rows),
+            "marker_umi_count": None,
             "total_umis": sum(release.n_umi[r] for r in rows),
             "n_cells": len(rows),
             "cell_cycle_stage_counts": dict(Counter(release.stages[r] for r in rows)),
             "library_cell_counts": dict(Counter(release.libraries[r] for r in rows)),
+            "cell_barcodes": [release.barcodes[r] for r in rows],
+            "cell_libraries": [release.libraries[r] for r in rows],
+            "cell_total_umis": [release.n_umi[r] for r in rows],
         }
         for field, value in expected.items():
             if phenotype[field] != value:
@@ -331,7 +340,8 @@ def verify_segregant_expression_streaming(
             Level.L2,
             "value_fidelity",
             not value_failures,
-            "every record's counts, totals and partitions equal the release"
+            "every record's counts, totals, partitions and summed cells equal the "
+            "release; every record gaps marker_umi_count"
             if not value_failures
             else f"{len(value_failures)} fields differ from the release",
             failures=value_failures[:20],

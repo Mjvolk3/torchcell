@@ -344,11 +344,6 @@ class CellAdapter:
             # --- begin De Chiara 2022: the life-cycle family ---
             ("life cycle phenotype (chunked)", self._life_cycle_phenotype_node),
             # --- end De Chiara 2022 ---
-            # jackson2020: pseudobulk single-cell UMI counts
-            (
-                "pseudobulk umi count phenotype (chunked)",
-                self._pseudobulk_umi_count_phenotype_node,
-            ),
             (
                 "genome architecture phenotype (chunked)",
                 self._genome_architecture_phenotype_node,
@@ -456,11 +451,6 @@ class CellAdapter:
                 self._get_life_cycle_phenotype_reference_nodes,
             ),
             # --- end De Chiara 2022 ---
-            # jackson2020: pseudobulk single-cell UMI counts
-            (
-                "pseudobulk umi count phenotype reference",
-                self._get_pseudobulk_umi_count_phenotype_reference_nodes,
-            ),
             (
                 "genome architecture phenotype reference",
                 self._get_genome_architecture_phenotype_reference_nodes,
@@ -3122,21 +3112,28 @@ class CellAdapter:
     def _single_cell_expression_properties(phenotype: Any) -> dict[str, Any]:
         """Node properties of a ``SingleCellExpressionPhenotype`` (experiment or reference).
 
-        The three dicts serialize to JSON strings, the multi-valued phenotype convention;
-        the totals, the feature-universe pin and ``n_cells`` stay typed so a query can
+        The four dicts and the three per-cell lists serialize to JSON strings, the
+        multi-valued phenotype convention (a gapped dict is the JSON ``null``); the
+        totals, the feature-universe pin and ``n_cells`` stay typed so a query can
         size-normalize or tell a single cell from a pseudobulk without parsing a dict.
+        Boocock 2025, Jackson 2020 and N'Guessan 2025 all write this one node class
+        (#1016).
         """
         return {
             "graph_level": phenotype.graph_level,
             "label_name": phenotype.label_name,
             "label_statistic_name": phenotype.label_statistic_name,
             "umi_count": json.dumps(phenotype.umi_count),
+            "marker_umi_count": json.dumps(phenotype.marker_umi_count),
             "total_umis": phenotype.total_umis,
             "n_features": phenotype.n_features,
             "feature_universe_sha256": phenotype.feature_universe_sha256,
             "n_cells": phenotype.n_cells,
             "cell_cycle_stage_counts": json.dumps(phenotype.cell_cycle_stage_counts),
             "library_cell_counts": json.dumps(phenotype.library_cell_counts),
+            "cell_barcodes": json.dumps(phenotype.cell_barcodes),
+            "cell_libraries": json.dumps(phenotype.cell_libraries),
+            "cell_total_umis": json.dumps(phenotype.cell_total_umis),
             "measurement_type": phenotype.measurement_type,
         }
 
@@ -3238,71 +3235,6 @@ class CellAdapter:
         return nodes
 
     # --- end De Chiara 2022 -------------------------------------------------- #
-
-    # --- begin jackson2020: the pseudobulk UMI-count phenotype node ---------------- #
-    @staticmethod
-    def _pseudobulk_umi_count_properties(phenotype: Any) -> dict[str, Any]:
-        """Node properties of a ``PseudobulkUmiCountPhenotype`` (experiment or reference).
-
-        The two count dicts and the two per-cell lists serialize to JSON strings, the
-        multi-valued phenotype convention; the totals, the cell count and the
-        feature-universe pin stay typed so a query can filter on depth or cell number
-        without parsing a dict.
-        """
-        return {
-            "graph_level": phenotype.graph_level,
-            "label_name": phenotype.label_name,
-            "label_statistic_name": phenotype.label_statistic_name,
-            "umi_count": json.dumps(phenotype.umi_count),
-            "marker_umi_count": json.dumps(phenotype.marker_umi_count),
-            "total_umis": phenotype.total_umis,
-            "n_features": phenotype.n_features,
-            "feature_universe_sha256": phenotype.feature_universe_sha256,
-            "n_cells": phenotype.n_cells,
-            "cell_barcodes": json.dumps(phenotype.cell_barcodes),
-            "cell_total_umis": json.dumps(phenotype.cell_total_umis),
-            "measurement_type": phenotype.measurement_type,
-        }
-
-    @data_chunker
-    def _pseudobulk_umi_count_phenotype_node(
-        self, data: dict[str, Any], method_name: str
-    ) -> BioCypherNode:
-        phenotype = data["experiment"].phenotype
-        phenotype_id = hashlib.sha256(
-            json.dumps(phenotype.model_dump()).encode("utf-8")
-        ).hexdigest()
-        return BioCypherNode(
-            node_id=phenotype_id,
-            preferred_id=f"phenotype_{phenotype_id}",
-            node_label="pseudobulk umi count phenotype",
-            properties=self._pseudobulk_umi_count_properties(phenotype),
-        )
-
-    def _get_pseudobulk_umi_count_phenotype_reference_nodes(
-        self,
-    ) -> list[BioCypherNode]:
-        nodes = []
-        seen_node_ids: set[str] = set()
-        for data in tqdm(self.dataset.experiment_reference_index):
-            phenotype = data.reference.phenotype_reference
-            phenotype_id = hashlib.sha256(
-                json.dumps(phenotype.model_dump()).encode("utf-8")
-            ).hexdigest()
-            if phenotype_id in seen_node_ids:
-                continue
-            seen_node_ids.add(phenotype_id)
-            nodes.append(
-                BioCypherNode(
-                    node_id=phenotype_id,
-                    preferred_id="pseudobulk umi count phenotype",
-                    node_label="pseudobulk umi count phenotype",
-                    properties=self._pseudobulk_umi_count_properties(phenotype),
-                )
-            )
-        return nodes
-
-    # --- end jackson2020 ---------------------------------------------------------- #
 
     @staticmethod
     def _genome_architecture_properties(phenotype: Any) -> dict[str, Any]:

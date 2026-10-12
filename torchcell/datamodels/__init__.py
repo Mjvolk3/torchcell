@@ -120,7 +120,6 @@ from .schema import (
     ProteinTurnoverPhenotype,
     PseudobulkUmiCountExperiment,
     PseudobulkUmiCountExperimentReference,
-    PseudobulkUmiCountPhenotype,
     Publication,
     ReferenceGenome,
     ReporterReadout,
@@ -297,7 +296,6 @@ __all__ = [
     "LifeCyclePhenotype",
     "LifeCycleTimeUnit",
     # jackson2020: the pseudobulk UMI-count family
-    "PseudobulkUmiCountPhenotype",
     "PseudobulkUmiCountExperiment",
     "PseudobulkUmiCountExperimentReference",
     # issue #1022: the error-model microarray score family

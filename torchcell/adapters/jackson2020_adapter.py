@@ -9,7 +9,8 @@ Each record is one (barcoded deletion strain, culture) pair: the genotype is one
 barcoded homozygous deletion with a first-class perturbation node, the culture an
 ``environment`` with its medium and its rapamycin perturbation where there is one (the
 flask temperature is a typed gap, so the enabled temperature methods emit nothing), and
-the readout a ``pseudobulk umi count phenotype``. The FY4/FY5 background rides on the ``genome`` node.
+the readout a ``single cell expression phenotype`` (the node class it shares with Boocock
+2025 since #1016). The FY4/FY5 background rides on the ``genome`` node.
 """
 
 import os.path as osp

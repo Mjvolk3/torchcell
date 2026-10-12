@@ -37,11 +37,24 @@
     },
     {
       "gate": "G5",
-      "outcome": "gap",
-      "reason": "GeneEssentialityPhenotype exists, but its one boolean carries no evidence type: is_essential=True here is a construction outcome (fewer than two PCR-verified colonies; the paper's 'candidates'), not a growth measurement, and the PCR counts have no field (kept in preprocess/calls.csv). Records load as the release's booleans; the gap is #924.",
+      "outcome": "pass",
+      "reason": "GeneEssentialityPhenotype exists; compounds resolve; since #924 every record carries a GeneEssentialityEvidence of type construction_outcome (class mutant_recovery): the paper's scoring rule, its definition of the call and its caveat, quoted with sha256, plus the per-record statistics the release carries",
       "evidence": [
         {
-          "value": "is_essential=True is a candidate, from a failed construction",
+          "value": 2,
+          "provenance": {
+            "source_uri": "paper/PMC1681482.1.txt",
+            "citation_key": "babaConstructionEscherichiaColi2006",
+            "sha256": "6e39bc2f12aecceac568f91dfcd068e109433132df618dc68624d317737bf3cd",
+            "method": "PMC Article Datasets plain text of the article (raw mirror)",
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "Mutants were scored as correct if two or more colonies had the expected structure based on PCR tests for both junction fragments.",
+          "note": "the minimum verified colonies for an obtained deletion; applied to Table 3's '5. verified' column it reproduces 3,985 / 303 and Table 6 exactly"
+        },
+        {
+          "value": "candidates for essential genes",
           "provenance": {
             "source_uri": "paper/PMC1681482.1.txt",
             "citation_key": "babaConstructionEscherichiaColi2006",
@@ -51,10 +64,10 @@
             "retrieved": null
           },
           "quote": "Based on finding mutants with the predicted structure, these 3985 genes are (probably) nonessential, while the 303 genes (including 37 genes of unknown function), for which no mutants were found, are candidates for essential genes",
-          "note": null
+          "note": "what is_essential=True means here: a candidate, from a construction that yielded no mutant with the expected structure (#924)"
         },
         {
-          "value": "construction outcome, not a population measurement",
+          "value": "a recovery method does not call a slow grower essential",
           "provenance": {
             "source_uri": "paper/PMC1681482.1.txt",
             "citation_key": "babaConstructionEscherichiaColi2006",
@@ -64,10 +77,10 @@
             "retrieved": null
           },
           "quote": "Because genetic footprinting measures cell populations, a mutation causing slow growth can lead to under-representation of the mutant and hence false classification of many genes as essential. In contrast, we sought deletion mutants as survivors without regard to growth rate.",
-          "note": null
+          "note": "the paper's own statement of how its evidence differs from a population method's; carried on every record's evidence (#924)"
         }
       ],
-      "issue": 924,
+      "issue": null,
       "blocked_kind": null
     }
   ],
@@ -325,6 +338,6 @@
     "unresolved_compounds": [],
     "proposed_class": null
   },
-  "decided_at": "2026-10-11",
-  "torchcell_commit": "aab08e0290961a827de5930ace2af752c44d2fdd"
+  "decided_at": "2026-10-12",
+  "torchcell_commit": "12f83492f939506d75cfc34122b8d169ea3c6737"
 }

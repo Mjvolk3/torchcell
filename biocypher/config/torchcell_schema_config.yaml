@@ -308,6 +308,17 @@ gene essentiality phenotype:
         is_essential: bool
         evidence: str
 
+# A categorical essentiality call stored as released (GradedGeneEssentialityPhenotype,
+# #909): Royet 2025's TRANSIT HMM states, Goodall 2018's "unclear" TraDIS calls.
+graded gene essentiality phenotype:
+    is_a: phenotypic feature
+    represented_as: node
+    properties:
+        graph_level: str
+        label_name: str
+        essentiality_call: str
+        evidence: str
+
 synthetic lethality phenotype:
     is_a: phenotypic feature
     represented_as: node
@@ -895,6 +906,7 @@ phenotype member of:
         [
             fitness phenotype,
             gene essentiality phenotype,
+            graded gene essentiality phenotype,
             synthetic lethality phenotype,
             synthetic rescue phenotype,
             gene interaction phenotype,

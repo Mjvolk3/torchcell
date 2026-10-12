@@ -1,0 +1,549 @@
+{
+  "record_version": 1,
+  "slug": "graded-gene-essentiality-sibling",
+  "date": "2026-10-12",
+  "pr": null,
+  "author_kind": "agent",
+  "base_commit": "c40f480e53bf621caee96c4518039301fd475ce9",
+  "python_version": "3.13.0",
+  "symbols": [
+    {
+      "symbol": "BacterialGradedGeneEssentialityExperiment",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "785e5874c5e37d9f0d5d7999fe7de424653cda90dfe34f7ff01cbce33c6eca9d",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "BacterialGradedGeneEssentialityExperimentReference",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "c60e5aef24e6f62e7c099b0cd41689d5e965d62114c7d64bc60e23a7ff444daa",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "ESSENTIALITY_EVIDENCE_CLASS",
+      "status": "modified",
+      "kinds": [
+        "enum_member_added"
+      ],
+      "fingerprint_before": "b810cc6a7d512f456105d1d9d09bd876082699009e3c9f0a9bc46e52ffed02f1",
+      "fingerprint_after": "09c6aec4c4ee46582f8d19365f5c2d0218bcd11d80a9c3912cb245d0c1e86e5c",
+      "impact": "stale",
+      "reasons": [
+        "gained members ['EssentialityEvidenceType.tnseq_hmm_state: EssentialityEvidenceClass.insertion_depletion']"
+      ]
+    },
+    {
+      "symbol": "ESSENTIALITY_EVIDENCE_FIELDS",
+      "status": "modified",
+      "kinds": [
+        "enum_member_added"
+      ],
+      "fingerprint_before": "3b88e5449f3052f540e4b08a2ca97bf88d846546f905043682b2d4f1a48ce85d",
+      "fingerprint_after": "46f7aabc35bb421e049c252328841c6ce9562d15eb59f83e69d4f4535dbd3f0b",
+      "impact": "stale",
+      "reasons": [
+        "gained members [\"EssentialityEvidenceType.tnseq_hmm_state: ('hmm_state', 'ta_sites', 'hmm_sites_essential', 'hmm_sites_growth_defect', 'hmm_sites_non_essential', 'hmm_sites_growth_advantage', 'mean_insertion_rate', 'mean_read_count')\"]"
+      ]
+    },
+    {
+      "symbol": "EXPERIMENT_REFERENCE_TYPE_MAP",
+      "status": "modified",
+      "kinds": [
+        "enum_member_added"
+      ],
+      "fingerprint_before": "7456aee12b83dcbe52c6d111750164bb58215390bf29fa97c5626087fa9a2410",
+      "fingerprint_after": "b5f8180b10bf3d13696fd96336d3a9415eec821ad74324c5219907db0e4d7776",
+      "impact": "stale",
+      "reasons": [
+        "gained members [\"'bacterial_graded_gene_essentiality': BacterialGradedGeneEssentialityExperimentReference\"]"
+      ]
+    },
+    {
+      "symbol": "EXPERIMENT_TYPE_MAP",
+      "status": "modified",
+      "kinds": [
+        "enum_member_added"
+      ],
+      "fingerprint_before": "2fca3c4c7f955f61567e77d0446db683114af13347aebf33dc269e58c4b0ca85",
+      "fingerprint_after": "b829416b8af8b281b82470f8104cb1537fd2625a525c615c2076590167c18c6b",
+      "impact": "stale",
+      "reasons": [
+        "gained members [\"'bacterial_graded_gene_essentiality': BacterialGradedGeneEssentialityExperiment\"]"
+      ]
+    },
+    {
+      "symbol": "EssentialityEvidenceType",
+      "status": "modified",
+      "kinds": [
+        "enum_member_added"
+      ],
+      "fingerprint_before": "221c071f438830a70cad9bc504b2dda3255621dc357666df6b4b9d745a003e42",
+      "fingerprint_after": "720562ddcea5f22f70649192dd49de1bed5530676805392e19e8a8fcee11931b",
+      "impact": "stale",
+      "reasons": [
+        "added member/const 'tnseq_hmm_state'"
+      ]
+    },
+    {
+      "symbol": "ExperimentReferenceType",
+      "status": "modified",
+      "kinds": [
+        "enum_member_added"
+      ],
+      "fingerprint_before": "d0a2f2c56a4a7bda227bba7b4256222417b90e90c93737dc79224edb7726b09c",
+      "fingerprint_after": "6ac179a146b94f7927d94dd6bb55bea04a5f515a5264e65f50a32e5431902219",
+      "impact": "stale",
+      "reasons": [
+        "gained members ['BacterialGradedGeneEssentialityExperimentReference']"
+      ]
+    },
+    {
+      "symbol": "ExperimentType",
+      "status": "modified",
+      "kinds": [
+        "enum_member_added"
+      ],
+      "fingerprint_before": "fc49ca18edb64b68945aa1c67e8c1dabd0eb6f1c67915b10ef52bda617bc1de0",
+      "fingerprint_after": "0f6c23dbfc1ba2860a8f4f6f93b5e17ceaf5f0a49b425f03fd409c09f34b2470",
+      "impact": "stale",
+      "reasons": [
+        "gained members ['BacterialGradedGeneEssentialityExperiment']"
+      ]
+    },
+    {
+      "symbol": "GRADED_ESSENTIALITY_CALLS",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "ca376279616e5e55874c1006104b220d1e890625eb9b67b5c206bfc93cf13038",
+      "impact": "stale",
+      "reasons": [
+        "new module-level binding"
+      ]
+    },
+    {
+      "symbol": "GeneEssentialityEvidence",
+      "status": "modified",
+      "kinds": [
+        "additive_field",
+        "contract_tightened"
+      ],
+      "fingerprint_before": "e993650efb18e9e259fdb1d08473ab5a5efbb1ff06a64769cd70dff996808ee6",
+      "fingerprint_after": "0f476edf728c445267144fca7a2242fcd617d692ad86e86063c3d7b59e002446",
+      "impact": "stale",
+      "reasons": [
+        "added optional field 'hmm_sites_essential'",
+        "added optional field 'hmm_sites_growth_advantage'",
+        "added optional field 'hmm_sites_growth_defect'",
+        "added optional field 'hmm_sites_non_essential'",
+        "added optional field 'hmm_state'",
+        "added optional field 'mean_insertion_rate'",
+        "added optional field 'mean_read_count'",
+        "added optional field 'ta_sites'",
+        "validator/serializer changed: ['_check_evidence']"
+      ]
+    },
+    {
+      "symbol": "GeneEssentialityPhenotype",
+      "status": "modified",
+      "kinds": [
+        "contract_tightened"
+      ],
+      "fingerprint_before": "e447db0117f2f311726c018068bdf3186a98d0836bd316702382ca554a484396",
+      "fingerprint_after": "66f9104b6af4c7cedc76bc352e43a53478fe792f6bb5db15a09a2e05192853ef",
+      "impact": "stale",
+      "reasons": [
+        "validator/serializer changed: ['_released_call_is_the_boolean']"
+      ]
+    },
+    {
+      "symbol": "GradedGeneEssentialityPhenotype",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "c66b1e11e0dbcceed4e7348e5c0fee87d0ba2263486873b0f8b49ff7a9ff32a8",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "HmmEssentialityState",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "bcad54eb46be30207b02e6142645f41db5a9ba588dbb2952c034a3694b24a6a3",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "PhenotypeType",
+      "status": "modified",
+      "kinds": [
+        "enum_member_added"
+      ],
+      "fingerprint_before": "4066009fb7a0d31ef5b774e4e74a48af77bd2e334c596ec2c5cf10e780950f83",
+      "fingerprint_after": "7f9ebd16482305f1ec298d0b02bf85b66bac4d9f9cc47d3a5a5903c97ef93405",
+      "impact": "stale",
+      "reasons": [
+        "gained members ['GradedGeneEssentialityPhenotype']"
+      ]
+    }
+  ],
+  "correctness_argument": "Some essentiality releases call a gene into a category that is not a boolean, and under the owner's rule of 2026-10-12 (the data is the data: every reported call is stored, never collapsed) those calls need a home. Royet 2025 Table S4 classifies every one of the 5,729 KT2440 genes on LB agar and after outgrowth in LB into TRANSIT HMM states; measured on the deposited workbook (sha256 b786a2a1...): LB agar ES 600, NE 4,458, GA 435, GD 223, N/A 13; outgrowth ES 722, NE 4,238, GA 533, GD 223, N/A 13, the N/A rows being the 13 genes with no TA site. The paper's Table 1 footnote c defines the four states (E essential, GA growth-advantage, GD growth-defect, NE non-essential). Goodall 2018 releases 317 'unclear' TraDIS calls (a likelihood ratio between the two modes), which the boolean leaf of #924 refuses and its store ledgered. A grade or an 'unclear' is a different released quantity from is_essential, so by the policy's Rule 6 it is a sibling leaf, GradedGeneEssentialityPhenotype, under the same parent Phenotype, not a widened boolean: its label essentiality_call holds the release's own category, checked against the categories its evidence type releases (GRADED_ESSENTIALITY_CALLS) and against the evidence's typed call. It carries GeneEssentialityEvidence, the #924 descriptor, whose class keeps every existing field and validator branch; Royet's rule is one new EssentialityEvidenceType member, tnseq_hmm_state, under insertion_depletion, and its per-gene statistics (TA sites, the sites the HMM labeled each state, mean insertion rate, mean read count, the state) are eight new optional-by-construction fields, refused on any other type, with consistency checks (the labeled sites sum to the TA sites, N/A exactly at zero TA sites). The boolean leaf now refuses tnseq_hmm_state evidence, since a graded call has no boolean. A bacterial experiment pair, BacterialGradedGeneEssentialityExperiment and its reference, joins the experiment unions and maps. No served record changes meaning: every existing essentiality record validates unchanged, the new fields dump as null on them. Two new stores: graded_gene_essentiality_goodall2018 (the 317 unclear calls) and graded_gene_essentiality_royet2025 (11,458 graded calls).",
+  "measurement_type_decision": true,
+  "source_quotes": [
+    {
+      "value": "TRANSIT HMM: a state per TA site, a state classification per gene",
+      "provenance": {
+        "source_uri": "paper.md",
+        "citation_key": "royetHighThroughputTnSeqScreens2025",
+        "sha256": "0a614be0b7b2f834f7bee191df047136eb59a4b10415dc6d7c5578e51ca53f8c",
+        "method": "MinerU OCR of the publisher PDF (torchcell-library mirror)",
+        "page": null,
+        "retrieved": null
+      },
+      "quote": "The gene essentiality of the Tn-seq input libraries was next determined using the TRANSIT software (DeJesus et al. 2015), which employs a Hidden Markov Model (HMM) method to predict essentiality and non-essentiality for individual insertion sites (DeJesus and Ioerger 2013).",
+      "note": "the rule behind every Table S4 call; Table S4 releases each gene's TA sites labeled ES, GD, NE and GA and its state classification"
+    },
+    {
+      "value": {
+        "ES": 600,
+        "NE": 4458
+      },
+      "provenance": {
+        "source_uri": "paper.md",
+        "citation_key": "royetHighThroughputTnSeqScreens2025",
+        "sha256": "0a614be0b7b2f834f7bee191df047136eb59a4b10415dc6d7c5578e51ca53f8c",
+        "method": "MinerU OCR of the publisher PDF (torchcell-library mirror)",
+        "page": null,
+        "retrieved": null
+      },
+      "quote": "The HMM analysis identified 600 genes essential for growth on LB agar, representing $1 0 . 8 \\%$ of the genes of P. putida KT2440. 4458 genes were identified as non-essential genes (NE) (Table S4).",
+      "note": "the LB agar sheet's counts, re-derived at build time. The states are defined in Table 1 footnote c of paper.pdf (sha256 d6d54b16607a7617034f4db71814f01eac04885a7fc67ed702d6a36064498f09, page 8): \"c State of each gene in LB defined by the TRANSIT software using a Hidden Markov Model: E, essential; GA, growth-\u00adAdvantage; GD, growth-\u00addefect; NE, non-\u00adessential.\". The OCR dropped that footnote; Table S4 writes the essential state ES, and N/A for a gene with no TA site"
+    },
+    {
+      "value": 3.6,
+      "provenance": {
+        "source_uri": "paper.md",
+        "citation_key": "goodallEssentialGenomeEscherichia2018",
+        "sha256": "facfe1fac8ab6dab5cd0ecb88876b33616cc00de7c1fe68b60590f7a1883b429",
+        "method": "MinerU OCR of the publisher PDF (torchcell-library mirror)",
+        "page": null,
+        "retrieved": null
+      },
+      "quote": "Genes with log likelihood scores between the upper and lower $\\mathsf { l o g } _ { 2 } 1 2$ threshold values of 3.6 and $- 3 . 6 ,$ , respectively, were deemed \u201cunclear.\u201d",
+      "note": "measured: every released call of both tables agrees with ratio < -3.6 essential, > 3.6 non-essential, else unclear; the exact log2(12) = 3.585 would move one unclear gene per table (ydhW in S1, grxD in S4) to non-essential. process() refuses any row that disagrees with 3.6"
+    },
+    {
+      "value": "?",
+      "provenance": {
+        "source_uri": "si/supplementary_table.html",
+        "citation_key": "gerdesExperimentalDeterminationSystem2003",
+        "sha256": "f29982272aab87de1c402e2fd1b2a0c5d6cd54cbfbcd259816a2245681100510",
+        "method": "the Table S1 page of the Supplementary Online Material (raw mirror)",
+        "page": null,
+        "retrieved": null
+      },
+      "quote": "= ambiguous.",
+      "note": null
+    }
+  ],
+  "alternatives_rejected": [
+    {
+      "alternative": "Loosen is_essential to bool | None and store a grade or 'unclear' as a typed ProvenanceGap on the boolean leaf",
+      "why_rejected": "A released 'unclear' or GD is reported by the primary, so no ProvenanceGapReason describes it honestly (not_reported_by_primary, not_carried_by_curation, deferred_pending_source_review); and loosening a required field needs owner sign-off (Rule 3). The coordinator relayed the decision that #1066's boolean leaf keeps its contract and the graded calls go to a sibling."
+    },
+    {
+      "alternative": "Collapse the HMM states to a boolean (ES true, GD / NE / GA false) and store them on GeneEssentialityPhenotype",
+      "why_rejected": "It discards the GD and GA grades the release states and asserts a conversion the paper does not make; the owner's rule stores every grade as released."
+    },
+    {
+      "alternative": "Carry the HMM statistics on the graded leaf instead of on GeneEssentialityEvidence",
+      "why_rejected": "Per-record evidence statistics live on the descriptor for every other evidence type (#924); a second home would split one record's evidence across two objects and leave the descriptor unable to describe the HMM call it types."
+    },
+    {
+      "alternative": "Store Goodall's unclear calls in the boolean store as a second experiment class",
+      "why_rejected": "A store holds one experiment class (ExperimentDataset.transform_item retypes every record through it), so the 317 unclear calls are a second, graded store of the same release, and each released call is stored exactly once across the two."
+    }
+  ],
+  "served_release": "2026.10.06-4b293d34",
+  "affected_loaders": [
+    {
+      "loader": "torchcell/datasets/ecoli/baba2006.py",
+      "dataset_classes": [
+        "GeneEssentialityBaba2006Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ESSENTIALITY_EVIDENCE_CLASS",
+        "ESSENTIALITY_EVIDENCE_FIELDS",
+        "EssentialityEvidenceType",
+        "GeneEssentialityEvidence",
+        "GeneEssentialityPhenotype",
+        "HmmEssentialityState"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/caglar2017.py",
+      "dataset_classes": [
+        "RnaseqCaglar2017Dataset",
+        "ProteomeCaglar2017Dataset",
+        "ProteinFoldChangeCaglar2017Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ExperimentType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/gerdes2003.py",
+      "dataset_classes": [
+        "GeneEssentialityGerdes2003Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ESSENTIALITY_EVIDENCE_CLASS",
+        "ESSENTIALITY_EVIDENCE_FIELDS",
+        "EssentialityEvidenceType",
+        "GeneEssentialityEvidence",
+        "GeneEssentialityPhenotype",
+        "HmmEssentialityState"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/goodall2018.py",
+      "dataset_classes": [
+        "GeneEssentialityGoodall2018Dataset",
+        "GradedGeneEssentialityGoodall2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "BacterialGradedGeneEssentialityExperiment",
+        "BacterialGradedGeneEssentialityExperimentReference",
+        "ESSENTIALITY_EVIDENCE_CLASS",
+        "ESSENTIALITY_EVIDENCE_FIELDS",
+        "EssentialityEvidenceType",
+        "GRADED_ESSENTIALITY_CALLS",
+        "GeneEssentialityEvidence",
+        "GeneEssentialityPhenotype",
+        "GradedGeneEssentialityPhenotype",
+        "HmmEssentialityState"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/gupta2024.py",
+      "dataset_classes": [
+        "ProteinTurnoverGupta2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ExperimentType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/ishii2007.py",
+      "dataset_classes": [
+        "_Ishii2007Dataset",
+        "MetabolomeIshii2007Dataset",
+        "ProteomeIshii2007Dataset",
+        "FluxIshii2007Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ExperimentType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/li2014.py",
+      "dataset_classes": [
+        "ProteinSynthesisRateLi2014Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ExperimentType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/price2018.py",
+      "dataset_classes": [
+        "RbTnseqPrice2018EcoliDataset",
+        "GeneEssentialityPrice2018EcoliDataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ESSENTIALITY_EVIDENCE_CLASS",
+        "ESSENTIALITY_EVIDENCE_FIELDS",
+        "EssentialityEvidenceType",
+        "GeneEssentialityEvidence",
+        "GeneEssentialityPhenotype",
+        "HmmEssentialityState"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/schastnaya2021.py",
+      "dataset_classes": [
+        "MetabolomeSchastnaya2021Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ExperimentType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/desiqueira2025.py",
+      "dataset_classes": [
+        "ProteomeDeSiqueira2025Dataset",
+        "ProteomePercentDeSiqueira2025Dataset",
+        "ProteomeLog10PercentDeSiqueira2025Dataset",
+        "IsoprenolTiterDeSiqueira2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ExperimentType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/lim2022.py",
+      "dataset_classes": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ExperimentType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/royet2025.py",
+      "dataset_classes": [
+        "EnvMetalTnseqRoyet2025Dataset",
+        "GradedGeneEssentialityRoyet2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "BacterialGradedGeneEssentialityExperiment",
+        "BacterialGradedGeneEssentialityExperimentReference",
+        "ESSENTIALITY_EVIDENCE_CLASS",
+        "ESSENTIALITY_EVIDENCE_FIELDS",
+        "EssentialityEvidenceType",
+        "GRADED_ESSENTIALITY_CALLS",
+        "GeneEssentialityEvidence",
+        "GradedGeneEssentialityPhenotype",
+        "HmmEssentialityState"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/private_torchcell/volk2021_inhibitor_bioscreen.py",
+      "dataset_classes": [
+        "InhibitorBioscreenVolk2021Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ExperimentType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/dechiara2022.py",
+      "dataset_classes": [
+        "_DeChiara2022Dataset",
+        "_GrowthDeChiara2022Dataset",
+        "DoublingTimeDeChiara2022Dataset",
+        "CellYieldDeChiara2022Dataset",
+        "LifeCycleDeChiara2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EXPERIMENT_REFERENCE_TYPE_MAP",
+        "EXPERIMENT_TYPE_MAP"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/hoepfner2014.py",
+      "dataset_classes": [
+        "EnvChemgenHoepfner2014Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenHoepfner2014Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "ExperimentType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/piotrowski2017.py",
+      "dataset_classes": [
+        "EnvChemgenPiotrowski2017Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ExperimentType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/sgd.py",
+      "dataset_classes": [
+        "GeneEssentialitySgdDataset"
+      ],
+      "served_classes": [
+        "GeneEssentialitySgdDataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "ESSENTIALITY_EVIDENCE_CLASS",
+        "ESSENTIALITY_EVIDENCE_FIELDS",
+        "EssentialityEvidenceType",
+        "GeneEssentialityEvidence",
+        "GeneEssentialityPhenotype",
+        "HmmEssentialityState"
+      ]
+    }
+  ],
+  "served_datasets": [
+    "EnvChemgenHoepfner2014Dataset",
+    "GeneEssentialitySgdDataset"
+  ],
+  "rebuild_scope": "full_kg_rebuild",
+  "owner_sign_off": {
+    "signed": false,
+    "quote": null,
+    "url": null
+  }
+}

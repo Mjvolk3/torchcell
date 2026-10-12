@@ -140,6 +140,26 @@ EXAMPLES: dict[str, dict[str, Any]] = {
         "colonies_tested": 8,
         "percent_verified": 12.5,
     },
+    # #909: the graded leaf needs a type that releases a categorical call
+    "torchcell.datamodels.schema.GradedGeneEssentialityPhenotype": {
+        "essentiality_call": "ES",
+        "evidence": {
+            "evidence_class": "insertion_depletion",
+            "evidence_type": "tnseq_hmm_state",
+            "statements": [
+                {"role": "scoring_rule", "provenance": _ESSENTIALITY_QUOTE},
+                {"role": "call_definition", "provenance": _ESSENTIALITY_QUOTE},
+            ],
+            "hmm_state": "ES",
+            "ta_sites": 8,
+            "hmm_sites_essential": 5,
+            "hmm_sites_growth_defect": 0,
+            "hmm_sites_non_essential": 3,
+            "hmm_sites_growth_advantage": 0,
+            "mean_insertion_rate": 0.5,
+            "mean_read_count": 23.0,
+        },
+    },
     # The generic builder fills a str field with "x", which no registered morphology
     # assay is named and no assay symbol is, so the #774 phenotype needs a real one.
     "torchcell.datamodels.schema.BacterialMorphologyPhenotype": {

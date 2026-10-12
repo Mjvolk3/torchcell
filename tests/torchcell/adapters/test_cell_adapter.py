@@ -381,6 +381,7 @@ NODE_METHODS = [
     "fitness phenotype (chunked)",
     "gene interaction phenotype (chunked)",
     "gene essentiality phenotype (chunked)",
+    "graded gene essentiality phenotype (chunked)",  # #909
     "synthetic lethality phenotype (chunked)",
     "synthetic rescue phenotype (chunked)",
     "calmorph phenotype (chunked)",
@@ -411,6 +412,7 @@ NODE_METHODS = [
     "fitness phenotype reference",
     "gene interaction phenotype reference",
     "gene essentiality phenotype reference",
+    "graded gene essentiality phenotype reference",  # #909
     "synthetic lethality phenotype reference",
     "synthetic rescue phenotype reference",
     "calmorph phenotype reference",
@@ -465,7 +467,7 @@ EDGE_METHODS = [
 def test_supported_method_names_are_the_registration_tables_in_order(
     recorder: _WandbRecorder,
 ) -> None:
-    """83 node methods and 17 edge methods, in the order ``__init__`` registers them;
+    """85 node methods and 17 edge methods, in the order ``__init__`` registers them;
     every "(chunked)" name maps to a decorated handler and every other name to a
     ``_get_`` collector, which is how ``get_nodes`` routes them.
     """

@@ -87,6 +87,8 @@ from torchcell.adapters import (
     GeneEssentialityPrice2018EcoliAdapter,
     GeneInteractionBabu2014Adapter,
     GeneInteractionButland2008Adapter,
+    GradedGeneEssentialityGoodall2018Adapter,
+    GradedGeneEssentialityRoyet2025Adapter,
     GrowthAucRapp2026Adapter,
     GrowthRateCampos2018Adapter,
     GrowthRateChoe2019Adapter,
@@ -194,7 +196,10 @@ from torchcell.datasets.ecoli.foo2014 import IsopentenolTiterFoo2014Dataset
 from torchcell.datasets.ecoli.fuhrer2017 import MetabolomeFuhrer2017Dataset
 from torchcell.datasets.ecoli.gerdes2003 import GeneEssentialityGerdes2003Dataset
 from torchcell.datasets.ecoli.girgis2009 import EnvChemgenGirgis2009Dataset
-from torchcell.datasets.ecoli.goodall2018 import GeneEssentialityGoodall2018Dataset
+from torchcell.datasets.ecoli.goodall2018 import (
+    GeneEssentialityGoodall2018Dataset,
+    GradedGeneEssentialityGoodall2018Dataset,
+)
 from torchcell.datasets.ecoli.gupta2024 import ProteinTurnoverGupta2024Dataset
 from torchcell.datasets.ecoli.guzman2018 import RnaseqGuzman2018Dataset
 from torchcell.datasets.ecoli.hawkins2020 import (
@@ -285,7 +290,10 @@ from torchcell.datasets.pputida.menasalvas2025 import (
     MetaboliteProductionPhaseMenasalvas2025Dataset,
     ProteomeMenasalvas2025Dataset,
 )
-from torchcell.datasets.pputida.royet2025 import EnvMetalTnseqRoyet2025Dataset
+from torchcell.datasets.pputida.royet2025 import (
+    EnvMetalTnseqRoyet2025Dataset,
+    GradedGeneEssentialityRoyet2025Dataset,
+)
 from torchcell.datasets.pputida.thompson2019_valerolactam import (
     LactamGrowthRateThompson2019Dataset,
     ValerolactamTiterThompson2019Dataset,
@@ -544,6 +552,15 @@ BACTERIAL: list[Bacterial] = [
         "gene_essentiality_goodall2018",
         GeneEssentialityGoodall2018Dataset,
         "gene essentiality phenotype",
+        env_perturbation=False,
+    ),
+    # #909: the 317 unclear calls of the same release, graded
+    _case(
+        GradedGeneEssentialityGoodall2018Adapter,
+        "goodall2018_graded",
+        "graded_gene_essentiality_goodall2018",
+        GradedGeneEssentialityGoodall2018Dataset,
+        "graded gene essentiality phenotype",
         env_perturbation=False,
     ),
     # Guzman 2018's own release (#964): a Keio deletion plus breseq calls on the 12
@@ -1038,6 +1055,15 @@ BACTERIAL: list[Bacterial] = [
         "pputida_env_metal_tnseq_royet2025",
         EnvMetalTnseqRoyet2025Dataset,
         RESPONSE,
+    ),
+    # #909: Table S4's HMM states, every grade as released
+    _case(
+        GradedGeneEssentialityRoyet2025Adapter,
+        "royet2025_graded",
+        "graded_gene_essentiality_royet2025",
+        GradedGeneEssentialityRoyet2025Dataset,
+        "graded gene essentiality phenotype",
+        env_perturbation=False,
     ),
     _case(
         CrispriArrayYunus2026Adapter,

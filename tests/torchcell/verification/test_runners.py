@@ -190,6 +190,7 @@ RUN_ALL_ORDER = [
     "run_bacterial_metabolite",
     # #770: the protein fold-change family.
     "run_bacterial_protein_fold_change",
+    "run_bacterial_graded_essentiality",
     # #921: the phosphosite-intensity family.
     "run_phosphosite_intensity",
     # De Chiara 2022: the natural-isolate panel stores.
@@ -2956,7 +2957,7 @@ def test_verify_bacterial_dataset_verifies_one_store_by_registry_name(
 
 
 def test_each_bioproduction_registry_is_paired_with_its_own_measured_set() -> None:
-    """The four families, their measured set and the L4 name they add, in one place.
+    """The five families, their measured set and the L4 name they add, in one place.
 
     Abundance and fold change share the L4 rule NAME and take DIFFERENT sets (one reads
     ``protein_abundance``, the other ``protein_fold_change``), so pairing keyed on that
@@ -2973,6 +2974,7 @@ def test_each_bioproduction_registry_is_paired_with_its_own_measured_set() -> No
                 runners.BACTERIAL_PROTEIN_ABUNDANCE_DATASETS,
                 runners.BACTERIAL_METABOLITE_DATASETS,
                 runners.BACTERIAL_PROTEIN_FOLD_CHANGE_DATASETS,
+                runners.BACTERIAL_GRADED_ESSENTIALITY_DATASETS,
             ],
             strict=True,
         )
@@ -2989,6 +2991,8 @@ def test_each_bioproduction_registry_is_paired_with_its_own_measured_set() -> No
             runners.bacterial_protein_fold_change_locus_set,
             "protein_and_perturbed_locus_containment_assembly",
         ),
+        # #909: the graded essentiality family, a family of its own
+        (True, runners.host_perturbed_gene_set, "perturbed_gene_containment_assembly"),
     ]
 
 
@@ -3865,3 +3869,24 @@ def test_the_hu_score_entry_dispatches_to_the_loader_verify_build(
     assert spec["root"] == "data/torchcell/microarray_score_hu2007"
     assert spec["verify"]("/store", "/root") is sentinel
     assert seen == [("/store", "/root")]
+
+
+def test_the_graded_essentiality_family_holds_the_two_graded_stores() -> None:
+    """#909: Goodall 2018's unclear calls and Royet 2025's Table S4, each under its own
+    dev-tree root and verified by its loader's graded entry point.
+    """
+    assert {
+        name: spec["root"]
+        for name, spec in runners.BACTERIAL_GRADED_ESSENTIALITY_DATASETS.items()
+    } == {
+        "graded_gene_essentiality_goodall2018": (
+            "data/torchcell/graded_gene_essentiality_goodall2018"
+        ),
+        "graded_gene_essentiality_royet2025": (
+            "data/torchcell/graded_gene_essentiality_royet2025"
+        ),
+    }
+    assert {
+        "graded_gene_essentiality_goodall2018",
+        "graded_gene_essentiality_royet2025",
+    } <= runners.bacterial_registry_names()

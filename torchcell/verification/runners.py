@@ -4677,6 +4677,37 @@ BACTERIAL_PROTEIN_FOLD_CHANGE_DATASETS: dict[str, dict[str, Any]] = {
 }
 
 
+# --- begin #909: the graded essentiality family -------------------------------- #
+def _verify_goodall_graded(dataset_root: str, data_root: str) -> VerificationReport:
+    """Goodall 2018's unclear calls: the graded store's L0-L3 and the quote audit."""
+    from torchcell.datasets.ecoli import goodall2018
+
+    return goodall2018.verify_graded_build(dataset_root, data_root)
+
+
+def _verify_royet_graded(dataset_root: str, data_root: str) -> VerificationReport:
+    """Royet 2025 Table S4: the graded store's L0-L3 and the quote audit."""
+    from torchcell.datasets.pputida import royet2025
+
+    return royet2025.verify_graded_build(dataset_root, data_root)
+
+
+#: Categorical essentiality calls stored as released (``GradedGeneEssentialityPhenotype``).
+#: A family of its own, apart from the boolean stores, so a grade never pools with a
+#: boolean; the family L4 is the bioproduction families' perturbed-gene containment.
+BACTERIAL_GRADED_ESSENTIALITY_DATASETS: dict[str, dict[str, Any]] = {
+    "graded_gene_essentiality_goodall2018": {
+        "root": "data/torchcell/graded_gene_essentiality_goodall2018",
+        "verify": _verify_goodall_graded,
+    },
+    "graded_gene_essentiality_royet2025": {
+        "root": "data/torchcell/graded_gene_essentiality_royet2025",
+        "verify": _verify_royet_graded,
+    },
+}
+# --- end #909 ---------------------------------------------------------------- #
+
+
 def host_perturbed_gene_set(records: Sequence[Mapping[str, Any]]) -> set[str]:
     """Every perturbed identifier a dataset's records assert is a locus of their host.
 
@@ -4780,7 +4811,7 @@ class _BacterialFamily(NamedTuple):
 
 
 def _bacterial_families() -> tuple[_BacterialFamily, ...]:
-    """The four bioproduction registries with their family rule.
+    """The five bioproduction registries with their family rule.
 
     Read out of the module globals on every call, so a test that replaces one registry
     is seen by the single-dataset lookup exactly as it is by the family runners.
@@ -4805,6 +4836,11 @@ def _bacterial_families() -> tuple[_BacterialFamily, ...]:
             BACTERIAL_PROTEIN_FOLD_CHANGE_DATASETS,
             bacterial_protein_fold_change_locus_set,
             "protein_and_perturbed_locus_containment_assembly",
+        ),
+        _BacterialFamily(
+            BACTERIAL_GRADED_ESSENTIALITY_DATASETS,
+            host_perturbed_gene_set,
+            "perturbed_gene_containment_assembly",
         ),
     )
 
@@ -4876,6 +4912,16 @@ def run_bacterial_metabolite(data_root: str) -> bool:
     """Verify every bacterial-host metabolite dataset (L0-L4). True if all pass."""
     return _run_bacterial_family(
         BACTERIAL_METABOLITE_DATASETS,
+        data_root,
+        measured_set=host_perturbed_gene_set,
+        l4_name="perturbed_gene_containment_assembly",
+    )
+
+
+def run_bacterial_graded_essentiality(data_root: str) -> bool:
+    """Verify every graded essentiality dataset (L0-L4). True if all pass (#909)."""
+    return _run_bacterial_family(
+        BACTERIAL_GRADED_ESSENTIALITY_DATASETS,
         data_root,
         measured_set=host_perturbed_gene_set,
         l4_name="perturbed_gene_containment_assembly",
@@ -5065,6 +5111,7 @@ def run_all(data_root: str) -> bool:
     bacterial_protein_ok = run_bacterial_protein_abundance(data_root)
     bacterial_metabolite_ok = run_bacterial_metabolite(data_root)
     bacterial_fold_change_ok = run_bacterial_protein_fold_change(data_root)
+    graded_essentiality_ok = run_bacterial_graded_essentiality(data_root)
     phosphosite_ok = run_phosphosite_intensity(data_root)
     natural_isolate_panel_ok = run_natural_isolate(data_root)
     pooled_sort_seq_ok = run_pooled_sort_seq(data_root)
@@ -5093,6 +5140,7 @@ def run_all(data_root: str) -> bool:
         and bacterial_protein_ok
         and bacterial_metabolite_ok
         and bacterial_fold_change_ok
+        and graded_essentiality_ok
         and phosphosite_ok
         and natural_isolate_panel_ok
         and pooled_sort_seq_ok

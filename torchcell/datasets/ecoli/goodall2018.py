@@ -52,13 +52,26 @@ PHENOTYPE. ``GeneEssentialityPhenotype.is_essential`` is the released call (True
 essential gene, its caveat that the low mode includes "a very severe fitness cost", the
 insertion-index and threshold definitions, and per record the released call, insertion
 index and log likelihood ratio. An "unclear" call has no boolean, so
-``GeneEssentialityPhenotype`` refuses it and unclear rows are dropped under a counted
-rule (a graded sibling, #909, is where they would go); the class has no ``n_samples`` or
-uncertainty for a call, and every released value stays in ``preprocess/calls.csv``. The replicate structure is sourced anyway (two sequenced
+``GeneEssentialityPhenotype`` refuses it and this store counts the unclear rows under
+``unclear_call_not_representable``; they are stored in the graded store below. The class
+has no ``n_samples`` or uncertainty for a call, and every released value stays in
+``preprocess/calls.csv``. The replicate structure is sourced anyway (two sequenced
 samples per condition, pooled before calling; ``SOURCED_VALUES["tl_replicates"]``,
 ``["lb_replicates"]``); there is no per-gene uncertainty to type. The released calls
 follow the PRINTED threshold of +/-3.6 exactly, not log2(12) = 3.585
 (``SOURCED_VALUES["call_threshold"]``; enforced at build time).
+
+THE UNCLEAR CALLS (#909). The 317 "unclear" rows are a released call like the other
+8,309, so they are stored, in the second dataset of this module,
+``GradedGeneEssentialityGoodall2018Dataset`` (store
+``graded_gene_essentiality_goodall2018``): a ``GradedGeneEssentialityPhenotype`` whose
+``essentiality_call`` is ``unclear``, with the same TraDIS evidence (the call, the
+insertion index and the likelihood ratio), on the same
+``BacterialReleasedTransposonPerturbation`` keyed by the released ``Gene`` symbol, with no
+annotation read. Each released call is stored once: the essential and non-essential
+calls stay booleans in the first store, the unclear calls are graded in the second, and
+both ledgers count the other store's rows. A store holds one experiment class, which is
+why the two calls of one release are two stores.
 
 REFERENCE. The unperturbed BW25113 parent in the same environment, viable
 (``is_essential=False``): the library was constructed in it and selected on the TL plates.
@@ -78,7 +91,7 @@ from collections import Counter
 from collections.abc import Callable, Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, ClassVar, Literal
+from typing import Any, ClassVar, Final, Literal
 
 import openpyxl
 import pandas as pd
@@ -100,6 +113,8 @@ from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
     BacterialGeneEssentialityExperiment,
     BacterialGeneEssentialityExperimentReference,
+    BacterialGradedGeneEssentialityExperiment,
+    BacterialGradedGeneEssentialityExperimentReference,
     BacterialReleasedTransposonPerturbation,
     Environment,
     EssentialityEvidenceClass,
@@ -111,6 +126,7 @@ from torchcell.datamodels.schema import (
     GeneEssentialityEvidence,
     GeneEssentialityPhenotype,
     Genotype,
+    GradedGeneEssentialityPhenotype,
     Media,
     MediaComponent,
     MediaComponentRole,
@@ -1119,6 +1135,115 @@ def build_reference(
     )
 
 
+def read_released_calls(
+    raw: Callable[[str], str],
+) -> tuple[list[GeneCall], list[CallRuleCheck]]:
+    """Both tables' rows and call-rule checks, refusing a call off the printed
+    threshold or a Table S1 histogram that is not the paper's.
+
+    ``raw`` maps a released file name to its path in the dataset's ``raw/``.
+    """
+    calls: list[GeneCall] = []
+    checks: list[CallRuleCheck] = []
+    for spec in CONDITIONS:
+        table = read_calls(raw(spec.table), spec)
+        check = call_rule_check(table, spec.key, CALL_THRESHOLD)
+        if check.disagreements:
+            raise CallRuleError(
+                f"{spec.table}: {len(check.disagreements)} calls disagree with "
+                f"+/-{CALL_THRESHOLD}: {check.disagreements[:5]}"
+            )
+        checks.append(check)
+        calls.extend(table)
+    tl_counts = call_counts([c for c in calls if c.condition == "TL"])
+    if tl_counts != EXPECTED_TL_COUNTS:
+        raise CallCountError(
+            f"{TABLE_S1} counts {tl_counts}, the paper states {EXPECTED_TL_COUNTS}"
+        )
+    return calls, checks
+
+
+# --- begin #909: the unclear calls, graded ------------------------------------ #
+#: What a graded record is: a row the boolean store ledgers as an unclear call.
+GRADED_ROW_RULE: Final = "unclear_call_not_representable"
+GRADED_DATASET_ROOT_REL = "data/torchcell/graded_gene_essentiality_goodall2018"
+
+
+def build_graded_experiment(
+    dataset_name: str, outcome: RowOutcome, env: Environment
+) -> BacterialGradedGeneEssentialityExperiment:
+    """The graded record of one unclear row, under its released symbol: the call as
+    released.
+    """
+    if outcome.drop_rule != GRADED_ROW_RULE:
+        raise ValueError(f"row {outcome.call.row} is not an unclear call")
+    return BacterialGradedGeneEssentialityExperiment(
+        dataset_name=dataset_name,
+        genotype=insertion_genotype(outcome.call.gene),
+        environment=env,
+        phenotype=GradedGeneEssentialityPhenotype(
+            essentiality_call=outcome.call.call, evidence=evidence(outcome.call)
+        ),
+    )
+
+
+def build_graded_reference(
+    dataset_name: str, genome_reference: AssemblyReferenceGenome, env: Environment
+) -> BacterialGradedGeneEssentialityExperimentReference:
+    """The unperturbed BW25113 parent in the same environment: non-essential."""
+    return BacterialGradedGeneEssentialityExperimentReference(
+        dataset_name=dataset_name,
+        genome_reference=genome_reference,
+        environment_reference=env.model_copy(),
+        phenotype_reference=GradedGeneEssentialityPhenotype(
+            essentiality_call=TradisCall.non_essential.value, evidence=evidence()
+        ),
+    )
+
+
+class GradedLedger(BaseModel):
+    """Where every released row of both tables is: a graded record or a boolean one."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    dataset: str
+    source_records: int
+    kept_records: int
+    in_boolean_store: int
+    kept_by_condition: dict[str, int]
+
+
+def graded_ledger(dataset_name: str, outcomes: Sequence[RowOutcome]) -> GradedLedger:
+    """Count the rows, refusing a row in neither store and two unclear rows on one gene
+    in one condition (``DuplicateRecordError``).
+    """
+    kept = [o for o in outcomes if o.drop_rule == GRADED_ROW_RULE]
+    boolean = sum(1 for o in outcomes if o.drop_rule is None)
+    if len(kept) + boolean != len(outcomes):
+        raise RuntimeError("a released row is neither graded nor boolean")
+    seen: set[tuple[str, str]] = set()
+    for outcome in kept:
+        key = (outcome.call.condition, outcome.call.gene)
+        if key in seen:
+            raise DuplicateRecordError(
+                f"{outcome.call.condition}: two unclear rows on {outcome.call.gene}"
+            )
+        seen.add(key)
+    return GradedLedger(
+        dataset=dataset_name,
+        source_records=len(outcomes),
+        kept_records=len(kept),
+        in_boolean_store=boolean,
+        kept_by_condition={
+            spec.key: sum(1 for o in kept if o.call.condition == spec.key)
+            for spec in CONDITIONS
+        },
+    )
+
+
+# --- end #909 ---------------------------------------------------------------- #
+
+
 # --------------------------------------------------------------------------- #
 # The dataset
 # --------------------------------------------------------------------------- #
@@ -1186,23 +1311,7 @@ class GeneEssentialityGoodall2018Dataset(ExperimentDataset):
     def process(self) -> None:
         """Parse Tables S1 and S4 into per-gene, per-condition records + LMDB."""
         verify_raw_files(self.raw_dir, DATA_SHA256)
-        calls: list[GeneCall] = []
-        checks: list[CallRuleCheck] = []
-        for spec in CONDITIONS:
-            table = read_calls(self._raw(spec.table), spec)
-            check = call_rule_check(table, spec.key, CALL_THRESHOLD)
-            if check.disagreements:
-                raise CallRuleError(
-                    f"{spec.table}: {len(check.disagreements)} calls disagree with "
-                    f"+/-{CALL_THRESHOLD}: {check.disagreements[:5]}"
-                )
-            checks.append(check)
-            calls.extend(table)
-        tl_counts = call_counts([c for c in calls if c.condition == "TL"])
-        if tl_counts != EXPECTED_TL_COUNTS:
-            raise CallCountError(
-                f"{TABLE_S1} counts {tl_counts}, the paper states {EXPECTED_TL_COUNTS}"
-            )
+        calls, checks = read_released_calls(self._raw)
 
         outcomes = classify_calls(calls)
         drop_log = build_drop_log(self.name, outcomes)
@@ -1292,6 +1401,137 @@ class GeneEssentialityGoodall2018Dataset(ExperimentDataset):
     def create_experiment(self) -> None:
         """Experiment construction is handled by ``build_experiment``."""
         raise NotImplementedError
+
+
+# --- begin #909: the unclear calls, graded ------------------------------------ #
+@register_dataset
+class GradedGeneEssentialityGoodall2018Dataset(ExperimentDataset):
+    """Goodall 2018's 317 "unclear" TraDIS calls, stored as released (#909).
+
+    The same release, raw files, call checks and released-symbol keying as
+    :class:`GeneEssentialityGoodall2018Dataset`; the records are the rows that store
+    counts as ``unclear_call_not_representable``, as
+    ``GradedGeneEssentialityPhenotype`` with ``essentiality_call`` "unclear". No
+    annotation is read.
+    """
+
+    organism = Organism.ecoli
+
+    REFERENCE_STRAIN: ClassVar[EcoliK12StrainName] = "BW25113"
+
+    def __init__(
+        self,
+        root: str = GRADED_DATASET_ROOT_REL,
+        io_workers: int = 0,
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
+        **kwargs: Any,
+    ) -> None:
+        """Initialize. No genome parameter: the loader reads no annotation."""
+        super().__init__(root, io_workers, transform, pre_transform, **kwargs)
+
+    @property
+    def experiment_class(self) -> type[Experiment]:
+        """Experiment schema class produced by this dataset."""
+        return BacterialGradedGeneEssentialityExperiment
+
+    @property
+    def reference_class(self) -> type[ExperimentReference]:
+        """Experiment-reference schema class produced by this dataset."""
+        return BacterialGradedGeneEssentialityExperimentReference
+
+    @property
+    def raw_file_names(self) -> list[str]:
+        """Every consumed file, linked from the raw mirror."""
+        return [raw.name for raw in RAW_FILES]
+
+    def download(self) -> None:
+        """Link each mirror file into ``raw/`` after checking the manifest and sha256."""
+        data_root = _data_root()
+        manifest = load_manifest(data_root)
+        os.makedirs(self.raw_dir, exist_ok=True)
+        for raw in RAW_FILES:
+            check_manifest_pin(
+                raw.mirror_relpath,
+                manifest_sha256(manifest, raw.mirror_relpath),
+                raw.sha256,
+            )
+            src = raw_mirror_dir(data_root) / raw.mirror_relpath
+            if not src.exists():
+                raise RuntimeError(f"required raw artifact missing from mirror: {src}")
+            link_verified(src, osp.join(self.raw_dir, raw.name), raw.sha256)
+
+    def _raw(self, name: str) -> str:
+        return osp.join(self.raw_dir, name)
+
+    @post_process
+    def process(self) -> None:
+        """Read both tables, classify the rows as the boolean store does, and store
+        the unclear calls under their released symbols; write the ledger and the per-row
+        table.
+        """
+        verify_raw_files(self.raw_dir, DATA_SHA256)
+        calls, _ = read_released_calls(self._raw)
+        outcomes = classify_calls(calls)
+        ledger = graded_ledger(self.name, outcomes)
+        kept = [o for o in outcomes if o.drop_rule == GRADED_ROW_RULE]
+        os.makedirs(self.preprocess_dir, exist_ok=True)
+        os.makedirs(self.processed_dir, exist_ok=True)
+        out = Path(self.preprocess_dir)
+        (out / "dropped_records.json").write_text(ledger.model_dump_json(indent=2))
+        pd.DataFrame(
+            [
+                {
+                    "condition": o.call.condition,
+                    "row": o.call.row,
+                    "gene": o.call.gene,
+                    "insertion_index": o.call.insertion_index,
+                    "log_likelihood_ratio": o.call.log_likelihood_ratio,
+                    "call": o.call.call,
+                    "record": idx,
+                }
+                for idx, o in enumerate(kept)
+            ]
+        ).to_csv(out / "calls.csv", index=False)
+        environments = {spec.key: environment(spec.key) for spec in CONDITIONS}
+        genome_reference = assembly_reference(self.REFERENCE_STRAIN)
+        references = {
+            key: build_graded_reference(self.name, genome_reference, env)
+            for key, env in environments.items()
+        }
+        env_out, interned_env = self._open_write_lmdb(
+            osp.join(self.processed_dir, "lmdb")
+        )
+        with env_out.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
+            for idx, outcome in enumerate(kept):
+                key = outcome.call.condition
+                experiment = build_graded_experiment(
+                    self.name, outcome, environments[key]
+                )
+                txn.put(
+                    f"{idx}".encode(),
+                    self._intern_record(experiment, references[key], PUBLICATION, itxn),
+                )
+        env_out.close()
+        interned_env.close()
+        log.info(
+            "Goodall 2018: %d unclear calls stored graded (%d rows in the boolean store)",
+            ledger.kept_records,
+            ledger.in_boolean_store,
+        )
+
+    def preprocess_raw(
+        self, df: pd.DataFrame, preprocess: dict[str, Any] | None = None
+    ) -> pd.DataFrame:
+        """Preprocessing is handled inside process() for this dataset."""
+        return df
+
+    def create_experiment(self) -> None:
+        """Experiment construction is handled by ``build_graded_experiment``."""
+        raise NotImplementedError
+
+
+# --- end #909 ---------------------------------------------------------------- #
 
 
 # --------------------------------------------------------------------------- #
@@ -1562,6 +1802,157 @@ def run_verification(data_root: str | None = None) -> VerificationReport:
         report.add(audit_sourced_value(value, Path(base) / "torchcell-library"))
     _write_report(report, osp.join(abs_root, "preprocess"))
     return report
+
+
+# --- begin #909: the graded store's L0-L4 ------------------------------------- #
+def _validate_graded_record(record: Record) -> None:
+    """L0: the experiment and its reference validate as the graded pair."""
+    BacterialGradedGeneEssentialityExperiment.model_validate(record["experiment"])
+    BacterialGradedGeneEssentialityExperimentReference.model_validate(
+        record["reference"]
+    )
+
+
+def _l2_graded_calls_match_the_tables(
+    records: Sequence[Record],
+    conditions: Sequence[ConditionKey | None],
+    raw_calls: Mapping[ConditionKey, Sequence[GeneCall]],
+) -> LevelResult:
+    """L2: each record is an unclear row of its table, found by the stored symbol, with
+    that row's insertion index and likelihood ratio, and every unclear row is a record.
+    """
+    by_name: dict[tuple[str, str], list[GeneCall]] = {}
+    for key, table in raw_calls.items():
+        for call in table:
+            by_name.setdefault((key, call.gene), []).append(call)
+    problems: list[str] = []
+    for r, condition in zip(records, conditions, strict=True):
+        symbol = r["experiment"]["genotype"]["perturbations"][0]["perturbed_gene_name"]
+        rows = by_name.get((str(condition), symbol), [])
+        if len(rows) != 1:
+            problems.append(f"{condition} {symbol}: {len(rows)} table rows")
+            continue
+        (row,) = rows
+        phenotype = r["experiment"]["phenotype"]
+        ev = phenotype["evidence"]
+        held = (
+            phenotype["essentiality_call"],
+            ev["tradis_call"],
+            ev["insertion_index"],
+            ev["log_likelihood_ratio"],
+        )
+        if held != (row.call, row.call, row.insertion_index, row.log_likelihood_ratio):
+            problems.append(f"{condition} {symbol}: stored {held}")
+        if row.call != "unclear":
+            problems.append(f"{condition} {symbol}: released {row.call}, not unclear")
+    n_unclear = sum(
+        1 for table in raw_calls.values() for c in table if c.call == "unclear"
+    )
+    return LevelResult(
+        level=Level.L2,
+        name="unclear_calls_match_released_tables",
+        passed=not problems,
+        message=(
+            f"{len(records)} records are unclear rows of Tables S1/S4 with their "
+            f"insertion index and likelihood ratio ({n_unclear} unclear rows released)"
+            if not problems
+            else f"{len(problems)} records disagree with the released tables"
+        ),
+        details={
+            "n_problems": len(problems),
+            "problems": problems[:20],
+            "n_unclear_released": n_unclear,
+        },
+    )
+
+
+def _l3_graded_reference(records: Sequence[Record]) -> LevelResult:
+    """L3: every reference is the parent's non-essential call with the shared evidence."""
+    expected = build_graded_reference(
+        "x", assembly_reference("BW25113"), environment("TL")
+    ).phenotype_reference.model_dump()
+    wrong = sum(1 for r in records if r["reference"]["phenotype_reference"] != expected)
+    return LevelResult(
+        level=Level.L3,
+        name="reference_is_the_parent_called_non_essential",
+        passed=not wrong,
+        message=f"{len(records) - wrong} of {len(records)} references state the "
+        "parent's non_essential call with the TraDIS evidence",
+        details={"n_wrong": wrong},
+    )
+
+
+def verify_graded_records(
+    records: Sequence[Record],
+    *,
+    raw_calls: Mapping[ConditionKey, Sequence[GeneCall]],
+    universe: set[str],
+    expected_count: int,
+    dataset_name: str = "graded_gene_essentiality_goodall2018",
+) -> VerificationReport:
+    """The L0-L4 gate over the graded store, given the re-read tables and the BW25113
+    annotation's symbols and tags as the L4 universe (a genome-reference finding).
+    """
+    from torchcell.verification.common import shared_rule_results
+
+    report = VerificationReport(
+        dataset_name=dataset_name, provenance=VERIFIER_PROVENANCE
+    )
+    conditions = record_conditions(records)
+    report.add(l0_structural(records, _validate_graded_record))
+    report.add(l1_count(len(records), expected_count))
+    report.add(_l1_one_record_per_gene_and_condition(records, conditions))
+    report.add(_l2_graded_calls_match_the_tables(records, conditions, raw_calls))
+    report.add(_l3_call_rule(raw_calls))
+    report.add(_l3_evidence_is_tradis_insertion_index(records))
+    report.add(_l3_graded_reference(records))
+    for result in shared_rule_results(records):
+        report.add(result)
+    report.add(_l4_containment(records, universe))
+    return report
+
+
+def verify_graded_build(dataset_root: str, data_root: str) -> VerificationReport:
+    """Verify the built graded store (L0-L4) and audit every sourced value.
+
+    The registry entry point (``runners.BACTERIAL_GRADED_ESSENTIALITY_DATASETS``): the
+    runner adds the family's assembly containment and writes the report.
+    """
+    from torchcell.verification.runners import _gene_set_for_reference, load_records
+
+    records = load_records(dataset_root)
+    ledger = GradedLedger.model_validate_json(
+        Path(dataset_root, "preprocess", "dropped_records.json").read_text()
+    )
+    raw_calls: dict[ConditionKey, Sequence[GeneCall]] = {
+        spec.key: read_calls(osp.join(dataset_root, "raw", spec.table), spec)
+        for spec in CONDITIONS
+    }
+    genome = bacterial_genome("ecoli", "BW25113", data_root)
+    check_replicon(genome)
+    references = {
+        json.dumps(r["reference"]["genome_reference"], sort_keys=True) for r in records
+    }
+    universe: set[str] = set()
+    for ref in references:
+        universe |= _gene_set_for_reference(json.loads(ref), data_root)
+    # keyed by released symbols, as the boolean store: the annotation's own symbols
+    # join its tags, and what is missing is a genome-reference finding
+    universe |= {
+        str(locus.symbol) for locus in genome.genbank.loci.values() if locus.symbol
+    }
+    report = verify_graded_records(
+        records,
+        raw_calls=raw_calls,
+        universe=universe,
+        expected_count=ledger.kept_records,
+    )
+    for value in SOURCED_VALUES.values():
+        report.add(audit_sourced_value(value, Path(data_root) / "torchcell-library"))
+    return report
+
+
+# --- end #909 ---------------------------------------------------------------- #
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -1,0 +1,466 @@
+{
+  "citation_key": "goodallEssentialGenomeEscherichia2018",
+  "table": "bacteria",
+  "row_name": "Goodall 2018",
+  "gates": [
+    {
+      "gate": "G1",
+      "outcome": "pass",
+      "reason": "primary: the per-gene TraDIS calls are the paper's own Tables S1 and S4 (the publisher SI in the PMC Article Datasets bucket, deposited in the raw mirror); Table S1's counts are the Results' own",
+      "evidence": [
+        {
+          "value": {
+            "essential": 358,
+            "non_essential": 3793,
+            "unclear": 162
+          },
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "goodallEssentialGenomeEscherichia2018",
+            "sha256": "facfe1fac8ab6dab5cd0ecb88876b33616cc00de7c1fe68b60590f7a1883b429",
+            "method": "MinerU OCR of the publisher PDF (torchcell-library mirror)",
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "Using this approach, sufficient insertions were found in 3,793 genes for them to be classed as nonessential, 162 genes were situated between the two modes and classed as unclear, and 358 genes in the mutant library were identified as essential (Table S1).",
+          "note": "process() requires Table S1 to carry exactly these counts"
+        },
+        {
+          "value": "Table S4",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "goodallEssentialGenomeEscherichia2018",
+            "sha256": "facfe1fac8ab6dab5cd0ecb88876b33616cc00de7c1fe68b60590f7a1883b429",
+            "method": "MinerU OCR of the publisher PDF (torchcell-library mirror)",
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "Insertion index scores were calculated as before (Table S4).",
+          "note": null
+        }
+      ],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G2",
+      "outcome": "pass",
+      "reason": "assembly_set: BW25113 -> ecoli_K12_BW25113_ASM75055v1 resolves and reads",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G3",
+      "outcome": "pass",
+      "reason": "24 file(s) in library+raw, 17260 worksheet row(s) counted; all intact",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G4",
+      "outcome": "pass",
+      "reason": "no key held by another module (0 mention(s)); no PMID check; values not compared (no dev store named)",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G5",
+      "outcome": "pass",
+      "reason": "GradedGeneEssentialityPhenotype exists; compounds resolve",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    }
+  ],
+  "zotero_item": "present",
+  "source_kind": "primary",
+  "aggregation": null,
+  "g2": {
+    "branch": "assembly_set",
+    "outcome": "resolvable_readable",
+    "hosts": [
+      {
+        "name": "BW25113",
+        "assembly_set": "ecoli_K12_BW25113_ASM75055v1",
+        "resolvable": true,
+        "readable": true
+      }
+    ]
+  },
+  "g3": {
+    "citation_key": "goodallEssentialGenomeEscherichia2018",
+    "trees_read": [
+      "library",
+      "raw"
+    ],
+    "files": [
+      {
+        "tree": "library",
+        "path": "si/si1.pdf",
+        "role": "si_pdf",
+        "bytes": 20103,
+        "sha256_manifest": "d36aa8941c8802ef3443f5b83fc064616b1fbd44240f391872c195a60a25a705",
+        "sha256_disk": "d36aa8941c8802ef3443f5b83fc064616b1fbd44240f391872c195a60a25a705",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si2.xlsx",
+        "role": "si_data",
+        "bytes": 257700,
+        "sha256_manifest": "db85743f0e28264751fb9adfe40d6ef1e333307c3a65cd315813066e57d3de15",
+        "sha256_disk": "db85743f0e28264751fb9adfe40d6ef1e333307c3a65cd315813066e57d3de15",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Table_S1_Essential genes identi",
+            "rows": 4315
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si3.pdf",
+        "role": "si_pdf",
+        "bytes": 40795,
+        "sha256_manifest": "d24f06d8ae49423cee9e71452ec0c8142d4f5bba21b9998a38eb21e401cadee3",
+        "sha256_disk": "d24f06d8ae49423cee9e71452ec0c8142d4f5bba21b9998a38eb21e401cadee3",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si4.docx",
+        "role": "si_data",
+        "bytes": 116918,
+        "sha256_manifest": "f0d50d01369f8ec6505607e634d332d722de94f0aa36778e557a0890db72b78b",
+        "sha256_disk": "f0d50d01369f8ec6505607e634d332d722de94f0aa36778e557a0890db72b78b",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si5.tif",
+        "role": "si_data",
+        "bytes": 128210,
+        "sha256_manifest": "9e3099f99f8b5f661303fce5cbe0cab07c2a453925671a27beb45a664a02855a",
+        "sha256_disk": "9e3099f99f8b5f661303fce5cbe0cab07c2a453925671a27beb45a664a02855a",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si6.pdf",
+        "role": "si_pdf",
+        "bytes": 28787,
+        "sha256_manifest": "120ea027b02082ab2f3fa034e4633aea54c44e3e643d96574d72155a4b49ab83",
+        "sha256_disk": "120ea027b02082ab2f3fa034e4633aea54c44e3e643d96574d72155a4b49ab83",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si7.xlsx",
+        "role": "si_data",
+        "bytes": 270726,
+        "sha256_manifest": "8a4c6eb83eafd4da8bfd1f2443acd4de4c1e5e5cb915b334a18725308f7eeb5f",
+        "sha256_disk": "8a4c6eb83eafd4da8bfd1f2443acd4de4c1e5e5cb915b334a18725308f7eeb5f",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Table_S4_Essential genes identi",
+            "rows": 4315
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/c7b93b39e9fc28bea142aefbdb5818718f7709fd176f0ff613388e07a122baef.jpg",
+        "role": "ocr_image",
+        "bytes": 88746,
+        "sha256_manifest": "3348afaa63436fb140f2c057796c23ec81ca363a7b72c7de526048464f17911d",
+        "sha256_disk": "3348afaa63436fb140f2c057796c23ec81ca363a7b72c7de526048464f17911d",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si6/995d0887fb4caba21ef6c8c35008094c12ff5dee73a01a1931d170014a0e933d.jpg",
+        "role": "ocr_image",
+        "bytes": 254927,
+        "sha256_manifest": "62c2e2bae0d38bb94136df2cf93fd17b2afbc4d9057876246c0546a9d126f4fe",
+        "sha256_disk": "62c2e2bae0d38bb94136df2cf93fd17b2afbc4d9057876246c0546a9d126f4fe",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si6/cd5c1b584135b8d660bc5447383154e2e39ce2fd25d18118ff1a329328ef55dd.jpg",
+        "role": "ocr_image",
+        "bytes": 253798,
+        "sha256_manifest": "64fb8425882ef5020591e02e11197958c914a29520b8e0796cf38d657498ac5a",
+        "sha256_disk": "64fb8425882ef5020591e02e11197958c914a29520b8e0796cf38d657498ac5a",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si1.md",
+        "role": "si_ocr",
+        "bytes": 84,
+        "sha256_manifest": "ce69ba88b3ac9f74d4a8ea7f8103f1c12d4b9ecdc9aefa35ad31d123559e637e",
+        "sha256_disk": "ce69ba88b3ac9f74d4a8ea7f8103f1c12d4b9ecdc9aefa35ad31d123559e637e",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si1_content_list.json",
+        "role": "ocr_layout",
+        "bytes": 320,
+        "sha256_manifest": "58aca5aad2b185fd2263226c52652a1712ececdcb0efb7a9035a9e94c76965db",
+        "sha256_disk": "58aca5aad2b185fd2263226c52652a1712ececdcb0efb7a9035a9e94c76965db",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si1_middle.json",
+        "role": "ocr_layout",
+        "bytes": 6885,
+        "sha256_manifest": "e37edbadc9b4b111868289f87d7d275c261a13e93846b41a8f61428d1648d65a",
+        "sha256_disk": "e37edbadc9b4b111868289f87d7d275c261a13e93846b41a8f61428d1648d65a",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si1_ocr_provenance.json",
+        "role": "ocr_provenance",
+        "bytes": 978,
+        "sha256_manifest": "9cd743dee111990e97bdfe4a03788ad85bc2e36471600c2f920bda65ba8ff4fe",
+        "sha256_disk": "9cd743dee111990e97bdfe4a03788ad85bc2e36471600c2f920bda65ba8ff4fe",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si3.md",
+        "role": "si_ocr",
+        "bytes": 1860,
+        "sha256_manifest": "3afa5e463bdedb9b693a276175744d7b7f258d85e62904058169a6c375896c10",
+        "sha256_disk": "3afa5e463bdedb9b693a276175744d7b7f258d85e62904058169a6c375896c10",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si3_content_list.json",
+        "role": "ocr_layout",
+        "bytes": 3846,
+        "sha256_manifest": "92d05f17ff238495ae76bbcddc74576361cbc6f3497aae313169b15bdbd62bf5",
+        "sha256_disk": "92d05f17ff238495ae76bbcddc74576361cbc6f3497aae313169b15bdbd62bf5",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si3_middle.json",
+        "role": "ocr_layout",
+        "bytes": 518859,
+        "sha256_manifest": "e879348ce8778e831b137b35772a5e1c0e611a5211f4b649bbf968ec0988b67f",
+        "sha256_disk": "e879348ce8778e831b137b35772a5e1c0e611a5211f4b649bbf968ec0988b67f",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si3_ocr_provenance.json",
+        "role": "ocr_provenance",
+        "bytes": 978,
+        "sha256_manifest": "5fc5258a3a57bdeb16b315e2dc2d84ce4b87fd496ec88cd0a317af79d6a72169",
+        "sha256_disk": "5fc5258a3a57bdeb16b315e2dc2d84ce4b87fd496ec88cd0a317af79d6a72169",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si6.md",
+        "role": "si_ocr",
+        "bytes": 6359,
+        "sha256_manifest": "07d4d7c37a26802a9ed4197863745060e2ec8a0b7295c1d85cea11805cbc8242",
+        "sha256_disk": "07d4d7c37a26802a9ed4197863745060e2ec8a0b7295c1d85cea11805cbc8242",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si6_content_list.json",
+        "role": "ocr_layout",
+        "bytes": 6966,
+        "sha256_manifest": "f3a25287dc0da4553359651f9ff4ec291100bb67e45b5da3d2a23630ba082019",
+        "sha256_disk": "f3a25287dc0da4553359651f9ff4ec291100bb67e45b5da3d2a23630ba082019",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si6_middle.json",
+        "role": "ocr_layout",
+        "bytes": 28484,
+        "sha256_manifest": "1e01e66955301feefcf2b21e40f0b16b365813b0834d3998c9b324d034cadf6a",
+        "sha256_disk": "1e01e66955301feefcf2b21e40f0b16b365813b0834d3998c9b324d034cadf6a",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si6_ocr_provenance.json",
+        "role": "ocr_provenance",
+        "bytes": 978,
+        "sha256_manifest": "fa013589b2921d0af666de9b959e4183793719b38fb82a373673fe6e5c9641e4",
+        "sha256_disk": "fa013589b2921d0af666de9b959e4183793719b38fb82a373673fe6e5c9641e4",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "data/si2.xlsx",
+        "role": "raw_data",
+        "bytes": 257700,
+        "sha256_manifest": "db85743f0e28264751fb9adfe40d6ef1e333307c3a65cd315813066e57d3de15",
+        "sha256_disk": "db85743f0e28264751fb9adfe40d6ef1e333307c3a65cd315813066e57d3de15",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Table_S1_Essential genes identi",
+            "rows": 4315
+          }
+        ]
+      },
+      {
+        "tree": "raw",
+        "path": "data/si7.xlsx",
+        "role": "raw_data",
+        "bytes": 270726,
+        "sha256_manifest": "8a4c6eb83eafd4da8bfd1f2443acd4de4c1e5e5cb915b334a18725308f7eeb5f",
+        "sha256_disk": "8a4c6eb83eafd4da8bfd1f2443acd4de4c1e5e5cb915b334a18725308f7eeb5f",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Table_S4_Essential genes identi",
+            "rows": 4315
+          }
+        ]
+      }
+    ],
+    "walls": []
+  },
+  "g4_key": {
+    "doi": "10.1128/mBio.02096-17",
+    "pmid": null,
+    "accessions": [
+      "PRJEB24436"
+    ],
+    "hits": [
+      {
+        "key_kind": "doi",
+        "key": "10.1128/mBio.02096-17",
+        "where": "torchcell/datasets/ecoli/goodall2018.py",
+        "relation": "own"
+      },
+      {
+        "key_kind": "accession",
+        "key": "PRJEB24436",
+        "where": "torchcell/datasets/ecoli/goodall2018.py",
+        "relation": "own"
+      }
+    ],
+    "pmid_checked": false
+  },
+  "g4_value": null,
+  "g5": {
+    "phenotype_class": "GradedGeneEssentialityPhenotype",
+    "class_exists": true,
+    "unresolved_compounds": [],
+    "proposed_class": null
+  },
+  "decided_at": "2026-10-12",
+  "torchcell_commit": "c40f480e53bf621caee96c4518039301fd475ce9"
+}

@@ -6259,6 +6259,10 @@ class EssentialityEvidenceType(StrEnum):
       both normalized densities are under a threshold (Price 2018).
     - ``curated_null_phenotype`` (``curated_annotation``): an SGD phenotype annotation of
       a null allele as inviable.
+    - ``tnseq_hmm_state`` (``insertion_depletion``): insertion junctions sequenced
+      (Tn-seq); TRANSIT's hidden Markov model labels every TA site and classifies the
+      gene into one of four states (Royet 2025 Table S4, #909). A graded call, so it is
+      stored on ``GradedGeneEssentialityPhenotype``, never on the boolean leaf.
 
     A graded call (Royet 2025's HMM states, #909) is a different released quantity, so
     it is a sibling of ``GeneEssentialityPhenotype`` under ``Phenotype`` carrying the
@@ -6270,6 +6274,7 @@ class EssentialityEvidenceType(StrEnum):
     tradis_insertion_index = "tradis_insertion_index"
     rb_tnseq_coverage_and_fitness = "rb_tnseq_coverage_and_fitness"
     curated_null_phenotype = "curated_null_phenotype"
+    tnseq_hmm_state = "tnseq_hmm_state"  # #909: Royet 2025's TRANSIT HMM states
 
 
 #: The parent of each evidence type: the DAG of the two enums, checked on every record.
@@ -6291,6 +6296,9 @@ ESSENTIALITY_EVIDENCE_CLASS: dict[
     EssentialityEvidenceType.curated_null_phenotype: (
         EssentialityEvidenceClass.curated_annotation
     ),
+    EssentialityEvidenceType.tnseq_hmm_state: (
+        EssentialityEvidenceClass.insertion_depletion
+    ),
 }
 
 
@@ -6300,7 +6308,7 @@ class FootprintingCall(StrEnum):
     ``N*`` is an N call whose asterisk the release does not define (accD's call is
     ``N*`` and the page says accD "is called nonessential"). ``X`` ("the gene was not
     covered") and ``?`` ("ambiguous") have no boolean, so ``GeneEssentialityPhenotype``
-    refuses them; they belong on a graded sibling (#909), not on a boolean.
+    refuses them; they are stored on ``GradedGeneEssentialityPhenotype`` (#909).
     """
 
     essential = "E"
@@ -6314,12 +6322,35 @@ class TradisCall(StrEnum):
     """A TraDIS call as Goodall 2018 Tables S1 and S4 release it (one-hot columns).
 
     ``unclear`` (log likelihood ratio within the threshold) has no boolean, so
-    ``GeneEssentialityPhenotype`` refuses it, as it refuses the footprinting X and ?.
+    ``GeneEssentialityPhenotype`` refuses it, as it refuses the footprinting X and ?;
+    ``GradedGeneEssentialityPhenotype`` stores it (#909).
     """
 
     essential = "essential"
     non_essential = "non_essential"
     unclear = "unclear"
+
+
+# --- begin #909: the graded essentiality sibling ------------------------------ #
+class HmmEssentialityState(StrEnum):
+    """A TRANSIT hidden-Markov-model gene state as Royet 2025 Table S4 releases it.
+
+    Table 1 footnote c of the publisher PDF defines the four: "State of each gene in LB
+    defined by the TRANSIT software using a Hidden Markov Model: E, essential; GA,
+    growth-Advantage; GD, growth-defect; NE, non-essential." Table S4 writes the
+    essential state ``ES``, and ``N/A`` for the 13 genes with no TA site (no insertion
+    site, so no state; measured on both sheets). Graded, so no member is a boolean:
+    these calls are stored on ``GradedGeneEssentialityPhenotype``.
+    """
+
+    essential = "ES"
+    growth_defect = "GD"
+    non_essential = "NE"
+    growth_advantage = "GA"
+    not_applicable = "N/A"
+
+
+# --- end #909 ---------------------------------------------------------------- #
 
 
 #: The boolean each released footprinting call is; None where the call has none.
@@ -6367,6 +6398,16 @@ ESSENTIALITY_EVIDENCE_FIELDS: dict[EssentialityEvidenceType, tuple[str, ...]] = 
         "false_discovery_rate_upper",
     ),
     EssentialityEvidenceType.curated_null_phenotype: ("curated_experiment_type",),
+    EssentialityEvidenceType.tnseq_hmm_state: (
+        "hmm_state",
+        "ta_sites",
+        "hmm_sites_essential",
+        "hmm_sites_growth_defect",
+        "hmm_sites_non_essential",
+        "hmm_sites_growth_advantage",
+        "mean_insertion_rate",
+        "mean_read_count",
+    ),
 }
 
 
@@ -6432,11 +6473,10 @@ class GeneEssentialityEvidence(ProvenanceGapMixin):
 
     The descriptor reads no boolean, so it is not tied to ``GeneEssentialityPhenotype``:
     that leaf maps a released call to ``is_essential`` in its own validator and refuses
-    a call with no boolean. A graded leaf (#909: Royet 2025's HMM states; Gerdes's X and
-    ?, Goodall's "unclear") is the sibling slot under the same parent, ``Phenotype``,
-    and carries this descriptor unchanged; its rule is one more
-    :class:`EssentialityEvidenceType` member with its entries in
-    :data:`ESSENTIALITY_EVIDENCE_CLASS` and :data:`ESSENTIALITY_EVIDENCE_FIELDS`.
+    a call with no boolean. The graded sibling under the same parent, ``Phenotype``,
+    is ``GradedGeneEssentialityPhenotype`` (#909): it carries this same descriptor and
+    stores a categorical call as released (Royet 2025's HMM states, type
+    ``tnseq_hmm_state``; Goodall's "unclear"; Gerdes's X and ?).
     """
 
     evidence_class: EssentialityEvidenceClass = Field(
@@ -6543,6 +6583,35 @@ class GeneEssentialityEvidence(ProvenanceGapMixin):
         description="curated_null_phenotype: the annotation's SGD experiment type, "
         "verbatim ('classical genetics', 'systematic mutation set')",
     )
+    # tnseq_hmm_state (Royet 2025 Table S4, #909)
+    hmm_state: HmmEssentialityState | None = Field(
+        default=None,
+        description="tnseq_hmm_state: the released state classification of the gene",
+    )
+    ta_sites: int | None = Field(
+        default=None,
+        description="tnseq_hmm_state: TA sites in the gene (Number of TA sites)",
+    )
+    hmm_sites_essential: int | None = Field(
+        default=None, description="tnseq_hmm_state: TA sites the HMM labeled ES"
+    )
+    hmm_sites_growth_defect: int | None = Field(
+        default=None, description="tnseq_hmm_state: TA sites the HMM labeled GD"
+    )
+    hmm_sites_non_essential: int | None = Field(
+        default=None, description="tnseq_hmm_state: TA sites the HMM labeled NE"
+    )
+    hmm_sites_growth_advantage: int | None = Field(
+        default=None, description="tnseq_hmm_state: TA sites the HMM labeled GA"
+    )
+    mean_insertion_rate: float | None = Field(
+        default=None,
+        description="tnseq_hmm_state: mean insertion rate within the gene (a fraction "
+        "of its TA sites)",
+    )
+    mean_read_count: float | None = Field(
+        default=None, description="tnseq_hmm_state: mean read count within the gene"
+    )
 
     @model_validator(mode="after")
     def _check_evidence(self) -> "GeneEssentialityEvidence":
@@ -6622,6 +6691,41 @@ class GeneEssentialityEvidence(ProvenanceGapMixin):
             value = getattr(self, name)
             if value is not None and value < 0:
                 raise ValueError(f"{name} {value} < 0")
+        # --- begin #909: the HMM site counts are the gene's TA sites, labeled ---- #
+        labeled = (
+            self.hmm_sites_essential,
+            self.hmm_sites_growth_defect,
+            self.hmm_sites_non_essential,
+            self.hmm_sites_growth_advantage,
+        )
+        if any(v is not None for v in labeled):
+            if any(v is None for v in labeled) or self.ta_sites is None:
+                raise ValueError(
+                    "ta_sites and the four hmm_sites_* counts are set together"
+                )
+            counts = [v for v in labeled if v is not None]
+            if min(counts) < 0 or sum(counts) != self.ta_sites:
+                raise ValueError(
+                    f"HMM site labels {counts} are not the gene's {self.ta_sites} "
+                    "TA sites"
+                )
+        if self.hmm_state is not None and self.ta_sites is not None:
+            if (self.hmm_state == HmmEssentialityState.not_applicable) != (
+                self.ta_sites == 0
+            ):
+                raise ValueError(
+                    f"HMM state {self.hmm_state.value} with {self.ta_sites} TA sites: "
+                    "N/A is exactly the gene with no TA site"
+                )
+        if self.mean_insertion_rate is not None and not (
+            0 <= self.mean_insertion_rate <= 1
+        ):
+            raise ValueError(
+                f"mean_insertion_rate {self.mean_insertion_rate} is not a fraction"
+            )
+        if self.mean_read_count is not None and self.mean_read_count < 0:
+            raise ValueError(f"mean_read_count {self.mean_read_count} < 0")
+        # --- end #909 ----------------------------------------------------------- #
         if self.gene_gc_fraction is not None and not 0 <= self.gene_gc_fraction <= 1:
             raise ValueError(f"gene_gc_fraction {self.gene_gc_fraction} is no fraction")
         fdr = (self.false_discovery_rate_lower, self.false_discovery_rate_upper)
@@ -6680,6 +6784,13 @@ class GeneEssentialityPhenotype(Phenotype, ModelStrict):
     @model_validator(mode="after")
     def _released_call_is_the_boolean(self) -> "GeneEssentialityPhenotype":
         """A released call letter must be the stored boolean, and must have one."""
+        # --- begin #909: a graded evidence type has no boolean ------------------ #
+        if self.evidence.evidence_type == EssentialityEvidenceType.tnseq_hmm_state:
+            raise ValueError(
+                "tnseq_hmm_state evidence calls a graded state, not a boolean; it is "
+                "stored on GradedGeneEssentialityPhenotype"
+            )
+        # --- end #909 ----------------------------------------------------------- #
         released: list[tuple[str, bool | None]] = []
         if self.evidence.footprinting_call is not None:
             call = self.evidence.footprinting_call
@@ -6705,6 +6816,83 @@ class GeneEssentialityPhenotype(Phenotype, ModelStrict):
         return self
 
     # --- end #924 -------------------------------------------------------------- #
+
+
+# --- begin #909: the graded essentiality sibling ------------------------------ #
+#: The categorical calls each evidence type releases, as the release spells them, and
+#: the descriptor field that carries the typed call. A type with no categorical call
+#: (a construction outcome, a coverage rule, a curated annotation) has no graded record.
+GRADED_ESSENTIALITY_CALLS: dict[
+    EssentialityEvidenceType, tuple[str, frozenset[str]]
+] = {
+    EssentialityEvidenceType.genetic_footprinting: (
+        "footprinting_call",
+        frozenset(call.value for call in FootprintingCall),
+    ),
+    EssentialityEvidenceType.tradis_insertion_index: (
+        "tradis_call",
+        frozenset(call.value for call in TradisCall),
+    ),
+    EssentialityEvidenceType.tnseq_hmm_state: (
+        "hmm_state",
+        frozenset(state.value for state in HmmEssentialityState),
+    ),
+}
+
+
+class GradedGeneEssentialityPhenotype(Phenotype, ModelStrict):
+    """A categorical essentiality call stored as released (#909).
+
+    The sibling of ``GeneEssentialityPhenotype`` under ``Phenotype``: the same
+    evidence (``GeneEssentialityEvidence``, unchanged), and a label that is the
+    release's own category rather than a boolean. Royet 2025 Table S4 grades every
+    KT2440 gene ES, GD, NE or GA (or N/A without a TA site); Goodall 2018 calls a gene
+    "unclear" when its likelihood ratio sits between the two modes; Gerdes 2003 calls
+    a gene X (not covered) or ? (ambiguous). None of those is a boolean, and a boolean
+    store would either drop them or collapse a grade into essential / not, so they are
+    stored here, verbatim.
+
+    ``essentiality_call`` is one of the calls its evidence type releases
+    (:data:`GRADED_ESSENTIALITY_CALLS`), and equals the evidence's typed call when the
+    record carries one; a reference (the unperturbed parent) states the type's
+    non-essential call and carries no statistics.
+    """
+
+    graph_level: str = "node"
+    label_name: str = "essentiality_call"
+    essentiality_call: str = Field(
+        description="the release's categorical call, as the release spells it (ES, "
+        "GD, NE, GA, N/A; essential, non_essential, unclear; E, N, N*, X, ?)"
+    )
+    evidence: GeneEssentialityEvidence = Field(
+        description="the evidence class and type, the source's statements and the "
+        "per-record statistics of this call (GeneEssentialityEvidence)"
+    )
+
+    @model_validator(mode="after")
+    def _call_is_the_types_category(self) -> "GradedGeneEssentialityPhenotype":
+        """The call is one its evidence type releases and agrees with the typed call."""
+        type_ = self.evidence.evidence_type
+        if type_ not in GRADED_ESSENTIALITY_CALLS:
+            raise ValueError(
+                f"{type_.value} evidence releases no categorical call; a graded record "
+                "needs genetic_footprinting, tradis_insertion_index or tnseq_hmm_state"
+            )
+        field, calls = GRADED_ESSENTIALITY_CALLS[type_]
+        if self.essentiality_call not in calls:
+            raise ValueError(
+                f"{self.essentiality_call!r} is not a {type_.value} call {sorted(calls)}"
+            )
+        typed = getattr(self.evidence, field)
+        if typed is not None and typed.value != self.essentiality_call:
+            raise ValueError(
+                f"essentiality_call {self.essentiality_call!r} is not the evidence's "
+                f"{field} {typed.value!r}"
+            )
+        return self
+
+
+# --- end #909 ---------------------------------------------------------------- #
 
 
 class SyntheticLethalityPhenotype(Phenotype, ModelStrict):
@@ -11616,6 +11804,28 @@ class BacterialGeneEssentialityExperiment(Experiment, ModelStrict):
     phenotype: GeneEssentialityPhenotype
 
 
+# --- begin #909: the graded essentiality sibling ------------------------------ #
+class BacterialGradedGeneEssentialityExperimentReference(
+    ExperimentReference, ModelStrict
+):
+    """Assembly-pinned reference for a bacterial graded gene-essentiality experiment."""
+
+    experiment_reference_type: str = "bacterial_graded_gene_essentiality"
+    genome_reference: AssemblyReferenceGenome
+    phenotype_reference: GradedGeneEssentialityPhenotype
+
+
+class BacterialGradedGeneEssentialityExperiment(Experiment, ModelStrict):
+    """Bacterial categorical essentiality calls (an HMM state, an unclear TraDIS call)."""
+
+    experiment_type: str = "bacterial_graded_gene_essentiality"
+    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
+    phenotype: GradedGeneEssentialityPhenotype
+
+
+# --- end #909 ---------------------------------------------------------------- #
+
+
 class BacterialProteinAbundanceExperimentReference(ExperimentReference, ModelStrict):
     """Assembly-pinned reference for a bacterial protein-abundance experiment."""
 
@@ -12468,6 +12678,7 @@ PhenotypeType = (
     | FitnessPhenotype
     | GeneInteractionPhenotype
     | GeneEssentialityPhenotype
+    | GradedGeneEssentialityPhenotype  # #909
     | SyntheticLethalityPhenotype
     | SyntheticRescuePhenotype
     | CalMorphPhenotype
@@ -12536,6 +12747,7 @@ ExperimentType = (
     | BacterialEnvironmentResponseExperiment
     | BacterialGeneInteractionExperiment
     | BacterialGeneEssentialityExperiment
+    | BacterialGradedGeneEssentialityExperiment  # #909
     | BacterialProteinAbundanceExperiment
     # --- begin #770: the protein fold-change family ---
     | BacterialProteinFoldChangeExperiment
@@ -12589,6 +12801,7 @@ ExperimentReferenceType = (
     | BacterialEnvironmentResponseExperimentReference
     | BacterialGeneInteractionExperimentReference
     | BacterialGeneEssentialityExperimentReference
+    | BacterialGradedGeneEssentialityExperimentReference  # #909
     | BacterialProteinAbundanceExperimentReference
     # --- begin #770: the protein fold-change family ---
     | BacterialProteinFoldChangeExperimentReference
@@ -12642,6 +12855,7 @@ EXPERIMENT_TYPE_MAP = {
     "bacterial_environment_response": BacterialEnvironmentResponseExperiment,
     "bacterial_gene_interaction": BacterialGeneInteractionExperiment,
     "bacterial_gene_essentiality": BacterialGeneEssentialityExperiment,
+    "bacterial_graded_gene_essentiality": BacterialGradedGeneEssentialityExperiment,
     "bacterial_protein_abundance": BacterialProteinAbundanceExperiment,
     # --- begin #770: the protein fold-change family ---
     "bacterial_protein_fold_change": BacterialProteinFoldChangeExperiment,
@@ -12704,6 +12918,9 @@ EXPERIMENT_REFERENCE_TYPE_MAP = {
     "bacterial_environment_response": BacterialEnvironmentResponseExperimentReference,
     "bacterial_gene_interaction": BacterialGeneInteractionExperimentReference,
     "bacterial_gene_essentiality": BacterialGeneEssentialityExperimentReference,
+    "bacterial_graded_gene_essentiality": (
+        BacterialGradedGeneEssentialityExperimentReference
+    ),
     "bacterial_protein_abundance": BacterialProteinAbundanceExperimentReference,
     # --- begin #770: the protein fold-change family ---
     "bacterial_protein_fold_change": (BacterialProteinFoldChangeExperimentReference),

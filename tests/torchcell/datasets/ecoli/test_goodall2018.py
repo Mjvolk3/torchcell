@@ -33,10 +33,12 @@ of every sourced value, the counts, hand-checked rows (read off ``si2.xlsx`` and
 
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 import os
 import os.path as osp
+import shutil
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
@@ -57,6 +59,8 @@ from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
     BacterialGeneEssentialityExperiment,
     BacterialGeneEssentialityExperimentReference,
+    BacterialGradedGeneEssentialityExperiment,
+    BacterialReleasedTransposonPerturbation,
     EssentialityEvidenceClass,
     EssentialityEvidenceType,
     EssentialityStatementRole,
@@ -1072,3 +1076,151 @@ HAND_CHECKED: dict[tuple[str, str], bool] = {
     ("LB", "ttcC"): True,
     ("TL", "ftsK"): False,
 }
+
+
+# --------------------------------------------------------------------------- #
+# #909: the unclear calls, graded
+# --------------------------------------------------------------------------- #
+@pytest.fixture
+def graded(synthetic: Path) -> m.GradedGeneEssentialityGoodall2018Dataset:
+    root = synthetic.parent / "graded_gene_essentiality_goodall2018"
+    shutil.copytree(synthetic / "raw", root / "raw")
+    return m.GradedGeneEssentialityGoodall2018Dataset(root=str(root))
+
+
+def test_build_graded_experiment_stores_the_unclear_call_as_released() -> None:
+    outcome = m.RowOutcome(
+        call=_call("hokC", "unclear", row=3, ratio=1.0),
+        drop_rule=m.GRADED_ROW_RULE,
+        reason="ratio 1.0",
+    )
+    experiment = m.build_graded_experiment("x", outcome, m.environment("TL"))
+    assert isinstance(experiment, BacterialGradedGeneEssentialityExperiment)
+    (perturbation,) = experiment.genotype.perturbations
+    assert isinstance(perturbation, BacterialReleasedTransposonPerturbation)
+    assert (
+        perturbation.systematic_gene_name,
+        perturbation.perturbed_gene_name,
+        perturbation.strain_label,
+        perturbation.identifier_kind,
+    ) == ("hokC", "hokC", "hokC", m.IDENTIFIER_KIND)
+    phenotype = experiment.phenotype
+    assert phenotype.essentiality_call == "unclear"
+    assert (
+        phenotype.evidence.tradis_call,
+        phenotype.evidence.insertion_index,
+        phenotype.evidence.log_likelihood_ratio,
+    ) == (TradisCall.unclear, 0.1, 1.0)
+    reference = m.build_graded_reference("x", REFERENCE, m.environment("TL"))
+    assert reference.phenotype_reference.essentiality_call == "non_essential"
+    assert reference.phenotype_reference.evidence.tradis_call is None
+    kept = outcome.model_copy(update={"drop_rule": None})
+    with pytest.raises(ValueError, match="is not an unclear call"):
+        m.build_graded_experiment("x", kept, m.environment("TL"))
+
+
+def test_graded_ledger_places_every_row_once() -> None:
+    def outcome(gene: str, call: m.EssentialityCall, rule: Any) -> m.RowOutcome:
+        return m.RowOutcome(call=_call(gene, call), drop_rule=rule, reason=None)
+
+    outcomes = [
+        outcome("a", "unclear", m.GRADED_ROW_RULE),
+        outcome("b", "essential", None),
+        outcome("ECK0005", "essential", None),
+    ]
+    ledger = m.graded_ledger("x", outcomes)
+    assert (
+        ledger.source_records,
+        ledger.kept_records,
+        ledger.in_boolean_store,
+        ledger.kept_by_condition,
+    ) == (3, 1, 2, {"TL": 1, "LB": 0})
+    with pytest.raises(m.DuplicateRecordError, match="two unclear rows on a"):
+        m.graded_ledger("x", [*outcomes, outcome("a", "unclear", m.GRADED_ROW_RULE)])
+
+
+def test_graded_store_holds_exactly_the_placed_unclear_rows(
+    graded: m.GradedGeneEssentialityGoodall2018Dataset,
+    built: m.GeneEssentialityGoodall2018Dataset,
+) -> None:
+    """Every released row is in one store, the boolean records or the graded records,
+    each under its released symbol, and none in two.
+    """
+    from torchcell.verification.runners import load_records
+
+    boolean = load_records(built.root)
+    records = load_records(graded.root)
+    ledger = m.GradedLedger.model_validate_json(
+        Path(graded.preprocess_dir, "dropped_records.json").read_text()
+    )
+    assert ledger.kept_records == len(records)
+    assert ledger.in_boolean_store == len(boolean)
+    assert ledger.kept_records + ledger.in_boolean_store == len(TL_ROWS) + len(LB_ROWS)
+    assert sorted(
+        (
+            str(condition),
+            r["experiment"]["genotype"]["perturbations"][0]["strain_label"],
+        )
+        for condition, r in zip(m.record_conditions(records), records, strict=True)
+    ) == [("LB", "proB"), ("LB", "yaaP"), ("TL", "hokC")]
+    assert {r["experiment"]["phenotype"]["essentiality_call"] for r in records} == {
+        "unclear"
+    }
+    assert {r["experiment"]["experiment_type"] for r in records} == {
+        "bacterial_graded_gene_essentiality"
+    }
+
+
+def test_graded_verification_passes_and_fails_on_tampering(
+    graded: m.GradedGeneEssentialityGoodall2018Dataset,
+) -> None:
+    from torchcell.verification.runners import load_records
+
+    raw = Path(graded.raw_dir)
+    raw_calls: dict[m.ConditionKey, list[m.GeneCall]] = {
+        spec.key: m.read_calls(raw / spec.table, spec) for spec in m.CONDITIONS
+    }
+    records = load_records(graded.root)
+    report = m.verify_graded_records(
+        records, raw_calls=raw_calls, universe=UNIVERSE, expected_count=len(records)
+    )
+    assert report.passed, report.summary()
+    assert [r.name for r in report.results][:6] == [
+        "structural",
+        "count",
+        "one_record_per_gene_and_condition",
+        "unclear_calls_match_released_tables",
+        "call_threshold_convention",
+        "evidence_is_tradis_insertion_index",
+    ]
+    moved = copy.deepcopy(records[0])
+    moved["experiment"]["phenotype"]["evidence"]["insertion_index"] = 9.0
+    referenced = copy.deepcopy(records[-1])
+    referenced["reference"]["phenotype_reference"]["essentiality_call"] = "unclear"
+    report = m.verify_graded_records(
+        [moved, *records[1:-1], referenced],
+        raw_calls=raw_calls,
+        universe=UNIVERSE,
+        expected_count=len(records),
+    )
+    failed = {r.name for r in report.results if not r.passed}
+    assert {
+        "unclear_calls_match_released_tables",
+        "reference_is_the_parent_called_non_essential",
+    } <= failed
+
+
+def test_verify_graded_build_reads_the_ledger_and_the_tables(
+    graded: m.GradedGeneEssentialityGoodall2018Dataset,
+    bw25113: EcoliK12BW25113Genome,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    import torchcell.verification.runners as runners
+
+    monkeypatch.setattr(runners, "_gene_set_for_reference", lambda ref, root: UNIVERSE)
+    monkeypatch.setattr(m, "bacterial_genome", lambda *a, **k: bw25113)
+    monkeypatch.setattr(m, "SOURCED_VALUES", {})
+    report = m.verify_graded_build(graded.root, str(tmp_path))
+    assert report.passed, report.summary()
+    assert report.dataset_name == "graded_gene_essentiality_goodall2018"

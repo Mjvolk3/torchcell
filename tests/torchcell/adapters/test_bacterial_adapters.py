@@ -48,6 +48,8 @@ def test_every_registered_bacterial_dataset_is_mapped_to_its_adapter() -> None:
     # organism keyed by publication) + 2 (#800 Li 2021's released 13C-MFA maps,
     # #927 Baba 2006 Table 3's OD600) + 1 (#770, Niu 2019's pinene fold changes),
     # re-derived from the merged conf and map.
+    # #927 Baba 2006 Table 3's OD600) + 2 (#909: Goodall 2018's unclear calls and
+    # Royet 2025's Table S4, graded), re-derived from the merged conf and map.
     assert (
         len(expected)
         == len(BACTERIAL)
@@ -74,6 +76,7 @@ def test_every_registered_bacterial_dataset_is_mapped_to_its_adapter() -> None:
         + 2
         + 1
         + 1
+        + 2
     )
     assert registered_bacterial_classes() == set(expected)
     mapped = {
@@ -112,6 +115,7 @@ def test_each_adapter_has_its_own_module() -> None:
         + 2
         + 1
         + 1
+        + 2
     )
     assert modules == [f"torchcell.adapters.{b.module}" for b in BACTERIAL]
 
@@ -153,6 +157,7 @@ def test_kg_bacteria_names_exactly_the_registered_bacterial_datasets() -> None:
         + 2
         + 1
         + 1
+        + 2
     )
     classes = [dataset_registry[name] for name in names]
     assert all(cls in dataset_adapter_map for cls in classes)

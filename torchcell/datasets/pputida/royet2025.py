@@ -86,8 +86,15 @@ the barcoded ``Putida_ML5`` and ``Putida_ML5_JBEI``, not this pool; and Royet 20
 none of its four source studies. All 4,732 compendium genes are among these 5,729, which
 is the shared gene universe and not a shared measurement.
 
-NOT STORED. Table S4 (the HMM essentiality calls, four states, on LB agar and after LB
-outgrowth) is another phenotype family; it is not loaded here (see the dataset note).
+TABLE S4 (#909). The TRANSIT HMM essentiality calls of every gene on LB agar (the
+library as plated) and after outgrowth in LB are the module's second dataset,
+:class:`GradedGeneEssentialityRoyet2025Dataset` (store
+``graded_gene_essentiality_royet2025``): one ``GradedGeneEssentialityPhenotype`` per
+(gene, stage), 5,729 genes x 2 stages = 11,458 records, every released state stored as
+released (ES, GD, NE, GA, and N/A for the 13 genes with no TA site). The evidence is
+``tnseq_hmm_state`` with the gene's TA sites, the sites the HMM labeled each state, the
+mean insertion rate and the mean read count. The gene is stored under the ``Gene ID``
+the table gives it and named by its ``Gene name`` column, with no annotation lookup.
 """
 
 from __future__ import annotations
@@ -127,14 +134,26 @@ from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
     BacterialEnvironmentResponseExperiment,
     BacterialEnvironmentResponseExperimentReference,
+    BacterialGradedGeneEssentialityExperiment,
+    BacterialGradedGeneEssentialityExperimentReference,
     Concentration,
     ConcentrationUnit,
     Environment,
     EnvironmentResponsePhenotype,
+    EssentialityEvidenceClass,
+    EssentialityEvidenceType,
+    EssentialityStatement,
+    EssentialityStatementRole,
     Experiment,
     ExperimentReference,
+    GeneEssentialityEvidence,
     Genotype,
+    GradedGeneEssentialityPhenotype,
+    HmmEssentialityState,
     MeasurementType,
+    Media,
+    MediaComponent,
+    MediaComponentRole,
     Publication,
     SampleUnit,
     SmallMoleculePerturbation,
@@ -189,8 +208,13 @@ DATA_RETRIEVED_AT = "2026-10-10T06:24:35.374102+00:00"
 
 TABLE_S5 = "EMI-27-e70095-s006.xlsx"
 TABLE_S3 = "EMI-27-e70095-s005.xlsx"
+TABLE_S4 = "EMI-27-e70095-s002.xlsx"
 #: The literature mirror's names for the same bytes (its ``si/`` directory).
-LIBRARY_SI_NAME: Final[dict[str, str]] = {TABLE_S5: "si9.xlsx", TABLE_S3: "si7.xlsx"}
+LIBRARY_SI_NAME: Final[dict[str, str]] = {
+    TABLE_S5: "si9.xlsx",
+    TABLE_S3: "si7.xlsx",
+    TABLE_S4: "si8.xlsx",
+}
 
 
 class RawFile(BaseModel):
@@ -245,10 +269,33 @@ RAW_FILES: tuple[RawFile, ...] = (
     ),
 )
 DATA_SHA256: Final[dict[str, str]] = {raw.name: raw.sha256 for raw in RAW_FILES}
+#: Table S4, the graded dataset's one file (#909). The literature mirror captured these
+#: bytes from the PMC bucket on 2026-10-07; the raw mirror copies them with that record.
+TABLE_S4_FILE: Final = RawFile(
+    name=TABLE_S4,
+    sha256="b786a2a1b995a736b96a894e7b623a1ca1ec419827373114f03b9bd597991f42",
+    bytes=713725,
+    description="Table S4: TRANSIT HMM per-site labels and the state classification of "
+    "every gene, on LB agar and after outgrowth in LB (one sheet each); the graded "
+    "dataset's values",
+    retrieval=RetrievalRecord(
+        method=RetrievalMethod.pmc_cloud,
+        source_url=f"https://pmc-oa-opendata.s3.amazonaws.com/{PMCID}.1/{TABLE_S4}",
+        retriever="torchcell.literature.retrieve.pmc_cloud_object",
+        params={"key": f"{PMCID}.1/{TABLE_S4}"},
+        sha256="b786a2a1b995a736b96a894e7b623a1ca1ec419827373114f03b9bd597991f42",
+        retrieved_at="2026-10-07T11:44:39.755453+00:00",
+    ),
+)
+
+
+def all_raw_files() -> tuple[RawFile, ...]:
+    """Every file of the raw mirror: the environment-response files and Table S4."""
+    return (*RAW_FILES, TABLE_S4_FILE)
+
+
 #: The released SI files this loader does not consume, and why.
 NOT_MIRRORED: tuple[str, ...] = (
-    "Table S4 (EMI-27-e70095-s002.xlsx): TRANSIT HMM four-state essentiality calls on LB "
-    "agar and after LB outgrowth; a gene-essentiality phenotype family, not loaded here",
     "Tables S1 and S2 (s010.xlsx, s004.xlsx): strains, plasmids and oligonucleotides",
     "Supporting Information S1 (s003.docx) and Figures S1-S4 (s001, s007, s009, s008)",
 )
@@ -330,6 +377,37 @@ TABLE1_FOOTNOTE_F = (
     "f p-\u00adValues adjusted for multiple comparisons using the Benjamini-\u00adHochberg "
     "procedure (see Transit manual)."
 )
+#: Table 1, footnote c, page 8 of ``paper.pdf`` at ``PAPER_PDF_SHA256``, as
+#: ``pdftotext -layout`` (poppler 21.01.0) reads it, soft hyphens kept. The OCR dropped
+#: Table 1's footnotes, so this quote is carried in a note, as footnote f is (#909).
+TABLE1_FOOTNOTE_C = (
+    "c State of each gene in LB defined by the TRANSIT software using a Hidden Markov "
+    "Model: E, essential; GA, growth-\u00adAdvantage; GD, growth-\u00addefect; NE, "
+    "non-\u00adessential."
+)
+_Q_HMM = (
+    "The gene essentiality of the Tn-seq input libraries was next determined using the "
+    "TRANSIT software (DeJesus et al. 2015), which employs a Hidden Markov Model (HMM) "
+    "method to predict essentiality and non-essentiality for individual insertion sites "
+    "(DeJesus and Ioerger 2013)."
+)
+_Q_HMM_COUNTS = (
+    "The HMM analysis identified 600 genes essential for growth on LB agar, "
+    "representing $1 0 . 8 \\%$ of the genes of P. putida KT2440. 4458 genes were "
+    "identified as non-essential genes (NE) (Table S4)."
+)
+_Q_PLATING = (
+    "The other part was spread on 50 plates of LB agar with gentamicin and grown for "
+    "$2 4 \\mathrm { h }$ at $2 8 ^ { \\circ } \\mathrm { C }$"
+)
+_Q_PLATED_POOL = (
+    "This library was directly sequenced and represents the mutant pool in LB agar (see "
+    "Table S3)."
+)
+_Q_OUTGROWTH = (
+    "To identify essential genes in LB or LB with metal, ${ \\sim } 1 0 ^ { 7 }$ "
+    "mutants were inoculated in $2 5 \\mathrm { m L }$ LB."
+)
 _Q_NORMALIZATION = (
     "Read counts per insertion were normalised using the LOESS method as described in "
     "Zomer et al. (Zomer et al. 2012)."
@@ -394,6 +472,35 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         "adjustment_back_solve confirms it: Benjamini-Hochberg over each sheet's 5,729 "
         "released p-values plus one unreleased test reproduces the q-value column",
     ),
+    # --- begin #909: Table S4, the HMM essentiality states -------------------- #
+    "hmm_rule": _paper(
+        "TRANSIT HMM: a state per TA site, a state classification per gene",
+        _Q_HMM,
+        note="the rule behind every Table S4 call; Table S4 releases each gene's TA "
+        "sites labeled ES, GD, NE and GA and its state classification",
+    ),
+    "hmm_counts": _paper(
+        {"ES": 600, "NE": 4458},
+        _Q_HMM_COUNTS,
+        note="the LB agar sheet's counts, re-derived at build time. The states are "
+        f"defined in Table 1 footnote c of paper.pdf (sha256 {PAPER_PDF_SHA256}, page "
+        f'8): "{TABLE1_FOOTNOTE_C}". The OCR dropped that footnote; Table S4 writes the '
+        "essential state ES, and N/A for a gene with no TA site",
+    ),
+    "plating": _paper(
+        {"medium": "LB agar with gentamicin", "hours": 24.0, "temperature_c": 28.0},
+        _Q_PLATING,
+        note="the LB agar stage: the library selected on gentamicin plates; no agar or "
+        "gentamicin amount is printed",
+    ),
+    "plated_pool": _paper("the mutant pool in LB agar", _Q_PLATED_POOL),
+    "outgrowth": _paper(
+        "LB outgrowth",
+        _Q_OUTGROWTH,
+        note="the outgrowth stage is the LB arm of the screen: 28 C, shaken, 12 "
+        "generations (temperature_c, aerobicity, duration_generations)",
+    ),
+    # --- end #909 ------------------------------------------------------------- #
 }
 
 #: The correction behind the q-value: Benjamini-Hochberg, as Table 1 footnote f of the
@@ -561,7 +668,7 @@ def retrieve_raw_files(dest_dir: str | Path) -> dict[str, Path]:
     dest = Path(dest_dir)
     dest.mkdir(parents=True, exist_ok=True)
     out: dict[str, Path] = {}
-    for raw in RAW_FILES:
+    for raw in all_raw_files():
         path = dest / raw.name
         write_verified(
             run_retriever(raw.retrieval),
@@ -581,12 +688,12 @@ def deposit_raw_mirror(
     Idempotent by sha256: a mirror file with the pinned hash is left alone, and one with
     any other hash raises rather than being overwritten.
     """
-    missing = sorted(set(DATA_SHA256) - set(sources))
+    missing = sorted({raw.name for raw in all_raw_files()} - set(sources))
     if missing:
         raise KeyError(f"no source given for {missing}")
     root = raw_mirror_dir(data_root)
     records: list[ArtifactRecord] = []
-    for raw in RAW_FILES:
+    for raw in all_raw_files():
         src = Path(sources[raw.name])
         got = _sha256(src)
         if got != raw.sha256:
@@ -616,7 +723,7 @@ def deposit_raw_mirror(
         title="High-Throughput Tn-Seq Screens Identify Both Known and Novel "
         "Pseudomonas putida KT2440 Genes Involved in Metal Tolerance",
         files=records,
-        si_data_sources=[r.retrieval.source_url or r.name for r in RAW_FILES],
+        si_data_sources=[r.retrieval.source_url or r.name for r in all_raw_files()],
         si_expected=list(NOT_MIRRORED),
         provenance_complete=True,
         created_at=datetime.now(UTC).isoformat(),
@@ -1394,6 +1501,493 @@ def verify_build(
     return report
 
 
+# --- begin #909: Table S4, the HMM essentiality states, graded --------------- #
+GRADED_DATASET_ROOT_REL = "data/torchcell/graded_gene_essentiality_royet2025"
+StageKey = Literal["LB_agar", "LB_outgrowth"]
+
+
+class StageSpec(BaseModel):
+    """One Table S4 sheet: the growth stage it calls and its title cell."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    key: StageKey
+    sheet: str
+    description: str
+
+
+STAGES: tuple[StageSpec, ...] = (
+    StageSpec(
+        key="LB_agar",
+        sheet="HMM analysis - LB agar",
+        description="the library as plated: LB agar with gentamicin, 24 h at 28 C",
+    ),
+    StageSpec(
+        key="LB_outgrowth",
+        sheet="HMM analysis - outgrowth in LB",
+        description="the library after outgrowth in LB: 28 C, shaken, 12 generations",
+    ),
+)
+S4_TITLE = (
+    "Table S4: Data obtained by TRANSIT and HMM analysis after growth of the bank of the "
+    "P. putida KT2440 mutants in LB agar and after outgrowth in LB."
+)
+S4_HEADER: tuple[str, ...] = (
+    "Gene ID",
+    "Gene name",
+    "Gene description",
+    "Number of\nTA sites",
+    " ES",
+    "GD",
+    "NE",
+    "GA",
+    "Mean insertion rate\nwithin the gene",
+    "Mean read count\nwithin the gene",
+    "State\nclassification",
+)
+#: The data rows start after the title, the group header and the column header.
+S4_FIRST_DATA_ROW = 4
+N_GRADED_RECORDS = N_GENES * len(STAGES)
+
+
+class S4Row(BaseModel):
+    """One Table S4 row: a gene's TA sites, their HMM labels and its state."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    stage: StageKey
+    row: int
+    gene_id: str
+    gene_name: str
+    ta_sites: int
+    sites_es: int
+    sites_gd: int
+    sites_ne: int
+    sites_ga: int
+    mean_insertion_rate: float
+    mean_read_count: float
+    state: HmmEssentialityState
+
+
+def read_stage_sheet(path: str | Path, spec: StageSpec) -> list[S4Row]:
+    """One Table S4 sheet, typed, with its header asserted.
+
+    The rate and read count are TEXT cells (``'0.5000'``), parsed with ``float``; a cell
+    that does not parse, a state outside the release's five, or a gene repeated stops
+    the build.
+    """
+    rows = _sheet_rows(path, spec.sheet)
+    header = tuple(rows[S4_FIRST_DATA_ROW - 2])
+    if header != S4_HEADER:
+        raise SheetFormatError(f"{spec.sheet} is headed {header}, expected {S4_HEADER}")
+    out: list[S4Row] = []
+    for offset, cells in enumerate(rows[S4_FIRST_DATA_ROW - 1 :]):
+        if cells[0] is None:
+            raise SheetFormatError(f"{spec.sheet} has a row with no Gene ID")
+        out.append(
+            S4Row(
+                stage=spec.key,
+                row=offset + 1,
+                gene_id=str(cells[0]),
+                gene_name=str(cells[1]),
+                ta_sites=int(cells[3]),
+                sites_es=int(cells[4]),
+                sites_gd=int(cells[5]),
+                sites_ne=int(cells[6]),
+                sites_ga=int(cells[7]),
+                mean_insertion_rate=float(cells[8]),
+                mean_read_count=float(cells[9]),
+                state=HmmEssentialityState(str(cells[10])),
+            )
+        )
+    if len(out) != N_GENES or len({r.gene_id for r in out}) != N_GENES:
+        raise SheetFormatError(
+            f"{spec.sheet} carries {len(out)} rows / {len({r.gene_id for r in out})} "
+            f"unique Gene IDs, expected {N_GENES}"
+        )
+    return out
+
+
+def read_table_s4(path: str | Path) -> dict[StageKey, list[S4Row]]:
+    """Both Table S4 sheets, the title asserted and the LB agar counts the paper's."""
+    rows = _sheet_rows(path, STAGES[0].sheet)
+    if rows[0][0] != S4_TITLE:
+        raise SheetFormatError(f"Table S4 is titled {rows[0][0]!r}")
+    sheets = {spec.key: read_stage_sheet(path, spec) for spec in STAGES}
+    states = Counter(r.state.value for r in sheets["LB_agar"])
+    paper = SOURCED_VALUES["hmm_counts"].value
+    if {state: states[state] for state in paper} != paper:
+        raise SheetFormatError(
+            f"Table S4 LB agar states {dict(states)}, the Results state {paper}"
+        )
+    return sheets
+
+
+def _plating_medium() -> Media:
+    """The LB agar plates the library was selected on: the shared LB, agar and
+    gentamicin, neither amount printed.
+    """
+    statement = SOURCED_VALUES["plating"]
+    return Media(
+        name="LB agar with gentamicin (Royet 2025 mariner library plates; agar and "
+        "gentamicin amounts unstated)",
+        state="solid",
+        is_synthetic=False,
+        base_medium="LB",
+        components=[
+            *LB.components,
+            MediaComponent(
+                compound=resolved_compound("agar"),
+                role=MediaComponentRole.gelling_agent,
+                concentration=None,
+                provenance=[statement],
+                note="no agar amount is printed for the selection plates",
+            ),
+            MediaComponent(
+                compound=resolved_compound("gentamicin"),
+                role=MediaComponentRole.selection_agent,
+                concentration=None,
+                provenance=[statement],
+                note="selects for the mariner transposon; no dose is printed",
+            ),
+        ],
+        provenance=[statement],
+    )
+
+
+def stage_environment(stage: StageKey) -> Environment:
+    """The environment of one Table S4 stage (module docstring)."""
+    temperature = Temperature(value=float(SOURCED_VALUES["temperature_c"].value))
+    if stage == "LB_agar":
+        hours = float(SOURCED_VALUES["plating"].value["hours"])
+        return Environment(
+            media=_plating_medium(), temperature=temperature, duration_hours=hours
+        )
+    return Environment(
+        media=LB,
+        temperature=temperature,
+        aerobicity=str(SOURCED_VALUES["aerobicity"].value),
+        duration_generations=float(SOURCED_VALUES["duration_generations"].value),
+    )
+
+
+#: The paper's statements every graded record's evidence carries, by role.
+HMM_EVIDENCE_STATEMENTS: Final[tuple[EssentialityStatement, ...]] = (
+    EssentialityStatement(
+        role=EssentialityStatementRole.scoring_rule,
+        provenance=SOURCED_VALUES["hmm_rule"],
+    ),
+    EssentialityStatement(
+        role=EssentialityStatementRole.call_definition,
+        provenance=SOURCED_VALUES["hmm_counts"],
+    ),
+)
+
+
+def hmm_evidence(row: S4Row | None = None) -> GeneEssentialityEvidence:
+    """The ``tnseq_hmm_state`` evidence, with ``row``'s released values when given."""
+    stats: dict[str, Any] = {}
+    if row is not None:
+        stats = {
+            "hmm_state": row.state,
+            "ta_sites": row.ta_sites,
+            "hmm_sites_essential": row.sites_es,
+            "hmm_sites_growth_defect": row.sites_gd,
+            "hmm_sites_non_essential": row.sites_ne,
+            "hmm_sites_growth_advantage": row.sites_ga,
+            "mean_insertion_rate": row.mean_insertion_rate,
+            "mean_read_count": row.mean_read_count,
+        }
+    return GeneEssentialityEvidence(
+        evidence_class=EssentialityEvidenceClass.insertion_depletion,
+        evidence_type=EssentialityEvidenceType.tnseq_hmm_state,
+        statements=list(HMM_EVIDENCE_STATEMENTS),
+        **stats,
+    )
+
+
+def build_graded_experiment(
+    dataset_name: str, row: S4Row, env: Environment
+) -> BacterialGradedGeneEssentialityExperiment:
+    """One gene in one stage, under the Gene ID and name the table gives it."""
+    return BacterialGradedGeneEssentialityExperiment(
+        dataset_name=dataset_name,
+        genotype=insertion_genotype(row.gene_id, row.gene_name),
+        environment=env,
+        phenotype=GradedGeneEssentialityPhenotype(
+            essentiality_call=row.state.value, evidence=hmm_evidence(row)
+        ),
+    )
+
+
+def build_graded_reference(
+    dataset_name: str, genome: AssemblyReferenceGenome, env: Environment
+) -> BacterialGradedGeneEssentialityExperimentReference:
+    """The unperturbed parent in the same stage: non-essential (NE)."""
+    return BacterialGradedGeneEssentialityExperimentReference(
+        dataset_name=dataset_name,
+        genome_reference=genome,
+        environment_reference=env.model_copy(),
+        phenotype_reference=GradedGeneEssentialityPhenotype(
+            essentiality_call=HmmEssentialityState.non_essential.value,
+            evidence=hmm_evidence(),
+        ),
+    )
+
+
+@register_dataset
+class GradedGeneEssentialityRoyet2025Dataset(ExperimentDataset):
+    """Royet 2025 Table S4: every KT2440 gene's TRANSIT HMM state on LB agar and after
+    outgrowth in LB, stored as released (#909).
+    """
+
+    organism = Organism.pputida
+
+    REFERENCE_STRAIN: ClassVar[Literal["KT2440"]] = "KT2440"
+
+    def __init__(
+        self,
+        root: str = GRADED_DATASET_ROOT_REL,
+        io_workers: int = 0,
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
+        **kwargs: Any,
+    ) -> None:
+        """Initialize; no genome is read (the Gene IDs are stored as released)."""
+        super().__init__(root, io_workers, transform, pre_transform, **kwargs)
+
+    @property
+    def experiment_class(self) -> type[Experiment]:
+        """Experiment schema class produced by this dataset."""
+        return BacterialGradedGeneEssentialityExperiment
+
+    @property
+    def reference_class(self) -> type[ExperimentReference]:
+        """Experiment-reference schema class produced by this dataset."""
+        return BacterialGradedGeneEssentialityExperimentReference
+
+    @property
+    def raw_file_names(self) -> list[str]:
+        """Table S4, linked from the raw mirror."""
+        return [TABLE_S4]
+
+    def download(self) -> None:
+        """Link Table S4 into ``raw/`` after checking the manifest and sha256."""
+        data_root = _data_root()
+        manifest = load_manifest(data_root)
+        os.makedirs(self.raw_dir, exist_ok=True)
+        raw = TABLE_S4_FILE
+        check_manifest_pin(
+            raw.mirror_relpath,
+            manifest_sha256(manifest, raw.mirror_relpath),
+            raw.sha256,
+        )
+        src = raw_mirror_dir(data_root) / raw.mirror_relpath
+        if not src.exists():
+            raise RuntimeError(f"required raw artifact missing from mirror: {src}")
+        link_verified(src, osp.join(self.raw_dir, raw.name), raw.sha256)
+
+    @post_process
+    def process(self) -> None:
+        """Read both Table S4 sheets and store every (gene, stage) call."""
+        verify_raw_files(self.raw_dir, {TABLE_S4: TABLE_S4_FILE.sha256})
+        sheets = read_table_s4(osp.join(self.raw_dir, TABLE_S4))
+        os.makedirs(self.preprocess_dir, exist_ok=True)
+        os.makedirs(self.processed_dir, exist_ok=True)
+        (Path(self.preprocess_dir) / "state_counts.json").write_text(
+            json.dumps(
+                {
+                    stage: dict(sorted(Counter(r.state.value for r in rows).items()))
+                    for stage, rows in sheets.items()
+                },
+                indent=2,
+            )
+        )
+        environments = {spec.key: stage_environment(spec.key) for spec in STAGES}
+        genome = reference_genome()
+        references = {
+            key: build_graded_reference(self.name, genome, env)
+            for key, env in environments.items()
+        }
+        env_out, interned_env = self._open_write_lmdb(
+            osp.join(self.processed_dir, "lmdb")
+        )
+        idx = 0
+        with env_out.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
+            for spec in STAGES:
+                for row in sheets[spec.key]:
+                    experiment = build_graded_experiment(
+                        self.name, row, environments[spec.key]
+                    )
+                    txn.put(
+                        f"{idx}".encode(),
+                        self._intern_record(
+                            experiment, references[spec.key], PUBLICATION, itxn
+                        ),
+                    )
+                    idx += 1
+        env_out.close()
+        interned_env.close()
+        log.info("Wrote %d Royet 2025 Table S4 graded calls", idx)
+
+    def preprocess_raw(
+        self, df: pd.DataFrame, preprocess: dict[str, Any] | None = None
+    ) -> pd.DataFrame:
+        """Preprocessing is handled inside process() for this dataset."""
+        return df
+
+    def create_experiment(self) -> None:
+        """Experiment construction is handled by ``build_graded_experiment``."""
+        raise NotImplementedError
+
+
+def _validate_graded_record(record: Mapping[str, Any]) -> None:
+    """L0: the experiment and its reference validate as the graded pair."""
+    BacterialGradedGeneEssentialityExperiment.model_validate(record["experiment"])
+    BacterialGradedGeneEssentialityExperimentReference.model_validate(
+        record["reference"]
+    )
+
+
+def _graded_stage(record: Mapping[str, Any]) -> StageKey | None:
+    """The stage whose environment a record stores, None if none."""
+    for spec in STAGES:
+        if (
+            record["experiment"]["environment"]
+            == stage_environment(spec.key).model_dump()
+        ):
+            return spec.key
+    return None
+
+
+def _l2_graded_calls_match_table_s4(
+    records: Sequence[Mapping[str, Any]], sheets: Mapping[StageKey, Sequence[S4Row]]
+) -> LevelResult:
+    """L2: each record is its stage's Table S4 row, call and statistics, and every row
+    of both sheets is exactly one record.
+    """
+    by_key = {(row.stage, row.gene_id): row for rows in sheets.values() for row in rows}
+    problems: list[str] = []
+    seen: Counter[tuple[str, str]] = Counter()
+    for record in records:
+        stage = _graded_stage(record)
+        (p,) = record["experiment"]["genotype"]["perturbations"]
+        key = (str(stage), str(p["systematic_gene_name"]))
+        seen[key] += 1
+        row = by_key.get((stage, p["systematic_gene_name"]))  # type: ignore[arg-type]
+        if row is None:
+            problems.append(f"{key}: no Table S4 row")
+            continue
+        phenotype = record["experiment"]["phenotype"]
+        ev = phenotype["evidence"]
+        held = (
+            phenotype["essentiality_call"],
+            str(ev["hmm_state"]),
+            ev["ta_sites"],
+            ev["hmm_sites_essential"],
+            ev["hmm_sites_growth_defect"],
+            ev["hmm_sites_non_essential"],
+            ev["hmm_sites_growth_advantage"],
+            ev["mean_insertion_rate"],
+            ev["mean_read_count"],
+            p["perturbed_gene_name"],
+        )
+        released = (
+            row.state.value,
+            row.state.value,
+            row.ta_sites,
+            row.sites_es,
+            row.sites_gd,
+            row.sites_ne,
+            row.sites_ga,
+            row.mean_insertion_rate,
+            row.mean_read_count,
+            row.gene_name,
+        )
+        if held != released:
+            problems.append(f"{key}: stored {held}, released {released}")
+    repeated = sorted(str(k) for k, n in seen.items() if n > 1)
+    missing = len(by_key) - len(seen)
+    if repeated:
+        problems.append(f"{len(repeated)} (stage, gene) keys repeat")
+    if missing:
+        problems.append(f"{missing} Table S4 rows have no record")
+    return LevelResult(
+        level=Level.L2,
+        name="calls_match_table_s4",
+        passed=not problems,
+        message=(
+            f"{len(records)} records are the {len(by_key)} Table S4 rows, call and "
+            "statistics"
+            if not problems
+            else f"{len(problems)} problems: {problems[:3]}"
+        ),
+        details={"n_problems": len(problems), "problems": problems[:20]},
+    )
+
+
+def _l3_graded_shared(records: Sequence[Mapping[str, Any]]) -> LevelResult:
+    """L3: every record's statements and every reference are the sourced ones."""
+    reference = build_graded_reference(
+        "x", reference_genome(), stage_environment("LB_agar")
+    ).phenotype_reference.model_dump()
+    statements = reference["evidence"]["statements"]
+    wrong = sum(
+        1
+        for r in records
+        if r["reference"]["phenotype_reference"] != reference
+        or r["experiment"]["phenotype"]["evidence"]["statements"] != statements
+    )
+    return LevelResult(
+        level=Level.L3,
+        name="evidence_is_tnseq_hmm_state",
+        passed=not wrong,
+        message=f"{len(records) - wrong} of {len(records)} records carry the "
+        "tnseq_hmm_state statements; every reference is the parent called NE",
+        details={"n_wrong": wrong},
+    )
+
+
+def verify_graded_build(dataset_root: str, data_root: str) -> VerificationReport:
+    """The L0-L3 gate of the graded store plus the audit of every sourced value.
+
+    The registry entry point (``runners.BACTERIAL_GRADED_ESSENTIALITY_DATASETS``): the
+    runner adds the family's assembly containment and writes the report.
+    """
+    from torchcell.verification.common import shared_rule_results
+    from torchcell.verification.levels import l0_structural, l1_count
+    from torchcell.verification.runners import load_records
+    from torchcell.verification.sourced import library_available
+
+    records = load_records(dataset_root)
+    sheets = read_table_s4(osp.join(dataset_root, "raw", TABLE_S4))
+    report = VerificationReport(
+        dataset_name=osp.basename(osp.normpath(dataset_root)),
+        provenance=Provenance(
+            source_uri=f"$DATA_ROOT/{RAW_DIR_REL}/data/{TABLE_S4}",
+            citation_key=CITATION_KEY,
+            sha256=TABLE_S4_FILE.sha256,
+            method="Table S4, TRANSIT HMM; one BacterialGradedGeneEssentialityExperiment "
+            "per (gene, stage), the call as released",
+            page="Table S4 (EMI-27-e70095-s002.xlsx), both sheets",
+        ),
+    )
+    report.add(l0_structural(records, _validate_graded_record))
+    report.add(l1_count(len(records), N_GRADED_RECORDS))
+    report.add(_l2_graded_calls_match_table_s4(records, sheets))
+    report.add(_l3_graded_shared(records))
+    for result in shared_rule_results(records):
+        report.add(result)
+    library_root = Path(data_root) / "torchcell-library"
+    if library_available(library_root):
+        for value in SOURCED_VALUES.values():
+            report.add(audit_sourced_value(value, library_root))
+    return report
+
+
+# --- end #909 ---------------------------------------------------------------- #
+
+
 def main(argv: list[str] | None = None) -> int:
     """CLI: ``deposit`` the raw mirror, ``build`` the dev LMDB, or ``verify`` it."""
     from dotenv import load_dotenv
@@ -1421,8 +2015,8 @@ def main(argv: list[str] | None = None) -> int:
             sources = dict(retrieve_raw_files(args.retrieve_into))
         else:
             sources = {
-                name: library_dir(data_root) / "si" / LIBRARY_SI_NAME[name]
-                for name in DATA_SHA256
+                raw.name: library_dir(data_root) / "si" / LIBRARY_SI_NAME[raw.name]
+                for raw in all_raw_files()
             }
         print(deposit_raw_mirror(sources=sources, data_root=data_root))
         return 0

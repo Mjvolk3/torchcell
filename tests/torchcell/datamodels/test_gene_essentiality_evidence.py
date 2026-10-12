@@ -20,6 +20,7 @@ from torchcell.datamodels.schema import (
     ESSENTIALITY_EVIDENCE_CLASS,
     ESSENTIALITY_EVIDENCE_FIELDS,
     FOOTPRINTING_CALL_IS_ESSENTIAL,
+    GRADED_ESSENTIALITY_CALLS,
     TRADIS_CALL_IS_ESSENTIAL,
     EssentialityEvidenceClass,
     EssentialityEvidenceType,
@@ -28,6 +29,8 @@ from torchcell.datamodels.schema import (
     FootprintingCall,
     GeneEssentialityEvidence,
     GeneEssentialityPhenotype,
+    GradedGeneEssentialityPhenotype,
+    HmmEssentialityState,
     TradisCall,
 )
 from torchcell.verification.report import Provenance
@@ -85,7 +88,20 @@ RECORDS: dict[EssentialityEvidenceType, dict[str, Any]] = {
         "false_discovery_rate_upper": 0.16,
     },
     T.curated_null_phenotype: {"curated_experiment_type": "classical genetics"},
+    T.tnseq_hmm_state: {
+        "hmm_state": HmmEssentialityState.essential,
+        "ta_sites": 8,
+        "hmm_sites_essential": 5,
+        "hmm_sites_growth_defect": 0,
+        "hmm_sites_non_essential": 3,
+        "hmm_sites_growth_advantage": 0,
+        "mean_insertion_rate": 0.5,
+        "mean_read_count": 23.0,
+    },
 }
+#: The evidence types whose call is graded, never a boolean (#909).
+GRADED_ONLY = {T.tnseq_hmm_state}
+BOOLEAN_TYPES = [t for t in T if t not in GRADED_ONLY]
 
 
 # --------------------------------------------------------------------------- #
@@ -101,6 +117,7 @@ def test_every_type_has_exactly_one_parent_and_the_parents_are_the_issue_table()
         T.tradis_insertion_index: C.insertion_depletion,
         T.rb_tnseq_coverage_and_fitness: C.insertion_depletion,
         T.curated_null_phenotype: C.curated_annotation,
+        T.tnseq_hmm_state: C.insertion_depletion,
     }
     assert set(ESSENTIALITY_EVIDENCE_CLASS.values()) == set(C)
 
@@ -108,7 +125,7 @@ def test_every_type_has_exactly_one_parent_and_the_parents_are_the_issue_table()
 def test_the_field_map_names_every_statistic_once_and_each_defaults_to_none() -> None:
     names = [n for fields in ESSENTIALITY_EVIDENCE_FIELDS.values() for n in fields]
     assert set(ESSENTIALITY_EVIDENCE_FIELDS) == set(T)
-    assert len(names) == len(set(names)) == 18
+    assert len(names) == len(set(names)) == 18 + 8
     shared = {"evidence_class", "evidence_type", "statements", "provenance_gaps"}
     model_fields = GeneEssentialityEvidence.model_fields
     assert set(model_fields) == shared | set(names)
@@ -137,7 +154,7 @@ def test_released_call_booleans() -> None:
 # --------------------------------------------------------------------------- #
 # Construction and round trip
 # --------------------------------------------------------------------------- #
-@pytest.mark.parametrize("type_", list(T))
+@pytest.mark.parametrize("type_", BOOLEAN_TYPES)
 def test_each_type_round_trips_on_the_phenotype(
     type_: EssentialityEvidenceType,
 ) -> None:
@@ -151,7 +168,7 @@ def test_each_type_round_trips_on_the_phenotype(
     assert phenotype.evidence.evidence_class == ESSENTIALITY_EVIDENCE_CLASS[type_]
 
 
-@pytest.mark.parametrize("type_", list(T))
+@pytest.mark.parametrize("type_", BOOLEAN_TYPES)
 def test_a_reference_carries_the_type_and_no_statistics(
     type_: EssentialityEvidenceType,
 ) -> None:
@@ -412,4 +429,136 @@ def test_exactly_one_rule_and_one_definition(
                 EssentialityStatement(role=role, provenance=statement())
                 for role in roles
             ],
+        )
+
+
+# --------------------------------------------------------------------------- #
+# #909: the HMM evidence and the graded sibling
+# --------------------------------------------------------------------------- #
+def test_the_hmm_states_are_the_releases_spellings() -> None:
+    assert [state.value for state in HmmEssentialityState] == [
+        "ES",
+        "GD",
+        "NE",
+        "GA",
+        "N/A",
+    ]
+    assert GRADED_ESSENTIALITY_CALLS == {
+        T.genetic_footprinting: (
+            "footprinting_call",
+            frozenset({"E", "N", "N*", "X", "?"}),
+        ),
+        T.tradis_insertion_index: (
+            "tradis_call",
+            frozenset({"essential", "non_essential", "unclear"}),
+        ),
+        T.tnseq_hmm_state: ("hmm_state", frozenset({"ES", "GD", "NE", "GA", "N/A"})),
+    }
+
+
+@pytest.mark.parametrize(
+    ("stats", "match"),
+    [
+        ({"hmm_sites_essential": 1}, "set together"),
+        (
+            {
+                "ta_sites": 8,
+                "hmm_sites_essential": 5,
+                "hmm_sites_growth_defect": 0,
+                "hmm_sites_non_essential": 2,
+                "hmm_sites_growth_advantage": 0,
+            },
+            "are not the gene's 8 TA sites",
+        ),
+        (
+            {"hmm_state": HmmEssentialityState.not_applicable, "ta_sites": 3},
+            "N/A is exactly the gene with no TA site",
+        ),
+        (
+            {"hmm_state": HmmEssentialityState.essential, "ta_sites": 0},
+            "N/A is exactly the gene with no TA site",
+        ),
+        ({"mean_insertion_rate": 1.2}, "is not a fraction"),
+        ({"mean_read_count": -1.0}, "mean_read_count -1.0 < 0"),
+    ],
+)
+def test_hmm_statistics_are_consistent(stats: dict[str, Any], match: str) -> None:
+    with pytest.raises(ValidationError, match=match):
+        _evidence(T.tnseq_hmm_state, **stats)
+
+
+def test_hmm_evidence_is_refused_on_the_boolean_leaf() -> None:
+    with pytest.raises(ValidationError, match="calls a graded state, not a boolean"):
+        GeneEssentialityPhenotype(
+            is_essential=True,
+            evidence=_evidence(T.tnseq_hmm_state, **RECORDS[T.tnseq_hmm_state]),
+        )
+
+
+@pytest.mark.parametrize(
+    ("type_", "stats", "call"),
+    [
+        (T.tnseq_hmm_state, RECORDS[T.tnseq_hmm_state], "ES"),
+        (
+            T.tnseq_hmm_state,
+            {"hmm_state": HmmEssentialityState.not_applicable, "ta_sites": 0},
+            "N/A",
+        ),
+        (
+            T.tradis_insertion_index,
+            {
+                "tradis_call": TradisCall.unclear,
+                "insertion_index": 0.05,
+                "log_likelihood_ratio": 1.0,
+            },
+            "unclear",
+        ),
+        (
+            T.genetic_footprinting,
+            {"footprinting_call": FootprintingCall.ambiguous},
+            "?",
+        ),
+    ],
+)
+def test_a_graded_call_round_trips(
+    type_: EssentialityEvidenceType, stats: dict[str, Any], call: str
+) -> None:
+    phenotype = GradedGeneEssentialityPhenotype(
+        essentiality_call=call, evidence=_evidence(type_, **stats)
+    )
+    assert phenotype.label_name == "essentiality_call"
+    assert (
+        GradedGeneEssentialityPhenotype.model_validate_json(phenotype.model_dump_json())
+        == phenotype
+    )
+
+
+def test_a_graded_reference_states_the_types_non_essential_call() -> None:
+    reference = GradedGeneEssentialityPhenotype(
+        essentiality_call="NE", evidence=_evidence(T.tnseq_hmm_state)
+    )
+    assert reference.evidence.hmm_state is None
+
+
+@pytest.mark.parametrize(
+    ("type_", "stats", "call", "match"),
+    [
+        (T.construction_outcome, {}, "essential", "releases no categorical call"),
+        (T.curated_null_phenotype, {}, "inviable", "releases no categorical call"),
+        (T.tnseq_hmm_state, {}, "unclear", "is not a tnseq_hmm_state call"),
+        (T.tradis_insertion_index, {}, "ES", "is not a tradis_insertion_index call"),
+        (
+            T.tnseq_hmm_state,
+            {"hmm_state": HmmEssentialityState.growth_defect},
+            "ES",
+            "is not the evidence's hmm_state 'GD'",
+        ),
+    ],
+)
+def test_a_graded_call_off_its_types_vocabulary_is_refused(
+    type_: EssentialityEvidenceType, stats: dict[str, Any], call: str, match: str
+) -> None:
+    with pytest.raises(ValidationError, match=match):
+        GradedGeneEssentialityPhenotype(
+            essentiality_call=call, evidence=_evidence(type_, **stats)
         )

@@ -58,10 +58,15 @@ from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
     BacterialEnvironmentResponseExperiment,
     BacterialEnvironmentResponseExperimentReference,
+    BacterialGradedGeneEssentialityExperiment,
     ConcentrationUnit,
+    EssentialityEvidenceClass,
+    EssentialityEvidenceType,
+    HmmEssentialityState,
     MeasurementType,
     SampleUnit,
     SmallMoleculePerturbation,
+    Temperature,
     TransposonInsertionPerturbation,
 )
 from torchcell.datasets.dataset_registry import dataset_registry
@@ -491,11 +496,15 @@ def test_the_sourced_values_name_the_paper_and_the_metal_table_agrees() -> None:
 # Raw mirror
 # --------------------------------------------------------------------------- #
 def _fake_raw(monkeypatch: pytest.MonkeyPatch, src: Path) -> dict[str, Path]:
-    """Two small files standing in for the PMC objects, with RAW_FILES re-pinned."""
+    """Three small files standing in for the PMC objects, with RAW_FILES and Table S4
+    (#909) re-pinned.
+    """
     src.mkdir(parents=True, exist_ok=True)
     files = {}
     raws = []
-    for raw, payload in zip(m.RAW_FILES, (b"table s5", b"table s3"), strict=True):
+    for raw, payload in zip(
+        m.all_raw_files(), (b"table s5", b"table s3", b"table s4"), strict=True
+    ):
         path = src / raw.name
         path.write_bytes(payload)
         sha = m._sha256(path)
@@ -509,8 +518,9 @@ def _fake_raw(monkeypatch: pytest.MonkeyPatch, src: Path) -> dict[str, Path]:
                 }
             )
         )
-    monkeypatch.setattr(m, "RAW_FILES", tuple(raws))
-    monkeypatch.setattr(m, "DATA_SHA256", {r.name: r.sha256 for r in raws})
+    monkeypatch.setattr(m, "RAW_FILES", tuple(raws[:2]))
+    monkeypatch.setattr(m, "TABLE_S4_FILE", raws[2])
+    monkeypatch.setattr(m, "DATA_SHA256", {r.name: r.sha256 for r in raws[:2]})
     return files
 
 
@@ -565,7 +575,7 @@ def test_retrieve_raw_files_runs_each_recorded_retriever(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     sources = _fake_raw(monkeypatch, tmp_path / "src")
-    payload = {raw.retrieval.source_url: sources[raw.name] for raw in m.RAW_FILES}
+    payload = {raw.retrieval.source_url: sources[raw.name] for raw in m.all_raw_files()}
     monkeypatch.setattr(
         m, "run_retriever", lambda record: payload[record.source_url].read_bytes()
     )
@@ -583,8 +593,17 @@ def test_download_links_the_pinned_mirror_files(
     dataset = m.EnvMetalTnseqRoyet2025Dataset.__new__(m.EnvMetalTnseqRoyet2025Dataset)
     dataset.root = str(tmp_path / "ds")
     m.EnvMetalTnseqRoyet2025Dataset.download(dataset)
-    for name in sources:
-        assert osp.islink(osp.join(dataset.raw_dir, name))
+    for raw in m.RAW_FILES:
+        assert osp.islink(osp.join(dataset.raw_dir, raw.name))
+    assert not osp.exists(osp.join(dataset.raw_dir, m.TABLE_S4))
+    graded = m.GradedGeneEssentialityRoyet2025Dataset.__new__(
+        m.GradedGeneEssentialityRoyet2025Dataset
+    )
+    graded.root = str(tmp_path / "graded")
+    m.GradedGeneEssentialityRoyet2025Dataset.download(graded)
+    assert os.listdir(graded.raw_dir) == [m.TABLE_S4]
+    assert osp.islink(osp.join(graded.raw_dir, m.TABLE_S4))
+    assert sorted(sources) == sorted(r.name for r in m.all_raw_files())
 
 
 def test_download_refuses_a_manifest_that_disagrees_with_the_pin(
@@ -885,3 +904,218 @@ def test_the_built_store_carries_every_released_test() -> None:
     assert by_name["p_value_adjustment_back_solve"]["passed"]
     unstored = json.loads((root / "preprocess" / "not_stored.json").read_text())
     assert sum(len(v) for v in unstored["dropped_cells_test"].values()) == 1333
+
+
+# --------------------------------------------------------------------------- #
+# #909: Table S4, the HMM essentiality states, graded
+# --------------------------------------------------------------------------- #
+S4Cells = tuple[str, str, str, int, int, int, int, int, str, str, str]
+S4_AGAR: list[S4Cells] = [
+    ("PP_0001", "parB", "partitioning", 8, 5, 0, 3, 0, "0.5000", "23.00", "ES"),
+    ("PP_0002", "parA", "partition", 20, 0, 0, 20, 0, "1.0000", "40.90", "NE"),
+    ("PP_0003", "PP_0003", "none", 0, 0, 0, 0, 0, "0.0000", "0.00", "N/A"),
+]
+S4_OUTGROWTH: list[S4Cells] = [
+    ("PP_0002", "parA", "partition", 20, 0, 4, 16, 0, "0.8000", "30.00", "GD"),
+    ("PP_0001", "parB", "partitioning", 8, 0, 0, 0, 8, "1.0000", "99.50", "GA"),
+    ("PP_0003", "PP_0003", "none", 0, 0, 0, 0, 0, "0.0000", "0.00", "N/A"),
+]
+
+
+def _write_s4(
+    path: Path,
+    agar: list[S4Cells] = S4_AGAR,
+    outgrowth: list[S4Cells] = S4_OUTGROWTH,
+    *,
+    title: str = m.S4_TITLE,
+    header: tuple[str, ...] = m.S4_HEADER,
+) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    workbook = openpyxl.Workbook()
+    first = workbook.active
+    assert first is not None
+    first.title = m.STAGES[0].sheet
+    second = workbook.create_sheet(m.STAGES[1].sheet)
+    for sheet, rows, top in ((first, agar, title), (second, outgrowth, None)):
+        sheet.append([top])
+        sheet.append(["#HMM - Genes", None, None, None, "Number of sites labeled"])
+        sheet.append(list(header))
+        for row in rows:
+            sheet.append(list(row))
+    workbook.save(path)
+    return path
+
+
+@pytest.fixture
+def s4_oracles(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The release's oracles lowered to the three-gene synthetic Table S4."""
+    monkeypatch.setattr(m, "N_GENES", len(S4_AGAR))
+    monkeypatch.setattr(m, "N_GRADED_RECORDS", 2 * len(S4_AGAR))
+    monkeypatch.setitem(
+        m.SOURCED_VALUES,
+        "hmm_counts",
+        m.SOURCED_VALUES["hmm_counts"].model_copy(update={"value": {"ES": 1, "NE": 1}}),
+    )
+
+
+def test_read_table_s4_types_every_row_of_both_sheets(
+    tmp_path: Path, s4_oracles: None
+) -> None:
+    sheets = m.read_table_s4(_write_s4(tmp_path / "s4.xlsx"))
+    assert list(sheets) == ["LB_agar", "LB_outgrowth"]
+    first = sheets["LB_agar"][0]
+    assert (
+        first.gene_id,
+        first.gene_name,
+        first.ta_sites,
+        (first.sites_es, first.sites_gd, first.sites_ne, first.sites_ga),
+        first.mean_insertion_rate,
+        first.mean_read_count,
+        first.state,
+    ) == ("PP_0001", "parB", 8, (5, 0, 3, 0), 0.5, 23.0, HmmEssentialityState.essential)
+    assert [r.state.value for r in sheets["LB_outgrowth"]] == ["GD", "GA", "N/A"]
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "match"),
+    [
+        ({"title": "Table S4: something else"}, "Table S4 is titled"),
+        ({"header": ("Gene", *m.S4_HEADER[1:])}, "is headed"),
+        ({"agar": S4_AGAR[:2]}, "carries 2 rows"),
+        ({"agar": [S4_AGAR[0], S4_AGAR[0], S4_AGAR[2]]}, "2 unique Gene IDs"),
+        (
+            {"agar": [S4_AGAR[0], S4_AGAR[0][:10] + ("XX",), S4_AGAR[2]]},
+            "'XX' is not a valid HmmEssentialityState",
+        ),
+    ],
+)
+def test_read_table_s4_refuses_an_unexpected_release(
+    tmp_path: Path, s4_oracles: None, kwargs: dict[str, Any], match: str
+) -> None:
+    with pytest.raises(ValueError, match=match):
+        m.read_table_s4(_write_s4(tmp_path / "s4.xlsx", **kwargs))
+
+
+def test_read_table_s4_refuses_counts_the_results_do_not_state(
+    tmp_path: Path, s4_oracles: None
+) -> None:
+    agar = [S4_AGAR[0], S4_AGAR[0][:1] + ("x",) + S4_AGAR[0][2:], S4_AGAR[2]]
+    agar[1] = ("PP_0002", *agar[1][1:])
+    with pytest.raises(m.SheetFormatError, match="the Results state"):
+        m.read_table_s4(_write_s4(tmp_path / "s4.xlsx", agar=agar))
+
+
+def test_stage_environments_are_the_plates_and_the_lb_outgrowth() -> None:
+    agar = m.stage_environment("LB_agar")
+    assert agar.media.state == "solid"
+    assert agar.media.base_medium == "LB"
+    assert [c.compound.name for c in agar.media.components[-2:]] == [
+        "agar",
+        "gentamicin",
+    ]
+    assert all(c.concentration is None for c in agar.media.components[-2:])
+    assert (agar.temperature, agar.duration_hours) == (Temperature(value=28.0), 24.0)
+    outgrowth = m.stage_environment("LB_outgrowth")
+    assert outgrowth.media == LB
+    assert (outgrowth.aerobicity, outgrowth.duration_generations) == ("aerobic", 12.0)
+    assert outgrowth.perturbations == []
+
+
+def test_hmm_evidence_carries_the_rows_statistics_and_the_papers_statements(
+    tmp_path: Path, s4_oracles: None
+) -> None:
+    row = m.read_table_s4(_write_s4(tmp_path / "s4.xlsx"))["LB_agar"][0]
+    experiment = m.build_graded_experiment("x", row, m.stage_environment("LB_agar"))
+    assert isinstance(experiment, BacterialGradedGeneEssentialityExperiment)
+    (perturbation,) = experiment.genotype.perturbations  # type: ignore[union-attr]
+    assert (perturbation.systematic_gene_name, perturbation.perturbed_gene_name) == (
+        "PP_0001",
+        "parB",
+    )
+    phenotype = experiment.phenotype
+    evidence = phenotype.evidence
+    assert phenotype.essentiality_call == "ES"
+    assert evidence.evidence_type is EssentialityEvidenceType.tnseq_hmm_state
+    assert evidence.evidence_class is EssentialityEvidenceClass.insertion_depletion
+    assert (
+        evidence.ta_sites,
+        evidence.hmm_sites_essential,
+        evidence.hmm_sites_non_essential,
+        evidence.mean_read_count,
+    ) == (8, 5, 3, 23.0)
+    assert evidence.scoring_rule is m.SOURCED_VALUES["hmm_rule"]
+    assert "Table 1 footnote c" in str(evidence.call_definition.note)
+    reference = m.build_graded_reference("x", REFERENCE, m.stage_environment("LB_agar"))
+    assert reference.phenotype_reference.essentiality_call == "NE"
+    assert reference.phenotype_reference.evidence.hmm_state is None
+
+
+def test_footnote_c_is_the_pdf_text_with_its_soft_hyphens() -> None:
+    assert m.TABLE1_FOOTNOTE_C.startswith("c State of each gene in LB")
+    assert m.TABLE1_FOOTNOTE_C.count("­") == 3
+
+
+@pytest.fixture
+def graded_built(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    s4_oracles: None,
+    presence_only_pins: list[Mapping[str, str]],
+) -> m.GradedGeneEssentialityRoyet2025Dataset:
+    root = tmp_path / m.GRADED_DATASET_ROOT_REL
+    _write_s4(root / "raw" / m.TABLE_S4)
+    monkeypatch.setattr(m, "reference_genome", lambda *a, **k: REFERENCE)
+    return m.GradedGeneEssentialityRoyet2025Dataset(root=str(root))
+
+
+def test_the_graded_build_stores_every_gene_in_both_stages(
+    graded_built: m.GradedGeneEssentialityRoyet2025Dataset,
+) -> None:
+    from torchcell.verification.runners import load_records
+
+    records = load_records(graded_built.root)
+    assert len(records) == 6
+    assert [r["experiment"]["phenotype"]["essentiality_call"] for r in records] == [
+        "ES",
+        "NE",
+        "N/A",
+        "GD",
+        "GA",
+        "N/A",
+    ]
+    counts = json.loads(
+        Path(graded_built.preprocess_dir, "state_counts.json").read_text()
+    )
+    assert counts == {
+        "LB_agar": {"ES": 1, "N/A": 1, "NE": 1},
+        "LB_outgrowth": {"GA": 1, "GD": 1, "N/A": 1},
+    }
+
+
+def test_the_graded_verification_passes_and_fails_on_tampering(
+    graded_built: m.GradedGeneEssentialityRoyet2025Dataset,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    from torchcell.verification.runners import load_records
+
+    report = m.verify_graded_build(graded_built.root, str(tmp_path / "no-data-root"))
+    assert report.passed, report.summary()
+    assert [r.name for r in report.results][:4] == [
+        "structural",
+        "count",
+        "calls_match_table_s4",
+        "evidence_is_tnseq_hmm_state",
+    ]
+    records = load_records(graded_built.root)
+    import copy
+
+    tampered = copy.deepcopy(records[0])
+    tampered["experiment"]["phenotype"]["evidence"]["mean_read_count"] = 1.0
+    repeated = [tampered, *records[1:], records[1]]
+    monkeypatch.setattr(
+        "torchcell.verification.runners.load_records", lambda root: repeated
+    )
+    report = m.verify_graded_build(graded_built.root, str(tmp_path / "no-data-root"))
+    failed = {r.name for r in report.results if not r.passed}
+    assert {"count", "calls_match_table_s4"} <= failed

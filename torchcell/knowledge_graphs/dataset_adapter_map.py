@@ -78,6 +78,8 @@ from torchcell.adapters import (
     GeneInteractionBabu2014Adapter,
     GeneInteractionButland2008Adapter,
     GenomeArchitecturePuddu2019Adapter,
+    GradedGeneEssentialityGoodall2018Adapter,
+    GradedGeneEssentialityRoyet2025Adapter,
     GrowthAucRapp2026Adapter,
     GrowthRateCampos2018Adapter,
     GrowthRateChoe2019Adapter,
@@ -238,7 +240,10 @@ from torchcell.datasets.ecoli.foo2014 import IsopentenolTiterFoo2014Dataset
 from torchcell.datasets.ecoli.fuhrer2017 import MetabolomeFuhrer2017Dataset
 from torchcell.datasets.ecoli.gerdes2003 import GeneEssentialityGerdes2003Dataset
 from torchcell.datasets.ecoli.girgis2009 import EnvChemgenGirgis2009Dataset
-from torchcell.datasets.ecoli.goodall2018 import GeneEssentialityGoodall2018Dataset
+from torchcell.datasets.ecoli.goodall2018 import (
+    GeneEssentialityGoodall2018Dataset,
+    GradedGeneEssentialityGoodall2018Dataset,
+)
 from torchcell.datasets.ecoli.gupta2024 import ProteinTurnoverGupta2024Dataset
 from torchcell.datasets.ecoli.guzman2018 import RnaseqGuzman2018Dataset
 from torchcell.datasets.ecoli.hawkins2020 import (
@@ -329,7 +334,10 @@ from torchcell.datasets.pputida.menasalvas2025 import (
     MetaboliteProductionPhaseMenasalvas2025Dataset,
     ProteomeMenasalvas2025Dataset,
 )
-from torchcell.datasets.pputida.royet2025 import EnvMetalTnseqRoyet2025Dataset
+from torchcell.datasets.pputida.royet2025 import (
+    EnvMetalTnseqRoyet2025Dataset,
+    GradedGeneEssentialityRoyet2025Dataset,
+)
 from torchcell.datasets.pputida.thompson2019_valerolactam import (
     LactamGrowthRateThompson2019Dataset,
     ValerolactamTiterThompson2019Dataset,
@@ -552,6 +560,7 @@ dataset_adapter_map: dict[type, type] = {
     GrowthYieldBaba2006Dataset: GrowthYieldBaba2006Adapter,
     GeneEssentialityGerdes2003Dataset: GeneEssentialityGerdes2003Adapter,
     GeneEssentialityGoodall2018Dataset: GeneEssentialityGoodall2018Adapter,
+    GradedGeneEssentialityGoodall2018Dataset: GradedGeneEssentialityGoodall2018Adapter,
     RnaseqGuzman2018Dataset: RnaseqGuzman2018Adapter,
     ProteinTurnoverGupta2024Dataset: ProteinTurnoverGupta2024Adapter,
     MetabolomeIshii2007Dataset: MetabolomeIshii2007Adapter,
@@ -627,6 +636,7 @@ dataset_adapter_map: dict[type, type] = {
         MetaboliteProductionPhaseMenasalvas2025Adapter
     ),
     EnvMetalTnseqRoyet2025Dataset: EnvMetalTnseqRoyet2025Adapter,
+    GradedGeneEssentialityRoyet2025Dataset: GradedGeneEssentialityRoyet2025Adapter,
     CrispriArrayYunus2026Dataset: CrispriArrayYunus2026Adapter,
     CrispriDifferentialProteomeYunus2026Dataset: (
         CrispriDifferentialProteomeYunus2026Adapter

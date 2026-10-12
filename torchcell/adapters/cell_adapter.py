@@ -281,6 +281,12 @@ class CellAdapter:
                 "gene essentiality phenotype (chunked)",
                 self._gene_essentiality_phenotype_node,
             ),
+            # --- begin #909: the graded essentiality sibling ---
+            (
+                "graded gene essentiality phenotype (chunked)",
+                self._graded_gene_essentiality_phenotype_node,
+            ),
+            # --- end #909 ---
             (
                 "synthetic lethality phenotype (chunked)",
                 self._synthetic_lethality_phenotype_node,
@@ -391,6 +397,12 @@ class CellAdapter:
                 "gene essentiality phenotype reference",
                 self._get_gene_essentiality_phenotype_reference_nodes,
             ),
+            # --- begin #909: the graded essentiality sibling ---
+            (
+                "graded gene essentiality phenotype reference",
+                self._get_graded_gene_essentiality_phenotype_reference_nodes,
+            ),
+            # --- end #909 ---
             (
                 "synthetic lethality phenotype reference",
                 self._get_synthetic_lethality_phenotype_reference_nodes,
@@ -1773,6 +1785,59 @@ class CellAdapter:
         }
 
     # --- end #924 -------------------------------------------------------------- #
+
+    # --- begin #909: the graded essentiality sibling -------------------------- #
+    @staticmethod
+    def _graded_gene_essentiality_properties(phenotype: Any) -> dict[str, Any]:
+        """Node properties of a ``GradedGeneEssentialityPhenotype`` (experiment or
+        reference): the released call and the evidence descriptor as JSON.
+        """
+        return {
+            "graph_level": phenotype.graph_level,
+            "label_name": phenotype.label_name,
+            "essentiality_call": phenotype.essentiality_call,
+            "evidence": phenotype.evidence.model_dump_json(),
+        }
+
+    @data_chunker
+    def _graded_gene_essentiality_phenotype_node(
+        self, data: dict[str, Any], method_name: str
+    ) -> BioCypherNode:
+        phenotype = data["experiment"].phenotype
+        phenotype_id = hashlib.sha256(
+            json.dumps(phenotype.model_dump()).encode("utf-8")
+        ).hexdigest()
+        return BioCypherNode(
+            node_id=phenotype_id,
+            preferred_id=f"phenotype_{phenotype_id}",
+            node_label="graded gene essentiality phenotype",
+            properties=self._graded_gene_essentiality_properties(phenotype),
+        )
+
+    def _get_graded_gene_essentiality_phenotype_reference_nodes(
+        self,
+    ) -> list[BioCypherNode]:
+        nodes = []
+        seen_node_ids: set[str] = set()
+        for data in tqdm(self.dataset.experiment_reference_index):
+            phenotype = data.reference.phenotype_reference
+            phenotype_id = hashlib.sha256(
+                json.dumps(phenotype.model_dump()).encode("utf-8")
+            ).hexdigest()
+            if phenotype_id in seen_node_ids:
+                continue
+            seen_node_ids.add(phenotype_id)
+            nodes.append(
+                BioCypherNode(
+                    node_id=phenotype_id,
+                    preferred_id="graded gene essentiality phenotype",
+                    node_label="graded gene essentiality phenotype",
+                    properties=self._graded_gene_essentiality_properties(phenotype),
+                )
+            )
+        return nodes
+
+    # --- end #909 -------------------------------------------------------------- #
 
     @data_chunker
     def _synthetic_lethality_phenotype_node(

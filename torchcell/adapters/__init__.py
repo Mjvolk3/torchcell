@@ -151,6 +151,9 @@ from .girgis2009_adapter import (
 from .goodall2018_adapter import (
     GeneEssentialityGoodall2018Adapter as GeneEssentialityGoodall2018Adapter,
 )
+from .goodall2018_graded_adapter import (
+    GradedGeneEssentialityGoodall2018Adapter as GradedGeneEssentialityGoodall2018Adapter,
+)
 from .gupta2024_adapter import (
     ProteinTurnoverGupta2024Adapter as ProteinTurnoverGupta2024Adapter,
 )
@@ -323,6 +326,9 @@ from .rousset2018_adapter import (
 )
 from .royet2025_adapter import (
     EnvMetalTnseqRoyet2025Adapter as EnvMetalTnseqRoyet2025Adapter,
+)
+from .royet2025_graded_adapter import (
+    GradedGeneEssentialityRoyet2025Adapter as GradedGeneEssentialityRoyet2025Adapter,
 )
 from .sameith2015_adapter import (
     DmMicroarraySameith2015Adapter as DmMicroarraySameith2015Adapter,
@@ -546,6 +552,7 @@ ecoli_adapters = [
     "GrowthYieldBaba2006Adapter",
     "GeneEssentialityGerdes2003Adapter",
     "GeneEssentialityGoodall2018Adapter",
+    "GradedGeneEssentialityGoodall2018Adapter",
     "RnaseqGuzman2018Adapter",
     "GeneEssentialityPrice2018EcoliAdapter",
     "ProteinTurnoverGupta2024Adapter",
@@ -612,6 +619,7 @@ pputida_adapters = [
     "MetaboliteProductionPhaseMenasalvas2025Adapter",
     "ProteomeMenasalvas2025Adapter",
     "EnvMetalTnseqRoyet2025Adapter",
+    "GradedGeneEssentialityRoyet2025Adapter",
     "CrispriArrayYunus2026Adapter",
     "CrispriDifferentialProteomeYunus2026Adapter",
     "CrispriKnockdownYunus2026Adapter",

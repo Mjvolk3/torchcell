@@ -37,6 +37,7 @@ from torchcell.candidates.gates import SourceKindFinding
 from torchcell.candidates.verdict import AggregationRecord
 from torchcell.datasets.ecoli import (
     cai2023,
+    goodall2018,
     lamoureux2023,
     lamoureux2023_public_k12,
     li2024,
@@ -99,6 +100,22 @@ PRECISE1K_ACCESSIONS: Final = SourcedValue(
 CECAFDB_SOURCE_DOIS: Final = tuple(sorted({w.doi for w in zhang2015.WORKBOOKS}))
 
 FINDINGS: Final[tuple[SourceKindFinding, ...]] = (
+    # #909: the row's candidate-table accession is unconfirmed, which leaves G1
+    # unmeasured; the per-gene calls are the paper's own publisher SI tables, deposited
+    # in the raw mirror, so the source kind is read off the module's quotes.
+    SourceKindFinding(
+        row_name="Goodall 2018",
+        citation_key=goodall2018.CITATION_KEY,
+        source_kind="primary",
+        reason="the per-gene TraDIS calls are the paper's own Tables S1 and S4 (the "
+        "publisher SI in the PMC Article Datasets bucket, deposited in the raw mirror); "
+        "Table S1's counts are the Results' own",
+        evidence=(
+            goodall2018.SOURCED_VALUES["tl_counts"],
+            goodall2018.SOURCED_VALUES["lb_table"],
+        ),
+        aggregation=None,
+    ),
     SourceKindFinding(
         row_name="D2Cell 2026",
         citation_key=li2024.CITATION_KEY,

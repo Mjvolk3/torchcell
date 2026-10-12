@@ -75,6 +75,7 @@ PHENOTYPE_METHOD: dict[type[Any], str] = {
     s.FitnessPhenotype: "fitness phenotype",
     s.GeneInteractionPhenotype: "gene interaction phenotype",
     s.GeneEssentialityPhenotype: "gene essentiality phenotype",
+    s.GradedGeneEssentialityPhenotype: "graded gene essentiality phenotype",  # #909
     s.SyntheticLethalityPhenotype: "synthetic lethality phenotype",
     s.SyntheticRescuePhenotype: "synthetic rescue phenotype",
     s.CalMorphPhenotype: "calmorph phenotype",

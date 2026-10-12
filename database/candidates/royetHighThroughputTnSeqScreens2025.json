@@ -1,0 +1,348 @@
+{
+  "citation_key": "royetHighThroughputTnSeqScreens2025",
+  "table": "bacteria",
+  "row_name": "Royet 2025 KT2440 metal Tn-seq",
+  "gates": [
+    {
+      "gate": "G1",
+      "outcome": "pass",
+      "reason": "primary: status='candidate', klass='Transposon fitness', no aggregation marker",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G2",
+      "outcome": "pass",
+      "reason": "assembly_set: KT2440 -> pputida_KT2440_ASM756v2 resolves and reads",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G3",
+      "outcome": "pass",
+      "reason": "13 file(s) in library+raw, 80495 worksheet row(s) counted; all intact",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G4",
+      "outcome": "pass",
+      "reason": "no key held by another module (0 mention(s)); no PMID check; values not compared (no dev store named)",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G5",
+      "outcome": "gap",
+      "reason": "1 compound(s) unresolved: gentamicin",
+      "evidence": [],
+      "issue": 1063,
+      "blocked_kind": null
+    }
+  ],
+  "zotero_item": "present",
+  "source_kind": "primary",
+  "aggregation": null,
+  "g2": {
+    "branch": "assembly_set",
+    "outcome": "resolvable_readable",
+    "hosts": [
+      {
+        "name": "KT2440",
+        "assembly_set": "pputida_KT2440_ASM756v2",
+        "resolvable": true,
+        "readable": true
+      }
+    ]
+  },
+  "g3": {
+    "citation_key": "royetHighThroughputTnSeqScreens2025",
+    "trees_read": [
+      "library",
+      "raw"
+    ],
+    "files": [
+      {
+        "tree": "library",
+        "path": "si/si1.tif",
+        "role": "si_data",
+        "bytes": 69398,
+        "sha256_manifest": "a438744a7117f534dbd7bf888075eacb74fef53a1cdb474303bde9d00a4c2ffc",
+        "sha256_disk": "a438744a7117f534dbd7bf888075eacb74fef53a1cdb474303bde9d00a4c2ffc",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si2.tif",
+        "role": "si_data",
+        "bytes": 74348,
+        "sha256_manifest": "f38f6ca75a2bea3589977d70e4be0a1a47b20f1cf7e61af2c723d21ff36d04f4",
+        "sha256_disk": "f38f6ca75a2bea3589977d70e4be0a1a47b20f1cf7e61af2c723d21ff36d04f4",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si3.tif",
+        "role": "si_data",
+        "bytes": 245642,
+        "sha256_manifest": "2531d6a381330fadc9e4700133a83d8248b0a4cba0ca33cc50bd47a1301a8e15",
+        "sha256_disk": "2531d6a381330fadc9e4700133a83d8248b0a4cba0ca33cc50bd47a1301a8e15",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si4.jpg",
+        "role": "si_data",
+        "bytes": 399938,
+        "sha256_manifest": "a40d5f4df57db8baf5920b9140f56f35d4aa2336b3484b056db37ffd6fef08b7",
+        "sha256_disk": "a40d5f4df57db8baf5920b9140f56f35d4aa2336b3484b056db37ffd6fef08b7",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si5.xlsx",
+        "role": "si_data",
+        "bytes": 13660,
+        "sha256_manifest": "3ae0f521010ce86bf1bce39fa436e58cc27bab0599293304267f30e33e385c85",
+        "sha256_disk": "3ae0f521010ce86bf1bce39fa436e58cc27bab0599293304267f30e33e385c85",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Feuil1",
+            "rows": 153
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si6.xlsx",
+        "role": "si_data",
+        "bytes": 11517,
+        "sha256_manifest": "681a9967e342e0167391a7ebaef532237f0b7216a055e801a00dc4f63945cfa8",
+        "sha256_disk": "681a9967e342e0167391a7ebaef532237f0b7216a055e801a00dc4f63945cfa8",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Feuil1",
+            "rows": 46
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si7.xlsx",
+        "role": "si_data",
+        "bytes": 11249,
+        "sha256_manifest": "283c919e627634f50647e52b637817dfb180cf67b4c007a15b582e8095857418",
+        "sha256_disk": "283c919e627634f50647e52b637817dfb180cf67b4c007a15b582e8095857418",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Feuil1",
+            "rows": 19
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si8.xlsx",
+        "role": "si_data",
+        "bytes": 713725,
+        "sha256_manifest": "b786a2a1b995a736b96a894e7b623a1ca1ec419827373114f03b9bd597991f42",
+        "sha256_disk": "b786a2a1b995a736b96a894e7b623a1ca1ec419827373114f03b9bd597991f42",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "HMM analysis - LB agar",
+            "rows": 5732
+          },
+          {
+            "sheet": "HMM analysis - outgrowth in LB",
+            "rows": 5732
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si9.xlsx",
+        "role": "si_data",
+        "bytes": 2568406,
+        "sha256_manifest": "7c32029a8039353c53992742e19182b6da07fd29f38538078670098037ec40eb",
+        "sha256_disk": "7c32029a8039353c53992742e19182b6da07fd29f38538078670098037ec40eb",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "LB-Co",
+            "rows": 5733
+          },
+          {
+            "sheet": "LB-Cu",
+            "rows": 5733
+          },
+          {
+            "sheet": "LB-Zn",
+            "rows": 5733
+          },
+          {
+            "sheet": "LB-Cd",
+            "rows": 5733
+          },
+          {
+            "sheet": "Log2FC all metals",
+            "rows": 5733
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si10.docx",
+        "role": "si_data",
+        "bytes": 22679,
+        "sha256_manifest": "52d4f78791fa992481fad98e32299250952c8135f77824860f1f063c8c2c3291",
+        "sha256_disk": "52d4f78791fa992481fad98e32299250952c8135f77824860f1f063c8c2c3291",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "data/EMI-27-e70095-s006.xlsx",
+        "role": "raw_data",
+        "bytes": 2568406,
+        "sha256_manifest": "7c32029a8039353c53992742e19182b6da07fd29f38538078670098037ec40eb",
+        "sha256_disk": "7c32029a8039353c53992742e19182b6da07fd29f38538078670098037ec40eb",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "LB-Co",
+            "rows": 5733
+          },
+          {
+            "sheet": "LB-Cu",
+            "rows": 5733
+          },
+          {
+            "sheet": "LB-Zn",
+            "rows": 5733
+          },
+          {
+            "sheet": "LB-Cd",
+            "rows": 5733
+          },
+          {
+            "sheet": "Log2FC all metals",
+            "rows": 5733
+          }
+        ]
+      },
+      {
+        "tree": "raw",
+        "path": "data/EMI-27-e70095-s005.xlsx",
+        "role": "raw_data",
+        "bytes": 11249,
+        "sha256_manifest": "283c919e627634f50647e52b637817dfb180cf67b4c007a15b582e8095857418",
+        "sha256_disk": "283c919e627634f50647e52b637817dfb180cf67b4c007a15b582e8095857418",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Feuil1",
+            "rows": 19
+          }
+        ]
+      },
+      {
+        "tree": "raw",
+        "path": "data/EMI-27-e70095-s002.xlsx",
+        "role": "raw_data",
+        "bytes": 713725,
+        "sha256_manifest": "b786a2a1b995a736b96a894e7b623a1ca1ec419827373114f03b9bd597991f42",
+        "sha256_disk": "b786a2a1b995a736b96a894e7b623a1ca1ec419827373114f03b9bd597991f42",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "HMM analysis - LB agar",
+            "rows": 5732
+          },
+          {
+            "sheet": "HMM analysis - outgrowth in LB",
+            "rows": 5732
+          }
+        ]
+      }
+    ],
+    "walls": []
+  },
+  "g4_key": {
+    "doi": "10.1111/1462-2920.70095",
+    "pmid": null,
+    "accessions": [
+      "PRJNA1175559"
+    ],
+    "hits": [
+      {
+        "key_kind": "doi",
+        "key": "10.1111/1462-2920.70095",
+        "where": "torchcell/datasets/pputida/royet2025.py",
+        "relation": "own"
+      }
+    ],
+    "pmid_checked": false
+  },
+  "g4_value": null,
+  "g5": {
+    "phenotype_class": "GradedGeneEssentialityPhenotype",
+    "class_exists": true,
+    "unresolved_compounds": [
+      "gentamicin"
+    ],
+    "proposed_class": null
+  },
+  "decided_at": "2026-10-12",
+  "torchcell_commit": "c40f480e53bf621caee96c4518039301fd475ce9"
+}

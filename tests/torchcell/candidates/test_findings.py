@@ -8,6 +8,7 @@ import pytest
 from torchcell.candidates import findings
 from torchcell.datasets.ecoli import (
     cai2023,
+    goodall2018,
     lamoureux2023,
     li2024,
     price2018,
@@ -27,10 +28,11 @@ from torchcell.datasets.pputida import borchert2024, lim2022
         ("Borchert 2024 fModules", borchert2024.CITATION_KEY, "aggregation"),
         ("Price 2018", price2018.CITATION_KEY, "aggregation"),
         ("PRECISE-1K", lamoureux2023.CITATION_KEY, "aggregation"),
+        ("Goodall 2018", goodall2018.CITATION_KEY, "primary"),
     ],
 )
 def test_each_finding_kind_and_key(row: str, key: str, kind: str) -> None:
-    """Seven rows are recorded, each under its settled module's citation key."""
+    """Eight rows are recorded, each under its settled module's citation key."""
     finding = findings.finding_for(row)
     assert finding is not None
     assert (finding.citation_key, finding.source_kind) == (key, kind)
@@ -39,11 +41,11 @@ def test_each_finding_kind_and_key(row: str, key: str, kind: str) -> None:
 def test_unrecorded_row_has_no_finding() -> None:
     """Oyetunde 2019 is an aggregation row with no finding yet (backfill).
 
-    Seven findings: the five of the gate's landing plus Price 2018 and PRECISE-1K,
-    added with plan decision 16 (2026-10-10).
+    Eight findings: the five of the gate's landing plus Price 2018 and PRECISE-1K,
+    added with plan decision 16 (2026-10-10), and Goodall 2018's primary reading (#909).
     """
     assert findings.finding_for("Oyetunde 2019") is None
-    assert len(findings.FINDINGS) == len(findings.FINDINGS_BY_ROW) == 5 + 2
+    assert len(findings.FINDINGS) == len(findings.FINDINGS_BY_ROW) == 5 + 2 + 1
 
 
 def test_aggregation_records() -> None:

@@ -511,6 +511,8 @@ BACTERIAL_DATASETS = {
     "GeneEssentialityGoodall2018Dataset",
     "RnaseqGuzman2018Dataset",
     "GeneEssentialityPrice2018EcoliDataset",
+    "GradedGeneEssentialityGoodall2018Dataset",
+    "GradedGeneEssentialityRoyet2025Dataset",
     "GeneInteractionBabu2014Dataset",
     "MrnaFractionBalakrishnan2022Dataset",
     "GeneInteractionButland2008Dataset",
@@ -630,6 +632,7 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
     # + 2 (#800 Li 2021 13C-MFA maps, #927 Baba 2006 Table 3 OD600)
     # + 1 (#964, Guzman 2018's own GEO release)
     # + 1 (#770, Niu 2019's pinene fold changes on ConcentrationUnit.fold_change).
+    # + 2 (#909: Goodall 2018's unclear calls and Royet 2025's Table S4, graded).
     assert (
         len(dataset_adapter_map)
         == 110
@@ -670,6 +673,7 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
         + 2
         + 1
         + 1
+        + 2
     )
     served = {d.__name__ for d in dataset_adapter_map}
     assert served - set(ADAPTER_TO_DATASET.values()) == BACTERIAL_DATASETS | {

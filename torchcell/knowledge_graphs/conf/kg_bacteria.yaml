@@ -75,6 +75,7 @@ datasets:
   - GeneEssentialityGerdes2003Dataset
   - EnvChemgenGirgis2009Dataset
   - GeneEssentialityGoodall2018Dataset
+  - GradedGeneEssentialityGoodall2018Dataset
   - RnaseqGuzman2018Dataset
   - ProteinTurnoverGupta2024Dataset
   - MetabolomeIshii2007Dataset
@@ -137,6 +138,7 @@ datasets:
   - MetaboliteGrowthPhaseMenasalvas2025Dataset
   - MetaboliteProductionPhaseMenasalvas2025Dataset
   - EnvMetalTnseqRoyet2025Dataset
+  - GradedGeneEssentialityRoyet2025Dataset
   - CrispriArrayYunus2026Dataset
   - CrispriKnockdownYunus2026Dataset
   - CrispriDifferentialProteomeYunus2026Dataset

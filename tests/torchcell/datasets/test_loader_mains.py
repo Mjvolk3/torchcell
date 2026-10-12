@@ -167,6 +167,12 @@ MAINS: list[tuple[str, list[tuple[str, str]], bool, str | None]] = [
         None,
     ),
     (
+        "yoshikawa2009",
+        [("EnvChemgenYoshikawa2009Dataset", "env_chemgen_yoshikawa2009")],
+        True,
+        None,
+    ),
+    (
         "baryshnikova2010",
         [("SmfBaryshnikova2010Dataset", "smf_baryshnikova2010")],
         True,
@@ -203,6 +209,7 @@ EXPECTED_STDOUT: dict[str, str] = {
     "mota2024": f"len = 2\n{REC0}\n",
     "wildenhain2015": f"len = 2\n{REC0}\n",
     "parsons2006": f"len = 2\n{REC0}\n",
+    "yoshikawa2009": f"len = 2\n{REC0}\n",
     "baryshnikova2010": f"len = 2\n{REC0}\n",
     "cooper2010": f"len = 2\n{REC0}\n",
 }

@@ -14,8 +14,8 @@ Two inputs, both read-only on the dev tree:
     every mapped store's ``preprocess/verification_report*.json`` as it sits on disk,
     judged twice: under the old rule (every rule gates) and the new one (gate rules
     only). A report older than the store's ``build_manifest.json`` is marked stale.
-``--sweep <json>``
-    the rows of a ``kg4_pre_build_verification_sweep.py`` rerun (run with ``DATA_ROOT``
+``--sweep <json> [<json> ...]``
+    the rows of a ``kg4_pre_build_verification_sweep.py`` rerun (one file per lane) (run with ``DATA_ROOT``
     pointed at an overlay, so no report lands in the shared tree): its
     ``failed_rules`` are the gate failures and ``genome_findings`` the open findings,
     so the old verdict is FAIL when either is non-empty.
@@ -155,14 +155,30 @@ def judge_reports(name: str, root: str, data_root: str) -> Reclassified:
 
 
 def judge_sweep(path: str, data_root: str) -> dict[str, Reclassified]:
-    """Judge a sweep rerun's rows: old FAIL when any rule failed, new by the gates."""
+    """Judge a sweep rerun's rows: old FAIL when any rule failed, new by the gates.
+
+    Every rule that did not hold (the row's ``failed_rules`` and ``genome_findings``
+    together) is reclassified here by name, so the current registry decides, not the
+    one the lane ran under.
+    """
+    from torchcell.verification.report import FindingClass, finding_class_of
+
     with open(path, encoding="utf-8") as handle:
         sweep = json.load(handle)
     out: dict[str, Reclassified] = {}
     for name, row in sweep["datasets"].items():
         preprocess = osp.join(data_root, row["root"], "preprocess")
-        gate = [f"{r['level']} {r['name']}" for r in row["failed_rules"]]
-        findings = [f"{r['level']} {r['name']}" for r in row.get("genome_findings", [])]
+        failing = [*row["failed_rules"], *row.get("genome_findings", [])]
+        gate = [
+            f"{r['level']} {r['name']}"
+            for r in failing
+            if finding_class_of(r["name"]) is FindingClass.gate
+        ]
+        findings = [
+            f"{r['level']} {r['name']}"
+            for r in failing
+            if finding_class_of(r["name"]) is FindingClass.report
+        ]
         if row["verdict"] in ("ERROR", "NO_VERIFIER"):
             verdict: Verdict = "ERROR" if row["verdict"] == "ERROR" else "NO_REPORT"
             out[name] = Reclassified(
@@ -229,13 +245,15 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     source = parser.add_mutually_exclusive_group(required=True)
     source.add_argument("--reports", action="store_true")
-    source.add_argument("--sweep", default=None)
+    source.add_argument("--sweep", nargs="+", default=None)
     parser.add_argument("--out", default=RESULTS)
     args = parser.parse_args(argv)
     load_dotenv()
     data_root = os.environ["DATA_ROOT"]
     results = Reclassification(
-        source="on-disk reports" if args.reports else f"sweep rerun {args.sweep}",
+        source="on-disk reports"
+        if args.reports
+        else "sweep rerun " + ", ".join(osp.basename(p) for p in args.sweep),
         data_root=data_root,
         measured_at=datetime.now().isoformat(timespec="seconds"),
     )
@@ -243,7 +261,8 @@ def main(argv: list[str] | None = None) -> int:
         for name, root in mapped_roots().items():
             results.stores[name] = judge_reports(name, root, data_root)
     else:
-        results.stores = judge_sweep(args.sweep, data_root)
+        for path in args.sweep:
+            results.stores.update(judge_sweep(path, data_root))
     os.makedirs(osp.dirname(args.out), exist_ok=True)
     with open(args.out, "w", encoding="utf-8") as handle:
         handle.write(results.model_dump_json(indent=2))

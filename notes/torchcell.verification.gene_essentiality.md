@@ -19,3 +19,7 @@ The checks the verifier made are not lost, they moved to where the evidence now 
 ## 2026.10.12 - The verifier is back with its dataset; "no condition" reads the medium's name
 
 `GeneEssentialitySgdDataset` stays (owner decision, [[torchcell.datasets.scerevisiae.sgd]]), so this module and `run_gene_essentiality` are restored. `states_no_condition` now reads `environment["media"]["name"] is None`, since the medium is a `Media` whose labels are typed gaps rather than `None`: an unnamed medium with no temperature and no edit is unconditional. SGD's stateless "YPD with 2% glucose" (YIL051C, MMF1) names a medium, so that one annotation is now conditional, as SGD records it; it is not one of the 23 SGD-versus-Costanzo disagreements.
+
+## 2026.10.12 - The cross-release contradiction reports, never gates
+
+`no_viable_deletion_in_<store>` judges this store's essentiality annotations against another paper's deletion strains through the shared gene key, which is a gene-set judgment across releases and not this store's fidelity to its own bytes, so it is `report`-class ([[torchcell.verification.report]], owner 2026-10-12: "the genome is separate.. it doesn't gate anything"). Its computation is unchanged. On the dev tree's current report it does not hold for `gene_essentiality_sgd`: 7 of 1,119 unconditionally essential genes are viable full-deletion strains of `smf_costanzo2016` (YHR072W-A, YHR099W, YJL012C, YLR293C, YNL138W-A, YOR167C, YOR182C); the store's verdict now reads its gate rows. `released_annotations` stays a gate.

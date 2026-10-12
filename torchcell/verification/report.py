@@ -186,13 +186,17 @@ GENOME_REFERENCE_RULES: Final[frozenset[str]] = frozenset(
 
 #: Rule families one helper renders under several names: ``gene_containment_<universe>``
 #: (S288C, an assembly, a strain's locus tags, another store's deletion set keyed by
-#: resolved names), the protein and perturbed-locus containment rows, and every
-#: ``assembly_pin*`` row (the record's pinned assembly is the genome reference itself).
+#: resolved names), the protein and perturbed-locus containment rows, every
+#: ``assembly_pin*`` row (the record's pinned assembly is the genome reference itself),
+#: and ``no_viable_deletion_in_<store>`` (an essentiality annotation judged against
+#: another paper's deletion strains through the shared gene key: a gene-set judgment
+#: across releases, not this store's fidelity to its own bytes).
 GENOME_REFERENCE_RULE_PREFIXES: Final[tuple[str, ...]] = (
     "gene_containment_",
     "perturbed_gene_containment_",
     "protein_and_perturbed_locus_containment_",
     "assembly_pin",
+    "no_viable_deletion_in_",
 )
 
 

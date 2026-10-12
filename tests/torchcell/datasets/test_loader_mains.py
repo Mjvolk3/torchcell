@@ -163,13 +163,13 @@ MAINS: list[tuple[str, list[tuple[str, str]], bool, str | None]] = [
     (
         "parsons2006",
         [("EnvChemgenParsons2006Dataset", "env_chemgen_parsons2006")],
-        True,
+        False,  # stored as released, no genome (#1045)
         None,
     ),
     (
         "yoshikawa2009",
         [("EnvChemgenYoshikawa2009Dataset", "env_chemgen_yoshikawa2009")],
-        True,
+        False,  # stored as released, no genome (#1045)
         None,
     ),
     (

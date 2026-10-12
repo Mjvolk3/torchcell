@@ -3112,9 +3112,29 @@
             <span class="s2">"graph_level"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">graph_level</span><span class="p">,</span>
             <span class="s2">"label_name"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">label_name</span><span class="p">,</span>
             <span class="s2">"label_statistic_name"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">label_statistic_name</span><span class="p">,</span>
-            <span class="s2">"net_flux"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">net_flux</span><span class="p">),</span>
+            <span class="c1"># #800: a reference map the source does not release is a typed gap.</span>
+            <span class="s2">"net_flux"</span><span class="p">:</span> <span class="p">(</span>
+                <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">net_flux</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">net_flux</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="k">else</span> <span class="kc">None</span>
+            <span class="p">),</span>
             <span class="s2">"net_flux_lower"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">lower</span><span class="p">)</span> <span class="k">if</span> <span class="n">lower</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
             <span class="s2">"net_flux_upper"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">upper</span><span class="p">)</span> <span class="k">if</span> <span class="n">upper</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s2">"exchange_flux"</span><span class="p">:</span> <span class="p">(</span>
+                <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">exchange_flux</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">exchange_flux</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="k">else</span> <span class="kc">None</span>
+            <span class="p">),</span>
+            <span class="s2">"exchange_flux_lower"</span><span class="p">:</span> <span class="p">(</span>
+                <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">exchange_flux_lower</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">exchange_flux_lower</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="k">else</span> <span class="kc">None</span>
+            <span class="p">),</span>
+            <span class="s2">"exchange_flux_upper"</span><span class="p">:</span> <span class="p">(</span>
+                <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">exchange_flux_upper</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">exchange_flux_upper</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="k">else</span> <span class="kc">None</span>
+            <span class="p">),</span>
             <span class="s2">"confidence_level"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">confidence_level</span><span class="p">,</span>
             <span class="s2">"measurement_type"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">measurement_type</span><span class="p">,</span>
             <span class="s2">"n_samples"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">n_samples</span><span class="p">,</span>

@@ -8895,6 +8895,12 @@
 <span class="sd">      grows like the reference. Distinct from ``log2_ratio`` (an end-point abundance</span>
 <span class="sd">      ratio, not a fitted growth rate) and from ``relative_growth_rate`` (a ratio against</span>
 <span class="sd">      a wild-type well, not a difference against a pooled population).</span>
+<span class="sd">    - ``optical_density``: ABSOLUTE absorbance of a liquid culture read at a stated</span>
+<span class="sd">      wavelength after a stated incubation (Baba 2006 Supplementary Table 3: each Keio</span>
+<span class="sd">      mutant's OD600 after 22 h in LB and 24 h and 48 h in glucose MOPS), on the plate</span>
+<span class="sd">      reader's own scale and unnormalized. Distinct from ``growth_rate`` (a rate fitted</span>
+<span class="sd">      over a curve; this is one end-point reading), from ``cell_yield`` (a cell count,</span>
+<span class="sd">      not an absorbance) and from ``colony_size`` (a solid-plate image measure).</span>
 <span class="sd">    """</span>
 
     <span class="n">log2_ratio</span> <span class="o">=</span> <span class="s2">"log2_ratio"</span>
@@ -8910,7 +8916,8 @@
     <span class="c1"># ADDITIVE (Peter 2018 phenome): a same-strain test-over-control growth ratio.</span>
     <span class="n">condition_growth_ratio</span> <span class="o">=</span> <span class="s2">"condition_growth_ratio"</span>
     <span class="n">cell_yield</span> <span class="o">=</span> <span class="s2">"cell_yield"</span>  <span class="c1"># De Chiara 2022 (additive)</span>
-    <span class="n">relative_fitness</span> <span class="o">=</span> <span class="s2">"relative_fitness"</span>  <span class="c1"># Hale 2024</span></div>
+    <span class="n">relative_fitness</span> <span class="o">=</span> <span class="s2">"relative_fitness"</span>  <span class="c1"># Hale 2024</span>
+    <span class="n">optical_density</span> <span class="o">=</span> <span class="s2">"optical_density"</span>  <span class="c1"># Baba 2006 Table 3 (additive, #927)</span></div>
 
 
 
@@ -8992,6 +8999,7 @@
         <span class="n">MeasurementType</span><span class="o">.</span><span class="n">growth_rate</span><span class="p">,</span>
         <span class="n">MeasurementType</span><span class="o">.</span><span class="n">colony_size</span><span class="p">,</span>
         <span class="n">MeasurementType</span><span class="o">.</span><span class="n">cell_yield</span><span class="p">,</span>  <span class="c1"># De Chiara 2022: cells per colony population</span>
+        <span class="n">MeasurementType</span><span class="o">.</span><span class="n">optical_density</span><span class="p">,</span>  <span class="c1"># Baba 2006 Table 3: end-point OD600 (#927)</span>
     <span class="p">}</span>
 <span class="p">)</span>
 <span class="c1"># --------------------------------------------------------------------------- #</span>
@@ -9265,9 +9273,16 @@
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">measurement_type</span><span class="si">}</span><span class="s2"> measurement_type requires `category`"</span>
                 <span class="p">)</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">environment_response</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">environment_response</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="c1"># ADDITIVE (#927): a numeric readout's value may be a typed</span>
+            <span class="c1"># ProvenanceGap, which is how a reference states that the source</span>
+            <span class="c1"># releases no reading for it (Baba 2006 Table 3 has no wild-type row).</span>
+            <span class="ow">and</span> <span class="s2">"environment_response"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">gapped_fields</span><span class="p">()</span>
+        <span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">measurement_type</span><span class="si">}</span><span class="s2"> requires a numeric environment_response"</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">measurement_type</span><span class="si">}</span><span class="s2"> requires a numeric environment_response "</span>
+                <span class="s2">"(or a ProvenanceGap on 'environment_response')"</span>
             <span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">category_label</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">category</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -10529,8 +10544,17 @@
     <span class="n">label_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"net_flux"</span>
     <span class="n">label_statistic_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 
-    <span class="n">net_flux</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">"reaction id -&gt; signed net flux in measurement_type's unit"</span>
+    <span class="c1"># ----------------------------------------------------------------------- #</span>
+    <span class="c1"># ADDITIVE (#800, Li 2021): ``net_flux`` admits a typed ProvenanceGap, so a</span>
+    <span class="c1"># reference whose flux map the release does not carry (Li 2021 names its</span>
+    <span class="c1"># control strain's map in the text and figure but releases none) is a typed</span>
+    <span class="c1"># absence rather than a reason to refuse the three released maps. The field</span>
+    <span class="c1"># stays required on every record that has a map: None ONLY with the gap.</span>
+    <span class="c1"># ----------------------------------------------------------------------- #</span>
+    <span class="n">net_flux</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"reaction id -&gt; signed net flux in measurement_type's unit. None "</span>
+        <span class="s2">"ONLY with a ProvenanceGap on 'net_flux' (a map the source names but does not "</span>
+        <span class="s2">"release, e.g. a control strain's)"</span>
     <span class="p">)</span>
     <span class="n">net_flux_lower</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -10562,10 +10586,54 @@
         <span class="n">description</span><span class="o">=</span><span class="s2">"reaction key -&gt; constraint-based-model reaction id for CBM linkage; "</span>
         <span class="s2">"None until that mapping is decided"</span><span class="p">,</span>
     <span class="p">)</span>
+    <span class="c1"># ----------------------------------------------------------------------- #</span>
+    <span class="c1"># ADDITIVE (#800, Li 2021): the EXCHANGE fluxes a 13C-MFA fit releases beside</span>
+    <span class="c1"># its net fluxes. A reversible reaction has a net flux (forward minus</span>
+    <span class="c1"># backward, above) and an exchange flux (how much it runs both ways), and a</span>
+    <span class="c1"># labeling fit identifies both; 13CFLUX-family tools release the exchange on</span>
+    <span class="c1"># their own compactified scale. Stored verbatim keyed by the release's own</span>
+    <span class="c1"># exchange ids (Li 2021: ``vAco.x``), never converted, and NOT validated to</span>
+    <span class="c1"># lie between their bounds, so no released row is refused.</span>
+    <span class="c1"># ----------------------------------------------------------------------- #</span>
+    <span class="n">exchange_flux</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"exchange id -&gt; the fitted exchange flux of a reversible reaction, "</span>
+        <span class="s2">"verbatim on the scale the source releases it; None when the source releases "</span>
+        <span class="s2">"none"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">exchange_flux_lower</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"exchange id -&gt; lower confidence bound of the exchange flux, at "</span>
+        <span class="s2">"confidence_level, verbatim"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">exchange_flux_upper</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"exchange id -&gt; upper confidence bound of the exchange flux, at "</span>
+        <span class="s2">"confidence_level, verbatim"</span><span class="p">,</span>
+    <span class="p">)</span>
 
     <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">validate_flux</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"FluxPhenotype"</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Non-empty fluxes, finite values, bounds that key on and bracket the flux."""</span>
+        <span class="c1"># --- begin #800: a gapped map carries no values and no bounds ----------- #</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">net_flux</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s2">"net_flux"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">gapped_fields</span><span class="p">():</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">"net_flux is None without a ProvenanceGap on 'net_flux' (an "</span>
+                    <span class="s2">"absent map is a typed gap, never a silent None)"</span>
+                <span class="p">)</span>
+            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span>
+                <span class="s2">"net_flux_lower"</span><span class="p">,</span>
+                <span class="s2">"net_flux_upper"</span><span class="p">,</span>
+                <span class="s2">"exchange_flux"</span><span class="p">,</span>
+                <span class="s2">"exchange_flux_lower"</span><span class="p">,</span>
+                <span class="s2">"exchange_flux_upper"</span><span class="p">,</span>
+            <span class="p">):</span>
+                <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> is set on a gapped net_flux map"</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_exchange</span><span class="p">()</span>
+        <span class="c1"># --- end #800 ------------------------------------------------------------ #</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">net_flux</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"net_flux cannot be empty"</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">net_flux</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -10608,6 +10676,24 @@
                 <span class="sa">f</span><span class="s2">"n_samples must be a positive integer, got </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_samples</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="c1"># --- begin #800 ------------------------------------------------------------- #</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_exchange</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Finite exchange values; bounds key on stored exchange ids (no bracketing)."""</span>
+        <span class="n">exchange</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exchange_flux</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"exchange_flux"</span><span class="p">,</span> <span class="s2">"exchange_flux_lower"</span><span class="p">,</span> <span class="s2">"exchange_flux_upper"</span><span class="p">):</span>
+            <span class="n">mapping</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">mapping</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="o">!=</span> <span class="s2">"exchange_flux"</span> <span class="ow">and</span> <span class="n">exchange</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> is set without exchange_flux"</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">mapping</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> for </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> must be finite"</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">exchange</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">exchange</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> key </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> not in exchange_flux"</span><span class="p">)</span>
+
+    <span class="c1"># --- end #800 --------------------------------------------------------------- #</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">ReporterReadout</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>

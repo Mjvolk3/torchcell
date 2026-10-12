@@ -471,9 +471,13 @@ def test_supported_method_names_are_the_registration_tables_in_order(
 
 
 def _environment_payload(experiment: s.FitnessExperiment) -> str:
-    """The toy environment's JSON (733 bytes), at or above the 512-byte pointer floor."""
+    """The toy environment's JSON (756 bytes), at or above the 512-byte pointer floor.
+
+    756 since the medium dumps its (empty) ``provenance_gaps`` (#901, #902, #903);
+    733 before.
+    """
     payload = json.dumps(experiment.model_dump()["environment"])
-    assert len(payload) == 733
+    assert len(payload) == 756
     return payload
 
 
@@ -484,7 +488,7 @@ def _environment_constant_id(experiment: s.FitnessExperiment) -> str:
 def test_experiment_genotype_and_publication_nodes_are_content_addressed() -> None:
     """The experiment handler returns the experiment node, whose id is the sha256 of
     the fully inlined record but whose blob holds a ``$ref`` pointer in place of the
-    733-byte environment (floor 512), followed by one ``interned constant`` node
+    756-byte environment (floor 512), followed by one ``interned constant`` node
     carrying that environment. The 922-byte genotype stays inline (floor 8192).
     Genotype names come back sorted by systematic name (YAL001C before YAL002W);
     the genotype node carries no ``serialized_data``.

@@ -384,6 +384,81 @@ def test_media_characterization_and_state_vocabulary() -> None:
         s.Media(name="X", state="plasma", is_synthetic=True)
 
 
+# --- #901/#902/#903: a typed gap on the medium --------------------------------- #
+def _label_gap(field: str) -> ProvenanceGap:
+    return ProvenanceGap(
+        field=field, reason=ProvenanceGapReason.not_carried_by_curation
+    )
+
+
+def test_a_medium_label_is_stated_or_gapped_never_silently_none() -> None:
+    """``name``, ``state`` and ``is_synthetic`` are each stated or ``None`` beside a
+    gap naming that field; a gap on another field does not cover it, and a gapped field
+    cannot also carry a value.
+    """
+    unstated = s.Media(
+        name=None,
+        state=None,
+        is_synthetic=None,
+        provenance_gaps=[_label_gap(f) for f in ("name", "state", "is_synthetic")],
+    )
+    assert unstated.gapped_fields() == {"name", "state", "is_synthetic"}
+    assert s.Media.model_validate(unstated.model_dump()) == unstated
+    stateless = s.Media(
+        name="YPD with 2% glucose",
+        state=None,
+        is_synthetic=False,
+        provenance_gaps=[_label_gap("state")],
+    )
+    assert (stateless.name, stateless.state) == ("YPD with 2% glucose", None)
+    with _refuses("Media.name is unset and carries no ProvenanceGap"):
+        s.Media(name=None, state="solid", is_synthetic=False)
+    with _refuses("Media.state is unset and carries no ProvenanceGap"):
+        s.Media(
+            name="YPD",
+            state=None,
+            is_synthetic=None,
+            provenance_gaps=[_label_gap("is_synthetic")],
+        )
+    with _refuses("field 'state' has a ProvenanceGap but is not None"):
+        s.Media(
+            name="YPD",
+            state="solid",
+            is_synthetic=False,
+            provenance_gaps=[_label_gap("state")],
+        )
+    with _refuses('state must be one of "solid", "liquid", or "gas"'):
+        s.Media(name="X", state="plasma", is_synthetic=None)
+
+
+def test_a_gapped_medium_has_no_stated_name_and_environment_media_stays_required() -> (
+    None
+):
+    """``stated_name`` refuses a gapped name by name; ``Environment.media`` is still a
+    required ``Media``, so an unstated medium is a gapped ``Media``, never ``None``.
+    """
+    assert YEPD.stated_name == "YEPD"
+    unnamed = s.Media(
+        name=None,
+        state=None,
+        is_synthetic=None,
+        provenance_gaps=[_label_gap(f) for f in ("name", "state", "is_synthetic")],
+    )
+    with pytest.raises(ValueError, match="this medium's name is a typed ProvenanceGap"):
+        _ = unnamed.stated_name
+    assert s.Environment.model_fields["media"].annotation is s.Media
+    assert s.Environment.model_fields["media"].is_required()
+    with pytest.raises(
+        ValidationError, match="Input should be a valid dictionary or instance of Media"
+    ):
+        s.Environment(media=None)  # type: ignore[arg-type]  # required, never None
+    assert s.Environment(media=unnamed).media.gapped_fields() == {
+        "name",
+        "state",
+        "is_synthetic",
+    }
+
+
 def test_environment_aerobicity_vocabulary() -> None:
     """The three oxygen regimes pass; ``hypoxic`` is refused."""
     for regime in ["aerobic", "anaerobic", "microaerobic"]:

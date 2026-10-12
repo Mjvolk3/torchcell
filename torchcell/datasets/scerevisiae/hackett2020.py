@@ -1631,7 +1631,7 @@ class InductionTimecourseHackett2020Dataset(ExperimentDataset):
                     environment_ = environment(*env_key)
                     if env_key not in env_pointers:
                         env_pointers[env_key] = self._intern(
-                            environment_, environment_.media.name, itxn
+                            environment_, environment_.media.stated_name, itxn
                         )
                     experiment = InductionTimecourseExpressionExperiment(
                         dataset_name=self.name,

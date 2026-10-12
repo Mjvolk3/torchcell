@@ -708,6 +708,55 @@ def test_media_membership_fails_free_text_media_including_a_missing_medium() -> 
     )
 
 
+def test_media_membership_passes_a_typed_medium_gap_and_counts_it() -> None:
+    """A medium whose ``name`` is ``None`` beside a ``ProvenanceGap(field='name')`` is
+    a declared absence: it passes and is counted by reason (#901-#903). A gap on another
+    field does not cover the name, so that medium stays free text and fails, exactly as
+    a record with no medium at all does.
+    """
+    name_gap = {"field": "name", "reason": "not_carried_by_curation"}
+    state_gap = {"field": "state", "reason": "not_carried_by_curation"}
+    unstated = {
+        "name": None,
+        "state": None,
+        "is_synthetic": None,
+        "base_medium": None,
+        "provenance_gaps": [
+            name_gap,
+            state_gap,
+            {"field": "is_synthetic", "reason": "not_carried_by_curation"},
+        ],
+    }
+    ypd = MEDIA_LIBRARY["YPD"].model_dump()
+    passing = _run(
+        [
+            _record(environment={"media": ypd}),
+            _record(environment={"media": unstated}),
+            _record(environment={"media": unstated}),
+        ]
+    )["media_membership"]
+    assert passing.passed is True
+    assert passing.message == (
+        "1 records on a shared MEDIA_LIBRARY medium, 0 on a medium deriving from one "
+        "(1 distinct media), 2 on a medium the source does not name, as a typed gap "
+        "(not_carried_by_curation x2)"
+    )
+    assert passing.details["n_gapped_records"] == 2
+    assert passing.details["gapped_reasons"] == {"not_carried_by_curation": 2}
+    unnamed_ungapped = {**unstated, "provenance_gaps": [state_gap]}
+    failing = _run(
+        [
+            _record(environment={"media": unstated}),
+            _record(environment={"media": unnamed_ungapped}),
+        ]
+    )["media_membership"]
+    assert failing.passed is False
+    assert failing.message == (
+        "1 free-text media over 1 records join nothing: None (base_medium=None) x1"
+    )
+    assert failing.details["n_gapped_records"] == 1
+
+
 # --------------------------------------------------------------------------- #
 # L4 gene containment + result order
 # --------------------------------------------------------------------------- #

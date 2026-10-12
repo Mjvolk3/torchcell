@@ -1867,7 +1867,7 @@ def production_environment() -> CultureEnvironment:
     note rather than typed, because a ``ProvenanceGap`` must name a field that is
     ``None`` and ``perturbations`` is set.
     """
-    if str(MEDIUM.value) not in M9_NREL_CARRUTHERS2025.name.replace(" ", "-"):
+    if str(MEDIUM.value) not in M9_NREL_CARRUTHERS2025.stated_name.replace(" ", "-"):
         raise RuntimeError(
             f"the served medium {M9_NREL_CARRUTHERS2025.name!r} is not the "
             f"{MEDIUM.value!r} the Methods name"

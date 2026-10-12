@@ -143,7 +143,7 @@ def _lines(out: str) -> list[str]:
 def test_real_schema_compact_table(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """The committed ``torchcell_schema_config.yaml``: 49 nodes (45 under six Biolink
+    """The committed ``torchcell_schema_config.yaml``: 50 nodes (46 under six Biolink
     parents, 4 auto-mapped by name), 14 edges under five relations, 11 concepts in all.
     Hale 2024 added ``perturbed segregant genotype`` under genotype and the ``segregant
     background of`` edge under part of.
@@ -157,8 +157,8 @@ def test_real_schema_compact_table(
     expression score phenotype, Hackett 2020's induction timecourse expression
     phenotype, #991's pooled sort seq expression phenotype, #990's biosensor
     fluorescence phenotype, #921's phosphosite intensity phenotype, #989's
-    microarray expression ratio phenotype and #909's graded gene essentiality
-    phenotype join it too.
+    microarray expression ratio phenotype, #909's graded gene essentiality phenotype and
+    #913's fitness contrast phenotype join it too.
     ``phage perturbation`` adds the SIXTH parent, ``biotic exposure``: Biolink defines
     ``environmental exposure`` as abiotic, and the two are siblings under
     ``exposure event``, so a phage node carries neither the other's label.
@@ -183,7 +183,8 @@ def test_real_schema_compact_table(
         f"{'phenotypic feature':25} → bacterial morphology phenotype, biosensor "
         "fluorescence phenotype, calmorph "
         "phenotype, environment response "
-        "phenotype, fitness phenotype, flux phenotype, gene essentiality phenotype, "
+        "phenotype, fitness contrast phenotype, fitness phenotype, flux phenotype, "
+        "gene essentiality phenotype, "
         "gene interaction phenotype, genome architecture phenotype, graded gene "
         "essentiality phenotype, induction "
         "timecourse expression phenotype, life cycle "
@@ -208,7 +209,7 @@ def test_real_schema_compact_table(
         f"{'participates in':25} → environment member of, genome member of, "
         "genotype member of, phenotype member of",
     ]
-    assert "Nodes:    45/49 explicit + 4 auto-mapped = 49/49 total" in lines
+    assert "Nodes:    46/50 explicit + 4 auto-mapped = 50/50 total" in lines
     assert "Edges:    14/14 mapped to 5 Biolink concepts" in lines
     assert "Total:    11 unique Biolink concepts used" in lines
     assert "✓ 4 nodes auto-mapped by name matching" in lines
@@ -219,7 +220,7 @@ def test_compact_headers_count_the_schema(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """The compact headers print ``len(nodes)`` and ``len(edges)`` (issue #532; they were
-    the literals 16 and 11): the committed schema has 49 nodes (``interned constant``
+    the literals 16 and 11): the committed schema has 50 nodes (``interned constant``
     joined in tcdb-002, then the four bacterial-program classes, ``phage
     perturbation``, ``promoter activity phenotype``, ``bacterial sequence
     variant perturbation``, ``bacterial morphology phenotype``, for #770
@@ -243,7 +244,7 @@ def test_compact_headers_count_the_schema(
 
     small = tmp_path / "schema.yaml"
     small.write_text(yaml.safe_dump(SCHEMA))
-    for path, n_nodes, n_edges in ((REAL_SCHEMA, 49, 14), (small, 3, 2)):
+    for path, n_nodes, n_edges in ((REAL_SCHEMA, 50, 14), (small, 3, 2)):
         print_schema_mappings(str(path), compact=True)
         lines = _lines(capsys.readouterr().out)
         assert f"📦 NODES ({n_nodes} total)" in lines

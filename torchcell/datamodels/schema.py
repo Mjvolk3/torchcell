@@ -12278,6 +12278,137 @@ class MrnaNumberFractionExperiment(Experiment, ModelStrict):
 
 
 # --------------------------------------------------------------------------- #
+# FITNESS CONTRAST BLOCK (issue #913). ADDITIVE: a new leaf under ``Phenotype``,
+# the sibling of ``EnvironmentResponsePhenotype``, with its own experiment pair.
+# Nothing above this block changes.
+# --------------------------------------------------------------------------- #
+class FitnessContrastPhenotype(Phenotype, ModelStrict):
+    """A released significance test of one gene's fitness between two culture arms.
+
+    Borchert 2023 releases, for every (gene, comparison sheet), a two-sample t test of
+    the gene's RB-TnSeq fitness in a condition arm against a reference arm: the
+    t-statistic, its p-value, the pFDR q-value and the monotonicity-adjusted q-value.
+    That quadruple tests a DIFFERENCE between two arms, so it is not a property of
+    either arm's per-culture fitness (``EnvironmentResponsePhenotype``), whose t and p
+    fields test one culture's response; filing it there would misfile the statistic on
+    one of its two arms. The released per-replicate fitness of each arm stays on the
+    sibling leaf; this leaf holds only what the release states about the contrast.
+
+    The record's ``environment`` is the condition arm and its reference's
+    ``environment_reference`` the reference arm. ``contrast_label`` is the source's own
+    name for the comparison (the sheet name), verbatim. Every statistic is stored as
+    released (a pFDR q-value can exceed 1 before the monotonicity adjustment, and 582
+    of Borchert's do), and each is value-or-gap: the reference of a contrast tests
+    nothing, so its fields are typed gaps rather than invented null-test values.
+    """
+
+    graph_level: str = "global"
+    label_name: str = "t_statistic"
+    label_statistic_name: str | None = None
+
+    measurement_type: str = Field(
+        description="what was compared and how, e.g. 'rbtnseq_gene_fitness_two_sample_t_test'"
+    )
+    test_name: str = Field(
+        description="the test the source names, verbatim (e.g. 'two-sample t test')"
+    )
+    contrast_label: str = Field(
+        description="the source's own label for the comparison, verbatim (a sheet name)"
+    )
+    t_statistic: float | None = Field(
+        description="the released test statistic, verbatim, signed as released. None "
+        "ONLY with a ProvenanceGap"
+    )
+    p_value: float | None = Field(
+        description="the released unadjusted p-value, a probability in [0, 1]. None "
+        "ONLY with a ProvenanceGap"
+    )
+    q_value: float | None = Field(
+        description="the released multiple-testing q-value, verbatim and not bounded "
+        "above (a pFDR q-value can exceed 1 before a monotonicity adjustment). None "
+        "ONLY with a ProvenanceGap"
+    )
+    q_value_method: str | None = Field(
+        default=None,
+        description="the correction behind q_value, e.g. 'positive_false_discovery_rate'; "
+        "required whenever q_value is stored",
+    )
+    q_value_adjusted: float | None = Field(
+        default=None,
+        description="a second, adjusted q-value the source also releases, verbatim; None "
+        "when the source releases no second q-value",
+    )
+    q_value_adjustment_method: str | None = Field(
+        default=None,
+        description="the adjustment behind q_value_adjusted, e.g. 'monotonicity'; "
+        "required whenever q_value_adjusted is stored and forbidden otherwise",
+    )
+    n_replicates_condition: int | None = Field(
+        default=None,
+        description="biological replicates of the condition arm the test is over",
+    )
+    n_replicates_reference: int | None = Field(
+        default=None,
+        description="biological replicates of the reference arm the test is over",
+    )
+
+    @model_validator(mode="after")
+    def _check_contrast(self) -> "FitnessContrastPhenotype":
+        """Value-or-gap statistics, finite values, a probability p, named corrections."""
+        _require_value_or_gap(self, ("t_statistic", "p_value", "q_value"))
+        for name in ("t_statistic", "p_value", "q_value", "q_value_adjusted"):
+            value = getattr(self, name)
+            if value is not None and not math.isfinite(value):
+                raise ValueError(f"{name} must be finite, got {value}")
+        if self.p_value is not None and not 0.0 <= self.p_value <= 1.0:
+            raise ValueError(f"p_value is {self.p_value}, not a probability in [0, 1]")
+        for name in ("q_value", "q_value_adjusted"):
+            value = getattr(self, name)
+            if value is not None and value < 0.0:
+                raise ValueError(f"{name} must be non-negative, got {value}")
+        if (self.q_value is not None) != (self.q_value_method is not None):
+            raise ValueError(
+                "q_value and q_value_method are set together or not at all"
+            )
+        if (self.q_value_adjusted is not None) != (
+            self.q_value_adjustment_method is not None
+        ):
+            raise ValueError(
+                "q_value_adjusted and q_value_adjustment_method are set together or not "
+                "at all"
+            )
+        for name in ("n_replicates_condition", "n_replicates_reference"):
+            value = getattr(self, name)
+            if value is not None and value < 1:
+                raise ValueError(f"{name} must be a positive integer, got {value}")
+        for name in ("measurement_type", "test_name", "contrast_label"):
+            if not getattr(self, name).strip():
+                raise ValueError(f"{name} cannot be blank")
+        return self
+
+
+class BacterialFitnessContrastExperimentReference(ExperimentReference, ModelStrict):
+    """The reference arm of a fitness contrast, assembly-pinned."""
+
+    experiment_reference_type: str = "bacterial_fitness_contrast"
+    genome_reference: AssemblyReferenceGenome
+    phenotype_reference: FitnessContrastPhenotype
+
+
+class BacterialFitnessContrastExperiment(Experiment, ModelStrict):
+    """One gene's fitness tested between a condition arm and a reference arm."""
+
+    experiment_type: str = "bacterial_fitness_contrast"
+    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
+    phenotype: FitnessContrastPhenotype
+
+
+# --------------------------------------------------------------------------- #
+# FITNESS CONTRAST BLOCK END (issue #913)
+# --------------------------------------------------------------------------- #
+
+
+# --------------------------------------------------------------------------- #
 # LIFE CYCLE BLOCK START (De Chiara 2022)
 # Progression through the sexual cycle and survival in stationary phase, read as the
 # percentage of a culture's cells in a state at a time after the culture was induced
@@ -12776,6 +12907,7 @@ PhenotypeType = (
     | BiosensorFluorescencePhenotype  # Zhang 2020 (#990)
     | BacterialMorphologyPhenotype  # issue #774
     | MrnaNumberFractionPhenotype  # issue #854
+    | FitnessContrastPhenotype  # issue #913
     | SingleCellExpressionPhenotype  # boocock2025
     | LifeCyclePhenotype  # De Chiara 2022
     # ADDITIVE (Puddu 2019 genome architecture)
@@ -12829,6 +12961,7 @@ ExperimentType = (
     | BacterialVisualScoreExperiment
     | BacterialMorphologyExperiment  # issue #774
     | MrnaNumberFractionExperiment  # issue #854
+    | BacterialFitnessContrastExperiment  # issue #913
     | SegregantExpressionExperiment  # boocock2025
     | LifeCycleExperiment  # De Chiara 2022
     | PseudobulkUmiCountExperiment  # jackson2020
@@ -12883,6 +13016,7 @@ ExperimentReferenceType = (
     | BacterialVisualScoreExperimentReference
     | BacterialMorphologyExperimentReference  # issue #774
     | MrnaNumberFractionExperimentReference  # issue #854
+    | BacterialFitnessContrastExperimentReference  # issue #913
     | SegregantExpressionExperimentReference  # boocock2025
     | LifeCycleExperimentReference  # De Chiara 2022
     | PseudobulkUmiCountExperimentReference  # jackson2020
@@ -12939,6 +13073,7 @@ EXPERIMENT_TYPE_MAP = {
     "bacterial_visual_score": BacterialVisualScoreExperiment,
     "bacterial_morphology": BacterialMorphologyExperiment,  # issue #774
     "mrna_number_fraction": MrnaNumberFractionExperiment,  # issue #854
+    "bacterial_fitness_contrast": BacterialFitnessContrastExperiment,  # issue #913
     "segregant_expression": SegregantExpressionExperiment,  # boocock2025
     "life_cycle": LifeCycleExperiment,  # De Chiara 2022
     "pseudobulk_umi_count": PseudobulkUmiCountExperiment,  # jackson2020
@@ -13004,6 +13139,9 @@ EXPERIMENT_REFERENCE_TYPE_MAP = {
     "bacterial_visual_score": BacterialVisualScoreExperimentReference,
     "bacterial_morphology": BacterialMorphologyExperimentReference,  # issue #774
     "mrna_number_fraction": MrnaNumberFractionExperimentReference,  # issue #854
+    "bacterial_fitness_contrast": (  # issue #913
+        BacterialFitnessContrastExperimentReference
+    ),
     "segregant_expression": SegregantExpressionExperimentReference,  # boocock2025
     "life_cycle": LifeCycleExperimentReference,  # De Chiara 2022
     "pseudobulk_umi_count": PseudobulkUmiCountExperimentReference,  # jackson2020

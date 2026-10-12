@@ -1,0 +1,321 @@
+{
+  "record_version": 1,
+  "slug": "fitness-contrast-phenotype",
+  "date": "2026-10-12",
+  "pr": null,
+  "author_kind": "agent",
+  "base_commit": "232e5d17882b668d27ccfe3bdb5e97dbcafd8a04",
+  "python_version": "3.13.0",
+  "symbols": [
+    {
+      "symbol": "BacterialFitnessContrastExperiment",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "6479ef2f4d3887a0803c64ba3104585531b487209a85ee12c6af90ee21cd4a10",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "BacterialFitnessContrastExperimentReference",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "0956a9100962dfbc0ee712e67af7c7e5f106e37120143e3af99bf163dee27a6c",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "EXPERIMENT_REFERENCE_TYPE_MAP",
+      "status": "modified",
+      "kinds": [
+        "enum_member_added"
+      ],
+      "fingerprint_before": "6328849fbe6e527f581f6aad633ebb1da11938d497ea2c7d898719f41387aa79",
+      "fingerprint_after": "a28cfcc21ed29628fbfd4cb707db246c66bb0fc610df23a7aeac9bab54a09d60",
+      "impact": "stale",
+      "reasons": [
+        "gained members [\"'bacterial_fitness_contrast': BacterialFitnessContrastExperimentReference\"]"
+      ]
+    },
+    {
+      "symbol": "EXPERIMENT_TYPE_MAP",
+      "status": "modified",
+      "kinds": [
+        "enum_member_added"
+      ],
+      "fingerprint_before": "b55a962ffabea8aa717febe5b1da5e9619018aced64bb5e799441c910d158ed7",
+      "fingerprint_after": "960b979bc782bacff7737bcd2622260f2db3b0f53b8878253a3e9cf4c065e37f",
+      "impact": "stale",
+      "reasons": [
+        "gained members [\"'bacterial_fitness_contrast': BacterialFitnessContrastExperiment\"]"
+      ]
+    },
+    {
+      "symbol": "ExperimentReferenceType",
+      "status": "modified",
+      "kinds": [
+        "enum_member_added"
+      ],
+      "fingerprint_before": "f1a60c21f4bb7caddbecf5a58f4ea0fe0e86a2ee1ccc7a72f76cd1b027c5ba21",
+      "fingerprint_after": "6da3401dc490134a3d0f63d3c3f4351a3aecb8273e32d41528fadc59c2194d07",
+      "impact": "stale",
+      "reasons": [
+        "gained members ['BacterialFitnessContrastExperimentReference']"
+      ]
+    },
+    {
+      "symbol": "ExperimentType",
+      "status": "modified",
+      "kinds": [
+        "enum_member_added"
+      ],
+      "fingerprint_before": "aecfd8a8a37c9d8efcb24084a9d2d854cc3f778e5bd6d2bc4268ace3e4887a59",
+      "fingerprint_after": "008db3fed3faeb5c749fd340351c4330d296838be9378acff2e1caf3cce52d94",
+      "impact": "stale",
+      "reasons": [
+        "gained members ['BacterialFitnessContrastExperiment']"
+      ]
+    },
+    {
+      "symbol": "FitnessContrastPhenotype",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "821586fbc20fc3e3d7774107bae6cd18fe79c906b0c831db8263bf1214df317a",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "PhenotypeType",
+      "status": "modified",
+      "kinds": [
+        "enum_member_added"
+      ],
+      "fingerprint_before": "7298b18961dec8093a260a78342ba008abc7f96975cd06c421347932974d5dfd",
+      "fingerprint_after": "c1c4b9b99c127ed2c7b8d0615b1327ae7078f231b7e2f2cb46cb9dd662a2aff3",
+      "impact": "stale",
+      "reasons": [
+        "gained members ['FitnessContrastPhenotype']"
+      ]
+    }
+  ],
+  "correctness_argument": "Borchert 2023 (#913) releases, for 64,853 (gene, comparison) rows over 13 comparison sheets of si1.xlsx (sha256 b80c6866...), a two-sample t test of a gene's RB-TnSeq fitness between a condition arm and a reference arm: 't-statistic', 'p-value', 'q-value' (pFDR) and 'adjusted_q-value' (monotonicity-adjusted), 259,412 values that no class could hold. Measured against #880's fields first, as the issue asks: EnvironmentResponsePhenotype carries a per-culture response with a t statistic, an unadjusted p-value and ONE adjusted p-value. A contrast record there would need environment_response set (its t-statistic validator requires the response it tests), and the release states no contrast value (only each arm's mean, from which a difference would be our arithmetic); it has no slot for a second q-value; and its t and p are documented as a test of ONE culture's response, so filing a two-arm test there changes what those fields mean (Rule 3, field_meaning). So a sibling leaf (Rule 6: a released quantity that differs in meaning from an existing field is a sibling leaf even on the same technology): FitnessContrastPhenotype under Phenotype, beside EnvironmentResponsePhenotype, which keeps holding each arm's per-culture fitness. Its own experiment pair, BacterialFitnessContrastExperiment / ...Reference (assembly-pinned), puts the condition arm in the record's environment and the reference arm in the reference's. Every statistic is value-or-gap (a reference arm tests nothing, so its statistics are typed gaps, never invented null values), stored verbatim: a pFDR q-value is not bounded above (582 released q-values exceed 1), p is a probability, a q-value names its correction. Additive: no served record serializes differently; the four bindings gain one member each.",
+  "measurement_type_decision": true,
+  "source_quotes": [
+    {
+      "value": "two-sample t test, pFDR q values",
+      "provenance": {
+        "source_uri": "paper.md",
+        "citation_key": "borchertRBTnSeqIdentifiesGenetic2023",
+        "sha256": "e156d3b2139add2feb8b3ffb1b319f9a7d369d6ee9b6454f67c38d33c924265a",
+        "method": null,
+        "page": null,
+        "retrieved": null
+      },
+      "quote": "Comparison of mean fitness values between enrichment and medium reference cultures $( \\mathbf { M 9 } + 2 0 \\mathbf { m M }$ glucose alone) was performed using a two-sample $t$ test, where the $p$ value was corrected for multiple testing via the positive false discovery rate (pFDR) method",
+      "note": null
+    },
+    {
+      "value": "monotonicity-adjusted pFDR q",
+      "provenance": {
+        "source_uri": "paper.md",
+        "citation_key": "borchertRBTnSeqIdentifiesGenetic2023",
+        "sha256": "e156d3b2139add2feb8b3ffb1b319f9a7d369d6ee9b6454f67c38d33c924265a",
+        "method": null,
+        "page": null,
+        "retrieved": null
+      },
+      "quote": "pFDR $q$ values were then adjusted for monotonicity (Yekutieli and Benjamini, 1999), and both unadjusted and adjusted $q$ values are reported.",
+      "note": null
+    }
+  ],
+  "alternatives_rejected": [
+    {
+      "alternative": "Store the contrast on EnvironmentResponsePhenotype with #880's p-value pair",
+      "why_rejected": "Needs a released contrast value it does not have, has one adjusted p-value for two released q-values, and redefines a per-culture test as a two-arm test (field_meaning)."
+    },
+    {
+      "alternative": "Attach the statistics to one of the two arms' per-culture records",
+      "why_rejected": "Misfiles a statistic of the difference on one arm (the original refusal in the Borchert 2023 note)."
+    },
+    {
+      "alternative": "Keep refusing the 259,412 values",
+      "why_rejected": "Owner rule 2026-10-12: every released value is stored."
+    }
+  ],
+  "served_release": "2026.10.06-4b293d34",
+  "affected_loaders": [
+    {
+      "loader": "torchcell/datasets/ecoli/caglar2017.py",
+      "dataset_classes": [
+        "RnaseqCaglar2017Dataset",
+        "ProteomeCaglar2017Dataset",
+        "ProteinFoldChangeCaglar2017Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ExperimentType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/gupta2024.py",
+      "dataset_classes": [
+        "ProteinTurnoverGupta2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ExperimentType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/ishii2007.py",
+      "dataset_classes": [
+        "_Ishii2007Dataset",
+        "MetabolomeIshii2007Dataset",
+        "ProteomeIshii2007Dataset",
+        "FluxIshii2007Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ExperimentType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/li2014.py",
+      "dataset_classes": [
+        "ProteinSynthesisRateLi2014Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ExperimentType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/schastnaya2021.py",
+      "dataset_classes": [
+        "MetabolomeSchastnaya2021Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ExperimentType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/borchert2023_contrast.py",
+      "dataset_classes": [
+        "FitnessContrastBorchert2023Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "BacterialFitnessContrastExperiment",
+        "BacterialFitnessContrastExperimentReference",
+        "ExperimentType",
+        "FitnessContrastPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/desiqueira2025.py",
+      "dataset_classes": [
+        "ProteomeDeSiqueira2025Dataset",
+        "ProteomePercentDeSiqueira2025Dataset",
+        "ProteomeLog10PercentDeSiqueira2025Dataset",
+        "IsoprenolTiterDeSiqueira2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ExperimentType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/lim2022.py",
+      "dataset_classes": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ExperimentType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/private_torchcell/volk2021_inhibitor_bioscreen.py",
+      "dataset_classes": [
+        "InhibitorBioscreenVolk2021Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ExperimentType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/dechiara2022.py",
+      "dataset_classes": [
+        "_DeChiara2022Dataset",
+        "_GrowthDeChiara2022Dataset",
+        "DoublingTimeDeChiara2022Dataset",
+        "CellYieldDeChiara2022Dataset",
+        "LifeCycleDeChiara2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EXPERIMENT_REFERENCE_TYPE_MAP",
+        "EXPERIMENT_TYPE_MAP"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/hoepfner2014.py",
+      "dataset_classes": [
+        "EnvChemgenHoepfner2014Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenHoepfner2014Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "ExperimentType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/piotrowski2017.py",
+      "dataset_classes": [
+        "EnvChemgenPiotrowski2017Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ExperimentType"
+      ]
+    }
+  ],
+  "served_datasets": [
+    "EnvChemgenHoepfner2014Dataset"
+  ],
+  "rebuild_scope": "full_kg_rebuild",
+  "owner_sign_off": {
+    "signed": false,
+    "quote": null,
+    "url": null
+  }
+}

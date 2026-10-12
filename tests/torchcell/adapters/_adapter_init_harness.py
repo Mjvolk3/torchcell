@@ -100,6 +100,7 @@ PHENOTYPE_METHOD: dict[type[Any], str] = {
     s.FluxPhenotype: "flux phenotype",
     s.BacterialMorphologyPhenotype: "bacterial morphology phenotype",
     s.MrnaNumberFractionPhenotype: "mrna number fraction phenotype",
+    s.FitnessContrastPhenotype: "fitness contrast phenotype",
     s.SingleCellExpressionPhenotype: "single cell expression phenotype",
     s.LifeCyclePhenotype: "life cycle phenotype",
     s.GenomeArchitecturePhenotype: "genome architecture phenotype",

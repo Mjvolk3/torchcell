@@ -1366,6 +1366,10 @@ NEW_CLASSES = {
         "mrna number fraction phenotype (chunked)",
         s.MrnaNumberFractionPhenotype,
     ),
+    "fitness contrast phenotype": (
+        "fitness contrast phenotype (chunked)",
+        s.FitnessContrastPhenotype,
+    ),
     "microarray expression score phenotype": (
         "microarray expression score phenotype (chunked)",
         s.MicroarrayExpressionScorePhenotype,
@@ -1470,6 +1474,10 @@ def test_the_new_methods_are_registered_and_the_served_edges_name_the_new_classe
         "mrna number fraction phenotype reference": (
             "_get_mrna_number_fraction_phenotype_reference_nodes"
         ),
+        "fitness contrast phenotype (chunked)": "_fitness_contrast_phenotype_node",
+        "fitness contrast phenotype reference": (
+            "_get_fitness_contrast_phenotype_reference_nodes"
+        ),
         "microarray expression score phenotype (chunked)": (
             "_microarray_expression_score_phenotype_node"
         ),
@@ -1504,7 +1512,7 @@ def test_the_new_methods_are_registered_and_the_served_edges_name_the_new_classe
     # expression leaf (#991) and the biosensor fluorescence leaf (#990) sit directly
     # after the promoter-activity class they are siblings of; #921's phosphosite
     # intensity phenotype sits beside the protein synthesis-rate leaf.
-    assert sources[-13:] == [
+    assert sources[-14:] == [
         "product titer phenotype",
         "protein turnover phenotype",
         "protein synthesis rate phenotype",
@@ -1518,6 +1526,7 @@ def test_the_new_methods_are_registered_and_the_served_edges_name_the_new_classe
         "single cell expression phenotype",
         "life cycle phenotype",
         "genome architecture phenotype",
+        "fitness contrast phenotype",
     ]
 
 

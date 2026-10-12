@@ -53,7 +53,7 @@ from Bio import Entrez
 from pydantic import BaseModel, ConfigDict
 from tqdm import tqdm
 
-from torchcell.data import ExperimentDataset, file_sha256, post_process
+from torchcell.data import ExperimentDataset, Organism, file_sha256, post_process
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
     Concentration,
@@ -520,6 +520,8 @@ def get_publication_info(pubmed_id: str) -> dict[str, str | None] | None:
 @register_dataset
 class GeneEssentialitySgdDataset(ExperimentDataset):
     """Gene essentiality experiments built from SGD inviable null phenotypes."""
+
+    organism = Organism.scerevisiae
 
     def __init__(
         self,

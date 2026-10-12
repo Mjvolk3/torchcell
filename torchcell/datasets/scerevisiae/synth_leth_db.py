@@ -37,6 +37,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     post_process,
     verify_raw_files,
     verify_sha256,
@@ -569,6 +570,8 @@ def _preprocess(genome: SCerevisiaeGenome | None, df: pd.DataFrame) -> pd.DataFr
 class SynthLethalityYeastSynthLethDbDataset(ExperimentDataset):
     """Yeast synthetic lethality gene-pair experiments from SynLethDB."""
 
+    organism = Organism.scerevisiae
+
     def __init__(
         self,
         root: str = "data/torchcell/syn_leth_db_yeast",
@@ -701,6 +704,8 @@ class SynthLethalityYeastSynthLethDbDataset(ExperimentDataset):
 @register_dataset
 class SynthRescueYeastSynthLethDbDataset(ExperimentDataset):
     """Yeast synthetic rescue gene-pair experiments from SynLethDB."""
+
+    organism = Organism.scerevisiae
 
     def __init__(
         self,

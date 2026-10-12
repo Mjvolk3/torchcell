@@ -206,3 +206,12 @@ validated once (193 us per record). The two superseded store copies were moved t
 - The rendered notes-tex schedule tables still show the old Hale row text (author, no
   parents); only the table script was corrected.
 - Incremental admission is not attempted: KG 4.0 is a full rebuild.
+
+## 2026.10.12 - Released gene_orf and gene_name stored verbatim; no resolver
+
+Owner rule of 2026-10-12, applied through the genome-gating sweep ([[database.genome-gating-sweep.2026.10.12]]: the `target_orf_is_not_a_current_genome_gene` rule, 0 records, and the resolver rewrite row) on branch `fix/genome-gate-reversals-yeast-2`.
+
+- `LINEAGE_COLUMNS` gains `gene_name`. Each `CrisprInterferencePerturbation` stores the lineage table's `gene_orf` as `systematic_gene_name` and its `gene_name` as `perturbed_gene_name`, both verbatim; for the 162,753 gene rows (of 2,923,436 in ATC1; the same ORFs in ATC2 and CON) whose `gene_name` cell is `NA`, the ORF stands in. Before, the name was the genome's canonical standard name and the ORF went through the shared resolver.
+- `orf_resolver`, the `smith2006.canonical_common_names` import and the `_resolvers` method are gone; the loader reads no genome. `genome` stays an optional constructor argument because `verify_build` (the runner's `verify_segregant_perturbation_dataset`) still passes `resolve_gene_name` to the shared record rules for the L4 containment row. `verify_segregant_perturbation_streaming` no longer takes `resolve_orf`: the L2 re-read compares the stored ORF with the released `gene_orf` cell byte for byte.
+- `preprocess/dropped_records.json` keeps one rule, `control_guide_targets_no_gene` (106,796 records: ATC1 36,064, ATC2 35,257, CON 35,475), the source's own control guides with `NA` under the ORF column.
+- Record count unchanged: 8,692,635. Every record's `perturbed_gene_name` can change (released name instead of the genome's), so the store is rebuilt under slurm with `--retire-existing --verify` from a frozen snapshot of the branch cherry-picked onto PR #1069; the L0-L4 table is appended below when the job finishes (the previous build took 1 h 40 min).

@@ -2907,7 +2907,6 @@ def test_run_bacterial_protein_abundance_names_its_own_l4_over_the_union(
     assert _names(report) == [
         "structural",
         "protein_and_perturbed_locus_containment_assembly",
-        "released_protein_keys_not_a_locus_reported",
     ]
     containment = _result(report, "protein_and_perturbed_locus_containment_assembly")
     assert containment["details"]["n_measured"] == 3
@@ -3891,49 +3890,3 @@ def test_the_graded_essentiality_family_holds_the_two_graded_stores() -> None:
         "graded_gene_essentiality_goodall2018",
         "graded_gene_essentiality_royet2025",
     } <= runners.bacterial_registry_names()
-
-
-def test_only_the_abundance_family_adds_the_reported_released_key_row() -> None:
-    """#904: the released-key row rides on the protein-abundance family alone."""
-    assert [f.reported for f in runners._bacterial_families()] == [
-        None,
-        runners.released_protein_keys_reported,
-        None,
-        None,
-    ]
-
-
-def _abundance_record(keys: dict[str, float]) -> dict[str, Any]:
-    return {
-        "experiment": {
-            "genotype": {"perturbations": []},
-            "phenotype": {"protein_abundance": keys},
-        },
-        "reference": {"genome_reference": {"species": "Escherichia coli"}},
-    }
-
-
-def test_a_released_protein_key_is_reported_and_kept_out_of_the_gated_set() -> None:
-    """A key the source released for a protein with no asserted locus (Brunk's DHSB)
-    claims no locus, so the gated containment never sees it and the reported row
-    lists it while passing.
-    """
-    records = [
-        _abundance_record({"b0001": 1.0, "DHSB": 2.0}),
-        _abundance_record({"b0002": 1.0, "PFLB": 3.0, "DHSB": 4.0}),
-    ]
-    assert runners.bacterial_protein_locus_set(records) == {"b0001", "b0002"}
-    row = runners.released_protein_keys_reported(records)
-    assert row.passed is True
-    assert int(row.level) == 4
-    assert row.name == "released_protein_keys_not_a_locus_reported"
-    assert row.details == {"n_released_keys": 2, "released_keys": ["DHSB", "PFLB"]}
-    assert row.message.startswith("REPORTED: 2 protein keys")
-
-
-def test_the_reported_row_is_empty_when_every_key_is_a_locus() -> None:
-    row = runners.released_protein_keys_reported(
-        [_abundance_record({"PP_0001": 1.0, "ECB_00001": 2.0})]
-    )
-    assert row.passed is True
-    assert row.details == {"n_released_keys": 0, "released_keys": []}

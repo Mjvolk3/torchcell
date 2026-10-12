@@ -41,7 +41,6 @@ import json
 import os
 import os.path as osp
 import pickle
-import re
 from collections import Counter
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
@@ -50,10 +49,7 @@ from typing import Any, NamedTuple, cast
 import lmdb
 
 from torchcell.data.experiment_dataset import resolve_interned
-from torchcell.datamodels.schema import (
-    BACTERIAL_ASSEMBLY_SETS,
-    BACTERIAL_LOCUS_TAG_PATTERN,
-)
+from torchcell.datamodels.schema import BACTERIAL_ASSEMBLY_SETS
 from torchcell.sequence.genome.bacterial import (
     BacterialAssembly,
     RefSeqPrimaryAssembly,
@@ -4743,62 +4739,19 @@ def host_perturbed_gene_set(records: Sequence[Mapping[str, Any]]) -> set[str]:
     return genes
 
 
-_LOCUS_TAG_RE = re.compile(BACTERIAL_LOCUS_TAG_PATTERN)
-
-
-def _is_locus_tag(key: str) -> bool:
-    """True when ``key`` has the form of a host locus tag (a claim of a locus)."""
-    return _LOCUS_TAG_RE.match(key) is not None
-
-
 def bacterial_protein_locus_set(records: Sequence[Mapping[str, Any]]) -> set[str]:
     """The host loci a protein-abundance dataset names: its quantified proteins and its
     perturbed genes.
 
     Both are identifiers the records claim are loci of their own pinned assembly, so
-    containment over their union is the gated L4 question for this family and is never
+    containment over their union is the whole L4 question for this family and is never
     empty (a panel whose arms are environmental, like Caglar's, perturbs no gene but
-    quantifies thousands of proteins). A protein key that is not locus-tag-shaped is a
-    protein id the authors released for a protein no single locus is asserted for
-    (Brunk 2016's DHSB, HYCG, PFLB; #904): it claims no locus, so it is reported by
-    :func:`released_protein_keys_reported` rather than gated here.
+    quantifies thousands of proteins).
     """
     measured = host_perturbed_gene_set(records)
     for record in records:
-        measured |= {
-            key
-            for key in record["experiment"]["phenotype"]["protein_abundance"]
-            if _is_locus_tag(key)
-        }
+        measured |= set(record["experiment"]["phenotype"]["protein_abundance"])
     return measured
-
-
-def released_protein_keys_reported(records: Sequence[Mapping[str, Any]]) -> LevelResult:
-    """L4 REPORTED, never gated: protein keys stored as released, not as a locus.
-
-    The owner's rule of 2026-10-12: the genome is a separate layer and a genome-
-    reference rule reports what it finds without failing a store. These keys join a
-    gene only at modeling time, so the row always passes and lists them.
-    """
-    released = sorted(
-        {
-            key
-            for record in records
-            for key in record["experiment"]["phenotype"]["protein_abundance"]
-            if not _is_locus_tag(key)
-        }
-    )
-    return LevelResult(
-        level=Level.L4,
-        name="released_protein_keys_not_a_locus_reported",
-        passed=True,
-        message=(
-            f"REPORTED: {len(released)} protein keys are stored as the source released "
-            "them and name no locus of the pinned assembly"
-            + (f": {', '.join(released[:20])}" if released else "")
-        ),
-        details={"n_released_keys": len(released), "released_keys": released},
-    )
 
 
 def bacterial_protein_fold_change_locus_set(
@@ -4823,11 +4776,8 @@ def _verify_one_bacterial(
     *,
     measured_set: Callable[[Sequence[Mapping[str, Any]]], set[str]],
     l4_name: str,
-    reported: Callable[[Sequence[Mapping[str, Any]]], LevelResult] | None = None,
 ) -> VerificationReport:
     """One bioproduction dataset: its own gate plus the family L4; writes its report.
-
-    ``reported`` adds the family's non-gating L4 row, when it has one.
 
     ``min_containment`` is 1.0 and not a floor with headroom: every identifier these
     records carry was written by a loader that resolved it against the pinned assembly,
@@ -4842,8 +4792,6 @@ def _verify_one_bacterial(
             universe, assembly_sets, measured_set(records), min_containment=1.0
         ).model_copy(update={"name": l4_name})
     )
-    if reported is not None:
-        report.add(reported(records))
     out = _write_report(report, osp.join(abs_root, "preprocess"))
     print(report.summary())
     print(f"  -> verified LMDB: {osp.join(abs_root, 'processed', 'lmdb')}")
@@ -4857,7 +4805,6 @@ class _BacterialFamily(NamedTuple):
     datasets: Mapping[str, Mapping[str, Any]]
     measured_set: Callable[[Sequence[Mapping[str, Any]]], set[str]]
     l4_name: str
-    reported: Callable[[Sequence[Mapping[str, Any]]], LevelResult] | None = None
 
 
 def _bacterial_families() -> tuple[_BacterialFamily, ...]:
@@ -4876,7 +4823,6 @@ def _bacterial_families() -> tuple[_BacterialFamily, ...]:
             BACTERIAL_PROTEIN_ABUNDANCE_DATASETS,
             bacterial_protein_locus_set,
             "protein_and_perturbed_locus_containment_assembly",
-            released_protein_keys_reported,
         ),
         _BacterialFamily(
             BACTERIAL_METABOLITE_DATASETS,
@@ -4918,7 +4864,6 @@ def verify_bacterial_dataset(name: str, data_root: str) -> VerificationReport:
                 data_root,
                 measured_set=family.measured_set,
                 l4_name=family.l4_name,
-                reported=family.reported,
             )
     raise KeyError(f"no bioproduction registry holds {name!r}")
 
@@ -4929,17 +4874,12 @@ def _run_bacterial_family(
     *,
     measured_set: Callable[[Sequence[Mapping[str, Any]]], set[str]],
     l4_name: str,
-    reported: Callable[[Sequence[Mapping[str, Any]]], LevelResult] | None = None,
 ) -> bool:
     """Verify one bioproduction family, dataset by dataset. True if all pass."""
     all_passed = True
     for spec in datasets.values():
         report = _verify_one_bacterial(
-            spec,
-            data_root,
-            measured_set=measured_set,
-            l4_name=l4_name,
-            reported=reported,
+            spec, data_root, measured_set=measured_set, l4_name=l4_name
         )
         all_passed = all_passed and report.passed
     return all_passed
@@ -4962,7 +4902,6 @@ def run_bacterial_protein_abundance(data_root: str) -> bool:
         data_root,
         measured_set=bacterial_protein_locus_set,
         l4_name="protein_and_perturbed_locus_containment_assembly",
-        reported=released_protein_keys_reported,
     )
 
 

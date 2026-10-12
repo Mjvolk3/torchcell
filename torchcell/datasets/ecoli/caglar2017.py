@@ -3505,6 +3505,13 @@ class ProteinFoldChangeCaglar2017Dataset(ExperimentDataset):
     one record per (growth phase, test level) whose test condition Table S1 states at a
     single dose. The gene-level arm, the doubling-time control model and the two
     pooled-dose salt levels are refused in ``build_accounting.json``.
+
+    All 8 records are kept as released (owner decision on #914, 2026-10-12: "the data
+    is the data"): each one's base group mixes Caglar's samples with Houser 2015's
+    glucose time course (15 of 20 exponential, 6 of 11 stationary), which is context
+    for a reader, recorded in the dataset note and the per-group ledger
+    (``fold_change_records.json``), and never a field on the record or a reason to
+    refuse it.
     """
 
     organism = Organism.ecoli

@@ -322,6 +322,72 @@ def round4_arms() -> list[dict[str, object]]:
     ]
 
 
+def round5_arms() -> list[dict[str, object]]:
+    """Round 5, for Delta: what rounds 3 and 4 said to run next.
+
+    Three readings decide it. The same config at the same seed differs between
+    machines by up to 0.23 and the fold seed swings the single-source arm from 0.18 to
+    0.43, so any number the paper reports has to be an ensemble over seeds AND over
+    partitions; the public screens are barely learned (held-out compound 0.03 to 0.10
+    against the chemistry learners' 0.13 to 0.19) under every encoding, weight and
+    capacity tried at one seed; and the Vanacloig held-out loss bottoms near epoch 35
+    while the training loss keeps falling, which no arm has yet answered with
+    regularization, since the width, dropout, learning rate and weight decay were taken
+    from 038 round 10 and never moved here. Four blocks:
+
+    1. the partition ensemble: seeds 1 and 2 of the three source-set arms on fold seeds
+       1 and 2 (seed 0 ran in round 3), so the data-combining comparison is six seeds
+       on fold seed 0 and three on each of the other two;
+    2. a regularization grid on the single-source arm at three seeds: dropout 0.4,
+       weight decay 1e-3, both, learning rate halved and doubled, and a narrower model;
+    3. the selection protocol: eight validation compounds instead of four, and the
+       round-1 length with last-step selection under the held-out fit, which separates
+       the selector from the length;
+    4. the auxiliary sources weighted up (3.0) with and without the larger condition
+       batch, at three seeds on the two-source arm, which is the one direction the
+       per-source held-out scores have not been tested in.
+    """
+    out: list[dict[str, object]] = []
+    for sources in ("van", "vanhop", "vanhophet"):
+        for fold_seed in (1, 2):
+            out.append(
+                arm(
+                    f"{sources}_e150_fs{fold_seed}",
+                    sources,
+                    150,
+                    fold_seed=fold_seed,
+                    name_suffix="_s12",
+                    seeds=[1, 2],
+                )
+            )
+    three = [0, 1, 2]
+    for name, overrides in (
+        ("van_e150_do0p4", {"dropout": 0.4}),
+        ("van_e150_wd1e3", {"weight_decay": 1e-3}),
+        ("van_e150_do0p4_wd1e3", {"dropout": 0.4, "weight_decay": 1e-3}),
+        ("van_e150_lr5e4", {"lr": 5e-4}),
+        ("van_e150_lr2e3", {"lr": 2e-3}),
+        ("van_e150_dim32", {"dim": 32, "hidden": 128}),
+        ("van_e150_nval8", {"n_val": 8}),
+        ("van_e50_last", {"select": "last"}),
+    ):
+        out.append(
+            arm(name, "van", 150 if "e150" in name else 50, seeds=three, **overrides)
+        )
+    out.append(arm("vanhop_e150_aw3", "vanhop", 150, seeds=three, aux_weight=3.0))
+    out.append(
+        arm(
+            "vanhop_e150_aw3_cb96",
+            "vanhop",
+            150,
+            seeds=three,
+            aux_weight=3.0,
+            cond_batch=96,
+        )
+    )
+    return out
+
+
 def configs(spec: dict[str, object], folds: list[int]) -> list[dict[str, object]]:
     """One config per fold of ``spec``."""
     out = []
@@ -384,18 +450,20 @@ def main() -> None:
         "--wave",
         type=int,
         default=1,
-        choices=(1, 2, 3),
+        choices=(1, 2, 3, 4),
         help=(
             "1 writes the r3_* screen, 2 the r3w2_* second wave, 3 the r4_* seed"
-            " ensemble (see the module doc and round4_arms)"
+            " ensemble, 4 the r5_* Delta round (see round4_arms and round5_arms)"
         ),
     )
     args = parser.parse_args()
     os.makedirs(args.out_dir, exist_ok=True)
     os.makedirs(RESULTS, exist_ok=True)
-    prefix = {1: "r3", 2: "r3w2", 3: "r4"}[args.wave]
-    specs = {1: arms, 2: wave2_arms, 3: round4_arms}[args.wave]()
-    label = {1: "ROUND 3 WAVE 1", 2: "ROUND 3 WAVE 2", 3: "ROUND 4"}[args.wave]
+    prefix = {1: "r3", 2: "r3w2", 3: "r4", 4: "r5"}[args.wave]
+    specs = {1: arms, 2: wave2_arms, 3: round4_arms, 4: round5_arms}[args.wave]()
+    label = {1: "ROUND 3 WAVE 1", 2: "ROUND 3 WAVE 2", 3: "ROUND 4", 4: "ROUND 5"}[
+        args.wave
+    ]
 
     rows, lines = [], []
     for spec in specs:

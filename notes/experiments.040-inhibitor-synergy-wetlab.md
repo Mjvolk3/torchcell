@@ -980,3 +980,35 @@ reading that follows is a paired difference over 30 runs per arm, which at a see
 of 0.05 resolves 0.03.
 
 https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/runs/2myelt8n
+
+## 2026.10.12 - Round 5 on Delta: power over partitions, regularization, the selector, and the auxiliary weight
+
+Delta ran round 3 in ten hours and wave 2 in six, so the account can carry another round
+before round 4 finishes here. Written by `scripts/r3_sweep.py --wave 4` as `r5_*`, 26
+single-GPU jobs, 48 configs, no dependencies, 195 estimated A40 hours, submitted on
+`bfjt-delta-gpu` at 04:50 as 22829316 to 22829341. Four blocks, each the next question
+the readings of the day before pose:
+
+- **The partition ensemble.** Seeds 1 and 2 of the three source-set arms on fold seeds 1
+  and 2 (seed 0 ran in round 3; the three-source seed 0 is in wave 2). With rounds 3 and
+  4 that gives six seeds on fold seed 0 and three on each of the other two, so the
+  data-combining comparison can be reported over partitions, which the fold-seed swing
+  of 0.18 to 0.43 says it must be. Twelve jobs.
+- **Regularization on the single-source arm, three seeds.** The Vanacloig held-out loss
+  bottoms near epoch 35 while the training loss keeps falling, and the width, dropout,
+  learning rate and weight decay were taken from 038 round 10 and never moved here:
+  dropout 0.4, weight decay 1e-3, both, learning rate halved and doubled, and a model of
+  width 32. Six jobs.
+- **The selector.** Eight validation compounds instead of four, and the round-1 length
+  with last-step selection under the held-out fit, which separates the selector's cost
+  from the length's. Two jobs.
+- **The auxiliary weight.** The public screens are barely learned under every encoding,
+  weight and capacity tried, and the one direction untried is weighting them UP:
+  auxiliary weight 3.0 on the two-source arm, with and without the 96-condition batch,
+  three seeds. Six jobs.
+
+Every arm that already has a copy on GilaHyper is left out; `r3_readout.py` reads the
+Delta tables once they are pulled. The overview of every scored arm so far, both machines,
+is `scripts/r3_plots.py` ([[experiments.040-inhibitor-synergy-wetlab.scripts.r3_plots]]).
+
+![](./assets/images/040-inhibitor-synergy-wetlab/r3_arms_overview_2026-10-12-04-51-32.svg)

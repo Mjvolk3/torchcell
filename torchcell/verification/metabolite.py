@@ -92,8 +92,15 @@ def _l1_orf_uniqueness(
     *,
     per_protocol: bool = False,
     per_environment: bool = False,
+    allow_duplicate_strains: bool = False,
 ) -> LevelResult:
     """L1: exactly one record per STRAIN (genotype signature of deleted ORFs).
+
+    With ``allow_duplicate_strains`` the rule becomes a FINDING: a release that carries
+    several rows of one strain with no plate, well or clone key (Cooper 2010's 47
+    replicate rows) stores every row as a record, and the collision count is reported
+    without failing the level, because the data is the data and no released row is
+    reduced to another.
 
     With ``per_protocol`` the key is (strain, measurement_type): one record per strain
     per declared protocol.
@@ -121,16 +128,25 @@ def _l1_orf_uniqueness(
     elif per_environment:
         unit = "(strain, environment) pairs"
     dup_unit = "deletion sets" if unit.endswith("sets)") else unit
+    if not dups:
+        message = f"{len(seen)} unique {unit}, one record each"
+    elif allow_duplicate_strains:
+        message = (
+            f"{len(dups)} {dup_unit} appear in multiple records (released replicate "
+            "rows with no strain key; reported, not refused)"
+        )
+    else:
+        message = f"{len(dups)} {dup_unit} appear in multiple records"
     return LevelResult(
         level=Level.L1,
         name="genotype_uniqueness",
-        passed=not dups,
-        message=(
-            f"{len(seen)} unique {unit}, one record each"
-            if not dups
-            else f"{len(dups)} {dup_unit} appear in multiple records"
-        ),
-        details={"n_strains": len(seen), "n_duplicated": len(dups)},
+        passed=allow_duplicate_strains or not dups,
+        message=message,
+        details={
+            "n_strains": len(seen),
+            "n_duplicated": len(dups),
+            "n_duplicate_records": sum(n - 1 for n in dups.values()),
+        },
     )
 
 
@@ -255,6 +271,7 @@ def verify_metabolite_dataset(
     reference_centered: bool = True,
     protocol_measurement_types: frozenset[str] | None = None,
     environment_keyed: bool = False,
+    allow_duplicate_strains: bool = False,
 ) -> VerificationReport:
     """Run the L0-L3 record-level gate for a metabolite dataset.
 
@@ -273,6 +290,10 @@ def verify_metabolite_dataset(
     (Ishii 2007's wild type at four chemostat dilution rates). L1 uniqueness then keys on
     (strain, environment).
 
+    ``allow_duplicate_strains`` (default False): set for a release whose rows of one
+    strain carry no key that tells them apart (Cooper 2010's replicate rows); every row
+    is a record and L1 uniqueness reports the collisions as a finding.
+
     L4 (cross-source gene overlap with the deletion collection) is asserted by the
     caller across datasets.
     """
@@ -290,6 +311,7 @@ def verify_metabolite_dataset(
             records,
             per_protocol=protocol_measurement_types is not None,
             per_environment=environment_keyed,
+            allow_duplicate_strains=allow_duplicate_strains,
         )
     )
 

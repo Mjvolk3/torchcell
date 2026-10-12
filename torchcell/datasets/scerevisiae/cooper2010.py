@@ -59,37 +59,34 @@ membership counts collected traces rather than traces that passed the 0.35 templ
 correlation cut), so they are not consumed. ``metabolite_level_se`` is a typed
 ``ProvenanceGap`` on every phenotype.
 
-RETENTION RULES (every count written to ``preprocess/dropped_records.json``):
+RETENTION RULES (every count written to ``preprocess/dropped_records.json``). The data is
+the data (owner rule, 2026-10-12): every Table 4 row is a record under the identifier the
+authors released, and no genome, annotation or other store is consulted at load time.
 
 - Identifier normalization: five cells are malformed by whitespace, case or a misplaced
   suffix (``YJL038C `` , ``YLR228 C``, ``YML009c``, ``YMR062 C``, ``YML048WA-``); they
-  are normalized (whitespace removed, upper-cased, trailing ``WA-`` -> ``W-A``) BEFORE
-  the resolver, and every normalization is recorded with the verbatim cell.
-- Resolver retention (the shared ``SCerevisiaeGenome.resolve_gene_name``): CURRENT kept
-  as is; RENAMED kept under the current systematic name with the normalized source name
-  as ``perturbed_gene_name`` (a merged-ORF strain stays a distinct strain of that gene);
-  NON_GENE_FEATURE, RETIRED and AMBIGUOUS go to the ``dropped_orfs`` ledger.
-- Duplicate identifiers: 46 identifiers occur twice (92 rows), replicate strains of the
-  collection with different values. They are NOT averaged. The metabolite verifier's L1
-  ``genotype_uniqueness`` keys a record on ``(systematic_gene_name, perturbation_type,
-  perturbed_gene_name)`` and ``KanMxDeletionPerturbation`` carries no strain
-  discriminator, so a second row cannot be a distinct served record without a schema or
-  verifier change; the FIRST row in file order is kept and the second is written, with
-  all of its values, to the ``duplicate_strain_rows`` ledger. Re-admitting those rows is a
-  follow-up that needs a strain_id-aware L1 (as ``verification/fitness.py`` has).
+  are normalized (whitespace removed, upper-cased, trailing ``WA-`` -> ``W-A``) and every
+  normalization is recorded with the verbatim cell. The normalized identifier is both
+  ``systematic_gene_name`` and ``perturbed_gene_name`` of the record.
+- Released identifiers R64-4-1 does not carry as a gene (22 rows: 13 non-gene features
+  such as the pseudogene YCL074W, 9 retired names such as YCL006C) are stored under the
+  released name like every other row. Whether a released name is a current gene is a
+  question for the genome layer at modeling time, never for the loader.
+- Duplicate identifiers: 46 identifiers occur twice and one three times (94 rows), the
+  replicate strains of the collection with different values. Every row is a record; the
+  rows that share an identifier are listed in the ``duplicate_identifiers`` ledger. The
+  release carries no plate, well or clone key, so the records of one identifier differ
+  only in their values; the metabolite verifier reports the collisions as a finding
+  (``allow_duplicate_strains``) rather than refusing the store.
 - Non-deletion rows: a parent-strain (BY4742) row would go to ``excluded_non_deletion``
   (a wild type has no perturbation and cannot be a deletion record); Table 4 carries
   none. Tet-promoter (YSC1182) strains are essential-gene knockdowns under doxycycline,
   not deletions, and would be excluded the same way; Table 4 carries no canonical
   essential gene (CDC28, ACT1, TUB2, RPB1, FAS1, FAS2, GLC7, CMD1 and CDC42 are all
   absent), so no tet-promoter row is present and the exclusion count is 0.
-- SGD essentiality flag: the local ``gene_essentiality_sgd`` store is consulted and every
-  kept ORF it lists is written to the ``essentiality_flagged`` ledger and KEPT. The store
-  holds SGD "inviable" null-phenotype annotations, which include conditionally inviable
-  genes (the 21 hits are ATG1, ATG2, ATG3, ATG5, ATG7, ATG8, ATG9, ATG10, ATG12, ATG15,
-  ATG16, ATG17, ATG18, ERG24, HHT2, PLC1, RPS28A, SAC1, SPC72, VPS30, YMR185W, all viable
-  deletion-collection strains; the deletion-only Mulleder 2016 set carries 28 of the same
-  kind), so the flag is diagnostic, not an exclusion.
+- No essentiality flag: the earlier join against the local ``gene_essentiality_sgd``
+  store was a load-time cross-reference and is gone; the 21 ORFs it used to flag (ATG1,
+  ATG2, ..., YMR185W) are viable deletion-collection strains and are stored as released.
 
 ENVIRONMENT: ``COOPER_SC``, a loader-local ``dropout(SC, ...)`` medium (never a
 ``media.py`` edit, which would move the value surface and block incremental admission):
@@ -116,7 +113,6 @@ import json
 import logging
 import os
 import os.path as osp
-import pickle
 import re
 import shutil
 from collections.abc import Callable, Sequence
@@ -124,7 +120,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-import lmdb
 from pydantic import BaseModel, ConfigDict, Field
 
 from torchcell.data import (
@@ -135,7 +130,6 @@ from torchcell.data import (
     verify_raw_files,
     verify_sha256,
 )
-from torchcell.data.experiment_dataset import resolve_interned
 from torchcell.datamodels.media import SC, dropout
 from torchcell.datamodels.schema import (
     Environment,
@@ -160,7 +154,6 @@ from torchcell.literature.manifest import (
     RetrievalRecord,
     sha256_file,
 )
-from torchcell.sequence.genome.scerevisiae.s288c import GeneNameStatus
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import (
     ProvenanceGap,
@@ -274,39 +267,29 @@ PEAK_NOTES: dict[str, str] = {
     "Asp": "Fig. 4B 'Asp' = Fig. 1 peak 18",
 }
 
-#: Retention rule for a row's ORF: kept only when it resolves to a LIVE R64 gene.
-_KEPT_STATUSES = frozenset({GeneNameStatus.CURRENT, GeneNameStatus.RENAMED})
-
-ORF_RULE = (
-    "a row is kept only when its normalized 'Sysname' resolves through the shared "
-    "SCerevisiaeGenome.resolve_gene_name to CURRENT (stored as is) or RENAMED (stored "
-    "under the current systematic name, the normalized source name kept as "
-    "perturbed_gene_name so a merged-ORF strain stays distinct); a NON_GENE_FEATURE, a "
-    "RETIRED name or an AMBIGUOUS name drops the row with its status in the ledger"
+IDENTIFIER_RULE = (
+    "every row is a record under its normalized 'Sysname', stored verbatim as both "
+    "systematic_gene_name and perturbed_gene_name; no genome or annotation is consulted, "
+    "so a released name R64 carries as a non-gene feature or no longer carries at all is "
+    "stored like every other row (the genome layer decides at modeling time)"
 )
 NORMALIZATION_RULE = (
     "the 'Sysname' cell has all whitespace removed and is upper-cased, and a trailing "
-    "'WA-' is rewritten 'W-A' (YML048WA- -> YML048W-A), before the resolver; every "
-    "changed cell is recorded verbatim"
+    "'WA-' is rewritten 'W-A' (YML048WA- -> YML048W-A); every changed cell is recorded "
+    "verbatim"
 )
 DUPLICATE_RULE = (
     "an identifier occurring on more than one row (replicate strains of the collection, "
-    "different values) keeps its FIRST row in file order as the served record; later "
-    "rows are written to the duplicate_strain_rows ledger with all their values, never "
-    "averaged, because the metabolite verifier keys L1 uniqueness on the deletion set "
-    "and KanMxDeletionPerturbation carries no strain discriminator"
+    "different values) is a record on every row, never averaged and never reduced to its "
+    "first row; the rows sharing an identifier are listed in duplicate_identifiers, and "
+    "the metabolite verifier reports their genotype collisions as a finding because the "
+    "release carries no plate, well or clone key that tells the strains apart"
 )
 EXCLUSION_RULE = (
     "a row is excluded when its identifier or NAME names the parent strain (BY4742, WT, "
     "wild type) rather than a deletion, or when it is a tet-promoter (YSC1182) "
     "essential-gene knockdown, which is not a deletion; Table 4 carries neither (no "
     "canonical essential gene is present), measured 0"
-)
-ESSENTIALITY_RULE = (
-    "every kept ORF listed in the local gene_essentiality_sgd store (SGD inviable null "
-    "phenotypes, which include conditionally inviable genes such as ATG1) is flagged and "
-    "KEPT; the flag is diagnostic because the store lists viable deletion-collection "
-    "strains and Table 4 holds no essential-gene knockdown"
 )
 REPLICATE_RULE = (
     "n_replicates = 1 for every key (conservative lower end): strains were screened in "
@@ -727,11 +710,12 @@ class TableRow(BaseModel):
 
 
 class KeptRow(TableRow):
-    """A retained row with what the resolver made of its identifier."""
+    """A retained row and the released identifier its record is keyed on."""
 
-    systematic_gene_name: str
-    perturbed_gene_name: str
-    status: str
+    systematic_gene_name: str = Field(
+        description="the normalized 'Sysname', as released"
+    )
+    perturbed_gene_name: str = Field(description="equal to systematic_gene_name")
 
 
 class IdentifierNormalization(BaseModel):
@@ -744,36 +728,14 @@ class IdentifierNormalization(BaseModel):
     normalized_name: str
 
 
-class DroppedOrf(BaseModel):
-    """One source identifier the retention rule removed, with what the resolver said."""
+class DuplicateIdentifier(BaseModel):
+    """One normalized identifier that heads more than one Table 4 row; every row is a record."""
 
     model_config = ConfigDict(extra="forbid")
 
-    row_index: int
-    source_name: str = Field(description="the 'Sysname' cell, verbatim")
     normalized_name: str
-    status: str = Field(description="GeneNameStatus the shared resolver returned")
-    resolved_to: str | None = Field(
-        default=None, description="what the resolver mapped it to, when anything"
-    )
-    feature_type: str | None = Field(
-        default=None, description="GFF feature type for a NON_GENE_FEATURE"
-    )
-    n_values: int = Field(description="present peak values lost with this row")
-
-
-class DuplicateStrainRow(BaseModel):
-    """A row whose identifier already has a served record, with all of its values."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    row_index: int
-    source_name: str
-    normalized_name: str
-    systematic_gene_name: str
-    name_cell: str
-    kept_row_index: int = Field(description="the served row of the same identifier")
-    levels: dict[str, float]
+    row_indices: list[int] = Field(description="0-based data rows, in file order")
+    name_cells: list[str] = Field(description="the 'NAME' cell of each row, verbatim")
 
 
 class ExcludedRow(BaseModel):
@@ -788,47 +750,32 @@ class ExcludedRow(BaseModel):
     levels: dict[str, float]
 
 
-class EssentialityFlag(BaseModel):
-    """A kept ORF the SGD essentiality store lists (diagnostic, not an exclusion)."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    row_index: int
-    systematic_gene_name: str
-    name_cell: str
-
-
 class BuildLedger(BaseModel):
     """The build's retention accounting: the rules, and exactly what they did."""
 
     model_config = ConfigDict(extra="forbid")
 
     dataset: str
-    orf_rule: str
+    identifier_rule: str
     normalization_rule: str
     duplicate_rule: str
     exclusion_rule: str
-    essentiality_rule: str
     replicate_rule: str
     legend_contradiction: str
     n_source_rows: int
     n_kept: int
-    n_dropped_orfs: int
-    n_renamed: int
     n_normalized: int
-    n_duplicate_rows: int
+    n_duplicate_identifiers: int = Field(
+        description="identifiers heading more than one row; all of their rows are records"
+    )
+    n_duplicate_rows: int = Field(
+        description="rows beyond the first of each duplicate identifier (all kept)"
+    )
     n_excluded_non_deletion: int
-    n_essentiality_flagged: int
     n_values_kept: int
     normalizations: list[IdentifierNormalization]
-    dropped_orfs: list[DroppedOrf]
-    renamed_orfs: dict[str, str] = Field(
-        description="normalized source name -> current systematic name for every RENAMED "
-        "row kept; the source name stays on the record as perturbed_gene_name"
-    )
-    duplicate_strain_rows: list[DuplicateStrainRow]
+    duplicate_identifiers: list[DuplicateIdentifier]
     excluded_non_deletion: list[ExcludedRow]
-    essentiality_flagged: list[EssentialityFlag]
     created_at: str
 
 
@@ -884,60 +831,19 @@ def read_table4(path: str | Path) -> list[TableRow]:
     return rows
 
 
-def load_sgd_essential_genes(data_root: str) -> frozenset[str]:
-    """Systematic names whose stored SGD essentiality phenotype is ``is_essential=True``.
-
-    Read from the dev-tree ``gene_essentiality_sgd`` LMDB (SGD inviable null phenotypes).
-    The store must exist: the flag is measured against it, never assumed.
-    """
-    root = osp.join(data_root, "data/torchcell/gene_essentiality_sgd")
-    lmdb_dir = osp.join(root, "processed", "lmdb")
-    if not osp.isdir(lmdb_dir):
-        raise FileNotFoundError(
-            f"{lmdb_dir} is absent; build GeneEssentialitySgdDataset first, the "
-            "essentiality flag is measured against it"
-        )
-    interned: dict[str, Any] = {}
-    interned_dir = osp.join(root, "processed", "interned")
-    if osp.isdir(interned_dir):
-        ienv = lmdb.open(interned_dir, readonly=True, lock=False)
-        with ienv.begin() as itxn:
-            for key, value in itxn.cursor():
-                interned[key.decode()] = pickle.loads(value)
-        ienv.close()
-    essential: set[str] = set()
-    env = lmdb.open(lmdb_dir, readonly=True, lock=False)
-    with env.begin() as txn:
-        for _, value in txn.cursor():
-            record = resolve_interned(pickle.loads(value), interned)
-            if record["experiment"]["phenotype"]["is_essential"] is not True:
-                continue
-            for perturbation in record["experiment"]["genotype"]["perturbations"]:
-                essential.add(perturbation["systematic_gene_name"])
-    env.close()
-    return frozenset(essential)
-
-
 def retain_rows(
-    rows: Sequence[TableRow],
-    resolve: Callable[[str], Any],
-    essential_genes: frozenset[str],
-    *,
-    dataset_name: str,
+    rows: Sequence[TableRow], *, dataset_name: str
 ) -> tuple[list[KeptRow], BuildLedger]:
-    """Apply every retention rule in order and return the kept rows plus the ledger.
+    """Apply the retention rules in order and return the kept rows plus the ledger.
 
-    Order per row: parent-strain exclusion, resolver retention (``ORF_RULE``), duplicate
-    identifier (``DUPLICATE_RULE``), essentiality flag (``ESSENTIALITY_RULE``, kept).
+    Order per row: parent-strain exclusion, then the row is a record under its normalized
+    released identifier (``IDENTIFIER_RULE``); rows sharing an identifier are all kept
+    and listed (``DUPLICATE_RULE``). Nothing here reads a genome or another store.
     """
     kept: list[KeptRow] = []
     normalizations: list[IdentifierNormalization] = []
-    dropped: list[DroppedOrf] = []
-    renamed: dict[str, str] = {}
-    duplicates: list[DuplicateStrainRow] = []
     excluded: list[ExcludedRow] = []
-    flagged: list[EssentialityFlag] = []
-    served: dict[tuple[str, str], int] = {}
+    rows_of: dict[str, list[TableRow]] = {}
     for row in rows:
         if row.source_name != row.normalized_name:
             normalizations.append(
@@ -958,78 +864,41 @@ def retain_rows(
                 )
             )
             continue
-        resolution = resolve(row.normalized_name)
-        orf = resolution.systematic_name
-        if resolution.status not in _KEPT_STATUSES or orf is None:
-            dropped.append(
-                DroppedOrf(
-                    row_index=row.row_index,
-                    source_name=row.source_name,
-                    normalized_name=row.normalized_name,
-                    status=str(resolution.status.value),
-                    resolved_to=orf,
-                    feature_type=resolution.feature_type,
-                    n_values=len(row.levels),
-                )
-            )
-            continue
-        if resolution.status == GeneNameStatus.RENAMED:
-            renamed[row.normalized_name] = orf
-        key = (orf, row.normalized_name)
-        if key in served:
-            duplicates.append(
-                DuplicateStrainRow(
-                    row_index=row.row_index,
-                    source_name=row.source_name,
-                    normalized_name=row.normalized_name,
-                    systematic_gene_name=orf,
-                    name_cell=row.name_cell,
-                    kept_row_index=served[key],
-                    levels=row.levels,
-                )
-            )
-            continue
-        served[key] = row.row_index
-        if orf in essential_genes:
-            flagged.append(
-                EssentialityFlag(
-                    row_index=row.row_index,
-                    systematic_gene_name=orf,
-                    name_cell=row.name_cell,
-                )
-            )
+        rows_of.setdefault(row.normalized_name, []).append(row)
         kept.append(
             KeptRow(
                 **row.model_dump(),
-                systematic_gene_name=orf,
+                systematic_gene_name=row.normalized_name,
                 perturbed_gene_name=row.normalized_name,
-                status=str(resolution.status.value),
             )
         )
+    duplicates = [
+        DuplicateIdentifier(
+            normalized_name=name,
+            row_indices=[row.row_index for row in group],
+            name_cells=[row.name_cell for row in group],
+        )
+        for name, group in rows_of.items()
+        if len(group) > 1
+    ]
     ledger = BuildLedger(
         dataset=dataset_name,
-        orf_rule=ORF_RULE,
+        identifier_rule=IDENTIFIER_RULE,
         normalization_rule=NORMALIZATION_RULE,
         duplicate_rule=DUPLICATE_RULE,
         exclusion_rule=EXCLUSION_RULE,
-        essentiality_rule=ESSENTIALITY_RULE,
         replicate_rule=REPLICATE_RULE,
         legend_contradiction=LEGEND_CONTRADICTION,
         n_source_rows=len(rows),
         n_kept=len(kept),
-        n_dropped_orfs=len(dropped),
-        n_renamed=len(renamed),
         n_normalized=len(normalizations),
-        n_duplicate_rows=len(duplicates),
+        n_duplicate_identifiers=len(duplicates),
+        n_duplicate_rows=sum(len(d.row_indices) - 1 for d in duplicates),
         n_excluded_non_deletion=len(excluded),
-        n_essentiality_flagged=len(flagged),
         n_values_kept=sum(len(row.levels) for row in kept),
         normalizations=normalizations,
-        dropped_orfs=dropped,
-        renamed_orfs=dict(sorted(renamed.items())),
-        duplicate_strain_rows=duplicates,
+        duplicate_identifiers=duplicates,
         excluded_non_deletion=excluded,
-        essentiality_flagged=flagged,
         created_at=datetime.now(UTC).isoformat(),
     )
     return kept, ledger
@@ -1050,30 +919,11 @@ class AminoAcidCooper2010Dataset(ExperimentDataset):
         genome: Any | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize the dataset. ``genome`` supplies ``resolve_gene_name``; when it is
-        None a read-only S288C genome is opened at build time (never at import).
+        """Initialize the dataset. ``genome`` is accepted for the registry's uniform
+        constructor and never read: no identifier is resolved at load time.
         """
         self.genome = genome
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
-
-    def _resolver(self) -> Callable[[str], Any]:
-        """``resolve_gene_name`` from the supplied genome, or a read-only S288C genome."""
-        if self.genome is None:
-            from dotenv import load_dotenv
-
-            from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
-
-            load_dotenv()
-            data_root = os.environ["DATA_ROOT"]
-            # overwrite=False is mandatory: a rebuild here would race any other process
-            # holding the same gffutils database.
-            self.genome = SCerevisiaeGenome(
-                genome_root=osp.join(data_root, "data/sgd/genome"),
-                go_root=osp.join(data_root, "data/go"),
-                overwrite=False,
-            )
-        resolver: Callable[[str], Any] = self.genome.resolve_gene_name
-        return resolver
 
     @property
     def experiment_class(self) -> type[Experiment]:
@@ -1182,32 +1032,19 @@ class AminoAcidCooper2010Dataset(ExperimentDataset):
         a mismatch raises ``RawSha256MismatchError`` and no store is written.
         """
         verify_raw_files(self.raw_dir, {TABLE4_NAME: TABLE4_SHA256})
-        from dotenv import load_dotenv
-
-        load_dotenv()
-        data_root = os.environ["DATA_ROOT"]
         rows = read_table4(osp.join(self.raw_dir, TABLE4_NAME))
-        kept, ledger = retain_rows(
-            rows,
-            self._resolver(),
-            load_sgd_essential_genes(data_root),
-            dataset_name=self.name,
-        )
+        kept, ledger = retain_rows(rows, dataset_name=self.name)
         log.info(
-            "Cooper2010: %d source rows -> %d kept (%d values); dropped %d ORFs "
-            "(%s); %d RENAMED kept under the current name; %d normalized identifiers; "
-            "%d duplicate rows to the ledger; %d excluded non-deletion rows; "
-            "%d essentiality-flagged rows kept",
+            "Cooper2010: %d source rows -> %d kept (%d values); %d normalized "
+            "identifiers; %d identifiers on more than one row (%d extra rows, all "
+            "kept); %d excluded non-deletion rows",
             ledger.n_source_rows,
             ledger.n_kept,
             ledger.n_values_kept,
-            ledger.n_dropped_orfs,
-            [f"{d.source_name}:{d.status}" for d in ledger.dropped_orfs],
-            ledger.n_renamed,
             ledger.n_normalized,
+            ledger.n_duplicate_identifiers,
             ledger.n_duplicate_rows,
             ledger.n_excluded_non_deletion,
-            ledger.n_essentiality_flagged,
         )
 
         os.makedirs(self.preprocess_dir, exist_ok=True)

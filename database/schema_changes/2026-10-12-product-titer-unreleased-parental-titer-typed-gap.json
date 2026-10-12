@@ -2,7 +2,7 @@
   "record_version": 1,
   "slug": "product-titer-unreleased-parental-titer-typed-gap",
   "date": "2026-10-12",
-  "pr": null,
+  "pr": 1080,
   "author_kind": "agent",
   "base_commit": "4fcf58711b786ede6f65c35e49d204840637e97e",
   "python_version": "3.13.0",

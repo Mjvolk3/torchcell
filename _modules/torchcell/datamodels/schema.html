@@ -460,6 +460,9 @@
     <span class="s2">"ecoli_k12_bw25113_locus_tag"</span><span class="p">,</span>
     <span class="s2">"pputida_kt2440_locus_tag"</span><span class="p">,</span>
     <span class="s2">"ecoli_b_rel606_locus_tag"</span><span class="p">,</span>
+    <span class="c1"># --- begin #910: E. coli K-12 W3110, read RefSeq-primary --------------------- #</span>
+    <span class="s2">"ecoli_k12_w3110_refseq_locus_tag"</span><span class="p">,</span>
+    <span class="c1"># --- end #910 ---------------------------------------------------------------- #</span>
 <span class="p">]</span>
 <span class="sd">"""The identifier namespace a bacterial locus tag belongs to.</span>
 
@@ -477,6 +480,9 @@
         <span class="sa">r</span><span class="s2">"^PP_(?:\d</span><span class="si">{4}</span><span class="s2">|(?:5|16|23)S[A-G]|t\d</span><span class="si">{2}</span><span class="s2">|tm\d</span><span class="si">{2}</span><span class="s2">|mr\d</span><span class="si">{2}</span><span class="s2">|r\d</span><span class="si">{2}</span><span class="s2">)$"</span>
     <span class="p">),</span>
     <span class="s2">"ecoli_b_rel606_locus_tag"</span><span class="p">:</span> <span class="sa">r</span><span class="s2">"^ECB_[rt]?\d</span><span class="si">{5}</span><span class="s2">$"</span><span class="p">,</span>
+    <span class="c1"># --- begin #910: E. coli K-12 W3110, read RefSeq-primary --------------------- #</span>
+    <span class="s2">"ecoli_k12_w3110_refseq_locus_tag"</span><span class="p">:</span> <span class="sa">r</span><span class="s2">"^Y75_RS\d</span><span class="si">{5}</span><span class="s2">$"</span><span class="p">,</span>
+    <span class="c1"># --- end #910 ---------------------------------------------------------------- #</span>
 <span class="p">}</span>
 <span class="sd">"""Locus-tag pattern of each namespace, measured from the deposited GenBank files.</span>
 
@@ -486,7 +492,11 @@
 <span class="sd">75 tRNA tags (``PP_t01``-``PP_t75``), 67 ``PP_mr`` tags, ``PP_tm01`` and ``PP_r01``.</span>
 <span class="sd">Admitting only four-digit tags would silently reject 165 real KT2440 genes. E. coli B</span>
 <span class="sd">REL606 (GCA_000017985.1) is five-digit: 4,276 ``ECB_NNNNN``, 85 tRNA ``ECB_tNNNNN`` and</span>
-<span class="sd">22 rRNA ``ECB_rNNNNN`` of its 4,383 gene features.</span>
+<span class="sd">22 rRNA ``ECB_rNNNNN`` of its 4,383 gene features. E. coli K-12 W3110 (GCF_000010245.2) is</span>
+<span class="sd">the one namespace read off a RefSeq file, because its GenBank annotation</span>
+<span class="sd">(GCA_000010245.1, the 2006 DDBJ/NIG submission) carries 4,444 gene features and not one</span>
+<span class="sd">``locus_tag``: all 4,531 gene and pseudogene features of the RefSeq flat file are</span>
+<span class="sd">``Y75_RSNNNNN`` (owner route #910, 2026-10-12; measured in ``teteneva2024``).</span>
 <span class="sd">"""</span>
 
 <span class="n">BACTERIAL_LOCUS_TAG_PATTERN</span> <span class="o">=</span> <span class="p">(</span>
@@ -1187,7 +1197,15 @@
 <span class="c1"># new classes below move none. The duplication is the measured price of that, and</span>
 <span class="c1"># unifying the two families later is a rebuild whose purpose is the unification.</span>
 <span class="c1"># --------------------------------------------------------------------------- #</span>
-<span class="n">BacterialReferenceStrain</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"MG1655"</span><span class="p">,</span> <span class="s2">"BW25113"</span><span class="p">,</span> <span class="s2">"KT2440"</span><span class="p">,</span> <span class="s2">"REL606"</span><span class="p">]</span>
+<span class="n">BacterialReferenceStrain</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span>
+    <span class="s2">"MG1655"</span><span class="p">,</span>
+    <span class="s2">"BW25113"</span><span class="p">,</span>
+    <span class="s2">"KT2440"</span><span class="p">,</span>
+    <span class="s2">"REL606"</span><span class="p">,</span>
+    <span class="c1"># --- begin #910: E. coli K-12 W3110, read RefSeq-primary --------------------- #</span>
+    <span class="s2">"W3110"</span><span class="p">,</span>
+    <span class="c1"># --- end #910 ---------------------------------------------------------------- #</span>
+<span class="p">]</span>
 <span class="sd">"""The sequenced strain a bacterial background's alleles are edits against.</span>
 
 <span class="sd">One member per deposited assembly set, for the same reason ``BacterialGeneNamespace``</span>
@@ -1206,6 +1224,9 @@
     <span class="s2">"BW25113"</span><span class="p">:</span> <span class="s2">"ecoli_K12_BW25113_ASM75055v1"</span><span class="p">,</span>
     <span class="s2">"KT2440"</span><span class="p">:</span> <span class="s2">"pputida_KT2440_ASM756v2"</span><span class="p">,</span>
     <span class="s2">"REL606"</span><span class="p">:</span> <span class="s2">"ecoli_B_REL606_ASM1798v1"</span><span class="p">,</span>
+    <span class="c1"># --- begin #910: E. coli K-12 W3110, read RefSeq-primary --------------------- #</span>
+    <span class="s2">"W3110"</span><span class="p">:</span> <span class="s2">"ecoli_K12_W3110_ASM1024v1"</span><span class="p">,</span>
+    <span class="c1"># --- end #910 ---------------------------------------------------------------- #</span>
 <span class="p">}</span>
 
 <span class="n">BacterialAssemblySet</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span>
@@ -1213,6 +1234,9 @@
     <span class="s2">"ecoli_K12_BW25113_ASM75055v1"</span><span class="p">,</span>
     <span class="s2">"pputida_KT2440_ASM756v2"</span><span class="p">,</span>
     <span class="s2">"ecoli_B_REL606_ASM1798v1"</span><span class="p">,</span>
+    <span class="c1"># --- begin #910: E. coli K-12 W3110, read RefSeq-primary --------------------- #</span>
+    <span class="s2">"ecoli_K12_W3110_ASM1024v1"</span><span class="p">,</span>
+    <span class="c1"># --- end #910 ---------------------------------------------------------------- #</span>
 <span class="p">]</span>
 <span class="sd">"""A deposited bacterial assembly set id, as a closed vocabulary.</span>
 
@@ -1230,6 +1254,11 @@
     <span class="s2">"ecoli_K12_BW25113_ASM75055v1"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"GCA_000750555.1"</span><span class="p">,</span> <span class="s2">"GCF_000750555.1"</span><span class="p">),</span>
     <span class="s2">"pputida_KT2440_ASM756v2"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"GCA_000007565.2"</span><span class="p">,</span> <span class="s2">"GCF_000007565.2"</span><span class="p">),</span>
     <span class="s2">"ecoli_B_REL606_ASM1798v1"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"GCA_000017985.1"</span><span class="p">,</span> <span class="s2">"GCF_000017985.1"</span><span class="p">),</span>
+    <span class="c1"># --- begin #910: E. coli K-12 W3110, read RefSeq-primary --------------------- #</span>
+    <span class="c1"># Read off the GCF report: the GCA report of this set still names the 2006 RefSeq</span>
+    <span class="c1"># release GCF_000010245.1 (AC_000091.1), whose files are not in the set.</span>
+    <span class="s2">"ecoli_K12_W3110_ASM1024v1"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"GCA_000010245.1"</span><span class="p">,</span> <span class="s2">"GCF_000010245.2"</span><span class="p">),</span>
+    <span class="c1"># --- end #910 ---------------------------------------------------------------- #</span>
 <span class="p">}</span>
 
 <span class="n">ASSEMBLY_ACCESSION_PATTERN</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">"^GC[AF]_\d</span><span class="si">{9}</span><span class="s2">\.\d+$"</span>
@@ -7688,6 +7717,308 @@
 <span class="c1"># --- end #770 ------------------------------------------------------------------- #</span>
 
 
+<span class="c1"># --- begin #921: the phosphosite intensity family ------------------------------ #</span>
+<span class="c1"># A mass-spectrometry proteome measurement AT A RESIDUE: the precursor signal of the</span>
+<span class="c1"># phosphopeptides that carry one modified site, per sample. A SIBLING of</span>
+<span class="c1"># ``ProteinAbundancePhenotype`` under ``Phenotype`` (the schema has no proteome parent</span>
+<span class="c1"># class; inserting one would change the bases of the served protein-abundance leaf),</span>
+<span class="c1"># not a mode of it: a site intensity moves with the site's occupancy AND with its</span>
+<span class="c1"># protein's abundance, so keying it on a protein in the abundance leaf would put two</span>
+<span class="c1"># quantities under one label (#921). Potel 2018 (E. coli, PXD008369) is the first</span>
+<span class="c1"># consumer; Leutert 2023 (yeast) releases the same per-sample shape beside a</span>
+<span class="c1"># differential one, which would be a further sibling (a ratio is a meaning change).</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PhosphoResidue</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The phosphorylated amino acid of a site, by its one-letter code.</span>
+
+<span class="sd">    S, T and Y carry an O-phosphate. H carries an N-phosphate, the residue Potel 2018</span>
+<span class="sd">    exists to measure: its first author's dissertation, Chapter V (the reprint of the</span>
+<span class="sd">    paper), "high ΔG of hydrolysis of the phosphoramidate bond makes the</span>
+<span class="sd">    phosphohistidine relatively" unstable, which is why acidic enrichment had missed it</span>
+<span class="sd">    (``torchcell-raw/potelWidespreadBacterialProtein2018/paper/thesis/</span>
+<span class="sd">    Potel.pdftotext.txt``, sha256 ``05a50657...``). The member value is the letter the</span>
+<span class="sd">    release writes in its ``Amino acid`` column.</span>
+<span class="sd">    """</span>
+
+    <span class="n">serine</span> <span class="o">=</span> <span class="s2">"S"</span>
+    <span class="n">threonine</span> <span class="o">=</span> <span class="s2">"T"</span>
+    <span class="n">tyrosine</span> <span class="o">=</span> <span class="s2">"Y"</span>
+    <span class="n">histidine</span> <span class="o">=</span> <span class="s2">"H"</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_phosphohistidine</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""True for the N-phosphorylated histidine, False for the three O-phosphates."""</span>
+        <span class="k">return</span> <span class="bp">self</span> <span class="ow">is</span> <span class="n">PhosphoResidue</span><span class="o">.</span><span class="n">histidine</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ProteinIdNamespace</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The identifier space a phosphosite's protein ids are written in.</span>
+
+<span class="sd">    One member today, the UniProtKB accession a proteomics search database keys on</span>
+<span class="sd">    (Potel 2018 searched the "reviewed E. coli K12 database (Uniprot, March 2016)").</span>
+<span class="sd">    A release keyed on another namespace (a yeast systematic ORF) is a new member with</span>
+<span class="sd">    its own pattern, so the ids of two namespaces never compare as one.</span>
+<span class="sd">    """</span>
+
+    <span class="n">uniprotkb_accession</span> <span class="o">=</span> <span class="s2">"uniprotkb_accession"</span>
+
+
+<span class="n">PROTEIN_ID_PATTERNS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">ProteinIdNamespace</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">ProteinIdNamespace</span><span class="o">.</span><span class="n">uniprotkb_accession</span><span class="p">:</span> <span class="n">UNIPROT_ACCESSION_PATTERN</span>
+<span class="p">}</span>
+<span class="sd">"""The pattern every protein id of each namespace must match."""</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">PhosphositeQuantification</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Whether a released site carries a precursor intensity in one sample.</span>
+
+<span class="sd">    ``not_quantified`` is the released ``0`` of a MaxQuant intensity column: the site</span>
+<span class="sd">    was identified in the experiment but no precursor signal was assigned to it in this</span>
+<span class="sd">    sample. It is a status and never a value, because a zero intensity is not a</span>
+<span class="sd">    measurement of zero phosphorylation, and never a dropped key, because the site's</span>
+<span class="sd">    identification belongs to the record whether or not this sample quantified it.</span>
+<span class="sd">    """</span>
+
+    <span class="n">quantified</span> <span class="o">=</span> <span class="s2">"quantified"</span>
+    <span class="n">not_quantified</span> <span class="o">=</span> <span class="s2">"not_quantified"</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">CultureGrowthPhase</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The growth phase a batch culture was harvested in, as the source names it.</span>
+
+<span class="sd">    Part of the SAMPLE, not of the environment: the medium, temperature and aeration of</span>
+<span class="sd">    an exponential and a stationary harvest of one culture are the same, and what</span>
+<span class="sd">    differs is when the cells were taken, which is the ``harvest_optical_density``</span>
+<span class="sd">    precedent of ``MicroarrayExpressionScorePhenotype``. ``exponential`` is the source's</span>
+<span class="sd">    "mid-log phase".</span>
+<span class="sd">    """</span>
+
+    <span class="n">exponential</span> <span class="o">=</span> <span class="s2">"exponential"</span>
+    <span class="n">stationary</span> <span class="o">=</span> <span class="s2">"stationary"</span>
+
+
+<span class="n">PHOSPHOSITE_KEY_SEPARATOR</span> <span class="o">=</span> <span class="s2">"|"</span>
+<span class="sd">"""Separates the three parts of a phosphosite key: proteins, residue, positions."""</span>
+<span class="n">PHOSPHOSITE_LIST_SEPARATOR</span> <span class="o">=</span> <span class="s2">";"</span>
+<span class="sd">"""Joins the members of a multi-protein site, the release's own ``;``."""</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Phosphosite</span><span class="p">(</span><span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One phosphosite as its release identifies it, with the evidence for the call.</span>
+
+<span class="sd">    A site the search could not assign to one protein is NOT split: Potel 2018 lists 42</span>
+<span class="sd">    of its 2,129 sites on more than one gene (``pflB;tdcE;grcA`` at ``734;738;101``;</span>
+<span class="sd">    ``tufA;tufB`` at ``313;313`` under the one accession ``P0CE47``), and the record</span>
+<span class="sd">    keeps the released lists in the released order. ``positions`` pairs one 1-based</span>
+<span class="sd">    position with each gene name (the Table 2 legend: "Gene names, the gene name of</span>
+<span class="sd">    proteins" and "Positions, the position of identified phosphosite within the protein</span>
+<span class="sd">    associated with"), while ``protein_ids`` may be shorter, since one accession can</span>
+<span class="sd">    stand for identical proteins of two genes.</span>
+
+<span class="sd">    The identification fields are the release's per-site evidence, constant across its</span>
+<span class="sd">    samples: the localization probability, and the posterior error probability, search</span>
+<span class="sd">    score and delta score of the best phosphopeptide carrying the site, with whether a</span>
+<span class="sd">    diagnostic immonium ion was seen. ``sequence_windows`` are the residues around the</span>
+<span class="sd">    site (``_`` pads a protein terminus), one per distinct protein sequence, and each</span>
+<span class="sd">    must center on ``residue``.</span>
+<span class="sd">    """</span>
+
+    <span class="n">protein_ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the protein ids the release assigns the site to, in its order"</span>
+    <span class="p">)</span>
+    <span class="n">protein_id_namespace</span><span class="p">:</span> <span class="n">ProteinIdNamespace</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the identifier space of protein_ids"</span>
+    <span class="p">)</span>
+    <span class="n">gene_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the gene names the release lists for the site, in its order"</span>
+    <span class="p">)</span>
+    <span class="n">positions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"1-based residue position of the site in each gene's protein, "</span>
+        <span class="s2">"paired with gene_names"</span>
+    <span class="p">)</span>
+    <span class="n">residue</span><span class="p">:</span> <span class="n">PhosphoResidue</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"the phosphorylated amino acid"</span><span class="p">)</span>
+    <span class="n">sequence_windows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the released sequence window(s) centered on the site, one per "</span>
+        <span class="s2">"distinct protein sequence; '_' pads a terminus"</span>
+    <span class="p">)</span>
+    <span class="n">localization_probability</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"probability the phosphate sits on this residue, in [0, 1]"</span>
+    <span class="p">)</span>
+    <span class="n">posterior_error_probability</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"posterior error probability of the best phosphopeptide carrying "</span>
+        <span class="s2">"the site, in [0, 1]"</span>
+    <span class="p">)</span>
+    <span class="n">identification_score</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"search-engine score of that best phosphopeptide (Andromeda for a "</span>
+        <span class="s2">"MaxQuant release)"</span>
+    <span class="p">)</span>
+    <span class="n">delta_score</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"score difference to the second-best peptide with a different "</span>
+        <span class="s2">"sequence"</span>
+    <span class="p">)</span>
+    <span class="n">diagnostic_peak</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"whether a diagnostic immonium ion was observed in the spectra "</span>
+        <span class="s2">"identifying the site"</span>
+    <span class="p">)</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_site</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Phosphosite"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Ids in their namespace, paired positions, centered windows, probabilities."""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">protein_ids</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"a phosphosite names at least one protein id"</span><span class="p">)</span>
+        <span class="n">pattern</span> <span class="o">=</span> <span class="n">PROTEIN_ID_PATTERNS</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">protein_id_namespace</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">protein_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">protein_ids</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">protein_id</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">protein_id</span><span class="si">!r}</span><span class="s2"> is not a </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">protein_id_namespace</span><span class="si">}</span><span class="s2"> id"</span>
+                <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">gene_names</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span><span class="ow">not</span> <span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">gene_names</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"a phosphosite names at least one non-empty gene name"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">positions</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gene_names</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">positions</span><span class="p">)</span><span class="si">}</span><span class="s2"> positions for </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gene_names</span><span class="p">)</span><span class="si">}</span><span class="s2"> gene "</span>
+                <span class="s2">"names; the release pairs one position with each gene"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">position</span> <span class="o">&lt;</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">position</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">positions</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"positions are 1-based, got </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">positions</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">sequence_windows</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"a phosphosite carries at least one sequence window"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">window</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sequence_windows</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">window</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"window </span><span class="si">{</span><span class="n">window</span><span class="si">!r}</span><span class="s2"> has no center residue"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">window</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">window</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">residue</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"window </span><span class="si">{</span><span class="n">window</span><span class="si">!r}</span><span class="s2"> does not center on </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">residue</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span>
+                <span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"localization_probability"</span><span class="p">,</span> <span class="s2">"posterior_error_probability"</span><span class="p">):</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="mf">0.0</span> <span class="o">&lt;=</span> <span class="n">value</span> <span class="o">&lt;=</span> <span class="mf">1.0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> is </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">, not a probability in [0, 1]"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"identification_score"</span><span class="p">,</span> <span class="s2">"delta_score"</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> must be finite"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">key</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The site's record key: released proteins, residue and positions, verbatim.</span>
+
+<span class="sd">        ``P00350|S|86`` for a one-protein site and ``P09373;P42632;P68066|S|734;738;101``</span>
+<span class="sd">        for a site the release lists on three, so a multi-protein site is one key and</span>
+<span class="sd">        never three guessed ones.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="n">PHOSPHOSITE_KEY_SEPARATOR</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="p">(</span>
+                <span class="n">PHOSPHOSITE_LIST_SEPARATOR</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">protein_ids</span><span class="p">),</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">residue</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="n">PHOSPHOSITE_LIST_SEPARATOR</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">positions</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">PhosphositeIntensityPhenotype</span><span class="p">(</span><span class="n">Phenotype</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Per-site phosphopeptide precursor intensity in ONE sample, as released.</span>
+
+<span class="sd">    One record is one sample (one enrichment and injection). ``sites`` holds every site</span>
+<span class="sd">    the release identifies, keyed by :meth:`Phosphosite.key`; ``quantification`` says</span>
+<span class="sd">    for each of them whether this sample assigned it an intensity; and</span>
+<span class="sd">    ``phosphosite_intensity`` holds the released number for exactly the quantified</span>
+<span class="sd">    ones. A released ``0`` is therefore ``not_quantified`` and absent from the intensity</span>
+<span class="sd">    map, never a stored zero and never a dropped site. The number is the instrument's</span>
+<span class="sd">    summed precursor signal on its own arbitrary scale (``measurement_type`` names the</span>
+<span class="sd">    acquisition and the software), so two samples compare only within one release.</span>
+
+<span class="sd">    The sample is described where it is measured: ``sample_label`` is the release's own</span>
+<span class="sd">    name for the column, ``replicate`` its replicate number, ``replicate_unit`` whether</span>
+<span class="sd">    that replicate is a biological or a technical one, and ``harvest_growth_phase`` /</span>
+<span class="sd">    ``harvest_optical_density`` when the culture was taken. Each of the last three is a</span>
+<span class="sd">    value or a typed ``ProvenanceGap``: Potel 2018 calls its twelve samples "n=12</span>
+<span class="sd">    biological replicates" in two SI legends while its reporting summary and the</span>
+<span class="sd">    dissertation reprint call each condition's three "technical triplicates", so the</span>
+<span class="sd">    unit is a gap until the published Online Methods are read (#922), not a pick.</span>
+<span class="sd">    """</span>
+
+    <span class="n">graph_level</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"node"</span>
+    <span class="n">label_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"phosphosite_intensity"</span>
+    <span class="n">label_statistic_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">phosphosite_intensity</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"site key -&gt; the released precursor intensity, for the sites this "</span>
+        <span class="s2">"sample quantified; strictly positive"</span>
+    <span class="p">)</span>
+    <span class="n">quantification</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">PhosphositeQuantification</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"site key -&gt; whether this sample quantified the site, for every "</span>
+        <span class="s2">"site the release identifies"</span>
+    <span class="p">)</span>
+    <span class="n">sites</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Phosphosite</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"site key -&gt; the site's proteins, residue, positions and "</span>
+        <span class="s2">"identification evidence"</span>
+    <span class="p">)</span>
+    <span class="n">measurement_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the acquisition and quantification, e.g. "</span>
+        <span class="s2">"'fe3_imac_lc_msms_maxquant_summed_xic'"</span>
+    <span class="p">)</span>
+    <span class="n">sample_label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the release's own name for this sample's column, verbatim"</span>
+    <span class="p">)</span>
+    <span class="n">replicate</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"the release's replicate number, 1-based"</span><span class="p">)</span>
+    <span class="n">replicate_unit</span><span class="p">:</span> <span class="n">SampleUnit</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"what one replicate is (biological or technical); None only with "</span>
+        <span class="s2">"a ProvenanceGap"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">harvest_growth_phase</span><span class="p">:</span> <span class="n">CultureGrowthPhase</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the growth phase the culture was harvested in; None only with a "</span>
+        <span class="s2">"ProvenanceGap"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">harvest_optical_density</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"OD600 of the culture at harvest, as the source states it; None "</span>
+        <span class="s2">"only with a ProvenanceGap"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_phosphosite_intensity</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"PhosphositeIntensityPhenotype"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Keys agree across the three maps; intensities positive; sample fields set."""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">sites</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"sites cannot be empty"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">site</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sites</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">site</span><span class="o">.</span><span class="n">key</span><span class="p">()</span> <span class="o">!=</span> <span class="n">key</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"site key </span><span class="si">{</span><span class="n">key</span><span class="si">!r}</span><span class="s2"> is not its site's key </span><span class="si">{</span><span class="n">site</span><span class="o">.</span><span class="n">key</span><span class="p">()</span><span class="si">!r}</span><span class="s2">"</span>
+                <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">quantification</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sites</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"quantification keys must match sites keys"</span><span class="p">)</span>
+        <span class="n">quantified</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">key</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">status</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">quantification</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">status</span> <span class="ow">is</span> <span class="n">PhosphositeQuantification</span><span class="o">.</span><span class="n">quantified</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">phosphosite_intensity</span><span class="p">)</span> <span class="o">!=</span> <span class="n">quantified</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"phosphosite_intensity keys must be exactly the quantified sites"</span>
+            <span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">phosphosite_intensity</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="ow">or</span> <span class="n">value</span> <span class="o">&lt;=</span> <span class="mf">0.0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"phosphosite_intensity for </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> is </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">; an unquantified "</span>
+                    <span class="s2">"site is a not_quantified status, never a stored zero"</span>
+                <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_label</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_type</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"sample_label and measurement_type are non-empty"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">replicate</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"replicate is 1-based, got </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">replicate</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">od</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">harvest_optical_density</span>
+        <span class="k">if</span> <span class="n">od</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">od</span><span class="p">)</span> <span class="ow">or</span> <span class="n">od</span> <span class="o">&lt;=</span> <span class="mf">0.0</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"harvest_optical_density must be positive, got </span><span class="si">{</span><span class="n">od</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">_require_value_or_gap</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="p">(</span><span class="s2">"replicate_unit"</span><span class="p">,</span> <span class="s2">"harvest_growth_phase"</span><span class="p">,</span> <span class="s2">"harvest_optical_density"</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+
+<span class="c1"># --- end #921 ------------------------------------------------------------------- #</span>
+
+
 <div class="viewcode-block" id="AssayType">
 <a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.AssayType.html#torchcell.datamodels.schema.AssayType">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">AssayType</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
@@ -10329,6 +10660,28 @@
 <span class="c1"># --- end #770 ------------------------------------------------------------------- #</span>
 
 
+<span class="c1"># --- begin #921: the phosphosite intensity family ------------------------------ #</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BacterialPhosphositeIntensityExperimentReference</span><span class="p">(</span>
+    <span class="n">ExperimentReference</span><span class="p">,</span> <span class="n">ModelStrict</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Assembly-pinned reference for a bacterial phosphosite-intensity experiment."""</span>
+
+    <span class="n">experiment_reference_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"bacterial_phosphosite_intensity"</span>
+    <span class="n">genome_reference</span><span class="p">:</span> <span class="n">AssemblyReferenceGenome</span>
+    <span class="n">phenotype_reference</span><span class="p">:</span> <span class="n">PhosphositeIntensityPhenotype</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BacterialPhosphositeIntensityExperiment</span><span class="p">(</span><span class="n">Experiment</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Bacterial phosphoproteome experiment: per-site intensities in one sample."""</span>
+
+    <span class="n">experiment_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"bacterial_phosphosite_intensity"</span>
+    <span class="n">genotype</span><span class="p">:</span> <span class="n">Genotype</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Genotype</span><span class="p">,]</span>  <span class="c1"># type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass</span>
+    <span class="n">phenotype</span><span class="p">:</span> <span class="n">PhosphositeIntensityPhenotype</span>
+
+
+<span class="c1"># --- end #921 ------------------------------------------------------------------- #</span>
+
+
 <span class="k">class</span><span class="w"> </span><span class="nc">BacterialMetaboliteExperimentReference</span><span class="p">(</span><span class="n">ExperimentReference</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Assembly-pinned reference for a bacterial metabolite experiment."""</span>
 
@@ -11141,6 +11494,7 @@
     <span class="o">|</span> <span class="n">ProductTiterPhenotype</span>
     <span class="o">|</span> <span class="n">ProteinTurnoverPhenotype</span>
     <span class="o">|</span> <span class="n">ProteinSynthesisRatePhenotype</span>  <span class="c1"># issue #857</span>
+    <span class="o">|</span> <span class="n">PhosphositeIntensityPhenotype</span>  <span class="c1"># issue #921</span>
     <span class="o">|</span> <span class="n">FluxPhenotype</span>
     <span class="o">|</span> <span class="n">PromoterActivityPhenotype</span>
     <span class="o">|</span> <span class="n">PooledSortSeqExpressionPhenotype</span>  <span class="c1"># Vaishnav 2022 (#991)</span>
@@ -11192,6 +11546,7 @@
     <span class="c1"># --- begin #770: the protein fold-change family ---</span>
     <span class="o">|</span> <span class="n">BacterialProteinFoldChangeExperiment</span>
     <span class="c1"># --- end #770 ---</span>
+    <span class="o">|</span> <span class="n">BacterialPhosphositeIntensityExperiment</span>  <span class="c1"># issue #921</span>
     <span class="o">|</span> <span class="n">BacterialMetaboliteExperiment</span>
     <span class="o">|</span> <span class="n">BacterialRNASeqExpressionExperiment</span>
     <span class="o">|</span> <span class="n">BacterialVisualScoreExperiment</span>
@@ -11243,6 +11598,7 @@
     <span class="c1"># --- begin #770: the protein fold-change family ---</span>
     <span class="o">|</span> <span class="n">BacterialProteinFoldChangeExperimentReference</span>
     <span class="c1"># --- end #770 ---</span>
+    <span class="o">|</span> <span class="n">BacterialPhosphositeIntensityExperimentReference</span>  <span class="c1"># issue #921</span>
     <span class="o">|</span> <span class="n">BacterialMetaboliteExperimentReference</span>
     <span class="o">|</span> <span class="n">BacterialRNASeqExpressionExperimentReference</span>
     <span class="o">|</span> <span class="n">BacterialVisualScoreExperimentReference</span>
@@ -11294,6 +11650,9 @@
     <span class="c1"># --- begin #770: the protein fold-change family ---</span>
     <span class="s2">"bacterial_protein_fold_change"</span><span class="p">:</span> <span class="n">BacterialProteinFoldChangeExperiment</span><span class="p">,</span>
     <span class="c1"># --- end #770 ---</span>
+    <span class="s2">"bacterial_phosphosite_intensity"</span><span class="p">:</span> <span class="p">(</span>  <span class="c1"># issue #921</span>
+        <span class="n">BacterialPhosphositeIntensityExperiment</span>
+    <span class="p">),</span>
     <span class="s2">"bacterial_metabolite"</span><span class="p">:</span> <span class="n">BacterialMetaboliteExperiment</span><span class="p">,</span>
     <span class="s2">"bacterial_rnaseq_expression"</span><span class="p">:</span> <span class="n">BacterialRNASeqExpressionExperiment</span><span class="p">,</span>
     <span class="s2">"bacterial_visual_score"</span><span class="p">:</span> <span class="n">BacterialVisualScoreExperiment</span><span class="p">,</span>
@@ -11350,6 +11709,9 @@
     <span class="c1"># --- begin #770: the protein fold-change family ---</span>
     <span class="s2">"bacterial_protein_fold_change"</span><span class="p">:</span> <span class="p">(</span><span class="n">BacterialProteinFoldChangeExperimentReference</span><span class="p">),</span>
     <span class="c1"># --- end #770 ---</span>
+    <span class="s2">"bacterial_phosphosite_intensity"</span><span class="p">:</span> <span class="p">(</span>  <span class="c1"># issue #921</span>
+        <span class="n">BacterialPhosphositeIntensityExperimentReference</span>
+    <span class="p">),</span>
     <span class="s2">"bacterial_metabolite"</span><span class="p">:</span> <span class="n">BacterialMetaboliteExperimentReference</span><span class="p">,</span>
     <span class="s2">"bacterial_rnaseq_expression"</span><span class="p">:</span> <span class="n">BacterialRNASeqExpressionExperimentReference</span><span class="p">,</span>
     <span class="s2">"bacterial_visual_score"</span><span class="p">:</span> <span class="n">BacterialVisualScoreExperimentReference</span><span class="p">,</span>

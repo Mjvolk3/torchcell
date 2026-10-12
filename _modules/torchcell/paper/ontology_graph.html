@@ -194,7 +194,13 @@
         <span class="s2">"Solvent"</span><span class="p">,</span>
         <span class="s2">"Temperature"</span><span class="p">,</span>
     <span class="p">),</span>
-    <span class="s2">"phenotype"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"Phenotype"</span><span class="p">,),</span>
+    <span class="s2">"phenotype"</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">"Phenotype"</span><span class="p">,</span>
+        <span class="c1"># One identified phosphosite (#921): the proteins, residue and positions a</span>
+        <span class="c1"># phosphosite-intensity phenotype keys its values on, with the evidence for the</span>
+        <span class="c1"># call. It is part of what was measured, so it sits on the phenotype lane.</span>
+        <span class="s2">"Phosphosite"</span><span class="p">,</span>
+    <span class="p">),</span>
     <span class="s2">"experiment"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"Experiment"</span><span class="p">,</span> <span class="s2">"ExperimentReference"</span><span class="p">),</span>
     <span class="c1"># ArtifactRef: the sha256-pinned pointer from a record to off-graph bytes.</span>
     <span class="s2">"provenance"</span><span class="p">:</span> <span class="p">(</span>

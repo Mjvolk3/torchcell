@@ -68,6 +68,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     link_verified,
     post_process,
     verify_raw_files,
@@ -515,6 +516,8 @@ def loader_inventory(
 @register_dataset
 class FitnessBrowserEcoliDataset(ExperimentDataset):
     """Fitness Browser Keio experiments not loaded from another release, by publication."""
+
+    organism = Organism.ecoli
 
     REFERENCE_STRAIN: ClassVar[EcoliK12StrainName] = "BW25113"
 

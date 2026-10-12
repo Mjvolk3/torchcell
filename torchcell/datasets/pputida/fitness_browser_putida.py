@@ -59,6 +59,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     link_verified,
     post_process,
     verify_raw_files,
@@ -549,6 +550,8 @@ def loader_inventory(
 @register_dataset
 class FitnessBrowserPutidaDataset(ExperimentDataset):
     """Fitness Browser KT2440 experiments of the attributed studies, by publication."""
+
+    organism = Organism.pputida
 
     REFERENCE_STRAIN: ClassVar[Literal["KT2440"]] = "KT2440"
 

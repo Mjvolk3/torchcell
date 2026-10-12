@@ -243,3 +243,9 @@ recoverable in-record, so the cost is bought deliberately rather than overlooked
 103 mapped datasets, 52 bacterial, both re-derived by importing the merged tree rather
 than incremented. The `kg_bacteria.yaml` entry sits in the same position as the
 `_bacterial_adapter_cases.py` row, because the gate asserts positional equality.
+
+## 2026.10.12 - The promoter label is stored verbatim as the gene identifier
+
+The owner's rule of 2026-10-12 ([[database.genome-gating-sweep.2026.10.12]], row 381): the loader reads no annotation. `resolve_promoters` and the `ecoli_genome` constructor parameter are gone; `promoter_genes` stores every well's released label verbatim as `promoter_gene` (it is the source's own gene identifier for the promoter, a symbol, a b-number or a synonym), and `None` only for the three labels that name no gene, `Empty`, `U66` and `U139` (`CONTROL_LABELS`, the collection's backbone and empty-well controls, which the paper does not define). `promoter_name` carries the label as before. The 48 labels the resolver used to leave at `None` (the rRNA operon names, the IS copies, retired symbols, two ambiguous symbols, six collisions) are stored like the other 1,758; the verifier's `promoter_gene_is_a_locus` and `promoter_genes_in_the_host_gene_universe` rows report what the pinned MG1655 annotation makes of them (#1069), and the resolution to a locus is a modeling-time join on the released label. `identifier_reconciliation.json` now carries `n_labels_with_gene` (1,806) and `control_labels` in place of the reconciliation report.
+
+Released vs stored: 69,480 released readings (1,930 wells x 4 arms x 9 hours), 69,480 records, 0 dropped, unchanged; what changed is the identifier on 69,480 records, from a resolved locus to the released label.

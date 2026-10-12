@@ -268,18 +268,21 @@ def mg1655(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> EcoliK12MG1655Gen
     return EcoliK12MG1655Genome(genome_root=str(root), overwrite=False)
 
 
-def test_a_promoter_label_resolves_to_its_locus_and_a_non_gene_to_none(
-    release: Path, mg1655: EcoliK12MG1655Genome
+def test_a_promoter_label_is_stored_verbatim_and_a_control_label_as_none(
+    release: Path,
 ) -> None:
+    """The released label IS the gene identifier; no annotation is read."""
     raw = m.read_raw_sheet(release)
-    mapping, ledger = m.resolve_promoters(raw, mg1655, label="synthetic")
-    assert mapping == {"thrL": "b0001", "thrA": "b0002", "U66": None}
+    mapping, ledger = m.promoter_genes(raw, label="synthetic")
+    assert mapping == {"thrL": "thrL", "thrA": "thrA", "U66": None}
     assert ledger.n_wells == len(SYNTHETIC_WELLS)
     assert ledger.n_labels == 3
-    assert ledger.n_labels_resolved == 2
-    assert ledger.unresolved_labels == ["U66"]
+    assert ledger.n_labels_with_gene == 2
+    assert ledger.control_labels == ["U66"]
     assert ledger.labels_in_more_than_one_well == {"thrA": 2}
-    assert ledger.reconciliation.assembly_set == MG1655_ASSEMBLY.assembly_set
+    assert m.CONTROL_LABELS == {"Empty", "U66", "U139"}
+    assert not hasattr(m, "resolve_promoters")
+    assert not hasattr(m, "reconcile_locus_tags")
 
 
 # --------------------------------------------------------------------------- #
@@ -551,7 +554,6 @@ def _pin_assembly(monkeypatch: pytest.MonkeyPatch) -> None:
 @pytest.fixture
 def built(
     deposited: tuple[dict[str, Path], Path],
-    mg1655: EcoliK12MG1655Genome,
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> Any:
@@ -559,9 +561,7 @@ def built(
     _, data_root = deposited
     monkeypatch.setenv("DATA_ROOT", str(data_root))
     _pin_assembly(monkeypatch)
-    dataset = m.PromoterReporterMohiuddin2022Dataset(
-        root=str(tmp_path / "store"), ecoli_genome=mg1655
-    )
+    dataset = m.PromoterReporterMohiuddin2022Dataset(root=str(tmp_path / "store"))
     yield dataset
     dataset.close_lmdb()
 
@@ -572,7 +572,6 @@ def test_the_build_writes_one_record_per_arm_well_and_read_hour(built: Any) -> N
 
 def test_the_build_refuses_a_grid_that_is_not_the_release(
     deposited: tuple[dict[str, Path], Path],
-    mg1655: EcoliK12MG1655Genome,
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
@@ -581,9 +580,7 @@ def test_the_build_refuses_a_grid_that_is_not_the_release(
     _pin_assembly(monkeypatch)
     monkeypatch.setattr(m, "EXPECTED_RECORDS", 1)
     with pytest.raises(RuntimeError, match="wrote 144 records, the grid is 1"):
-        m.PromoterReporterMohiuddin2022Dataset(
-            root=str(tmp_path / "store"), ecoli_genome=mg1655
-        )
+        m.PromoterReporterMohiuddin2022Dataset(root=str(tmp_path / "store"))
 
 
 def test_the_built_records_are_the_promoter_activity_pair(built: Any) -> None:
@@ -637,8 +634,9 @@ def test_the_build_writes_the_fold_change_check_and_the_promoter_ledger(
     assert extraction["fold_change"]["n_cells"] == 108
     assert extraction["fold_change"]["n_within_tolerance"] == 108
     ledger = json.loads((preprocess / "identifier_reconciliation.json").read_text())
-    assert ledger["unresolved_labels"] == ["U66"]
-    assert ledger["n_labels_resolved"] == 2
+    assert ledger["control_labels"] == ["U66"]
+    assert ledger["n_labels_with_gene"] == 2
+    assert "reconciliation" not in ledger
     built.close_lmdb()
 
 
@@ -666,7 +664,13 @@ def test_the_verifier_passes_every_row_on_the_synthetic_store(
     assert "reading_uniqueness" in names
     assert "promoter_genes_in_the_host_gene_universe" in names
     family = [row for row in report.results if row.name != "provenance_audit"]
-    assert [(row.name, row.message) for row in family if not row.passed] == []
+    # the two genome-reference rows report that the released symbols thrL and thrA
+    # are not the loci b0001 and b0002 themselves; they never decide the verdict
+    assert {row.name for row in family if not row.passed} == {
+        "promoter_gene_is_a_locus",
+        "promoter_genes_in_the_host_gene_universe",
+    }
+    assert all(row.finding_class.value == "report" for row in family if not row.passed)
     assert {row.level for row in family} == {
         Level.L0,
         Level.L1,
@@ -704,7 +708,7 @@ def test_the_real_store_holds_the_whole_released_grid() -> None:
 
 
 @pytest.mark.data
-def test_the_real_store_resolves_1761_of_the_1809_promoter_labels() -> None:
+def test_the_real_store_keeps_every_promoter_label_verbatim() -> None:
     dataset = m.PromoterReporterMohiuddin2022Dataset(
         root=os.path.join(os.environ["DATA_ROOT"], m.DATASET_ROOT_REL)
     )
@@ -714,11 +718,8 @@ def test_the_real_store_resolves_1761_of_the_1809_promoter_labels() -> None:
     dataset.close_lmdb()
     assert ledger["n_wells"] == 1930
     assert ledger["n_labels"] == 1809
-    assert ledger["n_labels_resolved"] == 1761
-    assert len(ledger["unresolved_labels"]) == 48
-    assert {"Empty", "U66", "U139", "rrnA", "spr", "ygaD"} <= set(
-        ledger["unresolved_labels"]
-    )
+    assert ledger["n_labels_with_gene"] == 1806
+    assert ledger["control_labels"] == ["Empty", "U139", "U66"]
 
 
 @pytest.mark.data
@@ -750,7 +751,11 @@ def test_the_real_stores_verification_report_passes_every_row() -> None:
     )
     assert report["dataset_name"] == "PromoterReporterMohiuddin2022Dataset"
     results = report["results"]
-    assert [(row["level"], row["name"]) for row in results if not row["passed"]] == []
+    assert report["passed"]
+    assert {row["name"] for row in results if not row["passed"]} <= {
+        "promoter_gene_is_a_locus",
+        "promoter_genes_in_the_host_gene_universe",
+    }
     # Fourteen rows share the name ``provenance_audit``, one per SOURCED_VALUES entry,
     # so they are counted on the list and the rest are keyed. ``Level`` serializes as
     # its int value, so L1 is 1.
@@ -779,13 +784,12 @@ def test_the_real_stores_verification_report_passes_every_row() -> None:
         34740,
     )
     gene = rows[(Level.L3, "promoter_gene_is_a_locus")]["details"]
-    assert gene["n_genes"] == 1761
-    # 106 of the 1,930 wells carry one of the 48 unresolved labels (Empty, U66 and U139
-    # alone occupy 60), and each well is 4 arms x 9 reads.
-    assert gene["n_null_records"] == 106 * 36 == 3816
+    assert gene["n_genes"] == 1806
+    # Empty, U66 and U139 occupy 60 of the 1,930 wells, each 4 arms x 9 reads.
+    assert gene["n_null_records"] == 60 * 36 == 2160
     assert (
         rows[(Level.L4, "promoter_genes_in_the_host_gene_universe")]["details"][
             "n_genes"
         ]
-        == 1761
+        == 1806
     )

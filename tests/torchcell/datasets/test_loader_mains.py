@@ -87,7 +87,7 @@ MAINS: list[tuple[str, list[tuple[str, str]], bool, str | None]] = [
             ("IsobutanolScreenLopez2024Dataset", "isobutanol_screen_lopez2024"),
             ("IsobutanolValidatedLopez2024Dataset", "isobutanol_validated_lopez2024"),
         ],
-        True,
+        False,
         None,
     ),
     ("bloom2019", [("Bloom2019Dataset", "bloom2019")], True, None),
@@ -103,20 +103,20 @@ MAINS: list[tuple[str, list[tuple[str, str]], bool, str | None]] = [
     (
         "smith2006",
         [("FattyAcidSmith2006Dataset", "env_chemgen_smith2006")],
-        True,
+        False,
         "preprocess/dropped_records.json",
     ),
     ("xue2025", [("FattyAcidXue2025Dataset", "ffa_xue2025")], True, None),
     (
         "costanzo2021",
         [("EnvChemgenCostanzo2021Dataset", "env_chemgen_costanzo2021")],
-        True,
+        False,
         "dropped_records.json",
     ),
     (
         "smith2016",
         [("CrispriChemgenSmith2016Dataset", "crispri_chemgen_smith2016")],
-        True,
+        False,
         "preprocess/dropped_records.json",
     ),
     (
@@ -246,7 +246,11 @@ def _run_main(
         root = data_root / "data/torchcell" / datasets[0][1]
         path = root / drop_log
         path.parent.mkdir(parents=True)
-        path.write_text(json.dumps({"rules": DROP_RULES, "n_dropped_records": 7}))
+        path.write_text(
+            json.dumps(
+                {"rules": DROP_RULES, "n_dropped_records": 7, "n_blank_cells": 7}
+            )
+        )
     mod.main()
     return log, mod
 
@@ -318,7 +322,7 @@ def test_main_prints_length_record_and_drop_log(
     ``bloom2019`` prints the genotype fields (``cross``, ``segregant_id``, the block
     count ``len([1, 2, 3]) == 3``) and the phenotype value; ``mormino2022`` prints
     ``json.dumps`` of the experiment; the drop-log mains print ``json.dumps`` of
-    ``rules`` (``costanzo2021`` prints ``n_dropped_records`` == 7 instead).
+    ``rules`` (``costanzo2021`` prints ``n_blank_cells`` == 7 instead).
     """
     _run_main(module_name, datasets, drop_log, tmp_path / "dr", monkeypatch)
     assert capsys.readouterr().out == EXPECTED_STDOUT[module_name]

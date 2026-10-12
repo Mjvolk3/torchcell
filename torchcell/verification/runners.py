@@ -591,6 +591,9 @@ def run_ohnuki_morphology(data_root: str) -> bool:
 VISUAL_SCORE_DATASETS: dict[str, dict[str, Any]] = {
     "carotenoid_ozaydin2013": {
         "root": "data/torchcell/carotenoid_ozaydin2013",
+        # One record per released scored row (#1045): 130 ORFs were scored on two
+        # plates, so they carry two records each.
+        "allow_duplicate_orfs": True,
         "provenance": Provenance(
             source_uri="https://ars.els-cdn.com/content/image/1-s2.0-S109671761200081X-mmc1.xlsx",
             citation_key="ozaydinCarotenoidbasedPhenotypicScreen2013a",
@@ -617,6 +620,7 @@ def run_visual_score(data_root: str) -> bool:
             dataset_name=name,
             provenance=spec["provenance"],
             expected_count=len(records),
+            allow_duplicate_orfs=bool(spec.get("allow_duplicate_orfs", False)),
         )
         if ohya_genes:
             report.add(
@@ -726,10 +730,11 @@ METABOLITE_DATASETS: dict[str, dict[str, Any]] = {
     "isobutanol_screen_lopez2024": {
         "root": "data/torchcell/isobutanol_screen_lopez2024",
         # First genome-wide biosensor screen (Table S2): median GFP fluorescence per YKO
-        # strain; FC = median fluor(deletion) / median fluor(WT same plate). Aggregated to
-        # ONE record per current-R64 ORF (mean FC; n_replicates=row count; SE=SD/sqrt-n when
-        # >=2 rows). 4805 rows - 57 unresolved = 4748 resolved -> 4554 unique ORFs.
-        "expected_count": 4554,
+        # strain; FC = median fluor(deletion) / median fluor(WT same plate). One record
+        # per released row (#1045): 4805 rows - 1 row with no ORF form (YLR287-A,
+        # deferred to the released-gene-name leaf) = 4804; 186 ORFs carry two records.
+        "expected_count": 4804,
+        "allow_duplicate_orfs": True,
         "reference_centered": False,  # FC ratio vs WT control (reference metabolite_level=1.0)
         "provenance": Provenance(
             source_uri=(
@@ -755,9 +760,13 @@ METABOLITE_DATASETS: dict[str, dict[str, Any]] = {
     "isobutanol_validated_lopez2024": {
         "root": "data/torchcell/isobutanol_validated_lopez2024",
         # Validated re-screen (Table S3): FC>=2 (66) + FC<=0.5 (161) strains re-measured in
-        # TRIPLICATE (n=3); FC average + STD (SE=STD/sqrt3). 227 block rows - 2 YBL071W-A
+        # TRIPLICATE (n=3); FC average + STD (SE=STD/sqrt3). All 227 block rows are
+        # records (#1045), both YBL071W-A rows included, so that ORF carries two records.
+        "allow_duplicate_orfs": True,
+        # (the line below is the earlier reading of the same count)
+        # 227 block rows - 2 YBL071W-A
         # (contradictory 3.469 up / 0.0757 down, dropped) - 1 unresolved YIR043C = 224.
-        "expected_count": 224,
+        "expected_count": 227,
         "reference_centered": False,
         "provenance": Provenance(
             source_uri=(
@@ -1756,13 +1765,13 @@ def run_rnaseq(data_root: str) -> bool:
 ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
     "yeastphenome": {
         "root": "data/torchcell/yeastphenome",
-        # Curated YeastPhenome GROWTH screens (NPV z-score label): 47 complete-loss-of-
-        # function deletion screens (haploid BY4741/BY4742 + homozygous-diploid BY4743;
-        # heterozygous/dosage screens excluded) minus already-built primaries, x their
-        # encodable single-dosed-compound growth conditions = 83 environments, 296777
-        # records (one per (ORF, condition, screen); non-ORF rows + unparseable /
-        # het-or-ambiguous / unknown-media columns drop-and-logged). Widen via SCREENS.
-        "expected_count": 296777,
+        # Curated YeastPhenome GROWTH screens (NPV z-score label): 47 deletion screens
+        # (haploid BY4741/BY4742, homozygous-diploid BY4743 and heterozygous BY4743) minus
+        # already-built primaries, x every growth condition the schema carries (#1045:
+        # dosed agents, temperature, time, anaerobic, the standard condition, gapped
+        # media) = 133 environments, 524,682 records (one per (ORF, condition, screen));
+        # 19 columns whose condition the schema cannot carry are counted in the ledger.
+        "expected_count": 524682,
         "background_genes": frozenset(),
         "provenance": Provenance(
             source_uri="https://doi.org/10.5281/zenodo.7714347",
@@ -2079,11 +2088,11 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
     },
     "env_chemgen_smith2006": {
         "root": "data/torchcell/env_chemgen_smith2006",
-        # 4249 unique-ORF strains x 3 conditions = 12,747 ordinal records. Of 4770
-        # released strains, 521 are dropped: 472 flagged NG/LG/NG-CONT on the YEPD growth
-        # control (the screen's own QC column), 26 non-current systematic names, and 23
-        # alias-resolutions that would collide with a directly-present R64 ORF.
-        "expected_count": 12747,
+        # 4770 released strains x 3 conditions = 14,310 ordinal records, every one
+        # stored under its released name (#1045): the 472 strains flagged NG/LG/NG-CONT
+        # on the YEPD growth control are stored with the flag carried in the ledger, and
+        # the 49 names the current annotation renames or lacks keep their released name.
+        "expected_count": 14310,
         # matalpha haploid single-deletion set (BY4742): no constant background.
         "background_genes": frozenset(),
         "provenance": Provenance(
@@ -2274,7 +2283,9 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
     },
     "env_chemgen_costanzo2021": {
         "root": "data/torchcell/env_chemgen_costanzo2021",
-        "expected_count": 61430,
+        # 4429 released strains x 14 conditions - 366 blank cells = 61,640 (#1045: the
+        # 15 strains the annotation retired or does not call a gene are stored).
+        "expected_count": 61640,
         "background_genes": frozenset(),
         "provenance": Provenance(
             source_uri=(
@@ -2475,11 +2486,11 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
     },
     "crispri_chemgen_smith2016": {
         "root": "data/torchcell/crispri_chemgen_smith2016",
-        # 7,053 of the 14,463 rows of Additional file 10. 7,410 drop on the compound
-        # rule: ten Drug labels are ChemDiv / ChemBridge / TimTec catalog ids for which the
-        # primary released no structure, so no InChIKey / ChEBI / CID exists. L1 strain
-        # identity keys on (gene, crispr_interference, guide spacer, library_pool).
-        "expected_count": 7053,
+        # All 14,463 rows of Additional file 10 (#1045): the 7,410 rows whose Drug label
+        # is a ChemDiv / ChemBridge / TimTec catalog id with no released structure are
+        # stored under a typed inchikey gap. L1 strain identity keys on (gene,
+        # crispr_interference, guide spacer, library_pool).
+        "expected_count": 14463,
         "background_genes": frozenset(),
         "provenance": Provenance(
             source_uri=(
@@ -2653,10 +2664,9 @@ FITNESS_DATASETS: dict[str, dict[str, Any]] = {
     },
     "smf_baryshnikova2010": {
         "root": "data/torchcell/smf_baryshnikova2010",
-        # 6023 released alleles minus the 30 frozen in the loader's _UNRESOLVABLE
-        # (== baryshnikova2010.EXPECTED_RECORDS; kept literal here because this module
-        # must not import loaders).
-        "expected_count": 5993,
+        # All 6023 released alleles (#1045; == baryshnikova2010.EXPECTED_RECORDS, kept
+        # literal here because this module must not import loaders).
+        "expected_count": 6023,
         "provenance": Provenance(
             source_uri=(
                 "$DATA_ROOT/torchcell-raw/baryshnikovaQuantitativeAnalysisFitness2010/"

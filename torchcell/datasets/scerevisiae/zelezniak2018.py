@@ -399,11 +399,13 @@ class ProteomeZelezniak2018Dataset(ExperimentDataset):
         self._reference = self._aggregate(wt_rows, _WT)
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
-        n_bad_orf = 0
+        deferred: list[str] = []
         rows: list[dict[str, Any]] = []
         for ko_orf, sub in df[df["KO_ORF"] != _WT].groupby("KO_ORF"):
             if not _SYSTEMATIC_RE.match(str(ko_orf)):
-                n_bad_orf += 1
+                # a released strain id with no ORF form waits for the released-gene-name
+                # leaf; counted, never dropped for good (0 of 97 released strains)
+                deferred.append(str(ko_orf))
                 continue
             gene = str(sub["KO_gene_name"].iloc[0])
             rows.append(
@@ -415,10 +417,10 @@ class ProteomeZelezniak2018Dataset(ExperimentDataset):
             )
         log.info(
             "Zelezniak: %d knockout strains, WT reference with %d proteins, "
-            "%d non-systematic KO_ORF skipped",
+            "%d strain ids deferred to the released-gene-name leaf",
             len(rows),
             len(self._reference["abundance"]),
-            n_bad_orf,
+            len(deferred),
         )
         pd.DataFrame([{"orf": r["orf"], "gene": r["gene"]} for r in rows]).to_csv(
             osp.join(self.preprocess_dir, "data.csv"), index=False

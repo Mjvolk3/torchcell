@@ -142,8 +142,8 @@ def test_homozygous_diploid_deletion_genotype(dataset):
 @pytest.mark.data
 @_needs_mirror
 def test_haploid_screens_are_ingested_as_haploid_background(dataset):
-    """HAPLOID deletion collections are complete loss-of-function too -- they must be
-    ingested (BY4741, ploidy=haploid), NOT excluded. Only heterozygous (dosage) is out.
+    """HAPLOID deletion collections are complete loss-of-function too -- they are
+    ingested (BY4741, ploidy=haploid); a heterozygous column is a copy-number drop.
     """
     haploid = [
         dataset[i]
@@ -218,7 +218,7 @@ def test_near_replicate_screens_are_distinct_records(dataset):
 def test_parse_condition_defensin_is_peptide_biologic():
     """The four PMID-31451498 plant defensins parse to a peptide BiologicPerturbation
     (sequence-identified, NOT a small molecule) -- the audit DEFECT fix. Pure unit test
-    of ``_parse_condition`` (no build/network).
+    of ``_parse_agent`` (no build/network).
     """
     from torchcell.datamodels.schema import (
         BiologicAgentClass,
@@ -227,14 +227,14 @@ def test_parse_condition_defensin_is_peptide_biologic():
     )
 
     for name in ("DmAMP1", "NaD1", "NbD6", "SBI6"):
-        pert = yp_mod._parse_condition(f"{name} [10 uM]")
+        pert = yp_mod._parse_agent(f"{name} [10 uM]")
         assert isinstance(pert, BiologicPerturbation)
         assert pert.agent_class == BiologicAgentClass.peptide
         assert pert.name == name
         assert pert.concentration.value == 10.0
 
     # a normal dosed compound still routes to a resolver-filled SmallMoleculePerturbation
-    small = yp_mod._parse_condition("furfural [10 mM]")
+    small = yp_mod._parse_agent("furfural [10 mM]")
     assert isinstance(small, SmallMoleculePerturbation)
     assert small.compound.name == "furfural"
     assert small.compound.inchikey is not None  # resolved via the pinned table

@@ -55,7 +55,9 @@ ENVIRONMENT (Methods; same cultures as the Kemmeren 2014 deletion compendium):
 GENOTYPE / REFERENCE:
   Each strain is one KanMX single-gene deletion in the S. cerevisiae nonessential deletion
   collection (Holstege compendium). genotype = one KanMxDeletionPerturbation
-  (systematic_gene_name = ORF, perturbed_gene_name = commonName). Reference = the wild-type
+  (systematic_gene_name = the released ORF, upper-cased; perturbed_gene_name = the
+  released commonName). No genome is consulted (#1045, 2026.10.12); the previous build
+  resolved each ORF through the alias table (0 of 1312 changed or dropped). Reference = the wild-type
   parental strain, fitness == 1.0. The Kemmeren compendium used BOTH MATa (BY4741) and MATa
   (BY4742) reference pools, but Dataset S2 does NOT resolve mating type per strain, so the
   representative haploid deletion background BY4741 is recorded on ``ReferenceGenome``
@@ -74,6 +76,7 @@ import logging
 import os
 import os.path as osp
 import pickle
+import re
 from collections.abc import Callable
 from typing import Any
 
@@ -104,7 +107,6 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
-from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -127,6 +129,7 @@ _N_SAMPLES = 2
 
 # Row count declared in the file's header comment ("... 1312 deletion strains ...").
 _EXPECTED_ROWS = 1312
+_SYSTEMATIC_RE = re.compile(r"^(Y[A-P][LR]\d{3}[WC](-[A-Z])?|Q\d{4})$")
 
 
 @register_dataset
@@ -139,13 +142,11 @@ class SmfODuibhir2014Dataset(ExperimentDataset):
         self,
         root: str = "data/torchcell/smf_oduibhir2014",
         io_workers: int = 0,
-        genome: SCerevisiaeGenome | None = None,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize the dataset; a genome is REQUIRED to resolve ORFs to current R64."""
-        self.genome = genome
+        """Initialize the dataset (no genome: every strain is stored as released)."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -184,29 +185,6 @@ class SmfODuibhir2014Dataset(ExperimentDataset):
                 )
             copy_verified(src, dest, _DATASET_S2_SHA256)
             log.info("Verified %s (sha256 %s)", dest, _DATASET_S2_SHA256)
-
-    def _resolver(self) -> Callable[[str], str | None]:
-        """Build an ORF -> current-R64-systematic-name resolver from the genome."""
-        if self.genome is None:
-            raise RuntimeError(
-                "SmfODuibhir2014Dataset requires a genome for ORF resolution; "
-                "inject SCerevisiaeGenome(...)"
-            )
-        genome = self.genome
-        df = genome.gene_attribute_table
-        ids = set(df["ID"])
-        alias_map = genome.alias_to_systematic
-
-        def resolve(token: str) -> str | None:
-            gene = token.upper()
-            if gene in ids:
-                return gene
-            candidates = alias_map.get(gene, [])
-            if candidates and candidates[0] in ids:
-                return candidates[0]
-            return None
-
-        return resolve
 
     def _read_dataset_s2(self) -> pd.DataFrame:
         """Read + validate Dataset S2 (skip the leading '#...' comment line)."""
@@ -282,24 +260,26 @@ class SmfODuibhir2014Dataset(ExperimentDataset):
 
         Every record is built and every refusal raised BEFORE the store is opened, so a
         refused file leaves no ``processed/lmdb`` behind for a retry to serve as empty.
-        Refusals (each 0 of the 1312 rows of the pinned file, 2026.10.01): a blank
-        ``commonName`` or ``log2relT``, and two rows resolving to the same ORF.
+        Every row is a record under its released ORF (upper-cased; no genome is
+        consulted, #1045). Refusals (each 0 of the 1312 rows of the pinned file): a blank
+        ``commonName`` or ``log2relT``, two rows naming one ORF, and an ORF cell that is
+        not ORF-shaped (which would need the released-gene-name leaf, never a drop).
         """
         verify_raw_files(self.raw_dir, {_RAW_FILENAME: _DATASET_S2_SHA256})
-        resolve = self._resolver()
         df = self._read_dataset_s2()
 
-        dropped: list[str] = []
         first_row: dict[str, str] = {}
         records: list[
             tuple[FitnessExperiment, FitnessExperimentReference, Publication]
         ] = []
         for _, row in df.iterrows():
             token = str(row["orf"])
-            orf = resolve(token)
-            if orf is None:
-                dropped.append(token)
-                continue
+            orf = token.strip().upper()
+            if not _SYSTEMATIC_RE.match(orf):
+                raise RuntimeError(
+                    f"Dataset S2 row {token!r} is not an ORF-shaped identifier; a "
+                    "released name with no ORF form needs the released-gene-name leaf"
+                )
             if orf in first_row:
                 raise RuntimeError(
                     f"Dataset S2 lists {orf} twice (rows {first_row[orf]!r} and "
@@ -338,10 +318,9 @@ class SmfODuibhir2014Dataset(ExperimentDataset):
                 )
         env.close()
         log.info(
-            "Wrote %d ODuibhir2014 fitness experiments to LMDB (%d ORFs dropped: %s)",
+            "Wrote %d ODuibhir2014 fitness experiments to LMDB (every released row, "
+            "under its released ORF)",
             len(records),
-            len(dropped),
-            sorted(dropped),
         )
 
     def preprocess_raw(self, df: Any, preprocess: dict[str, Any] | None = None) -> Any:
@@ -359,13 +338,8 @@ def main() -> None:
 
     load_dotenv()
     data_root = os.environ["DATA_ROOT"]
-    genome = SCerevisiaeGenome(
-        genome_root=osp.join(data_root, "data/sgd/genome"),
-        go_root=osp.join(data_root, "data/go"),
-        overwrite=False,
-    )
     root = osp.join(data_root, "data/torchcell/smf_oduibhir2014")
-    dataset = SmfODuibhir2014Dataset(root=root, genome=genome)
+    dataset = SmfODuibhir2014Dataset(root=root)
     print(f"len = {len(dataset)}")
     print(dataset[0])
 

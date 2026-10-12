@@ -2,7 +2,7 @@
   "record_version": 1,
   "slug": "single-cell-umi-one-tag",
   "date": "2026-10-12",
-  "pr": null,
+  "pr": 1052,
   "author_kind": "agent",
   "base_commit": "8bee8bb0402fd5e86856f87b9aad967911476b3a",
   "python_version": "3.13.0",

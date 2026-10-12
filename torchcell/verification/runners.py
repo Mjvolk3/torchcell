@@ -49,7 +49,6 @@ import lmdb
 
 from torchcell.data.experiment_dataset import resolve_interned
 from torchcell.datamodels.schema import BACTERIAL_ASSEMBLY_SETS
-from torchcell.datasets.systematic_name_currency import SGA_SYSTEMATIC_REFUSALS
 from torchcell.sequence.genome.bacterial import BacterialAssembly
 from torchcell.sequence.genome.ecoli.k12 import (
     BW25113_ASSEMBLY,
@@ -2610,21 +2609,15 @@ FITNESS_DATASETS: dict[str, dict[str, Any]] = {
     # --- begin #889: the Costanzo 2016 and Kuzmin 2018/2020 fitness stores ----------- #
     # Each count is the release's, derived by
     # experiments/036-dataset-fixes-before-kg-build/scripts/no_verifier_store_release_counts.py
-    # (results/no_verifier_store_release_counts.json). Costanzo 2016 and Kuzmin 2020
-    # then refuse every row naming an ORF R64-4-1 retired or merged (#893, #897;
-    # SGA_SYSTEMATIC_REFUSALS), so their counts are the release's minus those rows,
-    # measured by experiments/036-dataset-fixes-before-kg-build/scripts/
-    # yeast_gene_id_currency.py (results/yeast_gene_id_currency.json). Every store
-    # streams: the eager
+    # (results/no_verifier_store_release_counts.json). Every store streams: the eager
     # path validates against the 33-way ExperimentType union at 85 records/s, which is
     # 68 hours for dmf_costanzo2016; the streaming twin validates each record as the
     # FitnessExperiment it declares.
     "smf_costanzo2016": {
         "root": "data/torchcell/smf_costanzo2016",
         # one record per (strain, temperature) cell of the SMF spreadsheet that states
-        # both a fitness and a stddev, duplicate cells removed: 20,484, less the 74
-        # cells of the 35 refused ORFs
-        "expected_count": 20410,
+        # both a fitness and a stddev, duplicate cells removed
+        "expected_count": 20484,
         "stream": True,
         "experiment_class": "FitnessExperiment",
         "provenance": Provenance(
@@ -2645,9 +2638,8 @@ FITNESS_DATASETS: dict[str, dict[str, Any]] = {
     },
     "dmf_costanzo2016": {
         "root": "data/torchcell/dmf_costanzo2016",
-        # every row of the four Data File S1 interaction tables: 20,705,612, less the
-        # 157,605 rows naming one of the 35 refused ORFs
-        "expected_count": 20548007,
+        # every row of the four Data File S1 interaction tables
+        "expected_count": 20705612,
         "stream": True,
         "experiment_class": "FitnessExperiment",
         "provenance": Provenance(
@@ -2739,9 +2731,8 @@ FITNESS_DATASETS: dict[str, dict[str, Any]] = {
     "dmf_kuzmin2020": {
         "root": "data/torchcell/dmf_kuzmin2020",
         # 632,797 Tables S1 + S3 digenic rows + the 201 of 240 trigenic double-mutant
-        # query strains whose fitness Table S5 states = 632,998, less the 658 digenic
-        # rows naming one of the 31 refused ORFs
-        "expected_count": 632340,
+        # query strains whose fitness Table S5 states
+        "expected_count": 632998,
         "stream": True,
         "experiment_class": "FitnessExperiment",
         "provenance": Provenance(
@@ -2762,8 +2753,8 @@ FITNESS_DATASETS: dict[str, dict[str, Any]] = {
     },
     "tmf_kuzmin2020": {
         "root": "data/torchcell/tmf_kuzmin2020",
-        # Tables S1 + S3 trigenic rows: 301,798, less the 317 naming a refused ORF
-        "expected_count": 301481,
+        # Tables S1 + S3 trigenic rows
+        "expected_count": 301798,
         "stream": True,
         "experiment_class": "FitnessExperiment",
         "provenance": Provenance(
@@ -3483,14 +3474,8 @@ def _interaction_spec(
     companion: str,
     quotes: list[SourcedValue],
     provenance: Provenance,
-    strain_columns: tuple[str, ...] = (),
-    refused_orfs: frozenset[str] = frozenset(),
 ) -> dict[str, Any]:
-    """One GENE_INTERACTION_DATASETS entry (every Costanzo/Kuzmin store has a p-value).
-
-    ``refused_orfs`` names the ORFs whose released rows the loader refuses; the
-    released multiset drops a row naming one of them in ``strain_columns``.
-    """
+    """One GENE_INTERACTION_DATASETS entry (every Costanzo/Kuzmin store has a p-value)."""
     return {
         "root": f"data/torchcell/{name}",
         "expected_count": expected_count,
@@ -3505,26 +3490,18 @@ def _interaction_spec(
         "companion": companion,
         "quotes": quotes,
         "provenance": provenance,
-        "strain_columns": strain_columns,
-        "refused_orfs": refused_orfs,
     }
 
 
 GENE_INTERACTION_DATASETS: dict[str, dict[str, Any]] = {
     "dmi_costanzo2016": _interaction_spec(
         "dmi_costanzo2016",
-        # 20,705,612 released rows less the 157,605 naming a refused ORF (#893)
-        expected_count=20548007,
+        expected_count=20705612,
         order=2,
         released_files=COSTANZO2016_DATA_FILE_S1,
         score_column=COSTANZO2016_SCORE,
         combined_type=None,
-        selection=(
-            "every row of the four Data File S1 tables except those naming an ORF "
-            "R64-4-1 retired or merged (SGA_SYSTEMATIC_REFUSALS)"
-        ),
-        strain_columns=("Query Strain ID", "Array Strain ID"),
-        refused_orfs=frozenset(SGA_SYSTEMATIC_REFUSALS),
+        selection="every row of the four Data File S1 tables",
         companion="dmf_costanzo2016",
         quotes=_COSTANZO2016_QUOTES,
         provenance=Provenance(
@@ -3587,18 +3564,12 @@ GENE_INTERACTION_DATASETS: dict[str, dict[str, Any]] = {
     ),
     "dmi_kuzmin2020": _interaction_spec(
         "dmi_kuzmin2020",
-        # 632,797 digenic rows less the 658 naming a refused ORF (#899)
-        expected_count=632139,
+        expected_count=632797,
         order=2,
         released_files=KUZMIN2020_TABLES_S1_S3,
         score_column=KUZMIN_FINAL_SCORE,
         combined_type="digenic",
-        selection=(
-            "the 'digenic' rows of Tables S1 and S3 except those naming an ORF R64-4-1 "
-            "retired or merged (SGA_SYSTEMATIC_REFUSALS)"
-        ),
-        strain_columns=("Query strain ID", "Array strain ID"),
-        refused_orfs=frozenset(SGA_SYSTEMATIC_REFUSALS),
+        selection="the 'digenic' rows of Tables S1 and S3",
         companion="dmf_kuzmin2020",
         quotes=_KUZMIN2020_QUOTES,
         provenance=Provenance(
@@ -3617,18 +3588,12 @@ GENE_INTERACTION_DATASETS: dict[str, dict[str, Any]] = {
     ),
     "tmi_kuzmin2020": _interaction_spec(
         "tmi_kuzmin2020",
-        # 301,798 trigenic rows less the 317 naming a refused ORF (#900)
-        expected_count=301481,
+        expected_count=301798,
         order=3,
         released_files=KUZMIN2020_TABLES_S1_S3,
         score_column=KUZMIN_FINAL_SCORE,
         combined_type="trigenic",
-        selection=(
-            "the 'trigenic' rows of Tables S1 and S3 except those naming an ORF R64-4-1 "
-            "retired or merged (SGA_SYSTEMATIC_REFUSALS)"
-        ),
-        strain_columns=("Query strain ID", "Array strain ID"),
-        refused_orfs=frozenset(SGA_SYSTEMATIC_REFUSALS),
+        selection="the 'trigenic' rows of Tables S1 and S3",
         companion="tmf_kuzmin2020",
         quotes=_KUZMIN2020_QUOTES,
         provenance=Provenance(
@@ -3684,8 +3649,6 @@ def run_gene_interaction(data_root: str) -> bool:
                 score_column=spec["score_column"],
                 p_value_column=spec["p_value_column"],
                 combined_type=spec["combined_type"],
-                strain_columns=spec["strain_columns"],
-                refused_orfs=spec["refused_orfs"],
             )
         )
         released = ReleasedComparison(

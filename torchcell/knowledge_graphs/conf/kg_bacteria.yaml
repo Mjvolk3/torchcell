@@ -56,6 +56,7 @@ import_mode: full
 
 datasets:
   - GeneEssentialityBaba2006Dataset
+  - GrowthYieldBaba2006Dataset
   - GeneInteractionBabu2014Dataset
   - MrnaFractionBalakrishnan2022Dataset
   - GeneInteractionButland2008Dataset
@@ -83,6 +84,7 @@ datasets:
   - GrowthRateLamoureux2023Dataset
   - RnaseqPublicK12Lamoureux2023Dataset
   - ProteinSynthesisRateLi2014Dataset
+  - FluxLi2021Dataset
   - ProteomeMori2021Dataset
   - PhageRbTnseqMutalik2020Dataset
   - CrisprPineneToleranceNiu2019Dataset

@@ -80,6 +80,7 @@ from torchcell.adapters import (
     EnvMetalTnseqRoyet2025Adapter,
     ExometaboliteBrunk2016Adapter,
     FluxIshii2007Adapter,
+    FluxLi2021Adapter,
     GeneEssentialityBaba2006Adapter,
     GeneEssentialityGerdes2003Adapter,
     GeneEssentialityGoodall2018Adapter,
@@ -93,6 +94,7 @@ from torchcell.adapters import (
     GrowthRateS23Schmidt2016Adapter,
     GrowthRateSchmidt2016Adapter,
     GrowthWang2015Adapter,
+    GrowthYieldBaba2006Adapter,
     IsopentenolTiterFoo2014Adapter,
     IsoprenolSelectionMenasalvas2025Adapter,
     IsoprenolTiterBanerjee2024Adapter,
@@ -154,6 +156,7 @@ from torchcell.adapters.cell_adapter import SINGLE_PASS_EDGES, SINGLE_PASS_NODES
 from torchcell.datamodels.schema import PhagePerturbation
 from torchcell.datasets.dataset_registry import dataset_registry
 from torchcell.datasets.ecoli.baba2006 import GeneEssentialityBaba2006Dataset
+from torchcell.datasets.ecoli.baba2006_growth import GrowthYieldBaba2006Dataset
 from torchcell.datasets.ecoli.babu2014 import GeneInteractionBabu2014Dataset
 from torchcell.datasets.ecoli.balakrishnan2022 import (
     MrnaFractionBalakrishnan2022Dataset,
@@ -205,6 +208,7 @@ from torchcell.datasets.ecoli.lamoureux2023_public_k12 import (
     RnaseqPublicK12Lamoureux2023Dataset,
 )
 from torchcell.datasets.ecoli.li2014 import ProteinSynthesisRateLi2014Dataset
+from torchcell.datasets.ecoli.li2021 import FluxLi2021Dataset
 from torchcell.datasets.ecoli.mohiuddin2022 import PromoterReporterMohiuddin2022Dataset
 from torchcell.datasets.ecoli.mori2021 import ProteomeMori2021Dataset
 from torchcell.datasets.ecoli.mutalik2020 import PhageRbTnseqMutalik2020Dataset
@@ -383,6 +387,16 @@ BACTERIAL: list[Bacterial] = [
         "gene_essentiality_baba2006",
         GeneEssentialityBaba2006Dataset,
         "gene essentiality phenotype",
+        env_perturbation=False,
+    ),
+    # Baba 2006 Table 3's OD600 (#927): one Keio deletion per record; the three
+    # conditions differ in medium and duration, so no environment perturbation.
+    _case(
+        GrowthYieldBaba2006Adapter,
+        "baba2006_growth",
+        "growth_yield_baba2006",
+        GrowthYieldBaba2006Dataset,
+        RESPONSE,
         env_perturbation=False,
     ),
     _case(
@@ -595,6 +609,16 @@ BACTERIAL: list[Bacterial] = [
         ProteinSynthesisRateLi2014Dataset,
         SYNTHESIS_RATE,
         perturbation=False,
+        env_perturbation=False,
+    ),
+    # Li 2021 13C-MFA (#800): one zwf promoter replacement per record, one labeling
+    # medium with no added compound.
+    _case(
+        FluxLi2021Adapter,
+        "li2021_flux",
+        "flux_li2021",
+        FluxLi2021Dataset,
+        FLUX,
         env_perturbation=False,
     ),
     _case(

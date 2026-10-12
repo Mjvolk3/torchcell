@@ -69,6 +69,7 @@ from torchcell.adapters import (
     ExometaboliteBrunk2016Adapter,
     FattyAcidXue2025Adapter,
     FluxIshii2007Adapter,
+    FluxLi2021Adapter,
     GeneEssentialityBaba2006Adapter,
     GeneEssentialityGerdes2003Adapter,
     GeneEssentialityGoodall2018Adapter,
@@ -84,6 +85,7 @@ from torchcell.adapters import (
     GrowthRateS23Schmidt2016Adapter,
     GrowthRateSchmidt2016Adapter,
     GrowthWang2015Adapter,
+    GrowthYieldBaba2006Adapter,
     Hale2024Adapter,
     HetHillenmeyer2008Adapter,
     HomHillenmeyer2008Adapter,
@@ -198,6 +200,7 @@ from torchcell.data.experiment_dataset import (
     parse_organisms,
 )
 from torchcell.datasets.ecoli.baba2006 import GeneEssentialityBaba2006Dataset
+from torchcell.datasets.ecoli.baba2006_growth import GrowthYieldBaba2006Dataset
 from torchcell.datasets.ecoli.babu2014 import GeneInteractionBabu2014Dataset
 from torchcell.datasets.ecoli.balakrishnan2022 import (
     MrnaFractionBalakrishnan2022Dataset,
@@ -249,6 +252,7 @@ from torchcell.datasets.ecoli.lamoureux2023_public_k12 import (
     RnaseqPublicK12Lamoureux2023Dataset,
 )
 from torchcell.datasets.ecoli.li2014 import ProteinSynthesisRateLi2014Dataset
+from torchcell.datasets.ecoli.li2021 import FluxLi2021Dataset
 from torchcell.datasets.ecoli.mohiuddin2022 import PromoterReporterMohiuddin2022Dataset
 from torchcell.datasets.ecoli.mori2021 import ProteomeMori2021Dataset
 from torchcell.datasets.ecoli.mutalik2020 import PhageRbTnseqMutalik2020Dataset
@@ -539,6 +543,7 @@ dataset_adapter_map: dict[type, type] = {
     MetabolomeFuhrer2017Dataset: MetabolomeFuhrer2017Adapter,
     EnvChemgenGirgis2009Dataset: EnvChemgenGirgis2009Adapter,
     GeneEssentialityBaba2006Dataset: GeneEssentialityBaba2006Adapter,
+    GrowthYieldBaba2006Dataset: GrowthYieldBaba2006Adapter,
     GeneEssentialityGerdes2003Dataset: GeneEssentialityGerdes2003Adapter,
     GeneEssentialityGoodall2018Dataset: GeneEssentialityGoodall2018Adapter,
     ProteinTurnoverGupta2024Dataset: ProteinTurnoverGupta2024Adapter,
@@ -549,6 +554,7 @@ dataset_adapter_map: dict[type, type] = {
         MismatchCrispriFitnessHawkins2020Adapter
     ),
     ProteinSynthesisRateLi2014Dataset: ProteinSynthesisRateLi2014Adapter,
+    FluxLi2021Dataset: FluxLi2021Adapter,
     RnaseqLamoureux2023Dataset: RnaseqLamoureux2023Adapter,
     GrowthRateLamoureux2023Dataset: GrowthRateLamoureux2023Adapter,
     RnaseqPublicK12Lamoureux2023Dataset: RnaseqPublicK12Lamoureux2023Adapter,

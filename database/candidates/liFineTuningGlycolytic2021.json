@@ -1,0 +1,174 @@
+{
+  "citation_key": "liFineTuningGlycolytic2021",
+  "table": "bacteria",
+  "row_name": "Li 2021 mevalonate flux",
+  "gates": [
+    {
+      "gate": "G1",
+      "outcome": "pass",
+      "reason": "primary: status='candidate', klass='Metabolome / flux', no aggregation marker",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G2",
+      "outcome": "pass",
+      "reason": "assembly_set: MG1655 -> ecoli_K12_MG1655_ASM584v2 resolves and reads; BW25113 -> ecoli_K12_BW25113_ASM75055v1 resolves and reads",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G3",
+      "outcome": "pass",
+      "reason": "3 file(s) in library+raw, 1168 worksheet row(s) counted; all intact",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G4",
+      "outcome": "pass",
+      "reason": "no key held by another module (0 mention(s)); no PMID check; values not compared (no dev store named)",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G5",
+      "outcome": "pass",
+      "reason": "FluxPhenotype exists; compounds resolve",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    }
+  ],
+  "zotero_item": "present",
+  "source_kind": "primary",
+  "aggregation": null,
+  "g2": {
+    "branch": "assembly_set",
+    "outcome": "resolvable_readable",
+    "hosts": [
+      {
+        "name": "MG1655",
+        "assembly_set": "ecoli_K12_MG1655_ASM584v2",
+        "resolvable": true,
+        "readable": true
+      },
+      {
+        "name": "BW25113",
+        "assembly_set": "ecoli_K12_BW25113_ASM75055v1",
+        "resolvable": true,
+        "readable": true
+      }
+    ]
+  },
+  "g3": {
+    "citation_key": "liFineTuningGlycolytic2021",
+    "trees_read": [
+      "library",
+      "raw"
+    ],
+    "files": [
+      {
+        "tree": "library",
+        "path": "si/si1.docx",
+        "role": "si_data",
+        "bytes": 106886,
+        "sha256_manifest": "14250d74f8e7bb60335635d51d406e3da6756df185228a6b861af896fa2f5094",
+        "sha256_disk": "14250d74f8e7bb60335635d51d406e3da6756df185228a6b861af896fa2f5094",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si2.xlsx",
+        "role": "si_data",
+        "bytes": 64022,
+        "sha256_manifest": "24c836f8459e5cce4f6a322477a7554e1f7dd16e8bb6b7cdd0ac4890b24c585a",
+        "sha256_disk": "24c836f8459e5cce4f6a322477a7554e1f7dd16e8bb6b7cdd0ac4890b24c585a",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "NETWORK",
+            "rows": 353
+          },
+          {
+            "sheet": "LABEL_INPUT",
+            "rows": 66
+          },
+          {
+            "sheet": "LABEL_MEASUREMENTS",
+            "rows": 138
+          },
+          {
+            "sheet": "Biomass Composition",
+            "rows": 27
+          }
+        ]
+      },
+      {
+        "tree": "raw",
+        "path": "data/12934_2021_1526_MOESM2_ESM.xlsx",
+        "role": "raw_data",
+        "bytes": 64022,
+        "sha256_manifest": "24c836f8459e5cce4f6a322477a7554e1f7dd16e8bb6b7cdd0ac4890b24c585a",
+        "sha256_disk": "24c836f8459e5cce4f6a322477a7554e1f7dd16e8bb6b7cdd0ac4890b24c585a",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "NETWORK",
+            "rows": 353
+          },
+          {
+            "sheet": "LABEL_INPUT",
+            "rows": 66
+          },
+          {
+            "sheet": "LABEL_MEASUREMENTS",
+            "rows": 138
+          },
+          {
+            "sheet": "Biomass Composition",
+            "rows": 27
+          }
+        ]
+      }
+    ],
+    "walls": []
+  },
+  "g4_key": {
+    "doi": "10.1186/s12934-021-01526-1",
+    "pmid": null,
+    "accessions": [],
+    "hits": [
+      {
+        "key_kind": "doi",
+        "key": "10.1186/s12934-021-01526-1",
+        "where": "torchcell/datasets/ecoli/li2021.py",
+        "relation": "own"
+      }
+    ],
+    "pmid_checked": false
+  },
+  "g4_value": null,
+  "g5": {
+    "phenotype_class": "FluxPhenotype",
+    "class_exists": true,
+    "unresolved_compounds": [],
+    "proposed_class": "FluxLi2021Dataset"
+  },
+  "decided_at": "2026-10-12",
+  "torchcell_commit": "35dc9ff73f1a3fbdde155f889fe2b34e4e1b7252"
+}

@@ -503,6 +503,7 @@ BACTERIAL_DATASETS = {
     "FitnessBrowserEcoliDataset",
     "FitnessBrowserPutidaDataset",
     "FluxIshii2007Dataset",
+    "FluxLi2021Dataset",
     "MetabolomeBrunk2016Dataset",
     "ProteomeBrunk2016Dataset",
     "GeneEssentialityBaba2006Dataset",
@@ -515,6 +516,7 @@ BACTERIAL_DATASETS = {
     "GrowthAucRapp2026Dataset",
     "GrowthRateCampos2018Dataset",
     "GrowthRateLamoureux2023Dataset",
+    "GrowthYieldBaba2006Dataset",
     "GrowthWang2015Dataset",
     "MismatchCrispriFitnessHawkins2020Dataset",
     "GrowthRateChoe2019Dataset",
@@ -623,6 +625,7 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
     # + 1 (#921, Potel 2018 phosphosite intensities),
     # + 1 (row 39, Banerjee 2024 isoprenol titers)
     # + 1 (#910, Teteneva 2024's lake-water RB-TnSeq, the first W3110 dataset).
+    # + 2 (#800 Li 2021 13C-MFA maps, #927 Baba 2006 Table 3 OD600).
     assert (
         len(dataset_adapter_map)
         == 110
@@ -660,6 +663,7 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
         + 1
         + 1
         + 1
+        + 2
     )
     served = {d.__name__ for d in dataset_adapter_map}
     assert served - set(ADAPTER_TO_DATASET.values()) == BACTERIAL_DATASETS | {

@@ -6,6 +6,9 @@ from .auesukaree2009_adapter import (
 from .baba2006_adapter import (
     GeneEssentialityBaba2006Adapter as GeneEssentialityBaba2006Adapter,
 )
+from .baba2006_growth_adapter import (
+    GrowthYieldBaba2006Adapter as GrowthYieldBaba2006Adapter,
+)
 from .babu2014_adapter import (
     GeneInteractionBabu2014Adapter as GeneInteractionBabu2014Adapter,
 )
@@ -206,6 +209,7 @@ from .lamoureux2023_public_k12_adapter import (
 from .li2014_adapter import (
     ProteinSynthesisRateLi2014Adapter as ProteinSynthesisRateLi2014Adapter,
 )
+from .li2021_flux_adapter import FluxLi2021Adapter as FluxLi2021Adapter
 from .lian2019_adapter import Lian2019Adapter as Lian2019Adapter
 from .lim2022_adapter import (
     PutidaPrecise321Lim2022Adapter as PutidaPrecise321Lim2022Adapter,
@@ -535,11 +539,13 @@ ecoli_adapters = [
     "MetabolomeFuhrer2017Adapter",
     "EnvChemgenGirgis2009Adapter",
     "GeneEssentialityBaba2006Adapter",
+    "GrowthYieldBaba2006Adapter",
     "GeneEssentialityGerdes2003Adapter",
     "GeneEssentialityGoodall2018Adapter",
     "GeneEssentialityPrice2018EcoliAdapter",
     "ProteinTurnoverGupta2024Adapter",
     "ProteinSynthesisRateLi2014Adapter",
+    "FluxLi2021Adapter",
     "MetabolomeIshii2007Adapter",
     "ProteomeIshii2007Adapter",
     "FluxIshii2007Adapter",

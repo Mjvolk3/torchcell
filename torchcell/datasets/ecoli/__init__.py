@@ -243,6 +243,7 @@ sourcing layer.
 """
 
 from .baba2006 import GeneEssentialityBaba2006Dataset as GeneEssentialityBaba2006Dataset
+from .baba2006_growth import GrowthYieldBaba2006Dataset as GrowthYieldBaba2006Dataset
 from .babu2014 import GeneInteractionBabu2014Dataset as GeneInteractionBabu2014Dataset
 from .balakrishnan2022 import (
     MrnaFractionBalakrishnan2022Dataset as MrnaFractionBalakrishnan2022Dataset,
@@ -304,6 +305,7 @@ from .lamoureux2023_public_k12 import (
 from .li2014 import (
     ProteinSynthesisRateLi2014Dataset as ProteinSynthesisRateLi2014Dataset,
 )
+from .li2021 import FluxLi2021Dataset as FluxLi2021Dataset
 from .mohiuddin2022 import (
     PromoterReporterMohiuddin2022Dataset as PromoterReporterMohiuddin2022Dataset,
 )

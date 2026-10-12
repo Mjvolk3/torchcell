@@ -171,7 +171,6 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">csv</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">defaultdict</span>
@@ -198,7 +197,6 @@
 <span class="n">DEFAULT_VERSION</span> <span class="o">=</span> <span class="n">LATEST_ALIAS</span>
 <span class="n">SYSTEM_DATABASES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"system"</span><span class="p">,)</span>
 <span class="n">_COMMIT_CHARS</span> <span class="o">=</span> <span class="mi">8</span>
-<span class="n">DEFAULT_TC_DATA_API_KEY_ENV</span> <span class="o">=</span> <span class="s2">"TC_DATA_API_KEY"</span>
 <span class="c1">#: How many failing pointers the one-line ``artifacts`` verdict names.</span>
 <span class="n">_FAILING_SHOWN</span> <span class="o">=</span> <span class="mi">3</span>
 
@@ -1166,8 +1164,6 @@
     <span class="n">release</span><span class="p">:</span> <span class="n">KgRelease</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">tc_data_url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">api_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">api_key_env</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_TC_DATA_API_KEY_ENV</span><span class="p">,</span>
     <span class="n">http</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">timeout_s</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">5.0</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArtifactProbe</span><span class="p">:</span>
@@ -1175,8 +1171,8 @@
 
 <span class="sd">    The checks run in the order that needs the least: a store without a release node or</span>
 <span class="sd">    a release that predates pointer recording is a warning (nothing to check), a release</span>
-<span class="sd">    pointing at no file is ok without asking tc-data, and only then are the key and the</span>
-<span class="sd">    endpoint required. ``http`` injects the client (tests).</span>
+<span class="sd">    pointing at no file is ok without asking tc-data, and only then is the endpoint</span>
+<span class="sd">    asked (tc-data is public, so no key is needed). ``http`` injects the client (tests).</span>
 <span class="sd">    """</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">httpx</span>
 
@@ -1199,11 +1195,7 @@
             <span class="n">detail</span><span class="o">=</span><span class="s2">"the release points at no artifact file"</span><span class="p">,</span>
             <span class="n">release</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span>
         <span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">api_key</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">ArtifactProbe</span><span class="p">(</span>
-            <span class="n">state</span><span class="o">=</span><span class="s2">"fail"</span><span class="p">,</span> <span class="n">code</span><span class="o">=</span><span class="s2">"n/a"</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">api_key_env</span><span class="si">}</span><span class="s2"> unset"</span><span class="p">,</span> <span class="n">release</span><span class="o">=</span><span class="n">tag</span>
-        <span class="p">)</span>
-    <span class="n">source</span> <span class="o">=</span> <span class="n">TcDataSource</span><span class="p">(</span><span class="n">tc_data_url</span><span class="p">,</span> <span class="n">api_key</span><span class="p">,</span> <span class="n">http</span><span class="o">=</span><span class="n">http</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout_s</span><span class="p">)</span>
+    <span class="n">source</span> <span class="o">=</span> <span class="n">TcDataSource</span><span class="p">(</span><span class="n">tc_data_url</span><span class="p">,</span> <span class="n">http</span><span class="o">=</span><span class="n">http</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout_s</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">checks</span> <span class="o">=</span> <span class="n">classify_pointers</span><span class="p">(</span><span class="n">release</span><span class="o">.</span><span class="n">artifact_refs</span><span class="p">,</span> <span class="n">source</span><span class="p">)</span>
     <span class="k">except</span> <span class="p">(</span><span class="n">RemoteEndpointError</span><span class="p">,</span> <span class="n">httpx</span><span class="o">.</span><span class="n">HTTPError</span><span class="p">)</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
@@ -1407,12 +1399,6 @@
     <span class="n">p_art</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">"--tc-data-timeout"</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"seconds per tc-data request"</span>
     <span class="p">)</span>
-    <span class="n">p_art</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">"--api-key-env"</span><span class="p">,</span>
-        <span class="n">default</span><span class="o">=</span><span class="n">DEFAULT_TC_DATA_API_KEY_ENV</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">"the environment variable holding the tc-data key (read after the repo "</span>
-        <span class="s2">".env is loaded; the key itself is never printed)"</span><span class="p">,</span>
-    <span class="p">)</span>
     <span class="n">p_art</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--json"</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">)</span>
 
     <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">argv</span><span class="p">)</span>
@@ -1578,11 +1564,7 @@
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">probe</span> <span class="o">=</span> <span class="n">artifact_probe</span><span class="p">(</span>
-                <span class="n">served</span><span class="p">,</span>
-                <span class="n">tc_data_url</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">tc_data_url</span><span class="p">,</span>
-                <span class="n">api_key</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">api_key_env</span><span class="p">),</span>
-                <span class="n">api_key_env</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">api_key_env</span><span class="p">,</span>
-                <span class="n">timeout_s</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">tc_data_timeout</span><span class="p">,</span>
+                <span class="n">served</span><span class="p">,</span> <span class="n">tc_data_url</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">tc_data_url</span><span class="p">,</span> <span class="n">timeout_s</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">tc_data_timeout</span>
             <span class="p">)</span>
         <span class="c1"># flushed: ops.sh bounds this process, and a hung driver thread can hold exit</span>
         <span class="nb">print</span><span class="p">(</span>

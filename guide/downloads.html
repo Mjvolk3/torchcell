@@ -126,8 +126,8 @@
              
   <section class="tex2jax_ignore mathjax_ignore" id="downloading-datasets">
 <h1>Downloading datasets<a class="headerlink" href="#downloading-datasets" title="Link to this heading"></a></h1>
-<p>Built torchcell datasets are served as packaged archives by <code class="docutils literal notranslate"><span class="pre">tc-data</span></code>, a keyed HTTP
-endpoint with Swagger documentation. Each archive holds a dataset’s <code class="docutils literal notranslate"><span class="pre">processed/</span></code>
+<p>Built torchcell datasets are served as packaged archives by <code class="docutils literal notranslate"><span class="pre">tc-data</span></code>, a public
+read-only HTTP endpoint with Swagger documentation. Each archive holds a dataset’s <code class="docutils literal notranslate"><span class="pre">processed/</span></code>
 directory (the records LMDB and its <code class="docutils literal notranslate"><span class="pre">interned</span></code> sibling) and <code class="docutils literal notranslate"><span class="pre">preprocess/</span></code> directory
 (<code class="docutils literal notranslate"><span class="pre">build_manifest.json</span></code>, <code class="docutils literal notranslate"><span class="pre">gene_set.json</span></code>, <code class="docutils literal notranslate"><span class="pre">experiment_reference_index.json</span></code>), exactly
 as the loader wrote them, so a download replaces the build step. The raw files each
@@ -136,10 +136,10 @@ and so are two more file tiers that graph records point at without storing their
 the genomes tier (reference and isolate assembly sets) and the objects tier (derived
 files such as embeddings, matrices and indexed FASTA).</p>
 <p>The endpoint is <code class="docutils literal notranslate"><span class="pre">http://torchcell-database.ncsa.illinois.edu:8724</span></code>, on the database
-host, serving the archive store and the raw mirror from the Taiga project storage. A
-user needs nothing but that URL and a key: no account on the host, no ssh. Ask the
-maintainers for a named API key (the Keys section below says how one is issued); every request except <code class="docutils literal notranslate"><span class="pre">/health</span></code>
-carries the key in the <code class="docutils literal notranslate"><span class="pre">X-API-Key</span></code> header. The store currently holds <code class="docutils literal notranslate"><span class="pre">gene_essentiality_sgd</span></code>,
+host, serving the archive store and the raw mirror from the Taiga project storage. No
+key, account or ssh is needed: every route is open for reading. The URL is built into
+the package as <code class="docutils literal notranslate"><span class="pre">torchcell.endpoint_http.DEFAULT_URL</span></code>, and <code class="docutils literal notranslate"><span class="pre">TC_DATA_URL</span></code> overrides it
+for a mirror or a development server. The store currently holds <code class="docutils literal notranslate"><span class="pre">gene_essentiality_sgd</span></code>,
 <code class="docutils literal notranslate"><span class="pre">smf_costanzo2016</span></code>, <code class="docutils literal notranslate"><span class="pre">amino_acid_cooper2010</span></code>, <code class="docutils literal notranslate"><span class="pre">amino_acid_mulleder2016</span></code> and
 <code class="docutils literal notranslate"><span class="pre">betaxanthin_cachera2023</span></code>; <code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/datasets</span></code> is the authoritative list.</p>
 <section id="swagger">
@@ -154,7 +154,7 @@ carries the key in the <code class="docutils literal notranslate"><span class="p
 </thead>
 <tbody>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/health</span></code></p></td>
-<td><p>liveness, artifact and raw-key counts (no key)</p></td>
+<td><p>liveness, artifact and raw-key counts</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/datasets</span></code></p></td>
 <td><p>the artifact index: one row per packaged archive</p></td>
@@ -231,19 +231,20 @@ processing record names the script and inputs that produced it.</p></li>
 </ul>
 <p><code class="docutils literal notranslate"><span class="pre">/genomes</span></code> and <code class="docutils literal notranslate"><span class="pre">/objects</span></code> list only keys that carry a manifest, and an endpoint without
 one of those tiers answers its listing with an empty list.</p>
+<p>Paper content is withheld. In the raw and objects tiers a manifest record whose role
+begins <code class="docutils literal notranslate"><span class="pre">paper_</span></code> (<code class="docutils literal notranslate"><span class="pre">paper_pdf</span></code>, <code class="docutils literal notranslate"><span class="pre">paper_text</span></code>, <code class="docutils literal notranslate"><span class="pre">paper_ocr</span></code>, <code class="docutils literal notranslate"><span class="pre">paper_fulltext</span></code>) is left out
+of <code class="docutils literal notranslate"><span class="pre">/manifest</span></code> and <code class="docutils literal notranslate"><span class="pre">/files</span></code>, and a request for its bytes answers 404 <code class="docutils literal notranslate"><span class="pre">paper</span> <span class="pre">content</span> <span class="pre">is</span> <span class="pre">not</span> <span class="pre">served</span></code>. SI files and data files under the same key are served as usual.</p>
 </section>
 <section id="curl">
 <h2>curl<a class="headerlink" href="#curl" title="Link to this heading"></a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">TC_DATA_URL</span><span class="o">=</span>http://torchcell-database.ncsa.illinois.edu:8724
-<span class="nb">export</span><span class="w"> </span><span class="nv">TC_DATA_API_KEY</span><span class="o">=</span>&lt;your<span class="w"> </span>key&gt;
 
-curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: </span><span class="nv">$TC_DATA_API_KEY</span><span class="s2">"</span><span class="w"> </span><span class="s2">"</span><span class="nv">$TC_DATA_URL</span><span class="s2">/datasets"</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>json.tool
-curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: </span><span class="nv">$TC_DATA_API_KEY</span><span class="s2">"</span><span class="w"> </span><span class="s2">"</span><span class="nv">$TC_DATA_URL</span><span class="s2">/datasets/smf_costanzo2016"</span>
+curl<span class="w"> </span><span class="s2">"</span><span class="nv">$TC_DATA_URL</span><span class="s2">/datasets"</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>json.tool
+curl<span class="w"> </span><span class="s2">"</span><span class="nv">$TC_DATA_URL</span><span class="s2">/datasets/smf_costanzo2016"</span>
 
 <span class="c1"># download an archive, resuming if interrupted, then verify it</span>
 <span class="nv">ARCHIVE</span><span class="o">=</span>smf_costanzo2016-1.2.1-d8a0f06c.tar.xz
-curl<span class="w"> </span>-C<span class="w"> </span>-<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: </span><span class="nv">$TC_DATA_API_KEY</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-o<span class="w"> </span><span class="s2">"</span><span class="nv">$ARCHIVE</span><span class="s2">"</span><span class="w"> </span><span class="s2">"</span><span class="nv">$TC_DATA_URL</span><span class="s2">/datasets/smf_costanzo2016/</span><span class="nv">$ARCHIVE</span><span class="s2">"</span>
+curl<span class="w"> </span>-C<span class="w"> </span>-<span class="w"> </span>-o<span class="w"> </span><span class="s2">"</span><span class="nv">$ARCHIVE</span><span class="s2">"</span><span class="w"> </span><span class="s2">"</span><span class="nv">$TC_DATA_URL</span><span class="s2">/datasets/smf_costanzo2016/</span><span class="nv">$ARCHIVE</span><span class="s2">"</span>
 sha256sum<span class="w"> </span><span class="s2">"</span><span class="nv">$ARCHIVE</span><span class="s2">"</span><span class="w">   </span><span class="c1"># must equal the row's archive_sha256</span>
 
 <span class="c1"># unpack into a dataset root; processed/ and preprocess/ appear beside it</span>
@@ -251,32 +252,19 @@ mkdir<span class="w"> </span>-p<span class="w"> </span>data/torchcell/smf_costan
 tar<span class="w"> </span>-xf<span class="w"> </span><span class="s2">"</span><span class="nv">$ARCHIVE</span><span class="s2">"</span><span class="w"> </span>-C<span class="w"> </span>data/torchcell/smf_costanzo2016
 
 <span class="c1"># raw files</span>
-curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: </span><span class="nv">$TC_DATA_API_KEY</span><span class="s2">"</span><span class="w"> </span><span class="s2">"</span><span class="nv">$TC_DATA_URL</span><span class="s2">/raw"</span>
-curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: </span><span class="nv">$TC_DATA_API_KEY</span><span class="s2">"</span><span class="w"> </span><span class="s2">"</span><span class="nv">$TC_DATA_URL</span><span class="s2">/raw/&lt;citation_key&gt;/files"</span>
+curl<span class="w"> </span><span class="s2">"</span><span class="nv">$TC_DATA_URL</span><span class="s2">/raw"</span>
+curl<span class="w"> </span><span class="s2">"</span><span class="nv">$TC_DATA_URL</span><span class="s2">/raw/&lt;citation_key&gt;/files"</span>
 
 <span class="c1"># genomes and objects tiers: list, read the file rows, fetch one file, verify it</span>
-curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: </span><span class="nv">$TC_DATA_API_KEY</span><span class="s2">"</span><span class="w"> </span><span class="s2">"</span><span class="nv">$TC_DATA_URL</span><span class="s2">/genomes"</span>
-curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: </span><span class="nv">$TC_DATA_API_KEY</span><span class="s2">"</span><span class="w"> </span><span class="s2">"</span><span class="nv">$TC_DATA_URL</span><span class="s2">/genomes/&lt;assembly_set&gt;/files"</span>
-curl<span class="w"> </span>-C<span class="w"> </span>-<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: </span><span class="nv">$TC_DATA_API_KEY</span><span class="s2">"</span><span class="w"> </span>-D<span class="w"> </span>headers.txt<span class="w"> </span><span class="se">\</span>
+curl<span class="w"> </span><span class="s2">"</span><span class="nv">$TC_DATA_URL</span><span class="s2">/genomes"</span>
+curl<span class="w"> </span><span class="s2">"</span><span class="nv">$TC_DATA_URL</span><span class="s2">/genomes/&lt;assembly_set&gt;/files"</span>
+curl<span class="w"> </span>-C<span class="w"> </span>-<span class="w"> </span>-D<span class="w"> </span>headers.txt<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-o<span class="w"> </span><span class="s2">"&lt;file&gt;"</span><span class="w"> </span><span class="s2">"</span><span class="nv">$TC_DATA_URL</span><span class="s2">/genomes/&lt;assembly_set&gt;/artifact/&lt;path&gt;"</span>
 grep<span class="w"> </span>-i<span class="w"> </span>x-artifact-sha256<span class="w"> </span>headers.txt<span class="p">;</span><span class="w"> </span>sha256sum<span class="w"> </span><span class="s2">"&lt;file&gt;"</span><span class="w">   </span><span class="c1"># the two must agree</span>
-curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: </span><span class="nv">$TC_DATA_API_KEY</span><span class="s2">"</span><span class="w"> </span><span class="s2">"</span><span class="nv">$TC_DATA_URL</span><span class="s2">/objects"</span>
-curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: </span><span class="nv">$TC_DATA_API_KEY</span><span class="s2">"</span><span class="w"> </span><span class="s2">"</span><span class="nv">$TC_DATA_URL</span><span class="s2">/objects/&lt;object_key&gt;/files"</span>
+curl<span class="w"> </span><span class="s2">"</span><span class="nv">$TC_DATA_URL</span><span class="s2">/objects"</span>
+curl<span class="w"> </span><span class="s2">"</span><span class="nv">$TC_DATA_URL</span><span class="s2">/objects/&lt;object_key&gt;/files"</span>
 </pre></div>
 </div>
-</section>
-<section id="keys">
-<h2>Keys<a class="headerlink" href="#keys" title="Link to this heading"></a></h2>
-<p>A key is issued per person or group by a maintainer; there is no self-service sign-up.
-Each key has a name, the endpoint stores only its sha256, and the plaintext is shown
-once, at the moment it is made. To issue one, on the endpoint host:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>torchcell.datasets.server<span class="w"> </span>--gen-key<span class="w"> </span>&lt;name&gt;
-</pre></div>
-</div>
-<p>It prints the plaintext key, which goes to the user, and a <code class="docutils literal notranslate"><span class="pre">{&quot;&lt;name&gt;&quot;:</span> <span class="pre">&quot;&lt;sha256hex&gt;&quot;}</span></code>
-line, which is added to the JSON file <code class="docutils literal notranslate"><span class="pre">TC_DATA_KEYS_FILE</span></code> points at. The service reads
-that file when it starts, so restart it for a new key to be accepted. Deleting an entry
-and restarting revokes that key and no other.</p>
 </section>
 <section id="environment-variables">
 <h2>Environment variables<a class="headerlink" href="#environment-variables" title="Link to this heading"></a></h2>
@@ -290,37 +278,25 @@ and restarting revokes that key and no other.</p>
 <tbody>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">TC_DATA_URL</span></code></p></td>
 <td><p>client</p></td>
-<td><p>endpoint base URL; when set, loaders download instead of building</p></td>
+<td><p>endpoint base URL, overriding the built-in <code class="docutils literal notranslate"><span class="pre">DEFAULT_URL</span></code>; when set, loaders download instead of building</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">TC_DATA_API_KEY</span></code></p></td>
-<td><p>client</p></td>
-<td><p>the plaintext key for the <code class="docutils literal notranslate"><span class="pre">X-API-Key</span></code> header</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">TC_DATA_ROOT</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">TC_DATA_ROOT</span></code></p></td>
 <td><p>server</p></td>
 <td><p>the artifact store (<code class="docutils literal notranslate"><span class="pre">index.json</span></code>, <code class="docutils literal notranslate"><span class="pre">SHA256SUMS</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;slug&gt;/&lt;archive&gt;</span></code>)</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">TC_DATA_RAW_ROOT</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">TC_DATA_RAW_ROOT</span></code></p></td>
 <td><p>server</p></td>
 <td><p>the raw mirror; defaults to <code class="docutils literal notranslate"><span class="pre">$DATA_ROOT/torchcell-raw</span></code></p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">TC_DATA_GENOMES_ROOT</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">TC_DATA_GENOMES_ROOT</span></code></p></td>
 <td><p>server</p></td>
 <td><p>the genomes tier; defaults to <code class="docutils literal notranslate"><span class="pre">$DATA_ROOT/torchcell-genomes</span></code>; may be absent</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">TC_DATA_OBJECTS_ROOT</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">TC_DATA_OBJECTS_ROOT</span></code></p></td>
 <td><p>server</p></td>
 <td><p>the objects tier; defaults to <code class="docutils literal notranslate"><span class="pre">$DATA_ROOT/torchcell-objects</span></code>; may be absent</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">TC_DATA_KEYS_FILE</span></code></p></td>
-<td><p>server</p></td>
-<td><p>JSON <code class="docutils literal notranslate"><span class="pre">{name:</span> <span class="pre">sha256hex}</span></code> of accepted keys (preferred)</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">TC_DATA_API_KEYS</span></code></p></td>
-<td><p>server</p></td>
-<td><p>inline <code class="docutils literal notranslate"><span class="pre">name:key,name2:key2</span></code> (quick start only)</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">TC_DATA_HOST</span></code>, <code class="docutils literal notranslate"><span class="pre">TC_DATA_PORT</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">TC_DATA_HOST</span></code>, <code class="docutils literal notranslate"><span class="pre">TC_DATA_PORT</span></code></p></td>
 <td><p>server</p></td>
 <td><p>bind address and port (default <code class="docutils literal notranslate"><span class="pre">0.0.0.0:8724</span></code>)</p></td>
 </tr>
@@ -329,14 +305,14 @@ and restarting revokes that key and no other.</p>
 </section>
 <section id="from-python">
 <h2>From Python<a class="headerlink" href="#from-python" title="Link to this heading"></a></h2>
-<p>With <code class="docutils literal notranslate"><span class="pre">TC_DATA_URL</span></code> and <code class="docutils literal notranslate"><span class="pre">TC_DATA_API_KEY</span></code> set, any <code class="docutils literal notranslate"><span class="pre">ExperimentDataset</span></code> loader whose
-LMDB is absent fetches, verifies and unpacks its artifact instead of downloading the
+<p>With <code class="docutils literal notranslate"><span class="pre">TC_DATA_URL</span></code> set, any <code class="docutils literal notranslate"><span class="pre">ExperimentDataset</span></code> loader whose LMDB is absent fetches, verifies and unpacks its artifact instead of downloading the
 publisher files and running <code class="docutils literal notranslate"><span class="pre">process()</span></code>. If the endpoint has no artifact compatible
 with the installed version the loader raises and names the slug; it never falls back
 to the publisher path while the variable is set.</p>
-<p>The two variables are read from the process environment. Either export them in the
-shell, as in the curl section, or put the same two lines, without <code class="docutils literal notranslate"><span class="pre">export</span></code>, in a <code class="docutils literal notranslate"><span class="pre">.env</span></code>
-file in your project and load it before constructing a loader:</p>
+<p>A loader prefers a download only when <code class="docutils literal notranslate"><span class="pre">TC_DATA_URL</span></code> is set explicitly; the built-in
+default does not switch loaders over. The variable is read from the process environment.
+Either export it in the shell, as in the curl section, or put the same line, without
+<code class="docutils literal notranslate"><span class="pre">export</span></code>, in a <code class="docutils literal notranslate"><span class="pre">.env</span></code> file in your project and load it before constructing a loader:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
 
 <span class="n">load_dotenv</span><span class="p">()</span>  <span class="c1"># reads the .env beside this script or in a parent directory</span>
@@ -349,9 +325,12 @@ file in your project and load it before constructing a loader:</p>
 <p>torchcell does not read <code class="docutils literal notranslate"><span class="pre">.env</span></code> on its own. A <code class="docutils literal notranslate"><span class="pre">.env</span></code> with no <code class="docutils literal notranslate"><span class="pre">load_dotenv()</span></code> call leaves
 <code class="docutils literal notranslate"><span class="pre">TC_DATA_URL</span></code> unset, and the loader then downloads the publisher files and builds, with
 no error. <code class="docutils literal notranslate"><span class="pre">load_dotenv()</span></code> never overrides a variable that is already exported.</p>
+<p>The client needs no configuration: <code class="docutils literal notranslate"><span class="pre">DatasetClient()</span></code> with no arguments talks to the
+public endpoint, and <code class="docutils literal notranslate"><span class="pre">DatasetClient.from_env()</span></code> uses <code class="docutils literal notranslate"><span class="pre">TC_DATA_URL</span></code> when it is set and
+the public endpoint otherwise.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.client</span><span class="w"> </span><span class="kn">import</span> <span class="n">DatasetClient</span><span class="p">,</span> <span class="n">unpack_artifact</span>
 
-<span class="n">client</span> <span class="o">=</span> <span class="n">DatasetClient</span><span class="o">.</span><span class="n">from_env</span><span class="p">()</span>          <span class="c1"># TC_DATA_URL, TC_DATA_API_KEY</span>
+<span class="n">client</span> <span class="o">=</span> <span class="n">DatasetClient</span><span class="o">.</span><span class="n">from_env</span><span class="p">()</span>          <span class="c1"># TC_DATA_URL if set, else the public endpoint</span>
 <span class="n">artifact</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="s2">"smf_costanzo2016"</span><span class="p">)</span>  <span class="c1"># newest supported row on this major.minor</span>
 <span class="k">if</span> <span class="n">artifact</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
     <span class="k">raise</span> <span class="ne">SystemExit</span><span class="p">(</span><span class="s2">"nothing compatible with the installed torchcell"</span><span class="p">)</span>
@@ -359,8 +338,8 @@ no error. <code class="docutils literal notranslate"><span class="pre">load_dote
 <span class="n">unpack_artifact</span><span class="p">(</span><span class="n">archive</span><span class="p">,</span> <span class="s2">"data/torchcell/smf_costanzo2016"</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>The raw mirror keys and files are one <code class="docutils literal notranslate"><span class="pre">GET</span></code> away with the same header; see the Swagger
-page for the exact shapes. All three file tiers have client methods:</p>
+<p>The raw mirror keys and files are one <code class="docutils literal notranslate"><span class="pre">GET</span></code> away; see the Swagger page for the exact
+shapes. All three file tiers have client methods:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.client</span><span class="w"> </span><span class="kn">import</span> <span class="n">DatasetClient</span>
 
 <span class="n">client</span> <span class="o">=</span> <span class="n">DatasetClient</span><span class="o">.</span><span class="n">from_env</span><span class="p">()</span>

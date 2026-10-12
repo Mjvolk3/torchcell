@@ -541,7 +541,11 @@ def _public_rows() -> dict[str, dict[str, str]]:
             },
         ),
         "SRX000006": row("SRX000006", 6, **{L.COL_DESCRIPTION: "MG1655 pBR322"}),
-        "SRX000007": row("SRX000007", 7, **{L.COL_DESCRIPTION: "MG1655 fusAA608E"}),
+        "SRX000007": row(
+            "SRX000007",
+            7,
+            **{L.COL_DESCRIPTION: "MG1655 fusAA608E", L.COL_FULL_NAME: "fusA:a608e"},
+        ),
         "SRX000008": row("SRX000008", 8, **{L.COL_DESCRIPTION: "MG1655 infect_T7"}),
         "SRX000009": row(
             "SRX000009",
@@ -551,14 +555,26 @@ def _public_rows() -> dict[str, dict[str, str]]:
         "SRX000010": row(
             "SRX000010", 10, **{L.COL_DESCRIPTION: "MG1655 with inactive relA"}
         ),
-        "SRX000011": row("SRX000011", 11, **{L.COL_DESCRIPTION: "MG1655 del_7prrn"}),
-        "SRX000012": row("SRX000012", 12, **{L.COL_DESCRIPTION: "MG1655 crp_ar1_ar2"}),
+        "SRX000011": row(
+            "SRX000011",
+            11,
+            **{L.COL_DESCRIPTION: "MG1655 del_7prrn", L.COL_FULL_NAME: "rrn:del7"},
+        ),
+        "SRX000012": row(
+            "SRX000012",
+            12,
+            **{L.COL_DESCRIPTION: "MG1655 crp_ar1_ar2", L.COL_FULL_NAME: "crp:ar1ar2"},
+        ),
         "SRX000013": row(
             "SRX000013",
             13,
             **{L.COL_DESCRIPTION: "MG1655 Z1 del_thrA", L.COL_FULL_NAME: "z1:del_thrA"},
         ),
-        "SRX000014": row("SRX000014", 14, **{L.COL_DESCRIPTION: "MG1655 del_ihf"}),
+        "SRX000014": row(
+            "SRX000014",
+            14,
+            **{L.COL_DESCRIPTION: "MG1655 del_ihf", L.COL_FULL_NAME: "ihf:del"},
+        ),
         "SRX000015": row(
             "SRX000015", 15, **{L.COL_MEDIA: "NM3", L.COL_FULL_NAME: "nm3:wt"}
         ),
@@ -835,8 +851,12 @@ def test_the_build_keeps_wild_type_and_deletions_and_counts_every_drop(
         "SRX000003",
         "SRX000004",
         "SRX000005",
+        "SRX000007",
         "SRX000009",
+        "SRX000011",
+        "SRX000012",
         "SRX000013",
+        "SRX000014",
         "SRX000016",
         "SRX000021",
         "SRX000022",
@@ -845,16 +865,12 @@ def test_the_build_keeps_wild_type_and_deletions_and_counts_every_drop(
     assert _json(built, "record_samples.json") == kept
     drops = _json(built, "dropped_records.json")
     assert drops["source_records"] == 22
-    assert drops["kept_records"] == 10
-    assert drops["dropped_records"] == 12
+    assert drops["kept_records"] == 14
+    assert drops["dropped_records"] == 8
     assert {r["rule"]: r["n_records"] for r in drops["rules"]} == {
         "plasmid_borne_construct": 1,
-        "point_mutation_allele": 1,
         "phage_infected": 1,
         "allele_described_in_prose": 1,
-        "deletion_not_one_gene": 1,
-        "partial_gene_edit": 1,
-        "deletion_symbol_unresolved": 1,
         "medium_not_in_library": 1,
         "oxygen_regime_not_stated": 1,
         "oxygen_regime_transition": 1,
@@ -868,11 +884,31 @@ def test_the_build_keeps_wild_type_and_deletions_and_counts_every_drop(
         "background_strain_not_mg1655": 1,
         "deletion_1": 1,
         "deletion_2": 1,
+        "released_allele_deletion_not_one_gene": 1,
+        "released_allele_deletion_symbol_unresolved": 1,
+        "released_allele_partial_gene_edit": 1,
+        "released_allele_point_mutation_allele": 1,
         "wild_type": 5,
     }
-    assert drops["kept_by_base_media"] == {"LB": 8, "M9": 2}
-    strains = [built[i]["reference"]["genome_reference"]["strain"] for i in range(10)]
-    assert strains[4:7] == ["BW25113", "MG1655 CHL evolved", "MG1655 Z1 del_thrA"]
+    assert drops["kept_by_base_media"] == {"LB": 12, "M9": 2}
+    released = {
+        built[i]["experiment"]["genotype"]["perturbations"][0][
+            "systematic_gene_name"
+        ]: (built[i]["experiment"]["genotype"]["perturbations"][0]["released_kind"])
+        for i in (5, 7, 8, 10)
+    }
+    assert released == {
+        "fusA": "sequence_allele",
+        "7prrn": "deletion",
+        "crp": "sequence_allele",
+        "ihf": "deletion",
+    }
+    strains = [built[i]["reference"]["genome_reference"]["strain"] for i in range(14)]
+    assert [strains[i] for i in (4, 6, 9)] == [
+        "BW25113",
+        "MG1655 CHL evolved",
+        "MG1655 Z1 del_thrA",
+    ]
 
 
 def test_the_accession_ledger_is_the_deduplication_evidence(
@@ -897,8 +933,12 @@ def test_the_accession_ledger_is_the_deduplication_evidence(
         "SRX000003",
         "SRX000004",
         "SRX000005",
+        "SRX000007",
         "SRX000009",
+        "SRX000011",
+        "SRX000012",
         "SRX000013",
+        "SRX000014",
         "SRX000016",
         "SRX000021",
         "SRX000022",
@@ -1000,10 +1040,14 @@ def test_the_replicate_groups_pin_the_conditions_and_their_accessions(
         "bioreactor:wt",
         "bw:del_thrA",
         "chl:ale",
+        "crp:ar1ar2",
+        "fusA:a608e",
+        "ihf:del",
         "m9:no_nitrogen",
         "noph:wt",
         "pro:double",
         "rpoB:wt",
+        "rrn:del7",
         "thrA:del_thrA",
         "z1:del_thrA",
     ]
@@ -1016,7 +1060,8 @@ def test_the_replicate_groups_pin_the_conditions_and_their_accessions(
 def test_the_deleted_genes_are_written_on_the_genomes_own_symbols(
     built: P.RnaseqPublicK12Lamoureux2023Dataset,
 ) -> None:
-    assert built.gene_set == {"b0002", "b0005", "b0006"}
+    # the released-strain leaves add their released gene identifiers verbatim (#1057)
+    assert built.gene_set == {"7prrn", "b0002", "b0005", "b0006", "crp", "fusA", "ihf"}
     reconciliation = _json(built, "locus_tag_reconciliation.json")
     assert reconciliation["deleted_symbol_to_locus"] == {
         "proB": ["b0005", "proB"],
@@ -1137,31 +1182,31 @@ def test_the_dev_store_pins_the_measured_build() -> None:
     assert drops["source_records"] == 1675
     # #1057: the other substrains, evolved isolates, undefined labels and non-batch
     # cultures are stored on a background named as released (240 before)
-    assert drops["kept_records"] == 747
+    assert drops["kept_records"] == 789
     assert drops["kept_by_genotype_class"] == {
         "background_background_label_undefined": 4,
         "background_evolved_isolate": 29,
+        "background_point_mutation_allele": 6,
         "background_strain_not_mg1655": 211,
         "deletion_1": 130,
         "deletion_2": 16,
+        "released_allele_deletion_symbol_unresolved": 6,
+        "released_allele_point_mutation_allele": 30,
         "wild_type": 357,
     }
     assert drops["kept_by_base_media"] == {
         "L-broth": 15,
-        "LB": 273,
+        "LB": 313,
         "LB-Miller": 2,
-        "M9": 392,
+        "M9": 394,
         "MOPS": 59,
         "MOPS w/o KH2PO4": 6,
     }
     assert {r["rule"]: r["n_records"] for r in drops["rules"]} == {
         "plasmid_borne_construct": 175,
-        "point_mutation_allele": 41,
-        "allele_described_in_prose": 36,
+        "allele_described_in_prose": 9,
         "phage_infected": 20,
-        "deletion_symbol_unresolved": 6,
-        "partial_gene_edit": 3,
-        "medium_not_in_library": 513,
+        "medium_not_in_library": 548,
         "oxygen_regime_not_stated": 63,
         "oxygen_setpoint_not_expressible": 52,
         "temperature_not_stated": 19,

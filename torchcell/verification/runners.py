@@ -1144,11 +1144,12 @@ RNASEQ_DATASETS: dict[str, dict[str, Any]] = {
     # released b-numbers (b3036, b4223, b4590) are not in ASM584v2 and are kept as given.
     "rnaseq_lamoureux2023": {
         "root": "data/torchcell/rnaseq_lamoureux2023",
-        # 1,035 released samples - 335 dropped by the genotype and environment rules;
+        # 1,035 released samples - 318 dropped by the genotype and environment rules;
         # since #1057 the evolved isolates, the other strains (on a background named as
-        # released, on the MG1655 coordinates the release aligned them to) and the
-        # non-batch cultures (a typed gap on the rate) are stored, not dropped.
-        "expected_count": 700,
+        # released, on the MG1655 coordinates the release aligned them to), the rpoB and
+        # crp alleles (on the released-strain leaf) and the non-batch cultures (a typed
+        # gap on the rate) are stored, not dropped.
+        "expected_count": 717,
         "replicate_aware": True,
         "min_containment": 0.99,
         "provenance": Provenance(
@@ -1169,11 +1170,12 @@ RNASEQ_DATASETS: dict[str, dict[str, Any]] = {
     },
     "rnaseq_public_k12_lamoureux2023": {
         "root": "data/torchcell/rnaseq_public_k12_lamoureux2023",
-        # 1,675 curated public samples - 928 dropped by the genotype and environment
+        # 1,675 curated public samples - 886 dropped by the genotype and environment
         # rules; since #1057 the other K-12 substrains, the evolved isolates and the
         # undefined background labels are stored on a background named as released
-        # (MG1655 coordinates), and a non-batch culture with a typed gap on the rate.
-        "expected_count": 747,
+        # (MG1655 coordinates), the substitutions and the unresolved deletions on the
+        # released-strain leaf, and a non-batch culture with a typed gap on the rate.
+        "expected_count": 789,
         "replicate_aware": True,
         "min_containment": 0.99,
         "provenance": Provenance(

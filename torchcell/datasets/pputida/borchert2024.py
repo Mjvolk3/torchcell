@@ -226,6 +226,20 @@ RAND2017_PAPER_TEXT_SHA256 = (
     "9f49ab51f4c179b7652cff75a581f1d00319656dc82daf50c42db26807d55c26"
 )
 # --- end Rand 2017 ---------------------------------------------------------------- #
+# --- Thompson 2019 lysine (#908): raw-mirror source study ------------------------- #
+#: Thompson 2019 lysine (row "Thompson 2019 lysine") is in the RAW mirror only: the PMC
+#: Article Datasets text and its Table S1, deposited by
+#: ``experiments/036-dataset-fixes-before-kg-build/scripts/thompsonMassivelyParallelFitness2019_release_inventory.py``.
+THOMPSON2019_LYSINE_KEY = "thompsonMassivelyParallelFitness2019"
+THOMPSON2019_LYSINE_PAPER_TEXT = "paper/PMC6509195.1.txt"
+THOMPSON2019_LYSINE_PAPER_TEXT_SHA256 = (
+    "aedb5fb086aade7b80f848427a90af5478646b9d362b015b6a74a4410fb8dd4c"
+)
+THOMPSON2019_LYSINE_TABLE_S1 = "si/mBio.02577-18-st001.csv"
+THOMPSON2019_LYSINE_TABLE_S1_SHA256 = (
+    "b4718373fdcd6637de7a25eee4a17aedd47c1ad1a07262b1502e2cb0c4d2a0e5"
+)
+# --- end Thompson 2019 lysine ------------------------------------------------------ #
 
 _PAPER = Provenance(
     source_uri="paper.md", citation_key=CITATION_KEY, sha256=PAPER_MD_SHA256
@@ -261,6 +275,19 @@ _RAND2017 = Provenance(
     sha256=RAND2017_PAPER_TEXT_SHA256,
     method="raw mirror $DATA_ROOT/torchcell-raw/<key>/: PMC Article Datasets plain "
     "text of the NIH author manuscript (PMC5705400.1)",
+)
+_THOMPSON2019_LYSINE = Provenance(
+    source_uri=THOMPSON2019_LYSINE_PAPER_TEXT,
+    citation_key=THOMPSON2019_LYSINE_KEY,
+    sha256=THOMPSON2019_LYSINE_PAPER_TEXT_SHA256,
+    method="raw mirror $DATA_ROOT/torchcell-raw/<key>/: PMC Article Datasets plain "
+    "text (PMC6509195.1)",
+)
+_THOMPSON2019_LYSINE_S1 = Provenance(
+    source_uri=THOMPSON2019_LYSINE_TABLE_S1,
+    citation_key=THOMPSON2019_LYSINE_KEY,
+    sha256=THOMPSON2019_LYSINE_TABLE_S1_SHA256,
+    method="raw mirror $DATA_ROOT/torchcell-raw/<key>/: Table S1 as PMC deposits it",
 )
 _RELEASE = Provenance(
     source_uri=DATA_RELPATH,
@@ -485,6 +512,20 @@ Q_BORCHERT23_LIBRARY = (
 )
 
 
+#: Thompson 2019 lysine's four RB-TnSeq conditions (#908), its Table S1 header naming the
+#: same four columns, and its vessel: verbatim from the raw mirror's pinned files.
+#: The source spaces its numbers and units with U+2009 THIN SPACE, kept verbatim.
+Q_THOMPSON_LYSINE_CONDITIONS = (
+    "diluted 1:50 into 10\u2009ml MOPS minimal medium supplemented with 10\u2009mM "
+    "glucose or 5AVA or d-lysine or l-lysine"
+)
+Q_THOMPSON_LYSINE_TABLE_S1 = "gene,gene,desc,D-Lysine,L-Lysine,5-AVA,Glucose"
+Q_THOMPSON_LYSINE_VESSEL = (
+    "Cells were grown in 50-ml culture tubes for 48\u2009h at 30°C with shaking at "
+    "200\u2009rpm."
+)
+
+
 def _sv(
     source: Provenance, value: Any, quote: str, note: str | None = None
 ) -> SourcedValue:
@@ -647,13 +688,38 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         "0.9998); rand2017_release_inventory.py",
     ),
     "rand_library": _sv(_RAND2017, "Putida_ML5", Q_RAND_LIBRARY),
+    "thompson_lysine_conditions": _sv(
+        _THOMPSON2019_LYSINE,
+        "glucose, 5-aminovalerate, D-lysine, L-lysine at 10 mM",
+        Q_THOMPSON_LYSINE_CONDITIONS,
+    ),
+    "thompson_lysine_table_s1": _sv(
+        _THOMPSON2019_LYSINE_S1,
+        ("D-Lysine", "L-Lysine", "5-AVA", "Glucose"),
+        Q_THOMPSON_LYSINE_TABLE_S1,
+        note="each column matched one compendium sample by content, max abs difference "
+        "0.046 against a nearest wrong sample at 0.58 over the 39 loci "
+        "(thompsonMassivelyParallelFitness2019_release_inventory.py)",
+    ),
+    "thompson_lysine_vessel": _sv(
+        _THOMPSON2019_LYSINE,
+        "50-ml culture tubes",
+        Q_THOMPSON_LYSINE_VESSEL,
+        note="the release labels set6IT057 '48 well microplate; Tecan Infinite F200'; "
+        "Environment has no vessel field, so neither is stored on a record (#908)",
+    ),
 }
 
 # --------------------------------------------------------------------------- #
 # Source studies (checklist item 7): which paper first reported each sample
 # --------------------------------------------------------------------------- #
 SourceStudyKey = Literal[
-    "thompson2020", "schmidt2022", "borchert2023", "borchert2024", "rand2017"
+    "thompson2020",
+    "schmidt2022",
+    "borchert2023",
+    "borchert2024",
+    "rand2017",
+    "thompson2019_lysine",
 ]
 
 
@@ -712,9 +778,19 @@ SOURCE_STUDIES: dict[SourceStudyKey, SourceStudy] = {
         citation_key=RAND2017_KEY,
         fifty_rank=56,
     ),
+    # #908 (owner decision, 2026-10-12): the four samples Thompson 2019 lysine measured.
+    "thompson2019_lysine": SourceStudy(
+        key="thompson2019_lysine",
+        citation="Thompson MG et al. 2019, mBio 10:e02577-18",
+        doi="10.1128/mBio.02577-18",
+        citation_key=THOMPSON2019_LYSINE_KEY,
+        fifty_rank=54,
+    ),
 }
 
-AttributionBasis = Literal["source_study_quote", "compendium_release"]
+AttributionBasis = Literal[
+    "source_study_quote", "source_release_content_match", "compendium_release"
+]
 
 
 class SampleAttribution(BaseModel):
@@ -1055,6 +1131,18 @@ RAND2017_CONDITIONS: dict[tuple[str, str, float], str | None] = {
 }
 
 
+#: Thompson 2019 lysine's Table S1 column each compendium sample carries (#908), matched
+#: by content: max abs difference 0.0460 (D-Lysine), 0.0194 (L-Lysine), 0.0207 (5-AVA)
+#: and 0.0082 (Glucose) over the 39 loci, against nearest wrong samples at 2.14, 3.22,
+#: 1.43 and 0.58 (thompsonMassivelyParallelFitness2019_release_inventory.py).
+THOMPSON2019_LYSINE_SAMPLES: dict[str, str] = {
+    "set7IT062": "D-Lysine",
+    "set7IT055": "L-Lysine",
+    "set7IT044": "5-AVA",
+    "set6IT057": "Glucose",
+}
+
+
 def rand2017_key(sample: SampleMetadata) -> tuple[str, str, float] | None:
     """The ``RAND2017_CONDITIONS`` key of a Rand 2017 sample, or ``None``."""
     if sample.condition_2 is not None or sample.condition_1 is None:
@@ -1129,6 +1217,14 @@ def attribute_sample(sample: SampleMetadata) -> SampleAttribution:
             evidence=("borchert23_conditions", "borchert23_protocatechuate_day"),
             note="the 30 mM protocatechuate enrichment and its separate-day glucose "
             "control",
+        )
+    if sample.exp_name in THOMPSON2019_LYSINE_SAMPLES:
+        return SampleAttribution(
+            **common,
+            study="thompson2019_lysine",
+            basis="source_release_content_match",
+            evidence=("thompson_lysine_conditions", "thompson_lysine_table_s1"),
+            note=f"Table S1 column {THOMPSON2019_LYSINE_SAMPLES[sample.exp_name]!r}",
         )
     rand = rand2017_key(sample)
     if rand is not None:

@@ -238,8 +238,9 @@ def test_the_pins_are_the_ones_the_wetmore_record_uses() -> None:
 
 
 def test_expected_records_is_kept_samples_times_mapped_genes() -> None:
-    assert (p.EXPECTED_SAMPLES, p.EXPECTED_GENES) == (151, 3768)
-    assert p.EXPECTED_RECORDS == 568968
+    # #1057: every released gene, the 21 no ECK pair places stored as released
+    assert (p.EXPECTED_SAMPLES, p.EXPECTED_GENES) == (151, 3789)
+    assert p.EXPECTED_RECORDS == 151 * 3789
 
 
 # --------------------------------------------------------------------------- #
@@ -711,11 +712,11 @@ def test_the_inventory_counts_samples_genes_and_records_by_rule() -> None:
         p.SampleSource.wetmore2015.value: 3,
         p.SampleSource.price2018.value: 4,
     }
-    assert (counts.source_records, counts.kept_records) == (90, 56)
+    # #1057: a gene no ECK pair places is stored as released, so no gene is dropped
+    assert (counts.source_records, counts.kept_records) == (90, 70)
     assert [(d.rule, d.items, d.n_records) for d in counts.drops] == [
         (p.DROP_DISREGARDED, ("set1IT007",), 10),
         (p.DROP_MOTILITY, ("set6IT068",), 10),
-        (p.DROP_NO_ECK_PAIR, ("b0500", "b1172"), 14),
     ]
     assert counts.source_records == counts.kept_records + sum(
         d.n_records for d in counts.drops
@@ -932,6 +933,14 @@ def k12(
     )
 
 
+#: The shared verifier's genome-reference rules. Under the owner rule (#1057) a gene no
+#: ECK pair places is stored as the released MG1655 b-number, which is no BW25113 locus,
+#: so these may read it as a failure until the verifier learns the status (a separate
+#: branch); the tests accept them failing, and nothing else.
+GENOME_REFERENCE_RULES = frozenset(
+    {"canonical_gene_names", "gene_containment_sgd", "current_genome_genes"}
+)
+
 #: The synthetic release's genes: four map (b0003 crosses numbers, b0004 is a
 #: pseudogene), b0005 is not one-to-one, b0006 is absent from BW25113, b0099 unknown.
 SYNTHETIC_GENES = ["b0001", "b0002", "b0003", "b0004", "b0005", "b0006", "b0099"]
@@ -946,12 +955,37 @@ def test_map_genes_on_the_synthetic_k12_pair(
         p.map_genes(SYNTHETIC_GENES, mg1655, bw25113, label="synthetic")
     monkeypatch.setattr(p, "MIN_ECK_ROUTE_FRACTION", 0.5)
     mapping, report = p.map_genes(SYNTHETIC_GENES, mg1655, bw25113, label="synthetic")
-    assert {b: (m.locus_tag, m.perturbed_gene_name) for b, m in mapping.items()} == {
-        "b0001": ("BW25113_0001", "thrL"),
-        "b0002": ("BW25113_0002", "thrA"),
-        "b0003": ("BW25113_4412", "hokC"),
-        "b0004": ("BW25113_0004", "BW25113_0004"),
+    assert {
+        b: (m.locus_tag, m.perturbed_gene_name, m.gene_namespace)
+        for b, m in mapping.items()
+    } == {
+        "b0001": ("BW25113_0001", "thrL", "ecoli_k12_bw25113_locus_tag"),
+        "b0002": ("BW25113_0002", "thrA", "ecoli_k12_bw25113_locus_tag"),
+        "b0003": ("BW25113_4412", "hokC", "ecoli_k12_bw25113_locus_tag"),
+        "b0004": ("BW25113_0004", "BW25113_0004", "ecoli_k12_bw25113_locus_tag"),
+        # #1057: stored as released in the MG1655 namespace, named by MG1655's symbol
+        "b0005": ("b0005", "proB", "ecoli_k12_mg1655_bnumber"),
+        "b0006": ("b0006", "proC", "ecoli_k12_mg1655_bnumber"),
+        "b0099": ("b0099", "b0099", "ecoli_k12_mg1655_bnumber"),
     }
+    statuses = {
+        status.released: status.resolution.value for status in report.released_as
+    }
+    assert statuses == {
+        "b0005": "no_one_to_one_eck_pair",
+        "b0006": "no_one_to_one_eck_pair",
+        "b0099": "not_in_annotation",
+    }
+    genotype = p.build_genotype(mapping["b0006"])
+    leaf = genotype.perturbations[0]
+    assert isinstance(leaf, TransposonInsertionPerturbation)
+    assert leaf.description.startswith(p.DESCRIPTION_AS_RELEASED)
+    assert "(no_one_to_one_eck_pair: eck_absent_from_bw25113 (ECK0006))" in (
+        leaf.description
+    )
+    assert p.build_genotype(mapping["b0001"]).perturbations[0].description == (
+        p.DESCRIPTION
+    )
     assert report.numeric_disagreements == (("b0003", "BW25113_4412", "ECK0003"),)
     assert [(u.b_number, u.reason, u.eck) for u in report.unmapped] == [
         ("b0005", "eck_not_one_to_one", ("ECK0005",)),
@@ -989,6 +1023,7 @@ def test_the_mapping_refuses_a_reconciler_that_disagrees_with_the_crosswalk() ->
             MG1655_ECKS,
             reconcile,
             lambda tag: tag,
+            lambda b_number: b_number,
             label="x",
         )
 
@@ -1223,12 +1258,15 @@ def _dataset_root(data_root: Path) -> Path:
 def test_the_loader_builds_the_synthetic_release_end_to_end(mirrored: Path) -> None:
     root = _dataset_root(mirrored)
     dataset = p.RbTnseqPrice2018EcoliDataset(root=str(root))
-    assert len(dataset) == 8
+    assert len(dataset) == 14
     assert sorted(dataset.gene_set) == [
         "BW25113_0001",
         "BW25113_0002",
         "BW25113_0004",
         "BW25113_4412",
+        "b0005",
+        "b0006",
+        "b0099",
     ]
     references = dataset.experiment_reference_index
     assert references is not None
@@ -1243,16 +1281,20 @@ def test_the_loader_builds_the_synthetic_release_end_to_end(mirrored: Path) -> N
     ] == ("BW25113_0001")
     assert first["publication"]["doi"] == "10.1128/mBio.00306-15"
     drops = json.loads((root / "preprocess" / "dropped_records.json").read_text())
-    assert (drops["source_records"], drops["kept_records"]) == (28, 8)
+    assert (drops["source_records"], drops["kept_records"]) == (28, 14)
     assert [(d["rule"], d["items"], d["n_records"]) for d in drops["drops"]] == [
         (p.DROP_DISREGARDED, ["set1IT007"], 7),
         (p.DROP_MOTILITY, ["set6IT068"], 7),
-        (p.DROP_NO_ECK_PAIR, ["b0005", "b0006", "b0099"], 6),
     ]
     identifiers = json.loads(
         (root / "preprocess" / "identifier_mapping.json").read_text()
     )
     assert (identifiers["n_source_genes"], identifiers["n_mapped"]) == (7, 4)
+    assert [s["released"] for s in identifiers["released_as"]] == [
+        "b0005",
+        "b0006",
+        "b0099",
+    ]
     standard_error = json.loads(
         (root / "preprocess" / "standard_error.json").read_text()
     )
@@ -1294,19 +1336,22 @@ def test_verify_runs_the_family_verifier_with_the_bacterial_universe(
     mirrored: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     p.RbTnseqPrice2018EcoliDataset(root=str(_dataset_root(mirrored)))
-    monkeypatch.setattr(p, "EXPECTED_RECORDS", 8)
+    monkeypatch.setattr(p, "EXPECTED_RECORDS", 14)
     report = p.verify(str(mirrored))
     results = {r.name: r.passed for r in report.results}
     assert results["count"] is True
     assert results["pair_uniqueness"] is True
-    assert results["gene_containment_sgd"] is True
     assert results["compound_identity"] is True
+    # #1057: b0005, b0006 and b0099 are stored as the released MG1655 b-number, which is
+    # no BW25113 locus; only the shared genome-reference rules may read that as a
+    # failure, until the verifier learns the status (a separate branch)
+    failing = {name for name, passed in results.items() if not passed}
+    assert failing <= GENOME_REFERENCE_RULES
     # BW25113_0004 is a pseudogene the collection deleted. The shared row used to FAIL
     # on it (it required status `current`, which a `/pseudo` locus can never have) and
     # this loader's supplementary row carried the real check; the shared row now accepts
-    # a non-gene feature that resolves to ITSELF and counts it, so both pass and the
-    # supplementary row is the stricter restatement rather than the only honest one.
-    assert results["canonical_gene_names"] is True
+    # a non-gene feature that resolves to ITSELF and counts it, and the supplementary
+    # row is the stricter restatement over the BW25113 tags.
     assert results["stored_tags_are_loci_of_the_pinned_assembly"] is True
     pseudogene = next(
         r for r in report.results if r.name == "canonical_gene_names"
@@ -1326,7 +1371,7 @@ def test_report_recomputes_the_notes_numbers_from_the_mirrors(mirrored: Path) ->
         p.SampleSource.wetmore2015.value: 1,
         p.SampleSource.price2018.value: 1,
     }
-    assert out["inventory"]["kept_records"] == 8
+    assert out["inventory"]["kept_records"] == 14
     assert out["identifiers"]["n_mapped"] == 4
     assert out["standard_error"]["n_values"] == 28
     assert out["set_prefixes"] == ["set1", "set2", "set6"]
@@ -1405,7 +1450,8 @@ def test_the_essentiality_loader_is_registered_against_bw25113() -> None:
     assert shell.raw_file_names == ["si3.xlsx", "fit_logratios_good.tab"]
     assert shell.experiment_class is BacterialGeneEssentialityExperiment
     assert shell.reference_class is BacterialGeneEssentialityExperimentReference
-    assert (p.ESSENTIAL_SOURCE_GENES, p.ESSENTIAL_EXPECTED_RECORDS) == (324, 320)
+    # #1057: the four genes BW25113 deletes are stored as released, so every row is one
+    assert (p.ESSENTIAL_SOURCE_GENES, p.ESSENTIAL_EXPECTED_RECORDS) == (324, 324)
     assert p.MIN_ESSENTIAL_ECK_ROUTE_FRACTION < p.MIN_ECK_ROUTE_FRACTION
 
 
@@ -1607,15 +1653,16 @@ def test_the_essentiality_inventory_counts_rows_and_proves_disjointness(
     counts = p.essentiality_inventory(
         genes, _essential_identifiers(3, ("b0006", "b0007")), ["b0004", "b0005"]
     )
-    assert (counts.source_genes, counts.kept_genes) == (5, 3)
-    assert counts.dropped_genes == ("b0006", "b0007")
-    assert counts.dropped_gene_names == ("araC", "rhaD")
-    # the drop reason is tied to the pinned BW25113 genotype, not asserted from memory
-    assert counts.dropped_genes_explained_by_background == {
+    # #1057: the two genes no ECK pair places are stored as released, not dropped
+    assert (counts.source_genes, counts.kept_genes) == (5, 5)
+    assert counts.released_as_genes == ("b0006", "b0007")
+    assert counts.released_as_gene_names == ("araC", "rhaD")
+    # the status is tied to the pinned BW25113 genotype, not asserted from memory
+    assert counts.released_as_genes_explained_by_background == {
         "araC": "(araBAD)567",
         "rhaD": "(rhaBAD)568",
     }
-    assert counts.drop_rule == p.DROP_NO_ECK_PAIR
+    assert counts.released_as_status == p.DROP_NO_ECK_PAIR
     assert counts.rows_without_a_refseq_locus_tag == ("b0006", "b0007")
     assert counts.shared_with_fitness == ()
     assert counts.fitness_genes == 2
@@ -1736,8 +1783,15 @@ def test_the_essentiality_loader_builds_the_synthetic_table_end_to_end(
     monkeypatch.setattr(p, "MIN_ESSENTIAL_ECK_ROUTE_FRACTION", 0.5)
     root = _essentiality_root(essentiality_mirrored)
     dataset = p.GeneEssentialityPrice2018EcoliDataset(root=str(root))
-    assert len(dataset) == 3
-    assert sorted(dataset.gene_set) == ["BW25113_0001", "BW25113_0002", "BW25113_4412"]
+    assert len(dataset) == 5
+    # #1057: the two genes BW25113 deletes are stored as the released b-number
+    assert sorted(dataset.gene_set) == [
+        "BW25113_0001",
+        "BW25113_0002",
+        "BW25113_4412",
+        "b0006",
+        "b0007",
+    ]
     references = dataset.experiment_reference_index
     assert references is not None
     assert len(references) == 1
@@ -1747,8 +1801,8 @@ def test_the_essentiality_loader_builds_the_synthetic_table_end_to_end(
     assert first["publication"]["doi"] == p.PAPER_DOI
     assert first["experiment"]["environment"]["media"]["state"] == "solid"
     drops = json.loads((root / "preprocess" / "dropped_records.json").read_text())
-    assert (drops["source_genes"], drops["kept_genes"]) == (5, 3)
-    assert drops["dropped_genes"] == ["b0006", "b0007"]
+    assert (drops["source_genes"], drops["kept_genes"]) == (5, 5)
+    assert drops["released_as_genes"] == ["b0006", "b0007"]
     assert drops["shared_with_fitness"] == []
     label = json.loads((root / "preprocess" / "essentiality_label.json").read_text())
     assert sorted(label) == sorted(p.ESSENTIALITY_LABEL_VALUES)
@@ -1756,13 +1810,20 @@ def test_the_essentiality_loader_builds_the_synthetic_table_end_to_end(
     assert "nearly essential" in label["ESSENTIAL_LABEL"]["quote"]
     rows = pd.read_csv(root / "preprocess" / "essential_genes.csv")
     assert list(rows["b_number"]) == [b for b, *_ in SYNTHETIC_ESSENTIAL_ROWS]
-    assert list(rows["record"].astype("Int64")) == [0, 1, 2, pd.NA, pd.NA]
-    assert list(rows["locus_tag"].fillna("")) == [
+    assert list(rows["record"].astype("Int64")) == [0, 1, 2, 3, 4]
+    assert list(rows["locus_tag"]) == [
         "BW25113_0001",
         "BW25113_0002",
         "BW25113_4412",
+        "b0006",
+        "b0007",
+    ]
+    assert list(rows["status"].fillna("")) == [
         "",
         "",
+        "",
+        "no_one_to_one_eck_pair",
+        "no_one_to_one_eck_pair",
     ]
     assert (root / "preprocess" / "build_manifest.json").is_file()
 
@@ -1822,7 +1883,7 @@ def test_verify_essentiality_runs_every_row_over_the_built_store(
     p.GeneEssentialityPrice2018EcoliDataset(
         root=str(_essentiality_root(essentiality_mirrored))
     )
-    monkeypatch.setattr(p, "ESSENTIAL_EXPECTED_RECORDS", 3)
+    monkeypatch.setattr(p, "ESSENTIAL_EXPECTED_RECORDS", 5)
     report = p.verify_essentiality(str(essentiality_mirrored))
     results = {r.name: r.passed for r in report.results}
     assert results["structural"] is True
@@ -1833,13 +1894,11 @@ def test_verify_essentiality_runs_every_row_over_the_built_store(
     assert results["media_membership"] is True
     # the shared containment row keeps its name and names the universe in its message
     containment = next(r for r in report.results if r.name == "gene_containment_sgd")
-    assert containment.passed is True
     assert "BW25113 genes" in containment.message
-    assert results["current_genome_genes"] is True
     assert results["stored_tags_are_loci_of_the_pinned_assembly"] is True
-    # BW25113_0004 is the fixture's pseudogene and is not in this gene set, so unlike
-    # the fitness dataset every row of the essentiality report passes
-    assert [r.name for r in report.results if not r.passed] == []
+    # #1057: b0006 and b0007 are stored as the released MG1655 b-number, which is no
+    # BW25113 locus; only the shared genome-reference rules may read that as a failure
+    assert {r.name for r in report.results if not r.passed} <= GENOME_REFERENCE_RULES
     written = json.loads(
         (
             _essentiality_root(essentiality_mirrored)
@@ -1928,13 +1987,19 @@ def test_the_essentiality_report_recomputes_the_notes_numbers(
 ) -> None:
     monkeypatch.setattr(p, "MIN_ESSENTIAL_ECK_ROUTE_FRACTION", 0.5)
     out = p.essentiality_report(str(essentiality_mirrored))
-    assert out["inventory"]["kept_genes"] == 3
+    assert out["inventory"]["kept_genes"] == 5
     assert out["identifiers"]["n_mapped"] == 3
     # b0001 and b0002 carry a RefSeq tag the annotation knows; b0003's is unknown there
     assert out["refseq_route_agreement"]["n_agree"] == 2
     assert out["refseq_route_agreement"]["unresolved"] == ["b0003"]
     assert out["refseq_route_agreement"]["disagree"] == []
-    assert out["table_s1_names_differing_from_the_genome"] == ["b0003 thrW -> hokC"]
+    # b0006 and b0007 are stored as released and named by the synthetic MG1655's own
+    # symbol (proC; none for b0007), which the fixture's Table S1 names differently
+    assert out["table_s1_names_differing_from_the_genome"] == [
+        "b0003 thrW -> hokC",
+        "b0006 araC -> proC",
+        "b0007 rhaD -> b0007",
+    ]
 
 
 # --------------------------------------------------------------------------- #
@@ -2060,6 +2125,12 @@ def test_the_eck_route_on_the_deposited_annotations() -> None:
     assert (report.n_symbol_names, report.n_tag_names) == (3625, 143)
     assert mapping["b0002"].locus_tag == "BW25113_0002"
     assert mapping["b0002"].perturbed_gene_name == "thrA"
+    # #1057: the 21 no pair places are stored as released, each with its status
+    assert len(mapping) == 3789
+    assert Counter(s.resolution.value for s in report.released_as) == {
+        "not_in_annotation": 8,
+        "no_one_to_one_eck_pair": 13,
+    }
 
 
 @pytest.mark.data
@@ -2130,7 +2201,9 @@ def test_the_stress_vehicles_of_every_kept_sample(
 @pytest.mark.data
 @needs_mirrors
 def test_table_s1s_keio_rows_and_their_disjointness_from_the_fitness_genes() -> None:
-    """324 released rows, 320 records, intersection 0 with the 3,789 fitness genes."""
+    """324 released rows, 324 records (4 as released, #1057), intersection 0 with the
+    3,789 fitness genes.
+    """
     genes = p.read_essential_genes(p.source_path("si3.xlsx", DATA_ROOT))
     assert len(genes) == p.ESSENTIAL_SOURCE_GENES
     assert all(g.gene_class in {"Arole", "Bspecific", "Cvague", "Dhypo"} for g in genes)
@@ -2157,8 +2230,11 @@ def test_table_s1s_keio_rows_and_their_disjointness_from_the_fitness_genes() -> 
     assert report.unmapped_by_reason == {"eck_absent_from_bw25113": 4}
     counts = p.essentiality_inventory(genes, report, b_numbers)
     assert counts.kept_genes == p.ESSENTIAL_EXPECTED_RECORDS
-    assert sorted(counts.dropped_genes) == sorted(p.DELETED_OPERON_B_NUMBERS)
-    assert sorted(counts.dropped_gene_names) == ["araA", "araB", "rhaA", "rhaB"]
+    assert sorted(counts.released_as_genes) == sorted(p.DELETED_OPERON_B_NUMBERS)
+    assert sorted(counts.released_as_gene_names) == ["araA", "araB", "rhaA", "rhaB"]
+    assert sorted(
+        mapping[b].perturbed_gene_name for b in p.DELETED_OPERON_B_NUMBERS
+    ) == ["araA", "araB", "rhaA", "rhaB"]
     assert counts.gene_class_histogram == {
         "Arole": 200,
         "Bspecific": 98,

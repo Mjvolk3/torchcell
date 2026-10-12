@@ -51,6 +51,7 @@ from torchcell.datamodels.schema import (
     EnvironmentPhysicalPerturbation,
     MeasurementType,
     PhysicalFactor,
+    TransposonInsertionPerturbation,
     UncertaintyType,
 )
 from torchcell.datasets.bacteria_common import LocusTagResolutionError
@@ -1052,6 +1053,15 @@ def k12(
 SYNTHETIC_GENES = ["b0001", "b0002", "b0003", "b0004", "b0005", "b0006", "b0099"]
 
 
+#: The shared verifier's genome-reference rules. Under the owner rule (#1057) a gene no
+#: ECK pair places is stored as the released MG1655 b-number, which is no BW25113 locus,
+#: so these may read it as a failure until the verifier learns the status (a separate
+#: branch); the tests accept them failing, and nothing else.
+GENOME_REFERENCE_RULES = frozenset(
+    {"canonical_gene_names", "gene_containment_sgd", "current_genome_genes"}
+)
+
+
 def test_map_genes_places_one_to_one_eck_pairs_and_types_the_rest(
     k12: tuple[EcoliK12MG1655Genome, EcoliK12BW25113Genome],
     monkeypatch: pytest.MonkeyPatch,
@@ -1066,7 +1076,26 @@ def test_map_genes_places_one_to_one_eck_pairs_and_types_the_rest(
         "b0002": ("BW25113_0002", "thrA"),
         "b0003": ("BW25113_4412", "hokC"),
         "b0004": ("BW25113_0004", "BW25113_0004"),
+        # #1057: stored as released in the MG1655 namespace, named by MG1655's symbol
+        "b0005": ("b0005", "proB"),
+        "b0006": ("b0006", "proC"),
+        "b0099": ("b0099", "b0099"),
     }
+    assert {b: m.gene_namespace for b, m in mapping.items() if m.status} == {
+        "b0005": "ecoli_k12_mg1655_bnumber",
+        "b0006": "ecoli_k12_mg1655_bnumber",
+        "b0099": "ecoli_k12_mg1655_bnumber",
+    }
+    assert [(s.released, s.resolution.value) for s in report.released_as] == [
+        ("b0005", "no_one_to_one_eck_pair"),
+        ("b0006", "no_one_to_one_eck_pair"),
+        ("b0099", "not_in_annotation"),
+    ]
+    leaf = w.build_genotype(mapping["b0099"]).perturbations[0]
+    assert isinstance(leaf, TransposonInsertionPerturbation)
+    assert leaf.identifier_mapping is None
+    assert leaf.description.startswith(w.DESCRIPTION_AS_RELEASED)
+    assert report.n_mapped == 4
     assert report.numeric_disagreements == (("b0003", "BW25113_4412", "ECK0003"),)
     assert [(u.b_number, u.reason, u.eck) for u in report.unmapped] == [
         ("b0005", "eck_not_one_to_one", ("ECK0005",)),
@@ -1221,13 +1250,17 @@ def _dataset_root(data_root: Path) -> Path:
 def test_the_loader_builds_the_synthetic_release_end_to_end(mirrored: Path) -> None:
     root = _dataset_root(mirrored)
     dataset = w.RbTnseqWetmore2015Dataset(root=str(root))
-    # five kept samples (set1IT007 withdrawn, set1IT030 failed) x four mapped genes
-    assert len(dataset) == 20
+    # five kept samples (set1IT007 withdrawn, set1IT030 failed) x all seven genes, the
+    # three no ECK pair places stored as released (#1057)
+    assert len(dataset) == 35
     assert sorted(dataset.gene_set) == [
         "BW25113_0001",
         "BW25113_0002",
         "BW25113_0004",
         "BW25113_4412",
+        "b0005",
+        "b0006",
+        "b0099",
     ]
     references = dataset.experiment_reference_index
     assert references is not None
@@ -1264,14 +1297,13 @@ def test_the_loader_builds_the_synthetic_release_end_to_end(mirrored: Path) -> N
         "Keio:set2IT069",
     }
     drops = json.loads((root / "preprocess" / "dropped_records.json").read_text())
-    assert (drops["source_records"], drops["stored_records"]) == (49, 20)
+    assert (drops["source_records"], drops["stored_records"]) == (49, 35)
     assert [(d["rule"], d["items"], d["n_records"]) for d in drops["rules"]] == [
         (w.DROP_WITHDRAWN, ["set1IT007"], 7),
         (w.DROP_FAILED_QUALITY, ["set1IT030"], 7),
-        (w.DROP_NO_ECK_PAIR, ["b0005", "b0006", "b0099"], 15),
     ]
-    # every released value is accounted for: stored + the three drop rules
-    assert drops["source_records"] == 20 + 7 + 7 + 15
+    # every released value is accounted for: stored + the two drop rules
+    assert drops["source_records"] == 35 + 7 + 7
     assert drops["withdrawn_refused"] == ["set1IT007"]
     # the refusal carries the authors' own words, bound to the file they were read from
     withdrawal = next(d for d in drops["rules"] if d["rule"] == w.DROP_WITHDRAWN)
@@ -1322,7 +1354,7 @@ def test_verify_build_runs_every_row_and_the_compendium_cross_check(
     root = _dataset_root(mirrored)
     w.RbTnseqWetmore2015Dataset(root=str(root))
     with pytest.raises(FileNotFoundError, match="the compendium store the L4"):
-        w.verify_build(str(root), data_root=str(mirrored), expected_count=20)
+        w.verify_build(str(root), data_root=str(mirrored), expected_count=35)
     _served_copy(
         mirrored,
         {
@@ -1341,9 +1373,13 @@ def test_verify_build_runs_every_row_and_the_compendium_cross_check(
     )
     monkeypatch.setattr(w, "EXPECTED_WITHDRAWN", ("set1IT007",))
     monkeypatch.setattr(w, "EXPECTED_SAMPLES", 5)
-    report = w.verify_build(str(root), data_root=str(mirrored), expected_count=20)
+    report = w.verify_build(str(root), data_root=str(mirrored), expected_count=35)
     results = {r.name: r for r in report.results}
-    assert {name: r.passed for name, r in results.items() if not r.passed} == {}
+    # #1057: b0005, b0006 and b0099 are the released MG1655 b-number, no BW25113 locus;
+    # only the shared genome-reference rules may read that as a failure
+    assert {name for name, r in results.items() if not r.passed} <= (
+        GENOME_REFERENCE_RULES
+    )
     assert results["count"].passed is True
     assert results["withdrawn_samples_refused_not_stored"].message == (
         "SUPPLEMENTARY: 0 records of the 1 samples the authors withdrew "
@@ -1366,7 +1402,8 @@ def test_verify_build_runs_every_row_and_the_compendium_cross_check(
     check = json.loads(
         (root / "preprocess" / "compendium_cross_check.json").read_text()
     )
-    assert check["n_values_compared"] == 12
+    # three compared samples x all seven genes (three of them as released, #1057)
+    assert check["n_values_compared"] == 21
 
 
 def _value(
@@ -1380,6 +1417,7 @@ def _value(
     return w.StoredValue(
         sample=sample,
         tag=tag,
+        gene_namespace="ecoli_k12_bw25113_locus_tag",
         value=value,
         standard_error=se,
         t_statistic=value / math.sqrt(0.01 + 0.04) if t is None else t,
@@ -1489,13 +1527,21 @@ def test_stored_values_reads_one_perturbation_per_record() -> None:
                 "environment_response_se": 0.2,
                 "environment_response_t_statistic": -4.47,
             },
-            "genotype": {"perturbations": [{"systematic_gene_name": "BW25113_0001"}]},
+            "genotype": {
+                "perturbations": [
+                    {
+                        "systematic_gene_name": "BW25113_0001",
+                        "gene_namespace": "ecoli_k12_bw25113_locus_tag",
+                    }
+                ]
+            },
         }
     }
     (value,) = w.stored_values([record])
     assert value == w.StoredValue(
         sample="set1IT007",
         tag="BW25113_0001",
+        gene_namespace="ecoli_k12_bw25113_locus_tag",
         value=-1.0,
         standard_error=0.2,
         t_statistic=-4.47,
@@ -1591,7 +1637,7 @@ def test_inventory_closes_over_every_released_value() -> None:
         counts.source_records,
         counts.good_table_records,
         counts.stored_records,
-    ) == (7, 6, 5, 49, 42, 20)
+    ) == (7, 6, 5, 49, 42, 35)
     assert counts.stored_samples_by_group == {
         "carbon source": 3,
         "nitrogen source": 1,
@@ -1610,8 +1656,8 @@ def test_inventory_closes_over_every_released_value() -> None:
         7,
     )
     assert withdrawal.source is w.AUTHOR_WITHDRAWAL.instruction
-    # a rule that rests on this loader's own typing states no source quote
-    assert next(r for r in counts.rules if r.rule == w.DROP_NO_ECK_PAIR).source is None
+    # #1057: a gene no ECK pair places is stored as released, so no gene rule remains
+    assert w.DROP_NO_ECK_PAIR not in {r.rule for r in counts.rules}
     assert counts.unidentified_compounds == {"casamino acids": 1}
 
 
@@ -1690,7 +1736,10 @@ def test_the_loader_inventory_off_the_deposited_bytes() -> None:
         counts.source_genes,
         counts.stored_genes,
         counts.stored_records,
-    ) == (101, 92, 88, w.EXPECTED_GENES + 18, w.EXPECTED_GENES, w.EXPECTED_RECORDS)
+    ) == (101, 92, 88, w.EXPECTED_GENES, w.EXPECTED_GENES, w.EXPECTED_RECORDS)
+    # #1057: all 3,646 released genes are stored, 18 of them as released
+    assert (w.EXPECTED_GENES, identifiers.n_mapped) == (3646, 3628)
+    assert len(identifiers.released_as) == 18
     assert counts.stored_samples == w.EXPECTED_SAMPLES
     assert counts.quality_rules_reproduce_u is True
     assert [f.name for f in counts.failed] == [
@@ -1758,4 +1807,7 @@ def test_the_dev_build_holds_every_expected_record_and_its_report_passes() -> No
         .joinpath("preprocess", "verification_report.json")
         .read_text()
     )
-    assert {r["name"]: r["passed"] for r in report["results"] if not r["passed"]} == {}
+    # #1057: only the shared genome-reference rules may fail on the as-released genes
+    assert {r["name"] for r in report["results"] if not r["passed"]} <= (
+        GENOME_REFERENCE_RULES
+    )

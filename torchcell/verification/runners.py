@@ -2277,11 +2277,12 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
     "env_chemgen_parsons2006": {
         "root": "data/torchcell/env_chemgen_parsons2006",
         # Table S7's 4,111 strains x 82 conditions = 337,102 cells minus the 7,848
-        # released blanks, the 1,144 ratios of the 14 ORFs R64 no longer calls genes,
-        # and the 36,437 ratios of the 9 conditions whose compound has no structure
-        # identifier (7 crude extracts, agelasine E, stichloroside). Rules + counts:
+        # released blanks: every released ratio (#1045). Each strain under its released
+        # ORF (no genome lookup), and the 36,437 ratios of the 9 conditions whose
+        # compound has no structure identifier (7 crude extracts, agelasine E,
+        # stichloroside) with a typed inchikey gap. Counts:
         # preprocess/dropped_records.json.
-        "expected_count": 291673,
+        "expected_count": 329254,
         "background_genes": frozenset(),
         "stream": True,
         "provenance": Provenance(
@@ -2308,11 +2309,12 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
                 "CAS number, dose from Table S1 (pM restated as nM exactly; MMS a "
                 "basis-free percent), Methods vehicle at the 1% of the solvent control. "
                 "Genotype: BarcodedKanMxDeletionPerturbation (kanMX4, barcodes gapped), "
-                "YDL038C and YGR272C under their current genes with a ConstructedOrf. "
+                "each strain under its released Table S7 ORF, no genome lookup. "
                 "Reference per medium: the solvent-control pool, log2 ratio 0, on a "
                 "BY4741 StrainReferenceGenome (alleles quoted from the SI strain table; "
-                "that the pool is BY4741 gapped pending Giaever 2002). Dropped: released "
-                "blanks, non-gene ORFs, compounds with no structure identifier. Table "
+                "that the pool is BY4741 gapped pending Giaever 2002). No record for a "
+                "released blank; a compound with no structure identifier is stored "
+                "with a typed inchikey gap (#1045). Table "
                 "S4's 121 extra strains are Table S2's multidrug-sensitive set, released "
                 "without ratios"
             ),

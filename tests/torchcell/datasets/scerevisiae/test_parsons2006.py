@@ -7,30 +7,33 @@
 ``.xls``, so the four ``_read_*`` methods (the file boundary) are stubbed with parsed
 objects and everything downstream runs for real, including the pinned compound table.
 The parsers themselves run on hand-built frames shaped like the release (title row 0,
-header row 2, body from row 3). The genome is a duck-typed stub.
+header row 2, body from row 3). No genome is consulted (#1045): every strain is stored
+under its released ORF.
 
 Synthetic build (Table S7 rows x the four filled columns; every other cell blank):
 
-    YAL001C  current             Sulfometuron (SC), MMS (YPD) blank, Thialysine, Extract
-    YDL039C  current             all four
-    YDL038C  renamed -> YDL039C  all four (merged: two released ORFs on one gene)
-    YGR272C  renamed -> YGR271C-A all four (relation gapped)
-    YIL170W  non_gene_feature    all four -> dropped by orf_is_not_a_current_gene
+    YAL001C  Sulfometuron (SC), MMS (YPD) blank, Thialysine, Extract
+    YDL039C  all four
+    YDL038C  all four (an ORF SGD merged into YDL039C; stored as released)
+    YGR272C  all four (an ORF SGD merged into YGR271C-A; stored as released)
+    YIL170W  all four (a locus R64 does not call a gene; stored as released)
 
-Records: 2 + 3 + 3 + 3 = 11. Dropped: 82 x 5 - 19 = 391 blanks, 4 YIL170W ratios, 4
-extract ratios of the kept strains; 410 source cells. Records in build order: idx 0-1
-YAL001C (sulfometuron, thialysine), 2-4 YDL039C, 5-7 YDL038C, 8-10 YGR272C, each in
-column order sulfometuron, MMS, thialysine.
+Records: 3 + 4 + 4 + 4 + 4 = 19, every released ratio; 82 x 5 - 19 = 391 released blanks
+have none; 410 source cells. The 5 extract ratios are stored, the extract carrying its
+typed inchikey gap (#1045 row 19). Records in build order: idx 0-2 YAL001C (sulfometuron,
+thialysine, extract), 3-6 YDL039C, 7-10 YDL038C, 11-14 YGR272C, 15-18 YIL170W, each in
+column order sulfometuron, MMS, thialysine, extract.
 """
 
 from __future__ import annotations
 
 import hashlib
+import inspect
 import json
 import math
 import os
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import pandas as pd
 import pytest
@@ -45,7 +48,6 @@ from torchcell.datamodels.schema import (
     Genotype,
     MatingType,
     MeasurementType,
-    OrfHistoryRelation,
     PreCultureSource,
     SampleUnit,
     SmallMoleculePerturbation,
@@ -56,7 +58,6 @@ from torchcell.datamodels.schema import (
 )
 from torchcell.datamodels.strain_background import GIAEVER_2002
 from torchcell.datasets.scerevisiae import parsons2006 as p
-from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 
 S7_LABELS = [c.s7_label for c in p.CONDITIONS]
 COL = {label: i for i, label in enumerate(S7_LABELS)}
@@ -74,31 +75,6 @@ class _Resolution:
     @property
     def is_current_gene(self) -> bool:
         return self.status in ("current", "renamed")
-
-
-_RESOLVE = {
-    "YAL001C": ("current", "YAL001C"),
-    "YDL039C": ("current", "YDL039C"),
-    "YDL038C": ("renamed", "YDL039C"),
-    "YGR272C": ("renamed", "YGR271C-A"),
-    "YIL170W": ("non_gene_feature", "YIL170W"),
-    "TFC3": ("current", "YAL001C"),
-    "PRM7": ("current", "YDL039C"),
-}
-
-
-class _FakeGenome:
-    """The slice of ``SCerevisiaeGenome`` the Parsons name policy reads."""
-
-    feature_index = {"standard_to_ids": {"TFC3": ["YAL001C"], "PRM7": ["YDL039C"]}}
-
-    def resolve_gene_name(self, name: str) -> _Resolution:
-        status, systematic = _RESOLVE.get(name, ("retired", None))
-        return _Resolution(status, systematic)
-
-
-def _genome() -> SCerevisiaeGenome:
-    return cast(SCerevisiaeGenome, _FakeGenome())
 
 
 def _ratio_matrix() -> p.RatioMatrix:
@@ -149,7 +125,7 @@ def _s1_rows() -> list[p.S1Row]:
 def _build(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> p.EnvChemgenParsons2006Dataset:
-    """A real scratch build of the synthetic release (11 records)."""
+    """A real scratch build of the synthetic release (19 records)."""
     cls = p.EnvChemgenParsons2006Dataset
     monkeypatch.setattr(cls, "_read_ratio_matrix", lambda self: _ratio_matrix())
     monkeypatch.setattr(cls, "_read_p_value_matrix", lambda self: _p_value_matrix())
@@ -161,7 +137,7 @@ def _build(
     raw.mkdir(parents=True)
     for table in p.RAW_TABLES:
         (raw / table.filename).write_bytes(b"placeholder: the readers are stubbed")
-    return cls(root=str(tmp_path / "parsons"), genome=_genome())
+    return cls(root=str(tmp_path / "parsons"))
 
 
 @pytest.fixture
@@ -210,27 +186,38 @@ def _ref(dataset: Any, idx: int) -> StrainEnvironmentResponseExperimentReference
 # The build
 # --------------------------------------------------------------------------- #
 def test_drop_log_counts_every_cell_once(built: Any) -> None:
-    assert len(built) == 11
+    """Every released ratio is a record (#1045); only the released blanks have none."""
+    assert len(built) == 19
     log = json.loads((Path(built.preprocess_dir) / "dropped_records.json").read_text())
     assert (log["source_records"], log["released_ratios"]) == (410, 19)
-    assert (log["kept_records"], log["dropped_records"]) == (11, 399)
+    assert (log["kept_records"], log["dropped_records"]) == (19, 391)
     assert [(r["rule"], r["n_records"]) for r in log["rules"]] == [
-        ("ratio_cell_blank_in_release", 391),
-        ("orf_is_not_a_current_gene", 4),
-        ("compound_without_a_structure_identifier", 4),
+        ("ratio_cell_blank_in_release", 391)
     ]
-    assert log["rules"][1]["items"] == ["YIL170W (non_gene_feature)"]
-    assert log["rules"][2]["items"] == [
-        "192A4-Stichloroside",
-        "Agelasine E",
-        "Extract 00-132",
-        "Extract 00-192",
-        "Extract 00-243",
-        "Extract 00-303C",
-        "Extract 00-89",
-        "Extract 6592",
-        "Extract 95-57",
-    ]
+    gapped = {
+        g["condition"]: (g["compound_name"], g["gap_field"], g["gap_reason"])
+        for g in log["compound_identity_gaps"]
+    }
+    names = {"192A4-Stichloroside": "Stichloroside"}
+    assert gapped == {
+        label: (names.get(label, label), "inchikey", "deferred_pending_source_review")
+        for label in [
+            "192A4-Stichloroside",
+            "Agelasine E",
+            "Extract 00-132",
+            "Extract 00-192",
+            "Extract 00-243",
+            "Extract 00-303C",
+            "Extract 00-89",
+            "Extract 6592",
+            "Extract 95-57",
+        ]
+    }
+    assert {
+        g["condition"]: g["n_records"]
+        for g in log["compound_identity_gaps"]
+        if g["n_records"]
+    } == {"Extract 95-57": 5}
     assert log["release"] == {
         "table_s4_strains": 7,
         "table_s4_p_values": 19 + 2 * 82,
@@ -241,9 +228,27 @@ def test_drop_log_counts_every_cell_once(built: Any) -> None:
     }
 
 
+def test_a_name_only_compound_is_stored_with_its_typed_inchikey_gap(built: Any) -> None:
+    """YAL001C x Extract 95-57 (record 2) is stored (#1045 row 19): the compound keeps
+    its released label, carries no identifier, and declares the inchikey gap; the
+    extract's Methods vehicle is methanol.
+    """
+    edit = _edit(_exp(built, 2).environment)
+    assert (edit.compound.name, edit.compound.inchikey, edit.compound.pubchem_cid) == (
+        "Extract 95-57",
+        None,
+        None,
+    )
+    assert [(g.field, g.reason.value) for g in edit.compound.provenance_gaps] == [
+        ("inchikey", "deferred_pending_source_review")
+    ]
+    assert _solvent(edit).name == "methanol"
+    assert _exp(built, 2).phenotype.environment_response == -0.25
+
+
 def test_record_stores_the_released_ratio_and_the_s4_p_value(built: Any) -> None:
     # YDL038C x sulfometuron methyl, -log10 p at the cap
-    phenotype = _exp(built, 5).phenotype
+    phenotype = _exp(built, 7).phenotype
     assert phenotype.environment_response == 0.75
     assert phenotype.measurement_type is MeasurementType.log2_ratio
     assert phenotype.assay_type is AssayType.pooled_competitive_growth_barcode
@@ -259,31 +264,31 @@ def test_record_stores_the_released_ratio_and_the_s4_p_value(built: Any) -> None
         "environment_response_se",
     }
     assert _exp(built, 0).phenotype.environment_response_p_value == 0.01
-    assert _exp(built, 4).phenotype.environment_response_p_value is None
+    assert _exp(built, 5).phenotype.environment_response_p_value is None
 
 
-def test_renamed_orfs_keep_their_strain_under_the_current_gene(built: Any) -> None:
-    direct = _deletion(built, 2)
-    merged = _deletion(built, 5)
-    alone = _deletion(built, 8)
-    assert (direct.systematic_gene_name, direct.perturbed_gene_name) == (
+def test_every_strain_is_stored_under_its_released_orf(built: Any) -> None:
+    """Each strain's first record carries Table S7's ORF as both names: the merged
+    YDL038C and YGR272C and the non-gene YIL170W included, no ConstructedOrf (#1045).
+    """
+    stored = [
+        (d.systematic_gene_name, d.perturbed_gene_name, d.constructed_orf)
+        for d in (_deletion(built, i) for i in (0, 3, 7, 11, 15))
+    ]
+    assert stored == [
+        ("YAL001C", "YAL001C", None),
+        ("YDL039C", "YDL039C", None),
+        ("YDL038C", "YDL038C", None),
+        ("YGR272C", "YGR272C", None),
+        ("YIL170W", "YIL170W", None),
+    ]
+    assert sorted(built.gene_set) == [
+        "YAL001C",
+        "YDL038C",
         "YDL039C",
-        "PRM7",
-    )
-    assert direct.constructed_orf is None
-    assert merged.systematic_gene_name == "YDL039C"
-    assert merged.constructed_orf is not None
-    assert merged.constructed_orf.source_systematic_name == "YDL038C"
-    assert merged.constructed_orf.relation is OrfHistoryRelation.merged
-    assert alone.systematic_gene_name == "YGR271C-A"
-    assert alone.perturbed_gene_name == "YGR271C-A"  # no standard name in the stub
-    assert alone.constructed_orf is not None
-    assert alone.constructed_orf.relation is None
-    assert {g.field for g in alone.constructed_orf.provenance_gaps} == {
-        "relation",
-        "deleted_span",
-    }
-    assert sorted(built.gene_set) == ["YAL001C", "YDL039C", "YGR271C-A"]
+        "YGR272C",
+        "YIL170W",
+    ]
 
 
 def test_deletion_is_a_barcoded_kanmx4_strain_with_typed_barcode_gaps(
@@ -293,7 +298,7 @@ def test_deletion_is_a_barcoded_kanmx4_strain_with_typed_barcode_gaps(
     assert perturbation.perturbation_type == "barcoded_kanmx_deletion"
     assert (perturbation.systematic_gene_name, perturbation.perturbed_gene_name) == (
         "YAL001C",
-        "TFC3",
+        "YAL001C",
     )
     assert perturbation.cassette == "kanMX4"
     assert (
@@ -308,7 +313,7 @@ def test_deletion_is_a_barcoded_kanmx4_strain_with_typed_barcode_gaps(
 
 def test_environment_carries_medium_compound_dose_and_vehicle(built: Any) -> None:
     sulfometuron = _exp(built, 0).environment
-    mms = _exp(built, 3).environment
+    mms = _exp(built, 4).environment
     thialysine = _exp(built, 1).environment
     assert sulfometuron.media.base_medium == "SC"
     assert mms.media.base_medium == "YPD"
@@ -351,7 +356,11 @@ def test_environment_carries_medium_compound_dose_and_vehicle(built: Any) -> Non
 def test_one_reference_per_medium_on_the_by4741_background(built: Any) -> None:
     index = built.experiment_reference_index
     groups = sorted(sorted(int(i) for i in ref.member_indices) for ref in index)
-    assert groups == [[0, 2, 5, 8], [1, 4, 7, 10], [3, 6, 9]]
+    assert groups == [
+        [0, 3, 7, 11, 15],
+        [1, 5, 9, 13, 17],
+        [2, 4, 6, 8, 10, 12, 14, 16, 18],
+    ]
     reference = _ref(built, 0)
     assert reference.environment_reference.perturbations == []
     assert reference.phenotype_reference.environment_response == 0.0
@@ -397,15 +406,12 @@ def test_an_s7_orf_missing_from_s4_refuses(
         _build_with(tmp_path, monkeypatch, keep_p=True)
 
 
-def test_a_build_without_a_genome_refuses(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    raw = tmp_path / "parsons" / "raw"
-    raw.mkdir(parents=True)
-    for table in p.RAW_TABLES:
-        (raw / table.filename).write_bytes(b"x")
-    with pytest.raises(RuntimeError, match="requires a genome"):
-        p.EnvChemgenParsons2006Dataset(root=str(tmp_path / "parsons"))
+def test_the_loader_takes_no_genome() -> None:
+    """No genome is consulted (#1045), so ``build_dataset_lmdb`` injects none: it injects
+    by parameter name.
+    """
+    params = inspect.signature(p.EnvChemgenParsons2006Dataset.__init__).parameters
+    assert "genome" not in params
 
 
 def _build_with(
@@ -429,7 +435,7 @@ def _build_with(
     raw.mkdir(parents=True)
     for table in p.RAW_TABLES:
         (raw / table.filename).write_bytes(b"x")
-    return cls(root=str(tmp_path / "parsons"), genome=_genome())
+    return cls(root=str(tmp_path / "parsons"))
 
 
 def test_inline_construction_hooks_are_inert(built: Any) -> None:
@@ -502,7 +508,7 @@ def test_conditions_are_82_unique_columns_with_their_footnotes_stripped() -> Non
     ]
 
 
-def test_every_condition_resolves_except_the_nine_without_a_structure() -> None:
+def test_every_condition_resolves_except_the_nine_stored_with_a_gap() -> None:
     unidentified = sorted(
         c.s7_label
         for c in p.CONDITIONS
@@ -677,20 +683,6 @@ def test_s1_by_name_needs_every_condition_exactly_once() -> None:
         p.s1_by_name([r for r in rows if r.name != "Wortmannin"])
     with pytest.raises(RuntimeError, match="name twice"):
         p.s1_by_name([*rows, rows[0]])
-
-
-def test_resolve_strains_keeps_current_and_renamed_and_drops_the_rest() -> None:
-    resolution = p.resolve_strains(
-        ["YAL001C", "YDL039C", "YDL038C", "YGR272C", "YIL170W", "YZZ999W"], _genome()
-    )
-    assert resolution.kept == {
-        "YAL001C": "YAL001C",
-        "YDL039C": "YDL039C",
-        "YDL038C": "YDL039C",
-        "YGR272C": "YGR271C-A",
-    }
-    assert resolution.dropped == {"YIL170W": "non_gene_feature", "YZZ999W": "retired"}
-    assert sorted(resolution.constructed) == ["YDL038C", "YGR272C"]
 
 
 # --------------------------------------------------------------------------- #

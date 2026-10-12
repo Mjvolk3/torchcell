@@ -4,7 +4,7 @@
   "date": "2026-10-12",
   "pr": 1055,
   "author_kind": "agent",
-  "base_commit": "007cd23b0631e18574606da9164c9d78dbc01577",
+  "base_commit": "464c5cfc3d83fc6212e8b6a3d91da89e847d4b34",
   "python_version": "3.13.0",
   "symbols": [
     {
@@ -104,8 +104,8 @@
       "kinds": [
         "enum_member_added"
       ],
-      "fingerprint_before": "94e37b5f881266ddeb8519ca029c4796c9658f016276d9ccc39cd4b472fe16a5",
-      "fingerprint_after": "1dac5283c08dd32a6b410b012cb22b1f1c21aae5f65cea1cf74571969dad04ac",
+      "fingerprint_before": "89326490184f3d7357d962c39600426770854605bac4860cce86bc06aef72d6d",
+      "fingerprint_after": "96e44d0b3ae0fbcc3b90c1e297ac50f58e0e969d85ce5dea73dbf89ae1c084ac",
       "impact": "stale",
       "reasons": [
         "gained members ['PromoterDrivenGeneIntegrationPerturbation', 'VariablePromoterReporterPerturbation']"
@@ -641,6 +641,17 @@
       "loader": "torchcell/datasets/ecoli/mutalik2020.py",
       "dataset_classes": [
         "PhageRbTnseqMutalik2020Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/nichols2011.py",
+      "dataset_classes": [
+        "EnvChemgenNichols2011Dataset"
       ],
       "served_classes": [],
       "impact": "stale",

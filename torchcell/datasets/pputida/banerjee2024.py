@@ -2435,21 +2435,27 @@ def _ledger_l4(records: Sequence[dict[str, Any]], ledger: pd.DataFrame) -> Level
     """L4: every stored record against the build ledger, joined on value and time.
 
     LMDB keys are strings, so the store's iteration order is lexicographic and a
-    positional join would silently pair the wrong rows; the join key is
-    ``(titer, time_hours, strain)``, all three released values.
+    positional join would silently pair the wrong rows. The key is
+    ``(titer, time_hours)``, both released values, and its uniqueness across the 20
+    rows is asserted rather than assumed.
+
+    The STRAIN is deliberately not part of the key. It is not a stored field, and
+    recovering it from the genotype is ambiguous here: IY1485's only edit above IY1452
+    is the ΔgacA that no served leaf can hold, so the two hold identical genotypes and
+    are told apart by their titers. A strain-keyed join would fail on that pair for a
+    reason that is about the source's missing locus tag, not about the store.
     """
     if len(records) != len(ledger):
         raise AssertionError(
             f"{len(records)} records and {len(ledger)} ledger rows; the build ledger "
             "and the store disagree"
         )
-    by_key: dict[tuple[float, float, str], float] = {}
+    by_key: dict[tuple[float, float], float] = {}
     for _, row in ledger.iterrows():
         hours = row["time_hours"]
         key = (
             round(float(row["titer"]), 6),
             -1.0 if pd.isna(hours) else round(float(hours), 6),
-            str(row["strain"]),
         )
         if key in by_key:
             raise AssertionError(
@@ -2460,11 +2466,9 @@ def _ledger_l4(records: Sequence[dict[str, Any]], ledger: pd.DataFrame) -> Level
     for record in records:
         experiment = record["experiment"]
         hours = experiment["environment"]["duration_hours"]
-        strain = _strain_of(experiment)
         key = (
             round(float(experiment["phenotype"]["titer"]), 6),
             -1.0 if hours is None else round(float(hours), 6),
-            strain,
         )
         if key not in by_key:
             raise AssertionError(
@@ -2474,52 +2478,6 @@ def _ledger_l4(records: Sequence[dict[str, Any]], ledger: pd.DataFrame) -> Level
     return l4_cross_source(shared, tol=1e-9).model_copy(
         update={"name": "stored_titers_vs_the_build_ledger"}
     )
-
-
-def _strain_of(experiment: dict[str, Any]) -> str:
-    """Which released strain one stored genotype is, by its plasmid and deletion set.
-
-    The strain NAME is not a stored field, so the identification is by the genotype
-    itself, and exactly one spec must match. IY1452 and IY1485 share a genotype, because
-    IY1485's only extra edit is the ΔgacA no served leaf can hold, so they are reported
-    as one match and the titer separates them.
-    """
-    perturbations = experiment["genotype"]["perturbations"]
-    constructs = {
-        pert["construct_name"]
-        for pert in perturbations
-        if pert["perturbation_type"] == "heterologous_pathway"
-    }
-    deletions = {
-        pert["systematic_gene_name"]
-        for pert in perturbations
-        if pert["perturbation_type"] == "bacterial_deletion"
-    }
-    matches = sorted(
-        name
-        for name, spec in STRAIN_SPECS.items()
-        if {CASSETTES[spec.plasmid].name} == constructs
-        and {
-            tag
-            for symbol in spec.deletions
-            for tag in (
-                PHA_LOCUS_TAGS
-                if symbol == "phaABC"
-                else (
-                    ()
-                    if symbol == "gacA"
-                    else (str(DELETION_LOCUS_TAGS[symbol].value),)
-                )
-            )
-        }
-        == deletions
-    )
-    if not matches:
-        raise AssertionError(
-            "a stored record's genotype matches no strain spec; the genotype no longer "
-            "identifies a released strain"
-        )
-    return matches[0]
 
 
 def _quote_l4(data_root: str | None) -> LevelResult:

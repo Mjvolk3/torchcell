@@ -34,6 +34,7 @@ import os
 from pathlib import Path
 from typing import Any
 
+import pandas as pd
 import pytest
 
 import torchcell.datasets.pputida.banerjee2024 as b24
@@ -592,6 +593,366 @@ def test_the_quote_inventory_is_every_quote_constant() -> None:
     assert all(name.startswith("_Q_") for name in quotes)
     assert "_Q_FEDBATCH_IY1452" in quotes
     assert "_Q_DATA_AVAILABILITY" in quotes
+
+
+# --------------------------------------------------------------------------- #
+# A synthetic end-to-end build: the mirrors, a stub KT2440, the loader, the verifier
+# --------------------------------------------------------------------------- #
+#: The eleven locus tags the release states, laid end to end on a synthetic assembly.
+#: ``PP_5005`` carries the symbol this assembly really gives it, and ``PP_2675`` carries
+#: none, because the loader never asks the annotation for a symbol and must not start.
+_LOCUS_SPECS: tuple[tuple[str, str], ...] = (
+    ("PP_1649", "ldhA"),
+    ("PP_2082", "ppsA"),
+    ("PP_2675", ""),
+    ("PP_3073", "hbdH"),
+    ("PP_3540", "mvaB"),
+    ("PP_4043", "gntZ"),
+    ("PP_4116", "aceA"),
+    ("PP_4194", "gltA"),
+    ("PP_5003", "phaA"),
+    ("PP_5004", "phaB"),
+    ("PP_5005", "phaC-II"),
+)
+_ASSEMBLY_REPORT_MEMBER = "GCA_000007565.2_ASM756v2_assembly_report.txt"
+_ASSEMBLY_REPORT = (
+    "# Assembly name:  ASM756v2\n"
+    "# Organism name:  Pseudomonas putida KT2440 (g-proteobacteria)\n"
+    "# Infraspecific name:  strain=KT2440\n"
+    "# Taxid:          160488\n"
+    "# GenBank assembly accession: GCA_000007565.2\n"
+    "# RefSeq assembly accession: GCF_000007565.2\n"
+    "# RefSeq assembly and GenBank assemblies identical: yes\n"
+    "#\n"
+    "## Assembly-Units:\n"
+    "AE015451.2\tassembled-molecule\tna\tChromosome\tAE015451.2\t=\tNC_002947.4\n"
+)
+
+
+def _sha256_of(path: Path) -> str:
+    import hashlib
+
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _write_mirrors(data_root: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """A synthetic literature mirror carrying every real quote verbatim.
+
+    The quotes are the REAL ones, concatenated: this fixture's job is to prove the
+    audit finds each quote in the bytes it cites, so invented sentences would exercise
+    the file plumbing while retiring the check. Each file's sha256 is then pinned to
+    what was actually written.
+    """
+    library = data_root / "torchcell-library"
+    si_only = {"_Q_SI_TABLE1_PLASMIDS", "_Q_SI_TABLE2_STRAINS"}
+    deferred = {"_Q_PMD_CARRUTHERS"}
+    quotes = b24.every_quote()
+    paper = library / b24.CITATION_KEY / b24.PAPER_MD
+    paper.parent.mkdir(parents=True, exist_ok=True)
+    paper.write_text(
+        "\n\n".join(
+            quote
+            for name, quote in quotes.items()
+            if name not in si_only and name not in deferred
+        ),
+        encoding="utf-8",
+    )
+    si_md = library / b24.CITATION_KEY / b24.SI_MD
+    si_md.parent.mkdir(parents=True, exist_ok=True)
+    si_md.write_text(
+        "\n\n".join(quotes[name] for name in sorted(si_only)), encoding="utf-8"
+    )
+    si_pdf = library / b24.CITATION_KEY / b24.SI_PDF
+    si_pdf.write_bytes(b"%PDF-1.7\nsynthetic\n")
+    carruthers = library / b24.CARRUTHERS_KEY / b24.PAPER_MD
+    carruthers.parent.mkdir(parents=True, exist_ok=True)
+    carruthers.write_text(quotes["_Q_PMD_CARRUTHERS"], encoding="utf-8")
+    monkeypatch.setattr(b24, "PAPER_MD_SHA256", _sha256_of(paper))
+    monkeypatch.setattr(b24, "SI_MD_SHA256", _sha256_of(si_md))
+    monkeypatch.setattr(b24, "SI_PDF_SHA256", _sha256_of(si_pdf))
+    monkeypatch.setattr(b24, "CARRUTHERS_PAPER_MD_SHA256", _sha256_of(carruthers))
+
+
+@pytest.fixture
+def synthetic_kt2440(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
+    """The real KT2440 class over a synthetic assembly, with the network refused."""
+    import tests.torchcell.sequence.genome._bacterial_fixtures as fixtures
+    from tests.torchcell.sequence.genome._bacterial_fixtures import SyntheticLocus
+    from torchcell.sequence.genome.pputida.kt2440 import (
+        KT2440_ASSEMBLY,
+        PPutidaKT2440Genome,
+    )
+
+    monkeypatch.setattr(fixtures, "SEQUENCE", fixtures.SEQUENCE * 6)
+    loci = []
+    cursor = 1
+    for index, (tag, symbol) in enumerate(_LOCUS_SPECS):
+        start, end = cursor, cursor + 11
+        cursor = end + 3
+        loci.append(
+            SyntheticLocus(
+                tag=tag,
+                parts=((start, end),),
+                strand="+" if index % 2 == 0 else "-",
+                symbol=symbol,
+                product=f"synthetic product {tag}",
+                protein_id=f"AAN{index:05d}.1",
+                protein="MKV",
+            )
+        )
+    files = fixtures.write_assembly(
+        tmp_path / "tier",
+        KT2440_ASSEMBLY,
+        loci,
+        [fixtures.gaf_row("hbdH", "hbdH|PP_3073", "GO:0000001")],
+    )
+    fixtures.forbid_network(monkeypatch)
+    fixtures.serve_tier(monkeypatch, files)
+    report = tmp_path / "tier" / _ASSEMBLY_REPORT_MEMBER
+    report.write_text(_ASSEMBLY_REPORT)
+
+    def serve_report(assembly_set: str, filename: str, **_: Any) -> str:
+        if filename != _ASSEMBLY_REPORT_MEMBER:
+            raise FileNotFoundError(f"{assembly_set}/{filename} is not in the fixture")
+        return str(report)
+
+    import torchcell.datasets.bacteria_common as bacteria_common
+
+    monkeypatch.setattr(bacteria_common, "resolve", serve_report)
+    root = tmp_path / "kt2440"
+    root.mkdir()
+    return PPutidaKT2440Genome(genome_root=str(root), overwrite=False)
+
+
+@pytest.fixture
+def built_store(
+    synthetic_kt2440: Any, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> str:
+    """Deposit synthetic mirrors and build the loader end to end under ``tmp_path``."""
+    data_root = tmp_path / "root"
+    monkeypatch.setenv("DATA_ROOT", str(data_root))
+    _write_mirrors(data_root, monkeypatch)
+    b24.deposit_raw_mirror()
+    root = str(data_root / "data/torchcell/isoprenol_titer_banerjee2024")
+    b24.IsoprenolTiterBanerjee2024Dataset(root=root, pputida_genome=synthetic_kt2440)
+    return root
+
+
+def test_the_deposit_records_the_retrieval_of_what_it_copied(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Both consumed artifacts land in the raw mirror with an Elsevier retrieval record."""
+    data_root = tmp_path / "root"
+    monkeypatch.setenv("DATA_ROOT", str(data_root))
+    _write_mirrors(data_root, monkeypatch)
+    raw = b24.deposit_raw_mirror()
+    assert (raw / b24.SI_PDF).exists()
+    assert (raw / b24.SI_MD).exists()
+    manifest = b24.load_manifest()
+    assert [record.path for record in manifest.files] == [b24.SI_PDF, b24.SI_MD]
+    for record in manifest.files:
+        assert record.retrieval is not None
+        assert record.retrieval.method == "direct_url"
+        assert record.retrieval.source_url == b24.elsevier_url("mmc1.pdf")
+        assert record.retrieval.retrieved_at == b24.SI_RETRIEVED_AT
+    assert b24.manifest_sha256(manifest, b24.SI_MD) == b24.SI_MD_SHA256
+    with pytest.raises(KeyError, match="not in the raw-mirror manifest"):
+        b24.manifest_sha256(manifest, "si/nope.pdf")
+
+
+def test_the_deposit_is_idempotent_and_refuses_a_different_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A matching digest is left alone; a differing one raises rather than overwriting."""
+    data_root = tmp_path / "root"
+    monkeypatch.setenv("DATA_ROOT", str(data_root))
+    _write_mirrors(data_root, monkeypatch)
+    raw = b24.deposit_raw_mirror()
+    b24.deposit_raw_mirror()
+    (raw / b24.SI_MD).write_text("something else", encoding="utf-8")
+    with pytest.raises(RuntimeError, match="exists with a different sha256"):
+        b24.deposit_raw_mirror()
+
+
+def test_a_drifted_ocr_hash_stops_the_quote_audit(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A changed mirror is upstream drift, and every quote must be re-read."""
+    data_root = tmp_path / "root"
+    monkeypatch.setenv("DATA_ROOT", str(data_root))
+    _write_mirrors(data_root, monkeypatch)
+    monkeypatch.setattr(b24, "PAPER_MD_SHA256", "0" * 64)
+    with pytest.raises(RuntimeError, match="the OCR mirror moved"):
+        b24.verify_quotes()
+
+
+def test_a_quote_the_mirror_no_longer_carries_stops_the_audit(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The hash alone is not enough: each quote must be a substring of its own bytes."""
+    data_root = tmp_path / "root"
+    monkeypatch.setenv("DATA_ROOT", str(data_root))
+    _write_mirrors(data_root, monkeypatch)
+    paper = data_root / "torchcell-library" / b24.CITATION_KEY / b24.PAPER_MD
+    paper.write_text("the OCR was replaced wholesale", encoding="utf-8")
+    monkeypatch.setattr(b24, "PAPER_MD_SHA256", _sha256_of(paper))
+    with pytest.raises(RuntimeError, match="are not verbatim in their pinned mirror"):
+        b24.verify_quotes()
+
+
+def test_a_drifted_deferral_target_stops_the_audit(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The PMD organism rests on Carruthers 2025's bytes, so those are pinned too."""
+    data_root = tmp_path / "root"
+    monkeypatch.setenv("DATA_ROOT", str(data_root))
+    _write_mirrors(data_root, monkeypatch)
+    monkeypatch.setattr(b24, "CARRUTHERS_PAPER_MD_SHA256", "0" * 64)
+    with pytest.raises(RuntimeError, match="the deferred-to mirror moved"):
+        b24.verify_quotes()
+
+
+def test_the_built_store_holds_the_twenty_records(built_store: str) -> None:
+    """The end-to-end build: its count, its products and its ledger."""
+    from torchcell.verification.runners import load_records
+
+    records = load_records(built_store)
+    assert len(records) == b24.EXPECTED_RECORDS == 20
+    assert {
+        record["experiment"]["phenotype"]["product"]["name"] for record in records
+    } == {"isoprenol"}
+    for record in records:
+        ProductTiterExperiment.model_validate(record["experiment"])
+        ProductTiterExperimentReference.model_validate(record["reference"])
+    ledger = pd.read_csv(os.path.join(built_store, "preprocess", "titer_rows.csv"))
+    assert len(ledger) == 20
+    assert dict(ledger["family"].value_counts()) == {
+        "ezrich_knockouts": 6,
+        "ezrich_pathway": 4,
+        "fedbatch": 4,
+        "m9_minimal": 3,
+        "hydrolysate": 3,
+    }
+    assert sorted(ledger["titer"].tolist()) == sorted(
+        row.titer for row in b24.TITER_ROWS
+    )
+
+
+def test_the_built_store_writes_its_accounting_and_its_side_files(
+    built_store: str,
+) -> None:
+    """Nothing is dropped, and the unstored values are auditable from the tree."""
+    accounting = json.loads(
+        Path(built_store, "preprocess", "build_accounting.json").read_text()
+    )
+    assert accounting["kept_records"] == 20
+    assert accounting["dropped_records"] == 0
+    assert accounting["candidate_records"] == 20
+    assert accounting["quotes_verified"] == 42
+    assert sum(entry["values"] for entry in accounting["not_stored"]) == 10
+    assert any("SUBSTITUTION" in note for note in accounting["notes"])
+    assert any(
+        "gacA is stored under the symbol" in note for note in accounting["notes"]
+    )
+    od600 = pd.read_csv(os.path.join(built_store, "preprocess", "od600_not_stored.csv"))
+    assert od600["od600"].tolist() == [25.5, 20.5, 21.0, 17.9]
+    conditions = json.loads(
+        Path(built_store, "preprocess", "condition_provenance.json").read_text()
+    )
+    assert set(conditions) == set(b24.CONDITIONS)
+
+
+def test_the_built_store_passes_l0_to_l4(built_store: str) -> None:
+    """The module's own verifier, over the store it just built."""
+    report = b24.verify_build(built_store, os.environ["DATA_ROOT"])
+    assert report.passed, report.summary()
+    assert {result.level.name for result in report.results} == {
+        "L0",
+        "L1",
+        "L2",
+        "L3",
+        "L4",
+    }
+    written = json.loads(
+        Path(built_store, "preprocess", "verification_report.json").read_text()
+    )
+    assert written["dataset_name"] == "IsoprenolTiterBanerjee2024Dataset"
+    assert all(result["passed"] for result in written["results"])
+
+
+def test_the_ledger_join_key_is_unique_over_the_twenty_rows() -> None:
+    """The join rests on (titer, time) being unique, so that is asserted, not assumed.
+
+    The strain is NOT in the key: IY1485 and IY1452 hold identical genotypes, because
+    IY1485's only extra edit is the ΔgacA no served leaf can hold, so a strain-keyed
+    join would fail on that pair for a reason about the source rather than the store.
+    """
+    keys = [
+        (row.titer, -1.0 if row.time_hours is None else row.time_hours)
+        for row in b24.TITER_ROWS
+    ]
+    assert len(set(keys)) == len(keys) == 20
+    assert b24.strain_genotype("IY1485") == b24.strain_genotype("IY1452")
+
+
+def test_the_ledger_join_refuses_a_record_no_row_carries(built_store: str) -> None:
+    """The ledger is written from the same rows the records were put from."""
+    from torchcell.verification.runners import load_records
+
+    records = load_records(built_store)
+    ledger = pd.read_csv(os.path.join(built_store, "preprocess", "titer_rows.csv"))
+    bad = [dict(records[0])]
+    bad[0]["experiment"] = dict(records[0]["experiment"])
+    bad[0]["experiment"]["phenotype"] = dict(records[0]["experiment"]["phenotype"])
+    bad[0]["experiment"]["phenotype"]["titer"] = 99999.0
+    with pytest.raises(AssertionError, match="which no ledger row carries"):
+        b24._ledger_l4(bad, ledger.head(1))
+
+
+def test_the_ledger_join_refuses_a_count_mismatch(built_store: str) -> None:
+    """The store and its own build ledger cannot disagree on how many rows there are."""
+    from torchcell.verification.runners import load_records
+
+    records = load_records(built_store)
+    ledger = pd.read_csv(os.path.join(built_store, "preprocess", "titer_rows.csv"))
+    with pytest.raises(AssertionError, match="the build ledger and the store disagree"):
+        b24._ledger_l4(records, ledger.head(19))
+
+
+def test_the_download_links_the_pinned_artifacts_into_raw(
+    synthetic_kt2440: Any, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``download`` checks each file against the manifest pin before linking it."""
+    data_root = tmp_path / "root"
+    monkeypatch.setenv("DATA_ROOT", str(data_root))
+    _write_mirrors(data_root, monkeypatch)
+    b24.deposit_raw_mirror()
+    root = data_root / "data/torchcell/isoprenol_titer_banerjee2024"
+    dataset = b24.IsoprenolTiterBanerjee2024Dataset(
+        root=str(root), pputida_genome=synthetic_kt2440
+    )
+    assert dataset.raw_file_names == ["si1.pdf", "si1.md"]
+    for name in dataset.raw_file_names:
+        assert Path(dataset.raw_dir, name).exists()
+    dataset.close_lmdb()
+
+
+def test_create_experiment_says_where_the_records_are_written(
+    synthetic_kt2440: Any, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The base-class hook is not the write path here, and says so."""
+    data_root = tmp_path / "root"
+    monkeypatch.setenv("DATA_ROOT", str(data_root))
+    _write_mirrors(data_root, monkeypatch)
+    b24.deposit_raw_mirror()
+    root = data_root / "data/torchcell/isoprenol_titer_banerjee2024"
+    dataset = b24.IsoprenolTiterBanerjee2024Dataset(
+        root=str(root), pputida_genome=synthetic_kt2440
+    )
+    with pytest.raises(NotImplementedError, match="writes its records in process"):
+        dataset.create_experiment()
+    assert dataset.preprocess_raw("unchanged") == "unchanged"
+    dataset.close_lmdb()
 
 
 # --------------------------------------------------------------------------- #

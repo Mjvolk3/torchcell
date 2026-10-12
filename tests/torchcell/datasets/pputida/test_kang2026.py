@@ -1412,6 +1412,78 @@ def test_the_built_store_passes_l0_to_l4(built_store: str) -> None:
     assert written["provenance"]["citation_key"] == kang.CITATION_KEY
 
 
+def test_the_isoprenol_l4_refuses_a_drifted_deferral_target(
+    built_store: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A chain that cannot be re-walked from our own bytes is not a closed chain."""
+    from torchcell.verification.runners import load_records
+
+    records = [
+        record
+        for record in load_records(built_store)
+        if record["experiment"]["phenotype"]["product"]["name"] == kang.isoprenol().name
+    ]
+    assert len(records) == kang.N_FEDBATCH_TIMES
+    monkeypatch.setattr(kang, "BANERJEE2024_PAPER_MD_SHA256", "0" * 64)
+    with pytest.raises(AssertionError, match="the deferred-to mirror moved"):
+        kang._isoprenol_records_l4(records, os.environ["DATA_ROOT"])
+
+
+def test_the_isoprenol_l4_refuses_a_reference_quote_the_mirror_lost(
+    built_store: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The hash alone is not enough: the two quotes must be verbatim in those bytes."""
+    from torchcell.verification.runners import load_records
+
+    records = [
+        record
+        for record in load_records(built_store)
+        if record["experiment"]["phenotype"]["product"]["name"] == kang.isoprenol().name
+    ]
+    paper = (
+        Path(os.environ["DATA_ROOT"])
+        / "torchcell-library"
+        / kang.BANERJEE2024_KEY
+        / kang.PAPER_MD
+    )
+    paper.write_text(kang._Q_BANERJEE_FEDBATCH_TITER, encoding="utf-8")
+    monkeypatch.setattr(kang, "BANERJEE2024_PAPER_MD_SHA256", _sha256(paper))
+    with pytest.raises(AssertionError, match="is not verbatim in the"):
+        kang._isoprenol_records_l4(records, os.environ["DATA_ROOT"])
+
+
+def test_the_isoprenol_l4_refuses_a_time_table_s9_does_not_sample(
+    built_store: str,
+) -> None:
+    """Every isoprenol record must sit on one of the seven released sampled times."""
+    from torchcell.verification.runners import load_records
+
+    records = [
+        record
+        for record in load_records(built_store)
+        if record["experiment"]["phenotype"]["product"]["name"] == kang.isoprenol().name
+    ]
+    bad = [dict(records[0])]
+    bad[0]["experiment"] = dict(records[0]["experiment"])
+    bad[0]["experiment"]["environment"] = dict(records[0]["experiment"]["environment"])
+    bad[0]["experiment"]["environment"]["duration_hours"] = 999.0
+    with pytest.raises(AssertionError, match="which Table S9 does not sample"):
+        kang._isoprenol_records_l4(bad, os.environ["DATA_ROOT"])
+
+
+def test_the_isoprenol_l4_refuses_a_short_family(built_store: str) -> None:
+    """Seven sampled times means seven records; a missing one is a dropped measurement."""
+    from torchcell.verification.runners import load_records
+
+    records = [
+        record
+        for record in load_records(built_store)
+        if record["experiment"]["phenotype"]["product"]["name"] == kang.isoprenol().name
+    ]
+    with pytest.raises(AssertionError, match="isoprenol records for 7 sampled times"):
+        kang._isoprenol_records_l4(records[:-1], os.environ["DATA_ROOT"])
+
+
 def test_the_ledger_carries_the_isoprenol_column_on_the_fed_batch_rows_alone(
     built_store: str,
 ) -> None:

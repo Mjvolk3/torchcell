@@ -373,6 +373,29 @@ def assembly_reference(
     )
 
 
+#: The released-identifier forms a bacterial release prints where it does not print a
+#: locus tag, in the order they are tested (#1057). Each is a statement of the
+#: identifier's FORM, read off the string; no annotation is consulted.
+_RELEASED_FORMS: tuple[tuple[re.Pattern[str], str], ...] = (
+    (re.compile(r"^JW\d+(?:\.\d+)?$"), "Keio JW number"),
+    (re.compile(r"^b\d{4}\.\d+$"), "b-number with a Keio sub-number"),
+    (re.compile(r"^b\d{4}(?:,b\d{4})+$"), "b-numbers of a multi-gene strain"),
+)
+
+
+def released_identifier_kind(identifier: str) -> str:
+    """What a released identifier that is no locus tag is, by its form alone.
+
+    The ``identifier_kind`` of a ``BacterialReleasedStrainPerturbation``: a Keio JW
+    number, a sub-numbered b-number, a comma-joined multi-gene b-number cell, or
+    otherwise a gene symbol as written.
+    """
+    for pattern, kind in _RELEASED_FORMS:
+        if pattern.match(identifier):
+            return kind
+    return "gene symbol"
+
+
 # --------------------------------------------------------------------------- #
 # Retain-all locus-tag reconciliation
 # --------------------------------------------------------------------------- #

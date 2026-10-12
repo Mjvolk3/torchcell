@@ -1018,3 +1018,21 @@ def test_resolve_uniprot_accessions_deduplicates_and_sorts_what_it_was_asked(
     )
     assert resolution.requested == 2
     assert resolution.resolved_fraction == 1.0
+
+
+@pytest.mark.parametrize(
+    "identifier,kind",
+    [
+        ("JW5447", "Keio JW number"),
+        ("JW2623.5", "Keio JW number"),
+        ("b0033.1", "b-number with a Keio sub-number"),
+        ("b4404,b4405", "b-numbers of a multi-gene strain"),
+        ("cscR", "gene symbol"),
+        ("CSCR", "gene symbol"),
+    ],
+)
+def test_released_identifier_kind_reads_the_form_alone(
+    identifier: str, kind: str
+) -> None:
+    """#1057: the released-strain leaf's identifier_kind, from the string's form."""
+    assert bc.released_identifier_kind(identifier) == kind

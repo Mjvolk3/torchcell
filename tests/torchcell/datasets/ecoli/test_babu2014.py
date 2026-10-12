@@ -61,9 +61,11 @@ from torchcell.datamodels.schema import (
     BacterialGeneInteractionExperiment,
     BacterialGeneInteractionExperimentReference,
     BacterialMarkedAllelePerturbation,
+    BacterialReleasedStrainPerturbation,
     GeneInteractionPhenotype,
     Genotype,
     MediaComponentRole,
+    ReleasedStrainKind,
     SampleUnit,
 )
 from torchcell.datasets.dataset_registry import dataset_registry
@@ -108,17 +110,18 @@ SYNTHETIC_PAIRS: tuple[tuple[str, str, str, str, float], ...] = (
     ("b0005", "proB", "b0004", "yaaP", 4.1),
     ("b0003", "thrW", "b0001", "thrL", 4.5),
 )
-#: The eight pairs the retention rules keep, as ``(donor, recipient, score, screen)``.
+#: The nine pairs the retention rule keeps, as ``(donor, recipient, score, screen)``.
 #: Two of them carry a hypomorph: ``b0002`` is the synthetic essential-gene donor and
 #: ``b0006`` the synthetic SPA-tagged recipient, both stored as marked alleles (#792).
-#: ``b0010`` (a /gene_synonym of ``b0003``) and ``b0099`` (on no locus) are stored as
-#: released since #1057; only ``JW0098``, no b-number in form, and the duplicate pair
-#: are dropped.
+#: ``b0010`` (a /gene_synonym of ``b0003``), ``b0099`` (on no locus) and ``JW0098`` (no
+#: b-number in form, on the released-strain leaf) are stored as released since #1057;
+#: only the duplicate pair is dropped.
 KEPT_PAIRS: tuple[tuple[str, str, float, str], ...] = (
     ("b0001", "b0003", -5.0, m.SCREEN_THIS_STUDY),
     ("b0001", "b0004", 4.0, m.SCREEN_THIS_STUDY),
     ("b0001", "b0010", 3.5, m.SCREEN_THIS_STUDY),
     ("b0001", "b0099", -4.0, m.SCREEN_THIS_STUDY),
+    ("b0001", "JW0098", -2.0, m.SCREEN_THIS_STUDY),
     ("b0002", "b0003", -6.0, m.SCREEN_THIS_STUDY),
     ("b0001", "b0006", -7.0, m.SCREEN_THIS_STUDY),
     ("b0005", "b0007", 5.5, m.SCREEN_BUTLAND),
@@ -356,10 +359,10 @@ def test_the_released_counts_are_the_sourced_ones() -> None:
     assert m.N_RELEASED_PAIRS == 42705
     assert m.SIGN_SPLIT == (25239, 17466)
     assert m.N_HYPOMORPHIC_RECIPIENTS == 149
-    # 42,705 released minus 130 + 4; the hypomorph pairs are stored since #792, every
-    # b-number in form since #1057 (41,988 before, 583 pairs fewer)
-    assert m.EXPECTED_RECORDS == 42705 - (130 + 4) == 41988 + 583
-    assert m.EXPECTED_HYPOMORPH_RECORDS == 1023 + 2479 - 83
+    # 42,705 released minus the 4 duplicate rows; the hypomorph pairs are stored since
+    # #792, every released id since #1057 (41,988 before, 713 pairs fewer)
+    assert m.EXPECTED_RECORDS == 42705 - 4 == 41988 + 713
+    assert m.EXPECTED_HYPOMORPH_RECORDS == 1024 + 2479 - 83
 
 
 # --------------------------------------------------------------------------- #
@@ -621,7 +624,10 @@ def test_the_build_keeps_every_pair_the_identifier_rules_allow(
             p
             for p in genotype.perturbations
             if isinstance(
-                p, BacterialDeletionPerturbation | BacterialMarkedAllelePerturbation
+                p,
+                BacterialDeletionPerturbation
+                | BacterialMarkedAllelePerturbation
+                | BacterialReleasedStrainPerturbation,
             )
         ]
         assert len(marked) == 2
@@ -648,13 +654,11 @@ def test_the_build_ledgers_account_for_every_dropped_row(
     assert ledger["kept_records"] == len(KEPT_PAIRS)
     assert ledger["dropped_records"] == len(SYNTHETIC_PAIRS) - len(KEPT_PAIRS)
     counts = {rule["rule"]: rule["n_records"] for rule in ledger["rules"]}
-    # #1057: b0010 and b0099 are stored as released; only JW0098 is no b-number
-    assert counts == {m.RULE_NOT_A_TAG: 1, m.RULE_DUPLICATE: 2}
-    items = {rule["rule"]: rule["items"] for rule in ledger["rules"]}
-    assert items[m.RULE_NOT_A_TAG] == ["JW0098"]
-    assert ledger["n_aggravating"] == 4
+    # #1057: b0010, b0099 and JW0098 are stored as released; only the duplicate drops
+    assert counts == {m.RULE_DUPLICATE: 2}
+    assert ledger["n_aggravating"] == 5
     assert ledger["n_alleviating"] == 4
-    assert ledger["screen_id_counts"] == {m.SCREEN_THIS_STUDY: 7, m.SCREEN_BUTLAND: 1}
+    assert ledger["screen_id_counts"] == {m.SCREEN_THIS_STUDY: 8, m.SCREEN_BUTLAND: 1}
 
 
 def test_the_build_records_the_reciprocal_pair_and_its_sign_disagreement(
@@ -714,6 +718,31 @@ def test_the_build_refuses_a_pair_whose_donor_is_not_in_table_s1(
         )
 
 
+def test_a_recipient_released_under_no_b_number_is_stored_as_released(
+    built: m.GeneInteractionBabu2014Dataset,
+) -> None:
+    """#1057: ``JW0098`` is on the released-strain leaf, its id and cell verbatim."""
+    items = [built[i] for i in range(len(built))]
+    built.close_lmdb()
+    sides = [
+        p
+        for item in items
+        for p in item["experiment"]["genotype"]["perturbations"]
+        if p["systematic_gene_name"] == "JW0098"
+    ]
+    assert len(sides) == 1
+    leaf = BacterialReleasedStrainPerturbation.model_validate(sides[0])
+    assert (leaf.strain_label, leaf.identifier_kind, leaf.released_kind) == (
+        "JW0098__ghostH",
+        "Keio JW number",
+        ReleasedStrainKind.deletion,
+    )
+    assert (leaf.cassette, leaf.collection) == (
+        m.RECIPIENT_CASSETTE,
+        m.RECIPIENT_COLLECTION,
+    )
+
+
 # --------------------------------------------------------------------------- #
 # Verification over the synthetic build
 # --------------------------------------------------------------------------- #
@@ -742,7 +771,7 @@ def test_the_l0_to_l4_gate_passes_on_the_synthetic_build(
     containment = next(
         r for r in report.results if r.name == "gene_containment_mg1655_locus_tags"
     )
-    assert containment.details["missing_examples"] == ["b0010", "b0099"]
+    assert containment.details["missing_examples"] == ["JW0098", "b0010", "b0099"]
 
 
 def test_released_scores_excludes_the_contradictory_duplicate(
@@ -847,14 +876,13 @@ def test_the_dev_store_ledgers_state_the_measured_build() -> None:
     assert ledger["source_records"] == m.N_RELEASED_PAIRS
     assert ledger["kept_records"] == m.EXPECTED_RECORDS
     assert {rule["rule"]: rule["n_records"] for rule in ledger["rules"]} == {
-        m.RULE_NOT_A_TAG: 130,
-        m.RULE_DUPLICATE: 4,
+        m.RULE_DUPLICATE: 4
     }
-    assert (ledger["n_aggravating"], ledger["n_alleviating"]) == (25149, 17422)
+    assert (ledger["n_aggravating"], ledger["n_alleviating"]) == (25236, 17465)
     assert ledger["kept_donors"] == 163
-    assert ledger["kept_recipients"] == 3865
+    assert ledger["kept_recipients"] == 3876
     assert ledger["screen_id_counts"] == {
-        m.SCREEN_THIS_STUDY: 41442,
+        m.SCREEN_THIS_STUDY: 41572,
         m.SCREEN_BUTLAND: 1129,
     }
     report = json.loads((preprocess / "verification_report.json").read_text())

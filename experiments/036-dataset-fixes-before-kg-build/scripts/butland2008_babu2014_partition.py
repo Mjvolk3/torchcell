@@ -17,8 +17,9 @@ pairs sits once BOTH halves of the array are storable, and the kept-record count
 pins take.
 
 #1057 (the owner rule of 2026-10-12: the data is the data) re-measured it again: both
-loaders now store every released b-number as released, so the served side grew to 1,129
-and only an id that is not a b-number in form is dropped on its identifier.
+loaders now store every released id as released (an id that is no b-number on the
+released-strain leaf), so the served side grew to 1,129 and no cell is dropped on its
+identifier.
 
 This script is the measurement behind the new pins. Nothing here is read from the
 loader's docstring or from a build log: the served side comes from the rebuilt Babu dev
@@ -36,7 +37,7 @@ What it measures:
 2. **Where each served Butland-screen pair sits in the release.** Each of the 1,125 is
    located in the 39 x 8,073 matrix and classified by the FIRST Butland retention rule
    that applies to it, which is what decides whether it reaches the served rule at all.
-3. **The new Butland ledger.** The four retention rules re-applied in order, giving the
+3. **The new Butland ledger.** The three retention rules re-applied in order, giving the
    kept-record and kept-pair counts split by recipient row label, and the cells the
    served rule now removes.
 4. **No measurement stored twice.** The experiment content ids of both built stores (the
@@ -139,22 +140,19 @@ def release_side(raw_dir: str) -> dict[str, Any]:
     order = [raw_sizes.query_tags.index(tag) for tag in scores.query_tags]
     colonies, zero_colonies, _ = b.colony_counts(raw_sizes)
     colonies, zero_colonies = colonies[:, order], zero_colonies[:, order]
-    names = sorted(set(scores.query_tags) | set(scores.recipient_tags))
-    # #1057: every released id of b-number FORM is stored as released, as the loader does
-    not_a_tag = {name for name in names if not b.B_NUMBER_PATTERN.match(name)}
+    # #1057: every released id is stored as released, as the loader does
     return {
         "scores": scores,
         "block": b.score_block(scores),
         "colonies": colonies,
         "zero_colonies": zero_colonies,
-        "not_a_tag": not_a_tag,
     }
 
 
 def ledger(
     release: dict[str, Any], served: dict[tuple[str, str], str]
 ) -> dict[str, Any]:
-    """Re-apply the four retention rules in the loader's order over every released cell.
+    """Re-apply the three retention rules in the loader's order over every released cell.
 
     The per-cell rule the matrix assigns is also returned per oriented pair, which is
     what locates each served pair in the release. There is no longer a SPA-tag rule:
@@ -168,7 +166,6 @@ def ledger(
         release["colonies"],
         release["zero_colonies"],
     )
-    not_a_tag = release["not_a_tag"]
     rules: Counter[str] = Counter()
     pair_rule: dict[tuple[str, str], set[str]] = {}
     pair_label: dict[tuple[str, str], str] = {}
@@ -180,9 +177,7 @@ def ledger(
         label = scores.labels[row]
         for column, query_tag in enumerate(scores.query_tags):
             pair = (query_tag, recipient_tag)
-            if recipient_tag in not_a_tag:
-                rule = b.RULE_NOT_A_TAG
-            elif recipient_tag == query_tag:
+            if recipient_tag == query_tag:
                 rule = b.RULE_SELF_PAIR
             elif (
                 colonies[row, column] == zero_colonies[row, column]

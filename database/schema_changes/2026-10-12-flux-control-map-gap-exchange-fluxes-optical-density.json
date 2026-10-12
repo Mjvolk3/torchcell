@@ -4,7 +4,7 @@
   "date": "2026-10-12",
   "pr": 1070,
   "author_kind": "agent",
-  "base_commit": "464c5cfc3d83fc6212e8b6a3d91da89e847d4b34",
+  "base_commit": "232e5d17882b668d27ccfe3bdb5e97dbcafd8a04",
   "python_version": "3.13.0",
   "symbols": [
     {
@@ -234,6 +234,18 @@
       ]
     },
     {
+      "loader": "torchcell/datasets/ecoli/fitness_browser_ecoli.py",
+      "dataset_classes": [
+        "FitnessBrowserEcoliDataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "MeasurementType"
+      ]
+    },
+    {
       "loader": "torchcell/datasets/ecoli/girgis2009.py",
       "dataset_classes": [
         "EnvChemgenGirgis2009Dataset"
@@ -418,6 +430,18 @@
       "loader": "torchcell/datasets/pputida/borchert2024.py",
       "dataset_classes": [
         "RbTnseqBorchert2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "MeasurementType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/fitness_browser_putida.py",
+      "dataset_classes": [
+        "FitnessBrowserPutidaDataset"
       ],
       "served_classes": [],
       "impact": "stale",

@@ -154,7 +154,7 @@ _LEDGER_ROWS = (
     "SACE_YAU,,YBR001W,YBR001W,present,8,2.0\n"
     "SACE_YAU,,X5.contig_7,,present,4,1.0\n"
     "AAA,,ORFX,,absent,7,0.7\n"
-    "SACE_YAU,,ORFY,,bad annotation,3,0.3\n"
+    "SACE_YAU,,X7.contig_9,,bad annotation,3,0.3\n"
     "XTRA_ABC,,ORFZ,,unannotated,9,0.9\n"
 )
 
@@ -171,10 +171,11 @@ def test_blank_name_rows_are_served_or_dropped_by_class_and_counted(
     """Issue #598: SACE_YAU's blank ``present`` row whose ORF and ortholog are the
     served name YBR001W is served as YBR001W (8 / 2.0); its blank ``present`` pangenome
     row ``X5.contig_7`` is served as ``X5-contig_7``, the form Datafile 1 gives named
-    accessory ORFs; the ``absent`` and ``bad annotation`` rows are
-    dropped; the ``XTRA_ABC`` row never reaches the ledger. The reference is the mean
-    over the isolates holding each key: YAL001C (1.5 + 3.0) / 2, YBR001W (4.0 + 2.0) / 2,
-    X5-contig_7 1.0 from SACE_YAU alone.
+    accessory ORFs; its ``bad annotation`` row ``X7.contig_9`` is served the same way
+    (as released, with the class-definition gap on the rule); the ``absent`` row is
+    dropped as the paper does; the ``XTRA_ABC`` row never reaches the ledger. The
+    reference is the mean over the isolates holding each key: YAL001C (1.5 + 3.0) / 2,
+    YBR001W (4.0 + 2.0) / 2, X5-contig_7 1.0 and X7-contig_9 0.3 from SACE_YAU alone.
     """
     table = _zip({"final.tab": _LEDGER_HEADER + _LEDGER_ROWS})
     root = _root(tmp_path, monkeypatch, table)
@@ -183,8 +184,8 @@ def test_blank_name_rows_are_served_or_dropped_by_class_and_counted(
     assert [(p["expression_tpm"], p["expression_count"]) for p in phenotypes] == [
         ({"YAL001C": 1.5, "YBR001W": 4.0}, {"YAL001C": 10, "YBR001W": 20}),
         (
-            {"YAL001C": 3.0, "YBR001W": 2.0, "X5-contig_7": 1.0},
-            {"YAL001C": 30, "YBR001W": 8, "X5-contig_7": 4},
+            {"YAL001C": 3.0, "YBR001W": 2.0, "X5-contig_7": 1.0, "X7-contig_9": 0.3},
+            {"YAL001C": 30, "YBR001W": 8, "X5-contig_7": 4, "X7-contig_9": 3},
         ),
     ]
     reference = dataset[0]["reference"]["phenotype_reference"]
@@ -192,6 +193,7 @@ def test_blank_name_rows_are_served_or_dropped_by_class_and_counted(
         "YAL001C": 2.25,
         "YBR001W": 3.0,
         "X5-contig_7": 1.0,
+        "X7-contig_9": 0.3,
     }
     ledger = json.loads(
         (root / "preprocess" / "blank_systematic_name_ledger.json").read_text()
@@ -208,8 +210,9 @@ def test_blank_name_rows_are_served_or_dropped_by_class_and_counted(
         "bad_annotation": 1,
         "unannotated": 0,
     }
-    assert ledger["served_ids"] == {"YBR001W": 1, "X5-contig_7": 1}
+    assert ledger["served_ids"] == {"YBR001W": 1, "X5-contig_7": 1, "X7-contig_9": 1}
     assert ledger["tpm_by_class"]["absent"] == 0.7
+    assert ledger["tpm_by_class"]["bad_annotation"] == 0.3
     assert ledger["named_pan_absence_counts"] == {"present": 3}
     assert [r["row_class"] for r in ledger["rules"]] == [
         c.value for c in m.BlankRowClass
@@ -296,9 +299,10 @@ def test_the_blank_row_definitions_audit_against_the_mirrored_methods() -> None:
 @_needs_mirror
 def test_the_released_table_ledger_matches_issue_598() -> None:
     """The 943 built isolates of Datafile 1: 459,790 blank rows, 443,200 absent, 16,031
-    bad annotation, 0 unannotated and 559 present; the 559 are served, 98 under 16
-    S288C names (GAL1 YBR020W in 31 isolates, GAL2 YLR081W in 25) and 461 under 12
-    pangenome ids; GAL1 is then a key in all 943 records (912 named + 31 served).
+    bad annotation, 0 unannotated and 559 present; the 559 present rows are served, 98
+    under 16 S288C names (GAL1 YBR020W in 31 isolates, GAL2 YLR081W in 25) and 461 under
+    12 pangenome ids, and the 16,031 bad-annotation rows under their 17 pangenome ids;
+    GAL1 is then a key in all 943 records (912 named + 31 served).
     """
     from torchcell.sequence.genome.registry import PETER2018_1011, resolve
 
@@ -321,8 +325,9 @@ def test_the_released_table_ledger_matches_issue_598() -> None:
     assert (len(served), sum(served.values())) == (16, 98)
     assert (served["YBR020W"], served["YLR081W"]) == (31, 25)
     pangenome = {g: n for g, n in ledger.served_ids.items() if g not in served}
-    assert (len(pangenome), sum(pangenome.values())) == (12, 461)
+    assert (len(pangenome), sum(pangenome.values())) == (12 + 17, 461 + 16_031)
     assert pangenome["X39-augustus_masked.2.CGIPLA_MA"] == 190
+    assert pangenome["X142-augustus_masked.1731.ATP_4"] == 944
     gal1 = kept[kept["gene_id"] == "YBR020W"]
     assert (gal1["Strain"].nunique(), int(gal1["systematic_name"].isna().sum())) == (
         943,

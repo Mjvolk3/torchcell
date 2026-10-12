@@ -31,9 +31,11 @@ isolates) is classified by its ``pan_absence`` into a ``BlankRowClass`` and serv
 dropped by ``BLANK_ROW_RULES`` (issue #598): ``present`` rows are served (under the S288C
 name when the row is an accessory feature merged with its S288C homolog, else under the
 pangenome id ``X<n>-<name>``), ``absent`` rows are dropped as the paper does, and
-``bad annotation`` / ``unannotated`` rows are dropped under a typed ``ProvenanceGap``
-because no mirrored source defines those classes. Every row is counted in
-``preprocess/blank_systematic_name_ledger.json``. The shared
+``bad annotation`` / ``unannotated`` rows are served under their pangenome id with a
+typed ``ProvenanceGap`` on the class definition, because no mirrored source defines
+those classes and a released value is stored as released (owner rule 2026-10-12; the
+16,031 ``bad annotation`` rows of the built isolates carry 17 pangenome ids). Every row
+is counted in ``preprocess/blank_systematic_name_ledger.json``. The shared
 ``phenotype_reference`` is the POPULATION MEAN over the 943 built isolates (mean TPM /
 rounded mean count per gene) -- an absolute WT-equivalent baseline, NOT a centered 0
 (reference is not the record itself; ``reference_centered = False`` for verification).
@@ -307,8 +309,9 @@ _UNDEFINED_CLASS_GAP_NOTE = (
     "sheet of Supplementary Tables 1-9 ({si_xlsx}, sha256 {si_xlsx_sha}) for "
     "'bad annotation', 'unannotated' and 'pan_absence' with zero hits; the authors' "
     "code (github.com/HaploTeam/1011yeastsRNAseq: tpm_calc.R and GWAS scripts) does not "
-    "assign the column either (read 2026-10-02, not mirrored). Rows stay dropped and "
-    "counted until a source defines the class."
+    "assign the column either (read 2026-10-02, not mirrored). The rows are served "
+    "under their pangenome id as released, with this gap on the class definition, "
+    "until a source defines the class."
 )
 
 
@@ -329,6 +332,13 @@ def _undefined_class_gap(value: str) -> ProvenanceGap:
         ),
     )
 
+
+_PANGENOME_ID_RULE = (
+    "serve under 'X' + demangle_orf(ORF) (ORF 'X37.augustus_masked.2.CGIPLA_MA' -> "
+    "'X37-augustus_masked.2.CGIPLA_MA'), the form Datafile 1 gives every named accessory "
+    "ORF as its systematic_name; refused unless ORF is a pangenome id 'X<number>.<name>' "
+    "and the id is no served systematic_name"
+)
 
 BLANK_ROW_RULES: dict[BlankRowClass, BlankRowRule] = {
     BlankRowClass.present_s288c_homolog: BlankRowRule(
@@ -361,13 +371,7 @@ BLANK_ROW_RULES: dict[BlankRowClass, BlankRowRule] = {
         row_class=BlankRowClass.present_pangenome_orf,
         pan_absence="present",
         action="served",
-        id_rule=(
-            "serve under 'X' + demangle_orf(ORF) (ORF 'X37.augustus_masked.2."
-            "CGIPLA_MA' -> 'X37-augustus_masked.2.CGIPLA_MA'), the form Datafile 1 "
-            "gives every named accessory ORF as its systematic_name; refused unless "
-            "ORF is a pangenome id 'X<number>.<name>' and the id is no served "
-            "systematic_name"
-        ),
+        id_rule=_PANGENOME_ID_RULE,
         definition=_methods_sv(
             "present_pangenome_orf",
             _PRESENT_QUOTE,
@@ -405,16 +409,16 @@ BLANK_ROW_RULES: dict[BlankRowClass, BlankRowRule] = {
     BlankRowClass.bad_annotation: BlankRowRule(
         row_class=BlankRowClass.bad_annotation,
         pan_absence="bad annotation",
-        action="dropped",
-        id_rule=None,
+        action="served",
+        id_rule=_PANGENOME_ID_RULE,
         definition=None,
         gap=_undefined_class_gap("bad annotation"),
     ),
     BlankRowClass.unannotated: BlankRowRule(
         row_class=BlankRowClass.unannotated,
         pan_absence="unannotated",
-        action="dropped",
-        id_rule=None,
+        action="served",
+        id_rule=_PANGENOME_ID_RULE,
         definition=None,
         gap=_undefined_class_gap("unannotated"),
     ),
@@ -493,8 +497,9 @@ def resolve_gene_ids(df: pd.DataFrame) -> tuple[pd.DataFrame, BlankNameLedger]:
 
     ``df`` holds ``CAUDAL_COLUMNS`` for the built isolates only. A named row keeps its
     ``systematic_name``. A blank-name row is classified by ``pan_absence`` into a
-    ``BlankRowClass``; the two ``present`` classes are served under the id their
-    ``BLANK_ROW_RULES`` entry names and the others are dropped. A blank row with any
+    ``BlankRowClass``; every class whose rule says ``served`` is served under the id
+    the rule names (the S288C homolog name, else the pangenome id) and ``absent`` is
+    dropped as the paper does. A blank row with any
     other ``pan_absence`` raises ``UnclassifiedBlankRowError``; a served id that would
     collide with a named gene of the same isolate raises ``GeneIdCollisionError``.
     Returns the kept rows (with ``gene_id``) and the ledger.
@@ -520,12 +525,19 @@ def resolve_gene_ids(df: pd.DataFrame) -> tuple[pd.DataFrame, BlankNameLedger]:
         & (orf == blank["Ortholog_in_SGD_2010"].astype(str))
         & orf.isin(served_names)
     )
-    pangenome = (blank["pan_absence"] == "present") & ~homolog
+    served_by_pangenome_id = {
+        r.pan_absence
+        for r in BLANK_ROW_RULES.values()
+        if r.action == "served" and r.id_rule == _PANGENOME_ID_RULE
+    }
+    pangenome = blank["pan_absence"].isin(served_by_pangenome_id) & ~homolog
     row_class = pd.Series(
         blank["pan_absence"].map(by_value), index=blank.index, dtype=object
     )
     row_class[homolog] = BlankRowClass.present_s288c_homolog
-    row_class[pangenome] = BlankRowClass.present_pangenome_orf
+    row_class[pangenome & (blank["pan_absence"] == "present")] = (
+        BlankRowClass.present_pangenome_orf
+    )
 
     homolog_rows = blank[homolog].assign(gene_id=orf[homolog])
     not_pangenome = sorted(set(orf[pangenome & ~orf.str.match(_PANGENOME_ORF_RE)]))

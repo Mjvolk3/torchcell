@@ -60,12 +60,13 @@ on a ``BacterialStrainBackground`` named by its full ``Strain Description`` (its
 its description names. The release aligned every sample to MG1655, so every record's ids
 are MG1655 b-numbers and the background pins the MG1655 assembly; the genotype the
 release does not state (an isolate's acquired mutations, a strain's lesions) is a typed
-gap on ``genotype_statement``. Still dropped, because the release does not contain the
-edit: a plasmid-borne heterologous or orthologous protein (``pColi`` study) or an added
-gene (``+aldA``), whose construct, source organism and sequence are not in the release;
-an activating-region deletion inside ``crp``, a partial-gene edit with no coordinates;
-an ``rpoB`` amino-acid substitution, which the bacterial variant leaf cannot hold without
-genomic coordinates the release does not give. A deletion is a
+gap on ``genotype_statement``. An ``rpoB`` amino-acid substitution (``rpoBE546V``) and an
+activating-region deletion inside ``crp`` (``crp_delAr1``) are stored on
+``BacterialReleasedStrainPerturbation`` as a ``sequence_allele`` of the gene their token
+names, under the ``Strain Description`` as the strain label, with no coordinates looked
+up. Still dropped, because the release does not contain the edit: a plasmid-borne
+heterologous or orthologous protein (``pColi`` study) or an added gene (``+aldA``), whose
+construct, source organism and sequence are not in the release. A deletion is a
 ``BacterialDeletionPerturbation`` on the b-number the deleted gene's symbol resolves to.
 
 ENVIRONMENT (per sample, from the metadata row; the paper prints no recipe). The medium
@@ -130,6 +131,7 @@ from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
     BacterialAssemblySet,
     BacterialDeletionPerturbation,
+    BacterialReleasedStrainPerturbation,
     BacterialRNASeqExpressionExperiment,
     BacterialRNASeqExpressionExperimentReference,
     BacterialStrainBackground,
@@ -149,6 +151,7 @@ from torchcell.datamodels.schema import (
     MediaComponentRole,
     PhysicalFactor,
     Publication,
+    ReleasedStrainKind,
     RNASeqExpressionPhenotype,
     SmallMoleculePerturbation,
     Temperature,
@@ -530,12 +533,13 @@ GENOTYPE_RULE_REASONS: dict[GenotypeRule, str] = {
         "in the release"
     ),
     GenotypeRule.partial_gene_edit: (
-        "a deletion of a region inside a gene (crp activating regions AR1/AR2): the "
-        "release gives no coordinates, and a whole-gene deletion would misstate it"
+        "a deletion of a region inside a gene (crp activating regions AR1/AR2). Not a "
+        "drop since #1057: stored on the released-strain leaf as a sequence_allele of "
+        "crp, the release's token as the strain label and no coordinates looked up"
     ),
     GenotypeRule.point_mutation_allele: (
-        "an amino-acid substitution (rpoB E546V, E672K): the bacterial schema has no "
-        "allele leaf for a substitution"
+        "an amino-acid substitution (rpoB E546V, E672K). Not a drop since #1057: stored "
+        "on the released-strain leaf as a sequence_allele of rpoB"
     ),
 }
 
@@ -574,11 +578,43 @@ class StrainBackgroundSpec(BaseModel):
     evolved: bool
 
 
+class ReleasedAllele(BaseModel):
+    """One gene edit a ``Strain Description`` states but no placed leaf types (#1057).
+
+    ``gene`` is the release's own identifier verbatim (the symbol a substitution or a
+    partial edit names, or a deletion label such as ``7prrn``); ``kind`` is what the
+    token says the edit is. It is stored on ``BacterialReleasedStrainPerturbation``
+    under the sample's ``Strain Description`` as the strain label, with no lookup.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    gene: str
+    kind: ReleasedStrainKind
+    identifier_kind: str = "gene symbol"
+
+
+def released_allele_perturbation(
+    allele: ReleasedAllele, strain_label: str
+) -> BacterialReleasedStrainPerturbation:
+    """The released-strain leaf of one released allele, under its strain label."""
+    return BacterialReleasedStrainPerturbation(
+        systematic_gene_name=allele.gene,
+        perturbed_gene_name=allele.gene,
+        gene_namespace=GENE_NAMESPACE,
+        strain_label=strain_label,
+        identifier_kind=allele.identifier_kind,
+        released_kind=allele.kind,
+    )
+
+
 class GenotypeVerdict(BaseModel):
     """The settled genotype of one sample, or the rule that dropped it.
 
-    ``background`` is set for a sample stored on a strain other than MG1655 (#1057):
-    its ``rule`` still names why ``settle_genotype`` set it apart, and ``kept`` is true.
+    ``background`` is set for a sample stored on a strain other than MG1655, and
+    ``released_alleles`` for a sample whose description states an edit no placed leaf
+    types (#1057): its ``rule`` still names why ``settle_genotype`` set it apart, and
+    ``kept`` is true.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
@@ -586,11 +622,16 @@ class GenotypeVerdict(BaseModel):
     rule: GenotypeRule
     deleted_symbols: tuple[str, ...] = ()
     background: StrainBackgroundSpec | None = None
+    released_alleles: tuple[ReleasedAllele, ...] = ()
 
     @property
     def kept(self) -> bool:
-        """True for wild type, whole-gene deletions, or a strain stored as released."""
-        return self.rule in KEPT_GENOTYPE_RULES or self.background is not None
+        """True for wild type, whole-gene deletions, a strain or an allele as released."""
+        return (
+            self.rule in KEPT_GENOTYPE_RULES
+            or self.background is not None
+            or bool(self.released_alleles)
+        )
 
 
 def _description_tokens(description: str) -> list[str]:
@@ -721,6 +762,47 @@ def settle_background(row: Mapping[str, str]) -> GenotypeVerdict:
         background=StrainBackgroundSpec(
             name=strain, strain_cell=strain, description=description, evolved=False
         ),
+    )
+
+
+#: The ``settle_genotype`` rules a sample is stored under on the released-strain leaf
+#: since #1057: an amino-acid substitution (``rpoBE546V``) and a partial-gene edit
+#: (``crp_delAr1``), each the release's own token, with no coordinates looked up.
+ALLELE_RULES = frozenset(
+    {GenotypeRule.point_mutation_allele, GenotypeRule.partial_gene_edit}
+)
+
+
+def settle_allele(row: Mapping[str, str]) -> GenotypeVerdict:
+    """The stored genotype of an MG1655 sample whose description states an allele.
+
+    A substitution and a partial edit are released alleles of the gene their token
+    names (``sequence_allele``: the label states the change, not its coordinates); a
+    ``del_`` token beside them is a whole-gene deletion as for any MG1655 sample.
+    """
+    verdict = settle_genotype(row)
+    if verdict.rule not in ALLELE_RULES:
+        raise ValueError(f"{verdict.rule.value} is not an allele rule")
+    alleles: list[ReleasedAllele] = []
+    genes: list[str] = []
+    for token in _description_tokens(row[COL_DESCRIPTION]):
+        edit = _SUBSTITUTION_TOKEN.match(token) or _PARTIAL_EDIT_TOKEN.match(token)
+        deletion = _DELETION_TOKEN.match(token)
+        if edit is not None:
+            alleles.append(
+                ReleasedAllele(
+                    gene=edit.group("gene"), kind=ReleasedStrainKind.sequence_allele
+                )
+            )
+        elif deletion is not None:
+            genes.append(deletion.group("gene"))
+        else:
+            raise ValueError(
+                f"Strain Description {row[COL_DESCRIPTION]!r}: edit token {token!r} is "
+                "of no known form"
+            )
+    return GenotypeVerdict(
+        rule=verdict.rule, deleted_symbols=tuple(genes), released_alleles=tuple(alleles)
     )
 
 
@@ -1491,7 +1573,11 @@ class ReplicateGroup(BaseModel):
 
 
 def genotype_class(verdict: GenotypeVerdict) -> str:
-    """``wild_type``, ``deletion_<n>``, ``evolved_isolate`` or ``strain_<name>_...``."""
+    """``wild_type``, ``deletion_<n>``, ``evolved_isolate``, ``strain_<name>_...`` or
+    ``released_allele_<rule>``.
+    """
+    if verdict.released_alleles:
+        return f"released_allele_{verdict.rule.value}"
     if verdict.background is not None:
         if verdict.background.evolved:
             return "evolved_isolate"
@@ -1592,21 +1678,22 @@ class RnaseqLamoureux2023Dataset(ExperimentDataset):
     ) -> tuple[dict[str, tuple[str, str]], LocusTagReconciliation]:
         """Each deleted gene symbol -> (b-number, the genome's own symbol for it).
 
-        Every symbol must resolve to one MG1655 locus (a deletion cannot be written
-        against a name the genome does not carry), and the genome's symbol must resolve
-        back to the same locus, so one gene has one spelling across datasets.
+        A symbol that resolves to one MG1655 locus is a deletion on that b-number, and
+        the genome's symbol must resolve back to the same locus, so one gene has one
+        spelling across datasets. A symbol that resolves to none has no entry and is
+        stored as released on the released-strain leaf (#1057).
         """
         names = pd.Series(sorted(set(symbols)))
         stored, report = reconcile_locus_tags(
             genome, names, label=f"{self.name} deleted genes"
         )
-        report.require_resolved(1.0)
-        if report.outside_namespace:
-            raise RuntimeError(
-                f"deleted-gene symbols not stored as b-numbers: {report.outside_namespace}"
-            )
+        # #1057: a symbol the annotation does not resolve is not refused; it has no
+        # entry here and is stored as released on the released-strain leaf
+        unresolved = set(report.outside_namespace)
         mapping: dict[str, tuple[str, str]] = {}
         for symbol, tag in zip(names, stored, strict=True):
+            if tag in unresolved:
+                continue
             canonical = genome.genbank.loci[tag].symbol or symbol
             if genome.resolve_gene_name(canonical).systematic_name != tag:
                 raise RuntimeError(
@@ -1616,18 +1703,31 @@ class RnaseqLamoureux2023Dataset(ExperimentDataset):
         return mapping, report
 
     def _genotype(
-        self, verdict: GenotypeVerdict, tags: Mapping[str, tuple[str, str]]
+        self,
+        verdict: GenotypeVerdict,
+        tags: Mapping[str, tuple[str, str]],
+        description: str,
     ) -> Genotype:
-        return Genotype(
-            perturbations=[
-                BacterialDeletionPerturbation(
-                    systematic_gene_name=tags[symbol][0],
-                    perturbed_gene_name=tags[symbol][1],
-                    gene_namespace=GENE_NAMESPACE,
-                )
-                for symbol in verdict.deleted_symbols
-            ]
-        )
+        deletions: list[
+            BacterialDeletionPerturbation | BacterialReleasedStrainPerturbation
+        ] = [
+            BacterialDeletionPerturbation(
+                systematic_gene_name=tags[symbol][0],
+                perturbed_gene_name=tags[symbol][1],
+                gene_namespace=GENE_NAMESPACE,
+            )
+            if symbol in tags
+            else released_allele_perturbation(
+                ReleasedAllele(gene=symbol, kind=ReleasedStrainKind.deletion),
+                description,
+            )
+            for symbol in verdict.deleted_symbols
+        ]
+        alleles = [
+            released_allele_perturbation(allele, description)
+            for allele in verdict.released_alleles
+        ]
+        return Genotype(perturbations=[*deletions, *alleles])
 
     @post_process
     def process(self) -> None:
@@ -1673,6 +1773,8 @@ class RnaseqLamoureux2023Dataset(ExperimentDataset):
             g_verdict = settle_genotype(row)
             if g_verdict.rule in BACKGROUND_RULES:
                 g_verdict = settle_background(row)
+            elif g_verdict.rule in ALLELE_RULES:
+                g_verdict = settle_allele(row)
             genotype_verdicts[sample] = g_verdict
             if not g_verdict.kept:
                 dropped.setdefault(g_verdict.rule.value, []).append(sample)
@@ -1775,7 +1877,9 @@ class RnaseqLamoureux2023Dataset(ExperimentDataset):
             for idx, sample in enumerate(kept):
                 experiment = BacterialRNASeqExpressionExperiment(
                     dataset_name=self.name,
-                    genotype=self._genotype(genotype_verdicts[sample], tags),
+                    genotype=self._genotype(
+                        genotype_verdicts[sample], tags, rows[sample][COL_DESCRIPTION]
+                    ),
                     environment=environment_of(sample),
                     phenotype=rnaseq_phenotype(
                         genes,

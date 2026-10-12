@@ -85,13 +85,14 @@ on, its unstated genotype a typed gap (``settle_public_background``): a strain f
 only by whole-gene deletions keeps its ``Strain`` cell as the name and types the
 deletions, any other description is the name verbatim. Within MG1655, the
 ``Strain Description`` edit tokens are classified by an explicit table and an unknown
-token raises. Still dropped, because the release does not contain the edit: a
-plasmid-borne construct, an amino-acid substitution (the variant leaf needs coordinates
-the release does not give), a phage infection, an allele stated only in prose ("with
-inactive relA"), a deletion that is not one gene (``del_7prrn``), a deletion inside a gene
-(``crp_ar1_ar2``), on any strain; and a deletion whose symbol is no b-number in form
-(``ihf``, the IhfA/IhfB heterodimer, and the ``rrnC`` / ``rrnD`` / ``rrnE`` rRNA operons),
-which the deletion leaf cannot hold without a schema carrier.
+token raises. An amino-acid substitution or classical point allele (``cpxAF218Y``,
+``dnaA46``), the partial edit ``crp_ar1_ar2``, "with truncated relA", the multi-gene
+``del_7prrn`` and a deletion whose symbol the annotation resolves to no b-number (``ihf``,
+the ``rrnC`` / ``rrnD`` / ``rrnE`` rRNA operons, ``dgk``) are stored on
+``BacterialReleasedStrainPerturbation`` under the gene identifier the release writes,
+the ``Strain Description`` as the strain label (``settle_public_alleles``). Still
+dropped, because the release does not contain the edit: a plasmid-borne construct, a
+phage infection, and "with inactive relA", which names no edit kind.
 
 ENVIRONMENT. Written with the sibling loader's own encoding, so one condition means the
 same thing in both datasets: a loader-local ``Media`` derived from the ``M9`` or ``LB``
@@ -150,6 +151,7 @@ from torchcell.data import (
 )
 from torchcell.datamodels.schema import (
     BacterialDeletionPerturbation,
+    BacterialReleasedStrainPerturbation,
     BacterialRNASeqExpressionExperiment,
     BacterialRNASeqExpressionExperimentReference,
     ConcentrationUnit,
@@ -159,6 +161,7 @@ from torchcell.datamodels.schema import (
     Genotype,
     PhysicalFactor,
     Publication,
+    ReleasedStrainKind,
     RNASeqExpressionPhenotype,
 )
 from torchcell.datasets.bacteria_common import (
@@ -198,12 +201,14 @@ from torchcell.datasets.ecoli.lamoureux2023 import (
     DropLog,
     DropRule,
     RawFile,
+    ReleasedAllele,
     StrainBackgroundSpec,
     build_environment,
     culture_rate_gap,
     parse_amount,
     raw_mirror_dir,
     read_metadata,
+    released_allele_perturbation,
     retrieval_record,
     settle_environment,
     strain_background,
@@ -616,11 +621,16 @@ class PublicGenotypeVerdict(BaseModel):
     deleted_symbols: tuple[str, ...] = ()
     background: StrainBackgroundSpec | None = None
     untyped_edits: bool = False
+    released_alleles: tuple[ReleasedAllele, ...] = ()
 
     @property
     def kept(self) -> bool:
-        """True for wild type, whole-gene deletions, or a strain stored as released."""
-        return self.rule in KEPT_GENOTYPE_RULES or self.background is not None
+        """True for wild type, whole-gene deletions, a strain or an allele as released."""
+        return (
+            self.rule in KEPT_GENOTYPE_RULES
+            or self.background is not None
+            or bool(self.released_alleles)
+        )
 
 
 def settle_public_genotype(row: Mapping[str, str]) -> PublicGenotypeVerdict:
@@ -748,6 +758,111 @@ def settle_public_background(row: Mapping[str, str]) -> PublicGenotypeVerdict:
             evolved=evolved,
         ),
         untyped_edits=not evolved,
+    )
+
+
+#: The rules a public MG1655 sample is STORED under on the released-strain leaf since
+#: #1057: each names an edit the release states but no placed leaf types.
+ALLELE_RULES = frozenset(
+    {
+        PublicGenotypeRule.point_mutation_allele,
+        PublicGenotypeRule.partial_gene_edit,
+        PublicGenotypeRule.deletion_symbol_unresolved,
+        PublicGenotypeRule.deletion_not_one_gene,
+        PublicGenotypeRule.allele_described_in_prose,
+    }
+)
+#: A point-allele token's gene: the symbol the token opens with (``cpxAF218Y``,
+#: ``dnaA46``).
+_ALLELE_GENE = re.compile(r"^(?P<gene>[a-z]{3}[A-Z])")
+#: The one partial edit's gene and the one multi-gene deletion's label, as released.
+_PARTIAL_EDIT_GENES = {"crp_ar1_ar2": "crp"}
+_DELETION_LABELS = {"del_7prrn": "7prrn"}
+#: The prose that states WHAT the allele is ("with truncated relA"); "inactive" does not.
+_PROSE_KIND = {"truncated": ReleasedStrainKind.truncation}
+
+
+def settle_public_alleles(row: Mapping[str, str]) -> PublicGenotypeVerdict:
+    """The stored genotype of an MG1655 sample whose edits no placed leaf types.
+
+    A substitution or classical point allele (``cpxAF218Y``, ``dnaA46``) and the partial
+    edit ``crp_ar1_ar2`` are ``sequence_allele`` released alleles of the gene they name;
+    a deletion whose symbol is no b-number (``ihf``, ``rrnC``) and the multi-gene
+    ``del_7prrn`` are released ``deletion`` alleles under the released label; "with
+    truncated relA" is a released ``truncation`` of relA. Whole-gene ``del_`` tokens of
+    a resolvable symbol stay deletions. A background label beside them makes the sample
+    a background named as released (``settle_public_background``); "with inactive relA"
+    names no edit kind, so it stays dropped under its rule.
+    """
+    verdict = settle_public_genotype(row)
+    if verdict.rule not in ALLELE_RULES:
+        raise ValueError(f"{verdict.rule.value} is not an allele rule")
+    tokens = row[COL_DESCRIPTION][len(WILD_TYPE_DESCRIPTION) + 1 :].split()
+    rules = {PUBLIC_EDIT_TOKENS[t] for t in tokens if t in PUBLIC_EDIT_TOKENS}
+    if PublicGenotypeRule.background_label_undefined in rules:
+        description = row[COL_DESCRIPTION]
+        return PublicGenotypeVerdict(
+            rule=verdict.rule,
+            background=StrainBackgroundSpec(
+                name=description,
+                strain_cell=row[COL_STRAIN],
+                description=description,
+                evolved=False,
+            ),
+            untyped_edits=True,
+        )
+    if PublicGenotypeRule.allele_described_in_prose in rules and not any(
+        t in _PROSE_KIND for t in tokens
+    ):
+        return PublicGenotypeVerdict(rule=verdict.rule)
+    alleles: list[ReleasedAllele] = []
+    genes: list[str] = []
+    for index, token in enumerate(tokens):
+        if token in _PROSE_KIND:
+            alleles.append(
+                ReleasedAllele(gene=tokens[index + 1], kind=_PROSE_KIND[token])
+            )
+        elif token in _PARTIAL_EDIT_GENES:
+            alleles.append(
+                ReleasedAllele(
+                    gene=_PARTIAL_EDIT_GENES[token],
+                    kind=ReleasedStrainKind.sequence_allele,
+                )
+            )
+        elif token in _DELETION_LABELS:
+            alleles.append(
+                ReleasedAllele(
+                    gene=_DELETION_LABELS[token],
+                    kind=ReleasedStrainKind.deletion,
+                    identifier_kind="deletion label",
+                )
+            )
+        elif PUBLIC_EDIT_TOKENS.get(token) is PublicGenotypeRule.point_mutation_allele:
+            match = _ALLELE_GENE.match(token)
+            if match is None:
+                raise ValueError(f"point allele token {token!r} names no gene")
+            alleles.append(
+                ReleasedAllele(
+                    gene=match.group("gene"), kind=ReleasedStrainKind.sequence_allele
+                )
+            )
+        elif (deletion := _DELETION_TOKEN.match(token)) is not None:
+            gene = deletion.group("gene")
+            if gene in UNRESOLVED_DELETION_SYMBOLS:
+                alleles.append(
+                    ReleasedAllele(gene=gene, kind=ReleasedStrainKind.deletion)
+                )
+            else:
+                genes.append(gene)
+        elif PUBLIC_EDIT_TOKENS.get(token) is not (
+            PublicGenotypeRule.allele_described_in_prose
+        ):
+            raise ValueError(
+                f"Strain Description {row[COL_DESCRIPTION]!r}: token {token!r} is of "
+                "no stored form"
+            )
+    return PublicGenotypeVerdict(
+        rule=verdict.rule, deleted_symbols=tuple(genes), released_alleles=tuple(alleles)
     )
 
 
@@ -1224,7 +1339,9 @@ CONDITION_COLUMNS: tuple[str, ...] = (
 
 
 def genotype_class(verdict: PublicGenotypeVerdict) -> str:
-    """``wild_type``, ``deletion_<n>``, or the background class of a stored strain."""
+    """``wild_type``, ``deletion_<n>``, or the background or released-allele class."""
+    if verdict.released_alleles:
+        return f"released_allele_{verdict.rule.value}"
     if verdict.background is not None:
         return f"background_{verdict.rule.value}"
     if verdict.rule is PublicGenotypeRule.wild_type:
@@ -1331,13 +1448,13 @@ class RnaseqPublicK12Lamoureux2023Dataset(ExperimentDataset):
         stored, report = reconcile_locus_tags(
             genome, names, label=f"{self.name} deleted genes"
         )
-        report.require_resolved(1.0)
-        if report.outside_namespace:
-            raise RuntimeError(
-                f"deleted-gene symbols not stored as b-numbers: {report.outside_namespace}"
-            )
+        # #1057: a symbol the annotation does not resolve is not refused; it has no
+        # entry here and is stored as released on the released-strain leaf
+        unresolved = set(report.outside_namespace)
         mapping: dict[str, tuple[str, str]] = {}
         for symbol, tag in zip(names, stored, strict=True):
+            if tag in unresolved:
+                continue
             canonical = genome.genbank.loci[tag].symbol or symbol
             if genome.resolve_gene_name(canonical).systematic_name != tag:
                 raise RuntimeError(
@@ -1347,18 +1464,31 @@ class RnaseqPublicK12Lamoureux2023Dataset(ExperimentDataset):
         return mapping, report
 
     def _genotype(
-        self, verdict: PublicGenotypeVerdict, tags: Mapping[str, tuple[str, str]]
+        self,
+        verdict: PublicGenotypeVerdict,
+        tags: Mapping[str, tuple[str, str]],
+        description: str,
     ) -> Genotype:
-        return Genotype(
-            perturbations=[
-                BacterialDeletionPerturbation(
-                    systematic_gene_name=tags[symbol][0],
-                    perturbed_gene_name=tags[symbol][1],
-                    gene_namespace=GENE_NAMESPACE,
-                )
-                for symbol in verdict.deleted_symbols
-            ]
-        )
+        deletions: list[
+            BacterialDeletionPerturbation | BacterialReleasedStrainPerturbation
+        ] = [
+            BacterialDeletionPerturbation(
+                systematic_gene_name=tags[symbol][0],
+                perturbed_gene_name=tags[symbol][1],
+                gene_namespace=GENE_NAMESPACE,
+            )
+            if symbol in tags
+            else released_allele_perturbation(
+                ReleasedAllele(gene=symbol, kind=ReleasedStrainKind.deletion),
+                description,
+            )
+            for symbol in verdict.deleted_symbols
+        ]
+        alleles = [
+            released_allele_perturbation(allele, description)
+            for allele in verdict.released_alleles
+        ]
+        return Genotype(perturbations=[*deletions, *alleles])
 
     @post_process
     def process(self) -> None:
@@ -1421,6 +1551,8 @@ class RnaseqPublicK12Lamoureux2023Dataset(ExperimentDataset):
             g_verdict = settle_public_genotype(row)
             if g_verdict.rule in BACKGROUND_RULES:
                 g_verdict = settle_public_background(row)
+            elif g_verdict.rule in ALLELE_RULES:
+                g_verdict = settle_public_alleles(row)
             genotype_verdicts[sample] = g_verdict
             if not g_verdict.kept:
                 dropped.setdefault(g_verdict.rule.value, []).append(sample)
@@ -1505,7 +1637,9 @@ class RnaseqPublicK12Lamoureux2023Dataset(ExperimentDataset):
             for idx, sample in enumerate(kept):
                 experiment = BacterialRNASeqExpressionExperiment(
                     dataset_name=self.name,
-                    genotype=self._genotype(genotype_verdicts[sample], tags),
+                    genotype=self._genotype(
+                        genotype_verdicts[sample], tags, rows[sample][COL_DESCRIPTION]
+                    ),
                     environment=environment_of(sample),
                     phenotype=rnaseq_phenotype(
                         genes, count_values[:, idx], lengths, int(assigned[idx])

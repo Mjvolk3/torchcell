@@ -875,9 +875,10 @@ def _json(dataset: L.RnaseqLamoureux2023Dataset, name: str) -> Any:
 def test_the_build_keeps_wild_type_and_deletions_and_counts_every_drop(
     built: L.RnaseqLamoureux2023Dataset,
 ) -> None:
-    # #1057: the evolved isolate, the three other strains and the chemostat with no
-    # stated rate are stored, not dropped
-    assert len(built) == 11
+    # #1057: the evolved isolate, the three other strains, the crp partial edit and the
+    # rpoB substitution (on the released-strain leaf) and the chemostat with no stated
+    # rate are stored, not dropped
+    assert len(built) == 13
     assert _json(built, "record_samples.json") == [
         "p1k_00001",
         "p1k_00002",
@@ -886,6 +887,8 @@ def test_the_build_keeps_wild_type_and_deletions_and_counts_every_drop(
         "p1k_00005",
         "p1k_00006",
         "p1k_00007",
+        "p1k_00009",
+        "p1k_00010",
         "p1k_00012",
         "p1k_00015",
         "p1k_00016",
@@ -894,11 +897,9 @@ def test_the_build_keeps_wild_type_and_deletions_and_counts_every_drop(
     drop_log = _json(built, "dropped_records.json")
     assert {
         k: drop_log[k] for k in ("source_records", "kept_records", "dropped_records")
-    } == {"source_records": 17, "kept_records": 11, "dropped_records": 6}
+    } == {"source_records": 17, "kept_records": 13, "dropped_records": 4}
     assert [(r["stage"], r["rule"], r["samples"]) for r in drop_log["rules"]] == [
         ("genotype", "heterologous_expression_construct", ["p1k_00008"]),
-        ("genotype", "partial_gene_edit", ["p1k_00009"]),
-        ("genotype", "point_mutation_allele", ["p1k_00010"]),
         ("environment", "medium_not_in_library", ["p1k_00011"]),
         ("environment", "oxygen_regime_not_stated", ["p1k_00013"]),
         ("environment", "supplement_label_ambiguous", ["p1k_00014"]),
@@ -907,12 +908,20 @@ def test_the_build_keeps_wild_type_and_deletions_and_counts_every_drop(
         "deletion_1": 2,
         "deletion_2": 1,
         "evolved_isolate": 1,
+        "released_allele_partial_gene_edit": 1,
+        "released_allele_point_mutation_allele": 1,
         "strain_BW25113_deletion_0": 1,
         "strain_DGF-298_deletion_0": 1,
         "strain_W3110_deletion_0": 1,
         "wild_type": 4,
     }
-    assert drop_log["kept_by_base_media"] == {"LB": 1, "M9": 10}
+    assert drop_log["kept_by_base_media"] == {"LB": 1, "M9": 12}
+    rpob = built[8]["experiment"]["genotype"]["perturbations"]
+    assert [
+        (p["perturbation_type"], p["systematic_gene_name"], p["released_kind"])
+        for p in rpob
+    ] == [("bacterial_released_strain", "rpoB", "sequence_allele")]
+    assert rpob[0]["strain_label"] == "Escherichia coli K-12 MG1655 rpoBE546V"
     strains = {
         built[i]["reference"]["genome_reference"]["strain"] for i in range(len(built))
     }
@@ -923,7 +932,7 @@ def test_the_build_keeps_wild_type_and_deletions_and_counts_every_drop(
         "W3110",
         "DGF-298",
     }
-    w3110 = built[9]["reference"]["genome_reference"]
+    w3110 = built[11]["reference"]["genome_reference"]
     assert w3110["assembly_set"] == "ecoli_K12_MG1655_ASM584v2"
     assert w3110["background"]["name"] == "W3110"
 
@@ -1003,13 +1012,15 @@ def test_replicates_share_an_environment_and_are_grouped_by_condition(
     groups = {g["full_name"]: g for g in _json(built, "replicate_groups.json")}
     assert {k: g["record_indices"] for k, g in groups.items()} == {
         "control:wt_glc": [0, 1],
+        "crp:ar1": [7],
         "glu:ale": [5],
-        "minicoli:dgf": [10],
-        "minspan:no3_anaero": [8],
+        "minicoli:dgf": [12],
+        "minspan:no3_anaero": [10],
         "omics:bw": [6],
-        "rpoB:wt_031": [7],
+        "rpoB:e546v": [8],
+        "rpoB:wt_031": [9],
         "tcs:delpro_etoh": [4],
-        "w3110:wt": [9],
+        "w3110:wt": [11],
         "ytf:delthrA": [2, 3],
     }
     assert groups["ytf:delthrA"]["condition_cells"][L.COL_ANTIBIOTIC] == (
@@ -1021,7 +1032,7 @@ def test_replicates_share_an_environment_and_are_grouped_by_condition(
     assert (
         built[0]["experiment"]["environment"] != built[2]["experiment"]["environment"]
     )
-    anaerobic = built[8]["experiment"]["environment"]
+    anaerobic = built[10]["experiment"]["environment"]
     assert anaerobic["aerobicity"] == "anaerobic"
     assert anaerobic["perturbations"][3]["compound"]["name"] == "potassium nitrate"
     assert anaerobic["perturbations"][3]["concentration"]["value"] == 20.0
@@ -1100,11 +1111,9 @@ def test_the_dev_tree_build_pins_the_measured_counts() -> None:
     drop_log = json.loads((root / "preprocess/dropped_records.json").read_text())
     # #1057: the evolved isolates, the other strains and the non-batch cultures are
     # stored, not dropped (241 before)
-    assert (drop_log["source_records"], drop_log["kept_records"]) == (1035, 700)
+    assert (drop_log["source_records"], drop_log["kept_records"]) == (1035, 717)
     assert {r["rule"]: r["n_records"] for r in drop_log["rules"]} == {
         "heterologous_expression_construct": 96,
-        "point_mutation_allele": 9,
-        "partial_gene_edit": 8,
         "medium_not_in_library": 166,
         "oxygen_regime_not_stated": 52,
         "supplement_label_ambiguous": 4,
@@ -1114,11 +1123,13 @@ def test_the_dev_tree_build_pins_the_measured_counts() -> None:
         "deletion_2": 12,
         "deletion_3": 4,
         "evolved_isolate": 421,
+        "released_allele_partial_gene_edit": 8,
+        "released_allele_point_mutation_allele": 9,
         "strain_BW25113_deletion_0": 10,
         "strain_BW25113_deletion_1": 17,
         "wild_type": 128,
     }
-    assert drop_log["kept_by_base_media"] == {"01xLB": 8, "LB": 32, "M9": 660}
+    assert drop_log["kept_by_base_media"] == {"01xLB": 8, "LB": 36, "M9": 673}
     back_solve = json.loads(
         (root / "preprocess/pseudocount_back_solve.json").read_text()
     )
@@ -1184,7 +1195,7 @@ def test_the_dev_tree_build_passes_the_record_rules_and_never_merges_two_conditi
         provenance=Provenance(
             source_uri=L.ZENODO_RECORD_URL, citation_key=L.CITATION_KEY
         ),
-        expected_count=700,
+        expected_count=717,
     )
     results = report.results + shared_rule_results(
         records, resolve_gene_name=genome.resolve_gene_name, sgd_genes=genes

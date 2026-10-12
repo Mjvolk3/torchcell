@@ -13,8 +13,8 @@ partition, the environment builder, the phenotype builder and a full ``process()
 ``tmp_path``; the genome pin is an in-test object, so nothing reads ``$DATA_ROOT``.
 
 The ``@pytest.mark.data`` tests read the real mirror and pin the numbers the dendron note
-states: 26 released rows over the three released strain spellings (22 / 2 / 2), 15
-records after the two drop rules, the two negative stationary-phase rates, the four
+states: 26 released rows over the three released strain spellings (22 / 2 / 2), 16
+records after the three drop rules (15 before #1045 row 17 kept Glycerol + AA), the two negative stationary-phase rates, the four
 chemostat rows whose ``Stdev`` is exactly 0, and the Glucose reference at 0.58 h^-1.
 """
 
@@ -78,9 +78,10 @@ RELEASED: tuple[tuple[str, str, float, float], ...] = (
     ("chemostat µ=0.35", "BW25113", 0.35, 0.0),
     ("chemostat µ=0.5", "BW25113", 0.5, 0.0),
 )
-#: The 15 released condition labels that become records, in sheet order.
+#: The 16 released condition labels that become records, in sheet order.
 KEPT_CONDITIONS: tuple[str, ...] = (
     "LB",
+    "Glycerol + AA",
     "Acetate",
     "Fumarate",
     "Galactose ",
@@ -132,11 +133,11 @@ def _reference_genome() -> AssemblyReferenceGenome:
 # --------------------------------------------------------------------------- #
 # The declared module constants
 # --------------------------------------------------------------------------- #
-def test_declared_shape_is_26_released_rows_and_15_records() -> None:
+def test_declared_shape_is_26_released_rows_and_16_records() -> None:
     assert s23.EXPECTED_SOURCE_ROWS == 26
     assert sum(s23.EXPECTED_STRAIN_ROWS.values()) == s23.EXPECTED_SOURCE_ROWS
     assert s23.EXPECTED_STRAIN_ROWS == {"BW25113": 22, "MG1665": 2, "NCM3722": 2}
-    assert s23.EXPECTED_RECORDS == 15
+    assert s23.EXPECTED_RECORDS == 16
     assert s23.EXPECTED_UNPERTURBED == 0
     assert s23.EXPECTED_MEDIA_ONLY_EDIT == ("LB",)
     assert s23.N_SAMPLES == 3
@@ -250,12 +251,12 @@ def test_read_table_s23_refuses_a_changed_per_strain_count(tmp_path: Path) -> No
 # --------------------------------------------------------------------------- #
 # The partition, the environments and the phenotype
 # --------------------------------------------------------------------------- #
-def test_partition_keeps_15_rows_and_names_every_drop_rule(workbook: Path) -> None:
+def test_partition_keeps_16_rows_and_names_every_drop_rule(workbook: Path) -> None:
     kept, ledger = s23.partition(s23.read_table_s23(workbook))
     assert [row.condition for row in kept] == list(KEPT_CONDITIONS)
     assert ledger.source_rows == 26
-    assert ledger.kept_records == 15
-    assert ledger.dropped_rows == 11
+    assert ledger.kept_records == 16
+    assert ledger.dropped_rows == 10
     assert ledger.dropped == {
         s23.DROP_STRAIN_RULE: [
             "LB/MG1665",
@@ -263,12 +264,13 @@ def test_partition_keeps_15_rows_and_names_every_drop_rule(workbook: Path) -> No
             "Glucose/MG1665",
             "Glucose/NCM3722",
         ],
-        "medium_has_no_media_library_entry": ["Glycerol + AA/BW25113"],
         "growth_phase_not_representable": [
             "Stationary phase 1 day/BW25113",
             "Stationary phase 3 days/BW25113",
         ],
-        "culture_not_batch": [
+        # #1045 row 21: the chemostat environments are distinct now, but the rate this
+        # table releases for them is their dilution rate, with a Stdev of 0
+        s23.DROP_SET_POINT_RULE: [
             "chemostat µ=0.12/BW25113",
             "chemostat µ=0.20/BW25113",
             "chemostat µ=0.35/BW25113",
@@ -283,8 +285,8 @@ def test_build_environments_are_distinct_and_only_lb_has_no_perturbation(
 ) -> None:
     kept, _ = s23.partition(s23.read_table_s23(workbook))
     environments = s23.build_environments(kept)
-    assert len(environments) == 15
-    assert len({env.model_dump_json() for env in environments.values()}) == 15
+    assert len(environments) == 16
+    assert len({env.model_dump_json() for env in environments.values()}) == 16
     assert tuple(
         label for label, env in environments.items() if not env.perturbations
     ) == ("LB",)
@@ -354,7 +356,7 @@ def test_download_links_the_mirror(
 def built(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> s23.GrowthRateS23Schmidt2016Dataset:
-    """The 15-record store, built from the synthetic workbook into ``tmp_path``."""
+    """The 16-record store, built from the synthetic workbook into ``tmp_path``."""
     root = tmp_path / "growth_rate_s23_schmidt2016"
     raw = root / "raw"
     raw.mkdir(parents=True)
@@ -366,7 +368,7 @@ def built(
     return s23.GrowthRateS23Schmidt2016Dataset(root=str(root))
 
 
-def test_process_builds_15_records_against_the_glucose_reference(
+def test_process_builds_16_records_against_the_glucose_reference(
     built: s23.GrowthRateS23Schmidt2016Dataset,
 ) -> None:
     assert len(built) == s23.EXPECTED_RECORDS
@@ -394,10 +396,11 @@ def test_process_builds_15_records_against_the_glucose_reference(
         0.63,
         0.65,
         0.66,
+        1.27,
         1.9,
     ]
     # every kept condition has its own environment, so no two records collide
-    assert len({i["experiment"].environment.model_dump_json() for i in items}) == 15
+    assert len({i["experiment"].environment.model_dump_json() for i in items}) == 16
     built.close_lmdb()
 
 
@@ -407,13 +410,12 @@ def test_process_writes_the_three_declared_ledgers(
     preprocess = Path(built.preprocess_dir)
     built.close_lmdb()
     ledger = json.loads((preprocess / "dropped_records.json").read_text())
-    assert (ledger["source_rows"], ledger["kept_records"]) == (26, 15)
-    assert ledger["dropped_records"] == 11
+    assert (ledger["source_rows"], ledger["kept_records"]) == (26, 16)
+    assert ledger["dropped_records"] == 10
     assert {rule["rule"] for rule in ledger["rules"]} == {
         s23.DROP_STRAIN_RULE,
-        "medium_has_no_media_library_entry",
         "growth_phase_not_representable",
-        "culture_not_batch",
+        s23.DROP_SET_POINT_RULE,
     }
     assert any("Table S28" in note for note in ledger["notes"])
     not_stored = json.loads((preprocess / "not_stored.json").read_text())
@@ -424,7 +426,7 @@ def test_process_writes_the_three_declared_ledgers(
     sourced = json.loads((preprocess / "sourced_values.json").read_text())
     assert sourced["n_samples"]["value"] == 3
     frame = pd.read_csv(preprocess / "growth_rates.csv")
-    assert len(frame) == 15
+    assert len(frame) == 16
     assert frame["is_reference"].sum() == 1
     assert set(frame["strain"]) == {"BW25113"}
     assert set(frame["n_samples"]) == {3}
@@ -494,15 +496,15 @@ def test_real_table_s23_releases_the_26_rows_the_module_declares() -> None:
 
 
 @pytest.mark.data
-def test_real_partition_keeps_the_15_conditions_and_drops_11_rows() -> None:
+def test_real_partition_keeps_the_16_conditions_and_drops_10_rows() -> None:
     kept, ledger = s23.partition(s23.read_table_s23(_real_workbook()))
     assert [row.condition for row in kept] == list(KEPT_CONDITIONS)
-    assert (ledger.kept_records, ledger.dropped_rows) == (15, 11)
+    assert (ledger.kept_records, ledger.dropped_rows) == (16, 10)
     assert s23.reference_row(kept).growth_rate == 0.58
 
 
 @pytest.mark.data
-def test_real_dev_store_holds_15_records_and_its_declared_ledger() -> None:
+def test_real_dev_store_holds_16_records_and_its_declared_ledger() -> None:
     data_root = os.environ.get("DATA_ROOT")
     if data_root is None:
         pytest.skip("DATA_ROOT is not set")
@@ -512,4 +514,4 @@ def test_real_dev_store_holds_15_records_and_its_declared_ledger() -> None:
         pytest.skip(f"{root} is not built")
     ledger = json.loads(ledger_path.read_text())
     assert ledger["kept_records"] == s23.EXPECTED_RECORDS
-    assert ledger["dropped_records"] == 11
+    assert ledger["dropped_records"] == 10

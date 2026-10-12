@@ -38,6 +38,7 @@ from torchcell.datamodels.media import (
     LB_AGAR,
     LB_LENNOX,
     M9,
+    M9_AA_SCHMIDT2016,
     M9_NOCARBON_PRICE2018,
     M9_NONITROGEN_WETMORE2015,
     M9_SCHMIDT2016,
@@ -286,7 +287,8 @@ def test_m9_is_the_four_salts_and_every_m9_formulation_derives_from_it() -> None
     m9_family = [
         key for key in BACTERIAL_KEYS if MEDIA_LIBRARY[key].base_medium == "M9"
     ]
-    assert len(m9_family) == 18
+    # 18, plus M9_AA_SCHMIDT2016 (#1045 row 17)
+    assert len(m9_family) == 19
     assert oc.media_derivation_issues() == []
 
 
@@ -453,6 +455,40 @@ def test_mops_rich_is_the_mops_minimal_base_plus_table_s18s_supplements() -> Non
         "e5dbf3d5c97cfc12f49d7fd83f84bc95c16cbe963309a561fff20f442788b879",
         "428a06cae37867c8d21541f64d80da082e67743e1b1def9238a14e7726bc7150",
     }
+
+
+def test_schmidt_glycerol_aa_is_the_schmidt_m9_plus_twenty_two_stated_supplements() -> (
+    None
+):
+    """#1045 row 17: 'Glycerol + AA' is M9_SCHMIDT2016 plus 22 stated supplements.
+
+    Twenty L-amino acids and two nucleobases, each at the mg/L the Methods state (stored
+    as ug/mL); the base is carried unchanged, its thiamine gap included, and the 2.2 g/L
+    glycerol stays the condition's carbon factor, so the medium is carbon-free.
+    """
+    media = M9_AA_SCHMIDT2016
+    base = len(M9_SCHMIDT2016.components)
+    assert media.components[:base] == M9_SCHMIDT2016.components
+    supplements = {
+        c.compound.name: (c.concentration.value, c.concentration.unit, c.role)
+        for c in media.components[base:]
+        if c.concentration is not None
+    }
+    assert len(supplements) == 22
+    roles = Counter(role for _, _, role in supplements.values())
+    assert roles == {
+        MediaComponentRole.amino_acid: 20,
+        MediaComponentRole.nucleobase: 2,
+    }
+    assert {unit for _, unit, _ in supplements.values()} == {
+        ConcentrationUnit.ug_per_ml
+    }
+    assert supplements["L-valine"][0] == 143.2
+    assert supplements["L-alanine"][0] == 1.0
+    assert supplements["uracil"][0] == 20.5
+    assert media.open_gaps == ["thiamine"]
+    assert media.dropouts == M9_SCHMIDT2016.dropouts
+    assert "M9_AA_SCHMIDT2016" in CARBON_FREE_MEDIA
 
 
 def test_an_unstated_amount_stays_an_open_gap() -> None:

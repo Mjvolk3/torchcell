@@ -55,27 +55,29 @@ EVERY LOADED CONDITION IS WILD-TYPE BW25113: NONE IS A DELETION STRAIN. The thre
 deletion strains in the paper (``rimI``, ``rimJ``, ``rimL``) appear only in the
 N-alpha-acetylation tables (Supplementary Tables 20, 21 and 24) and carry no per-protein
 abundance at all, so no abundance record has a genotype perturbation. ``Genotype`` is
-therefore empty for all 14 records and the varying axis is entirely the environment,
+therefore empty for all 19 records and the varying axis is entirely the environment,
 which is why the glucose arm is the ``phenotype_reference`` rather than a record: the
 release defines every fold change against "BW25113 grown in minimal medium (glucose)".
 
-FOURTEEN RECORDS FROM TWENTY-TWO RELEASED CONDITIONS, AND EACH DROP IS STRUCTURAL.
-Seven of Table S6's 22 conditions are not loaded and one more is the reference:
+NINETEEN RECORDS FROM TWENTY-TWO RELEASED CONDITIONS. Two of Table S6's 22 conditions
+are not loaded and one more is the reference:
 
-- ``Glycerol + AA`` is M9 with glycerol plus 21 named supplements at stated doses, which
-  has no ``MEDIA_LIBRARY`` entry. ``media.py`` is a value-surface file this branch does
-  not edit, so the condition is left out and ``M9_GLYCEROL_AA_SCHMIDT2016`` is named in
-  the PR as the addition it needs.
-- The four ``Chemostat`` arms differ from each other ONLY in dilution rate, and
-  ``Environment`` has no culture-mode or dilution-rate slot. Loading them would give
-  four records one byte-identical environment, which is the rule the landed Lamoureux
-  2023 loader already states as ``culture_not_batch``.
 - ``Stationary phase 1 day`` and ``Stationary phase 3 days`` share medium, carbon
   source, temperature and oxygen regime with the exponential ``Glucose`` arm, and
   ``Environment`` has no growth-phase slot, so all three would collapse onto one
   environment.
 
-That the remaining 15 environments are pairwise distinct is asserted at build time by
+Since #1045 rows 17 and 21, two earlier drops are records:
+
+- ``Glycerol + AA`` is ``M9_AA_SCHMIDT2016``: M9 plus the twenty amino acids, adenine and
+  uracil at the mg/L the Methods state, with its 2.2 g/L glycerol as the carbon factor
+  (it was ``medium_has_no_media_library_entry``).
+- The four ``Chemostat`` arms carry ``Environment.dilution_rate_per_hour`` (0.5, 0.35,
+  0.2 and 0.12, the Methods' "dilution (rates: 0.12, 0.2, 0.35, 0.5)" in Table S23's
+  h-1), the field #753 added, so they differ in the one variable they differ in (they
+  were ``culture_not_batch``).
+
+That the 20 loaded environments are pairwise distinct is asserted at build time by
 comparing their serialized bytes, so the rule is checked rather than claimed.
 
 THE IDENTIFIER ROUTE IS DERIVED, SINGLE, AND THE RELEASED B-NUMBER IS NOT IT. The
@@ -178,7 +180,7 @@ from torchcell.data import (
     write_verified,
 )
 from torchcell.datamodels.compound_identity import resolved_compound
-from torchcell.datamodels.media import LB, M9_SCHMIDT2016
+from torchcell.datamodels.media import LB, M9_AA_SCHMIDT2016, M9_SCHMIDT2016
 from torchcell.datamodels.schema import (
     BacterialProteinAbundanceExperiment,
     BacterialProteinAbundanceExperimentReference,
@@ -504,6 +506,20 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         _Q_SEARCH_DATABASE,
         note="why five released rows are proteins of other organisms",
     ),
+    # #1045 row 21: the chemostat arms' dilution rates, now an Environment field
+    "chemostat_dilution_rates_per_hour": _paper(
+        {
+            "Chemostat µ=0.5": 0.5,
+            "Chemostat µ=0.35": 0.35,
+            "Chemostat µ=0.20": 0.2,
+            "Chemostat µ=0.12": 0.12,
+        },
+        _Q_CHEMOSTAT,
+        note="the unit is h^-1: Table S23 (si2.xlsx) states each chemostat arm's rate "
+        "under 'Growth rate (h-1)' (0.12, 0.2, 0.35, 0.5), and at steady state the "
+        "dilution rate is the specific growth rate; stored on "
+        "Environment.dilution_rate_per_hour",
+    ),
 }
 
 
@@ -567,26 +583,6 @@ class DropReason(BaseModel):
     needed_addition: str | None = None
 
 
-DROP_MEDIUM_NOT_IN_LIBRARY = DropReason(
-    rule="medium_has_no_media_library_entry",
-    description=(
-        "the glycerol + amino acid medium is M9 with glycerol plus 21 named supplements "
-        "at stated doses, which no MEDIA_LIBRARY key states; media.py is a value-surface "
-        "file this branch does not edit, so the condition is left out rather than "
-        "written against a medium that joins nothing"
-    ),
-    needed_addition="M9_GLYCEROL_AA_SCHMIDT2016",
-)
-DROP_CULTURE_NOT_BATCH = DropReason(
-    rule="culture_not_batch",
-    description=(
-        "a chemostat culture: Environment has no culture-mode or dilution-rate slot, so "
-        "the four chemostat arms, which differ from one another ONLY in dilution rate, "
-        "would carry one byte-identical environment. This is the rule the landed "
-        "Lamoureux 2023 loader states under the same name"
-    ),
-    needed_addition="a culture-mode / dilution-rate slot on Environment (closure-changing)",
-)
 DROP_GROWTH_PHASE = DropReason(
     rule="growth_phase_not_representable",
     description=(
@@ -616,6 +612,10 @@ class ConditionSpec(BaseModel):
     temperature_c: float = 37.0
     nacl_mm: float | None = None
     ph: float | None = None
+    dilution_rate_per_hour: float | None = Field(
+        default=None,
+        description="the chemostat dilution rate (h^-1); None for a batch culture",
+    )
     is_reference: bool = False
     drop: DropReason | None = None
 
@@ -662,14 +662,14 @@ CONDITIONS: tuple[ConditionSpec, ...] = (
         s25_files=("A14-07032", "A14-07033", "A14-07034"),
         media=LB,
     ),
-    _m9(
-        "Glycerol + AA",
-        "Glycerin.AA",
-        "glycerol + AA",
-        ("A14-07040", "A14-07041", "A14-07042"),
-        "glycerol",
-        2.2,
-        drop=DROP_MEDIUM_NOT_IN_LIBRARY,
+    ConditionSpec(
+        s6_column="Glycerol + AA",
+        s8_suffix="Glycerin.AA",
+        s25_label="glycerol + AA",
+        s25_files=("A14-07040", "A14-07041", "A14-07042"),
+        media=M9_AA_SCHMIDT2016,
+        carbon_source="glycerol",
+        carbon_g_per_l=2.2,
     ),
     _m9(
         "Acetate",
@@ -718,7 +718,7 @@ CONDITIONS: tuple[ConditionSpec, ...] = (
         ("A14-07064", "A14-07065", "A14-07066"),
         "glucose",
         1.0,
-        drop=DROP_CULTURE_NOT_BATCH,
+        dilution_rate_per_hour=0.5,
     ),
     _m9(
         "Chemostat µ=0.35",
@@ -727,7 +727,7 @@ CONDITIONS: tuple[ConditionSpec, ...] = (
         ("A14-07068", "A14-07069", "A14-07070"),
         "glucose",
         1.0,
-        drop=DROP_CULTURE_NOT_BATCH,
+        dilution_rate_per_hour=0.35,
     ),
     _m9(
         "Chemostat µ=0.20",
@@ -736,7 +736,7 @@ CONDITIONS: tuple[ConditionSpec, ...] = (
         ("A14-07072", "A14-07073", "A14-07074"),
         "glucose",
         1.0,
-        drop=DROP_CULTURE_NOT_BATCH,
+        dilution_rate_per_hour=0.2,
     ),
     _m9(
         "Chemostat µ=0.12",
@@ -745,7 +745,7 @@ CONDITIONS: tuple[ConditionSpec, ...] = (
         ("A14-07076", "A14-07077", "A14-07078"),
         "glucose",
         1.0,
-        drop=DROP_CULTURE_NOT_BATCH,
+        dilution_rate_per_hour=0.12,
     ),
     _m9(
         "Stationary phase 1 day",
@@ -835,8 +835,9 @@ CONDITIONS: tuple[ConditionSpec, ...] = (
 )
 CONDITIONS_BY_COLUMN: dict[str, ConditionSpec] = {c.s6_column: c for c in CONDITIONS}
 REFERENCE_CONDITION = "Glucose"
-#: 22 released conditions - 1 reference - 7 structurally unrepresentable = 14.
-EXPECTED_RECORDS = 14
+#: 22 released conditions - 1 reference - 2 stationary arms = 19 (14 before #1045 rows 17
+#: and 21 kept the glycerol + amino acid arm and the four chemostat arms).
+EXPECTED_RECORDS = 19
 #: Protein keys on a record of a condition both LC-MS experiments covered, and on one of
 #: the three conditions only dataset 2 covered.
 EXPECTED_PROTEIN_KEYS = 2329
@@ -1309,14 +1310,16 @@ def build_environment(spec: ConditionSpec) -> Environment:
         temperature=Temperature(value=spec.temperature_c),
         perturbations=perturbations,
         aerobicity=str(SOURCED_VALUES["aerobicity"].value),
+        dilution_rate_per_hour=spec.dilution_rate_per_hour,
     )
 
 
 def check_environments_distinct(environments: Mapping[str, Environment]) -> None:
     """Refuse two conditions whose environments serialize to the same bytes.
 
-    This is what makes the ``culture_not_batch`` and ``growth_phase_not_representable``
-    rules checked rather than asserted: whatever survives them must be distinguishable.
+    This is what makes the ``growth_phase_not_representable`` drop checked rather than
+    asserted, and what shows the four chemostat arms are told apart by their dilution
+    rate alone: whatever is loaded must be distinguishable.
     """
     seen: dict[str, str] = {}
     for name, environment in environments.items():
@@ -1779,11 +1782,7 @@ class ProteomeSchmidt2016Dataset(ExperimentDataset):
                 ],
                 needed_addition=reason.needed_addition,
             )
-            for reason in (
-                DROP_MEDIUM_NOT_IN_LIBRARY,
-                DROP_CULTURE_NOT_BATCH,
-                DROP_GROWTH_PHASE,
-            )
+            for reason in (DROP_GROWTH_PHASE,)
         ]
         log_model = DropLog(
             dataset=self.name,

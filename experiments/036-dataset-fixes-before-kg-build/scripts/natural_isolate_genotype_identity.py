@@ -91,10 +91,19 @@ def store_genotypes(processed: str) -> Iterator[tuple[str, dict[str, Any]]]:
     interned = _load_interned_at(processed)
 
     seen: dict[str, str] = {}
+    refs: set[str] = set()
     env = lmdb.open(osp.join(processed, "lmdb"), readonly=True, lock=False)
     with env.begin() as txn:
         for _, value in txn.cursor():
-            record = resolve_interned(pickle.loads(value), interned)
+            raw = pickle.loads(value)
+            pointer = raw["experiment"]["genotype"]
+            # An interned genotype is one stored object shared by all of an isolate's
+            # records: read and hash it once (its content id is its interning key).
+            if isinstance(pointer, dict) and "$ref" in pointer:
+                if pointer["$ref"] in refs:
+                    continue
+                refs.add(pointer["$ref"])
+            record = resolve_interned(raw, interned)
             genotype = dict(record["experiment"]["genotype"])
             isolate = genotype_isolate(genotype) or old_isolate(genotype)
             ident = content_id(genotype)

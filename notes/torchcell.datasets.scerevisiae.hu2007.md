@@ -129,3 +129,24 @@ Owner rule, relayed 2026-10-12: the data is the data; no loader drops a released
 - **Strain names.** `perturbed_gene_name` is Supplementary Table 1's gene name, or the ORF where the table names none, instead of the genome's current standard name. Against the current dev store this changes 26 of 263 records: 20 take the ORF (TOD6, EDS1, ERT1, NSI1, VMS1, HEL2, URC2, JHD1, COM2, TOG1, OTU1, ZNF1, ASG1, GSM1, OAF3, TDA9, RCO1, PUL4, USV1, SDD4 are names Table 1 does not give) and 6 take the 2007 name (YER109C FLO8, YGL071W RCS1, YJR122W CAF17, YJR127C ZMS1, YNL139C RLR1, YOR191W RIS1). `systematic_gene_name`, the join key, is unchanged.
 - **Gate removed.** The deleted ORF is no longer required to be an R64 locus (all 263 were, so no record moves for that reason). `verify_build` still reads a genome for the L4 `deleted_gene_containment_sgd` row, a measurement, not a filter.
 - **Store.** The shared dev store still holds the R64-keyed build; the rebuild runs under slurm into a scratch data root (job 4295, held by a user hold at the time of writing). The Kemmeren 2014 cross-check numbers in the 2026.10.11 section were measured on the R64-keyed store and are re-measured on the rebuilt one.
+
+### Rebuild and L0-L4 at `f92873d72` (slurm job 4347)
+
+Built with `build_dataset_lmdb --verify` into a scratch data root (links to the shared raw mirror, library, genomes tier and the Kemmeren 2014 store, read only), so the shared dev store keeps the R64-keyed build until this lands. `preprocess/array_elements.json`: 6,429 of 6,429 elements keyed, 1,672,173 stored values, 9 released null/null and 18,645 null/`p = 1` (source nulls, not values). Job 4295 had built the R64-keyed loader under the reparented schema at `10974b8f3` first: the same 263 records and the PR #1029 numbers, so the schema change alone moved nothing.
+
+| level | rule | result |
+|---|---|---|
+| L0 | structural | 263 records validated |
+| L1 | count | 263 of 263 |
+| L2 | score_finite, p_value_in_unit_interval, p_value_keys_match_scores | 1,672,173 values |
+| L2 | released_value_fidelity | 1,672,173 stored (score, p) pairs equal the GSE4654 release exactly |
+| L3 | reference_score_zero | 0 for all 1,672,173 reference values, no reference p-value |
+| L3 | deletion_lowers_score | median deleted-gene score -1.962, 0.837 negative over 257 deleted genes (6 carry no score in their own record) |
+| L3 | p_value_is_two_sided_normal | max deviation 5e-7 over 1,672,173 pairs (tolerance 5.01e-7) |
+| L3 | sourced_value_audit | 16 quotes verbatim |
+| L4 | deleted_gene_containment_sgd (finding, never a gate) | 263 of 263 deleted ORFs are R64 loci, 1 a non-gene locus, 0 not in R64 |
+| L4 | matched_profile_agreement_microarray_kemmeren2014 | 255 shared strains, median matched r 0.096 vs mismatched 0.031, one-sided Mann-Whitney p = 4.1e-23 |
+
+Kemmeren cross-check re-measured on this store by `experiments/036-dataset-fixes-before-kg-build/scripts/hu2007_release_inventory.py` (results JSON updated): 5,548 shared genes (5,566 on the R64-keyed store; the renamed elements keep their 2006 names and no longer meet Kemmeren's current ones), matched r quantiles q05 -0.076, q25 0.011, median 0.096, q75 0.183, q95 0.377; mismatched median 0.031, 95th percentile 0.162; 173 of 255 matched r above the mismatched median, 80 above its 95th percentile.
+
+Counts against the release: 269 GEO samples, 263 stored; the 6 not stored are the TetO7 strains refused under #1024 (reference and treatment unresolved, a field gate the 2026-10-12 rule would also revisit: it is an owner decision filed there, not taken here). Every non-null released (score, p) pair of the 263 is stored.

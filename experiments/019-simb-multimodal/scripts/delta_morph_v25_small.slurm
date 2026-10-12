@@ -83,7 +83,21 @@ case "$STAGE" in
               RUN_OV+=("wandb.tags=[v25d,${arm},lr3e-4,b128,split${s},init${init}]")
             done; done
           done ;;
-  *) echo "unknown V25_STAGE '$STAGE' (expected canary|morph_v25d)" >&2; exit 1 ;;
+  # morph_v26d (2026-10-12): the latent alignment term (torchcell/losses/latent_align.py,
+  # igb_expr_wave5.slurm stage morph_v26) on Delta: M_cls shaping the perturbed CLS and
+  # M_zs shaping [CLS || z_S], lambda 0.1 and 1, split seeds 0 to 2, init 0; 12 runs as
+  # 4 packs of 3, pack-major by split. Tags align<lambda> and src<source> for the readout.
+  morph_v26d) JOBS=(); RUN_OV=()
+          LA="multitask.latent_align.enabled=true multitask.latent_align.head=global"
+          for s in 0 1 2; do
+            for lam in 0.1 1; do
+              JOBS+=("M_cls_s${s}:0")
+              RUN_OV+=("$LA multitask.latent_align.lambda=${lam} multitask.latent_align.source=cls wandb.tags=[v26d,M_cls,align${lam},srccls,lr3e-4,b128,split${s},init0]")
+              JOBS+=("M_zs_s${s}:0")
+              RUN_OV+=("$LA multitask.latent_align.lambda=${lam} multitask.latent_align.source=cls_zs wandb.tags=[v26d,M_zs,align${lam},srccls_zs,lr3e-4,b128,split${s},init0]")
+            done
+          done ;;
+  *) echo "unknown V25_STAGE '$STAGE' (expected canary|morph_v25d|morph_v26d)" >&2; exit 1 ;;
 esac
 N_PACKS=$(( (${#JOBS[@]} + PACK - 1) / PACK ))
 if [[ -n "${V25_LIST:-}" ]]; then

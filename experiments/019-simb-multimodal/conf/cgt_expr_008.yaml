@@ -112,6 +112,22 @@ multitask:
   standardize_per_feature_target: [per_gene]
   normalize_vector_targets: []
 
+  # Latent alignment (round v26, torchcell/losses/latent_align.py): the cosine similarity
+  # of two strains' latent vectors is pulled toward the Pearson correlation of their label
+  # vectors on `head`, weighted `lambda` beside the data loss. `source` is the vector it
+  # shapes: cls (the perturbed CLS, needs model.perturb_cls), zs (the pool over the
+  # strain's perturbed gene tokens), cls_zs (both, the M_zs head input). A pair counts
+  # when both strains share at least `min_overlap` measured features; `center` subtracts
+  # the batch mean of the latents before the cosine. Off in every default; an arm turns it
+  # on with multitask.latent_align.enabled=true and its lambda.
+  latent_align:
+    enabled: false
+    lambda: 0.0
+    source: cls
+    head: global
+    min_overlap: 10
+    center: true
+
 model:
   hidden_channels: 90
   num_transformer_layers: 4

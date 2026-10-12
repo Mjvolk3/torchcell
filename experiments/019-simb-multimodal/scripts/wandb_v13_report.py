@@ -299,10 +299,35 @@ ROUNDS: dict[str, Round] = {
             "the mean over seeds with the min-max band. Nothing here is a result until the "
             "runs finish."
         ),
-        max_runs=130,
+        max_runs=160,
         label_key="calmorph",
         family_from_match=True,
-        variant_re=r"lr[0-9e.-]+|b\d+|mse|crps|pearson_mse|graphkl[0-9e.-]+|restarts\d+|warmup\d+|stack",
+        variant_re=r"lr[0-9e.-]+|b\d+|mse|crps|pearson_mse|graphkl[0-9e.-]+|restarts\d+|warmup\d+|stack|align[0-9e.-]+|src[a-z_]+|nocenter",
+    ),
+    "prot_v26": Round(
+        project="torchcell_019_prot_v26",
+        report_title="v26 proteome round: the latent alignment term on the knockout proteome",
+        view_name="v26 proteome alignment by cell",
+        view_id=None,
+        arm_re=r"(S_prot)",
+        split_tag_re=r"split(\d+)",
+        phenotype="proteome",
+        splits=["s0", "s1", "s2", "s3"],
+        split_label={f"s{i}": f"split {i}" for i in range(4)},
+        intro=(
+            "The knockout proteome (Messner 2023, the full fig3_proteome store) from the "
+            "genotype alone on the v21 small trunk at batch 128, 600 epochs, one run per "
+            "card on IGB cabbi (stage prot_v26 of igb_expr_wave5.slurm): the reference "
+            "against the latent alignment term at lambda 0.1 and 1 (the cosine similarity "
+            "of two strains' z_S pulled toward the Pearson correlation of their protein "
+            "vectors). Scored as the mean over epochs 500 to 599. Grouped lines are the mean "
+            "over splits with the min-max band. Nothing here is a result until the runs "
+            "finish."
+        ),
+        max_runs=40,
+        label_key="protein_abundance",
+        family_from_match=True,
+        variant_re=r"ref|align[0-9e.-]+|src[a-z_]+",
     ),
     "v18": Round(
         project="torchcell_019_expr_v18",

@@ -661,6 +661,58 @@ case "$STAGE" in
           JOBS_EXPLICIT=1
           RUNS_PER_GPU=1; STAGE_CONFIG=cgt_morph_v24
           EXTRA_OV="trainer.max_epochs=${MORPH_EPOCHS:-500} data_module.batch_size=128 +data_module.materialize=true data_module.persistent_workers=true wandb.project=torchcell_019_morph_v25" ;;
+  # v26 (2026-10-12, same project, torchcell/losses/latent_align.py): shaping the latent
+  # space by the labels. The cosine similarity of two strains' latent vectors is pulled
+  # toward the Pearson correlation of their 116-feature morphology vectors, weighted
+  # lambda beside the pinball loss. The marginal solution (every strain the same vector)
+  # pays this term from the first step, which the data loss never did (0.195 to 0.187
+  # across an escape). M_cls shapes the perturbed CLS at lambda 0.01, 0.1 and 1; M_zs
+  # shapes [CLS || z_S] at 0.1 and 1; one M_cls cell at lambda 1 without batch centering.
+  # lr 3e-4 (the only lr that escaped in v25), split seeds 0 to 3: 24 one-card tasks.
+  # Read with morph_v25_readout.py (window epochs 400 to 499; tags align<lambda>, src<source>).
+  #   sbatch -J 019-morph2w5-align -p cabbi --gres=gpu:1 --cpus-per-task=5 --mem=60g \
+  #       --time=0-08:00:00 --array=0-23%8 --export=ALL,W5_STAGE=morph_v26,... igb_expr_wave5.slurm
+  morph_v26) JOBS=(); SWEEP_OV=()
+          LA="multitask.latent_align.enabled=true multitask.latent_align.head=global regression_task.optimizer.lr=3e-4"
+          for s in 0 1 2 3; do
+            for lam in 0.1 1; do
+              JOBS+=("M_cls_s${s}:0")
+              SWEEP_OV+=("$LA multitask.latent_align.lambda=${lam} multitask.latent_align.source=cls wandb.tags=[v26,M_cls,align${lam},srccls,lr3e-4,split${s},init0]")
+              JOBS+=("M_zs_s${s}:0")
+              SWEEP_OV+=("$LA multitask.latent_align.lambda=${lam} multitask.latent_align.source=cls_zs wandb.tags=[v26,M_zs,align${lam},srccls_zs,lr3e-4,split${s},init0]")
+            done
+            JOBS+=("M_cls_s${s}:0")
+            SWEEP_OV+=("$LA multitask.latent_align.lambda=0.01 multitask.latent_align.source=cls wandb.tags=[v26,M_cls,align0.01,srccls,lr3e-4,split${s},init0]")
+            JOBS+=("M_cls_s${s}:0")
+            SWEEP_OV+=("$LA multitask.latent_align.lambda=1 multitask.latent_align.source=cls multitask.latent_align.center=false wandb.tags=[v26,M_cls,align1,srccls,nocenter,lr3e-4,split${s},init0]")
+          done
+          JOBS_EXPLICIT=1
+          RUNS_PER_GPU=1; STAGE_CONFIG=cgt_morph_v24
+          EXTRA_OV="trainer.max_epochs=${MORPH_EPOCHS:-500} data_module.batch_size=128 +data_module.materialize=true data_module.persistent_workers=true wandb.project=torchcell_019_morph_v25" ;;
+  # prot_v26 (2026-10-12, project torchcell_019_prot_v26): the same term on the knockout
+  # proteome. The S_prot arm (v21 small trunk: ProtT5, width 90, six layers, per-gene
+  # head) on the FULL fig3_proteome store (Messner 2023, every proteome genotype, not the
+  # both-label store of v21) at batch 128, the masked path off (mask_schedule null, so the
+  # alignment runs on the plain step), 600 epochs; the registered window is epochs 500 to
+  # 599, declared here before any cell is read. The latent is z_S, the pool over the
+  # strain's perturbed gene tokens (no perturbed CLS on this trunk), the label vector the
+  # measured proteins. Four reference tasks first (one per split, so each writes its
+  # split cache alone under %4), then lambda 0.1 and 1: 12 one-card tasks.
+  #   sbatch -J 019-prot2w1-align -p cabbi --gres=gpu:1 --cpus-per-task=5 --mem=60g \
+  #       --time=0-20:00:00 --array=0-11%4 --export=ALL,W5_STAGE=prot_v26,... igb_expr_wave5.slurm
+  prot_v26) JOBS=(); SWEEP_OV=()
+          PS="multitask.mask_schedule=null cell_dataset.query_file=fig3_proteome.cql cell_dataset.dataset_tag=fig3_proteome cell_dataset.require_modalities=[protein_abundance] regression_task.optimizer.lr=3e-4"
+          for s in 0 1 2 3; do
+            JOBS+=("S_prot_s${s}:0")
+            SWEEP_OV+=("$PS wandb.tags=[v26,S_prot,ref,lr3e-4,split${s},init0]")
+          done
+          for lam in 0.1 1; do for s in 0 1 2 3; do
+            JOBS+=("S_prot_s${s}:0")
+            SWEEP_OV+=("$PS multitask.latent_align.enabled=true multitask.latent_align.lambda=${lam} multitask.latent_align.source=zs multitask.latent_align.head=per_gene wandb.tags=[v26,S_prot,align${lam},srczs,lr3e-4,split${s},init0]")
+          done; done
+          JOBS_EXPLICIT=1
+          RUNS_PER_GPU=1; STAGE_CONFIG=cgt_expr_v21_small
+          EXTRA_OV="trainer.max_epochs=${PROT_EPOCHS:-600} data_module.batch_size=128 +data_module.materialize=true data_module.persistent_workers=true wandb.project=torchcell_019_prot_v26" ;;
   scale_n) JOBS=(); SWEEP_OV=()
           for wl in 45:6e-4 90:3e-4 180:1.5e-4 360:7.5e-5; do for s in 0 1 2; do
             JOBS+=("S_mask_s${s}:0")

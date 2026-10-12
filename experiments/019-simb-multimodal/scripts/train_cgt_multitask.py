@@ -124,6 +124,8 @@ from torchcell.losses.distributional import (
     make_dist_head,
     pit_ks,
 )
+from torchcell.losses.latent_align import SOURCES as LATENT_SOURCES
+from torchcell.losses.latent_align import latent_align_loss, strain_latent
 from torchcell.models.equivariant_cell_graph_transformer import (
     CellGraphTransformer,
     MaskedMultitaskLoss,
@@ -1000,6 +1002,12 @@ class MultitaskCGTTask(L.LightningModule):
         # gain uses the strain's own measurement or only the modality's marginal structure).
         self.condition_head: str | None = None
         self.condition_permute: bool = False
+        # LATENT ALIGNMENT (`multitask.latent_align`, the v26 round); None = off. An
+        # auxiliary term on the plain step: the cosine similarity of two strains' latent
+        # vectors (`source`: the perturbed CLS, z_S, or both) is pulled toward the Pearson
+        # correlation of their label vectors on `head`, weighted by `lambda` beside the
+        # data loss. Set by main(); keys lambda, source, head, min_overlap, center.
+        self.latent_align: dict[str, Any] | None = None
         # Wall clock for perf/epoch_seconds; None until the first epoch starts.
         self._epoch_t0: float | None = None
         self.save_hyperparameters(
@@ -1499,6 +1507,39 @@ class MultitaskCGTTask(L.LightningModule):
         total, per_head = self.loss(
             head_outputs, targets, masks, graph_reg_loss=reps["graph_reg_loss"]
         )
+        # LATENT ALIGNMENT. Added into `total` the way the graph prior is, so the
+        # optimizer sees one objective; the per-head losses above stay the pure data
+        # terms, and the term is logged on its own so a run with lambda 0 is a monitor
+        # of how much label similarity the latent carries. Logged in every stage,
+        # because the validation value is the honest read of whether the shaping
+        # transfers off the training strains.
+        la = self.latent_align
+        if la is not None and la["head"] in targets:
+            latent = strain_latent(
+                reps,
+                batch["gene"].perturbation_indices,
+                batch["gene"].perturbation_indices_batch,
+                la["source"],
+                self.model.pert_pooling,
+            )
+            align, n_pairs = latent_align_loss(
+                latent,
+                targets[la["head"]],
+                masks[la["head"]],
+                min_overlap=la["min_overlap"],
+                center=la["center"],
+            )
+            if n_pairs > 0:
+                total = total + la["lambda"] * align
+                self.log(
+                    f"{stage}/latent_align/loss", align, batch_size=bsz, sync_dist=True
+                )
+                self.log(
+                    f"{stage}/latent_align/pairs",
+                    float(n_pairs),
+                    batch_size=bsz,
+                    sync_dist=True,
+                )
         self.log(f"{stage}/loss", total, batch_size=bsz, sync_dist=True)
         for name, val in per_head.items():
             self.log(
@@ -3061,6 +3102,18 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
         if (standardize_heads_cfg or normalize_heads_cfg)
         else "raw",
         "graph_reg_lambda": float(cfg.model.graph_regularization.graph_reg_lambda),
+        # The v26 latent alignment term; 0 and "off" for every run that does not set it,
+        # so the round's cells group on these two keys without a null column.
+        "latent_align_lambda": (
+            float(_as_dict(cfg.multitask.get("latent_align", None)).get("lambda", 0.0))
+            if bool(_as_dict(cfg.multitask.get("latent_align", None)).get("enabled", False))
+            else 0.0
+        ),
+        "latent_align_source": (
+            str(_as_dict(cfg.multitask.get("latent_align", None)).get("source", "off"))
+            if bool(_as_dict(cfg.multitask.get("latent_align", None)).get("enabled", False))
+            else "off"
+        ),
         "lr": float(cfg.regression_task.optimizer.lr),
         "dropout": float(cfg.model.dropout),
         "weight_decay": float(cfg.regression_task.optimizer.weight_decay),
@@ -3336,6 +3389,36 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
             f"[conditioned] {task.condition_head} revealed in full on every step, "
             f"permuted across strains: {task.condition_permute}"
         )
+    _la = _as_dict(cfg.multitask.get("latent_align", None))
+    if bool(_la.get("enabled", False)):
+        if _sched is not None or _cond is not None:
+            raise ValueError(
+                "multitask.latent_align runs on the plain step only; set mask_schedule to "
+                "null and condition_head to null"
+            )
+        la_head = str(_la["head"])
+        if la_head not in active_heads:
+            raise ValueError(
+                f"multitask.latent_align.head={la_head!r} is not an active head {active_heads}"
+            )
+        la_source = str(_la["source"])
+        if la_source not in LATENT_SOURCES:
+            raise ValueError(
+                f"multitask.latent_align.source={la_source!r}, expected one of {LATENT_SOURCES}"
+            )
+        if la_source != "zs" and not bool(cfg.model.get("perturb_cls", False)):
+            raise ValueError(
+                f"multitask.latent_align.source={la_source!r} reads the perturbed CLS, "
+                "which needs model.perturb_cls=true"
+            )
+        task.latent_align = {
+            "lambda": float(_la["lambda"]),
+            "source": la_source,
+            "head": la_head,
+            "min_overlap": int(_la.get("min_overlap", 10)),
+            "center": bool(_la.get("center", True)),
+        }
+        print(f"[latent-align] {task.latent_align}")
     if task.train_eval_every > 0:
         print(
             f"[traineval] eval-mode train pass every {task.train_eval_every} epoch(s)"

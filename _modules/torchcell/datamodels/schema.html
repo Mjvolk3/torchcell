@@ -4334,6 +4334,11 @@
 <span class="sd">    - ``sequence_allele``: a designed allele the label states as a change (a point</span>
 <span class="sd">      substitution, an in-frame deletion or a duplication; ``- Allele``).</span>
 <span class="sd">    - ``truncation``: a truncated gene (``- Truncation``).</span>
+<span class="sd">    - ``transposon_insertion``: a transposon inserted in the gene's coding region, one</span>
+<span class="sd">      gene-level call over a pooled library's insertion mutants (Teteneva 2024: "only</span>
+<span class="sd">      insertions in the coding gene regions, which were assumed to inactivate the</span>
+<span class="sd">      respective gene function, were considered"; #910). The paper's Methods state the</span>
+<span class="sd">      class, since a pooled release labels each row by its gene alone.</span>
 <span class="sd">    """</span>
 
     <span class="n">deletion</span> <span class="o">=</span> <span class="s2">"deletion"</span>
@@ -4342,6 +4347,9 @@
     <span class="n">linked_marker</span> <span class="o">=</span> <span class="s2">"linked_marker"</span>
     <span class="n">sequence_allele</span> <span class="o">=</span> <span class="s2">"sequence_allele"</span>
     <span class="n">truncation</span> <span class="o">=</span> <span class="s2">"truncation"</span>
+    <span class="c1"># --- begin #910: a pooled Tn library's gene-level call ---------------------- #</span>
+    <span class="n">transposon_insertion</span> <span class="o">=</span> <span class="s2">"transposon_insertion"</span>
+    <span class="c1"># --- end #910 ---------------------------------------------------------------- #</span>
 
 
 <span class="n">RELEASED_STRAIN_KIND_SO</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">ReleasedStrainKind</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
@@ -4351,6 +4359,9 @@
     <span class="n">ReleasedStrainKind</span><span class="o">.</span><span class="n">linked_marker</span><span class="p">:</span> <span class="p">(</span><span class="s2">"SO:0001218"</span><span class="p">,</span> <span class="s2">"transgenic_insertion"</span><span class="p">),</span>
     <span class="n">ReleasedStrainKind</span><span class="o">.</span><span class="n">sequence_allele</span><span class="p">:</span> <span class="p">(</span><span class="s2">"SO:0001060"</span><span class="p">,</span> <span class="s2">"sequence_variant"</span><span class="p">),</span>
     <span class="n">ReleasedStrainKind</span><span class="o">.</span><span class="n">truncation</span><span class="p">:</span> <span class="p">(</span><span class="s2">"SO:0000159"</span><span class="p">,</span> <span class="s2">"deletion"</span><span class="p">),</span>
+    <span class="c1"># --- begin #910: the pair TransposonInsertionPerturbation pins -------------- #</span>
+    <span class="n">ReleasedStrainKind</span><span class="o">.</span><span class="n">transposon_insertion</span><span class="p">:</span> <span class="p">(</span><span class="s2">"SO:0001218"</span><span class="p">,</span> <span class="s2">"transgenic_insertion"</span><span class="p">),</span>
+    <span class="c1"># --- end #910 ---------------------------------------------------------------- #</span>
 <span class="p">}</span>
 <span class="sd">"""Sequence Ontology mechanism of each released kind, every pair one the schema</span>
 <span class="sd">already pins: the deletion leaves' ``deletion``, the marked-allele and degron leaves'</span>

@@ -5511,6 +5511,49 @@
 <span class="sd">"""Price 2018's MOPS rich defined medium without carbon: the medium of the 4 Keio</span>
 <span class="sd">carbon-source samples Wetmore 2015 and Price 2018 both release (rows 2 and 21)."""</span>
 <span class="c1"># --- end #1045 row 16 ------------------------------------------------------------ #</span>
+<span class="c1"># --- begin teteneva2024 (#910): natural lake water ------------------------------ #</span>
+<span class="c1">#: The Teteneva 2024 paper text as PMC renders it, mirrored in ``torchcell-raw`` (the</span>
+<span class="c1">#: library mirror held no Teteneva key when the loader was written); the source the</span>
+<span class="c1">#: quote below is cut from, relative to ``torchcell-raw/&lt;key&gt;/``.</span>
+<span class="n">_TETENEVA2024</span> <span class="o">=</span> <span class="s2">"tetenevaGenomewideScreenGenetic2024"</span>
+<span class="n">_TETENEVA2024_TEXT</span> <span class="o">=</span> <span class="s2">"paper/PMC11188689.1.txt"</span>
+<span class="n">_TETENEVA2024_TEXT_SHA</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"422bd7926fbeebfd6877e15f213e18914291b1f259a7086d66d66d0249353b2f"</span>
+<span class="p">)</span>
+<span class="n">_LAKE_WATER_QUOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"It is a man-made urban lake that is used for rainwater collection with no known "</span>
+    <span class="s2">"bacterial/chemical contamination."</span>
+<span class="p">)</span>
+
+<span class="n">LAKE_WATER</span> <span class="o">=</span> <span class="n">Media</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">"lake water, natural (composition not reported)"</span><span class="p">,</span>
+    <span class="n">state</span><span class="o">=</span><span class="s2">"liquid"</span><span class="p">,</span>
+    <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">base_medium</span><span class="o">=</span><span class="s2">"LAKE_WATER"</span><span class="p">,</span>
+    <span class="n">components</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">MediaComponent</span><span class="p">(</span>
+            <span class="n">compound</span><span class="o">=</span><span class="n">Compound</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"lake water (natural; composition not reported)"</span><span class="p">),</span>
+            <span class="n">role</span><span class="o">=</span><span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">complex_ingredient</span><span class="p">,</span>
+            <span class="n">definition</span><span class="o">=</span><span class="n">ComponentDefinition</span><span class="o">.</span><span class="n">intrinsically_undefined</span><span class="p">,</span>
+            <span class="n">note</span><span class="o">=</span><span class="s2">"a natural water sample: batch-variable by nature, and no chemical or "</span>
+            <span class="s2">"nutrient analysis of it is reported"</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">],</span>
+    <span class="n">provenance</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">_sv</span><span class="p">(</span>
+            <span class="s2">"a man-made urban lake near Marburg, Germany"</span><span class="p">,</span>
+            <span class="n">_LAKE_WATER_QUOTE</span><span class="p">,</span>
+            <span class="n">ck</span><span class="o">=</span><span class="n">_TETENEVA2024</span><span class="p">,</span>
+            <span class="n">sha</span><span class="o">=</span><span class="n">_TETENEVA2024_TEXT_SHA</span><span class="p">,</span>
+            <span class="n">uri</span><span class="o">=</span><span class="n">_TETENEVA2024_TEXT</span><span class="p">,</span>
+            <span class="n">note</span><span class="o">=</span><span class="s2">"Materials and methods, 'Water sampling'; the source is the raw "</span>
+            <span class="s2">"mirror's PMC text, not a library paper.md"</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">],</span>
+<span class="p">)</span>
+<span class="sd">"""A natural lake water, the base of every Teteneva 2024 medium: each water sample,</span>
+<span class="sd">filter-sterilized or not, derives from it (``teteneva2024.lake_water_medium``)."""</span>
+<span class="c1"># --- end teteneva2024 ------------------------------------------------------------- #</span>
 
 
 <span class="c1">#: Which of the fifty bacterial rows (rank in [[plan.bacteria-ontology-genome]]'s table,</span>
@@ -5621,6 +5664,11 @@
         <span class="s2">"2 Wetmore 2015: Data Set S1 'MOPS Rich Defined media_noCarbon' (4 Keio "</span>
         <span class="s2">"carbon-source experiments, set1IT067 to set1IT070)"</span><span class="p">,</span>
         <span class="s2">"21 Price 2018: Table S18 states the recipe (the same 4 Keio experiments)"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"LAKE_WATER"</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">"41 Teteneva 2024: the base of the six lake water media (water samples #1 to "</span>
+        <span class="s2">"#3, filter-sterilized or not); the paper describes the lake and the filtration "</span>
+        <span class="s2">"and reports no composition"</span><span class="p">,</span>
     <span class="p">),</span>
 <span class="p">}</span>
 <span class="sd">"""Use map for the bacterial entries; the keys are exactly the bacterial media."""</span>
@@ -6114,6 +6162,7 @@
     <span class="s2">"RCH2_DEFINED_NOCARBON_PRICE2018"</span><span class="p">:</span> <span class="n">RCH2_DEFINED_NOCARBON_PRICE2018</span><span class="p">,</span>
     <span class="s2">"MOPS_RICH_DEFINED_NOCARBON_PRICE2018"</span><span class="p">:</span> <span class="n">MOPS_RICH_DEFINED_NOCARBON_PRICE2018</span><span class="p">,</span>
     <span class="s2">"M9_AA_SCHMIDT2016"</span><span class="p">:</span> <span class="n">M9_AA_SCHMIDT2016</span><span class="p">,</span>
+    <span class="s2">"LAKE_WATER"</span><span class="p">:</span> <span class="n">LAKE_WATER</span><span class="p">,</span>
 <span class="p">}</span> <span class="o">|</span> <span class="p">{</span>
     <span class="n">_hm_key</span><span class="p">(</span><span class="n">compound</span><span class="p">,</span> <span class="n">partial</span><span class="p">):</span> <span class="n">HILLENMEYER_DROPOUT_MEDIA</span><span class="p">[</span><span class="n">label</span><span class="p">]</span>
     <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">compound</span><span class="p">,</span> <span class="n">partial</span> <span class="ow">in</span> <span class="n">_HILLENMEYER_DROPOUTS</span>
@@ -6195,6 +6244,8 @@
     <span class="s2">"carbon source is each sample's Condition_1 (D-galacturonic acid or D-glucose), "</span>
     <span class="s2">"carried as a carbon_source factor; the amino acids and nucleobases are "</span>
     <span class="s2">"supplements the table states"</span><span class="p">,</span>
+    <span class="s2">"LAKE_WATER"</span><span class="p">:</span> <span class="s2">"a natural water: no carbon source is added or reported; whatever "</span>
+    <span class="s2">"carbon it holds is inside the undefined water itself (Teteneva 2024)"</span><span class="p">,</span>
 <span class="p">}</span>
 
 

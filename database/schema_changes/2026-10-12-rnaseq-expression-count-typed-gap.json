@@ -2,7 +2,7 @@
   "record_version": 1,
   "slug": "rnaseq-expression-count-typed-gap",
   "date": "2026-10-12",
-  "pr": null,
+  "pr": 1081,
   "author_kind": "agent",
   "base_commit": "a03e2615f07c15d07a22b392201feae05b3bb8e7",
   "python_version": "3.13.0",

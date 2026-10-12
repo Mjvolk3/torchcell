@@ -46,6 +46,7 @@ from torchcell.datamodels.media import (
     M9_NOCARBON_PRICE2018,
     M9_NONITROGEN_PRICE2018,
     MOPS_MINIMAL,
+    MOPS_RICH_DEFINED_NOCARBON_PRICE2018,
 )
 from torchcell.datamodels.schema import (
     AssayType,
@@ -180,6 +181,8 @@ ROWS = [
     ),
 ]
 CARRIED = frozenset({"set1IT003", "set1IT007", "set1IT067", "set1IT071"})
+#: Table S5's label for Table S18's MOPS rich recipe (#1045 row 16).
+MOPS_RICH = "MOPS Rich Defined media_noCarbon"
 
 #: Supplementary Table 4's ``Solvent`` keyed as :func:`read_solvents` keys it, over the
 #: compounds these rows name plus the two non-water vehicles of the real sheet.
@@ -235,8 +238,8 @@ def test_the_pins_are_the_ones_the_wetmore_record_uses() -> None:
 
 
 def test_expected_records_is_kept_samples_times_mapped_genes() -> None:
-    assert (p.EXPECTED_SAMPLES, p.EXPECTED_GENES) == (147, 3768)
-    assert p.EXPECTED_RECORDS == 553896
+    assert (p.EXPECTED_SAMPLES, p.EXPECTED_GENES) == (151, 3768)
+    assert p.EXPECTED_RECORDS == 568968
 
 
 # --------------------------------------------------------------------------- #
@@ -247,7 +250,7 @@ def test_each_sample_gets_one_rule_and_its_source_paper() -> None:
     assert {n: s.drop_rule for n, s in specs.items()} == {
         "set1IT003": None,
         "set1IT007": p.DROP_DISREGARDED,
-        "set1IT067": p.DROP_MEDIUM_NOT_IN_LIBRARY,
+        "set1IT067": None,
         "set6IT068": p.DROP_MOTILITY,
         "set2IT026": None,
         "set2IT045": None,
@@ -264,7 +267,7 @@ def test_each_sample_gets_one_rule_and_its_source_paper() -> None:
     assert specs["set2IT045"].temperature_c == 28.0
 
 
-def test_the_withdrawal_outranks_the_medium_rule() -> None:
+def test_the_withdrawal_holds_on_the_mops_rich_medium() -> None:
     rows = [
         _row(
             "set1IT043",
@@ -339,6 +342,28 @@ def test_a_nitrogen_source_and_the_mops_medium_map_to_their_library_entries() ->
     assert isinstance(perturbation, EnvironmentPhysicalPerturbation)
     assert perturbation.factor is PhysicalFactor.nitrogen_source
     assert p.build_environment(specs["set2IT094"], SOLVENTS).media == MOPS_MINIMAL
+
+
+def test_a_mops_rich_carbon_sample_is_stored_on_table_s18s_recipe() -> None:
+    """#1045 row 16: the 4 MOPS rich samples were refused for want of a library entry.
+
+    The label now maps to Table S18's recipe, the carbon-source group accepts it, and the
+    sample's Condition_1 is the carbon factor on top of the carbon-free medium.
+    """
+    assert p.MEDIA_BY_LABEL[MOPS_RICH] is MOPS_RICH_DEFINED_NOCARBON_PRICE2018
+    assert MOPS_RICH in p.GROUP_MEDIA["carbon_source"]
+    environment = p.build_environment(_specs()["set1IT067"], SOLVENTS)
+    assert environment.media == MOPS_RICH_DEFINED_NOCARBON_PRICE2018
+    (perturbation,) = environment.perturbations
+    assert isinstance(perturbation, EnvironmentPhysicalPerturbation)
+    assert perturbation.factor is PhysicalFactor.carbon_source
+    assert perturbation.magnitude is not None
+    assert (perturbation.magnitude.value, perturbation.magnitude.unit) == (
+        22.0,
+        ConcentrationUnit.millimolar,
+    )
+    assert not hasattr(p, "DROP_MEDIUM_NOT_IN_LIBRARY")
+    assert "medium_not_in_media_library" not in p.DROP_RULES
 
 
 def test_a_stress_compound_keeps_its_printed_dose_and_table_s4s_vehicle() -> None:
@@ -453,6 +478,11 @@ def test_the_standard_error_is_the_larger_estimate_and_reproduces_t() -> None:
     assert release.n_values == 6
     assert release.n_naive_larger == 2
     assert release.t_max_abs_deviation < 1e-12
+    # the released t is carried verbatim, column-aligned to `samples` (#1045 row 23)
+    np.testing.assert_array_equal(
+        release.t_statistic,
+        tables["t"][["set1IT004 D-Glucose (C)", "set1IT003 D-Glucose (C)"]].to_numpy(),
+    )
 
 
 def test_a_t_that_the_larger_estimate_does_not_reproduce_is_refused() -> None:
@@ -565,7 +595,7 @@ def test_the_genotype_is_a_derived_gene_level_tn5_insertion() -> None:
 
 
 def test_the_phenotype_stores_the_standard_error_and_gaps_the_strain_count() -> None:
-    phenotype = p.build_phenotype(-1.5, 0.3, "Keio:set1IT003")
+    phenotype = p.build_phenotype(-1.5, 0.3, -4.74, "Keio:set1IT003")
     assert phenotype.measurement_type is MeasurementType.log2_ratio
     assert phenotype.assay_type is AssayType.pooled_competitive_growth_barcode
     assert phenotype.environment_response == -1.5
@@ -578,6 +608,9 @@ def test_the_phenotype_stores_the_standard_error_and_gaps_the_strain_count() -> 
     assert [g.field for g in phenotype.provenance_gaps] == ["n_samples", "sample_unit"]
     assert phenotype.screen_id == "Keio:set1IT003"
     assert phenotype.units == p.UNITS
+    # the released t is stored verbatim and named in the units (#1045 row 23)
+    assert phenotype.environment_response_t_statistic == -4.74
+    assert "environment_response_t_statistic" in p.UNITS
 
 
 def test_records_run_sample_by_sample_with_each_samples_publication() -> None:
@@ -626,6 +659,13 @@ def test_records_run_sample_by_sample_with_each_samples_publication() -> None:
                 publication.doi,
             )
         )
+        # each record carries its own cell of fit_t.tab (#1045 row 23)
+        phenotype = experiment.phenotype
+        response, se = phenotype.environment_response, phenotype.environment_response_se
+        assert response is not None and se is not None
+        assert phenotype.environment_response_t_statistic == pytest.approx(
+            response / math.sqrt(0.1**2 + se**2)
+        )
     assert seen == [
         ("BW25113_0001", -1.0, 0.3, "Keio:set1IT003", "10.1128/mBio.00306-15"),
         ("BW25113_0003", 3.0, 0.7, "Keio:set1IT003", "10.1128/mBio.00306-15"),
@@ -668,15 +708,14 @@ def test_the_inventory_counts_samples_genes_and_records_by_rule() -> None:
         p.SampleSource.price2018.value: 5,
     }
     assert counts.kept_samples_by_source == {
-        p.SampleSource.wetmore2015.value: 2,
+        p.SampleSource.wetmore2015.value: 3,
         p.SampleSource.price2018.value: 4,
     }
-    assert (counts.source_records, counts.kept_records) == (90, 48)
+    assert (counts.source_records, counts.kept_records) == (90, 56)
     assert [(d.rule, d.items, d.n_records) for d in counts.drops] == [
         (p.DROP_DISREGARDED, ("set1IT007",), 10),
-        (p.DROP_MEDIUM_NOT_IN_LIBRARY, ("set1IT067",), 10),
         (p.DROP_MOTILITY, ("set6IT068",), 10),
-        (p.DROP_NO_ECK_PAIR, ("b0500", "b1172"), 12),
+        (p.DROP_NO_ECK_PAIR, ("b0500", "b1172"), 14),
     ]
     assert counts.source_records == counts.kept_records + sum(
         d.n_records for d in counts.drops
@@ -1207,7 +1246,6 @@ def test_the_loader_builds_the_synthetic_release_end_to_end(mirrored: Path) -> N
     assert (drops["source_records"], drops["kept_records"]) == (28, 8)
     assert [(d["rule"], d["items"], d["n_records"]) for d in drops["drops"]] == [
         (p.DROP_DISREGARDED, ["set1IT007"], 7),
-        (p.DROP_MEDIUM_NOT_IN_LIBRARY, [], 0),
         (p.DROP_MOTILITY, ["set6IT068"], 7),
         (p.DROP_NO_ECK_PAIR, ["b0005", "b0006", "b0099"], 6),
     ]
@@ -1945,9 +1983,8 @@ def test_the_sample_inventory_by_source_and_rule(
         by_rule.setdefault(spec.drop_rule, []).append(spec.name)
     assert len(real_specs) == 162
     assert {k: len(v) for k, v in by_rule.items()} == {
-        None: 147,
+        None: 151,
         p.DROP_DISREGARDED: 4,
-        p.DROP_MEDIUM_NOT_IN_LIBRARY: 4,
         p.DROP_MOTILITY: 7,
     }
     assert by_rule[p.DROP_DISREGARDED] == [
@@ -1956,15 +1993,12 @@ def test_the_sample_inventory_by_source_and_rule(
         "set1IT043",
         "set1IT044",
     ]
-    assert by_rule[p.DROP_MEDIUM_NOT_IN_LIBRARY] == [
-        "set1IT067",
-        "set1IT068",
-        "set1IT069",
-        "set1IT070",
-    ]
+    mops_rich = [s.name for s in real_specs if s.media_label == MOPS_RICH]
+    assert mops_rich == ["set1IT067", "set1IT068", "set1IT069", "set1IT070"]
+    assert all(s.drop_rule is None for s in real_specs if s.name in mops_rich)
     assert sum(s.source is p.SampleSource.wetmore2015 for s in real_specs) == 92
     kept = [s for s in real_specs if s.drop_rule is None]
-    assert sum(s.source is p.SampleSource.wetmore2015 for s in kept) == 84
+    assert sum(s.source is p.SampleSource.wetmore2015 for s in kept) == 88
     assert sum(s.source is p.SampleSource.price2018 for s in kept) == 63
     assert sorted({s.name.split("IT")[0] for s in real_specs}) == [
         "set1",

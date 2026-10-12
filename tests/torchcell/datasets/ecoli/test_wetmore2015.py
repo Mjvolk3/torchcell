@@ -43,6 +43,7 @@ from torchcell.datamodels.media import (
     LB_LENNOX,
     M9_NOCARBON_WETMORE2015,
     M9_NONITROGEN_WETMORE2015,
+    MOPS_RICH_DEFINED_NOCARBON_PRICE2018,
 )
 from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
@@ -815,14 +816,15 @@ def _specs(rows: list[dict[str, Any]] | None = None) -> tuple[w.SampleSpec, ...]
     )
 
 
-def test_classify_samples_refuses_withdrawn_failed_and_unlisted_media() -> None:
+def test_classify_samples_refuses_withdrawn_and_failed_samples() -> None:
     specs = {s.name: s for s in _specs()}
     assert list(specs) == [r["name"] for r in S1_ROWS[1:]]
     assert {n: s.drop_rule for n, s in specs.items()} == {
         "set1IT003": None,
         "set1IT007": w.DROP_WITHDRAWN,
         "set1IT030": w.DROP_FAILED_QUALITY,
-        "set1IT067": w.DROP_MEDIUM_NOT_IN_LIBRARY,
+        # stored since #1045 row 16 gave the label a library entry
+        "set1IT067": None,
         "set1IT071": None,
         "set1IT059": None,
         "set2IT069": None,
@@ -832,6 +834,19 @@ def test_classify_samples_refuses_withdrawn_failed_and_unlisted_media() -> None:
     assert specs["set2IT069"].temperature_c == 28.0
     assert specs["set1IT059"].units == "mg/mL"
     assert specs["set1IT003"].screen_id == "Keio:set1IT003"
+
+
+def test_a_mops_rich_sample_is_stored_on_price_table_s18s_recipe() -> None:
+    """#1045 row 16: Data Set S1's own row for the label prints unusable micronutrients.
+
+    The label maps to Price 2018 Table S18's recipe for the same medium (the same lab's
+    later table, which re-releases these samples), and the carbon-source group accepts
+    it, so the sample's Condition_1 is the carbon factor on the carbon-free medium.
+    """
+    assert w.MEDIA_BY_LABEL[_MOPS] is MOPS_RICH_DEFINED_NOCARBON_PRICE2018
+    assert _MOPS in w.GROUP_MEDIA["carbon_source"]
+    assert not hasattr(w, "DROP_MEDIUM_NOT_IN_LIBRARY")
+    assert "medium_not_in_media_library" not in w.DROP_RULES
 
 
 @pytest.mark.parametrize(
@@ -1206,9 +1221,8 @@ def _dataset_root(data_root: Path) -> Path:
 def test_the_loader_builds_the_synthetic_release_end_to_end(mirrored: Path) -> None:
     root = _dataset_root(mirrored)
     dataset = w.RbTnseqWetmore2015Dataset(root=str(root))
-    # four kept samples (set1IT007 withdrawn, set1IT030 failed, set1IT067 on MOPS Rich
-    # Defined) x four mapped genes
-    assert len(dataset) == 16
+    # five kept samples (set1IT007 withdrawn, set1IT030 failed) x four mapped genes
+    assert len(dataset) == 20
     assert sorted(dataset.gene_set) == [
         "BW25113_0001",
         "BW25113_0002",
@@ -1217,7 +1231,7 @@ def test_the_loader_builds_the_synthetic_release_end_to_end(mirrored: Path) -> N
     ]
     references = dataset.experiment_reference_index
     assert references is not None
-    assert len(references) == 4
+    assert len(references) == 5
     first = dataset[0]
     phenotype = first["experiment"]["phenotype"]
     assert phenotype["screen_id"] == "Keio:set1IT003"
@@ -1242,17 +1256,22 @@ def test_the_loader_builds_the_synthetic_release_end_to_end(mirrored: Path) -> N
     # the withdrawn sample is absent from the store, not flagged in it
     assert {
         dataset[i]["experiment"]["phenotype"]["screen_id"] for i in range(len(dataset))
-    } == {"Keio:set1IT003", "Keio:set1IT071", "Keio:set1IT059", "Keio:set2IT069"}
+    } == {
+        "Keio:set1IT003",
+        "Keio:set1IT067",
+        "Keio:set1IT071",
+        "Keio:set1IT059",
+        "Keio:set2IT069",
+    }
     drops = json.loads((root / "preprocess" / "dropped_records.json").read_text())
-    assert (drops["source_records"], drops["stored_records"]) == (49, 16)
+    assert (drops["source_records"], drops["stored_records"]) == (49, 20)
     assert [(d["rule"], d["items"], d["n_records"]) for d in drops["rules"]] == [
         (w.DROP_WITHDRAWN, ["set1IT007"], 7),
         (w.DROP_FAILED_QUALITY, ["set1IT030"], 7),
-        (w.DROP_MEDIUM_NOT_IN_LIBRARY, ["set1IT067"], 7),
-        (w.DROP_NO_ECK_PAIR, ["b0005", "b0006", "b0099"], 12),
+        (w.DROP_NO_ECK_PAIR, ["b0005", "b0006", "b0099"], 15),
     ]
-    # every released value is accounted for: stored + the four drop rules
-    assert drops["source_records"] == 16 + 7 + 7 + 7 + 12
+    # every released value is accounted for: stored + the three drop rules
+    assert drops["source_records"] == 20 + 7 + 7 + 15
     assert drops["withdrawn_refused"] == ["set1IT007"]
     # the refusal carries the authors' own words, bound to the file they were read from
     withdrawal = next(d for d in drops["rules"] if d["rule"] == w.DROP_WITHDRAWN)
@@ -1303,35 +1322,42 @@ def test_verify_build_runs_every_row_and_the_compendium_cross_check(
     root = _dataset_root(mirrored)
     w.RbTnseqWetmore2015Dataset(root=str(root))
     with pytest.raises(FileNotFoundError, match="the compendium store the L4"):
-        w.verify_build(str(root), data_root=str(mirrored), expected_count=16)
+        w.verify_build(str(root), data_root=str(mirrored), expected_count=20)
     _served_copy(
         mirrored,
-        {"set1IT003": None, "set1IT067": w.DROP_MEDIUM_NOT_IN_LIBRARY, "set9": None},
+        {
+            "set1IT003": None,
+            "set1IT007": w.DROP_WITHDRAWN,
+            "set1IT067": None,
+            "set9": None,
+        },
     )
     monkeypatch.setattr(
         w,
         "subsumption_record",
         lambda data_root=None: SimpleNamespace(
-            carried=("set1IT003", "set1IT067", "set1IT071")
+            carried=("set1IT003", "set1IT007", "set1IT067", "set1IT071")
         ),
     )
     monkeypatch.setattr(w, "EXPECTED_WITHDRAWN", ("set1IT007",))
-    monkeypatch.setattr(w, "EXPECTED_SAMPLES", 4)
-    report = w.verify_build(str(root), data_root=str(mirrored), expected_count=16)
+    monkeypatch.setattr(w, "EXPECTED_SAMPLES", 5)
+    report = w.verify_build(str(root), data_root=str(mirrored), expected_count=20)
     results = {r.name: r for r in report.results}
     assert {name: r.passed for name, r in results.items() if not r.passed} == {}
     assert results["count"].passed is True
     assert results["withdrawn_samples_refused_not_stored"].message == (
         "SUPPLEMENTARY: 0 records of the 1 samples the authors withdrew "
-        "(['set1IT007']); 0 of them are in the store; 4 samples stored, expected 4"
+        "(['set1IT007']); 0 of them are in the store; 5 samples stored, expected 5"
     )
     cross = results["compendium_cross_check_price2018"]
     assert cross.level == Level.L4
-    # the copy holds the same values, so every compared sample agrees exactly
-    assert cross.details["compared"] == ["set1IT003", "set1IT071"]
-    assert cross.details["absent_here"] == {"set1IT067": w.DROP_MEDIUM_NOT_IN_LIBRARY}
-    assert cross.details["absent_there"] == {"set1IT067": w.DROP_MEDIUM_NOT_IN_LIBRARY}
+    # the copy holds the same values, so every compared sample agrees exactly; the MOPS
+    # rich sample is compared in both stores since #1045 row 16
+    assert cross.details["compared"] == ["set1IT003", "set1IT067", "set1IT071"]
+    assert cross.details["absent_here"] == {"set1IT007": w.DROP_WITHDRAWN}
+    assert cross.details["absent_there"] == {"set1IT007": w.DROP_WITHDRAWN}
     assert [a["pearson_r"] for a in cross.details["agreements"]] == [
+        pytest.approx(1.0),
         pytest.approx(1.0),
         pytest.approx(1.0),
     ]
@@ -1340,7 +1366,7 @@ def test_verify_build_runs_every_row_and_the_compendium_cross_check(
     check = json.loads(
         (root / "preprocess" / "compendium_cross_check.json").read_text()
     )
-    assert check["n_values_compared"] == 8
+    assert check["n_values_compared"] == 12
 
 
 def _value(
@@ -1565,9 +1591,9 @@ def test_inventory_closes_over_every_released_value() -> None:
         counts.source_records,
         counts.good_table_records,
         counts.stored_records,
-    ) == (7, 6, 4, 49, 42, 16)
+    ) == (7, 6, 5, 49, 42, 20)
     assert counts.stored_samples_by_group == {
-        "carbon source": 2,
+        "carbon source": 3,
         "nitrogen source": 1,
         "LB": 1,
     }
@@ -1664,7 +1690,7 @@ def test_the_loader_inventory_off_the_deposited_bytes() -> None:
         counts.source_genes,
         counts.stored_genes,
         counts.stored_records,
-    ) == (101, 92, 84, w.EXPECTED_GENES + 18, w.EXPECTED_GENES, w.EXPECTED_RECORDS)
+    ) == (101, 92, 88, w.EXPECTED_GENES + 18, w.EXPECTED_GENES, w.EXPECTED_RECORDS)
     assert counts.stored_samples == w.EXPECTED_SAMPLES
     assert counts.quality_rules_reproduce_u is True
     assert [f.name for f in counts.failed] == [
@@ -1680,7 +1706,7 @@ def test_the_loader_inventory_off_the_deposited_bytes() -> None:
     ]
     assert counts.withdrawn_refused == w.EXPECTED_WITHDRAWN
     assert counts.stored_samples_by_group == {
-        "carbon source": 57,
+        "carbon source": 61,
         "nitrogen source": 26,
         "LB": 1,
     }
@@ -1695,8 +1721,13 @@ def test_the_loader_inventory_off_the_deposited_bytes() -> None:
         "eck_absent_from_bw25113": 6,
         "eck_not_one_to_one": 5,
     }
-    # 29, not 30: the withdrawn samples' own Condition_1 label is refused with them
-    assert len(counts.unidentified_compounds) == 29
+    # 29 before the #726 curator pass gave the condition labels their rows; measured
+    # 2026-10-12, only the failed fumarate sample's label and the casamino acids
+    # hydrolysate stay without a structure identifier
+    assert counts.unidentified_compounds == {
+        "Sodium Fumarate dibasic": 1,
+        "casamino acids": 4,
+    }
 
 
 @pytest.mark.data

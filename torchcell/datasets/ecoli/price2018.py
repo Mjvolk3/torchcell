@@ -43,8 +43,9 @@ across records and ``screen_id`` = ``Keio:<sample name>`` keeps them distinct.
   released t statistic is computed from: ``t = fit / sqrt(0.1^2 + SE^2)`` holds for every
   value of the 162 samples (Wetmore's moderated t, sigma 0.1), checked at build time. The
   naive estimate is the larger one for 35.75% of the values, so storing the
-  strain-consistency column alone would overstate precision there. The t statistic itself
-  has no slot on the phenotype and is not stored.
+  strain-consistency column alone would overstate precision there. The released t itself
+  is stored in ``environment_response_t_statistic`` (#1045 row 23), as Wetmore 2015's
+  loader stores its own; it is a test of the value, so it never feeds the SE.
 * ``n_samples`` (usable strains per gene) and ``sample_unit`` are typed gaps: the count is
   released only inside the R image (``fit.image``, field ``n``); Table S20 gives only its
   median, 12.
@@ -58,7 +59,8 @@ across records and ``screen_id`` = ``Keio:<sample name>`` keeps them distinct.
 * Reference: per sample, the typical gene of that sample (fitness 0 by the
   normalization), in the sample's own environment.
 * Environment: Table S5's medium through the media library (``LB`` is ``LB_LENNOX``, the
-  M9 and MOPS media are Price's own Table S18 entries), its temperature, and its
+  M9 and MOPS media are Price's own Table S18 entries, ``MOPS Rich Defined
+  media_noCarbon`` among them since #1045 row 16), its temperature, and its
   Condition_1: a carbon or nitrogen source is
   ``EnvironmentPhysicalPerturbation(factor=carbon_source | nitrogen_source)`` with the
   compound as ``agent``; a stress compound is a ``SmallMoleculePerturbation`` whose
@@ -77,10 +79,11 @@ DROPPED SAMPLES (counted in ``preprocess/dropped_records.json``): the four sucro
 D-mannitol samples the authors' own 2021 note withdraws (``wetmore.AUTHOR_WITHDRAWAL``,
 the typed refusal reason Wetmore 2015's own loader refuses the same four samples under:
 author-withdrawn data is bad data, so it is refused by both, never stored and flagged);
-the four ``MOPS Rich Defined
-media_noCarbon`` samples (no media-library entry); the seven soft-agar motility samples
-(no media-library entry for 0.3% LB Lennox agar, and the readout is a spatial cut, not
-growth in a condition).
+the seven soft-agar motility samples (no media-library entry for 0.3% LB Lennox agar, and
+the readout is a spatial cut, not growth in a condition). The four ``MOPS Rich Defined
+media_noCarbon`` samples (``set1IT067`` to ``set1IT070``) were refused under
+``medium_not_in_media_library`` until #1045 row 16 added Table S18's recipe to the
+library (``MOPS_RICH_DEFINED_NOCARBON_PRICE2018``); they are stored now.
 
 ESSENTIALITY (:class:`GeneEssentialityPrice2018EcoliDataset`). Supplementary Table 1's
 324 ``orgId == "Keio"`` rows, one record each, as
@@ -170,6 +173,7 @@ from torchcell.datamodels.media import (
     M9_NOCARBON_PRICE2018,
     M9_NONITROGEN_PRICE2018,
     MOPS_MINIMAL,
+    MOPS_RICH_DEFINED_NOCARBON_PRICE2018,
 )
 from torchcell.datamodels.schema import (
     BW25113_BACKGROUND_GENOTYPE,
@@ -1129,6 +1133,10 @@ class ReleaseTables(BaseModel):
     samples: tuple[str, ...]
     fitness: npt.NDArray[np.float64]
     standard_error: npt.NDArray[np.float64]
+    t_statistic: npt.NDArray[np.float64] = Field(
+        description="the released moderated t (fit_t.tab), genes x samples, stored per "
+        "record in environment_response_t_statistic"
+    )
     n_values: int
     n_naive_larger: int = Field(
         description="values whose read-count estimate exceeds the strain-consistency one"
@@ -1209,6 +1217,7 @@ def align_release(
         samples=tuple(samples),
         fitness=values,
         standard_error=standard_error,
+        t_statistic=arrays["t"],
         n_values=int(values.size),
         n_naive_larger=int((arrays["se_naive"] > arrays["se_obs"]).sum()),
         t_max_abs_deviation=deviation,
@@ -1252,7 +1261,6 @@ PUBLICATIONS: dict[SampleSource, Publication] = {
 
 #: The authors' own withdrawal, the same typed reason Wetmore 2015's loader refuses on.
 DROP_DISREGARDED = wetmore.AUTHOR_WITHDRAWAL.rule
-DROP_MEDIUM_NOT_IN_LIBRARY = "medium_not_in_media_library"
 DROP_MOTILITY = "motility_soft_agar_assay"
 DROP_NO_ECK_PAIR = "no_one_to_one_eck_pair"
 
@@ -1263,9 +1271,6 @@ DROP_RULES: dict[str, str] = {
     "sucrose or D-mannitol (wetmore2015.AUTHOR_WITHDRAWAL.conditions), so the measured "
     "response is not a response to the named compound and no record of these samples "
     "is stored, by this loader or by Wetmore 2015's own",
-    DROP_MEDIUM_NOT_IN_LIBRARY: "'MOPS Rich Defined media_noCarbon' has no MEDIA_LIBRARY "
-    "entry (Table S18 states it; the bacterial media tranche left it out), and a "
-    "free-text medium joins nothing",
     DROP_MOTILITY: "an LB 0.3% soft-agar plate cut into 'outer' or 'inner' regions: no "
     "MEDIA_LIBRARY entry for LB Lennox soft agar (LB_LENNOX is liquid, LB_AGAR is Miller "
     "at 2%), and the readout is a spatial selection, not growth in a condition",
@@ -1274,8 +1279,8 @@ DROP_RULES: dict[str, str] = {
     "BW25113 lacks or carries on several loci); per gene in identifier_mapping.json",
 }
 #: The source's own statement a rule rests on, verbatim with its sha256. Only the
-#: withdrawal is the source's own; the other three rules are this loader's typing (the
-#: media library, the motility readout, the ECK crosswalk), so they carry None.
+#: withdrawal is the source's own; the other two rules are this loader's typing (the
+#: motility readout, the ECK crosswalk), so they carry None.
 DROP_RULE_SOURCES: dict[str, SourcedValue] = {
     DROP_DISREGARDED: wetmore.AUTHOR_WITHDRAWAL.instruction
 }
@@ -1286,9 +1291,8 @@ MEDIA_BY_LABEL: dict[str, Media] = {
     "M9 minimal media_noCarbon": M9_NOCARBON_PRICE2018,
     "M9 minimal media_noNitrogen": M9_NONITROGEN_PRICE2018,
     "MOPS minimal media_noCarbon": MOPS_MINIMAL,
+    "MOPS Rich Defined media_noCarbon": MOPS_RICH_DEFINED_NOCARBON_PRICE2018,
 }
-#: Table S5 ``Media`` values that are dropped, not refused.
-UNLISTED_MEDIA: frozenset[str] = frozenset({"MOPS Rich Defined media_noCarbon"})
 
 GroupKind = Literal["carbon_source", "nitrogen_source", "stress", "plain"]
 #: Table S5 ``Group`` -> how its Condition_1 enters the environment.
@@ -1301,7 +1305,11 @@ GROUP_KINDS: dict[str, GroupKind] = {
 #: The media a group may name; a pairing outside this is refused.
 GROUP_MEDIA: dict[GroupKind, frozenset[str]] = {
     "carbon_source": frozenset(
-        {"M9 minimal media_noCarbon", "MOPS minimal media_noCarbon"}
+        {
+            "M9 minimal media_noCarbon",
+            "MOPS minimal media_noCarbon",
+            "MOPS Rich Defined media_noCarbon",
+        }
     ),
     "nitrogen_source": frozenset({"M9 minimal media_noNitrogen"}),
     "stress": frozenset({"LB"}),
@@ -1408,8 +1416,6 @@ def classify_samples(
         drop: str | None = None
         if condition in wetmore.AUTHOR_WITHDRAWAL.conditions:
             drop = DROP_DISREGARDED
-        elif media_label in UNLISTED_MEDIA:
-            drop = DROP_MEDIUM_NOT_IN_LIBRARY
         elif group == "motility":
             drop = DROP_MOTILITY
         else:
@@ -1745,7 +1751,8 @@ UNITS = (
     "1.0.3): normalized log2 ratio of the gene's insertion-strain barcode abundance at "
     "the end of growth in the condition over the time-zero sample, weighted over the "
     "gene's usable strains, typical gene = 0; SE = max(strain-consistency, read-count) "
-    "estimate"
+    "estimate; environment_response_t_statistic = the released moderated t "
+    "(fit_t.tab) = fit / sqrt(0.1^2 + SE^2)"
 )
 UNITS_REFERENCE = "the typical gene of this sample (gene fitness is normalized to 0)"
 DESCRIPTION = (
@@ -1773,15 +1780,16 @@ def build_genotype(mapping: GeneMapping) -> Genotype:
 
 
 def build_phenotype(
-    fitness: float, standard_error: float, screen_id: str
+    fitness: float, standard_error: float, t_statistic: float, screen_id: str
 ) -> EnvironmentResponsePhenotype:
-    """One gene's fitness in one sample, with the paper's standard error."""
+    """One gene's fitness in one sample, with the paper's SE and the released t."""
     return EnvironmentResponsePhenotype(
         measurement_type=MeasurementType.log2_ratio,
         assay_type=AssayType.pooled_competitive_growth_barcode,
         environment_response=fitness,
         environment_response_uncertainty=standard_error,
         environment_response_uncertainty_type=UncertaintyType.standard_error,
+        environment_response_t_statistic=t_statistic,
         screen_id=screen_id,
         units=UNITS,
         provenance_gaps=[N_SAMPLES_GAP, SAMPLE_UNIT_GAP],
@@ -1878,6 +1886,7 @@ def iter_records(
                     phenotype=build_phenotype(
                         float(release.fitness[i, j]),
                         float(release.standard_error[i, j]),
+                        float(release.t_statistic[i, j]),
                         sample.spec.screen_id,
                     ),
                 ),
@@ -1886,8 +1895,9 @@ def iter_records(
             )
 
 
-#: Records the build writes: 147 kept samples x 3,768 mapped genes (measured 2026-10-07).
-EXPECTED_SAMPLES = 147
+#: Records the build writes: 151 kept samples x 3,768 mapped genes (147 measured
+#: 2026-10-07, plus the 4 MOPS rich samples #1045 row 16 keeps).
+EXPECTED_SAMPLES = 151
 EXPECTED_GENES = 3768
 EXPECTED_RECORDS = EXPECTED_SAMPLES * EXPECTED_GENES
 
@@ -1965,7 +1975,7 @@ def inventory(
             n_records=sum(1 for s in specs if s.drop_rule == rule)
             * identifiers.n_source_genes,
         )
-        for rule in (DROP_DISREGARDED, DROP_MEDIUM_NOT_IN_LIBRARY, DROP_MOTILITY)
+        for rule in (DROP_DISREGARDED, DROP_MOTILITY)
     ]
     drops.append(
         DropRuleCount(
@@ -2441,7 +2451,7 @@ def selection_medium() -> Media:
 def essentiality_environment() -> Environment:
     """The library-isolation condition: the selection plates at 37 C.
 
-    This is NOT one of the 147 fitness-assay environments: the call is made on the
+    This is NOT one of the fitness-assay environments: the call is made on the
     library as isolated (``ESSENTIAL_CONDITION``). Both durations are typed gaps, and
     ``aerobicity`` keeps the field default, since plates incubated in air are never
     stated and the field cannot be ``None``.

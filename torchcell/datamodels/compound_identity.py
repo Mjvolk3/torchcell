@@ -78,7 +78,7 @@ from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
 # The committed table lives next to this module; its bytes are the canonical,
 # sha256-pinned artifact. The builder recomputes + prints this constant.
 _TABLE_PATH = Path(__file__).with_name("compound_identity_table.json")
-_TABLE_SHA256 = "77fbc85b392e33622713db65f0ec6013c5ba1d268c919e9c5bdc6b3ad6d54c39"
+_TABLE_SHA256 = "3042ca39de93cd381e1ef2b07494c3c575e75a05de820e757c8cb43487c09307"
 
 # Conservative, DOCUMENTED synonym canonicalization (normalized -> normalized),
 # applied BEFORE lookup. Only spellings we are certain name the SAME compound --

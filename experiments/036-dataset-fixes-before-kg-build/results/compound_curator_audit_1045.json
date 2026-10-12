@@ -1,0 +1,55 @@
+{
+  "summary": {
+    "input_list": "torchcell/datamodels/compound_identity_inputs/audit_1045_media.txt",
+    "input_list_sha256": "7b1d1deafebf30d00a605c7a9e416928454afca3d4de0b38ddc0535b23d12823",
+    "table_before": {
+      "sha256": "77fbc85b392e33622713db65f0ec6013c5ba1d268c919e9c5bdc6b3ad6d54c39",
+      "records": 5723
+    },
+    "table_after": {
+      "sha256": "3042ca39de93cd381e1ef2b07494c3c575e75a05de820e757c8cb43487c09307",
+      "records": 5727
+    },
+    "rows_added": 4,
+    "folds": [],
+    "table_written": true
+  },
+  "labels": [
+    {
+      "label": "potassium hydroxide",
+      "row_name": "potassium hydroxide",
+      "inchikey": "KWYUFKZDYYNOTN-UHFFFAOYSA-M",
+      "pubchem_cid": 14797,
+      "chebi_id": "CHEBI:32035",
+      "resolution_status": "RESOLVED",
+      "smiles": "[OH-].[K+]"
+    },
+    {
+      "label": "guanine",
+      "row_name": "guanine",
+      "inchikey": "UYTPUPDQBNUYGX-UHFFFAOYSA-N",
+      "pubchem_cid": 135398634,
+      "chebi_id": "CHEBI:16235",
+      "resolution_status": "RESOLVED",
+      "smiles": "C1=NC2=C(N1)C(=O)NC(=N2)N"
+    },
+    {
+      "label": "L-aspartic acid potassium salt",
+      "row_name": "L-aspartic acid potassium salt",
+      "inchikey": "TXXVQZSTAVIHFD-DKWTVANSSA-M",
+      "pubchem_cid": 23672742,
+      "chebi_id": null,
+      "resolution_status": "RESOLVED",
+      "smiles": "C(C(C(=O)[O-])N)C(=O)O.[K+]"
+    },
+    {
+      "label": "L-cysteine hydrochloride monohydrate",
+      "row_name": "L-cysteine hydrochloride monohydrate",
+      "inchikey": "QIJRTFXNRTXDIP-JIZZDEOASA-N",
+      "pubchem_cid": 23462,
+      "chebi_id": "CHEBI:91248",
+      "resolution_status": "RESOLVED",
+      "smiles": "C(C(C(=O)O)N)S.O.Cl"
+    }
+  ]
+}

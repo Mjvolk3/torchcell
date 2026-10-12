@@ -327,7 +327,7 @@ def test_the_released_table_ledger_matches_issue_598() -> None:
     pangenome = {g: n for g, n in ledger.served_ids.items() if g not in served}
     assert (len(pangenome), sum(pangenome.values())) == (12 + 17, 461 + 16_031)
     assert pangenome["X39-augustus_masked.2.CGIPLA_MA"] == 190
-    assert pangenome["X142-augustus_masked.1731.ATP_4"] == 944
+    assert pangenome["X142-augustus_masked.1731.ATP_4"] == 943  # one row per built isolate
     gal1 = kept[kept["gene_id"] == "YBR020W"]
     assert (gal1["Strain"].nunique(), int(gal1["systematic_name"].isna().sum())) == (
         943,

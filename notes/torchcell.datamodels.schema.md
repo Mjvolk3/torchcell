@@ -509,3 +509,69 @@ Schema impact (`PYTHONPATH=<wt> python scripts/schema_impact_check.py --base ori
 Tests: `test_a_medium_label_is_stated_or_gapped_never_silently_none` and `test_a_gapped_medium_has_no_stated_name_and_environment_media_stays_required` in `tests/torchcell/datamodels/test_schema.py`, `test_a_stated_medium_projects_no_gap_key_and_keeps_its_id` and `test_a_gapped_medium_is_keyed_by_its_gaps_never_by_a_stated_medium` in `tests/torchcell/datamodels/test_identity.py`, `test_media_membership_passes_a_typed_medium_gap_and_counts_it` in `tests/torchcell/verification/test_common.py`.
 
 The schema-change policy landed on main the same day ([[torchcell.datamodels.schema-change-policy]], PR #1044), and this is the first schema change after it. Its record is `database/schema_changes/2026-10-12-sgd-synlethdb-typed-media-gap.json`: one symbol, `Media`, kind `typed_gap`, fingerprint `db903b1e...` to `928f43b9...` (base `8bee8bb04`, Python 3.13.0), 51 served datasets of the `2026.10.06-4b293d34` release, rebuild scope `full_kg_rebuild`, and the owner's 2026-10-12 words as the sign-off. `name` and `state` are declared bare (`name: str | None`, a comment in place of the `Field(description=...)`), because the impact tool reads a documentation-only `Field` wrapper added to a required field as "default changed", which only a sign-off kind would cover; the declared contract is the same either way. `scripts/check_schema_change_records.py` passes, `python -m torchcell.provenance.schema_change check` reads "1 record(s) carry every change since eb07bd213ca1", and `tests/torchcell/datamodels/test_schema_change_records.py` passes against the grandfathered baseline as committed, so `BASELINE_COMMIT` stays `eb07bd213`.
+
+## 2026.10.12 - The promoter belongs to the genotype: two leaves, a pooled readout, a biosensor readout (#991, #990)
+
+A promoter is an edit to the total genomic content of the cell, so it goes on the
+genotype. Two releases blocked on that, and on where their readout belongs. Record:
+`database/schema_changes/2026-10-12-promoter-genotypes-pooled-sortseq-biosensor.json`
+(PR #1055); 16 symbols, 108 datasets stale, 0 breaking.
+
+**Genotype, two new leaves under `GeneAdditionPerturbation`** (`state="present"`,
+SO:0000667 `insertion`, the parent's relaxed name validator, which a heterologous
+reporter needs):
+
+- `PromoterDrivenGeneIntegrationPerturbation`: a gene integrated at a REQUIRED
+  `integration_locus`, driven by `promoter_name`, with `promoter_sequence` optional for a
+  named part whose sequence the release does not deposit. Zhang 2020 varies which of six
+  promoters drives each of five re-integrated genes, and without the leaf 275 distinct
+  designs would collapse onto one genotype.
+- `VariablePromoterReporterPerturbation`: a reporter whose promoter carries a variable
+  released sequence. `promoter_sequence` is REQUIRED (it IS the independent variable) and
+  `variable_region_start` / `..._end` are the 1-based inclusive span of the insert inside
+  it, so the constant scaffold is not duplicated per record and the insert stays
+  recoverable. `scaffold_name` is part of the identity: the same 80-mer in another
+  scaffold is another construct.
+
+Two leaves rather than one because the promoter means a different thing in each: a named
+characterized part whose sequence is optional and whose locus is required, against a
+sequence that must be present on a construct with no locus. The bacterial
+`PromoterReplacementPerturbation` is the sibling they sit beside: it asserts a native
+promoter was REMOVED and a part put in its place (SO:1000032 `delins`), and its required
+`gene_namespace` plus locus-tag validator refuse `YKR097W`. A promoter field on
+`GeneAdditionPerturbation` was rejected: it is in the closure of the served metabolite,
+morphology and product-titer loaders, so it would change a served class's field meaning
+(policy rule 3), and `None` there would mean both "not released" and "native context".
+
+**`ReporterReadout.sort_seq_fluorescence`.** The four existing members each return a
+reading per well or per cell; a sort-seq number is a read-weighted average of bin indices
+for one sequence out of millions, so storing one under an existing member would claim a
+sample unit it does not have. An enum member re-stales every store importing the enum,
+which is accepted and is in the record.
+
+**`PooledSortSeqExpressionPhenotype` + its experiment pair**, a SIBLING of the served
+`PromoterActivityPhenotype` under `Phenotype`. The served class's `well_id` stays
+required, because it is that class's identity rule: an arrayed reporter library holds one
+promoter in several wells, so without the well two readings of one promoter in one
+condition collapse into a single L1 identity. A pooled library has no well at all, and its
+key is the source's `sequence_id`. `library_id` and `read_count` are the two released
+per-record values a pooled assay carries instead; the uncertainty quartet is there for a
+source that labels its dispersion, and Vaishnav 2022 does not (gapped, with the
+measurement in [[torchcell.datasets.scerevisiae.vaishnav2022]]).
+
+**`BiosensorFluorescencePhenotype` + its pair.** Zhang 2020's GFP reports intracellular
+tryptophan, not the varied promoters. `PromoterActivityPhenotype` would name the wrong
+measured entity, `MeasurementType.biosensor_readout` lives on
+`EnvironmentResponsePhenotype` whose verifier requires an environmental edit on every
+record, and `MetabolitePhenotype` holds a metabolite QUANTITY, so a fluorescence synthesis
+rate stored there would pose as a titer. The leaf keeps the signal in `signal_units` and
+names `sensed_metabolite` as a typed `Compound`, which is the one class the environment and
+phenotype lanes already share, so the record joins the compound layer without the
+phenotype composing a medium. A release that publishes a calibration converts explicitly.
+
+Graph side: `pooled sort seq expression phenotype` and `biosensor fluorescence phenotype`
+under `phenotypic feature`, both as `phenotype member of` sources, each with its
+`CellAdapter` node method and reference collector. The two perturbation leaves are yeast
+leaves, so they project onto the served `perturbation` class and add no graph class. Counts
+re-derived from the merged files: 46 node classes (42 explicit), 14 edges, 76 mermaid data
+lines, 81 adapter node methods.

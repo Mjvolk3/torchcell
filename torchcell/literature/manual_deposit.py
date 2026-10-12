@@ -374,7 +374,9 @@ def extend_manifest(
     does not exist yet is created (the Mohiuddin 2022 precedent: a raw-mirror key may
     exist before its paper is in the literature mirror). ``si_expected``, when given,
     replaces the manifest's list, because it is the statement of what is still missing
-    and a deposit changes it; ``si_data_sources`` is extended, never shortened.
+    and a deposit changes it; ``si_data_sources`` is extended, never shortened, by every
+    retrieved record's ``source_url`` (a derived record has no retrieval and adds none)
+    and by ``si_data_sources``.
     """
     root = Path(key_root)
     root.mkdir(parents=True, exist_ok=True)
@@ -406,8 +408,13 @@ def extend_manifest(
                 f"{record.sha256}; refusing"
             )
     manifest.files.sort(key=lambda record: record.path)
-    for url in [*(r.source for r in records), *si_data_sources]:
-        if url is not None and url not in manifest.si_data_sources:
+    retrieved = [
+        r.retrieval.source_url
+        for r in records
+        if r.retrieval is not None and r.retrieval.source_url is not None
+    ]
+    for url in [*retrieved, *si_data_sources]:
+        if url not in manifest.si_data_sources:
             manifest.si_data_sources.append(url)
     if si_expected is not None:
         manifest.si_expected = list(si_expected)

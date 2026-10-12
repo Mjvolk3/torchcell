@@ -276,6 +276,19 @@ def test_extend_manifest_creates_merges_and_refuses_a_disagreeing_sha(
     ]
     assert merged.si_expected == ["Table S9: not released"]
     assert merged.created_at == first.created_at
+    derived = ArtifactRecord(
+        path="si/sm.layout.txt",
+        role="si_text",
+        bytes=3,
+        sha256="1" * 64,
+        source="derived from si/sm.pdf",
+    )
+    extend_manifest(
+        tmp_path, [derived], citation_key=KEY, doi=deposit.doi, title=deposit.title
+    )
+    after = Manifest.model_validate_json(path.read_text())
+    assert "derived from si/sm.pdf" not in after.si_data_sources
+    assert after.si_data_sources == merged.si_data_sources
     bad = records[0].model_copy(update={"sha256": "f" * 64})
     with pytest.raises(DepositMismatchError, match="refusing"):
         extend_manifest(

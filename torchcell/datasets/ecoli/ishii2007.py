@@ -43,32 +43,27 @@ node class with its own ``CellAdapter`` methods, so nothing in
 
 RETRIEVAL: THE PUBLISHER IS BLOCKED, THE PAPER'S OWN CITED WEB SITE IS NOT. The row's
 accession read "Science supporting online material; no repository accession found", and
-the supporting online material is indeed unreachable by script: measured 2026-10-08,
+the supporting online material is unreachable by script: measured 2026-10-08,
 ``https://www.science.org/doi/suppl/10.1126/science.1132067`` answers HTTP 403 with a
 Cloudflare JavaScript challenge ("Enable JavaScript and cookies to continue",
-``window._cf_chl_opt``), the DOI has no PMCID ("Identifier not found in PMC"), and the
-publisher's own free-access ``ijkey`` link printed on the project web site answers 403
-too, so the block is at the edge and not an entitlement. The data is NOT in that
-supplement, though: the paper's reference 21 is a project web site, and it serves the
-complete quantitative release over plain HTTP with no challenge and no cookie. Both
-consumed workbooks are therefore ``RetrievalMethod.direct_url`` and re-retrievable. What
-stays retrieval-gated is the supplement's TEXT (Materials and Methods, SOM text, figs.
-S1-S10, tables S1-S11), and the one thing the records need from it is the medium; the
-manual recipe for it is written into the raw mirror's ``si_expected``.
+``window._cf_chl_opt``) and the DOI has no PMCID ("Identifier not found in PMC"). The
+data is NOT in that supplement: the paper's reference 21 is a project web site that
+serves the complete quantitative release over plain HTTP, so both consumed workbooks are
+``RetrievalMethod.direct_url`` and re-retrievable. The supplement's TEXT was deposited
+by hand on 2026-10-12 (:data:`SOM_DEPOSIT`, ``manual_browser``, issue #699) and OCR'd
+with MinerU beside it (``si/ishii_som.md``); the environment is quoted from that OCR.
 
-THE MEDIUM IS THE ONE UNPINNED ENVIRONMENT VALUE, AND IT IS LABELLED AS A READING. No
-mirrored byte names the medium: the paper body says only "in glucose-limited chemostat
-cultures" and the project web site's workbooks state units, replicate structure and cell
-parameters but no recipe. ``MEDIUM`` is therefore built in this module (never added to
-the shared ``MEDIA_LIBRARY``) as a single ``composition_deferred`` component that defers
-to the supplement, and ``is_synthetic=True`` is a READING, NOT A STATEMENT: the paper
-says glucose is the growth-limiting substrate whose concentration the dilution rate sets,
-and a complex medium's other carbon sources would relieve that limitation. It is
-recorded in ``build_accounting.json`` under ``unpinned_environment_values`` and carried
-as a ``ProvenanceGap`` on every environment. ``temperature`` is ``None`` for the same
-reason, also as a typed gap. ``aerobicity="aerobic"`` is NOT a default left in place: it
-is asserted at build time from the release's own ``Specific_Rates`` sheet, where every
-loaded culture has a positive oxygen uptake rate.
+THE ENVIRONMENT IS QUOTED FROM THE SOM. "Glucose-limited chemostat cultures were grown
+using a synthetic medium" of 14 stated components (``MEDIUM``, built in this module and
+not added to the shared ``MEDIA_LIBRARY``; the glucose amount is the 4 g/l FEED), and
+"Cultures were grown aerobically at 37 oC" (``Temperature(37.0)`` and
+``aerobicity="aerobic"``, the latter also asserted at build time from the release's own
+``Specific_Rates`` sheet, where every loaded culture has a positive oxygen uptake rate).
+The OCR misreads the litre's "l" as "1" in several amounts; each such reading is noted
+on the sourced value beside the PDF text layer's own reading. The flux fit is quoted
+too (``SOURCED_VALUES["flux_fitting_procedure"]``): a genetic-algorithm global search
+then sequential quadratic programming, minimizing the squared residual of the
+amino-acid mass distributions; the SOM bounds only the reference sample's fluxes.
 
 RECORDS DROPPED, WITH THE ARITHMETIC. Each sheet's sample columns are classified in one
 fixed order, so each dropped column has exactly one reason:
@@ -151,7 +146,6 @@ import os.path as osp
 import re
 import shutil
 from collections.abc import Callable, Mapping, Sequence
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, ClassVar, Literal
 
@@ -169,6 +163,7 @@ from torchcell.data import (
     verify_raw_files,
     write_verified,
 )
+from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
     BACTERIAL_ASSEMBLY_SETS,
     BacterialDeletionPerturbation,
@@ -176,8 +171,8 @@ from torchcell.datamodels.schema import (
     BacterialMetaboliteExperimentReference,
     BacterialProteinAbundanceExperiment,
     BacterialProteinAbundanceExperimentReference,
-    ComponentDefinition,
-    Compound,
+    Concentration,
+    ConcentrationUnit,
     Environment,
     Experiment,
     ExperimentReference,
@@ -193,6 +188,7 @@ from torchcell.datamodels.schema import (
     Publication,
     SampleUnit,
     StrainConstruction,
+    Temperature,
 )
 from torchcell.datasets.bacteria_common import (
     STRAIN_GENE_NAMESPACES,
@@ -203,11 +199,24 @@ from torchcell.datasets.bacteria_common import (
 )
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.literature.manifest import (
+    ROLE_OCR_IMAGE,
+    ROLE_OCR_LAYOUT,
+    ROLE_OCR_PROVENANCE,
     ROLE_RAW_DATA,
+    ROLE_SI_OCR,
+    ROLE_SI_PDF,
     ArtifactRecord,
     Manifest,
+    ProcessingRecord,
     RetrievalMethod,
     RetrievalRecord,
+)
+from torchcell.literature.manual_deposit import (
+    DepositedFile,
+    ManualDeposit,
+    artifact_records,
+    extend_manifest,
+    write_deposit_records,
 )
 from torchcell.literature.provenance import run_retriever
 from torchcell.sequence.genome.ecoli.k12 import EcoliK12Genome, EcoliK12StrainName
@@ -244,6 +253,51 @@ PROJECT_SITE = "http://ecoli.iab.keio.ac.jp/"
 #: The publisher supplement, reachable only through a browser (see the module docstring).
 PUBLISHER_SUPPLEMENT_URL = "https://www.science.org/doi/suppl/10.1126/science.1132067"
 DATA_RETRIEVED_AT = "2026-10-08"
+
+# --- begin SOM deposit (issue #699, 2026-10-12) ---------------------------------- #
+#: The Science supporting online material, downloaded by the owner in a browser.
+SOM_PDF = "ishii_som.pdf"
+SOM_PDF_RELPATH = f"si/{SOM_PDF}"
+SOM_PDF_SHA256 = "cb6183c58ceaf56e9dc06c99a09f5e4bd0fdb93dc9534c1aad2092f9649414fd"
+#: Its MinerU OCR, written beside it by ``torchcell.literature.ocr.ocr_pdf`` (the
+#: function ``lit_capture_si --ocr-recorded`` and ``reocr_si`` call), CPU mode, under
+#: slurm on 2026-10-12. Every SOM quote is a substring of this file.
+SOM_MD = "si/ishii_som.md"
+SOM_MD_SHA256 = "d9ffefadb22ccd71ea10f49f442a285111fd40e30c4832374a245fd8d0c4e0c3"
+SOM_OCR_PROVENANCE = "si/ishii_som_ocr_provenance.json"
+SOM_OCR_LAYOUT = ("si/ishii_som_content_list.json", "si/ishii_som_middle.json")
+SOM_OCR_IMAGES = "si/images/ishii_som"
+SOM_DEPOSIT = ManualDeposit(
+    citation_key=CITATION_KEY,
+    doi=PAPER_DOI,
+    title=TITLE,
+    source_url=PUBLISHER_SUPPLEMENT_URL,
+    retrieval_command=(
+        f"open https://www.science.org/doi/{PAPER_DOI} in a browser, pass the "
+        "Cloudflare check, follow 'Supplementary Materials', download the supporting "
+        f"online material PDF and copy it unchanged to {SOM_PDF_RELPATH}; then verify "
+        "its sha256"
+    ),
+    retrieved_by="the owner (mjvolk3), browser download",
+    deposited_at="2026-10-12",
+    issues=(699,),
+    note="the Science Express supporting online material, 96 pages (Materials and "
+    "Methods, SOM Text, Figs. S1 to S7, Tables S1 to S12, References, by its own "
+    "contents list). Its MinerU OCR (si/ishii_som.md) is written beside it with its "
+    "processing record",
+    files=(
+        DepositedFile(
+            path=SOM_PDF_RELPATH,
+            role=ROLE_SI_PDF,
+            sha256=SOM_PDF_SHA256,
+            bytes=3782393,
+            original_filename=SOM_PDF,
+            arrived_at="2026-10-12T03:41:13-05:00",
+            description="Supporting Online Material, 96 pages",
+        ),
+    ),
+)
+# --- end SOM deposit ----------------------------------------------------------------- #
 
 QUANTITATIVE_FILE = "Quantitative_data.xls"
 GC_MS_FILE = "Flux_GC-MS_data.xls"
@@ -369,18 +423,12 @@ RAW_FILES_BY_NAME: dict[str, RawFile] = {f.name: f for f in RAW_FILES}
 #: What the release holds that this build does not consume. Byte sizes measured by HEAD
 #: on 2026-10-08; every one is the same scriptable plain GET as the two consumed files.
 NOT_MIRRORED: tuple[str, ...] = (
-    f"{PUBLISHER_SUPPLEMENT_URL} -- the Science supporting online material (Materials "
-    "and Methods, SOM text, figs. S1-S10, tables S1-S11). NOT deposited: measured "
-    "2026-10-08, science.org answers HTTP 403 with a Cloudflare JavaScript challenge "
-    "('Enable JavaScript and cookies to continue', window._cf_chl_opt) for the "
-    "supplement page, for the article PDF, and for the publisher's own free-access "
-    "ijkey link printed on the project web site; the DOI has no PMCID ('Identifier not "
-    "found in PMC'). MANUAL RECIPE: open "
-    "https://www.science.org/doi/10.1126/science.1132067 in a browser, follow "
-    "'Supplementary Materials', download the supporting-online-material PDF, then "
-    "deposit it under si/ with RetrievalMethod.manual_browser and the sha256 of the "
-    "bytes that arrive. It is the only source of the chemostat medium, the temperature "
-    "and the flux-fitting procedure, which are typed gaps on the records until then",
+    f"{PUBLISHER_SUPPLEMENT_URL} -- the Science supporting online material. "
+    "science.org answers scripts with a Cloudflare JavaScript challenge (measured "
+    "2026-10-08) and the DOI has no PMCID, so the owner DEPOSITED it by hand on "
+    f"2026-10-12 as {SOM_PDF_RELPATH} (manual_browser, issue #699), with its MinerU "
+    f"OCR {SOM_MD} beside it. The loader quotes the OCR for the chemostat medium, the "
+    "temperature and the flux-fitting procedure",
     f"{PROJECT_SITE}Metabolome_UK_data.xls (17,547,264 B) -- the unknown-peak CE-TOFMS "
     "matrices (six sheets, 4,051-11,470 rows). NOT consumed: unidentified peaks have no "
     "metabolite identity to key on",
@@ -466,6 +514,27 @@ def _ids_sheet(value: Any, quote: str, *, note: str | None = None) -> SourcedVal
     )
 
 
+def _som(value: Any, quote: str, *, page: str, note: str | None = None) -> SourcedValue:
+    """A value bound to the MinerU OCR of the deposited supporting online material.
+
+    ``source_uri`` is relative to ``$DATA_ROOT/torchcell-raw/<citation_key>/``;
+    :func:`sourced_value_root` resolves it there.
+    """
+    return SourcedValue(
+        value=value,
+        quote=quote,
+        note=note,
+        provenance=Provenance(
+            source_uri=SOM_MD,
+            citation_key=CITATION_KEY,
+            sha256=SOM_MD_SHA256,
+            method=f"MinerU 2.7.6 OCR (CPU, 200 DPI) of {SOM_PDF_RELPATH} (sha256 "
+            f"{SOM_PDF_SHA256}), the owner's manual deposit (torchcell-raw mirror)",
+            page=page,
+        ),
+    )
+
+
 # --------------------------------------------------------------------------- #
 # Sourced values (verbatim quotes, pinned sha256)
 # --------------------------------------------------------------------------- #
@@ -500,6 +569,50 @@ _ASSAY_QUOTE = (
     "(LC-MS/MS) for absolute quantification of proteins (12)."
 )
 
+_SOM_CULTURE = "Materials and Methods, 'Strains and culture' (SOM page 2)"
+_SOM_FLUX = "Materials and Methods, 'Metabolic flux analysis' (SOM pages 11 to 14)"
+_MEDIUM_QUOTE = (
+    "Glucose-limited chemostat cultures were grown using a synthetic medium $( 4 8 "
+    "\\mathrm { m M } \\mathrm { N a } _ { 2 } \\mathrm { H P O } _ { 4 } , 2$ 2 mM "
+    "${ \\mathrm { K H } } _ { 2 } { \\mathrm { P O } } _ { 4 } .$ , 10 mM NaCl, 45 mM (NH4) "
+    "$\\mathrm { _ { 2 S O _ { 4 } } }$ , $4 \\mathrm { g } / 1$ glucose), supplemented "
+    "with $1 \\mathrm { m M }$ $\\mathrm { M g S O _ { 4 } }$ , $1 \\mathrm { m g / l }$ "
+    "thiamin·HCl, $5 . 6 \\mathrm { m g } / 1 \\mathrm { C a C l } _ { 2 }$ , $8 "
+    "\\mathrm { m g } / \\mathrm { l F e C l } _ { 3 }$ , 1 mg/l MnCl2·4H2O, 1.7 mg/l "
+    "$\\mathrm { Z n C l _ { 2 } } , 0 . 4 3 \\ \\mathrm { m g } / 1 \\mathrm { C u C l _ { 2 } "
+    "} \\cdot 2 \\mathrm { H _ { 2 } O } , 0 . 6 \\ \\mathrm { m g } / 1 \\mathrm { C o C "
+    "l _ { 2 } } \\cdot 2 \\mathrm { H _ { 2 } O }$ and $0 . 6 \\mathrm { m g / l "
+    "\\mathrm { N a _ { 2 } M o O _ { 4 } \\cdot 2 H _ { 2 } O } }$ ."
+)
+_TEMPERATURE_QUOTE = (
+    "Cultures were grown aerobically at $3 7 ~ ^ { \\mathrm { { o } } } \\mathrm { { C } }$ "
+    "in a total working volume of 1 l"
+)
+_FLUX_FIT_QUOTE = (
+    "In the present study, a two-step optimization was implemented: the first step is "
+    "a global search using a genetic algorithm (26) whereas the second step is a local "
+    "search using sequential quadratic programming method (27)."
+)
+_FLUX_CONFIDENCE_QUOTE = (
+    "For each flux or exchange coefficient of the reference sample (wild-type cells "
+    "cultured at a specific growth rate of $0 . 2 \\mathrm { h } ^ { - 1 }$ ), the $90 "
+    "\\%$ confidence boundaries were calculated based on the average and standard "
+    "deviation of the four samples (RF03, RF04, RF05 and RF06, see Table S2) (Table "
+    "S5B)."
+)
+_LABELING_FEED_QUOTE = (
+    "For experiments with gene disruptants, the feed medium containing $4 \\mathrm { g "
+    "} / 1$ of natural glucose was replaced by an identical medium containing $0 . 4 \\ "
+    "\\mathrm { g / l }$ of $[ 1 - ^ { 1 3 } \\mathrm { C } ]$ glucose, $0 . 4 \\ "
+    "\\mathrm { g / l }$ of uniformly labeled [U- $^ { 1 3 } \\mathrm { C } ]$ glucose "
+    "and $3 . 2 \\ \\mathrm { g } / 1$ of natural glucose."
+)
+_OCR_L_AS_1 = (
+    "the OCR reads the litre's 'l' as '1' in 'g/1' and 'mg/1' and splits '22 mM' across "
+    "a math span ('2$ 2 mM'); the PDF's own text layer (pdftotext 21.01.0) reads "
+    "'48 mM Na2HPO4, 22 mM KH2PO4, 10 mM NaCl, 45 mM (NH4)2SO4, 4 g/l glucose'"
+)
+
 SOURCED_VALUES: dict[str, SourcedValue] = {
     "disruptants": _paper(
         24,
@@ -526,12 +639,41 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
     "glucose_limited": _paper(
         "glucose",
         _LIMITING_SUBSTRATE_QUOTE,
-        note="A READING, NOT A STATEMENT, for Media.is_synthetic: glucose being the "
-        "sole growth-limiting substrate whose concentration the dilution rate sets "
-        "requires a defined medium, since another carbon source would relieve the "
-        "limitation. No mirrored byte names the medium or its recipe; the recipe is in "
-        "the Cloudflare-gated supplement. Recorded in build_accounting.json under "
-        "unpinned_environment_values",
+        note="glucose is the growth-limiting substrate whose concentration the dilution "
+        "rate sets; the medium itself is the SOM's synthetic medium (chemostat_medium)",
+    ),
+    "chemostat_medium": _som(
+        "synthetic medium, 14 components",
+        _MEDIUM_QUOTE,
+        page=_SOM_CULTURE,
+        note="every component of MEDIUM, with its amount; " + _OCR_L_AS_1,
+    ),
+    "temperature_c": _som(37.0, _TEMPERATURE_QUOTE, page=_SOM_CULTURE),
+    "flux_fitting_procedure": _som(
+        "13C metabolic flux analysis: free fluxes and exchange coefficients fitted to "
+        "GC-MS mass distributions by a genetic algorithm then sequential quadratic "
+        "programming",
+        _FLUX_FIT_QUOTE,
+        page=_SOM_FLUX,
+        note="the objective is the summed squared difference between measured and "
+        "simulated mass distribution vectors of the proteinogenic amino acids",
+    ),
+    "flux_confidence_reference_only": _som(
+        0.90,
+        _FLUX_CONFIDENCE_QUOTE,
+        page=_SOM_FLUX,
+        note="the SOM bounds the REFERENCE sample's fluxes only (90% boundaries from "
+        "RF03 to RF06, printed as its Table S5B); no disruptant or dilution-rate fit "
+        "carries an interval, and the project web site's workbook releases none",
+    ),
+    "labeling_feed": _som(
+        "10% [1-13C] glucose, 10% [U-13C] glucose, 80% natural glucose",
+        _LABELING_FEED_QUOTE,
+        page=_SOM_FLUX,
+        note="the disruptant flux cultures' feed after the omics samples were taken; "
+        "the dilution-rate cultures used 20% + 20% + 60% (0.8, 0.8 and 2.4 g/l). The "
+        "total glucose stays 4 g/l, so the chemical environment of a flux record is "
+        "MEDIUM; the tracer is the measurement's method",
     ),
     "assays": _paper(
         ["CE-TOFMS", "LC-MS/MS", "qRT-PCR", "metabolic flux analysis"],
@@ -539,16 +681,13 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         note="the four quantitative layers; this module serves the CE-TOFMS metabolome, "
         "the LC-MS/MS proteome and the flux analysis",
     ),
-    "aerobic": _paper(
+    "aerobic": _som(
         "aerobic",
-        "The observed increase in the expression of phosphoenolpyruvate carboxylase "
-        "(Ppc), decrease in the expression of phosphoenolpyruvate carboxykinase (PckA), "
-        "and repression of glyoxylate shunt enzymes are also logical responses to "
-        "enhance the tricarboxylic acid cycle flux (2), which corresponds to energy "
-        "production under aerobic conditions and the components of which are important "
-        "precursors in biomass production.",
-        note="corroborated by the release itself and asserted at build time: every "
-        "loaded culture has a positive oxygen uptake rate in the Specific_Rates sheet",
+        _TEMPERATURE_QUOTE,
+        page=_SOM_CULTURE,
+        note="stated by the SOM ('grown aerobically'); also asserted at build time: "
+        "every loaded culture has a positive oxygen uptake rate in the Specific_Rates "
+        "sheet",
     ),
     "project_site": _paper(
         PROJECT_SITE,
@@ -753,59 +892,64 @@ PUBLICATION = Publication(
 # --------------------------------------------------------------------------- #
 # The medium, and the two environment gaps it leaves open
 # --------------------------------------------------------------------------- #
-_SUPPLEMENT_LOOKED_IN = Provenance(
-    source_uri=PAPER_MD,
-    citation_key=CITATION_KEY,
-    sha256=PAPER_MD_SHA256,
-    method="full body read, plus every sheet of both mirrored workbooks and every page "
-    f"of {PROJECT_SITE}; the recipe is in the supplement at {PUBLISHER_SUPPLEMENT_URL}, "
-    "which answers HTTP 403 with a Cloudflare JavaScript challenge (manual recipe in "
-    "the raw mirror's si_expected)",
-    page="body, 'The cells were grown at a single fixed dilution rate'",
-)
+_MEDIUM_PROVENANCE = [SOURCED_VALUES["chemostat_medium"]]
+_MM = ConcentrationUnit.millimolar
+_GL = ConcentrationUnit.g_per_l
+#: mg/l is ug/mL exactly, so the amounts are stored as the SOM prints them.
+_UGML = ConcentrationUnit.ug_per_ml
 
+
+def _component(
+    label: str, role: MediaComponentRole, value: float, unit: ConcentrationUnit
+) -> MediaComponent:
+    """One component of the SOM's synthetic medium at its stated amount."""
+    return MediaComponent(
+        compound=resolved_compound(label),
+        role=role,
+        concentration=Concentration(value=value, unit=unit),
+        provenance=_MEDIUM_PROVENANCE,
+    )
+
+
+_SALT = MediaComponentRole.bulk_salt
+_TRACE = MediaComponentRole.trace_element
 MEDIUM = Media(
-    name="glucose-limited chemostat medium, composition deferred to the Science "
-    "supporting online material (Ishii 2007)",
+    name="glucose-limited chemostat synthetic medium, 4 g/l glucose feed (Ishii 2007 "
+    "SOM)",
     state="liquid",
     is_synthetic=True,
     base_medium=None,
     components=[
-        MediaComponent(
-            compound=Compound(
-                name="glucose-limited chemostat medium (no recipe stated)"
-            ),
-            role=MediaComponentRole.other,
-            concentration=None,
-            definition=ComponentDefinition.composition_deferred,
-            provenance=[SOURCED_VALUES["glucose_limited"]],
-            defers_to=[
-                "Ishii 2007 Supporting Online Material, Materials and Methods "
-                f"({PUBLISHER_SUPPLEMENT_URL}); not mirrored"
-            ],
-            note="the paper names no medium and no component amount, and the project "
-            "web site's workbooks state units, replicate structure and cell parameters "
-            "but no recipe, so not one gram or millimolar figure is copied in from "
-            "another E. coli chemostat study. The carbon source stays inside this "
-            "deferred line: 'glucose-limited' names the limiting substrate, not a "
-            "concentration",
-        )
+        _component("disodium hydrogen phosphate", _SALT, 48.0, _MM),
+        _component("potassium dihydrogen phosphate", _SALT, 22.0, _MM),
+        _component("sodium chloride", _SALT, 10.0, _MM),
+        _component("ammonium sulfate", MediaComponentRole.nitrogen_source, 45.0, _MM),
+        _component("glucose", MediaComponentRole.carbon_source, 4.0, _GL),
+        _component("magnesium sulfate", _SALT, 1.0, _MM),
+        _component("thiamine hydrochloride", MediaComponentRole.vitamin, 1.0, _UGML),
+        _component("calcium chloride", _SALT, 5.6, _UGML),
+        _component("iron(III) chloride", _TRACE, 8.0, _UGML),
+        _component("manganese(II) chloride tetrahydrate", _TRACE, 1.0, _UGML),
+        _component("zinc chloride", _TRACE, 1.7, _UGML),
+        _component("copper(II) chloride dihydrate", _TRACE, 0.43, _UGML),
+        _component("cobalt(II) chloride dihydrate", _TRACE, 0.6, _UGML),
+        _component("sodium molybdate dihydrate", _TRACE, 0.6, _UGML),
     ],
-    provenance=[SOURCED_VALUES["glucose_limited"], SOURCED_VALUES["dilution_rate_arm"]],
+    provenance=[
+        SOURCED_VALUES["chemostat_medium"],
+        SOURCED_VALUES["glucose_limited"],
+        SOURCED_VALUES["dilution_rate_arm"],
+    ],
 )
-"""Ishii 2007's chemostat medium, kept in this module and OUT of ``MEDIA_LIBRARY``.
+"""Ishii 2007's chemostat medium from the SOM, kept in this module (not ``MEDIA_LIBRARY``).
 
-The library holds recipes; this object holds the absence of one, and sharing it would
-invite a second loader to attach amounts to it.
+The glucose amount is the FEED concentration: in a glucose-limited chemostat the
+culture's residual glucose is set by the dilution rate, which every environment states
+on ``dilution_rate_per_hour``. The hydrates are the ones the SOM prints (CuCl2·2H2O,
+CoCl2·2H2O, Na2MoO4·2H2O, MnCl2·4H2O); "cobalt(II) chloride dihydrate" has no row in the
+compound identity table, so its InChIKey is a typed gap the resolver attaches.
 """
 
-TEMPERATURE_GAP = ProvenanceGap(
-    field="temperature",
-    reason=ProvenanceGapReason.not_reported_by_primary,
-    looked_in=_SUPPLEMENT_LOOKED_IN,
-    note="the cultivation temperature is in the same unmirrored supplement, so "
-    "temperature is None rather than a guessed 37 C",
-)
 FLUX_INTERVAL_GAP = ProvenanceGap(
     field="confidence_level",
     reason=ProvenanceGapReason.not_reported_by_primary,
@@ -818,8 +962,10 @@ FLUX_INTERVAL_GAP = ProvenanceGap(
     ),
     note="the release publishes ONE number per reaction and no interval, so "
     "net_flux_lower, net_flux_upper and confidence_level are all None. The fit's input "
-    f"is mirrored ({GC_MS_FILE}) and its procedure is in the unmirrored supplement; "
-    "nothing here promotes a bound to 'the' statistic because there is no bound",
+    f"is mirrored ({GC_MS_FILE}) and its procedure is quoted from the SOM "
+    "(SOURCED_VALUES['flux_fitting_procedure']). The SOM computes 90% confidence "
+    "boundaries for the REFERENCE sample only (from RF03 to RF06, its Table S5B), so no "
+    "loaded record has a bound to promote",
 )
 METABOLITE_SE_GAP = ProvenanceGap(
     field="metabolite_level_se",
@@ -840,7 +986,7 @@ METABOLITE_SE_GAP = ProvenanceGap(
 
 
 def environment(dilution_rate_per_hour: float) -> Environment:
-    """One culture's environment: the medium, aerobic, no temperature, this rate.
+    """One culture's environment: the SOM medium, aerobic, 37 C, this rate.
 
     The dilution rate is REQUIRED rather than defaulted, because it is the only field
     that distinguishes the five wild-type environments from one another: in a chemostat
@@ -849,19 +995,15 @@ def environment(dilution_rate_per_hour: float) -> Environment:
     disruptant cultures and every RF control share 0.2 h-1; the four dilution-rate
     records carry 0.1, 0.4, 0.5 and 0.7 h-1 and are four different environments.
 
-    There is NO ``ProvenanceGap`` on ``media``, and that is the mixin's rule rather than
-    an omission: a field cannot both hold a value and declare itself missing. The
-    deferral lives where it belongs, on :data:`MEDIUM`'s single
-    ``composition_deferred`` component and its ``defers_to``, which is how
-    ``SM_DEFERRED`` carries the same situation. ``is_synthetic`` being a reading is
-    recorded in ``build_accounting.json`` under ``unpinned_environment_values``.
+    The medium and the temperature are quoted from the deposited SOM
+    (``SOURCED_VALUES["chemostat_medium"]`` and ``["temperature_c"]``), so no
+    environment field is a gap.
     """
     return Environment(
         media=MEDIUM,
-        temperature=None,
+        temperature=Temperature(value=SOURCED_VALUES["temperature_c"].value),
         aerobicity=AEROBICITY,
         dilution_rate_per_hour=dilution_rate_per_hour,
-        provenance_gaps=[TEMPERATURE_GAP],
     )
 
 
@@ -947,18 +1089,80 @@ def deposit_raw_mirror(
                 retrieval=raw.retrieval,
             )
         )
-    manifest = Manifest(
+    extend_manifest(
+        root,
+        records,
         citation_key=CITATION_KEY,
         doi=PAPER_DOI,
         title=TITLE,
-        files=records,
-        si_data_sources=[PROJECT_SITE, PUBLISHER_SUPPLEMENT_URL],
         si_expected=list(NOT_MIRRORED),
-        provenance_complete=True,
-        created_at=datetime.now(UTC).isoformat(),
+        si_data_sources=[PROJECT_SITE, PUBLISHER_SUPPLEMENT_URL],
     )
-    (root / "manifest.json").write_text(manifest.model_dump_json(indent=2))
     return root
+
+
+def som_ocr_records(root: Path) -> list[ArtifactRecord]:
+    """The SOM's MinerU outputs, each hashed in place, the markdown with its record.
+
+    The markdown must hash to ``SOM_MD_SHA256`` (the quotes' anchor) and its
+    ``ocr_pdf`` processing record must name the deposited PDF's sha256 as its input.
+    """
+    processing = ProcessingRecord.model_validate_json(
+        (root / SOM_OCR_PROVENANCE).read_text()
+    )
+    if processing.input_sha256 != [SOM_PDF_SHA256]:
+        raise RuntimeError(f"{SOM_OCR_PROVENANCE} is not the OCR of {SOM_PDF_RELPATH}")
+    md = root / SOM_MD
+    if _sha256(md) != SOM_MD_SHA256:
+        raise RuntimeError(f"{md} does not hash to its pin {SOM_MD_SHA256}")
+    derived = f"mineru OCR of {SOM_PDF_RELPATH}"
+    records = [
+        ArtifactRecord(
+            path=SOM_MD,
+            role=ROLE_SI_OCR,
+            bytes=md.stat().st_size,
+            sha256=SOM_MD_SHA256,
+            source=derived,
+            processing=processing,
+        )
+    ]
+    others = [(SOM_OCR_PROVENANCE, ROLE_OCR_PROVENANCE)]
+    others += [(rel, ROLE_OCR_LAYOUT) for rel in SOM_OCR_LAYOUT]
+    others += [
+        (str(path.relative_to(root)), ROLE_OCR_IMAGE)
+        for path in sorted((root / SOM_OCR_IMAGES).iterdir())
+    ]
+    for rel, role in others:
+        path = root / rel
+        records.append(
+            ArtifactRecord(
+                path=rel,
+                role=role,
+                bytes=path.stat().st_size,
+                sha256=_sha256(path),
+                source=derived,
+            )
+        )
+    return records
+
+
+def record_som_deposit(data_root: str | None = None) -> Path:
+    """Record the owner's SOM deposit and its OCR in the raw mirror's manifest.
+
+    Verifies the PDF, writes ``DEPOSIT.md`` and ``SHA256SUMS.txt`` in ``si/``, and
+    extends ``manifest.json`` with the PDF and every MinerU output beside it. The OCR is
+    produced by :func:`torchcell.literature.ocr.ocr_pdf`, never here.
+    """
+    root = raw_mirror_dir(data_root)
+    write_deposit_records(SOM_DEPOSIT, root)
+    return extend_manifest(
+        root,
+        [*artifact_records(SOM_DEPOSIT), *som_ocr_records(root)],
+        citation_key=CITATION_KEY,
+        doi=PAPER_DOI,
+        title=TITLE,
+        si_expected=list(NOT_MIRRORED),
+    )
 
 
 def load_manifest(data_root: str | None = None) -> Manifest:
@@ -978,11 +1182,11 @@ def manifest_sha256(manifest: Manifest, relpath: str) -> str:
 def sourced_value_root(value: SourcedValue, data_root: str | None = None) -> Path:
     """The mirror root a ``SourcedValue``'s ``source_uri`` is relative to.
 
-    The workbook quotes sit in the raw mirror (``data/...``); the paper quotes are from
-    the literature mirror.
+    The workbook quotes (``data/...``) and the SOM OCR quotes (``si/...``) sit in the
+    raw mirror; the paper quotes are from the literature mirror.
     """
     base = Path(data_root or _data_root())
-    if value.provenance.source_uri.startswith("data/"):
+    if value.provenance.source_uri.startswith(("data/", "si/")):
         return base / "torchcell-raw"
     return base / "torchcell-library"
 
@@ -1863,19 +2067,15 @@ class _Ishii2007Dataset(ExperimentDataset):
                         for key, value in SOURCED_VALUES.items()
                     },
                     "not_mirrored": list(NOT_MIRRORED),
-                    "unpinned_environment_values": [
-                        {
-                            "field": "media",
-                            "reading": "a synthetic (defined) glucose-limited medium "
-                            "with its recipe deferred to the unmirrored supplement",
-                            "why": str(SOURCED_VALUES["glucose_limited"].note),
-                        },
-                        {
-                            "field": "temperature",
-                            "reading": "none; left None",
-                            "why": str(TEMPERATURE_GAP.note),
-                        },
-                    ],
+                    "unpinned_environment_values": [],
+                    "som_sourced_environment_values": {
+                        field: SOURCED_VALUES[key].model_dump(mode="json")
+                        for field, key in (
+                            ("media", "chemostat_medium"),
+                            ("temperature", "temperature_c"),
+                            ("aerobicity", "aerobic"),
+                        )
+                    },
                 },
                 indent=2,
             )

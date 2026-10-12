@@ -455,8 +455,9 @@ def test_tmf_records(tmp_path: Path) -> None:
 
     Finding: the query perturbations carry the SPLIT halves of the query strain id
     (``YAL015C`` and ``YOL043C_tm72``), not the full id the Dmf query-strain records
-    and every 2018 loader use. Finding: ``fitness_std`` is stored with no
-    ``fitness_uncertainty`` labeling, so ``fitness_se`` is None on every record.
+    and every 2018 loader use. The released SD is labeled ``sample_sd`` over 4
+    colonies (2026.10.12, the owner's "if uncertainty exists we cannot be missing it!";
+    it was stored only as ``fitness_std`` before), so ``fitness_se`` is 0.025 and 0.005.
     """
     ds = build(tmp_path, TmfKuzmin2020Dataset)
     assert len(ds) == 2
@@ -466,7 +467,13 @@ def test_tmf_records(tmp_path: Path) -> None:
             genotype=TM72_TRIGENIC,
             environment=ENVIRONMENT,
             phenotype=FitnessPhenotype(
-                fitness=0.85, fitness_std=0.05, screen_id=SCREEN_ID_MAIN
+                fitness=0.85,
+                fitness_std=0.05,
+                screen_id=SCREEN_ID_MAIN,
+                fitness_uncertainty=0.05,
+                fitness_uncertainty_type=UncertaintyType.sample_sd,
+                n_samples=4,
+                sample_unit=SampleUnit.colony,
             ),
         ),
         FitnessExperiment(
@@ -474,12 +481,18 @@ def test_tmf_records(tmp_path: Path) -> None:
             genotype=TM99_TRIGENIC,
             environment=ENVIRONMENT,
             phenotype=FitnessPhenotype(
-                fitness=0.6, fitness_std=0.01, screen_id=SCREEN_ID_PILOT
+                fitness=0.6,
+                fitness_std=0.01,
+                screen_id=SCREEN_ID_PILOT,
+                fitness_uncertainty=0.01,
+                fitness_uncertainty_type=UncertaintyType.sample_sd,
+                n_samples=4,
+                sample_unit=SampleUnit.colony,
             ),
         ),
     ]
     assert dumps(experiments(ds)) == dumps(expected)
-    assert [e.phenotype.fitness_se for e in experiments(ds)] == [None, None]
+    assert [e.phenotype.fitness_se for e in experiments(ds)] == [0.025, 0.005]
 
 
 def test_tmf_reference_is_the_trigenic_mean_sd_unlabeled(tmp_path: Path) -> None:

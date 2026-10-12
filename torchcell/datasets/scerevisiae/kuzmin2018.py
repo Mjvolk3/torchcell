@@ -9,13 +9,22 @@ import os
 import os.path as osp
 import zipfile
 from collections.abc import Callable
+from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
 import pandas as pd
 from torch_geometric.data import download_url
 from tqdm import tqdm
 
-from torchcell.data import ExperimentDataset, Organism, post_process
+from torchcell.data import (
+    ExperimentDataset,
+    Organism,
+    copy_verified,
+    link_verified,
+    post_process,
+    verify_raw_files,
+)
 from torchcell.datamodels.media import SGA_TM_SELECTION
 from torchcell.datamodels.schema import (
     Environment,
@@ -39,6 +48,15 @@ from torchcell.datamodels.schema import (
     UncertaintyType,
 )
 from torchcell.datasets.dataset_registry import register_dataset
+from torchcell.literature.manifest import (
+    ROLE_RAW_DATA,
+    ArtifactRecord,
+    Manifest,
+    RetrievalMethod,
+    RetrievalRecord,
+)
+from torchcell.verification.report import Provenance
+from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -65,6 +83,193 @@ log = logging.getLogger(__name__)
 # NB: the "12-24 colony measurements" in si1.md line 59 is the QUERY fitness
 # (col 9, bootstrap), a DIFFERENT column whose std the loader does not store.
 N_SAMPLES_COMBINED_MUTANT = 4
+
+CITATION_KEY = "kuzminSystematicAnalysisComplex2018"
+RAW_TABLE_NAME = "aao1729_data_s1.tsv"
+#: Additional Data S1 as every Kuzmin 2018 loader reads it; the hosted zip and the
+#: library mirror's ``si/si_data/Data File S1_Raw genetic interaction dataset.tsv``
+#: hold the same bytes (measured 2026-10-12). Verified before any record is read.
+RAW_TABLE_SHA256 = "c82b60f98590071fcb07b74b672958a5863b58e03b78631e6235cb664ee82afb"
+
+# --- Additional Data S4: the query strains' fitness standard deviation ------------- #
+# The SD of a query strain's fitness is released in Additional Data S4 ("This file
+# contains the fitness standard for single and double mutant query strains.", si1.md
+# line 462), a file the hosted zip of Data S1 does not carry. It is read from the raw
+# mirror, where it was deposited from the library mirror's copy (deposit_raw_mirror).
+# Verbatim from si/si1.md line 59 (sha256 2ec80d05...): "The quantitative scoring
+# method employed for single and double mutant fitness estimation was described
+# previously (8), with the exception that bootstrapped means, instead of medians,
+# across replicates were used in variance estimation and final fitness values. Each
+# high-density array was screened in triplicate for a total of 6 replicates. Since the
+# arrays were in 1536-colony format, there are 4 technical replicates of mutants on the
+# array resulting in a total of between 12 and 24 colony measurements for each fitness
+# estimate." So the released "St.dev." is a BOOTSTRAP quantity, already an SE of the
+# estimator (never divided by sqrt(n)), and the colony count is the conservative lower
+# end of the stated range, as kuzmin2020.py does for its Table S5.
+S4_NAME = (
+    "Data File S4_Fitness standard for single and double mutant query strains.xlsx"
+)
+S4_SHA256 = "2c9ee77dc6f0a08900158f23cecbcad41db6dc4a2555fbc7100fbca455869d51"
+_S4_LIBRARY_RELPATH = f"si/si_data/{S4_NAME}"
+_S4_RAW_RELPATH = f"data/{S4_NAME}"
+N_SAMPLES_QUERY_STRAIN_FITNESS = 12
+# Data S1 rounds the query fitness to 4 decimals; S4 carries more. A matched pair must
+# agree to within the rounding (half a unit of the 4th decimal; the largest measured
+# difference over the 504 matched strains is 5.0e-05).
+_QUERY_FITNESS_ROUNDING_TOL = 5e-5 + 1e-9
+#: A query strain Additional Data S4 lists with a blank Fitness and St.dev.: the release
+#: states no uncertainty for it (19 Smf and 7 Dmf records).
+S4_BLANK_GAP = ProvenanceGap(
+    field="fitness_uncertainty",
+    reason=ProvenanceGapReason.not_reported_by_primary,
+    looked_in=Provenance(
+        source_uri=f"tc://raw/{CITATION_KEY}/{_S4_RAW_RELPATH}",
+        citation_key=CITATION_KEY,
+        sha256=S4_SHA256,
+        page="the row of this query strain's tm number",
+    ),
+    note="Additional Data S4 lists this query strain with a blank Fitness and "
+    "St.dev.; no other file of the release states its fitness uncertainty",
+)
+
+
+def raw_mirror_dir(data_root: str | None = None) -> str:
+    """``$DATA_ROOT/torchcell-raw/kuzminSystematicAnalysisComplex2018``."""
+    return osp.join(data_root or os.environ["DATA_ROOT"], "torchcell-raw", CITATION_KEY)
+
+
+def deposit_raw_mirror(*, retrieved_at: str, data_root: str | None = None) -> str:
+    """Copy Additional Data S4 from the library mirror into the raw mirror; write its
+    ``manifest.json``.
+
+    Idempotent by sha256: an existing deposit with the pinned hash is kept, a different
+    one raises. The library mirror's own record of this file carries no upstream
+    retrieval; the SI names where the files were released (the Boone-lab supplement
+    page and DRYAD doi:10.5061/dryad.tt367), recorded as ``si_data_sources``.
+    """
+    root = data_root or os.environ["DATA_ROOT"]
+    source = osp.join(root, "torchcell-library", CITATION_KEY, _S4_LIBRARY_RELPATH)
+    dest = Path(raw_mirror_dir(root)) / _S4_RAW_RELPATH
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    if dest.exists():
+        verify_raw_files(str(dest.parent), {S4_NAME: S4_SHA256})
+    else:
+        copy_verified(source, dest, S4_SHA256)
+    manifest = Manifest(
+        citation_key=CITATION_KEY,
+        doi="10.1126/science.aao1729",
+        title="Systematic analysis of complex genetic interactions",
+        library_id="6582362",
+        zotero_item_key="F7BPKWES",
+        files=[
+            ArtifactRecord(
+                path=_S4_RAW_RELPATH,
+                role=ROLE_RAW_DATA,
+                bytes=dest.stat().st_size,
+                sha256=S4_SHA256,
+                source=source,
+                retrieval=RetrievalRecord(
+                    method=RetrievalMethod.local_archive,
+                    source_url=source,
+                    retriever="torchcell.literature.retrieve.local_archive",
+                    params={"path": source, "sha256": S4_SHA256},
+                    sha256=S4_SHA256,
+                    retrieved_at=retrieved_at,
+                ),
+            )
+        ],
+        si_data_sources=[
+            "http://boonelab.ccbr.utoronto.ca/supplement/kuzmin2018/supplement.html",
+            "https://doi.org/10.5061/dryad.tt367",
+        ],
+        si_expected=[
+            "Additional Data S4 (Data File S4_Fitness standard for single and double "
+            "mutant query strains.xlsx): deposited, read by SmfKuzmin2018Dataset and "
+            "DmfKuzmin2018Dataset for the query strains' fitness SD",
+            "Additional Data S1 (aao1729_data_s1.tsv): NOT deposited here; the loaders "
+            "read it from the hosted zip, and the library mirror holds the same bytes "
+            "(sha256 c82b60f98590071fcb07b74b672958a5863b58e03b78631e6235cb664ee82afb)",
+            "the library mirror's manifest records no upstream retrieval for its copy "
+            "of Data S4; the SI names the two locations in si_data_sources",
+        ],
+        provenance_complete=True,
+        created_at=datetime.now(UTC).isoformat(),
+    )
+    (Path(raw_mirror_dir(root)) / "manifest.json").write_text(
+        manifest.model_dump_json(indent=2)
+    )
+    return raw_mirror_dir(root)
+
+
+def _link_s4(raw_dir: str) -> None:
+    """Symlink Additional Data S4 from the raw mirror into ``raw_dir`` (verified)."""
+    mirror = osp.join(raw_mirror_dir(), _S4_RAW_RELPATH)
+    if not osp.exists(mirror):
+        raise RuntimeError(
+            f"{mirror} is missing: deposit Additional Data S4 into the raw mirror with "
+            "kuzmin2018.deposit_raw_mirror(), then rebuild (sha256 verified)."
+        )
+    link_verified(mirror, osp.join(raw_dir, S4_NAME), S4_SHA256)
+
+
+def _query_strain_uncertainty(std_val: Any) -> dict[str, Any]:
+    """Ontology fields for a query-strain fitness SD (Additional Data S4).
+
+    A blank S4 SD is a typed gap (``S4_BLANK_GAP``); a released one is a bootstrap SE
+    over colonies, used as-is (see ``N_SAMPLES_QUERY_STRAIN_FITNESS``).
+    """
+    if pd.isna(std_val):
+        return {"provenance_gaps": [S4_BLANK_GAP]}
+    return {
+        "fitness_uncertainty": std_val,
+        "fitness_uncertainty_type": UncertaintyType.bootstrap_se,
+        "n_samples": N_SAMPLES_QUERY_STRAIN_FITNESS,
+        "sample_unit": SampleUnit.colony,
+    }
+
+
+def _attach_query_strain_sd(
+    df: pd.DataFrame, df_s4: pd.DataFrame, is_query: pd.Series
+) -> pd.DataFrame:
+    """Add ``query_strain_sd`` (Additional Data S4 "St.dev.") to the query rows.
+
+    S4 keys a strain by its bare tm number ("tm3180"); Data S1 by the full strain id
+    ("YAR002W+YDL227C_tm3180"). Every query row must find its S4 row (all 546 do);
+    a missing one, or an S4 fitness that differs from Data S1's 4-decimal value by more
+    than the rounding, is refused rather than joined. Non-query rows get NaN.
+    """
+    repeated = df_s4["Query Strain ID"][df_s4["Query Strain ID"].duplicated()]
+    if len(repeated):
+        raise ValueError(
+            f"Additional Data S4 lists query strain(s) {sorted(repeated)} more than once"
+        )
+    s4 = df_s4.set_index("Query Strain ID")
+    tm = df.loc[is_query, "Query strain ID"].str.rsplit("_", n=1).str[-1]
+    missing = sorted(set(tm) - set(s4.index))
+    if missing:
+        raise ValueError(
+            f"{len(missing)} query strain(s) are absent from Additional Data S4: "
+            f"{missing[:10]}"
+        )
+    s4_fitness = tm.map(s4["Fitness"])
+    s4_sd = tm.map(s4["St.dev."])
+    if (s4_fitness.isna() != s4_sd.isna()).any():
+        raise ValueError(
+            "Additional Data S4 gives a Fitness without a St.dev. (or the reverse) "
+            "for a query strain"
+        )
+    gap = (s4_fitness - df.loc[is_query, "Query single/double mutant fitness"]).abs()
+    if (gap > _QUERY_FITNESS_ROUNDING_TOL).any():
+        raise ValueError(
+            "Additional Data S4 and Data S1 disagree beyond rounding on "
+            f"{int((gap > _QUERY_FITNESS_ROUNDING_TOL).sum())} query strain(s) "
+            f"(max |diff| {gap.max():.6f}); the SD would describe another estimate"
+        )
+    df = df.copy()
+    df["query_strain_sd"] = float("nan")
+    df.loc[is_query, "query_strain_sd"] = s4_sd
+    return df
+
 
 # Record kinds emitted by DmfKuzmin2018Dataset. Two physically different
 # double-mutant measurements live in one raw table:
@@ -138,9 +343,9 @@ def _combined_mutant_uncertainty(std_val: Any) -> dict[str, Any]:
     A released SD of exactly 0 (4 digenic and 5 trigenic rows of Data S1) is stored
     as released, with the SE of 0 that arithmetic gives, never dropped or replaced by
     a gap (#894, #895; owner decision 2026-10-12: the uncertainty a source releases
-    is stored as released).
-    The SI defines the column only as "12. Combined mutant fitness standard
-    deviation" (si/si1.md line 427) and states nothing else about these rows.
+    is stored as released). The SI defines the column only as "12. Combined mutant
+    fitness standard deviation" (si/si1.md line 427) and states nothing else about
+    these rows.
     """
     if pd.isna(std_val):
         return {"fitness_uncertainty": None, "fitness_uncertainty_type": None}
@@ -237,9 +442,9 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
         return FitnessExperimentReference
 
     @property
-    def raw_file_names(self) -> str:  # type: ignore[override]  # single raw file as str, base is list[str]
-        """Return the name of the raw Kuzmin 2018 data file."""
-        return "aao1729_data_s1.tsv"
+    def raw_file_names(self) -> list[str]:
+        """Data S1 (from the hosted zip) and Additional Data S4 (from the raw mirror)."""
+        return [RAW_TABLE_NAME, S4_NAME]
 
     @property
     def processed_file_names(self) -> list[str]:
@@ -247,18 +452,28 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
         return "lmdb"  # type: ignore[return-value]  # single processed dir as str, base/PyG accept str
 
     def download(self) -> None:
-        """Download the Kuzmin 2018 archive and extract it into the raw directory."""
-        path = download_url(self.url, self.raw_dir)
-        with zipfile.ZipFile(path, "r") as zip_ref:
-            zip_ref.extractall(self.raw_dir)
-        os.remove(path)
+        """Fetch Data S1 from the hosted zip unless it is in ``raw/``; link S4 in.
+
+        Data S1 is fetched only when absent so a store whose Data S1 is already in
+        ``raw/`` gains Additional Data S4 without a network call.
+        """
+        if not osp.exists(osp.join(self.raw_dir, RAW_TABLE_NAME)):
+            path = download_url(self.url, self.raw_dir)
+            with zipfile.ZipFile(path, "r") as zip_ref:
+                zip_ref.extractall(self.raw_dir)
+            os.remove(path)
+        _link_s4(self.raw_dir)
 
     @post_process
     def process(self) -> None:
         """Preprocess the raw table and write experiment records to the LMDB store."""
-        df = pd.read_csv(osp.join(self.raw_dir, self.raw_file_names), sep="\t")
+        verify_raw_files(
+            self.raw_dir, {RAW_TABLE_NAME: RAW_TABLE_SHA256, S4_NAME: S4_SHA256}
+        )
+        df = pd.read_csv(osp.join(self.raw_dir, RAW_TABLE_NAME), sep="\t")
+        df_s4 = pd.read_excel(osp.join(self.raw_dir, S4_NAME))
 
-        df = self.preprocess_raw(df)
+        df = self.preprocess_raw(df, df_s4)
         os.makedirs(self.preprocess_dir, exist_ok=True)
         df.to_csv(osp.join(self.preprocess_dir, "data.csv"), index=False)
 
@@ -281,10 +496,14 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
         env.close()
         interned_env.close()
 
-    def preprocess_raw(
-        self, df: pd.DataFrame, preprocess: dict[str, Any] | None = None
+    def preprocess_raw(  # type: ignore[override]  # dataset-specific signature
+        self, df: pd.DataFrame, df_s4: pd.DataFrame
     ) -> pd.DataFrame:
-        """Clean and reshape the raw Kuzmin table into per-genotype rows."""
+        """Clean and reshape the raw Kuzmin table into per-genotype rows.
+
+        The query-strain rows gain ``query_strain_sd`` from Additional Data S4
+        (``_attach_query_strain_sd``).
+        """
         df[["Query strain ID_1", "Query strain ID_2"]] = df[
             "Query strain ID"
         ].str.split("+", expand=True)
@@ -348,7 +567,7 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
             .copy()
             .reset_index(drop=True)
         )
-        return df
+        return _attach_query_strain_sd(df, df_s4, df["smf_type"] == "query_smf")
 
     @staticmethod
     def create_experiment(  # type: ignore[override]  # dataset-specific signature
@@ -420,9 +639,17 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
         elif row["smf_type"] == "array_smf":
             smf_key = "Array single mutant fitness"
 
-        # No reported std for single mutants (SMF value comes from Costanzo/query
-        # estimates); leave uncertainty unset.
-        phenotype = FitnessPhenotype(fitness=row[smf_key], fitness_std=None)
+        # A query single mutant's SD is released in Additional Data S4 (a bootstrap
+        # SE, or a typed gap where S4 leaves it blank); an array single mutant's
+        # fitness comes with no SD in this release, so it carries none.
+        if row["smf_type"] == "query_smf":
+            phenotype = FitnessPhenotype(
+                fitness=row[smf_key],
+                fitness_std=_reported_sd(row["query_strain_sd"]),
+                **_query_strain_uncertainty(row["query_strain_sd"]),
+            )
+        else:
+            phenotype = FitnessPhenotype(fitness=row[smf_key], fitness_std=None)
 
         # Reference noise = mean combined-mutant SD -> sample_sd over colonies.
         phenotype_reference = FitnessPhenotype(
@@ -491,23 +718,33 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
         return FitnessExperimentReference
 
     @property
-    def raw_file_names(self) -> str:  # type: ignore[override]  # single raw file as str, base is list[str]
-        """Return the name of the raw Kuzmin 2018 data file."""
-        return "aao1729_data_s1.tsv"
+    def raw_file_names(self) -> list[str]:
+        """Data S1 (from the hosted zip) and Additional Data S4 (from the raw mirror)."""
+        return [RAW_TABLE_NAME, S4_NAME]
 
     def download(self) -> None:
-        """Download the Kuzmin 2018 archive and extract it into the raw directory."""
-        path = download_url(self.url, self.raw_dir)
-        with zipfile.ZipFile(path, "r") as zip_ref:
-            zip_ref.extractall(self.raw_dir)
-        os.remove(path)
+        """Fetch Data S1 from the hosted zip unless it is in ``raw/``; link S4 in.
+
+        Data S1 is fetched only when absent so a store whose Data S1 is already in
+        ``raw/`` gains Additional Data S4 without a network call.
+        """
+        if not osp.exists(osp.join(self.raw_dir, RAW_TABLE_NAME)):
+            path = download_url(self.url, self.raw_dir)
+            with zipfile.ZipFile(path, "r") as zip_ref:
+                zip_ref.extractall(self.raw_dir)
+            os.remove(path)
+        _link_s4(self.raw_dir)
 
     @post_process
     def process(self) -> None:
         """Preprocess the raw table and write experiment records to the LMDB store."""
-        df = pd.read_csv(osp.join(self.raw_dir, self.raw_file_names), sep="\t")
+        verify_raw_files(
+            self.raw_dir, {RAW_TABLE_NAME: RAW_TABLE_SHA256, S4_NAME: S4_SHA256}
+        )
+        df = pd.read_csv(osp.join(self.raw_dir, RAW_TABLE_NAME), sep="\t")
+        df_s4 = pd.read_excel(osp.join(self.raw_dir, S4_NAME))
 
-        df = self.preprocess_raw(df)
+        df = self.preprocess_raw(df, df_s4)
         if self.subset_n is not None:
             df = df.sample(n=self.subset_n, random_state=42).reset_index(drop=True)
         os.makedirs(self.preprocess_dir, exist_ok=True)
@@ -532,10 +769,14 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
         env.close()
         interned_env.close()
 
-    def preprocess_raw(
-        self, df: pd.DataFrame, preprocess: dict[str, Any] | None = None
+    def preprocess_raw(  # type: ignore[override]  # dataset-specific signature
+        self, df: pd.DataFrame, df_s4: pd.DataFrame
     ) -> pd.DataFrame:
-        """Clean and reshape the raw Kuzmin table into per-genotype rows."""
+        """Clean and reshape the raw Kuzmin table into per-genotype rows.
+
+        The query-strain rows gain ``query_strain_sd`` from Additional Data S4
+        (``_attach_query_strain_sd``).
+        """
         df[["Query strain ID_1", "Query strain ID_2"]] = df[
             "Query strain ID"
         ].str.split("+", expand=True)
@@ -595,7 +836,9 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
         df = df.replace("'", "_prime", regex=True)
         df = df.replace("Δ", "_delta", regex=True)
         df = df.reset_index(drop=True)
-        return df
+        return _attach_query_strain_sd(
+            df, df_s4, df["record_kind"] == RECORD_KIND_DOUBLE_MUTANT_QUERY_STRAIN
+        )
 
     @staticmethod
     def create_experiment(  # type: ignore[override]  # dataset-specific signature
@@ -657,19 +900,13 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
         environment_reference = environment.model_copy()
         # Phenotype
         if row["record_kind"] == RECORD_KIND_DOUBLE_MUTANT_QUERY_STRAIN:
-            # The SD of these query-strain fitnesses is released in "Data File
-            # S4_Fitness standard for single and double mutant query strains.xlsx",
-            # which is NOT among this loader's declared raw files (it declares only
-            # aao1729_data_s1.tsv out of the hosted zip). So no uncertainty is
-            # recorded, exactly as SmfKuzmin2018Dataset does for query single-mutant
-            # fitness. FOLLOW-UP: ingesting it requires adding Data File S4 to the
-            # raw mirror with a provenance record (source_url + retrieval_command +
-            # sha256); per the SI it is a bootstrap quantity over 12-24 colony
-            # measurements, not a sample SD (see kuzmin2020.py's
-            # N_SAMPLES_QUERY_STRAIN_FITNESS for the verbatim quote).
+            # The SD of a query strain's fitness is released in Additional Data S4:
+            # a bootstrap SE over colonies, or a typed gap where S4 leaves it blank.
             fitness = row["Query single/double mutant fitness"]
-            fitness_std = None
-            uncertainty: dict[str, Any] = {}
+            fitness_std = _reported_sd(row["query_strain_sd"])
+            uncertainty: dict[str, Any] = _query_strain_uncertainty(
+                row["query_strain_sd"]
+            )
         else:
             fitness = row["Combined mutant fitness"]
             fitness_std = _reported_sd(
@@ -741,9 +978,9 @@ class TmfKuzmin2018Dataset(ExperimentDataset):
         return FitnessExperimentReference
 
     @property
-    def raw_file_names(self) -> str:  # type: ignore[override]  # single raw file as str, base is list[str]
-        """Return the name of the raw Kuzmin 2018 data file."""
-        return "aao1729_data_s1.tsv"
+    def raw_file_names(self) -> list[str]:
+        """Additional Data S1, from the hosted zip."""
+        return [RAW_TABLE_NAME]
 
     def download(self) -> None:
         """Download the Kuzmin 2018 archive and extract it into the raw directory."""
@@ -755,7 +992,8 @@ class TmfKuzmin2018Dataset(ExperimentDataset):
     @post_process
     def process(self) -> None:
         """Preprocess the raw table and write experiment records to the LMDB store."""
-        df = pd.read_csv(osp.join(self.raw_dir, self.raw_file_names), sep="\t")
+        verify_raw_files(self.raw_dir, {RAW_TABLE_NAME: RAW_TABLE_SHA256})
+        df = pd.read_csv(osp.join(self.raw_dir, RAW_TABLE_NAME), sep="\t")
 
         df = self.preprocess_raw(df)
         if self.subset_n is not None:
@@ -978,9 +1216,9 @@ class DmiKuzmin2018Dataset(ExperimentDataset):
         return GeneInteractionExperimentReference
 
     @property
-    def raw_file_names(self) -> str:  # type: ignore[override]  # single raw file as str, base is list[str]
-        """Return the name of the raw Kuzmin 2018 data file."""
-        return "aao1729_data_s1.tsv"
+    def raw_file_names(self) -> list[str]:
+        """Additional Data S1, from the hosted zip."""
+        return [RAW_TABLE_NAME]
 
     def download(self) -> None:
         """Download the Kuzmin 2018 archive and extract it into the raw directory."""
@@ -992,7 +1230,8 @@ class DmiKuzmin2018Dataset(ExperimentDataset):
     @post_process
     def process(self) -> None:
         """Preprocess the raw table and write experiment records to the LMDB store."""
-        df = pd.read_csv(osp.join(self.raw_dir, self.raw_file_names), sep="\t")
+        verify_raw_files(self.raw_dir, {RAW_TABLE_NAME: RAW_TABLE_SHA256})
+        df = pd.read_csv(osp.join(self.raw_dir, RAW_TABLE_NAME), sep="\t")
 
         df = self.preprocess_raw(df)
         if self.subset_n is not None:
@@ -1195,9 +1434,9 @@ class TmiKuzmin2018Dataset(ExperimentDataset):
         return GeneInteractionExperimentReference
 
     @property
-    def raw_file_names(self) -> str:  # type: ignore[override]  # single raw file as str, base is list[str]
-        """Return the name of the raw Kuzmin 2018 data file."""
-        return "aao1729_data_s1.tsv"
+    def raw_file_names(self) -> list[str]:
+        """Additional Data S1, from the hosted zip."""
+        return [RAW_TABLE_NAME]
 
     def download(self) -> None:
         """Download the Kuzmin 2018 archive and extract it into the raw directory."""
@@ -1209,7 +1448,8 @@ class TmiKuzmin2018Dataset(ExperimentDataset):
     @post_process
     def process(self) -> None:
         """Preprocess the raw table and write experiment records to the LMDB store."""
-        df = pd.read_csv(osp.join(self.raw_dir, self.raw_file_names), sep="\t")
+        verify_raw_files(self.raw_dir, {RAW_TABLE_NAME: RAW_TABLE_SHA256})
+        df = pd.read_csv(osp.join(self.raw_dir, RAW_TABLE_NAME), sep="\t")
 
         df = self.preprocess_raw(df)
         if self.subset_n is not None:

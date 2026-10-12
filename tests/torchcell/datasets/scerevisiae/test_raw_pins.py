@@ -186,6 +186,19 @@ def _pins_from_constants(
             m.AID_FILENAME: m.AID_SHA256,
         },
         "FattyAcidXue2025Dataset": lambda: {m.DATA_FILENAME: m.DATA_SHA256},
+        # Kuzmin 2018 (#894, #1054): Data S1 in every class; Smf and Dmf also read
+        # Additional Data S4 from the raw mirror.
+        "SmfKuzmin2018Dataset": lambda: {
+            m.RAW_TABLE_NAME: m.RAW_TABLE_SHA256,
+            m.S4_NAME: m.S4_SHA256,
+        },
+        "DmfKuzmin2018Dataset": lambda: {
+            m.RAW_TABLE_NAME: m.RAW_TABLE_SHA256,
+            m.S4_NAME: m.S4_SHA256,
+        },
+        "TmfKuzmin2018Dataset": lambda: {m.RAW_TABLE_NAME: m.RAW_TABLE_SHA256},
+        "DmiKuzmin2018Dataset": lambda: {m.RAW_TABLE_NAME: m.RAW_TABLE_SHA256},
+        "TmiKuzmin2018Dataset": lambda: {m.RAW_TABLE_NAME: m.RAW_TABLE_SHA256},
         "EnvChemgenParsons2006Dataset": lambda: {
             table.filename: table.sha256 for table in m.RAW_TABLES
         },
@@ -348,7 +361,7 @@ def test_process_verifies_every_raw_file_against_its_pin_before_reading(
 #: Loader modules with a ``process()`` and no build-time pin yet: the pin debt. A module
 #: leaves this list only by gaining a ``verify_raw_files`` call.
 UNPINNED_LOADERS = frozenset(
-    {"costanzo2016", "kemmeren2014", "kuzmin2018", "kuzmin2020", "sameith2015"}
+    {"costanzo2016", "kemmeren2014", "kuzmin2020", "sameith2015"}
 )
 #: Loaders whose source is not a file in ``raw/`` but a pinned directory under
 #: ``$DATA_ROOT``, verified by its own digest before any file is read: ``sgd`` reads the

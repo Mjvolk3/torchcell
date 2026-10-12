@@ -31,15 +31,7 @@ EMPTY_RAW = {"GeneEssentialitySgdDataset"}
 # works; the fix touches six preprocess_raw call sites that only the data-gated tests
 # exercise, so it waits for a PR that can cover them. Strict: a loader that starts
 # returning a list must leave this set.
-STR_RAW = {
-    "DmfKuzmin2018Dataset",
-    "DmiKuzmin2018Dataset",
-    "SmfCostanzo2016Dataset",
-    "SmfKuzmin2018Dataset",
-    "SmfKuzmin2020Dataset",
-    "TmfKuzmin2018Dataset",
-    "TmiKuzmin2018Dataset",
-}
+STR_RAW = {"SmfCostanzo2016Dataset", "SmfKuzmin2020Dataset"}
 
 
 def _shell(cls: type[ExperimentDataset]) -> ExperimentDataset:
@@ -76,7 +68,8 @@ def test_registered_class_contract(name: str) -> None:
 def test_schema_classes_and_raw_files_are_declared_at_class_level(name: str) -> None:
     """experiment_class / reference_class are schema types; raw_file_names is a list of names.
 
-    The seven STR_RAW loaders are held to the string they return today instead.
+    The two STR_RAW loaders are held to the string they return today instead (the five
+    Kuzmin 2018 loaders declare a list since #1054 pinned their raw files).
     """
     shell = _shell(REGISTERED[name])
     assert issubclass(shell.experiment_class, Experiment)

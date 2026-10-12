@@ -1,0 +1,212 @@
+{
+  "script": "experiments/036-dataset-fixes-before-kg-build/scripts/nguessan2025_snp_liftover.py",
+  "commit": "2a6c9bcfbad791377496443fd23a9527c37191e5",
+  "dirty_tracked_paths": [],
+  "function": "torchcell.datasets.scerevisiae.nguessan2025.lift_snps",
+  "params": {
+    "flanks": [
+      25,
+      50,
+      100,
+      200
+    ],
+    "seed": 25
+  },
+  "inputs": {
+    "data/dryad/SNP_list.txt": "333550aa3a7eecd2c90b5550c36cc7f59257d878142a423fa24402724c3b59b6",
+    "data/bbqtl/BY4742_fixed.fasta": "c2e18c61d0529cf44d5991702f7ee50a3d968b2fa8e97bbc65a35d90b83c6f4e",
+    "sgd_S288C_R64-4-1_20230830/S288C_reference_sequence_R64-4-1_20230830.fsa": "dbf065ffc3f5bbaa7554ef53c6861399eecc597fe058df5f81ba557944e3f86b"
+  },
+  "table": {
+    "path": "derived/SNP_list_lifted_S288C_R64-4-1.tsv",
+    "bytes": 2537055,
+    "sha256": "18c768d365f7086874f13fa02ffa8ea5c277e71a1ef59ead04b1c3dfb83be211"
+  },
+  "summary": {
+    "snps": 41594,
+    "status": {
+      "lifted": 41587,
+      "no_match": 7
+    },
+    "flank_bp_of_lifted": {
+      "25": 41472,
+      "50": 100,
+      "100": 14,
+      "200": 1
+    },
+    "hits_of_multiple": {},
+    "strand_of_lifted": {
+      "+": 41587
+    },
+    "lifted_to_another_chromosome": 0,
+    "by_allele_is_s288c_base": 41578,
+    "lifted_unchanged_position": 22129,
+    "per_chromosome": {
+      "chrI": {
+        "snps": 995,
+        "lifted": 993,
+        "status": {
+          "lifted": 993,
+          "no_match": 2
+        },
+        "by_allele_is_s288c_base": 993,
+        "offset_min": 0,
+        "offset_max": 0
+      },
+      "chrII": {
+        "snps": 3735,
+        "lifted": 3734,
+        "status": {
+          "lifted": 3734,
+          "no_match": 1
+        },
+        "by_allele_is_s288c_base": 3733,
+        "offset_min": -1,
+        "offset_max": 4489
+      },
+      "chrIII": {
+        "snps": 558,
+        "lifted": 558,
+        "status": {
+          "lifted": 558
+        },
+        "by_allele_is_s288c_base": 555,
+        "offset_min": 0,
+        "offset_max": 10580
+      },
+      "chrIV": {
+        "snps": 4035,
+        "lifted": 4035,
+        "status": {
+          "lifted": 4035
+        },
+        "by_allele_is_s288c_base": 4033,
+        "offset_min": -2,
+        "offset_max": 0
+      },
+      "chrV": {
+        "snps": 1859,
+        "lifted": 1859,
+        "status": {
+          "lifted": 1859
+        },
+        "by_allele_is_s288c_base": 1859,
+        "offset_min": 0,
+        "offset_max": 1097
+      },
+      "chrVI": {
+        "snps": 1288,
+        "lifted": 1288,
+        "status": {
+          "lifted": 1288
+        },
+        "by_allele_is_s288c_base": 1288,
+        "offset_min": 0,
+        "offset_max": 0
+      },
+      "chrVII": {
+        "snps": 3931,
+        "lifted": 3931,
+        "status": {
+          "lifted": 3931
+        },
+        "by_allele_is_s288c_base": 3931,
+        "offset_min": -1,
+        "offset_max": 0
+      },
+      "chrVIII": {
+        "snps": 1638,
+        "lifted": 1638,
+        "status": {
+          "lifted": 1638
+        },
+        "by_allele_is_s288c_base": 1637,
+        "offset_min": 0,
+        "offset_max": 2
+      },
+      "chrIX": {
+        "snps": 2078,
+        "lifted": 2078,
+        "status": {
+          "lifted": 2078
+        },
+        "by_allele_is_s288c_base": 2078,
+        "offset_min": -3,
+        "offset_max": 0
+      },
+      "chrX": {
+        "snps": 2974,
+        "lifted": 2973,
+        "status": {
+          "lifted": 2973,
+          "no_match": 1
+        },
+        "by_allele_is_s288c_base": 2973,
+        "offset_min": -1,
+        "offset_max": 0
+      },
+      "chrXI": {
+        "snps": 3239,
+        "lifted": 3239,
+        "status": {
+          "lifted": 3239
+        },
+        "by_allele_is_s288c_base": 3239,
+        "offset_min": -3,
+        "offset_max": 0
+      },
+      "chrXII": {
+        "snps": 4310,
+        "lifted": 4309,
+        "status": {
+          "lifted": 4309,
+          "no_match": 1
+        },
+        "by_allele_is_s288c_base": 4309,
+        "offset_min": 0,
+        "offset_max": 1
+      },
+      "chrXIII": {
+        "snps": 2945,
+        "lifted": 2943,
+        "status": {
+          "lifted": 2943,
+          "no_match": 2
+        },
+        "by_allele_is_s288c_base": 2942,
+        "offset_min": -327,
+        "offset_max": 0
+      },
+      "chrXIV": {
+        "snps": 1799,
+        "lifted": 1799,
+        "status": {
+          "lifted": 1799
+        },
+        "by_allele_is_s288c_base": 1798,
+        "offset_min": 1,
+        "offset_max": 6
+      },
+      "chrXV": {
+        "snps": 4289,
+        "lifted": 4289,
+        "status": {
+          "lifted": 4289
+        },
+        "by_allele_is_s288c_base": 4289,
+        "offset_min": 0,
+        "offset_max": 190
+      },
+      "chrXVI": {
+        "snps": 1921,
+        "lifted": 1921,
+        "status": {
+          "lifted": 1921
+        },
+        "by_allele_is_s288c_base": 1921,
+        "offset_min": 0,
+        "offset_max": 3
+      }
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "lifted_table_sha256": "18c768d365f7086874f13fa02ffa8ea5c277e71a1ef59ead04b1c3dfb83be211",
+  "lifted_snps": 41587,
+  "released_snps": 41594,
+  "marker_reference": {
+    "by_allele_is_s288c_base": 41578,
+    "fraction": 0.999784,
+    "bar": 0.95
+  },
+  "mat_fixation": {
+    "strains": 2951,
+    "nearest_lifted_snp": {
+      "chromosome": "chrIII",
+      "position": 201156,
+      "ref": "T",
+      "alt": "C",
+      "index": 5021,
+      "column": 5019
+    },
+    "mean_p_rm": 0.043794,
+    "tolerance": 0.05,
+    "fixed": true
+  }
+}

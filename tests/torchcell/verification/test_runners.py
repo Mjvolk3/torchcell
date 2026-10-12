@@ -1496,6 +1496,91 @@ def test_run_environment_response_dispatches_eager_and_streaming(
         assert all(r["passed"] for r in report["results"])
 
 
+def _absolute_env_record(gene: str, value: float, *, stressed: bool) -> Record:
+    """A growth-rate record whose reference states its own rate (an ABSOLUTE readout)."""
+
+    def phenotype(v: float) -> EnvironmentResponsePhenotype:
+        return EnvironmentResponsePhenotype(
+            measurement_type=MeasurementType.growth_rate,
+            environment_response=v,
+            units="1/h",
+        )
+
+    env = Environment(
+        media=YP_GALACTOSE,
+        temperature=Temperature(value=30),
+        perturbations=[
+            SmallMoleculePerturbation(
+                compound=Compound(name="hydroquinone", inchikey=HYDROQUINONE),
+                concentration=Concentration(basis=DoseBasis.IC30),
+            )
+        ]
+        if stressed
+        else [],
+    )
+    experiment = EnvironmentResponseExperiment(
+        dataset_name="test",
+        genotype=_genotype([gene]),
+        environment=env,
+        phenotype=phenotype(value),
+    )
+    reference = EnvironmentResponseExperimentReference(
+        dataset_name="test",
+        genome_reference=_reference_genome(),
+        environment_reference=env.model_copy(),
+        phenotype_reference=phenotype(0.45 if not stressed else 0.18),
+    )
+    return {"experiment": experiment.model_dump(), "reference": reference.model_dump()}
+
+
+@pytest.mark.parametrize("stream", [False, True], ids=["eager", "streaming"])
+def test_an_entry_declares_an_absolute_readout_and_its_base_condition(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, stream: bool
+) -> None:
+    """``reference_centered: False`` runs the absolute reference rule and
+    ``expected_unperturbed`` is the declared count of base-condition records; an entry
+    that omits them is held to the relative rule, which a nonzero reference fails.
+    """
+    records = [
+        _absolute_env_record(GENES[0], 0.44, stressed=False),
+        _absolute_env_record(GENES[1], 0.17, stressed=True),
+        _absolute_env_record(GENES[2], 0.16, stressed=True),
+    ]
+    _write_lmdb(_root(tmp_path, "env_abs"), records)
+    _stub_sgd(monkeypatch, set(GENES))
+    _stub_genome(monkeypatch)
+    extra: dict[str, Any] = {"stream": True} if stream else {}
+    monkeypatch.setattr(
+        runners,
+        "ENVIRONMENT_RESPONSE_DATASETS",
+        {
+            "env_abs": _spec(
+                "env_abs",
+                expected_count=3,
+                reference_centered=False,
+                expected_unperturbed=1,
+                **extra,
+            )
+        },
+    )
+    report = runners.verify_environment_response_entry("env_abs", str(tmp_path))
+    by_name = {r.name: r for r in report.results}
+    assert by_name["reference_zero"].details["rule"] == "absolute_reference"
+    assert by_name["reference_zero"].passed
+    assert by_name["environment_perturbed"].details["expected_unperturbed"] == 1
+    assert by_name["environment_perturbed"].passed
+    monkeypatch.setattr(
+        runners,
+        "ENVIRONMENT_RESPONSE_DATASETS",
+        {"env_abs": _spec("env_abs", expected_count=3, **extra)},
+    )
+    relative = runners.verify_environment_response_entry("env_abs", str(tmp_path))
+    by_name = {r.name: r for r in relative.results}
+    assert by_name["reference_zero"].details["rule"] == "numeric_zero"
+    assert not by_name["reference_zero"].passed
+    assert not by_name["environment_perturbed"].passed
+
+
 def _bacterial_env_record(locus: str, value: float) -> Record:
     """One KT2440 environment-response record: a locus-tag deletion under an inhibitor."""
     phenotype = EnvironmentResponsePhenotype(
@@ -2118,6 +2203,7 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         "env_chemgen_hillenmeyer2008_het": 2712677,
         "env_chemgen_hillenmeyer2008_hom": 1063034,
         "env_chemgen_parsons2006": 291673,
+        "env_chemgen_yoshikawa2009": 28140,
         "crispri_chemgen_smith2016": 7053,
     }
     assert {
@@ -2245,7 +2331,7 @@ def test_every_registry_root_is_the_dev_tree_path_of_its_own_name() -> None:
         + 14  # METABOLITE_DATASETS
         + 4  # PROTEIN_DATASETS
         + 6  # RNASEQ_DATASETS
-        + 15  # ENVIRONMENT_RESPONSE_DATASETS
+        + 16  # ENVIRONMENT_RESPONSE_DATASETS
         + 11  # FITNESS_DATASETS
         + 1  # SEGREGANT_GROWTH_DATASETS
         + 1  # SEGREGANT_EXPRESSION_DATASETS

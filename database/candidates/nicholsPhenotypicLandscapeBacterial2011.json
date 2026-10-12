@@ -1,0 +1,549 @@
+{
+  "citation_key": "nicholsPhenotypicLandscapeBacterial2011",
+  "table": "bacteria",
+  "row_name": "Nichols 2011",
+  "gates": [
+    {
+      "gate": "G1",
+      "outcome": "pass",
+      "reason": "primary: status='candidate', klass='Fitness / chemical genomics', no aggregation marker",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G2",
+      "outcome": "pass",
+      "reason": "assembly_set: MG1655 -> ecoli_K12_MG1655_ASM584v2 resolves and reads; BW25113 -> ecoli_K12_BW25113_ASM75055v1 resolves and reads",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G3",
+      "outcome": "pass",
+      "reason": "26 file(s) in raw, 0 worksheet row(s) counted; all intact",
+      "evidence": [
+        {
+          "value": [
+            3979,
+            324
+          ],
+          "provenance": {
+            "source_uri": "si/mmc8.md",
+            "citation_key": "nicholsPhenotypicLandscapeBacterial2011",
+            "sha256": "0fbf32478f0491b25b27a031b47f639e1d67cbba4b5311f42940673e5ab33e92",
+            "method": "MinerU OCR (CPU) of si/mmc8.pdf (sha256 e0c4e40678d83bc47252d8e47cad64bdd8178ca4713cad2496e0a72b77909e2c), the owner's manual deposit (torchcell-raw mirror)",
+            "page": "Results, 'Phenomic Profiling of E. coli K12 Yields a Robust, High-Quality Data Set'",
+            "retrieved": null
+          },
+          "quote": "The entire matrix (3979 mutants $\\times 3 2 4$ conditions)",
+          "note": "the Table S2 shape: 3,979 strain rows by 324 screen columns"
+        }
+      ],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G4",
+      "outcome": "pass",
+      "reason": "no key held by another module (1 mention(s)); no PMID check; values not compared (no dev store named)",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G5",
+      "outcome": "gap",
+      "reason": "44 compound(s) unresolved: A22, Acriflavine, Amoxicillin, Ampicillin, Azidothymidine, Aztreonam, Bicyclomycin, Bile salts, CCCP (Carbonyl cyanide 3-chlorophenylhydrazone), CHIR-090, Calcofluor (F3543 Fluorescent Brightener 28), Carbenicillin, Cecropin B, Cefsulodin, Ceftazidime, Cholate, Clarythromycin, CuCl2, Cycloserine D, Deoxycholate, EDTA, Epigallocatechin gallate (EGCG), Ethidium Bromide, FeSO4, Fosfomycin, Gentamicin, Glucose 6P, Indolicidin, Mecillinam, NH4Cl, NiCl2, Nitrofurnatoin, Oxacillin, Paraquat dichloride, Phenazine methosulfate (PMS), Polymyxin B, Propidium iodide, SDS, Spiramycin, Streptonigrin, TAPS, Taurocholate, Triclosan/Irgasan, Triton X-100",
+      "evidence": [
+        {
+          "value": "standard normal per screen",
+          "provenance": {
+            "source_uri": "si/mmc8.md",
+            "citation_key": "nicholsPhenotypicLandscapeBacterial2011",
+            "sha256": "0fbf32478f0491b25b27a031b47f639e1d67cbba4b5311f42940673e5ab33e92",
+            "method": "MinerU OCR (CPU) of si/mmc8.pdf (sha256 e0c4e40678d83bc47252d8e47cad64bdd8178ca4713cad2496e0a72b77909e2c), the owner's manual deposit (torchcell-raw mirror)",
+            "page": "Extended Experimental Procedures, 'Phenotype Analysis'",
+            "retrieved": null
+          },
+          "quote": "For each screen, we estimated the mean and IQR of Condition-Gene scores and re-scaled the data to a standard normal distribution $( \\mathsf { I Q R } = 1 . 3 5 )$",
+          "note": "measured on Table S2 (nichols2011_release_checks.py): every one of the 324 columns has a median within 0.022 of 0 and an IQR of 1.309 to 1.379 (median 1.348), so the released numbers ARE the re-scaled scores, which is what measurement_type z_score names"
+        },
+        {
+          "value": "unaveraged S-score",
+          "provenance": {
+            "source_uri": "si/mmc8.md",
+            "citation_key": "nicholsPhenotypicLandscapeBacterial2011",
+            "sha256": "0fbf32478f0491b25b27a031b47f639e1d67cbba4b5311f42940673e5ab33e92",
+            "method": "MinerU OCR (CPU) of si/mmc8.pdf (sha256 e0c4e40678d83bc47252d8e47cad64bdd8178ca4713cad2496e0a72b77909e2c), the owner's manual deposit (torchcell-raw mirror)",
+            "page": "Extended Experimental Procedures, 'Screen Conditions and Data Processing'",
+            "retrieved": null
+          },
+          "quote": "so the scores generated here are analogous to ‘‘unaveraged’’ S-scores (Collins et al., 2006).",
+          "note": "a condition-gene interaction is constructed one way only, so there is no reciprocal score to average"
+        },
+        {
+          "value": [
+            4,
+            6
+          ],
+          "provenance": {
+            "source_uri": "si/mmc8.md",
+            "citation_key": "nicholsPhenotypicLandscapeBacterial2011",
+            "sha256": "0fbf32478f0491b25b27a031b47f639e1d67cbba4b5311f42940673e5ab33e92",
+            "method": "MinerU OCR (CPU) of si/mmc8.pdf (sha256 e0c4e40678d83bc47252d8e47cad64bdd8178ca4713cad2496e0a72b77909e2c), the owner's manual deposit (torchcell-raw mirror)",
+            "page": "Results, 'Phenomic Profiling of E. coli K12 Yields a Robust, High-Quality Data Set'",
+            "retrieved": null
+          },
+          "quote": "Two independently derived clones of each mutant strain were analyzed (for sRNA mutants, a single isolate was arrayed twice), and screens were performed at least twice, enabling scores to be based on four to six independent measurements.",
+          "note": "a range with no per-record count released and no companion statistic to back-solve it from, so n_samples takes the conservative lower end, 4 (CLAUDE.md, 'Resolving a range with no per-record value'), and one sample is a colony"
+        }
+      ],
+      "issue": 1063,
+      "blocked_kind": null
+    }
+  ],
+  "zotero_item": "absent",
+  "source_kind": "primary",
+  "aggregation": null,
+  "g2": {
+    "branch": "assembly_set",
+    "outcome": "resolvable_readable",
+    "hosts": [
+      {
+        "name": "MG1655",
+        "assembly_set": "ecoli_K12_MG1655_ASM584v2",
+        "resolvable": true,
+        "readable": true
+      },
+      {
+        "name": "BW25113",
+        "assembly_set": "ecoli_K12_BW25113_ASM75055v1",
+        "resolvable": true,
+        "readable": true
+      }
+    ]
+  },
+  "g3": {
+    "citation_key": "nicholsPhenotypicLandscapeBacterial2011",
+    "trees_read": [
+      "raw"
+    ],
+    "files": [
+      {
+        "tree": "raw",
+        "path": "si/images/mmc8/073fc40741508cb25f1cac87f1e0959c00b74658c45dbb141b600c5742ba8460.jpg",
+        "role": "ocr_image",
+        "bytes": 79915,
+        "sha256_manifest": "c26f26fc0c2479e8cc7c9db5f17b6a20a6a33be8d840974ed26c1ba98cf55122",
+        "sha256_disk": "c26f26fc0c2479e8cc7c9db5f17b6a20a6a33be8d840974ed26c1ba98cf55122",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/images/mmc8/0c1956b86551536d1cbb96f14adebe8d17d1485bf1192868f2df0b9c3b80e5b0.jpg",
+        "role": "ocr_image",
+        "bytes": 57153,
+        "sha256_manifest": "00845c7ae9a63bbc206ab9e710a729b9ed18d80b5279876761d99f06d565d9e1",
+        "sha256_disk": "00845c7ae9a63bbc206ab9e710a729b9ed18d80b5279876761d99f06d565d9e1",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/images/mmc8/12517247ee395e96ba26aeb530b9503fc473ff51770f72c72091ea6575015968.jpg",
+        "role": "ocr_image",
+        "bytes": 46577,
+        "sha256_manifest": "0f5bc136f1510a9adc13e04a362e01d8b3d69313de31ee9e12b80974eec70422",
+        "sha256_disk": "0f5bc136f1510a9adc13e04a362e01d8b3d69313de31ee9e12b80974eec70422",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/images/mmc8/27592c226e1d941bce464202008742af4cf888c8a387baf070ae26259ac7d22d.jpg",
+        "role": "ocr_image",
+        "bytes": 138486,
+        "sha256_manifest": "f6a900e77739f92d4b866627b7f48a7b755b6c3c60e50eb0e20a7efd862576ad",
+        "sha256_disk": "f6a900e77739f92d4b866627b7f48a7b755b6c3c60e50eb0e20a7efd862576ad",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/images/mmc8/4edf4cf8829bcbbf8ebe1a0e3684d9b2009215933dbc369d9f4ac79370bd5f92.jpg",
+        "role": "ocr_image",
+        "bytes": 85697,
+        "sha256_manifest": "50555e6b328068f7584e2972224b940bb1d08446b6aa46056e2dbc4ff429129a",
+        "sha256_disk": "50555e6b328068f7584e2972224b940bb1d08446b6aa46056e2dbc4ff429129a",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/images/mmc8/52fb9031bb04a3cd1be44e080e43ece77af7432966c3bbdf6f90b535bc558cc0.jpg",
+        "role": "ocr_image",
+        "bytes": 115116,
+        "sha256_manifest": "df021f29af0bdc64187057413472f69436d6243f2f9c06a77652533f012e2734",
+        "sha256_disk": "df021f29af0bdc64187057413472f69436d6243f2f9c06a77652533f012e2734",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/images/mmc8/56d93a908e640b4662431a6285b49077c8f8c549fadc2d7b4a60f712abcce524.jpg",
+        "role": "ocr_image",
+        "bytes": 16157,
+        "sha256_manifest": "37702b7bca66fe1857f27c4ccb9e978423985e6463a61b8de3f49e2bef4c0290",
+        "sha256_disk": "37702b7bca66fe1857f27c4ccb9e978423985e6463a61b8de3f49e2bef4c0290",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/images/mmc8/7e61afddce39327932a7419d42a79e8317b693d10834c886726f60320f5c10d4.jpg",
+        "role": "ocr_image",
+        "bytes": 135741,
+        "sha256_manifest": "f913dce2cc1932b8e7faaa56684e9dfe259165313c4a4c505c028d31cd66021a",
+        "sha256_disk": "f913dce2cc1932b8e7faaa56684e9dfe259165313c4a4c505c028d31cd66021a",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/images/mmc8/83ee8a094c210423484591dc6c1aaf002bfba84b4c2beccd7a18f70438fd7836.jpg",
+        "role": "ocr_image",
+        "bytes": 158271,
+        "sha256_manifest": "2c6bd261671f400c853f0a8e73f69a2f8647b5ff14703f75552d680f321ea07a",
+        "sha256_disk": "2c6bd261671f400c853f0a8e73f69a2f8647b5ff14703f75552d680f321ea07a",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/images/mmc8/9e5fa66c3a0b7242bf71e97521a55b531d0639a73ee4930c6ed39e4abf9d4a53.jpg",
+        "role": "ocr_image",
+        "bytes": 82551,
+        "sha256_manifest": "abd6778f74f29818d33b147b47c0c889bedd4b5ad383d32a7017a74b8321e54a",
+        "sha256_disk": "abd6778f74f29818d33b147b47c0c889bedd4b5ad383d32a7017a74b8321e54a",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/images/mmc8/acd43d95923768e9a0003ec892410273956b55bd4f3961d3eab4dedd4872a42b.jpg",
+        "role": "ocr_image",
+        "bytes": 140297,
+        "sha256_manifest": "d937194f1e9b0647cac7957ca7479abb783530d8e2ceb4d2aacadafa77f3b54e",
+        "sha256_disk": "d937194f1e9b0647cac7957ca7479abb783530d8e2ceb4d2aacadafa77f3b54e",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/images/mmc8/cab777fcfa78389c8c1fbc0909fa58e7f893f715157035f63077e9a561b9cc61.jpg",
+        "role": "ocr_image",
+        "bytes": 182164,
+        "sha256_manifest": "04f670b5aefd2e8d5c0cff161b4ae5191aad3fdb5a166e9ebf4616c24ac6e010",
+        "sha256_disk": "04f670b5aefd2e8d5c0cff161b4ae5191aad3fdb5a166e9ebf4616c24ac6e010",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/images/mmc8/cdb67be5a25f5de98054825204f0b31d0fc4ebe1bb9f7600fe23b09ff7255aba.jpg",
+        "role": "ocr_image",
+        "bytes": 95153,
+        "sha256_manifest": "f638aa7f82bf88a6ff01b7e5fd1c9e13abdfc0f13c76196af21ecea4a785234c",
+        "sha256_disk": "f638aa7f82bf88a6ff01b7e5fd1c9e13abdfc0f13c76196af21ecea4a785234c",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/images/mmc8/f8ffbcc31b9a14c4664a95ef4560e122a8a9fbbfd768c49cb8c614f96c1cdd1c.jpg",
+        "role": "ocr_image",
+        "bytes": 73333,
+        "sha256_manifest": "51395933eeddb8c2063681aadef75e4ae8b265f4b137a33701e69e4430c05ff9",
+        "sha256_disk": "51395933eeddb8c2063681aadef75e4ae8b265f4b137a33701e69e4430c05ff9",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/mmc1.xls",
+        "role": "si_data",
+        "bytes": 34304,
+        "sha256_manifest": "349ae759627153dbb6921aee6cc6fc4ef2d6a3e3304da5c68afeb16f5eb02e30",
+        "sha256_disk": "349ae759627153dbb6921aee6cc6fc4ef2d6a3e3304da5c68afeb16f5eb02e30",
+        "retrieval_method": "manual_browser",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/mmc2.xls",
+        "role": "si_data",
+        "bytes": 13938077,
+        "sha256_manifest": "54be9cbc384bdbc7b1aa5a1da872d0e10ca513526f1f446ed068d27675f10fa8",
+        "sha256_disk": "54be9cbc384bdbc7b1aa5a1da872d0e10ca513526f1f446ed068d27675f10fa8",
+        "retrieval_method": "manual_browser",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/mmc3.xls",
+        "role": "si_data",
+        "bytes": 18432,
+        "sha256_manifest": "bd1de75036367825e51e70387e2818ce10d952ea5195dacc24dbf21bd0df5f5f",
+        "sha256_disk": "bd1de75036367825e51e70387e2818ce10d952ea5195dacc24dbf21bd0df5f5f",
+        "retrieval_method": "manual_browser",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/mmc4.xls",
+        "role": "si_data",
+        "bytes": 25088,
+        "sha256_manifest": "20cbe16a3e17fbc955a623c2eb6eb293c8846c2524aabf19d14f255b45c05527",
+        "sha256_disk": "20cbe16a3e17fbc955a623c2eb6eb293c8846c2524aabf19d14f255b45c05527",
+        "retrieval_method": "manual_browser",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/mmc5.xls",
+        "role": "si_data",
+        "bytes": 62976,
+        "sha256_manifest": "c5407840e72ba9a673d9d08fa202beb0e684f39e696b19b769070b221adc099e",
+        "sha256_disk": "c5407840e72ba9a673d9d08fa202beb0e684f39e696b19b769070b221adc099e",
+        "retrieval_method": "manual_browser",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/mmc6.xls",
+        "role": "si_data",
+        "bytes": 124416,
+        "sha256_manifest": "0cb5f840b8c017cfcb667d4de54e6b2a51f9fa7df240e4fc6e3991026fde73ea",
+        "sha256_disk": "0cb5f840b8c017cfcb667d4de54e6b2a51f9fa7df240e4fc6e3991026fde73ea",
+        "retrieval_method": "manual_browser",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/mmc7.xls",
+        "role": "si_data",
+        "bytes": 64512,
+        "sha256_manifest": "0b0b1248c8101ef8d7148cd67bb6bfbd19197938cfd629586c2c38c5fd1417cd",
+        "sha256_disk": "0b0b1248c8101ef8d7148cd67bb6bfbd19197938cfd629586c2c38c5fd1417cd",
+        "retrieval_method": "manual_browser",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/mmc8.md",
+        "role": "si_ocr",
+        "bytes": 94166,
+        "sha256_manifest": "0fbf32478f0491b25b27a031b47f639e1d67cbba4b5311f42940673e5ab33e92",
+        "sha256_disk": "0fbf32478f0491b25b27a031b47f639e1d67cbba4b5311f42940673e5ab33e92",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/mmc8.pdf",
+        "role": "si_pdf",
+        "bytes": 4341546,
+        "sha256_manifest": "e0c4e40678d83bc47252d8e47cad64bdd8178ca4713cad2496e0a72b77909e2c",
+        "sha256_disk": "e0c4e40678d83bc47252d8e47cad64bdd8178ca4713cad2496e0a72b77909e2c",
+        "retrieval_method": "manual_browser",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/mmc8_content_list.json",
+        "role": "ocr_layout",
+        "bytes": 132144,
+        "sha256_manifest": "ecac6bf8151be7f9225b7a0f8d49aa35588b202853a66eea8b815569bf8fbb90",
+        "sha256_disk": "ecac6bf8151be7f9225b7a0f8d49aa35588b202853a66eea8b815569bf8fbb90",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/mmc8_middle.json",
+        "role": "ocr_layout",
+        "bytes": 2922695,
+        "sha256_manifest": "3c8ffca1442e27c42a30c8ab6ea070741f832517e9a0169402852c3b3d52b9b4",
+        "sha256_disk": "3c8ffca1442e27c42a30c8ab6ea070741f832517e9a0169402852c3b3d52b9b4",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/mmc8_ocr_provenance.json",
+        "role": "ocr_provenance",
+        "bytes": 1009,
+        "sha256_manifest": "0a2bba33f97c78f093cc405fa8ced289ec122c2a57ffa3d74321ff0942399489",
+        "sha256_disk": "0a2bba33f97c78f093cc405fa8ced289ec122c2a57ffa3d74321ff0942399489",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      }
+    ],
+    "walls": []
+  },
+  "g4_key": {
+    "doi": "10.1016/j.cell.2010.11.052",
+    "pmid": null,
+    "accessions": [],
+    "hits": [
+      {
+        "key_kind": "doi",
+        "key": "10.1016/j.cell.2010.11.052",
+        "where": "torchcell/datasets/ecoli/nichols2011.py",
+        "relation": "own"
+      },
+      {
+        "key_kind": "doi",
+        "key": "10.1016/j.cell.2010.11.052",
+        "where": "torchcell/datasets/ecoli/shiver2016.py",
+        "relation": "mentioned"
+      }
+    ],
+    "pmid_checked": false
+  },
+  "g4_value": null,
+  "g5": {
+    "phenotype_class": "EnvironmentResponsePhenotype",
+    "class_exists": true,
+    "unresolved_compounds": [
+      "A22",
+      "Acriflavine",
+      "Amoxicillin",
+      "Ampicillin",
+      "Azidothymidine",
+      "Aztreonam",
+      "Bicyclomycin",
+      "Bile salts",
+      "CCCP (Carbonyl cyanide 3-chlorophenylhydrazone)",
+      "CHIR-090",
+      "Calcofluor (F3543 Fluorescent Brightener 28)",
+      "Carbenicillin",
+      "Cecropin B",
+      "Cefsulodin",
+      "Ceftazidime",
+      "Cholate",
+      "Clarythromycin",
+      "CuCl2",
+      "Cycloserine D",
+      "Deoxycholate",
+      "EDTA",
+      "Epigallocatechin gallate (EGCG)",
+      "Ethidium Bromide",
+      "FeSO4",
+      "Fosfomycin",
+      "Gentamicin",
+      "Glucose 6P",
+      "Indolicidin",
+      "Mecillinam",
+      "NH4Cl",
+      "NiCl2",
+      "Nitrofurnatoin",
+      "Oxacillin",
+      "Paraquat dichloride",
+      "Phenazine methosulfate (PMS)",
+      "Polymyxin B",
+      "Propidium iodide",
+      "SDS",
+      "Spiramycin",
+      "Streptonigrin",
+      "TAPS",
+      "Taurocholate",
+      "Triclosan/Irgasan",
+      "Triton X-100"
+    ],
+    "proposed_class": null
+  },
+  "decided_at": "2026-10-12",
+  "torchcell_commit": "634ed34dfa25e27795876f163410e687bec18efe"
+}

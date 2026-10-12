@@ -141,3 +141,4 @@ datasets:
   - ExometaboliteBrunk2016Dataset
   - ProteomeBrunk2016Dataset
   - BiofuelTiterBrunk2016Dataset
+  - EnvChemgenNichols2011Dataset

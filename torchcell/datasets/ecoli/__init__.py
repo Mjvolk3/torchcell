@@ -103,6 +103,10 @@ sourcing layer.
 - ``niu2019`` -- ``CrisprPineneToleranceNiu2019Dataset``: CRISPRa and CRISPRi of the
   pinene-response genes in the designed parent BW25113(PT5-dxs), one record per stored
   strain's OD600 ratio against the no-guide control under 0.5% pinene.
+- ``nichols2011`` -- ``EnvChemgenNichols2011Dataset``: the phenotypic landscape of the
+  K-12 single-gene deletion and essential-gene arrays, Table S2's per-screen re-scaled
+  S-scores of 3,979 strains in 324 conditions. Shiver 2016 re-analyzes 235 of these
+  conditions as its batch 0 and does not load them, so this is their one store.
 - ``shiver2016`` -- ``EnvChemgenShiver2016Dataset``: the neglected-antibiotic
   chemical-genomic screen, KEIO deletion fitness-scores across the 57 conditions of
   its own batches in the integrated S1 Dataset matrix.
@@ -288,6 +292,7 @@ from .mori2021 import ProteomeMori2021Dataset as ProteomeMori2021Dataset
 from .mutalik2020 import (
     PhageRbTnseqMutalik2020Dataset as PhageRbTnseqMutalik2020Dataset,
 )
+from .nichols2011 import EnvChemgenNichols2011Dataset as EnvChemgenNichols2011Dataset
 from .niu2019 import (
     CrisprPineneToleranceNiu2019Dataset as CrisprPineneToleranceNiu2019Dataset,
 )

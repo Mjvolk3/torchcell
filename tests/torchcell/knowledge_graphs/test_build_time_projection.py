@@ -495,6 +495,7 @@ BACTERIAL_DATASETS = {
     "CrispriScreenRousset2018Dataset",
     "DoublingTimeCaglar2017Dataset",
     "EnvChemgenGirgis2009Dataset",
+    "EnvChemgenNichols2011Dataset",
     "EnvChemgenShiver2016Dataset",
     "EnvChemgenWang2015Dataset",
     "EnvChemgenWang2024Dataset",
@@ -609,7 +610,8 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
     # + 1 (Wetmore 2015's own RB-TnSeq release, owner policy 2026-10-10)
     # + 1 (Piotrowski 2017 chemical-genetic z-scores)
     # + 1 (Yoshikawa 2009 ethanol and NaCl growth rates)
-    # + 1 (#1014, N'Guessan 2025 reference-panel segregant pseudobulk).
+    # + 1 (#1014, N'Guessan 2025 reference-panel segregant pseudobulk)
+    # + 1 (#691, Nichols 2011 chemical-genomic re-scaled S-scores).
     assert (
         len(dataset_adapter_map)
         == 110
@@ -630,6 +632,7 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
         + 1
         + 2
         + 3
+        + 1
         + 1
         + 1
         + 1

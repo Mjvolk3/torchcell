@@ -73,6 +73,7 @@ from torchcell.adapters import (
     CrisprPineneToleranceNiu2019Adapter,
     DoublingTimeCaglar2017Adapter,
     EnvChemgenGirgis2009Adapter,
+    EnvChemgenNichols2011Adapter,
     EnvChemgenShiver2016Adapter,
     EnvChemgenWang2015Adapter,
     EnvChemgenWang2024Adapter,
@@ -201,6 +202,7 @@ from torchcell.datasets.ecoli.li2014 import ProteinSynthesisRateLi2014Dataset
 from torchcell.datasets.ecoli.mohiuddin2022 import PromoterReporterMohiuddin2022Dataset
 from torchcell.datasets.ecoli.mori2021 import ProteomeMori2021Dataset
 from torchcell.datasets.ecoli.mutalik2020 import PhageRbTnseqMutalik2020Dataset
+from torchcell.datasets.ecoli.nichols2011 import EnvChemgenNichols2011Dataset
 from torchcell.datasets.ecoli.niu2019 import CrisprPineneToleranceNiu2019Dataset
 from torchcell.datasets.ecoli.price2018 import (
     GeneEssentialityPrice2018EcoliDataset,
@@ -1028,6 +1030,13 @@ BACTERIAL: list[Bacterial] = [
         "biofuel_titer_brunk2016",
         BiofuelTiterBrunk2016Dataset,
         "product titer phenotype",
+    ),
+    _case(
+        EnvChemgenNichols2011Adapter,
+        "nichols2011",
+        "ecoli_env_chemgen_nichols2011",
+        EnvChemgenNichols2011Dataset,
+        RESPONSE,
     ),
 ]
 IDS = [b.case.adapter_cls.__name__ for b in BACTERIAL]

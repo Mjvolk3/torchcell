@@ -254,6 +254,9 @@ from .nadal_ribelles2025_adapter import (
     NadalRibellesPerturbSeq2025Adapter as NadalRibellesPerturbSeq2025Adapter,
 )
 from .nguessan2025_adapter import Nguessan2025Adapter as Nguessan2025Adapter
+from .nichols2011_adapter import (
+    EnvChemgenNichols2011Adapter as EnvChemgenNichols2011Adapter,
+)
 from .niu2019_adapter import (
     CrisprPineneToleranceNiu2019Adapter as CrisprPineneToleranceNiu2019Adapter,
 )
@@ -538,6 +541,7 @@ ecoli_adapters = [
     "CrispriScreenRousset2018Adapter",
     "MetabolomeSchastnaya2021Adapter",
     "EnvChemgenShiver2016Adapter",
+    "EnvChemgenNichols2011Adapter",
     "ProteomeSchmidt2016Adapter",
     "GrowthRateS23Schmidt2016Adapter",
     "CarbonSourceTong2020Adapter",

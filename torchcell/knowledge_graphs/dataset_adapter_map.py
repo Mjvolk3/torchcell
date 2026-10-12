@@ -56,6 +56,7 @@ from torchcell.adapters import (
     EnvChemgenGirgis2009Adapter,
     EnvChemgenHoepfner2014Adapter,
     EnvChemgenMota2024Adapter,
+    EnvChemgenNichols2011Adapter,
     EnvChemgenParsons2006Adapter,
     EnvChemgenPiotrowski2017Adapter,
     EnvChemgenShiver2016Adapter,
@@ -244,6 +245,7 @@ from torchcell.datasets.ecoli.li2014 import ProteinSynthesisRateLi2014Dataset
 from torchcell.datasets.ecoli.mohiuddin2022 import PromoterReporterMohiuddin2022Dataset
 from torchcell.datasets.ecoli.mori2021 import ProteomeMori2021Dataset
 from torchcell.datasets.ecoli.mutalik2020 import PhageRbTnseqMutalik2020Dataset
+from torchcell.datasets.ecoli.nichols2011 import EnvChemgenNichols2011Dataset
 from torchcell.datasets.ecoli.niu2019 import CrisprPineneToleranceNiu2019Dataset
 from torchcell.datasets.ecoli.price2018 import (
     GeneEssentialityPrice2018EcoliDataset,
@@ -546,6 +548,7 @@ dataset_adapter_map: dict[type, type] = {
     CrispriScreenRousset2018Dataset: CrispriScreenRousset2018Adapter,
     MetabolomeSchastnaya2021Dataset: MetabolomeSchastnaya2021Adapter,
     EnvChemgenShiver2016Dataset: EnvChemgenShiver2016Adapter,
+    EnvChemgenNichols2011Dataset: EnvChemgenNichols2011Adapter,
     ProteomeSchmidt2016Dataset: ProteomeSchmidt2016Adapter,
     ProteomeSrmSet1Schmidt2016Dataset: ProteomeSrmSet1Schmidt2016Adapter,
     ProteomeSrmSet2Schmidt2016Dataset: ProteomeSrmSet2Schmidt2016Adapter,

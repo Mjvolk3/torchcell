@@ -31,16 +31,19 @@ title of this document.
 \clearpage
 \tcfig{\figSheet}{\textbf{Gene essentiality: the label, what ranks the held-out genes
 best, and the genes still missed.} \textbf{a}, The label. One open reading frame is
-deleted from the genome and the deletion strain is grown on YPD: a strain that grows
-marks its gene nonessential, one that cannot marks it essential. The cell is the yeast
-of manuscript Figure 1. \textbf{b}, One row per idea on the FCL held-out \gnHeldOut{}
-genes, best first: the two published methods and DCell as their authors released them,
-rescored on these genes with a gene bootstrap (Flux Cone Learning \gfclAuroc{}, FBA
-\gfbaAuroc{}); a random forest and an MLP that read the same columns with no graph;
-CGT with the FBA growth ratio as its only metabolic input and CGT with the metabolic
-solve; GCN over the gene graphs reading GO; and the equal-weight average of the last
-two, \gbestAverage{} [\gbestAverageLo{}, \gbestAverageHi{}]. Learned rows are five-fold
-ensembles. \textbf{c}, The three models fixed in advance on \gnResplits{} other
+deleted from the genome (genes drawn as arrows, the red cross the deletion) and the
+deletion strain is grown on YPD: a strain that grows marks its gene nonessential, one
+that cannot marks it essential. The cell is the yeast of manuscript Figure 1.
+\textbf{b}, One row per idea on the FCL held-out \gnHeldOut{} genes, best first. Gray
+is nothing trained here: the two published methods' released predictions rescored on
+these genes with a gene bootstrap (Flux Cone Learning \gfclAuroc{}, FBA \gfbaAuroc{}).
+Blue is trained here but neither family: DCell on its published inputs and refit on GO
+membership, a random forest and an MLP on sequence, pathway and the FBA ratio with no
+graph. Orange is CGT, with the FBA growth ratio as its only metabolic input, with the
+metabolic solve, and with the solve plus the gene-rule counts; red is GCN over the gene
+graphs, reading GO or the transformer's three inputs; purple is the equal-weight
+average of CGT with the solve and GCN with GO, \gbestAverage{} [\gbestAverageLo{},
+\gbestAverageHi{}]. Learned rows are five-fold ensembles. \textbf{c}, The three models fixed in advance on \gnResplits{} other
 held-out fifths of the labeled genes, sorted by the average; a point is one method on
 one split, the seed-mean standardized logit of three seeds scored once on that split's
 held-out fifth; the average beats the better single model on
@@ -48,17 +51,17 @@ held-out fifth; the average beats the better single model on
 \gresplitDiffaverageMinusthebettersinglemodelOf{} splits. \textbf{d}, The same
 families trained on the \ggenomeLabeled{} FCL-labeled metabolic genes and read once on
 the \ggenomeN{} genome-wide genes outside the metabolic model, where the solve has no
-call: the gene graphs transfer (the untrained physical degree alone reads
-\ggengcnDegree{}) and the metabolic column does not. \textbf{e}, Every one of the
+call: the gene graphs transfer, whatever their input (the untrained physical degree
+alone reads \ggengcnDegree{}), and the metabolic column does not. \textbf{e}, Every one of the
 \gnEssentialHeldOut{} essential held-out genes, worst first by the two families' mean
 misrank, the share of nonessential genes scored above the gene; a name is bold where
 FBA's knockout growth ratio on YPD is 1.0, the deletions FBA cannot see. \textbf{f},
 What the misranked genes share, one axis per class: the chance that a gene carrying
 the feature is misranked worse than one without it, 0.5 (dashed) no association,
 filled where the Benjamini-Hochberg $q$ within the family is under 0.1. Color is the
-family: gray a published method with nothing learned here, blue a learned model
-reading no graph and no metabolic model, orange CGT reading the metabolic solve, red
-GCN over the nine gene graphs, purple their equal-weight average. Written by
+family: gray nothing trained here, blue trained here but neither family, orange CGT
+reading the metabolic solve, red GCN over the nine gene graphs, purple their
+equal-weight average. Written by
 \texttt{essentiality\_gate\_sheet.py}, GilaHyper, 2026-10-12.}{fig:sheet}
 
 \pfstep{What each panel decides} Panel b is the claim: on the genes the published

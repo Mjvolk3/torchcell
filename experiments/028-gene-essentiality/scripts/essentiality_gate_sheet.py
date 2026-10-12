@@ -38,7 +38,7 @@ import textwrap  # noqa: E402
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 from matplotlib.lines import Line2D  # noqa: E402
-from matplotlib.patches import Ellipse, FancyArrowPatch, Rectangle  # noqa: E402
+from matplotlib.patches import FancyArrow  # noqa: E402
 from matplotlib.ticker import MultipleLocator  # noqa: E402
 
 HERE = osp.dirname(osp.abspath(__file__))
@@ -61,10 +61,13 @@ GRAY = sf.PLOT_PALETTE[5]
 LABEL = {
     # b: the FCL held-out genes, best first as the leaderboard orders them
     "GO graph + layer-free solve": "average of CGT + solve and GCN",
+    "transformer + solve + rule counts": "CGT + metabolic solve + gene-rule counts",
     "transformer + layer-free solve": "CGT + metabolic solve",
     "graph convolution on GO": "GCN on gene graphs, GO input",
     "transformer + FBA ratios (reported)": "CGT + FBA growth ratio",
+    "graph convolution, three inputs": "GCN on gene graphs: sequence, pathway, FBA",
     "MLP, three inputs": "MLP, no graph: sequence, pathway, FBA",
+    "DCell hierarchy, GO membership input": "DCell hierarchy, refit on GO membership",
     "random forest on GO + FBA ratios": "random forest: GO, FBA",
     "Flux Cone Learning, released": "Flux Cone Learning, published predictions",
     "DCell, published gene input": "DCell, published inputs",
@@ -76,27 +79,33 @@ LABEL = {
 KEEP_B = [k for k in LABEL if k not in ("physical degree, nothing trained", "graph convolution, ProtT5")]
 #: Panel d's gutter is 26 mm, so its rows take shorter names than panel b's.
 LABEL_D = {
-    "physical degree, nothing trained": "physical degree, untrained",
+    "graph convolution, degree only": "GCN, physical graph, degree",
     "graph convolution, ProtT5": "GCN, sequence input",
+    "graph convolution, three inputs": "GCN: sequence, pathway, FBA",
+    "physical degree, nothing trained": "physical degree, untrained",
     "graph convolution on GO": "GCN, GO input",
+    "transformer + FBA ratios": "CGT + FBA growth ratio",
     "transformer + layer-free solve": "CGT + metabolic solve",
     "MLP, three inputs": "MLP: sequence, pathway, FBA",
 }
-KEEP_D = [
-    "physical degree, nothing trained",
-    "graph convolution, ProtT5",
-    "graph convolution on GO",
-    "transformer + layer-free solve",
-    "MLP, three inputs",
-]
+KEEP_D = list(LABEL_D)
+assert len(KEEP_B) == 12 and len(KEEP_D) == 8
+#: Gray means nothing was trained here. summary_figure.py colors DCell and the random
+#: forest as comparators, but both were trained on this split, so on the sheet they are
+#: blue with the MLP: learned here, not one of the two families.
+COLOR = {
+    "DCell, published gene input": sf.NO_MODULE,
+    "DCell hierarchy, GO membership input": sf.NO_MODULE,
+    "random forest on GO + FBA ratios": sf.NO_MODULE,
+}
 CGT_NAME = "CGT + metabolic solve"
 GCN_NAME = "GCN, GO input"
 STATUS_SYMBOL = {"file": "●", "partial": "◐", "idea": "○"}
 SECTION_SYMBOL = {"todo": ("✗", "#E53935"), "tent": ("■", "#E0A020"), "final": ("✓", "#43A047")}
 SECTION_STATUS = "todo"
 STATUS_MARKS = os.environ.get("GATE_STATUS_MARKS", "1") == "1"
-#: The yeast cell drawing of Figure 1 (fig1_yeast_cells.py), the orange one.
-CELL_PNG = osp.join(sf.IMAGES, "yeast_cell_orange.png")
+#: The yeast cell drawing of Figure 1 (fig1_yeast_cells.py), the brown one.
+CELL_PNG = osp.join(sf.IMAGES, "yeast_cell_rose.png")
 
 
 def keep(bars, keys: list[str], names: dict[str, str]):
@@ -106,6 +115,7 @@ def keep(bars, keys: list[str], names: dict[str, str]):
     assert not missing, f"rows absent from the result readers: {missing}"
     out = [have[k] for k in bars_order(bars, keys)]
     for b in out:
+        b.color = COLOR.get(b.label, b.color)
         b.label = names[b.label]
     return out
 
@@ -167,18 +177,23 @@ def cell(ax, x: float, y: float, w: float) -> None:
     ax.imshow(img, extent=(x - w / 2, x + w / 2, y - h / 2, y + h / 2), zorder=3, interpolation="lanczos")
 
 
-def orf_row(ax, y: float, deleted: bool) -> None:
-    """A genome segment with three open reading frames; the middle one deleted when asked."""
+def gene_arrow(ax, x0: float, w: float, y: float, orf: bool) -> None:
+    """A gene as the standard thick arrow on the genome line."""
+    ax.add_patch(FancyArrow(x0, y, w, 0.0, width=1.8, head_width=2.8, head_length=1.4, length_includes_head=True,
+                            facecolor="#FFF2CC" if orf else "#F5F5F5", edgecolor="#D6B656" if orf else "black",
+                            lw=0.5, zorder=2))
+    if orf:
+        ax.text(x0 + (w - 1.4) / 2, y + 2.2, "ORF", fontsize=5, ha="center", va="bottom", zorder=3)
+
+
+def orf_row(ax, y: float) -> None:
+    """The genome segment: three genes, the middle one deleted (a red cross over it)."""
     ax.plot([1.0, 19.0], [y, y], color="black", lw=0.6, zorder=1)
-    for i, (x0, w) in enumerate([(2.0, 4.5), (8.0, 5.0), (14.5, 3.5)]):
-        middle = i == 1
-        if middle and deleted:
-            ax.add_patch(Rectangle((x0, y - 1.2), w, 2.4, facecolor="white", edgecolor="black", lw=0.5, ls=(0, (1.5, 1.5)), zorder=2))
-            ax.text(x0 + w / 2, y, "Δ", fontsize=6, ha="center", va="center", zorder=3)
-        else:
-            ax.add_patch(Rectangle((x0, y - 1.2), w, 2.4, facecolor="#FFF2CC" if middle else "#F5F5F5", edgecolor="#D6B656" if middle else "black", lw=0.5, zorder=2))
-            if middle:
-                ax.text(x0 + w / 2, y, "ORF", fontsize=5, ha="center", va="center", zorder=3)
+    for i, (x0, w) in enumerate(((2.0, 4.5), (8.0, 5.5), (14.5, 4.0))):
+        gene_arrow(ax, x0, w, y, orf=i == 1)
+    cx, cy = 8.0 + (5.5 - 1.4) / 2, y
+    ax.plot([cx - 2.0, cx + 2.0], [cy - 2.0, cy + 2.0], color=sf.PLOT_PALETTE[1], lw=1.2, zorder=4)
+    ax.plot([cx - 2.0, cx + 2.0], [cy + 2.0, cy - 2.0], color=sf.PLOT_PALETTE[1], lw=1.2, zorder=4)
 
 
 def panel_concept(ax) -> None:
@@ -187,22 +202,20 @@ def panel_concept(ax) -> None:
     ax.set_ylim(0, 44)
     ax.set_aspect("equal")
     ax.axis("off")
-    ax.text(1.0, 43.5, "genome", fontsize=6, ha="left", va="top")
-    orf_row(ax, 40.0, deleted=False)
-    arrow(ax, (10.5, 38.4), (10.5, 35.2))
-    ax.text(12.5, 36.8, "delete one ORF", fontsize=6, ha="left", va="center")
-    orf_row(ax, 33.0, deleted=True)
-    arrow(ax, (10.5, 31.4), (10.5, 26.0))
-    cell(ax, 10.5, 22.0, 9.0)
-    ax.text(10.5, 18.2, "deletion strain\non YPD", fontsize=6, ha="center", va="top")
-    arrow(ax, (15.5, 23.5), (28.5, 28.0))
-    arrow(ax, (15.5, 20.5), (28.5, 11.5))
-    cell(ax, 33.5, 28.5, 9.0)
-    cell(ax, 42.5, 30.5, 6.0)
-    ax.text(37.0, 24.0, "grows: nonessential", fontsize=6, ha="center", va="top")
-    cell(ax, 33.5, 10.5, 9.0)
-    ax.text(39.5, 10.5, "☠", fontsize=11, family="DejaVu Sans", ha="left", va="center", zorder=4)
-    ax.text(37.0, 6.0, "no growth: essential", fontsize=6, ha="center", va="top")
+    ax.text(1.0, 43.8, "genome", fontsize=6, ha="left", va="top")
+    orf_row(ax, 37.5)
+    ax.text(20.5, 37.5, "delete one ORF", fontsize=6, ha="left", va="center")
+    arrow(ax, (10.5, 35.2), (10.5, 30.5))
+    cell(ax, 10.5, 26.5, 9.0)
+    ax.text(10.5, 22.7, "deletion strain\non YPD", fontsize=6, ha="center", va="top")
+    arrow(ax, (15.5, 28.0), (28.5, 31.5))
+    arrow(ax, (15.5, 25.0), (28.5, 14.0))
+    cell(ax, 33.5, 32.0, 9.0)
+    cell(ax, 42.5, 34.0, 6.0)
+    ax.text(37.0, 27.5, "grows: nonessential", fontsize=6, ha="center", va="top")
+    cell(ax, 33.5, 13.0, 9.0)
+    ax.text(39.5, 13.0, "☠", fontsize=11, family="DejaVu Sans", ha="left", va="center", zorder=4)
+    ax.text(37.0, 8.5, "no growth: essential", fontsize=6, ha="center", va="top")
 
 
 def genome_split_counts() -> tuple[int, int]:
@@ -259,8 +272,8 @@ def main() -> None:
     fig = sf.new_figure(height)
     fig.legend(
         handles=[
-            sf.patch(sf.COMPARATOR, "published method, nothing learned here"),
-            sf.patch(sf.NO_MODULE, "learned, no graph, no metabolic model"),
+            sf.patch(sf.COMPARATOR, "nothing trained here: published predictions, or a graph statistic"),
+            sf.patch(sf.NO_MODULE, "trained here, neither family: no gene graphs, no metabolic solve"),
             sf.patch(sf.SOLVE, "CGT, cell graph transformer, reading the metabolic solve"),
             sf.patch(sf.GRAPH, "GCN, graph convolution over the nine gene graphs"),
             sf.patch(sf.AVERAGE, "average of the two, equal weights"),

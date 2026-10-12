@@ -78,3 +78,15 @@ bottom (row 1 44 mm, row 2 40 mm), one band per row of letter, legend, title. Pa
 is two stacked axes, one per gene class, with the class named inside the axes. The
 `\statuskey` macro prints under `\maketitle`. Render:
 `essentiality_gate_sheet_2026-10-12-08-37-10.svg`.
+
+## 2026.10.12 - Genes as arrows, the brown cell, a few more rows, gray means untrained
+
+Review: a few more rows in b and d; the brown cell of Figure 1; genes drawn as the
+standard thick arrow with a red cross for the deletion, so one genome row suffices; and
+gray must not color a model trained here. b now has 12 rows (adds CGT + solve + gene-rule
+counts, GCN on the transformer's three inputs, the DCell hierarchy refit on GO
+membership) and d has 8 (adds GCN on the physical graph with degree, GCN on the three
+inputs, CGT + FBA ratio). `summary_figure.py` colors DCell and the random forest as
+comparators; the sheet overrides them to blue through `COLOR`, since both were trained on
+this split, and gray is left to the two published prediction sets and the untrained
+degree. Render: `essentiality_gate_sheet_2026-10-12-09-15-29.svg`.

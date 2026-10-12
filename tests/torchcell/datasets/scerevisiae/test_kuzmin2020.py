@@ -66,7 +66,6 @@ from typing import Any
 import pandas as pd
 import pytest
 
-from tests.torchcell.datasets._sga_genome_stub import SgaGenomeStub
 from torchcell.datamodels.media import SGA_TM_SELECTION
 from torchcell.datamodels.schema import (
     Environment,
@@ -182,25 +181,6 @@ def write_xlsx(path: Path, columns: list[str], rows: list[list[Any]]) -> None:
     pd.DataFrame(rows, columns=columns).to_excel(path, index=False, startrow=1)
 
 
-# Every fixture gene is live; the SGA rename/refusal tables hold on the stub (#897).
-SGA_GENOME = SgaGenomeStub(
-    live=[
-        "YAL001C",
-        "YAL015C",
-        "YAL048C",
-        "YAL056W",
-        "YBL007C",
-        "YBR001C",
-        "YBR160W",
-        "YCR002C",
-        "YDL227C",
-        "YIL154C",
-        "YML107C",
-        "YOL043C",
-    ]
-)
-
-
 def write_tables(
     folder: Path,
     s5_rows: list[list[Any]] = S5_ROWS,
@@ -225,7 +205,7 @@ def build(
     """Build ``cls`` under ``tmp_path/<class name>`` from the three tables."""
     root = tmp_path / cls.__name__
     write_tables(root / "raw", s5_rows, s1_rows, s3_rows)
-    return cls(root=str(root), genome=SGA_GENOME, **kw)
+    return cls(root=str(root), **kw)
 
 
 def fitness(
@@ -611,7 +591,7 @@ def test_download_extracts_the_hosted_zip_and_removes_it(
 
     monkeypatch.setattr(k, "download_url", fake_download_url)
     root = tmp_path / cls.__name__
-    ds = cls(root=str(root), genome=SGA_GENOME)
+    ds = cls(root=str(root))
     assert calls == [(URL, str(root / "raw"))]
     assert cls.url == URL
     assert sorted(os.listdir(root / "raw")) == [S1_NAME, S3_NAME, S5_NAME]
@@ -687,21 +667,7 @@ def test_main_builds_all_five_under_data_root(
     work.mkdir()
     monkeypatch.chdir(work)
     monkeypatch.setenv("DATA_ROOT", str(data_root))
-    genome_calls: list[dict[str, Any]] = []
-
-    def genome_recorder(**kwargs: Any) -> SgaGenomeStub:
-        genome_calls.append(kwargs)
-        return SGA_GENOME
-
-    monkeypatch.setattr(k, "SCerevisiaeGenome", genome_recorder)
     k.main()
-    assert genome_calls == [
-        {
-            "genome_root": f"{data_root}/data/sgd/genome",
-            "go_root": f"{data_root}/data/go",
-            "overwrite": False,
-        }
-    ]
     assert capsys.readouterr().out == (
         "Computing experiment_reference_index (streaming)...\n" * 5
         + "".join(
@@ -1151,170 +1117,3 @@ def test_released_digenic_rows_per_screen_and_one_name_per_array(
     names = dmi_frame.groupby("Array strain ID")["Array allele name"].nunique()
     assert (names == 1).all()
     assert len(names) == 4_553
-
-
-# ---------------------------------------------------------------------------------------
-# 2026.10.11 (#897, #898, #899, #900): released systematic names and the prime of imp2'
-# ---------------------------------------------------------------------------------------
-# Three more S3 digenic crosses of the cdc28-4 query and one more trigenic row: the
-# renamed array YAL043C-A (stored as YAL042C-A), the merged array YAR044W (refused, it is
-# now part of YAR042W) and imp2' (YIL154C, stored as "imp2'", not "imp2").
-RENAMED_ARRAY = "YAL043C-A_dma42"
-MERGED_ARRAY = "YAR044W_dma74"
-IMP2_ARRAY = "YIL154C_dma2380"
-CURRENCY_S3_ROWS: list[list[Any]] = [
-    *S3_ROWS,
-    [TSQ, "cdc28-4+hoΔ", RENAMED_ARRAY, "yal043c-aΔ", "digenic", 0.9, 0.02, 0.83, 1.0, 0.07, 0.2],
-    [TSQ, "cdc28-4+hoΔ", MERGED_ARRAY, "osh1Δ", "digenic", 0.8, 0.03, 0.83, 0.97, -0.01, 0.5],
-    [TSQ, "cdc28-4+hoΔ", IMP2_ARRAY, "imp2'Δ", "digenic", 0.7, 0.04, 0.83, 0.9, -0.05, 0.1],
-    [TM801, "cdc28-4+pml39Δ", MERGED_ARRAY, "osh1Δ", "trigenic", 0.2, 0.01, 0.55, 0.97, 0.02, 0.6],
-]  # fmt: skip
-
-
-def ledger(ds: Any) -> dict[str, Any]:
-    """The build's ``preprocess/systematic_name_ledger.json``."""
-    with open(osp.join(ds.preprocess_dir, "systematic_name_ledger.json")) as f:
-        loaded: dict[str, Any] = json.load(f)
-    return loaded
-
-
-def test_dmi_maps_a_renamed_array_refuses_a_merged_one_and_keeps_the_prime(
-    tmp_path: Path,
-) -> None:
-    """Five digenic rows in, the merged-array row refused, four records out: the two
-    fixture crosses, then YAL043C-A stored as YAL042C-A under its released strain id and
-    allele name, then YIL154C named "imp2'" as Costanzo 2016 names it.
-    """
-    dmi = build(tmp_path, k.DmiKuzmin2020Dataset, s3_rows=CURRENCY_S3_ROWS)
-    renamed = SgaKanMxDeletionPerturbation(
-        systematic_gene_name="YAL042C-A",
-        perturbed_gene_name="yal043c-a",
-        strain_id=RENAMED_ARRAY,
-    )
-    imp2 = SgaKanMxDeletionPerturbation(
-        systematic_gene_name="YIL154C",
-        perturbed_gene_name="imp2'",
-        strain_id=IMP2_ARRAY,
-    )
-    name = "DmiKuzmin2020Dataset"
-    assert stored(dmi, "experiment") == [
-        interaction(name, [cdc28(TSQ), CDC10_TS], -0.12, 0.03, "edge", MAIN),
-        interaction(name, [GEM1, cdc28(TSQ)], 0.04, 0.4, "edge", PILOT),
-        interaction(name, [renamed, cdc28(TSQ)], 0.07, 0.2, "edge", PILOT),
-        interaction(name, [cdc28(TSQ), imp2], -0.05, 0.1, "edge", PILOT),
-    ]
-    assert ledger(dmi) == {
-        "dataset_name": name,
-        "annotation": "S288C R64-4-1 (2023-08-30)",
-        "n_rows_in": 5,
-        "n_rows_refused": 1,
-        "n_rows_out": 4,
-        "renamed": [
-            {
-                "released_name": "YAL043C-A",
-                "stored_name": "YAL042C-A",
-                "reason": None,
-                "locus": "YAL042C-A",
-                "n_rows": 1,
-            }
-        ],
-        "refused": [
-            {
-                "released_name": "YAR044W",
-                "stored_name": None,
-                "reason": "merged_into_locus",
-                "locus": "YAR042W",
-                "n_rows": 1,
-            }
-        ],
-    }
-
-
-@pytest.mark.parametrize(
-    ("cls", "n_in", "n_out"),
-    [
-        (k.DmfKuzmin2020Dataset, 6, 5),
-        (k.TmfKuzmin2020Dataset, 3, 2),
-        (k.TmiKuzmin2020Dataset, 3, 2),
-    ],
-    ids=["dmf", "tmf", "tmi"],
-)
-def test_every_kuzmin_loader_refuses_the_merged_array_row(
-    tmp_path: Path, cls: type[Any], n_in: int, n_out: int
-) -> None:
-    """Dmf reads the five digenic rows plus the tm801 query strain (six), Tmf and Tmi
-    the three trigenic rows; each refuses exactly the one row naming YAR044W.
-    """
-    ds = build(tmp_path, cls, s3_rows=CURRENCY_S3_ROWS)
-    assert len(ds) == n_out
-    got = ledger(ds)
-    assert (got["n_rows_in"], got["n_rows_refused"], got["n_rows_out"]) == (
-        n_in,
-        1,
-        n_out,
-    )
-    assert [o["released_name"] for o in got["refused"]] == ["YAR044W"]
-    arrays = {
-        p["strain_id"]
-        for e in stored(ds, "experiment")
-        for p in e["genotype"]["perturbations"]
-    }
-    assert MERGED_ARRAY not in arrays
-
-
-def test_dmf_refuses_an_unknown_record_kind(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """The two record kinds partition the frame; a row of a third kind is refused by
-    count before any name is checked.
-    """
-    original = k.DmfKuzmin2020Dataset.preprocess_raw
-
-    def with_a_third_kind(self: Any, *tables: pd.DataFrame) -> pd.DataFrame:
-        frame = original(self, *tables)
-        frame.loc[0, "record_kind"] = "elsewhere"
-        return frame
-
-    monkeypatch.setattr(k.DmfKuzmin2020Dataset, "preprocess_raw", with_a_third_kind)
-    with pytest.raises(ValueError, match=r"^1 rows have an unknown record_kind$"):
-        build(tmp_path, k.DmfKuzmin2020Dataset)
-
-
-@pytest.mark.data
-@pytest.mark.slow
-@_needs_raw
-def test_released_names_are_mapped_or_refused_by_the_r64_tables(
-    built: tuple[Any, pd.DataFrame],
-) -> None:
-    """On the released tables and the R64-4-1 genome, the Dmf frame (632,797 digenic
-    rows + 201 query strains) loses 658 rows naming 31 refused ORFs (25 merged, 6
-    retired) and renames 16 ORFs over 342 rows; 488 kept rows carry imp2'.
-    """
-    from torchcell.datasets.systematic_name_currency import sga_systematic_name_currency
-    from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-
-    _, df = built
-    data_root = os.environ["DATA_ROOT"]
-    genome = SCerevisiaeGenome(
-        genome_root=osp.join(data_root, "data/sgd/genome"),
-        go_root=osp.join(data_root, "data/go"),
-        overwrite=False,
-    )
-    currency = sga_systematic_name_currency(genome, "DmfKuzmin2020Dataset")
-    digenic = df["record_kind"] == k.RECORD_KIND_DIGENIC_ARRAY_CROSS
-    kept = currency.apply(
-        df[digenic], ["Query systematic name no ho", "Array systematic name"]
-    )
-    currency.apply(df[~digenic], ["Query systematic name_1", "Query systematic name_2"])
-    got = currency.ledger("DmfKuzmin2020Dataset")
-    assert (got.n_rows_in, got.n_rows_refused, got.n_rows_out) == (
-        632_998,
-        658,
-        632_340,
-    )
-    assert len(got.renamed) == 16
-    assert sum(o.n_rows for o in got.renamed) == 342
-    reasons = [str(o.reason) for o in got.refused]
-    assert (reasons.count("merged_into_locus"), reasons.count("retired_systematic_name")) == (25, 6)  # fmt: skip
-    names = kept["Array allele name"].map(k._stored_gene_name)
-    assert int((names == "imp2'").sum()) == 488

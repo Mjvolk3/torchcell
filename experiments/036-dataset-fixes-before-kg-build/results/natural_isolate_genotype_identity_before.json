@@ -1,0 +1,56 @@
+{
+  "n_isolates_any_store": 1004,
+  "n_isolates_in_two_or_more_stores": 999,
+  "shared_isolates_with_one_content_id": 999,
+  "stores": [
+    {
+      "mismatched": [],
+      "n_identical": 943,
+      "n_isolates": 943,
+      "processed": "/scratch/projects/torchcell-scratch/data/torchcell/caudal_pantranscriptome2024/processed",
+      "store": "caudal_pantranscriptome2024"
+    },
+    {
+      "mismatched": [],
+      "n_identical": 971,
+      "n_isolates": 971,
+      "processed": "/scratch/projects/torchcell-scratch/data/torchcell/isolate_growth_peter2018/processed",
+      "store": "isolate_growth_peter2018"
+    },
+    {
+      "mismatched": [],
+      "n_identical": 794,
+      "n_isolates": 794,
+      "processed": "/scratch/projects/torchcell-scratch/data/torchcell/proteome_muenzner2024/processed",
+      "store": "proteome_muenzner2024"
+    },
+    {
+      "mismatched": [],
+      "n_identical": 55,
+      "n_isolates": 55,
+      "processed": "/scratch/projects/torchcell-scratch/data/torchcell/protein_turnover_muenzner2024/processed",
+      "store": "protein_turnover_muenzner2024"
+    },
+    {
+      "mismatched": [],
+      "n_identical": 906,
+      "n_isolates": 906,
+      "processed": "/scratch/projects/torchcell-scratch/data/torchcell/doubling_time_dechiara2022/processed",
+      "store": "doubling_time_dechiara2022"
+    },
+    {
+      "mismatched": [],
+      "n_identical": 906,
+      "n_isolates": 906,
+      "processed": "/scratch/projects/torchcell-scratch/data/torchcell/cell_yield_dechiara2022/processed",
+      "store": "cell_yield_dechiara2022"
+    },
+    {
+      "mismatched": [],
+      "n_identical": 905,
+      "n_isolates": 905,
+      "processed": "/scratch/projects/torchcell-scratch/data/torchcell/life_cycle_dechiara2022/processed",
+      "store": "life_cycle_dechiara2022"
+    }
+  ]
+}

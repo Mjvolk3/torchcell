@@ -30,7 +30,7 @@
     {
       "gate": "G4",
       "outcome": "pass",
-      "reason": "no key held by another module (0 mention(s)); no PMID check; values not compared (no dev store named)",
+      "reason": "no key held by another module (1 mention(s)); no PMID check; values not compared (no dev store named)",
       "evidence": [],
       "issue": null,
       "blocked_kind": null
@@ -1078,6 +1078,12 @@
       {
         "key_kind": "doi",
         "key": "10.1038/s41586-018-0030-5",
+        "where": "torchcell/datasets/scerevisiae/muenzner2024.py",
+        "relation": "mentioned"
+      },
+      {
+        "key_kind": "doi",
+        "key": "10.1038/s41586-018-0030-5",
         "where": "torchcell/datasets/scerevisiae/peter2018.py",
         "relation": "own"
       }
@@ -1091,6 +1097,6 @@
     "unresolved_compounds": [],
     "proposed_class": null
   },
-  "decided_at": "2026-10-11",
-  "torchcell_commit": "d88f3865c50ad0c8edd330b9e4aa90c93f2387d2"
+  "decided_at": "2026-10-12",
+  "torchcell_commit": "3e5bd4b9a8e5745b91fda847863c3b5b532b7e94"
 }

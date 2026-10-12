@@ -472,3 +472,7 @@ Additive, for De Chiara 2022 ([[torchcell.datasets.scerevisiae.dechiara2022]]):
 - `PreCultureSource.timed_culture`: a pre-culture of stated duration and unstated growth phase.
 
 Schema impact vs origin/main: 96 datasets impacted, 0 breaking.
+
+## 2026.10.12 - Schema changes now carry a record
+
+From main `eb07bd213` on, every change to a fingerprinted symbol of this module ships a schema-change record (`database/schema_changes/<date>-<slug>.json`) with its correctness argument, the fingerprints before and after, the affected loaders, and the owner's sign-off for a removal, rename, loosened required field, changed field meaning or removed enum member. The rules and their history are in [[torchcell.datamodels.schema-change-policy]]; the dated sections above are the record of earlier changes and are not backfilled.

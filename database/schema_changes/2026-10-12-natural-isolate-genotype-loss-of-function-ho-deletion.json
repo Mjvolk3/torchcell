@@ -2,9 +2,9 @@
   "record_version": 1,
   "slug": "natural-isolate-genotype-loss-of-function-ho-deletion",
   "date": "2026-10-12",
-  "pr": null,
+  "pr": 1058,
   "author_kind": "agent",
-  "base_commit": "8bee8bb0402fd5e86856f87b9aad967911476b3a",
+  "base_commit": "5a0f8483fdd405395aed31ef19c99820de474a74",
   "python_version": "3.13.0",
   "symbols": [
     {

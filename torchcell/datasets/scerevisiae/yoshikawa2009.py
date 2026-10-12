@@ -89,6 +89,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -1441,6 +1442,8 @@ STRAIN_RULES: dict[GeneNameRefusalReason, str] = {
 @register_dataset
 class EnvChemgenYoshikawa2009Dataset(ExperimentDataset):
     """Yoshikawa 2009 growth rates: env x geno -> one culture's specific growth rate."""
+
+    organism = Organism.scerevisiae
 
     def __init__(
         self,

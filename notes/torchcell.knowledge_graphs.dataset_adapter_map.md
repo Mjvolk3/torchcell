@@ -16,17 +16,17 @@ A build used to serve every class in `dataset_adapter_map` (plus `PRIVATE_DATASE
 - `build_adapter_map(include_private, organisms)` is the public map (or the union with the private map) passed through `select_organisms`; the default `organisms` is every organism, so existing callers are unchanged.
 - `refuse_organism_mismatch(classes, organisms)` raises `OrganismRefused` naming each configured class outside the set with its organism, the set, and the flag. It is the twin of `refuse_private_datasets`: nothing named is dropped silently.
 
-Map sizes from a dry run of the generator's own selection (`take_include_private_flag`, `take_organisms_flag`, `select_organisms` on the merged tree at `eb07bd213` plus this branch):
+Map sizes from a dry run of the generator's own selection (`take_include_private_flag`, `take_organisms_flag`, `select_organisms` on this branch rebased onto `8bee8bb04`, which includes Yoshikawa 2009):
 
 | `--include-private` | `--organisms` | mapped datasets |
 |---|---|---:|
-| no | (absent) `scerevisiae,ecoli,pputida` | 152 |
-| no | `scerevisiae` | 66 |
+| no | (absent) `scerevisiae,ecoli,pputida` | 153 |
+| no | `scerevisiae` | 67 |
 | no | `ecoli` | 58 |
 | no | `pputida` | 28 |
 | no | `ecoli,pputida` | 86 |
-| yes | (absent) | 153 |
-| yes | `scerevisiae` | 67 |
+| yes | (absent) | 154 |
+| yes | `scerevisiae` | 68 |
 | yes | `ecoli` | 58 |
 | yes | `pputida` | 28 |
 

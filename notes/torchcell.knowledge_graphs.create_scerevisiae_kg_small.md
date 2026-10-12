@@ -34,6 +34,6 @@ RETURN d.id AS DatasetID, ExperimentMemberOfCount, COUNT(DISTINCT r2) AS Experim
 - the visible map is the public map, unioned with the private map under `--include-private`, as before;
 - with a `datasets` list, `refuse_organism_mismatch` names any listed class outside `ORGANISMS` (after the private refusal), so an increment cannot name a dataset the build was not asked to serve;
 - the build map is `select_organisms(visible, ORGANISMS)`, so `datasets: null` builds every mapped dataset of the asked organisms;
-- the membership line is printed (it was only logged), `Build membership: ALL (include_private=True, organisms=scerevisiae, 67 mapped datasets)`, so the generation log the live rebuild reads names the graph it wrote.
+- the membership line is printed (it was only logged), `Build membership: ALL (include_private=True, organisms=scerevisiae, 68 mapped datasets)`, so the generation log the live rebuild reads names the graph it wrote.
 
 Tests: `test_an_organism_set_narrows_the_full_build_and_the_log_names_it` and `test_a_named_dataset_outside_the_organism_set_is_refused_by_name` in `tests/torchcell/knowledge_graphs/test_create_scerevisiae_kg_small.py`. The shared `FakeDataset` stand-in now declares `organism = Organism.scerevisiae`, since every build reads it off the class.

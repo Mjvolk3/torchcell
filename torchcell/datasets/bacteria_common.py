@@ -41,7 +41,7 @@ import re
 from collections import Counter
 from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, Literal, overload
+from typing import Any, Final, Literal, overload
 
 import pandas as pd
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
@@ -56,6 +56,7 @@ from torchcell.datamodels.schema import (
     BacterialGeneNamespace,
     BacterialReferenceStrain,
     BacterialStrainBackground,
+    DerivedIdentifierMapping,
 )
 from torchcell.literature.manifest import sha256_file
 from torchcell.sequence.genome.bacterial import (
@@ -610,6 +611,62 @@ BACTERIAL_GENOME_PARAMETERS: dict[str, BacterialHost] = {
 REFERENCE_STRAIN_ATTRIBUTE = "REFERENCE_STRAIN"
 #: The yeast loader parameter (``SCerevisiaeGenome``).
 YEAST_GENOME_PARAMETER = "genome"
+
+
+# --- begin #1045 row 20: the locus_tag_synonym route, shared by every loader ----- #
+#: The GenBank name layer a ``locus_tag_synonym`` route reads, and the only one it may
+#: read: ``/gene_synonym``. An ``old_locus_tag`` or a symbol is a different route.
+SYNONYM_LAYER: Final = "synonym"
+
+
+def locus_tag_synonym_mapping(
+    genome: EcoliK12Genome, released: str, stored: str, pattern: re.Pattern[str]
+) -> DerivedIdentifierMapping | None:
+    """The ``locus_tag_synonym`` mapping of ``released`` onto ``stored``, else ``None``.
+
+    Reads the pinned annotation's own ``/gene_synonym`` lists and returns a mapping only
+    when every condition the route names holds: ``released`` and ``stored`` both have the
+    form of a locus tag of the pinned namespace (``pattern``, so nothing crosses
+    strains), the annotation does NOT carry ``released`` as a locus tag of its own, and
+    exactly ONE locus lists ``released`` as a ``/gene_synonym`` -- that locus being
+    ``stored``. ``None`` means no route describes the remap and the caller drops the
+    record: a tag of another strain's namespace is an ``eck_crosswalk``, and a released
+    tag that several loci list is ambiguous.
+
+    Written for Rapp 2026 and moved here when Babu 2014, Butland 2008 and Girgis 2009
+    took the same route (#1045 row 20). Measured on ``ecoli_K12_MG1655_ASM584v2``:
+    ``b4104`` is not one of the 4,651 locus tags and is listed by exactly one locus,
+    ``b4583`` (``phnE1``), whose ``/gene_synonym`` values are ``b4103``, ``b4104``,
+    ``ECK4096``, ``ECK4097``.
+    """
+    if pattern.match(released) is None or pattern.match(stored) is None:
+        return None
+    loci = genome.genbank.loci
+    if released in loci:
+        return None
+    carriers = sorted(tag for tag, locus in loci.items() if released in locus.synonyms)
+    if carriers != [stored]:
+        return None
+    return DerivedIdentifierMapping(
+        source_identifier=released, route="locus_tag_synonym"
+    )
+
+
+def canonical_symbol(genome: EcoliK12Genome, tag: str) -> str:
+    """The annotation's own symbol of ``tag`` when it resolves back to ``tag``, else
+    the tag, so a stored (tag, symbol) pair always round-trips through the resolver.
+
+    The symbol a ``locus_tag_synonym`` record carries: the released symbol names the
+    retired fragment (Babu 2014 releases ``lomR_2`` for ``b1371``, which no locus
+    carries), so the stored locus's own symbol is written instead (Gerdes 2003's rule).
+    """
+    symbol = genome.genbank.loci[tag].symbol
+    if symbol is None:
+        return tag
+    return symbol if genome.resolve_gene_name(symbol).systematic_name == tag else tag
+
+
+# --- end #1045 row 20 ------------------------------------------------------------ #
 
 
 def declared_reference_strain(dataset_class: type) -> BacterialReferenceStrain:

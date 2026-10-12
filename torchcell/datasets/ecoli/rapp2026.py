@@ -135,6 +135,7 @@ from torchcell.datasets.bacteria_common import (
     LocusTagReconciliation,
     assembly_reference,
     bacterial_genome,
+    locus_tag_synonym_mapping,
     reconcile_locus_tags,
 )
 from torchcell.datasets.dataset_registry import register_dataset
@@ -1603,42 +1604,6 @@ def canonical_symbol(genome: EcoliK12Genome, tag: str) -> str:
         return tag
     resolution = genome.resolve_gene_name(symbol)
     return symbol if resolution.systematic_name == tag else tag
-
-
-#: The GenBank name layer a ``locus_tag_synonym`` route reads, and the only one it may
-#: read: ``/gene_synonym``. An ``old_locus_tag`` or a symbol is a different route.
-SYNONYM_LAYER: Final = "synonym"
-
-
-def locus_tag_synonym_mapping(
-    genome: EcoliK12Genome, released: str, stored: str, pattern: re.Pattern[str]
-) -> DerivedIdentifierMapping | None:
-    """The ``locus_tag_synonym`` mapping of ``released`` onto ``stored``, else ``None``.
-
-    Reads the pinned annotation's own ``/gene_synonym`` lists and returns a mapping only
-    when every condition the route names holds: ``released`` and ``stored`` both have the
-    form of a locus tag of the pinned namespace (``pattern``, so nothing crosses
-    strains), the annotation does NOT carry ``released`` as a locus tag of its own, and
-    exactly ONE locus lists ``released`` as a ``/gene_synonym`` -- that locus being
-    ``stored``. ``None`` means no route describes the remap and the caller drops the
-    record: a tag of another strain's namespace is an ``eck_crosswalk``, and a released
-    tag that several loci list is ambiguous.
-
-    Measured on ``ecoli_K12_MG1655_ASM584v2``: ``b4104`` is not one of the 4,651 locus
-    tags and is listed by exactly one locus, ``b4583`` (``phnE1``), whose ``/gene_synonym``
-    values are ``b4103``, ``b4104``, ``ECK4096``, ``ECK4097``.
-    """
-    if pattern.match(released) is None or pattern.match(stored) is None:
-        return None
-    loci = genome.genbank.loci
-    if released in loci:
-        return None
-    carriers = sorted(tag for tag, locus in loci.items() if released in locus.synonyms)
-    if carriers != [stored]:
-        return None
-    return DerivedIdentifierMapping(
-        source_identifier=released, route="locus_tag_synonym"
-    )
 
 
 def resolve_strains(

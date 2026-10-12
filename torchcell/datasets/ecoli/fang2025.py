@@ -85,11 +85,16 @@ denominator is below the authors' stated robustness floor, they use none of thes
 numbers, and no phenotype field can carry the flag, so storing them unmarked would
 present them as equal in quality to the 15,708.
 
-The second rule removes 3 more rows, 2 in round 1 and 1 in round 2, whose every cluster
-member is a b-number ``GCA_000005845.2`` no longer carries: the ``sokEb4700`` and
-``ybfKb4590`` singleton clusters, which Wang 2018 drops for the same reason at its own
-scale. The per-round arithmetic and the per-library split of the excluded rows are in
-``preprocess/build_accounting.json``.
+That is the ONE rule. Every cluster member's b-number is stored as Wang 2018's
+Supplementary Data 2 releases it, with the member's own symbol, and the loader reads no
+annotation (the owner's rule of 2026-10-12: the data is the data, and the genome is a
+separate layer joined at modeling time). Two of those b-numbers, ``b4700`` (``sokE``)
+and ``b4590`` (``ybfK``), are ones GCA_000005845.2 no longer carries; before the rule
+their 3 rows (2 in round 1, 1 in round 2) were dropped as ``retired_target`` and the two
+members were pruned from the genotypes of the clusters that carried them beside a
+current b-number. They are records now, and the L4 genome-reference rows report them
+as findings (#1069). The per-round arithmetic and the per-library split of the
+excluded rows are in ``preprocess/build_accounting.json``.
 
 Round 2 keeping only 331 of 55,671 is not an error and not a drop rule: 55,334 of its
 guides read below 20 AFTER sorting, which is what sorting the top 1% of a library
@@ -172,21 +177,14 @@ from torchcell.datamodels.schema import (
 )
 from torchcell.datasets.bacteria_common import (
     BACTERIAL_ASSEMBLY_SETS,
-    LocusTagReconciliation,
     assembly_reference,
     bacterial_genome,
-    reconcile_locus_tags,
 )
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.datasets.ecoli.wang2018 import CITATION_KEY as WANG_CITATION_KEY
 from torchcell.datasets.ecoli.wang2018 import CLUSTERS_FILE as WANG_CLUSTERS_FILE
 from torchcell.datasets.ecoli.wang2018 import LIBRARY_FILE as WANG_LIBRARY_FILE
-from torchcell.datasets.ecoli.wang2018 import (
-    GeneCluster,
-    read_clusters,
-    read_library,
-    stored_gene_names,
-)
+from torchcell.datasets.ecoli.wang2018 import GeneCluster, read_clusters, read_library
 from torchcell.datasets.ecoli.wang2018 import load_manifest as wang_load_manifest
 from torchcell.datasets.ecoli.wang2018 import manifest_sha256 as wang_manifest_sha256
 from torchcell.datasets.ecoli.wang2018 import raw_mirror_dir as wang_raw_mirror_dir
@@ -593,9 +591,9 @@ ROUNDS: tuple[Round, ...] = (
 )
 
 #: Totals over the two rounds, measured on the pinned bytes.
-EXPECTED_RECORDS = 15708
-EXPECTED_PERTURBATIONS = 16187
-EXPECTED_GENES = 2628
+EXPECTED_RECORDS = 15711
+EXPECTED_PERTURBATIONS = 16191
+EXPECTED_GENES = 2630
 
 #: A library guide id: ``<symbol><bNNNN>_<position>``.
 GUIDE_ID_RE = re.compile(
@@ -610,11 +608,10 @@ DROP_RULES: list[str] = [
     "Fitness (reads<20, ...) column rather than in the qualified Fitness column, and "
     "applying the floor independently reproduces that split with zero disagreement in "
     "both rounds; no phenotype field can carry the flag, so they are not stored",
-    "retired_target -- 3 rows (sokEb4700_32 and sokEb4700_33 in round 1, ybfKb4590_11 "
-    "in round 2): every member of the guide's cluster is a b-number the pinned "
-    "GCA_000005845.2 annotation no longer carries, so the L1 canonical-name rule and "
-    "the L4 gene universe would both reject the stored name. Wang 2018 drops the same "
-    "two singleton clusters, at its own scale (55 rows over five screens)",
+    "no genome rule -- every cluster member's b-number is stored as released; b4700 "
+    "(sokE) and b4590 (ybfK), which GCA_000005845.2 no longer carries, key 3 records "
+    "(sokEb4700_32 and sokEb4700_33 in round 1, ybfKb4590_11 in round 2) and 4 "
+    "cluster-member perturbations, and the L4 genome-reference rows report them",
 ]
 
 
@@ -1071,7 +1068,6 @@ class RoundAccounting(BaseModel):
     source_rows: int
     dropped_below_read_floor: int
     dropped_by_library: dict[str, int]
-    dropped_retired_target: int
     kept_records: int
     perturbations: int
     background_knockdowns: int
@@ -1079,17 +1075,12 @@ class RoundAccounting(BaseModel):
     max_equation_2_error: float
 
     def check(self) -> None:
-        """The two drop counts must account for every released row."""
-        kept = (
-            self.source_rows
-            - self.dropped_below_read_floor
-            - self.dropped_retired_target
-        )
+        """The one drop count must account for every released row."""
+        kept = self.source_rows - self.dropped_below_read_floor
         if kept != self.kept_records:
             raise ValueError(
                 f"{self.round_id}: {self.source_rows} rows minus "
-                f"{self.dropped_below_read_floor} below the floor and "
-                f"{self.dropped_retired_target} retired is {kept}, not the "
+                f"{self.dropped_below_read_floor} below the floor is {kept}, not the "
                 f"{self.kept_records} records written"
             )
 
@@ -1114,8 +1105,6 @@ class BuildAccounting(BaseModel):
     kept_records: int
     perturbations: int
     distinct_genes: int
-    retired_targets_dropped: list[str]
-    reconciliation: LocusTagReconciliation
     read_floor: int
     drop_rules: list[str]
     accessions_recorded_not_loaded: dict[str, str]
@@ -1147,22 +1136,16 @@ class CrispriGuideFfaEnrichmentFang2025Dataset(ExperimentDataset):
     organism = Organism.ecoli
 
     REFERENCE_STRAIN: ClassVar[Literal["MG1655"]] = "MG1655"
-    #: Measured on the pinned bytes: 4,313 of the 4,317 cluster-member b-numbers resolve
-    #: to a locus of GCA_000005845.2 (0.9991). Below this the annotation or the release
-    #: moved and the build stops rather than dropping more records.
-    MIN_RESOLVED_FRACTION: ClassVar[float] = 0.999
 
     def __init__(
         self,
         root: str = "data/torchcell/crispri_guide_ffa_enrichment_fang2025",
         io_workers: int = 0,
-        ecoli_genome: EcoliK12Genome | None = None,
         transform: Any | None = None,
         pre_transform: Any | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize; the MG1655 genome resolves the library's b-numbers."""
-        self.ecoli_genome = ecoli_genome
+        """Initialize. No genome parameter: the loader reads no annotation."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -1216,18 +1199,6 @@ class CrispriGuideFfaEnrichmentFang2025Dataset(ExperimentDataset):
             link_verified(source, osp.join(self.raw_dir, raw.filename), recorded)
         log.info("Fang 2025 and Wang 2018 artifacts linked into %s", self.raw_dir)
 
-    def _genome(self) -> EcoliK12Genome:
-        """The injected MG1655 genome, or one opened from the genomes tier."""
-        if self.ecoli_genome is None:
-            self.ecoli_genome = bacterial_genome("ecoli", self.REFERENCE_STRAIN)
-        expected = BACTERIAL_ASSEMBLY_SETS[self.REFERENCE_STRAIN]
-        if self.ecoli_genome.ASSEMBLY_SET != expected:
-            raise ValueError(
-                f"{type(self).__name__} needs the {expected} genome, got "
-                f"{self.ecoli_genome.ASSEMBLY_SET}"
-            )
-        return self.ecoli_genome
-
     def _pointer(self, obj: Any, hint: str, itxn: Any) -> Any:
         """``obj``'s dump, interned exactly as ``_intern_record`` interns it."""
         holder = {"value": obj.model_dump()}
@@ -1252,34 +1223,10 @@ class CrispriGuideFfaEnrichmentFang2025Dataset(ExperimentDataset):
             n_non_targeting=N_CONTROL_GUIDES,
         )
 
-        genome = self._genome()
-        bnumbers = sorted(
-            {m.bnumber for cluster in clusters.values() for m in cluster.members}
-        )
-        stored, reconciliation = reconcile_locus_tags(
-            genome, pd.Series(bnumbers), label=self.name
-        )
-        reconciliation.require_resolved(self.MIN_RESOLVED_FRACTION)
-        if reconciliation.outside_namespace:
-            raise RuntimeError(
-                f"{self.name}: targets outside {MG1655_NAMESPACE}: "
-                f"{reconciliation.outside_namespace}"
-            )
-        if list(stored) != bnumbers:
-            raise RuntimeError(
-                f"{self.name}: reconciliation remapped a b-number, which means the "
-                "released identifiers are not this assembly's locus tags"
-            )
-        retired = frozenset(reconciliation.retired_kept) | frozenset(
-            reconciliation.ambiguous_kept
-        )
-        names = stored_gene_names(genome, clusters.values())
+        # Every cluster member as Wang 2018's Supplementary Data 2 releases it: the
+        # b-number and the member's own symbol, no annotation read.
         targets: dict[str, tuple[tuple[str, str], ...]] = {
-            token: tuple(
-                (m.bnumber, names[m.bnumber])
-                for m in cluster.members
-                if m.bnumber not in retired
-            )
+            token: tuple((m.bnumber, m.symbol) for m in cluster.members)
             for token, cluster in clusters.items()
         }
         background = self._background_knockdown(targets, spacers)
@@ -1298,7 +1245,6 @@ class CrispriGuideFfaEnrichmentFang2025Dataset(ExperimentDataset):
             reference = build_reference(self.name, round_, genome_reference)
             leaves = background if round_.carries_background_knockdown else ()
             genotypes: dict[str, dict[str, Any]] = {}
-            dropped_retired = 0
             perturbations = 0
             with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
                 env_ptr = self._pointer(
@@ -1317,9 +1263,6 @@ class CrispriGuideFfaEnrichmentFang2025Dataset(ExperimentDataset):
                     if match is None:
                         raise RuntimeError(f"{key!r} is not a library guide id")
                     target = targets[str(match.group("token"))]
-                    if not target:
-                        dropped_retired += 1
-                        continue
                     if key not in genotypes:
                         genotypes[key] = build_genotype(
                             target, spacers[key], leaves
@@ -1353,7 +1296,7 @@ class CrispriGuideFfaEnrichmentFang2025Dataset(ExperimentDataset):
                     perturbations += len(target) + len(leaves)
                     genes.update(bnumber for bnumber, _ in target)
                     genes.update(bnumber for bnumber, _, _ in leaves)
-            kept = len(rows.kept) - dropped_retired
+            kept = len(rows.kept)
             if kept != round_.kept_records:
                 raise RuntimeError(
                     f"{round_.round_id}: wrote {kept} records, the pinned bytes give "
@@ -1370,7 +1313,6 @@ class CrispriGuideFfaEnrichmentFang2025Dataset(ExperimentDataset):
                     source_rows=rows.source_rows,
                     dropped_below_read_floor=rows.excluded_rows,
                     dropped_by_library=rows.excluded_by_library,
-                    dropped_retired_target=dropped_retired,
                     kept_records=kept,
                     perturbations=perturbations,
                     background_knockdowns=len(leaves) * kept,
@@ -1388,9 +1330,7 @@ class CrispriGuideFfaEnrichmentFang2025Dataset(ExperimentDataset):
                 f"{self.name}: wrote (records, perturbations, genes) {totals}, the "
                 f"pinned bytes give {expected}"
             )
-        self._write_reports(
-            clusters, spacers, reconciliation, accounting, genes, retired, background
-        )
+        self._write_reports(clusters, spacers, accounting, genes, background)
         log.info(
             "Wrote %d %s records over %d distinct genes", idx, self.name, len(genes)
         )
@@ -1451,10 +1391,8 @@ class CrispriGuideFfaEnrichmentFang2025Dataset(ExperimentDataset):
         self,
         clusters: Mapping[str, GeneCluster],
         spacers: Mapping[str, str],
-        reconciliation: LocusTagReconciliation,
         rounds: list[RoundAccounting],
         genes: set[str],
-        retired: frozenset[str],
         background: tuple[tuple[str, str, str], ...],
     ) -> None:
         """Write the per-round retention table and the build accounting."""
@@ -1465,7 +1403,7 @@ class CrispriGuideFfaEnrichmentFang2025Dataset(ExperimentDataset):
             dataset=self.name,
             reference_strain=self.REFERENCE_STRAIN,
             strain_background=str(HOST_BACKGROUND.value),
-            assembly_set=reconciliation.assembly_set,
+            assembly_set=BACTERIAL_ASSEMBLY_SETS[self.REFERENCE_STRAIN],
             library_citation_key=str(LIBRARY_PROVENANCE.value),
             library_guides=len(spacers),
             library_targeting_guides=N_TARGETING_GUIDES,
@@ -1477,8 +1415,6 @@ class CrispriGuideFfaEnrichmentFang2025Dataset(ExperimentDataset):
             kept_records=sum(r.kept_records for r in rounds),
             perturbations=sum(r.perturbations for r in rounds),
             distinct_genes=len(genes),
-            retired_targets_dropped=sorted(retired),
-            reconciliation=reconciliation,
             read_floor=int(READ_FLOOR.value),
             drop_rules=DROP_RULES,
             accessions_recorded_not_loaded={
@@ -1576,8 +1512,9 @@ def verify_build(
                 "pcnB repression of the pcnBi host (pcnBb0143_956). Reference = the "
                 "unsorted library of the same round, response 0.0 by that "
                 f"normalization. DROPPED: 95,631 rows below the authors' own "
-                f"{READ_FLOOR.value}-read floor and 3 rows whose only target is a "
-                "retired b-number (b4700, b4590)"
+                f"{READ_FLOOR.value}-read floor; every cluster member's b-number is "
+                "stored as released (b4700 and b4590, which the pinned annotation no "
+                "longer carries, are genome-reference findings)"
             ),
             page=(
                 "Nat Commun 2025 16 (doi:10.1038/s41467-025-58368-3); Methods "
@@ -1603,7 +1540,7 @@ def main() -> None:
     data_root = _data_root()
     root = osp.join(data_root, "data/torchcell/crispri_guide_ffa_enrichment_fang2025")
     genome = bacterial_genome("ecoli", MG1655_STRAIN, data_root)
-    dataset = CrispriGuideFfaEnrichmentFang2025Dataset(root=root, ecoli_genome=genome)
+    dataset = CrispriGuideFfaEnrichmentFang2025Dataset(root=root)
     print(f"len = {len(dataset)}")
     dataset.close_lmdb()
     accounting = json.loads(
@@ -1619,7 +1556,6 @@ def main() -> None:
                     "perturbations",
                     "distinct_genes",
                     "read_floor",
-                    "retired_targets_dropped",
                     "library_citation_key",
                 )
             },

@@ -13,7 +13,9 @@ real pins; those are asserted by the refusal test and the data-gated tests).
 
 The synthetic release is read-count driven, because the ONE retention rule is a read
 floor: every expected count below falls out of the counts in ``ROUND_1_READS`` and
-``ROUND_2_READS`` rather than being asserted separately.
+``ROUND_2_READS`` rather than being asserted separately. The loader reads no genome:
+``b4590``, which the synthetic MG1655 assembly does not carry, is stored as released
+and the verifier's genome-reference rows report it.
 
     guide            cluster members   round 1 (tra/bs/as)   round 2 (bs/as)
     thrLb0001_10     b0001             100/100/50  keep      100/100  keep
@@ -21,15 +23,15 @@ floor: every expected count below falls out of the counts in ``ROUND_1_READS`` a
     thrAb0002_12     b0002             100/100/5   floor     100/100  keep
     proBb0005_60     b0005, b0006      100/100/100 keep      100/100  keep
     yaaPb0004_45     b0004             100/100/40  keep      100/5    floor
-    ybfKb4590_5      b4590 (retired)   100/100/60  retired   100/100  retired
+    ybfKb4590_5      b4590 (no locus)  100/100/60  keep      100/100  keep
     thrWb0003_31     b0003             10/100/100  floor     10/100   floor
 
-Round 1: 5 rows clear the floor, 1 of them is the retired singleton, so 4 records over
-5 perturbations (``proBb0005_60`` carries two, one per cluster member). Round 2: 4 rows
-clear the floor, 1 retired, so 3 records, each carrying ONE EXTRA knockdown for the
-synthetic pcnBi background (``yaaPb0004_45`` on b0004), giving 7 perturbations. Seven
-records, 12 perturbations, 5 distinct genes. ``yaaPb0004_45`` is the background guide
-AND is below the round-2 floor on purpose, so no record repeats a gene.
+Round 1: 5 rows clear the floor, so 5 records over 6 perturbations (``proBb0005_60``
+carries two, one per cluster member). Round 2: 4 rows clear the floor, so 4 records,
+each carrying ONE EXTRA knockdown for the synthetic pcnBi background (``yaaPb0004_45``
+on b0004), giving 9 perturbations. Nine records, 15 perturbations, 6 distinct genes.
+``yaaPb0004_45`` is the background guide AND is below the round-2 floor on purpose, so
+no record repeats a gene.
 
 Both Methods equations are written into the synthetic workbook by computing them from
 the synthetic read counts, which is what lets the loader's own equation check and its
@@ -157,7 +159,7 @@ ROUND_1 = m.Round(
     fitness_all_column=21,
     carries_background_knockdown=False,
     floor_kept_rows=5,
-    kept_records=4,
+    kept_records=5,
 )
 ROUND_2 = m.Round(
     round_id="round_2_pcnbi",
@@ -172,12 +174,12 @@ ROUND_2 = m.Round(
     fitness_all_column=19,
     carries_background_knockdown=True,
     floor_kept_rows=4,
-    kept_records=3,
+    kept_records=4,
 )
 SYNTHETIC_ROUNDS = (ROUND_1, ROUND_2)
 N_SYNTHETIC_RECORDS = ROUND_1.kept_records + ROUND_2.kept_records
-N_SYNTHETIC_PERTURBATIONS = 12
-N_SYNTHETIC_GENES = 5
+N_SYNTHETIC_PERTURBATIONS = 15
+N_SYNTHETIC_GENES = 6
 
 REFERENCE = AssemblyReferenceGenome(
     species="Escherichia coli",
@@ -354,16 +356,9 @@ def synthetic(
 
 
 @pytest.fixture
-def built(
-    synthetic: Path, monkeypatch: pytest.MonkeyPatch, mg1655: EcoliK12MG1655Genome
-) -> m.CrispriGuideFfaEnrichmentFang2025Dataset:
-    """The synthetic build, with the resolved-fraction floor lowered for 6 of 7 names."""
-    monkeypatch.setattr(
-        m.CrispriGuideFfaEnrichmentFang2025Dataset, "MIN_RESOLVED_FRACTION", 0.8
-    )
-    return m.CrispriGuideFfaEnrichmentFang2025Dataset(
-        root=str(synthetic), ecoli_genome=mg1655
-    )
+def built(synthetic: Path) -> m.CrispriGuideFfaEnrichmentFang2025Dataset:
+    """The synthetic build; the loader takes no genome."""
+    return m.CrispriGuideFfaEnrichmentFang2025Dataset(root=str(synthetic))
 
 
 def _records(
@@ -572,7 +567,7 @@ def test_build_genotype_adds_the_background_knockdown_only_when_asked() -> None:
 def test_build_writes_one_record_per_kept_guide_round_pair(
     built: m.CrispriGuideFfaEnrichmentFang2025Dataset,
 ) -> None:
-    assert len(built) == N_SYNTHETIC_RECORDS == 7
+    assert len(built) == N_SYNTHETIC_RECORDS == 9
 
 
 def test_build_validates_every_record_against_the_schema_classes(
@@ -593,21 +588,33 @@ def test_build_keeps_the_two_rounds_apart_by_screen_id(
     built: m.CrispriGuideFfaEnrichmentFang2025Dataset,
 ) -> None:
     screens = [r["experiment"]["phenotype"]["screen_id"] for r in _records(built)]
-    assert screens == ["round_1_cf"] * 4 + ["round_2_pcnbi"] * 3
+    assert screens == ["round_1_cf"] * 5 + ["round_2_pcnbi"] * 4
 
 
-def test_build_drops_the_retired_singleton_from_both_rounds(
+def test_build_stores_the_singleton_on_no_locus_as_released(
     built: m.CrispriGuideFfaEnrichmentFang2025Dataset,
 ) -> None:
-    """``ybfKb4590_5`` clears the floor in both rounds and is stored in neither."""
+    """``ybfKb4590_5`` clears the floor in both rounds and is stored in both, under the
+    b-number and symbol Wang 2018 released; no annotation decides it.
+    """
+    records = _records(built)
     stored = {
-        perturbation["systematic_gene_name"]
-        for record in _records(built)
+        perturbation["systematic_gene_name"]: perturbation["perturbed_gene_name"]
+        for record in records
         for perturbation in record["experiment"]["genotype"]["perturbations"]
     }
-    assert "b4590" not in stored
-    assert stored == {"b0001", "b0002", "b0004", "b0005", "b0006"}
+    assert stored["b4590"] == "ybfK"
+    assert set(stored) == {"b0001", "b0002", "b0004", "b0005", "b0006", "b4590"}
     assert len(stored) == N_SYNTHETIC_GENES
+    on_b4590 = [
+        r["experiment"]["phenotype"]["screen_id"]
+        for r in records
+        if any(
+            p["systematic_gene_name"] == "b4590"
+            for p in r["experiment"]["genotype"]["perturbations"]
+        )
+    ]
+    assert on_b4590 == ["round_1_cf", "round_2_pcnbi"]
 
 
 def test_build_gives_every_round_two_record_the_background_knockdown(
@@ -620,7 +627,7 @@ def test_build_gives_every_round_two_record_the_background_knockdown(
         for r in records
         if r["experiment"]["phenotype"]["screen_id"] == "round_2_pcnbi"
     ]
-    assert len(round_two) == 3
+    assert len(round_two) == 4
     for record in round_two:
         perturbations = record["experiment"]["genotype"]["perturbations"]
         names = [p["systematic_gene_name"] for p in perturbations]
@@ -659,9 +666,9 @@ def test_build_carries_one_knockdown_per_cluster_member(
         for r in records
         if r["experiment"]["phenotype"]["screen_id"] == "round_1_cf"
     ]
-    assert sorted(counts) == [1, 1, 1, 2]
+    assert sorted(counts) == [1, 1, 1, 1, 2]
     total = sum(len(r["experiment"]["genotype"]["perturbations"]) for r in records)
-    assert total == N_SYNTHETIC_PERTURBATIONS == 12
+    assert total == N_SYNTHETIC_PERTURBATIONS == 15
 
 
 def test_build_stores_the_released_fitness_verbatim(
@@ -692,14 +699,14 @@ def test_build_writes_the_round_retention_accounting(
     assert accounting["read_floor"] == 20
     assert accounting["library_citation_key"] == "wangPooledCRISPRInterference2018"
     assert accounting["strain_background"] == "CF"
-    assert accounting["retired_targets_dropped"] == ["b4590"]
+    assert "retired_targets_dropped" not in accounting
+    assert "reconciliation" not in accounting
     by_round = {r["round_id"]: r for r in accounting["rounds"]}
     assert by_round["round_1_cf"]["dropped_below_read_floor"] == 2
-    assert by_round["round_1_cf"]["dropped_retired_target"] == 1
-    assert by_round["round_1_cf"]["kept_records"] == 4
+    assert "dropped_retired_target" not in by_round["round_1_cf"]
+    assert by_round["round_1_cf"]["kept_records"] == 5
     assert by_round["round_2_pcnbi"]["dropped_below_read_floor"] == 3
-    assert by_round["round_2_pcnbi"]["dropped_retired_target"] == 1
-    assert by_round["round_2_pcnbi"]["background_knockdowns"] == 3
+    assert by_round["round_2_pcnbi"]["background_knockdowns"] == 4
     assert (synthetic / "preprocess" / "round_retention.csv").exists()
 
 
@@ -718,7 +725,7 @@ def test_build_verifies_the_pins_of_both_mirrors(
 
 
 def test_round_accounting_refuses_arithmetic_that_does_not_close() -> None:
-    """The two drop counts must account for every released row."""
+    """The one drop count must account for every released row."""
     accounting = m.RoundAccounting(
         round_id="round_1_cf",
         sheet="Figure 1",
@@ -729,24 +736,20 @@ def test_round_accounting_refuses_arithmetic_that_does_not_close() -> None:
         source_rows=7,
         dropped_below_read_floor=2,
         dropped_by_library={"before_sorting": 1, "after_sorting": 1},
-        dropped_retired_target=1,
-        kept_records=5,
-        perturbations=5,
+        kept_records=6,
+        perturbations=6,
         background_knockdowns=0,
         max_equation_1_error=0.0,
         max_equation_2_error=0.0,
     )
-    with pytest.raises(ValueError, match="not the 5 records written"):
+    with pytest.raises(ValueError, match="not the 6 records written"):
         accounting.check()
 
 
 def test_background_knockdown_refuses_a_guide_outside_the_library(
-    synthetic: Path, monkeypatch: pytest.MonkeyPatch, mg1655: EcoliK12MG1655Genome
+    synthetic: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """If the short-form resolution were wrong, the build stops rather than deriving."""
-    monkeypatch.setattr(
-        m.CrispriGuideFfaEnrichmentFang2025Dataset, "MIN_RESOLVED_FRACTION", 0.8
-    )
     monkeypatch.setattr(
         m,
         "ROUND_TWO_BACKGROUND_GUIDE",
@@ -757,34 +760,23 @@ def test_background_knockdown_refuses_a_guide_outside_the_library(
         ),
     )
     with pytest.raises(RuntimeError, match="does not resolve"):
-        m.CrispriGuideFfaEnrichmentFang2025Dataset(
-            root=str(synthetic), ecoli_genome=mg1655
-        )
+        m.CrispriGuideFfaEnrichmentFang2025Dataset(root=str(synthetic))
 
 
-def test_build_refuses_a_genome_of_another_assembly_set(
-    synthetic: Path, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
-    """A BW25113 tag is not a b-number, so resolving this release against it is refused."""
-    from tests.torchcell.sequence.genome._bacterial_fixtures import BW25113_LOCI
-    from torchcell.sequence.genome.ecoli.k12 import (
-        BW25113_ASSEMBLY,
-        EcoliK12BW25113Genome,
+def test_the_loader_reads_no_genome() -> None:
+    import inspect
+
+    assert (
+        "ecoli_genome"
+        not in inspect.signature(
+            m.CrispriGuideFfaEnrichmentFang2025Dataset.__init__
+        ).parameters
     )
-
-    files = write_assembly(tmp_path / "bw-tier", BW25113_ASSEMBLY, BW25113_LOCI)
-    forbid_network(monkeypatch)
-    serve_tier(monkeypatch, files)
-    root = tmp_path / "bw25113"
-    root.mkdir()
-    bw25113 = EcoliK12BW25113Genome(genome_root=str(root), overwrite=False)
-    monkeypatch.setattr(
-        m.CrispriGuideFfaEnrichmentFang2025Dataset, "MIN_RESOLVED_FRACTION", 0.8
+    assert not hasattr(m, "reconcile_locus_tags")
+    assert not hasattr(m, "stored_gene_names")
+    assert not hasattr(
+        m.CrispriGuideFfaEnrichmentFang2025Dataset, "MIN_RESOLVED_FRACTION"
     )
-    with pytest.raises(ValueError, match="needs the ecoli_K12_MG1655_ASM584v2 genome"):
-        m.CrispriGuideFfaEnrichmentFang2025Dataset(
-            root=str(synthetic), ecoli_genome=bw25113
-        )
 
 
 def test_dataset_exposes_its_schema_classes() -> None:
@@ -993,8 +985,12 @@ def test_verify_build_runs_every_level_on_the_synthetic_store(
     report = m.verify_build(
         str(synthetic), genome=mg1655, expected_count=N_SYNTHETIC_RECORDS
     )
-    failed = [r.name for r in report.results if not r.passed]
-    assert failed == []
+    failed = [r for r in report.results if not r.passed]
+    # b4590 is on no synthetic locus: the genome-reference rows report it under the
+    # verdict and never decide it
+    assert [r.name for r in failed if r.finding_class.value != "report"] == []
+    assert report.passed
+    assert failed, "b4590 must be reported by the genome-reference rows"
     assert {int(r.level) for r in report.results} >= {0, 1, 2, 3, 4}
     written = json.loads(
         (synthetic / "preprocess" / "verification_report.json").read_text()
@@ -1082,14 +1078,14 @@ def test_the_built_store_holds_the_measured_record_count() -> None:
     accounting = m.BuildAccounting.model_validate(payload)
     accounting.check()
     assert accounting.source_rows == 111342
-    assert accounting.kept_records == m.EXPECTED_RECORDS == 15708
-    assert accounting.perturbations == m.EXPECTED_PERTURBATIONS == 16187
-    assert accounting.distinct_genes == m.EXPECTED_GENES == 2628
+    assert accounting.kept_records == m.EXPECTED_RECORDS == 15711
+    assert accounting.perturbations == m.EXPECTED_PERTURBATIONS == 16191
+    assert accounting.distinct_genes == m.EXPECTED_GENES == 2630
     assert accounting.read_floor == 20
     assert accounting.library_citation_key == "wangPooledCRISPRInterference2018"
     by_round = {r.round_id: r for r in accounting.rounds}
-    assert by_round["round_1_cf"].kept_records == 15378
-    assert by_round["round_2_pcnbi"].kept_records == 330
+    assert by_round["round_1_cf"].kept_records == 15380
+    assert by_round["round_2_pcnbi"].kept_records == 331
     assert by_round["round_1_cf"].dropped_by_library["after_sorting"] == 38379
     assert by_round["round_2_pcnbi"].dropped_by_library["after_sorting"] == 55334
     for round_ in accounting.rounds:
@@ -1119,5 +1115,6 @@ def test_the_built_store_carries_the_round_two_background_knockdown() -> None:
 @needs_store
 def test_the_built_store_passes_every_verification_level() -> None:
     report = m.verify_build(str(STORE), data_root=DATA_ROOT)
-    failed = [r.name for r in report.results if not r.passed]
-    assert failed == []
+    failed = [r for r in report.results if not r.passed]
+    assert [r.name for r in failed if r.finding_class.value != "report"] == []
+    assert report.passed

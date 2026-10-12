@@ -968,21 +968,11 @@ def test_map_genes_on_the_synthetic_k12_pair(
         "b0006": ("b0006", "proC", "ecoli_k12_mg1655_bnumber"),
         "b0099": ("b0099", "b0099", "ecoli_k12_mg1655_bnumber"),
     }
-    statuses = {
-        status.released: status.resolution.value for status in report.released_as
-    }
-    assert statuses == {
-        "b0005": "no_one_to_one_eck_pair",
-        "b0006": "no_one_to_one_eck_pair",
-        "b0099": "not_in_annotation",
-    }
+    assert report.released_as == ("b0005", "b0006", "b0099")
     genotype = p.build_genotype(mapping["b0006"])
     leaf = genotype.perturbations[0]
     assert isinstance(leaf, TransposonInsertionPerturbation)
-    assert leaf.description.startswith(p.DESCRIPTION_AS_RELEASED)
-    assert "(no_one_to_one_eck_pair: eck_absent_from_bw25113 (ECK0006))" in (
-        leaf.description
-    )
+    assert leaf.description == p.DESCRIPTION_AS_RELEASED
     assert p.build_genotype(mapping["b0001"]).perturbations[0].description == (
         p.DESCRIPTION
     )
@@ -1290,11 +1280,7 @@ def test_the_loader_builds_the_synthetic_release_end_to_end(mirrored: Path) -> N
         (root / "preprocess" / "identifier_mapping.json").read_text()
     )
     assert (identifiers["n_source_genes"], identifiers["n_mapped"]) == (7, 4)
-    assert [s["released"] for s in identifiers["released_as"]] == [
-        "b0005",
-        "b0006",
-        "b0099",
-    ]
+    assert identifiers["released_as"] == ["b0005", "b0006", "b0099"]
     standard_error = json.loads(
         (root / "preprocess" / "standard_error.json").read_text()
     )
@@ -1662,7 +1648,6 @@ def test_the_essentiality_inventory_counts_rows_and_proves_disjointness(
         "araC": "(araBAD)567",
         "rhaD": "(rhaBAD)568",
     }
-    assert counts.released_as_status == p.DROP_NO_ECK_PAIR
     assert counts.rows_without_a_refseq_locus_tag == ("b0006", "b0007")
     assert counts.shared_with_fitness == ()
     assert counts.fitness_genes == 2
@@ -1818,12 +1803,12 @@ def test_the_essentiality_loader_builds_the_synthetic_table_end_to_end(
         "b0006",
         "b0007",
     ]
-    assert list(rows["status"].fillna("")) == [
-        "",
-        "",
-        "",
-        "no_one_to_one_eck_pair",
-        "no_one_to_one_eck_pair",
+    assert list(rows["gene_namespace"]) == [
+        "ecoli_k12_bw25113_locus_tag",
+        "ecoli_k12_bw25113_locus_tag",
+        "ecoli_k12_bw25113_locus_tag",
+        "ecoli_k12_mg1655_bnumber",
+        "ecoli_k12_mg1655_bnumber",
     ]
     assert (root / "preprocess" / "build_manifest.json").is_file()
 
@@ -2125,11 +2110,11 @@ def test_the_eck_route_on_the_deposited_annotations() -> None:
     assert (report.n_symbol_names, report.n_tag_names) == (3625, 143)
     assert mapping["b0002"].locus_tag == "BW25113_0002"
     assert mapping["b0002"].perturbed_gene_name == "thrA"
-    # #1057: the 21 no pair places are stored as released, each with its status
+    # #1057: the 21 no pair places are stored as the released b-number
     assert len(mapping) == 3789
-    assert Counter(s.resolution.value for s in report.released_as) == {
-        "not_in_annotation": 8,
-        "no_one_to_one_eck_pair": 13,
+    assert len(report.released_as) == 21
+    assert {mapping[b].gene_namespace for b in report.released_as} == {
+        "ecoli_k12_mg1655_bnumber"
     }
 
 

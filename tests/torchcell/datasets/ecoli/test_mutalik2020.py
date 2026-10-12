@@ -1756,7 +1756,7 @@ def k12(
 
 #: The genes of the synthetic release. b0001-b0004 have a one-to-one ECK pair in the
 #: synthetic BW25113 annotation; b0005's ECK is on two BW25113 loci and b0006/b0007's
-#: ECKs are absent, so those three are the ``no_one_to_one_eck_pair`` drops.
+#: ECKs are absent, so those three are stored as the released b-number (#1057).
 SYNTHETIC_GENES = ["b0001", "b0002", "b0003", "b0004", "b0005", "b0006", "b0007"]
 SYNTHETIC_MAPPED = {
     "b0001": "BW25113_0001",
@@ -1784,14 +1784,14 @@ def test_the_eck_route_places_the_genes_it_can_and_names_the_rest(
         **SYNTHETIC_MAPPED,
         **{b: b for b in SYNTHETIC_AS_RELEASED},
     }
-    assert {b: m.gene_namespace for b, m in mapping.items() if m.status} == {
+    assert {b: mapping[b].gene_namespace for b in report.released_as} == {
         b: "ecoli_k12_mg1655_bnumber" for b in SYNTHETIC_AS_RELEASED
     }
-    assert [s.released for s in report.released_as] == list(SYNTHETIC_AS_RELEASED)
+    assert report.released_as == SYNTHETIC_AS_RELEASED
     leaf = mut.build_genotype(mapping["b0005"]).perturbations[0]
     assert isinstance(leaf, TransposonInsertionPerturbation)
     assert leaf.identifier_mapping is None
-    assert leaf.description.startswith(mut.PERTURBATION_DESCRIPTION_AS_RELEASED)
+    assert leaf.description == mut.PERTURBATION_DESCRIPTION_AS_RELEASED
     assert (report.n_measured_genes, report.n_mapped) == (7, 4)
     assert report.mapped_fraction == pytest.approx(4 / 7)
     assert report.unmapped == ("b0005", "b0006", "b0007")
@@ -2349,7 +2349,7 @@ class TestDevStore:
         assert drops["dropped_records"] == 0
         by_rule = {rule["rule"]: rule for rule in drops["rules"]}
         assert by_rule[mut.DROP_MEDIUM_NOT_IN_LIBRARY]["n_records"] == 0
-        assert mut.DROP_NO_ECK_PAIR not in by_rule
+        assert "no_one_to_one_eck_pair" not in by_rule
         identifiers = _json.loads(
             Path(preprocess, "identifier_mapping.json").read_text()
         )

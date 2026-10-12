@@ -1081,20 +1081,16 @@ def test_map_genes_places_one_to_one_eck_pairs_and_types_the_rest(
         "b0006": ("b0006", "proC"),
         "b0099": ("b0099", "b0099"),
     }
-    assert {b: m.gene_namespace for b, m in mapping.items() if m.status} == {
+    assert {b: mapping[b].gene_namespace for b in report.released_as} == {
         "b0005": "ecoli_k12_mg1655_bnumber",
         "b0006": "ecoli_k12_mg1655_bnumber",
         "b0099": "ecoli_k12_mg1655_bnumber",
     }
-    assert [(s.released, s.resolution.value) for s in report.released_as] == [
-        ("b0005", "no_one_to_one_eck_pair"),
-        ("b0006", "no_one_to_one_eck_pair"),
-        ("b0099", "not_in_annotation"),
-    ]
+    assert report.released_as == ("b0005", "b0006", "b0099")
     leaf = w.build_genotype(mapping["b0099"]).perturbations[0]
     assert isinstance(leaf, TransposonInsertionPerturbation)
     assert leaf.identifier_mapping is None
-    assert leaf.description.startswith(w.DESCRIPTION_AS_RELEASED)
+    assert leaf.description == w.DESCRIPTION_AS_RELEASED
     assert report.n_mapped == 4
     assert report.numeric_disagreements == (("b0003", "BW25113_4412", "ECK0003"),)
     assert [(u.b_number, u.reason, u.eck) for u in report.unmapped] == [
@@ -1657,7 +1653,7 @@ def test_inventory_closes_over_every_released_value() -> None:
     )
     assert withdrawal.source is w.AUTHOR_WITHDRAWAL.instruction
     # #1057: a gene no ECK pair places is stored as released, so no gene rule remains
-    assert w.DROP_NO_ECK_PAIR not in {r.rule for r in counts.rules}
+    assert "no_one_to_one_eck_pair" not in {r.rule for r in counts.rules}
     assert counts.unidentified_compounds == {"casamino acids": 1}
 
 

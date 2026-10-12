@@ -19,17 +19,16 @@ The synthetic release is a 2 x 10 matrix, and every cell exercises one outcome:
     b0001 Isolate 2  non-essential      kept +2.5     dropped: all-zero colonies, S 0.0
     b0003 Isolate 1  non-essential      kept -3.0     kept +1.5
     b0004 Isolate 1  non-essential      kept -1.0     kept  0.0 (a released zero)
-    b0010 Isolate 1  non-essential      kept +3.3     kept -3.4 (on b0003, a synonym)
-    b0099 Isolate 1  non-essential      kept +3.5     kept -3.6 (as released, unannotated)
+    b0010 Isolate 1  non-essential      kept +3.3     kept -3.4 (as released, #1057)
+    b0099 Isolate 1  non-essential      kept +3.5     kept -3.6 (as released, #1057)
     b0007 Isolate 1  non-essential      kept -2.0     dropped: self pair
     b0006 SPA-tag    SPA-tag essential  kept -7.0     dropped: served
     b0002 Isolate 1  non-essential      dropped: served  kept +3.5
-    JW0098 Isolate 1 non-essential      dropped: no bacterial leaf holds a JW id
+    JW0098 Isolate 1 non-essential      dropped: no b-number in form, no leaf holds it
 
-Fourteen records survive six drops; the ``b0006`` row is the hypomorph case, stored on
-``BacterialMarkedAllelePerturbation`` since issue #792. Under the owner rule (#1057)
-``b0010`` is stored on ``b0003`` beside ``b0003``'s own strain, told apart by its
-``locus_tag_synonym`` mapping, and ``b0099`` is stored as released with its status. Data-gated tests (``--data``)
+Fourteen records survive six drops; ``b0010`` (a /gene_synonym of ``b0003``) and
+``b0099`` (on no locus) are stored under their released b-numbers since #1057; the ``b0006`` row is the hypomorph case, stored on
+``BacterialMarkedAllelePerturbation`` since issue #792. Data-gated tests (``--data``)
 read the real raw mirror
 and the built dev-tree LMDB under ``$DATA_ROOT`` (they never build it): the manifest
 pins, the provenance audit of every sourced value including the seven quoted from
@@ -42,7 +41,6 @@ from __future__ import annotations
 import json
 import os
 import os.path as osp
-from collections import Counter
 from collections.abc import Iterator, Mapping, Sequence
 from pathlib import Path
 from typing import Any
@@ -130,7 +128,7 @@ SYNTHETIC_RAW: tuple[tuple[str, str], ...] = (
     (_FOUR, _FOUR),
     (_FOUR, _FOUR),
 )
-#: ``(query tag, stored recipient locus, strain version, score)`` of the kept cells.
+#: ``(query tag, recipient tag, strain version, score)`` of the nine kept cells.
 KEPT_CELLS: tuple[tuple[str, str, str, float], ...] = (
     ("b0005", "b0001", "Isolate 1", -5.0),
     ("b0007", "b0001", "Isolate 1", 4.0),
@@ -142,8 +140,8 @@ KEPT_CELLS: tuple[tuple[str, str, str, float], ...] = (
     ("b0005", "b0007", "Isolate 1", -2.0),
     ("b0005", "b0006", m.LABEL_SPA_TAG, -7.0),
     ("b0007", "b0002", "Isolate 1", 3.5),
-    ("b0005", "b0003", "Isolate 1", 3.3),
-    ("b0007", "b0003", "Isolate 1", -3.4),
+    ("b0005", "b0010", "Isolate 1", 3.3),
+    ("b0007", "b0010", "Isolate 1", -3.4),
     ("b0005", "b0099", "Isolate 1", 3.5),
     ("b0007", "b0099", "Isolate 1", -3.6),
 )
@@ -166,17 +164,6 @@ SERVED_STUB: dict[tuple[str, str], str] = {
     ("b0005", "b4486"): m.BABU_SCREEN_TAG,
     ("b0003", "b0001"): "This Study",
 }
-
-
-def served_babu() -> m.ServedBabu:
-    """The stub as the loader reads it: every served pair stored under its own ids."""
-    return m.ServedBabu(
-        pairs=dict(SERVED_STUB),
-        records=len(SERVED_STUB),
-        loci={pair: pair for pair in SERVED_STUB},
-    )
-
-
 #: ``(query gene, query tag, recipient gene, recipient tag, version, essentiality,
 #: association, S, |Z|, log2(Q/R))`` of the synthetic Supplementary Table 3.
 SYNTHETIC_HIGH_CONFIDENCE: tuple[tuple[Any, ...], ...] = (
@@ -391,7 +378,9 @@ def synthetic_counts(monkeypatch: pytest.MonkeyPatch) -> None:
 @pytest.fixture
 def served_stub(monkeypatch: pytest.MonkeyPatch) -> None:
     """Stub the served Babu store so the partition runs without opening an LMDB."""
-    monkeypatch.setattr(m, "read_served_babu", lambda root: served_babu())
+    monkeypatch.setattr(
+        m, "read_served_babu", lambda root: (dict(SERVED_STUB), len(SERVED_STUB))
+    )
 
 
 @pytest.fixture
@@ -873,9 +862,7 @@ def test_the_build_ledgers_account_for_every_released_cell(
     assert drops["kept_records"] == len(KEPT_CELLS)
     assert drops["dropped_records"] == drops["source_records"] - len(KEPT_CELLS)
     by_rule = {rule["rule"]: rule["n_records"] for rule in drops["rules"]}
-    # #1057: b0010 reaches b0003, which the array also carries as its own strain; both
-    # are stored, told apart by the mapping. b0099 is stored as released. Only the JW
-    # id, which no bacterial leaf can hold, is dropped on its identifier.
+    # #1057: b0010 and b0099 are stored as released; only JW0098 is no b-number
     assert by_rule == {
         m.RULE_NOT_A_TAG: 2,
         m.RULE_SELF_PAIR: 1,
@@ -894,14 +881,6 @@ def test_the_build_ledgers_account_for_every_released_cell(
         6,
         1,
     )
-    statuses = {
-        status["released"]: (status["stored_as"], status["resolution"])
-        for status in drops["identifier_statuses"]
-    }
-    assert statuses == {
-        "b0010": ("b0003", "locus_tag_synonym_shared_locus"),
-        "b0099": ("b0099", "not_in_annotation"),
-    }
     items = {rule["rule"]: rule["items"] for rule in drops["rules"]}
     assert items[m.RULE_NOT_A_TAG] == [
         "b0005 -> JW0098 (Isolate 1)",
@@ -936,8 +915,8 @@ def test_every_built_record_stores_its_own_measured_colony_count(
 ) -> None:
     """The ledger's measured distribution and the records' ``n_samples`` agree exactly.
 
-    The synthetic release holds 13 cells at 4 colonies and 1 at 8, so the two views must
-    be the same histogram; a builder that defaulted to 4 would read 14 at 4 and 0 at 8.
+    The synthetic release holds 9 cells at 4 colonies and 1 at 8, so the two views must
+    be the same histogram; a builder that defaulted to 4 would read 10 at 4 and 0 at 8.
     """
     structure = json.loads(
         Path(built.preprocess_dir, "replicate_structure.json").read_text()
@@ -988,7 +967,6 @@ def test_the_build_proves_the_partition_against_the_served_store(
     assert partition["served_pairs_not_in_this_release"] == ["b0005 -> b4486"]
     assert partition["stored_records"] == len(KEPT_CELLS)
     assert partition["served_fraction_of_this_release"] == pytest.approx(3 / 20)
-    assert partition["overlap_pairs_by_locus"] == []
 
 
 def test_the_build_writes_the_identifier_and_not_loaded_ledgers(
@@ -1233,39 +1211,6 @@ def test_reading_the_served_store_refuses_two_records_of_one_oriented_pair(
         m.read_served_babu("stubbed")
 
 
-def test_a_served_pair_printed_under_another_b_number_is_met_by_locus() -> None:
-    """#1057: Babu prints ``b4486`` where this release prints its synonym ``b4344``.
-
-    Only a served pair whose released ids this release does NOT print is indexed by
-    locus, and two such pairs on one locus pair have no single answer.
-    """
-    served = m.ServedBabu(
-        pairs={
-            ("b0005", "b4486"): m.BABU_SCREEN_TAG,
-            ("b0005", "b0002"): m.BABU_SCREEN_TAG,
-            ("b0007", "b0001"): "This Study",
-        },
-        records=3,
-        loci={
-            ("b0005", "b4486"): ("b0005", "b4486"),
-            ("b0005", "b0002"): ("b0005", "b0002"),
-            ("b0007", "b0001"): ("b0007", "b0001"),
-        },
-    )
-    released = {("b0005", "b4344"), ("b0005", "b0002")}
-    assert m.served_by_locus(served, released) == {
-        ("b0005", "b4486"): ("b0005", "b4486")
-    }
-    twice = served.model_copy(
-        update={
-            "pairs": {**served.pairs, ("b0005", "b9999"): m.BABU_SCREEN_TAG},
-            "loci": {**served.loci, ("b0005", "b9999"): ("b0005", "b4486")},
-        }
-    )
-    with pytest.raises(RuntimeError, match="no single served match"):
-        m.served_by_locus(twice, released)
-
-
 # --------------------------------------------------------------------------- #
 # Verification
 # --------------------------------------------------------------------------- #
@@ -1278,17 +1223,17 @@ def test_the_l0_to_l4_gate_passes_on_the_synthetic_build(
     report = m.verify_records(
         records,
         released=released,
-        served=served_babu(),
+        served=dict(SERVED_STUB),
         universe=universe,
         expected_count=len(KEPT_CELLS),
-        stored_as_released=frozenset({"b0099"}),
     )
     failures = [result.name for result in report.results if not result.passed]
     assert failures == [], report.summary()
     by_name = {result.name: result for result in report.results}
+    # b0010 and b0099 are no locus tags of the annotation: reported, not failed (#1057)
     assert by_name["gene_containment_mg1655_locus_tags"].details[
-        "stored_as_released"
-    ] == ["b0099"]
+        "missing_examples"
+    ] == ["b0010", "b0099"]
     assert by_name["recipient_leaf_states_its_array_row"].details["versions"] == {
         "Isolate 1": 12,
         "Isolate 2": 1,
@@ -1399,32 +1344,25 @@ def test_the_dev_store_ledgers_state_the_measured_build() -> None:
         pytest.skip("the dev store is not built")
     drops = json.loads((preprocess / "dropped_records.json").read_text())
     assert drops["source_records"] == 314847
-    # 301,803 on main; #1057 stores every b-number-form id, on its synonym locus or as
-    # released (4,915 cells), and only the 75 ids no leaf can hold are dropped on name
-    assert drops["kept_records"] == m.EXPECTED_RECORDS == 306718
+    # #1057: every b-number in form is stored as released (301,803 before)
+    assert drops["kept_records"] == m.EXPECTED_RECORDS == 306722
     assert {rule["rule"]: rule["n_records"] for rule in drops["rules"]} == {
         m.RULE_NOT_A_TAG: 5772,
         m.RULE_SELF_PAIR: 78,
         m.RULE_CONTRADICTION: 421,
-        m.RULE_SERVED: 1858,
-    }
-    assert Counter(status["resolution"] for status in drops["identifier_statuses"]) == {
-        "locus_tag_synonym": 6,
-        "locus_tag_synonym_shared_locus": 51,
-        "not_in_annotation": 6,
-        "ambiguous_in_annotation": 1,
+        m.RULE_SERVED: 1854,
     }
     assert (drops["n_aggravating"], drops["n_alleviating"], drops["n_zero"]) == (
         148508,
-        150145,
+        150149,
         8065,
     )
     assert drops["kept_queries"] == 39
-    assert drops["kept_recipients"] == 4002
+    assert drops["kept_recipients"] == 4042
     assert drops["kept_hypomorph_records"] == 5413
     assert drops["kept_strain_versions"] == {
-        "Isolate 1": 150898,
-        "Isolate 2": 150407,
+        "Isolate 1": 150900,
+        "Isolate 2": 150409,
         m.LABEL_SPA_TAG: 5413,
     }
 
@@ -1434,9 +1372,9 @@ def test_the_dev_store_partition_is_the_measured_0_36_percent() -> None:
     """The partition as rebuilt once BOTH loaders store the SPA-tagged hypomorphs.
 
     Babu's own store grew from 38,579 to 41,988 records with PR #837 and to 42,571 with
-    #1057, which put 4 more records of this screen on the served side (1,129). Every
-    served pair is a storable cell here: the overlap is 1,129 pairs over 1,858 cells,
-    split 731 Keio and 398 SPA-tag, 2 of them met by locus (``b4344`` on ``b4486``).
+    #1057, which put 4 more records of this screen on the served side (1,129). The
+    overlap is 1,127 pairs over 1,854 cells, split 729 Keio and 398 SPA-tag, and 2 pairs
+    this release does not name under Babu's ids.
     """
     preprocess = Path(_data_root(), m.DATASET_ROOT_REL, "preprocess")
     if not preprocess.is_dir():
@@ -1450,12 +1388,12 @@ def test_the_dev_store_partition_is_the_measured_0_36_percent() -> None:
     )
     assert round(partition["served_fraction_of_this_release"] * 100, 2) == 0.36
     assert partition["shared_pairs"] == 0
-    assert partition["overlap_pairs_dropped"] == m.SERVED_OVERLAP_PAIRS == 1129
-    assert partition["overlap_cells_dropped"] == m.SERVED_OVERLAP_CELLS == 1858
+    assert partition["overlap_pairs_dropped"] == m.SERVED_OVERLAP_PAIRS == 1127
+    assert partition["overlap_cells_dropped"] == m.SERVED_OVERLAP_CELLS == 1854
     assert (
         partition["overlap_pairs_on_a_keio_recipient"]
         == m.SERVED_OVERLAP_PAIRS_ON_A_KEIO_RECIPIENT
-        == 731
+        == 729
     )
     assert (
         partition["served_pairs_on_a_spa_tag_recipient"]
@@ -1465,8 +1403,8 @@ def test_the_dev_store_partition_is_the_measured_0_36_percent() -> None:
     assert partition["served_pairs_not_in_this_release"] == list(
         m.SERVED_PAIRS_NOT_IN_THIS_RELEASE
     )
-    assert partition["overlap_pairs_by_locus"] == ["b2528 -> b4486", "b2531 -> b4486"]
-    assert 731 + 398 == m.SERVED_BUTLAND_RECORDS == m.SERVED_OVERLAP_PAIRS
+    assert 729 + 398 + 2 == m.SERVED_BUTLAND_RECORDS
+    assert 729 + 398 == m.SERVED_OVERLAP_PAIRS
 
 
 @pytest.mark.data
@@ -1522,7 +1460,12 @@ def test_the_dev_store_holds_the_spa_tag_half_on_the_marked_allele_leaf() -> Non
             str(leaf["cassette"]): leaf
             for leaf in record["experiment"]["genotype"]["perturbations"]
         }
-        pairs.add((m.released_id(leaves["cat"]), m.released_id(leaves["kan"])))
+        pairs.add(
+            (
+                str(leaves["cat"]["systematic_gene_name"]),
+                str(leaves["kan"]["systematic_gene_name"]),
+            )
+        )
         recipient = leaves["kan"]
         if recipient["perturbation_type"] != m.MARKED_ALLELE_TYPE:
             continue
@@ -1535,8 +1478,8 @@ def test_the_dev_store_holds_the_spa_tag_half_on_the_marked_allele_leaf() -> Non
         assert recipient["insertion_site"] is None
         assert recipient["construction"] is None
     assert hypomorphs == 5413
-    served = m.read_served_babu(osp.join(_data_root(), m.BABU_ROOT_REL))
-    assert pairs & set(served.pairs) == set()
+    served, _ = m.read_served_babu(osp.join(_data_root(), m.BABU_ROOT_REL))
+    assert pairs & set(served) == set()
 
 
 # --------------------------------------------------------------------------- #
@@ -1725,64 +1668,3 @@ def test_deposit_refuses_a_hash_mismatch(tmp_path: Path) -> None:
         m.deposit_raw_mirror(
             sources=dict(sources_map(sources)), data_root=str(tmp_path)
         )
-
-
-def test_a_synonym_routed_cell_carries_its_released_recipient() -> None:
-    """#1045 row 20: a cell stored under a merged locus keeps the released b-number.
-
-    The mapping rides on the recipient leaf, and both the served-pair key and the L2 key
-    read the released id back off it, so the partition against Babu 2014 and the matrix
-    check meet the same id the release printed.
-    """
-    cell = m.StoredCell(
-        query_tag="b0005",
-        query_gene="proB",
-        recipient_tag="b0003",
-        recipient_released="b0010",
-        recipient_gene="thrW",
-        version="Isolate 1",
-        recipient_is_hypomorph=False,
-        score=-1.5,
-        n_samples=4,
-        replicate_screens=2,
-    )
-    mapping = cell.recipient_mapping()
-    assert mapping is not None
-    assert (mapping.source_identifier, mapping.route) == ("b0010", "locus_tag_synonym")
-    assert cell.model_copy(
-        update={"recipient_released": "b0003"}
-    ).recipient_mapping() is (None)
-    experiment = m.build_experiment(
-        "t",
-        cell.query_tag,
-        cell.query_gene,
-        cell.recipient_tag,
-        cell.recipient_gene,
-        cell.version,
-        cell.score,
-        cell.n_samples,
-        recipient_mapping=mapping,
-    )
-    leaves = {
-        leaf["cassette"]: leaf
-        for leaf in experiment.model_dump()["genotype"]["perturbations"]
-    }
-    query, recipient = leaves[m.QUERY_CASSETTE], leaves[m.RECIPIENT_CASSETTE]
-    assert recipient["systematic_gene_name"] == "b0003"
-    assert m.released_id(recipient) == "b0010"
-    assert m.released_id(query) == "b0005"
-    hypomorph = m.pair_genotype(
-        "b0005",
-        "proB",
-        "b0003",
-        "thrW",
-        m.LABEL_SPA_TAG,
-        recipient_is_hypomorph=True,
-        recipient_mapping=mapping,
-    )
-    (marked,) = [
-        leaf
-        for leaf in hypomorph.perturbations
-        if isinstance(leaf, BacterialMarkedAllelePerturbation)
-    ]
-    assert marked.identifier_mapping == mapping

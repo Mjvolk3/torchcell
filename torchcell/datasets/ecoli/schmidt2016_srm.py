@@ -778,10 +778,8 @@ def select_arm(
         genome, pd.Series([genes[key] for key in accessions]), label=label
     )
     report.require_resolved(MIN_RESOLVED_FRACTION)
-    outside = set(report.outside_namespace)
-    unresolved = [tag for tag in stored if tag in outside]
-    if unresolved:
-        raise RuntimeError(f"{label}: {unresolved} resolve to no BW25113 locus")
+    # #1057: a symbol the annotation resolves to no locus is stored as released (the
+    # reconciler keeps it as given); none does on this release
     locus_tag = {key: str(tag) for key, tag in zip(accessions, stored, strict=True)}
     if len(set(locus_tag.values())) != len(locus_tag):
         raise RuntimeError(f"{label}: two released symbols share one locus tag")

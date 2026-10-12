@@ -41,7 +41,7 @@ Every family carries the same single retention rule as the metabolome loader
 ``/gene_synonym`` of exactly ONE locus, the pseudogene ``b4583`` (``phnE1``), so the
 record is KEPT with ``identifier_mapping=DerivedIdentifierMapping(
 source_identifier="b4104", route="locus_tag_synonym")`` on its perturbation
-(``bacteria_common.locus_tag_synonym_mapping`` re-checks every condition of that route). The
+(``rapp2026.locus_tag_synonym_mapping`` re-checks every condition of that route). The
 rule still fires for a released b-number this annotation relates to another locus by a
 route no ``DerivedIdentifierRoute`` member names. ``argR``, the metabolome loader's other
 drop, is absent from Table S1 and Table S2 and from both accumulation tables, so it never
@@ -126,7 +126,6 @@ from torchcell.datasets.bacteria_common import (
     STRAIN_GENE_NAMESPACES,
     assembly_reference,
     bacterial_genome,
-    locus_tag_synonym_mapping,
     reconcile_locus_tags,
 )
 from torchcell.datasets.dataset_registry import register_dataset
@@ -167,6 +166,7 @@ from torchcell.datasets.ecoli.rapp2026 import (
     environment,
     host_background,
     load_manifest,
+    locus_tag_synonym_mapping,
     manifest_sha256,
     metabolite_identity_gaps,
     raw_mirror_dir,
@@ -593,7 +593,7 @@ class ResolvedGene(BaseModel):
 
     ``identifier_mapping`` is ``None`` for a gene whose Table S1 b-number IS the stored
     locus tag, and a ``locus_tag_synonym`` mapping for one the annotation relates to its
-    stored tag through a ``/gene_synonym`` (``bacteria_common.locus_tag_synonym_mapping``).
+    stored tag through a ``/gene_synonym`` (``rapp2026.locus_tag_synonym_mapping``).
     """
 
     model_config = ConfigDict(extra="forbid", frozen=True)

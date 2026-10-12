@@ -92,8 +92,8 @@ resolve (0.9953), 2,259 through the gene-symbol layer and 77 through a gene syno
 with no ambiguity and no collision. Each b-number is kept in
 ``preprocess/protein_identifiers.csv`` as the source's cross-reference.
 
-THE RETENTION LEDGER, WITH ITS ARITHMETIC. 2,359 released rows become 2,329 protein
-keys: 2,359 - 5 - 14 - 11 = 2,329.
+THE RETENTION LEDGER, WITH ITS ARITHMETIC. 2,359 released rows become 2,340 protein
+keys: 2,359 - 5 - 14 = 2,340.
 
 - 5 rows are not *E. coli* proteins. The search database was built that way -- "The
   database consists of 4,431 E. coli proteins as well as known contaminants" -- and the
@@ -108,12 +108,15 @@ keys: 2,359 - 5 - 14 - 11 = 2,329.
   that would pick a row for four of the seven, and it is NOT taken: ``rmlA`` and
   ``glsA`` are two distinct paralogs under one symbol in BOTH rows, so a uniform drop
   is the only rule that never mis-attributes a measurement.
-- 11 symbols resolve to no BW25113 locus and are kept as given by the retain-all
-  policy, so they have no gene to key an abundance to: ``JW58``, ``NA``, ``adeP``,
-  ``coaB``, ``comR``, ``ghxP``, ``insC``, ``insH``, ``trmB``, ``trpG`` and ``zapE``.
+- 11 symbols resolve to no BW25113 locus: ``JW58``, ``NA``, ``adeP``, ``coaB``,
+  ``comR``, ``ghxP``, ``insC``, ``insH``, ``trmB``, ``trpG`` and ``zapE``. They were
+  dropped until #1057 (the owner rule of 2026-10-12: the data is the data, and the
+  genome does not gate a released row); each is now stored under its released symbol as
+  given (``protein_identifiers.csv`` gives each row's released symbol, released b-number
+  and stored key).
 
-Three records carry 2,034 keys rather than 2,329: ``Xylose``, ``Mannose`` and
-``Fructose`` are the conditions dataset 1 did not cover, so the 295 kept dataset-1
+Three records carry 2,043 keys rather than 2,340: ``Xylose``, ``Mannose`` and
+``Fructose`` are the conditions dataset 1 did not cover, so the 297 kept dataset-1
 proteins are released as ``NA`` there and are dropped from those records. Every
 record's reference is key-matched to that record.
 
@@ -840,8 +843,8 @@ REFERENCE_CONDITION = "Glucose"
 EXPECTED_RECORDS = 19
 #: Protein keys on a record of a condition both LC-MS experiments covered, and on one of
 #: the three conditions only dataset 2 covered.
-EXPECTED_PROTEIN_KEYS = 2329
-EXPECTED_PROTEIN_KEYS_DATASET2_ONLY = 2034
+EXPECTED_PROTEIN_KEYS = 2340
+EXPECTED_PROTEIN_KEYS_DATASET2_ONLY = 2043
 #: The second BW25113 glucose triplicate (``Glucose.2``, Table S25 A14-07088..90), which
 #: Table S6 does not combine: it is the reproducibility arm of Supplementary Figure 7.
 GLUCOSE_REPRODUCIBILITY_FILES = ("A14-07088", "A14-07089", "A14-07090")
@@ -1182,7 +1185,10 @@ class ProteinSelection(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     kept: list[ProteinRow]
-    locus_tag: dict[str, str] = Field(description="uniprot accession -> locus tag")
+    locus_tag: dict[str, str] = Field(
+        description="uniprot accession -> locus tag, or the released symbol as given "
+        "where the annotation resolves it to no locus (#1057)"
+    )
     reconciliation: LocusTagReconciliation
     rules: list[DropRule]
 
@@ -1195,7 +1201,11 @@ class ProteinSelection(BaseModel):
 def select_proteins(
     rows: Sequence[ProteinRow], genome: EcoliK12Genome, *, label: str
 ) -> ProteinSelection:
-    """Apply the three protein-row rules, then reconcile the surviving gene symbols.
+    """Apply the two protein-row rules, then reconcile the surviving gene symbols.
+
+    A symbol the annotation resolves to no locus is NOT dropped (#1057, the owner rule of
+    2026-10-12: the genome does not gate a released row): the row is stored under its
+    released symbol as given.
 
     Order matters and is not arbitrary: the non-host rows go first, because four of the
     five share an E. coli gene synonym with a host row and would otherwise make that
@@ -1215,16 +1225,10 @@ def select_proteins(
         genome, pd.Series([row.gene for row in unique]), label=label
     )
     report.require_resolved(MIN_RESOLVED_FRACTION)
-    outside = set(report.outside_namespace)
-    kept: list[ProteinRow] = []
-    locus_tag: dict[str, str] = {}
-    unresolved: list[ProteinRow] = []
-    for row, tag in zip(unique, stored, strict=True):
-        if tag in outside:
-            unresolved.append(row)
-            continue
-        kept.append(row)
-        locus_tag[row.uniprot] = str(tag)
+    # #1057: a symbol the annotation resolves to no locus is stored as released (the
+    # reconciler keeps it as given), not dropped
+    kept = list(unique)
+    locus_tag = {row.uniprot: str(tag) for row, tag in zip(unique, stored, strict=True)}
     if len({*locus_tag.values()}) != len(kept):
         raise RuntimeError(f"{label}: two kept rows share one locus tag")
 
@@ -1257,18 +1261,6 @@ def select_proteins(
                 f"{row.gene} ({row.uniprot}, dataset {row.dataset}, row {row.row_number})"
                 for row in duplicated
             ],
-        ),
-        DropRule(
-            rule="gene_symbol_resolves_to_no_locus_of_the_pinned_assembly",
-            scope="protein_row",
-            description=(
-                "the symbol resolves to no locus of "
-                f"{BACTERIAL_ASSEMBLY_SETS[SCHMIDT_REFERENCE_STRAIN]} through any "
-                "resolver layer and is kept as given by the retain-all policy, so it "
-                "names no gene node"
-            ),
-            n_items=len(unresolved),
-            items=[f"{row.gene} ({row.uniprot})" for row in unresolved],
         ),
     ]
     return ProteinSelection(
@@ -1944,7 +1936,12 @@ def replicate_rule(records: Sequence[Mapping[str, Any]]) -> Any:
 def gene_containment_rule(
     records: Sequence[Mapping[str, Any]], universe: set[str]
 ) -> Any:
-    """L4: every stored protein key is a locus of the pinned BW25113 assembly."""
+    """L4: how many stored protein keys are loci of the pinned BW25113 assembly.
+
+    Reported, not gating (#1057, the owner rule of 2026-10-12: the genome does not gate
+    a released row): a released symbol the annotation does not resolve is stored as
+    given and listed here.
+    """
     from torchcell.verification.report import Level, LevelResult
 
     measured: set[str] = set()
@@ -1955,10 +1952,12 @@ def gene_containment_rule(
     return LevelResult(
         level=Level.L4,
         name="gene_containment_bw25113",
-        passed=bool(measured) and not outside,
+        passed=bool(measured),
         message=(
-            f"{len(measured)} measured protein keys; {len(outside)} outside the "
-            f"{BACTERIAL_ASSEMBLY_SETS[SCHMIDT_REFERENCE_STRAIN]} locus universe"
+            f"{len(measured)} measured protein keys; {len(outside)} are released "
+            "symbols outside the "
+            f"{BACTERIAL_ASSEMBLY_SETS[SCHMIDT_REFERENCE_STRAIN]} locus universe, "
+            "stored as released"
         ),
         details={"outside": outside[:20], "n_universe": len(universe)},
     )

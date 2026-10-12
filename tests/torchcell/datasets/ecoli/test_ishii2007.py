@@ -757,26 +757,38 @@ def test_check_gpmg_unused_passes_on_an_empty_row_and_stops_on_a_filled_one() ->
         m.check_gpmg_unused(book)
 
 
-def test_environment_is_aerobic_with_a_typed_temperature_gap_and_deferred_medium() -> (
-    None
-):
-    """The medium's absence lives on the component, because the mixin forbids a gap on
-    a field that holds a value.
-    """
+def test_environment_is_the_som_medium_aerobic_at_37_c_with_no_gap() -> None:
+    """Every environment field is quoted from the deposited SOM, so none is a gap."""
     env = m.environment(0.2)
     assert env.aerobicity == "aerobic"
-    assert env.temperature is None
+    assert env.temperature is not None and env.temperature.value == 37.0
     assert env.dilution_rate_per_hour == 0.2
-    assert [gap.field for gap in env.provenance_gaps] == ["temperature"]
+    assert env.provenance_gaps == []
     assert env.media.is_synthetic is True
     assert env.media.base_medium is None
-    (component,) = env.media.components
-    assert component.definition is ComponentDefinition.composition_deferred
-    assert component.concentration is None
-    assert component.defers_to == [
-        "Ishii 2007 Supporting Online Material, Materials and Methods "
-        f"({m.PUBLISHER_SUPPLEMENT_URL}); not mirrored"
-    ]
+    stated = {
+        c.compound.name: (
+            c.concentration.value,
+            str(c.concentration.unit),
+            c.role.value,
+        )
+        for c in env.media.components
+        if c.concentration is not None
+    }
+    assert len(stated) == len(env.media.components) == 14
+    assert stated["disodium hydrogen phosphate"] == (48.0, "mM", "bulk_salt")
+    assert stated["potassium dihydrogen phosphate"] == (22.0, "mM", "bulk_salt")
+    assert stated["ammonium sulfate"] == (45.0, "mM", "nitrogen_source")
+    assert stated["D-glucose"] == (4.0, "g/L", "carbon_source")
+    assert stated["thiamine hydrochloride"] == (1.0, "ug/mL", "vitamin")
+    assert stated["copper(II) chloride dihydrate"] == (0.43, "ug/mL", "trace_element")
+    for component in env.media.components:
+        assert component.definition is ComponentDefinition.defined
+        assert component.provenance == [m.SOURCED_VALUES["chemostat_medium"]]
+    cobalt = next(
+        c for c in env.media.components if c.compound.name.startswith("cobalt")
+    )
+    assert [g.field for g in cobalt.compound.provenance_gaps] == ["inchikey"]
 
 
 def test_environment_is_one_environment_per_dilution_rate() -> None:
@@ -805,14 +817,18 @@ def test_flux_phenotype_states_no_interval_and_one_labeling_experiment() -> None
     assert [gap.field for gap in phenotype.provenance_gaps] == ["confidence_level"]
 
 
-def test_not_mirrored_names_the_publisher_block_and_its_manual_recipe() -> None:
-    """The row is retrieval-gated on the supplement TEXT, and the recipe says how."""
+def test_not_mirrored_names_the_publisher_block_and_the_hand_deposit() -> None:
+    """The supplement TEXT is behind a challenge; the owner deposited it by hand."""
     supplement = next(
         item for item in m.NOT_MIRRORED if m.PUBLISHER_SUPPLEMENT_URL in item
     )
-    assert "MANUAL RECIPE" in supplement
-    assert "RetrievalMethod.manual_browser" in supplement
+    assert "DEPOSITED it by hand on 2026-10-12" in supplement
+    assert "manual_browser, issue #699" in supplement
     assert "Cloudflare JavaScript challenge" in supplement
+    (som,) = m.SOM_DEPOSIT.files
+    assert (som.path, som.sha256) == (m.SOM_PDF_RELPATH, m.SOM_PDF_SHA256)
+    assert m.SOM_DEPOSIT.issues == (699,)
+    assert "Cloudflare check" in m.SOM_DEPOSIT.retrieval_command
     for raw in m.RAW_FILES:
         assert raw.retrieval.method.value == "direct_url"
         assert raw.retrieval.source_url == f"{m.PROJECT_SITE}{raw.name}"
@@ -933,7 +949,9 @@ def test_metabolome_build_writes_the_protocol_and_record_ledgers(
             "duplicate_culture_same_genotype_and_environment",
         ]
         accounting = json.loads((out / "build_accounting.json").read_text())
-        assert [v["field"] for v in accounting["unpinned_environment_values"]] == [
+        assert accounting["unpinned_environment_values"] == []
+        assert sorted(accounting["som_sourced_environment_values"]) == [
+            "aerobicity",
             "media",
             "temperature",
         ]
@@ -1174,7 +1192,7 @@ def test_raw_mirror_pins_both_workbooks_as_scriptable_direct_urls() -> None:
     manifest = m.load_manifest()
     assert manifest.citation_key == m.CITATION_KEY
     recorded = {record.path: record for record in manifest.files}
-    assert sorted(recorded) == [
+    assert sorted(r for r in recorded if r.startswith("data/")) == [
         "data/Flux_GC-MS_data.xls",
         "data/Quantitative_data.xls",
     ]
@@ -1187,23 +1205,30 @@ def test_raw_mirror_pins_both_workbooks_as_scriptable_direct_urls() -> None:
         assert record.retrieval.source_url == f"{m.PROJECT_SITE}{raw.name}"
         assert osp.exists(m.raw_mirror_dir() / raw.mirror_relpath)
         assert m._sha256(m.raw_mirror_dir() / raw.mirror_relpath) == raw.sha256
-    assert any("MANUAL RECIPE" in item for item in manifest.si_expected)
+    assert any("DEPOSITED it by hand" in item for item in manifest.si_expected)
+    som = recorded[m.SOM_PDF_RELPATH]
+    assert som.sha256 == m.SOM_PDF_SHA256
+    assert som.retrieval is not None
+    assert som.retrieval.method.value == "manual_browser"
+    assert recorded[m.SOM_MD].sha256 == m.SOM_MD_SHA256
 
 
 @pytest.mark.data
 def test_every_sourced_value_is_a_verbatim_quote_of_its_pinned_artifact() -> None:
     """Each quote is found byte for byte in the file its provenance names.
 
-    Eight are from the Ishii ``paper.md``, two from Baba 2006 (the Keio deferral), one
-    from the ``IDs`` sheet and the rest from the ``Information`` sheet of the mirrored
-    workbook.
+    Seven are from the Ishii ``paper.md``, two from Baba 2006 (the Keio deferral), six
+    from the MinerU OCR of the deposited SOM, one from the ``IDs`` sheet and the rest
+    from the ``Information`` sheet of the mirrored workbook.
     """
     for key, value in m.SOURCED_VALUES.items():
         result = audit_sourced_value(value, m.sourced_value_root(value))
         assert result.passed, (key, result.message)
     keys = {value.provenance.citation_key for value in m.SOURCED_VALUES.values()}
     assert keys == {m.CITATION_KEY, m.BABA_KEY}
-    assert len(m.SOURCED_VALUES) == 24
+    assert len(m.SOURCED_VALUES) == 29
+    som = [v for v in m.SOURCED_VALUES.values() if v.provenance.source_uri == m.SOM_MD]
+    assert len(som) == 6
     pages = sorted(
         (value.provenance.page or "paper") for value in m.SOURCED_VALUES.values()
     )
@@ -1518,14 +1543,18 @@ def test_deposit_raw_mirror_writes_a_manifest_naming_the_direct_url_retrieval(
     manifest = m.load_manifest()
     assert manifest.doi == m.PAPER_DOI
     assert [record.path for record in manifest.files] == [
-        f"data/{m.QUANTITATIVE_FILE}",
         f"data/{m.GC_MS_FILE}",
+        f"data/{m.QUANTITATIVE_FILE}",
     ]
     for record in manifest.files:
         assert record.retrieval is not None
         assert record.retrieval.method.value == "direct_url"
         assert m.manifest_sha256(manifest, record.path) == record.sha256
-    assert manifest.si_data_sources == [m.PROJECT_SITE, m.PUBLISHER_SUPPLEMENT_URL]
+    assert manifest.si_data_sources == [
+        *(raw.source_url for raw in m.RAW_FILES),
+        m.PROJECT_SITE,
+        m.PUBLISHER_SUPPLEMENT_URL,
+    ]
     with pytest.raises(KeyError, match="is not in the raw-mirror manifest"):
         m.manifest_sha256(manifest, "data/nope.xls")
 
@@ -1585,6 +1614,84 @@ def test_sourced_value_root_separates_the_two_mirrors(
     assert m.sourced_value_root(m.SOURCED_VALUES["metabolite_unit"]) == (
         data_root / "torchcell-raw"
     )
+    assert m.sourced_value_root(m.SOURCED_VALUES["temperature_c"]) == (
+        data_root / "torchcell-raw"
+    )
+
+
+def _som_tree(root: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """A synthetic SOM deposit with its MinerU outputs, pins re-pointed at it."""
+    from torchcell.literature.manifest import ProcessingRecord
+    from torchcell.literature.manual_deposit import DepositedFile
+
+    (root / m.SOM_OCR_IMAGES).mkdir(parents=True)
+    pdf, md = b"%PDF synthetic SOM", b"synthetic SOM markdown"
+    (root / m.SOM_PDF_RELPATH).write_bytes(pdf)
+    (root / m.SOM_MD).write_bytes(md)
+    for rel in m.SOM_OCR_LAYOUT:
+        (root / rel).write_text("{}")
+    (root / m.SOM_OCR_IMAGES / "fig1.jpg").write_bytes(b"jpg")
+    record = ProcessingRecord(
+        processor="torchcell.literature.ocr.ocr_pdf",
+        tool="mineru",
+        version="2.7.6",
+        input_sha256=[hashlib_sha256(pdf)],
+    )
+    (root / m.SOM_OCR_PROVENANCE).write_text(record.model_dump_json())
+    monkeypatch.setattr(m, "SOM_PDF_SHA256", hashlib_sha256(pdf))
+    monkeypatch.setattr(m, "SOM_MD_SHA256", hashlib_sha256(md))
+    (som,) = m.SOM_DEPOSIT.files
+    monkeypatch.setattr(
+        m,
+        "SOM_DEPOSIT",
+        m.SOM_DEPOSIT.model_copy(
+            update={
+                "files": (
+                    DepositedFile.model_validate(
+                        som.model_dump()
+                        | {"sha256": hashlib_sha256(pdf), "bytes": len(pdf)}
+                    ),
+                )
+            }
+        ),
+    )
+    return root
+
+
+def test_record_som_deposit_records_the_pdf_and_every_ocr_output(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = _som_tree(tmp_path / m.RAW_DIR_REL, monkeypatch)
+    m.record_som_deposit(str(tmp_path))
+    manifest = m.load_manifest(str(tmp_path))
+    roles = {record.path: record.role for record in manifest.files}
+    assert roles == {
+        m.SOM_PDF_RELPATH: "si_pdf",
+        m.SOM_MD: "si_ocr",
+        m.SOM_OCR_PROVENANCE: "ocr_provenance",
+        "si/ishii_som_content_list.json": "ocr_layout",
+        "si/ishii_som_middle.json": "ocr_layout",
+        "si/images/ishii_som/fig1.jpg": "ocr_image",
+    }
+    md = next(r for r in manifest.files if r.path == m.SOM_MD)
+    assert md.processing is not None and md.processing.tool == "mineru"
+    pdf = next(r for r in manifest.files if r.path == m.SOM_PDF_RELPATH)
+    assert pdf.retrieval is not None
+    assert pdf.retrieval.method.value == "manual_browser"
+    assert (root / "si" / "DEPOSIT.md").is_file()
+    assert any("DEPOSITED it by hand" in item for item in manifest.si_expected)
+
+
+def test_som_ocr_records_refuse_another_pdfs_ocr_and_a_changed_markdown(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = _som_tree(tmp_path, monkeypatch)
+    (root / m.SOM_MD).write_bytes(b"edited")
+    with pytest.raises(RuntimeError, match="does not hash to its pin"):
+        m.som_ocr_records(root)
+    monkeypatch.setattr(m, "SOM_PDF_SHA256", "0" * 64)
+    with pytest.raises(RuntimeError, match="is not the OCR of"):
+        m.som_ocr_records(root)
 
 
 def test_cli_deposit_retrieves_and_writes_the_mirror(

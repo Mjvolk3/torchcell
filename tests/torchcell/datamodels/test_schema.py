@@ -2131,6 +2131,7 @@ def test_a_flux_record_states_an_interval_rather_than_one_statistic() -> None:
     assert phenotype.label_statistic_name is None
     assert phenotype.graph_level == "metabolism"
     # a net flux is SIGNED: nothing is clamped, because the sign is the direction
+    assert phenotype.net_flux is not None
     assert phenotype.net_flux["PGI"] == -1.2
 
 
@@ -2572,13 +2573,15 @@ def test_absolute_measurement_types_are_exactly_the_three_unnormalized_readouts(
 ):
     """The gate the verifier's reference relief requires. A relative readout is 0 at its
     control by construction and is deliberately not a member. ``cell_yield`` joined for
-    De Chiara 2022's colony cell yields, released in cells.
+    De Chiara 2022's colony cell yields, released in cells; ``optical_density`` for Baba
+    2006 Table 3's end-point OD600 (#927).
     """
     assert s.ABSOLUTE_MEASUREMENT_TYPES == frozenset(
         {
             s.MeasurementType.growth_rate,
             s.MeasurementType.colony_size,
             s.MeasurementType.cell_yield,
+            s.MeasurementType.optical_density,
         }
     )
     assert s.MeasurementType.relative_growth_rate not in s.ABSOLUTE_MEASUREMENT_TYPES

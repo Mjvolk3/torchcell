@@ -530,8 +530,13 @@ def _reference_absolute_result(
         passed=passed,
         message=(
             f"absolute rule: reference value finite and on the record's own scale for "
-            f"all {n_values} records, {n_gapped_reference} of them a typed gap as "
-            f"declared ({sorted(types)})"
+            f"all {n_values} records"
+            + (
+                f", {n_gapped_reference} of them a typed gap as declared"
+                if n_gapped_reference
+                else ""
+            )
+            + f" ({sorted(types)})"
             if passed
             else f"absolute rule: {n_bad_reference} references absent or non-finite; "
             f"{n_gapped_reference} gapped references, {expected_gapped_reference} "

@@ -718,3 +718,8 @@ contract changes and no served dataset is staled.
 ## 2026.10.10 - A verdict column rendered from the candidate store
 
 `build_bacteria_candidate_datasets_table.py` now writes `tables/verdicts.tex` (rank, row, candidate-gate verdict, decision date) and a `verdicts` map in the JSON dump, both read from `database/candidates/` through `torchcell.candidates.store.verdicts_by_row`. No row literal changed and `sort_key` never reads a verdict (decision 7 of [[plan.dataset-admission-pipeline.2026.10.10]]). Measured: the JSON dump minus the new `verdicts` key is identical to the one `origin/main`'s script writes, and the printed summary lines are identical; every row reads `no verdict` until the re-audit writes the first verdicts. Gate design: [[torchcell.candidates.gates]].
+
+## 2026.10.12 - Rows 17 and 19 closed as unloadable; row 50 loaded
+
+- **Row 17, Tian 2019, and row 19, Wang 2022: closed as unloadable (#907), 0 records.** Re-read before closing: Tian's article has no Supporting Information (no SI in the mirror manifest; neither "Supporting Information" nor "ASSOCIATED CONTENT" in the PDF text layer), its titers are bar heights and its four prose numbers are percent improvements. Wang's `si1.docx` holds only a medium table and a strain table, and its data statement points at the JBEI Experiment Data Depot with no study id. Reopen either row if a per-record release turns up.
+- **Row 50, Li 2021: loaded (#800, PR #1070)** as `FluxLi2021Dataset`, the three released 13C-MFA maps, with the control strain's unreleased map a typed gap on the reference ([[torchcell.datasets.ecoli.li2021]]).

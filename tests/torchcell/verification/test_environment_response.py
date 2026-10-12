@@ -893,7 +893,54 @@ def test_absolute_reference_branch_states_its_own_value_and_names_itself() -> No
             "n_relative_measurement_type": 0,
             "n_reference_type_mismatch": 0,
             "measurement_types": ["growth_rate"],
+            "n_gapped_reference": 0,
+            "expected_gapped_reference": 0,
         }
+
+
+def test_gapped_absolute_reference_is_counted_against_its_declared_oracle() -> None:
+    """#927: a reference whose reading the source does not release is a typed gap.
+
+    It is not a bad reference, but the count is an oracle: declaring it passes,
+    leaving it undeclared fails, and the row says how many were gapped.
+    """
+    from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
+
+    gapped = EnvironmentResponsePhenotype(
+        measurement_type=MeasurementType.growth_rate,
+        units="doubling time in minutes",
+        provenance_gaps=[
+            ProvenanceGap(
+                field="environment_response",
+                reason=ProvenanceGapReason.not_reported_by_primary,
+            )
+        ],
+    )
+    records = [
+        _record("YAL001C", _absolute(60.0 + i, replicate_id=str(i)), gapped)
+        for i in range(3)
+    ]
+    kwargs: dict[str, Any] = dict(
+        dataset_name="release",
+        provenance=PROV,
+        expected_count=3,
+        sgd_genes=set(GENES),
+        reference_centered=False,
+    )
+    declared = verify_environment_response_dataset(
+        records, expected_gapped_reference=3, **kwargs
+    )
+    streaming = verify_environment_response_dataset_streaming(
+        iter(records), expected_gapped_reference=3, **kwargs
+    )
+    for report in (declared, streaming):
+        row = _row(report, "reference_zero")
+        assert row[2] is True
+        assert "3 of them a typed gap as declared" in row[3]
+        assert _details(report, "reference_zero")["n_gapped_reference"] == 3
+        assert _details(report, "reference_zero")["n_bad_reference"] == 0
+    undeclared = verify_environment_response_dataset(records, **kwargs)
+    assert _row(undeclared, "reference_zero")[2] is False
 
 
 def test_absolute_branch_refuses_a_relative_measurement_type() -> None:
@@ -915,6 +962,8 @@ def test_absolute_branch_refuses_a_relative_measurement_type() -> None:
         "n_relative_measurement_type": 3,
         "n_reference_type_mismatch": 0,
         "measurement_types": ["log2_ratio"],
+        "n_gapped_reference": 0,
+        "expected_gapped_reference": 0,
     }
     assert not _row(eager, "reference_zero")[2]
 

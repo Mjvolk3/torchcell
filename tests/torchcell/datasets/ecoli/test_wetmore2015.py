@@ -51,7 +51,6 @@ from torchcell.datamodels.schema import (
     EnvironmentPhysicalPerturbation,
     MeasurementType,
     PhysicalFactor,
-    TransposonInsertionPerturbation,
     UncertaintyType,
 )
 from torchcell.datasets.bacteria_common import LocusTagResolutionError
@@ -817,13 +816,14 @@ def _specs(rows: list[dict[str, Any]] | None = None) -> tuple[w.SampleSpec, ...]
     )
 
 
-def test_classify_samples_refuses_withdrawn_and_failed_samples() -> None:
+def test_classify_samples_refuses_only_the_withdrawn_sample() -> None:
     specs = {s.name: s for s in _specs()}
     assert list(specs) == [r["name"] for r in S1_ROWS[1:]]
+    # #1057: the sample the quality rules fail is kept, its verdict on its spec
     assert {n: s.drop_rule for n, s in specs.items()} == {
         "set1IT003": None,
         "set1IT007": w.DROP_WITHDRAWN,
-        "set1IT030": w.DROP_FAILED_QUALITY,
+        "set1IT030": None,
         # stored since #1045 row 16 gave the label a library entry
         "set1IT067": None,
         "set1IT071": None,
@@ -831,6 +831,7 @@ def test_classify_samples_refuses_withdrawn_and_failed_samples() -> None:
         "set2IT069": None,
     }
     assert specs["set1IT030"].quality.failed_rules() == ("g_med_min",)
+    assert specs["set1IT030"].quality.successful is False
     assert specs["set2IT069"].total_generations is None
     assert specs["set2IT069"].temperature_c == 28.0
     assert specs["set1IT059"].units == "mg/mL"
@@ -858,7 +859,8 @@ def test_a_mops_rich_sample_is_stored_on_price_table_s18s_recipe() -> None:
         ({"Aerobic_v_Aerobic": "Anaerobic"}, "Aerobic_v_Aerobic is 'Anaerobic'"),
         ({"Condition_2": "Glycerol"}, "a second condition 'Glycerol'"),
         ({"Media": "marine broth"}, "unknown medium 'marine broth'"),
-        ({"Group": "stress"}, "no kept sample of group 'stress' expected"),
+        # #1057: a stress row is the released medium with no compound, so it must be LB
+        ({"Group": "stress"}, "group 'stress' on medium"),
         ({"Media": _M9N}, "group 'carbon source' on medium"),
     ],
 )
@@ -904,6 +906,7 @@ def _good_frames(
 
     return {
         "fit_logratios_good.tab": frame(fit, samples),
+        "fit_logratios.tab": frame(fit, every),
         "fit_t.tab": frame(t, every),
         "fit_standard_error_obs.tab": frame(obs, every),
         "fit_standard_error_naive.tab": frame(naive, every),
@@ -947,8 +950,8 @@ def test_align_release_refuses_inconsistent_tables() -> None:
     frames = _good_frames(["setA1", "setA2"], ["b0001", "b0002"])
     frames["fit_t.tab"].loc[0, "sysName"] = "b0009"
     refused(frames, "t: gene rows differ")
-    frames = _good_frames(["setA1", "setA2", "setA3"], ["b0001"])
-    refused(frames, r"only in fitness \['setA3'\]")
+    frames = _good_frames(["setA1"], ["b0001"], extra=("setA2",))
+    refused(frames, r"fitness: kept samples absent \['setA2'\]")
     frames = _good_frames(["setA1", "setA2"], ["b0001"])
     frames["fit_standard_error_obs.tab"] = frames["fit_standard_error_obs.tab"].drop(
         columns=["setA2 desc"]
@@ -1021,8 +1024,8 @@ def test_build_environment_reads_each_sample_from_its_own_columns() -> None:
 
 def test_build_environment_refuses_a_dropped_or_malformed_sample() -> None:
     specs = {s.name: s for s in _specs()}
-    with pytest.raises(ValueError, match="set1IT030 is dropped"):
-        w.build_environment(specs["set1IT030"])
+    with pytest.raises(ValueError, match="set1IT007 is dropped"):
+        w.build_environment(specs["set1IT007"])
     with pytest.raises(ValueError, match="a plain sample names 'x'"):
         w.build_environment(specs["set2IT069"].model_copy(update={"condition": "x"}))
     with pytest.raises(ValueError, match="a carbon source sample names no condition"):
@@ -1046,6 +1049,26 @@ def k12(
         EcoliK12MG1655Genome(genome_root=str(tmp_path / "mg1655"), overwrite=True),
         EcoliK12BW25113Genome(genome_root=str(tmp_path / "bw25113"), overwrite=True),
     )
+
+
+#: The release's gene table over the synthetic genes, its own ``name`` column; b0004 and
+#: b0099 carry none, and b4999 is a gene the fitness table does not value.
+GENE_TABLE = pd.DataFrame(
+    {
+        "locusId": [100, 101, 102, 103, 104, 105, 106, 107],
+        "sysName": [
+            "b0001",
+            "b0002",
+            "b0003",
+            "b0004",
+            "b0005",
+            "b0006",
+            "b0099",
+            "b4999",
+        ],
+        "name": ["thrL", "thrA", "thrB", None, "proB", "proC", None, "yzzZ"],
+    }
+)
 
 
 #: Four map (b0003 crosses numbers, b0004 is a pseudogene); b0005 is not one-to-one,
@@ -1086,11 +1109,8 @@ def test_map_genes_places_one_to_one_eck_pairs_and_types_the_rest(
         "b0006": "ecoli_k12_mg1655_bnumber",
         "b0099": "ecoli_k12_mg1655_bnumber",
     }
+    # the crosswalk is a derived artifact (#1057): no record reads it
     assert report.released_as == ("b0005", "b0006", "b0099")
-    leaf = w.build_genotype(mapping["b0099"]).perturbations[0]
-    assert isinstance(leaf, TransposonInsertionPerturbation)
-    assert leaf.identifier_mapping is None
-    assert leaf.description == w.DESCRIPTION_AS_RELEASED
     assert report.n_mapped == 4
     assert report.numeric_disagreements == (("b0003", "BW25113_4412", "ECK0003"),)
     assert [(u.b_number, u.reason, u.eck) for u in report.unmapped] == [
@@ -1202,6 +1222,7 @@ def mirrored(
     frames = _good_frames(SUCCESSFUL, SYNTHETIC_GENES, extra=("set1IT030", "set1IT001"))
     for name, frame in frames.items():
         frame.to_csv(source / name, sep="\t", index=False)
+    GENE_TABLE.to_csv(source / "fit_genes.tab", sep="\t", index=False)
     _write_s1(source / "si1.xlsx")
     monkeypatch.setattr(
         w,
@@ -1246,21 +1267,13 @@ def _dataset_root(data_root: Path) -> Path:
 def test_the_loader_builds_the_synthetic_release_end_to_end(mirrored: Path) -> None:
     root = _dataset_root(mirrored)
     dataset = w.RbTnseqWetmore2015Dataset(root=str(root))
-    # five kept samples (set1IT007 withdrawn, set1IT030 failed) x all seven genes, the
-    # three no ECK pair places stored as released (#1057)
-    assert len(dataset) == 35
-    assert sorted(dataset.gene_set) == [
-        "BW25113_0001",
-        "BW25113_0002",
-        "BW25113_0004",
-        "BW25113_4412",
-        "b0005",
-        "b0006",
-        "b0099",
-    ]
+    # six kept samples (set1IT007 withdrawn; set1IT030, which the quality rules fail,
+    # kept since #1057) x all seven genes, each under its released b-number
+    assert len(dataset) == 42
+    assert sorted(dataset.gene_set) == SYNTHETIC_GENES
     references = dataset.experiment_reference_index
     assert references is not None
-    assert len(references) == 5
+    assert len(references) == 6
     first = dataset[0]
     phenotype = first["experiment"]["phenotype"]
     assert phenotype["screen_id"] == "Keio:set1IT003"
@@ -1272,34 +1285,53 @@ def test_the_loader_builds_the_synthetic_release_end_to_end(mirrored: Path) -> N
     perturbation = first["experiment"]["genotype"]["perturbations"][0]
     assert (
         perturbation["systematic_gene_name"],
+        perturbation["perturbed_gene_name"],
+        perturbation["gene_namespace"],
         perturbation["identifier_mapping"],
         perturbation["transposon"],
         perturbation["library_pool"],
     ) == (
-        "BW25113_0001",
-        {"source_identifier": "b0001", "route": "eck_crosswalk"},
+        "b0001",
+        "thrL",
+        "ecoli_k12_mg1655_bnumber",
+        None,
         "Tn5 transpososome",
         "KEIO_ML9",
     )
+    # a gene fit_genes.tab names with no symbol is named by its b-number
+    names = {
+        dataset[i]["experiment"]["genotype"]["perturbations"][0][
+            "systematic_gene_name"
+        ]: dataset[i]["experiment"]["genotype"]["perturbations"][0][
+            "perturbed_gene_name"
+        ]
+        for i in range(7)
+    }
+    assert names["b0099"] == "b0099"
     assert first["publication"]["doi"] == "10.1128/mBio.00306-15"
     # the withdrawn sample is absent from the store, not flagged in it
     assert {
         dataset[i]["experiment"]["phenotype"]["screen_id"] for i in range(len(dataset))
     } == {
         "Keio:set1IT003",
+        "Keio:set1IT030",
         "Keio:set1IT067",
         "Keio:set1IT071",
         "Keio:set1IT059",
         "Keio:set2IT069",
     }
     drops = json.loads((root / "preprocess" / "dropped_records.json").read_text())
-    assert (drops["source_records"], drops["stored_records"]) == (49, 35)
+    assert (drops["source_records"], drops["stored_records"]) == (49, 42)
     assert [(d["rule"], d["items"], d["n_records"]) for d in drops["rules"]] == [
-        (w.DROP_WITHDRAWN, ["set1IT007"], 7),
-        (w.DROP_FAILED_QUALITY, ["set1IT030"], 7),
+        (w.DROP_WITHDRAWN, ["set1IT007"], 7)
     ]
-    # every released value is accounted for: stored + the two drop rules
-    assert drops["source_records"] == 35 + 7 + 7
+    # every released value is accounted for: stored + the withdrawal
+    assert drops["source_records"] == 42 + 7
+    # the stored sample's quality verdict, as released (#1057)
+    assert [f["name"] for f in drops["quality_flagged"]] == ["set1IT030"]
+    samples = json.loads((root / "preprocess" / "samples.json").read_text())
+    flagged = next(s for s in samples if s["name"] == "set1IT030")
+    assert (flagged["drop_rule"], flagged["quality"]["successful"]) == (None, False)
     assert drops["withdrawn_refused"] == ["set1IT007"]
     # the refusal carries the authors' own words, bound to the file they were read from
     withdrawal = next(d for d in drops["rules"] if d["rule"] == w.DROP_WITHDRAWN)
@@ -1350,7 +1382,7 @@ def test_verify_build_runs_every_row_and_the_compendium_cross_check(
     root = _dataset_root(mirrored)
     w.RbTnseqWetmore2015Dataset(root=str(root))
     with pytest.raises(FileNotFoundError, match="the compendium store the L4"):
-        w.verify_build(str(root), data_root=str(mirrored), expected_count=35)
+        w.verify_build(str(root), data_root=str(mirrored), expected_count=42)
     _served_copy(
         mirrored,
         {
@@ -1368,18 +1400,18 @@ def test_verify_build_runs_every_row_and_the_compendium_cross_check(
         ),
     )
     monkeypatch.setattr(w, "EXPECTED_WITHDRAWN", ("set1IT007",))
-    monkeypatch.setattr(w, "EXPECTED_SAMPLES", 5)
-    report = w.verify_build(str(root), data_root=str(mirrored), expected_count=35)
+    monkeypatch.setattr(w, "EXPECTED_SAMPLES", 6)
+    report = w.verify_build(str(root), data_root=str(mirrored), expected_count=42)
     results = {r.name: r for r in report.results}
-    # #1057: b0005, b0006 and b0099 are the released MG1655 b-number, no BW25113 locus;
-    # only the shared genome-reference rules may read that as a failure
+    # #1057: the released b-numbers against the MG1655 annotation (b0099 is no MG1655
+    # locus); only the shared genome-reference rules may read that as a failure
     assert {name for name, r in results.items() if not r.passed} <= (
         GENOME_REFERENCE_RULES
     )
     assert results["count"].passed is True
     assert results["withdrawn_samples_refused_not_stored"].message == (
         "SUPPLEMENTARY: 0 records of the 1 samples the authors withdrew "
-        "(['set1IT007']); 0 of them are in the store; 5 samples stored, expected 5"
+        "(['set1IT007']); 0 of them are in the store; 6 samples stored, expected 6"
     )
     cross = results["compendium_cross_check_price2018"]
     assert cross.level == Level.L4
@@ -1609,23 +1641,7 @@ def test_loader_source_path_checks_the_pin_of_each_mirror(
 
 def test_inventory_closes_over_every_released_value() -> None:
     specs = _specs()
-    identifiers = w.IdentifierReport(
-        n_source_genes=7,
-        n_mapped=4,
-        mapped_fraction=4 / 7,
-        min_fraction=0.5,
-        numeric_disagreements=(),
-        unmapped=tuple(
-            w.UnmappedGene(b_number=b, reason="eck_not_one_to_one", eck=())
-            for b in ("b0005", "b0006", "b0099")
-        ),
-        unmapped_by_reason={"eck_not_one_to_one": 3},
-        reconcile_status_histogram={},
-        reconcile_layer_histogram={},
-        n_symbol_names=3,
-        n_tag_names=1,
-    )
-    counts = w.inventory(specs, identifiers)
+    counts = w.inventory(specs, 7)
     assert (
         counts.condition_samples,
         counts.successful,
@@ -1633,14 +1649,15 @@ def test_inventory_closes_over_every_released_value() -> None:
         counts.source_records,
         counts.good_table_records,
         counts.stored_records,
-    ) == (7, 6, 5, 49, 42, 35)
+    ) == (7, 6, 6, 49, 42, 42)
     assert counts.stored_samples_by_group == {
-        "carbon source": 3,
+        "carbon source": 4,
         "nitrogen source": 1,
         "LB": 1,
     }
-    assert [f.name for f in counts.failed] == ["set1IT030"]
-    assert counts.failed[0].failed_rules == ("g_med_min",)
+    # #1057: the failed sample is stored, its verdict listed as released
+    assert [f.name for f in counts.quality_flagged] == ["set1IT030"]
+    assert counts.quality_flagged[0].failed_rules == ("g_med_min",)
     assert counts.withdrawn_refused == ("set1IT007",)
     dropped = sum(r.n_records for r in counts.rules)
     assert counts.stored_records + dropped == counts.source_records
@@ -1654,7 +1671,12 @@ def test_inventory_closes_over_every_released_value() -> None:
     assert withdrawal.source is w.AUTHOR_WITHDRAWAL.instruction
     # #1057: a gene no ECK pair places is stored as released, so no gene rule remains
     assert "no_one_to_one_eck_pair" not in {r.rule for r in counts.rules}
-    assert counts.unidentified_compounds == {"casamino acids": 1}
+    # the kept quality-flagged fumarate sample names a compound the identity table does
+    # not resolve, so its records carry the typed inchikey gap (#1057)
+    assert counts.unidentified_compounds == {
+        "Sodium Fumarate dibasic": 1,
+        "casamino acids": 1,
+    }
 
 
 def test_the_command_line_dispatches_each_command(
@@ -1732,13 +1754,15 @@ def test_the_loader_inventory_off_the_deposited_bytes() -> None:
         counts.source_genes,
         counts.stored_genes,
         counts.stored_records,
-    ) == (101, 92, 88, w.EXPECTED_GENES, w.EXPECTED_GENES, w.EXPECTED_RECORDS)
-    # #1057: all 3,646 released genes are stored, 18 of them as released
+    ) == (101, 92, 97, w.EXPECTED_GENES, w.EXPECTED_GENES, w.EXPECTED_RECORDS)
+    # #1057: all 3,646 released genes under their b-numbers; the derived crosswalk would
+    # place 3,628 of them on BW25113 and names no record
     assert (w.EXPECTED_GENES, identifiers.n_mapped) == (3646, 3628)
     assert len(identifiers.released_as) == 18
     assert counts.stored_samples == w.EXPECTED_SAMPLES
     assert counts.quality_rules_reproduce_u is True
-    assert [f.name for f in counts.failed] == [
+    # the 9 samples the quality rules fail are stored, their verdict as released
+    assert [f.name for f in counts.quality_flagged] == [
         "set1IT030",
         "set1IT033",
         "set1IT034",
@@ -1751,9 +1775,10 @@ def test_the_loader_inventory_off_the_deposited_bytes() -> None:
     ]
     assert counts.withdrawn_refused == w.EXPECTED_WITHDRAWN
     assert counts.stored_samples_by_group == {
-        "carbon source": 61,
+        "carbon source": 64,
         "nitrogen source": 26,
-        "LB": 1,
+        "stress": 2,
+        "LB": 5,
     }
     # 4 withdrawn x 3,646 released genes, refused with the authors' own words
     withdrawal = next(r for r in counts.rules if r.rule == w.DROP_WITHDRAWN)
@@ -1767,10 +1792,11 @@ def test_the_loader_inventory_off_the_deposited_bytes() -> None:
         "eck_not_one_to_one": 5,
     }
     # 29 before the #726 curator pass gave the condition labels their rows; measured
-    # 2026-10-12, only the failed fumarate sample's label and the casamino acids
-    # hydrolysate stay without a structure identifier
+    # 2026-10-12 with the quality-flagged samples kept (#1057), the fumarate and lactate
+    # salts carry a deferred inchikey gap and casamino acids its terminal one
     assert counts.unidentified_compounds == {
-        "Sodium Fumarate dibasic": 1,
+        "Sodium Fumarate dibasic": 2,
+        "Sodium L-Lactate": 2,
         "casamino acids": 4,
     }
 

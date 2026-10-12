@@ -23,8 +23,9 @@ changed is the policy that reads them. The duplication is now explicit and joina
 (both datasets key a sample as ``Keio:<name>``), and the compendium is the L4 check of
 this release rather than its replacement.
 
-THE RECORDS. One record per (mapped gene, kept sample) of the release's gene fitness
-table (``fit_logratios_good.tab``, the successful samples), in
+THE RECORDS. One record per (released gene, kept sample) of the release's all-sample gene
+fitness table (``fit_logratios.tab``; for the successful samples it is byte-identical to
+``fit_logratios_good.tab``, which the build checks), in
 ``BacterialEnvironmentResponseExperiment`` as an ``EnvironmentResponsePhenotype``:
 
 * the value is the normalized gene fitness, a signed log2 ratio (``GENE_FITNESS_IS_LOG2``);
@@ -38,12 +39,11 @@ table (``fit_logratios_good.tab``, the successful samples), in
 * genotype: one ``TransposonInsertionPerturbation`` per gene (``transposon`` = Table 1's
   "Tn5 transpososome", ``library_pool`` = Table S1's KEIO_ML9), on BW25113 as Table S1
   states it ("wild-type strain"), so the reference is ``assembly_reference("BW25113")``
-  with no background beyond the assembly. The release names MG1655 b-numbers; each is
-  placed on its BW25113 locus through its one-to-one ECK pair and the record says so in
-  ``identifier_mapping`` (route ``eck_crosswalk``). A gene no one-to-one pair places is
-  stored too since #1057 (the owner rule of 2026-10-12: the data is the data, and the
-  genome does not gate a released row), as the released MG1655 b-number in the MG1655
-  namespace, its ``description`` saying AS RELEASED;
+  with no background beyond the assembly. Since #1057 (the owner rule of 2026-10-12:
+  the stored key is the released identifier) every gene is stored under the release's
+  ``sysName``, an MG1655 b-number, in the MG1655 namespace, named by ``fit_genes.tab``'s
+  own ``name`` (else the b-number); no annotation is read, and the ECK crosswalk to
+  BW25113 tags (:func:`map_genes`) is a derived artifact of the ``report`` CLI;
 * environment: Data Set S1's own columns. ``Media`` through the media library
   (``M9_NOCARBON_WETMORE2015``, ``M9_NONITROGEN_WETMORE2015``, ``LB_LENNOX``, each
   quoting Data Set S1's Media tab, and, since #1045 row 16, Price 2018 Table S18's
@@ -56,15 +56,19 @@ table (``fit_logratios_good.tab``, the successful samples), in
   (°C)``, and ``Total Generations`` as ``duration_generations``;
 * reference: the typical gene of the same sample, response 0 by the normalization.
 
-Not stored, each with a typed reason in ``preprocess/dropped_records.json``: the 4
+Not stored, with its typed reason in ``preprocess/dropped_records.json``: only the 4
 sucrose and D-mannitol samples the authors themselves withdrew in 2021
 (:data:`AUTHOR_WITHDRAWAL`, the rule the compendium loader refuses the same four samples
-under; author-withdrawn data is bad data, so it is refused rather than stored and
-flagged, and the refusal carries the authors' instruction and its cause verbatim with
-their sha256), the 9 condition samples that failed the paper's own rules (the paper's
-analyses exclude them; their values stay in the deposited ``fit_logratios.tab``). The
-genes with no one-to-one ECK pair were dropped too until #1057; they are stored as
-released now. The 4 samples on ``MOPS Rich Defined
+under; an author withdrawal is the one drop, and the refusal carries the authors'
+instruction and its cause verbatim with their sha256). The 9 condition samples Data Set
+S1 scores ``u = FALSE`` (the paper's own quality rules) were dropped until #1057; they
+are stored from ``fit_logratios.tab`` with their released SE and t, and their quality
+verdict as released (``u``, every metric, the rules each fails) is in
+``preprocess/samples.json`` and ``dropped_records.json`` under ``quality_flagged``,
+keyed by the records' own ``screen_id``: ``EnvironmentResponsePhenotype`` has no field
+for a sample's QC verdict. Two of them are ``stress`` rows that name no compound
+(``short`` ``LB``), so their environment is the released LB with no added
+perturbation. The genes with no one-to-one ECK pair were dropped too until #1057. The 4 samples on ``MOPS Rich Defined
 media_noCarbon`` were refused under ``medium_not_in_media_library`` until #1045 row 16
 gave the label a library entry; they are stored now.
 
@@ -130,7 +134,6 @@ from torchcell.datamodels.schema import (
     BacterialGeneNamespace,
     Concentration,
     ConcentrationUnit,
-    DerivedIdentifierMapping,
     Environment,
     EnvironmentPerturbationType,
     EnvironmentPhysicalPerturbation,
@@ -1592,6 +1595,12 @@ LOADER_FILE_NAMES: dict[str, tuple[Literal["raw", "library"], str, str]] = {
         RELEASE_FITNESS,
         RAW_FILES[RELEASE_FITNESS].sha256,
     ),
+    "fit_logratios.tab": (
+        "raw",
+        RELEASE_FITNESS_ALL,
+        RAW_FILES[RELEASE_FITNESS_ALL].sha256,
+    ),
+    "fit_genes.tab": ("raw", RELEASE_GENES, RAW_FILES[RELEASE_GENES].sha256),
     "fit_t.tab": ("raw", RELEASE_T, RAW_FILES[RELEASE_T].sha256),
     "fit_standard_error_obs.tab": (
         "raw",
@@ -1657,9 +1666,9 @@ def align_release(
 ) -> ReleaseTables:
     """Align the four gene tables on ``samples`` and check them against each other.
 
-    ``fitness`` is the successful-sample table; the t and standard-error tables carry
-    every sample. Refused: tables whose gene rows (locusId, sysName) differ; ``samples``
-    that are not exactly the fitness table's samples; a sample missing from a table or
+    ``fitness`` is the all-sample table, as the t and standard-error tables are (#1057:
+    the samples the paper's quality rules fail are stored too). Refused: tables whose
+    gene rows (locusId, sysName) differ; a sample of ``samples`` missing from a table or
     whose header text differs between tables; a missing value; a non-positive standard
     error; and a released t that is not ``fit / sqrt(sigma^2 + max(se_obs,
     se_naive)^2)``.
@@ -1669,12 +1678,9 @@ def align_release(
         if not table[keys].equals(fitness[keys]):
             raise ValueError(f"{label}: gene rows differ from the fitness table's")
     fit_columns = _fitness_columns(fitness, "fitness")
-    if sorted(fit_columns) != sorted(samples):
-        raise ValueError(
-            f"fitness samples != the kept-sample list: only in fitness "
-            f"{sorted(set(fit_columns) - set(samples))}, only in the list "
-            f"{sorted(set(samples) - set(fit_columns))}"
-        )
+    absent = sorted(set(samples) - set(fit_columns))
+    if absent:
+        raise ValueError(f"fitness: kept samples absent {absent}")
     arrays: dict[str, npt.NDArray[np.float64]] = {}
     for label, table in (("t", t), ("se_obs", se_obs), ("se_naive", se_naive)):
         columns = _fitness_columns(table, label)
@@ -1714,13 +1720,32 @@ def align_release(
 
 
 def read_release(raw_dir: str, samples: Sequence[str]) -> ReleaseTables:
-    """:func:`align_release` on the four tables linked into ``raw_dir``."""
+    """:func:`align_release` on the all-sample tables linked into ``raw_dir``.
+
+    The successful-sample table must hold the same values as the all-sample one for
+    every sample it carries, so the two release files are proved to be one release.
+    """
 
     def read(name: str) -> pd.DataFrame:
         return pd.read_csv(osp.join(raw_dir, name), sep="\t")
 
+    every = read("fit_logratios.tab")
+    good = read("fit_logratios_good.tab")
+    good_columns = _fitness_columns(good, "fitness good")
+    every_columns = _fitness_columns(every, "fitness all")
+    differing = sorted(
+        s
+        for s, header in good_columns.items()
+        if not np.array_equal(
+            good[header].to_numpy(), every[every_columns[s]].to_numpy()
+        )
+    )
+    if differing:
+        raise ValueError(
+            f"fit_logratios_good.tab differs from the all table on {differing}"
+        )
     return align_release(
-        fitness=read("fit_logratios_good.tab"),
+        fitness=every,
         t=read("fit_t.tab"),
         se_obs=read("fit_standard_error_obs.tab"),
         se_naive=read("fit_standard_error_naive.tab"),
@@ -1730,7 +1755,6 @@ def read_release(raw_dir: str, samples: Sequence[str]) -> ReleaseTables:
 
 
 # Samples: retention, the refusals, the environment ------------------------------- #
-DROP_FAILED_QUALITY = "failed_paper_quality_rules"
 #: The authors' own withdrawal, the same rule name the compendium loader refuses under.
 DROP_WITHDRAWN = AUTHOR_WITHDRAWAL.rule
 
@@ -1740,19 +1764,11 @@ DROP_RULES: dict[str, str] = {
     f"found that {AUTHOR_WITHDRAWAL.cause.quote!r} The measured response is therefore "
     "not a response to the named compound, so no record of these samples is stored "
     "(the compendium loader refuses the same four samples under the same rule); their "
-    "values stay in the deposited fit_logratios_good.tab",
-    DROP_FAILED_QUALITY: "Data Set S1 Expt_Quality_Keio scores the sample u = FALSE, and "
-    "the paper's five rules (SUCCESS_RULES) reproduce that verdict: the paper's "
-    "analyses exclude it and the release's gene-fitness table omits it. Its values stay "
-    "in the deposited fit_logratios.tab",
+    "values stay in the deposited fit_logratios_good.tab"
 }
-#: The source statement a rule rests on: a verbatim quote bound to its sha256. Only the
-#: two rules the source itself states have one. The ECK rule rests on this loader's own
-#: identifier typing, so it has no entry (``DropRuleCount.source`` is None there, and its
-#: description says what the rule is).
+#: The source statement the one rule left rests on: a verbatim quote bound to its sha256.
 DROP_RULE_SOURCES: dict[str, SourcedValue] = {
-    DROP_WITHDRAWN: AUTHOR_WITHDRAWAL.instruction,
-    DROP_FAILED_QUALITY: SUCCESS_FIELD,
+    DROP_WITHDRAWN: AUTHOR_WITHDRAWAL.instruction
 }
 
 #: Data Set S1 ``Media`` -> the library object. Each of the first three quotes Data Set
@@ -1767,13 +1783,15 @@ MEDIA_BY_LABEL: dict[str, Media] = {
 }
 
 GroupKind = Literal["carbon_source", "nitrogen_source", "plain"]
-#: Data Set S1 ``Group`` -> how its Condition_1 enters the environment. ``stress`` is
-#: absent on purpose: both of the release's E. coli stress rows failed the quality rules
-#: and name no compound, so a kept stress sample is refused rather than guessed at.
+#: Data Set S1 ``Group`` -> how its Condition_1 enters the environment. The release's two
+#: E. coli ``stress`` rows name no compound (``short`` ``LB``), so they are the released
+#: LB with no added perturbation (#1057); a stress row naming a compound would be refused
+#: rather than guessed at, since ``plain`` requires an empty Condition_1.
 GROUP_KINDS: dict[str, GroupKind] = {
     "carbon source": "carbon_source",
     "nitrogen source": "nitrogen_source",
     "LB": "plain",
+    "stress": "plain",
 }
 #: The media a group may name; a pairing outside this is refused.
 GROUP_MEDIA: dict[GroupKind, frozenset[str]] = {
@@ -1832,10 +1850,10 @@ def classify_samples(
     sheets; time-zero rows are the denominator of every log ratio, not samples. Each
     sample must be the Keio_ML9 library, liquid, aerobic, and carry no second
     condition, else it is refused; its quality verdict ``u`` must equal the paper's
-    five rules applied to its own metrics, else it is refused. A sample is then dropped
-    by exactly one rule, checked in this order (the compendium loader's order): the
-    authors' 2021 withdrawal, failed quality, a medium outside the library. A kept
-    sample must name a known group whose medium fits it.
+    five rules applied to its own metrics, else it is refused. The one drop is the
+    authors' 2021 withdrawal (#1057: a sample the quality rules fail is stored, its
+    verdict kept on its spec). A kept sample must name a known group whose medium fits
+    it.
     """
     condition_rows = experiments.loc[experiments["Group"] != "Time0"]
     samples = _unique_index(condition_rows, "Expts_Keio")
@@ -1865,8 +1883,6 @@ def classify_samples(
         drop: str | None = None
         if condition in AUTHOR_WITHDRAWAL.conditions:
             drop = DROP_WITHDRAWN
-        elif not metrics.successful:
-            drop = DROP_FAILED_QUALITY
         else:
             if media_label not in MEDIA_BY_LABEL:
                 raise ValueError(f"{name}: unknown medium {media_label!r}")
@@ -2201,39 +2217,61 @@ UNITS = (
 UNITS_REFERENCE = "the typical gene of this sample (gene fitness is normalized to 0)"
 DESCRIPTION = (
     "Tn5 transposon insertion disrupting a gene; gene-level call over the gene's usable "
-    "insertion strains (no per-strain barcode or mapped site). Locus tag DERIVED: the "
-    "release names an MG1655 b-number, mapped to this BW25113 locus through its "
-    "one-to-one ECK pair (identifier_mapping)"
-)
-#: The description of a gene no ECK pair places: what is stored, no more.
-DESCRIPTION_AS_RELEASED = (
-    "Tn5 transposon insertion disrupting a gene; gene-level call over the gene's usable "
     "insertion strains (no per-strain barcode or mapped site). Locus tag AS RELEASED: "
-    "the release's MG1655 b-number, in the MG1655 namespace"
+    "the release's sysName, an MG1655 b-number, in the MG1655 namespace, named by "
+    "fit_genes.tab; the library strain is BW25113"
 )
 PUBLICATION = Publication(doi=PAPER_DOI, doi_url=f"https://doi.org/{PAPER_DOI}")
 
 
-def build_genotype(mapping: GeneMapping) -> Genotype:
-    """A Tn5 insertion in one gene of KEIO_ML9, its derived identifier typed.
+class StoredGene(BaseModel):
+    """One release gene exactly as the release gives it (#1057).
 
-    A gene no ECK pair places is stored as the released b-number, with no mapping
-    (#1057).
+    ``b_number`` is the ``sysName``; ``name`` is ``fit_genes.tab``'s own ``name``,
+    else the b-number. No annotation is read.
     """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    b_number: str
+    name: str
+
+
+def released_genes(
+    b_numbers: Sequence[str], gene_table: pd.DataFrame
+) -> dict[str, StoredGene]:
+    """Each released sysName, named by the release's gene table, in release order.
+
+    A sysName that is not an MG1655 b-number in form, or that the gene table names
+    twice or not at all, is refused: the release changed shape.
+    """
+    names: dict[str, str] = {}
+    for sys_name, name in zip(gene_table["sysName"], gene_table["name"], strict=True):
+        if pd.isna(sys_name):
+            continue
+        key = str(sys_name)
+        if key in names:
+            raise ValueError(f"fit_genes.tab names {key} twice")
+        names[key] = "" if pd.isna(name) else str(name).strip()
+    out: dict[str, StoredGene] = {}
+    for b in b_numbers:
+        if RELEASED_PATTERN.match(b) is None:
+            raise ValueError(f"{b!r} is not an MG1655 b-number in form")
+        if b not in names:
+            raise ValueError(f"{b} is in the fitness table but not in fit_genes.tab")
+        out[b] = StoredGene(b_number=b, name=names[b] or b)
+    return out
+
+
+def build_genotype(gene: StoredGene) -> Genotype:
+    """A Tn5 insertion in one gene of KEIO_ML9, under the released b-number."""
     return Genotype(
         perturbations=[
             TransposonInsertionPerturbation(
-                systematic_gene_name=mapping.locus_tag,
-                perturbed_gene_name=mapping.perturbed_gene_name,
-                gene_namespace=mapping.gene_namespace,
-                identifier_mapping=None
-                if mapping.gene_namespace == RELEASED_NAMESPACE
-                else DerivedIdentifierMapping(
-                    source_identifier=mapping.b_number, route="eck_crosswalk"
-                ),
-                description=DESCRIPTION_AS_RELEASED
-                if mapping.gene_namespace == RELEASED_NAMESPACE
-                else DESCRIPTION,
+                systematic_gene_name=gene.b_number,
+                perturbed_gene_name=gene.name,
+                gene_namespace=RELEASED_NAMESPACE,
+                description=DESCRIPTION,
                 transposon=str(TRANSPOSON.value),
                 library_pool=str(MUTANT_LIBRARY.value),
             )
@@ -2320,7 +2358,7 @@ def iter_records(
     dataset_name: str,
     samples: Sequence[SampleRecords],
     release: ReleaseTables,
-    mapping: Mapping[str, GeneMapping],
+    genes: Mapping[str, StoredGene],
 ) -> Iterator[
     tuple[
         BacterialEnvironmentResponseExperiment,
@@ -2329,11 +2367,7 @@ def iter_records(
     ]
 ]:
     """Every record, sample by sample then gene by gene in release order."""
-    rows = [
-        (i, build_genotype(mapping[b]))
-        for i, b in enumerate(release.b_numbers)
-        if b in mapping
-    ]
+    rows = [(i, build_genotype(genes[b])) for i, b in enumerate(release.b_numbers)]
     for sample in samples:
         j = sample.column
         for i, genotype in rows:
@@ -2354,11 +2388,10 @@ def iter_records(
             )
 
 
-#: What the build writes (84 samples measured on the deposited release 2026-10-11, plus
-#: the 4 MOPS rich samples #1045 row 16 keeps) x all 3,646 released genes: 3,628 on a
-#: BW25113 locus through their ECK pair, and since #1057 the 18 no pair places, stored as
-#: the released MG1655 b-number.
-EXPECTED_SAMPLES = 88
+#: What the build writes: 97 samples (84 measured on the deposited release 2026-10-11,
+#: the 4 MOPS rich samples #1045 row 16 keeps, and the 9 the quality rules fail, kept
+#: since #1057) x all 3,646 released genes, each under its released b-number.
+EXPECTED_SAMPLES = 97
 EXPECTED_GENES = 3646
 EXPECTED_RECORDS = EXPECTED_SAMPLES * EXPECTED_GENES
 #: The withdrawn samples, refused: no record of them is stored.
@@ -2387,16 +2420,15 @@ class DropRuleCount(BaseModel):
     source: SourcedValue | None = Field(
         default=None,
         description="the source's own statement the rule rests on, verbatim and bound "
-        "to the sha256-pinned file it was read from (DROP_RULE_SOURCES). None for a "
-        "rule that rests on this loader's typing rather than on a statement of the "
-        "source: the media library, the ECK crosswalk",
+        "to the sha256-pinned file it was read from (DROP_RULE_SOURCES); the author "
+        "withdrawal is the only rule left (#1057)",
     )
     items: tuple[str, ...]
     n_records: int
 
 
 class FailedSample(BaseModel):
-    """A condition sample the paper's own rules fail, with the rules it trips."""
+    """A stored sample the paper's own rules fail (``u = FALSE``), as released."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -2414,7 +2446,10 @@ class Inventory(BaseModel):
 
     condition_samples: int
     successful: int
-    failed: tuple[FailedSample, ...]
+    quality_flagged: tuple[FailedSample, ...] = Field(
+        description="the samples Data Set S1 scores u = FALSE, each STORED since #1057 "
+        "with this verdict as released (no record field holds a sample's QC verdict)"
+    )
     quality_rules_reproduce_u: bool
     stored_samples: int
     stored_samples_by_group: dict[str, int]
@@ -2440,11 +2475,11 @@ class Inventory(BaseModel):
     )
 
 
-def inventory(specs: Sequence[SampleSpec], identifiers: IdentifierReport) -> Inventory:
+def inventory(specs: Sequence[SampleSpec], n_genes: int) -> Inventory:
     """Count samples, genes and records kept, flagged and dropped, by rule."""
     successful = [s for s in specs if s.quality.successful]
     kept = [s for s in specs if s.drop_rule is None]
-    genes = identifiers.n_source_genes
+    genes = n_genes
     rules = [
         DropRuleCount(
             rule=rule,
@@ -2452,10 +2487,9 @@ def inventory(specs: Sequence[SampleSpec], identifiers: IdentifierReport) -> Inv
             description=DROP_RULES[rule],
             source=DROP_RULE_SOURCES.get(rule),
             items=tuple(s.name for s in specs if s.drop_rule == rule),
-            n_records=sum(1 for s in specs if s.drop_rule == rule)
-            * identifiers.n_source_genes,
+            n_records=sum(1 for s in specs if s.drop_rule == rule) * n_genes,
         )
-        for rule in (DROP_WITHDRAWN, DROP_FAILED_QUALITY)
+        for rule in (DROP_WITHDRAWN,)
     ]
     withdrawn = tuple(s.name for s in specs if s.drop_rule == DROP_WITHDRAWN)
     unidentified = Counter(
@@ -2467,7 +2501,7 @@ def inventory(specs: Sequence[SampleSpec], identifiers: IdentifierReport) -> Inv
     return Inventory(
         condition_samples=len(specs),
         successful=len(successful),
-        failed=tuple(
+        quality_flagged=tuple(
             FailedSample(
                 name=s.name,
                 short=s.short,
@@ -2485,10 +2519,10 @@ def inventory(specs: Sequence[SampleSpec], identifiers: IdentifierReport) -> Inv
         stored_samples_by_group=dict(Counter(s.group for s in kept)),
         stored_samples_by_medium=dict(Counter(s.media_label for s in kept)),
         withdrawn_refused=withdrawn,
-        source_genes=identifiers.n_source_genes,
+        source_genes=n_genes,
         stored_genes=genes,
-        source_records=len(specs) * identifiers.n_source_genes,
-        good_table_records=len(successful) * identifiers.n_source_genes,
+        source_records=len(specs) * n_genes,
+        good_table_records=len(successful) * n_genes,
         stored_records=len(kept) * genes,
         rules=tuple(rules),
         unidentified_compounds=dict(sorted(unidentified.items())),
@@ -2553,8 +2587,7 @@ class RbTnseqWetmore2015Dataset(ExperimentDataset):
 
     @post_process
     def process(self) -> None:
-        """Build one record per (mapped gene, kept sample) and the preprocess reports."""
-        data_root = str(_data_root(None))
+        """Build one record per (released gene, kept sample) and the preprocess reports."""
         verify_raw_files(
             self.raw_dir, {name: pin for name, (_, _, pin) in LOADER_FILE_NAMES.items()}
         )
@@ -2564,18 +2597,16 @@ class RbTnseqWetmore2015Dataset(ExperimentDataset):
             pd.read_excel(s1, sheet_name=DATA_SET_S1_QUALITY_SHEET),
         )
         release = read_release(
-            self.raw_dir, [s.name for s in specs if s.quality.successful]
+            self.raw_dir, [s.name for s in specs if s.drop_rule is None]
         )
-        mg1655 = bacterial_genome("ecoli", "MG1655", data_root)
-        if not isinstance(mg1655, EcoliK12MG1655Genome):
-            raise TypeError(f"expected the MG1655 genome, got {type(mg1655).__name__}")
-        mapping, identifiers = map_genes(
-            release.b_numbers, mg1655, self._bw25113(), label=self.name
+        genes = released_genes(
+            release.b_numbers,
+            pd.read_csv(osp.join(self.raw_dir, "fit_genes.tab"), sep="\t"),
         )
         samples = sample_records(
             self.name, specs, release, assembly_reference(REFERENCE_STRAIN)
         )
-        counts = inventory(specs, identifiers)
+        counts = inventory(specs, len(genes))
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
         os.makedirs(self.processed_dir, exist_ok=True)
@@ -2585,7 +2616,7 @@ class RbTnseqWetmore2015Dataset(ExperimentDataset):
         txn = env.begin(write=True)
         itxn = interned_env.begin(write=True)
         for experiment, reference, publication in tqdm(
-            iter_records(self.name, samples, release, mapping),
+            iter_records(self.name, samples, release, genes),
             total=counts.stored_records,
             desc="Wetmore 2015 Keio",
         ):
@@ -2607,22 +2638,17 @@ class RbTnseqWetmore2015Dataset(ExperimentDataset):
             raise RuntimeError(
                 f"wrote {idx} records, inventory says {counts.stored_records}"
             )
-        self._write_reports(specs, release, identifiers, counts)
+        self._write_reports(specs, release, counts)
         log.info("Wrote %d Wetmore 2015 Keio records", idx)
 
     def _write_reports(
-        self,
-        specs: Sequence[SampleSpec],
-        release: ReleaseTables,
-        identifiers: IdentifierReport,
-        counts: Inventory,
+        self, specs: Sequence[SampleSpec], release: ReleaseTables, counts: Inventory
     ) -> None:
-        """``dropped_records.json``, ``identifier_mapping.json``, ``samples.json`` and
-        ``standard_error.json`` in ``preprocess/``.
+        """``dropped_records.json``, ``samples.json`` (each sample's quality verdict as
+        released) and ``standard_error.json`` in ``preprocess/``.
         """
         payloads: dict[str, Any] = {
             "dropped_records.json": counts.model_dump(mode="json"),
-            "identifier_mapping.json": identifiers.model_dump(mode="json"),
             "samples.json": [s.model_dump(mode="json") for s in specs],
             "standard_error.json": {
                 "rule": PER_GENE_STANDARD_ERROR.quote,
@@ -2995,12 +3021,13 @@ def verify_build(
 ) -> VerificationReport:
     """Run the environment-response L0-L4 verifier on a built tree and write its report.
 
-    The gene universe and resolver are BW25113's (every GenBank locus, pseudogenes
-    included), the assembly every record pins. Four SUPPLEMENTARY rows are added: the
-    stored tags are loci of that assembly (L1), no record of a withdrawn sample is
-    stored (L1), every stored t matches its stored SE (L2), and the cross-check against
-    the Price 2018 compendium's dev store (L4, :func:`compendium_cross_check`), which
-    reads that store read-only and refuses when it is absent.
+    The gene universe and resolver are MG1655's, the namespace every released b-number
+    is stored in (#1057); its genome-reference rows report and never gate. Three
+    SUPPLEMENTARY rows are added: no record of a withdrawn sample is stored (L1), every
+    stored t matches its stored SE (L2), and the cross-check against the Price 2018
+    compendium's dev store (L4, :func:`compendium_cross_check`), which reads that store
+    read-only and refuses when it is absent; both stores key a gene by its released
+    b-number.
     """
     from torchcell.verification.environment_response import (
         verify_environment_response_dataset_streaming,
@@ -3008,9 +3035,7 @@ def verify_build(
     from torchcell.verification.runners import stream_records
 
     root = str(_data_root(data_root))
-    genome = bacterial_genome("ecoli", REFERENCE_STRAIN, root)
-    if not isinstance(genome, EcoliK12BW25113Genome):
-        raise TypeError(f"expected the BW25113 genome, got {type(genome).__name__}")
+    genome = bacterial_genome("ecoli", "MG1655", root)
     report = verify_environment_response_dataset_streaming(
         stream_records(dataset_root),
         dataset_name=RbTnseqWetmore2015Dataset.__name__,
@@ -3021,17 +3046,6 @@ def verify_build(
         resolve_gene_name=genome.resolve_gene_name,
     )
     own = stored_values(stream_records(dataset_root))
-    # a gene no ECK pair places is the released MG1655 b-number, no BW25113 tag (#1057)
-    report.add(
-        stored_tags_are_loci(
-            {
-                v.tag
-                for v in own
-                if v.gene_namespace == STRAIN_GENE_NAMESPACES[REFERENCE_STRAIN]
-            },
-            genome.resolve_gene_name,
-        )
-    )
     report.add(withdrawal_census(own))
     report.add(t_identity(own, float(T_STATISTIC_SIGMA.value)))
     superset_root = osp.join(root, SUPERSET_DATASET_ROOT_REL)
@@ -3065,7 +3079,9 @@ def verify_build(
 def loader_inventory(
     data_root: str | None = None,
 ) -> tuple[Inventory, IdentifierReport]:
-    """The loader's sample, gene and record accounting off the pinned files."""
+    """The loader's sample, gene and record accounting off the pinned files, and the
+    ECK crosswalk as the derived artifact it is (#1057: no record reads it).
+    """
     root = str(_data_root(data_root))
     s1 = loader_source_path("si1.xlsx", root)
     specs = classify_samples(
@@ -3079,10 +3095,9 @@ def loader_inventory(
         bw25113, EcoliK12BW25113Genome
     ):
         raise TypeError("the K-12 genomes resolved to the wrong classes")
-    _, identifiers = map_genes(
-        [str(b) for b in fitness["sysName"]], mg1655, bw25113, label="inventory"
-    )
-    return inventory(specs, identifiers), identifiers
+    b_numbers = [str(b) for b in fitness["sysName"]]
+    _, identifiers = map_genes(b_numbers, mg1655, bw25113, label="inventory")
+    return inventory(specs, len(b_numbers)), identifiers
 
 
 def all_sample_comparison(data_root: str | None = None) -> ReleaseComparison:

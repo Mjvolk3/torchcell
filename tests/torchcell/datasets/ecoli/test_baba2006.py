@@ -693,7 +693,7 @@ def test_run_verification_and_cli(
     assert m.main(["verify"]) == 0
     out = capsys.readouterr().out
     assert "gene_essentiality_baba2006: PASS" in out
-    assert "[rp] L4 gene_containment_bw25113_jw_synonyms:" in out
+    assert "L4 gene_containment_bw25113_jw_synonyms:" in out
 
 
 def test_download_links_the_mirror_and_checks_the_manifest(

@@ -296,5 +296,5 @@ Measured on the released positions (these numbers describe the release and are n
 - `@register_dataset`, the package export, `dataset_adapter_map` (`Nguessan2025Adapter`, after Boocock 2025), `organism = Organism.scerevisiae`.
 - `runners.SEGREGANT_EXPRESSION_DATASETS["nguessan2025"]` (2,951, `verify_build_module`); `verify_build` reads it.
 - Pins on `7a068d41a` (unchanged from `007cd23b0`): `dataset_adapter_map` total 154 and the served set names the class (`test_build_time_projection.py`); registry roots 75 (`SEGREGANT_EXPRESSION_DATASETS` addend 2; `test_runners.py`); the bacterial pins stay 86 (`test_bacterial_adapters.py` three asserts, `_bacterial_adapter_cases.py`). `browser_style --check` and the ontology figure: no drift.
-- Candidate gate (job 4335): G1 to G5 pass (G3 37 files intact), **admissible**.
+- Candidate gate (job 4354, at `809ff4f35`): G1 to G5 pass (G3 37 files intact), **admissible**.
 - `scripts/schema_impact_check.py --base origin/main`: "No schema contract changes vs origin/main."

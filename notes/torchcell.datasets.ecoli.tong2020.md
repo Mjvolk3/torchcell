@@ -390,3 +390,37 @@ supplementary L2 row `carbon_equivalence_of_the_carpe_doses` multiplies each sto
 by the carbon atoms of its agent's SMILES; the result is one value across all 30
 sources, 120 mM carbon (20 mM glucose x 6), which cross-checks both the parse and the
 column pairing.
+
+Build: slurm job 4202 (the single-store pattern with `--retire-existing --verify`), run
+from this branch only after array 4011's task 95 (this dataset, from main's code) read
+COMPLETED: 111,420 records (109,320 BW25113 + 2,100 MG1655, unchanged), gene set
+3,714, 60 references.
+
+### L0-L4 after the rebuild
+
+| level | rule | BW25113 (109,320 records) | MG1655 (2,100 records) |
+|---|---|---|---|
+| L0 | structural | PASS | PASS |
+| L1 | count | PASS, 109,320 of 109,320 | PASS, 2,100 of 2,100 |
+| L1 | pair_uniqueness | PASS | PASS |
+| L1 | provenance_gaps | PASS, 218,640 gaps, **0 deferred fields** (was `magnitude`) | PASS, 8,400 gaps (was 10,500), 0 deferred fields |
+| L1 | canonical_gene_names | PASS, 3,644 names (108 pseudogene loci) | PASS, 70 names (1 pseudogene locus) |
+| L2 | value_fidelity | PASS, 109,320 values | PASS, 2,100 values |
+| L2 | uncertainty_sanity | PASS | PASS |
+| L3 | reference_one | PASS | PASS |
+| L3 | compound_identity, media_compound_identity, media_membership | PASS | PASS |
+| L4 | gene_containment_sgd, current_genome_genes | PASS, 3,644 of 3,644 | PASS, 70 of 70 |
+| L1 (supp.) | pair_uniqueness_with_environment_perturbations | PASS, 0 duplicated | PASS, 0 duplicated |
+| L1 (supp.) | stored_tags_are_loci_of_the_pinned_assembly | PASS | PASS |
+| L2 (supp.) | carbon_equivalence_of_the_carpe_doses | PASS, {120.0 mM C: 109,320} | PASS, {120.0 mM C: 2,100} |
+
+Generated tables:
+`experiments/036-dataset-fixes-before-kg-build/results/manual_deposits_2026_10_12_verification_tables.txt`.
+
+### Candidate gate
+
+`python -m torchcell.candidates gate --citation-key tongGeneDispensabilityEscherichia2020
+--phenotype-class FitnessPhenotype --proposed-class CarbonSourceTong2020Dataset --write`
+wrote `database/candidates/tongGeneDispensabilityEscherichia2020.json`, the key's first
+verdict: **admissible**, G1 to G5 pass; G3 reads 14 files across the library and raw
+mirrors, 17,478 worksheet rows, all intact.

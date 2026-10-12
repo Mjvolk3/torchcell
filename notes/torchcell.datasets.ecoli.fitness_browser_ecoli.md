@@ -33,3 +33,27 @@ created: 1791803941338
 One `BacterialEnvironmentResponseExperiment` per (placed gene, stored sample): 6 samples x 3,768 genes = 22,608 records (the browser's 3,789 loci, of which 3,768 place on BW25113 through a one-to-one ECK pair, the route `price2018.map_genes` takes; every one of the 3,789 names a b-number in `Gene.sysName`, and 21 have no one-to-one ECK pair). The value is `FitByExp_Keio.fit`, the browser's moderated t is `environment_response_t_statistic`, and `environment_response_se` is `sqrt((f / t)^2 - 0.1^2)`. Environment: `RCH2_DEFINED_NOCARBON_PRICE2018`, D-mannitol as carbon source (`EnvironmentPhysicalPerturbation`, mM), 30 C, aerobic; `nGenerations` is empty, so `duration_hours` and `duration_generations` are typed gaps. D-mannitol carries the compound table's `inchikey` gap (#726). `screen_id` is `Keio:<expName>`, the key Price 2018 and Wetmore 2015 also use.
 
 Reports in `preprocess/`: `samples.json` (every browser experiment with its fate and its typed row), `dropped_records.json` (fates, by publication, the study table), `identifier_mapping.json`, `compendium_cross_check.json`, `verification_report.json`.
+
+### Build and L0-L4 (dev store, slurm job 4196, 2026-10-12)
+
+Built with `build_dataset_lmdb --dataset FitnessBrowserEcoliDataset --retire-existing --verify` (array script, worktree source): 22,608 records in 40 s, gene set 3,768, 6 references; `--list-stale` reads the store `fresh`. Of the browser's 3,789 Keio loci, 21 do not place on BW25113 (`b_number_not_in_mg1655_annotation` 8, `eck_absent_from_bw25113` 7, `eck_not_one_to_one` 6), the same 21 the Price 2018 loader drops. Report: `$DATA_ROOT/data/torchcell/rbtnseq_fitness_browser_ecoli/preprocess/verification_report.json`.
+
+| level | rule | result |
+|---|---|---|
+| L0 | structural | pass: 22,608 records validated |
+| L1 | count | pass: 22,608 observed, 22,608 expected |
+| L1 | pair_uniqueness | pass: 22,608 unique (study, strain, condition) records |
+| L1 | provenance_gaps | pass: 135,648 documented gaps; deferred field `inchikey` (D-mannitol, #726) |
+| L1 | canonical_gene_names | pass: 3,768 systematic names, each current in the BW25113 genome |
+| L1 | records_carry_their_browser_publication | pass: 6 stored samples, each record names Price21b's DOI |
+| L2 | value_fidelity, se_nonnegative | pass: 22,608 values |
+| L2 | interval_orientation, uncertainty_sanity | pass |
+| L3 | measurement_type_consistent | pass: `log2_ratio` only |
+| L3 | reference_zero | pass: reference response 0 for all records |
+| L3 | environment_perturbed | pass: every record carries its carbon source |
+| L3 | compound_identity, media_compound_identity, media_membership | pass: 1 medium, `RCH2_DEFINED_NOCARBON_PRICE2018` |
+| L4 | gene_containment_sgd, current_genome_genes | pass: 1.000 of 3,768 genes are BW25113 genes |
+| L4 | compendium_cross_check_price2018 | pass: 151 shared samples, 568,968 (gene, sample) values, pooled Pearson r 1.000000, smallest per-sample r 1.000000 (bar 0.999999), largest difference 8.88e-16 |
+| L4 | own_release_cross_check_wetmore2015 | pass: 83 shared samples, 301,124 values, pooled Pearson r 0.997034, smallest per-sample r 0.988897 (bar 0.87), largest single-gene difference 2.57 |
+
+The L4 rows measure the browser's copy of the 151 Keio samples the served Price 2018 store keeps (the store was rebuilt at 05:56 by array 4011 and now keeps 151, not the 147 of the 2026.10.11 audit) against that store, and of the 83 samples Wetmore 2015's store keeps against its own 1.0.0 release: the Price copy is identical to the float, so storing it again would duplicate it (G4), and the Wetmore agreement reproduces the audit's minimum 0.98890.

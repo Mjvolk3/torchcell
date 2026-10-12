@@ -281,7 +281,8 @@ def stored(ds: Any, key: str) -> list[dict[str, Any]]:
 
 def test_smf_allele_single_and_blank_sd(tmp_path: Path) -> None:
     """Smf: CDC28 (``Allele1`` "cdc28-4", no "delta") becomes an SGA allele, GEM1 a KanMX
-    deletion with ``sample_sd`` n 4 (se 0.005); the reference is fitness 1.0, no SD.
+    deletion whose S5 SD is a ``bootstrap_se`` over 12 colonies, used as-is (se 0.01);
+    the reference is fitness 1.0, no SD.
     CDC28's blank St.dev. is stored as ``fitness_std`` None with every uncertainty field
     None: the SI defines no meaning for a blank, so it is "no value reported".
     """
@@ -315,11 +316,11 @@ def test_smf_allele_single_and_blank_sd(tmp_path: Path) -> None:
             0.95,
             0.01,
             screen_id=S5_SCREEN,
-            **labeled(0.01, UncertaintyType.sample_sd, 4),
+            **labeled(0.01, UncertaintyType.bootstrap_se, 12),
         ),
     ]
     assert experiments == expected
-    assert experiments[1]["phenotype"]["fitness_se"] == 0.005
+    assert experiments[1]["phenotype"]["fitness_se"] == 0.01
     assert stored(ds, "reference") == [fitness_reference(name, None)] * 2
 
 

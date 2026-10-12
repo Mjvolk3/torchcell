@@ -283,11 +283,10 @@ def test_smf_records(tmp_path: Path) -> None:
     loaders) and the strain id the S5 "Query Strain ID". The reference is fitness
     1.0 with no SD.
 
-    Finding: the S5 "St.dev." is stored as ``sample_sd`` over 4 colonies (se = sd / 2:
-    0.005 and 0.01) through ``_combined_mutant_uncertainty``, although the module's
-    own ``N_SAMPLES_QUERY_STRAIN_FITNESS`` comment quotes the SI calling the query-
-    strain fitness SD a bootstrap quantity over 12-24 colonies, and the Dmf loader
-    labels the very same S5 column ``bootstrap_se`` for its double-mutant rows.
+    The S5 "St.dev." is a query-strain fitness SD, which the SI calls a bootstrap
+    quantity over 12-24 colonies (``N_SAMPLES_QUERY_STRAIN_FITNESS``): it is stored as
+    ``bootstrap_se`` over 12 colonies, used as-is (se 0.01 and 0.02), the label the Dmf
+    loader gives the same S5 column (#1054 finding, corrected in #1053).
     """
     ds = build(tmp_path, SmfKuzmin2020Dataset)
     assert len(ds) == 2
@@ -308,7 +307,7 @@ def test_smf_records(tmp_path: Path) -> None:
                 fitness=0.98,
                 fitness_std=0.01,
                 screen_id=SCREEN_ID_QUERY_FITNESS,
-                **sample_sd(0.01),
+                **bootstrap_se(0.01),
             ),
         ),
         FitnessExperiment(
@@ -327,12 +326,12 @@ def test_smf_records(tmp_path: Path) -> None:
                 fitness=0.8,
                 fitness_std=0.02,
                 screen_id=SCREEN_ID_QUERY_FITNESS,
-                **sample_sd(0.02),
+                **bootstrap_se(0.02),
             ),
         ),
     ]
     assert dumps(experiments(ds)) == dumps(expected)
-    assert [e.phenotype.fitness_se for e in experiments(ds)] == [0.005, 0.01]
+    assert [e.phenotype.fitness_se for e in experiments(ds)] == [0.01, 0.02]
     reference = fitness_reference("SmfKuzmin2020Dataset", None)
     assert dumps(references(ds)) == [reference.model_dump()] * 2
     assert_side_files(ds, ["YAL015C", "YBR001C"], 2)

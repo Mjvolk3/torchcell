@@ -459,11 +459,18 @@ class SmfKuzmin2020Dataset(ExperimentDataset):
         )
         environment_reference = environment.model_copy()
 
+        # Table S5's "St.dev." of a single-mutant query strain is the query-strain
+        # fitness SD the Dmf query path reads: the SI (si/si1.md line 41) says
+        # "bootstrapped means, instead of medians, across replicates were used in
+        # variance estimation and final fitness values" over "a total of between 12
+        # and 24 colony measurements for each fitness estimate", a bootstrap SE over
+        # 12 colonies (the conservative end), not a sample SD over 4 (#1054 finding;
+        # it was labeled as the combined-mutant column before, halving 472 SEs).
         phenotype = FitnessPhenotype(
             fitness=row["Fitness"],
             fitness_std=_reported_sd(row["St.dev."]),
             screen_id=row["screen_id"],
-            **_combined_mutant_uncertainty(row["St.dev."]),
+            **_query_strain_uncertainty(row["St.dev."]),
         )
 
         phenotype_reference = FitnessPhenotype(fitness=1.0, fitness_std=None)

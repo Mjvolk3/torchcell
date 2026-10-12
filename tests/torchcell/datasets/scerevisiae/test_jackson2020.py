@@ -448,7 +448,8 @@ def test_pseudobulk_phenotype_and_pooled_sum_exactly() -> None:
     assert type(phenotype).__name__ == "SingleCellExpressionPhenotype"
     assert phenotype.cell_cycle_stage_counts is None
     assert phenotype.provenance_gaps == [j.CELL_CYCLE_GAP]
-    assert phenotype.measurement_type == "scrnaseq_pseudobulk_umi_count"
+    # One tag for the leaf: the per-strain sum is analysis, n_cells records it.
+    assert phenotype.measurement_type == "scrnaseq_umi_count"
 
 
 def test_strain_genotype_is_one_barcoded_homozygous_deletion(

@@ -7673,7 +7673,14 @@ class SingleCellExpressionPhenotype(Phenotype, ModelStrict):
     ``ProvenanceGap``; a missing partition without the gap is refused, so a None is
     never a silent absence.
 
-    ``measurement_type`` is the source's assay tag, kept as each loader wrote it.
+    ``measurement_type`` is the leaf's one assay tag, ``scrnaseq_umi_count``, and no
+    other value validates. The leaf is the physical measurement, 10x Chromium 3' UMI
+    counts, and every release it holds stores the same tag whatever its design: summing
+    a strain's cells (Jackson 2020) is analysis that ``n_cells`` already records, and the
+    designs diverge in the experiment classes above the leaf (``SegregantExpression*``,
+    ``PseudobulkUmiCount*``), not in the tag. A single-cell UMI platform other than 10x
+    Chromium 3' gets a sibling leaf under the same parent (``Phenotype``), with its own
+    tag, never a second tag on this leaf.
 
     Provenance: Boocock et al. 2025, eLife; Jackson et al. 2020, eLife. See
     ``[[torchcell.datasets.scerevisiae.boocock2025]]`` and
@@ -7737,9 +7744,10 @@ class SingleCellExpressionPhenotype(Phenotype, ModelStrict):
         "aligned with cell_barcodes; sums to total_umis",
         repr=False,
     )
-    measurement_type: str = Field(
+    measurement_type: Literal["scrnaseq_umi_count"] = Field(
         default="scrnaseq_umi_count",
-        description="assay tag: 10x 3' single-cell RNA-seq UMI counts per feature",
+        description="the leaf's one assay tag: 10x Chromium 3' single-cell RNA-seq UMI "
+        "counts per feature; a non-10x platform is a sibling leaf, not another tag",
     )
 
     def __repr__(self) -> str:
@@ -7840,8 +7848,6 @@ class SingleCellExpressionPhenotype(Phenotype, ModelStrict):
                 f"cell_total_umis sums to {sum(self.cell_total_umis)}, not total_umis "
                 f"{self.total_umis}"
             )
-        if not self.measurement_type.strip():
-            raise ValueError("measurement_type cannot be blank")
         return self
 
 

@@ -47,7 +47,7 @@ def _phenotype(**overrides: Any) -> SingleCellExpressionPhenotype:
         "cell_barcodes": ["GGGT", "AAAC"],
         "cell_libraries": ["YPD", "YPD"],
         "cell_total_umis": [6, 2],
-        "measurement_type": "scrnaseq_pseudobulk_umi_count",
+        "measurement_type": "scrnaseq_umi_count",
         "provenance_gaps": [
             ProvenanceGap(
                 field="cell_cycle_stage_counts",
@@ -94,7 +94,7 @@ def test_the_node_projects_dicts_and_lists_as_json_and_keeps_scalars_typed() -> 
         "cell_barcodes": '["GGGT", "AAAC"]',
         "cell_libraries": '["YPD", "YPD"]',
         "cell_total_umis": "[6, 2]",
-        "measurement_type": "scrnaseq_pseudobulk_umi_count",
+        "measurement_type": "scrnaseq_umi_count",
     }
     declared = set(SCHEMA[NODE]["properties"])
     assert set(node.get_properties()) - {"id", "preferred_id"} == declared

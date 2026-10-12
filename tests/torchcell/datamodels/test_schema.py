@@ -3293,7 +3293,10 @@ def test_single_cell_counts_sort_and_the_total_may_exceed_the_stored_universe() 
             {"library_cell_counts": {"L1": 3, "L2": -1}},
             "library_cell_counts holds a non-positive count",
         ),
-        ({"measurement_type": " "}, "measurement_type cannot be blank"),
+        (
+            {"measurement_type": "scrnaseq_pseudobulk_umi_count"},
+            "Input should be 'scrnaseq_umi_count'",
+        ),
     ],
 )
 def test_single_cell_refuses_what_a_count_record_cannot_be(

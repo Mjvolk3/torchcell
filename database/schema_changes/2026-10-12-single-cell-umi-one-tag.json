@@ -1,0 +1,168 @@
+{
+  "record_version": 1,
+  "slug": "single-cell-umi-one-tag",
+  "date": "2026-10-12",
+  "pr": null,
+  "author_kind": "agent",
+  "base_commit": "8bee8bb0402fd5e86856f87b9aad967911476b3a",
+  "python_version": "3.13.0",
+  "symbols": [
+    {
+      "symbol": "SingleCellExpressionPhenotype",
+      "status": "modified",
+      "kinds": [
+        "contract_tightened"
+      ],
+      "fingerprint_before": "e55ac47dca5906a912510f2de0f320bd47b975bd5795e536594e0aa4e5f7cc51",
+      "fingerprint_after": "887f1857bd55949cd0959352dc782078efe1301a6ecd794766ec15ea8b938edc",
+      "impact": "breaking",
+      "reasons": [
+        "field 'measurement_type' type changed: str -> Literal['scrnaseq_umi_count']",
+        "validator/serializer changed: ['_check_totals']"
+      ]
+    }
+  ],
+  "correctness_argument": "SingleCellExpressionPhenotype is the leaf for one physical measurement, 10x Chromium 3' single-cell UMI counts, and its three releases are that measurement: Boocock 2025 loads cells onto the Chromium device with the Single Cell 3' Solution V2 or V3 kit, Jackson 2020 uses the 10x Genomics Chromium 3' v2 Single Cell Gene Expression Kit, and N'Guessan 2025 the Chromium Next GEM Single-cell 3' Reagent Kit, and each releases UMI counts per gene per cell (the six verbatim quotes in source_quotes). By rule 6 case 1 of [[torchcell.datamodels.schema-change-policy]], the same physical measurement and the same released quantity share one leaf and one measurement_type tag, and the designs diverge in the experiment classes above the leaf: PseudobulkUmiCountExperiment for Jackson's pooled TF-deletion strains, SegregantExpressionExperiment for the Boocock and N'Guessan segregants. Before this change the field was a free string and the dev stores carried two tags for the one measurement: scrnaseq_umi_count on Boocock and N'Guessan (the leaf default; 79,516 Boocock records measured) and scrnaseq_pseudobulk_umi_count on Jackson (784 records measured), per experiments/036-dataset-fixes-before-kg-build/results/single_cell_leaf_merge_audit.json. 'Pseudobulk' names an analysis step, summing a strain's cells per condition, which every record already states through n_cells, cell_barcodes and cell_libraries; it is not a different measurement, so the second tag split one measurement in two for any query on measurement_type. The tag is a property of the leaf, so the leaf now admits exactly its one value: the field is Literal['scrnaseq_umi_count'] with the same default, and the blank-tag check in _check_totals is removed because the Literal already refuses a blank tag. This is a tightening: every Boocock and N'Guessan value the old class accepted is accepted and serialized unchanged, and Jackson's loader stops passing its own tag so its records take the leaf default. A single-cell UMI platform other than 10x Chromium 3' gets a sibling leaf under the same parent (Phenotype) with its own tag (rule 6 case 2), which the class docstring now states. No served dataset holds the leaf (KG 3.0 serves none of the three loaders); Boocock 2025 and Jackson 2020 are mapped for KG 4.0, a full build. The choice of tag was the owner's, deferred to the driver session by the DAG rule on 2026-10-12, which chose scrnaseq_umi_count.",
+  "measurement_type_decision": true,
+  "source_quotes": [
+    {
+      "value": "scrnaseq_umi_count",
+      "provenance": {
+        "source_uri": "paper.md",
+        "citation_key": "boocockSinglecellEQTLMapping2025",
+        "sha256": "a2920750e12fb9977f36a687bb9f73aa0382527de84270b44609a3338bbeafe4",
+        "method": null,
+        "page": "section 'Single-cell library preparation'",
+        "retrieved": null
+      },
+      "quote": "loaded onto the Chromium device using either the Single Cell $3 ^ { \\prime }$ Solution V2 or V3 kit.",
+      "note": "Boocock 2025 chemistry: 10x Chromium 3' (V2 or V3 kit, a specific, not a technology)"
+    },
+    {
+      "value": "scrnaseq_umi_count",
+      "provenance": {
+        "source_uri": "paper.md",
+        "citation_key": "boocockSinglecellEQTLMapping2025",
+        "sha256": "a2920750e12fb9977f36a687bb9f73aa0382527de84270b44609a3338bbeafe4",
+        "method": null,
+        "page": "Figure 1 legend, section 'scRNA-seq enables simultaneous expression profiling, cell-cycle stage determination, and genotyping in a segregating yeast population'",
+        "retrieved": null
+      },
+      "quote": "Unique molecular identifier (UMI) counts are tallied for each transcript in each segregant.",
+      "note": "Boocock 2025 released quantity: UMI counts per transcript per cell"
+    },
+    {
+      "value": "scrnaseq_umi_count",
+      "provenance": {
+        "source_uri": "paper.md",
+        "citation_key": "jacksonGeneRegulatoryNetwork2020",
+        "sha256": "453924f3d5ed998e99695768cf5b4067f2dbac3fb0af53dcbf8fd9017f199697",
+        "method": null,
+        "page": "section 'Library preparation and sequencing'",
+        "retrieved": null
+      },
+      "quote": "Single cell library preparation was done using the $ 1 0 \\times$ Genomics Chromium ${ \\boldsymbol { 3 ^ { \\prime } } }$ v2 Single Cell Gene Expression Kit",
+      "note": "Jackson 2020 chemistry: 10x Chromium 3' v2 (CHEMISTRY_QUOTE in jackson2020.py)"
+    },
+    {
+      "value": "scrnaseq_umi_count",
+      "provenance": {
+        "source_uri": "paper.md",
+        "citation_key": "jacksonGeneRegulatoryNetwork2020",
+        "sha256": "453924f3d5ed998e99695768cf5b4067f2dbac3fb0af53dcbf8fd9017f199697",
+        "method": null,
+        "page": "section 'Supplementary files'",
+        "retrieved": null
+      },
+      "quote": "gene expression values are unmodified transcript counts after deartifacting using UMIs",
+      "note": "Jackson 2020 released quantity (Source code 2): raw UMI counts per cell; the per-strain sum is the loader's pseudobulk, recorded by n_cells"
+    },
+    {
+      "value": "scrnaseq_umi_count",
+      "provenance": {
+        "source_uri": "paper.md",
+        "citation_key": "nguessanRefiningResolutionYeast2025",
+        "sha256": "97cf5c178323798ef84fe4763f9a3d7361b6d37907fbfe320d607996feab861b",
+        "method": null,
+        "page": "section 'Yeast growth and single-cell RNA-sequencing protocol'",
+        "retrieved": null
+      },
+      "quote": "We used the Chromium Next GEM Single-cell $3 ^ { \\prime }$ Reagent Kit to prepare the sequencing libraries and sequenced on a NextSeq 500 high-output flow cell.",
+      "note": "N'Guessan 2025 chemistry: 10x Chromium Next GEM 3'"
+    },
+    {
+      "value": "scrnaseq_umi_count",
+      "provenance": {
+        "source_uri": "paper.md",
+        "citation_key": "nguessanRefiningResolutionYeast2025",
+        "sha256": "97cf5c178323798ef84fe4763f9a3d7361b6d37907fbfe320d607996feab861b",
+        "method": null,
+        "page": "section 'Single-cell RNA-sequencing data parsing'",
+        "retrieved": null
+      },
+      "quote": "counted the number of UMI per gene per barcode",
+      "note": "N'Guessan 2025 released quantity: UMI counts per gene per cell barcode (CellRanger 3.1.0 count)"
+    }
+  ],
+  "alternatives_rejected": [
+    {
+      "alternative": "Keep two tags on the free-string field: scrnaseq_umi_count for Boocock 2025 and N'Guessan 2025, scrnaseq_pseudobulk_umi_count for Jackson 2020.",
+      "why_rejected": "The two tags name one physical measurement (the chemistry quotes); what differs is the per-strain sum, an analysis step every record already states through n_cells and the per-cell lists. Two tags make a measurement_type query split one measurement in two, against rule 6 case 1."
+    },
+    {
+      "alternative": "A pseudobulk sibling leaf: restore a PseudobulkUmiCountPhenotype beside SingleCellExpressionPhenotype for Jackson 2020.",
+      "why_rejected": "Rule 6 places a leaf by the physical measurement, never the analysis, and pooling cells is analysis. #1016 measured that every stored value of both dev stores round-trips through the one leaf with nothing dropped or changed (PR #1038), so a sibling would separate records whose fields and meanings are identical and undo a merge the owner approved."
+    },
+    {
+      "alternative": "Unify the loaders on one tag but leave the field a free string.",
+      "why_rejected": "The one-tag rule would stay a loader convention the schema does not hold, and the drift corrected here is exactly a loader writing its own tag on a free string; the next 10x loader could write a third."
+    },
+    {
+      "alternative": "Unify on scrnaseq_pseudobulk_umi_count instead.",
+      "why_rejected": "The tag would be false for the Boocock records that hold one de novo cell (n_cells = 1), which no analysis pooled; scrnaseq_umi_count names the measurement and is true of every record of all three releases."
+    }
+  ],
+  "served_release": "2026.10.06-4b293d34",
+  "affected_loaders": [
+    {
+      "loader": "torchcell/datasets/scerevisiae/boocock2025.py",
+      "dataset_classes": [
+        "Boocock2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "SingleCellExpressionPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/jackson2020.py",
+      "dataset_classes": [
+        "TfDeletionPseudobulkJackson2020Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "SingleCellExpressionPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/nguessan2025.py",
+      "dataset_classes": [
+        "Nguessan2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "SingleCellExpressionPhenotype"
+      ]
+    }
+  ],
+  "served_datasets": [],
+  "rebuild_scope": "dev_stores",
+  "owner_sign_off": {
+    "signed": false,
+    "quote": null,
+    "url": null
+  }
+}

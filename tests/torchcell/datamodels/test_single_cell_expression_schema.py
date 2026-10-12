@@ -18,7 +18,7 @@ marker.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, get_args
 
 import pytest
 from pydantic import TypeAdapter, ValidationError
@@ -37,6 +37,8 @@ from torchcell.datamodels.schema import (
     PseudobulkUmiCountExperiment,
     PseudobulkUmiCountExperimentReference,
     ReferenceGenome,
+    SegregantExpressionExperiment,
+    SegregantExpressionExperimentReference,
     SingleCellExpressionPhenotype,
     StrainBackground,
     StrainReferenceGenome,
@@ -70,7 +72,7 @@ def _phenotype(**overrides: Any) -> SingleCellExpressionPhenotype:
         "cell_barcodes": ["AAAC", "GGGT"],
         "cell_libraries": ["YPD", "YPD"],
         "cell_total_umis": [6, 4],
-        "measurement_type": "scrnaseq_pseudobulk_umi_count",
+        "measurement_type": "scrnaseq_umi_count",
         "provenance_gaps": [_gap("cell_cycle_stage_counts")],
     }
     kwargs.update(overrides)
@@ -120,7 +122,7 @@ def test_a_valid_phenotype_sorts_both_dicts_and_summarizes_itself() -> None:
     assert phenotype.marker_umi_count is not None
     assert list(phenotype.marker_umi_count) == ["KANMX", "NATMX"]
     assert phenotype.label_name == "umi_count"
-    assert phenotype.measurement_type == "scrnaseq_pseudobulk_umi_count"
+    assert phenotype.measurement_type == "scrnaseq_umi_count"
     assert phenotype.gapped_fields() == {"cell_cycle_stage_counts"}
     assert repr(phenotype) == (
         "SingleCellExpressionPhenotype(genes=2, total_umis=10, n_cells=2)"
@@ -221,7 +223,7 @@ def test_the_markers_may_be_a_typed_gap_and_only_with_one() -> None:
             {"feature_universe_sha256": "ABC"},
             "feature_universe_sha256 must be 64 lowercase hex digits",
         ),
-        ({"measurement_type": "  "}, "measurement_type cannot be blank"),
+        ({"measurement_type": "  "}, "Input should be 'scrnaseq_umi_count'"),
     ],
 )
 def test_the_phenotype_refuses_inconsistent_counts(
@@ -289,3 +291,38 @@ def test_the_family_is_registered_under_one_type_tag() -> None:
         EXPERIMENT_REFERENCE_TYPE_MAP["pseudobulk_umi_count"]
         is PseudobulkUmiCountExperimentReference
     )
+
+
+def test_one_leaf_one_tag_and_the_designs_diverge_above_it() -> None:
+    """Jackson 2020 and Boocock 2025 are one physical measurement, so one leaf and tag.
+
+    Both releases are 10x Chromium 3' UMI counts: the experiment pairs differ (pooled
+    TF-deletion strains, haplotype-mosaic segregants) and both hold this leaf, which
+    admits exactly one ``measurement_type``. Summing a strain's cells is analysis that
+    ``n_cells`` records, so the tag Jackson wrote before the unification is refused.
+    """
+    field = SingleCellExpressionPhenotype.model_fields["measurement_type"]
+    assert get_args(field.annotation) == ("scrnaseq_umi_count",)
+    assert field.default == "scrnaseq_umi_count"
+    for experiment in (PseudobulkUmiCountExperiment, SegregantExpressionExperiment):
+        assert (
+            experiment.model_fields["phenotype"].annotation
+            is SingleCellExpressionPhenotype
+        )
+    for reference in (
+        PseudobulkUmiCountExperimentReference,
+        SegregantExpressionExperimentReference,
+    ):
+        assert (
+            reference.model_fields["phenotype_reference"].annotation
+            is SingleCellExpressionPhenotype
+        )
+    dumped = _phenotype().model_dump()
+    assert dumped["measurement_type"] == "scrnaseq_umi_count"
+    del dumped["measurement_type"]
+    defaulted = SingleCellExpressionPhenotype.model_validate(dumped)
+    assert defaulted.measurement_type == "scrnaseq_umi_count"
+    assert defaulted == _phenotype()
+    with pytest.raises(ValidationError) as caught:
+        _phenotype(measurement_type="scrnaseq_pseudobulk_umi_count")
+    assert "Input should be 'scrnaseq_umi_count'" in str(caught.value)

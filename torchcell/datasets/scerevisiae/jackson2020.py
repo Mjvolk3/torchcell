@@ -36,6 +36,9 @@ it keeps the per-cell barcodes and UMI totals, and the two cassette transcripts 
 the genes. Each cell's library is its release ``Condition`` (the paper's "11 independent
 single-cell sequencing batches, each corresponding to a single shake flask"), and the
 release assigns no cell-cycle stage, so ``cell_cycle_stage_counts`` is a typed gap.
+``measurement_type`` is the leaf's one tag, ``scrnaseq_umi_count``: the chemistry is the
+10x Chromium 3' kit (``CHEMISTRY_QUOTE``), the same physical measurement as Boocock 2025
+and N'Guessan 2025, and the per-strain sum is analysis that ``n_cells`` records.
 
 REFERENCE. One per condition: the six HO-deletion control strains of that flask, their
 cells summed ("six biological replicates of the wild-type control in which we deleted
@@ -1078,7 +1081,6 @@ def read_release(
 # --------------------------------------------------------------------------- #
 # Records
 # --------------------------------------------------------------------------- #
-MEASUREMENT_TYPE = "scrnaseq_pseudobulk_umi_count"
 #: The release labels no cell with a cell-cycle stage: its five metadata columns are
 #: ``META_COLUMNS``, and the paper's cell-cycle reading (Figure 3) clusters cells by
 #: marker-gene expression without releasing a per-cell label.
@@ -1116,7 +1118,6 @@ def pseudobulk_phenotype(
         cell_barcodes=list(entry.cell_barcodes),
         cell_libraries=list(entry.cell_libraries),
         cell_total_umis=list(entry.cell_total_umis),
-        measurement_type=MEASUREMENT_TYPE,
         provenance_gaps=[CELL_CYCLE_GAP],
     )
 

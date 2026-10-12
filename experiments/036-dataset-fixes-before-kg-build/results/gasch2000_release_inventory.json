@@ -1,0 +1,1529 @@
+{
+  "release": {
+    "path": "data/complete_dataset.txt",
+    "sha256": "3050664e0deba976b70b954676675cce74d3288198d850abb6fb123bac58daa7",
+    "n_genes": 6152,
+    "n_array_columns": 173,
+    "n_values": 1032274
+  },
+  "by_reference_kind": {
+    "same_culture_before_change": {
+      "columns": 121,
+      "values": 717347
+    },
+    "reference_pool": {
+      "columns": 35,
+      "values": 212118
+    },
+    "unresolved": {
+      "columns": 3,
+      "values": 18066
+    },
+    "other_publication": {
+      "columns": 7,
+      "values": 41898
+    },
+    "other_culture": {
+      "columns": 7,
+      "values": 42845
+    }
+  },
+  "pool_anchor_arrays": {
+    "Heat Shock 000 minutes hs-2": {
+      "n_values": 6108,
+      "n_zero": 91,
+      "mean_abs": 0.4428880157170923
+    },
+    "dtt 000 min  dtt-2": {
+      "n_values": 6039,
+      "n_zero": 112,
+      "mean_abs": 0.4739029640668985
+    },
+    "YP glucose vs reference pool car-2": {
+      "n_values": 6131,
+      "n_zero": 170,
+      "mean_abs": 0.46728755504811614
+    },
+    "steady state 33 dec C ct-2": {
+      "n_values": 6104,
+      "n_zero": 122,
+      "mean_abs": 0.32366317169069464
+    }
+  },
+  "series": [
+    {
+      "series": "hs-1",
+      "header": "^Heat Shock \\d+ minutes hs-1$",
+      "reference_kind": "same_culture_before_change",
+      "source": "methods",
+      "quote": "isolated from the unstressed, asynchronous culture was labeled with Cy3-dUTP, and",
+      "note": "release labels 5, 10, 15, 20, 30, 40, 60, 80 min; the methods list 5, 10, 15, 20, 30, 40, 50, and 60 minutes",
+      "n_columns": 8
+    },
+    {
+      "series": "hs-2",
+      "header": "^Heat Shock \\d+ ?(minutes|inutes)\\s+hs-2$",
+      "reference_kind": "reference_pool",
+      "source": "methods",
+      "quote": "pool was prepared by combining an equal mass of total RNA from each sample, and this",
+      "note": "",
+      "n_columns": 7
+    },
+    {
+      "series": "37C to 25C",
+      "header": "^37C to 25C shock - \\d+ min$",
+      "reference_kind": "same_culture_before_change",
+      "source": "methods",
+      "quote": "an aliquot was frozen for use as the reference sample",
+      "note": "",
+      "n_columns": 5
+    },
+    {
+      "series": "variable heat to 37C",
+      "header": "^heat shock \\d+ to 37, 20 minutes$",
+      "reference_kind": "same_culture_before_change",
+      "source": "methods",
+      "quote": "Half of the culture was collected to serve as the unstressed",
+      "note": "",
+      "n_columns": 5
+    },
+    {
+      "series": "29C to 33C",
+      "header": "^29C to 33C - \\d+ minutes$",
+      "reference_kind": "same_culture_before_change",
+      "source": "methods",
+      "quote": "isolated from the unstressed, asynchronous culture was labeled with Cy3-dUTP, and",
+      "note": "",
+      "n_columns": 3
+    },
+    {
+      "series": "33C vs 30C",
+      "header": "^33C vs\\. 30C - 90 minutes$",
+      "reference_kind": "unresolved",
+      "source": "methods",
+      "quote": "media at 33oC, and samples were collected at 5, 15, 30 minutes.",
+      "note": "the header names a 30 C reference; the series it sits in starts at 29 C and the methods sample it at 5, 15 and 30 minutes only",
+      "n_columns": 1
+    },
+    {
+      "series": "29C sorbitol to 33C sorbitol",
+      "header": "^29C \\+1M sorbitol to 33C \\+ 1M sorbitol - \\d+ minutes$",
+      "reference_kind": "same_culture_before_change",
+      "source": "methods",
+      "quote": "isolated from the unstressed, asynchronous culture was labeled with Cy3-dUTP, and",
+      "note": "",
+      "n_columns": 3
+    },
+    {
+      "series": "29C sorbitol to 33C no sorbitol",
+      "header": "^29C \\+1M sorbitol to 33C \\+ \\*NO sorbitol - \\d+ minutes$",
+      "reference_kind": "same_culture_before_change",
+      "source": "methods",
+      "quote": "isolated from the unstressed, asynchronous culture was labeled with Cy3-dUTP, and",
+      "note": "",
+      "n_columns": 3
+    },
+    {
+      "series": "H2O2 constant",
+      "header": "^constant 0\\.32 mM H2O2 \\(\\d+ min\\) (redo|rescan)$",
+      "reference_kind": "same_culture_before_change",
+      "source": "methods",
+      "quote": "Following the removal of 100 mL as a",
+      "note": "",
+      "n_columns": 10
+    },
+    {
+      "series": "menadione",
+      "header": "^1 ?mM Menadione \\(\\d+ min\\) ?redo$",
+      "reference_kind": "same_culture_before_change",
+      "source": "methods",
+      "quote": "isolated from the unstressed, asynchronous culture was labeled with Cy3-dUTP, and",
+      "note": "",
+      "n_columns": 9
+    },
+    {
+      "series": "dtt-1",
+      "header": "^2\\.5mM DTT \\d+ min dtt-1$",
+      "reference_kind": "same_culture_before_change",
+      "source": "methods",
+      "quote": "isolated from the unstressed, asynchronous culture was labeled with Cy3-dUTP, and",
+      "note": "",
+      "n_columns": 8
+    },
+    {
+      "series": "dtt-2",
+      "header": "^dtt \\d+ min\\s+dtt-2$",
+      "reference_kind": "reference_pool",
+      "source": "methods",
+      "quote": "Cy5-dUTP and compared to a reference pool, consisting of equal mass of total RNA from",
+      "note": "",
+      "n_columns": 7
+    },
+    {
+      "series": "diamide",
+      "header": "^1\\.5 mM diamide \\(\\d+ min\\)$",
+      "reference_kind": "same_culture_before_change",
+      "source": "methods",
+      "quote": "isolated from the unstressed, asynchronous culture was labeled with Cy3-dUTP, and",
+      "note": "",
+      "n_columns": 8
+    },
+    {
+      "series": "hyper-osmotic",
+      "header": "^1M sorbitol - \\d+ min$",
+      "reference_kind": "same_culture_before_change",
+      "source": "methods",
+      "quote": "isolated from the unstressed, asynchronous culture was labeled with Cy3-dUTP, and",
+      "note": "",
+      "n_columns": 7
+    },
+    {
+      "series": "hypo-osmotic",
+      "header": "^Hypo-osmotic shock - \\d+ min$",
+      "reference_kind": "same_culture_before_change",
+      "source": "methods",
+      "quote": "isolated from the unstressed, asynchronous culture was labeled with Cy3-dUTP, and",
+      "note": "",
+      "n_columns": 5
+    },
+    {
+      "series": "hypo-osmotic steady state",
+      "header": "^steady-state 1M sorbitol$",
+      "reference_kind": "unresolved",
+      "source": "methods",
+      "quote": "sorbitol were also collected and resuspended in identical media, containing 1 M sorbitol.",
+      "note": "the array list calls it 'hypo-osmotic steady-state'; the methods describe a handling control in identical sorbitol medium, and neither names its reference",
+      "n_columns": 1
+    },
+    {
+      "series": "amino acid starvation",
+      "header": "^aa starv [\\d.]+ h$",
+      "reference_kind": "same_culture_before_change",
+      "source": "methods",
+      "quote": "isolated from the unstressed, asynchronous culture was labeled with Cy3-dUTP, and",
+      "note": "",
+      "n_columns": 5
+    },
+    {
+      "series": "nitrogen depletion",
+      "header": "^Nitrogen Depletion [\\d]+ (min\\.|h|d)$",
+      "reference_kind": "same_culture_before_change",
+      "source": "methods",
+      "quote": "isolated from the unstressed, asynchronous culture was labeled with Cy3-dUTP, and",
+      "note": "",
+      "n_columns": 10
+    },
+    {
+      "series": "diauxic shift",
+      "header": "^(Diauxic Shift Timecourse - 0 h|diauxic shift timecourse ?[\\d.]+( h)?)$",
+      "reference_kind": "other_publication",
+      "source": "paper",
+      "quote": "along with previously-published data (DeRisi et al., 1997)",
+      "note": "",
+      "n_columns": 7
+    },
+    {
+      "series": "ypd-2",
+      "header": "^YPD \\d+ (h|d)\\s+ypd-2$",
+      "reference_kind": "same_culture_before_change",
+      "source": "methods",
+      "quote": "collected to serve as the time = 0 reference.",
+      "note": "",
+      "n_columns": 10
+    },
+    {
+      "series": "ypd-1",
+      "header": "^YPD stationary phase \\d+ (h|d) ypd-1$",
+      "reference_kind": "same_culture_before_change",
+      "source": "methods",
+      "quote": "collected to serve as the time = 0 reference.",
+      "note": "release labels run to 28 d; the methods list 2 h to 5 d",
+      "n_columns": 12
+    },
+    {
+      "series": "mutant heat",
+      "header": "^DBY.*(37degree|37degrees).*$",
+      "reference_kind": "same_culture_before_change",
+      "source": "methods",
+      "quote": "isolated from the unstressed, asynchronous culture was labeled with Cy3-dUTP, and",
+      "note": "one msn2 msn4 array is labeled '(real strain)' and its partner is not",
+      "n_columns": 5
+    },
+    {
+      "series": "mutant H2O2",
+      "header": "^DBY.*H2O2.*$",
+      "reference_kind": "same_culture_before_change",
+      "source": "methods",
+      "quote": "to OD600  0.5, and 50 mL was removed as a reference.",
+      "note": "",
+      "n_columns": 5
+    },
+    {
+      "series": "MSN2 MSN4 overexpression",
+      "header": "^Msn[24] overexpression( \\(repeat\\))?$",
+      "reference_kind": "other_culture",
+      "source": "methods",
+      "quote": "Cy5-dUTP and compared to total RNA from control cells harboring pRS416.",
+      "note": "",
+      "n_columns": 2
+    },
+    {
+      "series": "YAP1 overexpression",
+      "header": "^YAP1 overexpression$",
+      "reference_kind": "unresolved",
+      "source": "methods",
+      "quote": "Overexpression constructs pRS-MSN2 and pRS-MSN4 as well as the parent vector",
+      "note": "the methods and Table 1 describe MSN2 and MSN4 constructs only",
+      "n_columns": 1
+    },
+    {
+      "series": "car-1",
+      "header": "^\\w+ vs\\. reference pool\\s+car-1$",
+      "reference_kind": "reference_pool",
+      "source": "methods",
+      "quote": "dUTP.  For both experiments, a reference pool was created by combining an equal mass",
+      "note": "",
+      "n_columns": 6
+    },
+    {
+      "series": "car-2",
+      "header": "^YP \\w+ vs reference pool car-2$",
+      "reference_kind": "reference_pool",
+      "source": "methods",
+      "quote": "dUTP.  For both experiments, a reference pool was created by combining an equal mass",
+      "note": "",
+      "n_columns": 7
+    },
+    {
+      "series": "ct-1",
+      "header": "^\\d+ deg growth ct-1$",
+      "reference_kind": "other_culture",
+      "source": "methods",
+      "quote": "the 33oC sample was used as a reference and labeled in Cy3-dUTP while all other",
+      "note": "",
+      "n_columns": 5
+    },
+    {
+      "series": "ct-2",
+      "header": "^steady state \\d+ dec C ct-2( \\(repeat hyb\\))?$",
+      "reference_kind": "reference_pool",
+      "source": "methods",
+      "quote": "pool was created by mixing an equal mass of total RNA from each sample, and this pool",
+      "note": "",
+      "n_columns": 8
+    }
+  ],
+  "columns": [
+    {
+      "index": 3,
+      "header": "Heat Shock 05 minutes hs-1",
+      "series": "hs-1",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 5259
+    },
+    {
+      "index": 4,
+      "header": "Heat Shock 10 minutes hs-1",
+      "series": "hs-1",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 5448
+    },
+    {
+      "index": 5,
+      "header": "Heat Shock 15 minutes hs-1",
+      "series": "hs-1",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 5652
+    },
+    {
+      "index": 6,
+      "header": "Heat Shock 20 minutes hs-1",
+      "series": "hs-1",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 5372
+    },
+    {
+      "index": 7,
+      "header": "Heat Shock 30 minutes hs-1",
+      "series": "hs-1",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 5369
+    },
+    {
+      "index": 8,
+      "header": "Heat Shock 40 minutes hs-1",
+      "series": "hs-1",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 4847
+    },
+    {
+      "index": 9,
+      "header": "Heat Shock 60 minutes hs-1",
+      "series": "hs-1",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 5426
+    },
+    {
+      "index": 10,
+      "header": "Heat Shock 80 minutes hs-1",
+      "series": "hs-1",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 4768
+    },
+    {
+      "index": 11,
+      "header": "Heat Shock 000 minutes hs-2",
+      "series": "hs-2",
+      "reference_kind": "reference_pool",
+      "n_values": 6108
+    },
+    {
+      "index": 12,
+      "header": "Heat Shock 000 minutes  hs-2",
+      "series": "hs-2",
+      "reference_kind": "reference_pool",
+      "n_values": 6079
+    },
+    {
+      "index": 13,
+      "header": "Heat Shock 000 minutes  hs-2",
+      "series": "hs-2",
+      "reference_kind": "reference_pool",
+      "n_values": 6102
+    },
+    {
+      "index": 14,
+      "header": "Heat Shock 005 minutes  hs-2",
+      "series": "hs-2",
+      "reference_kind": "reference_pool",
+      "n_values": 6127
+    },
+    {
+      "index": 15,
+      "header": "Heat Shock 015 minutes  hs-2",
+      "series": "hs-2",
+      "reference_kind": "reference_pool",
+      "n_values": 6124
+    },
+    {
+      "index": 16,
+      "header": "Heat Shock 030inutes  hs-2",
+      "series": "hs-2",
+      "reference_kind": "reference_pool",
+      "n_values": 6133
+    },
+    {
+      "index": 17,
+      "header": "Heat Shock 060 minutes  hs-2",
+      "series": "hs-2",
+      "reference_kind": "reference_pool",
+      "n_values": 6124
+    },
+    {
+      "index": 18,
+      "header": "37C to 25C shock - 15 min",
+      "series": "37C to 25C",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6062
+    },
+    {
+      "index": 19,
+      "header": "37C to 25C shock - 30 min",
+      "series": "37C to 25C",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6107
+    },
+    {
+      "index": 20,
+      "header": "37C to 25C shock - 45 min",
+      "series": "37C to 25C",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6118
+    },
+    {
+      "index": 21,
+      "header": "37C to 25C shock - 60 min",
+      "series": "37C to 25C",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6121
+    },
+    {
+      "index": 22,
+      "header": "37C to 25C shock - 90 min",
+      "series": "37C to 25C",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6126
+    },
+    {
+      "index": 23,
+      "header": "heat shock 17 to 37, 20 minutes",
+      "series": "variable heat to 37C",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6082
+    },
+    {
+      "index": 24,
+      "header": "heat shock 21 to 37, 20 minutes",
+      "series": "variable heat to 37C",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6074
+    },
+    {
+      "index": 25,
+      "header": "heat shock 25 to 37, 20 minutes",
+      "series": "variable heat to 37C",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6108
+    },
+    {
+      "index": 26,
+      "header": "heat shock 29 to 37, 20 minutes",
+      "series": "variable heat to 37C",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6094
+    },
+    {
+      "index": 27,
+      "header": "heat shock 33 to 37, 20 minutes",
+      "series": "variable heat to 37C",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6105
+    },
+    {
+      "index": 28,
+      "header": "29C to 33C - 5 minutes",
+      "series": "29C to 33C",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 5853
+    },
+    {
+      "index": 29,
+      "header": "29C to 33C - 15 minutes",
+      "series": "29C to 33C",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6090
+    },
+    {
+      "index": 30,
+      "header": "29C to 33C - 30 minutes",
+      "series": "29C to 33C",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6031
+    },
+    {
+      "index": 31,
+      "header": "33C vs. 30C - 90 minutes",
+      "series": "33C vs 30C",
+      "reference_kind": "unresolved",
+      "n_values": 6117
+    },
+    {
+      "index": 32,
+      "header": "29C +1M sorbitol to 33C + 1M sorbitol - 5 minutes",
+      "series": "29C sorbitol to 33C sorbitol",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6144
+    },
+    {
+      "index": 33,
+      "header": "29C +1M sorbitol to 33C + 1M sorbitol - 15 minutes",
+      "series": "29C sorbitol to 33C sorbitol",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6123
+    },
+    {
+      "index": 34,
+      "header": "29C +1M sorbitol to 33C + 1M sorbitol - 30 minutes",
+      "series": "29C sorbitol to 33C sorbitol",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6126
+    },
+    {
+      "index": 35,
+      "header": "29C +1M sorbitol to 33C + *NO sorbitol - 5 minutes",
+      "series": "29C sorbitol to 33C no sorbitol",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6079
+    },
+    {
+      "index": 36,
+      "header": "29C +1M sorbitol to 33C + *NO sorbitol - 15 minutes",
+      "series": "29C sorbitol to 33C no sorbitol",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6135
+    },
+    {
+      "index": 37,
+      "header": "29C +1M sorbitol to 33C + *NO sorbitol - 30 minutes",
+      "series": "29C sorbitol to 33C no sorbitol",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6119
+    },
+    {
+      "index": 38,
+      "header": "constant 0.32 mM H2O2 (10 min) redo",
+      "series": "H2O2 constant",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 5897
+    },
+    {
+      "index": 39,
+      "header": "constant 0.32 mM H2O2 (20 min) redo",
+      "series": "H2O2 constant",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 5913
+    },
+    {
+      "index": 40,
+      "header": "constant 0.32 mM H2O2 (30 min) redo",
+      "series": "H2O2 constant",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 5922
+    },
+    {
+      "index": 41,
+      "header": "constant 0.32 mM H2O2 (40 min) rescan",
+      "series": "H2O2 constant",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 5643
+    },
+    {
+      "index": 42,
+      "header": "constant 0.32 mM H2O2 (50 min) redo",
+      "series": "H2O2 constant",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 5991
+    },
+    {
+      "index": 43,
+      "header": "constant 0.32 mM H2O2 (60 min) redo",
+      "series": "H2O2 constant",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 5956
+    },
+    {
+      "index": 44,
+      "header": "constant 0.32 mM H2O2 (80 min) redo",
+      "series": "H2O2 constant",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 5915
+    },
+    {
+      "index": 45,
+      "header": "constant 0.32 mM H2O2 (100 min) redo",
+      "series": "H2O2 constant",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 5911
+    },
+    {
+      "index": 46,
+      "header": "constant 0.32 mM H2O2 (120 min) redo",
+      "series": "H2O2 constant",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 5891
+    },
+    {
+      "index": 47,
+      "header": "constant 0.32 mM H2O2 (160 min) redo",
+      "series": "H2O2 constant",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 5903
+    },
+    {
+      "index": 48,
+      "header": "1 mM Menadione (10 min)redo",
+      "series": "menadione",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 5840
+    },
+    {
+      "index": 49,
+      "header": "1 mM Menadione (20 min) redo",
+      "series": "menadione",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 5972
+    },
+    {
+      "index": 50,
+      "header": "1 mM Menadione (30 min) redo",
+      "series": "menadione",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6021
+    },
+    {
+      "index": 51,
+      "header": "1mM Menadione (40 min) redo",
+      "series": "menadione",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 5988
+    },
+    {
+      "index": 52,
+      "header": "1 mM Menadione (50 min)redo",
+      "series": "menadione",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6003
+    },
+    {
+      "index": 53,
+      "header": "1 mM Menadione (80 min) redo",
+      "series": "menadione",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 5991
+    },
+    {
+      "index": 54,
+      "header": "1 mM Menadione (105 min) redo",
+      "series": "menadione",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6001
+    },
+    {
+      "index": 55,
+      "header": "1 mM Menadione (120 min)redo",
+      "series": "menadione",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 5847
+    },
+    {
+      "index": 56,
+      "header": "1 mM Menadione (160 min) redo",
+      "series": "menadione",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 5906
+    },
+    {
+      "index": 57,
+      "header": "2.5mM DTT 005 min dtt-1",
+      "series": "dtt-1",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 5150
+    },
+    {
+      "index": 58,
+      "header": "2.5mM DTT 015 min dtt-1",
+      "series": "dtt-1",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 4990
+    },
+    {
+      "index": 59,
+      "header": "2.5mM DTT 030 min dtt-1",
+      "series": "dtt-1",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 4839
+    },
+    {
+      "index": 60,
+      "header": "2.5mM DTT 045 min dtt-1",
+      "series": "dtt-1",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 5555
+    },
+    {
+      "index": 61,
+      "header": "2.5mM DTT 060 min dtt-1",
+      "series": "dtt-1",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 5214
+    },
+    {
+      "index": 62,
+      "header": "2.5mM DTT 090 min dtt-1",
+      "series": "dtt-1",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 5561
+    },
+    {
+      "index": 63,
+      "header": "2.5mM DTT 120 min dtt-1",
+      "series": "dtt-1",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 5837
+    },
+    {
+      "index": 64,
+      "header": "2.5mM DTT 180 min dtt-1",
+      "series": "dtt-1",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 5574
+    },
+    {
+      "index": 65,
+      "header": "dtt 000 min  dtt-2",
+      "series": "dtt-2",
+      "reference_kind": "reference_pool",
+      "n_values": 6039
+    },
+    {
+      "index": 66,
+      "header": "dtt 015 min dtt-2",
+      "series": "dtt-2",
+      "reference_kind": "reference_pool",
+      "n_values": 6034
+    },
+    {
+      "index": 67,
+      "header": "dtt 030 min  dtt-2",
+      "series": "dtt-2",
+      "reference_kind": "reference_pool",
+      "n_values": 6062
+    },
+    {
+      "index": 68,
+      "header": "dtt 060 min dtt-2",
+      "series": "dtt-2",
+      "reference_kind": "reference_pool",
+      "n_values": 6015
+    },
+    {
+      "index": 69,
+      "header": "dtt 120 min dtt-2",
+      "series": "dtt-2",
+      "reference_kind": "reference_pool",
+      "n_values": 6002
+    },
+    {
+      "index": 70,
+      "header": "dtt 240 min dtt-2",
+      "series": "dtt-2",
+      "reference_kind": "reference_pool",
+      "n_values": 6048
+    },
+    {
+      "index": 71,
+      "header": "dtt 480 min dtt-2",
+      "series": "dtt-2",
+      "reference_kind": "reference_pool",
+      "n_values": 5995
+    },
+    {
+      "index": 72,
+      "header": "1.5 mM diamide (5 min)",
+      "series": "diamide",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 5993
+    },
+    {
+      "index": 73,
+      "header": "1.5 mM diamide (10 min)",
+      "series": "diamide",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6066
+    },
+    {
+      "index": 74,
+      "header": "1.5 mM diamide (20 min)",
+      "series": "diamide",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6055
+    },
+    {
+      "index": 75,
+      "header": "1.5 mM diamide (30 min)",
+      "series": "diamide",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6063
+    },
+    {
+      "index": 76,
+      "header": "1.5 mM diamide (40 min)",
+      "series": "diamide",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6056
+    },
+    {
+      "index": 77,
+      "header": "1.5 mM diamide (50 min)",
+      "series": "diamide",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6039
+    },
+    {
+      "index": 78,
+      "header": "1.5 mM diamide (60 min)",
+      "series": "diamide",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6023
+    },
+    {
+      "index": 79,
+      "header": "1.5 mM diamide (90 min)",
+      "series": "diamide",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 5992
+    },
+    {
+      "index": 80,
+      "header": "1M sorbitol - 5 min",
+      "series": "hyper-osmotic",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6051
+    },
+    {
+      "index": 81,
+      "header": "1M sorbitol - 15 min",
+      "series": "hyper-osmotic",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6086
+    },
+    {
+      "index": 82,
+      "header": "1M sorbitol - 30 min",
+      "series": "hyper-osmotic",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6080
+    },
+    {
+      "index": 83,
+      "header": "1M sorbitol - 45 min ",
+      "series": "hyper-osmotic",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6097
+    },
+    {
+      "index": 84,
+      "header": "1M sorbitol - 60 min",
+      "series": "hyper-osmotic",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6093
+    },
+    {
+      "index": 85,
+      "header": "1M sorbitol - 90 min",
+      "series": "hyper-osmotic",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6055
+    },
+    {
+      "index": 86,
+      "header": "1M sorbitol - 120 min",
+      "series": "hyper-osmotic",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6069
+    },
+    {
+      "index": 87,
+      "header": "Hypo-osmotic shock - 5 min",
+      "series": "hypo-osmotic",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6125
+    },
+    {
+      "index": 88,
+      "header": "Hypo-osmotic shock - 15 min",
+      "series": "hypo-osmotic",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6123
+    },
+    {
+      "index": 89,
+      "header": "Hypo-osmotic shock - 30 min",
+      "series": "hypo-osmotic",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6106
+    },
+    {
+      "index": 90,
+      "header": "Hypo-osmotic shock - 45 min",
+      "series": "hypo-osmotic",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6105
+    },
+    {
+      "index": 91,
+      "header": "Hypo-osmotic shock - 60 min",
+      "series": "hypo-osmotic",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6118
+    },
+    {
+      "index": 92,
+      "header": "steady-state 1M sorbitol",
+      "series": "hypo-osmotic steady state",
+      "reference_kind": "unresolved",
+      "n_values": 5936
+    },
+    {
+      "index": 93,
+      "header": "aa starv 0.5 h",
+      "series": "amino acid starvation",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6021
+    },
+    {
+      "index": 94,
+      "header": "aa starv 1 h",
+      "series": "amino acid starvation",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6049
+    },
+    {
+      "index": 95,
+      "header": "aa starv 2 h",
+      "series": "amino acid starvation",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6034
+    },
+    {
+      "index": 96,
+      "header": "aa starv 4 h",
+      "series": "amino acid starvation",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6026
+    },
+    {
+      "index": 97,
+      "header": "aa starv 6 h",
+      "series": "amino acid starvation",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6029
+    },
+    {
+      "index": 98,
+      "header": "Nitrogen Depletion 30 min.",
+      "series": "nitrogen depletion",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6084
+    },
+    {
+      "index": 99,
+      "header": "Nitrogen Depletion 1 h",
+      "series": "nitrogen depletion",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6080
+    },
+    {
+      "index": 100,
+      "header": "Nitrogen Depletion 2 h",
+      "series": "nitrogen depletion",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6080
+    },
+    {
+      "index": 101,
+      "header": "Nitrogen Depletion 4 h",
+      "series": "nitrogen depletion",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6052
+    },
+    {
+      "index": 102,
+      "header": "Nitrogen Depletion 8 h",
+      "series": "nitrogen depletion",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6062
+    },
+    {
+      "index": 103,
+      "header": "Nitrogen Depletion 12 h",
+      "series": "nitrogen depletion",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6063
+    },
+    {
+      "index": 104,
+      "header": "Nitrogen Depletion 1 d",
+      "series": "nitrogen depletion",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6031
+    },
+    {
+      "index": 105,
+      "header": "Nitrogen Depletion 2 d",
+      "series": "nitrogen depletion",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6044
+    },
+    {
+      "index": 106,
+      "header": "Nitrogen Depletion 3 d",
+      "series": "nitrogen depletion",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6004
+    },
+    {
+      "index": 107,
+      "header": "Nitrogen Depletion 5 d",
+      "series": "nitrogen depletion",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 5993
+    },
+    {
+      "index": 108,
+      "header": "Diauxic Shift Timecourse - 0 h",
+      "series": "diauxic shift",
+      "reference_kind": "other_publication",
+      "n_values": 6011
+    },
+    {
+      "index": 109,
+      "header": "diauxic shift timecourse 9.5 h",
+      "series": "diauxic shift",
+      "reference_kind": "other_publication",
+      "n_values": 5983
+    },
+    {
+      "index": 110,
+      "header": "diauxic shift timecourse11.5 ",
+      "series": "diauxic shift",
+      "reference_kind": "other_publication",
+      "n_values": 5951
+    },
+    {
+      "index": 111,
+      "header": "diauxic shift timecourse 13.5 h",
+      "series": "diauxic shift",
+      "reference_kind": "other_publication",
+      "n_values": 6002
+    },
+    {
+      "index": 112,
+      "header": "diauxic shift timecourse 15.5 h",
+      "series": "diauxic shift",
+      "reference_kind": "other_publication",
+      "n_values": 5987
+    },
+    {
+      "index": 113,
+      "header": "diauxic shift timecourse 18.5 h",
+      "series": "diauxic shift",
+      "reference_kind": "other_publication",
+      "n_values": 6013
+    },
+    {
+      "index": 114,
+      "header": "diauxic shift timecourse 20.5 h",
+      "series": "diauxic shift",
+      "reference_kind": "other_publication",
+      "n_values": 5951
+    },
+    {
+      "index": 115,
+      "header": "YPD 2 h ypd-2",
+      "series": "ypd-2",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6020
+    },
+    {
+      "index": 116,
+      "header": "YPD 4 h ypd-2",
+      "series": "ypd-2",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6016
+    },
+    {
+      "index": 117,
+      "header": "YPD 6 h ypd-2",
+      "series": "ypd-2",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 5981
+    },
+    {
+      "index": 118,
+      "header": "YPD 8 h ypd-2",
+      "series": "ypd-2",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6028
+    },
+    {
+      "index": 119,
+      "header": "YPD 10 h  ypd-2",
+      "series": "ypd-2",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6026
+    },
+    {
+      "index": 120,
+      "header": "YPD 12 h ypd-2",
+      "series": "ypd-2",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6024
+    },
+    {
+      "index": 121,
+      "header": "YPD 1 d ypd-2",
+      "series": "ypd-2",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6023
+    },
+    {
+      "index": 122,
+      "header": "YPD 2 d ypd-2",
+      "series": "ypd-2",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6014
+    },
+    {
+      "index": 123,
+      "header": "YPD 3 d ypd-2",
+      "series": "ypd-2",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6017
+    },
+    {
+      "index": 124,
+      "header": "YPD 5 d ypd-2",
+      "series": "ypd-2",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 5978
+    },
+    {
+      "index": 125,
+      "header": "YPD stationary phase 2 h ypd-1",
+      "series": "ypd-1",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6075
+    },
+    {
+      "index": 126,
+      "header": "YPD stationary phase 4 h ypd-1",
+      "series": "ypd-1",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6090
+    },
+    {
+      "index": 127,
+      "header": "YPD stationary phase 8 h ypd-1",
+      "series": "ypd-1",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 5429
+    },
+    {
+      "index": 128,
+      "header": "YPD stationary phase 12 h ypd-1",
+      "series": "ypd-1",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6094
+    },
+    {
+      "index": 129,
+      "header": "YPD stationary phase 1 d ypd-1",
+      "series": "ypd-1",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6092
+    },
+    {
+      "index": 130,
+      "header": "YPD stationary phase 2 d ypd-1",
+      "series": "ypd-1",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6057
+    },
+    {
+      "index": 131,
+      "header": "YPD stationary phase 3 d ypd-1",
+      "series": "ypd-1",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6088
+    },
+    {
+      "index": 132,
+      "header": "YPD stationary phase 5 d ypd-1",
+      "series": "ypd-1",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 5944
+    },
+    {
+      "index": 133,
+      "header": "YPD stationary phase 7 d ypd-1",
+      "series": "ypd-1",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6003
+    },
+    {
+      "index": 134,
+      "header": "YPD stationary phase 13 d ypd-1",
+      "series": "ypd-1",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 5109
+    },
+    {
+      "index": 135,
+      "header": "YPD stationary phase 22 d ypd-1",
+      "series": "ypd-1",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 5988
+    },
+    {
+      "index": 136,
+      "header": "YPD stationary phase 28 d ypd-1",
+      "series": "ypd-1",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 5949
+    },
+    {
+      "index": 137,
+      "header": "DBY7286 37degree heat - 20 min",
+      "series": "mutant heat",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6083
+    },
+    {
+      "index": 138,
+      "header": "DBYmsn2-4- 37degree heat - 20 min",
+      "series": "mutant heat",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6125
+    },
+    {
+      "index": 139,
+      "header": "DBYmsn2/4 (real strain) + 37degrees (20 min)",
+      "series": "mutant heat",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6150
+    },
+    {
+      "index": 140,
+      "header": "DBYyap1- 37degree heat - 20 min (redo)",
+      "series": "mutant heat",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6086
+    },
+    {
+      "index": 141,
+      "header": "DBYyap1 + 37degree heat (repeat)",
+      "series": "mutant heat",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6124
+    },
+    {
+      "index": 142,
+      "header": "DBY7286 + 0.3 mM H2O2 (20 min)",
+      "series": "mutant H2O2",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6136
+    },
+    {
+      "index": 143,
+      "header": "DBYmsn2msn4 (good strain) + 0.32 mM H2O2",
+      "series": "mutant H2O2",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6097
+    },
+    {
+      "index": 144,
+      "header": "DBYmsn2/4 (real strain) + 0.32 mM H2O2 (20 min)",
+      "series": "mutant H2O2",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6151
+    },
+    {
+      "index": 145,
+      "header": "DBYyap1- + 0.3 mM H2O2 (20 min)",
+      "series": "mutant H2O2",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6139
+    },
+    {
+      "index": 146,
+      "header": "DBYyap1 + 0.32 mM H2O2 (20 min)",
+      "series": "mutant H2O2",
+      "reference_kind": "same_culture_before_change",
+      "n_values": 6095
+    },
+    {
+      "index": 147,
+      "header": "Msn2 overexpression (repeat)",
+      "series": "MSN2 MSN4 overexpression",
+      "reference_kind": "other_culture",
+      "n_values": 6139
+    },
+    {
+      "index": 148,
+      "header": "Msn4 overexpression",
+      "series": "MSN2 MSN4 overexpression",
+      "reference_kind": "other_culture",
+      "n_values": 6139
+    },
+    {
+      "index": 149,
+      "header": "YAP1 overexpression",
+      "series": "YAP1 overexpression",
+      "reference_kind": "unresolved",
+      "n_values": 6013
+    },
+    {
+      "index": 150,
+      "header": "ethanol vs. reference pool car-1",
+      "series": "car-1",
+      "reference_kind": "reference_pool",
+      "n_values": 6036
+    },
+    {
+      "index": 151,
+      "header": "galactose vs. reference pool car-1",
+      "series": "car-1",
+      "reference_kind": "reference_pool",
+      "n_values": 5993
+    },
+    {
+      "index": 152,
+      "header": "glucose vs. reference pool car-1",
+      "series": "car-1",
+      "reference_kind": "reference_pool",
+      "n_values": 6097
+    },
+    {
+      "index": 153,
+      "header": "mannose vs. reference pool  car-1",
+      "series": "car-1",
+      "reference_kind": "reference_pool",
+      "n_values": 5988
+    },
+    {
+      "index": 154,
+      "header": "raffinose vs. reference pool car-1",
+      "series": "car-1",
+      "reference_kind": "reference_pool",
+      "n_values": 6067
+    },
+    {
+      "index": 155,
+      "header": "sucrose vs. reference pool car-1",
+      "series": "car-1",
+      "reference_kind": "reference_pool",
+      "n_values": 6008
+    },
+    {
+      "index": 156,
+      "header": "YP ethanol vs reference pool car-2",
+      "series": "car-2",
+      "reference_kind": "reference_pool",
+      "n_values": 6117
+    },
+    {
+      "index": 157,
+      "header": "YP fructose vs reference pool car-2",
+      "series": "car-2",
+      "reference_kind": "reference_pool",
+      "n_values": 6115
+    },
+    {
+      "index": 158,
+      "header": "YP galactose vs reference pool car-2",
+      "series": "car-2",
+      "reference_kind": "reference_pool",
+      "n_values": 6113
+    },
+    {
+      "index": 159,
+      "header": "YP glucose vs reference pool car-2",
+      "series": "car-2",
+      "reference_kind": "reference_pool",
+      "n_values": 6131
+    },
+    {
+      "index": 160,
+      "header": "YP mannose vs reference pool car-2",
+      "series": "car-2",
+      "reference_kind": "reference_pool",
+      "n_values": 6125
+    },
+    {
+      "index": 161,
+      "header": "YP raffinose vs reference pool car-2",
+      "series": "car-2",
+      "reference_kind": "reference_pool",
+      "n_values": 6098
+    },
+    {
+      "index": 162,
+      "header": "YP sucrose vs reference pool car-2",
+      "series": "car-2",
+      "reference_kind": "reference_pool",
+      "n_values": 6123
+    },
+    {
+      "index": 163,
+      "header": "17 deg growth ct-1",
+      "series": "ct-1",
+      "reference_kind": "other_culture",
+      "n_values": 6098
+    },
+    {
+      "index": 164,
+      "header": "21 deg growth ct-1",
+      "series": "ct-1",
+      "reference_kind": "other_culture",
+      "n_values": 6125
+    },
+    {
+      "index": 165,
+      "header": "25 deg growth ct-1",
+      "series": "ct-1",
+      "reference_kind": "other_culture",
+      "n_values": 6120
+    },
+    {
+      "index": 166,
+      "header": "29 deg growth ct-1",
+      "series": "ct-1",
+      "reference_kind": "other_culture",
+      "n_values": 6114
+    },
+    {
+      "index": 167,
+      "header": "37 deg growth ct-1",
+      "series": "ct-1",
+      "reference_kind": "other_culture",
+      "n_values": 6110
+    },
+    {
+      "index": 168,
+      "header": "steady state 15 dec C ct-2",
+      "series": "ct-2",
+      "reference_kind": "reference_pool",
+      "n_values": 6069
+    },
+    {
+      "index": 169,
+      "header": "steady state 17 dec C ct-2",
+      "series": "ct-2",
+      "reference_kind": "reference_pool",
+      "n_values": 6101
+    },
+    {
+      "index": 170,
+      "header": "steady state 21 dec C ct-2",
+      "series": "ct-2",
+      "reference_kind": "reference_pool",
+      "n_values": 6115
+    },
+    {
+      "index": 171,
+      "header": "steady state 25 dec C ct-2",
+      "series": "ct-2",
+      "reference_kind": "reference_pool",
+      "n_values": 6125
+    },
+    {
+      "index": 172,
+      "header": "steady state 29 dec C ct-2",
+      "series": "ct-2",
+      "reference_kind": "reference_pool",
+      "n_values": 6090
+    },
+    {
+      "index": 173,
+      "header": "steady state 33 dec C ct-2",
+      "series": "ct-2",
+      "reference_kind": "reference_pool",
+      "n_values": 6104
+    },
+    {
+      "index": 174,
+      "header": "steady state 36 dec C ct-2",
+      "series": "ct-2",
+      "reference_kind": "reference_pool",
+      "n_values": 6056
+    },
+    {
+      "index": 175,
+      "header": "steady state 36 dec C ct-2 (repeat hyb)",
+      "series": "ct-2",
+      "reference_kind": "reference_pool",
+      "n_values": 5455
+    }
+  ]
+}

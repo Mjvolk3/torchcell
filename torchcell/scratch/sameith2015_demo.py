@@ -10,8 +10,7 @@ Run from the repo root:
 
     PYTHONPATH=$PWD python torchcell/scratch/sameith2015_demo.py
 
-Needs ``DATA_ROOT`` in ``.env`` with the SGD genome and GO data under it; it
-builds (downloading the raw files if absent) or loads the
+Needs ``DATA_ROOT`` in ``.env``; it builds (downloading the raw files if absent) or loads the
 ``dm_microarray_sameith2015`` and ``sm_microarray_sameith2015`` datasets under
 ``DATA_ROOT/data/torchcell``. No GPU.
 """
@@ -26,20 +25,12 @@ from torchcell.datasets.scerevisiae.sameith2015 import (
     DmMicroarraySameith2015Dataset,
     SmMicroarraySameith2015Dataset,
 )
-from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 
 
 def main() -> None:
     """Demonstrate both Sameith2015 datasets (single and double mutants)."""
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
-
-    # Initialize genome for gene name mapping
-    genome = SCerevisiaeGenome(
-        genome_root=osp.join(cast(str, DATA_ROOT), "data/sgd/genome"),
-        go_root=osp.join(cast(str, DATA_ROOT), "data/go"),
-        overwrite=False,
-    )
 
     print("=" * 80)
     print("SAMEITH2015 MICROARRAY EXPRESSION DATASETS DEMO")
@@ -52,7 +43,6 @@ def main() -> None:
 
     dm_dataset = DmMicroarraySameith2015Dataset(
         root=osp.join(cast(str, DATA_ROOT), "data/torchcell/dm_microarray_sameith2015"),
-        genome=genome,
         io_workers=10,
         process_workers=0,  # Use sequential for demo
     )
@@ -91,7 +81,6 @@ def main() -> None:
 
     sm_dataset = SmMicroarraySameith2015Dataset(
         root=osp.join(cast(str, DATA_ROOT), "data/torchcell/sm_microarray_sameith2015"),
-        genome=genome,
         io_workers=10,
         process_workers=0,  # Use sequential for demo
     )

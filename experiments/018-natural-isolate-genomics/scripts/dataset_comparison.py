@@ -48,7 +48,6 @@ from torchcell.datasets.scerevisiae.sameith2015 import (
     DmMicroarraySameith2015Dataset,
     SmMicroarraySameith2015Dataset,
 )
-from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 from torchcell.utils import (
     PANEL_WIDTHS_MM,
     PLOT_PALETTE,
@@ -720,22 +719,14 @@ def panel_decoupling():
 def main():
     logger.info("=" * 80)
     sample = int(os.getenv("SAMPLE_SIZE", "0")) or None
-    # Inject a genome so the Kemmeren loader can resolve alias-only KO names (CDK8,
-    # MED*, ATG*, ...) to systematic ids via the shared R64 reconciler; without it the
-    # loader silently drops those 34 strains (1,484 -> 1,450). Cached roots avoid the
-    # go.obo re-download (upstream 403s).
-    genome = SCerevisiaeGenome(
-        genome_root=osp.join(DATA_ROOT, "data/sgd/genome"),
-        go_root=osp.join(DATA_ROOT, "data/go"),
-        overwrite=False,
-    )
+    # The Kemmeren loader reads no genome (2026.10.12): the GEO titles resolve through
+    # Table S1 and the pinned RELEASE_TITLE_NAMES_WITHOUT_AN_ORF table.
     # process_workers>0: the sequential build path silently loses the LMDB write for
     # this loader (documented); the parallel path materialises processed/lmdb reliably.
     kem = MicroarrayKemmeren2014Dataset(
         root=osp.join(DATA_ROOT, "data/torchcell/microarray_kemmeren2014"),
         io_workers=0,
         process_workers=8,
-        genome=genome,
     )
     sm = SmMicroarraySameith2015Dataset(
         root=osp.join(DATA_ROOT, "data/torchcell/sm_microarray_sameith2015"),

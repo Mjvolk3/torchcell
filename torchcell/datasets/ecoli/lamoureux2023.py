@@ -70,11 +70,23 @@ none); a stated trace-element mixture is a deferred component and a stated selec
 antibiotic a ``selection_agent`` component. The carbon and nitrogen sources vary across the
 compendium, so each is an ``EnvironmentPhysicalPerturbation``; pH is one too; a supplement
 is a ``SmallMoleculePerturbation`` per named compound. Dropped, because the record could
-not say what the sample saw: a base medium with no ``MEDIA_LIBRARY`` key (a free-text
-medium joins nothing, and no mirrored source states those recipes), a non-batch culture
-(``Environment`` has no culture-type slot, so a chemostat would merge with a batch record),
-an unstated oxygen regime, and the one supplement label that names two compounds with one
-dose (``Acetoacetate/LiCl(10mM)``).
+not say what the sample saw: a base medium with no ``MEDIA_LIBRARY`` key to derive from
+(a free-text medium joins nothing, and no mirrored source states those recipes), a
+non-batch culture whose metadata states no dilution rate (a fed-batch culture), an
+unstated oxygen regime (``Environment.aerobicity`` cannot be a typed gap), and the one
+supplement label that names two compounds with one dose (``Acetoacetate/LiCl(10mM)``).
+
+#1045 rows 21 and 24 (2026-10-12). A chemostat whose ``Additional Details`` cell states
+its rate ("chemostat w/ dilution rate 0.31 h^-1") is a record with
+``Environment.dilution_rate_per_hour`` (#753). A ``Base Media`` label that NAMES a
+library medium or a variant of one is a record on a composition-deferred medium that
+derives from that key (``LIBRARY_BASES``: ``01xLB``, ``LB-Miller`` and ``L-broth`` from
+``LB``; ``MOPS`` and ``MOPS w/o KH2PO4`` from ``MOPS_MINIMAL``; ``M9 RDM`` from ``M9``),
+exactly as ``M9`` and ``LB`` always were; a label that names no library medium
+(``CAMHB``, ``RPMI+10%LB``, ``TMA``, ``Medium C``, ``W2``, ``M9P``, ``LB,MOPS``, NM3,
+Gutnick, ...) stays dropped. A blank pH or a blank source cell of a minimal medium (the
+public arm) is a typed gap on the perturbation's ``magnitude`` / ``agent``, not a
+refusal.
 """
 
 from __future__ import annotations
@@ -437,6 +449,8 @@ COL_SAMPLE = "sample_id"
 COL_STUDY = "study"
 COL_PROJECT = "project"
 COL_CONDITION = "condition"
+#: The free-text column a PRECISE-1K chemostat states its dilution rate in.
+COL_DETAILS = "Additional Details"
 COL_FULL_NAME = "full_name"
 COL_REP = "rep_id"
 COL_DESCRIPTION = "Strain Description"
@@ -613,10 +627,11 @@ ENVIRONMENT_RULE_REASONS: dict[EnvironmentRule, str] = {
         "release states its recipe, so the medium would be free text that joins nothing"
     ),
     EnvironmentRule.culture_not_batch: (
-        "a chemostat or fed-batch culture: Environment has no culture-type slot (the "
-        "CultureEnvironment fields do not survive the bacterial experiment's "
-        "Environment-typed slot), so the record would merge with batch records of the "
-        "same medium"
+        "a non-batch culture whose metadata states no dilution rate (a fed-batch "
+        "culture): Environment has no culture-type slot, so the record would merge with "
+        "batch records of the same medium. A chemostat whose 'Additional Details' cell "
+        "states its rate is a record with Environment.dilution_rate_per_hour (#1045 row "
+        "21)"
     ),
     EnvironmentRule.oxygen_regime_not_stated: (
         "the 'Electron Acceptor' cell is blank and the condition does not say "
@@ -629,8 +644,23 @@ ENVIRONMENT_RULE_REASONS: dict[EnvironmentRule, str] = {
     ),
 }
 
-#: ``Base Media`` label -> (the MEDIA_LIBRARY key it derives from, is_synthetic).
-LIBRARY_BASES: dict[str, tuple[str, bool]] = {"M9": ("M9", True), "LB": ("LB", False)}
+#: ``Base Media`` label -> (the MEDIA_LIBRARY key it derives from, is_synthetic). The
+#: label names the library medium or a variant of it, and the recipe stays
+#: composition-deferred either way (#1045 row 24 added the variants after ``LB``).
+LIBRARY_BASES: dict[str, tuple[str, bool]] = {
+    "M9": ("M9", True),
+    "LB": ("LB", False),
+    "01xLB": ("LB", False),
+    "LB-Miller": ("LB", False),
+    "L-broth": ("LB", False),
+    "MOPS": ("MOPS_MINIMAL", True),
+    "MOPS w/o KH2PO4": ("MOPS_MINIMAL", True),
+    "M9 RDM": ("M9", True),
+}
+#: The culture type a stated dilution rate makes a record of, and the cell that states
+#: it, measured on the release: "chemostat w/ dilution rate 0.31 h^-1" (3 MG1655 rows).
+CHEMOSTAT = "Chemostat"
+_DILUTION_RATE = re.compile(r"chemostat w/ dilution rate (?P<rate>\d*\.?\d+) h\^-1")
 BATCH = "Batch"
 AEROBIC_ACCEPTOR = "O2"
 ANAEROBIC_CONDITION_TOKEN = "anaero"
@@ -736,7 +766,7 @@ class ConditionSpec(BaseModel):
 
     base_media: str
     temperature_c: float
-    ph: float
+    ph: float | None
     carbon: Amount | None
     nitrogen: Amount | None
     aerobicity: Literal["aerobic", "anaerobic"]
@@ -744,6 +774,11 @@ class ConditionSpec(BaseModel):
     trace: str | None
     supplements: tuple[Amount, ...]
     antibiotic: Amount | None
+    # --- #1045 rows 21 and 24 ---------------------------------------------- #
+    dilution_rate_per_hour: float | None = None
+    #: The source factors of a minimal medium whose cell is blank: each is a typed gap
+    #: on its perturbation rather than a refusal of the sample.
+    unstated_sources: tuple[PhysicalFactor, ...] = ()
 
 
 class EnvironmentVerdict(BaseModel):
@@ -760,8 +795,12 @@ def settle_environment(row: Mapping[str, str]) -> EnvironmentVerdict:
     media = row[COL_MEDIA]
     if media not in LIBRARY_BASES:
         return EnvironmentVerdict(rule=EnvironmentRule.medium_not_in_library)
+    dilution_rate: float | None = None
     if row[COL_CULTURE] != BATCH:
-        return EnvironmentVerdict(rule=EnvironmentRule.culture_not_batch)
+        stated = _DILUTION_RATE.fullmatch(row[COL_DETAILS])
+        if row[COL_CULTURE] != CHEMOSTAT or stated is None:
+            return EnvironmentVerdict(rule=EnvironmentRule.culture_not_batch)
+        dilution_rate = float(stated.group("rate"))
     acceptor = row[COL_ACCEPTOR]
     if acceptor == AEROBIC_ACCEPTOR:
         aerobicity: Literal["aerobic", "anaerobic"] = "aerobic"
@@ -803,6 +842,7 @@ def settle_environment(row: Mapping[str, str]) -> EnvironmentVerdict:
             antibiotic=parse_amount(antibiotic, default_unit=None)
             if antibiotic
             else None,
+            dilution_rate_per_hour=dilution_rate,
         )
     )
 
@@ -826,6 +866,37 @@ def _magnitude_gap(column: str, cell: str) -> ProvenanceGap:
         looked_in=metadata_provenance(column),
         note=f"the cell {cell!r} names the compound with no amount",
     )
+
+
+def _unstated_source(factor: PhysicalFactor) -> EnvironmentPhysicalPerturbation:
+    """A minimal medium's carbon or nitrogen source the metadata leaves blank (#1045).
+
+    The medium needs one and the release names none, so the factor is recorded with
+    both its compound and its amount as typed gaps rather than the sample refused.
+    """
+    column = COL_CARBON if factor is PhysicalFactor.carbon_source else COL_NITROGEN
+    return EnvironmentPhysicalPerturbation(
+        factor=factor,
+        provenance_gaps=[
+            ProvenanceGap(
+                field=name,
+                reason=ProvenanceGapReason.not_reported_by_primary,
+                looked_in=metadata_provenance(column),
+                note="the cell is blank on a minimal medium, so the source the cells "
+                "grew on is not stated",
+            )
+            for name in ("agent", "magnitude")
+        ],
+    )
+
+
+#: A blank ``pH`` cell (the public arm): the pH factor is recorded with its value gapped.
+PH_VALUE_GAP = ProvenanceGap(
+    field="magnitude",
+    reason=ProvenanceGapReason.not_reported_by_primary,
+    looked_in=metadata_provenance(COL_PH),
+    note="the pH cell is blank",
+)
 
 
 def _source_perturbation(
@@ -925,11 +996,16 @@ def build_environment(spec: ConditionSpec) -> Environment:
                 PhysicalFactor.nitrogen_source, spec.nitrogen, COL_NITROGEN
             )
         )
+    perturbations.extend(_unstated_source(factor) for factor in spec.unstated_sources)
     perturbations.append(
         EnvironmentPhysicalPerturbation(
             factor=PhysicalFactor.ph,
-            magnitude=Concentration(value=spec.ph, unit=ConcentrationUnit.ph),
-            provenance_gaps=[PH_AGENT_GAP],
+            magnitude=None
+            if spec.ph is None
+            else Concentration(value=spec.ph, unit=ConcentrationUnit.ph),
+            provenance_gaps=[PH_AGENT_GAP]
+            if spec.ph is not None
+            else [PH_AGENT_GAP, PH_VALUE_GAP],
         )
     )
     if spec.electron_acceptor is not None:
@@ -951,6 +1027,7 @@ def build_environment(spec: ConditionSpec) -> Environment:
         temperature=Temperature(value=spec.temperature_c),
         perturbations=perturbations,
         aerobicity=spec.aerobicity,
+        dilution_rate_per_hour=spec.dilution_rate_per_hour,
         provenance_gaps=[DURATION_GAP],
     )
 

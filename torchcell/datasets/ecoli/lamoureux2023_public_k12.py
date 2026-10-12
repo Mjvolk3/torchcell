@@ -149,6 +149,7 @@ from torchcell.datamodels.schema import (
     Experiment,
     ExperimentReference,
     Genotype,
+    PhysicalFactor,
     Publication,
     RNASeqExpressionPhenotype,
 )
@@ -663,16 +664,16 @@ class PublicEnvironmentRule(StrEnum):
     oxygen_regime_transition = "oxygen_regime_transition"
     oxygen_setpoint_not_expressible = "oxygen_setpoint_not_expressible"
     temperature_not_stated = "temperature_not_stated"
-    ph_not_stated = "ph_not_stated"
-    minimal_medium_source_not_stated = "minimal_medium_source_not_stated"
 
 
 PUBLIC_ENVIRONMENT_RULE_REASONS: dict[PublicEnvironmentRule, str] = {
     PublicEnvironmentRule.medium_not_in_library: (
-        "the 'Base Media' label has no MEDIA_LIBRARY key (MOPS, NM3, L-broth, Gutnick, "
-        "tryptone broth, minimal medium A, M4 minimal, Mueller-Hinton, LB-Miller, "
-        "'LB,MOPS', 'M9 RDM', 'MOPS w/o KH2PO4') or is blank, and no mirrored source "
-        "states its recipe, so the medium would be free text that joins nothing"
+        "the 'Base Media' label names no MEDIA_LIBRARY medium or variant of one (NM3, "
+        "Gutnick, tryptone broth, minimal medium A, M4 minimal, Mueller-Hinton, "
+        "'LB,MOPS') or is blank, and no mirrored source states its recipe, so the "
+        "medium would be free text that joins nothing. MOPS, 'MOPS w/o KH2PO4', "
+        "LB-Miller, L-broth and 'M9 RDM' derive from a library key since #1045 row 24; "
+        "a blank label needs the typed medium gap, which the schema does not yet have"
     ),
     PublicEnvironmentRule.culture_not_batch: (
         "the 'Culture Type' cell is not batch (bioreactor, blank, or a growth phase "
@@ -696,14 +697,6 @@ PUBLIC_ENVIRONMENT_RULE_REASONS: dict[PublicEnvironmentRule, str] = {
     PublicEnvironmentRule.temperature_not_stated: (
         "the 'Temperature (C)' cell is blank; temperature is part of every sibling "
         "record's environment identity, so a gapped one would not be comparable"
-    ),
-    PublicEnvironmentRule.ph_not_stated: (
-        "the 'pH' cell is blank; pH is an EnvironmentPhysicalPerturbation on every "
-        "PRECISE-1K record, so a record without one would not be comparable"
-    ),
-    PublicEnvironmentRule.minimal_medium_source_not_stated: (
-        "an M9 row whose carbon or nitrogen source cell is blank: a minimal medium with "
-        "no stated source does not say what the cells grew on"
     ),
 }
 
@@ -775,19 +768,28 @@ def settle_public_environment(row: Mapping[str, str]) -> PublicEnvironmentVerdic
         return PublicEnvironmentVerdict(
             rule=PublicEnvironmentRule.temperature_not_stated
         )
-    if not row[COL_PH]:
-        return PublicEnvironmentVerdict(rule=PublicEnvironmentRule.ph_not_stated)
     carbon = row[COL_CARBON]
     nitrogen = row[COL_NITROGEN]
-    if row[COL_MEDIA] == "M9" and not (carbon and nitrogen):
-        return PublicEnvironmentVerdict(
-            rule=PublicEnvironmentRule.minimal_medium_source_not_stated
+    # #1045 row 24 retired two rules here: a blank pH cell is the pH factor with its
+    # magnitude gapped (it was ph_not_stated, 11 samples), and a minimal medium's blank
+    # source cell is that factor with its compound and amount gapped (it was
+    # minimal_medium_source_not_stated, 24 samples)
+    unstated: tuple[PhysicalFactor, ...] = ()
+    if row[COL_MEDIA] == "M9":
+        unstated = tuple(
+            factor
+            for factor, cell in (
+                (PhysicalFactor.carbon_source, carbon),
+                (PhysicalFactor.nitrogen_source, nitrogen),
+            )
+            if not cell
         )
     return PublicEnvironmentVerdict(
         spec=ConditionSpec(
             base_media=row[COL_MEDIA],
             temperature_c=float(row[COL_TEMPERATURE]),
-            ph=float(row[COL_PH]),
+            ph=float(row[COL_PH]) if row[COL_PH] else None,
+            unstated_sources=unstated,
             carbon=parse_amount(
                 carbon,
                 default_unit=ConcentrationUnit.g_per_l,

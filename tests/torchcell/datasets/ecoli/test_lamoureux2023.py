@@ -56,6 +56,7 @@ from tests.torchcell.sequence.genome._bacterial_fixtures import (
     write_assembly,
 )
 from torchcell.data import ManifestPinMismatchError
+from torchcell.datamodels.media import MEDIA_LIBRARY
 from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
     BacterialDeletionPerturbation,
@@ -101,6 +102,7 @@ def _row(**cells: str) -> dict[str, str]:
         L.COL_TRACE: "sauer trace element mixture",
         L.COL_SUPPLEMENT: "",
         L.COL_ANTIBIOTIC: "",
+        L.COL_DETAILS: "",
     }
     row.update(cells)
     return row
@@ -262,9 +264,15 @@ def test_parse_supplements_splits_a_plus_into_two_compounds() -> None:
     "cells,rule",
     [
         ({L.COL_MEDIA: "CAMHB"}, E.medium_not_in_library),
-        ({L.COL_MEDIA: "01xLB"}, E.medium_not_in_library),
+        ({L.COL_MEDIA: "TMA"}, E.medium_not_in_library),
         ({L.COL_CULTURE: "Chemostat"}, E.culture_not_batch),
-        ({L.COL_CULTURE: "Fed-batch"}, E.culture_not_batch),
+        (
+            {
+                L.COL_CULTURE: "Fed-batch",
+                L.COL_DETAILS: "chemostat w/ dilution rate 0.31 h^-1",
+            },
+            E.culture_not_batch,
+        ),
         ({L.COL_ACCEPTOR: ""}, E.oxygen_regime_not_stated),
         ({L.COL_ACCEPTOR: "KNO3(20mM)"}, E.oxygen_regime_not_stated),
         ({L.COL_SUPPLEMENT: "Acetoacetate/LiCl(10mM)"}, E.supplement_label_ambiguous),
@@ -275,6 +283,76 @@ def test_settle_environment_names_the_rule_that_drops_a_sample(
 ) -> None:
     verdict = L.settle_environment(_row(**cells))
     assert (verdict.rule, verdict.spec) == (rule, None)
+
+
+def _spec(verdict: L.EnvironmentVerdict) -> L.ConditionSpec:
+    """The parsed condition of a kept verdict."""
+    assert verdict.spec is not None, verdict.rule
+    return verdict.spec
+
+
+def test_a_chemostat_that_states_its_rate_is_a_record_with_that_dilution_rate() -> None:
+    """#1045 row 21: the release's 'Additional Details' cell states the rate."""
+    spec = L.settle_environment(
+        _row(
+            **{
+                L.COL_CULTURE: "Chemostat",
+                L.COL_DETAILS: "chemostat w/ dilution rate 0.44 h^-1",
+            }
+        )
+    ).spec
+    assert spec is not None
+    assert spec.dilution_rate_per_hour == 0.44
+    environment = L.build_environment(spec)
+    assert environment.dilution_rate_per_hour == 0.44
+    batch = L.build_environment(_spec(L.settle_environment(_row())))
+    assert batch.dilution_rate_per_hour is None
+    assert environment.model_dump_json() != batch.model_dump_json()
+
+
+def test_a_label_naming_a_library_variant_derives_from_that_key() -> None:
+    """#1045 row 24: '01xLB' joins at LB and 'MOPS' at MOPS_MINIMAL, recipe deferred."""
+    lb = L.settle_environment(
+        _row(
+            **{
+                L.COL_MEDIA: "01xLB",
+                L.COL_CARBON: "",
+                L.COL_NITROGEN: "",
+                L.COL_TRACE: "",
+            }
+        )
+    ).spec
+    assert lb is not None
+    media = L.build_environment(lb).media
+    assert (media.base_medium, media.is_synthetic) == ("LB", False)
+    (base,) = media.components
+    assert base.definition is ComponentDefinition.composition_deferred
+    assert base.compound.name == "01xLB base, PRECISE-1K formulation"
+    assert L.LIBRARY_BASES["MOPS"] == ("MOPS_MINIMAL", True)
+    assert {key for key, _ in L.LIBRARY_BASES.values()} <= set(MEDIA_LIBRARY)
+
+
+def test_a_blank_ph_and_a_blank_minimal_source_are_gapped_factors() -> None:
+    """#1045 row 24: the factor is kept and its unstated slots carry typed gaps."""
+    spec = _spec(L.settle_environment(_row())).model_copy(
+        update={
+            "ph": None,
+            "nitrogen": None,
+            "unstated_sources": (PhysicalFactor.nitrogen_source,),
+        }
+    )
+    environment = L.build_environment(spec)
+    by_factor = {
+        p.factor: p
+        for p in environment.perturbations
+        if isinstance(p, EnvironmentPhysicalPerturbation)
+    }
+    ph = by_factor[PhysicalFactor.ph]
+    assert ph.magnitude is None
+    assert {gap.field for gap in ph.provenance_gaps} == {"agent", "magnitude"}
+    nitrogen = by_factor[PhysicalFactor.nitrogen_source]
+    assert (nitrogen.agent, nitrogen.magnitude) == (None, None)
+    assert {gap.field for gap in nitrogen.provenance_gaps} == {"agent", "magnitude"}
 
 
 def test_settle_environment_refuses_an_m9_row_without_a_carbon_source() -> None:

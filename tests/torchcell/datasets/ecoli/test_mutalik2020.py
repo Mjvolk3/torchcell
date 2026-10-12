@@ -1431,19 +1431,22 @@ def test_fitness_columns_key_on_the_experiment_name_not_the_description() -> Non
 
 
 def test_the_raw_pins_cover_every_file_the_build_reads() -> None:
-    """``raw_pins`` is the two linked artifacts plus the fifteen extracted members.
+    """``raw_pins`` is the two linked artifacts plus the sixteen extracted members.
 
     ``fit_t.tab`` joined the extracted members when the released t became stored
-    (#1045 row 23): five leaves per analysis set, three sets.
+    (#1045 row 23): five leaves per analysis set, three sets; the release's own gene
+    table joined them when the records took the released gene names (#1057).
     """
     pins = mut.raw_pins()
     assert sorted(pins) == sorted([*mut.LINKED_ARTIFACTS, *mut.RAW_MEMBERS])
-    assert len(mut.RAW_MEMBERS) == 15
+    assert len(mut.RAW_MEMBERS) == 16
     assert sum(rel.endswith("/fit_t.tab") for rel in mut.RAW_MEMBERS) == 3
+    assert mut.RAW_MEMBERS[mut.GENES_NAME] == "g/Keio/genes.tab"
     assert all(len(digest) == 64 for digest in pins.values())
     assert pins[mut.S13_NAME] == mut.artifact(mut.S13_TABLE_REL).sha256
     for raw_rel, member in mut.RAW_MEMBERS.items():
-        assert member == f"html/{raw_rel}"
+        if raw_rel != mut.GENES_NAME:
+            assert member == f"html/{raw_rel}"
         assert pins[raw_rel] == mut.TARBALL_MEMBERS[member]
 
 
@@ -1501,25 +1504,16 @@ def test_a_released_t_above_its_se_bound_is_refused() -> None:
         mut.check_t_statistic("x", fit, se, [[math.nan, 0.0], [0.0, 0.0]])
 
 
-def test_the_genotype_records_that_the_locus_tag_was_derived() -> None:
-    """A BW25113 tag reached from an MG1655 b-number says so on the perturbation."""
-    genotype = mut.build_genotype(
-        mut.GeneMapping(
-            b_number="b0003",
-            eck="ECK0003",
-            locus_tag="BW25113_4412",
-            perturbed_gene_name="hokC",
-            numerics_agree=False,
-        )
-    )
+def test_the_genotype_stores_the_released_b_number_and_name() -> None:
+    """#1057: the released sysName is the stored key, with no derived mapping."""
+    genotype = mut.build_genotype("b0003", "b0003")
     (perturbation,) = genotype.perturbations
     assert isinstance(perturbation, TransposonInsertionPerturbation)
-    assert perturbation.systematic_gene_name == "BW25113_4412"
-    assert perturbation.perturbed_gene_name == "hokC"
-    assert perturbation.gene_namespace == "ecoli_k12_bw25113_locus_tag"
-    assert perturbation.identifier_mapping is not None
-    assert perturbation.identifier_mapping.source_identifier == "b0003"
-    assert perturbation.identifier_mapping.route == "eck_crosswalk"
+    assert perturbation.systematic_gene_name == "b0003"
+    assert perturbation.perturbed_gene_name == "b0003"
+    assert perturbation.gene_namespace == "ecoli_k12_mg1655_bnumber"
+    assert perturbation.identifier_mapping is None
+    assert "AS RELEASED" in perturbation.description
     assert perturbation.transposon == "Tn5 transpososome"
     assert perturbation.library_pool == "Keio_ML9a"
     assert perturbation.barcode is None
@@ -1665,16 +1659,29 @@ def test_the_declared_controls_are_the_planktonic_buffer_controls() -> None:
     assert mut.UNPERTURBED_CONTROL_MEDIA_LABEL == "LB_plus_SM_buffer"
 
 
-def test_a_control_whose_medium_has_no_library_base_is_not_declared() -> None:
-    """A dropped control contributes no record, so it is never declared."""
+def test_a_control_whose_medium_has_no_library_base_is_kept_as_released() -> None:
+    """#1057: an unlisted Media label keeps its assay; the label is stored as released."""
     axis, released = _release_shaped_axis()
+    expected = mut.declared_unperturbed_records(axis, released)
     target = "set28IT100"
     released[target] = released[target].model_copy(update={"media_label": "M9"})
-    kept, dropped = mut.kept_assays(axis, released)
-    assert dropped == [target]
-    # set28/29 now has 8 kept experiments, which its frozen census does not divide
-    with pytest.raises(ValueError, match="do not divide over its 8 kept"):
-        mut.declared_unperturbed_records(axis, released)
+    kept, unlisted = mut.kept_assays(axis, released)
+    assert unlisted == [target]
+    assert target in {assay.exp_name for assay in kept}
+    # the declared count is the planktonic controls only, and the target no longer
+    # names the planktonic medium, so its records leave the declaration and nothing else
+    per_experiment = mut.records_per_experiment(kept)
+    assert mut.declared_unperturbed_records(axis, released) == (
+        expected - per_experiment["Keio_ML9_set28_set29"]
+    )
+    medium = mut.assay_medium(released[target])
+    assert (medium.name, medium.state, medium.is_synthetic) == (
+        "M9",
+        released[target].state,
+        None,
+    )
+    assert [gap.field for gap in medium.provenance_gaps] == ["is_synthetic"]
+    assert medium.components == []
 
 
 def test_records_per_experiment_refuses_a_census_the_experiments_do_not_span() -> None:
@@ -1787,11 +1794,8 @@ def test_the_eck_route_places_the_genes_it_can_and_names_the_rest(
     assert {b: mapping[b].gene_namespace for b in report.released_as} == {
         b: "ecoli_k12_mg1655_bnumber" for b in SYNTHETIC_AS_RELEASED
     }
+    # the crosswalk is a derived artifact (#1057): no record reads it
     assert report.released_as == SYNTHETIC_AS_RELEASED
-    leaf = mut.build_genotype(mapping["b0005"]).perturbations[0]
-    assert isinstance(leaf, TransposonInsertionPerturbation)
-    assert leaf.identifier_mapping is None
-    assert leaf.description == mut.PERTURBATION_DESCRIPTION_AS_RELEASED
     assert (report.n_measured_genes, report.n_mapped) == (7, 4)
     assert report.mapped_fraction == pytest.approx(4 / 7)
     assert report.unmapped == ("b0005", "b0006", "b0007")
@@ -2136,9 +2140,8 @@ class TestSyntheticRelease:
         root = tmp_path / "dataset"
         dataset = mut.PhageRbTnseqMutalik2020Dataset(root=str(root))
         assert len(dataset) == 42
-        assert sorted(dataset.gene_set) == sorted(
-            [*SYNTHETIC_MAPPED.values(), *SYNTHETIC_AS_RELEASED]
-        )
+        # #1057: every measured gene under its released b-number
+        assert sorted(dataset.gene_set) == sorted(SYNTHETIC_GENES)
         references = dataset.experiment_reference_index
         assert references is not None
         assert len(references) == 6
@@ -2192,9 +2195,10 @@ class TestSyntheticRelease:
         assert challenge["environment"]["media"]["state"] == "liquid"
         assert challenge["environment"]["duration_hours"] == pytest.approx(8.0)
         (perturbation,) = challenge["genotype"]["perturbations"]
-        assert perturbation["systematic_gene_name"] in SYNTHETIC_MAPPED.values()
-        assert perturbation["identifier_mapping"]["route"] == "eck_crosswalk"
-        assert perturbation["identifier_mapping"]["source_identifier"].startswith("b")
+        # #1057: the released b-number and the release's own gene name, no mapping
+        assert perturbation["systematic_gene_name"] == "b0001"
+        assert perturbation["perturbed_gene_name"] == "thrL"
+        assert perturbation["identifier_mapping"] is None
         assert perturbation["library_pool"] == "Keio_ML9a"
 
         control = by_screen["Keio:set16IT007"]["experiment"]
@@ -2238,9 +2242,7 @@ class TestSyntheticRelease:
             drops["kept_records"],
             drops["dropped_records"],
         ) == (42, 42, 0)
-        assert {
-            rule["rule"]: (rule["n_records"], rule["items"]) for rule in drops["rules"]
-        } == {mut.DROP_MEDIUM_NOT_IN_LIBRARY: (0, [])}
+        assert drops["rules"] == []
         ledger = _json.loads((root / "preprocess" / "assay_ledger.json").read_text())
         assert (
             ledger["used_experiments"],
@@ -2256,44 +2258,60 @@ class TestSyntheticRelease:
             "experiment_description": 1,
         }
         assert ledger["release_quality_flag"] == {"True": 1, "False": 5}
-        assert ledger["dropped_for_medium"] == []
+        assert ledger["unlisted_media"] == []
         assert ledger["released_columns"] == 7
-        identifiers = _json.loads(
-            (root / "preprocess" / "identifier_mapping.json").read_text()
-        )
-        assert (identifiers["n_measured_genes"], identifiers["n_mapped"]) == (7, 4)
+        # the ECK crosswalk is no part of the build (#1057)
+        assert not (root / "preprocess" / "identifier_mapping.json").exists()
 
-    def test_an_assay_whose_medium_has_no_library_base_is_dropped_and_counted(
+    def test_an_assay_whose_medium_has_no_library_base_is_stored_as_released(
         self, tmp_path: Path, release_mirror: str, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """The refusal that keeps a new released label from getting an invented recipe."""
+        """#1057: an unlisted label keeps its records; the medium is its label, gapped."""
         import json as _json
 
         monkeypatch.delitem(mut.MEDIA_BY_LABEL, "LB_agar")
         root = tmp_path / "dataset"
         dataset = mut.PhageRbTnseqMutalik2020Dataset(root=str(root))
-        assert len(dataset) == 35
+        assert len(dataset) == 42
         drops = _json.loads((root / "preprocess" / "dropped_records.json").read_text())
-        by_rule = {rule["rule"]: rule for rule in drops["rules"]}
-        assert by_rule[mut.DROP_MEDIUM_NOT_IN_LIBRARY]["n_records"] == 7
-        assert by_rule[mut.DROP_MEDIUM_NOT_IN_LIBRARY]["items"] == ["set30IT064"]
-        assert drops["source_records"] == 42 and drops["kept_records"] == 35
+        assert drops["source_records"] == 42 and drops["kept_records"] == 42
         ledger = _json.loads((root / "preprocess" / "assay_ledger.json").read_text())
-        assert ledger["dropped_for_medium"] == ["set30IT064"]
-        assert ledger["record_bearing"] == 5
+        assert ledger["unlisted_media"] == ["set30IT064"]
+        assert ledger["record_bearing"] == 6
+        solid = next(
+            dataset[i]["experiment"]
+            for i in range(len(dataset))
+            if dataset[i]["experiment"]["phenotype"]["screen_id"] == "Keio:set30IT064"
+        )
+        assert solid["environment"]["media"]["name"] == "LB_agar"
+        assert solid["environment"]["media"]["is_synthetic"] is None
+        # the release's Condition_2 (Kan, 50 ug/ml) is kept as an added compound
+        kanamycin = [
+            p
+            for p in solid["environment"]["perturbations"]
+            if p["perturbation_type"] == "small_molecule"
+        ]
+        assert [k["concentration"]["value"] for k in kanamycin] == [50.0]
 
-    def test_the_build_refuses_a_genome_of_the_wrong_strain(
+    def test_the_build_reads_no_genome(
         self,
         tmp_path: Path,
         release_mirror: str,
         k12: tuple[EcoliK12MG1655Genome, EcoliK12BW25113Genome],
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        """``ecoli_genome`` is the BW25113 genome; MG1655 is refused by name."""
-        mg1655, _ = k12
+        """#1057: the records key the released b-numbers, so no genome is opened."""
+        monkeypatch.setattr(
+            mut,
+            "bacterial_genome",
+            lambda *a, **k: pytest.fail("the build read a genome"),
+        )
+        dataset = mut.PhageRbTnseqMutalik2020Dataset(root=str(tmp_path / "nogenome"))
+        assert len(dataset) == 42
+        # the guard on an injected genome still names the strain it needs
         with pytest.raises(TypeError, match="needs the BW25113 genome"):
-            mut.PhageRbTnseqMutalik2020Dataset(
-                root=str(tmp_path / "wrong"), ecoli_genome=mg1655
-            )
+            dataset.ecoli_genome = k12[0]
+            dataset._bw25113()
 
 
 # --------------------------------------------------------------------------- #
@@ -2316,7 +2334,8 @@ def test_the_oracles_are_internally_consistent() -> None:
     assert sum(mut.EXPECTED_SET_CENSUS.values()) == mut.EXPECTED_RECORDS
     assert sum(mut.EXPECTED_KIND_CENSUS.values()) == mut.EXPECTED_RECORDS
     assert sum(mut.EXPECTED_FORMAT_CENSUS.values()) == mut.EXPECTED_RECORDS
-    # 286,344 and 3,697 before #1057 stored the 19 ECK-unplaced genes (1,471 records)
+    # 286,344 and 3,697 before #1057 stored the 19 ECK-unplaced genes (1,471 records);
+    # since then every gene is its released b-number
     assert mut.EXPECTED_RECORDS == 287815 == 286344 + 1471
     assert mut.EXPECTED_GENES == 3716 == 3697 + 19
     # every solid-agar assay is in set30 and set30 holds nothing else
@@ -2347,18 +2366,9 @@ class TestDevStore:
         assert drops["kept_records"] == mut.EXPECTED_RECORDS
         assert drops["source_records"] == 287815
         assert drops["dropped_records"] == 0
-        by_rule = {rule["rule"]: rule for rule in drops["rules"]}
-        assert by_rule[mut.DROP_MEDIUM_NOT_IN_LIBRARY]["n_records"] == 0
-        assert "no_one_to_one_eck_pair" not in by_rule
-        identifiers = _json.loads(
-            Path(preprocess, "identifier_mapping.json").read_text()
-        )
-        assert identifiers["n_mapped"] == 3697
-        assert len(identifiers["released_as"]) == 19
-        assert identifiers["n_measured_genes"] == mut.EXPECTED_GENES == 3716
-        assert identifiers["numeric_disagreements"] == [
-            ["b0018", "BW25113_4412", "ECK0018"]
-        ]
+        # #1057: no retention rule remains, and the crosswalk is no part of the build
+        assert drops["rules"] == []
+        assert not Path(preprocess, "identifier_mapping.json").exists()
         ledger = _json.loads(Path(preprocess, "assay_ledger.json").read_text())
         assert (
             ledger["used_experiments"],
@@ -2410,5 +2420,6 @@ class TestDevStore:
         assert record["phenotype"]["measurement_type"] == "log2_ratio"
         assert str(record["phenotype"]["screen_id"]).startswith(f"{mut.ORG_ID}:")
         (perturbation,) = record["genotype"]["perturbations"]
-        assert perturbation["gene_namespace"] == "ecoli_k12_bw25113_locus_tag"
-        assert perturbation["identifier_mapping"]["route"] == "eck_crosswalk"
+        # #1057: the released b-number, no derived mapping
+        assert perturbation["gene_namespace"] == "ecoli_k12_mg1655_bnumber"
+        assert perturbation["identifier_mapping"] is None

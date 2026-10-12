@@ -82,19 +82,14 @@ CP009273.1 is 4,631,469 bp), so the fitness tables are BW25113 biology labeled i
 MG1655 namespace. The released fitness table is itself BW25113-consistent: ``araA``
 (b0062), ``araB`` (b0063), ``rhaA`` (b3903) and ``rhaB`` (b3904), which BW25113 lacks,
 carry no row, while ``lacZ``, ``hsdR`` and ``rph``, whose lesions leave the gene in
-place, do. So the records pin BW25113 and remap every identifier through the ECK
-accession the two GenBank annotations share (``eck_route``), which is a DERIVED mapping
-and is reported rather than applied silently (plan D9). ``audit_identifiers`` scores all
-three routes: the ECK join resolves 3,697 of the 3,716 genes that carry a value
-(0.9949), the b-numbers resolve against the deposited MG1655 annotation at 0.998 (a
-route that would misstate the strain) and the FEBA gene symbols resolve against BW25113
-at 0.961 (the weakest). Every record says so on its own perturbation:
-``identifier_mapping=DerivedIdentifierMapping(source_identifier=<b-number>,
-route="eck_crosswalk")``. A gene with no one-to-one ECK pair has no BW25113 identifier;
-it was dropped (19 genes / 1,471 cells) until #1057 (the owner rule of 2026-10-12: the
-genome does not gate a released row) and is now stored as the released MG1655 b-number
-in the MG1655 namespace, its ``description`` saying AS RELEASED, as the Price 2018
-loader stores the same release's genes.
+place, do. The records pin BW25113 (the assayed strain) and, since #1057 (the owner
+rule of 2026-10-12: the stored key is the released identifier), every gene is stored
+under the released ``sysName``, an MG1655 b-number, in the MG1655 namespace, named by
+the release's own FEBA gene table (``g/Keio/genes.tab``, its ``name`` column, else the
+b-number), as the Price 2018 and Wetmore 2015 loaders store the same release's genes.
+No annotation is read in the build. The ECK join to BW25113 tags (``eck_route``, which
+places 3,697 of the 3,716 measured genes) and ``audit_identifiers``'s three-route
+scores are derived artifacts outside the record.
 """
 
 from __future__ import annotations
@@ -138,7 +133,6 @@ from torchcell.datamodels.schema import (
     Compound,
     Concentration,
     ConcentrationUnit,
-    DerivedIdentifierMapping,
     Environment,
     EnvironmentPerturbationType,
     EnvironmentResponsePhenotype,
@@ -151,6 +145,7 @@ from torchcell.datamodels.schema import (
     MediaComponentRole,
     PhagePerturbation,
     Publication,
+    SmallMoleculePerturbation,
     Temperature,
     TransposonInsertionPerturbation,
     UncertaintyType,
@@ -1506,8 +1501,9 @@ MUTALIK2020_LB_AGAR_KAN = Media(
 """The solid-agar assay medium, which the release's own metadata calls ``LB_agar``."""
 
 #: The released per-experiment ``Media`` label to the object a record stores. A label
-#: outside this map has no MEDIA_LIBRARY base to join on, so its assay is DROPPED and
-#: counted (``DROP_MEDIUM_NOT_IN_LIBRARY``) rather than given an invented medium.
+#: outside this map is stored as released (#1057): :func:`unlisted_medium` keeps the
+#: label as the medium's name, its state from the release's own format column, and its
+#: composition a typed gap, rather than an invented recipe or a drop.
 MEDIA_BY_LABEL: dict[str, Media] = {
     "LB": MUTALIK2020_LB,
     "LB_plus_SM_buffer": MUTALIK2020_LB_SM_BUFFER,
@@ -1516,6 +1512,65 @@ MEDIA_BY_LABEL: dict[str, Media] = {
 
 #: The kanamycin dose the solid plates carry, as the release's metadata writes it.
 SOLID_KANAMYCIN = (50.0, "ug/ml")
+
+
+def unlisted_medium(label: str, state: str) -> Media:
+    """A released Media label with no library entry, stored as released (#1057).
+
+    The label is the name and the release's ``Liquid v. solid`` column the state; what
+    the medium is (``is_synthetic``) and its composition are not stated, so
+    ``is_synthetic`` is a typed gap and ``components`` is empty.
+    """
+    return Media(
+        name=label,
+        state=state,
+        is_synthetic=None,
+        provenance_gaps=[
+            ProvenanceGap(
+                field="is_synthetic",
+                reason=ProvenanceGapReason.not_reported_by_primary,
+                note=f"the release's per-experiment Media label {label!r} names no "
+                "medium this loader's library carries, and the release states no "
+                "recipe for it; the label is stored as released",
+            )
+        ],
+    )
+
+
+def assay_medium(released: ReleasedAssay) -> Media:
+    """The medium of one released experiment: its library object, else as released."""
+    if released.media_label in MEDIA_BY_LABEL:
+        return MEDIA_BY_LABEL[released.media_label]
+    return unlisted_medium(released.media_label, released.state)
+
+
+#: The released ``Units_2`` labels to their typed unit; another label is refused.
+UNITS_2_BY_LABEL: dict[str, ConcentrationUnit] = {"ug/ml": ConcentrationUnit.ug_per_ml}
+
+
+def released_addition(released: ReleasedAssay) -> SmallMoleculePerturbation:
+    """The release's Condition_2 on a medium stored as released, as an added compound.
+
+    A library medium carries its own additions (the solid plates' kanamycin), so this is
+    only for a label with no library entry (#1057), whose second condition would
+    otherwise be lost with the recipe the release does not give.
+    """
+    if (
+        released.condition_2 is None
+        or released.concentration_2 is None
+        or released.units_2 is None
+    ):
+        raise ValueError(f"{released.exp_name}: Condition_2 is not fully stated")
+    if released.units_2 not in UNITS_2_BY_LABEL:
+        raise ValueError(f"{released.exp_name}: unknown Units_2 {released.units_2!r}")
+    return SmallMoleculePerturbation(
+        description="the release's per-experiment Condition_2, added to a medium "
+        "stored under its released label (#1057)",
+        compound=resolved_compound(released.condition_2),
+        concentration=Concentration(
+            value=released.concentration_2, unit=UNITS_2_BY_LABEL[released.units_2]
+        ),
+    )
 
 
 # --------------------------------------------------------------------------- #
@@ -1660,7 +1715,7 @@ def environment(
 ) -> Environment:
     """The culture one experiment was run in, from its own released metadata.
 
-    The medium comes from the released ``Media`` label through :data:`MEDIA_BY_LABEL`;
+    The medium comes from the released ``Media`` label through :func:`assay_medium`;
     the temperature, the oxygen regime and the format come from the released row; the
     exposure is the planktonic 8 hr or a typed gap for the solid plates. A challenge
     carries exactly one ``PhagePerturbation`` and a no-phage control carries NONE: the
@@ -1670,7 +1725,7 @@ def environment(
     not happen. The buffer itself is in the medium, which is what makes a control's
     environment the honest reference for the challenges run beside it.
     """
-    media = MEDIA_BY_LABEL[released.media_label]
+    media = assay_medium(released)
     if media.state != released.state:
         raise ValueError(
             f"{assay.exp_name}: the release calls the medium {released.media_label!r} "
@@ -1685,7 +1740,7 @@ def environment(
                 f"{SOLID_KANAMYCIN}, but the release states "
                 f"{released.condition_2!r} at {dose}"
             )
-    elif released.condition_2 is not None:
+    elif released.condition_2 is not None and released.media_label in MEDIA_BY_LABEL:
         raise ValueError(
             f"{assay.exp_name}: the release adds {released.condition_2!r} to "
             f"{released.media_label!r}, which {media.name!r} does not carry"
@@ -1699,6 +1754,8 @@ def environment(
         if assay.kind == "phage"
         else []
     )
+    if released.media_label not in MEDIA_BY_LABEL and released.condition_2 is not None:
+        perturbations.append(released_addition(released))
     return Environment(
         media=media,
         temperature=Temperature(value=released.temperature_c),
@@ -1735,15 +1792,9 @@ MUTANT_LIBRARY = "Keio_ML9a"
 
 PERTURBATION_DESCRIPTION = (
     "Tn5 transposon insertion disrupting a gene; gene-level call over the gene's "
-    "insertion strains (no per-strain barcode or mapped site released). Locus tag "
-    "DERIVED: the release names an MG1655 b-number, mapped to this BW25113 locus "
-    "through its one-to-one ECK pair (eck_crosswalk)"
-)
-#: The description of a gene no ECK pair places: what is stored, no more.
-PERTURBATION_DESCRIPTION_AS_RELEASED = (
-    "Tn5 transposon insertion disrupting a gene; gene-level call over the gene's "
     "insertion strains (no per-strain barcode or mapped site released). Locus tag AS "
-    "RELEASED: the release's MG1655 b-number, in the MG1655 namespace"
+    "RELEASED: the release's sysName, an MG1655 b-number, in the MG1655 namespace, "
+    "named by the release's FEBA gene table; the assayed strain is BW25113"
 )
 #: The namespace a gene the ECK route cannot place is stored in: the release's own.
 RELEASED_NAMESPACE = STRAIN_GENE_NAMESPACES["MG1655"]
@@ -1972,26 +2023,39 @@ UNITS_REFERENCE = (
 )
 
 
-def build_genotype(mapping: GeneMapping) -> Genotype:
-    """A Tn5 insertion in one gene of ``Keio_ML9a``, with its derived mapping typed.
+def released_gene_names(
+    b_numbers: Sequence[str], gene_table: Sequence[Mapping[str, str]]
+) -> dict[str, str]:
+    """Each measured b-number's name in the release's FEBA gene table, else itself.
 
-    A gene no ECK pair places is stored as the released b-number, with no mapping
-    (#1057).
+    A measured identifier that is not an MG1655 b-number in form, or that the gene
+    table names twice, is refused: the release changed shape.
     """
+    names: dict[str, str] = {}
+    for row in gene_table:
+        key = row["sysName"]
+        if not key:
+            continue
+        if key in names:
+            raise ValueError(f"genes.tab names {key} twice")
+        names[key] = row["name"].strip()
+    out: dict[str, str] = {}
+    for b in b_numbers:
+        if RELEASED_PATTERN.match(b) is None:
+            raise ValueError(f"{b!r} is not an MG1655 b-number in form")
+        out[b] = names.get(b, "") or b
+    return out
+
+
+def build_genotype(b_number: str, name: str) -> Genotype:
+    """A Tn5 insertion in one gene of ``Keio_ML9a``, under the released b-number."""
     return Genotype(
         perturbations=[
             TransposonInsertionPerturbation(
-                systematic_gene_name=mapping.locus_tag,
-                perturbed_gene_name=mapping.perturbed_gene_name,
-                gene_namespace=mapping.gene_namespace,
-                identifier_mapping=None
-                if mapping.gene_namespace == RELEASED_NAMESPACE
-                else DerivedIdentifierMapping(
-                    source_identifier=mapping.b_number, route="eck_crosswalk"
-                ),
-                description=PERTURBATION_DESCRIPTION_AS_RELEASED
-                if mapping.gene_namespace == RELEASED_NAMESPACE
-                else PERTURBATION_DESCRIPTION,
+                systematic_gene_name=b_number,
+                perturbed_gene_name=name,
+                gene_namespace=RELEASED_NAMESPACE,
+                description=PERTURBATION_DESCRIPTION,
                 transposon=str(TRANSPOSON.value),
                 library_pool=MUTANT_LIBRARY,
             )
@@ -2115,15 +2179,10 @@ def build_reference(
 # --------------------------------------------------------------------------- #
 # Retention: every rule, with its arithmetic
 # --------------------------------------------------------------------------- #
-DROP_MEDIUM_NOT_IN_LIBRARY = "medium_has_no_media_library_base"
-
-DROP_RULES: dict[str, str] = {
-    DROP_MEDIUM_NOT_IN_LIBRARY: "the released per-experiment Media label is not in "
-    "MEDIA_BY_LABEL, so the assay's medium has no MEDIA_LIBRARY base to join on and a "
-    "free-text medium joins nothing. The release names exactly LB, LB_plus_SM_buffer "
-    "and LB_agar, so this rule drops nothing today; it is the refusal that keeps a new "
-    "label from being given an invented recipe"
-}
+#: No retention rule remains (#1057): the medium rule that dropped an assay whose label
+#: had no library base (it dropped none of the released assays) now stores the label as
+#: released (:func:`unlisted_medium`).
+DROP_RULES: dict[str, str] = {}
 
 
 class DropRule(BaseModel):
@@ -2164,7 +2223,10 @@ class AssayLedger(BaseModel):
     used_experiments: int
     time_zero: int
     record_bearing: int
-    dropped_for_medium: tuple[str, ...]
+    unlisted_media: tuple[str, ...] = Field(
+        description="experiments whose released Media label has no library entry, "
+        "stored with the label as released and the composition a typed gap (#1057)"
+    )
     released_columns: int
     kind_census: dict[str, int]
     format_census: dict[str, int]
@@ -2192,16 +2254,20 @@ LINKED_ARTIFACTS: dict[str, str] = {
 #: The per-analysis-set tables the build reads, as ``raw/`` path -> tarball member. A
 #: ``.tar.gz`` has no random access, so these are extracted in ONE streaming pass at
 #: download time instead of re-streaming 915 MB per member at build time.
+GENES_NAME = "genes.tab"
 RAW_MEMBERS: dict[str, str] = {
-    f"{analysis_set}/{leaf}": f"html/{analysis_set}/{leaf}"
-    for analysis_set in sorted(set(ANALYSIS_SETS.values()))
-    for leaf in (
-        "exps",
-        "fit_logratios.tab",
-        "fit_standard_error_obs.tab",
-        "fit_t.tab",
-        "fit_quality.tab",
-    )
+    **{
+        f"{analysis_set}/{leaf}": f"html/{analysis_set}/{leaf}"
+        for analysis_set in sorted(set(ANALYSIS_SETS.values()))
+        for leaf in (
+            "exps",
+            "fit_logratios.tab",
+            "fit_standard_error_obs.tab",
+            "fit_t.tab",
+            "fit_quality.tab",
+        )
+    },
+    GENES_NAME: "g/Keio/genes.tab",
 }
 
 
@@ -2265,22 +2331,21 @@ def fitness_columns(columns: Iterable[str]) -> dict[str, str]:
 def kept_assays(
     axis: ExperimentAxis, released: Mapping[str, ReleasedAssay]
 ) -> tuple[list[Assay], list[str]]:
-    """The record-bearing assays whose medium has a library base, and those dropped.
+    """The record-bearing assays, and those whose medium label has no library entry.
 
-    The start samples are excluded first: a time-zero sample is the denominator of every
-    log ratio and the release gives it no fitness column. ``process()`` and the declared
-    control count of :func:`declared_unperturbed_records` both select through this.
+    The start samples are excluded: a time-zero sample is the denominator of every log
+    ratio and the release gives it no fitness column. Every other assay is kept (#1057);
+    the second list names the kept assays whose medium is stored as released.
+    ``process()`` and the declared control count of
+    :func:`declared_unperturbed_records` both select through this.
     """
-    kept: list[Assay] = []
-    dropped: list[str] = []
-    for assay in axis.assays:
-        if assay.kind == "time_zero":
-            continue
-        if released[assay.exp_name].media_label not in MEDIA_BY_LABEL:
-            dropped.append(assay.exp_name)
-            continue
-        kept.append(assay)
-    return kept, dropped
+    kept = [assay for assay in axis.assays if assay.kind != "time_zero"]
+    unlisted = [
+        assay.exp_name
+        for assay in kept
+        if released[assay.exp_name].media_label not in MEDIA_BY_LABEL
+    ]
+    return kept, unlisted
 
 
 # --------------------------------------------------------------------------- #
@@ -2371,10 +2436,10 @@ class PhageRbTnseqMutalik2020Dataset(ExperimentDataset):
     def _kept_assays(
         self, axis: ExperimentAxis, released: Mapping[str, ReleasedAssay]
     ) -> tuple[list[Assay], list[str]]:
-        """The record-bearing assays whose medium has a library base, and those dropped.
+        """The record-bearing assays, and those whose medium is stored as released.
 
-        The 21 start samples are excluded first: a time-zero sample is the denominator of
-        every log ratio and the release gives it no fitness column.
+        The 21 start samples are excluded: a time-zero sample is the denominator of every
+        log ratio and the release gives it no fitness column.
         """
         return kept_assays(axis, released)
 
@@ -2393,7 +2458,7 @@ class PhageRbTnseqMutalik2020Dataset(ExperimentDataset):
                 for analysis_set in analysis_sets
             }
         )
-        kept, dropped_for_medium = self._kept_assays(axis, released)
+        kept, unlisted_media = self._kept_assays(axis, released)
         by_set: dict[str, list[Assay]] = {name: [] for name in analysis_sets}
         for assay in kept:
             by_set[assay.analysis_set].append(assay)
@@ -2434,16 +2499,13 @@ class PhageRbTnseqMutalik2020Dataset(ExperimentDataset):
         measured = sorted(
             {str(name) for fitness, _ in tables.values() for name in fitness["sysName"]}
         )
-        bw25113 = self._bw25113()
-        mg1655 = bacterial_genome("ecoli", "MG1655", _data_root())
-        if not isinstance(mg1655, EcoliK12MG1655Genome):
-            raise TypeError(f"expected the MG1655 genome, got {type(mg1655).__name__}")
-        mapping, identifiers = map_measured_genes(
-            measured, mg1655, bw25113, label=self.name
-        )
-        genotypes = {
-            b_number: build_genotype(gene) for b_number, gene in mapping.items()
-        }
+        with open(osp.join(self.raw_dir, GENES_NAME)) as handle:
+            gene_table = [
+                {key: (value or "") for key, value in row.items()}
+                for row in csv.DictReader(handle, delimiter="\t")
+            ]
+        names = released_gene_names(measured, gene_table)
+        genotypes = {b: build_genotype(b, name) for b, name in names.items()}
 
         environments = {
             assay.exp_name: environment(
@@ -2520,9 +2582,8 @@ class PhageRbTnseqMutalik2020Dataset(ExperimentDataset):
             axis=axis,
             released=released,
             kept=kept,
-            dropped_for_medium=dropped_for_medium,
+            unlisted_media=unlisted_media,
             tables=tables,
-            identifiers=identifiers,
             kept_records=idx,
         )
         n_values = sum(check.n_values for check in t_checks)
@@ -2543,7 +2604,7 @@ class PhageRbTnseqMutalik2020Dataset(ExperimentDataset):
         log.info(
             "Mutalik2020: wrote %d records over %d genes and %d experiments",
             idx,
-            len(mapping),
+            len(names),
             len(kept),
         )
 
@@ -2553,33 +2614,22 @@ class PhageRbTnseqMutalik2020Dataset(ExperimentDataset):
         axis: ExperimentAxis,
         released: Mapping[str, ReleasedAssay],
         kept: Sequence[Assay],
-        dropped_for_medium: Sequence[str],
+        unlisted_media: Sequence[str],
         tables: Mapping[str, tuple[Any, Any]],
-        identifiers: MappingReport,
         kept_records: int,
     ) -> None:
-        """Write the retention ledger, the assay ledger and the identifier report."""
+        """Write the retention ledger and the assay ledger."""
         import pandas as pd
 
-        #: Source records are the cells of every record-bearing used experiment, the
-        #: ones dropped for their medium INCLUDED, so the arithmetic below closes over
-        #: both rules. The 21 start samples are not source records at all: the release
-        #: gives a time-zero sample no fitness column (see :class:`AssayLedger`).
+        #: Source records are the cells of every record-bearing used experiment. The 21
+        #: start samples are not source records at all: the release gives a time-zero
+        #: sample no fitness column (see :class:`AssayLedger`). No rule drops one since
+        #: #1057.
         def cells(exp_name: str) -> int:
             return len(tables[released[exp_name].set_name][0])
 
-        source_records = sum(cells(a.exp_name) for a in kept) + sum(
-            cells(name) for name in dropped_for_medium
-        )
-        rules = (
-            DropRule(
-                rule=DROP_MEDIUM_NOT_IN_LIBRARY,
-                scope="experiment",
-                description=DROP_RULES[DROP_MEDIUM_NOT_IN_LIBRARY],
-                n_records=sum(cells(name) for name in dropped_for_medium),
-                items=tuple(dropped_for_medium),
-            ),
-        )
+        source_records = sum(cells(a.exp_name) for a in kept)
+        rules: tuple[DropRule, ...] = ()
         drop_log = DropLog(
             dataset=self.name,
             source_records=source_records,
@@ -2609,7 +2659,7 @@ class PhageRbTnseqMutalik2020Dataset(ExperimentDataset):
             used_experiments=len(axis.assays),
             time_zero=len(axis.time_zero),
             record_bearing=len(kept),
-            dropped_for_medium=tuple(dropped_for_medium),
+            unlisted_media=tuple(unlisted_media),
             released_columns=sum(
                 len(fitness_columns(tables[name][0].columns)) for name in tables
             ),
@@ -2626,10 +2676,6 @@ class PhageRbTnseqMutalik2020Dataset(ExperimentDataset):
         )
         with open(osp.join(self.preprocess_dir, "assay_ledger.json"), "w") as handle:
             handle.write(ledger.model_dump_json(indent=2))
-        with open(
-            osp.join(self.preprocess_dir, "identifier_mapping.json"), "w"
-        ) as handle:
-            handle.write(identifiers.model_dump_json(indent=2))
 
     def preprocess_raw(self, df: Any, preprocess: dict[str, Any] | None = None) -> Any:
         """Preprocessing is handled inside process() for this dataset."""
@@ -2654,8 +2700,8 @@ EXPECTED_SET_CENSUS: dict[str, int] = {
 }
 EXPECTED_RECORDS = sum(EXPECTED_SET_CENSUS.values())
 
-#: The frozen gene-set oracle: distinct stored genes over the kept records, 3,697 BW25113
-#: locus tags plus the 19 released MG1655 b-numbers no ECK pair places (#1057).
+#: The frozen gene-set oracle: distinct stored genes over the kept records, every one a
+#: released MG1655 b-number (#1057).
 EXPECTED_GENES = 3716
 
 #: Records per kind of experiment: 68 phage challenges and 10 no-phage controls.
@@ -2845,11 +2891,11 @@ def verify_build(
 ) -> VerificationReport:
     """Run the environment-response L0-L4 verifier on a built tree and write its report.
 
-    The gene universe and the resolver are BW25113's (every GenBank locus, pseudogenes
-    included), which is the assembly every record pins. The verifier is the STREAMING
-    one: 286,344 records with a component-level medium on each environment are not
-    materialized. Four SUPPLEMENTARY rows are appended -- the three censuses of
-    :func:`experiment_census` and :func:`stored_tags_are_loci` -- and the shared
+    The gene universe and the resolver are MG1655's, the namespace every released
+    b-number is stored in (#1057); its genome-reference rows report and never gate. The
+    verifier is the STREAMING one: the records, each with a component-level medium on
+    its environment, are not materialized. Four SUPPLEMENTARY rows are appended -- the
+    three censuses of :func:`experiment_census` and the gene-set size -- and the shared
     ``pair_uniqueness`` and ``canonical_gene_names`` rows keep their own verdicts.
     ``expected_unperturbed`` is the tree's own :func:`read_declared_unperturbed`: the
     no-phage controls in the planktonic assay culture, which carry no environmental edit
@@ -2865,9 +2911,7 @@ def verify_build(
     )
     from torchcell.verification.runners import stream_records
 
-    genome = bacterial_genome("ecoli", REFERENCE_STRAIN, data_root)
-    if not isinstance(genome, EcoliK12BW25113Genome):
-        raise TypeError(f"expected the BW25113 genome, got {type(genome).__name__}")
+    genome = bacterial_genome("ecoli", "MG1655", data_root)
     report = verify_environment_response_dataset_streaming(
         stream_records(dataset_root),
         dataset_name=PhageRbTnseqMutalik2020Dataset.__name__,
@@ -2880,23 +2924,11 @@ def verify_build(
     )
     for row in experiment_census(stream_records(dataset_root)):
         report.add(row)
-    stored = {
-        (str(perturbation["systematic_gene_name"]), str(perturbation["gene_namespace"]))
+    tags = {
+        str(perturbation["systematic_gene_name"])
         for record in stream_records(dataset_root)
         for perturbation in record["experiment"]["genotype"]["perturbations"]
     }
-    tags = {tag for tag, _ in stored}
-    # a gene no ECK pair places is the released MG1655 b-number, no BW25113 tag (#1057)
-    report.add(
-        stored_tags_are_loci(
-            {
-                tag
-                for tag, namespace in stored
-                if namespace == STRAIN_GENE_NAMESPACES[REFERENCE_STRAIN]
-            },
-            genome.resolve_gene_name,
-        )
-    )
     if len(tags) != EXPECTED_GENES:
         report.add(
             LevelResult(

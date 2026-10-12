@@ -79,31 +79,27 @@ nine-vector on one record could not say. The triage row's 7,720 instances at dim
 note gives for the released readings.
 
 IDENTIFIERS. The sheet names a well's promoter by the regulated gene's symbol, a
-b-number or a gene synonym. ``reconcile_locus_tags`` resolves the 1,809 distinct labels
-against MG1655 GCA_000005845.2 through its layers (24 as a locus tag, 1,481 as a gene
-symbol, 266 as a gene synonym, 38 not found) under the retain-all policy that drops
-nothing for a naming reason. Measured, 1,761 of the 1,809 end up naming one locus of the
-assembly and 48 do not; those 48 are stored with ``promoter_gene = None`` and their
-label kept verbatim, and they are:
+b-number or a gene synonym, and the record stores that label verbatim twice: as
+``promoter_name`` and, when the label names a gene, as ``promoter_gene``. The loader
+reads no annotation (the owner's rule of 2026-10-12: the data is the data, and the
+genome is a separate layer joined at modeling time). Before that rule the 1,809
+distinct labels went through ``reconcile_locus_tags`` against MG1655 GCA_000005845.2
+and ``promoter_gene`` held the locus the resolver chose (1,761 resolved; 48 did not:
+the eight rRNA operon names ``rrnA`` to ``rrnH``, the ``insA``/``insB`` IS copies,
+retired symbols such as ``aniC``, ``groE`` and ``somA``, two ambiguous symbols ``spr``
+and ``ygaD``, and six labels kept as given because another label reached the same
+locus). Those are now genome-reference findings the verifier's
+``promoter_gene_is_a_locus`` and ``promoter_genes_in_the_host_gene_universe`` rows
+report (#1069), and the resolution to a locus is a modeling-time join on the released
+label.
 
-- 38 the resolver does not find: the eight rRNA operon names ``rrnA`` to ``rrnH``, whose
-  promoters are real but whose names are not gene names in this annotation; the
-  ``insA``/``insB`` IS copies; retired symbols (``aniC``, ``dpbA``, ``fruL``,
-  ``gatR_1``, ``groE``, ``gssA``, ``molR_2``, ``pagB``, ``phnQ``, ``rdoA``, ``smf_2``,
-  ``somA``, ``tdcG_2``, ``yifM_2``, ``ygaQ``, ``yqaC``, ``yqaD``) and retired b-numbers;
-- two ambiguous (``spr`` -> b2175 or b4043, ``ygaD`` -> b2676 or b2700);
-- the six kept as given because another label reached the same locus, so the policy
-  keeps both rather than merging two wells into one identity (``b0255`` and ``b0257``
-  both reach b4587, ``b2639`` and ``b2641`` reach b2641, ``b4283`` and ``b4285`` reach
-  b4623), and the retired b-numbers among them are already in the 38;
-- ``Empty``, ``U66`` and ``U139``, one well on each of 20 plates. They name no E. coli
-  gene. The collection's two backbones are pUA66 and pUA139 in the library's source
-  paper (reference 28, Zaslaver 2006), so these read as the empty-vector and empty-well
-  background controls, but THE PAPER DEFINES NONE OF THE THREE LABELS and no record
-  asserts it: they are kept as 2,160 readings whose promoter resolves to nothing.
-
-The full list and the resolution histogram are in
-``preprocess/identifier_reconciliation.json``.
+The three labels that are NOT a gene name are ``Empty``, ``U66`` and ``U139``, one well
+on each of 20 plates (:data:`CONTROL_LABELS`). The collection's two backbones are pUA66
+and pUA139 in the library's source paper (reference 28, Zaslaver 2006), so these read as
+the empty-vector and empty-well background controls, but THE PAPER DEFINES NONE OF THE
+THREE LABELS and no record asserts it: they are kept as 2,160 readings whose
+``promoter_gene`` is ``None`` and whose label stays verbatim on ``promoter_name``. The
+label histogram is in ``preprocess/identifier_reconciliation.json``.
 
 WHERE THE GENE LINKAGE LIVES, AND WHAT IT IS NOT. The only gene the genotype names is
 the reporter, so this dataset's ``gene_set`` is ``{"gfp"}`` -- the same shape Foo 2014's
@@ -193,7 +189,6 @@ from torchcell.data import (
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import LB
 from torchcell.datamodels.schema import (
-    BACTERIAL_ASSEMBLY_SETS,
     AssemblyReferenceGenome,
     Concentration,
     ConcentrationUnit,
@@ -214,10 +209,7 @@ from torchcell.datamodels.schema import (
 )
 from torchcell.datasets.bacteria_common import (
     STRAIN_GENE_NAMESPACES,
-    LocusTagReconciliation,
     assembly_reference,
-    bacterial_genome,
-    reconcile_locus_tags,
 )
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.literature.manifest import (
@@ -234,8 +226,7 @@ from torchcell.literature.manifest import (
 )
 from torchcell.literature.provenance import run_retriever
 from torchcell.literature.retrieve import pmc_cloud_url
-from torchcell.sequence.genome.bacterial import BacterialGenome
-from torchcell.sequence.genome.ecoli.k12 import EcoliK12Genome, EcoliK12StrainName
+from torchcell.sequence.genome.ecoli.k12 import EcoliK12StrainName
 from torchcell.verification.report import (
     Level,
     LevelResult,
@@ -1010,52 +1001,47 @@ def check_fold_change(raw: pd.DataFrame, fold: pd.DataFrame) -> FoldChangeCheck:
     )
 
 
+#: The three sheet labels that name no E. coli gene: the empty-vector and empty-well
+#: controls of the collection (``U66`` and ``U139`` are its pUA66 and pUA139 backbones in
+#: Zaslaver 2006, reference 28), one well on each of 20 plates. The paper defines none
+#: of them, so no record asserts what they are; their ``promoter_gene`` is ``None``.
+CONTROL_LABELS: frozenset[str] = frozenset({"Empty", "U66", "U139"})
+
+
 class PromoterLedger(BaseModel):
-    """How the sheet's promoter labels map onto the pinned MG1655 annotation."""
+    """The sheet's promoter labels as stored: verbatim, with no annotation read."""
 
     model_config = ConfigDict(extra="forbid")
 
     dataset: str
     n_wells: int
     n_labels: int
-    n_labels_resolved: int
-    unresolved_labels: list[str]
-    reconciliation: LocusTagReconciliation
+    n_labels_with_gene: int
+    control_labels: list[str]
     labels_in_more_than_one_well: dict[str, int]
 
 
-def resolve_promoters(
-    raw: pd.DataFrame, genome: BacterialGenome[Any], *, label: str
+def promoter_genes(
+    raw: pd.DataFrame, *, label: str
 ) -> tuple[dict[str, str | None], PromoterLedger]:
-    """Map every promoter label to an MG1655 locus tag, or to ``None``.
+    """Every promoter label to the gene identifier it releases, verbatim, or ``None``.
 
-    ``reconcile_locus_tags`` is the shared retain-all policy: it returns the locus tag
-    for a label that resolves to one and the label itself otherwise. A label that comes
-    back unchanged AND is not a locus tag of the assembly resolved to nothing, so its
-    ``promoter_gene`` is ``None`` rather than a non-gene string in a gene field.
+    The label IS the source's gene identifier for the promoter (a symbol, a b-number or
+    a synonym), so it is stored as released; no annotation decides what it resolves to.
+    Only the three :data:`CONTROL_LABELS`, which name no gene, map to ``None``.
     """
-    stored, reconciliation = reconcile_locus_tags(genome, raw["promoter"], label=label)
     mapping: dict[str, str | None] = {}
-    for source, resolved in zip(raw["promoter"], stored, strict=True):
+    for source in raw["promoter"]:
         if source in mapping:
             continue
-        mapping[source] = None if resolved == source else str(resolved)
-    for source in list(mapping):
-        if mapping[source] is None:
-            resolution = genome.resolve_gene_name(source)
-            if resolution.systematic_name == source and resolution.status.value in (
-                "current",
-                "non_gene_feature",
-            ):
-                mapping[source] = source
+        mapping[str(source)] = None if source in CONTROL_LABELS else str(source)
     counts = raw["promoter"].value_counts()
     return mapping, PromoterLedger(
         dataset=label,
         n_wells=len(raw),
         n_labels=len(mapping),
-        n_labels_resolved=sum(1 for v in mapping.values() if v is not None),
-        unresolved_labels=sorted(k for k, v in mapping.items() if v is None),
-        reconciliation=reconciliation,
+        n_labels_with_gene=sum(1 for v in mapping.values() if v is not None),
+        control_labels=sorted(k for k, v in mapping.items() if v is None),
         labels_in_more_than_one_well={
             str(name): int(n) for name, n in counts.items() if n > 1
         },
@@ -1197,11 +1183,9 @@ class PromoterReporterMohiuddin2022Dataset(ExperimentDataset):
         io_workers: int = 0,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
-        ecoli_genome: EcoliK12Genome | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize; ``ecoli_genome`` is injected by the build entry points."""
-        self.ecoli_genome = ecoli_genome
+        """Initialize. No genome parameter: the loader reads no annotation."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -1240,18 +1224,6 @@ class PromoterReporterMohiuddin2022Dataset(ExperimentDataset):
             "Mohiuddin 2022 workbook linked into %s (sha256 verified)", self.raw_dir
         )
 
-    def _genome(self) -> EcoliK12Genome:
-        """The injected genome, or the reference strain's default cache (a direct run)."""
-        if self.ecoli_genome is None:
-            self.ecoli_genome = bacterial_genome("ecoli", self.REFERENCE_STRAIN)
-        expected = BACTERIAL_ASSEMBLY_SETS[self.REFERENCE_STRAIN]
-        if self.ecoli_genome.ASSEMBLY_SET != expected:
-            raise ValueError(
-                f"{type(self).__name__} needs the {expected} genome, got "
-                f"{self.ecoli_genome.ASSEMBLY_SET}"
-            )
-        return self.ecoli_genome
-
     @post_process
     def process(self) -> None:
         """Parse the workbook into per-(arm, well, hour) records; write LMDB."""
@@ -1260,8 +1232,7 @@ class PromoterReporterMohiuddin2022Dataset(ExperimentDataset):
         raw = read_raw_sheet(path)
         fold = read_fold_change_sheet(path)
         fold_check = check_fold_change(raw, fold)
-        genome = self._genome()
-        promoter_gene, ledger = resolve_promoters(raw, genome, label=self.name)
+        promoter_gene, ledger = promoter_genes(raw, label=self.name)
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
         os.makedirs(self.processed_dir, exist_ok=True)
@@ -1330,11 +1301,11 @@ class PromoterReporterMohiuddin2022Dataset(ExperimentDataset):
             raise RuntimeError(f"wrote {idx} records, the grid is {EXPECTED_RECORDS}")
         log.info(
             "Mohiuddin 2022: wrote %d records from %d wells over %d promoter labels, "
-            "%d of which resolve to an MG1655 locus",
+            "%d of which name a gene as released",
             idx,
             len(raw),
             ledger.n_labels,
-            ledger.n_labels_resolved,
+            ledger.n_labels_with_gene,
         )
 
     def _write_ledgers(
@@ -1403,9 +1374,10 @@ VERIFIER_PROVENANCE = Provenance(
         "the same hour, which is the divisor of the paper's own fold change. The 'Fold "
         "Change' sheet is NOT stored: the build reproduces all 52,110 of its cells from "
         "the 'Raw Data' sheet to a maximum relative error of 2.2e-16, and a stored "
-        "record's ratio to its own reference IS that cell. promoter_gene is the MG1655 "
-        "locus the label resolves to for 1,761 of the 1,809 labels and None for the 48 "
-        "that resolve to no single locus, which are kept with their label verbatim"
+        "record's ratio to its own reference IS that cell. promoter_gene is the "
+        "released label verbatim (a symbol, a b-number or a synonym; no annotation "
+        "read) for 1,806 of the 1,809 labels and None for the three control labels "
+        "Empty, U66 and U139, which name no gene"
     ),
     page=(
         "Microbiology Spectrum 2022 10:e02253-21 "

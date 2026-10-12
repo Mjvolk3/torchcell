@@ -66,6 +66,12 @@ class Round:
     # Heads beyond `phenotype` that the round trains (the joint round has two). Each gets
     # its own ranked sections after a first section that puts the heads side by side.
     extra_phenotypes: tuple[str, ...] = ()
+    # The morphology rounds mix arm prefixes (M_, MP_, CM_, CMP_), so `arm_re` is matched
+    # in full against every tag and group 1 is the family itself (not `<prefix>_<readout>`).
+    family_from_match: bool = False
+    # v25 varies the recipe inside an arm (lr, loss, graph KL, schedule) and says so in
+    # tags; tags matching this regex join the family so each cell is its own group.
+    variant_re: str | None = None
 
 
 ROUNDS: dict[str, Round] = {
@@ -233,6 +239,56 @@ ROUNDS: dict[str, Round] = {
         ),
         max_runs=48,
         extra_phenotypes=("proteome",),
+    ),
+    "morph_v24": Round(
+        project="torchcell_019_morph_v24",
+        report_title="v24 morphology round: the 116 moving CalMorph features from the genotype, and with a measured modality as input",
+        view_name="v24 morphology round by arm",
+        view_id=None,
+        arm_re=r"((?:M|MP|CM|CMP)_(?:cls|pool|zs|xattn|expr|exprperm|prot|protperm))_(s\d+)",
+        phenotype="morphology",
+        splits=[f"s{i}" for i in range(12)],
+        split_label={f"s{i}": f"split {i}" for i in range(12)},
+        intro=(
+            "One run per RTX 6000 Ada card on IGB cabbi, 1,200 epochs, batch 128 (config "
+            "cgt_morph_v24): M_cls predicts the 116 moving CalMorph features off the "
+            "perturbed CLS from the genotype alone (fig3_core, 4,695 strains); MP_cls the "
+            "same on the proteome store's strains; CMP_expr and CM_prot reveal the strain's "
+            "own expression or proteome as input through the v20 conditioning step with the "
+            "gene pool, CMP_exprperm and CM_protperm another strain's; CM_expr and "
+            "CM_exprperm are the CLS-only conditioned arms, a null by construction. Scored "
+            "as the mean over epochs 1,000 to 1,199. Grouped lines are the mean over seeds "
+            "with the min-max band."
+        ),
+        max_runs=130,
+        label_key="calmorph",
+        family_from_match=True,
+    ),
+    "morph_v25": Round(
+        project="torchcell_019_morph_v25",
+        report_title="v25 inductive morphology round: readout, learning rate, loss, graph prior and schedule from the genotype alone",
+        view_name="v25 inductive round by cell",
+        view_id=None,
+        arm_re=r"((?:M|MP|CM|CMP)_(?:cls|pool|zs|xattn|expr|exprperm|prot|protperm))_(s\d+)",
+        phenotype="morphology",
+        splits=["s0", "s1", "s2", "s3"],
+        split_label={f"s{i}": f"split {i}" for i in range(4)},
+        intro=(
+            "Genotype-only morphology on fig3_core, one run per card on IGB cabbi, 1,200 "
+            "epochs (config cgt_morph_v24 with overrides; jobs 2428203, 2428214, 2428212): "
+            "readout {M_cls, M_pool, M_zs (CLS and the deleted gene's token), M_xattn (S3 "
+            "cross-attention)} at lr 3e-4, 1e-3, 3e-3; M_cls init seeds 1 and 2 for the "
+            "plateau-escape rate; warmup; MSE in place of the 19-quantile pinball; the graph "
+            "KL in place of the hard mask; lr 1e-4; warm restarts; a stacked cell. A cell is "
+            "arm plus its recipe tags. Scored as the mean over epochs 1,000 to 1,199 and the "
+            "escape fraction (training Pearson above 0.3 by epoch 400). Grouped lines are "
+            "the mean over seeds with the min-max band. Nothing here is a result until the "
+            "runs finish."
+        ),
+        max_runs=130,
+        label_key="calmorph",
+        family_from_match=True,
+        variant_re=r"lr[0-9e.-]+|mse|graphkl[0-9e.-]+|restarts\d+|warmup\d+|stack",
     ),
     "v18": Round(
         project="torchcell_019_expr_v18",
@@ -424,9 +480,12 @@ def label_runs(api: wandb.Api, rnd: Round) -> int:
     n = 0
     prefix = rnd.arm_re.split("_")[0]
     for run in api.runs(f"{ENTITY}/{rnd.project}"):
-        arms = [t for t in run.tags if t.startswith(f"{prefix}_")]
+        if rnd.family_from_match:
+            arms = [t for t in run.tags if re.fullmatch(rnd.arm_re, t)]
+        else:
+            arms = [t for t in run.tags if t.startswith(f"{prefix}_")]
         if len(arms) != 1:
-            raise ValueError(f"{run.id}: expected one {prefix}_* tag, got {arms}")
+            raise ValueError(f"{run.id}: expected one arm tag, got {arms}")
         arm = arms[0]
         m = re.fullmatch(rnd.arm_re, arm)
         if m is None:
@@ -434,7 +493,13 @@ def label_runs(api: wandb.Api, rnd: Round) -> int:
         readout, split = m.group(1), m.group(2)
         seed = int(run.config["seed"])
         name = f"{arm}_seed{seed}"
-        family = f"{prefix}_{readout}"
+        family = readout if rnd.family_from_match else f"{prefix}_{readout}"
+        if rnd.variant_re is not None:
+            variants = sorted(t for t in run.tags if re.fullmatch(rnd.variant_re, t))
+            if variants:
+                family = family + "_" + "_".join(variants)
+                arm = f"{family}_{split}"
+                name = f"{arm}_seed{seed}"
         # The trainer's group, `<host>-<jobid>_<sha256>`, is the run's CHECKPOINT DIRECTORY,
         # and this function overwrites both fields that carry it (group becomes the arm so
         # `/groups/<arm>` shows an arm across splits and seeds; name becomes arm_seed). A
@@ -697,7 +762,8 @@ def main() -> None:
     for r in api.runs(f"{ENTITY}/{rnd.project}"):
         keys.setdefault(str(r.config["family"]), set()).update(r.summary.keys())
     prefix = rnd.arm_re.split("_")[0]
-    assert all(f.startswith(prefix) for f in keys), sorted(keys)
+    if not rnd.family_from_match:
+        assert all(f.startswith(prefix) for f in keys), sorted(keys)
     print(f"round view\n{populate_view(rnd, args.round, set().union(*keys.values()))}")
     for family in sorted(keys):
         print(f"{family}: arm view, then the group page")

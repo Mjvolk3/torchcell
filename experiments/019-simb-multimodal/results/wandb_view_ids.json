@@ -9,6 +9,56 @@
     "name": "grid: by depth",
     "url": "https://wandb.ai/zhao-group/torchcell_019_grid_bench?nw=3ne19cnkxjq"
   },
+  "morph_v24": {
+    "id": "d98qfdb0rqy",
+    "name": "v24 morphology round by arm",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v24?nw=d98qfdb0rqy"
+  },
+  "morph_v24/CMP_expr": {
+    "id": "pwlp71sk3vm",
+    "name": "CMP_expr: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v24?nw=pwlp71sk3vm"
+  },
+  "morph_v24/CMP_exprperm": {
+    "id": "aw6au257vds",
+    "name": "CMP_exprperm: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v24?nw=aw6au257vds"
+  },
+  "morph_v24/CM_expr": {
+    "id": "aduhc0jld4v",
+    "name": "CM_expr: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v24?nw=aduhc0jld4v"
+  },
+  "morph_v24/CM_exprperm": {
+    "id": "lzgozwq0uyx",
+    "name": "CM_exprperm: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v24?nw=lzgozwq0uyx"
+  },
+  "morph_v24/CM_prot": {
+    "id": "ovh3n4pimu7",
+    "name": "CM_prot: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v24?nw=ovh3n4pimu7"
+  },
+  "morph_v24/CM_protperm": {
+    "id": "fxsagbjgh93",
+    "name": "CM_protperm: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v24?nw=fxsagbjgh93"
+  },
+  "morph_v24/MP_cls": {
+    "id": "f1mdaxyire3",
+    "name": "MP_cls: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v24?nw=f1mdaxyire3"
+  },
+  "morph_v24/M_cls": {
+    "id": "acv1bpkemcs",
+    "name": "M_cls: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v24?nw=acv1bpkemcs"
+  },
+  "morph_v24/M_pool": {
+    "id": "859vkbzzbqf",
+    "name": "M_pool: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v24?nw=859vkbzzbqf"
+  },
   "v16": {
     "id": "jvc4d5ajdy1",
     "name": "v16 joint round by arm",

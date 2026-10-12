@@ -1,0 +1,120 @@
+{
+  "data_root": "/scratch/projects/torchcell-scratch",
+  "git_head": "91487019d079fa4b64900dfb94837b29476d458c",
+  "datasets": {
+    "DmfKuzmin2018Dataset": {
+      "dataset_class": "DmfKuzmin2018Dataset",
+      "root": "data/torchcell/dmf_kuzmin2018",
+      "records": 410571,
+      "route": "registry",
+      "route_detail": "run_fitness[FITNESS_DATASETS:dmf_kuzmin2018]",
+      "verdict": "FAIL",
+      "n_rules": 14,
+      "failed_rules": [
+        {
+          "level": "L2",
+          "name": "uncertainty_sanity",
+          "passed": false,
+          "message": "4/410399 labeled uncertainties are a sample dispersion of exactly 0 (a pseudocount artifact, not perfect precision)"
+        }
+      ],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/dmf_kuzmin2018/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 265.4,
+      "git_head": "91487019d079fa4b64900dfb94837b29476d458c",
+      "manifest_built_at": "2026-10-11T21:43:14"
+    },
+    "TmfKuzmin2018Dataset": {
+      "dataset_class": "TmfKuzmin2018Dataset",
+      "root": "data/torchcell/tmf_kuzmin2018",
+      "records": 91111,
+      "route": "registry",
+      "route_detail": "run_fitness[FITNESS_DATASETS:tmf_kuzmin2018]",
+      "verdict": "FAIL",
+      "n_rules": 14,
+      "failed_rules": [
+        {
+          "level": "L2",
+          "name": "uncertainty_sanity",
+          "passed": false,
+          "message": "5/91111 labeled uncertainties are a sample dispersion of exactly 0 (a pseudocount artifact, not perfect precision)"
+        }
+      ],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/tmf_kuzmin2018/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 75.6,
+      "git_head": "91487019d079fa4b64900dfb94837b29476d458c",
+      "manifest_built_at": "2026-10-11T21:44:48"
+    },
+    "DmfKuzmin2020Dataset": {
+      "dataset_class": "DmfKuzmin2020Dataset",
+      "root": "data/torchcell/dmf_kuzmin2020",
+      "records": 632998,
+      "route": "registry",
+      "route_detail": "run_fitness[FITNESS_DATASETS:dmf_kuzmin2020]",
+      "verdict": "FAIL",
+      "n_rules": 14,
+      "failed_rules": [
+        {
+          "level": "L1",
+          "name": "count",
+          "passed": false,
+          "message": "observed 632998, expected 632340"
+        },
+        {
+          "level": "L1",
+          "name": "canonical_gene_names",
+          "passed": false,
+          "message": "0 genes carry conflicting common-name spellings (0 records; 0 case-only); 47 systematic names are not the genome's current name; 40 common names resolve to another gene"
+        },
+        {
+          "level": "L2",
+          "name": "uncertainty_sanity",
+          "passed": false,
+          "message": "33/632998 labeled uncertainties are a sample dispersion of exactly 0 (a pseudocount artifact, not perfect precision)"
+        },
+        {
+          "level": "L4",
+          "name": "current_genome_genes",
+          "passed": false,
+          "message": "47 systematic names are absent from the current genome over 1000 records: YAL043C-A x21, YAL058C-A x21, YAR037W x22, YAR040C x22, YAR043C x22, YAR044W x22, YBR075W x21, YBR090C-A x21, YBR100W x21, YCL006C x21"
+        }
+      ],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/dmf_kuzmin2020/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 416.0,
+      "git_head": "91487019d079fa4b64900dfb94837b29476d458c",
+      "manifest_built_at": "2026-10-11T22:00:45"
+    },
+    "FattyAcidXue2025Dataset": {
+      "dataset_class": "FattyAcidXue2025Dataset",
+      "root": "data/torchcell/ffa_xue2025",
+      "records": 176,
+      "route": "registry",
+      "route_detail": "run_metabolite[METABOLITE_DATASETS:ffa_xue2025]",
+      "verdict": "FAIL",
+      "n_rules": 8,
+      "failed_rules": [
+        {
+          "level": "L4",
+          "name": "gene_containment_scmd_ohya2005",
+          "passed": false,
+          "message": "0.769 of scmd_ohya2005's 13 deletion genes are in Ohya (>= 0.9)"
+        }
+      ],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/ffa_xue2025/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 6.2,
+      "git_head": "91487019d079fa4b64900dfb94837b29476d458c",
+      "manifest_built_at": "2026-10-12T00:19:22"
+    }
+  }
+}

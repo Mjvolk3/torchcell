@@ -1,0 +1,591 @@
+{
+  "xue2025": {
+    "workbook": {
+      "path": "/scratch/projects/torchcell-scratch/torchcell-library/xue2025/data/Supplementary Data 1_Raw titers.xlsx",
+      "sha256": "023de80ec51a4d0d1ccd6fc3506e42a44fcea6d3c3101ee7a83a005e49bbc779"
+    },
+    "mirror_manifest_files": [
+      "data/Supplementary Data 1_Raw titers.xlsx"
+    ],
+    "sheets": {
+      "Abbreviations": 20,
+      "raw-titer (mg-L)": 2783
+    },
+    "genotype_rows": 177,
+    "wild_type_rows": 1,
+    "records": 176,
+    "records_with_any_of_three": 112,
+    "records_with_rgr1_or_med4": 83,
+    "genotype_statement": [
+      {
+        "sheet": "Abbreviations",
+        "cell": "A3",
+        "text": "MED4",
+        "terms": []
+      },
+      {
+        "sheet": "Abbreviations",
+        "cell": "B3",
+        "text": "M",
+        "terms": []
+      },
+      {
+        "sheet": "Abbreviations",
+        "cell": "A6",
+        "text": "RGR1",
+        "terms": []
+      },
+      {
+        "sheet": "Abbreviations",
+        "cell": "B6",
+        "text": "R",
+        "terms": []
+      },
+      {
+        "sheet": "Abbreviations",
+        "cell": "A10",
+        "text": "TFC7",
+        "terms": []
+      },
+      {
+        "sheet": "Abbreviations",
+        "cell": "B10",
+        "text": "T",
+        "terms": []
+      },
+      {
+        "sheet": "raw-titer (mg-L)",
+        "cell": "A11",
+        "text": "M 4Δ",
+        "terms": []
+      },
+      {
+        "sheet": "raw-titer (mg-L)",
+        "cell": "A33",
+        "text": "T 4Δ",
+        "terms": []
+      },
+      {
+        "sheet": "raw-titer (mg-L)",
+        "cell": "A72",
+        "text": "R 4Δ",
+        "terms": []
+      }
+    ],
+    "allele_terms": [
+      "RGR1",
+      "MED4",
+      "TFC7",
+      "truncation",
+      "DAmP",
+      "degron",
+      "conditional",
+      "hypomorph",
+      "partial"
+    ],
+    "allele_hits": [
+      {
+        "sheet": "Abbreviations",
+        "cell": "A3",
+        "text": "MED4",
+        "terms": [
+          "MED4"
+        ]
+      },
+      {
+        "sheet": "Abbreviations",
+        "cell": "A6",
+        "text": "RGR1",
+        "terms": [
+          "RGR1"
+        ]
+      },
+      {
+        "sheet": "Abbreviations",
+        "cell": "A10",
+        "text": "TFC7",
+        "terms": [
+          "TFC7"
+        ]
+      }
+    ],
+    "genes": [
+      {
+        "common_name": "RGR1",
+        "systematic_name": "YLR071C",
+        "records": 46,
+        "sgd_locus": {
+          "path": "/scratch/projects/torchcell-scratch/data/sgd/genome/genes/YLR071C.json",
+          "sha256": "90baf3e6b463ce89eec60f69cc5006940a855a45db9c533a66429cd087f77945"
+        },
+        "sgd_null_inviable": [
+          {
+            "strain": "S288C",
+            "experiment": "systematic mutation set",
+            "reference": "Giaever G, et al. (2002)",
+            "pubmed_id": 12140549
+          }
+        ],
+        "sgd_null_inviable_s288c": 1,
+        "essentiality_store_keys": [
+          "796"
+        ],
+        "in_ohya2005": false
+      },
+      {
+        "common_name": "MED4",
+        "systematic_name": "YOR174W",
+        "records": 46,
+        "sgd_locus": {
+          "path": "/scratch/projects/torchcell-scratch/data/sgd/genome/genes/YOR174W.json",
+          "sha256": "5080e17a2496724c647159a9f72e7fa10e54ec63e36ca686cc4811331cd2befd"
+        },
+        "sgd_null_inviable": [
+          {
+            "strain": "S288C",
+            "experiment": "systematic mutation set",
+            "reference": "Giaever G, et al. (2002)",
+            "pubmed_id": 12140549
+          }
+        ],
+        "sgd_null_inviable_s288c": 1,
+        "essentiality_store_keys": [
+          "1123"
+        ],
+        "in_ohya2005": false
+      },
+      {
+        "common_name": "TFC7",
+        "systematic_name": "YOR110W",
+        "records": 46,
+        "sgd_locus": {
+          "path": "/scratch/projects/torchcell-scratch/data/sgd/genome/genes/YOR110W.json",
+          "sha256": "838ae231f2935b09b3c9f59e34ea269fdcb3b234c92f67a2015d215de7aa5717"
+        },
+        "sgd_null_inviable": [
+          {
+            "strain": "Other",
+            "experiment": "classical genetics",
+            "reference": "Manaud N, et al. (1998)",
+            "pubmed_id": 9584160
+          }
+        ],
+        "sgd_null_inviable_s288c": 0,
+        "essentiality_store_keys": [],
+        "in_ohya2005": false
+      }
+    ],
+    "store_records": 176,
+    "store_records_with_any_of_three": 112,
+    "store_perturbation_types_of_three": {
+      "kanmx_deletion": 138
+    }
+  },
+  "zero_sd_tables": [
+    {
+      "citation_key": "kuzminSystematicAnalysisComplex2018",
+      "file": {
+        "path": "/scratch/projects/torchcell-scratch/data/torchcell/dmf_kuzmin2018/raw/aao1729_data_s1.tsv",
+        "sha256": "c82b60f98590071fcb07b74b672958a5863b58e03b78631e6235cb664ee82afb"
+      },
+      "sd_column": "Combined mutant fitness standard deviation",
+      "rows": 501510,
+      "zero_sd_rows": 9,
+      "zero_sd_rows_by_type": {
+        "trigenic": 5,
+        "digenic": 4
+      },
+      "zero_sd_cell_text": {
+        "0.0000": 9
+      },
+      "p_value_on_zero_sd_rows": {
+        "0.000e+00": 9
+      }
+    },
+    {
+      "citation_key": "kuzminExploringWholegenomeDuplicate2020",
+      "file": {
+        "path": "/scratch/projects/torchcell-scratch/data/torchcell/dmf_kuzmin2020/raw/aaz5667-Table-S1.xlsx",
+        "sha256": "4180577d53d5012c6c747227cbeca8a2d09f59bd8028d3bb2f5fd84601c77def"
+      },
+      "sd_column": "Double/triple mutant fitness standard deviation",
+      "rows": 794772,
+      "zero_sd_rows": 24,
+      "zero_sd_rows_by_type": {
+        "digenic": 18,
+        "trigenic": 6
+      },
+      "zero_sd_cell_text": {
+        "0": 24
+      },
+      "p_value_on_zero_sd_rows": {
+        "0": 24
+      }
+    },
+    {
+      "citation_key": "kuzminExploringWholegenomeDuplicate2020",
+      "file": {
+        "path": "/scratch/projects/torchcell-scratch/data/torchcell/dmf_kuzmin2020/raw/aaz5667-Table-S3.xlsx",
+        "sha256": "625420bed5de3563c9f1b4f1909a627aa4d8dd1b629c3f8a3596eb99e132c54f"
+      },
+      "sd_column": "Double/triple mutant fitness standard deviation",
+      "rows": 139823,
+      "zero_sd_rows": 22,
+      "zero_sd_rows_by_type": {
+        "digenic": 15,
+        "trigenic": 7
+      },
+      "zero_sd_cell_text": {
+        "0": 22
+      },
+      "p_value_on_zero_sd_rows": {
+        "0": 22
+      }
+    },
+    {
+      "citation_key": "costanzoGlobalGeneticInteraction2016",
+      "file": {
+        "path": "/scratch/projects/torchcell-scratch/data/torchcell/dmf_costanzo2016/raw/SGA_DAmP.txt",
+        "sha256": "581eafbc7a30155f5af7777101e6f94cfd03fcf0242ee76ecce47aa88d75ebc8"
+      },
+      "sd_column": "Double mutant fitness standard deviation",
+      "rows": 1391958,
+      "zero_sd_rows": 115,
+      "zero_sd_rows_by_type": {
+        "all": 115
+      },
+      "zero_sd_cell_text": {
+        "0.0000": 115
+      },
+      "p_value_on_zero_sd_rows": {
+        "0.000e+00": 115
+      }
+    },
+    {
+      "citation_key": "costanzoGlobalGeneticInteraction2016",
+      "file": {
+        "path": "/scratch/projects/torchcell-scratch/data/torchcell/dmf_costanzo2016/raw/SGA_ExE.txt",
+        "sha256": "84dfe41a09192479842dc0055373c35afcb5246c8e11bb9724326615f5162f7d"
+      },
+      "sd_column": "Double mutant fitness standard deviation",
+      "rows": 818570,
+      "zero_sd_rows": 230,
+      "zero_sd_rows_by_type": {
+        "all": 230
+      },
+      "zero_sd_cell_text": {
+        "0.0000": 230
+      },
+      "p_value_on_zero_sd_rows": {
+        "0.000e+00": 228,
+        "1.000e+00": 2
+      }
+    },
+    {
+      "citation_key": "costanzoGlobalGeneticInteraction2016",
+      "file": {
+        "path": "/scratch/projects/torchcell-scratch/data/torchcell/dmf_costanzo2016/raw/SGA_ExN_NxE.txt",
+        "sha256": "d8b183a80da1d52bbf66c134d4707c1c243c2cf1689859aee72c28e4d4adffca"
+      },
+      "sd_column": "Double mutant fitness standard deviation",
+      "rows": 5796145,
+      "zero_sd_rows": 1356,
+      "zero_sd_rows_by_type": {
+        "all": 1356
+      },
+      "zero_sd_cell_text": {
+        "0.0000": 1356
+      },
+      "p_value_on_zero_sd_rows": {
+        "0.000e+00": 1356
+      }
+    },
+    {
+      "citation_key": "costanzoGlobalGeneticInteraction2016",
+      "file": {
+        "path": "/scratch/projects/torchcell-scratch/data/torchcell/dmf_costanzo2016/raw/SGA_NxN.txt",
+        "sha256": "c413d1bfab7e79a2db142ba3e43572411216f24c23df71bb1e180163da1304ae"
+      },
+      "sd_column": "Double mutant fitness standard deviation",
+      "rows": 12698939,
+      "zero_sd_rows": 1080,
+      "zero_sd_rows_by_type": {
+        "all": 1080
+      },
+      "zero_sd_cell_text": {
+        "0.0000": 1080
+      },
+      "p_value_on_zero_sd_rows": {
+        "0.000e+00": 1072,
+        "1.000e+00": 8
+      }
+    }
+  ],
+  "zero_sd_stores": [
+    {
+      "slug": "dmf_kuzmin2018",
+      "records": 410571,
+      "zero_uncertainty_records": 4,
+      "uncertainty_types": {
+        "sample_sd": 4
+      },
+      "n_samples": {
+        "4": 4
+      },
+      "fitness_se": {
+        "0.0": 4
+      },
+      "fitness_std": {
+        "0.0": 4
+      }
+    },
+    {
+      "slug": "tmf_kuzmin2018",
+      "records": 91111,
+      "zero_uncertainty_records": 5,
+      "uncertainty_types": {
+        "sample_sd": 5
+      },
+      "n_samples": {
+        "4": 5
+      },
+      "fitness_se": {
+        "0.0": 5
+      },
+      "fitness_std": {
+        "0.0": 5
+      }
+    },
+    {
+      "slug": "dmf_kuzmin2020",
+      "records": 632998,
+      "zero_uncertainty_records": 33,
+      "uncertainty_types": {
+        "sample_sd": 33
+      },
+      "n_samples": {
+        "4": 33
+      },
+      "fitness_se": {
+        "0.0": 33
+      },
+      "fitness_std": {
+        "0.0": 33
+      }
+    }
+  ],
+  "si_evidence": [
+    {
+      "citation_key": "kuzminSystematicAnalysisComplex2018",
+      "file": {
+        "path": "/scratch/projects/torchcell-scratch/torchcell-library/kuzminSystematicAnalysisComplex2018/si/si1.md",
+        "sha256": "2ec80d05d823976e12add17699ad759bcd983768d2f53e7eb6c0185b963b8291"
+      },
+      "definitions": [
+        {
+          "file": {
+            "path": "/scratch/projects/torchcell-scratch/torchcell-library/kuzminSystematicAnalysisComplex2018/si/si1.md",
+            "sha256": "2ec80d05d823976e12add17699ad759bcd983768d2f53e7eb6c0185b963b8291"
+          },
+          "line": 398,
+          "quote": "12) Combined mutant fitness standard deviation"
+        },
+        {
+          "file": {
+            "path": "/scratch/projects/torchcell-scratch/torchcell-library/kuzminSystematicAnalysisComplex2018/si/si1.md",
+            "sha256": "2ec80d05d823976e12add17699ad759bcd983768d2f53e7eb6c0185b963b8291"
+          },
+          "line": 427,
+          "quote": "12. Combined mutant fitness standard deviation"
+        }
+      ],
+      "term_lines": {
+        "standard deviation": [
+          191,
+          269,
+          398,
+          427
+        ],
+        "not computed": [],
+        "not calculated": [],
+        "undefined": [],
+        "zero": [
+          358
+        ],
+        "single colony": [],
+        "pseudocount": []
+      },
+      "paper": {
+        "path": "/scratch/projects/torchcell-scratch/torchcell-library/kuzminSystematicAnalysisComplex2018/paper.md",
+        "sha256": "86f0e25af0194221fb67d253df578c5310f05b1394a060517a66c5fbd467a6cd"
+      },
+      "paper_term_lines": {
+        "standard deviation": [],
+        "not computed": [],
+        "not calculated": [],
+        "undefined": [],
+        "zero": [
+          101
+        ],
+        "single colony": [],
+        "pseudocount": []
+      }
+    },
+    {
+      "citation_key": "kuzminExploringWholegenomeDuplicate2020",
+      "file": {
+        "path": "/scratch/projects/torchcell-scratch/torchcell-library/kuzminExploringWholegenomeDuplicate2020/si/si1.md",
+        "sha256": "69179c57ada82e99faa40a800fa311e0ad300ac3bde8ea1f310e6c7caf9567fe"
+      },
+      "definitions": [
+        {
+          "file": {
+            "path": "/scratch/projects/torchcell-scratch/torchcell-library/kuzminExploringWholegenomeDuplicate2020/si/si1.md",
+            "sha256": "69179c57ada82e99faa40a800fa311e0ad300ac3bde8ea1f310e6c7caf9567fe"
+          },
+          "line": 229,
+          "quote": "12. Combined mutant fitness standard deviation"
+        },
+        {
+          "file": {
+            "path": "/scratch/projects/torchcell-scratch/torchcell-library/kuzminExploringWholegenomeDuplicate2020/si/si1.md",
+            "sha256": "69179c57ada82e99faa40a800fa311e0ad300ac3bde8ea1f310e6c7caf9567fe"
+          },
+          "line": 285,
+          "quote": "12. Combined mutant fitness standard deviation"
+        }
+      ],
+      "term_lines": {
+        "standard deviation": [
+          77,
+          202,
+          229,
+          259,
+          285
+        ],
+        "not computed": [],
+        "not calculated": [],
+        "undefined": [],
+        "zero": [
+          95,
+          109
+        ],
+        "single colony": [],
+        "pseudocount": []
+      },
+      "paper": {
+        "path": "/scratch/projects/torchcell-scratch/torchcell-library/kuzminExploringWholegenomeDuplicate2020/paper.md",
+        "sha256": "9a8bdc03bb397d587b135fe0bc2820b8e3ac1bce3432133e1fbb650745c6a27a"
+      },
+      "paper_term_lines": {
+        "standard deviation": [],
+        "not computed": [],
+        "not calculated": [],
+        "undefined": [],
+        "zero": [],
+        "single colony": [],
+        "pseudocount": []
+      }
+    },
+    {
+      "citation_key": "costanzoGlobalGeneticInteraction2016",
+      "file": {
+        "path": "/scratch/projects/torchcell-scratch/torchcell-library/costanzoGlobalGeneticInteraction2016/si/si1.md",
+        "sha256": "1828703b0ff739fdf1c0d9232fe4fd81a3ce95a1b111780f55ef63bfa676880e"
+      },
+      "definitions": [
+        {
+          "file": {
+            "path": "/scratch/projects/torchcell-scratch/torchcell-library/costanzoGlobalGeneticInteraction2016/si/si1.md",
+            "sha256": "1828703b0ff739fdf1c0d9232fe4fd81a3ce95a1b111780f55ef63bfa676880e"
+          },
+          "line": 563,
+          "quote": "Double mutant fitness Double mutant fitness standard deviation"
+        }
+      ],
+      "term_lines": {
+        "standard deviation": [
+          481,
+          563
+        ],
+        "not computed": [],
+        "not calculated": [],
+        "undefined": [],
+        "zero": [],
+        "single colony": [
+          408
+        ],
+        "pseudocount": []
+      },
+      "paper": {
+        "path": "/scratch/projects/torchcell-scratch/torchcell-library/costanzoGlobalGeneticInteraction2016/paper.md",
+        "sha256": "b675090ca3779d2c0031112d2fad7a78f0f09de9132d6a8ce103924fe2c92135"
+      },
+      "paper_term_lines": {
+        "standard deviation": [
+          130,
+          160
+        ],
+        "not computed": [],
+        "not calculated": [],
+        "undefined": [],
+        "zero": [],
+        "single colony": [],
+        "pseudocount": []
+      }
+    },
+    {
+      "citation_key": "baryshnikovaQuantitativeAnalysisFitness2010",
+      "file": {
+        "path": "/scratch/projects/torchcell-scratch/torchcell-library/baryshnikovaQuantitativeAnalysisFitness2010/si/si1.md",
+        "sha256": "f85ea57ce9f5ec60b633b837ff2c5ee18cc65e113db2f034b892739690d8046e"
+      },
+      "definitions": [
+        {
+          "file": {
+            "path": "/scratch/projects/torchcell-scratch/torchcell-library/baryshnikovaQuantitativeAnalysisFitness2010/si/si1.md",
+            "sha256": "f85ea57ce9f5ec60b633b837ff2c5ee18cc65e113db2f034b892739690d8046e"
+          },
+          "line": 262,
+          "quote": "one that reflects the local variability in replicate colonies (based on $4 -$ 8 colonies for the corresponding double mutant)"
+        },
+        {
+          "file": {
+            "path": "/scratch/projects/torchcell-scratch/torchcell-library/baryshnikovaQuantitativeAnalysisFitness2010/si/si1.md",
+            "sha256": "f85ea57ce9f5ec60b633b837ff2c5ee18cc65e113db2f034b892739690d8046e"
+          },
+          "line": 268,
+          "quote": "variance estimates derived from local double mutant colony reproducibility can occasionally dramatically underestimate the true variance"
+        }
+      ],
+      "term_lines": {
+        "standard deviation": [
+          16,
+          220,
+          228,
+          288,
+          390
+        ],
+        "not computed": [],
+        "not calculated": [],
+        "undefined": [],
+        "zero": [],
+        "single colony": [],
+        "pseudocount": []
+      },
+      "paper": {
+        "path": "/scratch/projects/torchcell-scratch/torchcell-library/baryshnikovaQuantitativeAnalysisFitness2010/paper.md",
+        "sha256": "7ebd3880c052d1808c055f2ba2445e016f79080f222591bb023b755806ccd3d0"
+      },
+      "paper_term_lines": {
+        "standard deviation": [],
+        "not computed": [],
+        "not calculated": [],
+        "undefined": [],
+        "zero": [],
+        "single colony": [],
+        "pseudocount": []
+      }
+    }
+  ]
+}

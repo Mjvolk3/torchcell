@@ -96,6 +96,32 @@ worktree by default -- code AND notes (roadmap/plan/weekly/dendron/`.claude/*`).
   for structured data. New structured objects should be pydantic unless there is a
   clear reason not to.
 
+### Schema changes
+
+`torchcell/datamodels/schema.py` (+ `pydant.py`) is the most sensitive file in the database.
+Full rules, reasons and history: [[torchcell.datamodels.schema-change-policy]].
+
+- **Trust the served schema.** A served class, field or enum member is presumed correct
+  (compute and verification went into it); the burden is on the change.
+- **Correctness is the criterion, not reversibility.** An irreversible change is fine when it
+  is demonstrably more correct; "convenient for a new source" is never a reason.
+- **Additive first** (new leaf or sibling, optional-by-construction field, typed
+  `ProvenanceGap` on a required field). A removal, rename, loosened required field or changed
+  field meaning needs a written correctness argument AND the owner's sign-off.
+- **Never remove a dataset class to satisfy a required field** (the typed gap is the route);
+  **never weaken a required field for a thin source** (`Environment.media` stays required).
+- **New measurement types go by the physical measurement, not the analysis:** a different
+  technology is its own leaf with explicit conversion; the same technology shares the leaf
+  and diverges in the experiment class above it (10x 3' UMI: one leaf for Boocock and Jackson).
+- **Every change ships a record**, `database/schema_changes/<date>-<slug>.json`
+  (`python -m torchcell.provenance.schema_change template | new | check | list`), plus the
+  impact report and the served datasets that rebuild in the PR body, and the `schema-breaking`
+  label when a served closure changes. Docstrings, a new symbol no served closure holds yet,
+  and test-only edits need none.
+- Enforced by the `schema-change-records` pre-commit hook and
+  `tests/torchcell/datamodels/test_schema_change_records.py`. `TORCHCELL_SCHEMA_RECORD_ACK=1`
+  passes a commit, never a landing.
+
 ## Evidence Discipline -- Never State an Unrun Experiment as a Result
 
 **Every claim must trace to something actually RUN and OBSERVED. If it was not measured, it
@@ -820,6 +846,9 @@ fingerprints, the BioCypher graph schema, and the adapter code it was serialized
   `$DATA_ROOT/database/data/...` is remade from scratch by the full KG build. Never "clear
   just that one `database/data/<dataset>`" to dodge the check; the honest answer to a
   shared-class change is the full rebuild, and the manifest names the datasets and symbols.
+  Such a change ships its schema-change record, whose `rebuild_scope` reads
+  `full_kg_rebuild` and names the served datasets, and its PR carries the `schema-breaking`
+  label ([[torchcell.datamodels.schema-change-policy]]).
   The full build is `database/slurm/scripts/gilahyper_live_rebuild-slurm_docker.slurm`
   ([[database.slurm.scripts.gilahyper_live_rebuild-slurm_docker]]): it reads the DEV-tree
   LMDBs read-only, so every mapped dev store must first read `fresh` under

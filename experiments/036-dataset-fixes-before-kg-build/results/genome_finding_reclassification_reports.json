@@ -1,0 +1,2086 @@
+{
+  "source": "on-disk reports",
+  "data_root": "/scratch/projects/torchcell-scratch",
+  "measured_at": "2026-10-12T11:30:05",
+  "stores": {
+    "SmfCostanzo2016Dataset": {
+      "dataset_class": "SmfCostanzo2016Dataset",
+      "root": "data/torchcell/smf_costanzo2016",
+      "old_verdict": "FAIL",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [
+        "L1 canonical_gene_names"
+      ],
+      "reports": [
+        "data/torchcell/smf_costanzo2016/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "DmfCostanzo2016Dataset": {
+      "dataset_class": "DmfCostanzo2016Dataset",
+      "root": "data/torchcell/dmf_costanzo2016",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "absent",
+      "note": null
+    },
+    "DmiCostanzo2016Dataset": {
+      "dataset_class": "DmiCostanzo2016Dataset",
+      "root": "data/torchcell/dmi_costanzo2016",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "absent",
+      "note": null
+    },
+    "SmfKuzmin2018Dataset": {
+      "dataset_class": "SmfKuzmin2018Dataset",
+      "root": "data/torchcell/smf_kuzmin2018",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/smf_kuzmin2018/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "SmfODuibhir2014Dataset": {
+      "dataset_class": "SmfODuibhir2014Dataset",
+      "root": "data/torchcell/smf_oduibhir2014",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "DmfKuzmin2018Dataset": {
+      "dataset_class": "DmfKuzmin2018Dataset",
+      "root": "data/torchcell/dmf_kuzmin2018",
+      "old_verdict": "FAIL",
+      "new_verdict": "FAIL",
+      "failing_gate_rules": [
+        "L2 uncertainty_sanity"
+      ],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/dmf_kuzmin2018/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "TmfKuzmin2018Dataset": {
+      "dataset_class": "TmfKuzmin2018Dataset",
+      "root": "data/torchcell/tmf_kuzmin2018",
+      "old_verdict": "FAIL",
+      "new_verdict": "FAIL",
+      "failing_gate_rules": [
+        "L2 uncertainty_sanity"
+      ],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/tmf_kuzmin2018/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "DmiKuzmin2018Dataset": {
+      "dataset_class": "DmiKuzmin2018Dataset",
+      "root": "data/torchcell/dmi_kuzmin2018",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "TmiKuzmin2018Dataset": {
+      "dataset_class": "TmiKuzmin2018Dataset",
+      "root": "data/torchcell/tmi_kuzmin2018",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "SmfKuzmin2020Dataset": {
+      "dataset_class": "SmfKuzmin2020Dataset",
+      "root": "data/torchcell/smf_kuzmin2020",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/smf_kuzmin2020/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "DmfKuzmin2020Dataset": {
+      "dataset_class": "DmfKuzmin2020Dataset",
+      "root": "data/torchcell/dmf_kuzmin2020",
+      "old_verdict": "FAIL",
+      "new_verdict": "FAIL",
+      "failing_gate_rules": [
+        "L2 uncertainty_sanity"
+      ],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/dmf_kuzmin2020/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "TmfKuzmin2020Dataset": {
+      "dataset_class": "TmfKuzmin2020Dataset",
+      "root": "data/torchcell/tmf_kuzmin2020",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/tmf_kuzmin2020/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "DmiKuzmin2020Dataset": {
+      "dataset_class": "DmiKuzmin2020Dataset",
+      "root": "data/torchcell/dmi_kuzmin2020",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/dmi_kuzmin2020/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "TmiKuzmin2020Dataset": {
+      "dataset_class": "TmiKuzmin2020Dataset",
+      "root": "data/torchcell/tmi_kuzmin2020",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "GeneEssentialitySgdDataset": {
+      "dataset_class": "GeneEssentialitySgdDataset",
+      "root": "data/torchcell/gene_essentiality_sgd",
+      "old_verdict": "FAIL",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [
+        "L4 no_viable_deletion_in_smf_costanzo2016"
+      ],
+      "reports": [
+        "data/torchcell/gene_essentiality_sgd/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "SynthLethalityYeastSynthLethDbDataset": {
+      "dataset_class": "SynthLethalityYeastSynthLethDbDataset",
+      "root": "data/torchcell/syn_leth_db_yeast",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/syn_leth_db_yeast/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "SynthRescueYeastSynthLethDbDataset": {
+      "dataset_class": "SynthRescueYeastSynthLethDbDataset",
+      "root": "data/torchcell/syn_rescue_db_yeast",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/syn_rescue_db_yeast/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "ScmdOhya2005Dataset": {
+      "dataset_class": "ScmdOhya2005Dataset",
+      "root": "data/torchcell/scmd_ohya2005",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "MicroarrayKemmeren2014Dataset": {
+      "dataset_class": "MicroarrayKemmeren2014Dataset",
+      "root": "data/torchcell/microarray_kemmeren2014",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "MicroarrayScoreHu2007Dataset": {
+      "dataset_class": "MicroarrayScoreHu2007Dataset",
+      "root": "data/torchcell/microarray_score_hu2007",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/microarray_score_hu2007/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "InductionTimecourseHackett2020Dataset": {
+      "dataset_class": "InductionTimecourseHackett2020Dataset",
+      "root": "data/torchcell/induction_timecourse_hackett2020",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/induction_timecourse_hackett2020/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "SmMicroarraySameith2015Dataset": {
+      "dataset_class": "SmMicroarraySameith2015Dataset",
+      "root": "data/torchcell/sm_microarray_sameith2015",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "DmMicroarraySameith2015Dataset": {
+      "dataset_class": "DmMicroarraySameith2015Dataset",
+      "root": "data/torchcell/dm_microarray_sameith2015",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "CaudalPanTranscriptome2024Dataset": {
+      "dataset_class": "CaudalPanTranscriptome2024Dataset",
+      "root": "data/torchcell/caudal_pantranscriptome2024",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/caudal_pantranscriptome2024/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "LifeCycleDeChiara2022Dataset": {
+      "dataset_class": "LifeCycleDeChiara2022Dataset",
+      "root": "data/torchcell/life_cycle_dechiara2022",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/life_cycle_dechiara2022/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "DoublingTimeDeChiara2022Dataset": {
+      "dataset_class": "DoublingTimeDeChiara2022Dataset",
+      "root": "data/torchcell/doubling_time_dechiara2022",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/doubling_time_dechiara2022/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "CellYieldDeChiara2022Dataset": {
+      "dataset_class": "CellYieldDeChiara2022Dataset",
+      "root": "data/torchcell/cell_yield_dechiara2022",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/cell_yield_dechiara2022/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "ScmdOhnuki2018Dataset": {
+      "dataset_class": "ScmdOhnuki2018Dataset",
+      "root": "data/torchcell/scmd_ohnuki2018",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "ScmdOhnuki2022Dataset": {
+      "dataset_class": "ScmdOhnuki2022Dataset",
+      "root": "data/torchcell/scmd_ohnuki2022",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "CarotenoidOzaydin2013Dataset": {
+      "dataset_class": "CarotenoidOzaydin2013Dataset",
+      "root": "data/torchcell/carotenoid_ozaydin2013",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "BetaxanthinCachera2023Dataset": {
+      "dataset_class": "BetaxanthinCachera2023Dataset",
+      "root": "data/torchcell/betaxanthin_cachera2023",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "MetaboliteDaSilveira2014Dataset": {
+      "dataset_class": "MetaboliteDaSilveira2014Dataset",
+      "root": "data/torchcell/metabolite_dasilveira2014",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "MetaboliteZelezniak2018Dataset": {
+      "dataset_class": "MetaboliteZelezniak2018Dataset",
+      "root": "data/torchcell/metabolite_zelezniak2018",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "ProteomeMessner2021Dataset": {
+      "dataset_class": "ProteomeMessner2021Dataset",
+      "root": "data/torchcell/proteome_messner2021",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/proteome_messner2021/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "ProteomeMessner2023Dataset": {
+      "dataset_class": "ProteomeMessner2023Dataset",
+      "root": "data/torchcell/proteome_messner2023",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "ProteomeMuenzner2024Dataset": {
+      "dataset_class": "ProteomeMuenzner2024Dataset",
+      "root": "data/torchcell/proteome_muenzner2024",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "ProteinTurnoverMuenzner2024Dataset": {
+      "dataset_class": "ProteinTurnoverMuenzner2024Dataset",
+      "root": "data/torchcell/protein_turnover_muenzner2024",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/protein_turnover_muenzner2024/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "ProteomeZelezniak2018Dataset": {
+      "dataset_class": "ProteomeZelezniak2018Dataset",
+      "root": "data/torchcell/proteome_zelezniak2018",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "AminoAcidMulleder2016Dataset": {
+      "dataset_class": "AminoAcidMulleder2016Dataset",
+      "root": "data/torchcell/amino_acid_mulleder2016",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "AminoAcidCooper2010Dataset": {
+      "dataset_class": "AminoAcidCooper2010Dataset",
+      "root": "data/torchcell/amino_acid_cooper2010",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "OrganicAcidYoshida2012Dataset": {
+      "dataset_class": "OrganicAcidYoshida2012Dataset",
+      "root": "data/torchcell/organic_acid_yoshida2012",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "IsobutanolScreenLopez2024Dataset": {
+      "dataset_class": "IsobutanolScreenLopez2024Dataset",
+      "root": "data/torchcell/isobutanol_screen_lopez2024",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "IsobutanolValidatedLopez2024Dataset": {
+      "dataset_class": "IsobutanolValidatedLopez2024Dataset",
+      "root": "data/torchcell/isobutanol_validated_lopez2024",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "FattyAcidXue2025Dataset": {
+      "dataset_class": "FattyAcidXue2025Dataset",
+      "root": "data/torchcell/ffa_xue2025",
+      "old_verdict": "FAIL",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [
+        "L4 gene_containment_scmd_ohya2005"
+      ],
+      "reports": [
+        "data/torchcell/ffa_xue2025/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "NadalRibellesPerturbSeq2025Dataset": {
+      "dataset_class": "NadalRibellesPerturbSeq2025Dataset",
+      "root": "data/torchcell/nadal_ribelles_perturbseq2025",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "Bloom2019Dataset": {
+      "dataset_class": "Bloom2019Dataset",
+      "root": "data/torchcell/bloom2019",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "IsolateGrowthPeter2018Dataset": {
+      "dataset_class": "IsolateGrowthPeter2018Dataset",
+      "root": "data/torchcell/isolate_growth_peter2018",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/isolate_growth_peter2018/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "Boocock2025Dataset": {
+      "dataset_class": "Boocock2025Dataset",
+      "root": "data/torchcell/boocock2025",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/boocock2025/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "Nguessan2025Dataset": {
+      "dataset_class": "Nguessan2025Dataset",
+      "root": "data/torchcell/nguessan2025",
+      "old_verdict": "FAIL",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [
+        "L4 marker_reference",
+        "L4 mat_fixation"
+      ],
+      "reports": [
+        "data/torchcell/nguessan2025/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "retired",
+      "note": null
+    },
+    "TfDeletionPseudobulkJackson2020Dataset": {
+      "dataset_class": "TfDeletionPseudobulkJackson2020Dataset",
+      "root": "data/torchcell/tf_deletion_pseudobulk_jackson2020",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/tf_deletion_pseudobulk_jackson2020/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "GenomeArchitecturePuddu2019Dataset": {
+      "dataset_class": "GenomeArchitecturePuddu2019Dataset",
+      "root": "data/torchcell/genome_architecture_puddu2019",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/genome_architecture_puddu2019/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "CrispriSegregantHale2024Dataset": {
+      "dataset_class": "CrispriSegregantHale2024Dataset",
+      "root": "data/torchcell/crispri_segregant_hale2024",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/crispri_segregant_hale2024/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "SmfBaryshnikova2010Dataset": {
+      "dataset_class": "SmfBaryshnikova2010Dataset",
+      "root": "data/torchcell/smf_baryshnikova2010",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "EnvChemgenCostanzo2021Dataset": {
+      "dataset_class": "EnvChemgenCostanzo2021Dataset",
+      "root": "data/torchcell/env_chemgen_costanzo2021",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "EnvChemgenAuesukaree2009Dataset": {
+      "dataset_class": "EnvChemgenAuesukaree2009Dataset",
+      "root": "data/torchcell/env_chemgen_auesukaree2009",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "EnvChemgenMota2024Dataset": {
+      "dataset_class": "EnvChemgenMota2024Dataset",
+      "root": "data/torchcell/env_chemgen_mota2024",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "FattyAcidSmith2006Dataset": {
+      "dataset_class": "FattyAcidSmith2006Dataset",
+      "root": "data/torchcell/env_chemgen_smith2006",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "CrispriChemgenSmith2016Dataset": {
+      "dataset_class": "CrispriChemgenSmith2016Dataset",
+      "root": "data/torchcell/crispri_chemgen_smith2016",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "CrisprMagicLian2019Dataset": {
+      "dataset_class": "CrisprMagicLian2019Dataset",
+      "root": "data/torchcell/crispr_magic_lian2019",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "CrispriMormino2022Dataset": {
+      "dataset_class": "CrispriMormino2022Dataset",
+      "root": "data/torchcell/crispri_mormino2022",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "EnvChemgenVanacloig2022Dataset": {
+      "dataset_class": "EnvChemgenVanacloig2022Dataset",
+      "root": "data/torchcell/env_chemgen_vanacloig2022",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "EnvChemgenPiotrowski2017Dataset": {
+      "dataset_class": "EnvChemgenPiotrowski2017Dataset",
+      "root": "data/torchcell/env_chemgen_piotrowski2017",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "EnvChemgenWildenhain2015Dataset": {
+      "dataset_class": "EnvChemgenWildenhain2015Dataset",
+      "root": "data/torchcell/env_chemgen_wildenhain2015",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "EnvChemgenHoepfner2014Dataset": {
+      "dataset_class": "EnvChemgenHoepfner2014Dataset",
+      "root": "data/torchcell/env_chemgen_hoepfner2014",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "HetHillenmeyer2008Dataset": {
+      "dataset_class": "HetHillenmeyer2008Dataset",
+      "root": "data/torchcell/env_chemgen_hillenmeyer2008_het",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "HomHillenmeyer2008Dataset": {
+      "dataset_class": "HomHillenmeyer2008Dataset",
+      "root": "data/torchcell/env_chemgen_hillenmeyer2008_hom",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "EnvChemgenParsons2006Dataset": {
+      "dataset_class": "EnvChemgenParsons2006Dataset",
+      "root": "data/torchcell/env_chemgen_parsons2006",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "EnvChemgenYoshikawa2009Dataset": {
+      "dataset_class": "EnvChemgenYoshikawa2009Dataset",
+      "root": "data/torchcell/env_chemgen_yoshikawa2009",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/env_chemgen_yoshikawa2009/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "GeneInteractionBabu2014Dataset": {
+      "dataset_class": "GeneInteractionBabu2014Dataset",
+      "root": "data/torchcell/gene_interaction_babu2014",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/gene_interaction_babu2014/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "MrnaFractionBalakrishnan2022Dataset": {
+      "dataset_class": "MrnaFractionBalakrishnan2022Dataset",
+      "root": "data/torchcell/mrna_fraction_balakrishnan2022",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/mrna_fraction_balakrishnan2022/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "GeneInteractionButland2008Dataset": {
+      "dataset_class": "GeneInteractionButland2008Dataset",
+      "root": "data/torchcell/gene_interaction_butland2008",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/gene_interaction_butland2008/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "RnaseqCaglar2017Dataset": {
+      "dataset_class": "RnaseqCaglar2017Dataset",
+      "root": "data/torchcell/rnaseq_caglar2017",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "ProteomeCaglar2017Dataset": {
+      "dataset_class": "ProteomeCaglar2017Dataset",
+      "root": "data/torchcell/proteome_caglar2017",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/proteome_caglar2017/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "DoublingTimeCaglar2017Dataset": {
+      "dataset_class": "DoublingTimeCaglar2017Dataset",
+      "root": "data/torchcell/doubling_time_caglar2017",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/doubling_time_caglar2017/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "ProteinFoldChangeCaglar2017Dataset": {
+      "dataset_class": "ProteinFoldChangeCaglar2017Dataset",
+      "root": "data/torchcell/protein_fold_change_caglar2017",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/protein_fold_change_caglar2017/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "CrispriChemgenChoe2025Dataset": {
+      "dataset_class": "CrispriChemgenChoe2025Dataset",
+      "root": "data/torchcell/crispri_chemgen_choe2025",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/crispri_chemgen_choe2025/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "CrispriKnockdownCui2018Dataset": {
+      "dataset_class": "CrispriKnockdownCui2018Dataset",
+      "root": "data/torchcell/crispri_knockdown_cui2018",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/crispri_knockdown_cui2018/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "GrowthRateCampos2018Dataset": {
+      "dataset_class": "GrowthRateCampos2018Dataset",
+      "root": "data/torchcell/ecoli_growth_rate_campos2018",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/ecoli_growth_rate_campos2018/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "MorphologyCampos2018Dataset": {
+      "dataset_class": "MorphologyCampos2018Dataset",
+      "root": "data/torchcell/ecoli_morphology_campos2018",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/ecoli_morphology_campos2018/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "retired",
+      "note": null
+    },
+    "GrowthRateChoe2019Dataset": {
+      "dataset_class": "GrowthRateChoe2019Dataset",
+      "root": "data/torchcell/growth_rate_choe2019",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "MetabolomeBrunk2016Dataset": {
+      "dataset_class": "MetabolomeBrunk2016Dataset",
+      "root": "data/torchcell/metabolome_brunk2016",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/metabolome_brunk2016/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "ExometaboliteBrunk2016Dataset": {
+      "dataset_class": "ExometaboliteBrunk2016Dataset",
+      "root": "data/torchcell/exometabolite_brunk2016",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/exometabolite_brunk2016/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "ProteomeBrunk2016Dataset": {
+      "dataset_class": "ProteomeBrunk2016Dataset",
+      "root": "data/torchcell/proteome_brunk2016",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/proteome_brunk2016/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "BiofuelTiterBrunk2016Dataset": {
+      "dataset_class": "BiofuelTiterBrunk2016Dataset",
+      "root": "data/torchcell/biofuel_titer_brunk2016",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/biofuel_titer_brunk2016/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "IsopentenolTiterFoo2014Dataset": {
+      "dataset_class": "IsopentenolTiterFoo2014Dataset",
+      "root": "data/torchcell/isopentenol_titer_foo2014",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/isopentenol_titer_foo2014/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "TranscriptionFactorKnockoutChoe2019Dataset": {
+      "dataset_class": "TranscriptionFactorKnockoutChoe2019Dataset",
+      "root": "data/torchcell/tf_knockout_growth_choe2019",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "MetabolomeFuhrer2017Dataset": {
+      "dataset_class": "MetabolomeFuhrer2017Dataset",
+      "root": "data/torchcell/metabolome_fuhrer2017",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/metabolome_fuhrer2017/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "EnvChemgenGirgis2009Dataset": {
+      "dataset_class": "EnvChemgenGirgis2009Dataset",
+      "root": "data/torchcell/ecoli_env_chemgen_girgis2009",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/ecoli_env_chemgen_girgis2009/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "GeneEssentialityBaba2006Dataset": {
+      "dataset_class": "GeneEssentialityBaba2006Dataset",
+      "root": "data/torchcell/gene_essentiality_baba2006",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/gene_essentiality_baba2006/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "GeneEssentialityGerdes2003Dataset": {
+      "dataset_class": "GeneEssentialityGerdes2003Dataset",
+      "root": "data/torchcell/gene_essentiality_gerdes2003",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/gene_essentiality_gerdes2003/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "GeneEssentialityGoodall2018Dataset": {
+      "dataset_class": "GeneEssentialityGoodall2018Dataset",
+      "root": "data/torchcell/gene_essentiality_goodall2018",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/gene_essentiality_goodall2018/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "ProteinTurnoverGupta2024Dataset": {
+      "dataset_class": "ProteinTurnoverGupta2024Dataset",
+      "root": "data/torchcell/protein_turnover_gupta2024",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/protein_turnover_gupta2024/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "MetabolomeIshii2007Dataset": {
+      "dataset_class": "MetabolomeIshii2007Dataset",
+      "root": "data/torchcell/metabolome_ishii2007",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/metabolome_ishii2007/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "ProteomeIshii2007Dataset": {
+      "dataset_class": "ProteomeIshii2007Dataset",
+      "root": "data/torchcell/proteome_ishii2007",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/proteome_ishii2007/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "FluxIshii2007Dataset": {
+      "dataset_class": "FluxIshii2007Dataset",
+      "root": "data/torchcell/flux_ishii2007",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/flux_ishii2007/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "MismatchCrispriFitnessHawkins2020Dataset": {
+      "dataset_class": "MismatchCrispriFitnessHawkins2020Dataset",
+      "root": "data/torchcell/mismatch_crispri_fitness_hawkins2020",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/mismatch_crispri_fitness_hawkins2020/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "ProteinSynthesisRateLi2014Dataset": {
+      "dataset_class": "ProteinSynthesisRateLi2014Dataset",
+      "root": "data/torchcell/protein_synthesis_rate_li2014",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/protein_synthesis_rate_li2014/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "RnaseqLamoureux2023Dataset": {
+      "dataset_class": "RnaseqLamoureux2023Dataset",
+      "root": "data/torchcell/rnaseq_lamoureux2023",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "GrowthRateLamoureux2023Dataset": {
+      "dataset_class": "GrowthRateLamoureux2023Dataset",
+      "root": "data/torchcell/growth_rate_lamoureux2023",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/growth_rate_lamoureux2023/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "RnaseqPublicK12Lamoureux2023Dataset": {
+      "dataset_class": "RnaseqPublicK12Lamoureux2023Dataset",
+      "root": "data/torchcell/rnaseq_public_k12_lamoureux2023",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "PromoterReporterMohiuddin2022Dataset": {
+      "dataset_class": "PromoterReporterMohiuddin2022Dataset",
+      "root": "data/torchcell/promoter_reporter_mohiuddin2022",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/promoter_reporter_mohiuddin2022/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "ProteomeMori2021Dataset": {
+      "dataset_class": "ProteomeMori2021Dataset",
+      "root": "data/torchcell/proteome_mori2021",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/proteome_mori2021/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "PhageRbTnseqMutalik2020Dataset": {
+      "dataset_class": "PhageRbTnseqMutalik2020Dataset",
+      "root": "data/torchcell/phage_rbtnseq_mutalik2020",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/phage_rbtnseq_mutalik2020/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "CrisprPineneToleranceNiu2019Dataset": {
+      "dataset_class": "CrisprPineneToleranceNiu2019Dataset",
+      "root": "data/torchcell/crispr_pinene_tolerance_niu2019",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/crispr_pinene_tolerance_niu2019/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "RbTnseqPrice2018EcoliDataset": {
+      "dataset_class": "RbTnseqPrice2018EcoliDataset",
+      "root": "data/torchcell/rbtnseq_price2018_ecoli",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "GeneEssentialityPrice2018EcoliDataset": {
+      "dataset_class": "GeneEssentialityPrice2018EcoliDataset",
+      "root": "data/torchcell/gene_essentiality_price2018_ecoli",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "RbTnseqWetmore2015Dataset": {
+      "dataset_class": "RbTnseqWetmore2015Dataset",
+      "root": "data/torchcell/rbtnseq_wetmore2015_ecoli",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/rbtnseq_wetmore2015_ecoli/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "CrispriCrossRachwalski2024Dataset": {
+      "dataset_class": "CrispriCrossRachwalski2024Dataset",
+      "root": "data/torchcell/crispri_cross_rachwalski2024",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/crispri_cross_rachwalski2024/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "MetabolomeRapp2026Dataset": {
+      "dataset_class": "MetabolomeRapp2026Dataset",
+      "root": "data/torchcell/metabolome_rapp2026",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/metabolome_rapp2026/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "GrowthAucRapp2026Dataset": {
+      "dataset_class": "GrowthAucRapp2026Dataset",
+      "root": "data/torchcell/growth_auc_rapp2026",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "MetaboliteIntensityRapp2026Dataset": {
+      "dataset_class": "MetaboliteIntensityRapp2026Dataset",
+      "root": "data/torchcell/metabolite_intensity_rapp2026",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "TargetedMetabolomeRapp2026Dataset": {
+      "dataset_class": "TargetedMetabolomeRapp2026Dataset",
+      "root": "data/torchcell/targeted_metabolome_rapp2026",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "CrispriScreenRousset2018Dataset": {
+      "dataset_class": "CrispriScreenRousset2018Dataset",
+      "root": "data/torchcell/ecoli_crispri_rousset2018",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/ecoli_crispri_rousset2018/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "MetabolomeSchastnaya2021Dataset": {
+      "dataset_class": "MetabolomeSchastnaya2021Dataset",
+      "root": "data/torchcell/metabolome_schastnaya2021",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/metabolome_schastnaya2021/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "EnvChemgenShiver2016Dataset": {
+      "dataset_class": "EnvChemgenShiver2016Dataset",
+      "root": "data/torchcell/ecoli_env_chemgen_shiver2016",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/ecoli_env_chemgen_shiver2016/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "EnvChemgenNichols2011Dataset": {
+      "dataset_class": "EnvChemgenNichols2011Dataset",
+      "root": "data/torchcell/ecoli_env_chemgen_nichols2011",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "absent",
+      "note": null
+    },
+    "ProteomeSchmidt2016Dataset": {
+      "dataset_class": "ProteomeSchmidt2016Dataset",
+      "root": "data/torchcell/proteome_schmidt2016",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/proteome_schmidt2016/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "ProteomeSrmSet1Schmidt2016Dataset": {
+      "dataset_class": "ProteomeSrmSet1Schmidt2016Dataset",
+      "root": "data/torchcell/proteome_srm_set1_schmidt2016",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "ProteomeSrmSet2Schmidt2016Dataset": {
+      "dataset_class": "ProteomeSrmSet2Schmidt2016Dataset",
+      "root": "data/torchcell/proteome_srm_set2_schmidt2016",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "GrowthRateSchmidt2016Dataset": {
+      "dataset_class": "GrowthRateSchmidt2016Dataset",
+      "root": "data/torchcell/growth_rate_schmidt2016",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/growth_rate_schmidt2016/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "GrowthRateS23Schmidt2016Dataset": {
+      "dataset_class": "GrowthRateS23Schmidt2016Dataset",
+      "root": "data/torchcell/growth_rate_s23_schmidt2016",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/growth_rate_s23_schmidt2016/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "CarbonSourceTong2020Dataset": {
+      "dataset_class": "CarbonSourceTong2020Dataset",
+      "root": "data/torchcell/ecoli_carbon_source_tong2020",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/ecoli_carbon_source_tong2020/preprocess/verification_report.json",
+        "data/torchcell/ecoli_carbon_source_tong2020/preprocess/verification_report_BW25113.json",
+        "data/torchcell/ecoli_carbon_source_tong2020/preprocess/verification_report_MG1655.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "EnvChemgenWang2015Dataset": {
+      "dataset_class": "EnvChemgenWang2015Dataset",
+      "root": "data/torchcell/env_chemgen_wang2015",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/env_chemgen_wang2015/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "GrowthWang2015Dataset": {
+      "dataset_class": "GrowthWang2015Dataset",
+      "root": "data/torchcell/growth_wang2015",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/growth_wang2015/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "CrispriGuideFfaEnrichmentFang2025Dataset": {
+      "dataset_class": "CrispriGuideFfaEnrichmentFang2025Dataset",
+      "root": "data/torchcell/crispri_guide_ffa_enrichment_fang2025",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/crispri_guide_ffa_enrichment_fang2025/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "CrispriGuideFitnessWang2018Dataset": {
+      "dataset_class": "CrispriGuideFitnessWang2018Dataset",
+      "root": "data/torchcell/crispri_guide_fitness_wang2018",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/crispri_guide_fitness_wang2018/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "EnvChemgenWang2024Dataset": {
+      "dataset_class": "EnvChemgenWang2024Dataset",
+      "root": "data/torchcell/ecoli_env_chemgen_wang2024",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/ecoli_env_chemgen_wang2024/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "ProteomeBanerjee2025Dataset": {
+      "dataset_class": "ProteomeBanerjee2025Dataset",
+      "root": "data/torchcell/proteome_banerjee2025",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/proteome_banerjee2025/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "RbTnseqBorchert2023Dataset": {
+      "dataset_class": "RbTnseqBorchert2023Dataset",
+      "root": "data/torchcell/rbtnseq_borchert2023",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/rbtnseq_borchert2023/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "RbTnseqBorchert2024Dataset": {
+      "dataset_class": "RbTnseqBorchert2024Dataset",
+      "root": "data/torchcell/rbtnseq_borchert2024",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "IsoprenolTiterCarruthers2025Dataset": {
+      "dataset_class": "IsoprenolTiterCarruthers2025Dataset",
+      "root": "data/torchcell/isoprenol_titer_carruthers2025",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/isoprenol_titer_carruthers2025/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "ProteomeCarruthers2025Dataset": {
+      "dataset_class": "ProteomeCarruthers2025Dataset",
+      "root": "data/torchcell/proteome_carruthers2025",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/proteome_carruthers2025/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "CampaignProteomeCarruthers2025Dataset": {
+      "dataset_class": "CampaignProteomeCarruthers2025Dataset",
+      "root": "data/torchcell/campaign_proteome_carruthers2025",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/campaign_proteome_carruthers2025/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "ProteomeFoldChangeCarruthers2025Dataset": {
+      "dataset_class": "ProteomeFoldChangeCarruthers2025Dataset",
+      "root": "data/torchcell/proteome_fold_change_carruthers2025",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/proteome_fold_change_carruthers2025/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "ProteomeDeSiqueira2025Dataset": {
+      "dataset_class": "ProteomeDeSiqueira2025Dataset",
+      "root": "data/torchcell/proteome_desiqueira2025",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/proteome_desiqueira2025/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "ProteomePercentDeSiqueira2025Dataset": {
+      "dataset_class": "ProteomePercentDeSiqueira2025Dataset",
+      "root": "data/torchcell/proteome_percent_desiqueira2025",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/proteome_percent_desiqueira2025/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "ProteomeLog10PercentDeSiqueira2025Dataset": {
+      "dataset_class": "ProteomeLog10PercentDeSiqueira2025Dataset",
+      "root": "data/torchcell/proteome_log10_percent_desiqueira2025",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/proteome_log10_percent_desiqueira2025/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "IsoprenolTiterDeSiqueira2025Dataset": {
+      "dataset_class": "IsoprenolTiterDeSiqueira2025Dataset",
+      "root": "data/torchcell/isoprenol_titer_desiqueira2025",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/isoprenol_titer_desiqueira2025/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "IsoprenylAcetateTiterKang2026Dataset": {
+      "dataset_class": "IsoprenylAcetateTiterKang2026Dataset",
+      "root": "data/torchcell/isoprenyl_acetate_titer_kang2026",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/isoprenyl_acetate_titer_kang2026/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "ValerolactamTiterThompson2019Dataset": {
+      "dataset_class": "ValerolactamTiterThompson2019Dataset",
+      "root": "data/torchcell/valerolactam_titer_thompson2019",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/valerolactam_titer_thompson2019/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "LactamGrowthRateThompson2019Dataset": {
+      "dataset_class": "LactamGrowthRateThompson2019Dataset",
+      "root": "data/torchcell/lactam_growth_rate_thompson2019",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "PutidaPrecise321Lim2022Dataset": {
+      "dataset_class": "PutidaPrecise321Lim2022Dataset",
+      "root": "data/torchcell/putida_precise321_lim2022",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "IsoprenolToleranceLim2025Dataset": {
+      "dataset_class": "IsoprenolToleranceLim2025Dataset",
+      "root": "data/torchcell/isoprenol_tolerance_lim2025",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/isoprenol_tolerance_lim2025/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "ProteomeLim2025Dataset": {
+      "dataset_class": "ProteomeLim2025Dataset",
+      "root": "data/torchcell/proteome_lim2025",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/proteome_lim2025/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "ProteomeFoldChangeLim2025Dataset": {
+      "dataset_class": "ProteomeFoldChangeLim2025Dataset",
+      "root": "data/torchcell/proteome_fold_change_lim2025",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/proteome_fold_change_lim2025/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "IsoprenolSelectionMenasalvas2025Dataset": {
+      "dataset_class": "IsoprenolSelectionMenasalvas2025Dataset",
+      "root": "data/torchcell/isoprenol_selection_menasalvas2025",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "ProteomeMenasalvas2025Dataset": {
+      "dataset_class": "ProteomeMenasalvas2025Dataset",
+      "root": "data/torchcell/proteome_menasalvas2025",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/proteome_menasalvas2025/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "MetaboliteGrowthPhaseMenasalvas2025Dataset": {
+      "dataset_class": "MetaboliteGrowthPhaseMenasalvas2025Dataset",
+      "root": "data/torchcell/metabolite_growth_menasalvas2025",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/metabolite_growth_menasalvas2025/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "MetaboliteProductionPhaseMenasalvas2025Dataset": {
+      "dataset_class": "MetaboliteProductionPhaseMenasalvas2025Dataset",
+      "root": "data/torchcell/metabolite_production_menasalvas2025",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/metabolite_production_menasalvas2025/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "EnvMetalTnseqRoyet2025Dataset": {
+      "dataset_class": "EnvMetalTnseqRoyet2025Dataset",
+      "root": "data/torchcell/pputida_env_metal_tnseq_royet2025",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/pputida_env_metal_tnseq_royet2025/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "CrispriArrayYunus2026Dataset": {
+      "dataset_class": "CrispriArrayYunus2026Dataset",
+      "root": "data/torchcell/crispri_array_yunus2026",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "CrispriDifferentialProteomeYunus2026Dataset": {
+      "dataset_class": "CrispriDifferentialProteomeYunus2026Dataset",
+      "root": "data/torchcell/crispri_differential_proteome_yunus2026",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "CrispriKnockdownYunus2026Dataset": {
+      "dataset_class": "CrispriKnockdownYunus2026Dataset",
+      "root": "data/torchcell/crispri_knockdown_yunus2026",
+      "old_verdict": "NO_REPORT",
+      "new_verdict": "NO_REPORT",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "IsoprenolTiterYunus2026Dataset": {
+      "dataset_class": "IsoprenolTiterYunus2026Dataset",
+      "root": "data/torchcell/isoprenol_titer_yunus2026",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/isoprenol_titer_yunus2026/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "CrispriPanelProteomeYunus2026Dataset": {
+      "dataset_class": "CrispriPanelProteomeYunus2026Dataset",
+      "root": "data/torchcell/crispri_panel_proteome_yunus2026",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/crispri_panel_proteome_yunus2026/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    },
+    "InhibitorBioscreenVolk2021Dataset": {
+      "dataset_class": "InhibitorBioscreenVolk2021Dataset",
+      "root": "data/torchcell/inhibitor_bioscreen_volk2021",
+      "old_verdict": "PASS",
+      "new_verdict": "PASS",
+      "failing_gate_rules": [],
+      "genome_findings": [],
+      "reports": [
+        "data/torchcell/inhibitor_bioscreen_volk2021/preprocess/verification_report.json"
+      ],
+      "report_stale": false,
+      "manifest": "present",
+      "note": null
+    }
+  }
+}

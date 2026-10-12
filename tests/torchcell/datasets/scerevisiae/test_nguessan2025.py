@@ -358,18 +358,69 @@ def test_read_snp_markers_sorts_and_maps_back_to_geno_columns(tmp_path: Path) ->
     ]
     assert order == [1, 3, 0, 2]
     assert [mk.column for mk in markers] == order
+    # Index counts every row, END rows included; the geno column counts SNPs only.
+    assert [mk.index for mk in markers] == [1, 3, 0, 2]
 
 
-def test_read_snp_markers_refuses_an_unconfirmed_layout(tmp_path: Path) -> None:
+def test_read_snp_markers_reads_the_deposited_header_and_end_rows(
+    tmp_path: Path,
+) -> None:
+    """The header is the deposited one, quoted; the END rows are dropped, not markers."""
     path = tmp_path / "snps.txt"
-    path.write_text("SNP\tchrom\tpos\nx\tchr01\t1\n")
-    with pytest.raises(ValueError, match="update SNP_LIST_COLUMNS"):
+    path.write_text(rel.snp_list())
+    assert path.read_text().splitlines()[0] == (
+        '"Index"\t"SNP"\t"Chromosome"\t"Position (bp)"\t"BY allele"\t"RM allele"'
+    )
+    markers, _ = m.read_snp_markers(path)
+    assert len(markers) == 4
+    assert {mk.chromosome for mk in markers} == {"chrI", "chrIII"}
+    assert m.CHROMOSOME_TOKEN["16"] == "chrXVI"
+
+
+_END_1 = (1, "END", 1, 0, "0", "0")
+
+
+@pytest.mark.parametrize(
+    ("rows", "message"),
+    [
+        ([(1, "snp1", 1, 100, "A", "T"), _END_1], r"Index is not 0..1"),
+        (
+            [(0, "snp1", 17, 100, "A", "T"), (1, "END", 17, 0, "0", "0")],
+            r"chromosomes \['17'\] are not 1..16",
+        ),
+        (
+            [(0, "snp1", 1, 100, "A", "T"), (1, "END", 1, 5, "0", "0")],
+            "Index 1 is not the one END row of chromosome 1",
+        ),
+        (
+            [(0, "snp1", 1, 100, "A", "T"), _END_1, (2, "END", 1, 0, "0", "0")],
+            "Index 2 is not the one END row of chromosome 1",
+        ),
+        (
+            [(0, "snp1", 1, 100, "A", "T"), _END_1, (2, "snp2", 1, 200, "C", "G")],
+            "snp2 follows the END row of chromosome 1",
+        ),
+        (
+            [(0, "snp1", 1, 100, "A", "T"), (1, "snp3", 1, 200, "C", "G")],
+            "Index 1 is snp3, expected snp2",
+        ),
+        ([(0, "snp1", 1, 100, "A", "T")], r"chromosomes \['1'\] have no END row"),
+    ],
+)
+def test_read_snp_markers_refuses_a_layout_other_than_the_deposit(
+    tmp_path: Path, rows: list[tuple[int, str, int, int, str, str]], message: str
+) -> None:
+    path = tmp_path / "snps.txt"
+    path.write_text(rel.snp_list(rows))
+    with pytest.raises(ValueError, match=message):
         m.read_snp_markers(path)
-    path.write_text(rel.snp_list([(1, "chr01", 100, "A", "T")]))
-    with pytest.raises(ValueError, match="index is not 0..0"):
-        m.read_snp_markers(path)
-    path.write_text(rel.snp_list([(0, "chrI", 100, "A", "T")]))
-    with pytest.raises(ValueError, match=r"\['chrI'\] are not chr01..chr16"):
+
+
+def test_read_snp_markers_refuses_another_header(tmp_path: Path) -> None:
+    """The header assumed before the deposit (#1021) is refused, naming the deposited."""
+    path = tmp_path / "snps.txt"
+    path.write_text("index\tchromosome\tposition\tBY\tRM\n0\tchr01\t1\tA\tG\n")
+    with pytest.raises(ValueError, match="is not the deposited"):
         m.read_snp_markers(path)
 
 

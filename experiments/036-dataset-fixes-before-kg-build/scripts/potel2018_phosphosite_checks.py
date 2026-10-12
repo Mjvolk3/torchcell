@@ -141,7 +141,16 @@ def stale_round_trips(base: str, data_root: str) -> dict[str, Any]:
             if not osp.isdir(osp.join(root, "processed", "lmdb")):
                 out[name] = {"store": "no dev store on this machine"}
                 continue
-            out[name] = {"via": via, **round_trip(root)}
+            try:
+                out[name] = {"via": via, **round_trip(root)}
+            except (AttributeError, ValueError) as error:
+                # A shared dev store written by ANOTHER branch's schema (a class this
+                # branch does not define, or a record it would refuse) is reported, not
+                # compared: it is not evidence about this change.
+                out[name] = {
+                    "via": via,
+                    "not_readable_under_this_branch": str(error).splitlines()[0],
+                }
     return out
 
 

@@ -838,3 +838,9 @@ not this branch's: `proteome_caglar2017` (105/105 records fail L0 schema validat
 E. coli stores whose loaders this branch does not touch, built by another branch under an
 older closure. Measured 2026-10-09 by running
 `torchcell.verification.runners.run_bacterial_protein_abundance` over the dev tree.
+
+## 2026.10.12 - The five pathway parts carry a typed organism gap (#915)
+
+The owner's ruling on #915: `source_organism` on the five integrated pIY670 parts (`mvaS`, `mvaE`, `MKmm`, `PMDHKQ`, `aphA`) is a typed `ProvenanceGap`, never a sentinel string, and a part token is mapped to an organism only where Supplementary Data 2 Sheet 4 states it. The schema change that allows it (`HeterologousPathwayPerturbation.source_organism` becomes value-or-gap, still required) is recorded in `database/schema_changes/2026-10-12-released-z-score-and-pathway-organism-gap.json`.
+
+Sheet 4 states no token. Its `Protein` column (the README's "Tertiary Protein.ID from UniPROT") reads `Mvas`, `Mvae`, `Mvk`, `Mvd1` and `Apha` for the five mevalonate-pathway UniProt entries; none of them equals a pIY670 token verbatim, so no part is mapped (measured 2026-10-12 on the deposited Dryad workbook). `Mvas`, `Mvae` and `Apha` equal `mvaS`, `mvaE` and `aphA` after case folding; whether that counts as the sheet stating them is an owner question, and it is not acted on. Each part stores `source_organism=None` with a `not_reported_by_primary` gap whose `looked_in` is the SI OCR (Supplementary Tables 4 and 5) and whose note names Sheet 4. The integrated mCherry biosensor copies carry the same kind of gap. Nothing is refused: the 58 `IsoprenolSelectionMenasalvas2025Dataset` records keep every perturbation.

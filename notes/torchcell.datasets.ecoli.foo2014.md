@@ -146,3 +146,7 @@ control and Table 1's own `Improvement in titer (%)` column, a different column 
 table from the one the values were parsed out of. The second re-reads each record's construct
 from the deposited Table S3 bytes. The containment counts 8, not 9, because `rfp` carries the
 `unreported` source organism and so is correctly excluded from the host locus universe.
+
+## 2026.10.12 - The rfp reporter's organism is a typed gap (#915)
+
+`HeterologousPathwayPerturbation.source_organism` is now stated or a typed `ProvenanceGap` (schema record `2026-10-12-released-z-score-and-pathway-organism-gap`). The PS+RFP control's rfp gene, whose organism neither the article nor Table S3 names, stores `source_organism=None` with a `not_reported_by_primary` gap that names the deposited Table S3 as searched, instead of the string `unreported`. The 9 records are otherwise unchanged.

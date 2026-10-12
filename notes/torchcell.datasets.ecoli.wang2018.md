@@ -362,3 +362,21 @@ exercises all three drop rules, the multi-member cluster, the sigma back-solve, 
 environment families, the accounting arithmetic and the three verifier rows. The
 data-gated block (`@pytest.mark.data`) re-audits every quote against the pinned OCR and
 pins the real numbers above; it skips cleanly where the mirror or the store is absent.
+
+## 2026.10.12 - Supplementary Data 5 loaded as released, and the guide Z score stored (#879)
+
+`CrispriGeneFitnessWang2018Dataset` stores Supplementary Data 5, the paper's gene-level call, one `BacterialEnvironmentResponseExperiment` per released (gene, screen) row: 4,142 essentiality rows plus 4,004 in each of the other four screens, 20,158 in all, none dropped. Each released column has a carrier, each sourced from `paper.md` (sha256 `9980415d...`):
+
+| SD5 column | stored on | source |
+|---|---|---|
+| `gene fitness` | `environment_response` (`log2_ratio`) | "The fitness of this gene for the studied phenotype was then the median of fitness of all sgRNAs belonging to the selected subset" |
+| `Z score` | `environment_response_z_score` (new, #879) | equation (4); `gene fitness / Z` is each screen's recorded sigma, re-checked at build |
+| `FPRvalue` | `environment_response_p_value` | "We then took the classical Storey-Tibshirani approach70 to convert the FPR values (a particular type of $P$ value) to $\mathrm { Q }$ values, which were used as the threshold for hit-gene calling" |
+| `FDRvalue` | `environment_response_p_value_adjusted`, method `storey_tibshirani_q_value` | the same sentence: the FDR is that Q value |
+| `sgRNA number used to calculate the metrics` | `CrisprConstruct.n_guides` | "The sgRNA subset with the smallest FPR value was selected as the sgRNA set to determine all metrics for this gene" |
+
+The genotype is every member of the gene's BLASTN cluster, keyed by Supplementary Data 2's own member tokens (b-number and symbol), with no genome lookup, so the retired b4590 (ybfK) and b4700 (sokE) are stored as released. The `gene` cell names a cluster by its representative's symbol among the clusters Supplementary Data 3 designs guides for; `insA` names two clusters, and only `insAb4294` carries guides. 99 rows release 0 guides (with fitness 0, Z 0, FDR 1, FPR 1) and are stored as released. Environments and the non-targeting reference are the guide level's.
+
+Supplementary Data 5 (MOESM8) is deposited in the raw mirror by the recorded `pmc_cloud` route, sha256 `528d16763dc7ae88a9b530243c63851bd4350d432407ab333c0a472b8cff7503`, the same bytes as the library mirror's `si/si8.xlsx`. The guide records (`CrispriGuideFitnessWang2018Dataset`, 240,481) now carry their released Z score too. Candidate verdict: `admissible_with_gaps` (G5: ampicillin, #1063), from `experiments/database/scripts/wang2018_gene_fitness_candidate_verdict.py`.
+
+Not changed here and raised for the owner: the guide level still drops 55 rows whose only target is a retired b-number and 4,880 `Quality == "Bad"` rows.

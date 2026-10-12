@@ -3,8 +3,8 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/datasets/scerevisiae/test_wildenhain2015.py
 """Wildenhain 2015 loader: screen counting, the drop rule, the category mapping.
 
-The end-to-end tests run on a synthetic AID-format CSV and a fake genome, so no build
-tree and no network are needed. The audit test binds each module-level ``SourcedValue``
+The end-to-end tests run on a synthetic AID-format CSV, so no build tree, no genome and
+no network are needed. The audit test binds each module-level ``SourcedValue``
 to its verbatim quote in the sha256-pinned mirror it names (the AID description lives in
 the raw mirror, the paper OCR in the library mirror) and skips when they are absent.
 
@@ -35,6 +35,15 @@ record; the 33 essential-gene strains are pinned and served as conditional allel
 typed gaps; ``NA/NNK1`` lands on YKL171W and TSCII / YGL11 / wtn01 are held under
 ``strain_label_unresolved``; the environment states the 96-well culture and 1.96 % v/v
 DMSO; every phenotype carries a ``screen_id`` gap for the per-library normalization.
+
+2026.10.12 (owner rule: the data is the data): no fake genome, the build reads none. One
+record per released screen with ``replicate_id`` = ``PUBCHEM_RESULT_TAG`` (the fixture's
+nine rows give eight records; cells sort by strain then compound identity, so the wild
+type is 0, YAL001C 1 to 4, YJR066W 5 to 7), the re-exported duplicate collapses onto the
+first row, the two YJR066W / vanillin screens are two records with their own tags, calls
+and released spellings (``Tor1``, ``TOR1``), the SID-only compound is a record with its
+``inchikey`` gap, CDC28 (SGD-essential) is the deletion record the release calls it, and
+an ORF no genome carries is a record.
 """
 
 from __future__ import annotations
@@ -44,7 +53,6 @@ import gzip
 import hashlib
 import json
 import logging
-import math
 import os
 import os.path as osp
 from pathlib import Path
@@ -79,7 +87,6 @@ from torchcell.datamodels.schema import (
     StrainEnvironmentResponseExperiment,
     StrainEnvironmentResponseExperimentReference,
     Temperature,
-    UncertaintyType,
 )
 from torchcell.datamodels.strain_background import BRACHMANN_1998, GIAEVER_2002
 from torchcell.datasets.scerevisiae import wildenhain2015 as w
@@ -97,9 +104,6 @@ from torchcell.verification.sourced import (
     audit_sourced_value,
 )
 
-_GENES = {"YJR066W", "YAL001C"}
-_STANDARD = {"TOR1": ["YJR066W"], "TFC3": ["YAL001C"]}
-
 _HEADER = [
     "PUBCHEM_RESULT_TAG", "PUBCHEM_SID", "PUBCHEM_CID",
     "PUBCHEM_EXT_DATASOURCE_SMILES", "PUBCHEM_ACTIVITY_OUTCOME",
@@ -109,32 +113,6 @@ _HEADER = [
 ]  # fmt: skip
 
 _VANILLIN = "COC1=C(C=CC(=C1)C=O)O"
-
-
-class _Resolution:
-    def __init__(self, status: str, systematic: str | None) -> None:
-        self.status = status
-        self.systematic_name = systematic
-
-    @property
-    def is_current_gene(self) -> bool:
-        return self.status in ("current", "renamed")
-
-
-class _FakeGenome:
-    """The slice of ``SCerevisiaeGenome`` the loader's gene-name policy reads."""
-
-    gene_set = _GENES
-    feature_index = {"standard_to_ids": _STANDARD}
-
-    def resolve_gene_name(self, name: str) -> _Resolution:
-        upper = name.upper()
-        if upper in _GENES:
-            return _Resolution("current", upper)
-        for standard, ids in _STANDARD.items():
-            if upper == standard:
-                return _Resolution("renamed", ids[0])
-        return _Resolution("retired", upper)
 
 
 def _row(**kwargs: str) -> list[str]:
@@ -224,7 +202,7 @@ def _rows() -> list[list[str]]:
             z_score="-0.2",
             **{"non replicate": "0"},
         ),
-        # no CID and no SMILES -> the compound cannot be encoded, cell dropped
+        # no CID and no SMILES -> stored with the typed inchikey gap
         _row(
             PUBCHEM_SID="99",
             PUBCHEM_ACTIVITY_OUTCOME="Inactive",
@@ -246,10 +224,21 @@ def _rows() -> list[list[str]]:
     ]
 
 
+def _tagged(rows: list[list[str]]) -> list[list[str]]:
+    """The rows with ``PUBCHEM_RESULT_TAG`` 1, 2, ... in file order where blank."""
+    at = _HEADER.index("PUBCHEM_RESULT_TAG")
+    out = []
+    for i, row in enumerate(rows, start=1):
+        row = list(row)
+        if not row[at]:
+            row[at] = str(i)
+        out.append(row)
+    return out
+
+
 @pytest.fixture()
 def built(tmp_path: Any, monkeypatch: pytest.MonkeyPatch) -> Any:
-    """Build the synthetic dataset end to end into a temporary root."""
-    monkeypatch.setattr(w, "default_genome", lambda: _FakeGenome())
+    """Build the synthetic dataset end to end into a temporary root (no genome)."""
     monkeypatch.setattr(
         w.EnvChemgenWildenhain2015Dataset, "download", lambda self: None
     )
@@ -259,23 +248,31 @@ def built(tmp_path: Any, monkeypatch: pytest.MonkeyPatch) -> Any:
         writer = csv.writer(handle)
         writer.writerow(_HEADER)
         writer.writerow(["RESULT_TYPE"] * len(_HEADER))
-        writer.writerows(_rows())
+        writer.writerows(_tagged(_rows()))
     with open(osp.join(root, "raw", w.AID_FILENAME), "w") as handle:
         json.dump({"placeholder": True}, handle)
     return w.EnvChemgenWildenhain2015Dataset(root=root)
 
 
-def _by_key(dataset: Any) -> dict[tuple[str, str], dict[str, Any]]:
-    """Records keyed by (screened ORF or ``wild type``, compound name)."""
-    out = {}
+def _by_key(dataset: Any) -> dict[tuple[str, str], list[dict[str, Any]]]:
+    """Records grouped by (screened ORF or ``wild type``, compound name), one per
+    released screen in ascending z order.
+    """
+    out: dict[tuple[str, str], list[dict[str, Any]]] = {}
     for i in range(len(dataset)):
         record = dataset[i]
         experiment = record["experiment"]
         perturbations = experiment["genotype"]["perturbations"]
         orf = perturbations[0]["systematic_gene_name"] if perturbations else "wild type"
         compound = experiment["environment"]["perturbations"][0]["compound"]["name"]
-        out[(orf, compound)] = record
+        out.setdefault((orf, compound), []).append(record)
     return out
+
+
+def _only(dataset: Any, key: tuple[str, str]) -> dict[str, Any]:
+    """The one record of a single-screen cell."""
+    (record,) = _by_key(dataset)[key]
+    return record
 
 
 def _screen_gap() -> ProvenanceGap:
@@ -288,33 +285,34 @@ def _screen_gap() -> ProvenanceGap:
     )
 
 
-def test_drop_rules_hold_unresolved_strains_then_unidentifiable_compounds(
-    built: Any,
-) -> None:
-    """The fixture has no unresolved strain label, so rule 1 holds 0; rule 2 drops the
-    SID-only compound's cell. 6 cells (5 ORF cells + the wild-type cell), 5 kept.
+def test_drop_rules_hold_unresolved_strains_then_re_exported_rows(built: Any) -> None:
+    """The fixture has no unresolved strain label (rule 1 holds 0 rows); rule 2 collapses
+    the one re-exported row. 9 released rows, 8 records (one per distinct screen); the
+    SID-only compound is stored with its inchikey gap and listed, not dropped.
     """
     log = w.DropLog.model_validate_json(
         open(osp.join(built.root, "preprocess", "dropped_records.json")).read()
     )
     assert [rule.rule for rule in log.rules] == [
         "strain_label_unresolved",
-        "compound_without_a_structure_identifier",
+        "re_exported_duplicate_row",
     ]
     assert log.rules[0].scope == "strain"
     assert log.rules[0].n_records == 0 and log.rules[0].items == []
-    assert log.rules[1].items == ["SID 99"]
+    assert log.rules[1].scope == "library_row"
     assert log.rules[1].n_records == 1
-    assert log.source_records == 6 and log.kept_records == 5
-    assert len(built) == 5
+    assert log.compounds_without_a_structure_identifier == ["SID 99"]
+    assert log.source_records == 9 and log.kept_records == 8
+    assert len(built) == 8
 
 
 def test_re_exported_duplicate_is_one_screen_not_two(built: Any) -> None:
-    phenotype = _by_key(built)[("YAL001C", "vanillin")]["experiment"]["phenotype"]
+    phenotype = _only(built, ("YAL001C", "vanillin"))["experiment"]["phenotype"]
     assert phenotype["n_samples"] == 1
     assert phenotype["sample_unit"] == SampleUnit.screen
     assert phenotype["environment_response"] == -0.5
-    # n=1 has no dispersion, and that absence is typed rather than a silent None
+    assert phenotype["replicate_id"] == "1"  # the first released row's tag
+    # the release carries no per-screen error, and that absence is typed
     assert phenotype["environment_response_uncertainty"] is None
     assert [gap["field"] for gap in phenotype["provenance_gaps"]] == [
         "environment_response_uncertainty",
@@ -323,41 +321,70 @@ def test_re_exported_duplicate_is_one_screen_not_two(built: Any) -> None:
     ]
 
 
-def test_two_screens_average_and_carry_a_sample_sd(built: Any) -> None:
-    phenotype = _by_key(built)[("YJR066W", "vanillin")]["experiment"]["phenotype"]
-    assert phenotype["n_samples"] == 2
-    assert phenotype["environment_response"] == -5.0
-    assert phenotype["environment_response_uncertainty"] == math.sqrt(2)
-    assert (
-        phenotype["environment_response_uncertainty_type"] == UncertaintyType.sample_sd
-    )
-    assert phenotype["environment_response_se"] == 1.0
-    # the per-library normalization is the one typed gap a multi-screen cell carries
-    assert phenotype["provenance_gaps"] == [_screen_gap().model_dump()]
+def test_two_screens_are_two_records_as_released(built: Any) -> None:
+    """The release's two screens of YJR066W / vanillin (z -4.0 and -6.0) are two records,
+    each with its own released call, gene spelling and row tag; nothing is averaged.
+    """
+    records = _by_key(built)[("YJR066W", "vanillin")]
+    assert [r["experiment"]["phenotype"]["environment_response"] for r in records] == [
+        -6.0,
+        -4.0,
+    ]
+    assert [r["experiment"]["phenotype"]["replicate_id"] for r in records] == ["4", "3"]
+    assert [
+        r["experiment"]["genotype"]["perturbations"][0]["perturbed_gene_name"]
+        for r in records
+    ] == ["Tor1", "TOR1"]
+    for record in records:
+        phenotype = record["experiment"]["phenotype"]
+        assert phenotype["n_samples"] == 1
+        assert phenotype["environment_response_uncertainty"] is None
+        assert phenotype["environment_response_se"] is None
+        assert [gap["field"] for gap in phenotype["provenance_gaps"]] == [
+            "environment_response_uncertainty",
+            "environment_response_se",
+            "screen_id",
+        ]
+
+
+def test_sid_only_compound_is_stored_with_an_inchikey_gap(built: Any) -> None:
+    record = _only(built, ("YAL001C", "SID 99"))
+    compound = record["experiment"]["environment"]["perturbations"][0]["compound"]
+    assert compound["name"] == "SID 99"
+    assert compound["inchikey"] is None and compound["pubchem_cid"] is None
+    assert [gap["field"] for gap in compound["provenance_gaps"]] == ["inchikey"]
+    assert record["experiment"]["phenotype"]["environment_response"] == 0.1
 
 
 def test_released_call_maps_onto_the_shared_category_axis(built: Any) -> None:
     records = _by_key(built)
-    inactive = records[("YAL001C", "vanillin")]["experiment"]["phenotype"]
+    inactive = records[("YAL001C", "vanillin")][0]["experiment"]["phenotype"]
     assert inactive["category"] == ResponseCategory.no_change
     assert inactive["category_label"] == "Inactive"
-    active = records[("YJR066W", "vanillin")]["experiment"]["phenotype"]
+    active = records[("YJR066W", "vanillin")][0]["experiment"]["phenotype"]
     assert active["category"] == ResponseCategory.sensitive
     assert active["category_label"] == "Active / sensitive"
-    inconclusive = records[("YJR066W", "ethanol")]["experiment"]["phenotype"]
+    inconclusive = records[("YJR066W", "ethanol")][0]["experiment"]["phenotype"]
     assert inconclusive["category"] == ResponseCategory.not_determined
     assert inconclusive["category_label"] == "Inconclusive / resistant"
-    disagree = records[("YAL001C", "ethanol")]["experiment"]["phenotype"]
-    assert disagree["category"] == ResponseCategory.not_determined
-    assert disagree["category_label"] == "Active / Inactive / sensitive"
+    # two screens with different released calls are two records, each with its own
+    disagree = [r["experiment"]["phenotype"] for r in records[("YAL001C", "ethanol")]]
+    assert [(p["environment_response"], p["category_label"]) for p in disagree] == [
+        (-4.2, "Active / sensitive"),
+        (-0.2, "Inactive"),
+    ]
+    assert [p["category"] for p in disagree] == [
+        ResponseCategory.sensitive,
+        ResponseCategory.no_change,
+    ]
 
 
 def test_deletion_is_kanmx4_from_euroscarf_with_a_typed_barcode_gap(built: Any) -> None:
-    deletion = _by_key(built)[("YJR066W", "vanillin")]["experiment"]["genotype"][
+    deletion = _by_key(built)[("YJR066W", "vanillin")][1]["experiment"]["genotype"][
         "perturbations"
     ][0]
     assert deletion["perturbation_type"] == "barcoded_kanmx_deletion"
-    assert deletion["perturbed_gene_name"] == "TOR1"  # the release also spells it Tor1
+    assert deletion["perturbed_gene_name"] == "TOR1"  # this row's released sym
     assert deletion["collection"] == "Euroscarf deletion collection"
     assert deletion["cassette"] == "kanMX4"  # Giaever 2014, KANMX4_CASSETTE
     assert deletion["barcode"] is None  # the release publishes no barcode
@@ -372,7 +399,7 @@ def test_wild_type_screen_is_the_empty_genotype_on_by4741(built: Any) -> None:
     """Contract (#504 finding 3): the released ``NULL / wild type`` rows are the BY4741
     screen, served with no perturbation; the background is the reference genome's.
     """
-    record = _by_key(built)[("wild type", "vanillin")]
+    record = _only(built, ("wild type", "vanillin"))
     assert record["experiment"]["genotype"] == {"perturbations": []}
     assert record["experiment"]["phenotype"]["environment_response"] == -2.0
     assert record["reference"]["genome_reference"]["strain"] == "BY4741"
@@ -381,7 +408,9 @@ def test_wild_type_screen_is_the_empty_genotype_on_by4741(built: Any) -> None:
 def test_environment_is_a_static_96_well_sc_culture_at_20um_in_1_96pct_dmso(
     built: Any,
 ) -> None:
-    environment = _by_key(built)[("YJR066W", "vanillin")]["experiment"]["environment"]
+    environment = _by_key(built)[("YJR066W", "vanillin")][0]["experiment"][
+        "environment"
+    ]
     assert environment["media"] == w.WILDENHAIN_SC.model_dump()
     assert environment["temperature"]["value"] == 30.0
     assert environment["duration_hours"] == 18.0
@@ -452,7 +481,7 @@ def test_reference_is_the_strains_own_center_without_compound(built: Any) -> Non
     culture with no compound, on the typed BY4741 background; its units say the baseline
     is the same strain, not BY4741 under the compound.
     """
-    record = _by_key(built)[("YJR066W", "vanillin")]
+    record = _by_key(built)[("YJR066W", "vanillin")][0]
     reference = record["reference"]
     assert reference["experiment_reference_type"] == "strain_environment_response"
     assert reference["phenotype_reference"]["environment_response"] == 0.0
@@ -463,7 +492,7 @@ def test_reference_is_the_strains_own_center_without_compound(built: Any) -> Non
     units = reference["phenotype_reference"]["units"]
     assert "SAME strain's own screen center" in units
     assert "NOT BY4741 under the compound" in units
-    assert reference == _by_key(built)[("wild type", "vanillin")]["reference"]
+    assert reference == _only(built, ("wild type", "vanillin"))["reference"]
 
 
 def test_background_is_by4741_sourced_to_sci_data_with_pending_constructions() -> None:
@@ -566,24 +595,6 @@ def test_the_essential_set_is_the_intersection_with_the_sgd_essential_genes() ->
     assert orfs & essential == set(w.ESSENTIAL_GENE_ORFS)
 
 
-class _PanelGenome(_FakeGenome):
-    """The fake genome plus CDC28 (essential) and NNK1."""
-
-    gene_set = _GENES | {"YBR160W", "YKL171W"}
-    feature_index = {
-        "standard_to_ids": {**_STANDARD, "CDC28": ["YBR160W"], "NNK1": ["YKL171W"]}
-    }
-
-    def resolve_gene_name(self, name: str) -> _Resolution:
-        upper = name.upper()
-        if upper in self.gene_set:
-            return _Resolution("current", upper)
-        ids = self.feature_index["standard_to_ids"].get(upper)
-        if ids is not None:
-            return _Resolution("renamed", ids[0])
-        return _Resolution("retired", upper)
-
-
 def _panel_row(orf: str, sym: str, sid: str, cid: str, z: str) -> list[str]:
     return _row(
         PUBCHEM_SID=sid,
@@ -608,37 +619,26 @@ def _panel_rows() -> list[list[str]]:
     ]
 
 
-def test_essential_gene_strain_is_a_conditional_allele_with_typed_gaps(
+def test_essential_gene_strain_is_stored_as_the_deletion_the_release_calls_it(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Contract (#504 finding 1): CDC28 (YBR160W) is emitted, not dropped, as a
-    ``ConditionalAllelePerturbation`` whose class and collection are pending-review gaps
-    naming the strain tables, never as a kanMX null.
+    """Owner rule 2026-10-12: CDC28 (YBR160W, SGD-essential) is a kanMX4 Euroscarf
+    deletion record exactly as the release reports it; no annotation re-types it at
+    load time (the contradiction is filed in the dataset note).
     """
     _write_raw(tmp_path, _panel_rows())
-    dataset = _build(tmp_path, monkeypatch, _PanelGenome())
+    dataset = _build(tmp_path, monkeypatch)
     records = _by_key(dataset)
-    perturbation = records[("YBR160W", "vanillin")]["experiment"]["genotype"][
+    (perturbation,) = records[("YBR160W", "vanillin")][0]["experiment"]["genotype"][
         "perturbations"
     ]
-    assert len(perturbation) == 1
-    conditional = perturbation[0]
-    assert conditional["perturbation_type"] == "conditional_allele"
-    assert conditional["perturbed_gene_name"] == "CDC28"
-    assert conditional["allele_class"] is None
-    assert conditional["collection"] is None
-    assert [
-        (g["field"], g["reason"], g["resolve_with"]["source_uri"])
-        for g in conditional["provenance_gaps"]
-    ] == [
-        (
-            field,
-            ProvenanceGapReason.deferred_pending_source_review,
-            "Sci Data 2016 Table 1 (available online only); Cell Systems 2015 Table S3",
-        )
-        for field in ("allele_class", "collection")
+    assert perturbation["perturbation_type"] == "barcoded_kanmx_deletion"
+    assert perturbation["perturbed_gene_name"] == "CDC28"
+    assert perturbation["collection"] == "Euroscarf deletion collection"
+    assert "YBR160W" in w.ESSENTIAL_GENE_ORFS
+    nnk1 = records[("YKL171W", "vanillin")][0]["experiment"]["genotype"][
+        "perturbations"
     ]
-    nnk1 = records[("YKL171W", "vanillin")]["experiment"]["genotype"]["perturbations"]
     assert nnk1[0]["perturbation_type"] == "barcoded_kanmx_deletion"
 
 
@@ -650,16 +650,22 @@ def test_nnk1_rows_are_served_on_ykl171w_and_unresolved_labels_are_held(
     the ledger under ``strain_label_unresolved`` with their cell and row counts.
     """
     _write_raw(tmp_path, _panel_rows())
-    dataset = _build(tmp_path, monkeypatch, _PanelGenome())
+    dataset = _build(tmp_path, monkeypatch)
     records = _by_key(dataset)
     assert sorted(records) == [
         ("YBR160W", "vanillin"),
         ("YKL171W", "ethanol"),
         ("YKL171W", "vanillin"),
     ]
-    assert records[("YKL171W", "ethanol")]["experiment"]["phenotype"][
+    assert records[("YKL171W", "ethanol")][0]["experiment"]["phenotype"][
         "environment_response"
     ] == pytest.approx(-0.7)
+    assert (
+        records[("YKL171W", "ethanol")][0]["experiment"]["genotype"]["perturbations"][
+            0
+        ]["perturbed_gene_name"]
+        == "NNK1"
+    )
     log = w.DropLog.model_validate_json(
         (tmp_path / "preprocess" / "dropped_records.json").read_text()
     )
@@ -679,24 +685,11 @@ def test_an_unlisted_non_orf_label_refuses(
 ) -> None:
     _write_raw(tmp_path, [_panel_row("NA", "XYZ1", "1", "1183", "0.0")])
     with pytest.raises(RuntimeError) as info:
-        _build(tmp_path, monkeypatch, _PanelGenome())
+        _build(tmp_path, monkeypatch)
     assert str(info.value) == (
         "released row with orf='NA' sym='XYZ1' is neither a systematic ORF nor a "
         "listed NON_ORF_STRAIN_LABELS pair; a new strain label needs an explicit "
         "disposition, not a silent skip"
-    )
-
-
-def test_a_mapped_label_the_genome_does_not_resolve_to_its_orf_refuses(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """With the base fake genome, NNK1 resolves ``retired``, so the mapping refuses."""
-    _write_raw(tmp_path, [_panel_row("NA", "NNK1", "1", "1183", "0.0")])
-    with pytest.raises(RuntimeError) as info:
-        _build(tmp_path, monkeypatch)
-    assert str(info.value) == (
-        "strain label NA/NNK1 is mapped to YKL171W, but the genome resolves 'NNK1' to "
-        "'NNK1'"
     )
 
 
@@ -814,36 +807,54 @@ def _genotype(orf: str, common: str) -> Genotype:
     )
 
 
-def test_two_screen_record_equals_the_hand_built_experiment(built: Any) -> None:
-    """Record 3 = YJR066W / vanillin (record 0 is the wild-type screen, which sorts
-    first): screens -4.0 and -6.0 give mean -5.0, sample SD sqrt(2), SE 1.0 (derived by
-    the schema), n_samples 2 screens, ``Active / sensitive``; the release spells the gene
-    ``Tor1`` once, the record stores TOR1.
+def _single_screen_gaps() -> list[ProvenanceGap]:
+    note = "one released screen per record; the release carries no per-screen error"
+    return [
+        *(
+            ProvenanceGap(
+                field=field,
+                reason=ProvenanceGapReason.not_reported_by_primary,
+                note=note,
+            )
+            for field in ("environment_response_uncertainty", "environment_response_se")
+        ),
+        _screen_gap(),
+    ]
+
+
+def test_each_released_screen_equals_the_hand_built_experiment(built: Any) -> None:
+    """Records 5 and 6 = YJR066W / vanillin (cells sort by strain then compound identity:
+    wild type 0, YAL001C 1 to 4, YJR066W 5 to 7), the two released screens in ascending z:
+    z -6.0 (tag 4, spelled ``Tor1``) then z -4.0 (tag 3, ``TOR1``), each ``Active /
+    sensitive``, n_samples 1 screen, both dispersion fields a typed gap; nothing is
+    averaged and the gene name is the row's own.
     """
     environment = _environment(_vanillin())
-    expected = StrainEnvironmentResponseExperiment(
-        dataset_name=_NAME,
-        genotype=_genotype("YJR066W", "TOR1"),
-        environment=environment,
-        phenotype=EnvironmentResponsePhenotype(
-            measurement_type=MeasurementType.z_score,
-            assay_type=AssayType.liquid_od_growth,
-            environment_response=-5.0,
-            category=ResponseCategory.sensitive,
-            category_label="Active / sensitive",
-            n_samples=2,
-            sample_unit=SampleUnit.screen,
-            units=w.MEASUREMENT_UNITS,
-            environment_response_uncertainty=math.sqrt(2),
-            environment_response_uncertainty_type=UncertaintyType.sample_sd,
-            provenance_gaps=[_screen_gap()],
-        ),
-    ).model_dump()
-    assert built[3]["experiment"] == expected
-    assert built[3]["experiment"]["phenotype"]["environment_response_se"] == 1.0
-    assert built[3]["reference"] == _reference()
+
+    def expected(z: float, tag: str, name: str) -> dict[str, Any]:
+        return StrainEnvironmentResponseExperiment(
+            dataset_name=_NAME,
+            genotype=_genotype("YJR066W", name),
+            environment=environment,
+            phenotype=EnvironmentResponsePhenotype(
+                measurement_type=MeasurementType.z_score,
+                assay_type=AssayType.liquid_od_growth,
+                environment_response=z,
+                category=ResponseCategory.sensitive,
+                category_label="Active / sensitive",
+                n_samples=1,
+                sample_unit=SampleUnit.screen,
+                units=w.MEASUREMENT_UNITS,
+                replicate_id=tag,
+                provenance_gaps=_single_screen_gaps(),
+            ),
+        ).model_dump()
+
+    assert built[5]["experiment"] == expected(-6.0, "4", "Tor1")
+    assert built[6]["experiment"] == expected(-4.0, "3", "TOR1")
+    assert built[5]["reference"] == _reference()
     assert (
-        built[3]["publication"]
+        built[5]["publication"]
         == Publication(
             doi="10.1016/j.cels.2015.12.003",
             doi_url="https://doi.org/10.1016/j.cels.2015.12.003",
@@ -852,14 +863,10 @@ def test_two_screen_record_equals_the_hand_built_experiment(built: Any) -> None:
 
 
 def test_single_screen_record_equals_the_hand_built_experiment(built: Any) -> None:
-    """Record 1 = YAL001C / vanillin: the re-exported duplicate collapses to one screen
-    (z -0.5, ``Inactive``, n 1), so both dispersion fields carry the typed gap.
+    """Record 1 = YAL001C / vanillin: the re-exported duplicate collapses onto the first
+    row (z -0.5, ``Inactive``, tag 1), so one record with the typed gaps.
     """
     environment = _environment(_vanillin())
-    note = (
-        "one released screen for this (strain, compound) cell; a dispersion across "
-        "screens is undefined at n=1 and the release carries no per-screen error"
-    )
     expected = StrainEnvironmentResponseExperiment(
         dataset_name=_NAME,
         genotype=_genotype("YAL001C", "TFC3"),
@@ -873,20 +880,8 @@ def test_single_screen_record_equals_the_hand_built_experiment(built: Any) -> No
             n_samples=1,
             sample_unit=SampleUnit.screen,
             units=w.MEASUREMENT_UNITS,
-            provenance_gaps=[
-                *(
-                    ProvenanceGap(
-                        field=field,
-                        reason=ProvenanceGapReason.not_reported_by_primary,
-                        note=note,
-                    )
-                    for field in (
-                        "environment_response_uncertainty",
-                        "environment_response_se",
-                    )
-                ),
-                _screen_gap(),
-            ],
+            replicate_id="1",
+            provenance_gaps=_single_screen_gaps(),
         ),
     ).model_dump()
     assert built[1]["experiment"] == expected
@@ -894,14 +889,14 @@ def test_single_screen_record_equals_the_hand_built_experiment(built: Any) -> No
 
 
 def test_side_files_hold_one_reference_for_every_record(built: Any) -> None:
-    """The reference no longer carries the compound, so all five records share one."""
+    """The reference no longer carries the compound, so all eight records share one."""
     preprocess = Path(built.preprocess_dir)
     assert json.loads((preprocess / "gene_set.json").read_text()) == [
         "YAL001C",
         "YJR066W",
     ]
     index = json.loads((preprocess / "experiment_reference_index.json").read_text())
-    assert [entry["member_indices"] for entry in index] == [[0, 1, 2, 3, 4]]
+    assert [entry["member_indices"] for entry in index] == [list(range(8))]
     assert index[0]["reference"]["environment_reference"]["perturbations"] == []
     assert not (preprocess / "data.csv").exists()
     assert built.experiment_class is StrainEnvironmentResponseExperiment
@@ -914,14 +909,13 @@ def _write_raw(root: Path, rows: list[list[str]], *, blank_line: bool = False) -
         writer = csv.writer(handle)
         writer.writerow(_HEADER)
         writer.writerow(["RESULT_TYPE"] * len(_HEADER))
-        writer.writerows(rows)
+        writer.writerows(_tagged(rows))
         if blank_line:
             handle.write("\r\n")
     (root / "raw" / w.AID_FILENAME).write_text("{}")
 
 
-def _build(root: Path, monkeypatch: pytest.MonkeyPatch, genome: Any = None) -> Any:
-    monkeypatch.setattr(w, "default_genome", lambda: genome or _FakeGenome())
+def _build(root: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
     monkeypatch.setattr(
         w.EnvChemgenWildenhain2015Dataset, "download", lambda self: None
     )
@@ -934,24 +928,26 @@ def test_logged_counts_skip_blank_lines_and_blank_z_scores(
     """Build (a): the fixture rows plus a strain row with an empty ``z_score`` and a
     trailing blank line. Neither is a datapoint, so the counts stay 9 datapoints (the
     nine fixture rows, one of them the wild-type screen's non-ORF label) and 6 cells;
-    5 records are written (4 kanMX deletions + the wild type), 1 dropped for the SID-only
-    compound, and no cell has every screen flagged ``non replicate`` (YJR066W / vanillin
-    has one flagged screen of two). Build (b): the fixture with that cell's other screen
-    flagged too, so the closing count is 1.
+    8 records are written over the 6 cells (7 kanMX deletion screens + the wild type),
+    1 re-exported row collapsed, the SID-only compound stored with its gap, and no cell
+    has every screen flagged ``non replicate`` (YJR066W / vanillin has one flagged screen
+    of two). Build (b): the fixture with that cell's other screen flagged too, so the
+    closing count is 1.
     """
     caplog.set_level(logging.INFO, logger=w.log.name)
     rows = [*_rows(), _row(PUBCHEM_SID="5", PUBCHEM_CID="702", orf="YJR066W")]
     _write_raw(tmp_path / "a", rows, blank_line=True)
-    assert len(_build(tmp_path / "a", monkeypatch)) == 5
+    assert len(_build(tmp_path / "a", monkeypatch)) == 8
     messages = [r.getMessage() for r in caplog.records if r.name == w.log.name]
     assert messages[0] == (
         "Wildenhain2015: 9 datapoints (1 on a non-ORF strain label) -> 6 (strain, "
         "compound) cells"
     )
     assert messages[-1] == (
-        "Wrote 5 Wildenhain2015 records (4 kanMX deletion, 0 conditional allele, 1 wild "
-        "type; 0 held for an unresolved strain label; 1 dropped for an unidentifiable "
-        "compound; 0 cells whose every screen is non-replicate flagged)"
+        "Wrote 8 Wildenhain2015 records over 6 cells (7 kanMX deletion, 1 wild type; 0 "
+        "rows held for an unresolved strain label; 1 re-exported duplicate rows "
+        "collapsed; 1 compounds stored with an inchikey gap; 0 cells whose every screen "
+        "is non-replicate flagged)"
     )
     caplog.clear()
     flagged = _rows()
@@ -960,25 +956,36 @@ def test_logged_counts_skip_blank_lines_and_blank_z_scores(
     _build(tmp_path / "b", monkeypatch)
     messages = [r.getMessage() for r in caplog.records if r.name == w.log.name]
     assert messages[-1] == (
-        "Wrote 5 Wildenhain2015 records (4 kanMX deletion, 0 conditional allele, 1 wild "
-        "type; 0 held for an unresolved strain label; 1 dropped for an unidentifiable "
-        "compound; 1 cells whose every screen is non-replicate flagged)"
+        "Wrote 8 Wildenhain2015 records over 6 cells (7 kanMX deletion, 1 wild type; 0 "
+        "rows held for an unresolved strain label; 1 re-exported duplicate rows "
+        "collapsed; 1 compounds stored with an inchikey gap; 1 cells whose every screen "
+        "is non-replicate flagged)"
     )
 
 
-def test_an_off_genome_orf_refuses_with_the_count_and_the_names(
+def test_a_released_orf_no_genome_carries_is_stored_as_released(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """YDR001C is regex-valid but not in the fake genome (resolves ``retired``)."""
-    rows = [*_rows(), _row(PUBCHEM_CID="702", orf="YDR001C", z_score="1.5")]
+    """YDR001C is regex-valid and in no genome; no genome is read, so it is a record."""
+    rows = [
+        *_rows(),
+        _row(
+            PUBCHEM_CID="702",
+            PUBCHEM_ACTIVITY_OUTCOME="Inactive",
+            orf="YDR001C",
+            z_score="1.5",
+            **{"non replicate": "0"},
+        ),
+    ]
     _write_raw(tmp_path, rows)
-    with pytest.raises(RuntimeError) as info:
-        _build(tmp_path, monkeypatch)
-    assert str(info.value) == (
-        "1 released ORFs are not current R64 genes: ['YDR001C']; the release measured "
-        "242 current genes when this loader was written, so a new drop rule is needed, "
-        "not a silent skip"
-    )
+    dataset = _build(tmp_path, monkeypatch)
+    record = _only(dataset, ("YDR001C", "ethanol"))
+    (perturbation,) = record["experiment"]["genotype"]["perturbations"]
+    assert (
+        perturbation["systematic_gene_name"],
+        perturbation["perturbed_gene_name"],
+    ) == ("YDR001C", "")
+    assert record["experiment"]["phenotype"]["environment_response"] == 1.5
 
 
 def _one_name_for_every_compound(self: Any, cell: w.MatrixCell) -> Compound:
@@ -1008,9 +1015,9 @@ def test_two_z_strings_of_equal_value_are_one_screen(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Contract (issue #520): the datapoint key is the PARSED z, so ``-4.0`` and
-    ``-4.00`` in one cell are the same released datapoint: one screen, z -4.0, n 1, and
-    the single-screen dispersion gaps, instead of two screens with SD 0 that aborted the
-    build. The pinned export has 0 cells with two z strings of equal value.
+    ``-4.00`` in one cell are the same released datapoint: one record, z -4.0, n 1,
+    the second row's tag listed as a re-export. The pinned export has 0 cells with two
+    z strings of equal value.
     """
     rows = [
         _row(
@@ -1069,30 +1076,6 @@ def test_a_non_finite_or_unparseable_z_refuses_naming_the_cell(
         _build(tmp_path, monkeypatch)
     assert str(info.value) == message
     assert not (tmp_path / "processed" / "lmdb").exists()
-
-
-def test_canonical_names_skip_standards_that_do_not_resolve_back() -> None:
-    """``OLD1`` resolves ``retired`` and is skipped; ``TOR1`` and its second standard
-    ``TORX`` both name YJR066W, and the first listed wins.
-    """
-
-    class _Genome(_FakeGenome):
-        feature_index = {
-            "standard_to_ids": {
-                "TOR1": ["YJR066W"],
-                "TORX": ["YJR066W"],
-                "OLD1": ["YOL999W"],
-                "TFC3": ["YAL001C"],
-            }
-        }
-
-        def resolve_gene_name(self, name: str) -> _Resolution:
-            if name == "TORX":
-                return _Resolution("renamed", "YJR066W")
-            return super().resolve_gene_name(name)
-
-    genome: Any = _Genome()
-    assert w._canonical_common_names(genome) == {"YJR066W": "TOR1", "YAL001C": "TFC3"}
 
 
 # ---- Raw mirror, manifest, download (2026.09.30) --------------------------------- #
@@ -1359,10 +1342,9 @@ def test_build_links_the_mirror_into_raw_then_builds(
     monkeypatch.delenv("TC_DATA_URL", raising=False)
     csv_path, aid_path = _sources(tmp_path, csv_bytes, _AID_BYTES)
     mirror = w.deposit_raw_mirror(csv_path=csv_path, aid_path=aid_path)
-    monkeypatch.setattr(w, "default_genome", lambda: _FakeGenome())
     root = tmp_path / "env_chemgen_wildenhain2015"
     dataset = w.EnvChemgenWildenhain2015Dataset(root=str(root))
-    assert len(dataset) == 5
+    assert len(dataset) == 8
     for name, rel in w.raw_relpaths().items():
         assert os.readlink(root / "raw" / name) == str(mirror / rel)
     # a second download leaves the existing links in place

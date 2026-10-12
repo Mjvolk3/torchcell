@@ -1050,3 +1050,10 @@ submitted: its regularization grid and Hoepfner weight are the responses to the 
 two readings. Delta now holds 41 pending and 11 running jobs for this experiment.
 
 ![](./assets/images/040-inhibitor-synergy-wetlab/r3_convergence_2026-10-12-05-04-26.svg)
+
+### The three-source gene-cold arm is a null too
+
+Job 4047 finished at 05:05: gene-centered Spearman over the held-out strains 0.037, raw
+0.061, mean over three folds at one seed, against 0.019 and 0.047 for the one- and
+two-source arms. Every gene-cold reading is within noise of zero; the cell graph alone does
+not carry a deletion strain's inhibitor profile, with or without the public screens.

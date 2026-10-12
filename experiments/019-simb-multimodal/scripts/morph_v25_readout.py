@@ -1,0 +1,161 @@
+# experiments/019-simb-multimodal/scripts/morph_v25_readout.py
+# [[experiments.019-simb-multimodal.scripts.morph_v25_readout]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/019-simb-multimodal/scripts/morph_v25_readout
+"""Readout of the inductive morphology round v25 (project torchcell_019_morph_v25).
+
+A CELL is an arm (M_cls, M_pool, M_zs, M_xattn) plus the recipe tags the launcher wrote
+(lr, mse, crps, pearson_mse, graphkl, restarts, warmup, stack); the runs of a cell differ
+by split seed and initialization seed. Two statistics per run, as the gate records them:
+
+  window      the registered window, mean of val/morphology/pearson_per_feature over
+              epochs 1,000 to 1,199 (only for a run that reached epoch 1,199; a run
+              short of it is PARTIAL and reports the mean over its last 200 epochs
+              under `partial_window`, never under `window`);
+  escape      the first epoch at which traineval/morphology/pearson_per_feature exceeds
+              0.3, the plateau-escape criterion of the round (None if never), and the
+              training fit at the last logged epoch.
+
+Per cell: n runs, n finished, window mean and s.d., escape fraction, train fit. Writes
+results/morph_v25_readout.json and notes-tex/figure-3-gate/tables/morph_v25.tex.
+
+    python experiments/019-simb-multimodal/scripts/morph_v25_readout.py
+"""
+
+from __future__ import annotations
+
+import json
+import os.path as osp
+import re
+import statistics as st
+from concurrent.futures import ThreadPoolExecutor
+from typing import Any
+
+import wandb
+
+ENTITY = "zhao-group"
+PROJECT = "torchcell_019_morph_v25"
+VAL = "val/morphology/pearson_per_feature"
+TRAIN = "traineval/morphology/pearson_per_feature"
+WINDOW = (1000, 1199)
+ESCAPE = 0.3
+# The launcher's SWEEP_OV tags replace the arm script's, so a v25 run carries the arm
+# (M_cls), the split (split0) and the init seed (init0) as separate tags.
+ARM_TAGS = ("M_cls", "M_pool", "M_zs", "M_xattn", "MP_cls")
+SPLIT_RE = re.compile(r"split(\d+)")
+VARIANT_RE = re.compile(r"lr[0-9e.-]+|mse|crps|pearson_mse|graphkl[0-9e.-]+|restarts\d+|warmup\d+|stack")
+REPO = osp.abspath(osp.join(osp.dirname(__file__), "..", "..", ".."))
+RESULTS = osp.join(osp.dirname(osp.dirname(osp.abspath(__file__))), "results")
+TABLES = osp.join(REPO, "notes-tex", "figure-3-gate", "tables")
+
+
+def series(run: Any, key: str) -> list[tuple[int, float]]:
+    return [
+        (int(x["epoch"]), float(x[key]))
+        for x in run.history(keys=["epoch", key], pandas=False, samples=100000)
+        if x.get(key) is not None
+    ]
+
+
+def read_run(run: Any) -> dict[str, Any] | None:
+    arm = next((t for t in run.tags if t in ARM_TAGS), None)
+    sm = next((SPLIT_RE.fullmatch(t) for t in run.tags if SPLIT_RE.fullmatch(t)), None)
+    if arm is None or sm is None:
+        return None
+    split = int(sm.group(1))
+    variants = sorted(t for t in run.tags if VARIANT_RE.fullmatch(t))
+    cell = "_".join([arm, *variants])
+    val = series(run, VAL)
+    train = series(run, TRAIN)
+    last = max((e for e, _ in val), default=-1)
+    finished = last >= WINDOW[1]
+    in_window = [v for e, v in val if WINDOW[0] <= e <= WINDOW[1]]
+    tail = [v for e, v in val if e > last - 200]
+    escape = next((e for e, v in train if v > ESCAPE), None)
+    return {
+        "id": run.id,
+        "url": run.url,
+        "cell": cell,
+        "arm": arm,
+        "variants": variants,
+        "split": split,
+        "init_seed": int(run.config.get("seed", 0)),
+        "last_epoch": last,
+        "finished": finished,
+        "window": st.mean(in_window) if finished and in_window else None,
+        "partial_window": None if finished else (st.mean(tail) if tail else None),
+        "roll_max": max((v for _, v in val), default=None),
+        "train_last": train[-1][1] if train else None,
+        "escape_epoch": escape,
+    }
+
+
+def summarize(runs: list[dict[str, Any]]) -> dict[str, Any]:
+    fin = [r for r in runs if r["finished"]]
+    w = [r["window"] for r in fin]
+    esc = [r["escape_epoch"] is not None for r in runs]
+    return {
+        "n": len(runs),
+        "n_finished": len(fin),
+        "window_mean": st.mean(w) if w else None,
+        "window_sd": st.stdev(w) if len(w) > 1 else None,
+        "escape_fraction": sum(esc) / len(esc) if esc else None,
+        "n_escaped": sum(esc),
+        "train_last_mean": st.mean([r["train_last"] for r in runs if r["train_last"] is not None]) if runs else None,
+        "partial_window_mean": st.mean([r["partial_window"] for r in runs if r["partial_window"] is not None]) if any(r["partial_window"] is not None for r in runs) else None,
+    }
+
+
+def table(cells: dict[str, dict[str, Any]]) -> str:
+    rows = sorted(cells.items(), key=lambda kv: -(kv[1]["window_mean"] if kv[1]["window_mean"] is not None else -1))
+    best = max((c["window_mean"] for c in cells.values() if c["window_mean"] is not None), default=None)
+    out = [
+        "%% GENERATED by experiments/019-simb-multimodal/scripts/morph_v25_readout.py. Do not edit by hand.",
+        "%% SOURCE: experiments/019-simb-multimodal/results/morph_v25_readout.json",
+        "\\begin{table}[htbp]",
+        "  \\centering",
+        "  \\footnotesize",
+        "  \\caption[Round v25, inductive morphology]{Round v25 by cell (arm plus recipe), genotype only on "
+        "fig3_core, 116 moving features. The window is the mean validation Pearson per feature over "
+        "epochs 1{,}000 to 1{,}199 of finished runs; the escape fraction is the share of runs whose "
+        "training Pearson exceeded 0.3 at any epoch; the training fit is at the last logged epoch. A "
+        "cell with unfinished runs is partial. Bold, the best finished window mean. "
+        "\\src{experiments/019-simb-multimodal/scripts/morph_v25_readout.py}}",
+        "  \\label{tab:morph-v25}",
+        "  \\begin{tabular}{@{}lrrrrr@{}}",
+        "    \\toprule",
+        "    cell & runs (n) & finished (n) & window mean val Pearson per feature (s.d.) & escape fraction & train Pearson per feature, last epoch (mean) \\\\",
+        "    \\midrule",
+    ]
+    for name, c in rows:
+        w = "partial" if c["window_mean"] is None else f"{c['window_mean']:.3f}" + (f" ({c['window_sd']:.3f})" if c["window_sd"] is not None else "")
+        if best is not None and c["window_mean"] == best:
+            w = f"\\textbf{{{w}}}"
+        esc = f"{c['n_escaped']} of {c['n']}"
+        tr = "" if c["train_last_mean"] is None else f"{c['train_last_mean']:.2f}"
+        out.append(f"    \\texttt{{{name.replace('_', chr(92) + '_')}}} & {c['n']} & {c['n_finished']} & {w} & {esc} & {tr} \\\\")
+    out += ["    \\bottomrule", "  \\end{tabular}", "\\end{table}", ""]
+    return "\n".join(out)
+
+
+def main() -> None:
+    api = wandb.Api(timeout=120)
+    runs = list(api.runs(f"{ENTITY}/{PROJECT}", per_page=500))
+    with ThreadPoolExecutor(8) as pool:
+        rows = [r for r in pool.map(read_run, runs) if r is not None]
+    cells: dict[str, list[dict[str, Any]]] = {}
+    for r in rows:
+        cells.setdefault(r["cell"], []).append(r)
+    summary = {name: summarize(rs) for name, rs in cells.items()}
+    for name in sorted(summary, key=lambda n: -(summary[n]["window_mean"] or -1)):
+        c = summary[name]
+        w = "partial" if c["window_mean"] is None else f"{c['window_mean']:.3f} +/- {c['window_sd'] if c['window_sd'] is not None else 0:.3f}"
+        print(f"{name:32s} n {c['n']:2d} fin {c['n_finished']:2d} window {w:18s} escape {c['n_escaped']}/{c['n']} train {c['train_last_mean'] if c['train_last_mean'] is None else round(c['train_last_mean'], 3)}")
+    out = {"generated_by": "experiments/019-simb-multimodal/scripts/morph_v25_readout.py", "project": PROJECT, "window": WINDOW, "escape_threshold": ESCAPE, "cells": summary, "runs": rows}
+    with open(osp.join(RESULTS, "morph_v25_readout.json"), "w") as f:
+        json.dump(out, f, indent=1)
+    with open(osp.join(TABLES, "morph_v25.tex"), "w") as f:
+        f.write(table(summary))
+
+
+if __name__ == "__main__":
+    main()

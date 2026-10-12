@@ -82,6 +82,9 @@ class Round:
     # v25 varies the recipe inside an arm (lr, loss, graph KL, schedule) and says so in
     # tags; tags matching this regex join the family so each cell is its own group.
     variant_re: str | None = None
+    # v25's launcher tags replace the arm script's, so the arm tag carries no split
+    # (`M_cls`) and the split is its own tag (`split0`); this regex reads it.
+    split_tag_re: str | None = None
 
 
 ROUNDS: dict[str, Round] = {
@@ -279,7 +282,8 @@ ROUNDS: dict[str, Round] = {
         report_title="v25 inductive morphology round: readout, learning rate, loss, graph prior and schedule from the genotype alone",
         view_name="v25 inductive round by cell",
         view_id=None,
-        arm_re=r"((?:M|MP|CM|CMP)_(?:cls|pool|zs|xattn|expr|exprperm|prot|protperm))_(s\d+)",
+        arm_re=r"(M_cls|M_pool|M_zs|M_xattn|MP_cls)",
+        split_tag_re=r"split(\d+)",
         phenotype="morphology",
         splits=["s0", "s1", "s2", "s3"],
         split_label={f"s{i}": f"split {i}" for i in range(4)},
@@ -514,7 +518,17 @@ def label_runs(api: wandb.Api, rnd: Round) -> int:
         m = re.fullmatch(rnd.arm_re, arm)
         if m is None:
             raise ValueError(f"{run.id}: arm tag {arm} does not parse")
-        readout, split = m.group(1), m.group(2)
+        if rnd.split_tag_re is not None:
+            sm = next(
+                (re.fullmatch(rnd.split_tag_re, t) for t in run.tags if re.fullmatch(rnd.split_tag_re, t)),
+                None,
+            )
+            if sm is None:
+                raise ValueError(f"{run.id}: no split tag among {run.tags}")
+            readout, split = m.group(1), f"s{sm.group(1)}"
+            arm = f"{readout}_{split}"
+        else:
+            readout, split = m.group(1), m.group(2)
         seed = int(run.config["seed"])
         name = f"{arm}_seed{seed}"
         family = readout if rnd.family_from_match else f"{prefix}_{readout}"

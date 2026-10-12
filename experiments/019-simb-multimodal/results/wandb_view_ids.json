@@ -59,6 +59,66 @@
     "name": "M_pool: one line per split",
     "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v24?nw=859vkbzzbqf"
   },
+  "morph_v25": {
+    "id": "xbewyhsxbtr",
+    "name": "v25 inductive round by cell",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25?nw=xbewyhsxbtr"
+  },
+  "morph_v25/M_cls_lr1e-3": {
+    "id": "repnuddne0k",
+    "name": "M_cls_lr1e-3: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25?nw=repnuddne0k"
+  },
+  "morph_v25/M_cls_lr3e-3": {
+    "id": "rwdnusmjg1u",
+    "name": "M_cls_lr3e-3: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25?nw=rwdnusmjg1u"
+  },
+  "morph_v25/M_cls_lr3e-4": {
+    "id": "7r9amf7kzpx",
+    "name": "M_cls_lr3e-4: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25?nw=7r9amf7kzpx"
+  },
+  "morph_v25/M_pool_lr1e-3": {
+    "id": "4rifv7kcgxm",
+    "name": "M_pool_lr1e-3: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25?nw=4rifv7kcgxm"
+  },
+  "morph_v25/M_pool_lr3e-3": {
+    "id": "yymqpjrf7ww",
+    "name": "M_pool_lr3e-3: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25?nw=yymqpjrf7ww"
+  },
+  "morph_v25/M_pool_lr3e-4": {
+    "id": "461kphhmqyf",
+    "name": "M_pool_lr3e-4: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25?nw=461kphhmqyf"
+  },
+  "morph_v25/M_xattn_lr1e-3": {
+    "id": "7fyjficykat",
+    "name": "M_xattn_lr1e-3: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25?nw=7fyjficykat"
+  },
+  "morph_v25/M_xattn_lr3e-3": {
+    "id": "k9f34pj9ull",
+    "name": "M_xattn_lr3e-3: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25?nw=k9f34pj9ull"
+  },
+  "morph_v25/M_zs_lr1e-3": {
+    "id": "8cqn43mrvzc",
+    "name": "M_zs_lr1e-3: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25?nw=8cqn43mrvzc"
+  },
+  "morph_v25/M_zs_lr3e-3": {
+    "id": "183tsbckfqe",
+    "name": "M_zs_lr3e-3: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25?nw=183tsbckfqe"
+  },
+  "morph_v25/M_zs_lr3e-4": {
+    "id": "sp9tk23cbzu",
+    "name": "M_zs_lr3e-4: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25?nw=sp9tk23cbzu"
+  },
   "v16": {
     "id": "jvc4d5ajdy1",
     "name": "v16 joint round by arm",

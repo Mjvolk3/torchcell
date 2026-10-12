@@ -457,7 +457,15 @@ def masked_per_feature_pearson(
     pc = (pred - p_mean) * w
     tc = (target - t_mean) * w
     num = (pc * tc).sum(dim=0)
-    denom = torch.sqrt((pc * pc).sum(dim=0) * (tc * tc).sum(dim=0))
+    # The clamp sits INSIDE the sqrt. A column whose predictions are constant over the
+    # batch has sum(pc^2) = 0, and the backward of sqrt at 0 is inf; multiplied by the
+    # zero gradient the invalid branch of the where() passes down, that is NaN, and the
+    # whole model is NaN from the first step. This is exactly the state of a global head
+    # at initialization: the perturbation operator is ReZero (gate 0), so every strain's
+    # perturbed CLS, and every prediction column, is identical (v25c, 8 of 8 pearson_mse
+    # runs NaN at epoch 0; the per-gene expression head never hit it because its
+    # predictions differ across strains from the start).
+    denom = torch.sqrt(((pc * pc).sum(dim=0) * (tc * tc).sum(dim=0)).clamp_min(1e-16))
     valid = (n >= float(min_rows)) & (denom.detach() > 1e-8)
     r = torch.where(valid, num / denom.clamp_min(1e-8), torch.zeros_like(num))
     return r, valid

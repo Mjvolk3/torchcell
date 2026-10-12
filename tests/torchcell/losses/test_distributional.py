@@ -836,6 +836,24 @@ def test_pearson_loss_drops_constant_columns_and_survives_a_degenerate_batch() -
     assert flat.grad is not None and torch.isfinite(flat.grad).all()
 
 
+def test_pearson_loss_gradient_is_finite_with_a_constant_prediction_column() -> None:
+    """A batch where SOME prediction columns are constant must backpropagate finite
+    gradients. The dropped column's sqrt(0) used to send inf through the where(), which
+    multiplied by the zero upstream gradient gives NaN and poisons the whole model (the
+    v25c pearson_mse runs on the global head, NaN from epoch 0).
+    """
+    torch.manual_seed(8)
+    target = torch.randn(16, 4)
+    pred = torch.randn(16, 4)
+    pred[:, 2] = 0.3
+    pred.requires_grad_(True)
+    loss = pearson_loss(pred, target, mse_weight=1.0)
+    loss.backward()
+    assert pred.grad is not None and torch.isfinite(pred.grad).all()
+    # The constant column still gets the MSE anchor's gradient and nothing else.
+    assert torch.all(pred.grad[:, 2] != 0)
+
+
 def test_pearson_loss_gradient_ascends_the_metric() -> None:
     """One gradient step on the pure loss raises the mean per-feature Pearson."""
     torch.manual_seed(7)

@@ -266,3 +266,64 @@ f & \file{go_overlap_measured_vs_predicted.csv}, \file{nominations_summary.csv}.
 Status: on file. \\
 \bottomrule
 \end{tabular}}
+
+\clearpage
+\tcfigfit[0.98]{\figSiFour}{\textbf{Supplement four: what the mixture rounds say, read
+over both machines.} Rounds three and four of the mixture trainer, every run on fold
+seed 0 unless a panel says otherwise; a run is one seed on one fold on one machine, and
+an arm run on both machines contributes both copies.
+\textbf{a}, The one-, two- and three-source arms on the public side, mean over runs with
+its standard deviation, \hydrThreeonegenen{}, \hydrThreetwogenen{} and
+\hydrThreethreegenen{} runs: \hydrThreeonegenemean{}, \hydrThreetwogenemean{} and
+\hydrThreethreegenemean{}, against nested ridge at \hydladderRidge{}. The run spread is
+\hydrThreeonegenesd{} to \hydrThreethreegenesd{}. \status{todo}\,\fstat{partial}
+\textbf{b}, The same runs on the wet lab, growth AUROC over the 63 combinations under
+the served call: \hydrThreeonegrowthmean{}, \hydrThreetwogrowthmean{} and
+\hydrThreethreegrowthmean{}, against Loewe at \hydloeweAuroc{}. The seeds 3 to 5 of
+round four are still writing, hence partial. \status{todo}\,\fstat{partial}
+\textbf{c}, The dose channel, paired: the same arm with the log-molar dose modulation on
+and off, same machine, same folds, one seed; \hydrThreedosepairs{} pairs, FiLM lower on
+\hydrThreedosepairsfilmLower{} of them, and the furfural-grid residual more negative on
+\hydrThreedosepairsgridMoreNegative{} of them. \status{todo}\,\fstat{file}
+\textbf{d}, What the transformer predicts on the public screens it learns from: the
+held-out compound score per source, mean over the plain arms that carry it, beside the
+chemistry-feature learner's compound-cold score on the same source (Hoepfner
+\hydrThreesrchoepfnercgt{} against \hydrThreesrchoepfnerridge{}, Hillenmeyer
+\hydrThreesrchillenmeyercgt{} against \hydrThreesrchillenmeyerridge{}, Wildenhain
+\hydrThreesrcwildenhaincgt{} against \hydrThreesrcwildenhainridge{}); and the held-out
+DOSE of a seen Hoepfner compound under FiLM, \hydrThreesrchoepfnerdose{}.
+\status{todo}\,\fstat{file}
+\textbf{e}, The same config at the same seed on the two machines, \hydrThreemachinesn{}
+config-fold pairs: median absolute difference \hydrThreemachinesmedianAbsDiff{}, largest
+\hydrThreemachinesmaxAbsDiff{}, Spearman between the copies
+\hydrThreemachinesspearman{}. That is the run-to-run floor at a fixed seed.
+\status{todo}\,\fstat{file}
+\textbf{f}, The partition: each source-set arm on three fold seeds, one seed, median
+over the folds on file. The single-source arm reads \hydrThreefsoneZero{},
+\hydrThreefsoneOne{} and \hydrThreefsoneTwo{}. \status{todo}\,\fstat{partial}}{fig:sifour}
+
+%% The float is flushed before its source table is set: a deferred float
+%% otherwise lands on the page AFTER the table that describes it.
+\clearpage
+
+{\footnotesize\noindent
+\begin{tabular}{@{}p{8mm}p{168mm}@{}}
+\toprule
+\multicolumn{2}{@{}l}{\textbf{Sources for \cref{fig:sifour}}} \\
+\midrule
+a, b & every \file{results/mixture/r3*/*_scores.csv} and \file{r4*/*_scores.csv} on
+GilaHyper and \file{results/mixture-delta/r3*/*_scores.csv} pulled from Delta, seed
+members of the arms \file{mix_van_e150}, \file{mix_vanhop_e150} and
+\file{mix_vanhophet_e150}; the ridge bar from the 038 ladder, the Loewe bar from
+\file{mixture_scores.csv}. Status: partial, round four writing. \\
+c & the same files, the \file{_film} arm against its dose-off twin on the folds both have,
+seed 0. Status: on file. \\
+d & the same files, rows whose task is the auxiliary source (\file{heldout_compound},
+\file{heldout_dose}); the chemistry-feature bars from \file{source_basis.csv}. Status: on
+file. \\
+e & the same files, every config and fold scored on both machines at seed 0. Status: on
+file. \\
+f & the same files, the \file{_fs1} and \file{_fs2} arms. Status: partial, the
+three-source arm on fold seeds 1 and 2 is running. \\
+\bottomrule
+\end{tabular}}

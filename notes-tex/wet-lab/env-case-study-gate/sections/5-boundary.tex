@@ -209,3 +209,22 @@ for those arms only, and the note would say so. Third, whether the bottom row sh
 the model beside the rules, as the arm table shows it, or with the rules alone until an
 arm clears one of the bars. The first two are open; the third follows from whatever the
 queued rounds return.
+
+\pfstep{Round three, read over both machines} The screen that followed round one
+(\cref{fig:sifour}) was read on 2026.10.12 with every arm scored on Delta and most of them
+on GilaHyper as well. Three readings. The same config at the same seed differs between the
+machines by a median of \hydrThreemachinesmedianAbsDiff{} and by up to
+\hydrThreemachinesmaxAbsDiff{} on the public score, so no single-seed difference in the
+screen is a finding. Over every run so far the one-, two- and three-source arms read
+\hydrThreeonegenemean{}, \hydrThreetwogenemean{} and \hydrThreethreegenemean{} on the
+public side and \hydrThreeonegrowthmean{}, \hydrThreetwogrowthmean{} and
+\hydrThreethreegrowthmean{} on the growth call: adding the public screens does not lift
+either readout, and the arms predict a cold compound on those screens at
+\hydrThreesrchoepfnercgt{} (Hoepfner) and \hydrThreesrchillenmeyercgt{} (Hillenmeyer)
+against the chemistry-feature learners' \hydrThreesrchoepfnerridge{} and
+\hydrThreesrchillenmeyerridge{}. The dose modulation learns a held-out public dose
+(\hydrThreesrchoepfnerdose{}) and lowers the growth call on
+\hydrThreedosepairsfilmLower{} of \hydrThreedosepairs{} paired comparisons, which is round
+one's reading again under a protocol that selects on a held-out signal. Round four, six
+seeds on five folds of the three source-set arms, is what will turn the first reading
+into a measured null or a difference.

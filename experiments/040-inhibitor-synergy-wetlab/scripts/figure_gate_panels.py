@@ -297,6 +297,33 @@ class Reads:
             osp.basename(d): self.folds(d)
             for d in sorted(glob.glob(osp.join(R040, "mixture", "r1_*")))
         }
+        self.rounds = self.round_scores()
+        self.basis = self.csv(osp.join(R040, "source_basis.csv"))
+
+    def round_scores(self) -> pd.DataFrame:
+        """Every round-3 and round-4 score row, on this machine and pulled from Delta.
+
+        ``results/mixture/`` holds the GilaHyper runs, ``results/mixture-delta/`` the
+        Delta runs' tables; the same config at the same seed was run on both for
+        twenty-two arms, and the ``machine`` column is what tells them apart. ``arm``
+        is the config name without its fold and seed suffixes.
+        """
+        frames = []
+        for machine, sub in (("gilahyper", "mixture"), ("delta", "mixture-delta")):
+            for d in sorted(glob.glob(osp.join(R040, sub, "r[34]*"))):
+                if "smoke" in d:
+                    continue
+                t = self.folds(d)
+                if t.empty:
+                    continue
+                frames.append(t.assign(machine=machine, sweep=osp.basename(d)))
+        out = pd.concat(frames, ignore_index=True)
+        out["arm"] = (
+            out["name"]
+            .str.replace(r"_f\d+$", "", regex=True)
+            .str.replace(r"_s\d+$", "", regex=True)
+        )
+        return out
 
     def csv(self, path: str) -> pd.DataFrame:
         """Read one CSV and record its path."""
@@ -2402,6 +2429,386 @@ def fig_si3(R: Reads) -> dict[str, str]:
 # ------------------------------------------------------------------------------ main
 
 
+# ----------------------------------------------- supplement 4, the mixture rounds
+
+SET_ARMS = [
+    ("mix_van_e150", "one source: Vanacloig"),
+    ("mix_vanhop_e150", "two: with Hoepfner HOP"),
+    ("mix_vanhophet_e150", "three: with Hillenmeyer HET"),
+]
+
+
+def round_runs(R: Reads, task: str, subset: str, metric: str, call: str | None) -> Any:
+    """Per-run rows of one readout, seed members only (never the seed ensemble)."""
+    d = R.rounds
+    d = d[
+        (d.task == task)
+        & (d.subset == subset)
+        & (d.metric == metric)
+        & d.member.str.startswith("seed")
+    ]
+    if call is not None:
+        d = d[d.call == call]
+    return d
+
+
+def draw_source_sets(ax: Any, R: Reads, readout: str) -> None:
+    """The one-, two- and three-source arms over every run on fold seed 0.
+
+    A run is one seed on one fold on one machine; rounds 3 and 4 give up to six seeds
+    on five folds per arm, and the twenty-two arms run on both machines contribute both
+    copies. The bar is the mean over runs, the whisker its standard deviation, and the
+    count is written on the bar.
+    """
+    if readout == "gene":
+        d = round_runs(
+            R, "vanacloig", "test_compounds", "centered_spearman_median", None
+        )
+        bar_label = "nested ridge on FCFP4 counts"
+        bar_value = float(NUM["ladderRidge"])
+        bar_src = "ridge"
+        xlabel = "compound-cold centered Spearman (fold seed 0)"
+        xmax = 0.6
+    else:
+        d = round_runs(R, "ex23", "combinations", "growth_auroc", "served")
+        bar_label = "Loewe from the titration fits"
+        bar_value = float(NUM["loeweAuroc"])
+        bar_src = "loewe"
+        xlabel = "growth AUROC over the 63 combinations (served call)"
+        xmax = 1.0
+    d = d[d.fold_seed == 0]
+    data: list[tuple[str, Any, Any, str, bool]] = []
+    for arm, label in SET_ARMS:
+        v = d[d.arm == arm].value
+        tag = {
+            "mix_van_e150": "one",
+            "mix_vanhop_e150": "two",
+            "mix_vanhophet_e150": "three",
+        }[arm]
+        num(f"r3_{tag}_{readout}_mean", float(v.mean()))
+        num(f"r3_{tag}_{readout}_sd", float(v.std(ddof=1)))
+        num(f"r3_{tag}_{readout}_n", int(len(v)))
+        num(f"r3_{tag}_{readout}_folds", int(d[d.arm == arm].fold.nunique()))
+        data.append(
+            (
+                f"{label} (n = {len(v)})",
+                float(v.mean()),
+                float(v.std(ddof=1)),
+                "cgt",
+                False,
+            )
+        )
+    data.append((bar_label, bar_value, None, bar_src, False))
+    bars(ax, data, xlabel, xmax)
+    title(
+        ax,
+        "adding public screens: "
+        + (
+            "gene level, mean over runs"
+            if readout == "gene"
+            else "wet lab, mean over runs"
+        ),
+    )
+
+
+def draw_dose_pairs(ax: Any, R: Reads) -> None:
+    """The dose channel on the wet lab: FiLM against off, paired by arm and machine.
+
+    Each pair is the same arm with the log-molar dose modulation on and off, scored on
+    the same folds of the same machine at seed 0; the plotted value is the median over
+    the folds both copies have. Rounds 1 and 3 both carry such pairs.
+    """
+    d = round_runs(R, "ex23", "combinations", "growth_auroc", "served")
+    g = round_runs(
+        R, "isobole_ex26", "interior_cells", "mean_observed_minus_predicted", "served"
+    )
+    pairs = [
+        ("mix_van_e150", "mix_van_e150_film", "one source"),
+        ("mix_vanhop_e150", "mix_vanhop_e150_film", "two sources"),
+        ("mix_vanhophet_e150", "mix_vanhophet_e150_film", "three sources"),
+    ]
+    rows_: list[tuple[str, float, float, float, float]] = []
+    for off, film, label in pairs:
+        for machine in ("gilahyper", "delta"):
+            a = d[(d.arm == off) & (d.machine == machine) & (d.fold_seed == 0)]
+            b = d[(d.arm == film) & (d.machine == machine) & (d.fold_seed == 0)]
+            folds = sorted(set(a.fold) & set(b.fold))
+            if not folds:
+                continue
+            a0 = (
+                a[a.fold.isin(folds) & (a.member == "seed0")]
+                .groupby("fold")
+                .value.mean()
+            )
+            b0 = (
+                b[b.fold.isin(folds) & (b.member == "seed0")]
+                .groupby("fold")
+                .value.mean()
+            )
+            ga = g[
+                (g.arm == off)
+                & (g.machine == machine)
+                & g.fold.isin(folds)
+                & (g.member == "seed0")
+            ].value.median()
+            gb = g[
+                (g.arm == film)
+                & (g.machine == machine)
+                & g.fold.isin(folds)
+                & (g.member == "seed0")
+            ].value.median()
+            rows_.append(
+                (
+                    f"{label}, {machine}, {len(folds)} fold{'s' if len(folds) > 1 else ''}",
+                    float(a0.median()),
+                    float(b0.median()),
+                    float(ga),
+                    float(gb),
+                )
+            )
+    y = np.arange(len(rows_))[::-1]
+    lower = 0
+    for yi, (label, off_v, film_v, _, _) in zip(y, rows_):
+        ax.plot([off_v, film_v], [yi, yi], color="black", linewidth=0.5, zorder=2)
+        ax.plot(
+            off_v,
+            yi,
+            "o",
+            color=SRC_COLOR["cgt"],
+            markeredgecolor="black",
+            markeredgewidth=0.4,
+            markersize=3.6,
+            zorder=3,
+        )
+        ax.plot(
+            film_v,
+            yi,
+            "o",
+            color=SRC_FILL["cgt"],
+            markeredgecolor="black",
+            markeredgewidth=0.4,
+            markersize=3.6,
+            zorder=3,
+        )
+        lower += int(film_v < off_v)
+    ax.set_yticks(y)
+    ax.set_yticklabels([r[0] for r in rows_])
+    ax.set_ylim(-0.6, len(rows_) - 0.4)
+    ax.set_xlim(0.3, 0.7)
+    ax.set_xlabel("growth AUROC over the 63 combinations (served call)")
+    hgrid(ax, 0.1)
+    ax.axvline(
+        float(NUM["loeweAuroc"]), color=SRC_COLOR["loewe"], linewidth=0.8, zorder=1
+    )
+    num("r3_dose_pairs", int(len(rows_)))
+    num("r3_dose_pairs_filmLower", lower)
+    num("r3_dose_pairs_gridMoreNegative", int(sum(1 for r in rows_ if r[4] < r[3])))
+    handles = [
+        Line2D(
+            [],
+            [],
+            marker="o",
+            color=SRC_COLOR["cgt"],
+            markeredgecolor="black",
+            markeredgewidth=0.4,
+            linestyle="",
+            markersize=3.6,
+            label="dose modulation off",
+        ),
+        Line2D(
+            [],
+            [],
+            marker="o",
+            color=SRC_FILL["cgt"],
+            markeredgecolor="black",
+            markeredgewidth=0.4,
+            linestyle="",
+            markersize=3.6,
+            label="dose FiLM on (light fill)",
+        ),
+        Line2D([], [], color=SRC_COLOR["loewe"], linewidth=0.8, label="Loewe"),
+    ]
+    n = panel_legend(ax, handles, ncol=3)
+    title(ax, "the dose channel costs the growth call: paired, same folds", n)
+
+
+def draw_per_source(ax: Any, R: Reads) -> None:
+    """What the transformer predicts on the public screens it learns from.
+
+    For each auxiliary source, the held-out COMPOUND score of the plain arms that carry
+    it (centered Spearman, mean over runs), beside the chemistry-feature learner's
+    compound-cold score on the same source from ``source_basis.csv``; for Hoepfner also
+    the held-out DOSE score of the FiLM dose arms.
+    """
+    d = R.rounds[
+        R.rounds.member.str.startswith("seed")
+        & (R.rounds.metric == "centered_spearman_median")
+    ]
+    basis = R.basis.set_index("source")
+    plain = {
+        "hoepfner_hop": ("mix_vanhop_e150", "mix_vanhophet_e150"),
+        "hillenmeyer_het": ("mix_vanhophet_e150",),
+        "wildenhain": ("mix_vanwil_e150", "mix_vanhophetwil_e150"),
+    }
+    names = {
+        "hoepfner_hop": "Hoepfner HOP",
+        "hillenmeyer_het": "Hillenmeyer HET",
+        "wildenhain": "Wildenhain",
+    }
+    #: the row of source_basis.csv that holds each source's chemistry-feature score
+    basis_row = {
+        "hoepfner_hop": "Hoepfner",
+        "hillenmeyer_het": "Hillenmeyer HET",
+        "wildenhain": "Wildenhain",
+    }
+    data: list[tuple[str, Any, Any, str, bool]] = []
+    for source, arms in plain.items():
+        v = d[
+            (d.task == source) & (d.subset == "heldout_compound") & d.arm.isin(arms)
+        ].value
+        tag = source.split("_")[0]
+        num(f"r3_src_{tag}_cgt", float(v.mean()))
+        num(f"r3_src_{tag}_cgt_n", int(len(v)))
+        data.append(
+            (
+                f"{names[source]}, transformer (n = {len(v)})",
+                float(v.mean()),
+                float(v.std(ddof=1)),
+                "cgt",
+                False,
+            )
+        )
+        if source == "hoepfner_hop":
+            w = d[(d.task == source) & (d.subset == "heldout_dose")].value
+            num("r3_src_hoepfner_dose", float(w.mean()))
+            num("r3_src_hoepfner_dose_n", int(len(w)))
+            data.append(
+                (
+                    f"Hoepfner HOP, held-out DOSE, FiLM arms (n = {len(w)})",
+                    float(w.mean()),
+                    float(w.std(ddof=1)),
+                    "cgt",
+                    False,
+                )
+            )
+        ridge = float(basis.loc[basis_row[source], "spearman_median"])
+        num(f"r3_src_{tag}_ridge", ridge)
+        data.append(
+            (
+                f"{names[source]}, {basis.loc[basis_row[source], 'best_model']} on {basis.loc[basis_row[source], 'best_features']}",
+                ridge,
+                None,
+                "ridge",
+                False,
+            )
+        )
+    bars(ax, data, "held-out centered Spearman on the source", 0.5)
+    title(ax, "the public screens are barely learned")
+
+
+def draw_machines(ax: Any, R: Reads) -> None:
+    """The same config at the same seed on the two machines."""
+    d = round_runs(R, "vanacloig", "test_compounds", "centered_spearman_median", None)
+    d = d[d.member == "seed0"]
+    piv = d.pivot_table(index=["name", "fold"], columns="machine", values="value")
+    piv = piv.dropna()
+    x, y = piv["gilahyper"].to_numpy(), piv["delta"].to_numpy()
+    ax.plot([-0.2, 0.6], [-0.2, 0.6], color="black", linewidth=0.4, zorder=1)
+    ax.scatter(
+        x, y, s=7, color=SRC_COLOR["cgt"], edgecolor="black", linewidth=0.3, zorder=3
+    )
+    diff = np.abs(x - y)
+    num("r3_machines_n", int(len(diff)))
+    num("r3_machines_medianAbsDiff", float(np.median(diff)))
+    num("r3_machines_maxAbsDiff", float(diff.max()))
+    num(
+        "r3_machines_spearman",
+        float(pd.Series(x).corr(pd.Series(y), method="spearman")),
+    )
+    ax.set_xlim(-0.2, 0.6)
+    ax.set_ylim(-0.2, 0.6)
+    ax.set_xlabel("GilaHyper (RTX 6000 Ada), seed 0")
+    ax.set_ylabel("Delta (A40), seed 0")
+    ax.xaxis.set_major_locator(MultipleLocator(0.2))
+    ax.yaxis.set_major_locator(MultipleLocator(0.2))
+    ax.text(
+        0.03,
+        0.97,
+        f"{len(diff)} config-fold pairs\nmedian |diff| {np.median(diff):.3f}, max {diff.max():.2f}",
+        transform=ax.transAxes,
+        fontsize=4.6,
+        ha="left",
+        va="top",
+    )
+    title(ax, "the same config and seed on two machines: gene-level score")
+
+
+def draw_fold_seeds(ax: Any, R: Reads) -> None:
+    """The partition effect: the three source-set arms on three fold seeds.
+
+    The fold-seed arms are named ``<arm>_fs1`` and ``<arm>_fs2``; each is one seed on
+    folds 0 to 2 of that partition, and the plotted value is the median over its
+    folds. The Delta copy is used where both machines ran an arm.
+    """
+    d = round_runs(R, "vanacloig", "test_compounds", "centered_spearman_median", None)
+    d = d[d.member == "seed0"]
+    data: list[tuple[str, Any, Any, str, bool]] = []
+    tags = {
+        "mix_van_e150": "one",
+        "mix_vanhop_e150": "two",
+        "mix_vanhophet_e150": "three",
+    }
+    for arm, label in SET_ARMS:
+        for fs in (0, 1, 2):
+            name = arm if fs == 0 else f"{arm}_fs{fs}"
+            sub = d[(d.arm == name) & (d.fold_seed == fs)]
+            machine = "delta" if (sub.machine == "delta").any() else "gilahyper"
+            v = sub[sub.machine == machine].groupby("fold").value.mean()
+            if len(v) == 0:
+                data.append(
+                    (
+                        f"{label}, fold seed {fs} (not run)",
+                        float("nan"),
+                        None,
+                        "cgt",
+                        False,
+                    )
+                )
+                continue
+            num(f"r3_fs_{tags[arm]}_{fs}", float(v.median()))
+            num(f"r3_fs_{tags[arm]}_{fs}_folds", int(len(v)))
+            data.append(
+                (
+                    f"{label}, fold seed {fs} ({len(v)} fold{'s' if len(v) > 1 else ''})",
+                    float(v.median()),
+                    None,
+                    "cgt",
+                    False,
+                )
+            )
+    bars(ax, data, "compound-cold centered Spearman, median over folds, one seed", 0.6)
+    title(ax, "the partition is the largest effect: three fold seeds")
+
+
+def fig_si4(R: Reads) -> dict[str, str]:
+    """Supplement 4: what the mixture rounds say, read over both machines."""
+    fig = new_sheet(165)
+    fig.get_layout_engine().set(rect=(0, 0.012, 1, 0.94))
+    axes = rows(fig, 3, 2)
+    draw_source_sets(axes[0], R, "gene")
+    draw_source_sets(axes[1], R, "growth")
+    draw_dose_pairs(axes[2], R)
+    draw_per_source(axes[3], R)
+    draw_machines(axes[4], R)
+    draw_fold_seeds(axes[5], R)
+    sheet_legend(fig, ["loewe", "ridge", "cgt"], hatch=False, ncol=3)
+    letters_status(
+        fig, axes, ["partial", "partial", "ready", "ready", "ready", "partial"]
+    )
+    status_key(fig)
+    return save(fig, "gate_si4_rounds")
+
+
 def newest_svg(stem: str) -> dict[str, str]:
     """The newest ``<stem>_<timestamp>.svg`` of the experiment's image directory.
 
@@ -2525,6 +2932,7 @@ def main() -> None:
         "si3": fig_si3(R),
     }
     boundary_numbers(R)
+    figures["si4"] = fig_si4(R)
     figures["boundary"] = newest_svg("mixture_rules_isoboles")
     figures["rulechoice"] = newest_svg("rule_choice")
     internal = {k: v for k, v in R.paths.items() if not k.startswith("/")}

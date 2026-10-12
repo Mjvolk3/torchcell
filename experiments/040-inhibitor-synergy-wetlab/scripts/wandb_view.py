@@ -60,7 +60,8 @@ VIEW_ID: str | None = "n94xqhmif86"
 X = "epoch"
 # every panel draws up to this many runs or groups; the W&B default is 10
 MAX_SHOWN = 100
-SWEEP = re.compile(r"^r\d+_mix_\w+$")
+# r1_mix_<arm>, r2_mix_<arm>, r3_<arm>, r3w2_<arm>, r4_<arm>; smokes are skipped by name
+SWEEP = re.compile(r"^r\d+(w\d+)?_\w+$")
 KEY = re.compile(r"^fold(\d+)_seed(\d+)/(\w+)$")
 
 CURVES = {
@@ -68,6 +69,13 @@ CURVES = {
     "curve/validation_centered_spearman": "val_centered_mean",
     "curve/gene_loss_standardized_mse": "gene_loss",
     "curve/host_loss_mse": "host_loss",
+    # round 3: a held-out loss per source, logged every evaluation
+    "curve/heldout_loss_vanacloig": "heldout_loss_vanacloig",
+    "curve/heldout_loss_hoepfner_hop": "heldout_loss_hoepfner_hop",
+    "curve/heldout_loss_hillenmeyer_het": "heldout_loss_hillenmeyer_het",
+    "curve/heldout_loss_wildenhain": "heldout_loss_wildenhain",
+    "curve/train_loss_hoepfner_hop": "loss_hoepfner_hop",
+    "curve/train_loss_hillenmeyer_het": "loss_hillenmeyer_het",
     "curve/grad_norm": "grad_norm",
     "curve/lr": "lr",
     "curve/gpu_peak_gb": "gpu_peak_gb",
@@ -96,6 +104,21 @@ FINAL = {
     "Vanacloig compound-cold centered Spearman, median (ridge 0.359)": (
         "vanacloig/test_compounds/centered_spearman_median/both"
     ),
+    "Vanacloig gene-cold, gene-centered Spearman over held-out strains": (
+        "vanacloig/test_genes/gene_centered_spearman_median/both"
+    ),
+    "Hoepfner HOP held-out COMPOUND, centered Spearman (ridge 0.189)": (
+        "hoepfner_hop/heldout_compound/centered_spearman_median/both"
+    ),
+    "Hoepfner HOP held-out DOSE of a seen compound, centered Spearman": (
+        "hoepfner_hop/heldout_dose/centered_spearman_median/both"
+    ),
+    "Hillenmeyer HET held-out compound, centered Spearman (ridge 0.126)": (
+        "hillenmeyer_het/heldout_compound/centered_spearman_median/both"
+    ),
+    "Wildenhain held-out compound, centered Spearman (ridge 0.394)": (
+        "wildenhain/heldout_compound/centered_spearman_median/both"
+    ),
     "growth AUROC, software call": "ex23/combinations/growth_auroc/software",
 }
 
@@ -121,7 +144,21 @@ SECTIONS: list[tuple[str, list[tuple[str, list[str]]]]] = [
         ],
     ),
     (
-        "2 loss",
+        "2 held-out loss per source, by epoch (round 3; where each one bottoms is that "
+        "source's training length)",
+        [
+            ("Vanacloig held-out loss", ["curve/heldout_loss_vanacloig"]),
+            ("Hoepfner HOP held-out loss", ["curve/heldout_loss_hoepfner_hop"]),
+            ("Hillenmeyer HET held-out loss", ["curve/heldout_loss_hillenmeyer_het"]),
+            ("Wildenhain held-out loss", ["curve/heldout_loss_wildenhain"]),
+            (
+                "auxiliary TRAINING losses (the ones that were still falling at 50)",
+                ["curve/train_loss_hoepfner_hop", "curve/train_loss_hillenmeyer_het"],
+            ),
+        ],
+    ),
+    (
+        "3 loss",
         [
             (
                 "gene loss, by epoch (masked MSE on the standardized response)",
@@ -138,14 +175,14 @@ SECTIONS: list[tuple[str, list[tuple[str, list[str]]]]] = [
         ],
     ),
     (
-        "3 optimization",
+        "4 optimization",
         [
             ("gradient norm before clipping", ["curve/grad_norm"]),
             ("learning rate", ["curve/lr"]),
         ],
     ),
     (
-        "4 bookkeeping",
+        "5 bookkeeping",
         [
             ("peak GPU memory allocated (GB)", ["curve/gpu_peak_gb"]),
             ("wall time per seed (minutes)", ["curve/minutes"]),
@@ -188,9 +225,9 @@ def label_and_relog(api: wandb.Api) -> dict[str, dict[str, object]]:
     """Group every finished mixture run by arm and log its shared-key curves."""
     groups: dict[str, dict[str, object]] = {}
     for run in api.runs(f"{ENTITY}/{PROJECT}", filters={"state": "finished"}):
-        sweeps = [t for t in run.tags if SWEEP.match(t)]
+        sweeps = [t for t in run.tags if SWEEP.match(t) and "smoke" not in t]
         if not sweeps:
-            continue  # smokes carry no round tag
+            continue  # smokes carry no round tag, or a smoke tag
         sweep = sweeps[0]
         if "ex23/combinations/growth_auroc/served" not in run.summary:
             continue  # a run that died before scoring
@@ -227,6 +264,10 @@ def label_and_relog(api: wandb.Api) -> dict[str, dict[str, object]]:
         run.config["fold"] = int(run.config.get("folds", [0])[0])
         run.config["fold_seed_"] = int(run.config.get("fold_seed", 0))
         run.config["view"] = VIEW_TAG
+        # Delta nodes are gpuXNNN; the same config at the same seed differs between
+        # machines by up to 0.23, so the machine is a grouping key worth having
+        host = str(run.metadata.get("host", "")) if run.metadata else ""
+        run.config["machine"] = "delta" if host.startswith("gpu") else host
         run.update()
         entry = groups.setdefault(
             arm,

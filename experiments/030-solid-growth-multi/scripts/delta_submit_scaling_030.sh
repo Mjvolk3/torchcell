@@ -32,9 +32,14 @@
 # BATCH. 256 records per step on one GPU for every run (the IGB 180x8 full-data run uses
 # 2 x 512, so it is NOT a point of this grid; the grid runs its own 180x8 full-data chain).
 #
-# ORDER. Submit ONLY=calib first: one 3 h job, 180x8 on the full pool, 400 training
-# batches, which logs compute/records_seen and compute/gpu_hours_cumulative; the
-# records/s it reports is the pace every budget above assumes. Then ONLY=grid.
+# ORDER. Submit ONLY=calib first: two 3 h jobs, 180x8 and 45x2 on the full pool, 400
+# training batches each, which log compute/records_seen, compute/gpu_hours_cumulative
+# and the measured FLOPs per step; the records/s at 180x8 is the pace every budget
+# above assumes, and the 45x2 pace says whether the loader or the GPU binds (equal
+# paces mean the loader, and then no size finishes sooner than 180x8). Then ONLY=grid.
+# The config defines transforms.fit_stats_strict so the plain override composes; the
+# configs and the code are read from the checkout when a job STARTS, so a pull on
+# Delta reaches every job still pending.
 #
 #   RUN ON A DELTA LOGIN NODE, FROM THE WORKTREE ROOT, after `git pull`:
 #   mkdir -p /scratch/bbub/mjvolk3/torchcell/experiments/030-solid-growth-multi/slurm/output
@@ -98,8 +103,11 @@ declare -A LINKS=([64]=1 [16]=1 [4]=1 [full]=1)
 CHAIN_HEADLINE="${CHAIN_HEADLINE:-0}"
 
 if [[ "$ONLY" == "calib" ]]; then
-  submit "030-sclw1-calib" 3 "" $(size 180 8) $(sub full) +seed=1 trainer.max_epochs=1 trainer.limit_train_batches=400 >/dev/null
-  echo "calibration submitted; read compute/records_seen and compute/gpu_hours_cumulative from its W&B run"
+  for wd in "180 8" "45 2"; do
+    set -- $wd
+    submit "030-sclw1-calib-N$1L$2" 3 "" $(size "$1" "$2") $(sub full) +seed=1 trainer.max_epochs=1 trainer.limit_train_batches=400 >/dev/null
+  done
+  echo "calibration submitted (180x8 and 45x2); read compute/records_seen, compute/gpu_hours_cumulative and compute/flops_per_step from their W&B runs"
   exit 0
 fi
 

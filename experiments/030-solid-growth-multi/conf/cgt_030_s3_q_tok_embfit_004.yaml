@@ -51,3 +51,8 @@ subset:
 
 transforms:
   fit_stats: normalization_stats_030_s3q.json
+  # The arm refuses constants fitted on another training set. A scaling-sweep subset
+  # overrides this to false and keeps the full pool's constants, so every point of the
+  # curve optimizes the same normalized target. Defined here so the plain override
+  # `transforms.fit_stats_strict=false` composes (Hydra refuses an undefined key).
+  fit_stats_strict: true

@@ -302,15 +302,25 @@ class RegressionTask(L.LightningModule):
                         }
                     ),
                 )
-                # One Pearson per (label, token); every key is logged on every rank in
-                # vocabulary order, NaN when the rank saw no row of that token.
+                # One Pearson and one MSE (label units) per (label, token); every key
+                # is logged on every rank in vocabulary order, NaN when the world saw
+                # no row of that token. The per-token MSE is the per-screen loss the
+                # scaling readout fits (val/token/<Tmi...>/gene_interaction/MSE).
                 setattr(
                     self,
                     f"{stage}_token_metrics",
                     nn.ModuleDict(
                         {
                             label: nn.ModuleDict(
-                                {str(i): PearsonCorrCoef() for i in range(len(names))}
+                                {
+                                    str(i): MetricCollection(
+                                        {
+                                            "Pearson": PearsonCorrCoef(),
+                                            "MSE": MeanSquaredError(squared=True),
+                                        }
+                                    )
+                                    for i in range(len(names))
+                                }
                             )
                             for label in per_entry_labels
                         }
@@ -557,13 +567,14 @@ class RegressionTask(L.LightningModule):
                 # in the whole world reads NaN, on the metric's device). The per-rank
                 # gate this replaces logged a CPU NaN tensor into an NCCL all_reduce
                 # and killed job 2413834 in the sanity check.
-                computed = self._compute_metrics_safely(
-                    MetricCollection({"Pearson": metric})
-                )
-                value = computed.get(
-                    "Pearson", torch.tensor(float("nan"), device=self.device)
-                )
-                self.log(f"{stage}/token/{name}/{label}/Pearson", value, sync_dist=True)
+                computed = self._compute_metrics_safely(metric)
+                for key in ("Pearson", "MSE"):
+                    value = computed.get(
+                        key, torch.tensor(float("nan"), device=self.device)
+                    )
+                    self.log(
+                        f"{stage}/token/{name}/{label}/{key}", value, sync_dist=True
+                    )
                 self.log(
                     f"{stage}/token/{name}/{label}/n_entries",
                     float(self._token_counts[stage][label][i]),

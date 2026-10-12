@@ -102,6 +102,20 @@ def test_logs_params_flops_and_records(tmp_path: Path) -> None:
     assert params["non_embedding"] == 8 * 16 + 16 + 16 + 1
     assert _last(rec.metrics, "compute/params_non_embedding") == params["non_embedding"]
     assert _last(rec.metrics, "compute/flops_per_step") > 0
+    # 4 steps per epoch: of the default measured batch indices 1-5 only 1, 2, 3 exist,
+    # so the measurement closes at epoch end with three steps; every step has the same
+    # 16 records so the spread is zero and the per-record figure is per step over 16.
+    assert _last(rec.metrics, "compute/flops_measured_steps") == 3
+    assert _last(rec.metrics, "compute/flops_per_step_min") == pytest.approx(
+        _last(rec.metrics, "compute/flops_per_step_max")
+    )
+    assert _last(rec.metrics, "compute/flops_per_record") == pytest.approx(
+        _last(rec.metrics, "compute/flops_per_step") / 16
+    )
+    # the epoch-end row carries the epoch index so the compute keys join the
+    # validation rows in a W&B history query
+    epoch_rows = [m for m in rec.metrics if "compute/records_seen" in m]
+    assert [m["epoch"] for m in epoch_rows] == [0.0, 1.0]
     # 4 steps per epoch of 16 records; FLOPs per epoch is per step times steps
     assert _last(rec.metrics, "compute/steps_per_epoch") == 4
     assert _last(rec.metrics, "compute/flops_per_epoch") == pytest.approx(
@@ -129,3 +143,25 @@ def test_state_survives_resume(tmp_path: Path) -> None:
     assert cb2.records_seen == 7
     assert cb2.epochs_completed == 3
     assert cb2._measured is False
+
+
+def test_measurement_closes_after_last_requested_step() -> None:
+    """Per-step FLOPs and records reduce to the mean, the spread and the per-record
+    figure once the last requested batch index has been counted.
+    """
+    cb = ComputeAccounting(measure_steps=(1, 2))
+    cb._step_flops = [100.0, 300.0]
+    cb._step_records = [10, 10]
+    cb._close_measurement()
+    assert cb._measured is True
+    assert cb.flops_measured_steps == 2
+    assert cb.flops_per_step == 200.0
+    assert (cb.flops_per_step_min, cb.flops_per_step_max) == (100.0, 300.0)
+    assert cb.flops_per_record == 20.0
+    # closing again is a no-op; a fresh callback with nothing measured stays open
+    cb._step_flops.append(999.0)
+    cb._close_measurement()
+    assert cb.flops_per_step == 200.0
+    empty = ComputeAccounting()
+    empty._close_measurement()
+    assert empty._measured is False

@@ -133,6 +133,7 @@ def test_per_entry_step_trains_on_every_row_and_logs_counts() -> None:
     names = [n for n, _ in logged]
     for name in VOCAB:
         assert f"train/token/{name}/gene_interaction/Pearson" in names
+        assert f"train/token/{name}/gene_interaction/MSE" in names
         assert f"train/token/{name}/fitness/n_entries" in names
     assert ("train/n_entries/gene_interaction", 4.0) in logged
     assert task._entry_counts["train"] == {"gene_interaction": 0, "fitness": 0}

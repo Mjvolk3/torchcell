@@ -18,10 +18,14 @@ back when reviewing. The reference is `notes-tex/modeling/scaling-laws/`.
    `compute/params_total`, `compute/params_non_embedding`, `compute/flops_per_step`,
    `compute/flops_per_record`, `compute/flops_per_epoch`, `compute/flops_cumulative`,
    `compute/records_per_epoch`, `compute/records_seen`, `compute/gpu_hours_cumulative`.
-   FLOPs come from `torch.utils.flop_counter.FlopCounterMode` around one real training
-   step; 6ND is for token transformers and does not apply to a gene-token model with
-   graph penalties. The count covers the matmul family only, so it is a lower bound that
-   is comparable across sizes of one architecture.
+   FLOPs come from `torch.utils.flop_counter.FlopCounterMode` around several real
+   training steps (batch indices 1 to 5 by default; the mean is logged with the min,
+   the max and the count measured); 6ND is for token transformers and does not apply
+   to a gene-token model with graph penalties. The count covers the matmul family
+   only, so it is a lower bound that is comparable across sizes of one architecture.
+   Every epoch-end row carries `epoch`, which is what lets a W&B history query join
+   the compute keys to the validation rows; a key logged without it is invisible to
+   such a query (the first readout found zero rows that way).
 2. **N is stated as non-embedding parameters**, with the gene table or composite
    preprocessor reported separately (`compute/params_embedding`). A size ladder scales
    width and depth together in a fixed ratio; heads must divide the width (9 heads here).

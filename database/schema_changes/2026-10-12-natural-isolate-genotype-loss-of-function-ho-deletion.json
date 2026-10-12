@@ -4,7 +4,7 @@
   "date": "2026-10-12",
   "pr": 1058,
   "author_kind": "agent",
-  "base_commit": "283cfe2cfc56de90e747fb33d675a5c2991bcc46",
+  "base_commit": "232e5d17882b668d27ccfe3bdb5e97dbcafd8a04",
   "python_version": "3.13.0",
   "symbols": [
     {
@@ -26,8 +26,8 @@
       "kinds": [
         "enum_member_added"
       ],
-      "fingerprint_before": "89326490184f3d7357d962c39600426770854605bac4860cce86bc06aef72d6d",
-      "fingerprint_after": "449004c35289353d8cf8eaa3ba75108c70f7f79e15bf65099d6109a4da199815",
+      "fingerprint_before": "96e44d0b3ae0fbcc3b90c1e297ac50f58e0e969d85ce5dea73dbf89ae1c084ac",
+      "fingerprint_after": "1a2115043ccde3c72509c35f9bc14b2520b6d1a007948115506038701152ef5d",
       "impact": "stale",
       "reasons": [
         "gained members ['DeletionPerturbation', 'NaturalLossOfFunctionPerturbation']"
@@ -423,6 +423,22 @@
       "loader": "torchcell/datasets/ecoli/fang2025.py",
       "dataset_classes": [
         "CrispriGuideFfaEnrichmentFang2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ChromosomeCopyChange",
+        "GenePerturbationType",
+        "GenomeZygosity",
+        "Genotype",
+        "IsolateManipulation",
+        "NaturalIsolateDescriptor"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/fitness_browser_ecoli.py",
+      "dataset_classes": [
+        "FitnessBrowserEcoliDataset"
       ],
       "served_classes": [],
       "impact": "stale",
@@ -1063,6 +1079,22 @@
         "ProteomePercentDeSiqueira2025Dataset",
         "ProteomeLog10PercentDeSiqueira2025Dataset",
         "IsoprenolTiterDeSiqueira2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ChromosomeCopyChange",
+        "GenePerturbationType",
+        "GenomeZygosity",
+        "Genotype",
+        "IsolateManipulation",
+        "NaturalIsolateDescriptor"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/fitness_browser_putida.py",
+      "dataset_classes": [
+        "FitnessBrowserPutidaDataset"
       ],
       "served_classes": [],
       "impact": "stale",
@@ -2015,6 +2047,22 @@
         "SynthLethalityYeastSynthLethDbDataset",
         "SynthRescueYeastSynthLethDbDataset"
       ],
+      "impact": "stale",
+      "via": [
+        "ChromosomeCopyChange",
+        "GenePerturbationType",
+        "GenomeZygosity",
+        "Genotype",
+        "IsolateManipulation",
+        "NaturalIsolateDescriptor"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/vaishnav2022.py",
+      "dataset_classes": [
+        "PooledPromoterExpressionVaishnav2022Dataset"
+      ],
+      "served_classes": [],
       "impact": "stale",
       "via": [
         "ChromosomeCopyChange",

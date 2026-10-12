@@ -1,0 +1,628 @@
+{
+  "snp_list_sha256": "333550aa3a7eecd2c90b5550c36cc7f59257d878142a423fa24402724c3b59b6",
+  "s288c": {
+    "assembly_set": "sgd_S288C_R64-4-1_20230830",
+    "file": "S288C_reference_sequence_R64-4-1_20230830.fsa"
+  },
+  "by4742_fixed": {
+    "url": "https://raw.githubusercontent.com/arturrc/bbqtl_inference/2b1c89d6a602a8001b3b18dd00e75a8c97950d9d/1_genotype_inference/indexes/BY4742_fixed.fasta",
+    "sha256": "c2e18c61d0529cf44d5991702f7ee50a3d968b2fa8e97bbc65a35d90b83c6f4e"
+  },
+  "snps": 41594,
+  "by_allele_on_s288c": {
+    "total": 27221,
+    "per_chromosome": {
+      "chrI": {
+        "snps": 995,
+        "by_allele_matches": 995,
+        "fraction": 1.0
+      },
+      "chrII": {
+        "snps": 3735,
+        "by_allele_matches": 2006,
+        "fraction": 0.5371
+      },
+      "chrIII": {
+        "snps": 558,
+        "by_allele_matches": 251,
+        "fraction": 0.4498
+      },
+      "chrIV": {
+        "snps": 4035,
+        "by_allele_matches": 2845,
+        "fraction": 0.7051
+      },
+      "chrV": {
+        "snps": 1859,
+        "by_allele_matches": 804,
+        "fraction": 0.4325
+      },
+      "chrVI": {
+        "snps": 1288,
+        "by_allele_matches": 1288,
+        "fraction": 1.0
+      },
+      "chrVII": {
+        "snps": 3931,
+        "by_allele_matches": 3726,
+        "fraction": 0.9479
+      },
+      "chrVIII": {
+        "snps": 1638,
+        "by_allele_matches": 688,
+        "fraction": 0.42
+      },
+      "chrIX": {
+        "snps": 2078,
+        "by_allele_matches": 1014,
+        "fraction": 0.488
+      },
+      "chrX": {
+        "snps": 2974,
+        "by_allele_matches": 2825,
+        "fraction": 0.9499
+      },
+      "chrXI": {
+        "snps": 3239,
+        "by_allele_matches": 1245,
+        "fraction": 0.3844
+      },
+      "chrXII": {
+        "snps": 4310,
+        "by_allele_matches": 1591,
+        "fraction": 0.3691
+      },
+      "chrXIII": {
+        "snps": 2945,
+        "by_allele_matches": 2900,
+        "fraction": 0.9847
+      },
+      "chrXIV": {
+        "snps": 1799,
+        "by_allele_matches": 449,
+        "fraction": 0.2496
+      },
+      "chrXV": {
+        "snps": 4289,
+        "by_allele_matches": 3790,
+        "fraction": 0.8837
+      },
+      "chrXVI": {
+        "snps": 1921,
+        "by_allele_matches": 804,
+        "fraction": 0.4185
+      }
+    }
+  },
+  "by_allele_on_by4742_fixed": {
+    "total": 41594,
+    "per_chromosome": {
+      "chrI": {
+        "snps": 995,
+        "by_allele_matches": 995,
+        "fraction": 1.0
+      },
+      "chrII": {
+        "snps": 3735,
+        "by_allele_matches": 3735,
+        "fraction": 1.0
+      },
+      "chrIII": {
+        "snps": 558,
+        "by_allele_matches": 558,
+        "fraction": 1.0
+      },
+      "chrIV": {
+        "snps": 4035,
+        "by_allele_matches": 4035,
+        "fraction": 1.0
+      },
+      "chrV": {
+        "snps": 1859,
+        "by_allele_matches": 1859,
+        "fraction": 1.0
+      },
+      "chrVI": {
+        "snps": 1288,
+        "by_allele_matches": 1288,
+        "fraction": 1.0
+      },
+      "chrVII": {
+        "snps": 3931,
+        "by_allele_matches": 3931,
+        "fraction": 1.0
+      },
+      "chrVIII": {
+        "snps": 1638,
+        "by_allele_matches": 1638,
+        "fraction": 1.0
+      },
+      "chrIX": {
+        "snps": 2078,
+        "by_allele_matches": 2078,
+        "fraction": 1.0
+      },
+      "chrX": {
+        "snps": 2974,
+        "by_allele_matches": 2974,
+        "fraction": 1.0
+      },
+      "chrXI": {
+        "snps": 3239,
+        "by_allele_matches": 3239,
+        "fraction": 1.0
+      },
+      "chrXII": {
+        "snps": 4310,
+        "by_allele_matches": 4310,
+        "fraction": 1.0
+      },
+      "chrXIII": {
+        "snps": 2945,
+        "by_allele_matches": 2945,
+        "fraction": 1.0
+      },
+      "chrXIV": {
+        "snps": 1799,
+        "by_allele_matches": 1799,
+        "fraction": 1.0
+      },
+      "chrXV": {
+        "snps": 4289,
+        "by_allele_matches": 4289,
+        "fraction": 1.0
+      },
+      "chrXVI": {
+        "snps": 1921,
+        "by_allele_matches": 1921,
+        "fraction": 1.0
+      }
+    }
+  },
+  "offsets_to_s288c": {
+    "window_snps": 15,
+    "min_window_score": 13,
+    "search_range_bp": 6000,
+    "runs": {
+      "chrI": [
+        {
+          "start": 27210,
+          "end": 198664,
+          "offset": 0,
+          "snps": 990
+        }
+      ],
+      "chrII": [
+        {
+          "start": 9932,
+          "end": 382571,
+          "offset": 0,
+          "snps": 1440
+        },
+        {
+          "start": 382581,
+          "end": 384956,
+          "offset": null,
+          "snps": 15
+        },
+        {
+          "start": 385112,
+          "end": 469120,
+          "offset": -1,
+          "snps": 555
+        },
+        {
+          "start": 469123,
+          "end": 471370,
+          "offset": null,
+          "snps": 15
+        },
+        {
+          "start": 471496,
+          "end": 796422,
+          "offset": 4489,
+          "snps": 1710
+        }
+      ],
+      "chrIII": [
+        {
+          "start": 1349,
+          "end": 85839,
+          "offset": 0,
+          "snps": 135
+        },
+        {
+          "start": 85947,
+          "end": 290226,
+          "offset": null,
+          "snps": 420
+        }
+      ],
+      "chrIV": [
+        {
+          "start": 19638,
+          "end": 818487,
+          "offset": 0,
+          "snps": 2415
+        },
+        {
+          "start": 818792,
+          "end": 1135585,
+          "offset": -1,
+          "snps": 480
+        },
+        {
+          "start": 1137762,
+          "end": 1151663,
+          "offset": null,
+          "snps": 15
+        },
+        {
+          "start": 1152102,
+          "end": 1523194,
+          "offset": -2,
+          "snps": 1125
+        }
+      ],
+      "chrV": [
+        {
+          "start": 7546,
+          "end": 115692,
+          "offset": 0,
+          "snps": 495
+        },
+        {
+          "start": 116037,
+          "end": 564921,
+          "offset": 1097,
+          "snps": 1350
+        }
+      ],
+      "chrVI": [
+        {
+          "start": 30187,
+          "end": 261981,
+          "offset": 0,
+          "snps": 1275
+        }
+      ],
+      "chrVII": [
+        {
+          "start": 1581,
+          "end": 1005100,
+          "offset": 0,
+          "snps": 3645
+        },
+        {
+          "start": 1005304,
+          "end": 1007548,
+          "offset": null,
+          "snps": 15
+        },
+        {
+          "start": 1007581,
+          "end": 1075821,
+          "offset": -1,
+          "snps": 270
+        }
+      ],
+      "chrVIII": [
+        {
+          "start": 12791,
+          "end": 84820,
+          "offset": 0,
+          "snps": 330
+        },
+        {
+          "start": 84829,
+          "end": 92310,
+          "offset": null,
+          "snps": 15
+        },
+        {
+          "start": 92311,
+          "end": 520379,
+          "offset": 2,
+          "snps": 1290
+        }
+      ],
+      "chrIX": [
+        {
+          "start": 25331,
+          "end": 103927,
+          "offset": 0,
+          "snps": 615
+        },
+        {
+          "start": 104128,
+          "end": 110562,
+          "offset": null,
+          "snps": 15
+        },
+        {
+          "start": 111572,
+          "end": 430570,
+          "offset": -3,
+          "snps": 1440
+        }
+      ],
+      "chrX": [
+        {
+          "start": 24403,
+          "end": 638730,
+          "offset": 0,
+          "snps": 2775
+        },
+        {
+          "start": 639041,
+          "end": 724375,
+          "offset": -1,
+          "snps": 195
+        }
+      ],
+      "chrXI": [
+        {
+          "start": 2849,
+          "end": 66128,
+          "offset": 0,
+          "snps": 465
+        },
+        {
+          "start": 67862,
+          "end": 639102,
+          "offset": -3,
+          "snps": 2760
+        }
+      ],
+      "chrXII": [
+        {
+          "start": 14318,
+          "end": 187693,
+          "offset": 0,
+          "snps": 585
+        },
+        {
+          "start": 188707,
+          "end": 1058606,
+          "offset": 1,
+          "snps": 3720
+        }
+      ],
+      "chrXIII": [
+        {
+          "start": 9746,
+          "end": 907995,
+          "offset": 0,
+          "snps": 2880
+        },
+        {
+          "start": 908047,
+          "end": 909743,
+          "offset": null,
+          "snps": 15
+        },
+        {
+          "start": 909748,
+          "end": 915747,
+          "offset": -327,
+          "snps": 45
+        }
+      ],
+      "chrXIV": [
+        {
+          "start": 17243,
+          "end": 43154,
+          "offset": 1,
+          "snps": 240
+        },
+        {
+          "start": 43155,
+          "end": 306247,
+          "offset": 3,
+          "snps": 540
+        },
+        {
+          "start": 307336,
+          "end": 322456,
+          "offset": null,
+          "snps": 15
+        },
+        {
+          "start": 322674,
+          "end": 418797,
+          "offset": 6,
+          "snps": 300
+        },
+        {
+          "start": 420057,
+          "end": 442660,
+          "offset": null,
+          "snps": 15
+        },
+        {
+          "start": 442711,
+          "end": 757943,
+          "offset": 5,
+          "snps": 675
+        }
+      ],
+      "chrXV": [
+        {
+          "start": 30790,
+          "end": 724923,
+          "offset": 0,
+          "snps": 3615
+        },
+        {
+          "start": 726104,
+          "end": 1050309,
+          "offset": 190,
+          "snps": 660
+        }
+      ],
+      "chrXVI": [
+        {
+          "start": 26397,
+          "end": 210832,
+          "offset": 0,
+          "snps": 420
+        },
+        {
+          "start": 211078,
+          "end": 223879,
+          "offset": null,
+          "snps": 15
+        },
+        {
+          "start": 225204,
+          "end": 481070,
+          "offset": 2,
+          "snps": 690
+        },
+        {
+          "start": 481830,
+          "end": 931074,
+          "offset": 3,
+          "snps": 795
+        }
+      ]
+    }
+  },
+  "chrIII_mean_p_rm": {
+    "records": 2951,
+    "chrIII_snps": 558,
+    "lowest": [
+      {
+        "position": 187586,
+        "mean_p_rm": 0.0414
+      },
+      {
+        "position": 188037,
+        "mean_p_rm": 0.0415
+      },
+      {
+        "position": 190578,
+        "mean_p_rm": 0.0421
+      },
+      {
+        "position": 190607,
+        "mean_p_rm": 0.0421
+      },
+      {
+        "position": 190611,
+        "mean_p_rm": 0.0421
+      }
+    ],
+    "nearest_to_200000": {
+      "position": 200179,
+      "mean_p_rm": 0.1083
+    },
+    "windows_20kb": [
+      {
+        "from": 0,
+        "to": 20000,
+        "snps": 14,
+        "min": 0.453,
+        "mean": 0.4552
+      },
+      {
+        "from": 20000,
+        "to": 40000,
+        "snps": 15,
+        "min": 0.4369,
+        "mean": 0.4445
+      },
+      {
+        "from": 40000,
+        "to": 60000,
+        "snps": 42,
+        "min": 0.3891,
+        "mean": 0.4168
+      },
+      {
+        "from": 60000,
+        "to": 80000,
+        "snps": 43,
+        "min": 0.2609,
+        "mean": 0.3153
+      },
+      {
+        "from": 80000,
+        "to": 100000,
+        "snps": 77,
+        "min": 0.2255,
+        "mean": 0.2412
+      },
+      {
+        "from": 100000,
+        "to": 120000,
+        "snps": 12,
+        "min": 0.1985,
+        "mean": 0.2081
+      },
+      {
+        "from": 120000,
+        "to": 140000,
+        "snps": 16,
+        "min": 0.1658,
+        "mean": 0.1851
+      },
+      {
+        "from": 140000,
+        "to": 160000,
+        "snps": 26,
+        "min": 0.0942,
+        "mean": 0.1171
+      },
+      {
+        "from": 160000,
+        "to": 180000,
+        "snps": 30,
+        "min": 0.0532,
+        "mean": 0.0623
+      },
+      {
+        "from": 180000,
+        "to": 200000,
+        "snps": 25,
+        "min": 0.0414,
+        "mean": 0.0485
+      },
+      {
+        "from": 200000,
+        "to": 220000,
+        "snps": 28,
+        "min": 0.1083,
+        "mean": 0.2204
+      },
+      {
+        "from": 220000,
+        "to": 240000,
+        "snps": 86,
+        "min": 0.3153,
+        "mean": 0.3518
+      },
+      {
+        "from": 240000,
+        "to": 260000,
+        "snps": 92,
+        "min": 0.3745,
+        "mean": 0.3838
+      },
+      {
+        "from": 260000,
+        "to": 280000,
+        "snps": 13,
+        "min": 0.3968,
+        "mean": 0.4043
+      },
+      {
+        "from": 280000,
+        "to": 300000,
+        "snps": 39,
+        "min": 0.411,
+        "mean": 0.4158
+      }
+    ]
+  }
+}

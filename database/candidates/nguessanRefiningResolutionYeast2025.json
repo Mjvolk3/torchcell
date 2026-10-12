@@ -21,24 +21,24 @@
     },
     {
       "gate": "G3",
-      "outcome": "blocked",
-      "reason": "36 file(s) in library+raw, 0 worksheet row(s) counted; behind a manual_browser wall: raw:data/dryad/README.txt: {'retrieval_command': \"manual browser download (owner only; issue #1014): datadryad.org answers HTTP 401 'Unauthorized, must have current bearer token' on /api/v2/files/<id>/download and HTTP 403 on /downloads/file_stream/<id> (measured 2026-10-11), so: open https://doi.org/10.5061/dryad.1rn8pk0vd in a browser, download this file on its own (not the 24.7 GB dataset), place it under data/dryad/ with its Dryad name, and check its sha256 against this record\", 'dryad_file_id': 1474448, 'dryad_download_url': 'https://datadryad.org/api/v2/files/1474448/download'}; raw:data/dryad/SNP_list.txt: {'retrieval_command': \"manual browser download (owner only; issue #1014): datadryad.org answers HTTP 401 'Unauthorized, must have current bearer token' on /api/v2/files/<id>/download and HTTP 403 on /downloads/file_stream/<id> (measured 2026-10-11), so: open https://doi.org/10.5061/dryad.1rn8pk0vd in a browser, download this file on its own (not the 24.7 GB dataset), place it under data/dryad/ with its Dryad name, and check its sha256 against this record\", 'dryad_file_id': 1474445, 'dryad_download_url': 'https://datadryad.org/api/v2/files/1474445/download'}; raw:data/dryad/segregant_info.txt: {'retrieval_command': \"manual browser download (owner only; issue #1014): datadryad.org answers HTTP 401 'Unauthorized, must have current bearer token' on /api/v2/files/<id>/download and HTTP 403 on /downloads/file_stream/<id> (measured 2026-10-11), so: open https://doi.org/10.5061/dryad.1rn8pk0vd in a browser, download this file on its own (not the 24.7 GB dataset), place it under data/dryad/ with its Dryad name, and check its sha256 against this record\", 'dryad_file_id': 1474444, 'dryad_download_url': 'https://datadryad.org/api/v2/files/1474444/download'}; raw:data/dryad/geno_data_1.txt.gz: {'retrieval_command': \"manual browser download (owner only; issue #1014): datadryad.org answers HTTP 401 'Unauthorized, must have current bearer token' on /api/v2/files/<id>/download and HTTP 403 on /downloads/file_stream/<id> (measured 2026-10-11), so: open https://doi.org/10.5061/dryad.1rn8pk0vd in a browser, download this file on its own (not the 24.7 GB dataset), place it under data/dryad/ with its Dryad name, and check its sha256 against this record\", 'dryad_file_id': 1474423, 'dryad_download_url': 'https://datadryad.org/api/v2/files/1474423/download'}",
+      "outcome": "pass",
+      "reason": "37 file(s) in library+raw, 0 worksheet row(s) counted; all intact",
       "evidence": [],
       "issue": null,
-      "blocked_kind": "wall"
+      "blocked_kind": null
     },
     {
       "gate": "G4",
-      "outcome": "unmeasured",
-      "reason": "not evaluated: G3 stopped the run",
+      "outcome": "pass",
+      "reason": "no key held by another module (0 mention(s)); no PMID check; values not compared (no dev store named)",
       "evidence": [],
       "issue": null,
       "blocked_kind": null
     },
     {
       "gate": "G5",
-      "outcome": "unmeasured",
-      "reason": "not evaluated: G3 stopped the run",
+      "outcome": "pass",
+      "reason": "SingleCellExpressionPhenotype exists; compounds resolve",
       "evidence": [],
       "issue": null,
       "blocked_kind": null
@@ -494,7 +494,7 @@
         "role": "raw_data",
         "bytes": 3400,
         "sha256_manifest": "a4514d32d5fd3058130b05ce4172c10fd3ce20238810e52ab13bffd38ca5612f",
-        "sha256_disk": null,
+        "sha256_disk": "a4514d32d5fd3058130b05ce4172c10fd3ce20238810e52ab13bffd38ca5612f",
         "retrieval_method": "manual_browser",
         "is_zip": false,
         "zip_ok": null,
@@ -507,7 +507,7 @@
         "role": "raw_data",
         "bytes": 1159378,
         "sha256_manifest": "333550aa3a7eecd2c90b5550c36cc7f59257d878142a423fa24402724c3b59b6",
-        "sha256_disk": null,
+        "sha256_disk": "333550aa3a7eecd2c90b5550c36cc7f59257d878142a423fa24402724c3b59b6",
         "retrieval_method": "manual_browser",
         "is_zip": false,
         "zip_ok": null,
@@ -520,7 +520,7 @@
         "role": "raw_data",
         "bytes": 5691263,
         "sha256_manifest": "0d46317ec9e8c37ae903d1337699baeaacd7f2c8329812498474719dd9c765bc",
-        "sha256_disk": null,
+        "sha256_disk": "0d46317ec9e8c37ae903d1337699baeaacd7f2c8329812498474719dd9c765bc",
         "retrieval_method": "manual_browser",
         "is_zip": false,
         "zip_ok": null,
@@ -533,24 +533,65 @@
         "role": "raw_data",
         "bytes": 5078870207,
         "sha256_manifest": "25dc87034c470d7c109b61c8a52897a1e854953909a416f34e89d3ff7a36a366",
-        "sha256_disk": null,
+        "sha256_disk": "25dc87034c470d7c109b61c8a52897a1e854953909a416f34e89d3ff7a36a366",
         "retrieval_method": "manual_browser",
         "is_zip": false,
         "zip_ok": null,
         "leading_archive_sha256": null,
         "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "data/dryad/doi_10_5061_dryad_1rn8pk0vd__v20220520 (1).zip",
+        "role": "raw_data",
+        "bytes": 5085724902,
+        "sha256_manifest": "2fcaf5bc37bdf895846ecafd971902200956905cf297de6d04c8ffc5c286af0e",
+        "sha256_disk": "2fcaf5bc37bdf895846ecafd971902200956905cf297de6d04c8ffc5c286af0e",
+        "retrieval_method": "manual_browser",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": []
       }
     ],
-    "walls": [
-      "raw:data/dryad/README.txt: {'retrieval_command': \"manual browser download (owner only; issue #1014): datadryad.org answers HTTP 401 'Unauthorized, must have current bearer token' on /api/v2/files/<id>/download and HTTP 403 on /downloads/file_stream/<id> (measured 2026-10-11), so: open https://doi.org/10.5061/dryad.1rn8pk0vd in a browser, download this file on its own (not the 24.7 GB dataset), place it under data/dryad/ with its Dryad name, and check its sha256 against this record\", 'dryad_file_id': 1474448, 'dryad_download_url': 'https://datadryad.org/api/v2/files/1474448/download'}",
-      "raw:data/dryad/SNP_list.txt: {'retrieval_command': \"manual browser download (owner only; issue #1014): datadryad.org answers HTTP 401 'Unauthorized, must have current bearer token' on /api/v2/files/<id>/download and HTTP 403 on /downloads/file_stream/<id> (measured 2026-10-11), so: open https://doi.org/10.5061/dryad.1rn8pk0vd in a browser, download this file on its own (not the 24.7 GB dataset), place it under data/dryad/ with its Dryad name, and check its sha256 against this record\", 'dryad_file_id': 1474445, 'dryad_download_url': 'https://datadryad.org/api/v2/files/1474445/download'}",
-      "raw:data/dryad/segregant_info.txt: {'retrieval_command': \"manual browser download (owner only; issue #1014): datadryad.org answers HTTP 401 'Unauthorized, must have current bearer token' on /api/v2/files/<id>/download and HTTP 403 on /downloads/file_stream/<id> (measured 2026-10-11), so: open https://doi.org/10.5061/dryad.1rn8pk0vd in a browser, download this file on its own (not the 24.7 GB dataset), place it under data/dryad/ with its Dryad name, and check its sha256 against this record\", 'dryad_file_id': 1474444, 'dryad_download_url': 'https://datadryad.org/api/v2/files/1474444/download'}",
-      "raw:data/dryad/geno_data_1.txt.gz: {'retrieval_command': \"manual browser download (owner only; issue #1014): datadryad.org answers HTTP 401 'Unauthorized, must have current bearer token' on /api/v2/files/<id>/download and HTTP 403 on /downloads/file_stream/<id> (measured 2026-10-11), so: open https://doi.org/10.5061/dryad.1rn8pk0vd in a browser, download this file on its own (not the 24.7 GB dataset), place it under data/dryad/ with its Dryad name, and check its sha256 against this record\", 'dryad_file_id': 1474423, 'dryad_download_url': 'https://datadryad.org/api/v2/files/1474423/download'}"
-    ]
+    "walls": []
   },
-  "g4_key": null,
+  "g4_key": {
+    "doi": "10.7554/eLife.93906",
+    "pmid": null,
+    "accessions": [
+      "10.5061/dryad.1rn8pk0vd",
+      "PRJNA1022775"
+    ],
+    "hits": [
+      {
+        "key_kind": "doi",
+        "key": "10.7554/eLife.93906",
+        "where": "torchcell/datasets/scerevisiae/nguessan2025.py",
+        "relation": "own"
+      },
+      {
+        "key_kind": "accession",
+        "key": "10.5061/dryad.1rn8pk0vd",
+        "where": "torchcell/datasets/scerevisiae/nguessan2025.py",
+        "relation": "own"
+      },
+      {
+        "key_kind": "accession",
+        "key": "PRJNA1022775",
+        "where": "torchcell/datasets/scerevisiae/nguessan2025.py",
+        "relation": "own"
+      }
+    ],
+    "pmid_checked": false
+  },
   "g4_value": null,
-  "g5": null,
-  "decided_at": "2026-10-11",
-  "torchcell_commit": "0bda352d46388d506b0982e2533b5efef0e0c4f9"
+  "g5": {
+    "phenotype_class": "SingleCellExpressionPhenotype",
+    "class_exists": true,
+    "unresolved_compounds": [],
+    "proposed_class": null
+  },
+  "decided_at": "2026-10-12",
+  "torchcell_commit": "60b06aa2d589f56f504da5d7b03af70c7504bc0d"
 }

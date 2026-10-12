@@ -1,0 +1,484 @@
+{
+  "record_version": 1,
+  "slug": "two-channel-microarray-parent-and-ratio-leaf",
+  "date": "2026-10-12",
+  "pr": null,
+  "author_kind": "agent",
+  "base_commit": "8bee8bb0402fd5e86856f87b9aad967911476b3a",
+  "python_version": "3.13.0",
+  "symbols": [
+    {
+      "symbol": "EXPERIMENT_REFERENCE_TYPE_MAP",
+      "status": "modified",
+      "kinds": [
+        "enum_member_added"
+      ],
+      "fingerprint_before": "4aed17de23e781b9b0e29febf5998ae80436766acf05f6f0653ef1681953dde4",
+      "fingerprint_after": "e88c81f796d81985985944ab36655f3390f885f4849407287cdfbf2e0be58746",
+      "impact": "stale",
+      "reasons": [
+        "gained members [\"'microarray_expression_ratio': MicroarrayExpressionRatioExperimentReference\"]"
+      ]
+    },
+    {
+      "symbol": "EXPERIMENT_TYPE_MAP",
+      "status": "modified",
+      "kinds": [
+        "enum_member_added"
+      ],
+      "fingerprint_before": "1f03bad63e2bf27bdcefcb27bf82ba5456bca5193d59adc196a32b501ad0b6df",
+      "fingerprint_after": "08689c803c60247f43922010a9529b5b4285477aff8914dac9444a8f518d282d",
+      "impact": "stale",
+      "reasons": [
+        "gained members [\"'microarray_expression_ratio': MicroarrayExpressionRatioExperiment\"]"
+      ]
+    },
+    {
+      "symbol": "ExperimentReferenceType",
+      "status": "modified",
+      "kinds": [
+        "enum_member_added"
+      ],
+      "fingerprint_before": "30879d544129dc3d2bcf3cd6d12da8de05bde847a8963f658b61d565f41cd588",
+      "fingerprint_after": "d7d6dd3bc67cf18df3b78b9b99ef54b4cb32fc03c7bbdd7f17ab2a28eaf9d4fb",
+      "impact": "stale",
+      "reasons": [
+        "gained members ['MicroarrayExpressionRatioExperimentReference']"
+      ]
+    },
+    {
+      "symbol": "ExperimentType",
+      "status": "modified",
+      "kinds": [
+        "enum_member_added"
+      ],
+      "fingerprint_before": "a7044ea3512cb05556e56d95356f09cfdbd9c5828b128c17440eabf8afee9d10",
+      "fingerprint_after": "bea74711bcc832ad7b9b03325db8bc99321a8e2b20462ec15d8a509cb65e5a00",
+      "impact": "stale",
+      "reasons": [
+        "gained members ['MicroarrayExpressionRatioExperiment']"
+      ]
+    },
+    {
+      "symbol": "InductionTimecourseExpressionPhenotype",
+      "status": "modified",
+      "kinds": [
+        "equivalent_refactor"
+      ],
+      "fingerprint_before": "88d8c4517efa15e5915fac5f74d9491a8d5bc89809b444ae3231b60aca773cc2",
+      "fingerprint_after": "b2fd4754bbcbcdea8958465e0c11e839d8e2fe5e768e824b207a7fc0a90e433f",
+      "impact": "breaking",
+      "reasons": [
+        "base classes changed: ['Phenotype', 'ModelStrict'] -> ['TwoChannelMicroarrayExpressionPhenotype', 'ModelStrict']"
+      ]
+    },
+    {
+      "symbol": "MicroarrayExpressionPhenotype",
+      "status": "modified",
+      "kinds": [
+        "equivalent_refactor"
+      ],
+      "fingerprint_before": "4d4306956eaa355437194e7adf45d4ccaa4ac01f682b77b3508307543d46fdee",
+      "fingerprint_after": "28762389af4d43487e90a19686deaa8dd1eb627ef0d740527a7b3bda6a96bbc7",
+      "impact": "breaking",
+      "reasons": [
+        "base classes changed: ['Phenotype', 'ModelStrict'] -> ['TwoChannelMicroarrayExpressionPhenotype', 'ModelStrict']"
+      ]
+    },
+    {
+      "symbol": "MicroarrayExpressionRatioExperiment",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "8f5838ed139a5cc5d5eb295b0f4370e5323af71957a29eaa4f314227868f6c37",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "MicroarrayExpressionRatioExperimentReference",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "85fd9e8f21342e7379bc7c1e4f96c2d5fc0adccf4c74d3591b5be37b5fe45a3b",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "MicroarrayExpressionRatioPhenotype",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "ea6af1a9b945445c17b06a55efa90d70cd2464d2a29465504b82711eadb916f3",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "MicroarrayExpressionScorePhenotype",
+      "status": "modified",
+      "kinds": [
+        "equivalent_refactor"
+      ],
+      "fingerprint_before": "dbbb59b734db43fb48969660981ed906e5c3c2189c2f492410b541bcd6f1e08a",
+      "fingerprint_after": "42cbc1f41a6f9d3363cf069bc8ac20d75dad7ec4779bac7b38e819fce34c228d",
+      "impact": "breaking",
+      "reasons": [
+        "base classes changed: ['Phenotype', 'ModelStrict'] -> ['TwoChannelMicroarrayExpressionPhenotype', 'ModelStrict']"
+      ]
+    },
+    {
+      "symbol": "PhenotypeType",
+      "status": "modified",
+      "kinds": [
+        "enum_member_added"
+      ],
+      "fingerprint_before": "54c9d19ae5648759e45ac776b7b177a404054c325e991af3b7038e1d8db98682",
+      "fingerprint_after": "c1bec76302fa52175ce224f73fa8ed12ad3bfe61aedde163837fbed1167fc47b",
+      "impact": "stale",
+      "reasons": [
+        "gained members ['MicroarrayExpressionRatioPhenotype']"
+      ]
+    },
+    {
+      "symbol": "TwoChannelMicroarrayExpressionPhenotype",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "a3653341aaed3e4d204419f197098d834e3a6ab881e7535494b7d756140999b6",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    }
+  ],
+  "correctness_argument": "Physical measurement (policy rule 6): a two-channel microarray co-hybridizes a sample and a reference, labeled with two dyes, to the same spots; every value a release carries is computed from that per-spot pair. The five quoted sources (Kemmeren 2014, Sameith 2015, Hu 2007, Gasch 2000, Hackett 2020) all state that design. The releases differ in WHICH quantity they carry, which changes which fields exist (case 2 of rule 6): MicroarrayExpressionPhenotype (served: Kemmeren 2014, Sameith 2015 Sm and Dm) carries log2 ratio, SE, linear signal and per-gene n; MicroarrayExpressionScorePhenotype (Hu 2007, GEO GSE4654) an error-model X score and its p, no ratio and no signal; InductionTimecourseExpressionPhenotype (Hackett 2020) every processing layer of a time course, both channels included; and Gasch 2000 the log2 ratio alone. So the four are sibling leaves of one new abstract parent, TwoChannelMicroarrayExpressionPhenotype, under Phenotype. The parent declares no field, validator or config: the leaves share no released quantity (even the replicate count differs in kind: a per-gene dict, a strain-level int, absent), so any field on it would add a required field to the served leaf. Measured for the three reparented leaves (main 34e76c559 against this branch, Python 3.13): the pydantic core schema text (object ids and addresses removed), the JSON schema without docstring descriptions, the field set with annotations, required-ness and defaults, the field and model validator names and model_config are identical, so every record they accepted and its serialization is unchanged; only the MRO moved, which is the equivalent_refactor kind (the reason table now admits it for a base change). MicroarrayExpressionRatioPhenotype (#989) holds exactly what Gasch 2000 released: expression_log2_ratio as log2(sample/reference), the same orientation as the served leaf (the authors' data page, torchcell-raw/gaschGenomicExpressionPrograms2000/si/data.shtml, sha256 61e6e743e1ec757f7fa755feb21f746956c525fd29c9c7db56cb040f0d340c47: 'The normalized, relative transcript levels (R/G ratios) are represented in log2 space (RAT2N)', whitespace normalized), a required reference_basis, measurement_type and array_platform, and a per-gene n_replicates that is sourced or a typed ProvenanceGap (the release carries one column per array and no statement of spots per gene). Its graph class is a new node class under phenotypic feature; the parent is not a graph class. The X-to-p conversion of the score leaf is recorded as MicroarrayExpressionScorePhenotype.p_value_of_score, p = 2 * (1 - Phi(|X|)) = erfc(|X| / sqrt 2); re-measured on GSE4654_family.soft.gz (sha256 0e8bff679733a659b29c0828812ea47ccafd5230d202e0a71813a5d9c05082b4): 269 samples, 1,707,575 released (X, p) pairs, max |p - erfc(|X|/sqrt 2)| = 5.0e-7, the six-decimal rounding of the p column. No conversion between leaves exists: a score back to a ratio needs each spot's error, a ratio up to the served leaf needs the signal and the replicate counts, neither released. The five unions and type maps gain the ratio leaf's members.",
+  "measurement_type_decision": true,
+  "source_quotes": [
+    {
+      "value": "two-channel",
+      "provenance": {
+        "source_uri": "paper.md",
+        "citation_key": "kemmerenLargeScaleGeneticPerturbations2014",
+        "sha256": "299eac4b07fc977a89c24ce190d05cfd182342a9f0d56a05e7e477d72e4ad08d",
+        "method": null,
+        "page": null,
+        "retrieved": null
+      },
+      "quote": "a common reference design with wildtype (WT) reference RNA applied in dye-swap to each microarray",
+      "note": "the served leaf's Kemmeren 2014 release is a two-channel array against a common WT reference"
+    },
+    {
+      "value": "two-channel",
+      "provenance": {
+        "source_uri": "paper.md",
+        "citation_key": "sameithHighresolutionGeneExpression2015",
+        "sha256": "7064a1ebcf6dddf51ab23658b92457ded9b56e2eecb27b88694fd852e16c9161",
+        "method": null,
+        "page": null,
+        "retrieved": null
+      },
+      "quote": "Dual-channel 70-mer oligonucleotide arrays were employed with WT RNA as common reference.",
+      "note": "the served leaf's Sameith 2015 releases are the same design"
+    },
+    {
+      "value": "two-channel",
+      "provenance": {
+        "source_uri": "paper.md",
+        "citation_key": "huGeneticReconstructionFunctional2007",
+        "sha256": "74ada81539e7d599f36972a45703dd2b843552328c0b7e389b31728d639555ab",
+        "method": null,
+        "page": null,
+        "retrieved": null
+      },
+      "quote": "Because we used a common reference RNA design for all microarray hybridizations",
+      "note": "the score leaf's release is a two-channel common-reference design"
+    },
+    {
+      "value": "error-model score",
+      "provenance": {
+        "source_uri": "paper.md",
+        "citation_key": "huGeneticReconstructionFunctional2007",
+        "sha256": "74ada81539e7d599f36972a45703dd2b843552328c0b7e389b31728d639555ab",
+        "method": null,
+        "page": null,
+        "retrieved": null
+      },
+      "quote": "which generates a normalized, confidenceweighted measure of each ratio called the $X$ score",
+      "note": "what the score leaf carries is a statistic of the ratio, not the ratio"
+    },
+    {
+      "value": "two-channel",
+      "provenance": {
+        "source_uri": "paper.md",
+        "citation_key": "gaschGenomicExpressionPrograms2000",
+        "sha256": "e22b3e01f5664a00b9a6fdcd4c78bacd5803e5c31f285f45b98c47a871a98fbb",
+        "method": null,
+        "page": null,
+        "retrieved": null
+      },
+      "quote": "each Cy5-labeled sample was compared with a Cy3- labeled reference pool, consisting of an equal mass of all of the RNA samples",
+      "note": "the ratio leaf's release is a Cy5 sample against a Cy3 reference on one array"
+    },
+    {
+      "value": "two-channel",
+      "provenance": {
+        "source_uri": "paper.md",
+        "citation_key": "hackettLearningCausalNetworks2020",
+        "sha256": "78ec9f04356e813f0a2042f8c84435a37364523cb633437c0e07d7eadf4828a8",
+        "method": null,
+        "page": null,
+        "retrieved": null
+      },
+      "quote": "RNA from references and samples was labeled with Cy3-CTP and Cy5-CTP, respectively.",
+      "note": "the induction time-course leaf's release is the same two-dye design"
+    }
+  ],
+  "alternatives_rejected": [
+    {
+      "alternative": "Make expression (and the per-gene n_replicates) optional on the served MicroarrayExpressionPhenotype so Gasch 2000 fits (#989 option 2).",
+      "why_rejected": "Loosens a served required field for a thin source (policy rules 3 and 5): every served Kemmeren and Sameith record would stop guaranteeing its linear signal, for one release."
+    },
+    {
+      "alternative": "Store the Gasch ratios or the Hu X scores in MicroarrayExpressionPhenotype with the missing fields filled.",
+      "why_rejected": "Fabricates a signal and replicate counts the releases do not carry, and for Hu asserts a log ratio where the release carries a significance statistic (a meaning change)."
+    },
+    {
+      "alternative": "Keep each leaf directly under Phenotype (the state on main for Hu 2007 and Hackett 2020).",
+      "why_rejected": "Hides that the four releases are one physical measurement; rule 6 places a same-technology divergence as siblings under a shared parent, so a query over the technology stays meaningful."
+    },
+    {
+      "alternative": "Give the parent the fields two leaves share (reference_basis, array_platform, measurement_type).",
+      "why_rejected": "Adds required fields to the served leaf, a contract tightening on three served stores whose releases name them only in prose."
+    },
+    {
+      "alternative": "Make the ratio leaf a subclass of the served leaf, or the reverse.",
+      "why_rejected": "A ratio-only record is not a served-leaf record (no signal, no counts), so the subclass would violate substitutability and make the served node class ambiguous in ontology_checks.phenotype_label_map."
+    },
+    {
+      "alternative": "Also make the parent a BioCypher graph class (is_a for the served node class).",
+      "why_rejected": "Changes the served node class's is_a and its Neo4j labels, a graph-schema change beyond the record contract; left to the owner as a follow-up."
+    },
+    {
+      "alternative": "Recover Gasch channel intensities from the per-array ScanAlyze *.out.gz files on the Wayback capture (#989 option 3).",
+      "why_rejected": "Reprocessing raw scans is a different release than the authors' dataset; it is a separate future row, not a reason to bend this one."
+    }
+  ],
+  "served_release": "2026.10.06-4b293d34",
+  "affected_loaders": [
+    {
+      "loader": "torchcell/datasets/scerevisiae/hackett2020.py",
+      "dataset_classes": [
+        "InductionTimecourseHackett2020Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "InductionTimecourseExpressionPhenotype",
+        "TwoChannelMicroarrayExpressionPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/hu2007.py",
+      "dataset_classes": [
+        "MicroarrayScoreHu2007Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "MicroarrayExpressionScorePhenotype",
+        "TwoChannelMicroarrayExpressionPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/kemmeren2014.py",
+      "dataset_classes": [
+        "MicroarrayKemmeren2014Dataset"
+      ],
+      "served_classes": [
+        "MicroarrayKemmeren2014Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "MicroarrayExpressionPhenotype",
+        "TwoChannelMicroarrayExpressionPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/sameith2015.py",
+      "dataset_classes": [
+        "SmMicroarraySameith2015Dataset",
+        "DmMicroarraySameith2015Dataset"
+      ],
+      "served_classes": [
+        "DmMicroarraySameith2015Dataset",
+        "SmMicroarraySameith2015Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "MicroarrayExpressionPhenotype",
+        "TwoChannelMicroarrayExpressionPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/caglar2017.py",
+      "dataset_classes": [
+        "RnaseqCaglar2017Dataset",
+        "ProteomeCaglar2017Dataset",
+        "ProteinFoldChangeCaglar2017Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ExperimentType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/gupta2024.py",
+      "dataset_classes": [
+        "ProteinTurnoverGupta2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ExperimentType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/ishii2007.py",
+      "dataset_classes": [
+        "_Ishii2007Dataset",
+        "MetabolomeIshii2007Dataset",
+        "ProteomeIshii2007Dataset",
+        "FluxIshii2007Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ExperimentType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/li2014.py",
+      "dataset_classes": [
+        "ProteinSynthesisRateLi2014Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ExperimentType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/schastnaya2021.py",
+      "dataset_classes": [
+        "MetabolomeSchastnaya2021Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ExperimentType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/desiqueira2025.py",
+      "dataset_classes": [
+        "ProteomeDeSiqueira2025Dataset",
+        "ProteomePercentDeSiqueira2025Dataset",
+        "ProteomeLog10PercentDeSiqueira2025Dataset",
+        "IsoprenolTiterDeSiqueira2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ExperimentType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/lim2022.py",
+      "dataset_classes": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ExperimentType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/private_torchcell/volk2021_inhibitor_bioscreen.py",
+      "dataset_classes": [
+        "InhibitorBioscreenVolk2021Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ExperimentType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/dechiara2022.py",
+      "dataset_classes": [
+        "_DeChiara2022Dataset",
+        "_GrowthDeChiara2022Dataset",
+        "DoublingTimeDeChiara2022Dataset",
+        "CellYieldDeChiara2022Dataset",
+        "LifeCycleDeChiara2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EXPERIMENT_REFERENCE_TYPE_MAP",
+        "EXPERIMENT_TYPE_MAP"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/hoepfner2014.py",
+      "dataset_classes": [
+        "EnvChemgenHoepfner2014Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenHoepfner2014Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "ExperimentType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/piotrowski2017.py",
+      "dataset_classes": [
+        "EnvChemgenPiotrowski2017Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ExperimentType"
+      ]
+    }
+  ],
+  "served_datasets": [
+    "DmMicroarraySameith2015Dataset",
+    "EnvChemgenHoepfner2014Dataset",
+    "MicroarrayKemmeren2014Dataset",
+    "SmMicroarraySameith2015Dataset"
+  ],
+  "rebuild_scope": "full_kg_rebuild",
+  "owner_sign_off": {
+    "signed": false,
+    "quote": null,
+    "url": null
+  }
+}

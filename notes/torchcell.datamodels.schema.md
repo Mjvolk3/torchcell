@@ -637,3 +637,29 @@ The adapter serves the whole descriptor as one `evidence` JSON property of `gene
 `PYTHONPATH=<wt> python scripts/schema_impact_check.py --base origin/main` at `007cd23b0`: 12 changed symbols, 11 added (`EssentialityEvidenceClass`, `EssentialityEvidenceType`, `EssentialityStatement`, `EssentialityStatementRole`, `FootprintingCall`, `GeneEssentialityEvidence`, `TradisCall`, and the bindings `ESSENTIALITY_EVIDENCE_CLASS`, `ESSENTIALITY_EVIDENCE_FIELDS`, `FOOTPRINTING_CALL_IS_ESSENTIAL`, `TRADIS_CALL_IS_ESSENTIAL`) and `GeneEssentialityPhenotype` BREAKING (added required field `evidence`, the new validator); 5 loaders, 6 classes, all breaking: Baba 2006, Gerdes 2003, Goodall 2018, both Price 2018 classes (essentiality and RB-TnSeq share the module) and SGD. Of the `2026.10.06-4b293d34` release only `GeneEssentialitySgdDataset` is served, so the rebuild scope is the full KG rebuild. Record: `database/schema_changes/2026-10-12-gene-essentiality-evidence.json` (PR #1066; `additive_leaf` for the 11 new symbols, `contract_tightened` for the phenotype; measurement-type decision with eight verbatim source quotes; four alternatives rejected: a leaf per evidence type, an optional or free-text evidence, loosening `is_essential` to hold X / ? / unclear, and leaving the evidence in `preprocess/`).
 
 Tests: `tests/torchcell/datamodels/test_gene_essentiality_evidence.py` (the DAG and field map, each type's round trip, every refusal, the role counts, the released-call agreement), the evidence tests of the five loaders, the SGD verifier's `evidence` row, and the adapter's projected properties.
+
+## 2026.10.12 - The two-channel microarray parent and the ratio-only leaf (#1022, #989)
+
+A two-channel microarray co-hybridizes a sample and a reference, labeled with two dyes, to the same spots, and every value a release carries is computed from that per-spot pair. Four releases in the schema are that one measurement and differ in what they carry, so by rule 6 of [[torchcell.datamodels.schema-change-policy]] (same technology at one level, divergent in which fields exist) they are sibling leaves of one parent:
+
+```mermaid
+graph TD
+    P[Phenotype] --> T[TwoChannelMicroarrayExpressionPhenotype]
+    T --> M["MicroarrayExpressionPhenotype<br>(served: Kemmeren 2014, Sameith 2015 Sm, Dm)"]
+    T --> S["MicroarrayExpressionScorePhenotype<br>(Hu 2007)"]
+    T --> R["MicroarrayExpressionRatioPhenotype<br>(Gasch 2000, blocked loader)"]
+    T --> I["InductionTimecourseExpressionPhenotype<br>(Hackett 2020)"]
+```
+
+| leaf | what the release carries | label |
+|---|---|---|
+| `MicroarrayExpressionPhenotype` | log2 ratio, its SE, the linear signal, per-gene n | `expression_log2_ratio` |
+| `MicroarrayExpressionScorePhenotype` | an error-model X score and its p, no ratio, no signal | `expression_score` |
+| `MicroarrayExpressionRatioPhenotype` | the log2 ratio alone, against a named reference | `expression_log2_ratio` |
+| `InductionTimecourseExpressionPhenotype` | every processing layer of a time course, both channels | `log2_cleaned` |
+
+- **The parent has no field.** The leaves share no released quantity (the replicate count is a per-gene dict, a strain-level int or absent), so a field there would add a required field to the served leaf. It is never a record: `Phenotype.validate_label_fields` reads the concrete class's own annotations, and the parent has none. It is not a BioCypher graph class: that would change the served node class's `is_a` and its node labels.
+- **The served leaf's contract did not move.** Measured main `34e76c559` against the branch for the three reparented leaves: the pydantic core schema text (object ids and addresses removed), the JSON schema without docstring descriptions, the fields with annotations, required-ness and defaults, the validator names and `model_config` are identical. The fingerprint moves with the MRO, so the schema-impact tool reports the base change as breaking for Kemmeren 2014, Sameith 2015 Sm and Dm (served), Hu 2007 and Hackett 2020; the KG 4.0 wave rebuilds them. The record claims `equivalent_refactor`, which the policy's reason table now admits for a base change.
+- **`MicroarrayExpressionRatioPhenotype`** holds `expression_log2_ratio` as log2(sample/reference), a required `reference_basis`, `measurement_type` and `array_platform`, and `n_replicates` per gene, sourced or a typed `ProvenanceGap`. Making `expression` optional on the served leaf (#989 option 2) is refused by rules 3 and 5.
+- **The one conversion is inside the score leaf:** `MicroarrayExpressionScorePhenotype.p_value_of_score`, p = 2 (1 - Phi(|X|)) = erfc(|X| / sqrt 2). Re-measured on `GSE4654_family.soft.gz` (sha256 `0e8bff679733a659b29c0828812ea47ccafd5230d202e0a71813a5d9c05082b4`): 269 samples, 1,707,575 (X, p) pairs, max deviation 5.0e-7, the release's six-decimal rounding. `torchcell/verification/expression_score.py` now calls it. No conversion runs between leaves: a score back to a ratio needs each spot's error, a ratio up to the served leaf needs the signal and the counts.
+- **Record:** `database/schema_changes/2026-10-12-two-channel-microarray-parent-and-ratio-leaf.json` (12 symbols). The gap-carrier index in `torchcell/verification/common.py` kept the last class seen for a field set, so the field-less parent took `Phenotype`'s; it now keeps the first, most general one.

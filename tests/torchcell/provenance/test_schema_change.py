@@ -141,6 +141,7 @@ def _hermetic(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[None]
                 K.field_meaning,
                 K.field_required_loosened,
                 K.rename,
+                K.equivalent_refactor,
             },
         ),
         (
@@ -246,6 +247,9 @@ def test_an_unknown_reason_is_refused() -> None:
         ([K.contract_tightened], ["validator/serializer changed: ['_c']"], []),
         ([K.rename], ["symbol removed"], []),
         ([K.equivalent_refactor], ["members reordered"], []),
+        # #1022 #989: a leaf moved under a parent that adds no field, validator or
+        # config; the base change is its witness.
+        ([K.equivalent_refactor], ["base classes changed: ['A'] -> ['B']"], []),
         (
             [K.additive_field, K.removal],
             ["added optional field 'y'", "removed field 'x'"],

@@ -182,7 +182,9 @@ _MODIFIED_KINDS: Final[frozenset[SchemaChangeKind]] = frozenset(K) - {K.additive
 _REASON_RULES: Final[tuple[tuple[re.Pattern[str], frozenset[SchemaChangeKind]], ...]] = (
     (re.compile(r"^(new symbol|new module-level binding)$"), frozenset({K.additive_leaf, K.rename})),
     (re.compile(r"^(symbol removed|module-level binding removed)$"), frozenset({K.removal, K.rename})),
-    (re.compile(r"^base classes changed: "), frozenset({K.typed_gap, K.contract_tightened, K.field_meaning, K.field_required_loosened, K.rename})),
+    # equivalent_refactor: a class moved under a parent that adds no field, validator or
+    # config (the #1022 #989 two-channel parent); the record carries the measurement.
+    (re.compile(r"^base classes changed: "), frozenset({K.typed_gap, K.contract_tightened, K.field_meaning, K.field_required_loosened, K.rename, K.equivalent_refactor})),
     (re.compile(r"^model Config changed$"), frozenset({K.contract_tightened, K.field_meaning, K.field_required_loosened})),
     (re.compile(r"^added required field '"), frozenset({K.contract_tightened, K.field_meaning, K.rename})),
     (re.compile(r"^added optional field '"), frozenset({K.additive_field, K.typed_gap, K.rename})),
@@ -227,7 +229,7 @@ _WITNESSES: Final[dict[SchemaChangeKind, re.Pattern[str]]] = {
     ),
     K.equivalent_refactor: re.compile(
         r"^(validator/serializer changed: |module-level '[^']+' changed$"
-        r"|members reordered$|contract fingerprint changed$)"
+        r"|members reordered$|contract fingerprint changed$|base classes changed: )"
     ),
     K.typed_gap: re.compile(
         r"^(base classes changed: |added optional field '|validator/serializer changed: )"

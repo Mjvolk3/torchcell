@@ -253,7 +253,7 @@ def write_genome_rows(path: str) -> None:
 
 
 def write_figure_names(path: str) -> None:
-    stems = {"figGoalOne": "summary_goal1_", "figGoalTwo": "summary_goal2_"}
+    stems = {"figSheet": "essentiality_gate_sheet_", "figGoalOne": "summary_goal1_", "figGoalTwo": "summary_goal2_"}
     lines = [
         "%% SOURCE: written by essentiality_gate_numbers.py; the newest SVG of each stem under",
         "%% notes/assets/images/028-gene-essentiality/, converted by `make plots`.",

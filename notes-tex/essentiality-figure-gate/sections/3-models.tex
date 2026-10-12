@@ -8,7 +8,7 @@
 \section{The models and comparators on file\secstatus{todo}}
 \label{sec:models}
 
-\pfstep{Family 1, the transformer} The cell graph transformer over the nine-graph
+\pfstep{Family 1, CGT} The cell graph transformer (CGT) over the nine-graph
 perturbed gene graph with the pathway multi-hot and ProtT5 as node features, the deleted
 gene's token pooled to a logit, and a zero-initialized affine that adds the metabolic
 columns computed offline from yeast-GEM 9.0.2: the growth ratio of the deletion on one
@@ -18,7 +18,7 @@ single-medium form reads \gfamoneMedium{} [\gfamoneMediumLo{}, \gfamoneMediumHi{
 rule-count form \gfamruleCounts{} [\gfamruleCountsLo{}, \gfamruleCountsHi{}], and the
 layer-free solve alone \gfamlayerFree{} [\gfamlayerFreeLo{}, \gfamlayerFreeHi{}].
 
-\pfstep{Family 2, graph convolution on GO} A two-layer graph convolution over the union
+\pfstep{Family 2, GCN on GO} A two-layer graph convolution (GCN) over the union
 of nine gene-gene graphs on the propagated Gene Ontology multi-hot (2,362 terms over
 5,501 annotated genes), which reads \gfamgoGcn{} [\gfamgoGcnLo{}, \gfamgoGcnHi{}] as a
 five-fold ensemble. It is inductive in the regime key's sense: a gene's own annotation
@@ -44,7 +44,7 @@ scores \gfbaAuroc{} [\gfbaAurocLo{}, \gfbaAurocHi{}]. A DCell-style model over
 \gdcellFoldMean{}).
 
 \pfstep{The genome-wide limit} On the \ggenomeN{} genes with no GEM reaction the best
-arm on file is \ggenBestName{} at \ggenBest{}; the transformer with the solve reads
-\ggenlayerFree{}, graph convolution on ProtT5 over the union \ggengcnProt{}, graph
+arm on file is \ggenBestName{} at \ggenBest{}; CGT with the solve reads
+\ggenlayerFree{}, GCN on ProtT5 over the union \ggengcnProt{}, graph
 convolution on the physical graph's degree and clustering \ggengcnDegree{}, and the FBA
 ratio \ggenfba{} (a constant). Every genome-wide arm is in \ref{sec:performance}.

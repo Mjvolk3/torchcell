@@ -1943,6 +1943,8 @@ class CellAdapter:
             "environment_response_t_statistic": (
                 phenotype.environment_response_t_statistic
             ),
+            # #879: the Z score the source released (Wang 2018 equation 4).
+            "environment_response_z_score": phenotype.environment_response_z_score,
         }
 
     @data_chunker

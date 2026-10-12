@@ -4602,3 +4602,96 @@ def test_fold_change_is_a_dimensionless_concentration_unit() -> None:
     assert s.ConcentrationUnit.fold_change.value == "fold_change"
     assert s.ConcentrationUnit("fold_change") is s.ConcentrationUnit.fold_change
     assert s.ConcentrationUnit.mg_nitrogen_per_l.value == "mg_N/L"
+
+
+# #879: the released Z score of the response.
+
+
+def test_environment_response_z_score_is_stored_and_never_feeds_the_se() -> None:
+    """Wang 2018's released Z score is stored verbatim and leaves the SE alone."""
+    stored = _response(environment_response=-0.75, environment_response_z_score=-0.88)
+    assert stored.environment_response_z_score == -0.88
+    assert stored.environment_response_se is None
+    assert _response().environment_response_z_score is None
+    assert (
+        _response(environment_response_z_score=0.0).environment_response_z_score == 0.0
+    )
+
+
+def test_environment_response_z_score_is_finite_and_scores_a_number() -> None:
+    with _refuses("environment_response_z_score must be finite, got nan"):
+        _response(environment_response_z_score=float("nan"))
+    with _refuses("environment_response_z_score must be finite, got -inf"):
+        _response(environment_response_z_score=float("-inf"))
+    with _refuses("environment_response_z_score scores a numeric response"):
+        _response(
+            measurement_type=s.MeasurementType.categorical,
+            environment_response=None,
+            category=s.ResponseCategory.reduced,
+            environment_response_z_score=1.0,
+        )
+
+
+# #915: a typed gap on a pathway part's source organism.
+
+
+def _pathway_part(**overrides: Any) -> Any:
+    kwargs: dict[str, Any] = {
+        "systematic_gene_name": "mvaS",
+        "perturbed_gene_name": "mvaS",
+        "gene_namespace": "pputida_kt2440_locus_tag",
+        "is_heterologous": True,
+        "localization": "chromosomal_integration",
+        "pathway_name": "isoprenol via mevalonate",
+    }
+    kwargs.update(overrides)
+    return s.HeterologousPathwayPerturbation(**kwargs)
+
+
+def _organism_gap() -> Any:
+    from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
+
+    return ProvenanceGap(
+        field="source_organism",
+        reason=ProvenanceGapReason.not_reported_by_primary,
+        note="the plasmid table names the part token and no organism",
+    )
+
+
+def test_a_pathway_part_states_its_organism_or_carries_a_typed_gap() -> None:
+    """The organism is stated, or None beside a gap naming it; never a bare None."""
+    stated = _pathway_part(source_organism="Enterococcus faecalis")
+    assert stated.source_organism == "Enterococcus faecalis"
+    assert stated.provenance_gaps == []
+    gapped = _pathway_part(source_organism=None, provenance_gaps=[_organism_gap()])
+    assert gapped.source_organism is None
+    assert gapped.gapped_fields() == {"source_organism"}
+    with _refuses(
+        "HeterologousPathwayPerturbation.source_organism is unset and carries no "
+        "ProvenanceGap"
+    ):
+        _pathway_part(source_organism=None)
+    with _refuses("field 'source_organism' has a ProvenanceGap but is not None"):
+        _pathway_part(
+            source_organism="Enterococcus faecalis", provenance_gaps=[_organism_gap()]
+        )
+    with pytest.raises(ValidationError, match="source_organism"):
+        s.HeterologousPathwayPerturbation(  # type: ignore[call-arg]  # the refusal under test
+            systematic_gene_name="mvaS",
+            perturbed_gene_name="mvaS",
+            gene_namespace="pputida_kt2440_locus_tag",
+            is_heterologous=True,
+            localization="chromosomal_integration",
+            pathway_name="isoprenol via mevalonate",
+        )
+
+
+def test_a_gapped_pathway_part_hashes_and_compares_inside_a_genotype() -> None:
+    """``Genotype`` compares perturbations as a set, so the gap carrier must hash."""
+    part = _pathway_part(source_organism=None, provenance_gaps=[_organism_gap()])
+    twin = _pathway_part(source_organism=None, provenance_gaps=[_organism_gap()])
+    assert hash(part) == hash(twin)
+    assert Genotype(perturbations=[part]) == Genotype(perturbations=[twin])
+    assert Genotype(perturbations=[part]) != Genotype(
+        perturbations=[_pathway_part(source_organism="Enterococcus faecalis")]
+    )

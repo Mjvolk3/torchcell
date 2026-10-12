@@ -6,7 +6,7 @@ r"""Measurements on the Yoshikawa 2009 release that the loader, its note and its
 
 Reads, read-only, the two deposited copies of Table S1 in the raw mirror
 (``$DATA_ROOT/torchcell-raw/yoshikawaComprehensivePhenotypicAnalysis2009/si/``), the
-paper OCR in the literature mirror and the R64-4-1 genome:
+and the paper OCR in the literature mirror:
 
 1. the source question: the publisher ``.xls`` against YeastPhenome's ``.xlsx``, cell by
    cell (sheet names, dimensions, merged ranges, every cell's value and kind), plus each
@@ -19,10 +19,10 @@ paper OCR in the literature mirror and the R64-4-1 genome:
    thresholds, and the threshold interval the 5% ethanol calls imply (the largest
    sensitive and the smallest non-sensitive "larger of the two cultures", and the
    matching pair for tolerant);
-4. the name columns: how Column B (the release's gene name) relates to Column A (the
-   ORF) under R64-4-1's candidate sets (equal, the unique candidate, one of several
-   candidates, no candidate, or excluding Column A), and how the loader's
-   ``resolve_strains`` judges Column A;
+4. the name columns as the loader stores them (#1045: no genome lookup): Column A (the
+   ORF, upper-cased) and Column B (the release's gene name) verbatim, the lower-case
+   Column A cells, the repeated Column B names, and that no two Column A cells coincide
+   once upper-cased;
 5. with ``--check-source``, the yp-data copy re-fetched by its recorded retriever and
    hashed (network).
 
@@ -50,10 +50,8 @@ import openpyxl
 import xlrd
 from dotenv import load_dotenv
 
-from torchcell.datasets.gene_alias_resolution import candidate_orfs
 from torchcell.datasets.scerevisiae import yoshikawa2009 as y
 from torchcell.literature.provenance import check_source
-from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 
 RESULTS = "experiments/database/results"
 XLS_KINDS = {
@@ -242,44 +240,18 @@ def calls(rows: list[y.ReleaseRow]) -> dict[str, Any]:
     return result
 
 
-def names(rows: list[y.ReleaseRow], genome: SCerevisiaeGenome) -> dict[str, Any]:
-    """Column B against Column A, and the loader's judgement of Column A."""
-    relation: Counter[str] = Counter()
-    excluding: list[list[Any]] = []
-    for row in rows:
-        orf = row.orf.upper()
-        if row.name.upper() == orf:
-            relation["B equals A"] += 1
-            continue
-        resolved = genome.resolve_gene_name(orf).systematic_name
-        candidates = candidate_orfs(genome, row.name)
-        if not candidates:
-            relation["B has no R64 candidate"] += 1
-        elif orf in candidates or resolved in candidates:
-            relation[
-                "B's unique candidate is A"
-                if len(candidates) == 1
-                else "A among B's candidates"
-            ] += 1
-        else:
-            relation["B excludes A"] += 1
-            excluding.append([row.orf, row.name, candidates])
+def names(rows: list[y.ReleaseRow]) -> dict[str, Any]:
+    """The two name columns as stored: every strain under its own released names."""
+    stored = Counter(y.stored_orf(r.orf) for r in rows)
     duplicated = sorted(n for n, k in Counter(r.name for r in rows).items() if k > 1)
-    resolution = y.resolve_strains([row.orf for row in rows], genome)
     return {
-        "column_b_relation": dict(sorted(relation.items())),
-        "column_b_excluding_a": excluding,
-        "column_b_repeated_names": duplicated,
+        "stored_strains": len(rows),
         "column_a_lower_case": sorted(r.orf for r in rows if r.orf != r.orf.upper()),
-        "kept_strains": len(resolution.kept),
-        "renamed": sorted(o for o, c in resolution.kept.items() if o.upper() != c),
-        "refused": {
-            reason: sorted(
-                o for o, why in resolution.refused.items() if why.value == reason
-            )
-            for reason in sorted({why.value for why in resolution.refused.values()})
-        },
-        "shared_genes": resolution.shared_genes,
+        "column_a_coinciding_upper_cased": sorted(
+            o for o, k in stored.items() if k > 1
+        ),
+        "column_b_equals_column_a": sum(r.name.upper() == r.orf.upper() for r in rows),
+        "column_b_repeated_names": duplicated,
     }
 
 
@@ -297,11 +269,6 @@ def main() -> None:
         Path(data_root) / "torchcell-library" / y.CITATION_KEY / y.PAPER_MD
     ).read_text(encoding="utf-8")
     rows = y.read_release(xls_path)
-    genome = SCerevisiaeGenome(
-        genome_root=osp.join(data_root, "data/sgd/genome"),
-        go_root=osp.join(data_root, "data/go"),
-        overwrite=False,
-    )
     results: dict[str, Any] = {
         "files": {
             "xls": {"path": str(xls_path), "sha256": y.TABLE_S1.sha256},
@@ -312,7 +279,7 @@ def main() -> None:
         "five_percent_ethanol": five_percent(paper, xls_path, xlsx_path),
         "release_rows": len(rows),
         "calls": calls(rows),
-        "names": names(rows, genome),
+        "names": names(rows),
     }
     if args.check_source:
         record = y.yeastphenome_retrieval()

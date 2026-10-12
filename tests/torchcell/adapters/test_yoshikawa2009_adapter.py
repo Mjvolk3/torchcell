@@ -72,20 +72,21 @@ class _Recorder:
 def test_adapter_emits_the_strain_resolved_nodes(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """The 24 synthetic records give 24 experiment nodes, three references (one per
-    condition, each the standard strain's Table 1 rate) on ONE BY4742 genome node, a
-    barcoded kanMX deletion per genotype, and the two stress compounds at their doses.
+    """The 56 synthetic records give 56 experiment nodes, four references (one per
+    condition, each a standard-strain Table 1 rate; the 5% ethanol one reads the
+    nonstress row and says so in its units) on ONE BY4742 genome node, a barcoded kanMX
+    deletion per genotype, and ethanol at both doses and sodium chloride.
     """
     monkeypatch.delenv("TC_DATA_URL", raising=False)
     monkeypatch.setattr(cell_adapter_module, "wandb", _Recorder())
     dataset = _build(tmp_path, monkeypatch)
-    assert len(dataset) == 24
+    assert len(dataset) == 56
     adapter = EnvChemgenYoshikawa2009Adapter(
         dataset=dataset,
         process_workers=1,
         io_workers=1,
-        chunk_size=24,
-        loader_batch_size=24,
+        chunk_size=56,
+        loader_batch_size=56,
     )
     try:
         nodes = list(adapter.get_nodes())
@@ -96,8 +97,8 @@ def test_adapter_emits_the_strain_resolved_nodes(
     by_label: dict[str, list[Any]] = {}
     for node in nodes:
         by_label.setdefault(node.get_label(), []).append(node)
-    assert len(by_label["experiment"]) == 24
-    assert len(by_label["experiment reference"]) == 3
+    assert len(by_label["experiment"]) == 56
+    assert len(by_label["experiment reference"]) == 4
     references = [
         json.loads(n.get_properties()["serialized_data"])
         for n in by_label["experiment reference"]
@@ -107,7 +108,7 @@ def test_adapter_emits_the_strain_resolved_nodes(
     }
     assert sorted(
         r["phenotype_reference"]["environment_response"] for r in references
-    ) == [0.178, 0.203, 0.452]
+    ) == [0.178, 0.203, 0.452, 0.452]
     assert len(by_label["genome"]) == 1
     genome = json.loads(by_label["genome"][0].get_properties()["serialized_data"])
     assert (genome["strain"], genome["background"]["mating_type"]) == (
@@ -126,6 +127,7 @@ def test_adapter_emits_the_strain_resolved_nodes(
         for n in by_label["environment perturbation"]
     }
     assert compounds == {
+        (resolved_compound("ethanol").inchikey, 5.0, "percent"),
         (resolved_compound("ethanol").inchikey, 8.0, "percent_v/v"),
         (resolved_compound("sodium chloride").inchikey, 1.0, "M"),
     }
@@ -133,9 +135,9 @@ def test_adapter_emits_the_strain_resolved_nodes(
     assert {p.get_properties()["measurement_type"] for p in phenotypes} == {
         "growth_rate"
     }
-    assert len({ph.get_id() for ph in phenotypes}) == 24 + 3
+    assert len({ph.get_id() for ph in phenotypes}) == 56 + 4
     perturbation_edges = [e for e in edges if e.get_label() == "perturbation member of"]
-    assert len(perturbation_edges) == 24
+    assert len(perturbation_edges) == 56
 
 
 _INIT_CASES = [

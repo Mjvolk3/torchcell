@@ -8,19 +8,14 @@ reader runs on a stub ``xlrd`` book and the build stubs ``_read_release`` with p
 rows; everything downstream runs for real, including the compound table and the
 currency check (on small pin tables and a duck-typed genome).
 
-Synthetic build (seven released rows; each condition's rates are distinct numbers):
+Synthetic build (seven released rows; each condition's rates are distinct numbers).
+Every strain is stored as released, under its ORF cell (upper-cased) and its name cell,
+with no genome lookup (#1045): the renamed YFL035C-B, the retired YAR037W, the merged
+YAR044W and the lower-case YAR043C-a are kept as the release names them.
 
-    YAL001C    current                               kept
-    YAL002W    current                               kept
-    YFL034C-A  current                               kept
-    YFL035C-B  renamed -> YFL034C-A (a pinned rename) kept, its released name recorded
-    YAR037W    retired                               refused
-    YAR044W    merged into YAR042W                   refused
-    YDL134C-A  renamed -> YDL133C-A, unsourced       refused
-
-Records: 4 strains x 3 conditions x 2 cultures = 24, in release-row order, each strain
-nonstress (cultures 1, 2), 8% ethanol (1, 2), 1 M NaCl (1, 2). Source cells: 7 x 4 x 2 =
-56; refused: the 5% ethanol columns (7 x 2 = 14) and 3 strains x 6 = 18.
+Records: 7 strains x 4 conditions x 2 cultures = 56, in release-row order, each strain
+nonstress (cultures 1, 2), 5% ethanol (1, 2), 8% ethanol (1, 2), 1 M NaCl (1, 2). Source
+cells: 7 x 4 x 2 = 56; nothing refused.
 """
 
 from __future__ import annotations
@@ -46,7 +41,6 @@ from torchcell.datamodels.schema import (
     Genotype,
     MatingType,
     MeasurementType,
-    OrfHistoryRelation,
     PreCultureSource,
     ResponseCategory,
     SampleUnit,
@@ -55,119 +49,29 @@ from torchcell.datamodels.schema import (
     StrainEnvironmentResponseExperimentReference,
     UncertaintyType,
 )
-from torchcell.datamodels.strain_background import R64_GFF
-from torchcell.datasets.gene_alias_resolution import (
-    AliasResolutionRule,
-    GeneNameRefusal,
-    GeneNameRefusalReason,
-    GeneNameRefused,
-    PinnedAliasResolution,
-    pin_table,
-)
 from torchcell.datasets.scerevisiae import yoshikawa2009 as y
-from torchcell.datasets.systematic_name_currency import (
-    PinnedSystematicNameRefusal,
-    refusal_table,
-)
-from torchcell.sequence.genome.base import GeneNameResolution, GeneNameStatus
 from torchcell.verification.report import Provenance
 
 _PROV = Provenance(source_uri="sgd", sha256="0" * 64)
-CURRENT = GeneNameStatus.CURRENT
-RENAMED = GeneNameStatus.RENAMED
-RETIRED = GeneNameStatus.RETIRED
 
-_RESOLUTIONS: dict[str, tuple[GeneNameStatus, str | None]] = {
-    "YAL001C": (CURRENT, "YAL001C"),
-    "YAL002W": (CURRENT, "YAL002W"),
-    "YFL034C-A": (CURRENT, "YFL034C-A"),
-    "YAR042W": (CURRENT, "YAR042W"),
-    "YDL133C-A": (CURRENT, "YDL133C-A"),
-    "YFL035C-B": (RENAMED, "YFL034C-A"),
-    "YAR037W": (RETIRED, "YAR037W"),
-    "YAR044W": (RENAMED, "YAR042W"),
-    "YDL134C-A": (RENAMED, "YDL133C-A"),
-    "YZZ001W": (RENAMED, "YAL002W"),
-    "YZZ002W": (RENAMED, "YAL002W"),
-}
-
-
-class _Genome:
-    """The lookups the currency check reads, table-driven."""
-
-    def __init__(
-        self, resolutions: dict[str, tuple[GeneNameStatus, str | None]] = _RESOLUTIONS
-    ) -> None:
-        self._resolutions = resolutions
-        self.gene_set = {n for n, (st, _) in resolutions.items() if st is CURRENT}
-        self.alias_to_systematic: dict[str, list[str]] = {
-            n: [orf]
-            for n, (st, orf) in resolutions.items()
-            if st is RENAMED and orf is not None
-        }
-        self.feature_index: dict[str, Any] = {"standard_to_ids": {}}
-
-    def resolve_gene_name(self, name: str) -> GeneNameResolution:
-        status, orf = self._resolutions[name]
-        return GeneNameResolution(input_name=name, status=status, systematic_name=orf)
-
-
-def _rename(alias: str, orf: str) -> PinnedAliasResolution:
-    return PinnedAliasResolution(
-        alias=alias,
-        systematic_name=orf,
-        rule=AliasResolutionRule.SGD_SYSTEMATIC_RENAME,
-        provenance=_PROV,
-        quote=f"{alias} used to be the systematic name; changed to {orf}.",
-    )
-
-
-RENAMES = pin_table([_rename("YFL035C-B", "YFL034C-A")])
-REFUSALS = refusal_table(
-    [
-        PinnedSystematicNameRefusal(
-            name="YAR044W",
-            reason=GeneNameRefusalReason.MERGED_INTO_LOCUS,
-            locus="YAR042W",
-            provenance=_PROV,
-            quote="YAR044W was merged into YAR042W.",
-            basis="merged",
-        ),
-        PinnedSystematicNameRefusal(
-            name="YAR037W",
-            reason=GeneNameRefusalReason.RETIRED_SYSTEMATIC_NAME,
-            locus=None,
-            provenance=_PROV,
-            quote=None,
-            basis="absent",
-        ),
-    ]
-)
-UNSOURCED = {
-    "YDL134C-A": GeneNameRefusal(
-        name="YDL134C-A",
-        reason=GeneNameRefusalReason.NOT_CURRENT_UNPINNED,
-        candidates=["YDL133C-A"],
-        detail="history lists the name only",
-    )
-}
-ORFS = [
-    "YAL001C",
-    "YAL002W",
-    "YFL034C-A",
-    "YFL035C-B",
-    "YAR037W",
-    "YAR044W",
-    "YDL134C-A",
+#: (ORF cell, name cell) of the seven synthetic release rows.
+ORFS: list[tuple[str, str]] = [
+    ("YAL001C", "TFC3"),
+    ("YAL002W", "VPS8"),
+    ("YFL034C-A", "RPL22B"),
+    ("YFL035C-B", "YFL035C-B"),
+    ("YAR037W", "YAR037W"),
+    ("YAR044W", "OSH1"),
+    ("YAR043C-a", "YAR043C-a"),
 ]
 CALLS = {"non-stress": 1, "5% ethanol": 2, "8% ethanol": 0, "1M NaCl": 2}
 
 
-def _row(index: int, orf: str) -> y.ReleaseRow:
+def _row(index: int, orf: str, name: str) -> y.ReleaseRow:
     """Rates 0.1 * (index + 1) + 0.01 * condition + 0.001 * culture, distinct per cell."""
     return y.ReleaseRow(
         orf=orf,
-        name=orf,
+        name=name,
         conditions={
             label: y.ConditionCells(
                 rates=(
@@ -181,32 +85,19 @@ def _row(index: int, orf: str) -> y.ReleaseRow:
     )
 
 
-ROWS = [_row(i, orf) for i, orf in enumerate(ORFS)]
-
-
-def _resolve(orfs: list[str], genome: Any = None) -> y.StrainResolution:
-    return y.resolve_strains(
-        orfs,
-        _Genome() if genome is None else genome,
-        renames=RENAMES,
-        refusals=REFUSALS,
-        unsourced=UNSOURCED,
-        rows_per_orf=6,
-    )
+ROWS = [_row(i, orf, name) for i, (orf, name) in enumerate(ORFS)]
 
 
 def _build(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
-    """A real scratch build of the synthetic release (24 records)."""
+    """A real scratch build of the synthetic release (56 records)."""
     cls = y.EnvChemgenYoshikawa2009Dataset
     monkeypatch.setattr(cls, "_read_release", lambda self: list(ROWS))
-    monkeypatch.setattr(cls, "_resolve", lambda self, orfs: _resolve(orfs))
-    monkeypatch.setattr(cls, "_common_names", lambda self: {"YAL001C": "TFC3"})
     monkeypatch.setattr(y, "check_release", lambda rows: None)
     raw = tmp_path / "yoshikawa" / "raw"
     raw.mkdir(parents=True)
     (raw / y.TABLE_S1.filename).write_bytes(b"placeholder: the reader is stubbed")
     monkeypatch.setattr(y, "verify_raw_files", lambda raw_dir, pins: None)
-    return cls(root=str(tmp_path / "yoshikawa"), genome=None)
+    return cls(root=str(tmp_path / "yoshikawa"))
 
 
 @pytest.fixture
@@ -239,53 +130,29 @@ def _ref(dataset: Any, idx: int) -> StrainEnvironmentResponseExperimentReference
 # --------------------------------------------------------------------------- #
 # The build
 # --------------------------------------------------------------------------- #
-def test_drop_log_counts_the_condition_then_the_strains(built: Any) -> None:
-    assert len(built) == 24
+def test_drop_log_accounts_every_released_cell_as_a_record(built: Any) -> None:
+    """Every released cell is a record, the 5% ethanol columns included (#1045)."""
+    assert len(built) == 56
     log = json.loads(Path(built.preprocess_dir, "dropped_records.json").read_text())
     assert (
         log["source_records"],
         log["kept_records"],
         log["dropped_records"],
         log["unperturbed_records"],
-    ) == (56, 24, 32, 8)
-    assert [
-        (r["rule"], r["scope"], r["n_records"], r["items"]) for r in log["rules"]
-    ] == [
-        ("condition_not_described_by_primary", "condition", 14, ["5% ethanol"]),
-        ("released_name_retired", "strain", 6, ["YAR037W"]),
-        ("released_name_merged_into_locus", "strain", 6, ["YAR044W"]),
-        ("released_name_change_unsourced", "strain", 6, ["YDL134C-A"]),
-    ]
-
-
-def test_systematic_name_ledger_names_the_rename_and_the_three_refusals(
-    built: Any,
-) -> None:
-    ledger = json.loads(
-        Path(built.preprocess_dir, "systematic_name_ledger.json").read_text()
-    )
-    assert (ledger["n_rows_in"], ledger["n_rows_refused"], ledger["n_rows_out"]) == (
-        42,
-        18,
-        24,
-    )
-    assert [
-        (o["released_name"], o["stored_name"], o["n_rows"]) for o in ledger["renamed"]
-    ] == [("YFL035C-B", "YFL034C-A", 6)]
-    assert [
-        (o["released_name"], o["reason"], o["locus"]) for o in ledger["refused"]
-    ] == [
-        ("YAR037W", "retired_systematic_name", None),
-        ("YAR044W", "merged_into_locus", "YAR042W"),
-        ("YDL134C-A", "not_current_unpinned", "YDL133C-A"),
-    ]
+        log["rules"],
+    ) == (56, 56, 0, 14, [])
+    assert not Path(built.preprocess_dir, "systematic_name_ledger.json").exists()
 
 
 def test_each_record_is_one_culture_with_the_strains_call(built: Any) -> None:
-    """YAL001C (row 0): nonstress cultures 1 and 2, then 8% ethanol, then 1 M NaCl."""
+    """YAL001C (row 0): nonstress cultures 1 and 2, then 5% ethanol, 8% ethanol and
+    1 M NaCl.
+    """
     expected = [
         (0.101, "1st experiment", ResponseCategory.no_change, "1: no-change"),
         (0.102, "2nd experiment", ResponseCategory.no_change, "1: no-change"),
+        (0.111, "1st experiment", ResponseCategory.resistant, "2: tolerant"),
+        (0.112, "2nd experiment", ResponseCategory.resistant, "2: tolerant"),
         (0.121, "1st experiment", ResponseCategory.sensitive, "0: sensitive"),
         (0.122, "2nd experiment", ResponseCategory.sensitive, "0: sensitive"),
         (0.131, "1st experiment", ResponseCategory.resistant, "2: tolerant"),
@@ -312,41 +179,51 @@ def test_each_record_is_one_culture_with_the_strains_call(built: Any) -> None:
         }
 
 
-def test_the_strain_is_a_kanmx4_deletion_with_its_released_name_when_renamed(
-    built: Any,
-) -> None:
-    first = _deletion(built, 0)
-    assert (first.systematic_gene_name, first.perturbed_gene_name) == (
-        "YAL001C",
-        "TFC3",
-    )
-    assert (first.collection, first.cassette, first.constructed_orf) == (
-        "Open Biosystems",
-        "kanMX4",
-        None,
-    )
-    assert {g.field for g in first.provenance_gaps} == {"barcode", "downtag_barcode"}
-    direct = _deletion(built, 12)
-    renamed = _deletion(built, 18)
-    assert direct.systematic_gene_name == renamed.systematic_gene_name == "YFL034C-A"
-    assert direct.constructed_orf is None
-    assert renamed.constructed_orf is not None
-    assert (
-        renamed.constructed_orf.source_systematic_name,
-        renamed.constructed_orf.relation,
-        renamed.constructed_orf.deleted_span,
-    ) == ("YFL035C-B", OrfHistoryRelation.alias, None)
-    assert [g.field for g in renamed.constructed_orf.provenance_gaps] == [
-        "deleted_span"
+def test_every_strain_is_a_kanmx4_deletion_named_as_released(built: Any) -> None:
+    """Each strain's first record (every 8th) carries its released ORF cell, upper-cased,
+    and its released name cell; no ConstructedOrf, no lookup (#1045). YFL034C-A and the
+    renamed YFL035C-B stay two strains under two names.
+    """
+    stored = [
+        (d.systematic_gene_name, d.perturbed_gene_name, d.constructed_orf)
+        for d in (_deletion(built, 8 * i) for i in range(len(ORFS)))
     ]
-    assert math.isclose(_exp(built, 18).phenotype.environment_response or 0.0, 0.401)
+    assert stored == [
+        ("YAL001C", "TFC3", None),
+        ("YAL002W", "VPS8", None),
+        ("YFL034C-A", "RPL22B", None),
+        ("YFL035C-B", "YFL035C-B", None),
+        ("YAR037W", "YAR037W", None),
+        ("YAR044W", "OSH1", None),
+        ("YAR043C-A", "YAR043C-a", None),
+    ]
+    first = _deletion(built, 0)
+    assert (first.collection, first.cassette) == ("Open Biosystems", "kanMX4")
+    assert {g.field for g in first.provenance_gaps} == {"barcode", "downtag_barcode"}
+    assert math.isclose(_exp(built, 24).phenotype.environment_response or 0.0, 0.401)
+
+
+def test_two_released_orfs_that_coincide_upper_cased_stop_the_build(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    cls = y.EnvChemgenYoshikawa2009Dataset
+    rows = [_row(0, "YAL043C-a", "x"), _row(1, "YAL043C-A", "y")]
+    monkeypatch.setattr(cls, "_read_release", lambda self: rows)
+    monkeypatch.setattr(y, "check_release", lambda rows: None)
+    monkeypatch.setattr(y, "verify_raw_files", lambda raw_dir, pins: None)
+    raw = tmp_path / "y" / "raw"
+    raw.mkdir(parents=True)
+    (raw / y.TABLE_S1.filename).write_bytes(b"x")
+    with pytest.raises(RuntimeError, match="coincide once upper-cased"):
+        cls(root=str(tmp_path / "y"))
 
 
 def test_environments_carry_ypd_the_stress_and_the_static_culture(built: Any) -> None:
     nonstress = _exp(built, 0).environment
-    ethanol = _exp(built, 2).environment
-    nacl = _exp(built, 4).environment
-    for env in (nonstress, ethanol, nacl):
+    ethanol_5 = _exp(built, 2).environment
+    ethanol = _exp(built, 4).environment
+    nacl = _exp(built, 6).environment
+    for env in (nonstress, ethanol_5, ethanol, nacl):
         assert isinstance(env, CultureEnvironment)
         assert env.media.name == YPD_LIQUID.name
         assert env.temperature is not None and env.temperature.value == 30.0
@@ -380,11 +257,23 @@ def test_environments_carry_ypd_the_stress_and_the_static_culture(built: Any) ->
         (resolved_compound("ethanol").inchikey, 8.0, ConcentrationUnit.percent_v_v),
         (resolved_compound("sodium chloride").inchikey, 1.0, ConcentrationUnit.molar),
     ]
+    # the 5% ethanol columns: the release's own dose, basis-free, and no read time
+    assert ethanol_5.duration_hours is None
+    assert [(g.field, g.reason.value, g.note) for g in ethanol_5.provenance_gaps] == [
+        ("duration_hours", "not_reported_by_primary", y.FIVE_PERCENT_ETHANOL_NOTE)
+    ]
+    (edit,) = ethanol_5.perturbations
+    assert isinstance(edit, SmallMoleculePerturbation)
+    assert (
+        edit.compound.inchikey,
+        edit.concentration.value,
+        edit.concentration.unit,
+    ) == (resolved_compound("ethanol").inchikey, 5.0, ConcentrationUnit.percent)
 
 
 def test_one_reference_per_condition_from_table_1(built: Any) -> None:
     got = []
-    for idx in (0, 2, 4):
+    for idx in (0, 4, 6):
         ref = _ref(built, idx)
         phenotype = ref.phenotype_reference
         assert ref.environment_reference == _exp(built, idx).environment
@@ -409,6 +298,12 @@ def test_one_reference_per_condition_from_table_1(built: Any) -> None:
         assert math.isclose(avg or 0.0, want_avg)
         assert math.isclose(sd or 0.0, want_sd)
         assert math.isclose(se or 0.0, want_sd / math.sqrt(720))
+    # the 5% ethanol records read the nonstress standard strain (Table 1 has no 5% row)
+    five = _ref(built, 2)
+    assert five.environment_reference == _exp(built, 0).environment
+    assert five.phenotype_reference.environment_response == 0.452
+    assert five.phenotype_reference.units == y.FIVE_PERCENT_REFERENCE_UNITS
+    assert _ref(built, 0).phenotype_reference.units == y.REFERENCE_UNITS
     genome = _ref(built, 0).genome_reference
     assert genome.strain == "BY4742"
     assert genome.background.mating_type is MatingType.alpha
@@ -426,10 +321,9 @@ def test_release_fidelity_matches_the_build_and_names_a_changed_cell(
     built: Any,
 ) -> None:
     records = [built[i] for i in range(len(built))]
-    kept = _resolve(ORFS).kept
-    passed = y.release_fidelity(records, ROWS, kept)
+    passed = y.release_fidelity(records, ROWS)
     assert passed.passed, passed.message
-    assert passed.details["n_records"] == passed.details["n_expected"] == 24
+    assert passed.details["n_records"] == passed.details["n_expected"] == 56
     changed = list(ROWS)
     cells = changed[1].conditions["1M NaCl"]
     changed[1] = changed[1].model_copy(
@@ -440,29 +334,13 @@ def test_release_fidelity_matches_the_build_and_names_a_changed_cell(
             }
         }
     )
-    failed = y.release_fidelity(records, changed, kept)
+    failed = y.release_fidelity(records, changed)
     assert not failed.passed
     assert failed.details["n_mismatched"] == 1
-    moved = y.release_fidelity(records, ROWS, {**kept, "YAL002W": "YAL001C"})
-    assert not moved.passed and moved.details["n_mismatched"] == 6
-
-
-def test_a_build_without_a_genome_refuses(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    cls = y.EnvChemgenYoshikawa2009Dataset
-    monkeypatch.setattr(cls, "_read_release", lambda self: list(ROWS))
-    monkeypatch.setattr(y, "check_release", lambda rows: None)
-    monkeypatch.setattr(y, "verify_raw_files", lambda raw_dir, pins: None)
-    raw = tmp_path / "y" / "raw"
-    raw.mkdir(parents=True)
-    (raw / y.TABLE_S1.filename).write_bytes(b"x")
-    with pytest.raises(RuntimeError, match="requires a genome"):
-        cls(root=str(tmp_path / "y"), genome=None)
-    dataset = cls.__new__(cls)
-    dataset.genome = None
-    with pytest.raises(RuntimeError, match="requires a genome"):
-        dataset._common_names()
+    renamed = list(ROWS)
+    renamed[1] = renamed[1].model_copy(update={"name": "vps8"})
+    moved = y.release_fidelity(records, renamed)
+    assert not moved.passed and moved.details["n_mismatched"] == 8
 
 
 def test_inline_construction_hooks_are_inert(built: Any) -> None:
@@ -472,83 +350,6 @@ def test_inline_construction_hooks_are_inert(built: Any) -> None:
     assert built.raw_file_names == ["FYR_456_sm_tableS1.xls"]
     assert built.experiment_class is StrainEnvironmentResponseExperiment
     assert built.reference_class is StrainEnvironmentResponseExperimentReference
-
-
-# --------------------------------------------------------------------------- #
-# Strain names
-# --------------------------------------------------------------------------- #
-def test_resolve_keeps_live_and_renamed_and_refuses_the_rest() -> None:
-    got = _resolve(ORFS)
-    assert got.kept == {
-        "YAL001C": "YAL001C",
-        "YAL002W": "YAL002W",
-        "YFL034C-A": "YFL034C-A",
-        "YFL035C-B": "YFL034C-A",
-    }
-    assert got.refused == {
-        "YAR037W": GeneNameRefusalReason.RETIRED_SYSTEMATIC_NAME,
-        "YAR044W": GeneNameRefusalReason.MERGED_INTO_LOCUS,
-        "YDL134C-A": GeneNameRefusalReason.NOT_CURRENT_UNPINNED,
-    }
-    assert got.shared_genes == {"YFL034C-A": ["YFL034C-A", "YFL035C-B"]}
-    assert (got.released_name("YFL035C-B"), got.released_name("YAL001C")) == (
-        "YFL035C-B",
-        None,
-    )
-
-
-def test_a_lower_case_suffix_is_judged_upper_cased_and_recorded_verbatim() -> None:
-    got = _resolve(["yfl035c-B"])
-    assert got.kept == {"yfl035c-B": "YFL034C-A"}
-    assert got.released_name("yfl035c-B") == "yfl035c-B"
-
-
-def test_two_renamed_names_on_one_gene_stop_the_build() -> None:
-    renames = pin_table([_rename("YZZ001W", "YAL002W")])
-    genome = _Genome()
-    with pytest.raises(RuntimeError, match="two renamed released ORFs"):
-        y.resolve_strains(
-            ["YZZ001W", "YZZ002W"],
-            genome,
-            renames={**renames, **pin_table([_rename("YZZ002W", "YAL002W")])},
-            refusals={},
-            unsourced={},
-        )
-
-
-def test_an_unsourced_change_the_genome_contradicts_stops_the_build() -> None:
-    resolutions = {**_RESOLUTIONS, "YDL134C-A": (RETIRED, "YDL134C-A")}
-    with pytest.raises(GeneNameRefused, match="pin_rule_contradicted"):
-        _resolve(["YDL134C-A"], _Genome(resolutions))
-
-
-def test_an_unpinned_non_current_name_stops_the_build() -> None:
-    with pytest.raises(GeneNameRefused, match="not_current_unpinned"):
-        _resolve(["YZZ001W"])
-
-
-def test_the_pin_tables_extend_the_sga_tables_by_the_names_only_this_release_has() -> (
-    None
-):
-    assert len(y.RENAMES) == 16 + 5 and len(y.REFUSALS) == 35 + 7
-    assert sorted(p.alias for p in y.YOSHIKAWA_RENAMES) == [
-        "YHR039C-B",
-        "YML010W-A",
-        "YML013C-A",
-        "YML095C-A",
-        "YMR158C-B",
-    ]
-    assert sorted((r.name, r.reason.value, r.locus) for r in y.YOSHIKAWA_REFUSALS) == [
-        ("YAR043C-A", "retired_systematic_name", None),
-        ("YCL003W", "merged_into_locus", "YCL004W"),
-        ("YDL061W", "retired_systematic_name", None),
-        ("YGR272C", "merged_into_locus", "YGR271C-A"),
-        ("YHR034W", "retired_systematic_name", None),
-        ("YHR096W", "retired_systematic_name", None),
-        ("YKL147W", "retired_systematic_name", None),
-    ]
-    assert list(y.UNSOURCED_NAME_CHANGES) == ["YDL134C-A"]
-    assert not set(y.UNSOURCED_NAME_CHANGES) & (set(y.RENAMES) | set(y.REFUSALS))
 
 
 # --------------------------------------------------------------------------- #
@@ -662,10 +463,12 @@ def _release_with_table2_counts() -> list[y.ReleaseRow]:
     for i in range(4729):
         conditions = {}
         for spec in y.CONDITIONS:
+            if spec.table2_label is None:
+                conditions[spec.label] = y.ConditionCells(rates=(0.1, 0.1), call=1)
+                continue
             sensitive, no_change, _ = counts[spec.table2_label]
             call = 0 if i < sensitive else 1 if i < sensitive + no_change else 2
             conditions[spec.label] = y.ConditionCells(rates=(0.1, 0.1), call=call)
-        conditions["5% ethanol"] = y.ConditionCells(rates=(0.1, 0.1), call=1)
         rows.append(y.ReleaseRow(orf=f"Y{i}", name=f"Y{i}", conditions=conditions))
     return rows
 
@@ -689,10 +492,12 @@ def test_check_release_holds_the_strain_count_and_table_2() -> None:
         y.check_release(flipped)
 
 
-def test_condition_label_reads_the_one_compound() -> None:
+def test_condition_label_reads_the_one_compound_and_its_dose() -> None:
+    """Ethanol is added at two doses, so the label is read off compound and dose."""
     envs = {spec.label: y.environment(spec).model_dump() for spec in y.CONDITIONS}
     assert {label: y.condition_label(env) for label, env in envs.items()} == {
         "non-stress": "non-stress",
+        "5% ethanol": "5% ethanol",
         "8% ethanol": "8% ethanol",
         "1M NaCl": "1M NaCl",
     }
@@ -710,9 +515,13 @@ def test_table_1_rows_parse_the_printed_sd() -> None:
         (0.203, 0.178, 0.229),
     ]
     assert [t.sd for t in rows] == pytest.approx([0.0044, 0.0056, 0.0076])
-    assert y.REFUSED_CONDITIONS.keys() == {"5% ethanol"}
-    assert [spec.label for spec in y.CONDITIONS] == [
-        label for label in y.RELEASE_CONDITIONS if label not in y.REFUSED_CONDITIONS
+    # every released condition is stored; 5% ethanol reads the nonstress row
+    assert [spec.label for spec in y.CONDITIONS] == list(y.RELEASE_CONDITIONS)
+    assert [(s.key, s.reference_key, s.table2_label) for s in y.CONDITIONS] == [
+        ("nonstress", "nonstress", "nonstress"),
+        ("ethanol_5", "nonstress", None),
+        ("ethanol_8", "ethanol_8", "8% ethanol"),
+        ("nacl_1m", "nacl_1m", "1M NaCl"),
     ]
 
 
@@ -835,21 +644,12 @@ def test_verify_build_adds_release_fidelity_to_the_family_report(
     monkeypatch.setattr(runners, "verify_environment_response_entry", entry)
     monkeypatch.setattr(runners, "load_records", lambda root: [])
     monkeypatch.setattr(y, "read_release", lambda path: list(ROWS))
-    monkeypatch.setattr(y, "SCerevisiaeGenome", lambda **kwargs: _Genome())
-    real = y.resolve_strains
-    monkeypatch.setattr(
-        y,
-        "resolve_strains",
-        lambda orfs, genome: real(
-            orfs, genome, renames=RENAMES, refusals=REFUSALS, unsourced=UNSOURCED
-        ),
-    )
     report = y.verify_build(str(tmp_path / "store"), data_root=str(tmp_path))
     assert calls == [("env_chemgen_yoshikawa2009", str(tmp_path))]
     (fidelity,) = report.results
     assert fidelity.name == "release_fidelity"
-    assert not fidelity.passed  # an empty store holds none of the 24 kept cells
-    assert fidelity.details["n_expected"] == 24
+    assert not fidelity.passed  # an empty store holds none of the 56 released cells
+    assert fidelity.details["n_expected"] == 56
 
 
 def test_yeastphenome_screens_do_not_serve_this_paper() -> None:
@@ -883,45 +683,6 @@ def test_every_sourced_value_is_a_verbatim_quote_in_its_pinned_mirror() -> None:
         payload = value.source_path(root).read_bytes()
         assert hashlib.sha256(payload).hexdigest() == value.provenance.sha256
         assert value.quote in payload.decode("utf-8"), value.value
-
-
-_GFF = (
-    "torchcell-genomes/sgd_S288C_R64-4-1_20230830/"
-    "saccharomyces_cerevisiae_R64-4-1_20230830.gff"
-)
-
-
-@pytest.mark.data
-@pytest.mark.skipif(
-    _data_root() is None or not (_data_root() or Path()).joinpath(_GFF).exists(),
-    reason="R64-4-1 genomes tier not present",
-)
-def test_every_new_pin_matches_its_sgd_history_bytes() -> None:
-    root = _data_root()
-    assert root is not None
-    gff = (root / _GFF).read_bytes()
-    assert hashlib.sha256(gff).hexdigest() == R64_GFF.sha256
-    pins: list[PinnedAliasResolution | PinnedSystematicNameRefusal] = [
-        *y.YOSHIKAWA_RENAMES,
-        *y.YOSHIKAWA_REFUSALS,
-    ]
-    for pin in pins:
-        if pin.provenance == R64_GFF:
-            assert isinstance(pin, PinnedSystematicNameRefusal)
-            assert pin.quote is None
-            assert f"ID={pin.name};" not in gff.decode("utf-8")
-            continue
-        raw = (root / pin.provenance.source_uri).read_bytes()
-        assert hashlib.sha256(raw).hexdigest() == pin.provenance.sha256
-        notes = [h["note"] for h in json.loads(raw)["locus"]["history"]]
-        assert pin.quote is not None
-        assert any(pin.quote in note for note in notes), pin.quote
-    unsourced = root / "data/sgd/genome/genes/YDL133C-A.json"
-    assert hashlib.sha256(unsourced.read_bytes()).hexdigest() in (
-        y.UNSOURCED_NAME_CHANGES["YDL134C-A"].detail
-    )
-    notes = [h["note"] for h in json.loads(unsourced.read_bytes())["locus"]["history"]]
-    assert [n for n in notes if "YDL134C-A" in n] == ["<b>Name:</b> YDL134C-A"]
 
 
 @pytest.mark.data

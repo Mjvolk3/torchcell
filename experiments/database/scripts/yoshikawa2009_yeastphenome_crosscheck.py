@@ -17,12 +17,13 @@ measures, read-only:
    in a stress condition over the mean of the two nonstress cultures) against
    ``yoshikawa_shimizu_2009_value.txt``, joined on (ORF, condition), with the largest
    absolute difference, how many joined cells agree to 1e-12, Pearson's r, and the ORFs
-   of the cells that do not agree; the yp-data cells of the 5% ethanol column, which the
-   loader refuses, are counted apart;
-3. for every cell that does not agree, whether it does once the strains the loader
-   REFUSES are pooled back into the gene yp-data translated them to (a merged ORF into
-   its locus, YDL134C-A into YDL133C-A), recomputed from the released Table S1 the same
-   way; this is the measurement that says what yp-data's ORF translation does;
+   of the cells that do not agree (the 5% ethanol column included, which the loader
+   stores since #1045);
+3. for every cell that does not agree, whether it does once ONE released strain that
+   yp-data's index lacks is pooled into that gene, recomputed from the released Table
+   S1 the same way; this is the measurement that says what yp-data's ORF translation
+   does, read off yp-data itself (no genome lookup; the loader stores every strain under
+   its released ORF);
 4. the same join against ``yoshikawa_shimizu_2009_valuez.txt`` (the per-screen NPV the
    yeastphenome loader would serve), Pearson and Spearman only.
 
@@ -148,7 +149,6 @@ def compare_values(
     ours: list[float] = []
     theirs: list[float] = []
     disagreeing: dict[str, float] = {}
-    refused_column = 0
     yp_cells = 0
     for orf, row in frame.iterrows():
         for column, label in YP_COLUMNS.items():
@@ -156,9 +156,6 @@ def compare_values(
             if isinstance(value, float) and math.isnan(value):
                 continue
             yp_cells += 1
-            if label in y.REFUSED_CONDITIONS:
-                refused_column += 1
-                continue
             stored = ratios.get((str(orf), label))
             if stored is None:
                 continue
@@ -171,7 +168,6 @@ def compare_values(
     return {
         "yp_orfs": int(frame.shape[0]),
         "yp_cells": yp_cells,
-        "yp_cells_in_the_refused_5_percent_column": refused_column,
         "joined_cells": len(ours),
         "joined_genes": len(joined_genes),
         "store_cells_not_in_yp": len(ratios) - len(ours),
@@ -200,25 +196,31 @@ def pooled_ratio(
 def explain_disagreements(
     disagreeing: dict[str, float], frame: pd.DataFrame, rows: dict[str, y.ReleaseRow]
 ) -> dict[str, Any]:
-    """How many disagreeing cells yp-data's value reproduces with the refused strains pooled."""
-    locus_of = {name: r.locus for name, r in y.REFUSALS.items() if r.locus is not None}
-    for name, refusal in y.UNSOURCED_NAME_CHANGES.items():
-        locus_of[name] = refusal.candidates[0]
+    """How many disagreeing cells yp-data reproduces with one absent strain pooled in.
+
+    The candidates are the released strains (stored ORFs) that yp-data's index lacks:
+    yp-data translated them onto another gene. A cell is reproduced when pooling exactly
+    one of them into the cell's gene gives yp-data's value to 1e-12.
+    """
+    absent = sorted(orf for orf in rows if orf not in {str(o) for o in frame.index})
     column_of = {label: column for column, label in YP_COLUMNS.items()}
     reproduced: dict[str, list[str]] = {}
     unexplained: list[str] = []
     for cell in disagreeing:
         gene, label = cell.split(" / ")
-        pooled = [gene] + sorted(
-            name for name, locus in locus_of.items() if locus == gene and name in rows
-        )
         value = float(frame[column_of[label]].astype(float)[gene])
-        if len(pooled) > 1 and abs(pooled_ratio(rows, pooled, label) - value) <= 1e-12:
-            reproduced[cell] = pooled
+        matches = [
+            strain
+            for strain in absent
+            if abs(pooled_ratio(rows, [gene, strain], label) - value) <= 1e-12
+        ]
+        if matches:
+            reproduced[cell] = [gene, *matches]
         else:
             unexplained.append(cell)
     return {
-        "reproduced_with_refused_strains_pooled": len(reproduced),
+        "released_strains_absent_from_yp": absent,
+        "reproduced_with_one_absent_strain_pooled": len(reproduced),
         "genes": sorted({cell.split(" / ")[0] for cell in reproduced}),
         "pooled_strains": {cell: names for cell, names in sorted(reproduced.items())},
         "unexplained": sorted(unexplained),

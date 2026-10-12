@@ -2327,17 +2327,17 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
     },
     "env_chemgen_yoshikawa2009": {
         "root": "data/torchcell/env_chemgen_yoshikawa2009",
-        # Table S1's 4,729 strains minus the 39 whose released ORF R64-4-1 retired (10),
-        # merged into a longer locus (28) or renamed without a sourced relation (1),
-        # x 3 kept conditions (the undescribed 5% ethanol columns refused) x 2 cultures.
-        # Rules + counts: preprocess/dropped_records.json.
-        "expected_count": 28140,
+        # Table S1's 4,729 strains x its 4 conditions (the 5% ethanol columns included)
+        # x 2 cultures: every released cell, each strain under its released ORF (#1045).
+        # Accounting: preprocess/dropped_records.json.
+        "expected_count": 37832,
         "background_genes": frozenset(),
         # An ABSOLUTE readout (#776): the reference is the standard strain's own Table 1
-        # rate, and the nonstress condition is a measured base condition, one record
-        # per kept strain and culture (4,690 x 2).
+        # rate (the nonstress row for the 5% ethanol columns, which Table 1 lacks), and
+        # the nonstress condition is a measured base condition, one record per strain
+        # and culture (4,729 x 2).
         "reference_centered": False,
-        "expected_unperturbed": 9380,
+        "expected_unperturbed": 9458,
         "provenance": Provenance(
             source_uri=(
                 "$DATA_ROOT/torchcell-raw/yoshikawaComprehensivePhenotypicAnalysis2009/"
@@ -2355,16 +2355,16 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
                 "(0: sensitive, 1: no-change, 2: tolerant) as category. Static 96-well "
                 "YPD at 30 C from a 24 h pre-culture; at 4 h 25 uL of water "
                 "(nonstress, no perturbation), 40% (v/v) ethanol (8% v/v) or 5 M NaCl "
-                "(1 M) as a SmallMoleculePerturbation. Reference per condition: the "
-                "standard strain (BY4742 his3 deletion) in that condition, Table 1's "
+                "(1 M) as a SmallMoleculePerturbation; the released 5% ethanol columns "
+                "as ethanol 5 (basis-free percent) with a typed duration gap. Reference "
+                "per condition: the standard strain (BY4742 his3 deletion) in that "
+                "condition (nonstress for 5% ethanol, which Table 1 lacks), Table 1's "
                 "average rate with its SD (sample_sd, n 720 wells), on a BY4742 "
                 "StrainReferenceGenome whose provenance is gapped (strains derive from "
                 "BY4742 or BY4739, unreleased per strain). Genotype: "
                 "BarcodedKanMxDeletionPerturbation (Open Biosystems, kanMX4, barcodes "
-                "gapped); 21 SGD-renamed ORFs stored under the current ORF with their "
-                "released name on a ConstructedOrf (alias). Refused: the 5% ethanol "
-                "columns (condition and reference not described), 10 retired, 28 merged "
-                "and 1 unsourced released names"
+                "gapped), each strain under its released ORF and name cell, no genome "
+                "lookup (#1045). Nothing refused"
             ),
             page=(
                 "FEMS Yeast Res 2009 9:32 (doi:10.1111/j.1567-1364.2008.00456.x); "

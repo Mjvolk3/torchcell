@@ -32,10 +32,15 @@ RECORD = one (deletion strain x condition x culture) ``StrainEnvironmentResponse
   ``no_change`` / ``resistant``; the call is made from BOTH cultures ("both independent
   cultures were lower than the threshold value"), so it is identical on the strain's two
   records of one condition.
-- GENOTYPE: one ``BarcodedKanMxDeletionPerturbation`` per strain: collection "Open
-  Biosystems", cassette kanMX4 (the paper names the Winzeler 1999 collection, whose
-  cassette Giaever 2014 states), barcodes gapped pending Giaever 2002 (the strains were
-  grown one per well, so no barcode was read).
+- GENOTYPE: one ``BarcodedKanMxDeletionPerturbation`` per strain, AS RELEASED: the
+  release's ORF cell is ``systematic_gene_name`` (the two lower-case suffixes the release
+  writes, ``YAL043C-a`` and ``YAR043C-a``, upper-cased, the only change; no two released
+  ORFs coincide upper-cased) and its name cell is ``perturbed_gene_name``. No genome is
+  consulted: a released ORF the current annotation renamed, merged or retired is stored
+  under the name the release gives it (#1045, owner rule 2026-10-12: "the data is the
+  data"). Collection "Open Biosystems", cassette kanMX4 (the paper names the Winzeler 1999
+  collection, whose cassette Giaever 2014 states), barcodes gapped pending Giaever 2002
+  (the strains were grown one per well, so no barcode was read).
 - ENVIRONMENT: a ``CultureEnvironment`` in the shared liquid YPD restated with the
   paper's recipe, 30 C, static 96-well culture (127 uL after the addition), inoculated
   with 2 uL of a 24 h YPD pre-culture, read to 9 h (nonstress) or 11 h (stress). The
@@ -48,23 +53,15 @@ RECORD = one (deletion strain x condition x culture) ``StrainEnvironmentResponse
   from BY4739 instead ("derived from S. cerevisiae BY4742 (...) or BY4739 (...)"), so the
   background's ``provenance`` is a typed gap that says so.
 
-RECORDS REFUSED (``preprocess/dropped_records.json``, rules applied in this order):
-
-1. ``condition_not_described_by_primary``: Table S1's "5% ethanol" columns. The Methods
-   describe nonstress, 8% ethanol and 1 M NaCl and no 5% condition, and Table 1 gives no
-   standard-strain rate for it, so neither its protocol nor its reference value is
-   sourced. The values are in the authors' own file; they are refused, not dropped
-   silently, and counted.
-2. ``released_name_retired`` / ``released_name_merged_into_locus``: a released ORF that
-   R64-4-1 retired, or keeps only as an alias of a longer locus it was merged into, by a
-   pinned refusal (``torchcell.datasets.systematic_name_currency``: the SGA tables plus
-   seven pins for names only this release carries).
-3. ``released_name_change_unsourced``: YDL134C-A, which R64 lists only as an alias of
-   YDL133C-A and whose SGD history records the old name but neither a nomenclature
-   correction nor a merge, so neither pin's rule can be sourced.
-
-Renamed ORFs (an SGD nomenclature correction, same locus) are stored under the current
-ORF by a ``PinnedAliasResolution``; ``preprocess/systematic_name_ledger.json`` lists them.
+THE 5% ETHANOL COLUMNS. Table S1 releases a "5% ethanol" condition the paper never
+describes: the Methods give nonstress, 8% ethanol and 1 M NaCl, and Table 1 gives no
+standard-strain rate for it. The columns are released data, so they are stored (9,458
+records, #1045): ethanol at 5 (basis-free ``percent``, the release's own header), the
+read time a typed gap on ``duration_hours`` ("the paper describes 8% ethanol and 1 M NaCl;
+the 5% ethanol columns are released in Table S1 without a protocol or a Table 1 reference
+rate"), and, because a numeric reference value is required and none is released for this
+condition, the NONSTRESS standard strain (Table 1's nonstress row) as the reference; its
+``units`` say so. No record is refused.
 
 DATA SOURCE: ``$DATA_ROOT/torchcell-raw/yoshikawaComprehensivePhenotypicAnalysis2009/si/``
 with a ``manifest.json`` (``write_raw_manifest``), ``DEPOSIT.md`` and ``SHA256SUMS.txt``.
@@ -103,7 +100,6 @@ from torchcell.datamodels.schema import (
     BarcodedKanMxDeletionPerturbation,
     Concentration,
     ConcentrationUnit,
-    ConstructedOrf,
     CultureEnvironment,
     CultureFormat,
     EndpointRule,
@@ -114,7 +110,6 @@ from torchcell.datamodels.schema import (
     Genotype,
     MatingType,
     MeasurementType,
-    OrfHistoryRelation,
     PreCulture,
     PreCultureSource,
     Publication,
@@ -132,31 +127,11 @@ from torchcell.datamodels.strain_background import (
     BRACHMANN_1998,
     GIAEVER_2002,
     KANMX4_CASSETTE,
-    R64_GFF,
     STANDARD_BY_GENOTYPES,
     pending_source_review,
     standard_allele,
 )
 from torchcell.datasets.dataset_registry import register_dataset
-from torchcell.datasets.gene_alias_resolution import (
-    AliasResolutionRule,
-    GeneNameRefusal,
-    GeneNameRefusalReason,
-    GeneNameRefused,
-    PinnedAliasResolution,
-    pin_table,
-)
-from torchcell.datasets.scerevisiae.smith2006 import canonical_common_names
-from torchcell.datasets.systematic_name_currency import (
-    SGA_SYSTEMATIC_REFUSALS,
-    SGA_SYSTEMATIC_RENAMES,
-    PinnedSystematicNameRefusal,
-    SystematicNameCurrency,
-    SystematicNameGenome,
-    SystematicNameLedger,
-    SystematicNameOutcome,
-    refusal_table,
-)
 from torchcell.literature.manifest import (
     ROLE_RAW_DATA,
     ROLE_SI_DATA,
@@ -165,8 +140,6 @@ from torchcell.literature.manifest import (
     RetrievalMethod,
     RetrievalRecord,
 )
-from torchcell.sequence.genome.base import GeneNameStatus
-from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 from torchcell.verification.report import Level, LevelResult, Provenance
 from torchcell.verification.sourced import (
     ProvenanceGap,
@@ -650,12 +623,15 @@ def call_counts(rows: list[ReleaseRow], label: str) -> tuple[int, int, int]:
 def check_release(rows: list[ReleaseRow]) -> None:
     """The release against the paper: 4,729 strains, and Table 2's call counts.
 
-    Each kept condition's (sensitive, no change, tolerant) counts must equal the paper's
-    Table 2, so a Table S1 whose calls were edited or misread refuses.
+    Each condition's (sensitive, no change, tolerant) counts must equal the paper's
+    Table 2 where Table 2 has a row (not the 5% ethanol columns), so a Table S1 whose
+    calls were edited or misread refuses.
     """
     if len(rows) != N_STRAINS.value:
         raise RuntimeError(f"Table S1 has {len(rows)} strains, not {N_STRAINS.value}")
     for spec in CONDITIONS:
+        if spec.table2_label is None:
+            continue
         got = call_counts(rows, spec.label)
         want = TABLE1_COUNTS.value[spec.table2_label]
         if got != want:
@@ -667,19 +643,33 @@ def check_release(rows: list[ReleaseRow]) -> None:
 # --------------------------------------------------------------------------- #
 # Conditions
 # --------------------------------------------------------------------------- #
-ConditionKey = Literal["nonstress", "ethanol_8", "nacl_1m"]
+ConditionKey = Literal["nonstress", "ethanol_5", "ethanol_8", "nacl_1m"]
+
+#: Why the 5% ethanol columns carry gaps and the nonstress reference (#1045).
+FIVE_PERCENT_ETHANOL_NOTE = (
+    "the paper describes 8% ethanol and 1 M NaCl; the 5% ethanol columns are released "
+    "in Table S1 without a protocol or a Table 1 reference rate"
+)
 
 
 class ConditionSpec(BaseModel):
-    """A released condition the loader keeps: its stress, its timing, its Table 1 row."""
+    """A released condition: its stress, its timing, and the Table 1 row it is read by.
+
+    ``table1`` is the standard-strain row of the reference: the condition's own, or, for
+    the 5% ethanol columns Table 1 has no row for, the nonstress row (``reference_key``).
+    ``table2_label`` is None where Table 2 gives no call counts. ``duration_hours`` is
+    None, with ``duration_gap``, where the paper states no read time.
+    """
 
     model_config = ConfigDict(frozen=True)
 
     label: str
     key: ConditionKey
     table1: Table1Row
-    table2_label: str
-    duration_hours: float
+    reference_key: ConditionKey
+    table2_label: str | None
+    duration_hours: float | None
+    duration_gap: str | None = None
     compound_label: str | None
     dose: Concentration | None
 
@@ -689,15 +679,28 @@ CONDITIONS: tuple[ConditionSpec, ...] = (
         label="non-stress",
         key="nonstress",
         table1=TABLE1_NONSTRESS,
+        reference_key="nonstress",
         table2_label="nonstress",
         duration_hours=NONSTRESS_HOURS.value,
         compound_label=None,
         dose=None,
     ),
     ConditionSpec(
+        label="5% ethanol",
+        key="ethanol_5",
+        table1=TABLE1_NONSTRESS,
+        reference_key="nonstress",
+        table2_label=None,
+        duration_hours=None,
+        duration_gap=FIVE_PERCENT_ETHANOL_NOTE,
+        compound_label="ethanol",
+        dose=Concentration(value=5.0, unit=ConcentrationUnit.percent),
+    ),
+    ConditionSpec(
         label="8% ethanol",
         key="ethanol_8",
         table1=TABLE1_ETHANOL,
+        reference_key="ethanol_8",
         table2_label="8% ethanol",
         duration_hours=STRESS_HOURS.value,
         compound_label="ethanol",
@@ -709,22 +712,17 @@ CONDITIONS: tuple[ConditionSpec, ...] = (
         label="1M NaCl",
         key="nacl_1m",
         table1=TABLE1_NACL,
+        reference_key="nacl_1m",
         table2_label="1M NaCl",
         duration_hours=STRESS_HOURS.value,
         compound_label="sodium chloride",
         dose=Concentration(value=NACL_MOLAR.value, unit=ConcentrationUnit.molar),
     ),
 )
-#: Released conditions refused whole, with the measurement that refuses them.
-REFUSED_CONDITIONS: dict[str, str] = {
-    "5% ethanol": (
-        "the Methods describe the nonstress, 8% ethanol and 1 M NaCl conditions and no "
-        "5% ethanol condition (its dose basis, its addition time and its regression "
-        "window are not stated), and Table 1 gives no standard-strain rate for it, so "
-        "the record's reference value is not sourced either"
-    )
+#: Each condition by its key (the 5% ethanol reference reads the nonstress one).
+CONDITION_BY_KEY: dict[ConditionKey, ConditionSpec] = {
+    spec.key: spec for spec in CONDITIONS
 }
-
 MEASUREMENT_UNITS = (
     "normalized specific growth rate (1/h) of ONE culture, as released in Yoshikawa "
     "2009 Table S1 ('specific growth rate at 1st|2nd experiment (1/h)'): the slope of "
@@ -744,6 +742,11 @@ REFERENCE_UNITS = (
     "the same condition: Table 1's average specific growth rate over its 720 wells (90 "
     "plates x 2 runs) with Table 1's SD; the reference has no genotype slot, so its "
     "genome states the BY4742 background and the HIS3 deletion is stated here"
+)
+FIVE_PERCENT_REFERENCE_UNITS = (
+    REFERENCE_UNITS
+    + "; for the 5% ethanol records the reference is the standard strain in the "
+    "NONSTRESS condition (Table 1's nonstress row): " + FIVE_PERCENT_ETHANOL_NOTE
 )
 
 
@@ -867,7 +870,11 @@ def _stress(spec: ConditionSpec) -> list[EnvironmentPerturbationType]:
 
 
 def environment(spec: ConditionSpec) -> CultureEnvironment:
-    """The condition's culture: liquid YPD, 30 C, static, read to its last OD."""
+    """The condition's culture: liquid YPD, 30 C, static, read to its last OD.
+
+    A condition the paper gives no read time for (the 5% ethanol columns) carries a
+    typed gap on ``duration_hours``.
+    """
     return CultureEnvironment(
         media=YOSHIKAWA_YPD,
         temperature=Temperature(value=TEMPERATURE_C.value),
@@ -876,17 +883,31 @@ def environment(spec: ConditionSpec) -> CultureEnvironment:
         duration_hours=spec.duration_hours,
         culture_format=_culture_format(),
         pre_culture=_pre_culture(),
+        provenance_gaps=[]
+        if spec.duration_gap is None
+        else [
+            ProvenanceGap(
+                field="duration_hours",
+                reason=ProvenanceGapReason.not_reported_by_primary,
+                note=spec.duration_gap,
+            )
+        ],
     )
 
 
 def reference(
     spec: ConditionSpec, dataset_name: str
 ) -> StrainEnvironmentResponseExperimentReference:
-    """The standard strain in the same condition: Table 1's rate and SD over 720 wells."""
+    """The standard strain in the reference condition: Table 1's rate and SD over 720
+    wells. The condition's own, except for the 5% ethanol columns, which Table 1 has no
+    row for: their reference is the standard strain in the nonstress condition.
+    """
+    own = spec.reference_key == spec.key
+    reference_spec = spec if own else CONDITION_BY_KEY[spec.reference_key]
     return StrainEnvironmentResponseExperimentReference(
         dataset_name=dataset_name,
         genome_reference=BY4742_GENOME,
-        environment_reference=environment(spec),
+        environment_reference=environment(reference_spec),
         phenotype_reference=EnvironmentResponsePhenotype(
             measurement_type=MeasurementType.growth_rate,
             assay_type=AssayType.liquid_od_growth,
@@ -895,7 +916,7 @@ def reference(
             environment_response_uncertainty_type=TABLE1_IS_SAMPLE_SD.value,
             n_samples=STANDARD_WELLS.value,
             sample_unit=SampleUnit.biological_replicate,
-            units=REFERENCE_UNITS,
+            units=REFERENCE_UNITS if own else FIVE_PERCENT_REFERENCE_UNITS,
         ),
     )
 
@@ -925,42 +946,22 @@ def phenotype(rate: float, replicate: int, call: int) -> EnvironmentResponsePhen
     )
 
 
-def renamed_orf(released: str) -> ConstructedOrf:
-    """The released name of a strain SGD renamed for nomenclature (same locus).
-
-    The relation is ``alias``, which the strain's ``SGD_SYSTEMATIC_RENAME`` pin sources;
-    the interval is not released. Recording the released name is what keeps two strains
-    of one gene apart: the release carries RPL22B both as ``YFL034C-A`` and under its
-    pre-1998 name ``YFL035C-B``, two rows with different rates.
-    """
-    return ConstructedOrf(
-        source_systematic_name=released,
-        relation=OrfHistoryRelation.alias,
-        deleted_span=None,
-        provenance_gaps=[
-            ProvenanceGap(
-                field="deleted_span",
-                reason=ProvenanceGapReason.not_reported_by_primary,
-                note=f"the strain deleted {released} as annotated when it was made; "
-                "Table S1 releases no coordinates",
-            )
-        ],
-    )
+def stored_orf(released: str) -> str:
+    """The release's ORF cell as stored: upper-cased (``YAL043C-a`` -> ``YAL043C-A``)."""
+    return released.upper()
 
 
-def genotype(orf: str, common: str, released: str | None = None) -> Genotype:
-    """One kanMX4 deletion of the Open Biosystems copy of the YKO MATalpha collection.
-
-    ``released`` is the release's own ORF name when SGD has since renamed it.
+def genotype(row: ReleaseRow) -> Genotype:
+    """One kanMX4 deletion of the Open Biosystems copy of the YKO MATalpha collection,
+    named exactly as the release names the strain (no genome is consulted).
     """
     return Genotype(
         perturbations=[
             BarcodedKanMxDeletionPerturbation(
-                systematic_gene_name=orf,
-                perturbed_gene_name=common,
+                systematic_gene_name=stored_orf(row.orf),
+                perturbed_gene_name=row.name,
                 collection=COLLECTION.value,
                 cassette=KANMX4_CASSETTE.value,
-                constructed_orf=None if released is None else renamed_orf(released),
                 provenance_gaps=[
                     pending_source_review(
                         "barcode",
@@ -976,303 +977,6 @@ def genotype(orf: str, common: str, released: str | None = None) -> Genotype:
                 ],
             )
         ]
-    )
-
-
-# --------------------------------------------------------------------------- #
-# Released systematic names R64-4-1 no longer carries
-# --------------------------------------------------------------------------- #
-def _sgd_locus(orf: str, sha256: str) -> Provenance:
-    """Provenance of one cached SGD locus record (``locus.history[].note``)."""
-    return Provenance(
-        source_uri=f"data/sgd/genome/genes/{orf}.json",
-        sha256=sha256,
-        method="SGD locus record cached by SCerevisiaeGenome; the quote is a substring "
-        "of one locus.history[].note (after its bold category label)",
-        page="locus.history",
-        retrieved="2025-08-28",
-    )
-
-
-def _nomenclature(old: str, new: str) -> str:
-    """SGD's nomenclature-correction sentence for one renamed ORF, verbatim."""
-    return (
-        f"{old} used to be the systematic name for this ORF. Since this name was "
-        f"incorrect, this ORF name has been changed to {new} to properly represent the "
-        "systematic ORF nomenclature."
-    )
-
-
-def _rename(alias: str, orf: str, sha256: str, quote: str) -> PinnedAliasResolution:
-    return PinnedAliasResolution(
-        alias=alias,
-        systematic_name=orf,
-        rule=AliasResolutionRule.SGD_SYSTEMATIC_RENAME,
-        provenance=_sgd_locus(orf, sha256),
-        quote=quote,
-    )
-
-
-#: Released names SGD renamed for nomenclature that the SGA tables do not hold (the
-#: other 16 renames this release carries are SGA_SYSTEMATIC_RENAMES pins).
-YOSHIKAWA_RENAMES: tuple[PinnedAliasResolution, ...] = (
-    _rename(
-        "YHR039C-B",
-        "YHR039C-A",
-        "665b1485af0d438d8d993ce5f8cfd99f038c208815ef1246de0d79395582b2b9",
-        "Old name: YHR039C-B; new name: YHR039C-A; date: 11/1998; old coord: ChrVIII "
-        "187670 187164; SGDID: S0002100; Name changed due to nomenclature",
-    ),
-    _rename(
-        "YML010W-A",
-        "YML009W-B",
-        "e940f2b8c6e83b61e9d89211d616aa1732d00cd7dd77702942ac1b298315580d",
-        _nomenclature("YML010W-A", "YML009W-B"),
-    ),
-    _rename(
-        "YML013C-A",
-        "YML012C-A",
-        "020702b551aa57a0cedd9ca4391bcafa31f6661d2b6ca0bf29440c169d14e64a",
-        _nomenclature("YML013C-A", "YML012C-A"),
-    ),
-    _rename(
-        "YML095C-A",
-        "YML094C-A",
-        "1bb9ac8bccf1c25340304fdfd1d404dacc0e6103c778d46dad463de708d27d82",
-        _nomenclature("YML095C-A", "YML094C-A"),
-    ),
-    _rename(
-        "YMR158C-B",
-        "YMR158C-A",
-        "c9edbe0b5b1df23bcb3ab39b4cb44c936ff90d621837e38ad9bf0a0859fc410f",
-        _nomenclature("YMR158C-B", "YMR158C-A"),
-    ),
-)
-
-
-def _merged(
-    name: str, locus: str, sha256: str, quote: str
-) -> PinnedSystematicNameRefusal:
-    return PinnedSystematicNameRefusal(
-        name=name,
-        reason=GeneNameRefusalReason.MERGED_INTO_LOCUS,
-        locus=locus,
-        provenance=_sgd_locus(locus, sha256),
-        quote=quote,
-        basis=f"SGD merged {name} into the gene {locus}; the released strain deleted "
-        f"{name} as annotated when it was made, part of {locus}, not {locus}",
-    )
-
-
-def _retired(name: str) -> PinnedSystematicNameRefusal:
-    return PinnedSystematicNameRefusal(
-        name=name,
-        reason=GeneNameRefusalReason.RETIRED_SYSTEMATIC_NAME,
-        locus=None,
-        provenance=R64_GFF,
-        quote=None,
-        basis="no locus ID, gene= or Alias= value in the R64-4-1 GFF",
-    )
-
-
-#: Released names refused that the SGA tables do not hold: two merged into a gene and
-#: five with no R64-4-1 locus (``YAR043C-A`` is the release's ``YAR043C-a``).
-YOSHIKAWA_REFUSALS: tuple[PinnedSystematicNameRefusal, ...] = (
-    _merged(
-        "YCL003W",
-        "YCL004W",
-        "3205efbbb1469b6928f0ea0fffa84a54ca7e2795ba8e041aed816dd4e60b0285",
-        "YCL003W was originally annotated as an independent ORF, but as a result of a "
-        "sequence change, it was merged with an adjacent ORF into a single reading "
-        "frame, designated YCL004W.",
-    ),
-    _merged(
-        "YGR272C",
-        "YGR271C-A",
-        "1c258bb5a4207b3d18dfda14a5b660fa03c7d508c4566403339be57f74193d18",
-        "As a consequence of this sequence change, YGR272C was merged into an adjacent "
-        "ORF, YGR271C-A.",
-    ),
-    _retired("YAR043C-A"),
-    _retired("YDL061W"),
-    _retired("YHR034W"),
-    _retired("YHR096W"),
-    _retired("YKL147W"),
-)
-
-#: A released name R64 lists as an alias of one ORF whose SGD history records the old
-#: name and nothing else, so neither the rename rule nor the merge rule can be sourced.
-UNSOURCED_NAME_CHANGES: dict[str, GeneNameRefusal] = {
-    "YDL134C-A": GeneNameRefusal(
-        name="YDL134C-A",
-        reason=GeneNameRefusalReason.NOT_CURRENT_UNPINNED,
-        candidates=["YDL133C-A"],
-        detail="R64-4-1 lists YDL134C-A as an Alias of YDL133C-A (RPL41B) alone; the "
-        "SGD locus history of YDL133C-A (data/sgd/genome/genes/YDL133C-A.json, sha256 "
-        "4d77ed92af9922fb588ace98d05d9716aceccb615595e1bcf90eab7f681fba23) lists "
-        "'Name: YDL134C-A' and no annotation change, so whether the strain deleted the "
-        "current locus (a rename) or part of it (a merge) is not sourced",
-    )
-}
-
-RENAMES: dict[str, PinnedAliasResolution] = pin_table(
-    [*SGA_SYSTEMATIC_RENAMES.values(), *YOSHIKAWA_RENAMES]
-)
-REFUSALS: dict[str, PinnedSystematicNameRefusal] = refusal_table(
-    [*SGA_SYSTEMATIC_REFUSALS.values(), *YOSHIKAWA_REFUSALS]
-)
-
-
-class StrainResolution(BaseModel):
-    """Released ORFs resolved onto R64-4-1: kept (current ORF) or refused (reason).
-
-    ``shared_genes`` names each current ORF two kept released ORFs land on; the strains
-    stay distinct by the renamed one's ``ConstructedOrf``.
-    """
-
-    kept: dict[str, str]
-    refused: dict[str, GeneNameRefusalReason]
-    shared_genes: dict[str, list[str]]
-    ledger: SystematicNameLedger
-
-    def released_name(self, orf: str) -> str | None:
-        """The release's name to record on the strain: set only when SGD renamed it."""
-        return None if orf.upper() == self.kept[orf] else orf
-
-
-def resolve_strains(
-    orfs: list[str],
-    genome: SystematicNameGenome,
-    *,
-    renames: Mapping[str, PinnedAliasResolution] = RENAMES,
-    refusals: Mapping[str, PinnedSystematicNameRefusal] = REFUSALS,
-    unsourced: Mapping[str, GeneNameRefusal] = UNSOURCED_NAME_CHANGES,
-    dataset_name: str = "EnvChemgenYoshikawa2009Dataset",
-    rows_per_orf: int = 1,
-) -> StrainResolution:
-    """Released ORF -> current R64 ORF through the pinned currency tables, or refused.
-
-    The release spells two suffixes in lower case (``YAL043C-a``, ``YAR043C-a``); a name
-    is judged upper-cased. A live gene (or a non-gene locus by its own id) is kept as
-    itself, a pinned rename maps to the current ORF, a pinned retirement or merge is
-    refused, an ``unsourced`` name is refused after the genome is shown to still resolve
-    it the way its refusal states, and anything else stops the build
-    (``NOT_CURRENT_UNPINNED``). Two released ORFs landing on one current ORF are kept as
-    two strains when at most one of them is the current name itself (the other carries
-    its released name); two released names that both need a rename onto one ORF stop
-    the build, since nothing would then say which strain is which gene annotation.
-    """
-    currency = SystematicNameCurrency(genome, renames, refusals)
-    kept: dict[str, str] = {}
-    refused: dict[str, GeneNameRefusalReason] = {}
-    unsourced_outcomes: list[SystematicNameOutcome] = []
-    for orf in orfs:
-        name = orf.upper()
-        if name in unsourced:
-            refusal = unsourced[name]
-            resolution = genome.resolve_gene_name(name)
-            if (
-                resolution.status is not GeneNameStatus.RENAMED
-                or [resolution.systematic_name] != refusal.candidates
-            ):
-                raise GeneNameRefused(
-                    GeneNameRefusal(
-                        name=name,
-                        reason=GeneNameRefusalReason.PIN_RULE_CONTRADICTED,
-                        candidates=[]
-                        if resolution.systematic_name is None
-                        else [resolution.systematic_name],
-                        detail=f"refused as an unsourced change to "
-                        f"{refusal.candidates}, but the genome resolves it as "
-                        f"{resolution.status.value}",
-                    )
-                )
-            refused[orf] = refusal.reason
-            unsourced_outcomes.append(
-                SystematicNameOutcome(
-                    released_name=name,
-                    stored_name=None,
-                    reason=refusal.reason,
-                    locus=refusal.candidates[0],
-                    n_rows=rows_per_orf,
-                )
-            )
-            continue
-        stored = currency.stored_name(name)
-        if stored is None:
-            refused[orf] = refusals[name].reason
-        else:
-            kept[orf] = stored
-    sources: dict[str, list[str]] = {}
-    for orf, current in kept.items():
-        sources.setdefault(current, []).append(orf)
-    shared = {
-        current: sorted(names) for current, names in sources.items() if len(names) > 1
-    }
-    for current, names in shared.items():
-        if sum(name.upper() != current for name in names) > 1:
-            raise RuntimeError(
-                f"two renamed released ORFs land on {current}: {names}; neither is "
-                "the current name, so the strains cannot be told apart by it"
-            )
-    ledger = _ledger(
-        dataset_name,
-        kept,
-        refused,
-        refusals,
-        unsourced_outcomes,
-        len(orfs),
-        rows_per_orf,
-    )
-    return StrainResolution(
-        kept=kept, refused=refused, shared_genes=shared, ledger=ledger
-    )
-
-
-def _ledger(
-    dataset_name: str,
-    kept: dict[str, str],
-    refused: dict[str, GeneNameRefusalReason],
-    refusals: Mapping[str, PinnedSystematicNameRefusal],
-    unsourced_outcomes: list[SystematicNameOutcome],
-    n_orfs: int,
-    rows_per_orf: int,
-) -> SystematicNameLedger:
-    """Every non-current released name, counted in records (``rows_per_orf`` each)."""
-    renamed = [
-        SystematicNameOutcome(
-            released_name=orf.upper(),
-            stored_name=current,
-            reason=None,
-            locus=current,
-            n_rows=rows_per_orf,
-        )
-        for orf, current in sorted(kept.items())
-        if orf.upper() != current
-    ]
-    pinned = [
-        SystematicNameOutcome(
-            released_name=orf.upper(),
-            stored_name=None,
-            reason=reason,
-            locus=refusals[orf.upper()].locus,
-            n_rows=rows_per_orf,
-        )
-        for orf, reason in sorted(refused.items())
-        if orf.upper() in refusals
-    ]
-    n_in = n_orfs * rows_per_orf
-    n_refused = len(refused) * rows_per_orf
-    return SystematicNameLedger(
-        dataset_name=dataset_name,
-        annotation="S288C R64-4-1 (2023-08-30)",
-        n_rows_in=n_in,
-        n_rows_refused=n_refused,
-        n_rows_out=n_in - n_refused,
-        renamed=renamed,
-        refused=sorted(
-            [*pinned, *unsourced_outcomes], key=lambda outcome: outcome.released_name
-        ),
     )
 
 
@@ -1421,7 +1125,7 @@ class DropRule(BaseModel):
 
 
 class DropLog(BaseModel):
-    """Every retention rule applied to a build, in order."""
+    """Every retention rule applied to a build, in order (none since #1045)."""
 
     dataset: str
     source_records: int
@@ -1429,14 +1133,6 @@ class DropLog(BaseModel):
     dropped_records: int
     unperturbed_records: int
     rules: list[DropRule]
-
-
-#: Strain refusal reason -> its rule name in the drop log.
-STRAIN_RULES: dict[GeneNameRefusalReason, str] = {
-    GeneNameRefusalReason.RETIRED_SYSTEMATIC_NAME: "released_name_retired",
-    GeneNameRefusalReason.MERGED_INTO_LOCUS: "released_name_merged_into_locus",
-    GeneNameRefusalReason.NOT_CURRENT_UNPINNED: "released_name_change_unsourced",
-}
 
 
 @register_dataset
@@ -1449,13 +1145,11 @@ class EnvChemgenYoshikawa2009Dataset(ExperimentDataset):
         self,
         root: str = "data/torchcell/env_chemgen_yoshikawa2009",
         io_workers: int = 0,
-        genome: SCerevisiaeGenome | None = None,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize the dataset; a genome is REQUIRED for systematic-name resolution."""
-        self.genome = genome
+        """Initialize the dataset (no genome: every strain is stored as released)."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -1499,33 +1193,16 @@ class EnvChemgenYoshikawa2009Dataset(ExperimentDataset):
     def _read_release(self) -> list[ReleaseRow]:
         return read_release(osp.join(self.raw_dir, TABLE_S1.filename))
 
-    def _resolve(self, orfs: list[str]) -> StrainResolution:
-        if self.genome is None:
-            raise RuntimeError(
-                "EnvChemgenYoshikawa2009Dataset requires a genome for systematic-name "
-                "resolution; inject SCerevisiaeGenome(...)"
-            )
-        return resolve_strains(
-            orfs,
-            self.genome,
-            dataset_name=self.name,
-            rows_per_orf=len(CONDITIONS) * len(REPLICATE_IDS),
-        )
-
-    def _common_names(self) -> dict[str, str]:
-        if self.genome is None:
-            raise RuntimeError("EnvChemgenYoshikawa2009Dataset requires a genome")
-        return canonical_common_names(self.genome)
-
     # ---- build ------------------------------------------------------------------- #
     @post_process
     def process(self) -> None:
-        """One record per (kept strain x kept condition x culture); write LMDB + ledgers."""
+        """One record per (strain x condition x culture), every released cell; LMDB + log."""
         verify_raw_files(self.raw_dir, {TABLE_S1.filename: TABLE_S1.sha256})
         rows = self._read_release()
         check_release(rows)
-        strains = self._resolve([row.orf for row in rows])
-        common = self._common_names()
+        stored = [stored_orf(row.orf) for row in rows]
+        if len(set(stored)) != len(stored):
+            raise RuntimeError("two released ORFs coincide once upper-cased")
         publication = Publication(
             pubmed_id=PMID,
             pubmed_url=f"https://pubmed.ncbi.nlm.nih.gov/{PMID}/",
@@ -1542,14 +1219,7 @@ class EnvChemgenYoshikawa2009Dataset(ExperimentDataset):
         n_unperturbed = 0
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for row in tqdm(rows, desc="yoshikawa2009"):
-                current = strains.kept.get(row.orf)
-                if current is None:
-                    continue
-                strain = genotype(
-                    current,
-                    common.get(current, current),
-                    strains.released_name(row.orf),
-                )
+                strain = genotype(row)
                 for spec in CONDITIONS:
                     cells = row.conditions[spec.label]
                     for replicate, rate in enumerate(cells.rates):
@@ -1570,72 +1240,31 @@ class EnvChemgenYoshikawa2009Dataset(ExperimentDataset):
         env.close()
         interned_env.close()
 
-        drop_log = self._drop_log(rows, strains, idx, n_unperturbed)
+        drop_log = self._drop_log(rows, idx, n_unperturbed)
         with open(osp.join(self.preprocess_dir, "dropped_records.json"), "w") as handle:
             handle.write(drop_log.model_dump_json(indent=2))
-        with open(
-            osp.join(self.preprocess_dir, "systematic_name_ledger.json"), "w"
-        ) as handle:
-            handle.write(strains.ledger.model_dump_json(indent=2))
         log.info(
-            "Yoshikawa2009: wrote %d records (%d strains x %d conditions x %d cultures); "
-            "refused %d strains and the %s columns",
+            "Yoshikawa2009: wrote %d records (%d strains x %d conditions x %d cultures)",
             idx,
-            len(strains.kept),
+            len(rows),
             len(CONDITIONS),
             len(REPLICATE_IDS),
-            len(strains.refused),
-            sorted(REFUSED_CONDITIONS),
         )
 
-    def _drop_log(
-        self,
-        rows: list[ReleaseRow],
-        strains: StrainResolution,
-        kept: int,
-        unperturbed: int,
-    ) -> DropLog:
-        """The condition rule first, then the strain rules on what is left."""
-        per_cell = len(REPLICATE_IDS)
-        source_records = len(rows) * len(RELEASE_CONDITIONS) * per_cell
-        rules = [
-            DropRule(
-                rule="condition_not_described_by_primary",
-                scope="condition",
-                description=REFUSED_CONDITIONS[label],
-                n_records=len(rows) * per_cell,
-                items=[label],
-            )
-            for label in sorted(REFUSED_CONDITIONS)
-        ]
-        per_strain = len(CONDITIONS) * per_cell
-        for reason, rule in STRAIN_RULES.items():
-            items = sorted(orf for orf, why in strains.refused.items() if why is reason)
-            rules.append(
-                DropRule(
-                    rule=rule,
-                    scope="strain",
-                    description=(
-                        f"the released ORF's GeneNameRefusalReason is {reason.value} "
-                        "(systematic_name_ledger.json gives each locus)"
-                    ),
-                    n_records=len(items) * per_strain,
-                    items=items,
-                )
-            )
+    def _drop_log(self, rows: list[ReleaseRow], kept: int, unperturbed: int) -> DropLog:
+        """The accounting: every released cell is a record, so no rule drops any."""
+        source_records = len(rows) * len(RELEASE_CONDITIONS) * len(REPLICATE_IDS)
         log_ = DropLog(
             dataset=self.name,
             source_records=source_records,
             kept_records=kept,
             dropped_records=source_records - kept,
             unperturbed_records=unperturbed,
-            rules=rules,
+            rules=[],
         )
-        accounted = sum(rule.n_records for rule in rules)
-        if accounted != log_.dropped_records:
+        if log_.dropped_records:
             raise RuntimeError(
-                f"drop accounting mismatch: rules total {accounted}, "
-                f"{log_.dropped_records} records missing from the build"
+                f"{log_.dropped_records} released cells have no record and no rule"
             )
         return log_
 
@@ -1651,58 +1280,65 @@ class EnvChemgenYoshikawa2009Dataset(ExperimentDataset):
 # --------------------------------------------------------------------------- #
 # Verification
 # --------------------------------------------------------------------------- #
-#: Each kept condition's added compound, as the stored environment names it.
-CONDITION_OF_COMPOUND: dict[str | None, str] = {
-    None
-    if spec.compound_label is None
-    else resolved_compound(spec.compound_label).name: spec.label
-    for spec in CONDITIONS
-}
+def _condition_of_edit() -> dict[tuple[str, float] | None, str]:
+    """Each condition by its one added compound and dose, as the stored environment
+    names them (ethanol is added at two doses); None is the nonstress condition.
+    """
+    out: dict[tuple[str, float] | None, str] = {}
+    for spec in CONDITIONS:
+        if spec.compound_label is None or spec.dose is None:
+            out[None] = spec.label
+            continue
+        if spec.dose.value is None:
+            raise RuntimeError(f"{spec.label}: a stress dose has no value")
+        name = resolved_compound(spec.compound_label).name
+        out[(name, spec.dose.value)] = spec.label
+    return out
+
+
+CONDITION_OF_EDIT = _condition_of_edit()
 
 
 def condition_label(environment_: Mapping[str, Any]) -> str:
-    """The released condition a stored environment is, read off its one compound."""
+    """The released condition a stored environment is, read off its one compound edit."""
     edits = environment_["perturbations"]
     if len(edits) > 1:
         raise RuntimeError(f"an environment carries {len(edits)} edits, not 0 or 1")
-    compound = edits[0]["compound"]["name"] if edits else None
-    return CONDITION_OF_COMPOUND[compound]
+    if not edits:
+        return CONDITION_OF_EDIT[None]
+    edit = edits[0]
+    return CONDITION_OF_EDIT[
+        (edit["compound"]["name"], float(edit["concentration"]["value"]))
+    ]
 
 
 def release_fidelity(
-    records: list[dict[str, Any]], rows: list[ReleaseRow], kept: Mapping[str, str]
+    records: list[dict[str, Any]], rows: list[ReleaseRow]
 ) -> LevelResult:
-    """L2: every stored rate and call is its released Table S1 cell, and every kept cell
-    has its record.
+    """L2: every stored rate, call and name is its released Table S1 cell, and every
+    released cell has its record.
 
-    ``kept`` maps a released ORF to the current ORF the build stored it under (the
-    resolution's ``kept``); a renamed strain carries its released name on its
-    ``ConstructedOrf``, so it is compared with the row it came from.
+    A record is matched to its release row by the stored ORF (the release's ORF cell
+    upper-cased), and its ``perturbed_gene_name`` must be that row's name cell.
     """
-    by_orf = {row.orf: row for row in rows if row.orf in kept}
-    expected = len(kept) * len(CONDITIONS) * len(REPLICATE_IDS)
+    by_orf = {stored_orf(row.orf): row for row in rows}
+    expected = len(rows) * len(CONDITIONS) * len(REPLICATE_IDS)
     seen: set[tuple[str, str, str]] = set()
     mismatches: list[str] = []
     for record in records:
         experiment = record["experiment"]
         (perturbation,) = experiment["genotype"]["perturbations"]
-        constructed = perturbation.get("constructed_orf")
-        orf = (
-            constructed["source_systematic_name"]
-            if constructed
-            else perturbation["systematic_gene_name"]
-        )
-        if kept.get(orf) != perturbation["systematic_gene_name"]:
-            mismatches.append(
-                f"{orf}: stored under {perturbation['systematic_gene_name']}"
-            )
+        orf = perturbation["systematic_gene_name"]
+        row = by_orf.get(orf)
+        if row is None or perturbation["perturbed_gene_name"] != row.name:
+            mismatches.append(f"{orf}: not a released strain as named")
             continue
         label = condition_label(experiment["environment"])
         phenotype_ = experiment["phenotype"]
         replicate = str(phenotype_["replicate_id"])
         key = (orf, label, replicate)
         seen.add(key)
-        cells = by_orf[orf].conditions[label]
+        cells = row.conditions[label]
         category, category_label = CALLS[cells.call]
         stored = (
             float(phenotype_["environment_response"]),
@@ -1723,7 +1359,7 @@ def release_fidelity(
         passed=passed,
         message=(
             f"all {len(records)} stored rates and calls equal their released Table S1 "
-            f"cells, one record per kept (strain, condition, culture)"
+            f"cells, one record per released (strain, condition, culture)"
             if passed
             else f"{len(mismatches)} records differ from the release; {len(seen)} "
             f"distinct cells over {len(records)} records, {expected} expected: "
@@ -1754,13 +1390,7 @@ def verify_build(dataset_root: str, data_root: str | None = None) -> Any:
     root = data_root or _data_root()
     report = verify_environment_response_entry(REGISTRY_NAME, root)
     rows = read_release(raw_mirror_dir(root) / TABLE_S1.raw_rel)
-    genome = SCerevisiaeGenome(
-        genome_root=osp.join(root, "data/sgd/genome"),
-        go_root=osp.join(root, "data/go"),
-        overwrite=False,
-    )
-    kept = resolve_strains([row.orf for row in rows], genome).kept
-    report.add(release_fidelity(load_records(dataset_root), rows, kept))
+    report.add(release_fidelity(load_records(dataset_root), rows))
     return report
 
 
@@ -1770,13 +1400,8 @@ def main() -> None:
 
     load_dotenv()
     data_root = os.environ["DATA_ROOT"]
-    genome = SCerevisiaeGenome(
-        genome_root=osp.join(data_root, "data/sgd/genome"),
-        go_root=osp.join(data_root, "data/go"),
-        overwrite=False,
-    )
     root = osp.join(data_root, DATASET_ROOT_REL)
-    dataset = EnvChemgenYoshikawa2009Dataset(root=root, genome=genome)
+    dataset = EnvChemgenYoshikawa2009Dataset(root=root)
     print(f"len = {len(dataset)}")
     print(dataset[0])
 

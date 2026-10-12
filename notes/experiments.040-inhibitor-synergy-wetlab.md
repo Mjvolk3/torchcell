@@ -1174,9 +1174,23 @@ Round 7 (`r3_sweep.py --wave 7`, `results/r7_plan.csv`): `van_e150_cell`,
 hours. Delta triage before this: `r5b_vanwil_e300` (two jobs, 300 epochs; every run
 selects before 135) and `r5b_vanhet_e150` (three jobs; the source-combining null is
 already measured on vanhop and vanhophet) cancelled, 22829495 to 22829497 and 22829501
-to 22829502; the 36 remaining round-5 and 5b jobs (partition ensemble, regularization
-grid, selector, the `cond_batch` 96 and `aux_weight` arms) stay, since they answer the
-questions the cell readout inherits.
+to 22829502; then every remaining round-5 and 5b job (36, all pending, all on the old
+gene readout) cancelled as well, so no compute goes to a readout the framework has
+moved past. Their questions (the partition ensemble on fold seeds 1 and 2, the
+`cond_batch` 96 and `aux_weight` arms, the regularization grid, the selector) are
+requeued under `readout: cell` once the first round-7 reading is in. Delta now holds
+only round 7: 22846359 to 22846371 (the five arms at seed 0 and their seed-1-and-2
+twins); GilaHyper runs 4326 (van cell, two processes) with 4327 (lambda_host 3) and
+4328 (dose FiLM) behind it, and 4329 (vanhop cell) and 4330 (vanhophet cell) behind the
+last old-readout round-4 job, 4282. The queued round-4 remainder and round 6 (4061 to
+4068, 4212, 4213, 4227) are cancelled.
+
+Round 7 is the first time this was computed. An audit of the earlier environment work
+(019, 030, 031, 033, 035, 038) finds no model that read a no-deletion record and the
+deletion strains through one head: 035 and 038 put the compound token in front of the
+wildtype gene tokens and read every record at its deleted genes, with the sensitized
+background present as three extra deletions; 030 carries a per-dataset token and gene
+records only; 019, 031 and 033 trained no environment model.
 
 What is NOT yet general, stated so it is not mistaken for done: the batch is still
 grouped by genotype (one encoder forward per strain against its conditions), which is a

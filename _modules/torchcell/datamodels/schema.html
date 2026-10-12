@@ -7906,6 +7906,24 @@
     <span class="c1"># ----------------------------------------------------------------------- #</span>
     <span class="c1"># end ADDITIVE (#863)</span>
     <span class="c1"># ----------------------------------------------------------------------- #</span>
+    <span class="c1"># ----------------------------------------------------------------------- #</span>
+    <span class="c1"># ADDITIVE (Wetmore 2015 own release): the released test statistic of the</span>
+    <span class="c1"># response. A test statistic is a TEST of the number, like the p-value above,</span>
+    <span class="c1"># so it never feeds environment_response_uncertainty or the derived SE.</span>
+    <span class="c1"># Nothing above this block changes.</span>
+    <span class="c1"># ----------------------------------------------------------------------- #</span>
+    <span class="n">environment_response_t_statistic</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the test statistic the source released for this response, "</span>
+        <span class="s2">"verbatim. For RB-TnSeq it is the moderated t of Wetmore 2015 (Methods (iv)): "</span>
+        <span class="s2">"t = f / sqrt(sigma^2 + max(V_e, V_n)) with sigma = 0.1, so it is a function "</span>
+        <span class="s2">"of the response and its standard error and is stored because the release "</span>
+        <span class="s2">"states it, not recomputed. The statistic is named in `units` or the "</span>
+        <span class="s2">"dataset's provenance. None when the source releases no statistic."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># ----------------------------------------------------------------------- #</span>
+    <span class="c1"># end ADDITIVE (Wetmore 2015 own release)</span>
+    <span class="c1"># ----------------------------------------------------------------------- #</span>
 
 <div class="viewcode-block" id="EnvironmentResponsePhenotype.validate_response">
 <a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.EnvironmentResponsePhenotype.html#torchcell.datamodels.schema.EnvironmentResponsePhenotype.validate_response">[docs]</a>
@@ -8029,6 +8047,24 @@
             <span class="p">)</span>
         <span class="c1"># ------------------------------------------------------------------- #</span>
         <span class="c1"># end ADDITIVE (#863)</span>
+        <span class="c1"># ------------------------------------------------------------------- #</span>
+        <span class="c1"># ------------------------------------------------------------------- #</span>
+        <span class="c1"># ADDITIVE (Wetmore 2015 own release): a released test statistic is a</span>
+        <span class="c1"># finite number; a statistic needs the response it tests.</span>
+        <span class="c1"># ------------------------------------------------------------------- #</span>
+        <span class="n">t_statistic</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">environment_response_t_statistic</span>
+        <span class="k">if</span> <span class="n">t_statistic</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">t_statistic</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"environment_response_t_statistic must be finite, got </span><span class="si">{</span><span class="n">t_statistic</span><span class="si">}</span><span class="s2">"</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">environment_response</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">"environment_response_t_statistic tests a numeric response; set "</span>
+                    <span class="s2">"environment_response"</span>
+                <span class="p">)</span>
+        <span class="c1"># ------------------------------------------------------------------- #</span>
+        <span class="c1"># end ADDITIVE (Wetmore 2015 own release)</span>
         <span class="c1"># ------------------------------------------------------------------- #</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 

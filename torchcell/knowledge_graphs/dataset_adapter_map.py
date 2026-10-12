@@ -53,6 +53,7 @@ from torchcell.adapters import (
     EnvChemgenWang2015Adapter,
     EnvChemgenWang2024Adapter,
     EnvChemgenWildenhain2015Adapter,
+    EnvChemgenYoshikawa2009Adapter,
     EnvMetalTnseqRoyet2025Adapter,
     ExometaboliteBrunk2016Adapter,
     FattyAcidXue2025Adapter,
@@ -396,6 +397,7 @@ from torchcell.datasets.scerevisiae.wildenhain2015 import (
 )
 from torchcell.datasets.scerevisiae.xue2025 import FattyAcidXue2025Dataset
 from torchcell.datasets.scerevisiae.yoshida2012 import OrganicAcidYoshida2012Dataset
+from torchcell.datasets.scerevisiae.yoshikawa2009 import EnvChemgenYoshikawa2009Dataset
 from torchcell.datasets.scerevisiae.zelezniak2018 import (
     MetaboliteZelezniak2018Dataset,
     ProteomeZelezniak2018Dataset,
@@ -472,6 +474,7 @@ dataset_adapter_map: dict[type, type] = {
     HetHillenmeyer2008Dataset: HetHillenmeyer2008Adapter,
     HomHillenmeyer2008Dataset: HomHillenmeyer2008Adapter,
     EnvChemgenParsons2006Dataset: EnvChemgenParsons2006Adapter,
+    EnvChemgenYoshikawa2009Dataset: EnvChemgenYoshikawa2009Adapter,
     # Bacteria (plan.bacteria-ontology-genome step 9): E. coli, then P. putida.
     GeneInteractionBabu2014Dataset: GeneInteractionBabu2014Adapter,
     MrnaFractionBalakrishnan2022Dataset: MrnaFractionBalakrishnan2022Adapter,

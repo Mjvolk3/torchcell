@@ -361,6 +361,9 @@ from .xue2025_adapter import FattyAcidXue2025Adapter as FattyAcidXue2025Adapter
 from .yoshida2012_adapter import (
     OrganicAcidYoshida2012Adapter as OrganicAcidYoshida2012Adapter,
 )
+from .yoshikawa2009_adapter import (
+    EnvChemgenYoshikawa2009Adapter as EnvChemgenYoshikawa2009Adapter,
+)
 from .yunus2026_array_adapter import (
     CrispriArrayYunus2026Adapter as CrispriArrayYunus2026Adapter,
 )
@@ -483,6 +486,7 @@ environment_adapters = [
     "HetHillenmeyer2008Adapter",
     "HomHillenmeyer2008Adapter",
     "EnvChemgenParsons2006Adapter",
+    "EnvChemgenYoshikawa2009Adapter",
 ]
 
 baryshnikova_adapters = ["SmfBaryshnikova2010Adapter"]

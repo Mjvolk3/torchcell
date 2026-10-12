@@ -40,7 +40,13 @@ from Baba.
 
 RECORDS. All 200 released columns are records (#1045 row 22, #1057). The 29 KEIO
 deletion columns (16 strains over their carbon sources) carry a
-``BacterialDeletionPerturbation``. The 171 phosphomutant columns (87 strains) were
+``BacterialReleasedStrainPerturbation`` of ``released_kind=deletion`` keyed by the gene
+SYMBOL the column token releases (``sucB knockout`` -> ``sucB``), with the KEIO
+collection and cassette from Baba: the release names no b-number for a deletion strain,
+and under the owner's rule of 2026-10-12 the loader reads no annotation to derive one,
+so the resolution to a locus is a modeling-time join. Before that rule the symbols went
+through ``reconcile_locus_tags`` and the record carried the resolved b-number. The 171
+phosphomutant columns (87 strains) were
 dropped under ``phosphosite_substitution_has_no_bacterial_leaf`` until #1057; each is
 now stored as released on ``BacterialReleasedStrainPerturbation``
 (``released_kind=sequence_allele``): ``strain_label`` is the Supplementary Data 3
@@ -103,7 +109,6 @@ from torchcell.datamodels.schema import (
     BACTERIAL_ASSEMBLY_SETS,
     AssemblyReferenceGenome,
     BacterialAssemblySet,
-    BacterialDeletionPerturbation,
     BacterialMetaboliteExperiment,
     BacterialMetaboliteExperimentReference,
     BacterialReleasedStrainPerturbation,
@@ -123,12 +128,8 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.bacteria_common import (
-    LOCUS_TAG_PATTERNS,
     STRAIN_GENE_NAMESPACES,
-    LocusTagReconciliation,
     assembly_reference,
-    bacterial_genome,
-    reconcile_locus_tags,
 )
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.literature.manifest import (
@@ -139,7 +140,7 @@ from torchcell.literature.manifest import (
     RetrievalRecord,
 )
 from torchcell.literature.provenance import run_retriever
-from torchcell.sequence.genome.ecoli.k12 import EcoliK12Genome, EcoliK12StrainName
+from torchcell.sequence.genome.ecoli.k12 import EcoliK12StrainName
 from torchcell.verification.report import (
     Level,
     LevelResult,
@@ -532,9 +533,8 @@ PHOSPHOMUTANT_IDENTIFIER_KIND = (
     "protein name, as the Supplementary Data 3 token writes it"
 )
 NOT_DETECTED = "nd"
-#: Checklist item 4: below this fraction of deletion gene symbols resolving to MG1655
-#: b-numbers the build stops. Every one of the 16 resolves on the pinned annotation.
-MIN_RESOLVED_FRACTION = 0.95
+#: What a deletion record's gene identifier is: the symbol its token writes.
+DELETION_IDENTIFIER_KIND = "gene symbol, as the Supplementary Data 3 token writes it"
 
 PUBLICATION = Publication(doi=PAPER_DOI, doi_url=f"https://doi.org/{PAPER_DOI}")
 """The mirrored article prints no PubMed id, so the DOI is the only identifier."""
@@ -1141,42 +1141,6 @@ def identity_ledger(ions: Sequence[IonRow]) -> IdentityLedger:
     )
 
 
-class ResolvedDeletion(BaseModel):
-    """One kept column with the MG1655 locus tag of its deleted gene."""
-
-    model_config = ConfigDict(extra="forbid", frozen=True)
-
-    column: StrainColumn
-    locus_tag: str
-
-
-def resolve_deletions(
-    genome: EcoliK12Genome, kept: Sequence[StrainColumn], *, label: str
-) -> tuple[list[ResolvedDeletion], LocusTagReconciliation]:
-    """Reconcile each deletion's gene symbol on ``genome``, refusing an unplaced one.
-
-    Every one of the released symbols is a current MG1655 gene, so a symbol the
-    reconciler keeps as given is a changed annotation or the wrong genome, not a
-    record to drop.
-    """
-    symbols = pd.Series([column.gene_symbol for column in kept], dtype=object)
-    stored, report = reconcile_locus_tags(genome, symbols, label=label)
-    report.require_resolved(MIN_RESOLVED_FRACTION)
-    pattern = LOCUS_TAG_PATTERNS[report.gene_namespace]
-    resolved: list[ResolvedDeletion] = []
-    unplaced: list[str] = []
-    for column, tag in zip(kept, stored.tolist(), strict=True):
-        if pattern.match(str(tag)) is None:
-            unplaced.append(f"{column.gene_symbol} -> {tag}")
-            continue
-        resolved.append(ResolvedDeletion(column=column, locus_tag=str(tag)))
-    if unplaced:
-        raise TableFormatError(
-            f"{len(unplaced)} deletion symbols are not on an MG1655 locus: {unplaced}"
-        )
-    return resolved, report
-
-
 # --------------------------------------------------------------------------- #
 # Record construction (pure, no files)
 # --------------------------------------------------------------------------- #
@@ -1243,14 +1207,23 @@ def wild_type_phenotype(phenotype: MetabolitePhenotype) -> MetabolitePhenotype:
     )
 
 
-def deletion_genotype(resolved: ResolvedDeletion) -> Genotype:
-    """The one KEIO deletion, named by its MG1655 b-number."""
+def deletion_genotype(column: StrainColumn) -> Genotype:
+    """The one KEIO deletion, stored under the symbol Supplementary Data 3 releases.
+
+    The release names the deleted gene by symbol only (``sucB knockout``), so the record
+    is a ``BacterialReleasedStrainPerturbation`` of kind ``deletion`` keyed by that
+    symbol, with the KEIO collection and cassette from Baba 2006; no annotation
+    decides a b-number for it (the owner's rule of 2026-10-12).
+    """
     return Genotype(
         perturbations=[
-            BacterialDeletionPerturbation(
-                systematic_gene_name=resolved.locus_tag,
-                perturbed_gene_name=resolved.column.gene_symbol,
+            BacterialReleasedStrainPerturbation(
+                systematic_gene_name=column.gene_symbol,
+                perturbed_gene_name=column.gene_symbol,
                 gene_namespace=STRAIN_GENE_NAMESPACES[REFERENCE_STRAIN_NAME],
+                strain_label=column.strain,
+                identifier_kind=DELETION_IDENTIFIER_KIND,
+                released_kind=ReleasedStrainKind.deletion,
                 collection=COLLECTION,
                 cassette=CASSETTE,
             )
@@ -1287,14 +1260,14 @@ def build_phosphomutant_experiment(
 
 
 def build_experiment(
-    dataset_name: str, resolved: ResolvedDeletion, ions: Sequence[IonRow]
+    dataset_name: str, column: StrainColumn, ions: Sequence[IonRow]
 ) -> BacterialMetaboliteExperiment:
     """The record of one deletion strain in one carbon source."""
     return BacterialMetaboliteExperiment(
         dataset_name=dataset_name,
-        genotype=deletion_genotype(resolved),
-        environment=environment(resolved.column.carbon_source),
-        phenotype=metabolite_phenotype(ions, resolved.column.fold_change),
+        genotype=deletion_genotype(column),
+        environment=environment(column.carbon_source),
+        phenotype=metabolite_phenotype(ions, column.fold_change),
     )
 
 
@@ -1329,11 +1302,9 @@ class MetabolomeSchastnaya2021Dataset(ExperimentDataset):
         io_workers: int = 0,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
-        ecoli_genome: EcoliK12Genome | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize; ``ecoli_genome`` is injected by the build entry points."""
-        self.ecoli_genome = ecoli_genome
+        """Initialize. No genome parameter: the loader reads no annotation."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -1377,20 +1348,6 @@ class MetabolomeSchastnaya2021Dataset(ExperimentDataset):
     def _raw(self, name: str) -> str:
         return osp.join(self.raw_dir, name)
 
-    def _genome(self) -> EcoliK12Genome:
-        """The injected genome, or the reference strain's default cache (a direct run);
-        a genome of another assembly set is refused.
-        """
-        if self.ecoli_genome is None:
-            self.ecoli_genome = bacterial_genome("ecoli", self.REFERENCE_STRAIN)
-        expected = BACTERIAL_ASSEMBLY_SETS[self.REFERENCE_STRAIN]
-        if self.ecoli_genome.ASSEMBLY_SET != expected:
-            raise ValueError(
-                f"{type(self).__name__} needs the {expected} genome, got "
-                f"{self.ecoli_genome.ASSEMBLY_SET}"
-            )
-        return self.ecoli_genome
-
     @post_process
     def process(self) -> None:
         """Parse Supplementary Data 3 into one record per released column + LMDB."""
@@ -1406,11 +1363,7 @@ class MetabolomeSchastnaya2021Dataset(ExperimentDataset):
         detected = detected_ion_ledger(table.columns)
         identities = identity_ledger(table.ions)
 
-        genome = self._genome()
-        resolved, reconciliation = resolve_deletions(
-            genome, knockout_columns, label=f"{self.name} deletion gene symbols"
-        )
-        n_records = len(resolved) + len(phosphomutant_columns)
+        n_records = len(knockout_columns) + len(phosphomutant_columns)
         drop_log = DropLog(
             dataset=self.name,
             released_columns=len(table.columns),
@@ -1429,7 +1382,7 @@ class MetabolomeSchastnaya2021Dataset(ExperimentDataset):
             "detected ions per group %s",
             len(table.columns),
             n_records,
-            len(resolved),
+            len(knockout_columns),
             len(phosphomutant_columns),
             n_phosphomutant_strains,
             identities.n_single_identity,
@@ -1441,11 +1394,10 @@ class MetabolomeSchastnaya2021Dataset(ExperimentDataset):
         os.makedirs(self.processed_dir, exist_ok=True)
         self._write_ledgers(
             drop_log,
-            reconciliation,
             detected,
             identities,
             table.ions,
-            resolved,
+            knockout_columns,
             phosphomutant_columns,
             entries,
         )
@@ -1458,7 +1410,8 @@ class MetabolomeSchastnaya2021Dataset(ExperimentDataset):
         )
         with env_out.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             experiments = [
-                build_experiment(self.name, item, table.ions) for item in resolved
+                build_experiment(self.name, column, table.ions)
+                for column in knockout_columns
             ] + [
                 build_phosphomutant_experiment(self.name, column, table.ions)
                 for column in phosphomutant_columns
@@ -1478,15 +1431,14 @@ class MetabolomeSchastnaya2021Dataset(ExperimentDataset):
     def _write_ledgers(
         self,
         drop_log: DropLog,
-        reconciliation: LocusTagReconciliation,
         detected: DetectedIonLedger,
         identities: IdentityLedger,
         ions: Sequence[IonRow],
-        resolved: Sequence[ResolvedDeletion],
+        deletions: Sequence[StrainColumn],
         phosphomutants: Sequence[StrainColumn],
         entries: Mapping[str, PhosphomutantEntry],
     ) -> None:
-        """The drop log, the reconciliation, the ion tables and the p-value matrix.
+        """The drop log, the ion tables, the strain table and the p-value matrix.
 
         ``strains.csv`` lists every record in LMDB order: the deletions first, then the
         phosphomutants with Supplementary Data 1's b-number and mutant state beside the
@@ -1494,9 +1446,6 @@ class MetabolomeSchastnaya2021Dataset(ExperimentDataset):
         """
         out = Path(self.preprocess_dir)
         (out / "dropped_records.json").write_text(drop_log.model_dump_json(indent=2))
-        (out / "identifier_reconciliation.json").write_text(
-            reconciliation.model_dump_json(indent=2)
-        )
         (out / "detected_ion_counts.json").write_text(
             detected.model_dump_json(indent=2)
         )
@@ -1528,23 +1477,23 @@ class MetabolomeSchastnaya2021Dataset(ExperimentDataset):
                 {
                     "record": idx,
                     "arm": "deletion",
-                    "released_column": item.column.column,
-                    "released_strain": item.column.strain,
-                    "gene_symbol": item.column.gene_symbol,
-                    "locus_tag": item.locus_tag,
+                    "released_column": column.column,
+                    "released_strain": column.strain,
+                    "gene_symbol": column.gene_symbol,
+                    "locus_tag": "",
                     "sd1_enzyme_locus": "",
                     "sd1_mutant_state": "",
-                    "carbon_source": item.column.carbon_source,
-                    "extraction": item.column.extraction,
-                    "n_detected": item.column.n_detected,
+                    "carbon_source": column.carbon_source,
+                    "extraction": column.extraction,
+                    "n_detected": column.n_detected,
                     "strain_background": SOURCED_VALUES["deletion_background"].value,
                     "reference_background": WILD_TYPE_BACKGROUND_NAME,
                 }
-                for idx, item in enumerate(resolved)
+                for idx, column in enumerate(deletions)
             ]
             + [
                 {
-                    "record": len(resolved) + idx,
+                    "record": len(deletions) + idx,
                     "arm": "phosphomutant",
                     "released_column": column.column,
                     "released_strain": column.strain,
@@ -1561,7 +1510,7 @@ class MetabolomeSchastnaya2021Dataset(ExperimentDataset):
                 for idx, column in enumerate(phosphomutants)
             ]
         ).to_csv(out / "strains.csv", index=False)
-        columns = [item.column for item in resolved] + list(phosphomutants)
+        columns = list(deletions) + list(phosphomutants)
         p_values = pd.DataFrame(
             {
                 f"{column.strain}|{column.carbon_source}": column.adjusted_p_value

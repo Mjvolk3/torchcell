@@ -74,6 +74,7 @@ import os
 import re
 import sys
 import tempfile
+import time
 import unicodedata
 from collections.abc import Callable
 from datetime import UTC, datetime
@@ -135,6 +136,9 @@ PDF_HEADER_WINDOW = 1024
 PDF_TRAILER_WINDOW = 2048
 EXIT_REFUSED = 2
 EXIT_MANUAL = 3
+#: Reads of an item's attachments, and seconds between them, before a missing MD5 fails.
+VERIFY_READS = 10
+VERIFY_DELAY = 6.0
 
 
 class RefusedError(RuntimeError):
@@ -793,16 +797,41 @@ def create_item(
     return str(resp["successful"]["0"]["key"])
 
 
-def verify_stored(lib: ZoteroLibrary, item_key: str, files: list[AttachedFile]) -> None:
-    """Every attachment written is a PDF child of the item holding the MD5 we sent."""
-    stored = {a["key"]: a["data"].get("md5") for a in lib.pdf_attachments(item_key)}
-    for attached in files:
-        held = stored.get(str(attached.attachment_key))
-        if held != attached.md5:
-            raise RuntimeError(
-                f"attachment {attached.attachment_key} ({attached.filename}) of "
-                f"{item_key} stores md5 {held}; the bytes sent have md5 {attached.md5}"
-            )
+def verify_stored(
+    lib: ZoteroLibrary,
+    item_key: str,
+    files: list[AttachedFile],
+    *,
+    reads: int = VERIFY_READS,
+    delay: float = VERIFY_DELAY,
+    sleep: Callable[[float], None] = time.sleep,
+) -> None:
+    """Every attachment written is a PDF child of the item holding the MD5 we sent.
+
+    The read straight after an upload can show the attachment with no MD5 yet
+    (measured 2026-10-12 on the first live filing: ``md5`` None, then the right value
+    on a read about a minute later), so a missing MD5 is re-read up to ``reads``
+    times, ``delay`` seconds apart. A wrong MD5 fails at once.
+    """
+    for read in range(reads):
+        stored = {a["key"]: a["data"].get("md5") for a in lib.pdf_attachments(item_key)}
+        held = {str(f.attachment_key): stored.get(str(f.attachment_key)) for f in files}
+        for attached in files:
+            md5 = held[str(attached.attachment_key)]
+            if md5 is not None and md5 != attached.md5:
+                raise RuntimeError(
+                    f"attachment {attached.attachment_key} ({attached.filename}) of "
+                    f"{item_key} stores md5 {md5}; the bytes sent have md5 "
+                    f"{attached.md5}"
+                )
+        if all(md5 is not None for md5 in held.values()):
+            return
+        if read < reads - 1:
+            sleep(delay)
+    missing = sorted(key for key, md5 in held.items() if md5 is None)
+    raise RuntimeError(
+        f"attachments {missing} of {item_key} still show no md5 after {reads} reads"
+    )
 
 
 # -- the filing ------------------------------------------------------------------

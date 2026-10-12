@@ -812,7 +812,7 @@ def test_add_paper_attach_to_refusals(
     assert zot.writes() == (0, 0, 0)
 
 
-def _main_pdf(key: str, md5: str) -> dict[str, Any]:
+def _main_pdf(key: str, md5: str | None) -> dict[str, Any]:
     return {
         "key": key,
         "data": {
@@ -1135,3 +1135,53 @@ def test_add_paper_attaches_to_an_owner_item_in_the_database_root(
     ]
     assert zot.created == []
     assert zot.item("OWNER")["data"]["collections"] == ["DBROOT"]
+
+
+class LaggingZot(FakeZot):
+    """Answers the attachment with no MD5 for the first ``lag`` reads."""
+
+    def __init__(self, lag: int, md5: str) -> None:
+        """One PDF child ATT1 of ITEM whose MD5 appears after ``lag`` reads."""
+        super().__init__(collections=COLLECTIONS)
+        self.lag = lag
+        self.md5 = md5
+
+    def children(self, item_key: str) -> list[dict[str, Any]]:
+        """ATT1, its MD5 None until the read after the ``lag``-th."""
+        self.calls.append(("children", item_key))
+        reads = sum(1 for c in self.calls if c[0] == "children")
+        md5 = None if reads <= self.lag else self.md5
+        return self._page([_main_pdf("ATT1", md5)])
+
+
+def _attached_pdf() -> za.AttachedFile:
+    return za.AttachedFile(
+        attachment_key="ATT1",
+        role="paper",
+        filename="p.pdf",
+        route=za.Route.PMC_CLOUD,
+        method=RetrievalMethod.pmc_cloud,
+        source_url=PMC_PDF_URL,
+        origin=PMC_PDF_URL,
+        sha256=_sha(PDF),
+        md5=_md5(PDF),
+        n_bytes=len(PDF),
+    )
+
+
+def test_verify_stored_rereads_a_missing_md5(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Two reads without an MD5, then the right one: two sleeps, no error."""
+    slept: list[float] = []
+    lib = _lib(monkeypatch, LaggingZot(lag=2, md5=_md5(PDF)))
+    za.verify_stored(lib, "ITEM", [_attached_pdf()], delay=1.5, sleep=slept.append)
+    assert slept == [1.5, 1.5]
+
+
+def test_verify_stored_gives_up_after_its_reads(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    slept: list[float] = []
+    lib = _lib(monkeypatch, LaggingZot(lag=99, md5=_md5(PDF)))
+    with pytest.raises(RuntimeError, match=r"\['ATT1'\] of ITEM still show no md5"):
+        za.verify_stored(lib, "ITEM", [_attached_pdf()], reads=3, sleep=slept.append)
+    assert slept == [6.0, 6.0]

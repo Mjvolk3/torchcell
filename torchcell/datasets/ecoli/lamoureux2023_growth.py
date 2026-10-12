@@ -6,7 +6,7 @@ r"""Lamoureux 2023 PRECISE-1K: the released per-sample growth rate, as an absolu
 
 Lamoureux et al. 2023 (Nucleic Acids Res 51:10184, doi:10.1093/nar/gkad750) releases its
 sample metadata with a ``Growth Rate (1/hr)`` column. 354 of ``metadata_qc.csv``'s 1,035
-rows carry a value; this module serves the 89 of them the schema can hold as
+rows carry a value; this module serves 260 of them as
 :class:`GrowthRateLamoureux2023Dataset`, one ``BacterialEnvironmentResponseExperiment``
 per released sample carrying the ABSOLUTE rate, against a declared base condition.
 
@@ -18,26 +18,24 @@ half is closed: PR #836 (#776) gave the environment-response verifier an absolut
 doubling time", so an absolute rate in 1/hr is exactly that member.
 
 THE COUNTS, each measured rather than recalled. Of the 354 rate cells, every one is a
-``p1k_*`` id of the PRECISE-1K index, so the sibling Public K-12 arm contributes NOTHING:
-0 of its 240 built records carry a rate. Applying the expression loader's OWN genotype
-and environment rules (``settle_genotype`` / ``settle_environment``, imported, never
-restated) to the 354 keeps 103 and drops 251 -- 138 evolved isolates, 94 heterologous
-constructs, 12 non-MG1655 strains and 7 point-mutation alleles. Measured: those 103 are
-exactly the built ``rnaseq_lamoureux2023`` records that carry a rate.
+``p1k_*`` id of the PRECISE-1K index, so the sibling Public K-12 arm contributes NOTHING.
+The genotype and environment rules are the expression loader's own, imported and never
+restated, with the same #1057 dispatch (``settle_genotype``, then ``settle_background``
+for a strain rule or ``settle_allele`` for an allele rule, then ``settle_environment``):
+they keep 260 and drop 94, the heterologous constructs of the ``pColi`` study. The 260
+are 61 wild type, 42 single deletions, 138 evolved isolates stored under their released
+strain description, 12 BW25113 samples stored on a background named as released, and 7
+``rpoB`` substitution samples stored on the released-strain leaf. Until #1057 the 138,
+the 12 and the 7 were dropped, which left 103.
 
-THE 14 ZERO-RATE ROWS ARE DROPPED, AND THAT IS A DECISION. 14 of the 103 release the
-string ``0.0``. A stored 0 h^-1 asserts a fully arrested culture from which a sequencing
-library was nonetheless prepared, and the release gives no legend that says so: a 0 in a
-released numeric column is indistinguishable from an unrecorded cell, and whether the
-authors meant 0 or blank is NOT stated anywhere in the paper or the release. The
-conservative reading is that the cell is uninterpretable, so the 14 rows are dropped
-under ``DROP_ZERO_RATE`` with every id, condition and value written verbatim to
-``preprocess/dropped_records.json``, which makes the decision reversible. All 14 sit in 7
-stress conditions (``fur:wt_dpd``, ``fur:delfur_dpd``, ``ompr:wt_nacl``,
-``oxidative:wt_pq``, ``oxidative:deloxyr_pq``, ``oxidative:delsoxr_pq``,
-``oxidative:delsoxs_pq``), and the cost is recorded too: the ``oxyR``, ``soxR`` and
-``soxS`` deletions appear ONLY in those rows, so they are absent from the stored gene
-set. The remaining 89 rates run 0.07 to 1.42 h^-1 and none is negative.
+THE 16 ZERO-RATE ROWS ARE STORED (#1057; until then the 14 among the 103 were dropped
+under ``zero_rate_not_distinguishable_from_unrecorded``). The release prints ``0.0``,
+and the owner rule of 2026-10-12 is that a released value is stored as released and
+read at modeling time. Whether the authors meant an arrested culture or an unrecorded
+cell is stated nowhere, so every zero-rate id is listed in
+``preprocess/dropped_records.json`` under ``notes`` for the reader, and none is dropped.
+All 16 sit in stress conditions (``fur:wt_dpd``, ``ompr:wt_nacl``,
+``oxidative:deloxyr_pq``, ...).
 
 THE REFERENCE IS A DECLARED BASE CONDITION, NEVER A BORROWED ROW. The absolute branch
 needs the reference to state its own finite value on the record's own scale. The
@@ -54,8 +52,9 @@ without a hand-written exclusion. An aggregate rather than one row because the e
 0.58 to 0.69, 19%, which is the Caglar 2017 situation verbatim ("the three released base
 measurements span 0.2174 log2 ... so borrowing one is not neutral").
 
-``screen_id`` IS THE RELEASED PROJECT, AND IT IS LOAD-BEARING. Measured over the 89: the
-L1 key (genotype, environment, project, ``rep_id``) is unique for all 89, and dropping the
+``screen_id`` IS THE RELEASED PROJECT, AND IT IS LOAD-BEARING. Measured: the
+L1 key (genotype, environment, project, ``rep_id``) was unique for all 89 of the
+pre-#1057 build, and dropping the
 project leaves 2 duplicate triples, because ``ica:wt_glc`` and ``ytf:wt_glc`` are the same
 declared environment and the same wild-type genotype measured in two different projects,
 which repeat ``rep_id`` 1 and 2. This is Caglar 2017's use of ``screen_id``: the source's
@@ -116,9 +115,11 @@ from torchcell.data import (
     verify_raw_files,
 )
 from torchcell.datamodels.schema import (
+    AssemblyReferenceGenome,
     BacterialDeletionPerturbation,
     BacterialEnvironmentResponseExperiment,
     BacterialEnvironmentResponseExperimentReference,
+    BacterialReleasedStrainPerturbation,
     Environment,
     EnvironmentResponsePhenotype,
     Experiment,
@@ -126,6 +127,7 @@ from torchcell.datamodels.schema import (
     Genotype,
     MeasurementType,
     Publication,
+    ReleasedStrainKind,
 )
 from torchcell.datasets.bacteria_common import (
     assembly_reference,
@@ -157,13 +159,13 @@ UNITS = COL_GROWTH_RATE
 
 #: Build oracles, every one measured on the pinned metadata before being written here.
 EXPECTED_RATE_CELLS = 354
-EXPECTED_AFTER_LOADER_RULES = 103
-EXPECTED_ZERO_RATES = 14
-EXPECTED_RECORDS = 89
+EXPECTED_AFTER_LOADER_RULES = 260
+EXPECTED_ZERO_RATES = 16
+EXPECTED_RECORDS = 260
 EXPECTED_UNPERTURBED = 0
 EXPECTED_BASE_RECORDS = 8
-#: Measured over the 89 stored rates.
-MIN_RATE = 0.07
+#: Measured over the 260 stored rates.
+MIN_RATE = 0.0
 MAX_RATE = 1.42
 #: Measured mean of the 8 base-condition rates, recomputed by the build and compared.
 BASE_RATE_MEAN = 0.63875
@@ -288,17 +290,6 @@ class DropRule(BaseModel):
     items: list[str] = Field(default_factory=list)
 
 
-DROP_ZERO_RATE = "zero_rate_not_distinguishable_from_unrecorded"
-ZERO_RATE_DESCRIPTION = (
-    "the released cell is exactly 0.0. A stored 0 h^-1 asserts a fully arrested culture "
-    "from which a sequencing library was nonetheless prepared, and the release carries "
-    "no legend that says so, so the cell is indistinguishable from an unrecorded one. "
-    "Whether the authors meant 0 or blank is stated nowhere in the paper or the "
-    "release, so the conservative reading is that the cell is uninterpretable. Every "
-    "dropped id, condition and value is listed here, so the decision is reversible"
-)
-
-
 class RateRow(BaseModel):
     """One released sample that carries a growth rate, with its released context."""
 
@@ -311,15 +302,32 @@ class RateRow(BaseModel):
     rep_id: str
     rate: float
     deleted_symbols: tuple[str, ...]
+    description: str = Field(description="``Strain Description``, verbatim")
+    background: lm.StrainBackgroundSpec | None = Field(
+        default=None, description="the released strain when it is not MG1655 (#1057)"
+    )
+    released_alleles: tuple[lm.ReleasedAllele, ...] = Field(
+        default=(), description="edits stored on the released-strain leaf (#1057)"
+    )
+
+    @property
+    def is_wild_type_mg1655(self) -> bool:
+        """MG1655 with no deletion, no released allele and no other strain."""
+        return (
+            not self.deleted_symbols
+            and not self.released_alleles
+            and self.background is None
+        )
 
 
 def read_rate_rows(path: str) -> tuple[list[RateRow], list[DropRule]]:
     """Every metadata row with a rate, filtered by the expression loader's own rules.
 
     The genotype and environment rules are ``lamoureux2023``'s, imported rather than
-    restated, so this dataset keeps exactly the samples the expression dataset keeps.
-    The rate cell is then required to be a positive number; the zero cells go under
-    :data:`DROP_ZERO_RATE`.
+    restated, with its #1057 dispatch (a strain rule settles through
+    ``settle_background``, an allele rule through ``settle_allele``), so this dataset
+    keeps exactly the samples the expression dataset keeps. The rate cell is stored as
+    released, a 0.0 included.
     """
     metadata = lm.read_metadata(path)
     samples = sorted(str(sample) for sample in metadata.index)
@@ -338,6 +346,10 @@ def read_rate_rows(path: str) -> tuple[list[RateRow], list[DropRule]]:
     for sample in with_rate:
         row = rows[sample]
         genotype = lm.settle_genotype(row)
+        if genotype.rule in lm.BACKGROUND_RULES:
+            genotype = lm.settle_background(row)
+        elif genotype.rule in lm.ALLELE_RULES:
+            genotype = lm.settle_allele(row)
         if not genotype.kept:
             dropped.setdefault(("genotype", genotype.rule.value), []).append(sample)
             reasons[genotype.rule.value] = lm.GENOTYPE_RULE_REASONS[genotype.rule]
@@ -352,12 +364,6 @@ def read_rate_rows(path: str) -> tuple[list[RateRow], list[DropRule]]:
             ]
             continue
         rate = float(str(row[COL_GROWTH_RATE]).strip())
-        if rate <= 0.0:
-            dropped.setdefault(("readout", DROP_ZERO_RATE), []).append(
-                f"{sample} ({row[lm.COL_FULL_NAME]}, {rate})"
-            )
-            reasons[DROP_ZERO_RATE] = ZERO_RATE_DESCRIPTION
-            continue
         kept.append(
             RateRow(
                 sample=sample,
@@ -367,6 +373,9 @@ def read_rate_rows(path: str) -> tuple[list[RateRow], list[DropRule]]:
                 rep_id=str(row[lm.COL_REP]),
                 rate=rate,
                 deleted_symbols=tuple(sorted(genotype.deleted_symbols)),
+                description=str(row[lm.COL_DESCRIPTION]),
+                background=genotype.background,
+                released_alleles=genotype.released_alleles,
             )
         )
     rules = [
@@ -474,7 +483,7 @@ def base_aggregate(
     members = [
         row
         for row in rows
-        if not row.deleted_symbols and environments[row.sample].model_dump_json() == key
+        if row.is_wild_type_mg1655 and environments[row.sample].model_dump_json() == key
     ]
     if len(members) != EXPECTED_BASE_RECORDS:
         raise RuntimeError(
@@ -523,17 +532,31 @@ def reference_phenotype(aggregate: BaseAggregate) -> EnvironmentResponsePhenotyp
 
 
 def genotype_of(row: RateRow, tags: Mapping[str, tuple[str, str]]) -> Genotype:
-    """The released deletions of one sample, on their MG1655 b-numbers."""
-    return Genotype(
-        perturbations=[
-            BacterialDeletionPerturbation(
-                systematic_gene_name=tags[symbol][0],
-                perturbed_gene_name=tags[symbol][1],
-                gene_namespace=lm.GENE_NAMESPACE,
-            )
-            for symbol in row.deleted_symbols
-        ]
-    )
+    """The released deletions and alleles of one sample, as ``lamoureux2023`` writes them.
+
+    A deletion symbol with a ``tags`` entry is a deletion on its MG1655 b-number; one
+    without is stored as released on the released-strain leaf, as is every released
+    allele, each under the sample's ``Strain Description`` (#1057).
+    """
+    deletions: list[BacterialDeletionPerturbation | BacterialReleasedStrainPerturbation]
+    deletions = [
+        BacterialDeletionPerturbation(
+            systematic_gene_name=tags[symbol][0],
+            perturbed_gene_name=tags[symbol][1],
+            gene_namespace=lm.GENE_NAMESPACE,
+        )
+        if symbol in tags
+        else lm.released_allele_perturbation(
+            lm.ReleasedAllele(gene=symbol, kind=ReleasedStrainKind.deletion),
+            row.description,
+        )
+        for symbol in row.deleted_symbols
+    ]
+    alleles = [
+        lm.released_allele_perturbation(allele, row.description)
+        for allele in row.released_alleles
+    ]
+    return Genotype(perturbations=[*deletions, *alleles])
 
 
 def deletion_tags(
@@ -541,19 +564,18 @@ def deletion_tags(
 ) -> tuple[dict[str, tuple[str, str]], Any]:
     """Each deleted symbol -> (b-number, the genome's own symbol), with the report.
 
-    Every symbol must resolve to one MG1655 locus and the genome's symbol must resolve
-    back to it, which is the rule ``lamoureux2023`` applies to the same symbols.
+    The rule ``lamoureux2023`` applies to the same symbols: a symbol that resolves to
+    one MG1655 locus whose own symbol resolves back is a deletion on it; a symbol that
+    resolves to none has no entry and is stored as released (#1057).
     """
     symbols = sorted({symbol for row in rows for symbol in row.deleted_symbols})
     names = pd.Series(symbols, dtype=object)
     stored, report = reconcile_locus_tags(genome, names, label=label)
-    report.require_resolved(1.0)
-    if report.outside_namespace:
-        raise RuntimeError(
-            f"deleted-gene symbols not stored as b-numbers: {report.outside_namespace}"
-        )
+    unresolved = set(report.outside_namespace)
     tags: dict[str, tuple[str, str]] = {}
     for symbol, tag in zip(symbols, stored.tolist(), strict=True):
+        if tag in unresolved:
+            continue
         canonical = genome.genbank.loci[str(tag)].symbol or symbol
         if genome.resolve_gene_name(canonical).systematic_name != str(tag):
             raise RuntimeError(
@@ -568,7 +590,7 @@ def deletion_tags(
 # --------------------------------------------------------------------------- #
 @register_dataset
 class GrowthRateLamoureux2023Dataset(ExperimentDataset):
-    """PRECISE-1K's released per-sample growth rate: 89 absolute rates in 1/hr."""
+    """PRECISE-1K's released per-sample growth rate: 260 absolute rates in 1/hr."""
 
     organism = Organism.ecoli
 
@@ -628,21 +650,20 @@ class GrowthRateLamoureux2023Dataset(ExperimentDataset):
 
     @post_process
     def process(self) -> None:
-        """Write one record per stored released rate, 89 in all."""
+        """Write one record per stored released rate, 260 in all."""
         verify_raw_files(self.raw_dir, {lm.METADATA.name: lm.METADATA.sha256})
         path = osp.join(self.raw_dir, lm.METADATA.name)
         rows, rules = read_rate_rows(path)
-        by_rule = {rule.rule: rule.n_records for rule in rules}
-        if by_rule.get(DROP_ZERO_RATE) != EXPECTED_ZERO_RATES:
+        zero = [row for row in rows if row.rate == 0.0]
+        if len(zero) != EXPECTED_ZERO_RATES:
             raise RuntimeError(
-                f"{by_rule.get(DROP_ZERO_RATE)} rows release a zero rate, the module "
-                f"declares {EXPECTED_ZERO_RATES}"
+                f"{len(zero)} stored rows release a zero rate, the module declares "
+                f"{EXPECTED_ZERO_RATES}"
             )
-        if len(rows) + by_rule[DROP_ZERO_RATE] != EXPECTED_AFTER_LOADER_RULES:
+        if len(rows) != EXPECTED_AFTER_LOADER_RULES:
             raise RuntimeError(
-                f"{len(rows) + by_rule[DROP_ZERO_RATE]} rate cells survive the "
-                f"expression loader's rules, the module declares "
-                f"{EXPECTED_AFTER_LOADER_RULES}"
+                f"{len(rows)} rate cells survive the expression loader's rules, the "
+                f"module declares {EXPECTED_AFTER_LOADER_RULES}"
             )
         if len(rows) != EXPECTED_RECORDS:
             raise RuntimeError(
@@ -679,6 +700,24 @@ class GrowthRateLamoureux2023Dataset(ExperimentDataset):
             environment_reference=base,
             phenotype_reference=reference_phenotype(aggregate),
         )
+        backgrounds: dict[str, BacterialEnvironmentResponseExperimentReference] = {}
+
+        def reference_of(
+            row: RateRow,
+        ) -> BacterialEnvironmentResponseExperimentReference:
+            """The base reference, on the sample's own released strain (#1057)."""
+            if row.background is None:
+                return reference
+            spec = row.background
+            if spec.name not in backgrounds:
+                genome_reference: AssemblyReferenceGenome = assembly_reference(
+                    self.REFERENCE_STRAIN, background=lm.strain_background(spec)
+                )
+                backgrounds[spec.name] = reference.model_copy(
+                    update={"genome_reference": genome_reference}
+                )
+            return backgrounds[spec.name]
+
         publication = Publication(
             doi=lm.PAPER_DOI, doi_url=f"https://doi.org/{lm.PAPER_DOI}"
         )
@@ -693,7 +732,9 @@ class GrowthRateLamoureux2023Dataset(ExperimentDataset):
                 )
                 txn.put(
                     f"{index}".encode(),
-                    self._intern_record(experiment, reference, publication, itxn),
+                    self._intern_record(
+                        experiment, reference_of(row), publication, itxn
+                    ),
                 )
         env.close()
         interned_env.close()
@@ -732,16 +773,19 @@ class GrowthRateLamoureux2023Dataset(ExperimentDataset):
                     "rules": [rule.model_dump(mode="json") for rule in rules],
                     "notes": [
                         "the genotype and environment rules are lamoureux2023's own, "
-                        "imported rather than restated, so this dataset keeps exactly "
-                        "the samples the expression dataset keeps; measured, the 103 "
-                        "cells they admit are exactly the built rnaseq_lamoureux2023 "
-                        "records that carry a rate",
+                        "imported rather than restated with its #1057 dispatch, so this "
+                        "dataset keeps exactly the samples the expression dataset keeps",
                         "every one of the 354 released rate cells is a p1k_* id, so the "
                         "Public K-12 arm contributes nothing: 0 of its 240 built "
                         "records carry a rate",
-                        "dropping the 14 zero-rate rows also drops the oxyR, soxR and "
-                        "soxS deletions entirely, because they appear only in those "
-                        "rows; that is the cost of the decision and it is recorded here",
+                        "the release prints 0.0 for these stored rows; whether that is "
+                        "an arrested culture or an unrecorded cell is stated nowhere, "
+                        "so it is stored as released (#1057): "
+                        + ", ".join(
+                            f"{row.sample} ({row.full_name})"
+                            for row in rows
+                            if row.rate == 0.0
+                        ),
                     ],
                 },
                 indent=2,
@@ -838,11 +882,17 @@ VERIFIER_PROVENANCE = Provenance(
 def l4_deleted_genes_are_mg1655_loci(
     records: Sequence[Mapping[str, Any]], genome: EcoliK12Genome
 ) -> LevelResult:
-    """L4: every stored deletion names a gene row of the pinned MG1655 annotation."""
+    """L4: every stored deletion names a gene row of the pinned MG1655 annotation.
+
+    It reads the placed deletion leaves; a gene stored as released on the
+    released-strain leaf is not placed, so the genome has nothing to say about it
+    (#1057).
+    """
     deleted = {
         perturbation["systematic_gene_name"]
         for record in records
         for perturbation in record["experiment"]["genotype"]["perturbations"]
+        if perturbation["perturbation_type"] == "bacterial_deletion"
     }
     universe = set(genome.genbank.loci)
     missing = sorted(deleted - universe)

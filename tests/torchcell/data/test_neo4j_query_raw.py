@@ -109,6 +109,8 @@ RECORDS = [
 _ENV_JSON: dict[str, Any] = {
     "provenance_gaps": [],
     "media": {
+        # #901/#902/#903: a medium carries typed gaps too, empty when it is stated
+        "provenance_gaps": [],
         "name": "YPD",
         "state": "solid",
         "is_synthetic": False,

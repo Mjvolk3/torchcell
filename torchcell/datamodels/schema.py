@@ -4172,7 +4172,7 @@ class MediaComponent(ModelStrict):
     )
 
 
-class Media(ModelStrict):
+class Media(ProvenanceGapMixin):
     """Growth medium resolved to typed COMPONENTS (provenance-first).
 
     ``name`` + ``state`` remain the human label; ``is_synthetic`` (REQUIRED)
@@ -4180,15 +4180,35 @@ class Media(ModelStrict):
     compositional breakdown; ``dropouts`` are auxotrophic components deliberately
     OMITTED (recorded so 'omitted' is distinguishable from 'not yet listed').
     ``is_fully_characterized`` / ``open_gaps`` make under-definition queryable.
+
+    A medium the source never states is still a ``Media`` (#901, #902, #903):
+    ``Environment.media`` stays required, and each of ``name``, ``state`` and
+    ``is_synthetic`` is stated or ``None`` beside a ``ProvenanceGap`` naming that
+    field, its reason and where we looked (``_stated_or_gapped``). So SynLethDB's
+    aggregated pairs, whose release carries no condition field, and an SGD phenotype
+    annotation with no condition property store a medium whose gaps say exactly that,
+    never a guessed YPD and never a free-text stand-in. A partly stated medium gaps
+    only what is missing: SGD's "YPD with 2% glucose" states a name, not a physical
+    state. ``media_identity`` keys a gapped medium by its gaps, so an absence never
+    merges with a stated medium or with another source's absence.
     """
 
-    name: str
-    state: str
-    is_synthetic: bool = Field(
+    # --- begin #901/#902/#903: a typed gap on the medium ------------------------ #
+    name: str | None = Field(
+        description="the medium's label as the source states it; None ONLY with a "
+        "ProvenanceGap(field='name') when the source names no medium"
+    )
+    state: str | None = Field(
+        description="solid, liquid or gas; None ONLY with a ProvenanceGap"
+        "(field='state') when the source states no physical state"
+    )
+    is_synthetic: bool | None = Field(
         description="True = chemically defined by construction (SD/SC/YNB/SGA); "
         "False = natural/complex (YPD, corn steep liquor). Orthogonal to how well "
-        "the composition is characterized."
+        "the composition is characterized. None ONLY with a ProvenanceGap"
+        "(field='is_synthetic') when the source states no medium to classify."
     )
+    # --- end #901/#902/#903 ------------------------------------------------------ #
     base_medium: str | None = Field(
         default=None,
         description="canonical base label for grouping, e.g. 'SD_MSG' | 'YNB' | 'SC' | 'YPD'",
@@ -4208,11 +4228,37 @@ class Media(ModelStrict):
 
     @field_validator("state", mode="after")
     @classmethod
-    def validate_state(cls, v: str) -> str:
-        """Validate that state is one of solid, liquid, or gas."""
-        if v not in ["solid", "liquid", "gas"]:
+    def validate_state(cls, v: str | None) -> str | None:
+        """Validate that a stated state is one of solid, liquid, or gas."""
+        if v is not None and v not in ["solid", "liquid", "gas"]:
             raise ValueError('state must be one of "solid", "liquid", or "gas"')
         return v
+
+    # --- begin #901/#902/#903: a typed gap on the medium ------------------------ #
+    @model_validator(mode="after")
+    def _stated_or_gapped(self) -> "Media":
+        """Each label field is stated or carries a typed gap; never a silent ``None``.
+
+        The mixin enforces the converse (a gapped field must be ``None``).
+        """
+        _require_value_or_gap(self, ("name", "state", "is_synthetic"))
+        return self
+
+    @property
+    def stated_name(self) -> str:
+        """The name the source states; raises for a medium whose name is a typed gap.
+
+        For code that builds or reads a medium it knows to be named (a loader's own
+        library medium, an FBA expansion of one): a gapped medium has no label to
+        stand in, so it is refused by name rather than spelled ``"None"``.
+        """
+        if self.name is None:
+            raise ValueError(
+                "this medium's name is a typed ProvenanceGap; it has no stated name"
+            )
+        return self.name
+
+    # --- end #901/#902/#903 ------------------------------------------------------ #
 
     @property
     def is_fully_characterized(self) -> bool:

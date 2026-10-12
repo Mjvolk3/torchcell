@@ -2661,7 +2661,7 @@ ConditionIdentity = tuple[str, float, float | None, tuple[str, ...]]
 def _condition_identity(condition: Condition) -> ConditionIdentity:
     """What identifies one condition in a built record, independent of record order."""
     return (
-        medium(condition.limitation).name,
+        medium(condition.limitation).stated_name,
         condition.duration_hours,
         condition.dilution_rate_per_hour,
         tuple(sorted(condition.deleted_symbols)),

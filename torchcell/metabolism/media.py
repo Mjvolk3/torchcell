@@ -725,7 +725,7 @@ def media_to_bounds(
             )
 
     return MediaBounds(
-        media_name=media.name,
+        media_name=media.stated_name,
         model_id=model.id,
         policy=resolved_policy,
         bounds=bounds,
@@ -944,7 +944,7 @@ def _sga_selection_fba(ontology: Media) -> Media:
         else:
             expanded.append(component)
     return Media(
-        name=ontology.name + " [FBA expansion]",
+        name=ontology.stated_name + " [FBA expansion]",
         state="liquid",
         is_synthetic=True,
         base_medium=ontology.base_medium,

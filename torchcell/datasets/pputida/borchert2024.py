@@ -1777,7 +1777,9 @@ class RbTnseqBorchert2024Dataset(ExperimentDataset):
                 attributions[sample.exp_name].study
             ].publication
             with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
-                env_ptr = self._pointer(environment, environment.media.name, itxn)
+                env_ptr = self._pointer(
+                    environment, environment.media.stated_name, itxn
+                )
                 ref_ptr = self._pointer(reference, reference.dataset_name, itxn)
                 pub_ptr = self._pointer(publication, "publication", itxn)
                 for row, tag in enumerate(tags):

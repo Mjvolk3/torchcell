@@ -172,9 +172,13 @@ REFERENCE_ID = _sha(REFERENCE)
 # differing only in it must be two environment nodes (Ishii 2007's recovered wild-type
 # series is four such records). ``MEDIA_ID`` is UNCHANGED, which is the evidence the
 # change stayed on the environment and did not disturb the medium-level join.
+# ``ENVIRONMENT_CONSTANT_ID`` moved again when ``Media`` gained ``provenance_gaps``
+# (#901, #902, #903): the interned blob now dumps the medium's empty gap list. Neither
+# ``MEDIA_ID`` nor ``ENVIRONMENT_ID`` moved, because ``media_identity`` projects a
+# medium's gaps only when it carries one.
 ENVIRONMENT_JSON = json.dumps(ENVIRONMENT.model_dump())
 ENVIRONMENT_CONSTANT_ID = (
-    "ee9652f19e630ed76c05e0b8ec524567f62e0e6ad7798b2fea6950e1c4745f98"
+    "f8acb954bbf25e9ee967bad4ce80ae16df96d4e8c4cbdebcc559a3182ac04990"
 )
 
 
@@ -538,7 +542,7 @@ def test_get_nodes_emits_the_exact_ohya_node_list(
     assert (
         ENVIRONMENT_CONSTANT_ID == hashlib.sha256(ENVIRONMENT_JSON.encode()).hexdigest()
     )
-    assert len(json.dumps(ENVIRONMENT.model_dump())) == 5200
+    assert len(json.dumps(ENVIRONMENT.model_dump())) == 5223
     assert EXPERIMENT_POINTER_MIN_BYTES["environment"] == 512
     genotypes = [e.genotype for e in EXPERIMENTS]
     assert all(isinstance(g, Genotype) for g in genotypes)

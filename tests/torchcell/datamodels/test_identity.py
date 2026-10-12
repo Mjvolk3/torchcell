@@ -24,7 +24,9 @@ from torchcell.datamodels.identity import (
     CONCENTRATION_IDENTITY_FIELDS,
     ENVIRONMENT_IDENTITY_FIELDS,
     MEDIA_COMPONENT_IDENTITY_FIELDS,
+    MEDIA_GAP_IDENTITY_FIELDS,
     MEDIA_IDENTITY_FIELDS,
+    MEDIA_OPTIONAL_IDENTITY_FIELDS,
     PHAGE_PERTURBATION_IDENTITY_FIELDS,
     PHYSICAL_PERTURBATION_IDENTITY_FIELDS,
     SMALL_MOLECULE_IDENTITY_FIELDS,
@@ -310,6 +312,81 @@ def test_a_gapped_temperature_is_not_the_same_environment_as_a_measured_one() ->
     assert identity_sha256(environment_identity(gapped)) != identity_sha256(
         environment_identity(measured)
     )
+
+
+# --- #901/#902/#903: a typed gap on the medium --------------------------------- #
+def _unstated_medium(citation_key: str, sha256: str) -> s.Media:
+    """A medium whose source names none: every label field gapped, looked for in one
+    pinned artifact of ``citation_key``.
+    """
+    looked_in = Provenance(
+        source_uri="paper.md", citation_key=citation_key, sha256=sha256
+    )
+    return s.Media(
+        name=None,
+        state=None,
+        is_synthetic=None,
+        provenance_gaps=[
+            ProvenanceGap(
+                field=field,
+                reason=ProvenanceGapReason.not_carried_by_curation,
+                looked_in=looked_in,
+                note=f"{citation_key} states no medium",
+            )
+            for field in ("name", "state", "is_synthetic")
+        ],
+    )
+
+
+def test_a_stated_medium_projects_no_gap_key_and_keeps_its_id() -> None:
+    """A medium with no gap projects exactly ``MEDIA_IDENTITY_FIELDS``, so every stated
+    medium's id is what it was before ``Media`` could carry gaps.
+    """
+    assert set(media_identity(YPD_LIQUID)) == set(MEDIA_IDENTITY_FIELDS)
+    assert MEDIA_OPTIONAL_IDENTITY_FIELDS == ("provenance_gaps",)
+    assert all(f in s.Media.model_fields for f in MEDIA_OPTIONAL_IDENTITY_FIELDS)
+    assert all(f in ProvenanceGap.model_fields for f in MEDIA_GAP_IDENTITY_FIELDS)
+
+
+def test_a_gapped_medium_is_keyed_by_its_gaps_never_by_a_stated_medium() -> None:
+    """An unstated medium projects its gaps (field, reason, where we looked; never the
+    note), so it never joins a stated medium, and two sources' absences stay two media.
+    """
+    sgd = _unstated_medium("cherrySGDSaccharomycesGenome1998", "a" * 64)
+    synlethdb = _unstated_medium("wangSynLethDB20Webbased2022", "b" * 64)
+    identity = media_identity(sgd)
+    assert set(identity) == set(MEDIA_IDENTITY_FIELDS) | {"provenance_gaps"}
+    assert (identity["state"], identity["is_synthetic"]) == (None, None)
+    assert identity["provenance_gaps"] == [
+        {
+            "field": field,
+            "reason": "not_carried_by_curation",
+            "looked_in": {
+                "source_uri": "paper.md",
+                "citation_key": "cherrySGDSaccharomycesGenome1998",
+                "sha256": "a" * 64,
+            },
+            "keys": [],
+        }
+        for field in ("is_synthetic", "name", "state")
+    ]
+    ids = {
+        identity_sha256(media_identity(medium))
+        for medium in (sgd, synlethdb, YPD_LIQUID, YPD_AGAR)
+    }
+    assert len(ids) == 4
+    reworded = sgd.model_copy(
+        update={
+            "provenance_gaps": [
+                gap.model_copy(update={"note": "reworded"})
+                for gap in sgd.provenance_gaps
+            ]
+        }
+    )
+    assert media_identity(reworded) == identity
+    assert identity_sha256(
+        environment_identity(s.Environment(media=sgd))
+    ) != identity_sha256(environment_identity(s.Environment(media=synlethdb)))
 
 
 def test_provenance_gaps_are_not_themselves_part_of_environment_identity() -> None:

@@ -75,6 +75,7 @@ from torchcell.datamodels.schema import (
     StrainBackground,
     Temperature,
 )
+from torchcell.verification.sourced import ProvenanceGap
 
 __all__ = [
     "BIOLOGIC_PERTURBATION_IDENTITY_FIELDS",
@@ -87,6 +88,8 @@ __all__ = [
     "INTEGRATED_CASSETTE_IDENTITY_FIELDS",
     "MEDIA_COMPONENT_IDENTITY_FIELDS",
     "MEDIA_IDENTITY_FIELDS",
+    "MEDIA_GAP_IDENTITY_FIELDS",
+    "MEDIA_OPTIONAL_IDENTITY_FIELDS",
     "PHAGE_PERTURBATION_IDENTITY_FIELDS",
     "PHYSICAL_PERTURBATION_IDENTITY_FIELDS",
     "PRE_CULTURE_IDENTITY_FIELDS",
@@ -128,6 +131,17 @@ MEDIA_IDENTITY_FIELDS: tuple[str, ...] = (
     "components",
     "dropouts",
 )
+# --- begin #901/#902/#903: a typed gap on the medium ---
+MEDIA_OPTIONAL_IDENTITY_FIELDS: tuple[str, ...] = ("provenance_gaps",)
+"""``Media`` fields projected only when SET. A stated medium carries no gap, so its id
+is the composition alone; a medium whose source states no name, state or class
+(SynLethDB, an SGD annotation with no condition) is keyed by its gaps as well, so
+one source's absence is not merged with a stated medium or with another source's
+absence. Only the gap's ``field``, ``reason`` and the artifact it was looked for in
+(``looked_in``: ``source_uri``, ``citation_key``, ``sha256``) are identity; its
+``note`` is the wording of who said so, dropped like a medium's ``name``."""
+MEDIA_GAP_IDENTITY_FIELDS: tuple[str, ...] = ("field", "reason", "looked_in", "keys")
+# --- end #901/#902/#903 ---
 TEMPERATURE_IDENTITY_FIELDS: tuple[str, ...] = ("value", "unit")
 SMALL_MOLECULE_IDENTITY_FIELDS: tuple[str, ...] = (
     "perturbation_type",
@@ -292,14 +306,40 @@ def _media_component_identity(component: MediaComponent) -> dict[str, Any]:
     }
 
 
+# --- begin #901/#902/#903: a typed gap on the medium ---
+def _media_gap_identity(gap: ProvenanceGap) -> dict[str, Any]:
+    """Project one medium gap: which field, why, and the artifact it was looked for in."""
+    looked_in = gap.looked_in
+    return {
+        "field": gap.field,
+        "reason": gap.reason.value,
+        "looked_in": (
+            None
+            if looked_in is None
+            else {
+                "source_uri": looked_in.source_uri,
+                "citation_key": looked_in.citation_key,
+                "sha256": looked_in.sha256,
+            }
+        ),
+        "keys": sorted(gap.keys),
+    }
+
+
+# --- end #901/#902/#903 ---
+
+
 def media_identity(media: Media) -> dict[str, Any]:
     """Project a medium onto its composition: state, synthetic flag, base, contents.
 
     ``name``, ``provenance``, and each component's ``provenance`` / ``note`` /
     ``defers_to`` are dropped: they record who stated the recipe, not what the recipe
-    is. Components and dropouts are sorted, so listing order is not identity.
+    is. Components and dropouts are sorted, so listing order is not identity. A
+    medium's ``provenance_gaps`` are projected only when it carries one
+    (``MEDIA_OPTIONAL_IDENTITY_FIELDS``), so a stated medium's id is unchanged and a
+    gapped one never joins it.
     """
-    return {
+    identity: dict[str, Any] = {
         "state": media.state,
         "is_synthetic": media.is_synthetic,
         "base_medium": media.base_medium,
@@ -310,6 +350,13 @@ def media_identity(media: Media) -> dict[str, Any]:
             compound_identity_key(dropout) for dropout in media.dropouts
         ),
     }
+    # --- begin #901/#902/#903: a typed gap on the medium ---
+    if media.provenance_gaps:
+        identity["provenance_gaps"] = _sorted_identities(
+            [_media_gap_identity(gap) for gap in media.provenance_gaps]
+        )
+    # --- end #901/#902/#903 ---
+    return identity
 
 
 def temperature_identity(temperature: Temperature) -> dict[str, Any]:

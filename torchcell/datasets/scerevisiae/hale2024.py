@@ -1328,7 +1328,8 @@ class CrispriSegregantHale2024Dataset(ExperimentDataset):
         env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
         with interned_env.begin(write=True) as itxn:
             env_ptr = {
-                k: self._pointer(v, SC_URA.name, itxn) for k, v in environments.items()
+                k: self._pointer(v, SC_URA.stated_name, itxn)
+                for k, v in environments.items()
             }
             ref_ptr = {
                 k: self._pointer(v, self.name, itxn) for k, v in references.items()

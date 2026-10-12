@@ -425,7 +425,10 @@ YEAST_PERTURBATION_NODES = [
 # ``dilution_rate_per_hour`` field changes it for every record, which is exactly the
 # BREAKING verdict ``scripts/schema_impact_check.py`` reports for all 81 datasets. The
 # six node digests are untouched, which is the evidence the change did not reach the
-# genotype, perturbation, construct or phenotype nodes.
+# genotype, perturbation, construct or phenotype nodes. They moved again, and only
+# they, when ``Media`` gained ``provenance_gaps`` (#901, #902, #903): every inlined
+# medium now dumps an empty gap list, so every experiment id changes, the BREAKING
+# verdict the schema-impact check reports for every dataset.
 YEAST_GOLDEN_DIGESTS = {
     "genotype (chunked)": (
         "5f412c3d4e0cc79a1c2121d7b38996401404c8aef584b834199601e0ccdd4d73"
@@ -440,7 +443,7 @@ YEAST_GOLDEN_DIGESTS = {
         "dbade8c3c8ad945e439aa6688b306b27b64044bf7415df60a19c14d1f1c00f65"
     ),
     "genotype to experiment (chunked)": (
-        "f66b704c612a016b08312c976a638a9794e4204743bc86acb5c65a0091141acd"
+        "f2a56e36038575fa29d0a330c29ed84b124c9ea12ce078b003fbd6de43ee170c"
     ),
     "perturbation to genotype (chunked)": (
         "15ab04c1633aac64a213c195cc0236dead004b933abdae1aaa55b059ae8cace3"
@@ -449,7 +452,7 @@ YEAST_GOLDEN_DIGESTS = {
         "c61d8ab0f5b88b2678c2a25fc4daa28162e3cee9679e0b3683d2a747a4e70a3b"
     ),
     "phenotype to experiment (chunked)": (
-        "c330b8b655c1e879544ca96d3de695a8ad5f161d6a7ee7bb332c81b7eea7babb"
+        "347549d2620370f42d683ac8db8fd10c7b1bc1de47b409749b94ccfa7a8a4719"
     ),
 }
 

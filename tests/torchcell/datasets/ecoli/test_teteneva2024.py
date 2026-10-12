@@ -107,11 +107,13 @@ def test_the_gcf_assembly_report_is_a_member_because_the_gca_one_is_stale() -> N
     assert te.STALE_GCA_REFSEQ_ACCESSION != te.W3110_TIER_DEPOSIT.refseq_accession
 
 
-def test_the_set_is_in_no_schema_vocabulary_so_nothing_served_changes() -> None:
-    """W3110 is not a reference strain and its set id is not an assembly-set member."""
-    assert "W3110" not in BACTERIAL_ASSEMBLY_SETS
-    assert ECOLI_K12_W3110 not in set(BACTERIAL_ASSEMBLY_SETS.values())
-    assert ECOLI_K12_W3110 not in ASSEMBLY_SET_ACCESSIONS
+def test_the_set_is_in_the_schema_vocabulary_with_the_gcf_report_s_pair() -> None:
+    """W3110 is a reference strain (#910) whose set pairs GCA .1 with GCF .2."""
+    assert BACTERIAL_ASSEMBLY_SETS["W3110"] == ECOLI_K12_W3110
+    assert ASSEMBLY_SET_ACCESSIONS[ECOLI_K12_W3110] == (
+        te.W3110_TIER_DEPOSIT.genbank_accession,
+        te.W3110_TIER_DEPOSIT.refseq_accession,
+    )
 
 
 # --------------------------------------------------------------------------------------

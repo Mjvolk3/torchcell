@@ -706,11 +706,25 @@ def test_every_quote_names_its_pinned_file() -> None:
         m.DRYAD_METADATA_REL,
     }
     assert m.sourced_values() == list(m.SOURCED.values())
-    spec = runners.SEGREGANT_EXPRESSION_DATASETS["nguessan2025"]
+    spec = m.VERIFICATION_SPEC
     assert spec["expected_count"] == m.N_SEGREGANTS == 2951
     assert spec["root"] == "data/torchcell/nguessan2025"
     assert spec["provenance"].sha256 == m.PAPER_MD_SHA256
     assert spec["provenance"].citation_key == m.CITATION_KEY
+
+
+def test_the_store_is_held_out_of_the_runner_and_the_map() -> None:
+    """Registered, but neither verified by run_all nor served (#1050).
+
+    The store builds and fails L4 marker_reference and mat_fixation: the deposited SNP
+    positions are on BY4742_fixed.fasta, not on the S288C reference the records name.
+    Lifting the hold means moving ``VERIFICATION_SPEC`` into the runner registry and
+    mapping the adapter, which this test then refuses until it is rewritten.
+    """
+    from torchcell.knowledge_graphs.dataset_adapter_map import dataset_adapter_map
+
+    assert "nguessan2025" not in runners.SEGREGANT_EXPRESSION_DATASETS
+    assert m.Nguessan2025Dataset not in dataset_adapter_map
 
 
 def test_the_class_is_registered_under_its_name() -> None:
@@ -761,7 +775,7 @@ def test_verify_build_reads_its_runner_entry(
     monkeypatch.setattr(runners, "_sgd_gene_set", lambda _: set(rel.GENES))
     monkeypatch.setattr(panel, "verify_reference_panel_expression_streaming", capture)
     assert m.verify_build(dataset.root, data_root=str(data_root)) == "report"
-    spec = runners.SEGREGANT_EXPRESSION_DATASETS["nguessan2025"]
+    spec = m.VERIFICATION_SPEC
     assert captured["records"] == 3
     assert (captured["dataset_name"], captured["expected_count"]) == (
         "nguessan2025",

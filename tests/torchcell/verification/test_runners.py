@@ -2334,7 +2334,7 @@ def test_every_registry_root_is_the_dev_tree_path_of_its_own_name() -> None:
         + 16  # ENVIRONMENT_RESPONSE_DATASETS
         + 11  # FITNESS_DATASETS
         + 1  # SEGREGANT_GROWTH_DATASETS
-        + 2  # SEGREGANT_EXPRESSION_DATASETS
+        + 1  # SEGREGANT_EXPRESSION_DATASETS
         + 1  # SEGREGANT_PERTURBATION_DATASETS
         + 5  # GENE_INTERACTION_DATASETS
         + 1  # GENE_ESSENTIALITY_DATASETS

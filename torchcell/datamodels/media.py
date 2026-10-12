@@ -4610,6 +4610,430 @@ MOPS_CASAMINO_WANG2018 = Media(
 acids, the amino-acid mixture that carries every amino acid except tryptophan (row 25)."""
 
 
+# --- begin banerjee2024: the four media of Banerjee 2024 (row 39) --------------- #
+# Four, because the paper states four different recipes and never equates them: the
+# vendor EZ rich defined medium of the knockout and plasmid rounds (Methods 2.5), the
+# Supplementary Table 3 M9 of the minimal-medium characterization (Methods 2.5), and
+# TWO "modified M9" variants whose nitrogen differs by a factor of two -- 20 mM NH4Cl in
+# the 2 L bioreactor (Methods 2.7) against 50 uL of 1 M NH4Cl in 5 mL, which is 10 mM,
+# in the hydrolysate tubes (Methods 2.8). Collapsing the two would assert an amount
+# neither statement makes.
+# --------------------------------------------------------------------------- #
+_BANERJEE2024 = Provenance(
+    citation_key="banerjeeGenomescalePathwayEngineering2024",
+    sha256="6b5b9e8647721569d846af92e5c0059ef9c4bb9eca66a418e8891a7a18d5c18c",
+    source_uri="paper.md",
+)
+#: Supplementary Table 3 ("Minimal M9 medium recipe"), from the OCR of the deposited
+#: Supplementary Information PDF. The OCR drops every subscript, so the stock table
+#: reads "NaHPO4" and "KHPO4"; the quote keeps that, and the compounds are the
+#: disodium/potassium phosphates the PDF's own text layer spells with subscripts.
+_BANERJEE2024_SI1 = Provenance(
+    citation_key="banerjeeGenomescalePathwayEngineering2024",
+    sha256="c0313af4bdbd443e7c61ad539ad3f101c88872f28993ac2ad98c154feb4d7ae0",
+    source_uri="si/si1.md",
+)
+_Q_BANERJEE_EZRICH = (
+    "The starter cultures were diluted in $5 ~ \\mathrm { m L }$ EZ rich defined medium "
+    "(Teknova, CA, USA) containing ${ 2 0 ~ \\ g / \\mathrm { L } }$ D-glucose $( 2 ~ "
+    "\\%$ ,w/v), $2 5 \\mu \\mathrm { g / m L }$ kanamycin in $5 0 \\mathrm { - m L }$ "
+    "test tubes"
+)
+_Q_BANERJEE_M9_STOCK = (
+    "<table><tr><td rowspan=1 colspan=1>Compound</td><td rowspan=1 colspan=1>Final "
+    "concentrations</td></tr><tr><td rowspan=1 colspan=1>NaHPO4</td><td rowspan=1 "
+    "colspan=1>68 g</td></tr><tr><td rowspan=1 colspan=1>KHPO4</td><td rowspan=1 "
+    "colspan=1>30 g</td></tr><tr><td rowspan=1 colspan=1>NaCl</td><td rowspan=1 "
+    "colspan=1>5g</td></tr></table>"
+)
+_Q_BANERJEE_M9_1X = (
+    "<table><tr><td rowspan=1 colspan=1>Compound/Stock</td><td rowspan=1 colspan=1>Per "
+    "1 L</td><td rowspan=1 colspan=1>Comments</td></tr><tr><td rowspan=1 colspan=1>10X "
+    "M9 Salts</td><td rowspan=1 colspan=1>100 mL</td><td rowspan=1 colspan=1>Make 10x "
+    "stock/filter separately</td></tr><tr><td rowspan=1 colspan=1>1M MgSO4</td><td "
+    "rowspan=1 colspan=1>2 mL</td><td rowspan=1 colspan=1>Make 1 M solution/filter "
+    "separately</td></tr><tr><td rowspan=1 colspan=1>1M CaCl2</td><td rowspan=1 "
+    "colspan=1>100 μL</td><td rowspan=1 colspan=1>Make 1 M solution/filter "
+    "separately</td></tr><tr><td rowspan=1 colspan=1>MQ H20</td><td rowspan=1 "
+    "colspan=1>787.4 mL</td><td rowspan=1 colspan=1>Autoclaved</td></tr><tr><td "
+    "rowspan=1 colspan=1>20% Glucose</td><td rowspan=1 colspan=1>100 ml</td><td "
+    "rowspan=1 colspan=1>Autoclaved</td></tr><tr><td rowspan=1 colspan=1>Trace "
+    "elements solution</td><td rowspan=1 colspan=1>500 μL</td><td rowspan=1 "
+    "colspan=1>Teknova</td></tr><tr><td rowspan=1 colspan=1>(NH4)2SO4</td><td "
+    "rowspan=1 colspan=1>10 ml</td><td rowspan=1 colspan=1>1 M stock</td></tr></table>"
+)
+_Q_BANERJEE_MODIFIED_M9 = (
+    "The cell culture was inoculated at $\\mathrm { O D } _ { 6 0 0 } 0 . 3$ in the 2 "
+    "L bioreactor (Biostat B, Sartorius, Germany) including the 1 L modified M9 minimal "
+    "medium, which contained $6 . 8 g /$ L ${ \\mathrm { N a } } _ { 2 } { \\mathrm { "
+    "H P O } } _ { 4 }$ $3 . 0 { \\ g } / \\mathrm { L }$ ${ \\mathrm { K H } } _ { 2 "
+    "} { \\mathrm { P O } } _ { 4 }$ $0 . 5 g / \\mathrm { L }$ NaCl, 20 mM $\\mathrm "
+    "{ N H } _ { 4 } \\mathrm { C l }$ ,2 mM $\\mathrm { M g } { \\bf S } { \\bf O } "
+    "_ { 4 }$ $0 . 1 \\mathrm { \\ m M \\ C a C l _ { 2 } }$ and trace metal solution."
+)
+_Q_BANERJEE_TRACE_STOCK = (
+    "The $1 0 0 0 \\mathrm { X }$ trace metal solution (TEKNOVA, USA) consisted of $5 0 "
+    "\\ \\mathrm { m M } \\ \\mathrm { F e C l _ { 3 } }$ $2 0 ~ \\mathrm { m M }$ "
+    "$\\mathrm { C a C l } _ { 2 }$ $1 0 \\ \\mathrm { m M }$ $\\mathbf { M n C l } _ { "
+    "2 } ,$ . $1 0 ~ \\mathrm { m M }$ $\\mathrm { Z n S O _ { 4 } }$ , 2 mM $\\mathrm { "
+    "C o C l } _ { 2 }$ ,2 mM $\\mathrm { C u C l } _ { 2 }$ $2 \\ \\mathrm { m M \\ N i "
+    "C l _ { 2 } }$ . $2 \\ \\mathrm { m M }$ $\\mathrm { N a _ { 2 } M o O _ { 4 } }$ , "
+    "2 mM $_ { \\mathrm { N a o _ { 3 } S e } }$ , and 2 mM $\\mathrm { B H _ { 3 } O _ "
+    "{ 3 } }$ ."
+)
+_Q_BANERJEE_TUBE_M9 = (
+    "Subsequently, we added $1 0 \\mu \\mathrm { L }$ of 1 M $\\mathrm { M g } { \\bf S "
+    "} { \\bf O } _ { 4 }$ $5 \\mu \\mathrm { L }$ of $1 0 0 \\mathrm { m M C a C l _ { "
+    "2 } }$ , $2 . 5 \\mu \\mathrm { L }$ of trace metal solution, and $5 0 \\mu "
+    "\\mathrm { L }$ of 1 M $\\mathrm { N H } _ { 4 } \\mathrm { C l }$ to the modified "
+    "M9 minimal medium. And the modified M9 minimal medium volume was adjusted to $5 "
+    "\\mathrm { m L }$"
+)
+
+#: The dilution the recipe itself states, which is what turns its 10X stock grams into
+#: the 1X amounts stored here. Not an assumption: the same table's "Per 1 L" column
+#: gives "10X M9 Salts | 100 mL", and Methods 2.7 independently writes the three salts
+#: at 6.8 / 3.0 / 0.5 g/L for its own modified M9.
+_BANERJEE_DILUTION_NOTE = (
+    "stored at the 1X amount the recipe's own '10X M9 Salts | 100 mL' per 1 L row "
+    "gives; Methods 2.7 states the same three salts directly as 6.8 g/L, 3.0 g/L and "
+    "0.5 g/L for this paper's modified M9, so the two statements agree"
+)
+_BANERJEE_OCR_SUBSCRIPT_NOTE = (
+    "the OCR of the SI PDF drops subscripts, so the quoted stock row reads 'NaHPO4' and "
+    "'KHPO4'; the PDF's own text layer spells them Na2HPO4 and KH2PO4, and Methods 2.7 "
+    "writes them with subscripts in the article body"
+)
+_BANERJEE_TRACE_NOTE = (
+    "a vendor solution; the source names Teknova but no catalog number"
+)
+
+_BANERJEE_M9_SALTS = [
+    _stated(
+        "disodium hydrogen phosphate",
+        _SALT,
+        6.8,
+        _GL,
+        _cite(_BANERJEE2024_SI1, "68 g per L of 10X salts", _Q_BANERJEE_M9_STOCK),
+        _cite(_BANERJEE2024_SI1, "10X M9 Salts | 100 mL", _Q_BANERJEE_M9_1X),
+        note=f"{_BANERJEE_DILUTION_NOTE}. {_BANERJEE_OCR_SUBSCRIPT_NOTE}",
+    ),
+    _stated(
+        "potassium dihydrogen phosphate",
+        _SALT,
+        3.0,
+        _GL,
+        _cite(_BANERJEE2024_SI1, "30 g per L of 10X salts", _Q_BANERJEE_M9_STOCK),
+        _cite(_BANERJEE2024_SI1, "10X M9 Salts | 100 mL", _Q_BANERJEE_M9_1X),
+        note=f"{_BANERJEE_DILUTION_NOTE}. {_BANERJEE_OCR_SUBSCRIPT_NOTE}",
+    ),
+    _stated(
+        "sodium chloride",
+        _SALT,
+        0.5,
+        _GL,
+        _cite(_BANERJEE2024_SI1, "5g per L of 10X salts", _Q_BANERJEE_M9_STOCK),
+        _cite(_BANERJEE2024_SI1, "10X M9 Salts | 100 mL", _Q_BANERJEE_M9_1X),
+        note=_BANERJEE_DILUTION_NOTE,
+    ),
+]
+
+EZ_RICH_TEKNOVA = Media(
+    name="EZ rich defined medium (Teknova; composition not stated)",
+    state="liquid",
+    is_synthetic=True,
+    base_medium="EZ_RICH_TEKNOVA",
+    components=[
+        _mixture(
+            "EZ rich defined medium (Teknova)",
+            _COMPLEX,
+            _DEFERRED,
+            provenance=[
+                _cite(
+                    _BANERJEE2024,
+                    "EZ rich defined medium (Teknova, CA, USA)",
+                    _Q_BANERJEE_EZRICH,
+                )
+            ],
+            note="a vendor defined medium at its working strength; the source prints no "
+            "per-component composition and names no catalog number, and the vendor "
+            "sheet is not a mirrored source. It is 'defined' in the vendor's sense and "
+            "carries amino acids, so a medium built on it is NOT carbon-source free in "
+            "the way the M9 variants are",
+        )
+    ],
+    provenance=[
+        _cite(
+            _BANERJEE2024,
+            "EZ rich defined medium (Teknova, CA, USA)",
+            _Q_BANERJEE_EZRICH,
+        )
+    ],
+)
+"""The Teknova EZ rich defined medium, composition deferred to the vendor: the base of
+Banerjee 2024's production medium, on the Foo 2014 ``M9_DIFCO`` pattern."""
+
+EZ_RICH_BANERJEE2024 = Media(
+    name="EZ rich defined medium (Teknova; composition not stated) with 25 ug/mL "
+    "kanamycin, no carbon source (Banerjee 2024)",
+    state="liquid",
+    is_synthetic=True,
+    base_medium="EZ_RICH_TEKNOVA",
+    components=[
+        *EZ_RICH_TEKNOVA.components,
+        _stated(
+            "kanamycin",
+            MediaComponentRole.selection_agent,
+            25.0,
+            _UGML,
+            _cite(_BANERJEE2024, "25 ug/mL kanamycin", _Q_BANERJEE_EZRICH),
+        ),
+    ],
+    provenance=[
+        _cite(
+            _BANERJEE2024,
+            "EZ rich defined medium (Teknova, CA, USA)",
+            _Q_BANERJEE_EZRICH,
+        )
+    ],
+)
+"""Banerjee 2024's production medium for every knockout and plasmid round (row 39)."""
+
+M9_BANERJEE2024 = Media(
+    name="M9 minimal medium (Supplementary Table 3 recipe: 10 mM ammonium sulfate + "
+    "Teknova trace elements), no carbon source (Banerjee 2024)",
+    state="liquid",
+    is_synthetic=True,
+    base_medium="M9",
+    components=[
+        _stated(
+            "ammonium sulfate",
+            _NSRC,
+            10.0,
+            _MM,
+            _cite(
+                _BANERJEE2024_SI1, "(NH4)2SO4 | 10 ml | 1 M stock", _Q_BANERJEE_M9_1X
+            ),
+            note="10 mL of a 1 M stock per 1 L, which the recipe's own columns state",
+        ),
+        *_BANERJEE_M9_SALTS,
+        _stated(
+            "magnesium sulfate",
+            _SALT,
+            2.0,
+            _MM,
+            _cite(_BANERJEE2024_SI1, "1M MgSO4 | 2 mL", _Q_BANERJEE_M9_1X),
+        ),
+        _stated(
+            "calcium chloride",
+            _SALT,
+            0.1,
+            _MM,
+            _cite(_BANERJEE2024_SI1, "1M CaCl2 | 100 uL", _Q_BANERJEE_M9_1X),
+        ),
+        _mixture(
+            "trace element solution (Teknova)",
+            _TRACE,
+            _DEFERRED,
+            concentration=_c(0.05, _VV),
+            provenance=[
+                _cite(
+                    _BANERJEE2024_SI1,
+                    "Trace elements solution | 500 uL: 0.05% v/v",
+                    _Q_BANERJEE_M9_1X,
+                )
+            ],
+            note=_BANERJEE_TRACE_NOTE,
+        ),
+    ],
+    dropouts=[_M9_AMMONIUM_CHLORIDE],
+    provenance=[
+        _cite(
+            _BANERJEE2024_SI1,
+            "Minimal M9 medium recipe",
+            _Q_BANERJEE_M9_1X,
+            note="the recipe's '20% Glucose | 100 ml' row is 20 g/L D-glucose, which is "
+            "the carbon source every condition varies, so it is carried as "
+            "EnvironmentPhysicalPerturbation(carbon_source) rather than as a component "
+            "here. An ammonium-sulfate formulation does not contain the M9 base's "
+            "ammonium chloride, which is recorded as a dropout",
+        )
+    ],
+)
+"""Banerjee 2024's Supplementary Table 3 M9: the minimal-medium characterization."""
+
+M9_MODIFIED_FEDBATCH_BANERJEE2024 = Media(
+    name="modified M9 minimal medium (20 mM ammonium chloride + 1000X Teknova trace "
+    "metals at an unstated dose), no carbon source (Banerjee 2024 fed-batch)",
+    state="liquid",
+    is_synthetic=True,
+    base_medium="M9",
+    components=[
+        _stated(
+            "ammonium chloride",
+            _NSRC,
+            20.0,
+            _MM,
+            _cite(_BANERJEE2024, "20 mM NH4Cl", _Q_BANERJEE_MODIFIED_M9),
+        ),
+        _stated(
+            "disodium hydrogen phosphate",
+            _SALT,
+            6.8,
+            _GL,
+            _cite(_BANERJEE2024, "6.8 g/L Na2HPO4", _Q_BANERJEE_MODIFIED_M9),
+        ),
+        _stated(
+            "potassium dihydrogen phosphate",
+            _SALT,
+            3.0,
+            _GL,
+            _cite(_BANERJEE2024, "3.0 g/L KH2PO4", _Q_BANERJEE_MODIFIED_M9),
+        ),
+        _stated(
+            "sodium chloride",
+            _SALT,
+            0.5,
+            _GL,
+            _cite(_BANERJEE2024, "0.5 g/L NaCl", _Q_BANERJEE_MODIFIED_M9),
+        ),
+        _stated(
+            "magnesium sulfate",
+            _SALT,
+            2.0,
+            _MM,
+            _cite(_BANERJEE2024, "2 mM MgSO4", _Q_BANERJEE_MODIFIED_M9),
+        ),
+        _stated(
+            "calcium chloride",
+            _SALT,
+            0.1,
+            _MM,
+            _cite(_BANERJEE2024, "0.1 mM CaCl2", _Q_BANERJEE_MODIFIED_M9),
+        ),
+        _mixture(
+            "trace metal solution (Teknova, 1000X stock)",
+            _TRACE,
+            _DEFERRED,
+            provenance=[
+                _cite(
+                    _BANERJEE2024, "and trace metal solution", _Q_BANERJEE_MODIFIED_M9
+                ),
+                _cite(
+                    _BANERJEE2024,
+                    "50 mM FeCl3, 20 mM CaCl2, 10 mM MnCl2, 10 mM ZnSO4, 2 mM CoCl2, "
+                    "2 mM CuCl2, 2 mM NiCl2, 2 mM Na2MoO4, 2 mM NaO3Se, 2 mM BH3O3 "
+                    "(the 1000X stock)",
+                    _Q_BANERJEE_TRACE_STOCK,
+                ),
+            ],
+            note="the amount is an OPEN GAP: the Methods name the solution and print "
+            "its full 1000X stock composition but never state how much of it the medium "
+            "receives, so no working concentration is recorded. A 1X assumption would "
+            "be this loader's number, not the paper's",
+        ),
+    ],
+    dropouts=[],
+    provenance=[
+        _cite(
+            _BANERJEE2024,
+            "1 L modified M9 minimal medium",
+            _Q_BANERJEE_MODIFIED_M9,
+            note="the fed-batch glucose (20 g/L batch, fed to a total of 100 g/L) is "
+            "the carbon source and travels as "
+            "EnvironmentPhysicalPerturbation(carbon_source)",
+        )
+    ],
+)
+"""Banerjee 2024's fed-batch "modified M9": 20 mM NH4Cl, in the 2 L bioreactor."""
+
+M9_MODIFIED_TUBE_BANERJEE2024 = Media(
+    name="modified M9 minimal medium (10 mM ammonium chloride + Teknova trace metals at "
+    "0.05% v/v), no carbon source (Banerjee 2024 hydrolysate tubes)",
+    state="liquid",
+    is_synthetic=True,
+    base_medium="M9",
+    components=[
+        _stated(
+            "ammonium chloride",
+            _NSRC,
+            10.0,
+            _MM,
+            _cite(
+                _BANERJEE2024, "50 uL of 1 M NH4Cl in 5 mL: 10 mM", _Q_BANERJEE_TUBE_M9
+            ),
+            note="HALF the fed-batch medium's 20 mM, which is why this is a second "
+            "medium object rather than the same one: 50 uL of a 1 M stock in the 5 mL "
+            "the same sentence adjusts the volume to is 10 mM",
+        ),
+        *[
+            component
+            for component in M9_MODIFIED_FEDBATCH_BANERJEE2024.components
+            if component.compound.name
+            in {
+                resolved_compound("disodium hydrogen phosphate").name,
+                resolved_compound("potassium dihydrogen phosphate").name,
+                resolved_compound("sodium chloride").name,
+            }
+        ],
+        _stated(
+            "magnesium sulfate",
+            _SALT,
+            2.0,
+            _MM,
+            _cite(
+                _BANERJEE2024, "10 uL of 1 M MgSO4 in 5 mL: 2 mM", _Q_BANERJEE_TUBE_M9
+            ),
+        ),
+        _stated(
+            "calcium chloride",
+            _SALT,
+            0.1,
+            _MM,
+            _cite(
+                _BANERJEE2024,
+                "5 uL of 100 mM CaCl2 in 5 mL: 0.1 mM",
+                _Q_BANERJEE_TUBE_M9,
+            ),
+        ),
+        _mixture(
+            "trace metal solution (Teknova, 1000X stock)",
+            _TRACE,
+            _DEFERRED,
+            concentration=_c(0.05, _VV),
+            provenance=[
+                _cite(
+                    _BANERJEE2024,
+                    "2.5 uL of trace metal solution in 5 mL: 0.05% v/v",
+                    _Q_BANERJEE_TUBE_M9,
+                ),
+                _cite(
+                    _BANERJEE2024,
+                    "50 mM FeCl3, 20 mM CaCl2, 10 mM MnCl2, 10 mM ZnSO4, 2 mM CoCl2, "
+                    "2 mM CuCl2, 2 mM NiCl2, 2 mM Na2MoO4, 2 mM NaO3Se, 2 mM BH3O3 "
+                    "(the 1000X stock)",
+                    _Q_BANERJEE_TRACE_STOCK,
+                ),
+            ],
+            note=f"{_BANERJEE_TRACE_NOTE}; unlike the fed-batch medium, this one DOES "
+            "state the dose (2.5 uL in 5 mL)",
+        ),
+    ],
+    dropouts=[],
+    provenance=[
+        _cite(
+            _BANERJEE2024,
+            "the modified M9 minimal medium volume was adjusted to 5 mL",
+            _Q_BANERJEE_TUBE_M9,
+            note="the 20 g/L glucose and the 0 to 35% (v/v) sorghum hydrolysate are "
+            "both varied per condition, so both travel as environment perturbations",
+        )
+    ],
+)
+"""Banerjee 2024's hydrolysate-tube "modified M9": 10 mM NH4Cl, 5 mL in culture tubes."""
+# --- end banerjee2024 ------------------------------------------------------- #
+
+
 # --------------------------------------------------------------------------- #
 # RCH2 defined minimal medium, no carbon (Price 2018 Supplementary Table 18, the Fitness
 # Browser's own media table). Borchert 2024's compendium names it for 20 P. putida
@@ -5029,6 +5453,19 @@ BACTERIAL_MEDIA_USES: dict[str, tuple[str, ...]] = {
     "M9_NREL_KANG2026": ("18 Kang 2026: 'M9'",),
     "M9_NREL_HIGH_N_KANG2026": ("18 Kang 2026: 'modified M9'",),
     "M9_MOPS_KANG2026": ("18 Kang 2026: 'M9-MOPS'",),
+    "EZ_RICH_TEKNOVA": ("39 Banerjee 2024: base of its production medium",),
+    "EZ_RICH_BANERJEE2024": (
+        "39 Banerjee 2024: the knockout and plasmid production rounds",
+    ),
+    "M9_BANERJEE2024": (
+        "39 Banerjee 2024: the minimal-medium characterization (Supplementary Table 3)",
+    ),
+    "M9_MODIFIED_FEDBATCH_BANERJEE2024": (
+        "39 Banerjee 2024: the 2 L bioreactor fed-batch runs",
+    ),
+    "M9_MODIFIED_TUBE_BANERJEE2024": (
+        "39 Banerjee 2024: the sorghum-hydrolysate culture tubes",
+    ),
     "M9_DEFERRED_BANERJEE2025": (
         "39 Banerjee 2025: the shotgun-proteomics cultures; names a modified M9 and defers its amounts to reference 21",
     ),
@@ -5537,6 +5974,11 @@ MEDIA_LIBRARY: dict[str, Media] = {
     "M9_NREL_KANG2026": M9_NREL_KANG2026,
     "M9_NREL_HIGH_N_KANG2026": M9_NREL_HIGH_N_KANG2026,
     "M9_MOPS_KANG2026": M9_MOPS_KANG2026,
+    "EZ_RICH_TEKNOVA": EZ_RICH_TEKNOVA,
+    "EZ_RICH_BANERJEE2024": EZ_RICH_BANERJEE2024,
+    "M9_BANERJEE2024": M9_BANERJEE2024,
+    "M9_MODIFIED_FEDBATCH_BANERJEE2024": M9_MODIFIED_FEDBATCH_BANERJEE2024,
+    "M9_MODIFIED_TUBE_BANERJEE2024": M9_MODIFIED_TUBE_BANERJEE2024,
     "M9_DEFERRED_BANERJEE2025": M9_DEFERRED_BANERJEE2025,
     "M9_NREL_CARRUTHERS2025": M9_NREL_CARRUTHERS2025,
     "M9_NREL_MOPS_MENASALVAS2025": M9_NREL_MOPS_MENASALVAS2025,
@@ -5594,6 +6036,14 @@ CARBON_FREE_MEDIA: dict[str, str] = {
     "M9_SCHMIDT2016": "the carbon source is the variable across the eleven carbon-source "
     "conditions",
     "M9_NREL_DESIQUEIRA2025": "acetate or glucose, varied per condition",
+    "EZ_RICH_TEKNOVA": "base; the vendor defined medium carries its own amino acids",
+    "EZ_RICH_BANERJEE2024": "the vendor base carries amino acids; the stated 20 g/L "
+    "D-glucose is the varied addition",
+    "M9_BANERJEE2024": "20 g/L D-glucose, the recipe's own '20% Glucose | 100 ml' row",
+    "M9_MODIFIED_FEDBATCH_BANERJEE2024": "20 g/L batch glucose, fed to a total of "
+    "100 g/L",
+    "M9_MODIFIED_TUBE_BANERJEE2024": "20 g/L glucose alone, or glucose with 5 to 35% "
+    "(v/v) sorghum hydrolysate, varied per condition",
     "M9_DEFERRED_BANERJEE2025": "p-CA alone, or p-CA with D-alanine and L-malate, "
     "varied per condition; the Methods hand the amounts to the figure legends",
     "M9_NREL_NOCARBON_LIM2022": "the aromatic project varies the carbon source "

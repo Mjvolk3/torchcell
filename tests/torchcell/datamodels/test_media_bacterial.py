@@ -191,6 +191,7 @@ def test_every_bacterial_base_is_a_library_member() -> None:
         "M9",
         "M9_DEFERRED_BANERJEE2025",
         "M9_DIFCO",
+        "EZ_RICH_TEKNOVA",
         "DAVIS_MINIMAL",
         "MOPS_MINIMAL",
         "RCH2_DEFINED_NOCARBON_PRICE2018",
@@ -287,8 +288,10 @@ def test_m9_is_the_four_salts_and_every_m9_formulation_derives_from_it() -> None
     m9_family = [
         key for key in BACTERIAL_KEYS if MEDIA_LIBRARY[key].base_medium == "M9"
     ]
-    # 18, plus M9_AA_SCHMIDT2016 (#1045 row 17)
-    assert len(m9_family) == 19
+    # 18, plus M9_AA_SCHMIDT2016 (#1045 row 17), plus the three of Banerjee 2024, whose
+    # Supplementary Table 3 M9 and two "modified M9" variants (20 mM NH4Cl in the
+    # bioreactor, 10 mM in the hydrolysate tubes) derive from the same four salts.
+    assert len(m9_family) == 22
     assert oc.media_derivation_issues() == []
 
 

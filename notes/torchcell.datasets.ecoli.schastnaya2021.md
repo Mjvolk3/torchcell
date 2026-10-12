@@ -309,3 +309,9 @@ Report `verification_report.json` (written 2026-10-11 08:04 UTC):
 | L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
 | L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
 | L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+
+## 2026.10.12 - The deletion arm stores its released gene symbol (genome-gate reversal)
+
+The owner's rule of 2026-10-12 ([[database.genome-gating-sweep.2026.10.12]], row 383): the loader reads no annotation. `resolve_deletions`, `ResolvedDeletion`, `MIN_RESOLVED_FRACTION`, the `ecoli_genome` constructor parameter and `preprocess/identifier_reconciliation.json` are gone. Each of the 29 KEIO deletion columns now carries a `BacterialReleasedStrainPerturbation` of `released_kind=deletion`, keyed by the gene symbol its column token releases (`sucB knockout` -> `sucB`) with `strain_label` the whole token, and the KEIO `collection` and `cassette` from Baba 2006 as before; the release names no b-number for a deletion strain, so the resolution to a locus is a modeling-time join and the L4 genome-reference rows report what the pinned MG1655 annotation makes of the stored symbols (#1069). The phosphomutant arm (#1057) already stored its released token on the same leaf, so both arms are now one `perturbation_type`: `bacterial_released_strain`, 103 distinct strain labels (16 deletion + 87 phosphomutant).
+
+Released vs stored: 200 released columns, 200 records, 0 dropped (unchanged since #1057); what changed is the identifier on the 29 deletion records, from a resolved b-number to the released symbol.

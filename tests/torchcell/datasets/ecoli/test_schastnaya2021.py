@@ -54,7 +54,6 @@ from torchcell.datamodels.schema import (
     MediaComponentRole,
     ReleasedStrainKind,
 )
-from torchcell.datasets.bacteria_common import LocusTagResolutionError
 from torchcell.literature.manifest import RetrievalMethod
 from torchcell.sequence.genome.ecoli.k12 import MG1655_ASSEMBLY, EcoliK12MG1655Genome
 from torchcell.verification.sourced import audit_sourced_value
@@ -538,28 +537,27 @@ def test_wild_type_phenotype_is_zero_on_the_same_keys(tmp_path: Path) -> None:
     assert reference.measurement_type == m.MEASUREMENT_TYPE
 
 
-def test_deletion_genotype_is_one_keio_deletion_on_the_mg1655_namespace(
-    tmp_path: Path,
-) -> None:
+def test_deletion_genotype_stores_the_released_symbol(tmp_path: Path) -> None:
+    """The release names the deleted gene by symbol, so that is the stored identifier."""
     _write_sd3(tmp_path / m.SD3_FILE, COLUMNS)
     column = m.read_sd3(tmp_path / m.SD3_FILE).columns[0]
-    genotype = m.deletion_genotype(m.ResolvedDeletion(column=column, locus_tag="b0002"))
-    (perturbation,) = genotype.perturbations
+    (perturbation,) = m.deletion_genotype(column).perturbations
     dumped = perturbation.model_dump()
-    assert dumped["systematic_gene_name"] == "b0002"
+    assert dumped["systematic_gene_name"] == "thrA"
     assert dumped["perturbed_gene_name"] == "thrA"
-    assert dumped["perturbation_type"] == "bacterial_deletion"
+    assert dumped["strain_label"] == "thrA knockout"
+    assert dumped["perturbation_type"] == "bacterial_released_strain"
+    assert dumped["released_kind"] == "deletion"
+    assert dumped["identifier_kind"] == m.DELETION_IDENTIFIER_KIND
     assert dumped["gene_namespace"] == "ecoli_k12_mg1655_bnumber"
     assert dumped["collection"] == "KEIO collection"
     assert dumped["cassette"] == m.CASSETTE
-    assert dumped["state"] == "absent"
 
 
 def test_build_reference_keeps_the_assembly_pin_through_a_dump(tmp_path: Path) -> None:
     _write_sd3(tmp_path / m.SD3_FILE, COLUMNS)
     table = m.read_sd3(tmp_path / m.SD3_FILE)
-    resolved = m.ResolvedDeletion(column=table.columns[0], locus_tag="b0002")
-    experiment = m.build_experiment("ds", resolved, table.ions)
+    experiment = m.build_experiment("ds", table.columns[0], table.ions)
     reference = m.build_reference("ds", REFERENCE, experiment)
     dumped = reference.model_dump()
     assert dumped["genome_reference"]["assembly_accession"] == "GCA_000005845.2"
@@ -576,16 +574,14 @@ def test_build_stores_the_two_deletions_and_the_two_phosphomutants(
     mg1655: EcoliK12MG1655Genome,
     presence_only_pins: list[Mapping[str, str]],
 ) -> None:
-    dataset = m.MetabolomeSchastnaya2021Dataset(
-        root=str(synthetic), ecoli_genome=mg1655
-    )
+    dataset = m.MetabolomeSchastnaya2021Dataset(root=str(synthetic))
     assert presence_only_pins == [m.DATA_SHA256]
     assert len(dataset) == 4
 
     first = dataset[0]["experiment"]
     (perturbation,) = first["genotype"]["perturbations"]
-    assert perturbation["systematic_gene_name"] == "b0002"
-    assert perturbation["perturbed_gene_name"] == "thrA"
+    assert perturbation["systematic_gene_name"] == "thrA"
+    assert perturbation["strain_label"] == "thrA knockout"
     assert first["phenotype"]["metabolite_level"] == {
         "C6H12O6": 0.5,
         "C3H4O3": -1.25,
@@ -596,7 +592,7 @@ def test_build_stores_the_two_deletions_and_the_two_phosphomutants(
     assert first["environment"]["media"]["name"] == m.MEDIA["GLUCOSE"].name
 
     second = dataset[1]["experiment"]
-    assert second["genotype"]["perturbations"][0]["systematic_gene_name"] == "b0005"
+    assert second["genotype"]["perturbations"][0]["systematic_gene_name"] == "proB"
     assert second["environment"]["media"]["name"] == m.MEDIA["ACETATE"].name
 
     # #1057: the phosphomutants are records, under the token Supplementary Data 3 prints
@@ -634,7 +630,7 @@ def test_build_stores_the_two_deletions_and_the_two_phosphomutants(
     )
     strains = (preprocess / "strains.csv").read_text().splitlines()
     assert strains[1].startswith(
-        "0,deletion,5,thrA knockout,thrA,b0002,,,GLUCOSE,cold,4,BW25113,"
+        "0,deletion,5,thrA knockout,thrA,,,,GLUCOSE,cold,4,BW25113,"
     )
     assert strains[3].startswith(
         "2,phosphomutant,7,ThrL-S2A,ThrL,,b0001,phospho-abolishing,GLUCOSE,cold,5,"
@@ -651,7 +647,7 @@ def test_build_stores_the_two_deletions_and_the_two_phosphomutants(
 def test_build_verifies_l0_to_l4_on_the_synthetic_tree(
     synthetic: Path, mg1655: EcoliK12MG1655Genome, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    m.MetabolomeSchastnaya2021Dataset(root=str(synthetic), ecoli_genome=mg1655)
+    m.MetabolomeSchastnaya2021Dataset(root=str(synthetic))
     monkeypatch.setattr(
         "torchcell.verification.runners._gene_set_for_reference",
         lambda reference, data_root: {"b0002", "b0005"},
@@ -669,58 +665,15 @@ def verify_without_audits(root: Path) -> Any:
     return m.verify_build(str(root), data_root=str(root))
 
 
-def test_build_refuses_a_genome_of_another_strain(
-    synthetic: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    from tests.torchcell.sequence.genome._bacterial_fixtures import BW25113_LOCI
-    from torchcell.sequence.genome.ecoli.k12 import (
-        BW25113_ASSEMBLY,
-        EcoliK12BW25113Genome,
-    )
-
-    files = write_assembly(tmp_path / "tier2", BW25113_ASSEMBLY, BW25113_LOCI)
-    serve_tier(monkeypatch, files)
-    root = tmp_path / "bw25113"
-    root.mkdir()
-    other = EcoliK12BW25113Genome(genome_root=str(root), overwrite=False)
-    with pytest.raises(ValueError, match="needs the ecoli_K12_MG1655_ASM584v2 genome"):
-        m.MetabolomeSchastnaya2021Dataset(root=str(synthetic), ecoli_genome=other)
-
-
-def test_resolve_deletions_stops_below_the_resolution_threshold(
-    tmp_path: Path, mg1655: EcoliK12MG1655Genome
-) -> None:
-    columns = [("notAGene knockout", "GLUCOSE", [1.0] * 5, [0.1] * 5)]
-    _write_sd3(tmp_path / m.SD3_FILE, columns)
-    kept = list(m.read_sd3(tmp_path / m.SD3_FILE).columns)
-    with pytest.raises(LocusTagResolutionError, match=r"0 of 1 names \(0\.000\)"):
-        m.resolve_deletions(mg1655, kept, label="test")
-
-
-def test_resolve_deletions_refuses_a_symbol_off_the_namespace(
-    tmp_path: Path, mg1655: EcoliK12MG1655Genome, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """Above the threshold an unplaced symbol is still a build error, not a drop."""
-    monkeypatch.setattr(m, "MIN_RESOLVED_FRACTION", 0.5)
-    columns = [
-        ("thrA knockout", "GLUCOSE", [1.0] * 5, [0.1] * 5),
-        ("notAGene knockout", "GLUCOSE", [1.0] * 5, [0.1] * 5),
-    ]
-    _write_sd3(tmp_path / m.SD3_FILE, columns)
-    kept = list(m.read_sd3(tmp_path / m.SD3_FILE).columns)
-    with pytest.raises(m.TableFormatError, match="not on an MG1655 locus"):
-        m.resolve_deletions(mg1655, kept, label="test")
-
-
 def test_process_verifies_the_real_pins(
-    tmp_path: Path, mg1655: EcoliK12MG1655Genome, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Without the presence-only stub the synthetic bytes fail the pinned sha256."""
     root = tmp_path / "metabolome_schastnaya2021"
     _write_raw(root / "raw")
     monkeypatch.setattr(m, "assembly_reference", lambda strain, **kwargs: REFERENCE)
     with pytest.raises(RawSha256MismatchError):
-        m.MetabolomeSchastnaya2021Dataset(root=str(root), ecoli_genome=mg1655)
+        m.MetabolomeSchastnaya2021Dataset(root=str(root))
 
 
 # --------------------------------------------------------------------------- #
@@ -986,10 +939,8 @@ def test_real_build_counts_and_the_gnd_record() -> None:
         by_type.setdefault(perturbation["perturbation_type"], set()).add(
             perturbation.get("strain_label") or perturbation["systematic_gene_name"]
         )
-    assert {k: len(v) for k, v in by_type.items()} == {
-        "bacterial_deletion": 16,
-        "bacterial_released_strain": 87,
-    }
+    # one leaf for both arms now: 16 deletion strains + 87 phosphomutant strains
+    assert {k: len(v) for k, v in by_type.items()} == {"bacterial_released_strain": 103}
 
 
 @pytest.mark.data

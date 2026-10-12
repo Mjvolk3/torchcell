@@ -117,8 +117,8 @@
         "own_release_url": "https://fit.genomics.lbl.gov/cgi_data/feba.db",
         "own_release_access": "scriptable",
         "mirrored": true,
-        "loaded_as_own_dataset": false,
-        "own_dataset_class": null,
+        "loaded_as_own_dataset": true,
+        "own_dataset_class": "FitnessBrowserPutidaDataset",
         "cross_check": {
           "statistic": "max_abs_diff",
           "value": 0.0004999993331319952,
@@ -143,8 +143,8 @@
         "own_release_url": "https://fit.genomics.lbl.gov/cgi_data/feba.db",
         "own_release_access": "scriptable",
         "mirrored": true,
-        "loaded_as_own_dataset": false,
-        "own_dataset_class": null,
+        "loaded_as_own_dataset": true,
+        "own_dataset_class": "FitnessBrowserPutidaDataset",
         "cross_check": {
           "statistic": "max_abs_diff",
           "value": 0.0004999930534744998,
@@ -239,8 +239,8 @@
         "own_release_url": "https://fit.genomics.lbl.gov/cgi_data/feba.db",
         "own_release_access": "scriptable",
         "mirrored": false,
-        "loaded_as_own_dataset": false,
-        "own_dataset_class": null,
+        "loaded_as_own_dataset": true,
+        "own_dataset_class": "FitnessBrowserPutidaDataset",
         "cross_check": {
           "statistic": "max_abs_diff",
           "value": 0.0004999997503820075,
@@ -265,8 +265,8 @@
         "own_release_url": "https://fit.genomics.lbl.gov/cgi_data/feba.db",
         "own_release_access": "scriptable",
         "mirrored": true,
-        "loaded_as_own_dataset": false,
-        "own_dataset_class": null,
+        "loaded_as_own_dataset": true,
+        "own_dataset_class": "FitnessBrowserPutidaDataset",
         "cross_check": {
           "statistic": "max_abs_diff",
           "value": 0.0004999973531831098,
@@ -291,8 +291,8 @@
         "own_release_url": "https://fit.genomics.lbl.gov/cgi_data/feba.db",
         "own_release_access": "scriptable",
         "mirrored": true,
-        "loaded_as_own_dataset": false,
-        "own_dataset_class": null,
+        "loaded_as_own_dataset": true,
+        "own_dataset_class": "FitnessBrowserPutidaDataset",
         "cross_check": {
           "statistic": "max_abs_diff",
           "value": 0.0004999852341339983,
@@ -317,8 +317,8 @@
         "own_release_url": "https://fit.genomics.lbl.gov/cgi_data/feba.db",
         "own_release_access": "scriptable",
         "mirrored": false,
-        "loaded_as_own_dataset": false,
-        "own_dataset_class": null,
+        "loaded_as_own_dataset": true,
+        "own_dataset_class": "FitnessBrowserPutidaDataset",
         "cross_check": {
           "statistic": "max_abs_diff",
           "value": 0.0004999949818080014,
@@ -343,8 +343,8 @@
         "own_release_url": "https://fit.genomics.lbl.gov/cgi_data/feba.db",
         "own_release_access": "scriptable",
         "mirrored": false,
-        "loaded_as_own_dataset": false,
-        "own_dataset_class": null,
+        "loaded_as_own_dataset": true,
+        "own_dataset_class": "FitnessBrowserPutidaDataset",
         "cross_check": {
           "statistic": "max_abs_diff",
           "value": 0.0004999928304728028,
@@ -369,8 +369,8 @@
         "own_release_url": "https://fit.genomics.lbl.gov/cgi_data/feba.db",
         "own_release_access": "scriptable",
         "mirrored": false,
-        "loaded_as_own_dataset": false,
-        "own_dataset_class": null,
+        "loaded_as_own_dataset": true,
+        "own_dataset_class": "FitnessBrowserPutidaDataset",
         "cross_check": {
           "statistic": "max_abs_diff",
           "value": 0.0004999501733509715,
@@ -395,8 +395,8 @@
         "own_release_url": "https://fit.genomics.lbl.gov/cgi_data/feba.db",
         "own_release_access": "scriptable",
         "mirrored": true,
-        "loaded_as_own_dataset": false,
-        "own_dataset_class": null,
+        "loaded_as_own_dataset": true,
+        "own_dataset_class": "FitnessBrowserPutidaDataset",
         "cross_check": {
           "statistic": "max_abs_diff",
           "value": 0.0004999796161199999,
@@ -827,6 +827,6 @@
     "unresolved_compounds": [],
     "proposed_class": null
   },
-  "decided_at": "2026-10-11",
-  "torchcell_commit": "aac409119b586fc444d5dc78842969c32c0cf1bf"
+  "decided_at": "2026-10-12",
+  "torchcell_commit": "0462023675b4fb9965fda050f45d97b47bd4c2b1"
 }

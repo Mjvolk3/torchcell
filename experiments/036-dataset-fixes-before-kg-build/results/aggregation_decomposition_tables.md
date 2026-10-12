@@ -27,24 +27,24 @@ Not decomposed:
 
 #### borchertMachineLearningAnalysis2024
 
-Counts: studies 12, loadable_scriptable 10, loadable_walled 0, loadable_per_record_values 10, loadable_raw_reads_only 0, compendium_only 1, loaded_as_own_dataset 1, mirrored 7, samples 332, samples_served 290, samples_loadable_from_own_release 254, samples_compendium_only 36.
+Counts: studies 12, loadable_scriptable 1, loadable_walled 0, loadable_per_record_values 1, loadable_raw_reads_only 0, compendium_only 1, loaded_as_own_dataset 10, mirrored 7, samples 332, samples_served 290, samples_loadable_from_own_release 22, samples_compendium_only 36.
 
 `RbTnseqBorchert2024Dataset` (12 sources)
 
 | source | role | samples (served) | own release | access | mirrored | loaded | L4 cross-check | compendium's attribution |
 |---|---|---|---|---|---|---|---|---|
-| doi:10.1128/aem.02430-21 | original_study | 128 (128) | per_record_values | scriptable | schmidtNitrogenMetabolismPseudomonas2022 | no | max_abs_diff 0.0005 vs 0.0005 (pass; 128 samples) | borchert2024 5; schmidt2022 123 (browser: Schmidt22 128) |
-| doi:10.1128/aem.01665-20 | original_study | 46 (46) | per_record_values | scriptable | thompsonFattyAcidAlcohol2020 | no | max_abs_diff 0.0005 vs 0.0005 (pass; 46 samples) | thompson2020 46 (browser: Thompson20 46) |
+| doi:10.1128/aem.02430-21 | original_study | 128 (128) | per_record_values | scriptable | schmidtNitrogenMetabolismPseudomonas2022 | FitnessBrowserPutidaDataset | max_abs_diff 0.0005 vs 0.0005 (pass; 128 samples) | borchert2024 5; schmidt2022 123 (browser: Schmidt22 128) |
+| doi:10.1128/aem.01665-20 | original_study | 46 (46) | per_record_values | scriptable | thompsonFattyAcidAlcohol2020 | FitnessBrowserPutidaDataset | max_abs_diff 0.0005 vs 0.0005 (pass; 46 samples) | thompson2020 46 (browser: Thompson20 46) |
 | doi:10.1016/j.ymben.2023.04.007 | original_study | 42 (42) | per_record_values | scriptable | borchertRBTnSeqIdentifiesGenetic2023 | RbTnseqBorchert2023Dataset | max_abs_diff 0.0005 vs 0.0005 (pass; 42 samples) | borchert2023 42 (browser: not-in-browser 42) |
 | doi:10.1128/msystems.00942-23 | compendium_paper | 36 (36) | none | - | borchertMachineLearningAnalysis2024 | no | not measured | borchert2024 36 (browser: not-in-browser 36) |
 | fitness-browser:no-pubId | unattributed_release | 22 (0) | per_record_values | scriptable | no | no | max_abs_diff 0.0005 vs 0.0005 (pass; 22 samples) | borchert2024 22 (browser: no-pubId 22) |
-| doi:10.1016/j.mec.2019.e00119 | original_study | 18 (18) | per_record_values | scriptable | no | no | max_abs_diff 0.0005 vs 0.0005 (pass; 18 samples) | borchert2024 18 (browser: Incha20 18) |
-| doi:10.1038/s41564-017-0028-z | original_study | 16 (0) | per_record_values | scriptable | randMetabolicPathwayCatabolizing2017 | no | max_abs_diff 0.0005 vs 0.0005 (pass; 16 samples) | rand2017 10; borchert2024 6 (browser: Rand17 16) |
-| doi:10.1128/mbio.02577-18 | original_study | 7 (7) | per_record_values | scriptable | thompsonMassivelyParallelFitness2019 | no | max_abs_diff 0.0005 vs 0.0005 (pass; 7 samples) | borchert2024 7 (browser: Thompson18 7) |
-| doi:10.1101/2020.09.30.321588 | original_study | 6 (6) | per_record_values | scriptable | no | no | max_abs_diff 0.0005 vs 0.0005 (pass; 6 samples) | borchert2024 6 (browser: Garber20 6) |
-| doi:10.1128/msystems.00297-18 | original_study | 6 (2) | per_record_values | scriptable | no | no | max_abs_diff 0.0005 vs 0.0005 (pass; 6 samples) | borchert2024 6 (browser: Price18b 6) |
-| doi:10.1101/2021.11.02.466981 | original_study | 3 (3) | per_record_values | scriptable | no | no | max_abs_diff 0.0005 vs 0.0005 (pass; 3 samples) | borchert2024 3 (browser: Price21b 3) |
-| doi:10.1016/j.mec.2019.e00098 | original_study | 2 (2) | per_record_values | scriptable | thompsonOmicsdrivenIdentificationElimination2019 | no | max_abs_diff 0.0005 vs 0.0005 (pass; 2 samples) | borchert2024 2 (browser: Thompson19 2) |
+| doi:10.1016/j.mec.2019.e00119 | original_study | 18 (18) | per_record_values | scriptable | no | FitnessBrowserPutidaDataset | max_abs_diff 0.0005 vs 0.0005 (pass; 18 samples) | borchert2024 18 (browser: Incha20 18) |
+| doi:10.1038/s41564-017-0028-z | original_study | 16 (0) | per_record_values | scriptable | randMetabolicPathwayCatabolizing2017 | FitnessBrowserPutidaDataset | max_abs_diff 0.0005 vs 0.0005 (pass; 16 samples) | rand2017 10; borchert2024 6 (browser: Rand17 16) |
+| doi:10.1128/mbio.02577-18 | original_study | 7 (7) | per_record_values | scriptable | thompsonMassivelyParallelFitness2019 | FitnessBrowserPutidaDataset | max_abs_diff 0.0005 vs 0.0005 (pass; 7 samples) | borchert2024 7 (browser: Thompson18 7) |
+| doi:10.1101/2020.09.30.321588 | original_study | 6 (6) | per_record_values | scriptable | no | FitnessBrowserPutidaDataset | max_abs_diff 0.0005 vs 0.0005 (pass; 6 samples) | borchert2024 6 (browser: Garber20 6) |
+| doi:10.1128/msystems.00297-18 | original_study | 6 (2) | per_record_values | scriptable | no | FitnessBrowserPutidaDataset | max_abs_diff 0.0005 vs 0.0005 (pass; 6 samples) | borchert2024 6 (browser: Price18b 6) |
+| doi:10.1101/2021.11.02.466981 | original_study | 3 (3) | per_record_values | scriptable | no | FitnessBrowserPutidaDataset | max_abs_diff 0.0005 vs 0.0005 (pass; 3 samples) | borchert2024 3 (browser: Price21b 3) |
+| doi:10.1016/j.mec.2019.e00098 | original_study | 2 (2) | per_record_values | scriptable | thompsonOmicsdrivenIdentificationElimination2019 | FitnessBrowserPutidaDataset | max_abs_diff 0.0005 vs 0.0005 (pass; 2 samples) | borchert2024 2 (browser: Thompson19 2) |
 
 Dropped or recomputed relative to the originals:
 

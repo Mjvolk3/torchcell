@@ -9,6 +9,7 @@ The hermetic tests build a workbook with the pinned NETWORK layout in ``tmp_path
 
 from __future__ import annotations
 
+import json
 import os
 import os.path as osp
 from pathlib import Path
@@ -16,7 +17,12 @@ from pathlib import Path
 import pytest
 from openpyxl import Workbook
 
-from torchcell.datamodels.schema import FluxPhenotype, PromoterReplacementPerturbation
+from torchcell.data.experiment_dataset import file_sha256
+from torchcell.datamodels.schema import (
+    AssemblyReferenceGenome,
+    FluxPhenotype,
+    PromoterReplacementPerturbation,
+)
 from torchcell.datasets.ecoli import li2021 as m
 from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
 
@@ -233,3 +239,106 @@ def test_dev_store_verifies() -> None:
         pytest.skip("flux_li2021 dev store not built")
     report = m.verify_build(root, _data_root())
     assert report.passed, report.summary()
+
+
+def test_exchange_values_must_be_finite() -> None:
+    with pytest.raises(ValueError, match="must be finite"):
+        FluxPhenotype(
+            net_flux={"a": 1.0},
+            exchange_flux={"a.x": float("nan")},
+            measurement_type="x",
+        )
+
+
+# --------------------------------------------------------------------------- #
+# The hermetic build: a synthetic library copy, deposit, download, process, verify
+# --------------------------------------------------------------------------- #
+REFERENCE = AssemblyReferenceGenome(
+    species="Escherichia coli",
+    strain="BW-P BF",
+    assembly_set="ecoli_K12_BW25113_ASM75055v1",
+    assembly_accession="GCA_000750555.1",
+    background=m.reference_background(),
+)
+
+
+@pytest.fixture
+def mirror(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """A data root whose library holds a synthetic workbook, pinned by its own hash."""
+    data_root = tmp_path / "data_root"
+    library = data_root / m.LIBRARY_DIR_REL / "si"
+    library.mkdir(parents=True)
+    source = _workbook(tmp_path)
+    target = library / "si2.xlsx"
+    target.write_bytes(source.read_bytes())
+    monkeypatch.setattr(m, "WORKBOOK_SHA256", file_sha256(target))
+    monkeypatch.setattr(m, "EXPECTED_REACTIONS", 2)
+    monkeypatch.setattr(m, "EXPECTED_EXCHANGES", {s.block_label: 1 for s in m.STRAINS})
+    monkeypatch.setattr(
+        m, "assembly_reference", lambda strain, background=None: REFERENCE
+    )
+    monkeypatch.setenv("DATA_ROOT", str(data_root))
+    return data_root
+
+
+def test_deposit_is_idempotent_and_writes_the_manifest(mirror: Path) -> None:
+    root = m.deposit_raw_mirror(str(mirror))
+    assert (root / m.WORKBOOK_RELPATH).exists()
+    assert m.manifest_sha256(str(mirror)) == m.WORKBOOK_SHA256
+    assert m.deposit_raw_mirror(str(mirror)) == root
+
+
+def test_hermetic_build_writes_three_records_and_verifies(
+    mirror: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from torchcell.verification import runners
+    from torchcell.verification.report import Level, LevelResult
+
+    m.deposit_raw_mirror(str(mirror))
+    root = mirror / m.DATASET_ROOT_REL
+    dataset = m.FluxLi2021Dataset(root=str(root))
+    assert len(dataset) == 3
+    not_stored = json.loads((root / "preprocess" / "not_stored.json").read_text())
+    assert not_stored["not_stored"][0]["count"] == 3 * 2 * 3
+    findings = json.loads((root / "preprocess" / "release_findings.json").read_text())
+    assert findings["control_map_released"] is False
+
+    monkeypatch.setattr(
+        runners, "_bacterial_gene_set", lambda assembly, base: {"BW25113_1852"}
+    )
+    monkeypatch.setattr(
+        m,
+        "audit_sourced_value",
+        lambda value, root: LevelResult(
+            level=Level.L3, name="provenance_audit", passed=True, message="stub"
+        ),
+    )
+    report = m.verify_build(str(root), str(mirror))
+    assert report.passed, report.summary()
+    assert (root / "preprocess" / "verification_report.json").exists()
+    assert m.main(["verify"]) == 0
+
+
+def test_verifier_rows_fail_on_a_moved_value_and_a_missing_gap() -> None:
+    blocks = [_block(spec.block_label) for spec in m.STRAINS]
+    records = [
+        {
+            "experiment": {
+                "genotype": {"perturbations": [{"promoter_name": spec.promoter}]},
+                "phenotype": m.flux_phenotype(blocks[i]).model_dump(mode="json"),
+            },
+            "reference": {
+                "phenotype_reference": m.reference_phenotype().model_dump(mode="json")
+            },
+        }
+        for i, spec in enumerate(m.STRAINS)
+    ]
+    assert m._l1_one_record_per_block(records).passed
+    assert m._l2_values_equal_workbook(records, blocks).passed
+    assert m._l3_interval_and_reference(records).passed
+    moved = [_block(spec.block_label, shift=1.0) for spec in m.STRAINS]
+    assert not m._l2_values_equal_workbook(records, moved).passed
+    records[0]["reference"]["phenotype_reference"]["provenance_gaps"] = []
+    assert not m._l3_interval_and_reference(records).passed
+    finding = m._l4_zwf_is_a_bw25113_gene(records[:0], set())
+    assert finding.passed

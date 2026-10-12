@@ -96,14 +96,150 @@
   "citation_key": "nguessanRefiningResolutionYeast2025",
   "code_commit": "1e0e2109014ab62cc6636fb2359186dc25d43f8d",
   "dryad": {
-    "deposited": false,
+    "batch1_numbers_are_0_to_4488_in_order": true,
+    "batch1_strains": 4489,
+    "deposited": true,
+    "encodings": {
+      "0.01": {
+        "blocks": {
+          "max": 6012.0,
+          "mean": 1542.0298,
+          "median": 1030.0,
+          "min": 66.0,
+          "p90": 3818.0
+        },
+        "genotype_bytes": {
+          "max": 261207.0,
+          "mean": 66557.1254,
+          "median": 44261.0,
+          "min": 2874.0,
+          "p90": 165739.0
+        },
+        "genotype_bytes_total": 196410077
+      },
+      "0.02": {
+        "blocks": {
+          "max": 4081.0,
+          "mean": 1041.7723,
+          "median": 750.0,
+          "min": 60.0,
+          "p90": 2403.0
+        },
+        "genotype_bytes": {
+          "max": 177318.0,
+          "mean": 44810.614,
+          "median": 32087.0,
+          "min": 2627.0,
+          "p90": 104219.0
+        },
+        "genotype_bytes_total": 132236122
+      },
+      "0.05": {
+        "blocks": {
+          "max": 2225.0,
+          "mean": 591.8024,
+          "median": 483.0,
+          "min": 57.0,
+          "p90": 1219.0
+        },
+        "genotype_bytes": {
+          "max": 96028.0,
+          "mean": 25262.4914,
+          "median": 20529.0,
+          "min": 2508.0,
+          "p90": 52516.0
+        },
+        "genotype_bytes_total": 74549612
+      },
+      "0.1": {
+        "blocks": {
+          "max": 1321.0,
+          "mean": 376.8116,
+          "median": 330.0,
+          "min": 54.0,
+          "p90": 694.0
+        },
+        "genotype_bytes": {
+          "max": 56996.0,
+          "mean": 15947.0983,
+          "median": 13836.0,
+          "min": 2384.0,
+          "p90": 29630.0
+        },
+        "genotype_bytes_total": 47059887
+      },
+      "called_parent_only": {
+        "blocks": {
+          "max": 161.0,
+          "mean": 65.5917,
+          "median": 63.0,
+          "min": 41.0,
+          "p90": 80.0
+        },
+        "genotype_bytes": {
+          "max": 6728.0,
+          "mean": 2849.9204,
+          "median": 2746.0,
+          "min": 1835.0,
+          "p90": 3444.0
+        },
+        "genotype_bytes_total": 8410115
+      },
+      "loader": {
+        "blocks": {
+          "max": 2225.0,
+          "mean": 591.8024,
+          "median": 483.0,
+          "min": 57.0,
+          "p90": 1219.0
+        },
+        "genotype_bytes": {
+          "max": 96028.0,
+          "mean": 25262.4914,
+          "median": 20529.0,
+          "min": 2508.0,
+          "p90": 52516.0
+        },
+        "genotype_bytes_total": 74549612
+      }
+    },
+    "fraction_exactly_half": {
+      "max": 0.01341539645141126,
+      "mean": 0.0,
+      "median": 0.0,
+      "min": 0.0,
+      "p90": 0.0
+    },
+    "fraction_in_0.05_0.95": {
+      "max": 0.6736788959946146,
+      "mean": 0.0811,
+      "median": 0.025796989950473626,
+      "min": 0.00019233543299514353,
+      "p90": 0.2660239457614079
+    },
+    "geno_data_1": {
+      "assigned_strains_held": 2951,
+      "assigned_strains_missing": [],
+      "batch1_strains_held": 4489,
+      "distinct_numbers": 20000,
+      "number_max": 19999,
+      "number_min": 0,
+      "numbers_ascending": true,
+      "numbers_contiguous": true,
+      "posteriors_per_row": {
+        "41594": 20000
+      },
+      "rows": 20000
+    },
     "issue": 1014,
-    "missing": [
-      "README.txt",
-      "SNP_list.txt",
-      "geno_data_1.txt.gz",
-      "segregant_info.txt"
-    ]
+    "missing": [],
+    "snp_list": {
+      "end_rows": 16,
+      "rows": 41610,
+      "snps": 41594
+    },
+    "snps": 41594,
+    "strains_read": 2951
   },
   "release": {
     "barcodes": 18233,

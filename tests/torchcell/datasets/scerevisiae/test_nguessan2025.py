@@ -14,6 +14,7 @@ import hashlib
 import json
 from collections.abc import Callable, Mapping
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -33,6 +34,7 @@ from torchcell.datamodels.schema import (
 from torchcell.datasets.scerevisiae import nguessan2025 as m
 from torchcell.datasets.scerevisiae.bloom2019 import Marker, ParentAssemblyRefs
 from torchcell.literature.manifest import Manifest, RetrievalMethod
+from torchcell.verification import runners
 
 
 @pytest.fixture
@@ -520,9 +522,10 @@ def _deposit_inputs(tmp_path: Path) -> tuple[Path, Path, Path]:
     return release, code, meta
 
 
-def test_deposit_records_the_walled_files_as_pending_manual_browser(
+def test_deposit_records_the_by_hand_dryad_files_as_manual_browser(
     tmp_path: Path,
 ) -> None:
+    """Written before the bytes arrive: the records name what a rebuild deposits."""
     release, code, meta = _deposit_inputs(tmp_path)
     data_root = tmp_path / "root"
     mirror = m.deposit_raw_mirror(
@@ -534,21 +537,35 @@ def test_deposit_records_the_walled_files_as_pending_manual_browser(
     )
     manifest = Manifest.model_validate_json((mirror / "manifest.json").read_text())
     by_path = {f.path: f for f in manifest.files}
+    archive = f"data/dryad/{m.DRYAD_ARCHIVE_NAME}"
     assert sorted(by_path) == sorted(
         [*m.raw_relpaths().values()]
         + [f"code/{p}" for p in m.CODE_FILES]
         + [f"data/dryad/{m.DRYAD_METADATA}", f"data/dryad/{m.DRYAD_LISTING}"]
+        + [archive]
     )
     geno = by_path[f"data/dryad/{m.GENO_NAME}"]
     assert geno.retrieval is not None
     assert geno.retrieval.method == RetrievalMethod.manual_browser
     assert (geno.sha256, geno.bytes) == (m.DRYAD_FILES[m.GENO_NAME].sha256, 5078870207)
+    assert geno.retrieval.retrieved_at == "2026-10-12"
     assert geno.retrieval.params["dryad_download_url"].endswith("/1474423/download")
+    assert geno.retrieval.params["received_in"] == archive
+    assert geno.retrieval.params["deposit_record"] == "data/dryad/DEPOSIT.md"
+    assert geno.retrieval.params["checksums"] == "data/dryad/SHA256SUMS.txt"
+    assert "select the four files" in geno.retrieval.params["retrieval_command"]
+    zipped = by_path[archive]
+    assert zipped.retrieval is not None
+    assert (zipped.sha256, zipped.bytes) == (m.DRYAD_ARCHIVE_SHA256, 5085724902)
+    assert zipped.retrieval.method == RetrievalMethod.manual_browser
+    assert zipped.retrieval.params["members"] == list(m.DRYAD_FILES)
+    assert "received_in" not in zipped.retrieval.params
     assert not (mirror / geno.path).exists()
     assert manifest.provenance_complete is False
     table = by_path[f"data/github/{m.GENE_TABLE}"]
     assert table.retrieval is not None
     assert table.retrieval.source_url == m.github_url(m.GENE_TABLE)
+    assert table.retrieval.retrieved_at == "2026-10-11"
     assert table.sha256 == rel.sha256(release / m.GENE_TABLE)
     assert m.missing_dryad_files(str(data_root)) == sorted(m.DRYAD_FILES)
     assert (
@@ -572,6 +589,61 @@ def test_deposit_is_idempotent_and_refuses_a_drifted_file(tmp_path: Path) -> Non
     (mirror / "data/github" / m.GENE_TABLE).write_text("edited\n")
     with pytest.raises(RuntimeError, match="exists with a different sha256"):
         m.deposit_raw_mirror(**kwargs)  # type: ignore[arg-type]
+
+
+def _stored_zip(
+    path: Path, members: dict[str, bytes], *, compress: bool = False
+) -> None:
+    import zipfile
+
+    method = zipfile.ZIP_DEFLATED if compress else zipfile.ZIP_STORED
+    with zipfile.ZipFile(path, "w", compression=method) as archive:
+        for name, data in members.items():
+            archive.writestr(name, data)
+
+
+def _dryad(name: str, data: bytes) -> m.DryadFile:
+    return m.DryadFile(
+        name=name, file_id=1, bytes=len(data), sha256=hashlib.sha256(data).hexdigest()
+    )
+
+
+def test_check_dryad_archive_accepts_exactly_the_stored_members(tmp_path: Path) -> None:
+    members = {"README.txt": b"readme\n", "SNP_list.txt": b"a\tb\n" * 50}
+    files = {name: _dryad(name, data) for name, data in members.items()}
+    path = tmp_path / "selection.zip"
+    _stored_zip(path, members)
+    m.check_dryad_archive(path, files)
+    _stored_zip(path, {**members, "extra.txt": b"x"})
+    with pytest.raises(ValueError, match="are not the stored deposit"):
+        m.check_dryad_archive(path, files)
+    _stored_zip(path, members, compress=True)
+    with pytest.raises(ValueError, match="are not the stored deposit"):
+        m.check_dryad_archive(path, files)
+    _stored_zip(path, {"README.txt": b"readme\n", "SNP_list.txt": b"short"})
+    with pytest.raises(ValueError, match="are not the stored deposit"):
+        m.check_dryad_archive(path, files)
+
+
+def test_deposit_refuses_an_arrival_zip_without_the_four_members(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A present zip at its pinned hash must still list exactly the four Dryad files."""
+    release, code, meta = _deposit_inputs(tmp_path)
+    data_root = tmp_path / "root"
+    dryad_dir = data_root / m.RAW_DIR_REL / "data" / "dryad"
+    dryad_dir.mkdir(parents=True)
+    zipped = dryad_dir / m.DRYAD_ARCHIVE_NAME
+    _stored_zip(zipped, {"README.txt": b"not the deposit\n"})
+    monkeypatch.setattr(m, "DRYAD_ARCHIVE_SHA256", rel.sha256(zipped))
+    with pytest.raises(ValueError, match="are not the stored deposit"):
+        m.deposit_raw_mirror(
+            release_dir=release,
+            code_dir=code,
+            dryad_metadata_dir=meta,
+            retrieved_at="2026-10-11",
+            data_root=str(data_root),
+        )
 
 
 def test_download_refuses_while_the_dryad_files_are_walled(
@@ -634,7 +706,17 @@ def test_every_quote_names_its_pinned_file() -> None:
         m.DRYAD_METADATA_REL,
     }
     assert m.sourced_values() == list(m.SOURCED.values())
-    assert m.VERIFICATION_SPEC["expected_count"] == m.N_SEGREGANTS == 2951
+    spec = runners.SEGREGANT_EXPRESSION_DATASETS["nguessan2025"]
+    assert spec["expected_count"] == m.N_SEGREGANTS == 2951
+    assert spec["root"] == "data/torchcell/nguessan2025"
+    assert spec["provenance"].sha256 == m.PAPER_MD_SHA256
+    assert spec["provenance"].citation_key == m.CITATION_KEY
+
+
+def test_the_class_is_registered_under_its_name() -> None:
+    from torchcell.datasets.dataset_registry import dataset_registry
+
+    assert dataset_registry["Nguessan2025Dataset"] is m.Nguessan2025Dataset
 
 
 _LIBRARY = Path("/scratch/projects/torchcell-scratch")
@@ -656,3 +738,39 @@ def test_every_quote_is_verbatim_in_the_mirror_bytes() -> None:
         for sv in m.RELEASE_SOURCED.values()
     ]
     assert [a.details for a in paper + release if not a.passed] == []
+
+
+def test_verify_build_reads_its_runner_entry(
+    dataset: m.Nguessan2025Dataset, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``verify_build`` hands the streaming verifier its registry entry and the store."""
+    import torchcell.sequence.genome.registry as registry
+    import torchcell.verification.segregant_expression_reference_panel as panel
+
+    data_root = tmp_path / "verify_root"
+    index = tmp_path / "member_index.tsv"
+    index.write_text("AAA\tGENOMES_ASSEMBLED/AAA_6.re.fa\n")
+    captured: dict[str, Any] = {}
+
+    def capture(stream: Any, **kwargs: Any) -> str:
+        captured.update(kwargs, records=len(list(stream)))
+        return "report"
+
+    monkeypatch.setattr(m, "SCerevisiaeGenome", lambda **_: rel.genome())
+    monkeypatch.setattr(registry, "resolve", lambda *_, **__: str(index))
+    monkeypatch.setattr(runners, "_sgd_gene_set", lambda _: set(rel.GENES))
+    monkeypatch.setattr(panel, "verify_reference_panel_expression_streaming", capture)
+    assert m.verify_build(dataset.root, data_root=str(data_root)) == "report"
+    spec = runners.SEGREGANT_EXPRESSION_DATASETS["nguessan2025"]
+    assert captured["records"] == 3
+    assert (captured["dataset_name"], captured["expected_count"]) == (
+        "nguessan2025",
+        2951,
+    )
+    assert captured["provenance"] is spec["provenance"]
+    assert captured["raw_dir"] == f"{dataset.root}/raw"
+    assert captured["library_root"] == f"{data_root}/torchcell-library"
+    assert captured["raw_root"] == f"{data_root}/torchcell-raw"
+    assert captured["assembly_index"] == {"AAA": "GENOMES_ASSEMBLED/AAA_6.re.fa"}
+    assert captured["gene_set"] == {"YAL001C", "YCL001W"}
+    assert captured["sgd_genes"] == set(rel.GENES)

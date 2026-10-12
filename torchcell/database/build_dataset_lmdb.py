@@ -47,7 +47,10 @@ from: the 105-store array rebuild of 2026-10-09 left those reports absent, becau
 build writes a build manifest and nothing else. Resolution order is
 :func:`resolve_verifier`; a verification that raises or fails retires the build manifest
 (:func:`retire_manifest`), so an unverified store reads ``no_manifest`` rather than
-``fresh`` and is rebuilt before the graph is built from it.
+``fresh`` and is rebuilt before the graph is built from it. "Fails" is the report's
+verdict, which only ``gate`` rules decide: a genome-reference finding
+(``FindingClass.report``: containment, name currency, assembly pins) is printed under
+the verdict and never retires a manifest.
 """
 
 from __future__ import annotations
@@ -310,6 +313,10 @@ def verify_after_build(dataset_class: type, data_root: str) -> bool:
     such and keeps its manifest: its family runner is what covers it, and that runner
     reads every store in the family.
 
+    The verdict is :attr:`VerificationReport.passed`, which only ``gate`` rules decide;
+    each report's genome-reference findings are printed in its summary and counted on
+    the PASS line, and none of them retires a manifest.
+
     ``except Exception`` is the point of the flag: a raising verifier is turned into a
     retired manifest and a non-zero exit, not into a silent pass.
     """
@@ -345,7 +352,11 @@ def verify_after_build(dataset_class: type, data_root: str) -> bool:
     failed = sorted(report.dataset_name for report in reports if not report.passed)
     if failed:
         return refuse(f"verification FAILED for {failed}")
-    print(f"verification PASSED: {len(reports)} report(s) by {kind}")
+    n_findings = sum(len(report.open_findings) for report in reports)
+    print(
+        f"verification PASSED: {len(reports)} report(s) by {kind}; "
+        f"{n_findings} genome-reference finding(s) reported, not gated"
+    )
     return True
 
 

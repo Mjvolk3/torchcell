@@ -92,14 +92,25 @@ def _narrow_registries(slugs: list[str]) -> None:
 
 
 def _level_marks(report: VerificationReport) -> dict[Level, str]:
-    """PASS/FAIL per level (``-`` when the verifier records no check at that level)."""
+    """Per level: the gate verdict, then the genome-reference findings beside it.
+
+    ``PASS`` / ``FAIL`` reads only the level's ``gate`` rules (``-`` when it has none);
+    ``+N genome`` counts its ``report``-class rules that do not hold, which the verdict
+    lists and never fails on (``FindingClass``, owner 2026-10-12). A level with no rule
+    at all is ``-``.
+    """
     marks: dict[Level, str] = {}
     for level in Level:
-        results = [r for r in report.results if r.level is level]
-        if not results:
+        gates = [r for r in report.gate_results if r.level is level]
+        findings = [r for r in report.open_findings if r.level is level]
+        has_report_rule = any(r.level is level for r in report.findings)
+        if not gates and not has_report_rule:
             marks[level] = "-"
-        else:
-            marks[level] = "PASS" if all(r.passed for r in results) else "FAIL"
+            continue
+        verdict = (
+            "-" if not gates else "PASS" if all(r.passed for r in gates) else "FAIL"
+        )
+        marks[level] = verdict + (f" +{len(findings)} genome" if findings else "")
     return marks
 
 
@@ -170,14 +181,15 @@ def main(argv: list[str] | None = None) -> int:
                 marks[Level.L3],
                 marks[Level.L4],
                 "PASS" if report.passed else "FAIL",
+                ", ".join(f"`{r.name}`" for r in report.open_findings) or "-",
             )
         )
         if not report.passed:
             failures[slug] = report.summary()
 
     header = (
-        "| dataset | records | L0 | L1 | L2 | L3 | L4 | overall |\n"
-        "| --- | --- | --- | --- | --- | --- | --- | --- |\n"
+        "| dataset | records | L0 | L1 | L2 | L3 | L4 | overall | genome findings |\n"
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- |\n"
     )
     table = header + "".join("| " + " | ".join(r) + " |\n" for r in rows)
     print()

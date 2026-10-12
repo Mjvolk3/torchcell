@@ -34,8 +34,15 @@ report PASS:
   #903); that typed absence is counted as gapped, by reason, and passes, while a medium
   with no name and no gap stays free text.
 - L4 ``gene_containment_sgd`` + ``current_genome_genes`` -- the aggregate containment
-  floor stays, and a record keyed to a systematic name the current genome does not carry
-  fails outright (a 0.993 containment hid seven records on retired ORFs).
+  floor, and the records keyed to a systematic name the current genome does not carry,
+  counted by name (a 0.993 containment hid seven records on retired ORFs).
+
+``canonical_gene_names``, ``gene_containment_sgd`` and ``current_genome_genes`` compare
+the data with OUR genome reference, so they are ``report``-class rules
+(:class:`torchcell.verification.report.FindingClass`, owner 2026-10-12): each keeps its
+computation and its ``passed`` outcome, and the report lists it under the verdict with
+its statistic instead of failing the store. The other shared rules gate, including
+``measured_genes_present``, which reads no annotation.
 
 Everything reads the stored MAPPINGS an LMDB yields, never the loader, so one
 implementation serves the eager and the streaming verifiers: each accumulator takes one
@@ -533,12 +540,15 @@ class SharedRecordRules:
         array screened as separate strains, ``YPR089W``/``YPR090W``) and are reported,
         not failed. The ``None`` sentinel of an allele-bearing perturbation is never a
         spelling. A common name the resolver cannot place at all is reported as
-        unresolved; only a name that resolves to ANOTHER gene fails.
+        unresolved; only a name that resolves to ANOTHER gene does not hold.
+
+        A ``report``-class rule (``FindingClass.report``): its outcome is listed under
+        the store's verdict and never fails it.
 
         A stored systematic name that resolves to ITSELF as a ``non_gene_feature`` (a
         pseudogene locus) passes and is counted: it is a real locus of the annotation and
         a real deletion target. A name whose resolution is ``renamed``, ``retired`` or
-        ``ambiguous``, or that lands on another locus, still fails.
+        ``ambiguous``, or that lands on another locus, does not hold.
         """
         spellings: dict[str, set[str]] = {}
         for (systematic, common), _ in self._name_records.items():
@@ -808,11 +818,13 @@ class SharedRecordRules:
     def _gene_containment_results(self, sgd_genes: set[str]) -> list[LevelResult]:
         """L4: the aggregate containment floor, plus the per-record genome membership.
 
-        An empty measured set (no record carries a gene perturbation) passes both
-        results vacuously, each saying the set is empty, and adds a FAILING
-        ``measured_genes_present`` result ahead of them: a dataset verified against a
-        gene universe that measures no gene fails for that stated reason, not for a
-        fabricated 0.000 overlap.
+        The two genome rows are ``report``-class (``FindingClass.report``): they
+        compare the measured names with the genome reference, so the store's verdict
+        lists them and never fails on them. An empty measured set (no record carries a
+        gene perturbation) holds both vacuously, each saying the set is empty, and adds
+        a FAILING ``measured_genes_present`` gate row ahead of them: a dataset verified
+        against a gene universe that measures no gene fails for that stated reason, not
+        for a fabricated 0.000 overlap.
 
         The message names the universe it was GIVEN (``gene_universe_label``), because
         this rule serves every host: four landed bacterial loaders pass their strain's

@@ -247,7 +247,18 @@ def test_sgd_genes_add_l4_results_and_min_containment_is_forwarded() -> None:
         "n_records": 1,
         "missing_records": {"YJR155W": 1},
     }
-    assert strict.passed is False
+    # Both gene rows compare the stored names with the genome reference, so they are
+    # reported under the verdict and the store passes on its gate rules (owner,
+    # 2026-10-12: genome-reference rules report, never gate).
+    assert [r.finding_class.value for r in (containment, off_genome)] == [
+        "report",
+        "report",
+    ]
+    assert [r.name for r in strict.open_findings] == [
+        "gene_containment_sgd",
+        "current_genome_genes",
+    ]
+    assert strict.passed is True
 
     relaxed = _verify(_good_records(), sgd_genes=sgd, min_containment=0.5)
     assert _result(relaxed, "gene_containment_sgd").passed is True

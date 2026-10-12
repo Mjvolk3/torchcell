@@ -54,6 +54,11 @@ kg4_pre_build_verification_sweep.py --dataset ScmdOhya2005Dataset
 Results land in ``experiments/036-dataset-fixes-before-kg-build/results/
 kg4_pre_build_verification_sweep.json`` (``--out`` to move them); a partial run merges
 into whatever is already there, so the sweep can be driven in waves.
+
+A row's verdict is the reports' own ``VerificationReport.passed``, which only ``gate``
+rules decide (owner, 2026-10-12: genome-reference rules report, never gate). A failing
+gate rule is listed in ``failed_rules``; a genome-reference rule that does not hold is
+listed in ``genome_findings`` and leaves the verdict PASS.
 """
 
 from __future__ import annotations
@@ -414,6 +419,16 @@ class RuleOutcome(BaseModel):
     message: str
 
 
+def _rule_outcome(result: Any) -> RuleOutcome:
+    """A report's ``LevelResult`` as the row stores it."""
+    return RuleOutcome(
+        level=result.level.name,
+        name=result.name,
+        passed=result.passed,
+        message=result.message,
+    )
+
+
 class DatasetSweep(BaseModel):
     """One mapped dataset's route, verdict and report, measured by this sweep."""
 
@@ -427,6 +442,7 @@ class DatasetSweep(BaseModel):
     verdict: Verdict
     n_rules: int = 0
     failed_rules: list[RuleOutcome] = Field(default_factory=list)
+    genome_findings: list[RuleOutcome] = Field(default_factory=list)
     reports: list[str] = Field(default_factory=list)
     error: str | None = None
     seconds: float = 0.0
@@ -608,27 +624,39 @@ def written_reports(abs_root: str, since: float) -> list[str]:
     )
 
 
-def read_outcomes(paths: list[str]) -> tuple[int, list[RuleOutcome], bool]:
-    """Rule count, the failures, and whether every rule in every report passed."""
+class Outcomes(BaseModel):
+    """What a dataset's written reports say, split by finding class."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    n_rules: int
+    failed_rules: list[RuleOutcome]
+    genome_findings: list[RuleOutcome]
+    passed: bool
+
+
+def read_outcomes(paths: list[str]) -> Outcomes:
+    """Rule count, the failing gate rules, the open genome findings, and the verdict.
+
+    The verdict is every report's own ``passed`` (gate rules only) and needs at least
+    one report.
+    """
     from torchcell.verification.report import VerificationReport
 
     n_rules = 0
     failures: list[RuleOutcome] = []
+    findings: list[RuleOutcome] = []
+    passed = bool(paths)
     for path in paths:
         with open(path, encoding="utf-8") as handle:
             report = VerificationReport.model_validate_json(handle.read())
         n_rules += len(report.results)
-        failures.extend(
-            RuleOutcome(
-                level=result.level.name,
-                name=result.name,
-                passed=False,
-                message=result.message,
-            )
-            for result in report.results
-            if not result.passed
-        )
-    return n_rules, failures, bool(paths) and not failures
+        failures.extend(_rule_outcome(r) for r in report.gate_results if not r.passed)
+        findings.extend(_rule_outcome(r) for r in report.open_findings)
+        passed = passed and report.passed
+    return Outcomes(
+        n_rules=n_rules, failed_rules=failures, genome_findings=findings, passed=passed
+    )
 
 
 def sweep_one(name: str, data_root: str) -> DatasetSweep:
@@ -662,10 +690,11 @@ def sweep_one(name: str, data_root: str) -> DatasetSweep:
         return row
     row.seconds = round(time.time() - started, 1)
     row.reports = written_reports(abs_root, started)
-    n_rules, failures, passed = read_outcomes(row.reports)
-    row.n_rules = n_rules
-    row.failed_rules = failures
-    row.verdict = "PASS" if passed else "FAIL"
+    outcomes = read_outcomes(row.reports)
+    row.n_rules = outcomes.n_rules
+    row.failed_rules = outcomes.failed_rules
+    row.genome_findings = outcomes.genome_findings
+    row.verdict = "PASS" if outcomes.passed else "FAIL"
     if not row.reports:
         row.verdict = "ERROR"
         row.error = "the route wrote no verification report"
@@ -706,8 +735,13 @@ def render_tables(results: SweepResults) -> str:
     )
     lines.append("|---|---:|---|---|---|---|---|")
     for row in verified:
+        findings = (
+            f" +{len(row.genome_findings)} genome finding(s)"
+            if row.genome_findings
+            else ""
+        )
         failed = (
-            "PASS"
+            f"PASS{findings}"
             if row.verdict == "PASS"
             else (
                 f"FAIL: {', '.join(f'{f.level} {f.name}' for f in row.failed_rules)}"
@@ -749,6 +783,22 @@ def render_tables(results: SweepResults) -> str:
         lines.append("|---|---|---|---|")
         for row in failing:
             for rule in row.failed_rules:
+                message = rule.message.replace("|", "\\|").replace("\n", " ")
+                lines.append(
+                    f"| `{row.root.rsplit('/', 1)[-1]}` | {rule.level} | "
+                    f"`{rule.name}` | {message} |"
+                )
+    lines.append("")
+    lines.append("### Genome-reference findings (reported, never gated)")
+    lines.append("")
+    reported = [r for r in verified if r.genome_findings]
+    if not reported:
+        lines.append("No genome-reference rule failed to hold.")
+    else:
+        lines.append("| Store | Level | Rule | Statistic |")
+        lines.append("|---|---|---|---|")
+        for row in reported:
+            for rule in row.genome_findings:
                 message = rule.message.replace("|", "\\|").replace("\n", " ")
                 lines.append(
                     f"| `{row.root.rsplit('/', 1)[-1]}` | {rule.level} | "
@@ -922,7 +972,8 @@ def main(argv: list[str] | None = None) -> int:
         save_results(results, out)
         print(
             f"[{index}/{len(names)}] {name} {row.verdict} "
-            f"rules={row.n_rules} failed={len(row.failed_rules)} {row.seconds}s"
+            f"rules={row.n_rules} failed={len(row.failed_rules)} "
+            f"genome_findings={len(row.genome_findings)} {row.seconds}s"
         )
     print(json.dumps(results.totals(), indent=2))
     return 0

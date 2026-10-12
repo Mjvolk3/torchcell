@@ -72,6 +72,7 @@ SOURCES: dict[str, list[str]] = {
     "vanhophet": ["vanacloig", "hoepfner_hop", "hillenmeyer_het"],
     "vanhophetwil": ["vanacloig", "hoepfner_hop", "hillenmeyer_het", "wildenhain"],
     "vanwil": ["vanacloig", "wildenhain"],
+    "vanhet": ["vanacloig", "hillenmeyer_het"],
 }
 
 #: The round's shared recipe: 038 round 10's converged settings, the host head trained on
@@ -388,6 +389,66 @@ def round5_arms() -> list[dict[str, object]]:
     return out
 
 
+def round5b_arms() -> list[dict[str, object]]:
+    """Round 5b, for Delta: what the convergence read of rounds 3 and 4 adds.
+
+    ``r3_convergence.py`` over 117 runs on both machines: the Vanacloig training loss
+    falls six-fold while its held-out loss removes 11 percent of its first value,
+    bottoms near epoch 34 and rises by more than it removed; Hoepfner's training loss
+    falls 0.85 to 0.59 and its held-out loss removes 13 percent; Hillenmeyer's training
+    loss RISES over training (0.85 to 0.92, 1.12 under auxiliary weight 0.3) and its
+    held-out loss removes 5 percent, so that source is not learned at all; Wildenhain's
+    held-out loss removes 41 percent, bottoms at epoch 80 to 100 and is still falling in
+    every run, so the one source the model does learn is cut off by the schedule. Round
+    5 already carries the regularization grid for the first reading and the auxiliary
+    weight for Hoepfner; this adds the two the table left out:
+
+    * Hillenmeyer weighted up with the larger condition batch on the three-source arm,
+      at 3 and at 10 (two seeds: three would run eleven hours on an A40 against the
+      twelve-hour limit, and a cut-off loses the whole config), and the two-source arm
+      with Hillenmeyer alone, plain and weighted, so a source that competes with
+      Hoepfner for the gradient is seen without it;
+    * Wildenhain at 300 epochs and at the larger condition batch, one seed, since its
+      held-out loss was still falling at 150.
+    """
+    out: list[dict[str, object]] = []
+    three = [0, 1, 2]
+    out.append(
+        arm(
+            "vanhophet_e150_aw3_cb96",
+            "vanhophet",
+            150,
+            seeds=[0, 1],
+            aux_weight=3.0,
+            cond_batch=96,
+        )
+    )
+    out.append(
+        arm(
+            "vanhophet_e150_aw10_cb96",
+            "vanhophet",
+            150,
+            seeds=[0, 1],
+            aux_weight=10.0,
+            cond_batch=96,
+        )
+    )
+    out.append(arm("vanhet_e150", "vanhet", 150, seeds=three))
+    out.append(
+        arm(
+            "vanhet_e150_aw3_cb96",
+            "vanhet",
+            150,
+            seeds=three,
+            aux_weight=3.0,
+            cond_batch=96,
+        )
+    )
+    out.append(arm("vanwil_e300", "vanwil", 300))
+    out.append(arm("vanwil_e150_cb96", "vanwil", 150, cond_batch=96))
+    return out
+
+
 def configs(spec: dict[str, object], folds: list[int]) -> list[dict[str, object]]:
     """One config per fold of ``spec``."""
     out = []
@@ -450,20 +511,25 @@ def main() -> None:
         "--wave",
         type=int,
         default=1,
-        choices=(1, 2, 3, 4),
+        choices=(1, 2, 3, 4, 5),
         help=(
             "1 writes the r3_* screen, 2 the r3w2_* second wave, 3 the r4_* seed"
-            " ensemble, 4 the r5_* Delta round (see round4_arms and round5_arms)"
+            " ensemble, 4 the r5_* Delta round, 5 the r5b_* convergence follow-up"
         ),
     )
     args = parser.parse_args()
     os.makedirs(args.out_dir, exist_ok=True)
     os.makedirs(RESULTS, exist_ok=True)
-    prefix = {1: "r3", 2: "r3w2", 3: "r4", 4: "r5"}[args.wave]
-    specs = {1: arms, 2: wave2_arms, 3: round4_arms, 4: round5_arms}[args.wave]()
-    label = {1: "ROUND 3 WAVE 1", 2: "ROUND 3 WAVE 2", 3: "ROUND 4", 4: "ROUND 5"}[
-        args.wave
-    ]
+    prefix = {1: "r3", 2: "r3w2", 3: "r4", 4: "r5", 5: "r5b"}[args.wave]
+    waves = {1: arms, 2: wave2_arms, 3: round4_arms, 4: round5_arms, 5: round5b_arms}
+    specs = waves[args.wave]()
+    label = {
+        1: "ROUND 3 WAVE 1",
+        2: "ROUND 3 WAVE 2",
+        3: "ROUND 4",
+        4: "ROUND 5",
+        5: "ROUND 5B",
+    }[args.wave]
 
     rows, lines = [], []
     for spec in specs:

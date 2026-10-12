@@ -1012,3 +1012,41 @@ Delta tables once they are pulled. The overview of every scored arm so far, both
 is `scripts/r3_plots.py` ([[experiments.040-inhibitor-synergy-wetlab.scripts.r3_plots]]).
 
 ![](./assets/images/040-inhibitor-synergy-wetlab/r3_arms_overview_2026-10-12-04-52-22.svg)
+
+## 2026.10.12 - Convergence, per source, and round 5b
+
+Measured by `scripts/r3_convergence.py`
+([[experiments.040-inhibitor-synergy-wetlab.scripts.r3_convergence]]) over the 117
+round-3 and round-4 runs on both machines before touching the Delta queue. The learning
+rate is zero at epoch 150 on every arm, so no run is cut off by its schedule; what the
+curves show is what each source does under it.
+
+- **The target overfits in magnitude and holds in rank.** The Vanacloig training loss
+  falls 0.59 to 0.09; its held-out loss removes 11 percent of its first value, bottoms
+  near epoch 34 and rises by 0.14 by the end, more than it removed. The held-out centered
+  Spearman, which is the score, plateaus near epoch 60 to 75 and barely declines. The
+  standardized held-out MSE sits above 1 on most folds, which is the 010 finding again:
+  ordering generalizes, magnitudes do not. Round 5's regularization grid is the response.
+- **Hoepfner is half learned.** Training loss 0.85 to 0.59, held-out loss removes 13
+  percent at epoch 53 and rises 0.04. Round 5's auxiliary weight 3.0 is the response.
+- **Hillenmeyer HET is not learned.** Its training loss RISES over training, 0.85 to
+  0.92, and to 1.12 under auxiliary weight 0.3; its held-out loss removes 5 percent. The
+  source loses the gradient to the target and to Hoepfner. Nothing in round 5 addressed
+  it.
+- **Wildenhain is the one source the model learns, and the schedule cuts it off.** Held-out
+  loss removes 41 percent, bottoms at epoch 81 to 100, and is still falling at 150 in
+  every run.
+- **The 50-epoch bridge arm is undertrained on the auxiliary source**: Hoepfner training
+  loss 0.73 at its end against 0.59 at 150, and the target's held-out loss bottoms at
+  epoch 12 under the shorter schedule.
+
+**Round 5b** (`r3_sweep.py --wave 5`, 15 jobs, 18 configs, 128 estimated A40 hours,
+Delta 22829489 to 22829503 on bfjt, no dependencies): Hillenmeyer weighted up at 3 and at
+10 with the 96-condition batch on the three-source arm (two seeds, since three would run
+eleven hours against the twelve-hour limit), the two-source arm with Hillenmeyer alone,
+plain and weighted, so the source is seen without Hoepfner competing for the gradient;
+and Wildenhain at 300 epochs and at the larger condition batch. Round 5 stands as
+submitted: its regularization grid and Hoepfner weight are the responses to the first
+two readings. Delta now holds 41 pending and 11 running jobs for this experiment.
+
+![](./assets/images/040-inhibitor-synergy-wetlab/r3_convergence_2026-10-12-05-04-26.svg)

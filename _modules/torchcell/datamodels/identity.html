@@ -189,6 +189,7 @@
     <span class="n">StrainBackground</span><span class="p">,</span>
     <span class="n">Temperature</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProvenanceGap</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">"BIOLOGIC_PERTURBATION_IDENTITY_FIELDS"</span><span class="p">,</span>
@@ -201,6 +202,8 @@
     <span class="s2">"INTEGRATED_CASSETTE_IDENTITY_FIELDS"</span><span class="p">,</span>
     <span class="s2">"MEDIA_COMPONENT_IDENTITY_FIELDS"</span><span class="p">,</span>
     <span class="s2">"MEDIA_IDENTITY_FIELDS"</span><span class="p">,</span>
+    <span class="s2">"MEDIA_GAP_IDENTITY_FIELDS"</span><span class="p">,</span>
+    <span class="s2">"MEDIA_OPTIONAL_IDENTITY_FIELDS"</span><span class="p">,</span>
     <span class="s2">"PHAGE_PERTURBATION_IDENTITY_FIELDS"</span><span class="p">,</span>
     <span class="s2">"PHYSICAL_PERTURBATION_IDENTITY_FIELDS"</span><span class="p">,</span>
     <span class="s2">"PRE_CULTURE_IDENTITY_FIELDS"</span><span class="p">,</span>
@@ -242,6 +245,17 @@
     <span class="s2">"components"</span><span class="p">,</span>
     <span class="s2">"dropouts"</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="c1"># --- begin #901/#902/#903: a typed gap on the medium ---</span>
+<span class="n">MEDIA_OPTIONAL_IDENTITY_FIELDS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"provenance_gaps"</span><span class="p">,)</span>
+<span class="sd">"""``Media`` fields projected only when SET. A stated medium carries no gap, so its id</span>
+<span class="sd">is the composition alone; a medium whose source states no name, state or class</span>
+<span class="sd">(SynLethDB, an SGD annotation with no condition) is keyed by its gaps as well, so</span>
+<span class="sd">one source's absence is not merged with a stated medium or with another source's</span>
+<span class="sd">absence. Only the gap's ``field``, ``reason`` and the artifact it was looked for in</span>
+<span class="sd">(``looked_in``: ``source_uri``, ``citation_key``, ``sha256``) are identity; its</span>
+<span class="sd">``note`` is the wording of who said so, dropped like a medium's ``name``."""</span>
+<span class="n">MEDIA_GAP_IDENTITY_FIELDS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"field"</span><span class="p">,</span> <span class="s2">"reason"</span><span class="p">,</span> <span class="s2">"looked_in"</span><span class="p">,</span> <span class="s2">"keys"</span><span class="p">)</span>
+<span class="c1"># --- end #901/#902/#903 ---</span>
 <span class="n">TEMPERATURE_IDENTITY_FIELDS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"value"</span><span class="p">,</span> <span class="s2">"unit"</span><span class="p">)</span>
 <span class="n">SMALL_MOLECULE_IDENTITY_FIELDS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
     <span class="s2">"perturbation_type"</span><span class="p">,</span>
@@ -409,6 +423,29 @@
     <span class="p">}</span>
 
 
+<span class="c1"># --- begin #901/#902/#903: a typed gap on the medium ---</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_media_gap_identity</span><span class="p">(</span><span class="n">gap</span><span class="p">:</span> <span class="n">ProvenanceGap</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Project one medium gap: which field, why, and the artifact it was looked for in."""</span>
+    <span class="n">looked_in</span> <span class="o">=</span> <span class="n">gap</span><span class="o">.</span><span class="n">looked_in</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"field"</span><span class="p">:</span> <span class="n">gap</span><span class="o">.</span><span class="n">field</span><span class="p">,</span>
+        <span class="s2">"reason"</span><span class="p">:</span> <span class="n">gap</span><span class="o">.</span><span class="n">reason</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="s2">"looked_in"</span><span class="p">:</span> <span class="p">(</span>
+            <span class="kc">None</span>
+            <span class="k">if</span> <span class="n">looked_in</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="p">{</span>
+                <span class="s2">"source_uri"</span><span class="p">:</span> <span class="n">looked_in</span><span class="o">.</span><span class="n">source_uri</span><span class="p">,</span>
+                <span class="s2">"citation_key"</span><span class="p">:</span> <span class="n">looked_in</span><span class="o">.</span><span class="n">citation_key</span><span class="p">,</span>
+                <span class="s2">"sha256"</span><span class="p">:</span> <span class="n">looked_in</span><span class="o">.</span><span class="n">sha256</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">),</span>
+        <span class="s2">"keys"</span><span class="p">:</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">gap</span><span class="o">.</span><span class="n">keys</span><span class="p">),</span>
+    <span class="p">}</span>
+
+
+<span class="c1"># --- end #901/#902/#903 ---</span>
+
+
 <div class="viewcode-block" id="media_identity">
 <a class="viewcode-back" href="../../../generated/torchcell.datamodels.identity.media_identity.html#torchcell.datamodels.identity.media_identity">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">media_identity</span><span class="p">(</span><span class="n">media</span><span class="p">:</span> <span class="n">Media</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
@@ -416,9 +453,12 @@
 
 <span class="sd">    ``name``, ``provenance``, and each component's ``provenance`` / ``note`` /</span>
 <span class="sd">    ``defers_to`` are dropped: they record who stated the recipe, not what the recipe</span>
-<span class="sd">    is. Components and dropouts are sorted, so listing order is not identity.</span>
+<span class="sd">    is. Components and dropouts are sorted, so listing order is not identity. A</span>
+<span class="sd">    medium's ``provenance_gaps`` are projected only when it carries one</span>
+<span class="sd">    (``MEDIA_OPTIONAL_IDENTITY_FIELDS``), so a stated medium's id is unchanged and a</span>
+<span class="sd">    gapped one never joins it.</span>
 <span class="sd">    """</span>
-    <span class="k">return</span> <span class="p">{</span>
+    <span class="n">identity</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">"state"</span><span class="p">:</span> <span class="n">media</span><span class="o">.</span><span class="n">state</span><span class="p">,</span>
         <span class="s2">"is_synthetic"</span><span class="p">:</span> <span class="n">media</span><span class="o">.</span><span class="n">is_synthetic</span><span class="p">,</span>
         <span class="s2">"base_medium"</span><span class="p">:</span> <span class="n">media</span><span class="o">.</span><span class="n">base_medium</span><span class="p">,</span>
@@ -428,7 +468,14 @@
         <span class="s2">"dropouts"</span><span class="p">:</span> <span class="nb">sorted</span><span class="p">(</span>
             <span class="n">compound_identity_key</span><span class="p">(</span><span class="n">dropout</span><span class="p">)</span> <span class="k">for</span> <span class="n">dropout</span> <span class="ow">in</span> <span class="n">media</span><span class="o">.</span><span class="n">dropouts</span>
         <span class="p">),</span>
-    <span class="p">}</span></div>
+    <span class="p">}</span>
+    <span class="c1"># --- begin #901/#902/#903: a typed gap on the medium ---</span>
+    <span class="k">if</span> <span class="n">media</span><span class="o">.</span><span class="n">provenance_gaps</span><span class="p">:</span>
+        <span class="n">identity</span><span class="p">[</span><span class="s2">"provenance_gaps"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_sorted_identities</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">_media_gap_identity</span><span class="p">(</span><span class="n">gap</span><span class="p">)</span> <span class="k">for</span> <span class="n">gap</span> <span class="ow">in</span> <span class="n">media</span><span class="o">.</span><span class="n">provenance_gaps</span><span class="p">]</span>
+        <span class="p">)</span>
+    <span class="c1"># --- end #901/#902/#903 ---</span>
+    <span class="k">return</span> <span class="n">identity</span></div>
 
 
 

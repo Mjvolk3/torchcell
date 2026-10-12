@@ -117,41 +117,450 @@
 <span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/sgd</span>
 <span class="c1"># Test file: tests/torchcell/datasets/scerevisiae/test_sgd.py</span>
 
-<span class="sd">"""SGD-derived gene essentiality dataset for S. cerevisiae."""</span>
+<span class="sd">"""SGD-derived gene essentiality dataset for S. cerevisiae.</span>
 
+<span class="sd">The source is SGD's per-gene API dump, ``$DATA_ROOT/data/sgd/genome/genes/&lt;ORF&gt;.json``</span>
+<span class="sd">(the locus ``phenotype_details`` responses ``torchcell.graph.sgd.main_get_all_genes``</span>
+<span class="sd">wrote, 6,607 files), pinned by one sha256 over the sorted ``"&lt;file name&gt; &lt;file</span>
+<span class="sd">sha256&gt;"`` lines (:data:`SGD_GENES_DIGEST`). The build reads those files, not a graph</span>
+<span class="sd">built from them, and refuses bytes off the pin.</span>
+
+<span class="sd">One record per SGD annotation with ``mutant_type`` "null", strain "S288C" and phenotype</span>
+<span class="sd">"inviable" (1,329 in the pinned dump), under two rules (#901):</span>
+
+<span class="sd">- **Allele.** Every annotation names one allele. A record is stored only when that allele</span>
+<span class="sd">  is the whole-gene deletion SGD writes ``&lt;gene&gt;-Δ``: the genotype is a deletion of the</span>
+<span class="sd">  gene. The other 42 annotations name a point, truncation or internal-deletion allele</span>
+<span class="sd">  (``cdc42-111``, ``sac1Δ114-503``, ``hht2-L61P``); the schema has no leaf that carries a</span>
+<span class="sd">  named allele verbatim (#984), and storing them as a whole-gene deletion is what made</span>
+<span class="sd">  24 records exact duplicates of a sibling. They are ledgered in</span>
+<span class="sd">  ``preprocess/dropped_records.json`` (:class:`SgdDropLog`), never stored.</span>
+<span class="sd">- **Condition.** An annotation's condition properties are carried, never dropped: the</span>
+<span class="sd">  pinned dump holds four (class, text) pairs, each mapped by :data:`SGD_CONDITIONS` and</span>
+<span class="sd">  any other refused by name. "nitrogen starvation" and "2% glucose" are nutrient edits</span>
+<span class="sd">  (``EnvironmentPhysicalPerturbation``), "elevated temperature, 37 °C" is the</span>
+<span class="sd">  temperature, and "YPD with 2% glucose" names a medium without its physical state, so</span>
+<span class="sd">  it is stored by its stated name on the library YPD base with only ``state`` a typed</span>
+<span class="sd">  gap (:data:`SGD_STATELESS_YPD`).</span>
+<span class="sd">- **Medium.** ``Environment.media`` is required, so an annotation that names no medium</span>
+<span class="sd">  still stores a ``Media``, whose ``name``, ``state`` and ``is_synthetic`` are typed</span>
+<span class="sd">  gaps (``not_carried_by_curation``) quoting what the annotation carries in place of</span>
+<span class="sd">  one (:func:`sgd_unstated_medium`); the temperature it does not state is a typed gap</span>
+<span class="sd">  on the environment. The old loader guessed YEPD solid at 30 C for every record.</span>
+<span class="sd">"""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">Counter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Mapping</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">lmdb</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">Bio</span><span class="w"> </span><span class="kn">import</span> <span class="n">Entrez</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ConfigDict</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExperimentDataset</span><span class="p">,</span> <span class="n">Organism</span><span class="p">,</span> <span class="n">post_process</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExperimentDataset</span><span class="p">,</span> <span class="n">Organism</span><span class="p">,</span> <span class="n">file_sha256</span><span class="p">,</span> <span class="n">post_process</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.compound_identity</span><span class="w"> </span><span class="kn">import</span> <span class="n">resolved_compound</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Concentration</span><span class="p">,</span>
+    <span class="n">ConcentrationUnit</span><span class="p">,</span>
     <span class="n">Environment</span><span class="p">,</span>
+    <span class="n">EnvironmentPhysicalPerturbation</span><span class="p">,</span>
     <span class="n">GeneEssentialityExperiment</span><span class="p">,</span>
     <span class="n">GeneEssentialityExperimentReference</span><span class="p">,</span>
     <span class="n">GeneEssentialityPhenotype</span><span class="p">,</span>
     <span class="n">Genotype</span><span class="p">,</span>
     <span class="n">Media</span><span class="p">,</span>
+    <span class="n">PhysicalFactor</span><span class="p">,</span>
     <span class="n">Publication</span><span class="p">,</span>
     <span class="n">ReferenceGenome</span><span class="p">,</span>
     <span class="n">SgaKanMxDeletionPerturbation</span><span class="p">,</span>
     <span class="n">Temperature</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCerevisiaeGraph</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.graph.sgd</span><span class="w"> </span><span class="kn">import</span> <span class="n">data_root</span><span class="p">,</span> <span class="n">main_get_all_genes</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.graph.sgd</span><span class="w"> </span><span class="kn">import</span> <span class="n">data_root</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.report</span><span class="w"> </span><span class="kn">import</span> <span class="n">Provenance</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProvenanceGap</span><span class="p">,</span> <span class="n">ProvenanceGapReason</span>
 
 <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="c1">#: Where the SGD per-gene API dump sits under ``$DATA_ROOT``.</span>
+<span class="n">SGD_GENES_RELPATH</span> <span class="o">=</span> <span class="s2">"data/sgd/genome/genes"</span>
+<span class="c1">#: sha256 over the sorted ``"&lt;file name&gt; &lt;file sha256&gt;"`` lines of the 6,607 gene JSONs</span>
+<span class="c1">#: the served build consumed (the #889 verifier's pin of the same dump). Any changed,</span>
+<span class="c1">#: added or removed file changes it.</span>
+<span class="n">SGD_GENES_DIGEST</span> <span class="o">=</span> <span class="s2">"1cb4ed59556b1534e28eb79ad21135cdb5a149f78dca8df4924f473e39eef409"</span>
+
+<span class="c1">#: The pinned dump, as the place every gap of this dataset looked in.</span>
+<span class="n">SGD_DUMP</span> <span class="o">=</span> <span class="n">Provenance</span><span class="p">(</span>
+    <span class="n">source_uri</span><span class="o">=</span><span class="sa">f</span><span class="s2">"$DATA_ROOT/</span><span class="si">{</span><span class="n">SGD_GENES_RELPATH</span><span class="si">}</span><span class="s2">/&lt;systematic name&gt;.json"</span><span class="p">,</span>
+    <span class="n">citation_key</span><span class="o">=</span><span class="s2">"cherrySGDSaccharomycesGenome1998"</span><span class="p">,</span>
+    <span class="n">sha256</span><span class="o">=</span><span class="n">SGD_GENES_DIGEST</span><span class="p">,</span>
+    <span class="n">method</span><span class="o">=</span><span class="s2">"SGD locus phenotype_details API responses (torchcell.graph.sgd."</span>
+    <span class="s2">"main_get_all_genes); sha256 over the sorted '&lt;file name&gt; &lt;file sha256&gt;' lines"</span><span class="p">,</span>
+    <span class="n">page</span><span class="o">=</span><span class="s2">"phenotype_details[].properties"</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Environment: the medium and temperature SGD does not state are typed gaps (#901)</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1">#: What every SGD medium gap says first: an annotation is a phenotype on an allele</span>
+<span class="c1">#: under zero or one condition properties, and none of them names a growth medium.</span>
+<span class="n">_SGD_SILENCE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"the SGD phenotype annotation states a phenotype ('inviable', mutant_type "</span>
+    <span class="s2">"'null', strain 'S288C') and an allele ('&lt;gene&gt;-Δ') but no growth medium: "</span>
+<span class="p">)</span>
+<span class="c1">#: Where the medium would be, so the gap reads as a worklist entry.</span>
+<span class="n">_SGD_RESOLVE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"; the medium, if stated, is in the annotation's own reference "</span>
+    <span class="s2">"(Publication.pubmed_id)"</span>
+<span class="p">)</span>
+
+
+<span class="c1"># --- begin #901/#902/#903: a typed gap on the medium --------------------------- #</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">sgd_unstated_medium</span><span class="p">(</span><span class="n">silence</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Media</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The ``Media`` of an SGD annotation that names none: every label a typed gap.</span>
+
+<span class="sd">    ``silence`` says what the annotation carries in place of a medium (no condition</span>
+<span class="sd">    property, or one that is a nutrient edit or a temperature). The three gaps share</span>
+<span class="sd">    one reason (``not_carried_by_curation``: SGD curates the primary paper and does not</span>
+<span class="sd">    carry its medium) and one place looked (the pinned dump), so every such record</span>
+<span class="sd">    stores one gapped medium, never a guessed YEPD.</span>
+<span class="sd">    """</span>
+    <span class="n">note</span> <span class="o">=</span> <span class="n">_SGD_SILENCE</span> <span class="o">+</span> <span class="n">silence</span> <span class="o">+</span> <span class="n">_SGD_RESOLVE</span>
+    <span class="k">return</span> <span class="n">Media</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">state</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span>
+            <span class="n">ProvenanceGap</span><span class="p">(</span>
+                <span class="n">field</span><span class="o">=</span><span class="n">field</span><span class="p">,</span>
+                <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_carried_by_curation</span><span class="p">,</span>
+                <span class="n">looked_in</span><span class="o">=</span><span class="n">SGD_DUMP</span><span class="p">,</span>
+                <span class="n">note</span><span class="o">=</span><span class="n">note</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"name"</span><span class="p">,</span> <span class="s2">"state"</span><span class="p">,</span> <span class="s2">"is_synthetic"</span><span class="p">)</span>
+        <span class="p">],</span>
+    <span class="p">)</span>
+
+
+<span class="c1">#: An annotation with no condition property (1,299 of the 1,329 in the pinned dump).</span>
+<span class="n">SGD_UNSTATED_MEDIUM</span> <span class="o">=</span> <span class="n">sgd_unstated_medium</span><span class="p">(</span>
+    <span class="s2">"phenotype_details[].properties carries no condition property"</span>
+<span class="p">)</span>
+<span class="c1">#: "YPD with 2% glucose" names a medium, so its name is stated, verbatim, and its base</span>
+<span class="c1">#: is the library's YPD (yeast extract, peptone, 2% dextrose: complex by construction,</span>
+<span class="c1">#: hence ``is_synthetic`` False). SGD states no physical state, and ``Media.state`` is</span>
+<span class="c1">#: solid, liquid or gas, so the state alone is the gap: neither plate nor broth is</span>
+<span class="c1">#: guessed.</span>
+<span class="n">SGD_STATELESS_YPD</span> <span class="o">=</span> <span class="n">Media</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">"YPD with 2</span><span class="si">% g</span><span class="s2">lucose"</span><span class="p">,</span>
+    <span class="n">state</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">base_medium</span><span class="o">=</span><span class="s2">"YPD"</span><span class="p">,</span>
+    <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">ProvenanceGap</span><span class="p">(</span>
+            <span class="n">field</span><span class="o">=</span><span class="s2">"state"</span><span class="p">,</span>
+            <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_carried_by_curation</span><span class="p">,</span>
+            <span class="n">looked_in</span><span class="o">=</span><span class="n">SGD_DUMP</span><span class="p">,</span>
+            <span class="n">note</span><span class="o">=</span><span class="s2">"SGD states the medium as 'YPD with 2</span><span class="si">% g</span><span class="s2">lucose' (condition property, "</span>
+            <span class="s2">"class_type 'media') without its physical state; the state, if stated, "</span>
+            <span class="s2">"is in the annotation's own reference (Publication.pubmed_id)"</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">],</span>
+<span class="p">)</span>
+<span class="c1"># --- end #901/#902/#903 -------------------------------------------------------- #</span>
+
+<span class="n">SGD_TEMPERATURE_GAP</span> <span class="o">=</span> <span class="n">ProvenanceGap</span><span class="p">(</span>
+    <span class="n">field</span><span class="o">=</span><span class="s2">"temperature"</span><span class="p">,</span>
+    <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_carried_by_curation</span><span class="p">,</span>
+    <span class="n">looked_in</span><span class="o">=</span><span class="n">SGD_DUMP</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the SGD phenotype annotation carries no temperature condition property"</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">SGD_ENVIRONMENT</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span>
+    <span class="n">media</span><span class="o">=</span><span class="n">SGD_UNSTATED_MEDIUM</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span><span class="n">SGD_TEMPERATURE_GAP</span><span class="p">]</span>
+<span class="p">)</span>
+<span class="sd">"""An annotation with no condition property: neither medium nor temperature is stated."""</span>
+
+<span class="c1">#: The verbatim (class_type, note) condition pairs of the pinned dump, and the</span>
+<span class="c1">#: environment each one is. Any other pair refuses the build (:class:`SgdConditionError`).</span>
+<span class="n">SGD_CONDITIONS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">Environment</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="p">(</span><span class="s2">"media"</span><span class="p">,</span> <span class="s2">"nitrogen starvation"</span><span class="p">):</span> <span class="n">Environment</span><span class="p">(</span>
+        <span class="n">media</span><span class="o">=</span><span class="n">sgd_unstated_medium</span><span class="p">(</span>
+            <span class="s2">"its one condition property (class_type 'media') reads 'nitrogen "</span>
+            <span class="s2">"starvation', a nutrient edit to a base medium it does not name"</span>
+        <span class="p">),</span>
+        <span class="n">temperature</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
+            <span class="n">EnvironmentPhysicalPerturbation</span><span class="p">(</span>
+                <span class="n">factor</span><span class="o">=</span><span class="n">PhysicalFactor</span><span class="o">.</span><span class="n">nitrogen_source</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"nitrogen starvation"</span>
+            <span class="p">)</span>
+        <span class="p">],</span>
+        <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span><span class="n">SGD_TEMPERATURE_GAP</span><span class="p">],</span>
+    <span class="p">),</span>
+    <span class="p">(</span><span class="s2">"media"</span><span class="p">,</span> <span class="s2">"2</span><span class="si">% g</span><span class="s2">lucose"</span><span class="p">):</span> <span class="n">Environment</span><span class="p">(</span>
+        <span class="n">media</span><span class="o">=</span><span class="n">sgd_unstated_medium</span><span class="p">(</span>
+            <span class="s2">"its one condition property (class_type 'media') reads '2</span><span class="si">% g</span><span class="s2">lucose', a "</span>
+            <span class="s2">"carbon-source edit to a base medium it does not name"</span>
+        <span class="p">),</span>
+        <span class="n">temperature</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
+            <span class="n">EnvironmentPhysicalPerturbation</span><span class="p">(</span>
+                <span class="n">factor</span><span class="o">=</span><span class="n">PhysicalFactor</span><span class="o">.</span><span class="n">carbon_source</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="s2">"2</span><span class="si">% g</span><span class="s2">lucose"</span><span class="p">,</span>
+                <span class="n">magnitude</span><span class="o">=</span><span class="n">Concentration</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">ConcentrationUnit</span><span class="o">.</span><span class="n">percent</span><span class="p">),</span>
+                <span class="n">agent</span><span class="o">=</span><span class="n">resolved_compound</span><span class="p">(</span><span class="s2">"glucose"</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">],</span>
+        <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span><span class="n">SGD_TEMPERATURE_GAP</span><span class="p">],</span>
+    <span class="p">),</span>
+    <span class="p">(</span><span class="s2">"media"</span><span class="p">,</span> <span class="s2">"YPD with 2</span><span class="si">% g</span><span class="s2">lucose"</span><span class="p">):</span> <span class="n">Environment</span><span class="p">(</span>
+        <span class="n">media</span><span class="o">=</span><span class="n">SGD_STATELESS_YPD</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span><span class="n">SGD_TEMPERATURE_GAP</span><span class="p">]</span>
+    <span class="p">),</span>
+    <span class="p">(</span><span class="s2">"temperature"</span><span class="p">,</span> <span class="s2">"elevated temperature, 37 °C"</span><span class="p">):</span> <span class="n">Environment</span><span class="p">(</span>
+        <span class="n">media</span><span class="o">=</span><span class="n">sgd_unstated_medium</span><span class="p">(</span>
+            <span class="s2">"its one condition property is a temperature ('elevated temperature, "</span>
+            <span class="s2">"37 °C', class_type 'temperature'), which names no medium"</span>
+        <span class="p">),</span>
+        <span class="n">temperature</span><span class="o">=</span><span class="n">Temperature</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mf">37.0</span><span class="p">),</span>
+    <span class="p">),</span>
+<span class="p">}</span>
+
+<span class="c1">#: The one drop rule of this dataset.</span>
+<span class="n">RULE_NOT_WHOLE_GENE_DELETION</span> <span class="o">=</span> <span class="s2">"allele_not_whole_gene_deletion"</span>
+<span class="n">_RULE_DESCRIPTION</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"the annotation's allele is not the whole-gene deletion '&lt;gene&gt;-Δ' (a point, "</span>
+    <span class="s2">"truncation or internal-deletion allele); the schema has no leaf that carries a "</span>
+    <span class="s2">"named allele verbatim, and storing it as a deletion of the whole gene duplicated "</span>
+    <span class="s2">"the gene's other records, so it is ledgered, not stored"</span>
+<span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">SgdDumpDigestError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The SGD per-gene dump under ``$DATA_ROOT`` is not the pinned bytes."""</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">SgdConditionError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""An annotation carries a condition property outside :data:`SGD_CONDITIONS`."""</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">SgdAlleleError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""An annotation does not name exactly one allele."""</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">DuplicateSgdAnnotationError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Two kept annotations are one (gene, condition, PubMed id) record."""</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">SgdAnnotation</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One inviable null S288C phenotype annotation, as SGD's API states it."""</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">,</span> <span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">sgd_annotation_id</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">systematic_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">locus_display_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">allele</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">pubmed_id</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">experiment</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">conditions</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="o">...</span><span class="p">]</span>
+    <span class="n">note</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">SgdDroppedAnnotation</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One annotation the allele rule left out of the store, verbatim."""</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
+    <span class="n">sgd_annotation_id</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">systematic_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">locus_display_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">allele</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">pubmed_id</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">conditions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">note</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">SgdDropLog</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The ledger of a build: what the dump holds, what was kept, and every drop."""</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
+    <span class="n">dataset</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">source_annotations</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">kept_records</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">dropped_records</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">sgd_genes_digest</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">rule</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SgdDroppedAnnotation</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">sgd_genes_digest</span><span class="p">(</span><span class="n">genes_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""One sha256 over every ``&lt;gene&gt;.json`` in ``genes_dir`` (see the module pin)."""</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">file_sha256</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">genes_dir</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">))</span><span class="si">}</span><span class="s2">"</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">genes_dir</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">".json"</span><span class="p">)</span>
+    <span class="p">]</span>
+    <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">verify_sgd_dump</span><span class="p">(</span><span class="n">genes_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Refuse a missing dump or bytes off :data:`SGD_GENES_DIGEST`.</span>
+
+<span class="sd">    A fresh download (``torchcell.graph.sgd.main_get_all_genes``) is a new release with</span>
+<span class="sd">    its own digest: it needs a new pin and a new store, so it is never fetched here.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">osp</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">genes_dir</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">SgdDumpDigestError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">genes_dir</span><span class="si">}</span><span class="s2"> does not exist; the SGD per-gene dump pinned at "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">SGD_GENES_DIGEST</span><span class="si">}</span><span class="s2"> is the source of this dataset"</span>
+        <span class="p">)</span>
+    <span class="n">observed</span> <span class="o">=</span> <span class="n">sgd_genes_digest</span><span class="p">(</span><span class="n">genes_dir</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">observed</span> <span class="o">!=</span> <span class="n">SGD_GENES_DIGEST</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">SgdDumpDigestError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">genes_dir</span><span class="si">}</span><span class="s2">: digest </span><span class="si">{</span><span class="n">observed</span><span class="si">}</span><span class="s2"> is not the pinned </span><span class="si">{</span><span class="n">SGD_GENES_DIGEST</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_allele</span><span class="p">(</span><span class="n">detail</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">where</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="n">alleles</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">prop</span><span class="p">[</span><span class="s2">"bioitem"</span><span class="p">][</span><span class="s2">"display_name"</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">prop</span> <span class="ow">in</span> <span class="n">detail</span><span class="p">[</span><span class="s2">"properties"</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">prop</span><span class="p">[</span><span class="s2">"class_type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"BIOITEM"</span> <span class="ow">and</span> <span class="n">prop</span><span class="p">[</span><span class="s2">"role"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"Allele"</span>
+    <span class="p">]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">alleles</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">SgdAlleleError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">where</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">alleles</span><span class="p">)</span><span class="si">}</span><span class="s2"> alleles </span><span class="si">{</span><span class="n">alleles</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">alleles</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">inviable_null_annotations</span><span class="p">(</span><span class="n">genes_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">SgdAnnotation</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Every annotation reading ``null`` / ``S288C`` / ``inviable``, in file order.</span>
+
+<span class="sd">    Files are read in sorted name order and annotations in the order SGD lists them;</span>
+<span class="sd">    the systematic name is the file name, as the dump writes one file per locus.</span>
+<span class="sd">    """</span>
+    <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SgdAnnotation</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">names</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">genes_dir</span><span class="p">)</span> <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">".json"</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">names</span><span class="p">):</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">genes_dir</span><span class="p">,</span> <span class="n">name</span><span class="p">),</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+            <span class="n">payload</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">handle</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">detail</span> <span class="ow">in</span> <span class="n">payload</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"phenotype_details"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[]:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
+                <span class="n">detail</span><span class="p">[</span><span class="s2">"mutant_type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"null"</span>
+                <span class="ow">and</span> <span class="n">detail</span><span class="p">[</span><span class="s2">"strain"</span><span class="p">][</span><span class="s2">"display_name"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"S288C"</span>
+                <span class="ow">and</span> <span class="n">detail</span><span class="p">[</span><span class="s2">"phenotype"</span><span class="p">][</span><span class="s2">"display_name"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"inviable"</span>
+            <span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="n">where</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> annotation </span><span class="si">{</span><span class="n">detail</span><span class="p">[</span><span class="s1">'id'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">SgdAnnotation</span><span class="p">(</span>
+                    <span class="n">sgd_annotation_id</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">detail</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]),</span>
+                    <span class="n">systematic_name</span><span class="o">=</span><span class="n">name</span><span class="p">[:</span> <span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="s2">".json"</span><span class="p">)],</span>
+                    <span class="n">locus_display_name</span><span class="o">=</span><span class="n">detail</span><span class="p">[</span><span class="s2">"locus"</span><span class="p">][</span><span class="s2">"display_name"</span><span class="p">],</span>
+                    <span class="n">allele</span><span class="o">=</span><span class="n">_allele</span><span class="p">(</span><span class="n">detail</span><span class="p">,</span> <span class="n">where</span><span class="p">),</span>
+                    <span class="n">pubmed_id</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">detail</span><span class="p">[</span><span class="s2">"reference"</span><span class="p">][</span><span class="s2">"pubmed_id"</span><span class="p">]),</span>
+                    <span class="n">experiment</span><span class="o">=</span><span class="n">detail</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">][</span><span class="s2">"display_name"</span><span class="p">],</span>
+                    <span class="n">conditions</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span>
+                        <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">prop</span><span class="p">[</span><span class="s2">"class_type"</span><span class="p">]),</span> <span class="nb">str</span><span class="p">(</span><span class="n">prop</span><span class="p">[</span><span class="s2">"note"</span><span class="p">]))</span>
+                        <span class="k">for</span> <span class="n">prop</span> <span class="ow">in</span> <span class="n">detail</span><span class="p">[</span><span class="s2">"properties"</span><span class="p">]</span>
+                        <span class="k">if</span> <span class="n">prop</span><span class="p">[</span><span class="s2">"class_type"</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">"BIOITEM"</span>
+                    <span class="p">),</span>
+                    <span class="n">note</span><span class="o">=</span><span class="n">detail</span><span class="p">[</span><span class="s2">"note"</span><span class="p">]</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">is_whole_gene_deletion</span><span class="p">(</span><span class="n">allele</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">locus_display_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""True when ``allele`` is SGD's name for the deletion of the whole gene.</span>
+
+<span class="sd">    SGD writes it ``&lt;gene&gt;-Δ`` (U+0394); one annotation of the pinned dump spells the</span>
+<span class="sd">    sign U+2206 (``yil102c-A-∆``), which is the same name, so both signs and letter case</span>
+<span class="sd">    are folded. Anything after the sign (``sac1Δ114-503``, ``cdc24p-∆CH``) or any other</span>
+<span class="sd">    form (``cdc42-111``, ``Nog1-(1-426)``) is a different allele.</span>
+<span class="sd">    """</span>
+    <span class="n">folded</span> <span class="o">=</span> <span class="n">allele</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"∆"</span><span class="p">,</span> <span class="s2">"Δ"</span><span class="p">)</span><span class="o">.</span><span class="n">casefold</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">folded</span> <span class="o">==</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">locus_display_name</span><span class="si">}</span><span class="s2">-Δ"</span><span class="o">.</span><span class="n">casefold</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">condition_environment</span><span class="p">(</span><span class="n">annotation</span><span class="p">:</span> <span class="n">SgdAnnotation</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Environment</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The environment an annotation's condition properties state (module docstring)."""</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">annotation</span><span class="o">.</span><span class="n">conditions</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">SGD_ENVIRONMENT</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">annotation</span><span class="o">.</span><span class="n">conditions</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span> <span class="ow">or</span> <span class="p">(</span>
+        <span class="n">annotation</span><span class="o">.</span><span class="n">conditions</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">SGD_CONDITIONS</span>
+    <span class="p">):</span>
+        <span class="k">raise</span> <span class="n">SgdConditionError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">annotation</span><span class="o">.</span><span class="n">systematic_name</span><span class="si">}</span><span class="s2"> annotation </span><span class="si">{</span><span class="n">annotation</span><span class="o">.</span><span class="n">sgd_annotation_id</span><span class="si">}</span><span class="s2">: "</span>
+            <span class="sa">f</span><span class="s2">"conditions </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">annotation</span><span class="o">.</span><span class="n">conditions</span><span class="p">)</span><span class="si">}</span><span class="s2"> are not in SGD_CONDITIONS"</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">SGD_CONDITIONS</span><span class="p">[</span><span class="n">annotation</span><span class="o">.</span><span class="n">conditions</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">split_by_allele</span><span class="p">(</span>
+    <span class="n">annotations</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">SgdAnnotation</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">SgdAnnotation</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">SgdAnnotation</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""``(kept, dropped)``: whole-gene deletion alleles first, every other allele second."""</span>
+    <span class="n">kept</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SgdAnnotation</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">dropped</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SgdAnnotation</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">annotation</span> <span class="ow">in</span> <span class="n">annotations</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">is_whole_gene_deletion</span><span class="p">(</span><span class="n">annotation</span><span class="o">.</span><span class="n">allele</span><span class="p">,</span> <span class="n">annotation</span><span class="o">.</span><span class="n">locus_display_name</span><span class="p">):</span>
+            <span class="n">kept</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">annotation</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">dropped</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">annotation</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">kept</span><span class="p">,</span> <span class="n">dropped</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">refuse_duplicate_annotations</span><span class="p">(</span><span class="n">kept</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">SgdAnnotation</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Raise when two kept annotations share gene, condition and PubMed id."""</span>
+    <span class="n">keys</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">((</span><span class="n">a</span><span class="o">.</span><span class="n">systematic_name</span><span class="p">,</span> <span class="n">a</span><span class="o">.</span><span class="n">conditions</span><span class="p">,</span> <span class="n">a</span><span class="o">.</span><span class="n">pubmed_id</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">kept</span><span class="p">)</span>
+    <span class="n">repeated</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">keys</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">repeated</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">DuplicateSgdAnnotationError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">repeated</span><span class="p">)</span><span class="si">}</span><span class="s2"> (gene, conditions, PubMed id) keys repeat: </span><span class="si">{</span><span class="n">repeated</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">drop_log</span><span class="p">(</span>
+    <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">n_source</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">kept</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SgdAnnotation</span><span class="p">],</span>
+    <span class="n">dropped</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SgdAnnotation</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SgdDropLog</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The ledger of one build."""</span>
+    <span class="k">return</span> <span class="n">SgdDropLog</span><span class="p">(</span>
+        <span class="n">dataset</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span>
+        <span class="n">source_annotations</span><span class="o">=</span><span class="n">n_source</span><span class="p">,</span>
+        <span class="n">kept_records</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">kept</span><span class="p">),</span>
+        <span class="n">dropped_records</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">dropped</span><span class="p">),</span>
+        <span class="n">sgd_genes_digest</span><span class="o">=</span><span class="n">SGD_GENES_DIGEST</span><span class="p">,</span>
+        <span class="n">rule</span><span class="o">=</span><span class="n">RULE_NOT_WHOLE_GENE_DELETION</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="n">_RULE_DESCRIPTION</span><span class="p">,</span>
+        <span class="n">rows</span><span class="o">=</span><span class="p">[</span>
+            <span class="n">SgdDroppedAnnotation</span><span class="p">(</span>
+                <span class="n">sgd_annotation_id</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">sgd_annotation_id</span><span class="p">,</span>
+                <span class="n">systematic_name</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">systematic_name</span><span class="p">,</span>
+                <span class="n">locus_display_name</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">locus_display_name</span><span class="p">,</span>
+                <span class="n">allele</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">allele</span><span class="p">,</span>
+                <span class="n">pubmed_id</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">pubmed_id</span><span class="p">,</span>
+                <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">text</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">kind</span><span class="p">,</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">a</span><span class="o">.</span><span class="n">conditions</span><span class="p">],</span>
+                <span class="n">note</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">note</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">dropped</span>
+        <span class="p">],</span>
+    <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">get_publication_info</span><span class="p">(</span><span class="n">pubmed_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
@@ -233,14 +642,12 @@
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"data/torchcell/gene_essentiality_sgd"</span><span class="p">,</span>
-        <span class="n">scerevisiae_graph</span><span class="p">:</span> <span class="n">SCerevisiaeGraph</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">io_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
         <span class="n">transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">pre_transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Store the S. cerevisiae graph and initialize the experiment dataset."""</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">scerevisiae_graph</span> <span class="o">=</span> <span class="n">scerevisiae_graph</span>
+<span class="w">        </span><span class="sd">"""Initialize the experiment dataset (the source is the pinned SGD dump)."""</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">io_workers</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="nd">@property</span>
@@ -255,14 +662,13 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">raw_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Return the raw file names (none, as data is fetched from SGD)."""</span>
-        <span class="k">return</span> <span class="p">[]</span>  <span class="c1"># Return an empty list if there are no raw files to download</span>
+<span class="w">        </span><span class="sd">"""No files in ``raw/``: the source is the pinned dump under ``$DATA_ROOT``."""</span>
+        <span class="k">return</span> <span class="p">[]</span>
 
 <div class="viewcode-block" id="GeneEssentialitySgdDataset.download">
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.sgd.GeneEssentialitySgdDataset.html#torchcell.datasets.scerevisiae.sgd.GeneEssentialitySgdDataset.download">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">download</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Do nothing; this dataset has no raw files to download."""</span>
-        <span class="c1"># If there's nothing to download, you can just pass</span>
+<span class="w">        </span><span class="sd">"""Do nothing; the pinned dump is verified in :meth:`process`, never fetched."""</span>
         <span class="k">pass</span></div>
 
 
@@ -272,7 +678,6 @@
         <span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">preprocess</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Return the DataFrame unchanged (no raw preprocessing needed)."""</span>
-        <span class="c1"># If there's no preprocessing needed, you can return the DataFrame as is</span>
         <span class="k">return</span> <span class="n">df</span></div>
 
 
@@ -280,75 +685,57 @@
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.sgd.GeneEssentialitySgdDataset.html#torchcell.datasets.scerevisiae.sgd.GeneEssentialitySgdDataset.process">[docs]</a>
     <span class="nd">@post_process</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Build essentiality experiments from SGD inviable phenotypes into LMDB."""</span>
+<span class="w">        </span><span class="sd">"""Verify the SGD dump, apply the allele rule, and write the LMDB and ledger."""</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Processing SGD Gene Essentiality Data..."</span><span class="p">)</span>
+        <span class="n">genes_dir</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">(),</span> <span class="n">SGD_GENES_RELPATH</span><span class="p">)</span>
+        <span class="n">verify_sgd_dump</span><span class="p">(</span><span class="n">genes_dir</span><span class="p">)</span>
+        <span class="n">annotations</span> <span class="o">=</span> <span class="n">inviable_null_annotations</span><span class="p">(</span><span class="n">genes_dir</span><span class="p">)</span>
+        <span class="n">kept</span><span class="p">,</span> <span class="n">dropped</span> <span class="o">=</span> <span class="n">split_by_allele</span><span class="p">(</span><span class="n">annotations</span><span class="p">)</span>
+        <span class="n">refuse_duplicate_annotations</span><span class="p">(</span><span class="n">kept</span><span class="p">)</span>
+        <span class="n">environments</span> <span class="o">=</span> <span class="p">[</span><span class="n">condition_environment</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">kept</span><span class="p">]</span>
 
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-        <span class="c1"># Check if SGD gene data exists (DATA_ROOT unset is refused by data_root())</span>
-        <span class="n">sgd_genes_dir</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">(),</span> <span class="s2">"data/sgd/genome/genes"</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">osp</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">sgd_genes_dir</span><span class="p">):</span>
-            <span class="n">gene_files</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">sgd_genes_dir</span><span class="p">)</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">".json"</span><span class="p">)]</span>
-            <span class="n">gene_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">gene_files</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">gene_count</span> <span class="o">=</span> <span class="mi">0</span>
-
-        <span class="k">if</span> <span class="n">gene_count</span> <span class="o">&lt;</span> <span class="mi">100</span><span class="p">:</span>  <span class="c1"># Arbitrary threshold to check if genes are downloaded</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"SGD gene data incomplete or missing (found </span><span class="si">{</span><span class="n">gene_count</span><span class="si">}</span><span class="s2"> files)."</span><span class="p">)</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Downloading SGD gene data. This may take 15-30 minutes..."</span><span class="p">)</span>
-            <span class="n">main_get_all_genes</span><span class="p">()</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"SGD gene download complete!"</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"SGD gene data already exists (</span><span class="si">{</span><span class="n">gene_count</span><span class="si">}</span><span class="s2"> gene files found)"</span><span class="p">)</span>
+        <span class="n">ledger</span> <span class="o">=</span> <span class="n">drop_log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">annotations</span><span class="p">),</span> <span class="n">kept</span><span class="p">,</span> <span class="n">dropped</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"dropped_records.json"</span><span class="p">),</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">ledger</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
 
         <span class="n">env</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">),</span> <span class="n">map_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e12</span><span class="p">))</span>
-
         <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
-            <span class="n">index</span> <span class="o">=</span> <span class="mi">0</span>
-            <span class="n">scerevisiae_graph</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">SCerevisiaeGraph</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">scerevisiae_graph</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">gene</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">scerevisiae_graph</span><span class="o">.</span><span class="n">G_raw</span><span class="o">.</span><span class="n">nodes</span><span class="p">()):</span>
-                <span class="n">node_data</span> <span class="o">=</span> <span class="n">scerevisiae_graph</span><span class="o">.</span><span class="n">G_raw</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span>
-                <span class="n">inviable_phenotypes</span> <span class="o">=</span> <span class="p">[</span>
-                    <span class="n">i</span>
-                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">node_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"phenotype_details"</span><span class="p">,</span> <span class="p">[])</span>
-                    <span class="k">if</span> <span class="p">(</span>
-                        <span class="n">i</span><span class="p">[</span><span class="s2">"mutant_type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"null"</span>
-                        <span class="ow">and</span> <span class="n">i</span><span class="p">[</span><span class="s2">"strain"</span><span class="p">][</span><span class="s2">"display_name"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"S288C"</span>
-                        <span class="ow">and</span> <span class="n">i</span><span class="p">[</span><span class="s2">"phenotype"</span><span class="p">][</span><span class="s2">"display_name"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"inviable"</span>
-                    <span class="p">)</span>
-                <span class="p">]</span>
-
-                <span class="k">for</span> <span class="n">phenotype</span> <span class="ow">in</span> <span class="n">inviable_phenotypes</span><span class="p">:</span>
-                    <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_experiment</span><span class="p">(</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">gene</span><span class="p">,</span> <span class="n">phenotype</span>
-                    <span class="p">)</span>
-
-                    <span class="n">serialized_data</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
-                        <span class="p">{</span>
-                            <span class="s2">"experiment"</span><span class="p">:</span> <span class="n">experiment</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
-                            <span class="s2">"reference"</span><span class="p">:</span> <span class="n">reference</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
-                            <span class="s2">"publication"</span><span class="p">:</span> <span class="n">publication</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
-                        <span class="p">}</span>
-                    <span class="p">)</span>
-                    <span class="n">txn</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span> <span class="n">serialized_data</span><span class="p">)</span>
-                    <span class="n">index</span> <span class="o">+=</span> <span class="mi">1</span>
-
-        <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+            <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="p">(</span><span class="n">annotation</span><span class="p">,</span> <span class="n">environment</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
+                <span class="nb">zip</span><span class="p">(</span><span class="n">kept</span><span class="p">,</span> <span class="n">environments</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="p">):</span>
+                <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_experiment</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">annotation</span><span class="p">,</span> <span class="n">environment</span>
+                <span class="p">)</span>
+                <span class="n">serialized_data</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
+                    <span class="p">{</span>
+                        <span class="s2">"experiment"</span><span class="p">:</span> <span class="n">experiment</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+                        <span class="s2">"reference"</span><span class="p">:</span> <span class="n">reference</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+                        <span class="s2">"publication"</span><span class="p">:</span> <span class="n">publication</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+                    <span class="p">}</span>
+                <span class="p">)</span>
+                <span class="n">txn</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span> <span class="n">serialized_data</span><span class="p">)</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">"</span><span class="si">%s</span><span class="s2">: </span><span class="si">%d</span><span class="s2"> of </span><span class="si">%d</span><span class="s2"> annotations stored, </span><span class="si">%d</span><span class="s2"> ledgered (</span><span class="si">%s</span><span class="s2">)"</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">ledger</span><span class="o">.</span><span class="n">kept_records</span><span class="p">,</span>
+            <span class="n">ledger</span><span class="o">.</span><span class="n">source_annotations</span><span class="p">,</span>
+            <span class="n">ledger</span><span class="o">.</span><span class="n">dropped_records</span><span class="p">,</span>
+            <span class="n">RULE_NOT_WHOLE_GENE_DELETION</span><span class="p">,</span>
+        <span class="p">)</span></div>
 
 
-    <span class="c1"># HACK for this dataset all meta data is guessed,</span>
-    <span class="c1"># since we have no way fo extracting it from the paper yet</span>
-    <span class="c1"># It is a reasonable guess</span>
 <div class="viewcode-block" id="GeneEssentialitySgdDataset.create_experiment">
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.sgd.GeneEssentialitySgdDataset.html#torchcell.datasets.scerevisiae.sgd.GeneEssentialitySgdDataset.create_experiment">[docs]</a>
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">create_experiment</span><span class="p">(</span>  <span class="c1"># type: ignore[override]  # dataset-specific signature</span>
-        <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">gene</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">phenotype_data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+        <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">annotation</span><span class="p">:</span> <span class="n">SgdAnnotation</span><span class="p">,</span> <span class="n">environment</span><span class="p">:</span> <span class="n">Environment</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span>
         <span class="n">GeneEssentialityExperiment</span><span class="p">,</span> <span class="n">GeneEssentialityExperimentReference</span><span class="p">,</span> <span class="n">Publication</span>
     <span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Build the experiment, reference, and publication for one gene phenotype."""</span>
+<span class="w">        </span><span class="sd">"""Build the experiment, reference, and publication for one kept annotation."""</span>
         <span class="n">genome_reference</span> <span class="o">=</span> <span class="n">ReferenceGenome</span><span class="p">(</span>
             <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span> <span class="n">strain</span><span class="o">=</span><span class="s2">"S288C"</span>
         <span class="p">)</span>
@@ -356,27 +743,22 @@
         <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span>
             <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
                 <span class="n">SgaKanMxDeletionPerturbation</span><span class="p">(</span>
-                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">gene</span><span class="p">,</span>
-                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">phenotype_data</span><span class="p">[</span><span class="s2">"locus"</span><span class="p">][</span><span class="s2">"display_name"</span><span class="p">],</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">annotation</span><span class="o">.</span><span class="n">systematic_name</span><span class="p">,</span>
+                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">annotation</span><span class="o">.</span><span class="n">locus_display_name</span><span class="p">,</span>
                     <span class="n">strain_id</span><span class="o">=</span><span class="s2">"S288C"</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="p">]</span>
         <span class="p">)</span>
 
-        <span class="n">environment</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span>
-            <span class="n">media</span><span class="o">=</span><span class="n">Media</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"YEPD"</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="s2">"solid"</span><span class="p">,</span> <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
-            <span class="n">temperature</span><span class="o">=</span><span class="n">Temperature</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mi">30</span><span class="p">),</span>  <span class="c1"># Assuming standard temperature</span>
-        <span class="p">)</span>
-
         <span class="n">phenotype</span> <span class="o">=</span> <span class="n">GeneEssentialityPhenotype</span><span class="p">(</span><span class="n">is_essential</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">phenotype_reference</span> <span class="o">=</span> <span class="n">GeneEssentialityPhenotype</span><span class="p">(</span><span class="n">is_essential</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
-        <span class="n">pubmed_id</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">phenotype_data</span><span class="p">[</span><span class="s2">"reference"</span><span class="p">][</span><span class="s2">"pubmed_id"</span><span class="p">])</span>
-        <span class="n">pub_info</span> <span class="o">=</span> <span class="n">get_publication_info</span><span class="p">(</span><span class="n">pubmed_id</span><span class="p">)</span>
+        <span class="n">pub_info</span> <span class="o">=</span> <span class="n">get_publication_info</span><span class="p">(</span><span class="n">annotation</span><span class="o">.</span><span class="n">pubmed_id</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">pub_info</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"Unable to retrieve publication information for PubMed ID: </span><span class="si">{</span><span class="n">pubmed_id</span><span class="si">}</span><span class="s2">"</span>
+                <span class="s2">"Unable to retrieve publication information for PubMed ID: "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">annotation</span><span class="o">.</span><span class="n">pubmed_id</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
 
         <span class="n">experiment</span> <span class="o">=</span> <span class="n">GeneEssentialityExperiment</span><span class="p">(</span>
@@ -409,28 +791,9 @@
 <span class="w">    </span><span class="sd">"""Build and inspect the SGD gene essentiality dataset under ``$DATA_ROOT``."""</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
 
-    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCerevisiaeGraph</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.scerevisiae.s288c</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCerevisiaeGenome</span>
-
     <span class="n">load_dotenv</span><span class="p">()</span>
-    <span class="n">root</span> <span class="o">=</span> <span class="n">data_root</span><span class="p">()</span>
-
-    <span class="c1"># Never overwrite=True: a rebuild races any other process reading the shared genome.</span>
-    <span class="n">genome</span> <span class="o">=</span> <span class="n">SCerevisiaeGenome</span><span class="p">(</span>
-        <span class="n">genome_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="s2">"data/sgd/genome"</span><span class="p">),</span>
-        <span class="n">go_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="s2">"data/go"</span><span class="p">),</span>
-        <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">graph</span> <span class="o">=</span> <span class="n">SCerevisiaeGraph</span><span class="p">(</span>
-        <span class="n">sgd_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="s2">"data/sgd/genome"</span><span class="p">),</span>
-        <span class="n">string_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="s2">"data/string"</span><span class="p">),</span>
-        <span class="n">tflink_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="s2">"data/tflink"</span><span class="p">),</span>
-        <span class="n">genome</span><span class="o">=</span><span class="n">genome</span><span class="p">,</span>
-    <span class="p">)</span>
-
     <span class="n">dataset</span> <span class="o">=</span> <span class="n">GeneEssentialitySgdDataset</span><span class="p">(</span>
-        <span class="n">root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="s2">"data/torchcell/gene_essentiality_sgd"</span><span class="p">),</span>
-        <span class="n">scerevisiae_graph</span><span class="o">=</span><span class="n">graph</span><span class="p">,</span>
+        <span class="n">root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">(),</span> <span class="s2">"data/torchcell/gene_essentiality_sgd"</span><span class="p">)</span>
     <span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
 

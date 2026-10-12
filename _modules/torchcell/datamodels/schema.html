@@ -4546,7 +4546,7 @@
 
 <div class="viewcode-block" id="Media">
 <a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.Media.html#torchcell.datamodels.schema.Media">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">Media</span><span class="p">(</span><span class="n">ModelStrict</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Media</span><span class="p">(</span><span class="n">ProvenanceGapMixin</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Growth medium resolved to typed COMPONENTS (provenance-first).</span>
 
 <span class="sd">    ``name`` + ``state`` remain the human label; ``is_synthetic`` (REQUIRED)</span>
@@ -4554,15 +4554,33 @@
 <span class="sd">    compositional breakdown; ``dropouts`` are auxotrophic components deliberately</span>
 <span class="sd">    OMITTED (recorded so 'omitted' is distinguishable from 'not yet listed').</span>
 <span class="sd">    ``is_fully_characterized`` / ``open_gaps`` make under-definition queryable.</span>
+
+<span class="sd">    A medium the source never states is still a ``Media`` (#901, #902, #903):</span>
+<span class="sd">    ``Environment.media`` stays required, and each of ``name``, ``state`` and</span>
+<span class="sd">    ``is_synthetic`` is stated or ``None`` beside a ``ProvenanceGap`` naming that</span>
+<span class="sd">    field, its reason and where we looked (``_stated_or_gapped``). So SynLethDB's</span>
+<span class="sd">    aggregated pairs, whose release carries no condition field, and an SGD phenotype</span>
+<span class="sd">    annotation with no condition property store a medium whose gaps say exactly that,</span>
+<span class="sd">    never a guessed YPD and never a free-text stand-in. A partly stated medium gaps</span>
+<span class="sd">    only what is missing: SGD's "YPD with 2% glucose" states a name, not a physical</span>
+<span class="sd">    state. ``media_identity`` keys a gapped medium by its gaps, so an absence never</span>
+<span class="sd">    merges with a stated medium or with another source's absence.</span>
 <span class="sd">    """</span>
 
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">state</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">is_synthetic</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+    <span class="c1"># --- begin #901/#902/#903: a typed gap on the medium ------------------------ #</span>
+    <span class="c1"># The medium's label as the source states it; None ONLY with a</span>
+    <span class="c1"># ProvenanceGap(field='name') when the source names no medium. Required, no default.</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="c1"># solid, liquid or gas; None ONLY with a ProvenanceGap(field='state') when the</span>
+    <span class="c1"># source states no physical state. Required, no default.</span>
+    <span class="n">state</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">is_synthetic</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">"True = chemically defined by construction (SD/SC/YNB/SGA); "</span>
         <span class="s2">"False = natural/complex (YPD, corn steep liquor). Orthogonal to how well "</span>
-        <span class="s2">"the composition is characterized."</span>
+        <span class="s2">"the composition is characterized. None ONLY with a ProvenanceGap"</span>
+        <span class="s2">"(field='is_synthetic') when the source states no medium to classify."</span>
     <span class="p">)</span>
+    <span class="c1"># --- end #901/#902/#903 ------------------------------------------------------ #</span>
     <span class="n">base_medium</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">"canonical base label for grouping, e.g. 'SD_MSG' | 'YNB' | 'SC' | 'YPD'"</span><span class="p">,</span>
@@ -4584,12 +4602,38 @@
 <a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.Media.html#torchcell.datamodels.schema.Media.validate_state">[docs]</a>
     <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"state"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">validate_state</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Validate that state is one of solid, liquid, or gas."""</span>
-        <span class="k">if</span> <span class="n">v</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"solid"</span><span class="p">,</span> <span class="s2">"liquid"</span><span class="p">,</span> <span class="s2">"gas"</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_state</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Validate that a stated state is one of solid, liquid, or gas."""</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">v</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"solid"</span><span class="p">,</span> <span class="s2">"liquid"</span><span class="p">,</span> <span class="s2">"gas"</span><span class="p">]:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">'state must be one of "solid", "liquid", or "gas"'</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">v</span></div>
 
+
+    <span class="c1"># --- begin #901/#902/#903: a typed gap on the medium ------------------------ #</span>
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_stated_or_gapped</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Media"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Each label field is stated or carries a typed gap; never a silent ``None``.</span>
+
+<span class="sd">        The mixin enforces the converse (a gapped field must be ``None``).</span>
+<span class="sd">        """</span>
+        <span class="n">_require_value_or_gap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">(</span><span class="s2">"name"</span><span class="p">,</span> <span class="s2">"state"</span><span class="p">,</span> <span class="s2">"is_synthetic"</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">stated_name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The name the source states; raises for a medium whose name is a typed gap.</span>
+
+<span class="sd">        For code that builds or reads a medium it knows to be named (a loader's own</span>
+<span class="sd">        library medium, an FBA expansion of one): a gapped medium has no label to</span>
+<span class="sd">        stand in, so it is refused by name rather than spelled ``"None"``.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"this medium's name is a typed ProvenanceGap; it has no stated name"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+
+    <span class="c1"># --- end #901/#902/#903 ------------------------------------------------------ #</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_fully_characterized</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>

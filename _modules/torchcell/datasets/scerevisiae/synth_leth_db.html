@@ -140,7 +140,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">Counter</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Hashable</span><span class="p">,</span> <span class="n">Mapping</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Mapping</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">lmdb</span>
@@ -157,13 +157,9 @@
     <span class="n">verify_sha256</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">ComponentDefinition</span><span class="p">,</span>
-    <span class="n">Compound</span><span class="p">,</span>
     <span class="n">Environment</span><span class="p">,</span>
     <span class="n">Genotype</span><span class="p">,</span>
     <span class="n">Media</span><span class="p">,</span>
-    <span class="n">MediaComponent</span><span class="p">,</span>
-    <span class="n">MediaComponentRole</span><span class="p">,</span>
     <span class="n">Publication</span><span class="p">,</span>
     <span class="n">ReferenceGenome</span><span class="p">,</span>
     <span class="n">SgaKanMxDeletionPerturbation</span><span class="p">,</span>
@@ -222,39 +218,88 @@
     <span class="s2">"relevant information about an SL entry are stored as properties of the edge"</span>
 <span class="p">)</span>
 
-<span class="n">SYNLETHDB_MEDIUM_NOT_CARRIED</span><span class="p">:</span> <span class="n">Media</span> <span class="o">=</span> <span class="n">Media</span><span class="p">(</span>
-    <span class="n">name</span><span class="o">=</span><span class="s2">"growth medium not carried by SynLethDB (stated, if at all, by each record's "</span>
-    <span class="s2">"primary paper)"</span><span class="p">,</span>
-    <span class="n">state</span><span class="o">=</span><span class="s2">"solid"</span><span class="p">,</span>
-    <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-    <span class="n">components</span><span class="o">=</span><span class="p">[</span>
-        <span class="n">MediaComponent</span><span class="p">(</span>
-            <span class="n">compound</span><span class="o">=</span><span class="n">Compound</span><span class="p">(</span>
-                <span class="n">name</span><span class="o">=</span><span class="s2">"growth medium of the record's primary study (not carried by "</span>
-                <span class="s2">"SynLethDB)"</span>
-            <span class="p">),</span>
-            <span class="n">role</span><span class="o">=</span><span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">other</span><span class="p">,</span>
-            <span class="n">definition</span><span class="o">=</span><span class="n">ComponentDefinition</span><span class="o">.</span><span class="n">composition_deferred</span><span class="p">,</span>
-            <span class="n">note</span><span class="o">=</span><span class="s2">"SynLethDB aggregates gene pairs from many papers and carries no "</span>
-            <span class="s2">"medium; the deferral target is the record's own Publication.pubmed_id, "</span>
-            <span class="s2">"which differs per record, so defers_to stays empty here"</span><span class="p">,</span>
+<span class="c1">#: paper.md line 38: SynLethDB's second source is BioGRID, reference 22 (the BioGRID</span>
+<span class="c1">#: 2019 update, Nucleic Acids Res. 47, D529-D541, DOI 10.1093/nar/gky1079), which is</span>
+<span class="c1">#: not in the mirror.</span>
+<span class="n">SYNLETHDB_BIOGRID_SOURCE_QUOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"The second source is public databases containing SL data such as GenomeRNAi (21) "</span>
+    <span class="s2">"and BioGRID (22)."</span>
+<span class="p">)</span>
+<span class="c1">#: paper.md line 38: what SynLethDB says about its SR pairs. No SR score is defined</span>
+<span class="c1">#: anywhere in the paper; the confidence score it defines is for SL pairs only</span>
+<span class="c1">#: (``SYNLETHDB_SL_SCORE_QUOTE``).</span>
+<span class="n">SYNLETHDB_SR_COLLECTION_QUOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"We collected 16 207 SR gene pairs and 5798 non-synthetic lethal (non-SL) gene "</span>
+    <span class="s2">"pairs from the above three sources"</span>
+<span class="p">)</span>
+<span class="c1">#: paper.md line 75 (OCR drops the 'fi' ligature, kept verbatim).</span>
+<span class="n">SYNLETHDB_SL_SCORE_QUOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"we integrated the scores of different types of sources into a normalized "</span>
+    <span class="s2">"confdence score for every SL pair"</span>
+<span class="p">)</span>
+
+<span class="c1">#: Every SynLethDB 2.0 sentence this module rests on, as audited ``SourcedValue``s</span>
+<span class="c1">#: (each is a verbatim substring of the pinned ``paper.md``).</span>
+<span class="n">SYNLETHDB_SOURCED_QUOTES</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">SourcedValue</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">SourcedValue</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="s2">"an SL entry carries species, PubMed, evidence and cell line; no medium "</span>
+        <span class="s2">"and no temperature"</span><span class="p">,</span>
+        <span class="n">provenance</span><span class="o">=</span><span class="n">_SYNLETHDB_PAPER</span><span class="p">,</span>
+        <span class="n">quote</span><span class="o">=</span><span class="n">SYNLETHDB_ENTRY_FIELDS_QUOTE</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"line 49"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">SourcedValue</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="s2">"BioGRID is a source, cited as reference 22"</span><span class="p">,</span>
+        <span class="n">provenance</span><span class="o">=</span><span class="n">_SYNLETHDB_PAPER</span><span class="p">,</span>
+        <span class="n">quote</span><span class="o">=</span><span class="n">SYNLETHDB_BIOGRID_SOURCE_QUOTE</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"line 38"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">SourcedValue</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="s2">"SR pairs were collected from the same three sources; no SR score is "</span>
+        <span class="s2">"defined"</span><span class="p">,</span>
+        <span class="n">provenance</span><span class="o">=</span><span class="n">_SYNLETHDB_PAPER</span><span class="p">,</span>
+        <span class="n">quote</span><span class="o">=</span><span class="n">SYNLETHDB_SR_COLLECTION_QUOTE</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"line 38"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">SourcedValue</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="s2">"the confidence score is defined for SL pairs"</span><span class="p">,</span>
+        <span class="n">provenance</span><span class="o">=</span><span class="n">_SYNLETHDB_PAPER</span><span class="p">,</span>
+        <span class="n">quote</span><span class="o">=</span><span class="n">SYNLETHDB_SL_SCORE_QUOTE</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"line 75; OCR drops the 'fi' ligature"</span><span class="p">,</span>
+    <span class="p">),</span>
+<span class="p">)</span>
+
+<span class="c1"># --- begin #902/#903: a typed gap on the medium -------------------------------- #</span>
+<span class="c1">#: What every SynLethDB medium gap quotes: the paper's own list of what an SL entry</span>
+<span class="c1">#: stores, and the released header. Neither carries a condition field, and</span>
+<span class="c1">#: ``r.cell_line``, the one column that could carry a growth context, is empty on all</span>
+<span class="c1">#: 14,000 SL and 6,948 SR rows (``n_cell_line_stated`` 0 in</span>
+<span class="c1">#: ``experiments/036-dataset-fixes-before-kg-build/results/sgd_synlethdb_findings.json``).</span>
+<span class="n">SYNLETHDB_MEDIUM_SILENCE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"SynLethDB carries no growth medium: paper.md line 49 lists what an SL entry stores "</span>
+    <span class="s2">"('"</span> <span class="o">+</span> <span class="n">SYNLETHDB_ENTRY_FIELDS_QUOTE</span> <span class="o">+</span> <span class="s2">"') and both released CSVs carry only "</span>
+    <span class="s2">"n1.name, n1.identifier, n2.name, n2.identifier, r.cell_line, r.pubmed_id, "</span>
+    <span class="s2">"r.source, r.statistic_score, with r.cell_line empty on every row. The medium, if "</span>
+    <span class="s2">"stated at all, is in each record's own Publication.pubmed_id. Replaces the #622 "</span>
+    <span class="s2">"composition-deferred stand-in medium, which joined no shared medium"</span>
+<span class="p">)</span>
+<span class="n">SYNLETHDB_MEDIUM</span> <span class="o">=</span> <span class="n">Media</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">state</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">ProvenanceGap</span><span class="p">(</span>
+            <span class="n">field</span><span class="o">=</span><span class="n">field</span><span class="p">,</span>
+            <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_carried_by_curation</span><span class="p">,</span>
+            <span class="n">looked_in</span><span class="o">=</span><span class="n">_SYNLETHDB_PAPER</span><span class="p">,</span>
+            <span class="n">note</span><span class="o">=</span><span class="n">SYNLETHDB_MEDIUM_SILENCE</span><span class="p">,</span>
         <span class="p">)</span>
-    <span class="p">],</span>
-    <span class="n">provenance</span><span class="o">=</span><span class="p">[</span>
-        <span class="n">SourcedValue</span><span class="p">(</span>
-            <span class="n">value</span><span class="o">=</span><span class="s2">"growth medium not carried by the curation layer"</span><span class="p">,</span>
-            <span class="n">provenance</span><span class="o">=</span><span class="n">_SYNLETHDB_PAPER</span><span class="p">,</span>
-            <span class="n">quote</span><span class="o">=</span><span class="n">SYNLETHDB_ENTRY_FIELDS_QUOTE</span><span class="p">,</span>
-            <span class="n">note</span><span class="o">=</span><span class="s2">"line 49. state='solid' and is_synthetic=False are NOT sourced: the "</span>
-            <span class="s2">"schema requires both, and they keep the old stub's values. The loader "</span>
-            <span class="s2">"formerly emitted an unsourced 'YEPD' solid medium"</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"name"</span><span class="p">,</span> <span class="s2">"state"</span><span class="p">,</span> <span class="s2">"is_synthetic"</span><span class="p">)</span>
     <span class="p">],</span>
 <span class="p">)</span>
-<span class="sd">"""The honest medium of a SynLethDB record: a composition-deferred placeholder naming</span>
-<span class="sd">the absence, not a recipe. ``Media`` has no ``provenance_gaps`` and ``Environment.media``</span>
-<span class="sd">is required, so a typed gap on the medium itself is not expressible in the current</span>
-<span class="sd">schema; this object is the in-schema stand-in for one."""</span>
+<span class="sd">"""The medium of every SL and SR record: a ``Media`` whose name, state and class are</span>
+<span class="sd">typed gaps quoting the release's silence, never a guessed YPD or a free-text stand-in."""</span>
+<span class="c1"># --- end #902/#903 ------------------------------------------------------------- #</span>
 
 <span class="c1">#: The temperature is absent for the same reason (``not_carried_by_curation``).</span>
 <span class="n">SYNLETHDB_TEMPERATURE_GAP</span> <span class="o">=</span> <span class="n">ProvenanceGap</span><span class="p">(</span>
@@ -266,11 +311,48 @@
 <span class="p">)</span>
 
 <span class="n">SYNLETHDB_ENVIRONMENT</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span>
-    <span class="n">media</span><span class="o">=</span><span class="n">SYNLETHDB_MEDIUM_NOT_CARRIED</span><span class="p">,</span>
+    <span class="n">media</span><span class="o">=</span><span class="n">SYNLETHDB_MEDIUM</span><span class="p">,</span>
     <span class="n">temperature</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span><span class="n">SYNLETHDB_TEMPERATURE_GAP</span><span class="p">],</span>
 <span class="p">)</span>
 <span class="sd">"""Every SL and SR record's environment: neither medium nor temperature is carried."""</span>
+
+<span class="c1"># --- begin #903: the SR file's statistic score has no sourced definition -------- #</span>
+<span class="c1">#: The BioGRID 2019 update, SynLethDB 2.0's reference 22 (paper.pdf reference list,</span>
+<span class="c1">#: "The BioGRID interaction database: update. Nucleic Acids Res., 47, D529–D541"). Not</span>
+<span class="c1">#: mirrored; reading it (and the row's own primary paper) is what would define the</span>
+<span class="c1">#: SR scores, so it is the gap's ``resolve_with``.</span>
+<span class="n">BIOGRID_2019_REFERENCE</span> <span class="o">=</span> <span class="n">Provenance</span><span class="p">(</span>
+    <span class="n">source_uri</span><span class="o">=</span><span class="s2">"https://doi.org/10.1093/nar/gky1079"</span><span class="p">,</span>
+    <span class="n">method</span><span class="o">=</span><span class="s2">"SynLethDB 2.0 reference 22 (Oughtred et al. 2019, The BioGRID interaction "</span>
+    <span class="s2">"database: 2019 update, Nucleic Acids Res. 47, D529-D541); not in the mirror"</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">sr_score_gap</span><span class="p">(</span><span class="n">score</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">pubmed_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ProvenanceGap</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The typed absence stored in place of one released SR ``r.statistic_score``.</span>
+
+<span class="sd">    ``Yeast_SR.csv`` states a score on 74 of its 6,948 rows (all ``r.source`` BioGRID,</span>
+<span class="sd">    all PubMed 24470217, -1.0 to -0.2). SynLethDB 2.0 defines a normalized confidence</span>
+<span class="sd">    score for SL pairs only (``SYNLETHDB_SL_SCORE_QUOTE``) and says of SR pairs only</span>
+<span class="sd">    that they were collected (``SYNLETHDB_SR_COLLECTION_QUOTE``); the BioGRID</span>
+<span class="sd">    documentation it cites is not mirrored. A number with no sourced meaning is not</span>
+<span class="sd">    stored as SynLethDB's statistic score: the record keeps ``None`` and this gap,</span>
+<span class="sd">    whose note carries the released value verbatim so nothing is lost.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">ProvenanceGap</span><span class="p">(</span>
+        <span class="n">field</span><span class="o">=</span><span class="s2">"synthetic_rescue_statistic_score"</span><span class="p">,</span>
+        <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">deferred_pending_source_review</span><span class="p">,</span>
+        <span class="n">looked_in</span><span class="o">=</span><span class="n">_SYNLETHDB_PAPER</span><span class="p">,</span>
+        <span class="n">resolve_with</span><span class="o">=</span><span class="n">BIOGRID_2019_REFERENCE</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="sa">f</span><span class="s2">"Yeast_SR.csv states r.statistic_score </span><span class="si">{</span><span class="n">score</span><span class="si">!r}</span><span class="s2"> (r.source </span><span class="si">{</span><span class="n">source</span><span class="si">}</span><span class="s2">, "</span>
+        <span class="sa">f</span><span class="s2">"r.pubmed_id </span><span class="si">{</span><span class="n">pubmed_id</span><span class="si">}</span><span class="s2">); no mirrored source defines it: SynLethDB 2.0 "</span>
+        <span class="s2">"defines its confidence score for SL pairs only and cites BioGRID "</span>
+        <span class="s2">"(reference 22, not mirrored) for its database-sourced pairs"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="c1"># --- end #903 ------------------------------------------------------------------ #</span>
 
 <span class="c1">#: GFF feature types whose ``Dbxref`` ``GeneID`` names a locus (``locus_tag``).</span>
 <span class="n">_NCBI_LOCUS_TYPES</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">"gene"</span><span class="p">,</span> <span class="s2">"pseudogene"</span><span class="p">})</span>
@@ -366,14 +448,14 @@
 <span class="sd">    cell would turn the whole column float and every PMID into ``"111.0"``. The Entrez</span>
 <span class="sd">    ids are read as integers; a blank or non-integer id raises from pandas.</span>
 <span class="sd">    """</span>
-    <span class="c1"># Annotated so the mixed values (a type and two dtype names) type-check against</span>
-    <span class="c1"># pandas-stubs' read_csv overloads instead of joining to ``object``.</span>
-    <span class="n">dtypes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">type</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">"r.pubmed_id"</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="s2">"n1.identifier"</span><span class="p">:</span> <span class="s2">"int64"</span><span class="p">,</span>
-        <span class="s2">"n2.identifier"</span><span class="p">:</span> <span class="s2">"int64"</span><span class="p">,</span>
-    <span class="p">}</span>
-    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtypes</span><span class="p">)</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span>
+        <span class="n">path</span><span class="p">,</span>
+        <span class="n">dtype</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">"r.pubmed_id"</span><span class="p">:</span> <span class="s2">"str"</span><span class="p">,</span>
+            <span class="s2">"n1.identifier"</span><span class="p">:</span> <span class="s2">"int64"</span><span class="p">,</span>
+            <span class="s2">"n2.identifier"</span><span class="p">:</span> <span class="s2">"int64"</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">)</span>
     <span class="n">blank</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">"r.pubmed_id"</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">blank</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
         <span class="k">raise</span> <span class="n">BlankPubmedIdError</span><span class="p">(</span>
@@ -864,12 +946,19 @@
 
         <span class="n">environment</span> <span class="o">=</span> <span class="n">SYNLETHDB_ENVIRONMENT</span>
 
+        <span class="c1"># #903: a released SR score has no sourced definition, so it is a typed gap</span>
+        <span class="n">score</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">"r.statistic_score"</span><span class="p">]</span>
         <span class="n">phenotype</span> <span class="o">=</span> <span class="n">SyntheticRescuePhenotype</span><span class="p">(</span>
             <span class="n">is_synthetic_rescue</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">synthetic_rescue_statistic_score</span><span class="o">=</span><span class="p">(</span>
-                <span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"r.statistic_score"</span><span class="p">])</span>
-                <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">notna</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"r.statistic_score"</span><span class="p">])</span>
-                <span class="k">else</span> <span class="kc">None</span>
+            <span class="n">synthetic_rescue_statistic_score</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">(</span>
+                <span class="p">[]</span>
+                <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">score</span><span class="p">)</span>
+                <span class="k">else</span> <span class="p">[</span>
+                    <span class="n">sr_score_gap</span><span class="p">(</span>
+                        <span class="nb">float</span><span class="p">(</span><span class="n">score</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"r.source"</span><span class="p">]),</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"r.pubmed_id"</span><span class="p">])</span>
+                    <span class="p">)</span>
+                <span class="p">]</span>
             <span class="p">),</span>
         <span class="p">)</span>
 

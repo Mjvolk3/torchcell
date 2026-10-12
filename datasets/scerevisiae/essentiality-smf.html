@@ -909,35 +909,6 @@ tar<span class="w"> </span>-xf<span class="w"> </span><span class="s2">"</span><
 <p><strong>Temperature shown, and issue #410.</strong> For deletion and DAmP strains Costanzo 2016 released one temperature-combined fitness. The supplementary text says: “Because we observed a close correlation between fitness measured at [26 °C] and [30 °C] for deletion mutants , we combined measurements from different temperatures in the average for each deletion mutant. Fitness associated with TS mutants was computed separately at either [26 °C] or [30 °C] .” (mirror OCR <code class="docutils literal notranslate"><span class="pre">costanzoGlobalGeneticInteraction2016/si/si1.md</span></code>, line 96, sha256 <code class="docutils literal notranslate"><span class="pre">1828703b0ff739fd...</span></code>; bracketed temperatures replace OCR-garbled tokens, the rest is verbatim). <code class="docutils literal notranslate"><span class="pre">SmfCostanzo2016Dataset</span></code> nevertheless emits each deletion and DAmP strain twice, once at 26 °C and once at 30 °C, with the same value (issue <a class="reference external" href="https://github.com/Mjvolk3/torchcell/issues/410">#410</a>; the twin counts are in the summary above). The two panels of <a class="reference internal" href="#fig-smf-histogram"><span class="std std-numref">Fig. 2</span></a> therefore differ only through the TS alleles. The per-strain-type tables use the 30 °C records: for deletion and DAmP strains that record carries the one combined value exactly once, for TS alleles it is the 30 °C measurement, and 30 °C is the first Costanzo source in the default <code class="docutils literal notranslate"><span class="pre">LabelPolicy</span></code>. The 26 °C label on a deletion or DAmP record is not a 26 °C measurement.</p>
 <p><strong>SGD “inviable” includes conditionally inviable genes.</strong> The essentiality store holds every SGD null-mutant “inviable” annotation in strain S288C. Some annotated genes have viable deletion-collection strains (the <code class="docutils literal notranslate"><span class="pre">cooper2010.py</span></code> docstring lists 21 such hits, among them ATG1, ERG24 and VPS30), and those genes still become a fitness-0 entry through the converter. The overlap table above shows the same tension: SGD-essential genes that carry a KanMX or NatMX deletion strain with a measured fitness well above 0.</p>
 <p><strong>The essentiality environment is assumed, not recorded.</strong> SGD phenotype annotations carry no medium or temperature. The loader writes the same environment on every record, marked in the source:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="c1"># HACK for this dataset all meta data is guessed,</span>
-    <span class="c1"># since we have no way fo extracting it from the paper yet</span>
-    <span class="c1"># It is a reasonable guess</span>
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">create_experiment</span><span class="p">(</span>  <span class="c1"># type: ignore[override]  # dataset-specific signature</span>
-        <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">gene</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">phenotype_data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span>
-        <span class="n">GeneEssentialityExperiment</span><span class="p">,</span> <span class="n">GeneEssentialityExperimentReference</span><span class="p">,</span> <span class="n">Publication</span>
-    <span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Build the experiment, reference, and publication for one gene phenotype."""</span>
-        <span class="n">genome_reference</span> <span class="o">=</span> <span class="n">ReferenceGenome</span><span class="p">(</span>
-            <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span> <span class="n">strain</span><span class="o">=</span><span class="s2">"S288C"</span>
-        <span class="p">)</span>
-
-        <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span>
-            <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
-                <span class="n">SgaKanMxDeletionPerturbation</span><span class="p">(</span>
-                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">gene</span><span class="p">,</span>
-                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">phenotype_data</span><span class="p">[</span><span class="s2">"locus"</span><span class="p">][</span><span class="s2">"display_name"</span><span class="p">],</span>
-                    <span class="n">strain_id</span><span class="o">=</span><span class="s2">"S288C"</span><span class="p">,</span>
-                <span class="p">)</span>
-            <span class="p">]</span>
-        <span class="p">)</span>
-
-        <span class="n">environment</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span>
-            <span class="n">media</span><span class="o">=</span><span class="n">Media</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"YEPD"</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="s2">"solid"</span><span class="p">,</span> <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
-            <span class="n">temperature</span><span class="o">=</span><span class="n">Temperature</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mi">30</span><span class="p">),</span>  <span class="c1"># Assuming standard temperature</span>
-</pre></div>
-</div>
 <p>The KanMX deletion perturbation type and the strain id <code class="docutils literal notranslate"><span class="pre">S288C</span></code> on those records are fixed by the same function, not read from the annotation.</p>
 <p><strong>One graph node per distinct experiment.</strong> The graph identifies an experiment by the sha256 of its serialized record, which excludes the publication. SGD records of one gene that differ only by publication therefore collapse to one node, which is why the query returns one essentiality entry per gene while the store holds one per annotation. SMF records of genes outside <code class="docutils literal notranslate"><span class="pre">$gene_set</span></code> are not returned.</p>
 </section>

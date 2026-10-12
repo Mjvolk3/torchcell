@@ -874,7 +874,7 @@
             <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">MediaBounds</span><span class="p">(</span>
-        <span class="n">media_name</span><span class="o">=</span><span class="n">media</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+        <span class="n">media_name</span><span class="o">=</span><span class="n">media</span><span class="o">.</span><span class="n">stated_name</span><span class="p">,</span>
         <span class="n">model_id</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
         <span class="n">policy</span><span class="o">=</span><span class="n">resolved_policy</span><span class="p">,</span>
         <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
@@ -1097,7 +1097,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">expanded</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">component</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">Media</span><span class="p">(</span>
-        <span class="n">name</span><span class="o">=</span><span class="n">ontology</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">" [FBA expansion]"</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="n">ontology</span><span class="o">.</span><span class="n">stated_name</span> <span class="o">+</span> <span class="s2">" [FBA expansion]"</span><span class="p">,</span>
         <span class="n">state</span><span class="o">=</span><span class="s2">"liquid"</span><span class="p">,</span>
         <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">base_medium</span><span class="o">=</span><span class="n">ontology</span><span class="o">.</span><span class="n">base_medium</span><span class="p">,</span>

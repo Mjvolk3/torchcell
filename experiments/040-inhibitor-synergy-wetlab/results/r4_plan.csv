@@ -1,0 +1,13 @@
+job,sweep,arm,sources,n_sources,epochs,split,aux_holdout,fold_seed,folds,configs,estimated_hours,time_limit_hours,overrides
+1,r4_van_e150_s345_p0,van_e150,vanacloig,1,150,compound,none,0,0 1 2,3,9.9,12,"seeds=[3, 4, 5]"
+2,r4_van_e150_s345_p1,van_e150,vanacloig,1,150,compound,none,0,3 4,2,6.6,12,"seeds=[3, 4, 5]"
+3,r4_vanhop_e150_s345_p0,vanhop_e150,vanacloig hoepfner_hop,2,150,compound,compound,0,0,1,6.3,12,"seeds=[3, 4, 5]"
+4,r4_vanhop_e150_s345_p1,vanhop_e150,vanacloig hoepfner_hop,2,150,compound,compound,0,1,1,6.3,12,"seeds=[3, 4, 5]"
+5,r4_vanhop_e150_s345_p2,vanhop_e150,vanacloig hoepfner_hop,2,150,compound,compound,0,2,1,6.3,12,"seeds=[3, 4, 5]"
+6,r4_vanhop_e150_s345_p3,vanhop_e150,vanacloig hoepfner_hop,2,150,compound,compound,0,3,1,6.3,12,"seeds=[3, 4, 5]"
+7,r4_vanhop_e150_s345_p4,vanhop_e150,vanacloig hoepfner_hop,2,150,compound,compound,0,4,1,6.3,12,"seeds=[3, 4, 5]"
+8,r4_vanhophet_e150_s345_p0,vanhophet_e150,vanacloig hoepfner_hop hillenmeyer_het,3,150,compound,compound,0,0,1,8.7,12,"seeds=[3, 4, 5]"
+9,r4_vanhophet_e150_s345_p1,vanhophet_e150,vanacloig hoepfner_hop hillenmeyer_het,3,150,compound,compound,0,1,1,8.7,12,"seeds=[3, 4, 5]"
+10,r4_vanhophet_e150_s345_p2,vanhophet_e150,vanacloig hoepfner_hop hillenmeyer_het,3,150,compound,compound,0,2,1,8.7,12,"seeds=[3, 4, 5]"
+11,r4_vanhophet_e150_s345_p3,vanhophet_e150,vanacloig hoepfner_hop hillenmeyer_het,3,150,compound,compound,0,3,1,8.7,12,"seeds=[3, 4, 5]"
+12,r4_vanhophet_e150_s345_p4,vanhophet_e150,vanacloig hoepfner_hop hillenmeyer_het,3,150,compound,compound,0,4,1,8.7,12,"seeds=[3, 4, 5]"

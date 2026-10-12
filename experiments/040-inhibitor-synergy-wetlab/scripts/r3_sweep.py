@@ -297,6 +297,31 @@ def wave2_arms() -> list[dict[str, object]]:
     return out
 
 
+def round4_arms() -> list[dict[str, object]]:
+    """Round 4: three more seeds on every fold of the three source-set arms.
+
+    Written once both waves of round 3 had run. The same config at the same seed differs
+    between GilaHyper and Delta by up to 0.23 on the gene-level score (median 0.05), the
+    fold seed swings the single-source arm from 0.18 to 0.43, and the three-seed
+    ensemble on folds 0 to 2 reads 0.290, 0.271 and 0.267 for one, two and three
+    sources. The data-combining comparison is the paper's second theme and it is a null
+    inside that noise, so the budget goes to power on it rather than to more directions:
+    seeds 3 to 5 on folds 0 to 4, which with round 3's seeds 0 to 2 makes six seeds on
+    five folds per arm. Config names carry ``_s345``.
+    """
+    return [
+        arm(
+            f"{sources}_e150",
+            sources,
+            150,
+            folds=[0, 1, 2, 3, 4],
+            name_suffix="_s345",
+            seeds=[3, 4, 5],
+        )
+        for sources in ("van", "vanhop", "vanhophet")
+    ]
+
+
 def configs(spec: dict[str, object], folds: list[int]) -> list[dict[str, object]]:
     """One config per fold of ``spec``."""
     out = []
@@ -359,14 +384,18 @@ def main() -> None:
         "--wave",
         type=int,
         default=1,
-        choices=(1, 2),
-        help="1 writes the r3_* screen, 2 the r3w2_* second wave (see the module doc)",
+        choices=(1, 2, 3),
+        help=(
+            "1 writes the r3_* screen, 2 the r3w2_* second wave, 3 the r4_* seed"
+            " ensemble (see the module doc and round4_arms)"
+        ),
     )
     args = parser.parse_args()
     os.makedirs(args.out_dir, exist_ok=True)
     os.makedirs(RESULTS, exist_ok=True)
-    prefix = "r3" if args.wave == 1 else "r3w2"
-    specs = arms() if args.wave == 1 else wave2_arms()
+    prefix = {1: "r3", 2: "r3w2", 3: "r4"}[args.wave]
+    specs = {1: arms, 2: wave2_arms, 3: round4_arms}[args.wave]()
+    label = {1: "ROUND 3 WAVE 1", 2: "ROUND 3 WAVE 2", 3: "ROUND 4"}[args.wave]
 
     rows, lines = [], []
     for spec in specs:
@@ -381,7 +410,7 @@ def main() -> None:
             header = (
                 f"# experiments/040-inhibitor-synergy-wetlab/conf/mixture/{sweep}.yaml\n"
                 f"#\n"
-                f"# ROUND 3 WAVE {args.wave}, ARM {spec['arm']}, folds {folds} of fold seed"
+                f"# {label}, ARM {spec['arm']}, folds {folds} of fold seed"
                 f" {spec['fold_seed']}, seeds {seeds}, written by scripts/r3_sweep.py"
                 f"{' --wave 2' if args.wave == 2 else ''}.\n"
                 f"# Sources: {', '.join(spec['sources'])}."
@@ -447,7 +476,7 @@ def main() -> None:
             "#!/bin/bash\n"
             f"# experiments/040-inhibitor-synergy-wetlab/conf/mixture/{prefix}_submit_delta.sh\n"
             "#\n"
-            f"# ROUND 3 WAVE {args.wave} SUBMISSION, written by scripts/r3_sweep.py"
+            f"# {label} SUBMISSION, written by scripts/r3_sweep.py"
             f"{' --wave 2' if args.wave == 2 else ''}. One GPU and one\n"
             "# process per job, no dependencies and no -preempt partition, so every job\n"
             "# is eligible the moment it is submitted.\n"

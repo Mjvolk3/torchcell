@@ -910,3 +910,73 @@ https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/runs/1ccu2v9b
 https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/runs/2lacgu27
 
 https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/runs/2myelt8n
+
+## 2026.10.12 - Round 3 is complete on Delta; the machines disagree at a fixed seed; round 4 buys power
+
+### Delta ran the round in ten hours, not days
+
+Wave 1's 26 surviving jobs completed on Delta between 19:40 and 00:30 on 2026.10.11, and
+24 of wave 2's jobs were running by midnight (the two gene-cold ones were cancelled as
+duplicates of GilaHyper's, which ran). The "days in the queue" estimate from 2026.10.10
+was wrong for this account, so a GilaHyper prescreen of a Delta arm is a duplicate rather
+than a head start; the fourteen-job refill queued here at 02:50 duplicated finished or
+running Delta arms and was cancelled, leaving the three-source gene-cold arm (4047). The
+Delta result tables are pulled to `results/mixture-delta/` (no checkpoints were written
+on Delta) and `scripts/r3_readout.py` now reads both trees with a `machine` column.
+
+### The same config at the same seed differs between machines by as much as any arm effect
+
+Twenty-two arms ran on both machines with seed 0 on the same folds. On the gene-level
+score the two copies differ by a median of 0.05 and by up to 0.23 (`van_e150_n10` 0.093
+here against 0.285 on Delta; `van_e150_lh0p1` 0.327 against 0.096; `van_e150` 0.277
+against 0.332). The growth AUROC differs by a median of 0.03 and by up to 0.22
+(`van_e150_anchors`, one fold). That is the run-to-run floor at a fixed seed, from
+hardware and kernel nondeterminism, and it is the size of every single-seed difference
+the screen reports. No single-seed reading in round 3 is a finding; the ensembles are.
+
+### What the round says once the ensembles are read
+
+**Data combining, three seeds on folds 0 to 2** (seed 0 from wave 1, seeds 1 and 2 from
+wave 2, GilaHyper copies): per fold the single-source arm reads 0.25, 0.30, 0.29, the
+two-source arm 0.30, 0.27, 0.24, the three-source arm 0.30, 0.27, 0.25; medians 0.290,
+0.271, 0.267; within-fold seed spread 0.04 to 0.07. Growth AUROC of the three-seed
+ensemble prediction: 0.587, 0.517, 0.542. Adding the public screens does not lift either
+readout at this power. Null within noise, not yet a measured null.
+
+**The partition is the largest effect in the round.** The single-source arm reads 0.332
+on fold seed 0, 0.433 on fold seed 1 and 0.182 on fold seed 2 (Delta, one seed, three
+folds each); the two-source arm 0.274, 0.322, 0.184. Any comparison has to be paired
+within a partition, and the paper's number has to be reported over partitions.
+
+**Gene-cold is a null.** A held-out deletion strain's profile is predicted at 0.019
+(single source) and 0.047 (with Hoepfner) gene-centered, one seed; the three-source arm
+is running. The cell graph alone does not carry a strain's inhibitor profile.
+
+**Dose, now on eight paired comparisons.** FiLM against off at the same seed and machine:
+growth AUROC is lower with FiLM in six of eight (the exceptions are Delta's two-source
+pair, 0.562 against 0.519, and Delta's single-source fold 0), and the furfural-grid
+residual is more negative in all eight (-0.63 to -0.86 against -0.38 to -0.48). The
+held-out public dose is predicted at 0.12 to 0.19 by every FiLM arm on every fold. The
+reading from yesterday stands: the channel learns the public dose axis and the host head
+is worse for it.
+
+**Nothing else moves at one seed.** Per-source head, attribute encoding, both together,
+auxiliary weight 0.3, 96 conditions per step, two environment layers, two transformer
+layers, the wide model and the Wildenhain source sets all land inside the floor above on
+every readout (`results/r3_readout_arms.csv`). The per-source held-out compound scores
+stay at 0.00 to 0.14 for Hoepfner and 0.01 to 0.06 for Hillenmeyer under every setting,
+and Wildenhain's own held-out compounds read 0.13 to 0.29. The 50-epoch bridge arm reads
+0.202 against 0.274 at 150 on Delta.
+
+### Round 4: seeds 3 to 5 on every fold of the three source-set arms
+
+The data-combining comparison is the paper's second theme and it is a null inside the
+noise, so the two cards go to power on it rather than to more directions:
+`scripts/r3_sweep.py --wave 3` writes `r4_*`, seeds 3 to 5 on folds 0 to 4 for the one-,
+two- and three-source arms, which with round 3 makes six seeds on five folds per arm
+(GilaHyper 4057 to 4068, about 33 hours on two cards). Delta's running wave-2 jobs supply
+seeds 0 to 2 on folds 3 and 4 and the three-source arm on fold seeds 1 and 2. The
+reading that follows is a paired difference over 30 runs per arm, which at a seed spread
+of 0.05 resolves 0.03.
+
+https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/runs/2myelt8n

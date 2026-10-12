@@ -1,7 +1,12 @@
 # experiments/040-inhibitor-synergy-wetlab/scripts/r3_readout.py
 # [[experiments.040-inhibitor-synergy-wetlab.scripts.r3_readout]]
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/040-inhibitor-synergy-wetlab/scripts/r3_readout
-"""Read every scored mixture arm on this machine into two tables.
+"""Read every scored mixture arm, on this machine and pulled from Delta, into two tables.
+
+``results/mixture/`` holds the GilaHyper runs and ``results/mixture-delta/`` the Delta
+runs' tables (rsynced from the Delta tree without the checkpoints). The same arm can
+have been run on both; the ``machine`` column keeps them apart, and a reader that wants
+one copy per arm takes the one with the more folds or the one named.
 
 ``results/r3_readout_arms.csv``: one row per (sweep, arm), the median over folds of the
 seed-mean of the gene-level held-out score and the wet-lab readouts under the served
@@ -33,7 +38,10 @@ import pandas as pd
 
 EXPERIMENT = osp.dirname(osp.dirname(osp.abspath(__file__)))
 RESULTS = osp.join(EXPERIMENT, "results")
-MIXTURE = osp.join(RESULTS, "mixture")
+MACHINES = {
+    "gilahyper": osp.join(RESULTS, "mixture"),
+    "delta": osp.join(RESULTS, "mixture-delta"),
+}
 
 #: (column, task, subset, metric, call) of the readouts an arm row carries
 READOUTS: list[tuple[str, str, str, str, str | None]] = [
@@ -102,11 +110,12 @@ def arm_of(name: str) -> str:
 
 def scores() -> pd.DataFrame:
     frames = []
-    for path in sorted(glob.glob(osp.join(MIXTURE, "*", "*_scores.csv"))):
-        sweep = osp.basename(osp.dirname(path))
-        if "smoke" in sweep:
-            continue
-        frames.append(pd.read_csv(path).assign(sweep=sweep))
+    for machine, root in MACHINES.items():
+        for path in sorted(glob.glob(osp.join(root, "*", "*_scores.csv"))):
+            sweep = osp.basename(osp.dirname(path))
+            if "smoke" in sweep:
+                continue
+            frames.append(pd.read_csv(path).assign(sweep=sweep, machine=machine))
     table = pd.concat(frames, ignore_index=True)
     table["arm"] = table["name"].map(arm_of)
     return table
@@ -114,8 +123,9 @@ def scores() -> pd.DataFrame:
 
 def arm_table(table: pd.DataFrame) -> pd.DataFrame:
     rows = []
-    for (sweep, arm), group in table.groupby(["sweep", "arm"]):
+    for (machine, sweep, arm), group in table.groupby(["machine", "sweep", "arm"]):
         row: dict[str, object] = {
+            "machine": machine,
             "sweep": sweep,
             "arm": arm,
             "folds": group["fold"].nunique(),
@@ -139,7 +149,12 @@ def arm_table(table: pd.DataFrame) -> pd.DataFrame:
 
 def selection_table() -> pd.DataFrame:
     rows = []
-    for path in sorted(glob.glob(osp.join(MIXTURE, "*", "*_history.csv"))):
+    paths = [
+        (machine, path)
+        for machine, root in MACHINES.items()
+        for path in sorted(glob.glob(osp.join(root, "*", "*_history.csv")))
+    ]
+    for machine, path in paths:
         sweep = osp.basename(osp.dirname(path))
         if "smoke" in sweep:
             continue
@@ -151,6 +166,7 @@ def selection_table() -> pd.DataFrame:
             chosen = int(run["selected_step"].iloc[0])
             at = run[run["step"] == chosen]
             row: dict[str, object] = {
+                "machine": machine,
                 "sweep": sweep,
                 "name": name,
                 "arm": arm_of(name),

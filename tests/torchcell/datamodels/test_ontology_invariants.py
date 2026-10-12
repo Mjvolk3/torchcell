@@ -33,7 +33,9 @@ from torchcell.datamodels.schema import (
     BacterialDegronPerturbation,
     BacterialDeletionPerturbation,
     BacterialMarkedAllelePerturbation,
+    BacterialReleasedCrisprPerturbation,
     BacterialReleasedStrainPerturbation,
+    BacterialReleasedTransposonPerturbation,
     BacterialSequenceVariantPerturbation,
     BacterialSiteVariantPerturbation,
     BacterialSpanDeletionPerturbation,
@@ -226,6 +228,15 @@ _SPAN_CALL = BacterialVariantCall(
     frequency_statement="1",
     frequency=1.0,
     frequency_basis=VariantFrequencyBasis.fraction,
+)
+
+#: The leaves that store a source's own identifier as released (#691).
+_RELEASED_LEAVES: frozenset[type[GenePerturbation]] = frozenset(
+    {
+        BacterialReleasedStrainPerturbation,
+        BacterialReleasedCrisprPerturbation,
+        BacterialReleasedTransposonPerturbation,
+    }
 )
 
 FACTORY: dict[type[GenePerturbation], dict[str, Any]] = {
@@ -457,6 +468,28 @@ FACTORY: dict[type[GenePerturbation], dict[str, Any]] = {
         "released_kind": ReleasedStrainKind.deletion,
         "cassette": "kanamycin",
     },
+    # #691 round 2: a guide against a symbol the pinned assembly retires (Hawkins 2020's
+    # sokE) and an insertion in a multi-copy IS symbol (Goodall 2018's insA), both as
+    # released.
+    BacterialReleasedCrisprPerturbation: {
+        "systematic_gene_name": "sokE",
+        "perturbed_gene_name": "sokE",
+        "gene_namespace": "ecoli_k12_mg1655_bnumber",
+        "strain_label": "sokEb4700_32",
+        "identifier_kind": "gene symbol",
+        "expression_direction": "decreased",
+        "crispr": CrisprConstruct(
+            effector="dCas9", guide_sequence="CGTACTACCAGATAACCTAA"
+        ),
+    },
+    BacterialReleasedTransposonPerturbation: {
+        "systematic_gene_name": "insA",
+        "perturbed_gene_name": "insA",
+        "gene_namespace": "ecoli_k12_bw25113_locus_tag",
+        "strain_label": "insA",
+        "identifier_kind": "gene symbol",
+        "transposon": "Tn5",
+    },
     HeterologousPathwayPerturbation: dict(
         systematic_gene_name="Efa:mvaE",
         perturbed_gene_name="mvaE",
@@ -638,10 +671,10 @@ def test_provenance_is_declared(cls: type[GenePerturbation]) -> None:
 @pytest.mark.parametrize("cls", _LEAVES_SORTED)
 def test_identity_is_curie_or_systematic(cls: type[GenePerturbation]) -> None:
     name = _instance(cls).systematic_gene_name
-    if cls is BacterialReleasedStrainPerturbation:
+    if cls in _RELEASED_LEAVES:
         # #691: the fourth family, a source's own identifier stored as released. Only
-        # this leaf carries it, and it is disjoint from the other three by the leaf's
-        # own validator (a locus tag is refused) and by form.
+        # the released leaves carry it, and it is disjoint from the other three by
+        # their shared validator (a locus tag is refused) and by form.
         assert not (
             _SYSTEMATIC_RE.match(name)
             or _BACTERIAL_TAG_RE.match(name)

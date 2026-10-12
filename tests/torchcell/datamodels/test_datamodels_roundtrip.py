@@ -406,6 +406,17 @@ EXAMPLES: dict[str, dict[str, Any]] = {
         "gene_namespace": "ecoli_k12_mg1655_bnumber",
         "crispr": {"effector": "dCas9-Mxi1"},
     },
+    # #691 round 2: the released CRISPR leaf serves both directions, so its direction
+    # is required with no default and the generic builder cannot invent it.
+    "torchcell.datamodels.schema.BacterialReleasedCrisprPerturbation": {
+        "systematic_gene_name": "sokE",
+        "perturbed_gene_name": "sokE",
+        "gene_namespace": "ecoli_k12_mg1655_bnumber",
+        "strain_label": "sokEb4700_32",
+        "identifier_kind": "gene symbol",
+        "expression_direction": "decreased",
+        "crispr": {"effector": "dCas9"},
+    },
     "torchcell.datamodels.schema.PromoterReplacementPerturbation": {
         "systematic_gene_name": "b0002",
         "perturbed_gene_name": "thrA",

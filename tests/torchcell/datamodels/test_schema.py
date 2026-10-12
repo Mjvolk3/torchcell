@@ -4047,3 +4047,130 @@ def test_the_pooled_leaf_takes_a_value_or_a_gap_on_its_label_never_a_silent_none
     with pytest.raises(ValidationError, match="carries no ProvenanceGap"):
         phenotype(None)
     assert phenotype(8.5).expression_level == 8.5
+
+
+# #691 round 2: a CRISPR guide and a transposon insertion against a released identifier
+# --------------------------------------------------------------------------- #
+_RELEASED_CRISPR: dict[str, Any] = dict(
+    systematic_gene_name="sokE",
+    perturbed_gene_name="sokE",
+    gene_namespace="ecoli_k12_mg1655_bnumber",
+    strain_label="sokEb4700_32",
+    identifier_kind="gene symbol",
+    expression_direction="decreased",
+    crispr=s.CrisprConstruct(effector="dCas9", guide_sequence="CGTACTACCAGATAACCTAA"),
+)
+_RELEASED_TRANSPOSON: dict[str, Any] = dict(
+    systematic_gene_name="insA",
+    perturbed_gene_name="insA",
+    gene_namespace="ecoli_k12_bw25113_locus_tag",
+    strain_label="insA",
+    identifier_kind="gene symbol",
+)
+
+
+def test_released_crispr_leaf_stores_the_construct_against_a_released_label() -> None:
+    leaf = s.BacterialReleasedCrisprPerturbation(**_RELEASED_CRISPR)
+    assert leaf.perturbation_type == "bacterial_released_crispr"
+    assert leaf.mechanism_so == ("SO:0001998", "sgRNA")
+    assert leaf.crispr.guide_sequence == "CGTACTACCAGATAACCTAA"
+    back = s.Genotype.model_validate(
+        s.Genotype(perturbations=[leaf]).model_dump()
+    ).perturbations[0]
+    assert back == leaf and type(back) is s.BacterialReleasedCrisprPerturbation
+
+
+@pytest.mark.parametrize("direction", ["increased", "decreased"])
+def test_released_crispr_leaf_takes_either_direction(direction: str) -> None:
+    leaf = s.BacterialReleasedCrisprPerturbation(
+        **{**_RELEASED_CRISPR, "expression_direction": direction}
+    )
+    assert leaf.expression_direction == direction
+
+
+def test_released_crispr_leaf_requires_a_stated_direction() -> None:
+    with pytest.raises(ValueError, match="expression_direction"):
+        s.BacterialReleasedCrisprPerturbation(
+            **{**_RELEASED_CRISPR, "expression_direction": "knockdown"}
+        )
+    with pytest.raises(ValueError):
+        s.BacterialReleasedCrisprPerturbation(
+            **{k: v for k, v in _RELEASED_CRISPR.items() if k != "expression_direction"}
+        )
+
+
+def test_released_transposon_leaf_stores_gene_level_calls_and_mapped_sites() -> None:
+    gene_level = s.BacterialReleasedTransposonPerturbation(**_RELEASED_TRANSPOSON)
+    assert gene_level.perturbation_type == "bacterial_released_transposon"
+    assert gene_level.mechanism_so == ("SO:0001218", "transgenic_insertion")
+    assert gene_level.insertion_position is None and gene_level.barcode is None
+    mapped = s.BacterialReleasedTransposonPerturbation(
+        **_RELEASED_TRANSPOSON,
+        barcode="ACGTACGTACGTACGTACGT",
+        insertion_position=12345,
+        insertion_strand="+",
+        transposon="mariner Himar1",
+        library_pool="pool 1",
+    )
+    for leaf in (gene_level, mapped):
+        back = s.Genotype.model_validate(
+            s.Genotype(perturbations=[leaf]).model_dump()
+        ).perturbations[0]
+        assert back == leaf
+        assert type(back) is s.BacterialReleasedTransposonPerturbation
+    with pytest.raises(ValueError, match="1-based"):
+        s.BacterialReleasedTransposonPerturbation(
+            **_RELEASED_TRANSPOSON, insertion_position=0
+        )
+
+
+@pytest.mark.parametrize(
+    "identifier", ["BW25113_0001", "b0002", "PP_0001", "ECB_00001", " sokE", ""]
+)
+def test_released_construct_leaves_refuse_a_locus_tag_or_a_non_verbatim_identifier(
+    identifier: str,
+) -> None:
+    with pytest.raises(ValueError):
+        s.BacterialReleasedCrisprPerturbation(
+            **{**_RELEASED_CRISPR, "systematic_gene_name": identifier}
+        )
+    with pytest.raises(ValueError):
+        s.BacterialReleasedTransposonPerturbation(
+            **{**_RELEASED_TRANSPOSON, "systematic_gene_name": identifier}
+        )
+
+
+@pytest.mark.parametrize("field", ["strain_label", "identifier_kind"])
+def test_released_construct_leaves_refuse_an_empty_label(field: str) -> None:
+    with pytest.raises(ValueError, match=f"{field} must be a non-empty verbatim"):
+        s.BacterialReleasedCrisprPerturbation(**{**_RELEASED_CRISPR, field: " "})
+    with pytest.raises(ValueError, match=f"{field} must be a non-empty verbatim"):
+        s.BacterialReleasedTransposonPerturbation(
+            **{**_RELEASED_TRANSPOSON, field: " "}
+        )
+
+
+def test_released_construct_leaves_are_gene_perturbation_siblings_of_the_strain_leaf() -> (
+    None
+):
+    """Parent GenePerturbation, not an axis class: the placed leaves of each technology
+    keep their locus-tag contract and the three released leaves sit beside them.
+    """
+    members = typing.get_args(s.GenePerturbationType)
+    for cls in (
+        s.BacterialReleasedCrisprPerturbation,
+        s.BacterialReleasedTransposonPerturbation,
+    ):
+        assert cls in members
+        assert cls.__mro__[1] is s.GenePerturbation
+        assert not issubclass(cls, s.ExpressionModulationPerturbation)
+        assert not issubclass(cls, s.PresenceAbsencePerturbation)
+    assert s.BacterialReleasedStrainPerturbation.__mro__[1] is s.GenePerturbation
+    placed = s.BacterialCrisprInterferencePerturbation.model_fields
+    assert "strain_label" not in placed and "identifier_kind" not in placed
+
+
+def test_fold_change_is_a_dimensionless_concentration_unit() -> None:
+    assert s.ConcentrationUnit.fold_change.value == "fold_change"
+    assert s.ConcentrationUnit("fold_change") is s.ConcentrationUnit.fold_change
+    assert s.ConcentrationUnit.mg_nitrogen_per_l.value == "mg_N/L"

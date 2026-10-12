@@ -4331,6 +4331,232 @@ class VariablePromoterReporterPerturbation(GeneAdditionPerturbation, ModelStrict
 # --------------------------------------------------------------------------- #
 
 
+# --------------------------------------------------------------------------- #
+# ADDITIVE (#691, round 2: the CRISPR and transposon screens): a construct stored under
+# the identifier its source released, with no lookup against any assembly. Two leaves;
+# nothing above this line changes.
+#
+# BacterialReleasedStrainPerturbation carries a released strain identifier but no
+# construct, so a guide record (Cui 2018, Rousset 2018, Hawkins 2020, Fang 2025, Niu
+# 2019) or a transposon record (Goodall 2018) whose identity is the construct plus the
+# released gene label still had to resolve the label to a locus tag before it could be
+# stored, and the placed leaves refuse a label the pinned annotation retires, shares or
+# cannot place. Measured in those loaders' retention ledgers: Cui 2018 drops 925 guides
+# (1,850 measurements) under its three gene_* rules, Rousset 2018 643 records under its
+# three symbol rules, Hawkins 2020 37 (sokE, retired in ASM584v2), Fang 2025 3, Goodall
+# 2018 106 (the 9 multi-copy insertion-sequence symbols, both tables) and Niu 2019 the
+# 2 operon labels and the 1 combination strain naming them. Each leaf below stores the
+# construct as the placed leaf of its technology does and the gene as the strain leaf
+# does: the released identifier verbatim, never a locus tag of any namespace.
+# --------------------------------------------------------------------------- #
+def _validate_released_identifier(value: str) -> str:
+    """Return ``value`` if it is a released identifier verbatim and not a locus tag.
+
+    The released leaves' counterpart of ``_validate_bacterial_locus_tag``: the identifier
+    is whatever the source wrote, so the only checks are that it is non-empty, carries
+    no surrounding whitespace, and is not a locus tag of a pinned namespace, which the
+    placed leaves own.
+    """
+    if not value or value != value.strip():
+        raise ValueError(
+            f"systematic_gene_name must be the released identifier verbatim, got "
+            f"{value!r}"
+        )
+    if _namespace_of_locus_tag(value) is not None:
+        raise ValueError(
+            f"{value!r} is a bacterial locus tag; a released tag of a pinned assembly "
+            "is stored on the placed bacterial leaves"
+        )
+    return value
+
+
+def _check_released_labels(model: "GenePerturbation") -> None:
+    """Raise unless ``strain_label`` and ``identifier_kind`` are verbatim, non-empty."""
+    for field in ("strain_label", "identifier_kind"):
+        value = getattr(model, field)
+        if not value or value != value.strip():
+            raise ValueError(f"{field} must be a non-empty verbatim string")
+
+
+class BacterialReleasedCrisprPerturbation(GenePerturbation, ModelStrict):
+    """A guide-directed dead-Cas construct against a gene named only as released.
+
+    The released-identifier counterpart of ``BacterialCrisprInterferencePerturbation``
+    and ``BacterialCrisprActivationPerturbation``, one leaf for both directions because
+    the construct is the same material entity and the direction is a released fact of
+    the effector, so ``expression_direction`` is REQUIRED with no default rather than
+    fixed per class. ``systematic_gene_name`` is the source's own target identifier,
+    verbatim (a symbol such as ``sokE``, an operon label such as ``sufBCDS``, an
+    accession), ``perturbed_gene_name`` the released name, and ``strain_label`` the
+    release's whole identifier of the guide or of the strain carrying it, which keeps
+    two guides against one target apart when the spacer alone does not. Nothing is
+    looked up: no assembly decides whether the record exists, no derived locus tag is
+    stored, and a crosswalk to an annotation is a separate, later act.
+
+    ``crispr`` is the shared ``CrisprConstruct`` the placed CRISPR leaves carry (the
+    effector, the spacer, the guide count and the library pool), so the guide payload is
+    described once for the placed and the released families. The mechanism is the guide
+    itself, SO:0001998 ``sgRNA``, as on the expression axis; the leaf is a sibling of the
+    placed bacterial leaves and of ``BacterialReleasedStrainPerturbation`` under
+    ``GenePerturbation``, and it refuses a locus tag of any bacterial namespace, so a
+    guide against a placed tag stays on the placed leaves and one kind of record never
+    sits in two classes.
+    """
+
+    description: str = (
+        "Guide-directed dead-Cas perturbation of a bacterial gene identified by the "
+        "source's own released label, not placed on an assembly"
+    )
+    perturbation_type: Literal["bacterial_released_crispr"] = (
+        "bacterial_released_crispr"
+    )
+    gene_namespace: BacterialGeneNamespace = Field(
+        description="the host namespace the study writes its strains against; the "
+        "released identifier is not a tag of it"
+    )
+    strain_label: str = Field(
+        description="the source's whole released identifier of the guide or of the "
+        "strain carrying it, verbatim (a row label, a guide id)"
+    )
+    identifier_kind: str = Field(
+        description="what systematic_gene_name is, as the source writes it (e.g. 'gene "
+        "symbol', 'operon label')"
+    )
+    expression_direction: str = Field(
+        description="'decreased' for a dead-Cas repressor (CRISPRi), 'increased' for a "
+        "dead-Cas activator (CRISPRa), as the source states the effector"
+    )
+    crispr: CrisprConstruct = Field(
+        description="the guide + dead-Cas effector introduced to modulate expression"
+    )
+
+    @field_validator("systematic_gene_name", mode="after")
+    @classmethod
+    def validate_sys_gene_name(cls, v: str) -> str:
+        """The released identifier verbatim, and never a locus tag of a namespace."""
+        return _validate_released_identifier(v)
+
+    @field_validator("expression_direction", mode="after")
+    @classmethod
+    def validate_expression_direction(cls, v: str) -> str:
+        """Direction is increased (activation) or decreased (interference)."""
+        if v not in {"increased", "decreased"}:
+            raise ValueError(
+                f"expression_direction must be 'increased' or 'decreased', got {v!r}"
+            )
+        return v
+
+    @model_validator(mode="after")
+    def _check_label(self) -> "BacterialReleasedCrisprPerturbation":
+        """The strain label and identifier kind are verbatim, non-empty strings."""
+        _check_released_labels(self)
+        return self
+
+    @property
+    def mechanism_so(self) -> tuple[str, str]:
+        """(SO id, SO name): the guide itself, as on the expression axis."""
+        return ("SO:0001998", "sgRNA")
+
+
+class BacterialReleasedTransposonPerturbation(GenePerturbation, ModelStrict):
+    """A transposon insertion disrupting a gene named only as released.
+
+    The released-identifier counterpart of ``TransposonInsertionPerturbation``: the
+    same mapped-insertion fields (``barcode``, ``insertion_position``,
+    ``insertion_strand``, ``transposon``, ``library_pool``), each verbatim from the
+    release and ``None`` when the source releases only gene-level calls (Goodall 2018),
+    and the gene as ``BacterialReleasedStrainPerturbation`` stores it:
+    ``systematic_gene_name`` is the source's own identifier verbatim (Goodall 2018: the
+    ``Gene`` symbol, including the nine multi-copy insertion-sequence symbols no single
+    BW25113 locus carries), ``perturbed_gene_name`` the released name and
+    ``strain_label`` the release's whole row label. ``insertion_position`` is the
+    coordinate AS RELEASED, on whatever reference the source mapped against, since no
+    assembly is consulted here; the placed leaf is where a position on the pinned
+    assembly lives.
+
+    The mechanism is SO:0001218 ``transgenic_insertion``, as on the placed leaf. A
+    sibling of the placed bacterial leaves and of the released-strain leaf under
+    ``GenePerturbation``; it refuses a locus tag of any bacterial namespace, so an
+    insertion in a placed tag stays on ``TransposonInsertionPerturbation``.
+    """
+
+    description: str = (
+        "Transposon insertion disrupting a bacterial gene identified by the source's "
+        "own released label, not placed on an assembly"
+    )
+    perturbation_type: Literal["bacterial_released_transposon"] = (
+        "bacterial_released_transposon"
+    )
+    gene_namespace: BacterialGeneNamespace = Field(
+        description="the host namespace the study writes its strains against; the "
+        "released identifier is not a tag of it"
+    )
+    strain_label: str = Field(
+        description="the source's whole released identifier of the insertion mutant, "
+        "verbatim (a row label, a strain or barcode id)"
+    )
+    identifier_kind: str = Field(
+        description="what systematic_gene_name is, as the source writes it (e.g. 'gene "
+        "symbol')"
+    )
+    barcode: str | None = Field(
+        default=None,
+        description="the random barcode the strain is counted by in a pooled assay; "
+        "None when the source released no per-strain tag",
+    )
+    insertion_position: int | None = Field(
+        default=None,
+        description="1-based position of the insertion as released, on the reference "
+        "the source mapped against; None when only gene-level calls were released",
+    )
+    insertion_strand: Literal["+", "-"] | None = Field(
+        default=None,
+        description="orientation of the inserted element as released; None when "
+        "unreleased",
+    )
+    transposon: str | None = Field(
+        default=None,
+        description="the transposon / delivery vector, verbatim (e.g. 'mariner Himar1', "
+        "'Tn5'); None when unsourced",
+    )
+    library_pool: str | None = Field(
+        default=None,
+        description="the mutant library sub-pool this strain was screened in, when a "
+        "study runs several; a pooled measurement is pool-relative, so the pool joins "
+        "the strain identity",
+    )
+
+    @field_validator("systematic_gene_name", mode="after")
+    @classmethod
+    def validate_sys_gene_name(cls, v: str) -> str:
+        """The released identifier verbatim, and never a locus tag of a namespace."""
+        return _validate_released_identifier(v)
+
+    @field_validator("insertion_position", mode="after")
+    @classmethod
+    def _validate_position(cls, v: int | None) -> int | None:
+        """A released position is 1-based, so it is at least 1."""
+        if v is not None and v < 1:
+            raise ValueError(f"insertion_position is 1-based, got {v}")
+        return v
+
+    @model_validator(mode="after")
+    def _check_label(self) -> "BacterialReleasedTransposonPerturbation":
+        """The strain label and identifier kind are verbatim, non-empty strings."""
+        _check_released_labels(self)
+        return self
+
+    @property
+    def mechanism_so(self) -> tuple[str, str]:
+        """(SO id, SO name): a transgenic insertion, as on the placed leaf."""
+        return ("SO:0001218", "transgenic_insertion")
+
+
+# --------------------------------------------------------------------------- #
+# End ADDITIVE (#691, round 2).
+# --------------------------------------------------------------------------- #
+
+
 SgaPerturbationType = (
     SgaKanMxDeletionPerturbation
     | SgaNatMxDeletionPerturbation
@@ -4377,6 +4603,9 @@ GenePerturbationType = (
     | BacterialCrisprActivationPerturbation
     # a strain stored under its released identifier (#691)
     | BacterialReleasedStrainPerturbation
+    # a CRISPR guide and a transposon insertion against a released identifier (#691)
+    | BacterialReleasedCrisprPerturbation
+    | BacterialReleasedTransposonPerturbation
 )
 
 
@@ -4585,6 +4814,14 @@ class ConcentrationUnit(StrEnum):
     # which the source does not do, so the dose is stored on the basis it was set on.
     mg_nitrogen_per_l = "mg_N/L"
     # --- end De Chiara 2022 ------------------------------------------------------- #
+    # --- begin Niu 2019: a dimensionless ratio to a reference ---------------------- #
+    # A product quantity released only as a FOLD CHANGE over the source's own reference
+    # (Niu 2019: 40 pinene cells, "the ratio of pinene titer with CRISPRa and without",
+    # no absolute titer anywhere in that arm). The number is dimensionless, so no
+    # concentration unit is true of it and a molar conversion does not exist; it is
+    # stored on the scale the source set it on, with the reference at 1.0.
+    fold_change = "fold_change"
+    # --- end Niu 2019 ------------------------------------------------------------- #
 
 
 class DoseBasis(StrEnum):

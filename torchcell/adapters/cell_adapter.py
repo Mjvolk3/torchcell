@@ -39,7 +39,9 @@ from torchcell.datamodels.schema import (
     BacterialDegronPerturbation,
     BacterialDeletionPerturbation,
     BacterialMarkedAllelePerturbation,
+    BacterialReleasedCrisprPerturbation,
     BacterialReleasedStrainPerturbation,
+    BacterialReleasedTransposonPerturbation,
     BacterialSequenceVariantPerturbation,
     BacterialSiteVariantPerturbation,
     BacterialSpanDeletionPerturbation,
@@ -93,6 +95,12 @@ BACTERIAL_PERTURBATION_LEAVES: tuple[type, ...] = (
     # strain_label, released_kind, identifier_kind, cassette and collection travel in the
     # serialized record, as the round-2 leaves' own fields do.
     BacterialReleasedStrainPerturbation,
+    # #691 round 2: a CRISPR guide and a transposon insertion against a released
+    # identifier. The same five properties; crispr, expression_direction, barcode,
+    # insertion_position, insertion_strand, transposon and library_pool travel in the
+    # serialized record, as they do on the placed leaves of each technology.
+    BacterialReleasedCrisprPerturbation,
+    BacterialReleasedTransposonPerturbation,
 )
 """The gene-perturbation leaves written as ``bacterial perturbation`` nodes.
 

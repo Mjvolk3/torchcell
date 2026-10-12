@@ -469,6 +469,7 @@ Additive, for De Chiara 2022 ([[torchcell.datasets.scerevisiae.dechiara2022]]):
 - `LifeCyclePhenotype`: a culture's time course, `life_cycle` keyed `<measurement type>@<time><h|d>` (`life_cycle_key`, `parse_life_cycle_key`; one canonical spelling per time point) to a percentage. `LifeCycleMeasurementType` is `sporulation_efficiency`, `dyad_fraction` (a percent of the asci, not of the culture) and `stationary_phase_viability`; the first two are bounded by 100, a plate-normalized viability is not. `LifeCycleAssay` restricts each assay to the measurements it produces (`LIFE_CYCLE_ASSAY_MEASUREMENTS`). `LifeCycleExperiment` / `...Reference` declare a `CultureEnvironment`, so the induction protocol serializes.
 - `MeasurementType.cell_yield`, in `ABSOLUTE_MEASUREMENT_TYPES`: cells per colony population (Scan-o-matic), kept apart from `colony_size` (an end-point size on an image scale).
 - `ConcentrationUnit.mg_nitrogen_per_l` (`mg_N/L`): a nitrogen-equivalent dose, stored on the basis the source set it on.
+- `ConcentrationUnit.fold_change` (`fold_change`, #691 round 2): a dimensionless ratio to the source's own reference, for a product released only as a fold change (Niu 2019's 40 pinene cells); the reference is 1.0 and no molar conversion exists.
 - `PreCultureSource.timed_culture`: a pre-culture of stated duration and unstated growth phase.
 
 Schema impact vs origin/main: 96 datasets impacted, 0 breaking.

@@ -6,10 +6,10 @@ r"""Schmidt 2016 Table S23: the per-condition growth rates, as an absolute reado
 
 Schmidt et al. 2016 (Nat Biotechnol 34:104, doi:10.1038/nbt.3418) Supplementary Table
 23 releases one ``Growth rate (h-1)`` with a ``Stdev`` per (growth condition, strain),
-26 rows over three strains. This module serves the 15 of them that the schema can hold
-as :class:`GrowthRateS23Schmidt2016Dataset`, one
-``BacterialEnvironmentResponseExperiment`` per condition carrying the ABSOLUTE rate,
-plus the Glucose row as the reference.
+26 rows over three strains. This module serves 24 of them as
+:class:`GrowthRateS23Schmidt2016Dataset`, one ``BacterialEnvironmentResponseExperiment``
+per (condition, strain) carrying the ABSOLUTE rate, with each strain's Glucose row as its
+reference.
 
 Table S23 was the E. coli SI audit's rank 13 and was blocked. Three blockers were
 stated; re-measured on 2026-10-09 after PR #836 (#776) only the third survives, and it
@@ -35,30 +35,26 @@ touches none of their records. The pinned artifact, the media objects, the condi
 table and the environment helpers are imported FROM ``schmidt2016`` instead, so there is
 one copy of each.
 
-THE 10 DROPPED ROWS, each by a measured rule and not a preference. 26 released rows
-minus 16 records:
+THE 2 DROPPED ROWS. 26 released rows minus 24 records. Since #1057 (the owner rule of
+2026-10-12: "the data is the data", and the genome does not gate a released row) every
+row is stored as released but the two stationary-phase rows, which carry the proteome
+loader's own structural drop rule, imported from ``schmidt2016`` rather than restated
+(``growth_phase_not_representable``: Environment has no growth-phase slot, so they would
+collapse onto the Glucose arm).
 
-* 4 rows are the two non-BW25113 strains. ``BacterialReferenceStrain`` is
-  ``MG1655 | BW25113 | KT2440 | REL606`` and the genomes tier deposits an assembly set
-  for each; ``NCM3722`` is in neither, so its 2 rows cannot be pinned to a genome at
-  all. The other 2 rows spell the strain ``MG1665``, a transposition of ``MG1655``;
-  even correcting it does not rescue them, because every Table S23 row is wild type, so
-  L1 ``pair_uniqueness``'s genotype signature is the empty tuple for all three strains
-  and its condition signature carries no strain field. Measured on the 17 BW25113 +
-  typo-corrected MG1655 records: "2 records duplicate an earlier (study, strain,
-  condition) triple; 15 unique triples" -- LB and Glucose collide across strains. The
-  multi-strain rows are blocked on the uniqueness key, independently of the vocabulary.
-* 2 rows carry the proteome loader's own structural drop rule, imported from
-  ``schmidt2016`` rather than restated: the two stationary-phase rows on
-  ``growth_phase_not_representable``.
-* 4 rows are the chemostat arms, on :data:`DROP_SET_POINT_RULE`. Their environments are
-  distinct since #1045 row 21 (``Environment.dilution_rate_per_hour``), and the proteome
-  and SRM stores keep them, but the growth rate this table releases for them IS that
-  dilution rate: at steady state the specific growth rate equals the dilution rate the
-  experimenter set, and the released ``Stdev`` is literally ``0`` in all four rows (L2
-  ``uncertainty_sanity`` refuses "4/19 labeled uncertainties are a sample dispersion of
-  exactly 0"). A record would state the environment's own control variable as a
-  measured phenotype, so the rule is a correctness one, not a missing carrier.
+* The 4 rows of the two non-BW25113 strains are stored, each on a
+  ``BacterialStrainBackground`` named as Table S23 writes it (``MG1665`` verbatim, the
+  paper's text saying MG1655; ``NCM3722``) with the genotype the paper's text states
+  (``F-, λ, rph-1``; ``F+``), pinned to the K-12 MG1655 reference assembly, which no
+  gene of these wild-type records uses. Each strain's reference is its own Glucose row.
+  Every Table S23 row is wild type, so if the shared L1 ``pair_uniqueness`` signature
+  carries no strain field it reads the three strains' LB and Glucose rows as
+  duplicates; that is a property of the verifier's key, reported rather than resolved
+  by dropping rows.
+* The 4 chemostat rows are stored. Their environments carry the dilution rate (#1045 row
+  21); the growth rate Table S23 releases for them is that set point, and its ``Stdev``
+  is printed as ``0``, which is no measured spread, so the uncertainty is a typed gap
+  quoting the released 0 rather than a sample SD of 0.
 
 ``Glycerol + AA`` was dropped on ``medium_has_no_media_library_entry`` until #1045 row 17
 gave it ``M9_AA_SCHMIDT2016``; it is a record now (1.27 h-1).
@@ -80,8 +76,10 @@ state 3), while the Methods fit each rate "from at least four consecutive measur
 WITHIN one curve. ``n_samples = 3`` is the conservative resolution of that pair -- the
 lower count, so the larger standard error -- and it is the only one with a sourced
 number; the note on ``SOURCED_VALUES["n_samples"]`` names the inferential step in the
-record itself. Measured both ways: the 15-record build passes all 16 L0-L4 rows with
-``n_samples=3``, and also passes with the ``Stdev`` left unstored behind two typed gaps.
+record itself. Measured both ways on 2026-10-09: the then 15-record build passed all 16
+L0-L4 rows with ``n_samples=3``, and also passed with the ``Stdev`` left unstored behind
+two typed gaps. The four chemostat rows carry no sample SD (their released 0 is a typed
+gap), so the inferential step touches only the 20 batch rows.
 
 WHAT IS NOT STORED, with its count. Table S23's other released columns have no axis in
 the schema and are written verbatim to ``preprocess/not_stored.json`` instead of being
@@ -94,7 +92,7 @@ stationary rows, ``after >6 volume changes`` in the four chemostat rows).
 
 RECORDED, NOT ACTED ON. Table S28 restates the two stationary-phase conditions'
 ``Experimental Growth rate`` as ``0`` where Table S23 releases ``-0.01``: an internal
-inconsistency of the release, on two rows this module drops for an unrelated reason.
+inconsistency of the release, on the two rows this module drops for an unrelated reason.
 
 DATA. The one consumed file is ``si2.xlsx``, the same pinned Supplementary-tables
 workbook ``schmidt2016.py`` consumes, read from the same raw mirror under the same
@@ -127,8 +125,10 @@ from torchcell.data import (
 )
 from torchcell.datamodels.schema import (
     AssayType,
+    AssemblyReferenceGenome,
     BacterialEnvironmentResponseExperiment,
     BacterialEnvironmentResponseExperimentReference,
+    BacterialStrainBackground,
     Environment,
     EnvironmentResponsePhenotype,
     Experiment,
@@ -194,16 +194,17 @@ EXPECTED_STRAIN_ROWS: dict[str, int] = {
     STRAIN_MG1665: 2,
     STRAIN_NCM3722: 2,
 }
-EXPECTED_RECORDS = 16
+EXPECTED_RECORDS = 24
 #: What L3 ``environment_perturbed`` must observe: 0 records with no environmental edit
 #: at all. An edit is a perturbation, a non-baseline temperature OR a non-baseline
 #: medium, which is what covers the one record below.
 EXPECTED_UNPERTURBED = 0
 #: The ONE kept condition whose only edit is its medium: ``LB`` is a complex medium with
 #: no carbon-source factor on top, so its ``Environment.perturbations`` is empty while
-#: its ``media`` differs from the 14 M9 records' baseline. Declared so that a condition
+#: its ``media`` differs from the M9 records' baseline. Its three rows (BW25113, MG1665,
+#: NCM3722, in sheet order) are records since #1057. Declared so that a condition
 #: silently losing its perturbation cannot pass as this one.
-EXPECTED_MEDIA_ONLY_EDIT: tuple[str, ...] = ("LB",)
+EXPECTED_MEDIA_ONLY_EDIT: tuple[str, ...] = ("LB", "LB", "LB")
 
 #: The released condition label that IS the reference, and ``schmidt2016``'s own name
 #: for it. The Glucose row is also a record, as Caglar 2017's base condition is: for an
@@ -260,9 +261,8 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
     "other_strains": _paper(
         [STRAIN_MG1665, STRAIN_NCM3722],
         sm._Q_OTHER_STRAINS,
-        note="the two rows per strain are not stored: NCM3722 has no deposited assembly "
-        "set and no BacterialReferenceStrain member, and every Table S23 row is wild "
-        "type, so L1 pair_uniqueness cannot tell two strains apart on one condition",
+        note="the two rows per strain are stored since #1057, each strain named as Table "
+        "S23 writes it on a background pinned to the K-12 MG1655 reference assembly",
     ),
     "growth_rate_estimator": _paper(
         "exponential fit to flow-cytometry cell counts over at least four consecutive "
@@ -425,36 +425,20 @@ class DropLedger(BaseModel):
         return sum(len(rows) for rows in self.dropped.values())
 
 
-#: The rule that drops the two non-BW25113 strains. The four rows fail on the uniqueness
-#: key whatever the vocabulary says, which is why one rule covers both spellings.
-DROP_STRAIN_RULE = "strain_not_distinguishable_from_bw25113"
-#: The rule that drops the chemostat rows (#1045 row 21): their released growth rate is
-#: the dilution rate their environment already states, with a released Stdev of 0.
-DROP_SET_POINT_RULE = "growth_rate_is_the_dilution_rate_set_point"
-
-
 def partition(rows: Sequence[S23Row]) -> tuple[list[S23Row], DropLedger]:
     """Split the released rows into the records and the ledger of what dropped.
 
-    Three rules, in this order: a row of either non-BW25113 strain goes under
-    ``DROP_STRAIN_RULE``, a BW25113 row whose ``schmidt2016`` condition carries a
-    ``DropReason`` goes under that reason's own ``rule`` name, and a chemostat row goes
-    under ``DROP_SET_POINT_RULE`` because the rate it releases is its environment's
-    dilution rate, not a measurement.
+    One rule: a row whose ``schmidt2016`` condition carries a ``DropReason`` goes under
+    that reason's own ``rule`` name. A row of another strain and a chemostat row are
+    records since #1057.
     """
     kept: list[S23Row] = []
     dropped: dict[str, list[str]] = {}
     for row in rows:
         key = f"{row.condition}/{row.strain}"
-        if row.strain != STRAIN_BW25113:
-            dropped.setdefault(DROP_STRAIN_RULE, []).append(key)
-            continue
         spec = _condition_spec(row.condition)
         if spec.drop is not None:
             dropped.setdefault(spec.drop.rule, []).append(key)
-            continue
-        if spec.dilution_rate_per_hour is not None:
-            dropped.setdefault(DROP_SET_POINT_RULE, []).append(key)
             continue
         kept.append(row)
     ledger = DropLedger(source_rows=len(rows), kept_records=len(kept), dropped=dropped)
@@ -483,8 +467,36 @@ def build_environments(rows: Sequence[S23Row]) -> dict[str, Environment]:
     return environments
 
 
+#: The typed gap on a chemostat row's uncertainty: Table S23 prints its ``Stdev`` as 0.
+SET_POINT_STDEV_GAP = ProvenanceGap(
+    field="environment_response_uncertainty",
+    reason=ProvenanceGapReason.not_reported_by_primary,
+    looked_in=SI2_SOURCE,
+    note="a chemostat row: Table S23 releases Stdev 0, because the growth rate it prints "
+    "is the dilution rate the experimenter set; 0 is no measured spread, so no sample SD "
+    "is stored (#1057)",
+)
+
+
 def phenotype(row: S23Row) -> EnvironmentResponsePhenotype:
-    """One condition's absolute growth rate, with the released ``Stdev``."""
+    """One condition's absolute growth rate, with the released ``Stdev``.
+
+    A chemostat row's rate is its dilution-rate set point and its released ``Stdev`` is
+    0, so its uncertainty is the typed gap :data:`SET_POINT_STDEV_GAP` (#1057).
+    """
+    if _condition_spec(row.condition).dilution_rate_per_hour is not None:
+        if row.stdev != 0.0:
+            raise ValueError(
+                f"chemostat row {row.condition!r} releases Stdev {row.stdev}, not the "
+                "set point's 0"
+            )
+        return EnvironmentResponsePhenotype(
+            measurement_type=MeasurementType.growth_rate,
+            assay_type=AssayType.other,
+            environment_response=row.growth_rate,
+            units=UNITS,
+            provenance_gaps=[*RECORD_GAPS, SET_POINT_STDEV_GAP],
+        )
     return EnvironmentResponsePhenotype(
         measurement_type=MeasurementType.growth_rate,
         assay_type=AssayType.other,
@@ -498,9 +510,45 @@ def phenotype(row: S23Row) -> EnvironmentResponsePhenotype:
     )
 
 
-def reference_row(rows: Sequence[S23Row]) -> S23Row:
-    """The BW25113 Glucose row, which is this dataset's reference."""
-    matches = [row for row in rows if row.condition == REFERENCE_CONDITION]
+#: The genotype the paper's text writes for each non-BW25113 strain of Table S23, keyed
+#: by the strain as Table S23 names it (``MG1665``; the text says MG1655). The value is
+#: the quoted string with the OCR's citation superscripts (20, 21) removed;
+#: ``sm._Q_OTHER_STRAINS`` is the verbatim quote.
+STRAIN_GENOTYPES: dict[str, str] = {STRAIN_MG1665: "F-, λ, rph-1", STRAIN_NCM3722: "F+"}
+
+
+def strain_genome(strain: str, data_root: str | None = None) -> AssemblyReferenceGenome:
+    """BW25113's assembly pin, or another strain on a background named as released.
+
+    A Table S23 strain that is not BW25113 is stored under the name Table S23 writes
+    (``MG1665``, ``NCM3722``) on the K-12 MG1655 reference assembly, with the genotype
+    the paper's text states for it. The records are wild type, so no gene uses the pin
+    (#1057).
+    """
+    if strain == STRAIN_BW25113:
+        return assembly_reference(
+            GrowthRateS23Schmidt2016Dataset.REFERENCE_STRAIN, data_root=data_root
+        )
+    background = BacterialStrainBackground(
+        name=strain,
+        reference_strain="MG1655",
+        assembly_set="ecoli_K12_MG1655_ASM584v2",
+        genotype_statement=STRAIN_GENOTYPES[strain],
+        provenance=[
+            _si2(strain, strain, note="the strain name as Table S23 writes it"),
+            _paper(STRAIN_GENOTYPES[strain], sm._Q_OTHER_STRAINS),
+        ],
+    )
+    return assembly_reference("MG1655", background=background, data_root=data_root)
+
+
+def reference_row(rows: Sequence[S23Row], strain: str = STRAIN_BW25113) -> S23Row:
+    """A strain's Glucose row, its reference; BW25113's is the dataset's."""
+    matches = [
+        row
+        for row in rows
+        if row.condition == REFERENCE_CONDITION and row.strain == strain
+    ]
     if len(matches) != 1:
         raise RuntimeError(
             f"{len(matches)} kept rows carry the reference condition "
@@ -514,7 +562,7 @@ def reference_row(rows: Sequence[S23Row]) -> S23Row:
 # --------------------------------------------------------------------------- #
 @register_dataset
 class GrowthRateS23Schmidt2016Dataset(ExperimentDataset):
-    """Schmidt 2016 Table S23: 15 absolute per-condition growth rates of BW25113."""
+    """Schmidt 2016 Table S23: 24 absolute per-condition growth rates, three strains."""
 
     organism = Organism.ecoli
 
@@ -569,7 +617,7 @@ class GrowthRateS23Schmidt2016Dataset(ExperimentDataset):
 
     @post_process
     def process(self) -> None:
-        """Write one record per kept Table S23 condition, 15 in all."""
+        """Write one record per kept Table S23 (condition, strain), 24 in all."""
         verify_raw_files(self.raw_dir, sm.DATA_SHA256)
         rows = read_table_s23(osp.join(self.raw_dir, sm.SI2))
         kept, ledger = partition(rows)
@@ -593,12 +641,15 @@ class GrowthRateS23Schmidt2016Dataset(ExperimentDataset):
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
         os.makedirs(self.processed_dir, exist_ok=True)
-        reference = BacterialEnvironmentResponseExperimentReference(
-            dataset_name=self.name,
-            genome_reference=assembly_reference(self.REFERENCE_STRAIN),
-            environment_reference=environments[base.condition],
-            phenotype_reference=phenotype(base),
-        )
+        references = {
+            strain: BacterialEnvironmentResponseExperimentReference(
+                dataset_name=self.name,
+                genome_reference=strain_genome(strain),
+                environment_reference=environments[REFERENCE_CONDITION],
+                phenotype_reference=phenotype(reference_row(kept, strain)),
+            )
+            for strain in sorted({row.strain for row in kept})
+        }
         pub = sm.publication()
         genotype = Genotype(perturbations=[])
         env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
@@ -612,7 +663,7 @@ class GrowthRateS23Schmidt2016Dataset(ExperimentDataset):
                 )
                 txn.put(
                     f"{index}".encode(),
-                    self._intern_record(experiment, reference, pub, itxn),
+                    self._intern_record(experiment, references[row.strain], pub, itxn),
                 )
         env.close()
         interned_env.close()
@@ -639,27 +690,9 @@ class GrowthRateS23Schmidt2016Dataset(ExperimentDataset):
         """The retention ledger, the sourcing table and the unstored columns."""
         out = Path(self.preprocess_dir)
         rules = {
-            DROP_STRAIN_RULE: (
-                "the released strain is MG1665 or NCM3722: NCM3722 is in neither "
-                "BacterialReferenceStrain nor the deposited assembly sets, and because "
-                "every Table S23 row is wild type, L1 pair_uniqueness's genotype "
-                "signature is empty for all three strains, so a second strain's LB and "
-                "Glucose rows duplicate BW25113's (measured: 2 duplicate triples among "
-                "17 records)"
-            ),
-            **{
-                spec.drop.rule: spec.drop.description
-                for spec in sm.CONDITIONS
-                if spec.drop is not None
-            },
-            DROP_SET_POINT_RULE: (
-                "a chemostat row: at steady state the specific growth rate is the "
-                "dilution rate the experimenter set, which the environment already "
-                "states (Environment.dilution_rate_per_hour, #1045 row 21), and the "
-                "released Stdev is exactly 0, the set point rather than a measured "
-                "spread; a record would restate the environment's control variable as "
-                "a measured phenotype"
-            ),
+            spec.drop.rule: spec.drop.description
+            for spec in sm.CONDITIONS
+            if spec.drop is not None
         }
         (out / "dropped_records.json").write_text(
             json.dumps(
@@ -672,14 +705,17 @@ class GrowthRateS23Schmidt2016Dataset(ExperimentDataset):
                         for rule, members in sorted(ledger.dropped.items())
                     ],
                     "notes": [
-                        f"the reference is the BW25113 {base.condition} row "
-                        f"({base.growth_rate} h-1), which is ALSO a record: for an "
-                        "absolute readout a reference condition is a measured condition "
+                        f"each strain's reference is its own {base.condition} row "
+                        f"(BW25113's is {base.growth_rate} h-1), which is ALSO a "
+                        "record: for an absolute readout a reference condition is a measured condition "
                         "too, as Caglar 2017's base condition is",
                         "the four chemostat rows release a Stdev of exactly 0, the "
-                        "dilution-rate set-point rather than a measured spread, which L2 "
-                        "uncertainty_sanity refuses on its own; they are dropped on "
-                        f"{DROP_SET_POINT_RULE} before that rule is reached",
+                        "dilution-rate set-point rather than a measured spread; since "
+                        "#1057 they are records whose uncertainty is a typed gap quoting "
+                        "that 0",
+                        "the MG1665 and NCM3722 rows are records since #1057, each on a "
+                        "background named as released and referenced to its own Glucose "
+                        "row",
                         "Table S28 restates the two stationary-phase conditions' growth "
                         "rate as 0 where Table S23 releases -0.01; both rows are dropped "
                         "on growth_phase_not_representable, so the inconsistency is "
@@ -726,7 +762,12 @@ class GrowthRateS23Schmidt2016Dataset(ExperimentDataset):
                     "strain": row.strain,
                     "growth_rate_h1": row.growth_rate,
                     "stdev": row.stdev,
-                    "n_samples": N_SAMPLES,
+                    "n_samples": (
+                        None
+                        if _condition_spec(row.condition).dilution_rate_per_hour
+                        is not None
+                        else N_SAMPLES
+                    ),
                     "is_reference": row.condition == base.condition,
                 }
                 for row in kept
@@ -752,35 +793,43 @@ def l4_assembly_pin(
 ) -> LevelResult:
     """L4: the record's pinned assembly IS the one the genomes tier deposited.
 
-    Every record is wild-type BW25113, so no record names a gene and the L4 gene rules
-    have nothing to look at. What the records DO assert about the outside world is their
-    genome pin, so the rule re-derives it from the deposited assembly report and
-    requires every record to carry exactly that pair. This is the Caglar 2017 L4.
+    Every record is wild type, so no record names a gene and the L4 gene rules have
+    nothing to look at. What the records DO assert about the outside world is their
+    genome pin, so the rule re-derives each strain's pin from the deposited assembly
+    report (BW25113's own set; MG1665 and NCM3722 on the K-12 MG1655 set, #1057) and
+    requires every record to carry its strain's pair. This is the Caglar 2017 L4.
     """
-    expected = assembly_reference(
-        GrowthRateS23Schmidt2016Dataset.REFERENCE_STRAIN, data_root=data_root
-    )
-    want = (str(expected.assembly_set), str(expected.assembly_accession))
-    pins = sorted(
-        {
-            (
-                str(rec["reference"]["genome_reference"]["assembly_set"]),
-                str(rec["reference"]["genome_reference"]["assembly_accession"]),
-            )
-            for rec in records
-        }
-    )
+    by_strain: dict[str, set[tuple[str, str]]] = {}
+    for rec in records:
+        genome = rec["reference"]["genome_reference"]
+        by_strain.setdefault(str(genome["strain"]), set()).add(
+            (str(genome["assembly_set"]), str(genome["assembly_accession"]))
+        )
+    expected = {
+        strain: (str(pin.assembly_set), str(pin.assembly_accession))
+        for strain in sorted(by_strain)
+        for pin in [strain_genome(strain, data_root)]
+    }
+    wrong = {
+        strain: sorted(pins)
+        for strain, pins in sorted(by_strain.items())
+        if pins != {expected[strain]}
+    }
     return LevelResult(
         level=Level.L4,
         name="assembly_pin_resolves",
-        passed=pins == [want],
+        passed=not wrong,
         message=(
-            f"all {len(records)} records pin {want[0]} / {want[1]}, the accession the "
-            "deposited assembly report names"
-            if pins == [want]
-            else f"records pin {pins}; the deposited assembly report names {want}"
+            f"all {len(records)} records pin their strain's deposited assembly: "
+            + "; ".join(f"{k} {v[0]} / {v[1]}" for k, v in expected.items())
+            if not wrong
+            else f"records pin {wrong}; the deposited assembly reports name {expected}"
         ),
-        details={"pins": pins, "expected": want, "n_records": len(records)},
+        details={
+            "pins": {k: sorted(v) for k, v in sorted(by_strain.items())},
+            "expected": expected,
+            "n_records": len(records),
+        },
     )
 
 
@@ -814,9 +863,9 @@ def verify_build(
             sha256=sm.SI2_SHA256,
             method=(
                 "Supplementary Table 23 'Growth rate (h-1)' and 'Stdev': one "
-                "BacterialEnvironmentResponseExperiment per kept (condition, BW25113) "
+                "BacterialEnvironmentResponseExperiment per kept (condition, strain) "
                 "row, MeasurementType.growth_rate carrying the ABSOLUTE rate in h^-1; "
-                "the reference is the released Glucose row's own rate"
+                "each strain's reference is its released Glucose row's own rate"
             ),
             page=f"si2.xlsx sheet '{SHEET_S23}'",
             retrieved=sm.SI2_RETRIEVED_AT,

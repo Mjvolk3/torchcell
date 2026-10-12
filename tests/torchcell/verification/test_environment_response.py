@@ -61,6 +61,7 @@ from torchcell.datamodels.schema import (
 from torchcell.verification.environment_response import (
     _condition_signature,
     _genotype_signature,
+    _pair_key,
     environment_response_gene_set,
     verify_environment_response_dataset,
     verify_environment_response_dataset_streaming,
@@ -588,8 +589,8 @@ def test_genotype_signature_keys_on_allele_guide_pool_and_donor() -> None:
 def test_condition_signature_reads_compound_agent_dose_and_scalars() -> None:
     """A compound perturbation reads ``concentration``; a physical agent with no
     concentration reads ``magnitude``; ``None`` fields become ``""``, the perturbation
-    tuples are sorted, and temperature, media name, both durations and ``screen_id``
-    follow.
+    tuples are sorted, and temperature, media name, both durations, the chemostat
+    dilution rate (``None`` for a batch environment, #1057) and ``screen_id`` follow.
     """
     experiment = {
         "environment": {
@@ -622,8 +623,51 @@ def test_condition_signature_reads_compound_agent_dose_and_scalars() -> None:
         "YPD",
         48.0,
         None,
+        None,
         "s1",
     )
+
+
+def test_condition_signature_splits_chemostat_arms_by_dilution_rate() -> None:
+    """Two chemostat arms on one feed differ only in ``dilution_rate_per_hour`` (#1057)."""
+
+    def arm(rate: float | None) -> dict[str, Any]:
+        return {
+            "environment": {
+                "perturbations": [],
+                "temperature": {"value": 37.0},
+                "media": {"name": "M9"},
+                "dilution_rate_per_hour": rate,
+            },
+            "phenotype": {},
+        }
+
+    signatures = {_condition_signature(arm(rate)) for rate in (0.12, 0.5, None)}
+    assert sorted(str(sig[5]) for sig in signatures) == ["0.12", "0.5", "None"]
+
+
+def test_pair_key_splits_wild_type_strains_by_the_reference_background() -> None:
+    """Empty genotypes on one condition are told apart by the background name (#1057)."""
+
+    def record(background: str | None) -> dict[str, Any]:
+        return {
+            "experiment": {
+                "genotype": {"perturbations": []},
+                "environment": {"perturbations": [], "media": {"name": "LB"}},
+                "phenotype": {"units": "1/h"},
+            },
+            "reference": {
+                "genome_reference": {
+                    "strain": background or "BW25113",
+                    "background": None if background is None else {"name": background},
+                }
+            },
+            "publication": {"doi": "10.1038/nbt.3418"},
+        }
+
+    keys = [_pair_key(record(b), frozenset()) for b in (None, "MG1665", "NCM3722")]
+    assert [key[2] for key in keys] == [None, "MG1665", "NCM3722"]
+    assert len(set(keys)) == 3
 
 
 def test_gene_set_leaves_out_the_background() -> None:

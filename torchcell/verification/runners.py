@@ -2325,6 +2325,54 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
             ),
         ),
     },
+    "env_chemgen_yoshikawa2009": {
+        "root": "data/torchcell/env_chemgen_yoshikawa2009",
+        # Table S1's 4,729 strains minus the 39 whose released ORF R64-4-1 retired (10),
+        # merged into a longer locus (28) or renamed without a sourced relation (1),
+        # x 3 kept conditions (the undescribed 5% ethanol columns refused) x 2 cultures.
+        # Rules + counts: preprocess/dropped_records.json.
+        "expected_count": 28140,
+        "background_genes": frozenset(),
+        # An ABSOLUTE readout (#776): the reference is the standard strain's own Table 1
+        # rate, and the nonstress condition is a measured base condition, one record
+        # per kept strain and culture (4,690 x 2).
+        "reference_centered": False,
+        "expected_unperturbed": 9380,
+        "provenance": Provenance(
+            source_uri=(
+                "$DATA_ROOT/torchcell-raw/yoshikawaComprehensivePhenotypicAnalysis2009/"
+                "si/FYR_456_sm_tableS1.xls (raw mirror with manifest.json; the "
+                "publisher's Table S1, a manual browser download; YeastPhenome's "
+                "cell-identical .xlsx deposited beside it as the cross-check)"
+            ),
+            citation_key="yoshikawaComprehensivePhenotypicAnalysis2009",
+            sha256="1861ba647e382f28a39041b2b590276ad30e67ef334b0d8be968415f56d9f759",
+            method=(
+                "released Table S1 normalized specific growth rate (1/h) of ONE culture "
+                "per record (replicate_id '1st experiment' / '2nd experiment', "
+                "n_samples 1, biological_replicate), measurement_type growth_rate, "
+                "assay liquid_od_growth, with the strain's both-cultures call "
+                "(0: sensitive, 1: no-change, 2: tolerant) as category. Static 96-well "
+                "YPD at 30 C from a 24 h pre-culture; at 4 h 25 uL of water "
+                "(nonstress, no perturbation), 40% (v/v) ethanol (8% v/v) or 5 M NaCl "
+                "(1 M) as a SmallMoleculePerturbation. Reference per condition: the "
+                "standard strain (BY4742 his3 deletion) in that condition, Table 1's "
+                "average rate with its SD (sample_sd, n 720 wells), on a BY4742 "
+                "StrainReferenceGenome whose provenance is gapped (strains derive from "
+                "BY4742 or BY4739, unreleased per strain). Genotype: "
+                "BarcodedKanMxDeletionPerturbation (Open Biosystems, kanMX4, barcodes "
+                "gapped); 21 SGD-renamed ORFs stored under the current ORF with their "
+                "released name on a ConstructedOrf (alias). Refused: the 5% ethanol "
+                "columns (condition and reference not described), 10 retired, 28 merged "
+                "and 1 unsourced released names"
+            ),
+            page=(
+                "FEMS Yeast Res 2009 9:32 (doi:10.1111/j.1567-1364.2008.00456.x); "
+                "paper.md sha256="
+                "6552adf5b44fabc293ff1980069b67c9a6598a0d60c98e90c8ce424c5120f7fa"
+            ),
+        ),
+    },
     "crispri_chemgen_smith2016": {
         "root": "data/torchcell/crispri_chemgen_smith2016",
         # 7,053 of the 14,463 rows of Additional file 10. 7,410 drop on the compound
@@ -2397,6 +2445,12 @@ def verify_environment_response_entry(
     be verified the way the family run verifies it (a loader's ``verify_build`` calls
     this, which is what ``build_dataset_lmdb --verify`` resolves). ``hosts`` caches the
     gene universes across a family run; a single call builds its own.
+
+    An entry may declare an ABSOLUTE readout (#776): ``reference_centered: False`` makes
+    the reference rule check that each reference states its own finite value on the
+    record's scale instead of 0, and ``expected_unperturbed`` is how many records are a
+    measured base condition with no environmental edit. Both default to the relative
+    readout every other entry is (0 at the control, no unperturbed record).
     """
     spec = ENVIRONMENT_RESPONSE_DATASETS[name]
     hosts = {} if hosts is None else hosts
@@ -2422,6 +2476,8 @@ def verify_environment_response_entry(
             gene_universe_label=host.label,
             min_containment=MIN_RNASEQ_GENE_CONTAINMENT,
             resolve_gene_name=host.resolve_gene_name,
+            reference_centered=spec.get("reference_centered", True),
+            expected_unperturbed=spec.get("expected_unperturbed", 0),
         )
     else:
         records = load_records(abs_root)
@@ -2442,6 +2498,8 @@ def verify_environment_response_entry(
             sgd_genes=host.universe,
             gene_universe_label=host.label,
             min_containment=MIN_RNASEQ_GENE_CONTAINMENT,
+            reference_centered=spec.get("reference_centered", True),
+            expected_unperturbed=spec.get("expected_unperturbed", 0),
         )
     return report
 

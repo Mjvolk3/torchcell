@@ -488,6 +488,7 @@ BACTERIAL_DATASETS = {
     "CrispriCrossRachwalski2024Dataset",
     "CrispriDifferentialProteomeYunus2026Dataset",
     "CrispriGuideFfaEnrichmentFang2025Dataset",
+    "CrispriGeneFitnessWang2018Dataset",
     "CrispriGuideFitnessWang2018Dataset",
     "CrispriKnockdownCui2018Dataset",
     "CrispriKnockdownYunus2026Dataset",
@@ -633,6 +634,7 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
     # + 1 (#964, Guzman 2018's own GEO release)
     # + 1 (#770, Niu 2019's pinene fold changes on ConcentrationUnit.fold_change).
     # + 2 (#909: Goodall 2018's unclear calls and Royet 2025's Table S4, graded).
+    # + 1 (#879, Wang 2018 Supplementary Data 5 gene-level calls).
     assert (
         len(dataset_adapter_map)
         == 110

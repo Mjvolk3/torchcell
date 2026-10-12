@@ -676,7 +676,8 @@ def test_an_unknown_screen_has_no_environment() -> None:
 # --------------------------------------------------------------------------- #
 def test_the_phenotype_is_a_signed_log2_ratio_over_two_biological_replicates() -> None:
     """A negative fitness is the point: this is not a clamped FitnessPhenotype."""
-    phenotype = m.guide_phenotype(SCREEN_A, -4.0)
+    phenotype = m.guide_phenotype(SCREEN_A, -4.0, -8.0)
+    assert phenotype.environment_response_z_score == -8.0
     assert phenotype.measurement_type is MeasurementType.log2_ratio
     assert phenotype.assay_type is AssayType.pooled_competitive_growth_barcode
     assert phenotype.environment_response == -4.0
@@ -930,6 +931,21 @@ def test_the_stored_fitness_is_the_released_number(
     assert by_key[("furfural_tolerance", GUIDES["thrLb0001_10"])] == -8.0
 
 
+def test_the_stored_guide_z_score_is_the_released_column(
+    built: m.CrispriGuideFitnessWang2018Dataset,
+) -> None:
+    """#879: the sheet's Z score (fitness / sigma) is stored verbatim on every record."""
+    by_key = {
+        (
+            r["experiment"]["phenotype"]["screen_id"],
+            r["experiment"]["genotype"]["perturbations"][0]["crispr"]["guide_sequence"],
+        ): r["experiment"]["phenotype"]["environment_response_z_score"]
+        for r in _records(built)
+    }
+    assert by_key[("essentiality", GUIDES["thrLb0001_10"])] == -4.0 / SIGMA_A
+    assert by_key[("furfural_tolerance", GUIDES["thrLb0001_10"])] == -8.0 / SIGMA_B
+
+
 def test_the_build_accounting_balances_and_names_the_drop_rules(
     built: m.CrispriGuideFitnessWang2018Dataset,
 ) -> None:
@@ -1163,10 +1179,10 @@ def test_every_quote_is_still_verbatim_in_the_pinned_ocr(name: str) -> None:
 @pytest.mark.data
 @needs_mirror
 def test_the_mirror_pins_every_consumed_file_to_its_recorded_retrieval() -> None:
-    """Seven files, each with a re-runnable ``pmc_cloud`` retrieval and its sha256."""
+    """Eight files, each with a re-runnable ``pmc_cloud`` retrieval and its sha256."""
     manifest = m.load_manifest(DATA_ROOT)
-    assert {f.path for f in manifest.files} == {r.relpath for r in m.RAW_FILES}
-    for raw in m.RAW_FILES:
+    assert {f.path for f in manifest.files} == {r.relpath for r in m.MIRROR_FILES}
+    for raw in m.MIRROR_FILES:
         assert m.manifest_sha256(manifest, raw.relpath) == raw.sha256
         record = next(f for f in manifest.files if f.path == raw.relpath)
         assert record.retrieval is not None
@@ -1283,3 +1299,184 @@ def test_the_verification_report_passes_l0_to_l4() -> None:
     assert isinstance(report.provenance, Provenance)
     failures = [r.name for r in report.results if not r.passed]
     assert failures == []
+
+
+# --------------------------------------------------------------------------- #
+# The gene level (#879): Supplementary Data 5
+# --------------------------------------------------------------------------- #
+#: ``(gene, n_guides, fitness, FDR, FPR)`` per synthetic screen. ``ybfK`` is a retired
+#: b-number in the real annotation and is stored as released; ``thrW`` releases 0 guides.
+GENE_ROWS_A: list[tuple[str, int, float, float, float]] = [
+    ("thrL", 2, -3.75, 0.001, 0.0001),
+    ("thrA", 1, -2.0, 0.2, 0.1),
+    ("proB", 1, 1.25, 0.5, 0.4),
+    ("yaaP", 1, 0.5, 0.9, 0.8),
+    ("ybfK", 1, -1.0, 0.3, 0.25),
+    ("thrW", 0, 0.0, 1.0, 1.0),
+]
+GENE_ROWS_B: list[tuple[str, int, float, float, float]] = [
+    (gene, n, fitness * 2.0, fdr, fpr) for gene, n, fitness, fdr, fpr in GENE_ROWS_A
+][:5]
+
+
+def write_gene_fitness(
+    path: Path,
+    sheets: Sequence[
+        tuple[m.Screen, list[tuple[str, int, float, float, float]], float]
+    ],
+) -> None:
+    """A synthetic Supplementary Data 5: one sheet per screen, Z = fitness / sigma."""
+    _write_sheets(
+        path,
+        [
+            (
+                screen.sheet,
+                [
+                    m.GENE_FITNESS_COLUMNS,
+                    *(
+                        [gene, n, fitness, fitness / sigma, fdr, fpr]
+                        for gene, n, fitness, fdr, fpr in rows
+                    ),
+                ],
+            )
+            for screen, rows, sigma in sheets
+        ],
+    )
+
+
+@pytest.fixture
+def gene_built(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    presence_only_pins: list[Mapping[str, str]],
+) -> m.CrispriGeneFitnessWang2018Dataset:
+    """The gene-level dataset built over a synthetic Supplementary Data 2, 3 and 5."""
+    root = tmp_path / "data/torchcell/crispri_gene_fitness_wang2018"
+    raw = root / "raw"
+    raw.mkdir(parents=True)
+    write_clusters(raw / m.CLUSTERS_FILE.filename)
+    write_library(raw / m.LIBRARY_FILE.filename)
+    write_gene_fitness(
+        raw / m.GENE_FITNESS_FILE.filename,
+        [(SCREEN_A, GENE_ROWS_A, SIGMA_A), (SCREEN_B, GENE_ROWS_B, SIGMA_B)],
+    )
+    monkeypatch.setattr(m, "SCREENS", SYNTHETIC_SCREENS)
+    monkeypatch.setattr(m, "N_CLUSTERS", N_SYNTHETIC_CLUSTERS)
+    monkeypatch.setattr(m, "N_CLUSTER_MEMBERS", N_SYNTHETIC_MEMBERS)
+    monkeypatch.setattr(m, "N_TARGETING_GUIDES", N_SYNTHETIC_TARGETING)
+    monkeypatch.setattr(m, "N_CONTROL_GUIDES", N_SYNTHETIC_CONTROLS)
+    monkeypatch.setattr(
+        m,
+        "GENE_ROWS_BY_SCREEN",
+        {"essentiality": len(GENE_ROWS_A), "furfural_tolerance": len(GENE_ROWS_B)},
+    )
+    monkeypatch.setattr(m, "EXPECTED_GENE_RECORDS", len(GENE_ROWS_A) + len(GENE_ROWS_B))
+    monkeypatch.setattr(m, "host_reference", lambda *a, **k: REFERENCE)
+    return m.CrispriGeneFitnessWang2018Dataset(root=str(root))
+
+
+def _gene_records(
+    dataset: m.CrispriGeneFitnessWang2018Dataset,
+) -> dict[tuple[str, str], dict[str, Any]]:
+    out: dict[tuple[str, str], dict[str, Any]] = {}
+    for i in range(len(dataset)):
+        experiment = dataset[i]["experiment"]
+        first = experiment["genotype"]["perturbations"][0]
+        out[(experiment["phenotype"]["screen_id"], first["perturbed_gene_name"])] = (
+            experiment
+        )
+    return out
+
+
+def test_every_released_gene_row_is_one_record(
+    gene_built: m.CrispriGeneFitnessWang2018Dataset,
+) -> None:
+    """No drop rule: 6 + 5 released rows are 11 records, the retired b4590 included."""
+    assert len(gene_built) == len(GENE_ROWS_A) + len(GENE_ROWS_B)
+    records = _gene_records(gene_built)
+    assert ("essentiality", "ybfK") in records
+    assert (
+        records[("essentiality", "ybfK")]["genotype"]["perturbations"][0][
+            "systematic_gene_name"
+        ]
+        == "b4590"
+    )
+
+
+def test_the_four_released_columns_land_on_their_carriers(
+    gene_built: m.CrispriGeneFitnessWang2018Dataset,
+) -> None:
+    phenotype = _gene_records(gene_built)[("furfural_tolerance", "thrL")]["phenotype"]
+    assert phenotype["environment_response"] == -7.5
+    assert phenotype["environment_response_z_score"] == -7.5 / SIGMA_B
+    assert phenotype["environment_response_p_value"] == 0.0001
+    assert phenotype["environment_response_p_value_adjusted"] == 0.001
+    assert phenotype["p_value_adjustment_method"] == "storey_tibshirani_q_value"
+    assert phenotype["measurement_type"] == "log2_ratio"
+    assert phenotype["environment_response_se"] is None
+
+
+def test_a_cluster_gene_carries_every_member_and_the_released_subset_size(
+    gene_built: m.CrispriGeneFitnessWang2018Dataset,
+) -> None:
+    """``proB`` names the proBb0005 cluster, so both members are repressed."""
+    genotype = _gene_records(gene_built)[("essentiality", "proB")]["genotype"]
+    members = [
+        (p["systematic_gene_name"], p["perturbed_gene_name"])
+        for p in genotype["perturbations"]
+    ]
+    assert members == [("b0005", "proB"), ("b0006", "proC")]
+    assert {p["crispr"]["n_guides"] for p in genotype["perturbations"]} == {1}
+    assert {p["crispr"]["guide_sequence"] for p in genotype["perturbations"]} == {None}
+
+
+def test_a_row_releasing_zero_guides_is_stored_as_released(
+    gene_built: m.CrispriGeneFitnessWang2018Dataset,
+) -> None:
+    experiment = _gene_records(gene_built)[("essentiality", "thrW")]
+    assert experiment["genotype"]["perturbations"][0]["crispr"]["n_guides"] == 0
+    assert experiment["phenotype"]["environment_response"] == 0.0
+    assert experiment["phenotype"]["environment_response_p_value"] == 1.0
+    accounting = m.GeneBuildAccounting.model_validate_json(
+        Path(gene_built.preprocess_dir, "build_accounting.json").read_text()
+    )
+    assert accounting.zero_guide_rows == 1
+    assert accounting.kept_records == 11
+    assert accounting.source_rows_by_screen == {
+        "essentiality": 6,
+        "furfural_tolerance": 5,
+    }
+
+
+def test_a_symbol_naming_two_guided_clusters_is_refused() -> None:
+    """``insA`` names two clusters; only one carries guides, which is what resolves it."""
+    one = m.GeneCluster(
+        token="insAb0022",
+        gene_class="protein_coding",
+        members=(m._member("insAb0022"),),
+    )
+    two = m.GeneCluster(
+        token="insAb4294",
+        gene_class="protein_coding",
+        members=(m._member("insAb4294"),),
+    )
+    clusters = {"insAb0022": one, "insAb4294": two}
+    assert m.clusters_by_released_symbol(clusters, {"insAb4294_10": "A" * 20}) == {
+        "insA": two
+    }
+    with pytest.raises(ValueError, match="names two guided clusters"):
+        m.clusters_by_released_symbol(
+            clusters, {"insAb4294_10": "A" * 20, "insAb0022_7": "C" * 20}
+        )
+
+
+def test_a_gene_sheet_whose_sigma_is_not_the_screens_is_refused(tmp_path: Path) -> None:
+    path = tmp_path / "sd5.xlsx"
+    write_gene_fitness(path, [(SCREEN_A, GENE_ROWS_A, SIGMA_B)])
+    with pytest.raises(ValueError, match="gene-level sigma"):
+        m.read_gene_screen(path, SCREEN_A)
+
+
+def test_verify_build_dispatches_on_the_store_basename(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="is neither"):
+        m.verify_build(str(tmp_path / "some_other_store"))

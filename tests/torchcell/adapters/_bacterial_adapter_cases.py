@@ -64,6 +64,7 @@ from torchcell.adapters import (
     CrispriChemgenChoe2025Adapter,
     CrispriCrossRachwalski2024Adapter,
     CrispriDifferentialProteomeYunus2026Adapter,
+    CrispriGeneFitnessWang2018Adapter,
     CrispriGuideFfaEnrichmentFang2025Adapter,
     CrispriGuideFitnessWang2018Adapter,
     CrispriKnockdownCui2018Adapter,
@@ -255,7 +256,10 @@ from torchcell.datasets.ecoli.teteneva2024 import RbTnseqTeteneva2024Dataset
 from torchcell.datasets.ecoli.tong2020 import CarbonSourceTong2020Dataset
 from torchcell.datasets.ecoli.wang2015 import EnvChemgenWang2015Dataset
 from torchcell.datasets.ecoli.wang2015_growth import GrowthWang2015Dataset
-from torchcell.datasets.ecoli.wang2018 import CrispriGuideFitnessWang2018Dataset
+from torchcell.datasets.ecoli.wang2018 import (
+    CrispriGeneFitnessWang2018Dataset,
+    CrispriGuideFitnessWang2018Dataset,
+)
 from torchcell.datasets.ecoli.wang2024 import EnvChemgenWang2024Dataset
 from torchcell.datasets.ecoli.wetmore2015 import RbTnseqWetmore2015Dataset
 from torchcell.datasets.pputida.banerjee2024 import IsoprenolTiterBanerjee2024Dataset
@@ -833,6 +837,14 @@ BACTERIAL: list[Bacterial] = [
         "wang2018",
         "crispri_guide_fitness_wang2018",
         CrispriGuideFitnessWang2018Dataset,
+        RESPONSE,
+        crispr=True,
+    ),
+    _case(
+        CrispriGeneFitnessWang2018Adapter,
+        "wang2018_gene",
+        "crispri_gene_fitness_wang2018",
+        CrispriGeneFitnessWang2018Dataset,
         RESPONSE,
         crispr=True,
     ),

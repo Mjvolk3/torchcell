@@ -336,7 +336,8 @@
     {
       "loader": "torchcell/datasets/ecoli/wang2018.py",
       "dataset_classes": [
-        "CrispriGuideFitnessWang2018Dataset"
+        "CrispriGuideFitnessWang2018Dataset",
+        "CrispriGeneFitnessWang2018Dataset"
       ],
       "served_classes": [],
       "impact": "stale",

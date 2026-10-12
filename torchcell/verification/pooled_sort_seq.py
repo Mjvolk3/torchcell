@@ -15,8 +15,11 @@ and the genotype beside each one, which no single record can check:
    well, so this is the identity rule that stands in its place; two records sharing it
    would be one measurement stored twice.
 2. L1 ``count`` -- the record count against the caller's oracle.
-3. L2 ``value_fidelity`` -- every estimate finite, and within the bin scale the caller
-   states (a bin index cannot be negative, nor above the bin count).
+3. L2 ``value_fidelity`` -- every STATED estimate finite, and within the bin scale the
+   caller states (a bin index cannot be negative, nor above the bin count). A record
+   whose release row carries no estimate is skipped here and counted by
+   ``estimate_is_stated_or_gapped`` instead: the release lists the row, so the record
+   exists, and its absence is a typed gap rather than a value to range-check.
 4. L2 ``released_values`` (caller) -- the stored estimates equal the released file's own,
    which is the bit-for-bit check that the loader transformed nothing.
 5. L3 ``units_declared`` -- every record names its ``expression_units``, its
@@ -31,7 +34,11 @@ and the genotype beside each one, which no single record can check:
 7. L3 ``uncertainty_is_typed_or_gapped`` -- a record with no stored uncertainty carries
    the typed ``ProvenanceGap`` that says so, so a missing dispersion is never a silent
    ``None``.
-8. L4 ``read_count_coverage`` (caller) -- how many records carry the release's own read
+8. L3 ``estimate_is_stated_or_gapped`` -- the same rule on the label itself: a record
+   whose ``expression_level`` is absent carries a gap on that field, and the level of
+   a record that states one is never also gapped. The count of each is reported, so a
+   release's own absences are visible rather than silently dropped at load time.
+9. L4 ``read_count_coverage`` (caller) -- how many records carry the release's own read
    count, reported rather than required: a release that carries none is honest, and the
    number belongs in the report.
 
@@ -211,6 +218,57 @@ def _l3_uncertainty_is_typed_or_gapped(records: Iterable[Record]) -> LevelResult
     )
 
 
+def _l3_estimate_is_stated_or_gapped(records: Iterable[Record]) -> LevelResult:
+    """L3: an absent estimate carries its typed gap, and a stated one carries none.
+
+    The release's own absences are records (it lists the row), so this is the rule that
+    keeps them honest: no silent ``None`` label, and no gap beside a value.
+    """
+    problems: list[dict[str, Any]] = []
+    n = 0
+    n_stated = 0
+    n_gapped = 0
+    for record in records:
+        n += 1
+        phenotype = record["experiment"]["phenotype"]
+        gapped = "expression_level" in {
+            str(gap.get("field")) for gap in phenotype.get("provenance_gaps") or []
+        }
+        stated = phenotype.get("expression_level") is not None
+        if stated and not gapped:
+            n_stated += 1
+        elif not stated and gapped:
+            n_gapped += 1
+        elif len(problems) < 20:
+            problems.append(
+                {
+                    "sequence_id": phenotype.get("sequence_id"),
+                    "why": (
+                        "a stated estimate also carries a gap"
+                        if stated
+                        else "an absent estimate carries no gap"
+                    ),
+                }
+            )
+    return LevelResult(
+        level=Level.L3,
+        name="estimate_is_stated_or_gapped",
+        passed=not problems,
+        message=(
+            f"{n_stated} records state an estimate and {n_gapped} carry the release's "
+            "own absence as a typed gap"
+            if not problems
+            else f"{len(problems)} of {n} records are neither stated nor gapped"
+        ),
+        details={
+            "n_records": n,
+            "n_stated": n_stated,
+            "n_gapped": n_gapped,
+            "problems": problems,
+        },
+    )
+
+
 def l4_read_count_coverage(records: Iterable[Record]) -> LevelResult:
     """L4: how many records carry the release's own read count (reported, not required)."""
     n = 0
@@ -237,12 +295,19 @@ def l4_read_count_coverage(records: Iterable[Record]) -> LevelResult:
 
 
 def l2_released_values(
-    records: Iterable[Record], released: dict[str, float], tolerance: float = 0.0
+    records: Iterable[Record], released: dict[str, float | None], tolerance: float = 0.0
 ) -> LevelResult:
-    """L2: every stored estimate equals the released file's own value for that sequence."""
+    """L2: every record's estimate is the release's own, absence included.
+
+    ``released`` maps the release's sequence identifier to its estimate, with ``None``
+    where the release lists the row but states no estimate. A record keyed to a
+    sequence the release does not list at all fails: the store may hold only what the
+    release holds, and nothing outside the release decides membership.
+    """
     missing: list[str] = []
     drifted: list[dict[str, Any]] = []
     n = 0
+    n_absent = 0
     worst = 0.0
     for record in records:
         n += 1
@@ -252,7 +317,24 @@ def l2_released_values(
             if len(missing) < 20:
                 missing.append(sequence_id)
             continue
-        delta = abs(float(phenotype["expression_level"]) - released[sequence_id])
+        stored = phenotype["expression_level"]
+        expected = released[sequence_id]
+        if expected is None or stored is None:
+            if expected is None and stored is None:
+                n_absent += 1
+            elif len(drifted) < 20:
+                drifted.append(
+                    {
+                        "sequence_id": sequence_id,
+                        "why": (
+                            "the release states no estimate and the record does"
+                            if expected is None
+                            else "the release states an estimate and the record does not"
+                        ),
+                    }
+                )
+            continue
+        delta = abs(float(stored) - expected)
         worst = max(worst, delta)
         if delta > tolerance and len(drifted) < 20:
             drifted.append({"sequence_id": sequence_id, "delta": delta})
@@ -262,14 +344,16 @@ def l2_released_values(
         name="released_values",
         passed=passed,
         message=(
-            f"all {n} stored estimates equal the released value (max |delta| {worst})"
+            f"all {n} records match the release (max |delta| {worst}; {n_absent} "
+            "absences agree)"
             if passed
             else f"{len(missing)} sequences are not in the release and "
-            f"{len(drifted)} stored estimates differ from it"
+            f"{len(drifted)} records differ from it"
         ),
         details={
             "n_records": n,
             "max_abs_delta": worst,
+            "n_absent_agree": n_absent,
             "not_in_release": missing,
             "drifted": drifted,
         },
@@ -314,8 +398,10 @@ def verify_pooled_sort_seq_dataset_streaming(
     report.add(
         l2_value_fidelity(
             (
-                float(record["experiment"]["phenotype"]["expression_level"])
+                float(level)
                 for record in records()
+                if (level := record["experiment"]["phenotype"]["expression_level"])
+                is not None
             ),
             allow_nan=False,
             minimum=minimum,
@@ -325,4 +411,5 @@ def verify_pooled_sort_seq_dataset_streaming(
     report.add(_l3_units_declared(records()))
     report.add(_l3_sequence_is_the_genotype(records()))
     report.add(_l3_uncertainty_is_typed_or_gapped(records()))
+    report.add(_l3_estimate_is_stated_or_gapped(records()))
     return report

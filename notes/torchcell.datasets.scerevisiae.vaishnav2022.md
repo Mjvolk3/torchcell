@@ -36,8 +36,10 @@ Counted by the inventory script off the sha256-pinned mirror, never from the abs
 | distinct `seqID` groups | 71,158 | same file |
 | distinct `seq110` sequences | 71,158 | same file |
 | rows whose `origID` is its own `seqID` | 67,690 | same file |
-| groups with no `ExpressionLevel` (refused) | 104 (110 rows) | same file |
-| **records the loader builds** | **71,054** | `read_measurements` on the real files |
+| groups whose `ExpressionLevel` cell is the verbatim `NA` | 104 (110 rows) | same file |
+| **records the loader builds** | **71,158** | `read_measurements` on the real files |
+| of those, carrying an estimate | 71,054 | same |
+| of those, carrying a typed gap on the estimate | 104 | same |
 | expression range | 0.3206 to 17.0 | same file |
 | Zenodo defined-medium test-set rows | 5,327 | Zenodo 4436477 |
 | of those, joining the GEO table by `origID` | 5,327, all to distinct `seqID`s | measured |
@@ -46,9 +48,23 @@ Counted by the inventory script off the sha256-pinned mirror, never from the abs
 
 The file name is the decision: it is `splitByOrigID`, one ROW per design label of a
 measurement whose own identity is `seqID`. Within a group there is exactly one sequence
-and exactly one value, and no group mixes a value with a blank (all three asserted by
-`read_measurements`, not assumed), so one record per `seqID` is the honest count and a
-row-per-record store would have held 4,433 measurements more than once.
+and exactly one `ExpressionLevel` cell, and every row's `origID` is a member of its own
+`seqID` list (all three asserted by `read_measurements`, not assumed), so one record per
+`seqID` drops no row's label and a row-per-record store would have held 4,433
+measurements more than once.
+
+**The release decides membership, and nothing else does.** Owner rule, 2026-10-12: "the
+data is the data ... the genome is separate.. it doesn't gate anything". Every `seqID`
+the file lists is a record, including the 104 whose cell is the verbatim `NA`: those
+carry `expression_level = None` beside a typed `ProvenanceGap` on that field, whose
+`looked_in` names the pinned file and whose note quotes the cell. An earlier revision of
+this loader refused them, which made the store hold 71,054 rather than the released
+71,158 and turned a release absence into a silent drop. The leaf enforces the rule
+(`_require_value_or_gap` on `expression_level`), and the verifier's
+`estimate_is_stated_or_gapped` and `released_values` levels both check it: an absence
+the release states must be an absence in the store, and a sequence the release does not
+list at all is not a record. No lookup against the genome or any other tree takes part
+in that decision: this loader injects no genome and resolves no gene name.
 
 The Zenodo test set is the same measurements, so it is not loaded as records. It supplies
 the two released per-record values the GEO table does not carry: its `expt` token
@@ -64,10 +80,12 @@ The dev store is slurm array job **4269** (`991-build-vaishnav2022`, the committ
 in this note yet, and nothing here claims a verified store.
 
 What IS measured, in-process on the real sha256-pinned files rather than on a built store:
-`read_measurements` returns 71,054 rows, 5,327 of them carrying `library_id` and
-`read_count`, and records built from sampled rows carry the 18-97 span. The verifier's own
+`read_measurements` returns 71,158 rows (71,054 with an estimate, 104 gapped), 5,327 of
+them carrying `library_id` and `read_count`, and records built from sampled rows carry
+the 18-97 span. The verifier's own
 run (L0 structural, L1 count and sequence uniqueness, L2 value fidelity and released-value
-fidelity, L3 units, sequence-is-the-genotype and typed gaps, L4 read-count coverage) lands
+fidelity, L3 units, sequence-is-the-genotype, typed gaps and stated-or-gapped estimate,
+L4 read-count coverage) lands
 in `preprocess/verification_report.json` when the job runs, and this section gets its table
 then.
 

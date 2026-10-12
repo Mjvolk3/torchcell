@@ -14,7 +14,8 @@ shape the real file has:
 - ``A`` and ``B``: one row each, one measurement each.
 - ``C;D``: TWO rows (one per design label) of ONE measurement, the ``splitByOrigID``
   shape, so the store must hold it once.
-- ``E``: one row with a blank ``ExpressionLevel``, refused.
+- ``E``: one row whose ``ExpressionLevel`` cell is the release's own ``NA``, stored
+  as a record whose level is None beside a typed gap.
 
 The Zenodo test set re-releases ``B`` with its ``expt`` token and read count, so exactly
 one stored record carries ``library_id`` and ``read_count`` and the others carry neither.
@@ -51,7 +52,12 @@ def _construct(letter: str) -> str:
     return FLANK5 + letter * v.VARIABLE_REGION_LENGTH + FLANK3
 
 
-SEQUENCES = {"A": _construct("A"), "B": _construct("C"), "C;D": _construct("G")}
+SEQUENCES = {
+    "A": _construct("A"),
+    "B": _construct("C"),
+    "C;D": _construct("G"),
+    "E": _construct("T"),
+}
 EXPRESSION = {"A": 8.5, "B": 12.25, "C;D": 3.75}
 
 MOLEVOL_ROWS = [
@@ -59,7 +65,7 @@ MOLEVOL_ROWS = [
     ("B", "B", SEQUENCES["B"], EXPRESSION["B"]),
     ("C", "C;D", SEQUENCES["C;D"], EXPRESSION["C;D"]),
     ("D", "C;D", SEQUENCES["C;D"], EXPRESSION["C;D"]),
-    ("E", "E", _construct("T"), None),
+    ("E", "E", SEQUENCES["E"], "NA"),
 ]
 ZENODO_ROWS = [("B", "NBT_S288CdU_SCUra", 647, EXPRESSION["B"])]
 
@@ -92,8 +98,8 @@ def data_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     root = tmp_path / "data_root"
     monkeypatch.setenv("DATA_ROOT", str(root))
     monkeypatch.setattr(v, "EXPECTED_ROWS", len(MOLEVOL_ROWS))
-    monkeypatch.setattr(v, "EXPECTED_RECORDS", 3)
-    monkeypatch.setattr(v, "EXPECTED_REFUSED_SEQUENCES", 1)
+    monkeypatch.setattr(v, "EXPECTED_RECORDS", 4)
+    monkeypatch.setattr(v, "EXPECTED_UNMEASURED_SEQUENCES", 1)
     monkeypatch.setattr(v, "MOLEVOL_SHA256", _sha(MOLEVOL))
     monkeypatch.setattr(v, "TESTDATA_SHA256", _sha(ZENODO))
     monkeypatch.setattr(v, "ZENODO_README_SHA256", _sha(README))
@@ -178,20 +184,25 @@ def test_deposit_refuses_a_file_whose_bytes_are_not_the_recorded_ones(
 # --------------------------------------------------------------------------- #
 # Reading the release
 # --------------------------------------------------------------------------- #
-def test_read_measurements_collapses_the_split_rows_and_refuses_the_blank(
+def test_read_measurements_collapses_the_split_rows_and_keeps_the_na_row(
     data_root: Path,
 ) -> None:
-    """One row per measured seqID, the Zenodo columns only where the release has them."""
+    """One row per LISTED seqID: the split pair collapses, the NA row is kept as absent.
+
+    The release decides membership: a group whose cell is ``NA`` is listed, so it stays
+    with no estimate, and the Zenodo columns appear only where the release has them.
+    """
     mirror = v.raw_mirror_dir(str(data_root))
     frame = v.read_measurements(
         mirror / v.MOLEVOL_REL, mirror / v.TESTDATA_REL
     ).set_index("seqID")
-    assert list(frame.index) == ["A", "B", "C;D"]
-    assert [frame.loc[key, "expression_level"] for key in frame.index] == [
+    assert list(frame.index) == ["A", "B", "C;D", "E"]
+    assert [frame.loc[key, "expression_level"] for key in ("A", "B", "C;D")] == [
         EXPRESSION["A"],
         EXPRESSION["B"],
         EXPRESSION["C;D"],
     ]
+    assert pd.isna(frame.loc["E", "expression_level"])
     assert frame.loc["B", "library_id"] == "NBT_S288CdU_SCUra"
     assert frame.loc["B", "read_count"] == 647
     assert frame.loc["A", "library_id"] is None
@@ -201,8 +212,11 @@ def test_read_measurements_collapses_the_split_rows_and_refuses_the_blank(
 def test_read_measurements_refuses_a_seqid_with_two_values(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """A seqID carrying two different numbers is not one measurement split by label."""
-    rows = [("C", "C;D", SEQUENCES["C;D"], 3.75), ("D", "C;D", SEQUENCES["C;D"], 4.0)]
+    """A seqID carrying two different cells is not one measurement split by label."""
+    rows = [
+        ("C", "C;D", SEQUENCES["C;D"], "3.75"),
+        ("D", "C;D", SEQUENCES["C;D"], "4.0"),
+    ]
     molevol = tmp_path / "molevol.txt.gz"
     molevol.write_bytes(
         gzip.compress(
@@ -214,7 +228,7 @@ def test_read_measurements_refuses_a_seqid_with_two_values(
     zenodo = tmp_path / "zenodo.csv"
     zenodo.write_bytes(ZENODO)
     monkeypatch.setattr(v, "EXPECTED_ROWS", len(rows))
-    with pytest.raises(RuntimeError, match="more than one expression value"):
+    with pytest.raises(RuntimeError, match="more than one ExpressionLevel cell"):
         v.read_measurements(molevol, zenodo)
 
 
@@ -231,8 +245,8 @@ def test_read_measurements_refuses_a_zenodo_value_that_is_not_the_geo_one(
     )
     zenodo.write_bytes(frame.to_csv(index=False).encode())
     monkeypatch.setattr(v, "EXPECTED_ROWS", len(MOLEVOL_ROWS))
-    monkeypatch.setattr(v, "EXPECTED_RECORDS", 3)
-    monkeypatch.setattr(v, "EXPECTED_REFUSED_SEQUENCES", 1)
+    monkeypatch.setattr(v, "EXPECTED_RECORDS", 4)
+    monkeypatch.setattr(v, "EXPECTED_UNMEASURED_SEQUENCES", 1)
     with pytest.raises(RuntimeError, match="disagrees with the GEO table"):
         v.read_measurements(molevol, zenodo)
 
@@ -260,25 +274,54 @@ def test_variable_region_span_is_the_eighty_base_insert() -> None:
 # --------------------------------------------------------------------------- #
 # The built store
 # --------------------------------------------------------------------------- #
-def test_the_store_holds_one_record_per_measured_sequence(
+def test_the_store_holds_one_record_per_listed_sequence(
     dataset: v.PooledPromoterExpressionVaishnav2022Dataset,
 ) -> None:
-    """Three records: the blank is refused and the split pair is stored once."""
-    assert len(dataset) == 3
+    """Four records: the split pair is stored once and the NA row is stored as absent."""
+    assert len(dataset) == 4
     records = _records(dataset)
     assert [r["experiment"]["phenotype"]["sequence_id"] for r in records] == [
         "A",
         "B",
         "C;D",
+        "E",
     ]
     assert [r["experiment"]["phenotype"]["expression_level"] for r in records] == [
         EXPRESSION["A"],
         EXPRESSION["B"],
         EXPRESSION["C;D"],
+        None,
     ]
     assert [r["experiment"]["experiment_type"] for r in records] == [
         "pooled_sort_seq_expression"
-    ] * 3
+    ] * 4
+
+
+def test_the_na_row_is_a_record_whose_level_is_a_typed_gap(
+    dataset: v.PooledPromoterExpressionVaishnav2022Dataset,
+) -> None:
+    """The release lists the row, so the record exists and its absence is typed.
+
+    The gap names the field, the reason, the pinned file it was read from and the cell
+    verbatim, so the absence is queryable rather than a row the loader dropped.
+    """
+    absent = next(
+        r
+        for r in _records(dataset)
+        if r["experiment"]["phenotype"]["sequence_id"] == "E"
+    )
+    phenotype = absent["experiment"]["phenotype"]
+    assert phenotype["expression_level"] is None
+    gap = next(
+        g for g in phenotype["provenance_gaps"] if g["field"] == "expression_level"
+    )
+    assert gap["reason"] == "not_reported_by_primary"
+    assert gap["looked_in"]["sha256"] == v.MOLEVOL_SHA256
+    assert v.RELEASED_ABSENT_CELL in gap["note"]
+    assert (
+        absent["experiment"]["genotype"]["perturbations"][0]["promoter_sequence"]
+        == SEQUENCES["E"]
+    )
 
 
 def test_every_record_carries_its_sequence_on_the_genotype(
@@ -314,7 +357,7 @@ def test_only_the_zenodo_rows_carry_a_library_and_a_read_count(
     }
     assert by_sequence["B"]["library_id"] == "NBT_S288CdU_SCUra"
     assert by_sequence["B"]["read_count"] == 647
-    for key in ("A", "C;D"):
+    for key in ("A", "C;D", "E"):
         assert by_sequence[key]["library_id"] is None
         assert by_sequence[key]["read_count"] is None
 
@@ -331,12 +374,16 @@ def test_the_uncertainty_is_a_typed_gap_on_every_record(
         assert phenotype["n_samples"] is None
         assert phenotype["sample_unit"] is None
         gaps = {gap["field"]: gap["reason"] for gap in phenotype["provenance_gaps"]}
-        assert set(gaps) == {
+        expected = {
             "expression_level_uncertainty",
             "expression_level_uncertainty_type",
             "n_samples",
             "sample_unit",
         }
+        # The NA row carries one gap more, on the label itself.
+        if phenotype["expression_level"] is None:
+            expected = expected | {"expression_level"}
+        assert set(gaps) == expected
         assert set(gaps.values()) == {"not_reported_by_primary"}
 
 
@@ -392,11 +439,9 @@ def _report(data_root: Path, dataset: Any) -> Any:
         expected_count=len(dataset),
         maximum=spec["maximum"],
     )
-    report.add(
-        psq.l2_released_values(
-            iter(records), {key: value for key, value in EXPRESSION.items()}
-        )
-    )
+    released: dict[str, float | None] = dict(EXPRESSION)
+    released["E"] = None
+    report.add(psq.l2_released_values(iter(records), released))
     report.add(psq.l4_read_count_coverage(iter(records)))
     return report
 
@@ -415,9 +460,12 @@ def test_the_verifier_passes_every_level_on_the_built_store(
         "units_declared",
         "sequence_is_the_genotype",
         "uncertainty_is_typed_or_gapped",
+        "estimate_is_stated_or_gapped",
         "released_values",
         "read_count_coverage",
     ]
+    stated = next(r for r in report.results if r.name == "estimate_is_stated_or_gapped")
+    assert (stated.details["n_stated"], stated.details["n_gapped"]) == (3, 1)
     assert report.passed
     coverage = next(r for r in report.results if r.name == "read_count_coverage")
     assert coverage.details["n_with_read_count"] == 1
@@ -533,11 +581,11 @@ def test_the_cli_builds_and_then_verifies_the_store(
     monkeypatch.setattr(v, "DATASET_ROOT_REL", "store")
     monkeypatch.setattr("dotenv.load_dotenv", lambda *a, **k: None)
     assert v.main(["build"]) == 0
-    assert "len = 3" in capsys.readouterr().out
+    assert "len = 4" in capsys.readouterr().out
 
     name = "pooled_promoter_expression_vaishnav2022"
     spec = dict(runners.POOLED_SORT_SEQ_DATASETS[name])
-    spec["expected_count"] = 3
+    spec["expected_count"] = 4
     monkeypatch.setitem(runners.POOLED_SORT_SEQ_DATASETS, name, spec)
     assert v.main(["verify"]) == 0
     assert (data_root / "store" / "preprocess" / "verification_report.json").is_file()

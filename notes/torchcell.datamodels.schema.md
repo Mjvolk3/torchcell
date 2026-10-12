@@ -559,6 +559,13 @@ per-record values a pooled assay carries instead; the uncertainty quartet is the
 source that labels its dispersion, and Vaishnav 2022 does not (gapped, with the
 measurement in [[torchcell.datasets.scerevisiae.vaishnav2022]]).
 
+`expression_level` is value-or-gap (`str | None` with `_require_value_or_gap`), which is
+the owner rule that the release decides what is stored: a release row whose estimate cell
+is empty or `NA` is still a record, with `None` beside a typed `ProvenanceGap` on that
+field, never a refused row and never a filled value. A sequence the release lists no row
+for is not a record at all. The first consumer's 104 such rows were refused in an earlier
+revision, which silently shrank its store from the released 71,158 to 71,054.
+
 **`BiosensorFluorescencePhenotype` + its pair.** Zhang 2020's GFP reports intracellular
 tryptophan, not the varied promoters. `PromoterActivityPhenotype` would name the wrong
 measured entity, `MeasurementType.biosensor_readout` lives on

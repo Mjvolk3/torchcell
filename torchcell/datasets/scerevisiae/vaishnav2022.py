@@ -2,7 +2,7 @@
 # [[torchcell.datasets.scerevisiae.vaishnav2022]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/vaishnav2022
 # Test file: tests/torchcell/datasets/scerevisiae/test_vaishnav2022.py
-"""Vaishnav 2022 pooled sort-seq expression of 71,054 promoter sequences (#991).
+"""Vaishnav 2022 pooled sort-seq expression of 71,158 promoter sequences (#991).
 
 One record is ONE library sequence's measured expression in SC-Ura: an 80 bp variable
 insert inside a 110 bp promoter scaffold driving a YFP reporter on a low-copy CEN
@@ -24,8 +24,11 @@ GSE163045, sha256 ``9193507a...``), four columns: ``origID``, ``seqID``, ``seq11
   identity is ``seqID`` (the semicolon-joined set of the labels that asked for it;
   67,690 rows have ``origID == seqID``). One record per ``seqID``, therefore, and not
   one per row: a row-per-record store would hold 4,433 measurements more than once.
-- 104 ``seqID`` groups (110 rows) carry a blank ``ExpressionLevel`` and are REFUSED:
-  a designed sequence with no measurement is not a record. 71,054 remain.
+- 104 ``seqID`` groups (110 rows) carry the verbatim cell ``NA`` in
+  ``ExpressionLevel``. The release LISTS them, so they are stored: their
+  ``expression_level`` is ``None`` beside a typed ``ProvenanceGap`` naming the
+  cell. Every listed ``seqID`` is a record, so the store holds 71,158, of which
+  71,054 carry an estimate. Nothing outside the release decides what is stored.
 
 ``Random_testdata_defined_media.csv`` (Zenodo 4436477, sha256 ``cf31f667...``) re-releases
 5,327 of those same measurements with three further columns. MEASURED: every row joins to
@@ -34,7 +37,7 @@ GEO ``ExpressionLevel`` to 7.1e-15 (float round-trip, not a second measurement).
 therefore not loaded as records of its own -- that would store 5,327 measurements twice --
 but as the source of two released per-record values the GEO table does not carry:
 ``library_id`` (its ``expt`` token, ``NBT_S288CdU_SCUra`` on every row) and ``read_count``
-(``proTotal``). Both are ``None`` on the other 65,727 records, which is what the release
+(``proTotal``). Both are ``None`` on the other 65,831 records, which is what the release
 states about them.
 
 NOT loaded, with the reason, each named in the dataset note as a later admission:
@@ -99,6 +102,7 @@ import logging
 import os
 import os.path as osp
 import pickle
+import re
 import shutil
 from collections.abc import Callable
 from datetime import UTC, datetime
@@ -188,9 +192,9 @@ REPORTER_SOURCE_ORGANISM = "synthetic construct"
 CONSTRUCT_NAME = "pTpA-YFP dual-reporter CEN plasmid (Addgene 127546)"
 LOCALIZATION = "episomal_cen_plasmid"
 STRAIN = "S288C::ura3"
-EXPECTED_RECORDS = 71054
+EXPECTED_RECORDS = 71158
 EXPECTED_ROWS = 75487
-EXPECTED_REFUSED_SEQUENCES = 104
+EXPECTED_UNMEASURED_SEQUENCES = 104
 
 EXPRESSION_UNITS = (
     "read-weighted mean index of the 18 uniform log(YFP:RFP) sort bins the sequence was "
@@ -481,16 +485,41 @@ def variable_region_span(sequence: str) -> tuple[int, int]:
     return start, end
 
 
+#: The verbatim cell the release writes where a listed sequence has no estimate.
+RELEASED_ABSENT_CELL = "NA"
+_NUMBER = re.compile(r"[-+]?(\d+\.?\d*|\.\d+)([eE][-+]?\d+)?")
+
+
+def _released_level(cell: str) -> float | None:
+    """A release cell as a number, or None for the release's own absence marker.
+
+    Read with no NA inference, so the cell is classified here and only here: the one
+    marker the release uses (``NA``) is an absence the record carries as a typed gap,
+    and any other non-numeric cell is a shape this loader has not seen and refuses.
+    """
+    if cell == RELEASED_ABSENT_CELL:
+        return None
+    if not _NUMBER.fullmatch(cell):
+        raise RuntimeError(
+            f"ExpressionLevel cell {cell!r} is neither a number nor "
+            f"{RELEASED_ABSENT_CELL!r}"
+        )
+    return float(cell)
+
+
 def read_measurements(
     molevol_path: str | Path, testdata_path: str | Path
 ) -> pd.DataFrame:
-    """One row per released ``seqID`` that carries a measurement, with its Zenodo columns.
+    """One row per released ``seqID``, as the release lists it, with its Zenodo columns.
 
-    Enforces, rather than assumes, what the release's shape is: one sequence and one
-    value per ``seqID``, no group mixing a value with a blank, and every Zenodo row
-    joining to a distinct ``seqID`` with the same value.
+    Every ``seqID`` the release lists is kept. A group whose rows carry ``NA`` keeps
+    ``expression_level = None``; the record carries a typed gap for it. Enforced, not
+    assumed: one sequence and one cell value per ``seqID`` (so no group mixes a number
+    with ``NA``), every row's ``origID`` is a member of its ``seqID`` list (so one record
+    per ``seqID`` drops no row's label), and every Zenodo row joins a distinct measured
+    ``seqID`` with the same value.
     """
-    table = pd.read_csv(molevol_path, sep="\t")
+    table = pd.read_csv(molevol_path, sep="\t", keep_default_na=False, dtype=str)
     if list(table.columns) != ["origID", "seqID", "seq110", "ExpressionLevel"]:
         raise RuntimeError(
             f"unexpected columns in the GEO table: {list(table.columns)}"
@@ -499,33 +528,36 @@ def read_measurements(
         raise RuntimeError(
             f"{len(table)} rows in the GEO table, expected {EXPECTED_ROWS}"
         )
+    member = [
+        orig in seq_id.split(";")
+        for orig, seq_id in zip(table.origID, table.seqID, strict=True)
+    ]
+    if not all(member):
+        raise RuntimeError("a row's origID is not in its own seqID list")
     groups = table.groupby("seqID")
     if groups.seq110.nunique().max() != 1:
         raise RuntimeError("a seqID carries more than one sequence")
-    if groups.ExpressionLevel.nunique().max() > 1:
-        raise RuntimeError("a seqID carries more than one expression value")
-    mixed = groups.ExpressionLevel.apply(
-        lambda values: bool(values.isna().any() and values.notna().any())
-    )
-    if bool(mixed.any()):
-        raise RuntimeError("a seqID mixes a measured value with a blank")
-
-    measured = table.dropna(subset=["ExpressionLevel"])
-    refused = table.seqID.nunique() - measured.seqID.nunique()
-    if refused != EXPECTED_REFUSED_SEQUENCES:
-        raise RuntimeError(
-            f"{refused} seqID groups carry no measurement, expected "
-            f"{EXPECTED_REFUSED_SEQUENCES}"
-        )
+    if groups.ExpressionLevel.nunique().max() != 1:
+        raise RuntimeError("a seqID carries more than one ExpressionLevel cell")
     records = (
-        measured.groupby("seqID", sort=True)
-        .agg(seq110=("seq110", "first"), expression_level=("ExpressionLevel", "first"))
+        table.groupby("seqID", sort=True)
+        .agg(seq110=("seq110", "first"), cell=("ExpressionLevel", "first"))
         .reset_index()
     )
+    records["expression_level"] = [_released_level(c) for c in records.cell]
+    # pandas stores a None in a float column as NaN, so the absence is counted
+    # and read back through isna(), never through an identity test.
+    unmeasured = int(records.expression_level.isna().sum())
+    if unmeasured != EXPECTED_UNMEASURED_SEQUENCES:
+        raise RuntimeError(
+            f"{unmeasured} seqID groups carry {RELEASED_ABSENT_CELL!r}, expected "
+            f"{EXPECTED_UNMEASURED_SEQUENCES}"
+        )
     if len(records) != EXPECTED_RECORDS:
         raise RuntimeError(f"{len(records)} records, expected {EXPECTED_RECORDS}")
 
     zenodo = pd.read_csv(testdata_path)
+    measured = table[table.ExpressionLevel != RELEASED_ABSENT_CELL]
     joined = zenodo[["origID", "expt", "proTotal", "meanEL"]].merge(
         measured[["origID", "seqID", "ExpressionLevel"]], on="origID", how="left"
     )
@@ -533,7 +565,7 @@ def read_measurements(
         raise RuntimeError("a Zenodo test-set row names an origID the GEO table lacks")
     if joined.seqID.duplicated().any():
         raise RuntimeError("two Zenodo test-set rows map to one seqID")
-    drift = (joined.meanEL - joined.ExpressionLevel).abs().max()
+    drift = (joined.meanEL - joined.ExpressionLevel.astype(float)).abs().max()
     if drift > 1e-12:
         raise RuntimeError(
             f"the Zenodo test set disagrees with the GEO table by {drift} (not a "
@@ -577,13 +609,35 @@ def genotype(sequence_id: str, sequence: str) -> Genotype:
     )
 
 
+def absent_estimate_gap() -> ProvenanceGap:
+    """The typed gap of a release row whose ExpressionLevel cell is ``NA``."""
+    return ProvenanceGap(
+        field="expression_level",
+        reason=ProvenanceGapReason.not_reported_by_primary,
+        looked_in=Provenance(
+            source_uri=f"$DATA_ROOT/torchcell-raw/{CITATION_KEY}/{MOLEVOL_REL}",
+            citation_key=CITATION_KEY,
+            sha256=MOLEVOL_SHA256,
+            page="column ExpressionLevel",
+        ),
+        note=(
+            f"the release lists this sequence as a row and writes "
+            f"{RELEASED_ABSENT_CELL!r} in its ExpressionLevel cell: designed and listed, "
+            "no estimate released"
+        ),
+    )
+
+
 def phenotype(
-    expression_level: float,
+    expression_level: float | None,
     sequence_id: str,
     library_id: str | None,
     read_count: int | None,
 ) -> PooledSortSeqExpressionPhenotype:
-    """One sequence's released estimate, with the two Zenodo columns when it has them."""
+    """One sequence's released estimate, or the release's own absence as a typed gap."""
+    gaps = phenotype_gaps()
+    if expression_level is None:
+        gaps.append(absent_estimate_gap())
     return PooledSortSeqExpressionPhenotype(
         expression_level=expression_level,
         sequence_id=sequence_id,
@@ -592,13 +646,13 @@ def phenotype(
         readout=ReporterReadout.sort_seq_fluorescence,
         reporter_gene=REPORTER_GENE,
         expression_units=EXPRESSION_UNITS,
-        provenance_gaps=phenotype_gaps(),
+        provenance_gaps=gaps,
     )
 
 
 @register_dataset
 class PooledPromoterExpressionVaishnav2022Dataset(ExperimentDataset):
-    """Vaishnav 2022 GPRA sort-seq expression of 71,054 promoter sequences in SC-Ura."""
+    """Vaishnav 2022 GPRA sort-seq expression of 71,158 promoter sequences in SC-Ura."""
 
     organism = Organism.scerevisiae
 
@@ -689,12 +743,12 @@ class PooledPromoterExpressionVaishnav2022Dataset(ExperimentDataset):
                     else int(cast(float, row.read_count))
                 )
                 library_id = None if row.library_id is None else str(row.library_id)
-                measured = phenotype(
-                    float(cast(float, row.expression_level)),
-                    sequence_id,
-                    library_id,
-                    read_count,
+                level = (
+                    None
+                    if pd.isna(row.expression_level)
+                    else float(cast(float, row.expression_level))
                 )
+                measured = phenotype(level, sequence_id, library_id, read_count)
                 experiment = PooledSortSeqExpressionExperiment(
                     dataset_name=self.name,
                     genotype=genotype(sequence_id, str(row.seq110)),

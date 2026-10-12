@@ -85,15 +85,14 @@ DEFERRED_FILES: dict[str, dict[str, Any]] = {
 
 def molevol_inventory(path: Path) -> dict[str, Any]:
     """The GEO table's shape, counted off its bytes."""
-    table = pd.read_csv(path, sep="\t")
+    table = pd.read_csv(path, sep="\t", keep_default_na=False, dtype=str)
+    numeric = pd.to_numeric(table.ExpressionLevel, errors="coerce")
     groups = table.groupby("seqID")
     sizes = groups.size()
-    measured = table.dropna(subset=["ExpressionLevel"])
+    measured = table[numeric.notna()]
     flank5 = table.seq110.str[: len(v.SCAFFOLD_5PRIME)].value_counts()
     flank3 = table.seq110.str[-len(v.SCAFFOLD_3PRIME) :].value_counts()
-    prefixes = (
-        table.origID.str.split(".").str[0].value_counts().head(10).to_dict()
-    )
+    prefixes = table.origID.str.split(".").str[0].value_counts().head(10).to_dict()
     return {
         "columns": list(table.columns),
         "n_rows": int(len(table)),
@@ -102,14 +101,25 @@ def molevol_inventory(path: Path) -> dict[str, Any]:
         "n_rows_whose_origid_is_its_seqid": int((table.origID == table.seqID).sum()),
         "rows_per_group": {int(k): int(n) for k, n in sizes.value_counts().items()},
         "max_sequences_per_group": int(groups.seq110.nunique().max()),
-        "max_values_per_group": int(groups.ExpressionLevel.nunique().max()),
-        "n_rows_without_a_value": int(table.ExpressionLevel.isna().sum()),
+        "max_cells_per_group": int(groups.ExpressionLevel.nunique().max()),
+        "n_rows_without_a_value": int(numeric.isna().sum()),
+        "verbatim_cells_without_a_value": {
+            str(k): int(n)
+            for k, n in table.ExpressionLevel[numeric.isna()].value_counts().items()
+        },
         "n_groups_without_a_value": int(
             table.seqID.nunique() - measured.seqID.nunique()
         ),
-        "n_records": int(measured.seqID.nunique()),
-        "expression_level_min": float(table.ExpressionLevel.min()),
-        "expression_level_max": float(table.ExpressionLevel.max()),
+        "n_records": int(table.seqID.nunique()),
+        "n_records_with_an_estimate": int(measured.seqID.nunique()),
+        "every_origid_is_in_its_seqid_list": bool(
+            all(
+                orig in seq_id.split(";")
+                for orig, seq_id in zip(table.origID, table.seqID, strict=True)
+            )
+        ),
+        "expression_level_min": float(numeric.min()),
+        "expression_level_max": float(numeric.max()),
         "sequence_lengths": {
             int(k): int(n) for k, n in table.seq110.str.len().value_counts().items()
         },
@@ -123,6 +133,7 @@ def zenodo_inventory(testdata: Path, molevol: Path) -> dict[str, Any]:
     """The Zenodo test set's join to the GEO table, and what its three SD columns are."""
     frame = pd.read_csv(testdata)
     table = pd.read_csv(molevol, sep="\t")
+    table = table[table.ExpressionLevel.notna()]
     joined = frame[["origID", "expt", "proTotal", "meanEL", "sdEL"]].merge(
         table[["origID", "seqID", "ExpressionLevel"]], on="origID", how="left"
     )
@@ -193,7 +204,9 @@ def cenpk_inventory(directory: Path) -> dict[str, Any]:
 def main(argv: list[str] | None = None) -> int:
     """Measure the release and print the inventory; ``--write`` saves the JSON."""
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    parser.add_argument("--cenpk", help="directory holding the retrieved CEN.PK objects")
+    parser.add_argument(
+        "--cenpk", help="directory holding the retrieved CEN.PK objects"
+    )
     parser.add_argument("--write", action="store_true")
     args = parser.parse_args(argv)
     load_dotenv()

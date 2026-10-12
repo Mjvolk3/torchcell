@@ -187,3 +187,66 @@ def test_read_count_coverage_reports_rather_than_requires() -> None:
 def test_the_pooled_readout_set_is_the_sort_seq_member_alone() -> None:
     """The member the schema added for this family, pinned against a per-well one."""
     assert psq.POOLED_READOUTS == frozenset({"sort_seq_fluorescence"})
+
+
+def test_estimate_is_stated_or_gapped_counts_the_releases_own_absence() -> None:
+    """A release row with no estimate is a record with a typed gap on the label."""
+    gapped = _record(
+        expression_level=None,
+        provenance_gaps=[
+            {"field": "expression_level", "reason": "not_reported_by_primary"}
+        ],
+    )
+    result = psq._l3_estimate_is_stated_or_gapped([_record(), gapped])
+    assert result.passed
+    assert (result.details["n_stated"], result.details["n_gapped"]) == (1, 1)
+
+
+def test_estimate_is_stated_or_gapped_refuses_a_silent_absence_and_a_gapped_value() -> (
+    None
+):
+    """Neither a missing level with no gap nor a stated level with one is honest."""
+    silent = psq._l3_estimate_is_stated_or_gapped(
+        [_record(expression_level=None, provenance_gaps=[])]
+    )
+    assert not silent.passed
+    assert silent.details["problems"] == [
+        {"sequence_id": "A", "why": "an absent estimate carries no gap"}
+    ]
+    both = psq._l3_estimate_is_stated_or_gapped(
+        [
+            _record(
+                provenance_gaps=[
+                    {"field": "expression_level", "reason": "not_reported_by_primary"}
+                ]
+            )
+        ]
+    )
+    assert not both.passed
+    assert both.details["problems"] == [
+        {"sequence_id": "A", "why": "a stated estimate also carries a gap"}
+    ]
+
+
+def test_released_values_agrees_on_an_absence_and_refuses_a_disagreement() -> None:
+    """The release decides: an absence it states must be an absence in the store."""
+    absent = _record(expression_level=None)
+    agree = psq.l2_released_values([absent], {"A": None})
+    assert agree.passed
+    assert agree.details["n_absent_agree"] == 1
+    stored_anyway = psq.l2_released_values([_record()], {"A": None})
+    assert not stored_anyway.passed
+    assert stored_anyway.details["drifted"] == [
+        {
+            "sequence_id": "A",
+            "why": "the release states no estimate and the record does",
+        }
+    ]
+    dropped = psq.l2_released_values([absent], {"A": 8.5})
+    assert not dropped.passed
+    assert dropped.details["drifted"] == [
+        {
+            "sequence_id": "A",
+            "why": "the release states an estimate and the record does not",
+        }
+    ]

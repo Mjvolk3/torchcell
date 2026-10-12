@@ -20,13 +20,18 @@ has no well. The rule that stands in its place is one record per `sequence_id`.
 | L1 | `count` | the record count against the registry's oracle |
 | L1 | `sequence_uniqueness` | one record per `sequence_id`, the pooled identity rule |
 | L2 | `value_fidelity` | finite, inside the bin scale the registry states |
-| L2 | `released_values` | every stored estimate equals the released file's own value |
+| L2 | `released_values` | every record matches the release, an absence it states included |
 | L3 | `units_declared` | units, reporter and a POOLED readout member on every record |
 | L3 | `sequence_is_the_genotype` | the genotype carries this record's sequence, unambiguous ACGT, span inside it |
 | L3 | `uncertainty_is_typed_or_gapped` | an absent dispersion carries the typed gap that says so |
+| L3 | `estimate_is_stated_or_gapped` | an absent LABEL carries its gap, a stated one carries none |
 | L4 | `read_count_coverage` | how many records carry the release's read count (reported, not required) |
 
-Two of those are the ones a reviewer should look at first. `sequence_is_the_genotype` is
+Two of those are the ones a reviewer should look at first. `released_values` and `estimate_is_stated_or_gapped` are the pair that keeps the release
+the only thing deciding what is stored: a row the release lists with no estimate is a
+record whose label is `None` beside a typed gap, a sequence the release does not list is
+not a record, and neither a silent `None` nor a gap beside a value passes.
+`sequence_is_the_genotype` is
 what makes the family a sequence-level genotype store rather than numbers keyed by a
 label: it re-checks, per record, that the single promoter-bearing perturbation's
 `promoter_variant_id` is the phenotype's `sequence_id`. `units_declared` refuses a

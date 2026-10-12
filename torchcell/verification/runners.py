@@ -3258,8 +3258,9 @@ POOLED_SORT_SEQ_DATASETS: dict[str, dict[str, Any]] = {
     "pooled_promoter_expression_vaishnav2022": {
         "root": "data/torchcell/pooled_promoter_expression_vaishnav2022",
         "raw_mirror": "torchcell-raw/vaishnavEvolutionEvolvabilityEngineering2022",
-        # 71,158 released seqID groups minus the 104 that carry no ExpressionLevel.
-        "expected_count": 71054,
+        # Every seqID group the release lists; the 104 whose ExpressionLevel cell
+        # is "NA" are records with a typed gap on the label, not refusals.
+        "expected_count": 71158,
         # The 18 uniform sort bins the estimate is a read-weighted mean index of; the
         # released values run 0.32 to 17.0, so the scale is the bound, not the data.
         "maximum": 18.0,
@@ -3320,8 +3321,14 @@ def verify_pooled_sort_seq_dataset(
         osp.join(root, "raw", vaishnav.MOLEVOL_NAME),
         osp.join(root, "raw", vaishnav.TESTDATA_NAME),
     )
-    released = {
-        str(row.seqID): float(cast(float, row.expression_level))
+    import pandas as pd
+
+    released: dict[str, float | None] = {
+        str(row.seqID): (
+            None
+            if pd.isna(row.expression_level)
+            else float(cast(float, row.expression_level))
+        )
         for row in measurements.itertuples(index=False)
     }
     report.add(l2_released_values(stream_records(root), released))

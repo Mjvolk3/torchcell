@@ -9234,6 +9234,12 @@ class PooledSortSeqExpressionPhenotype(Phenotype, ModelStrict):
     determined it is (de Boer 2020 restricts its high-quality analysis to sequences with
     at least 100 reads).
 
+    A release ROW whose estimate cell is empty or ``NA`` is still a record: the
+    sequence was designed, cloned and listed, and what the release says about it is
+    that it has no estimate. ``expression_level`` is then ``None`` beside a
+    ``ProvenanceGap`` on that field quoting the cell, never a refused row and never a
+    filled value. A sequence the release lists no row for is not a record at all.
+
     The uncertainty ontology mirrors the sibling: ``expression_level_se`` is the DERIVED,
     ML-facing SE, auto-filled from a source-reported uncertainty and its type via
     ``derive_se``. A source that releases a dispersion of unstated kind leaves both None
@@ -9244,8 +9250,10 @@ class PooledSortSeqExpressionPhenotype(Phenotype, ModelStrict):
     label_name: str = "expression_level"
     label_statistic_name: str | None = "expression_level_se"
 
-    expression_level: float = Field(
-        description="the expression estimate as released, in expression_units"
+    expression_level: float | None = Field(
+        description="the expression estimate as released, in expression_units; None "
+        "only beside a ProvenanceGap, for a release row whose estimate cell is empty "
+        "or 'NA'"
     )
     expression_level_se: float | None = Field(
         default=None,
@@ -9295,9 +9303,9 @@ class PooledSortSeqExpressionPhenotype(Phenotype, ModelStrict):
     )
 
     @field_validator("expression_level")
-    def validate_expression_level(cls, v: float) -> float:
+    def validate_expression_level(cls, v: float | None) -> float | None:
         """Reject a non-finite estimate (NaN or infinity is not a measurement)."""
-        if not math.isfinite(v):
+        if v is not None and not math.isfinite(v):
             raise ValueError(f"expression_level must be finite, got {v}")
         return v
 
@@ -9334,7 +9342,8 @@ class PooledSortSeqExpressionPhenotype(Phenotype, ModelStrict):
 
     @model_validator(mode="after")
     def _check(self) -> "PooledSortSeqExpressionPhenotype":
-        """Enforce the uncertainty invariant and non-empty identifiers."""
+        """Enforce the uncertainty invariant, non-empty identifiers, value-or-gap."""
+        _require_value_or_gap(self, ("expression_level",))
         if not self.sequence_id.strip():
             raise ValueError("sequence_id cannot be empty")
         if self.library_id is not None and not self.library_id.strip():

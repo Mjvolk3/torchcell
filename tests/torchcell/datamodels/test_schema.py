@@ -3933,3 +3933,38 @@ def test_the_two_readout_families_are_siblings_not_promoter_activity() -> None:
     assert s.EXPERIMENT_TYPE_MAP["biosensor_fluorescence"] is (
         s.BiosensorFluorescenceExperiment
     )
+
+
+def test_the_pooled_leaf_takes_a_value_or_a_gap_on_its_label_never_a_silent_none() -> (
+    None
+):
+    """A release row with no estimate is a record; the absence is typed, not dropped.
+
+    The owner rule the leaf follows: what the release lists is what the store holds, so
+    an unmeasured row is kept with ``expression_level=None`` beside a ``ProvenanceGap``
+    on that field. A silent ``None`` is refused, as is a gap beside a stated value.
+    """
+
+    def phenotype(
+        level: float | None, gaps: list[ProvenanceGap] | None = None
+    ) -> s.PooledSortSeqExpressionPhenotype:
+        return s.PooledSortSeqExpressionPhenotype(
+            expression_level=level,
+            sequence_id="GA.EDV.SCUra.high_248",
+            readout=s.ReporterReadout.sort_seq_fluorescence,
+            reporter_gene="YFP",
+            expression_units="sort-bin index",
+            provenance_gaps=gaps or [],
+        )
+
+    gap = ProvenanceGap(
+        field="expression_level",
+        reason=ProvenanceGapReason.not_reported_by_primary,
+        note="the release writes 'NA' in this row's ExpressionLevel cell",
+    )
+    absent = phenotype(None, [gap])
+    assert absent.expression_level is None
+    assert absent.gapped_fields() == {"expression_level"}
+    with pytest.raises(ValidationError, match="carries no ProvenanceGap"):
+        phenotype(None)
+    assert phenotype(8.5).expression_level == 8.5

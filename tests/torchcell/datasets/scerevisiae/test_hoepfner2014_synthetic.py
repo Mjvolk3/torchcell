@@ -3,57 +3,51 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/datasets/scerevisiae/test_hoepfner2014_synthetic.py
 """Hoepfner 2014 HIP-HOP loader built end to end on synthetic score matrices.
 
-``process()`` reads three things besides ``raw/``: the S288C gene universe from the
-genomes tier (``$DATA_ROOT/torchcell-genomes/sgd_S288C_R64-4-1_20230830``, two FASTAs
-sha256-pinned by a ``GenomeManifest``), the committed Table S5 strain CSV of experiment
-036 (sha256-pinned, read from the worktree), and the injected genome's
-``resolve_gene_name``. ``DATA_ROOT`` is pointed into ``tmp_path`` with a five-gene tier
-(YAL001C, YAL034C-B, YBR271W, YLR074C, YCL074W in the ORF FASTA; YNCA0001W in the RNA
-FASTA) and the resolver is a dict-backed stub returning real ``GeneNameResolution``s.
-``Table_S1.xls`` is written with openpyxl under the release's ``.xls`` name; pandas
-sniffs the zip signature, so ``_load_compound_meta`` runs unchanged.
+``process()`` reads two things besides ``raw/``: the committed Table S5 strain CSV of
+experiment 036 (sha256-pinned, read from the worktree) and ``DATA_ROOT`` (pointed into
+``tmp_path``). No genome is read (2026.10.12, the data is the data): every row is stored
+under its released spelling. ``Table_S1.xls`` is written with openpyxl under the
+release's ``.xls`` name; pandas sniffs the zip signature, so ``_load_compound_meta`` runs
+unchanged.
 
 Table S1: CMB 3 Amitriptyline (SMILES released, curated: InChIKey
 KRMDCWKBEZIMAB-UHFFFAOYSA-N, PubChem 2160, ChEBI:2666), CMB 409 Boromycin (released
-SMILES RDKit cannot parse, no curated identifier: the one DROPPED compound), CMB 777
-(structure only, no name: resolves from its SMILES as ``CMB777``), CMB 888 Unreleased
-(name only, no SMILES: the encodable-only filter, never a drop), plus a ``244, 1818``
+SMILES RDKit cannot parse, no curated identifier: STORED with the inchikey gap and its
+SMILES), CMB 777 (structure only, no name: resolves from its SMILES as ``CMB777``), CMB
+888 Unreleased (name only, no SMILES: STORED with the inchikey gap), plus a ``244, 1818``
 multi-id structure row, an empty-id row, a nameless CMB 1234 row and a NaN-SMILES row
 that exercise the cell parser.
 
-HIP header columns (index: header): 1 ``Ad. 3_50_HIP_0077`` (kept, n = 2), 2 its z-score
-companion (skipped), 3 ``MADL 3_50_HIP_0091`` (kept, n = 1), 4 ``Ad. 409_1.2_HIP_0077``
-(dropped compound), 5 ``Ad. 777_10_HIP_0077`` (kept, n = 2), 6 ``Ad. 888_10_HIP_0077``
-(filtered), 7 ``Ad. 3_50_HOP_0077`` (other assay, skipped). HOP header: 1
-``Ad. 3_50_HOP_0077`` (kept), 2 ``Ad. 409_1.2_HOP_0077`` (dropped compound).
+HIP header columns (index: header): 1 ``Ad. 3_50_HIP_0077`` (n = 2), 2 its z-score
+companion (skipped), 3 ``MADL 3_50_HIP_0091`` (n = 1), 4 ``Ad. 409_1.2_HIP_0077``, 5
+``Ad. 777_10_HIP_0077``, 6 ``Ad. 888_10_HIP_0077``, 7 ``Ad. 3_50_HOP_0077`` (other assay,
+skipped). HOP header: 1 ``Ad. 3_50_HOP_0077``, 2 ``Ad. 409_1.2_HOP_0077``. Every
+sensitivity column is stored.
 
 HIP rows (cells at columns 1..7) and what they become:
 
-    YAL001C    0.1 0.11 -1.5 0.9 2.25 0.3 9.9   CURRENT: records 0, 1, 2
-    YAL035C-A  0.2 0.21 ""   ""  0.4  0.3 9.9   RENAMED -> YAL034C-B: records 3, 4
-    YCL074W    0.5 0.5  0.5  0.5 ""   0.5 9.9   NON_GENE_FEATURE pseudogene: dropped, 2 cells
-    YBR271W   -3.0 -3.1 -2.0 -1.0 -0.5 0.3 9.9  CURRENT, Table S5 positional: records 5, 6, 7
-    YHR999W    0.7 (all seven)                  CURRENT but not in the FASTA: dropped, 3 cells
-    YLR074C    0.6 "" 0.6 "" 0.6 (line ends)    CURRENT, scored in 3 of 5 HIP columns,
-                                                Table S5 CL1+ MUT: records 8, 9, 10
-    YAL034C-B  0.8 (line ends)                  CURRENT, scored in 1 of 5 HIP columns:
-                                                dropped by the DETECTION rule, 1 cell
+    YAL001C    0.1 0.11 -1.5 0.9 2.25 0.3 9.9   records 0-4
+    YAL035C-A  0.2 0.21 ""   ""  0.4  0.3 9.9   R64 alias of YAL034C-B, stored as
+                                                released: records 5-7
+    YCL074W    0.5 0.5  0.5  0.5 ""   0.5 9.9   pseudogene, stored: records 8-11
+    YBR271W   -3.0 -3.1 -2.0 -1.0 -0.5 0.3 9.9  Table S5 positional: records 12-16
+    YHR999W    0.7 (all seven)                  no such R64 gene, stored: records 17-21
+    YLR074C    0.6 "" 0.6 "" 0.6 (line ends)    Table S5 CL1+ MUT: records 22-24
+    YAL034C-B  0.8 (line ends)                  scored in 1 of 5 columns: record 25
+    R0010W     0.9 (line ends)                  not ORF-shaped: held out, 1 cell
 
-HOP rows: YAL001C 1.0 0.7 (record 11), YBR271W -0.25 "" (record 12; scored in exactly
-1 of 2 HOP columns, the rule's 50% boundary, kept), YAL034C-B 0.33 with no second cell
-(record 13; the short line exercises the column-bound guard), and YAL001C again 0.99 ""
-(record 14; a repeated ORF row is stored, see the Finding test).
+HOP rows: YAL001C 1.0 0.7 (records 26, 27), YBR271W -0.25 "" (record 28), YAL034C-B 0.33
+with no second cell (record 29; the short line exercises the column-bound guard), and
+YAL001C again 0.99 "" (record 30; a repeated ORF row is stored, see the Finding test).
 
-Ledger arithmetic: kept HIP 11 + HOP 4 = 15; dropped-compound cells are the non-empty
-column-4 cells of KEPT HIP rows (YAL001C 0.9, YBR271W -1.0 = 2) plus the column-2 cell
-of kept HOP rows (YAL001C 0.7 = 1), so 3 over 2 columns; the pseudogene row loses its
-two non-empty kept-column cells and the FASTA-absent row its three. The unencodable
-CMB 888 column holds 3 cells of kept HIP rows. References are one per (assay, study):
-HIP_0077 members [0, 2, 3, 4, 5, 7, 8, 10], HIP_0091 [1, 6, 9], HOP_0077 [11, 12, 13,
-14]. Table S5 flags: YBR271W 3 HIP records, YLR074C 3. Every kept HIP row is in Table
-S5 once (YAL035C-A as ``YAL035C-a``), so each HIP record carries lab, batch, plate and
-well. The records are ``StrainEnvironmentResponseExperiment``s on the BY4743
-``StrainReferenceGenome`` (#506).
+Ledger arithmetic: stored HIP 26 + HOP 5 = 31; HIP scored cells 27 = 26 stored + 1 held
+out (R0010W); HOP 5 = 5 stored. Boromycin's identity gap covers HIP 4 records (YAL001C,
+YCL074W, YBR271W, YHR999W) and HOP 1; CMB 888's covers HIP 5. References are one per
+(assay, study): HIP_0091 members [1, 9, 13, 18, 23], HIP_0077 the other HIP records,
+HOP_0077 [26-30]. Table S5 flags: YBR271W 5 HIP records, YLR074C 3. Table S5 lists five
+of the seven stored HIP rows once (YAL035C-A as ``YAL035C-a``); YHR999W and YAL034C-B
+are not listed and carry the construction gap. The records are
+``StrainEnvironmentResponseExperiment``s on the BY4743 ``StrainReferenceGenome`` (#506).
 """
 
 from __future__ import annotations
@@ -76,7 +70,6 @@ from torchcell.datamodels.schema import (
     Compound,
     Concentration,
     ConcentrationUnit,
-    ConstructedOrf,
     CultureEnvironment,
     CultureFormat,
     DoseBasis,
@@ -97,12 +90,6 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.scerevisiae import hoepfner2014 as m
-from torchcell.literature.manifest import ArtifactRecord
-from torchcell.sequence.genome.registry import GenomeManifest
-from torchcell.sequence.genome.scerevisiae.s288c import (
-    GeneNameResolution,
-    GeneNameStatus,
-)
 from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
 
 _CITATION_KEY = "hoepfnerHighresolutionChemicalDissection2014"
@@ -113,30 +100,6 @@ _BOROMYCIN = (
     "CC(C)C(N)C(=O)OC(C)C1C/C=C\\CCC(O)C(C)(C)C7CCC(C)C4(OB25OC(C(=O)O1)C3(O2)"
     "OC(CCC3C)C(C)(C)C(O)CCCC6CC(OC(=O)C4O5)C(C)O6)O7"
 )
-
-_RESOLUTIONS: dict[str, tuple[GeneNameStatus, str, str | None]] = {
-    "YAL001C": (GeneNameStatus.CURRENT, "YAL001C", None),
-    "YAL034C-B": (GeneNameStatus.CURRENT, "YAL034C-B", None),
-    "YAL035C-A": (GeneNameStatus.RENAMED, "YAL034C-B", None),
-    "YBR271W": (GeneNameStatus.CURRENT, "YBR271W", None),
-    "YCL074W": (GeneNameStatus.NON_GENE_FEATURE, "YCL074W", "pseudogene"),
-    "YHR999W": (GeneNameStatus.CURRENT, "YHR999W", None),
-    "YLR074C": (GeneNameStatus.CURRENT, "YLR074C", None),
-}
-
-
-class _StubGenome:
-    """Only ``resolve_gene_name`` is read from the injected genome."""
-
-    def resolve_gene_name(self, name: str) -> GeneNameResolution:
-        status, systematic, feature = _RESOLUTIONS[name]
-        return GeneNameResolution(
-            input_name=name,
-            status=status,
-            systematic_name=systematic,
-            feature_type=feature,
-        )
-
 
 _HIP_HEADER = [
     "Systematic Name",
@@ -156,6 +119,7 @@ _HIP_ROWS: list[list[str]] = [
     ["YHR999W"] + ["0.7"] * 7,
     ["YLR074C", "0.6", "", "0.6", "", "0.6"],
     ["YAL034C-B", "0.8"],
+    ["R0010W", "0.9"],
 ]
 _HOP_HEADER = [
     "Systematic Name",
@@ -207,57 +171,15 @@ def _write_raw(raw: Path) -> None:
     _write_table_s1(raw / "Table_S1.xls")
 
 
-_ORF_FASTA = (
-    ">YAL001C TFC3 SGDID:S000000001\nATGGTA\n"
-    ">YAL034C-B MTW1 SGDID:S000028596\nATGACC\n"
-    ">YBR271W EFM2 SGDID:S000000475\nATGCAT\n"
-    ">YLR074C BUD20 SGDID:S000004064\nATGAAG\n"
-    ">YCL074W YCL074W SGDID:S000000579\nATGTTT\n"
-)
-_RNA_FASTA = ">YNCA0001W tA(UGC)A SGDID:S000006534\nGGGCGT\n"
-
-
-def _write_genomes_tier(data_root: Path) -> None:
-    """The SGD assembly set: two FASTAs pinned by a ``GenomeManifest``."""
-    tier = data_root / "torchcell-genomes" / "sgd_S288C_R64-4-1_20230830"
-    tier.mkdir(parents=True)
-    records = []
-    for name, text in (
-        ("orf_coding_all_R64-4-1_20230830.fasta", _ORF_FASTA),
-        ("rna_coding_R64-4-1_20230830.fasta", _RNA_FASTA),
-    ):
-        (tier / name).write_text(text)
-        records.append(
-            ArtifactRecord(
-                path=name,
-                role="sequence",
-                bytes=len(text.encode()),
-                sha256=hashlib.sha256(text.encode()).hexdigest(),
-            )
-        )
-    manifest = GenomeManifest(
-        assembly_set="sgd_S288C_R64-4-1_20230830",
-        organism="Saccharomyces cerevisiae",
-        strain_or_population="S288C",
-        source="SGD",
-        release="R64-4-1_20230830",
-        files=records,
-        provenance_complete=True,
-        created_at="2026-09-27T00:00:00+00:00",
-    )
-    (tier / "manifest.json").write_text(manifest.model_dump_json(indent=2))
-
-
 @pytest.fixture
 def dataset(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> m.EnvChemgenHoepfner2014Dataset:
     data_root = tmp_path / "data_root"
     monkeypatch.setenv("DATA_ROOT", str(data_root))
-    _write_genomes_tier(data_root)
     root = tmp_path / "env_chemgen_hoepfner2014"
     _write_raw(root / "raw")
-    return m.EnvChemgenHoepfner2014Dataset(root=str(root), genome=_StubGenome())
+    return m.EnvChemgenHoepfner2014Dataset(root=str(root))
 
 
 _AMITRIPTYLINE_COMPOUND = Compound(
@@ -269,6 +191,15 @@ _AMITRIPTYLINE_COMPOUND = Compound(
 )
 _CMB777_COMPOUND = Compound(
     name="CMB777", inchikey="KRMDCWKBEZIMAB-UHFFFAOYSA-N", smiles=_AMITRIPTYLINE
+)
+_BOROMYCIN_COMPOUND = Compound(
+    name="Boromycin",
+    smiles=_BOROMYCIN,
+    provenance_gaps=[
+        ProvenanceGap(
+            field="inchikey", reason=ProvenanceGapReason.deferred_pending_source_review
+        )
+    ],
 )
 _DMSO = Compound(
     name="dimethyl sulfoxide",
@@ -407,39 +338,24 @@ def _phenotype(
     )
 
 
-def _hip_genotype(
-    orf: str, perturbed: str, construction: StrainConstruction
-) -> Genotype:
-    constructed = None
-    if orf != perturbed:
-        note = (
-            f"R64-4-1 lists {perturbed} as an alias of {orf}; whether it was merged, "
-            "reannotated or renamed, and its deleted interval, need the SGD locus history"
-        )
-        constructed = ConstructedOrf(
-            source_systematic_name=perturbed,
-            relation=None,
-            deleted_span=None,
-            provenance_gaps=[
-                ProvenanceGap(
-                    field=field,
-                    reason=ProvenanceGapReason.deferred_pending_source_review,
-                    resolve_with=m.SGD_LOCUS_HISTORY,
-                    note=note,
-                )
-                for field in ("relation", "deleted_span")
-            ],
-        )
+def _hip_genotype(orf: str, construction: StrainConstruction | None) -> Genotype:
+    """The released ORF as systematic and perturbed name; a strain Table S5 does not
+    list carries the construction gap.
+    """
+    gaps = (
+        [m._BARCODE_GAP]
+        if construction is not None
+        else [m._BARCODE_GAP, m._CONSTRUCTION_GAP]
+    )
     return Genotype(
         perturbations=[
             HeterozygousDeletionPerturbation(
                 systematic_gene_name=orf,
-                perturbed_gene_name=perturbed,
+                perturbed_gene_name=orf,
                 cassette="kanMX4",
                 collection="YSC1055",
                 construction=construction,
-                constructed_orf=constructed,
-                provenance_gaps=[m._BARCODE_GAP],
+                provenance_gaps=gaps,
             )
         ]
     )
@@ -508,32 +424,48 @@ def _summary(
     return out
 
 
-def test_fifteen_records_stream_hip_then_hop_in_row_then_column_order(
+def test_thirty_one_records_stream_hip_then_hop_in_row_then_column_order(
     dataset: m.EnvChemgenHoepfner2014Dataset,
 ) -> None:
-    """Kept HIP columns are header indices 1, 3, 5, so each kept HIP row yields three
-    records (fewer where a cell is empty or the line ends), then the HOP rows follow
-    with their one kept column; the ``MADL`` column stores n = 1, the ``Ad.`` columns
-    n = 2. The sparse HIP row YAL034C-B (1 of 5 columns) is gone.
+    """Stored HIP columns are header indices 1, 3, 4, 5, 6, so each HIP row yields up to
+    five records (fewer where a cell is empty or the line ends), then the HOP rows follow
+    with their two columns; the ``MADL`` column stores n = 1, the ``Ad.`` columns n = 2.
+    Every row is stored under its released spelling: the renamed ORF YAL035C-A, the
+    pseudogene YCL074W, the gene R64 does not list (YHR999W) and the sparse row
+    YAL034C-B (1 of 5 columns). Only R0010W, not ORF-shaped, is held out.
     """
-    assert len(dataset) == 15
+    assert len(dataset) == 31
     hip, hop = "heterozygous_deletion", "barcoded_kanmx_deletion"
+    ami, boro, c777, c888 = "amitriptyline", "Boromycin", "CMB777", "Unreleased"
+
+    full = [
+        (ami, 50.0, 2, "0077"),
+        (ami, 50.0, 1, "0091"),
+        (boro, 1.2, 2, "0077"),
+        (c777, 10.0, 2, "0077"),
+        (c888, 10.0, 2, "0077"),
+    ]
+
+    def scored(orf: str, scores: list[float | None]) -> list[Any]:
+        return [
+            (hip, orf, orf, name, dose, score, n, study)
+            for (name, dose, n, study), score in zip(full, scores, strict=True)
+            if score is not None
+        ]
+
     assert _summary(dataset) == [
-        (hip, "YAL001C", "YAL001C", "amitriptyline", 50.0, 0.1, 2, "0077"),
-        (hip, "YAL001C", "YAL001C", "amitriptyline", 50.0, -1.5, 1, "0091"),
-        (hip, "YAL001C", "YAL001C", "CMB777", 10.0, 2.25, 2, "0077"),
-        (hip, "YAL034C-B", "YAL035C-A", "amitriptyline", 50.0, 0.2, 2, "0077"),
-        (hip, "YAL034C-B", "YAL035C-A", "CMB777", 10.0, 0.4, 2, "0077"),
-        (hip, "YBR271W", "YBR271W", "amitriptyline", 50.0, -3.0, 2, "0077"),
-        (hip, "YBR271W", "YBR271W", "amitriptyline", 50.0, -2.0, 1, "0091"),
-        (hip, "YBR271W", "YBR271W", "CMB777", 10.0, -0.5, 2, "0077"),
-        (hip, "YLR074C", "YLR074C", "amitriptyline", 50.0, 0.6, 2, "0077"),
-        (hip, "YLR074C", "YLR074C", "amitriptyline", 50.0, 0.6, 1, "0091"),
-        (hip, "YLR074C", "YLR074C", "CMB777", 10.0, 0.6, 2, "0077"),
-        (hop, "YAL001C", "YAL001C", "amitriptyline", 50.0, 1.0, 2, "0077"),
-        (hop, "YBR271W", "YBR271W", "amitriptyline", 50.0, -0.25, 2, "0077"),
-        (hop, "YAL034C-B", "YAL034C-B", "amitriptyline", 50.0, 0.33, 2, "0077"),
-        (hop, "YAL001C", "YAL001C", "amitriptyline", 50.0, 0.99, 2, "0077"),
+        *scored("YAL001C", [0.1, -1.5, 0.9, 2.25, 0.3]),
+        *scored("YAL035C-A", [0.2, None, None, 0.4, 0.3]),
+        *scored("YCL074W", [0.5, 0.5, 0.5, None, 0.5]),
+        *scored("YBR271W", [-3.0, -2.0, -1.0, -0.5, 0.3]),
+        *scored("YHR999W", [0.7, 0.7, 0.7, 0.7, 0.7]),
+        *scored("YLR074C", [0.6, 0.6, None, 0.6, None]),
+        *scored("YAL034C-B", [0.8, None, None, None, None]),
+        (hop, "YAL001C", "YAL001C", ami, 50.0, 1.0, 2, "0077"),
+        (hop, "YAL001C", "YAL001C", boro, 1.2, 0.7, 2, "0077"),
+        (hop, "YBR271W", "YBR271W", ami, 50.0, -0.25, 2, "0077"),
+        (hop, "YAL034C-B", "YAL034C-B", ami, 50.0, 0.33, 2, "0077"),
+        (hop, "YAL001C", "YAL001C", ami, 50.0, 0.99, 2, "0077"),
     ]
 
 
@@ -552,7 +484,6 @@ def test_hip_record_is_a_heterozygous_kanmx4_deletion_in_ypd_with_a_dmso_vehicle
             dataset_name=_DATASET,
             genotype=_hip_genotype(
                 "YAL001C",
-                "YAL001C",
                 StrainConstruction(
                     lab="Lab 4", batch="chr1_1", plate="201", well="E12"
                 ),
@@ -569,20 +500,19 @@ def test_hip_record_is_a_heterozygous_kanmx4_deletion_in_ypd_with_a_dmso_vehicle
     )
 
 
-def test_renamed_row_keeps_the_source_orf_and_a_structure_only_compound_is_cmb_named(
+def test_renamed_row_is_stored_as_released_and_a_structure_only_compound_is_cmb_named(
     dataset: m.EnvChemgenHoepfner2014Dataset,
 ) -> None:
-    """Record 4: YAL035C-A is stored under YAL034C-B with the source ORF as
-    ``perturbed_gene_name`` and as ``constructed_orf`` (relation and span gapped), and
-    its construction from Table S5's ``YAL035C-a`` entry; CMB 777 has no released name,
-    so its compound is named ``CMB777`` with the InChIKey derived from its SMILES.
+    """Record 6: YAL035C-A is stored under YAL035C-A (no rename onto YAL034C-B, no
+    ConstructedOrf), with its construction from Table S5's ``YAL035C-a`` entry; CMB 777
+    has no released name, so its compound is named ``CMB777`` with the InChIKey derived
+    from its SMILES.
     """
     assert (
-        dataset[4]["experiment"]
+        dataset[6]["experiment"]
         == StrainEnvironmentResponseExperiment(
             dataset_name=_DATASET,
             genotype=_hip_genotype(
-                "YAL034C-B",
                 "YAL035C-A",
                 StrainConstruction(
                     lab="Lab 4", batch="chr1_1", plate="262", well="E10"
@@ -594,15 +524,33 @@ def test_renamed_row_keeps_the_source_orf_and_a_structure_only_compound_is_cmb_n
     )
 
 
+def test_boromycin_and_a_gene_r64_does_not_list_are_stored(
+    dataset: m.EnvChemgenHoepfner2014Dataset,
+) -> None:
+    """Record 19: YHR999W (no R64 gene, absent from Table S5, so the construction gap)
+    under Boromycin, whose released SMILES RDKit cannot parse: the compound is stored
+    under its released name with that SMILES verbatim and the typed inchikey gap.
+    """
+    assert (
+        dataset[19]["experiment"]
+        == StrainEnvironmentResponseExperiment(
+            dataset_name=_DATASET,
+            genotype=_hip_genotype("YHR999W", None),
+            environment=_environment("HIP", _treated(_BOROMYCIN_COMPOUND, 1.2)),
+            phenotype=_phenotype(0.7, 2, "0077"),
+        ).model_dump()
+    )
+
+
 def test_hop_record_is_a_barcoded_kanmx4_deletion_over_a_16_hour_exposure(
     dataset: m.EnvChemgenHoepfner2014Dataset,
 ) -> None:
-    """Record 11: the HOP arm stores ``BarcodedKanMxDeletionPerturbation`` from YSC1056
+    """Record 26: the HOP arm stores ``BarcodedKanMxDeletionPerturbation`` from YSC1056
     and an environment with both durations (16 h, 5 generations); its reference is the
     HOP control of study 0077.
     """
     assert (
-        dataset[11]["experiment"]
+        dataset[26]["experiment"]
         == StrainEnvironmentResponseExperiment(
             dataset_name=_DATASET,
             genotype=_hop_genotype("YAL001C"),
@@ -610,7 +558,7 @@ def test_hop_record_is_a_barcoded_kanmx4_deletion_over_a_16_hour_exposure(
             phenotype=_phenotype(1.0, 2, "0077"),
         ).model_dump()
     )
-    assert dataset[11]["reference"] == _reference("HOP", "0077")
+    assert dataset[26]["reference"] == _reference("HOP", "0077")
 
 
 def test_reference_index_has_one_entry_per_assay_and_study(
@@ -621,10 +569,11 @@ def test_reference_index_has_one_entry_per_assay_and_study(
             Path(dataset.root) / "preprocess" / "experiment_reference_index.json"
         ).read_text()
     )
+    hip_0091 = [1, 9, 13, 18, 23]
     assert [entry["member_indices"] for entry in index] == [
-        [0, 2, 3, 4, 5, 7, 8, 10],
-        [1, 6, 9],
-        [11, 12, 13, 14],
+        [i for i in range(26) if i not in hip_0091],
+        hip_0091,
+        [26, 27, 28, 29, 30],
     ]
     assert [entry["reference"] for entry in index] == [
         _reference("HIP", "0077"),
@@ -633,101 +582,53 @@ def test_reference_index_has_one_entry_per_assay_and_study(
     ]
 
 
-def test_drop_ledger_measures_every_rule(
+def test_ledger_accounts_for_every_scored_cell(
     dataset: m.EnvChemgenHoepfner2014Dataset,
 ) -> None:
-    """``<root>/dropped_records.json``: Boromycin's two columns cost 3 cells (HIP 2,
-    HOP 1) with the RDKit parse failure as the unresolved reason; the pseudogene row
-    loses 2 kept-column cells and the FASTA-absent CURRENT row 3; the one RENAMED row is
-    listed per assay; the detection rule drops the sparse HIP row YAL034C-B (1 of 5
-    columns, 1 cell) and keeps HOP YBR271W at exactly half; CMB 888 is the one
-    unencodable id (3 cells of kept HIP rows); amitriptyline's 50 uM equals its Table S1
-    IC30 (in range); every kept HIP row has one Table S5 entry.
+    """``<root>/dropped_records.json``: HIP 27 scored cells = 26 stored + 1 held out
+    (R0010W, not ORF-shaped); HOP 5 = 5 stored. Boromycin (released SMILES, RDKit parse
+    failure as the unresolved reason) and CMB 888 (no SMILES) are listed in
+    ``compound_identity_gaps`` with their stored columns and records per arm; the
+    CMB4019 exclusion has no column here; amitriptyline's 50 uM, Boromycin's 1.2 uM and
+    CMB 888's 10 uM equal their Table S1 IC30 (in range).
     """
     report = json.loads((Path(dataset.root) / "dropped_records.json").read_text())
     report.pop("created_at")
+    gaps = report.pop("compound_identity_gaps")
     assert report == {
         "dataset": _DATASET,
-        "rule": (
-            "drop every record whose compound carries no structure identifier after "
-            "resolution: no curated compound_identity_table row with an InChIKey / ChEBI "
-            "id / PubChem CID, and no RDKit-parseable released Table S1 SMILES to derive "
-            "an InChIKey from"
+        "not_orf_shaped_rule": (
+            "systematic_name_is_not_orf_shaped_needs_released_name_leaf"
         ),
-        "orf_rule": (
-            "a row is kept only when its 'Systematic Name' resolves through the shared "
-            "SCerevisiaeGenome.resolve_gene_name to CURRENT (stored as is) or RENAMED "
-            "(stored under the current systematic name, the source ORF kept as "
-            "perturbed_gene_name so a merged-ORF strain stays distinct); a "
-            "NON_GENE_FEATURE (pseudogene, blocked reading frame, transposable-element "
-            "gene) or a RETIRED name drops the row and every one of its cells"
-        ),
-        "detection_rule": m.DETECTION_RULE,
+        "not_orf_shaped_policy": m.NOT_ORF_SHAPED_POLICY,
         "exclusion_rule": m.EXCLUSION_RULE,
-        "n_kept": 15,
-        "n_dropped": 3,
-        "kept_by_assay": {"HIP": 11, "HOP": 4},
-        "dropped_by_assay": {"HIP": 2, "HOP": 1},
-        "dropped_compounds": [
-            {
-                "cmb_id": "409",
-                "source_name": "Boromycin",
-                "smiles": _BOROMYCIN,
-                "resolution_status": "UNRESOLVED_PUBLIC",
-                "unresolved_reason": (
-                    "the released Table S1 SMILES does not parse in RDKit 2026.03.6 "
-                    "(boron chemistry), so no InChIKey can be derived from the primary "
-                    "structure; PubChem carries a Boromycin record (CID 76962270) but "
-                    "adopting it would substitute a different structure for the one the "
-                    "screen released"
-                ),
-                "n_columns": 2,
-                "n_records": 3,
-            }
-        ],
-        "dropped_orfs": {
-            "HIP": [
-                {
-                    "source_name": "YCL074W",
-                    "status": "non_gene_feature",
-                    "resolved_to": "YCL074W",
-                    "feature_type": "pseudogene",
-                    "n_records": 2,
-                },
-                {
-                    "source_name": "YHR999W",
-                    "status": "current",
-                    "resolved_to": "YHR999W",
-                    "feature_type": None,
-                    "n_records": 3,
-                },
-            ],
-            "HOP": [],
-        },
-        "renamed_orfs": {"HIP": {"YAL035C-A": "YAL034C-B"}, "HOP": {}},
-        "detection": {
+        "n_kept": 31,
+        "n_dropped": 1,
+        "kept_by_assay": {"HIP": 26, "HOP": 5},
+        "dropped_by_assay": {"HIP": 1, "HOP": 0},
+        "accounting": {
             "HIP": {
-                "n_columns": 5,
+                "n_sensitivity_columns": 5,
+                "n_rows": 8,
                 "n_rows_without_any_score": 0,
-                "n_rows_kept": 4,
-                "n_records_dropped": 1,
-                "dropped": [
-                    {
-                        "source_name": "YAL034C-B",
-                        "systematic_name": "YAL034C-B",
-                        "n_scored_columns": 1,
-                        "n_columns": 5,
-                        "n_records": 1,
-                    }
-                ],
+                "n_source_cells": 27,
+                "n_stored": 26,
+                "n_not_orf_shaped": 1,
+                "n_excluded_condition": 0,
             },
             "HOP": {
-                "n_columns": 2,
+                "n_sensitivity_columns": 2,
+                "n_rows": 4,
                 "n_rows_without_any_score": 0,
-                "n_rows_kept": 4,
-                "n_records_dropped": 0,
-                "dropped": [],
+                "n_source_cells": 5,
+                "n_stored": 5,
+                "n_not_orf_shaped": 0,
+                "n_excluded_condition": 0,
             },
+        },
+        "not_orf_shaped": {
+            "HIP": [{"source_name": "R0010W", "n_records": 1}],
+            "HOP": [],
         },
         "excluded_conditions": [
             {
@@ -737,28 +638,43 @@ def test_drop_ledger_measures_every_rule(
                 "n_records_by_assay": {"HIP": 0, "HOP": 0},
             }
         ],
-        "encodable_filter": {
-            "rule": m.ENCODABLE_RULE,
-            "n_cmb_ids": 1,
-            "n_cmb_ids_by_assay": {"HIP": 1, "HOP": 0},
-            "n_columns_by_assay": {"HIP": 1, "HOP": 0},
-            "n_records_by_assay": {"HIP": 3, "HOP": 0},
-            "n_deposited_cmb_ids": 4,
-        },
+        "n_cmb_ids_stored": 4,
+        "n_compounds_stored": 4,
+        "columns_by_assay": {"HIP": 5, "HOP": 2},
         "positive_control": {"HIP": 0, "HOP": 0},
         "solvent_gap_columns": {"HIP": 0, "HOP": 0},
         "ph_gap_columns": {"HIP": 0, "HOP": 0},
         "dose_outside_ic30_range": [],
-        "n_kept_columns_with_ic30": {"HIP": 2, "HOP": 1},
-        "hip_construction": {"one_entry": 4},
+        "n_kept_columns_with_ic30": {"HIP": 4, "HOP": 2},
+        "hip_construction": {"one_entry": 5, "not_listed": 2},
     }
+    assert [
+        (
+            g["cmb_id"],
+            g["source_name"],
+            g["smiles"],
+            g["n_columns_by_assay"],
+            g["n_records_by_assay"],
+        )
+        for g in gaps
+    ] == [
+        ("409", "Boromycin", _BOROMYCIN, {"HIP": 1, "HOP": 1}, {"HIP": 4, "HOP": 1}),
+        ("888", "Unreleased", None, {"HIP": 1, "HOP": 0}, {"HIP": 5, "HOP": 0}),
+    ]
+    assert gaps[0]["resolution_status"] == "UNRESOLVED_PUBLIC"
+    assert gaps[0]["unresolved_reason"] == (
+        "the released Table S1 SMILES does not parse in RDKit 2026.03.6 (boron "
+        "chemistry), so no InChIKey can be derived from the primary structure; PubChem "
+        "carries a Boromycin record (CID 76962270) but adopting it would substitute a "
+        "different structure for the one the screen released"
+    )
 
 
 def test_table_s5_flag_file_counts_kept_hip_records_per_listed_strain(
     dataset: m.EnvChemgenHoepfner2014Dataset,
 ) -> None:
     """Two flagged Table S5 strains appear in the HIP matrix: YBR271W (CL1, positional,
-    MUT) and YLR074C (CL1+, not positional, MUT), 3 kept records each; the HOP rows of
+    MUT, 5 stored records) and YLR074C (CL1+, not positional, MUT, 3); the HOP rows of
     YBR271W are not flagged. The file pins the regenerated 036 CSV and Table S5 by
     sha256 and carries the paper's cluster paragraph verbatim.
     """
@@ -783,8 +699,8 @@ def test_table_s5_flag_file_counts_kept_hip_records_per_listed_strain(
         "policy": m.TABLE_S5_POLICY,
         "n_strains": 2,
         "n_positional_strains": 1,
-        "n_records_flagged": 6,
-        "n_positional_records_flagged": 3,
+        "n_records_flagged": 8,
+        "n_positional_records_flagged": 5,
         "strains": [
             {
                 "systematic_gene_name": "YBR271W",
@@ -795,7 +711,7 @@ def test_table_s5_flag_file_counts_kept_hip_records_per_listed_strain(
                 "construction_lab": "Lab 14",
                 "construction_batch": "chr00_1",
                 "n_table_s5_entries": 1,
-                "n_records": 3,
+                "n_records": 5,
             },
             {
                 "systematic_gene_name": "YLR074C",
@@ -817,7 +733,7 @@ def test_sourced_values_file_and_gene_set(
 ) -> None:
     """``preprocess/sourced_values.json`` holds the sourced constants in key order;
     ``temperature_c`` is checked literally and the whole file equals the JSON dump of
-    ``SOURCED_VALUES``. The gene set is the four current ORFs the kept rows resolve to.
+    ``SOURCED_VALUES``. The gene set is every released ORF a stored record carries.
     """
     preprocess = Path(dataset.root) / "preprocess"
     payload = json.loads((preprocess / "sourced_values.json").read_text())
@@ -846,7 +762,10 @@ def test_sourced_values_file_and_gene_set(
     assert json.loads((preprocess / "gene_set.json").read_text()) == [
         "YAL001C",
         "YAL034C-B",
+        "YAL035C-A",
         "YBR271W",
+        "YCL074W",
+        "YHR999W",
         "YLR074C",
     ]
     manifest = json.loads((preprocess / "build_manifest.json").read_text())
@@ -892,19 +811,6 @@ def test_compound_meta_reads_names_and_structures_across_the_three_sheets(
     }
 
 
-def test_sgd_gene_universe_is_the_fasta_headers_first_token(tmp_path: Path) -> None:
-    data_root = tmp_path / "data_root"
-    _write_genomes_tier(data_root)
-    assert m._load_sgd_genes(str(data_root)) == {
-        "YAL001C",
-        "YAL034C-B",
-        "YBR271W",
-        "YLR074C",
-        "YCL074W",
-        "YNCA0001W",
-    }
-
-
 def _digests(raw: Path) -> dict[str, dict[str, str]]:
     return {
         name: {**spec, "sha256": hashlib.sha256((raw / name).read_bytes()).hexdigest()}
@@ -919,18 +825,17 @@ def test_download_links_the_mirror_only_when_its_bytes_match_the_pinned_sha256(
     is not the pinned Dryad digest raises ``RawSha256MismatchError`` with both digests
     and links nothing; with the pins repointed at the fixture's digests each absent raw
     file is symlinked, a raw file already present (``Table_S1.xls``, a plain copy) is
-    left as it is, and the build runs to its fifteen records under the real build-time
+    left as it is, and the build runs to its 31 records under the real build-time
     check.
     """
     monkeypatch.setattr(m, "verify_raw_files", verify_raw_files)
     data_root = tmp_path / "data_root"
     monkeypatch.setenv("DATA_ROOT", str(data_root))
-    _write_genomes_tier(data_root)
     mirror = data_root / "torchcell-raw" / _CITATION_KEY
     _write_raw(mirror)
     digest = hashlib.sha256((mirror / "HIP_scores.txt").read_bytes()).hexdigest()
     with pytest.raises(RawSha256MismatchError) as err:
-        m.EnvChemgenHoepfner2014Dataset(root=str(tmp_path / "a"), genome=_StubGenome())
+        m.EnvChemgenHoepfner2014Dataset(root=str(tmp_path / "a"))
     assert str(err.value) == (
         f"sha256 mismatch for {mirror / 'HIP_scores.txt'}: expected "
         f"{m._DRYAD_FILES['HIP_scores.txt']['sha256']}, observed {digest}"
@@ -940,15 +845,13 @@ def test_download_links_the_mirror_only_when_its_bytes_match_the_pinned_sha256(
     raw = tmp_path / "b" / "raw"
     raw.mkdir(parents=True)
     (raw / "Table_S1.xls").write_bytes((mirror / "Table_S1.xls").read_bytes())
-    dataset = m.EnvChemgenHoepfner2014Dataset(
-        root=str(tmp_path / "b"), genome=_StubGenome()
-    )
+    dataset = m.EnvChemgenHoepfner2014Dataset(root=str(tmp_path / "b"))
     for name in ("HIP_scores.txt", "HOP_scores.txt"):
         assert (raw / name).is_symlink() and os.readlink(raw / name) == str(
             mirror / name
         )
     assert not (raw / "Table_S1.xls").is_symlink()
-    assert len(dataset) == 15
+    assert len(dataset) == 31
 
 
 class _FakeResponse:
@@ -979,7 +882,6 @@ def test_download_fetches_a_file_the_mirror_lacks_and_verifies_the_pin(
     """
     data_root = tmp_path / "data_root"
     monkeypatch.setenv("DATA_ROOT", str(data_root))
-    _write_genomes_tier(data_root)
     mirror = data_root / "torchcell-raw" / _CITATION_KEY
     _write_raw(mirror)
     pins = _digests(mirror)
@@ -997,7 +899,7 @@ def test_download_fetches_a_file_the_mirror_lacks_and_verifies_the_pin(
     monkeypatch.setattr(m, "_dryad_get", fake_dryad_get)
     wrong = hashlib.sha256(b"wrong body").hexdigest()
     with pytest.raises(RawSha256MismatchError) as err:
-        m.EnvChemgenHoepfner2014Dataset(root=str(tmp_path / "a"), genome=_StubGenome())
+        m.EnvChemgenHoepfner2014Dataset(root=str(tmp_path / "a"))
     assert str(err.value) == (
         "sha256 mismatch for https://datadryad.org/downloads/file_stream/4834609: "
         f"expected {pins['HOP_scores.txt']['sha256']}, observed {wrong}"
@@ -1005,15 +907,13 @@ def test_download_fetches_a_file_the_mirror_lacks_and_verifies_the_pin(
     assert sorted(p.name for p in (tmp_path / "a" / "raw").iterdir()) == [
         "HIP_scores.txt"
     ]
-    dataset = m.EnvChemgenHoepfner2014Dataset(
-        root=str(tmp_path / "b"), genome=_StubGenome()
-    )
+    dataset = m.EnvChemgenHoepfner2014Dataset(root=str(tmp_path / "b"))
     assert calls == ["https://datadryad.org/downloads/file_stream/4834609"] * 2
     assert [r.closed for r in responses] == [True, True]
     hop = tmp_path / "b" / "raw" / "HOP_scores.txt"
     assert not hop.is_symlink() and hop.read_bytes() == hop_bytes
     assert (tmp_path / "b" / "raw" / "HIP_scores.txt").is_symlink()
-    assert len(dataset) == 15
+    assert len(dataset) == 31
 
 
 def test_deposit_raw_mirror_records_the_dryad_retrieval_per_file(
@@ -1066,15 +966,15 @@ def test_deposit_raw_mirror_records_the_dryad_retrieval_per_file(
 def test_a_short_matrix_line_stops_at_its_last_cell(
     dataset: m.EnvChemgenHoepfner2014Dataset,
 ) -> None:
-    """Record 13 is the HOP row ``YAL034C-B`` whose line carries only the first kept
-    cell (0.33); the dropped-compound column lies beyond the line's end and adds nothing
-    to the HOP drop count (1, from YAL001C's 0.7 alone).
+    """Record 29 is the HOP row ``YAL034C-B`` whose line carries only the first cell
+    (0.33); the Boromycin column lies beyond the line's end and adds no record and no
+    scored cell (HOP stores 5 of 5 scored cells).
     """
-    (perturbation,) = dataset[13]["experiment"]["genotype"]["perturbations"]
+    (perturbation,) = dataset[29]["experiment"]["genotype"]["perturbations"]
     assert perturbation == _hop_genotype("YAL034C-B").perturbations[0].model_dump()
-    assert dataset[13]["experiment"]["phenotype"]["environment_response"] == 0.33
+    assert dataset[29]["experiment"]["phenotype"]["environment_response"] == 0.33
     report = json.loads((Path(dataset.root) / "dropped_records.json").read_text())
-    assert report["dropped_by_assay"]["HOP"] == 1
+    assert report["accounting"]["HOP"]["n_source_cells"] == 5
 
 
 def test_solve_anubis_returns_the_smallest_nonce_meeting_the_difficulty() -> None:
@@ -1099,21 +999,21 @@ def test_a_repeated_orf_row_is_stored_twice_under_one_genotype(
     dataset: m.EnvChemgenHoepfner2014Dataset,
 ) -> None:
     """Finding: ``_iter_records`` (hoepfner2014.py lines 1266-1269) caches the genotype
-    per source ORF and never checks that an ORF row is unique, so the second HOP
-    ``YAL001C`` line becomes record 14 with the same genotype and reference as record 11
+    per released ORF and never checks that an ORF row is unique, so the second HOP
+    ``YAL001C`` line becomes record 30 with the same genotype and reference as record 26
     and a second (strain, condition) measurement of 0.99; nothing in the ledger reports
-    the repeat.
+    the repeat. (The deposited matrices carry no repeated token: measured 2026.10.12.)
     """
     assert (
-        dataset[14]["experiment"]["genotype"] == dataset[11]["experiment"]["genotype"]
+        dataset[30]["experiment"]["genotype"] == dataset[26]["experiment"]["genotype"]
     )
-    assert dataset[14]["reference"] == dataset[11]["reference"]
+    assert dataset[30]["reference"] == dataset[26]["reference"]
     assert (
-        dataset[14]["experiment"]["environment"]
-        == dataset[11]["experiment"]["environment"]
+        dataset[30]["experiment"]["environment"]
+        == dataset[26]["experiment"]["environment"]
     )
-    assert dataset[14]["experiment"]["phenotype"]["environment_response"] == 0.99
-    assert dataset[11]["experiment"]["phenotype"]["environment_response"] == 1.0
+    assert dataset[30]["experiment"]["phenotype"]["environment_response"] == 0.99
+    assert dataset[26]["experiment"]["phenotype"]["environment_response"] == 1.0
 
 
 def test_a_raw_file_off_the_pin_is_refused_at_build_time(
@@ -1128,7 +1028,7 @@ def test_a_raw_file_off_the_pin_is_refused_at_build_time(
     staged = off_pin_raw(m, ["HIP_scores.txt", "HOP_scores.txt", "Table_S1.xls"])
     raw = staged.root / "raw" / "HIP_scores.txt"
     with pytest.raises(RawSha256MismatchError) as err:
-        m.EnvChemgenHoepfner2014Dataset(root=str(staged.root), genome=_StubGenome())
+        m.EnvChemgenHoepfner2014Dataset(root=str(staged.root))
     assert str(err.value) == (
         f"sha256 mismatch for {raw}: expected "
         "dbc5041defea9c046da0890d5e569f97d5f7afbf50ea0885f539ea8e5980cd24, "
@@ -1139,35 +1039,41 @@ def test_a_raw_file_off_the_pin_is_refused_at_build_time(
     assert hashlib.sha256(raw.read_bytes()).hexdigest() == staged.observed
 
 
-# Phase 24: a kept dose outside the IC30 band is listed in the ledger
+# Phase 24: a stored dose outside the IC30 band is listed in the ledger
 
 
-def test_a_kept_dose_outside_the_ic30_band_is_listed_with_its_ratio(
+def test_a_stored_dose_outside_the_ic30_band_is_listed_with_its_ratio(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """``IC30_RATIO_RANGE`` is narrowed to (2.0, 4.0), so amitriptyline's 50 uM against
     its Table S1 IC30 of 50 uM (ratio 1.0, in range under the real (0.5, 2.0)) falls
-    outside. Every kept CMB 3 column is listed, in assay then column order: HIP
-    study 0077, HIP study 0091, HOP study 0077. CMB 777 has no IC30 row (it is only in
-    the structures sheet), so it is never checked; Boromycin's columns are not kept.
+    outside, and so do Boromycin's 1.2 uM and CMB 888's 10 uM (each ratio 1.0). Every
+    stored column with an IC30 is listed, in assay then column order. CMB 777 has no
+    IC30 row (it is only in the structures sheet), so it is never checked.
     """
     monkeypatch.setattr(m, "IC30_RATIO_RANGE", (2.0, 4.0))
     data_root = tmp_path / "data_root"
     monkeypatch.setenv("DATA_ROOT", str(data_root))
-    _write_genomes_tier(data_root)
     root = tmp_path / "env_chemgen_hoepfner2014"
     _write_raw(root / "raw")
-    m.EnvChemgenHoepfner2014Dataset(root=str(root), genome=_StubGenome())
+    m.EnvChemgenHoepfner2014Dataset(root=str(root))
     report = json.loads((root / "dropped_records.json").read_text())
     assert report["dose_outside_ic30_range"] == [
         {
             "assay": assay,
-            "cmb_id": "3",
-            "compound": "amitriptyline",
+            "cmb_id": cmb,
+            "compound": compound,
             "study": study,
-            "concentration_um": 50.0,
-            "ic30_um": 50.0,
+            "concentration_um": dose,
+            "ic30_um": dose,
             "ratio": 1.0,
         }
-        for assay, study in (("HIP", "0077"), ("HIP", "0091"), ("HOP", "0077"))
+        for assay, cmb, compound, study, dose in (
+            ("HIP", "3", "amitriptyline", "0077", 50.0),
+            ("HIP", "3", "amitriptyline", "0091", 50.0),
+            ("HIP", "409", "Boromycin", "0077", 1.2),
+            ("HIP", "888", "Unreleased", "0077", 10.0),
+            ("HOP", "3", "amitriptyline", "0077", 50.0),
+            ("HOP", "409", "Boromycin", "0077", 1.2),
+        )
     ]

@@ -9,51 +9,51 @@ genome-wide chemogenomic resource: 2956 HIP + 2923 HOP experiments for 1776 disc
 compounds (>40M data points), each compound profiled in duplicate at (or near) its
 S. cerevisiae IC30.
 
-ENCODABLE COMPOUNDS ONLY (build filter): ~92% of the profiled compounds are PROPRIETARY
-Novartis ``CMBxxx`` entries with no released structure -- black-box perturbations no
-molecular encoder can represent. This loader keeps ONLY the compounds with a released
-SMILES in ``Table_S1.xls`` (152 of the 153 CMB rows the table carries; 150 of those CMB
-ids appear in a kept HIP column and 149 in a kept HOP column), so every stored
-(ORF, compound) record is featurisable by the cell graph transformer. The full atlas is
-recoverable by removing the ``smiles is None`` skip in ``_column_meta``. Provenance:
-paper.md line 110 ("In addition to 1641 proprietary compounds (named CMBxxx), we included
-135 reference compounds ... Table S1"); analysis in
-``experiments/017-hoepfner-background-mutations`` (``compound_encodability.json``). The
-exclusion is a measured ledger entry (``encodable_filter``): 1,702 of the 1,852 deposited
-CMB ids, 2,650 HIP + 2,619 HOP columns, 15,263,802 HIP + 11,728,428 HOP cells of rows that
-pass the ORF and detection rules (``experiments/036-dataset-fixes-before-kg-build/scripts/
-hoepfner2014_inputs.py``).
+EVERY RELEASED COMPOUND IS STORED (2026.10.12, the data is the data). About 92% of the
+profiled compounds are PROPRIETARY Novartis ``CMBxxx`` entries with no released structure
+(paper.md line 110: "In addition to 1641 proprietary compounds (named CMBxxx), we included
+135 reference compounds ... Table S1"). They are released measurements of an unidentified
+compound, so every sensitivity column of both deposited matrices is stored except the
+CMB4019 condition below: 1,851 CMB ids, 2,953 HIP + 2,920 HOP columns. Until 2026.10.12 an
+``encodable_filter`` built a column only for a CMB id with a released SMILES, which held
+out 1,702 CMB ids, 2,650 HIP + 2,619 HOP columns and 26,992,230 records; that filter is
+removed, and whether a compound is featurizable is a modeling-time question.
 
-COMPOUND IDENTITY -- the compound is keyed by structure, never by a tagged label. The
-resolver is called with the CLEAN common name (or ``CMB<id>`` for a proprietary compound
-whose structure WAS released), so the stored ``Compound`` carries the curated table's
-canonical name and its InChIKey / ChEBI id / PubChem CID. Where no curated row exists the
-InChIKey is DERIVED from the Table S1 SMILES with ``inchikey_from_smiles`` (RDKit); a
-curated row always wins, because the two routes measurably disagree (concanamycin A's
-curated PubChem key and its SMILES-derived key differ in the stereo block). Measured over
-the 150 kept CMB ids: 149 carry a structure identifier, 148 distinct InChIKeys (CMB 244
-and CMB 1818 are two fermentation batches of concanamycin A and correctly merge onto one
-key).
+COMPOUND IDENTITY -- the compound is keyed by structure where one exists, never by a
+tagged label. The resolver is called with the CLEAN released label (the Table S1 common
+name, else ``CMB<id>``) and the released Table S1 SMILES when there is one, so the stored
+``Compound`` carries the curated table's canonical name and its InChIKey / ChEBI id /
+PubChem CID. Where no curated row exists the InChIKey is DERIVED from the Table S1 SMILES
+with ``inchikey_from_smiles`` (RDKit); a curated row always wins, because the two routes
+measurably disagree (concanamycin A's curated PubChem key and its SMILES-derived key
+differ in the stereo block). A compound with neither (a proprietary CMB id with no
+released SMILES, and CMB409 Boromycin, whose released SMILES RDKit 2026.03.6 cannot parse)
+is STORED under its released label with the typed ``inchikey`` gap ``resolved_compound``
+attaches, its released SMILES carried verbatim on ``Compound.smiles`` when there is one,
+and its released dose and vehicle exactly as every other column. The ledger's
+``compound_identity_gaps`` lists each such CMB id with its columns and records per arm.
+Measured on the deposited headers: 1,703 gapped CMB ids, 148 with an InChIKey (147
+distinct keys: CMB 244 and CMB 1818 are two fermentation batches of concanamycin A and
+correctly merge onto one key), 1,849 distinct stored compound names.
 
-RECORDS DROPPED -- rule: a column is dropped when its compound carries NO structure
-identifier after resolution (no curated identifier, and no RDKit-parseable released
-SMILES). Measured: ONE compound, CMB409 "Boromycin", whose released SMILES RDKit
-2026.03.6 cannot parse (boron cage), 2 columns. The ORF rule below removes 30 rows per
-assay; the DETECTION rule removes 72 HIP rows (2,263 records) and 452 HOP rows (7,344
-records, 328 of the rows SGD-essential); the CMB4019 exclusion removes 6 columns (HIP
-17,289 + HOP 13,479 records). Measured over the real record path
-(``experiments/036-dataset-fixes-before-kg-build/scripts/hoepfner2014_inputs.py``):
-3,083,827 records over 602 sensitivity columns (HIP 1,739,664 over 302 + HOP 1,344,163
-over 300), against 3,124,319 before #506. The rules and the measured counts are written to
-``<root>/dropped_records.json`` at build time.
+RECORDS STORED AND HELD OUT. Every scored cell of a stored column is a record; a blank
+cell is not a value. Measured in-process on the raw matrices with this module's column
+census and row reader (2026.10.12): 30,308,574 records, HIP 17,104,778 over 2,953 columns
+and 5,869 rows, HOP 13,203,796 over 2,920 columns and 4,970 rows, against 3,083,827
+before. Two rules still hold cells out, and both are counted in
+``<root>/dropped_records.json`` (whose ``accounting`` proves scored cells = stored + held
+out per arm): ``NOT_ORF_SHAPED_RULE`` (a released token the ``GenePerturbation`` pattern
+rejects; measured 0 scored cells, the four ``R00x0`` tokens and ``YBR160W_AS`` carry no
+score) and the CMB4019 exclusion (6 columns, HIP 17,397 + HOP 13,623 scored cells over
+every row).
 
 SCREEN (study) IDENTITY -- ``EnvironmentResponsePhenotype.screen_id`` carries the
 deposited study number. It is a real batch covariate, *"<Study number>: an internal id
 for the study in which the compound was profiled. All compound profiles of one study use
 the same set of control samples and are normalized together."* (paper.md line 50), and it
 is what keeps one (strain, condition) L1-unique once the compound name is cleaned:
-measured, 47 kept columns collide on (compound, dose) alone (HIP 22, HOP 25) and 0 collide
-on (compound, dose, study). The reference is per (assay, study) for the same reason: each
+measured over all 5,873 stored columns (2026.10.12), 531 collide on (released label, dose)
+alone (HIP 257, HOP 274) and 0 collide on (resolved compound, dose, study). The reference is per (assay, study) for the same reason: each
 study normalizes against its OWN control samples.
 
 STRAIN BACKGROUND AND GENOTYPE (#506, on the #507 schema). The records are
@@ -87,24 +87,34 @@ ORF"* (line 176).
 - HOP (YSC1056, homozygous diploid): one ``BarcodedKanMxDeletionPerturbation(
   cassette="kanMX4", collection="YSC1056")``. No barcode is released by the paper, so
   ``barcode`` is a pending gap on both arms.
-- A RENAMED source ORF (an old deletion-collection ORF that R64 lists as an alias of a
-  current gene) carries ``constructed_orf=ConstructedOrf(source_systematic_name=<source>)``
-  with ``relation`` and ``deleted_span`` gapped pending the SGD locus history, so the strain
-  is never recorded as a deletion of the whole current gene.
+- The deposited 'Systematic Name' is stored as released on both arms, as the
+  ``systematic_gene_name`` and the ``perturbed_gene_name`` (the matrices carry no
+  common-name column). No genome is read: an old deletion-collection ORF that R64 now
+  lists as an alias, a retired ORF, a pseudogene, a blocked reading frame or a
+  transposable-element gene is the strain the collection released and is stored under
+  that spelling. Whether a spelling is a current R64 gene is a modeling-time question.
 
-DETECTION RULE (strains not in the pool). Paper: *"For HOP, 4520 strains were detected
-(96.0%) from 4705 strains obtained from OpenBiosystems."* and an average of 5796 of 5910
-HIP strains (line 64). The deposited matrices carry a score for 4,970 HOP rows, 265 more
-than the 4,705 strains obtained, so some scored rows are not strains of the pool. The
-paper gives the detection COUNT, not a per-row rule; this loader's rule (a decision the user
-may reverse) is: a row is dropped when it is scored in fewer than half of its arm's deposited
-sensitivity columns (all compounds, encodable or not). The rows it removes and the records
-they lose are in the drop ledger.
+STRAIN DETECTION. Paper: *"For HOP, 4520 strains were detected (96.0%) from 4705 strains
+obtained from OpenBiosystems."* and an average of 5796 of 5910 HIP strains (line 64);
+both counts are ``SOURCED_VALUES`` (``hop_detection``, ``hip_detection``). The deposited
+matrices carry a score for 4,970 HOP rows, 265 more than the 4,705 strains obtained. The
+paper gives a COUNT, not a per-row rule, so no row is removed for being scored in few
+columns: a row scored in any stored column is stored (the former 50% detection rule held
+out HIP 72 rows and HOP 452 rows). A row scored in no stored column carries no record and
+is counted as ``n_rows_without_any_score``.
 
 CONDITIONS EXCLUDED. CMB4019 "D-Glucose (starvation)" (Table S1) is a glucose-starvation
 condition the paper never describes: its header number cannot be a uM addition to YPD and
 no glucose concentration is stated, so the medium change cannot be expressed with a
 sourced value. Its columns are EXCLUDED under a named rule and counted in the ledger.
+This is the one exclusion that needs a schema decision, not a loader change. A
+``Concentration`` can be built with no value and a basis, but the only basis that fits,
+``reduced_from_standard``, asserts a medium reduction the paper never states, and the
+released header number cannot be a typed gap on any field that can be None:
+``SmallMoleculePerturbation.concentration`` is required (and that class states the
+compound was ADDED, the opposite of starvation), ``Concentration`` carries no gaps, and an
+``EnvironmentPhysicalPerturbation`` on carbon source would record a medium change the
+paper does not describe.
 
 VEHICLE AND pH. Every compound dosed at or below 200 uM carries the 2% DMSO vehicle
 (*"DMSO was normalized to 2% to allow testing compounds up to 200 uM"*, line 58); above
@@ -201,20 +211,14 @@ BUILD / SOURCE QUIRKS handled deterministically (no fabrication):
   Identity is structural, never smuggled into a name: the compound is the compound, the
   dose is the ``Concentration``, the assay is the genotype leaf, the study is
   ``screen_id``.
-- Systematic ORF names go through the SHARED ``SCerevisiaeGenome.resolve_gene_name``, the
-  same policy as Costanzo 2021, Wildenhain 2015 and Hillenmeyer 2008: a CURRENT gene is
-  kept as is; a RENAMED alias (an old deletion-collection ORF that SGD merged into a
-  neighbour, e.g. ``YAL035C-A`` -> ``YAL034C-B``) is kept under the current systematic
-  name with the source ORF as ``perturbed_gene_name``, so it stays a DISTINCT strain of
-  that gene; a NON_GENE_FEATURE (pseudogene, blocked reading frame, transposable-element
-  gene) or a RETIRED name is DROPPED with its status and feature type in the ledger. The
-  R64 FASTA universe alone is NOT the gene set (it lists pseudogenes and blocked reading
-  frames as ORFs), which is why a FASTA membership test used to pass 14 non-gene rows
-  that the shared L1 canonical-gene-name rule then failed. Empty cells are skipped.
+- Systematic ORF names are stored exactly as the matrices release them (no
+  ``resolve_gene_name``, no rename onto a current gene, no SGD gene universe); a token
+  the ``GenePerturbation`` pattern rejects is held out under ``NOT_ORF_SHAPED_RULE``
+  until a released-gene-name leaf exists. Empty cells are skipped.
 - Constant sub-objects are INTERNED into ``processed/interned``: one environment per
   sensitivity column, one reference per (assay, study), one publication. A record stores
   ``{"$ref": ...}`` pointers for them, which is what keeps a 3.1M-record LMDB small and
-  lets a streaming reader memoize per-condition work.
+  lets a streaming reader memoize per-condition work across the 30.3M records.
 """
 
 import csv
@@ -252,12 +256,12 @@ from torchcell.datamodels.compound_identity import (
 )
 from torchcell.datamodels.media import YPD_LIQUID
 from torchcell.datamodels.schema import (
+    SGD_SYSTEMATIC_GENE_PATTERN,
     AssayType,
     BarcodedKanMxDeletionPerturbation,
     Compound,
     Concentration,
     ConcentrationUnit,
-    ConstructedOrf,
     CultureEnvironment,
     CultureFormat,
     DoseBasis,
@@ -300,8 +304,6 @@ from torchcell.literature.manifest import (
     RetrievalRecord,
     sha256_file,
 )
-from torchcell.sequence.genome.registry import SGD_S288C_R64, resolve
-from torchcell.sequence.genome.scerevisiae.s288c import GeneNameStatus
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import (
     ProvenanceGap,
@@ -360,12 +362,6 @@ _DRYAD_FILES: dict[str, dict[str, str]] = {
 
 _ASSAYS = (("HIP_scores.txt", "HIP"), ("HOP_scores.txt", "HOP"))
 
-# S288C reference gene universe (systematic ORF + RNA-coding names) for R64 resolution.
-_SGD_GENE_FASTAS = (
-    "orf_coding_all_R64-4-1_20230830.fasta",
-    "rna_coding_R64-4-1_20230830.fasta",
-)
-
 # Experiment column header: '(Ad.|MADL) scores for Exp. <CMB>_<conc>_<HIP|HOP>_<study>'
 # with an optional trailing ' z-score' (the companion gene-wise z-score column).
 _COL_RE = re.compile(
@@ -385,22 +381,19 @@ REFERENCE_UNITS = (
     "ratio; a strain growing exactly as its controls scores 0"
 )
 
-DROP_RULE = (
-    "drop every record whose compound carries no structure identifier after resolution: "
-    "no curated compound_identity_table row with an InChIKey / ChEBI id / PubChem CID, "
-    "and no RDKit-parseable released Table S1 SMILES to derive an InChIKey from"
-)
+#: The ``GenePerturbation.systematic_gene_name`` validator, applied to the released token.
+_ORF_SHAPED = re.compile(SGD_SYSTEMATIC_GENE_PATTERN)
 
-#: Retention rule for a row's ORF: kept only when it resolves to a LIVE R64 gene.
-_KEPT_STATUSES = frozenset({GeneNameStatus.CURRENT, GeneNameStatus.RENAMED})
+NOT_ORF_SHAPED_RULE = "systematic_name_is_not_orf_shaped_needs_released_name_leaf"
 
-ORF_RULE = (
-    "a row is kept only when its 'Systematic Name' resolves through the shared "
-    "SCerevisiaeGenome.resolve_gene_name to CURRENT (stored as is) or RENAMED (stored "
-    "under the current systematic name, the source ORF kept as perturbed_gene_name so a "
-    "merged-ORF strain stays distinct); a NON_GENE_FEATURE (pseudogene, blocked reading "
-    "frame, transposable-element gene) or a RETIRED name drops the row and every one of "
-    "its cells"
+NOT_ORF_SHAPED_POLICY = (
+    "a row whose released 'Systematic Name' token is not ORF-shaped (it fails the "
+    "GenePerturbation.systematic_gene_name pattern, e.g. R0010W or YBR160W_AS) cannot be "
+    "stored on the existing deletion leaves, which require that pattern; the row is held "
+    "out under this rule, with its token and its scored cells counted, until a yeast "
+    "released-gene-name leaf (a GenePerturbation child carrying the released identifier "
+    "verbatim with systematic_gene_name as a typed gap) exists. Every ORF-shaped token is "
+    "stored as released, with no genome lookup"
 )
 
 TABLE_S5_POLICY = (
@@ -413,19 +406,6 @@ TABLE_S5_POLICY = (
     "name; the strain's construction Lab / Batch / Plate / Well rides on the record."
 )
 
-#: Fraction of an arm's deposited sensitivity columns a row must be scored in to count as
-#: a strain of the pool (the loader's rule, NOT the paper's: see DETECTION_RULE).
-DETECTION_MIN_FRACTION = 0.5
-
-DETECTION_RULE = (
-    "a row is kept only when it carries a score in at least half of its arm's deposited "
-    "sensitivity columns (every compound, encodable or not; z-score companions excluded). "
-    "The paper gives the detection COUNT ('For HOP, 4520 strains were detected (96.0%) "
-    "from 4705 strains obtained', paper.md line 64), not a per-row rule; the 50% "
-    "threshold is this loader's decision and may be reversed. A row scored in fewer "
-    "columns is treated as a strain absent from the pool and dropped with its records"
-)
-
 #: Table S1 CMB ids excluded under a named rule, with the Table S1 name each must carry.
 EXCLUDED_CONDITIONS: dict[str, str] = {"4019": "D-Glucose (starvation)"}
 
@@ -435,14 +415,6 @@ EXCLUSION_RULE = (
     "addition of glucose to YPD, and no glucose concentration is stated anywhere, so the "
     "medium change cannot be expressed with a sourced value. Storing it as YPD plus "
     "added glucose would state the opposite of starvation"
-)
-
-ENCODABLE_RULE = (
-    "a sensitivity column is built only when its CMB id has a released SMILES in Table "
-    "S1; the other (proprietary Novartis CMBxxx) columns are black-box perturbations no "
-    "molecular encoder can represent and are excluded. Paper: 'In addition to 1641 "
-    "proprietary compounds (named CMBxxx), we included 135 reference compounds' "
-    "(paper.md line 110)"
 )
 
 #: Highest dose the paper's 2% DMSO normalization covers (SOURCED_VALUES["dmso_ceiling_um"]).
@@ -651,15 +623,15 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         5796,
         "an average of 5796 out of 5910 HIP strains received were detectable "
         "$( 9 8 . 0 \\% )$",
-        note="the paper's detection COUNT; the loader's per-row rule (DETECTION_RULE) is "
-        "its own decision",
+        note="the paper's detection COUNT, recorded for the note; it is not a per-row "
+        "rule, and every row scored in any column is stored",
     ),
     "hop_detection": _sv(
         4520,
         "For HOP, 4520 strains were detected $( 9 6 . 0 \\% )$ from 4705 strains "
         "obtained from OpenBiosystems.",
-        note="the paper's detection COUNT; the loader's per-row rule (DETECTION_RULE) is "
-        "its own decision",
+        note="the paper's detection COUNT, recorded for the note; it is not a per-row "
+        "rule, and every row scored in any column is stored",
     ),
     "dmso_ceiling_um": _sv(
         200.0,
@@ -731,8 +703,8 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         "In addition to 1641 proprietary compounds (named CMBxxx), we included 135 "
         "reference compounds with a previously reported molecular mechanism of action "
         "(Table S1).",
-        note="the encodable-only filter excludes the CMB ids with no released SMILES; the "
-        "build counts them in the ledger",
+        note="a CMB id with no released SMILES is stored under its released label with "
+        "the typed inchikey gap; the ledger's compound_identity_gaps counts them",
     ),
     "cassette": SourcedValue(
         value="kanMX4",
@@ -760,13 +732,6 @@ HOEPFNER_SUPPLEMENT = Provenance(
 )
 """``resolve_with`` target for the HIP passage question (Fig. S2) and the background
 mutation coordinates (Figs. S15 to S17)."""
-
-SGD_LOCUS_HISTORY = Provenance(
-    source_uri="https://www.yeastgenome.org (locus history of the source ORF)",
-    method="not mirrored; SGD ORF merge / reannotation history, which states how a "
-    "deletion-collection ORF relates to the current gene and its R64 coordinates",
-)
-"""``resolve_with`` target for a RENAMED ORF's relation and deleted span."""
 
 _PAPER = Provenance(
     source_uri=PAPER_MD,
@@ -1040,66 +1005,31 @@ def load_manifest(data_root: str | None = None) -> Manifest:
 # --------------------------------------------------------------------------- #
 # Typed build-side records (written beside the LMDB, not into it)
 # --------------------------------------------------------------------------- #
-class DroppedCompound(BaseModel):
-    """One compound the identity rule removed, and what it cost."""
+class CompoundIdentityGap(BaseModel):
+    """One stored compound with no InChIKey: kept under its released label, gapped."""
 
     model_config = ConfigDict(extra="forbid")
 
     cmb_id: str
-    source_name: str
-    smiles: str | None
+    source_name: str = Field(
+        description="the released label: the Table S1 common name, else CMB<id>"
+    )
+    smiles: str | None = Field(
+        description="the released Table S1 SMILES verbatim, None when none is released"
+    )
     resolution_status: str
     unresolved_reason: str | None
-    n_columns: int
-    n_records: int
+    n_columns_by_assay: dict[str, int]
+    n_records_by_assay: dict[str, int]
 
 
-class DroppedOrf(BaseModel):
-    """One source ORF the retention rule removed, with what the resolver said."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    source_name: str = Field(description="the 'Systematic Name' cell, verbatim")
-    status: str = Field(description="GeneNameStatus the shared resolver returned")
-    resolved_to: str | None = Field(
-        default=None, description="what the resolver mapped it to, when anything"
-    )
-    feature_type: str | None = Field(
-        default=None, description="GFF feature type for a NON_GENE_FEATURE"
-    )
-    n_records: int = Field(
-        description="non-empty cells in KEPT sensitivity columns lost with this row"
-    )
-
-
-class UndetectedStrain(BaseModel):
-    """One row the detection rule removed: scored in too few of its arm's columns."""
+class NotOrfShapedRow(BaseModel):
+    """One row held out under ``NOT_ORF_SHAPED_RULE``: its token fails the ORF pattern."""
 
     model_config = ConfigDict(extra="forbid")
 
     source_name: str = Field(description="the 'Systematic Name' cell, verbatim")
-    systematic_name: str = Field(
-        description="the current systematic name it resolves to"
-    )
-    n_scored_columns: int = Field(
-        description="deposited sensitivity columns of the arm this row carries a score in"
-    )
-    n_columns: int = Field(description="deposited sensitivity columns of the arm")
-    n_records: int = Field(description="non-empty cells in KEPT columns lost with it")
-
-
-class DetectionLedger(BaseModel):
-    """The detection rule for one arm and what it removed."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    n_columns: int = Field(description="deposited sensitivity columns of the arm")
-    n_rows_without_any_score: int = Field(
-        description="rows scored in no column at all (no records; not strains of the pool)"
-    )
-    n_rows_kept: int = Field(description="scored rows that pass the rule")
-    n_records_dropped: int
-    dropped: list[UndetectedStrain]
+    n_records: int = Field(description="scored cells in stored columns of this row")
 
 
 class ExcludedCondition(BaseModel):
@@ -1113,26 +1043,29 @@ class ExcludedCondition(BaseModel):
     n_records_by_assay: dict[str, int]
 
 
-class EncodableFilterLedger(BaseModel):
-    """The encodable-only build filter (no released SMILES), measured per arm."""
+class CellAccounting(BaseModel):
+    """Every scored sensitivity cell of one arm: stored, held out, or excluded."""
 
     model_config = ConfigDict(extra="forbid")
 
-    rule: str
-    n_cmb_ids: int = Field(description="distinct CMB ids excluded over both arms")
-    n_cmb_ids_by_assay: dict[str, int]
-    n_columns_by_assay: dict[str, int]
-    n_records_by_assay: dict[str, int] = Field(
-        description="non-empty cells in excluded columns of rows that pass the ORF and "
-        "detection rules (the records a full-atlas build would add)"
+    n_sensitivity_columns: int = Field(
+        description="deposited sensitivity columns of the arm (z-score companions are "
+        "not sensitivity columns)"
     )
-    n_deposited_cmb_ids: int = Field(
-        description="distinct CMB ids in the deposited sensitivity columns of both arms"
+    n_rows: int = Field(description="data rows of the deposited matrix")
+    n_rows_without_any_score: int = Field(
+        description="rows scored in no stored column (not records; not-a-value accounting)"
     )
+    n_source_cells: int = Field(
+        description="scored cells over every sensitivity column of the arm"
+    )
+    n_stored: int
+    n_not_orf_shaped: int
+    n_excluded_condition: int
 
 
 class DoseOutsideIc30(BaseModel):
-    """A kept column whose dose lies outside ``IC30_RATIO_RANGE`` x its Table S1 IC30."""
+    """A stored column whose dose lies outside ``IC30_RATIO_RANGE`` x its Table S1 IC30."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -1146,52 +1079,60 @@ class DoseOutsideIc30(BaseModel):
 
 
 class DroppedRecordReport(BaseModel):
-    """The build's drop ledger: the rules, and exactly what they removed."""
+    """The build's ledger: what was stored, what is held out, and under which rule.
+
+    Every scored sensitivity cell is accounted for per arm:
+    ``n_source_cells = n_stored + n_not_orf_shaped + n_excluded_condition``.
+    """
 
     model_config = ConfigDict(extra="forbid")
 
     dataset: str
-    rule: str
-    orf_rule: str
-    detection_rule: str
+    not_orf_shaped_rule: str
+    not_orf_shaped_policy: str
     exclusion_rule: str
     n_kept: int
-    n_dropped: int
+    n_dropped: int = Field(
+        description="cells held out under NOT_ORF_SHAPED_RULE plus EXCLUSION_RULE"
+    )
     kept_by_assay: dict[str, int]
     dropped_by_assay: dict[str, int]
-    dropped_compounds: list[DroppedCompound]
-    dropped_orfs: dict[str, list[DroppedOrf]] = Field(
-        description="per assay, the rows whose ORF resolves to neither a CURRENT nor a "
-        "RENAMED R64 gene, never guessed onto a current gene"
-    )
-    renamed_orfs: dict[str, dict[str, str]] = Field(
-        description="per assay, source ORF -> current systematic name for every RENAMED "
-        "row kept; the source ORF stays on the record as perturbed_gene_name and as "
-        "constructed_orf.source_systematic_name"
-    )
-    detection: dict[str, DetectionLedger] = Field(
-        description="per assay, the DETECTION_RULE and the rows it removed"
+    accounting: dict[str, CellAccounting]
+    not_orf_shaped: dict[str, list[NotOrfShapedRow]] = Field(
+        description="per assay, rows whose released token fails the ORF pattern"
     )
     excluded_conditions: list[ExcludedCondition]
-    encodable_filter: EncodableFilterLedger
+    compound_identity_gaps: list[CompoundIdentityGap] = Field(
+        description="stored compounds with no InChIKey (proprietary CMB ids with no "
+        "released SMILES, and CMB409 Boromycin whose SMILES RDKit cannot parse), each "
+        "stored under its released label with the typed inchikey gap"
+    )
+    n_cmb_ids_stored: int = Field(
+        description="distinct CMB ids over both arms' columns"
+    )
+    n_compounds_stored: int = Field(
+        description="distinct stored Compound names over both arms (two CMB ids of one "
+        "curated compound merge)"
+    )
+    columns_by_assay: dict[str, int] = Field(description="stored sensitivity columns")
     positive_control: dict[str, int] = Field(
         description="per assay, deposited sensitivity columns of the plate positive control "
         "Benomyl (CMB991); its 97 experiments are in the separate Benomyl score files, "
         "which are not in the raw mirror"
     )
     solvent_gap_columns: dict[str, int] = Field(
-        description="per assay, kept columns dosed above 200 uM (solvent is a gap)"
+        description="per assay, stored columns dosed above 200 uM (solvent is a gap)"
     )
     ph_gap_columns: dict[str, int] = Field(
-        description="per assay, kept columns of an acid / base / acetate (pH is a gap)"
+        description="per assay, stored columns of an acid / base / acetate (pH is a gap)"
     )
     dose_outside_ic30_range: list[DoseOutsideIc30] = Field(
-        description="kept columns whose dose is outside 0.5x to 2x the Table S1 IC30; "
+        description="stored columns whose dose is outside 0.5x to 2x the Table S1 IC30; "
         "basis stays IC30 (how the dose was SET)"
     )
     n_kept_columns_with_ic30: dict[str, int]
     hip_construction: dict[str, int] = Field(
-        description="kept HIP rows by Table S5 construction match: 'one_entry', "
+        description="stored HIP rows by Table S5 construction match: 'one_entry', "
         "'duplicate_entries' (lab and batch kept, plate and well unset), 'not_listed'"
     )
     created_at: str
@@ -1336,17 +1277,6 @@ def _dryad_get(session: requests.Session, url: str) -> requests.Response:
 # --------------------------------------------------------------------------- #
 # Source readers
 # --------------------------------------------------------------------------- #
-def _load_sgd_genes(data_root: str) -> set[str]:
-    """S288C R64 systematic-name universe from the ORF + RNA-coding FASTA headers."""
-    genes: set[str] = set()
-    for name in _SGD_GENE_FASTAS:
-        with open(resolve(SGD_S288C_R64, name, data_root=data_root)) as handle:
-            for line in handle:
-                if line.startswith(">"):
-                    genes.add(line[1:].split()[0])
-    return genes
-
-
 def _load_compound_meta(table_s1_path: str) -> dict[str, dict[str, str | None]]:
     """CMB id -> {common_name, smiles} from Table_S1 (reference + novel MoA + structures).
 
@@ -1461,17 +1391,8 @@ def _strain_construction(entries: list[TableS5Entry]) -> StrainConstruction:
     )
 
 
-def _has_identifier(compound: Compound) -> bool:
-    """Whether a compound carries ANY structure identifier (the retention rule)."""
-    return (
-        compound.inchikey is not None
-        or compound.chebi_id is not None
-        or compound.pubchem_cid is not None
-    )
-
-
 class _ColumnMeta:
-    """One kept sensitivity column: its record templates and its identity fields."""
+    """One stored sensitivity column: its record templates and its identity fields."""
 
     __slots__ = (
         "index",
@@ -1479,9 +1400,11 @@ class _ColumnMeta:
         "study",
         "conc",
         "compound",
+        "inchikey",
         "exp_base",
         "pheno_base",
         "env_dump",
+        "n_records",
     )
 
     def __init__(
@@ -1494,35 +1417,36 @@ class _ColumnMeta:
         env_dump: dict[str, Any],
         conc: float = 0.0,
         compound: str = "",
+        inchikey: str | None = None,
     ) -> None:
         self.index = index
         self.cmb = cmb
         self.study = study
         self.conc = conc
         self.compound = compound
+        self.inchikey = inchikey
         self.exp_base = exp_base
         self.pheno_base = pheno_base
         # The environment INLINE, for the per-column schema validation: what the LMDB
         # stores is the interned pointer, and the schema only accepts the resolved form.
         self.env_dump = env_dump
+        self.n_records = 0  # records written for this column (the identity-gap ledger)
 
 
 class _ColumnCensus:
     """Every deposited sensitivity column of one arm, by what the build does with it.
 
-    ``detection`` is every sensitivity column of the arm (the DETECTION_RULE
-    denominator); ``unencodable`` the columns with no released SMILES (the encodable-only
-    filter); ``excluded`` the columns of an ``EXCLUDED_CONDITIONS`` compound;
-    ``positive_control`` the Benomyl (CMB991) columns; ``cmbs`` every CMB id seen. Kept and dropped-compound columns
-    come from ``_column_meta``.
+    ``sensitivity`` is every sensitivity column of the arm (z-score companions are not);
+    ``excluded`` the columns of an ``EXCLUDED_CONDITIONS`` compound; ``positive_control``
+    the Benomyl (CMB991) columns; ``cmbs`` every CMB id seen. Stored columns come from
+    ``_column_meta``.
     """
 
-    __slots__ = ("detection", "cmbs", "unencodable", "excluded", "positive_control")
+    __slots__ = ("sensitivity", "cmbs", "excluded", "positive_control")
 
     def __init__(self) -> None:
-        self.detection: list[int] = []
+        self.sensitivity: list[int] = []
         self.cmbs: set[str] = set()
-        self.unencodable: list[tuple[int, str]] = []
         self.excluded: list[tuple[int, str]] = []
         self.positive_control: list[int] = []
 
@@ -1537,28 +1461,24 @@ class _BuildCounts:
 
     __slots__ = (
         "kept",
-        "dropped",
         "flagged",
-        "dropped_orfs",
-        "renamed_orfs",
-        "undetected",
+        "not_orf_shaped",
+        "rows",
         "empty_rows",
-        "detected_rows",
-        "unencodable",
+        "source_cells",
         "excluded",
         "construction",
     )
 
     def __init__(self) -> None:
-        self.kept: Counter[str] = Counter()  # assay -> kept records
-        self.dropped: Counter[tuple[str, str]] = Counter()  # (assay, CMB) -> removed
-        self.flagged: Counter[str] = Counter()  # ORF -> kept HIP records, Table S5 only
-        self.dropped_orfs: dict[str, list[DroppedOrf]] = {}  # assay -> dropped rows
-        self.renamed_orfs: dict[str, dict[str, str]] = {}  # assay -> source -> current
-        self.undetected: dict[str, list[UndetectedStrain]] = {}  # assay -> rows
-        self.empty_rows: Counter[str] = Counter()  # assay -> rows scored nowhere
-        self.detected_rows: Counter[str] = Counter()  # assay -> rows passing the rule
-        self.unencodable: Counter[str] = Counter()  # assay -> cells in filtered columns
+        self.kept: Counter[str] = Counter()  # assay -> stored records
+        self.flagged: Counter[str] = (
+            Counter()
+        )  # ORF -> stored HIP records, Table S5 only
+        self.not_orf_shaped: dict[str, list[NotOrfShapedRow]] = {}  # assay -> rows
+        self.rows: Counter[str] = Counter()  # assay -> data rows read
+        self.empty_rows: Counter[str] = Counter()  # assay -> rows scored nowhere stored
+        self.source_cells: Counter[str] = Counter()  # assay -> scored sensitivity cells
         self.excluded: Counter[tuple[str, str]] = Counter()  # (assay, CMB) -> cells
         self.construction: Counter[str] = Counter()  # HIP rows by Table S5 match
 
@@ -1575,33 +1495,10 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
         io_workers: int = 0,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
-        genome: Any | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize the dataset. ``genome`` supplies ``resolve_gene_name``; when it is
-        None a read-only S288C genome is opened at build time (never at import).
-        """
-        self.genome = genome
+        """Initialize the dataset. No genome is read: every row is stored as released."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
-
-    def _resolver(self) -> Callable[[str], Any]:
-        """``resolve_gene_name`` from the supplied genome, or a read-only S288C genome."""
-        if self.genome is None:
-            from dotenv import load_dotenv
-
-            from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
-
-            load_dotenv()
-            data_root = os.environ["DATA_ROOT"]
-            # overwrite=False is mandatory: a rebuild here would race any other process
-            # holding the same gffutils database.
-            self.genome = SCerevisiaeGenome(
-                genome_root=osp.join(data_root, "data/sgd/genome"),
-                go_root=osp.join(data_root, "data/go"),
-                overwrite=False,
-            )
-        resolver: Callable[[str], Any] = self.genome.resolve_gene_name
-        return resolver
 
     @property
     def experiment_class(self) -> type[Experiment]:
@@ -1805,46 +1702,17 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
             ),
         )
 
-    @staticmethod
-    def _constructed_orf(orf: str, source_orf: str) -> ConstructedOrf | None:
-        """The ORF a RENAMED strain was built against; ``None`` when it is the gene.
-
-        The shared resolver only says the source ORF is an alias of the current gene, so
-        whether it was merged into it, reannotated or merely renamed, and which interval
-        the cassette replaced, are gaps pending the SGD locus history.
-        """
-        if source_orf == orf:
-            return None
-        note = (
-            f"R64-4-1 lists {source_orf} as an alias of {orf}; whether it was merged, "
-            "reannotated or renamed, and its deleted interval, need the SGD locus history"
-        )
-        return ConstructedOrf(
-            source_systematic_name=source_orf,
-            relation=None,
-            deleted_span=None,
-            provenance_gaps=[
-                pending_source_review("relation", SGD_LOCUS_HISTORY, note),
-                pending_source_review("deleted_span", SGD_LOCUS_HISTORY, note),
-            ],
-        )
-
     def _genotype(
-        self,
-        assay: str,
-        orf: str,
-        source_orf: str | None = None,
-        strain_entries: list[TableS5Entry] | None = None,
+        self, assay: str, orf: str, strain_entries: list[TableS5Entry] | None = None
     ) -> Genotype:
         """HIP -> heterozygous kanMX4 deletion; HOP -> homozygous barcoded deletion.
 
-        ``orf`` is the CURRENT systematic name; ``source_orf`` is the deposited row name,
-        which differs only for a RENAMED ORF and then stays on the record as
-        ``perturbed_gene_name`` and ``constructed_orf``. ``strain_entries`` are the Table
-        S5 entries of the deposited HIP ORF (``None`` or empty when it is not listed).
+        ``orf`` is the deposited 'Systematic Name' exactly as released; it is both the
+        ``systematic_gene_name`` and the ``perturbed_gene_name`` (the matrices carry no
+        common-name column), with no genome lookup and no rename. ``strain_entries`` are
+        the Table S5 entries of the deposited HIP ORF (``None`` or empty when it is not
+        listed).
         """
-        perturbed = orf if source_orf is None else source_orf
-        constructed_orf = self._constructed_orf(orf, perturbed)
         if assay == "HIP":
             gaps = [_BARCODE_GAP]
             construction = None
@@ -1862,11 +1730,10 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
                 perturbations=[
                     HeterozygousDeletionPerturbation(
                         systematic_gene_name=orf,
-                        perturbed_gene_name=perturbed,
+                        perturbed_gene_name=orf,
                         cassette=str(SOURCED_VALUES["cassette"].value),
                         collection=str(SOURCED_VALUES["hip_collection"].value),
                         construction=construction,
-                        constructed_orf=constructed_orf,
                         replaced_allele=None,
                         provenance_gaps=gaps,
                     )
@@ -1876,10 +1743,9 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
             perturbations=[
                 BarcodedKanMxDeletionPerturbation(
                     systematic_gene_name=orf,
-                    perturbed_gene_name=perturbed,
+                    perturbed_gene_name=orf,
                     cassette=str(SOURCED_VALUES["cassette"].value),
                     collection=str(SOURCED_VALUES["hop_collection"].value),
-                    constructed_orf=constructed_orf,
                     provenance_gaps=[_BARCODE_GAP],
                 )
             ]
@@ -1934,16 +1800,18 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
         assay: str,
         meta: dict[str, dict[str, str | None]],
         itxn: Any,
-    ) -> tuple[list[_ColumnMeta], list[tuple[int, str]]]:
-        """Parse the sensitivity columns into kept templates and dropped columns.
+    ) -> list[_ColumnMeta]:
+        """Parse the arm's sensitivity columns into stored record templates.
 
-        Returns ``(kept, dropped)``, where ``dropped`` is ``(column index, CMB id)`` for a
-        column whose compound carries NO structure identifier after resolution. A CMB id
-        with no released SMILES (the encodable-only filter) and an ``EXCLUDED_CONDITIONS``
-        compound are neither kept nor dropped here; ``_column_census`` counts them.
+        Every sensitivity column is stored except an ``EXCLUDED_CONDITIONS`` compound's
+        (``_column_census`` counts those). The compound is ``resolved_compound`` of its
+        released label with the released Table S1 SMILES when there is one: a curated row
+        or an RDKit-parseable SMILES gives it an InChIKey, and otherwise (a proprietary
+        CMB id with no released structure, or CMB409 Boromycin whose SMILES RDKit cannot
+        parse) it is stored under the released label with the typed ``inchikey`` gap the
+        resolver attaches, its released SMILES carried verbatim when there is one.
         """
         kept: list[_ColumnMeta] = []
-        dropped: list[tuple[int, str]] = []
         for index, raw in enumerate(header):
             name = raw.strip().strip('"')
             match = _COL_RE.match(name)
@@ -1952,18 +1820,14 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
             if match.group("assay") != assay:
                 continue
             cmb = match.group("cmb")
-            smiles = (meta.get(cmb) or {}).get("smiles")
-            if smiles is None or cmb in EXCLUDED_CONDITIONS:
-                continue  # ENCODABLE_RULE / EXCLUSION_RULE, counted by _column_census
+            if cmb in EXCLUDED_CONDITIONS:
+                continue  # EXCLUSION_RULE, counted by _column_census
             compound = resolved_compound(
                 self._compound_name(cmb, meta),
-                smiles=smiles,
+                smiles=(meta.get(cmb) or {}).get("smiles"),
                 known_proprietary=(meta.get(cmb) or {}).get("common_name") is None,
                 derive_from_smiles=True,
             )
-            if not _has_identifier(compound):
-                dropped.append((index, cmb))
-                continue
             conc = float(match.group("conc"))
             study = match.group("study")
             environment = self._environment(assay, self._treatment(cmb, compound, conc))
@@ -2000,9 +1864,10 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
                     env_dump,
                     conc=conc,
                     compound=compound.name,
+                    inchikey=compound.inchikey,
                 )
             )
-        return kept, dropped
+        return kept
 
     @staticmethod
     def _column_census(
@@ -2021,13 +1886,11 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
             if match.group("assay") != assay:
                 continue
             cmb = match.group("cmb")
-            census.detection.append(index)
+            census.sensitivity.append(index)
             census.cmbs.add(cmb)
             if cmb == POSITIVE_CONTROL_CMB:
                 census.positive_control.append(index)
-            if (meta.get(cmb) or {}).get("smiles") is None:
-                census.unencodable.append((index, cmb))
-            elif cmb in EXCLUDED_CONDITIONS:
+            if cmb in EXCLUDED_CONDITIONS:
                 name = (meta.get(cmb) or {}).get("common_name")
                 if name != EXCLUDED_CONDITIONS[cmb]:
                     raise ValueError(
@@ -2047,77 +1910,56 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
         self,
         path: str,
         assay: str,
-        sgd_genes: set[str],
         columns: list[_ColumnMeta],
-        dropped_columns: list[tuple[int, str]],
         reference_refs: dict[tuple[str, str], Any],
         pub_ref: Any,
         counts: _BuildCounts,
         strains: dict[str, list[TableS5Entry]],
         validate: Callable[[Any], object],
-        resolve: Callable[[str], Any],
         census: _ColumnCensus,
     ) -> Iterator[bytes]:
-        """Yield one pickled record per (kept row, kept sensitivity column).
+        """Yield one pickled record per (row, stored column) scored cell.
 
-        A row's ORF goes through ``resolve`` under ``ORF_RULE``, then the row must pass
-        ``DETECTION_RULE`` over ``census.detection``. The cells a dropped row loses in
-        KEPT columns are counted, and the dropped / excluded / unencodable columns'
-        non-empty cells of every surviving row are counted in the SAME pass, so the drop
-        ledger is measured rather than estimated. The first record of each column is
-        validated against the experiment schema, which is what makes the per-column
-        template safe. ``strains`` (Table S5, keyed by upper-cased ORF) gives a HIP
-        strain its construction record and its flag.
+        The row's 'Systematic Name' is stored exactly as released: no genome lookup, no
+        rename, no detection threshold. A row scored in no stored column carries no
+        record and is counted as not-a-value; a row whose token fails the
+        ``GenePerturbation`` ORF pattern is held out under ``NOT_ORF_SHAPED_RULE`` with
+        its cells counted. Every scored sensitivity cell and every excluded-condition
+        cell is counted in the SAME pass, so the ledger's accounting is measured. The
+        first record of each column is validated against the experiment schema, which is
+        what makes the per-column template safe. ``strains`` (Table S5, keyed by
+        upper-cased ORF) gives a HIP strain its construction record and its flag.
         """
 
         def filled(parts: list[str], index: int) -> bool:
             return index < len(parts) and parts[index].strip().strip('"') != ""
 
-        dropped_orfs: list[DroppedOrf] = []
-        undetected: list[UndetectedStrain] = []
-        renamed: dict[str, str] = {}
+        not_orf_shaped: list[NotOrfShapedRow] = []
         validated: set[int] = set()
         genotypes: dict[str, dict[str, Any]] = {}
-        n_detection = len(census.detection)
         with open(path) as handle:
             handle.readline()
             for line in tqdm(handle, desc=f"Hoepfner2014 {assay}"):
                 parts = line.rstrip("\n").split("\t")
-                source_orf = parts[0].strip().strip('"')
-                resolution = resolve(source_orf)
-                orf = resolution.systematic_name
-                lost = sum(1 for col in columns if filled(parts, col.index))
-                if resolution.status not in _KEPT_STATUSES or orf not in sgd_genes:
-                    dropped_orfs.append(
-                        DroppedOrf(
-                            source_name=source_orf,
-                            status=str(resolution.status.value),
-                            resolved_to=orf,
-                            feature_type=resolution.feature_type,
-                            n_records=lost,
-                        )
-                    )
-                    continue
-                n_scored = sum(1 for index in census.detection if filled(parts, index))
+                counts.rows[assay] += 1
+                orf = parts[0].strip().strip('"')
+                counts.source_cells[assay] += sum(
+                    1 for index in census.sensitivity if filled(parts, index)
+                )
+                for index, cmb in census.excluded:
+                    if filled(parts, index):
+                        counts.excluded[(assay, cmb)] += 1
+                n_scored = sum(1 for col in columns if filled(parts, col.index))
                 if n_scored == 0:
                     counts.empty_rows[assay] += 1
                     continue
-                if n_scored < DETECTION_MIN_FRACTION * n_detection:
-                    undetected.append(
-                        UndetectedStrain(
-                            source_name=source_orf,
-                            systematic_name=orf,
-                            n_scored_columns=n_scored,
-                            n_columns=n_detection,
-                            n_records=lost,
-                        )
+                if _ORF_SHAPED.match(orf) is None:
+                    not_orf_shaped.append(
+                        NotOrfShapedRow(source_name=orf, n_records=n_scored)
                     )
                     continue
-                counts.detected_rows[assay] += 1
-                if resolution.status == GeneNameStatus.RENAMED:
-                    renamed[source_orf] = orf
-                entries = strains.get(source_orf.upper(), [])
-                genotype = genotypes.get(source_orf)
+                entries = strains.get(orf.upper(), [])
+                genotype = genotypes.get(orf)
                 if genotype is None:
                     if assay == "HIP":
                         counts.construction[
@@ -2127,23 +1969,10 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
                             if len(entries) == 1
                             else "duplicate_entries"
                         ] += 1
-                    genotype = self._genotype(
-                        assay, orf, source_orf, entries
-                    ).model_dump()
-                    genotypes[source_orf] = genotype
-                for index, cmb in dropped_columns:
-                    if filled(parts, index):
-                        counts.dropped[(assay, cmb)] += 1
-                for index, cmb in census.excluded:
-                    if filled(parts, index):
-                        counts.excluded[(assay, cmb)] += 1
-                counts.unencodable[assay] += sum(
-                    1 for index, _ in census.unencodable if filled(parts, index)
-                )
-                # Table S5 names PHYSICAL strains by their 2014 name, so the flag matches
-                # on the deposited (source) name only: a RENAMED merged-ORF strain is not
-                # the listed strain of the gene it now maps to, and is never flagged
-                # through the current name.
+                    genotype = self._genotype(assay, orf, entries).model_dump()
+                    genotypes[orf] = genotype
+                # Table S5 names PHYSICAL strains by their 2014 name, the same spelling
+                # the matrices release, so the flag joins on the released token.
                 flagged = assay == "HIP" and any(entry.flagged for entry in entries)
                 for col in columns:
                     if col.index >= len(parts):
@@ -2166,8 +1995,9 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
                         validate({**experiment, "environment": col.env_dump})
                         validated.add(col.index)
                     counts.kept[assay] += 1
+                    col.n_records += 1
                     if flagged:
-                        counts.flagged[source_orf] += 1
+                        counts.flagged[orf] += 1
                     yield pickle.dumps(
                         {
                             "experiment": experiment,
@@ -2175,21 +2005,19 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
                             "publication": pub_ref,
                         }
                     )
-        counts.dropped_orfs[assay] = sorted(dropped_orfs, key=lambda d: d.source_name)
-        counts.undetected[assay] = sorted(undetected, key=lambda d: d.source_name)
-        counts.renamed_orfs[assay] = dict(sorted(renamed.items()))
+        counts.not_orf_shaped[assay] = sorted(
+            not_orf_shaped, key=lambda row: row.source_name
+        )
         log.info(
-            "Hoepfner2014 %s: wrote %d records; kept %d RENAMED rows under their current "
-            "name; dropped %d rows (%d cells) whose ORF is no current gene: %s; dropped "
-            "%d rows (%d cells) under the detection rule",
+            "Hoepfner2014 %s: wrote %d records from %d rows; %d rows scored nowhere; held "
+            "out %d rows (%d cells) whose token is not ORF-shaped: %s",
             assay,
             counts.kept[assay],
-            len(renamed),
-            len(dropped_orfs),
-            sum(d.n_records for d in dropped_orfs),
-            [f"{d.source_name}:{d.status}" for d in counts.dropped_orfs[assay]],
-            len(undetected),
-            sum(d.n_records for d in undetected),
+            counts.rows[assay],
+            counts.empty_rows[assay],
+            len(not_orf_shaped),
+            sum(row.n_records for row in not_orf_shaped),
+            [row.source_name for row in counts.not_orf_shaped[assay]],
         )
 
     @post_process
@@ -2210,9 +2038,7 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
         from torchcell.datamodels.schema import ExperimentType
 
         load_dotenv()
-        data_root = os.environ["DATA_ROOT"]
         repo_root = Path(__file__).resolve().parents[3]
-        sgd_genes = _load_sgd_genes(data_root)
         table_s1 = osp.join(self.raw_dir, "Table_S1.xls")
         meta = _load_compound_meta(table_s1)
         ic30 = _load_ic30(table_s1)
@@ -2225,25 +2051,21 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
         env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
 
         columns: dict[str, list[_ColumnMeta]] = {}
-        dropped_columns: dict[str, list[tuple[int, str]]] = {}
         censuses: dict[str, _ColumnCensus] = {}
         reference_refs: dict[tuple[str, str], Any] = {}
         with interned_env.begin(write=True) as itxn:
             for filename, assay in _ASSAYS:
                 header = self._read_header(filename)
-                kept, dropped = self._column_meta(header, assay, meta, itxn)
+                kept = self._column_meta(header, assay, meta, itxn)
                 columns[assay] = kept
-                dropped_columns[assay] = dropped
                 censuses[assay] = self._column_census(header, assay, meta)
                 log.info(
-                    "Hoepfner2014 %s: %d kept sensitivity experiments, %d dropped "
-                    "(compound without a structure identifier), %d excluded by rule, "
-                    "%d without a released structure",
+                    "Hoepfner2014 %s: %d stored sensitivity experiments (%d with no "
+                    "InChIKey, stored with the typed gap), %d excluded by rule",
                     assay,
                     len(kept),
-                    len(dropped),
+                    sum(1 for col in kept if col.inchikey is None),
                     len(censuses[assay].excluded),
-                    len(censuses[assay].unencodable),
                 )
                 for study in sorted({col.study for col in kept}):
                     reference_refs[(assay, study)] = self._intern_ref(
@@ -2252,7 +2074,6 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
             pub_ref = self._intern_ref(publication, DOI, itxn)
 
         counts = _BuildCounts()
-        resolve = self._resolver()
         idx = 0
         batch_size = 500_000
         txn = env.begin(write=True)
@@ -2260,15 +2081,12 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
             for value in self._iter_records(
                 osp.join(self.raw_dir, filename),
                 assay,
-                sgd_genes,
                 columns[assay],
-                dropped_columns[assay],
                 reference_refs,
                 pub_ref,
                 counts,
                 strains,
                 validate,
-                resolve,
                 censuses[assay],
             ):
                 txn.put(f"{idx}".encode(), value)
@@ -2281,7 +2099,7 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
         interned_env.close()
         log.info("Wrote %d Hoepfner2014 environment-response experiments to LMDB", idx)
 
-        self._write_drop_ledger(meta, ic30, columns, dropped_columns, censuses, counts)
+        self._write_drop_ledger(meta, ic30, columns, censuses, counts)
         self._write_table_s5_flags(strains, counts)
         self._write_sourced_values()
 
@@ -2290,49 +2108,47 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
         meta: dict[str, dict[str, str | None]],
         ic30: dict[str, float],
         columns: dict[str, list[_ColumnMeta]],
-        dropped_columns: dict[str, list[tuple[int, str]]],
         censuses: dict[str, _ColumnCensus],
         counts: _BuildCounts,
     ) -> None:
-        """Write ``<root>/dropped_records.json``: every rule and what it measured."""
-        cmb_columns: Counter[str] = Counter()
-        for dropped in dropped_columns.values():
-            for _, cmb in dropped:
-                cmb_columns[cmb] += 1
-        compounds: list[DroppedCompound] = []
-        for cmb in sorted(cmb_columns):
+        """Write ``<root>/dropped_records.json``: what was stored, held out and why.
+
+        Raises when an arm's scored sensitivity cells do not equal stored plus held-out
+        plus excluded cells, so no released cell can leave the build uncounted.
+        """
+        gap_cmbs = sorted(
+            {
+                col.cmb
+                for cols in columns.values()
+                for col in cols
+                if col.inchikey is None
+            },
+            key=int,
+        )
+        identity_gaps: list[CompoundIdentityGap] = []
+        for cmb in gap_cmbs:
             source_name = self._compound_name(cmb, meta)
             resolution = resolve_compound_identity(
                 name=source_name,
                 known_proprietary=(meta.get(cmb) or {}).get("common_name") is None,
             )
-            compounds.append(
-                DroppedCompound(
+            identity_gaps.append(
+                CompoundIdentityGap(
                     cmb_id=cmb,
                     source_name=source_name,
                     smiles=(meta.get(cmb) or {}).get("smiles"),
                     resolution_status=resolution.status.value,
                     unresolved_reason=resolution.unresolved_reason,
-                    n_columns=cmb_columns[cmb],
-                    n_records=sum(
-                        n
-                        for (_, dropped_cmb), n in counts.dropped.items()
-                        if dropped_cmb == cmb
-                    ),
+                    n_columns_by_assay={
+                        assay: sum(1 for col in cols if col.cmb == cmb)
+                        for assay, cols in columns.items()
+                    },
+                    n_records_by_assay={
+                        assay: sum(col.n_records for col in cols if col.cmb == cmb)
+                        for assay, cols in columns.items()
+                    },
                 )
             )
-        detection = {
-            assay: DetectionLedger(
-                n_columns=len(census.detection),
-                n_rows_without_any_score=counts.empty_rows[assay],
-                n_rows_kept=counts.detected_rows[assay],
-                n_records_dropped=sum(
-                    d.n_records for d in counts.undetected.get(assay, [])
-                ),
-                dropped=counts.undetected.get(assay, []),
-            )
-            for assay, census in censuses.items()
-        }
         excluded = [
             ExcludedCondition(
                 cmb_id=cmb,
@@ -2347,20 +2163,32 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
             )
             for cmb, name in sorted(EXCLUDED_CONDITIONS.items())
         ]
-        unencodable_ids = {
-            assay: {cmb for _, cmb in census.unencodable}
-            for assay, census in censuses.items()
-        }
-        encodable = EncodableFilterLedger(
-            rule=ENCODABLE_RULE,
-            n_cmb_ids=len(set().union(*unencodable_ids.values())),
-            n_cmb_ids_by_assay={a: len(ids) for a, ids in unencodable_ids.items()},
-            n_columns_by_assay={
-                a: len(census.unencodable) for a, census in censuses.items()
-            },
-            n_records_by_assay={a: counts.unencodable[a] for a in censuses},
-            n_deposited_cmb_ids=len(set().union(*(c.cmbs for c in censuses.values()))),
-        )
+        accounting: dict[str, CellAccounting] = {}
+        held_out: dict[str, int] = {}
+        for assay, census in censuses.items():
+            n_not_orf = sum(
+                row.n_records for row in counts.not_orf_shaped.get(assay, [])
+            )
+            n_excluded = sum(n for (a, _), n in counts.excluded.items() if a == assay)
+            accounting[assay] = CellAccounting(
+                n_sensitivity_columns=len(census.sensitivity),
+                n_rows=counts.rows[assay],
+                n_rows_without_any_score=counts.empty_rows[assay],
+                n_source_cells=counts.source_cells[assay],
+                n_stored=counts.kept[assay],
+                n_not_orf_shaped=n_not_orf,
+                n_excluded_condition=n_excluded,
+            )
+            if (
+                counts.source_cells[assay]
+                != counts.kept[assay] + n_not_orf + n_excluded
+            ):
+                raise RuntimeError(
+                    f"Hoepfner2014 {assay}: {counts.source_cells[assay]} scored cells != "
+                    f"{counts.kept[assay]} stored + {n_not_orf} not ORF-shaped + "
+                    f"{n_excluded} excluded"
+                )
+            held_out[assay] = n_not_orf + n_excluded
         low, high = IC30_RATIO_RANGE
         outside: list[DoseOutsideIc30] = []
         with_ic30: dict[str, int] = {}
@@ -2386,23 +2214,24 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
                 )
         report = DroppedRecordReport(
             dataset=self.name,
-            rule=DROP_RULE,
-            orf_rule=ORF_RULE,
-            detection_rule=DETECTION_RULE,
+            not_orf_shaped_rule=NOT_ORF_SHAPED_RULE,
+            not_orf_shaped_policy=NOT_ORF_SHAPED_POLICY,
             exclusion_rule=EXCLUSION_RULE,
             n_kept=sum(counts.kept.values()),
-            n_dropped=sum(counts.dropped.values()),
+            n_dropped=sum(held_out.values()),
             kept_by_assay=dict(counts.kept),
-            dropped_by_assay={
-                assay: sum(counts.dropped[(assay, cmb)] for _, cmb in dropped)
-                for assay, dropped in dropped_columns.items()
-            },
-            dropped_compounds=compounds,
-            dropped_orfs=counts.dropped_orfs,
-            renamed_orfs=counts.renamed_orfs,
-            detection=detection,
+            dropped_by_assay=held_out,
+            accounting=accounting,
+            not_orf_shaped=counts.not_orf_shaped,
             excluded_conditions=excluded,
-            encodable_filter=encodable,
+            compound_identity_gaps=identity_gaps,
+            n_cmb_ids_stored=len(
+                {col.cmb for cols in columns.values() for col in cols}
+            ),
+            n_compounds_stored=len(
+                {col.compound for cols in columns.values() for col in cols}
+            ),
+            columns_by_assay={assay: len(cols) for assay, cols in columns.items()},
             positive_control={
                 assay: len(census.positive_control)
                 for assay, census in censuses.items()

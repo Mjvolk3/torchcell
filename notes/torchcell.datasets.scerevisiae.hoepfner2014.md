@@ -441,3 +441,43 @@ Report `verification_report.json` (written 2026-10-11 15:43 UTC):
 | L3 | `media_membership` | pass | 3083827 records on a shared MEDIA_LIBRARY medium, 0 on a medium deriving from one (1 distinct media) |
 | L4 | `gene_containment_sgd` | pass | 1.000 of 5825 measured genes are S288C reference genes (>= 0.9) |
 | L4 | `current_genome_genes` | pass | every one of the 5825 measured systematic names is a gene of the current genome |
+
+## 2026.10.12 - Stored as released: the genome gate is reversed
+
+Owner rule (2026-10-12): the data is the data; nothing is dropped unless the authors withdrew it, and the genome gates nothing. The loader now stores every scored cell of every deposited sensitivity column under the row's released spelling and the compound's released label. No genome is read: `resolve_gene_name`, `GeneNameStatus`, the SGD FASTA gene universe, the renamed-ORF rewrite (`renamed_orfs`, `ConstructedOrf`) and the `genome=` constructor argument are gone.
+
+### Rules removed, with the records they held out
+
+Counts are the served ledger's (`dropped_records.json`, built 2026-10-12, 3,083,827 records), which counted only the cells a rule removed from columns the build kept; the "restored" column is measured in-process on the raw matrices with the module's column census and row reader, over every column now stored.
+
+| Rule | Served ledger | Restored now | What replaces it |
+|---|---|---|---|
+| `encodable_filter` (no released SMILES) | 26,992,230 records; 1,702 CMB ids; 2,650 HIP + 2,619 HOP columns | 26,992,230 | stored as `resolved_compound("CMB<id>")` (or the released name) with the typed `inchikey` gap, released dose and DMSO vehicle as every other column; `compound_identity_gaps` in the ledger |
+| Boromycin CMB409 (SMILES does not parse in RDKit) | 10,222 records, 2 columns | 10,222 | stored with the `inchikey` gap, the released SMILES verbatim on `Compound.smiles` |
+| `orf_rule` (retired or non-gene ORF) | 13,809 records (HIP 7,204, HOP 6,605) | 134,849 (HIP 70,575, HOP 64,274) | stored under the released spelling |
+| `detection_rule` (scored in under half the columns) | 9,607 records; HIP 72 rows, HOP 452 rows | 87,446 (HIP 24,991, HOP 62,455) | none: a row scored in any stored column is stored |
+| RENAMED rewrite onto the current gene | 0 records (52 HIP + 46 HOP ORFs rewritten) | n/a | stored under the released spelling, no `ConstructedOrf` |
+
+The paper's detection counts ("an average of 5796 out of 5910 HIP strains received were detectable", "For HOP, 4520 strains were detected (96.0%) from 4705 strains obtained") stay in `SOURCED_VALUES` as sourced numbers, not as a rule. Rows scored in no stored column are not records and are counted as `n_rows_without_any_score`.
+
+### What still holds cells out
+
+- `systematic_name_is_not_orf_shaped_needs_released_name_leaf`: a released token the `GenePerturbation.systematic_gene_name` pattern rejects cannot sit on the deletion leaves. The deposit's such tokens (`R0010W`, `R0020C`, `R0030W`, `R0040C`, `YBR160W_AS`) carry no scored cell in either matrix, so the rule holds out 0 records. It waits for group 1's released-gene-name leaf.
+- CMB4019 "D-Glucose (starvation)", 6 columns, HIP 17,397 + HOP 13,623 scored cells over every row (the served ledger's 30,768 counted only rows that passed the old rules). **Needs schema.** A `Concentration` with no value and a basis can be built, but the only fitting basis, `reduced_from_standard`, asserts a medium reduction the paper never states; the header number (0.25 / 0.5 / 0.75) cannot be a typed gap because `SmallMoleculePerturbation.concentration` is required and `Concentration` carries no gaps; and a `SmallMoleculePerturbation` states the compound was added, the opposite of starvation. No medium change is invented.
+- `dose_outside_ic30_range` (now 124 columns: HIP 64, HOP 60), the solvent gap (69 columns per arm above 200 uM) and the pH gap (6 columns per arm) are stored-with-gap accounting, not drops.
+
+### Expected store
+
+| Arm | Stored columns | Stored rows | Records |
+|---|---|---|---|
+| HIP | 2,953 | 5,869 | 17,104,778 |
+| HOP | 2,920 | 4,970 | 13,203,796 |
+| Total | 5,873 | | 30,308,574 |
+
+1,851 CMB ids over both arms, 1,849 distinct stored compound names, 1,703 CMB ids carrying the `inchikey` gap, 148 with an InChIKey (147 distinct keys). 96 studies per arm. 0 columns collide on (resolved compound, dose, study). The ledger's `accounting` section asserts, per arm, scored sensitivity cells = stored + not ORF-shaped + excluded.
+
+Store-size and build-time estimate, linear in record count from the served build (an estimate, not a measurement): the served `processed/lmdb` is 12.78 GB (`du -sb`) for 3,083,827 records, so about 126 GB for 30,308,574 (x9.83). The served build ran from `processed/` creation 08:54:49Z to the ledger `created_at` 08:56:02Z (records written) to the build manifest `built_at` 09:11:47Z (post-processing), 17.0 min in total, so about 2.8 h at x9.83; the 70 MB `experiment_reference_index.json` scales to about 690 MB.
+
+Verification consequence (expected, not measured): L4 `current_genome_genes` and any L1 canonical-gene-name check will now see the retired, non-gene and renamed released spellings that the old gate removed.
+
+L0-L4 after rebuild: (orchestrator fills in after the slurm build)

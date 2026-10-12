@@ -1955,22 +1955,21 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
     },
     "env_chemgen_hoepfner2014": {
         "root": "data/torchcell/env_chemgen_hoepfner2014",
-        # ENCODABLE-COMPOUNDS-ONLY build (only compounds with a released SMILES in Table S1;
-        # the proprietary CMBxxx columns are counted in the ledger's encodable_filter),
-        # MINUS the one kept compound that resolves to no structure identifier (CMB409
-        # Boromycin), MINUS the six CMB4019 "D-Glucose (starvation)" columns excluded by
-        # rule (#506: HIP 17,289 + HOP 13,479 records), MINUS the rows scored in fewer
-        # than half of their arm's deposited sensitivity columns (#506 detection rule:
-        # HIP 72 rows / 2,263 records, HOP 452 rows / 7,344 records, 328 of the HOP rows
-        # SGD-essential). Row ORFs through the shared resolver (CURRENT kept; RENAMED kept
-        # under the current name with a ConstructedOrf; NON_GENE_FEATURE / RETIRED
-        # dropped, 30 rows per assay). HIP 1,739,664 (302 encodable heterozygous kanMX4
-        # deletion experiments) + HOP 1,344,163 (300 barcoded kanMX4 deletion
-        # experiments) = 3,083,827 records, measured by
-        # experiments/036-dataset-fixes-before-kg-build/scripts/hoepfner2014_inputs.py
-        # over the real record path. Drop ledger: <root>/dropped_records.json.
-        "expected_count": 3083827,
-        # ~3.1M records -> single-pass streaming gate (retained from the 30M full-atlas build).
+        # STORED AS RELEASED (2026.10.12, the data is the data): every scored cell of
+        # every deposited sensitivity column, the 1,702 proprietary CMB ids with no
+        # released SMILES and CMB409 Boromycin (unparseable SMILES) included under their
+        # released labels with the typed inchikey gap; every row under its released ORF
+        # spelling with no genome lookup (retired, non-gene and renamed ORFs included)
+        # and no detection threshold. Held out: the six CMB4019 "D-Glucose (starvation)"
+        # columns (EXCLUSION_RULE, needs schema; HIP 17,397 + HOP 13,623 scored cells)
+        # and any row whose token is not ORF-shaped (NOT_ORF_SHAPED_RULE; 0 scored cells
+        # in the deposit). HIP 17,104,778 (2,953 heterozygous kanMX4 deletion
+        # experiments, 5,869 rows) + HOP 13,203,796 (2,920 barcoded kanMX4 deletion
+        # experiments, 4,970 rows) = 30,308,574 records, measured in-process on the raw
+        # matrices with the loader's column census and row reader. Ledger:
+        # <root>/dropped_records.json.
+        "expected_count": 30308574,
+        # ~30.3M records -> single-pass streaming gate.
         "stream": True,
         # HIP heterozygous + HOP homozygous kanMX4 deletion diploid collections (BY4743):
         # no constant background genes in the genotype (the BY4743 alleles ride on the
@@ -1989,28 +1988,26 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
                 "compound/concentration) at IC30 in YPD_LIQUID, 30 C, 24-well culture "
                 "(CultureEnvironment); 2% DMSO vehicle up to 200 uM, a solvent "
                 "ProvenanceGap above it, a pH ProvenanceGap for HCl / NaOH / sodium "
-                "acetate; encodable compounds only (released Table S1 SMILES), and every "
-                "kept compound carries a structure identifier -- curated "
+                "acetate; every deposited compound stored: a curated "
                 "compound_identity_table row first, else an InChIKey derived from the "
-                "released SMILES with RDKit; the one compound resolving to no identifier "
-                "(CMB409 Boromycin) is DROPPED; CMB4019 glucose starvation is EXCLUDED "
-                "(medium change not expressible with a sourced value); rows scored in "
-                "fewer than half of their arm's columns are DROPPED (detection rule). "
+                "released SMILES with RDKit, else (1,702 proprietary CMB ids with no "
+                "released SMILES and CMB409 Boromycin) the released label with the typed "
+                "inchikey gap; CMB4019 glucose starvation is EXCLUDED (medium change not "
+                "expressible with a sourced value; needs schema). "
                 "StrainEnvironmentResponseExperiment records on a BY4743 "
                 "StrainReferenceGenome whose name and alleles are pending-review gaps. "
                 "HIP = HeterozygousDeletionPerturbation (kanMX4, YSC1055, Table S5 "
                 "construction lab / batch / plate / well) incl. essential genes, HIP "
                 "duration hours, generations and endpoint all gaps (Fig. S2); HOP = "
                 "BarcodedKanMxDeletionPerturbation (kanMX4, YSC1056) at 16 h / ~5 "
-                "generations; RENAMED source ORFs carry a ConstructedOrf; n_samples = 2 "
-                "(Ad. columns) / 1 (MADL columns), technical duplicate, reference "
-                "n_samples = 4 (conservative lower end of the paper's 4-8 control "
-                "replicates); screen_id = the deposited study number; assay_type = "
-                "pooled_competitive_growth_barcode; Table S5 background-mutation HIP "
-                "strains are KEPT and flagged in <root>/table_s5_affected_strains.json; "
-                "row ORFs go through the SHARED resolve_gene_name (CURRENT kept; RENAMED "
-                "kept under the current name; NON_GENE_FEATURE and RETIRED dropped to "
-                "<root>/dropped_records.json)"
+                "generations; n_samples = 2 (Ad. columns) / 1 (MADL columns), technical "
+                "duplicate, reference n_samples = 4 (conservative lower end of the "
+                "paper's 4-8 control replicates); screen_id = the deposited study "
+                "number; assay_type = pooled_competitive_growth_barcode; Table S5 "
+                "background-mutation HIP strains are KEPT and flagged in "
+                "<root>/table_s5_affected_strains.json; every row stored under its "
+                "released ORF spelling with no genome lookup and no detection rule; a "
+                "token that is not ORF-shaped is held out to <root>/dropped_records.json"
             ),
             page=(
                 "Microbiol Res 2014 (doi:10.1016/j.micres.2013.11.004); Dryad "

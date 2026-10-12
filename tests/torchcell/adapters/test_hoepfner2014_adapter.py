@@ -152,17 +152,15 @@ def test_environment_response_phenotype_node_carries_the_screen_id() -> None:
 
 
 # ---- #506: the adapter over a small strain-resolved scratch build ---------------- #
-_ORF_FASTA = (
-    ">YAL001C TFC3 SGDID:S000000001\nATGGTA\n>YBR115C LYS2 SGDID:S000000319\nATGACC\n"
-)
 _HIP = [
     [
         "Systematic Name",
         "Ad. scores for Exp. 3_50_HIP_0077",
         "Ad. scores for Exp. 4016_60000_HIP_0125",
+        "Ad. scores for Exp. 1234_10_HIP_0077",
     ],
-    ["YAL001C", "-1.5", "0.25"],
-    ["YBR115C", "0.5", "-0.75"],
+    ["YAL001C", "-1.5", "0.25", "0.1"],
+    ["YBR115C", "0.5", "-0.75", ""],
 ]
 _HOP = [
     [
@@ -172,20 +170,6 @@ _HOP = [
     ],
     ["YAL001C", "1.0", "2.0"],
 ]
-
-
-class _CurrentGenome:
-    """Every ORF resolves as a CURRENT gene."""
-
-    def resolve_gene_name(self, name: str) -> Any:
-        from torchcell.sequence.genome.scerevisiae.s288c import (
-            GeneNameResolution,
-            GeneNameStatus,
-        )
-
-        return GeneNameResolution(
-            input_name=name, status=GeneNameStatus.CURRENT, systematic_name=name
-        )
 
 
 class _NoWandb:
@@ -206,9 +190,10 @@ class _NoWandb:
 
 
 def _small_build(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
-    """A real ``process()`` over two tiny matrices, a two-gene genomes tier and a
-    Table S1 with amitriptyline (CMB 3, IC30 50 uM) and hydrochloric acid (CMB 4016,
-    IC30 60849 uM), with the raw pins repointed at the fixture's bytes.
+    """A real ``process()`` over two tiny matrices and a Table S1 with amitriptyline
+    (CMB 3, IC30 50 uM) and hydrochloric acid (CMB 4016, IC30 60849 uM), plus a
+    proprietary CMB 1234 column Table S1 does not list (no structure released), with
+    the raw pins repointed at the fixture's bytes. No genome is read.
     """
     import gc
 
@@ -216,40 +201,10 @@ def _small_build(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
 
     import torchcell.adapters.cell_adapter as cell_adapter_module
     from torchcell.datasets.scerevisiae import hoepfner2014 as m
-    from torchcell.literature.manifest import ArtifactRecord
-    from torchcell.sequence.genome.registry import GenomeManifest
 
     data_root = tmp_path / "data_root"
     monkeypatch.setenv("DATA_ROOT", str(data_root))
     monkeypatch.setattr(cell_adapter_module, "wandb", _NoWandb())
-    tier = data_root / "torchcell-genomes" / "sgd_S288C_R64-4-1_20230830"
-    tier.mkdir(parents=True)
-    records = []
-    for name, text in (
-        ("orf_coding_all_R64-4-1_20230830.fasta", _ORF_FASTA),
-        ("rna_coding_R64-4-1_20230830.fasta", ""),
-    ):
-        (tier / name).write_text(text)
-        records.append(
-            ArtifactRecord(
-                path=name,
-                role="sequence",
-                bytes=len(text.encode()),
-                sha256=hashlib.sha256(text.encode()).hexdigest(),
-            )
-        )
-    (tier / "manifest.json").write_text(
-        GenomeManifest(
-            assembly_set="sgd_S288C_R64-4-1_20230830",
-            organism="Saccharomyces cerevisiae",
-            strain_or_population="S288C",
-            source="SGD",
-            release="R64-4-1_20230830",
-            files=records,
-            provenance_complete=True,
-            created_at="2026-10-02T00:00:00+00:00",
-        ).model_dump_json()
-    )
     root = tmp_path / "env_chemgen_hoepfner2014"
     raw = root / "raw"
     raw.mkdir(parents=True)
@@ -280,7 +235,7 @@ def _small_build(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
             for name, spec in m._DRYAD_FILES.items()
         },
     )
-    dataset = m.EnvChemgenHoepfner2014Dataset(root=str(root), genome=_CurrentGenome())
+    dataset = m.EnvChemgenHoepfner2014Dataset(root=str(root))
     gc.unfreeze()
     return dataset
 
@@ -292,7 +247,9 @@ def test_adapter_emits_strain_resolved_nodes_from_a_scratch_build(
     node serializes the BY4743 background (HIS3 0 functional copies, every allele a
     pending gap); the perturbation nodes are the heterozygous and barcoded kanMX4
     leaves; the 60 mM HCl column adds a pH environment-perturbation node next to the
-    compound node; the phenotype nodes carry the screen id.
+    compound node; the proprietary CMB 1234 column (no released structure) is stored
+    and projects a compound node under its released label with no InChIKey; the
+    phenotype nodes carry the screen id.
     """
     import gc
 
@@ -303,7 +260,7 @@ def test_adapter_emits_strain_resolved_nodes_from_a_scratch_build(
 
     monkeypatch.delenv("TC_DATA_URL", raising=False)
     dataset = _small_build(tmp_path, monkeypatch)
-    assert len(dataset) == 6
+    assert len(dataset) == 7
     adapter = EnvChemgenHoepfner2014Adapter(
         dataset=dataset,
         process_workers=1,
@@ -354,6 +311,15 @@ def test_adapter_emits_strain_resolved_nodes_from_a_scratch_build(
     }
     assert ("environment_physical", "pH", "hydrochloric acid") in {
         (t, f, str(c).lower()) for t, f, c in env_perts
+    }
+    proprietary = [
+        p
+        for p in (n.get_properties() for n in by_label["environment perturbation"])
+        if p["compound_name"] == "CMB1234"
+    ]
+    assert proprietary
+    assert {(p["perturbation_type"], p["inchikey"]) for p in proprietary} == {
+        ("small_molecule", None)
     }
     assert {
         n.get_properties()["screen_id"]

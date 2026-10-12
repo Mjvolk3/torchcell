@@ -9,28 +9,28 @@ Three modes (combinable):
   (``_column_meta`` / ``_column_census`` / ``_iter_records``, the per-column schema
   validation included) over the full deposited ``HIP_scores.txt`` / ``HOP_scores.txt`` in
   the dev raw directory, with a dict-backed interned store and no LMDB. Every yielded
-  record is unpickled and tallied. Reports, per arm: records kept (vs the old dev drop
-  ledger), rows the detection rule drops and how many of those are in the SGD essential
-  gene set (``$DATA_ROOT/data/torchcell/gene_essentiality_sgd/preprocess/gene_set.json``),
-  the excluded glucose-starvation columns and records, the columns / records dosed above
-  200 uM (solvent gap) and of the pH agents, the RENAMED-ORF records now carrying a
-  ``constructed_orf`` (and how many target an essential gene), the Table S5 construction
-  coverage of HIP rows and records, the marker-locus records and their derived functional
-  dose, the encodable-only filter, the IC30-range columns, and the flag set against the
-  017 CSV. Writes ``results/hoepfner2014_inputs.json`` and
-  ``results/hoepfner2014_inputs_detection_dropped.csv``.
+  record is unpickled and tallied. Reports, per arm (2026.10.12, every row stored as
+  released, every non-excluded column stored, no detection threshold): records kept (vs
+  the old dev drop ledger), rows with no score, rows whose token is not ORF-shaped, the
+  records on SGD essential genes
+  (``$DATA_ROOT/data/torchcell/gene_essentiality_sgd/preprocess/gene_set.json``), the
+  excluded glucose-starvation columns and records, the columns / records dosed above
+  200 uM (solvent gap) and of the pH agents, the columns and records whose compound
+  carries the typed ``inchikey`` gap, the Table S5 construction coverage of HIP rows and
+  records, the marker-locus records and their derived functional dose, the IC30-range
+  columns, and the flag set against the 017 CSV. Writes
+  ``results/hoepfner2014_inputs.json``.
 - ``--slice-build``: copies every row of a fixed subset of deposited columns (the
   glucose-starvation, hydrochloric-acid, sodium-hydroxide, sodium-acetate and sorbitol
   columns plus the first ``--n-extra`` other encodable columns per arm), keeping EVERY
-  sensitivity column's emptiness pattern so the detection rule sees the full denominator,
+  sensitivity column's emptiness pattern,
   into a sliced raw directory under the scratch root, then runs the real ``process()``
   there. The sliced files carry their own sha256, so the slice build overrides the pinned
   raw hashes for that run only (a verification harness, never the loader). Writes
   ``results/hoepfner2014_inputs_slice.json``.
 - ``--dev-lmdb``: after the slurm rebuild, reads the dev store
   (``$DATA_ROOT/data/torchcell/env_chemgen_hoepfner2014``) and tallies the same per-record
-  quantities from it (experiment type, leaves, solvent gaps, constructed ORFs, construction
-  coverage). Writes ``results/hoepfner2014_inputs_dev_lmdb.json``.
+  quantities from it (experiment type, leaves, solvent gaps, construction coverage). Writes ``results/hoepfner2014_inputs_dev_lmdb.json``.
 
 Run from the repo root::
 
@@ -94,18 +94,6 @@ class _DictTxn:
         self.store[key] = value
 
 
-def _genome() -> Any:
-    """The read-only S288C genome whose resolver the loader uses."""
-    from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
-
-    data_root = os.environ["DATA_ROOT"]
-    return SCerevisiaeGenome(
-        genome_root=osp.join(data_root, "data/sgd/genome"),
-        go_root=osp.join(data_root, "data/go"),
-        overwrite=False,
-    )
-
-
 def _essential(data_root: str) -> set[str]:
     with open(osp.join(data_root, ESSENTIAL)) as handle:
         return set(json.load(handle))
@@ -119,7 +107,13 @@ def _env_of(record: dict[str, Any], interned: dict[str, Any]) -> dict[str, Any]:
 
 
 def stream(data_root: str) -> dict[str, Any]:
-    """Run the loader's record path over the full deposited matrices; tally records."""
+    """Run the loader's record path over the full deposited matrices; tally records.
+
+    No genome is read (2026.10.12): every row is stored under its released
+    'Systematic Name', every sensitivity column of a non-excluded condition is stored
+    (a compound with no structure identifier carries the typed ``inchikey`` gap), and
+    there is no detection threshold.
+    """
     raw_dir = osp.join(data_root, SLUG, "raw")
     dataset = m.EnvChemgenHoepfner2014Dataset.__new__(m.EnvChemgenHoepfner2014Dataset)
     dataset.name = "EnvChemgenHoepfner2014Dataset"
@@ -127,24 +121,21 @@ def stream(data_root: str) -> dict[str, Any]:
     meta = m._load_compound_meta(table_s1)
     ic30 = m._load_ic30(table_s1)
     strains = m.load_table_s5_strains(Path.cwd())
-    sgd_genes = m._load_sgd_genes(data_root)
     essential = _essential(data_root)
     background = m.hoepfner_background()
-    resolve = _genome().resolve_gene_name
     validate: Callable[[Any], object] = TypeAdapter(ExperimentType).validate_python
     itxn = _DictTxn()
     counts = m._BuildCounts()
     out: dict[str, Any] = {"by_assay": {}}
-    unencodable_ids: set[str] = set()
     deposited_ids: set[str] = set()
-    detection_rows: list[dict[str, Any]] = []
+    gapped_ids: set[str] = set()
     for filename, assay in m._ASSAYS:
         with open(osp.join(raw_dir, filename)) as handle:
             header = handle.readline().rstrip("\n").split("\t")
-        columns, dropped = dataset._column_meta(header, assay, meta, itxn)
+        columns = dataset._column_meta(header, assay, meta, itxn)
         census = dataset._column_census(header, assay, meta)
-        unencodable_ids |= {cmb for _, cmb in census.unencodable}
         deposited_ids |= census.cmbs
+        gapped_ids |= {col.cmb for col in columns if col.inchikey is None}
         refs = {study: {"$ref": study} for study in {col.study for col in columns}}
         reference_refs = {(assay, study): ref for study, ref in refs.items()}
         n_records = 0
@@ -152,24 +143,23 @@ def stream(data_root: str) -> dict[str, Any]:
         leaves: Counter[str] = Counter()
         solvent_gap = 0
         ph_gap = 0
-        renamed_records = 0
-        renamed_essential_records = 0
+        gapped_records = 0
+        essential_records = 0
         constructed: Counter[str] = Counter()
         marker: Counter[str] = Counter()
         marker_dose: dict[str, Any] = {}
         env_cache: dict[str, dict[str, Any]] = {}
+        gapped_columns = {col.index for col in columns if col.inchikey is None}
+        column_of_ref: dict[str, int] = {}
         for value in dataset._iter_records(
             osp.join(raw_dir, filename),
             assay,
-            sgd_genes,
             columns,
-            dropped,
             reference_refs,
             {"$ref": "publication"},
             counts,
             strains,
             validate,
-            resolve,
             census,
         ):
             record = pickle.loads(value)
@@ -188,10 +178,10 @@ def stream(data_root: str) -> dict[str, Any]:
                 solvent_gap += 1
             if len(env["perturbations"]) > 1:
                 ph_gap += 1
-            if pert["constructed_orf"] is not None:
-                renamed_records += 1
-                if pert["systematic_gene_name"] in essential:
-                    renamed_essential_records += 1
+            if small["compound"]["inchikey"] is None:
+                gapped_records += 1
+            if pert["systematic_gene_name"] in essential:
+                essential_records += 1
             if assay == "HIP":
                 constructed[
                     "none"
@@ -208,41 +198,28 @@ def stream(data_root: str) -> dict[str, Any]:
                     marker_dose[MARKER_LOCI[gene]] = (
                         heterozygous_deletion_functional_copies(background, leaf)
                     )
-        undetected = counts.undetected[assay]
-        for row in undetected:
-            detection_rows.append(
-                {
-                    "assay": assay,
-                    "source_name": row.source_name,
-                    "systematic_name": row.systematic_name,
-                    "sgd_essential": row.systematic_name in essential,
-                    "n_scored_columns": row.n_scored_columns,
-                    "n_columns": row.n_columns,
-                    "n_records": row.n_records,
-                }
-            )
-        renamed = counts.renamed_orfs[assay]
+        del column_of_ref
+        not_orf_shaped = counts.not_orf_shaped.get(assay, [])
         out["by_assay"][assay] = {
             "records_kept": n_records,
             "experiment_types": dict(types),
             "perturbation_types": dict(leaves),
-            "kept_columns": len(columns),
-            "detection_columns": len(census.detection),
-            "detection_rows_kept": counts.detected_rows[assay],
-            "detection_rows_dropped": len(undetected),
-            "detection_rows_dropped_sgd_essential": sum(
-                1 for row in undetected if row.systematic_name in essential
-            ),
-            "detection_records_dropped": sum(row.n_records for row in undetected),
-            "detection_records_dropped_sgd_essential": sum(
-                row.n_records for row in undetected if row.systematic_name in essential
-            ),
+            "rows_read": counts.rows[assay],
             "rows_without_any_score": counts.empty_rows[assay],
-            "orf_rule_rows_dropped": len(counts.dropped_orfs[assay]),
+            "scored_sensitivity_cells": counts.source_cells[assay],
+            "kept_columns": len(columns),
+            "sensitivity_columns": len(census.sensitivity),
+            "not_orf_shaped_rows": [row.model_dump() for row in not_orf_shaped],
             "glucose_starvation_columns": sum(
                 1 for _, cmb in census.excluded if cmb == "4019"
             ),
             "glucose_starvation_records_excluded": counts.excluded[(assay, "4019")],
+            "compound_identity_gap_columns": len(gapped_columns),
+            "compound_identity_gap_cmb_ids": len(
+                {col.cmb for col in columns if col.inchikey is None}
+            ),
+            "compound_identity_gap_records": gapped_records,
+            "records_on_sgd_essential_genes": essential_records,
             "solvent_gap_columns": sum(
                 1 for col in columns if col.conc > m.DMSO_CEILING_UM
             ),
@@ -254,21 +231,12 @@ def stream(data_root: str) -> dict[str, Any]:
                 1 for col in columns if col.cmb in m.PH_AGENT_CONDITIONS
             ),
             "ph_gap_records": ph_gap,
-            "renamed_rows": len(renamed),
-            "renamed_targets_sgd_essential": sorted(
-                {cur for cur in renamed.values() if cur in essential}
-            ),
-            "renamed_records": renamed_records,
-            "renamed_records_sgd_essential": renamed_essential_records,
             "hip_construction_rows": dict(counts.construction)
             if assay == "HIP"
             else {},
             "hip_construction_records": dict(constructed),
             "marker_locus_records": dict(marker),
             "hip_marker_functional_copies": marker_dose,
-            "unencodable_columns": len(census.unencodable),
-            "unencodable_cmb_ids": len({cmb for _, cmb in census.unencodable}),
-            "unencodable_records": counts.unencodable[assay],
             "positive_control_columns": len(census.positive_control),
             "kept_columns_with_ic30": sum(1 for col in columns if col.cmb in ic30),
             "kept_columns_outside_half_to_twice_ic30": sum(
@@ -277,7 +245,7 @@ def stream(data_root: str) -> dict[str, Any]:
                 if col.cmb in ic30 and not 0.5 <= col.conc / ic30[col.cmb] <= 2.0
             ),
         }
-    out["unencodable_cmb_ids_both_arms"] = len(unencodable_ids)
+    out["compound_identity_gap_cmb_ids_both_arms"] = len(gapped_ids)
     out["deposited_cmb_ids_both_arms"] = len(deposited_ids)
     flagged_now = set(counts.flagged)
     flagged_listed = {
@@ -307,10 +275,6 @@ def stream(data_root: str) -> dict[str, Any]:
     RESULTS.mkdir(parents=True, exist_ok=True)
     with open(RESULTS / "hoepfner2014_inputs.json", "w") as handle:
         json.dump(out, handle, indent=2, sort_keys=True)
-    with open(RESULTS / "hoepfner2014_inputs_detection_dropped.csv", "w") as handle:
-        writer = csv.DictWriter(handle, fieldnames=list(detection_rows[0]))
-        writer.writeheader()
-        writer.writerows(detection_rows)
     return out
 
 
@@ -343,9 +307,9 @@ def slice_build(data_root: str, scratch_root: str, n_extra: int) -> dict[str, An
                 elif (meta.get(cmb) or {}).get("smiles") and extra < n_extra:
                     keep.append(index)
                     extra += 1
-            # Every other sensitivity column is written as an unencodable placeholder
-            # column (CMB id 0, no Table S1 SMILES) carrying the real cell, so the
-            # detection rule sees the same denominator and numerator as the full build.
+            # Every other sensitivity column is written as a placeholder column (CMB
+            # id 0, no Table S1 SMILES) carrying the real cell, so the slice keeps the
+            # full matrix's emptiness pattern.
             others = [i for i in sensitivity if i not in keep]
             with open(osp.join(sliced_raw, filename), "w") as out:
                 new_header = [header[i] for i in keep] + [
@@ -368,7 +332,7 @@ def slice_build(data_root: str, scratch_root: str, n_extra: int) -> dict[str, An
     pins["Table_S1.xls"] = m._DRYAD_FILES["Table_S1.xls"]
     m._DRYAD_FILES.clear()
     m._DRYAD_FILES.update(pins)
-    dataset = m.EnvChemgenHoepfner2014Dataset(root=root, genome=_genome())
+    dataset = m.EnvChemgenHoepfner2014Dataset(root=root)
     with open(osp.join(root, "dropped_records.json")) as handle:
         ledger = json.load(handle)
     types: Counter[str] = Counter()
@@ -398,8 +362,8 @@ def slice_build(data_root: str, scratch_root: str, n_extra: int) -> dict[str, An
         "records_with_solvent_gap": solvent_none,
         "records_with_ph_factor": ph,
         "ledger_kept_by_assay": ledger["kept_by_assay"],
-        "ledger_detection_dropped": {
-            assay: len(value["dropped"]) for assay, value in ledger["detection"].items()
+        "ledger_not_orf_shaped_rows": {
+            assay: len(rows) for assay, rows in ledger["not_orf_shaped"].items()
         },
         "ledger_excluded_conditions": ledger["excluded_conditions"],
         "reference_genome": reference["genome_reference"],
@@ -418,7 +382,6 @@ def dev_lmdb(data_root: str) -> dict[str, Any]:
     types: Counter[str] = Counter()
     leaves: Counter[str] = Counter()
     solvent_none: Counter[str] = Counter()
-    constructed: Counter[str] = Counter()
     construction: Counter[str] = Counter()
     for record in stream_records(osp.join(data_root, SLUG)):
         experiment = record["experiment"]
@@ -428,15 +391,12 @@ def dev_lmdb(data_root: str) -> dict[str, Any]:
         leaves[leaf] += 1
         if experiment["environment"]["perturbations"][0]["solvent"] is None:
             solvent_none[leaf] += 1
-        if pert.get("constructed_orf") is not None:
-            constructed[leaf] += 1
         if leaf == "heterozygous_deletion":
             construction["none" if pert["construction"] is None else "set"] += 1
     result = {
         "experiment_types": dict(types),
         "perturbation_types": dict(leaves),
         "solvent_gap_records": dict(solvent_none),
-        "constructed_orf_records": dict(constructed),
         "hip_construction_records": dict(construction),
     }
     RESULTS.mkdir(parents=True, exist_ok=True)

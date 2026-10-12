@@ -26,13 +26,15 @@ as a log ratio in ``MicroarrayExpressionPhenotype``.
 RECORD = one GSE4654 sample whose strain is a deletion grown to mid-log in YPD:
 
 - GENOTYPE: one ``KanMxDeletionPerturbation`` in BY4741 (the Open Biosystems
-  collection, ``MATa his3D1 leu2D0 met15D0 ura3D0``). The common name is the genome's
-  own standard name for the ORF, so one gene carries one spelling across datasets.
+  collection, ``MATa his3D1 leu2D0 met15D0 ura3D0``), named as the release names it:
+  the systematic name of Supplementary Table 1 and its gene name, or the systematic
+  name again where the table gives no gene name (the release names that strain by its
+  ORF alone).
 - ENVIRONMENT: ``YPD_LIQUID``; the growth temperature is stated nowhere in the paper or
   the Supplementary Methods (the 39 C figure is the heat-shock arm's shift), so it is a
   typed ``ProvenanceGap``. Aerobicity is the schema default; the paper states none.
 - PHENOTYPE: ``expression_score`` = the released X score per element, keyed by the
-  element's current R64 locus, ``expression_score_p_value`` = the released p-value,
+  element's released GPL3588 ID, ``expression_score_p_value`` = the released p-value,
   ``n_replicates = 2`` (the CONSERVATIVE lower end of "Each experiment was
   independently carried out at least twice", which the "weighted duplicate averaging"
   sentence corroborates), and ``harvest_optical_density`` = the strain's "Average OD of
@@ -42,18 +44,15 @@ RECORD = one GSE4654 sample whose strain is a deletion grown to mid-log in YPD:
   score is the neutral 0 for every element the record scores, with no p-value.
 
 ARRAY ELEMENTS. GPL3588's ID column holds 2006-era ORF names ("May not match current
-SGD annotations"), resolved through ``SCerevisiaeGenome.resolve_gene_name``: a current
-gene keys as itself, a renamed ORF as its current id, and a valid non-gene R64 locus (a
-Ty ORF, a blocked reading frame) as its own feature id. An element is dropped, and
-counted in ``preprocess/array_elements.json``, when its name is not in R64 (retired),
-is ambiguous, or resolves onto a locus another element already carries directly (a
-dubious ORF absorbed into a verified neighbour; keeping it would score the neighbour
-twice). Measured on the build: 5,997 of 6,429 elements are keyed; 412 are retired (348
-``i``-prefixed and 29 ``Int``-prefixed intergenic elements, 33 old-style Ty and LTR
-names, and the ORFs YCL006C and YIL080W) and 20 resolve onto a directly present
-element. A released null score is not a key: over the 263 kept samples 9 values are
-null in both columns and 18,645 carry ``p = 1`` beside a null score, which leaves no
-score to key the p-value to (3,180 and 18,646 over all 269 samples).
+SGD annotations"). Every element is stored under that released ID, verbatim, with no
+resolution against R64 and no status beside it (owner rule, 2026-10-12: the data is
+the data; no loader drops a released row on genome or annotation grounds). So the
+intergenic (``i``- and ``Int``-prefixed), Ty and LTR elements, the ORFs R64 retired and
+the dubious ORFs a neighbour absorbed are all keys, each under its own released name;
+the 6,429 IDs are unique as released. A released null score is not a key: over the 263
+kept samples 9 values are null in both columns and 18,645 carry ``p = 1`` beside a
+null score, which leaves no score to key the p-value to (3,180 and 18,646 over all 269
+samples). ``preprocess/array_elements.json`` counts them.
 
 RECORDS REFUSED (``preprocess/dropped_records.json``):
 
@@ -90,7 +89,7 @@ import shutil
 from collections.abc import Callable, Iterator, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict
 from tqdm import tqdm
@@ -118,7 +117,6 @@ from torchcell.datamodels.schema import (
     ReferenceGenome,
 )
 from torchcell.datasets.dataset_registry import register_dataset
-from torchcell.datasets.scerevisiae.smith2006 import canonical_common_names
 from torchcell.literature.manifest import (
     ROLE_RAW_DATA,
     ROLE_SI_PDF,
@@ -129,7 +127,6 @@ from torchcell.literature.manifest import (
     RetrievalMethod,
     RetrievalRecord,
 )
-from torchcell.sequence.genome.base import GeneNameStatus
 from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 from torchcell.verification.report import (
     Level,
@@ -480,12 +477,6 @@ CONDITIONS = frozenset(
     }
 )
 
-#: A deletion targets a live gene, or a valid non-gene R64 locus by its own id (FLO8,
-#: YER109C, is a blocked reading frame in S288C), as Cachera and Ohya retain them.
-DELETABLE_LOCUS_STATUSES = frozenset(
-    {GeneNameStatus.CURRENT, GeneNameStatus.NON_GENE_FEATURE}
-)
-
 _SYSTEMATIC_RE = re.compile(r"^Y[A-P][LR]\d{3}[WC](?:-[A-Z])?$")
 _TABLE1_ROW = re.compile(
     r"^(Y[A-P][LR]\d{3}[WC](?:-[A-Z])?) (\S*) ?"
@@ -787,69 +778,6 @@ def read_table1(path: str | Path) -> list[StrainCondition]:
 
 
 # --------------------------------------------------------------------------- #
-# Array-element resolution
-# --------------------------------------------------------------------------- #
-ElementRule = Literal[
-    "retired_not_in_r64", "ambiguous_name", "resolves_onto_a_directly_present_element"
-]
-
-
-class ElementResolution(BaseModel):
-    """GPL3588 element -> stored R64 key, plus the elements each drop rule removed."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    key_of: dict[str, str]
-    status_counts: dict[str, int]
-    dropped: dict[ElementRule, list[str]]
-
-
-def resolve_elements(
-    platform_ids: Sequence[str], genome: SCerevisiaeGenome
-) -> ElementResolution:
-    """Key every array element by its current R64 locus, or drop it with a rule.
-
-    A current gene keys as itself; a renamed ORF and a non-gene R64 locus key as the
-    resolver's id, unless that id is another element's own name (the dubious ORF the
-    neighbour absorbed), which would score one locus twice.
-    """
-    resolutions = {
-        element: genome.resolve_gene_name(element) for element in platform_ids
-    }
-    direct = {
-        str(r.systematic_name)
-        for element, r in resolutions.items()
-        if r.systematic_name is not None
-        and r.systematic_name == element.upper()
-        and r.status in (GeneNameStatus.CURRENT, GeneNameStatus.NON_GENE_FEATURE)
-    }
-    key_of: dict[str, str] = {}
-    counts: dict[str, int] = {}
-    dropped: dict[ElementRule, list[str]] = {
-        "retired_not_in_r64": [],
-        "ambiguous_name": [],
-        "resolves_onto_a_directly_present_element": [],
-    }
-    for element in platform_ids:
-        resolution = resolutions[element]
-        counts[resolution.status.value] = counts.get(resolution.status.value, 0) + 1
-        if resolution.status is GeneNameStatus.RETIRED:
-            dropped["retired_not_in_r64"].append(element)
-            continue
-        if resolution.systematic_name is None:
-            dropped["ambiguous_name"].append(element)
-            continue
-        key = str(resolution.systematic_name)
-        if key != element.upper() and key in direct:
-            dropped["resolves_onto_a_directly_present_element"].append(element)
-            continue
-        key_of[element] = key
-    if len(set(key_of.values())) != len(key_of):
-        raise RuntimeError("two GPL3588 elements resolve to one R64 key")
-    return ElementResolution(key_of=key_of, status_counts=counts, dropped=dropped)
-
-
-# --------------------------------------------------------------------------- #
 # Retention bookkeeping
 # --------------------------------------------------------------------------- #
 class DropRule(BaseModel):
@@ -872,12 +800,10 @@ class DropLog(BaseModel):
     not_released: list[str]
 
 
-def phenotype_of(
-    sample: SoftSample, key_of: dict[str, str], od: float
-) -> MicroarrayExpressionScorePhenotype:
-    """One strain's released scores and p-values, keyed by the resolved R64 locus."""
-    scores = {key_of[e]: x for e, (x, _) in sample.values.items() if e in key_of}
-    p_values = {key_of[e]: p for e, (_, p) in sample.values.items() if e in key_of}
+def phenotype_of(sample: SoftSample, od: float) -> MicroarrayExpressionScorePhenotype:
+    """One strain's released scores and p-values, keyed by the released element ID."""
+    scores = {e: x for e, (x, _) in sample.values.items()}
+    p_values = {e: p for e, (_, p) in sample.values.items()}
     return MicroarrayExpressionScorePhenotype(
         expression_score=scores,
         expression_score_p_value=p_values,
@@ -919,13 +845,13 @@ class MicroarrayScoreHu2007Dataset(ExperimentDataset):
         self,
         root: str = DATASET_ROOT,
         io_workers: int = 0,
-        genome: SCerevisiaeGenome | None = None,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize the dataset; a genome is REQUIRED to resolve array elements."""
-        self.genome = genome
+        """Initialize the dataset; it keys every element by its released ID, so it
+        reads no genome.
+        """
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -967,18 +893,11 @@ class MicroarrayScoreHu2007Dataset(ExperimentDataset):
         verify_raw_files(
             self.raw_dir, {soft_name: SOFT.sha256, table_name: SI_TABLE1_TEXT.sha256}
         )
-        if self.genome is None:
-            raise RuntimeError(
-                "MicroarrayScoreHu2007Dataset requires a genome to resolve GPL3588 "
-                "elements; inject SCerevisiaeGenome(...)"
-            )
         release = read_soft(osp.join(self.raw_dir, soft_name))
         table = read_table1(osp.join(self.raw_dir, table_name))
         conditions: dict[str, dict[str, StrainCondition]] = {}
         for row in table:
             conditions.setdefault(row.orf, {})[row.condition] = row
-        elements = resolve_elements(release.platform_ids, self.genome)
-        canonical = canonical_common_names(self.genome)
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae", strain=PARENT_STRAIN.value
         )
@@ -1003,15 +922,6 @@ class MicroarrayScoreHu2007Dataset(ExperimentDataset):
                     f"{sample.gsm} ({sample.orf}) has no mid-log or TetO7 row in "
                     "Supplementary Table 1"
                 )
-        for sample in kept:
-            resolution = self.genome.resolve_gene_name(sample.orf)
-            if (
-                resolution.status not in DELETABLE_LOCUS_STATUSES
-                or resolution.systematic_name != sample.orf
-            ):
-                raise RuntimeError(
-                    f"deleted ORF {sample.orf} is {resolution.status.value} in R64"
-                )
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
         os.makedirs(self.processed_dir, exist_ok=True)
@@ -1020,16 +930,15 @@ class MicroarrayScoreHu2007Dataset(ExperimentDataset):
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for sample in tqdm(kept, desc="hu2007"):
                 row = conditions[sample.orf][CONDITION_MID_LOG]
-                phenotype = phenotype_of(sample, elements.key_of, row.average_od)
+                phenotype = phenotype_of(sample, row.average_od)
                 experiment = MicroarrayExpressionScoreExperiment(
                     dataset_name=self.name,
                     genotype=Genotype(
                         perturbations=[
                             KanMxDeletionPerturbation(
                                 systematic_gene_name=sample.orf,
-                                perturbed_gene_name=canonical.get(
-                                    sample.orf, sample.orf
-                                ),
+                                # the release's own name for the strain
+                                perturbed_gene_name=row.gene_name or sample.orf,
                             )
                         ]
                     ),
@@ -1051,18 +960,17 @@ class MicroarrayScoreHu2007Dataset(ExperimentDataset):
                 idx += 1
         env.close()
         interned_env.close()
-        self._write_ledgers(release, table, elements, kept, teto7, idx)
+        self._write_ledgers(release, table, kept, teto7, idx)
 
     def _write_ledgers(
         self,
         release: SoftRelease,
         table: list[StrainCondition],
-        elements: ElementResolution,
         kept: list[SoftSample],
         teto7: list[str],
         n_written: int,
     ) -> None:
-        """The drop log, the element resolution and the strain table, beside the LMDB."""
+        """The drop log, the element census and the strain table, beside the LMDB."""
         released = {sample.orf for sample in release.samples}
         not_released = sorted(
             f"{row.orf} ({row.condition})"
@@ -1100,12 +1008,8 @@ class MicroarrayScoreHu2007Dataset(ExperimentDataset):
             handle.write(drop_log.model_dump_json(indent=2))
         element_log = {
             "n_elements": len(release.platform_ids),
-            "n_keyed": len(elements.key_of),
-            "status_counts": elements.status_counts,
-            "dropped": elements.dropped,
-            "renamed": {
-                e: k for e, k in sorted(elements.key_of.items()) if e.upper() != k
-            },
+            "n_keyed": len({e for s in kept for e in s.values}),
+            "n_stored_values": sum(len(s.values) for s in kept),
             "released_null_both": sum(s.null_both for s in kept),
             "released_null_score_p_one": sum(s.null_score_p_one for s in kept),
         }
@@ -1136,7 +1040,7 @@ class MicroarrayScoreHu2007Dataset(ExperimentDataset):
             "Hu2007: wrote %d records (%d TetO7 refused); %d of %d elements keyed",
             n_written,
             len(teto7),
-            len(elements.key_of),
+            element_log["n_keyed"],
             len(release.platform_ids),
         )
 
@@ -1165,14 +1069,14 @@ VERIFICATION_PROVENANCE = Provenance(
     citation_key=CITATION_KEY,
     sha256=SOFT.sha256,
     method=f"GSE4654 family SOFT ({GEO_PLATFORM}): released error-model X score and "
-    "p-value per element, keyed by the element's R64 locus",
+    "p-value per element, keyed by the element's released GPL3588 ID",
     page="Nat Genet 39:683, Methods; Supplementary Table 1",
     retrieved=RETRIEVED_AT,
 )
 
 
 def _l2_released_fidelity(
-    records: Sequence[dict[str, Any]], release: SoftRelease, key_of: dict[str, str]
+    records: Sequence[dict[str, Any]], release: SoftRelease
 ) -> LevelResult:
     """L2: every stored (score, p) is the released pair, and no keyed one is missing."""
     by_orf = {sample.orf: sample for sample in release.samples}
@@ -1183,9 +1087,7 @@ def _l2_released_fidelity(
             "systematic_gene_name"
         ]
         phenotype = record["experiment"]["phenotype"]
-        expected = {
-            key_of[e]: pair for e, pair in by_orf[orf].values.items() if e in key_of
-        }
+        expected = dict(by_orf[orf].values)
         stored = {
             gene: (score, phenotype["expression_score_p_value"][gene])
             for gene, score in phenotype["expression_score"].items()
@@ -1296,8 +1198,7 @@ def verify_build(
     mirror = raw_mirror_dir(data_root)
     verify_sha256(mirror / SOFT.relpath, SOFT.sha256)
     release = read_soft(mirror / SOFT.relpath)
-    elements = resolve_elements(release.platform_ids, genome)
-    report.add(_l2_released_fidelity(records, release, elements.key_of))
+    report.add(_l2_released_fidelity(records, release))
     report.add(_l3_provenance_audit(osp.join(data_root, "torchcell-library")))
     report.add(_l4_sgd_containment(records, genome))
     report.add(
@@ -1318,13 +1219,8 @@ def main() -> None:
 
     load_dotenv()
     data_root = os.environ["DATA_ROOT"]
-    genome = SCerevisiaeGenome(
-        genome_root=osp.join(data_root, "data/sgd/genome"),
-        go_root=osp.join(data_root, "data/go"),
-        overwrite=False,
-    )
     root = osp.join(data_root, DATASET_ROOT)
-    dataset = MicroarrayScoreHu2007Dataset(root=root, genome=genome)
+    dataset = MicroarrayScoreHu2007Dataset(root=root)
     print(f"len = {len(dataset)}")
     print(dataset[0])
     print(Path(osp.join(root, "preprocess/dropped_records.json")).read_text())

@@ -48,7 +48,6 @@ from scipy.stats import norm
 from torchcell.data import ManifestPinMismatchError
 from torchcell.datamodels.media import YPD_LIQUID
 from torchcell.datasets.scerevisiae import hu2007 as h
-from torchcell.sequence.genome.base import GeneNameResolution, GeneNameStatus
 from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 from torchcell.verification.report import Level
 from torchcell.verification.runners import load_records
@@ -77,44 +76,13 @@ _HHR = [f"YHR00{i}W" for i in range(1, 9)]
 
 
 class _FakeGenome:
-    """The slice of ``SCerevisiaeGenome`` the Hu 2007 element policy reads."""
+    """The slice of ``SCerevisiaeGenome`` the Hu 2007 L4 containment row reads."""
 
     gene_set = _GENES
     feature_index: dict[str, Any] = {
         "standard_to_ids": {"TFC3": ["YAL001C"]},
         "locus_type": {"YER109C": "blocked_reading_frame"},
     }
-
-    def resolve_gene_name(self, name: str) -> GeneNameResolution:
-        upper = name.upper()
-        if upper in _GENES:
-            return GeneNameResolution(
-                input_name=name, status=GeneNameStatus.CURRENT, systematic_name=upper
-            )
-        renamed = {"YAL003W": "YAL002W", "YDR999W": "YDR001C", "TFC3": "YAL001C"}
-        if upper in renamed:
-            return GeneNameResolution(
-                input_name=name,
-                status=GeneNameStatus.RENAMED,
-                systematic_name=renamed[upper],
-            )
-        if upper == "YER109C":
-            return GeneNameResolution(
-                input_name=name,
-                status=GeneNameStatus.NON_GENE_FEATURE,
-                systematic_name="YER109C",
-                feature_type="blocked_reading_frame",
-            )
-        if upper == "AMBIG1":
-            return GeneNameResolution(
-                input_name=name,
-                status=GeneNameStatus.AMBIGUOUS,
-                systematic_name=None,
-                candidates=["YAL001C", "YAL002W"],
-            )
-        return GeneNameResolution(
-            input_name=name, status=GeneNameStatus.RETIRED, systematic_name=upper
-        )
 
 
 def _genome() -> SCerevisiaeGenome:
@@ -316,48 +284,35 @@ def test_read_table1_parses_every_row_and_refuses_an_unparsed_one(
 # --------------------------------------------------------------------------- #
 # element policy, phenotypes, environment
 # --------------------------------------------------------------------------- #
-def test_resolve_elements_keys_current_loci_and_drops_by_rule() -> None:
-    resolution = h.resolve_elements(_PLATFORM, _genome())
-    assert resolution.key_of == {
-        "YAL001C": "YAL001C",
-        "YAL002W": "YAL002W",
-        "YBR001C": "YBR001C",
-        "YCR001W": "YCR001W",
-        "YDR999W": "YDR001C",
-        "YER109C": "YER109C",
-        **{g: g for g in _HHR},
-    }
-    assert resolution.dropped == {
-        "retired_not_in_r64": ["iYAL001C"],
-        "ambiguous_name": ["AMBIG1"],
-        "resolves_onto_a_directly_present_element": ["YAL003W"],
-    }
-    assert resolution.status_counts == {
-        "current": 12,
-        "renamed": 2,
-        "non_gene_feature": 1,
-        "retired": 1,
-        "ambiguous": 1,
-    }
-
-
 def test_phenotype_and_reference_hold_the_release_and_the_neutral_zero() -> None:
     sample = h.SoftSample(
         gsm="GSM1",
         title="yal001c deletion",
         orf="YAL001C",
-        values={"YAL001C": (-3.0, 0.0027), "YDR999W": (1.5, 0.1336), "AMBIG1": (1, 1)},
+        values={
+            "YAL001C": (-3.0, 0.0027),
+            "YDR999W": (1.5, 0.1336),
+            "iYAL001C": (2.0, 0.0455),
+            "AMBIG1": (1.0, 0.3173),
+        },
         null_both=0,
         null_score_p_one=0,
     )
-    phenotype = h.phenotype_of(
-        sample, {"YAL001C": "YAL001C", "YDR999W": "YDR001C"}, 0.82
-    )
-    assert dict(phenotype.expression_score) == {"YAL001C": -3.0, "YDR001C": 1.5}
+    # owner rule 2026-10-12: every released element ID is a key, verbatim, whatever
+    # R64 says of it (a renamed ORF, an intergenic element, an ambiguous name)
+    phenotype = h.phenotype_of(sample, 0.82)
+    assert dict(phenotype.expression_score) == {
+        "AMBIG1": 1.0,
+        "YAL001C": -3.0,
+        "YDR999W": 1.5,
+        "iYAL001C": 2.0,
+    }
     assert phenotype.expression_score_p_value is not None
     assert dict(phenotype.expression_score_p_value) == {
+        "AMBIG1": 0.3173,
         "YAL001C": 0.0027,
-        "YDR001C": 0.1336,
+        "YDR999W": 0.1336,
+        "iYAL001C": 0.0455,
     }
     assert (phenotype.n_replicates, phenotype.harvest_optical_density) == (2, 0.82)
     assert phenotype.measurement_type == (
@@ -368,7 +323,9 @@ def test_phenotype_and_reference_hold_the_release_and_the_neutral_zero() -> None
         "(spotted cDNA, two-color)"
     )
     reference = h.reference_phenotype(list(phenotype.expression_score))
-    assert dict(reference.expression_score) == {"YAL001C": 0.0, "YDR001C": 0.0}
+    assert dict(reference.expression_score) == dict.fromkeys(
+        ["AMBIG1", "YAL001C", "YDR999W", "iYAL001C"], 0.0
+    )
     assert (reference.expression_score_p_value, reference.harvest_optical_density) == (
         None,
         None,
@@ -401,17 +358,15 @@ def _raw_root(tmp_path: Path, text: str, table: str = _TABLE1) -> Path:
     return root
 
 
-def _build(
-    root: Path, genome: SCerevisiaeGenome | None
-) -> h.MicroarrayScoreHu2007Dataset:
-    return h.MicroarrayScoreHu2007Dataset(root=str(root), genome=genome)
+def _build(root: Path) -> h.MicroarrayScoreHu2007Dataset:
+    return h.MicroarrayScoreHu2007Dataset(root=str(root))
 
 
 def test_process_writes_the_mid_log_deletions_and_the_three_ledgers(
     synthetic: None, tmp_path: Path, raw_pin_calls: list[Any]
 ) -> None:
     root = _raw_root(tmp_path, _soft_text())
-    dataset = _build(root, _genome())
+    dataset = _build(root)
     assert len(dataset) == 2
     assert raw_pin_calls[-1] == (
         "hu2007",
@@ -432,10 +387,13 @@ def test_process_writes_the_mid_log_deletions_and_the_three_ledgers(
         "kanmx_deletion",
     )
     phenotype = gsm1["experiment"]["phenotype"]
+    # every element GSM1 released a score for, under its released ID; the two it
+    # released null (YBR001C null/null, YCR001W null/p = 1) are not keys
     assert sorted(phenotype["expression_score"]) == sorted(
-        ["YAL001C", "YAL002W", "YDR001C", "YER109C", *_HHR]
+        e for e in _PLATFORM if e not in {"YBR001C", "YCR001W"}
     )
-    assert phenotype["expression_score"]["YDR001C"] == 1.5
+    assert phenotype["expression_score"]["YDR999W"] == 1.5
+    assert phenotype["expression_score"]["iYAL001C"] == 2.0
     assert phenotype["harvest_optical_density"] == 0.82
     reference = gsm1["reference"]
     assert reference["genome_reference"]["strain"] == "BY4741"
@@ -443,6 +401,14 @@ def test_process_writes_the_mid_log_deletions_and_the_three_ledgers(
     assert (
         by_strain["YER109C"]["experiment"]["phenotype"]["harvest_optical_density"]
         == 1.0
+    )
+    # Supplementary Table 1 names no gene for YER109C, so the release's own name for
+    # the strain is its ORF
+    assert (
+        by_strain["YER109C"]["experiment"]["genotype"]["perturbations"][0][
+            "perturbed_gene_name"
+        ]
+        == "YER109C"
     )
 
     drop_log = json.loads((root / "preprocess" / "dropped_records.json").read_text())
@@ -452,8 +418,12 @@ def test_process_writes_the_mid_log_deletions_and_the_three_ledgers(
     ]
     assert drop_log["not_released"] == ["YAL001C (mig-log phase, heat-shock)"]
     elements = json.loads((root / "preprocess" / "array_elements.json").read_text())
-    assert (elements["n_elements"], elements["n_keyed"]) == (17, 14)
-    assert elements["renamed"] == {"YDR999W": "YDR001C"}
+    assert (
+        elements["n_elements"],
+        elements["n_keyed"],
+        elements["n_stored_values"],
+    ) == (17, 17, 15 + 17)
+    assert "renamed" not in elements and "dropped" not in elements
     assert (elements["released_null_both"], elements["released_null_score_p_one"]) == (
         1,
         1,
@@ -468,36 +438,34 @@ def test_process_writes_the_mid_log_deletions_and_the_three_ledgers(
     ]
 
 
-def test_process_refuses_without_a_genome(synthetic: None, tmp_path: Path) -> None:
-    root = _raw_root(tmp_path, _soft_text())
-    with pytest.raises(RuntimeError) as err:
-        _build(root, None)
-    assert str(err.value).startswith(
-        "MicroarrayScoreHu2007Dataset requires a genome to resolve GPL3588"
-    )
-
-
 def test_process_refuses_a_sample_absent_from_table_1(
     synthetic: None, tmp_path: Path
 ) -> None:
     table = _TABLE1.replace("YER109C  mig-log phase 1.00  ", "")
     root = _raw_root(tmp_path, _soft_text(), table)
     with pytest.raises(RuntimeError) as err:
-        _build(root, _genome())
+        _build(root)
     assert str(err.value) == (
         "GSM3 (YER109C) has no mid-log or TetO7 row in Supplementary Table 1"
     )
 
 
-def test_process_refuses_a_deleted_orf_that_is_not_an_r64_locus(
+def test_process_stores_a_deleted_orf_r64_does_not_carry_under_its_released_name(
     synthetic: None, tmp_path: Path
 ) -> None:
+    """The owner rule (2026-10-12): no released row is dropped or refused on genome or
+    annotation grounds. A strain whose ORF is not an R64 locus is stored as released.
+    """
     text = _soft_text().replace("yer109c deletion", "ypl999c deletion")
     table = _TABLE1.replace("YER109C  mig", "YPL999C  mig")
     root = _raw_root(tmp_path, text, table)
-    with pytest.raises(RuntimeError) as err:
-        _build(root, _genome())
-    assert str(err.value) == "deleted ORF YPL999C is retired in R64"
+    dataset = _build(root)
+    dataset.close_lmdb()
+    strains = sorted(
+        r["experiment"]["genotype"]["perturbations"][0]["systematic_gene_name"]
+        for r in load_records(str(root))
+    )
+    assert strains == ["YAL001C", "YPL999C"]
 
 
 # --------------------------------------------------------------------------- #
@@ -622,7 +590,7 @@ def test_verify_build_passes_l0_to_l4_on_the_synthetic_release(
     monkeypatch.setattr(h, "KEMMEREN_ALPHA", 1.0)
     store = data_root / h.DATASET_ROOT
     _raw_root(store.parent, _soft_text())
-    _build(store, _genome()).close_lmdb()
+    _build(store).close_lmdb()
     _write_store(
         data_root / h.KEMMEREN_ROOT,
         [
@@ -647,7 +615,7 @@ def test_verify_build_passes_l0_to_l4_on_the_synthetic_release(
         "deleted_gene_containment_sgd",
         "matched_profile_agreement_microarray_kemmeren2014",
     ]
-    assert results["released_value_fidelity"].details["n_values"] == 12 + 14
+    assert results["released_value_fidelity"].details["n_values"] == 15 + 17
     assert results["deleted_gene_containment_sgd"].details["non_gene"] == ["YER109C"]
     agreement = results["matched_profile_agreement_microarray_kemmeren2014"]
     assert agreement.level is Level.L4
@@ -659,7 +627,6 @@ def test_released_fidelity_names_a_record_that_drifted(
     synthetic: None, tmp_path: Path
 ) -> None:
     release = h.read_soft(_write_soft(tmp_path / "s.soft.gz", _soft_text()))
-    key_of = h.resolve_elements(release.platform_ids, _genome()).key_of
     record = {
         "experiment": {
             "genotype": {"perturbations": [{"systematic_gene_name": "YER109C"}]},
@@ -669,10 +636,10 @@ def test_released_fidelity_names_a_record_that_drifted(
             },
         }
     }
-    result = h._l2_released_fidelity([record], release, key_of)
+    result = h._l2_released_fidelity([record], release)
     assert not result.passed
     assert result.details["mismatched"] == [
-        {"strain": "YER109C", "n_stored": 1, "n_released": 14, "n_differ": 14}
+        {"strain": "YER109C", "n_stored": 1, "n_released": 17, "n_differ": 17}
     ]
 
 

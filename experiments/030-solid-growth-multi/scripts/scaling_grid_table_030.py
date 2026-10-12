@@ -38,7 +38,6 @@ and ``experiments/030-solid-growth-multi/results/scaling_grid_table_030.json``.
 
 from __future__ import annotations
 
-import json
 import os
 import os.path as osp
 import sys
@@ -131,7 +130,8 @@ class GridTables(BaseModel):
 
 def _tiny_cell_graph() -> HeteroData:
     """The smallest cell graph the model constructs on; the gene count only sizes the
-    embedding table, which the non-embedding count excludes."""
+    embedding table, which the non-embedding count excludes.
+    """
     cg = HeteroData()
     cg["gene"].num_nodes = 8
     cg["gene", "physical", "gene"].edge_index = torch.tensor(
@@ -370,7 +370,9 @@ def write_tables(t: GridTables, out_dir: str) -> None:
     os.makedirs(out_dir, exist_ok=True)
     n180 = t.n_180x8_wandb
     lines = [
-        _header("the model's num_parameters at each size (checked against W&B 53qqijnu)"),
+        _header(
+            "the model's num_parameters at each size (checked against W&B 53qqijnu)"
+        ),
         "\\begin{table}[htbp]",
         "\\centering\\footnotesize",
         "\\caption{The $N$ ladder. Width and depth scale together at 9 attention heads; "
@@ -427,7 +429,9 @@ def write_tables(t: GridTables, out_dir: str) -> None:
         f.write("\n".join(lines))
 
     lines = [
-        _header("triple_noise_ceiling_030.json (noise_model sd_of_scores, pair_classes pearson)"),
+        _header(
+            "triple_noise_ceiling_030.json (noise_model sd_of_scores, pair_classes pearson)"
+        ),
         "\\begin{table}[htbp]",
         "\\centering\\footnotesize",
         "\\caption{The replicate floor per screen in label units. Under a squared loss "
@@ -496,7 +500,9 @@ def write_tables(t: GridTables, out_dir: str) -> None:
     )
     lines.append(_summ("030_sclw1", lambda j: j.seed > 1, "seed replicates"))
     lines.append(
-        _summ("030_sclw1", lambda j: j.lr != "2.5e-4", "learning-rate check (1e-4, 1e-3)")
+        _summ(
+            "030_sclw1", lambda j: j.lr != "2.5e-4", "learning-rate check (1e-4, 1e-3)"
+        )
     )
     lines.append(_summ("025_sclw1", lambda j: j.seed == 1, "subset"))
     lines.append(_summ("025_sclw1", lambda j: j.seed > 1, "seed replicates"))
@@ -529,7 +535,9 @@ def main() -> None:
         )
     for r in tables.floors:
         print(f"  {r.screen} ({r.reliability_source}): E = {r.floor_E:.3e}")
-    print(f"  {len(tables.jobs)} jobs; wrote {out_dir}/t{{1-sizes,2-subsets,3-floors,4-jobs}}.tex")
+    print(
+        f"  {len(tables.jobs)} jobs; wrote {out_dir}/t{{1-sizes,2-subsets,3-floors,4-jobs}}.tex"
+    )
 
 
 if __name__ == "__main__":

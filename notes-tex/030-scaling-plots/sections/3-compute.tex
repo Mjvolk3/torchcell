@@ -1,0 +1,51 @@
+%% notes-tex/030-scaling-plots/sections/3-compute.tex
+
+\section{Compute\secstatus{todo}}
+\label{sec:compute}
+
+The compute callback is what lets the grid say anything about $C$. It measures
+FLOPs on five real training steps of every run, accumulates them per epoch with
+the records seen and the GPU hours, and saves its state with the checkpoint, so
+a chained point's totals continue. Figure~\ref{fig:compute} is what those keys
+draw.
+
+\tcfig{figures/030-scaling-plots-compute.pdf}{%
+The compute family, sketched. \textbf{a}, C1: per-epoch validation loss against
+records seen, one line per point colored by size, one panel per subset in the
+real figure; the dot on each line is its selected epoch and the vertical line is
+the matched budget $B$. \textbf{b}, C2: the same trajectories against cumulative
+FLOPs; the dashed lower envelope is the compute-efficient frontier, the size
+that reaches a given loss for the least compute. \textbf{c}, C3: the same against
+GPU hours, the unit the queue charges; the horizontal offset of a size between b
+and c is its utilization. \textbf{d}, C4: FLOPs per record and records per
+second against size from the calibration jobs, with the spread over the five
+measured steps as a whisker; a flat pace line across sizes means the loader, not
+the GPU, sets the pace.
+}{fig:compute}
+\src{notes/assets/drawio/030-scaling-plots.gen.py}
+
+\notesec{C1, learning curves against records seen}
+The plot every other read is taken from. It shows where each point's selected
+epoch sits, where $B$ cuts each curve, and which curves are still falling at
+their last epoch. A full-pool curve that is still falling at ten epochs is the
+picture of the unconverged headline point, and it is the plot to show beside any
+exponent fit on the selected read.
+
+\notesec{C2 and C3, the envelope}
+Against FLOPs, the lower envelope of the trajectories across sizes is the
+compute-efficient frontier of this architecture on this data: at each budget the
+size whose curve is lowest. The grid has one budget line of an IsoFLOP sweep,
+the fixed-epoch column, so the envelope here is read as the shape of the
+frontier rather than its slope, which keeps C2 partial. Against GPU hours the
+envelope is the same picture in the unit the queue charges, and because the FLOP
+count excludes the loader while the wall clock includes it, the ratio of a size's
+position in C2 to its position in C3 is the utilization that size achieved.
+
+\notesec{C4, cost and pace against size}
+From the two calibration jobs now, and from every grid run's first epoch after.
+FLOPs per record should rise with $N$; whether records per second falls with it
+is the question the calibration was queued to answer. A pace that follows the
+FLOPs means the GPU binds and the small sizes could have trained longer in their
+48 h; a pace that stays flat means the loader binds and no size finishes sooner
+than 180x8. The whisker is the minimum to maximum over the five measured steps,
+which on the per-entry path is the spread one batch's row count introduces.

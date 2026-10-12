@@ -1,0 +1,34 @@
+%% notes-tex/030-scaling-plots/sections/5-pair.tex
+
+\section{The 025 pair\secstatus{todo}}
+\label{sec:pair}
+
+The 025 twin trains the merged-label trainer on the same subsets, the same
+genotypes pair for pair, at 180x8, with three seeds at the two smallest
+subsets. It passes through the same readout and the same two reads at the same
+$B$, so the two plots of Figure~\ref{fig:pair} compare like with like.
+
+\tcfig{figures/030-scaling-plots-pair.pdf}{%
+The pair family, sketched. \textbf{a}, P1: the 030 minus 025 pooled validation
+MSE per subset, seed mean and sd where both sides have three seeds, a single
+point at 1/4, and the full point hollow as the difference of two unconverged
+ten-epoch runs. \textbf{b}, P2: the paired learning curves against records seen,
+one panel per subset in the real figure; a gap that holds past $B$ is more
+supervision per genotype, one that closes is a faster start.
+}{fig:pair}
+\src{notes/assets/drawio/030-scaling-plots.gen.py}
+
+\notesec{P1, the gap against data}
+Pooled only, since 025 logs no per-screen key. Interpretable at 1/64 and 1/16,
+where both sides converge and both have a seed spread; a single comparison at
+1/4; a learning-speed difference at the full pool. The gap is per-entry rows
+plus the dataset token plus the measurement types the 030 build added, and the
+caption says so until the token ablation column exists.
+
+\notesec{P2, paired learning curves}
+The plot that tells the two readings of a gap apart. If the 030 curve sits below
+the 025 curve from the first epochs and the distance holds through $B$ and
+beyond, the per-entry rows are more supervision at every stage of training. If
+the curves start apart and meet, the extra rows were a faster start that the
+merged label catches up on, and the gap at a fixed $B$ overstates what the rows
+buy at convergence.

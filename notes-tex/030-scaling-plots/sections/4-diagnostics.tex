@@ -1,0 +1,67 @@
+%% notes-tex/030-scaling-plots/sections/4-diagnostics.tex
+
+\section{Diagnostics\secstatus{todo}}
+\label{sec:diagnostics}
+
+An exponent is a fitted quantity with an interval, and the interval, not the
+point, is what an extrapolation inherits. The six plots of
+Figure~\ref{fig:diagnostics} are what put the interval and its caveats on the
+page beside the curves.
+
+\tcfig{figures/030-scaling-plots-diagnostics.pdf}{%
+The diagnostic family, sketched. \textbf{a}, D1: the bootstrap distribution of
+one exponent, 300 resamples over runs, the 5 to 95 percent interval shaded.
+\textbf{b}, D2: the held-out prediction of every fit against the observed loss
+at the held-out point; a marker on the diagonal is a fit that extrapolated one
+step. \textbf{c}, D3: the fitted $E$ with its interval against the replicate
+floor of each screen, the floor bounds as a band and the mean-prediction loss as
+the top of the range. \textbf{d}, D4: the three seeds of each replicated cell
+beside the step to its neighbor along $D$. \textbf{e}, D5: the learning-rate
+check at 45x2 on 1/4. \textbf{f}, D6: validation Pearson against $D$, pooled
+with its 0.35 screen-offset floor and per screen through the per-token keys.
+}{fig:diagnostics}
+\src{notes/assets/drawio/030-scaling-plots.gen.py}
+
+\notesec{D1, the bootstrap}
+One histogram per fitted exponent (axis, read, target, form). On the $D$ axis
+with four points and one seed at two of them, the resamples that drop a point
+move the slope a long way, and the histogram will be wide; drawing it is the
+honest way to say so, and it is the plot that keeps the point estimate from
+being quoted alone.
+
+\notesec{D2, held out against observed}
+Every fit in one scatter: predicted loss at the held-out largest point against
+the observed loss there. The fits that land on the diagonal are the ones whose
+exponent extrapolates one step; the ones that miss describe the points they
+were fit on and nothing beyond them. The floored form on the $D$ axis has no
+marker here, which is why the plot is partial.
+
+\notesec{D3, the fitted floor against the replicate floor}
+Per screen and pooled: the fitted $E$ with its interval, the band between the
+floor bounds (for 2018, the Dango 0.59 and the cross-year 0.89 reliabilities;
+for 2020 the same-strain 0.44), and the loss of predicting the screen mean as the
+top of the range. A fitted $E$ inside or just above the band is a model near the
+noise limit of that screen; one far above it says the model family, not the
+data, is the limit; one below it is a wrong fit. On 2020 the floor is 56\% of
+the variance, so the band sits high and the plot will show how little of the
+2020 loss any model can remove.
+
+\notesec{D4, seed spread against effect size}
+The four replicated cells, three seeds each, with the step to the adjacent cell
+along $D$ drawn beside them. Every exponent interval rests on this spread; if a
+step along the axis is not larger than the spread within a cell, the slope
+between those cells is noise, and the plot says so before a fit is quoted.
+
+\notesec{D5, the learning-rate check}
+Three curves at the smallest size on 1/4. It says whether 2.5e-4 is near the
+optimum at 45x2 and nothing about 180x8, which runs at a batch four times
+smaller than the one it was tuned at; the plot is drawn with that caption so
+the $N$ exponent is not read as if the rate had been checked across the ladder.
+
+\notesec{D6, Pearson beside the loss}
+The headline metric every reader of the trigenic work expects, drawn with the
+floor the two screen means put under the pooled number: predicting only the
+per-screen mean scores 0.34 on the validation entries. The per-token Pearson
+curves carry no such floor, so this plot and the per-screen loss curves of S1
+tell one story, and a pooled Pearson that rises while the per-screen loss does
+not fall is the token learning the offset, not the model learning interactions.

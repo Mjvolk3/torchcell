@@ -1,0 +1,2383 @@
+[
+  {
+    "module": "bacteria_common.py",
+    "holder": "fix/audit-bacterial-refusals-1045",
+    "load": [
+      {
+        "name": "resolve_gene_name",
+        "line": 477,
+        "function": "reconcile_locus_tags",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "ecoli/baba2006.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "resolve_gene_name",
+        "line": 604,
+        "function": "canonical_symbol",
+        "phase": "load"
+      },
+      {
+        "name": "reconcile_locus_tags",
+        "line": 617,
+        "function": "resolve_rows",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 620,
+        "function": "resolve_rows",
+        "phase": "load"
+      }
+    ],
+    "verify": [
+      {
+        "name": "resolve_gene_name",
+        "line": 1175,
+        "function": "run_verification",
+        "phase": "verify"
+      }
+    ]
+  },
+  {
+    "module": "ecoli/babu2014.py",
+    "holder": "fix/audit-bacterial-refusals-1045",
+    "load": [
+      {
+        "name": "reconcile_locus_tags",
+        "line": 1654,
+        "function": "retain",
+        "phase": "load"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 1657,
+        "function": "retain",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "ecoli/balakrishnan2022.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "resolve_gene_name",
+        "line": 1126,
+        "function": "select_genes",
+        "phase": "load"
+      }
+    ],
+    "verify": [
+      {
+        "name": "resolve_gene_name",
+        "line": 846,
+        "function": "check_gene_symbols",
+        "phase": "verify"
+      }
+    ]
+  },
+  {
+    "module": "ecoli/brunk2016.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "reconcile_locus_tags",
+        "line": 1939,
+        "function": "build_context",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 1940,
+        "function": "build_context",
+        "phase": "load"
+      },
+      {
+        "name": "reconcile_locus_tags",
+        "line": 2302,
+        "function": "process",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 2305,
+        "function": "process",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "ecoli/butland2008.py",
+    "holder": "fix/audit-bacterial-refusals-1045",
+    "load": [
+      {
+        "name": "reconcile_locus_tags",
+        "line": 2160,
+        "function": "retain",
+        "phase": "load"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 2163,
+        "function": "retain",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "ecoli/caglar2017.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "reconcile_locus_tags",
+        "line": 2450,
+        "function": "reconcile_rel606",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 2451,
+        "function": "reconcile_rel606",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "ecoli/campos2018.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "reconcile_locus_tags",
+        "line": 1435,
+        "function": "resolve_rows",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 1438,
+        "function": "resolve_rows",
+        "phase": "load"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 1465,
+        "function": "resolve_rows",
+        "phase": "load"
+      }
+    ],
+    "verify": [
+      {
+        "name": "resolve_gene_name",
+        "line": 2161,
+        "function": "verify_fitness_build",
+        "phase": "verify"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 2211,
+        "function": "verify_morphology_build",
+        "phase": "verify"
+      }
+    ]
+  },
+  {
+    "module": "ecoli/choe2019_growth_rate.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "reconcile_locus_tags",
+        "line": 1130,
+        "function": "resolve_symbols",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 1131,
+        "function": "resolve_symbols",
+        "phase": "load"
+      }
+    ],
+    "verify": [
+      {
+        "name": "resolve_gene_name",
+        "line": 1816,
+        "function": "_verify",
+        "phase": "verify"
+      }
+    ]
+  },
+  {
+    "module": "ecoli/choe2025.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "resolve_gene_name",
+        "line": 1353,
+        "function": "canonical_symbol",
+        "phase": "load"
+      },
+      {
+        "name": "reconcile_locus_tags",
+        "line": 1396,
+        "function": "resolve_genes",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 1397,
+        "function": "resolve_genes",
+        "phase": "load"
+      }
+    ],
+    "verify": [
+      {
+        "name": "resolve_gene_name",
+        "line": 2103,
+        "function": "stored_tags_are_loci",
+        "phase": "verify"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 2155,
+        "function": "run_verification",
+        "phase": "verify"
+      }
+    ]
+  },
+  {
+    "module": "ecoli/cui2018.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "reconcile_locus_tags",
+        "line": 1206,
+        "function": "process",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 1209,
+        "function": "process",
+        "phase": "load"
+      }
+    ],
+    "verify": [
+      {
+        "name": "resolve_gene_name",
+        "line": 1435,
+        "function": "stored_tags_are_loci",
+        "phase": "verify"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 1556,
+        "function": "verify_build",
+        "phase": "verify"
+      }
+    ]
+  },
+  {
+    "module": "ecoli/fang2025.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "reconcile_locus_tags",
+        "line": 1259,
+        "function": "process",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 1262,
+        "function": "process",
+        "phase": "load"
+      }
+    ],
+    "verify": [
+      {
+        "name": "resolve_gene_name",
+        "line": 1592,
+        "function": "verify_build",
+        "phase": "verify"
+      }
+    ]
+  },
+  {
+    "module": "ecoli/foo2014.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "reconcile_locus_tags",
+        "line": 1246,
+        "function": "process",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 1249,
+        "function": "process",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "ecoli/fuhrer2017.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "resolve_gene_name",
+        "line": 1042,
+        "function": "canonical_symbol",
+        "phase": "load"
+      },
+      {
+        "name": "reconcile_locus_tags",
+        "line": 1066,
+        "function": "resolve_strains",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 1067,
+        "function": "resolve_strains",
+        "phase": "load"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 1073,
+        "function": "resolve_strains",
+        "phase": "load"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 1075,
+        "function": "resolve_strains",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "ecoli/gerdes2003.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "resolve_gene_name",
+        "line": 584,
+        "function": "canonical_symbol",
+        "phase": "load"
+      },
+      {
+        "name": "reconcile_locus_tags",
+        "line": 614,
+        "function": "resolve_rows",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 617,
+        "function": "resolve_rows",
+        "phase": "load"
+      }
+    ],
+    "verify": [
+      {
+        "name": "resolve_gene_name",
+        "line": 1227,
+        "function": "run_verification",
+        "phase": "verify"
+      }
+    ]
+  },
+  {
+    "module": "ecoli/girgis2009.py",
+    "holder": "fix/audit-bacterial-refusals-1045",
+    "load": [
+      {
+        "name": "resolve_gene_name",
+        "line": 1608,
+        "function": "canonical_symbol",
+        "phase": "load"
+      },
+      {
+        "name": "reconcile_locus_tags",
+        "line": 1622,
+        "function": "resolve_b_numbers",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 1625,
+        "function": "resolve_b_numbers",
+        "phase": "load"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 1630,
+        "function": "resolve_b_numbers",
+        "phase": "load"
+      }
+    ],
+    "verify": [
+      {
+        "name": "resolve_gene_name",
+        "line": 2220,
+        "function": "verify_build",
+        "phase": "verify"
+      }
+    ]
+  },
+  {
+    "module": "ecoli/goodall2018.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "resolve_gene_name",
+        "line": 871,
+        "function": "canonical_symbol",
+        "phase": "load"
+      },
+      {
+        "name": "reconcile_locus_tags",
+        "line": 906,
+        "function": "resolve_calls",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 907,
+        "function": "resolve_calls",
+        "phase": "load"
+      }
+    ],
+    "verify": [
+      {
+        "name": "resolve_gene_name",
+        "line": 1537,
+        "function": "run_verification",
+        "phase": "verify"
+      }
+    ]
+  },
+  {
+    "module": "ecoli/gupta2024.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "resolve_gene_name",
+        "line": 1634,
+        "function": "_symbol_locus",
+        "phase": "load"
+      },
+      {
+        "name": "reconcile_locus_tags",
+        "line": 2271,
+        "function": "process",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 2274,
+        "function": "process",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "ecoli/hawkins2020.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "reconcile_locus_tags",
+        "line": 1162,
+        "function": "resolve_targets",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 1440,
+        "function": "process",
+        "phase": "load"
+      }
+    ],
+    "verify": [
+      {
+        "name": "resolve_gene_name",
+        "line": 1857,
+        "function": "verify_build",
+        "phase": "verify"
+      }
+    ]
+  },
+  {
+    "module": "ecoli/ishii2007.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "reconcile_locus_tags",
+        "line": 1590,
+        "function": "resolve_symbols",
+        "phase": "load"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 1594,
+        "function": "resolve_symbols",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "ecoli/lamoureux2023.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "reconcile_locus_tags",
+        "line": 1321,
+        "function": "_deletion_tags",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 1324,
+        "function": "_deletion_tags",
+        "phase": "load"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 1332,
+        "function": "_deletion_tags",
+        "phase": "load"
+      },
+      {
+        "name": "reconcile_locus_tags",
+        "line": 1379,
+        "function": "process",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 1382,
+        "function": "process",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "ecoli/lamoureux2023_growth.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "reconcile_locus_tags",
+        "line": 549,
+        "function": "deletion_tags",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 550,
+        "function": "deletion_tags",
+        "phase": "load"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 558,
+        "function": "deletion_tags",
+        "phase": "load"
+      }
+    ],
+    "verify": [
+      {
+        "name": "resolve_gene_name",
+        "line": 895,
+        "function": "verify_build",
+        "phase": "verify"
+      }
+    ]
+  },
+  {
+    "module": "ecoli/lamoureux2023_public_k12.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "reconcile_locus_tags",
+        "line": 1222,
+        "function": "_deletion_tags",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 1225,
+        "function": "_deletion_tags",
+        "phase": "load"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 1233,
+        "function": "_deletion_tags",
+        "phase": "load"
+      },
+      {
+        "name": "reconcile_locus_tags",
+        "line": 1283,
+        "function": "process",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 1286,
+        "function": "process",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "ecoli/li2014.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "reconcile_locus_tags",
+        "line": 734,
+        "function": "process",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "ecoli/mohiuddin2022.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "reconcile_locus_tags",
+        "line": 1037,
+        "function": "resolve_promoters",
+        "phase": "load"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 1045,
+        "function": "resolve_promoters",
+        "phase": "load"
+      }
+    ],
+    "verify": [
+      {
+        "name": "resolve_gene_name",
+        "line": 1562,
+        "function": "run_verification",
+        "phase": "verify"
+      }
+    ]
+  },
+  {
+    "module": "ecoli/mori2021.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "reconcile_locus_tags",
+        "line": 1181,
+        "function": "select_proteins",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 1184,
+        "function": "select_proteins",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "ecoli/mutalik2020.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "reconcile_locus_tags",
+        "line": 1087,
+        "function": "audit_identifiers",
+        "phase": "load"
+      },
+      {
+        "name": "reconcile_locus_tags",
+        "line": 1090,
+        "function": "audit_identifiers",
+        "phase": "load"
+      },
+      {
+        "name": "reconcile_locus_tags",
+        "line": 1814,
+        "function": "map_measured_genes",
+        "phase": "load"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 1835,
+        "function": "map_measured_genes",
+        "phase": "load"
+      }
+    ],
+    "verify": [
+      {
+        "name": "resolve_gene_name",
+        "line": 2718,
+        "function": "verify_build",
+        "phase": "verify"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 2728,
+        "function": "verify_build",
+        "phase": "verify"
+      }
+    ]
+  },
+  {
+    "module": "ecoli/niu2019.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "resolve_gene_name",
+        "line": 991,
+        "function": "canonical_symbol",
+        "phase": "load"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 997,
+        "function": "_resolve",
+        "phase": "load"
+      }
+    ],
+    "verify": [
+      {
+        "name": "resolve_gene_name",
+        "line": 1575,
+        "function": "verify_build",
+        "phase": "verify"
+      }
+    ]
+  },
+  {
+    "module": "ecoli/price2018.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "reconcile_locus_tags",
+        "line": 1727,
+        "function": "reconcile",
+        "phase": "load"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 1734,
+        "function": "map_genes",
+        "phase": "load"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 3009,
+        "function": "refseq_route_agreement",
+        "phase": "load"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 3053,
+        "function": "essentiality_report",
+        "phase": "load"
+      }
+    ],
+    "verify": [
+      {
+        "name": "resolve_gene_name",
+        "line": 2192,
+        "function": "stored_tags_are_loci",
+        "phase": "verify"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 2234,
+        "function": "verify",
+        "phase": "verify"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 2241,
+        "function": "verify",
+        "phase": "verify"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 2941,
+        "function": "verify_essentiality_records",
+        "phase": "verify"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 2952,
+        "function": "verify_essentiality_records",
+        "phase": "verify"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 2979,
+        "function": "verify_essentiality",
+        "phase": "verify"
+      }
+    ]
+  },
+  {
+    "module": "ecoli/rachwalski2024.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "resolve_gene_name",
+        "line": 1433,
+        "function": "canonical_symbol",
+        "phase": "load"
+      },
+      {
+        "name": "reconcile_locus_tags",
+        "line": 1457,
+        "function": "resolve_labels",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 1460,
+        "function": "resolve_labels",
+        "phase": "load"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 1475,
+        "function": "resolve_labels",
+        "phase": "load"
+      }
+    ],
+    "verify": [
+      {
+        "name": "resolve_gene_name",
+        "line": 2198,
+        "function": "stored_tags_are_loci",
+        "phase": "verify"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 2280,
+        "function": "run_verification",
+        "phase": "verify"
+      }
+    ]
+  },
+  {
+    "module": "ecoli/rapp2026.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "resolve_gene_name",
+        "line": 1604,
+        "function": "canonical_symbol",
+        "phase": "load"
+      },
+      {
+        "name": "reconcile_locus_tags",
+        "line": 1670,
+        "function": "resolve_strains",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 1671,
+        "function": "resolve_strains",
+        "phase": "load"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 1682,
+        "function": "resolve_strains",
+        "phase": "load"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 1704,
+        "function": "resolve_strains",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "ecoli/rapp2026_platforms.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "reconcile_locus_tags",
+        "line": 627,
+        "function": "resolve_genes",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 628,
+        "function": "resolve_genes",
+        "phase": "load"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 640,
+        "function": "resolve_genes",
+        "phase": "load"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 652,
+        "function": "resolve_genes",
+        "phase": "load"
+      }
+    ],
+    "verify": [
+      {
+        "name": "resolve_gene_name",
+        "line": 2069,
+        "function": "verify_growth",
+        "phase": "verify"
+      }
+    ]
+  },
+  {
+    "module": "ecoli/rousset2018.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "resolve_gene_name",
+        "line": 1307,
+        "function": "canonical_symbol",
+        "phase": "load"
+      },
+      {
+        "name": "reconcile_locus_tags",
+        "line": 1322,
+        "function": "resolve_symbols",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 1323,
+        "function": "resolve_symbols",
+        "phase": "load"
+      }
+    ],
+    "verify": [
+      {
+        "name": "resolve_gene_name",
+        "line": 1900,
+        "function": "verify_build",
+        "phase": "verify"
+      }
+    ]
+  },
+  {
+    "module": "ecoli/schastnaya2021.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "reconcile_locus_tags",
+        "line": 1148,
+        "function": "resolve_deletions",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 1149,
+        "function": "resolve_deletions",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "ecoli/schmidt2016.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "reconcile_locus_tags",
+        "line": 1213,
+        "function": "select_proteins",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 1216,
+        "function": "select_proteins",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "ecoli/schmidt2016_growth_rate.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "reconcile_locus_tags",
+        "line": 679,
+        "function": "resolve_deletions",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 680,
+        "function": "resolve_deletions",
+        "phase": "load"
+      }
+    ],
+    "verify": [
+      {
+        "name": "resolve_gene_name",
+        "line": 961,
+        "function": "verify_build",
+        "phase": "verify"
+      }
+    ]
+  },
+  {
+    "module": "ecoli/schmidt2016_srm.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "reconcile_locus_tags",
+        "line": 777,
+        "function": "select_arm",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 780,
+        "function": "select_arm",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "ecoli/shiver2016.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "resolve_gene_name",
+        "line": 1762,
+        "function": "canonical_symbol",
+        "phase": "load"
+      },
+      {
+        "name": "reconcile_locus_tags",
+        "line": 1776,
+        "function": "resolve_columns",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 1779,
+        "function": "resolve_columns",
+        "phase": "load"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 1796,
+        "function": "resolve_columns",
+        "phase": "load"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 1874,
+        "function": "resolve_columns",
+        "phase": "load"
+      }
+    ],
+    "verify": [
+      {
+        "name": "resolve_gene_name",
+        "line": 2199,
+        "function": "verify_build",
+        "phase": "verify"
+      }
+    ]
+  },
+  {
+    "module": "ecoli/tong2020.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "resolve_gene_name",
+        "line": 1225,
+        "function": "canonical_symbol",
+        "phase": "load"
+      },
+      {
+        "name": "reconcile_locus_tags",
+        "line": 1271,
+        "function": "resolve_strains",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 1274,
+        "function": "resolve_strains",
+        "phase": "load"
+      },
+      {
+        "name": "reconcile_locus_tags",
+        "line": 1275,
+        "function": "resolve_strains",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 1278,
+        "function": "resolve_strains",
+        "phase": "load"
+      },
+      {
+        "name": "reconcile_locus_tags",
+        "line": 1321,
+        "function": "resolve_strains",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 1324,
+        "function": "resolve_strains",
+        "phase": "load"
+      }
+    ],
+    "verify": [
+      {
+        "name": "resolve_gene_name",
+        "line": 1825,
+        "function": "stored_tags_are_loci",
+        "phase": "verify"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 1935,
+        "function": "verify_build",
+        "phase": "verify"
+      }
+    ]
+  },
+  {
+    "module": "ecoli/wang2015.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "resolve_gene_name",
+        "line": 1000,
+        "function": "canonical_symbol",
+        "phase": "load"
+      },
+      {
+        "name": "reconcile_locus_tags",
+        "line": 1020,
+        "function": "resolve_strains",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 1023,
+        "function": "resolve_strains",
+        "phase": "load"
+      },
+      {
+        "name": "reconcile_locus_tags",
+        "line": 1027,
+        "function": "resolve_strains",
+        "phase": "load"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 1039,
+        "function": "resolve_strains",
+        "phase": "load"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 1052,
+        "function": "resolve_strains",
+        "phase": "load"
+      }
+    ],
+    "verify": [
+      {
+        "name": "resolve_gene_name",
+        "line": 1466,
+        "function": "run_verification",
+        "phase": "verify"
+      }
+    ]
+  },
+  {
+    "module": "ecoli/wang2015_growth.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [],
+    "verify": [
+      {
+        "name": "resolve_gene_name",
+        "line": 670,
+        "function": "verify_build",
+        "phase": "verify"
+      }
+    ]
+  },
+  {
+    "module": "ecoli/wang2018.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "reconcile_locus_tags",
+        "line": 1700,
+        "function": "process",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 1703,
+        "function": "process",
+        "phase": "load"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 1929,
+        "function": "_write_reports",
+        "phase": "load"
+      }
+    ],
+    "verify": [
+      {
+        "name": "resolve_gene_name",
+        "line": 1491,
+        "function": "stored_gene_names",
+        "phase": "verify"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 2129,
+        "function": "verify_build",
+        "phase": "verify"
+      }
+    ]
+  },
+  {
+    "module": "ecoli/wang2024.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "resolve_gene_name",
+        "line": 1107,
+        "function": "canonical_symbol",
+        "phase": "load"
+      },
+      {
+        "name": "reconcile_locus_tags",
+        "line": 1120,
+        "function": "resolve_b_numbers",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 1123,
+        "function": "resolve_b_numbers",
+        "phase": "load"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 1128,
+        "function": "resolve_b_numbers",
+        "phase": "load"
+      }
+    ],
+    "verify": [
+      {
+        "name": "resolve_gene_name",
+        "line": 1642,
+        "function": "verify_build",
+        "phase": "verify"
+      }
+    ]
+  },
+  {
+    "module": "ecoli/wetmore2015.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "reconcile_locus_tags",
+        "line": 1481,
+        "function": "_reconcile",
+        "phase": "load"
+      },
+      {
+        "name": "reconcile_locus_tags",
+        "line": 2093,
+        "function": "map_genes",
+        "phase": "load"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 2112,
+        "function": "map_genes",
+        "phase": "load"
+      }
+    ],
+    "verify": [
+      {
+        "name": "resolve_gene_name",
+        "line": 2963,
+        "function": "verify_build",
+        "phase": "verify"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 2966,
+        "function": "verify_build",
+        "phase": "verify"
+      }
+    ]
+  },
+  {
+    "module": "pputida/banerjee2025.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "reconcile_locus_tags",
+        "line": 1771,
+        "function": "process",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 1774,
+        "function": "process",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "pputida/borchert2023.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "reconcile_locus_tags",
+        "line": 1622,
+        "function": "process",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 1625,
+        "function": "process",
+        "phase": "load"
+      }
+    ],
+    "verify": [
+      {
+        "name": "resolve_gene_name",
+        "line": 1802,
+        "function": "verify_build",
+        "phase": "verify"
+      }
+    ]
+  },
+  {
+    "module": "pputida/borchert2024.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "resolve_gene_name",
+        "line": 1548,
+        "function": "perturbed_gene_names",
+        "phase": "load"
+      },
+      {
+        "name": "reconcile_locus_tags",
+        "line": 1753,
+        "function": "process",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 1756,
+        "function": "process",
+        "phase": "load"
+      }
+    ],
+    "verify": [
+      {
+        "name": "resolve_gene_name",
+        "line": 1964,
+        "function": "verify_build",
+        "phase": "verify"
+      }
+    ]
+  },
+  {
+    "module": "pputida/carruthers2025.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "resolve_gene_name",
+        "line": 1697,
+        "function": "chassis_background",
+        "phase": "load"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 1707,
+        "function": "chassis_background",
+        "phase": "load"
+      },
+      {
+        "name": "reconcile_locus_tags",
+        "line": 3728,
+        "function": "process",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 3729,
+        "function": "process",
+        "phase": "load"
+      },
+      {
+        "name": "reconcile_locus_tags",
+        "line": 4150,
+        "function": "process",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 4151,
+        "function": "process",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 4872,
+        "function": "process",
+        "phase": "load"
+      },
+      {
+        "name": "reconcile_locus_tags",
+        "line": 4880,
+        "function": "process",
+        "phase": "load"
+      },
+      {
+        "name": "reconcile_locus_tags",
+        "line": 4917,
+        "function": "process",
+        "phase": "load"
+      },
+      {
+        "name": "reconcile_locus_tags",
+        "line": 5307,
+        "function": "process",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 5308,
+        "function": "process",
+        "phase": "load"
+      },
+      {
+        "name": "reconcile_locus_tags",
+        "line": 6307,
+        "function": "_released_fold_change_cells",
+        "phase": "load"
+      }
+    ],
+    "verify": [
+      {
+        "name": "reconcile_locus_tags",
+        "line": 5889,
+        "function": "_l4_proteome_vs_released_sheet",
+        "phase": "verify"
+      },
+      {
+        "name": "reconcile_locus_tags",
+        "line": 6026,
+        "function": "_l4_overexpression_proteome_vs_released_sheet",
+        "phase": "verify"
+      },
+      {
+        "name": "reconcile_locus_tags",
+        "line": 6103,
+        "function": "_l1_campaign_strain_cycles_pair_the_titers",
+        "phase": "verify"
+      },
+      {
+        "name": "reconcile_locus_tags",
+        "line": 6187,
+        "function": "_l4_campaign_profile_vs_deposited_matrix",
+        "phase": "verify"
+      }
+    ]
+  },
+  {
+    "module": "pputida/desiqueira2025.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "reconcile_locus_tags",
+        "line": 2319,
+        "function": "process",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 2320,
+        "function": "process",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "pputida/kang2026.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "resolve_gene_name",
+        "line": 1244,
+        "function": "chassis_background",
+        "phase": "load"
+      },
+      {
+        "name": "reconcile_locus_tags",
+        "line": 2607,
+        "function": "process",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 2608,
+        "function": "process",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "pputida/lim2022.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "reconcile_locus_tags",
+        "line": 1534,
+        "function": "process",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 1537,
+        "function": "process",
+        "phase": "load"
+      },
+      {
+        "name": "reconcile_locus_tags",
+        "line": 1559,
+        "function": "process",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "pputida/lim2025.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "reconcile_locus_tags",
+        "line": 1873,
+        "function": "resolve_variant_loci",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 1874,
+        "function": "resolve_variant_loci",
+        "phase": "load"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 2539,
+        "function": "unplaceable_protein_keys",
+        "phase": "load"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 2716,
+        "function": "standard_names",
+        "phase": "load"
+      },
+      {
+        "name": "reconcile_locus_tags",
+        "line": 2735,
+        "function": "reconcile_genotype_loci",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 2736,
+        "function": "reconcile_genotype_loci",
+        "phase": "load"
+      },
+      {
+        "name": "reconcile_locus_tags",
+        "line": 3493,
+        "function": "process",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 3496,
+        "function": "process",
+        "phase": "load"
+      },
+      {
+        "name": "reconcile_locus_tags",
+        "line": 3898,
+        "function": "process",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 3901,
+        "function": "process",
+        "phase": "load"
+      }
+    ],
+    "verify": [
+      {
+        "name": "resolve_gene_name",
+        "line": 4177,
+        "function": "run_tolerance_verification",
+        "phase": "verify"
+      }
+    ]
+  },
+  {
+    "module": "pputida/menasalvas2025.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "reconcile_locus_tags",
+        "line": 2166,
+        "function": "process",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 2167,
+        "function": "process",
+        "phase": "load"
+      },
+      {
+        "name": "reconcile_locus_tags",
+        "line": 2601,
+        "function": "resolve_protein_keys",
+        "phase": "load"
+      },
+      {
+        "name": "reconcile_locus_tags",
+        "line": 3379,
+        "function": "_variant_locus_index",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 3467,
+        "function": "process",
+        "phase": "load"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 4692,
+        "function": "selection_report",
+        "phase": "load"
+      }
+    ],
+    "verify": [
+      {
+        "name": "resolve_gene_name",
+        "line": 4595,
+        "function": "stored_tags_are_loci",
+        "phase": "verify"
+      }
+    ]
+  },
+  {
+    "module": "pputida/royet2025.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "resolve_gene_name",
+        "line": 762,
+        "function": "canonical_symbol",
+        "phase": "load"
+      },
+      {
+        "name": "reconcile_locus_tags",
+        "line": 1131,
+        "function": "process",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 1134,
+        "function": "process",
+        "phase": "load"
+      }
+    ],
+    "verify": [
+      {
+        "name": "resolve_gene_name",
+        "line": 1381,
+        "function": "verify_build",
+        "phase": "verify"
+      }
+    ]
+  },
+  {
+    "module": "pputida/thompson2019_valerolactam.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "reconcile_locus_tags",
+        "line": 1047,
+        "function": "resolve_symbols",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 1563,
+        "function": "_prepare",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "pputida/yunus2026.py",
+    "holder": "fix/audit-bacterial-refusals-1045 (bacterial set)",
+    "load": [
+      {
+        "name": "resolve_gene_name",
+        "line": 2220,
+        "function": "build_guide_library",
+        "phase": "load"
+      },
+      {
+        "name": "reconcile_locus_tags",
+        "line": 2939,
+        "function": "_resolve_targets",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 2942,
+        "function": "_resolve_targets",
+        "phase": "load"
+      },
+      {
+        "name": "reconcile_locus_tags",
+        "line": 3500,
+        "function": "process",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 3503,
+        "function": "process",
+        "phase": "load"
+      },
+      {
+        "name": "require_resolved",
+        "line": 3908,
+        "function": "_resolve_accessions",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "scerevisiae/auesukaree2009.py",
+    "holder": "sweep (unheld)",
+    "load": [
+      {
+        "name": "resolve_gene_name",
+        "line": 652,
+        "function": "_resolve_token",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "scerevisiae/cachera2023.py",
+    "holder": "sweep (unheld)",
+    "load": [
+      {
+        "name": "resolve_gene_name",
+        "line": 330,
+        "function": "_resolve_systematic",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "scerevisiae/cooper2010.py",
+    "holder": "sweep (unheld)",
+    "load": [
+      {
+        "name": "resolve_gene_name",
+        "line": 1075,
+        "function": "_resolver",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "scerevisiae/costanzo2016.py",
+    "holder": "fix/audit-yeast-refusals-1045",
+    "load": [
+      {
+        "name": "sga_systematic_name_currency",
+        "line": 220,
+        "function": "process",
+        "phase": "load"
+      },
+      {
+        "name": "sga_systematic_name_currency",
+        "line": 644,
+        "function": "process",
+        "phase": "load"
+      },
+      {
+        "name": "sga_systematic_name_currency",
+        "line": 1013,
+        "function": "process",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "scerevisiae/costanzo2021.py",
+    "holder": "sweep (unheld)",
+    "load": [
+      {
+        "name": "resolve_gene_name",
+        "line": 804,
+        "function": "process",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "scerevisiae/gene_name_reconcile.py",
+    "holder": "sweep (unheld)",
+    "load": [
+      {
+        "name": "resolve_gene_name",
+        "line": 56,
+        "function": "reconcile_systematic_names",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "scerevisiae/hackett2020.py",
+    "holder": "sweep (unheld)",
+    "load": [
+      {
+        "name": "resolve_gene_name",
+        "line": 1194,
+        "function": "resolve",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "scerevisiae/hale2024.py",
+    "holder": "sweep (unheld)",
+    "load": [
+      {
+        "name": "resolve_gene_name",
+        "line": 1057,
+        "function": "resolve",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "scerevisiae/hillenmeyer2008.py",
+    "holder": "sweep (unheld)",
+    "load": [
+      {
+        "name": "resolve_gene_name",
+        "line": 1880,
+        "function": "_resolver",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "scerevisiae/hoepfner2014.py",
+    "holder": "sweep (unheld)",
+    "load": [
+      {
+        "name": "resolve_gene_name",
+        "line": 1603,
+        "function": "_resolver",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "scerevisiae/hu2007.py",
+    "holder": "sweep (unheld)",
+    "load": [
+      {
+        "name": "resolve_gene_name",
+        "line": 817,
+        "function": "resolve_elements",
+        "phase": "load"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 1007,
+        "function": "process",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "scerevisiae/jackson2020.py",
+    "holder": "sweep (unheld)",
+    "load": [
+      {
+        "name": "resolve_gene_name",
+        "line": 966,
+        "function": "build_feature_map",
+        "phase": "load"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 1504,
+        "function": "_deleted_gene_ids",
+        "phase": "load"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 1515,
+        "function": "_deleted_gene_ids",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "scerevisiae/kemmeren2014.py",
+    "holder": "sweep (unheld)",
+    "load": [
+      {
+        "name": "resolve_gene_name",
+        "line": 1251,
+        "function": "resolve_gene_name_comprehensive",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "scerevisiae/kuzmin2020.py",
+    "holder": "fix/audit-yeast-refusals-1045, fix/keep-records-887-sd-zero",
+    "load": [
+      {
+        "name": "sga_systematic_name_currency",
+        "line": 425,
+        "function": "process",
+        "phase": "load"
+      },
+      {
+        "name": "sga_systematic_name_currency",
+        "line": 595,
+        "function": "process",
+        "phase": "load"
+      },
+      {
+        "name": "sga_systematic_name_currency",
+        "line": 888,
+        "function": "process",
+        "phase": "load"
+      },
+      {
+        "name": "sga_systematic_name_currency",
+        "line": 1139,
+        "function": "process",
+        "phase": "load"
+      },
+      {
+        "name": "sga_systematic_name_currency",
+        "line": 1371,
+        "function": "process",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "scerevisiae/lian2019.py",
+    "holder": "sweep (unheld)",
+    "load": [
+      {
+        "name": "resolve_gene_name",
+        "line": 728,
+        "function": "resolve",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "scerevisiae/mormino2022.py",
+    "holder": "sweep (unheld)",
+    "load": [
+      {
+        "name": "resolve_gene_name",
+        "line": 566,
+        "function": "_resolve",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "scerevisiae/mota2024.py",
+    "holder": "sweep (unheld)",
+    "load": [
+      {
+        "name": "resolve_gene_name",
+        "line": 568,
+        "function": "_parse_acid",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "scerevisiae/parsons2006.py",
+    "holder": "fix/audit-yeast-refusals-1045",
+    "load": [
+      {
+        "name": "resolve_gene_name",
+        "line": 1175,
+        "function": "resolve_strains",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "scerevisiae/piotrowski2017.py",
+    "holder": "sweep (unheld)",
+    "load": [
+      {
+        "name": "resolve_gene_name",
+        "line": 930,
+        "function": "_canonical_common_names",
+        "phase": "load"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 961,
+        "function": "resolve_strains",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "scerevisiae/puddu2019.py",
+    "holder": "sweep (unheld)",
+    "load": [
+      {
+        "name": "resolve_gene_name",
+        "line": 1285,
+        "function": "_resolver",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "scerevisiae/sameith2015.py",
+    "holder": "sweep (unheld)",
+    "load": [
+      {
+        "name": "candidate_orfs",
+        "line": 156,
+        "function": "convert_title_token",
+        "phase": "load"
+      },
+      {
+        "name": "resolve_gene_name_strict",
+        "line": 158,
+        "function": "convert_title_token",
+        "phase": "load"
+      }
+    ],
+    "verify": [
+      {
+        "name": "check_ambiguous_aliases",
+        "line": 586,
+        "function": "_check_title_resolutions",
+        "phase": "verify"
+      },
+      {
+        "name": "check_ambiguous_aliases",
+        "line": 1611,
+        "function": "_check_title_resolutions",
+        "phase": "verify"
+      }
+    ]
+  },
+  {
+    "module": "scerevisiae/smith2006.py",
+    "holder": "sweep (unheld)",
+    "load": [
+      {
+        "name": "resolve_gene_name",
+        "line": 463,
+        "function": "canonical_common_names",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "scerevisiae/smith2016.py",
+    "holder": "sweep (unheld)",
+    "load": [
+      {
+        "name": "resolve_gene_name",
+        "line": 510,
+        "function": "resolve",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "scerevisiae/synth_leth_db.py",
+    "holder": "sweep (unheld)",
+    "load": [
+      {
+        "name": "resolve_gene_name",
+        "line": 403,
+        "function": "_resolve_side",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "scerevisiae/vanacloig2022.py",
+    "holder": "sweep (unheld)",
+    "load": [
+      {
+        "name": "resolve_gene_name",
+        "line": 1278,
+        "function": "_canonical_common_names",
+        "phase": "load"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 1298,
+        "function": "resolve_library_rows",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "scerevisiae/wildenhain2015.py",
+    "holder": "sweep (unheld)",
+    "load": [
+      {
+        "name": "resolve_gene_name",
+        "line": 929,
+        "function": "_canonical_common_names",
+        "phase": "load"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 1300,
+        "function": "process",
+        "phase": "load"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 1323,
+        "function": "process",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "scerevisiae/xue2025.py",
+    "holder": "fix/keep-records-887-sd-zero",
+    "load": [
+      {
+        "name": "resolve_gene_name_strict",
+        "line": 272,
+        "function": "_resolve_systematic",
+        "phase": "load"
+      },
+      {
+        "name": "check_ambiguous_aliases",
+        "line": 422,
+        "function": "process",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "scerevisiae/yoshikawa2009.py",
+    "holder": "fix/audit-yeast-refusals-1045",
+    "load": [
+      {
+        "name": "MERGED_INTO_LOCUS",
+        "line": 1058,
+        "function": "_merged",
+        "phase": "load"
+      },
+      {
+        "name": "SystematicNameCurrency",
+        "line": 1165,
+        "function": "resolve_strains",
+        "phase": "load"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 1173,
+        "function": "resolve_strains",
+        "phase": "load"
+      },
+      {
+        "name": "GeneNameRefused",
+        "line": 1178,
+        "function": "resolve_strains",
+        "phase": "load"
+      }
+    ],
+    "verify": []
+  },
+  {
+    "module": "systematic_name_currency.py",
+    "holder": "fix/audit-yeast-refusals-1045",
+    "load": [
+      {
+        "name": "resolve_gene_name",
+        "line": 202,
+        "function": "_refusal_holds",
+        "phase": "load"
+      },
+      {
+        "name": "GeneNameRefused",
+        "line": 212,
+        "function": "_refusal_holds",
+        "phase": "load"
+      },
+      {
+        "name": "check_pin",
+        "line": 253,
+        "function": "__init__",
+        "phase": "load"
+      },
+      {
+        "name": "SystematicNameCurrency",
+        "line": 376,
+        "function": "sga_systematic_name_currency",
+        "phase": "load"
+      },
+      {
+        "name": "SGA_SYSTEMATIC_REFUSALS",
+        "line": 377,
+        "function": "sga_systematic_name_currency",
+        "phase": "load"
+      },
+      {
+        "name": "SystematicNameCurrency",
+        "line": 369,
+        "function": "sga_systematic_name_currency",
+        "phase": "load"
+      },
+      {
+        "name": "MERGED_INTO_LOCUS",
+        "line": 417,
+        "function": "_merged",
+        "phase": "load"
+      }
+    ],
+    "verify": [
+      {
+        "name": "resolve_gene_name",
+        "line": 272,
+        "function": "stored_name",
+        "phase": "verify"
+      },
+      {
+        "name": "resolve_gene_name",
+        "line": 275,
+        "function": "stored_name",
+        "phase": "verify"
+      },
+      {
+        "name": "GeneNameRefused",
+        "line": 276,
+        "function": "stored_name",
+        "phase": "verify"
+      }
+    ]
+  }
+]

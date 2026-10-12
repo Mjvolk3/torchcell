@@ -10,9 +10,13 @@ YBR001C with no standard-name owner. ``STDONLY`` is the standard name of YCR001W
 alias of YBR001C, but YCR001W does not repeat it in its own Alias list, so the
 candidate set must union both maps to see the ambiguity.
 
-The last test re-reads the source of every pin the three loaders declare (the R64 GFF
-and the da Silveira Table S4) when those files are on this machine, and checks the
-bytes against the pinned sha256 and the quote against the bytes.
+The last test re-reads the source of every pin the loaders still declare (the R64 GFF)
+when it is on this machine, and checks the bytes against the pinned sha256 and the quote
+against the bytes.
+
+Since 2026-10-12 the module is a downstream utility (owner: "the data is the data!!!!"):
+``test_no_loader_outside_the_sweep_list_imports_the_resolution_modules`` pins which
+loaders still import it at load time, so a new loader cannot start gating on it.
 """
 
 from __future__ import annotations
@@ -22,7 +26,6 @@ import os
 from pathlib import Path
 from typing import Any
 
-import pandas as pd
 import pytest
 from pydantic import ValidationError
 
@@ -211,46 +214,79 @@ def _data_root() -> Path | None:
 def test_every_loader_pin_matches_its_source_bytes() -> None:
     """Each pin's quote is in the bytes it cites, and those bytes hash to the pin.
 
-    GFF pins (Xue 2025, Sameith 2015) quote a substring of the R64-4-1 GFF; the da
-    Silveira pins quote ``<Systematic Name> | <Standard Name>`` of a Table S4 Quant row.
-    Skipped where the files are not on this machine.
+    The pins left in loaders (Xue 2025, Sameith 2015) are GFF pins and quote a substring
+    of the R64-4-1 GFF. da Silveira 2014 declares none since 2026-10-12: it stores the
+    names its own table gives and resolves nothing. Skipped where the GFF is not on this
+    machine.
     """
-    from torchcell.datasets.scerevisiae import dasilveira2014, sameith2015, xue2025
+    from torchcell.datasets.scerevisiae import sameith2015, xue2025
 
     root = _data_root()
     gff = None if root is None else root / R64_PATH
-    s4 = (
-        None
-        if root is None
-        else root
-        / "torchcell-library"
-        / dasilveira2014._LIBRARY_CITATION_KEY
-        / "data"
-        / dasilveira2014.DATA_FILENAME
-    )
-    if gff is None or s4 is None or not gff.exists() or not s4.exists():
-        pytest.skip("R64 GFF or da Silveira Table S4 not on this machine")
+    if gff is None or not gff.exists():
+        pytest.skip("R64 GFF not on this machine")
     gff_bytes = gff.read_bytes()
     gff_text = gff_bytes.decode("utf-8")
-    s4_rows = {
-        f"{orf} | {name}"
-        for orf, name in pd.read_excel(s4, sheet_name="Quant")
-        .iloc[:, :2]
-        .itertuples(index=False)
-    }
-    for module in (xue2025, sameith2015, dasilveira2014):
+    for module in (xue2025, sameith2015):
         for pin in module.AMBIGUOUS_ALIAS_PINS.values():
-            if pin.rule is AliasResolutionRule.SGD_STANDARD_NAME:
-                assert pin.provenance.sha256 == hashlib.sha256(gff_bytes).hexdigest()
-                assert pin.quote in gff_text, pin.alias
-            else:
-                assert (
-                    pin.provenance.sha256 == hashlib.sha256(s4.read_bytes()).hexdigest()
-                )
-                assert pin.quote in s4_rows, pin.alias
+            assert pin.rule is AliasResolutionRule.SGD_STANDARD_NAME, pin.alias
+            assert pin.provenance.sha256 == hashlib.sha256(gff_bytes).hexdigest()
+            assert pin.quote in gff_text, pin.alias
 
 
 R64_PATH = (
     "data/sgd/genome/S288C_reference_genome_R64-4-1_20230830/"
     "saccharomyces_cerevisiae_R64-4-1_20230830.gff"
 )
+
+
+#: Modules under ``torchcell/datasets`` that still import a resolution module at load
+#: time on this branch (2026-10-12), each left to the branch rewriting it: Costanzo
+#: 2016, Kuzmin 2020 and Yoshikawa 2009 to ``fix/audit-yeast-refusals-1045`` (which
+#: deletes ``systematic_name_currency``), Xue 2025 to ``fix/keep-records-887-sd-zero``,
+#: Sameith 2015 to the loader sweep. The set only shrinks.
+LOAD_TIME_RESOLUTION_PENDING_SWEEP = frozenset(
+    {
+        "torchcell.datasets.scerevisiae.costanzo2016",
+        "torchcell.datasets.scerevisiae.kuzmin2020",
+        "torchcell.datasets.scerevisiae.sameith2015",
+        "torchcell.datasets.scerevisiae.xue2025",
+        "torchcell.datasets.scerevisiae.yoshikawa2009",
+        "torchcell.datasets.systematic_name_currency",
+    }
+)
+RESOLUTION_MODULES = frozenset(
+    {
+        "torchcell.datasets.gene_alias_resolution",
+        "torchcell.datasets.systematic_name_currency",
+    }
+)
+
+
+def test_no_loader_outside_the_sweep_list_imports_the_resolution_modules() -> None:
+    """Owner, 2026-10-12: name resolution is downstream and gates no record at load time.
+
+    Every module under ``torchcell/datasets`` that imports ``gene_alias_resolution`` or
+    ``systematic_name_currency`` must be one the sweep has yet to rewrite; a loader
+    added or changed to gate on them fails here. da Silveira 2014 left the list on
+    2026-10-12 (it stores its table's own names).
+    """
+    import ast
+
+    import torchcell.datasets as datasets_package
+
+    root = Path(datasets_package.__file__).parent
+    importers = set()
+    for path in sorted(root.rglob("*.py")):
+        module = "torchcell.datasets." + ".".join(
+            path.relative_to(root).with_suffix("").parts
+        )
+        if module in RESOLUTION_MODULES - {
+            "torchcell.datasets.systematic_name_currency"
+        }:
+            continue
+        for node in ast.walk(ast.parse(path.read_text())):
+            if isinstance(node, ast.ImportFrom) and node.module in RESOLUTION_MODULES:
+                importers.add(module)
+    assert importers - LOAD_TIME_RESOLUTION_PENDING_SWEEP == set()
+    assert "torchcell.datasets.scerevisiae.dasilveira2014" not in importers

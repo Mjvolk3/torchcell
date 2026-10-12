@@ -2,7 +2,18 @@
 # [[torchcell.datasets.gene_alias_resolution]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/gene_alias_resolution
 # Test file: tests/torchcell/datasets/test_gene_alias_resolution.py
-"""Refusing gene-name resolution for S. cerevisiae loaders that read common names (#886).
+"""Refusing gene-name resolution against R64: a downstream utility, not a load gate (#886).
+
+Owner, 2026-10-12: "the data is the data!!!! it is what they reported ... we don't drop
+raw data unless they themselves pull it! ... the genome is separate.. it doesn't gate
+anything... we do that at modeling time if it is an issue." A loader stores each record
+under the names its release gives; it does not call this module to decide whether a
+record is stored, and a :class:`GeneNameRefused` raised here never drops or refuses a
+record at load time. The module maps a released name onto the R64 annotation for a
+DOWNSTREAM caller (an adapter, a modeling step, an audit), where a refusal is that
+caller's typed answer. The loaders that still call it at load time are pinned in
+``tests/torchcell/datasets/test_gene_alias_resolution.py`` for the sweep that removes
+the call; no new loader may join them.
 
 A common gene name can belong to more than one R64 ORF: ``TFC7`` is the standard name of
 ``YOR110W`` and a secondary alias of ``YNL039W`` (BDP1). A loader that takes the first

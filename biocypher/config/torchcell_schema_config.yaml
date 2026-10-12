@@ -633,6 +633,10 @@ flux phenotype:
         n_samples: int
         sample_unit: str
         target_reaction_ids: str
+        # #800 (Li 2021): the released exchange fluxes of reversible reactions.
+        exchange_flux: str
+        exchange_flux_lower: str
+        exchange_flux_upper: str
 
 # Transcription from ONE promoter read through a reporter fusion
 # (PromoterActivityPhenotype). Every field but provenance_gaps is projected, enums as

@@ -927,6 +927,9 @@ def test_flux_phenotype_node_keeps_the_sign_and_the_interval() -> None:
         "n_samples": 2,
         "sample_unit": "biological_replicate",
         "target_reaction_ids": '{"PGI": "PGI"}',
+        "exchange_flux": None,
+        "exchange_flux_lower": None,
+        "exchange_flux_upper": None,
         "id": pid,
         "preferred_id": f"phenotype_{pid}",
     }
@@ -938,8 +941,43 @@ def test_flux_phenotype_node_keeps_the_sign_and_the_interval() -> None:
         "n_samples",
         "sample_unit",
         "target_reaction_ids",
+        "exchange_flux",
+        "exchange_flux_lower",
+        "exchange_flux_upper",
     )
     assert [bare.get_properties()[k] for k in optional] == [None] * len(optional)
+
+
+def test_flux_phenotype_node_serves_the_exchange_fluxes_verbatim() -> None:
+    """#800: Li 2021's exchange table rides on the node as JSON, unconverted."""
+    phenotype = _flux(
+        exchange_flux={"vAco.x": 0.33},
+        exchange_flux_lower={"vAco.x": 0.21},
+        exchange_flux_upper={"vAco.x": 0.45},
+    )
+    [node] = _run("flux phenotype (chunked)", _phenotype_record(phenotype))
+    properties = node.get_properties()
+    assert properties["exchange_flux"] == '{"vAco.x": 0.33}'
+    assert properties["exchange_flux_lower"] == '{"vAco.x": 0.21}'
+    assert properties["exchange_flux_upper"] == '{"vAco.x": 0.45}'
+
+
+def test_flux_reference_node_serves_a_gapped_map_as_null() -> None:
+    """#800: a reference whose map the source does not release has a null net_flux."""
+    from torchcell.adapters.cell_adapter import CellAdapter
+    from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
+
+    gap = ProvenanceGap(
+        field="net_flux", reason=ProvenanceGapReason.not_reported_by_primary
+    )
+    gapped = s.FluxPhenotype(
+        net_flux=None,
+        measurement_type="c13_mfa_net_flux_mmol_per_gdcw_per_h",
+        provenance_gaps=[gap],
+    )
+    properties = CellAdapter._flux_properties(gapped)
+    assert properties["net_flux"] is None
+    assert properties["net_flux_lower"] is None
 
 
 def test_promoter_activity_phenotype_node_projects_every_field_as_a_scalar() -> None:

@@ -2978,9 +2978,29 @@ class CellAdapter:
             "graph_level": phenotype.graph_level,
             "label_name": phenotype.label_name,
             "label_statistic_name": phenotype.label_statistic_name,
-            "net_flux": json.dumps(phenotype.net_flux),
+            # #800: a reference map the source does not release is a typed gap.
+            "net_flux": (
+                json.dumps(phenotype.net_flux)
+                if phenotype.net_flux is not None
+                else None
+            ),
             "net_flux_lower": json.dumps(lower) if lower is not None else None,
             "net_flux_upper": json.dumps(upper) if upper is not None else None,
+            "exchange_flux": (
+                json.dumps(phenotype.exchange_flux)
+                if phenotype.exchange_flux is not None
+                else None
+            ),
+            "exchange_flux_lower": (
+                json.dumps(phenotype.exchange_flux_lower)
+                if phenotype.exchange_flux_lower is not None
+                else None
+            ),
+            "exchange_flux_upper": (
+                json.dumps(phenotype.exchange_flux_upper)
+                if phenotype.exchange_flux_upper is not None
+                else None
+            ),
             "confidence_level": phenotype.confidence_level,
             "measurement_type": phenotype.measurement_type,
             "n_samples": phenotype.n_samples,

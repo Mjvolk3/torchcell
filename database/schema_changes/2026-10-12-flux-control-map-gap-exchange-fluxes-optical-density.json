@@ -1,0 +1,765 @@
+{
+  "record_version": 1,
+  "slug": "flux-control-map-gap-exchange-fluxes-optical-density",
+  "date": "2026-10-12",
+  "pr": null,
+  "author_kind": "agent",
+  "base_commit": "7a068d41a8d409dba02c290ad9578e3d7fd217ab",
+  "python_version": "3.13.0",
+  "symbols": [
+    {
+      "symbol": "ABSOLUTE_MEASUREMENT_TYPES",
+      "status": "modified",
+      "kinds": [
+        "enum_member_added"
+      ],
+      "fingerprint_before": "6f8608467a8523ba528898ff864a66476e21fbfb583d703f01cc51d24a5e7999",
+      "fingerprint_after": "673747f25de4a67c660cdb686eb5ca47eb436864d70e4895fbacb236311e9cb2",
+      "impact": "stale",
+      "reasons": [
+        "gained members ['MeasurementType.optical_density']"
+      ]
+    },
+    {
+      "symbol": "EnvironmentResponsePhenotype",
+      "status": "modified",
+      "kinds": [
+        "typed_gap"
+      ],
+      "fingerprint_before": "6ffc88ac96e18215b5b87d4aa7b7be0a8c92f0825b03bc2cb69366b6544e9cb3",
+      "fingerprint_after": "feeebeb75826b959a01714ecdd6bb3add256abda902f72bb6deff7aec1c11aba",
+      "impact": "stale",
+      "reasons": [
+        "validator/serializer changed: ['_check']"
+      ]
+    },
+    {
+      "symbol": "FluxPhenotype",
+      "status": "modified",
+      "kinds": [
+        "typed_gap",
+        "additive_field"
+      ],
+      "fingerprint_before": "10bd49b16d5548be0bb9217aa295d1a67e9c79850cc4a5603a1d787576cac0bc",
+      "fingerprint_after": "2ba4a74e440c0f1735494065915fbbff82459800da0c863a5a14d12fe103b8f6",
+      "impact": "breaking",
+      "reasons": [
+        "added optional field 'exchange_flux'",
+        "added optional field 'exchange_flux_lower'",
+        "added optional field 'exchange_flux_upper'",
+        "field 'net_flux' type changed: dict[str, float] -> dict[str, float] | None",
+        "validator/serializer changed: ['validate_flux']"
+      ]
+    },
+    {
+      "symbol": "MeasurementType",
+      "status": "modified",
+      "kinds": [
+        "enum_member_added"
+      ],
+      "fingerprint_before": "1ae062209e7b2fe2f59d1520d16a9e965b85f0e868c6332deab9b59bd6710a62",
+      "fingerprint_after": "100e648ca10dc245bd9fb8ac04af14c6d3fa5bdf829bdde5c708717a41d34ed8",
+      "impact": "stale",
+      "reasons": [
+        "added member/const 'optical_density'"
+      ]
+    }
+  ],
+  "correctness_argument": "Owner rule 2026-10-12: a released value is stored as released, and a value the source does not state is a typed ProvenanceGap, never a reason to refuse. Two releases could not be stored without a typed gap on a required value, and one released quantity had no carrier. (1) FluxPhenotype.net_flux becomes value-or-gap. Li 2021 (#800) names its control strain BW-P BF as analysed ('MFA was performed to detect the metabolic fux distribution in strains BW-P08 BF and BW-P10 BF ... and the control strain BW-P BF.', paper.md sha256 7d174c8e...) but Additional file 2 (sha256 24c836f8...) releases blocks for BW-P08, BW-P04 and BW-P10 only, so FluxExperimentReference.phenotype_reference, which is required and whose net_flux could not be empty, had nothing to hold and every record was refused (issue #800). net_flux stays required: it is None only beside a ProvenanceGap(field='net_flux'), and a gapped map refuses bounds or exchange values, so no record the old contract accepted changes meaning and no silent None is admitted. (2) FluxPhenotype gains exchange_flux / exchange_flux_lower / exchange_flux_upper, optional by construction (absent = the release carries none). A 13C-MFA fit identifies a reversible reaction's exchange flux beside its net flux; Li 2021 releases an exchange table under each NETWORK block (24, 23 and 23 rows, 'Bestfit', 'LB', 'UB') and Ishii 2007 releases seven 'Exch.' rows it currently writes to a side CSV because 'no field holds a reversibility parameter'. Values are stored verbatim on the release's own scale and are deliberately not validated to lie between their bounds, so no released row is refused. (3) EnvironmentResponsePhenotype._check admits environment_response=None on a numeric measurement type ONLY beside a ProvenanceGap(field='environment_response'). Baba 2006 Table 3 (#927, msb4100050-s5.xls sha256 a1a9c30b...) releases OD600 for 3,985 obtained mutants and no BW25113 row, while the Results compare to wild type ('The vast majority showed no differences from wild type.'); the reference's reading is therefore a typed absence. The verifier's absolute branch counts such references against a declared oracle (expected_gapped_reference), so a gapped reference cannot silently appear or vanish. (4) MeasurementType.optical_density, added to ABSOLUTE_MEASUREMENT_TYPES. The released number is an end-point absorbance of a liquid culture at 600 nm ('Absorbance at 600 nm was measured after mixing for 5 s in a 96-well plate reader (Molecular Dynamics).'; Figure 6: 'Maximum cell density values are plotted.'), which is not a fitted growth rate (growth_rate), not a cell count (cell_yield) and not a plate-image area (colony_size): a different physical measurement gets its own member (policy Rule 6), and it is absolute, so it joins the absolute set. No served record's meaning changes. The impact is breaking for the served closures that hold FluxPhenotype (Ishii 2007 flux) and stale for every environment-response closure; it lands with the KG 4.0 full rebuild.",
+  "measurement_type_decision": true,
+  "source_quotes": [
+    {
+      "value": "absorbance at 600 nm",
+      "provenance": {
+        "source_uri": "paper/PMC1681482.1.txt",
+        "citation_key": "babaConstructionEscherichiaColi2006",
+        "sha256": "6e39bc2f12aecceac568f91dfcd068e109433132df618dc68624d317737bf3cd",
+        "method": "PMC Article Datasets plain text of the article (raw mirror)",
+        "page": null,
+        "retrieved": null
+      },
+      "quote": "Absorbance at 600 nm was measured after mixing for 5 s in a 96-well plate reader (Molecular Dynamics).",
+      "note": null
+    },
+    {
+      "value": {
+        "hours": 22.0,
+        "celsius": 37.0
+      },
+      "provenance": {
+        "source_uri": "paper/PMC1681482.1.txt",
+        "citation_key": "babaConstructionEscherichiaColi2006",
+        "sha256": "6e39bc2f12aecceac568f91dfcd068e109433132df618dc68624d317737bf3cd",
+        "method": "PMC Article Datasets plain text of the article (raw mirror)",
+        "page": null,
+        "retrieved": null
+      },
+      "quote": "Mutants were tested for growth in 200-\u03bcl LB medium with kanamycin as a rich medium in 96-well microplates inoculated directly with 96 inoculation pins (Genetix Limited, UK) and incubated for 22 h at 37\u00b0C without shaking.",
+      "note": null
+    },
+    {
+      "value": "maximum cell density",
+      "provenance": {
+        "source_uri": "paper/PMC1681482.1.txt",
+        "citation_key": "babaConstructionEscherichiaColi2006",
+        "sha256": "6e39bc2f12aecceac568f91dfcd068e109433132df618dc68624d317737bf3cd",
+        "method": "PMC Article Datasets plain text of the article (raw mirror)",
+        "page": null,
+        "retrieved": null
+      },
+      "quote": "Maximum cell density values are plotted.",
+      "note": "Figure 6's legend: the released value is a single end-point reading"
+    },
+    {
+      "value": [
+        "BW-P08 BF",
+        "BW-P10 BF",
+        "BW-P BF"
+      ],
+      "provenance": {
+        "source_uri": "paper.md",
+        "citation_key": "liFineTuningGlycolytic2021",
+        "sha256": "7d174c8ef7af0e0c275f6194271d39346c22411c27904803ee16b7caf95b7773",
+        "method": null,
+        "page": "Discussion",
+        "retrieved": null
+      },
+      "quote": "MFA was performed to detect the metabolic fux distribution in strains BW-P08 BF and BW-P10 BF (which had high MVA titers) and the control strain BW-P BF.",
+      "note": "the control BW-P BF is named as analysed; its map is not in the release"
+    }
+  ],
+  "alternatives_rejected": [
+    {
+      "alternative": "Refuse Li 2021 because the control map is absent (issue #800's original recommendation)",
+      "why_rejected": "The owner reversed it on 2026-10-12: the absent map is a typed gap on the reference, never a reason to refuse the three released maps."
+    },
+    {
+      "alternative": "Borrow BW-P04's block, or an average of the released blocks, as the control map",
+      "why_rejected": "It would store another strain's fit as the control's; the release does not state the control's map."
+    },
+    {
+      "alternative": "Store Baba's OD600 as MeasurementType.growth_rate or cell_yield",
+      "why_rejected": "Both are different physical quantities (a fitted rate, a cell count); reusing either changes what the member means (Rule 3, field_meaning)."
+    },
+    {
+      "alternative": "Make EnvironmentResponseExperimentReference.phenotype_reference optional",
+      "why_rejected": "Loosens a required field for a thin source (Rule 5); the value-or-gap on the reading keeps the reference, its environment and its strain stated."
+    }
+  ],
+  "served_release": "2026.10.06-4b293d34",
+  "affected_loaders": [
+    {
+      "loader": "torchcell/datasets/ecoli/ishii2007.py",
+      "dataset_classes": [
+        "_Ishii2007Dataset",
+        "MetabolomeIshii2007Dataset",
+        "ProteomeIshii2007Dataset",
+        "FluxIshii2007Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "FluxPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/li2021.py",
+      "dataset_classes": [
+        "FluxLi2021Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "FluxPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/baba2006_growth.py",
+      "dataset_classes": [
+        "GrowthYieldBaba2006Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "MeasurementType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/caglar2017_doubling_time.py",
+      "dataset_classes": [
+        "DoublingTimeCaglar2017Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "MeasurementType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/choe2025.py",
+      "dataset_classes": [
+        "CrispriChemgenChoe2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "MeasurementType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/cui2018.py",
+      "dataset_classes": [
+        "CrispriKnockdownCui2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "MeasurementType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/fang2025.py",
+      "dataset_classes": [
+        "CrispriGuideFfaEnrichmentFang2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "MeasurementType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/girgis2009.py",
+      "dataset_classes": [
+        "EnvChemgenGirgis2009Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "MeasurementType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/hawkins2020.py",
+      "dataset_classes": [
+        "MismatchCrispriFitnessHawkins2020Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "MeasurementType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/lamoureux2023_growth.py",
+      "dataset_classes": [
+        "GrowthRateLamoureux2023Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "MeasurementType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/mutalik2020.py",
+      "dataset_classes": [
+        "PhageRbTnseqMutalik2020Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "MeasurementType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/niu2019.py",
+      "dataset_classes": [
+        "CrisprPineneToleranceNiu2019Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "MeasurementType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/price2018.py",
+      "dataset_classes": [
+        "RbTnseqPrice2018EcoliDataset",
+        "GeneEssentialityPrice2018EcoliDataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "MeasurementType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/rousset2018.py",
+      "dataset_classes": [
+        "CrispriScreenRousset2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "MeasurementType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/schmidt2016_s23_growth_rate.py",
+      "dataset_classes": [
+        "GrowthRateS23Schmidt2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "MeasurementType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/shiver2016.py",
+      "dataset_classes": [
+        "EnvChemgenShiver2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "MeasurementType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/wang2015.py",
+      "dataset_classes": [
+        "EnvChemgenWang2015Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "MeasurementType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/wang2018.py",
+      "dataset_classes": [
+        "CrispriGuideFitnessWang2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "MeasurementType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/wang2024.py",
+      "dataset_classes": [
+        "EnvChemgenWang2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "MeasurementType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/wetmore2015.py",
+      "dataset_classes": [
+        "RbTnseqWetmore2015Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "MeasurementType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/borchert2023.py",
+      "dataset_classes": [
+        "RbTnseqBorchert2023Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "MeasurementType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/borchert2024.py",
+      "dataset_classes": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "MeasurementType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/lim2025.py",
+      "dataset_classes": [
+        "IsoprenolToleranceLim2025Dataset",
+        "ProteomeLim2025Dataset",
+        "ProteomeFoldChangeLim2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "MeasurementType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/menasalvas2025.py",
+      "dataset_classes": [
+        "IsoprenolSelectionMenasalvas2025Dataset",
+        "ProteomeMenasalvas2025Dataset",
+        "_MetabolitePhaseDataset",
+        "MetaboliteGrowthPhaseMenasalvas2025Dataset",
+        "MetaboliteProductionPhaseMenasalvas2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "MeasurementType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/royet2025.py",
+      "dataset_classes": [
+        "EnvMetalTnseqRoyet2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "MeasurementType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/thompson2019_valerolactam.py",
+      "dataset_classes": [
+        "_Thompson2019Dataset",
+        "ValerolactamTiterThompson2019Dataset",
+        "LactamGrowthRateThompson2019Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "MeasurementType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/private_torchcell/volk2021_inhibitor_bioscreen.py",
+      "dataset_classes": [
+        "InhibitorBioscreenVolk2021Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "MeasurementType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/auesukaree2009.py",
+      "dataset_classes": [
+        "EnvChemgenAuesukaree2009Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenAuesukaree2009Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "MeasurementType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/bloom2019.py",
+      "dataset_classes": [
+        "Bloom2019Dataset"
+      ],
+      "served_classes": [
+        "Bloom2019Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "MeasurementType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/costanzo2021.py",
+      "dataset_classes": [
+        "EnvChemgenCostanzo2021Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenCostanzo2021Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "MeasurementType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/dechiara2022.py",
+      "dataset_classes": [
+        "_DeChiara2022Dataset",
+        "_GrowthDeChiara2022Dataset",
+        "DoublingTimeDeChiara2022Dataset",
+        "CellYieldDeChiara2022Dataset",
+        "LifeCycleDeChiara2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "MeasurementType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/hale2024.py",
+      "dataset_classes": [
+        "CrispriSegregantHale2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "MeasurementType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/hillenmeyer2008.py",
+      "dataset_classes": [
+        "HetHillenmeyer2008Dataset",
+        "HomHillenmeyer2008Dataset"
+      ],
+      "served_classes": [
+        "HetHillenmeyer2008Dataset",
+        "HomHillenmeyer2008Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "MeasurementType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/hoepfner2014.py",
+      "dataset_classes": [
+        "EnvChemgenHoepfner2014Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenHoepfner2014Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "MeasurementType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/lian2019.py",
+      "dataset_classes": [
+        "CrisprMagicLian2019Dataset"
+      ],
+      "served_classes": [
+        "CrisprMagicLian2019Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "MeasurementType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/mormino2022.py",
+      "dataset_classes": [
+        "CrispriMormino2022Dataset"
+      ],
+      "served_classes": [
+        "CrispriMormino2022Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "MeasurementType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/mota2024.py",
+      "dataset_classes": [
+        "EnvChemgenMota2024Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenMota2024Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "MeasurementType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/parsons2006.py",
+      "dataset_classes": [
+        "EnvChemgenParsons2006Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "MeasurementType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/peter2018.py",
+      "dataset_classes": [
+        "IsolateGrowthPeter2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "MeasurementType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/piotrowski2017.py",
+      "dataset_classes": [
+        "EnvChemgenPiotrowski2017Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "MeasurementType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/smith2006.py",
+      "dataset_classes": [
+        "FattyAcidSmith2006Dataset"
+      ],
+      "served_classes": [
+        "FattyAcidSmith2006Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "MeasurementType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/smith2016.py",
+      "dataset_classes": [
+        "CrispriChemgenSmith2016Dataset"
+      ],
+      "served_classes": [
+        "CrispriChemgenSmith2016Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "MeasurementType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/vanacloig2022.py",
+      "dataset_classes": [
+        "EnvChemgenVanacloig2022Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenVanacloig2022Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "MeasurementType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/wildenhain2015.py",
+      "dataset_classes": [
+        "EnvChemgenWildenhain2015Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenWildenhain2015Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "MeasurementType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/yeastphenome.py",
+      "dataset_classes": [
+        "YeastPhenomeDataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "MeasurementType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/yoshikawa2009.py",
+      "dataset_classes": [
+        "EnvChemgenYoshikawa2009Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "MeasurementType"
+      ]
+    }
+  ],
+  "served_datasets": [
+    "Bloom2019Dataset",
+    "CrisprMagicLian2019Dataset",
+    "CrispriChemgenSmith2016Dataset",
+    "CrispriMormino2022Dataset",
+    "EnvChemgenAuesukaree2009Dataset",
+    "EnvChemgenCostanzo2021Dataset",
+    "EnvChemgenHoepfner2014Dataset",
+    "EnvChemgenMota2024Dataset",
+    "EnvChemgenVanacloig2022Dataset",
+    "EnvChemgenWildenhain2015Dataset",
+    "FattyAcidSmith2006Dataset",
+    "HetHillenmeyer2008Dataset",
+    "HomHillenmeyer2008Dataset"
+  ],
+  "rebuild_scope": "full_kg_rebuild",
+  "owner_sign_off": {
+    "signed": false,
+    "quote": null,
+    "url": null
+  }
+}

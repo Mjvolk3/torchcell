@@ -498,6 +498,8 @@ def _reference_absolute_result(
     n_relative_type: int,
     n_type_mismatch: int,
     types: set[str],
+    n_gapped_reference: int = 0,
+    expected_gapped_reference: int = 0,
 ) -> LevelResult:
     """L3 ``reference_zero``, the ABSOLUTE branch: the reference states its own value.
 
@@ -510,17 +512,30 @@ def _reference_absolute_result(
     member of ``ABSOLUTE_MEASUREMENT_TYPES``, so asking for it on a log2-ratio or z-score
     dataset FAILS instead of quietly skipping the zero check. The message names the
     branch that ran, as the categorical branch does.
+
+    #927: a reference whose value is a typed ``ProvenanceGap`` on
+    ``environment_response`` (the source releases no reading for it, Baba 2006 Table
+    3's absent wild type) is not a bad reference: it is counted apart and the count is
+    an ORACLE, so ``n_gapped_reference`` must EQUAL ``expected_gapped_reference``.
     """
-    passed = n_bad_reference == 0 and n_relative_type == 0 and n_type_mismatch == 0
+    passed = (
+        n_bad_reference == 0
+        and n_relative_type == 0
+        and n_type_mismatch == 0
+        and n_gapped_reference == expected_gapped_reference
+    )
     return LevelResult(
         level=Level.L3,
         name="reference_zero",
         passed=passed,
         message=(
             f"absolute rule: reference value finite and on the record's own scale for "
-            f"all {n_values} records ({sorted(types)})"
+            f"all {n_values} records, {n_gapped_reference} of them a typed gap as "
+            f"declared ({sorted(types)})"
             if passed
             else f"absolute rule: {n_bad_reference} references absent or non-finite; "
+            f"{n_gapped_reference} gapped references, {expected_gapped_reference} "
+            "declared; "
             f"{n_relative_type} records carry a RELATIVE measurement_type, which is 0 "
             f"at its control by construction and may not take this relief; "
             f"{n_type_mismatch} references on a different scale than their experiment "
@@ -533,16 +548,20 @@ def _reference_absolute_result(
             "n_relative_measurement_type": n_relative_type,
             "n_reference_type_mismatch": n_type_mismatch,
             "measurement_types": sorted(types),
+            "n_gapped_reference": n_gapped_reference,
+            "expected_gapped_reference": expected_gapped_reference,
         },
     )
 
 
-def _l3_reference_absolute(records: Sequence[Record]) -> LevelResult:
+def _l3_reference_absolute(
+    records: Sequence[Record], expected_gapped_reference: int = 0
+) -> LevelResult:
     """L3: the reference of an ABSOLUTE readout states its own measured value."""
     from torchcell.datamodels.schema import ABSOLUTE_MEASUREMENT_TYPES
 
     absolute = {str(member.value) for member in ABSOLUTE_MEASUREMENT_TYPES}
-    accumulator = _AbsoluteReferenceAccumulator(absolute)
+    accumulator = _AbsoluteReferenceAccumulator(absolute, expected_gapped_reference)
     for rec in records:
         accumulator.add(rec)
     return accumulator.result()
@@ -551,8 +570,12 @@ def _l3_reference_absolute(records: Sequence[Record]) -> LevelResult:
 class _AbsoluteReferenceAccumulator:
     """Single-pass accumulator for the absolute-reference rule (eager + streaming)."""
 
-    def __init__(self, absolute_types: set[str]) -> None:
+    def __init__(
+        self, absolute_types: set[str], expected_gapped_reference: int = 0
+    ) -> None:
         self._absolute = absolute_types
+        self.expected_gapped_reference = expected_gapped_reference
+        self.n_gapped_reference = 0
         self.n_values = 0
         self.n_bad_reference = 0
         self.n_relative_type = 0
@@ -569,7 +592,13 @@ class _AbsoluteReferenceAccumulator:
             self.n_relative_type += 1
         reference = record["reference"]["phenotype_reference"]
         value = reference["environment_response"]
-        if value is None or not math.isfinite(float(value)):
+        gapped = any(
+            gap["field"] == "environment_response"
+            for gap in reference.get("provenance_gaps") or []
+        )
+        if value is None and gapped:
+            self.n_gapped_reference += 1
+        elif value is None or not math.isfinite(float(value)):
             self.n_bad_reference += 1
         if str(reference["measurement_type"]) != kind:
             self.n_type_mismatch += 1
@@ -582,6 +611,8 @@ class _AbsoluteReferenceAccumulator:
             n_relative_type=self.n_relative_type,
             n_type_mismatch=self.n_type_mismatch,
             types=self.types,
+            n_gapped_reference=self.n_gapped_reference,
+            expected_gapped_reference=self.expected_gapped_reference,
         )
 
 
@@ -911,6 +942,7 @@ def verify_environment_response_dataset(
     reference_unit_scaled: bool = False,
     expected_unperturbed: int = 0,
     expected_non_bracketing: int = 0,
+    expected_gapped_reference: int = 0,
 ) -> VerificationReport:
     """Run the L0-L4 record-level gate for an environment-response dataset.
 
@@ -945,6 +977,9 @@ def verify_environment_response_dataset(
     - ``expected_non_bracketing`` (default 0) is how many stored two-sided intervals do
       not bracket their value, which a nonlinear transform of a released interval can
       produce; observed must EQUAL declared.
+    - ``expected_gapped_reference`` (default 0, absolute branch only, #927) is how many
+      records' references carry a typed gap on ``environment_response`` because the
+      source releases no reading for the reference; observed must EQUAL declared.
     """
     from pydantic import TypeAdapter
 
@@ -1009,7 +1044,7 @@ def verify_environment_response_dataset(
         else (
             _l3_reference_zero(records)
             if reference_centered
-            else _l3_reference_absolute(records)
+            else _l3_reference_absolute(records, expected_gapped_reference)
         )
     )
     report.add(_l3_environment_perturbed(records, expected_unperturbed))
@@ -1043,6 +1078,7 @@ def verify_environment_response_dataset_streaming(
     reference_unit_scaled: bool = False,
     expected_unperturbed: int = 0,
     expected_non_bracketing: int = 0,
+    expected_gapped_reference: int = 0,
 ) -> VerificationReport:
     """Single-pass, memory-bounded L0-L4 gate for LARGE environment-response datasets.
 
@@ -1087,7 +1123,8 @@ def verify_environment_response_dataset_streaming(
 
     intervals = _IntervalAccumulator()
     absolute_reference = _AbsoluteReferenceAccumulator(
-        {str(member.value) for member in ABSOLUTE_MEASUREMENT_TYPES}
+        {str(member.value) for member in ABSOLUTE_MEASUREMENT_TYPES},
+        expected_gapped_reference,
     )
     ratio_reference = _ratio_reference_accumulator()
     shared = SharedRecordRules(

@@ -8272,6 +8272,12 @@ class MeasurementType(StrEnum):
       grows like the reference. Distinct from ``log2_ratio`` (an end-point abundance
       ratio, not a fitted growth rate) and from ``relative_growth_rate`` (a ratio against
       a wild-type well, not a difference against a pooled population).
+    - ``optical_density``: ABSOLUTE absorbance of a liquid culture read at a stated
+      wavelength after a stated incubation (Baba 2006 Supplementary Table 3: each Keio
+      mutant's OD600 after 22 h in LB and 24 h and 48 h in glucose MOPS), on the plate
+      reader's own scale and unnormalized. Distinct from ``growth_rate`` (a rate fitted
+      over a curve; this is one end-point reading), from ``cell_yield`` (a cell count,
+      not an absorbance) and from ``colony_size`` (a solid-plate image measure).
     """
 
     log2_ratio = "log2_ratio"
@@ -8288,6 +8294,7 @@ class MeasurementType(StrEnum):
     condition_growth_ratio = "condition_growth_ratio"
     cell_yield = "cell_yield"  # De Chiara 2022 (additive)
     relative_fitness = "relative_fitness"  # Hale 2024
+    optical_density = "optical_density"  # Baba 2006 Table 3 (additive, #927)
 
 
 class ResponseCategory(StrEnum):
@@ -8365,6 +8372,7 @@ ABSOLUTE_MEASUREMENT_TYPES: frozenset[MeasurementType] = frozenset(
         MeasurementType.growth_rate,
         MeasurementType.colony_size,
         MeasurementType.cell_yield,  # De Chiara 2022: cells per colony population
+        MeasurementType.optical_density,  # Baba 2006 Table 3: end-point OD600 (#927)
     }
 )
 # --------------------------------------------------------------------------- #
@@ -8630,9 +8638,16 @@ class EnvironmentResponsePhenotype(Phenotype, ModelStrict):
                 raise ValueError(
                     f"{self.measurement_type} measurement_type requires `category`"
                 )
-        elif self.environment_response is None:
+        elif (
+            self.environment_response is None
+            # ADDITIVE (#927): a numeric readout's value may be a typed
+            # ProvenanceGap, which is how a reference states that the source
+            # releases no reading for it (Baba 2006 Table 3 has no wild-type row).
+            and "environment_response" not in self.gapped_fields()
+        ):
             raise ValueError(
-                f"{self.measurement_type} requires a numeric environment_response"
+                f"{self.measurement_type} requires a numeric environment_response "
+                "(or a ProvenanceGap on 'environment_response')"
             )
         if self.category_label is not None and self.category is None:
             raise ValueError(
@@ -9866,8 +9881,17 @@ class FluxPhenotype(Phenotype, ModelStrict):
     label_name: str = "net_flux"
     label_statistic_name: str | None = None
 
-    net_flux: dict[str, float] = Field(
-        description="reaction id -> signed net flux in measurement_type's unit"
+    # ----------------------------------------------------------------------- #
+    # ADDITIVE (#800, Li 2021): ``net_flux`` admits a typed ProvenanceGap, so a
+    # reference whose flux map the release does not carry (Li 2021 names its
+    # control strain's map in the text and figure but releases none) is a typed
+    # absence rather than a reason to refuse the three released maps. The field
+    # stays required on every record that has a map: None ONLY with the gap.
+    # ----------------------------------------------------------------------- #
+    net_flux: dict[str, float] | None = Field(
+        description="reaction id -> signed net flux in measurement_type's unit. None "
+        "ONLY with a ProvenanceGap on 'net_flux' (a map the source names but does not "
+        "release, e.g. a control strain's)"
     )
     net_flux_lower: dict[str, float] | None = Field(
         default=None,
@@ -9899,10 +9923,54 @@ class FluxPhenotype(Phenotype, ModelStrict):
         description="reaction key -> constraint-based-model reaction id for CBM linkage; "
         "None until that mapping is decided",
     )
+    # ----------------------------------------------------------------------- #
+    # ADDITIVE (#800, Li 2021): the EXCHANGE fluxes a 13C-MFA fit releases beside
+    # its net fluxes. A reversible reaction has a net flux (forward minus
+    # backward, above) and an exchange flux (how much it runs both ways), and a
+    # labeling fit identifies both; 13CFLUX-family tools release the exchange on
+    # their own compactified scale. Stored verbatim keyed by the release's own
+    # exchange ids (Li 2021: ``vAco.x``), never converted, and NOT validated to
+    # lie between their bounds, so no released row is refused.
+    # ----------------------------------------------------------------------- #
+    exchange_flux: dict[str, float] | None = Field(
+        default=None,
+        description="exchange id -> the fitted exchange flux of a reversible reaction, "
+        "verbatim on the scale the source releases it; None when the source releases "
+        "none",
+    )
+    exchange_flux_lower: dict[str, float] | None = Field(
+        default=None,
+        description="exchange id -> lower confidence bound of the exchange flux, at "
+        "confidence_level, verbatim",
+    )
+    exchange_flux_upper: dict[str, float] | None = Field(
+        default=None,
+        description="exchange id -> upper confidence bound of the exchange flux, at "
+        "confidence_level, verbatim",
+    )
 
     @model_validator(mode="after")
     def validate_flux(self) -> "FluxPhenotype":
         """Non-empty fluxes, finite values, bounds that key on and bracket the flux."""
+        # --- begin #800: a gapped map carries no values and no bounds ----------- #
+        if self.net_flux is None:
+            if "net_flux" not in self.gapped_fields():
+                raise ValueError(
+                    "net_flux is None without a ProvenanceGap on 'net_flux' (an "
+                    "absent map is a typed gap, never a silent None)"
+                )
+            for name in (
+                "net_flux_lower",
+                "net_flux_upper",
+                "exchange_flux",
+                "exchange_flux_lower",
+                "exchange_flux_upper",
+            ):
+                if getattr(self, name) is not None:
+                    raise ValueError(f"{name} is set on a gapped net_flux map")
+            return self
+        self._validate_exchange()
+        # --- end #800 ------------------------------------------------------------ #
         if not self.net_flux:
             raise ValueError("net_flux cannot be empty")
         for key, value in self.net_flux.items():
@@ -9945,6 +10013,24 @@ class FluxPhenotype(Phenotype, ModelStrict):
                 f"n_samples must be a positive integer, got {self.n_samples}"
             )
         return self
+
+    # --- begin #800 ------------------------------------------------------------- #
+    def _validate_exchange(self) -> None:
+        """Finite exchange values; bounds key on stored exchange ids (no bracketing)."""
+        exchange = self.exchange_flux
+        for name in ("exchange_flux", "exchange_flux_lower", "exchange_flux_upper"):
+            mapping = getattr(self, name)
+            if mapping is None:
+                continue
+            if name != "exchange_flux" and exchange is None:
+                raise ValueError(f"{name} is set without exchange_flux")
+            for key, value in mapping.items():
+                if not math.isfinite(value):
+                    raise ValueError(f"{name} for {key} must be finite")
+                if exchange is not None and key not in exchange:
+                    raise ValueError(f"{name} key {key} not in exchange_flux")
+
+    # --- end #800 --------------------------------------------------------------- #
 
 
 class ReporterReadout(StrEnum):

@@ -2,7 +2,7 @@
 # [[torchcell.datasets.ecoli.choe2019_growth_rate]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/ecoli/choe2019_growth_rate
 # Test file: tests/torchcell/datasets/ecoli/test_choe2019_growth_rate.py
-"""Choe 2019 genome-reduced ALE: the two designed-deletion arms, and nothing evolved.
+"""Choe 2019 genome-reduced ALE: the designed deletions and alleles, nothing evolved.
 
 Choe et al. 2019 (Nat Commun 10:935, doi:10.1038/s41467-019-08888-6) evolved the
 genome-reduced *E. coli* MS56 for 807 generations in M9 glucose, resequenced the
@@ -11,9 +11,11 @@ RNA-seq, Ribo-seq, ChIP-seq, a Biolog phenotype microarray and intracellular met
 Two dataset classes serve what is BOTH released as a number AND keyed to a strain whose
 genotype this schema can write:
 
-- :class:`GrowthRateChoe2019Dataset` -- ``BacterialFitnessExperiment``, two records:
+- :class:`GrowthRateChoe2019Dataset` -- ``BacterialFitnessExperiment``, five records:
   ``MS56 Delta21kb`` (21 gene deletions) and ``MS56 DeltarpoS`` (one), each against their
-  isogenic parent MS56, from the Fig. 2c sheet of the Source Data workbook.
+  isogenic parent MS56, from the Fig. 2c sheet of the Source Data workbook; and since
+  #1057 the three reconstructed single-allele strains of the Fig. 2f sheet (``cspCmut``,
+  ``ilvNmut``, ``yifBmut``), each against its own kan-marked wild-type-allele control.
 - :class:`TranscriptionFactorKnockoutChoe2019Dataset` --
   ``BacterialFitnessExperiment``, two records: the Keio BW25113 ``DeltaydaS`` and
   ``DeltaabgR`` single deletions, whose growth rates the Supplementary Fig. 6 legend
@@ -56,15 +58,20 @@ this was MEASURED on these bytes rather than assumed
 6. ``Genotype.__eq__`` compares the perturbation SET, so a clone written with its
    parent's perturbations only would be genotype-identical to its parent.
 
-THE DESIGNED POINT MUTANTS SHOW THE SAME GAP WITHOUT ANY EVOLVED-CLONE EXCUSE, WHICH IS
-WHY THIS ROW MATTERS TO ISSUE #731. Supplementary Table 3 releases three strains the
-authors BUILT on MS56, each a single exactly specified allele with its own isogenic
-kan-marked wild-type-allele control: ``MS56, cspC::cspC(G37A)-kanR``,
-``MS56, ilvN::ilvN(C202T)-kanR`` and ``MS56, yifB::yifB(1169C insertion)-kanR``. The
-Fig. 2f sheet releases their growth rates as three paired mutant-over-parent ratios each.
-The strains are designed, the alleles are given to the base, the ratios are released --
-and not one record can be written, because the perturbation axis has no bacterial
-sequence-variant leaf. That is a designed-strain gap, not an evolved-population one.
+THE DESIGNED POINT MUTANTS ARE RECORDS (#1045 row 22, #1057). Supplementary Table 3
+releases three strains the authors BUILT on MS56, each a single exactly specified allele
+with its own isogenic kan-marked wild-type-allele control: ``cspCmut``
+(``MS56, cspC::cspC(G37A)-kanR``) against ``cspCWT`` (``MS56, cspC::cspC-kan``),
+``ilvNmut`` (``MS56, ilvN::ilvN(C202T)-kanR``) against ``ilvNWT``, and ``yifBmut``
+(``MS56, yifB::yifB(1169C insertion)-kanR``) against ``yifBWT``. The Fig. 2f sheet
+releases each mutant-over-control growth-rate ratio for three sets. Each is stored as
+released, on ``BacterialReleasedStrainPerturbation`` (``released_kind=sequence_allele``):
+the gene symbol and the allele exactly as Supplementary Table 3 writes them, the strain
+name, the marker as written, and no coordinate, because the release gives a CDS-relative
+change and no replicon position. The reference of each is its control, a
+``BacterialStrainBackground`` named as released whose ``genotype_statement`` is its
+Supplementary Table 3 row; the fitness is the mean of the three released ratios with
+their sample SD (n = 3 biological replicates, the Fig. 2f legend).
 
 A SECOND REASON NOT TO MIX THE TWO GROWTH PANELS, measured here: Fig. 2c's rates give
 eMS57/MS56 = 2.8159, while Fig. 2f releases eMS57/MS56 directly as 1.3990 (mean of three
@@ -174,6 +181,7 @@ from torchcell.datamodels.schema import (
     BacterialDeletionPerturbation,
     BacterialFitnessExperiment,
     BacterialFitnessExperimentReference,
+    BacterialReleasedStrainPerturbation,
     BacterialStrainBackground,
     Concentration,
     ConcentrationUnit,
@@ -187,6 +195,7 @@ from torchcell.datamodels.schema import (
     MediaComponent,
     MediaComponentRole,
     Publication,
+    ReleasedStrainKind,
     SampleUnit,
     Temperature,
     UncertaintyType,
@@ -198,6 +207,7 @@ from torchcell.datasets.bacteria_common import (
     assembly_reference,
     bacterial_genome,
     reconcile_locus_tags,
+    released_identifier_kind,
 )
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.literature.manifest import (
@@ -375,12 +385,82 @@ GROWTH_STRAIN_ORDER: tuple[str, ...] = (
     LARGE_DELETION_LABEL,
     RPOS_DELETION_LABEL,
 )
-#: The Fig. 2f row labels, verbatim and in sheet order (none is loadable).
+#: The Fig. 2f row labels, verbatim and in sheet order; all but the first are records.
 RATIO_ROW_ORDER: tuple[str, ...] = (
     "eMS57/MS56",
     "ilvN*/ilvNWT",
     "cspC*/cspCWT",
     "yifB*/yifBWT",
+)
+
+
+class ReconstructedAllele(BaseModel):
+    """One Fig. 2f reconstructed single-allele strain and its kan-marked control.
+
+    Every field is a string Supplementary Table 3 or the Fig. 2f sheet prints, verbatim:
+    the ratio row label, the gene symbol and the allele inside the mutant's genotype, the
+    two strain names and their genotypes, and the marker as the mutant row writes it.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    ratio_label: str
+    gene: str
+    allele: str
+    strain: str
+    genotype_statement: str
+    control_strain: str
+    control_genotype_statement: str
+    cassette: str
+
+    @property
+    def strain_quote(self) -> str:
+        """The mutant's Supplementary Table 3 row, as ``si/si1.md`` carries it."""
+        return (
+            f"{self.strain}</td><td rowspan=1 colspan=1>{self.genotype_statement}</td>"
+        )
+
+    @property
+    def control_quote(self) -> str:
+        """The control's Supplementary Table 3 row, as ``si/si1.md`` carries it."""
+        return (
+            f"{self.control_strain}</td><td rowspan=1 colspan=1>"
+            f"{self.control_genotype_statement}</td>"
+        )
+
+
+#: The three reconstructed alleles, in Fig. 2f row order (#1045 row 22, #1057).
+RECONSTRUCTED_ALLELES: tuple[ReconstructedAllele, ...] = (
+    ReconstructedAllele(
+        ratio_label="ilvN*/ilvNWT",
+        gene="ilvN",
+        allele="ilvN(C202T)",
+        strain="ilvNmut",
+        genotype_statement="MS56, ilvN::ilvN(C202T)-kanR",
+        control_strain="ilvNWT",
+        control_genotype_statement="MS56, ilvN::ilvN-kan",
+        cassette="kanR",
+    ),
+    ReconstructedAllele(
+        ratio_label="cspC*/cspCWT",
+        gene="cspC",
+        allele="cspC(G37A)",
+        strain="cspCmut",
+        genotype_statement="MS56, cspC::cspC(G37A)-kanR",
+        control_strain="cspCWT",
+        control_genotype_statement="MS56, cspC::cspC-kan",
+        cassette="kanR",
+    ),
+    ReconstructedAllele(
+        ratio_label="yifB*/yifBWT",
+        gene="yifB",
+        allele="yifB(1169C insertion)",
+        strain="yifBmut",
+        genotype_statement="MS56, yifB::yifB(1169C insertion)-kanR",
+        control_strain="yifBWT",
+        control_genotype_statement="MS56, yifB::yifB-kanR",
+        cassette="kanR",
+    ),
 )
 
 #: The 21 gene symbols Supplementary Table 3's large-deletion genotype expands to, in
@@ -434,8 +514,8 @@ KEIO_FITNESS: tuple[tuple[str, float], tuple[str, float]] = (
 KEIO_PANEL_STRAINS = 62
 
 #: Expected record counts, asserted at the end of each build.
-GROWTH_EXPECTED_RECORDS = 2
-GROWTH_EXPECTED_REFERENCES = 1
+GROWTH_EXPECTED_RECORDS = 5
+GROWTH_EXPECTED_REFERENCES = 4
 TF_EXPECTED_RECORDS = 2
 TF_EXPECTED_REFERENCES = 1
 #: Every deletion symbol must resolve; a renamed label stops the build.
@@ -487,6 +567,12 @@ _Q_MEDIA = (
     "$\\mathrm { M g S O _ { 4 } }$ , $0 . 1 \\mathrm { m M }$ of "
     "$\\mathrm { C a C l } _ { 2 }$ , and $2 { \\bf g } 1 ^ { - 1 }$ of glucose), "
     "unless stated otherwise."
+)
+_Q_FIG2F = (
+    "f Construction of the cspC point mutation on MS56 had a beneficial effect on "
+    "fitness, whereas ilvN mutation showed no effect. The yifB mutation on MS56 "
+    "decreased the growth rate. Error bars indicate s.d. of three biological replicates "
+    "shown as red circles."
 )
 _Q_TRIPLICATED = (
     "All bacterial growth measurements were biologically triplicated and their "
@@ -590,6 +676,22 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
     ),
     "keio_panel_size": _si1(KEIO_PANEL_STRAINS, _Q_KEIO_PANEL),
     "transcription_factors_deleted_in_parent": _paper(63, _Q_SIXTY_TWO_TFS),
+    "reconstruction_replicates": _paper(
+        3,
+        _Q_FIG2F,
+        note="the Fig. 2f sheet's Set1-Set3 columns are the three biological replicates "
+        "of each mutant-over-control ratio",
+    ),
+    **{
+        f"{a.strain}_genotype": _si1(a.genotype_statement, a.strain_quote)
+        for a in RECONSTRUCTED_ALLELES
+    },
+    **{
+        f"{a.control_strain}_genotype": _si1(
+            a.control_genotype_statement, a.control_quote
+        )
+        for a in RECONSTRUCTED_ALLELES
+    },
 }
 
 _GAP_TEMPERATURE = ProvenanceGap(
@@ -1100,6 +1202,55 @@ def build_growth_genotype(
     )
 
 
+def reconstructed_genotype(allele: ReconstructedAllele) -> Genotype:
+    """One reconstructed strain's allele, stored as Supplementary Table 3 releases it."""
+    return Genotype(
+        perturbations=[
+            BacterialReleasedStrainPerturbation(
+                systematic_gene_name=allele.gene,
+                perturbed_gene_name=allele.allele,
+                gene_namespace=MG1655_NAMESPACE,
+                strain_label=allele.strain,
+                identifier_kind=released_identifier_kind(allele.gene),
+                released_kind=ReleasedStrainKind.sequence_allele,
+                cassette=allele.cassette,
+            )
+        ]
+    )
+
+
+def control_background(allele: ReconstructedAllele) -> BacterialStrainBackground:
+    """The kan-marked wild-type-allele control a reconstructed strain is a ratio to."""
+    return BacterialStrainBackground(
+        name=allele.control_strain,
+        reference_strain=MG1655,
+        assembly_set=MG1655_ASSEMBLY_SET,
+        parents=[PARENT_LABEL],
+        genotype_statement=allele.control_genotype_statement,
+        alleles=[],
+        provenance=[
+            SOURCED_VALUES[f"{allele.control_strain}_genotype"],
+            SOURCED_VALUES["parent_genotype_statement"],
+        ],
+    )
+
+
+def reconstruction_phenotype(ratios: Sequence[float]) -> FitnessPhenotype:
+    """The mean of the released mutant-over-control ratios, with their sample SD."""
+    return FitnessPhenotype(
+        fitness=statistics.fmean(ratios),
+        fitness_uncertainty=statistics.stdev(ratios),
+        fitness_uncertainty_type=UncertaintyType.sample_sd,
+        n_samples=len(ratios),
+        sample_unit=SampleUnit.biological_replicate,
+    )
+
+
+def control_phenotype() -> FitnessPhenotype:
+    """A control: 1.0, the denominator of every released ratio; its spread is not."""
+    return FitnessPhenotype(fitness=1.0, n_samples=None, sample_unit=None)
+
+
 def build_keio_genotype(symbol: str, locus_tag: str) -> Genotype:
     """One Keio single deletion, written against the pinned BW25113 assembly."""
     return Genotype(
@@ -1319,7 +1470,7 @@ class GrowthRateChoe2019Dataset(ExperimentDataset):
 
     @post_process
     def process(self) -> None:
-        """Build the two designed-deletion fitness records and write the LMDB."""
+        """Build the designed-deletion and reconstructed-allele records, write the LMDB."""
         verify_raw_files(self.raw_dir, self._consumed_sha256())
         source = self._raw(SOURCE_DATA.name)
         panel = read_growth_panel(source)
@@ -1382,6 +1533,7 @@ class GrowthRateChoe2019Dataset(ExperimentDataset):
                 index += 1
                 rows.append(
                     {
+                        "panel": GROWTH_SHEET,
                         "strain": label,
                         "deleted_genes": len(symbols),
                         "locus_tags": ";".join(locus_tag[s] for s in symbols),
@@ -1391,6 +1543,41 @@ class GrowthRateChoe2019Dataset(ExperimentDataset):
                         "growth_rate_mean": rates.mean,
                         "parent_growth_rate_mean": parent.mean,
                         "n_samples": rates.n_samples,
+                        "fitness": phenotype.fitness,
+                        "fitness_uncertainty": phenotype.fitness_uncertainty,
+                        "fitness_se": phenotype.fitness_se,
+                    }
+                )
+            for allele in RECONSTRUCTED_ALLELES:
+                released = ratios[allele.ratio_label]
+                phenotype = reconstruction_phenotype(released)
+                control = BacterialFitnessExperimentReference(
+                    dataset_name=self.name,
+                    genome_reference=assembly_reference(
+                        self.REFERENCE_STRAIN, background=control_background(allele)
+                    ),
+                    environment_reference=environment,
+                    phenotype_reference=control_phenotype(),
+                )
+                experiment = BacterialFitnessExperiment(
+                    dataset_name=self.name,
+                    genotype=reconstructed_genotype(allele),
+                    environment=environment,
+                    phenotype=phenotype,
+                )
+                txn.put(
+                    f"{index}".encode(),
+                    self._intern_record(experiment, control, pub, itxn),
+                )
+                index += 1
+                rows.append(
+                    {
+                        "panel": RATIO_SHEET,
+                        "strain": allele.strain,
+                        "reference_strain": allele.control_strain,
+                        "allele": allele.allele,
+                        "released_ratios": ";".join(f"{v}" for v in released),
+                        "n_samples": len(released),
                         "fitness": phenotype.fitness,
                         "fitness_uncertainty": phenotype.fitness_uncertainty,
                         "fitness_se": phenotype.fitness_se,
@@ -1407,8 +1594,7 @@ class GrowthRateChoe2019Dataset(ExperimentDataset):
             panel, ratios, rows, report, recovery, disagreement, region, variants
         )
         log.info(
-            "Choe 2019 Fig. 2c: %d designed-deletion records (+ %d MS56 reference); "
-            "fitness %.6f to %.6f",
+            "Choe 2019 Fig. 2c + 2f: %d records (%d references); fitness %.6f to %.6f",
             index,
             GROWTH_EXPECTED_REFERENCES,
             min(row["fitness"] for row in rows),
@@ -1433,10 +1619,13 @@ class GrowthRateChoe2019Dataset(ExperimentDataset):
             json.dumps(
                 {
                     "dataset": self.name,
-                    "source_rows": len(panel.rows),
+                    "source_rows": len(panel.rows) + len(ratios),
                     "kept_records": len(rows),
-                    "reference_rows": [PARENT_LABEL],
-                    "dropped_records": len(panel.rows) - len(rows) - 1,
+                    "reference_rows": [
+                        PARENT_LABEL,
+                        *(a.control_strain for a in RECONSTRUCTED_ALLELES),
+                    ],
+                    "dropped_records": len(panel.rows) + len(ratios) - len(rows) - 1,
                     "rules": [
                         {
                             "strain": EVOLVED_LABEL,
@@ -1446,6 +1635,13 @@ class GrowthRateChoe2019Dataset(ExperimentDataset):
                             "genotype would have to be produced by thresholding "
                             "population allele frequencies, a call the authors never "
                             "made, and no perturbation leaf holds a called variant",
+                        },
+                        {
+                            "strain": f"{EVOLVED_LABEL} ({RATIO_SHEET})",
+                            "reason": "evolved_clone_has_no_writable_genotype",
+                            "detail": "the Fig. 2f eMS57/MS56 row is the same evolved "
+                            "clone as Fig. 2c's, a ratio the two panels give "
+                            "differently (panel_disagreement)",
                         },
                         {
                             "strain": PARENT_LABEL,
@@ -1465,18 +1661,16 @@ class GrowthRateChoe2019Dataset(ExperimentDataset):
                         },
                     ],
                     "notes": [
-                        f"{len(panel.rows)} released Fig. 2c rows = {len(rows)} records "
-                        f"+ 1 MS56 reference + 2 refused strains",
+                        f"{len(panel.rows)} released Fig. 2c rows = 2 records + 1 MS56 "
+                        "reference + 2 refused strains; "
+                        f"{len(ratios)} released Fig. 2f rows = 3 records + 1 refused "
+                        "evolved clone",
                         f"Fig. 2f releases three reconstructed single-allele strains "
-                        f"({', '.join(RATIO_ROW_ORDER[1:])}) as paired "
-                        "mutant-over-parent growth-rate ratios. Every one is a DESIGNED "
-                        "strain with an exactly specified allele (cspC G37A, ilvN "
-                        "C202T, yifB 1169C insertion) and none can be written: the "
-                        "perturbation axis has no bacterial sequence-variant leaf "
-                        "(issue #731), SequenceVariantPerturbation refuses a b-number "
-                        "(issue #749), and BacterialBackgroundAllele requires a "
-                        "non-optional functional flag the paper does not determine for "
-                        "two of the three",
+                        f"({', '.join(RATIO_ROW_ORDER[1:])}) as mutant-over-control "
+                        "growth-rate ratios for three sets. Since #1057 each is a record "
+                        "on BacterialReleasedStrainPerturbation (sequence_allele), the "
+                        "gene and allele as Supplementary Table 3 writes them, against "
+                        "its kan-marked wild-type-allele control",
                         f"the three variant tables release {total_calls} calls, every "
                         "one a population allele frequency; each is typed in "
                         "called_variants.json with its blocking reasons",

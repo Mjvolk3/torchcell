@@ -21,9 +21,12 @@ RECORD = one (deletion strain x carbon source) ``BacterialFitnessExperiment``:
 - ENVIRONMENT: ``TONG2020_MOPS_MINIMAL_AGAR``, the solid form of the shared
   ``MOPS_MINIMAL`` (``base_medium="MOPS_MINIMAL"``), at 37 C for 24 h, plus ONE
   ``EnvironmentPhysicalPerturbation(factor=carbon_source)`` whose ``agent`` is the
-  carbon source as the column header names it. The carbon-source concentration is not in
-  the mirror (the paper puts it on its Carbon Phenotype Explorer web app), so
-  ``magnitude`` is a typed ``ProvenanceGap``, never a guess.
+  carbon source as the column header names it and whose ``magnitude`` is its
+  concentration in mM. The paper puts the concentrations only on its Carbon Phenotype
+  Explorer web app ("A full list of carbon sources and the concentrations can be found
+  on the carbon conditions tab"); the owner's browser print of that tab is deposited in
+  the raw mirror (``data/carpe/CarPE.pdf``, issue #788 item 3), and each dose is
+  quoted from its ``pdftotext`` layout (:data:`CARBON_CONCENTRATION_MM`).
 - PHENOTYPE: ``FitnessPhenotype``; the released value is the end-point colony integrated
   density minus the first time point, divided by the interquartile mean of its plate row
   and then of its column, so a typical (wild-type-like) colony is 1.0. The reference
@@ -100,6 +103,19 @@ SOURCED VALUES (module-level ``SourcedValue``s anchored to the sha256 of
 - ``Temperature(37.0)``, ``duration_hours = 24.0`` and the solid MOPS medium from the
   screening paragraph; ``aerobic`` from plates incubated in air.
 
+THE CARPE DOSES. The print is two pages of the tab with "Show 50 entries" set, born
+digital (Chrome's Skia PDF), so ``pdftotext -layout -enc UTF-8`` reads it exactly; the
+layout text and the parsed table (``data/carpe/CarPE.layout.txt`` and
+``carpe_carbon_conditions.csv``) sit beside the PDF with their processing records.
+The footer counts 32 entries and the text layer carries 30: the two others are the
+empty rows above "Adenosine" on page 1. Each of the 30 is one Table S1A column, paired
+by compound (the row names the reagent: "Sodium acetate" for "Acetate", "D-Maltose
+monohydrate" for "Maltose"). ``process`` re-parses the linked layout text and refuses a
+build whose parse differs from the quoted doses. The doses add equal carbon, as the
+paper says they were picked to: every one is 120 mM carbon (20 mM glucose x 6), checked
+on the stored records by the supplementary L2 row
+:func:`carbon_equivalence_of_the_doses`.
+
 DATA SOURCE: Table S1, ``mBio.02259-20-st001.xlsx``, from the PMC Article Datasets bucket
 (``pmc_cloud``), deposited in ``$DATA_ROOT/torchcell-raw/tongGeneDispensabilityEscherichia2020/``
 with a ``manifest.json``. The published bytes hold a complete xlsx archive (the first
@@ -114,16 +130,18 @@ as the file's.
 
 from __future__ import annotations
 
+import csv
 import hashlib
 import io
 import json
 import logging
 import os
 import os.path as osp
+import re
 import shutil
+import subprocess
 from collections import Counter
 from collections.abc import Callable, Mapping, Sequence
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, ClassVar, Literal, cast
 
@@ -147,6 +165,8 @@ from torchcell.datamodels.schema import (
     BacterialFitnessExperiment,
     BacterialFitnessExperimentReference,
     BacterialGeneNamespace,
+    Concentration,
+    ConcentrationUnit,
     Environment,
     EnvironmentPhysicalPerturbation,
     Experiment,
@@ -172,10 +192,20 @@ from torchcell.datasets.bacteria_common import (
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.literature.manifest import (
     ROLE_RAW_DATA,
+    ROLE_SI_PDF,
+    ROLE_SI_TEXT,
     ArtifactRecord,
     Manifest,
+    ProcessingRecord,
     RetrievalMethod,
     RetrievalRecord,
+)
+from torchcell.literature.manual_deposit import (
+    DepositedFile,
+    ManualDeposit,
+    artifact_records,
+    extend_manifest,
+    write_deposit_records,
 )
 from torchcell.literature.retrieve import pmc_cloud_url
 from torchcell.sequence.genome.bacterial import BacterialGenome
@@ -229,6 +259,72 @@ PAPER_MD_SHA256 = "daea2b924f553b75c3bfc626b2dbd10147e4a23c4272dd4b03b703242ac16
 #: concentration. A Shiny app: a scripted GET returns only its "Please Wait" loader
 #: page (measured 2026-10-07), so the concentrations are a manual-browser retrieval.
 CARPE_URL = "https://edbrownlab.shinyapps.io/CarPE/"
+
+# --- begin CarPE deposit (issue #788 item 3, 2026-10-12) ------------------------- #
+#: The owner's browser print of the CarPE "carbon conditions" tab, deposited by hand.
+CARPE_DIR_REL = "data/carpe"
+CARPE_PDF = "CarPE.pdf"
+CARPE_PDF_REL = f"{CARPE_DIR_REL}/{CARPE_PDF}"
+CARPE_PDF_SHA256 = "c0451d1406e75a62590c940ba440aff8dd71f45ef556e33f506197deff9d4c25"
+CARPE_PDF_BYTES = 67116
+#: The print's text layer as ``pdftotext`` lays it out: the source every concentration
+#: quote is a substring of, recorded with its processing record beside the PDF.
+CARPE_LAYOUT = "CarPE.layout.txt"
+CARPE_LAYOUT_REL = f"{CARPE_DIR_REL}/{CARPE_LAYOUT}"
+CARPE_LAYOUT_SHA256 = "7ce5f26accfb805a63bb952c9131f5b2dda3dc1c7dc56d6c3abfc8996f2fa667"
+#: The parsed table, one row per carbon source the print carries.
+CARPE_CSV = "carpe_carbon_conditions.csv"
+CARPE_CSV_REL = f"{CARPE_DIR_REL}/{CARPE_CSV}"
+CARPE_CSV_SHA256 = "1076c9eae19168ccfb8bae736308552f0fde0bb0765fe12ba64fe7949578e7a3"
+#: ``pdftotext`` arguments (``-`` writes the text to stdout) and the poppler release
+#: the pinned layout text was produced with.
+PDFTOTEXT_ARGS: tuple[str, ...] = ("-layout", "-enc", "UTF-8")
+PDFTOTEXT_VERSION = "pdftotext version 21.01.0"
+#: The app's own footer counts 32 entries; the print's text layer carries 30. The two
+#: others are the two rows above "Adenosine" on page 1 of the print, which carry no
+#: text in any column (seen on the rendered page, 2026-10-12).
+CARPE_ENTRIES_REPORTED = 32
+CARPE_BLANK_ENTRIES = 2
+
+CARPE_DEPOSIT = ManualDeposit(
+    citation_key=CITATION_KEY,
+    doi=DOI,
+    title=(
+        "Gene Dispensability in Escherichia coli Grown in Thirty Different Carbon "
+        "Environments"
+    ),
+    source_url=CARPE_URL,
+    retrieval_command=(
+        f"open {CARPE_URL} in a browser, wait for the Shiny app to load, open the "
+        "'carbon conditions' tab, set 'Show' to 50 entries so all rows are on one "
+        "page, print the page to PDF, and copy the PDF unchanged to "
+        f"{CARPE_PDF_REL}; then verify its sha256"
+    ),
+    retrieved_by="the owner (mjvolk3), Chrome 154 print to PDF (the PDF's Creator "
+    "and Producer are Chrome and Skia/PDF m154; its CreationDate is 2026-10-12 "
+    "03:23:57 CDT)",
+    deposited_at="2026-10-12",
+    issues=(788,),
+    note="a 2-page letter-landscape print of the tab, not a data export (the print "
+    "shows the table's 'Show 50 entries' and 'Search' controls and no export "
+    "control). The text layer is born digital (Skia), so pdftotext reads it exactly; "
+    "the four columns are Carbon.Sources, Supplier, Product.Code and "
+    "Concentration..mM.",
+    files=(
+        DepositedFile(
+            path=CARPE_PDF_REL,
+            role=ROLE_SI_PDF,
+            sha256=CARPE_PDF_SHA256,
+            bytes=CARPE_PDF_BYTES,
+            original_filename=CARPE_PDF,
+            arrived_at="2026-10-12T03:41:18-05:00",
+            description="the CarPE carbon conditions tab: 30 carbon sources with "
+            "supplier, product code and concentration in mM (the footer counts 32 "
+            "entries; two are empty rows)",
+        ),
+    ),
+)
+# --- end CarPE deposit ------------------------------------------------------------ #
 
 ENDPOINT_SHEET = "S1A - Endpoint Biomass"
 KEIO_COMPARISON_SHEET = "S1B - Comparison to Keio Data"
@@ -453,6 +549,172 @@ SOURCED_VALUES: tuple[SourcedValue, ...] = (
     RELEASED_TABLE,
 )
 
+
+# --- begin CarPE concentrations (issue #788 item 3) ------------------------------ #
+def _carpe(value: float, quote: str, *, note: str | None = None) -> SourcedValue:
+    """A concentration bound to its row of the pinned CarPE layout text.
+
+    ``source_uri`` is relative to ``$DATA_ROOT/torchcell-raw/<citation_key>/``, the raw
+    mirror, not the literature mirror the paper quotes resolve against.
+    """
+    return SourcedValue(
+        value=value,
+        quote=quote,
+        note=note,
+        provenance=Provenance(
+            source_uri=CARPE_LAYOUT_REL,
+            citation_key=CITATION_KEY,
+            sha256=CARPE_LAYOUT_SHA256,
+            method=(
+                f"{PDFTOTEXT_VERSION} {' '.join(PDFTOTEXT_ARGS)} of {CARPE_PDF_REL} "
+                f"(sha256 {CARPE_PDF_SHA256}), the owner's browser print of the "
+                "Carbon Phenotype Explorer (torchcell-raw mirror)"
+            ),
+            page="CarPE 'carbon conditions' tab",
+        ),
+    )
+
+
+_SALT = "the reagent is the {form}; the dose is of the carbon source it carries"
+
+#: Each Table S1A carbon-source column's concentration in mM, from the CarPE row that
+#: names the same compound. The row names the REAGENT (a salt or a hydrate where one
+#: was used) and the column the carbon source, so the pairing is by compound, one to
+#: one over the 30 columns; ``CARPE_ROW_FOR_COLUMN`` keeps the row name.
+CARBON_CONCENTRATION_MM: dict[str, SourcedValue] = {
+    "Galactose": _carpe(
+        20.0,
+        "D-galactose anhydrous             Bioshop         GAL500.250                                 20",
+    ),
+    "L-alanine": _carpe(
+        40.0,
+        "L-Alanine                      Sigma-Aldrich       A7627                               40",
+    ),
+    "D-alanine": _carpe(
+        40.0,
+        "D-Alanine                         Sigma-Aldrich   A7377                                      40",
+    ),
+    "Mannose": _carpe(
+        20.0,
+        "D-(+)-Mannose                     Sigma-Aldrich   M6020                                      20",
+    ),
+    "Glucosamine": _carpe(
+        20.0,
+        "D-(+)-Glucosamine hydrocloride    Sigma-Aldrich   G1514                                      20",
+        note=_SALT.format(form="hydrochloride (spelled 'hydrocloride' in the app)"),
+    ),
+    "Thymidine": _carpe(
+        12.0,
+        "Thymidine                      Sigma-Aldrich       T9250                               12",
+    ),
+    "Adenosine": _carpe(
+        12.0,
+        "Adenosine                         Sigma-Aldrich   A9251                                      12",
+    ),
+    "Saccharate": _carpe(
+        20.0,
+        "D-Saccharic Acid Potassium Salt   Sigma-Aldrich   S4140                                      20",
+        note=_SALT.format(form="potassium salt"),
+    ),
+    "Acetate": _carpe(
+        60.0,
+        "Sodium acetate                 Sigma-Aldrich       S2889                               60",
+        note=_SALT.format(form="sodium salt"),
+    ),
+    "α-ketoglutarate": _carpe(
+        24.0,
+        "alpha-Ketoglutaric Acid           Sigma-Aldrich   K1128                                      24",
+    ),
+    "Malate": _carpe(
+        30.0,
+        "L-Malic Acid                   Sigma-Aldrich       112577                              30",
+    ),
+    "Succinate": _carpe(
+        30.0,
+        "Succinic Acid                  Sigma-Aldrich       S-3674                              30",
+    ),
+    "Fumarate": _carpe(
+        30.0,
+        "Fumaric Acid                   Sigma-Aldrich       47910                               30",
+    ),
+    "Ribose": _carpe(
+        24.0,
+        "D-(-)-Ribose                      Sigma-Aldrich   R7500                                      24",
+    ),
+    "Fucose": _carpe(
+        20.0,
+        "L-Fucose                       Sigma-Aldrich       F2252                               20",
+    ),
+    "Glycerol": _carpe(
+        40.0,
+        "Glycerol                       Bioshop             GLY001.4                            40",
+    ),
+    "Lactate": _carpe(
+        40.0,
+        "Sodium L-Lactate               Sigma-Aldrich       L7022                               40",
+        note=_SALT.format(form="sodium salt"),
+    ),
+    "Oxaloacetate": _carpe(
+        30.0,
+        "Oxaloacetic acid               Sigma-Aldrich       O4126                               30",
+    ),
+    "Pyruvate": _carpe(
+        40.0,
+        "Sodium pyruvate                Sigma-Aldrich       P2256                               40",
+        note=_SALT.format(form="sodium salt"),
+    ),
+    "Galacturonate": _carpe(
+        20.0,
+        "D-Galacturonic acid sodium salt   Sigma-Aldrich   73960                                      20",
+        note=_SALT.format(form="sodium salt"),
+    ),
+    "Maltose": _carpe(
+        10.0,
+        "D-Maltose monohydrate             Bioshop         MAL211.1                                   10",
+        note=_SALT.format(form="monohydrate"),
+    ),
+    "Fructose": _carpe(
+        20.0,
+        "D-(-)-Fructose                    Sigma-Aldrich   F3510                                      20",
+    ),
+    "Trehalose": _carpe(
+        10.0,
+        "D-trehalose dihydrate             Sigma-Aldrich   T0167                                      10",
+        note=_SALT.format(form="dihydrate"),
+    ),
+    "Mannitol": _carpe(
+        20.0,
+        "D-Mannitol                        Bioshop         MAN509.1                                   20",
+    ),
+    "Sorbitol": _carpe(
+        20.0,
+        "D-Sorbitol                        Sigma-Aldrich   S1876                                      20",
+    ),
+    "Glucuronate": _carpe(
+        20.0,
+        "D-Glucuronic acid sodium salt     Sigma-Aldrich   G8645                                      20",
+        note=_SALT.format(form="sodium salt"),
+    ),
+    "Gluconate": _carpe(
+        20.0,
+        "D-Gluconic acid sodium salt       Sigma-Aldrich   G9005                                      20",
+        note=_SALT.format(form="sodium salt"),
+    ),
+    "Xylose": _carpe(
+        24.0,
+        "D-Xylose                       Sigma-Aldrich       X1500                               24",
+    ),
+    "Glucose": _carpe(
+        20.0,
+        "Glucose                        Fisher Scientific   D16-10                              20",
+    ),
+    "N-acetyl Glucosamine": _carpe(
+        15.0,
+        "N-acetyl-D-glucosamine         Sigma-Aldrich       A8625                               15",
+    ),
+}
+# --- end CarPE concentrations ------------------------------------------------------ #
+
 #: The solid MOPS minimal medium of the screen. ``MOPS_MINIMAL`` is the shared recipe
 #: (Neidhardt 1974 as tabulated by Price 2018, which the media library adopts for Tong
 #: 2020's Teknova medium); the screen plates are its agar form, and the paper gives no
@@ -513,6 +775,23 @@ def table_s1_retrieval(retrieved_at: str = XLSX_RETRIEVED_AT) -> RetrievalRecord
     )
 
 
+#: What the mirror holds and what it does not, written into ``manifest.json``.
+SI_EXPECTED: tuple[str, ...] = (
+    "Table S1 (mBio.02259-20-st001.xlsx): sheet 'S1A - Endpoint Biomass' (the "
+    "per-strain, per-carbon-source normalized end-point growth this dataset is built "
+    "from) and sheet 'S1B - Comparison to Keio Data' (the Keio membership the "
+    "background assignment reads)",
+    "Carbon Phenotype Explorer 'carbon conditions' tab (carbon-source concentrations, "
+    f"{CARPE_URL}): a Shiny app, not scriptable (a scripted GET returns its 'Please "
+    "Wait' loader page, measured 2026-10-07). DEPOSITED 2026-10-12 by the owner as "
+    f"{CARPE_PDF_REL}, a browser print of the tab (manual_browser, issue #788 item 3), "
+    f"with {CARPE_LAYOUT_REL} (its pdftotext layout text) and {CARPE_CSV_REL} (the "
+    "parsed table) beside it, each with its processing record. The tab counts 32 "
+    "entries; 30 carry text and are the 30 Table S1A carbon sources, and the other two "
+    "are empty rows",
+)
+
+
 def deposit_raw_mirror(
     *,
     xlsx_path: str | Path,
@@ -523,7 +802,8 @@ def deposit_raw_mirror(
 
     Idempotent by sha256: an existing mirror file with the recorded hash is left alone and
     a differing one raises rather than being overwritten. The bytes are verified against
-    ``XLSX_SHA256`` before anything is written.
+    ``XLSX_SHA256`` before anything is written. The manifest is EXTENDED, never
+    rewritten, so the CarPE records :func:`record_carpe_deposit` adds survive.
     """
     got = _sha256(xlsx_path)
     if got != XLSX_SHA256:
@@ -538,14 +818,9 @@ def deposit_raw_mirror(
             raise RuntimeError(f"{dest} exists with a different sha256; refusing")
     else:
         shutil.copy2(xlsx_path, dest)
-    manifest = Manifest(
-        citation_key=CITATION_KEY,
-        doi=DOI,
-        title=(
-            "Gene Dispensability in Escherichia coli Grown in Thirty Different Carbon "
-            "Environments"
-        ),
-        files=[
+    extend_manifest(
+        root,
+        [
             ArtifactRecord(
                 path=XLSX_REL,
                 role=ROLE_RAW_DATA,
@@ -555,19 +830,11 @@ def deposit_raw_mirror(
                 retrieval=table_s1_retrieval(retrieved_at),
             )
         ],
-        si_data_sources=[XLSX_URL],
-        si_expected=[
-            "Table S1 (mBio.02259-20-st001.xlsx): sheet 'S1A - Endpoint Biomass' (the "
-            "per-strain, per-carbon-source normalized end-point growth this dataset is "
-            "built from) and sheet 'S1B - Comparison to Keio Data' (the Keio membership "
-            "the background assignment reads)",
-            "Carbon Phenotype Explorer 'carbon conditions' tab (carbon-source "
-            f"concentrations, {CARPE_URL}): a Shiny app, not scriptable, NOT mirrored",
-        ],
-        provenance_complete=True,
-        created_at=datetime.now(UTC).isoformat(),
+        citation_key=CITATION_KEY,
+        doi=DOI,
+        title=CARPE_DEPOSIT.title,
+        si_expected=list(SI_EXPECTED),
     )
-    (root / "manifest.json").write_text(manifest.model_dump_json(indent=2))
     return root
 
 
@@ -583,6 +850,255 @@ def manifest_sha256(manifest: Manifest, relpath: str) -> str:
         if record.path == relpath:
             return record.sha256
     raise KeyError(f"{relpath} is not in the raw-mirror manifest")
+
+
+# --------------------------------------------------------------------------- #
+# The CarPE print: its text layer, the parsed table, and their records
+# --------------------------------------------------------------------------- #
+_CARPE_HEADER = re.compile(
+    r"^\s*Carbon\.Sources\s+Supplier\s+Product\.Code\s+Concentration\.\.mM\.\s*$"
+)
+_CARPE_CONTROLS = re.compile(r"^\s*Show\s+\d+\s+entries\s+Search:\s*$")
+_CARPE_FOOTER = re.compile(
+    r"^\s*Showing 1 to (\d+) of (\d+) entries\s+Previous\s+1\s+Next\s*$"
+)
+#: Columns of the print are separated by runs of two or more spaces; a cell's own
+#: words by one ("Fisher Scientific", "D-Galacturonic acid sodium salt").
+_CARPE_COLUMN_GAP = re.compile(r"\s{2,}")
+CARPE_CSV_HEADER = ("carbon_source", "supplier", "product_code", "concentration_mM")
+
+
+class CarpeRow(BaseModel):
+    """One row of the CarPE carbon conditions tab, as the print carries it."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    carbon_source: str
+    supplier: str
+    product_code: str
+    concentration_mm: float
+    line: str
+
+
+class CarpeTable(BaseModel):
+    """The parsed tab: its text-bearing rows and the entry count its footer reports."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    rows: tuple[CarpeRow, ...]
+    entries_reported: int
+    header_lines: int
+
+
+def pdftotext_version() -> str:
+    """The ``pdftotext`` version line, recorded as the extraction's provenance."""
+    result = subprocess.run(
+        ["pdftotext", "-v"], capture_output=True, text=True, check=True
+    )
+    return (result.stderr or result.stdout).strip().split("\n")[0]
+
+
+def carpe_layout_text(pdf_path: str | Path) -> str:
+    """The print's text layer, ``pdftotext -layout -enc UTF-8`` (columns kept apart)."""
+    result = subprocess.run(
+        ["pdftotext", *PDFTOTEXT_ARGS, str(pdf_path), "-"],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return result.stdout
+
+
+def parse_carpe_layout(text: str) -> CarpeTable:
+    """Parse the laid-out CarPE print into its rows, refusing any line it cannot read.
+
+    A page starts with the column header line (the first also with the app's "Show 50
+    entries / Search:" controls) and the print ends with the app's footer, "Showing 1 to
+    N of N entries". Every other non-blank line must split into exactly four cells, the
+    last a number. Raises ``ValueError`` on an unreadable line, a missing header or
+    footer, a footer that shows a partial page, or a carbon source listed twice.
+    """
+    rows: list[CarpeRow] = []
+    headers = 0
+    reported: int | None = None
+    for raw in text.replace("\f", "\n").splitlines():
+        if not raw.strip() or _CARPE_CONTROLS.match(raw):
+            continue
+        if _CARPE_HEADER.match(raw):
+            headers += 1
+            continue
+        footer = _CARPE_FOOTER.match(raw)
+        if footer is not None:
+            shown, total = int(footer.group(1)), int(footer.group(2))
+            if shown != total:
+                raise ValueError(f"the print shows {shown} of {total} entries")
+            reported = total
+            continue
+        cells = _CARPE_COLUMN_GAP.split(raw.strip())
+        if len(cells) != 4:
+            raise ValueError(f"CarPE line is not four columns: {raw!r}")
+        name, supplier, code, amount = cells
+        rows.append(
+            CarpeRow(
+                carbon_source=name,
+                supplier=supplier,
+                product_code=code,
+                concentration_mm=float(amount),
+                line=raw.strip(),
+            )
+        )
+    if headers == 0 or reported is None:
+        raise ValueError(
+            "no CarPE column header or footer: not a carbon conditions print"
+        )
+    names = [row.carbon_source for row in rows]
+    repeated = sorted({n for n in names if names.count(n) > 1})
+    if repeated:
+        raise ValueError(f"the print lists {repeated} more than once")
+    return CarpeTable(rows=tuple(rows), entries_reported=reported, header_lines=headers)
+
+
+def carpe_csv_text(table: CarpeTable) -> str:
+    """The parsed rows as CSV, in print order, concentration as the print writes it."""
+    out = io.StringIO()
+    writer = csv.writer(out, lineterminator="\n")
+    writer.writerow(CARPE_CSV_HEADER)
+    for row in table.rows:
+        amount = row.line.rsplit(" ", 1)[-1]
+        writer.writerow([row.carbon_source, row.supplier, row.product_code, amount])
+    return out.getvalue()
+
+
+def check_carpe_table(table: CarpeTable) -> None:
+    """The parsed print is exactly what the loader's sourced concentrations quote.
+
+    Every Table S1A column's quote is one parsed row's line and its value that row's
+    concentration; every text-bearing row is used once; the footer's count exceeds the
+    rows by the two empty entries and no more.
+    """
+    by_line = {row.line: row for row in table.rows}
+    used: set[str] = set()
+    for column, sourced in CARBON_CONCENTRATION_MM.items():
+        row = by_line.get(sourced.quote)
+        if row is None:
+            raise RuntimeError(f"{column}: its CarPE quote is not a row of the print")
+        if row.concentration_mm != sourced.value:
+            raise RuntimeError(
+                f"{column}: the print reads {row.concentration_mm} mM, the loader "
+                f"{sourced.value} mM"
+            )
+        used.add(row.line)
+    if set(CARBON_CONCENTRATION_MM) != set(CARBON_SOURCE_COLUMNS):
+        raise RuntimeError("the sourced concentrations do not cover the 30 columns")
+    unused = sorted(row.carbon_source for row in table.rows if row.line not in used)
+    if unused:
+        raise RuntimeError(f"CarPE rows no Table S1A column reads: {unused}")
+    if table.entries_reported - len(table.rows) != CARPE_BLANK_ENTRIES:
+        raise RuntimeError(
+            f"the footer counts {table.entries_reported} entries and the print carries "
+            f"{len(table.rows)} rows, not {CARPE_BLANK_ENTRIES} fewer"
+        )
+
+
+def _write_once(path: Path, text: str) -> None:
+    """Write ``text`` unless an identical file is there; refuse a different one."""
+    if path.exists():
+        if path.read_text(encoding="utf-8") != text:
+            raise RuntimeError(f"{path} exists with other content; refusing")
+        return
+    path.write_text(text, encoding="utf-8")
+
+
+def carpe_layout_record(size: int, sha256: str) -> ArtifactRecord:
+    """The manifest record of the layout text: derived from the PDF by ``pdftotext``."""
+    return ArtifactRecord(
+        path=CARPE_LAYOUT_REL,
+        role=ROLE_SI_TEXT,
+        bytes=size,
+        sha256=sha256,
+        source=f"derived from {CARPE_PDF_REL}",
+        processing=ProcessingRecord(
+            processor="torchcell.datasets.ecoli.tong2020.carpe_layout_text",
+            tool="pdftotext",
+            version=PDFTOTEXT_VERSION,
+            params={"args": list(PDFTOTEXT_ARGS)},
+            input_sha256=[CARPE_PDF_SHA256],
+        ),
+    )
+
+
+def carpe_csv_record(size: int, sha256: str) -> ArtifactRecord:
+    """The manifest record of the parsed CSV: the layout text, read row by row."""
+    return ArtifactRecord(
+        path=CARPE_CSV_REL,
+        role=ROLE_RAW_DATA,
+        bytes=size,
+        sha256=sha256,
+        source=f"derived from {CARPE_LAYOUT_REL}",
+        processing=ProcessingRecord(
+            processor="torchcell.datasets.ecoli.tong2020.parse_carpe_layout",
+            tool="pdftotext",
+            version=PDFTOTEXT_VERSION,
+            params={
+                "args": list(PDFTOTEXT_ARGS),
+                "columns": list(CARPE_CSV_HEADER),
+                "column_separator": "two or more spaces",
+            },
+            input_sha256=[CARPE_PDF_SHA256, CARPE_LAYOUT_SHA256],
+        ),
+    )
+
+
+def write_carpe_parse(raw_root: str | Path) -> list[ArtifactRecord]:
+    """Extract and parse the deposited print beside it; return the two records.
+
+    The PDF must carry its pinned sha256, ``pdftotext`` must be the pinned release,
+    and both outputs must hash to their pins; an existing output with other content is
+    refused. The parse is checked against the loader's sourced concentrations.
+    """
+    root = Path(raw_root)
+    pdf = root / CARPE_PDF_REL
+    if _sha256(pdf) != CARPE_PDF_SHA256:
+        raise RuntimeError(f"{pdf} does not hash to its pin {CARPE_PDF_SHA256}")
+    version = pdftotext_version()
+    if version != PDFTOTEXT_VERSION:
+        raise RuntimeError(f"{version!r} is not the pinned {PDFTOTEXT_VERSION!r}")
+    text = carpe_layout_text(pdf)
+    table = parse_carpe_layout(text)
+    check_carpe_table(table)
+    rendered = carpe_csv_text(table)
+    for name, body, pin in (
+        (CARPE_LAYOUT_REL, text, CARPE_LAYOUT_SHA256),
+        (CARPE_CSV_REL, rendered, CARPE_CSV_SHA256),
+    ):
+        got = hashlib.sha256(body.encode("utf-8")).hexdigest()
+        if got != pin:
+            raise RuntimeError(f"{name}: produced sha256 {got}, pinned {pin}")
+        _write_once(root / name, body)
+    return [
+        carpe_layout_record(len(text.encode("utf-8")), CARPE_LAYOUT_SHA256),
+        carpe_csv_record(len(rendered.encode("utf-8")), CARPE_CSV_SHA256),
+    ]
+
+
+def record_carpe_deposit(data_root: str | None = None) -> Path:
+    """Record the owner's CarPE print in the raw mirror and add it to the manifest.
+
+    Verifies the deposit, writes ``DEPOSIT.md`` and ``SHA256SUMS.txt`` beside it,
+    writes the layout text and the parsed CSV, and extends ``manifest.json`` with all
+    three files without touching the Table S1 record.
+    """
+    root = raw_mirror_dir(data_root)
+    write_deposit_records(CARPE_DEPOSIT, root)
+    records = [*artifact_records(CARPE_DEPOSIT), *write_carpe_parse(root)]
+    return extend_manifest(
+        root,
+        records,
+        citation_key=CITATION_KEY,
+        doi=DOI,
+        title=CARPE_DEPOSIT.title,
+        si_expected=list(SI_EXPECTED),
+    )
 
 
 # --------------------------------------------------------------------------- #
@@ -882,34 +1398,23 @@ class IdentifierReport(BaseModel):
 # --------------------------------------------------------------------------- #
 # Records
 # --------------------------------------------------------------------------- #
-def carbon_source_gap() -> ProvenanceGap:
-    """The typed absence of a carbon source's concentration (it lives on CarPE)."""
-    return ProvenanceGap(
-        field="magnitude",
-        reason=ProvenanceGapReason.deferred_pending_source_review,
-        resolve_with=Provenance(
-            source_uri=CARPE_URL,
-            citation_key=CITATION_KEY,
-            method="manual browser: a Shiny app; a scripted GET returns only its "
-            "'Please Wait' loader page (measured 2026-10-07)",
-            page="carbon conditions tab",
-        ),
-        note="the paper lists every carbon source's concentration only on its Carbon "
-        "Phenotype Explorer web app; the concentrations were chosen to add the same "
-        "amount of carbon per condition",
-    )
-
-
 def environment(carbon_source: str) -> Environment:
-    """The screen plate: solid MOPS minimal medium plus its carbon source."""
+    """The screen plate: solid MOPS minimal medium plus its carbon source at its dose.
+
+    The dose is the CarPE concentration of that carbon source in mM
+    (:data:`CARBON_CONCENTRATION_MM`, quoted from the deposited print).
+    """
     return Environment(
         media=TONG2020_MOPS_MINIMAL_AGAR,
         temperature=Temperature(value=TEMPERATURE_C.value),
         perturbations=[
             EnvironmentPhysicalPerturbation(
                 factor=PhysicalFactor.carbon_source,
+                magnitude=Concentration(
+                    value=CARBON_CONCENTRATION_MM[carbon_source].value,
+                    unit=ConcentrationUnit.millimolar,
+                ),
                 agent=resolved_compound(carbon_source),
-                provenance_gaps=[carbon_source_gap()],
             )
         ],
         aerobicity=AEROBICITY.value,
@@ -1024,8 +1529,8 @@ class CarbonSourceTong2020Dataset(ExperimentDataset):
 
     @property
     def raw_file_names(self) -> list[str]:
-        """The mirrored Table S1 workbook."""
-        return [XLSX_FILENAME]
+        """The mirrored Table S1 workbook and the CarPE print's layout text."""
+        return [XLSX_FILENAME, CARPE_LAYOUT]
 
     def download(self) -> None:
         """Link the mirror file into ``raw/`` after verifying it against ``XLSX_SHA256``.
@@ -1035,13 +1540,24 @@ class CarbonSourceTong2020Dataset(ExperimentDataset):
         """
         data_root = _data_root()
         manifest = load_manifest(data_root)
-        check_manifest_pin(XLSX_REL, manifest_sha256(manifest, XLSX_REL), XLSX_SHA256)
-        src = raw_mirror_dir(data_root) / XLSX_REL
-        if not src.exists():
-            raise RuntimeError(f"required raw artifact missing from mirror: {src}")
+        files = (
+            (XLSX_REL, XLSX_FILENAME, XLSX_SHA256),
+            (CARPE_LAYOUT_REL, CARPE_LAYOUT, CARPE_LAYOUT_SHA256),
+        )
+        for relpath, _, pin in files:
+            check_manifest_pin(relpath, manifest_sha256(manifest, relpath), pin)
+            src = raw_mirror_dir(data_root) / relpath
+            if not src.exists():
+                raise RuntimeError(f"required raw artifact missing from mirror: {src}")
         os.makedirs(self.raw_dir, exist_ok=True)
-        link_verified(src, osp.join(self.raw_dir, XLSX_FILENAME), XLSX_SHA256)
-        log.info("Tong 2020 Table S1 linked into %s (sha256 verified)", self.raw_dir)
+        for relpath, name, pin in files:
+            link_verified(
+                raw_mirror_dir(data_root) / relpath, osp.join(self.raw_dir, name), pin
+            )
+        log.info(
+            "Tong 2020 Table S1 and the CarPE layout linked into %s (sha256 verified)",
+            self.raw_dir,
+        )
 
     def _genomes(self) -> tuple[EcoliK12MG1655Genome, EcoliK12BW25113Genome]:
         """The MG1655 genome (opened here) and the BW25113 genome (injected or opened)."""
@@ -1060,7 +1576,15 @@ class CarbonSourceTong2020Dataset(ExperimentDataset):
     @post_process
     def process(self) -> None:
         """Parse Table S1A into per-(strain, carbon source) records; write the LMDB."""
-        verify_raw_files(self.raw_dir, {XLSX_FILENAME: XLSX_SHA256})
+        verify_raw_files(
+            self.raw_dir,
+            {XLSX_FILENAME: XLSX_SHA256, CARPE_LAYOUT: CARPE_LAYOUT_SHA256},
+        )
+        check_carpe_table(
+            parse_carpe_layout(
+                Path(self.raw_dir, CARPE_LAYOUT).read_text(encoding="utf-8")
+            )
+        )
         table = read_table_s1(osp.join(self.raw_dir, XLSX_FILENAME))
         mg1655, bw25113 = self._genomes()
         strains = resolve_strains(
@@ -1317,6 +1841,56 @@ def stored_tags_are_loci(
     )
 
 
+def carbon_atoms(smiles: str) -> int:
+    """Carbon atoms in one molecule of ``smiles`` (RDKit)."""
+    from rdkit import Chem
+
+    molecule = Chem.MolFromSmiles(smiles)
+    if molecule is None:
+        raise ValueError(f"RDKit cannot read SMILES {smiles!r}")
+    return sum(1 for atom in molecule.GetAtoms() if atom.GetSymbol() == "C")
+
+
+def carbon_equivalence_of_the_doses(
+    records: Sequence[Mapping[str, Any]],
+) -> LevelResult:
+    """SUPPLEMENTARY L2: every stored dose adds the same amount of carbon.
+
+    The paper's design rule ("Concentrations were picked so that all carbon sources
+    resulted in the same amount of carbon added.") is checked on the stored records:
+    each record's carbon-source magnitude in mM times the carbon atoms of its agent
+    (from the agent's SMILES) must be one value across every record. The CarPE doses
+    are read off the print and the carbon counts off the compound table, so agreement
+    is a cross-check of the parse against the paper's own statement.
+    """
+    carbon_mm: Counter[float] = Counter()
+    unreadable: list[str] = []
+    for record in records:
+        (perturbation,) = record["experiment"]["environment"]["perturbations"]
+        agent, magnitude = perturbation["agent"], perturbation["magnitude"]
+        if magnitude is None or agent.get("smiles") is None:
+            unreadable.append(str(agent.get("name")))
+            continue
+        if magnitude["unit"] != ConcentrationUnit.millimolar.value:
+            unreadable.append(f"{agent['name']} in {magnitude['unit']}")
+            continue
+        carbon_mm[magnitude["value"] * carbon_atoms(agent["smiles"])] += 1
+    passed = len(carbon_mm) == 1 and not unreadable
+    return LevelResult(
+        level=Level.L2,
+        name="carbon_equivalence_of_the_carpe_doses",
+        passed=passed,
+        message=(
+            f"SUPPLEMENTARY: mM carbon per record {dict(carbon_mm)}; "
+            f"{len(unreadable)} records without an mM dose or a SMILES"
+        ),
+        details={
+            "carbon_mm": {str(k): v for k, v in carbon_mm.items()},
+            "unreadable": sorted(set(unreadable))[:20],
+        },
+    )
+
+
 def verify_build(
     dataset_root: str, data_root: str | None = None
 ) -> dict[str, VerificationReport]:
@@ -1325,9 +1899,10 @@ def verify_build(
     Each background is checked against its own genome: the resolver and the L4 gene
     universe (every GenBank locus, pseudogenes included) of the strain its records pin.
     One resolver cannot serve both, because a gene symbol resolves in both annotations.
-    Two SUPPLEMENTARY rows are appended to each report (``pair_uniqueness_with_
-    perturbations``, ``stored_tags_are_loci``): the verifier's own ``pair_uniqueness``
-    and ``canonical_gene_names`` rows stay in the report with their verdicts. Each report
+    Three SUPPLEMENTARY rows are appended to each report (``pair_uniqueness_with_
+    perturbations``, ``stored_tags_are_loci``, ``carbon_equivalence_of_the_doses``): the
+    verifier's own ``pair_uniqueness`` and ``canonical_gene_names`` rows stay in the
+    report with their verdicts. Each report
     is written to ``preprocess/verification_report_<strain>.json``.
     """
     from torchcell.verification.fitness import verify_fitness_dataset
@@ -1363,6 +1938,7 @@ def verify_build(
         subset = by_strain.get(strain_name, [])
         report.add(pair_uniqueness_with_perturbations(subset))
         report.add(stored_tags_are_loci(subset, genome))
+        report.add(carbon_equivalence_of_the_doses(subset))
         out = osp.join(
             dataset_root, "preprocess", f"verification_report_{strain_name}.json"
         )

@@ -54,6 +54,8 @@ from torchcell.datamodels.schema import (
     BacterialFitnessExperiment,
     BacterialFitnessExperimentReference,
     BacterialGeneNamespace,
+    Concentration,
+    ConcentrationUnit,
     EnvironmentPhysicalPerturbation,
     MediaComponentRole,
     PhysicalFactor,
@@ -67,6 +69,7 @@ from torchcell.datasets.bacteria_common import (
 )
 from torchcell.datasets.dataset_registry import dataset_registry
 from torchcell.literature.manifest import Manifest
+from torchcell.literature.manual_deposit import extend_manifest
 from torchcell.sequence.genome.bacterial import BacterialGenome
 from torchcell.sequence.genome.base import GeneNameStatus
 from torchcell.sequence.genome.ecoli.k12 import (
@@ -355,7 +358,7 @@ def test_the_screen_medium_is_solid_mops_minimal_with_agar_and_no_carbon() -> No
     )
 
 
-def test_the_carbon_source_is_a_physical_factor_whose_dose_is_a_typed_gap() -> None:
+def test_the_carbon_source_is_a_physical_factor_dosed_at_its_carpe_millimolar() -> None:
     environment = t.environment("Glucose")
     assert environment.media is t.TONG2020_MOPS_MINIMAL_AGAR
     assert environment.temperature is not None
@@ -368,12 +371,152 @@ def test_the_carbon_source_is_a_physical_factor_whose_dose_is_a_typed_gap() -> N
     assert perturbation.agent is not None
     assert perturbation.agent.name == "D-glucose"
     assert perturbation.agent.inchikey == "WQZGKKKJIJFFOK-GASJEMHNSA-N"
-    assert perturbation.magnitude is None
-    (gap,) = perturbation.provenance_gaps
-    assert gap.field == "magnitude"
-    assert gap.reason is ProvenanceGapReason.deferred_pending_source_review
-    assert gap.resolve_with is not None
-    assert gap.resolve_with.source_uri == "https://edbrownlab.shinyapps.io/CarPE/"
+    assert perturbation.magnitude == Concentration(
+        value=20.0, unit=ConcentrationUnit.millimolar
+    )
+    assert perturbation.provenance_gaps == []
+    acetate = t.environment("Acetate").perturbations[0]
+    assert isinstance(acetate, EnvironmentPhysicalPerturbation)
+    assert acetate.magnitude is not None
+    assert acetate.magnitude.value == 60.0
+
+
+def test_every_carpe_dose_is_quoted_from_the_layout_text_of_the_pinned_print() -> None:
+    assert list(t.CARBON_CONCENTRATION_MM) == list(t.CARBON_SOURCE_COLUMNS)
+    doses = {c: v.value for c, v in t.CARBON_CONCENTRATION_MM.items()}
+    assert doses["Maltose"] == doses["Trehalose"] == 10.0
+    assert doses["N-acetyl Glucosamine"] == 15.0
+    assert doses["Adenosine"] == doses["Thymidine"] == 12.0
+    for sourced in t.CARBON_CONCENTRATION_MM.values():
+        assert sourced.provenance.source_uri == "data/carpe/CarPE.layout.txt"
+        assert sourced.provenance.sha256 == t.CARPE_LAYOUT_SHA256
+        assert t.CARPE_PDF_SHA256 in str(sourced.provenance.method)
+        assert sourced.quote.endswith(f" {sourced.value:g}")
+    salts = {c for c, v in t.CARBON_CONCENTRATION_MM.items() if v.note is not None}
+    assert salts == {
+        "Glucosamine",
+        "Saccharate",
+        "Acetate",
+        "Lactate",
+        "Pyruvate",
+        "Galacturonate",
+        "Maltose",
+        "Trehalose",
+        "Glucuronate",
+        "Gluconate",
+    }
+
+
+def _layout(rows: list[str], *, shown: int, total: int) -> str:
+    """A two-page CarPE print as ``pdftotext -layout`` lays it out."""
+    header = "  Carbon.Sources        Supplier     Product.Code     Concentration..mM."
+    half = len(rows) // 2
+    page1 = [
+        "Show 50         entries                 Search:",
+        "",
+        header,
+        "",
+        "",
+        *(f" {row}" for row in rows[:half]),
+    ]
+    page2 = [
+        header,
+        *(f" {row}" for row in rows[half:]),
+        f"Showing 1 to {shown} of {total} entries        Previous   1     Next",
+    ]
+    return "\n".join(page1) + "\n\f" + "\n".join(page2) + "\n\f"
+
+
+def _carpe_lines() -> list[str]:
+    return [v.quote for v in t.CARBON_CONCENTRATION_MM.values()]
+
+
+def test_parse_reads_both_pages_and_the_footer_count() -> None:
+    table = t.parse_carpe_layout(_layout(_carpe_lines(), shown=32, total=32))
+    assert (len(table.rows), table.entries_reported, table.header_lines) == (30, 32, 2)
+    glucose = next(r for r in table.rows if r.carbon_source == "Glucose")
+    assert (glucose.supplier, glucose.product_code, glucose.concentration_mm) == (
+        "Fisher Scientific",
+        "D16-10",
+        20.0,
+    )
+    t.check_carpe_table(table)
+    csv_text = t.carpe_csv_text(table)
+    lines = csv_text.splitlines()
+    assert lines[0] == "carbon_source,supplier,product_code,concentration_mM"
+    assert "Glucose,Fisher Scientific,D16-10,20" in lines
+    assert len(lines) == 31
+
+
+def test_parse_refuses_a_line_a_partial_page_a_repeat_and_a_non_print() -> None:
+    lines = _carpe_lines()
+    with pytest.raises(ValueError, match="not four columns"):
+        t.parse_carpe_layout(_layout([*lines, "Glucose  20"], shown=32, total=32))
+    with pytest.raises(ValueError, match="shows 10 of 32 entries"):
+        t.parse_carpe_layout(_layout(lines, shown=10, total=32))
+    with pytest.raises(ValueError, match="more than once"):
+        t.parse_carpe_layout(_layout([*lines, lines[0]], shown=32, total=32))
+    with pytest.raises(ValueError, match="not a carbon conditions print"):
+        t.parse_carpe_layout("Adenosine   Sigma-Aldrich   A9251   12\n")
+
+
+def test_check_refuses_a_changed_dose_a_missing_row_an_extra_row_and_the_count() -> (
+    None
+):
+    lines = _carpe_lines()
+    changed = [
+        line[:-2] + "21" if line.startswith("Glucose") else line for line in lines
+    ]
+    with pytest.raises(RuntimeError, match="Glucose: its CarPE quote is not a row"):
+        t.check_carpe_table(t.parse_carpe_layout(_layout(changed, shown=32, total=32)))
+    with pytest.raises(RuntimeError, match="is not a row of the print"):
+        t.check_carpe_table(
+            t.parse_carpe_layout(_layout(lines[1:], shown=31, total=31))
+        )
+    extra = [*lines, "Sucrose   Sigma-Aldrich   S0389   10"]
+    with pytest.raises(RuntimeError, match=r"no Table S1A column reads: \['Sucrose'\]"):
+        t.check_carpe_table(t.parse_carpe_layout(_layout(extra, shown=33, total=33)))
+    with pytest.raises(RuntimeError, match="not 2 fewer"):
+        t.check_carpe_table(t.parse_carpe_layout(_layout(lines, shown=30, total=30)))
+
+
+def test_carbon_atoms_counts_carbon_and_refuses_an_unreadable_smiles() -> None:
+    assert t.carbon_atoms("C(C1C(C(C(C(O1)O)O)O)O)O") == 6
+    assert t.carbon_atoms("CC(=O)[O-]") == 2
+    with pytest.raises(ValueError, match="cannot read SMILES"):
+        t.carbon_atoms("not a smiles ((")
+
+
+def _dose_record(smiles: str | None, value: float, unit: str = "mM") -> dict[str, Any]:
+    return {
+        "experiment": {
+            "environment": {
+                "perturbations": [
+                    {
+                        "agent": {"name": "x", "smiles": smiles},
+                        "magnitude": {"value": value, "unit": unit},
+                    }
+                ]
+            }
+        }
+    }
+
+
+def test_carbon_equivalence_passes_equal_carbon_and_names_what_breaks_it() -> None:
+    glucose, acetate = "C(C1C(C(C(C(O1)O)O)O)O)O", "CC(=O)O"
+    good = t.carbon_equivalence_of_the_doses(
+        [_dose_record(glucose, 20.0), _dose_record(acetate, 60.0)]
+    )
+    assert good.passed and good.details["carbon_mm"] == {"120.0": 2}
+    bad = t.carbon_equivalence_of_the_doses(
+        [_dose_record(glucose, 20.0), _dose_record(acetate, 30.0)]
+    )
+    assert not bad.passed
+    unread = t.carbon_equivalence_of_the_doses(
+        [_dose_record(None, 20.0), _dose_record(glucose, 20.0, unit="g/L")]
+    )
+    assert not unread.passed
+    assert unread.details["unreadable"] == ["x", "x in g/L"]
 
 
 def test_every_carbon_source_column_is_one_distinct_environment() -> None:
@@ -486,6 +629,36 @@ def test_every_sourced_value_is_backed_by_its_verbatim_quote() -> None:
     for value in values:
         result = audit_sourced_value(value, root)
         assert result.passed, f"{value.value!r}: {result.message}"
+
+
+@pytest.mark.data
+def test_every_carpe_dose_is_backed_by_the_deposited_print() -> None:
+    raw_root = osp.join(_data_root(), "torchcell-raw")
+    for column, value in t.CARBON_CONCENTRATION_MM.items():
+        result = audit_sourced_value(value, raw_root)
+        assert result.passed, f"{column}: {result.message}"
+    key_root = Path(raw_root) / t.CITATION_KEY
+    manifest = t.load_manifest(_data_root())
+    held = {record.path: record for record in manifest.files}
+    assert held[t.CARPE_PDF_REL].sha256 == t.CARPE_PDF_SHA256
+    pdf_retrieval = held[t.CARPE_PDF_REL].retrieval
+    assert pdf_retrieval is not None
+    assert pdf_retrieval.method.value == "manual_browser"
+    assert pdf_retrieval.params["deposit_record"] == "data/carpe/DEPOSIT.md"
+    for relpath, pin in (
+        (t.CARPE_LAYOUT_REL, t.CARPE_LAYOUT_SHA256),
+        (t.CARPE_CSV_REL, t.CARPE_CSV_SHA256),
+    ):
+        processing = held[relpath].processing
+        assert held[relpath].sha256 == pin
+        assert processing is not None
+        assert processing.version == t.PDFTOTEXT_VERSION
+        assert processing.input_sha256[0] == t.CARPE_PDF_SHA256
+    table = t.parse_carpe_layout(t.carpe_layout_text(key_root / t.CARPE_PDF_REL))
+    t.check_carpe_table(table)
+    assert t.carpe_csv_text(table) == (key_root / t.CARPE_CSV_REL).read_text()
+    sums = (key_root / "data" / "carpe" / "SHA256SUMS.txt").read_text()
+    assert sums == f"{t.CARPE_PDF_SHA256}  CarPE.pdf\n"
 
 
 @pytest.mark.data
@@ -728,6 +901,19 @@ def mirrored(
     )
     data_root = tmp_path / "data_root"
     t.deposit_raw_mirror(xlsx_path=source, data_root=str(data_root))
+    layout = _layout(_carpe_lines(), shown=32, total=32).encode("utf-8")
+    layout_sha = hashlib.sha256(layout).hexdigest()
+    monkeypatch.setattr(t, "CARPE_LAYOUT_SHA256", layout_sha)
+    raw_root = data_root / t.RAW_DIR_REL
+    (raw_root / t.CARPE_LAYOUT_REL).parent.mkdir(parents=True)
+    (raw_root / t.CARPE_LAYOUT_REL).write_bytes(layout)
+    extend_manifest(
+        raw_root,
+        [t.carpe_layout_record(len(layout), layout_sha)],
+        citation_key=t.CITATION_KEY,
+        doi=t.DOI,
+        title="synthetic",
+    )
     monkeypatch.setenv("DATA_ROOT", str(data_root))
     monkeypatch.delenv("TC_DATA_URL", raising=False)
     monkeypatch.setattr(t, "MIN_RESOLVED_FRACTION", 0.5)
@@ -759,6 +945,11 @@ def test_the_loader_builds_the_synthetic_release_end_to_end(
         "BW25113_0001"
     )
     assert first["environment"]["perturbations"][0]["agent"]["name"] == "galactose"
+    assert first["environment"]["perturbations"][0]["magnitude"] == {
+        "value": 20.0,
+        "unit": "mM",
+        "basis": None,
+    }
     assert first["phenotype"]["fitness"] == 0.5
     assert first["phenotype"]["n_samples"] == 2
 
@@ -784,6 +975,7 @@ def test_the_loader_builds_the_synthetic_release_end_to_end(
     ]
     assert (root / "preprocess" / "build_manifest.json").is_file()
     assert (root / "raw" / t.XLSX_FILENAME).is_file()
+    assert (root / "raw" / t.CARPE_LAYOUT).is_file()
 
 
 def test_a_direct_run_opens_the_bw25113_genome_itself(
@@ -848,4 +1040,6 @@ def test_verify_build_reports_each_background_with_the_supplementary_rows(
         assert rows["canonical_gene_names"] is True
         assert rows["stored_tags_are_loci_of_the_pinned_assembly"] is True
         assert rows["reference_one"] and rows["current_genome_genes"]
+        # every stored dose is 120 mM carbon, the paper's equal-carbon design rule
+        assert rows["carbon_equivalence_of_the_carpe_doses"] is True
         assert (root / "preprocess" / f"verification_report_{strain}.json").is_file()

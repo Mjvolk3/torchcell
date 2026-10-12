@@ -458,3 +458,38 @@ def test_the_phenotype_leaf_derives_the_se_from_a_typed_uncertainty() -> None:
         expression_units="bins",
     )
     assert phenotype.expression_level_se == 1.0
+
+
+# --------------------------------------------------------------------------- #
+# Provenance
+# --------------------------------------------------------------------------- #
+def test_every_sourced_value_quotes_a_text_artifact_of_the_mirror() -> None:
+    """Each quote must be auditable: a TEXT artifact, named by citation key and sha256.
+
+    The audit (`audit_sourced_value`) reads the source as text and looks for the quote, so
+    a value anchored to a PDF could never pass it. Two of these values are sourced to de
+    Boer 2020, the paper this release's method defers to, which is mirrored for that
+    reason. This test checks the shape offline; the quotes themselves are re-read against
+    the mirror by the verifier when the library is mounted.
+    """
+    assert set(v.SOURCED_VALUES) == {
+        "construct",
+        "scaffold",
+        "strain",
+        "media",
+        "temperature",
+        "temperature_paper",
+        "expression_units",
+        "bins",
+        "readout",
+        "internal_control",
+    }
+    for name, value in v.SOURCED_VALUES.items():
+        provenance = value.provenance
+        assert provenance.citation_key in {
+            v.CITATION_KEY,
+            "deboerDecipheringEukaryoticGeneregulatory2020",
+        }, name
+        assert provenance.sha256 and len(provenance.sha256) == 64, name
+        assert provenance.source_uri.endswith(".md"), name
+        assert value.quote.strip(), name

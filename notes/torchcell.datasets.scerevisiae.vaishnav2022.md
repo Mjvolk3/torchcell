@@ -69,6 +69,13 @@ decide what the number means:
   each promoter sequence were estimated as the weighted average of bins in which the
   promoter was observed."
 
+Three of the ten values are sourced to de Boer 2020 rather than to this paper, because the
+quote must be auditable and `audit_sourced_value` reads its source as TEXT: this paper's
+Supplementary Notes are a PDF the mirror has not OCR'd, and de Boer 2020 (mirrored, the
+method's deferral target) states the same facts in prose. The growth temperature is
+sourced both ways, from de Boer's GPRA culture sentence and from this paper's own "Unless
+otherwise noted, yeast were grown at 30 C" line.
+
 So the stored number is a read-weighted mean index over the 18 uniform log(YFP:RFP) sort
 bins, and `read_count` counts the observations it averaged.
 

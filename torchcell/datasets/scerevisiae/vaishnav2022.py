@@ -226,12 +226,13 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         value=f"{SCAFFOLD_NAME} scaffold with an 80 bp variable region",
         provenance=_PAPER,
         quote=(
-            "a library of ~200,000,000 random 80 bp promoters was cloned in front of a "
-            "YFP reporter construct"
+            "in which 80\u2009bp of DNA are embedded within a promoter construct and "
+            "the associated expression is assayed in the S. cerevisiae"
         ),
         note=(
-            "the variable region is 80 bp; the loaded table's constant 17 bp and 13 bp "
-            "flanks are the scaffold the pT-pA oligo of Supplementary Table 3 defines"
+            "the variable region is 80 bp inside a constant construct; the loaded "
+            "table's constant 17 bp and 13 bp flanks are that construct's pTpA "
+            "scaffold, which Supplementary Table 3's pT-pA oligo defines"
         ),
     ),
     "strain": SourcedValue(
@@ -261,15 +262,26 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
     ),
     "temperature": SourcedValue(
         value=30.0,
-        provenance=Provenance(
-            source_uri="si/si1.pdf",
-            citation_key=CITATION_KEY,
-            sha256="b6e49903b32e62ab28e6898492bcdf5a60a8a45f28f19da07e3cc67141eec6a9",
-            method="pdftotext -layout",
-            page="Supplementary Notes, GPRA experimental details",
+        provenance=_DEBOER,
+        quote=(
+            "All cultures were grown in a shaker incubator, at $3 0 ^ { \\circ } "
+            "\\mathrm { C }$ and approximately $2 5 0 \\mathrm { r ."
         ),
-        quote="All cultures were grown in a\nshaker incubator, at 30°C",
-        note="shaking culture, so the environment is aerobic",
+        note=(
+            "the pre-sort GPRA culture, in the paper this release's method defers to; "
+            "the Vaishnav SI states the same sentence, and its own text states the "
+            "same temperature for every culture (see temperature_paper). A shaking "
+            "culture, so the environment is aerobic."
+        ),
+    ),
+    "temperature_paper": SourcedValue(
+        value=30.0,
+        provenance=_PAPER,
+        quote=(
+            "Unless otherwise noted, yeast were grown at $3 0 ^ { \\circ } "
+            "\\mathrm { C } ,$ , in an orbital shaker incubator at 225\u2009rpm."
+        ),
+        note="the same value stated by this paper itself, for every culture it reports",
     ),
     "expression_units": SourcedValue(
         value=EXPRESSION_UNITS,
@@ -303,12 +315,14 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         ),
     ),
     "internal_control": SourcedValue(
-        value="log(YFP:RFP), the released ratio",
-        provenance=_PAPER,
+        value="log(YFP/RFP), the released ratio",
+        provenance=_DEBOER,
         quote=(
-            "Cells were sorted by the log ratio of RFP to YFP signal (using mCherry "
-            "and GFP absorption/emission), which controls for extrinsic sources of "
-            "variation that affect both reporters"
+            "dual reporter system expressing a constitutive red fluorescent protein "
+            "(RFP) and a variable yellow fluorescent protein (YFP). log(YFP/RFP) "
+            "measured using flow cytometry (see Methods) reports an expression signal "
+            "that is integrated over several generations and normalized for extrinsic "
+            "noise"
         ),
         note=(
             "why the reference restates the record: the control is inside the released "

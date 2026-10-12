@@ -1,0 +1,48 @@
+%% notes-tex/030-scaling-study/sections/6-next.tex
+
+\section{What to run next, by what it buys\secstatus{todo}}
+\label{sec:next}
+
+In order of the limit each one moves, with its cost in 48 h one-GPU jobs. None
+is queued.
+
+\pfstep{Read the calibration jobs before trusting the budget table} Two 3 h jobs
+at 180x8 and 45x2 report records per second and the measured FLOPs per step at
+both ends of the ladder. Equal paces mean the loader binds, every size costs
+4.3 h an epoch, and the fixed-epoch slice of $L(N)$ is all 48 h can give; a
+faster 45x2 means the small sizes can run to convergence on the full pool, and
+the epoch budget should then scale per size by the ratio of paces. The
+validation pass is also timed there: at 240 epochs of 1/64 it runs 240 times
+over 37,705 triples at a validation batch of 32, and if one pass costs more than
+a quarter of an epoch the small subsets need validation every second epoch to
+finish inside 48 h, with the readout interpolating on the epochs that have a
+validation row.
+
+\pfstep{A 1/8 subset at 180x8, both builds} Two jobs. The subsets are nested by
+one shuffle, so adding a denominator leaves the existing subsets unchanged and
+adds a fifth point to the $D$ axis between 1/16 and 1/4, which is what the floored
+form's held-out test needs (four points in sample) and what the gap needs for a
+third converged point. Eighty epochs of 1/8 is 10.4M records, one 48 h job at the
+assumed pace.
+
+\pfstep{The learning rate at the top of the ladder} One or two jobs at 180x8 on
+1/16 at 1e-4 (and 6e-4). The check at 45x2 on 1/4 says nothing about the end of
+the ladder where the batch is four times smaller than the arm was tuned at, and
+an $N$ exponent fit across sizes run at one learning rate is an exponent of the
+schedule as much as of the capacity.
+
+\pfstep{A converged full-data point} Not cheap: one hundred epochs at 180x8 is
+nine chained 48 h jobs with a queue wait per link. Until it exists the top of
+the $D$ axis and the whole $N$ axis are read at ten epochs, and the figures say
+so. The alternative that costs nothing is to fit the converged curve on 1/64,
+1/16, 1/8 and 1/4 only and treat the full point as the held-out prediction
+target, which the readout already does when the full point is the largest $x$.
+
+\pfstep{The token ablation} One 180x8 column of the 030 arm with
+\texttt{dataset\_token.enabled=false} on the four subsets, four jobs, which
+separates the token from the per-entry rows in the gap.
+
+\pfstep{The compute axis} Three budgets spanning two decades of FLOPs, four
+sizes at each, records seen set by the budget and the per-size cost per record
+from the calibration jobs; twelve jobs, after the first two sweeps have shown
+that the budget buys anything.

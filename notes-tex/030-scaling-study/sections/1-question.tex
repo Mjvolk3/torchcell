@@ -1,0 +1,68 @@
+%% notes-tex/030-scaling-study/sections/1-question.tex
+
+\section{The question and the vocabulary\secstatus{todo}}
+\label{sec:question}
+
+\begin{keybox}
+\textbf{Measured.} The grid is queued on Delta (calibration 22828396 and
+22828397, the 030 grid 22812513 to 22812546, the 025 pair 22812547 to 22812556,
+all pending on 2026-10-12). The parameter counts, subset sizes, budgets and
+replicate floors in the tables are read from the grid's own files. The three
+defects of Section~\ref{sec:support} were each reproduced before being fixed.
+
+\textbf{Not measured.} Every exponent, every floor-against-fit comparison and
+the paired gap. No run of the grid has completed. The curves in the planned
+figures are sketches of what each panel will hold.
+\end{keybox}
+
+A \term{scaling law} is a fitted relation between a model's held-out loss $L$ and
+what a training run spends: trainable parameters $N$, distinct training examples
+$D$, and compute $C$. The two published forms, Kaplan's single-axis power law
+$L = (N_c/N)^{\alpha_N}$ and Hoffmann's joint form with a floor,
+$L(N, D) = E + A N^{-\alpha} + B D^{-\beta}$, and the recipe for fitting them (least
+squares in log space from a grid of starts, a Huber residual, the largest run held
+out, a bootstrap over runs) are set out in the scaling-laws explainer
+(\texttt{notes-tex/modeling/scaling-laws}, with the forms drawn and the fitting
+functions exercised on synthetic runs in
+\texttt{experiments/041-scaling-laws/scripts/scaling\_law\_forms.py}). The three
+works behind those forms are in the mirror under
+\texttt{kaplanScalingLawsNeural2020},
+\texttt{hoffmannTrainingComputeOptimalLarge2022} and
+\texttt{besirogluChinchillaScalingReplication2024}. This study is the first set of
+runs on a torchcell model built to be fit against them.
+
+The question the grid answers is the one that decides where the next unit of
+effort goes on the trigenic build: does the loss still fall with more distinct
+data at the current size, does it still fall with more parameters at the current
+data, and how far is either curve from the floor the replicate noise of the
+screens sets. A fourth question is specific to the 030 build: what keeping every
+stored measurement of a genotype, under a token that names its source screen,
+buys over one merged label per genotype, read as the gap between the 030 curve
+and its 025 twin at every data size.
+
+\notesec{Vocabulary}
+Terms with a technical sense here, in alphabetical order. The loss, the data unit
+and the two reads are the ones a reader has to hold apart.
+
+%% SOURCE: hand-authored vocabulary table (definitions, no measured values)
+\begin{table}[H]
+\centering\footnotesize
+\begin{tabular}{p{0.24\linewidth}p{0.72\linewidth}}
+\toprule
+term & meaning \\
+\midrule
+calibration job & a 3 h job of 400 training batches at one size on the full pool, run before the grid, whose logged records seen, GPU hours and FLOPs per step give the pace the epoch budgets assume; two of them, at 180x8 and 45x2, so that equal paces expose a loader-bound run. \\
+closure double & a double-deletion record whose gene pair lies inside a training triple's gene set; the strict pool S3Q keeps every closure double except the 88 whose pair is itself a held-out query pair. \\
+$D$, records and entry rows & distinct training examples. On 025 the unit is the record (one merged label per genotype); on 030 the per-entry loss averages over entry rows, every stored measurement of a genotype, 1.6 to 2.2 rows per record across the subsets. Both units are reported; repeated epochs are not more $D$. \\
+dataset token & the 030 arm's one-hot over the build's 15 source datasets, projected to 8 dimensions and concatenated to the readout, so every entry row trains under the name of its screen and every validation triple is scored under its own screen's token. \\
+$E$, replicate floor & the expected squared error of the best possible predictor of a single noisy measurement, $(1 - r)\,\mathrm{var}(\tau)$ for replicate reliability $r$, per screen in label units (Table~\ref{tab:floors}); the lower bound on the $E$ of a floored fit. \\
+held-out test & the largest point of an axis is left out, the form is fit on the rest, and its prediction at that point is compared with the observation; the test of whether an exponent extrapolates. \\
+label units & the gene-interaction score $\tau$ after the inverse of the training normalization, so a loss is comparable across sizes, subsets and builds; the normalized loss is not, because its constants are fitted per training set. \\
+matched read & the loss of a point at one shared records-seen budget $B$, interpolated on its per-epoch validation curve; $B$ is the smallest total any point of the grid reached, so every point has the read. \\
+$N$, non-embedding & trainable parameters outside the gene embedding table and the composite-embedding preprocessor, the count the loss responds to; 79k to 3.6M across the ladder (Table~\ref{tab:sizes}). \\
+query pair & the two query genes of a trigenic screen's triple; the unit that leaks between training and evaluation, so the evaluation triples are held out with their query pair and the subsets are drawn by it. \\
+screen & one of the two trigenic sources, Kuzmin 2018 and Kuzmin 2020, whose validation triples never overlap and whose means differ by about one standard deviation, which is why curves are fitted per screen. \\
+selected read & the loss of a point at the epoch of lowest pooled validation MSE, the validation-selected checkpoint; the converged read for subsets that converge inside their budget. \\
+\bottomrule
+\end{tabular}
+\end{table}

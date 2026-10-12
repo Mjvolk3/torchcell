@@ -1,0 +1,40 @@
+%% notes-tex/030-scaling-study/sections/5-figures.tex
+
+\section{The planned figures\secstatus{todo}}
+\label{sec:figures}
+
+Two figures carry the result: the three-panel results figure the readout writes
+from the runs (Figure~\ref{fig:results-plan} is its sketch), and the reading guide
+that says what each outcome means for the next unit of effort
+(Figure~\ref{fig:reading}). Both are drawn before any run has reported, so that
+the figure is specified before the data exist and the readout writes to it
+rather than the other way round.
+
+\tcfig{figures/030-scaling-results-plan.pdf}{%
+The results figure, sketched. \textbf{a}, validation MSE in label units against
+$D$ at 180x8, 030 in orange and the 025 twin in purple, the matched read filled
+and the selected read hollow, the replicate floor of each screen dashed, the full
+point ringed as the held-out point predicted from the rest. The 2018 and 2020
+curves are drawn separately in the real figure; one curve stands for them here.
+\textbf{b}, validation MSE against $N$ at the full pool, five sizes at ten epochs
+each, the plateau the data sets dashed. \textbf{c}, the gap, 030 minus 025
+pooled MSE per subset, seed mean and spread at 1/64 and 1/16, the full point
+hollow as two unconverged runs. Every curve is hand-drawn to show what the panel
+holds; \texttt{scaling\_readout\_030.py} writes the real figure.
+}{fig:results-plan}
+\src{notes/assets/drawio/030-scaling-study.gen.py}
+
+\tcfig{figures/030-scaling-reading.pdf}{%
+How the three fits are read. Each column is one question with its outcomes and
+what each outcome says to do next; the colors follow the figure above, orange
+for an answer that points at data, purple for one that points at size, red for
+a fit that cannot be right. The gate at the bottom applies to every fit: an
+exponent whose held-out prediction missed describes the points it was fit on and
+nothing beyond them.
+}{fig:reading}
+\src{notes/assets/drawio/030-scaling-study.gen.py}
+
+\figph{3.2cm}{Figure placeholder: the results figure from
+\texttt{scaling\_readout\_030.py}, three panels at 179 mm, written to
+\texttt{ASSET\_IMAGES\_DIR/030-solid-growth-multi/scaling\_030\_sclw1\_[timestamp].svg}
+once the grid has run.}

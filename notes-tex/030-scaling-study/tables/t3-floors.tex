@@ -1,0 +1,17 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/030-solid-growth-multi/scripts/scaling_grid_table_030.py, reading triple_noise_ceiling_030.json (noise_model sd_of_scores, pair_classes pearson)
+
+\begin{table}[htbp]
+\centering\footnotesize
+\caption{The replicate floor per screen in label units. Under a squared loss the best predictor of a single noisy measurement has expected error $E = (1 - r)\,\mathrm{var}(\tau)$ where $r$ is the replicate reliability, the correlation of two independent measurements of the same triple. The variance column is the loss of predicting the screen mean, the top of the range a curve can move through, so the floor's share of it is the fraction of the loss no model can remove. The 2020 reliability is measured on this build's same-strain re-measured pairs; 2018 has 61 such pairs, so it is bounded by the published Dango replicate correlation below and the cross-year 2018 vs 2020 pairs above.}
+\label{tab:floors}
+\begin{tabular}{llrrrrr}
+\toprule
+screen & reliability from & $r$ & sd($\tau$) & var($\tau$) & $E$ & $E$/var \\
+\midrule
+Kuzmin 2018 & Dango 0.59 & 0.59 & 0.0535 & 2.86e-3 & 1.17e-3 & 0.41 \\
+Kuzmin 2018 & cross-year 2018 vs 2020 pairs & 0.89 & 0.0535 & 2.86e-3 & 0.31e-3 & 0.11 \\
+Kuzmin 2020 & same-strain re-measured pairs & 0.44 & 0.0633 & 4.01e-3 & 2.25e-3 & 0.56 \\
+\bottomrule
+\end{tabular}
+\end{table}

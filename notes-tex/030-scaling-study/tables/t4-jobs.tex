@@ -1,0 +1,20 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/030-solid-growth-multi/scripts/scaling_grid_table_030.py, reading the loops of delta_submit_scaling_030.sh and delta_submit_scaling.sh
+
+\begin{table}[htbp]
+\centering\footnotesize
+\caption{The job list, 32 jobs of the 030 grid and 8 of the 025 pair, one GPU each on the Delta A40 partition, 48 h apiece except the two 3 h calibration jobs (400 training batches at 180x8 and 45x2, which report the pace and the measured FLOPs per step). Every 030 job is the composite closure arm on the query-pair-disjoint split (cgt\_030\_s3\_q\_tok\_embfit\_004) at batch 256; every 025 job is its merged-label twin (cgt\_s3\_q\_kl\_embfit\_037) at 180x8.}
+\label{tab:jobs}
+\begin{tabular}{llrrrr}
+\toprule
+sweep & what varies & jobs & sizes & subsets & seeds \\
+\midrule
+030\_sclw1 & calibration & 2 & 45x2, 180x8 & full & 1 \\
+030\_sclw1 & size $\times$ subset & 20 & 45x2, 63x3, 90x4, 126x6, 180x8 & 1/64, 1/16, 1/4, full & 1 \\
+030\_sclw1 & seed replicates & 8 & 45x2, 180x8 & 1/64, 1/16 & 2, 3 \\
+030\_sclw1 & learning-rate check (1e-4, 1e-3) & 2 & 45x2 & 1/4 & 1 \\
+025\_sclw1 & subset & 4 & 180x8 & 1/64, 1/16, 1/4, full & 1 \\
+025\_sclw1 & seed replicates & 4 & 180x8 & 1/64, 1/16 & 2, 3 \\
+\bottomrule
+\end{tabular}
+\end{table}

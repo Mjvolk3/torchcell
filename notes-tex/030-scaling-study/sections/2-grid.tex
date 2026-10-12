@@ -1,0 +1,90 @@
+%% notes-tex/030-scaling-study/sections/2-grid.tex
+
+\section{The grid\secstatus{todo}}
+\label{sec:grid}
+
+Every 030 run is the composite closure arm on the query-pair-disjoint split,
+\texttt{cgt\_030\_s3\_q\_tok\_embfit\_004}: the per-entry trainer with the dataset
+token, the strict pool S3Q, every stored entry a training row, scored on the
+pinned 37,705 validation triples. What varies is the size and the training
+subset (Figure~\ref{fig:grid}). Every 025 run is the same arm's merged-label twin,
+\texttt{cgt\_s3\_q\_kl\_embfit\_037}, on the same subsets at the current size.
+Batch is 256 records on one A40, the learning rate 2.5e-4 constant, the
+normalization constants those of the full pool on every subset
+(\texttt{transforms.fit\_stats\_strict=false}), so the optimization target does
+not move with $D$ on 030. The 025 trainer has no such switch and refits its
+constants on each subset's training records; the losses are compared in label
+units, where that difference does not enter, but the training objectives differ
+on that side of the pair.
+
+\tcfig{figures/030-scaling-grid.pdf}{%
+The grid as queued. Columns are the nested subsets of S3Q, drawn by query pair
+with seed 42 so the 1/64 pairs lie inside the 1/16 pairs inside the 1/4 pairs;
+rows are the five sizes with their non-embedding $N$. A filled mark is a queued
+run; three marks are seeds 1 to 3, placed where runs are cheapest (the two
+smallest subsets) at the two end sizes; the red ring is the learning-rate check
+at the smallest size on 1/4. The purple row is the 025 twin at 180x8. The strip
+below gives each column's epoch budget, the records seen under it, and the wall
+time at the assumed pace; the dashed line is the shared budget of the matched
+read. Planned figure drawn from the grid's own tables; no run has reported.
+}{fig:grid}
+\src{notes/assets/drawio/030-scaling-study.gen.py}
+
+\notesec{The size ladder}
+Width and depth scale together in the current configuration's ratio at nine
+attention heads (Table~\ref{tab:sizes}): 45x2, 63x3, 90x4, 126x6 and 180x8, the
+last being the size every 030 and 025 arm has trained at. $N$ is read from the
+model's own tally at each size, the count the compute callback logs, and the
+180x8 count equals the one W\&B holds for the instrumented IGB run. The ladder
+spans 1.66 decades, under the two decades the explainer's recipe asks for, and
+the composite preprocessor that projects the sequence embeddings to the hidden
+width is excluded from $N$ as the embedding is.
+
+\input{tables/t1-sizes}
+
+\notesec{The data ladder}
+Subsets are drawn by the unit that leaks, the query pair, so a smaller subset
+removes whole query screens with every triple they reach, and the closure doubles
+follow their triples (Table~\ref{tab:subsets}). Singles are in every subset, so
+the single-mutant fitness supervision does not vary with $D$, and the pinned
+validation and test triples are in every pool unchanged. The same shuffle on the
+same sorted pair list gives the same kept pairs on the 025 build, pair for pair,
+so a 030 subset and its 025 twin hold the same genotypes and differ only in what
+is kept per genotype. $D$ is counted in both units. The ratio between them
+drifts from 1.56 rows per record at 1/64 to 2.24 at the full pool, because the
+Costanzo and Kuzmin double-mutant screens that supply most of the extra rows
+cover the recurring pairs more densely; the 030 curve is therefore fitted in
+both units and the two exponents reported side by side.
+
+\input{tables/t2-subsets}
+
+\notesec{Budgets}
+Every point is one 48 h job, because a dependent job accrues no queue priority
+on Delta and a chain pays a fresh queue wait per link. The epoch budget is keyed
+by subset: 240, 120, 40 and 10 epochs for 1/64 through the full pool, which is
+what 48 h holds at the 180x8 pace for the two largest subsets. That pace, 68
+records per second on one A40, is read from the 025 four-GPU runs and is an
+assumption until the calibration jobs report; the first version of the submit
+script assumed four times that and would have timed out every full-data job
+before its tenth epoch. The budget table is keyed by subset only, so a small size
+on the full pool gets the same ten epochs as 180x8 whether or not it could have
+trained longer, which Section~\ref{sec:support} returns to. The 180x8 full-data
+point at ten epochs is the headline point of both the $D$ and $N$ axes and is
+not converged: the same arm on IGB was at validation Pearson 0.384 over epochs 13
+to 22 and still rising, and the random-split seed took about 150 epochs to turn.
+
+\notesec{What is recorded per run}
+The compute callback (\texttt{torchcell.trainers.compute\_accounting}) writes
+$N$ at fit start, and at every epoch end the records per epoch, the cumulative
+records seen, the measured FLOPs per step and their cumulative sum, and the GPU
+hours, together with the epoch index. FLOPs are counted by
+\texttt{torch.utils.flop\_counter.FlopCounterMode} around five real training
+steps (batch indices 1 to 5, forward and backward), and the mean, the minimum and
+the maximum are logged, so a per-entry batch whose row count varies shows its
+spread rather than one draw; $6ND$ is a rule for token transformers and does not
+describe a gene-token model with graph penalties. The count covers the matmul
+family only and is a lower bound, comparable across sizes of one architecture.
+The callback's state is saved with the checkpoint, so a chain of jobs continues
+its totals.
+
+\input{tables/t4-jobs}

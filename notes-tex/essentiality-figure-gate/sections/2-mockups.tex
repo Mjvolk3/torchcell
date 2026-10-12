@@ -1,0 +1,97 @@
+%% notes-tex/essentiality-figure-gate/sections/2-mockups.tex
+%% SOURCE: the two sheets are written by experiments/028-gene-essentiality/scripts/
+%% summary_figure.py from the result files named in their captions; every number in a
+%% caption is a macro of tables/gate_numbers.tex written by essentiality_gate_numbers.py.
+
+\section{The mockups\secstatus{todo}}
+\label{sec:mockups}
+
+Result files are under \file{experiments/028-gene-essentiality/results/}. The two sheets
+below are the summary figures of \file{028-gene-essentiality} as they stand; the
+proposed main-text figure is a composition of their panels, listed first, and is not drawn
+yet. The statistic is the AUROC on the \gnHeldOut{} held-out genes under the fold
+protocol (five models trained on five cross-validation files, logits averaged on the
+held-out genes) unless the caption says otherwise; intervals are gene bootstraps.
+
+\pfstep{The sheet proposed for the main text} Six panels in two rows: the setup and the
+score, then the module.
+
+\begin{description}
+  \item[a] The two families and their average, drawn as in the families explainer of
+    \file{028-gene-essentiality}: the cell graph transformer with the offline solve on
+    an affine, graph convolution on the GO multi-hot, and the standardized equal-weight
+    average with nothing fitted. \fstat{file}
+  \item[b] Every method on the \gnHeldOut{} held-out genes, best first, with Flux Cone
+    Learning and FBA as comparators: Figure~\ref{fig:goal1}a. \fstat{file}
+  \item[c] The three fixed in advance on \gnResplits{} other held-out fifths, three seeds
+    per split: Figure~\ref{fig:goal1}b. \fstat{file}
+  \item[d] The module forms on one backbone, seed means with every seed drawn, the
+    in-loop forms hatched: Figure~\ref{fig:goal2}a. \fstat{file}
+  \item[e] Each form minus the same cell with no metabolism on the \gnResplits{} splits,
+    and the share of split-and-seed pairs above: Figure~\ref{fig:goal2}e and f. \fstat{file}
+  \item[f] The genome-wide \ggenomeN{} genes with no GEM reaction, where the solve reads
+    a constant row and the gene graphs carry the signal: Figure~\ref{fig:goal1}c.
+    \fstat{file}
+\end{description}
+
+\noindent The hard-genes panel (Figure~\ref{fig:goal1}d and e) is proposed for the
+supplement with the misclassification enrichment table, and the cost panels
+(Figure~\ref{fig:goal2}b and c) for the Methods.
+
+\clearpage
+\tcfigfit[1.0]{\figGoalOne}{\textbf{Goal 1: the best method on gene essentiality,
+against Flux Cone Learning and FBA.} One color means one thing in every panel: gray a
+comparator with nothing learned here, blue a learned model reading no metabolic column
+and no graph, orange family 1 (the transformer), red family 2 (graph convolution on GO),
+purple their average; a hatch marks a linear program solved inside the training loop.
+\textbf{a}, Every method on the \gnHeldOut{} held-out genes, best first; the first rows are
+averages of family 2 with a form of family 1 (the best at \gbestAverage{}), the DCell-style
+rows are the comparator under the same fold protocol (\gdcellEnsemble{}
+[\gdcellEnsembleLo{}, \gdcellEnsembleHi{}]), Flux Cone Learning reads \gfclAuroc{} and FBA
+\gfbaAuroc{}. Learned models are five-fold ensembles, the random forest is one fit on the
+split file, and intervals are gene bootstraps.
+\textbf{b}, The layer-free form of family 1 (circles), graph convolution on GO (squares)
+and their average (diamonds), fixed in advance, on \gnResplits{} other held-out fifths of
+the labeled genes, three seeds per split, sorted by the average's AUROC; means
+\gresplitMeanlayerfree{}, \gresplitMeangoconvolution{} and \gresplitMeanaverage{}.
+\textbf{c}, The same models trained on the released genes and read on the \ggenomeN{}
+genome-wide genes that carry no GEM reaction, pooled over seeds with a gene bootstrap; the
+dashed line is chance.
+\textbf{d}, What the misranked genes of the released \gnHeldOut{} share, per class, for
+the two families; filled where the Benjamini-Hochberg $q$ within the family is under 0.1.
+\textbf{e}, Every one of the \gnEssentialHeldOut{} essential genes in the released
+held-out set, worst first by the two families' mean misrank. Written by
+\texttt{summary\_figure.py}. \fstat{file}}{fig:goal1}
+
+\clearpage
+\tcfigfit[1.0]{\figGoalTwo}{\textbf{Goal 2: the form of the metabolic module that
+helps, what it costs, and what a record of one genotype in one medium can carry.} Orange
+is the transformer reading any FBA-derived column, blue the same cell with no metabolic
+column, gray a count; a hatch marks a linear program solved inside the training loop.
+\textbf{a}, The forms of the module on one backbone, the pathway multi-hot with ProtT5:
+the bar is the seed mean of the held-out AUROC and each point one seed; no metabolism
+\gladnone{} (\gladnoneSeeds{} seeds, sd \gladnoneSd{}), the single-medium solve with the
+rule counts \gladoneSolveCounts{} (\gladoneSolveCountsSeeds{} seeds, sd
+\gladoneSolveCountsSd{}), the four-media form \gladfourSolveCounts{}.
+\textbf{b}, Wall minutes per cell for the forms of \textbf{a}, as run.
+\textbf{c}, What the layer-free solve costs over the solid-growth build, logarithmic.
+\textbf{d}, The layer-free forms by the number of media whose growth ratio they read and
+by whether they also read the stored flux vector and the six gene-rule counts, on the
+released split; the diamond is the five-fold ensemble (\gladoneSolveCountsEns{} for the
+single medium, \gladfourSolveCountsEns{} for four).
+\textbf{e}, Each form minus the same cell with no metabolism on the \gnResplits{} repeated
+splits: the single-medium form reads \ggainOneMediumOverNone{}, above on
+\ggainOneMediumOverNoneUp{} of \ggainOneMediumOverNoneOf{}.
+\textbf{f}, The share of split-and-seed pairs on which the form scores above the cell with
+no metabolism (\ggainOneMediumOverNonePairsUp{} of \ggainOneMediumOverNonePairs{} for the
+single-medium form); the dashed line is a module that helps on half the runs.
+\textbf{g}, The same columns handed to the second family, graph convolution on GO, on the
+repeated splits: as node features and as a zero-initialized affine on the node's logit,
+each minus the same convolution on GO alone. Written by \texttt{summary\_figure.py} from
+\texttt{simplification\_readout.json} and \texttt{resplit\_readout.json}.
+\fstat{file}}{fig:goal2}
+
+\pfstep{What is not drawn} The families explainer is a draw.io composition in
+\file{028-gene-essentiality} and enters the proposed sheet as panel a once it is
+re-exported into this document's figures. The main-text composition itself, at Nature's
+full-page box, is the open item of \ref{sec:remaining}.

@@ -1,0 +1,66 @@
+%% notes-tex/essentiality-figure-gate/essentiality-figure-gate.tex
+%% [[experiments.028-gene-essentiality.scripts.essentiality_gate_numbers]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/essentiality-figure-gate/essentiality-figure-gate.tex
+%%
+%% Mockups of the manuscript's gene-essentiality figure, held for a decision before any
+%% panel enters the paper. Fitness and interactions have their own gate
+%% (notes-tex/interaction-fitness-figure-gate on the 030 branch).
+%%
+%% Build:  make numbers  -> macros and table rows from the 028 result files
+%%         make plots    -> convert the newest 028 summary sheets into figures/
+%%         make          -> essentiality-figure-gate.pdf
+%%         make check    -> formatting / provenance gate
+%%
+%% EVERY number a caption or a sentence prints is a macro of tables/gate_numbers.tex,
+%% written by experiments/028-gene-essentiality/scripts/essentiality_gate_numbers.py from
+%% the result files summary_figure.py draws. Nothing is typed into a figure or a caption.
+%% The registry (section 6) is a plan and carries no result.
+
+\documentclass[10pt,a4paper]{article}
+\usepackage[draft]{tcdoc}
+\usepackage{float}
+\usepackage{longtable}
+
+\emergencystretch=3em
+
+%% Figure and table status, the symbol set of the metabolism figure gate (defined here
+%% until tcdoc.sty carries it on this branch). Filled circle = on file, every drawn value
+%% in a committed result file; half circle = partial; open circle = idea only. None of the
+%% three means approved.
+\providecommand{\tcfsfile}{{\normalfont\footnotesize\textcolor{tcgray}{\ding{108}}}}
+\providecommand{\tcfspartial}{{\normalfont\footnotesize\textcolor{tcgray}{\ding{119}}}}
+\providecommand{\tcfsidea}{{\normalfont\footnotesize\textcolor{tcgray}{\ding{109}}}}
+\providecommand{\fstat}[1]{\csname tcfs#1\endcsname}
+
+\input{tables/gate_numbers}
+\input{tables/gate_figure_names}
+
+%% The regime key, stated once and carried by the data figures.
+\newcommand{\regimekey}{Regime is what a method reads when it scores a held-out gene:
+\emph{inductive}, the gene's own sequence, annotation, graph position and the metabolic
+model's solve for its deletion, none of which needs the screen; \emph{transductive}, a
+measured call or phenotype of other genes in the same screen (the label-propagation
+store), which holds only inside a called screen; \emph{comparator}, a published method
+scored on the same genes with nothing learned here.}
+
+\title{\vspace{-1.5em}Gene Essentiality Gate\\
+  {\large The Held-Out Score, the Module Form That Carries, and the Panels Proposed for
+   the Main Text}}
+\author{Michael Volk}
+\date{\today}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\tccontents
+
+\input{sections/1-decision}
+\input{sections/2-mockups}
+\input{sections/3-models}
+\input{sections/4-remaining}
+\input{sections/5-state}
+\input{sections/6-registry}
+\input{sections/7-performance}
+
+\end{document}

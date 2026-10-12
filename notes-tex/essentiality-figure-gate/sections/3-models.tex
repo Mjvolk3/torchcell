@@ -1,0 +1,50 @@
+%% notes-tex/essentiality-figure-gate/sections/3-models.tex
+%% SOURCE: the macros of tables/gate_numbers.tex, written by
+%% experiments/028-gene-essentiality/scripts/essentiality_gate_numbers.py from
+%% results/fcl_comparison.json, family_ensembles_folds.json, dcell_style_folds.json and
+%% genome_heldout_readout.json.
+
+\clearpage
+\section{The models and comparators on file\secstatus{todo}}
+\label{sec:models}
+
+\pfstep{Family 1, the transformer} The cell graph transformer over the nine-graph
+perturbed gene graph with the pathway multi-hot and ProtT5 as node features, the deleted
+gene's token pooled to a logit, and a zero-initialized affine that adds the metabolic
+columns computed offline from yeast-GEM 9.0.2: the growth ratio of the deletion on one
+medium, the deletion's parsimonious flux vector as $\log(1 + |v|)$, and six counts read
+off the gene-protein-reaction rules. As a five-fold ensemble on the released split the
+single-medium form reads \gfamoneMedium{} [\gfamoneMediumLo{}, \gfamoneMediumHi{}], the
+rule-count form \gfamruleCounts{} [\gfamruleCountsLo{}, \gfamruleCountsHi{}], and the
+layer-free solve alone \gfamlayerFree{} [\gfamlayerFreeLo{}, \gfamlayerFreeHi{}].
+
+\pfstep{Family 2, graph convolution on GO} A two-layer graph convolution over the union
+of nine gene-gene graphs on the propagated Gene Ontology multi-hot (2,362 terms over
+5,501 annotated genes), which reads \gfamgoGcn{} [\gfamgoGcnLo{}, \gfamgoGcnHi{}] as a
+five-fold ensemble. It is inductive in the regime key's sense: a gene's own annotation
+and graph position, no call of any other gene.
+
+\pfstep{Their average} Each family's logits standardized and weighted equally with nothing
+fitted. The best of the \gnPairAverages{} two-family averages on file is
+\gbestAverage{} [\gbestAverageLo{}, \gbestAverageHi{}] (\gbestAverageNames{}); the average
+was fixed in advance before the \gnResplits{} repeated splits were read, where it beats
+the layer-free form by \gresplitDiffaverageMinuslayerfree{}
+(\gresplitDiffaverageMinuslayerfreeUp{} of \gresplitDiffaverageMinuslayerfreeOf{}) and
+graph convolution on GO by \gresplitDiffaverageMinusGOconvolution{}
+(\gresplitDiffaverageMinusGOconvolutionUp{} of \gresplitDiffaverageMinusGOconvolutionOf{}).
+
+\pfstep{Comparators on the same genes} Flux Cone Learning (Merzbacher 2025) scores
+\gfclAuroc{} on the \gnHeldOut{} genes; on its own released held-out set of
+\gfclReleasedN{} it reads \gfclReleasedAuroc{}, and its published five-fold mean of
+\gfclPublishedCv{} was recomputed at \gfclRecomputedCv{} from the released notebook, so the
+comparison is against a reproduced baseline. FBA with yeast-GEM 9.0.2 and nothing fitted
+scores \gfbaAuroc{} [\gfbaAurocLo{}, \gfbaAurocHi{}]. A DCell-style model over
+\gdcellTerms{} GO terms, trained under the same fold protocol, reads \gdcellEnsemble{}
+[\gdcellEnsembleLo{}, \gdcellEnsembleHi{}] as a fold ensemble (fold mean
+\gdcellFoldMean{}).
+
+\pfstep{The genome-wide limit} On the \ggenomeN{} genes with no GEM reaction the best
+arm on file is \ggenBestName{} at \ggenBest{}; the transformer with the solve reads
+\ggenlayerFree{}, graph convolution on ProtT5 over the union \ggengcnProt{}, graph
+convolution on the physical graph's degree and clustering \ggengcnDegree{}, and the FBA
+ratio \ggenfba{} (a constant). Every genome-wide arm is in \ref{sec:performance}.

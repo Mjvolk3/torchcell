@@ -190,10 +190,12 @@ PAIRED = [
     ("L1_ridge_lower_order", "L2_hgb_lower_order"),
     ("L2_hgb_lower_order", "L3_ridge_gene_plus_lower_order"),
 ]
-WANDB_ENTITY = "zhao-group"
-WANDB_PROJECT = "torchcell_030-solid-growth-multi_equivariant_cell_graph_transformer"
-WANDB_ARM_TAG = {"R": "cgt_030_s3_r_tok_embfit_003", "Q": "cgt_030_s3_q_tok_embfit_004"}
-WANDB_WINDOW = 10
+from wandb_seed_histories import (  # noqa: E402  (sibling module, scripts dir)
+    WANDB_ARM_TAG,
+    WANDB_HEADLINE_SEED,
+    WANDB_WINDOW,
+    wandb_seed_histories,
+)
 LIMIT: int | None = None
 
 
@@ -232,6 +234,8 @@ class PairedRow(BaseModel):
 
 
 class WandbReference(BaseModel):
+    """One seed of one arm's transformer, stitched over its rank-0 runs by epoch."""
+
     arm: str
     config_tag: str
     run_ids: list[str]
@@ -242,6 +246,9 @@ class WandbReference(BaseModel):
     val_pearson_max: float
     val_pearson_max_epoch: int
     window: int
+    partial: bool = Field(
+        description="fewer epochs logged than the window; recorded, never drawn"
+    )
 
 
 class LadderSummary(BaseModel):
@@ -831,43 +838,35 @@ def fit_arm(
 
 
 # ----------------------------------------------------------------------------- wandb
-def wandb_reference(arm: str) -> WandbReference:
-    """The arm's transformer: rank-0 runs tagged with its config, stitched by epoch."""
-    import wandb
-
-    api = wandb.Api(timeout=120)
+def wandb_references(arm: str) -> list[WandbReference]:
+    """The arm's transformer, one reference per seed; the headline seed must be present."""
     tag = WANDB_ARM_TAG[arm]
-    runs = [
-        r
-        for r in api.runs(f"{WANDB_ENTITY}/{WANDB_PROJECT}", filters={"tags": tag})
-        if "val/gene_interaction/Pearson" in r.summary
-    ]
-    assert runs, f"no rank-0 run tagged {tag}"
-    seeds = {int(r.config.get("seed", 42)) for r in runs}
-    assert len(seeds) == 1, f"{tag}: more than one seed {seeds}; pick one per arm"
-    frames = []
-    for r in runs:
-        h = pd.DataFrame(r.scan_history(keys=["epoch", "val/gene_interaction/Pearson"]))
-        frames.append(h.dropna())
-    hist = (
-        pd.concat(frames)
-        .groupby("epoch")["val/gene_interaction/Pearson"]
-        .last()
-        .sort_index()
-    )
-    last = hist.iloc[-WANDB_WINDOW:]
-    return WandbReference(
-        arm=arm,
-        config_tag=tag,
-        run_ids=sorted(r.id for r in runs),
-        seed=seeds.pop(),
-        n_epochs_logged=int(len(hist)),
-        last_epoch=int(hist.index[-1]),
-        val_pearson_last_window_mean=float(last.mean()),
-        val_pearson_max=float(hist.max()),
-        val_pearson_max_epoch=int(hist.idxmax()),
-        window=WANDB_WINDOW,
-    )
+    hists = wandb_seed_histories(tag, "val/gene_interaction/Pearson")
+    assert WANDB_HEADLINE_SEED in hists, f"{tag}: headline seed {WANDB_HEADLINE_SEED} absent"
+    refs = []
+    for seed, hist in hists.items():
+        last = hist.iloc[-WANDB_WINDOW:]
+        refs.append(
+            WandbReference(
+                arm=arm,
+                config_tag=tag,
+                run_ids=hist.attrs["run_ids"],
+                seed=seed,
+                n_epochs_logged=int(len(hist)),
+                last_epoch=int(hist.index[-1]),
+                val_pearson_last_window_mean=float(last.mean()),
+                val_pearson_max=float(hist.max()),
+                val_pearson_max_epoch=int(hist.idxmax()),
+                window=WANDB_WINDOW,
+                partial=bool(len(hist) < WANDB_WINDOW),
+            )
+        )
+        print(
+            f"  wandb {tag} seed {seed}: {len(hist)} epochs to {int(hist.index[-1])}, "
+            f"last-window mean {float(last.mean()):.4f}"
+            + (" (partial, not drawn)" if len(hist) < WANDB_WINDOW else "")
+        )
+    return refs
 
 
 # ------------------------------------------------------------------------------ table
@@ -927,14 +926,17 @@ def plot_ladder(
     for ax, arm, letter in zip(axes, ARMS, "ab"):
         color, fill = COLOR[arm], FILL[arm]
         sub = ladder[ladder["arm"] == arm].set_index(["rung", "split"])["pearson"]
-        ref = [r for r in refs if r.arm == arm]
+        # one bar per seed that has logged a full window; a partial seed is in the
+        # summary but not on the axes
+        ref = [r for r in refs if r.arm == arm and not r.partial]
         cats = [TICKS[r] for r in rungs]
         vals = [sub.loc[(r, "test")] for r in rungs]
         x = np.arange(len(cats) + len(ref))
         ax.bar(x[: len(rungs)], vals, 0.7, color=fill, **BAR)
-        if ref:
-            cats.append(f"CGT 030\n(val, ep {ref[0].last_epoch - ref[0].window + 1}-{ref[0].last_epoch})")
-            ax.bar(x[-1], ref[0].val_pearson_last_window_mean, 0.7, color=color, **BAR)
+        for i, r in enumerate(ref):
+            seed = f", seed {r.seed}" if len(ref) > 1 else ""
+            cats.append(f"CGT 030{seed}\n(val, ep {r.last_epoch - r.window + 1}-{r.last_epoch})")
+            ax.bar(x[len(rungs) + i], r.val_pearson_last_window_mean, 0.7, color=color, **BAR)
         ax.set_xticks(x)
         ax.set_xticklabels(cats, rotation=45, ha="right", fontsize=5)
         ax.set_ylabel("Held-out Pearson r")
@@ -963,7 +965,9 @@ def plot_ladder(
 # ------------------------------------------------------------------------------- main
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--stage", choices=["features", "fit", "plot", "all"], default="all")
+    ap.add_argument(
+        "--stage", choices=["features", "fit", "wandb", "plot", "all"], default="all"
+    )
     ap.add_argument("--wandb", action="store_true", help="fetch the transformer rows")
     ap.add_argument(
         "--limit", type=int, default=None, help="SMOKE: first N triples only"
@@ -994,7 +998,7 @@ def main() -> None:
         pd.DataFrame([p.model_dump() for p in paired]).to_csv(
             osp.join(RESULTS, "lower_order_baselines_030_paired.csv"), index=False
         )
-        refs = [wandb_reference(arm) for arm in ARMS] if args.wandb else []
+        refs = [r for arm in ARMS for r in wandb_references(arm)] if args.wandb else []
         test = ladder[ladder["split"] == "test"]
         summary = LadderSummary(
             policy_name=POLICY_NAME,
@@ -1032,6 +1036,22 @@ def main() -> None:
         write_tex(
             ladder,
             pd.DataFrame([p.model_dump() for p in paired]),
+            osp.join(RESULTS, "t11-lower-order-baselines-030.tex"),
+        )
+    if args.stage == "wandb":
+        # refresh only the transformer references of an existing summary (the fits are
+        # deterministic and already on file)
+        path = osp.join(RESULTS, "lower_order_baselines_030_summary.json")
+        with open(path) as f:
+            data = json.load(f)
+        data["wandb"] = []  # the old references are replaced, whatever their shape
+        summary = LadderSummary(**data)
+        summary.wandb = [r for arm in ARMS for r in wandb_references(arm)]
+        with open(path, "w") as f:
+            f.write(summary.model_dump_json(indent=2))
+        write_tex(
+            pd.read_csv(osp.join(RESULTS, "lower_order_baselines_030.csv")),
+            pd.read_csv(osp.join(RESULTS, "lower_order_baselines_030_paired.csv")),
             osp.join(RESULTS, "t11-lower-order-baselines-030.tex"),
         )
     if args.stage in ("plot", "all"):

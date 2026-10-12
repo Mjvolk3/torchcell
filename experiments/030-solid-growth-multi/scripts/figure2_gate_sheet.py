@@ -72,9 +72,11 @@ R007 = osp.join(EXPERIMENT_ROOT, "007-kuzmin-tm", "results", "fba_baseline_si")
 IMAGES = osp.join(ASSET_IMAGES_DIR, "030-solid-growth-multi")
 WIDTH_MM = PANEL_WIDTHS_MM["full"]
 
-WANDB_ENTITY = "zhao-group"
-WANDB_PROJECT = "torchcell_030-solid-growth-multi_equivariant_cell_graph_transformer"
-WANDB_ARM_TAG = {"R": "cgt_030_s3_r_tok_embfit_003", "Q": "cgt_030_s3_q_tok_embfit_004"}
+from wandb_seed_histories import (  # noqa: E402  (sibling module, scripts dir)
+    WANDB_ARM_TAG,
+    WANDB_HEADLINE_SEED,
+    wandb_seed_histories,
+)
 
 #: Color is the input family, never the learner.
 SCREEN = PLOT_PALETTE[5]
@@ -202,23 +204,19 @@ def fitness_ref() -> list[dict[str, Any]]:
     return read_json(osp.join(R030, "figure2_gate_fitness_wandb.json"))
 
 
-def curves(fetch: bool) -> dict[str, list[tuple[int, float]]]:
+def curves(fetch: bool) -> dict[str, dict[int, list[tuple[int, float]]]]:
+    """Per arm, per seed, the validation interaction Pearson by epoch; seeds never mixed."""
     cache = osp.join(R030, "figure2_gate_curves_wandb.json")
     if fetch:
-        import wandb
-
-        api = wandb.Api(timeout=120)
-        out: dict[str, list[tuple[int, float]]] = {}
+        out: dict[str, dict[int, list[tuple[int, float]]]] = {}
         for arm, tag in WANDB_ARM_TAG.items():
-            runs = [r for r in api.runs(f"{WANDB_ENTITY}/{WANDB_PROJECT}", filters={"tags": tag})
-                    if "val/gene_interaction/Pearson" in r.summary]
-            frames = [pd.DataFrame(r.scan_history(keys=["epoch", "val/gene_interaction/Pearson"])).dropna() for r in runs]
-            hist = pd.concat(frames).groupby("epoch")["val/gene_interaction/Pearson"].last().sort_index()
-            out[arm] = [(int(e), float(v)) for e, v in hist.items()]
+            hists = wandb_seed_histories(tag, "val/gene_interaction/Pearson")
+            out[arm] = {seed: [(int(e), float(v)) for e, v in h.items()] for seed, h in hists.items()}
         with open(cache, "w") as f:
-            json.dump(out, f)
+            json.dump({arm: {str(k): v for k, v in d.items()} for arm, d in out.items()}, f)
         return out
-    return {k: [tuple(x) for x in v] for k, v in read_json(cache).items()}
+    raw = read_json(cache)
+    return {arm: {int(k): [tuple(x) for x in v] for k, v in d.items()} for arm, d in raw.items()}
 
 
 def comparators() -> list[tuple[str, float, str, bool]]:
@@ -266,10 +264,12 @@ def panel_ladder(fig, x, top, w, h, lad: pd.DataFrame, arm: str, s030: dict[str,
         labels.append(label)
         vals.append(float(sub.loc[(key, "test")]))
         colors.append(fill)
-    ref = [r for r in s030["wandb"] if r["arm"] == arm][0]
-    labels.append(f"CGT, val ep {ref['last_epoch'] - ref['window'] + 1}-{ref['last_epoch']}")
-    vals.append(float(ref["val_pearson_last_window_mean"]))
-    colors.append(CGT)
+    refs = [r for r in s030["wandb"] if r["arm"] == arm and not r["partial"]]
+    for ref in refs:
+        seed = f" seed {ref['seed']}," if len(refs) > 1 else ""
+        labels.append(f"CGT,{seed} val ep {ref['last_epoch'] - ref['window'] + 1}-{ref['last_epoch']}")
+        vals.append(float(ref["val_pearson_last_window_mean"]))
+        colors.append(CGT)
     y = np.arange(len(labels))[::-1]
     ax.barh(y, vals, 0.7, color=colors, zorder=3, **BAR)
     ax.set_yticks(y)
@@ -305,10 +305,12 @@ def panel_fitness(fig, x, top, w, h, lad: pd.DataFrame, refs: list[dict[str, Any
         cats.append(f"ridge\narm {arm}")
         vals.append(float(sub.loc[("F1_ridge_lower_order_fitness", "test")]))
         colors.append(TERMS_FILL)
-        ref = [r for r in refs if r["arm"] == arm][0]
-        cats.append(f"CGT\narm {arm}")
-        vals.append(float(ref["val_fitness_order3_last_window_mean"]))
-        colors.append(CGT)
+        full = [r for r in refs if r["arm"] == arm and not r["partial"]]
+        for ref in full:
+            seed = f"\nseed {ref['seed']}" if len(full) > 1 else ""
+            cats.append(f"CGT\narm {arm}{seed}")
+            vals.append(float(ref["val_fitness_order3_last_window_mean"]))
+            colors.append(CGT)
     xs = np.arange(len(cats))
     ax.bar(xs, vals, 0.7, color=colors, zorder=3, **BAR)
     ax.set_xticks(xs)
@@ -380,18 +382,22 @@ def panel_agreement(fig, x, top, w, h, pr: pd.DataFrame) -> None:
     ax.tick_params(length=0)
 
 
-def panel_curves(fig, x, top, w, h, cv: dict[str, list[tuple[int, float]]], lad: pd.DataFrame) -> None:
+def panel_curves(fig, x, top, w, h, cv: dict[str, dict[int, list[tuple[int, float]]]], lad: pd.DataFrame) -> None:
     ax = place(fig, x, top, w, h)
     for arm, color in (("R", CGT), ("Q", CGT_FILL)):
-        pts = cv[arm]
-        ax.plot([e for e, _ in pts], [v for _, v in pts], lw=0.7, color=color, zorder=3, label=f"CGT arm {arm}")
+        for seed, pts in sorted(cv[arm].items()):
+            headline = seed == WANDB_HEADLINE_SEED
+            ax.plot([e for e, _ in pts], [v for _, v in pts], lw=0.7 if headline else 0.5,
+                    ls="-" if headline else (0, (1, 1)), marker="" if len(pts) > 1 else "o", ms=2,
+                    color=color, zorder=3)
         sub = lad[(lad["arm"] == arm) & (lad["split"] == "val")].set_index("rung")
         ax.axhline(float(sub.loc["N1_mult_query_double", "pearson"]), color=TERMS, lw=0.6, ls="-" if arm == "R" else (0, (2, 2)), zorder=2)
         ax.axhline(float(sub.loc["B1_additive_gene", "pearson"]), color=IDENTITY, lw=0.6, ls="-" if arm == "R" else (0, (2, 2)), zorder=2)
     ax.set_xlabel("epoch (synced to the run registry)")
     ax.set_ylabel("validation Pearson r")
     metric_axis(ax, 0.8)
-    panel_legend(fig, [Line2D([], [], color=CGT, lw=0.7, label="CGT arm R"), Line2D([], [], color=CGT_FILL, lw=0.7, label="CGT arm Q"),
+    panel_legend(fig, [Line2D([], [], color=CGT, lw=0.7, label="CGT arm R, seed 0"), Line2D([], [], color=CGT_FILL, lw=0.7, label="CGT arm Q, seed 0"),
+                       Line2D([], [], color="black", lw=0.5, ls=(0, (1, 1)), label="other seeds, dotted"),
                        Line2D([], [], color=TERMS, lw=0.6, label="N1 null, val (solid R, dashed Q)"),
                        Line2D([], [], color=IDENTITY, lw=0.6, label="B1 ridge, val")], x, top, 2)
 

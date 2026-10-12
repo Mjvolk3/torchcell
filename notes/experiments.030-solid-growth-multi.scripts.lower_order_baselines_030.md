@@ -174,3 +174,15 @@ Not done here: the transformer's own test predictions on 030 for a paired compar
 (the checkpoints are on IGB; the per-triple predictions of every rung are written to
 `results/lower_order_baselines_030_pred_<arm>.parquet` for that pairing), and a
 Spearman readout of the model.
+
+## 2026.10.12 - Job 4111: fits reproduced, references per seed, a `wandb` stage
+
+Job 4111 refit both arms on the 16-CPU main partition and reproduced the committed
+result CSVs byte for byte (`git diff` empty on `lower_order_baselines_030.csv` and
+`_paired.csv`), then failed in the W&B step because arm Q now carries two seeds. The
+W&B reader moved to [[experiments.030-solid-growth-multi.scripts.wandb_seed_histories]];
+`WandbReference` gained `partial`, the ladder draws one CGT bar per seed with a full
+window, and `--stage wandb` refreshes only the references of an existing summary, since
+the fits are deterministic and on file. References on file: arm R seed 0, 92 synced
+epochs to 164, last-window 0.562; arm Q seed 0, 45 epochs to 45, 0.399; arm Q seed 1, 2
+epochs, partial. Ladder render: `lower_order_baselines_030_ladder_2026-10-12-07-22-20.svg`.

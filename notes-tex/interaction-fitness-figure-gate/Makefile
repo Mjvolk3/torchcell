@@ -26,5 +26,8 @@ ROOT    := $(abspath $(REPO))
 SCRIPTS := $(ROOT)/experiments/030-solid-growth-multi/scripts
 .PHONY: numbers
 numbers:
-	cd $(ROOT) && PYTHONPATH=$(ROOT) $(PYTHON) $(SCRIPTS)/figure2_gate_sheet.py $(if $(filter 1,$(WANDB)),--wandb,)
+	# the numbers script first: it writes the fitness-head cache the sheet's panel f reads
 	cd $(ROOT) && PYTHONPATH=$(ROOT) $(PYTHON) $(SCRIPTS)/figure2_gate_numbers.py $(if $(filter 1,$(WANDB)),--wandb,)
+	cd $(ROOT) && PYTHONPATH=$(ROOT) $(PYTHON) $(SCRIPTS)/figure2_gate_sheet.py $(if $(filter 1,$(WANDB)),--wandb,)
+	# then the figure-name macros, so they point at the sheets just rendered
+	cd $(ROOT) && PYTHONPATH=$(ROOT) $(PYTHON) $(SCRIPTS)/figure2_gate_numbers.py --names-only

@@ -27,3 +27,12 @@ The user's fairness point is answered in the gate's decision section with two ru
 sheet does not yet carry: C1, CGT's predicted f_ijk minus the measured null, and C2, tau
 derived from CGT's predicted fitness of every term; both wait on E3's per-triple dumps of
 the fitness head.
+
+## 2026.10.12 - Curves and bars per seed
+
+Panel j draws every seed of an arm: seed 0 solid, other seeds dotted (a seed with one
+epoch is a dot). Panels c, d and f draw one CGT bar per seed that has a full ten-epoch
+window; a partial seed is in the summary only. The Makefile's `numbers` target now runs
+the numbers script first (it writes the fitness-head cache panel f reads), the sheet
+second, and the figure-name macros last so they name the sheets just rendered. Renders:
+`figure2_gate_sheet_2026-10-12-07-25-43.svg`, `figure2_gate_sheet2_2026-10-12-07-25-44.svg`.

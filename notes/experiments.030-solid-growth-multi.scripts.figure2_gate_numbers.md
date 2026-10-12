@@ -50,3 +50,11 @@ artifacts. On arm R only the triple's own fitness and score are withheld; on arm
 held-out query pair's double leaves as well, and the singles, the array gene and the
 array-side doubles stay. Exported headlessly (draw.io 32.4.1 under xvfb) to
 `figures/030-datasets-splits.pdf`, vector with two fonts, 178 mm wide.
+
+## 2026.10.12 - Seed macros
+
+The transformer macros are per seed: seed 0 writes the unsuffixed `\gcgtRValWindow`
+form, every seed writes `\gcgtQSeedOneValWindow` and the like, `\gcgtQNSeeds` counts
+them and `\gcgtQSeedsLogged` lists each seed's synced epochs and whether it is partial;
+the fitness-head macros follow the same rule. `--names-only` rewrites just the
+figure-name macros. 380 macros.

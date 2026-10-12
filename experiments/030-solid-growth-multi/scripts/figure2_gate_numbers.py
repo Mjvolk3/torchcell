@@ -26,7 +26,10 @@ files. Sources, all committed result files:
 
 W&B (``--wandb``): the 030 arms' validation fitness Pearson on the held-out triples
 (``val/fitness/order3/Pearson``), mean of the last ten synced epochs, the same window
-the interaction row uses.
+the interaction row uses, one reference per seed (``wandb_seed_histories.py``; seeds are never
+stitched together). Seed 0 writes the
+unsuffixed macros; every seed writes ``...Seed<Word>...`` macros; a seed with fewer
+epochs than the window is on file as partial and drawn nowhere.
 
 Writes:
     notes-tex/interaction-fitness-figure-gate/tables/gate_numbers.tex      \\newcommand macros
@@ -77,10 +80,14 @@ R007 = osp.join(EXPERIMENT_ROOT, "007-kuzmin-tm", "results", "fba_baseline_si")
 TABLES = osp.join(REPO, "notes-tex", "interaction-fitness-figure-gate", "tables")
 IMAGES = osp.join(ASSET_IMAGES_DIR, "030-solid-growth-multi")
 
-WANDB_ENTITY = "zhao-group"
-WANDB_PROJECT = "torchcell_030-solid-growth-multi_equivariant_cell_graph_transformer"
-WANDB_ARM_TAG = {"R": "cgt_030_s3_r_tok_embfit_003", "Q": "cgt_030_s3_q_tok_embfit_004"}
-WANDB_WINDOW = 10
+from wandb_seed_histories import (  # noqa: E402  (sibling module, scripts dir)
+    WANDB_ARM_TAG,
+    WANDB_HEADLINE_SEED,
+    WANDB_WINDOW,
+    wandb_seed_histories,
+)
+
+SEED_WORD = {0: "Zero", 1: "One", 2: "Two", 3: "Three", 4: "Four"}
 
 DIGIT_WORDS = ["Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"]
 
@@ -109,12 +116,16 @@ B_RUNGS = {
 
 
 class FitnessRef(BaseModel):
+    """One seed of one arm's fitness head, stitched over its rank-0 runs by epoch."""
+
     arm: str
+    seed: int
     run_ids: list[str]
     n_epochs_logged: int
     last_epoch: int
     val_fitness_order3_last_window_mean: float
     window: int
+    partial: bool
 
 
 def macro_name(key: str) -> str:
@@ -183,29 +194,24 @@ def read_fba() -> dict[str, Any]:
         return json.load(f)["correlations"]["tau"]
 
 
-def wandb_fitness(arm: str) -> FitnessRef:
-    import wandb
-
-    api = wandb.Api(timeout=120)
-    tag = WANDB_ARM_TAG[arm]
+def wandb_fitness(arm: str) -> list[FitnessRef]:
+    """The arm's fitness head on the held-out triples, one reference per seed."""
     key = "val/fitness/order3/Pearson"
-    runs = [
-        r
-        for r in api.runs(f"{WANDB_ENTITY}/{WANDB_PROJECT}", filters={"tags": tag})
-        if key in r.summary
+    hists = wandb_seed_histories(WANDB_ARM_TAG[arm], key)
+    assert WANDB_HEADLINE_SEED in hists, f"{arm}: headline seed {WANDB_HEADLINE_SEED} absent"
+    return [
+        FitnessRef(
+            arm=arm,
+            seed=seed,
+            run_ids=hist.attrs["run_ids"],
+            n_epochs_logged=int(len(hist)),
+            last_epoch=int(hist.index[-1]),
+            val_fitness_order3_last_window_mean=float(hist.iloc[-WANDB_WINDOW:].mean()),
+            window=WANDB_WINDOW,
+            partial=bool(len(hist) < WANDB_WINDOW),
+        )
+        for seed, hist in hists.items()
     ]
-    assert runs, f"no rank-0 run tagged {tag} carries {key}"
-    frames = [pd.DataFrame(r.scan_history(keys=["epoch", key])).dropna() for r in runs]
-    hist = pd.concat(frames).groupby("epoch")[key].last().sort_index()
-    last = hist.iloc[-WANDB_WINDOW:]
-    return FitnessRef(
-        arm=arm,
-        run_ids=sorted(r.id for r in runs),
-        n_epochs_logged=int(len(hist)),
-        last_epoch=int(hist.index[-1]),
-        val_fitness_order3_last_window_mean=float(last.mean()),
-        window=WANDB_WINDOW,
-    )
 
 
 # ------------------------------------------------------------------------------ macros
@@ -251,20 +257,39 @@ def macros(
             m[f"b{arm}{rung}"] = fmt(float(tp[rung]["mean"]))
             if tp[rung]["sd"] is not None:
                 m[f"b{arm}{rung}Sd"] = fmt(float(tp[rung]["sd"]))
+    # the transformer: the headline seed writes the unsuffixed macros, every seed writes
+    # its own (``cgtQSeedOneValWindow``), and ``cgt<arm>SeedsLogged`` lists them all
     for ref in s030["wandb"]:
-        a = ref["arm"]
-        m[f"cgt{a}ValWindow"] = fmt(float(ref["val_pearson_last_window_mean"]))
-        m[f"cgt{a}ValMax"] = fmt(float(ref["val_pearson_max"]))
-        m[f"cgt{a}ValMaxEpoch"] = fmt(int(ref["val_pearson_max_epoch"]))
-        m[f"cgt{a}LastEpoch"] = fmt(int(ref["last_epoch"]))
-        m[f"cgt{a}FirstEpoch"] = fmt(int(ref["last_epoch"]) - int(ref["window"]) + 1)
-        m[f"cgt{a}EpochsSynced"] = fmt(int(ref["n_epochs_logged"]))
-        m[f"cgt{a}Seed"] = fmt(int(ref["seed"]))
-        m[f"cgt{a}Runs"] = ", ".join(ref["run_ids"])
+        a, seed = ref["arm"], int(ref["seed"])
+        prefixes = [f"cgt{a}Seed{SEED_WORD[seed]}"]
+        if seed == WANDB_HEADLINE_SEED:
+            prefixes.append(f"cgt{a}")
+        for pre in prefixes:
+            m[f"{pre}ValWindow"] = fmt(float(ref["val_pearson_last_window_mean"]))
+            m[f"{pre}ValMax"] = fmt(float(ref["val_pearson_max"]))
+            m[f"{pre}ValMaxEpoch"] = fmt(int(ref["val_pearson_max_epoch"]))
+            m[f"{pre}LastEpoch"] = fmt(int(ref["last_epoch"]))
+            m[f"{pre}FirstEpoch"] = fmt(int(ref["last_epoch"]) - int(ref["window"]) + 1)
+            m[f"{pre}EpochsSynced"] = fmt(int(ref["n_epochs_logged"]))
+            m[f"{pre}Runs"] = ", ".join(ref["run_ids"])
+        m[f"cgt{a}Seed"] = fmt(WANDB_HEADLINE_SEED)
+    for a in ("R", "Q"):
+        refs = sorted((r for r in s030["wandb"] if r["arm"] == a), key=lambda r: r["seed"])
+        m[f"cgt{a}NSeeds"] = fmt(len(refs))
+        m[f"cgt{a}SeedsLogged"] = "; ".join(
+            f"seed {r['seed']}, {r['n_epochs_logged']} epochs to {r['last_epoch']}"
+            + (" (partial, under the window)" if r["partial"] else "")
+            for r in refs
+        )
     for f in fitness:
-        m[f"fit{f.arm}CgtValWindow"] = fmt(f.val_fitness_order3_last_window_mean)
-        m[f"fit{f.arm}CgtLastEpoch"] = fmt(f.last_epoch)
-        m[f"fit{f.arm}CgtFirstEpoch"] = fmt(f.last_epoch - f.window + 1)
+        prefixes = [f"fit{f.arm}CgtSeed{SEED_WORD[f.seed]}"]
+        if f.seed == WANDB_HEADLINE_SEED:
+            prefixes.append(f"fit{f.arm}Cgt")
+        for pre in prefixes:
+            m[f"{pre}ValWindow"] = fmt(f.val_fitness_order3_last_window_mean)
+            m[f"{pre}LastEpoch"] = fmt(f.last_epoch)
+            m[f"{pre}FirstEpoch"] = fmt(f.last_epoch - f.window + 1)
+            m[f"{pre}EpochsSynced"] = fmt(f.n_epochs_logged)
     # 010 checkpoints and the 1598 replication on arm R
     t = s025["transformer"]["R"]
     for name, v in t["010_checkpoints_test_pearson"].items():
@@ -402,10 +427,12 @@ def plot_fitness(ladder: pd.DataFrame, fitness: list[FitnessRef], stem: str) -> 
         ax.bar(x, sub.loc[("F1_ridge_lower_order_fitness", "test")], 0.7, color=FILL[arm], **BAR)
         cats.append(f"F1 ridge\narm {arm}")
         x += 1
-        ref = [f for f in fitness if f.arm == arm]
-        if ref:
-            ax.bar(x, ref[0].val_fitness_order3_last_window_mean, 0.7, color=COLOR[arm], **BAR)
-            cats.append(f"CGT 030\narm {arm}")
+        # one bar per seed with a full window; a partial seed is on file, not drawn
+        refs = [f for f in fitness if f.arm == arm and not f.partial]
+        for f in refs:
+            ax.bar(x, f.val_fitness_order3_last_window_mean, 0.7, color=COLOR[arm], **BAR)
+            seed = f", seed {f.seed}" if len(refs) > 1 else ""
+            cats.append(f"CGT 030\narm {arm}{seed}")
             x += 1
     ax.set_xticks(range(len(cats)))
     ax.set_xticklabels(cats, rotation=45, ha="right", fontsize=5)
@@ -434,15 +461,23 @@ def plot_fitness(ladder: pd.DataFrame, fitness: list[FitnessRef], stem: str) -> 
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--wandb", action="store_true", help="fetch the fitness-head rows")
+    ap.add_argument(
+        "--names-only",
+        action="store_true",
+        help="rewrite only the figure-name macros, after the sheet script has rendered",
+    )
     args = ap.parse_args()
     os.makedirs(TABLES, exist_ok=True)
     os.makedirs(IMAGES, exist_ok=True)
+    if args.names_only:
+        write_figure_names(osp.join(TABLES, "gate_figure_names.tex"))
+        return
     ladder, paired = read_ladder(), read_paired()
     s030, s025 = read_summary_030(), read_summary_025()
     cgt010, dcell, dango, fba = read_010(), read_dcell(), read_dango(), read_fba()
     cache = osp.join(R030, "figure2_gate_fitness_wandb.json")
     if args.wandb:
-        fitness = [wandb_fitness(arm) for arm in ("R", "Q")]
+        fitness = [f for arm in ("R", "Q") for f in wandb_fitness(arm)]
         with open(cache, "w") as f:
             json.dump([x.model_dump() for x in fitness], f, indent=2)
     else:

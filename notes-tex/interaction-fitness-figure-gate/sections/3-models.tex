@@ -21,7 +21,11 @@ synced \gcgtREpochsSynced{} epochs to the registry up to epoch \gcgtRLastEpoch{}
 maximum over epochs is \gcgtRValMax{} at epoch \gcgtRValMaxEpoch{} (a biased order
 statistic), and the last-ten-epoch mean is \gcgtRValWindow{}; arm Q has synced
 \gcgtQEpochsSynced{} epochs and reads \gcgtQValWindow{} over epochs \gcgtQFirstEpoch{} to
-\gcgtQLastEpoch{}. Runs: \texttt{\gcgtRRuns{}} and \texttt{\gcgtQRuns{}}.
+\gcgtQLastEpoch{}. Runs: \texttt{\gcgtRRuns{}} and \texttt{\gcgtQRuns{}}. Every
+seed that carries an arm's tag is read on its own and never stitched into another seed's
+history; the headline number is seed \gcgtRSeed{}, and a seed with fewer synced epochs
+than the ten-epoch window is on file as partial and drawn nowhere. Seeds on file, arm R:
+\gcgtRSeedsLogged{}; arm Q: \gcgtQSeedsLogged{}.
 
 \pfstep{The gene-identity ladder of 025, same arms} Test Pearson on the 025 build, from
 \file{025-additive-baselines}: train mean \gbRBZerotrainmean{} and \gbQBZerotrainmean{},

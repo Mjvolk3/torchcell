@@ -524,8 +524,8 @@ def test_the_bacterial_leaf_tuple_is_exactly_the_leaves_carrying_gene_namespace(
     assert plain | variant == namespaced
     assert plain & variant == set()
     # 5 from PR #707 plus the round-2 marked-allele, degron and CRISPRa leaves
-    # (#749, #792, #799)
-    assert len(BACTERIAL_PERTURBATION_LEAVES) == 5 + 3
+    # (#749, #792, #799) plus the released-identifier leaf (#691)
+    assert len(BACTERIAL_PERTURBATION_LEAVES) == 5 + 3 + 1
     assert len(BACTERIAL_VARIANT_PERTURBATION_LEAVES) == 3
 
 

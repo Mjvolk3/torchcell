@@ -33,6 +33,7 @@ from torchcell.datamodels.schema import (
     BacterialDegronPerturbation,
     BacterialDeletionPerturbation,
     BacterialMarkedAllelePerturbation,
+    BacterialReleasedStrainPerturbation,
     BacterialSequenceVariantPerturbation,
     BacterialSiteVariantPerturbation,
     BacterialSpanDeletionPerturbation,
@@ -64,6 +65,7 @@ from torchcell.datamodels.schema import (
     NaturalGenePresencePerturbation,
     PresenceAbsencePerturbation,
     PromoterReplacementPerturbation,
+    ReleasedStrainKind,
     SequencePerturbation,
     SequenceVariantPerturbation,
     SgaAllelePerturbation,
@@ -388,6 +390,17 @@ FACTORY: dict[type[GenePerturbation], dict[str, Any]] = {
             effector="dCas9*-MCPSoxS", guide_sequence="CGTACTACCAGATAACCTAA"
         ),
     },
+    # #691: a strain under its released identifier, an ECK accession no assembly is
+    # consulted for.
+    BacterialReleasedStrainPerturbation: {
+        "systematic_gene_name": "ECK1963",
+        "perturbed_gene_name": "HCHA",
+        "gene_namespace": "ecoli_k12_bw25113_locus_tag",
+        "strain_label": "ECK1963-HCHA",
+        "identifier_kind": "ECK accession",
+        "released_kind": ReleasedStrainKind.deletion,
+        "cassette": "kanamycin",
+    },
     HeterologousPathwayPerturbation: dict(
         systematic_gene_name="Efa:mvaE",
         perturbed_gene_name="mvaE",
@@ -569,6 +582,16 @@ def test_provenance_is_declared(cls: type[GenePerturbation]) -> None:
 @pytest.mark.parametrize("cls", _LEAVES_SORTED)
 def test_identity_is_curie_or_systematic(cls: type[GenePerturbation]) -> None:
     name = _instance(cls).systematic_gene_name
+    if cls is BacterialReleasedStrainPerturbation:
+        # #691: the fourth family, a source's own identifier stored as released. Only
+        # this leaf carries it, and it is disjoint from the other three by the leaf's
+        # own validator (a locus tag is refused) and by form.
+        assert not (
+            _SYSTEMATIC_RE.match(name)
+            or _BACTERIAL_TAG_RE.match(name)
+            or _CURIE_RE.match(name)
+        ), name
+        return
     assert (
         _SYSTEMATIC_RE.match(name)
         or _BACTERIAL_TAG_RE.match(name)

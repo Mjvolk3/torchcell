@@ -3710,6 +3710,156 @@ class BacterialCrisprActivationPerturbation(CrisprActivationPerturbation, ModelS
 # --------------------------------------------------------------------------- #
 
 
+# --------------------------------------------------------------------------- #
+# ADDITIVE (#691, Nichols 2011): a bacterial strain stored under the identifier its
+# source released, with no lookup against any assembly. A new leaf and its enum;
+# nothing above this block changes.
+#
+# Every bacterial leaf above requires ``systematic_gene_name`` to be a locus tag of a
+# pinned assembly, so a loader must resolve the released name through the genome
+# before it can store a record, and a name the annotation lacks is refused. The owner
+# rule of 2026-10-12 is that the genome never gates a record: a strain is stored as the
+# source names it. Nichols 2011 labels its 3,979 strains by ECK accession and symbol
+# (``ECK1963-HCHA``); 41 of its ECK-only labels and the ECK5000-series sRNA labels are
+# in no BW25113 annotation, nine designed alleles are released as a protein change
+# only (``LPXC(G210S)``), and twelve labels head two rows each. This leaf stores all of
+# them as released.
+# --------------------------------------------------------------------------- #
+class ReleasedStrainKind(StrEnum):
+    """What a source's own strain label says the strain is, read off that label.
+
+    The members are the classes a released strain label states, not a reading of the
+    strain's sequence: Nichols 2011 marks its rows with a suffix (none, ``- SPA``,
+    ``- DAS``, ``- Linked``, ``- Allele``, ``- Truncation``) and the paper says what
+    each set of strains is.
+
+    - ``deletion``: the gene (or, for a multi-gene label, each listed gene) is deleted.
+    - ``affinity_tag``: an in-frame affinity tag fused to the product (``- SPA``).
+    - ``degron``: a degron fused to the product (``- DAS``).
+    - ``linked_marker``: a selectable cassette linked to the wild-type allele, the
+      control of an allele series (``- Linked``).
+    - ``sequence_allele``: a designed allele the label states as a change (a point
+      substitution, an in-frame deletion or a duplication; ``- Allele``).
+    - ``truncation``: a truncated gene (``- Truncation``).
+    """
+
+    deletion = "deletion"
+    affinity_tag = "affinity_tag"
+    degron = "degron"
+    linked_marker = "linked_marker"
+    sequence_allele = "sequence_allele"
+    truncation = "truncation"
+
+
+RELEASED_STRAIN_KIND_SO: dict[ReleasedStrainKind, tuple[str, str]] = {
+    ReleasedStrainKind.deletion: ("SO:0000159", "deletion"),
+    ReleasedStrainKind.affinity_tag: ("SO:0001218", "transgenic_insertion"),
+    ReleasedStrainKind.degron: ("SO:0001218", "transgenic_insertion"),
+    ReleasedStrainKind.linked_marker: ("SO:0001218", "transgenic_insertion"),
+    ReleasedStrainKind.sequence_allele: ("SO:0001060", "sequence_variant"),
+    ReleasedStrainKind.truncation: ("SO:0000159", "deletion"),
+}
+"""Sequence Ontology mechanism of each released kind, every pair one the schema
+already pins: the deletion leaves' ``deletion``, the marked-allele and degron leaves'
+``transgenic_insertion`` and the generic ``sequence_variant`` of the AXIS-3 root. A
+truncation removes part of the gene, which is a deletion."""
+
+
+class BacterialReleasedStrainPerturbation(GenePerturbation, ModelStrict):
+    """One gene of a bacterial strain, identified only by what its source released.
+
+    ``systematic_gene_name`` is the source's own gene identifier, verbatim (Nichols
+    2011: the ECK accession of the row label), and ``perturbed_gene_name`` the source's
+    gene name, verbatim (the label's upper-case symbol, ``HCHA``). Nothing is looked up:
+    no assembly decides whether the record exists, and no derived locus tag is stored,
+    so the record says exactly what the release says and a crosswalk to an annotation is
+    a separate, later act. ``strain_label`` is the release's whole strain identifier
+    (``ECK1205/1207/1209-RDLABC``), shared by every gene of a multi-gene strain, and is
+    what keeps two strains of one gene apart (``ECK0055-C-IMP-DAS-KAN - DAS`` and
+    ``ECK0055-B-IMP-DAS+4-KAN - DAS``). ``released_kind`` is the class the label states.
+
+    It is NOT placed under the presence/absence or sequence axis classes, because the
+    axis is a property of the kind (a deletion and an affinity tag are both stored
+    here); ``mechanism_so`` gives the Sequence Ontology pair of the kind, from
+    :data:`RELEASED_STRAIN_KIND_SO`. It is a sibling of the placed bacterial leaves, and
+    it refuses a locus tag of any bacterial namespace: a released tag of the pinned
+    assembly is stored on those leaves, so one kind of record never sits in two classes.
+
+    ``gene_namespace`` names the host the study writes its strains against (Nichols
+    2011: "During the entire study, BW25113 is referred to as wild-type"), as it does for
+    a heterologous gene on an addition leaf; the identifier is not a tag of it, so the
+    namespace check has nothing to compare.
+    """
+
+    description: str = (
+        "Bacterial gene perturbation identified by the source's own strain label and "
+        "gene identifier, not placed on an assembly"
+    )
+    perturbation_type: Literal["bacterial_released_strain"] = (
+        "bacterial_released_strain"
+    )
+    gene_namespace: BacterialGeneNamespace = Field(
+        description="the host namespace the study writes its strains against; the "
+        "released identifier is not a tag of it"
+    )
+    strain_label: str = Field(
+        description="the source's whole strain identifier, verbatim (a row or column "
+        "label), shared by every gene of a multi-gene strain"
+    )
+    identifier_kind: str = Field(
+        description="what systematic_gene_name is, as the source writes it (e.g. 'ECK "
+        "accession')"
+    )
+    released_kind: ReleasedStrainKind = Field(
+        description="what the source's label says the strain is"
+    )
+    cassette: str | None = Field(
+        default=None,
+        description="the selectable marker the source names for the strain, verbatim "
+        "(e.g. 'kanamycin'); None when unstated",
+    )
+    collection: str | None = Field(
+        default=None,
+        description="the strain set the source names for this strain, verbatim; None "
+        "when the source does not say which of its sets a strain belongs to",
+    )
+
+    @field_validator("systematic_gene_name", mode="after")
+    @classmethod
+    def validate_sys_gene_name(cls, v: str) -> str:
+        """The released identifier verbatim, and never a locus tag of a namespace."""
+        if not v or v != v.strip():
+            raise ValueError(
+                f"systematic_gene_name must be the released identifier verbatim, got "
+                f"{v!r}"
+            )
+        if _namespace_of_locus_tag(v) is not None:
+            raise ValueError(
+                f"{v!r} is a bacterial locus tag; a released tag of a pinned assembly "
+                "is stored on the placed bacterial leaves"
+            )
+        return v
+
+    @model_validator(mode="after")
+    def _check_label(self) -> "BacterialReleasedStrainPerturbation":
+        """The strain label and identifier kind are verbatim, non-empty strings."""
+        for field in ("strain_label", "identifier_kind"):
+            value = getattr(self, field)
+            if not value or value != value.strip():
+                raise ValueError(f"{field} must be a non-empty verbatim string")
+        return self
+
+    @property
+    def mechanism_so(self) -> tuple[str, str]:
+        """(SO id, SO name) of this perturbation's released kind."""
+        return RELEASED_STRAIN_KIND_SO[self.released_kind]
+
+
+# --------------------------------------------------------------------------- #
+# End ADDITIVE (#691).
+# --------------------------------------------------------------------------- #
+
+
 SgaPerturbationType = (
     SgaKanMxDeletionPerturbation
     | SgaNatMxDeletionPerturbation
@@ -3750,6 +3900,8 @@ GenePerturbationType = (
     | BacterialMarkedAllelePerturbation
     | BacterialDegronPerturbation
     | BacterialCrisprActivationPerturbation
+    # a strain stored under its released identifier (#691)
+    | BacterialReleasedStrainPerturbation
 )
 
 

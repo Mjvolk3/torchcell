@@ -183,6 +183,12 @@ def _genotype_signature(
         for field in ("tag", "terminus", "degron", "cassette", "insertion_site"):
             if p.get(field) is not None:
                 ident = ident + (str(p[field]),)
+        # #691: a strain stored under its released label is that label; two strains of
+        # one gene (an SPA tag and a linked control, two degrons) differ in it and in the
+        # kind the label states. Absent on every other leaf, so their keys are unchanged.
+        for field in ("strain_label", "released_kind"):
+            if p.get(field) is not None:
+                ident = ident + (str(p[field]),)
         constructed = p.get("constructed_orf")
         if isinstance(constructed, dict):
             ident = ident + (constructed.get("source_systematic_name"),)

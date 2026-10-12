@@ -39,6 +39,7 @@ from torchcell.datamodels.schema import (
     BacterialDegronPerturbation,
     BacterialDeletionPerturbation,
     BacterialMarkedAllelePerturbation,
+    BacterialReleasedStrainPerturbation,
     BacterialSequenceVariantPerturbation,
     BacterialSiteVariantPerturbation,
     BacterialSpanDeletionPerturbation,
@@ -88,6 +89,10 @@ BACTERIAL_PERTURBATION_LEAVES: tuple[type, ...] = (
     BacterialMarkedAllelePerturbation,
     BacterialDegronPerturbation,
     BacterialCrisprActivationPerturbation,
+    # #691: a strain under its released identifier. The same five properties; its
+    # strain_label, released_kind, identifier_kind, cassette and collection travel in the
+    # serialized record, as the round-2 leaves' own fields do.
+    BacterialReleasedStrainPerturbation,
 )
 """The gene-perturbation leaves written as ``bacterial perturbation`` nodes.
 

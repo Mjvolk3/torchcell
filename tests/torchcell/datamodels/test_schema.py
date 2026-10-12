@@ -3665,3 +3665,63 @@ def test_timecourse_family_is_in_every_union_and_map() -> None:
         s.EXPERIMENT_REFERENCE_TYPE_MAP["induction_timecourse_expression"]
         is s.InductionTimecourseExpressionExperimentReference
     )
+
+
+# --------------------------------------------------------------------------- #
+# #691: a bacterial strain under its released identifier
+# --------------------------------------------------------------------------- #
+_RELEASED: dict[str, Any] = dict(
+    systematic_gene_name="ECK2331",
+    perturbed_gene_name="ECK2331",
+    gene_namespace="ecoli_k12_bw25113_locus_tag",
+    strain_label="ECK2331",
+    identifier_kind="ECK accession",
+    released_kind=s.ReleasedStrainKind.deletion,
+)
+
+
+def test_released_strain_leaf_stores_an_identifier_no_annotation_carries() -> None:
+    leaf = s.BacterialReleasedStrainPerturbation(**_RELEASED, cassette="kanamycin")
+    assert leaf.perturbation_type == "bacterial_released_strain"
+    assert leaf.mechanism_so == ("SO:0000159", "deletion")
+    assert leaf.collection is None
+    back = s.Genotype.model_validate(
+        s.Genotype(perturbations=[leaf]).model_dump()
+    ).perturbations[0]
+    assert back == leaf and type(back) is s.BacterialReleasedStrainPerturbation
+
+
+@pytest.mark.parametrize(
+    ("kind", "so"),
+    [
+        (s.ReleasedStrainKind.deletion, ("SO:0000159", "deletion")),
+        (s.ReleasedStrainKind.affinity_tag, ("SO:0001218", "transgenic_insertion")),
+        (s.ReleasedStrainKind.degron, ("SO:0001218", "transgenic_insertion")),
+        (s.ReleasedStrainKind.linked_marker, ("SO:0001218", "transgenic_insertion")),
+        (s.ReleasedStrainKind.sequence_allele, ("SO:0001060", "sequence_variant")),
+        (s.ReleasedStrainKind.truncation, ("SO:0000159", "deletion")),
+    ],
+)
+def test_released_kind_names_its_sequence_ontology_pair(
+    kind: s.ReleasedStrainKind, so: tuple[str, str]
+) -> None:
+    leaf = s.BacterialReleasedStrainPerturbation(**{**_RELEASED, "released_kind": kind})
+    assert leaf.mechanism_so == so
+
+
+@pytest.mark.parametrize(
+    "identifier", ["BW25113_0001", "b0002", "PP_0001", " ECK2331", ""]
+)
+def test_released_strain_leaf_refuses_a_locus_tag_or_a_non_verbatim_identifier(
+    identifier: str,
+) -> None:
+    with pytest.raises(ValueError):
+        s.BacterialReleasedStrainPerturbation(
+            **{**_RELEASED, "systematic_gene_name": identifier}
+        )
+
+
+@pytest.mark.parametrize("field", ["strain_label", "identifier_kind"])
+def test_released_strain_leaf_refuses_an_empty_label(field: str) -> None:
+    with pytest.raises(ValueError, match=f"{field} must be a non-empty verbatim"):
+        s.BacterialReleasedStrainPerturbation(**{**_RELEASED, field: " "})

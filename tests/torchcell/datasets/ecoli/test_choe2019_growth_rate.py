@@ -46,7 +46,9 @@ from torchcell.datamodels.schema import (
     BacterialBackgroundAllele,
     BacterialDeletionPerturbation,
     BacterialGeneNamespace,
+    BacterialReleasedStrainPerturbation,
     BacterialStrainBackground,
+    ReleasedStrainKind,
     SampleUnit,
     SequenceVariantPerturbation,
     UncertaintyType,
@@ -59,6 +61,12 @@ MG1655_ASSEMBLY: BacterialAssemblySet = "ecoli_K12_MG1655_ASM584v2"
 BW25113_ASSEMBLY: BacterialAssemblySet = "ecoli_K12_BW25113_ASM75055v1"
 MG1655_NAMESPACE: BacterialGeneNamespace = "ecoli_k12_mg1655_bnumber"
 BW25113_NAMESPACE: BacterialGeneNamespace = "ecoli_k12_bw25113_locus_tag"
+#: The shared verifier's genome-reference rules. Under the owner rule (#1057) a gene
+#: symbol stored as released need not be a locus of the annotation, so these may read it
+#: as a failure until the verifier changes (a separate branch); nothing else may fail.
+GENOME_REFERENCE_RULES = frozenset(
+    {"canonical_gene_names", "gene_containment_sgd", "current_genome_genes"}
+)
 
 #: The Fig. 2c rows, verbatim from the real sheet, in sheet order.
 FIG2C: dict[str, tuple[float, float, float]] = {
@@ -208,7 +216,8 @@ def test_the_large_deletion_genotype_string_expands_to_the_declared_symbols() ->
 
 
 def test_every_declared_count_and_quote_is_present() -> None:
-    assert ch.GROWTH_EXPECTED_RECORDS == 2
+    assert ch.GROWTH_EXPECTED_RECORDS == 5
+    assert ch.GROWTH_EXPECTED_REFERENCES == 4
     assert ch.TF_EXPECTED_RECORDS == 2
     assert ch.KEIO_PANEL_STRAINS == 62
     assert [fitness for _, fitness in ch.KEIO_FITNESS] == [0.724, 0.698]
@@ -701,7 +710,8 @@ def test_no_perturbation_leaf_holds_a_called_bacterial_variant() -> None:
     """MEASURED: the two refusals the module's finding rests on, on real identifiers.
 
     The reconstructed Fig. 2f strains are DESIGNED single-allele strains with exactly
-    specified alleles, so neither refusal is an evolved-population artefact.
+    specified alleles, so neither refusal is an evolved-population artefact; since #1057
+    they are stored on the released-strain leaf instead (see the reconstruction tests).
     """
     with pytest.raises(ValidationError, match="Invalid systematic gene name format"):
         SequenceVariantPerturbation(
@@ -717,6 +727,80 @@ def test_no_perturbation_leaf_holds_a_called_bacterial_variant() -> None:
             functional=None,  # type: ignore[arg-type]
             provenance=[ch.SOURCED_VALUES["parent_strain"]],
         )
+
+
+def test_reconstructed_alleles_are_the_fig2f_rows_and_quote_supplementary_table_3() -> (
+    None
+):
+    assert [a.ratio_label for a in ch.RECONSTRUCTED_ALLELES] == list(
+        ch.RATIO_ROW_ORDER[1:]
+    )
+    assert [a.strain for a in ch.RECONSTRUCTED_ALLELES] == [
+        "ilvNmut",
+        "cspCmut",
+        "yifBmut",
+    ]
+    assert ch.SOURCED_VALUES["cspCmut_genotype"].quote == (
+        "cspCmut</td><td rowspan=1 colspan=1>MS56, cspC::cspC(G37A)-kanR</td>"
+    )
+    assert ch.SOURCED_VALUES["yifBWT_genotype"].value == "MS56, yifB::yifB-kanR"
+    assert ch.SOURCED_VALUES["reconstruction_replicates"].value == 3
+
+
+def test_reconstructed_genotype_stores_the_allele_as_released() -> None:
+    allele = ch.RECONSTRUCTED_ALLELES[1]
+    (perturbation,) = ch.reconstructed_genotype(allele).perturbations
+    assert isinstance(perturbation, BacterialReleasedStrainPerturbation)
+    assert (
+        perturbation.systematic_gene_name,
+        perturbation.perturbed_gene_name,
+        perturbation.strain_label,
+        perturbation.identifier_kind,
+        perturbation.released_kind,
+        perturbation.cassette,
+        perturbation.gene_namespace,
+    ) == (
+        "cspC",
+        "cspC(G37A)",
+        "cspCmut",
+        "gene symbol",
+        ReleasedStrainKind.sequence_allele,
+        "kanR",
+        MG1655_NAMESPACE,
+    )
+
+
+def test_control_background_names_the_kan_marked_wild_type_allele_strain() -> None:
+    background = ch.control_background(ch.RECONSTRUCTED_ALLELES[0])
+    assert (background.name, background.parents, background.genotype_statement) == (
+        "ilvNWT",
+        ["MS56"],
+        "MS56, ilvN::ilvN-kan",
+    )
+    assert background.alleles == []
+    assert background.provenance is not None
+    assert background.provenance[0].quote == (
+        "ilvNWT</td><td rowspan=1 colspan=1>MS56, ilvN::ilvN-kan</td>"
+    )
+
+
+def test_reconstruction_phenotype_is_the_mean_and_sample_sd_of_the_released_ratios() -> (
+    None
+):
+    ratios = FIG2F["yifB*/yifBWT"]
+    phenotype = ch.reconstruction_phenotype(ratios)
+    assert phenotype.fitness == pytest.approx(statistics.fmean(ratios))
+    assert phenotype.fitness == pytest.approx(0.688324, abs=1e-6)
+    assert phenotype.fitness_uncertainty == pytest.approx(statistics.stdev(ratios))
+    assert phenotype.fitness_uncertainty_type is UncertaintyType.sample_sd
+    assert phenotype.n_samples == 3
+    assert phenotype.sample_unit is SampleUnit.biological_replicate
+    control = ch.control_phenotype()
+    assert (control.fitness, control.n_samples, control.fitness_uncertainty) == (
+        1.0,
+        None,
+        None,
+    )
 
 
 def test_build_growth_genotype_writes_one_deletion_per_named_gene() -> None:
@@ -755,7 +839,7 @@ def _reference_genome(strain: str, assembly_set: str, accession: str) -> Any:
     ) -> AssemblyReferenceGenome:
         return AssemblyReferenceGenome(
             species="Escherichia coli",
-            strain=strain,
+            strain=strain if background is None else background.name,
             ploidy="haploid",
             assembly_set=assembly_set,  # type: ignore[arg-type]
             assembly_accession=accession,
@@ -845,7 +929,7 @@ def test_download_links_the_mirror_and_refuses_an_absent_file(
         dataset.download()
 
 
-def test_process_builds_the_two_designed_deletion_records(
+def test_process_builds_the_deletion_and_reconstructed_allele_records(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     _deposit(tmp_path, monkeypatch)
@@ -865,27 +949,60 @@ def test_process_builds_the_two_designed_deletion_records(
         ecoli_genome=FakeGenome(MG1655_TAGS, MG1655_ASSEMBLY),  # type: ignore[arg-type]
     )
     assert len(dataset) == ch.GROWTH_EXPECTED_RECORDS
-    assert dataset.gene_set == set(MG1655_TAGS.values())
+    # the three reconstructed alleles are stored under their released gene symbols
+    assert dataset.gene_set == set(MG1655_TAGS.values()) | {"ilvN", "cspC", "yifB"}
 
     items = [dataset.transform_item(dataset[i]) for i in range(len(dataset))]
-    assert sorted(len(i["experiment"].genotype.perturbations) for i in items) == [1, 21]
+    assert sorted(len(i["experiment"].genotype.perturbations) for i in items) == [
+        1,
+        1,
+        1,
+        1,
+        21,
+    ]
     assert {i["publication"].doi for i in items} == {ch.PAPER_DOI}
     assert {i["reference"].phenotype_reference.fitness for i in items} == {1.0}
-    assert {i["reference"].genome_reference.strain for i in items} == {"MS56"}
-    backgrounds = [i["reference"].genome_reference.background for i in items]
-    assert {b.genotype_statement for b in backgrounds} == {ch.MS56_GENOTYPE_STATEMENT}
-    assert {len(b.alleles) for b in backgrounds} == {0}
+    by_reference = {
+        i["reference"].genome_reference.strain: i["reference"].genome_reference
+        for i in items
+    }
+    assert sorted(by_reference) == ["MS56", "cspCWT", "ilvNWT", "yifBWT"]
+    assert {
+        strain: genome.background.genotype_statement
+        for strain, genome in by_reference.items()
+    } == {
+        "MS56": ch.MS56_GENOTYPE_STATEMENT,
+        "ilvNWT": "MS56, ilvN::ilvN-kan",
+        "cspCWT": "MS56, cspC::cspC-kan",
+        "yifBWT": "MS56, yifB::yifB-kanR",
+    }
+    assert {len(g.background.alleles) for g in by_reference.values()} == {0}
+    deletions = [i for i in items if i["reference"].genome_reference.strain == "MS56"]
     # both designed deletions grow FASTER than the reduced parent, so fitness > 1
-    assert all(i["experiment"].phenotype.fitness > 1.0 for i in items)
+    assert all(i["experiment"].phenotype.fitness > 1.0 for i in deletions)
+    alleles = {
+        i["experiment"].genotype.perturbations[0].strain_label: i[
+            "experiment"
+        ].phenotype
+        for i in items
+        if i["reference"].genome_reference.strain != "MS56"
+    }
+    assert {k: round(v.fitness, 6) for k, v in alleles.items()} == {
+        "ilvNmut": round(statistics.fmean(FIG2F["ilvN*/ilvNWT"]), 6),
+        "cspCmut": round(statistics.fmean(FIG2F["cspC*/cspCWT"]), 6),
+        "yifBmut": round(statistics.fmean(FIG2F["yifB*/yifBWT"]), 6),
+    }
+    assert {v.n_samples for v in alleles.values()} == {3}
     assert {i["experiment"].environment.temperature for i in items} == {None}
     dataset.close_lmdb()
 
     preprocess = Path(dataset.preprocess_dir)
     ledger = json.loads((preprocess / "dropped_records.json").read_text())
-    assert ledger["source_rows"] == 5
+    assert ledger["source_rows"] == 9
     assert ledger["kept_records"] == ch.GROWTH_EXPECTED_RECORDS
-    assert ledger["dropped_records"] == 2
-    assert ledger["reference_rows"] == ["MS56"]
+    # MG1655 and eMS57 of Fig. 2c, and eMS57/MS56 of Fig. 2f
+    assert ledger["dropped_records"] == 3
+    assert ledger["reference_rows"] == ["MS56", "ilvNWT", "cspCWT", "yifBWT"]
     reasons = {rule["reason"] for rule in ledger["rules"]}
     assert reasons == {
         "evolved_clone_has_no_writable_genotype",
@@ -912,14 +1029,18 @@ def test_process_builds_the_two_designed_deletion_records(
     sourced = json.loads((preprocess / "sourced_values.json").read_text())
     assert sourced["cassette"]["value"] == ch.KAN_CASSETTE
     strains = pd.read_csv(preprocess / "strains.csv")
-    assert sorted(strains["deleted_genes"]) == [1, 21]
+    assert sorted(strains["deleted_genes"].dropna()) == [1, 21]
+    assert list(strains["strain"].iloc[2:]) == ["ilvNmut", "cspCmut", "yifBmut"]
     assert (preprocess / "build_manifest.json").exists()
 
     report = ch.verify_growth_build(
         str(root),
         genome=FakeGenome(MG1655_TAGS, MG1655_ASSEMBLY),  # type: ignore[arg-type]
     )
-    assert [(r.level, r.name) for r in report.results if not r.passed] == []
+    # a released gene symbol is not a locus of the pinned annotation; the rules that
+    # say so report and never gate (#1057)
+    failed = {r.name for r in report.results if not r.passed}
+    assert failed <= GENOME_REFERENCE_RULES, failed
     assert (preprocess / "verification_report.json").exists()
 
 
@@ -1205,3 +1326,24 @@ def test_real_mg1655_annotation_puts_the_named_genes_in_one_contiguous_run() -> 
     assert region["mg1655_window_bp"] == 22790
     # the released interval is MS56's, 806,266 bp upstream of the MG1655 one
     assert region["ms56_to_mg1655_offset_bp"] == 806266
+
+
+@pytest.mark.data
+def test_real_every_sourced_quote_is_verbatim_in_its_pinned_file() -> None:
+    """Each quote, the #1057 Supplementary Table 3 rows included, is in its file."""
+    data_root = os.environ.get("DATA_ROOT")
+    if data_root is None:
+        pytest.skip("DATA_ROOT is not set")
+    library = Path(data_root, ch.LIBRARY_DIR_REL)
+    if not library.exists():
+        pytest.skip(f"library mirror not present: {library}")
+    texts: dict[str, str] = {}
+    for prov in (ch.PAPER, ch.SI1):
+        assert file_sha256(library / prov.source_uri) == prov.sha256
+        texts[prov.source_uri] = (library / prov.source_uri).read_text(encoding="utf-8")
+    missing = [
+        name
+        for name, value in ch.SOURCED_VALUES.items()
+        if value.quote not in texts[value.provenance.source_uri]
+    ]
+    assert missing == []

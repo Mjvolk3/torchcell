@@ -163,3 +163,98 @@ Expression measured on the release supports the MAT rule's premise (inventory `m
 - `marker_umi_count` is None with `MARKER_GAP` (`not_reported_by_primary`): CellRanger "mapped the scRNA-seq reads to the reference genome" (paper.md, Methods) with no cassette sequence named, and `Table_expressed_genes.csv` lists 6,240 features, every one an S288C CDS id (`^Y[A-P][LR]\d{3}[WC](-[A-Z])?_CDS$`, 6,240 of 6,240, measured on the raw-mirror file).
 
 The verifier ([[torchcell.verification.segregant_expression_reference_panel]]) compares the three per-cell lists against the assigned cells and requires both gaps. The class is still unregistered and no store is built (#1014), so these are exercised by the synthetic release in the tests only.
+
+## 2026.10.12 - Deposit recorded, store built, L4 finds the SNPs off S288C (#1014, #1050)
+
+The four Nguyen Ba 2022 Dryad files arrived in the raw mirror on 2026-10-12. Branch `feat/scerevisiae-nguessan2025-register`.
+
+### The deposit
+
+The owner downloaded the four-file selection from https://doi.org/10.5061/dryad.1rn8pk0vd in a browser (about 04:30 CDT) and pushed the zip Dryad returned, `doi_10_5061_dryad_1rn8pk0vd__v20220520 (1).zip`, to GilaHyper by rsync; the four members sit beside it under `data/dryad/`, and each hashes to the sha256 Dryad lists for it (checked by the owner at 06:15 CDT; `SHA256SUMS.txt`). The recipe that actually ran differs from the one #1014 asked for (four individual downloads): it is recorded as it happened in `data/dryad/DEPOSIT.md` and as the `retrieval_command` of every deposit record. The zip is kept as the as-received artifact: 5,085,724,902 B, sha256 `2fcaf5bc37bdf895846ecafd971902200956905cf297de6d04c8ffc5c286af0e` (measured, slurm job 4195; Dryad lists no digest for an assembled selection), its four members stored uncompressed (`unzip -Z -l`). `deposit_raw_mirror` now writes the four members and the zip as `manual_browser` records dated 2026-10-12 with `received_in`, `deposit_record` and `checksums` params, and refuses a present zip whose central directory is not exactly the four stored members (`check_dryad_archive`). The manifest it replaced is kept as `manifest.superseded.20261012-065322.json`; the new one lists 13 files with `provenance_complete` true (slurm job 4199).
+
+| path | bytes | sha256 | retrieval |
+|---|---|---|---|
+| `data/dryad/README.txt` | 3,400 | `a4514d32...` | `manual_browser`, 2026-10-12 |
+| `data/dryad/SNP_list.txt` | 1,159,378 | `333550aa...` | `manual_browser`, 2026-10-12 |
+| `data/dryad/segregant_info.txt` | 5,691,263 | `0d46317e...` | `manual_browser`, 2026-10-12 |
+| `data/dryad/geno_data_1.txt.gz` | 5,078,870,207 | `25dc8703...` | `manual_browser`, 2026-10-12 |
+| `data/dryad/doi_10_5061_dryad_1rn8pk0vd__v20220520 (1).zip` | 5,085,724,902 | `2fcaf5bc...` | `manual_browser`, 2026-10-12 (the arrival zip) |
+
+### What the deposit corrected
+
+The SNP list's layout was an assumption (decision 9 of the 2026.10.11 section) and it was wrong in three ways, each now read off the file and enforced by `read_snp_markers`:
+
+- the header is `"Index" "SNP" "Chromosome" "Position (bp)" "BY allele" "RM allele"` (quoted), not `index chromosome position BY RM`;
+- chromosomes are `1` to `16`, not `chr01` to `chr16`;
+- each chromosome ends with an `END` row (position and both alleles `0`) that is not a SNP: 41,610 rows are 41,594 SNPs (`snp1` to `snp41594`, in file order) and 16 `END` rows.
+
+Every geno row carries 41,594 posteriors, the SNP count, so the k-th posterior is taken to be `snp<k>`. That is the one inference left in reading the panel: the counts agree and the README says nothing more. L4 `mat_fixation` and `cis_concordance` test it (a shifted column map would break the MAT fixation and the own-locus correlation).
+
+### Measured on the deposit (`results/nguessan2025_release_inventory.json`, job 4195)
+
+| quantity | value |
+|---|---|
+| `geno_data_1.txt.gz` rows | 20,000, `Number` 0 to 19,999, ascending and contiguous, 41,594 posteriors each |
+| batch 1 in `segregant_info.txt` | 4,489 strains, `Number` 0 to 4,488 in file order |
+| batch-1 strains in geno file 1 | 4,489 of 4,489 |
+| assigned strains in geno file 1 | 2,951 of 2,951 (none missing, no other geno file needed) |
+| blocks per strain, 0.05 grid (the loader's encoder) | min 57, median 483, mean 591.8, p90 1,219, max 2,225 |
+| genotype bytes per strain (pickled blocks), 0.05 grid | median 20,529, p90 52,516, max 96,028; 74.5 MB over 2,951 |
+| blocks per strain, called parent only | median 63 (min 41, max 161) |
+| blocks per strain, 0.1 / 0.02 / 0.01 grid | median 330 / 750 / 1,030 |
+| fraction of markers at exactly 0.5 | median 0, p90 0, max 0.0134 |
+| fraction of markers in (0.05, 0.95) | median 0.0258, mean 0.0811, max 0.674 |
+
+The hypothesis of the 2026.10.11 section (thousands of blocks per strain) is answered: at the stored 0.05 grid the median is 483 blocks and the maximum 2,225, about 20 KB of genotype per record at the median against 36.7 KB of `umi_count` JSON. Exact 0.5 posteriors exist (decision 4 applies, up to 1.34% of one strain's markers) but are absent from at least 90% of strains.
+
+### Build and verification (slurm job 4199)
+
+`build_dataset_lmdb --dataset Nguessan2025Dataset --retire-existing --verify` from the worktree at `961766618` (clean; rebased onto main as `2a78aec8b`, same loader): **2,951 records** in 133 s, gene set 6,326, one reference; the job ran 4 min 44 s (sized against Hale 2024's 36 GB in job 4011_28, it asked 24 GB and peaked at 4.3 GB RSS). The verification FAILED, so the build manifest was retired to `build_manifest.json.unverified.20261012-065804` and the store reads `no_manifest`.
+
+| level | rule | result |
+|---|---|---|
+| L0 | `structural` | ok: 2,951/2,951 records validate as `segregant_expression` |
+| L1 | `count` | ok: 2,951 (expected 2,951) |
+| L1 | `segregant_uniqueness` | ok: 2,951 unique strains, 0 duplicates |
+| L1 | `provenance_gaps` | ok: 8,853 documented gaps over 2,951 records |
+| L1 | `canonical_gene_names` | ok: no gene perturbations |
+| L2 | `uncertainty_sanity` | ok |
+| L2 | `value_fidelity` | ok: counts, totals and partitions equal the assigned cells |
+| L2 | `mosaic_round_trip` | ok: worst error 0.0250 (bound 0.025); blocks per record min 57, median 483, max 2,225 |
+| L2 | `reference_pseudobulk` | ok: reference and record sum both equal the 14,263 assigned cells |
+| L3 | `compound_identity`, `media_compound_identity`, `media_membership` | ok |
+| L3 | `release_numbers` | ok: 18,233 barcodes, medians 5,158 and 1,311, 4.83 cells per strain, 4,489 batch-1 strains |
+| L3 | `sourced_values` | ok: 28/28 quotes in the pinned bytes |
+| L4 | `parents_pinned` | ok: BY4741, RM11-1a (AAA) |
+| L4 | `marker_reference` | **FAIL**: 0.6740 of 500 sampled SNPs carry the S288C base as their BY allele (bar 0.95) |
+| L4 | `gene_containment_sgd` | ok: 6,239/6,240 released genes are S288C genes |
+| L4 | `mat_fixation` | **FAIL**: a-specific/alpha-specific UMIs 50,457/247; mean P(RM) 0.1097 at the SNP nearest chrIII:200,000 |
+| L4 | `cis_concordance` | ok: 0.2329 of 2,460 tested genes beat the permuted-map threshold 0.0473 (null 0.01, bar 0.05) |
+
+### Why L4 fails: the SNP positions are on BY4742_fixed, not S288C (#1050)
+
+[[experiments.036-dataset-fixes-before-kg-build.scripts.nguessan2025_snp_coordinate_audit]] (slurm job 4233): the `BY allele` equals the S288C R64-4-1 base at the stated position for 27,221 of 41,594 SNPs (0.6544; chrI and chrVI 1.0000, chrXIV 0.2496) and the base of `BY4742_fixed.fasta`, the reference the BB-QTL genotyping code indexes (`arturrc/bbqtl_inference` @ `2b1c89d6`; #1015), for 41,594 of 41,594. The offset to S288C is piecewise constant along each chromosome (1 to 6 bp on most, +4,489 on chrII after 471 kb, +1,097 on chrV after 116 kb, chrIII after 86 kb not resolved within +-6 kb). The Dryad README's "S288C_reference_genome_R64-3-1_20210421" does not describe the released positions.
+
+Both failures follow from that. `marker_reference` reads the BY allele against S288C. `mat_fixation` reads the SNP nearest S288C's MAT (200,000), but in BY4742_fixed coordinates the store's chrIII P(RM) is lowest at 187,586 (0.0414) and rises to both sides, so the MATa fixation is there, about 10 kb left of the coordinate the rule reads. `cis_concordance` still passes because a shift of at most a few kb keeps a gene's nearest SNP in linkage with it.
+
+The records are therefore wrong as stored: their blocks name S288C coordinates (parent 1's `assembly_ref`) they do not have. The class is registered (the candidate verdict is admissible) but held out of `dataset_adapter_map` and `runners.SEGREGANT_EXPRESSION_DATASETS` (`VERIFICATION_SPEC` stays in the loader, `test_the_store_is_held_out_of_the_runner_and_the_map` pins the hold); a mapped store that fails verification would fail the KG build's freshness check. #1050 asks the owner to choose between lifting the SNPs to S288C R64-4-1 by exact flank match from a deposited `BY4742_fixed.fasta` (recommended: every other segregant store states its blocks on S288C) and pinning parent 1 to BY4742_fixed as a new genomes-tier set.
+
+### Registration, runner and map
+
+- `@register_dataset` on `Nguessan2025Dataset` and the package export (`nguessan_datasets`).
+- `runners.SEGREGANT_EXPRESSION_DATASETS` entries now name their loader module (`verify_build_module`) and `run_segregant_expression` dispatches to that module's `verify_build`; Boocock 2025 is the only entry while N'Guessan is held.
+- Pins re-derived on the rebased tree: `dataset_adapter_map` total and the served set, the registry-root count (`SEGREGANT_EXPRESSION_DATASETS` addend 1) and the bacterial pins (86 in `test_bacterial_adapters.py` and `_bacterial_adapter_cases.py`) all equal main's, since the dataset is not mapped. `browser_style --check` and the ontology figure report no drift.
+
+### Candidate gate (slurm job 4233)
+
+`python -m torchcell.candidates gate --row "N'Guessan 2025" --table yeast --phenotype-class SingleCellExpressionPhenotype --write`: G1 pass, G2 pass, G3 pass (37 files in library and raw, all intact), G4 pass, G5 pass; outcome **admissible** (`database/candidates/nguessanRefiningResolutionYeast2025.json`). The gates do not read the SNP coordinates, so admissible does not answer #1050.
+
+### Schema impact
+
+`scripts/schema_impact_check.py --base origin/main`: "No schema contract changes vs origin/main."
+
+### Owner decisions taken by recommendation
+
+1. The arrival zip is kept beside its members as the as-received artifact, under the name the browser gave it, and recorded in the manifest; no loader reads it.
+2. The k-th posterior of a geno row is `snp<k>`: the only reading the counts allow, recorded as an inference in the loader and tested by L4.
+3. The store is not mapped while it fails L4; the coordinate fix is #1050's, not this branch's, because it needs a new raw artifact and a choice of coordinate system.

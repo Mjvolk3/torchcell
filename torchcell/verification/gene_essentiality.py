@@ -25,7 +25,10 @@ counting and containment:
    whole-gene deletion); a ledgered annotation SGD does not release fails the rule.
 7. L3 ``reference_viable`` -- every reference says ``is_essential`` False, in the
    experiment's own environment.
-8. Shared rules, and the two L4 gene rules against the S288C universe.
+8. L3 ``evidence`` (#924) -- every experiment and reference carries one evidence type,
+   the same on both, and a curated annotation states its SGD experiment type on the
+   experiment (never on the reference, where no call was made).
+9. Shared rules, and the two L4 gene rules against the S288C universe.
 
 The caller adds any cross-dataset L4 rows (``extra_results``). The SGD runner's L4
 ``no_viable_deletion_in_smf_costanzo2016`` compares only the unconditional records
@@ -61,6 +64,7 @@ __all__ = [
     "essential_gene_set",
     "states_no_condition",
     "essential_without_viable_deletion_result",
+    "evidence_result",
     "released_annotations_result",
     "verify_gene_essentiality_dataset",
 ]
@@ -138,6 +142,61 @@ def released_annotations_result(
     )
 
 
+# --- begin #924: the typed evidence behind a gene-essentiality call ------------ #
+def evidence_result(
+    type_pairs: Counter[tuple[str, str]],
+    experiment_types: Counter[str | None],
+    reference_experiment_types: Counter[str | None],
+) -> LevelResult:
+    """L3 ``evidence``: one evidence type per store, the same on experiment and
+    reference, and the curated experiment type on every curated experiment only.
+
+    ``type_pairs`` counts (experiment evidence_type, reference evidence_type);
+    ``experiment_types`` and ``reference_experiment_types`` count the
+    ``curated_experiment_type`` of the experiments and references.
+    """
+    problems: list[str] = []
+    if len(type_pairs) != 1:
+        problems.append(f"{len(type_pairs)} evidence-type pairs {dict(type_pairs)}")
+    problems += [
+        f"{n} experiments of {e} evidence have references of {r} evidence"
+        for (e, r), n in type_pairs.items()
+        if e != r
+    ]
+    curated = {e for e, _ in type_pairs} == {"curated_null_phenotype"}
+    if curated and experiment_types[None]:
+        problems.append(
+            f"{experiment_types[None]} curated experiments state no experiment type"
+        )
+    stated_on_reference = sum(
+        n for t, n in reference_experiment_types.items() if t is not None
+    )
+    if stated_on_reference:
+        problems.append(f"{stated_on_reference} references state an experiment type")
+    n = sum(type_pairs.values())
+    return LevelResult(
+        level=Level.L3,
+        name="evidence",
+        passed=n > 0 and not problems,
+        message=(
+            f"all {n} experiments and references carry "
+            f"{next(iter(type_pairs))[0]} evidence"
+            if n > 0 and not problems
+            else "; ".join(problems) or "no records"
+        ),
+        details={
+            "type_pairs": {f"{e} / {r}": k for (e, r), k in type_pairs.items()},
+            "curated_experiment_types": {
+                str(t): k for t, k in sorted(experiment_types.items(), key=str)
+            },
+            "problems": problems,
+        },
+    )
+
+
+# --- end #924 ---------------------------------------------------------------- #
+
+
 def verify_gene_essentiality_dataset(
     records: Iterable[Record],
     *,
@@ -174,6 +233,9 @@ def verify_gene_essentiality_dataset(
     stored: Counter[tuple[str, str]] = Counter()
     not_essential: list[int] = []
     reference_problems: Counter[str] = Counter()
+    type_pairs: Counter[tuple[str, str]] = Counter()
+    experiment_types: Counter[str | None] = Counter()
+    reference_experiment_types: Counter[str | None] = Counter()
 
     for i, rec in enumerate(records):
         n_records += 1
@@ -212,6 +274,13 @@ def verify_gene_essentiality_dataset(
             reference_problems["reference is_essential is not False"] += 1
         if ref["environment_reference"] != exp["environment"]:
             reference_problems["reference environment differs"] += 1
+        evidence = exp["phenotype"]["evidence"]
+        reference_evidence = ref["phenotype_reference"]["evidence"]
+        type_pairs[
+            (str(evidence["evidence_type"]), str(reference_evidence["evidence_type"]))
+        ] += 1
+        experiment_types[evidence["curated_experiment_type"]] += 1
+        reference_experiment_types[reference_evidence["curated_experiment_type"]] += 1
 
     report = VerificationReport(dataset_name=dataset_name, provenance=provenance)
     report.add(
@@ -302,6 +371,9 @@ def verify_gene_essentiality_dataset(
             ),
             details={"problems": dict(reference_problems)},
         )
+    )
+    report.add(
+        evidence_result(type_pairs, experiment_types, reference_experiment_types)
     )
     for result in extra_results:
         report.add(result)

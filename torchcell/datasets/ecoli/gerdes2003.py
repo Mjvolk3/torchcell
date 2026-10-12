@@ -27,11 +27,23 @@ THE CALL. E is ``is_essential=True``; N is False. Six rows carry ``N*`` (ftsK, r
 kdsA, accD, usg, nusA); the page defines E, N, X and ? but not the asterisk, and says
 "accD is called nonessential ... regardless of convincing arguments to the contrary",
 with accD's call written ``N*``. So ``N*`` is an N call whose asterisk flags contrary
-expectation, stored False and listed in ``preprocess/calls.csv``. X ("the gene was not
-covered") and ? ("ambiguous") have no boolean and are dropped under counted rules. What
-``is_essential=True`` means here is that no disruptive insertion survived 23 doublings
-of competitive growth in a pool, which can include slow growers (Baba 2006 says so of
-genetic footprinting).
+expectation, stored False with its letter on the evidence. X ("the gene was not
+covered") and ? ("ambiguous") have no boolean and are dropped under counted rules:
+``GeneEssentialityPhenotype`` refuses them, since a graded call is not a boolean (#909
+is where a graded sibling would hold them). What ``is_essential=True`` means here is
+that no disruptive insertion survived 23 doublings of competitive growth in a pool,
+which can include slow growers (Baba 2006 says so of genetic footprinting).
+
+EVIDENCE (#924). Every phenotype carries a ``GeneEssentialityEvidence`` of type
+``genetic_footprinting`` (class ``insertion_depletion``): the essential rule of the
+assertion criteria, the procedure's "essential under these growth conditions" as the
+call's definition, the page's caveat that every call is "based exclusively on our
+experimental data", the assertion-error definition, and per record the released call
+letter, the recovered insertions (amino-acid coordinates) and the assertion error.
+Table S1 writes the assertion error as a value (65 E rows), a bound such as ``< 0.05``
+(545 E rows, ``assertion_error_is_upper_bound``), ``n.d.`` (8 E rows) or an empty cell
+(proC); the last two are typed gaps. One N row (yaiI) carries ``< 0.05``; it shares its
+start, 404868, with proC, the E row whose cell is empty, and is stored as released.
 
 COUNTS. Table S1 calls 619 E, 3,114 N, 6 N*, 331 X and 221 ? (4,291 rows); the abstract
 states 620 essential and 3,126 dispensable, and the procedure overview 3,746 unambiguous
@@ -73,6 +85,7 @@ import json
 import logging
 import os
 import os.path as osp
+import re
 from collections import Counter
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
@@ -103,8 +116,14 @@ from torchcell.datamodels.schema import (
     ConcentrationUnit,
     DerivedIdentifierMapping,
     Environment,
+    EssentialityEvidenceClass,
+    EssentialityEvidenceType,
+    EssentialityStatement,
+    EssentialityStatementRole,
     Experiment,
     ExperimentReference,
+    FootprintingCall,
+    GeneEssentialityEvidence,
     GeneEssentialityPhenotype,
     Genotype,
     Media,
@@ -296,6 +315,41 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         "ORFs asserted as essential (E). All ORFs longer then 240 base pairs in length "
         "(>80 AA) free",
     ),
+    "scoring_rule": _sv(
+        "assertion",
+        "over 240 bp and free of inserts in a covered region, or a few inserts only in "
+        "the 3'-most 20% or 5'-most 5%",
+        "All ORFs longer then 240 base pairs in length (>80 AA) free\nfrom inserts were "
+        "asserted as essential, if located in regions for which reliable PCR data "
+        "were\nobtained. In addition, genes with only a few insertions within the "
+        "3’-most 20% or 5’-most 5% of the\ngene were asserted as essential.",
+        note="the rule every E call follows; carried on every record's evidence (#924)",
+    ),
+    "call_definition": _sv(
+        "assertion",
+        "essential under these growth conditions",
+        "Failure to recover inserts, or the presence of only a limited number of "
+        "inserts at the very ends of a\ncoding sequence, suggests that the gene is "
+        "essential under these growth conditions.",
+        note="what is_essential=True means here (#924)",
+    ),
+    "calls_uncorrected": _sv(
+        "page",
+        "calls from the footprinting data alone",
+        "For consistency all essentiality calls in Table S1 are based\nexclusively on "
+        "our experimental data, without any corrections by context or otherwise.",
+        note="the page's caveat on its own calls; carried on every record (#924)",
+    ),
+    "assertion_error": _sv(
+        "page",
+        "p_o(L) = exp(-rL)",
+        "A numerical measure of confidence in an assertion was calculated for each "
+        'essential ORF (column "assertion error").\nAssertion error shows the '
+        "probability of missing an ORF by chance if insert locations were completely "
+        "random.",
+        note="the 'assertion error' column; the formula follows on the page "
+        "(p_o(L) = exp(-rL), r the local insertion density, L the ORF length in bp)",
+    ),
     "abstract_counts": _sv(
         "pubmed",
         {"essential": 620, "dispensable": 3126},
@@ -330,6 +384,33 @@ MEDIUM_PROVENANCE: tuple[SourcedValue, ...] = (
     SOURCED_VALUES["lb_based"],
     SOURCED_VALUES["temperature_c"],
     SOURCED_VALUES["ph"],
+)
+#: The statements every record's evidence quotes (#924).
+SCORING_RULE_STATEMENT = SOURCED_VALUES["scoring_rule"]
+CALL_DEFINITION_STATEMENT = SOURCED_VALUES["call_definition"]
+CALLS_UNCORRECTED_STATEMENT = SOURCED_VALUES["calls_uncorrected"]
+ASSERTION_ERROR_STATEMENT = SOURCED_VALUES["assertion_error"]
+INSERTION_COORDINATES_STATEMENT = SOURCED_VALUES["insertion_coordinates"]
+#: The source's statements every record's evidence carries, by role (#924).
+EVIDENCE_STATEMENTS: tuple[EssentialityStatement, ...] = (
+    EssentialityStatement(
+        role=EssentialityStatementRole.scoring_rule, provenance=SCORING_RULE_STATEMENT
+    ),
+    EssentialityStatement(
+        role=EssentialityStatementRole.call_definition,
+        provenance=CALL_DEFINITION_STATEMENT,
+    ),
+    EssentialityStatement(
+        role=EssentialityStatementRole.caveat, provenance=CALLS_UNCORRECTED_STATEMENT
+    ),
+    EssentialityStatement(
+        role=EssentialityStatementRole.statistic_definition,
+        provenance=ASSERTION_ERROR_STATEMENT,
+    ),
+    EssentialityStatement(
+        role=EssentialityStatementRole.statistic_definition,
+        provenance=INSERTION_COORDINATES_STATEMENT,
+    ),
 )
 #: Table S1's call histogram, measured on the pinned workbook (process() requires it).
 TABLE_CALLS: dict[str, int] = {"?": 221, "E": 619, "N": 3114, "N*": 6, "X": 331}
@@ -840,6 +921,87 @@ def insertion_genotype(outcome: RowOutcome) -> Genotype:
     )
 
 
+# --- begin #924: the footprinting evidence on every record ------------------- #
+#: Table S1's assertion-error cell when no value is given: ``n.d.``, or empty.
+ASSERTION_ERROR_NOT_DETERMINED = "n.d."
+#: A released value (``0.306647``) or bound (``< 0.05``).
+_ASSERTION_ERROR_PATTERN = re.compile(r"(?P<bound>< )?(?P<number>\d+(\.\d+)?)")
+
+
+class AssertionErrorCell(BaseModel):
+    """One Table S1 assertion-error cell, read as released."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    value: float | None
+    is_upper_bound: bool | None
+    released: str
+
+
+def read_assertion_error(text: str, where: str) -> AssertionErrorCell:
+    """``"< 0.05"`` is a bound, ``"0.306647"`` a value, ``"n.d."`` or ``""`` none.
+
+    Anything else raises: the cell's forms are the four the pinned table holds.
+    """
+    if text in ("", ASSERTION_ERROR_NOT_DETERMINED):
+        return AssertionErrorCell(value=None, is_upper_bound=None, released=text)
+    match = _ASSERTION_ERROR_PATTERN.fullmatch(text)
+    if match is None:
+        raise TableFormatError(f"{where}: assertion error {text!r}")
+    bound = match.group("bound") is not None
+    value = float(match.group("number"))
+    if not 0 <= value <= 1:
+        raise TableFormatError(f"{where}: assertion error {text!r} is no probability")
+    return AssertionErrorCell(value=value, is_upper_bound=bound, released=text)
+
+
+def assertion_error_gap(row: GerdesRow) -> ProvenanceGap:
+    """The typed absence of an E row's assertion error (``n.d.`` or an empty cell)."""
+    released = row.assertion_error
+    note = (
+        "Table S1 reads 'n.d.' for this E call's assertion error"
+        if released == ASSERTION_ERROR_NOT_DETERMINED
+        else "this E call's assertion-error cell is empty in Table S1"
+    )
+    return ProvenanceGap(
+        field="assertion_error",
+        reason=ProvenanceGapReason.not_reported_by_primary,
+        looked_in=_TABLE_LOOKED_IN,
+        note=note,
+    )
+
+
+def evidence(row: GerdesRow | None = None) -> GeneEssentialityEvidence:
+    """The genetic-footprinting evidence (#924), with ``row``'s call when given.
+
+    Per record: the released letter, the recovered insertions and the assertion error
+    as released (value, bound, or a typed gap on an E call). The reference (``row``
+    None) carries the type, rule, definition, caveat and definitions only.
+    """
+    stats: dict[str, Any] = {}
+    gaps: list[ProvenanceGap] = []
+    if row is not None:
+        cell = read_assertion_error(row.assertion_error, f"row {row.row}")
+        stats = {
+            "footprinting_call": FootprintingCall(row.call),
+            "footprint_insertions_aa": list(row.insertions_aa),
+            "assertion_error": cell.value,
+            "assertion_error_is_upper_bound": cell.is_upper_bound,
+        }
+        if cell.value is None and row.call == "E":
+            gaps.append(assertion_error_gap(row))
+    return GeneEssentialityEvidence(
+        evidence_class=EssentialityEvidenceClass.insertion_depletion,
+        evidence_type=EssentialityEvidenceType.genetic_footprinting,
+        statements=list(EVIDENCE_STATEMENTS),
+        provenance_gaps=gaps,
+        **stats,
+    )
+
+
+# --- end #924 ---------------------------------------------------------------- #
+
+
 def build_experiment(
     dataset_name: str, outcome: RowOutcome, env: Environment
 ) -> BacterialGeneEssentialityExperiment:
@@ -850,7 +1012,9 @@ def build_experiment(
         dataset_name=dataset_name,
         genotype=insertion_genotype(outcome),
         environment=env,
-        phenotype=GeneEssentialityPhenotype(is_essential=outcome.gerdes.is_essential),
+        phenotype=GeneEssentialityPhenotype(
+            is_essential=outcome.gerdes.is_essential, evidence=evidence(outcome.gerdes)
+        ),
     )
 
 
@@ -862,7 +1026,9 @@ def build_reference(
         dataset_name=dataset_name,
         genome_reference=genome_reference,
         environment_reference=environment(kanamycin=False),
-        phenotype_reference=GeneEssentialityPhenotype(is_essential=False),
+        phenotype_reference=GeneEssentialityPhenotype(
+            is_essential=False, evidence=evidence()
+        ),
     )
 
 
@@ -983,7 +1149,8 @@ class GeneEssentialityGerdes2003Dataset(ExperimentDataset):
         outcomes: Sequence[RowOutcome],
     ) -> None:
         """The drop log, identifier ledger, the transposon leaf's typed absences, and
-        the per-row table with each kept row's LMDB index and the values with no field.
+        the per-row table with each kept row's LMDB index; the call letter, insertions
+        and assertion error are also on the record's evidence.
         """
         out = Path(self.preprocess_dir)
         (out / "dropped_records.json").write_text(drop_log.model_dump_json(indent=2))
@@ -1106,13 +1273,24 @@ def _l2_calls_match_table_s1(
         stored = record["experiment"]["phenotype"]["is_essential"]
         if row.call in ("X", "?") or stored != row.is_essential:
             problems.append(f"{released}: stored {stored}, call {row.call}")
+        ev = record["experiment"]["phenotype"]["evidence"]
+        cell = read_assertion_error(row.assertion_error, released)
+        held = (
+            ev["footprinting_call"],
+            tuple(ev["footprint_insertions_aa"]),
+            ev["assertion_error"],
+            ev["assertion_error_is_upper_bound"],
+        )
+        if held != (row.call, row.insertions_aa, cell.value, cell.is_upper_bound):
+            problems.append(f"{released}: evidence {held}")
         if resolve(released).systematic_name != tag:
             problems.append(f"{released}: does not resolve to {tag}")
     return LevelResult(
         level=Level.L2,
         name="calls_match_table_s1",
         passed=not problems,
-        message=f"{len(records)} records equal their Table S1 row's call and locus"
+        message=f"{len(records)} records equal their Table S1 row's call and locus, and "
+        "carry its letter, insertions and assertion error as evidence"
         if not problems
         else f"{len(problems)} records disagree with Table S1",
         details={"n_problems": len(problems), "problems": problems[:20]},
@@ -1148,6 +1326,45 @@ def _l3_reference_is_the_parent_off_selection(records: Sequence[Record]) -> Leve
         message=f"{len(records) - wrong} of {len(records)} references are the viable "
         "parent in the medium without the selection agent",
         details={"n_wrong": wrong},
+    )
+
+
+#: The per-record evidence fields; the rest is shared with the reference.
+_RECORD_EVIDENCE_FIELDS = frozenset(
+    {
+        "footprinting_call",
+        "footprint_insertions_aa",
+        "assertion_error",
+        "assertion_error_is_upper_bound",
+        "provenance_gaps",
+    }
+)
+
+
+def _l3_evidence_is_genetic_footprinting(records: Sequence[Record]) -> LevelResult:
+    """L3 (#924): every record and reference carries the genetic-footprinting
+    evidence with the sourced rule, definition, caveat and definitions; the reference
+    has no per-record values.
+    """
+    reference = evidence().model_dump()
+    shared = {k: v for k, v in reference.items() if k not in _RECORD_EVIDENCE_FIELDS}
+    wrong = 0
+    gapped = 0
+    for record in records:
+        ev = record["experiment"]["phenotype"]["evidence"]
+        gapped += bool(ev["provenance_gaps"])
+        if {k: v for k, v in ev.items() if k not in _RECORD_EVIDENCE_FIELDS} != shared:
+            wrong += 1
+        elif record["reference"]["phenotype_reference"]["evidence"] != reference:
+            wrong += 1
+    return LevelResult(
+        level=Level.L3,
+        name="evidence_is_genetic_footprinting",
+        passed=not wrong,
+        message=f"{len(records) - wrong} of {len(records)} records and references carry "
+        "genetic_footprinting evidence (insertion_depletion) with the sourced rule, "
+        f"definition and caveat; {gapped} E calls gap their assertion error",
+        details={"n_wrong": wrong, "n_assertion_error_gaps": gapped},
     )
 
 
@@ -1191,6 +1408,7 @@ def verify_records(
     report.add(_l2_calls_match_table_s1(records, rows, resolve))
     report.add(_l3_call_histogram(rows))
     report.add(_l3_reference_is_the_parent_off_selection(records))
+    report.add(_l3_evidence_is_genetic_footprinting(records))
     for result in shared_rule_results(records):
         report.add(result)
     report.add(_l4_containment(records, universe))

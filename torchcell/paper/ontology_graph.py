@@ -90,6 +90,10 @@ LANE_ROOTS: dict[str, tuple[str, ...]] = {
         # phosphosite-intensity phenotype keys its values on, with the evidence for the
         # call. It is part of what was measured, so it sits on the phenotype lane.
         "Phosphosite",
+        # The evidence behind a gene-essentiality call (#924): it qualifies what the
+        # phenotype's boolean means, so it is drawn beside the phenotypes.
+        "GeneEssentialityEvidence",
+        "EssentialityStatement",
     ),
     "experiment": ("Experiment", "ExperimentReference"),
     # ArtifactRef: the sha256-pinned pointer from a record to off-graph bytes.

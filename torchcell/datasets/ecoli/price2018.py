@@ -98,17 +98,22 @@ ESSENTIALITY (:class:`GeneEssentialityPrice2018EcoliDataset`). Supplementary Tab
   the condition is the library-isolation condition ("growth on LB plates" at 37 C, not
   the fitness assays' conditions), and Supplementary Note 1 puts the E. coli
   false-discovery rate somewhere between 6% and 16% (21% against the PEC / Keio list
-  before 15 cases the note argues are nearly essential). ``GeneEssentialityPhenotype``
-  has one boolean and no slot for any of that, so the three quotes are
-  ``ESSENTIAL_LABEL`` / ``ESSENTIAL_CONDITION`` / ``ESSENTIAL_FDR``, written verbatim to
-  ``preprocess/essentiality_label.json`` with the quantities that have no field, and the
-  caveat is restated on every record's perturbation ``description``.
+  before 15 cases the note argues are nearly essential). Every phenotype's ``evidence``
+  (#924) carries it: type ``rb_tnseq_coverage_and_fitness`` (class
+  ``insertion_depletion``), ``ESSENTIAL_RULE`` as the scoring rule, ``ESSENTIAL_LABEL``
+  as the call's definition, ``ESSENTIAL_FDR`` / ``ESSENTIAL_FDR_NAIVE`` /
+  ``ESSENTIAL_CONDITION`` / ``ESSENTIAL_IGNORES_BARCODES`` as caveats, the 6% to 16%
+  range as numbers, and the gene's Table S1 coverage columns. The quotes are also
+  written verbatim to ``preprocess/essentiality_label.json``, and the caveat is restated
+  on every record's perturbation ``description``.
 * The call is a no-insertion call, not a measurement: "Protein-coding genes were
   considered essential or important for growth (nearly essential) if we did not estimate
   fitness values for the gene and both the normalized insertion density and the
   normalized read density were under 0.2". Table S1's coverage columns (``GC``,
   ``nReads``, ``normreads``, ``nPosCentral``, ``dens``) are the evidence the call is
-  computed from, not a phenotype, and are kept in ``preprocess/essential_genes.csv``.
+  computed from, not a phenotype: they are on each record's evidence (#924) with their
+  definitions (``ESSENTIAL_COVERAGE_COLUMNS``) and kept in
+  ``preprocess/essential_genes.csv``.
 * All 324 rows become records. Four of them are araA, araB, rhaA and rhaB (``b0062``,
   ``b0063``, ``b3903``, ``b3904``), whose ECK ids no BW25113 locus carries: BW25113
   DELETES araBAD and rhaBAD, so a library built in it can have no insertion there and
@@ -195,8 +200,13 @@ from torchcell.datamodels.schema import (
     EnvironmentPerturbationType,
     EnvironmentPhysicalPerturbation,
     EnvironmentResponsePhenotype,
+    EssentialityEvidenceClass,
+    EssentialityEvidenceType,
+    EssentialityStatement,
+    EssentialityStatementRole,
     Experiment,
     ExperimentReference,
+    GeneEssentialityEvidence,
     GeneEssentialityPhenotype,
     Genotype,
     MeasurementType,
@@ -747,6 +757,19 @@ ESSENTIAL_TABLE_COLUMNS = _tables(
     "identifier the fitness tables name, so the stored locus tag comes through the same "
     "one-to-one ECK pair",
 )
+ESSENTIAL_COVERAGE_COLUMNS = _tables(
+    "the five Table S1 coverage columns",
+    "GC – the gene's fraction of G or C nucleotides / nReads – thetotal number of "
+    "TnSeq reads that lie within the gene / normreads – nReads normalized to so that "
+    "the median across all genes is 1, and also normalized for GC content / "
+    "nPosCentral – number of locations within the central 10-90% of the gene that are "
+    "supported by at least 2 TnSeq reads / dens – the density of central insertions, "
+    "normalized so that the median across all genes is 1",
+    page="Supplementary Table 1, preamble",
+    note="the definitions of the statistics each record's evidence carries (#924): "
+    "gene_gc_fraction, tnseq_reads, normalized_read_density, "
+    "central_insertion_positions, normalized_insertion_density",
+)
 ESSENTIAL_LABEL = _paper(
     "essential or important for growth (nearly essential)",
     "Genes that lack insertions or that have very low coverage in the start samples are "
@@ -755,9 +778,9 @@ ESSENTIAL_LABEL = _paper(
     "that contained yeast extract.",
     page="Methods, 'Identifying essential or nearly essential genes'",
     note="the label the records carry is THIS, not unconditional essentiality: a gene "
-    "with no insertions in a rich-medium library. GeneEssentialityPhenotype has one "
-    "boolean and no slot for 'nearly', so the distinction lives in this quote, in "
-    "preprocess/essentiality_label.json and in ESSENTIAL_DESCRIPTION",
+    "with no insertions in a rich-medium library. It is every record's "
+    "evidence.call_definition (#924), and is also in preprocess/essentiality_label.json "
+    "and in ESSENTIAL_DESCRIPTION",
 )
 ESSENTIAL_RULE = _paper(
     0.2,
@@ -815,9 +838,9 @@ ESSENTIAL_FDR = _notes(
     r"proteins that are essential, or nearly so, for growth in rich media is somewhere "
     r"between $6 \%$ and $16 \%$ .",
     page="Supplementary Note 1, the E. coli validation",
-    note="a DATASET-level false-discovery rate with no per-record slot on "
-    "GeneEssentialityPhenotype; it is written to preprocess/essentiality_label.json "
-    "verbatim and must travel with any use of these 320 records",
+    note="a DATASET-level false-discovery rate; every record's evidence carries it as "
+    "a caveat and as false_discovery_rate_lower / _upper (#924), and it is written to "
+    "preprocess/essentiality_label.json verbatim",
 )
 ESSENTIAL_FDR_NAIVE = _notes(
     0.21,
@@ -2395,7 +2418,7 @@ ESSENTIAL_DESCRIPTION = (
 
 
 #: The quotes written verbatim to ``preprocess/essentiality_label.json``: everything the
-#: one stored boolean does not say.
+#: stored boolean does not say (each is also on every record's evidence since #924).
 ESSENTIALITY_LABEL_VALUES: Final = (
     "ESSENTIAL_TABLE",
     "ESSENTIAL_LABEL",
@@ -2559,8 +2582,9 @@ class EssentialityInventory(BaseModel):
         "by the release's own rule (ESSENTIAL_RULE, FITNESS_GENES_ARE_NON_ESSENTIAL)"
     )
     unencodable_quantities: dict[str, str] = Field(
-        description="what Table S1 and Supplementary Note 1 state that no field of "
-        "GeneEssentialityPhenotype can hold -> the verbatim quote stating it"
+        description="what Table S1 and Supplementary Note 1 state about the call that "
+        "is_essential alone does not say -> the verbatim quote stating it; since #924 "
+        "each is also on every record's GeneEssentialityEvidence"
     )
 
 
@@ -2653,15 +2677,84 @@ def build_essentiality_genotype(mapping: GeneMapping) -> Genotype:
     )
 
 
+# --- begin #924: the TnSeq evidence on every record -------------------------- #
+#: The paper's statements every record's evidence carries, by role.
+ESSENTIAL_EVIDENCE_STATEMENTS: Final[tuple[EssentialityStatement, ...]] = (
+    EssentialityStatement(
+        role=EssentialityStatementRole.scoring_rule, provenance=ESSENTIAL_RULE
+    ),
+    EssentialityStatement(
+        role=EssentialityStatementRole.call_definition, provenance=ESSENTIAL_LABEL
+    ),
+    *(
+        EssentialityStatement(role=EssentialityStatementRole.caveat, provenance=value)
+        for value in (
+            ESSENTIAL_FDR,
+            ESSENTIAL_FDR_NAIVE,
+            ESSENTIAL_CONDITION,
+            ESSENTIAL_IGNORES_BARCODES,
+        )
+    ),
+    EssentialityStatement(
+        role=EssentialityStatementRole.statistic_definition,
+        provenance=ESSENTIAL_COVERAGE_COLUMNS,
+    ),
+)
+
+
+def essentiality_evidence(
+    gene: EssentialGene | None = None,
+) -> GeneEssentialityEvidence:
+    """The RB-TnSeq coverage-and-fitness evidence (#924), with ``gene``'s Table S1
+    coverage columns when given.
+
+    The scoring rule is ``ESSENTIAL_RULE``, the call's definition ``ESSENTIAL_LABEL``,
+    and the caveats the FDR (reconciled and naive), the library-isolation condition and
+    the unused barcodes;
+    the FDR range is also carried as numbers. The reference (``gene`` None) carries all
+    of that and no coverage columns: the parent was not called.
+    """
+    low, high = ESSENTIAL_FDR.value
+    coverage: dict[str, Any] = {}
+    if gene is not None:
+        coverage = {
+            "tnseq_reads": gene.n_reads,
+            "normalized_read_density": gene.normreads,
+            "central_insertion_positions": gene.n_pos_central,
+            "normalized_insertion_density": gene.dens,
+            "gene_gc_fraction": gene.gc,
+        }
+    return GeneEssentialityEvidence(
+        evidence_class=EssentialityEvidenceClass.insertion_depletion,
+        evidence_type=EssentialityEvidenceType.rb_tnseq_coverage_and_fitness,
+        statements=list(ESSENTIAL_EVIDENCE_STATEMENTS),
+        false_discovery_rate_lower=float(low),
+        false_discovery_rate_upper=float(high),
+        **coverage,
+    )
+
+
+# --- end #924 ---------------------------------------------------------------- #
+
+
 def build_essentiality_experiment(
-    dataset_name: str, mapping: GeneMapping, environment: Environment
+    dataset_name: str,
+    mapping: GeneMapping,
+    environment: Environment,
+    gene: EssentialGene,
 ) -> BacterialGeneEssentialityExperiment:
-    """One likely-essential gene: ``is_essential=True``, with the label's caveat."""
+    """One likely-essential gene: ``is_essential=True``, with the label's caveat and the
+    gene's Table S1 coverage as evidence.
+    """
+    if gene.b_number != mapping.b_number:
+        raise ValueError(f"{gene.b_number} is not the mapped {mapping.b_number}")
     return BacterialGeneEssentialityExperiment(
         dataset_name=dataset_name,
         genotype=build_essentiality_genotype(mapping),
         environment=environment,
-        phenotype=GeneEssentialityPhenotype(is_essential=True),
+        phenotype=GeneEssentialityPhenotype(
+            is_essential=True, evidence=essentiality_evidence(gene)
+        ),
     )
 
 
@@ -2680,7 +2773,9 @@ def build_essentiality_reference(
         dataset_name=dataset_name,
         genome_reference=genome_reference,
         environment_reference=environment.model_copy(),
-        phenotype_reference=GeneEssentialityPhenotype(is_essential=False),
+        phenotype_reference=GeneEssentialityPhenotype(
+            is_essential=False, evidence=essentiality_evidence()
+        ),
     )
 
 
@@ -2783,7 +2878,9 @@ class GeneEssentialityPrice2018EcoliDataset(ExperimentDataset):
                 txn.put(
                     f"{idx}".encode(),
                     self._intern_record(
-                        build_essentiality_experiment(self.name, placed, environment),
+                        build_essentiality_experiment(
+                            self.name, placed, environment, gene
+                        ),
                         reference,
                         publication,
                         itxn,
@@ -2959,10 +3056,10 @@ def essentiality_label_is_qualified(
 ) -> LevelResult:
     """L3: every record restates the label's caveat on its perturbation description.
 
-    ``GeneEssentialityPhenotype`` is one boolean, so a record read without this text
-    would say "essential" where the paper says "essential or important for growth
-    (nearly essential)" at a 6% to 16% false-discovery rate. The row fails if any record
-    drops it.
+    The phenotype's evidence carries the label and the FDR since #924; the description
+    keeps them on the genotype too, so a reader of the perturbation alone still sees
+    "essential or important for growth (nearly essential)" at a 6% to 16%
+    false-discovery rate. The row fails if any record drops it.
     """
     missing = sum(
         1
@@ -2981,6 +3078,68 @@ def essentiality_label_is_qualified(
             else f"{missing} perturbations do not carry the label caveat"
         ),
         details={"n_records": len(records), "n_missing": missing},
+    )
+
+
+#: The per-record evidence fields; the rest is shared with the reference (#924).
+_RECORD_EVIDENCE_FIELDS: Final = (
+    "tnseq_reads",
+    "normalized_read_density",
+    "central_insertion_positions",
+    "normalized_insertion_density",
+    "gene_gc_fraction",
+)
+
+
+def essentiality_evidence_matches_table(
+    records: Sequence[Mapping[str, Any]], genes: Sequence[EssentialGene]
+) -> LevelResult:
+    """L2 (#924): the records' coverage columns are Table S1's placed rows, every one
+    under the rule's 0.2, and every record and reference carries the
+    rb_tnseq_coverage_and_fitness evidence the loader sources.
+
+    A record names its BW25113 locus, not its b-number, so the check is on the
+    multiset: the coverage tuples of the records equal those of the Keio rows Table S1
+    gives a BW25113 locus tag (the four deleted-operon rows have none).
+    """
+    threshold = float(ESSENTIAL_RULE.value)
+    reference = essentiality_evidence().model_dump()
+    shared = {k: v for k, v in reference.items() if k not in _RECORD_EVIDENCE_FIELDS}
+    problems: list[str] = []
+    held: list[tuple[Any, ...]] = []
+    for r in records:
+        ev = r["experiment"]["phenotype"]["evidence"]
+        held.append(tuple(ev[name] for name in _RECORD_EVIDENCE_FIELDS))
+        if {k: v for k, v in ev.items() if k not in _RECORD_EVIDENCE_FIELDS} != shared:
+            problems.append("a record's evidence is not the sourced rule and caveats")
+        if r["reference"]["phenotype_reference"]["evidence"] != reference:
+            problems.append("a reference's evidence is not the sourced one")
+        if not (
+            ev["normalized_insertion_density"] < threshold
+            and ev["normalized_read_density"] < threshold
+        ):
+            problems.append(f"coverage {held[-1]} is not under {threshold}")
+    released = [
+        (g.n_reads, g.normreads, g.n_pos_central, g.dens, g.gc)
+        for g in genes
+        if g.refseq_locus_tag is not None
+    ]
+    if Counter(held) != Counter(released):
+        problems.append(
+            f"{len(held)} record coverage tuples are not the {len(released)} placed "
+            "Table S1 rows"
+        )
+    return LevelResult(
+        level=Level.L2,
+        name="evidence_matches_table_s1",
+        passed=not problems,
+        message=(
+            f"{len(records)} records carry rb_tnseq_coverage_and_fitness evidence with "
+            f"their Table S1 coverage, every density under {threshold}"
+            if not problems
+            else f"{len(problems)} problems: {sorted(set(problems))[:5]}"
+        ),
+        details={"n_problems": len(problems), "n_released_placed": len(released)},
     )
 
 
@@ -3008,6 +3167,7 @@ def verify_essentiality_records(
     )
     report.add(l1_count(len(records), expected_count))
     report.add(essentiality_calls_match_table(records, genes))
+    report.add(essentiality_evidence_matches_table(records, genes))
     report.add(essential_genes_are_not_fitness_genes(genes, fitness_b_numbers))
     report.add(essentiality_label_is_qualified(records))
     for result in shared_rule_results(

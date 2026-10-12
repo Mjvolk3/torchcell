@@ -306,6 +306,7 @@ gene essentiality phenotype:
         graph_level: str
         label_name: str
         is_essential: bool
+        evidence: str
 
 synthetic lethality phenotype:
     is_a: phenotypic feature

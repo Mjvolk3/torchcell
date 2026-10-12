@@ -498,22 +498,44 @@ def identifier_route(root: Path) -> dict[str, Any]:
     }
 
 
-def schema_fit() -> dict[str, Any]:
-    """Construct the phenotype and the transposon leaf the loader would write."""
+def schema_fit(root: Path) -> dict[str, Any]:
+    """Construct the transposon leaf the loader would write, and dnaK's phenotype with
+    its #924 evidence, and say what still has no boolean (X and ?).
+    """
+    from torchcell.datasets.ecoli import gerdes2003 as loader
+
+    rows = loader.read_table_s1(root / "data" / TABLE_S1)
+    (dnak,) = [r for r in rows if r.blattner_id == "b0014"]
     leaf = TransposonInsertionPerturbation(
         systematic_gene_name="b0014",
         perturbed_gene_name="dnaK",
         gene_namespace=STRAIN_GENE_NAMESPACES["MG1655"],
         transposon="EZ::TN<KAN-2>",
     )
+    phenotype = GeneEssentialityPhenotype(
+        is_essential=dnak.is_essential, evidence=loader.evidence(dnak)
+    )
     return {
-        "essential": GeneEssentialityPhenotype(is_essential=True).model_dump(),
+        "dnaK": phenotype.model_dump(mode="json"),
         "transposon_leaf": leaf.model_dump(mode="json"),
+        "field_for": {
+            "the evidence type (no insertion recovered after 23 doublings of a pool)": (
+                "evidence.evidence_type genetic_footprinting (evidence_class "
+                "insertion_depletion)"
+            ),
+            "the assertion error (a per-gene probability of a chance miss)": (
+                "evidence.assertion_error / assertion_error_is_upper_bound (a typed "
+                "gap on an E call whose cell is n.d. or empty)"
+            ),
+            "the insertion positions behind an N call": (
+                "evidence.footprint_insertions_aa"
+            ),
+            "the call letter, N* included": "evidence.footprinting_call",
+        },
         "no_field_for": [
-            "the evidence type (no insertion recovered after 23 doublings of a pool)",
-            "the assertion error (a per-gene probability of a chance miss)",
-            "the insertion positions behind an N call",
-            "the X (not covered) and ? (ambiguous) categories",
+            "the X (not covered) and ? (ambiguous) categories: FootprintingCall names "
+            "them, and GeneEssentialityPhenotype refuses them because they have no "
+            "boolean (a graded sibling, #909)"
         ],
     }
 
@@ -534,7 +556,7 @@ def main() -> None:
         "table_s1": table_inventory(root),
         "baba2006_reserved_column": baba_reserved_column(root),
         "identifier_resolution_mg1655": identifier_route(root),
-        "schema_fit": schema_fit(),
+        "schema_fit": schema_fit(root),
     }
     os.makedirs(osp.dirname(RESULTS), exist_ok=True)
     with open(RESULTS, "w") as handle:

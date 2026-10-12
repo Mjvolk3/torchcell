@@ -21,6 +21,7 @@ from __future__ import annotations
 from collections import Counter
 from typing import Any
 
+from tests.torchcell.datamodels._essentiality_evidence import curated_evidence
 from torchcell.datamodels.media import SC
 from torchcell.datamodels.schema import (
     Environment,
@@ -35,6 +36,7 @@ from torchcell.datamodels.schema import (
 from torchcell.verification.gene_essentiality import (
     essential_gene_set,
     essential_without_viable_deletion_result,
+    evidence_result,
     released_annotations_result,
     states_no_condition,
     verify_gene_essentiality_dataset,
@@ -53,6 +55,7 @@ FAMILY_NAMES = [
     "essential_label",
     "released_annotations",
     "reference_viable",
+    "evidence",
 ]
 SHARED_NAMES = [
     "provenance_gaps",
@@ -86,7 +89,9 @@ def _record(
             ]
         ),
         environment=environment,
-        phenotype=GeneEssentialityPhenotype(is_essential=essential),
+        phenotype=GeneEssentialityPhenotype(
+            is_essential=essential, evidence=curated_evidence("classical genetics")
+        ),
     )
     reference = GeneEssentialityExperimentReference(
         dataset_name="test",
@@ -96,7 +101,9 @@ def _record(
         environment_reference=Environment(
             media=SC, temperature=Temperature(value=reference_temperature)
         ),
-        phenotype_reference=GeneEssentialityPhenotype(is_essential=reference_essential),
+        phenotype_reference=GeneEssentialityPhenotype(
+            is_essential=reference_essential, evidence=curated_evidence()
+        ),
     )
     return {
         "experiment": experiment.model_dump(),
@@ -357,3 +364,43 @@ def test_the_scope_names_the_compared_set_in_the_message() -> None:
         "smf: YAL001C (YAL001C_sn1)"
     )
     assert result.details["scope"] == "unconditionally essential"
+
+
+# --------------------------------------------------------------------------- #
+# #924: the evidence rule
+# --------------------------------------------------------------------------- #
+def test_the_evidence_row_names_the_one_type_and_the_experiment_types() -> None:
+    result = _result(_verify(_records()), "evidence")
+    assert result.passed is True
+    assert result.message == (
+        "all 3 experiments and references carry curated_null_phenotype evidence"
+    )
+    assert result.details["type_pairs"] == {
+        "curated_null_phenotype / curated_null_phenotype": 3
+    }
+    assert result.details["curated_experiment_types"] == {"classical genetics": 3}
+
+
+def test_the_evidence_row_fails_on_mixed_types_or_misplaced_experiment_types() -> None:
+    pairs = Counter(
+        {
+            ("curated_null_phenotype", "curated_null_phenotype"): 2,
+            ("construction_outcome", "curated_null_phenotype"): 1,
+        }
+    )
+    result = evidence_result(pairs, Counter({"x": 3}), Counter({None: 3}))
+    assert result.passed is False
+    assert result.details["problems"] == [
+        "2 evidence-type pairs {('curated_null_phenotype', 'curated_null_phenotype'): "
+        "2, ('construction_outcome', 'curated_null_phenotype'): 1}",
+        "1 experiments of construction_outcome evidence have references of "
+        "curated_null_phenotype evidence",
+    ]
+    one = Counter({("curated_null_phenotype", "curated_null_phenotype"): 2})
+    result = evidence_result(one, Counter({None: 1, "x": 1}), Counter({"x": 2}))
+    assert result.details["problems"] == [
+        "1 curated experiments state no experiment type",
+        "2 references state an experiment type",
+    ]
+    empty = evidence_result(Counter(), Counter(), Counter())
+    assert empty.passed is False

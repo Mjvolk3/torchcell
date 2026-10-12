@@ -1,0 +1,423 @@
+{
+  "record_version": 1,
+  "slug": "gene-essentiality-evidence",
+  "date": "2026-10-12",
+  "pr": null,
+  "author_kind": "agent",
+  "base_commit": "007cd23b0631e18574606da9164c9d78dbc01577",
+  "python_version": "3.13.0",
+  "symbols": [
+    {
+      "symbol": "ESSENTIALITY_EVIDENCE_CLASS",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "b810cc6a7d512f456105d1d9d09bd876082699009e3c9f0a9bc46e52ffed02f1",
+      "impact": "stale",
+      "reasons": [
+        "new module-level binding"
+      ]
+    },
+    {
+      "symbol": "ESSENTIALITY_EVIDENCE_FIELDS",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "3b88e5449f3052f540e4b08a2ca97bf88d846546f905043682b2d4f1a48ce85d",
+      "impact": "stale",
+      "reasons": [
+        "new module-level binding"
+      ]
+    },
+    {
+      "symbol": "EssentialityEvidenceClass",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "29995de6b0b44619c4b14dcdd3a82a99edc0f367cf2ada86ba74f012a836fdf9",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "EssentialityEvidenceType",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "221c071f438830a70cad9bc504b2dda3255621dc357666df6b4b9d745a003e42",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "EssentialityStatement",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "ec92d71482f77c4db663f330509f960be792f8ea82e51756d110aff98f93575f",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "EssentialityStatementRole",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "dd15ea88eb1394d90e032749488d3646109cf7e487d279aea3fd781960f3d8fe",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "FOOTPRINTING_CALL_IS_ESSENTIAL",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "3e9d17638543fce0c4a8e03da96c096733a764891d5412192c8e1dd18a0f9e80",
+      "impact": "stale",
+      "reasons": [
+        "new module-level binding"
+      ]
+    },
+    {
+      "symbol": "FootprintingCall",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "1f7ea768e3da70c2f6aa895e27e0715e619f2256d210893088b8ff0125ab932a",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "GeneEssentialityEvidence",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "e993650efb18e9e259fdb1d08473ab5a5efbb1ff06a64769cd70dff996808ee6",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "GeneEssentialityPhenotype",
+      "status": "modified",
+      "kinds": [
+        "contract_tightened"
+      ],
+      "fingerprint_before": "59eddfb8fb1a730fd0b756a4a1ed3d50274a1ca6269599a6af9c617de9d3320a",
+      "fingerprint_after": "e447db0117f2f311726c018068bdf3186a98d0836bd316702382ca554a484396",
+      "impact": "breaking",
+      "reasons": [
+        "added required field 'evidence'",
+        "validator/serializer changed: ['_released_call_is_the_boolean']"
+      ]
+    },
+    {
+      "symbol": "TRADIS_CALL_IS_ESSENTIAL",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "a0f67d6edb12b5c674d585a67e21b9d1f29d93fa1d4c79f43bae4d28717a096c",
+      "impact": "stale",
+      "reasons": [
+        "new module-level binding"
+      ]
+    },
+    {
+      "symbol": "TradisCall",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "6e51589ff81443798e742928eba9039b4d2f9bbc13d83341a6d039ca5bf27f5b",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    }
+  ],
+  "correctness_argument": "GeneEssentialityPhenotype is one boolean, is_essential, and five stores write it meaning five different observations (issue #924). Baba 2006 (construction_outcome): no deletion with two or more PCR-verified KmR colonies, which the paper calls 'candidates for essential genes'. Gerdes 2003 (genetic_footprinting): no disruptive insertion recovered after 23 doublings of a pooled fermentor culture. Goodall 2018 (tradis_insertion_index): the low mode of a TraDIS insertion index at a 12-fold likelihood ratio, which the paper says includes 'a very severe fitness cost'. Price 2018 (rb_tnseq_coverage_and_fitness): no fitness value and both normalized TnSeq densities under 0.2, 'essential or important for growth (nearly essential)' at a stated 6% to 16% FDR. SGD (curated_null_phenotype): a curated inviable null phenotype. Baba 2006 states why the difference matters: 'Because genetic footprinting measures cell populations, a mutation causing slow growth can lead to under-representation of the mutant and hence false classification of many genes as essential.' Measured on the dev stores (experiments/036-dataset-fixes-before-kg-build/scripts/essentiality_call_agreement_baba2006_gerdes2003.py, 2026-10-10): Baba and Gerdes share 3,551 loci and agree at Cohen's kappa 0.43, 47 Baba-only and 389 Gerdes-only essential calls; Baba and Goodall TL agree at kappa 0.80. Before this change a consumer pooling essentiality could not tell the evidence apart, and every is_essential=True phenotype of every store dumped to the same dict, so the graph served one phenotype node for all of them. The change adds a required, typed descriptor, GeneEssentialityEvidence: a two-level evidence type (EssentialityEvidenceClass mutant_recovery / insertion_depletion / curated_annotation, the physical observation; EssentialityEvidenceType, the readout and rule, each with exactly one parent in ESSENTIALITY_EVIDENCE_CLASS), the source's own statements typed by role (exactly one scoring_rule, exactly one call_definition, the source's caveats, the definitions of the statistics), each a verbatim SourcedValue with sha256 under the one name 'provenance', and the per-record statistics each release carries (Baba's verified / tested / percent; Gerdes's call letter, insertions and assertion error, value, bound or typed gap; Goodall's call, insertion index and log likelihood ratio; Price's five Table S1 coverage columns and the FDR range; SGD's experiment type), each optional by construction because it belongs to one evidence type and is refused on any other (ESSENTIALITY_EVIDENCE_FIELDS). is_essential keeps its type, default and meaning. The field is required, not optional: every store that writes the class sources it from its own paper (the five loaders fill it, quotes audited verbatim), so no served record is left unsourceable. The new phenotype validator refuses only an incoherent record, a released call letter that disagrees with the boolean or has none (footprinting X or ?, TraDIS 'unclear'); those calls are graded, the loaders already ledger them under counted rules, and a graded leaf (#909) is the sibling slot under Phenotype that would carry this same descriptor. Breaking for the five stores and for the served GeneEssentialitySgdDataset; lands with the KG 4.0 full rebuild.",
+  "measurement_type_decision": true,
+  "source_quotes": [
+    {
+      "value": "a recovery method does not call a slow grower essential",
+      "provenance": {
+        "source_uri": "paper/PMC1681482.1.txt",
+        "citation_key": "babaConstructionEscherichiaColi2006",
+        "sha256": "6e39bc2f12aecceac568f91dfcd068e109433132df618dc68624d317737bf3cd",
+        "method": "PMC Article Datasets plain text of the article (raw mirror)",
+        "page": null,
+        "retrieved": null
+      },
+      "quote": "Because genetic footprinting measures cell populations, a mutation causing slow growth can lead to under-representation of the mutant and hence false classification of many genes as essential. In contrast, we sought deletion mutants as survivors without regard to growth rate.",
+      "note": "the paper's own statement of how its evidence differs from a population method's; carried on every record's evidence (#924)"
+    },
+    {
+      "value": 2,
+      "provenance": {
+        "source_uri": "paper/PMC1681482.1.txt",
+        "citation_key": "babaConstructionEscherichiaColi2006",
+        "sha256": "6e39bc2f12aecceac568f91dfcd068e109433132df618dc68624d317737bf3cd",
+        "method": "PMC Article Datasets plain text of the article (raw mirror)",
+        "page": null,
+        "retrieved": null
+      },
+      "quote": "Mutants were scored as correct if two or more colonies had the expected structure based on PCR tests for both junction fragments.",
+      "note": "the minimum verified colonies for an obtained deletion; applied to Table 3's '5. verified' column it reproduces 3,985 / 303 and Table 6 exactly"
+    },
+    {
+      "value": "essential under these growth conditions",
+      "provenance": {
+        "source_uri": "si/assertion_of_essentiality.pdftotext.txt",
+        "citation_key": "gerdesExperimentalDeterminationSystem2003",
+        "sha256": "f19345e2a9c768d5ffb8e9cc3c0d0437487dbc036755170e7576401262f89f95",
+        "method": "pdftotext -layout of the essentiality-assertion criteria PDF (raw mirror)",
+        "page": null,
+        "retrieved": null
+      },
+      "quote": "Failure to recover inserts, or the presence of only a limited number of inserts at the very ends of a\ncoding sequence, suggests that the gene is essential under these growth conditions.",
+      "note": "what is_essential=True means here (#924)"
+    },
+    {
+      "value": "12-fold likelihood between the two modes",
+      "provenance": {
+        "source_uri": "paper.md",
+        "citation_key": "goodallEssentialGenomeEscherichia2018",
+        "sha256": "facfe1fac8ab6dab5cd0ecb88876b33616cc00de7c1fe68b60590f7a1883b429",
+        "method": "MinerU OCR of the publisher PDF (torchcell-library mirror)",
+        "page": null,
+        "retrieved": null
+      },
+      "quote": "genes were assigned as \u201cessential\u201d if they were 12 times more likely to be in the left mode than in the right mode, and \u201cnonessential\u201d if they were 12 times more likely to be in the right mode",
+      "note": null
+    },
+    {
+      "value": "essential or a very severe fitness cost",
+      "provenance": {
+        "source_uri": "paper.md",
+        "citation_key": "goodallEssentialGenomeEscherichia2018",
+        "sha256": "facfe1fac8ab6dab5cd0ecb88876b33616cc00de7c1fe68b60590f7a1883b429",
+        "method": "MinerU OCR of the publisher PDF (torchcell-library mirror)",
+        "page": null,
+        "retrieved": null
+      },
+      "quote": "which have a low number of transposon insertions, are either essential for survival or genes that, when disrupted, confer a very severe fitness cost (Fig. 1D).",
+      "note": "what is_essential=True means for these records: the left (low-insertion) mode, which includes severe growth defects, not only lethality"
+    },
+    {
+      "value": 0.2,
+      "provenance": {
+        "source_uri": "paper.md",
+        "citation_key": "priceMutantPhenotypesThousands2018",
+        "sha256": "f3443cdcb2f722b5e6aa6d999f67d68a6f845eb9eb45ad0bac1cc4c24ea53e2d",
+        "method": "MinerU OCR of the publisher PDF (torchcell-library mirror)",
+        "page": "Methods, 'Identifying essential or nearly essential genes'",
+        "retrieved": null
+      },
+      "quote": "Protein-coding genes were considered essential or important for growth (nearly essential) if we did not estimate fitness values for the gene and both the normalized insertion density and the normalized read density were under 0.2.",
+      "note": "a no-insertion call over genes the fitness analysis could not value, which is why the essential set and the fitness set are disjoint by construction; the two densities are Table S1's dens and normreads, kept in preprocess/essential_genes.csv"
+    },
+    {
+      "value": "essential or important for growth (nearly essential)",
+      "provenance": {
+        "source_uri": "paper.md",
+        "citation_key": "priceMutantPhenotypesThousands2018",
+        "sha256": "f3443cdcb2f722b5e6aa6d999f67d68a6f845eb9eb45ad0bac1cc4c24ea53e2d",
+        "method": "MinerU OCR of the publisher PDF (torchcell-library mirror)",
+        "page": "Methods, 'Identifying essential or nearly essential genes'",
+        "retrieved": null
+      },
+      "quote": "Genes that lack insertions or that have very low coverage in the start samples are likely to be essential or important for growth (nearly essential) in rich medium, as except for S. elongatus, pools of mutants were produced and recovered in medium that contained yeast extract.",
+      "note": "the label the records carry is THIS, not unconditional essentiality: a gene with no insertions in a rich-medium library. It is every record's evidence.call_definition (#924), and is also in preprocess/essentiality_label.json and in ESSENTIAL_DESCRIPTION"
+    },
+    {
+      "value": {
+        "observable": "inviable",
+        "mutant_type": "null",
+        "strain_background": "S288C"
+      },
+      "provenance": {
+        "source_uri": "paper.md",
+        "citation_key": "engelNewDataCollaborations2022",
+        "sha256": "ef55aeb36bb3d86d1dcff9f5a053ca4e6c11812b6a4bf8a465196c2d28877152",
+        "method": "MinerU OCR of the publisher PDF (torchcell-library mirror)",
+        "page": "New allele pages",
+        "retrieved": null
+      },
+      "quote": "The phenotype annotations for an allele include an observable feature (e.g., \u201ccell shape\u201d), a qualifier (e.g., \u201cabnormal\u201d), a mutant type (e.g., null), strain background, and a reference.",
+      "note": "the annotation fields a stored call reads: the observable 'inviable', the mutant type 'null' and the strain background 'S288C'"
+    }
+  ],
+  "alternatives_rejected": [
+    {
+      "alternative": "A separate phenotype leaf per evidence type (a construction-outcome leaf, an insertion-depletion leaf, a curated leaf)",
+      "why_rejected": "The released quantity is the same boolean call in all five stores, so by the policy's Rule 6 case 1 the leaf is shared and the divergence is typed beside it; five leaves would move the served SGD records off their class and split every consumer of 'gene essentiality phenotype' (label policy, the essentiality-to-fitness converter, Cooper 2010's flag) across five classes. The evidence class and type carry the DAG instead, two levels deep, and a graded call (#909), a different released quantity, keeps the sibling-leaf route."
+    },
+    {
+      "alternative": "An optional free-text evidence string or an optional descriptor on GeneEssentialityPhenotype",
+      "why_rejected": "Optional would let a new store write is_essential with no evidence, which is the gap #924 closes, and a string is not queryable or checkable. Every current store can source the descriptor from its own paper, so the field is required."
+    },
+    {
+      "alternative": "Loosen is_essential to bool | None to store Gerdes's X and ? and Goodall's 'unclear' calls",
+      "why_rejected": "Loosening a required field and changing what the boolean denotes needs owner sign-off (policy Rule 3) and would make every boolean consumer handle a third state; the graded calls are a different released quantity and belong on the graded sibling (#909)."
+    },
+    {
+      "alternative": "Keep the evidence in each store's preprocess/calls.csv and the dataset notes (the state before this change)",
+      "why_rejected": "The evidence then never reaches a record, a graph node or a consumer that pools stores; the per-call statistics stay off the record they qualify."
+    }
+  ],
+  "served_release": "2026.10.06-4b293d34",
+  "affected_loaders": [
+    {
+      "loader": "torchcell/datasets/ecoli/baba2006.py",
+      "dataset_classes": [
+        "GeneEssentialityBaba2006Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ESSENTIALITY_EVIDENCE_CLASS",
+        "ESSENTIALITY_EVIDENCE_FIELDS",
+        "EssentialityEvidenceClass",
+        "EssentialityEvidenceType",
+        "EssentialityStatement",
+        "EssentialityStatementRole",
+        "FOOTPRINTING_CALL_IS_ESSENTIAL",
+        "FootprintingCall",
+        "GeneEssentialityEvidence",
+        "GeneEssentialityPhenotype",
+        "TRADIS_CALL_IS_ESSENTIAL",
+        "TradisCall"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/gerdes2003.py",
+      "dataset_classes": [
+        "GeneEssentialityGerdes2003Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ESSENTIALITY_EVIDENCE_CLASS",
+        "ESSENTIALITY_EVIDENCE_FIELDS",
+        "EssentialityEvidenceClass",
+        "EssentialityEvidenceType",
+        "EssentialityStatement",
+        "EssentialityStatementRole",
+        "FOOTPRINTING_CALL_IS_ESSENTIAL",
+        "FootprintingCall",
+        "GeneEssentialityEvidence",
+        "GeneEssentialityPhenotype",
+        "TRADIS_CALL_IS_ESSENTIAL",
+        "TradisCall"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/goodall2018.py",
+      "dataset_classes": [
+        "GeneEssentialityGoodall2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ESSENTIALITY_EVIDENCE_CLASS",
+        "ESSENTIALITY_EVIDENCE_FIELDS",
+        "EssentialityEvidenceClass",
+        "EssentialityEvidenceType",
+        "EssentialityStatement",
+        "EssentialityStatementRole",
+        "FOOTPRINTING_CALL_IS_ESSENTIAL",
+        "FootprintingCall",
+        "GeneEssentialityEvidence",
+        "GeneEssentialityPhenotype",
+        "TRADIS_CALL_IS_ESSENTIAL",
+        "TradisCall"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/price2018.py",
+      "dataset_classes": [
+        "RbTnseqPrice2018EcoliDataset",
+        "GeneEssentialityPrice2018EcoliDataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ESSENTIALITY_EVIDENCE_CLASS",
+        "ESSENTIALITY_EVIDENCE_FIELDS",
+        "EssentialityEvidenceClass",
+        "EssentialityEvidenceType",
+        "EssentialityStatement",
+        "EssentialityStatementRole",
+        "FOOTPRINTING_CALL_IS_ESSENTIAL",
+        "FootprintingCall",
+        "GeneEssentialityEvidence",
+        "GeneEssentialityPhenotype",
+        "TRADIS_CALL_IS_ESSENTIAL",
+        "TradisCall"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/sgd.py",
+      "dataset_classes": [
+        "GeneEssentialitySgdDataset"
+      ],
+      "served_classes": [
+        "GeneEssentialitySgdDataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "ESSENTIALITY_EVIDENCE_CLASS",
+        "ESSENTIALITY_EVIDENCE_FIELDS",
+        "EssentialityEvidenceClass",
+        "EssentialityEvidenceType",
+        "EssentialityStatement",
+        "EssentialityStatementRole",
+        "FOOTPRINTING_CALL_IS_ESSENTIAL",
+        "FootprintingCall",
+        "GeneEssentialityEvidence",
+        "GeneEssentialityPhenotype",
+        "TRADIS_CALL_IS_ESSENTIAL",
+        "TradisCall"
+      ]
+    }
+  ],
+  "served_datasets": [
+    "GeneEssentialitySgdDataset"
+  ],
+  "rebuild_scope": "full_kg_rebuild",
+  "owner_sign_off": {
+    "signed": false,
+    "quote": null,
+    "url": null
+  }
+}

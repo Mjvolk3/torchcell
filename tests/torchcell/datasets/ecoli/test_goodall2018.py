@@ -57,7 +57,11 @@ from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
     BacterialGeneEssentialityExperiment,
     BacterialGeneEssentialityExperimentReference,
+    EssentialityEvidenceClass,
+    EssentialityEvidenceType,
+    EssentialityStatementRole,
     MediaComponentRole,
+    TradisCall,
     TransposonInsertionPerturbation,
 )
 from torchcell.datasets.bacteria_common import LocusTagResolutionError
@@ -504,6 +508,38 @@ def test_build_experiment_is_one_gene_level_insertion() -> None:
         "x", _kept("thrA", "BW25113_0002", "non_essential"), m.environment("LB")
     )
     assert non_essential.phenotype.is_essential is False
+
+
+def test_evidence_is_the_tradis_call_with_the_rows_values() -> None:
+    """#924: the 12-fold rule, the paper's definition, its low-mode caveat and the
+    statistic definitions, with the row's call, index and ratio on a record only.
+    """
+    record = m.build_experiment(
+        "x", _kept("thrA", "BW25113_0002", "essential"), m.environment("TL")
+    )
+    evidence = record.phenotype.evidence
+    assert evidence.evidence_type is EssentialityEvidenceType.tradis_insertion_index
+    assert evidence.evidence_class is EssentialityEvidenceClass.insertion_depletion
+    assert (
+        evidence.tradis_call,
+        evidence.insertion_index,
+        evidence.log_likelihood_ratio,
+    ) == (TradisCall.essential, 0.1, -10.0)
+    assert evidence.scoring_rule is m.SOURCED_VALUES["call_rule"]
+    assert evidence.call_definition is m.SOURCED_VALUES["essential_definition"]
+    assert evidence.statements_of(EssentialityStatementRole.caveat) == [
+        m.SOURCED_VALUES["left_mode"]
+    ]
+    assert evidence.statements_of(EssentialityStatementRole.statistic_definition) == [
+        m.SOURCED_VALUES["insertion_index"],
+        m.SOURCED_VALUES["call_threshold"],
+    ]
+    reference = m.build_reference("x", REFERENCE, m.environment("TL"))
+    assert reference.phenotype_reference.evidence.tradis_call is None
+    assert reference.phenotype_reference.evidence.statements == evidence.statements
+    # an unclear call has no boolean: the descriptor holds it, the boolean leaf does not
+    unclear = m.evidence(_call("hokC", "unclear"))
+    assert unclear.tradis_call is TradisCall.unclear
 
 
 def test_build_experiment_refuses_a_dropped_row() -> None:

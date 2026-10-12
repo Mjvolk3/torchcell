@@ -60,8 +60,14 @@ states the parent's viability in the medium the selection agent was added to.
 NOT STORED. The OD600 growth of the obtained mutants (Table 3, LB 22 h and MOPS 24 h /
 48 h) is a separate measurement with no wild-type value in the release; it is not part
 of this dataset. Table 3's re-served Gerdes 2003 / PEC / Tn5 columns are other studies'
-calls. The PCR counts behind each call have no field on ``GeneEssentialityPhenotype``;
-they are kept per row in ``preprocess/calls.csv``.
+calls.
+
+EVIDENCE (#924). Every phenotype carries a ``GeneEssentialityEvidence`` of type
+``construction_outcome`` (class ``mutant_recovery``): the scoring rule, the paper's
+"candidates for essential genes" as the call's definition, its own caveat on population
+methods, the definitions of the colony counts, and the record's Table 3 PCR counts
+(verified, tested, percent). The reference carries the same evidence without counts.
+``preprocess/calls.csv`` keeps the per-row table, untargeted and dropped rows included.
 """
 
 from __future__ import annotations
@@ -101,8 +107,13 @@ from torchcell.datamodels.schema import (
     ConcentrationUnit,
     DerivedIdentifierMapping,
     Environment,
+    EssentialityEvidenceClass,
+    EssentialityEvidenceType,
+    EssentialityStatement,
+    EssentialityStatementRole,
     Experiment,
     ExperimentReference,
+    GeneEssentialityEvidence,
     GeneEssentialityPhenotype,
     Genotype,
     Media,
@@ -242,6 +253,23 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         note="Table II footnote b; measured: '7. percent' equals 100 x verified / "
         "tested on all 4,288 targeted rows",
     ),
+    "call_definition": _paper(
+        "candidates for essential genes",
+        "Based on finding mutants with the predicted structure, these 3985 genes are "
+        "(probably) nonessential, while the 303 genes (including 37 genes of unknown "
+        "function), for which no mutants were found, are candidates for essential genes",
+        note="what is_essential=True means here: a candidate, from a construction that "
+        "yielded no mutant with the expected structure (#924)",
+    ),
+    "population_methods_caveat": _paper(
+        "a recovery method does not call a slow grower essential",
+        "Because genetic footprinting measures cell populations, a mutation causing slow "
+        "growth can lead to under-representation of the mutant and hence false "
+        "classification of many genes as essential. In contrast, we sought deletion "
+        "mutants as survivors without regard to growth rate.",
+        note="the paper's own statement of how its evidence differs from a population "
+        "method's; carried on every record's evidence (#924)",
+    ),
     "secm_exception": _paper(
         "secM",
         "The exceptional case, secM, has a translational arrest sequence within its "
@@ -289,6 +317,33 @@ KANAMYCIN_UG_PER_ML: float = SOURCED_VALUES["kanamycin_ug_per_ml"].value
 SELECTION_PLATES_STATEMENT = SOURCED_VALUES["selection_plates"]
 LB_FORMULATION_STATEMENT = SOURCED_VALUES["lb_formulation"]
 KANAMYCIN_STATEMENT = SOURCED_VALUES["kanamycin_ug_per_ml"]
+#: The statements every record's evidence quotes (#924), bound at import likewise.
+SCORING_RULE_STATEMENT = SOURCED_VALUES["scoring_rule"]
+CALL_DEFINITION_STATEMENT = SOURCED_VALUES["call_definition"]
+POPULATION_METHODS_CAVEAT = SOURCED_VALUES["population_methods_caveat"]
+COLONIES_TESTED_STATEMENT = SOURCED_VALUES["colonies_tested"]
+PERCENT_COLUMN_STATEMENT = SOURCED_VALUES["percent_column"]
+#: The source's statements every record's evidence carries, by role (#924).
+EVIDENCE_STATEMENTS: tuple[EssentialityStatement, ...] = (
+    EssentialityStatement(
+        role=EssentialityStatementRole.scoring_rule, provenance=SCORING_RULE_STATEMENT
+    ),
+    EssentialityStatement(
+        role=EssentialityStatementRole.call_definition,
+        provenance=CALL_DEFINITION_STATEMENT,
+    ),
+    EssentialityStatement(
+        role=EssentialityStatementRole.caveat, provenance=POPULATION_METHODS_CAVEAT
+    ),
+    EssentialityStatement(
+        role=EssentialityStatementRole.statistic_definition,
+        provenance=COLONIES_TESTED_STATEMENT,
+    ),
+    EssentialityStatement(
+        role=EssentialityStatementRole.statistic_definition,
+        provenance=PERCENT_COLUMN_STATEMENT,
+    ),
+)
 #: Below this fraction of distinct JW ids resolving to one BW25113 locus the build stops
 #: (checklist item 4). The annotation carries 4,334 JW synonyms; measured 4,163 of 4,288
 #: resolve (0.9708), 47 of them onto a locus another JW id also reaches.
@@ -778,6 +833,29 @@ def deletion_genotype(outcome: RowOutcome) -> Genotype:
     )
 
 
+def evidence(row: KeioRow | None = None) -> GeneEssentialityEvidence:
+    """The construction-outcome evidence (#924), with ``row``'s PCR counts when given.
+
+    The reference (``row`` None) carries the type, rule, definition and caveat only: no
+    construction was attempted on the parent.
+    """
+    counts: dict[str, Any] = {}
+    if row is not None:
+        if not row.targeted:
+            raise ValueError(f"{row.jw_id} was not targeted; it has no PCR counts")
+        counts = {
+            "colonies_verified": row.verified,
+            "colonies_tested": row.tested,
+            "percent_verified": row.percent,
+        }
+    return GeneEssentialityEvidence(
+        evidence_class=EssentialityEvidenceClass.mutant_recovery,
+        evidence_type=EssentialityEvidenceType.construction_outcome,
+        statements=list(EVIDENCE_STATEMENTS),
+        **counts,
+    )
+
+
 def build_experiment(
     dataset_name: str, outcome: RowOutcome, env: Environment
 ) -> BacterialGeneEssentialityExperiment:
@@ -788,7 +866,9 @@ def build_experiment(
         dataset_name=dataset_name,
         genotype=deletion_genotype(outcome),
         environment=env,
-        phenotype=GeneEssentialityPhenotype(is_essential=not outcome.keio.obtained),
+        phenotype=GeneEssentialityPhenotype(
+            is_essential=not outcome.keio.obtained, evidence=evidence(outcome.keio)
+        ),
     )
 
 
@@ -800,7 +880,9 @@ def build_reference(
         dataset_name=dataset_name,
         genome_reference=genome_reference,
         environment_reference=environment(kanamycin=False),
-        phenotype_reference=GeneEssentialityPhenotype(is_essential=False),
+        phenotype_reference=GeneEssentialityPhenotype(
+            is_essential=False, evidence=evidence()
+        ),
     )
 
 
@@ -928,7 +1010,7 @@ class GeneEssentialityBaba2006Dataset(ExperimentDataset):
         outcomes: Sequence[RowOutcome],
     ) -> None:
         """The drop log, identifier ledger, scoring check, and the per-row table (with
-        each kept row's LMDB index and the PCR counts that have no field).
+        each kept row's LMDB index; its PCR counts are also on the record's evidence).
         """
         out = Path(self.preprocess_dir)
         (out / "dropped_records.json").write_text(drop_log.model_dump_json(indent=2))
@@ -1042,6 +1124,14 @@ def _l2_calls_match_table_s3(
         stored = record["experiment"]["phenotype"]["is_essential"]
         if stored != (not row.obtained):
             problems.append(f"{jw_id}: stored {stored}, verified {row.verified}")
+        ev = record["experiment"]["phenotype"]["evidence"]
+        counts = (
+            ev["colonies_verified"],
+            ev["colonies_tested"],
+            ev["percent_verified"],
+        )
+        if counts != (row.verified, row.tested, row.percent):
+            problems.append(f"{jw_id}: evidence counts {counts}")
         if (p["collection"] == KEIO_COLLECTION) != row.obtained:
             problems.append(f"{jw_id}: collection {p['collection']!r}")
         if resolve(jw_id).systematic_name != p["systematic_gene_name"]:
@@ -1050,7 +1140,8 @@ def _l2_calls_match_table_s3(
         level=Level.L2,
         name="calls_match_table_s3",
         passed=not problems,
-        message=f"{len(records)} records equal their Table 3 row's scoring outcome"
+        message=f"{len(records)} records equal their Table 3 row's scoring outcome and "
+        "carry its PCR counts as evidence"
         if not problems
         else f"{len(problems)} records disagree with Table 3",
         details={"n_problems": len(problems), "problems": problems[:20]},
@@ -1087,6 +1178,39 @@ def _l3_reference_is_the_parent_off_selection(records: Sequence[Record]) -> Leve
         passed=not wrong,
         message=f"{len(records) - wrong} of {len(records)} references are the viable "
         "parent on LB agar without the selection agent",
+        details={"n_wrong": wrong},
+    )
+
+
+#: The evidence fields a record shares with the reference: everything but the counts.
+_SHARED_EVIDENCE_EXCLUDES = frozenset(
+    {"colonies_verified", "colonies_tested", "percent_verified"}
+)
+
+
+def _l3_evidence_is_construction_outcome(records: Sequence[Record]) -> LevelResult:
+    """L3 (#924): every record and reference carries the construction-outcome evidence,
+    with the scoring rule, definition and caveat the loader sources; the reference has
+    no counts.
+    """
+    reference = evidence().model_dump()
+    shared = {k: v for k, v in reference.items() if k not in _SHARED_EVIDENCE_EXCLUDES}
+    wrong = 0
+    for record in records:
+        ev = record["experiment"]["phenotype"]["evidence"]
+        if {
+            k: v for k, v in ev.items() if k not in _SHARED_EVIDENCE_EXCLUDES
+        } != shared:
+            wrong += 1
+        elif record["reference"]["phenotype_reference"]["evidence"] != reference:
+            wrong += 1
+    return LevelResult(
+        level=Level.L3,
+        name="evidence_is_construction_outcome",
+        passed=not wrong,
+        message=f"{len(records) - wrong} of {len(records)} records and references carry "
+        "construction_outcome evidence (mutant_recovery) with the sourced rule, "
+        "definition and caveat",
         details={"n_wrong": wrong},
     )
 
@@ -1132,6 +1256,7 @@ def verify_records(
     report.add(_l2_calls_match_table_s3(records, rows, resolve))
     report.add(_l3_scoring_rule(check))
     report.add(_l3_reference_is_the_parent_off_selection(records))
+    report.add(_l3_evidence_is_construction_outcome(records))
     for result in shared_rule_results(records):
         report.add(result)
     report.add(_l4_containment(records, universe))

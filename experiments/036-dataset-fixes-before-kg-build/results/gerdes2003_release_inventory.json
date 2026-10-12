@@ -402,18 +402,116 @@
     }
   },
   "schema_fit": {
-    "essential": {
+    "dnaK": {
+      "evidence": {
+        "assertion_error": 0.001,
+        "assertion_error_is_upper_bound": true,
+        "call_definition": {
+          "note": "what is_essential=True means here (#924)",
+          "provenance": {
+            "citation_key": "gerdesExperimentalDeterminationSystem2003",
+            "method": "pdftotext -layout of the essentiality-assertion criteria PDF (raw mirror)",
+            "page": null,
+            "retrieved": null,
+            "sha256": "f19345e2a9c768d5ffb8e9cc3c0d0437487dbc036755170e7576401262f89f95",
+            "source_uri": "si/assertion_of_essentiality.pdftotext.txt"
+          },
+          "quote": "Failure to recover inserts, or the presence of only a limited number of inserts at the very ends of a\ncoding sequence, suggests that the gene is essential under these growth conditions.",
+          "value": "essential under these growth conditions"
+        },
+        "caveats": [
+          {
+            "note": "the page's caveat on its own calls; carried on every record (#924)",
+            "provenance": {
+              "citation_key": "gerdesExperimentalDeterminationSystem2003",
+              "method": "the Table S1 page of the Supplementary Online Material (raw mirror)",
+              "page": null,
+              "retrieved": null,
+              "sha256": "f29982272aab87de1c402e2fd1b2a0c5d6cd54cbfbcd259816a2245681100510",
+              "source_uri": "si/supplementary_table.html"
+            },
+            "quote": "For consistency all essentiality calls in Table S1 are based\nexclusively on our experimental data, without any corrections by context or otherwise.",
+            "value": "calls from the footprinting data alone"
+          }
+        ],
+        "central_insertion_positions": null,
+        "colonies_tested": null,
+        "colonies_verified": null,
+        "curated_experiment_type": null,
+        "evidence_class": "insertion_depletion",
+        "evidence_type": "genetic_footprinting",
+        "false_discovery_rate_lower": null,
+        "false_discovery_rate_upper": null,
+        "footprint_insertions_aa": [
+          9,
+          581
+        ],
+        "footprinting_call": "E",
+        "gene_gc_fraction": null,
+        "insertion_index": null,
+        "log_likelihood_ratio": null,
+        "normalized_insertion_density": null,
+        "normalized_read_density": null,
+        "percent_verified": null,
+        "provenance_gaps": [],
+        "scoring_rule": {
+          "note": "the rule every E call follows; carried on every record's evidence (#924)",
+          "provenance": {
+            "citation_key": "gerdesExperimentalDeterminationSystem2003",
+            "method": "pdftotext -layout of the essentiality-assertion criteria PDF (raw mirror)",
+            "page": null,
+            "retrieved": null,
+            "sha256": "f19345e2a9c768d5ffb8e9cc3c0d0437487dbc036755170e7576401262f89f95",
+            "source_uri": "si/assertion_of_essentiality.pdftotext.txt"
+          },
+          "quote": "All ORFs longer then 240 base pairs in length (>80 AA) free\nfrom inserts were asserted as essential, if located in regions for which reliable PCR data were\nobtained. In addition, genes with only a few insertions within the 3’-most 20% or 5’-most 5% of the\ngene were asserted as essential.",
+          "value": "over 240 bp and free of inserts in a covered region, or a few inserts only in the 3'-most 20% or 5'-most 5%"
+        },
+        "statistic_definitions": [
+          {
+            "note": "the 'assertion error' column; the formula follows on the page (p_o(L) = exp(-rL), r the local insertion density, L the ORF length in bp)",
+            "provenance": {
+              "citation_key": "gerdesExperimentalDeterminationSystem2003",
+              "method": "the Table S1 page of the Supplementary Online Material (raw mirror)",
+              "page": null,
+              "retrieved": null,
+              "sha256": "f29982272aab87de1c402e2fd1b2a0c5d6cd54cbfbcd259816a2245681100510",
+              "source_uri": "si/supplementary_table.html"
+            },
+            "quote": "A numerical measure of confidence in an assertion was calculated for each essential ORF (column \"assertion error\").\nAssertion error shows the probability of missing an ORF by chance if insert locations were completely random.",
+            "value": "p_o(L) = exp(-rL)"
+          },
+          {
+            "note": null,
+            "provenance": {
+              "citation_key": "gerdesExperimentalDeterminationSystem2003",
+              "method": "the Table S1 page of the Supplementary Online Material (raw mirror)",
+              "page": null,
+              "retrieved": null,
+              "sha256": "f29982272aab87de1c402e2fd1b2a0c5d6cd54cbfbcd259816a2245681100510",
+              "source_uri": "si/supplementary_table.html"
+            },
+            "quote": "within each ORF and their locations (in amino acid coordinates) relative to the translational start.",
+            "value": "amino-acid coordinates from the translational start"
+          }
+        ],
+        "tnseq_reads": null,
+        "tradis_call": null
+      },
       "graph_level": "node",
       "is_essential": true,
       "label_name": "is_essential",
       "label_statistic_name": null,
       "provenance_gaps": []
     },
+    "field_for": {
+      "the assertion error (a per-gene probability of a chance miss)": "evidence.assertion_error / assertion_error_is_upper_bound (a typed gap on an E call whose cell is n.d. or empty)",
+      "the call letter, N* included": "evidence.footprinting_call",
+      "the evidence type (no insertion recovered after 23 doublings of a pool)": "evidence.evidence_type genetic_footprinting (evidence_class insertion_depletion)",
+      "the insertion positions behind an N call": "evidence.footprint_insertions_aa"
+    },
     "no_field_for": [
-      "the evidence type (no insertion recovered after 23 doublings of a pool)",
-      "the assertion error (a per-gene probability of a chance miss)",
-      "the insertion positions behind an N call",
-      "the X (not covered) and ? (ambiguous) categories"
+      "the X (not covered) and ? (ambiguous) categories: FootprintingCall names them, and GeneEssentialityPhenotype refuses them because they have no boolean (a graded sibling, #909)"
     ],
     "transposon_leaf": {
       "barcode": null,

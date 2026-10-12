@@ -1733,22 +1733,30 @@ class CellAdapter:
             json.dumps(phenotype.model_dump()).encode("utf-8")
         ).hexdigest()
 
-        graph_level = phenotype.graph_level
-        label_name = phenotype.label_name
-        is_essential = phenotype.is_essential
-
-        properties = {
-            "graph_level": graph_level,
-            "label_name": label_name,
-            "is_essential": is_essential,
-        }
-
         return BioCypherNode(
             node_id=phenotype_id,
             preferred_id=f"phenotype_{phenotype_id}",
             node_label="gene essentiality phenotype",
-            properties=properties,
+            properties=self._gene_essentiality_properties(phenotype),
         )
+
+    # --- begin #924: the typed evidence behind a gene-essentiality call -------- #
+    @staticmethod
+    def _gene_essentiality_properties(phenotype: Any) -> dict[str, Any]:
+        """Node properties of a ``GeneEssentialityPhenotype`` (experiment or reference).
+
+        ``evidence`` is the whole descriptor as JSON (class, type, statements, per-record
+        statistics), under its field name as every nested phenotype field is served, so
+        the node class still matches the pydantic class by its property set.
+        """
+        return {
+            "graph_level": phenotype.graph_level,
+            "label_name": phenotype.label_name,
+            "is_essential": phenotype.is_essential,
+            "evidence": phenotype.evidence.model_dump_json(),
+        }
+
+    # --- end #924 -------------------------------------------------------------- #
 
     @data_chunker
     def _synthetic_lethality_phenotype_node(
@@ -1982,21 +1990,11 @@ class CellAdapter:
                 json.dumps(phenotype.model_dump()).encode("utf-8")
             ).hexdigest()
 
-            graph_level = phenotype.graph_level
-            label_name = phenotype.label_name
-            is_essential = phenotype.is_essential
-
-            properties = {
-                "graph_level": graph_level,
-                "label_name": label_name,
-                "is_essential": is_essential,
-            }
-
             node = BioCypherNode(
                 node_id=phenotype_id,
                 preferred_id="gene essentiality phenotype",
                 node_label="gene essentiality phenotype",
-                properties=properties,
+                properties=self._gene_essentiality_properties(phenotype),
             )
             nodes.append(node)
         return nodes

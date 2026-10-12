@@ -31,6 +31,7 @@ LMDB under ``$DATA_ROOT`` (never building it).
 
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 import os
@@ -56,6 +57,10 @@ from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
     ComponentDefinition,
     ConcentrationUnit,
+    EssentialityEvidenceClass,
+    EssentialityEvidenceType,
+    EssentialityStatementRole,
+    FootprintingCall,
     Genotype,
     MediaComponentRole,
     TransposonInsertionPerturbation,
@@ -67,7 +72,11 @@ from torchcell.datasets.bacteria_common import (
 from torchcell.literature.manifest import ROLE_RAW_DATA, ArtifactRecord, Manifest
 from torchcell.sequence.genome.ecoli.k12 import MG1655_ASSEMBLY, EcoliK12MG1655Genome
 from torchcell.verification.report import Provenance, VerificationReport
-from torchcell.verification.sourced import SourcedValue, audit_sourced_value
+from torchcell.verification.sourced import (
+    ProvenanceGapReason,
+    SourcedValue,
+    audit_sourced_value,
+)
 
 
 class FakeSheet:
@@ -482,6 +491,87 @@ def test_build_experiment_and_reference(tmp_path: Path) -> None:
     reference = m.build_reference("gerdes", REFERENCE)
     assert reference.environment_reference == m.environment(kanamycin=False)
     assert reference.phenotype_reference.is_essential is False
+    # #924: the call letter, the insertions and the assertion error as released
+    ea, eb = a.phenotype.evidence, b.phenotype.evidence
+    assert (ea.footprinting_call, ea.footprint_insertions_aa, ea.assertion_error) == (
+        FootprintingCall.non_essential,
+        [23],
+        None,
+    )
+    assert (eb.footprinting_call, eb.footprint_insertions_aa) == (
+        FootprintingCall.essential,
+        [],
+    )
+    assert (eb.assertion_error, eb.assertion_error_is_upper_bound) == (0.001, True)
+    assert eb.evidence_type is EssentialityEvidenceType.genetic_footprinting
+    assert eb.evidence_class is EssentialityEvidenceClass.insertion_depletion
+    assert eb.scoring_rule is m.SOURCED_VALUES["scoring_rule"]
+    assert eb.call_definition is m.SOURCED_VALUES["call_definition"]
+    assert eb.statements_of(EssentialityStatementRole.caveat) == [
+        m.SOURCED_VALUES["calls_uncorrected"]
+    ]
+    assert eb.statements_of(EssentialityStatementRole.statistic_definition) == [
+        m.SOURCED_VALUES["assertion_error"],
+        m.SOURCED_VALUES["insertion_coordinates"],
+    ]
+    ref = reference.phenotype_reference.evidence
+    assert ref.footprinting_call is None and ref.statements == eb.statements
+
+
+@pytest.mark.parametrize(
+    ("text", "value", "bound"),
+    [
+        ("< 0.05", 0.05, True),
+        ("< 0.0001", 0.0001, True),
+        ("0.306647", 0.306647, False),
+        ("", None, None),
+        ("n.d.", None, None),
+    ],
+)
+def test_read_assertion_error_reads_the_four_released_forms(
+    text: str, value: float | None, bound: bool | None
+) -> None:
+    cell = m.read_assertion_error(text, "row 1")
+    assert (cell.value, cell.is_upper_bound, cell.released) == (value, bound, text)
+
+
+@pytest.mark.parametrize("text", ["<0.05", "~0.1", "1.5", "< 2", "abc"])
+def test_read_assertion_error_refuses_any_other_form(text: str) -> None:
+    with pytest.raises(m.TableFormatError, match="assertion error"):
+        m.read_assertion_error(text, "row 1")
+
+
+def test_an_e_call_without_an_assertion_error_carries_a_typed_gap() -> None:
+    def row(call: str, error: str) -> m.GerdesRow:
+        return m.GerdesRow(
+            row=1,
+            ergo_id="REC1",
+            gene="g",
+            call=call,  # type: ignore[arg-type]
+            length_aa=100,
+            insertions_aa=(),
+            assertion_error=error,
+            blattner_id="b0001",
+        )
+
+    for error, note in (
+        ("n.d.", "Table S1 reads 'n.d.'"),
+        ("", "cell is empty in Table S1"),
+    ):
+        evidence = m.evidence(row("E", error))
+        (gap,) = evidence.provenance_gaps
+        assert (gap.field, gap.reason) == (
+            "assertion_error",
+            ProvenanceGapReason.not_reported_by_primary,
+        )
+        assert gap.note is not None and note in gap.note
+    # an N call has no assertion error to gap; the one N row that carries one keeps it
+    assert m.evidence(row("N", "")).provenance_gaps == []
+    released = m.evidence(row("N", "< 0.05"))
+    assert (released.assertion_error, released.assertion_error_is_upper_bound) == (
+        0.05,
+        True,
+    )
 
 
 def test_perturbation_field_gaps_name_real_leaf_fields() -> None:
@@ -611,8 +701,30 @@ def test_verify_records_passes_and_fails_on_tampering(
         "calls_match_table_s1",
         "reference_is_the_viable_parent_without_kanamycin",
     }
-    # 1 (flipped call) + 1 (b0002 does not resolve to b0004) + 1 (b0010 is on two rows)
-    assert failed["calls_match_table_s1"].details["n_problems"] == 3
+    # 1 (flipped call) + 2 (b0004 is an X row: its call, and its evidence is not the
+    # row's) + 1 (b0010 is on two rows)
+    assert failed["calls_match_table_s1"].details["n_problems"] == 4
+
+
+def test_verify_records_fails_on_tampered_evidence(
+    built: m.GeneEssentialityGerdes2003Dataset, mg1655: EcoliK12MG1655Genome
+) -> None:
+    """#924: a record whose insertions are not its row's fails L2, and a reference
+    whose statements are not the sourced ones fails L3.
+    """
+    from torchcell.verification.runners import load_records
+
+    records = load_records(built.root)
+    records[0]["experiment"]["phenotype"]["evidence"]["footprint_insertions_aa"] = [999]
+    # the reference is interned (one object shared by every record): copy it first
+    records[1] = copy.deepcopy(records[1])
+    records[1]["reference"]["phenotype_reference"]["evidence"]["statements"] = []
+    failed = {
+        r.name: r for r in _report(built, mg1655, records).results if not r.passed
+    }
+    assert failed["calls_match_table_s1"].details["n_problems"] == 1
+    assert "evidence" in failed["calls_match_table_s1"].details["problems"][0]
+    assert failed["evidence_is_genetic_footprinting"].details["n_wrong"] == 1
 
 
 def test_run_verification_and_cli(

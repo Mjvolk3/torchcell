@@ -55,6 +55,9 @@ from torchcell.datamodels.schema import (
     BacterialGeneEssentialityExperimentReference,
     ConcentrationUnit,
     EnvironmentPhysicalPerturbation,
+    EssentialityEvidenceClass,
+    EssentialityEvidenceType,
+    EssentialityStatementRole,
     Genotype,
     MeasurementType,
     MediaComponentRole,
@@ -1657,7 +1660,7 @@ def test_the_essentiality_inventory_counts_rows_and_proves_disjointness(
         "Cvague": 1,
         "Dhypo": 2,
     }
-    # the three quantities the one boolean cannot hold travel with the records
+    # what the boolean alone does not say; since #924 it is on every record's evidence
     assert set(counts.unencodable_quantities) == {
         "the label is 'nearly essential' too",
         "the condition is the library isolation, not an assay",
@@ -1688,10 +1691,34 @@ def test_a_gene_in_both_releases_or_a_lost_mapping_is_refused(tmp_path: Path) ->
         )
 
 
+def _essential_gene(b_number: str = "b0001", **coverage: Any) -> p.EssentialGene:
+    """A Table S1 Keio row with low coverage (the release's own rule calls it)."""
+    values: dict[str, Any] = {
+        "gc": 0.52,
+        "n_reads": 3,
+        "normreads": 0.01,
+        "n_pos_central": 0,
+        "dens": 0.0,
+    }
+    values.update(coverage)
+    return p.EssentialGene(
+        row=1,
+        locus_id="1",
+        b_number=b_number,
+        refseq_locus_tag="BW25113_RS00005",
+        name="thrL",
+        desc="d",
+        gene_class="Arole",
+        **values,
+    )
+
+
 def test_an_essentiality_record_carries_the_label_caveat() -> None:
     mapping = _mapping("b0001", "BW25113_0001", "thrL")
     environment = p.essentiality_environment()
-    experiment = p.build_essentiality_experiment("D", mapping, environment)
+    experiment = p.build_essentiality_experiment(
+        "D", mapping, environment, _essential_gene()
+    )
     assert experiment.phenotype.is_essential is True
     assert experiment.phenotype.label_name == "is_essential"
     assert isinstance(experiment.genotype, Genotype)
@@ -1707,6 +1734,74 @@ def test_an_essentiality_record_carries_the_label_caveat() -> None:
     reference = p.build_essentiality_reference("D", _pin(), environment)
     assert reference.phenotype_reference.is_essential is False
     assert reference.environment_reference == environment
+    # #924: the evidence is the paper's rule, label, caveats and the row's coverage
+    evidence = experiment.phenotype.evidence
+    assert (
+        evidence.evidence_type is EssentialityEvidenceType.rb_tnseq_coverage_and_fitness
+    )
+    assert evidence.evidence_class is EssentialityEvidenceClass.insertion_depletion
+    assert evidence.scoring_rule is p.ESSENTIAL_RULE
+    assert evidence.call_definition is p.ESSENTIAL_LABEL
+    assert evidence.statements_of(EssentialityStatementRole.caveat) == [
+        p.ESSENTIAL_FDR,
+        p.ESSENTIAL_FDR_NAIVE,
+        p.ESSENTIAL_CONDITION,
+        p.ESSENTIAL_IGNORES_BARCODES,
+    ]
+    assert evidence.statements_of(EssentialityStatementRole.statistic_definition) == [
+        p.ESSENTIAL_COVERAGE_COLUMNS
+    ]
+    assert (
+        evidence.tnseq_reads,
+        evidence.normalized_read_density,
+        evidence.central_insertion_positions,
+        evidence.normalized_insertion_density,
+        evidence.gene_gc_fraction,
+    ) == (3, 0.01, 0, 0.0, 0.52)
+    assert (
+        evidence.false_discovery_rate_lower,
+        evidence.false_discovery_rate_upper,
+    ) == (0.06, 0.16)
+    reference_evidence = reference.phenotype_reference.evidence
+    assert reference_evidence.tnseq_reads is None
+    assert reference_evidence.statements == evidence.statements
+
+
+def test_an_essentiality_record_refuses_another_genes_coverage() -> None:
+    mapping = _mapping("b0001", "BW25113_0001", "thrL")
+    with pytest.raises(ValueError, match="b0002 is not the mapped b0001"):
+        p.build_essentiality_experiment(
+            "D", mapping, p.essentiality_environment(), _essential_gene("b0002")
+        )
+
+
+def test_the_evidence_row_checks_coverage_threshold_and_statements() -> None:
+    mapping = _mapping("b0001", "BW25113_0001", "thrL")
+    environment = p.essentiality_environment()
+    gene = _essential_gene()
+    record = {
+        "experiment": p.build_essentiality_experiment(
+            "D", mapping, environment, gene
+        ).model_dump(),
+        "reference": p.build_essentiality_reference(
+            "D", _pin(), environment
+        ).model_dump(),
+    }
+    assert p.essentiality_evidence_matches_table([record], [gene]).passed is True
+    other = _essential_gene(n_reads=4)
+    result = p.essentiality_evidence_matches_table([record], [other])
+    assert result.passed is False
+    assert "are not the 1 placed Table S1 rows" in result.message
+    high = json.loads(json.dumps(record))
+    high["experiment"]["phenotype"]["evidence"]["normalized_read_density"] = 0.5
+    result = p.essentiality_evidence_matches_table([high], [gene])
+    assert result.passed is False
+    assert "is not under 0.2" in result.message
+    stripped = json.loads(json.dumps(record))
+    stripped["reference"]["phenotype_reference"]["evidence"]["statements"] = []
+    result = p.essentiality_evidence_matches_table([stripped], [gene])
+    assert result.passed is False
+    assert "a reference's evidence is not the sourced one" in result.message
 
 
 # --------------------------------------------------------------------------- #
@@ -1897,7 +1992,9 @@ def test_verify_essentiality_runs_every_row_over_the_built_store(
 def test_the_essentiality_rows_fail_on_a_record_that_misstates_the_call() -> None:
     mapping = _mapping("b0001", "BW25113_0001", "thrL")
     environment = p.essentiality_environment()
-    experiment = p.build_essentiality_experiment("D", mapping, environment)
+    experiment = p.build_essentiality_experiment(
+        "D", mapping, environment, _essential_gene()
+    )
     reference = p.build_essentiality_reference("D", _pin(), environment)
     record = {
         "experiment": experiment.model_dump(),
@@ -1918,7 +2015,9 @@ def test_the_essentiality_rows_fail_on_a_record_that_misstates_the_call() -> Non
 def test_the_call_row_names_a_multi_perturbation_or_a_live_reference() -> None:
     mapping = _mapping("b0001", "BW25113_0001", "thrL")
     environment = p.essentiality_environment()
-    experiment = p.build_essentiality_experiment("D", mapping, environment)
+    experiment = p.build_essentiality_experiment(
+        "D", mapping, environment, _essential_gene()
+    )
     reference = p.build_essentiality_reference("D", _pin(), environment)
     record = {
         "experiment": experiment.model_dump(),

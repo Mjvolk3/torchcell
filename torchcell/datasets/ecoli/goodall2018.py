@@ -40,10 +40,15 @@ has no ``provenance_gaps`` field, so those absences are typed in
 ``PERTURBATION_FIELD_GAPS`` and written to ``preprocess/perturbation_field_gaps.json``.
 
 PHENOTYPE. ``GeneEssentialityPhenotype.is_essential`` is the released call (True for
-"essential", False for "non-essential"). The class has no field for an "unclear" call, the
-insertion index, the likelihood ratio, ``n_samples`` or an uncertainty, so unclear rows
-are dropped under a counted rule and every released value stays in
-``preprocess/calls.csv``. The replicate structure is sourced anyway (two sequenced
+"essential", False for "non-essential"). Its ``evidence`` (#924) is a
+``GeneEssentialityEvidence`` of type ``tradis_insertion_index`` (class
+``insertion_depletion``): the 12-fold two-mode rule, the paper's definition of an
+essential gene, its caveat that the low mode includes "a very severe fitness cost", the
+insertion-index and threshold definitions, and per record the released call, insertion
+index and log likelihood ratio. An "unclear" call has no boolean, so
+``GeneEssentialityPhenotype`` refuses it and unclear rows are dropped under a counted
+rule (a graded sibling, #909, is where they would go); the class has no ``n_samples`` or
+uncertainty for a call, and every released value stays in ``preprocess/calls.csv``. The replicate structure is sourced anyway (two sequenced
 samples per condition, pooled before calling; ``SOURCED_VALUES["tl_replicates"]``,
 ``["lb_replicates"]``); there is no per-gene uncertainty to type. The released calls
 follow the PRINTED threshold of +/-3.6 exactly, not log2(12) = 3.585
@@ -91,8 +96,13 @@ from torchcell.datamodels.schema import (
     BacterialGeneEssentialityExperiment,
     BacterialGeneEssentialityExperimentReference,
     Environment,
+    EssentialityEvidenceClass,
+    EssentialityEvidenceType,
+    EssentialityStatement,
+    EssentialityStatementRole,
     Experiment,
     ExperimentReference,
+    GeneEssentialityEvidence,
     GeneEssentialityPhenotype,
     Genotype,
     Media,
@@ -100,6 +110,7 @@ from torchcell.datamodels.schema import (
     MediaComponentRole,
     Publication,
     Temperature,
+    TradisCall,
     TransposonInsertionPerturbation,
 )
 from torchcell.datasets.bacteria_common import (
@@ -346,8 +357,8 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         "To normalize for gene length, the number of unique insertion points within the "
         "CDS was divided by the CDS length in bases. This value was termed the "
         "insertion index score",
-        note="released in the 'Insertion Index Score' column; not stored on records "
-        "(no field), kept in preprocess/calls.csv",
+        note="released in the 'Insertion Index Score' column; stored on each record's "
+        "evidence (#924) and kept in preprocess/calls.csv",
     ),
     "cds_only": _paper(
         "protein-coding sequences",
@@ -426,6 +437,33 @@ EXPECTED_TL_COUNTS: dict[str, int] = SOURCED_VALUES["tl_counts"].value
 LB_TEMPERATURE_C: float = SOURCED_VALUES["lb_temperature_c"].value
 LB_AEROBICITY: str = SOURCED_VALUES["lb_shaking"].value
 SELECTION_MEDIUM_STATEMENT = SOURCED_VALUES["selection_medium"]
+#: The statements every record's evidence quotes (#924).
+SCORING_RULE_STATEMENT = SOURCED_VALUES["call_rule"]
+CALL_DEFINITION_STATEMENT = SOURCED_VALUES["essential_definition"]
+LEFT_MODE_CAVEAT = SOURCED_VALUES["left_mode"]
+INSERTION_INDEX_STATEMENT = SOURCED_VALUES["insertion_index"]
+CALL_THRESHOLD_STATEMENT = SOURCED_VALUES["call_threshold"]
+#: The source's statements every record's evidence carries, by role (#924).
+EVIDENCE_STATEMENTS: tuple[EssentialityStatement, ...] = (
+    EssentialityStatement(
+        role=EssentialityStatementRole.scoring_rule, provenance=SCORING_RULE_STATEMENT
+    ),
+    EssentialityStatement(
+        role=EssentialityStatementRole.call_definition,
+        provenance=CALL_DEFINITION_STATEMENT,
+    ),
+    EssentialityStatement(
+        role=EssentialityStatementRole.caveat, provenance=LEFT_MODE_CAVEAT
+    ),
+    EssentialityStatement(
+        role=EssentialityStatementRole.statistic_definition,
+        provenance=INSERTION_INDEX_STATEMENT,
+    ),
+    EssentialityStatement(
+        role=EssentialityStatementRole.statistic_definition,
+        provenance=CALL_THRESHOLD_STATEMENT,
+    ),
+)
 #: Checklist item 4: below this fraction of distinct Table S1/S4 gene names resolving to
 #: one BW25113 locus the build stops. The paper states the names ARE BW25113 annotation
 #: symbols, so a lower fraction would mean the wrong annotation, not a few multi-copy
@@ -806,8 +844,9 @@ DROP_RULE_DESCRIPTIONS: dict[DropRuleName, str] = {
     "another resolving name), so no locus tag of the pinned namespace names the "
     "disrupted gene; each item gives the row and the candidates",
     "unclear_call_not_representable": "the released call is 'Unclear' (ratio within "
-    "+/-3.6) and GeneEssentialityPhenotype stores only a boolean is_essential, so the "
-    "call has no field; the row's values stay in preprocess/calls.csv",
+    "+/-3.6); GeneEssentialityPhenotype stores a boolean is_essential and refuses a "
+    "TraDIS 'unclear' call, which is graded, not boolean; the row's values stay in "
+    "preprocess/calls.csv",
 }
 
 
@@ -1075,6 +1114,27 @@ def insertion_genotype(locus_tag: str, symbol: str) -> Genotype:
     )
 
 
+def evidence(call: GeneCall | None = None) -> GeneEssentialityEvidence:
+    """The TraDIS evidence (#924), with ``call``'s released values when given.
+
+    The reference (``call`` None) carries the type, rule, definition, caveat and
+    definitions only: the parent was not called.
+    """
+    stats: dict[str, Any] = {}
+    if call is not None:
+        stats = {
+            "tradis_call": TradisCall(call.call),
+            "insertion_index": call.insertion_index,
+            "log_likelihood_ratio": call.log_likelihood_ratio,
+        }
+    return GeneEssentialityEvidence(
+        evidence_class=EssentialityEvidenceClass.insertion_depletion,
+        evidence_type=EssentialityEvidenceType.tradis_insertion_index,
+        statements=list(EVIDENCE_STATEMENTS),
+        **stats,
+    )
+
+
 def build_experiment(
     dataset_name: str, outcome: RowOutcome, env: Environment
 ) -> BacterialGeneEssentialityExperiment:
@@ -1090,7 +1150,8 @@ def build_experiment(
         genotype=insertion_genotype(outcome.locus_tag, outcome.symbol),
         environment=env,
         phenotype=GeneEssentialityPhenotype(
-            is_essential=outcome.call.call == "essential"
+            is_essential=outcome.call.call == "essential",
+            evidence=evidence(outcome.call),
         ),
     )
 
@@ -1103,7 +1164,9 @@ def build_reference(
         dataset_name=dataset_name,
         genome_reference=genome_reference,
         environment_reference=env.model_copy(),
-        phenotype_reference=GeneEssentialityPhenotype(is_essential=False),
+        phenotype_reference=GeneEssentialityPhenotype(
+            is_essential=False, evidence=evidence()
+        ),
     )
 
 
@@ -1397,6 +1460,10 @@ def _l2_calls_match_the_tables(
         stored = r["experiment"]["phenotype"]["is_essential"]
         if row.call == "unclear" or stored != (row.call == "essential"):
             problems.append(f"{condition} {symbol}: stored {stored}, table {row.call}")
+        ev = r["experiment"]["phenotype"]["evidence"]
+        held = (ev["tradis_call"], ev["insertion_index"], ev["log_likelihood_ratio"])
+        if held != (row.call, row.insertion_index, row.log_likelihood_ratio):
+            problems.append(f"{condition} {symbol}: evidence {held}")
         resolution = resolve(row.gene)
         if resolution.systematic_name != perturbation["systematic_gene_name"] or (
             resolution.status
@@ -1412,7 +1479,8 @@ def _l2_calls_match_the_tables(
         name="calls_match_released_tables",
         passed=not problems,
         message=(
-            f"{len(records)} records equal their Table S1/S4 row's call and locus"
+            f"{len(records)} records equal their Table S1/S4 row's call and locus, and "
+            "carry its call, insertion index and likelihood ratio as evidence"
             if not problems
             else f"{len(problems)} records disagree with the released tables"
         ),
@@ -1445,6 +1513,36 @@ def _l3_tl_counts(raw_calls: Mapping[ConditionKey, Sequence[GeneCall]]) -> Level
         passed=counts == EXPECTED_TL_COUNTS,
         message=f"Table S1 {counts}; the paper states {EXPECTED_TL_COUNTS}",
         details={"table": counts, "paper": EXPECTED_TL_COUNTS},
+    )
+
+
+#: The per-record evidence fields; the rest is shared with the reference.
+_RECORD_EVIDENCE_FIELDS = frozenset(
+    {"tradis_call", "insertion_index", "log_likelihood_ratio"}
+)
+
+
+def _l3_evidence_is_tradis_insertion_index(records: Sequence[Record]) -> LevelResult:
+    """L3 (#924): every record and reference carries the TraDIS evidence with the
+    sourced rule, definition, caveat and definitions; the reference has no values.
+    """
+    reference = evidence().model_dump()
+    shared = {k: v for k, v in reference.items() if k not in _RECORD_EVIDENCE_FIELDS}
+    wrong = 0
+    for record in records:
+        ev = record["experiment"]["phenotype"]["evidence"]
+        if {k: v for k, v in ev.items() if k not in _RECORD_EVIDENCE_FIELDS} != shared:
+            wrong += 1
+        elif record["reference"]["phenotype_reference"]["evidence"] != reference:
+            wrong += 1
+    return LevelResult(
+        level=Level.L3,
+        name="evidence_is_tradis_insertion_index",
+        passed=not wrong,
+        message=f"{len(records) - wrong} of {len(records)} records and references carry "
+        "tradis_insertion_index evidence (insertion_depletion) with the sourced rule, "
+        "definition and caveat",
+        details={"n_wrong": wrong},
     )
 
 
@@ -1498,6 +1596,7 @@ def verify_records(
     report.add(_l2_calls_match_the_tables(records, conditions, raw_calls, resolve))
     report.add(_l3_call_rule(raw_calls))
     report.add(_l3_tl_counts(raw_calls))
+    report.add(_l3_evidence_is_tradis_insertion_index(records))
     for result in shared_rule_results(records):
         report.add(result)
     report.add(_l4_containment(records, universe))

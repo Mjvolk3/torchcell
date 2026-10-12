@@ -33,6 +33,15 @@ One record per SGD annotation with ``mutant_type`` "null", strain "S288C" and ph
   gaps (``not_carried_by_curation``) quoting what the annotation carries in place of
   one (:func:`sgd_unstated_medium`); the temperature it does not state is a typed gap
   on the environment. The old loader guessed YEPD solid at 30 C for every record.
+- **Evidence (#924).** Every phenotype carries a ``GeneEssentialityEvidence`` of type
+  ``curated_null_phenotype`` (class ``curated_annotation``): the annotation fields a
+  call reads and the call's definition, both anchored to SGD's own description of a
+  phenotype annotation (Engel 2022, :data:`SGD_SCORING_RULE`,
+  :data:`SGD_CALL_DEFINITION`); the allele rule above is this loader's, not SGD's, so
+  the evidence does not carry it; and
+  per record the annotation's SGD experiment type verbatim (1,121 "systematic mutation
+  set", 166 "classical genetics" of the 1,287 stored in the pinned dump). The mirrored
+  SGD literature does not define the "inviable" term itself.
 """
 
 import hashlib
@@ -60,6 +69,11 @@ from torchcell.datamodels.schema import (
     ConcentrationUnit,
     Environment,
     EnvironmentPhysicalPerturbation,
+    EssentialityEvidenceClass,
+    EssentialityEvidenceType,
+    EssentialityStatement,
+    EssentialityStatementRole,
+    GeneEssentialityEvidence,
     GeneEssentialityExperiment,
     GeneEssentialityExperimentReference,
     GeneEssentialityPhenotype,
@@ -74,7 +88,11 @@ from torchcell.datamodels.schema import (
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.graph.sgd import data_root
 from torchcell.verification.report import Provenance
-from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
+from torchcell.verification.sourced import (
+    ProvenanceGap,
+    ProvenanceGapReason,
+    SourcedValue,
+)
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -95,6 +113,93 @@ SGD_DUMP = Provenance(
     "main_get_all_genes); sha256 over the sorted '<file name> <file sha256>' lines",
     page="phenotype_details[].properties",
 )
+
+# --- begin #924: the curated-annotation evidence on every record ------------- #
+#: SGD's own description of a phenotype annotation (Engel 2022, the literature mirror).
+SGD_CURATION_CITATION_KEY = "engelNewDataCollaborations2022"
+SGD_CURATION_PAPER = "paper.md"
+SGD_CURATION_PAPER_SHA256 = (
+    "ef55aeb36bb3d86d1dcff9f5a053ca4e6c11812b6a4bf8a465196c2d28877152"
+)
+_ANNOTATION_QUOTE = (
+    "The phenotype annotations for an allele include an observable feature (e.g., "
+    "“cell shape”), a qualifier (e.g., “abnormal”), a mutant type "
+    "(e.g., null), strain background, and a reference."
+)
+
+
+def _engel(value: Any, quote: str, *, note: str) -> SourcedValue:
+    """A value bound to a verbatim quote of the pinned Engel 2022 OCR."""
+    return SourcedValue(
+        value=value,
+        quote=quote,
+        note=note,
+        provenance=Provenance(
+            source_uri=SGD_CURATION_PAPER,
+            citation_key=SGD_CURATION_CITATION_KEY,
+            sha256=SGD_CURATION_PAPER_SHA256,
+            method="MinerU OCR of the publisher PDF (torchcell-library mirror)",
+            page="New allele pages",
+        ),
+    )
+
+
+SGD_SCORING_RULE = _engel(
+    {"observable": "inviable", "mutant_type": "null", "strain_background": "S288C"},
+    _ANNOTATION_QUOTE,
+    note="the annotation fields a stored call reads: the observable 'inviable', the "
+    "mutant type 'null' and the strain background 'S288C'",
+)
+SGD_CALL_DEFINITION = _engel(
+    "SGD annotates the null allele's observable feature as 'inviable'",
+    _ANNOTATION_QUOTE,
+    note="is_essential=True is the curated observable of a null allele; the mirrored "
+    "SGD literature does not define the 'inviable' term itself",
+)
+SGD_EXPERIMENT_TYPES = _engel(
+    "classical genetics or high-throughput (large-scale survey, systematic mutation "
+    "set)",
+    "In addition, annotations are classified as classical genetics or highthroughput "
+    "(e.g., large-scale survey, systematic mutation set).",
+    note="the definition of curated_experiment_type, the annotation's 'experiment' "
+    "display name",
+)
+#: Every sourced statement of this loader, audited against the literature mirror.
+SOURCED_VALUES: dict[str, SourcedValue] = {
+    "scoring_rule": SGD_SCORING_RULE,
+    "call_definition": SGD_CALL_DEFINITION,
+    "experiment_types": SGD_EXPERIMENT_TYPES,
+}
+
+
+#: The source's statements every record's evidence carries, by role (#924).
+EVIDENCE_STATEMENTS: tuple[EssentialityStatement, ...] = (
+    EssentialityStatement(
+        role=EssentialityStatementRole.scoring_rule, provenance=SGD_SCORING_RULE
+    ),
+    EssentialityStatement(
+        role=EssentialityStatementRole.call_definition, provenance=SGD_CALL_DEFINITION
+    ),
+    EssentialityStatement(
+        role=EssentialityStatementRole.statistic_definition,
+        provenance=SGD_EXPERIMENT_TYPES,
+    ),
+)
+
+
+def sgd_evidence(experiment_type: str | None = None) -> GeneEssentialityEvidence:
+    """The curated-annotation evidence (#924), with the annotation's SGD experiment
+    type when given; the reference (None) carries the rule and definition only.
+    """
+    return GeneEssentialityEvidence(
+        evidence_class=EssentialityEvidenceClass.curated_annotation,
+        evidence_type=EssentialityEvidenceType.curated_null_phenotype,
+        statements=list(EVIDENCE_STATEMENTS),
+        curated_experiment_type=experiment_type,
+    )
+
+
+# --- end #924 ---------------------------------------------------------------- #
 
 # --------------------------------------------------------------------------- #
 # Environment: the medium and temperature SGD does not state are typed gaps (#901)
@@ -623,8 +728,12 @@ class GeneEssentialitySgdDataset(ExperimentDataset):
             ]
         )
 
-        phenotype = GeneEssentialityPhenotype(is_essential=True)
-        phenotype_reference = GeneEssentialityPhenotype(is_essential=False)
+        phenotype = GeneEssentialityPhenotype(
+            is_essential=True, evidence=sgd_evidence(annotation.experiment)
+        )
+        phenotype_reference = GeneEssentialityPhenotype(
+            is_essential=False, evidence=sgd_evidence()
+        )
 
         pub_info = get_publication_info(annotation.pubmed_id)
 

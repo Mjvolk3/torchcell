@@ -32,6 +32,7 @@ import lmdb
 import pytest
 from pydantic import ValidationError
 
+from tests.torchcell.datamodels._essentiality_evidence import curated_evidence
 from torchcell.datamodels.conversion import ConversionEntry, ConversionMap, Converter
 from torchcell.datamodels.fitness_composite_conversion import CompositeFitnessConverter
 from torchcell.datamodels.gene_essentiality_to_fitness_conversion import (
@@ -77,13 +78,17 @@ def _essentiality(gene: str, essential: bool) -> dict[str, Any]:
             dataset_name="sgd",
             genotype=_genotype([gene]),
             environment=ENVIRONMENT,
-            phenotype=GeneEssentialityPhenotype(is_essential=essential),
+            phenotype=GeneEssentialityPhenotype(
+                is_essential=essential, evidence=curated_evidence("classical genetics")
+            ),
         ),
         "experiment_reference": GeneEssentialityExperimentReference(
             dataset_name="sgd",
             genome_reference=GENOME,
             environment_reference=ENVIRONMENT,
-            phenotype_reference=GeneEssentialityPhenotype(is_essential=False),
+            phenotype_reference=GeneEssentialityPhenotype(
+                is_essential=False, evidence=curated_evidence()
+            ),
         ),
     }
 

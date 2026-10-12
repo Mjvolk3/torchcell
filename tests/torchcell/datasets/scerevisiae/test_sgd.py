@@ -47,6 +47,9 @@ from torchcell.datamodels.schema import (
     ConcentrationUnit,
     Environment,
     EnvironmentPhysicalPerturbation,
+    EssentialityEvidenceClass,
+    EssentialityEvidenceType,
+    EssentialityStatementRole,
     GeneEssentialityExperiment,
     GeneEssentialityExperimentReference,
     GeneEssentialityPhenotype,
@@ -300,7 +303,9 @@ def _experiment(gene: str, locus: str, environment: Environment) -> dict[str, An
             ]
         ),
         environment=environment,
-        phenotype=GeneEssentialityPhenotype(is_essential=True),
+        phenotype=GeneEssentialityPhenotype(
+            is_essential=True, evidence=m.sgd_evidence("classical genetics")
+        ),
     ).model_dump()
 
 
@@ -309,7 +314,9 @@ def _reference(environment: Environment) -> dict[str, Any]:
         dataset_name="GeneEssentialitySgdDataset",
         genome_reference=_GENOME,
         environment_reference=environment,
-        phenotype_reference=GeneEssentialityPhenotype(is_essential=False),
+        phenotype_reference=GeneEssentialityPhenotype(
+            is_essential=False, evidence=m.sgd_evidence()
+        ),
     ).model_dump()
 
 
@@ -793,4 +800,82 @@ def test_the_pinned_dump_holds_the_issue_counts() -> None:
     assert Counter(m.condition_environment(a).media.name for a in kept) == {
         None: 1286,
         "YPD with 2% glucose": 1,
+    }
+
+
+# --------------------------------------------------------------------------- #
+# #924: the curated-annotation evidence
+# --------------------------------------------------------------------------- #
+def test_sgd_evidence_is_the_curated_null_phenotype_with_its_experiment_type() -> None:
+    """The annotation fields a call reads and its definition, anchored to SGD's own
+    description of a phenotype annotation (Engel 2022), the experiment-type definition,
+    and the annotation's experiment type on an experiment only. The loader's own allele
+    rule (#901) is not SGD's, so the evidence does not carry it.
+    """
+    evidence = m.sgd_evidence("systematic mutation set")
+    assert evidence.evidence_type is EssentialityEvidenceType.curated_null_phenotype
+    assert evidence.evidence_class is EssentialityEvidenceClass.curated_annotation
+    assert evidence.curated_experiment_type == "systematic mutation set"
+    assert evidence.scoring_rule is m.SGD_SCORING_RULE
+    assert evidence.scoring_rule.value == {
+        "observable": "inviable",
+        "mutant_type": "null",
+        "strain_background": "S288C",
+    }
+    assert evidence.call_definition is m.SGD_CALL_DEFINITION
+    assert evidence.statements_of(EssentialityStatementRole.caveat) == []
+    assert evidence.statements_of(EssentialityStatementRole.statistic_definition) == [
+        m.SGD_EXPERIMENT_TYPES
+    ]
+    assert {sv.provenance.citation_key for sv in m.SOURCED_VALUES.values()} == {
+        "engelNewDataCollaborations2022"
+    }
+    assert m.sgd_evidence().curated_experiment_type is None
+
+
+def test_a_stored_record_carries_its_annotations_experiment_type(
+    dataset: m.GeneEssentialitySgdDataset,
+) -> None:
+    """Every fixture annotation is 'classical genetics'; the reference states none."""
+    for index in range(len(dataset)):
+        item = dataset[index]
+        evidence = item["experiment"]["phenotype"]["evidence"]
+        assert evidence["curated_experiment_type"] == "classical genetics"
+        assert evidence["evidence_type"] == "curated_null_phenotype"
+        reference = item["reference"]["phenotype_reference"]["evidence"]
+        assert reference["curated_experiment_type"] is None
+
+
+@pytest.mark.data
+@pytest.mark.parametrize("key", sorted(m.SOURCED_VALUES))
+def test_real_sourced_values_are_verbatim_in_the_literature_mirror(key: str) -> None:
+    import os
+    from pathlib import Path as _Path
+
+    from dotenv import load_dotenv
+
+    from torchcell.verification.sourced import audit_sourced_value
+
+    load_dotenv()
+    library = _Path(os.environ["DATA_ROOT"]) / "torchcell-library"
+    result = audit_sourced_value(m.SOURCED_VALUES[key], library)
+    assert result.passed, result.message
+
+
+@pytest.mark.data
+def test_the_pinned_dump_splits_the_kept_annotations_by_experiment_type() -> None:
+    """Of the 1,287 stored annotations, 1,121 are 'systematic mutation set' and 166
+    'classical genetics' (measured 2026-10-12 on the pinned dump).
+    """
+    import os
+    import os.path as osp
+
+    from dotenv import load_dotenv
+
+    load_dotenv()
+    genes_dir = osp.join(os.environ["DATA_ROOT"], m.SGD_GENES_RELPATH)
+    kept, _ = m.split_by_allele(m.inviable_null_annotations(genes_dir))
+    assert Counter(a.experiment for a in kept) == {
+        "systematic mutation set": 1121,
+        "classical genetics": 166,
     }

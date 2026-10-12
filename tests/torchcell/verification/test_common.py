@@ -35,6 +35,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
+from tests.torchcell.datamodels._essentiality_evidence import curated_evidence
 from torchcell.datamodels.media import MEDIA_LIBRARY
 from torchcell.datamodels.schema import (
     Compound,
@@ -945,7 +946,10 @@ def test_declared_member_validator_checks_the_tag_then_the_model() -> None:
         "environment": {
             "media": {"name": "m", "state": "solid", "is_synthetic": False}
         },
-        "phenotype": {"is_essential": True},
+        "phenotype": {
+            "is_essential": True,
+            "evidence": curated_evidence("classical genetics").model_dump(),
+        },
     }
     assert type(validate(stored)).__name__ == "GeneEssentialityExperiment"
     import pytest

@@ -11,6 +11,7 @@ import typing
 
 import pytest
 
+from tests.torchcell.datamodels._essentiality_evidence import curated_evidence
 from torchcell.datamodels.schema import (
     EXPERIMENT_REFERENCE_TYPE_MAP,
     EXPERIMENT_TYPE_MAP,
@@ -119,7 +120,7 @@ def test_inherited_validator_rejects_unknown_label_name() -> None:
     [
         FitnessPhenotype(fitness=0.87),
         GeneInteractionPhenotype(gene_interaction=0.1),
-        GeneEssentialityPhenotype(),
+        GeneEssentialityPhenotype(evidence=curated_evidence("classical genetics")),
         SyntheticLethalityPhenotype(),
         SyntheticRescuePhenotype(),
     ],

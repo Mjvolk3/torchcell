@@ -109,18 +109,209 @@
       "systematic_gene_name": "BW25113_0002"
     },
     "essential": {
+      "evidence": {
+        "assertion_error": null,
+        "assertion_error_is_upper_bound": null,
+        "call_definition": {
+          "note": "what is_essential=True means here: a candidate, from a construction that yielded no mutant with the expected structure (#924)",
+          "provenance": {
+            "citation_key": "babaConstructionEscherichiaColi2006",
+            "method": "PMC Article Datasets plain text of the article (raw mirror)",
+            "page": null,
+            "retrieved": null,
+            "sha256": "6e39bc2f12aecceac568f91dfcd068e109433132df618dc68624d317737bf3cd",
+            "source_uri": "paper/PMC1681482.1.txt"
+          },
+          "quote": "Based on finding mutants with the predicted structure, these 3985 genes are (probably) nonessential, while the 303 genes (including 37 genes of unknown function), for which no mutants were found, are candidates for essential genes",
+          "value": "candidates for essential genes"
+        },
+        "caveats": [
+          {
+            "note": "the paper's own statement of how its evidence differs from a population method's; carried on every record's evidence (#924)",
+            "provenance": {
+              "citation_key": "babaConstructionEscherichiaColi2006",
+              "method": "PMC Article Datasets plain text of the article (raw mirror)",
+              "page": null,
+              "retrieved": null,
+              "sha256": "6e39bc2f12aecceac568f91dfcd068e109433132df618dc68624d317737bf3cd",
+              "source_uri": "paper/PMC1681482.1.txt"
+            },
+            "quote": "Because genetic footprinting measures cell populations, a mutation causing slow growth can lead to under-representation of the mutant and hence false classification of many genes as essential. In contrast, we sought deletion mutants as survivors without regard to growth rate.",
+            "value": "a recovery method does not call a slow grower essential"
+          }
+        ],
+        "central_insertion_positions": null,
+        "colonies_tested": 8,
+        "colonies_verified": 1,
+        "curated_experiment_type": null,
+        "evidence_class": "mutant_recovery",
+        "evidence_type": "construction_outcome",
+        "false_discovery_rate_lower": null,
+        "false_discovery_rate_upper": null,
+        "footprint_insertions_aa": null,
+        "footprinting_call": null,
+        "gene_gc_fraction": null,
+        "insertion_index": null,
+        "log_likelihood_ratio": null,
+        "normalized_insertion_density": null,
+        "normalized_read_density": null,
+        "percent_verified": 12.5,
+        "provenance_gaps": [],
+        "scoring_rule": {
+          "note": "the minimum verified colonies for an obtained deletion; applied to Table 3's '5. verified' column it reproduces 3,985 / 303 and Table 6 exactly",
+          "provenance": {
+            "citation_key": "babaConstructionEscherichiaColi2006",
+            "method": "PMC Article Datasets plain text of the article (raw mirror)",
+            "page": null,
+            "retrieved": null,
+            "sha256": "6e39bc2f12aecceac568f91dfcd068e109433132df618dc68624d317737bf3cd",
+            "source_uri": "paper/PMC1681482.1.txt"
+          },
+          "quote": "Mutants were scored as correct if two or more colonies had the expected structure based on PCR tests for both junction fragments.",
+          "value": 2
+        },
+        "statistic_definitions": [
+          {
+            "note": "measured: 382 ORFs tested 4 colonies, 3,906 tested 8",
+            "provenance": {
+              "citation_key": "babaConstructionEscherichiaColi2006",
+              "method": "PMC Article Datasets plain text of the article (raw mirror)",
+              "page": null,
+              "retrieved": null,
+              "sha256": "6e39bc2f12aecceac568f91dfcd068e109433132df618dc68624d317737bf3cd",
+              "source_uri": "paper/PMC1681482.1.txt"
+            },
+            "quote": "From every gene deletion experiment, four or eight KmR colonies were chosen and checked for ones with the correct structure by PCR",
+            "value": [
+              4,
+              8
+            ]
+          },
+          {
+            "note": "Table II footnote b; measured: '7. percent' equals 100 x verified / tested on all 4,288 targeted rows",
+            "provenance": {
+              "citation_key": "babaConstructionEscherichiaColi2006",
+              "method": "PMC Article Datasets plain text of the article (raw mirror)",
+              "page": null,
+              "retrieved": null,
+              "sha256": "6e39bc2f12aecceac568f91dfcd068e109433132df618dc68624d317737bf3cd",
+              "source_uri": "paper/PMC1681482.1.txt"
+            },
+            "quote": "bPercent of the four or eight KmR colonies shown to have the correct structure by PCR as described in text is given.",
+            "value": "percent of the tested colonies verified by PCR"
+          }
+        ],
+        "tnseq_reads": null,
+        "tradis_call": null
+      },
       "graph_level": "node",
       "is_essential": true,
       "label_name": "is_essential",
       "label_statistic_name": null,
       "provenance_gaps": []
     },
-    "no_field_for": [
-      "the evidence type (a construction outcome, not a growth measurement)",
-      "the PCR counts behind the call (verified, colonies tested, percent)",
-      "'candidate' status of the 303 (the paper's own word)"
-    ],
+    "field_for": {
+      "'candidate' status of the 303 (the paper's own word)": "evidence.call_definition ('candidates for essential genes')",
+      "the PCR counts behind the call (verified, colonies tested, percent)": "evidence.colonies_verified / colonies_tested / percent_verified",
+      "the evidence type (a construction outcome, not a growth measurement)": "evidence.evidence_type construction_outcome (evidence_class mutant_recovery)"
+    },
+    "no_field_for": [],
     "non_essential": {
+      "evidence": {
+        "assertion_error": null,
+        "assertion_error_is_upper_bound": null,
+        "call_definition": {
+          "note": "what is_essential=True means here: a candidate, from a construction that yielded no mutant with the expected structure (#924)",
+          "provenance": {
+            "citation_key": "babaConstructionEscherichiaColi2006",
+            "method": "PMC Article Datasets plain text of the article (raw mirror)",
+            "page": null,
+            "retrieved": null,
+            "sha256": "6e39bc2f12aecceac568f91dfcd068e109433132df618dc68624d317737bf3cd",
+            "source_uri": "paper/PMC1681482.1.txt"
+          },
+          "quote": "Based on finding mutants with the predicted structure, these 3985 genes are (probably) nonessential, while the 303 genes (including 37 genes of unknown function), for which no mutants were found, are candidates for essential genes",
+          "value": "candidates for essential genes"
+        },
+        "caveats": [
+          {
+            "note": "the paper's own statement of how its evidence differs from a population method's; carried on every record's evidence (#924)",
+            "provenance": {
+              "citation_key": "babaConstructionEscherichiaColi2006",
+              "method": "PMC Article Datasets plain text of the article (raw mirror)",
+              "page": null,
+              "retrieved": null,
+              "sha256": "6e39bc2f12aecceac568f91dfcd068e109433132df618dc68624d317737bf3cd",
+              "source_uri": "paper/PMC1681482.1.txt"
+            },
+            "quote": "Because genetic footprinting measures cell populations, a mutation causing slow growth can lead to under-representation of the mutant and hence false classification of many genes as essential. In contrast, we sought deletion mutants as survivors without regard to growth rate.",
+            "value": "a recovery method does not call a slow grower essential"
+          }
+        ],
+        "central_insertion_positions": null,
+        "colonies_tested": 8,
+        "colonies_verified": 6,
+        "curated_experiment_type": null,
+        "evidence_class": "mutant_recovery",
+        "evidence_type": "construction_outcome",
+        "false_discovery_rate_lower": null,
+        "false_discovery_rate_upper": null,
+        "footprint_insertions_aa": null,
+        "footprinting_call": null,
+        "gene_gc_fraction": null,
+        "insertion_index": null,
+        "log_likelihood_ratio": null,
+        "normalized_insertion_density": null,
+        "normalized_read_density": null,
+        "percent_verified": 75.0,
+        "provenance_gaps": [],
+        "scoring_rule": {
+          "note": "the minimum verified colonies for an obtained deletion; applied to Table 3's '5. verified' column it reproduces 3,985 / 303 and Table 6 exactly",
+          "provenance": {
+            "citation_key": "babaConstructionEscherichiaColi2006",
+            "method": "PMC Article Datasets plain text of the article (raw mirror)",
+            "page": null,
+            "retrieved": null,
+            "sha256": "6e39bc2f12aecceac568f91dfcd068e109433132df618dc68624d317737bf3cd",
+            "source_uri": "paper/PMC1681482.1.txt"
+          },
+          "quote": "Mutants were scored as correct if two or more colonies had the expected structure based on PCR tests for both junction fragments.",
+          "value": 2
+        },
+        "statistic_definitions": [
+          {
+            "note": "measured: 382 ORFs tested 4 colonies, 3,906 tested 8",
+            "provenance": {
+              "citation_key": "babaConstructionEscherichiaColi2006",
+              "method": "PMC Article Datasets plain text of the article (raw mirror)",
+              "page": null,
+              "retrieved": null,
+              "sha256": "6e39bc2f12aecceac568f91dfcd068e109433132df618dc68624d317737bf3cd",
+              "source_uri": "paper/PMC1681482.1.txt"
+            },
+            "quote": "From every gene deletion experiment, four or eight KmR colonies were chosen and checked for ones with the correct structure by PCR",
+            "value": [
+              4,
+              8
+            ]
+          },
+          {
+            "note": "Table II footnote b; measured: '7. percent' equals 100 x verified / tested on all 4,288 targeted rows",
+            "provenance": {
+              "citation_key": "babaConstructionEscherichiaColi2006",
+              "method": "PMC Article Datasets plain text of the article (raw mirror)",
+              "page": null,
+              "retrieved": null,
+              "sha256": "6e39bc2f12aecceac568f91dfcd068e109433132df618dc68624d317737bf3cd",
+              "source_uri": "paper/PMC1681482.1.txt"
+            },
+            "quote": "bPercent of the four or eight KmR colonies shown to have the correct structure by PCR as described in text is given.",
+            "value": "percent of the tested colonies verified by PCR"
+          }
+        ],
+        "tnseq_reads": null,
+        "tradis_call": null
+      },
       "graph_level": "node",
       "is_essential": false,
       "label_name": "is_essential",
@@ -128,6 +319,7 @@
       "provenance_gaps": []
     },
     "phenotype_fields": [
+      "evidence",
       "graph_level",
       "is_essential",
       "label_name",

@@ -413,8 +413,14 @@ def identifier_route(root: Path) -> dict[str, Any]:
     }
 
 
-def schema_fit() -> dict[str, Any]:
-    """Construct the phenotype and the deletion leaf the loader would write (thrA)."""
+def schema_fit(root: Path) -> dict[str, Any]:
+    """Construct the phenotype and the deletion leaf the loader would write (thrA), and
+    an essential call's phenotype with its #924 evidence (secM, one of eight verified).
+    """
+    from torchcell.datasets.ecoli import baba2006 as loader
+
+    rows = {r.jw_id: r for r in loader.read_table_s3(root / "data" / loader.TABLE_S3)}
+    thra, secm = rows["JW0001"], next(r for r in rows.values() if r.gene == "secM")
     tag = bacterial_genome("ecoli", "BW25113").resolve_gene_name("JW0001")
     if tag.systematic_name is None:
         raise RuntimeError("JW0001 does not resolve on BW25113")
@@ -428,16 +434,30 @@ def schema_fit() -> dict[str, Any]:
         collection="Keio collection",
         cassette="kanamycin cassette",
     )
+    essential = GeneEssentialityPhenotype(
+        is_essential=not secm.obtained, evidence=loader.evidence(secm)
+    )
+    non_essential = GeneEssentialityPhenotype(
+        is_essential=not thra.obtained, evidence=loader.evidence(thra)
+    )
     return {
         "phenotype_fields": sorted(GeneEssentialityPhenotype.model_fields),
-        "essential": GeneEssentialityPhenotype(is_essential=True).model_dump(),
-        "non_essential": GeneEssentialityPhenotype(is_essential=False).model_dump(),
+        "essential": essential.model_dump(mode="json"),
+        "non_essential": non_essential.model_dump(mode="json"),
         "deletion_leaf": leaf.model_dump(mode="json"),
-        "no_field_for": [
-            "the evidence type (a construction outcome, not a growth measurement)",
-            "the PCR counts behind the call (verified, colonies tested, percent)",
-            "'candidate' status of the 303 (the paper's own word)",
-        ],
+        "field_for": {
+            "the evidence type (a construction outcome, not a growth measurement)": (
+                "evidence.evidence_type construction_outcome (evidence_class "
+                "mutant_recovery)"
+            ),
+            "the PCR counts behind the call (verified, colonies tested, percent)": (
+                "evidence.colonies_verified / colonies_tested / percent_verified"
+            ),
+            "'candidate' status of the 303 (the paper's own word)": (
+                "evidence.call_definition ('candidates for essential genes')"
+            ),
+        },
+        "no_field_for": [],
     }
 
 
@@ -456,7 +476,7 @@ def main() -> None:
         "quotes": check_quotes(root, hashes),
         "tables": table_inventory(root),
         "identifier_resolution_bw25113": identifier_route(root),
-        "schema_fit": schema_fit(),
+        "schema_fit": schema_fit(root),
     }
     os.makedirs(osp.dirname(RESULTS), exist_ok=True)
     with open(RESULTS, "w") as handle:

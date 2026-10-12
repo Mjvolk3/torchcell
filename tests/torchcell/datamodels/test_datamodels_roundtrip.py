@@ -112,7 +112,34 @@ _SPAN_CALL_EXAMPLE: dict[str, Any] = {
 }
 
 # class qualname -> keyword arguments; committed when a validator wants a specific shape.
+_ESSENTIALITY_QUOTE: dict[str, Any] = {
+    "value": 2,
+    "quote": "a quoted rule",
+    "provenance": {
+        "source_uri": "paper.md",
+        "citation_key": "testKey2026",
+        "sha256": "0" * 64,
+    },
+}
+
 EXAMPLES: dict[str, dict[str, Any]] = {
+    # #924: a SourcedValue's value is Any, which the generic builder cannot fill, and
+    # the evidence needs exactly one scoring rule and one call definition.
+    "torchcell.datamodels.schema.EssentialityStatement": {
+        "role": "scoring_rule",
+        "provenance": _ESSENTIALITY_QUOTE,
+    },
+    "torchcell.datamodels.schema.GeneEssentialityEvidence": {
+        "evidence_class": "mutant_recovery",
+        "evidence_type": "construction_outcome",
+        "statements": [
+            {"role": "scoring_rule", "provenance": _ESSENTIALITY_QUOTE},
+            {"role": "call_definition", "provenance": _ESSENTIALITY_QUOTE},
+        ],
+        "colonies_verified": 1,
+        "colonies_tested": 8,
+        "percent_verified": 12.5,
+    },
     # The generic builder fills a str field with "x", which no registered morphology
     # assay is named and no assay symbol is, so the #774 phenotype needs a real one.
     "torchcell.datamodels.schema.BacterialMorphologyPhenotype": {

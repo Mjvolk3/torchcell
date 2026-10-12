@@ -49,6 +49,7 @@ from typing import Any, Literal
 import lmdb
 import pytest
 
+from tests.torchcell.datamodels._essentiality_evidence import curated_evidence
 from tests.torchcell.datasets._genome_injection_fakes import (
     FakeYeastGenome,
     install_bacterial_fakes,
@@ -3334,13 +3335,17 @@ def _essentiality_record(
         dataset_name="test",
         genotype=_genotype([gene]),
         environment=env,
-        phenotype=GeneEssentialityPhenotype(is_essential=True),
+        phenotype=GeneEssentialityPhenotype(
+            is_essential=True, evidence=curated_evidence("classical genetics")
+        ),
     )
     reference = GeneEssentialityExperimentReference(
         dataset_name="test",
         genome_reference=_reference_genome(),
         environment_reference=env.model_copy(),
-        phenotype_reference=GeneEssentialityPhenotype(is_essential=False),
+        phenotype_reference=GeneEssentialityPhenotype(
+            is_essential=False, evidence=curated_evidence()
+        ),
     )
     return {
         "experiment": experiment.model_dump(),

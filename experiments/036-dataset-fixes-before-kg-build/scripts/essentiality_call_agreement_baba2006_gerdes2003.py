@@ -22,6 +22,11 @@ Stores read (``$DATA_ROOT/data/torchcell/<slug>``):
 - ``gene_essentiality_price2018_ecoli``: Price 2018 Table S1, essential-or-important
   calls only (every record ``is_essential=True``), so it is compared as a gene list.
 
+Since #924 every record states its evidence (``phenotype.evidence``), so each store's
+evidence class and type are read from the records (one per store, refused otherwise)
+and every comparison names the two evidence types it compares: a disagreement between
+a construction outcome and a population method is between two different measurements.
+
 For two boolean call sets the counts are: shared loci, both essential, both not, each
 side's essential-only, the agreeing count, and Cohen's kappa. Agreement is stated as
 counts; nothing here judges which method is right. The duplication question is answered
@@ -105,6 +110,21 @@ def calls_by_locus(
     return out
 
 
+def evidence_of(records: list[dict[str, Any]]) -> dict[str, str]:
+    """The one evidence class and type a store's records carry (#924)."""
+    kinds = {
+        (
+            str(r["experiment"]["phenotype"]["evidence"]["evidence_class"]),
+            str(r["experiment"]["phenotype"]["evidence"]["evidence_type"]),
+        )
+        for r in records
+    }
+    if len(kinds) != 1:
+        raise ValueError(f"a store carries {len(kinds)} evidence kinds: {kinds}")
+    ((evidence_class, evidence_type),) = kinds
+    return {"evidence_class": evidence_class, "evidence_type": evidence_type}
+
+
 def kappa(a: Calls, b: Calls, shared: list[str]) -> float | None:
     """Cohen's kappa of two boolean call sets on their shared loci."""
     n = len(shared)
@@ -179,8 +199,14 @@ def main() -> None:
     if not all(price.values()):
         raise ValueError("Price 2018 Table S1 is expected to be essential-only")
     gerdes, unpaired = gerdes_on_bw25113(gerdes_mg)
+    evidence = {name: evidence_of(r) for name, r in records.items()}
+
+    def pair(a: str, b: str) -> str:
+        return f"{evidence[a]['evidence_type']} vs {evidence[b]['evidence_type']}"
+
     result: dict[str, Any] = {
         "stores": {name: manifest_of(slug) for name, slug in STORES.items()},
+        "evidence": evidence,
         "records": {name: len(r) for name, r in records.items()},
         "call_sets": {
             "baba2006": {"loci": len(baba), "essential": sum(baba.values())},
@@ -203,13 +229,34 @@ def main() -> None:
             },
             "price2018": {"loci": len(price), "essential": sum(price.values())},
         },
-        "baba2006_vs_goodall2018_tl": compare(baba, goodall_tl),
-        "baba2006_vs_goodall2018_lb": compare(baba, goodall_lb),
-        "baba2006_vs_price2018_list": against_list(baba, price),
-        "gerdes2003_vs_goodall2018_tl": compare(gerdes, goodall_tl),
-        "gerdes2003_vs_goodall2018_lb": compare(gerdes, goodall_lb),
-        "gerdes2003_vs_price2018_list": against_list(gerdes, price),
-        "baba2006_vs_gerdes2003": compare(baba, gerdes),
+        "baba2006_vs_goodall2018_tl": {
+            "evidence": pair("baba2006", "goodall2018"),
+            **compare(baba, goodall_tl),
+        },
+        "baba2006_vs_goodall2018_lb": {
+            "evidence": pair("baba2006", "goodall2018"),
+            **compare(baba, goodall_lb),
+        },
+        "baba2006_vs_price2018_list": {
+            "evidence": pair("baba2006", "price2018"),
+            **against_list(baba, price),
+        },
+        "gerdes2003_vs_goodall2018_tl": {
+            "evidence": pair("gerdes2003", "goodall2018"),
+            **compare(gerdes, goodall_tl),
+        },
+        "gerdes2003_vs_goodall2018_lb": {
+            "evidence": pair("gerdes2003", "goodall2018"),
+            **compare(gerdes, goodall_lb),
+        },
+        "gerdes2003_vs_price2018_list": {
+            "evidence": pair("gerdes2003", "price2018"),
+            **against_list(gerdes, price),
+        },
+        "baba2006_vs_gerdes2003": {
+            "evidence": pair("baba2006", "gerdes2003"),
+            **compare(baba, gerdes),
+        },
     }
     os.makedirs(osp.dirname(RESULTS), exist_ok=True)
     with open(RESULTS, "w") as handle:

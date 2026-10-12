@@ -28,6 +28,7 @@ LMDB under ``$DATA_ROOT`` (never building it).
 
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 import os
@@ -52,6 +53,9 @@ from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
     BacterialDeletionPerturbation,
     BacterialGeneEssentialityExperiment,
+    EssentialityEvidenceClass,
+    EssentialityEvidenceType,
+    EssentialityStatementRole,
     Genotype,
     MediaComponentRole,
 )
@@ -525,6 +529,39 @@ def test_build_reference_is_the_viable_parent_without_kanamycin() -> None:
     assert reference.genome_reference == REFERENCE
 
 
+def test_evidence_is_the_construction_outcome_with_the_rows_pcr_counts() -> None:
+    """#924: the paper's rule, its 'candidates' definition, its caveat on population
+    methods and the count definitions, with the row's counts on a record only.
+    """
+    record = m.build_experiment(
+        "baba", _kept("JW0001", "BW25113_0002", 1), m.environment()
+    )
+    evidence = record.phenotype.evidence
+    assert evidence.evidence_type is EssentialityEvidenceType.construction_outcome
+    assert evidence.evidence_class is EssentialityEvidenceClass.mutant_recovery
+    assert (
+        evidence.colonies_verified,
+        evidence.colonies_tested,
+        evidence.percent_verified,
+    ) == (1, 8, 12.5)
+    assert evidence.scoring_rule is m.SOURCED_VALUES["scoring_rule"]
+    assert evidence.scoring_rule.value == 2
+    assert evidence.call_definition is m.SOURCED_VALUES["call_definition"]
+    assert "candidates for essential genes" in evidence.call_definition.quote
+    assert evidence.statements_of(EssentialityStatementRole.caveat) == [
+        m.SOURCED_VALUES["population_methods_caveat"]
+    ]
+    assert evidence.statements_of(EssentialityStatementRole.statistic_definition) == [
+        m.SOURCED_VALUES["colonies_tested"],
+        m.SOURCED_VALUES["percent_column"],
+    ]
+    reference = m.build_reference("baba", REFERENCE).phenotype_reference.evidence
+    assert reference.colonies_tested is None
+    assert reference.statements == evidence.statements
+    with pytest.raises(ValueError, match="was not targeted"):
+        m.evidence(_row("JW9", None, None))
+
+
 # --------------------------------------------------------------------------- #
 # The hermetic build
 # --------------------------------------------------------------------------- #
@@ -678,9 +715,42 @@ def test_verify_records_fails_on_tampered_records(
         "calls_match_table_s3",
         "reference_is_the_viable_parent_without_kanamycin",
     }
-    # 1 (flipped call) + 1 (collection on an unobtained deletion) + 3 (the JW id of
-    # another row: its call, its collection and its locus) + 1 (the appended copy)
-    assert failed["calls_match_table_s3"].details["n_problems"] == 6
+    # 1 (flipped call) + 1 (collection on an unobtained deletion) + 4 (the JW id of
+    # another row: its call, its collection, its PCR counts and its locus) + 1 (the
+    # appended copy)
+    assert failed["calls_match_table_s3"].details["n_problems"] == 7
+
+
+def test_verify_records_fails_on_tampered_evidence(
+    built: m.GeneEssentialityBaba2006Dataset, bw25113: EcoliK12BW25113Genome
+) -> None:
+    """#924: a record whose PCR counts are not its row's fails L2, and a reference whose
+    statements are not the sourced ones fails L3.
+    """
+    from torchcell.verification.runners import load_records
+
+    records = load_records(built.root)
+    records[0]["experiment"]["phenotype"]["evidence"]["colonies_tested"] = 4
+    # the reference is interned (one object shared by every record): copy it first
+    records[1] = copy.deepcopy(records[1])
+    records[1]["reference"]["phenotype_reference"]["evidence"]["statements"] = []
+    failed = {
+        r.name: r for r in _report(built, bw25113, records).results if not r.passed
+    }
+    assert failed["calls_match_table_s3"].details["n_problems"] == 1
+    assert (
+        failed["calls_match_table_s3"]
+        .details["problems"][0]
+        .endswith(
+            "evidence counts ("
+            + ", ".join(
+                str(records[0]["experiment"]["phenotype"]["evidence"][k])
+                for k in ("colonies_verified", "colonies_tested", "percent_verified")
+            )
+            + ")"
+        )
+    )
+    assert failed["evidence_is_construction_outcome"].details["n_wrong"] == 1
 
 
 def test_run_verification_and_cli(

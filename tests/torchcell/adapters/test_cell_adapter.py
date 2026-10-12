@@ -57,6 +57,7 @@ from biocypher._create import BioCypherEdge, BioCypherNode
 from omegaconf import DictConfig, OmegaConf
 
 import torchcell.adapters.cell_adapter as cell_adapter_module
+from tests.torchcell.datamodels._essentiality_evidence import curated_evidence
 from torchcell.adapters.cell_adapter import CellAdapter
 from torchcell.data.data import ExperimentReferenceIndex
 from torchcell.datamodels import schema as s
@@ -863,8 +864,16 @@ PHENOTYPE_CASES: list[tuple[str, str, Any, Any, dict[str, Any]]] = [
         "gene_essentiality",
         "gene essentiality phenotype",
         s.GeneEssentialityExperimentReference,
-        s.GeneEssentialityPhenotype(is_essential=True),
-        {"graph_level": "node", "label_name": "is_essential", "is_essential": True},
+        s.GeneEssentialityPhenotype(
+            is_essential=True, evidence=curated_evidence("classical genetics")
+        ),
+        {
+            "graph_level": "node",
+            "label_name": "is_essential",
+            "is_essential": True,
+            # #924: the evidence descriptor as JSON
+            "evidence": curated_evidence("classical genetics").model_dump_json(),
+        },
     ),
     (
         "synthetic_lethality",

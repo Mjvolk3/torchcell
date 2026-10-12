@@ -5693,14 +5693,496 @@ class FitnessPhenotype(Phenotype, ModelStrict):
         return self
 
 
+# --- begin #924: the typed evidence behind a gene-essentiality call ------------ #
+class EssentialityEvidenceClass(StrEnum):
+    """The PHYSICAL observation a gene-essentiality call rests on (#924).
+
+    The parent level of :class:`EssentialityEvidenceType`: two calls of one class
+    observed the same kind of thing, and differ only in how it was read out or scored.
+    Calls of different classes are different measurements, and Baba 2006 states the
+    difference that matters for a consumer pooling them: a population method can call a
+    slow grower essential, a recovery method cannot.
+
+    - ``mutant_recovery``: a defined mutant of each gene is built one gene at a time and
+      recovered as a clone, or not (Baba 2006, the Keio construction).
+    - ``insertion_depletion``: a pooled random-insertion library is grown and the
+      insertions that survive are mapped; a gene without enough of them is called
+      essential (Gerdes 2003, Goodall 2018, Price 2018).
+    - ``curated_annotation``: a database curator's record of a primary paper's
+      observation (SGD's inviable null phenotypes).
+    """
+
+    mutant_recovery = "mutant_recovery"
+    insertion_depletion = "insertion_depletion"
+    curated_annotation = "curated_annotation"
+
+
+class EssentialityEvidenceType(StrEnum):
+    """The readout and rule that turn the observation into the call (#924).
+
+    The leaf level; each member has exactly one parent in
+    :data:`ESSENTIALITY_EVIDENCE_CLASS`.
+
+    - ``construction_outcome`` (``mutant_recovery``): targeted replacement, KmR
+      colonies checked by PCR; a gene is a candidate essential gene when too few
+      colonies have the expected structure (Baba 2006).
+    - ``genetic_footprinting`` (``insertion_depletion``): insertions mapped by nested
+      PCR after outgrowth in a fermentor; essential when no disruptive insertion is
+      recovered (Gerdes 2003).
+    - ``tradis_insertion_index`` (``insertion_depletion``): transposon junctions
+      sequenced (TraDIS); the insertion index per gene is called by a two-mode
+      likelihood ratio (Goodall 2018).
+    - ``rb_tnseq_coverage_and_fitness`` (``insertion_depletion``): TnSeq of an RB-TnSeq
+      library; essential or important for growth when the gene got no fitness value and
+      both normalized densities are under a threshold (Price 2018).
+    - ``curated_null_phenotype`` (``curated_annotation``): an SGD phenotype annotation of
+      a null allele as inviable.
+
+    A graded call (Royet 2025's HMM states, #909) is a different released quantity, so
+    it is a sibling of ``GeneEssentialityPhenotype`` under ``Phenotype`` carrying the
+    same descriptor, with its rule added here as a new ``insertion_depletion`` leaf.
+    """
+
+    construction_outcome = "construction_outcome"
+    genetic_footprinting = "genetic_footprinting"
+    tradis_insertion_index = "tradis_insertion_index"
+    rb_tnseq_coverage_and_fitness = "rb_tnseq_coverage_and_fitness"
+    curated_null_phenotype = "curated_null_phenotype"
+
+
+#: The parent of each evidence type: the DAG of the two enums, checked on every record.
+ESSENTIALITY_EVIDENCE_CLASS: dict[
+    EssentialityEvidenceType, EssentialityEvidenceClass
+] = {
+    EssentialityEvidenceType.construction_outcome: (
+        EssentialityEvidenceClass.mutant_recovery
+    ),
+    EssentialityEvidenceType.genetic_footprinting: (
+        EssentialityEvidenceClass.insertion_depletion
+    ),
+    EssentialityEvidenceType.tradis_insertion_index: (
+        EssentialityEvidenceClass.insertion_depletion
+    ),
+    EssentialityEvidenceType.rb_tnseq_coverage_and_fitness: (
+        EssentialityEvidenceClass.insertion_depletion
+    ),
+    EssentialityEvidenceType.curated_null_phenotype: (
+        EssentialityEvidenceClass.curated_annotation
+    ),
+}
+
+
+class FootprintingCall(StrEnum):
+    """A genetic-footprinting call as Gerdes 2003 Table S1 writes it.
+
+    ``N*`` is an N call whose asterisk the release does not define (accD's call is
+    ``N*`` and the page says accD "is called nonessential"). ``X`` ("the gene was not
+    covered") and ``?`` ("ambiguous") have no boolean, so ``GeneEssentialityPhenotype``
+    refuses them; they belong on a graded sibling (#909), not on a boolean.
+    """
+
+    essential = "E"
+    non_essential = "N"
+    non_essential_flagged = "N*"
+    not_covered = "X"
+    ambiguous = "?"
+
+
+class TradisCall(StrEnum):
+    """A TraDIS call as Goodall 2018 Tables S1 and S4 release it (one-hot columns).
+
+    ``unclear`` (log likelihood ratio within the threshold) has no boolean, so
+    ``GeneEssentialityPhenotype`` refuses it, as it refuses the footprinting X and ?.
+    """
+
+    essential = "essential"
+    non_essential = "non_essential"
+    unclear = "unclear"
+
+
+#: The boolean each released footprinting call is; None where the call has none.
+FOOTPRINTING_CALL_IS_ESSENTIAL: dict[FootprintingCall, bool | None] = {
+    FootprintingCall.essential: True,
+    FootprintingCall.non_essential: False,
+    FootprintingCall.non_essential_flagged: False,
+    FootprintingCall.not_covered: None,
+    FootprintingCall.ambiguous: None,
+}
+#: The boolean each released TraDIS call is; None where the call has none.
+TRADIS_CALL_IS_ESSENTIAL: dict[TradisCall, bool | None] = {
+    TradisCall.essential: True,
+    TradisCall.non_essential: False,
+    TradisCall.unclear: None,
+}
+
+#: The per-record statistics each evidence type may carry. A statistic belongs to the
+#: one evidence type whose release defines it, so it is optional by construction and
+#: refused on any other type.
+ESSENTIALITY_EVIDENCE_FIELDS: dict[EssentialityEvidenceType, tuple[str, ...]] = {
+    EssentialityEvidenceType.construction_outcome: (
+        "colonies_verified",
+        "colonies_tested",
+        "percent_verified",
+    ),
+    EssentialityEvidenceType.genetic_footprinting: (
+        "footprinting_call",
+        "footprint_insertions_aa",
+        "assertion_error",
+        "assertion_error_is_upper_bound",
+    ),
+    EssentialityEvidenceType.tradis_insertion_index: (
+        "tradis_call",
+        "insertion_index",
+        "log_likelihood_ratio",
+    ),
+    EssentialityEvidenceType.rb_tnseq_coverage_and_fitness: (
+        "tnseq_reads",
+        "normalized_read_density",
+        "central_insertion_positions",
+        "normalized_insertion_density",
+        "gene_gc_fraction",
+        "false_discovery_rate_lower",
+        "false_discovery_rate_upper",
+    ),
+    EssentialityEvidenceType.curated_null_phenotype: ("curated_experiment_type",),
+}
+
+
+class EssentialityStatementRole(StrEnum):
+    """The role a sourced statement plays in a gene-essentiality call's evidence.
+
+    - ``scoring_rule``: the rule that turns the observation into the call; its
+      ``value`` is the threshold or criterion.
+    - ``call_definition``: the source's own words for what its call means; on the
+      boolean leaf, what ``is_essential=True`` means (Baba's "candidates for essential
+      genes", Price's "essential or important for growth (nearly essential)").
+    - ``caveat``: a caveat the source states about its own calls (Baba 2006 on
+      population methods, Price 2018's false-discovery rate).
+    - ``statistic_definition``: the source's definition of a per-record statistic the
+      evidence carries (the colony counts, the assertion error, the insertion index,
+      the TnSeq coverage columns).
+    """
+
+    scoring_rule = "scoring_rule"
+    call_definition = "call_definition"
+    caveat = "caveat"
+    statistic_definition = "statistic_definition"
+
+
+class EssentialityStatement(ModelStrict):
+    """One verbatim statement of the source about its essentiality call, and its role.
+
+    The quote is ``provenance``, the one name every ``SourcedValue`` field carries, so
+    a generic auditor finds it without a per-class table.
+    """
+
+    role: EssentialityStatementRole
+    provenance: SourcedValue = Field(
+        description="the statement, verbatim with its source's sha256"
+    )
+
+
+class GeneEssentialityEvidence(ProvenanceGapMixin):
+    """What a gene-essentiality call IS: its evidence type, rule and statistics (#924).
+
+    ``GeneEssentialityPhenotype.is_essential`` means a different thing in every store
+    that writes it: a failed construction (Baba 2006), no disruptive insertion after 23
+    doublings of a pool (Gerdes 2003), the low mode of a TraDIS insertion index
+    (Goodall 2018), no fitness value and low TnSeq coverage (Price 2018), or a curated
+    inviable null phenotype (SGD). This descriptor states which, on every record.
+
+    Every record carries the two-level type (:class:`EssentialityEvidenceClass` and its
+    :class:`EssentialityEvidenceType` leaf, checked against
+    :data:`ESSENTIALITY_EVIDENCE_CLASS`) and the source's own statements about the call,
+    each verbatim with sha256 and typed by its :class:`EssentialityStatementRole`:
+    exactly one ``scoring_rule`` (the rule that made the call), exactly one
+    ``call_definition`` (what a True call means), any ``caveat`` the source states about
+    its own calls, and the ``statistic_definition`` of each statistic the record
+    carries. Only what the source states about its own method goes here.
+
+    The per-record statistics are OPTIONAL BY CONSTRUCTION, because each belongs to one
+    evidence type (:data:`ESSENTIALITY_EVIDENCE_FIELDS`) and is refused on any other:
+    ``None`` means "this evidence type does not release it". A reference phenotype
+    (the unperturbed parent) carries the type, rule and definition of its dataset and
+    no statistics, since no call was made on it. Within its type a statistic is
+    value-or-gap where the source defines it for the record (a footprinting E call's
+    ``assertion_error``), and the loaders' L2 checks require the rest.
+
+    The descriptor reads no boolean, so it is not tied to ``GeneEssentialityPhenotype``:
+    that leaf maps a released call to ``is_essential`` in its own validator and refuses
+    a call with no boolean. A graded leaf (#909: Royet 2025's HMM states; Gerdes's X and
+    ?, Goodall's "unclear") is the sibling slot under the same parent, ``Phenotype``,
+    and carries this descriptor unchanged; its rule is one more
+    :class:`EssentialityEvidenceType` member with its entries in
+    :data:`ESSENTIALITY_EVIDENCE_CLASS` and :data:`ESSENTIALITY_EVIDENCE_FIELDS`.
+    """
+
+    evidence_class: EssentialityEvidenceClass = Field(
+        description="the physical observation the call rests on (the parent level)"
+    )
+    evidence_type: EssentialityEvidenceType = Field(
+        description="the readout and rule that made the call (the leaf level)"
+    )
+    statements: list[EssentialityStatement] = Field(
+        description="the source's own statements about the call, each verbatim with "
+        "sha256 and typed by its role: exactly one scoring_rule, exactly one "
+        "call_definition, the source's caveats on its own calls, and the definitions "
+        "of the per-record statistics"
+    )
+    # construction_outcome (Baba 2006 Supplementary Table 3)
+    colonies_verified: int | None = Field(
+        default=None,
+        description="construction_outcome: KmR colonies shown by PCR to have the "
+        "expected structure",
+    )
+    colonies_tested: int | None = Field(
+        default=None, description="construction_outcome: KmR colonies checked by PCR"
+    )
+    percent_verified: float | None = Field(
+        default=None,
+        description="construction_outcome: the released percent of the tested colonies "
+        "verified (100 x verified / tested)",
+    )
+    # genetic_footprinting (Gerdes 2003 Table S1)
+    footprinting_call: FootprintingCall | None = Field(
+        default=None,
+        description="genetic_footprinting: the released call letter (E, N or N* on a "
+        "boolean record)",
+    )
+    footprint_insertions_aa: list[int] | None = Field(
+        default=None,
+        description="genetic_footprinting: the insertions recovered in the gene after "
+        "outgrowth, in amino-acid coordinates from the translational start; empty when "
+        "none was recovered",
+    )
+    assertion_error: float | None = Field(
+        default=None,
+        description="genetic_footprinting: the probability of missing the ORF by chance "
+        "if insertions were random, p_o(L) = exp(-rL); value or typed gap on an E call",
+    )
+    assertion_error_is_upper_bound: bool | None = Field(
+        default=None,
+        description="genetic_footprinting: True when the release states the assertion "
+        "error as a bound ('< 0.05'), False when it states the value",
+    )
+    # tradis_insertion_index (Goodall 2018 Tables S1 and S4)
+    tradis_call: TradisCall | None = Field(
+        default=None,
+        description="tradis_insertion_index: the released call (essential or "
+        "non_essential on a boolean record)",
+    )
+    insertion_index: float | None = Field(
+        default=None,
+        description="tradis_insertion_index: unique insertion sites in the CDS divided "
+        "by the CDS length in bases",
+    )
+    log_likelihood_ratio: float | None = Field(
+        default=None,
+        description="tradis_insertion_index: log2 likelihood ratio between the two "
+        "modes (negative = the essential mode)",
+    )
+    # rb_tnseq_coverage_and_fitness (Price 2018 Supplementary Table 1)
+    tnseq_reads: int | None = Field(
+        default=None,
+        description="rb_tnseq_coverage_and_fitness: TnSeq reads within the gene (nReads)",
+    )
+    normalized_read_density: float | None = Field(
+        default=None,
+        description="rb_tnseq_coverage_and_fitness: reads normalized to a median of 1 "
+        "across genes and for GC content (normreads)",
+    )
+    central_insertion_positions: int | None = Field(
+        default=None,
+        description="rb_tnseq_coverage_and_fitness: locations in the central 10-90% of "
+        "the gene supported by at least 2 TnSeq reads (nPosCentral)",
+    )
+    normalized_insertion_density: float | None = Field(
+        default=None,
+        description="rb_tnseq_coverage_and_fitness: density of central insertions "
+        "normalized to a median of 1 across genes (dens)",
+    )
+    gene_gc_fraction: float | None = Field(
+        default=None,
+        description="rb_tnseq_coverage_and_fitness: the gene's G or C fraction (GC), "
+        "the input of the read normalization",
+    )
+    false_discovery_rate_lower: float | None = Field(
+        default=None,
+        description="rb_tnseq_coverage_and_fitness: the low end of the source's stated "
+        "false-discovery rate of its essential list (a fraction)",
+    )
+    false_discovery_rate_upper: float | None = Field(
+        default=None,
+        description="rb_tnseq_coverage_and_fitness: the high end of that rate",
+    )
+    # curated_null_phenotype (SGD)
+    curated_experiment_type: str | None = Field(
+        default=None,
+        description="curated_null_phenotype: the annotation's SGD experiment type, "
+        "verbatim ('classical genetics', 'systematic mutation set')",
+    )
+
+    @model_validator(mode="after")
+    def _check_evidence(self) -> "GeneEssentialityEvidence":
+        """The class is the type's parent; statistics belong to their own type and are
+        internally consistent; a footprinting E call's assertion error is value or gap.
+        """
+        roles = Counter(statement.role for statement in self.statements)
+        for role in (
+            EssentialityStatementRole.scoring_rule,
+            EssentialityStatementRole.call_definition,
+        ):
+            if roles[role] != 1:
+                raise ValueError(
+                    f"the evidence states {roles[role]} {role.value} statements, not 1"
+                )
+        parent = ESSENTIALITY_EVIDENCE_CLASS[self.evidence_type]
+        if self.evidence_class != parent:
+            raise ValueError(
+                f"evidence_type {self.evidence_type.value} is a "
+                f"{parent.value} type, not {self.evidence_class.value}"
+            )
+        own = set(ESSENTIALITY_EVIDENCE_FIELDS[self.evidence_type])
+        gapped = self.gapped_fields()
+        for type_, names in ESSENTIALITY_EVIDENCE_FIELDS.items():
+            for name in names:
+                if name in own:
+                    continue
+                if getattr(self, name) is not None or name in gapped:
+                    raise ValueError(
+                        f"{name} belongs to {type_.value} evidence, not "
+                        f"{self.evidence_type.value}"
+                    )
+        colonies = (self.colonies_verified, self.colonies_tested, self.percent_verified)
+        if any(v is not None for v in colonies):
+            verified, tested, percent = colonies
+            if verified is None or tested is None or percent is None:
+                raise ValueError(
+                    "colonies_verified, colonies_tested and percent_verified are set "
+                    "together"
+                )
+            if tested <= 0 or not 0 <= verified <= tested:
+                raise ValueError(f"{verified} of {tested} colonies verified")
+            if abs(percent - 100.0 * verified / tested) > 1e-9:
+                raise ValueError(
+                    f"percent_verified {percent} is not 100 x {verified} / {tested}"
+                )
+        if (self.assertion_error is None) != (
+            self.assertion_error_is_upper_bound is None
+        ):
+            raise ValueError(
+                "assertion_error and assertion_error_is_upper_bound are set together"
+            )
+        if self.assertion_error is not None and not 0 <= self.assertion_error <= 1:
+            raise ValueError(
+                f"assertion_error {self.assertion_error} is no probability"
+            )
+        if (
+            self.footprinting_call == FootprintingCall.essential
+            and self.assertion_error is None
+            and "assertion_error" not in gapped
+        ):
+            raise ValueError(
+                "an E call carries its assertion error or a typed ProvenanceGap"
+            )
+        if self.footprint_insertions_aa is not None and any(
+            p < 0 for p in self.footprint_insertions_aa
+        ):
+            raise ValueError("footprint_insertions_aa holds a negative position")
+        if self.insertion_index is not None and self.insertion_index < 0:
+            raise ValueError(f"insertion_index {self.insertion_index} < 0")
+        for name in (
+            "tnseq_reads",
+            "normalized_read_density",
+            "central_insertion_positions",
+            "normalized_insertion_density",
+        ):
+            value = getattr(self, name)
+            if value is not None and value < 0:
+                raise ValueError(f"{name} {value} < 0")
+        if self.gene_gc_fraction is not None and not 0 <= self.gene_gc_fraction <= 1:
+            raise ValueError(f"gene_gc_fraction {self.gene_gc_fraction} is no fraction")
+        fdr = (self.false_discovery_rate_lower, self.false_discovery_rate_upper)
+        if (fdr[0] is None) != (fdr[1] is None):
+            raise ValueError(
+                "false_discovery_rate_lower and false_discovery_rate_upper are set "
+                "together"
+            )
+        if fdr[0] is not None and fdr[1] is not None and not 0 <= fdr[0] <= fdr[1] <= 1:
+            raise ValueError(
+                f"false-discovery range {fdr} is not 0 <= low <= high <= 1"
+            )
+        return self
+
+    def statements_of(self, role: EssentialityStatementRole) -> list[SourcedValue]:
+        """The quotes of one role, in the order the evidence lists them."""
+        return [s.provenance for s in self.statements if s.role == role]
+
+    @property
+    def scoring_rule(self) -> SourcedValue:
+        """The one rule that made the call."""
+        (rule,) = self.statements_of(EssentialityStatementRole.scoring_rule)
+        return rule
+
+    @property
+    def call_definition(self) -> SourcedValue:
+        """The source's one statement of what a True call means."""
+        (definition,) = self.statements_of(EssentialityStatementRole.call_definition)
+        return definition
+
+
+# --- end #924 ---------------------------------------------------------------- #
+
+
 class GeneEssentialityPhenotype(Phenotype, ModelStrict):
-    """Phenotype indicating whether a gene knockout is lethal."""
+    """Phenotype indicating whether a gene knockout is lethal.
+
+    ``is_essential`` is the release's own call. What that call IS differs by store, so
+    every record also carries its ``evidence`` (#924): the evidence class and type, the
+    scoring rule and the source's definition of the call, quoted with sha256, and the
+    per-record statistics of its type. A released call with no boolean (a footprinting
+    X or ?, a TraDIS "unclear") is refused here; it is a graded call, not a boolean.
+    """
 
     graph_level: str = "node"
     label_name: str = "is_essential"
     is_essential: bool = Field(
         default=True, description="gene knockout leading cell death."
     )
+    # --- begin #924: the typed evidence behind a gene-essentiality call -------- #
+    evidence: GeneEssentialityEvidence = Field(
+        description="the evidence class and type, rule, definition, caveats and "
+        "per-record statistics of this call (GeneEssentialityEvidence)"
+    )
+
+    @model_validator(mode="after")
+    def _released_call_is_the_boolean(self) -> "GeneEssentialityPhenotype":
+        """A released call letter must be the stored boolean, and must have one."""
+        released: list[tuple[str, bool | None]] = []
+        if self.evidence.footprinting_call is not None:
+            call = self.evidence.footprinting_call
+            released.append(
+                (
+                    f"footprinting call {call.value}",
+                    FOOTPRINTING_CALL_IS_ESSENTIAL[call],
+                )
+            )
+        if self.evidence.tradis_call is not None:
+            call_ = self.evidence.tradis_call
+            released.append(
+                (f"TraDIS call {call_.value}", TRADIS_CALL_IS_ESSENTIAL[call_])
+            )
+        for label, boolean in released:
+            if boolean is None:
+                raise ValueError(
+                    f"the {label} has no boolean; a graded call is not an "
+                    "is_essential record"
+                )
+            if boolean != self.is_essential:
+                raise ValueError(f"the {label} is not is_essential={self.is_essential}")
+        return self
+
+    # --- end #924 -------------------------------------------------------------- #
 
 
 class SyntheticLethalityPhenotype(Phenotype, ModelStrict):

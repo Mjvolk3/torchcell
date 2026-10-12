@@ -23,6 +23,12 @@ The content id reported is the sha256 of the sort-keyed JSON of the python-mode 
 the same bytes for a stored dict and a rebuilt one.
 
     PYTHONPATH=<worktree> python experiments/036-dataset-fixes-before-kg-build/scripts/natural_isolate_genotype_identity.py before
+
+``after`` takes ``--processed STORE=PATH`` and ``--superseded STORE=PATH`` to name a
+store's generation explicitly, for a store another branch rebuilt after this one (the dev
+stores are shared across worktrees): the measured generation and the one before it are
+then read from those directories instead of ``processed`` and the newest
+``processed.superseded.*``.
 """
 
 from __future__ import annotations
@@ -229,9 +235,17 @@ def _perturbation_types(processed: str) -> dict[str, dict[str, str]]:
     }
 
 
-def after(data_root: str) -> dict[str, Any]:
-    """Rebuilt genotypes vs ``genotype``, across stores, and old vs new by type."""
-    stores = {s: osp.join(data_root, "data/torchcell", s, "processed") for s in STORES}
+def after(
+    data_root: str, processed: Mapping[str, str], superseded: Mapping[str, str]
+) -> dict[str, Any]:
+    """Rebuilt genotypes vs ``genotype``, across stores, and old vs new by type.
+
+    ``processed`` and ``superseded`` map a store to an explicit generation directory.
+    """
+    stores = {
+        s: processed.get(s, osp.join(data_root, "data/torchcell", s, "processed"))
+        for s in STORES
+    }
     with tempfile.TemporaryDirectory() as workdir:
         genotypes = _builder(data_root, workdir)
         ids = _Ids(genotypes, full=True)
@@ -239,12 +253,17 @@ def after(data_root: str) -> dict[str, Any]:
         ledger = genotypes.ledger().model_dump(mode="json")
     for row in rows:
         root = osp.dirname(row["processed"])
-        superseded = sorted(glob.glob(osp.join(root, "processed.superseded.*")))
+        named = superseded.get(row["store"])
+        previous = (
+            [named]
+            if named is not None
+            else sorted(glob.glob(osp.join(root, "processed.superseded.*")))
+        )
         added: Counter[str] = Counter()
         removed: Counter[str] = Counter()
         n_compared = 0
-        if superseded:
-            old = _perturbation_types(superseded[-1])
+        if previous:
+            old = _perturbation_types(previous[-1])
             new = _perturbation_types(row["processed"])
             for isolate, after_types in new.items():
                 if isolate not in old:
@@ -257,7 +276,7 @@ def after(data_root: str) -> dict[str, Any]:
                 removed.update(
                     before_types[k] for k in before_types.keys() - after_types.keys()
                 )
-        row["superseded"] = superseded[-1] if superseded else None
+        row["superseded"] = previous[-1] if previous else None
         row["n_isolates_compared_with_superseded"] = n_compared
         row["perturbations_added_by_type"] = dict(sorted(added.items()))
         row["perturbations_removed_by_type"] = dict(sorted(removed.items()))
@@ -268,14 +287,37 @@ def after(data_root: str) -> dict[str, Any]:
     }
 
 
+def _pairs(items: list[str]) -> dict[str, str]:
+    """``["store=path", ...]`` as a dict; an unknown store or a missing path raises."""
+    out: dict[str, str] = {}
+    for item in items:
+        store, path = item.split("=", 1)
+        if store not in STORES or not osp.isdir(path):
+            raise ValueError(
+                f"--processed/--superseded {item!r}: unknown store or path"
+            )
+        out[store] = path
+    return out
+
+
 def main() -> None:
     """Run one mode and write its JSON beside the other results."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("mode", choices=["before", "after"])
+    parser.add_argument(
+        "--processed", action="append", default=[], metavar="STORE=PATH"
+    )
+    parser.add_argument(
+        "--superseded", action="append", default=[], metavar="STORE=PATH"
+    )
     args = parser.parse_args()
     load_dotenv()
     data_root = os.environ["DATA_ROOT"]
-    result = before(data_root) if args.mode == "before" else after(data_root)
+    result = (
+        before(data_root)
+        if args.mode == "before"
+        else after(data_root, _pairs(args.processed), _pairs(args.superseded))
+    )
     os.makedirs(RESULTS, exist_ok=True)
     path = osp.join(RESULTS, f"natural_isolate_genotype_identity_{args.mode}.json")
     with open(path, "w") as handle:

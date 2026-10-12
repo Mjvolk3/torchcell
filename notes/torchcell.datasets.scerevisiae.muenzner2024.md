@@ -111,3 +111,61 @@ L0 validates each record against the class its own `experiment_type` names rathe
 ### Tests
 
 `tests/torchcell/datasets/scerevisiae/test_muenzner2024.py` (synthetic workbook + the Caudal synthetic Peter tier, end-to-end builds, ledgers, parsing refusals, media, deposit, download, both gates, `verify_build` against a synthetic Caudal store; `--data`: quote audits and the measured workbook counts), `tests/torchcell/adapters/test_muenzner2024_adapter.py`, plus pins in `test_runners.py`, `test_raw_pins.py`, `test_build_time_projection.py`, `test_adapter_schema_consistency.py` and `test_schema.py`.
+
+## 2026.10.12 - The shared isolate genotype, stored as released (#987, #988, PR #1058)
+
+The genotype of every isolate in this store is now built by [[torchcell.sequence.natural_isolate]], the one module every natural-isolate loader of the Peter 2018 panel shares, and audited by [[torchcell.verification.natural_isolate_genotype]]. Beyond the sequence variants, natural presences and natural absences it already carried (unchanged, the release's own representation off the 1,011-genome set), each genotype now stores what Peter 2018 releases about the isolate, as released and keyed as the release keys it: every call of the two loss-of-function matrices (`NaturalLossOfFunctionPerturbation`, keyed by the loss-of-function matrix's `NAME`, by the code's pangenome ORF name in the frameshift matrix, or by `Gene` verbatim on a frameshift row released without a code), the HO deletion Supplementary Table 1 marks (`DeletionPerturbation` of YDL227C, kept beside whatever the presence matrix states about HO), and Table S1's ploidy, zygosity and aneuploidy on `Genotype.natural_isolate` (each the table's value or a typed gap). No call is dropped, re-keyed or annotated by a lookup in another file or in the S288C annotation (owner rule, 2026-10-12: the data is the data).
+
+Rebuilt with the code of `073d4b74a` (build manifests: `torchcell_commit` `6ffa14d10`, a notes-only commit on top, `torchcell_dirty: false`) with `build_dataset_lmdb --retire-existing --verify` under slurm (array 4292: task 1 the proteome store, 18 min; task 2 the turnover store, 2 min); the predecessor is kept as `processed.superseded.*`. Record counts unchanged: 794 proteome and 55 turnover records, one per isolate.
+
+**These two generations are no longer the dev stores' `processed/`.** The #1045 audit branch's slurm array 4348 (tasks 2 and 3, started 11:41 and 11:45, from that branch's own source snapshot) retired them and rebuilt both stores with the pre-#1058 genotype code (the proteome task ended FAILED, the turnover task COMPLETED), minutes after the builds below passed `--verify` (the dev stores are shared across worktrees). Both #1058 generations are kept beside them, under the names given in the headings; the identity measurement reads them there. The next build from main after #1058 lands rebuilds both stores.
+
+### `proteome_muenzner2024` (kept as `processed.superseded.20261012-114150`)
+
+Genotype ledger: 794 isolates, 3,988,281 sequence variants, 66,957 natural presences, 105,431 natural absences, 85 HO deletions; loss-of-function calls: nonsense_or_sift 185,451 on 3,809 genes, homozygous_frameshift 114,589 on 2,309 gene keys (7,053 on rows released without a code).
+
+All 16 rows pass (`preprocess.superseded.20261012-114150/verification_report.json`):
+
+| level | rule | result |
+|---|---|---|
+| L0 | structural | 794 records validated |
+| L1 | count | observed 794, expected 794 |
+| L1 | strain_uniqueness | 794 unique (strain, condition) records over 794 strains |
+| L1 | genotype_strain_consistency | all 794 genotypes name one isolate each |
+| L2 | value_fidelity | 1214201 values checked |
+| L2 | single_acquisition | n_replicates values [1] (the release: acquired once) |
+| L3 | shared_reference | one shared reference over 1576 proteins, all finite and > 0 |
+| L3 | reference_covers_every_key | 0 measured cells have no euploid reference value |
+| L3 | measurement_type_consistent | single measurement_type: 'swath_ms_maxlfq_precursor_batch_corrected_quantity' |
+| L4 | gene_containment_sgd | 1.0000 of 1576 measured proteins are S288C systematic names (>= 0.99); outside: [] |
+| L4 | caudal_isolate_overlap | 759 isolates also in the built Caudal 2024 store (expected 759) |
+| L4 | caudal_genotype_agreement | 4 isolates compared with the Caudal 2024 store: 4 identical genotypes |
+| L1 | isolate_genotype_identity | 794 isolates, one genotype each, every strain-carrying perturbation names its isolate |
+| L2 | isolate_genotype_round_trip | 794 stored genotypes equal their re-derivation from the pinned Peter 2018 releases |
+| L4 | isolate_descriptor_matches_table_s1 | 794 descriptors and 85 HO deletions equal Supplementary Table 1 re-read from si3.xls |
+| L4 | loss_of_function_calls_match_release | stored loss-of-function calls are the release's 1s, row for row by the matrix's own key, over 794 isolates: {'nonsense_or_sift': 185451, 'homozygous_frameshift': 114589} |
+
+### `protein_turnover_muenzner2024` (kept as `processed.superseded.20261012-114548`)
+
+Genotype ledger: 55 isolates, 278,223 sequence variants, 4,940 natural presences, 7,366 natural absences, 4 HO deletions; loss-of-function calls: nonsense_or_sift 12,695 on 1,440 genes, homozygous_frameshift 7,830 on 849 gene keys (474 on rows released without a code).
+
+All 14 rows pass (`preprocess.superseded.20261012-114548/verification_report.json`):
+
+| level | rule | result |
+|---|---|---|
+| L0 | structural | 55 records validated |
+| L1 | count | observed 55, expected 55 |
+| L1 | strain_uniqueness | 55 unique (strain, condition) records over 55 strains |
+| L1 | genotype_strain_consistency | all 55 genotypes name one isolate each |
+| L2 | value_fidelity | 58061 values checked |
+| L3 | half_life_is_ln2_over_rate | max relative error 5.68e-15 over 58061 (rate, HL) pairs |
+| L3 | shared_reference | one shared reference over 1524 proteins, all finite and > 0 |
+| L3 | uncovered_cells_match_ledger | 939 measured cells without a euploid reference value (ledger: 939) |
+| L3 | measurement_type_consistent | single measurement_type: 'dynamic_silac_lys8_kdp_per_hour_no_dilution_correction' |
+| L4 | gene_containment_sgd | 0.9989 of 1836 measured proteins are S288C systematic names (>= 0.99); outside: ['R0040C', 'YFL057C'] |
+| L1 | isolate_genotype_identity | 55 isolates, one genotype each, every strain-carrying perturbation names its isolate |
+| L2 | isolate_genotype_round_trip | 55 stored genotypes equal their re-derivation from the pinned Peter 2018 releases |
+| L4 | isolate_descriptor_matches_table_s1 | 55 descriptors and 4 HO deletions equal Supplementary Table 1 re-read from si3.xls |
+| L4 | loss_of_function_calls_match_release | stored loss-of-function calls are the release's 1s, row for row by the matrix's own key, over 55 isolates: {'nonsense_or_sift': 12695, 'homozygous_frameshift': 7830} |
+
+`caudal_genotype_agreement` compares four sampled isolates with the Caudal 2024 store as #1058 rebuilt it (10:30), so both stores carry the shared genotype.

@@ -122,3 +122,98 @@ The sporulation replicate count is a typed gap on `n_samples` and `sample_unit`:
 Schema impact (`scripts/schema_impact_check.py --base origin/main`): 96 datasets impacted, 0 breaking; additive. The new `ConcentrationUnit` and `MeasurementType` members move every closure that holds them, so the stores read stale until the KG 4.0 full rebuild that follows this wave.
 
 Candidate gate: admissible, G1-G5 pass (`database/candidates/dechiaraDomesticationReprogrammedBudding2022.json`). Issues: #1006, #1007, #1008 filed; De Chiara evidence added to #1001 (karyotype) and #1002 (shared isolate-genotype module).
+
+## 2026.10.12 - The shared isolate genotype, stored as released (#987, #988, PR #1058)
+
+The genotype of every isolate in this store is now built by [[torchcell.sequence.natural_isolate]], the one module every natural-isolate loader of the Peter 2018 panel shares, and audited by [[torchcell.verification.natural_isolate_genotype]]. Beyond the sequence variants, natural presences and natural absences it already carried (unchanged, the release's own representation off the 1,011-genome set), each genotype now stores what Peter 2018 releases about the isolate, as released and keyed as the release keys it: every call of the two loss-of-function matrices (`NaturalLossOfFunctionPerturbation`, keyed by the loss-of-function matrix's `NAME`, by the code's pangenome ORF name in the frameshift matrix, or by `Gene` verbatim on a frameshift row released without a code), the HO deletion Supplementary Table 1 marks (`DeletionPerturbation` of YDL227C, kept beside whatever the presence matrix states about HO), and Table S1's ploidy, zygosity and aneuploidy on `Genotype.natural_isolate` (each the table's value or a typed gap). No call is dropped, re-keyed or annotated by a lookup in another file or in the S288C annotation (owner rule, 2026-10-12: the data is the data).
+
+Rebuilt with the code of `073d4b74a` (build manifests: `torchcell_commit` `6ffa14d10`, a notes-only commit on top, `torchcell_dirty: false`) with `build_dataset_lmdb --retire-existing --verify` under slurm (array 4291 tasks 3 to 5, 21 to 22 min each); the predecessor is kept as `processed.superseded.*`. Record count unchanged: 36,295 doubling-time, 36,286 cell-yield and 4,039 life-cycle records.
+
+The ledger is the builder's over the 1,011-genome panel (the loader builds the whole panel once for its three stores); each store holds the isolates its records name.
+
+### `doubling_time_dechiara2022`
+
+Genotype ledger (`preprocess/natural_isolate_genotype_ledger.json`): 1,011 isolates, 5,103,155 sequence variants, 84,592 natural presences, 136,351 natural absences, 124 HO deletions; loss-of-function calls: nonsense_or_sift 240,526 on 4,090 genes, homozygous_frameshift 147,310 on 2,455 gene keys (9,006 on rows released without a code).
+
+All 20 rows pass (`preprocess/verification_report.json`):
+
+| level | rule | result |
+|---|---|---|
+| L0 | structural | 36295 records validated (949 distinct genotypes and references) |
+| L1 | count | observed 36295, expected 36295 released non-missing conditions |
+| L1 | isolate_condition_uniqueness | 36295 unique (isolate, condition) records |
+| L1 | isolates_in_peter_panel | every record's genotype names one isolate of Peter's 1011-isolate panel (906 isolates) |
+| L2 | released_value_fidelity | every stored value equals its released Supplementary Table 3 cell (36295 conditions) |
+| L2 | positive_values | 36295 of 36295 values finite and positive |
+| L3 | measurement_type_consistent | measurement types ['growth_rate'] |
+| L3 | reference_is_population_mean | every reference phenotype is the mean of its condition's released values |
+| L3 | sourced_quotes_are_verbatim | 29 quotes re-read against their sha256-pinned mirror files; 0 failed |
+| L1 | provenance_gaps | 116274 documented provenance gaps over 36295/36295 records; 1 deferred field(s): ['inchikey']; 1416297 undeclared None values over 22 carrier fields (top: Compound.inchi x241571, Compound.smiles x177942, Compound.chebi_id x175650, Compound.pubchem_cid x141647, Compound.inchikey x62472) |
+| L1 | canonical_gene_names | no gene perturbations to check |
+| L2 | uncertainty_sanity | 0 labeled uncertainties, none a zero dispersion; 36295 records report n_samples >= 2 with no uncertainty |
+| L3 | compound_identity | environment edits: 27334 compound references carry a structure identifier; 8169 declare a typed gap (8 distinct compounds, unencodable) |
+| L3 | media_compound_identity | medium components: 72590 compound references carry a structure identifier; 71006 declare a typed gap (4 distinct compounds, unencodable) |
+| L3 | media_membership | 0 records on a shared MEDIA_LIBRARY medium, 36295 on a medium deriving from one (3 distinct media) |
+| L1 | isolate_genotype_identity | 906 isolates, one genotype each, every strain-carrying perturbation names its isolate |
+| L2 | isolate_genotype_round_trip | 906 stored genotypes equal their re-derivation from the pinned Peter 2018 releases |
+| L4 | isolate_descriptor_matches_table_s1 | 906 descriptors and 124 HO deletions equal Supplementary Table 1 re-read from si3.xls |
+| L4 | loss_of_function_calls_match_release | stored loss-of-function calls are the release's 1s, row for row by the matrix's own key, over 906 isolates: {'nonsense_or_sift': 217409, 'homozygous_frameshift': 132124} |
+| L4 | sequence_variant_genes_are_s288c_genes | 1.000 of 5977 sequence-variant genes are SGD R64-4-1 genes (>= 0.9) |
+
+### `cell_yield_dechiara2022`
+
+Genotype ledger (`preprocess/natural_isolate_genotype_ledger.json`): 1,011 isolates, 5,103,155 sequence variants, 84,592 natural presences, 136,351 natural absences, 124 HO deletions; loss-of-function calls: nonsense_or_sift 240,526 on 4,090 genes, homozygous_frameshift 147,310 on 2,455 gene keys (9,006 on rows released without a code).
+
+All 20 rows pass (`preprocess/verification_report.json`):
+
+| level | rule | result |
+|---|---|---|
+| L0 | structural | 36286 records validated (949 distinct genotypes and references) |
+| L1 | count | observed 36286, expected 36286 released non-missing conditions |
+| L1 | isolate_condition_uniqueness | 36286 unique (isolate, condition) records |
+| L1 | isolates_in_peter_panel | every record's genotype names one isolate of Peter's 1011-isolate panel (906 isolates) |
+| L2 | released_value_fidelity | every stored value equals its released Supplementary Table 3 cell (36286 conditions) |
+| L2 | positive_values | 36286 of 36286 values finite and positive |
+| L3 | measurement_type_consistent | measurement types ['cell_yield'] |
+| L3 | reference_is_population_mean | every reference phenotype is the mean of its condition's released values |
+| L3 | sourced_quotes_are_verbatim | 29 quotes re-read against their sha256-pinned mirror files; 0 failed |
+| L1 | provenance_gaps | 116247 documented provenance gaps over 36286/36286 records; 1 deferred field(s): ['inchikey']; 1415982 undeclared None values over 22 carrier fields (top: Compound.inchi x241517, Compound.smiles x177906, Compound.chebi_id x175614, Compound.pubchem_cid x141620, Compound.inchikey x62463) |
+| L1 | canonical_gene_names | no gene perturbations to check |
+| L2 | uncertainty_sanity | 0 labeled uncertainties, none a zero dispersion; 36286 records report n_samples >= 2 with no uncertainty |
+| L3 | compound_identity | environment edits: 27325 compound references carry a structure identifier; 8169 declare a typed gap (8 distinct compounds, unencodable) |
+| L3 | media_compound_identity | medium components: 72572 compound references carry a structure identifier; 70988 declare a typed gap (4 distinct compounds, unencodable) |
+| L3 | media_membership | 0 records on a shared MEDIA_LIBRARY medium, 36286 on a medium deriving from one (3 distinct media) |
+| L1 | isolate_genotype_identity | 906 isolates, one genotype each, every strain-carrying perturbation names its isolate |
+| L2 | isolate_genotype_round_trip | 906 stored genotypes equal their re-derivation from the pinned Peter 2018 releases |
+| L4 | isolate_descriptor_matches_table_s1 | 906 descriptors and 124 HO deletions equal Supplementary Table 1 re-read from si3.xls |
+| L4 | loss_of_function_calls_match_release | stored loss-of-function calls are the release's 1s, row for row by the matrix's own key, over 906 isolates: {'nonsense_or_sift': 217409, 'homozygous_frameshift': 132124} |
+| L4 | sequence_variant_genes_are_s288c_genes | 1.000 of 5977 sequence-variant genes are SGD R64-4-1 genes (>= 0.9) |
+
+### `life_cycle_dechiara2022`
+
+Genotype ledger (`preprocess/natural_isolate_genotype_ledger.json`): 1,011 isolates, 5,103,155 sequence variants, 84,592 natural presences, 136,351 natural absences, 124 HO deletions; loss-of-function calls: nonsense_or_sift 240,526 on 4,090 genes, homozygous_frameshift 147,310 on 2,455 gene keys (9,006 on rows released without a code).
+
+All 20 rows pass (`preprocess/verification_report.json`):
+
+| level | rule | result |
+|---|---|---|
+| L0 | structural | 4039 records validated (910 distinct genotypes and references) |
+| L1 | count | observed 4039, expected 4039 released non-missing conditions |
+| L1 | isolate_condition_uniqueness | 4039 unique (isolate, condition) records |
+| L1 | isolates_in_peter_panel | every record's genotype names one isolate of Peter's 1011-isolate panel (905 isolates) |
+| L2 | released_value_fidelity | every stored value equals its released Supplementary Table 3 cell (4039 conditions) |
+| L2 | viability_above_100 | 37 plate-normalized viabilities above 100, 37 declared |
+| L3 | one_assay_per_protocol | 5 protocols, one assay each |
+| L3 | reference_is_population_mean | every reference phenotype is the mean of its condition's released values |
+| L3 | sourced_quotes_are_verbatim | 29 quotes re-read against their sha256-pinned mirror files; 0 failed |
+| L1 | provenance_gaps | 7406 documented provenance gaps over 3290/4039 records; 1 deferred field(s): ['inchikey']; 130744 undeclared None values over 19 carrier fields (top: Compound.inchi x21037, Compound.chebi_id x19337, Compound.pubchem_cid x14534, Compound.smiles x14534, Compound.inchikey x11306) |
+| L1 | canonical_gene_names | no gene perturbations to check |
+| L2 | uncertainty_sanity | 0 labeled uncertainties, none a zero dispersion; 0 records report n_samples >= 2 with no uncertainty |
+| L3 | compound_identity | environment edits: 0 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | media_compound_identity | medium components: 2464 compound references carry a structure identifier; 1614 declare a typed gap (2 distinct compounds, unencodable) |
+| L3 | media_membership | 0 records on a shared MEDIA_LIBRARY medium, 4039 on a medium deriving from one (4 distinct media) |
+| L1 | isolate_genotype_identity | 905 isolates, one genotype each, every strain-carrying perturbation names its isolate |
+| L2 | isolate_genotype_round_trip | 905 stored genotypes equal their re-derivation from the pinned Peter 2018 releases |
+| L4 | isolate_descriptor_matches_table_s1 | 905 descriptors and 48 HO deletions equal Supplementary Table 1 re-read from si3.xls |
+| L4 | loss_of_function_calls_match_release | stored loss-of-function calls are the release's 1s, row for row by the matrix's own key, over 905 isolates: {'nonsense_or_sift': 217011, 'homozygous_frameshift': 131254} |
+| L4 | sequence_variant_genes_are_s288c_genes | 1.000 of 5977 sequence-variant genes are SGD R64-4-1 genes (>= 0.9) |

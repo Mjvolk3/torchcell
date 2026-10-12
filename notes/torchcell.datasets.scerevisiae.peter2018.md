@@ -111,3 +111,44 @@ of a `deferred_pending_source_review` gap on `inchikey`, and the YPRIBOSE medium
 reading of the bare name, so that component is renamed. No loader code changed; the test
 pins both. The `inchikey` deferred-gap count in the verification table above (1,942: KCl and
 ribose) describes the store as built before this; the next build has none from these two.
+
+## 2026.10.12 - The shared isolate genotype, stored as released (#987, #988, PR #1058)
+
+The genotype of every isolate in this store is now built by [[torchcell.sequence.natural_isolate]], the one module every natural-isolate loader of the Peter 2018 panel shares, and audited by [[torchcell.verification.natural_isolate_genotype]]. Beyond the sequence variants, natural presences and natural absences it already carried (unchanged, the release's own representation off the 1,011-genome set), each genotype now stores what Peter 2018 releases about the isolate, as released and keyed as the release keys it: every call of the two loss-of-function matrices (`NaturalLossOfFunctionPerturbation`, keyed by the loss-of-function matrix's `NAME`, by the code's pangenome ORF name in the frameshift matrix, or by `Gene` verbatim on a frameshift row released without a code), the HO deletion Supplementary Table 1 marks (`DeletionPerturbation` of YDL227C, kept beside whatever the presence matrix states about HO), and Table S1's ploidy, zygosity and aneuploidy on `Genotype.natural_isolate` (each the table's value or a typed gap). No call is dropped, re-keyed or annotated by a lookup in another file or in the S288C annotation (owner rule, 2026-10-12: the data is the data).
+
+Rebuilt with the code of `073d4b74a` (build manifests: `torchcell_commit` `6ffa14d10`, a notes-only commit on top, `torchcell_dirty: false`) with `build_dataset_lmdb --retire-existing --verify` under slurm (array 4291 task 2, 32 min); the predecessor is kept as `processed.superseded.*`. Record count unchanged: 33,985 records over 971 isolates x 35 conditions.
+
+### `isolate_growth_peter2018`
+
+Genotype ledger (`preprocess/natural_isolate_genotype_ledger.json`): 971 isolates, 4,901,609 sequence variants, 81,373 natural presences, 131,255 natural absences, 122 HO deletions; loss-of-function calls: nonsense_or_sift 231,339 on 4,069 genes, homozygous_frameshift 141,453 on 2,440 gene keys (8,625 on rows released without a code).
+
+All 24 rows pass (`preprocess/verification_report.json`):
+
+| level | rule | result |
+|---|---|---|
+| L0 | structural | 33985 records validated (971 genotypes validated once each and spliced into their records) |
+| L1 | count | observed 33985, expected 33985 |
+| L1 | isolate_condition_uniqueness | 33985 unique (isolate, condition) records |
+| L1 | isolate_condition_coverage | 971 isolates, one genotype object each, 35 records each |
+| L2 | value_fidelity | 33985 values checked |
+| L2 | release_fidelity | 33985 released cells, each stored once and equal to its stored ratio |
+| L1 | isolate_genotype_identity | 971 isolates, one genotype each, every strain-carrying perturbation names its isolate |
+| L2 | isolate_genotype_round_trip | 971 stored genotypes equal their re-derivation from the pinned Peter 2018 releases |
+| L4 | isolate_descriptor_matches_table_s1 | 971 descriptors and 122 HO deletions equal Supplementary Table 1 re-read from si3.xls |
+| L4 | loss_of_function_calls_match_release | stored loss-of-function calls are the release's 1s, row for row by the matrix's own key, over 971 isolates: {'nonsense_or_sift': 231339, 'homozygous_frameshift': 141453} |
+| L3 | measurement_type_consistent | single measurement_type: 'condition_growth_ratio' |
+| L3 | reference_zero | ratio rule: reference response == 1 for all 33985 records (['condition_growth_ratio']) |
+| L3 | environment_perturbed | all 33985 experiments carry an environmental edit (perturbation, non-baseline temperature, or non-baseline media; baseline temp=30.0, media='YPD (solid, 2% agar)') |
+| L3 | conditions_documented | 35 environments, each a Supplementary Table 2 row re-read from si/si3.xls (971 records each) |
+| L3 | sourced_values | 60 sourced values audited against the library mirror |
+| L1 | provenance_gaps | 96009 documented provenance gaps over 33985/33985 records; 0 deferred field(s): []; 1012753 undeclared None values over 20 carrier fields (top: Compound.inchi x160215, Compound.chebi_id x104868, Compound.smiles x101955, Compound.inchikey x67970, Compound.pubchem_cid x67970) |
+| L1 | canonical_gene_names | 8053 systematic names, one canonical spelling each (no resolver supplied: spelling checked, annotation not) |
+| L2 | uncertainty_sanity | 0 labeled uncertainties, none a zero dispersion; 33985 records report n_samples >= 2 with no uncertainty |
+| L3 | compound_identity | environment edits: 24275 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | media_compound_identity | medium components: 67970 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | media_membership | 0 records on a shared MEDIA_LIBRARY medium, 33985 on a medium deriving from one (8 distinct media) |
+| L4 | s288c_gene_containment | 0.9998 of 6307 S288C-keyed perturbation names are S288C genes (>= 0.999); 1 are not |
+| L4 | pangenome_orf_containment | all 1645 present accessory ORFs are pangenome ORFs of the presence matrix |
+| L4 | published_md5 | release md5 479862335552a050e46de163d1ee5f72 equals the host's md5.txt and the loader pin |
+
+`s288c_gene_containment` now counts a frameshift call released without a pangenome code apart: its key is the release's `Gene`, not an S288C name. The 2026.10.11 section's 'Not on the genotype yet (#988)' and 'Loss of function (second deliverable): filed, not implemented (#987)' are implemented here: 231,339 nonsense/SIFT calls and 141,453 frameshift calls are stored, every released call over the 971 isolates.

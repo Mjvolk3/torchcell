@@ -421,3 +421,32 @@ Measured by `experiments/036-dataset-fixes-before-kg-build/scripts/media_stubs_s
 Phase 3 of the artifact tier ([[plan.artifact-tier.2026.10.07]]; schema side in [[torchcell.datamodels.schema]]). Each `SequenceVariantPerturbation` now carries `sequence_ref`, an `ArtifactRef` with `tier="genomes"`, `key="peter2018_1011_assemblies"`, `path="allReferenceGenesWithSNPsAndIndelsInferred.tar.gz"`, `member="<gene>.fasta#<header_token>"`, and the tarball's sha256 and bytes. `refgene_tarball_ref(data_root)` reads those from the genomes-tier manifest through `load_genome_manifest`, and `refgene_member_ref` narrows it per allele. The module constant `REFGENE_TAR_SHA256` is gone: `download()` relies on `resolve` (which verifies the tarball against that manifest) and `process()` pins `raw/` to `peter.record(REFGENE_TAR_NAME).sha256`, the same lookup as the presence and copy-number matrices. The manifest still pins `b5400b89...33f25` (160,823,369 bytes), the value the served records carried; `test_the_tier_manifest_lists_the_reference_gene_tarball` asserts it.
 
 Measured by `experiments/036-dataset-fixes-before-kg-build/scripts/artifact_ref_loader_slice.py` (output `experiments/036-dataset-fixes-before-kg-build/results/artifact_ref_loader_slice.json`), through the loader's own `refgene_tarball_ref` and `_sequence_perturbations` over the dev tree's cached `preprocess/sequence_variants.parquet` (read-only): isolate AAA gets 4,557 refs and AAB 4,913, every one round-trips through `ArtifactRef.parse(str(ref), sha256=...)`, and the first, `tc://genomes/peter2018_1011_assemblies/allReferenceGenesWithSNPsAndIndelsInferred.tar.gz#YAL001C.fasta#AAA_YAL001C_TFC3`, resolves against the local genomes tier (`torchcell.artifacts.check`). The dev store (`caudal_pantranscriptome2024`, 943 records) still holds the old fields; its rebuild runs under slurm. Tests: `test_caudal2024.py` (tarball ref from a synthetic manifest, a perturbation's serialized ref and its parse round trip, the real-tier lookup) and `test_caudal2024_synthetic.py` (the expected records now carry refs; the synthetic tarball is gzip mtime 0 so its sha256 is fixed).
+
+## 2026.10.12 - The shared isolate genotype, stored as released (#987, #988, PR #1058)
+
+The genotype of every isolate in this store is now built by [[torchcell.sequence.natural_isolate]], the one module every natural-isolate loader of the Peter 2018 panel shares, and audited by [[torchcell.verification.natural_isolate_genotype]]. Beyond the sequence variants, natural presences and natural absences it already carried (unchanged, the release's own representation off the 1,011-genome set), each genotype now stores what Peter 2018 releases about the isolate, as released and keyed as the release keys it: every call of the two loss-of-function matrices (`NaturalLossOfFunctionPerturbation`, keyed by the loss-of-function matrix's `NAME`, by the code's pangenome ORF name in the frameshift matrix, or by `Gene` verbatim on a frameshift row released without a code), the HO deletion Supplementary Table 1 marks (`DeletionPerturbation` of YDL227C, kept beside whatever the presence matrix states about HO), and Table S1's ploidy, zygosity and aneuploidy on `Genotype.natural_isolate` (each the table's value or a typed gap). No call is dropped, re-keyed or annotated by a lookup in another file or in the S288C annotation (owner rule, 2026-10-12: the data is the data).
+
+Rebuilt with the code of `073d4b74a` (build manifests: `torchcell_commit` `6ffa14d10`, a notes-only commit on top, `torchcell_dirty: false`) with `build_dataset_lmdb --retire-existing --verify` under slurm (array 4291 task 1, 22 min); the predecessor is kept as `processed.superseded.*`. Record count unchanged: 943 records, one per isolate.
+
+### `caudal_pantranscriptome2024`
+
+Genotype ledger (`preprocess/natural_isolate_genotype_ledger.json`): 943 isolates, 4,759,608 sequence variants, 79,016 natural presences, 126,839 natural absences, 116 HO deletions; loss-of-function calls: nonsense_or_sift 223,947 on 3,994 genes, homozygous_frameshift 137,677 on 2,408 gene keys (8,440 on rows released without a code).
+
+All 12 rows pass (`preprocess/verification_report.json`):
+
+| level | rule | result |
+|---|---|---|
+| L0 | structural | 943 records validated |
+| L1 | count | observed 943, expected 943 |
+| L1 | strain_uniqueness | 943 unique (strain, condition) records over 943 strains |
+| L2 | tpm_value_fidelity | 5686300 values checked |
+| L2 | count_value_fidelity | 5686300 counts are non-negative integers |
+| L3 | measurement_type_consistent | single measurement_type: 'rnaseq_tpm' |
+| L3 | reference_finite | reference expression finite for all 6097438 values |
+| L4 | gene_containment_sgd | 0.941 of 6466 measured genes are S288C reference genes (>= 0.9) |
+| L1 | isolate_genotype_identity | 943 isolates, one genotype each, every strain-carrying perturbation names its isolate |
+| L2 | isolate_genotype_round_trip | 943 stored genotypes equal their re-derivation from the pinned Peter 2018 releases |
+| L4 | isolate_descriptor_matches_table_s1 | 943 descriptors and 116 HO deletions equal Supplementary Table 1 re-read from si3.xls |
+| L4 | loss_of_function_calls_match_release | stored loss-of-function calls are the release's 1s, row for row by the matrix's own key, over 943 isolates: {'nonsense_or_sift': 223947, 'homozygous_frameshift': 137677} |
+
+Caudal 2024 had no `verify_build` before this change; `build_dataset_lmdb --verify` now runs the RNA-seq family rules (`runners.verify_rnaseq_store`) plus the shared audit. The family's L0 validates each record against its own experiment class (`levels.validate_by_type_tag`), because the `ExperimentType` union costs 28.8 to 33.6 s per Caudal record (about 8 h for the store) against 0.76 to 0.85 s.

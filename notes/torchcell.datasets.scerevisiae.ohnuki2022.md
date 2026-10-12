@@ -48,3 +48,11 @@ Now `process()` starts with `verify_raw_files(self.raw_dir, ...)` against `MUTAN
 - A target ORF listed twice (after strip, uppercase and name reconciliation) used to give two records of one quadruple genotype; it is now refused by name. 0 of the 1982 released rows repeat.
 - The 3Delta reference mean used to skip a blank cell (`mean` skips NaN) while a blank mutant cell dropped its strain. A blank reference cell is now refused, so the reference is never averaged over a subset of replicates. 0 blank cells in the released 749 x 501 `wt749data.tsv`; the blank mutant drop (YGL141W, 2 cells) is unchanged.
 - Tests: `test_repeated_target_orf_refuses`, `test_blank_reference_cell_refuses`, `test_clean_base_only_matrix`.
+
+## 2026.10.12 - Every released record stored as released; no genome at load time (#1045)
+
+Owner rule, 2026-10-12: the data is the data; the genome and the experiment are loaded separately and meet through their gene sets at modeling time, so a loader never consults the annotation to decide whether a record exists or how it is keyed. Sweep row: [[database.genome-gating-sweep.2026.10.12]]. PR #1079 (group 1). The store is rebuilt from the branch with `--retire-existing --verify` (slurm array 4457); the L0-L4 table is appended when the task finishes.
+
+Before: `reconcile_systematic_names` remapped 7 target ORFs to the current id (e.g. YAL058C-A to YAL056C-A, YML033W to YML034W); the two target rows that are also 3Delta background genes (YGL013C PDR1, YDR011W SNQ2) and the one row with blank cells (YGL141W HRD1, 2 of 501 CV traits) were dropped: 1,979 records.
+
+Now: the released target ORF (stripped, upper-cased) is both names; the HRD1 row is stored with its 499 measured traits and the 2 blank cells key-absent; the PDR1 and SNQ2 targets are stored as released (the genotype carries the target deletion and the background deletion of the same gene, which is what the collection says of those strains). 1,982 records.

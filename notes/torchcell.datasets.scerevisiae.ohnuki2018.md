@@ -59,3 +59,11 @@ Issue #622: the loader built `Media(name="YPD", state="liquid", is_synthetic=Fal
 Methods (mirror `paper.md`, sha256 `8c9d991f...`): line 179 gives the recipe, "YPD medium containing 1% (w/v) Bacto yeast extract ..., 2% (w/v) Bacto peptone ..., and 2% (w/v) glucose, which was prepared as described previously [15]" (ref 15 is Ohya 2005, line 339); line 181 gives the state, "inoculated into 2 mL of YPD liquid medium". The paper's recipe equals the library `YPD_LIQUID` percentages, so the loader now emits `OHNUKI_YPD = restated(YPD_LIQUID, ...)` with both quotes in `MEDIUM_SOURCED_VALUES`. `restated()` (new in `torchcell/datamodels/media.py`) returns the library object with the paper's SourcedValues appended to its provenance. `name` and `provenance` are not part of `media_identity`, so the record's medium node joins the library object exactly.
 
 Measured by `experiments/036-dataset-fixes-before-kg-build/scripts/media_stubs_seven_loaders.py` (output `experiments/036-dataset-fixes-before-kg-build/results/media_stubs_seven_loaders.csv`): 3 components, 5 provenance entries, `media_identity` equal to `YPD_LIQUID`; the dev store (1,112 records) carries the stub on all 2,224 environments. Not built in-process; the dev rebuild runs under slurm.
+
+## 2026.10.12 - Every released record stored as released; no genome at load time (#1045)
+
+Owner rule, 2026-10-12: the data is the data; the genome and the experiment are loaded separately and meet through their gene sets at modeling time, so a loader never consults the annotation to decide whether a record exists or how it is keyed. Sweep row: [[database.genome-gating-sweep.2026.10.12]]. PR #1079 (group 1). The store is rebuilt from the branch with `--retire-existing --verify` (slurm array 4457); the L0-L4 table is appended when the task finishes.
+
+Before: `reconcile_systematic_names` ran over every ORF (0 of 1,112 changed), and `create_calmorph_experiment` wrote a blank cell as `0.0` (0 blank cells in the pinned matrix, so nothing was fabricated).
+
+Now: the `ORF` cell (stripped, upper-cased) is both names with no genome; a blank cell is key-absent in the record. 1,112 records, unchanged values.

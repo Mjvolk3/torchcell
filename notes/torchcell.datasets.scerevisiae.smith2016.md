@@ -137,3 +137,11 @@ Now `process()` starts with `verify_raw_files(self.raw_dir, ...)` against `EFFEC
 ## 2026.09.30 - Module constant is the one pin at download (issue #561)
 
 Before this change, `download()` verified the mirror bytes against the digest recorded in the raw-mirror `manifest.json`, and `process()` verified them against the module constant. Because `deposit_raw_mirror` writes the manifest from the constant, the two were equal by construction, but the loader still carried two pins. Now `download()` verifies the bytes against the module constant, and `check_manifest_pin` refuses a manifest that records any other digest, raising `ManifestPinMismatchError` named by path with both digests. The manifest stays the retrieval record. Built records are unchanged. Tests: `test_download_refuses_a_manifest_digest_off_the_module_pin` in [[tests.torchcell.datasets.scerevisiae.test_raw_pins]].
+
+## 2026.10.12 - Every released record stored as released; no genome at load time (#1045)
+
+Owner rule, 2026-10-12: the data is the data; the genome and the experiment are loaded separately and meet through their gene sets at modeling time, so a loader never consults the annotation to decide whether a record exists or how it is keyed. Sweep row: [[database.genome-gating-sweep.2026.10.12]]. PR #1079 (group 1). The store is rebuilt from the branch with `--retire-existing --verify` (slurm array 4457); the L0-L4 table is appended when the task finishes.
+
+Before: 7,410 of 14,463 rows were dropped because the Drug label is a ChemDiv / ChemBridge / TimTec catalog id with no released structure (`resolve_compound_identity` PROPRIETARY); the target ORF was resolved through the genome (0 dropped) and the perturbed name was the genome's standard name.
+
+Now: every row is a record. The vendor-code drugs are stored under the released label with the typed `inchikey` gap `resolved_compound` attaches (`not_reported_by_primary`), listed under `compound_identity_gaps` in the ledger with their record counts (the Parsons 2006 route of #1053). The target is the released `ORF` cell and `perturbed_gene_name` the released `Gene` cell (the ORF where blank); no genome is injected. 14,463 records (was 7,053). An `ORF` cell with no ORF form is counted under `deferred_to_released_gene_name_leaf` (0 of 14,463).

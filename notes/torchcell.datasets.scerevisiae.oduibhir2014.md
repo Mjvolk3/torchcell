@@ -53,3 +53,11 @@ Previous behavior: `process` opened `processed/lmdb` first and built each record
 Fix: every record is built first, then the store is opened and written. Two rows resolving to one ORF, a blank `commonName` and a blank `log2relT` are each refused with a `RuntimeError` naming the row. Measured on the pinned Dataset S2 (sha256 `37ef19ee...`): 0 duplicates, 0 lowercase ORFs, 0 blank common names and 0 blank `log2relT` of 1312 rows, so the built records do not change.
 
 Tests: `test_an_orf_listed_twice_is_refused_before_the_store_opens`, `test_a_blank_common_name_is_refused_before_the_store_opens`, `test_a_blank_log2relt_is_refused_before_the_store_opens`.
+
+## 2026.10.12 - Every released record stored as released; no genome at load time (#1045)
+
+Owner rule, 2026-10-12: the data is the data; the genome and the experiment are loaded separately and meet through their gene sets at modeling time, so a loader never consults the annotation to decide whether a record exists or how it is keyed. Sweep row: [[database.genome-gating-sweep.2026.10.12]]. PR #1079 (group 1). The store is rebuilt from the branch with `--retire-existing --verify` (slurm array 4457); the L0-L4 table is appended when the task finishes.
+
+Before: each ORF went through the genome's ID and alias tables (0 of 1,312 changed or dropped on the pinned file).
+
+Now: the ORF (upper-cased) and the released `commonName` are stored with no genome injected. A row id with no ORF form is refused by name (0 of 1,312). 1,312 records, unchanged.

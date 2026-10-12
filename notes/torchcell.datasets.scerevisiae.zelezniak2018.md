@@ -198,3 +198,11 @@ Open:
 - The calibrated unit is a typed gap until the Zenodo README or the authors' code is mirrored (needs a retrieval go-ahead).
 - Downstream readers of the pooled values (experiment 019 metabolome heads and fig6 queries, amino-acid and metabolite comparisons) now see up to three records per strain on different scales. `MeanExperimentDeduplicator` groups by `experiment_type` plus genes, so applied to this dataset it would merge a strain's protocol records again (read from `torchcell/data/mean_experiment_deduplicate.py`; not run).
 - `DATASET_FULL_RECORDS` in `torchcell/knowledge_graphs/build_time_projection.py` still says 95; it is a gathered snapshot of the dev tree and is regenerated after the dev rebuild.
+
+## 2026.10.12 - Every released record stored as released; no genome at load time (#1045)
+
+Owner rule, 2026-10-12: the data is the data; the genome and the experiment are loaded separately and meet through their gene sets at modeling time, so a loader never consults the annotation to decide whether a record exists or how it is keyed. Sweep row: [[database.genome-gating-sweep.2026.10.12]]. PR #1079 (group 1). The store is rebuilt from the branch with `--retire-existing --verify` (slurm array 4457); the L0-L4 table is appended when the task finishes.
+
+Before: a `KO_ORF` outside the ORF pattern was skipped (0 of 97 in the pinned matrix).
+
+Now: such a strain id is counted as deferred to the released-gene-name leaf (0 of 97). Records unchanged: 97 proteome, 129 metabolome.

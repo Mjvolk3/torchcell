@@ -89,3 +89,11 @@ Methods line 172 (mirror `paper.md`, sha256 `86f4a416...`): the strains "were re
 Measured by `experiments/036-dataset-fixes-before-kg-build/scripts/media_stubs_seven_loaders.py` (output `experiments/036-dataset-fixes-before-kg-build/results/media_stubs_seven_loaders.csv`): both conditions' environments carry 3 components and 4 provenance entries, `media_identity` equal to `YPD_LIQUID`; the dev store (6,188 records) carries the stub on all 12,376 environments. Not built in-process; the dev rebuild runs under slurm.
 
 Observation, not checked further and not changed here: `GROWTH_TEMP_C = 30.0`, while line 172 recovers the strains at 25 C and states no temperature for the 6 h YPD growth.
+
+## 2026.10.12 - Every released record stored as released; no genome at load time (#1045)
+
+Owner rule, 2026-10-12: the data is the data; the genome and the experiment are loaded separately and meet through their gene sets at modeling time, so a loader never consults the annotation to decide whether a record exists or how it is keyed. Sweep row: [[database.genome-gating-sweep.2026.10.12]]. PR #1079 (group 1). The store is rebuilt from the branch with `--retire-existing --verify` (slurm array 4457); the L0-L4 table is appended when the task finishes.
+
+Before: every gene name of a DEG table was resolved through the genome's ID, alias and standard-name tables; ~1.13M values (3.1%) under names the tables did not place (ncRNAs such as `15S_RRNA`, `SNR*`, retired symbols) were dropped and ~15.7k values under a second name for one ORF were collapsed to the first; the deleted gene's `perturbed_gene_name` was the genome's standard name (the string `"nan"` for 940 records with none).
+
+Now: the keys of `expression_log2_ratio` are the released names, stripped and otherwise verbatim; the deleted gene is the ORF of the genotype label as both names. 6,188 records, every released value under its released name. A name on two rows of one table raises `RepeatedGeneNameError` (0); a genotype label with no ORF form is counted under `deferred_to_released_gene_name_leaf` in `preprocess/dropped_records.json` (0 of 6,188). The ~221 `ptbs` genotype rows with no DEG table carry no log-fold-change vector and have no record, as before.

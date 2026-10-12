@@ -207,3 +207,11 @@ Now `process()` starts with `verify_raw_files(self.raw_dir, ...)` against `XLS_S
 ## 2026.09.30 - Module constant is the one pin at download (issue #561)
 
 Before this change, `download()` verified the mirror bytes against the digest recorded in the raw-mirror `manifest.json`, and `process()` verified them against the module constant. Because `deposit_raw_mirror` writes the manifest from the constant, the two were equal by construction, but the loader still carried two pins. Now `download()` verifies the bytes against the module constant, and `check_manifest_pin` refuses a manifest that records any other digest, raising `ManifestPinMismatchError` named by path with both digests. The manifest stays the retrieval record. Built records are unchanged. Tests: `test_download_refuses_a_manifest_digest_off_the_module_pin` in [[tests.torchcell.datasets.scerevisiae.test_raw_pins]].
+
+## 2026.10.12 - Every released record stored as released; no genome at load time (#1045)
+
+Owner rule, 2026-10-12: the data is the data; the genome and the experiment are loaded separately and meet through their gene sets at modeling time, so a loader never consults the annotation to decide whether a record exists or how it is keyed. Sweep row: [[database.genome-gating-sweep.2026.10.12]]. PR #1079 (group 1). The store is rebuilt from the branch with `--retire-existing --verify` (slurm array 4457); the L0-L4 table is appended when the task finishes.
+
+Before: the ORF token of each allele id went through the genome's ID table and alias table; 30 alleles whose token resolved to no current gene were dropped (`_UNRESOLVABLE`, frozen: 29 deletions and `YIL171W_damp`) and 42 whose token is an R64 synonym were stored under the current ORF (31 of those onto a locus whose own strain the release also carries, told apart only by `strain_id`).
+
+Now: the ORF token (upper-cased) is both names; `strain_id` keeps the raw id verbatim. `EXPECTED_RECORDS = _EXPECTED_ROWS = 6023` (was 5,993). The ledger reads `RETENTION_RULE` with `n_dropped` 0. `_UNRESOLVABLE` and `_resolver` are gone.

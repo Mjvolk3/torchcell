@@ -1605,6 +1605,23 @@
       ]
     },
     {
+      "loader": "torchcell/datasets/scerevisiae/vaishnav2022.py",
+      "dataset_classes": [
+        "PooledPromoterExpressionVaishnav2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbationType",
+        "PooledSortSeqExpressionExperiment",
+        "PooledSortSeqExpressionExperimentReference",
+        "PooledSortSeqExpressionPhenotype",
+        "ReporterReadout",
+        "VariablePromoterReporterPerturbation",
+        "_validate_dna_sequence"
+      ]
+    },
+    {
       "loader": "torchcell/datasets/scerevisiae/vanacloig2022.py",
       "dataset_classes": [
         "EnvChemgenVanacloig2022Dataset"

@@ -189,8 +189,10 @@ RUN_ALL_ORDER = [
     "run_bacterial_metabolite",
     # #770: the protein fold-change family.
     "run_bacterial_protein_fold_change",
-    # De Chiara 2022: the natural-isolate panel stores, called last in run_all.
+    # De Chiara 2022: the natural-isolate panel stores.
     "run_natural_isolate",
+    # #991: the pooled sort-seq expression family, called last in run_all.
+    "run_pooled_sort_seq",
 ]
 
 
@@ -2307,6 +2309,7 @@ def test_every_registry_root_is_the_dev_tree_path_of_its_own_name() -> None:
         runners.PSEUDOBULK_UMI_COUNT_DATASETS,
         runners.GENOME_ARCHITECTURE_DATASETS,
         runners.INDUCTION_TIMECOURSE_DATASETS,
+        runners.POOLED_SORT_SEQ_DATASETS,
     ]
     roots = {
         name: spec["root"] for registry in registries for name, spec in registry.items()
@@ -2333,6 +2336,7 @@ def test_every_registry_root_is_the_dev_tree_path_of_its_own_name() -> None:
         + 1  # PSEUDOBULK_UMI_COUNT_DATASETS
         + 1  # GENOME_ARCHITECTURE_DATASETS
         + 1  # INDUCTION_TIMECOURSE_DATASETS
+        + 1  # POOLED_SORT_SEQ_DATASETS
     )
     assert all(
         isinstance(spec["provenance"], Provenance)

@@ -3728,3 +3728,208 @@ def test_released_strain_leaf_refuses_a_locus_tag_or_a_non_verbatim_identifier(
 def test_released_strain_leaf_refuses_an_empty_label(field: str) -> None:
     with pytest.raises(ValueError, match=f"{field} must be a non-empty verbatim"):
         s.BacterialReleasedStrainPerturbation(**{**_RELEASED, field: " "})
+
+
+# --------------------------------------------------------------------------- #
+# #991 / #990: the promoter-carrying genotype leaves and the two readout families
+# --------------------------------------------------------------------------- #
+def test_promoter_driven_integration_requires_its_locus_and_promoter() -> None:
+    """The integration leaf narrows the parent's optional locus to a required one."""
+    leaf = s.PromoterDrivenGeneIntegrationPerturbation(
+        systematic_gene_name="YER090W",
+        perturbed_gene_name="TRP2",
+        source_organism="Saccharomyces cerevisiae",
+        is_heterologous=False,
+        localization="chromosomal_integration",
+        promoter_name="pTEF1",
+        integration_locus="EasyClone XII-5",
+    )
+    assert leaf.perturbation_type == "promoter_driven_gene_integration"
+    assert (leaf.state, leaf.mechanism_so_id) == ("present", "SO:0000667")
+    assert isinstance(leaf, s.GeneAdditionPerturbation)
+    assert leaf.promoter_sequence is None and leaf.is_inducible is False
+    with pytest.raises(ValidationError):
+        s.PromoterDrivenGeneIntegrationPerturbation(  # type: ignore[call-arg]
+            systematic_gene_name="YER090W",
+            perturbed_gene_name="TRP2",
+            source_organism="Saccharomyces cerevisiae",
+            is_heterologous=False,
+            localization="chromosomal_integration",
+            promoter_name="pTEF1",
+        )
+    with pytest.raises(ValidationError, match="cannot be empty"):
+        s.PromoterDrivenGeneIntegrationPerturbation(
+            systematic_gene_name="YER090W",
+            perturbed_gene_name="TRP2",
+            source_organism="Saccharomyces cerevisiae",
+            is_heterologous=False,
+            localization="chromosomal_integration",
+            promoter_name="   ",
+            integration_locus="EasyClone XII-5",
+        )
+
+
+def test_promoter_driven_integration_refuses_a_deposited_sequence_that_is_not_dna() -> (
+    None
+):
+    """A promoter sequence is an identity key, so a degenerate spelling is refused."""
+    with pytest.raises(ValidationError, match="unambiguous DNA"):
+        s.PromoterDrivenGeneIntegrationPerturbation(
+            systematic_gene_name="YER090W",
+            perturbed_gene_name="TRP2",
+            source_organism="Saccharomyces cerevisiae",
+            is_heterologous=False,
+            localization="chromosomal_integration",
+            promoter_name="pTEF1",
+            promoter_sequence="acgtn",
+            integration_locus="EasyClone XII-5",
+        )
+
+
+def test_variable_promoter_reporter_requires_the_sequence_and_a_whole_span() -> None:
+    """The sequence IS the genotype here, and half a span does not locate the insert."""
+
+    def reporter(
+        sequence: str | None = "ACGTACGTAC", start: int | None = 3, end: int | None = 8
+    ) -> s.VariablePromoterReporterPerturbation:
+        return s.VariablePromoterReporterPerturbation(
+            systematic_gene_name="addgene127546:YFP",
+            perturbed_gene_name="YFP",
+            source_organism="synthetic construct",
+            is_heterologous=True,
+            localization="episomal_cen_plasmid",
+            promoter_variant_id="HQ_28",
+            promoter_sequence=sequence,  # type: ignore[arg-type]
+            scaffold_name="pTpA",
+            variable_region_start=start,
+            variable_region_end=end,
+        )
+
+    leaf = reporter()
+    assert leaf.perturbation_type == "variable_promoter_reporter"
+    assert leaf.integration_locus is None
+    with pytest.raises(ValidationError):
+        reporter(sequence=None)
+    with pytest.raises(ValidationError, match="both be set or"):
+        reporter(end=None)
+    with pytest.raises(ValidationError, match="is before"):
+        reporter(start=8, end=3)
+
+
+def test_both_promoter_leaves_are_members_of_the_genotype_union() -> None:
+    """A Genotype admits each leaf and keeps its own type through the union."""
+    integration = s.PromoterDrivenGeneIntegrationPerturbation(
+        systematic_gene_name="YER090W",
+        perturbed_gene_name="TRP2",
+        source_organism="Saccharomyces cerevisiae",
+        is_heterologous=False,
+        localization="chromosomal_integration",
+        promoter_name="pTEF1",
+        integration_locus="EasyClone XII-5",
+    )
+    reporter = s.VariablePromoterReporterPerturbation(
+        systematic_gene_name="addgene127546:YFP",
+        perturbed_gene_name="YFP",
+        source_organism="synthetic construct",
+        is_heterologous=True,
+        localization="episomal_cen_plasmid",
+        promoter_variant_id="HQ_28",
+        promoter_sequence="ACGTACGTAC",
+        scaffold_name="pTpA",
+    )
+    genotype = s.Genotype(perturbations=[integration, reporter])
+    assert sorted(genotype.perturbation_types) == [
+        "promoter_driven_gene_integration",
+        "variable_promoter_reporter",
+    ]
+    round_tripped = s.Genotype.model_validate(genotype.model_dump())
+    assert round_tripped == genotype
+
+
+def test_pooled_sort_seq_phenotype_keys_on_the_sequence_and_rejects_blanks() -> None:
+    """The pooled family's identity key is the sequence id, and it cannot be blank."""
+    phenotype = s.PooledSortSeqExpressionPhenotype(
+        expression_level=8.5,
+        sequence_id="HQ_28",
+        library_id="NBT_S288CdU_SCUra",
+        read_count=647,
+        readout=s.ReporterReadout.sort_seq_fluorescence,
+        reporter_gene="YFP",
+        expression_units="sort-bin index",
+    )
+    assert (phenotype.label_name, phenotype.label_statistic_name) == (
+        "expression_level",
+        "expression_level_se",
+    )
+    assert phenotype.expression_level_se is None
+    with pytest.raises(ValidationError, match="sequence_id cannot be empty"):
+        s.PooledSortSeqExpressionPhenotype(
+            expression_level=8.5,
+            sequence_id="  ",
+            readout=s.ReporterReadout.sort_seq_fluorescence,
+            reporter_gene="YFP",
+            expression_units="sort-bin index",
+        )
+    with pytest.raises(ValidationError, match="read_count must be a positive integer"):
+        s.PooledSortSeqExpressionPhenotype(
+            expression_level=8.5,
+            sequence_id="HQ_28",
+            read_count=0,
+            readout=s.ReporterReadout.sort_seq_fluorescence,
+            reporter_gene="YFP",
+            expression_units="sort-bin index",
+        )
+    with pytest.raises(ValidationError, match="no unlabelled uncertainty"):
+        s.PooledSortSeqExpressionPhenotype(
+            expression_level=8.5,
+            expression_level_uncertainty=1.0,
+            sequence_id="HQ_28",
+            readout=s.ReporterReadout.sort_seq_fluorescence,
+            reporter_gene="YFP",
+            expression_units="sort-bin index",
+        )
+
+
+def test_biosensor_phenotype_names_the_sensed_metabolite() -> None:
+    """The signal stays in its own units and the sensed compound is typed."""
+    phenotype = s.BiosensorFluorescencePhenotype(
+        biosensor_signal=1.25,
+        biosensor_signal_uncertainty=0.5,
+        biosensor_signal_uncertainty_type=s.UncertaintyType.sample_sd,
+        n_samples=4,
+        sample_unit=s.SampleUnit.biological_replicate,
+        sensed_metabolite=s.Compound(name="L-tryptophan"),
+        sensor_name="trpR-based tryptophan biosensor",
+        reporter_gene="yEGFP",
+        readout=s.ReporterReadout.flow_cytometry_fluorescence,
+        signal_units="specific GFP synthesis rate (MFI/h)",
+    )
+    assert phenotype.label_name == "biosensor_signal"
+    assert phenotype.biosensor_signal_se == 0.25
+    assert phenotype.sensed_metabolite.name == "L-tryptophan"
+    with pytest.raises(ValidationError, match="n_samples and sample_unit are required"):
+        s.BiosensorFluorescencePhenotype(
+            biosensor_signal=1.25,
+            biosensor_signal_uncertainty=0.5,
+            biosensor_signal_uncertainty_type=s.UncertaintyType.sample_sd,
+            sensed_metabolite=s.Compound(name="L-tryptophan"),
+            sensor_name="trpR-based tryptophan biosensor",
+            reporter_gene="yEGFP",
+            readout=s.ReporterReadout.flow_cytometry_fluorescence,
+            signal_units="specific GFP synthesis rate (MFI/h)",
+        )
+
+
+def test_the_two_readout_families_are_siblings_not_promoter_activity() -> None:
+    """Each new leaf is its own phenotype under Phenotype, and the served one is intact."""
+    for leaf in (s.PooledSortSeqExpressionPhenotype, s.BiosensorFluorescencePhenotype):
+        assert leaf.__bases__[0] is s.Phenotype
+        assert not issubclass(leaf, s.PromoterActivityPhenotype)
+    assert s.PromoterActivityPhenotype.model_fields["well_id"].is_required()
+    assert "sort_seq_fluorescence" in {member.value for member in s.ReporterReadout}
+    assert s.EXPERIMENT_TYPE_MAP["pooled_sort_seq_expression"] is (
+        s.PooledSortSeqExpressionExperiment
+    )
+    assert s.EXPERIMENT_TYPE_MAP["biosensor_fluorescence"] is (
+        s.BiosensorFluorescenceExperiment
+    )

@@ -80,6 +80,7 @@ def _pins_from_constants(
         "InductionTimecourseHackett2020Dataset": lambda: {
             name: m.RAW_SHA256[name] for name in m.RAW_FILES
         },
+        "PooledPromoterExpressionVaishnav2022Dataset": lambda: dict(m.RAW_FILES),
         "IsolateGrowthPeter2018Dataset": lambda: {
             m.PHENO_NAME: m.PHENO_SHA256,
             m.REFGENE_TAR_NAME: genome(m.REFGENE_TAR_NAME),

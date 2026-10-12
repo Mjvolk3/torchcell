@@ -614,7 +614,8 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
     # + 1 (Yoshikawa 2009 ethanol and NaCl growth rates)
     # + 1 (#1014, N'Guessan 2025 reference-panel segregant pseudobulk)
     # + 1 (#691, Nichols 2011 chemical-genomic re-scaled S-scores)
-    # + 2 (#931: the Fitness Browser's own Keio and KT2440 experiments, by publication).
+    # + 2 (#931: the Fitness Browser's own Keio and KT2440 experiments, by publication)
+    # + 1 (#991, Vaishnav 2022 pooled sort-seq promoter expression).
     assert (
         len(dataset_adapter_map)
         == 110
@@ -648,6 +649,7 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
         + 1
         + 1
         + 2
+        + 1
     )
     served = {d.__name__ for d in dataset_adapter_map}
     assert served - set(ADAPTER_TO_DATASET.values()) == BACTERIAL_DATASETS | {
@@ -679,6 +681,7 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
         "MicroarrayScoreHu2007Dataset",
         "NadalRibellesPerturbSeq2025Dataset",
         "Nguessan2025Dataset",
+        "PooledPromoterExpressionVaishnav2022Dataset",
         "ProteomeMessner2021Dataset",
         "ProteomeMessner2023Dataset",
         "ProteomeMuenzner2024Dataset",

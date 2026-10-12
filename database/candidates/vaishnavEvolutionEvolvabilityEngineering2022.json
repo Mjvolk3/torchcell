@@ -22,7 +22,7 @@
     {
       "gate": "G3",
       "outcome": "pass",
-      "reason": "3 file(s) in library, 5747 worksheet row(s) counted; all intact",
+      "reason": "3 file(s) in library+raw, 5747 worksheet row(s) counted; all intact",
       "evidence": [],
       "issue": null,
       "blocked_kind": null
@@ -37,50 +37,10 @@
     },
     {
       "gate": "G5",
-      "outcome": "gap",
-      "reason": "composed: PromoterActivityPhenotype exists, but no yeast genotype holds the variable promoter sequence, its well_id is a required str a pooled sort-seq library has none of, and ReporterReadout has no sort-seq member",
-      "evidence": [
-        {
-          "value": "the exact GEO accessions (the schedule listed GEO as unconfirmed; now confirmed)",
-          "provenance": {
-            "source_uri": "paper.md",
-            "citation_key": "vaishnavEvolutionEvolvabilityEngineering2022",
-            "sha256": "80aa5de145c36b3617809db881b313bc0be69267259e5296bb617efd8bd97f09",
-            "method": null,
-            "page": null,
-            "retrieved": null
-          },
-          "quote": "Data generated for this study are available at the NCBI GEO with accession numbers GSE163045 and GSE163866",
-          "note": null
-        },
-        {
-          "value": "genotype basis: a plasmid-borne reporter with a variable promoter insert, which is why no host-gene perturbation class applies",
-          "provenance": {
-            "source_uri": "paper.md",
-            "citation_key": "vaishnavEvolutionEvolvabilityEngineering2022",
-            "sha256": "80aa5de145c36b3617809db881b313bc0be69267259e5296bb617efd8bd97f09",
-            "method": null,
-            "page": null,
-            "retrieved": null
-          },
-          "quote": "cloned into the promoter of a YFP gene within a CEN plasmid",
-          "note": null
-        },
-        {
-          "value": "the library sizes, STATED not measured (the files holding them are 0.7-3.6 GB)",
-          "provenance": {
-            "source_uri": "paper.md",
-            "citation_key": "vaishnavEvolutionEvolvabilityEngineering2022",
-            "sha256": "80aa5de145c36b3617809db881b313bc0be69267259e5296bb617efd8bd97f09",
-            "method": null,
-            "page": null,
-            "retrieved": null
-          },
-          "quote": "A total of 20,616,659 random sequences (defined medium) and 30,722,376 random sequences (complex medium), along with their experimentally measured expression",
-          "note": null
-        }
-      ],
-      "issue": 991,
+      "outcome": "pass",
+      "reason": "PooledSortSeqExpressionPhenotype exists; compounds resolve",
+      "evidence": [],
+      "issue": null,
       "blocked_kind": null
     }
   ],
@@ -102,7 +62,8 @@
   "g3": {
     "citation_key": "vaishnavEvolutionEvolvabilityEngineering2022",
     "trees_read": [
-      "library"
+      "library",
+      "raw"
     ],
     "files": [
       {
@@ -160,16 +121,23 @@
     "doi": "10.1038/s41586-022-04506-6",
     "pmid": null,
     "accessions": [],
-    "hits": [],
+    "hits": [
+      {
+        "key_kind": "doi",
+        "key": "10.1038/s41586-022-04506-6",
+        "where": "torchcell/datasets/scerevisiae/vaishnav2022.py",
+        "relation": "own"
+      }
+    ],
     "pmid_checked": false
   },
   "g4_value": null,
   "g5": {
-    "phenotype_class": "PromoterActivityPhenotype",
+    "phenotype_class": "PooledSortSeqExpressionPhenotype",
     "class_exists": true,
     "unresolved_compounds": [],
-    "proposed_class": "a yeast promoter-variant perturbation (sequence-level genotype)"
+    "proposed_class": null
   },
-  "decided_at": "2026-10-11",
-  "torchcell_commit": "e83a1e1803a87127d6b983208b050f88dccfec63"
+  "decided_at": "2026-10-12",
+  "torchcell_commit": "9e015303ec2b94e12780fc9dba84458dff0017ef"
 }

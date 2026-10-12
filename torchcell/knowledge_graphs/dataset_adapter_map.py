@@ -121,6 +121,7 @@ from torchcell.adapters import (
     Nguessan2025Adapter,
     OrganicAcidYoshida2012Adapter,
     PhageRbTnseqMutalik2020Adapter,
+    PooledPromoterExpressionVaishnav2022Adapter,
     PromoterReporterMohiuddin2022Adapter,
     ProteinFoldChangeCaglar2017Adapter,
     ProteinSynthesisRateLi2014Adapter,
@@ -418,6 +419,9 @@ from torchcell.datasets.scerevisiae.synth_leth_db import (
     SynthLethalityYeastSynthLethDbDataset,
     SynthRescueYeastSynthLethDbDataset,
 )
+from torchcell.datasets.scerevisiae.vaishnav2022 import (
+    PooledPromoterExpressionVaishnav2022Dataset,
+)
 from torchcell.datasets.scerevisiae.vanacloig2022 import EnvChemgenVanacloig2022Dataset
 from torchcell.datasets.scerevisiae.wildenhain2015 import (
     EnvChemgenWildenhain2015Dataset,
@@ -455,6 +459,9 @@ dataset_adapter_map: dict[type, type] = {
     MicroarrayKemmeren2014Dataset: MicroarrayKemmeren2014Adapter,
     MicroarrayScoreHu2007Dataset: MicroarrayScoreHu2007Adapter,
     InductionTimecourseHackett2020Dataset: InductionTimecourseHackett2020Adapter,
+    PooledPromoterExpressionVaishnav2022Dataset: (
+        PooledPromoterExpressionVaishnav2022Adapter
+    ),
     SmMicroarraySameith2015Dataset: SmMicroarraySameith2015Adapter,
     DmMicroarraySameith2015Dataset: DmMicroarraySameith2015Adapter,
     CaudalPanTranscriptome2024Dataset: CaudalPanTranscriptome2024Adapter,

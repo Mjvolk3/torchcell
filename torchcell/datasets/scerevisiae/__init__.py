@@ -82,6 +82,9 @@ from .sameith2015 import (
 )
 from .smith2006 import FattyAcidSmith2006Dataset as FattyAcidSmith2006Dataset
 from .smith2016 import CrispriChemgenSmith2016Dataset as CrispriChemgenSmith2016Dataset
+from .vaishnav2022 import (
+    PooledPromoterExpressionVaishnav2022Dataset as PooledPromoterExpressionVaishnav2022Dataset,
+)
 from .vanacloig2022 import (
     EnvChemgenVanacloig2022Dataset as EnvChemgenVanacloig2022Dataset,
 )
@@ -170,6 +173,8 @@ hu2007_datasets = ["MicroarrayScoreHu2007Dataset"]
 
 hackett2020_datasets = ["InductionTimecourseHackett2020Dataset"]
 
+vaishnav2022_datasets = ["PooledPromoterExpressionVaishnav2022Dataset"]
+
 yeastphenome_datasets = ["YeastPhenomeDataset"]
 
 bloom_datasets = ["Bloom2019Dataset"]
@@ -231,6 +236,7 @@ __all__ = (
     + kemmeren_datasets
     + hu2007_datasets
     + hackett2020_datasets
+    + vaishnav2022_datasets
     + yeastphenome_datasets
     + bloom_datasets
     + peter2018_datasets

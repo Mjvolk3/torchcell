@@ -353,6 +353,9 @@ from .thompson2019_valerolactam_titer_adapter import (
     ValerolactamTiterThompson2019Adapter as ValerolactamTiterThompson2019Adapter,
 )
 from .tong2020_adapter import CarbonSourceTong2020Adapter as CarbonSourceTong2020Adapter
+from .vaishnav2022_adapter import (
+    PooledPromoterExpressionVaishnav2022Adapter as PooledPromoterExpressionVaishnav2022Adapter,
+)
 from .vanacloig2022_adapter import (
     EnvChemgenVanacloig2022Adapter as EnvChemgenVanacloig2022Adapter,
 )
@@ -439,6 +442,7 @@ expression_adapters = [
     "NadalRibellesPerturbSeq2025Adapter",
     "TfDeletionPseudobulkJackson2020Adapter",
     "InductionTimecourseHackett2020Adapter",
+    "PooledPromoterExpressionVaishnav2022Adapter",
 ]
 
 morphology_adapters = ["ScmdOhnuki2018Adapter", "ScmdOhnuki2022Adapter"]

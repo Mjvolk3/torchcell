@@ -3251,6 +3251,101 @@ def run_genome_architecture(data_root: str) -> bool:
 
 
 # --------------------------------------------------------------------------- #
+# Pooled sort-seq expression datasets (#991): a massively parallel reporter assay,
+# where the identity of a record is the SEQUENCE rather than a well.
+# --------------------------------------------------------------------------- #
+POOLED_SORT_SEQ_DATASETS: dict[str, dict[str, Any]] = {
+    "pooled_promoter_expression_vaishnav2022": {
+        "root": "data/torchcell/pooled_promoter_expression_vaishnav2022",
+        "raw_mirror": "torchcell-raw/vaishnavEvolutionEvolvabilityEngineering2022",
+        # 71,158 released seqID groups minus the 104 that carry no ExpressionLevel.
+        "expected_count": 71054,
+        # The 18 uniform sort bins the estimate is a read-weighted mean index of; the
+        # released values run 0.32 to 17.0, so the scale is the bound, not the data.
+        "maximum": 18.0,
+        "provenance": Provenance(
+            source_uri=(
+                "$DATA_ROOT/torchcell-raw/vaishnavEvolutionEvolvabilityEngineering2022/"
+                "geo/GSE163045_MolEvol_seq_data_SCUra_only.splitByOrigID.meanEL.all"
+                ".txt.gz (GEO GSE163045) and zenodo/Random_testdata_defined_media.csv "
+                "(Zenodo 4436477)"
+            ),
+            citation_key="vaishnavEvolutionEvolvabilityEngineering2022",
+            sha256=("9193507ae0500a8bf0f75388a9bb3e58dd21b84a519b8346d0b1995e242a36f2"),
+            method=(
+                "one record per released seqID that carries an ExpressionLevel: the "
+                "read-weighted mean sort-bin index of one 110 bp promoter construct, "
+                "with the Zenodo test set's expt token and read count on the 5,327 "
+                "measurements it re-releases"
+            ),
+            page=(
+                "Nature 603:455 (doi:10.1038/s41586-022-04506-6); Methods, "
+                "'Experimental measurement of sequence-expression pairs using a "
+                "Sort-seq strategy'"
+            ),
+        ),
+    }
+}
+
+
+def verify_pooled_sort_seq_dataset(
+    name: str, data_root: str, abs_root: str | None = None
+) -> VerificationReport:
+    """One POOLED_SORT_SEQ_DATASETS entry's report (written by the caller).
+
+    ``abs_root`` defaults to the registry root under ``data_root``; the loader's
+    verification entry point passes the store it just built. The released table is
+    re-read from the store's own ``raw/`` directory, so L2 compares the stored estimates
+    to the bytes the build consumed, and the three provenance audits re-read the paper
+    and the deferral target in the library mirror.
+    """
+    import torchcell.datasets.scerevisiae.vaishnav2022 as vaishnav
+    from torchcell.verification.pooled_sort_seq import (
+        l2_released_values,
+        l4_read_count_coverage,
+        verify_pooled_sort_seq_dataset_streaming,
+    )
+    from torchcell.verification.sourced import audit_sourced_value, library_available
+
+    spec = POOLED_SORT_SEQ_DATASETS[name]
+    root = abs_root or osp.join(data_root, spec["root"])
+    report = verify_pooled_sort_seq_dataset_streaming(
+        lambda: stream_records(root),
+        dataset_name=vaishnav.PooledPromoterExpressionVaishnav2022Dataset.__name__,
+        provenance=spec["provenance"],
+        expected_count=spec["expected_count"],
+        maximum=spec["maximum"],
+    )
+    measurements = vaishnav.read_measurements(
+        osp.join(root, "raw", vaishnav.MOLEVOL_NAME),
+        osp.join(root, "raw", vaishnav.TESTDATA_NAME),
+    )
+    released = {
+        str(row.seqID): float(cast(float, row.expression_level))
+        for row in measurements.itertuples(index=False)
+    }
+    report.add(l2_released_values(stream_records(root), released))
+    report.add(l4_read_count_coverage(stream_records(root)))
+    library_root = osp.join(data_root, "torchcell-library")
+    if library_available(library_root):
+        for value in vaishnav.SOURCED_VALUES.values():
+            report.add(audit_sourced_value(value, library_root))
+    return report
+
+
+def run_pooled_sort_seq(data_root: str) -> bool:
+    """Verify pooled sort-seq datasets (L0-L4). True if all pass."""
+    all_passed = True
+    for name, spec in POOLED_SORT_SEQ_DATASETS.items():
+        report = verify_pooled_sort_seq_dataset(name, data_root)
+        out = _write_report(report, osp.join(data_root, spec["root"], "preprocess"))
+        print(report.summary())
+        print(f"  -> wrote {out}\n")
+        all_passed = all_passed and report.passed
+    return all_passed
+
+
+# --------------------------------------------------------------------------- #
 # Perturbation-on-segregant datasets (a CRISPRi guide on a haplotype mosaic)
 # --------------------------------------------------------------------------- #
 SEGREGANT_PERTURBATION_DATASETS: dict[str, dict[str, Any]] = {
@@ -4763,6 +4858,7 @@ def run_all(data_root: str) -> bool:
     bacterial_metabolite_ok = run_bacterial_metabolite(data_root)
     bacterial_fold_change_ok = run_bacterial_protein_fold_change(data_root)
     natural_isolate_panel_ok = run_natural_isolate(data_root)
+    pooled_sort_seq_ok = run_pooled_sort_seq(data_root)
     return (
         expression_ok
         and expression_score_ok
@@ -4789,6 +4885,7 @@ def run_all(data_root: str) -> bool:
         and bacterial_metabolite_ok
         and bacterial_fold_change_ok
         and natural_isolate_panel_ok
+        and pooled_sort_seq_ok
     )
 
 

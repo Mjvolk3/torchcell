@@ -54,6 +54,7 @@ from tests.torchcell.sequence.genome._bacterial_fixtures import (
 from torchcell.data import ManifestPinMismatchError
 from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
+    BacterialStrainBackground,
     ConcentrationUnit,
     DoseBasis,
     EnvironmentPhysicalPerturbation,
@@ -189,13 +190,47 @@ def test_every_rule_carries_a_reason_except_the_two_kept_ones() -> None:
 # Environment settling
 # --------------------------------------------------------------------------- #
 @pytest.mark.parametrize(
+    "culture,named", [("bioreactor", "bioreactor"), ("", "(blank)")]
+)
+def test_a_non_batch_culture_is_stored_with_a_typed_gap(
+    culture: str, named: str
+) -> None:
+    """#1057: never refused; the gap names the culture cell as released."""
+    verdict = P.settle_public_environment(_row(**{L.COL_CULTURE: culture}))
+    assert verdict.rule is None and verdict.spec is not None
+    assert verdict.spec.culture_without_rate == named
+    environment = P.build_public_environment(verdict.spec)
+    gap = {g.field: g for g in environment.provenance_gaps}["dilution_rate_per_hour"]
+    assert named in str(gap.note)
+
+
+def test_a_strain_or_label_sample_is_stored_on_its_released_name() -> None:
+    """#1057: a strain types its deletions; an untyped description is the name."""
+    bw = P.settle_public_background(
+        _row(**{L.COL_STRAIN: "BW25113", L.COL_DESCRIPTION: "BW25113 del_thrA"})
+    )
+    assert bw.kept and bw.deleted_symbols == ("thrA",)
+    assert bw.background is not None and bw.background.name == "BW25113"
+    w = P.settle_public_background(
+        _row(**{L.COL_STRAIN: "W3110", L.COL_DESCRIPTION: "W3110 D13"})
+    )
+    assert w.background is not None and w.background.name == "W3110 D13"
+    assert (w.untyped_edits, w.deleted_symbols) == (True, ())
+    plasmid = P.settle_public_background(
+        _row(**{L.COL_STRAIN: "W3110", L.COL_DESCRIPTION: "W3110 pBR322"})
+    )
+    assert (plasmid.kept, plasmid.rule) == (False, G.plasmid_borne_construct)
+    evolved = P.settle_public_background(
+        _row(**{L.COL_DESCRIPTION: "MG1655 CHL evolved"})
+    )
+    assert evolved.background is not None and evolved.background.evolved
+
+
+@pytest.mark.parametrize(
     "cells,rule",
     [
         ({L.COL_MEDIA: "NM3"}, E.medium_not_in_library),
         ({L.COL_MEDIA: ""}, E.medium_not_in_library),
-        ({L.COL_CULTURE: "bioreactor"}, E.culture_not_batch),
-        ({L.COL_CULTURE: ""}, E.culture_not_batch),
-        ({L.COL_CULTURE: "Mid-to-late exponential"}, E.culture_not_batch),
         ({P.COL_AEROBICITY: ""}, E.oxygen_regime_not_stated),
         ({P.COL_AEROBICITY: "transition"}, E.oxygen_regime_transition),
         ({P.COL_AEROBICITY: "aerobic(30% DO)"}, E.oxygen_setpoint_not_expressible),
@@ -496,22 +531,42 @@ def _public_rows() -> dict[str, dict[str, str]]:
                 P.COL_TIME: "12:00:00",
             },
         ),
-        "SRX000005": row("SRX000005", 5, **{L.COL_STRAIN: "BW25113"}),
+        "SRX000005": row(
+            "SRX000005",
+            5,
+            **{
+                L.COL_STRAIN: "BW25113",
+                L.COL_DESCRIPTION: "BW25113 del_thrA",
+                L.COL_FULL_NAME: "bw:del_thrA",
+            },
+        ),
         "SRX000006": row("SRX000006", 6, **{L.COL_DESCRIPTION: "MG1655 pBR322"}),
         "SRX000007": row("SRX000007", 7, **{L.COL_DESCRIPTION: "MG1655 fusAA608E"}),
         "SRX000008": row("SRX000008", 8, **{L.COL_DESCRIPTION: "MG1655 infect_T7"}),
-        "SRX000009": row("SRX000009", 9, **{L.COL_DESCRIPTION: "MG1655 CHL evolved"}),
+        "SRX000009": row(
+            "SRX000009",
+            9,
+            **{L.COL_DESCRIPTION: "MG1655 CHL evolved", L.COL_FULL_NAME: "chl:ale"},
+        ),
         "SRX000010": row(
             "SRX000010", 10, **{L.COL_DESCRIPTION: "MG1655 with inactive relA"}
         ),
         "SRX000011": row("SRX000011", 11, **{L.COL_DESCRIPTION: "MG1655 del_7prrn"}),
         "SRX000012": row("SRX000012", 12, **{L.COL_DESCRIPTION: "MG1655 crp_ar1_ar2"}),
-        "SRX000013": row("SRX000013", 13, **{L.COL_DESCRIPTION: "MG1655 Z1 del_thrA"}),
+        "SRX000013": row(
+            "SRX000013",
+            13,
+            **{L.COL_DESCRIPTION: "MG1655 Z1 del_thrA", L.COL_FULL_NAME: "z1:del_thrA"},
+        ),
         "SRX000014": row("SRX000014", 14, **{L.COL_DESCRIPTION: "MG1655 del_ihf"}),
         "SRX000015": row(
             "SRX000015", 15, **{L.COL_MEDIA: "NM3", L.COL_FULL_NAME: "nm3:wt"}
         ),
-        "SRX000016": row("SRX000016", 16, **{L.COL_CULTURE: "bioreactor"}),
+        "SRX000016": row(
+            "SRX000016",
+            16,
+            **{L.COL_CULTURE: "bioreactor", L.COL_FULL_NAME: "bioreactor:wt"},
+        ),
         "SRX000017": row("SRX000017", 17, **{P.COL_AEROBICITY: ""}),
         "SRX000018": row("SRX000018", 18, **{P.COL_AEROBICITY: "transition"}),
         "SRX000019": row("SRX000019", 19, **{P.COL_AEROBICITY: "aerobic(30% DO)"}),
@@ -734,6 +789,17 @@ MG1655_PIN = AssemblyReferenceGenome(
 )
 
 
+def _pinned(
+    strain: str, *, background: BacterialStrainBackground | None = None
+) -> AssemblyReferenceGenome:
+    """The MG1655 pin, on a released strain's background when one is given."""
+    if background is None:
+        return MG1655_PIN
+    return MG1655_PIN.model_copy(
+        update={"strain": background.name, "background": background}
+    )
+
+
 @pytest.fixture
 def built(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
@@ -749,7 +815,7 @@ def built(
     root = tmp_path / "rnaseq_public_k12_lamoureux2023"
     files = _release_files(root / "raw")
     _pin(monkeypatch, files)
-    monkeypatch.setattr(P, "assembly_reference", lambda strain: MG1655_PIN)
+    monkeypatch.setattr(P, "assembly_reference", _pinned)
     return P.RnaseqPublicK12Lamoureux2023Dataset(root=str(root), ecoli_genome=genome)
 
 
@@ -761,33 +827,35 @@ def test_the_build_keeps_wild_type_and_deletions_and_counts_every_drop(
     built: P.RnaseqPublicK12Lamoureux2023Dataset,
 ) -> None:
     # SRX000021 (blank pH) and SRX000022 (blank nitrogen source on M9) are kept since
-    # #1045 row 24, each with a gapped factor
-    assert len(built) == 6
-    assert _json(built, "record_samples.json") == [
+    # #1045 row 24, each with a gapped factor; since #1057 the BW25113 strain, the
+    # evolved isolate, the undefined label and the bioreactor culture are stored too
+    kept = [
         "SRX000001",
         "SRX000002",
         "SRX000003",
         "SRX000004",
+        "SRX000005",
+        "SRX000009",
+        "SRX000013",
+        "SRX000016",
         "SRX000021",
         "SRX000022",
     ]
+    assert len(built) == len(kept)
+    assert _json(built, "record_samples.json") == kept
     drops = _json(built, "dropped_records.json")
     assert drops["source_records"] == 22
-    assert drops["kept_records"] == 6
-    assert drops["dropped_records"] == 16
+    assert drops["kept_records"] == 10
+    assert drops["dropped_records"] == 12
     assert {r["rule"]: r["n_records"] for r in drops["rules"]} == {
-        "strain_not_mg1655": 1,
         "plasmid_borne_construct": 1,
         "point_mutation_allele": 1,
         "phage_infected": 1,
-        "evolved_isolate": 1,
         "allele_described_in_prose": 1,
         "deletion_not_one_gene": 1,
         "partial_gene_edit": 1,
-        "background_label_undefined": 1,
         "deletion_symbol_unresolved": 1,
         "medium_not_in_library": 1,
-        "culture_not_batch": 1,
         "oxygen_regime_not_stated": 1,
         "oxygen_regime_transition": 1,
         "oxygen_setpoint_not_expressible": 1,
@@ -795,11 +863,16 @@ def test_the_build_keeps_wild_type_and_deletions_and_counts_every_drop(
     }
     assert {r["stage"] for r in drops["rules"]} == {"genotype", "environment"}
     assert drops["kept_by_genotype_class"] == {
+        "background_background_label_undefined": 1,
+        "background_evolved_isolate": 1,
+        "background_strain_not_mg1655": 1,
         "deletion_1": 1,
         "deletion_2": 1,
-        "wild_type": 4,
+        "wild_type": 5,
     }
-    assert drops["kept_by_base_media"] == {"LB": 4, "M9": 2}
+    assert drops["kept_by_base_media"] == {"LB": 8, "M9": 2}
+    strains = [built[i]["reference"]["genome_reference"]["strain"] for i in range(10)]
+    assert strains[4:7] == ["BW25113", "MG1655 CHL evolved", "MG1655 Z1 del_thrA"]
 
 
 def test_the_accession_ledger_is_the_deduplication_evidence(
@@ -823,6 +896,10 @@ def test_the_accession_ledger_is_the_deduplication_evidence(
         "SRX000002",
         "SRX000003",
         "SRX000004",
+        "SRX000005",
+        "SRX000009",
+        "SRX000013",
+        "SRX000016",
         "SRX000021",
         "SRX000022",
     ]
@@ -863,7 +940,7 @@ def test_a_repeated_count_profile_refuses_the_build(
     multiqc.to_csv(root / "raw" / P.PUBLIC_MULTIQC.name, sep="\t")
     files[P.PUBLIC_MULTIQC.name] = (root / "raw" / P.PUBLIC_MULTIQC.name).read_bytes()
     _pin(monkeypatch, files)
-    monkeypatch.setattr(P, "assembly_reference", lambda strain: MG1655_PIN)
+    monkeypatch.setattr(P, "assembly_reference", _pinned)
     with pytest.raises(RuntimeError, match="public count columns repeat another"):
         P.RnaseqPublicK12Lamoureux2023Dataset(root=str(root), ecoli_genome=genome)
 
@@ -920,11 +997,15 @@ def test_the_replicate_groups_pin_the_conditions_and_their_accessions(
 ) -> None:
     groups = _json(built, "replicate_groups.json")
     assert [g["full_name"] for g in groups] == [
+        "bioreactor:wt",
+        "bw:del_thrA",
+        "chl:ale",
         "m9:no_nitrogen",
         "noph:wt",
         "pro:double",
         "rpoB:wt",
         "thrA:del_thrA",
+        "z1:del_thrA",
     ]
     by_name = {g["full_name"]: g for g in groups}
     assert by_name["rpoB:wt"]["experiment_accessions"] == ["SRX000001", "SRX000002"]
@@ -959,7 +1040,7 @@ def test_a_divergence_count_off_its_pin_refuses_the_build(
     files = _release_files(root / "raw")
     _pin(monkeypatch, files)
     monkeypatch.setattr(P, "GENE_LENGTH_DIVERGENCE_N", 7)
-    monkeypatch.setattr(P, "assembly_reference", lambda strain: MG1655_PIN)
+    monkeypatch.setattr(P, "assembly_reference", _pinned)
     with pytest.raises(RuntimeError, match="released gene spans differ"):
         P.RnaseqPublicK12Lamoureux2023Dataset(root=str(root), ecoli_genome=genome)
 
@@ -983,7 +1064,7 @@ def test_a_count_total_off_the_multiqc_assigned_total_refuses_the_build(
     multiqc.to_csv(root / "raw" / P.PUBLIC_MULTIQC.name, sep="\t")
     files[P.PUBLIC_MULTIQC.name] = (root / "raw" / P.PUBLIC_MULTIQC.name).read_bytes()
     _pin(monkeypatch, files)
-    monkeypatch.setattr(P, "assembly_reference", lambda strain: MG1655_PIN)
+    monkeypatch.setattr(P, "assembly_reference", _pinned)
     with pytest.raises(RuntimeError, match="do not sum to the MultiQC Assigned total"):
         P.RnaseqPublicK12Lamoureux2023Dataset(root=str(root), ecoli_genome=genome)
 
@@ -1054,27 +1135,36 @@ def test_the_dev_store_pins_the_measured_build() -> None:
     root = _built_root()
     drops = json.loads((root / "preprocess/dropped_records.json").read_text())
     assert drops["source_records"] == 1675
-    assert drops["kept_records"] == 240
+    # #1057: the other substrains, evolved isolates, undefined labels and non-batch
+    # cultures are stored on a background named as released (240 before)
+    assert drops["kept_records"] == 747
     assert drops["kept_by_genotype_class"] == {
-        "deletion_1": 84,
+        "background_background_label_undefined": 4,
+        "background_evolved_isolate": 29,
+        "background_strain_not_mg1655": 211,
+        "deletion_1": 130,
         "deletion_2": 16,
-        "wild_type": 140,
+        "wild_type": 357,
     }
-    assert drops["kept_by_base_media"] == {"LB": 156, "M9": 84}
+    assert drops["kept_by_base_media"] == {
+        "L-broth": 15,
+        "LB": 273,
+        "LB-Miller": 2,
+        "M9": 392,
+        "MOPS": 59,
+        "MOPS w/o KH2PO4": 6,
+    }
     assert {r["rule"]: r["n_records"] for r in drops["rules"]} == {
-        "strain_not_mg1655": 669,
         "plasmid_borne_construct": 175,
         "point_mutation_allele": 41,
         "allele_described_in_prose": 36,
-        "evolved_isolate": 29,
         "phage_infected": 20,
-        "background_label_undefined": 7,
         "deletion_symbol_unresolved": 6,
         "partial_gene_edit": 3,
-        "medium_not_in_library": 250,
-        "culture_not_batch": 164,
-        "minimal_medium_source_not_stated": 24,
-        "ph_not_stated": 11,
+        "medium_not_in_library": 513,
+        "oxygen_regime_not_stated": 63,
+        "oxygen_setpoint_not_expressible": 52,
+        "temperature_not_stated": 19,
     }
 
 

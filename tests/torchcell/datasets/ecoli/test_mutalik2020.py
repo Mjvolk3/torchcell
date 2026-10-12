@@ -17,6 +17,8 @@ from __future__ import annotations
 import csv
 import hashlib
 import io
+import json
+import math
 import os
 import os.path as osp
 from pathlib import Path
@@ -1429,10 +1431,15 @@ def test_fitness_columns_key_on_the_experiment_name_not_the_description() -> Non
 
 
 def test_the_raw_pins_cover_every_file_the_build_reads() -> None:
-    """``raw_pins`` is the two linked artifacts plus the twelve extracted members."""
+    """``raw_pins`` is the two linked artifacts plus the fifteen extracted members.
+
+    ``fit_t.tab`` joined the extracted members when the released t became stored
+    (#1045 row 23): five leaves per analysis set, three sets.
+    """
     pins = mut.raw_pins()
     assert sorted(pins) == sorted([*mut.LINKED_ARTIFACTS, *mut.RAW_MEMBERS])
-    assert len(mut.RAW_MEMBERS) == 12
+    assert len(mut.RAW_MEMBERS) == 15
+    assert sum(rel.endswith("/fit_t.tab") for rel in mut.RAW_MEMBERS) == 3
     assert all(len(digest) == 64 for digest in pins.values())
     assert pins[mut.S13_NAME] == mut.artifact(mut.S13_TABLE_REL).sha256
     for raw_rel, member in mut.RAW_MEMBERS.items():
@@ -1443,7 +1450,7 @@ def test_the_raw_pins_cover_every_file_the_build_reads() -> None:
 def test_the_phenotype_is_a_signed_log2_ratio_with_the_release_s_own_se() -> None:
     """The SE is an SE of the estimate, so it is stored as-is and the SE is derived."""
     phenotype = mut.build_phenotype(
-        -4.0689, 0.2275, exp_name="set16IT008", state="liquid"
+        -4.0689, 0.2275, -16.3426, exp_name="set16IT008", state="liquid"
     )
     assert phenotype.measurement_type == MeasurementType.log2_ratio
     assert phenotype.assay_type == AssayType.pooled_competitive_growth_barcode
@@ -1462,8 +1469,36 @@ def test_the_phenotype_is_a_signed_log2_ratio_with_the_release_s_own_se() -> Non
     ]
     assert "planktonic" in str(phenotype.units)
     assert "solid-agar" in str(
-        mut.build_phenotype(1.0, 0.1, exp_name="set30IT064", state="solid").units
+        mut.build_phenotype(1.0, 0.1, 7.07, exp_name="set30IT064", state="solid").units
     )
+    # the released t is stored verbatim beside the SE, and named in the units
+    assert phenotype.environment_response_t_statistic == pytest.approx(-16.3426)
+    assert "environment_response_t_statistic" in str(phenotype.units)
+
+
+def test_a_released_t_above_its_se_bound_is_refused() -> None:
+    """#1045 row 23: ``|t| <= |fit| / sqrt(0.1^2 + se_obs^2)`` for every value.
+
+    The read-count SE is not released, so the RB-TnSeq identity is a bound; a value at
+    the bound counts as one where the strain-consistency SE is the larger, and one above
+    it means the three tables are not one analysis.
+    """
+    fit = [[1.0, -2.0], [0.0, 0.5]]
+    se = [[0.2, 0.3], [0.1, 0.4]]
+    bound = [
+        [f / math.sqrt(0.01 + e**2) for f, e in zip(fr, er)] for fr, er in zip(fit, se)
+    ]
+    t = [[bound[0][0], bound[0][1] / 2], [0.0, bound[1][1]]]
+    check = mut.check_t_statistic("set16:set16IT008", fit, se, t)
+    assert (check.n_values, check.n_at_bound) == (4, 3)
+    assert check.max_ratio == pytest.approx(1.0)
+    over = [[bound[0][0] * 1.01, bound[0][1]], [0.0, bound[1][1]]]
+    with pytest.raises(ValueError, match="1 released t exceed"):
+        mut.check_t_statistic("set16:set16IT008", fit, se, over)
+    with pytest.raises(ValueError, match="shapes differ"):
+        mut.check_t_statistic("x", fit, se, [[1.0]])
+    with pytest.raises(ValueError, match="not finite"):
+        mut.check_t_statistic("x", fit, se, [[math.nan, 0.0], [0.0, 0.0]])
 
 
 def test_the_genotype_records_that_the_locus_tag_was_derived() -> None:
@@ -1774,6 +1809,24 @@ def _table(genes: list[str], columns: dict[str, float]) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _t_table(genes: list[str], columns: dict[str, float], se: float) -> str:
+    """A released ``fit_t.tab`` at its bound, ``fit / sqrt(0.1^2 + se_obs^2)``.
+
+    Computed from the fitness and SE exactly as :func:`_table` prints them, so the
+    synthetic t sits ON the bound the loader asserts (the read-count SE is the smaller).
+    """
+    header = ["locusId", "sysName", "desc", *columns]
+    lines = ["\t".join(header)]
+    for index, gene in enumerate(genes, start=1):
+        row = [str(index), gene, f"product of {gene}"]
+        for value in columns.values():
+            fit = float(f"{value + index / 100:.6f}")
+            error = float(f"{se + index / 100:.6f}")
+            row.append(f"{fit / math.sqrt(0.1**2 + error**2):.12f}")
+        lines.append("\t".join(row))
+    return "\n".join(lines) + "\n"
+
+
 def _quality(columns: dict[str, float], usable: set[str]) -> str:
     """A released ``fit_quality.tab``: one row per experiment with its ``u`` flag."""
     lines = ["name\tshort\tt0set\tgMean\tmaxFit\tu"]
@@ -1899,6 +1952,7 @@ RELEASE_MEMBERS: dict[str, str] = {
                 "fit_standard_error_obs.tab",
                 _table(SYNTHETIC_GENES, dict.fromkeys(columns, 0.25)),
             ),
+            ("fit_t.tab", _t_table(SYNTHETIC_GENES, columns, 0.25)),
             ("fit_quality.tab", _quality(columns, {"set16IT008"})),
         )
     },
@@ -1944,7 +1998,7 @@ def release_mirror(
     """A tmp ``DATA_ROOT`` holding a deposited synthetic release the loader can build.
 
     The five artifacts are stand-ins re-pinned by monkeypatch, the tarball is a real
-    ``.tar.gz`` carrying the twelve members the loader extracts, and the genome tier and
+    ``.tar.gz`` carrying the fifteen members the loader extracts, and the genome tier and
     assembly pin are the synthetic K-12 pair, so the whole build runs with no
     ``$DATA_ROOT`` and no network.
     """
@@ -2010,7 +2064,7 @@ class TestSyntheticRelease:
     def test_download_links_the_mirror_and_extracts_the_pinned_members(
         self, tmp_path: Path, release_mirror: str
     ) -> None:
-        """Two links and twelve extracted members, every one sha256-verified."""
+        """Two links and fifteen extracted members, every one sha256-verified."""
         root = tmp_path / "linked"
         dataset = mut.PhageRbTnseqMutalik2020Dataset.__new__(
             mut.PhageRbTnseqMutalik2020Dataset
@@ -2084,6 +2138,17 @@ class TestSyntheticRelease:
         }
         assert "Keio:set16IT001" not in census
         assert (root / "preprocess" / "build_manifest.json").is_file()
+        # every record carries its released t, on the SE bound in this release
+        for index in range(len(dataset)):
+            phenotype = dataset[index]["experiment"]["phenotype"]
+            fit = phenotype["environment_response"]
+            se = phenotype["environment_response_se"]
+            assert phenotype["environment_response_t_statistic"] == pytest.approx(
+                fit / math.sqrt(0.1**2 + se**2), rel=1e-9
+            )
+        report = json.loads((root / "preprocess" / "t_statistic.json").read_text())
+        # six record-bearing experiments x seven released genes, all at the bound
+        assert (report["n_values"], report["n_at_bound"]) == (42, 42)
 
     def test_each_built_record_carries_its_phage_dose_and_derived_mapping(
         self, tmp_path: Path, release_mirror: str

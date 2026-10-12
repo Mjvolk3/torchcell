@@ -13,32 +13,32 @@
     },
     {
       "gate": "G2",
-      "outcome": "blocked",
-      "reason": "assembly_set: W3110 -> ecoli_K12_W3110_ASM1024v1 resolves but no genome class reads it",
+      "outcome": "pass",
+      "reason": "assembly_set: W3110 -> ecoli_K12_W3110_ASM1024v1 resolves and reads",
       "evidence": [],
       "issue": null,
-      "blocked_kind": "ingest"
+      "blocked_kind": null
     },
     {
       "gate": "G3",
-      "outcome": "unmeasured",
-      "reason": "not evaluated: G2 stopped the run",
+      "outcome": "pass",
+      "reason": "11 file(s) in raw, 1052331 worksheet row(s) counted; all intact",
       "evidence": [],
       "issue": null,
       "blocked_kind": null
     },
     {
       "gate": "G4",
-      "outcome": "unmeasured",
-      "reason": "not evaluated: G2 stopped the run",
+      "outcome": "pass",
+      "reason": "no key held by another module (0 mention(s)); no PMID check; values not compared (no dev store named)",
       "evidence": [],
       "issue": null,
       "blocked_kind": null
     },
     {
       "gate": "G5",
-      "outcome": "unmeasured",
-      "reason": "not evaluated: G2 stopped the run",
+      "outcome": "pass",
+      "reason": "PhosphositeIntensityPhenotype exists; compounds resolve",
       "evidence": [],
       "issue": null,
       "blocked_kind": null
@@ -49,20 +49,238 @@
   "aggregation": null,
   "g2": {
     "branch": "assembly_set",
-    "outcome": "resolvable_not_ingestible",
+    "outcome": "resolvable_readable",
     "hosts": [
       {
         "name": "W3110",
         "assembly_set": "ecoli_K12_W3110_ASM1024v1",
         "resolvable": true,
-        "readable": false
+        "readable": true
       }
     ]
   },
-  "g3": null,
-  "g4_key": null,
+  "g3": {
+    "citation_key": "potelWidespreadBacterialProtein2018",
+    "trees_read": [
+      "raw"
+    ],
+    "files": [
+      {
+        "tree": "raw",
+        "path": "data/41592_2018_BFnmeth4580_MOESM4_ESM.xlsx",
+        "role": "raw_data",
+        "bytes": 520006,
+        "sha256_manifest": "f69ca61a0f0dba3987b26bcdf4bd9b0c8fcf8744495233bad678a23cf5682481",
+        "sha256_disk": "f69ca61a0f0dba3987b26bcdf4bd9b0c8fcf8744495233bad678a23cf5682481",
+        "retrieval_method": "springer_esm",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Description",
+            "rows": 36
+          },
+          {
+            "sheet": "Supplementary Table 2.",
+            "rows": 2130
+          }
+        ]
+      },
+      {
+        "tree": "raw",
+        "path": "si/41592_2018_BFnmeth4580_MOESM1_ESM.pdf",
+        "role": "si_pdf",
+        "bytes": 1321436,
+        "sha256_manifest": "f4cc85a6bf9aca3084641dd0340b006840484c00deef5a87aca3c868583edb3d",
+        "sha256_disk": "f4cc85a6bf9aca3084641dd0340b006840484c00deef5a87aca3c868583edb3d",
+        "retrieval_method": "springer_esm",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/41592_2018_BFnmeth4580_MOESM2_ESM.pdf",
+        "role": "si_pdf",
+        "bytes": 164418,
+        "sha256_manifest": "7ab7cabe3d1eb8479f8a3bcd98b3ac263c1429141ba02fda3f43d8d6b0401981",
+        "sha256_disk": "7ab7cabe3d1eb8479f8a3bcd98b3ac263c1429141ba02fda3f43d8d6b0401981",
+        "retrieval_method": "springer_esm",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/41592_2018_BFnmeth4580_MOESM3_ESM.xlsx",
+        "role": "si_data",
+        "bytes": 19188161,
+        "sha256_manifest": "e6e4ef28ce90357fd497c3616269721557c44f0e3c76ae9c11cf506f3997c2ce",
+        "sha256_disk": "e6e4ef28ce90357fd497c3616269721557c44f0e3c76ae9c11cf506f3997c2ce",
+        "retrieval_method": "springer_esm",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Description",
+            "rows": 36
+          },
+          {
+            "sheet": "Supplementary Table 1.",
+            "rows": 1048356
+          }
+        ]
+      },
+      {
+        "tree": "raw",
+        "path": "si/41592_2018_BFnmeth4580_MOESM5_ESM.xlsx",
+        "role": "si_data",
+        "bytes": 30951,
+        "sha256_manifest": "c2ebaef8910fb2ec5109557943ce36079069c9894b072435c32addac44ab95ef",
+        "sha256_disk": "c2ebaef8910fb2ec5109557943ce36079069c9894b072435c32addac44ab95ef",
+        "retrieval_method": "springer_esm",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Description",
+            "rows": 18
+          },
+          {
+            "sheet": "Supplementary Table 3.",
+            "rows": 252
+          }
+        ]
+      },
+      {
+        "tree": "raw",
+        "path": "si/41592_2018_BFnmeth4580_MOESM6_ESM.xlsx",
+        "role": "si_data",
+        "bytes": 166352,
+        "sha256_manifest": "31a986e2b9a1cc582b1265a0bc124693f4bcdbf941abb3398f27217d3f1d58bb",
+        "sha256_disk": "31a986e2b9a1cc582b1265a0bc124693f4bcdbf941abb3398f27217d3f1d58bb",
+        "retrieval_method": "springer_esm",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Description",
+            "rows": 15
+          },
+          {
+            "sheet": "Supplementary Table 5.",
+            "rows": 1470
+          }
+        ]
+      },
+      {
+        "tree": "raw",
+        "path": "si/41592_2018_BFnmeth4580_MOESM7_ESM.xlsx",
+        "role": "si_data",
+        "bytes": 14219,
+        "sha256_manifest": "61ff4b381c5f53f24ee1609ad80c9fd6c42e7c738579bf781dd94e1b83e89589",
+        "sha256_disk": "61ff4b381c5f53f24ee1609ad80c9fd6c42e7c738579bf781dd94e1b83e89589",
+        "retrieval_method": "springer_esm",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Sheet1",
+            "rows": 18
+          }
+        ]
+      },
+      {
+        "tree": "raw",
+        "path": "si/41592_2018_BFnmeth4580_MOESM1_ESM.pdftotext.txt",
+        "role": "si_text",
+        "bytes": 17013,
+        "sha256_manifest": "4dee5c2a098fdaf95cfbe899c773348fe01281d535f9147708ffc9be79bd40de",
+        "sha256_disk": "4dee5c2a098fdaf95cfbe899c773348fe01281d535f9147708ffc9be79bd40de",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/41592_2018_BFnmeth4580_MOESM2_ESM.pdftotext.txt",
+        "role": "si_text",
+        "bytes": 9097,
+        "sha256_manifest": "9951a1ac02a5090d343134b97440acf618757c369e12310cc3b4ba23ee37ee43",
+        "sha256_disk": "9951a1ac02a5090d343134b97440acf618757c369e12310cc3b4ba23ee37ee43",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "data/41592_2018_BFnmeth4580_MOESM4_ESM.legends.txt",
+        "role": "si_text",
+        "bytes": 4388,
+        "sha256_manifest": "a85a3a155971d28456c6b3661b96bc662dfc46310c1c0d487283cb4e8dcfb57d",
+        "sha256_disk": "a85a3a155971d28456c6b3661b96bc662dfc46310c1c0d487283cb4e8dcfb57d",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/41592_2018_BFnmeth4580_MOESM6_ESM.legends.txt",
+        "role": "si_text",
+        "bytes": 1725,
+        "sha256_manifest": "ea531578dfa930d3373218407a44f7690f3b062662d5995cdb3851bdd5b7998f",
+        "sha256_disk": "ea531578dfa930d3373218407a44f7690f3b062662d5995cdb3851bdd5b7998f",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      }
+    ],
+    "walls": []
+  },
+  "g4_key": {
+    "doi": "10.1038/nmeth.4580",
+    "pmid": null,
+    "accessions": [
+      "PXD008369"
+    ],
+    "hits": [
+      {
+        "key_kind": "doi",
+        "key": "10.1038/nmeth.4580",
+        "where": "torchcell/datasets/ecoli/potel2018.py",
+        "relation": "own"
+      },
+      {
+        "key_kind": "accession",
+        "key": "PXD008369",
+        "where": "torchcell/datasets/ecoli/potel2018.py",
+        "relation": "own"
+      }
+    ],
+    "pmid_checked": false
+  },
   "g4_value": null,
-  "g5": null,
-  "decided_at": "2026-10-10",
-  "torchcell_commit": "878d586074283075bc33c88ed075598dc931edad"
+  "g5": {
+    "phenotype_class": "PhosphositeIntensityPhenotype",
+    "class_exists": true,
+    "unresolved_compounds": [],
+    "proposed_class": null
+  },
+  "decided_at": "2026-10-12",
+  "torchcell_commit": "8f69868dd92af3695e8f3dfde34788f1bf2f20c8"
 }

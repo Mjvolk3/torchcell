@@ -63,7 +63,7 @@ import os.path as osp
 import pickle
 import re
 import urllib.request
-from typing import Any
+from typing import Any, cast
 
 import lmdb
 import pandas as pd
@@ -345,7 +345,10 @@ class AminoAcidMulleder2016Dataset(ExperimentDataset):
         log.info(
             "Mulleder: data_raw rows per released ORF %s; reference n_replicates %d "
             "(strains the robust mean summarizes)",
-            {int(k): int(v) for k, v in n_rows.value_counts().sort_index().items()},
+            {
+                int(cast(int, k)): int(v)
+                for k, v in n_rows.value_counts().sort_index().items()
+            },
             self._n_reference_strains,
         )
         pd.DataFrame(

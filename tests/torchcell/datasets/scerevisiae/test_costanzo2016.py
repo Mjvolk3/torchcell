@@ -62,7 +62,6 @@ import lmdb
 import pandas as pd
 import pytest
 
-from tests.torchcell.datasets._sga_genome_stub import SgaGenomeStub
 from torchcell.data import ExperimentDataset
 from torchcell.datamodels.media import SGA_DM_SELECTION
 from torchcell.datamodels.schema import (
@@ -84,10 +83,6 @@ from torchcell.datamodels.schema import (
     SgaTsAllelePerturbation,
     Temperature,
     UncertaintyType,
-)
-from torchcell.datasets.gene_alias_resolution import (
-    GeneNameRefusalReason,
-    GeneNameRefused,
 )
 from torchcell.datasets.scerevisiae import costanzo2016 as c
 
@@ -249,26 +244,6 @@ _PUBLICATION = Publication(
     doi_url="https://www.science.org/doi/10.1126/science.aaf1420",
 )
 _GENOME = ReferenceGenome(species="Saccharomyces cerevisiae", strain="S288C")
-# Every fixture gene is live; the SGA rename/refusal tables hold on the stub (#893).
-_SGA_GENOME = SgaGenomeStub(
-    live=[
-        "YAL001C",
-        "YAL002W",
-        "YAL003W",
-        "YAL005C",
-        "YAL007C",
-        "YAL008W",
-        "YAL009W",
-        "YAL010C",
-        "YAL011W",
-        "YAL012W",
-        "YAL013W",
-        "YAL014C",
-        "YAL015C",
-        "YAL016W",
-        "YAL017W",
-    ]
-)
 
 
 def _write_smf_raw(root: Path) -> None:
@@ -317,25 +292,21 @@ def _reference_index(preprocess_dir: str) -> list[tuple[list[int], float]]:
 def smf(tmp_path_factory: pytest.TempPathFactory) -> c.SmfCostanzo2016Dataset:
     root = tmp_path_factory.mktemp("costanzo2016") / "smf"
     _write_smf_raw(root)
-    return c.SmfCostanzo2016Dataset(genome=_SGA_GENOME, root=str(root))
+    return c.SmfCostanzo2016Dataset(root=str(root))
 
 
 @pytest.fixture(scope="module")
 def dmf(tmp_path_factory: pytest.TempPathFactory) -> c.DmfCostanzo2016Dataset:
     root = tmp_path_factory.mktemp("costanzo2016") / "dmf"
     _write_sga_raw(root, _SGA_FILES)
-    return c.DmfCostanzo2016Dataset(
-        genome=_SGA_GENOME, root=str(root), io_workers=1, batch_size=2
-    )
+    return c.DmfCostanzo2016Dataset(root=str(root), io_workers=1, batch_size=2)
 
 
 @pytest.fixture(scope="module")
 def dmi(tmp_path_factory: pytest.TempPathFactory) -> c.DmiCostanzo2016Dataset:
     root = tmp_path_factory.mktemp("costanzo2016") / "dmi"
     _write_sga_raw(root, _SGA_FILES)
-    return c.DmiCostanzo2016Dataset(
-        genome=_SGA_GENOME, root=str(root), io_workers=1, batch_size=2
-    )
+    return c.DmiCostanzo2016Dataset(root=str(root), io_workers=1, batch_size=2)
 
 
 # --------------------------------------------------------------------------- #
@@ -483,31 +454,19 @@ def test_smf_reference_std_is_the_mean_stddev_of_each_temperature(
 def test_smf_side_files_gene_set_reference_index_manifest_and_interning(
     smf: c.SmfCostanzo2016Dataset,
 ) -> None:
-    """``preprocess/`` holds the five side files with the fixture's exact content.
+    """``preprocess/`` holds the four side files with the fixture's exact content.
 
     Gene set = the five systematic names sorted; two references (26 C members 0..3,
     30 C members 4..8, first-sighting order); manifest names this loader and host;
-    the systematic-name ledger records no renamed or refused name (every fixture gene
-    is live); ``processed/interned`` holds exactly 4 objects (2 environments + 2
-    references, the publication is under 512 bytes and stays inline).
+    ``processed/interned`` holds exactly 4 objects (2 environments + 2 references,
+    the publication is under 512 bytes and stays inline).
     """
     assert sorted(os.listdir(smf.preprocess_dir)) == [
         "build_manifest.json",
         "data.csv",
         "experiment_reference_index.json",
         "gene_set.json",
-        "systematic_name_ledger.json",
     ]
-    with open(osp.join(smf.preprocess_dir, "systematic_name_ledger.json")) as f:
-        assert json.load(f) == {
-            "dataset_name": "SmfCostanzo2016Dataset",
-            "annotation": "S288C R64-4-1 (2023-08-30)",
-            "n_rows_in": 9,
-            "n_rows_refused": 0,
-            "n_rows_out": 9,
-            "renamed": [],
-            "refused": [],
-        }
     with open(osp.join(smf.preprocess_dir, "gene_set.json")) as f:
         assert json.load(f) == ["YAL001C", "YAL002W", "YAL003W", "YAL005C", "YAL007C"]
     assert sorted(smf.gene_set) == [
@@ -711,7 +670,7 @@ def test_dmf_subset_n_samples_rows_with_seed_42(tmp_path: Path) -> None:
     root = tmp_path / "dmf_subset"
     _write_sga_raw(root, _SGA_FILES)
     ds = c.DmfCostanzo2016Dataset(
-        genome=_SGA_GENOME, root=str(root), subset_n=2, io_workers=1, batch_size=2
+        root=str(root), subset_n=2, io_workers=1, batch_size=2
     )
     assert len(ds) == 2
     kept = [
@@ -941,7 +900,7 @@ def smf_twins(tmp_path_factory: pytest.TempPathFactory) -> c.SmfCostanzo2016Data
     pd.DataFrame(_SMF_TWIN_ROWS, columns=_SMF_COLUMNS).to_excel(
         root / "raw" / "strain_ids_and_single_mutant_fitness.xlsx", index=False
     )
-    return c.SmfCostanzo2016Dataset(genome=_SGA_GENOME, root=str(root))
+    return c.SmfCostanzo2016Dataset(root=str(root))
 
 
 def _smf_experiment(
@@ -1189,9 +1148,7 @@ def test_dmf_suppressor_damp_and_natmx_classes(tmp_path: Path) -> None:
     """
     root = tmp_path / "dmf_edge"
     _write_sga_raw(root, _SGA_EDGE_FILES_WITH_SD)
-    ds = c.DmfCostanzo2016Dataset(
-        genome=_SGA_GENOME, root=str(root), io_workers=1, batch_size=2
-    )
+    ds = c.DmfCostanzo2016Dataset(root=str(root), io_workers=1, batch_size=2)
     assert len(ds) == 2
     first, second = _edge_pair()
     for index, genotype, fitness, std in (
@@ -1225,9 +1182,7 @@ def test_dmf_blank_sd_refuses_the_build_by_name(tmp_path: Path) -> None:
     root = tmp_path / "dmf_blank_sd"
     _write_sga_raw(root, _SGA_EDGE_FILES)
     with pytest.raises(c.BlankDoubleMutantFitnessError) as excinfo:
-        c.DmfCostanzo2016Dataset(
-            genome=_SGA_GENOME, root=str(root), io_workers=1, batch_size=2
-        )
+        c.DmfCostanzo2016Dataset(root=str(root), io_workers=1, batch_size=2)
     assert str(excinfo.value) == (
         "1 Costanzo 2016 DMF row(s) have a blank fitness or standard deviation "
         "(first: YAL013W_S2 x YAL014C_damp2 at DMA30)"
@@ -1241,9 +1196,7 @@ def test_dmi_suppressor_damp_and_natmx_classes(tmp_path: Path) -> None:
     """
     root = tmp_path / "dmi_edge"
     _write_sga_raw(root, _SGA_EDGE_FILES)
-    ds = c.DmiCostanzo2016Dataset(
-        genome=_SGA_GENOME, root=str(root), io_workers=1, batch_size=2
-    )
+    ds = c.DmiCostanzo2016Dataset(root=str(root), io_workers=1, batch_size=2)
     first, second = _edge_pair()
     for index, genotype, score, p_value in (
         (0, first, 0.1, 0.2),
@@ -1297,17 +1250,13 @@ def test_dmf_row_at_22c_is_refused_by_name_while_dmi_stores_it(tmp_path: Path) -
     files = dict(_SGA_EMPTY, **{"SGA_ExE.txt": [_TSA22]})
     _write_sga_raw(tmp_path / "dmf22", files)
     with pytest.raises(c.UnsupportedTemperatureError) as excinfo:
-        c.DmfCostanzo2016Dataset(
-            genome=_SGA_GENOME, root=str(tmp_path / "dmf22"), io_workers=1
-        )
+        c.DmfCostanzo2016Dataset(root=str(tmp_path / "dmf22"), io_workers=1)
     assert str(excinfo.value) == (
         "Costanzo 2016 strain YAL015C_tsa4 x YAL016W_dma3 at 22 C: reference noise is "
         "defined only at 26 and 30 C"
     )
     _write_sga_raw(tmp_path / "dmi22", files)
-    dmi22 = c.DmiCostanzo2016Dataset(
-        genome=_SGA_GENOME, root=str(tmp_path / "dmi22"), io_workers=1
-    )
+    dmi22 = c.DmiCostanzo2016Dataset(root=str(tmp_path / "dmi22"), io_workers=1)
     assert len(dmi22) == 1
     assert dmi22[0]["experiment"]["environment"] == _environment(22).model_dump()
 
@@ -1321,7 +1270,7 @@ def test_dmf_blank_fitness_refuses_the_build_by_name(tmp_path: Path) -> None:
     root = tmp_path / "dmf_nan"
     _write_sga_raw(root, dict(_SGA_EMPTY, **{"SGA_NxN.txt": [row]}))
     with pytest.raises(c.BlankDoubleMutantFitnessError) as excinfo:
-        c.DmfCostanzo2016Dataset(genome=_SGA_GENOME, root=str(root), io_workers=1)
+        c.DmfCostanzo2016Dataset(root=str(root), io_workers=1)
     assert str(excinfo.value) == (
         "1 Costanzo 2016 DMF row(s) have a blank fitness or standard deviation "
         "(first: YAL015C_dma4 x YAL016W_sn3 at DMA30)"
@@ -1335,9 +1284,7 @@ def test_dmi_subset_n_samples_the_same_rows_as_dmf(tmp_path: Path) -> None:
     """
     root = tmp_path / "dmi_subset"
     _write_sga_raw(root, _SGA_FILES)
-    ds = c.DmiCostanzo2016Dataset(
-        genome=_SGA_GENOME, root=str(root), subset_n=2, io_workers=1
-    )
+    ds = c.DmiCostanzo2016Dataset(root=str(root), subset_n=2, io_workers=1)
     kept = [
         (
             ds[i]["experiment"]["phenotype"]["gene_interaction"],
@@ -1456,21 +1403,12 @@ def test_main_builds_the_seven_datasets_under_data_root(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """``main`` constructs SMF, three DMF and three DMI datasets with these exact roots
-    and arguments (the 1e5 and 5e5 subsets) and ONE genome built without overwrite,
-    printing each length and one record; the classes and the genome are replaced by
-    recorders so nothing is built.
+    and arguments (the 1e5 and 5e5 subsets), printing each length and one record; the
+    classes are replaced by recorders so nothing is built.
     """
     monkeypatch.setenv("DATA_ROOT", str(tmp_path))
     monkeypatch.setattr("dotenv.load_dotenv", lambda *a, **k: False)
     calls: list[tuple[str, dict[str, Any]]] = []
-    genome = object()
-    genome_calls: list[dict[str, Any]] = []
-
-    def genome_recorder(**kwargs: Any) -> object:
-        genome_calls.append(kwargs)
-        return genome
-
-    monkeypatch.setattr(c, "SCerevisiaeGenome", genome_recorder)
 
     def recorder(name: str) -> type[Any]:
         class _Recorder:
@@ -1496,12 +1434,11 @@ def test_main_builds_the_seven_datasets_under_data_root(
     assert calls == [
         (
             "SmfCostanzo2016Dataset",
-            {"genome": genome, "root": f"{base}/smf_costanzo2016", "io_workers": 10},
+            {"root": f"{base}/smf_costanzo2016", "io_workers": 10},
         ),
         (
             "DmfCostanzo2016Dataset",
             {
-                "genome": genome,
                 "root": f"{base}/dmf_costanzo2016_1e5",
                 "io_workers": 10,
                 "batch_size": 10000,
@@ -1511,7 +1448,6 @@ def test_main_builds_the_seven_datasets_under_data_root(
         (
             "DmfCostanzo2016Dataset",
             {
-                "genome": genome,
                 "root": f"{base}/dmf_costanzo2016_5e5",
                 "io_workers": 10,
                 "batch_size": 10000,
@@ -1520,17 +1456,11 @@ def test_main_builds_the_seven_datasets_under_data_root(
         ),
         (
             "DmfCostanzo2016Dataset",
-            {
-                "genome": genome,
-                "root": f"{base}/dmf_costanzo2016",
-                "io_workers": 10,
-                "batch_size": 10000,
-            },
+            {"root": f"{base}/dmf_costanzo2016", "io_workers": 10, "batch_size": 10000},
         ),
         (
             "DmiCostanzo2016Dataset",
             {
-                "genome": genome,
                 "root": f"{base}/dmi_costanzo2016_1e5",
                 "io_workers": 10,
                 "subset_n": 100000,
@@ -1539,7 +1469,6 @@ def test_main_builds_the_seven_datasets_under_data_root(
         (
             "DmiCostanzo2016Dataset",
             {
-                "genome": genome,
                 "root": f"{base}/dmi_costanzo2016_5e5",
                 "io_workers": 10,
                 "subset_n": 500000,
@@ -1547,15 +1476,8 @@ def test_main_builds_the_seven_datasets_under_data_root(
         ),
         (
             "DmiCostanzo2016Dataset",
-            {"genome": genome, "root": f"{base}/dmi_costanzo2016", "io_workers": 10},
+            {"root": f"{base}/dmi_costanzo2016", "io_workers": 10},
         ),
-    ]
-    assert genome_calls == [
-        {
-            "genome_root": f"{tmp_path}/data/sgd/genome",
-            "go_root": f"{tmp_path}/data/go",
-            "overwrite": False,
-        }
     ]
     assert capsys.readouterr().out.splitlines() == [
         "7",
@@ -1563,208 +1485,3 @@ def test_main_builds_the_seven_datasets_under_data_root(
         *["7", "DmfCostanzo2016Dataset[0]"] * 3,
         *["7", "DmiCostanzo2016Dataset[0]"] * 3,
     ]
-
-
-# --------------------------------------------------------------------------- #
-# 2026.10.11 (#893, #930, #979): released systematic names R64 no longer carries
-# --------------------------------------------------------------------------- #
-# SMF: one live strain, one merged ORF (YAR044W, now part of YAR042W) and one retired
-# ORF (YAR037W). Six rows (three strains x two temperatures), four refused, so two
-# records; the reference noise is still the mean over all three strains' rows.
-_SMF_CURRENCY_ROWS: list[tuple[Any, ...]] = [
-    ("YAL002W_dma1", "YAL002W", "VPS8", 0.95, 0.01, 0.90, 0.02),
-    ("YAR044W_dma74", "YAR044W", "yar044w", 0.97, 0.03, 0.96, 0.04),
-    ("YAR037W_dma71", "YAR037W", "yar037w", 1.01, 0.05, 1.00, 0.06),
-]
-# DMF / DMI at DMA30: a live pair (kept, record 0), a merged array (refused), a retired
-# query (refused) and a renamed array YAL043C-A (kept as YAL042C-A, record 1).
-_SGA_CURRENCY_FILES: dict[str, list[tuple[Any, ...]]] = {
-    "SGA_DAmP.txt": [],
-    "SGA_ExE.txt": [],
-    "SGA_ExN_NxE.txt": [],
-    "SGA_NxN.txt": [
-        ("YAL001C_damp1", "tfc3-damp", "YAL002W_dma1", "vps8", "DMA30", -0.12, 0.001, 0.9, 0.95, 0.70, 0.05),
-        ("YAL009W_sn1", "spo7", "YAR044W_dma74", "yar044w", "DMA30", 0.03, 0.2, 1.0, 0.97, 0.80, 0.03),
-        ("YCL006C_sn3", "ycl006c", "YAL010C_dma3", "mdm10", "DMA30", 0.01, 0.4, 1.0, 0.99, 0.90, 0.01),
-        ("YAL001C_damp1", "tfc3-damp", "YAL043C-A_dma42", "yal043c-a", "DMA30", 0.05, 0.3, 0.9, 1.0, 0.95, 0.02),
-    ],
-}  # fmt: skip
-_SGA_CURRENCY_LEDGER_REFUSED = [
-    {
-        "released_name": "YAR044W",
-        "stored_name": None,
-        "reason": "merged_into_locus",
-        "locus": "YAR042W",
-        "n_rows": 1,
-    },
-    {
-        "released_name": "YCL006C",
-        "stored_name": None,
-        "reason": "retired_systematic_name",
-        "locus": None,
-        "n_rows": 1,
-    },
-]
-
-
-def _ledger(dataset: ExperimentDataset) -> dict[str, Any]:
-    with open(osp.join(dataset.preprocess_dir, "systematic_name_ledger.json")) as f:
-        loaded: dict[str, Any] = json.load(f)
-    return loaded
-
-
-def test_smf_refuses_merged_and_retired_strains_after_the_reference_noise(
-    tmp_path: Path,
-) -> None:
-    """Only the live strain's two records are stored; the reference noise is the mean
-    over all six released rows (26 C: 0.01, 0.03, 0.05; 30 C: 0.02, 0.04, 0.06), so a
-    refusal changes no kept record; the ledger names both refusals and their reasons.
-    """
-    root = tmp_path / "smf_currency"
-    (root / "raw").mkdir(parents=True)
-    pd.DataFrame(_SMF_CURRENCY_ROWS, columns=_SMF_COLUMNS).to_excel(
-        root / "raw" / "strain_ids_and_single_mutant_fitness.xlsx", index=False
-    )
-    ds = c.SmfCostanzo2016Dataset(genome=_SGA_GENOME, root=str(root))
-    assert len(ds) == 2
-    assert ds[0]["experiment"] == _smf_experiment(_dma1(), 26, 0.95, 0.01).model_dump()
-    assert ds[1]["experiment"] == _smf_experiment(_dma1(), 30, 0.90, 0.02).model_dump()
-    assert ds[0]["reference"] == _smf_reference(26, 0.03).model_dump()
-    assert ds[1]["reference"] == _smf_reference(30, 0.04).model_dump()
-    assert _ledger(ds) == {
-        "dataset_name": "SmfCostanzo2016Dataset",
-        "annotation": "S288C R64-4-1 (2023-08-30)",
-        "n_rows_in": 6,
-        "n_rows_refused": 4,
-        "n_rows_out": 2,
-        "renamed": [],
-        "refused": [
-            {
-                "released_name": "YAR037W",
-                "stored_name": None,
-                "reason": "retired_systematic_name",
-                "locus": None,
-                "n_rows": 2,
-            },
-            {
-                "released_name": "YAR044W",
-                "stored_name": None,
-                "reason": "merged_into_locus",
-                "locus": "YAR042W",
-                "n_rows": 2,
-            },
-        ],
-    }
-
-
-@pytest.mark.parametrize(
-    "cls", [c.DmfCostanzo2016Dataset, c.DmiCostanzo2016Dataset], ids=["dmf", "dmi"]
-)
-def test_dmf_and_dmi_refuse_the_same_rows_and_map_a_renamed_array(
-    tmp_path: Path, cls: type[ExperimentDataset]
-) -> None:
-    """Of four DMA30 rows, the merged-array and retired-query rows are refused and the
-    renamed array YAL043C-A is stored as YAL042C-A with its released strain id and
-    allele name. DMF's 30 C reference SD stays the mean of all four released SDs,
-    (0.05 + 0.03 + 0.01 + 0.02) / 4 = 0.0275.
-    """
-    root = tmp_path / cls.__name__
-    _write_sga_raw(root, _SGA_CURRENCY_FILES)
-    ds = cls(genome=_SGA_GENOME, root=str(root), io_workers=1)  # type: ignore[call-arg]
-    assert len(ds) == 2
-    kept = ds[0]["experiment"]["genotype"]["perturbations"]
-    assert [p["strain_id"] for p in kept] == ["YAL001C_damp1", "YAL002W_dma1"]
-    renamed = ds[1]["experiment"]["genotype"]["perturbations"][1]
-    assert (
-        renamed
-        == SgaKanMxDeletionPerturbation(
-            systematic_gene_name="YAL042C-A",
-            perturbed_gene_name="yal043c-a",
-            strain_id="YAL043C-A_dma42",
-        ).model_dump()
-    )
-    if cls is c.DmfCostanzo2016Dataset:
-        assert ds[0]["reference"]["phenotype_reference"]["fitness_std"] == 0.0275
-    assert _ledger(ds) == {
-        "dataset_name": cls.__name__,
-        "annotation": "S288C R64-4-1 (2023-08-30)",
-        "n_rows_in": 4,
-        "n_rows_refused": 2,
-        "n_rows_out": 2,
-        "renamed": [
-            {
-                "released_name": "YAL043C-A",
-                "stored_name": "YAL042C-A",
-                "reason": None,
-                "locus": "YAL042C-A",
-                "n_rows": 1,
-            }
-        ],
-        "refused": _SGA_CURRENCY_LEDGER_REFUSED,
-    }
-
-
-def test_a_build_needs_a_genome_and_refuses_an_unpinned_non_current_name(
-    tmp_path: Path,
-) -> None:
-    """Without a genome no release is read; with one, an ORF that is neither live nor
-    pinned (``YZZ999W``, retired in the stub) stops the build by name.
-    """
-    root = tmp_path / "smf_no_genome"
-    _write_smf_raw(root)
-    with pytest.raises(RuntimeError) as excinfo:
-        c.SmfCostanzo2016Dataset(root=str(root))
-    assert str(excinfo.value) == (
-        "SmfCostanzo2016Dataset requires an injected SCerevisiaeGenome: every released "
-        "systematic name is checked against R64 before a record is written (#893)"
-    )
-    root = tmp_path / "smf_unpinned"
-    (root / "raw").mkdir(parents=True)
-    pd.DataFrame(
-        [("YZZ999W_dma9", "YZZ999W", "yzz999w", 0.9, 0.01, 0.9, 0.01)],
-        columns=_SMF_COLUMNS,
-    ).to_excel(root / "raw" / "strain_ids_and_single_mutant_fitness.xlsx", index=False)
-    with pytest.raises(GeneNameRefused) as refused:
-        c.SmfCostanzo2016Dataset(genome=_SGA_GENOME, root=str(root))
-    assert refused.value.refusal.reason is GeneNameRefusalReason.NOT_CURRENT_UNPINNED
-    assert refused.value.refusal.name == "YZZ999W"
-
-
-_SMF_RAW = osp.join(
-    os.environ["DATA_ROOT"],
-    "data/torchcell/smf_costanzo2016/raw/strain_ids_and_single_mutant_fitness.xlsx",
-)
-
-
-@pytest.mark.data
-@pytest.mark.slow
-@pytest.mark.skipif(
-    not osp.exists(_SMF_RAW), reason=f"requires the released SMF table at {_SMF_RAW}"
-)
-def test_released_smf_refuses_74_rows_of_35_orfs_r64_no_longer_carries() -> None:
-    """On the released spreadsheet and the R64-4-1 genome: 20,484 rows in, 74 refused
-    (35 ORFs: 28 merged, 7 retired, two rows each but YDL038C and YIL168W with four),
-    none renamed.
-    """
-    from torchcell.datasets.systematic_name_currency import sga_systematic_name_currency
-    from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-
-    data_root = os.environ["DATA_ROOT"]
-    genome = SCerevisiaeGenome(
-        genome_root=osp.join(data_root, "data/sgd/genome"),
-        go_root=osp.join(data_root, "data/go"),
-        overwrite=False,
-    )
-    loader = c.SmfCostanzo2016Dataset.__new__(c.SmfCostanzo2016Dataset)
-    frame = loader.preprocess_raw(pd.read_excel(_SMF_RAW))
-    currency = sga_systematic_name_currency(genome, "SmfCostanzo2016Dataset")
-    currency.apply(frame, ["Systematic gene name"])
-    got = currency.ledger("SmfCostanzo2016Dataset")
-    assert (got.n_rows_in, got.n_rows_refused, got.n_rows_out) == (20_484, 74, 20_410)
-    assert got.renamed == []
-    reasons = [str(o.reason) for o in got.refused]
-    assert (reasons.count("merged_into_locus"), reasons.count("retired_systematic_name")) == (28, 7)  # fmt: skip
-    assert {o.released_name: o.n_rows for o in got.refused if o.n_rows != 2} == {
-        "YDL038C": 4,
-        "YIL168W": 4,
-    }

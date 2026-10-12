@@ -44,11 +44,6 @@ from torchcell.datamodels.schema import (
     UncertaintyType,
 )
 from torchcell.datasets.dataset_registry import register_dataset
-from torchcell.datasets.systematic_name_currency import (
-    SystematicNameGenome,
-    sga_systematic_name_currency,
-)
-from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -134,19 +129,6 @@ def _reference_std_at(temperature: Any, std_26: Any, std_30: Any, strain: str) -
 
 
 # ============================================================================
-# Released systematic names (#893, #930, #979)
-# ============================================================================
-# Data File S1 names 35 strains by an ORF the R64-4-1 annotation no longer carries as a
-# locus. Every build checks each released systematic name against the injected genome
-# through ``systematic_name_currency``: a renamed ORF would map to its current name (none
-# of the 35 is a rename), and a retired ORF (7) or an ORF merged into a longer locus (28)
-# is refused with its typed reason. A refused strain's rows are removed AFTER the
-# reference noise is computed, so the reference stays the release's statistic and no
-# other record changes; the count and the names refused are written to
-# ``preprocess/systematic_name_ledger.json``.
-
-
-# ============================================================================
 # Fitness
 @register_dataset
 class SmfCostanzo2016Dataset(ExperimentDataset):
@@ -165,11 +147,9 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
         io_workers: int = 0,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
-        genome: SystematicNameGenome | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize the SMF dataset; a build needs ``genome`` to check ORF names."""
-        self.genome = genome
+        """Initialize the SMF dataset under ``root`` via the base dataset."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -217,12 +197,9 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
         (phenotype_reference_std_26, phenotype_reference_std_30) = (
             self.compute_phenotype_reference_std(df)
         )
-        currency = sga_systematic_name_currency(self.genome, type(self).__name__)
-        df = currency.apply(df, ["Systematic gene name"]).reset_index(drop=True)
 
         # Save preprocssed df - mainly for quick stats
         os.makedirs(self.preprocess_dir, exist_ok=True)
-        currency.write_ledger(self.name, self.preprocess_dir)
         df.to_csv(osp.join(self.preprocess_dir, "data.csv"), index=False)
 
         log.info("Processing SMF Files...")
@@ -495,11 +472,9 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
         io_workers: int = 1,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
-        genome: SystematicNameGenome | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize the dataset; a build needs ``genome`` to check ORF names."""
-        self.genome = genome
+        """Initialize the dataset with optional subsetting and batched IO."""
         self.io_workers = io_workers
         self.subset_n = subset_n
         self.batch_size = batch_size
@@ -641,11 +616,6 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
 
         # Functions for data filtering... duplicates selection,
         df = self.preprocess_raw(df)
-        currency = sga_systematic_name_currency(self.genome, type(self).__name__)
-        df = currency.apply(
-            df, ["Query Systematic Name", "Array Systematic Name"]
-        ).reset_index(drop=True)
-        currency.write_ledger(self.name, self.preprocess_dir)
 
         # Subset
         if self.subset_n is not None:
@@ -888,11 +858,9 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
         io_workers: int = 1,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
-        genome: SystematicNameGenome | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize the dataset; a build needs ``genome`` to check ORF names."""
-        self.genome = genome
+        """Initialize the dataset with optional subsetting and batched IO."""
         self.io_workers = io_workers
         self.subset_n = subset_n
         self.batch_size = batch_size
@@ -1010,11 +978,6 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
 
         # Functions for data filtering... duplicates selection,
         df = self.preprocess_raw(df)
-        currency = sga_systematic_name_currency(self.genome, type(self).__name__)
-        df = currency.apply(
-            df, ["Query Systematic Name", "Array Systematic Name"]
-        ).reset_index(drop=True)
-        currency.write_ledger(self.name, self.preprocess_dir)
 
         # Subset
         if self.subset_n is not None:
@@ -1208,17 +1171,10 @@ def main() -> None:
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
     assert DATA_ROOT is not None, "DATA_ROOT must be set"
-    genome = SCerevisiaeGenome(
-        genome_root=osp.join(DATA_ROOT, "data/sgd/genome"),
-        go_root=osp.join(DATA_ROOT, "data/go"),
-        overwrite=False,
-    )
 
     # Single mutant fitness
     dataset = SmfCostanzo2016Dataset(
-        root=osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016"),
-        io_workers=10,
-        genome=genome,
+        root=osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016"), io_workers=10
     )
     print(len(dataset))
     print(dataset[100])
@@ -1226,7 +1182,6 @@ def main() -> None:
     # Double mutant fitness
     dataset = DmfCostanzo2016Dataset(
         root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016_1e5"),
-        genome=genome,
         io_workers=10,
         batch_size=int(1e4),
         subset_n=int(1e5),
@@ -1236,7 +1191,6 @@ def main() -> None:
 
     dataset = DmfCostanzo2016Dataset(
         root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016_5e5"),
-        genome=genome,
         io_workers=10,
         batch_size=int(1e4),
         subset_n=int(5e5),
@@ -1246,7 +1200,6 @@ def main() -> None:
 
     dataset = DmfCostanzo2016Dataset(
         root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016"),
-        genome=genome,
         io_workers=10,
         batch_size=int(1e4),
     )
@@ -1256,7 +1209,6 @@ def main() -> None:
     # Interactions
     dataset = DmiCostanzo2016Dataset(
         root=osp.join(DATA_ROOT, "data/torchcell/dmi_costanzo2016_1e5"),
-        genome=genome,
         io_workers=10,
         subset_n=int(1e5),
     )
@@ -1265,7 +1217,6 @@ def main() -> None:
 
     dataset = DmiCostanzo2016Dataset(
         root=osp.join(DATA_ROOT, "data/torchcell/dmi_costanzo2016_5e5"),
-        genome=genome,
         io_workers=10,
         subset_n=int(5e5),
     )
@@ -1273,9 +1224,7 @@ def main() -> None:
     print(dataset[0])
 
     dataset = DmiCostanzo2016Dataset(
-        root=osp.join(DATA_ROOT, "data/torchcell/dmi_costanzo2016"),
-        io_workers=10,
-        genome=genome,
+        root=osp.join(DATA_ROOT, "data/torchcell/dmi_costanzo2016"), io_workers=10
     )
     print(len(dataset))
     print(dataset[0])

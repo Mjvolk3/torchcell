@@ -10,7 +10,7 @@ created: 1791693231988
 
 The owner's request: "I want to get to the end where we know all the manual problems that need to be solved. I will then try to solve them." This ledger is that list, one row per problem, each traced to the issue or PR line it comes from. Umbrella issue: #919 (`by-hand`), one checkbox per row.
 
-**What counts as a row.** A problem an agent may not or cannot solve: a retrieval behind a wall that needs a browser, a Zotero write (agents never write to Zotero), a data decision a PR or issue explicitly left to the owner (not one taken by recommendation), a credential, or a build and disk step reserved for the owner. Decisions already taken by recommendation, and open issues an agent can fix, are listed at the end as checked and excluded, so the list can be audited for completeness.
+**What counts as a row.** A problem an agent may not or cannot solve: a retrieval behind a wall that needs a browser, a Zotero write an agent may not make (since 2026-10-12 agents file a dataset's primary paper with its PDF through `scripts/zotero_add_paper.py`; every other Zotero write stays the owner's), a data decision a PR or issue explicitly left to the owner (not one taken by recommendation), a credential, or a build and disk step reserved for the owner. Decisions already taken by recommendation, and open issues an agent can fix, are listed at the end as checked and excluded, so the list can be audited for completeness.
 
 **Sources read, all of them.** Every open issue labeled `by-hand`, `dataset` or `before-next-kg-build` (39, from `gh issue list --state open --label <l> --limit 200`); the 33 issues closed since 2026-10-08 and their comments (`gh issue list --state closed --search "closed:>=2026-10-08"`); the bodies of the 64 PRs closed since 2026-10-08 12:00 UTC (`gh pr list --state closed --limit 100`); the program memory `bacteria-expansion-program-state`; [[database.kg-4-pre-build-verification]]; the `blocked` rows and `EXCLUDED` list of `experiments/database/scripts/build_bacteria_candidate_datasets_table.py` (`ranked()` at `edd48664ae`; "candidate rank" below is a position in that order); [[plan.dataset-admission-pipeline.2026.10.10]]; and `python -m torchcell.candidates ledger --print` (two verdicts, both `admissible`, no blocked gate, so it contributes no row).
 
@@ -20,7 +20,7 @@ The owner's request: "I want to get to the end where we know all the manual prob
 
 1. #691, attach the Nichols 2011 PDF: a loader the candidate table estimates at 1,289,196 instances (a product of dimensions, not a count).
 2. #726, the compound-identity curator (a go-ahead, plus a non-throttled PubChem host only if GilaHyper is throttled again): 94,640 Borchert 2024 records dropped on the `RCH2_defined_noCarbon` medium (#860), all 47,320 of Rand 2017's among them.
-3. #910, file Teteneva 2024 in Zotero and then choose the W3110 annotation route: 66,162 reported RB-TnSeq fitness values.
+3. #910, choose the W3110 annotation route (Teteneva 2024 itself was filed on 2026-10-12 as group item `PUKZFNFZ`): 66,162 reported RB-TnSeq fitness values.
 
 #788 item 3 (Tong 2020's CarPE table) touches more records, 111,420, but fills a typed gap on records already stored rather than adding records.
 
@@ -29,11 +29,11 @@ The owner's request: "I want to get to the end where we know all the manual prob
 | kind | problems | largest unblock in the kind |
 |---|---:|---|
 | walled retrieval | 3 | #788 (item 3): fills the carbon-source concentration, a typed gap on all 111,420 stored records |
-| Zotero curation | 6 | #691: the Nichols 2011 loader: the candidate table estimates 1,289,196 instances (a product of dimensions, not a count); Shiver 2016 already holds a re-scored Nichols batch-0 block of 835,337 measured values, deliberately not loaded |
+| Zotero curation | 3 | #691: the Nichols 2011 loader: the candidate table estimates 1,289,196 instances (a product of dimensions, not a count); Shiver 2016 already holds a re-scored Nichols batch-0 block of 835,337 measured values, deliberately not loaded |
 | owner data decision | 21 | #726: 94,640 Borchert 2024 records dropped on the RCH2 medium, among them all 47,320 of Rand 2017's (#860); identities for the 276 bacterial gap labels counted in PR #838 |
 | infrastructure/credential | 1 | #726: the same 94,640 records as the go-ahead row; the curator re-queries all 5,532 table rows |
 | build/ops | 9 | #916: serves every mapped dataset, including all bacterial stores; resolves the four drift notices |
-| **total** | **40** | |
+| **total** | **37** | |
 
 ### Walled retrieval (3)
 
@@ -69,16 +69,31 @@ https://www.science.org/doi/suppl/10.1126/science.1132067
 
 Deposit to `$DATA_ROOT/torchcell-raw/ishiiMultipleHighThroughputAnalyses2007/si/`. Measured 2026-10-10: neither mirror holds an `si/` for this key. The other three papers #699 names need no download: Tian 2019 releases no SI at all (PR #815), and the Thompson 2020 and Schmidt 2022 SIs were marked unneeded because both rows are subsumed by Borchert 2024. Hypothesis (unmeasured): the aggregation-decomposition audit in flight on `docs/aggregation-decomposition-policy` may reopen those two, since it loads a compendium's original studies from their own releases.
 
-### Zotero curation (6)
+### Zotero curation (3)
 
 | id | dataset or row | program | owner action | unblocks | agent step afterwards |
 |---|---|---|---|---|---|
-| #691 | Nichols 2011 (candidate rank 10) | bacteria | Attach the article PDF (and SI PDFs if available) as a stored file on group item `REEL3RAD` in `database/Escherichia-coli` | the Nichols 2011 loader: the candidate table estimates 1,289,196 instances (a product of dimensions, not a count); Shiver 2016 already holds a re-scored Nichols batch-0 block of 835,337 measured values, deliberately not loaded | nightly `lit_sync` captures and OCRs it; then a loader plus the correlation check against Shiver's batch-0 block (`notes/plan.bacteria-si-phenotype-audit-ecoli.md`, rank 2) |
-| #910 | Teteneva 2024, E. coli W3110 lake water (candidate rank 40) | bacteria | Add Teteneva et al. 2024 (PMC11188689) with its PDF to `database/Escherichia-coli`, or say 'close the row as deferred' | the Teteneva 2024 loader: 66,162 RB-TnSeq fitness values reported for Table S4 | `lit_sync` mirrors it; `pmc_cloud` fetches Tables S3/S4 into the raw mirror; then the annotation-route decision (row below) and the loader |
-| #788 (item 4) | Banerjee 2024 isoprenol (candidate rank 79) and Kang 2026's reference titer | bacteria | Say go-ahead and add Banerjee 2024 (doi 10.1016/j.ymben.2024.02.004) with its PDF to `database/Pseudomonas-putida` | the Banerjee 2024 row (candidate estimate 171 instances) and Kang 2026's 7 fed-batch titer records, refused today for want of the reference titer Kang defers to Banerjee 2024 | `lit_sync` mirrors it; the Kang 2026 loader builds its reference through the deferral chain; a Banerjee 2024 loader |
-| #911 | nine raw-mirror-only papers (Balakrishnan 2022, Brunk 2016, Li 2014, Mohiuddin 2022, Thompson 2019 valerolactam, Wang 2024, CeCaFDB, Rand 2017, Thompson 2019 lysine) | literature | Add each with its PDF to the group library, or decide raw-mirror-only is enough | no records (loaders read the raw mirror); gives each paper a `\cite` key, a `torchcell-library/` OCR copy and `tc-lit` access | `lit_sync` captures them; re-run `candidate-gate` on Balakrishnan 2022 and Li 2014 so their verdicts read `zotero_item: present` |
+| #691 | Nichols 2011 (candidate rank 10) | bacteria | Download the article PDF in a browser and attach it to group item `REEL3RAD` in `database/Escherichia-coli` (by hand, or `scripts/zotero_add_paper.py --attach-to REEL3RAD --pdf <file> --pdf-source-url <url>`), with the SI PDFs if wanted | the Nichols 2011 loader: the candidate table estimates 1,289,196 instances (a product of dimensions, not a count); Shiver 2016 already holds a re-scored Nichols batch-0 block of 835,337 measured values, deliberately not loaded | nightly `lit_sync` captures and OCRs it; then a loader plus the correlation check against Shiver's batch-0 block (`notes/plan.bacteria-si-phenotype-audit-ecoli.md`, rank 2) |
 | #644 | group library item pair `8WK5B5MP` / `Y6J4Q887` | literature | Merge or re-key the two group items sharing citation key `chaoPredictingDynamicExpression2025` | no records; it made the SI re-OCR job (slurm 3241, #607) refuse at its Zotero precheck on 2026-10-02 | re-run the #607 SI re-OCR job |
 | #624 | personal item with key `yun$On$ConnectionsAre2020` | literature | Regenerate or edit the Better BibTeX citation key so it has no `$` | no records; a `\cite` copied from Zotero resolves again | none; the nightly `lit_bib_store` warning stops |
+
+**Filed 2026-10-12, no longer by-hand.** The owner's policy of 2026-10-12 lets an agent file a dataset's primary paper with its PDF into the group library's database collections through `scripts/zotero_add_paper.py` ([[scripts.zotero_add_paper]]). Of the eleven papers the three closed rows named (#910, #788 item 4, the nine of #911), the owner had already filed ten by hand between 08:30 and 08:37 UTC that day (Zotero `dateAdded`), each with a stored PDF attachment except Thompson 2019 valerolactam; the script created the eleventh, Teteneva 2024, and attached the missing PDF:
+
+| row | paper | group item | filed by | PDF |
+|---|---|---|---|---|
+| #910 | Teteneva 2024, 10.1093/ismejo/wrae096 | `PUKZFNFZ` in `database/Escherichia-coli` | script (created) | `DFFQ6A6W`, PMC Article Datasets `PMC11188689.1/PMC11188689.1.pdf` (OUP answered 403), sha256 `d01d686125a9be5c3f9e38291b849b3e80d776464392770d9523757ce8e89d1d` |
+| #911 | Thompson 2019 valerolactam, 10.1016/j.mec.2019.e00098 | `ZVF4KENC` in the `database` root | owner; PDF attached by the script | `65FKM8IN`, the raw mirror's `thompsonOmicsdrivenIdentificationElimination2019/paper/PMC6838509.1.pdf` (ScienceDirect answered 403), sha256 `ed6c14563b2b48d10f269b1b1abc624b4cbfbd634c49cbf2e19b4a1b53238b2f` |
+| #788 (item 4) | Banerjee 2024, 10.1016/j.ymben.2024.02.004 | `SGZWENVM` in `database/Saccharomyces-cerevisiae` | owner | already present (`BLJCY8FZ`) |
+| #911 | Balakrishnan 2022 | `XQHB45ZA` in the `database` root | owner | already present (`YECYP5WR`) |
+| #911 | Brunk 2016 | `IHA9N77M` in the `database` root | owner | already present (`82I5M7G2`) |
+| #911 | Li 2014 | `DQE5E4S6` in the `database` root | owner | already present (`DUPDY5TE`) |
+| #911 | Mohiuddin 2022 | `EGPSMFUM` in the `database` root | owner | already present (`MTGEHQKP`) |
+| #911 | Thompson 2019 lysine | `79VR9V78` in the `database` root | owner | already present (`5H39PKRF`) |
+| #911 | Wang 2024 | `MA8SRZ5S` in the `database` root | owner | already present (`V4VPEK3X`) |
+| #911 | Rand 2017 | `HUK5FE9F` in the `database` root | owner | already present (`9NXIW7E8`) |
+| #911 | CeCaFDB (Zhang 2015) | `J7VEB9DQ` in the `database` root | owner | already present (`MS4SXEE9`) |
+
+Two placements for the owner to look at, neither touched (the script never moves an item): Banerjee 2024 is a *P. putida* paper filed in `database/Saccharomyces-cerevisiae`, and the nine #911 items sit in the `database` root rather than in `database/Escherichia-coli` or `database/Pseudomonas-putida`. The nightly `lit_sync` mirrors the root and every organism collection, so both placements are mirrored either way.
 
 #### #691: Nichols 2011 (candidate rank 10)
 
@@ -86,23 +101,7 @@ Source (#691): "**Owner, by hand:** attach the article PDF as a stored file on t
 
 https://doi.org/10.1016/j.cell.2010.11.052
 
-Measured 2026-10-10: no `nicholsPhenotypicLandscapeBacterial2011` directory in `$DATA_ROOT/torchcell-library/`.
-
-#### #910: Teteneva 2024, E. coli W3110 lake water (candidate rank 40)
-
-Source (PR #841, Open decisions for the owner, 1): "**File Teteneva 2024 in Zotero, or close the row as deferred.** Everything else waits on this. It is the one thing an agent must not do."
-
-https://pmc.ncbi.nlm.nih.gov/articles/PMC11188689/
-
-#### #788 (item 4): Banerjee 2024 isoprenol (candidate rank 79) and Kang 2026's reference titer
-
-Source (#788, comment of 2026-10-08 (correction to item 4)): "Banerjee 2024 is still not mirrored, and it is still the paper Kang 2026 defers to for the only baseline titer it states ... adding Banerjee 2024 is a **new curation decision**"
-
-https://doi.org/10.1016/j.ymben.2024.02.004
-
-#### #911: nine raw-mirror-only papers (Balakrishnan 2022, Brunk 2016, Li 2014, Mohiuddin 2022, Thompson 2019 valerolactam, Wang 2024, CeCaFDB, Rand 2017, Thompson 2019 lysine)
-
-Source (PR #816 (Mohiuddin 2022); plan decision D5): "**Adding the item is the library owner's to do; nothing here writes to Zotero.**"
+Measured 2026-10-10: no `nicholsPhenotypicLandscapeBacterial2011` directory in `$DATA_ROOT/torchcell-library/`. Measured 2026-10-12 (`scripts/zotero_add_paper.py --attach-to REEL3RAD`, exit 3, nothing written): ScienceDirect `pdfft` answers HTTP 403, no raw-mirror manifest records the DOI, and the PMC Article Datasets bucket holds only `PMC3060659.1.json`, `.txt` and `.xml` (an author manuscript, no PDF). The publisher's SI files are on its CDN (`ars.els-cdn.com/content/image/1-s2.0-S0092867410013747-mmc<N>`), which `lit_capture_si` reaches once the key is mirrored.
 
 #### #644: group library item pair `8WK5B5MP` / `Y6J4Q887`
 
@@ -225,3 +224,7 @@ Agent work, not owner-only, in the same labels: #524, #528, #533, #537, #541, #6
 Decisions taken by recommendation are reversible and not rows here: PRs #830, #834, #835, #836, #837, #839, #843, #844, #845, #850, #851, #852, #855, #859, #864, #865, #866, #868, #870, #873, #874, #876, #880, #881, #882, #884, #885 and #892 each carry such a section; read them if a recommendation should be revisited.
 
 Outside the three labels: #271 (unlabeled, 2026-08-23) lists Zotero hygiene the owner would also do by hand (four duplicate works, 20 personal items that fail the DOI-and-PDF gate); it is not a bacterial or KG 4.0 item.
+
+## 2026.10.12 - Zotero curation narrowed to three rows
+
+The owner opened the group library's database collections to agents on 2026-10-12 for a dataset's primary paper with its PDF (rule in the repo `CLAUDE.md`, tool `scripts/zotero_add_paper.py`, [[scripts.zotero_add_paper]]). The Zotero curation section above was edited in place: #910, #788 (item 4) and #911 are resolved, with every item key in its "Filed 2026-10-12" table, and the section now holds #691 (no scriptable PDF: publisher 403, PMC author manuscript without a PDF), #644 and #624 (citation-key edits, still the owner's). Counts: Zotero curation 6 to 3, total 40 to 37. The #910 annotation-route decision is unchanged in the owner data decision section.

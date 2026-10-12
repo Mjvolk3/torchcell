@@ -979,3 +979,9 @@ L0 to L4 after the rebuild (`run_verification("protein_fold_change")`): 1 L0, 4 
 62 L3 and 1 L4 check, all pass. The two sample-level families were rebuilt in the same
 pass and both still verify: rnaseq 152 records (1 L0, 2 L1, 3 L2, 60 L3, 1 L4) and
 proteome 105 records (1 L0, 3 L1, 3 L2, 60 L3, 1 L4).
+
+## 2026.10.12 - Table S8's 8 fold-change records kept as released (#914)
+
+The owner's ruling on #914: all 8 `ProteinFoldChangeCaglar2017Dataset` records (33,268 protein fold changes) stay, each citing this paper. Context for a reader, not a record field and not a reason to refuse: every kept record's base group mixes Caglar's samples with Houser 2015's glucose time course (15 of 20 samples in the exponential phase, 6 of 11 in the stationary phase), because the base group is the phase's reference condition that Houser's time course shares; every test group is Caglar's alone. The per-group attribution is measured in `preprocess/fold_change_records.json` (`houser2015_test_samples`, `houser2015_base_samples`). No loader logic changed; the class docstring records the decision.
+
+The other Table S8 groups stay refused under their own rules (16 groups: the doubling-time control model and the pooled-dose `highMg` and `highNa` levels), and the 100,704-row gene-level arm has no carrier; these are #1045 row 29 and are not part of #914.

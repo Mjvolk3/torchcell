@@ -195,3 +195,17 @@ L4 now reads WHICH proteins are keyed from the build's own `preprocess/protein_k
 Schema impact: `scripts/schema_impact_check.py --base origin/main` reports "No schema
 contract changes vs origin/main". The record classes are unchanged; the store's key set
 grows, so the served graph takes it in the KG 4.0 full rebuild.
+
+## 2026.10.12 - DHSB, HYCG and PFLB stored under their released keys (#904)
+
+The owner's ruling on #904, under the rule of 2026-10-12 ("the data is the data"): a host protein for which no single MG1655 locus is asserted is stored under the protein id the authors released, verbatim, and never refused. `ProteomeBrunk2016Dataset` now carries all 68 host SRM proteins on every record: 65 keyed by their MG1655 locus (44 through the released UniProt `GN=` or single-gene GPR routes, 21 through released peptides that occur in one MG1655 protein only) and 3 under their released keys, `DHSB`, `HYCG` and `PFLB`. The record count is unchanged at 81.
+
+Explanatory context, kept here and not on any record:
+
+- **DHSB.** Its peptide `FLIDSR` also occurs, read with I = L, at a non-tryptic position in b3876. Requiring tryptic context would key DHSB to b0724 (sdhB); that assumes complete enzyme specificity, so no locus is asserted and DHSB is stored as `DHSB`.
+- **HYCG and PFLB.** Each has a released peptide that also occurs in a second MG1655 protein (HYCG's in hycG and, with I = L, in hyfI).
+- **FUMA and TKT1.** They keep the released UniProt gene keys (fumA b1612, tktA b2935), although a paralog shares their peptides: both FUMA peptides occur in fumA and fumB (b4122), and TKT1's `ALSMDAVQK` in tktA and tktB. Their peak areas may therefore carry paralog signal; that is a modeling-time consideration.
+
+Verification: a released key that is not locus-tag-shaped claims no locus, so the protein-abundance family's gated L4 containment counts only locus-shaped keys plus the perturbed host genes. A new L4 row, `released_protein_keys_not_a_locus_reported`, lists the released keys and always passes (the genome does not gate a store). The synthase genes (GPPS, LS, BIS), measured with an empty Organism cell, now carry a typed `ProvenanceGap` on `source_organism` instead of the string `unreported` (#915).
+
+Still not stored, as before and raised for the owner: the 13 non-host proteins (pathway enzymes and the AmpR, Cam and BSA standards, where `HMGS` and `HMGR` each name two organisms), and the eight `72C` samples.

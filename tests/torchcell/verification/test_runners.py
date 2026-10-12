@@ -3105,6 +3105,7 @@ def test_the_bioproduction_registries_name_every_landed_store() -> None:
         "isoprenyl_acetate_titer_kang2026": (
             "data/torchcell/isoprenyl_acetate_titer_kang2026"
         ),
+        "isoprenol_titer_banerjee2024": ("data/torchcell/isoprenol_titer_banerjee2024"),
         "isoprenol_titer_yunus2026": "data/torchcell/isoprenol_titer_yunus2026",
         "valerolactam_titer_thompson2019": (
             "data/torchcell/valerolactam_titer_thompson2019"

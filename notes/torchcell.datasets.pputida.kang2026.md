@@ -510,6 +510,7 @@ The record count is unchanged at 19, and this row's refusals remain the ones alr
 recorded: the aqueous-isoprenol column of Table S9 (read, oracle-checked and carried in
 `preprocess/titer_rows.csv`, and NOT a `ProductTiterExperiment`) and the five strains
 Table 1 gives no titer.
+
 ## 2026.10.09 - Table S6 stays refused after #770, because the identifier route is the blocker, not the phenotype class
 
 Issue #770 names Kang 2026's Supplementary Table S6 as one of five places a protein-level
@@ -557,3 +558,100 @@ alternative. The contrast itself is sourced and ready for whoever takes the rout
 question up, verbatim from the Figure S1 caption: "(a) Volcano plot analysis displaying
 differentially expressed proteins in PIPA-D16 (targeting PP_4854) relative to the control
 strain PIPA-C (lacking the CRISPRi/dCas9 system)."
+
+## 2026.10.12 - The Banerjee 2024 deferral closed, and the seven isoprenol records landed
+
+The 2026.10.08 section above declined Table S9's released aqueous isoprenol column for
+one reason, and named the one thing that would change it: "(a) Banerjee 2024 mirrored, so
+its own fed-batch isoprenol titer for the named strain becomes a sourced reference with
+its own conditions and replicate design". That condition is now met, so the seven values
+are records and this store goes **19 -> 26**.
+
+### What was missing was a denominator, not a field
+
+`ProductTiterExperimentReference` requires a `phenotype_reference` and
+`ProductTiterPhenotype.titer` is a required float, so an isoprenol record needs an
+isoprenol reference titer. Measured on the pinned mirror, Table S9 is still the only
+place any isoprenol NUMBER appears in THIS paper, and the one isoprenol baseline the
+paper states is still second-hand:
+
+> In the previously reported engineered P. putida KT2440 background, this strain
+> supported isoprenol titers of up to 762 mg/L in shake flasks and $3 . 5 ~ \mathrm { g }
+> / \mathrm { L }$ in fed-batch cultures (Banerjee et al., 2024).
+
+That restatement carries no medium, no vessel, no time point, no uncertainty and no
+replicate count, which is why it could not be a reference. It is kept, unchanged, as
+`ISOPRENOL_BASELINE_SECOND_HAND`: its job is to NAME the deferral target.
+
+### The chain, and what each link supplies
+
+`this SI -> Banerjee 2024 Results 3.6 -> the number`, re-walkable from our own bytes:
+
+| link | artifact | sha256 |
+|---|---|---|
+| the restatement that names the target | Kang `paper.md`, Results 3.1 | `894aee24472194d22c33ecc0a31994660b19bde41e4aadee2cb0080f0c016c63` |
+| the number with every field a reference needs | Banerjee 2024 `paper.md`, Results 3.6 | `6b5b9e8647721569d846af92e5c0059ef9c4bb9eca66a418e8891a7a18d5c18c` |
+
+Banerjee 2024's own statement, verbatim:
+
+> The maximum growth and isoprenol production in the IY1452 strain were obtained,
+> reaching an $\mathrm { O D } _ { 6 0 0 }$ of $2 1 . 0 \pm 3 . 4$ at $^ { 7 2 \mathrm {
+> ~ h ~ } }$ and a titer of $3 . 5 \pm$ $0 . 3 ~ \ g / \mathrm { L }$ at $^ { 9 6
+> \mathrm { ~ h ~ } }$ (Fig. 8).
+
+and its Fig. 8 caption, which is what makes the `+- 0.3` a sample SD with an n:
+
+> performed in the $^ { 2 \mathrm { ~ L ~ } }$ bioreactors in M9 defined medium in
+> triplicates. Error bars represent standard deviation.
+
+So the reference is strain IY1452, a 2 L bioreactor, modified M9, 96 h, 3.5 +- 0.3 g/L
+over biological triplicates. Stored as **3500 ug/mL** with a 300 ug/mL `sample_sd` and
+`n_samples=3`: 3.5 g/L is 3500 mg/L and 1 mg/L is exactly 1 ug/mL, so the records and
+their denominator share a unit and nothing is scaled.
+
+**The reference's environment is BANERJEE'S fed-batch condition**, built by calling
+`banerjee2024.environment(banerjee2024.CONDITIONS["bioreactor_m9mod_fedbatch"],
+duration_hours=96.0)` rather than transcribed into a Kang condition. The reference
+measurement was made there; stating a Kang medium for it would misreport where it came
+from.
+
+### The seven records
+
+Same strain and run as the ester rows (`PIPAxyl-E3-K3-O15`, the fed-batch condition),
+same seven sampled times, different product:
+
+| time (h) | 21.4 | 45.4 | 69.4 | 93.4 | 117.4 | 141.4 | 165.4 |
+|---|---|---|---|---|---|---|---|
+| isoprenol, aqueous (mg/L) | 190.7 | 197.0 | 175.0 | 231.0 | 234.7 | 307.8 | 254.2 |
+
+`isoprenol()` goes through the same shared compound layer as the ester, so these records
+and the mirrored Banerjee 2024 isoprenol records are about one compound entity rather
+than two matching strings. Their gaps are this paper's own: no replicate count for its
+single fed-batch run, no isoprenol SD, no isoprenol yield, no productivity. The one
+thing that is no longer a gap is the reference.
+
+### What changed in the module
+
+* `ISOPRENOL_NOT_A_RECORD` -> `ISOPRENOL_IS_A_RECORD`, which now states the chain and
+  the history (why it was refused twice, what closed it) and is written into
+  `preprocess/build_accounting.json`.
+* `EXPECTED_RECORDS` is `7 + 5 + 7 + 7 = 26`, with `N_FEDBATCH_TIMES` named.
+* `_record_signature` gained the PRODUCT. The two fed-batch families share all seven
+  sampled times, so a value and a time alone no longer say which product a record is
+  about, even though the current values happen not to collide.
+* The isoprenol rows carry ledger `source = "Table S9 isoprenol"`, which keeps them a
+  separate family from the ester rows of the same table in the verification grouping.
+* `_isoprenol_column_l4` now checks BOTH fed-batch families carry the released column
+  (it is the ester rows' companion reading and the isoprenol rows' own stored value), and
+  that no Table 1 or Table S4 row carries it.
+* A new L4, `isoprenol_records_and_their_deferred_reference`: the seven titers
+  re-derived from the deposited Table S9 bytes, AND the reference re-read from the
+  mirrored Banerjee 2024 `paper.md` with its sha256 checked and both quotes required
+  verbatim. A deferral chain that cannot be re-walked from our own documentation is not
+  a closed chain, which is what that level enforces.
+
+The ester records, the Table 1 and Table S4 records, the chassis genotype and the Δ86kb
+span resolution are all untouched. The record count does not decrease: 19 -> 26.
+
+Banerjee 2024's own loader, its ESM inventory and the four media it needed:
+[[torchcell.datasets.pputida.banerjee2024]].

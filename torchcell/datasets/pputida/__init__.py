@@ -10,6 +10,9 @@ is ``torchcell.datasets.bacteria_common``.
 
 What this package holds:
 
+- ``banerjee2024`` -- ``IsoprenolTiterBanerjee2024Dataset``: the GSMM-guided isoprenol
+  campaign, the 20 titers the article body states numerically across EZ rich, M9
+  minimal, fed-batch and sorghum hydrolysate. Its ESM releases no measurement table.
 - ``carruthers2025`` -- ``IsoprenolTiterCarruthers2025Dataset``,
   ``ProteomeCarruthers2025Dataset`` and
   ``ProteomeFoldChangeCarruthers2025Dataset``: the CRISPRi isoprenol production
@@ -40,6 +43,9 @@ What this package holds:
   subsumed by ``RbTnseqBorchert2024Dataset`` and is deliberately not a loader.
 """
 
+from .banerjee2024 import (
+    IsoprenolTiterBanerjee2024Dataset as IsoprenolTiterBanerjee2024Dataset,
+)
 from .banerjee2025 import ProteomeBanerjee2025Dataset as ProteomeBanerjee2025Dataset
 from .borchert2023 import RbTnseqBorchert2023Dataset as RbTnseqBorchert2023Dataset
 from .borchert2024 import RbTnseqBorchert2024Dataset as RbTnseqBorchert2024Dataset

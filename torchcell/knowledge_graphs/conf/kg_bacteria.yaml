@@ -122,6 +122,7 @@ datasets:
   - ProteomeLog10PercentDeSiqueira2025Dataset
   - IsoprenolTiterDeSiqueira2025Dataset
   - IsoprenylAcetateTiterKang2026Dataset
+  - IsoprenolTiterBanerjee2024Dataset
   - PutidaPrecise321Lim2022Dataset
   - IsoprenolToleranceLim2025Dataset
   - ProteomeLim2025Dataset

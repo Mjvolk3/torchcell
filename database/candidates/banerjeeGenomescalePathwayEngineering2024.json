@@ -1,0 +1,533 @@
+{
+  "citation_key": "banerjeeGenomescalePathwayEngineering2024",
+  "table": "bacteria",
+  "row_name": "Banerjee 2024",
+  "gates": [
+    {
+      "gate": "G1",
+      "outcome": "pass",
+      "reason": "primary: status='candidate', klass='Production campaign', no aggregation marker",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G2",
+      "outcome": "pass",
+      "reason": "assembly_set: KT2440 -> pputida_KT2440_ASM756v2 resolves and reads",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G3",
+      "outcome": "pass",
+      "reason": "30 file(s) in library+raw, 2795 worksheet row(s) counted; all intact",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G4",
+      "outcome": "pass",
+      "reason": "no key held by another module (1 mention(s)); no PMID check; values not compared (no dev store named)",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G5",
+      "outcome": "pass",
+      "reason": "ProductTiterPhenotype exists; compounds resolve",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    }
+  ],
+  "zotero_item": "present",
+  "source_kind": "primary",
+  "aggregation": null,
+  "g2": {
+    "branch": "assembly_set",
+    "outcome": "resolvable_readable",
+    "hosts": [
+      {
+        "name": "KT2440",
+        "assembly_set": "pputida_KT2440_ASM756v2",
+        "resolvable": true,
+        "readable": true
+      }
+    ]
+  },
+  "g3": {
+    "citation_key": "banerjeeGenomescalePathwayEngineering2024",
+    "trees_read": [
+      "library",
+      "raw"
+    ],
+    "files": [
+      {
+        "tree": "library",
+        "path": "si/si1.pdf",
+        "role": "si_pdf",
+        "bytes": 593395,
+        "sha256_manifest": "c09fe2f914846b3a2dee12d058d62ebb6041c52eb42d4b17b6b028c185ef0108",
+        "sha256_disk": "c09fe2f914846b3a2dee12d058d62ebb6041c52eb42d4b17b6b028c185ef0108",
+        "retrieval_method": "direct_url",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si2.xlsx",
+        "role": "si_data",
+        "bytes": 67179,
+        "sha256_manifest": "5c60bbb9f02184b0341d1f36fceba780750a4a4c0b557c352e61ac7a918f363e",
+        "sha256_disk": "5c60bbb9f02184b0341d1f36fceba780750a4a4c0b557c352e61ac7a918f363e",
+        "retrieval_method": "direct_url",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "EFM Results",
+            "rows": 17
+          },
+          {
+            "sheet": "cMCS Runs Details",
+            "rows": 1000
+          },
+          {
+            "sheet": "cMCS Results",
+            "rows": 1000
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si3.txt",
+        "role": "si_data",
+        "bytes": 2726312,
+        "sha256_manifest": "5bc5ec2f8b77b7a85fd031ad7c726bc45804650c12c3bc35963592e3a02c3261",
+        "sha256_disk": "5bc5ec2f8b77b7a85fd031ad7c726bc45804650c12c3bc35963592e3a02c3261",
+        "retrieval_method": "direct_url",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si4.xlsx",
+        "role": "si_data",
+        "bytes": 41343,
+        "sha256_manifest": "ffa6063f45c2d331e2985a6db8df9ea86fd0b888eed76c04cf1407f022d809d8",
+        "sha256_disk": "ffa6063f45c2d331e2985a6db8df9ea86fd0b888eed76c04cf1407f022d809d8",
+        "retrieval_method": "direct_url",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Preliminary_design",
+            "rows": 13
+          },
+          {
+            "sheet": "OptKnock",
+            "rows": 123
+          },
+          {
+            "sheet": "OptKnock_constrained",
+            "rows": 266
+          },
+          {
+            "sheet": "OptForce",
+            "rows": 163
+          },
+          {
+            "sheet": "Frequency",
+            "rows": 213
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si5.txt",
+        "role": "si_data",
+        "bytes": 75516,
+        "sha256_manifest": "a1e73dcfc47c7f40e6af2582cc817c770f12f430bd10ab9726aef88be770e864",
+        "sha256_disk": "a1e73dcfc47c7f40e6af2582cc817c770f12f430bd10ab9726aef88be770e864",
+        "retrieval_method": "direct_url",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si6.pdf",
+        "role": "si_pdf",
+        "bytes": 35453,
+        "sha256_manifest": "ad997c30e02fcc1cfd79544becb480d23eab63c36be29908e1823478f935a8ca",
+        "sha256_disk": "ad997c30e02fcc1cfd79544becb480d23eab63c36be29908e1823478f935a8ca",
+        "retrieval_method": "direct_url",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/09579f2ed65d2d619af4210a269fb5c4394bf0ee4fc2a5e81edc0682e2e64545.jpg",
+        "role": "ocr_image",
+        "bytes": 41724,
+        "sha256_manifest": "14e07f295693500048e7a1cc1e8302ed5198cfe5bc0a1beb1a5419981140995c",
+        "sha256_disk": "14e07f295693500048e7a1cc1e8302ed5198cfe5bc0a1beb1a5419981140995c",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/160ef6baf9ac0d12f90da9308c448e38469c5947bf2979fdc89ce8fd90d756cf.jpg",
+        "role": "ocr_image",
+        "bytes": 42997,
+        "sha256_manifest": "b8d0ec10efa3bdeea4f87fd072f0ef531c28b21468c69d2ca3245255bd8eba08",
+        "sha256_disk": "b8d0ec10efa3bdeea4f87fd072f0ef531c28b21468c69d2ca3245255bd8eba08",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/2f82d2d5fba6127b25ce7ffa8a43a3ab62c3a9fd14aae5156b33675331e36371.jpg",
+        "role": "ocr_image",
+        "bytes": 172557,
+        "sha256_manifest": "86b9496d46edada1b75bee436cf6fc0076f2a47208e9d1240aefca1767451fac",
+        "sha256_disk": "86b9496d46edada1b75bee436cf6fc0076f2a47208e9d1240aefca1767451fac",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/3c402bc1fe14705489d5b99774ad28b1213d850260577aac0522d6b4b4935c25.jpg",
+        "role": "ocr_image",
+        "bytes": 193694,
+        "sha256_manifest": "d97a2fcc89422e35384e45eaad166a08034045f862ad3ff2927d92d19f842700",
+        "sha256_disk": "d97a2fcc89422e35384e45eaad166a08034045f862ad3ff2927d92d19f842700",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/4ee9aa1cf9d137fddf8f02493c7693d892bf7f577f11cb0507a8bb450afbee1a.jpg",
+        "role": "ocr_image",
+        "bytes": 46605,
+        "sha256_manifest": "1788a769020bbdbb4e5a026cb35fa117252b330ee058848ecd46a3d627e7ae84",
+        "sha256_disk": "1788a769020bbdbb4e5a026cb35fa117252b330ee058848ecd46a3d627e7ae84",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/69d8d18489a19bb945389f6d2f5d82ee299402996ada8de2de442d8a89257280.jpg",
+        "role": "ocr_image",
+        "bytes": 22169,
+        "sha256_manifest": "b7acf3e971523403e04465ef1a0e98aa6540b2807eaec8e9f8e0a67623a03f91",
+        "sha256_disk": "b7acf3e971523403e04465ef1a0e98aa6540b2807eaec8e9f8e0a67623a03f91",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/a0cb74bb6663bb4a3851c5624835021cc795f7c8815b2f00feedc0b961938575.jpg",
+        "role": "ocr_image",
+        "bytes": 200441,
+        "sha256_manifest": "e0b55cb661763693e99beb2f3e73e30cc4a19f48a127549ac889e61144692043",
+        "sha256_disk": "e0b55cb661763693e99beb2f3e73e30cc4a19f48a127549ac889e61144692043",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/a1fe213941f6355ae0f1ce73782e1860ce864e3f10a501f6416b59a7ac75ee94.jpg",
+        "role": "ocr_image",
+        "bytes": 99910,
+        "sha256_manifest": "7e1ead46d12c4600928129c16253014f89428adb9d203b6064e05fdeb5e446e1",
+        "sha256_disk": "7e1ead46d12c4600928129c16253014f89428adb9d203b6064e05fdeb5e446e1",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/d59467426f0035b2b73b1db8fbf73e4ce91e84eb9aece636c60deda962166a51.jpg",
+        "role": "ocr_image",
+        "bytes": 41329,
+        "sha256_manifest": "19466b83ac0f304c4421206c6f0150d9aa56a0da5717ce58df8faec21922a084",
+        "sha256_disk": "19466b83ac0f304c4421206c6f0150d9aa56a0da5717ce58df8faec21922a084",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/ec4352ca3cb9a550b59a8b9505b3d4a171dc0dfd9a8bb3e7364b78d2ec1f97e8.jpg",
+        "role": "ocr_image",
+        "bytes": 58487,
+        "sha256_manifest": "909da624abbcbb70cdc8a63f7f0c03f5f7eaf3c00823dd730f18d03bfc19b2e8",
+        "sha256_disk": "909da624abbcbb70cdc8a63f7f0c03f5f7eaf3c00823dd730f18d03bfc19b2e8",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/f0bc88c19066300b560bcb714c7884c17b550044f1a296e6ef2be43a273018fb.jpg",
+        "role": "ocr_image",
+        "bytes": 40714,
+        "sha256_manifest": "7644c0c9cd8534c030bd1681b07e30d0d27fb7ac872b9ff7a86697639a9ca2dc",
+        "sha256_disk": "7644c0c9cd8534c030bd1681b07e30d0d27fb7ac872b9ff7a86697639a9ca2dc",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/f65f7a3400af290575ee49688ab85aa23b5251b0f580a2c06de7395af301d438.jpg",
+        "role": "ocr_image",
+        "bytes": 39661,
+        "sha256_manifest": "868287dd8795cdcece21b3f97a14dcef02196b37272522d99b61683f161ed10a",
+        "sha256_disk": "868287dd8795cdcece21b3f97a14dcef02196b37272522d99b61683f161ed10a",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/f6c90825c6197e728fb59f03bddcde5c7b47ce3d83e472efccd24ddd268846e1.jpg",
+        "role": "ocr_image",
+        "bytes": 183022,
+        "sha256_manifest": "70b973220aa08842a0c795c7dca07b13a7d298ef6b793142a13a617e15b90a64",
+        "sha256_disk": "70b973220aa08842a0c795c7dca07b13a7d298ef6b793142a13a617e15b90a64",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/fe0edb94984563ebe72f5e42477baeb79879a6af47f602158f9fb5aea0c0baf6.jpg",
+        "role": "ocr_image",
+        "bytes": 198412,
+        "sha256_manifest": "e9371773143d302e129ba2035e361c7abc5257bdac3356717c49595151a04991",
+        "sha256_disk": "e9371773143d302e129ba2035e361c7abc5257bdac3356717c49595151a04991",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si1.md",
+        "role": "si_ocr",
+        "bytes": 14163,
+        "sha256_manifest": "c0313af4bdbd443e7c61ad539ad3f101c88872f28993ac2ad98c154feb4d7ae0",
+        "sha256_disk": "c0313af4bdbd443e7c61ad539ad3f101c88872f28993ac2ad98c154feb4d7ae0",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si1_content_list.json",
+        "role": "ocr_layout",
+        "bytes": 22064,
+        "sha256_manifest": "94cfbce4d7336d3358b1f0363d5e3ac954c82f3dc46b4f0713939a5c46805935",
+        "sha256_disk": "94cfbce4d7336d3358b1f0363d5e3ac954c82f3dc46b4f0713939a5c46805935",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si1_middle.json",
+        "role": "ocr_layout",
+        "bytes": 297609,
+        "sha256_manifest": "e618758c3dd0e098a66019c92e90271398c0a7b0d4cd7d0b600b9aa1bcb9242e",
+        "sha256_disk": "e618758c3dd0e098a66019c92e90271398c0a7b0d4cd7d0b600b9aa1bcb9242e",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si1_ocr_provenance.json",
+        "role": "ocr_provenance",
+        "bytes": 1022,
+        "sha256_manifest": "39522debd8a109c236a3025f24193806f1c861012f6b4db0992e11092149dda9",
+        "sha256_disk": "39522debd8a109c236a3025f24193806f1c861012f6b4db0992e11092149dda9",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si6.md",
+        "role": "si_ocr",
+        "bytes": 3665,
+        "sha256_manifest": "7485ef0e6caeaa50bfe6c0915de82bd28d6589b5392ce2153f49c6778b3e7ab9",
+        "sha256_disk": "7485ef0e6caeaa50bfe6c0915de82bd28d6589b5392ce2153f49c6778b3e7ab9",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si6_content_list.json",
+        "role": "ocr_layout",
+        "bytes": 9970,
+        "sha256_manifest": "e14d6ad1a6361eb22f7622e5d92f4fda82db87ec01e1fa8c9d802e63e679ebe4",
+        "sha256_disk": "e14d6ad1a6361eb22f7622e5d92f4fda82db87ec01e1fa8c9d802e63e679ebe4",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si6_middle.json",
+        "role": "ocr_layout",
+        "bytes": 351446,
+        "sha256_manifest": "c11ee09a606ca17c14a8d81d59c72718baed592a9b44f5868ff6b735da700b70",
+        "sha256_disk": "c11ee09a606ca17c14a8d81d59c72718baed592a9b44f5868ff6b735da700b70",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si6_ocr_provenance.json",
+        "role": "ocr_provenance",
+        "bytes": 1022,
+        "sha256_manifest": "9294ff84558ba7bf611666e4ca99c06684c0414ac24e6c96a6b7fc10d010f150",
+        "sha256_disk": "9294ff84558ba7bf611666e4ca99c06684c0414ac24e6c96a6b7fc10d010f150",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/si1.pdf",
+        "role": "si_data",
+        "bytes": 593395,
+        "sha256_manifest": "c09fe2f914846b3a2dee12d058d62ebb6041c52eb42d4b17b6b028c185ef0108",
+        "sha256_disk": "c09fe2f914846b3a2dee12d058d62ebb6041c52eb42d4b17b6b028c185ef0108",
+        "retrieval_method": "direct_url",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/si1.md",
+        "role": "si_data",
+        "bytes": 14163,
+        "sha256_manifest": "c0313af4bdbd443e7c61ad539ad3f101c88872f28993ac2ad98c154feb4d7ae0",
+        "sha256_disk": "c0313af4bdbd443e7c61ad539ad3f101c88872f28993ac2ad98c154feb4d7ae0",
+        "retrieval_method": "direct_url",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      }
+    ],
+    "walls": []
+  },
+  "g4_key": {
+    "doi": "10.1016/j.ymben.2024.02.004",
+    "pmid": null,
+    "accessions": [
+      "PXD039868"
+    ],
+    "hits": [
+      {
+        "key_kind": "doi",
+        "key": "10.1016/j.ymben.2024.02.004",
+        "where": "torchcell/datasets/pputida/banerjee2024.py",
+        "relation": "own"
+      },
+      {
+        "key_kind": "doi",
+        "key": "10.1016/j.ymben.2024.02.004",
+        "where": "torchcell/datasets/pputida/yunus2026.py",
+        "relation": "mentioned"
+      },
+      {
+        "key_kind": "accession",
+        "key": "PXD039868",
+        "where": "torchcell/datasets/pputida/banerjee2024.py",
+        "relation": "own"
+      }
+    ],
+    "pmid_checked": false
+  },
+  "g4_value": null,
+  "g5": {
+    "phenotype_class": "ProductTiterPhenotype",
+    "class_exists": true,
+    "unresolved_compounds": [],
+    "proposed_class": "IsoprenolTiterBanerjee2024Dataset"
+  },
+  "decided_at": "2026-10-12",
+  "torchcell_commit": "a6b5c78627013acb4119b5d7eeef8e27c53e7338"
+}

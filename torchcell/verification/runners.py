@@ -4430,6 +4430,15 @@ def _verify_foo_titer(dataset_root: str, data_root: str) -> VerificationReport:
     return foo2014.verify_build(dataset_root, data_root)
 
 
+def _verify_banerjee_isoprenol_titer(
+    dataset_root: str, data_root: str
+) -> VerificationReport:
+    """Banerjee 2024: the 20 prose-stated isoprenol titers and their quote audit."""
+    from torchcell.datasets.pputida import banerjee2024
+
+    return banerjee2024.verify_build(dataset_root, data_root)
+
+
 def _verify_kang_titer(dataset_root: str, data_root: str) -> VerificationReport:
     """Kang 2026: the Table 1 / Table S4 / Table S9 titers and their two L4 joins."""
     from torchcell.datasets.pputida import kang2026
@@ -4513,6 +4522,10 @@ PRODUCT_TITER_DATASETS: dict[str, dict[str, Any]] = {
     "isoprenyl_acetate_titer_kang2026": {
         "root": "data/torchcell/isoprenyl_acetate_titer_kang2026",
         "verify": _verify_kang_titer,
+    },
+    "isoprenol_titer_banerjee2024": {
+        "root": "data/torchcell/isoprenol_titer_banerjee2024",
+        "verify": _verify_banerjee_isoprenol_titer,
     },
     "isoprenol_titer_yunus2026": {
         "root": "data/torchcell/isoprenol_titer_yunus2026",

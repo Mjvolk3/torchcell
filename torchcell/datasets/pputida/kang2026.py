@@ -39,22 +39,25 @@ no field for it, so the value was parsed past and never read. It is now read, ca
 every sampled time; its maximum below the maximum ester sum, which is what makes the
 ester this run's product) and re-joined to the deposited bytes by a verification L4.
 
-It is NOT a record, and the reason is a missing DENOMINATOR, not a missing field.
+It IS a record now, and what changed is the DENOMINATOR rather than the schema.
 ``ProductTiterExperimentReference`` requires a ``phenotype_reference`` and
 ``ProductTiterPhenotype.titer`` is a required float, so an isoprenol record needs an
 isoprenol reference titer. Measured on the pinned mirror, Table S9 is the only place any
-isoprenol NUMBER appears: Table S1 is a compound-property comparison, Table S4 releases
-only the ester, Tables S2, S3, S5 to S8 release no titer at all, and Fig. 2b's isoprenol
-bars have no companion table. The single isoprenol baseline the paper states is
-second-hand (:data:`ISOPRENOL_BASELINE_SECOND_HAND`): 762 mg/L in flasks and 3.5 g/L in
-fed-batch are Banerjee 2024's measurements on the background PIPA was ADAPTED FROM, with
-no culture conditions and no replicate count carried across, and Banerjee 2024 is not in
-the literature mirror. Writing that as this run's reference would state a measurement
-nobody made in this study. The sibling Yunus 2026 loader refuses its whole titer family
-for the same reason ("no control titer is stated anywhere"), and that precedent is
-followed here; :data:`ISOPRENOL_NOT_A_RECORD` states it in the build accounting.
+isoprenol NUMBER appears in THIS paper: Table S1 is a compound-property comparison,
+Table S4 releases only the ester, Tables S2, S3, S5 to S8 release no titer at all, and
+Fig. 2b's isoprenol bars have no companion table. The single isoprenol baseline this
+paper states is second-hand (:data:`ISOPRENOL_BASELINE_SECOND_HAND`), and on the first
+two builds Banerjee 2024 was not in the literature mirror, so the chain could not be
+closed from our own documentation and the seven values were refused.
 
-Nineteen records: 7 + 5 + 7. Nothing is dropped. The Table 1 strains that carry no titer
+Banerjee 2024 is now mirrored, and its Results 3.6 states that titer as a REFERENCE
+rather than as a bare number: strain IY1452, a 2 L bioreactor, modified M9, 96 h,
+3.5 +- 0.3 g/L over biological triplicates. So the deferral chain is closed -- this SI ->
+Banerjee 2024 Results 3.6 -> the number -- and the seven isoprenol values are stored
+against :data:`ISOPRENOL_REFERENCE`, whose environment is Banerjee's own fed-batch
+condition because that is where the reference measurement was made.
+
+Twenty-six records: 7 + 5 + 7 ester + 7 isoprenol. Nothing is dropped. The Table 1 strains that carry no titer
 (``PIPAxyl``, ``PIPAxyl-O2``, ``PIPAxyl-O6``, ``PIPAxyl-O7`` and the integration variant
 whose name the OCR renders ``014``) are not records; they are written to
 ``preprocess/strains_without_a_titer.csv``.
@@ -138,7 +141,7 @@ import logging
 import os
 import os.path as osp
 import shutil
-from collections.abc import Callable, Iterable, Sequence
+from collections.abc import Callable, Hashable, Iterable, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, ClassVar, Literal
@@ -195,6 +198,7 @@ from torchcell.datamodels.schema import (
     SampleUnit,
     SmallMoleculePerturbation,
     Temperature,
+    UncertaintyType,
 )
 from torchcell.datasets.bacteria_common import (
     LocusTagReconciliation,
@@ -290,6 +294,8 @@ QUANTIFICATION_METHOD = "GC-FID"
 #: ``Compound``: that table is PubChem-sourced and curating a row is a human act.
 ISOPRENYL_ACETATE_INCHIKEY = "OCUAPVNNQFAQSM-UHFFFAOYSA-N"
 PRODUCT_NAME = "isoprenyl acetate"
+#: The precursor Table S9 also releases, stored since the Banerjee 2024 chain closed.
+ISOPRENOL_NAME = "isoprenol"
 
 #: Vessel and working volume per culture format. ``ProductTiterExperiment.environment``
 #: is annotated ``CultureEnvironment``, so these travel on the record (``_culture_format``).
@@ -456,6 +462,55 @@ def _carruthers(
             source_uri=PAPER_MD,
             citation_key=CARRUTHERS_KEY,
             sha256=CARRUTHERS_PAPER_MD_SHA256,
+            method="MinerU OCR of the publisher PDF (torchcell-library mirror of the "
+            "deferred-to paper)",
+            page=page,
+        ),
+    )
+
+
+#: The paper Kang's isoprenol baseline DEFERS to, now mirrored. Results 3.1 restates
+#: Banerjee 2024's fed-batch isoprenol titer; Banerjee 2024 states it with its own
+#: strain, vessel, medium, time point, uncertainty and replicate design, which is what
+#: makes it usable as this family's reference rather than a bare number.
+BANERJEE2024_KEY = "banerjeeGenomescalePathwayEngineering2024"
+BANERJEE2024_PAPER_MD_SHA256 = (
+    "6b5b9e8647721569d846af92e5c0059ef9c4bb9eca66a418e8891a7a18d5c18c"
+)
+#: Banerjee 2024's own statement of the fed-batch isoprenol titer: the strain IY1452, in
+#: a 2 L bioreactor on modified M9, at 96 h, 3.5 +- 0.3 g/L over biological triplicates.
+_Q_BANERJEE_FEDBATCH_TITER = (
+    "The maximum growth and isoprenol production in the IY1452 strain were obtained, "
+    "reaching an $\\mathrm { O D } _ { 6 0 0 }$ of $2 1 . 0 \\pm 3 . 4$ at $^ { 7 2 "
+    "\\mathrm { ~ h ~ } }$ and a titer of $3 . 5 \\pm$ $0 . 3 ~ \\ g / \\mathrm { L }$ "
+    "at $^ { 9 6 \\mathrm { ~ h ~ } }$ (Fig. 8)."
+)
+#: Banerjee 2024's Fig. 8 caption, which gives that titer its replicate design.
+_Q_BANERJEE_FEDBATCH_TRIPLICATE = (
+    "performed in the $^ { 2 \\mathrm { ~ L ~ } }$ bioreactors in M9 defined medium in "
+    "triplicates. Error bars represent standard deviation."
+)
+
+
+def _banerjee(
+    value: Any, quote: str, *, page: str, note: str | None = None
+) -> SourcedValue:
+    """Bind a value to the MIRRORED Banerjee 2024 paper this baseline defers to.
+
+    Kang's Results 3.1 states the isoprenol titer of the background PIPA was adapted
+    from and attributes it to Banerjee et al. 2024. The chain is: this restatement ->
+    Banerjee 2024's own Results 3.6 -> the number with its strain, vessel, medium, time
+    point, uncertainty and replicate count. That chain, not the restatement, is the
+    citation, per the deferral rule in ``CLAUDE.md``.
+    """
+    return SourcedValue(
+        value=value,
+        quote=quote,
+        note=note,
+        provenance=Provenance(
+            source_uri=PAPER_MD,
+            citation_key=BANERJEE2024_KEY,
+            sha256=BANERJEE2024_PAPER_MD_SHA256,
             method="MinerU OCR of the publisher PDF (torchcell-library mirror of the "
             "deferred-to paper)",
             page=page,
@@ -657,10 +712,10 @@ _Q_OFFGAS = (
     "trap at the end of the 168-h cultivation, despite the inclusion of a $2 0 \\%$ "
     "Durasyn overlay in the culture (Table S9)."
 )
-#: The ONLY isoprenol baseline stated anywhere in this mirror, and it is second-hand:
-#: the number is Banerjee 2024's, measured on the background PIPA was adapted from,
-#: with no culture conditions and no replicate count given here. See
-#: :data:`ISOPRENOL_NOT_A_RECORD`.
+#: The only isoprenol baseline stated in THIS paper, and it is second-hand: the number
+#: is Banerjee 2024's, measured on the background PIPA was adapted from, with no culture
+#: conditions and no replicate count given here. It is evidence, not the reference; the
+#: reference is :data:`ISOPRENOL_REFERENCE`, read from the mirrored Banerjee 2024.
 _Q_ISOPRENOL_BASELINE = (
     "In the previously reported engineered P. putida KT2440 background, this strain "
     "supported isoprenol titers of up to 762 mg/L in shake flasks and $3 . 5 ~ \\mathrm "
@@ -841,40 +896,65 @@ OFFGAS_FRACTION_PERCENT = _paper(
     note="Table S9's own 'Off-gas fraction (%)' column reads 51.9 at 165.4 h; that "
     "column is the independent oracle for the three-phase sum this loader stores",
 )
-#: The chassis isoprenol titers Kang's Results 3.1 states. Carried as EVIDENCE for
-#: :data:`ISOPRENOL_NOT_A_RECORD`, never as a ``phenotype_reference``: the measurement
-#: is Banerjee 2024's, on the background PIPA was adapted from rather than on PIPA, and
-#: this paper restates it without culture conditions or a replicate count.
+#: The chassis isoprenol titers Kang's Results 3.1 states. Carried as the RESTATEMENT
+#: that names the deferral target, never as the ``phenotype_reference`` itself: this
+#: paper gives the number with no culture conditions and no replicate count, so the
+#: reference is read from the mirrored Banerjee 2024 (:data:`ISOPRENOL_REFERENCE`).
 ISOPRENOL_BASELINE_SECOND_HAND = _paper(
     {"flask_mg_per_l": 762.0, "fedbatch_g_per_l": 3.5},
     _Q_ISOPRENOL_BASELINE,
     page="Results 3.1, 'Production of isoprenyl acetate in P. putida'",
-    note="Banerjee 2024's numbers, restated here. Banerjee 2024 is not in the "
-    "literature mirror, the strain is the background PIPA was ADAPTED FROM rather than "
-    "PIPA, and no medium, sugar load or replicate count travels with either number, so "
-    "neither can be a reference titer for a record of this study",
+    note="Banerjee 2024's numbers, restated here without a medium, a sugar load or a "
+    "replicate count, on the background PIPA was ADAPTED FROM. This restatement is what "
+    "NAMES the deferral target; the usable reference is Banerjee 2024's own Results "
+    "3.6, which states the fed-batch titer with every field a reference needs",
 )
-#: Why Table S9's released aqueous isoprenol column is read, ledgered and oracle-checked
-#: but is NOT a record. Written into the build accounting so the decision is auditable
-#: from the built tree.
-ISOPRENOL_NOT_A_RECORD = (
+#: The isoprenol REFERENCE titer, sourced by the now-closed deferral chain. Kang's
+#: Results 3.1 restates it; Banerjee 2024's Results 3.6 states it with everything a
+#: reference needs. 3.5 g/L is 3500 mg/L, which is 3500 ug/mL, so the stored reference
+#: is on the same unit as the records it is the denominator for and no value is scaled.
+ISOPRENOL_REFERENCE_TITER_MG_PER_L = 3500.0
+ISOPRENOL_REFERENCE = _banerjee(
+    ISOPRENOL_REFERENCE_TITER_MG_PER_L,
+    _Q_BANERJEE_FEDBATCH_TITER,
+    page="Banerjee 2024, Results 3.6, 'Isoprenol production in fed-batch cultivation'",
+    note="3.5 +- 0.3 g/L of isoprenol by strain IY1452 at 96 h in a 2 L bioreactor on "
+    "modified M9, which is the strain and the run Kang's Results 3.1 points at. Stored "
+    "as 3500 ug/mL: 3.5 g/L is 3500 mg/L and 1 mg/L is exactly 1 ug/mL",
+)
+ISOPRENOL_REFERENCE_UNCERTAINTY_G_PER_L = 0.3
+#: The key the isoprenol family's records name their reference by.
+ISOPRENOL_REFERENCE_KEY = "isoprenol_banerjee2024_fedbatch"
+#: The time point Banerjee 2024 states for that titer, which its environment carries.
+BANERJEE_FEDBATCH_HOURS = 96.0
+ISOPRENOL_REFERENCE_REPLICATES = _banerjee(
+    3,
+    _Q_BANERJEE_FEDBATCH_TRIPLICATE,
+    page="Banerjee 2024, Fig. 8 caption",
+    note="what makes the +- 0.3 g/L a sample SD with an n: biological triplicates in "
+    "the 2 L bioreactors. Kang's own restatement carries no replicate count, which is "
+    "why the chain had to be followed rather than quoted",
+)
+#: Why Table S9's released aqueous isoprenol column IS a record, as of the Banerjee 2024
+#: mirroring. Written into the build accounting so the change is auditable from the
+#: built tree.
+ISOPRENOL_IS_A_RECORD = (
     "Table S9's 'Isoprenol, aqueous (mg/L)' column (7 values, 175.0 to 307.8 mg/L) is "
-    "read into FedBatchRow, oracle-checked and carried per record in "
-    "preprocess/titer_rows.csv, and it is NOT a ProductTiterExperiment. "
-    "ProductTiterExperimentReference requires a phenotype_reference and "
-    "ProductTiterPhenotype.titer is a required float, so an isoprenol record needs an "
-    "isoprenol reference titer. Measured on the pinned mirror: Table S9 is the ONLY "
-    "place any isoprenol number is released (Tables S1 to S8 carry none, Table S4 "
-    "releases only the ester, and Fig. 2b's isoprenol bars have no companion table), "
-    "so there is no second isoprenol measurement to be the denominator. The one "
-    "isoprenol baseline the paper states is second-hand "
-    f"(ISOPRENOL_BASELINE_SECOND_HAND, '{_Q_ISOPRENOL_BASELINE}'): it is Banerjee "
-    "2024's measurement, on the background PIPA was adapted from rather than on PIPA, "
-    "with no stated culture conditions and no replicate count, and Banerjee 2024 is "
-    "not in the literature mirror. Writing it as this run's reference would state a "
-    "measurement nobody made in this study. The sibling Yunus 2026 loader refuses its "
-    "titer family for the same reason (no control titer is stated), and that precedent "
-    "is followed here"
+    "stored as 7 ProductTiterExperiment records whose product is isoprenol. They were "
+    "refused on the first two builds for one reason: ProductTiterPhenotype.titer is a "
+    "required float, so an isoprenol record needs an isoprenol REFERENCE titer, and the "
+    "only isoprenol baseline this paper states is second-hand "
+    f"('{_Q_ISOPRENOL_BASELINE}') with no conditions and no replicate count, while "
+    "Banerjee 2024 itself was not in the literature mirror, so the chain could not be "
+    "closed from our own documentation. Banerjee 2024 is now mirrored "
+    f"({BANERJEE2024_KEY}, paper.md sha256 {BANERJEE2024_PAPER_MD_SHA256}), and its "
+    "Results 3.6 states that titer with its strain (IY1452), vessel (2 L bioreactor), "
+    "medium (modified M9), time point (96 h), uncertainty (+- 0.3 g/L) and replicate "
+    "design (biological triplicates, Fig. 8 caption). That is a reference, not a bare "
+    "number, so the deferral chain is closed and the records are stored: this SI -> "
+    "Banerjee 2024 Results 3.6 -> the number. The reference's environment is BANERJEE'S "
+    "OWN fed-batch condition, built from that loader's sourced condition rather than "
+    "from a Kang condition, because the reference measurement was made there"
 )
 PIY670_PARTS = _si(
     _Q_PIY670_PARTS,
@@ -1967,6 +2047,100 @@ def isoprenyl_acetate() -> Compound:
     return resolved_compound(PRODUCT_NAME)
 
 
+def isoprenol() -> Compound:
+    """The PRECURSOR as a typed ``Compound``: the un-esterified alcohol of Table S9.
+
+    The same shared compound layer the ester goes through, so Kang's isoprenol records
+    and the mirrored Banerjee 2024 isoprenol records are about one compound entity
+    rather than two matching strings.
+    """
+    return resolved_compound(ISOPRENOL_NAME)
+
+
+def isoprenol_phenotype(titer_mg_per_l: float) -> ProductTiterPhenotype:
+    """One released aqueous isoprenol value of Table S9, in ``ug/mL``.
+
+    The gaps are the ester family's, for the same reasons: this paper releases no
+    replicate count for its single fed-batch run, no isoprenol SD, no isoprenol yield
+    and no productivity. The ONE thing that is no longer a gap is the reference, which
+    the closed Banerjee 2024 deferral supplies.
+    """
+    gaps = [
+        ProvenanceGap(
+            field=field,
+            reason=ProvenanceGapReason.not_reported_by_primary,
+            note="Methods 2.8 describes a single fed-batch run in a 2 L bioreactor and "
+            "never states a replicate count for it; the triplicate design is stated for "
+            "the tube and flask figures only",
+        )
+        for field in ("n_samples", "sample_unit")
+    ]
+    gaps.extend(
+        ProvenanceGap(
+            field=field,
+            reason=ProvenanceGapReason.not_reported_by_primary,
+            note="Table S9 releases the aqueous isoprenol as a single value per sampled "
+            "time, with no spread of any kind",
+        )
+        for field in ("titer_uncertainty", "titer_uncertainty_type")
+    )
+    gaps.extend(
+        ProvenanceGap(
+            field=field,
+            reason=ProvenanceGapReason.not_reported_by_primary,
+            note="no isoprenol yield on substrate and no isoprenol productivity are "
+            "released; the one released yield is the ester's, at the fed-batch maximum",
+        )
+        for field in (
+            "product_yield",
+            "product_yield_unit",
+            "productivity",
+            "productivity_unit",
+        )
+    )
+    return ProductTiterPhenotype(
+        product=isoprenol(),
+        titer=titer_mg_per_l,
+        titer_unit=ConcentrationUnit.ug_per_ml,
+        quantification_method=str(QUANTIFICATION.value),
+        provenance_gaps=gaps,
+    )
+
+
+def isoprenol_reference_phenotype() -> ProductTiterPhenotype:
+    """Banerjee 2024's fed-batch isoprenol titer, as this family's reference phenotype.
+
+    Everything on it is sourced from the mirrored deferral target: the titer
+    (:data:`ISOPRENOL_REFERENCE`), its standard deviation and its replicate design
+    (:data:`ISOPRENOL_REFERENCE_REPLICATES`). The uncertainty is stored on the SAME unit
+    as the titer: 0.3 g/L is 300 mg/L, which is 300 ug/mL.
+    """
+    return ProductTiterPhenotype(
+        product=isoprenol(),
+        titer=float(ISOPRENOL_REFERENCE.value),
+        titer_unit=ConcentrationUnit.ug_per_ml,
+        titer_uncertainty=ISOPRENOL_REFERENCE_UNCERTAINTY_G_PER_L * 1000.0,
+        titer_uncertainty_type=UncertaintyType.sample_sd,
+        n_samples=int(ISOPRENOL_REFERENCE_REPLICATES.value),
+        sample_unit=SampleUnit.biological_replicate,
+        quantification_method=str(QUANTIFICATION.value),
+        provenance_gaps=[
+            ProvenanceGap(
+                field=field,
+                reason=ProvenanceGapReason.not_reported_by_primary,
+                note="Banerjee 2024 releases no yield and no productivity for its "
+                "fed-batch runs",
+            )
+            for field in (
+                "product_yield",
+                "product_yield_unit",
+                "productivity",
+                "productivity_unit",
+            )
+        ],
+    )
+
+
 def titer_phenotype(
     titer_mg_per_l: float, *, n_samples: int | None, product_yield: float | None = None
 ) -> ProductTiterPhenotype:
@@ -2125,9 +2299,12 @@ TABLE1_ROWS: tuple[Table1Row, ...] = (
 SI_TABLE4_COLUMN = "IPA titer (mg/L)"
 #: Table S9's released aqueous ISOPRENOL column: the un-esterified precursor left in the
 #: broth. Read into :class:`FedBatchRow`, oracle-checked and carried per record in
-#: ``preprocess/titer_rows.csv``; NOT a record, for the reason
-#: :data:`ISOPRENOL_NOT_A_RECORD` states.
+#: ``preprocess/titer_rows.csv``, and a record in its own right since the Banerjee 2024
+#: deferral closed (:data:`ISOPRENOL_IS_A_RECORD`).
 SI_TABLE9_ISOPRENOL_COLUMN = "Isoprenol, aqueous (mg/L)"
+#: The ledger ``source`` the isoprenol records carry, which keeps them a separate family
+#: from the ester rows of the same table in the verification grouping.
+SI_TABLE9_ISOPRENOL_SOURCE = "Table S9 isoprenol"
 SI_TABLE9_COLUMNS: tuple[str, ...] = (
     "Time (h)",
     "Glucose (g/L)",
@@ -2325,9 +2502,9 @@ class FedBatchRow(BaseModel):
 
     ``isoprenol_aqueous_mg_per_l`` is the released aqueous isoprenol, the precursor the
     AAT did not esterify. It is read here, oracle-checked by
-    :meth:`IsoprenylAcetateTiterKang2026Dataset._assert_fed_batch_oracles` and written
-    per record to ``preprocess/titer_rows.csv``; it is not a record, and
-    :data:`ISOPRENOL_NOT_A_RECORD` is the reason.
+    :meth:`IsoprenylAcetateTiterKang2026Dataset._assert_fed_batch_oracles`, written per
+    record to ``preprocess/titer_rows.csv`` AND stored as its own isoprenol record since
+    the Banerjee 2024 deferral closed (:data:`ISOPRENOL_IS_A_RECORD`).
     """
 
     time_hours: float
@@ -2500,8 +2677,12 @@ def strain_genotype(strain: str, symbols: dict[str, str]) -> Genotype:
 # The dataset
 # --------------------------------------------------------------------------- #
 #: The record count this loader states: 7 Table 1 rows + 5 Table S4 rows + 7 Table S9
-#: sampled times.
-EXPECTED_RECORDS = len(TABLE1_ROWS) + len(AAT_CASSETTES) + 7
+#: sampled times of the ester + the SAME 7 sampled times of the released aqueous
+#: isoprenol, which became records when the Banerjee 2024 deferral closed.
+N_FEDBATCH_TIMES = 7
+EXPECTED_RECORDS = (
+    len(TABLE1_ROWS) + len(AAT_CASSETTES) + N_FEDBATCH_TIMES + N_FEDBATCH_TIMES
+)
 #: The baseline every family's reference is, and the quote that makes it the paper's own
 #: fold-change denominator.
 REFERENCE_BASELINES: dict[str, tuple[str, float, str, str]] = {
@@ -2630,6 +2811,22 @@ class IsoprenylAcetateTiterKang2026Dataset(ExperimentDataset):
             )
             for key, (_, titer, condition, _) in REFERENCE_BASELINES.items()
         }
+        # The isoprenol family's reference is the mirrored Banerjee 2024 measurement, so
+        # its environment is BANERJEE'S fed-batch condition, built from that loader's own
+        # sourced condition rather than transcribed into a Kang condition. The reference
+        # measurement was made there, and stating a Kang medium for it would misreport
+        # where it came from.
+        from torchcell.datasets.pputida import banerjee2024
+
+        references[ISOPRENOL_REFERENCE_KEY] = ProductTiterExperimentReference(
+            dataset_name=self.name,
+            genome_reference=reference_genome,
+            environment_reference=banerjee2024.environment(
+                banerjee2024.CONDITIONS["bioreactor_m9mod_fedbatch"],
+                duration_hours=BANERJEE_FEDBATCH_HOURS,
+            ),
+            phenotype_reference=isoprenol_reference_phenotype(),
+        )
         pub = publication()
 
         rows: list[dict[str, Any]] = []
@@ -2698,6 +2895,29 @@ class IsoprenylAcetateTiterKang2026Dataset(ExperimentDataset):
                     "quote": _Q_FEDBATCH_SAMPLING,
                 }
             )
+        # The SAME seven sampled times, now as isoprenol records: the released aqueous
+        # isoprenol column, against the Banerjee 2024 reference. ISOPRENOL_IS_A_RECORD
+        # holds the chain.
+        for point in fed_batch:
+            rows.append(
+                {
+                    "source": SI_TABLE9_ISOPRENOL_SOURCE,
+                    "column": SI_TABLE9_ISOPRENOL_COLUMN,
+                    "strain": "PIPAxyl-E3-K3-O15",
+                    "condition": "fedbatch_mops_ye_glcxyl_1337",
+                    "titer_mg_per_l": point.isoprenol_aqueous_mg_per_l,
+                    "time_hours": point.time_hours,
+                    "n_samples": None,
+                    "product_yield_g_per_g": None,
+                    "pulse_at_48h": False,
+                    "reference": ISOPRENOL_REFERENCE_KEY,
+                    "isoprenol_aqueous_mg_per_l": point.isoprenol_aqueous_mg_per_l,
+                    "aqueous_mg_per_l": None,
+                    "organic_mg_per_l": None,
+                    "offgas_mg_per_l": None,
+                    "quote": _Q_FEDBATCH_SAMPLING,
+                }
+            )
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
         os.makedirs(self.processed_dir, exist_ok=True)
@@ -2714,10 +2934,14 @@ class IsoprenylAcetateTiterKang2026Dataset(ExperimentDataset):
                     environment=environment(
                         spec, duration_hours=None if hours is None else float(hours)
                     ),
-                    phenotype=titer_phenotype(
-                        float(ledger_row["titer_mg_per_l"]),
-                        n_samples=None if replicates is None else int(replicates),
-                        product_yield=ledger_row["product_yield_g_per_g"],
+                    phenotype=(
+                        isoprenol_phenotype(float(ledger_row["titer_mg_per_l"]))
+                        if ledger_row["column"] == SI_TABLE9_ISOPRENOL_COLUMN
+                        else titer_phenotype(
+                            float(ledger_row["titer_mg_per_l"]),
+                            n_samples=None if replicates is None else int(replicates),
+                            product_yield=ledger_row["product_yield_g_per_g"],
+                        )
                     ),
                 )
                 txn.put(
@@ -2768,7 +2992,7 @@ class IsoprenylAcetateTiterKang2026Dataset(ExperimentDataset):
                 notes=[
                     "nothing is dropped: every released isoprenyl acetate number in the "
                     "mirror is a record, from all three columns",
-                    ISOPRENOL_NOT_A_RECORD,
+                    ISOPRENOL_IS_A_RECORD,
                     "the Table 1 strains with no titer are not records and are listed "
                     "in preprocess/strains_without_a_titer.csv",
                     f"{n_quotes} Table 1 quotes were re-read verbatim from the pinned "
@@ -2933,18 +3157,23 @@ def _expected_perturbations(strain: str) -> int:
 
 
 def _record_signature(
-    titer: float, duration_hours: float | None
-) -> tuple[float, float]:
+    titer: float, duration_hours: float | None, product: str
+) -> tuple[float, float, str]:
     """The key a record and its ledger row are joined on.
 
-    ``(titer, duration_hours)`` is unique across the 19 records of this build, and both
-    numbers are released values rather than positions: LMDB keys are strings, so the
-    store's iteration order is lexicographic ("10" before "2") and a positional join
-    would silently pair the wrong rows.
+    ``(titer, duration_hours, product)`` is unique across the 26 records of this build,
+    and the first two are released values rather than positions: LMDB keys are strings,
+    so the store's iteration order is lexicographic ("10" before "2") and a positional
+    join would silently pair the wrong rows. The PRODUCT joined the key when the
+    isoprenol records landed: the ester and the isoprenol families share all seven
+    sampled times of one run, so a value and a time alone no longer identify which of
+    two products a record is about, even though their current values happen not to
+    collide.
     """
     return (
         round(titer, 6),
         -1.0 if duration_hours is None else round(duration_hours, 6),
+        product,
     )
 
 
@@ -2957,11 +3186,17 @@ def _records_by_source(
             f"{len(records)} records and {len(rows)} ledger rows; the build ledger and "
             "the store disagree"
         )
-    by_signature: dict[tuple[float, float], str] = {}
+    by_signature: dict[tuple[float, float, str], str] = {}
     for _, row in rows.iterrows():
         hours = row["time_hours"]
         signature = _record_signature(
-            float(row["titer_mg_per_l"]), None if pd.isna(hours) else float(hours)
+            float(row["titer_mg_per_l"]),
+            None if pd.isna(hours) else float(hours),
+            (
+                isoprenol().name
+                if str(row["column"]) == SI_TABLE9_ISOPRENOL_COLUMN
+                else isoprenyl_acetate().name
+            ),
         )
         if signature in by_signature:
             raise RuntimeError(
@@ -2975,6 +3210,7 @@ def _records_by_source(
         signature = _record_signature(
             experiment["phenotype"]["titer"],
             experiment["environment"]["duration_hours"],
+            experiment["phenotype"]["product"]["name"],
         )
         if signature not in by_signature:
             raise RuntimeError(
@@ -2982,6 +3218,72 @@ def _records_by_source(
             )
         grouped.setdefault(by_signature[signature], []).append(record)
     return grouped
+
+
+def _isoprenol_records_l4(
+    records: Sequence[dict[str, Any]], data_root: str | None
+) -> Any:
+    """L4: the isoprenol records against Table S9, and their reference against Banerjee.
+
+    Two joins in one level, because the isoprenol family rests on two mirrors. The
+    stored titers are re-derived from the deposited Table S9 bytes, and the reference
+    titer is re-read from the MIRRORED Banerjee 2024 ``paper.md``: its sha256 is checked
+    against the pin and both quotes that give the number its value and its replicate
+    design must be verbatim in it. A deferral chain that cannot be re-walked from our
+    own documentation is not a closed chain, which is what this level enforces.
+    """
+    path = raw_mirror_dir(data_root) / SI_DOCX_REL
+    released = {
+        row.time_hours: row.isoprenol_aqueous_mg_per_l for row in read_fed_batch(path)
+    }
+    shared: list[tuple[Hashable, float, float]] = []
+    for record in records:
+        hours = record["experiment"]["environment"]["duration_hours"]
+        if hours not in released:
+            raise AssertionError(
+                f"an isoprenol record is at {hours} h, which Table S9 does not sample"
+            )
+        shared.append(
+            (hours, record["experiment"]["phenotype"]["titer"], released[hours])
+        )
+    if len(shared) != N_FEDBATCH_TIMES:
+        raise AssertionError(
+            f"{len(shared)} isoprenol records for {N_FEDBATCH_TIMES} sampled times"
+        )
+    banerjee = (
+        Path(data_root or _data_root())
+        / "torchcell-library"
+        / BANERJEE2024_KEY
+        / PAPER_MD
+    )
+    digest = _sha256(banerjee)
+    if digest != BANERJEE2024_PAPER_MD_SHA256:
+        raise AssertionError(
+            f"{banerjee} hashes {digest}, not the pinned "
+            f"{BANERJEE2024_PAPER_MD_SHA256}; the deferred-to mirror moved and the "
+            "isoprenol reference must be re-read before it is trusted"
+        )
+    text = banerjee.read_text(encoding="utf-8")
+    for quote in (_Q_BANERJEE_FEDBATCH_TITER, _Q_BANERJEE_FEDBATCH_TRIPLICATE):
+        if quote not in text:
+            raise AssertionError(
+                "a quote the isoprenol reference rests on is not verbatim in the "
+                f"mirrored Banerjee 2024 paper.md: {quote[:60]!r}"
+            )
+    # The reference is part of the join: every isoprenol record must carry the SAME
+    # deferred titer, so a reference that drifted would surface here rather than in a
+    # record's own value.
+    for record in records:
+        shared.append(
+            (
+                "banerjee2024_reference",
+                float(record["reference"]["phenotype_reference"]["titer"]),
+                ISOPRENOL_REFERENCE_TITER_MG_PER_L,
+            )
+        )
+    return l4_cross_source(shared, tol=1e-9).model_copy(
+        update={"name": "isoprenol_records_and_their_deferred_reference"}
+    )
 
 
 def verify_build(dataset_root: str, data_root: str | None = None) -> VerificationReport:
@@ -3089,6 +3391,7 @@ def verify_build(dataset_root: str, data_root: str | None = None) -> Verificatio
     )
     report.add(_fed_batch_l4(grouped["Table S9"], data_root))
     report.add(_isoprenol_column_l4(ledger, data_root))
+    report.add(_isoprenol_records_l4(grouped[SI_TABLE9_ISOPRENOL_SOURCE], data_root))
     report.add(_table1_l4(grouped["Table 1"], data_root))
     out = osp.join(dataset_root, "preprocess", "verification_report.json")
     with open(out, "w") as handle:
@@ -3122,17 +3425,20 @@ def _fed_batch_l4(records: Sequence[dict[str, Any]], data_root: str | None) -> A
 def _isoprenol_column_l4(ledger: pd.DataFrame, data_root: str | None) -> Any:
     """L4: the ledgered aqueous isoprenol against Table S9, re-read from the mirror.
 
-    The column is not a record (:data:`ISOPRENOL_NOT_A_RECORD`), so this joins the BUILD
-    LEDGER rather than the store: every fed-batch row must carry the released isoprenol
-    value and every other row must carry none, which is what keeps a read-but-unstored
-    column from drifting unnoticed.
+    This joins the BUILD LEDGER rather than the store, which is what keeps the column's
+    own shape checked independently of the records built from it: every fed-batch row of
+    EITHER product must carry the released isoprenol value of its sampled time, and
+    every Table 1 or Table S4 row must carry none. The two fed-batch families are
+    checked together on purpose: they are two products of one run, so the column they
+    share is one measurement and a drift in either family's copy of it surfaces here.
     """
     path = raw_mirror_dir(data_root) / SI_DOCX_REL
     released = {
         row.time_hours: row.isoprenol_aqueous_mg_per_l for row in read_fed_batch(path)
     }
-    fed_batch = ledger[ledger["source"] == "Table S9"]
-    other = ledger[ledger["source"] != "Table S9"]
+    fed_batch_sources = ("Table S9", SI_TABLE9_ISOPRENOL_SOURCE)
+    fed_batch = ledger[ledger["source"].isin(fed_batch_sources)]
+    other = ledger[~ledger["source"].isin(fed_batch_sources)]
     if not other["isoprenol_aqueous_mg_per_l"].isna().all():
         raise AssertionError(
             "a Table 1 or Table S4 ledger row carries an isoprenol value; the column is "
@@ -3148,9 +3454,10 @@ def _isoprenol_column_l4(ledger: pd.DataFrame, data_root: str | None) -> Any:
         shared.append(
             (hours, float(row["isoprenol_aqueous_mg_per_l"]), released[hours])
         )
-    if len(shared) != len(released):
+    if len(shared) != len(released) * len(fed_batch_sources):
         raise AssertionError(
-            f"{len(shared)} ledgered isoprenol values for {len(released)} sampled times"
+            f"{len(shared)} ledgered isoprenol values for {len(released)} sampled times "
+            f"across {len(fed_batch_sources)} fed-batch families"
         )
     return l4_cross_source(shared, tol=1e-9).model_copy(
         update={"name": "ledgered_aqueous_isoprenol_vs_table_s9"}

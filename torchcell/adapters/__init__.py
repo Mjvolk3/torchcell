@@ -12,6 +12,9 @@ from .babu2014_adapter import (
 from .balakrishnan2022_adapter import (
     MrnaFractionBalakrishnan2022Adapter as MrnaFractionBalakrishnan2022Adapter,
 )
+from .banerjee2024_titer_adapter import (
+    IsoprenolTiterBanerjee2024Adapter as IsoprenolTiterBanerjee2024Adapter,
+)
 from .banerjee2025_proteome_adapter import (
     ProteomeBanerjee2025Adapter as ProteomeBanerjee2025Adapter,
 )
@@ -580,6 +583,7 @@ pputida_adapters = [
     "ProteomeLog10PercentDeSiqueira2025Adapter",
     "ProteomePercentDeSiqueira2025Adapter",
     "IsoprenolTiterDeSiqueira2025Adapter",
+    "IsoprenolTiterBanerjee2024Adapter",
     "IsoprenylAcetateTiterKang2026Adapter",
     "PutidaPrecise321Lim2022Adapter",
     "IsoprenolToleranceLim2025Adapter",

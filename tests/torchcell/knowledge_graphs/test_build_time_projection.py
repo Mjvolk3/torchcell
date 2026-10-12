@@ -526,6 +526,7 @@ BACTERIAL_DATASETS = {
     "IsoprenolTiterDeSiqueira2025Dataset",
     "IsoprenolTiterYunus2026Dataset",
     "IsoprenolToleranceLim2025Dataset",
+    "IsoprenolTiterBanerjee2024Dataset",
     "IsoprenylAcetateTiterKang2026Dataset",
     "LactamGrowthRateThompson2019Dataset",
     "MetaboliteGrowthPhaseMenasalvas2025Dataset",
@@ -617,10 +618,12 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
     # + 1 (#691, Nichols 2011 chemical-genomic re-scaled S-scores)
     # + 2 (#931: the Fitness Browser's own Keio and KT2440 experiments, by publication)
     # + 1 (#991, Vaishnav 2022 pooled sort-seq promoter expression)
-    # + 1 (#921, Potel 2018 phosphosite intensities).
+    # + 1 (#921, Potel 2018 phosphosite intensities),
+    # + 1 (row 39, Banerjee 2024 isoprenol titers).
     assert (
         len(dataset_adapter_map)
         == 110
+        + 1
         + 1
         + 6
         + 2

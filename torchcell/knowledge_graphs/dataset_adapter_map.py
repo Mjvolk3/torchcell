@@ -93,6 +93,7 @@ from torchcell.adapters import (
     IsolateGrowthPeter2018Adapter,
     IsopentenolTiterFoo2014Adapter,
     IsoprenolSelectionMenasalvas2025Adapter,
+    IsoprenolTiterBanerjee2024Adapter,
     IsoprenolTiterCarruthers2025Adapter,
     IsoprenolTiterDeSiqueira2025Adapter,
     IsoprenolTiterYunus2026Adapter,
@@ -284,6 +285,7 @@ from torchcell.datasets.ecoli.wang2015_growth import GrowthWang2015Dataset
 from torchcell.datasets.ecoli.wang2018 import CrispriGuideFitnessWang2018Dataset
 from torchcell.datasets.ecoli.wang2024 import EnvChemgenWang2024Dataset
 from torchcell.datasets.ecoli.wetmore2015 import RbTnseqWetmore2015Dataset
+from torchcell.datasets.pputida.banerjee2024 import IsoprenolTiterBanerjee2024Dataset
 from torchcell.datasets.pputida.banerjee2025 import ProteomeBanerjee2025Dataset
 from torchcell.datasets.pputida.borchert2023 import RbTnseqBorchert2023Dataset
 from torchcell.datasets.pputida.borchert2024 import RbTnseqBorchert2024Dataset
@@ -592,6 +594,7 @@ dataset_adapter_map: dict[type, type] = {
     ),
     IsoprenolTiterDeSiqueira2025Dataset: IsoprenolTiterDeSiqueira2025Adapter,
     IsoprenylAcetateTiterKang2026Dataset: IsoprenylAcetateTiterKang2026Adapter,
+    IsoprenolTiterBanerjee2024Dataset: IsoprenolTiterBanerjee2024Adapter,
     ValerolactamTiterThompson2019Dataset: ValerolactamTiterThompson2019Adapter,
     LactamGrowthRateThompson2019Dataset: LactamGrowthRateThompson2019Adapter,
     PutidaPrecise321Lim2022Dataset: PutidaPrecise321Lim2022Adapter,

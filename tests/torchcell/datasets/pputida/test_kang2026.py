@@ -597,11 +597,16 @@ def test_the_primary_column_is_the_seven_table1_rows() -> None:
 
 
 def test_the_record_count_is_the_three_columns_added_up() -> None:
-    """19 = 7 Table 1 + 5 Table S4 + 7 Table S9."""
-    assert kang.EXPECTED_RECORDS == 19
+    """26 = 7 Table 1 + 5 Table S4 + 7 Table S9 ester + 7 Table S9 isoprenol.
+
+    The isoprenol seven landed when the Banerjee 2024 deferral closed; before that the
+    count was 19 and the column was read, ledgered and declined for want of a reference.
+    """
+    assert kang.EXPECTED_RECORDS == 26
     assert len(kang.TABLE1_ROWS) == 7
     assert len(kang.AAT_CASSETTES) == 5
     assert len(TABLE_S9_ROWS) == 7
+    assert kang.N_FEDBATCH_TIMES == 7
 
 
 def test_every_strain_spec_names_a_defined_cassette() -> None:
@@ -792,17 +797,60 @@ def test_isoprenol_above_the_ester_sum_is_refused() -> None:
         kang.IsoprenylAcetateTiterKang2026Dataset._assert_fed_batch_oracles(rows)
 
 
-def test_the_isoprenol_column_is_declared_not_a_record_with_its_reason() -> None:
-    """The decline is a module constant, not prose in a commit message."""
-    reason = kang.ISOPRENOL_NOT_A_RECORD
-    assert "ProductTiterExperimentReference requires a phenotype_reference" in reason
-    assert "Banerjee" in reason
+def test_the_isoprenol_column_is_a_record_and_says_what_closed_the_chain() -> None:
+    """The chain is a module constant, not prose in a commit message."""
+    reason = kang.ISOPRENOL_IS_A_RECORD
+    assert "ProductTiterPhenotype.titer is a required float" in reason
+    assert "Banerjee 2024 is now mirrored" in reason
+    assert kang.BANERJEE2024_PAPER_MD_SHA256 in reason
+    assert "this SI -> Banerjee 2024 Results 3.6 -> the number" in reason
     assert kang.ISOPRENOL_BASELINE_SECOND_HAND.value == {
         "flask_mg_per_l": 762.0,
         "fedbatch_g_per_l": 3.5,
     }
     assert kang.ISOPRENOL_BASELINE_SECOND_HAND.quote in reason
     assert kang.ISOPRENOL_BASELINE_SECOND_HAND.provenance.sha256 == kang.PAPER_MD_SHA256
+
+
+def test_the_isoprenol_reference_is_read_from_the_deferred_to_paper() -> None:
+    """Every field of the reference comes from Banerjee 2024, not from this paper."""
+    assert kang.ISOPRENOL_REFERENCE.provenance.citation_key == kang.BANERJEE2024_KEY
+    assert (
+        kang.ISOPRENOL_REFERENCE.provenance.sha256 == kang.BANERJEE2024_PAPER_MD_SHA256
+    )
+    assert kang.ISOPRENOL_REFERENCE.value == 3500.0
+    assert kang.ISOPRENOL_REFERENCE_UNCERTAINTY_G_PER_L == 0.3
+    assert kang.ISOPRENOL_REFERENCE_REPLICATES.value == 3
+    assert (
+        kang.ISOPRENOL_REFERENCE_REPLICATES.provenance.citation_key
+        == kang.BANERJEE2024_KEY
+    )
+    phenotype = kang.isoprenol_reference_phenotype()
+    assert phenotype.product.name == "isoprenol"
+    assert phenotype.titer == 3500.0
+    assert phenotype.titer_unit == ConcentrationUnit.ug_per_ml
+    assert phenotype.titer_uncertainty == 300.0
+    assert phenotype.n_samples == 3
+    assert phenotype.sample_unit == SampleUnit.biological_replicate
+
+
+def test_an_isoprenol_record_carries_the_papers_own_gaps() -> None:
+    """This paper states no replicate count, no isoprenol SD, no yield for its run."""
+    phenotype = kang.isoprenol_phenotype(190.7)
+    assert phenotype.product.name == "isoprenol"
+    assert phenotype.titer == 190.7
+    assert phenotype.titer_unit == ConcentrationUnit.ug_per_ml
+    assert phenotype.n_samples is None
+    assert {gap.field for gap in phenotype.provenance_gaps} == {
+        "n_samples",
+        "sample_unit",
+        "titer_uncertainty",
+        "titer_uncertainty_type",
+        "product_yield",
+        "product_yield_unit",
+        "productivity",
+        "productivity_unit",
+    }
 
 
 def _panel_rows() -> list[kang.AatPanelRow]:
@@ -873,19 +921,36 @@ def test_build_accounting_refuses_a_drop_no_rule_accounts_for() -> None:
         accounting.check()
 
 
-def test_the_record_join_key_is_the_titer_and_the_duration_not_the_position() -> None:
-    """LMDB keys are strings, so "10" sorts before "2" and a positional join misreads."""
-    assert kang._record_signature(414.0, None) == (414.0, -1.0)
-    assert kang._record_signature(1909.4, 141.4) == (1909.4, 141.4)
-    assert kang._record_signature(414.0, None) != kang._record_signature(414.0, 48.0)
+def test_the_record_join_key_is_the_titer_duration_and_product() -> None:
+    """LMDB keys are strings, so "10" sorts before "2" and a positional join misreads.
+
+    The product joined the key when the isoprenol records landed: the two fed-batch
+    families share all seven sampled times, so a value and a time alone no longer say
+    which product a record is about.
+    """
+    ester = kang.isoprenyl_acetate().name
+    assert kang._record_signature(414.0, None, ester) == (414.0, -1.0, ester)
+    assert kang._record_signature(1909.4, 141.4, ester) == (1909.4, 141.4, ester)
+    assert kang._record_signature(414.0, None, ester) != kang._record_signature(
+        414.0, 48.0, ester
+    )
+    assert kang._record_signature(
+        190.7, 21.4, kang.isoprenol().name
+    ) != kang._record_signature(190.7, 21.4, ester)
 
 
 def _record(
-    titer: float, hours: float | None, perturbations: list[Any]
+    titer: float,
+    hours: float | None,
+    perturbations: list[Any],
+    product: str | None = None,
 ) -> dict[str, Any]:
     return {
         "experiment": {
-            "phenotype": {"titer": titer},
+            "phenotype": {
+                "titer": titer,
+                "product": {"name": product or kang.isoprenyl_acetate().name},
+            },
             "environment": {"duration_hours": hours},
             "genotype": {"perturbations": perturbations},
         }
@@ -896,8 +961,18 @@ def test_a_ledger_with_a_repeated_signature_is_refused() -> None:
     """Two rows with one key would pair records to the wrong released column."""
     ledger = pd.DataFrame(
         [
-            {"titer_mg_per_l": 414.0, "time_hours": None, "source": "Table 1"},
-            {"titer_mg_per_l": 414.0, "time_hours": None, "source": "Table S4"},
+            {
+                "titer_mg_per_l": 414.0,
+                "time_hours": None,
+                "source": "Table 1",
+                "column": kang.SI_TABLE9_SUM_LABEL,
+            },
+            {
+                "titer_mg_per_l": 414.0,
+                "time_hours": None,
+                "source": "Table S4",
+                "column": kang.SI_TABLE9_SUM_LABEL,
+            },
         ]
     )
     records = [_record(414.0, None, []), _record(414.0, None, [])]
@@ -908,7 +983,14 @@ def test_a_ledger_with_a_repeated_signature_is_refused() -> None:
 def test_a_store_record_no_ledger_row_carries_is_refused() -> None:
     """The ledger is written from the same rows the records were put from."""
     ledger = pd.DataFrame(
-        [{"titer_mg_per_l": 414.0, "time_hours": None, "source": "Table 1"}]
+        [
+            {
+                "titer_mg_per_l": 414.0,
+                "time_hours": None,
+                "source": "Table 1",
+                "column": kang.SI_TABLE9_SUM_LABEL,
+            }
+        ]
     )
     with pytest.raises(RuntimeError, match="which no ledger row carries"):
         kang._records_by_source([_record(999.0, None, [])], ledger)
@@ -1013,6 +1095,24 @@ def _write_library(root: Path, text: str, monkeypatch: pytest.MonkeyPatch) -> No
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text, encoding="utf-8")
     monkeypatch.setattr(kang, "PAPER_MD_SHA256", _sha256(path))
+
+
+def _write_banerjee_library(root: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """The deferred-to mirror the isoprenol L4 re-walks the chain from.
+
+    It carries the two real statements verbatim, because the level's job is to prove
+    the chain can be re-walked from our own bytes; a fixture with invented sentences
+    would exercise the file plumbing while retiring the check.
+    """
+    path = root / "torchcell-library" / kang.BANERJEE2024_KEY / kang.PAPER_MD
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        "# synthetic Banerjee 2024 mirror\n\n"
+        f"{kang._Q_BANERJEE_FEDBATCH_TITER}\n\n"
+        f"{kang._Q_BANERJEE_FEDBATCH_TRIPLICATE}\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(kang, "BANERJEE2024_PAPER_MD_SHA256", _sha256(path))
 
 
 def test_the_quote_audit_hashes_the_ocr_before_it_trusts_a_quote(
@@ -1260,6 +1360,7 @@ def built_store(
     monkeypatch.setattr(kang, "SI_DOCX_SHA256", _sha256(source))
     kang.deposit_raw_mirror(si_docx_path=source)
     _write_library(data_root, _synthetic_paper_md(), monkeypatch)
+    _write_banerjee_library(data_root, monkeypatch)
     root = str(data_root / "data/torchcell/isoprenyl_acetate_titer_kang2026")
     kang.IsoprenylAcetateTiterKang2026Dataset(
         root=root, pputida_genome=synthetic_kt2440
@@ -1268,7 +1369,7 @@ def built_store(
 
 
 def test_the_built_store_holds_one_record_per_released_number(built_store: str) -> None:
-    """Nineteen records, and the three columns are all present in the ledger."""
+    """Twenty-six records, and all four released columns present in the ledger."""
     from torchcell.verification.runners import load_records
 
     records = load_records(built_store)
@@ -1278,12 +1379,18 @@ def test_the_built_store_holds_one_record_per_released_number(built_store: str) 
         "Table 1": 7,
         "Table S4": 5,
         "Table S9": 7,
+        kang.SI_TABLE9_ISOPRENOL_SOURCE: 7,
     }
     assert set(ledger["column"]) == {
         "Titer (mg/L); culture conditions",
         kang.SI_TABLE4_COLUMN,
         kang.SI_TABLE9_SUM_LABEL,
+        kang.SI_TABLE9_ISOPRENOL_COLUMN,
     }
+    products = {
+        record["experiment"]["phenotype"]["product"]["name"] for record in records
+    }
+    assert products == {kang.isoprenyl_acetate().name, kang.isoprenol().name}
     for record in records:
         ProductTiterExperiment.model_validate(record["experiment"])
 
@@ -1308,19 +1415,21 @@ def test_the_built_store_passes_l0_to_l4(built_store: str) -> None:
 def test_the_ledger_carries_the_isoprenol_column_on_the_fed_batch_rows_alone(
     built_store: str,
 ) -> None:
-    """The unstored column reaches the build ledger, and nowhere else."""
+    """The column reaches both fed-batch families of the build ledger, and nowhere else.
+
+    It is the ester rows' companion reading AND the isoprenol rows' own stored value, so
+    it appears twice over: once per family, same seven numbers.
+    """
+    released = [190.7, 197.0, 175.0, 231.0, 234.7, 307.8, 254.2]
     ledger = pd.read_csv(osp.join(built_store, "preprocess", "titer_rows.csv"))
-    fed_batch = ledger[ledger["source"] == "Table S9"]
-    assert fed_batch["isoprenol_aqueous_mg_per_l"].tolist() == [
-        190.7,
-        197.0,
-        175.0,
-        231.0,
-        234.7,
-        307.8,
-        254.2,
+    ester = ledger[ledger["source"] == "Table S9"]
+    assert ester["isoprenol_aqueous_mg_per_l"].tolist() == released
+    isoprenol = ledger[ledger["source"] == kang.SI_TABLE9_ISOPRENOL_SOURCE]
+    assert isoprenol["isoprenol_aqueous_mg_per_l"].tolist() == released
+    assert isoprenol["titer_mg_per_l"].tolist() == released
+    other = ledger[
+        ~ledger["source"].isin(["Table S9", kang.SI_TABLE9_ISOPRENOL_SOURCE])
     ]
-    other = ledger[ledger["source"] != "Table S9"]
     assert other["isoprenol_aqueous_mg_per_l"].isna().all()
     assert len(other) == 12
 
@@ -1351,7 +1460,7 @@ def test_the_build_accounting_records_zero_drops(built_store: str) -> None:
     assert accounting["kept_records"] == kang.EXPECTED_RECORDS
     assert accounting["dropped_records"] == 0
     assert accounting["rules"] == []
-    assert kang.ISOPRENOL_NOT_A_RECORD in accounting["notes"]
+    assert kang.ISOPRENOL_IS_A_RECORD in accounting["notes"]
     histogram = accounting["reconciliation"]["status_histogram"]
     assert histogram["current"] == 13
     assert sum(histogram.values()) == 13
@@ -1406,13 +1515,16 @@ def test_the_four_references_are_the_papers_own_baselines(built_store: str) -> N
         record["reference"]["phenotype_reference"]["titer"]
         for record in load_records(built_store)
     }
-    assert titers == {414.0, 181.0, 405.0, 1500.0}
+    # 3500.0 is the fifth: the isoprenol family's reference, which is Banerjee 2024's
+    # fed-batch titer rather than one of this paper's own baselines.
+    assert titers == {414.0, 181.0, 405.0, 1500.0, 3500.0}
     assert set(kang.REFERENCE_BASELINES) == {
         "flask_pipa",
         "flask_pipaxyl",
         "tube_pipa",
         "fedbatch",
     }
+    assert kang.ISOPRENOL_REFERENCE_KEY not in kang.REFERENCE_BASELINES
 
 
 # --------------------------------------------------------------------------- #

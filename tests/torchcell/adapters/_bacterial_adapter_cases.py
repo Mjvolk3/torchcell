@@ -95,6 +95,7 @@ from torchcell.adapters import (
     GrowthWang2015Adapter,
     IsopentenolTiterFoo2014Adapter,
     IsoprenolSelectionMenasalvas2025Adapter,
+    IsoprenolTiterBanerjee2024Adapter,
     IsoprenolTiterCarruthers2025Adapter,
     IsoprenolTiterDeSiqueira2025Adapter,
     IsoprenolTiterYunus2026Adapter,
@@ -240,6 +241,7 @@ from torchcell.datasets.ecoli.wang2015_growth import GrowthWang2015Dataset
 from torchcell.datasets.ecoli.wang2018 import CrispriGuideFitnessWang2018Dataset
 from torchcell.datasets.ecoli.wang2024 import EnvChemgenWang2024Dataset
 from torchcell.datasets.ecoli.wetmore2015 import RbTnseqWetmore2015Dataset
+from torchcell.datasets.pputida.banerjee2024 import IsoprenolTiterBanerjee2024Dataset
 from torchcell.datasets.pputida.banerjee2025 import ProteomeBanerjee2025Dataset
 from torchcell.datasets.pputida.borchert2023 import RbTnseqBorchert2023Dataset
 from torchcell.datasets.pputida.borchert2024 import RbTnseqBorchert2024Dataset
@@ -897,6 +899,13 @@ BACTERIAL: list[Bacterial] = [
         "kang2026",
         "isoprenyl_acetate_titer_kang2026",
         IsoprenylAcetateTiterKang2026Dataset,
+        TITER,
+    ),
+    _case(
+        IsoprenolTiterBanerjee2024Adapter,
+        "banerjee2024_titer",
+        "isoprenol_titer_banerjee2024",
+        IsoprenolTiterBanerjee2024Dataset,
         TITER,
     ),
     _case(

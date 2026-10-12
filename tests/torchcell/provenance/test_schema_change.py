@@ -1054,3 +1054,20 @@ def test_cli_tripwire_exit_codes_and_the_override(
         "schema-change-records: TORCHCELL_SCHEMA_RECORD_ACK set -> passing this "
         "commit; CI still requires the record before landing"
     )
+
+
+def test_cli_tripwire_prints_the_exemption_note(
+    repo: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A new class nothing served imports passes, with a note for the PR body."""
+    edit_schema(
+        repo,
+        "class Experiment(",
+        "class NewLeaf(ModelStrict):\n    x: int\n\n\nclass Experiment(",
+    )
+    assert sc.main(["tripwire", "--repo", str(repo), "--base", "main"]) == 0
+    assert capsys.readouterr().out.splitlines() == [
+        "schema-change-records: note: NewLeaf: new and in no served closure, so no "
+        "record is required; list it in the PR body",
+        "schema-change-records: every schema change vs main is recorded",
+    ]

@@ -45,11 +45,37 @@ spec.loader.exec_module(sf)
 WIDTH_MM = sf.WIDTH_MM
 GRAY = sf.PLOT_PALETTE[5]
 
-#: The one name per family. Every bar label and legend entry passes through this map.
-RENAME = {
-    "transformer": "CGT",
-    "graph convolution": "GCN",
-    "GO graph": "GCN on GO",
+#: One name per family, and every learned bar says its graph and its input. CGT is the
+#: cell graph transformer; GCN is graph convolution over the union of the nine gene graphs
+#: (physical, regulatory, TFLink and six STRING channels; ``graph_baselines.py``), named
+#: with the node input it reads: GO is the GO multi-hot, "3 inputs" is ProtT5 + pathway
+#: multi-hot + FBA ratios, the transformer's three. Keys are the labels of
+#: ``summary_figure.py``; a label absent here is an error, not a pass-through.
+GCN9 = "GCN (9 graphs)"
+THREE = "ProtT5+pathway+FBA"
+LABEL = {
+    # a: the released held-out genes
+    "GO graph + solve + rule counts": f"avg: CGT solve+counts, {GCN9} GO",
+    "GO graph + cached solve head": f"avg: CGT cached solve, {GCN9} GO",
+    "GO graph + layer-free solve": f"avg: CGT layer-free, {GCN9} GO",
+    "transformer + solve + rule counts": "CGT, solve + rule counts",
+    "transformer + layer-free solve": "CGT, layer-free solve",
+    "graph convolution on GO": f"{GCN9}, GO input",
+    "transformer + cached solve head": "CGT, cached solve head",
+    "transformer + learned-ceiling LP": "CGT, LP in the training loop",
+    "transformer + FBA ratios (reported)": "CGT, FBA ratio affine (reported)",
+    "graph convolution, three inputs": f"{GCN9}, {THREE}",
+    "MLP, three inputs": f"MLP, {THREE}, no graph",
+    "DCell hierarchy, GO membership input": "DCell hierarchy, GO membership",
+    "random forest on GO + FBA ratios": "random forest, GO + FBA ratios",
+    "Flux Cone Learning, released": "Flux Cone Learning, released",
+    "DCell, published gene input": "DCell, published gene input",
+    "FBA growth ratio, YPD": "FBA growth ratio, YPD",
+    # c: the genome-wide held-out genes
+    "graph convolution, degree only": "GCN (physical), degree+clustering",
+    "graph convolution, ProtT5": f"{GCN9}, ProtT5",
+    "physical degree, nothing trained": "physical degree, nothing trained",
+    "transformer + FBA ratios": "CGT, FBA ratio affine",
 }
 STATUS_SYMBOL = {"file": "●", "partial": "◐", "idea": "○"}
 STATUS_WORD = {"file": "on file", "partial": "partial", "idea": "idea only"}
@@ -60,9 +86,8 @@ STATUS_MARKS = os.environ.get("GATE_STATUS_MARKS", "1") == "1"
 
 
 def rename(label: str) -> str:
-    for old, new in RENAME.items():
-        label = label.replace(old, new)
-    return label
+    assert label in LABEL, f"no gate label for {label!r}"
+    return LABEL[label]
 
 
 def letter_status(fig, x_mm: float, top_mm: float, ch: str, status: str) -> None:
@@ -139,7 +164,7 @@ def main() -> None:
             sf.patch(sf.COMPARATOR, "comparator, nothing learned here"),
             sf.patch(sf.NO_MODULE, "learned, no metabolic column, no graph"),
             sf.patch(sf.SOLVE, "CGT reading the metabolic solve"),
-            sf.patch(sf.GRAPH, "GCN on the gene graphs"),
+            sf.patch(sf.GRAPH, "GCN over the 9 gene graphs (physical, regulatory, TFLink, 6 STRING)"),
             sf.patch(sf.AVERAGE, "CGT + GCN average, equal weights"),
             sf.patch("white", "LP solved inside training", hatch="/////"),
         ],
@@ -165,9 +190,9 @@ def main() -> None:
     bx, bw, bh = right_block + 12.0, 52.0, 36.0
     panel_legend(
         fig,
-        [marker(sf.SOLVE, "o", "CGT + solve"), marker(sf.GRAPH, "s", "GCN on GO"),
-         marker(sf.AVERAGE, "D", "CGT + GCN average")],
-        bx + 2.0, top - 1.0, 3,
+        [marker(sf.SOLVE, "o", "CGT layer-free"), marker(sf.GRAPH, "s", f"{GCN9} GO"),
+         marker(sf.AVERAGE, "D", "average")],
+        bx - 4.0, top - 1.0, 3,
     )
     ax = sf.place(fig, bx, top + 5.0, bw, bh)
     for key, color, shape in (("layer_free", sf.SOLVE, "o"), ("go_convolution", sf.GRAPH, "s"), ("average", sf.AVERAGE, "D")):
@@ -182,7 +207,8 @@ def main() -> None:
     ax.grid(axis="y", which="both", lw=0.3, color="0.85", zorder=0)
     ax.set_axisbelow(True)
     ax.set_xlabel("repeated outer split, sorted by the average")
-    ax.set_ylabel("held-out AUROC")
+    ax.set_ylabel("held-out AUROC, 3 seeds per point")
+    ax.set_title("Three methods fixed in advance, ten resplits", pad=3, loc="left")
     letter_status(fig, right_block, top, "b", "file")
 
     # c: what transfers off the metabolic genes
@@ -194,8 +220,8 @@ def main() -> None:
     sf.draw_bars(ax, bars)
     ax.axvline(0.5, color="black", lw=0.5, ls=(0, (2, 2)), zorder=5)
     sf.auroc_axis(ax, 0.4, 0.8)
-    ax.set_xlabel("AUROC, 4,674 genome-wide held-out genes")
-    ax.set_title("What transfers off the metabolic genes", pad=3, loc="left")
+    ax.set_xlabel("AUROC, 4,674 genome-wide genes (dashed: chance)")
+    ax.set_title("Trained on the 195, read genome-wide", pad=3, loc="left")
     letter_status(fig, 0.0, top, "c", "file")
 
     # d: what the misranked genes share, with its legend above
@@ -203,9 +229,9 @@ def main() -> None:
     dx = right_block + 44.0
     panel_legend(
         fig,
-        [marker(sf.SOLVE, "o", "CGT + solve"), marker(sf.GRAPH, "s", "GCN on GO"),
-         marker("white", "o", "hollow: q at or above 0.1", hollow=True)],
-        right_block + 10.0, top - 1.0, 3,
+        [marker(sf.SOLVE, "o", "CGT layer-free"), marker(sf.GRAPH, "s", f"{GCN9} GO"),
+         marker("white", "o", "hollow: q >= 0.1", hollow=True)],
+        right_block + 6.0, top - 1.0, 3,
     )
     ax = sf.place(fig, dx, top + 5.0, 20.0, 28.0)
     sf.panel_enrichment(ax, set_label, models)
@@ -220,8 +246,9 @@ def main() -> None:
     )
     panel_legend(
         fig,
-        [marker(sf.SOLVE, "o", "CGT + solve"), marker(sf.GRAPH, "s", "GCN on GO")],
-        14.0, top - 1.0, 2,
+        [marker(sf.SOLVE, "o", "CGT, layer-free solve"), marker(sf.GRAPH, "s", f"{GCN9}, GO input"),
+         Line2D([], [], ls="", label="bold name: FBA growth ratio 1.0, FBA calls it viable")],
+        14.0, top - 1.0, 3,
     )
     ax = sf.place(fig, 14.0, top + 5.0, 74.0, 20.0)
     x = np.arange(len(genes))
@@ -239,7 +266,8 @@ def main() -> None:
     ax.tick_params(axis="y", which="minor", length=0)
     ax.grid(axis="y", which="both", lw=0.3, color="0.85", zorder=0)
     ax.set_axisbelow(True)
-    ax.set_ylabel("misrank")
+    ax.set_ylabel("share of nonessential genes\nscored above the gene")
+    ax.set_title(f"The {len(genes)} essential held-out genes, worst first", pad=3, loc="left")
     letter_status(fig, 0.0, top, "e", "file")
 
     status_key(fig)

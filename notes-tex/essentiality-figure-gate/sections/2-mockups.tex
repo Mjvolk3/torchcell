@@ -13,8 +13,13 @@ original summary sheets follow it for the panels it leaves out. The statistic is
 AUROC on the \gnHeldOut{} held-out genes under the fold protocol (five models trained on
 five cross-validation files, logits averaged on the held-out genes) unless the caption
 says otherwise; intervals are gene bootstraps. One name per model family everywhere: CGT
-is the cell graph transformer, GCN is graph convolution on the gene graphs, and their
-average is the equal-weight average of standardized logits. The symbols after each panel
+is the cell graph transformer; GCN is two-layer graph convolution over the union of the
+nine gene graphs (physical, regulatory, TFLink and the six STRING channels), named with
+the node input it reads, the GO multi-hot or the transformer's three inputs (ProtT5, the
+pathway multi-hot and the FBA ratios); their average is the equal-weight average of
+standardized logits. A gene's misrank under a model is the share of the other class
+scored on the wrong side of it: for an essential gene, the fraction of nonessential genes
+scored above it. The symbols after each panel
 letter are the panel's section status (not reviewed) and figure status (on file), the
 key at the sheet's foot.
 
@@ -30,33 +35,37 @@ reading is under the figure.}{fig:sheet}
 
 \noindent\textbf{What each panel of Figure~\ref{fig:sheet} reports.}
 \textbf{a}, Every method on the \gnHeldOut{} released held-out genes, best first: the top
-rows are averages of GCN on GO with a form of CGT (the best at \gbestAverage{}
-[\gbestAverageLo{}, \gbestAverageHi{}]), then the CGT forms, GCN on GO
+rows are averages of GCN with GO input and a form of CGT (the best at \gbestAverage{}
+[\gbestAverageLo{}, \gbestAverageHi{}]), then the CGT forms, GCN with GO input
 (\gfamgoGcn{}), the learned models with no metabolic column, the DCell-style hierarchy
 under the same fold protocol (\gdcellEnsemble{}), the random forest, and the two published
 comparators, Flux Cone Learning at \gfclAuroc{} and FBA at \gfbaAuroc{}. Learned models
 are five-fold ensembles, the random forest is one fit on the split file, and intervals
 are gene bootstraps. \status{todo}\,\fstat{file}
 \textbf{b}, The three models fixed in advance on \gnResplits{} other held-out fifths of
-the labeled genes, three seeds per split, sorted by the average's AUROC: CGT with the
-layer-free solve (mean \gresplitMeanlayerfree{}), GCN on GO (\gresplitMeangoconvolution{})
+the labeled genes, sorted by the average's AUROC. Each point is one method on one split:
+the seed-mean standardized logit of three seeds, scored once on that split's held-out
+fifth, so a point is a three-seed family score and not one run. CGT with the layer-free
+solve (mean \gresplitMeanlayerfree{}), GCN with GO input (\gresplitMeangoconvolution{})
 and their average (\gresplitMeanaverage{}), which beats the better single model on
 \gresplitDiffaverageMinusthebettersinglemodelUp{} of
 \gresplitDiffaverageMinusthebettersinglemodelOf{} splits. \status{todo}\,\fstat{file}
 \textbf{c}, The same models trained on the released genes and read on the \ggenomeN{}
 genome-wide genes that carry no GEM reaction (\ggenomeEssential{} essential), pooled over
-seeds with a gene bootstrap; the dashed line is chance. The metabolic columns read a
-constant row here, so CGT with the solve reads \ggenlayerFree{} where GCN on ProtT5 reads
-\ggengcnProt{} and the physical degree alone \ggengcnDegree{}. \status{todo}\,\fstat{file}
+seeds with a gene bootstrap; the dashed line is chance. Every bar names its graph and
+its input. The metabolic columns read a constant row here, so CGT with the solve reads
+\ggenlayerFree{} where GCN over the nine graphs with ProtT5 input reads \ggengcnProt{}
+and the physical degree alone, nothing trained, \ggengcnDegree{}. \status{todo}\,\fstat{file}
 \textbf{d}, What the misranked genes of the released \gnHeldOut{} share, per class: the
 chance that a gene carrying the annotation is misranked worse than one without it, 0.5
-(dashed) being no association, for CGT with the layer-free solve (circles) and GCN on GO
-(squares), filled where the Benjamini-Hochberg $q$ within the family is under 0.1.
+(dashed) being no association, for CGT with the layer-free solve (circles) and GCN with
+GO input (squares), filled where the Benjamini-Hochberg $q$ within the family is under 0.1.
 \status{todo}\,\fstat{file}
 \textbf{e}, Every one of the \gnEssentialHeldOut{} essential genes in the released held-out
-set, worst first by the two families' mean misrank, with the fraction of nonessential
-genes each family ranks above it; a gene's name is bold where FBA calls its deletion
-viable on YPD, the feature panel d tests. \status{todo}\,\fstat{file}
+set, worst first by the two families' mean misrank; the vertical axis is the misrank
+itself, the fraction of nonessential held-out genes each family scores above the gene,
+so 0 is a gene ranked above every nonessential gene. A gene's name is bold where FBA
+calls its deletion viable on YPD, the feature panel d tests. \status{todo}\,\fstat{file}
 
 \pfstep{What the sheet leaves to the supplement} The module forms on one backbone and
 their cost (Figure~\ref{fig:goal2}a and b), the store's scale (c), the forms by media and
@@ -71,7 +80,7 @@ enters the paper.
 \tcfigfit[1.0]{\figGoalOne}{\textbf{Goal 1: the best method on gene essentiality,
 against Flux Cone Learning and FBA.} One color means one thing in every panel: gray a
 comparator with nothing learned here, blue a learned model reading no metabolic column
-and no graph, orange family 1 (CGT), red family 2 (GCN on GO),
+and no graph, orange family 1 (CGT), red family 2 (GCN with GO input),
 purple their average; a hatch marks a linear program solved inside the training loop.
 \textbf{a}, Every method on the \gnHeldOut{} held-out genes, best first; the first rows are
 averages of family 2 with a form of family 1 (the best at \gbestAverage{}), the DCell-style

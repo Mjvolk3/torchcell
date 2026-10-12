@@ -7,7 +7,7 @@
 For ``PooledSortSeqExpressionPhenotype`` datasets: a massively parallel reporter assay
 in which the whole library is measured at once, so the identity of a record is the
 SEQUENCE rather than a well. The schema validator already rejects a non-finite estimate,
-an unlabelled uncertainty, a non-positive read count and an empty identifier at
+an unlabeled uncertainty, a non-positive read count and an empty identifier at
 instantiation, so L0 subsumes those. What this verifier adds is about the SET of records
 and the genotype beside each one, which no single record can check:
 

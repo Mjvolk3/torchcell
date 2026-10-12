@@ -74,7 +74,7 @@ WHAT IS NOT STORED, and why
 ``sdEL == sdScale * relativeSD`` on all 5,327 rows to 2.0e-14, so ``sdEL`` is an
 author-SCALED quantity, not a plain dispersion of the reads. Neither this paper's
 Methods and SI nor de Boer 2020 (its deferral target) defines any of the three, so the
-uncertainty TYPE cannot be labelled, and the schema admits no unlabelled uncertainty.
+uncertainty TYPE cannot be labeled, and the schema admits no unlabeled uncertainty.
 The uncertainty fields therefore carry a typed ``ProvenanceGap`` naming the columns. The
 owner question in the dataset note is whether to ask the authors.
 
@@ -336,8 +336,8 @@ _UNCERTAINTY_GAP_NOTE = (
     "sdEL == sdScale * relativeSD on all 5,327 rows to 2.0e-14, so sdEL is an "
     "author-scaled quantity rather than a dispersion of the reads; neither this paper "
     "(Methods, Supplementary Notes) nor de Boer 2020, its method's deferral target, "
-    "defines any of the three, so the uncertainty type cannot be labelled and no "
-    "unlabelled uncertainty is stored"
+    "defines any of the three, so the uncertainty type cannot be labeled and no "
+    "unlabeled uncertainty is stored"
 )
 _SAMPLE_GAP_NOTE = (
     "the estimate averages READS over sort bins, and a read is not a replicate of the "

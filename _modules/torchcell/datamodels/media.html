@@ -2227,7 +2227,8 @@
 <span class="p">)</span>
 <span class="sd">"""Potassium acetate sporulation medium: nitrogen starvation on a respiratory carbon</span>
 <span class="sd">source, the laboratory trigger of meiosis. De Chiara 2022 states 2% KAc and nothing more;</span>
-<span class="sd">potassium acetate is not yet in the pinned compound table, so it carries a typed gap."""</span>
+<span class="sd">potassium acetate resolves through the compound table's row from the #726 curator pass</span>
+<span class="sd">(PubChem CID 517044), so it carries an InChIKey rather than a typed gap (#1008)."""</span>
 
 <span class="n">PBS</span> <span class="o">=</span> <span class="n">Media</span><span class="p">(</span>
     <span class="n">name</span><span class="o">=</span><span class="s2">"PBS (phosphate-buffered saline)"</span><span class="p">,</span>
@@ -4622,6 +4623,111 @@
 <span class="sd">acids, the amino-acid mixture that carries every amino acid except tryptophan (row 25)."""</span>
 
 
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># RCH2 defined minimal medium, no carbon (Price 2018 Supplementary Table 18, the Fitness</span>
+<span class="c1"># Browser's own media table). Borchert 2024's compendium names it for 20 P. putida</span>
+<span class="c1"># KT2440 samples, ten of them Rand 2017's own Putida_ML5 assays (#860). The two Wolfe's</span>
+<span class="c1"># mixes follow the Fang 2025 trace-stock convention: each is ONE component at the stated</span>
+<span class="c1"># 1 X, with its 100X stock recipe quoted from the same sheet, because the diluted amounts</span>
+<span class="c1"># of its fourteen salts or ten vitamins would be a derivation rather than a stated value.</span>
+<span class="c1"># The sheet defines "X" itself ('"X" is the concentration of the stock supplement mix')</span>
+<span class="c1"># and prints each mix as 100X, so 1 X is a 1:100 dilution, carried as 1% (v/v) the way</span>
+<span class="c1"># Fang 2025's "1 mL/L" is carried as 0.1% (v/v).</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="n">_Q_PRICE_RCH2</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"Media | RCH2_defined_noCarbon / Description | Defined minimal media for soil and "</span>
+    <span class="s2">"groundwater bacteria with no carbon / Minimal | =TRUE() / Controlled vocabulary | "</span>
+    <span class="s2">"Concentration | Units / Ammonium chloride | 0.25 | g/L / Potassium Chloride | 0.1 "</span>
+    <span class="s2">"| g/L / Sodium phosphate monobasic monohydrate | 0.6 | g/L / PIPES sesquisodium "</span>
+    <span class="s2">"salt | 30 | mM / Wolfe's mineral mix | 1 | X / Wolfe's vitamin mix | 1 | X"</span>
+<span class="p">)</span>
+<span class="n">_Q_PRICE_X</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s1">'MEDIA SUPPLEMENT MIXES / "X" is the concentration of the stock supplement mix / '</span>
+    <span class="s2">"See individual medias for the concentration of supplement used."</span>
+<span class="p">)</span>
+<span class="n">_Q_PRICE_WOLFE_MINERAL</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"Media | Wolfe's mineral mix / Description | Standard 100X mineral solution (based "</span>
+    <span class="s2">"on Wolfe's formulation) / X | 100 / Controlled vocabulary | Concentration | Units / "</span>
+    <span class="s2">"Magnesium Sulfate Heptahydrate | 3 | g/L / Nitrilotriacetic acid | 1.5 | g/L / "</span>
+    <span class="s2">"Sodium Chloride | 1 | g/L / Manganese (II) sulfate monohydrate | 0.5 | g/L / Cobalt "</span>
+    <span class="s2">"chloride hexahydrate | 0.1 | g/L / Zinc sulfate heptahydrate | 0.1 | g/L / Calcium "</span>
+    <span class="s2">"Chloride Dihydrate | 0.1 | g/L / Iron (II) sulfate heptahydrate | 0.1 | g/L / "</span>
+    <span class="s2">"Nickel (II) chloride hexahydrate | 0.025 | g/L / Aluminum potassium sulfate "</span>
+    <span class="s2">"dodecahydrate | 0.02 | g/L / Copper (II) sulfate pentahydrate | 0.01 | g/L / Boric "</span>
+    <span class="s2">"Acid | 0.01 | g/L / Sodium Molybdate Dihydrate | 0.01 | g/L / Sodium selenite "</span>
+    <span class="s2">"pentahydrate | 0.3 | mg/L"</span>
+<span class="p">)</span>
+<span class="n">_Q_PRICE_WOLFE_VITAMIN</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"Media | Wolfe's vitamin mix / Description | Standard 100X vitamin solution (based "</span>
+    <span class="s2">"on Wolfe's formulation) / X | 100 / Controlled vocabulary | Concentration | Units / "</span>
+    <span class="s2">"pyridoxine HCl | 10 | mg/L / 4-Aminobenzoic acid | 5 | mg/L / Lipoic acid | 5 | "</span>
+    <span class="s2">"mg/L / Nicotinic Acid | 5 | mg/L / Riboflavin | 5 | mg/L / thiamine HCl | 5 | mg/L "</span>
+    <span class="s2">"/ calcium pantothenate | 5 | mg/L / biotin | 2 | mg/L / Folic Acid | 2 | mg/L / "</span>
+    <span class="s2">"Cyanocobalamin | 0.1 | mg/L"</span>
+<span class="p">)</span>
+<span class="n">_WOLFE_DILUTION_NOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"1 X of the sheet's 100X stock is a 1:100 dilution, carried as 1% (v/v); the sheet "</span>
+    <span class="s1">'defines "X" as the concentration of the stock supplement mix. The stock recipe is '</span>
+    <span class="s2">"the second quote and stays a mixture here (the Fang 2025 trace-stock convention): "</span>
+    <span class="s2">"its diluted per-compound amounts would be a derivation, not a stated value"</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_rch2</span><span class="p">(</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">role</span><span class="p">:</span> <span class="n">MediaComponentRole</span><span class="p">,</span>
+    <span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">unit</span><span class="p">:</span> <span class="n">ConcentrationUnit</span><span class="p">,</span>
+    <span class="n">read</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MediaComponent</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">_stated</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">role</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">unit</span><span class="p">,</span> <span class="n">_cite</span><span class="p">(</span><span class="n">_PRICE2018_S3</span><span class="p">,</span> <span class="n">read</span><span class="p">,</span> <span class="n">_Q_PRICE_RCH2</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_wolfe_mix</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">role</span><span class="p">:</span> <span class="n">MediaComponentRole</span><span class="p">,</span> <span class="n">stock_quote</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MediaComponent</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">_mixture</span><span class="p">(</span>
+        <span class="n">name</span><span class="p">,</span>
+        <span class="n">role</span><span class="p">,</span>
+        <span class="n">_DEFERRED</span><span class="p">,</span>
+        <span class="n">concentration</span><span class="o">=</span><span class="n">_c</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">_VV</span><span class="p">),</span>
+        <span class="n">provenance</span><span class="o">=</span><span class="p">[</span>
+            <span class="n">_cite</span><span class="p">(</span><span class="n">_PRICE2018_S3</span><span class="p">,</span> <span class="s2">"1 X"</span><span class="p">,</span> <span class="n">_Q_PRICE_RCH2</span><span class="p">,</span> <span class="n">note</span><span class="o">=</span><span class="n">_WOLFE_DILUTION_NOTE</span><span class="p">),</span>
+            <span class="n">_cite</span><span class="p">(</span><span class="n">_PRICE2018_S3</span><span class="p">,</span> <span class="s2">"100X stock recipe"</span><span class="p">,</span> <span class="n">stock_quote</span><span class="p">),</span>
+            <span class="n">_cite</span><span class="p">(</span><span class="n">_PRICE2018_S3</span><span class="p">,</span> <span class="s2">"X is the stock concentration"</span><span class="p">,</span> <span class="n">_Q_PRICE_X</span><span class="p">),</span>
+        <span class="p">],</span>
+        <span class="n">note</span><span class="o">=</span><span class="n">_WOLFE_DILUTION_NOTE</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="n">RCH2_DEFINED_NOCARBON_PRICE2018</span> <span class="o">=</span> <span class="n">Media</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">"RCH2 defined minimal medium, no carbon source (Price 2018 "</span>
+    <span class="s2">"'RCH2_defined_noCarbon')"</span><span class="p">,</span>
+    <span class="n">state</span><span class="o">=</span><span class="s2">"liquid"</span><span class="p">,</span>
+    <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">base_medium</span><span class="o">=</span><span class="s2">"RCH2_DEFINED_NOCARBON_PRICE2018"</span><span class="p">,</span>
+    <span class="n">components</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">_rch2</span><span class="p">(</span><span class="s2">"ammonium chloride"</span><span class="p">,</span> <span class="n">_NSRC</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="n">_GL</span><span class="p">,</span> <span class="s2">"0.25 g/L"</span><span class="p">),</span>
+        <span class="n">_rch2</span><span class="p">(</span><span class="s2">"potassium chloride"</span><span class="p">,</span> <span class="n">_SALT</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">_GL</span><span class="p">,</span> <span class="s2">"0.1 g/L"</span><span class="p">),</span>
+        <span class="n">_rch2</span><span class="p">(</span><span class="s2">"sodium dihydrogen phosphate monohydrate"</span><span class="p">,</span> <span class="n">_SALT</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">,</span> <span class="n">_GL</span><span class="p">,</span> <span class="s2">"0.6 g/L"</span><span class="p">),</span>
+        <span class="n">_rch2</span><span class="p">(</span><span class="s2">"PIPES sesquisodium salt"</span><span class="p">,</span> <span class="n">_BUFFER</span><span class="p">,</span> <span class="mf">30.0</span><span class="p">,</span> <span class="n">_MM</span><span class="p">,</span> <span class="s2">"30 mM"</span><span class="p">),</span>
+        <span class="n">_wolfe_mix</span><span class="p">(</span><span class="s2">"Wolfe's mineral mix"</span><span class="p">,</span> <span class="n">_TRACE</span><span class="p">,</span> <span class="n">_Q_PRICE_WOLFE_MINERAL</span><span class="p">),</span>
+        <span class="n">_wolfe_mix</span><span class="p">(</span><span class="s2">"Wolfe's vitamin mix"</span><span class="p">,</span> <span class="n">_VITAMIN</span><span class="p">,</span> <span class="n">_Q_PRICE_WOLFE_VITAMIN</span><span class="p">),</span>
+    <span class="p">],</span>
+    <span class="n">provenance</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">_cite</span><span class="p">(</span>
+            <span class="n">_PRICE2018_S3</span><span class="p">,</span>
+            <span class="s2">"RCH2_defined_noCarbon"</span><span class="p">,</span>
+            <span class="n">_Q_PRICE_RCH2</span><span class="p">,</span>
+            <span class="n">note</span><span class="o">=</span><span class="s2">"the Fitness Browser's media table, which Borchert 2024's compendium "</span>
+            <span class="s2">"release names for 20 P. putida samples; the carbon source is each "</span>
+            <span class="s2">"sample's Condition_1, carried as EnvironmentPhysicalPerturbation(factor="</span>
+            <span class="s2">"carbon_source)"</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">],</span>
+<span class="p">)</span>
+<span class="sd">"""Price 2018's RCH2 defined minimal medium without carbon: the medium of Borchert 2024's</span>
+<span class="sd">20 RCH2 samples, ten of them Rand 2017's own assays (row 8)."""</span>
+
+
 <span class="c1">#: Which of the fifty bacterial rows (rank in [[plan.bacteria-ontology-genome]]'s table,</span>
 <span class="c1">#: first author, year) use each bacterial entry, and how the paper states it. "names" means</span>
 <span class="c1">#: the paper names the formulation without printing amounts; every other use is a stated</span>
@@ -4703,6 +4809,11 @@
         <span class="s2">"43 Fang 2025: both rounds of the CRISPRi-FACS screen (500 mL flasks holding "</span>
         <span class="s2">"100 mL), and every tube and flask fermentation; the glucose variant the same "</span>
         <span class="s2">"sentence offers is used by one titer figure and by no screen record"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"RCH2_DEFINED_NOCARBON_PRICE2018"</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">"8 Borchert 2024: the 20 compendium samples on 'RCH2_defined_noCarbon' (sets 1 "</span>
+        <span class="s2">"and 5 of the Putida_ML5 library), ten of them Rand 2017's own assays; the "</span>
+        <span class="s2">"release names the medium and Price 2018 Table S18 states it"</span><span class="p">,</span>
     <span class="p">),</span>
 <span class="p">}</span>
 <span class="sd">"""Use map for the bacterial entries; the keys are exactly the bacterial media."""</span>
@@ -5188,6 +5299,7 @@
     <span class="s2">"MOPS_CASAMINO_WANG2018"</span><span class="p">:</span> <span class="n">MOPS_CASAMINO_WANG2018</span><span class="p">,</span>
     <span class="s2">"M9_MODIFIED_FANG2025"</span><span class="p">:</span> <span class="n">M9_MODIFIED_FANG2025</span><span class="p">,</span>
     <span class="o">**</span><span class="n">JACKSON2020_MEDIA</span><span class="p">,</span>  <span class="c1"># jackson2020: Supplementary file 1, Table 4</span>
+    <span class="s2">"RCH2_DEFINED_NOCARBON_PRICE2018"</span><span class="p">:</span> <span class="n">RCH2_DEFINED_NOCARBON_PRICE2018</span><span class="p">,</span>
 <span class="p">}</span> <span class="o">|</span> <span class="p">{</span>
     <span class="n">_hm_key</span><span class="p">(</span><span class="n">compound</span><span class="p">,</span> <span class="n">partial</span><span class="p">):</span> <span class="n">HILLENMEYER_DROPOUT_MEDIA</span><span class="p">[</span><span class="n">label</span><span class="p">]</span>
     <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">compound</span><span class="p">,</span> <span class="n">partial</span> <span class="ow">in</span> <span class="n">_HILLENMEYER_DROPOUTS</span>
@@ -5251,6 +5363,9 @@
     <span class="s2">"Media' is the base plus 1 mM ammonium sulfate and Table 1 lists its carbon source "</span>
     <span class="s2">"as None"</span><span class="p">,</span>
     <span class="c1"># --- end jackson2020 ---</span>
+    <span class="s2">"RCH2_DEFINED_NOCARBON_PRICE2018"</span><span class="p">:</span> <span class="s2">"the carbon source is the variable of the "</span>
+    <span class="s2">"RB-TnSeq carbon-source experiments (Borchert 2024: glucose, potassium acetate, "</span>
+    <span class="s2">"levulinic acid, 4-hydroxyvalerate, vanillin or p-coumaric acid)"</span><span class="p">,</span>
 <span class="p">}</span>
 
 

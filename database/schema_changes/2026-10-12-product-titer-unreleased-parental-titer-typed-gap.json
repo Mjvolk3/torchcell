@@ -1,0 +1,193 @@
+{
+  "record_version": 1,
+  "slug": "product-titer-unreleased-parental-titer-typed-gap",
+  "date": "2026-10-12",
+  "pr": null,
+  "author_kind": "agent",
+  "base_commit": "4fcf58711b786ede6f65c35e49d204840637e97e",
+  "python_version": "3.13.0",
+  "symbols": [
+    {
+      "symbol": "ProductTiterPhenotype",
+      "status": "modified",
+      "kinds": [
+        "typed_gap"
+      ],
+      "fingerprint_before": "d0d20752d3a8c26578ae3371a16a6bcfa6b1120120fd587549155de4a9e5389b",
+      "fingerprint_after": "5eb854f5a989ec55e474ca850d6b700325129c789fd2acec056091bc986d5a50",
+      "impact": "breaking",
+      "reasons": [
+        "field 'titer' type changed: float -> float | None",
+        "validator/serializer changed: ['_check_titer', 'validate_titer']"
+      ]
+    }
+  ],
+  "correctness_argument": "A ProductTiterExperimentReference must carry a phenotype_reference, and ProductTiterPhenotype.titer was a required float, so a family whose PARENTAL titer the source never released had no honest representation. Banerjee 2024's M9-minimal family is that case: it states its denominator only as a ratio, 'over 4-fold higher than WT (IY1245)', and prints no M9 titer for IY1245 anywhere in the mirror. The required field left exactly three options, and two of them are forbidden: reconstruct 762/4, which invents a number; substitute a family member's own value (the first build put IY1452's 762 mg/L there), which states a parental measurement nobody made; or refuse the three released child titers, which deletes measured values. The typed gap is the fourth, and it is the route CLAUDE.md already prescribes ('a typed ProvenanceGap on a required field' is listed under additive-first, and the add-dataset skill states 'never remove a dataset class to satisfy a required field (the typed gap is the route)'). So titer ADMITS None without becoming optional: the field keeps no default, so every record still states it explicitly, and _check_titer refuses a None that no ProvenanceGap names. For every other dataset the contract is unchanged in practice, because a None could not previously be expressed at all and still cannot be expressed silently. An absent titer additionally carries no uncertainty, no standard error and no censoring, since each is a statement about a value and no value was released. No served record changes: every existing ProductTiterPhenotype in every store stores a float, so their serialization is byte-identical, and this is a widening of what the class admits rather than a change to what it means. The distinction from the #867 censoring case is kept explicit in the docstring: censoring is a value the assay bounded, this is a value the source never printed.",
+  "measurement_type_decision": false,
+  "source_quotes": [
+    {
+      "value": "over 4-fold higher than WT (IY1245)",
+      "provenance": {
+        "source_uri": "paper.md",
+        "citation_key": "banerjeeGenomescalePathwayEngineering2024",
+        "sha256": "6b5b9e8647721569d846af92e5c0059ef9c4bb9eca66a418e8891a7a18d5c18c",
+        "method": "MinerU OCR of the publisher PDF (torchcell-library mirror)",
+        "page": "Results 3.4",
+        "retrieved": null
+      },
+      "quote": "We observed that the IY1452 strain (\u2206phaABC \u0394mvaB \u0394hbdH \u2206ldhA \u2206PP_2675 with plasmid pIY670) had the best isoprenol titer at $7 6 2 ~ \\mathrm { m g / L }$ , Fig. 5); over 4-fold higher than WT (IY1245).",
+      "note": "the family's denominator is stated only as a ratio; IY1245's own M9 titer appears nowhere in the mirror"
+    },
+    {
+      "value": "on request",
+      "provenance": {
+        "source_uri": "paper.md",
+        "citation_key": "banerjeeGenomescalePathwayEngineering2024",
+        "sha256": "6b5b9e8647721569d846af92e5c0059ef9c4bb9eca66a418e8891a7a18d5c18c",
+        "method": "MinerU OCR of the publisher PDF (torchcell-library mirror)",
+        "page": "Data availability",
+        "retrieved": null
+      },
+      "quote": "Data will be made available on request.",
+      "note": "why no released table supplies the parent's number either"
+    }
+  ],
+  "alternatives_rejected": [
+    {
+      "alternative": "Reconstruct the parent's titer from the stated ratio (762/4 = 190.5 mg/L).",
+      "why_rejected": "A ratio plus a child's value is not a released measurement of the parent; the number would be this loader's arithmetic."
+    },
+    {
+      "alternative": "Substitute a family member's own titer as the denominator (IY1452's 762 mg/L, which the first build stored).",
+      "why_rejected": "States a parental measurement nobody made, and makes a strain its own control."
+    },
+    {
+      "alternative": "Refuse the three released M9 titers for want of a baseline.",
+      "why_rejected": "Deletes measured values, which the 2026-10-12 rule forbids: the data is the data."
+    },
+    {
+      "alternative": "Leave titer required and give the reference a sentinel such as 0.0 or NaN.",
+      "why_rejected": "A silent hole with no reason attached, and 0.0 asserts an exact zero, which is itself a measurement."
+    },
+    {
+      "alternative": "Give titer a default of None.",
+      "why_rejected": "That would make the field optional, so a record could omit it entirely; keeping no default means every record states it explicitly and only a declared gap may state None."
+    }
+  ],
+  "served_release": "2026.10.06-4b293d34",
+  "affected_loaders": [
+    {
+      "loader": "torchcell/datasets/ecoli/brunk2016.py",
+      "dataset_classes": [
+        "_MetaboliteBrunk2016Dataset",
+        "MetabolomeBrunk2016Dataset",
+        "ExometaboliteBrunk2016Dataset",
+        "ProteomeBrunk2016Dataset",
+        "BiofuelTiterBrunk2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ProductTiterPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/foo2014.py",
+      "dataset_classes": [
+        "IsopentenolTiterFoo2014Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ProductTiterPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/banerjee2024.py",
+      "dataset_classes": [
+        "IsoprenolTiterBanerjee2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ProductTiterPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/carruthers2025.py",
+      "dataset_classes": [
+        "IsoprenolTiterCarruthers2025Dataset",
+        "ProteomeCarruthers2025Dataset",
+        "CampaignProteomeCarruthers2025Dataset",
+        "ProteomeFoldChangeCarruthers2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ProductTiterPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/desiqueira2025.py",
+      "dataset_classes": [
+        "ProteomeDeSiqueira2025Dataset",
+        "ProteomePercentDeSiqueira2025Dataset",
+        "ProteomeLog10PercentDeSiqueira2025Dataset",
+        "IsoprenolTiterDeSiqueira2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ProductTiterPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/kang2026.py",
+      "dataset_classes": [
+        "IsoprenylAcetateTiterKang2026Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ProductTiterPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/thompson2019_valerolactam.py",
+      "dataset_classes": [
+        "_Thompson2019Dataset",
+        "ValerolactamTiterThompson2019Dataset",
+        "LactamGrowthRateThompson2019Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ProductTiterPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/yunus2026.py",
+      "dataset_classes": [
+        "_Yunus2026Dataset",
+        "_Yunus2026BenchlingDataset",
+        "CrispriKnockdownYunus2026Dataset",
+        "CrispriArrayYunus2026Dataset",
+        "CrispriDifferentialProteomeYunus2026Dataset",
+        "IsoprenolTiterYunus2026Dataset",
+        "CrispriPanelProteomeYunus2026Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "ProductTiterPhenotype"
+      ]
+    }
+  ],
+  "served_datasets": [],
+  "rebuild_scope": "dev_stores",
+  "owner_sign_off": {
+    "signed": false,
+    "quote": null,
+    "url": null
+  }
+}

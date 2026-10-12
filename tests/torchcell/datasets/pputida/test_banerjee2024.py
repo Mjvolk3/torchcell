@@ -162,19 +162,53 @@ def test_the_four_reference_baselines_and_their_strains() -> None:
         for key, baseline in b24.REFERENCE_BASELINES.items()
     ] == [
         ("ezrich", "XW11", 104.0, "ug/mL"),
-        ("m9", "IY1452", 762.0, "ug/mL"),
+        # The M9 family's parental titer is NOT released, so its reference names the
+        # wild type the paper names and its titer is a typed gap, never a substitute.
+        ("m9", "IY1245", None, "ug/mL"),
         ("fedbatch", "IY1245", 0.5, "g/L"),
         ("hydrolysate", "IY1452", 841.0, "ug/mL"),
     ]
     assert {row.reference for row in b24.TITER_ROWS} == set(b24.REFERENCE_BASELINES)
 
 
-def test_the_m9_reference_is_recorded_as_a_substitution() -> None:
-    """The one judgment call says so on the record, in the word the PR uses."""
-    note = b24.REFERENCE_BASELINES["m9"].note
-    assert note.startswith("A SUBSTITUTION, flagged for review.")
+def test_the_m9_reference_titer_is_a_typed_gap_not_a_substitute() -> None:
+    """An unreleased denominator is a declared absence on the stored reference.
+
+    The paper states this family's baseline only as a ratio, so there is no parental
+    number to store. Both wrong answers are named in the note so neither comes back:
+    reconstructing 762/4, and copying a family member's own value in.
+    """
+    baseline = b24.REFERENCE_BASELINES["m9"]
+    assert baseline.strain == "IY1245"
+    assert baseline.titer is None
+    note = baseline.note
+    assert note.startswith(
+        "A TYPED GAP, because the parental titer was never released."
+    )
     assert "over 4-fold higher than WT (IY1245)" in note
-    assert "reconstructing one from the" in note
+    assert "Reconstructing 762/4 would invent a number" in note
+    phenotype = b24.titer_phenotype(
+        baseline.titer, ConcentrationUnit(baseline.unit), uncertainty=None
+    )
+    assert phenotype.titer is None
+    assert phenotype.titer_unit == ConcentrationUnit.ug_per_ml
+    gap = next(g for g in phenotype.provenance_gaps if g.field == "titer")
+    assert gap.reason.value == "not_reported_by_primary"
+    assert "never released" in str(gap.note)
+    # The three released child titers are untouched by the gap on their denominator.
+    assert len([row for row in b24.TITER_ROWS if row.reference == "m9"]) == 3
+
+
+def test_an_absent_titer_must_be_a_declared_absence() -> None:
+    """The schema half of the same rule: a None titer with no gap is refused."""
+    from pydantic import ValidationError
+
+    from torchcell.datamodels.schema import ProductTiterPhenotype
+
+    with pytest.raises(ValidationError, match="without a ProvenanceGap naming 'titer'"):
+        ProductTiterPhenotype(
+            product=b24.isoprenol(), titer=None, titer_unit=ConcentrationUnit.ug_per_ml
+        )
 
 
 def test_xw11_is_a_reference_and_never_a_record() -> None:
@@ -200,6 +234,7 @@ def test_the_stored_constants_reproduce_the_papers_own_fold_changes() -> None:
         (row.strain, row.condition, row.time_hours): row.titer for row in b24.TITER_ROWS
     }
     ezrich = b24.REFERENCE_BASELINES["ezrich"].titer
+    assert ezrich is not None, "the EZ-rich denominator is a released number"
     assert by_key[("XW12", "tube_ezrich_glc20", 48.0)] / ezrich == pytest.approx(
         1.6, abs=0.05
     )
@@ -850,7 +885,7 @@ def test_the_built_store_writes_its_accounting_and_its_side_files(
     assert accounting["candidate_records"] == 20
     assert accounting["quotes_verified"] == 42
     assert sum(entry["values"] for entry in accounting["not_stored"]) == 10
-    assert any("SUBSTITUTION" in note for note in accounting["notes"])
+    assert any("typed gap on its titer" in note for note in accounting["notes"])
     assert any(
         "gacA is stored under the symbol" in note for note in accounting["notes"]
     )

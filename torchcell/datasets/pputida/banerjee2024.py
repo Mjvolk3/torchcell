@@ -62,13 +62,15 @@ What this paper carries that is NOT stored here, each with its count:
   the EZ-rich families' ``phenotype_reference``, and it is NOT a record of this dataset
   (it is Wang 2022's measurement).
 
-One judgment call, flagged for the owner in the PR: the **M9-minimal family's
-reference**. The paper's own denominator is "over 4-fold higher than WT (IY1245)" and
-IY1245's M9 titer is never released, so there is no stated parental number for that
-family. Reconstructing one from the 4-fold ratio is forbidden, so the stored reference is
-IY1452's own 762 mg/L in that same condition, with the substitution recorded on the
-reference's note and in ``preprocess/build_accounting.json``. Every other family's
-reference is a strain the paper names as the comparison.
+The **M9-minimal family's reference carries a typed gap**, because its parental titer was
+never released. The paper's denominator for that family is its wild type, stated only as
+a ratio ("over 4-fold higher than WT (IY1245)"), and IY1245's M9 titer appears nowhere in
+the mirror. So the reference names IY1245, stores its genotype and its condition, and
+leaves ``titer`` as a ``ProvenanceGap``. Reconstructing 762/4 would invent a number, and
+substituting a family member's own value (which the first build did, with IY1452's 762
+mg/L) would state a parental measurement nobody made. The three released M9 titers stay
+records either way: the gap is on the denominator, not on them. Every other family's
+reference is a strain the paper names as the comparison WITH a released number.
 
 The genome is a separate layer: this loader stores the identifiers the paper releases and
 never asks the annotation whether one exists. ``gacA`` is the clear case -- Banerjee
@@ -1521,7 +1523,7 @@ def isoprenol() -> Compound:
 
 
 def titer_phenotype(
-    titer: float, unit: ConcentrationUnit, *, uncertainty: float | None
+    titer: float | None, unit: ConcentrationUnit, *, uncertainty: float | None
 ) -> ProductTiterPhenotype:
     """One released titer on its OWN released unit, with the typed absences it forces.
 
@@ -1531,6 +1533,11 @@ def titer_phenotype(
     only; everywhere else the spread exists solely as a figure error bar and both the
     number and its type are typed gaps, because the schema forbids a type without a
     value.
+
+    ``titer`` is ``None`` for exactly one object in this dataset: the M9-minimal
+    family's REFERENCE, whose parental value the paper states only as a ratio. The unit
+    is still the family's released one, because what is missing is the parent's number
+    and not the scale every member of that family is reported on.
     """
     gaps: list[ProvenanceGap] = [
         ProvenanceGap(
@@ -1549,6 +1556,19 @@ def titer_phenotype(
         )
         for field in ("product_yield", "product_yield_unit")
     )
+    if titer is None:
+        gaps.append(
+            ProvenanceGap(
+                field="titer",
+                reason=ProvenanceGapReason.not_reported_by_primary,
+                note="the parental titer of this family is never released: the paper "
+                "states its denominator only as a ratio ('over 4-fold higher than WT "
+                "(IY1245)') and prints no M9 titer for that strain anywhere in the "
+                "mirror. Reconstructing it from the ratio would invent a number and "
+                "substituting a family member's own value would state a measurement "
+                "nobody made",
+            )
+        )
     if uncertainty is None:
         gaps.extend(
             ProvenanceGap(
@@ -1849,11 +1869,16 @@ TITER_ROWS: tuple[TiterRow, ...] = (
 
 
 class ReferenceBaseline(BaseModel):
-    """One family's reference: the strain, titer and condition its comparisons use."""
+    """One family's reference: the strain, titer and condition its comparisons use.
+
+    ``titer`` is ``None`` where the source states the family's denominator only as a
+    RATIO and never prints the parent's own number. That is a typed gap on the stored
+    reference, not a licence to substitute a family member's value.
+    """
 
     key: str
     strain: str
-    titer: float
+    titer: float | None
     unit: Literal["ug/mL", "g/L"]
     uncertainty: float | None
     condition: str
@@ -1883,20 +1908,22 @@ REFERENCE_BASELINES: dict[str, ReferenceBaseline] = {
     ),
     "m9": ReferenceBaseline(
         key="m9",
-        strain="IY1452",
-        titer=762.0,
+        strain="IY1245",
+        titer=None,
         unit=_MG_PER_L,
         uncertainty=None,
         condition="tube_m9_glc20",
         quote=_Q_M9_TITERS,
         page=_RESULTS_M9,
-        note="A SUBSTITUTION, flagged for review. The paper's own denominator for this "
-        "family is 'over 4-fold higher than WT (IY1245)' and IY1245's M9 titer is never "
-        "released, so there is no stated parental number; reconstructing one from the "
-        "4-fold ratio is forbidden. The stored reference is instead the family member "
-        "the paper calls the best producer, in the same condition, which keeps all "
-        "three released M9 values as records rather than refusing them for want of a "
-        "baseline",
+        note="A TYPED GAP, because the parental titer was never released. The paper's "
+        "denominator for this family is its wild type, stated only as a ratio ('over "
+        "4-fold higher than WT (IY1245)'), and IY1245's M9 titer appears nowhere in the "
+        "mirror. Reconstructing 762/4 would invent a number, and putting a family "
+        "member's own value here (the 762 mg/L of IY1452, which an earlier build did) "
+        "would state a parental measurement nobody made. So the reference names the "
+        "strain the paper names, its genotype and its condition are stored, and its "
+        "titer is a ProvenanceGap. The three released M9 titers stay records either "
+        "way: the gap is on the denominator, not on them",
     ),
     "fedbatch": ReferenceBaseline(
         key="fedbatch",
@@ -2197,8 +2224,8 @@ class IsoprenolTiterBanerjee2024Dataset(ExperimentDataset):
                     "quoting the pinned paper.md OCR and nothing is read off a bar",
                     f"{n_quotes} quotes were re-read verbatim from the pinned mirrors "
                     "before any value was used",
-                    "the M9-minimal family's reference is a SUBSTITUTION: "
-                    + REFERENCE_BASELINES["m9"].note,
+                    "the M9-minimal family's reference carries a typed gap on its "
+                    "titer: " + REFERENCE_BASELINES["m9"].note,
                     "XW11's 104 mg/L is this dataset's EZ-rich reference and not one of "
                     "its records, because Banerjee attributes that measurement to Wang "
                     "et al. 2022",
@@ -2232,7 +2259,15 @@ class IsoprenolTiterBanerjee2024Dataset(ExperimentDataset):
         by_strain = {
             (row.strain, row.condition, row.time_hours): row for row in TITER_ROWS
         }
+        # The EZ-rich denominator is a RELEASED number, unlike the M9 family's, so every
+        # fold-change oracle below rests on it. Asserted rather than assumed: if it ever
+        # became a typed gap the oracles would silently stop dividing by a measurement.
         ezrich = REFERENCE_BASELINES["ezrich"].titer
+        if ezrich is None:
+            raise RuntimeError(
+                "the EZ-rich reference titer is a typed gap, so the fold-change oracles "
+                "have no released denominator to check against"
+            )
         xw12 = by_strain[("XW12", "tube_ezrich_glc20", 48.0)].titer
         xw15 = by_strain[("XW15", "tube_ezrich_glc20", 48.0)].titer
         iy939 = by_strain[("IY939", "tube_ezrich_glc20", 48.0)].titer

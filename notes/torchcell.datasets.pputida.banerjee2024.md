@@ -245,3 +245,92 @@ every titer value by value, every oracle and its refusal, the genotype cases the
 forces, the environment and phenotype builders with their typed gaps, and the not-stored
 ledger; 4 `@pytest.mark.data` tests that re-read the quotes, pin the deposited manifest
 and run L0 to L4 over the built store.
+
+## 2026.10.12 - The M9-minimal reference is a typed gap, not a substitution
+
+The owner's decision on the one judgment call the first build flagged: **the M9-minimal
+family's parental titer was never released, so the reference carries a
+`ProvenanceGap` on `titer`, and the three records stay.** The substitution the first
+build made (IY1452's own 762 mg/L standing in as the family's denominator) is undone.
+
+### Why the substitution was wrong
+
+The paper states this family's baseline only as a ratio, verbatim from the pinned
+`paper.md` (sha256 `6b5b9e8647721569d846af92e5c0059ef9c4bb9eca66a418e8891a7a18d5c18c`):
+
+> We observed that the IY1452 strain (∆phaABC ΔmvaB ΔhbdH ∆ldhA ∆PP_2675 with plasmid
+> pIY670) had the best isoprenol titer at $7 6 2 ~ \mathrm { m g / L }$ , Fig. 5); over
+> 4-fold higher than WT (IY1245).
+
+IY1245's M9 titer appears nowhere in the mirror, and the data availability is "Data will
+be made available on request". Four routes existed and three are forbidden:
+
+| route | why it fails |
+|---|---|
+| reconstruct 762/4 = 190.5 mg/L | a ratio plus a child's value is not a released measurement of the parent |
+| substitute IY1452's own 762 mg/L (the first build) | states a parental measurement nobody made, and makes a strain its own control |
+| refuse the 3 released M9 titers | deletes measured values, which "the data is the data" forbids |
+| **typed gap on the reference's titer** | the route `CLAUDE.md` already prescribes for a required field a source does not fill |
+
+### The schema change it needed
+
+`ProductTiterPhenotype.titer` was a required `float`, so the gap could not be expressed.
+It is now `float | None` **with no default**, so the field stays required to be STATED
+and only a declared absence may state `None`:
+
+- `_check_titer` refuses a `None` that no `ProvenanceGap` names, so an absent titer is a
+  declared absence and never a silent one. For every other dataset the contract is
+  unchanged in practice: a `None` could not be expressed before and still cannot be
+  expressed silently.
+- An absent titer also carries no uncertainty, no standard error and no censoring, since
+  each is a statement about a value and no value was released.
+- Distinct from the #867 censoring case, which is a value the assay BOUNDED; this is a
+  value the source never printed. Both are now in the class docstring.
+
+Record: `database/schema_changes/2026-10-12-product-titer-unreleased-parental-titer-typed-gap.json`,
+kind `typed_gap`, **`owner_sign_off.signed = false`** -- a retyped field on a served class
+needs the owner's sign-off before this lands.
+
+`scripts/schema_impact_check.py --base origin/main` reports the `ProductTiterPhenotype`
+closure as impacted: Brunk 2016, Foo 2014, Banerjee 2024, Carruthers 2025, De Siqueira
+2025, Kang 2026, Thompson 2019 and Yunus 2026. Measured, and worth stating plainly:
+**the change makes zero ADDITIONAL dev stores stale.** `--list-stale --include-private`
+returns 161 classes on this branch against 162 on main (the difference is
+`RbTnseqTeteneva2024Dataset`, which main has not rebuilt), so every titer store listed
+was already stale before this change. No stored record's bytes change either: every
+existing `ProductTiterPhenotype` in every store holds a float, so this widens what the
+class admits rather than changing what it means.
+
+### Verification, L0 to L4, after the rebuild
+
+`sbatch` job 4458, `build_dataset_lmdb --retire-existing --verify`, dev tree only:
+
+```
+BUILT IsoprenolTiterBanerjee2024Dataset: 20 records; gene_set size 15; references 4
+```
+
+| level | result |
+|---|---|
+| L0 structural | 20 records validated |
+| L1 count | observed 20, expected 20 |
+| L2 value_fidelity / cross_method | 20 values; 20 pairs agree within 0.0 |
+| L3 unit rule | `g/L` and `ug/mL`, no source value scaled |
+| L3 uncertainty rule | 4 released SDs (fed-batch); 16 typed gaps on both fields |
+| L3 medium / plasmid / assembly | 4 media over 6 conditions; one plasmid per strain; all on GCA_000007565.2 |
+| L4 stored_titers_vs_the_build_ledger | 20 entities agree within 1e-09 |
+| L4 every_quote_is_verbatim_in_its_pinned_mirror | 42 quotes re-read from the three pinned mirrors |
+| L4 released_locus_tags_are_reported_not_gated | 10 released tags; gacA of IY1485 carries none, so no typed perturbation and no gene edge |
+| L4 perturbed_gene_containment_assembly | 1.000 of 10 measured genes are loci of `pputida_KT2440_ASM756v2` |
+
+`verification PASSED ... 0 genome-reference finding(s) reported, not gated`. The record
+count is unchanged at **20**, and `references 4` still holds: the gapped reference is a
+reference object like the other three, with its titer absent rather than guessed.
+
+### gacA stays untyped, and that is final
+
+The second decision: the contradiction between the mirrored papers (PP_4099 in Schmidt
+2022 and Thompson 2020, PP_1650 in Borchert 2023) is **modeling-time information and is
+never resolved in the loader**. IY1485's ΔgacA keeps no typed perturbation, the evidence
+stays in `GACA_NO_TAG` and `GENOTYPE_NOT_TYPED`, and the L4 genome-reference level keeps
+reporting it as a finding rather than failing the store. Nothing changed here; it is
+recorded so the question is not reopened.

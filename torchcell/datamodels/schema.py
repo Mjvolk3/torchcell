@@ -9658,6 +9658,17 @@ class ProductTiterPhenotype(Phenotype, ModelStrict):
     (and ``CultureEnvironment``) slots already, and putting them on the phenotype would
     make "what was measured" carry part of "what it was grown in".
 
+    A titer the source never RELEASED is a typed gap, not a substitute (#788). Banerjee
+    2024's M9-minimal family states its denominator only as a ratio ("over 4-fold higher
+    than WT (IY1245)") and never prints the parent's titer, so the reference carries
+    ``titer=None`` with a ``ProvenanceGap`` naming 'titer'. Putting a family member's own
+    value there instead would state a parental measurement nobody made, and
+    reconstructing one from the ratio would invent a number; the three released child
+    titers stay records either way. ``titer`` therefore ADMITS ``None`` without becoming
+    optional: it keeps no default, so every record states it explicitly, and
+    ``_check_titer`` refuses a ``None`` that no gap declares.
+    This is distinct from the censoring case below, which is a value the assay bounded.
+
     A titer the assay could not detect is a BOUND, not a zero (#867): Thompson 2019
     states the wild type's 48 h valerolactam as "no valerolactam could be detected",
     which is a value below the assay's floor. ``titer_censoring`` carries it on the
@@ -9674,7 +9685,12 @@ class ProductTiterPhenotype(Phenotype, ModelStrict):
         description="typed chemical identity of the product measured (InChIKey / ChEBI "
         "when sourced), the join key onto the shared compound layer"
     )
-    titer: float = Field(description="measured product titer in ``titer_unit``")
+    titer: float | None = Field(
+        description="measured product titer in ``titer_unit``. REQUIRED to be stated: "
+        "there is no default, so every record passes it explicitly. ``None`` is "
+        "admitted ONLY with a ``ProvenanceGap`` naming 'titer' -- a reference whose "
+        "parental titer the source never released (see the class docstring)"
+    )
     titer_unit: ConcentrationUnit = Field(
         description="typed UO-aligned unit of the titer, e.g. 'g/L' | 'mM'"
     )
@@ -9729,8 +9745,10 @@ class ProductTiterPhenotype(Phenotype, ModelStrict):
 
     @field_validator("titer", mode="after")
     @classmethod
-    def validate_titer(cls, v: float) -> float:
-        """A titer is a measured amount: finite and non-negative."""
+    def validate_titer(cls, v: float | None) -> float | None:
+        """A titer is a measured amount: finite and non-negative, or a typed absence."""
+        if v is None:
+            return v
         if math.isnan(v) or math.isinf(v):
             raise ValueError("titer must be a finite number")
         if v < 0:
@@ -9764,7 +9782,29 @@ class ProductTiterPhenotype(Phenotype, ModelStrict):
 
     @model_validator(mode="after")
     def _check_titer(self) -> "ProductTiterPhenotype":
-        """No unlabelled uncertainty, no unitless yield or productivity."""
+        """No unlabelled uncertainty, no unitless yield or productivity.
+
+        An absent titer must be a DECLARED absence (#788): ``ProvenanceGapMixin``
+        already refuses a gap beside a stored value, and this is the other half --
+        a ``None`` titer with no gap naming it would be a silent hole rather than a
+        typed one. An absent titer also carries no uncertainty and no censoring,
+        because there is no value for either to be about.
+        """
+        if self.titer is None:
+            if "titer" not in {gap.field for gap in self.provenance_gaps}:
+                raise ValueError(
+                    "titer is None without a ProvenanceGap naming 'titer': an absent "
+                    "titer is a declared absence, never a silent one"
+                )
+            if self.titer_uncertainty is not None or self.titer_se is not None:
+                raise ValueError(
+                    "an absent titer carries no titer_uncertainty and no titer_se"
+                )
+            if self.titer_censoring is not None:
+                raise ValueError(
+                    "an absent titer carries no titer_censoring: a bound is a statement "
+                    "about a value, and no value was released"
+                )
         unc, typ = self.titer_uncertainty, self.titer_uncertainty_type
         if (unc is None) != (typ is None):
             raise ValueError(

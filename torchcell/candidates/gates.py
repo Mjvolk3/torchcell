@@ -22,7 +22,13 @@ What each gate reads:
 - **G2** host strains named in the row's text against :data:`HOSTS`, then the genomes tier
   through :func:`torchcell.sequence.genome.registry.resolve`. Readable means the set is in
   the schema's ``BacterialAssemblySet`` vocabulary or is one of the two yeast sets a loader
-  already reads (:data:`READABLE_ASSEMBLY_SETS`).
+  already reads (:data:`READABLE_ASSEMBLY_SETS`). G2 checks the strain BACKGROUND only:
+  that it resolves to a genomes-tier assembly, or to a declared probabilistic
+  representation (the ``haplotype_mosaic`` branch, a segregant panel over its parents).
+  It is NOT a per-record gate (owner, 2026-10-12: "the genome is separate.. it doesn't
+  gate anything"): an admitted dataset's records are never dropped, refused or failed
+  because a released name or position disagrees with that assembly; that comparison is a
+  ``report``-class verification finding.
 - **G3** the ``si/`` and ``data/`` entries of ``torchcell-library/<key>/manifest.json`` and
   ``torchcell-raw/<key>/manifest.json``, kept apart (#495).
 - **G4** DOI, accessions and PMID against every module under ``torchcell/datasets`` (G4-key),
@@ -566,7 +572,16 @@ def evaluate_g2(
     source_kind: SourceKind | None,
     verify: bool = True,
 ) -> GateRun:
-    """Resolve every host the row names; the worst host decides (plan decision 5)."""
+    """Resolve every host the row names; the worst host decides (plan decision 5).
+
+    A check on the strain background a candidate names, run once per candidate row:
+    each host must resolve to a genomes-tier assembly set (``assembly_set``) or, for a
+    segregant panel, its parents to the sets of a declared probabilistic representation
+    (``haplotype_mosaic``). It is not a per-record gate. Whether each released gene name
+    or position is a locus of that assembly is never asked here, and never decides
+    whether a record is stored: it is a reported verification finding
+    (``torchcell.verification.report.FindingClass.report``) and a modeling-time choice.
+    """
     branch = g2_branch(row)
     names = hosts_named(row)
     if not names and source_kind == "aggregation":

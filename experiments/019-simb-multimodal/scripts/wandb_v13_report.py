@@ -44,6 +44,16 @@ VIEW_REGISTRY = osp.join(
 CKPT_GROUP_RE = re.compile(r"[\w.-]+-\d+_[0-9a-f]{64}")
 
 
+#: Runs shown per panel in every saved view: the largest value the workspace accepts, so
+#: no round is cut to W&B's default of 10.
+MAX_RUNS_SHOWN = 1000
+#: Default smoothing of every saved view: a running average over ten epochs, so the
+#: 1,200-epoch curves read as trends while the raw epoch-to-epoch spread stays visible
+#: in the band (user, 2026-10-11).
+SMOOTHING_TYPE = "average"
+SMOOTHING_WEIGHT = 10
+
+
 @dataclass(frozen=True)
 class Round:
     """What differs between the rounds that share the split design."""
@@ -357,6 +367,20 @@ def chart_sections(pheno: str) -> list[tuple[str, list[str | list[str]]]]:
     overlaid (train against validation).
     """
     return [
+        (
+            # The loss curves come first (user, 2026-10-11): the plateau of the
+            # genotype-only morphology runs is a flat training loss, and whether a run
+            # ever fits is read here before any score.
+            "0 loss curves",
+            [
+                ["train/loss", "traineval/loss", "val/loss"],
+                "train/loss",
+                "val/loss",
+                f"train/{pheno}/loss",
+                f"val/{pheno}/loss",
+                [f"train/{pheno}/loss", f"val/{pheno}/loss"],
+            ],
+        ),
         (
             "1 headline: validation",
             [
@@ -676,7 +700,7 @@ def populate_view(
             name=name,
             is_open=True,
             layout_settings=ws.SectionLayoutSettings(columns=3, rows=2),
-            panel_settings=ws.SectionPanelSettings(x_axis=X, smoothing_type="none"),
+            panel_settings=ws.SectionPanelSettings(x_axis=X, smoothing_type=SMOOTHING_TYPE, smoothing_weight=SMOOTHING_WEIGHT),
             panels=[
                 wr.LinePlot(
                     x=X,
@@ -690,10 +714,14 @@ def populate_view(
         )
         for name, panels in kept
     ]
+    # Every view shows every run: W&B's default of 10 runs per panel hides most of a
+    # round, and the user reads the aggregate across all runs, so the cap is maxed out
+    # rather than set per round (`Round.max_runs` is kept for the record only).
     settings = ws.WorkspaceSettings(
         x_axis=X,
-        smoothing_type="none",
-        max_runs=rnd.max_runs,
+        smoothing_type=SMOOTHING_TYPE,
+        smoothing_weight=SMOOTHING_WEIGHT,
+        max_runs=MAX_RUNS_SHOWN,
         sort_panels_alphabetically=False,
     )
     runset_settings = ws.RunsetSettings(
@@ -736,28 +764,32 @@ def populate_view(
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--round", choices=sorted(ROUNDS), default="v13")
+    # The saved views are what the user reads (every run, aggregated by arm); the report
+    # is a per-split walk nobody opens, so it is written only on request.
+    parser.add_argument("--report", action="store_true", help="also write the report")
     args = parser.parse_args()
     rnd = ROUNDS[args.round]
     api = wandb.Api()
     n = label_runs(api, rnd)
     print(f"labeled runs: {n} changed")
-    report = build_report(rnd)
-    existing = [
-        r
-        for r in api.reports(f"{ENTITY}/{rnd.project}")
-        if r.display_name == rnd.report_title
-    ]
-    if existing:
-        live = wr.Report.from_url(
-            f"https://wandb.ai/{ENTITY}/{rnd.project}/reports/x--{existing[0].id}"
-        )
-        live.blocks = report.blocks
-        live.width = report.width
-        live.save()
-        print(f"report updated: {live.url}")
-    else:
-        report.save()
-        print(f"report created: {report.url}")
+    if args.report:
+        report = build_report(rnd)
+        existing = [
+            r
+            for r in api.reports(f"{ENTITY}/{rnd.project}")
+            if r.display_name == rnd.report_title
+        ]
+        if existing:
+            live = wr.Report.from_url(
+                f"https://wandb.ai/{ENTITY}/{rnd.project}/reports/x--{existing[0].id}"
+            )
+            live.blocks = report.blocks
+            live.width = report.width
+            live.save()
+            print(f"report updated: {live.url}")
+        else:
+            report.save()
+            print(f"report created: {report.url}")
     keys: dict[str, set[str]] = {}
     for r in api.runs(f"{ENTITY}/{rnd.project}"):
         keys.setdefault(str(r.config["family"]), set()).update(r.summary.keys())

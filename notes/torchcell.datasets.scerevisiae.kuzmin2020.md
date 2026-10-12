@@ -415,3 +415,34 @@ Rebuilt by slurm array 3825 (`gilahyper_build_dataset_lmdbs_array.slurm`, `--ret
 | L4 | `gene_containment_sgd` | PASS | 1.000 of 4335 measured genes are S288C reference genes (>= 0.9) |
 | L4 | `current_genome_genes` | PASS | every one of the 4335 measured systematic names is a gene of the current genome |
 | L4 | `fitness_companion_containment` | PASS | every one of the 301481 (strain, environment) keys is a record of tmf_kuzmin2020 |
+
+## 2026.10.12 - Released SDs of exactly 0 are stored as released (#897)
+
+Owner decision of 2026-10-12 on #894, #895, #897 and #930: "if no uncertainty is provided we can't do anything about it ... but if uncertainty exists we cannot be missing it!". The uncertainty a source releases is stored exactly as released and gapped only when the source states none; the earlier fix direction (a typed gap) is reversed. The same finding for Kuzmin 2018 is in [[torchcell.datasets.scerevisiae.kuzmin2018]] (2026.10.12).
+
+Measured by [[experiments.036-dataset-fixes-before-kg-build.scripts.keep_records_887_sd_zero_inventory]] (results `results/keep_records_887_sd_zero_inventory.json`, slurm job 4201).
+
+**Case: the release gives exactly 0 and states nothing else.** Table S1 (`aaz5667-Table-S1.xlsx`, sha256 `4180577d53d5012c6c747227cbeca8a2d09f59bd8028d3bb2f5fd84601c77def`) gives an SD of 0 on 18 digenic and 6 trigenic rows of 794,772, Table S3 (sha256 `625420bed5de3563c9f1b4f1909a627aa4d8dd1b629c3f8a3596eb99e132c54f`) on 15 digenic and 7 trigenic rows of 139,823; the P-value on all 46 is 0. The SI defines the column by its name only, "12. Combined mutant fitness standard deviation" (`si/si1.md` lines 229 and 285, sha256 `69179c57ada82e99faa40a800fa311e0ad300ac3bde8ea1f310e6c7caf9567fe`), and no SI or main-text line gives a meaning for 0, a per-row replicate count or another uncertainty column (line lists in the results JSON).
+
+**Stored as released already; no store changes from this branch.** The 33 digenic rows (18 tagged `kuzmin2020_s1_diagnostic_array`, 15 `kuzmin2020_s3_pilot_genome_wide_arrays`) are records of `dmf_kuzmin2020` with `fitness_uncertainty` = `fitness_std` = 0.0, `sample_sd`, `n_samples` 4, `colony`, `fitness_se` 0.0 and no gap; the 13 trigenic rows are records of `tmf_kuzmin2020`, which stores every released SD only as the deprecated `fitness_std`, with no `fitness_uncertainty`, type, `n_samples` or `fitness_se` (its last report: 301,481 records, 0 labeled uncertainties). That missing uncertainty is a separate finding under the same decision, reported in PR #1054 and not changed here. Only the docstring of `_combined_mutant_uncertainty` changed. The typed note has no carrier on `FitnessPhenotype` (owner question in PR #1054). `fix/audit-yeast-refusals-1045` rebuilds this store for the #983 refusals; its rule for these rows is unchanged: keep the 0 as released.
+
+L0-L4 on the dev store as it stood, read-only (job 4201). The store read holds 632,998 records with the released ORF names (manifest: built 2026-10-12T03:00:45Z, commit `1caad9dbe6`, dirty), so `count`, `canonical_gene_names` and `current_genome_genes` fail on the #897 gene-ID rows that `fix/audit-yeast-refusals-1045` is rebuilding; `uncertainty_sanity` fails on the 33 released zeros:
+
+`dmf_kuzmin2020`: **FAIL**, 14 rules, 4 failing (report written 2026-10-12T07:28:40)
+
+| Level | Rule | Verdict | Message |
+|---|---|---|---|
+| L0 | `structural` | PASS | 632998 records validated |
+| L1 | `count` | **FAIL** | observed 632998, expected 632340 |
+| L1 | `pair_uniqueness` | PASS | 632998 unique (strain, environment) records, one each |
+| L2 | `value_fidelity` | PASS | 632998 values checked |
+| L2 | `se_nonnegative` | PASS | 632998 values checked |
+| L3 | `reference_one` | PASS | reference fitness == 1.0 for all 632998 records |
+| L1 | `provenance_gaps` | PASS | 632998 documented provenance gaps over 632998/632998 records; 0 deferred field(s): []; 20255936 undeclared None values over 8 carrier fields (top: Compound.inchi x8228974, Compound.chebi_id x5696982, Compound.smiles x... |
+| L1 | `canonical_gene_names` | **FAIL** | 0 genes carry conflicting common-name spellings (0 records; 0 case-only); 47 systematic names are not the genome's current name; 40 common names resolve to another gene |
+| L2 | `uncertainty_sanity` | **FAIL** | 33/632998 labeled uncertainties are a sample dispersion of exactly 0 (a pseudocount artifact, not perfect precision) |
+| L3 | `compound_identity` | PASS | environment edits: 0 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | PASS | medium components: 4430986 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | PASS | 632998 records on a shared MEDIA_LIBRARY medium, 0 on a medium deriving from one (1 distinct media) |
+| L4 | `gene_containment_sgd` | PASS | 0.989 of 4367 measured genes are S288C reference genes (>= 0.9) |
+| L4 | `current_genome_genes` | **FAIL** | 47 systematic names are absent from the current genome over 1000 records: YAL043C-A x21, YAL058C-A x21, YAR037W x22, YAR040C x22, YAR043C x22, YAR044W x22, YBR075W x21, YBR090C-A x21, YBR100W x21, YCL006C x21 |

@@ -312,8 +312,12 @@ def test_the_pyrf_deletion_is_the_strain_tables_own_locus() -> None:
     assert mv.PYRF_DELETION.quote == "Pp KT2440 ΔPP_1815/pyrF"
 
 
-def test_the_five_pathway_genes_are_integrated_with_an_unreported_origin() -> None:
-    """The pathway is chromosomal here, and its source organisms are not released."""
+def test_the_five_pathway_genes_are_integrated_with_a_typed_organism_gap() -> None:
+    """The pathway is chromosomal here, and its source organisms are typed absences.
+
+    #915: no sentinel string stands in for an organism; each part carries ``None``
+    beside one ``ProvenanceGap`` that says where the source was searched.
+    """
     pathway = mv.pathway_perturbations()
     assert [p.systematic_gene_name for p in pathway] == [
         "mvaS",
@@ -328,8 +332,34 @@ def test_the_five_pathway_genes_are_integrated_with_an_unreported_origin() -> No
         "PP_0871intergenic",
     }
     assert {p.promoter_name for p in pathway} == {"Pcv", "Ptrc"}
-    assert {p.source_organism for p in pathway} == {mv.SOURCE_ORGANISM_UNREPORTED}
+    assert {p.source_organism for p in pathway} == {None}
+    assert [p.gapped_fields() for p in pathway] == [{"source_organism"}] * 5
+    gap = pathway[0].provenance_gaps[0]
+    assert gap.reason.value == "not_reported_by_primary"
+    assert gap.note == mv.PATHWAY_ORGANISM_GAP_NOTE
+    assert gap.looked_in is not None
+    assert gap.looked_in.sha256 == mv.SI1_MD_SHA256
     assert {p.pathway_name for p in pathway} == {"isoprenol pathway"}
+
+
+def test_sheet_4_states_no_pathway_token_so_none_is_mapped() -> None:
+    """The five Sheet 4 protein names are not the pIY670 tokens verbatim (#915).
+
+    The names below are the sheet's ``Protein`` column for the five UniProt entries
+    PATHWAY_ENZYME_ORGANISMS records; the owner allowed a token to be mapped only where
+    the sheet states it, and an exact-string comparison finds none.
+    """
+    sheet_names = {"Mvas", "Mvae", "Mvk", "Mvd1", "Apha"}
+    tokens = {gene["token"] for gene in mv.PATHWAY_GENES}
+    assert sheet_names & tokens == set()
+    assert all(name in mv.PATHWAY_ORGANISM_GAP_NOTE for name in sheet_names)
+
+
+def test_the_mcherry_copy_carries_a_typed_organism_gap() -> None:
+    copy = mv.mcherry_perturbation("PP_5402intergenic")
+    assert copy.source_organism is None
+    assert copy.provenance_gaps[0].note == mv.MCHERRY_ORGANISM_GAP_NOTE
+    assert copy.integration_locus == "PP_5402intergenic"
 
 
 def test_a_pathway_token_absent_from_the_quoted_plasmid_is_refused(

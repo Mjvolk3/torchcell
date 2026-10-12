@@ -65,8 +65,9 @@ suffix: it is the ``Organism`` column of the proteomics workbook, which states
 Escherichia coli for AtoB, Idi, IspA and NudB, Saccharomyces cerevisiae for HMGS, HMGR,
 MK, PMK and PMD, and Staphylococcus aureus for the ``sa`` pair.
 :data:`PATHWAY_GENES` is checked against those bytes at build time. The three synthases
-(GPPS, LS, BIS) carry no organism anywhere in the mirror, so they take the
-:data:`SOURCE_ORGANISM_UNREPORTED` sentinel the sibling production loaders use. The four
+(GPPS, LS, BIS) carry no organism anywhere in the mirror, so their ``source_organism``
+is ``None`` beside a typed ``ProvenanceGap`` (:func:`unstated_organism_gap`, #915), never
+a sentinel string that reads as an organism name. The four
 E. coli genes are extra copies of NATIVE genes, so they are stored under their MG1655
 b-numbers; DH1's own lesions are never written by the paper, so the background carries
 no alleles, exactly as the Foo 2014 chassis does.
@@ -336,10 +337,14 @@ EXPECTED_UM_COLUMNS = 51
 #: The columns with no unit in their header, declined.
 EXPECTED_UNITLESS_COLUMNS = 26
 
-#: ``GeneAdditionPerturbation.source_organism`` is a required ``str`` on a leaf with no
-#: ``provenance_gaps`` field, so an unreported origin is this explicit sentinel, the
-#: value the Foo 2014 and Menasalvas 2025 loaders use.
-SOURCE_ORGANISM_UNREPORTED = "unreported"
+#: Why a synthase carries no organism (#915): the workbook measures GPPS, Limonene
+#: Synthase and Bisabolene with an empty ``Organism`` cell, and no other mirrored byte
+#: names one, so ``source_organism`` is ``None`` beside this typed gap.
+UNSTATED_ORGANISM_NOTE = (
+    "the proteomics workbook measures this protein with an empty Organism cell, and "
+    "neither the article text nor the supplementary PDF names the organism the gene "
+    "was taken from"
+)
 
 MEASUREMENT_TYPE_METABOLITE = "lc_ms_concentration_um"
 MEASUREMENT_TYPE_EXOMETABOLITE = "hplc_extracellular_concentration_g_per_l"
@@ -1023,7 +1028,8 @@ class PathwayGene(BaseModel):
 
     token: str
     gene_name: str
-    source_organism: str
+    #: ``None`` only where no mirrored byte states one; the record then carries a gap.
+    source_organism: str | None
     is_heterologous: bool
     #: The proteomics sheet's own name for this protein, where it measures it.
     protein_name: str | None = None
@@ -1114,21 +1120,21 @@ PATHWAY_GENES: dict[str, PathwayGene] = {
     "GPPS": PathwayGene(
         token="GPPS",
         gene_name="GPPS",
-        source_organism=SOURCE_ORGANISM_UNREPORTED,
+        source_organism=None,
         is_heterologous=True,
         protein_name="GPPS",
     ),
     "LS": PathwayGene(
         token="LS",
         gene_name="LS",
-        source_organism=SOURCE_ORGANISM_UNREPORTED,
+        source_organism=None,
         is_heterologous=True,
         protein_name="Limonene Synthase",
     ),
     "BIS": PathwayGene(
         token="BIS",
         gene_name="BIS",
-        source_organism=SOURCE_ORGANISM_UNREPORTED,
+        source_organism=None,
         is_heterologous=True,
         protein_name="Bisabolene",
     ),
@@ -1683,6 +1689,11 @@ def pathway_perturbation(
     """
     gene = part.gene
     name = locus_of[gene.gene_name] if not gene.is_heterologous else gene.token
+    gaps = (
+        [unstated_organism_gap(gene.protein_name)]
+        if gene.source_organism is None
+        else []
+    )
     return HeterologousPathwayPerturbation(
         systematic_gene_name=name,
         perturbed_gene_name=gene.gene_name,
@@ -1693,6 +1704,23 @@ def pathway_perturbation(
         localization="episomal_plasmid",
         construct_name=part.plasmid_name,
         variant=part.variant,
+        provenance_gaps=gaps,
+    )
+
+
+def unstated_organism_gap(protein_name: str | None) -> ProvenanceGap:
+    """The typed absence of a pathway gene's organism, searched in the workbook."""
+    return ProvenanceGap(
+        field="source_organism",
+        reason=ProvenanceGapReason.not_reported_by_primary,
+        looked_in=Provenance(
+            source_uri=PROTEOMICS_REL,
+            citation_key=CITATION_KEY,
+            sha256=PROTEOMICS_SHA256,
+            method="the proteomics workbook's Organism column",
+            page=SHEET_PROTEOMICS,
+        ),
+        note=f"{protein_name}: {UNSTATED_ORGANISM_NOTE}",
     )
 
 
@@ -1715,7 +1743,8 @@ def check_pathway_organisms(path: str | Path) -> int:
 
     The organism of a pathway gene is NOT read off its token's suffix: it is the
     ``Organism`` the workbook states for the protein it measures. A gene the workbook
-    MEASURES with no organism must carry the unreported sentinel; a gene it does not
+    MEASURES with no organism must carry ``None`` (a typed gap on the record); a gene it
+    does not
     measure at all is left alone, because silence there is not a statement. Returns how
     many genes the workbook settles.
     """
@@ -1737,11 +1766,11 @@ def check_pathway_organisms(path: str | Path) -> int:
             continue
         stated = {s for s in organisms[gene.protein_name] if s}
         if not stated:
-            if gene.source_organism != SOURCE_ORGANISM_UNREPORTED:
+            if gene.source_organism is not None:
                 raise RuntimeError(
                     f"{gene.token}: the workbook states no organism for "
-                    f"{gene.protein_name!r}, so source_organism must be the "
-                    f"unreported sentinel, not {gene.source_organism!r}"
+                    f"{gene.protein_name!r}, so source_organism must be a typed "
+                    f"gap, not {gene.source_organism!r}"
                 )
             continue
         if gene.source_organism not in stated:

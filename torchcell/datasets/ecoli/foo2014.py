@@ -76,7 +76,8 @@ genes that is an extra copy of a NATIVE gene -- the case the leaf's docstring na
 sourced to "Gene candidates to be tested for improving isopentenol tolerance were PCR
 amplified using E. coli MG1655 genomic DNA", with the MG1655 b-number as
 ``systematic_gene_name``. For PS+RFP it is the reporter, whose origin the paper never
-states, so ``source_organism`` is :data:`SOURCE_ORGANISM_UNREPORTED`.
+states, so ``source_organism`` is ``None`` beside a typed ``ProvenanceGap``
+(:func:`reporter_organism_gap`, #915).
 
 DH1's OWN LESIONS ARE NOT STATED, AND ARE NOT INVENTED. The paper names the host once,
 "For growth assays and isopentenol production, E. coli DH1 (ATCC 33849) was used", and
@@ -244,10 +245,13 @@ IPTG_UM = 500.0
 KANAMYCIN_UG_PER_ML = 15.0
 EXPECTED_RECORDS = 9
 
-#: ``GeneAdditionPerturbation.source_organism`` is a required ``str`` on a leaf with no
-#: ``provenance_gaps`` field, so an unreported origin cannot be typed as an absence. The
-#: honest value is this explicit sentinel, the same one the Menasalvas 2025 loader uses.
-SOURCE_ORGANISM_UNREPORTED = "unreported"
+#: Why the rfp reporter carries no organism (#915): neither the article nor Table S3
+#: names the organism the rfp gene was taken from, so ``source_organism`` is ``None``
+#: beside a typed gap rather than a sentinel string that reads as an organism name.
+REPORTER_ORGANISM_GAP_NOTE = (
+    "Table S3 lists the control plasmid pBbS5k-rfp and the article names no organism "
+    "for the rfp gene it carries"
+)
 
 
 # --------------------------------------------------------------------------- #
@@ -1000,8 +1004,8 @@ def overexpression_perturbation(
     For the eight tolerance genes this is an extra copy of a NATIVE gene, the case
     ``HeterologousPathwayPerturbation`` names explicitly, so ``systematic_gene_name`` is
     the MG1655 b-number and ``source_organism`` is the host. For the rfp control the
-    reporter's origin is never stated, so it is
-    :data:`SOURCE_ORGANISM_UNREPORTED`. ``copy_number`` is the leaf's default 1.0: Table
+    reporter's origin is never stated, so it is ``None`` beside a typed gap
+    (:func:`reporter_organism_gap`). ``copy_number`` is the leaf's default 1.0: Table
     S3 calls pBbS5k "a low-copy plasmid" and no number is released.
     """
     is_control = gene == CONTROL_GENE
@@ -1010,15 +1014,28 @@ def overexpression_perturbation(
         perturbed_gene_name=gene,
         gene_namespace=NAMESPACE,
         pathway_name=PATHWAY_REPORTER if is_control else PATHWAY_TOLERANCE,
-        source_organism=(
-            SOURCE_ORGANISM_UNREPORTED
-            if is_control
-            else str(TOLERANCE_GENE_ORIGIN.value)
-        ),
+        source_organism=None if is_control else str(TOLERANCE_GENE_ORIGIN.value),
         is_heterologous=is_control,
         localization="episomal_plasmid",
         construct_name=plasmid,
         promoter_name=str(PROMOTER.value),
+        provenance_gaps=[reporter_organism_gap()] if is_control else [],
+    )
+
+
+def reporter_organism_gap() -> ProvenanceGap:
+    """The typed absence of the rfp reporter's organism."""
+    return ProvenanceGap(
+        field="source_organism",
+        reason=ProvenanceGapReason.not_reported_by_primary,
+        looked_in=Provenance(
+            source_uri=SI_TABLE3_REL,
+            citation_key=CITATION_KEY,
+            sha256=SI_TABLE3_SHA256,
+            method="the deposited Table S3 and the article's Methods",
+            page=_SI_TABLE3,
+        ),
+        note=REPORTER_ORGANISM_GAP_NOTE,
     )
 
 

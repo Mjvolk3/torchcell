@@ -614,14 +614,27 @@ def test_a_pathway_gene_organism_must_be_the_one_the_workbook_states(
         brunk.check_pathway_organisms(workbook)
 
 
-def test_a_gene_the_workbook_never_measures_keeps_the_unreported_sentinel(
+def test_a_gene_with_no_stated_organism_carries_a_typed_gap(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """``GPPS`` has no organism anywhere, so an asserted one stops the build."""
+    """``GPPS`` has no organism anywhere, so an asserted one stops the build.
+
+    #915: the record carries ``None`` beside a gap, never a sentinel string.
+    """
     workbook = write_proteomics_workbook(tmp_path / "mmc3.xlsx")
-    assert brunk.PATHWAY_GENES["GPPS"].source_organism == (
-        brunk.SOURCE_ORGANISM_UNREPORTED
+    assert brunk.PATHWAY_GENES["GPPS"].source_organism is None
+    part = brunk.PathwayPart(
+        plasmid_id="JPUB_000000",
+        plasmid_name="pJBEI-6409",
+        gene=brunk.PATHWAY_GENES["GPPS"],
+        variant=None,
     )
+    stored = brunk.pathway_perturbation(part, {}, "limonene")
+    assert stored.source_organism is None
+    assert stored.gapped_fields() == {"source_organism"}
+    assert stored.provenance_gaps[0].note == (f"GPPS: {brunk.UNSTATED_ORGANISM_NOTE}")
+    assert stored.provenance_gaps[0].looked_in is not None
+    assert stored.provenance_gaps[0].looked_in.sha256 == brunk.PROTEOMICS_SHA256
     invented = brunk.PATHWAY_GENES["GPPS"].model_copy(
         update={"protein_name": "AmpR", "source_organism": "Abies grandis"}
     )

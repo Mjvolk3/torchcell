@@ -1165,7 +1165,7 @@ MVAS_ORGANISM = _paper(
     note="the organism of the mvaS copies TEAM-3174 overexpresses, which Supplementary "
     "Table 4 writes into that strain's own genotype cell as 'Pcv-E. faecalis.mvaS'. It "
     "is NOT the organism of the INTEGRATED pathway's own mvaS, which stays "
-    "SOURCE_ORGANISM_UNREPORTED",
+    "a typed ProvenanceGap on source_organism",
 )
 TABLE4_CONTROL_CHASSIS = _si(
     _Q_TABLE4_TEAM2595,
@@ -1302,8 +1302,10 @@ PATHWAY_ENZYME_ORGANISMS = _readme(
     "acetyltransferase/HMG-CoA reductase, a Methanosarcina mazei mevalonate kinase, a "
     "Saccharomyces cerevisiae diphosphomevalonate decarboxylase and an Escherichia "
     "coli class B acid phosphatase). The sheet never says which pIY670 part token each "
-    "one is, so SOURCE_ORGANISM_UNREPORTED stays on the integrated pathway and the "
-    "mapping is raised for review rather than taken",
+    "one is: its Protein column (the README's 'Tertiary Protein.ID from UniPROT') "
+    "reads Mvas, Mvae, Mvk, Mvd1 and Apha, and none of them is a pIY670 token "
+    "verbatim (#915, measured 2026-10-12), so the integrated pathway's "
+    "source_organism stays a typed ProvenanceGap on all five parts",
 )
 PROTEOME_CONTAMINANTS = _readme(
     ("P04264", "P13645", "P35527", "P00761"),
@@ -1807,20 +1809,54 @@ def host_reference(data_root: str | None = None) -> AssemblyReferenceGenome:
     return assembly_reference(KT2440_STRAIN, data_root=data_root)
 
 
-#: ``GeneAdditionPerturbation.source_organism`` is a REQUIRED ``str`` on a leaf that
-#: carries no ``provenance_gaps`` field, so an unreported origin cannot be typed as an
-#: absence. The honest value is therefore this explicit sentinel rather than an
-#: organism read off the ``MKmm`` / ``PMDHKQ`` suffixes. Making the field nullable with
-#: the gap mixin is raised in the PR, not taken here.
-SOURCE_ORGANISM_UNREPORTED = "unreported"
+#: Why the five integrated pathway parts carry no organism (#915). The
+#: ``source_organism`` of a ``HeterologousPathwayPerturbation`` is stated or a typed
+#: ``ProvenanceGap``; this note is the gap's, so a reader of one record learns where the
+#: source was searched and why no organism was read off a part token.
+PATHWAY_ORGANISM_GAP_NOTE = (
+    "Supplementary Table 5 names each part by its pIY670 token only ('araC-pBAD-mvaS,"
+    "mvaE ptrc-MKmm,PMDHKQ,aphARK2 kanR'), and the paper defers the pathway's origin "
+    "to its references 22 and 24, neither of which is mirrored. Supplementary Data 2 "
+    "Sheet 4 quantifies five mevalonate-pathway enzymes whose UniProt entries name an "
+    "organism, but its Protein column reads Mvas, Mvae, Mvk, Mvd1 and Apha, none of "
+    "which is a pIY670 token verbatim, so the sheet states no token's organism. "
+    "Inferring one from a case-folded name or from the MKmm suffix is not done"
+)
+#: The same for the integrated mCherry biosensor copies: no mirrored byte names the
+#: organism the mCherry part was taken from.
+MCHERRY_ORGANISM_GAP_NOTE = (
+    "Supplementary Table 4 writes the biosensor copy as 'PpedF-RBS-mCherry' and no "
+    "mirrored byte of this paper names the organism the mCherry part was taken from"
+)
+
+
+def unstated_organism_gap(note: str) -> ProvenanceGap:
+    """The typed absence of a part's source organism, searched in the SI tables."""
+    return ProvenanceGap(
+        field="source_organism",
+        reason=ProvenanceGapReason.not_reported_by_primary,
+        looked_in=Provenance(
+            source_uri=SI1_MD_REL,
+            citation_key=CITATION_KEY,
+            sha256=SI1_MD_SHA256,
+            method=(
+                f"MinerU {MINERU_VERSION} OCR of the Supplementary Information PDF "
+                "(raw mirror), Supplementary Tables 4 and 5; and Supplementary Data 2 "
+                "Sheet 4's Protein column"
+            ),
+            page=_PAGE_SI_TABLE5,
+        ),
+        note=note,
+    )
 
 
 def pathway_perturbations() -> list[HeterologousPathwayPerturbation]:
     """The five integrated isoprenol-pathway genes, by their verbatim part tokens.
 
     Each token must appear in the quoted pIY670 description, so a changed quote cannot
-    drift away from the stored identifiers unnoticed. ``source_organism`` is
-    :data:`SOURCE_ORGANISM_UNREPORTED`: this paper defers the pathway's origin to
+    drift away from the stored identifiers unnoticed. ``source_organism`` is ``None``
+    beside a typed gap (:func:`unstated_organism_gap`): this paper defers the pathway's
+    origin to
     reference 22 (Banerjee et al., isoprenol in P. putida) and reference 24 (Kang et
     al., the IPP-bypass pathway in E. coli), neither of which is mirrored, and the three
     ``mvaS`` HOMOLOGS whose organisms it does name are extra copies in the final
@@ -1841,12 +1877,13 @@ def pathway_perturbations() -> list[HeterologousPathwayPerturbation]:
                 perturbed_gene_name=token,
                 gene_namespace=KT2440_NAMESPACE,
                 pathway_name=str(PATHWAY_NAME.value),
-                source_organism=SOURCE_ORGANISM_UNREPORTED,
+                source_organism=None,
                 is_heterologous=True,
                 localization="chromosomal_integration",
                 integration_locus=gene["locus"],
                 promoter_name=gene["promoter"],
                 copy_number=1.0,
+                provenance_gaps=[unstated_organism_gap(PATHWAY_ORGANISM_GAP_NOTE)],
             )
         )
     return built
@@ -3031,7 +3068,7 @@ def _write_variant_ledger(ledger: VariantLedger, preprocess_dir: str) -> None:
 # The designed strains of the deposited arms
 # --------------------------------------------------------------------------- #
 #: The verbatim part token of the fluorescent biosensor copy. mCherry's own source
-#: organism is nowhere in the mirror, so it carries SOURCE_ORGANISM_UNREPORTED.
+#: organism is nowhere in the mirror, so it carries a typed gap on source_organism.
 MCHERRY_TOKEN = "mCherry"
 #: The mvaS copies TEAM-3174 overexpresses carry the SAME part token as the integrated
 #: pathway's mvaS and are distinguished by their integration locus and their sourced
@@ -3098,12 +3135,13 @@ def mcherry_perturbation(locus: str) -> HeterologousPathwayPerturbation:
         perturbed_gene_name=MCHERRY_TOKEN,
         gene_namespace=KT2440_NAMESPACE,
         pathway_name="PpedF-RBS-mCherry isoprenol biosensor",
-        source_organism=SOURCE_ORGANISM_UNREPORTED,
+        source_organism=None,
         is_heterologous=True,
         localization="chromosomal_integration",
         integration_locus=locus,
         promoter_name="PpedF",
         copy_number=1.0,
+        provenance_gaps=[unstated_organism_gap(MCHERRY_ORGANISM_GAP_NOTE)],
     )
 
 

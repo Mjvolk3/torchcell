@@ -8336,7 +8336,14 @@
 <span class="sd">    ``ProvenanceGap``; a missing partition without the gap is refused, so a None is</span>
 <span class="sd">    never a silent absence.</span>
 
-<span class="sd">    ``measurement_type`` is the source's assay tag, kept as each loader wrote it.</span>
+<span class="sd">    ``measurement_type`` is the leaf's one assay tag, ``scrnaseq_umi_count``, and no</span>
+<span class="sd">    other value validates. The leaf is the physical measurement, 10x Chromium 3' UMI</span>
+<span class="sd">    counts, and every release it holds stores the same tag whatever its design: summing</span>
+<span class="sd">    a strain's cells (Jackson 2020) is analysis that ``n_cells`` already records, and the</span>
+<span class="sd">    designs diverge in the experiment classes above the leaf (``SegregantExpression*``,</span>
+<span class="sd">    ``PseudobulkUmiCount*``), not in the tag. A single-cell UMI platform other than 10x</span>
+<span class="sd">    Chromium 3' gets a sibling leaf under the same parent (``Phenotype``), with its own</span>
+<span class="sd">    tag, never a second tag on this leaf.</span>
 
 <span class="sd">    Provenance: Boocock et al. 2025, eLife; Jackson et al. 2020, eLife. See</span>
 <span class="sd">    ``[[torchcell.datasets.scerevisiae.boocock2025]]`` and</span>
@@ -8400,9 +8407,10 @@
         <span class="s2">"aligned with cell_barcodes; sums to total_umis"</span><span class="p">,</span>
         <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">measurement_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+    <span class="n">measurement_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"scrnaseq_umi_count"</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="s2">"scrnaseq_umi_count"</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">"assay tag: 10x 3' single-cell RNA-seq UMI counts per feature"</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the leaf's one assay tag: 10x Chromium 3' single-cell RNA-seq UMI "</span>
+        <span class="s2">"counts per feature; a non-10x platform is a sibling leaf, not another tag"</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -8503,8 +8511,6 @@
                 <span class="sa">f</span><span class="s2">"cell_total_umis sums to </span><span class="si">{</span><span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cell_total_umis</span><span class="p">)</span><span class="si">}</span><span class="s2">, not total_umis "</span>
                 <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">total_umis</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_type</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"measurement_type cannot be blank"</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span>
 
 

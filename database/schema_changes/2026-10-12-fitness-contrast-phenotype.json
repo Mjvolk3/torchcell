@@ -2,7 +2,7 @@
   "record_version": 1,
   "slug": "fitness-contrast-phenotype",
   "date": "2026-10-12",
-  "pr": null,
+  "pr": 1074,
   "author_kind": "agent",
   "base_commit": "232e5d17882b668d27ccfe3bdb5e97dbcafd8a04",
   "python_version": "3.13.0",

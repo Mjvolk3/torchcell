@@ -493,3 +493,71 @@ def test_every_sourced_value_quotes_a_text_artifact_of_the_mirror() -> None:
         assert provenance.sha256 and len(provenance.sha256) == 64, name
         assert provenance.source_uri.endswith(".md"), name
         assert value.quote.strip(), name
+
+
+# --------------------------------------------------------------------------- #
+# The family runner and the CLI
+# --------------------------------------------------------------------------- #
+def test_the_family_runner_verifies_the_store_it_is_pointed_at(
+    data_root: Path,
+    dataset: v.PooledPromoterExpressionVaishnav2022Dataset,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """``verify_pooled_sort_seq_dataset`` re-reads the store's own ``raw/`` for L2.
+
+    This is the path the slurm build's ``--verify`` takes, so it is exercised here
+    rather than only the streaming gate: the runner reads the release back out of the
+    store it just built and compares every stored estimate to it.
+    """
+    from torchcell.verification import runners
+
+    name = "pooled_promoter_expression_vaishnav2022"
+    spec = dict(runners.POOLED_SORT_SEQ_DATASETS[name])
+    spec["expected_count"] = len(dataset)
+    monkeypatch.setitem(runners.POOLED_SORT_SEQ_DATASETS, name, spec)
+    report = runners.verify_pooled_sort_seq_dataset(
+        name, str(data_root), abs_root=str(data_root / "store")
+    )
+    assert report.passed, [r.message for r in report.results if not r.passed]
+    released = next(r for r in report.results if r.name == "released_values")
+    assert released.details["max_abs_delta"] == 0.0
+    assert released.details["n_records"] == len(dataset)
+
+
+def test_the_cli_builds_and_then_verifies_the_store(
+    data_root: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """``build`` then ``verify``: the two commands the slurm job and a rerun use."""
+    from torchcell.verification import runners
+
+    monkeypatch.setattr(v, "DATASET_ROOT_REL", "store")
+    monkeypatch.setattr("dotenv.load_dotenv", lambda *a, **k: None)
+    assert v.main(["build"]) == 0
+    assert "len = 3" in capsys.readouterr().out
+
+    name = "pooled_promoter_expression_vaishnav2022"
+    spec = dict(runners.POOLED_SORT_SEQ_DATASETS[name])
+    spec["expected_count"] = 3
+    monkeypatch.setitem(runners.POOLED_SORT_SEQ_DATASETS, name, spec)
+    assert v.main(["verify"]) == 0
+    assert (data_root / "store" / "preprocess" / "verification_report.json").is_file()
+
+
+def test_the_cli_deposit_writes_the_mirror(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """``deposit`` is the one-time command that writes the raw mirror and its manifest."""
+    root = tmp_path / "cli_root"
+    monkeypatch.setenv("DATA_ROOT", str(root))
+    monkeypatch.setattr(v, "MOLEVOL_SHA256", _sha(MOLEVOL))
+    monkeypatch.setattr(v, "TESTDATA_SHA256", _sha(ZENODO))
+    monkeypatch.setattr(v, "ZENODO_README_SHA256", _sha(README))
+    monkeypatch.setattr("dotenv.load_dotenv", lambda *a, **k: None)
+    download = tmp_path / "cli_download"
+    download.mkdir()
+    (download / v.MOLEVOL_NAME).write_bytes(MOLEVOL)
+    (download / v.TESTDATA_NAME).write_bytes(ZENODO)
+    (download / v.ZENODO_README_NAME).write_bytes(README)
+    assert v.main(["deposit", "--download-dir", str(download)]) == 0
+    assert "deposited" in capsys.readouterr().out
+    assert (v.raw_mirror_dir(str(root)) / "manifest.json").is_file()

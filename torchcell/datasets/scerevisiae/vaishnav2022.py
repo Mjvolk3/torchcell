@@ -742,10 +742,11 @@ def run_verification(data_root: str | None = None) -> Any:
     )
 
     base = data_root or os.environ["DATA_ROOT"]
+    root = osp.join(base, DATASET_ROOT_REL)
     report = verify_pooled_sort_seq_dataset(
-        "pooled_promoter_expression_vaishnav2022", base
+        "pooled_promoter_expression_vaishnav2022", base, abs_root=root
     )
-    _write_report(report, osp.join(base, DATASET_ROOT_REL, "preprocess"))
+    _write_report(report, osp.join(root, "preprocess"))
     return report
 
 

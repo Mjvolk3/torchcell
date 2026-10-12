@@ -3386,7 +3386,8 @@ def test_run_gene_essentiality_reads_sgd_and_the_viable_deletion_store(
         "provenance": PROV,
     }
     monkeypatch.setattr(runners, "GENE_ESSENTIALITY_DATASETS", {"ess": spec})
-    assert runners.run_gene_essentiality(str(tmp_path)) is False
+    # the cross-release contradiction is reported, never gated (owner, 2026-10-12)
+    assert runners.run_gene_essentiality(str(tmp_path)) is True
     report = _read_report(_root(tmp_path, "ess"))
     released = _result(report, "released_annotations")
     assert released["passed"] is True
@@ -3396,7 +3397,7 @@ def test_run_gene_essentiality_reads_sgd_and_the_viable_deletion_store(
     )
     # #901: the conditional YJR155W record is not compared; YBR085W, unconditional, is
     cross = _result(report, "no_viable_deletion_in_smf")
-    assert cross["passed"] is False
+    assert (cross["passed"], cross["finding_class"]) == (False, "report")
     assert cross["details"]["contradicted"] == {"YBR085W": "YBR085W_dma1"}
     assert cross["details"]["n_essential"] == 2
     assert cross["message"].startswith(
@@ -3404,7 +3405,8 @@ def test_run_gene_essentiality_reads_sgd_and_the_viable_deletion_store(
     )
 
     monkeypatch.setitem(spec, "sgd_genes_digest", "0" * 64)
-    runners.run_gene_essentiality(str(tmp_path))
+    # a release that drifted from its pin is a gate failure
+    assert runners.run_gene_essentiality(str(tmp_path)) is False
     drift = _result(_read_report(_root(tmp_path, "ess")), "released_annotations")
     assert drift["passed"] is False
     assert drift["details"]["pinned_digest"] == "0" * 64

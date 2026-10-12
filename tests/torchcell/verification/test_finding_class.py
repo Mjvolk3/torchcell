@@ -72,6 +72,7 @@ def test_the_registry_is_exactly_the_reclassified_rules() -> None:
         "perturbed_gene_containment_",
         "protein_and_perturbed_locus_containment_",
         "assembly_pin",
+        "no_viable_deletion_in_",
     )
 
 
@@ -91,6 +92,7 @@ def test_the_registry_is_exactly_the_reclassified_rules() -> None:
         "assembly_pin",
         "assembly_pin_resolves",
         "assembly_pin_is_mg1655_genbank_with_the_ncm3722_background",
+        "no_viable_deletion_in_smf_costanzo2016",
     ],
 )
 def test_genome_reference_rules_are_report(name: str) -> None:
@@ -126,7 +128,6 @@ def test_genome_reference_rules_are_report(name: str) -> None:
         "reference_genome_is_the_named_denominator_strain",
         "every_record_measures_the_same_kt2440_locus_set",
         "site_identifiers_deleted_loci",
-        "no_viable_deletion_in_smf_costanzo2016",
     ],
 )
 def test_data_fidelity_rules_are_gate(name: str) -> None:

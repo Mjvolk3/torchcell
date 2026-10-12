@@ -29,7 +29,8 @@ from torchcell.knowledge_graphs.dataset_adapter_map import dataset_adapter_map
 
 def test_every_registered_bacterial_dataset_is_mapped_to_its_adapter() -> None:
     expected = {b.case.dataset_cls: b.case.adapter_cls for b in BACTERIAL}
-    # 59 + 1 (Teteneva W3110) + 6 (#844's six P. putida classes) + 2 (#834's two)
+    # 59 + 1 (labeled "Teteneva W3110" since 5d8f6efd9, though no Teteneva class was
+    # registered before #910) + 6 (#844's six P. putida classes) + 2 (#834's two)
     # + 3 (#826: Schmidt Table S23, Wang's no-isoprenol column, Lamoureux's growth
     # rate) + 1 (#770's four Lim 2025 proteome contrasts) + 1 (Wang 2024 rifampicin
     # Tn-seq) + 1 (row 53, Royet 2025's metal Tn-seq) + 2 (Thompson 2019 valerolactam:
@@ -41,11 +42,12 @@ def test_every_registered_bacterial_dataset_is_mapped_to_its_adapter() -> None:
     # + 2 (#931: the Fitness Browser's own Keio and KT2440 experiments, one loader per
     # organism keyed by publication) + 1 (#921, Potel 2018 phosphosite intensities),
     # + 1 (row 39, Banerjee 2024 isoprenol titers),
+    # + 1 (#910, Teteneva 2024's lake-water RB-TnSeq, the first W3110 dataset),
     # re-derived from the merged conf and map.
     assert (
         len(expected)
         == len(BACTERIAL)
-        == 59 + 1 + 6 + 2 + 3 + 1 + 1 + 1 + 2 + 1 + 4 + 1 + 1 + 2 + 1 + 1 + 2 + 1 + 1
+        == 59 + 1 + 6 + 2 + 3 + 1 + 1 + 1 + 2 + 1 + 4 + 1 + 1 + 2 + 1 + 1 + 2 + 1 + 1 + 1
     )
     assert registered_bacterial_classes() == set(expected)
     mapped = {
@@ -61,7 +63,7 @@ def test_each_adapter_has_its_own_module() -> None:
     modules = [b.case.adapter_cls.__module__ for b in BACTERIAL]
     assert (
         len(set(modules))
-        == 59 + 1 + 6 + 2 + 3 + 1 + 1 + 1 + 2 + 1 + 4 + 1 + 1 + 2 + 1 + 1 + 2 + 1 + 1
+        == 59 + 1 + 6 + 2 + 3 + 1 + 1 + 1 + 2 + 1 + 4 + 1 + 1 + 2 + 1 + 1 + 2 + 1 + 1 + 1
     )
     assert modules == [f"torchcell.adapters.{b.module}" for b in BACTERIAL]
 
@@ -80,7 +82,7 @@ def test_kg_bacteria_names_exactly_the_registered_bacterial_datasets() -> None:
     assert (
         len(names)
         == len(set(names))
-        == 59 + 1 + 6 + 2 + 3 + 1 + 1 + 1 + 2 + 1 + 4 + 1 + 1 + 2 + 1 + 1 + 2 + 1 + 1
+        == 59 + 1 + 6 + 2 + 3 + 1 + 1 + 1 + 2 + 1 + 4 + 1 + 1 + 2 + 1 + 1 + 2 + 1 + 1 + 1
     )
     classes = [dataset_registry[name] for name in names]
     assert all(cls in dataset_adapter_map for cls in classes)

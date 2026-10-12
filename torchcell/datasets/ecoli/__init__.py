@@ -219,6 +219,12 @@ sourcing layer.
   it and no genome class or schema vocabulary names it yet. The paper is in neither
   mirror and filing it is a curation decision, so every value a loader needs is a typed
   gap rather than a guess.
+- ``teteneva2024`` -- ``RbTnseqTeteneva2024Dataset``: the lake-water RB-TnSeq screen of
+  E. coli K-12 W3110 RpoS+, Supplementary Table S4's gene fitness per (gene, lake water
+  sample, filtration, sampling day), on W3110's own RefSeq ``Y75_RS`` loci (the set
+  ``ecoli_K12_W3110_ASM1024v1`` read RefSeq first, owner route #910). Table S4 names
+  genes by symbol only; three resolution steps place 3,681 of its 3,691 symbols and the
+  rest are kept by name in the resolution ledger, not stored.
 - ``cai2023`` -- the MCF2Chem record: an aggregation NOT admitted. Its 8,888 production
   records are transcriptions of review tables, not measurements, and they are released
   only through a web server whose API answered 502 the day the row was settled, so there
@@ -347,6 +353,7 @@ from .schmidt2016_srm import (
     ProteomeSrmSet2Schmidt2016Dataset as ProteomeSrmSet2Schmidt2016Dataset,
 )
 from .shiver2016 import EnvChemgenShiver2016Dataset as EnvChemgenShiver2016Dataset
+from .teteneva2024 import RbTnseqTeteneva2024Dataset as RbTnseqTeteneva2024Dataset
 from .tong2020 import CarbonSourceTong2020Dataset as CarbonSourceTong2020Dataset
 from .wang2015 import EnvChemgenWang2015Dataset as EnvChemgenWang2015Dataset
 from .wang2015_growth import GrowthWang2015Dataset as GrowthWang2015Dataset

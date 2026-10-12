@@ -195,6 +195,7 @@ def test_every_bacterial_base_is_a_library_member() -> None:
         "DAVIS_MINIMAL",
         "MOPS_MINIMAL",
         "RCH2_DEFINED_NOCARBON_PRICE2018",
+        "LAKE_WATER",
     }
     assert bases <= set(BACTERIAL_MEDIA_USES)
     assert oc.media_base_issues() == []
@@ -570,8 +571,11 @@ def test_every_quote_is_verbatim_in_the_mirrored_file(key: str) -> None:
     xlsx as its row rendering, and a docx as its paragraph rendering. The two binary
     shapes re-hash the file first, so a quote is trusted only against the pinned bytes.
     """
-    root = Path(os.environ["DATA_ROOT"]) / "torchcell-library"
+    library = Path(os.environ["DATA_ROOT"]) / "torchcell-library"
+    raw = Path(os.environ["DATA_ROOT"]) / "torchcell-raw"
     for sv in _sourced(MEDIA_LIBRARY[key]):
+        # a quote of a raw-mirror text (Teteneva 2024's PMC text, #910) is audited there
+        root = raw if sv.source_path(raw).is_file() else library
         path = sv.source_path(root)
         if path.suffix in {".xlsx", ".docx"}:
             assert sha256_file(path) == sv.provenance.sha256, f"{key}: {path}"

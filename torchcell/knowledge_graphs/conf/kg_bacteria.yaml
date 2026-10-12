@@ -109,6 +109,7 @@ datasets:
   - EnvChemgenWang2024Dataset
   - RbTnseqWetmore2015Dataset
   - FitnessBrowserEcoliDataset
+  - RbTnseqTeteneva2024Dataset
   - RbTnseqBorchert2023Dataset
   - ProteomeBanerjee2025Dataset
   - RbTnseqBorchert2024Dataset

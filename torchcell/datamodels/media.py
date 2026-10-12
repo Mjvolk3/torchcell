@@ -5391,6 +5391,49 @@ MOPS_RICH_DEFINED_NOCARBON_PRICE2018 = Media(
 """Price 2018's MOPS rich defined medium without carbon: the medium of the 4 Keio
 carbon-source samples Wetmore 2015 and Price 2018 both release (rows 2 and 21)."""
 # --- end #1045 row 16 ------------------------------------------------------------ #
+# --- begin teteneva2024 (#910): natural lake water ------------------------------ #
+#: The Teteneva 2024 paper text as PMC renders it, mirrored in ``torchcell-raw`` (the
+#: library mirror held no Teteneva key when the loader was written); the source the
+#: quote below is cut from, relative to ``torchcell-raw/<key>/``.
+_TETENEVA2024 = "tetenevaGenomewideScreenGenetic2024"
+_TETENEVA2024_TEXT = "paper/PMC11188689.1.txt"
+_TETENEVA2024_TEXT_SHA = (
+    "422bd7926fbeebfd6877e15f213e18914291b1f259a7086d66d66d0249353b2f"
+)
+_LAKE_WATER_QUOTE = (
+    "It is a man-made urban lake that is used for rainwater collection with no known "
+    "bacterial/chemical contamination."
+)
+
+LAKE_WATER = Media(
+    name="lake water, natural (composition not reported)",
+    state="liquid",
+    is_synthetic=False,
+    base_medium="LAKE_WATER",
+    components=[
+        MediaComponent(
+            compound=Compound(name="lake water (natural; composition not reported)"),
+            role=MediaComponentRole.complex_ingredient,
+            definition=ComponentDefinition.intrinsically_undefined,
+            note="a natural water sample: batch-variable by nature, and no chemical or "
+            "nutrient analysis of it is reported",
+        )
+    ],
+    provenance=[
+        _sv(
+            "a man-made urban lake near Marburg, Germany",
+            _LAKE_WATER_QUOTE,
+            ck=_TETENEVA2024,
+            sha=_TETENEVA2024_TEXT_SHA,
+            uri=_TETENEVA2024_TEXT,
+            note="Materials and methods, 'Water sampling'; the source is the raw "
+            "mirror's PMC text, not a library paper.md",
+        )
+    ],
+)
+"""A natural lake water, the base of every Teteneva 2024 medium: each water sample,
+filter-sterilized or not, derives from it (``teteneva2024.lake_water_medium``)."""
+# --- end teteneva2024 ------------------------------------------------------------- #
 
 
 #: Which of the fifty bacterial rows (rank in [[plan.bacteria-ontology-genome]]'s table,
@@ -5501,6 +5544,10 @@ BACTERIAL_MEDIA_USES: dict[str, tuple[str, ...]] = {
         "2 Wetmore 2015: Data Set S1 'MOPS Rich Defined media_noCarbon' (4 Keio "
         "carbon-source experiments, set1IT067 to set1IT070)",
         "21 Price 2018: Table S18 states the recipe (the same 4 Keio experiments)",
+    "LAKE_WATER": (
+        "41 Teteneva 2024: the base of the six lake water media (water samples #1 to "
+        "#3, filter-sterilized or not); the paper describes the lake and the filtration "
+        "and reports no composition",
     ),
 }
 """Use map for the bacterial entries; the keys are exactly the bacterial media."""
@@ -5994,6 +6041,7 @@ MEDIA_LIBRARY: dict[str, Media] = {
     "RCH2_DEFINED_NOCARBON_PRICE2018": RCH2_DEFINED_NOCARBON_PRICE2018,
     "MOPS_RICH_DEFINED_NOCARBON_PRICE2018": MOPS_RICH_DEFINED_NOCARBON_PRICE2018,
     "M9_AA_SCHMIDT2016": M9_AA_SCHMIDT2016,
+    "LAKE_WATER": LAKE_WATER,
 } | {
     _hm_key(compound, partial): HILLENMEYER_DROPOUT_MEDIA[label]
     for label, compound, partial in _HILLENMEYER_DROPOUTS
@@ -6075,6 +6123,8 @@ CARBON_FREE_MEDIA: dict[str, str] = {
     "carbon source is each sample's Condition_1 (D-galacturonic acid or D-glucose), "
     "carried as a carbon_source factor; the amino acids and nucleobases are "
     "supplements the table states",
+    "LAKE_WATER": "a natural water: no carbon source is added or reported; whatever "
+    "carbon it holds is inside the undefined water itself (Teteneva 2024)",
 }
 
 

@@ -141,6 +141,7 @@ from torchcell.adapters import (
     RbTnseqFitnessBrowserEcoliAdapter,
     RbTnseqFitnessBrowserPutidaAdapter,
     RbTnseqPrice2018EcoliAdapter,
+    RbTnseqTeteneva2024Adapter,
     RbTnseqWetmore2015Adapter,
     RnaseqCaglar2017Adapter,
     RnaseqLamoureux2023Adapter,
@@ -235,6 +236,7 @@ from torchcell.datasets.ecoli.schmidt2016_srm import (
     ProteomeSrmSet2Schmidt2016Dataset,
 )
 from torchcell.datasets.ecoli.shiver2016 import EnvChemgenShiver2016Dataset
+from torchcell.datasets.ecoli.teteneva2024 import RbTnseqTeteneva2024Dataset
 from torchcell.datasets.ecoli.tong2020 import CarbonSourceTong2020Dataset
 from torchcell.datasets.ecoli.wang2015 import EnvChemgenWang2015Dataset
 from torchcell.datasets.ecoli.wang2015_growth import GrowthWang2015Dataset
@@ -799,6 +801,15 @@ BACTERIAL: list[Bacterial] = [
         "rbtnseq_fitness_browser_ecoli",
         FitnessBrowserEcoliDataset,
         RESPONSE,
+    # Teteneva 2024 (#910): one Tn5 insertion per record on a W3110 RefSeq locus; each
+    # condition is its own lake water medium, so no environment perturbation.
+    _case(
+        RbTnseqTeteneva2024Adapter,
+        "teteneva2024",
+        "rbtnseq_teteneva2024_ecoli",
+        RbTnseqTeteneva2024Dataset,
+        RESPONSE,
+        env_perturbation=False,
     ),
     _case(
         RbTnseqBorchert2023Adapter,

@@ -1,0 +1,212 @@
+{
+  "citation_key": "tetenevaGenomewideScreenGenetic2024",
+  "table": "bacteria",
+  "row_name": "Teteneva 2024 lake water",
+  "gates": [
+    {
+      "gate": "G1",
+      "outcome": "pass",
+      "reason": "primary: status='candidate', klass='Transposon fitness', no aggregation marker",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G2",
+      "outcome": "pass",
+      "reason": "assembly_set: BW25113 -> ecoli_K12_BW25113_ASM75055v1 resolves and reads; W3110 -> ecoli_K12_W3110_ASM1024v1 resolves and reads",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G3",
+      "outcome": "pass",
+      "reason": "7 file(s) in raw, 11100 worksheet row(s) counted; all intact",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G4",
+      "outcome": "pass",
+      "reason": "no key held by another module (0 mention(s)); no PMID check; values not compared (no dev store named)",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G5",
+      "outcome": "pass",
+      "reason": "EnvironmentResponsePhenotype exists; compounds resolve",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    }
+  ],
+  "zotero_item": "absent",
+  "source_kind": "primary",
+  "aggregation": null,
+  "g2": {
+    "branch": "assembly_set",
+    "outcome": "resolvable_readable",
+    "hosts": [
+      {
+        "name": "BW25113",
+        "assembly_set": "ecoli_K12_BW25113_ASM75055v1",
+        "resolvable": true,
+        "readable": true
+      },
+      {
+        "name": "W3110",
+        "assembly_set": "ecoli_K12_W3110_ASM1024v1",
+        "resolvable": true,
+        "readable": true
+      }
+    ]
+  },
+  "g3": {
+    "citation_key": "tetenevaGenomewideScreenGenetic2024",
+    "trees_read": [
+      "raw"
+    ],
+    "files": [
+      {
+        "tree": "raw",
+        "path": "si/supplementary_figure_s1_wrae096.pdf",
+        "role": "si_pdf",
+        "bytes": 354566,
+        "sha256_manifest": "65bcac7a61e938a92b90838401e7a153e6ff5ec33ae57b5840950fb11efd5d82",
+        "sha256_disk": "65bcac7a61e938a92b90838401e7a153e6ff5ec33ae57b5840950fb11efd5d82",
+        "retrieval_method": "manual_browser",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/supplementary_figure_s2_wrae096.pdf",
+        "role": "si_pdf",
+        "bytes": 251076,
+        "sha256_manifest": "d88f962bd32bb756a0d16659e5b3208ad84b7dc620e21d747f0ff549d369f356",
+        "sha256_disk": "d88f962bd32bb756a0d16659e5b3208ad84b7dc620e21d747f0ff549d369f356",
+        "retrieval_method": "manual_browser",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/supplementary_table_s2_wrae096.layout.txt",
+        "role": "si_text",
+        "bytes": 477,
+        "sha256_manifest": "78f0ba620a574aeec9f6315c3411ac5bf0453030d96676c94e2707d44eafbce1",
+        "sha256_disk": "78f0ba620a574aeec9f6315c3411ac5bf0453030d96676c94e2707d44eafbce1",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/supplementary_table_s2_wrae096.pdf",
+        "role": "si_pdf",
+        "bytes": 36151,
+        "sha256_manifest": "c41e8b17ed4ecd8ddf420332e4d32a33aae13ae7b029feb275632a5baf5ab396",
+        "sha256_disk": "c41e8b17ed4ecd8ddf420332e4d32a33aae13ae7b029feb275632a5baf5ab396",
+        "retrieval_method": "manual_browser",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/supplementary_table_s3_wrae096.xlsx",
+        "role": "si_data",
+        "bytes": 14056,
+        "sha256_manifest": "5cec5dd2f2b3fbc46a0012154b1864dda812326f12b1622391081e96995e323b",
+        "sha256_disk": "5cec5dd2f2b3fbc46a0012154b1864dda812326f12b1622391081e96995e323b",
+        "retrieval_method": "manual_browser",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "DATA",
+            "rows": 64
+          },
+          {
+            "sheet": "LEGEND",
+            "rows": 3
+          }
+        ]
+      },
+      {
+        "tree": "raw",
+        "path": "si/supplementary_table_s4_wrae096.xlsx",
+        "role": "si_data",
+        "bytes": 1809613,
+        "sha256_manifest": "678bbe6cecc2a11517fc11cbeb4d5a5ff88bca3e4aea1264bad336d5fccad0dc",
+        "sha256_disk": "678bbe6cecc2a11517fc11cbeb4d5a5ff88bca3e4aea1264bad336d5fccad0dc",
+        "retrieval_method": "manual_browser",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "DATA",
+            "rows": 11030
+          },
+          {
+            "sheet": "LEGEND",
+            "rows": 3
+          }
+        ]
+      },
+      {
+        "tree": "raw",
+        "path": "si/supplementary_tables_s3_s4.rendered.txt",
+        "role": "si_text",
+        "bytes": 775,
+        "sha256_manifest": "b2f8ad50aa2ecedd091d65e0765b152bd8b5ef4ba11c1e4b54a1471ba47bd646",
+        "sha256_disk": "b2f8ad50aa2ecedd091d65e0765b152bd8b5ef4ba11c1e4b54a1471ba47bd646",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      }
+    ],
+    "walls": []
+  },
+  "g4_key": {
+    "doi": "10.1093/ismejo/wrae096",
+    "pmid": null,
+    "accessions": [
+      "PRJNA1043681",
+      "PRJNA1073534"
+    ],
+    "hits": [
+      {
+        "key_kind": "doi",
+        "key": "10.1093/ismejo/wrae096",
+        "where": "torchcell/datasets/ecoli/teteneva2024.py",
+        "relation": "own"
+      }
+    ],
+    "pmid_checked": false
+  },
+  "g4_value": null,
+  "g5": {
+    "phenotype_class": "EnvironmentResponsePhenotype",
+    "class_exists": true,
+    "unresolved_compounds": [],
+    "proposed_class": null
+  },
+  "decided_at": "2026-10-12",
+  "torchcell_commit": "9dadcbeffd1ad2dd5dcd6bff078ed2b100121a57"
+}

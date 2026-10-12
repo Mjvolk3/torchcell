@@ -352,6 +352,9 @@ from .synth_leth_db_adapter import (
 from .synth_leth_db_adapter import (
     SynthRescueYeastSynthLethDbAdapter as SynthRescueYeastSynthLethDbAdapter,
 )
+from .teteneva2024_adapter import (
+    RbTnseqTeteneva2024Adapter as RbTnseqTeteneva2024Adapter,
+)
 from .thompson2019_valerolactam_growth_adapter import (
     LactamGrowthRateThompson2019Adapter as LactamGrowthRateThompson2019Adapter,
 )
@@ -551,6 +554,7 @@ ecoli_adapters = [
     "RbTnseqPrice2018EcoliAdapter",
     "RbTnseqWetmore2015Adapter",
     "RbTnseqFitnessBrowserEcoliAdapter",
+    "RbTnseqTeteneva2024Adapter",
     "CrispriCrossRachwalski2024Adapter",
     "MetabolomeRapp2026Adapter",
     "GrowthAucRapp2026Adapter",

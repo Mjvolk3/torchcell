@@ -586,6 +586,12 @@ case "$STAGE" in
           JOBS_EXPLICIT=1
           RUNS_PER_GPU=1; STAGE_CONFIG=cgt_morph_v24
           EXTRA_OV="trainer.max_epochs=1200 data_module.batch_size=128 +data_module.materialize=true data_module.persistent_workers=true" ;;
+  # BUDGET (2026-10-12, user): every v25 stage runs MORPH_EPOCHS epochs, default 500. The
+  # first 22 cells at 1,200 epochs showed that the loss finishes learning by epoch 50,
+  # an escape from the plateau happens by epoch 400 and the validation peak of an escaped
+  # run sits at epochs 400 to 600 before it overfits, so 1,200 epochs was idle GPU. The
+  # registered window of v25 is epochs 400 to 499 (morph_v25_readout.py); the 1,200-epoch
+  # cells keep their 1,000 to 1,199 reading as a check that the two windows rank alike.
   # THE INDUCTIVE ROUND v25 (2026-10-11, project torchcell_019_morph_v25): the genotype-only
   # morphology grid on fig3_core. Readout {M_cls, M_pool, M_zs, M_xattn} x lr {3e-4, 1e-3,
   # 3e-3} x split seeds 0 to 3 (48 tasks, init seed 0), then the plateau-escape replicates
@@ -610,7 +616,7 @@ case "$STAGE" in
           done
           JOBS_EXPLICIT=1
           RUNS_PER_GPU=1; STAGE_CONFIG=cgt_morph_v24
-          EXTRA_OV="trainer.max_epochs=1200 data_module.batch_size=128 +data_module.materialize=true data_module.persistent_workers=true wandb.project=torchcell_019_morph_v25" ;;
+          EXTRA_OV="trainer.max_epochs=${MORPH_EPOCHS:-500} data_module.batch_size=128 +data_module.materialize=true data_module.persistent_workers=true wandb.project=torchcell_019_morph_v25" ;;
   # v25b (2026-10-11, same project): the levers the betaxanthin, trigenic and environment
   # campaigns found, transplanted. Loss: the 19-quantile pinball (the default) against MSE
   # (`dist=point`) on M_cls and M_zs at two lrs. Graph prior: the hard mask at layer 1
@@ -639,7 +645,7 @@ case "$STAGE" in
           done
           JOBS_EXPLICIT=1
           RUNS_PER_GPU=1; STAGE_CONFIG=cgt_morph_v24
-          EXTRA_OV="trainer.max_epochs=1200 data_module.batch_size=128 +data_module.materialize=true data_module.persistent_workers=true wandb.project=torchcell_019_morph_v25" ;;
+          EXTRA_OV="trainer.max_epochs=${MORPH_EPOCHS:-500} data_module.batch_size=128 +data_module.materialize=true data_module.persistent_workers=true wandb.project=torchcell_019_morph_v25" ;;
   # v25c (2026-10-11, same project): the loss axis beyond MSE. Morphology trains the
   # 19-quantile pinball; the global heads of the other campaigns trained MSE or CRPS, and
   # the metric is Pearson per feature, so the Gaussian CRPS and the pearson_mse objective
@@ -654,7 +660,7 @@ case "$STAGE" in
           done; done; done
           JOBS_EXPLICIT=1
           RUNS_PER_GPU=1; STAGE_CONFIG=cgt_morph_v24
-          EXTRA_OV="trainer.max_epochs=1200 data_module.batch_size=128 +data_module.materialize=true data_module.persistent_workers=true wandb.project=torchcell_019_morph_v25" ;;
+          EXTRA_OV="trainer.max_epochs=${MORPH_EPOCHS:-500} data_module.batch_size=128 +data_module.materialize=true data_module.persistent_workers=true wandb.project=torchcell_019_morph_v25" ;;
   scale_n) JOBS=(); SWEEP_OV=()
           for wl in 45:6e-4 90:3e-4 180:1.5e-4 360:7.5e-5; do for s in 0 1 2; do
             JOBS+=("S_mask_s${s}:0")

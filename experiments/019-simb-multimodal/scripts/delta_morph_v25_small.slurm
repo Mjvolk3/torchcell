@@ -32,6 +32,10 @@
 #       $R/experiments/019-simb-multimodal/scripts/delta_morph_v25_small.slurm
 #   done
 # N_PACKS is printed by `V25_STAGE=morph_v25d V25_LIST=1 bash <this script>` (no sbatch).
+# BUDGET: V25_EPOCHS, default 500 (2026-10-12): the loss finishes learning by epoch 50, an
+# escape happens by epoch 400 and the validation peak of an escaped run sits at epochs 400
+# to 600, so the registered window of v25 is epochs 400 to 499. Materializing the splits
+# costs about 1.8 h per run on Lustre before epoch 1 (measured on pack 0, 2026-10-12).
 #
 #SBATCH --job-name=019-morph-v25
 #SBATCH --partition=gpuA40x4
@@ -60,7 +64,7 @@ PACK="${V25_PACK:-3}"
 # One persistent worker per run (delta_expr_v21_small.slurm, measured 2026-10-05).
 WORKERS="${V25_WORKERS:-1}"
 
-BASE_OV="trainer.max_epochs=1200 data_module.batch_size=128 wandb.project=torchcell_019_morph_v25 regression_task.optimizer.lr=3e-4"
+BASE_OV="trainer.max_epochs=${V25_EPOCHS:-500} data_module.batch_size=128 wandb.project=torchcell_019_morph_v25 regression_task.optimizer.lr=3e-4"
 case "$STAGE" in
   canary) JOBS=(); RUN_OV=()
           for i in $(seq 1 "$PACK"); do

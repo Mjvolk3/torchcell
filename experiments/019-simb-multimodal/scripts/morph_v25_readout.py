@@ -8,9 +8,10 @@ A CELL is an arm (M_cls, M_pool, M_zs, M_xattn) plus the recipe tags the launche
 by split seed and initialization seed. Two statistics per run, as the gate records them:
 
   window      the registered window, mean of val/morphology/pearson_per_feature over
-              epochs 1,000 to 1,199 (only for a run that reached epoch 1,199; a run
-              short of it is PARTIAL and reports the mean over its last 200 epochs
-              under `partial_window`, never under `window`);
+              epochs 400 to 499 (only for a run that reached epoch 499; a run short of
+              it is PARTIAL and reports the mean over its last 200 epochs under
+              `partial_window`, never under `window`); `window_late` is the 1,000 to
+              1,199 mean of the first wave's 1,200-epoch runs;
   escape      the first epoch at which traineval/morphology/pearson_per_feature exceeds
               0.3, the plateau-escape criterion of the round (None if never), and the
               training fit at the last logged epoch.
@@ -36,7 +37,13 @@ ENTITY = "zhao-group"
 PROJECT = "torchcell_019_morph_v25"
 VAL = "val/morphology/pearson_per_feature"
 TRAIN = "traineval/morphology/pearson_per_feature"
-WINDOW = (1000, 1199)
+# The registered window of v25 (declared 2026-10-12 before any cell was read on it): the
+# loss finishes learning by epoch 50, an escape happens by epoch 400, and an escaped
+# run's validation peak sits at epochs 400 to 600 before it overfits, so the budget is
+# 500 epochs and the window the last 100. The 1,200-epoch cells of the first wave also
+# report their 1,000 to 1,199 mean (`window_late`) as the check that both rank alike.
+WINDOW = (400, 499)
+WINDOW_LATE = (1000, 1199)
 ESCAPE = 0.3
 # The launcher's SWEEP_OV tags replace the arm script's, so a v25 run carries the arm
 # (M_cls), the split (split0) and the init seed (init0) as separate tags.
@@ -69,6 +76,7 @@ def read_run(run: Any) -> dict[str, Any] | None:
     last = max((e for e, _ in val), default=-1)
     finished = last >= WINDOW[1]
     in_window = [v for e, v in val if WINDOW[0] <= e <= WINDOW[1]]
+    late = [v for e, v in val if WINDOW_LATE[0] <= e <= WINDOW_LATE[1]]
     tail = [v for e, v in val if e > last - 200]
     escape = next((e for e, v in train if v > ESCAPE), None)
     # Saturation: the validation score at the ladder epochs, the change over the last 200
@@ -94,6 +102,7 @@ def read_run(run: Any) -> dict[str, Any] | None:
         "last_epoch": last,
         "finished": finished,
         "window": st.mean(in_window) if finished and in_window else None,
+        "window_late": st.mean(late) if last >= WINDOW_LATE[1] and late else None,
         "partial_window": None if finished else (st.mean(tail) if tail else None),
         "roll_max": max((v for _, v in val), default=None),
         "train_last": train[-1][1] if train else None,
@@ -128,7 +137,7 @@ def table(cells: dict[str, dict[str, Any]]) -> str:
         "  \\footnotesize",
         "  \\caption[Round v25, inductive morphology]{Round v25 by cell (arm plus recipe), genotype only on "
         "fig3_core, 116 moving features. The window is the mean validation Pearson per feature over "
-        "epochs 1{,}000 to 1{,}199 of finished runs; the escape fraction is the share of runs whose "
+        "epochs 400 to 499 of finished runs (the 1{,}200-epoch runs of the first wave also carry their 1{,}000 to 1{,}199 mean in the json); the escape fraction is the share of runs whose "
         "training Pearson exceeded 0.3 at any epoch; the training fit is at the last logged epoch. A "
         "cell with unfinished runs is partial. Bold, the best finished window mean. "
         "\\src{experiments/019-simb-multimodal/scripts/morph_v25_readout.py}}",

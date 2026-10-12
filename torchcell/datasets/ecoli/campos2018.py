@@ -2089,6 +2089,39 @@ def verify_build(
     data_root: str | None = None,
     expected_count: int = EXPECTED_RECORDS,
 ) -> VerificationReport:
+    """L0-L4 for whichever Campos 2018 store ``dataset_root`` is, named by its basename.
+
+    This module builds two stores from one release, and
+    ``torchcell.database.build_dataset_lmdb --verify`` resolves both to this one entry
+    point by module, so the store's directory name picks the gate:
+    ``ecoli_growth_rate_campos2018`` runs :func:`verify_fitness_build` and
+    ``ecoli_morphology_campos2018`` runs :func:`verify_morphology_build`. A root that is
+    neither is refused before any record is read. Running the fitness gate on the
+    morphology store is what array 4011 task 53 did: it read ``phenotype["fitness"]``
+    from a record that carries ``morphology`` and raised ``KeyError: 'fitness'``.
+    """
+    verifiers = {
+        osp.basename(DATASET_ROOT_REL): verify_fitness_build,
+        osp.basename(MORPHOLOGY_ROOT_REL): verify_morphology_build,
+    }
+    name = osp.basename(osp.normpath(dataset_root))
+    if name not in verifiers:
+        raise ValueError(
+            f"{dataset_root} is not a Campos 2018 store; the stores are "
+            f"{sorted(verifiers)}"
+        )
+    return verifiers[name](
+        dataset_root, genome=genome, data_root=data_root, expected_count=expected_count
+    )
+
+
+def verify_fitness_build(
+    dataset_root: str,
+    *,
+    genome: EcoliK12BW25113Genome | None = None,
+    data_root: str | None = None,
+    expected_count: int = EXPECTED_RECORDS,
+) -> VerificationReport:
     """Run the fitness L0-L4 verifier on a built tree and write its report.
 
     Every record is checked against the BW25113 genome its references pin: the resolver
@@ -2237,7 +2270,7 @@ def main(argv: list[str] | None = None) -> int:
         dataset = GrowthRateCampos2018Dataset(root=root)
         print(f"len = {len(dataset)}")
         return 0
-    report = verify_build(root, data_root=data_root)
+    report = verify_fitness_build(root, data_root=data_root)
     print(report.summary())
     return 0 if report.passed else 1
 

@@ -898,18 +898,74 @@ def test_download_refuses_a_mirror_whose_file_is_gone(mirrored: Path) -> None:
         dataset.download()
 
 
-def test_verify_build_passes_on_the_synthetic_build(
+def test_verify_build_runs_the_fitness_gate_on_the_fitness_store(
     tmp_path: Path, mirrored: Path, bw25113: EcoliK12BW25113Genome
 ) -> None:
-    root = tmp_path / "dataset"
+    """The store's directory name, the one ``build_dataset_lmdb`` hands over, picks it."""
+    root = tmp_path / "ecoli_growth_rate_campos2018"
     c.GrowthRateCampos2018Dataset(root=str(root))
     report = c.verify_build(str(root), genome=bw25113, expected_count=_SYNTHETIC_KEPT)
     assert report.passed, report.summary()
+    assert report.dataset_name == "ecoli_growth_rate_campos2018"
     rows = {result.name: result for result in report.results}
     assert rows["count"].details["observed"] == _SYNTHETIC_KEPT
     assert rows["pair_uniqueness"].details["n_duplicated"] == 0
     assert rows["reference_one"].passed
+    assert "assay_coverage" not in rows
     assert (root / "preprocess" / "verification_report.json").exists()
+
+
+def test_verify_build_runs_the_morphology_gate_on_the_morphology_store(
+    tmp_path: Path, mirrored: Path, bw25113: EcoliK12BW25113Genome
+) -> None:
+    """Array 4011 task 53: the morphology store was given the fitness gate.
+
+    ``build_dataset_lmdb --verify`` resolves both Campos classes to this module's
+    ``verify_build``, which ran the fitness verifier on every root and raised
+    ``KeyError: 'fitness'`` on the first morphology record. The morphology store gets
+    exactly the rules :func:`verify_morphology_build` applies, and no fitness rule.
+    """
+    root = tmp_path / "ecoli_morphology_campos2018"
+    c.MorphologyCampos2018Dataset(root=str(root))
+    report = c.verify_build(str(root), genome=bw25113, expected_count=_SYNTHETIC_KEPT)
+    assert report.passed, report.summary()
+    assert report.dataset_name == "ecoli_morphology_campos2018"
+    direct = c.verify_morphology_build(
+        str(root), genome=bw25113, expected_count=_SYNTHETIC_KEPT
+    )
+    names = [result.name for result in report.results]
+    assert names == [result.name for result in direct.results]
+    assert names == [
+        "structural",
+        "count",
+        "pair_uniqueness",
+        "assay_coverage",
+        "value_fidelity",
+        "cv_nonnegative",
+        "vocabulary_parity",
+        "reference_populated",
+        "provenance_gaps",
+        "canonical_gene_names",
+        "uncertainty_sanity",
+        "compound_identity",
+        "media_compound_identity",
+        "media_membership",
+        "gene_containment_sgd",
+        "current_genome_genes",
+    ]
+    assert "reference_one" not in names
+
+
+def test_verify_build_refuses_a_root_that_is_neither_campos_store(
+    tmp_path: Path,
+) -> None:
+    """Refused by name before a genome is built or a record is read."""
+    with pytest.raises(
+        ValueError,
+        match=r"is not a Campos 2018 store; the stores are "
+        r"\['ecoli_growth_rate_campos2018', 'ecoli_morphology_campos2018'\]",
+    ):
+        c.verify_build(str(tmp_path / "dataset"))
 
 
 # --------------------------------------------------------------------------- #
@@ -1504,7 +1560,7 @@ def test_the_cli_builds_each_dataset_under_its_own_root(
 @pytest.mark.parametrize(
     ("command", "root_attr", "function"),
     [
-        ("verify", "DATASET_ROOT_REL", "verify_build"),
+        ("verify", "DATASET_ROOT_REL", "verify_fitness_build"),
         ("verify-morphology", "MORPHOLOGY_ROOT_REL", "verify_morphology_build"),
     ],
 )

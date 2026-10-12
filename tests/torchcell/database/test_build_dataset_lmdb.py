@@ -41,15 +41,26 @@ covers the dataset (a bioproduction registry first, then the loader module's
 to ``build_manifest.json.unverified.<stamp>``, so the store reads ``no_manifest``
 instead of ``fresh``; an entry point needing a ``family``, ``arm`` or ``name`` is refused
 rather than guessed at, and a dataset with none says so and keeps its manifest.
+
+2026.10.12 (array 4011 task 53): rule 3 resolves by MODULE, so the classes one module
+builds share its ``verify_build``. Over the real adapter map three modules are shared
+that way (``campos2018``, ``dechiara2022``, ``muenzner2024``), pinned exactly, and each
+one's ``verify_build`` must refuse a root that is none of its stores with ``ValueError``
+before it reads anything, with the network refused. ``campos2018`` did not: it ran the
+fitness gate on whatever root it was handed, so the morphology store's ``--verify``
+raised ``KeyError: 'fitness'`` and its manifest was retired.
 """
 
 from __future__ import annotations
 
+import contextlib
+import importlib
 import json
 import os
 import pickle
 import sys
 import types
+from collections import defaultdict
 from collections.abc import Iterator
 from pathlib import Path
 from types import SimpleNamespace
@@ -71,6 +82,7 @@ from tests.torchcell.datasets._genome_injection_fakes import (
     YeastLoader,
     install_bacterial_fakes,
 )
+from tests.torchcell.sequence.genome._bacterial_fixtures import forbid_network
 from torchcell.data.experiment_dataset import ExperimentDataset, post_process
 from torchcell.database.build_dataset_lmdb import (
     build_dataset,
@@ -1060,6 +1072,54 @@ def test_resolve_verifier_refuses_an_entry_point_it_cannot_call(
     for toy in (needs_family, needs_name):
         with pytest.raises(LookupError, match="no run_verification"):
             m.resolve_verifier(toy)
+
+
+def test_a_verify_build_shared_by_several_mapped_stores_refuses_a_root_of_none(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Rule 3 resolves by module, so a module building several stores must read the root.
+
+    ``campos2018.verify_build`` was the fitness gate for both of its stores, so the
+    morphology store's ``--verify`` read ``phenotype["fitness"]`` off a morphology
+    record (array 4011 task 53). A shared ``verify_build`` that dispatches on the
+    store's basename refuses a root that is none of its stores before building a genome
+    or reading a record; one that ignores the root reaches the refused network or the
+    missing store instead, and fails here.
+    """
+    from torchcell.knowledge_graphs.dataset_adapter_map import build_adapter_map
+
+    forbid_network(monkeypatch)
+    slugs_by_entry_point: dict[str, list[str]] = defaultdict(list)
+    for cls in build_adapter_map(include_private=True):
+        # no per-dataset entry point means no rule 3, which is what is under test here
+        with contextlib.suppress(LookupError):
+            kind, _ = m.resolve_verifier(cls)
+            if kind.endswith(".verify_build"):
+                slugs_by_entry_point[kind].append(m.dataset_slug(cls))
+    shared = {
+        kind: sorted(slugs)
+        for kind, slugs in slugs_by_entry_point.items()
+        if len(slugs) > 1
+    }
+    assert shared == {
+        "torchcell.datasets.ecoli.campos2018.verify_build": [
+            "ecoli_growth_rate_campos2018",
+            "ecoli_morphology_campos2018",
+        ],
+        "torchcell.datasets.scerevisiae.dechiara2022.verify_build": [
+            "cell_yield_dechiara2022",
+            "doubling_time_dechiara2022",
+            "life_cycle_dechiara2022",
+        ],
+        "torchcell.datasets.scerevisiae.muenzner2024.verify_build": [
+            "protein_turnover_muenzner2024",
+            "proteome_muenzner2024",
+        ],
+    }
+    for kind in shared:
+        verify_build = importlib.import_module(kind.rsplit(".", 1)[0]).verify_build
+        with pytest.raises(ValueError, match="not_a_store"):
+            verify_build(str(tmp_path / "not_a_store"), data_root=str(tmp_path))
 
 
 def test_retire_manifest_is_a_rename_and_refuses_a_taken_stamp(tmp_path: Path) -> None:

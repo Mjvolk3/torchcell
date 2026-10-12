@@ -218,10 +218,15 @@ def resolve_verifier(dataset_class: type) -> tuple[str, Callable[[str], list[Any
        written here, since in a family run the runner writes it.
 
     A module whose entry point needs an argument this CLI cannot supply (a ``family``,
-    an ``arm``, a dataset ``name`` -- the modules that build several stores) does NOT
-    match: those stores are either held by a registry, which is rule 1, or verified by
-    their family runner, which reads every store in the family and is not a per-dataset
-    build step.
+    an ``arm``, a dataset ``name``) does NOT match: those stores are either held by a
+    registry, which is rule 1, or verified by their family runner, which reads every
+    store in the family and is not a per-dataset build step.
+
+    Rule 3 resolves by MODULE, so every store a module builds reaches the same
+    ``verify_build``. A module that builds several stores (``campos2018``,
+    ``dechiara2022``, ``muenzner2024``) therefore picks the gate from the store root's
+    basename and refuses a root that is none of its stores; one that ignored the root
+    would run one store's gate on another's records.
     """
     from torchcell.verification import runners
 

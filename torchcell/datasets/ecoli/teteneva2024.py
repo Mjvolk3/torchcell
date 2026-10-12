@@ -37,35 +37,47 @@ Supplementary Table S4 actually reports, which cannot be read (gate 2). So no ge
 class, no ``BacterialReferenceStrain`` member and no schema vocabulary names this set
 yet: nothing served changes.
 
-**Gate 2, the paper: BLOCKED on a curation decision, nothing was fetched.** The paper
-is in neither mirror: ``$DATA_ROOT/torchcell-library/`` holds no Teteneva key and
-``$DATA_ROOT/torchcell-raw/`` holds none either (checked 2026-10-09). The library
-mirror is populated FROM Zotero by ``scripts/lit_sync.py``, and filing a paper in
-Zotero is a curation decision that needs an explicit instruction each time, which the
-2026.10.08 entry of ``notes/experiments.database.expansion-bacteria.md`` records as
-still open for this row. So every schema value a loader needs is a typed absence here
-(:data:`LOADER_GAPS`), not a guess: the replicate count, the fitness statistic and its
-scale, time zero, the medium (an oligotrophic natural water, which would be a new
-``Media`` entry that must be defined from the paper), and the identifier namespace of
-Table S4. ``SourcedValue`` cannot even be constructed for this row, because it requires
-a ``citation_key`` and the ``sha256`` of a mirrored artifact.
-
-What makes the refusal cheap to reverse: the whole deposit is in the PMC open-access
-bucket, listed on 2026-10-09 (:data:`PMC_OA_DEPOSIT`), including
-``supplementary_table_s4_wrae096.xlsx``, the workbook the row was counted off. Once the
-paper is filed in Zotero, ``lit_sync`` plus ``lit_capture_si`` mirror it through the
-existing ``pmc_cloud`` retriever with no by-hand step. :data:`EDITS_NEEDED` is the rest
-of the work, in order.
+**Gate 2, the paper: the SI is deposited, the paper text is not yet mirrored.** The
+owner filed the paper in Zotero on 2026-10-12 (group item ``PUKZFNFZ`` in
+``database/Escherichia-coli``, #910), and ``scripts/lit_sync.py`` mirrors it into
+``$DATA_ROOT/torchcell-library/`` on its next nightly run; until then the library
+mirror holds no Teteneva key. The same day the owner deposited five supplementary files
+by hand into ``$DATA_ROOT/torchcell-raw/tetenevaGenomewideScreenGenetic2024/si/``
+(:data:`SI_DEPOSIT`, ``manual_browser``), and every one of them is byte-identical to the
+PMC open-access bucket object of the same name (fetched and compared on 2026-10-12), so
+a rebuild needs no person. Table S4 is measured off the pinned bytes
+(:func:`table_s4_inventory`): 11,027 gene-by-water-sample rows, 66,162 non-empty
+fitness values (six per row: filtered and non-filtered water at days 2, 4 and 8), three
+water samples, and 3,691 distinct genes named ONLY by a gene symbol (column
+``Gene name``). That answers the identifier half of gate 1a without deciding it: a
+symbol route is needed whichever annotation member is read, and
+:data:`SYMBOL_ROUTES` counts how the symbols land on each. Every schema value a loader
+needs is still a typed absence (:data:`LOADER_GAPS`), because the values that decide
+them (the statistic, time zero, the water) are in the paper text, which is not yet in
+the library mirror, and the annotation route is the owner's decision (#910).
+:data:`EDITS_NEEDED` is the rest of the work, in order.
 """
 
 from __future__ import annotations
 
 import gzip
+import io
 import re
+from collections import Counter
+from pathlib import Path
 from typing import Final
 
+from Bio import SeqIO
+from openpyxl import load_workbook
 from pydantic import BaseModel, ConfigDict, Field
 
+from torchcell.literature.manifest import ROLE_SI_DATA, ROLE_SI_PDF
+from torchcell.literature.manual_deposit import (
+    DepositedFile,
+    ManualDeposit,
+    ScriptedEquivalent,
+)
+from torchcell.literature.retrieve import pmc_cloud_url
 from torchcell.sequence.genome.bacterial import read_genbank
 from torchcell.sequence.genome.registry import ECOLI_K12_W3110, resolve
 from torchcell.verification.report import Provenance
@@ -421,23 +433,251 @@ def eck_jw_b_notes(data_root: str | None = None) -> tuple[tuple[str, str, str], 
         return tuple(ECK_JW_B_NOTE.findall(handle.read()))
 
 
+def symbol_index(member: str, data_root: str | None = None) -> dict[str, set[str]]:
+    """``/gene`` symbol -> the gene features carrying it, for one annotation member.
+
+    A feature is keyed by its ``locus_tag`` where it has one (RefSeq) and by its
+    location otherwise (the GenBank member has none), so two features sharing a symbol
+    count as two.
+    """
+    path = resolve(ECOLI_K12_W3110, member, data_root=data_root)
+    index: dict[str, set[str]] = {}
+    with gzip.open(path, "rt") as handle:
+        for record in SeqIO.parse(handle, "genbank"):  # type: ignore[no-untyped-call]  # Bio.SeqIO is untyped
+            for feature in record.features:
+                if feature.type != "gene":
+                    continue
+                key = feature.qualifiers.get("locus_tag", [str(feature.location)])[0]
+                for symbol in feature.qualifiers.get("gene", []):
+                    index.setdefault(symbol, set()).add(key)
+    return index
+
+
+def symbol_routes(
+    symbols: tuple[str, ...], data_root: str | None = None
+) -> dict[str, dict[str, int]]:
+    """How Table S4's symbols land on each annotation member, by ``/gene`` only.
+
+    ``unique``: one gene feature carries the symbol; ``ambiguous``: two or more do;
+    ``none``: no gene feature's ``/gene`` is the symbol (a synonym route is not
+    counted, because which synonyms a route may follow is part of the decision).
+    """
+    out: dict[str, dict[str, int]] = {}
+    for member in (GENBANK_MEMBER, REFSEQ_MEMBER):
+        index = symbol_index(member, data_root)
+        counts = Counter(
+            "none"
+            if symbol not in index
+            else "unique"
+            if len(index[symbol]) == 1
+            else "ambiguous"
+            for symbol in symbols
+        )
+        out[member] = {k: counts.get(k, 0) for k in ("unique", "ambiguous", "none")}
+    return out
+
+
+#: Measured on 2026-10-12 by :func:`symbol_routes` over the 3,691 Table S4 symbols.
+SYMBOL_ROUTES: Final = {
+    GENBANK_MEMBER: {"unique": 3_036, "ambiguous": 0, "none": 655},
+    REFSEQ_MEMBER: {"unique": 3_607, "ambiguous": 44, "none": 40},
+}
+
+
 # --------------------------------------------------------------------------- #
 # Gate 2: the refusal
 # --------------------------------------------------------------------------- #
-#: Neither mirror holds this paper, checked on 2026-10-09 by listing both roots.
+#: The library mirror holds no Teteneva key (the paper was filed in Zotero on
+#: 2026-10-12 and lit_sync has not run since); the raw mirror holds the SI deposit's
+#: key, checked on 2026-10-12 by listing both roots.
 LIBRARY_MIRROR_KEYS_MATCHING_TETENEVA: Final = 0
-RAW_MIRROR_KEYS_MATCHING_TETENEVA: Final = 0
+RAW_MIRROR_KEYS_MATCHING_TETENEVA: Final = 1
+#: The Zotero item the owner filed on 2026-10-12 (#910), and its PDF attachment.
+ZOTERO_ITEM: Final = "PUKZFNFZ"
+ZOTERO_PDF_ATTACHMENT: Final = "DFFQ6A6W"
+
+# --------------------------------------------------------------------------- #
+# Gate 2: the owner's SI deposit (#910, 2026-10-12)
+# --------------------------------------------------------------------------- #
+SI_PAGE: Final = f"https://doi.org/{PAPER_DOI}"
+
+
+def _si_file(
+    name: str, role: str, sha256: str, size: int, arrived: str, holds: str
+) -> DepositedFile:
+    """One deposited SI file, with the PMC bucket object measured to equal it."""
+    key = f"{_OA_PREFIX}/{name}"
+    return DepositedFile(
+        path=f"si/{name}",
+        role=role,
+        sha256=sha256,
+        bytes=size,
+        original_filename=name,
+        arrived_at=f"2026-10-12T03:40:{arrived}-05:00",
+        description=holds,
+        scripted_equivalent=ScriptedEquivalent(
+            retriever="torchcell.literature.retrieve.pmc_cloud_object",
+            params={"key": key},
+            url=pmc_cloud_url(key),
+            checked_at="2026-10-12",
+        ),
+    )
+
+
+SI_DEPOSIT: Final = ManualDeposit(
+    citation_key=EXPECTED_CITATION_KEY,
+    doi=PAPER_DOI,
+    title=PAPER_TITLE,
+    source_url=SI_PAGE,
+    retrieval_command=(
+        f"open {SI_PAGE} (The ISME Journal) in a browser, open the article's "
+        "Supplementary data, download the five files, and copy them unchanged to si/; "
+        "or, measured equivalent, fetch each from the PMC Article Datasets bucket "
+        f"under {_OA_PREFIX}/ with torchcell.literature.retrieve.pmc_cloud_object"
+    ),
+    retrieved_by="the owner (mjvolk3), browser download",
+    deposited_at="2026-10-12",
+    issues=(910,),
+    note="five of the article's supplementary files; the PMC bucket also lists "
+    "Supplementary Table S1 and Figures S3 and S4, which were not downloaded. The "
+    "DOI 10.1093/ismejo/wrae096 is the one NCBI esummary returned for PMC11188689 and "
+    f"the one Zotero item {ZOTERO_ITEM} was filed under (#910); every file name "
+    "carries the article id 'wrae096'",
+    files=(
+        _si_file(
+            "supplementary_figure_s1_wrae096.pdf",
+            ROLE_SI_PDF,
+            "65bcac7a61e938a92b90838401e7a153e6ff5ec33ae57b5840950fb11efd5d82",
+            354566,
+            "57",
+            "Supplementary Figure S1, hierarchical clustering of gene fitness, 1 page",
+        ),
+        _si_file(
+            "supplementary_figure_s2_wrae096.pdf",
+            ROLE_SI_PDF,
+            "d88f962bd32bb756a0d16659e5b3208ad84b7dc620e21d747f0ff549d369f356",
+            251076,
+            "57",
+            "Supplementary Figure S2, PCA of gene fitness per water sample, 1 page",
+        ),
+        _si_file(
+            "supplementary_table_s2_wrae096.pdf",
+            ROLE_SI_PDF,
+            "c41e8b17ed4ecd8ddf420332e4d32a33aae13ae7b029feb275632a5baf5ab396",
+            36151,
+            "57",
+            "Supplementary Table S2, date, pH, air and water temperature of five lake "
+            "water samples, 1 page",
+        ),
+        _si_file(
+            "supplementary_table_s3_wrae096.xlsx",
+            ROLE_SI_DATA,
+            "5cec5dd2f2b3fbc46a0012154b1864dda812326f12b1622391081e96995e323b",
+            14056,
+            "57",
+            "Supplementary Table S3, sequencing QC of 63 samples (FastQC/MultiQC)",
+        ),
+        _si_file(
+            "supplementary_table_s4_wrae096.xlsx",
+            ROLE_SI_DATA,
+            "678bbe6cecc2a11517fc11cbeb4d5a5ff88bca3e4aea1264bad336d5fccad0dc",
+            1809613,
+            "58",
+            "Supplementary Table S4, gene fitness values, principal components and "
+            "Euclidean distances per water sample",
+        ),
+    ),
+)
+TABLE_S4_RELPATH: Final = "si/supplementary_table_s4_wrae096.xlsx"
+TABLE_S3_RELPATH: Final = "si/supplementary_table_s3_wrae096.xlsx"
+
+
+class TableS4Inventory(BaseModel):
+    """What Supplementary Table S4's DATA sheet holds, measured off the bytes."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    header_rows: int
+    gene_by_sample_rows: int
+    rows_per_water_sample: dict[int, int]
+    fitness_columns: tuple[str, ...]
+    fitness_values: int
+    identifier_column: str
+    distinct_symbols: tuple[str, ...]
+    other_columns: tuple[str, ...]
+
+
+#: Table S4's DATA sheet: three header rows, then one row per (water sample, gene).
+_S4_HEADER_ROWS: Final = 3
+_S4_FITNESS: Final = slice(1, 7)
+_S4_SYMBOL: Final = 7
+
+
+def table_s4_inventory(path: str | Path) -> TableS4Inventory:
+    """Measure Table S4: rows, water samples, the six fitness columns, the identifiers.
+
+    The three header rows name the block ("gene fitness values", then "filtered" and
+    "non-filtered", then "day 2/4/8"), so a fitness column is named
+    ``<water>, <day>`` by carrying the merged cells to the right. Raises ``ValueError``
+    when the headers are not that layout or a row carries no gene symbol.
+    """
+    workbook = load_workbook(io.BytesIO(Path(path).read_bytes()), read_only=True)
+    rows = list(workbook["DATA"].iter_rows(values_only=True))
+    workbook.close()
+    top, water, day = rows[:_S4_HEADER_ROWS]
+    if (top[0], top[1], top[_S4_SYMBOL]) != (
+        "Lake water sample",
+        "gene fitness values",
+        "Gene name",
+    ):
+        raise ValueError(f"Table S4 header is {top}")
+    columns: list[str] = []
+    current = ""
+    for w, d in zip(water[_S4_FITNESS], day[_S4_FITNESS], strict=True):
+        current = str(w) if w is not None else current
+        columns.append(f"{current}, {d}")
+    body = rows[_S4_HEADER_ROWS:]
+    if any(row[_S4_SYMBOL] is None for row in body):
+        raise ValueError("a Table S4 row carries no gene symbol")
+    per_sample = Counter(int(row[0]) for row in body)
+    return TableS4Inventory(
+        header_rows=_S4_HEADER_ROWS,
+        gene_by_sample_rows=len(body),
+        rows_per_water_sample=dict(sorted(per_sample.items())),
+        fitness_columns=tuple(columns),
+        fitness_values=sum(1 for r in body for c in r[_S4_FITNESS] if c is not None),
+        identifier_column=str(top[_S4_SYMBOL]),
+        distinct_symbols=tuple(sorted({str(row[_S4_SYMBOL]) for row in body})),
+        other_columns=tuple(str(c) for c in top[_S4_SYMBOL + 1 :] if c is not None),
+    )
+
+
+#: Measured on the deposited bytes on 2026-10-12 by :func:`table_s4_inventory`.
+TABLE_S4_GENE_BY_SAMPLE_ROWS: Final = 11_027
+TABLE_S4_FITNESS_VALUES: Final = 66_162
+TABLE_S4_ROWS_PER_WATER_SAMPLE: Final = {1: 3_675, 2: 3_679, 3: 3_673}
+TABLE_S4_DISTINCT_SYMBOLS: Final = 3_691
+TABLE_S4_FITNESS_COLUMNS: Final = (
+    "filtered, day 2",
+    "filtered, day 4",
+    "filtered, day 8",
+    "non-filtered, day 2",
+    "non-filtered, day 4",
+    "non-filtered, day 8",
+)
 
 _RESOLVE_WITH_PAPER = Provenance(
     source_uri=f"https://doi.org/{PAPER_DOI}",
     page="Materials and methods",
-    method="not retrieved: the paper is in neither mirror and Zotero curation is the "
-    "owner's decision",
+    method="not yet mirrored: filed in Zotero on 2026-10-12 (PUKZFNFZ), mirrored by "
+    "the next lit_sync run",
 )
 _RESOLVE_WITH_TABLE_S4 = Provenance(
     source_uri=f"https://pmc-oa-opendata.s3.amazonaws.com/{TABLE_S4_OA_KEY}",
     page="Supplementary Table S4",
-    method="not retrieved: see above",
+    method="deposited 2026-10-12 as torchcell-raw/<key>/si/"
+    "supplementary_table_s4_wrae096.xlsx (byte-identical to this bucket object); its "
+    "legend does not state the statistic, so the paper text decides",
 )
 
 
@@ -484,10 +724,11 @@ LOADER_GAPS: Final = (
     ),
     _gap(
         "gene_namespace",
-        "which identifiers Table S4 names its 3,691 genes by. This also decides gate "
-        "1a: a b-number or JW number is reachable through the GenBank ECK:JW:b notes, "
-        "a Y75_RS tag through the RefSeq member, and a gene symbol through neither "
-        "uniquely",
+        "Table S4 names its 3,691 genes by gene symbol only (column 'Gene name'; "
+        "measured 2026-10-12, SYMBOL_ROUTES). By /gene alone 3,036 land uniquely on "
+        "the GenBank member and 655 on none; 3,607 land uniquely on the RefSeq member, "
+        "44 on two or more features and 40 on none. Which member, and which synonym "
+        "rule closes the remainder, is the owner's annotation-route decision (#910)",
         in_table=True,
     ),
     _gap(
@@ -498,20 +739,17 @@ LOADER_GAPS: Final = (
     ),
 )
 
-#: The work left, in order. Everything after the first item waits on the first.
+#: The work left, in order. Filing the paper (PUKZFNFZ) and depositing Tables S3 and
+#: S4 were done on 2026-10-12; the route decision is the owner's.
 EDITS_NEEDED: Final = (
-    "file the paper in Zotero (owner's curation decision, group library "
-    "database/Escherichia-coli, matched by DOI 10.1093/ismejo/wrae096), then "
-    "scripts/lit_sync.py and scripts/lit_capture_si.py mirror it; every object is in "
-    "the PMC open-access bucket under PMC11188689.1, so the pmc_cloud retriever needs "
-    "no by-hand step",
-    "deposit Supplementary Table S4 in the raw mirror "
-    "($DATA_ROOT/torchcell-raw/<key>/) with its retrieval record and sha256, and "
-    "re-count its 11,027 rows and 66,162 non-empty values off the pinned bytes",
+    "let scripts/lit_sync.py mirror the filed paper (Zotero PUKZFNFZ, filed "
+    "2026-10-12) into the library mirror and OCR it; its Methods source the "
+    "statistic, time zero, the water and the replicate design",
     "decide the annotation route for ecoli_K12_W3110_ASM1024v1 against the "
-    "identifiers Table S4 reports: GenBank-first does not apply (the deposit carries "
-    "no locus_tag), so either the set is read RefSeq-primary with Y75_RS tags or the "
-    "ingest gains a symbol-plus-ECK:JW:b route",
+    "identifiers Table S4 reports, which are gene symbols only (SYMBOL_ROUTES): "
+    "GenBank-first does not apply (the deposit carries no locus_tag), so either the "
+    "set is read RefSeq-primary with Y75_RS tags and a symbol route, or the ingest "
+    "gains a symbol-plus-ECK:JW:b route",
     "torchcell/sequence/genome/ecoli/: a W3110 genome class beside EcoliK12Genome, "
     "reading whichever member the route decides",
     "torchcell/datamodels/schema.py: 'W3110' in BacterialReferenceStrain; "

@@ -6137,17 +6137,499 @@
 
 
 
+<span class="c1"># --- begin #924: the typed evidence behind a gene-essentiality call ------------ #</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">EssentialityEvidenceClass</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The PHYSICAL observation a gene-essentiality call rests on (#924).</span>
+
+<span class="sd">    The parent level of :class:`EssentialityEvidenceType`: two calls of one class</span>
+<span class="sd">    observed the same kind of thing, and differ only in how it was read out or scored.</span>
+<span class="sd">    Calls of different classes are different measurements, and Baba 2006 states the</span>
+<span class="sd">    difference that matters for a consumer pooling them: a population method can call a</span>
+<span class="sd">    slow grower essential, a recovery method cannot.</span>
+
+<span class="sd">    - ``mutant_recovery``: a defined mutant of each gene is built one gene at a time and</span>
+<span class="sd">      recovered as a clone, or not (Baba 2006, the Keio construction).</span>
+<span class="sd">    - ``insertion_depletion``: a pooled random-insertion library is grown and the</span>
+<span class="sd">      insertions that survive are mapped; a gene without enough of them is called</span>
+<span class="sd">      essential (Gerdes 2003, Goodall 2018, Price 2018).</span>
+<span class="sd">    - ``curated_annotation``: a database curator's record of a primary paper's</span>
+<span class="sd">      observation (SGD's inviable null phenotypes).</span>
+<span class="sd">    """</span>
+
+    <span class="n">mutant_recovery</span> <span class="o">=</span> <span class="s2">"mutant_recovery"</span>
+    <span class="n">insertion_depletion</span> <span class="o">=</span> <span class="s2">"insertion_depletion"</span>
+    <span class="n">curated_annotation</span> <span class="o">=</span> <span class="s2">"curated_annotation"</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">EssentialityEvidenceType</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The readout and rule that turn the observation into the call (#924).</span>
+
+<span class="sd">    The leaf level; each member has exactly one parent in</span>
+<span class="sd">    :data:`ESSENTIALITY_EVIDENCE_CLASS`.</span>
+
+<span class="sd">    - ``construction_outcome`` (``mutant_recovery``): targeted replacement, KmR</span>
+<span class="sd">      colonies checked by PCR; a gene is a candidate essential gene when too few</span>
+<span class="sd">      colonies have the expected structure (Baba 2006).</span>
+<span class="sd">    - ``genetic_footprinting`` (``insertion_depletion``): insertions mapped by nested</span>
+<span class="sd">      PCR after outgrowth in a fermentor; essential when no disruptive insertion is</span>
+<span class="sd">      recovered (Gerdes 2003).</span>
+<span class="sd">    - ``tradis_insertion_index`` (``insertion_depletion``): transposon junctions</span>
+<span class="sd">      sequenced (TraDIS); the insertion index per gene is called by a two-mode</span>
+<span class="sd">      likelihood ratio (Goodall 2018).</span>
+<span class="sd">    - ``rb_tnseq_coverage_and_fitness`` (``insertion_depletion``): TnSeq of an RB-TnSeq</span>
+<span class="sd">      library; essential or important for growth when the gene got no fitness value and</span>
+<span class="sd">      both normalized densities are under a threshold (Price 2018).</span>
+<span class="sd">    - ``curated_null_phenotype`` (``curated_annotation``): an SGD phenotype annotation of</span>
+<span class="sd">      a null allele as inviable.</span>
+
+<span class="sd">    A graded call (Royet 2025's HMM states, #909) is a different released quantity, so</span>
+<span class="sd">    it is a sibling of ``GeneEssentialityPhenotype`` under ``Phenotype`` carrying the</span>
+<span class="sd">    same descriptor, with its rule added here as a new ``insertion_depletion`` leaf.</span>
+<span class="sd">    """</span>
+
+    <span class="n">construction_outcome</span> <span class="o">=</span> <span class="s2">"construction_outcome"</span>
+    <span class="n">genetic_footprinting</span> <span class="o">=</span> <span class="s2">"genetic_footprinting"</span>
+    <span class="n">tradis_insertion_index</span> <span class="o">=</span> <span class="s2">"tradis_insertion_index"</span>
+    <span class="n">rb_tnseq_coverage_and_fitness</span> <span class="o">=</span> <span class="s2">"rb_tnseq_coverage_and_fitness"</span>
+    <span class="n">curated_null_phenotype</span> <span class="o">=</span> <span class="s2">"curated_null_phenotype"</span>
+
+
+<span class="c1">#: The parent of each evidence type: the DAG of the two enums, checked on every record.</span>
+<span class="n">ESSENTIALITY_EVIDENCE_CLASS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span>
+    <span class="n">EssentialityEvidenceType</span><span class="p">,</span> <span class="n">EssentialityEvidenceClass</span>
+<span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">EssentialityEvidenceType</span><span class="o">.</span><span class="n">construction_outcome</span><span class="p">:</span> <span class="p">(</span>
+        <span class="n">EssentialityEvidenceClass</span><span class="o">.</span><span class="n">mutant_recovery</span>
+    <span class="p">),</span>
+    <span class="n">EssentialityEvidenceType</span><span class="o">.</span><span class="n">genetic_footprinting</span><span class="p">:</span> <span class="p">(</span>
+        <span class="n">EssentialityEvidenceClass</span><span class="o">.</span><span class="n">insertion_depletion</span>
+    <span class="p">),</span>
+    <span class="n">EssentialityEvidenceType</span><span class="o">.</span><span class="n">tradis_insertion_index</span><span class="p">:</span> <span class="p">(</span>
+        <span class="n">EssentialityEvidenceClass</span><span class="o">.</span><span class="n">insertion_depletion</span>
+    <span class="p">),</span>
+    <span class="n">EssentialityEvidenceType</span><span class="o">.</span><span class="n">rb_tnseq_coverage_and_fitness</span><span class="p">:</span> <span class="p">(</span>
+        <span class="n">EssentialityEvidenceClass</span><span class="o">.</span><span class="n">insertion_depletion</span>
+    <span class="p">),</span>
+    <span class="n">EssentialityEvidenceType</span><span class="o">.</span><span class="n">curated_null_phenotype</span><span class="p">:</span> <span class="p">(</span>
+        <span class="n">EssentialityEvidenceClass</span><span class="o">.</span><span class="n">curated_annotation</span>
+    <span class="p">),</span>
+<span class="p">}</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">FootprintingCall</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A genetic-footprinting call as Gerdes 2003 Table S1 writes it.</span>
+
+<span class="sd">    ``N*`` is an N call whose asterisk the release does not define (accD's call is</span>
+<span class="sd">    ``N*`` and the page says accD "is called nonessential"). ``X`` ("the gene was not</span>
+<span class="sd">    covered") and ``?`` ("ambiguous") have no boolean, so ``GeneEssentialityPhenotype``</span>
+<span class="sd">    refuses them; they belong on a graded sibling (#909), not on a boolean.</span>
+<span class="sd">    """</span>
+
+    <span class="n">essential</span> <span class="o">=</span> <span class="s2">"E"</span>
+    <span class="n">non_essential</span> <span class="o">=</span> <span class="s2">"N"</span>
+    <span class="n">non_essential_flagged</span> <span class="o">=</span> <span class="s2">"N*"</span>
+    <span class="n">not_covered</span> <span class="o">=</span> <span class="s2">"X"</span>
+    <span class="n">ambiguous</span> <span class="o">=</span> <span class="s2">"?"</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">TradisCall</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A TraDIS call as Goodall 2018 Tables S1 and S4 release it (one-hot columns).</span>
+
+<span class="sd">    ``unclear`` (log likelihood ratio within the threshold) has no boolean, so</span>
+<span class="sd">    ``GeneEssentialityPhenotype`` refuses it, as it refuses the footprinting X and ?.</span>
+<span class="sd">    """</span>
+
+    <span class="n">essential</span> <span class="o">=</span> <span class="s2">"essential"</span>
+    <span class="n">non_essential</span> <span class="o">=</span> <span class="s2">"non_essential"</span>
+    <span class="n">unclear</span> <span class="o">=</span> <span class="s2">"unclear"</span>
+
+
+<span class="c1">#: The boolean each released footprinting call is; None where the call has none.</span>
+<span class="n">FOOTPRINTING_CALL_IS_ESSENTIAL</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">FootprintingCall</span><span class="p">,</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">FootprintingCall</span><span class="o">.</span><span class="n">essential</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">FootprintingCall</span><span class="o">.</span><span class="n">non_essential</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">FootprintingCall</span><span class="o">.</span><span class="n">non_essential_flagged</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">FootprintingCall</span><span class="o">.</span><span class="n">not_covered</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">FootprintingCall</span><span class="o">.</span><span class="n">ambiguous</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="c1">#: The boolean each released TraDIS call is; None where the call has none.</span>
+<span class="n">TRADIS_CALL_IS_ESSENTIAL</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">TradisCall</span><span class="p">,</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">TradisCall</span><span class="o">.</span><span class="n">essential</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">TradisCall</span><span class="o">.</span><span class="n">non_essential</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">TradisCall</span><span class="o">.</span><span class="n">unclear</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="c1">#: The per-record statistics each evidence type may carry. A statistic belongs to the</span>
+<span class="c1">#: one evidence type whose release defines it, so it is optional by construction and</span>
+<span class="c1">#: refused on any other type.</span>
+<span class="n">ESSENTIALITY_EVIDENCE_FIELDS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">EssentialityEvidenceType</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">EssentialityEvidenceType</span><span class="o">.</span><span class="n">construction_outcome</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">"colonies_verified"</span><span class="p">,</span>
+        <span class="s2">"colonies_tested"</span><span class="p">,</span>
+        <span class="s2">"percent_verified"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">EssentialityEvidenceType</span><span class="o">.</span><span class="n">genetic_footprinting</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">"footprinting_call"</span><span class="p">,</span>
+        <span class="s2">"footprint_insertions_aa"</span><span class="p">,</span>
+        <span class="s2">"assertion_error"</span><span class="p">,</span>
+        <span class="s2">"assertion_error_is_upper_bound"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">EssentialityEvidenceType</span><span class="o">.</span><span class="n">tradis_insertion_index</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">"tradis_call"</span><span class="p">,</span>
+        <span class="s2">"insertion_index"</span><span class="p">,</span>
+        <span class="s2">"log_likelihood_ratio"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">EssentialityEvidenceType</span><span class="o">.</span><span class="n">rb_tnseq_coverage_and_fitness</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">"tnseq_reads"</span><span class="p">,</span>
+        <span class="s2">"normalized_read_density"</span><span class="p">,</span>
+        <span class="s2">"central_insertion_positions"</span><span class="p">,</span>
+        <span class="s2">"normalized_insertion_density"</span><span class="p">,</span>
+        <span class="s2">"gene_gc_fraction"</span><span class="p">,</span>
+        <span class="s2">"false_discovery_rate_lower"</span><span class="p">,</span>
+        <span class="s2">"false_discovery_rate_upper"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">EssentialityEvidenceType</span><span class="o">.</span><span class="n">curated_null_phenotype</span><span class="p">:</span> <span class="p">(</span><span class="s2">"curated_experiment_type"</span><span class="p">,),</span>
+<span class="p">}</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">EssentialityStatementRole</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The role a sourced statement plays in a gene-essentiality call's evidence.</span>
+
+<span class="sd">    - ``scoring_rule``: the rule that turns the observation into the call; its</span>
+<span class="sd">      ``value`` is the threshold or criterion.</span>
+<span class="sd">    - ``call_definition``: the source's own words for what its call means; on the</span>
+<span class="sd">      boolean leaf, what ``is_essential=True`` means (Baba's "candidates for essential</span>
+<span class="sd">      genes", Price's "essential or important for growth (nearly essential)").</span>
+<span class="sd">    - ``caveat``: a caveat the source states about its own calls (Baba 2006 on</span>
+<span class="sd">      population methods, Price 2018's false-discovery rate).</span>
+<span class="sd">    - ``statistic_definition``: the source's definition of a per-record statistic the</span>
+<span class="sd">      evidence carries (the colony counts, the assertion error, the insertion index,</span>
+<span class="sd">      the TnSeq coverage columns).</span>
+<span class="sd">    """</span>
+
+    <span class="n">scoring_rule</span> <span class="o">=</span> <span class="s2">"scoring_rule"</span>
+    <span class="n">call_definition</span> <span class="o">=</span> <span class="s2">"call_definition"</span>
+    <span class="n">caveat</span> <span class="o">=</span> <span class="s2">"caveat"</span>
+    <span class="n">statistic_definition</span> <span class="o">=</span> <span class="s2">"statistic_definition"</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">EssentialityStatement</span><span class="p">(</span><span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One verbatim statement of the source about its essentiality call, and its role.</span>
+
+<span class="sd">    The quote is ``provenance``, the one name every ``SourcedValue`` field carries, so</span>
+<span class="sd">    a generic auditor finds it without a per-class table.</span>
+<span class="sd">    """</span>
+
+    <span class="n">role</span><span class="p">:</span> <span class="n">EssentialityStatementRole</span>
+    <span class="n">provenance</span><span class="p">:</span> <span class="n">SourcedValue</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the statement, verbatim with its source's sha256"</span>
+    <span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">GeneEssentialityEvidence</span><span class="p">(</span><span class="n">ProvenanceGapMixin</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""What a gene-essentiality call IS: its evidence type, rule and statistics (#924).</span>
+
+<span class="sd">    ``GeneEssentialityPhenotype.is_essential`` means a different thing in every store</span>
+<span class="sd">    that writes it: a failed construction (Baba 2006), no disruptive insertion after 23</span>
+<span class="sd">    doublings of a pool (Gerdes 2003), the low mode of a TraDIS insertion index</span>
+<span class="sd">    (Goodall 2018), no fitness value and low TnSeq coverage (Price 2018), or a curated</span>
+<span class="sd">    inviable null phenotype (SGD). This descriptor states which, on every record.</span>
+
+<span class="sd">    Every record carries the two-level type (:class:`EssentialityEvidenceClass` and its</span>
+<span class="sd">    :class:`EssentialityEvidenceType` leaf, checked against</span>
+<span class="sd">    :data:`ESSENTIALITY_EVIDENCE_CLASS`) and the source's own statements about the call,</span>
+<span class="sd">    each verbatim with sha256 and typed by its :class:`EssentialityStatementRole`:</span>
+<span class="sd">    exactly one ``scoring_rule`` (the rule that made the call), exactly one</span>
+<span class="sd">    ``call_definition`` (what a True call means), any ``caveat`` the source states about</span>
+<span class="sd">    its own calls, and the ``statistic_definition`` of each statistic the record</span>
+<span class="sd">    carries. Only what the source states about its own method goes here.</span>
+
+<span class="sd">    The per-record statistics are OPTIONAL BY CONSTRUCTION, because each belongs to one</span>
+<span class="sd">    evidence type (:data:`ESSENTIALITY_EVIDENCE_FIELDS`) and is refused on any other:</span>
+<span class="sd">    ``None`` means "this evidence type does not release it". A reference phenotype</span>
+<span class="sd">    (the unperturbed parent) carries the type, rule and definition of its dataset and</span>
+<span class="sd">    no statistics, since no call was made on it. Within its type a statistic is</span>
+<span class="sd">    value-or-gap where the source defines it for the record (a footprinting E call's</span>
+<span class="sd">    ``assertion_error``), and the loaders' L2 checks require the rest.</span>
+
+<span class="sd">    The descriptor reads no boolean, so it is not tied to ``GeneEssentialityPhenotype``:</span>
+<span class="sd">    that leaf maps a released call to ``is_essential`` in its own validator and refuses</span>
+<span class="sd">    a call with no boolean. A graded leaf (#909: Royet 2025's HMM states; Gerdes's X and</span>
+<span class="sd">    ?, Goodall's "unclear") is the sibling slot under the same parent, ``Phenotype``,</span>
+<span class="sd">    and carries this descriptor unchanged; its rule is one more</span>
+<span class="sd">    :class:`EssentialityEvidenceType` member with its entries in</span>
+<span class="sd">    :data:`ESSENTIALITY_EVIDENCE_CLASS` and :data:`ESSENTIALITY_EVIDENCE_FIELDS`.</span>
+<span class="sd">    """</span>
+
+    <span class="n">evidence_class</span><span class="p">:</span> <span class="n">EssentialityEvidenceClass</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the physical observation the call rests on (the parent level)"</span>
+    <span class="p">)</span>
+    <span class="n">evidence_type</span><span class="p">:</span> <span class="n">EssentialityEvidenceType</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the readout and rule that made the call (the leaf level)"</span>
+    <span class="p">)</span>
+    <span class="n">statements</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">EssentialityStatement</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the source's own statements about the call, each verbatim with "</span>
+        <span class="s2">"sha256 and typed by its role: exactly one scoring_rule, exactly one "</span>
+        <span class="s2">"call_definition, the source's caveats on its own calls, and the definitions "</span>
+        <span class="s2">"of the per-record statistics"</span>
+    <span class="p">)</span>
+    <span class="c1"># construction_outcome (Baba 2006 Supplementary Table 3)</span>
+    <span class="n">colonies_verified</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"construction_outcome: KmR colonies shown by PCR to have the "</span>
+        <span class="s2">"expected structure"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">colonies_tested</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"construction_outcome: KmR colonies checked by PCR"</span>
+    <span class="p">)</span>
+    <span class="n">percent_verified</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"construction_outcome: the released percent of the tested colonies "</span>
+        <span class="s2">"verified (100 x verified / tested)"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># genetic_footprinting (Gerdes 2003 Table S1)</span>
+    <span class="n">footprinting_call</span><span class="p">:</span> <span class="n">FootprintingCall</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"genetic_footprinting: the released call letter (E, N or N* on a "</span>
+        <span class="s2">"boolean record)"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">footprint_insertions_aa</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"genetic_footprinting: the insertions recovered in the gene after "</span>
+        <span class="s2">"outgrowth, in amino-acid coordinates from the translational start; empty when "</span>
+        <span class="s2">"none was recovered"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">assertion_error</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"genetic_footprinting: the probability of missing the ORF by chance "</span>
+        <span class="s2">"if insertions were random, p_o(L) = exp(-rL); value or typed gap on an E call"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">assertion_error_is_upper_bound</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"genetic_footprinting: True when the release states the assertion "</span>
+        <span class="s2">"error as a bound ('&lt; 0.05'), False when it states the value"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># tradis_insertion_index (Goodall 2018 Tables S1 and S4)</span>
+    <span class="n">tradis_call</span><span class="p">:</span> <span class="n">TradisCall</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"tradis_insertion_index: the released call (essential or "</span>
+        <span class="s2">"non_essential on a boolean record)"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">insertion_index</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"tradis_insertion_index: unique insertion sites in the CDS divided "</span>
+        <span class="s2">"by the CDS length in bases"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">log_likelihood_ratio</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"tradis_insertion_index: log2 likelihood ratio between the two "</span>
+        <span class="s2">"modes (negative = the essential mode)"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># rb_tnseq_coverage_and_fitness (Price 2018 Supplementary Table 1)</span>
+    <span class="n">tnseq_reads</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"rb_tnseq_coverage_and_fitness: TnSeq reads within the gene (nReads)"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">normalized_read_density</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"rb_tnseq_coverage_and_fitness: reads normalized to a median of 1 "</span>
+        <span class="s2">"across genes and for GC content (normreads)"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">central_insertion_positions</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"rb_tnseq_coverage_and_fitness: locations in the central 10-90</span><span class="si">% o</span><span class="s2">f "</span>
+        <span class="s2">"the gene supported by at least 2 TnSeq reads (nPosCentral)"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">normalized_insertion_density</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"rb_tnseq_coverage_and_fitness: density of central insertions "</span>
+        <span class="s2">"normalized to a median of 1 across genes (dens)"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">gene_gc_fraction</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"rb_tnseq_coverage_and_fitness: the gene's G or C fraction (GC), "</span>
+        <span class="s2">"the input of the read normalization"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">false_discovery_rate_lower</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"rb_tnseq_coverage_and_fitness: the low end of the source's stated "</span>
+        <span class="s2">"false-discovery rate of its essential list (a fraction)"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">false_discovery_rate_upper</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"rb_tnseq_coverage_and_fitness: the high end of that rate"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># curated_null_phenotype (SGD)</span>
+    <span class="n">curated_experiment_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"curated_null_phenotype: the annotation's SGD experiment type, "</span>
+        <span class="s2">"verbatim ('classical genetics', 'systematic mutation set')"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_evidence</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"GeneEssentialityEvidence"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The class is the type's parent; statistics belong to their own type and are</span>
+<span class="sd">        internally consistent; a footprinting E call's assertion error is value or gap.</span>
+<span class="sd">        """</span>
+        <span class="n">roles</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">(</span><span class="n">statement</span><span class="o">.</span><span class="n">role</span> <span class="k">for</span> <span class="n">statement</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">statements</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">role</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="n">EssentialityStatementRole</span><span class="o">.</span><span class="n">scoring_rule</span><span class="p">,</span>
+            <span class="n">EssentialityStatementRole</span><span class="o">.</span><span class="n">call_definition</span><span class="p">,</span>
+        <span class="p">):</span>
+            <span class="k">if</span> <span class="n">roles</span><span class="p">[</span><span class="n">role</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"the evidence states </span><span class="si">{</span><span class="n">roles</span><span class="p">[</span><span class="n">role</span><span class="p">]</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">role</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2"> statements, not 1"</span>
+                <span class="p">)</span>
+        <span class="n">parent</span> <span class="o">=</span> <span class="n">ESSENTIALITY_EVIDENCE_CLASS</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">evidence_type</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">evidence_class</span> <span class="o">!=</span> <span class="n">parent</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"evidence_type </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">evidence_type</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2"> is a "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">parent</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2"> type, not </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">evidence_class</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="n">own</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">ESSENTIALITY_EVIDENCE_FIELDS</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">evidence_type</span><span class="p">])</span>
+        <span class="n">gapped</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gapped_fields</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">type_</span><span class="p">,</span> <span class="n">names</span> <span class="ow">in</span> <span class="n">ESSENTIALITY_EVIDENCE_FIELDS</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">own</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">gapped</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> belongs to </span><span class="si">{</span><span class="n">type_</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2"> evidence, not "</span>
+                        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">evidence_type</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span>
+                    <span class="p">)</span>
+        <span class="n">colonies</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">colonies_verified</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">colonies_tested</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">percent_verified</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">colonies</span><span class="p">):</span>
+            <span class="n">verified</span><span class="p">,</span> <span class="n">tested</span><span class="p">,</span> <span class="n">percent</span> <span class="o">=</span> <span class="n">colonies</span>
+            <span class="k">if</span> <span class="n">verified</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">tested</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">percent</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">"colonies_verified, colonies_tested and percent_verified are set "</span>
+                    <span class="s2">"together"</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="n">tested</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="ow">not</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">verified</span> <span class="o">&lt;=</span> <span class="n">tested</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">verified</span><span class="si">}</span><span class="s2"> of </span><span class="si">{</span><span class="n">tested</span><span class="si">}</span><span class="s2"> colonies verified"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">percent</span> <span class="o">-</span> <span class="mf">100.0</span> <span class="o">*</span> <span class="n">verified</span> <span class="o">/</span> <span class="n">tested</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">1e-9</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"percent_verified </span><span class="si">{</span><span class="n">percent</span><span class="si">}</span><span class="s2"> is not 100 x </span><span class="si">{</span><span class="n">verified</span><span class="si">}</span><span class="s2"> / </span><span class="si">{</span><span class="n">tested</span><span class="si">}</span><span class="s2">"</span>
+                <span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">assertion_error</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="o">!=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assertion_error_is_upper_bound</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"assertion_error and assertion_error_is_upper_bound are set together"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">assertion_error</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">assertion_error</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"assertion_error </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">assertion_error</span><span class="si">}</span><span class="s2"> is no probability"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">footprinting_call</span> <span class="o">==</span> <span class="n">FootprintingCall</span><span class="o">.</span><span class="n">essential</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">assertion_error</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="s2">"assertion_error"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gapped</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"an E call carries its assertion error or a typed ProvenanceGap"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">footprint_insertions_aa</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">any</span><span class="p">(</span>
+            <span class="n">p</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">footprint_insertions_aa</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"footprint_insertions_aa holds a negative position"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">insertion_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">insertion_index</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"insertion_index </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">insertion_index</span><span class="si">}</span><span class="s2"> &lt; 0"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="s2">"tnseq_reads"</span><span class="p">,</span>
+            <span class="s2">"normalized_read_density"</span><span class="p">,</span>
+            <span class="s2">"central_insertion_positions"</span><span class="p">,</span>
+            <span class="s2">"normalized_insertion_density"</span><span class="p">,</span>
+        <span class="p">):</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2"> &lt; 0"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">gene_gc_fraction</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gene_gc_fraction</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"gene_gc_fraction </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">gene_gc_fraction</span><span class="si">}</span><span class="s2"> is no fraction"</span><span class="p">)</span>
+        <span class="n">fdr</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">false_discovery_rate_lower</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">false_discovery_rate_upper</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">fdr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="o">!=</span> <span class="p">(</span><span class="n">fdr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"false_discovery_rate_lower and false_discovery_rate_upper are set "</span>
+                <span class="s2">"together"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">fdr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">fdr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">fdr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">fdr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"false-discovery range </span><span class="si">{</span><span class="n">fdr</span><span class="si">}</span><span class="s2"> is not 0 &lt;= low &lt;= high &lt;= 1"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">statements_of</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">role</span><span class="p">:</span> <span class="n">EssentialityStatementRole</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">SourcedValue</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""The quotes of one role, in the order the evidence lists them."""</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">provenance</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">statements</span> <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">role</span> <span class="o">==</span> <span class="n">role</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">scoring_rule</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SourcedValue</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The one rule that made the call."""</span>
+        <span class="p">(</span><span class="n">rule</span><span class="p">,)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">statements_of</span><span class="p">(</span><span class="n">EssentialityStatementRole</span><span class="o">.</span><span class="n">scoring_rule</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">rule</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">call_definition</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SourcedValue</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The source's one statement of what a True call means."""</span>
+        <span class="p">(</span><span class="n">definition</span><span class="p">,)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">statements_of</span><span class="p">(</span><span class="n">EssentialityStatementRole</span><span class="o">.</span><span class="n">call_definition</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">definition</span>
+
+
+<span class="c1"># --- end #924 ---------------------------------------------------------------- #</span>
+
+
 <div class="viewcode-block" id="GeneEssentialityPhenotype">
 <a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.GeneEssentialityPhenotype.html#torchcell.datamodels.schema.GeneEssentialityPhenotype">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">GeneEssentialityPhenotype</span><span class="p">(</span><span class="n">Phenotype</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Phenotype indicating whether a gene knockout is lethal."""</span>
+<span class="w">    </span><span class="sd">"""Phenotype indicating whether a gene knockout is lethal.</span>
+
+<span class="sd">    ``is_essential`` is the release's own call. What that call IS differs by store, so</span>
+<span class="sd">    every record also carries its ``evidence`` (#924): the evidence class and type, the</span>
+<span class="sd">    scoring rule and the source's definition of the call, quoted with sha256, and the</span>
+<span class="sd">    per-record statistics of its type. A released call with no boolean (a footprinting</span>
+<span class="sd">    X or ?, a TraDIS "unclear") is refused here; it is a graded call, not a boolean.</span>
+<span class="sd">    """</span>
 
     <span class="n">graph_level</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"node"</span>
     <span class="n">label_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"is_essential"</span>
     <span class="n">is_essential</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"gene knockout leading cell death."</span>
-    <span class="p">)</span></div>
+    <span class="p">)</span>
+    <span class="c1"># --- begin #924: the typed evidence behind a gene-essentiality call -------- #</span>
+    <span class="n">evidence</span><span class="p">:</span> <span class="n">GeneEssentialityEvidence</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the evidence class and type, rule, definition, caveats and "</span>
+        <span class="s2">"per-record statistics of this call (GeneEssentialityEvidence)"</span>
+    <span class="p">)</span>
 
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_released_call_is_the_boolean</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"GeneEssentialityPhenotype"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""A released call letter must be the stored boolean, and must have one."""</span>
+        <span class="n">released</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">evidence</span><span class="o">.</span><span class="n">footprinting_call</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">call</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">evidence</span><span class="o">.</span><span class="n">footprinting_call</span>
+            <span class="n">released</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"footprinting call </span><span class="si">{</span><span class="n">call</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                    <span class="n">FOOTPRINTING_CALL_IS_ESSENTIAL</span><span class="p">[</span><span class="n">call</span><span class="p">],</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">evidence</span><span class="o">.</span><span class="n">tradis_call</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">call_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">evidence</span><span class="o">.</span><span class="n">tradis_call</span>
+            <span class="n">released</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="p">(</span><span class="sa">f</span><span class="s2">"TraDIS call </span><span class="si">{</span><span class="n">call_</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">TRADIS_CALL_IS_ESSENTIAL</span><span class="p">[</span><span class="n">call_</span><span class="p">])</span>
+            <span class="p">)</span>
+        <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">boolean</span> <span class="ow">in</span> <span class="n">released</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">boolean</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"the </span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2"> has no boolean; a graded call is not an "</span>
+                    <span class="s2">"is_essential record"</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="n">boolean</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_essential</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"the </span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2"> is not is_essential=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">is_essential</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+    <span class="c1"># --- end #924 -------------------------------------------------------------- #</span>
 
 
 <div class="viewcode-block" id="SyntheticLethalityPhenotype">

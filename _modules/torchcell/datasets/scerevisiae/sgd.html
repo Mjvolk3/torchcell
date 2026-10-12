@@ -147,6 +147,15 @@
 <span class="sd">  gaps (``not_carried_by_curation``) quoting what the annotation carries in place of</span>
 <span class="sd">  one (:func:`sgd_unstated_medium`); the temperature it does not state is a typed gap</span>
 <span class="sd">  on the environment. The old loader guessed YEPD solid at 30 C for every record.</span>
+<span class="sd">- **Evidence (#924).** Every phenotype carries a ``GeneEssentialityEvidence`` of type</span>
+<span class="sd">  ``curated_null_phenotype`` (class ``curated_annotation``): the annotation fields a</span>
+<span class="sd">  call reads and the call's definition, both anchored to SGD's own description of a</span>
+<span class="sd">  phenotype annotation (Engel 2022, :data:`SGD_SCORING_RULE`,</span>
+<span class="sd">  :data:`SGD_CALL_DEFINITION`); the allele rule above is this loader's, not SGD's, so</span>
+<span class="sd">  the evidence does not carry it; and</span>
+<span class="sd">  per record the annotation's SGD experiment type verbatim (1,121 "systematic mutation</span>
+<span class="sd">  set", 166 "classical genetics" of the 1,287 stored in the pinned dump). The mirrored</span>
+<span class="sd">  SGD literature does not define the "inviable" term itself.</span>
 <span class="sd">"""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
@@ -174,6 +183,11 @@
     <span class="n">ConcentrationUnit</span><span class="p">,</span>
     <span class="n">Environment</span><span class="p">,</span>
     <span class="n">EnvironmentPhysicalPerturbation</span><span class="p">,</span>
+    <span class="n">EssentialityEvidenceClass</span><span class="p">,</span>
+    <span class="n">EssentialityEvidenceType</span><span class="p">,</span>
+    <span class="n">EssentialityStatement</span><span class="p">,</span>
+    <span class="n">EssentialityStatementRole</span><span class="p">,</span>
+    <span class="n">GeneEssentialityEvidence</span><span class="p">,</span>
     <span class="n">GeneEssentialityExperiment</span><span class="p">,</span>
     <span class="n">GeneEssentialityExperimentReference</span><span class="p">,</span>
     <span class="n">GeneEssentialityPhenotype</span><span class="p">,</span>
@@ -188,7 +202,11 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.graph.sgd</span><span class="w"> </span><span class="kn">import</span> <span class="n">data_root</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.report</span><span class="w"> </span><span class="kn">import</span> <span class="n">Provenance</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProvenanceGap</span><span class="p">,</span> <span class="n">ProvenanceGapReason</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ProvenanceGap</span><span class="p">,</span>
+    <span class="n">ProvenanceGapReason</span><span class="p">,</span>
+    <span class="n">SourcedValue</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -209,6 +227,93 @@
     <span class="s2">"main_get_all_genes); sha256 over the sorted '&lt;file name&gt; &lt;file sha256&gt;' lines"</span><span class="p">,</span>
     <span class="n">page</span><span class="o">=</span><span class="s2">"phenotype_details[].properties"</span><span class="p">,</span>
 <span class="p">)</span>
+
+<span class="c1"># --- begin #924: the curated-annotation evidence on every record ------------- #</span>
+<span class="c1">#: SGD's own description of a phenotype annotation (Engel 2022, the literature mirror).</span>
+<span class="n">SGD_CURATION_CITATION_KEY</span> <span class="o">=</span> <span class="s2">"engelNewDataCollaborations2022"</span>
+<span class="n">SGD_CURATION_PAPER</span> <span class="o">=</span> <span class="s2">"paper.md"</span>
+<span class="n">SGD_CURATION_PAPER_SHA256</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"ef55aeb36bb3d86d1dcff9f5a053ca4e6c11812b6a4bf8a465196c2d28877152"</span>
+<span class="p">)</span>
+<span class="n">_ANNOTATION_QUOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"The phenotype annotations for an allele include an observable feature (e.g., "</span>
+    <span class="s2">"“cell shape”), a qualifier (e.g., “abnormal”), a mutant type "</span>
+    <span class="s2">"(e.g., null), strain background, and a reference."</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_engel</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">quote</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">note</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SourcedValue</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A value bound to a verbatim quote of the pinned Engel 2022 OCR."""</span>
+    <span class="k">return</span> <span class="n">SourcedValue</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">quote</span><span class="o">=</span><span class="n">quote</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="n">note</span><span class="p">,</span>
+        <span class="n">provenance</span><span class="o">=</span><span class="n">Provenance</span><span class="p">(</span>
+            <span class="n">source_uri</span><span class="o">=</span><span class="n">SGD_CURATION_PAPER</span><span class="p">,</span>
+            <span class="n">citation_key</span><span class="o">=</span><span class="n">SGD_CURATION_CITATION_KEY</span><span class="p">,</span>
+            <span class="n">sha256</span><span class="o">=</span><span class="n">SGD_CURATION_PAPER_SHA256</span><span class="p">,</span>
+            <span class="n">method</span><span class="o">=</span><span class="s2">"MinerU OCR of the publisher PDF (torchcell-library mirror)"</span><span class="p">,</span>
+            <span class="n">page</span><span class="o">=</span><span class="s2">"New allele pages"</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+
+
+<span class="n">SGD_SCORING_RULE</span> <span class="o">=</span> <span class="n">_engel</span><span class="p">(</span>
+    <span class="p">{</span><span class="s2">"observable"</span><span class="p">:</span> <span class="s2">"inviable"</span><span class="p">,</span> <span class="s2">"mutant_type"</span><span class="p">:</span> <span class="s2">"null"</span><span class="p">,</span> <span class="s2">"strain_background"</span><span class="p">:</span> <span class="s2">"S288C"</span><span class="p">},</span>
+    <span class="n">_ANNOTATION_QUOTE</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the annotation fields a stored call reads: the observable 'inviable', the "</span>
+    <span class="s2">"mutant type 'null' and the strain background 'S288C'"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">SGD_CALL_DEFINITION</span> <span class="o">=</span> <span class="n">_engel</span><span class="p">(</span>
+    <span class="s2">"SGD annotates the null allele's observable feature as 'inviable'"</span><span class="p">,</span>
+    <span class="n">_ANNOTATION_QUOTE</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"is_essential=True is the curated observable of a null allele; the mirrored "</span>
+    <span class="s2">"SGD literature does not define the 'inviable' term itself"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">SGD_EXPERIMENT_TYPES</span> <span class="o">=</span> <span class="n">_engel</span><span class="p">(</span>
+    <span class="s2">"classical genetics or high-throughput (large-scale survey, systematic mutation "</span>
+    <span class="s2">"set)"</span><span class="p">,</span>
+    <span class="s2">"In addition, annotations are classified as classical genetics or highthroughput "</span>
+    <span class="s2">"(e.g., large-scale survey, systematic mutation set)."</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the definition of curated_experiment_type, the annotation's 'experiment' "</span>
+    <span class="s2">"display name"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="c1">#: Every sourced statement of this loader, audited against the literature mirror.</span>
+<span class="n">SOURCED_VALUES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">SourcedValue</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"scoring_rule"</span><span class="p">:</span> <span class="n">SGD_SCORING_RULE</span><span class="p">,</span>
+    <span class="s2">"call_definition"</span><span class="p">:</span> <span class="n">SGD_CALL_DEFINITION</span><span class="p">,</span>
+    <span class="s2">"experiment_types"</span><span class="p">:</span> <span class="n">SGD_EXPERIMENT_TYPES</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<span class="c1">#: The source's statements every record's evidence carries, by role (#924).</span>
+<span class="n">EVIDENCE_STATEMENTS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">EssentialityStatement</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">EssentialityStatement</span><span class="p">(</span>
+        <span class="n">role</span><span class="o">=</span><span class="n">EssentialityStatementRole</span><span class="o">.</span><span class="n">scoring_rule</span><span class="p">,</span> <span class="n">provenance</span><span class="o">=</span><span class="n">SGD_SCORING_RULE</span>
+    <span class="p">),</span>
+    <span class="n">EssentialityStatement</span><span class="p">(</span>
+        <span class="n">role</span><span class="o">=</span><span class="n">EssentialityStatementRole</span><span class="o">.</span><span class="n">call_definition</span><span class="p">,</span> <span class="n">provenance</span><span class="o">=</span><span class="n">SGD_CALL_DEFINITION</span>
+    <span class="p">),</span>
+    <span class="n">EssentialityStatement</span><span class="p">(</span>
+        <span class="n">role</span><span class="o">=</span><span class="n">EssentialityStatementRole</span><span class="o">.</span><span class="n">statistic_definition</span><span class="p">,</span>
+        <span class="n">provenance</span><span class="o">=</span><span class="n">SGD_EXPERIMENT_TYPES</span><span class="p">,</span>
+    <span class="p">),</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">sgd_evidence</span><span class="p">(</span><span class="n">experiment_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GeneEssentialityEvidence</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The curated-annotation evidence (#924), with the annotation's SGD experiment</span>
+<span class="sd">    type when given; the reference (None) carries the rule and definition only.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">GeneEssentialityEvidence</span><span class="p">(</span>
+        <span class="n">evidence_class</span><span class="o">=</span><span class="n">EssentialityEvidenceClass</span><span class="o">.</span><span class="n">curated_annotation</span><span class="p">,</span>
+        <span class="n">evidence_type</span><span class="o">=</span><span class="n">EssentialityEvidenceType</span><span class="o">.</span><span class="n">curated_null_phenotype</span><span class="p">,</span>
+        <span class="n">statements</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">EVIDENCE_STATEMENTS</span><span class="p">),</span>
+        <span class="n">curated_experiment_type</span><span class="o">=</span><span class="n">experiment_type</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="c1"># --- end #924 ---------------------------------------------------------------- #</span>
 
 <span class="c1"># --------------------------------------------------------------------------- #</span>
 <span class="c1"># Environment: the medium and temperature SGD does not state are typed gaps (#901)</span>
@@ -750,8 +855,12 @@
             <span class="p">]</span>
         <span class="p">)</span>
 
-        <span class="n">phenotype</span> <span class="o">=</span> <span class="n">GeneEssentialityPhenotype</span><span class="p">(</span><span class="n">is_essential</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">phenotype_reference</span> <span class="o">=</span> <span class="n">GeneEssentialityPhenotype</span><span class="p">(</span><span class="n">is_essential</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">phenotype</span> <span class="o">=</span> <span class="n">GeneEssentialityPhenotype</span><span class="p">(</span>
+            <span class="n">is_essential</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">evidence</span><span class="o">=</span><span class="n">sgd_evidence</span><span class="p">(</span><span class="n">annotation</span><span class="o">.</span><span class="n">experiment</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">phenotype_reference</span> <span class="o">=</span> <span class="n">GeneEssentialityPhenotype</span><span class="p">(</span>
+            <span class="n">is_essential</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">evidence</span><span class="o">=</span><span class="n">sgd_evidence</span><span class="p">()</span>
+        <span class="p">)</span>
 
         <span class="n">pub_info</span> <span class="o">=</span> <span class="n">get_publication_info</span><span class="p">(</span><span class="n">annotation</span><span class="o">.</span><span class="n">pubmed_id</span><span class="p">)</span>
 

@@ -2,9 +2,9 @@
   "record_version": 1,
   "slug": "bacterial-released-construct-leaves",
   "date": "2026-10-12",
-  "pr": null,
+  "pr": 1077,
   "author_kind": "agent",
-  "base_commit": "b07faa8e96441e2db8186de607a0a96f8a49b005",
+  "base_commit": "cff7036829b09b353bd3dbd47f60ff56053b3ad6",
   "python_version": "3.13.0",
   "symbols": [
     {
@@ -52,8 +52,8 @@
       "kinds": [
         "enum_member_added"
       ],
-      "fingerprint_before": "89326490184f3d7357d962c39600426770854605bac4860cce86bc06aef72d6d",
-      "fingerprint_after": "3b74f53efd9850985603fed56ce46a13176d452650849a3eaeb47e7136a0f464",
+      "fingerprint_before": "96e44d0b3ae0fbcc3b90c1e297ac50f58e0e969d85ce5dea73dbf89ae1c084ac",
+      "fingerprint_after": "708e0baf0ea161a5cfc7c2dfe06b4d21b6cbaf4165ec6f615cae09cd5fd74411",
       "impact": "stale",
       "reasons": [
         "gained members ['BacterialReleasedCrisprPerturbation', 'BacterialReleasedTransposonPerturbation']"
@@ -86,7 +86,7 @@
       ]
     }
   ],
-  "correctness_argument": "PR #1067 added BacterialReleasedStrainPerturbation so a bacterial strain is stored under the identifier its source released, with no lookup against an assembly (owner rule of 2026-10-12: the data is the data, and the genome never gates a record). That leaf carries no construct, so a record whose identity is a construct plus a released gene label still had to resolve the label to a locus tag of the pinned assembly before the placed leaf of its technology (BacterialCrisprInterferencePerturbation, BacterialCrisprActivationPerturbation, TransposonInsertionPerturbation) would accept it, and the placed leaves refuse a label the annotation retires, merges, shares or cannot place. Measured in the landed loaders' own retention ledgers (each pinned as an oracle on the release bytes): Cui 2018 drops 925 guides under its three gene_* rules (gene_retired_in_the_pinned_assembly 619, gene_symbol_shared_with_another_source_name 283, gene_symbol_ambiguous_in_the_pinned_assembly 23), which is 1,850 measurements over its two screens (EXPECTED_DROPS in torchcell/datasets/ecoli/cui2018.py); Rousset 2018 drops 643 records under its three symbol rules (307 + 321 + 15, notes/torchcell.datasets.ecoli.rousset2018.md retention ledger); Hawkins 2020 drops 37 rows of sokE, retired in ASM584v2 (EXPECTED_DROPS in hawkins2020.py); Fang 2025 drops 3 retired-target rows (sokEb4590_32, sokEb4700_33, ybfKb4590_11); Goodall 2018 drops 106 rows of the 9 multi-copy insertion-sequence symbols (53 per table, symbol_not_on_one_bw25113_locus); Niu 2019 drops the 2 operon labels (sufBCDS, flgFGH) and the 1 activation combination strain that names them. Total 2,642 released records refused by the genome. BacterialReleasedCrisprPerturbation stores a guide record as the placed CRISPR leaves store the construct (the shared CrisprConstruct: effector, spacer, guide count, library pool; expression_direction required with no default, since one leaf serves both effectors and the direction is a released fact) and as the strain leaf stores the gene (systematic_gene_name the released identifier verbatim, perturbed_gene_name the released name, strain_label the whole released label, identifier_kind what the identifier is, gene_namespace the study's host). BacterialReleasedTransposonPerturbation does the same with the placed transposon leaf's fields (barcode, insertion_position as released, insertion_strand, transposon, library_pool). Both are siblings of the strain leaf and of the placed bacterial leaves under GenePerturbation, both expose the mechanism SO pair the placed leaf of the technology already pins (SO:0001998 sgRNA; SO:0001218 transgenic_insertion), and both refuse a locus tag of any namespace through the shared _validate_released_identifier, so one kind of record never sits in two classes and placed records stay on the placed leaves. ConcentrationUnit.fold_change is the dimensionless member that Niu 2019's 40 pinene cells need: the release gives the product only as a ratio with and without CRISPRa, no absolute titer exists anywhere in that arm, ProductTiterPhenotype requires a ConcentrationUnit, and no existing member is true of a ratio, so the 40 cells were refused rather than stored under a unit that lies. Every change is additive: no existing leaf, field, validator or enum member changes (BacterialReleasedStrainPerturbation's own validators are byte-identical to #1067), the placed leaves keep their locus-tag contract, and the widened union and enum are what re-stale the served closures. schema_impact_check --base origin/main (b07faa8e9): 6 changed symbols (2 leaves + 2 helpers added, ConcentrationUnit gains fold_change, GenePerturbationType gains the two leaves), 112 impacted datasets in 118 loader groups stale, 0 breaking.",
+  "correctness_argument": "PR #1067 added BacterialReleasedStrainPerturbation so a bacterial strain is stored under the identifier its source released, with no lookup against an assembly (owner rule of 2026-10-12: the data is the data, and the genome never gates a record). That leaf carries no construct, so a record whose identity is a construct plus a released gene label still had to resolve the label to a locus tag of the pinned assembly before the placed leaf of its technology (BacterialCrisprInterferencePerturbation, BacterialCrisprActivationPerturbation, TransposonInsertionPerturbation) would accept it, and the placed leaves refuse a label the annotation retires, merges, shares or cannot place. Measured in the landed loaders' own retention ledgers (each pinned as an oracle on the release bytes): Cui 2018 drops 925 guides under its three gene_* rules (gene_retired_in_the_pinned_assembly 619, gene_symbol_shared_with_another_source_name 283, gene_symbol_ambiguous_in_the_pinned_assembly 23), which is 1,850 measurements over its two screens (EXPECTED_DROPS in torchcell/datasets/ecoli/cui2018.py); Rousset 2018 drops 643 records under its three symbol rules (307 + 321 + 15, notes/torchcell.datasets.ecoli.rousset2018.md retention ledger); Hawkins 2020 drops 37 rows of sokE, retired in ASM584v2 (EXPECTED_DROPS in hawkins2020.py); Fang 2025 drops 3 retired-target rows (sokEb4590_32, sokEb4700_33, ybfKb4590_11); Goodall 2018 drops 106 rows of the 9 multi-copy insertion-sequence symbols (53 per table, symbol_not_on_one_bw25113_locus); Niu 2019 drops the 2 operon labels (sufBCDS, flgFGH) and the 1 activation combination strain that names them. Total 2,642 released records refused by the genome. BacterialReleasedCrisprPerturbation stores a guide record as the placed CRISPR leaves store the construct (the shared CrisprConstruct: effector, spacer, guide count, library pool; expression_direction required with no default, since one leaf serves both effectors and the direction is a released fact) and as the strain leaf stores the gene (systematic_gene_name the released identifier verbatim, perturbed_gene_name the released name, strain_label the whole released label, identifier_kind what the identifier is, gene_namespace the study's host). BacterialReleasedTransposonPerturbation does the same with the placed transposon leaf's fields (barcode, insertion_position as released, insertion_strand, transposon, library_pool). Both are siblings of the strain leaf and of the placed bacterial leaves under GenePerturbation, both expose the mechanism SO pair the placed leaf of the technology already pins (SO:0001998 sgRNA; SO:0001218 transgenic_insertion), and both refuse a locus tag of any namespace through the shared _validate_released_identifier, so one kind of record never sits in two classes and placed records stay on the placed leaves. ConcentrationUnit.fold_change is the dimensionless member that Niu 2019's 40 pinene cells need: the release gives the product only as a ratio with and without CRISPRa, no absolute titer exists anywhere in that arm, ProductTiterPhenotype requires a ConcentrationUnit, and no existing member is true of a ratio, so the 40 cells were refused rather than stored under a unit that lies. Every change is additive: no existing leaf, field, validator or enum member changes (BacterialReleasedStrainPerturbation's own validators are byte-identical to #1067), the placed leaves keep their locus-tag contract, and the widened union and enum are what re-stale the served closures. schema_impact_check --base origin/main: 6 changed symbols (2 leaves + 2 helpers added, ConcentrationUnit gains fold_change, GenePerturbationType gains the two leaves), 114 impacted datasets in 120 loader groups stale, 0 breaking, measured at the rebased head against cff703682.",
   "measurement_type_decision": false,
   "source_quotes": [
     {
@@ -539,6 +539,18 @@
       "loader": "torchcell/datasets/ecoli/niu2019.py",
       "dataset_classes": [
         "CrisprPineneToleranceNiu2019Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ConcentrationUnit",
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/potel2018.py",
+      "dataset_classes": [
+        "PhosphositeIntensityPotel2018Dataset"
       ],
       "served_classes": [],
       "impact": "stale",
@@ -1564,6 +1576,18 @@
         "SynthLethalityYeastSynthLethDbDataset",
         "SynthRescueYeastSynthLethDbDataset"
       ],
+      "impact": "stale",
+      "via": [
+        "ConcentrationUnit",
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/vaishnav2022.py",
+      "dataset_classes": [
+        "PooledPromoterExpressionVaishnav2022Dataset"
+      ],
+      "served_classes": [],
       "impact": "stale",
       "via": [
         "ConcentrationUnit",

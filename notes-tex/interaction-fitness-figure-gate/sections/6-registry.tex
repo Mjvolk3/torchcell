@@ -36,9 +36,12 @@ null does not explain; control: the arm on $\tau$. Arm R, three seeds. Decides: 
 the model's signal is in the residual or in the controls it re-learns. & \fstat{idea} \\
 E3 & \textbf{Test scores of the 030 checkpoints.} CPU scoring of the best-validation
 checkpoints of both arms on their pinned test triples, as
-\texttt{score\_cgt\_checkpoint\_cpu.py} did for 025, with the per-triple predictions
-written beside the ladder's, and a paired bootstrap against every rung. Decides: every
-validation bar on the sheets becomes a test bar. & \fstat{idea} \\
+\texttt{score\_cgt\_checkpoint\_cpu.py} did for 025, with the per-triple predictions of
+both heads written beside the ladder's, a paired bootstrap against every rung, and the
+two derived rungs of \ref{sec:decision}: C1, the model's $f_{ijk}$ minus the measured
+null; C2, $\tau$ from the model's predicted fitness of every term. Decides: every
+validation bar becomes a test bar, and whether CGT as a fitness predictor reaches the
+trees. & \fstat{idea} \\
 E4 & \textbf{Seeds.} Seeds 1 and 2 of the 030 composite arm on both arms, the budget of
 seed 0. Decides: the across-seed spread every transformer bar must carry. & \fstat{idea} \\
 E5 & \textbf{Deployment tiers of the ladder.} The lower-order rungs refit with the terms a

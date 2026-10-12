@@ -313,6 +313,8 @@ def write_figure_names(path: str) -> None:
     stems = {
         "figLadder": "lower_order_baselines_030_ladder_",
         "figFitness": "figure2_gate_fitness_",
+        "figSheet": "figure2_gate_sheet_",
+        "figSheetTwo": "figure2_gate_sheet2_",
     }
     lines = [
         "%% SOURCE: written by figure2_gate_numbers.py; the newest SVG of each stem under",

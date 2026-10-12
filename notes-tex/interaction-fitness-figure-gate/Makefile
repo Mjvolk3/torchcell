@@ -26,4 +26,5 @@ ROOT    := $(abspath $(REPO))
 SCRIPTS := $(ROOT)/experiments/030-solid-growth-multi/scripts
 .PHONY: numbers
 numbers:
+	cd $(ROOT) && PYTHONPATH=$(ROOT) $(PYTHON) $(SCRIPTS)/figure2_gate_sheet.py $(if $(filter 1,$(WANDB)),--wandb,)
 	cd $(ROOT) && PYTHONPATH=$(ROOT) $(PYTHON) $(SCRIPTS)/figure2_gate_numbers.py $(if $(filter 1,$(WANDB)),--wandb,)

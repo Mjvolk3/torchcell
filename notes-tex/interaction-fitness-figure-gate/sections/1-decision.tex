@@ -58,6 +58,22 @@ distance from that number is the thing the figure has to show. A transformer tha
 the same terms as inputs is the arm that makes the two regimes directly comparable, and
 it is the first entry of the registry (\ref{sec:registry}).
 
+\pfstep{CGT is a fitness predictor, and that is the other fair reading} The joint model
+predicts a held-out triple's fitness as well as its score, and on arm R its fitness head
+reads \gfitRCgtValWindow{} against \gloRFOneridgelowerorderfitnesstest{} for the ridge
+over the terms. Equation~\ref{eq:identity} then gives two rungs that use CGT as what it
+is. C1 takes the model's predicted $f_{ijk}$ and subtracts the measured null,
+$f_{ij} f_k + \varepsilon_{ik} + \varepsilon_{jk}$, the same terms the lower-order rungs
+read, so the model supplies only the one term the closure lacks; it is the comparison in
+which the model and the trees receive the same information in the same form. C2 derives
+$\tau$ from the model's own predicted fitness of the triple, the doubles and the singles,
+with no measured term, which tests whether its fitness predictions are consistent
+enough for the residual. Neither is on file: both need the fitness head's per-triple
+predictions, which E3 writes beside the interaction head's. If C1 reads above the trees,
+the model's fitness head is doing the work the ladder measures and the figure says so;
+if it does not, the fitness head is no more precise on $f_{ijk}$ than a ridge over the
+terms, which Figure~\ref{fig:sheet}f already suggests on arm Q.
+
 \pfstep{Three statements are on file} First, the free arithmetic is large. The
 zero-parameter null that predicts $\tau$ as minus the two digenic control scores reads
 \gloRNOnemultquerydoubletest{} on arm R and \gloQNOnemultquerydoubletest{} on arm Q (test

@@ -113,3 +113,10 @@ No sequence data; nothing in the genomes tier.
 ### Next build
 
 Dev-tree store only. Admission is the KG 4.0 full rebuild (the union growth marks 19 served classes stale). The adapter serves the Kemmeren 2014 graph shape with `microarray expression score phenotype` nodes; it is not in the build-time projection's calibration tables.
+
+## 2026.10.12 - The score leaf under the two-channel parent; the X-to-p conversion recorded (#1022, #989)
+
+- **Placement.** `MicroarrayExpressionScorePhenotype` is now a leaf of `TwoChannelMicroarrayExpressionPhenotype`, beside the served `MicroarrayExpressionPhenotype`, Gasch 2000's `MicroarrayExpressionRatioPhenotype` and Hackett 2020's `InductionTimecourseExpressionPhenotype` ([[torchcell.datamodels.schema]], 2026.10.12). Its fields, validators and serialization are unchanged (measured: identical core schema and JSON schema against main `34e76c559`); the base change moves its fingerprint, so the dev store reads stale until the KG 4.0 wave rebuilds it. The loader did not change.
+- **Conversion.** The p-value the release carries is `MicroarrayExpressionScorePhenotype.p_value_of_score(X)` = erfc(|X| / sqrt 2) = 2 (1 - Phi(|X|)). Re-measured on `data/GSE4654_family.soft.gz` (sha256 `0e8bff679733a659b29c0828812ea47ccafd5230d202e0a71813a5d9c05082b4`) with a stand-alone reader: 269 samples, 1,707,575 (X, p) pairs, 21,826 pairs with a null side, max |p - erfc(|X|/sqrt 2)| = 5.0e-7. The L3 row `p_value_is_two_sided_normal` now computes its expected p through that method, so the verifier and the schema hold one formula.
+- **Candidate gate.** Re-run at branch commit `fcf97be6a`: G1 to G5 pass, `admissible`, the same outcome and reasons as the stored verdict, which was left unchanged.
+- **Per-gene n.** The strain-level `n_replicates = 2` (the conservative lower end of "Each experiment was independently carried out at least twice") stays: the release states no per-gene count, and changing the field's type would be a meaning change on a verified class.

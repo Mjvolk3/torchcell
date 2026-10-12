@@ -21,6 +21,10 @@ What this package holds:
   ``ProteomeLog10PercentDeSiqueira2025Dataset``: the acetate-tolerization panel, whose
   proteome is released on three normalizations, loaded only where
   the genotype is representable (the wild type and the pre-tolerized parent).
+- ``fitness_browser_putida`` -- ``FitnessBrowserPutidaDataset``: the Fitness Browser's own
+  KT2440 experiments keyed by publication (the Borchert 2024 decomposition, #931, issues
+  #932 to #940), 234 samples of ten studies at full precision over 4,778 loci;
+  ``RbTnseqBorchert2024Dataset`` stays served as their L4 cross-check.
 - ``kang2026`` -- ``IsoprenylAcetateTiterKang2026Dataset``: the isoprenyl acetate
   production campaign on the PIPA chassis, across the paper's three titer columns.
 - ``lim2022`` -- ``PutidaPrecise321Lim2022Dataset``: putidaPRECISE321, the KT2440
@@ -59,6 +63,9 @@ from .desiqueira2025 import (
 )
 from .desiqueira2025 import (
     ProteomePercentDeSiqueira2025Dataset as ProteomePercentDeSiqueira2025Dataset,
+)
+from .fitness_browser_putida import (
+    FitnessBrowserPutidaDataset as FitnessBrowserPutidaDataset,
 )
 from .kang2026 import (
     IsoprenylAcetateTiterKang2026Dataset as IsoprenylAcetateTiterKang2026Dataset,

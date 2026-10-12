@@ -156,6 +156,24 @@ def test_feba_path_is_under_the_price2018_raw_mirror(tmp_path: Path) -> None:
     )
 
 
+def test_released_genes_are_the_deposit_s_own_tags(feba: fb.Feba) -> None:
+    genes = feba.genes("Org")
+    (thrl,) = fb.released_genes(["L1"], genes)
+    assert thrl == fb.ReleasedGene(locus_id="L1", tag="b0001", name="thrL")
+    with pytest.raises(ValueError, match="has no sysName"):
+        fb.released_genes(["L1", "L2"], genes)
+    with pytest.raises(ValueError, match="has values but no Gene row"):
+        fb.released_genes(["L9"], genes)
+    twice = {
+        "A": fb.FbGene(locus_id="A", sys_name="b0001", gene=None, gene_type=1),
+        "B": fb.FbGene(locus_id="B", sys_name="b0001", gene=None, gene_type=1),
+    }
+    with pytest.raises(ValueError, match="names loci A and B"):
+        fb.released_genes(["A", "B"], twice)
+    (unnamed,) = fb.released_genes(["A"], twice)
+    assert unnamed.name == "b0001"
+
+
 def _study(**kwargs: object) -> fb.SourceStudy:
     base: dict[str, object] = {
         "pub_id": "Pub20",

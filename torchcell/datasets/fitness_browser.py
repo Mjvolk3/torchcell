@@ -492,6 +492,53 @@ class Feba:
 
 
 # --------------------------------------------------------------------------- #
+# Genes, as the deposit names them
+# --------------------------------------------------------------------------- #
+class ReleasedGene(BaseModel):
+    """One locus with values, under the locus tag the deposit gives it.
+
+    ``tag`` is the ``Gene.sysName`` (the table's own comment: "a locus tag like SO_1446
+    or b2338"), ``name`` the ``Gene.gene`` symbol, else the tag. No assembly is consulted:
+    the genome is a separate layer and decides nothing about what is stored.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    locus_id: str
+    tag: str
+    name: str
+
+
+def released_genes(
+    loci: Sequence[str], genes: Mapping[str, FbGene]
+) -> tuple[ReleasedGene, ...]:
+    """Each locus with values as :class:`ReleasedGene`, in ``loci`` order.
+
+    Refused, as a change in the deposit's shape rather than resolved: a locus with no
+    ``Gene`` row, one with no ``sysName``, and two loci sharing a ``sysName``.
+    """
+    out: list[ReleasedGene] = []
+    seen: dict[str, str] = {}
+    for locus in loci:
+        if locus not in genes:
+            raise ValueError(f"locusId {locus} has values but no Gene row")
+        gene = genes[locus]
+        if gene.sys_name is None:
+            raise ValueError(f"locusId {locus} has no sysName")
+        if gene.sys_name in seen:
+            raise ValueError(
+                f"sysName {gene.sys_name} names loci {seen[gene.sys_name]} and {locus}"
+            )
+        seen[gene.sys_name] = locus
+        out.append(
+            ReleasedGene(
+                locus_id=locus, tag=gene.sys_name, name=gene.gene or gene.sys_name
+            )
+        )
+    return tuple(out)
+
+
+# --------------------------------------------------------------------------- #
 # Studies
 # --------------------------------------------------------------------------- #
 SourceKind = Literal["primary", "compendium_only"]

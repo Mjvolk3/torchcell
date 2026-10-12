@@ -4,7 +4,7 @@
   "date": "2026-10-12",
   "pr": 1058,
   "author_kind": "agent",
-  "base_commit": "007cd23b0631e18574606da9164c9d78dbc01577",
+  "base_commit": "283cfe2cfc56de90e747fb33d675a5c2991bcc46",
   "python_version": "3.13.0",
   "symbols": [
     {
@@ -26,8 +26,8 @@
       "kinds": [
         "enum_member_added"
       ],
-      "fingerprint_before": "94e37b5f881266ddeb8519ca029c4796c9658f016276d9ccc39cd4b472fe16a5",
-      "fingerprint_after": "f3ec9d0d9ee4b6fbee61ac29026cf848b466c9de32302a2d933ea1f49c34fffe",
+      "fingerprint_before": "89326490184f3d7357d962c39600426770854605bac4860cce86bc06aef72d6d",
+      "fingerprint_after": "449004c35289353d8cf8eaa3ba75108c70f7f79e15bf65099d6109a4da199815",
       "impact": "stale",
       "reasons": [
         "gained members ['DeletionPerturbation', 'NaturalLossOfFunctionPerturbation']"
@@ -666,6 +666,22 @@
       "loader": "torchcell/datasets/ecoli/mutalik2020.py",
       "dataset_classes": [
         "PhageRbTnseqMutalik2020Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ChromosomeCopyChange",
+        "GenePerturbationType",
+        "GenomeZygosity",
+        "Genotype",
+        "IsolateManipulation",
+        "NaturalIsolateDescriptor"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/nichols2011.py",
+      "dataset_classes": [
+        "EnvChemgenNichols2011Dataset"
       ],
       "served_classes": [],
       "impact": "stale",

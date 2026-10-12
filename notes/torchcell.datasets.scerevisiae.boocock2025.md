@@ -233,3 +233,5 @@ Rebuilt with `build_dataset_lmdb --dataset Boocock2025Dataset --retire-existing 
 `old-vs-new` (slurm job 4315, `experiments/036-dataset-fixes-before-kg-build/scripts/single_cell_leaf_merge_audit.py`) against `processed.superseded.20261012-080305`, the store dev-store array 4011 built at `1475b8cf1`: 79,516 records and 4 references paired, **0 stored values dropped or changed**. That baseline predates #1038 and #985 on main, so the fields it lists as added come from those two PRs, none from this change: the #1038 merge fields (`cell_barcodes`, `cell_libraries`, `cell_total_umis`, `marker_umi_count` with its gap) and the #985 `provenance_gaps` on `environment.media`.
 
 Candidate verdict re-gated at the rebased commit: G1 to G5 pass, admissible.
+
+After the branch was rebased onto main `464c5cfc3`, `build_manifest` reads this store stale through `GenePerturbationType` alone (main's released-strain leaf, which re-staled every dev store), not through anything of PR #1052. It is not rebuilt a third time here (55 min); the KG 4.0 dev-store array rebuilds it with every other store that change re-staled.

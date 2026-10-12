@@ -375,6 +375,10 @@ class CellAdapter:
                 self._mrna_number_fraction_phenotype_node,
             ),
             (
+                "fitness contrast phenotype (chunked)",
+                self._fitness_contrast_phenotype_node,
+            ),
+            (
                 "single cell expression phenotype (chunked)",
                 self._single_cell_expression_phenotype_node,
             ),
@@ -501,6 +505,10 @@ class CellAdapter:
             (
                 "mrna number fraction phenotype reference",
                 self._get_mrna_number_fraction_phenotype_reference_nodes,
+            ),
+            (
+                "fitness contrast phenotype reference",
+                self._get_fitness_contrast_phenotype_reference_nodes,
             ),
             (
                 "single cell expression phenotype reference",
@@ -3709,6 +3717,69 @@ class CellAdapter:
                 )
             )
         return nodes
+
+    # --- begin #913: the fitness-contrast phenotype --------------------------- #
+    @staticmethod
+    def _fitness_contrast_properties(phenotype: Any) -> dict[str, Any]:
+        """Node properties of a ``FitnessContrastPhenotype`` (experiment or reference).
+
+        Every field but ``provenance_gaps`` is a scalar property named by its field, so
+        the phenotype <-> node class bijection matches it without an alias table.
+        """
+        return {
+            "graph_level": phenotype.graph_level,
+            "label_name": phenotype.label_name,
+            "label_statistic_name": phenotype.label_statistic_name,
+            "measurement_type": phenotype.measurement_type,
+            "test_name": phenotype.test_name,
+            "contrast_label": phenotype.contrast_label,
+            "t_statistic": phenotype.t_statistic,
+            "p_value": phenotype.p_value,
+            "q_value": phenotype.q_value,
+            "q_value_method": phenotype.q_value_method,
+            "q_value_adjusted": phenotype.q_value_adjusted,
+            "q_value_adjustment_method": phenotype.q_value_adjustment_method,
+            "n_replicates_condition": phenotype.n_replicates_condition,
+            "n_replicates_reference": phenotype.n_replicates_reference,
+        }
+
+    @data_chunker
+    def _fitness_contrast_phenotype_node(
+        self, data: dict[str, Any], method_name: str
+    ) -> BioCypherNode:
+        phenotype = data["experiment"].phenotype
+        phenotype_id = hashlib.sha256(
+            json.dumps(phenotype.model_dump()).encode("utf-8")
+        ).hexdigest()
+        return BioCypherNode(
+            node_id=phenotype_id,
+            preferred_id=f"phenotype_{phenotype_id}",
+            node_label="fitness contrast phenotype",
+            properties=self._fitness_contrast_properties(phenotype),
+        )
+
+    def _get_fitness_contrast_phenotype_reference_nodes(self) -> list[BioCypherNode]:
+        nodes = []
+        seen_node_ids: set[str] = set()
+        for data in tqdm(self.dataset.experiment_reference_index):
+            phenotype = data.reference.phenotype_reference
+            phenotype_id = hashlib.sha256(
+                json.dumps(phenotype.model_dump()).encode("utf-8")
+            ).hexdigest()
+            if phenotype_id in seen_node_ids:
+                continue
+            seen_node_ids.add(phenotype_id)
+            nodes.append(
+                BioCypherNode(
+                    node_id=phenotype_id,
+                    preferred_id="fitness contrast phenotype",
+                    node_label="fitness contrast phenotype",
+                    properties=self._fitness_contrast_properties(phenotype),
+                )
+            )
+        return nodes
+
+    # --- end #913 ---------------------------------------------------------------- #
 
     def _get_dataset_nodes(self) -> list[BioCypherNode]:
         nodes = [

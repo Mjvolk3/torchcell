@@ -853,6 +853,27 @@ genome architecture phenotype:
         sample_unit: str
         sample_id: str
         sample_accession: str
+# A released significance test of one gene's fitness between two culture arms
+# (FitnessContrastPhenotype, issue #913: Borchert 2023's t, p, pFDR q and adjusted q).
+# Every field but provenance_gaps is a scalar property named by its field.
+fitness contrast phenotype:
+    is_a: phenotypic feature
+    represented_as: node
+    properties:
+        graph_level: str
+        label_name: str
+        label_statistic_name: str
+        measurement_type: str
+        test_name: str
+        contrast_label: str
+        t_statistic: float
+        p_value: float
+        q_value: float
+        q_value_method: str
+        q_value_adjusted: float
+        q_value_adjustment_method: str
+        n_replicates_condition: int
+        n_replicates_reference: int
 # PHENOTYPES END
 
 # RELATIONSHIPS
@@ -939,6 +960,7 @@ phenotype member of:
             single cell expression phenotype,
             life cycle phenotype,
             genome architecture phenotype,
+            fitness contrast phenotype,
         ]
     target: [experiment, experiment reference]
 

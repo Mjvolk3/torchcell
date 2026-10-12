@@ -160,6 +160,17 @@ EXAMPLES: dict[str, dict[str, Any]] = {
             "mean_read_count": 23.0,
         },
     },
+    # #913: the generic builder sets every required float to the same value but leaves
+    # q_value_method None, which the leaf refuses (a q-value names its correction).
+    "torchcell.datamodels.schema.FitnessContrastPhenotype": {
+        "measurement_type": "rbtnseq_gene_fitness_two_sample_t_test",
+        "test_name": "two-sample t test",
+        "contrast_label": "Glu_v_Glu_FA",
+        "t_statistic": 32.47,
+        "p_value": 5.4e-06,
+        "q_value": 0.027,
+        "q_value_method": "positive_false_discovery_rate",
+    },
     # The generic builder fills a str field with "x", which no registered morphology
     # assay is named and no assay symbol is, so the #774 phenotype needs a real one.
     "torchcell.datamodels.schema.BacterialMorphologyPhenotype": {

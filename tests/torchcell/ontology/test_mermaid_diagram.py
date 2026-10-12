@@ -506,7 +506,8 @@ def test_real_schema_diagram(md: ModuleType) -> None:
     # shape once more. 48 and 80 since `microarray expression ratio phenotype` (#989)
     # joined, the same shape. 49 and 82 since `graded gene essentiality phenotype`
     # joined (issue #909), the same shape again.
-    assert (len(gen.nodes), n_edges, n_data_lines) == (49, 14, 82)
+    # 50 and 84 since #913's `fitness contrast phenotype` joined: the shape once more.
+    assert (len(gen.nodes), n_edges, n_data_lines) == (50, 14, 84)
     # 182 = 158 + 4 + 4 + 4 + 4 + 4 + 4: one node is a declaration, an ``is_a`` line and
     # one data line per ``phenotype member of`` target, of which there are two. 186 =
     # 182 + 4 for Hale 2024: the node's declaration and ``is_a`` line, its ``genotype
@@ -518,7 +519,8 @@ def test_real_schema_diagram(md: ModuleType) -> None:
     # 202 = 198 + 4 for the phosphosite intensity phenotype (#921), 206 = 202 + 4
     # for the microarray expression ratio phenotype (#989), and 210 = 206 + 4 for the
     # graded gene essentiality phenotype (#909).
-    assert len(lines) == 210
+    # 214 = 210 + 4 for #913's fitness contrast phenotype.
+    assert len(lines) == 214
     assert lines[2:9] == [
         "    %% Biolink Classes (Parent Entity Types)",
         '    BioticExposure["biotic exposure"]',

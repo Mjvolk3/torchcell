@@ -12,7 +12,8 @@ Sources, in order, and no others:
    it too.
 2. With ``materialize``, the artifact cache ``$DATA_ROOT/artifact-cache/<sha256>/
    <basename>``; a cached file is re-hashed before it is returned.
-3. A remote source (tc-data over HTTP by default, ``TC_DATA_URL`` + ``TC_DATA_API_KEY``):
+3. A remote source (tc-data over HTTP by default: the public endpoint ``DEFAULT_URL``, or
+   ``TC_DATA_URL`` when set; no key):
    its manifest must list the path with ``ref.sha256``; with ``materialize`` the file is
    downloaded to ``<cache file>.part``, hashed, and only then renamed into the cache.
 
@@ -29,7 +30,6 @@ from typing import Literal, Protocol, Self
 
 import httpx
 
-from torchcell.api_keys import API_KEY_HEADER
 from torchcell.artifacts.ref import ArtifactRef, Tier
 from torchcell.artifacts.tiers import (
     TierManifest,
@@ -41,9 +41,9 @@ from torchcell.artifacts.tiers import (
 )
 from torchcell.datamodels.pydant import ModelStrict
 from torchcell.endpoint_http import (
-    API_KEY_VAR,
     CHUNK,
     DEFAULT_TIMEOUT,
+    DEFAULT_URL,
     URL_VAR,
     HttpClient,
 )
@@ -112,22 +112,20 @@ class TcDataSource:
 
     def __init__(
         self,
-        url: str,
-        api_key: str,
+        url: str = DEFAULT_URL,
         http: HttpClient | None = None,
         timeout: float = DEFAULT_TIMEOUT,
     ) -> None:
-        """``url`` is the endpoint base; ``http`` injects a client (tests)."""
+        """``url`` is the endpoint base (the public one by default); ``http`` injects a client."""
         self.url = url.rstrip("/")
-        self._headers = {API_KEY_HEADER: api_key}
         self._http: HttpClient = (
             http if http is not None else httpx.Client(timeout=timeout)
         )
 
     @classmethod
     def from_env(cls, http: HttpClient | None = None) -> Self:
-        """Build from ``TC_DATA_URL`` and ``TC_DATA_API_KEY`` (``KeyError`` if unset)."""
-        return cls(os.environ[URL_VAR], os.environ[API_KEY_VAR], http=http)
+        """Build on ``TC_DATA_URL`` when set, else on the public endpoint ``DEFAULT_URL``."""
+        return cls(os.environ.get(URL_VAR, DEFAULT_URL), http=http)
 
     def __repr__(self) -> str:
         """``tc-data <url>``, the form error messages name the source by."""
@@ -143,7 +141,7 @@ class TcDataSource:
         """``GET /{tier}/{key}/manifest``; a 404 is a ``RemoteMissError``."""
         self._served(tier)
         url = f"{self.url}/{tier}/{key}/manifest"
-        response = self._http.get(url, headers=self._headers)
+        response = self._http.get(url)
         if response.status_code == 404:
             raise RemoteMissError(f"{url}: HTTP 404")
         if response.status_code >= 400:
@@ -156,7 +154,7 @@ class TcDataSource:
         """Stream ``GET /{tier}/{key}/artifact/{path}`` into ``dest``; 404 is a miss."""
         self._served(tier)
         url = f"{self.url}/{tier}/{key}/artifact/{path}"
-        with self._http.stream("GET", url, headers=self._headers) as response:
+        with self._http.stream("GET", url) as response:
             if response.status_code == 404:
                 raise RemoteMissError(f"{url}: HTTP 404")
             if response.status_code != 200:
@@ -222,16 +220,14 @@ def _resolve_local(
     return ResolvedArtifact(path=path, source="local", verified=materialize)
 
 
-def _default_source(tried: list[str]) -> RemoteSource | None:
-    """tc-data from the environment; None (reason appended) when it is not configured."""
+def _default_source() -> RemoteSource:
+    """tc-data on ``TC_DATA_URL`` (after ``load_dotenv``), else the public ``DEFAULT_URL``.
+
+    There is always a remote: tc-data is a public read-only mirror that needs no key.
+    """
     from dotenv import load_dotenv
 
     load_dotenv()
-    if URL_VAR not in os.environ:
-        tried.append(
-            f"tc-data: {URL_VAR} is not set, so no remote source is configured"
-        )
-        return None
     return TcDataSource.from_env()
 
 
@@ -296,8 +292,9 @@ def resolve(
 
     With ``materialize=False`` only manifests are consulted (local, then remote): the
     answer is whether the ref resolves, nothing is downloaded and nothing is hashed.
-    ``client`` overrides the remote source; when None, tc-data is built from
-    ``TC_DATA_URL`` / ``TC_DATA_API_KEY`` only if the local tier misses.
+    ``client`` overrides the remote source; when None, tc-data is built (on
+    ``TC_DATA_URL`` when set, else the public ``DEFAULT_URL``) only if the local tier
+    misses.
 
     Raises ``ArtifactIntegrityError`` on any sha256 or size disagreement and
     ``ArtifactUnresolvableError`` when no source holds the ref.
@@ -313,11 +310,10 @@ def resolve(
             _check_bytes(ref, cached, "cached file")
             return ResolvedArtifact(path=cached, source="remote", verified=True)
         tried.append(f"artifact cache: {cached} absent")
-    source = client if client is not None else _default_source(tried)
-    if source is not None:
-        remote = _resolve_remote(ref, root, materialize, source, tried)
-        if remote is not None:
-            return remote
+    source = client if client is not None else _default_source()
+    remote = _resolve_remote(ref, root, materialize, source, tried)
+    if remote is not None:
+        return remote
     raise ArtifactUnresolvableError(
         f"{ref} (sha256 {ref.sha256}) did not resolve; sources tried: "
         + "; ".join(f"({i}) {reason}" for i, reason in enumerate(tried, start=1))

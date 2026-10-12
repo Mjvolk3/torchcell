@@ -1,8 +1,8 @@
 # docker/Dockerfile.tc-data
-# Slim image for the keyed dataset endpoint (torchcell.datasets.server, "tc-data").
+# Slim image for the public read-only dataset endpoint (torchcell.datasets.server, "tc-data").
 # It serves the artifact store, the raw mirror, the genomes tier and the objects tier
 # read-only over HTTP; it is NOT the torchcell ML env. The server imports only leaf
-# modules (torchcell.api_keys, torchcell.datasets.artifact,
+# modules (torchcell.datasets.artifact,
 # torchcell.provenance.build_manifest, torchcell.literature.manifest,
 # torchcell.sequence.genome.registry), none of which need torch, PyG, numpy or pyzotero,
 # so the image is python:3.13-slim plus the four HTTP/pydantic deps, like Dockerfile.tc-lit.
@@ -18,7 +18,7 @@
 # gffutils were.
 #
 # Build (context = repo root):  docker build -f docker/Dockerfile.tc-data -t tc-data-endpoint:latest .
-# Run is via docker/docker-compose.tc-data.yml (bind-mounts the store, the three tiers and keys, all :ro).
+# Run is via docker/docker-compose.tc-data.yml (bind-mounts the store and the three tiers, all :ro).
 
 FROM python:3.13-slim
 
@@ -40,11 +40,11 @@ ENV PYTHONPATH=/app \
 
 EXPOSE 8724
 
-# /health needs no auth; curl is absent from slim, so probe via stdlib urllib.
+# No route needs auth; curl is absent from slim, so probe via stdlib urllib.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD python -c "import sys,urllib.request; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8724/health').status==200 else 1)"
 
 # Config is 100% env-driven: TC_DATA_ROOT (store mount), TC_DATA_RAW_ROOT (raw mirror
-# mount), TC_DATA_GENOMES_ROOT and TC_DATA_OBJECTS_ROOT (tier mounts), TC_DATA_KEYS_FILE
-# (keys mount).
+# mount), TC_DATA_GENOMES_ROOT and TC_DATA_OBJECTS_ROOT (tier mounts). The endpoint is
+# public: no keys are mounted or read.
 CMD ["python", "-m", "torchcell.datasets.server"]

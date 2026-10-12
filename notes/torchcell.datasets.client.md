@@ -15,3 +15,7 @@ created: 1790716961469
 `unpack_artifact(archive, dataset_root)` extracts with `tarfile`'s `filter="data"`, which rejects absolute members, `..` components and links outside the root (the test proves `../escape.txt` raises `OutsideDestinationError`).
 
 Testability: the constructor takes `http=` so a `fastapi.testclient.TestClient` (an `httpx.Client` subclass) stands in for the network; the hermetic tests drive the real app this way, including the resume path (a spy on `stream` sees exactly one `Range: bytes=1000-` request).
+
+## 2026.10.12 - No key, public URL by default
+
+`DatasetClient(url=DEFAULT_URL, http=None, timeout=...)`: the key argument and the `X-API-Key` header are gone, `from_env` reads `TC_DATA_URL` with `torchcell.endpoint_http.DEFAULT_URL` (the Radiant endpoint) as the default. The only header any client still sends is `Range` on a resumed download, which is why `HttpClient.stream` keeps an optional `headers`. Same change on `TcDataSource` in [[torchcell.artifacts]].

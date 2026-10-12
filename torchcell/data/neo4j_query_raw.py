@@ -475,8 +475,8 @@ class Neo4jQueryRaw:
     # The resolver's ``data_root``: None reads ``DATA_ROOT`` after ``load_dotenv()``,
     # as ``torchcell.artifacts.tiers.resolve_data_root`` does.
     artifact_data_root: str | None = None
-    # The resolver's remote source: None builds tc-data from ``TC_DATA_URL`` /
-    # ``TC_DATA_API_KEY`` when the local tier misses.
+    # The resolver's remote source: None builds tc-data (``TC_DATA_URL`` when set, else
+    # the public endpoint; no key) when the local tier misses.
     artifact_client: RemoteSource | None = None
     # The gate's seam (``ArtifactResolver``); tests inject a fake.
     resolver: ArtifactResolver = require_resolvable

@@ -1,7 +1,8 @@
 # docker/docker-compose.tc-data.yml
-# Standalone deployment for the keyed dataset endpoint (tc-data). Kept separate from
-# docker-compose.tc-lit.yml (the literature endpoint) so each starts and stops on its
-# own; the Neo4j store is built and served by database/. On Radiant the container
+# Standalone deployment for the dataset endpoint (tc-data), a PUBLIC read-only mirror:
+# no route needs a key, and paper content (manifest roles beginning paper_) is withheld.
+# Kept separate from docker-compose.tc-lit.yml (the keyed literature endpoint) so each
+# starts and stops on its own; the Neo4j store is built and served by database/. On Radiant the container
 # runs as the uid:gid that owns the Taiga trees (TC_DATA_UID; measured 2026-09-30 as
 # 1000:555647, rocky:zhao5_nfs, the files are mode 660 in a setgid group, so the gid is
 # what grants the read) so the root-squashed mount is readable; nothing is staged on the
@@ -13,17 +14,13 @@
 #   TC_DATA_RAW_ROOT    host raw mirror (one dir per citation key with manifest.json)
 #   TC_DATA_GENOMES_ROOT  host genomes tier (one dir per assembly set with manifest.json)
 #   TC_DATA_OBJECTS_ROOT  host objects tier (one dir per object key with manifest.json)
-#   TC_DATA_KEYS_FILE   host path to the JSON keys file {name: sha256hex}
 #   TC_DATA_PORT        host port to expose (default 8724)
 #   TC_DATA_UID         uid or uid:gid to run as (Radiant: 1000:555647; default 67392)
 #
 # The build context is the repo root (context: ..), so run from a checkout root (or
 # from a `git archive HEAD torchcell docker` tree, as on Radiant).
 #
-# Mint a key first (writes nothing; prints the key + hash line):
-#   docker compose --env-file tc-data.conf -f docker/docker-compose.tc-data.yml run --rm tc-data-endpoint \
-#     python -m torchcell.datasets.server --gen-key collaborator-name
-# Then:
+# Start:
 #   docker compose --env-file tc-data.conf -f docker/docker-compose.tc-data.yml up -d --build
 
 services:
@@ -37,19 +34,17 @@ services:
     ports:
       - "${TC_DATA_PORT:-8724}:8724"
     volumes:
-      # Store, tiers and keys are mounted READ-ONLY: a read-only server backed
-      # by read-only mounts cannot mutate an archive under any bug or key.
+      # Store and tiers are mounted READ-ONLY: a read-only server backed by
+      # read-only mounts cannot mutate an archive under any bug or request.
       - "${TC_DATA_ROOT}:/data/store:ro"
       - "${TC_DATA_RAW_ROOT}:/data/torchcell-raw:ro"
       - "${TC_DATA_GENOMES_ROOT:?set TC_DATA_GENOMES_ROOT in tc-data.conf}:/data/torchcell-genomes:ro"
       - "${TC_DATA_OBJECTS_ROOT:?set TC_DATA_OBJECTS_ROOT in tc-data.conf}:/data/torchcell-objects:ro"
-      - "${TC_DATA_KEYS_FILE}:/keys.json:ro"
     environment:
       TC_DATA_ROOT: /data/store
       TC_DATA_RAW_ROOT: /data/torchcell-raw
       TC_DATA_GENOMES_ROOT: /data/torchcell-genomes
       TC_DATA_OBJECTS_ROOT: /data/torchcell-objects
-      TC_DATA_KEYS_FILE: /keys.json
       TC_DATA_HOST: 0.0.0.0
       TC_DATA_PORT: 8724
     restart: unless-stopped

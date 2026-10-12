@@ -3,15 +3,15 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/api_keys.py
 # Test file: tests/torchcell/test_api_keys.py
 
-"""Named API keys stored as sha256 hashes, shared by the ``tc-lit`` and ``tc-data`` servers.
+"""Named API keys stored as sha256 hashes, used by the keyed ``tc-lit`` server.
 
-Both endpoints authenticate an ``X-API-Key`` header against a set of named keys. The
-key values are never stored or logged: a keys file holds ``{name: sha256hex}``, an inline
-``name:key,name2:key2`` spec (quick-start and tests only) is hashed on load, and a
-presented key is compared constant-time against every stored hash. Each server binds
+The literature endpoint authenticates an ``X-API-Key`` header against a set of named
+keys. The key values are never stored or logged: a keys file holds ``{name: sha256hex}``,
+an inline ``name:key,name2:key2`` spec (quick-start and tests only) is hashed on load,
+and a presented key is compared constant-time against every stored hash. A server binds
 its own environment variable names by subclassing :class:`ApiKeys` and overriding
-:meth:`ApiKeys.from_env` (``TC_LIT_*`` for the literature endpoint, ``TC_DATA_*`` for
-the dataset endpoint); the model and the comparison are identical.
+:meth:`ApiKeys.from_env` (``TC_LIT_*`` for the literature endpoint). The dataset
+endpoint ``tc-data`` is a public read-only mirror and uses no key (since 2026-10-12).
 """
 
 from __future__ import annotations

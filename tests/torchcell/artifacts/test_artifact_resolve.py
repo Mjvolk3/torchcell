@@ -7,6 +7,10 @@ Hermetic: tiers are built under ``tmp_path``; the remote is ``FakeRemote`` (byte
 dict) or ``TcDataSource`` over the real tc-data app through the ASGI test client. Every
 integrity refusal asserts the exact message, and every unresolvable ref asserts the full
 ordered list of sources tried.
+
+2026.10.12 (public read-only tc-data): no key anywhere. Without a ``client`` and without
+``TC_DATA_URL`` the default remote is tc-data on ``DEFAULT_URL``; tests of that path stub
+the source (``offline_tc_data`` or a recording ``manifest``) so no request is made.
 """
 
 from __future__ import annotations
@@ -23,6 +27,7 @@ from fastapi.testclient import TestClient
 from tests.torchcell.artifacts._fakes import (
     FakeRemote,
     literature_manifest,
+    offline_tc_data,
     ref_for,
     sha,
     write_genomes,
@@ -40,18 +45,20 @@ from torchcell.artifacts import (
 )
 from torchcell.artifacts.resolve import RemoteEndpointError, RemoteMissError, cache_path
 from torchcell.datasets.artifact import ArtifactIndex
-from torchcell.datasets.server import DataKeys, DataServerConfig, create_app
+from torchcell.datasets.server import DataServerConfig, create_app
+from torchcell.endpoint_http import DEFAULT_URL
 from torchcell.sequence.genome.registry import GenomeManifest
 
 DATA = b">YAL001C\nATGAAA\n"
 OTHER = b">YAL001C\nATGTTT\n"
-KEY = "test-key"
 
 
 def _no_env_remote(monkeypatch: pytest.MonkeyPatch) -> None:
-    """No ``.env`` is read and no ``TC_DATA_URL`` is set: the default remote is absent."""
-    monkeypatch.setattr("dotenv.load_dotenv", lambda *a, **k: False)
+    """No ``.env``, no ``TC_DATA_URL``: the default remote is the public tc-data,
+    stubbed offline so it misses without a request.
+    """
     monkeypatch.delenv("TC_DATA_URL", raising=False)
+    offline_tc_data(monkeypatch)
 
 
 def _remote_with(tier: str, key: str, files: dict[str, bytes]) -> FakeRemote:
@@ -324,16 +331,27 @@ def test_a_listed_file_missing_from_disk_goes_on_to_the_remote(tmp_path: Path) -
     assert sorted((tmp_path / "artifact-cache").iterdir()) == []
 
 
-def test_without_a_client_or_tc_data_url_the_remote_is_named_as_unconfigured(
+def test_without_a_client_or_tc_data_url_the_default_source_is_the_public_endpoint(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    _no_env_remote(monkeypatch)
+    """There is always a remote: unset ``TC_DATA_URL`` builds tc-data on ``DEFAULT_URL``
+    (its manifest call is stubbed, so nothing touches the network).
+    """
+    monkeypatch.setattr("dotenv.load_dotenv", lambda *a, **k: False)
+    monkeypatch.delenv("TC_DATA_URL", raising=False)
+    built: list[TcDataSource] = []
+
+    def fake_manifest(self: TcDataSource, tier: str, key: str) -> GenomeManifest:
+        built.append(self)
+        raise RemoteMissError("stubbed")
+
+    monkeypatch.setattr(TcDataSource, "manifest", fake_manifest)
     ref = ref_for("raw", "k", "f.tsv", DATA)
     with pytest.raises(ArtifactUnresolvableError) as err:
         resolve(ref, materialize=False, data_root=tmp_path)
-    assert str(err.value).endswith(
-        "(2) tc-data: TC_DATA_URL is not set, so no remote source is configured"
-    )
+    assert str(err.value).endswith(f"(2) tc-data {DEFAULT_URL} manifest: stubbed")
+    assert len(built) == 1
+    assert built[0].url == DEFAULT_URL
 
 
 def test_without_a_client_tc_data_is_built_from_the_environment(
@@ -341,7 +359,6 @@ def test_without_a_client_tc_data_is_built_from_the_environment(
 ) -> None:
     monkeypatch.setattr("dotenv.load_dotenv", lambda *a, **k: False)
     monkeypatch.setenv("TC_DATA_URL", "http://tc-data.invalid:8724/")
-    monkeypatch.setenv("TC_DATA_API_KEY", KEY)
     built: list[TcDataSource] = []
 
     def fake_manifest(self: TcDataSource, tier: str, key: str) -> GenomeManifest:
@@ -371,8 +388,11 @@ def test_resolve_reads_data_root_from_the_environment(
 # -- TcDataSource ---------------------------------------------------------------------
 
 
-def _tc_data(tmp_path: Path) -> TcDataSource:
-    """tc-data over the real app: a raw mirror with one key, through the ASGI client."""
+def _tc_data(tmp_path: Path, raise_server_exceptions: bool = True) -> TcDataSource:
+    """tc-data over the real app: a raw mirror with one key, through the ASGI client.
+
+    ``raise_server_exceptions=False`` lets a server fault arrive as its HTTP 500.
+    """
     raw_root = tmp_path / "served" / "torchcell-raw"
     write_tier(tmp_path / "served", "raw", "kemmeren2014", {"data/expr.tsv": DATA})
     store = tmp_path / "store"
@@ -383,9 +403,11 @@ def _tc_data(tmp_path: Path) -> TcDataSource:
         raw_root=raw_root,
         genomes_root=tmp_path / "served-genomes",
         objects_root=tmp_path / "served-objects",
-        keys=DataKeys.from_pairs(f"t:{KEY}"),
     )
-    return TcDataSource("http://testserver/", KEY, http=TestClient(create_app(config)))
+    http = TestClient(
+        create_app(config), raise_server_exceptions=raise_server_exceptions
+    )
+    return TcDataSource("http://testserver/", http=http)
 
 
 def test_tc_data_source_resolves_the_raw_tier_end_to_end(tmp_path: Path) -> None:
@@ -416,11 +438,15 @@ def test_tc_data_source_turns_404s_into_misses(tmp_path: Path) -> None:
 
 
 def test_tc_data_source_raises_on_a_server_error(tmp_path: Path) -> None:
-    source = _tc_data(tmp_path)
-    source._headers = {"X-API-Key": "wrong"}
-    with pytest.raises(RemoteEndpointError):
+    """A corrupt ``manifest.json`` is a 500 from tc-data on both routes, which is an
+    endpoint error, not a miss.
+    """
+    source = _tc_data(tmp_path, raise_server_exceptions=False)
+    manifest = tmp_path / "served" / "torchcell-raw" / "kemmeren2014" / "manifest.json"
+    manifest.write_text("{not json", encoding="utf-8")
+    with pytest.raises(RemoteEndpointError, match=r"/manifest: HTTP 500$"):
         source.manifest("raw", "kemmeren2014")
-    with pytest.raises(RemoteEndpointError, match="expected HTTP 200, got 401"):
+    with pytest.raises(RemoteEndpointError, match="expected HTTP 200, got 500"):
         source.download("raw", "kemmeren2014", "data/expr.tsv", tmp_path / "x")
 
 
@@ -444,13 +470,13 @@ class _UrlRecorder:
         self.bodies = bodies
         self.urls: list[str] = []
 
-    def get(self, url: str, *, headers: Mapping[str, str]) -> Any:
+    def get(self, url: str) -> Any:
         self.urls.append(url)
         return _Response(200, self.bodies[url])
 
     @contextmanager
     def stream(
-        self, method: str, url: str, *, headers: Mapping[str, str]
+        self, method: str, url: str, *, headers: Mapping[str, str] | None = None
     ) -> Iterator[_Response]:
         self.urls.append(url)
         yield _Response(200, self.bodies[url])
@@ -476,7 +502,7 @@ def test_tc_data_source_uses_the_genomes_and_objects_url_shapes(tmp_path: Path) 
             "http://tc/objects/esm2/artifact/emb/iso.npy": DATA,
         }
     )
-    source = TcDataSource("http://tc", KEY, http=http)
+    source = TcDataSource("http://tc", http=http)
     got = resolve(
         ref_for("genomes", "set_v1", "genes.tar.gz", DATA),
         data_root=tmp_path,
@@ -496,12 +522,11 @@ def test_tc_data_source_uses_the_genomes_and_objects_url_shapes(tmp_path: Path) 
     ]
 
 
-def test_tc_data_source_from_env_has_no_default(
+def test_tc_data_source_from_env_defaults_to_the_public_endpoint(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.delenv("TC_DATA_URL", raising=False)
-    with pytest.raises(KeyError):
-        TcDataSource.from_env()
+    assert repr(TcDataSource.from_env()) == f"tc-data {DEFAULT_URL}"
+    assert TcDataSource().url == DEFAULT_URL
     monkeypatch.setenv("TC_DATA_URL", "http://a/")
-    monkeypatch.setenv("TC_DATA_API_KEY", KEY)
     assert repr(TcDataSource.from_env()) == "tc-data http://a"

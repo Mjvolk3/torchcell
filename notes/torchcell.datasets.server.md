@@ -36,3 +36,7 @@ Issue #534 (fixed in the literature PR for #525, since both servers share the pa
 ## 2026.09.30 - Underscore directories are unknown keys
 
 Issue #564. `_list_raw_keys` hid `_`-prefixed directories from `/raw`, but `_raw_key_dir` resolved them, so a direct `/raw/_x/manifest`, `/files` or `/artifact/...` request still answered when the directory held a manifest. Now `_raw_key_dir` raises 404 `unknown citation key` for any name starting with `_`, the same answer as an absent key and the same rule PR #559 added to the literature server's `_key_dir`. No other route, status or schema changed. Evidence: `test_underscore_directory_is_an_unknown_key_even_with_a_manifest` in [[tests.torchcell.datasets.test_datasets_server]].
+
+## 2026.10.12 - Keyless, paper roles withheld
+
+Every route is public (`APP_VERSION` 2.0.0): `DataKeys`, `require_key` and `--gen-key` are gone, and `DataServerConfig` has no `keys` field. The literature-shaped tiers (raw, objects) pass through `_public_manifest`/`_public_files`, which drop records with `role.startswith("paper_")`, and `_serve_public_file` answers 404 `paper content is not served` for such a path before the generic manifest check. Genomes manifests carry no paper roles and are unchanged. Reason and measurements in [[database.tc-data-endpoint]].

@@ -43,15 +43,17 @@ Every strain is modeled with FOUR deletion perturbations at full genotype fideli
   asymmetry (mutants carry the explicit 3Delta background; the reference genome is a
   WT-only placeholder) is the design decision flagged for human review.
 
-DROPPED STRAINS (3 of 1982 -> 1979 records):
+RECORDS (1982 of 1982; 2026.10.12, #1045): every released row is a record under its
+released target ORF (stripped and upper-cased; no genome is consulted, so the 7 names
+R64-4-1 renames, e.g. YAL058C-A, keep their released spelling). The previous build dropped
+three rows and remapped seven:
   * ``YGL141W`` (HRD1): the single mutant row with missing values (2 CV traits
-    ``ACV103_A1B``, ``ACV103_C`` are NaN). CalMorph completeness requires the full
-    501-trait vocabulary per record and values are never imputed, so the strain is
-    dropped whole (never partially imputed).
-  * ``YGL013C`` (PDR1) and ``YDR011W`` (SNQ2): these appear as target ORFs but are
-    ALREADY deleted in the 3Delta background, so they cannot be independent quadruple
-    deletions (deleting an already-deleted gene is not a new perturbation). Dropped per
-    the same background-collision convention used by the Vanacloig 2022 loader.
+    ``ACV103_A1B``, ``ACV103_C`` are NaN). Its 499 measured traits are stored and the two
+    blank cells are key-absent, never imputed.
+  * ``YGL013C`` (PDR1) and ``YDR011W`` (SNQ2): target ORFs that are also deleted in the
+    3Delta background. They are strains of the released collection with released
+    measurements and are stored as released: the genotype carries the target deletion and
+    the background deletion of the same gene, which is what the release says of them.
 """
 
 import hashlib
@@ -91,11 +93,6 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
-from torchcell.datasets.scerevisiae.gene_name_reconcile import (
-    default_genome,
-    reconcile_systematic_names,
-)
-from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -159,15 +156,9 @@ class ScmdOhnuki2022Dataset(ExperimentDataset):
         io_workers: int = 0,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
-        genome: SCerevisiaeGenome | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize the dataset; an optional genome reconciles target ORF names to R64.
-
-        If ``genome`` is not supplied one is constructed from ``DATA_ROOT`` during
-        processing (used only to reconcile the target ORF name to the current annotation).
-        """
-        self.genome = genome
+        """Initialize the dataset (no genome: every strain is stored as released)."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -216,14 +207,8 @@ class ScmdOhnuki2022Dataset(ExperimentDataset):
         df_mutant["ORF"] = df_mutant["ORF"].str.strip().str.upper()
         feature_cols = [c for c in df_mutant.columns if c != "ORF"]
 
-        # Reconcile the target ORF name to the current R64 annotation (retain-all,
-        # collision-safe; shared genome resolver). NOT dropped for naming here -- only the
-        # NaN and 3Delta-background filters below drop rows.
-        if self.genome is None:
-            self.genome = default_genome()
-        df_mutant["systematic_gene_name"] = reconcile_systematic_names(
-            self.genome, df_mutant["ORF"], label="Ohnuki 2022"
-        )
+        # The target ORF is stored as released (no genome is consulted, #1045).
+        df_mutant["systematic_gene_name"] = df_mutant["ORF"]
         # One strain per target ORF (0 repeats among the 1982 released rows): a repeat
         # would store two records of one genotype, so it is refused, not stored twice.
         repeated = df_mutant.loc[
@@ -232,31 +217,35 @@ class ScmdOhnuki2022Dataset(ExperimentDataset):
         if repeated:
             raise ValueError(
                 f"Ohnuki 2022 {MUTANT_FILE} lists {len(repeated)} target ORF(s) more "
-                f"than once after name reconciliation: {repeated}"
+                f"than once: {repeated}"
             )
 
-        # Drop the single strain with missing CalMorph values (never impute).
-        has_all = df_mutant[feature_cols].notna().all(axis=1)
-        n_nan = int((~has_all).sum())
-        if n_nan:
+        # A blank CalMorph cell is key-absent in its record, never imputed and never a
+        # reason to drop the strain (YGL141W: 2 of 501 cells blank).
+        blank_rows = df_mutant.loc[
+            df_mutant[feature_cols].isna().any(axis=1), "systematic_gene_name"
+        ].tolist()
+        if blank_rows:
             log.info(
-                "Ohnuki: dropping %d mutant row(s) with missing CalMorph values: %s",
-                n_nan,
-                df_mutant.loc[~has_all, "systematic_gene_name"].tolist(),
+                "Ohnuki: %d mutant row(s) with blank CalMorph cell(s), stored with the "
+                "blank cells key-absent: %s",
+                len(blank_rows),
+                blank_rows,
             )
-        # Drop target ORFs that coincide with the 3Delta background (cannot be an
-        # independent quadruple deletion of an already-deleted gene). Checked on the
-        # reconciled name so a legacy alias of a background gene is also caught.
-        not_bg = ~df_mutant["systematic_gene_name"].isin(BACKGROUND_GENES)
-        n_bg = int((~not_bg).sum())
-        if n_bg:
+        # A target ORF that is also a 3Delta background gene (PDR1, SNQ2) is a released
+        # strain with a released measurement; it is stored as released.
+        in_background = df_mutant.loc[
+            df_mutant["systematic_gene_name"].isin(BACKGROUND_GENES),
+            "systematic_gene_name",
+        ].tolist()
+        if in_background:
             log.info(
-                "Ohnuki: dropping %d target row(s) colliding with the 3Delta "
-                "background: %s",
-                n_bg,
-                df_mutant.loc[~not_bg, "systematic_gene_name"].tolist(),
+                "Ohnuki: %d target row(s) also deleted in the 3Delta background, stored "
+                "as released: %s",
+                len(in_background),
+                in_background,
             )
-        df_mutant = df_mutant.loc[has_all & not_bg].reset_index(drop=True)
+        df_mutant = df_mutant.reset_index(drop=True)
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
         df_mutant.to_csv(osp.join(self.preprocess_dir, "data.csv"), index=False)
@@ -355,7 +344,9 @@ class ScmdOhnuki2022Dataset(ExperimentDataset):
             temperature=Temperature(value=25),
         )
 
-        measurements = {col: float(row[col]) for col in feature_cols}
+        measurements = {
+            col: float(row[col]) for col in feature_cols if pd.notna(row[col])
+        }
         base, cv = self._split_traits(measurements)
         phenotype = CalMorphPhenotype(
             calmorph=base, calmorph_coefficient_of_variation=cv if cv else None

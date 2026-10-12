@@ -12,9 +12,8 @@ order):
 
     YAL001C     0.5, 1.0, ..., 9.5   (0.5 * (i + 1) for amino acid i)
     YBR001C     2.0 x 19
-    YBR001C     3.0 x 19             duplicate ORF -> dropped, first row kept
-    WT          1.0 x 19             not a systematic name -> skipped
-    YLR287-A    1.0 x 19             malformed -> skipped
+    WT          1.0 x 19             no ORF form -> deferred to the released-gene-name leaf
+    YLR287-A    1.0 x 19             no ORF form -> deferred to the released-gene-name leaf
     " YCR001W " 1.0 x 19             stripped
 
 ``robust_summary_statistics`` sheet (amino acid, mean (mM), sd (mM)): mean 0.25 * (i + 1)
@@ -32,10 +31,9 @@ ORF, so every default record has n = 1 per amino acid (issue #488 counts these r
   number of strains the MCD robust mean summarizes (issue #489);
 - the medium as a Finding: the record and its reference carry ``SM_AGAR`` (solid), not
   the liquid ``SM`` subculture the amino acids are extracted from (issue #143);
-- the build ledger: four YBR001C rows, one blank ORF and one ``WT`` row log exactly
-  "2 usable ORFs, 2 non-systematic ORF names skipped, 3 repeated-ORF rows dropped (1
-  ORFs kept at their first row)" (2026.10.01, issue #528: it used to count the one ORF,
-  not the three rows);
+- the build ledger: a blank ORF and a ``WT`` row log exactly "2 released ORFs stored, 2
+  rows deferred to the released-gene-name leaf (['WT', 'nan'])"; a second row for one
+  ORF is refused by name (2026.10.12, #1045: it used to keep the first row);
 - a blank concentration cell and a text cell (``n.d.``) each raise
   ``InvalidConcentrationError`` with an exact message (2026.10.01, issue #528: the blank
   used to be served as NaN and the text to stop in Python's ``float()``). The pinned
@@ -83,7 +81,6 @@ _LEVELS_YAL001C = [0.5 * (i + 1) for i in range(19)]
 _CONC_ROWS: list[list[Any]] = [
     ["YAL001C", *_LEVELS_YAL001C],
     ["YBR001C", *([2.0] * 19)],
-    ["YBR001C", *([3.0] * 19)],
     ["WT", *([1.0] * 19)],
     ["YLR287-A", *([1.0] * 19)],
     [" YCR001W ", *([1.0] * 19)],
@@ -185,8 +182,8 @@ def _reference(means: dict[str, float], n_strains: int = 3) -> dict[str, Any]:
 def test_three_records_n_one_with_the_robust_mean_reference(
     dataset: m.AminoAcidMulleder2016Dataset,
 ) -> None:
-    """Six rows give three records (YAL001C, the first YBR001C, the stripped YCR001W);
-    the WT and malformed names are skipped and the second YBR001C is a collision. Each
+    """Five rows give three records (YAL001C, YBR001C, the stripped YCR001W); the WT
+    and malformed names are deferred to the released-gene-name leaf. Each
     amino acid is n = 1 (one ``data_raw`` row each) with no SE on solid SM at 30 C; the
     reference is the summary mean with n = 3, the strains it summarizes.
     """
@@ -439,24 +436,18 @@ def test_medium_is_sm_agar_not_the_liquid_subculture(
     assert dataset[0]["experiment"]["environment"]["temperature"]["value"] == 30.0
 
 
-def test_ledger_counts_dropped_rows_and_their_orfs(
+def test_ledger_counts_deferred_rows_and_a_repeated_orf_is_refused(
     tmp_path: Path, caplog: pytest.LogCaptureFixture
 ) -> None:
-    """Six rows: YBR001C four times (2.0, 3.0, 4.0, 5.0), a blank ORF cell (read as NaN,
-    stringified to ``"nan"``), ``WT``, and YAL001C. Kept: YBR001C (the first row, 2.0 on
-    every key) and YAL001C, so two records. The ledger line counts the blank and ``WT``
-    as two non-systematic names.
-
-    Contract (issue #528): the ledger counts the three discarded YBR001C rows and the
-    one ORF they belong to (it used to report only "1 ORF collisions deduped").
+    """Four rows: YBR001C, a blank ORF cell (read as NaN, stringified to ``"nan"``),
+    ``WT``, and YAL001C. Kept: YBR001C and YAL001C, so two records; the ledger line names
+    the two rows with no ORF form, deferred to the released-gene-name leaf. A second row
+    for YBR001C is refused by name, never kept as the first (0 of 4,678 released rows).
     """
     rows: list[list[Any]] = [
         ["YBR001C", *([2.0] * 19)],
-        ["YBR001C", *([3.0] * 19)],
         [None, *([1.0] * 19)],
-        ["YBR001C", *([4.0] * 19)],
         ["WT", *([1.0] * 19)],
-        ["YBR001C", *([5.0] * 19)],
         ["YAL001C", *_LEVELS_YAL001C],
     ]
     root = _root(tmp_path, conc_rows=rows)
@@ -467,12 +458,19 @@ def test_ledger_counts_dropped_rows_and_their_orfs(
     assert dataset[1]["experiment"] == _experiment("YAL001C", _LEVELS_YAL001C)
     messages = [r.getMessage() for r in caplog.records if r.name == m.__name__]
     assert messages == [
-        "Mulleder: 2 usable ORFs, 2 non-systematic ORF names skipped, "
-        "3 repeated-ORF rows dropped (1 ORFs kept at their first row)",
+        "Mulleder: 2 released ORFs stored, 2 rows deferred to the released-gene-name "
+        "leaf (['WT', 'nan'])",
         "Mulleder: data_raw rows per released ORF {1: 2}; reference n_replicates 2 "
         "(strains the robust mean summarizes)",
         "Wrote 2 Mulleder amino-acid experiments to LMDB",
     ]
+    repeated = _root(
+        tmp_path / "repeat",
+        conc_rows=[["YBR001C", *([2.0] * 19)], ["YBR001C", *([3.0] * 19)]],
+    )
+    with pytest.raises(RuntimeError, match="released ORF YBR001C is on two rows"):
+        m.AminoAcidMulleder2016Dataset(root=str(repeated))
+    assert not (repeated / "processed" / "lmdb").exists()
 
 
 def test_blank_concentration_refuses_the_build_by_name(tmp_path: Path) -> None:

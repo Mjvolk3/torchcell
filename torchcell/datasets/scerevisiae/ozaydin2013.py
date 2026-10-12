@@ -18,11 +18,18 @@ Source: paper SI `1-s2.0-S109671761200081X-mmc1.xlsx` (Elsevier ESM). Sheet 1
 "Color scores of all deletions" is the whole-collection screen; Sheet 2 "Names and
 Functions of TOP200" is the curated high-hit subset (gene name/function/category).
 
-Maps to `VisualScorePhenotype` (WS4). One record per ORF that has a numeric color;
-text-only rows (`pet`, `tiny`, `_`) carry no usable measurement and are excluded
-(counted + logged, never silently dropped).
+Maps to `VisualScorePhenotype` (WS4). One record per RELEASED ROW with a numeric color
+(2026.10.12, #1045): an ORF scored on two plates is two records of one deletion, told
+apart by their values, with ``n_replicates = 1`` each (the previous build collapsed them
+to the maximum: 132 rows into 130 ORFs). The ORF is stored as released (upper-cased,
+no genome consulted); the strain is the row's own ``Strain`` cell. A row whose Color cell
+is text (``pet``, ``tiny``, ``_``; 546 rows) carries no number the ``visual_score`` field
+can hold and is listed, with its text, in ``preprocess/dropped_records.json``; a row whose
+ORF cell is not ORF-shaped (``YLR287-A``, 1 row) is counted there under
+``deferred_to_released_gene_name_leaf`` until that leaf lands.
 """
 
+import json
 import logging
 import os
 import os.path as osp
@@ -184,15 +191,6 @@ def _carotenogenic_cassette() -> list[GeneAdditionPerturbation]:
     ]
 
 
-class MixedStrainScoresError(ValueError):
-    """An ORF with numeric color scores on more than one background strain.
-
-    One record carries one reference genome, so scores from two backgrounds cannot be
-    aggregated into it. The pinned SI has none: its one ORF listed on two strains
-    (YML086C) has a numeric score only on BY4730 (the BY4741 row reads ``pet``).
-    """
-
-
 # Valid S. cerevisiae systematic ORF name (optional trailing -A/-B for sub-features).
 _SYSTEMATIC_RE = re.compile(r"^Y[A-P][LR]\d{3}[WC](-[A-Z])?$")
 
@@ -286,8 +284,8 @@ class CarotenoidOzaydin2013Dataset(ExperimentDataset):
         write_verified(data, dest, _SI_SHA256, self.si_url)
         log.info("Wrote %s (%d bytes, sha256 verified)", dest, len(data))
 
-    def _aggregate_by_orf(self) -> pd.DataFrame:
-        """Read Sheet 1, aggregate replicate rows to one row per ORF."""
+    def _released_rows(self) -> tuple[pd.DataFrame, dict[str, Any]]:
+        """Read Sheet 1 as released: one row per scored plate, plus the accounting."""
         xlsx = osp.join(self.raw_dir, self.si_filename)
         df = pd.read_excel(xlsx, sheet_name="Color scores of all deletions")
 
@@ -306,92 +304,93 @@ class CarotenoidOzaydin2013Dataset(ExperimentDataset):
             if pd.notna(r.get("ORF name"))
         }
 
-        records: dict[str, dict[str, Any]] = {}
-        malformed: set[str] = set()
+        rows: list[dict[str, Any]] = []
+        deferred: list[str] = []
+        text_rows: list[dict[str, Any]] = []
+        n_blank_orf = 0
         for _, row in df.iterrows():
             orf = row.get("ORF name")
             if pd.isna(orf):
+                n_blank_orf += 1
                 continue
             orf = str(orf).strip().upper()
-            # Some SI ORF names are malformed (e.g. 'YLR287-A' missing the W/C). Do not
-            # guess the missing letter -- exclude non-conforming names and log them.
             if not _SYSTEMATIC_RE.match(orf):
-                malformed.add(orf)
+                deferred.append(orf)
                 continue
             num, text = _parse_color(row.get("Color"))
-            flags = _parse_comment(row.get("Comment"))
             strain = (
                 str(row["Strain"]).strip() if pd.notna(row.get("Strain")) else "BY4741"
             )
-            rec = records.setdefault(
-                orf,
-                {
-                    "orf": orf,
-                    "strain": strain,
-                    "numeric_scores": [],
-                    "numeric_strains": set(),
-                    "texts": set(),
-                    "flags": {k: False for k in _FLAG_PATTERNS},
-                },
-            )
-            if num is not None:
-                rec["numeric_scores"].append(num)
-                rec["numeric_strains"].add(strain)
-            if text is not None:
-                rec["texts"].add(text)
-            for k, v in flags.items():
-                rec["flags"][k] = rec["flags"][k] or v
-
-        rows: list[dict[str, Any]] = []
-        for orf, rec in records.items():
-            scores = rec["numeric_scores"]
-            numeric_strains = sorted(rec["numeric_strains"])
-            if len(numeric_strains) > 1:
-                raise MixedStrainScoresError(
-                    f"Ozaydin: {orf} has numeric color scores on strains "
-                    f"{numeric_strains}; one record carries one reference genome"
-                )
+            if num is None:
+                text_rows.append({"orf": orf, "strain": strain, "text": text})
+                continue
             meta = top200_meta.get(orf, {})
             rows.append(
                 {
                     "orf": orf,
-                    # The strain of the scored rows; an ORF with no numeric score keeps
-                    # its first row's strain and is excluded from the records anyway.
-                    "strain": numeric_strains[0] if numeric_strains else rec["strain"],
-                    "visual_score": max(scores) if scores else None,
-                    "visual_score_min": min(scores) if len(scores) > 1 else None,
-                    "n_replicates": len(scores),
-                    "score_text": ";".join(sorted(rec["texts"])) or None,
-                    "comment_annotations": rec["flags"],
+                    "strain": strain,
+                    "visual_score": num,
+                    "visual_score_min": None,
+                    "n_replicates": 1,
+                    "score_text": text,
+                    "comment_annotations": _parse_comment(row.get("Comment")),
                     "in_top200": orf in top200_orfs,
                     **meta,
                 }
             )
-        if malformed:
-            log.info(
-                "Ozaydin: excluded %d malformed ORF names (e.g. %s)",
-                len(malformed),
-                sorted(malformed)[:5],
-            )
-        return pd.DataFrame(rows)
+        accounting = {
+            "dataset": self.name,
+            "source_rows": int(len(df)),
+            "kept_records": len(rows),
+            "rules": [
+                {
+                    "rule": "orf_cell_is_blank",
+                    "description": "the released row names no ORF",
+                    "n_records": n_blank_orf,
+                },
+                {
+                    "rule": "deferred_to_released_gene_name_leaf",
+                    "description": (
+                        "the released ORF cell is not ORF-shaped (YLR287-A: the release "
+                        "dropped the strand letter), so it cannot sit on "
+                        "KanMxDeletionPerturbation; stored once the released-gene-name "
+                        "leaf lands, never resolved against the genome"
+                    ),
+                    "n_records": len(deferred),
+                    "items": sorted(deferred),
+                },
+                {
+                    "rule": "color_cell_is_text_not_a_score",
+                    "description": (
+                        "the released Color cell is a word (pet, tiny, _), not a score on "
+                        "the -5..+5 scale; VisualScorePhenotype.visual_score holds a "
+                        "number, so the row's text is kept here, verbatim, with its ORF "
+                        "and strain"
+                    ),
+                    "n_records": len(text_rows),
+                    "items": text_rows,
+                },
+            ],
+        }
+        return pd.DataFrame(rows), accounting
 
     @post_process
     def process(self) -> None:
-        """Parse the SI into per-ORF VisualScore experiments and write LMDB."""
+        """Parse the SI into per-row VisualScore experiments and write LMDB."""
         verify_raw_files(self.raw_dir, {self.si_filename: _SI_SHA256})
-        agg = self._aggregate_by_orf()
-        n_total = len(agg)
-        # Exclude ORFs with no numeric color (text-only / missing) -- not measurements.
-        usable = agg[agg["visual_score"].notna()].reset_index(drop=True)
-        n_excluded = n_total - len(usable)
+        usable, accounting = self._released_rows()
         log.info(
-            "Ozaydin: %d ORFs total, %d usable (numeric color), %d excluded (text-only)",
-            n_total,
+            "Ozaydin: %d released rows, %d records (one per scored row); %d text-only "
+            "rows and %d rows deferred to the released-gene-name leaf listed in the ledger",
+            accounting["source_rows"],
             len(usable),
-            n_excluded,
+            accounting["rules"][2]["n_records"],
+            accounting["rules"][1]["n_records"],
         )
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
+        with open(osp.join(self.preprocess_dir, "dropped_records.json"), "w") as fh:
+            json.dump(accounting, fh, indent=2)
         usable.drop(columns=["comment_annotations"]).to_csv(
             osp.join(self.preprocess_dir, "data.csv"), index=False
         )
@@ -425,11 +424,9 @@ class CarotenoidOzaydin2013Dataset(ExperimentDataset):
         self, row: "pd.Series[Any]"
     ) -> tuple[VisualScoreExperiment, VisualScoreExperimentReference, Publication]:
         """Build the VisualScore experiment/reference/publication for one ORF."""
-        strain = (
-            str(row["strain"]) if row["strain"] in ("BY4741", "BY4730") else "BY4741"
-        )
+        # The row's own Strain cell, as released (BY4741 where the cell is blank).
         genome_reference = ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain=strain
+            species="Saccharomyces cerevisiae", strain=str(row["strain"])
         )
         genotype = Genotype(
             perturbations=[

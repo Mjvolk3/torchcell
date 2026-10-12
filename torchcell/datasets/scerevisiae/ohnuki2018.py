@@ -40,9 +40,10 @@ verifies both hashes, never the live URL):
   ``http://www.yeast.ib.k.u-tokyo.ac.jp/SCMD/download.php?path=ess1112data.tsv`` and
   ``...=wt114data.tsv``.
 
-ORFs are already SGD systematic names; they are validated against the S288C R64 gene
-universe (any not resolving would be logged + dropped -- empirically zero drops, all
-1,112 present).
+ORFs are already SGD systematic names and are stored AS RELEASED (stripped and
+upper-cased); no genome is consulted (#1045). A blank CalMorph cell is key-absent in the
+record, never written as 0.0 (the previous build wrote 0.0; the pinned matrix has 0 blank
+cells, so no stored value changes).
 """
 
 # torchcell/datasets/scerevisiae/ohnuki2018
@@ -84,11 +85,6 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
-from torchcell.datasets.scerevisiae.gene_name_reconcile import (
-    default_genome,
-    reconcile_systematic_names,
-)
-from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import SourcedValue
 
@@ -179,15 +175,9 @@ class ScmdOhnuki2018Dataset(ExperimentDataset):
         io_workers: int = 0,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
-        genome: SCerevisiaeGenome | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize the dataset; an optional genome reconciles ORF names to R64.
-
-        If ``genome`` is not supplied one is constructed from ``DATA_ROOT`` during
-        processing (used only to reconcile source ORF names to the current annotation).
-        """
-        self.genome = genome
+        """Initialize the dataset (no genome: every strain is stored as released)."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -269,12 +259,7 @@ class ScmdOhnuki2018Dataset(ExperimentDataset):
         return df
 
     def preprocess_calmorph_data(self, df_mutant: pd.DataFrame) -> pd.DataFrame:
-        """Clean the mutant matrix and reconcile ORF names to R64 (retain-all).
-
-        Names are reconciled to the current R64-4-1 annotation with the shared genome
-        resolver (see :mod:`torchcell.datasets.scerevisiae.gene_name_reconcile`); no record
-        is dropped for a naming reason.
-        """
+        """Clean the mutant matrix and name every strain as released (no genome)."""
         df_mutant = df_mutant.copy()
         # The ORF column carries the systematic gene name; there is no common-name column.
         df_mutant["systematic_gene_name"] = df_mutant["ORF"].str.strip().str.upper()
@@ -297,11 +282,6 @@ class ScmdOhnuki2018Dataset(ExperimentDataset):
                 f"{df_mutant.loc[duplicated, 'ORF'].tolist()}"
             )
 
-        if self.genome is None:
-            self.genome = default_genome()
-        df_mutant["systematic_gene_name"] = reconcile_systematic_names(
-            self.genome, df_mutant["systematic_gene_name"], label="Ohnuki 2018"
-        )
         df_mutant["perturbed_gene_name"] = df_mutant["systematic_gene_name"]
 
         log.info(
@@ -362,7 +342,9 @@ class ScmdOhnuki2018Dataset(ExperimentDataset):
             if col in info_columns:
                 continue
             value = row[col]
-            float_value = float(value) if pd.notna(value) else 0.0
+            if pd.isna(value):
+                continue  # a blank cell is key-absent, never 0.0
+            float_value = float(value)
             if col.startswith(_CV_PREFIXES):
                 cv_measurements[col] = float_value
             else:

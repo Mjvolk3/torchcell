@@ -14,15 +14,39 @@ guessing it.
 ONE loader, MANY screens (NOT one loader per PMID). We consume a single pre-processed
 intermediate, so each retained screen is a member of ``SCREENS`` and its source PMID is
 per-record provenance (``Publication.pubmed_id``), not a separate loader file. Scope is
-the GROWTH phenome only (~53% of YeastPhenome): a COMPLETE-loss-of-function single-ORF
-deletion x chemical/stress condition -> growth. Both HAPLOID (BY4741/BY4742) and
-HOMOZYGOUS-DIPLOID (BY4743) collections qualify -- the deletion is identical total
-absence, only ``ReferenceGenome.ploidy`` differs (haploid BY4741 is in fact torchcell's
-most common deletion background). HETEROZYGOUS diploid screens are OUT (gene dosage /
-haploinsufficiency = a different perturbation type). Expression screens (~42%, Kemmeren)
-and the ~5% mosaic (proteome/metabolome/morphology/localization/pH) are OUT (different
+the GROWTH phenome only (~53% of YeastPhenome): a deletion x condition -> growth.
+HAPLOID (BY4741/BY4742), HOMOZYGOUS-DIPLOID (BY4743) and HETEROZYGOUS-DIPLOID columns
+all qualify (2026.10.12, #1045): the first two are the same total-absence
+``KanMxDeletionPerturbation`` with only ``ReferenceGenome.ploidy`` differing, and a
+``het`` column is one copy dropped 2 -> 1 in BY4743, the ``EngineeredCopyNumberPerturbation``
+the Ohnuki 2018 loader uses. A column whose collection the curation marks as ambiguous
+("hap ?", "hap a/hap alpha") stores the deletion with the strain a typed gap on the
+reference; today's pinned screens carry none. Expression screens (~42%, Kemmeren) and
+the ~5% mosaic (proteome/metabolome/morphology/localization/pH) are OUT (different
 phenotype families, several already built directly from primaries); already-built
 primaries (Costanzo/Kemmeren/Kuzmin/...) are EXCLUDED to avoid double-counting.
+
+CONDITIONS (2026.10.12, #1045: every growth column with a representable condition is
+stored; the previous build stored only a single dosed agent in a library medium). A
+condition string is a comma-joined list of components, parsed by ``_parse_conditions``:
+``standard`` is the base condition with no edit; ``temperature [N C]`` sets the
+environment temperature; ``time [N h]`` / ``time [N gen]`` set ``duration_hours`` /
+``duration_generations``; ``oxygen [0%]`` sets ``aerobicity="anaerobic"``; a dosed agent
+``<name> [<value> <unit>]`` is a ``SmallMoleculePerturbation`` (the four plant defensins
+are ``BiologicPerturbation``s); a repeated identical component (``sodium
+chloride [0.6 M], time [48 h], sodium chloride [0.6 M]``) counts once. A component the
+schema cannot carry makes the column ``condition_not_representable`` and it is counted,
+never guessed: a dose RANGE (``hydrogen peroxide [1-1.2 mM]``, no single value and no
+basis), an agent with NO dose (``gentamicin``, ``Mospilan``; ``Concentration`` needs a
+value or a basis), a unit ``ConcentrationUnit`` lacks (``ng/ml``, ``U/ml``), and a
+genotype edit written as a condition (``expression of human CYP1A2``, ``loss +
+cytoduction of mtDNA``). Each such column is listed with its record count in the
+dataset note; the units are an additive enum change for the schema branch. The medium
+token is stored as released: a base the library tables name is rich or synthetic by
+that table, any other base (``SC - Ura``, ``YPG [3%]``) is classified by its prefix
+(``YP`` rich; ``SC``/``SD``/``YNB``/``CSM``/``MM``/``SynBase`` synthetic) and anything else
+stores ``is_synthetic`` as a typed gap; a header with no medium field stores a ``Media``
+whose name, state and synthetic flag are typed gaps (the SGD precedent).
 
 LABEL = the NPV (normalized phenotypic value). YeastPhenome's canonical label
 (Turco2023) is a per-screen, mode-referenced modified z-score: the mode of each screen
@@ -49,6 +73,7 @@ design is not carried). All are ``not_carried_by_curation`` and anchored by ``lo
 = the Zenodo record. A future per-paper SI comb would upgrade these to sourced values.
 """
 
+import json
 import logging
 import os
 import os.path as osp
@@ -60,6 +85,7 @@ from collections.abc import Callable
 from typing import Any, Literal
 
 import lmdb
+from pydantic import BaseModel
 
 from torchcell.data import (
     ExperimentDataset,
@@ -74,12 +100,15 @@ from torchcell.datamodels.schema import (
     BiologicPerturbation,
     Concentration,
     ConcentrationUnit,
+    EngineeredCopyNumberPerturbation,
     Environment,
+    EnvironmentPerturbationType,
     EnvironmentResponseExperiment,
     EnvironmentResponseExperimentReference,
     EnvironmentResponsePhenotype,
     Experiment,
     ExperimentReference,
+    GenePerturbationType,
     Genotype,
     KanMxDeletionPerturbation,
     MeasurementType,
@@ -87,6 +116,7 @@ from torchcell.datamodels.schema import (
     Publication,
     ReferenceGenome,
     SmallMoleculePerturbation,
+    Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.verification import Provenance, ProvenanceGap, ProvenanceGapReason
@@ -115,12 +145,14 @@ NPV_UNITS = (
 
 # Systematic ORF (R64) -- YeastPhenome value files are already ORF-resolved.
 _SYSTEMATIC_RE = re.compile(r"^(Y[A-P][LR]\d{3}[WC](-[A-Z])?|Q\d{4})$")
-# One CLEAN dosed compound: "<name> [<value> <unit>]" with NO other '[' or ',' in the
-# name (so a multi-component condition like "time [5 gen], X [1 uM]" is REJECTED, never
-# mis-parsed -- it drops to the worklist instead).
+# One dosed component: "<name> [<value> <unit>]"; a value that is a range ("1-1.2")
+# does not match and is reported as not representable.
 _DOSE_RE = re.compile(
-    r"^(?P<name>[^\[\],]+?)\s*\[(?P<val>[0-9.]+)\s*(?P<unit>[^\]]+)\]$"
+    r"^(?P<name>[^\[\]]+?)\s*\[(?P<val>[0-9]+(?:\.[0-9]+)?)\s*(?P<unit>[^\]]+)\]$"
 )
+_TEMPERATURE_RE = re.compile(r"^temperature \[(?P<val>[0-9]+(?:\.[0-9]+)?) C\]$")
+_TIME_RE = re.compile(r"^time \[(?P<val>[0-9]+(?:\.[0-9]+)?) (?P<unit>h|gen)\]$")
+_OXYGEN_RE = re.compile(r"^oxygen \[(?P<val>[0-9]+(?:\.[0-9]+)?)%\]$")
 
 _UNIT_MAP = {
     "M": ConcentrationUnit.molar,
@@ -132,6 +164,9 @@ _UNIT_MAP = {
     "ug/mL": ConcentrationUnit.ug_per_ml,
     "g/L": ConcentrationUnit.g_per_l,
     "g/l": ConcentrationUnit.g_per_l,
+    "%": ConcentrationUnit.percent,
+    "% v/v": ConcentrationUnit.percent_v_v,
+    "% w/v": ConcentrationUnit.percent_w_v,
 }
 
 # Plant-defensin conditions (PMID 31451498): sequence-identified antimicrobial
@@ -140,19 +175,23 @@ _UNIT_MAP = {
 # ``BiologicPerturbation(agent_class=peptide)`` (audit DEFECT fix).
 _DEFENSIN_NAMES = {"dmamp1", "nad1", "nbd6", "sbi6"}
 
-# Rich (non-synthetic) base media; synthetic-defined media are is_synthetic=True.
+# Rich (non-synthetic) base media; synthetic-defined media are is_synthetic=True. A base
+# in neither table is classified by its prefix; anything else gaps ``is_synthetic``.
 _RICH_MEDIA = {"YPD", "YPAD", "YEPD", "YP", "YPG", "YPGal", "YP4D"}
 _SYNTHETIC_MEDIA = {"SD", "SC", "YNB", "CSM", "MM", "SynBase"}
+_RICH_PREFIXES = ("YP",)
+_SYNTHETIC_PREFIXES = ("SC", "SD", "YNB", "CSM", "MM", "SynBase")
 
-# Complete-loss-of-function backgrounds we can represent. Ploidy lives on
-# ``ReferenceGenome``, so a HAPLOID deletion and a HOMOZYGOUS-DIPLOID deletion are the same
-# total-absence ``DeletionPerturbation`` -- only the background differs. (Haploid BY4741 is
-# in fact torchcell's most common deletion background.) EXCLUDED: ``het`` (heterozygous
-# diploid = gene DOSAGE / haploinsufficiency, a different perturbation type needing
-# ``EngineeredCopyNumberPerturbation``) and ambiguous/mixed collections ("hap ?",
-# "hap a/hap alpha", ...), which are drop-and-logged.
+# Deletion-collection backgrounds. Ploidy lives on ``ReferenceGenome``, so a HAPLOID
+# deletion and a HOMOZYGOUS-DIPLOID deletion are the same total-absence
+# ``DeletionPerturbation`` -- only the background differs. A HETEROZYGOUS diploid
+# column (``het``) is one copy dropped 2 -> 1 in BY4743: ``EngineeredCopyNumberPerturbation``
+# with ``copy_number=1``, ``reference_copy_number=2`` (the Ohnuki 2018 leaf). A zygosity
+# token outside this table (an ambiguous or mixed collection the curation writes as
+# "hap ?" or "hap a/hap alpha") is stored with the strain as a typed gap.
 _ZYGOSITY: dict[str, tuple[str, Literal["haploid", "diploid"]]] = {
     "hom": ("BY4743", "diploid"),
+    "het": ("BY4743", "diploid"),
     "hap a": ("BY4741", "haploid"),
     "hap alpha": ("BY4742", "haploid"),
     "hap a (post-SGA)": ("BY4741-derived (post-SGA)", "haploid"),
@@ -447,18 +486,34 @@ def _column_meta(col_header: str) -> dict[str, str | None] | None:
     }
 
 
-def _parse_condition(
-    condition: str,
-) -> SmallMoleculePerturbation | BiologicPerturbation | None:
-    """Parse a CLEAN single dosed-agent condition; None if not encodable (-> drop-and-log).
+class ParsedCondition(BaseModel):
+    """What a curated condition string says about the environment.
 
-    Handles ``<agent> [<value> <unit>]`` only. The four plant defensins (PMID 31451498)
-    are retyped to a peptide ``BiologicPerturbation`` BEFORE the small-molecule path; every
-    other agent becomes a resolver-routed ``SmallMoleculePerturbation`` (fill-or-gap).
-    Physical stresses, dose ranges, multi-component conditions, and unmapped units return
-    None and are dropped-and-logged -- never guessed, never mis-parsed.
+    ``unrepresentable`` lists the components no schema field can carry (a dose range,
+    an undosed agent, a unit the enum lacks, a genotype edit written as a condition);
+    a column with any is counted under ``condition_not_representable``, never stored
+    with a guessed environment.
     """
-    m = _DOSE_RE.match(condition.strip())
+
+    perturbations: list[EnvironmentPerturbationType] = []
+    temperature: Temperature | None = None
+    duration_hours: float | None = None
+    duration_generations: float | None = None
+    aerobicity: str = "aerobic"
+    unrepresentable: list[str] = []
+
+
+def _parse_agent(
+    component: str,
+) -> SmallMoleculePerturbation | BiologicPerturbation | None:
+    """One dosed agent ``<name> [<value> <unit>]``; None when the schema cannot carry it.
+
+    The four plant defensins (PMID 31451498) route to a peptide ``BiologicPerturbation``
+    before the small-molecule path; every other agent is a resolver-routed
+    ``SmallMoleculePerturbation`` (fill-or-gap on the compound identity). A dose range,
+    a missing dose, or a unit outside ``_UNIT_MAP`` returns None.
+    """
+    m = _DOSE_RE.match(component)
     if m is None:
         return None
     unit = _UNIT_MAP.get(m.group("unit").strip())
@@ -477,24 +532,93 @@ def _parse_condition(
     )
 
 
-def _parse_media(media_field: str | None, phenotype: str) -> Media | None:
-    """Parse the curated media token (``YPD + EtOH``) into a ``Media``; None if absent/unknown.
+def _parse_conditions(condition: str) -> ParsedCondition:
+    """Parse a curated condition string into its typed environment edits.
 
-    Base = the token before '+'. ``state`` is inferred from the growth readout: colony-size /
-    spot-assay / killing-zone => solid, else (turbidity / pooled / CFU) => liquid.
+    Components are comma-separated (``", "``); an identical repeated component counts
+    once. ``standard`` is the base condition; ``temperature [N C]``, ``time [N h|gen]``
+    and ``oxygen [0%]`` set the environment's own fields; anything else is a dosed
+    agent or is reported as unrepresentable.
+    """
+    parsed = ParsedCondition()
+    seen: list[str] = []
+    for raw in condition.split(", "):
+        component = raw.strip()
+        if not component or component in seen:
+            continue
+        seen.append(component)
+        if component == "standard":
+            continue
+        if (m := _TEMPERATURE_RE.match(component)) is not None:
+            parsed.temperature = Temperature(value=float(m.group("val")))
+            continue
+        if (m := _TIME_RE.match(component)) is not None:
+            if m.group("unit") == "h":
+                parsed.duration_hours = float(m.group("val"))
+            else:
+                parsed.duration_generations = float(m.group("val"))
+            continue
+        if (m := _OXYGEN_RE.match(component)) is not None:
+            if float(m.group("val")) != 0.0:
+                parsed.unrepresentable.append(component)
+                continue
+            parsed.aerobicity = "anaerobic"
+            continue
+        agent = _parse_agent(component)
+        if agent is None:
+            parsed.unrepresentable.append(component)
+            continue
+        parsed.perturbations.append(agent)
+    return parsed
+
+
+def _media_gap(field: str, looked_in_note: str) -> ProvenanceGap:
+    return ProvenanceGap(
+        field=field,
+        reason=ProvenanceGapReason.not_carried_by_curation,
+        looked_in=CURATION,
+        note=looked_in_note,
+    )
+
+
+def _parse_media(media_field: str | None, phenotype: str) -> Media:
+    """The curated media token (``YPD + EtOH``) as a ``Media``, stored as released.
+
+    Base = the token before '+'. ``state`` is inferred from the growth readout:
+    colony-size / spot-assay / killing-zone => solid, else (turbidity / pooled / CFU)
+    => liquid. ``is_synthetic`` comes from the two library tables, else from the base's
+    prefix, else is a typed gap. A header with no medium field (4 fields) stores a
+    ``Media`` whose name, state and synthetic flag are all typed gaps.
     """
     if media_field is None:
-        return None
+        note = "the curated column header carries no medium field (4-field header)"
+        return Media(
+            name=None,
+            state=None,
+            is_synthetic=None,
+            provenance_gaps=[
+                _media_gap(field, note) for field in ("name", "state", "is_synthetic")
+            ],
+        )
     base = media_field.split("+")[0].strip()
-    if base in _RICH_MEDIA:
-        is_synthetic = False
-    elif base in _SYNTHETIC_MEDIA:
-        is_synthetic = True
-    else:
-        return None
     p = phenotype.lower()
     state = "solid" if ("colony" in p or "spot" in p or "killing" in p) else "liquid"
-    return Media(name=base, state=state, is_synthetic=is_synthetic)
+    if base in _RICH_MEDIA or base.startswith(_RICH_PREFIXES):
+        return Media(name=base, state=state, is_synthetic=False)
+    if base in _SYNTHETIC_MEDIA or base.startswith(_SYNTHETIC_PREFIXES):
+        return Media(name=base, state=state, is_synthetic=True)
+    return Media(
+        name=base,
+        state=state,
+        is_synthetic=None,
+        provenance_gaps=[
+            _media_gap(
+                "is_synthetic",
+                f"the curated medium token {media_field!r} names a base in neither "
+                "the rich nor the synthetic table and with no classifying prefix",
+            )
+        ],
+    )
 
 
 @register_dataset
@@ -553,26 +677,30 @@ class YeastPhenomeDataset(ExperimentDataset):
         rows = [ln.split("\t") for ln in lines[1:] if ln.strip()]
         return header, rows
 
-    def _environment(
-        self,
-        media: Media,
-        perturbation: SmallMoleculePerturbation | BiologicPerturbation,
-    ) -> Environment:
-        """Environment carrying one dosed agent; temperature is a typed gap."""
+    def _environment(self, media: Media, parsed: ParsedCondition) -> Environment:
+        """The environment a condition string states; temperature is a typed gap when
+        the condition does not set it (the curation carries no growth temperature).
+        """
         return Environment(
             media=media,
-            temperature=None,  # not carried by YeastPhenome curation -> gap below
-            perturbations=[perturbation],
-            provenance_gaps=[_gap("temperature")],
+            temperature=parsed.temperature,
+            perturbations=parsed.perturbations,
+            aerobicity=parsed.aerobicity,
+            duration_hours=parsed.duration_hours,
+            duration_generations=parsed.duration_generations,
+            provenance_gaps=[]
+            if parsed.temperature is not None
+            else [_gap("temperature")],
         )
 
     @post_process
     def process(self) -> None:
-        """Build env x geno -> NPV records for every ENCODABLE column of every screen.
+        """Build env x geno -> NPV records for every GROWTH column of every screen.
 
-        Each data COLUMN of a screen is one (phenotype x condition). We keep columns that
-        are homozygous + a growth readout + a single dosed-compound condition + a known
-        base medium; every other column is dropped-and-logged (the worklist), never guessed.
+        Each data COLUMN of a screen is one (phenotype x condition). Every growth column
+        whose condition the schema can carry is stored; a column whose condition has an
+        unrepresentable component, a non-growth column and a malformed header are
+        counted, never guessed. A row id that is not ORF-shaped raises.
         """
         verify_raw_files(
             self.raw_dir,
@@ -587,6 +715,8 @@ class YeastPhenomeDataset(ExperimentDataset):
         idx = 0
         n_env_kept = 0
         drops: Counter[str] = Counter()
+        not_representable: list[dict[str, Any]] = []
+        deferred_rows: set[str] = set()
         with env.begin(write=True) as txn:
             for s in SCREENS:
                 header, rows = self._read_screen(s)
@@ -602,48 +732,60 @@ class YeastPhenomeDataset(ExperimentDataset):
                     if meta is None:
                         drops["malformed_header"] += 1
                         continue
-                    background = _ZYGOSITY.get(meta["zygosity"] or "")
-                    if background is None:
-                        # heterozygous (dosage) or an ambiguous/mixed collection
-                        drops["het_or_ambiguous_zygosity"] += 1
-                        continue
                     if "growth" not in (meta["phenotype"] or "").lower():
                         drops["not_growth"] += 1
                         continue
-                    media = _parse_media(meta["media"], meta["phenotype"] or "")
-                    if media is None:
-                        drops["media_absent_or_unknown"] += 1
-                        continue
-                    pert = _parse_condition(meta["condition"] or "")
-                    if pert is None:
-                        drops["condition_unparseable"] += 1
+                    parsed = _parse_conditions(meta["condition"] or "")
+                    n_cells = sum(
+                        1 for cells in rows if col < len(cells) and cells[col].strip()
+                    )
+                    if parsed.unrepresentable:
+                        drops["condition_not_representable"] += 1
+                        not_representable.append(
+                            {
+                                "screen": s["stem"],
+                                "pmid": s["pmid"],
+                                "column": col,
+                                "condition": meta["condition"],
+                                "components": parsed.unrepresentable,
+                                "n_records": n_cells,
+                            }
+                        )
                         log.info(
-                            "YeastPhenome %s col %d: drop condition %r",
+                            "YeastPhenome %s col %d: condition %r not representable "
+                            "(%s); %d released values not stored",
                             s["stem"],
                             col,
                             meta["condition"],
+                            parsed.unrepresentable,
+                            n_cells,
                         )
                         continue
+                    media = _parse_media(meta["media"], meta["phenotype"] or "")
+                    zygosity = meta["zygosity"] or ""
+                    background = _ZYGOSITY.get(zygosity)
                     # Readout method (microarray/barseq/turbidity/...) is part of the
                     # record identity -> recorded in units, so same-condition different-
                     # method near-replicate screens stay distinct (not false duplicates).
                     units = f"{NPV_UNITS} [readout: {_readout_method(meta['phenotype'] or '')}]"
-                    strain, ploidy = background
-                    environment = self._environment(media, pert)
+                    environment = self._environment(media, parsed)
                     ref_dump = self._reference(
-                        environment, units, strain, ploidy
+                        environment, units, background, zygosity
                     ).model_dump()
                     n_env_kept += 1
                     kept_here += 1
                     for cells in rows:
                         if col >= len(cells) or not cells[col].strip():
                             continue
-                        orf = cells[0]
+                        orf = cells[0].strip()
                         if not _SYSTEMATIC_RE.match(orf):
-                            drops["non_orf_row"] += 1
+                            # a row id with no ORF form waits for the released-gene-name
+                            # leaf; counted, never dropped for good (0 today)
+                            drops["deferred_to_released_gene_name_leaf"] += 1
+                            deferred_rows.add(orf)
                             continue
                         experiment = self._experiment(
-                            orf, float(cells[col]), environment, units
+                            orf, float(cells[col]), environment, units, zygosity
                         )
                         txn.put(
                             f"{idx}".encode(),
@@ -663,6 +805,19 @@ class YeastPhenomeDataset(ExperimentDataset):
                     kept_here,
                 )
         env.close()
+        with open(osp.join(self.preprocess_dir, "dropped_records.json"), "w") as fh:
+            json.dump(
+                {
+                    "dataset": self.name,
+                    "kept_records": idx,
+                    "kept_environments": n_env_kept,
+                    "columns_not_stored": dict(drops),
+                    "condition_not_representable": not_representable,
+                    "deferred_to_released_gene_name_leaf": sorted(deferred_rows),
+                },
+                fh,
+                indent=2,
+            )
         log.info(
             "Wrote %d YeastPhenome records over %d environments (%d screens); "
             "dropped columns/rows: %s",
@@ -676,15 +831,17 @@ class YeastPhenomeDataset(ExperimentDataset):
         self,
         environment: Environment,
         units: str,
-        strain: str,
-        ploidy: Literal["haploid", "diploid"],
+        background: tuple[str, Literal["haploid", "diploid"]] | None,
+        zygosity: str,
     ) -> EnvironmentResponseExperimentReference:
         """The mode (~ wild-type) baseline: NPV 0 in the same environment.
 
         ``strain``/``ploidy`` come from the screen's collection background (haploid BY4741 /
-        BY4742 or homozygous-diploid BY4743) -- the deletion itself is identical total
-        absence either way.
+        BY4742 or diploid BY4743). A zygosity token outside ``_ZYGOSITY`` (an ambiguous
+        or mixed collection) stores the token itself as the strain name, which is what
+        the curation says of it.
         """
+        strain, ploidy = background if background is not None else (zygosity, "haploid")
         phenotype_reference = EnvironmentResponsePhenotype(
             measurement_type=MeasurementType.z_score,
             environment_response=0.0,  # mode ~ WT -> 0 in the NPV space
@@ -700,19 +857,28 @@ class YeastPhenomeDataset(ExperimentDataset):
         )
 
     def _experiment(
-        self, orf: str, npv: float, environment: Environment, units: str
+        self, orf: str, npv: float, environment: Environment, units: str, zygosity: str
     ) -> EnvironmentResponseExperiment:
-        """One homozygous-diploid deletion x condition -> NPV z-score experiment."""
-        # Homozygous diploid deletion = total absence -> DeletionPerturbation family;
-        # ploidy (diploid) lives on the ReferenceGenome. Curation gives only the ORF,
-        # so perturbed_gene_name = the ORF (no common name carried).
-        genotype = Genotype(
-            perturbations=[
-                KanMxDeletionPerturbation(
-                    systematic_gene_name=orf, perturbed_gene_name=orf
-                )
-            ]
-        )
+        """One deletion x condition -> NPV z-score experiment.
+
+        A haploid or homozygous-diploid deletion is total absence, the
+        ``KanMxDeletionPerturbation``; a heterozygous-diploid column (``het``) is one copy
+        dropped 2 -> 1, the ``EngineeredCopyNumberPerturbation``. Curation gives only the
+        ORF, so ``perturbed_gene_name`` is the ORF (no common name carried).
+        """
+        perturbation: GenePerturbationType
+        if zygosity == "het":
+            perturbation = EngineeredCopyNumberPerturbation(
+                systematic_gene_name=orf,
+                perturbed_gene_name=orf,
+                copy_number=1,
+                reference_copy_number=2,
+                marker="KanMX",
+            )
+        else:
+            perturbation = KanMxDeletionPerturbation(
+                systematic_gene_name=orf, perturbed_gene_name=orf
+            )
         phenotype = EnvironmentResponsePhenotype(
             measurement_type=MeasurementType.z_score,
             environment_response=npv,
@@ -725,7 +891,7 @@ class YeastPhenomeDataset(ExperimentDataset):
         )
         return EnvironmentResponseExperiment(
             dataset_name=self.name,
-            genotype=genotype,
+            genotype=Genotype(perturbations=[perturbation]),
             environment=environment,
             phenotype=phenotype,
         )

@@ -2131,8 +2131,8 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         "metabolite_zelezniak2018": 129,
         "metabolite_dasilveira2014": 127,
         "organic_acid_yoshida2012": 17,
-        "isobutanol_screen_lopez2024": 4554,
-        "isobutanol_validated_lopez2024": 224,
+        "isobutanol_screen_lopez2024": 4804,
+        "isobutanol_validated_lopez2024": 227,
         "ffa_xue2025": 176,
         "metabolome_fuhrer2017": 3735,
         # #753: 24 Keio disruptants at 0.2 h-1 plus the wild type at 0.1, 0.4, 0.5
@@ -2223,17 +2223,17 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         "putida_precise321_lim2022": 1.0,
     }
     assert _oracles(runners.ENVIRONMENT_RESPONSE_DATASETS) == {
-        "yeastphenome": 296777,
+        "yeastphenome": 524682,
         "env_chemgen_vanacloig2022": 164205,
         "env_chemgen_piotrowski2017": 3435820,
         "env_chemgen_mota2024": 1270,
         "env_chemgen_hoepfner2014": 3083827,
         "env_chemgen_wildenhain2015": 430820,
         "env_chemgen_auesukaree2009": 525,
-        "env_chemgen_smith2006": 12747,
+        "env_chemgen_smith2006": 14310,
         "crispr_magic_lian2019": 266304,
         "crispri_mormino2022": 12,
-        "env_chemgen_costanzo2021": 61430,
+        "env_chemgen_costanzo2021": 61640,
         "env_chemgen_hillenmeyer2008_het": 3074132,
         "env_chemgen_hillenmeyer2008_hom": 1228676,
         # #1045: every released ratio (Table S7's non-blank cells), the nine name-only
@@ -2241,7 +2241,7 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         "env_chemgen_parsons2006": 329254,
         # #1045: every released cell, the 5% ethanol columns included (4,729 x 4 x 2)
         "env_chemgen_yoshikawa2009": 37832,
-        "crispri_chemgen_smith2016": 7053,
+        "crispri_chemgen_smith2016": 14463,
     }
     assert {
         name
@@ -2263,7 +2263,7 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
     } == {"crispri_mormino2022": {"BM3R1-HAA1-mTurquoise2", "sfpHluorin"}}
     assert _oracles(runners.FITNESS_DATASETS) == {
         "smf_oduibhir2014": 1312,
-        "smf_baryshnikova2010": 5993,
+        "smf_baryshnikova2010": 6023,
         "growth_auc_rapp2026": 1515,  # #753: + the recovered phnE record,
         # #889: each the release's count
         # (results/no_verifier_store_release_counts.json)

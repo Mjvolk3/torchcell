@@ -20,15 +20,11 @@ pinned in ``test_ozaydin2013_synthetic.py`` and not repeated here. Added:
   and refused on sha256, each with its exact message and no file written; the write
   when the pin matches; a present file whose digest matches the pin returns without a
   request;
-- the build ledger lines (6 ORFs total, 5 usable, 1 text-only, 1 malformed name) and
-  the absence of the malformed line when every name is systematic;
-- aggregation: the comment flags are OR-ed across replicates, and two equal scores
-  give ``visual_score_min`` equal to the score (the schema documents None only for a
-  single replicate);
-- 2026.10.01 (issue #528): the record's strain is the strain its numeric scores were
-  taken on, and numeric scores on two strains raise ``MixedStrainScoresError`` (the
-  first row's strain used to win). On the pinned SI the per-ORF aggregate is
-  identical before and after (4,975 ORFs);
+- the build ledger line (7 released rows, 5 records, 1 text-only row and 1 row
+  deferred to the released-gene-name leaf) and ``dropped_records.json``;
+- one record per released row (2026.10.12, #1045): two plates of one ORF are two
+  records with their own scores, flags and strains, never a maximum; a text-only row
+  is listed in the ledger with its text, and the strain is the row's own cell;
 - an out-of-scale color (6) refuses the build with the schema's message;
 - the medium (issue #622, 2026.10.02): the sourced ``OZAYDIN_SC_URA_AGAR`` plate (the
   library ``SC_URA`` made solid, agar amount an open gap), no longer a free-text stub;
@@ -42,6 +38,7 @@ from __future__ import annotations
 
 import hashlib
 import io
+import json
 import logging
 import os
 import os.path as osp
@@ -242,78 +239,84 @@ def test_download_accepts_a_present_file_matching_the_pin(
 
 
 def test_build_ledger_lines(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
-    """Seven rows: YLR287-A is malformed (no W/C) and excluded by name; YBR001C has only
-    the text score ``_``. The aggregate therefore holds 6 ORFs, 5 with a numeric color,
-    1 excluded as text-only; the malformed line lists the name. A second build whose
-    names are all systematic logs no malformed line.
+    """Seven rows: YLR287-A is not ORF-shaped and is deferred to the released-gene-name
+    leaf; YBR001C has only the text score ``_`` and is listed in the ledger. Five rows
+    are records. ``dropped_records.json`` carries both lists verbatim.
     """
     caplog.set_level(logging.INFO, logger=m.__name__)
     dataset = m.CarotenoidOzaydin2013Dataset(root=str(_root(tmp_path / "a")))
     assert len(dataset) == 5
     messages = [r.getMessage() for r in caplog.records if r.name == m.__name__]
     assert messages == [
-        "Ozaydin: excluded 1 malformed ORF names (e.g. ['YLR287-A'])",
-        "Ozaydin: 6 ORFs total, 5 usable (numeric color), 1 excluded (text-only)",
+        "Ozaydin: 7 released rows, 5 records (one per scored row); 1 text-only rows "
+        "and 1 rows deferred to the released-gene-name leaf listed in the ledger",
         "Wrote 5 Ozaydin visual-score experiments to LMDB",
     ]
-
-    caplog.clear()
-    clean = [row for row in _ROWS if row[0] != "YLR287-A"]
-    m.CarotenoidOzaydin2013Dataset(root=str(_root(tmp_path / "b", clean)))
-    messages = [r.getMessage() for r in caplog.records if r.name == m.__name__]
-    assert messages == [
-        "Ozaydin: 6 ORFs total, 5 usable (numeric color), 1 excluded (text-only)",
-        "Wrote 5 Ozaydin visual-score experiments to LMDB",
+    ledger = json.loads(
+        (Path(dataset.root) / "preprocess" / "dropped_records.json").read_text()
+    )
+    assert (ledger["source_rows"], ledger["kept_records"]) == (7, 5)
+    assert [(r["rule"], r["n_records"]) for r in ledger["rules"]] == [
+        ("orf_cell_is_blank", 0),
+        ("deferred_to_released_gene_name_leaf", 1),
+        ("color_cell_is_text_not_a_score", 1),
+    ]
+    assert ledger["rules"][1]["items"] == ["YLR287-A"]
+    assert ledger["rules"][2]["items"] == [
+        {"orf": "YBR001C", "strain": "BY4741", "text": "_"}
     ]
 
 
-def test_replicates_on_one_strain_aggregate_and_or_the_flags(tmp_path: Path) -> None:
+def test_two_plates_of_one_orf_are_two_records_with_their_own_flags(
+    tmp_path: Path,
+) -> None:
     """YAL001C scored twice on BY4741 (comment ``petite``, color 1; then ``tiny``, color
-    3): the aggregate is max 3.0, min 1.0, n 2, flags petite and tiny, on BY4741.
+    3): two records in row order, each n = 1 with no minimum, each carrying its own
+    row's flag (the previous build stored one record at the maximum with both flags).
     """
     rows: list[Row] = [
         ("YAL001C", "BY4741", 1, "petite"),
         ("YAL001C", "BY4741", 3, "tiny"),
     ]
     dataset = m.CarotenoidOzaydin2013Dataset(root=str(_root(tmp_path, rows)))
-    assert len(dataset) == 1
-    phenotype = dataset[0]["experiment"]["phenotype"]
-    assert (
-        phenotype["visual_score"],
-        phenotype["visual_score_min"],
-        phenotype["n_replicates"],
-    ) == (3.0, 1.0, 2)
-    assert {k for k, v in phenotype["comment_annotations"].items() if v} == {
-        "flag_petite",
-        "flag_tiny",
-    }
+    assert len(dataset) == 2
+    got = []
+    for i in range(2):
+        phenotype = dataset[i]["experiment"]["phenotype"]
+        got.append(
+            (
+                phenotype["visual_score"],
+                phenotype["visual_score_min"],
+                phenotype["n_replicates"],
+                {k for k, v in phenotype["comment_annotations"].items() if v},
+            )
+        )
+    assert got == [(1.0, None, 1, {"flag_petite"}), (3.0, None, 1, {"flag_tiny"})]
     assert dataset[0]["reference"]["genome_reference"]["strain"] == "BY4741"
 
 
-def test_numeric_scores_on_two_strains_refuse_the_build_by_name(tmp_path: Path) -> None:
-    """Contract (issue #528): YAL001C scored 1 on BY4730 and 3 on BY4741 raises
-    ``MixedStrainScoresError`` naming the ORF and both strains, and nothing is written
-    to LMDB (the first row's strain, BY4730, used to label a maximum scored on BY4741).
+def test_scores_on_two_strains_are_two_records_each_on_its_own_strain(
+    tmp_path: Path,
+) -> None:
+    """YAL001C scored 1 on BY4730 and 3 on BY4741: two records, each referenced to the
+    strain its row names (the previous build refused the pair by name).
     """
     rows: list[Row] = [
         ("YAL001C", "BY4730", 1, "petite"),
         ("YAL001C", "BY4741", 3, "tiny"),
     ]
-    root = _root(tmp_path, rows)
-    with pytest.raises(m.MixedStrainScoresError) as excinfo:
-        m.CarotenoidOzaydin2013Dataset(root=str(root))
-    assert str(excinfo.value) == (
-        "Ozaydin: YAL001C has numeric color scores on strains ['BY4730', 'BY4741']; "
-        "one record carries one reference genome"
-    )
-    assert not (root / "processed" / "lmdb").exists()
+    dataset = m.CarotenoidOzaydin2013Dataset(root=str(_root(tmp_path, rows)))
+    assert [
+        dataset[i]["reference"]["genome_reference"]["strain"] for i in range(2)
+    ] == ["BY4730", "BY4741"]
 
 
-def test_the_strain_is_the_one_the_score_was_taken_on(tmp_path: Path) -> None:
-    """Contract (issue #528): a text-only BY4741 row (``pet``) before a BY4730 row
-    scored 1 gives a record on BY4730 with score 1.0 and text ``pet`` (the first row's
-    strain, BY4741, used to win). The released SI lists YML086C this way with the
-    BY4730 row first, so its stored strain is BY4730 either way.
+def test_a_text_only_row_is_ledgered_and_the_scored_row_keeps_its_strain(
+    tmp_path: Path,
+) -> None:
+    """A text-only BY4741 row (``pet``) before a BY4730 row scored 1: one record on
+    BY4730 with score 1.0 and no text; the ``pet`` row is in the ledger with its ORF and
+    strain.
     """
     rows: list[Row] = [
         ("YAL001C", "BY4741", "pet", None),
@@ -324,21 +327,27 @@ def test_the_strain_is_the_one_the_score_was_taken_on(tmp_path: Path) -> None:
     assert dataset[0]["reference"]["genome_reference"]["strain"] == "BY4730"
     phenotype = dataset[0]["experiment"]["phenotype"]
     assert (phenotype["visual_score"], phenotype["n_replicates"]) == (1.0, 1)
-    assert phenotype["score_text"] == "pet"
+    assert phenotype["score_text"] is None
+    ledger = json.loads(
+        (Path(dataset.root) / "preprocess" / "dropped_records.json").read_text()
+    )
+    assert ledger["rules"][2]["items"] == [
+        {"orf": "YAL001C", "strain": "BY4741", "text": "pet"}
+    ]
 
 
-def test_equal_replicates_report_a_min_equal_to_the_score(tmp_path: Path) -> None:
-    """Two plates both scored 2: ``visual_score_min`` is 2.0, not None. The field is None
-    only for a single numeric replicate (``len(scores) > 1``), whatever the spread.
-    """
+def test_equal_scores_on_two_plates_are_two_records(tmp_path: Path) -> None:
+    """Two plates both scored 2: two records, score 2.0 each, no minimum, n = 1."""
     rows: list[Row] = [("YAL001C", "BY4741", 2, None), ("YAL001C", "BY4741", 2, None)]
     dataset = m.CarotenoidOzaydin2013Dataset(root=str(_root(tmp_path, rows)))
-    phenotype = dataset[0]["experiment"]["phenotype"]
-    assert (
-        phenotype["visual_score"],
-        phenotype["visual_score_min"],
-        phenotype["n_replicates"],
-    ) == (2.0, 2.0, 2)
+    assert len(dataset) == 2
+    for i in range(2):
+        phenotype = dataset[i]["experiment"]["phenotype"]
+        assert (
+            phenotype["visual_score"],
+            phenotype["visual_score_min"],
+            phenotype["n_replicates"],
+        ) == (2.0, None, 1)
 
 
 def test_out_of_scale_color_refuses_the_build(tmp_path: Path) -> None:

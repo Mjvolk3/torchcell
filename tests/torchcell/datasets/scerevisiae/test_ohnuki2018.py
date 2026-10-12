@@ -3,9 +3,8 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/datasets/scerevisiae/test_ohnuki2018.py
 """Hermetic build of the Ohnuki 2018 essential-gene heterozygote CalMorph loader.
 
-Both TSVs are written into ``<root>/raw/`` so PyG never calls ``download()``. The genome
-stub implements only ``resolve_gene_name``: YAL001C and YDR001C are current, YBR002C is
-renamed to YBR001C, YCR001W is retired.
+Both TSVs are written into ``<root>/raw/`` so PyG never calls ``download()``. No genome
+is consulted (#1045): every ORF is stored as released (stripped, upper-cased).
 
 Features (4 of the 501): base ``A101_A``, ``C103_A1B``; CV ``ACV103_A1B``, ``CCV103_A1B``.
 
@@ -14,7 +13,7 @@ Features (4 of the 501): base ``A101_A``, ``C103_A1B``; CV ``ACV103_A1B``, ``CCV
     YAL001C  1.0  2.0  0.5    0.25
     YBR002C  3.0  4.0  0.25   0.5
     YCR001W  5.0  6.0  0.125  0.75
-    YDR001C  7.0  8.0  (blank) 1.0     kept; the blank CV cell is stored as 0.0
+    YDR001C  7.0  8.0  (blank) 1.0     kept; the blank CV cell is key-absent
 
 ``wt114data.tsv`` (NAME + the same features): wt1 1.0 3.0 0.25 0.5; wt2 3.0 5.0 0.75 1.0;
 wt3 5.0 7.0 n.d. 1.5. Means: A101_A 3.0, C103_A1B 5.0, ACV103_A1B 0.5 (``n.d.`` coerced
@@ -56,7 +55,7 @@ import json
 import logging
 import re
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import pandas as pd
 import pydantic
@@ -76,11 +75,6 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.scerevisiae import ohnuki2018 as m
-from torchcell.sequence.genome.scerevisiae.s288c import (
-    GeneNameResolution,
-    GeneNameStatus,
-    SCerevisiaeGenome,
-)
 
 
 @pytest.fixture(autouse=True)
@@ -103,30 +97,6 @@ _WT_ROWS = [
     ["wt2", "3.0", "5.0", "0.75", "1.0"],
     ["wt3", "5.0", "7.0", "n.d.", "1.5"],
 ]
-_CURRENT = {"YAL001C", "YDR001C"}
-_RENAMED = {"YBR002C": "YBR001C"}
-
-
-class _StubGenome:
-    def resolve_gene_name(self, name: str) -> GeneNameResolution:
-        upper = name.strip().upper()
-        if upper in _CURRENT:
-            return GeneNameResolution(
-                input_name=name, status=GeneNameStatus.CURRENT, systematic_name=upper
-            )
-        if upper in _RENAMED:
-            return GeneNameResolution(
-                input_name=name,
-                status=GeneNameStatus.RENAMED,
-                systematic_name=_RENAMED[upper],
-            )
-        return GeneNameResolution(
-            input_name=name, status=GeneNameStatus.RETIRED, systematic_name=upper
-        )
-
-
-def _genome() -> SCerevisiaeGenome:
-    return cast(SCerevisiaeGenome, _StubGenome())
 
 
 def _write_tsv(path: Path, header: list[str], rows: list[list[str]]) -> None:
@@ -143,7 +113,7 @@ def _root(tmp_path: Path, slug: str = "scmd_ohnuki2018") -> Path:
 
 @pytest.fixture
 def dataset(tmp_path: Path) -> m.ScmdOhnuki2018Dataset:
-    return m.ScmdOhnuki2018Dataset(root=str(_root(tmp_path)), genome=_genome())
+    return m.ScmdOhnuki2018Dataset(root=str(_root(tmp_path)))
 
 
 _ENVIRONMENT = Environment(media=m.OHNUKI_YPD, temperature=Temperature(value=25))
@@ -167,7 +137,13 @@ _PUBLICATION = Publication(
 ).model_dump()
 
 
-def _experiment(orf: str, values: list[float]) -> dict[str, Any]:
+def _experiment(orf: str, values: list[float | None]) -> dict[str, Any]:
+    """A blank (None) cell is key-absent in the stored record."""
+    cv = {
+        key: value
+        for key, value in zip(("ACV103_A1B", "CCV103_A1B"), values[2:], strict=True)
+        if value is not None
+    }
     return CalMorphExperiment(
         dataset_name="ScmdOhnuki2018Dataset",
         genotype=Genotype(
@@ -183,11 +159,12 @@ def _experiment(orf: str, values: list[float]) -> dict[str, Any]:
         ),
         environment=_ENVIRONMENT,
         phenotype=CalMorphPhenotype(
-            calmorph={"A101_A": values[0], "C103_A1B": values[1]},
-            calmorph_coefficient_of_variation={
-                "ACV103_A1B": values[2],
-                "CCV103_A1B": values[3],
+            calmorph={
+                key: value
+                for key, value in zip(("A101_A", "C103_A1B"), values[:2], strict=True)
+                if value is not None
             },
+            calmorph_coefficient_of_variation=cv,
         ),
     ).model_dump()
 
@@ -195,45 +172,51 @@ def _experiment(orf: str, values: list[float]) -> dict[str, Any]:
 def test_four_heterozygote_records_including_the_renamed_and_retired_names(
     dataset: m.ScmdOhnuki2018Dataset,
 ) -> None:
-    """Every row is retained: YBR002C is stored under YBR001C, YCR001W keeps its retired
-    name. Each genotype is one 2 -> 1 copy-number perturbation with a KanMX marker on the
-    diploid BY4743 reference; the reference phenotype is the WT mean.
+    """Every row is retained under its released name: YBR002C (an R64 rename) and
+    YCR001W (retired) keep their names. Each genotype is one 2 -> 1 copy-number
+    perturbation with a KanMX marker on the diploid BY4743 reference; the reference
+    phenotype is the WT mean.
     """
     assert len(dataset) == 4
     assert dataset[0]["experiment"] == _experiment("YAL001C", [1.0, 2.0, 0.5, 0.25])
-    assert dataset[1]["experiment"] == _experiment("YBR001C", [3.0, 4.0, 0.25, 0.5])
+    assert dataset[1]["experiment"] == _experiment("YBR002C", [3.0, 4.0, 0.25, 0.5])
     assert dataset[2]["experiment"] == _experiment("YCR001W", [5.0, 6.0, 0.125, 0.75])
     assert dataset[0]["reference"] == _REFERENCE
     assert dataset[0]["publication"] == _PUBLICATION
     assert dataset[0]["reference"]["genome_reference"]["ploidy"] == "diploid"
 
 
-def test_missing_calmorph_value_is_stored_as_zero(
+def test_missing_calmorph_value_is_key_absent_never_zero(
     dataset: m.ScmdOhnuki2018Dataset,
 ) -> None:
-    """Finding: unlike Ohya 2005 and Ohnuki 2022, which drop a strain with any missing
-    CalMorph value, this loader keeps the row and ``create_calmorph_experiment`` (source
-    line 295) writes ``0.0`` for the blank cell, so YDR001C stores ACV103_A1B = 0.0.
+    """A blank cell is key-absent in the record (it used to be written as 0.0), so
+    YDR001C stores no ACV103_A1B and its other three traits.
     """
-    assert dataset[3]["experiment"] == _experiment("YDR001C", [7.0, 8.0, 0.0, 1.0])
+    assert dataset[3]["experiment"] == _experiment("YDR001C", [7.0, 8.0, None, 1.0])
+    assert (
+        "ACV103_A1B"
+        not in dataset[3]["experiment"]["phenotype"][
+            "calmorph_coefficient_of_variation"
+        ]
+    )
 
 
 def test_side_files(dataset: m.ScmdOhnuki2018Dataset) -> None:
-    """``data.csv`` keeps the blank cell blank (the 0.0 is introduced only in the record);
-    one reference covers all four records; the gene set is the four stored names.
+    """``data.csv`` keeps the blank cell blank; one reference covers all four records;
+    the gene set is the four released names.
     """
     preprocess = Path(dataset.root) / "preprocess"
     assert (preprocess / "data.csv").read_text() == (
         "ORF,A101_A,C103_A1B,ACV103_A1B,CCV103_A1B,systematic_gene_name,"
         "perturbed_gene_name\n"
         "YAL001C,1.0,2.0,0.5,0.25,YAL001C,YAL001C\n"
-        "YBR002C,3.0,4.0,0.25,0.5,YBR001C,YBR001C\n"
+        "YBR002C,3.0,4.0,0.25,0.5,YBR002C,YBR002C\n"
         "YCR001W,5.0,6.0,0.125,0.75,YCR001W,YCR001W\n"
         "YDR001C,7.0,8.0,,1.0,YDR001C,YDR001C\n"
     )
     assert json.loads((preprocess / "gene_set.json").read_text()) == [
         "YAL001C",
-        "YBR001C",
+        "YBR002C",
         "YCR001W",
         "YDR001C",
     ]
@@ -256,7 +239,7 @@ def test_build_refuses_present_files_off_the_pin_and_download_needs_the_mirror(
     mirror path under ``$DATA_ROOT``.
     """
     monkeypatch.setenv("DATA_ROOT", str(tmp_path / "data_root"))
-    dataset = m.ScmdOhnuki2018Dataset(root=str(_root(tmp_path)), genome=_genome())
+    dataset = m.ScmdOhnuki2018Dataset(root=str(_root(tmp_path)))
     dest = Path(dataset.root) / "raw" / "ess1112data.tsv"
     digest = hashlib.sha256(dest.read_bytes()).hexdigest()
     monkeypatch.setattr(m, "verify_raw_files", verify_raw_files)
@@ -275,7 +258,7 @@ def test_build_refuses_present_files_off_the_pin_and_download_needs_the_mirror(
             "(sha256 verified)."
         ),
     ):
-        m.ScmdOhnuki2018Dataset(root=str(tmp_path / "empty"), genome=_genome())
+        m.ScmdOhnuki2018Dataset(root=str(tmp_path / "empty"))
 
 
 def test_items_retype_through_the_calmorph_classes(
@@ -318,7 +301,7 @@ def test_build_logs_the_strain_count_then_processing(
 ) -> None:
     """All four rows are kept, so the count line says 4."""
     with caplog.at_level(logging.INFO, logger=m.log.name):
-        m.ScmdOhnuki2018Dataset(root=str(_root(tmp_path)), genome=_genome())
+        m.ScmdOhnuki2018Dataset(root=str(_root(tmp_path)))
     assert [r.getMessage() for r in caplog.records if r.name == m.log.name] == [
         "Ohnuki 2018: 4 essential-gene heterozygote strains (0 dropped for naming)",
         "Processing Ohnuki 2018 CalMorph morphology data...",
@@ -357,7 +340,7 @@ def test_blank_orf_rows_are_dropped_with_a_counted_warning(
         ],
     )
     with caplog.at_level(logging.INFO, logger=m.log.name):
-        dataset = m.ScmdOhnuki2018Dataset(root=str(root), genome=_genome())
+        dataset = m.ScmdOhnuki2018Dataset(root=str(root))
     assert [
         (r.levelname, r.getMessage()) for r in caplog.records if r.name == m.log.name
     ] == [
@@ -406,7 +389,7 @@ def test_two_spellings_of_one_strain_are_refused_before_the_store_opens(
     root = _edge_root(tmp_path, [["YAL001C", "1.0", "0.1"], ["yal001c ", "2.0", "0.2"]])
     for _ in range(2):
         with pytest.raises(RuntimeError) as info:
-            m.ScmdOhnuki2018Dataset(root=str(root), genome=_genome())
+            m.ScmdOhnuki2018Dataset(root=str(root))
         assert str(info.value) == (
             "Ohnuki 2018: the same strain is listed more than once (ORF stripped and "
             "uppercased): ['YAL001C', 'yal001c ']"
@@ -438,7 +421,7 @@ def test_a_wt_feature_with_no_numeric_cell_refuses_the_reference(
     )
     for _ in range(2):
         with pytest.raises(pydantic.ValidationError) as info:
-            m.ScmdOhnuki2018Dataset(root=str(root), genome=_genome())
+            m.ScmdOhnuki2018Dataset(root=str(root))
         assert [(e["loc"], e["msg"]) for e in info.value.errors()] == [
             (
                 ("calmorph_coefficient_of_variation",),
@@ -471,7 +454,7 @@ def test_a_tcv_column_is_a_base_parameter_and_refused_by_the_schema(
         [["w1", "1.0", "0.3"]],
     )
     with pytest.raises(pydantic.ValidationError) as info:
-        m.ScmdOhnuki2018Dataset(root=str(root), genome=_genome())
+        m.ScmdOhnuki2018Dataset(root=str(root))
     assert [(e["loc"], e["msg"]) for e in info.value.errors()] == [
         (
             ("calmorph",),
@@ -480,27 +463,6 @@ def test_a_tcv_column_is_a_base_parameter_and_refused_by_the_schema(
         )
     ]
     assert not (root / "processed" / "lmdb").exists()
-
-
-def test_missing_genome_is_built_once_by_default_genome(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """With ``genome=None`` the build calls ``default_genome()`` exactly once (line 230)
-    and reconciles with what it returns, so YBR002C is stored as YBR001C as in the
-    stubbed build.
-    """
-    stub: object = _StubGenome()
-    calls: list[None] = []
-
-    def fake_default_genome() -> object:
-        calls.append(None)
-        return stub
-
-    monkeypatch.setattr(m, "default_genome", fake_default_genome)
-    dataset = m.ScmdOhnuki2018Dataset(root=str(_root(tmp_path)))
-    assert calls == [None]
-    assert dataset.genome is stub
-    assert dataset[1]["experiment"] == _experiment("YBR001C", [3.0, 4.0, 0.25, 0.5])
 
 
 def test_download_copies_both_pinned_matrices_then_reverifies_in_place(
@@ -531,7 +493,7 @@ def test_download_copies_both_pinned_matrices_then_reverifies_in_place(
     )
     monkeypatch.setenv("DATA_ROOT", str(data_root))
     monkeypatch.delenv("TC_DATA_URL", raising=False)
-    dataset = m.ScmdOhnuki2018Dataset(root=str(tmp_path / "fresh"), genome=_genome())
+    dataset = m.ScmdOhnuki2018Dataset(root=str(tmp_path / "fresh"))
     raw = tmp_path / "fresh" / "raw"
     assert {name: (raw / name).read_bytes() for name in content} == content
     assert len(dataset) == 4

@@ -102,6 +102,7 @@ import pandas as pd
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     link_verified,
     post_process,
     verify_raw_files,
@@ -123,7 +124,6 @@ from torchcell.datamodels.schema import (
     SegregantParent,
     SingleCellExpressionPhenotype,
 )
-from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.datasets.scerevisiae.bloom2019 import (
     PARENT_PETER_ID,
     Marker,
@@ -1211,9 +1211,17 @@ def pseudobulk(
 # --------------------------------------------------------------------------- #
 # Dataset
 # --------------------------------------------------------------------------- #
-@register_dataset
+# Deliberately NOT ``@register_dataset`` (#1050): the store builds and fails L4
+# ``marker_reference`` and ``mat_fixation``, because the deposited SNP positions are on
+# ``BY4742_fixed.fasta``, not on the S288C reference the records name. A registered
+# class must also be mapped (``test_dataset_organism``: the registry is the adapter maps
+# plus YeastPhenome), and a mapped store that fails verification would fail the KG
+# build's freshness check. The candidate verdict is admissible; registration, the map
+# entry and the runner entry (``VERIFICATION_SPEC``) follow the fix.
 class Nguessan2025Dataset(ExperimentDataset):
     """N'Guessan 2025: 2,951 BB-QTL batch-1 segregants, their cells summed."""
+
+    organism = Organism.scerevisiae
 
     def __init__(
         self,

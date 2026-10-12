@@ -209,7 +209,7 @@ The hypothesis of the 2026.10.11 section (thousands of blocks per strain) is ans
 
 ### Build and verification (slurm job 4199)
 
-`build_dataset_lmdb --dataset Nguessan2025Dataset --retire-existing --verify` from the worktree at `961766618` (clean; rebased onto main as `2a78aec8b`, same loader): **2,951 records** in 133 s, gene set 6,326, one reference; the job ran 4 min 44 s (sized against Hale 2024's 36 GB in job 4011_28, it asked 24 GB and peaked at 4.3 GB RSS). The verification FAILED, so the build manifest was retired to `build_manifest.json.unverified.20261012-065804` and the store reads `no_manifest`.
+`build_dataset_lmdb --dataset Nguessan2025Dataset --retire-existing --verify` from the worktree at `961766618` (clean; the same loader code is `dbd101053` after the rebases): **2,951 records** in 133 s, gene set 6,326, one reference; the job ran 4 min 44 s (sized against Hale 2024's 36 GB in job 4011_28, it asked 24 GB and peaked at 4.3 GB RSS). The verification FAILED, so the build manifest was retired to `build_manifest.json.unverified.20261012-065804` and the store reads `no_manifest`.
 
 | level | rule | result |
 |---|---|---|
@@ -237,13 +237,13 @@ The hypothesis of the 2026.10.11 section (thousands of blocks per strain) is ans
 
 Both failures follow from that. `marker_reference` reads the BY allele against S288C. `mat_fixation` reads the SNP nearest S288C's MAT (200,000), but in BY4742_fixed coordinates the store's chrIII P(RM) is lowest at 187,586 (0.0414) and rises to both sides, so the MATa fixation is there, about 10 kb left of the coordinate the rule reads. `cis_concordance` still passes because a shift of at most a few kb keeps a gene's nearest SNP in linkage with it.
 
-The records are therefore wrong as stored: their blocks name S288C coordinates (parent 1's `assembly_ref`) they do not have. The class is registered (the candidate verdict is admissible) but held out of `dataset_adapter_map` and `runners.SEGREGANT_EXPRESSION_DATASETS` (`VERIFICATION_SPEC` stays in the loader, `test_the_store_is_held_out_of_the_runner_and_the_map` pins the hold); a mapped store that fails verification would fail the KG build's freshness check. #1050 asks the owner to choose between lifting the SNPs to S288C R64-4-1 by exact flank match from a deposited `BY4742_fixed.fasta` (recommended: every other segregant store states its blocks on S288C) and pinning parent 1 to BY4742_fixed as a new genomes-tier set.
+The records are therefore wrong as stored: their blocks name S288C coordinates (parent 1's `assembly_ref`) they do not have. The class stays unregistered and out of `dataset_adapter_map` and `runners.SEGREGANT_EXPRESSION_DATASETS` although its candidate verdict is now admissible (`VERIFICATION_SPEC` stays in the loader; `test_the_store_is_held_out_of_the_registry_the_runner_and_the_map` pins the hold). A mapped store that fails verification would fail the KG build's freshness check, and since the organism switch (#1042) the registry must equal the adapter maps plus YeastPhenome (`test_dataset_organism.py`), so registering without mapping is not an option either. The class declares `organism = Organism.scerevisiae`. #1050 asks the owner to choose between lifting the SNPs to S288C R64-4-1 by exact flank match from a deposited `BY4742_fixed.fasta` (recommended: every other segregant store states its blocks on S288C) and pinning parent 1 to BY4742_fixed as a new genomes-tier set.
 
 ### Registration, runner and map
 
-- `@register_dataset` on `Nguessan2025Dataset` and the package export (`nguessan_datasets`).
+- The store was built with the class registered and mapped (job 4199); after the L4 failure the registration, the package export, the map entry and the runner entry were taken back out. `organism = Organism.scerevisiae` is declared for when the hold lifts.
 - `runners.SEGREGANT_EXPRESSION_DATASETS` entries now name their loader module (`verify_build_module`) and `run_segregant_expression` dispatches to that module's `verify_build`; Boocock 2025 is the only entry while N'Guessan is held.
-- Pins re-derived on the rebased tree: `dataset_adapter_map` total and the served set, the registry-root count (`SEGREGANT_EXPRESSION_DATASETS` addend 1) and the bacterial pins (86 in `test_bacterial_adapters.py` and `_bacterial_adapter_cases.py`) all equal main's, since the dataset is not mapped. `browser_style --check` and the ontology figure report no drift.
+- Pins re-derived on the tree rebased onto `5a0f8483f`: `dataset_adapter_map` total (153) and the served set, the registry-root count (74; `SEGREGANT_EXPRESSION_DATASETS` addend 1) and the bacterial pins (86 in `test_bacterial_adapters.py` and `_bacterial_adapter_cases.py`) all equal main's, since the dataset is not mapped. `browser_style --check` and the ontology figure report no drift.
 
 ### Candidate gate (slurm job 4233)
 
@@ -257,4 +257,4 @@ The records are therefore wrong as stored: their blocks name S288C coordinates (
 
 1. The arrival zip is kept beside its members as the as-received artifact, under the name the browser gave it, and recorded in the manifest; no loader reads it.
 2. The k-th posterior of a geno row is `snp<k>`: the only reading the counts allow, recorded as an inference in the loader and tested by L4.
-3. The store is not mapped while it fails L4; the coordinate fix is #1050's, not this branch's, because it needs a new raw artifact and a choice of coordinate system.
+3. The class is not registered, mapped or in the runner registry while its store fails L4; the coordinate fix is #1050's, not this branch's, because it needs a new raw artifact and a choice of coordinate system.

@@ -111,8 +111,6 @@ def interaction_values_from_table(
     p_value_column: str,
     combined_type: str | None = None,
     excel_skiprows: int = 1,
-    strain_columns: Sequence[str] = (),
-    refused_orfs: frozenset[str] = frozenset(),
 ) -> InteractionValues:
     """Read the score and p-value columns of every row of the pinned released tables.
 
@@ -121,29 +119,14 @@ def interaction_values_from_table(
     ``combined_type`` is given only the rows whose ``Combined mutant type`` equals it
     are kept (Kuzmin's ``digenic`` / ``trigenic``); Costanzo's Data File S1 has no
     such column and every row is a digenic pair.
-
-    ``refused_orfs`` drops the released rows a loader refuses by name: a row goes when
-    any strain id in ``strain_columns`` (each ``+``-joined part, read up to its first
-    ``_``, as the loaders read it) names one of them. Costanzo 2016 and Kuzmin 2020
-    refuse the ORFs R64-4-1 retired or merged
-    (``torchcell.datasets.systematic_name_currency.SGA_SYSTEMATIC_REFUSALS``), so the
-    multiset compared is the one the store was built to hold.
     """
     import pandas as pd
 
-    if refused_orfs and not strain_columns:
-        raise ValueError("refused_orfs needs the strain_columns that name the ORFs")
     scores: list[FloatArray] = []
     p_values: list[FloatArray] = []
-    columns = [score_column, p_value_column, *strain_columns]
+    columns = [score_column, p_value_column]
     if combined_type is not None:
         columns.append(KUZMIN_COMBINED_TYPE)
-
-    def names_refused(strain: object) -> bool:
-        return any(
-            part.split("_")[0] in refused_orfs for part in str(strain).split("+")
-        )
-
     for released in files:
         path = osp.join(raw_dir, released.name)
         if released.name.endswith(".xlsx"):
@@ -152,11 +135,6 @@ def interaction_values_from_table(
             frame = pd.read_csv(path, sep="\t", usecols=columns)
         if combined_type is not None:
             frame = frame[frame[KUZMIN_COMBINED_TYPE] == combined_type]
-        if refused_orfs:
-            refused = pd.Series(False, index=frame.index)
-            for column in strain_columns:
-                refused |= frame[column].map(names_refused)
-            frame = frame[~refused]
         scores.append(frame[score_column].to_numpy(dtype=np.float64))
         p_values.append(frame[p_value_column].to_numpy(dtype=np.float64))
     return InteractionValues(

@@ -129,48 +129,6 @@ def test_a_costanzo_table_has_no_combined_type_column(tmp_path: Path) -> None:
     assert values.p_values.tolist() == [0.1, 0.001]
 
 
-def test_rows_naming_a_refused_orf_leave_the_released_multiset(tmp_path: Path) -> None:
-    """A row goes when ANY strain id names a refused ORF, the query read part by part
-    (``YAR044W`` in the ``+``-joined query, ``YAR037W`` as the array); a refused name
-    that is only a prefix of a strain's ORF (``YAR044W`` in ``YAR044W-A``) does not.
-    """
-    pd.DataFrame(
-        {
-            "Query strain ID": [
-                "YAL015C+YDL227C_tm461",
-                "YAR044W+YDL227C_tm9",
-                "YAL015C+YDL227C_tm461",
-                "YAL015C+YDL227C_tm461",
-            ],
-            "Array strain ID": [
-                "YBL007C_dma91",
-                "YBL007C_dma91",
-                "YAR037W_dma78",
-                "YAR044W-A_dma1",
-            ],
-            KUZMIN_FINAL_SCORE: [0.1, 0.2, 0.3, 0.4],
-            KUZMIN_P_VALUE: [0.5, 0.5, 0.5, 0.5],
-        }
-    ).to_csv(tmp_path / "s3.tsv", sep="\t", index=False)
-    values = interaction_values_from_table(
-        str(tmp_path),
-        [ReleasedFile(name="s3.tsv", sha256="unused")],
-        score_column=KUZMIN_FINAL_SCORE,
-        p_value_column=KUZMIN_P_VALUE,
-        strain_columns=("Query strain ID", "Array strain ID"),
-        refused_orfs=frozenset({"YAR044W", "YAR037W"}),
-    )
-    assert values.scores.tolist() == [0.1, 0.4]
-    with pytest.raises(ValueError, match="refused_orfs needs the strain_columns"):
-        interaction_values_from_table(
-            str(tmp_path),
-            [ReleasedFile(name="s3.tsv", sha256="unused")],
-            score_column=KUZMIN_FINAL_SCORE,
-            p_value_column=KUZMIN_P_VALUE,
-            refused_orfs=frozenset({"YAR044W"}),
-        )
-
-
 def _values(scores: list[float], p_values: list[float]) -> InteractionValues:
     return InteractionValues(
         scores=np.array(scores, dtype=np.float64),

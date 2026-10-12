@@ -1,0 +1,231 @@
+#### `CarbonSourceTong2020Dataset`
+
+111,420 records; store built 2026-10-12 11:55 UTC; 3 report(s); verdict **PASS**.
+
+Report `verification_report.json` (written 2026-10-12 12:22 UTC):
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 2100 records validated |
+| L1 | `count` | pass | observed 2100, expected 2100 |
+| L1 | `pair_uniqueness` | pass | 2100 unique (strain, environment) records, one each |
+| L2 | `value_fidelity` | pass | 2100 values checked |
+| L2 | `se_nonnegative` | pass | 0 values checked |
+| L3 | `reference_one` | pass | reference fitness == 1.0 for all 2100 records |
+| L1 | `provenance_gaps` | pass | 8400 documented provenance gaps over 2100/2100 records; 0 deferred field(s): []; 58100 undeclared None values over 9 carrier fields (top: Compound.inchi x35700, Compound.chebi_id x7700, Compound.smiles x2100, Environment.dilution_rate_per_hour x2100, Environment.duration_generations x2100) |
+| L1 | `canonical_gene_names` | pass | 70 systematic names, one canonical spelling each, each current in the genome; 1 common names the resolver cannot place; 1 are pseudogene loci the genome resolves to themselves |
+| L2 | `uncertainty_sanity` | pass | 0 labeled uncertainties, none a zero dispersion; 0 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | pass | environment edits: 2100 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | pass | medium components: 33600 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | pass | 0 records on a shared MEDIA_LIBRARY medium, 2100 on a medium deriving from one (1 distinct media) |
+| L4 | `gene_containment_sgd` | pass | 1.000 of 70 measured genes are reference genes (>= 0.9) |
+| L4 | `current_genome_genes` | pass | every one of the 70 measured systematic names is a gene of the current genome |
+| L1 | `pair_uniqueness_with_environment_perturbations` | pass | SUPPLEMENTARY: 2100 unique (strain, environment incl. perturbations) pairs, 0 duplicated |
+| L1 | `stored_tags_are_loci_of_the_pinned_assembly` | pass | SUPPLEMENTARY: 70 stored tags, statuses {'current': 69, 'non_gene_feature': 1}; 0 do not resolve to themselves |
+| L2 | `carbon_equivalence_of_the_carpe_doses` | pass | SUPPLEMENTARY: mM carbon per record {120.0: 2100}; 0 records without an mM dose or a SMILES |
+
+Report `verification_report_BW25113.json` (written 2026-10-12 12:21 UTC):
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 109320 records validated |
+| L1 | `count` | pass | observed 109320, expected 109320 |
+| L1 | `pair_uniqueness` | pass | 109320 unique (strain, environment) records, one each |
+| L2 | `value_fidelity` | pass | 109320 values checked |
+| L2 | `se_nonnegative` | pass | 0 values checked |
+| L3 | `reference_one` | pass | reference fitness == 1.0 for all 109320 records |
+| L1 | `provenance_gaps` | pass | 218640 documented provenance gaps over 109320/109320 records; 0 deferred field(s): []; 3024520 undeclared None values over 9 carrier fields (top: Compound.inchi x1858440, Compound.chebi_id x400840, Compound.smiles x109320, Environment.dilution_rate_per_hour x109320, Environment.duration_generations x109320) |
+| L1 | `canonical_gene_names` | pass | 3644 systematic names, one canonical spelling each, each current in the genome; 108 common names the resolver cannot place; 108 are pseudogene loci the genome resolves to themselves |
+| L2 | `uncertainty_sanity` | pass | 0 labeled uncertainties, none a zero dispersion; 109320 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | pass | environment edits: 109320 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | pass | medium components: 1749120 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | pass | 0 records on a shared MEDIA_LIBRARY medium, 109320 on a medium deriving from one (1 distinct media) |
+| L4 | `gene_containment_sgd` | pass | 1.000 of 3644 measured genes are reference genes (>= 0.9) |
+| L4 | `current_genome_genes` | pass | every one of the 3644 measured systematic names is a gene of the current genome |
+| L1 | `pair_uniqueness_with_environment_perturbations` | pass | SUPPLEMENTARY: 109320 unique (strain, environment incl. perturbations) pairs, 0 duplicated |
+| L1 | `stored_tags_are_loci_of_the_pinned_assembly` | pass | SUPPLEMENTARY: 3644 stored tags, statuses {'current': 3536, 'non_gene_feature': 108}; 0 do not resolve to themselves |
+| L2 | `carbon_equivalence_of_the_carpe_doses` | pass | SUPPLEMENTARY: mM carbon per record {120.0: 109320}; 0 records without an mM dose or a SMILES |
+
+Report `verification_report_MG1655.json` (written 2026-10-12 12:22 UTC):
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 2100 records validated |
+| L1 | `count` | pass | observed 2100, expected 2100 |
+| L1 | `pair_uniqueness` | pass | 2100 unique (strain, environment) records, one each |
+| L2 | `value_fidelity` | pass | 2100 values checked |
+| L2 | `se_nonnegative` | pass | 0 values checked |
+| L3 | `reference_one` | pass | reference fitness == 1.0 for all 2100 records |
+| L1 | `provenance_gaps` | pass | 8400 documented provenance gaps over 2100/2100 records; 0 deferred field(s): []; 58100 undeclared None values over 9 carrier fields (top: Compound.inchi x35700, Compound.chebi_id x7700, Compound.smiles x2100, Environment.dilution_rate_per_hour x2100, Environment.duration_generations x2100) |
+| L1 | `canonical_gene_names` | pass | 70 systematic names, one canonical spelling each, each current in the genome; 1 common names the resolver cannot place; 1 are pseudogene loci the genome resolves to themselves |
+| L2 | `uncertainty_sanity` | pass | 0 labeled uncertainties, none a zero dispersion; 0 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | pass | environment edits: 2100 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | pass | medium components: 33600 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | pass | 0 records on a shared MEDIA_LIBRARY medium, 2100 on a medium deriving from one (1 distinct media) |
+| L4 | `gene_containment_sgd` | pass | 1.000 of 70 measured genes are reference genes (>= 0.9) |
+| L4 | `current_genome_genes` | pass | every one of the 70 measured systematic names is a gene of the current genome |
+| L1 | `pair_uniqueness_with_environment_perturbations` | pass | SUPPLEMENTARY: 2100 unique (strain, environment incl. perturbations) pairs, 0 duplicated |
+| L1 | `stored_tags_are_loci_of_the_pinned_assembly` | pass | SUPPLEMENTARY: 70 stored tags, statuses {'current': 69, 'non_gene_feature': 1}; 0 do not resolve to themselves |
+| L2 | `carbon_equivalence_of_the_carpe_doses` | pass | SUPPLEMENTARY: mM carbon per record {120.0: 2100}; 0 records without an mM dose or a SMILES |
+
+#### `MrnaFractionBalakrishnan2022Dataset`
+
+28 records; store built 2026-10-12 10:50 UTC; 1 report(s); verdict **PASS**.
+
+Report `verification_report.json` (written 2026-10-12 10:50 UTC):
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 28 records validated |
+| L1 | `count` | pass | observed 28, expected 28 |
+| L1 | `replicate_groups` | pass | 28 records with distinct profiles over 15 (genotype, environment) groups, each measuring one gene set |
+| L2 | `number_fraction_value_fidelity` | pass | 116928 values checked |
+| L3 | `fraction_sum_at_most_one` | pass | 56 stored profiles sum to 0.975420 .. 0.997159 |
+| L3 | `measurement_type_consistent` | pass | single measurement_type: 'rnaseq_mrna_number_fraction' |
+| L3 | `reference_finite` | pass | reference expression finite for all 116928 values |
+| L4 | `gene_containment_assembly` | pass | 1.000 of 4176 measured genes are loci of ecoli_K12_MG1655_ASM584v2 (>= 1.0) |
+
+#### `MetabolomeIshii2007Dataset`
+
+28 records; store built 2026-10-12 11:12 UTC; 1 report(s); verdict **PASS**.
+
+Report `verification_report.json` (written 2026-10-12 11:14 UTC):
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 28 records validated |
+| L1 | `count` | pass | observed 28, expected 28 |
+| L1 | `genotype_uniqueness` | pass | 28 unique (strain, environment) pairs, one record each |
+| L2 | `value_fidelity` | pass | 4040 values checked |
+| L2 | `se_nonnegative` | pass | 0 values checked |
+| L3 | `reference_finite` | pass | reference level finite + key-subset for all 3297 values |
+| L3 | `measurement_type_consistent` | pass | single measurement_type: 'ce_tofms_intracellular_concentration_mm' |
+| L4 | `perturbed_gene_containment_bw25113_locus_tags` | pass | 24 of 24 stored identifiers are BW25113 GenBank gene rows |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in ishii_som.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in ishii_som.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in ishii_som.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in ishii_som.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in ishii_som.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in ishii_som.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in Quantitative_data.xls |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in Quantitative_data.xls |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in Quantitative_data.xls |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in Quantitative_data.xls |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in Quantitative_data.xls |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in Quantitative_data.xls |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in Quantitative_data.xls |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in Quantitative_data.xls |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in Quantitative_data.xls |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in Quantitative_data.xls |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in Quantitative_data.xls |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in Quantitative_data.xls |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in Quantitative_data.xls |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in Quantitative_data.xls |
+
+#### `ProteomeIshii2007Dataset`
+
+28 records; store built 2026-10-12 11:12 UTC; 1 report(s); verdict **PASS**.
+
+Report `verification_report.json` (written 2026-10-12 11:14 UTC):
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 28 records validated |
+| L1 | `count` | pass | observed 28, expected 28 |
+| L1 | `orf_uniqueness` | pass | 24 unique knocked-out ORFs, one record each |
+| L2 | `value_fidelity` | pass | 1574 values checked |
+| L2 | `se_nonnegative` | pass | 1513 values checked |
+| L3 | `reference_finite` | pass | reference abundance finite + key-matched for all 1574 values |
+| L3 | `measurement_type_consistent` | pass | single measurement_type: 'lc_ms_ms_absolute_mg_protein_per_g_dry_cell_weight' |
+| L4 | `protein_and_perturbed_locus_containment_bw25113` | pass | 65 of 65 stored identifiers are BW25113 GenBank gene rows |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in ishii_som.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in ishii_som.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in ishii_som.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in ishii_som.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in ishii_som.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in ishii_som.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in Quantitative_data.xls |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in Quantitative_data.xls |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in Quantitative_data.xls |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in Quantitative_data.xls |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in Quantitative_data.xls |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in Quantitative_data.xls |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in Quantitative_data.xls |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in Quantitative_data.xls |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in Quantitative_data.xls |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in Quantitative_data.xls |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in Quantitative_data.xls |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in Quantitative_data.xls |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in Quantitative_data.xls |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in Quantitative_data.xls |
+
+#### `FluxIshii2007Dataset`
+
+28 records; store built 2026-10-12 11:13 UTC; 1 report(s); verdict **PASS**.
+
+Report `verification_report.json` (written 2026-10-12 11:14 UTC):
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 28 records validated |
+| L1 | `count` | pass | observed 28, expected 28 |
+| L2 | `value_fidelity` | pass | 1172 values checked |
+| L3 | `flux_measurement_type_and_interval` | pass | 28 records share measurement_type ['c13_mfa_net_flux_percent_of_specific_glucose_uptake']; 0 carry a half-stated interval |
+| L4 | `perturbed_gene_containment_bw25113_locus_tags` | pass | 24 of 24 stored identifiers are BW25113 GenBank gene rows |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in ishii_som.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in ishii_som.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in ishii_som.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in ishii_som.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in ishii_som.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in ishii_som.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in Quantitative_data.xls |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in Quantitative_data.xls |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in Quantitative_data.xls |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in Quantitative_data.xls |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in Quantitative_data.xls |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in Quantitative_data.xls |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in Quantitative_data.xls |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in Quantitative_data.xls |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in Quantitative_data.xls |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in Quantitative_data.xls |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in Quantitative_data.xls |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in Quantitative_data.xls |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in Quantitative_data.xls |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in Quantitative_data.xls |
+
+### Summary
+
+| dataset | verdict |
+|---|---|
+| `CarbonSourceTong2020Dataset` | PASS |
+| `MrnaFractionBalakrishnan2022Dataset` | PASS |
+| `MetabolomeIshii2007Dataset` | PASS |
+| `ProteomeIshii2007Dataset` | PASS |
+| `FluxIshii2007Dataset` | PASS |

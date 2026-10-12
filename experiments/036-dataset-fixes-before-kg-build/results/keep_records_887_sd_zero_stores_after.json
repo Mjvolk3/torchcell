@@ -1,0 +1,31 @@
+[
+  {
+    "built_at": "2026-10-12T14:40:04.458561+00:00",
+    "gaps_by_field": {
+      "fitness_uncertainty": 19
+    },
+    "records": 1539,
+    "slug": "smf_kuzmin2018",
+    "torchcell_commit": "aac3e1f4fc54805a6e982d4636426d527c6153e6",
+    "uncertainty_types": {
+      "None": 1200,
+      "bootstrap_se": 339
+    },
+    "zero_uncertainty_records": 0
+  },
+  {
+    "built_at": "2026-10-12T14:45:15.969293+00:00",
+    "gaps_by_field": {
+      "fitness_uncertainty": 7
+    },
+    "records": 410571,
+    "slug": "dmf_kuzmin2018",
+    "torchcell_commit": "aac3e1f4fc54805a6e982d4636426d527c6153e6",
+    "uncertainty_types": {
+      "None": 7,
+      "bootstrap_se": 165,
+      "sample_sd": 410399
+    },
+    "zero_uncertainty_records": 4
+  }
+]

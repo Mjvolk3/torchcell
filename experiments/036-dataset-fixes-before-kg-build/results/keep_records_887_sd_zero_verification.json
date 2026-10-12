@@ -2,6 +2,23 @@
   "data_root": "/scratch/projects/torchcell-scratch",
   "git_head": "91487019d079fa4b64900dfb94837b29476d458c",
   "datasets": {
+    "SmfKuzmin2018Dataset": {
+      "dataset_class": "SmfKuzmin2018Dataset",
+      "root": "data/torchcell/smf_kuzmin2018",
+      "records": 1539,
+      "route": "registry",
+      "route_detail": "run_fitness[FITNESS_DATASETS:smf_kuzmin2018]",
+      "verdict": "PASS",
+      "n_rules": 14,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/smf_kuzmin2018/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 1.8,
+      "git_head": "aac3e1f4fc54805a6e982d4636426d527c6153e6",
+      "manifest_built_at": "2026-10-12T09:40:04"
+    },
     "DmfKuzmin2018Dataset": {
       "dataset_class": "DmfKuzmin2018Dataset",
       "root": "data/torchcell/dmf_kuzmin2018",
@@ -15,16 +32,16 @@
           "level": "L2",
           "name": "uncertainty_sanity",
           "passed": false,
-          "message": "4/410399 labeled uncertainties are a sample dispersion of exactly 0 (a pseudocount artifact, not perfect precision)"
+          "message": "4/410564 labeled uncertainties are a sample dispersion of exactly 0 (a pseudocount artifact, not perfect precision)"
         }
       ],
       "reports": [
         "/scratch/projects/torchcell-scratch/data/torchcell/dmf_kuzmin2018/preprocess/verification_report.json"
       ],
       "error": null,
-      "seconds": 265.4,
-      "git_head": "91487019d079fa4b64900dfb94837b29476d458c",
-      "manifest_built_at": "2026-10-11T21:43:14"
+      "seconds": 261.1,
+      "git_head": "aac3e1f4fc54805a6e982d4636426d527c6153e6",
+      "manifest_built_at": "2026-10-12T09:45:15"
     },
     "TmfKuzmin2018Dataset": {
       "dataset_class": "TmfKuzmin2018Dataset",

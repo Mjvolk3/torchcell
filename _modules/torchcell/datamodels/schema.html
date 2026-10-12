@@ -1858,7 +1858,16 @@
 <div class="viewcode-block" id="DeletionPerturbation">
 <a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.DeletionPerturbation.html#torchcell.datamodels.schema.DeletionPerturbation">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">DeletionPerturbation</span><span class="p">(</span><span class="n">PresenceAbsencePerturbation</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Gene deletion via KanMX or NatMX gene replacement (engineered absence)."""</span>
+<span class="w">    </span><span class="sd">"""Gene deletion via KanMX or NatMX gene replacement (engineered absence).</span>
+
+<span class="sd">    The parent of every marker-specific deletion leaf. It is stored ITSELF (a</span>
+<span class="sd">    ``GenePerturbationType`` member since #988) only where a source states an engineered</span>
+<span class="sd">    deletion and not the cassette that made it: each child asserts a marker, so it is the</span>
+<span class="sd">    one deletion class that claims nothing the source does not say. Such a record sets</span>
+<span class="sd">    ``description`` to say what the source states, since the class default names KanMX</span>
+<span class="sd">    and NatMX. First case: the HO deletion Peter 2018 Supplementary Table 1 marks on 124</span>
+<span class="sd">    natural isolates without naming the marker.</span>
+<span class="sd">    """</span>
 
     <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"Deletion via KanMX or NatMX gene replacement"</span>
     <span class="n">perturbation_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"deletion"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"deletion"</span>
@@ -2536,6 +2545,234 @@
         <span class="p">),</span>
     <span class="p">)</span></div>
 
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># begin #987 / #988: the natural-isolate genotype of the Peter 2018 panel.</span>
+<span class="c1"># A natural loss-of-function call (a sibling of SequenceVariantPerturbation</span>
+<span class="c1"># under SequencePerturbation) and the isolate descriptor ``Genotype`` carries</span>
+<span class="c1"># beside its perturbations (ploidy, genome zygosity, aneuploidy, manipulation).</span>
+<span class="c1"># Built for every natural-isolate loader by</span>
+<span class="c1"># ``torchcell.datasets.scerevisiae.peter2018_genotype``.</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">NaturalLossOfFunctionCause</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Which Peter 2018 release matrix called an isolate's allele a loss of function.</span>
+
+<span class="sd">    Each member names one matrix as the release describes it (the host's</span>
+<span class="sd">    ``README.txt``, sha256 ``f48e32771b44d38e88b9c8833f6f47e1a30eb6634ffccf55be42b117dd24f025``):</span>
+
+<span class="sd">    - ``nonsense_or_sift``: a 1 in ``1011LossOfFunction.xls.gz``, "loss of function</span>
+<span class="sd">      predicted for all genes in the 1011 dataset (nonsense mutation + SIFT</span>
+<span class="sd">      predictions)". The release folds the two predictions into one bit and does not</span>
+<span class="sd">      say which applied, so it is one member.</span>
+<span class="sd">    - ``homozygous_frameshift``: a 1 in ``genesMatrix_Frameshift.tab.gz``, "for each</span>
+<span class="sd">      isolate, the presence or absence (indicated by 1 or 0, respectively) of</span>
+<span class="sd">      homozygous frameshift is reported in each gene, based on the number of bases</span>
+<span class="sd">      affected by indels."</span>
+
+<span class="sd">    A gene called by both matrices carries two perturbations, one per call.</span>
+<span class="sd">    """</span>
+
+    <span class="n">nonsense_or_sift</span> <span class="o">=</span> <span class="s2">"nonsense_or_sift"</span>
+    <span class="n">homozygous_frameshift</span> <span class="o">=</span> <span class="s2">"homozygous_frameshift"</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">NaturalLossOfFunctionPerturbation</span><span class="p">(</span><span class="n">SequencePerturbation</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One released loss-of-function call on a natural isolate's gene, as released.</span>
+
+<span class="sd">    NATURAL-variation leaf, a SIBLING of ``SequenceVariantPerturbation`` under</span>
+<span class="sd">    ``SequencePerturbation`` (AXIS 3, the allelic axis), not a child of it: a call is a</span>
+<span class="sd">    statement a release matrix makes about the isolate's gene, not an allele, so it is</span>
+<span class="sd">    never counted as a variant. It is stored whatever any other file says about the same</span>
+<span class="sd">    gene; nothing is looked up to admit, drop or annotate it.</span>
+
+<span class="sd">    One perturbation per released call: ``cause`` names the matrix and ``call_ref`` pins</span>
+<span class="sd">    its bytes, and the row is keyed as that matrix keys it. ``release_code`` is the</span>
+<span class="sd">    row's pangenome ORF number (``CODE``), ``release_name`` the loss-of-function</span>
+<span class="sd">    matrix's ``NAME`` (the frameshift matrix has no such column), ``release_gene_name``</span>
+<span class="sd">    the row's ``Gene`` and ``release_span`` its ``CH``/``START``/``STOP`` on the</span>
+<span class="sd">    reference the release was called against. ``systematic_gene_name`` is the gene key</span>
+<span class="sd">    the release gives the row: ``NAME`` for a loss-of-function row, the pangenome ORF</span>
+<span class="sd">    name the release gives the code for a coded frameshift row, and ``Gene`` verbatim</span>
+<span class="sd">    for a frameshift row released without a code (a standard name on some rows, so the</span>
+<span class="sd">    yeast systematic-name pattern is not enforced here). ``perturbed_gene_name`` is the</span>
+<span class="sd">    same key.</span>
+
+<span class="sd">    The SO mechanism is ``loss_of_function_variant`` (SO:0002054, "A sequence variant</span>
+<span class="sd">    whereby the gene product has diminished or abolished function.").</span>
+<span class="sd">    """</span>
+
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">"Natural predicted loss of function of a gene in an isolate, as one released "</span>
+        <span class="s2">"matrix calls it"</span>
+    <span class="p">)</span>
+    <span class="n">perturbation_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"natural_loss_of_function"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"natural_loss_of_function"</span>
+    <span class="n">provenance</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"natural"</span>
+    <span class="n">mechanism_so_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"SO:0002054"</span>
+    <span class="n">mechanism_so_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"loss_of_function_variant"</span>
+    <span class="n">strain_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"isolate id whose gene is called, e.g. 'AAB'"</span><span class="p">)</span>
+    <span class="n">cause</span><span class="p">:</span> <span class="n">NaturalLossOfFunctionCause</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the release matrix that made the call"</span>
+    <span class="p">)</span>
+    <span class="n">call_ref</span><span class="p">:</span> <span class="n">ArtifactRef</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the sha256-pinned release matrix the call is read from"</span>
+    <span class="p">)</span>
+    <span class="n">release_code</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the row's pangenome ORF number (CODE); None for a frameshift row "</span>
+        <span class="s2">"the release gives no code"</span>
+    <span class="p">)</span>
+    <span class="n">release_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the loss-of-function matrix's NAME, verbatim; None for a "</span>
+        <span class="s2">"frameshift row (that matrix has no NAME column)"</span>
+    <span class="p">)</span>
+    <span class="n">release_gene_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"the row's Gene, verbatim"</span><span class="p">)</span>
+    <span class="n">release_span</span><span class="p">:</span> <span class="n">GenomicSpan</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the row's coordinates (CH, START, STOP) on the reference the "</span>
+        <span class="s2">"release was called against"</span>
+    <span class="p">)</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"systematic_gene_name"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_sys_gene_name</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Relax: the release's key, which is a standard name on some frameshift rows."""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">v</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"systematic_gene_name must be non-empty"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_call</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"NaturalLossOfFunctionPerturbation"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""A natural call, keyed the way its matrix keys its rows."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">provenance</span> <span class="o">!=</span> <span class="s2">"natural"</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"a natural loss-of-function call has provenance 'natural'"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">perturbed_gene_name</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">systematic_gene_name</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"perturbed_gene_name is the release's gene key"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cause</span> <span class="ow">is</span> <span class="n">NaturalLossOfFunctionCause</span><span class="o">.</span><span class="n">nonsense_or_sift</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">release_code</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">release_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">"a loss-of-function matrix row carries its CODE and NAME"</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">systematic_gene_name</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">release_name</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"a loss-of-function call is keyed by the row's NAME"</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">release_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"the frameshift matrix has no NAME column"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">release_code</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">systematic_gene_name</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">release_gene_name</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"a frameshift row without a code is keyed by its Gene, verbatim"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">GenomeZygosity</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A natural isolate's genome-wide zygosity, as Peter 2018 Table S1 classes it.</span>
+
+<span class="sd">    Distinct from ``Zygosity`` (how many chromosome copies of a BACKGROUND carry one</span>
+<span class="sd">    allele): this is a property of the whole genome, whether it carries heterozygous</span>
+<span class="sd">    sites, written in Table S1's own two words.</span>
+<span class="sd">    """</span>
+
+    <span class="n">homozygous</span> <span class="o">=</span> <span class="s2">"homozygous"</span>
+    <span class="n">heterozygous</span> <span class="o">=</span> <span class="s2">"heterozygous"</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">IsolateManipulation</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A genetic manipulation a natural isolate's own annotation marks.</span>
+
+<span class="sd">    - ``ho_deletion``: Peter 2018 Table S1 reads 'yes' in 'HO deletion' ("124 were</span>
+<span class="sd">      non-natural haploid with the HO gene deleted"). The deletion itself is a</span>
+<span class="sd">      ``DeletionPerturbation`` of HO (YDL227C) on the genotype.</span>
+<span class="sd">    """</span>
+
+    <span class="n">ho_deletion</span> <span class="o">=</span> <span class="s2">"ho_deletion"</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ChromosomeCopyChange</span><span class="p">(</span><span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One aberrant chromosome of a whole-chromosome aneuploidy annotation.</span>
+
+<span class="sd">    Peter 2018 Table S1 writes aneuploidy as "aneu;+/-X*Y" "with +/- the gain or loss</span>
+<span class="sd">    of chromosome, X the number of supernumerary copies and Y the concerned</span>
+<span class="sd">    chromosome"; ``aneu;+1*9;`` is one extra copy of chromosome IX over the isolate's</span>
+<span class="sd">    basal ploidy.</span>
+<span class="sd">    """</span>
+
+    <span class="n">chromosome</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"chromosome number, 1 to 16"</span><span class="p">)</span>
+    <span class="n">change</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"signed copies gained (+) or lost (-) relative to the basal ploidy"</span>
+    <span class="p">)</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"change"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_nonzero</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""A copy change of zero is not an aneuploidy."""</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"a chromosome copy change cannot be 0"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">NaturalIsolateDescriptor</span><span class="p">(</span><span class="n">HashableProvenanceGapMixin</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""What a natural isolate's own annotation says about its whole genome.</span>
+
+<span class="sd">    Carried on ``Genotype.natural_isolate`` beside the gene-keyed perturbations, because</span>
+<span class="sd">    none of it is gene-keyed: the basal ploidy (1n to 5n), the genome-wide zygosity,</span>
+<span class="sd">    the whole-chromosome copy changes, and whether the isolate was genetically</span>
+<span class="sd">    manipulated before sequencing. Read from one row of Peter 2018 Supplementary Table 1</span>
+<span class="sd">    (``annotation_ref``), so every loader on the 1,011-genome panel describes an isolate</span>
+<span class="sd">    identically.</span>
+
+<span class="sd">    Every element is the table's value or a typed gap, never a guess:</span>
+
+<span class="sd">    - ``ploidy`` is ``None`` only with a gap (the one isolate Table S1 writes ``Xn``).</span>
+<span class="sd">    - ``chromosome_copy_changes`` is ``[]`` for a euploid isolate and ``None`` only with</span>
+<span class="sd">      a gap (an empty 'Aneuploidies' cell).</span>
+<span class="sd">    - ``genetic_manipulation`` is ``ho_deletion`` where Table S1 marks one; otherwise it</span>
+<span class="sd">      is ``None`` with a gap, because the paper also says "the 93 external isolates were</span>
+<span class="sd">      genetically manipulated and made homozygous before sequencing" and Table S1 does</span>
+<span class="sd">      not mark which isolates those are.</span>
+
+<span class="sd">    These are the isolate's genome as SEQUENCED. For a manipulated isolate the paper</span>
+<span class="sd">    says the ploidy is not the natural one ("217 strains were genetically manipulated</span>
+<span class="sd">    and no longer in their natural ploidy states").</span>
+<span class="sd">    """</span>
+
+    <span class="n">isolate</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"the isolate's standardized name, e.g. 'AAB'"</span><span class="p">)</span>
+    <span class="n">annotation_ref</span><span class="p">:</span> <span class="n">ArtifactRef</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the sha256-pinned workbook holding the isolate's annotation row "</span>
+        <span class="s2">"(member: the sheet)"</span>
+    <span class="p">)</span>
+    <span class="n">genetic_manipulation</span><span class="p">:</span> <span class="n">IsolateManipulation</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"a manipulation the annotation marks; None only with a gap"</span>
+    <span class="p">)</span>
+    <span class="n">ploidy</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"basal ploidy as annotated; None only with a gap"</span>
+    <span class="p">)</span>
+    <span class="n">zygosity</span><span class="p">:</span> <span class="n">GenomeZygosity</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"genome-wide zygosity as annotated"</span><span class="p">)</span>
+    <span class="n">chromosome_copy_changes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ChromosomeCopyChange</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"whole-chromosome gains and losses, [] for a euploid isolate; None "</span>
+        <span class="s2">"only with a gap"</span>
+    <span class="p">)</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_sourced_or_gapped</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"NaturalIsolateDescriptor"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Each optional element is set or gapped, and the copy changes are canonical."""</span>
+        <span class="n">gapped</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gapped_fields</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"genetic_manipulation"</span><span class="p">,</span> <span class="s2">"ploidy"</span><span class="p">,</span> <span class="s2">"chromosome_copy_changes"</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gapped</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"NaturalIsolateDescriptor.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> is None and carries no "</span>
+                    <span class="s2">"ProvenanceGap"</span>
+                <span class="p">)</span>
+        <span class="n">changes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">chromosome_copy_changes</span> <span class="ow">or</span> <span class="p">[]</span>
+        <span class="n">chromosomes</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">chromosome</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">changes</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">chromosomes</span><span class="p">))</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">chromosomes</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"a chromosome appears twice in chromosome_copy_changes"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># end #987 / #988</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
 
 
 <div class="viewcode-block" id="CopyNumberVariantPerturbation">
@@ -4423,6 +4660,7 @@
     <span class="n">SgaPerturbationType</span>
     <span class="o">|</span> <span class="n">MeanDeletionPerturbation</span>
     <span class="o">|</span> <span class="n">MarkerDeletionPerturbation</span>
+    <span class="o">|</span> <span class="n">DeletionPerturbation</span>  <span class="c1"># #988: a deletion whose marker the source does not state</span>
     <span class="o">|</span> <span class="n">KanMxDeletionPerturbation</span>
     <span class="o">|</span> <span class="n">BarcodedKanMxDeletionPerturbation</span>
     <span class="o">|</span> <span class="n">HeterozygousDeletionPerturbation</span>
@@ -4433,6 +4671,7 @@
     <span class="o">|</span> <span class="n">NaturalGeneAbsencePerturbation</span>
     <span class="o">|</span> <span class="n">NaturalGenePresencePerturbation</span>
     <span class="o">|</span> <span class="n">SequenceVariantPerturbation</span>
+    <span class="o">|</span> <span class="n">NaturalLossOfFunctionPerturbation</span>  <span class="c1"># #987</span>
     <span class="o">|</span> <span class="n">CopyNumberVariantPerturbation</span>
     <span class="o">|</span> <span class="n">EngineeredCopyNumberPerturbation</span>
     <span class="o">|</span> <span class="n">CrisprActivationPerturbation</span>
@@ -4460,9 +4699,41 @@
 <div class="viewcode-block" id="Genotype">
 <a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.Genotype.html#torchcell.datamodels.schema.Genotype">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Genotype</span><span class="p">(</span><span class="n">ModelStrict</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Collection of gene perturbations defining a strain's genotype."""</span>
+<span class="w">    </span><span class="sd">"""Collection of gene perturbations defining a strain's genotype.</span>
+
+<span class="sd">    ``natural_isolate`` (#988) describes a natural isolate's whole genome where the</span>
+<span class="sd">    perturbations cannot: its ploidy, zygosity, aneuploidy and manipulation. It is</span>
+<span class="sd">    ``None`` for every other genotype and is then left out of the dump, so a genotype</span>
+<span class="sd">    without it serializes exactly as it did before the field existed.</span>
+<span class="sd">    """</span>
 
     <span class="n">perturbations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">GenePerturbationType</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"Gene perturbation"</span><span class="p">)</span>
+    <span class="n">natural_isolate</span><span class="p">:</span> <span class="n">NaturalIsolateDescriptor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">exclude_if</span><span class="o">=</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the natural isolate's genome-wide annotation (ploidy, zygosity, "</span>
+        <span class="s2">"aneuploidy, manipulation); None for a genotype that is not a natural isolate"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_one_isolate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Genotype"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""A natural isolate's perturbations that name a strain all name that isolate."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">natural_isolate</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span>
+        <span class="n">isolate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">natural_isolate</span><span class="o">.</span><span class="n">isolate</span>
+        <span class="n">others</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">strain</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">perturbations</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">strain</span> <span class="o">:=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="s2">"strain_id"</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="ow">and</span> <span class="n">strain</span> <span class="o">!=</span> <span class="n">isolate</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">others</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"natural isolate </span><span class="si">{</span><span class="n">isolate</span><span class="si">!r}</span><span class="s2"> carries perturbations of </span><span class="si">{</span><span class="n">others</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
 
 <div class="viewcode-block" id="Genotype.sort_perturbations">
 <a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.Genotype.html#torchcell.datamodels.schema.Genotype.sort_perturbations">[docs]</a>
@@ -4516,7 +4787,10 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Genotype</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">NotImplemented</span>
 
-        <span class="k">return</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">perturbations</span><span class="p">)</span> <span class="o">==</span> <span class="nb">set</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">perturbations</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">perturbations</span><span class="p">)</span> <span class="o">==</span> <span class="nb">set</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">perturbations</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">natural_isolate</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">natural_isolate</span>
+        <span class="p">)</span></div>
 
 
 

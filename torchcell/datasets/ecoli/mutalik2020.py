@@ -44,11 +44,17 @@ negative, which ``FitnessPhenotype.validate_fitness`` would clamp to 0.0. The ge
 one ``TransposonInsertionPerturbation`` per gene, and the environment of a challenge
 carries exactly one ``PhagePerturbation``.
 
-WHAT IS NOT STORED. The release carries a t-like statistic per (gene, experiment)
+THE RELEASED t IS STORED. The release carries a t-like statistic per (gene, experiment)
 (``fit_t.tab``) beside the fitness and the estimated standard error, and the paper's hit
 filter uses it ("fit >= 5; t >= 5; standard error = fit/t <= 2"). It is neither the
-measurement nor an uncertainty, and ``EnvironmentResponsePhenotype`` has no slot for a
-test statistic, so the file is not among the members the loader extracts. The release's
+measurement nor an uncertainty, so it goes in ``environment_response_t_statistic``, the
+slot Wetmore 2015's own release fills (#1045 row 23), and never feeds the stored SE. The
+release carries the strain-consistency SE (``fit_standard_error_obs.tab``) and not the
+read-count one, so the RB-TnSeq identity ``t = fit / sqrt(0.1^2 + max(se_obs,
+se_naive)^2)`` can only be checked as a bound: ``|t| <= |fit| / sqrt(0.1^2 + se_obs^2)``
+holds for every stored value, with equality where the read-count estimate is the smaller
+(measured 2026-10-12: 32.4%, 60.4% and 54.1% of the values of the three analysis sets).
+:func:`check_t_statistic` asserts the bound at build time. The release's
 own per-experiment usability flag ``u`` is FALSE for 68 of the 78 kept experiments, which
 is not a quality finding about this build: the paper states that under the strong
 positive selection of a phage assay "our standard quality metrics reported earlier [64]
@@ -1905,13 +1911,17 @@ _UNITS_STEM = (
     "in the time-zero start sample), the weighted average over the gene's insertion "
     "strains"
 )
+_UNITS_T = (
+    "; environment_response_t_statistic = the released t-like statistic (fit_t.tab), "
+    "the paper's hit filter statistic"
+)
 UNITS_PLANKTONIC = (
     f"{_UNITS_STEM}; 8 h planktonic 48-well culture in LB plus phage dilution buffer, "
-    "a typical gene = 0"
+    f"a typical gene = 0{_UNITS_T}"
 )
 UNITS_SOLID = (
     f"{_UNITS_STEM}; overnight solid-agar plate assay, colonies scraped after plating "
-    "the adsorbed mixture, a typical gene = 0"
+    f"the adsorbed mixture, a typical gene = 0{_UNITS_T}"
 )
 UNITS_REFERENCE = (
     "the typical gene of this experiment (gene fitness is normalized to 0)"
@@ -1947,16 +1957,85 @@ def screen_id(exp_name: str) -> str:
     return f"{ORG_ID}:{exp_name}"
 
 
+#: The RB-TnSeq moderated t's sigma (Wetmore 2015 Methods (iv), the method paper this
+#: release's statistics come from), for the bound :func:`check_t_statistic` asserts.
+T_STATISTIC_SIGMA = 0.1
+#: Relative slack of the bound, for the release's printed rounding.
+T_BOUND_RTOL = 1e-6
+
+
+class TStatisticCheck(BaseModel):
+    """The released t of one analysis set against the bound its SE allows."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    analysis_set: str
+    n_values: int
+    n_at_bound: int = Field(
+        description="values whose |t| equals |fit| / sqrt(sigma^2 + se_obs^2), i.e. "
+        "where the unreleased read-count SE is not the larger estimate"
+    )
+    max_ratio: float = Field(
+        description="max |t| / (|fit| / sqrt(sigma^2 + se_obs^2)) over nonzero fits"
+    )
+
+
+def check_t_statistic(
+    analysis_set: str,
+    fitness: Any,
+    standard_error: Any,
+    t: Any,
+    sigma: float = T_STATISTIC_SIGMA,
+) -> TStatisticCheck:
+    """Refuse a released t that its own fitness and SE cannot have produced.
+
+    ``t = fit / sqrt(sigma^2 + max(se_obs, se_naive)^2)``, and the release carries
+    ``se_obs`` only, so ``|t| <= |fit| / sqrt(sigma^2 + se_obs^2)`` must hold for every
+    value; a value above the bound means the three tables are not one analysis.
+    """
+    import numpy as np
+
+    fit = np.asarray(fitness, dtype=np.float64)
+    se = np.asarray(standard_error, dtype=np.float64)
+    stat = np.asarray(t, dtype=np.float64)
+    if not (fit.shape == se.shape == stat.shape):
+        raise ValueError(f"{analysis_set}: fitness, SE and t shapes differ")
+    if not np.isfinite(stat).all():
+        raise ValueError(
+            f"{analysis_set}: {int((~np.isfinite(stat)).sum())} t not finite"
+        )
+    bound = np.abs(fit) / np.sqrt(sigma**2 + se**2)
+    over = np.abs(stat) > bound * (1.0 + T_BOUND_RTOL) + 1e-12
+    if over.any():
+        raise ValueError(
+            f"{analysis_set}: {int(over.sum())} released t exceed |fit| / sqrt("
+            f"{sigma}^2 + se_obs^2)"
+        )
+    nonzero = bound > 0
+    return TStatisticCheck(
+        analysis_set=analysis_set,
+        n_values=int(stat.size),
+        n_at_bound=int(np.isclose(np.abs(stat), bound, rtol=T_BOUND_RTOL).sum()),
+        max_ratio=float((np.abs(stat[nonzero]) / bound[nonzero]).max()),
+    )
+
+
 def build_phenotype(
-    fitness: float, standard_error: float, *, exp_name: str, state: str
+    fitness: float,
+    standard_error: float,
+    t_statistic: float,
+    *,
+    exp_name: str,
+    state: str,
 ) -> EnvironmentResponsePhenotype:
-    """One released (gene, experiment) cell with the release's own standard error."""
+    """One released (gene, experiment) cell with its own standard error and t."""
     return EnvironmentResponsePhenotype(
         measurement_type=MeasurementType.log2_ratio,
         assay_type=AssayType.pooled_competitive_growth_barcode,
         environment_response=fitness,
         environment_response_uncertainty=standard_error,
         environment_response_uncertainty_type=UncertaintyType.standard_error,
+        environment_response_t_statistic=t_statistic,
         units=units_for(state),
         screen_id=screen_id(exp_name),
         provenance_gaps=[N_SAMPLES_GAP, SAMPLE_UNIT_GAP],
@@ -2072,6 +2151,7 @@ RAW_MEMBERS: dict[str, str] = {
         "exps",
         "fit_logratios.tab",
         "fit_standard_error_obs.tab",
+        "fit_t.tab",
         "fit_quality.tab",
     )
 }
@@ -2193,7 +2273,7 @@ class PhageRbTnseqMutalik2020Dataset(ExperimentDataset):
 
     @property
     def raw_file_names(self) -> list[str]:
-        """The two linked mirror files and the twelve extracted tarball members."""
+        """The two linked mirror files and the fifteen extracted tarball members."""
         return [*LINKED_ARTIFACTS, *RAW_MEMBERS]
 
     def download(self) -> None:
@@ -2271,6 +2351,7 @@ class PhageRbTnseqMutalik2020Dataset(ExperimentDataset):
             by_set[assay.analysis_set].append(assay)
 
         tables: dict[str, tuple[pd.DataFrame, pd.DataFrame]] = {}
+        t_tables: dict[str, pd.DataFrame] = {}
         for analysis_set in analysis_sets:
             fitness = pd.read_csv(
                 osp.join(self.raw_dir, analysis_set, "fit_logratios.tab"),
@@ -2287,7 +2368,20 @@ class PhageRbTnseqMutalik2020Dataset(ExperimentDataset):
                     f"{analysis_set}: the fitness and standard-error tables do not "
                     "carry the same genes in the same order"
                 )
+            statistic = pd.read_csv(
+                osp.join(self.raw_dir, analysis_set, "fit_t.tab"),
+                sep="\t",
+                dtype={"sysName": str},
+            )
+            if list(fitness["sysName"]) != list(statistic["sysName"]) or list(
+                fitness.columns
+            ) != list(statistic.columns):
+                raise ValueError(
+                    f"{analysis_set}: the fitness and t tables do not carry the same "
+                    "genes and experiments in the same order"
+                )
             tables[analysis_set] = (fitness, errors)
+            t_tables[analysis_set] = statistic
 
         measured = sorted(
             {str(name) for fitness, _ in tables.values() for name in fitness["sysName"]}
@@ -2325,11 +2419,14 @@ class PhageRbTnseqMutalik2020Dataset(ExperimentDataset):
         env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
         idx = 0
         dropped_by_gene: Counter[str] = Counter()
+        t_checks: list[TStatisticCheck] = []
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for analysis_set in analysis_sets:
                 fitness, errors = tables[analysis_set]
+                statistic = t_tables[analysis_set]
                 fit_columns = fitness_columns(fitness.columns)
                 se_columns = fitness_columns(errors.columns)
+                t_columns = fitness_columns(statistic.columns)
                 genes = [str(name) for name in fitness["sysName"]]
                 for assay in tqdm(by_set[analysis_set], desc=analysis_set):
                     state = released[assay.exp_name].state
@@ -2337,8 +2434,17 @@ class PhageRbTnseqMutalik2020Dataset(ExperimentDataset):
                     reference = references[assay.exp_name]
                     values = fitness[fit_columns[assay.exp_name]].to_numpy()
                     standard_errors = errors[se_columns[assay.exp_name]].to_numpy()
-                    for b_number, value, standard_error in zip(
-                        genes, values, standard_errors, strict=True
+                    t_values = statistic[t_columns[assay.exp_name]].to_numpy()
+                    t_checks.append(
+                        check_t_statistic(
+                            f"{analysis_set}:{assay.exp_name}",
+                            values,
+                            standard_errors,
+                            t_values,
+                        )
+                    )
+                    for b_number, value, standard_error, t_value in zip(
+                        genes, values, standard_errors, t_values, strict=True
                     ):
                         genotype = genotypes.get(b_number)
                         if genotype is None:
@@ -2351,6 +2457,7 @@ class PhageRbTnseqMutalik2020Dataset(ExperimentDataset):
                             phenotype=build_phenotype(
                                 float(value),
                                 float(standard_error),
+                                float(t_value),
                                 exp_name=assay.exp_name,
                                 state=state,
                             ),
@@ -2375,6 +2482,21 @@ class PhageRbTnseqMutalik2020Dataset(ExperimentDataset):
             dropped_by_gene=dropped_by_gene,
             kept_records=idx,
         )
+        n_values = sum(check.n_values for check in t_checks)
+        with open(osp.join(self.preprocess_dir, "t_statistic.json"), "w") as handle:
+            json.dump(
+                {
+                    "rule": "|t| <= |fit| / sqrt(sigma^2 + se_obs^2) for every value "
+                    "(the read-count SE is not released, so the identity is a bound)",
+                    "sigma": T_STATISTIC_SIGMA,
+                    "n_values": n_values,
+                    "n_at_bound": sum(check.n_at_bound for check in t_checks),
+                    "max_ratio": max(check.max_ratio for check in t_checks),
+                    "per_experiment": [check.model_dump() for check in t_checks],
+                },
+                handle,
+                indent=2,
+            )
         log.info(
             "Mutalik2020: wrote %d records over %d genes and %d experiments",
             idx,

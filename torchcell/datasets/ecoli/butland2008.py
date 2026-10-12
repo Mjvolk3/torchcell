@@ -105,9 +105,9 @@ zeros are the small-magnitude end of the distribution: the mean |Z| of the zero-
 is 0.1116 against 0.1214 for the cells whose |S| is nonzero but under 0.05; 8,071 of the
 8,559 carry at least one non-zero raw colony measurement; and an absent colony does NOT
 map to zero, since 310 of the 798 cells whose every raw colony reads 0 carry a nonzero S,
-down to -17.8. So a zero is stored as released. The 421 cells that are BOTH all-zero-colony
+down to -17.8. So a zero is stored as released. The 488 cells that are BOTH all-zero-colony
 and exactly-zero-score are the one case where the release contradicts itself, and they are
-dropped under rule 3 rather than stored as "no interaction" for a strain that never grew.
+dropped under rule 2 rather than stored as "no interaction" for a strain that never grew.
 
 The SPA-tag half was re-measured the same way when it was adopted, because an exact zero
 on 149 of 5,811 cells is one per row and that regularity had to be read before it was
@@ -152,32 +152,30 @@ Every cell is stored under the identifiers the matrix releases (the owner rule o
 A released b-number is the recipient's ``systematic_gene_name`` whatever the pinned
 annotation says about it: the retired and the ``/gene_synonym`` b-numbers the build used
 to drop (4,407 cells on 57 synonym b-numbers, and the retired ones) are stored as
-released, with no identifier mapping. Where the roster writes ``*`` (no Genobase name),
-the released b-number is the stored common name (4 strains). The annotation's verdict on
-every id is still written to ``preprocess/identifier_reconciliation.json``.
+released, with no identifier mapping. The 75 recipient ids that are no b-number in form
+(65 ``JW`` Keio ids, ``CSCR``, eight ``bNNNN.1`` entries and ``b4404,b4405``, one cell
+naming two loci) are stored on ``BacterialReleasedStrainPerturbation`` under the id as
+released, its label ``<id> (<strain version>)`` keeping the two isolates apart. Where
+the roster writes ``*`` (no Genobase name), the released id is the stored common name.
+The annotation's verdict on every id is still written to
+``preprocess/identifier_reconciliation.json``.
 
-1. ``released_id_is_not_a_b_number`` -- 5,772 cells on one of 75 released recipient ids
-   that are not an MG1655 b-number in FORM: 65 ``JW`` Keio ids, ``CSCR``, eight
-   ``bNNNN.1`` entries and ``b4404,b4405`` (one cell naming two loci). The bacterial
-   leaf's name validator holds a locus-tag-shaped name only, so storing these under the
-   released id needs a schema carrier, which is an owner question rather than a loader
-   rule. No SPA-tag row is one of them.
-2. ``self_pair_is_not_a_digenic_genotype`` -- 78 cells (each of the 39 query genes is
+1. ``self_pair_is_not_a_digenic_genotype`` -- 78 cells (each of the 39 query genes is
    itself in the recipient array, x 2 isolates), compared on the released ids. The
    Supplementary Methods say these exist ("we observed small numbers of self double
    mutants"), but a ``Genotype`` of two leaves on ONE locus would assert deleting the same
    gene twice. No query gene is a SPA-tag row.
-3. ``released_score_contradicts_its_own_raw_colonies`` -- 421 cells whose every raw colony
+2. ``released_score_contradicts_its_own_raw_colonies`` -- 488 cells whose every raw colony
    measurement reads 0, so no double mutant grew, yet whose released S is exactly 0.0, so
    no interaction. The release gives no rule for reconciling the two.
-4. ``already_served_by_gene_interaction_babu2014`` -- 1,854 cells whose oriented
+3. ``already_served_by_gene_interaction_babu2014`` -- 1,854 cells whose oriented
    (query, recipient) released-id pair the served Babu store already holds, dropped so
    nothing is stored twice (see THE PARTITION). 1,456 of them are Keio-isolate cells and
    398 are SPA-tag cells.
 
-5,772 + 78 + 421 + 1,854 = 8,125 dropped; 314,847 - 8,125 = 306,722 records (301,803
-before #1057), 148,508 aggravating, 150,149 alleviating and 8,065 at exactly zero, over
-39 query genes and 4,042 recipient ids. 5,413 of the records are SPA-tag hypomorphs: the
+78 + 488 + 1,854 = 2,420 dropped; 314,847 - 2,420 = 312,427 records (301,803 before
+#1057), 151,282 aggravating, 152,931 alleviating and 8,214 at exactly zero, over 39 query
+genes and 4,117 recipient ids. 5,413 of the records are SPA-tag hypomorphs: the
 5,811 cells of that half minus the 398 the served store holds.
 
 THE PARTITION AGAINST THE SERVED BABU STORE, PROVED BOTH WAYS AT BUILD TIME
@@ -192,7 +190,7 @@ loader already relies on to keep its 100 reciprocal pairs as two records each.
 - REVERSE: every one of the 1,129 served ``Butland et al.`` records is accounted for in
   this release rather than assumed, in three groups that sum to 1,129. 729 are storable
   cells on a Keio-isolate recipient row and 398 are storable cells on a ``SPA-tag
-  essential`` row, so rule 4 removes 1,127 pairs = 1,854 cells. 2 are pinned by name
+  essential`` row, so rule 3 removes 1,127 pairs = 1,854 cells. 2 are pinned by name
   because this release does not name them under those ids: ``b2528 -> b4486`` and
   ``b2531 -> b4486``, which the matrix names ``b2528 -> b4344`` and ``b2531 -> b4344``
   (gene name ``*``, absent from Genobase ver. 6). Each release's ids are stored as
@@ -273,6 +271,7 @@ from torchcell.datamodels.schema import (
     BacterialGeneInteractionExperimentReference,
     BacterialGeneNamespace,
     BacterialMarkedAllelePerturbation,
+    BacterialReleasedStrainPerturbation,
     BacterialStrainBackground,
     Environment,
     Experiment,
@@ -283,6 +282,7 @@ from torchcell.datamodels.schema import (
     MediaComponent,
     MediaComponentRole,
     Publication,
+    ReleasedStrainKind,
     SampleUnit,
     StrainConstruction,
     Temperature,
@@ -294,6 +294,7 @@ from torchcell.datasets.bacteria_common import (
     assembly_reference,
     bacterial_genome,
     reconcile_locus_tags,
+    released_identifier_kind,
 )
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.literature.manifest import (
@@ -440,7 +441,7 @@ NOT_LOADED = (
     "Colony Sizes': the per-colony pixel areas and their plate-normalized medians. "
     "Both are a colony-size fitness readout and torchcell has no colony-size phenotype "
     "class, so neither can be typed; the raw sheet IS read, for the per-record "
-    "replicate count and for rule 3, but no value of it is stored. The normalized "
+    "replicate count and for rule 2, but no value of it is stored. The normalized "
     "sheet additionally carries sentinel values (-100000 and 0 among otherwise "
     "positive sizes) that the release never documents",
     "Supplementary Table 4 sheet 'Z scores': the per-cell |Z| statistic. "
@@ -1477,7 +1478,6 @@ def audit_workbook_quote(
 # --------------------------------------------------------------------------- #
 # Retention ledger
 # --------------------------------------------------------------------------- #
-RULE_NOT_A_TAG = "released_id_is_not_a_b_number"
 RULE_SELF_PAIR = "self_pair_is_not_a_digenic_genotype"
 RULE_CONTRADICTION = "released_score_contradicts_its_own_raw_colonies"
 RULE_SERVED = "already_served_by_gene_interaction_babu2014"
@@ -1487,21 +1487,10 @@ RULE_ROSTER_NAME_WINS = "common_name_comes_from_the_array_roster_not_the_query_h
 UNNAMED_IN_GENOBASE = "*"
 
 #: The rules in the order the build applies them; each counts only the cells no earlier
-#: rule removed, which is what makes the four counts sum to the dropped total.
-DROP_RULES: Final[tuple[str, ...]] = (
-    RULE_NOT_A_TAG,
-    RULE_SELF_PAIR,
-    RULE_CONTRADICTION,
-    RULE_SERVED,
-)
+#: rule removed, which is what makes the three counts sum to the dropped total.
+DROP_RULES: Final[tuple[str, ...]] = (RULE_SELF_PAIR, RULE_CONTRADICTION, RULE_SERVED)
 
 DROP_RULE_DESCRIPTIONS: dict[str, str] = {
-    RULE_NOT_A_TAG: "a released id that is not an MG1655 b-number in FORM (a Keio JW "
-    "id, a gene symbol, a 'bNNNN.1' entry, or 'b4404,b4405', one cell naming two "
-    "loci): the bacterial perturbation leaf's name validator holds a locus-tag-shaped "
-    "name only, so the cell cannot be written under the released id without a schema "
-    "carrier. A b-number in form is stored as released whatever the annotation says "
-    "about it (#1057)",
     RULE_SELF_PAIR: "the query gene IS the recipient gene. The Supplementary Methods "
     "record that such cells exist ('we observed small numbers of self double mutants'), "
     "but a Genotype of two leaves on one locus would assert deleting the same gene "
@@ -1675,6 +1664,23 @@ HYPOMORPH_ALLELE_EFFECT: Literal["hypomorphic"] = "hypomorphic"
 #: literals spell them; the verifier reads the stored string rather than the class.
 DELETION_TYPE = "bacterial_deletion"
 MARKED_ALLELE_TYPE = "bacterial_marked_allele"
+RELEASED_STRAIN_TYPE = "bacterial_released_strain"
+#: A released-strain recipient's label: the released id and its "Strain Versions" token.
+_RELEASED_LABEL = re.compile(r"^(?P<id>.+) \((?P<version>[^()]+)\)$")
+
+
+def released_strain_label(recipient: str, version: str) -> str:
+    """``<released id> (<strain version>)``: the two roster cells that name the row."""
+    return f"{recipient} ({version})"
+
+
+def released_strain_version(label: str) -> str:
+    """The "Strain Versions" token a released-strain label carries."""
+    match = _RELEASED_LABEL.match(label)
+    if match is None:
+        raise ValueError(f"{label!r} is not a released-strain label of this release")
+    return match.group("version")
+
 
 P_VALUE_GAP = ProvenanceGap(
     field="gene_interaction_p_value",
@@ -1708,13 +1714,27 @@ def query_perturbation(locus_tag: str, symbol: str) -> BacterialDeletionPerturba
 
 def recipient_perturbation(
     locus_tag: str, symbol: str, version: str
-) -> BacterialDeletionPerturbation:
+) -> BacterialDeletionPerturbation | BacterialReleasedStrainPerturbation:
     """The recipient side of a Keio row: one arrayed isolate, marked ``kan``.
 
     ``version`` is the "Strain Versions" token verbatim and is stored as the
     construction ``batch``, because the two isolates are two independent constructions
-    of the same deletion whose scores can disagree.
+    of the same deletion whose scores can disagree. A recipient the roster names by an
+    id that is no b-number (a Keio JW number, ``CSCR``, a sub-numbered entry,
+    ``b4404,b4405``) is stored under that id as released, on the released-strain leaf,
+    its label carrying the isolate token (#1057).
     """
+    if not B_NUMBER_PATTERN.match(locus_tag):
+        return BacterialReleasedStrainPerturbation(
+            systematic_gene_name=locus_tag,
+            perturbed_gene_name=symbol,
+            gene_namespace=MG1655_NAMESPACE,
+            strain_label=released_strain_label(locus_tag, version),
+            identifier_kind=released_identifier_kind(locus_tag),
+            released_kind=ReleasedStrainKind.deletion,
+            cassette=RECIPIENT_CASSETTE,
+            collection=RECIPIENT_COLLECTION,
+        )
     return BacterialDeletionPerturbation(
         systematic_gene_name=locus_tag,
         perturbed_gene_name=symbol,
@@ -1777,9 +1797,11 @@ def pair_genotype(
                 f"a {LABEL_SPA_TAG!r} row of {recipient_tag} carries strain version "
                 f"{version!r}; the release repeats the label there and names no isolate"
             )
-        recipient: BacterialDeletionPerturbation | BacterialMarkedAllelePerturbation = (
-            recipient_hypomorph_perturbation(recipient_tag, recipient_gene)
-        )
+        recipient: (
+            BacterialDeletionPerturbation
+            | BacterialMarkedAllelePerturbation
+            | BacterialReleasedStrainPerturbation
+        ) = recipient_hypomorph_perturbation(recipient_tag, recipient_gene)
     else:
         recipient = recipient_perturbation(recipient_tag, recipient_gene, version)
     return Genotype(
@@ -1918,7 +1940,7 @@ def build_reference(
 SERVED_BUTLAND_RECORDS: Final = 1129
 #: Those records as oriented (query, recipient) gene pairs: no two of the 1,129 share one.
 SERVED_BUTLAND_PAIRS: Final = 1129
-#: Served pairs that are storable cells of this release, so rule 4 removes them. It is
+#: Served pairs that are storable cells of this release, so rule 3 removes them. It is
 #: 729 + 398: both halves of the array are in scope since issue #792's leaf landed.
 SERVED_OVERLAP_PAIRS: Final = 1127
 #: Cells of this release dropped because their oriented pair is one of those served. It
@@ -2001,7 +2023,7 @@ def assert_served_partition(
 
     REVERSE: every served record tagged with this screen is accounted for in this
     release, in three groups whose counts are pinned and which must sum to
-    :data:`SERVED_BUTLAND_RECORDS`: the storable cells rule 4 removes on a Keio-isolate
+    :data:`SERVED_BUTLAND_RECORDS`: the storable cells rule 3 removes on a Keio-isolate
     recipient row (:data:`SERVED_OVERLAP_PAIRS_ON_A_KEIO_RECIPIENT`), the storable cells
     it removes on a ``SPA-tag essential`` row
     (:data:`SERVED_PAIRS_ON_A_SPA_TAG_RECIPIENT`), and the pairs this release does not
@@ -2156,7 +2178,7 @@ def retain(
     served_records: int,
     served_root: str,
 ) -> Retention:
-    """Apply the four retention rules in order, then prove the partition."""
+    """Apply the three retention rules in order, then prove the partition."""
     if tuple(sorted(scores.query_tags)) != tuple(sorted(query_roster)):
         raise ReleaseContentError(
             "the matrix's query columns are not Supplementary Table 2's query roster"
@@ -2166,8 +2188,9 @@ def retain(
     _, reconciliation = reconcile_locus_tags(
         genome, names, label=f"{dataset_name} Table 4 query and recipient b-numbers"
     )
-    # #1057: every released id of b-number FORM is stored as released; the annotation's
-    # verdict on it (identifier_reconciliation.json) drops nothing
+    # #1057: every released id is stored as released (an id that is no b-number on the
+    # released-strain leaf); the annotation's verdict on it
+    # (identifier_reconciliation.json) drops nothing
     not_a_tag = {name for name in names if not B_NUMBER_PATTERN.match(name)}
     bad_queries = sorted(not_a_tag & set(scores.query_tags))
     if bad_queries:
@@ -2192,7 +2215,6 @@ def retain(
             tag
             for row, tag in enumerate(scores.recipient_tags)
             if scores.recipient_genes[row] == UNNAMED_IN_GENOBASE
-            and tag not in not_a_tag
         }
     )
     query_names = {
@@ -2233,9 +2255,6 @@ def retain(
             )
         for column, query_tag in enumerate(scores.query_tags):
             item = _cell_label(query_tag, recipient_tag, version)
-            if recipient_tag in not_a_tag:
-                dropped[RULE_NOT_A_TAG].append(item)
-                continue
             if recipient_tag == query_tag:
                 dropped[RULE_SELF_PAIR].append(item)
                 continue
@@ -2461,12 +2480,11 @@ def high_confidence_ledger(
 # The dataset
 # --------------------------------------------------------------------------- #
 DATASET_ROOT_REL = "data/torchcell/gene_interaction_butland2008"
-#: Records of the full build: 314,847 released cells minus 5,772 on an id that is not a
-#: b-number in form, 78 self pairs, 421 whose score contradicts their own raw colonies
-#: and 1,854 whose oriented pair the served Babu 2014 store already holds. Every b-number
-#: is stored as released since #1057 (301,803 before). 5,413 of them are SPA-tag
-#: hypomorph records (issue #792).
-EXPECTED_RECORDS = 306722
+#: Records of the full build: 314,847 released cells minus 78 self pairs, 488 whose
+#: score contradicts their own raw colonies and 1,854 whose oriented pair the served Babu
+#: 2014 store already holds. Every released id is stored as released since #1057 (301,803
+#: before). 5,413 of them are SPA-tag hypomorph records (issue #792).
+EXPECTED_RECORDS = 312427
 
 
 @register_dataset
@@ -2749,6 +2767,8 @@ def _recipient_row_key(perturbation: Mapping[str, Any]) -> str:
     hypomorph leaf carries as its ``collection``. So the row key is readable off the
     stored leaf either way, and this is the key the released matrix is indexed on.
     """
+    if perturbation["perturbation_type"] == RELEASED_STRAIN_TYPE:
+        return released_strain_version(str(perturbation["strain_label"]))
     construction = perturbation.get("construction")
     batch = None if construction is None else construction.get("batch")
     if batch is not None:
@@ -2793,6 +2813,12 @@ def _l1_recipient_leaf_states_its_row(records: Sequence[Record]) -> LevelResult:
                     bad.append(name)
                 else:
                     versions[HYPOMORPH_COLLECTION] += 1
+            elif perturbation["perturbation_type"] == RELEASED_STRAIN_TYPE:
+                if perturbation["collection"] != RECIPIENT_COLLECTION:
+                    bad.append(name)
+                else:
+                    label = str(perturbation["strain_label"])
+                    versions[released_strain_version(label)] += 1
             elif batch is None or perturbation["collection"] != RECIPIENT_COLLECTION:
                 bad.append(name)
             else:

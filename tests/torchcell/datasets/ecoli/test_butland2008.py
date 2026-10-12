@@ -24,9 +24,9 @@ The synthetic release is a 2 x 10 matrix, and every cell exercises one outcome:
     b0007 Isolate 1  non-essential      kept -2.0     dropped: self pair
     b0006 SPA-tag    SPA-tag essential  kept -7.0     dropped: served
     b0002 Isolate 1  non-essential      dropped: served  kept +3.5
-    JW0098 Isolate 1 non-essential      dropped: no b-number in form, no leaf holds it
+    JW0098 Isolate 1 non-essential      kept +4.4     kept -4.5 (released-strain leaf)
 
-Fourteen records survive six drops; ``b0010`` (a /gene_synonym of ``b0003``) and
+Sixteen records survive four drops; ``b0010`` (a /gene_synonym of ``b0003``) and
 ``b0099`` (on no locus) are stored under their released b-numbers since #1057; the ``b0006`` row is the hypomorph case, stored on
 ``BacterialMarkedAllelePerturbation`` since issue #792. Data-gated tests (``--data``)
 read the real raw mirror
@@ -144,6 +144,8 @@ KEPT_CELLS: tuple[tuple[str, str, str, float], ...] = (
     ("b0007", "b0010", "Isolate 1", -3.4),
     ("b0005", "b0099", "Isolate 1", 3.5),
     ("b0007", "b0099", "Isolate 1", -3.6),
+    ("b0005", "JW0098", "Isolate 1", 4.4),
+    ("b0007", "JW0098", "Isolate 1", -4.5),
 )
 #: The one kept cell whose recipient row is SPA-tag essential, so its recipient leaf is
 #: a marked allele rather than a deletion and its "version" is the label.
@@ -837,21 +839,20 @@ def test_the_build_keeps_every_cell_a_leaf_can_hold(
             p["cassette"]: p for p in experiment["genotype"]["perturbations"]
         }
         recipient = by_cassette["kan"]
-        construction = recipient["construction"]
+        row_key = m._recipient_row_key(recipient)
+        assert row_key in {"Isolate 1", "Isolate 2", m.LABEL_SPA_TAG}
         stored.add(
             (
                 by_cassette["cat"]["systematic_gene_name"],
                 recipient["systematic_gene_name"],
-                construction["batch"]
-                if construction is not None
-                else recipient["collection"],
+                row_key,
                 float(experiment["phenotype"]["gene_interaction"]),
             )
         )
         types.add(str(recipient["perturbation_type"]))
     assert stored == set(KEPT_CELLS)
     assert KEPT_HYPOMORPH_CELL in stored
-    assert types == {m.DELETION_TYPE, m.MARKED_ALLELE_TYPE}
+    assert types == {m.DELETION_TYPE, m.MARKED_ALLELE_TYPE, m.RELEASED_STRAIN_TYPE}
 
 
 def test_the_build_ledgers_account_for_every_released_cell(
@@ -862,30 +863,21 @@ def test_the_build_ledgers_account_for_every_released_cell(
     assert drops["kept_records"] == len(KEPT_CELLS)
     assert drops["dropped_records"] == drops["source_records"] - len(KEPT_CELLS)
     by_rule = {rule["rule"]: rule["n_records"] for rule in drops["rules"]}
-    # #1057: b0010 and b0099 are stored as released; only JW0098 is no b-number
-    assert by_rule == {
-        m.RULE_NOT_A_TAG: 2,
-        m.RULE_SELF_PAIR: 1,
-        m.RULE_CONTRADICTION: 1,
-        m.RULE_SERVED: 2,
-    }
+    # #1057: b0010, b0099 and JW0098 are stored as released
+    assert by_rule == {m.RULE_SELF_PAIR: 1, m.RULE_CONTRADICTION: 1, m.RULE_SERVED: 2}
     assert sum(by_rule.values()) == drops["dropped_records"]
     assert drops["kept_strain_versions"] == {
-        "Isolate 1": 12,
+        "Isolate 1": 14,
         "Isolate 2": 1,
         m.LABEL_SPA_TAG: 1,
     }
     assert drops["kept_hypomorph_records"] == 1
     assert (drops["n_aggravating"], drops["n_alleviating"], drops["n_zero"]) == (
+        8,
         7,
-        6,
         1,
     )
     items = {rule["rule"]: rule["items"] for rule in drops["rules"]}
-    assert items[m.RULE_NOT_A_TAG] == [
-        "b0005 -> JW0098 (Isolate 1)",
-        "b0007 -> JW0098 (Isolate 1)",
-    ]
     assert items[m.RULE_SELF_PAIR] == ["b0007 -> b0007 (Isolate 1)"]
     assert items[m.RULE_SERVED] == [
         "b0005 -> b0002 (Isolate 1)",
@@ -902,10 +894,10 @@ def test_the_build_measures_the_replicate_design_rather_than_asserting_it(
     )
     assert structure["sample_unit"] == "colony"
     assert structure["documented_n_samples"] == 4
-    assert structure["measured_n_samples_counts"] == {"4": 13, "8": 1}
-    assert structure["measured_replicate_screen_counts"] == {"2": 14}
+    assert structure["measured_n_samples_counts"] == {"4": 15, "8": 1}
+    assert structure["measured_replicate_screen_counts"] == {"2": 16}
     assert structure["modal_n_samples"] == 4
-    assert structure["records_at_modal_n_samples"] == 13
+    assert structure["records_at_modal_n_samples"] == 15
     assert structure["sha256"] == m.DATA_SHA256[m.TABLE_S4]
     assert "#793" in structure["note"]
 
@@ -915,8 +907,8 @@ def test_every_built_record_stores_its_own_measured_colony_count(
 ) -> None:
     """The ledger's measured distribution and the records' ``n_samples`` agree exactly.
 
-    The synthetic release holds 9 cells at 4 colonies and 1 at 8, so the two views must
-    be the same histogram; a builder that defaulted to 4 would read 10 at 4 and 0 at 8.
+    The synthetic release holds 15 cells at 4 colonies and 1 at 8, so the two views must
+    be the same histogram; a builder that defaulted to 4 would read 16 at 4 and 0 at 8.
     """
     structure = json.loads(
         Path(built.preprocess_dir, "replicate_structure.json").read_text()
@@ -1233,9 +1225,9 @@ def test_the_l0_to_l4_gate_passes_on_the_synthetic_build(
     # b0010 and b0099 are no locus tags of the annotation: reported, not failed (#1057)
     assert by_name["gene_containment_mg1655_locus_tags"].details[
         "missing_examples"
-    ] == ["b0010", "b0099"]
+    ] == ["JW0098", "b0010", "b0099"]
     assert by_name["recipient_leaf_states_its_array_row"].details["versions"] == {
-        "Isolate 1": 12,
+        "Isolate 1": 14,
         "Isolate 2": 1,
         m.LABEL_SPA_TAG: 1,
     }
@@ -1344,25 +1336,24 @@ def test_the_dev_store_ledgers_state_the_measured_build() -> None:
         pytest.skip("the dev store is not built")
     drops = json.loads((preprocess / "dropped_records.json").read_text())
     assert drops["source_records"] == 314847
-    # #1057: every b-number in form is stored as released (301,803 before)
-    assert drops["kept_records"] == m.EXPECTED_RECORDS == 306722
+    # #1057: every released id is stored as released (301,803 before)
+    assert drops["kept_records"] == m.EXPECTED_RECORDS == 312427
     assert {rule["rule"]: rule["n_records"] for rule in drops["rules"]} == {
-        m.RULE_NOT_A_TAG: 5772,
         m.RULE_SELF_PAIR: 78,
-        m.RULE_CONTRADICTION: 421,
+        m.RULE_CONTRADICTION: 488,
         m.RULE_SERVED: 1854,
     }
     assert (drops["n_aggravating"], drops["n_alleviating"], drops["n_zero"]) == (
-        148508,
-        150149,
-        8065,
+        151282,
+        152931,
+        8214,
     )
     assert drops["kept_queries"] == 39
-    assert drops["kept_recipients"] == 4042
+    assert drops["kept_recipients"] == 4117
     assert drops["kept_hypomorph_records"] == 5413
     assert drops["kept_strain_versions"] == {
-        "Isolate 1": 150900,
-        "Isolate 2": 150409,
+        "Isolate 1": 153791,
+        "Isolate 2": 153223,
         m.LABEL_SPA_TAG: 5413,
     }
 

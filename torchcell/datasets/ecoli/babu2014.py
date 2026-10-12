@@ -117,25 +117,23 @@ gene name its ``perturbed_gene_name``, whatever the pinned annotation says about
 the 6 retired b-numbers (``b0370``, ``b0510``, ``b4091``, ``b4223``, ``b4274``,
 ``b4574``) and the 52 the annotation carries as a ``/gene_synonym`` of another locus
 (``b0359``, ``b2654``, ...) are stored as released, with no identifier mapping and no
-resolution in the loader. ``preprocess/identifier_reconciliation.json`` still records
-what the annotation says about every released id. Two rules remove rows:
+resolution in the loader. The 11 recipient ids that are no b-number in form (``JW5447``,
+``JW5661``, ``cscR`` and eight ``bNNNN.1`` sub-numbered Keio entries) are stored on
+``BacterialReleasedStrainPerturbation`` under the id as released, its strain label the
+released ``<id>__<gene>`` cell and its ``identifier_kind`` the id's form.
+``preprocess/identifier_reconciliation.json`` still records what the annotation says
+about every released id. One rule removes rows:
 
-1. ``released_id_is_not_a_b_number`` -- 130 pairs naming one of 11 released ids that
-   are not an MG1655 b-number in FORM: ``JW5447``, ``JW5661``, ``cscR`` and eight
-   ``bNNNN.1`` sub-numbered Keio entries. The bacterial leaf's name validator holds a
-   locus-tag-shaped name only, so storing these under the released id needs a schema
-   carrier, which is an owner question rather than a loader rule.
-2. ``contradictory_duplicate_pair`` -- 4 rows, the two ordered (donor, recipient) pairs
+1. ``contradictory_duplicate_pair`` -- 4 rows, the two ordered (donor, recipient) pairs
    Table S2 releases TWICE with different scores (``b1396__paaI``/``b2863__ygeQ`` at
    -5.19537 and +4.33814; ``b2675__nrdE``/``b4462__ygaR`` at -7.12262 and -5.67666).
    The release gives no rule for choosing, and the two scores of the paaI pair disagree
    in SIGN, so both rows of both pairs are dropped.
 
-130 + 4 = 134 dropped; 42,705 - 134 = 42,571 records (41,988 before #1057 stored the 583
-pairs on a retired or synonym b-number), 25,149 aggravating and 17,422 alleviating, over
-all 163 donors and 3,865 of the 3,876 recipients. 3,419 of those records carry a marked
-hypomorphic allele on one side or both (1,023 donor-side, 2,479 recipient-side, 83 both);
-the one hypomorph pair still dropped names an id of rule 1 on its other side.
+42,705 - 4 = 42,701 records (41,988 before #1057 stored the 713 pairs on a retired,
+synonym or non-b-number id), 25,236 aggravating and 17,465 alleviating, over all 163
+donors and 3,876 recipients. 3,420 of those records carry a marked hypomorphic allele on
+one side or both (1,024 donor-side, 2,479 recipient-side, 83 both).
 
 RECIPROCAL PAIRS ARE KEPT, AND THEY ARE NOT DUPLICATES. 100 unordered gene pairs appear
 twice because each gene was a donor in its own screen, and the two scores often disagree
@@ -206,6 +204,7 @@ from torchcell.datamodels.schema import (
     BacterialGeneInteractionExperimentReference,
     BacterialGeneNamespace,
     BacterialMarkedAllelePerturbation,
+    BacterialReleasedStrainPerturbation,
     BacterialStrainBackground,
     Environment,
     Experiment,
@@ -216,6 +215,7 @@ from torchcell.datamodels.schema import (
     MediaComponent,
     MediaComponentRole,
     Publication,
+    ReleasedStrainKind,
     SampleUnit,
     Temperature,
 )
@@ -226,6 +226,7 @@ from torchcell.datasets.bacteria_common import (
     assembly_reference,
     bacterial_genome,
     reconcile_locus_tags,
+    released_identifier_kind,
 )
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.literature.manifest import (
@@ -1239,18 +1240,12 @@ def read_hypomorphic_recipients(path: str | Path) -> frozenset[str]:
 # --------------------------------------------------------------------------- #
 # Retention ledger
 # --------------------------------------------------------------------------- #
-RULE_NOT_A_TAG = "released_id_is_not_a_b_number"
 RULE_DUPLICATE = "contradictory_duplicate_pair"
 
 DROP_RULE_DESCRIPTIONS: dict[str, str] = {
-    RULE_NOT_A_TAG: "a released id that is not an MG1655 b-number in FORM (a Keio JW "
-    "id, a gene symbol, or a 'bNNNN.1' sub-numbered Keio entry): the bacterial "
-    "perturbation leaf's name validator holds a locus-tag-shaped name only, so the pair "
-    "cannot be written under the released id without a schema carrier. A b-number in "
-    "form is stored as released whatever the annotation says about it (#1057)",
     RULE_DUPLICATE: "an ordered (donor, recipient) pair Table S2 releases twice with "
     "different scores. The release gives no rule for choosing between them and one of "
-    "the two pairs disagrees in sign, so both rows of both pairs are dropped",
+    "the two pairs disagrees in sign, so both rows of both pairs are dropped"
 }
 
 
@@ -1378,8 +1373,25 @@ def donor_perturbation(locus_tag: str, symbol: str) -> BacterialDeletionPerturba
 
 def recipient_perturbation(
     locus_tag: str, symbol: str
-) -> BacterialDeletionPerturbation:
-    """The recipient side: the arrayed Keio deletion, marked with ``kan``."""
+) -> BacterialDeletionPerturbation | BacterialReleasedStrainPerturbation:
+    """The recipient side: the arrayed Keio deletion, marked with ``kan``.
+
+    A recipient Table S2 names by an id that is no b-number (a Keio JW number, a
+    sub-numbered entry, a symbol) is stored under that id as released, on the
+    released-strain leaf (#1057); its strain label is the released ``<id>__<gene>``
+    cell.
+    """
+    if not B_NUMBER_PATTERN.match(locus_tag):
+        return BacterialReleasedStrainPerturbation(
+            systematic_gene_name=locus_tag,
+            perturbed_gene_name=symbol,
+            gene_namespace=MG1655_NAMESPACE,
+            strain_label=f"{locus_tag}__{symbol}",
+            identifier_kind=released_identifier_kind(locus_tag),
+            released_kind=ReleasedStrainKind.deletion,
+            cassette=RECIPIENT_CASSETTE,
+            collection=RECIPIENT_COLLECTION,
+        )
     return BacterialDeletionPerturbation(
         systematic_gene_name=locus_tag,
         perturbed_gene_name=symbol,
@@ -1636,7 +1648,7 @@ def retain(
     donors: Mapping[str, DonorSpec],
     hypomorphic_recipients: frozenset[str],
 ) -> Retention:
-    """Apply the two retention rules, and refuse a ledger that misses a row."""
+    """Apply the retention rule, and refuse a ledger that misses a row."""
     unknown = sorted(set(frame["donor_id"]) - set(donors))
     if unknown:
         raise ReleaseContentError(
@@ -1646,31 +1658,28 @@ def retain(
     _, reconciliation = reconcile_locus_tags(
         genome, names, label=f"{dataset_name} Table S2 donor and recipient b-numbers"
     )
-    # #1057: every released id of b-number FORM is stored as released; the annotation's
-    # verdict on it (identifier_reconciliation.json) drops nothing
+    # #1057: every released id is stored as released; the annotation's verdict on it
+    # (identifier_reconciliation.json) drops nothing, and an id that is no b-number is
+    # stored on the released-strain leaf
     not_b_numbers = sorted(name for name in names if not B_NUMBER_PATTERN.match(name))
-    not_a_tag = frame["donor_id"].isin(not_b_numbers) | frame["recipient_id"].isin(
-        not_b_numbers
-    )
+    released_donors = sorted(set(not_b_numbers) & set(frame["donor_id"]))
+    if released_donors:
+        raise ReleaseContentError(
+            f"Table S1 donors are b-numbers, but Table S2 names donors {released_donors}"
+        )
     duplicate = frame.duplicated(subset=["donor_id", "recipient_id"], keep=False)
 
     rules = [
         DropRule(
-            rule=RULE_NOT_A_TAG,
-            description=DROP_RULE_DESCRIPTIONS[RULE_NOT_A_TAG],
-            n_records=int(not_a_tag.sum()),
-            items=not_b_numbers,
-        ),
-        DropRule(
             rule=RULE_DUPLICATE,
             description=DROP_RULE_DESCRIPTIONS[RULE_DUPLICATE],
-            n_records=int((duplicate & ~not_a_tag).sum()),
+            n_records=int(duplicate.sum()),
             items=sorted(
                 {_pair_label(dict(row)) for _, row in frame.loc[duplicate].iterrows()}
             ),
-        ),
+        )
     ]
-    kept = frame.loc[~(not_a_tag | duplicate)].reset_index(drop=True)
+    kept = frame.loc[~duplicate].reset_index(drop=True)
     kept = kept.assign(
         donor_is_hypomorph=[donors[b].is_hypomorph for b in kept["donor_id"]],
         recipient_is_hypomorph=[
@@ -1741,15 +1750,14 @@ def stored_rows(
 # The dataset
 # --------------------------------------------------------------------------- #
 DATASET_ROOT_REL = "data/torchcell/gene_interaction_babu2014"
-#: Records of the full build: 42,705 released pairs minus 130 pairs on an id that is not
-#: a b-number in form and the 4 rows of the two contradictory duplicate pairs. Every
-#: b-number is stored as released since #1057 (41,988 before, when 583 pairs on a retired
-#: or synonym b-number were dropped). The 3,420 hypomorph pairs are STORED since
-#: ``BacterialMarkedAllelePerturbation`` landed (#792); 1 is still dropped by rule 1.
-EXPECTED_RECORDS = 42571
+#: Records of the full build: 42,705 released pairs minus the 4 rows of the two
+#: contradictory duplicate pairs. Every released id is stored as released since #1057
+#: (41,988 before, when 713 pairs on a retired, synonym or non-b-number id were
+#: dropped). All 3,420 hypomorph pairs are STORED (#792).
+EXPECTED_RECORDS = 42701
 #: Records whose donor or recipient side is a marked hypomorphic allele rather than a
-#: deletion: 1,023 donor-side, 2,479 recipient-side, 83 both.
-EXPECTED_HYPOMORPH_RECORDS = 3419
+#: deletion: 1,024 donor-side, 2,479 recipient-side, 83 both.
+EXPECTED_HYPOMORPH_RECORDS = 3420
 
 
 @register_dataset
@@ -2038,8 +2046,14 @@ def _l1_hypomorph_sides_are_marked_alleles(
             ),
         )
         for side, is_hypomorph, collection, tag, site in expectations:
-            want = "bacterial_marked_allele" if is_hypomorph else "bacterial_deletion"
-            if str(side["perturbation_type"]) != want:
+            want = (
+                {"bacterial_marked_allele"} if is_hypomorph else {"bacterial_deletion"}
+            )
+            if side is recipient and not is_hypomorph:
+                # a recipient released under no b-number is on the released-strain
+                # leaf (#1057)
+                want |= {"bacterial_released_strain"}
+            if str(side["perturbation_type"]) not in want:
                 bad.append(
                     f"{side['systematic_gene_name']} is {side['perturbation_type']}"
                 )

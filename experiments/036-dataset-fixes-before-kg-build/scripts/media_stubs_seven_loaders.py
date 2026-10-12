@@ -222,7 +222,7 @@ def build_small(scratch_root: str, data_root: str) -> dict[str, str]:
     out["organic_acid_yoshida2012"] = osp.join(yo, "processed")
 
     ds = osp.join(scratch_root, "metabolite_dasilveira2014")
-    dasilveira2014.MetaboliteDaSilveira2014Dataset(root=ds, genome=genome)
+    dasilveira2014.MetaboliteDaSilveira2014Dataset(root=ds)
     out["metabolite_dasilveira2014"] = osp.join(ds, "processed")
 
     for slug, csv_name, cls in (

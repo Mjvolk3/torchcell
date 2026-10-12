@@ -18,9 +18,12 @@ mirror's ``manifest.json``) and writes
   ``umi_count``, the reference pseudobulk, and the mating-type genes the verifier's
   MAT rule reads (fraction of strains detecting each, its reference UMIs);
 - the Dryad side: which of the four walled files are on disk, and when all are, the
-  batch-1 strain count, the SNP count, and per assigned strain the blocks and pickled
-  genotype bytes at a pure called-parent run and the 0.1, 0.05, 0.02 and 0.01 grids, the
-  exact-0.5 and strictly-uncertain posterior fractions.
+  batch-1 strain count, the SNP list's rows (SNPs and the per-chromosome ``END`` rows),
+  every row of ``geno_data_1`` (its ``Number`` range and order, its posteriors per row,
+  and how many batch-1 and assigned strains it holds), and per assigned strain the
+  blocks and pickled genotype bytes at a pure called-parent run, the 0.1, 0.05, 0.02 and
+  0.01 grids and the loader's own encoder, the exact-0.5 and strictly-uncertain
+  posterior fractions.
 
 Run from the repo root: ``python experiments/036-dataset-fixes-before-kg-build/scripts/
 nguessan2025_release_inventory.py``.
@@ -28,6 +31,7 @@ nguessan2025_release_inventory.py``.
 
 from __future__ import annotations
 
+import gzip
 import hashlib
 import json
 import os
@@ -41,7 +45,6 @@ from dotenv import load_dotenv
 
 from torchcell.datamodels.schema import HaplotypeBlock
 from torchcell.datasets.scerevisiae import nguessan2025 as ng
-from torchcell.datasets.scerevisiae.bloom2019 import encode_blocks
 from torchcell.verification.runners import _sgd_gene_set
 from torchcell.verification.segregant_expression_reference_panel import (
     A_SPECIFIC,
@@ -60,7 +63,9 @@ def _sha256(path: str) -> str:
     return digest.hexdigest()
 
 
-def _distribution(values: list[int] | np.ndarray[Any, Any]) -> dict[str, float]:
+def _distribution(
+    values: list[int] | list[float] | np.ndarray[Any, Any],
+) -> dict[str, float]:
     array = np.asarray(values, dtype=float)
     return {
         "min": float(array.min()),
@@ -72,37 +77,80 @@ def _distribution(values: list[int] | np.ndarray[Any, Any]) -> dict[str, float]:
 
 
 def blocks_at(
-    posterior: np.ndarray[Any, Any], markers: list[Any], step: float | None
+    posterior: np.ndarray[Any, Any],
+    markers: list[Any],
+    chrom: np.ndarray[Any, Any],
+    step: float | None,
 ) -> list[HaplotypeBlock]:
-    """Runs of called parent (step None) or of called parent and grid level."""
+    """Runs of called parent (step None) or of called parent and grid level.
+
+    ``chrom`` is each marker's chromosome as an integer code, computed once by the
+    caller; a run also ends at a chromosome change.
+    """
+    parent = np.where(posterior > 0.5, 2, 1).astype(np.int8)
+    level: np.ndarray[Any, Any]
     if step is None:
-        coded = np.where(posterior > 0.5, 2, 1).astype(np.int8)
-        return encode_blocks(coded, markers)
-    parent = np.where(posterior > 0.5, 2, 1)
-    q = np.where(parent == 2, posterior, 1 - posterior)
-    level = np.rint(q / step).astype(np.int64)
-    chrom = [m.chromosome for m in markers]
-    out: list[HaplotypeBlock] = []
-    start = 0
-    for i in range(1, len(markers) + 1):
-        if (
-            i == len(markers)
-            or parent[i] != parent[start]
-            or level[i] != level[start]
-            or chrom[i] != chrom[start]
-        ):
-            out.append(
-                HaplotypeBlock(
-                    chromosome=chrom[start],
-                    start=markers[start].position,
-                    end=markers[i - 1].position,
-                    parent=int(parent[start]),  # type: ignore[arg-type]
-                    posterior=min(1.0, round(int(level[start]) * step, 6)),
-                    n_markers=i - start,
-                )
-            )
-            start = i
-    return out
+        level = np.zeros(len(posterior), dtype=np.int64)
+    else:
+        q = np.where(parent == 2, posterior, 1 - posterior)
+        level = np.rint(q / step).astype(np.int64)
+    change = np.ones(len(posterior), dtype=bool)
+    change[1:] = (
+        (parent[1:] != parent[:-1])
+        | (level[1:] != level[:-1])
+        | (chrom[1:] != chrom[:-1])
+    )
+    starts: list[int] = np.flatnonzero(change).tolist()
+    ends = [*(s - 1 for s in starts[1:]), len(posterior) - 1]
+    return [
+        HaplotypeBlock(
+            chromosome=markers[s].chromosome,
+            start=markers[s].position,
+            end=markers[e].position,
+            parent=int(parent[s]),  # type: ignore[arg-type]
+            posterior=1.0 if step is None else min(1.0, round(int(level[s]) * step, 6)),
+            n_markers=e - s + 1,
+        )
+        for s, e in zip(starts, ends)
+    ]
+
+
+def snp_list_rows(path: str) -> dict[str, int]:
+    """Rows of ``SNP_list.txt``: all of them, the ``END`` rows, and the SNPs."""
+    with open(path) as handle:
+        rows = [line.split("\t") for line in handle.read().splitlines()[1:]]
+    ends = sum(1 for row in rows if row[1] == ng.SNP_END)
+    return {"rows": len(rows), "end_rows": ends, "snps": len(rows) - ends}
+
+
+def geno_census(path: str, batch1: list[int], needed: set[int]) -> dict[str, Any]:
+    """Every row of a ``geno_data`` file: its Numbers, their order, the posteriors per row.
+
+    Streams the whole file (the loader stops once it holds the strains it needs), so it
+    states which strains the file holds rather than only that the needed ones are there.
+    """
+    numbers: list[int] = []
+    posteriors_per_row: Counter[int] = Counter()
+    with gzip.open(path, "rb") as handle:
+        for line in handle:
+            first, _, rest = line.partition(b"\t")
+            numbers.append(int(float(first)))
+            posteriors_per_row[rest.count(b"\t") + 1] += 1
+    held = set(numbers)
+    return {
+        "rows": len(numbers),
+        "distinct_numbers": len(held),
+        "number_min": min(numbers),
+        "number_max": max(numbers),
+        "numbers_ascending": numbers == sorted(numbers),
+        "numbers_contiguous": held == set(range(min(numbers), max(numbers) + 1)),
+        "posteriors_per_row": {
+            str(k): v for k, v in sorted(posteriors_per_row.items())
+        },
+        "batch1_strains_held": len(set(batch1) & held),
+        "assigned_strains_held": len(needed & held),
+        "assigned_strains_missing": sorted(needed - held),
+    }
 
 
 def release_section(mirror: str) -> tuple[dict[str, Any], Any, Any]:
@@ -156,7 +204,7 @@ def assignment_section(release: Any, assignment: Any) -> dict[str, Any]:
     all_rows = sorted(r for rows in cells.values() for r in rows)
     reference = np.asarray(release.counts[all_rows].sum(axis=0)).ravel()
     histogram = Counter(int(n) for n in per)
-    mating: dict[str, dict[str, float | int]] = {}
+    mating: dict[str, dict[str, Any]] = {}
     column = {g: j for j, g in enumerate(release.genes)}
     for gene in (*A_SPECIFIC, *ALPHA_SPECIFIC):
         if gene not in column:
@@ -208,11 +256,13 @@ def dryad_section(mirror: str, cells: dict[int, list[int]]) -> dict[str, Any]:
         if _sha256(path) != ng.manifest_sha256(manifest, rel[name]):
             raise RuntimeError(f"{path} does not match its manifest sha256")
     numbers = ng.read_batch_numbers(osp.join(mirror, rel[ng.SEGREGANT_INFO_NAME]))
-    markers, order = ng.read_snp_markers(osp.join(mirror, rel[ng.SNP_LIST_NAME]))
+    snp_path = osp.join(mirror, rel[ng.SNP_LIST_NAME])
+    markers, order = ng.read_snp_markers(snp_path)
     needed = {numbers[i] for i in cells}
-    genotypes = ng.read_reference_genotypes(
-        osp.join(mirror, rel[ng.GENO_NAME]), needed, len(markers)
-    )
+    geno_path = osp.join(mirror, rel[ng.GENO_NAME])
+    census = geno_census(geno_path, numbers, needed)
+    genotypes = ng.read_reference_genotypes(geno_path, needed, len(markers))
+    chrom = np.array([ng._CHROM_ORDER[m.chromosome] for m in markers])
     by_step: dict[str, dict[str, Any]] = {}
     exact_half: list[float] = []
     uncertain: list[float] = []
@@ -220,12 +270,19 @@ def dryad_section(mirror: str, cells: dict[int, list[int]]) -> dict[str, Any]:
         posterior = genotypes[number][order]
         exact_half.append(float(np.mean(posterior == 0.5)))
         uncertain.append(float(np.mean((posterior > 0.05) & (posterior < 0.95))))
-    for step in STEPS:
-        label = "called_parent_only" if step is None else str(step)
+    encoders: list[tuple[str, Any]] = [
+        (
+            "called_parent_only" if step is None else str(step),
+            lambda p, step=step: blocks_at(p, markers, chrom, step),
+        )
+        for step in STEPS
+    ]
+    encoders.append(("loader", lambda p: ng.encode_reference_posterior(p, markers)))
+    for label, encode in encoders:
         counts: list[int] = []
         sizes: list[int] = []
         for number in sorted(genotypes):
-            blocks = blocks_at(genotypes[number][order], markers, step)
+            blocks = encode(genotypes[number][order])
             counts.append(len(blocks))
             sizes.append(len(pickle.dumps([b.model_dump() for b in blocks])))
         by_step[label] = {
@@ -236,7 +293,11 @@ def dryad_section(mirror: str, cells: dict[int, list[int]]) -> dict[str, Any]:
     section.update(
         {
             "batch1_strains": len(numbers),
+            "batch1_numbers_are_0_to_4488_in_order": numbers
+            == list(range(ng.BATCH1_STRAINS)),
+            "snp_list": snp_list_rows(snp_path),
             "snps": len(markers),
+            "geno_data_1": census,
             "strains_read": len(genotypes),
             "fraction_exactly_half": _distribution(exact_half),
             "fraction_in_0.05_0.95": _distribution(uncertain),

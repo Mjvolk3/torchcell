@@ -14,10 +14,11 @@ but the release-size constants. The GitHub side:
     AACA-1  5 0 0 0   2     NA   <- refused, no significant match
     AACC-1  0 0 4 1   2     2
 
-The Dryad side: ``segregant_info.txt`` rows Number 10 (batch 1), 20 (batch 2), 11, 12
-(batch 1), so batch-1 index 0, 1, 2 is strain 10, 11, 12. ``SNP_list.txt`` lists four
-SNPs out of order (index 0 chr01:300, 1 chr01:100, 2 chr03:150, 3 chr01:200), sorted
-order [1, 3, 0, 2]. ``geno_data_1.txt.gz`` posteriors P(RM) by SNP index 0..3:
+The Dryad side, in the deposited layouts: ``segregant_info.txt`` rows Number 10 (batch
+1), 20 (batch 2), 11, 12 (batch 1), so batch-1 index 0, 1, 2 is strain 10, 11, 12.
+``SNP_list.txt`` lists four SNPs out of order (snp1 chromosome 1:300, snp2 1:100, snp3
+3:150, snp4 1:200), then the ``END`` row of chromosomes 1 and 3; sorted order [1, 3, 0,
+2]. ``geno_data_1.txt.gz`` posteriors P(RM) by geno column 0..3 (snp1..snp4):
 
     10: .20 .99 .98 .97 -> sorted .99 .97 .20 .98 -> parents 2 2 1 2, levels
         1.0 .95 .8 1.0 -> 4 blocks
@@ -67,10 +68,12 @@ ASSIGNMENT = [
 ]
 SEGREGANT_INFO = [(10, 1), (20, 2), (11, 1), (12, 1)]
 SNPS = [
-    (0, "chr01", 300, "G", "C"),
-    (1, "chr01", 100, "A", "T"),
-    (2, "chr03", 150, "A", "G"),
-    (3, "chr01", 200, "C", "G"),
+    (0, "snp1", 1, 300, "G", "C"),
+    (1, "snp2", 1, 100, "A", "T"),
+    (2, "snp3", 3, 150, "A", "G"),
+    (3, "snp4", 1, 200, "C", "G"),
+    (4, "END", 1, 0, "0", "0"),
+    (5, "END", 3, 0, "0", "0"),
 ]
 GENO = {
     10: [0.20, 0.99, 0.98, 0.97],
@@ -112,15 +115,18 @@ def assignment_csv(rows: list[tuple[str, int, str]] = ASSIGNMENT) -> str:
 
 
 def segregant_info(rows: list[tuple[int, int]] = SEGREGANT_INFO) -> str:
-    """``segregant_info.txt``: Number, Batch, Set, Plate, Well, barcode."""
-    lines = ["Number\tBatch\tSet\tPlate\tWell\tBarcode"]
-    lines += [f"{n}\t{b}\t1\t1\tA{i + 1}\tACGT" for i, (n, b) in enumerate(rows)]
+    """``segregant_info.txt`` with the deposited header (Number ... Barcode2)."""
+    lines = ["Number\tIndex\tBatch\tSet\tPlate\tWell\tBarcode1\tBarcode2"]
+    lines += [
+        f"{n}\t{i + 1}\t{b}\t1\t1\tA{i + 1}\tACGT\tTGCA"
+        for i, (n, b) in enumerate(rows)
+    ]
     return "\n".join(lines) + "\n"
 
 
-def snp_list(rows: list[tuple[int, str, int, str, str]] = SNPS) -> str:
-    """``SNP_list.txt`` with the assumed header."""
-    lines = ["\t".join(m.SNP_LIST_COLUMNS)]
+def snp_list(rows: list[tuple[int, str, int, int, str, str]] = SNPS) -> str:
+    """``SNP_list.txt`` as deposited: a quoted header, tab-separated rows."""
+    lines = ["\t".join(f'"{c}"' for c in m.SNP_LIST_COLUMNS)]
     lines += ["\t".join(str(v) for v in row) for row in rows]
     return "\n".join(lines) + "\n"
 

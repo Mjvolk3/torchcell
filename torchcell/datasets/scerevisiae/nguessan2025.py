@@ -35,17 +35,23 @@ sequence, RM11-1a to the Peter 2018 assembly ``AAA`` (Peter 2018 Table S1), the 
 pins Bloom 2019 and Boocock 2025 use; no new assembly set.
 
 **The Dryad deposit is walled** (HTTP 401 on the files API, 403 on the download route;
-issue #1014), so the four Dryad files are recorded in the raw-mirror manifest as
-``manual_browser`` artifacts pinned to Dryad's own sha256, and every record waits on
-their by-hand deposit: ``download()`` refuses while any is absent. Their FORMAT is read
-from the Dryad README only (tab-separated; ``segregant_info.txt`` has ``Number`` and
-``Batch`` columns; each ``geno_data`` row is ``Number`` then one posterior per SNP). The
-SNP list's column names are not stated there, so ``SNP_LIST_COLUMNS`` is an assumption
-the reader enforces and refuses against; it is confirmed or corrected at the deposit.
-The map from the release's batch-1 index to ``Number`` is the batch-1 rows of
+issue #1014), so the four Dryad files are a by-hand ``manual_browser`` deposit: the
+owner downloaded the four-file selection in a browser on 2026-10-12, the zip Dryad
+returned is kept beside its four members (``DEPOSIT.md`` in the mirror directory), and
+every member hashes to the sha256 Dryad lists for it. ``download()`` refuses while any
+is absent. The Dryad README states the formats (tab-separated; ``segregant_info.txt``
+has ``Number`` and ``Batch`` columns; each ``geno_data`` row is ``Number`` then one
+posterior per SNP) but not the SNP list's columns. ``SNP_LIST_COLUMNS`` is the header
+measured on the deposited file, which also closes every chromosome with an ``END`` row
+that is not a SNP: 41,610 rows, 16 of them ``END``, leave 41,594 SNPs, the number of
+posteriors on every geno row. The k-th posterior of a geno row is taken to be the k-th
+SNP row in file order (``snp<k>``, k from 1); the counts agree and the README says
+nothing more, so the L4 ``mat_fixation`` and ``cis_concordance`` rules test it. The map
+from the release's batch-1 index to ``Number`` is the batch-1 rows of
 ``segregant_info.txt`` in file order, the order the authors' code reads batch 1 in (the
-first 4,489 rows of its panel); L4 ``cis_concordance`` tests that map against a
-permutation null rather than assuming it.
+first 4,489 rows of its panel); on the deposit those are ``Number`` 0 to 4,488 in
+order, and L4 ``cis_concordance`` tests the map against a permutation null rather than
+assuming it.
 
 PHENOTYPE (``SingleCellExpressionPhenotype``, the single-cell UMI-count leaf shared with
 Boocock 2025 and Jackson 2020, #1016): UMI counts over the 6,240 released genes, summed
@@ -72,7 +78,7 @@ RAW MIRROR. ``$DATA_ROOT/torchcell-raw/nguessanRefiningResolutionYeast2025/`` wi
 ``manifest.json``: the four release files from GitHub ``arnaud00013/sc-eQTL`` at the
 commit the paper archives (``1e0e2109``), the README and the lineage-assignment script
 quoted below, the Dryad dataset metadata and file listing (readable without a token), and
-the four walled Dryad files as pending ``manual_browser`` records.
+the four walled Dryad files with the zip they arrived in, as ``manual_browser`` records.
 """
 
 from __future__ import annotations
@@ -261,19 +267,28 @@ N_SEGREGANTS = 2951
 LIBRARY_LABEL = "1"
 GROWTH_DURATION_HOURS = 4.0
 
-#: ASSUMED column names of ``SNP_list.txt`` (the Dryad README says only "Table with
-#: index, genome position, and sequence information"); the reader refuses any other
-#: header, and the deposit (#1014) confirms or corrects this tuple.
-SNP_LIST_COLUMNS = ("index", "chromosome", "position", "BY", "RM")
-#: Chromosome tokens of the Nguyen Ba lab files (``chr01``..``chr16``, as in the
-#: authors' CellRanger FASTA index) -> the S288C names markers carry.
+#: The header of ``SNP_list.txt`` as deposited (measured 2026-10-12 on the file Dryad
+#: lists at sha256 ``333550aa...``; its README says only "Table with index, genome
+#: position, and sequence information"). The reader refuses any other header.
+SNP_LIST_COLUMNS = (
+    "Index",
+    "SNP",
+    "Chromosome",
+    "Position (bp)",
+    "BY allele",
+    "RM allele",
+)
+#: The ``SNP`` value of the row that closes each chromosome in ``SNP_list.txt``. It is
+#: not a SNP: its position and both alleles are ``0``, and the geno rows carry no
+#: posterior for it (16 such rows; 41,610 rows less 16 is the 41,594 posteriors of a
+#: geno row).
+SNP_END = "END"
+#: The SNP list's chromosome numbers (``1``..``16``) -> the S288C names markers carry.
 _ROMAN = [
     "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX",
     "X", "XI", "XII", "XIII", "XIV", "XV", "XVI",
 ]  # fmt: skip
-CHROMOSOME_TOKEN: dict[str, str] = {
-    f"chr{i:02d}": f"chr{r}" for i, r in enumerate(_ROMAN, 1)
-}
+CHROMOSOME_TOKEN: dict[str, str] = {str(i): f"chr{r}" for i, r in enumerate(_ROMAN, 1)}
 _CHROM_ORDER = {f"chr{r}": i for i, r in enumerate(_ROMAN)}
 
 CALL_METHOD = (
@@ -688,39 +703,59 @@ def read_batch_numbers(path: str | Path, batch: int = 1) -> list[int]:
 def read_snp_markers(path: str | Path) -> tuple[list[Marker], list[int]]:
     """``SNP_list.txt`` as sorted ``Marker``s plus the geno column of each.
 
-    Refuses a header other than ``SNP_LIST_COLUMNS`` (an assumption until #1014), an
-    ``index`` that is not 0..n-1, or a chromosome token outside ``CHROMOSOME_TOKEN``.
-    ``Marker.column`` is the SNP's 0-based column among the posteriors of a geno row;
-    the returned list is sorted by (chromosome, position) and the second value maps each
-    sorted marker back to its geno column.
+    The deposited layout (module docstring): ``Index`` 0..n-1 over every row, one
+    ``END`` row per chromosome after all of that chromosome's SNPs (position and alleles
+    ``0``), and the SNPs named ``snp1``, ``snp2``, ... in file order. ``Marker.index``
+    is the row's ``Index`` and ``Marker.column`` the SNP's 0-based column among the
+    posteriors of a geno row (its rank among the non-``END`` rows). The returned list is
+    sorted by (chromosome, position); the second value maps each sorted marker back to
+    its geno column. Any other header, an ``Index`` that is not 0..n-1, a chromosome
+    outside ``1``..``16``, a SNP out of sequence, a malformed ``END`` row, or a
+    chromosome without exactly one ``END`` after its SNPs raises.
     """
-    table = pd.read_csv(path, sep="\t", dtype={"chromosome": str})
+    table = pd.read_csv(path, sep="\t", dtype=str, keep_default_na=False)
     if tuple(table.columns) != SNP_LIST_COLUMNS:
         raise ValueError(
-            f"{path}: header {tuple(table.columns)} is not the assumed "
-            f"{SNP_LIST_COLUMNS}; update SNP_LIST_COLUMNS from the deposited file"
+            f"{path}: header {tuple(table.columns)} is not the deposited "
+            f"{SNP_LIST_COLUMNS}"
         )
-    if table["index"].tolist() != list(range(len(table))):
-        raise ValueError(f"{path}: index is not 0..{len(table) - 1}")
-    unknown = sorted(set(table["chromosome"]) - set(CHROMOSOME_TOKEN))
+    rows = list(table.itertuples(index=False, name=None))
+    if [int(row[0]) for row in rows] != list(range(len(rows))):
+        raise ValueError(f"{path}: Index is not 0..{len(rows) - 1}")
+    unknown = sorted({row[2] for row in rows} - set(CHROMOSOME_TOKEN))
     if unknown:
-        raise ValueError(f"{path}: chromosome tokens {unknown} are not chr01..chr16")
-    markers = [
-        Marker(
-            chromosome=CHROMOSOME_TOKEN[chrom],
-            position=int(pos),
-            ref=str(by),
-            alt=str(rm),
-            index=int(idx),
-            column=int(idx),
+        raise ValueError(f"{path}: chromosomes {unknown} are not 1..16")
+    markers: list[Marker] = []
+    closed: set[str] = set()
+    for idx, snp, chrom, pos, by, rm in rows:
+        if snp == SNP_END:
+            if (pos, by, rm) != ("0", "0", "0") or chrom in closed:
+                raise ValueError(
+                    f"{path}: Index {idx} is not the one END row of chromosome {chrom}"
+                )
+            closed.add(chrom)
+            continue
+        if chrom in closed:
+            raise ValueError(f"{path}: {snp} follows the END row of chromosome {chrom}")
+        if snp != f"snp{len(markers) + 1}":
+            raise ValueError(
+                f"{path}: Index {idx} is {snp}, expected snp{len(markers) + 1}"
+            )
+        markers.append(
+            Marker(
+                chromosome=CHROMOSOME_TOKEN[chrom],
+                position=int(pos),
+                ref=by,
+                alt=rm,
+                index=int(idx),
+                column=len(markers),
+            )
         )
-        for idx, chrom, pos, by, rm in table.itertuples(index=False)
-    ]
-    order = sorted(
-        range(len(markers)),
-        key=lambda i: (_CHROM_ORDER[markers[i].chromosome], markers[i].position),
-    )
-    return [markers[i] for i in order], order
+    open_chromosomes = sorted({row[2] for row in rows} - closed)
+    if open_chromosomes:
+        raise ValueError(f"{path}: chromosomes {open_chromosomes} have no END row")
+    ordered = sorted(markers, key=lambda m: (_CHROM_ORDER[m.chromosome], m.position))
+    return ordered, [m.column for m in ordered]
 
 
 def read_reference_genotypes(

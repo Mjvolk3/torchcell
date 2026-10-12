@@ -45,6 +45,31 @@ morphology panel: the 1{,}011 natural isolates (Caudal 2024 expression, built; M
 to ask whether a thousand strains whose expression differs far more than the deletion
 panels' lifts those heads and, through them, the measured-input arms of d.}{fig:si-sketch}
 
+\tcfig{figures/fig3-si-morphology-mockup.pdf}{\textbf{The same figure as a mockup, the
+sketch's panels filled with round v24.} Panels drawn by
+\file{fig3_si_morphology_panels.py} from \file{morph_v24_readout.json},
+\file{morphology_baselines_split_fig3_core_moving/}, \file{morphology_feature_ceiling.csv}
+and the two covariation files; composed by \file{fig3_si_morphology_mockup_drawio.py}.
+Scores are the registered window (mean validation Pearson per feature over epochs 1{,}000 to
+1{,}199, 116 moving features); a bar is the mean over split seeds with its s.d. and one dot
+per seed. \textbf{a}, the strain sets of the two stores and the strains each arm trains on.
+\textbf{b}, replicate reliability of the 278 CalMorph features, the 0.5 threshold, the
+ceiling of the moving set. \textbf{c}, genotype only: the ceiling, ridge and nearest
+neighbor on sequence embeddings (embedding, rank and neighbor count selected on validation
+inside each of four split seeds, an upward-biased selection), and the cell graph transformer
+off the perturbed CLS on all strains and on the proteome store's strains (twelve seeds
+each). \textbf{d}, the strain's own expression or proteome as input against another
+strain's and, for the proteome, against genotype only on the same strains; dashed, the
+ridge from the same measurement on the moving features; dotted, the proteome ridge with the
+growth axis removed. The permuted-proteome arm has ten of twelve seeds. \textbf{e}, the
+registered contrasts per split seed: own minus permuted (expression, +0.092, 12 of 12) and
+own minus genotype only (proteome, +0.076, 12 of 12). \textbf{f}, each run's training-set
+Pearson (last epoch) against its window score: the genotype-only runs that never fit the
+training set, the two that did, and the conditioned runs that fit and overfit. \textbf{g},
+the validation score at epochs 200 to 1{,}199, mean over seeds per arm. \textbf{h}, the
+isolates, idea only. The figure is 196 mm tall, over the 170 mm print cap; the panels to
+keep are an author decision.}{fig:si-mockup}
+
 \pfstep{Every arm here is transductive in the sense the figure needs} The revealed modality
 is a gene-level measurement of the \emph{same} strain, present on every training, validation
 and test strain of the arm (\texttt{require\_modalities} keeps only genotypes carrying both

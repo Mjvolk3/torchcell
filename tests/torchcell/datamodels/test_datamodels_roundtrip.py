@@ -261,6 +261,17 @@ EXAMPLES: dict[str, dict[str, Any]] = {
         "is_synthetic": False,
     },
     "torchcell.datamodels.schema.CalMorphPhenotype": {"calmorph": {"A101_A": 0.5}},
+    # #989: the ratio-only microarray leaf requires its per-gene counts or a typed gap,
+    # and the generic builder leaves the optional map None without one.
+    "torchcell.datamodels.schema.MicroarrayExpressionRatioPhenotype": {
+        "expression_log2_ratio": {"YAL001C": -0.25, "YBR001C": 1.5},
+        "measurement_type": "scanalyze_rat2n_normalized_log2_ratio",
+        "reference_basis": "the same culture before the shift",
+        "array_platform": "spotted yeast ORF array",
+        "provenance_gaps": [
+            {"field": "n_replicates", "reason": "not_reported_by_primary"}
+        ],
+    },
     # De Chiara 2022: a life-cycle key is '<measurement type>@<time><h|d>' and the
     # generic builder's "x" key parses as none.
     "torchcell.datamodels.schema.LifeCyclePhenotype": {
@@ -490,6 +501,10 @@ EXAMPLES: dict[str, dict[str, Any]] = {
 UNCONSTRUCTIBLE: dict[str, str] = {
     "torchcell.datamodels.schema.Phenotype": (
         "abstract base: label_name must be a class attribute of a concrete subclass"
+    ),
+    "torchcell.datamodels.schema.TwoChannelMicroarrayExpressionPhenotype": (
+        "abstract parent (#1022 #989): it declares no field, so no label_name can name "
+        "one of its own"
     ),
     "torchcell.datamodels.schema.Experiment": (
         "abstract base: its phenotype field is the abstract Phenotype"

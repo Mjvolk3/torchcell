@@ -503,8 +503,9 @@ def test_real_schema_diagram(md: ModuleType) -> None:
     # phenotype` (#991) and `biosensor fluorescence phenotype` (#990) joined as
     # siblings of `promoter activity phenotype`: the phenotype shape twice more. 47 and
     # 78 since `phosphosite intensity phenotype` joined (issue #921), the phenotype
-    # shape once more.
-    assert (len(gen.nodes), n_edges, n_data_lines) == (47, 14, 78)
+    # shape once more. 48 and 80 since `microarray expression ratio phenotype` (#989)
+    # joined, the same shape.
+    assert (len(gen.nodes), n_edges, n_data_lines) == (48, 14, 80)
     # 182 = 158 + 4 + 4 + 4 + 4 + 4 + 4: one node is a declaration, an ``is_a`` line and
     # one data line per ``phenotype member of`` target, of which there are two. 186 =
     # 182 + 4 for Hale 2024: the node's declaration and ``is_a`` line, its ``genotype
@@ -512,9 +513,10 @@ def test_real_schema_diagram(md: ModuleType) -> None:
     # microarray expression score phenotype, 194 = 190 + 4 for the induction timecourse
     # expression phenotype, 190 = 194 - 4 since the pseudobulk umi count phenotype was
     # merged into the single cell expression phenotype (#1016), 198 = 190 + 4 + 4
-    # for the pooled sort-seq expression and biosensor fluorescence phenotypes, and
-    # 202 = 198 + 4 for the phosphosite intensity phenotype (#921).
-    assert len(lines) == 202
+    # for the pooled sort-seq expression and biosensor fluorescence phenotypes,
+    # 202 = 198 + 4 for the phosphosite intensity phenotype (#921), and 206 = 202 + 4
+    # for the microarray expression ratio phenotype (#989).
+    assert len(lines) == 206
     assert lines[2:9] == [
         "    %% Biolink Classes (Parent Entity Types)",
         '    BioticExposure["biotic exposure"]',

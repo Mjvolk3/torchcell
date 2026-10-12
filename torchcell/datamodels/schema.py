@@ -6827,7 +6827,64 @@ class CalMorphExperiment(Experiment, ModelStrict):
     phenotype: CalMorphPhenotype
 
 
-class MicroarrayExpressionPhenotype(Phenotype, ModelStrict):
+# --------------------------------------------------------------------------- #
+# begin #1022 #989: the two-channel microarray parent
+# One physical measurement, released four ways. A two-channel array co-hybridizes a
+# sample and a reference, each labeled with its own dye, to the same spots, and every
+# value a release carries is derived from that per-spot pair. What the releases CARRY
+# differs, so the leaves differ (schema-change rule 5: the same technology at one level,
+# diverging in the specifics, shares the parent and diverges in the leaf):
+#
+# - MicroarrayExpressionPhenotype (served: Kemmeren 2014, both Sameith 2015 sets): log2
+#   ratio, its SE, the linear signal and a per-gene replicate count.
+# - MicroarrayExpressionScorePhenotype (Hu 2007, GEO GSE4654): an error-model score of
+#   the ratio and its p-value, no ratio and no signal.
+# - MicroarrayExpressionRatioPhenotype (Gasch 2000): the log2 ratio alone, against a
+#   reference the record names.
+# - InductionTimecourseExpressionPhenotype (Hackett 2020): every processing layer of a
+#   time course, both channels included.
+#
+# The parent carries NO field: the leaves share no released quantity (even the replicate
+# count differs in kind), so any field here would add a required field to the served
+# leaf. Placing the served class under it changes only that class's MRO.
+# --------------------------------------------------------------------------- #
+class TwoChannelMicroarrayExpressionPhenotype(Phenotype, ModelStrict):
+    """Abstract parent of every two-channel microarray expression release.
+
+    The physical measurement is one array on which a sample and a reference, labeled
+    with two dyes, hybridize to the same spots: each value a release carries (a log
+    ratio, its error-model score, a channel intensity) is computed from that per-spot
+    pair, so it is relative to the reference the release names. Kemmeren 2014 states
+    "a common reference design with wildtype (WT) reference RNA applied in dye-swap to
+    each microarray", Sameith 2015 "Dual-channel 70-mer oligonucleotide arrays were
+    employed with WT RNA as common reference", Hu 2007 "we used a common reference RNA
+    design for all microarray hybridizations", Gasch 2000 "each Cy5-labeled sample was
+    compared with a Cy3- labeled reference pool" (the paper's own text, for its heat
+    shock series) and Hackett 2020 "RNA from references and samples was labeled with
+    Cy3-CTP and Cy5-CTP, respectively".
+
+    Never instantiated: a record is always one of the leaves, because what was released
+    decides which fields exist. The parent declares no field of its own, so
+    ``Phenotype.validate_label_fields`` (which reads the concrete class's OWN
+    annotations) refuses any ``label_name`` it is given.
+
+    The leaves keep their own ``label_name``, because no leaf's quantity converts into
+    another's without something its release does not carry: a score back to a ratio
+    needs each spot's error, a ratio up to the served leaf needs the channel signal
+    and the replicate counts. The one conversion that exists is inside a leaf: a score
+    leaf's p-value is a function of its score,
+    ``MicroarrayExpressionScorePhenotype.p_value_of_score``.
+    """
+
+
+# --------------------------------------------------------------------------- #
+# end #1022 #989: the two-channel microarray parent
+# --------------------------------------------------------------------------- #
+
+
+class MicroarrayExpressionPhenotype(
+    TwoChannelMicroarrayExpressionPhenotype, ModelStrict
+):
     """Microarray expression phenotype with canonical log2 ratio convention.
 
     CONVENTION: All expression_log2_ratio values follow the torchcell standard:
@@ -7049,9 +7106,12 @@ class MicroarrayExpressionExperiment(Experiment, ModelStrict):
 # --------------------------------------------------------------------------- #
 # MICROARRAY EXPRESSION SCORE BLOCK START (issue #1022)
 # A two-color microarray release that carries a per-gene error-model SCORE (and its
-# p-value) in place of a log ratio: the sibling of MicroarrayExpressionPhenotype.
+# p-value) in place of a log ratio: a leaf of TwoChannelMicroarrayExpressionPhenotype,
+# the sibling of MicroarrayExpressionPhenotype.
 # --------------------------------------------------------------------------- #
-class MicroarrayExpressionScorePhenotype(Phenotype, ModelStrict):
+class MicroarrayExpressionScorePhenotype(
+    TwoChannelMicroarrayExpressionPhenotype, ModelStrict
+):
     """Per-gene error-model expression SCORE of a strain against a reference, with its
     p-value: what a two-color microarray release carries when it releases no ratio.
 
@@ -7062,13 +7122,20 @@ class MicroarrayExpressionScorePhenotype(Phenotype, ModelStrict):
     the sample than in the reference) but it is a significance statistic, not a ratio:
     on GSE4654 ``p == 2 * (1 - Phi(|X|))`` to within the release's rounding.
 
-    Why a sibling of ``MicroarrayExpressionPhenotype`` and not a relaxation of it: that
+    Why a sibling of ``MicroarrayExpressionPhenotype`` (both are leaves of
+    ``TwoChannelMicroarrayExpressionPhenotype``) and not a relaxation of it: that
     class's label ``expression_log2_ratio`` is documented as ``log2(sample/reference)``
     and its linear ``expression`` field is required, so storing a score there would
     assert a log ratio and a signal the release does not carry, and relaxing either
-    field would move the schema closure of the three served microarray stores
-    (Kemmeren 2014, both Sameith 2015 sets) for one release. This class holds exactly
-    what was released, so it is additive: no served record changes.
+    field would change a served class's meaning for one release. This class holds
+    exactly what was released.
+
+    CONVERSION (score to p-value, ``p_value_of_score``): the error model's ``X`` is a
+    standard-normal deviate under the null, so its p-value is the two-sided tail,
+    ``p == 2 * (1 - Phi(|X|))``. Measured on the GSE4654 bytes for #1022: the identity
+    holds on all 1,707,575 released (X, p) pairs to within 5e-7, the rounding of the
+    release's six-decimal p column. No conversion runs the other way to a log ratio:
+    that needs each spot's error, which the release does not carry.
 
     Key semantics follow the other dict-valued families: a gene whose spot the release
     left null for this sample is not a key, never a 0. ``expression_score_p_value``
@@ -7207,6 +7274,19 @@ class MicroarrayExpressionScorePhenotype(Phenotype, ModelStrict):
             )
         return v
 
+    @staticmethod
+    def p_value_of_score(score: float) -> float:
+        """The two-sided standard-normal p-value of an error-model score.
+
+        ``2 * (1 - Phi(|score|))``, written as ``erfc(|score| / sqrt(2))`` so the tail
+        keeps its precision where ``1 - Phi`` would round to 0. This is the conversion
+        the released p-values obey (class docstring); a release whose p-values do not
+        is not an error-model score of this kind.
+        """
+        if isinstance(score, bool) or not math.isfinite(score):
+            raise ValueError(f"score must be a finite number, got {score!r}")
+        return math.erfc(abs(score) / math.sqrt(2.0))
+
     @model_validator(mode="after")
     def validate_p_value_keys(self) -> "MicroarrayExpressionScorePhenotype":
         """A stored p-value map tests exactly the genes the score map carries."""
@@ -7239,6 +7319,162 @@ class MicroarrayExpressionScoreExperiment(Experiment, ModelStrict):
 
 
 # --------------------------------------------------------------------------- #
+# begin #989: the ratio-only microarray leaf
+# A two-channel release that carries the per-gene log2 ratio against a named reference
+# and nothing else: no channel signal, no SE, no error-model score. The third leaf of
+# TwoChannelMicroarrayExpressionPhenotype (Gasch 2000 releases 173 such arrays).
+# --------------------------------------------------------------------------- #
+class MicroarrayExpressionRatioPhenotype(
+    TwoChannelMicroarrayExpressionPhenotype, ModelStrict
+):
+    """Per-gene log2 ratio of a sample against a named reference, as a two-channel
+    array release carries it when it carries nothing else.
+
+    Gasch et al. 2000 (Mol Biol Cell 11:4241) release every array as the ScanAlyze
+    log2 ratio of the sample (Cy5) to the reference (Cy3): "The normalized, relative
+    transcript levels (R/G ratios) are represented in log2 space (RAT2N)" (the authors'
+    data page). No channel intensity, standard error or replicate count is released
+    beside it, so ``MicroarrayExpressionPhenotype`` cannot hold the release: its linear
+    ``expression`` and per-gene ``n_replicates`` are required, and making them optional
+    would change a served class's contract for one source.
+
+    ``expression_log2_ratio`` is ``log2(sample/reference)`` in the same orientation as
+    the served leaf (positive = higher in the sample); a loader whose source uses the
+    other orientation negates it. A gene whose spot the release left null is not a key,
+    never a 0. A reference's own record is the neutral 0 for every key it carries.
+
+    ``reference_basis`` names the denominator in the source's own terms, because a
+    ratio means nothing without it and a release mixes kinds (the same culture before a
+    shift, a culture grown at another temperature, a strain carrying the empty vector).
+    ``measurement_type`` names the statistic and its pipeline; ``array_platform`` names
+    the array. ``n_replicates`` is the per-gene count of measurements behind each ratio,
+    or None with a typed gap when the release does not state it (Gasch: one column per
+    array, and no statement of how many spots per gene each column averages).
+    """
+
+    graph_level: str = "node"
+    label_name: str = "expression_log2_ratio"
+    label_statistic_name: str | None = None
+
+    expression_log2_ratio: dict[str, float] = Field(
+        description=(
+            "SortedDict of the per-gene log2(sample/reference) as released; a gene the "
+            "release left null is not a key"
+        ),
+        repr=False,
+    )
+    measurement_type: str = Field(
+        description="what the ratio is and how it was computed, e.g. "
+        "'scanalyze_rat2n_normalized_log2_ratio'"
+    )
+    reference_basis: str = Field(
+        description="what the reference channel is, in the source's own terms"
+    )
+    array_platform: str = Field(
+        description="the array the ratio was measured on, as the source names it"
+    )
+    n_replicates: dict[str, int] | None = Field(
+        default=None,
+        description="SortedDict of the measurements behind each gene's ratio, keyed "
+        "exactly like expression_log2_ratio; None only with a typed gap",
+        repr=False,
+    )
+
+    def __repr__(self) -> str:
+        """Summary repr instead of dumping the per-gene dicts."""
+        n_rep = len(self.n_replicates) if self.n_replicates is not None else 0
+        return (
+            f"MicroarrayExpressionRatioPhenotype(genes={len(self.expression_log2_ratio)}"
+            f", n_replicates_genes={n_rep})"
+        )
+
+    @field_validator("expression_log2_ratio", mode="before")
+    @classmethod
+    def convert_and_validate_ratio(cls, v: Any) -> Any:  # raw pre-validation input
+        """Coerce to a SortedDict; refuse an empty map or a non-finite ratio."""
+        if not isinstance(v, dict):
+            raise ValueError(
+                f"expression_log2_ratio must be a per-gene dict, got {type(v).__name__}"
+            )
+        if not v:
+            raise ValueError("expression_log2_ratio cannot be empty")
+        if not isinstance(v, SortedDict):
+            v = SortedDict(v)
+        for key, value in v.items():
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                raise ValueError(f"expression_log2_ratio for {key} is not a number")
+            if not math.isfinite(value):
+                raise ValueError(
+                    f"expression_log2_ratio for {key} is not finite: {value}"
+                )
+        return v
+
+    @field_validator("n_replicates", mode="before")
+    @classmethod
+    def convert_and_validate_n_replicates(
+        cls, v: Any
+    ) -> Any:  # raw pre-validation input
+        """Coerce to a SortedDict of positive integer counts, or keep None."""
+        if v is None:
+            return v
+        if not isinstance(v, dict):
+            raise ValueError(
+                f"n_replicates must be a per-gene dict, got {type(v).__name__}"
+            )
+        if not v:
+            raise ValueError("n_replicates cannot be empty; use None with a gap")
+        if not isinstance(v, SortedDict):
+            v = SortedDict(v)
+        for key, value in v.items():
+            if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+                raise ValueError(
+                    f"n_replicates for {key} must be a positive integer, got {value!r}"
+                )
+        return v
+
+    @field_validator("measurement_type", "reference_basis", "array_platform")
+    @classmethod
+    def validate_named(cls, v: str) -> str:
+        """The statistic, the denominator and the array are named, never blank."""
+        if not v.strip():
+            raise ValueError(
+                "measurement_type, reference_basis and array_platform cannot be blank"
+            )
+        return v
+
+    @model_validator(mode="after")
+    def validate_counts(self) -> "MicroarrayExpressionRatioPhenotype":
+        """Counts are sourced or gapped, and keyed exactly like the ratios."""
+        _require_value_or_gap(self, ("n_replicates",))
+        counts = self.n_replicates
+        if counts is not None and set(counts) != set(self.expression_log2_ratio):
+            raise ValueError(
+                "n_replicates must have the same keys as expression_log2_ratio"
+            )
+        return self
+
+
+class MicroarrayExpressionRatioExperimentReference(ExperimentReference, ModelStrict):
+    """Reference context for a ratio-only microarray experiment."""
+
+    experiment_reference_type: str = "microarray_expression_ratio"
+    phenotype_reference: MicroarrayExpressionRatioPhenotype
+
+
+class MicroarrayExpressionRatioExperiment(Experiment, ModelStrict):
+    """Experiment measuring a ratio-only microarray phenotype."""
+
+    experiment_type: str = "microarray_expression_ratio"
+    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
+    phenotype: MicroarrayExpressionRatioPhenotype
+
+
+# --------------------------------------------------------------------------- #
+# end #989: the ratio-only microarray leaf
+# --------------------------------------------------------------------------- #
+
+
+# --------------------------------------------------------------------------- #
 # begin ADDITIVE (Hackett 2020): one array of an induction time course.
 #
 # A two-colour microarray time course after a transcription factor is induced in a
@@ -7250,7 +7486,9 @@ class MicroarrayExpressionScoreExperiment(Experiment, ModelStrict):
 # names its primary layer ``log2_cleaned`` and has its own graph class, ``induction
 # timecourse expression phenotype``. No served dataset's schema closure moves
 # through these classes; the new ``GenePerturbationType`` member is the only change a
-# served closure sees.
+# served closure sees. Since #1022 #989 the phenotype is a leaf of
+# ``TwoChannelMicroarrayExpressionPhenotype``, beside the served microarray leaf rather
+# than under it (the same two-channel measurement, a different release).
 #
 # - The reference narrows ``genome_reference`` to ``StrainReferenceGenome`` (the typed
 #   background, which carries the synthetic activator cassette) and
@@ -7261,7 +7499,9 @@ class MicroarrayExpressionScoreExperiment(Experiment, ModelStrict):
 #   served Brunk 2016 time course already uses for "hours post-induction"; no time
 #   field is added.
 # --------------------------------------------------------------------------- #
-class InductionTimecourseExpressionPhenotype(Phenotype, ModelStrict):
+class InductionTimecourseExpressionPhenotype(
+    TwoChannelMicroarrayExpressionPhenotype, ModelStrict
+):
     """One array of an induction time course, with every released processing layer.
 
     PRIMARY LAYER (``label_name``): ``log2_cleaned``, the cleaned log2 ratio relative
@@ -11948,6 +12188,7 @@ PhenotypeType = (
     | CalMorphPhenotype
     | MicroarrayExpressionPhenotype
     | MicroarrayExpressionScorePhenotype  # issue #1022
+    | MicroarrayExpressionRatioPhenotype  # issue #989
     | InductionTimecourseExpressionPhenotype  # Hackett 2020 (additive)
     | RNASeqExpressionPhenotype
     | PseudobulkExpressionPhenotype
@@ -11984,6 +12225,7 @@ ExperimentType = (
     | CalMorphExperiment
     | MicroarrayExpressionExperiment
     | MicroarrayExpressionScoreExperiment  # issue #1022
+    | MicroarrayExpressionRatioExperiment  # issue #989
     | InductionTimecourseExpressionExperiment  # Hackett 2020 (additive)
     | RNASeqExpressionExperiment
     | PseudobulkExpressionExperiment
@@ -12036,6 +12278,7 @@ ExperimentReferenceType = (
     | CalMorphExperimentReference
     | MicroarrayExpressionExperimentReference
     | MicroarrayExpressionScoreExperimentReference  # issue #1022
+    | MicroarrayExpressionRatioExperimentReference  # issue #989
     | InductionTimecourseExpressionExperimentReference  # Hackett 2020 (additive)
     | RNASeqExpressionExperimentReference
     | PseudobulkExpressionExperimentReference
@@ -12088,6 +12331,7 @@ EXPERIMENT_TYPE_MAP = {
     "calmorph": CalMorphExperiment,
     "microarray_expression": MicroarrayExpressionExperiment,
     "microarray_expression_score": MicroarrayExpressionScoreExperiment,  # issue #1022
+    "microarray_expression_ratio": MicroarrayExpressionRatioExperiment,  # issue #989
     "induction_timecourse_expression": InductionTimecourseExpressionExperiment,  # Hackett 2020
     "rnaseq_expression": RNASeqExpressionExperiment,
     "pseudobulk_expression": PseudobulkExpressionExperiment,
@@ -12142,6 +12386,9 @@ EXPERIMENT_REFERENCE_TYPE_MAP = {
     "microarray_expression": MicroarrayExpressionExperimentReference,
     "microarray_expression_score": (  # issue #1022
         MicroarrayExpressionScoreExperimentReference
+    ),
+    "microarray_expression_ratio": (  # issue #989
+        MicroarrayExpressionRatioExperimentReference
     ),
     "induction_timecourse_expression": (  # Hackett 2020
         InductionTimecourseExpressionExperimentReference

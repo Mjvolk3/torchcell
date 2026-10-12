@@ -36,6 +36,7 @@ from enum import Enum
 from typing import Any
 
 from tests.torchcell.datamodels._essentiality_evidence import curated_evidence
+from torchcell.datamodels import schema as s
 from torchcell.datamodels.media import MEDIA_LIBRARY
 from torchcell.datamodels.schema import (
     Compound,
@@ -142,6 +143,21 @@ def test_gap_carrier_fields_maps_stored_dumps_back_to_their_class() -> None:
     assert index[frozenset(fitness.model_dump())] == "FitnessPhenotype"
     assert index[frozenset(environment.model_dump())] == "Environment"
     assert index.get(compound_keys | {"extra"}) is None
+
+
+def test_gap_carrier_fields_keeps_the_root_name_beside_a_field_less_parent() -> None:
+    """#1022 #989: the abstract two-channel parent declares no field, so it shares
+    ``Phenotype``'s key set; the index keeps the more general name, and the parent's
+    leaves (which add fields) still map to themselves.
+    """
+    index = gap_carrier_fields()
+    phenotype_keys = frozenset(s.Phenotype.model_fields)
+    assert phenotype_keys == frozenset(
+        s.TwoChannelMicroarrayExpressionPhenotype.model_fields
+    )
+    assert index[phenotype_keys] == "Phenotype"
+    ratio_keys = frozenset(s.MicroarrayExpressionRatioPhenotype.model_fields)
+    assert index[ratio_keys] == "MicroarrayExpressionRatioPhenotype"
 
 
 # --------------------------------------------------------------------------- #

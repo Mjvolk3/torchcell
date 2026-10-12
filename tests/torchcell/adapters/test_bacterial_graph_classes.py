@@ -1127,6 +1127,55 @@ def test_microarray_expression_score_reference_projects_its_absent_p_as_none() -
     assert props["expression_score"] == '{"YAL001C": 0.0}'
 
 
+def _expression_ratio(**kw: Any) -> s.MicroarrayExpressionRatioPhenotype:
+    fields: dict[str, Any] = dict(
+        expression_log2_ratio={"YBR001C": 1.5, "YAL001C": -0.25},
+        measurement_type="scanalyze_rat2n_normalized_log2_ratio",
+        reference_basis="the same culture before the shift",
+        array_platform="spotted yeast ORF array",
+        provenance_gaps=[
+            {"field": "n_replicates", "reason": "not_reported_by_primary"}
+        ],
+    )
+    fields.update(kw)
+    return s.MicroarrayExpressionRatioPhenotype(**fields)
+
+
+def test_microarray_expression_ratio_node_projects_dicts_as_sorted_json() -> None:
+    """#989: the ratio map is one sorted JSON string; a gapped count map stays None."""
+    phenotype = _expression_ratio()
+    [node] = _run(
+        "microarray expression ratio phenotype (chunked)", _phenotype_record(phenotype)
+    )
+    pid = _sha(phenotype)
+    assert (node.get_id(), node.get_label(), node.get_preferred_id()) == (
+        pid,
+        "microarray expression ratio phenotype",
+        f"phenotype_{pid}",
+    )
+    assert node.get_properties() == {
+        "id": pid,
+        "preferred_id": f"phenotype_{pid}",
+        "graph_level": "node",
+        "label_name": "expression_log2_ratio",
+        "label_statistic_name": None,
+        "expression_log2_ratio": '{"YAL001C": -0.25, "YBR001C": 1.5}',
+        "measurement_type": "scanalyze_rat2n_normalized_log2_ratio",
+        "reference_basis": "the same culture before the shift",
+        "array_platform": "spotted yeast ORF array",
+        "n_replicates": None,
+    }
+
+
+def test_microarray_expression_ratio_projects_sourced_counts_as_json() -> None:
+    """A release that states its per-gene counts carries them as a sorted JSON map."""
+    phenotype = _expression_ratio(
+        n_replicates={"YBR001C": 2, "YAL001C": 1}, provenance_gaps=[]
+    )
+    props = CellAdapter._microarray_expression_ratio_properties(phenotype)
+    assert props["n_replicates"] == '{"YAL001C": 1, "YBR001C": 2}'
+
+
 def _morphology_record(phenotype: s.BacterialMorphologyPhenotype) -> dict[str, Any]:
     return {
         "experiment": s.BacterialMorphologyExperiment(
@@ -1252,6 +1301,15 @@ def test_bacterial_morphology_optional_fields_project_as_none() -> None:
                 _expression_score(harvest_optical_density=1.1),
             ],
         ),
+        (
+            "microarray expression ratio phenotype reference",
+            "microarray expression ratio phenotype",
+            [
+                _expression_ratio(),
+                _expression_ratio(),
+                _expression_ratio(reference_basis="the 33 C culture"),
+            ],
+        ),
     ],
 )
 def test_reference_phenotype_nodes_are_deduplicated_and_reach_their_edge(
@@ -1311,6 +1369,10 @@ NEW_CLASSES = {
     "microarray expression score phenotype": (
         "microarray expression score phenotype (chunked)",
         s.MicroarrayExpressionScorePhenotype,
+    ),
+    "microarray expression ratio phenotype": (
+        "microarray expression ratio phenotype (chunked)",
+        s.MicroarrayExpressionRatioPhenotype,
     ),
 }
 
@@ -1419,6 +1481,12 @@ def test_the_new_methods_are_registered_and_the_served_edges_name_the_new_classe
         ),
         "phosphosite intensity phenotype reference": (
             "_get_phosphosite_intensity_phenotype_reference_nodes"
+        ),
+        "microarray expression ratio phenotype (chunked)": (
+            "_microarray_expression_ratio_phenotype_node"
+        ),
+        "microarray expression ratio phenotype reference": (
+            "_get_microarray_expression_ratio_phenotype_reference_nodes"
         ),
     }.items():
         assert table[name] == fn

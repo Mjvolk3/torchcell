@@ -123,6 +123,11 @@ def gap_carrier_fields() -> dict[frozenset[str], str]:
     carrier's gap-capable fields are exactly its model fields minus ``provenance_gaps``.
     A stored mapping is matched back to its class by its key set, which is also how an
     unrecognized carrier (a class this build does not know) stays visible in the report.
+
+    A subclass that declares no field of its own (an abstract parent such as
+    ``TwoChannelMicroarrayExpressionPhenotype``) has its ancestor's key set; the ancestor
+    keeps it. A class is visited before its subclasses are pushed, so the first class
+    seen for a key set is the most general one.
     """
     from torchcell.datamodels.schema import ProvenanceGapMixin
 
@@ -131,7 +136,7 @@ def gap_carrier_fields() -> dict[frozenset[str], str]:
     while stack:
         model = stack.pop()
         stack.extend(model.__subclasses__())
-        index[frozenset(model.model_fields)] = model.__name__
+        index.setdefault(frozenset(model.model_fields), model.__name__)
     return index
 
 

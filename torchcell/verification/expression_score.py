@@ -16,7 +16,10 @@ family's own conventions:
    deleted genes is < 0. A sign inversion would flip it positive.
 3. ``p_value_is_two_sided_normal`` (optional) -- when the release's p-value is the
    two-sided normal tail of the score, ``p == 2 * (1 - Phi(|score|))`` holds within the
-   release's rounding; the caller states that tolerance.
+   release's rounding; the caller states that tolerance. The expected p is the schema's
+   recorded conversion, ``MicroarrayExpressionScorePhenotype.p_value_of_score`` (#989
+   placed the leaf under ``TwoChannelMicroarrayExpressionPhenotype`` and recorded it
+   there), so the verifier and the schema cannot hold two formulas.
 
 L4 (:func:`l4_matched_profile_agreement`) compares each strain's profile with the
 profile a second source measured for the SAME deleted gene, against the profiles the
@@ -35,7 +38,7 @@ from typing import Any
 
 import numpy as np
 import numpy.typing as npt
-from scipy.stats import mannwhitneyu, norm
+from scipy.stats import mannwhitneyu
 
 from torchcell.verification.levels import (
     l0_structural,
@@ -143,6 +146,9 @@ def _l3_deletion_orientation(records: Sequence[Record]) -> LevelResult:
 
 def _l3_two_sided_normal(records: Sequence[Record], tol: float) -> LevelResult:
     """L3: ``p == 2 * (1 - Phi(|score|))`` within ``tol`` for every stored pair."""
+    # Lazy, as the other verifiers import the schema: schema.py imports this package.
+    from torchcell.datamodels.schema import MicroarrayExpressionScorePhenotype
+
     worst = 0.0
     n = 0
     for rec in records:
@@ -150,7 +156,7 @@ def _l3_two_sided_normal(records: Sequence[Record], tol: float) -> LevelResult:
         p_values = phenotype["expression_score_p_value"] or {}
         for gene, score in phenotype["expression_score"].items():
             n += 1
-            expected = 2.0 * float(norm.sf(abs(float(score))))
+            expected = MicroarrayExpressionScorePhenotype.p_value_of_score(float(score))
             worst = max(worst, abs(expected - float(p_values[gene])))
     return l3_convention(
         "p_value_is_two_sided_normal",

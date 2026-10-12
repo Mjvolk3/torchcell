@@ -80,6 +80,7 @@ PHENOTYPE_METHOD: dict[type[Any], str] = {
     s.CalMorphPhenotype: "calmorph phenotype",
     s.MicroarrayExpressionPhenotype: "microarray expression phenotype",
     s.MicroarrayExpressionScorePhenotype: "microarray expression score phenotype",
+    s.MicroarrayExpressionRatioPhenotype: "microarray expression ratio phenotype",
     s.InductionTimecourseExpressionPhenotype: "induction timecourse expression phenotype",
     s.PooledSortSeqExpressionPhenotype: "pooled sort seq expression phenotype",
     s.BiosensorFluorescencePhenotype: "biosensor fluorescence phenotype",

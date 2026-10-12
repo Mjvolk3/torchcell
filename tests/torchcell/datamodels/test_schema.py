@@ -3603,6 +3603,212 @@ def test_expression_score_family_is_in_every_union_and_map() -> None:
     )
 
 
+# --------------------------------------------------------------------------- #
+# Issues #1022 #989: the two-channel microarray parent, the X-to-p conversion and the
+# ratio-only leaf
+# --------------------------------------------------------------------------- #
+TWO_CHANNEL_LEAVES = (
+    s.MicroarrayExpressionPhenotype,
+    s.MicroarrayExpressionScorePhenotype,
+    s.MicroarrayExpressionRatioPhenotype,
+    s.InductionTimecourseExpressionPhenotype,
+)
+
+
+def test_two_channel_releases_are_siblings_under_one_field_less_parent() -> None:
+    """One physical measurement, four releases: four leaves of one parent, none a
+    subclass of another, the parent a direct child of ``Phenotype`` with no field of
+    its own and never a union member.
+    """
+    parent = s.TwoChannelMicroarrayExpressionPhenotype
+    assert parent.__bases__[0] is s.Phenotype
+    assert set(parent.model_fields) == set(s.Phenotype.model_fields)
+    assert {c.__name__ for c in parent.__subclasses__()} == {
+        c.__name__ for c in TWO_CHANNEL_LEAVES
+    }
+    for leaf in TWO_CHANNEL_LEAVES:
+        assert leaf.__bases__[0] is parent, leaf.__name__
+        assert not any(
+            issubclass(leaf, other) for other in TWO_CHANNEL_LEAVES if other is not leaf
+        ), leaf.__name__
+    members = typing.get_args(s.PhenotypeType)
+    assert parent not in members
+    assert all(leaf in members for leaf in TWO_CHANNEL_LEAVES)
+    assert [leaf.model_fields["label_name"].default for leaf in TWO_CHANNEL_LEAVES] == [
+        "expression_log2_ratio",
+        "expression_score",
+        "expression_log2_ratio",
+        "log2_cleaned",
+    ]
+
+
+def test_the_served_microarray_leaf_keeps_its_contract_under_the_parent() -> None:
+    """Reparenting moved the served class's MRO only: same fields, same required ones."""
+    fields = s.MicroarrayExpressionPhenotype.model_fields
+    assert set(fields) == {
+        "provenance_gaps",
+        "graph_level",
+        "label_name",
+        "label_statistic_name",
+        "expression_log2_ratio",
+        "expression_log2_ratio_se",
+        "expression",
+        "expression_log2_ratio_variance",
+        "n_replicates",
+    }
+    assert {name for name, info in fields.items() if info.is_required()} == {
+        "expression_log2_ratio",
+        "expression",
+        "n_replicates",
+    }
+
+
+def test_the_two_channel_parent_is_never_a_record() -> None:
+    """It declares no field, so no ``label_name`` can name one of its own."""
+    with pytest.raises(ValidationError, match="must be a class attribute"):
+        s.TwoChannelMicroarrayExpressionPhenotype(
+            graph_level="node", label_name="graph_level"
+        )
+
+
+@pytest.mark.parametrize(
+    "score,p_value",
+    [
+        (0.0, 1.0),
+        (1.959963984540054, 0.05),
+        (-1.959963984540054, 0.05),
+        (3.090232306167813, 0.002),
+    ],
+)
+def test_p_value_of_score_is_the_two_sided_normal_tail(
+    score: float, p_value: float
+) -> None:
+    """``p == 2 * (1 - Phi(|X|))``: the conversion GSE4654's 1,707,575 pairs obey."""
+    assert s.MicroarrayExpressionScorePhenotype.p_value_of_score(
+        score
+    ) == pytest.approx(p_value, rel=1e-12)
+
+
+def test_p_value_of_score_keeps_the_far_tail_and_refuses_non_numbers() -> None:
+    """``1 - Phi(10)`` rounds to 0 in doubles; the erfc form keeps it (about 1.5e-23)."""
+    from scipy.stats import norm
+
+    convert = s.MicroarrayExpressionScorePhenotype.p_value_of_score
+    assert 1.0 - float(norm.cdf(10.0)) == 0.0
+    assert convert(10.0) == pytest.approx(2.0 * float(norm.sf(10.0)), rel=1e-12)
+    for bad in (math.inf, math.nan, True):
+        with pytest.raises(ValueError, match="finite number"):
+            convert(bad)
+
+
+def _expression_ratio(**kw: Any) -> s.MicroarrayExpressionRatioPhenotype:
+    fields: dict[str, Any] = dict(
+        expression_log2_ratio={"YBR001C": 1.5, "YAL001C": -0.25},
+        measurement_type="scanalyze_rat2n_normalized_log2_ratio",
+        reference_basis="the same culture before the shift",
+        array_platform="spotted yeast ORF array",
+        provenance_gaps=[
+            ProvenanceGap(
+                field="n_replicates", reason=ProvenanceGapReason.not_reported_by_primary
+            )
+        ],
+    )
+    fields.update(kw)
+    return s.MicroarrayExpressionRatioPhenotype(**fields)
+
+
+def test_expression_ratio_sorts_its_keys_and_names_its_label() -> None:
+    phenotype = _expression_ratio()
+    assert list(phenotype.expression_log2_ratio.items()) == [
+        ("YAL001C", -0.25),
+        ("YBR001C", 1.5),
+    ]
+    assert (phenotype.label_name, phenotype.label_statistic_name) == (
+        "expression_log2_ratio",
+        None,
+    )
+    assert phenotype.n_replicates is None
+    assert phenotype.gapped_fields() == {"n_replicates"}
+    assert repr(phenotype) == (
+        "MicroarrayExpressionRatioPhenotype(genes=2, n_replicates_genes=0)"
+    )
+    counted = _expression_ratio(
+        n_replicates={"YBR001C": 2, "YAL001C": 1}, provenance_gaps=[]
+    )
+    assert counted.n_replicates is not None
+    assert list(counted.n_replicates.items()) == [("YAL001C", 1), ("YBR001C", 2)]
+    assert repr(counted) == (
+        "MicroarrayExpressionRatioPhenotype(genes=2, n_replicates_genes=2)"
+    )
+
+
+@pytest.mark.parametrize(
+    "fields,message",
+    [
+        ({"expression_log2_ratio": {}}, "expression_log2_ratio cannot be empty"),
+        ({"expression_log2_ratio": [1.0]}, "must be a per-gene dict"),
+        ({"expression_log2_ratio": {"YAL001C": True}}, "is not a number"),
+        ({"expression_log2_ratio": {"YAL001C": math.nan}}, "is not finite"),
+        ({"measurement_type": " "}, "cannot be blank"),
+        ({"reference_basis": ""}, "cannot be blank"),
+        ({"array_platform": "\t"}, "cannot be blank"),
+        ({"provenance_gaps": []}, "carries no ProvenanceGap"),
+        (
+            {"n_replicates": {"YAL001C": 1, "YBR001C": 1}},
+            "has a ProvenanceGap but is not None",
+        ),
+        ({"n_replicates": {"YAL001C": 1}, "provenance_gaps": []}, "same keys"),
+        (
+            {"n_replicates": {"YAL001C": 0, "YBR001C": 1}, "provenance_gaps": []},
+            "positive integer",
+        ),
+        (
+            {"n_replicates": {"YAL001C": True, "YBR001C": 1}, "provenance_gaps": []},
+            "positive integer",
+        ),
+        ({"n_replicates": [1], "provenance_gaps": []}, "must be a per-gene dict"),
+        ({"n_replicates": {}, "provenance_gaps": []}, "n_replicates cannot be empty"),
+        ({"expression_log2_ratio_se": {"YAL001C": 0.1}}, "Extra inputs"),
+    ],
+)
+def test_expression_ratio_refuses_what_a_ratio_record_cannot_be(
+    fields: dict[str, Any], message: str
+) -> None:
+    with pytest.raises(ValueError, match=message):
+        _expression_ratio(**fields)
+
+
+def test_expression_ratio_family_is_in_every_union_and_reconstructs_by_its_tag() -> (
+    None
+):
+    assert s.MicroarrayExpressionRatioPhenotype in typing.get_args(s.PhenotypeType)
+    assert s.MicroarrayExpressionRatioExperiment in typing.get_args(s.ExperimentType)
+    assert s.MicroarrayExpressionRatioExperimentReference in typing.get_args(
+        s.ExperimentReferenceType
+    )
+    s288c = s.ReferenceGenome(species="Saccharomyces cerevisiae", strain="S288C")
+    ypd = Environment(media=Media(name="YPD", state="liquid", is_synthetic=False))
+    experiment = s.MicroarrayExpressionRatioExperiment(
+        dataset_name="Toy",
+        genotype=Genotype(perturbations=[]),
+        environment=ypd,
+        phenotype=_expression_ratio(),
+    )
+    reference = s.MicroarrayExpressionRatioExperimentReference(
+        dataset_name="Toy",
+        genome_reference=s288c,
+        environment_reference=ypd,
+        phenotype_reference=_expression_ratio(
+            expression_log2_ratio={"YAL001C": 0.0, "YBR001C": 0.0}
+        ),
+    )
+    kind = experiment.experiment_type
+    assert kind == "microarray_expression_ratio"
+    assert reference.experiment_reference_type == kind
+    assert _experiment_cls(kind).model_validate(experiment.model_dump()) == experiment
+    assert _reference_cls(kind).model_validate(reference.model_dump()) == reference
+
+
 # Hackett 2020 (2026.10.11): the inducible promoter insertion leaf and the induction
 # time-course phenotype. Two genes, YAL001C and YAL002W; every layer the same keys.
 # --------------------------------------------------------------------------- #

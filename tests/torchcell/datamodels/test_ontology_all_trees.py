@@ -66,12 +66,20 @@ from torchcell.datamodels.schema import (
     TemperatureUnit,
 )
 
-
 # --------------------------------------------------------------------------- #
 # Generic leaf discovery: BFS over __subclasses__ from a root, minus the abstract
 # bases. Mirrors the gene-tree helper so a newly added CONCRETE leaf is discovered
 # automatically and MUST appear in the union or S3 fails.
 # --------------------------------------------------------------------------- #
+# Abstract intermediate bases, declared explicitly as the gene tree's ``ABSTRACT`` is
+# (test_ontology_invariants.py): never stored, never a union member, only a parent.
+# ``TwoChannelMicroarrayExpressionPhenotype`` (#1022 #989) names the two-channel array
+# technology its four leaves share; a record is always one of the leaves.
+PHENOTYPE_ABSTRACT: frozenset[type[BaseModel]] = frozenset(
+    {s.TwoChannelMicroarrayExpressionPhenotype}
+)
+
+
 def _discover_leaves(root: type[BaseModel]) -> set[type[BaseModel]]:
     """Every (transitive) subclass of ``root``."""
     seen: set[type[BaseModel]] = set()
@@ -104,6 +112,7 @@ class TreeSpec:
         union: object,
         tag_field: str | None,
         root_in_union: bool,
+        abstract: frozenset[type[BaseModel]] = frozenset(),
     ) -> None:
         """Discover the tree's concrete leaves + union members from (root, union)."""
         self.name = name
@@ -114,7 +123,8 @@ class TreeSpec:
         # as a generic fallback member (a documented Tier-2 review item); the env
         # tree does not. That root is the ONLY abstract class a union may contain.
         self.root_in_union = root_in_union
-        self.leaves = frozenset(_discover_leaves(root))
+        self.abstract = abstract
+        self.leaves = frozenset(_discover_leaves(root) - abstract)
         self.members = frozenset(_union_members(union))
 
     def __repr__(self) -> str:
@@ -130,7 +140,14 @@ TREES: list[TreeSpec] = [
         "perturbation_type",
         root_in_union=False,
     ),
-    TreeSpec("phenotype", Phenotype, PhenotypeType, None, root_in_union=True),
+    TreeSpec(
+        "phenotype",
+        Phenotype,
+        PhenotypeType,
+        None,
+        root_in_union=True,
+        abstract=PHENOTYPE_ABSTRACT,
+    ),
     TreeSpec(
         "experiment", Experiment, ExperimentType, "experiment_type", root_in_union=True
     ),
@@ -204,6 +221,12 @@ def test_s7_no_unexpected_abstract_in_union(tree: TreeSpec) -> None:
         f"{tree.name}: unexpected abstract classes in union: "
         f"{abstract_in_union - allowed_abstract}"
     )
+    # A declared abstract base is a real class with children, never a union member.
+    assert not (tree.members & tree.abstract), tree.members & tree.abstract
+    for base in tree.abstract:
+        assert base.__subclasses__(), (
+            f"{base.__name__} is declared abstract but has no leaf"
+        )
 
 
 # --------------------------------------------------------------------------- #

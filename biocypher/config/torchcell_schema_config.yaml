@@ -370,6 +370,26 @@ microarray expression score phenotype:
         harvest_optical_density: float
 # --- end #1022 ---
 
+# --- begin #989: the ratio-only microarray leaf ---
+# A two-channel release that carries only the per-gene log2 ratio against a reference it
+# names (MicroarrayExpressionRatioPhenotype; Gasch 2000). A sibling of the two classes
+# above under the pydantic parent TwoChannelMicroarrayExpressionPhenotype, which is not a
+# graph class: making it one would change the served class's is_a and its node labels.
+# Every property is named by its field (the phenotype <-> node class bijection).
+microarray expression ratio phenotype:
+    is_a: phenotypic feature
+    represented_as: node
+    properties:
+        graph_level: str
+        label_name: str
+        label_statistic_name: str
+        expression_log2_ratio: str
+        measurement_type: str
+        reference_basis: str
+        array_platform: str
+        n_replicates: str
+# --- end #989 ---
+
 # One array of an induction time course (InductionTimecourseExpressionPhenotype, Hackett
 # 2020 IDEA): the cleaned log2 ratio vs the same culture at t = 0 with the authors' noise
 # SD, the shrunken layer the paper's analyses use, and the release's identity of the
@@ -881,6 +901,7 @@ phenotype member of:
             calmorph phenotype,
             microarray expression phenotype,
             microarray expression score phenotype,
+            microarray expression ratio phenotype,
             induction timecourse expression phenotype,
             rnaseq expression phenotype,
             pseudobulk expression phenotype,

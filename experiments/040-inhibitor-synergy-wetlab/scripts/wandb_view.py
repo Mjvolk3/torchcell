@@ -36,6 +36,7 @@ rewritten on every call. Rerun after each job finishes.
 from __future__ import annotations
 
 import argparse
+import glob
 import json
 import os
 import os.path as osp
@@ -191,6 +192,24 @@ SECTIONS: list[tuple[str, list[tuple[str, list[str]]]]] = [
 ]
 
 
+def machines_from_logs() -> dict[str, str]:
+    """W&B run id to the machine whose slurm log announced it.
+
+    GilaHyper logs sit in ``slurm/output/``; Delta's are rsynced to
+    ``slurm/output-delta/`` (``rsync delta:.../slurm/output/ slurm/output-delta/``).
+    """
+    out: dict[str, str] = {}
+    for machine, sub in (("gilahyper", "output"), ("delta", "output-delta")):
+        for path in glob.glob(osp.join(EXPERIMENT, "slurm", sub, "*.out")):
+            with open(path, errors="replace") as fh:
+                for rid in re.findall(r"/runs/([a-z0-9]{8})", fh.read()):
+                    out[rid] = machine
+    return out
+
+
+MACHINE_OF_RUN = machines_from_logs()
+
+
 def arm_of(name: str) -> str:
     """The config name without its fold and fold-seed suffixes."""
     name = re.sub(r"_f\d+$", "", name)
@@ -264,10 +283,12 @@ def label_and_relog(api: wandb.Api) -> dict[str, dict[str, object]]:
         run.config["fold"] = int(run.config.get("folds", [0])[0])
         run.config["fold_seed_"] = int(run.config.get("fold_seed", 0))
         run.config["view"] = VIEW_TAG
-        # Delta nodes are gpuXNNN; the same config at the same seed differs between
-        # machines by up to 0.23, so the machine is a grouping key worth having
-        host = str(run.metadata.get("host", "")) if run.metadata else ""
-        run.config["machine"] = "delta" if host.startswith("gpu") else host
+        # The same config at the same seed differs between machines by up to 0.23, so
+        # the machine is a grouping key worth having. It is read from the slurm logs,
+        # which print the run URL at start: resuming a run to re-log its curves
+        # rewrites its W&B metadata (host, program, startedAt) with the machine that
+        # resumed it, so the metadata is not a record of where it trained.
+        run.config["machine"] = MACHINE_OF_RUN.get(run.id, "unknown")
         run.update()
         entry = groups.setdefault(
             arm,
@@ -358,9 +379,23 @@ def main() -> None:
         action="store_true",
         help="rewrite the saved view's panels without touching the runs",
     )
+    parser.add_argument(
+        "--relabel-only",
+        action="store_true",
+        help="rewrite every run's group and config keys (machine, arm) and stop",
+    )
     args = parser.parse_args()
     if args.view_only:
         print(populate_view())
+        return
+    if args.relabel_only:
+        api = wandb.Api()
+        n = 0
+        for run in api.runs(f"{ENTITY}/{PROJECT}", filters={"config.view": VIEW_TAG}):
+            run.config["machine"] = MACHINE_OF_RUN.get(run.id, "unknown")
+            run.update()
+            n += 1
+        print(f"relabeled {n} runs; machines known for {len(MACHINE_OF_RUN)} run ids")
         return
     api = wandb.Api()
     groups = label_and_relog(api)

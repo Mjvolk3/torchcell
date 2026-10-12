@@ -23,3 +23,7 @@ The vacuous pass above removed the only failing result for a dataset whose recor
 ## 2026.10.11 - The typed medium gap was reverted; media_membership is unchanged
 
 A section here recorded L3 `media_membership` counting an environment whose `media` was None beside a `ProvenanceGap(field='media')`. `Environment.media` stays required (owner decision, [[torchcell.datamodels.schema]]), so no environment can reach the rule in that shape and the rule is back to its `origin/main` form: a record with no joinable medium fails. The three stores that motivated the change are provenance records now, not datasets ([[torchcell.datasets.scerevisiae.sgd]], [[torchcell.datasets.scerevisiae.synth_leth_db]]).
+
+## 2026.10.12 - media_membership reads a gapped Media (#901, #902, #903)
+
+`Environment.media` stays a required `Media`, and a medium the source names none of carries `name` `None` beside a `ProvenanceGap(field='name')` ([[torchcell.datamodels.schema]]). `_media_verdict` reads that: an unnamed medium with a `name` gap is `gapped:<reason>` and passes, counted in the message ("N on a medium the source does not name, as a typed gap (reason xN)") and in `details` (`n_gapped_records`, `gapped_reasons`); an unnamed medium with no `name` gap, or no medium at all, stays free text and fails. A medium that is named but gaps only its state (SGD's "YPD with 2% glucose" on the YPD base) is judged by its name and `base_medium` like any other. Pinned by `test_media_membership_passes_a_typed_medium_gap_and_counts_it`.

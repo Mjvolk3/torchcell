@@ -189,3 +189,39 @@ The provenance record keeps the pin (`SGD_GENES_DIGEST`, `SGD_DUMP`, `verify_sgd
   - The store already on disk is the allele-ruled build (1,287 records, 1,138 essential genes), and `YNL031C` and `YHR056C` are not in its gene set. Cooper's committed ledger records `n_essentiality_flagged` 22, including `YNL031C`; a rebuild against the store as it now stands would record 21. That drift predates the removal (it arrived with the allele rule) and is unresolved.
   - The clean fix, and an owner decision: `load_sgd_essential_genes` can read the pinned dump directly through this provenance record (`inviable_null_annotations` plus `is_whole_gene_deletion`), which needs no store at all and pins the gene set to sha256'd bytes rather than to a built LMDB. Nothing here changes Cooper 2010, because changing which genes it flags changes a served dataset's ledger.
 - The dev store `$DATA_ROOT/data/torchcell/gene_essentiality_sgd` is orphaned (no loader builds it) and reads stale. Deprecating it is an owner decision; nothing here deletes it.
+
+## 2026.10.12 - Loaded again: a typed gap on Media, the class kept (owner decision)
+
+The owner reversed the removal of the section above, verbatim: "we are fine with irreversible updates to schema, as long as you are convinced it is correct ... why would you get rid of old classes?" `GeneEssentialitySgdDataset` is back in the registry, the KG mapping (`gene_essentiality_sgd.yaml`, `scerevisiae_global_kg.yaml`, `scerevisiae_small_global_kg.yaml`, `kg_bench_ladder.yaml`, `dataset_adapter_map`) and the verifiers (`run_gene_essentiality`), restored from the loader of the 2026.10.11 section before it, with every rule that section measured: the pinned dump, the whole-gene-deletion allele rule (42 other alleles ledgered in `preprocess/dropped_records.json`), and the four condition pairs carried. What changed is where an unstated medium lives. `Environment.media` stays a required `Media`, and `Media` now carries typed gaps ([[torchcell.datamodels.schema]]):
+
+- An annotation that names no medium stores `sgd_unstated_medium(...)`: `name`, `state` and `is_synthetic` each `None` beside a `ProvenanceGap(reason=not_carried_by_curation, looked_in=SGD_DUMP)` whose note says what the annotation carries instead ("the SGD phenotype annotation states a phenotype ('inviable', mutant_type 'null', strain 'S288C') and an allele ('<gene>-Δ') but no growth medium: ..."), then either no condition property, the nitrogen-starvation or 2% glucose edit, or the 37 °C temperature.
+- "YPD with 2% glucose" (YIL051C, MMF1) is stored by that name on the library YPD base (`base_medium` "YPD", `is_synthetic` False, YPD being yeast extract, peptone and dextrose), with only `state` a gap, since SGD states neither plate nor broth.
+- No YPD is guessed anywhere; the temperature SGD does not state stays a gap on the environment.
+
+### The rebuilt dev store (slurm 4184_1, verified by 4194)
+
+Built from `86c7ae573` with `--retire-existing --verify` (the main-code build of job 3953 moved aside as `*.superseded.20261012-061331`): **1,287 records** (1,329 annotations less the 42 ledgered alleles; the store served today holds 1,329 under the old guessed-YEPD loader), 1,138 genes, 5 references, 546 s. The CLI reports no per-dataset verifier, so the family runner verified it through `experiments/036-dataset-fixes-before-kg-build/scripts/kg4_pre_build_verification_sweep.py --dataset GeneEssentialitySgdDataset` (slurm 4194, HEAD `86c7ae573`, report `$DATA_ROOT/data/torchcell/gene_essentiality_sgd/preprocess/verification_report.json`). `--list-stale --include-private` no longer names it.
+
+| Level | Rule | Verdict | Message |
+|---|---|---|---|
+| L0 | `structural` | PASS | 1287 records validated as GeneEssentialityExperiment |
+| L0 | `reference_structural` | PASS | 1287 records validated as GeneEssentialityExperimentReference |
+| L1 | `count` | PASS | observed 1287, expected 1287 |
+| L1 | `single_gene` | PASS | all 1287 records perturb exactly one named gene |
+| L1 | `one_record_per_gene_and_publication` | PASS | 1287 (gene, environment, publication) keys, one record each |
+| L2 | `essential_label` | PASS | all 1287 experiments say is_essential True |
+| L2 | `released_annotations` | PASS | the 1287 stored (gene, PubMed id) records are the 1329 inviable null S288C annotations SGD releases, less the 42 the loader ledgers |
+| L3 | `reference_viable` | PASS | every one of the 1287 references is viable (is_essential False) in its experiment's own environment |
+| L4 | `no_viable_deletion_in_smf_costanzo2016` | **FAIL** | 7 of 1119 unconditionally essential genes are viable full-deletion strains of smf_costanzo2016: YHR072W-A (YHR072W-A_sn4180), YHR099W (YHR099W_sn2005), YJL012C (YJL012C_dma2460), YLR293C (YLR293C_sn2067), YNL138W-A (YNL138W-A_sn4590), YOR167C (YOR167C_dma4583), YOR182C (YOR182C_dma4575) |
+| L1 | `provenance_gaps` | PASS | 5145 documented provenance gaps over 1287/1287 records; 0 deferred field(s) |
+| L1 | `canonical_gene_names` | PASS | 1138 systematic names, one canonical spelling each, each current in the genome |
+| L2 | `uncertainty_sanity` | PASS | 0 labeled uncertainties, none a zero dispersion; 0 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | PASS | environment edits: 1 compound references carry a structure identifier; 0 declare a typed gap |
+| L3 | `media_compound_identity` | PASS | medium components: 0 compound references carry a structure identifier; 0 declare a typed gap |
+| L3 | `media_membership` | PASS | 0 records on a shared MEDIA_LIBRARY medium, 1 on a medium deriving from one (1 distinct media), 1286 on a medium the source does not name, as a typed gap (not_carried_by_curation x1286) |
+| L4 | `gene_containment_sgd` | PASS | 1.000 of 1138 measured genes are S288C reference genes (>= 0.9) |
+| L4 | `current_genome_genes` | PASS | every one of the 1138 measured systematic names is a gene of the current genome |
+
+The gap count checks by hand: 1,287 records carry three medium gaps and one temperature gap each (5,148), less the 37 °C record's temperature gap and the stateless YPD record's two stated labels, gives 5,145. `media_membership`, the #901 L3 failure, now passes: 1,286 records on a medium SGD does not name and 1 on the YPD-derived "YPD with 2% glucose". The one failing rule is unchanged from the 2026.10.11 store and left failing, not re-judged: the 7 unconditional disagreements with Costanzo 2016 (`UNCONDITIONAL_DISAGREEMENTS` of the superseded section). The 16 conditional ones (all annotated under nitrogen starvation, 14 ATG-named loci plus SAC1 and VPS30) carry their condition and so are outside the unconditional set.
+
+What the removal section listed as losing this class gets it back: the two supported queries (`essentiality_smf.cql`, `solid_growth_025.cql`), the 034 showcase, the supported-datasets table's Viability section, and `AminoAcidCooper2010Dataset`'s essentiality flag (which reads this store's records as plain mappings, so the gapped medium does not touch it; the store is again built by a loader).

@@ -43,7 +43,12 @@ table (``fit_logratios_good.tab``, the successful samples), in
   ``identifier_mapping`` (route ``eck_crosswalk``);
 * environment: Data Set S1's own columns. ``Media`` through the media library
   (``M9_NOCARBON_WETMORE2015``, ``M9_NONITROGEN_WETMORE2015``, ``LB_LENNOX``, each
-  quoting Data Set S1's Media tab), ``Condition_1`` / ``Concentration_1`` / ``Units_1``
+  quoting Data Set S1's Media tab, and, since #1045 row 16, Price 2018 Table S18's
+  ``MOPS_RICH_DEFINED_NOCARBON_PRICE2018`` for the 4 samples on ``MOPS Rich Defined
+  media_noCarbon``: Data Set S1's own row for that label agrees on every macro row and
+  prints its six micronutrients in mM at 40,000 to 3,000,000, so the same lab's later
+  table, which re-releases these same 4 samples, is the recipe and Data Set S1's row is
+  quoted beside it), ``Condition_1`` / ``Concentration_1`` / ``Units_1``
   as a carbon- or nitrogen-source ``EnvironmentPhysicalPerturbation``, ``Temperature
   (°C)``, and ``Total Generations`` as ``duration_generations``;
 * reference: the typical gene of the same sample, response 0 by the normalization.
@@ -54,10 +59,10 @@ sucrose and D-mannitol samples the authors themselves withdrew in 2021
 under; author-withdrawn data is bad data, so it is refused rather than stored and
 flagged, and the refusal carries the authors' instruction and its cause verbatim with
 their sha256), the 9 condition samples that failed the paper's own rules (the paper's
-analyses exclude them; their values stay in the deposited ``fit_logratios.tab``), the 4
-samples on ``MOPS Rich Defined media_noCarbon`` (no media-library entry, and Data Set
-S1's micronutrient amounts for it are unusable as printed), and the genes with no
-one-to-one ECK pair.
+analyses exclude them; their values stay in the deposited ``fit_logratios.tab``), and
+the genes with no one-to-one ECK pair. The 4 samples on ``MOPS Rich Defined
+media_noCarbon`` were refused under ``medium_not_in_media_library`` until #1045 row 16
+gave the label a library entry; they are stored now.
 
 WHAT THIS MODULE STILL PROVIDES TO OTHERS. The RB-TnSeq statistics as ``SourcedValue``
 constants (every RB-TnSeq row defers to this paper), the record of which Price 2018
@@ -111,6 +116,7 @@ from torchcell.datamodels.media import (
     LB_LENNOX,
     M9_NOCARBON_WETMORE2015,
     M9_NONITROGEN_WETMORE2015,
+    MOPS_RICH_DEFINED_NOCARBON_PRICE2018,
 )
 from torchcell.datamodels.schema import (
     AssayType,
@@ -1719,7 +1725,6 @@ def read_release(raw_dir: str, samples: Sequence[str]) -> ReleaseTables:
 
 # Samples: retention, the refusals, the environment ------------------------------- #
 DROP_FAILED_QUALITY = "failed_paper_quality_rules"
-DROP_MEDIUM_NOT_IN_LIBRARY = "medium_not_in_media_library"
 DROP_NO_ECK_PAIR = "no_one_to_one_eck_pair"
 #: The authors' own withdrawal, the same rule name the compendium loader refuses under.
 DROP_WITHDRAWN = AUTHOR_WITHDRAWAL.rule
@@ -1735,31 +1740,29 @@ DROP_RULES: dict[str, str] = {
     "the paper's five rules (SUCCESS_RULES) reproduce that verdict: the paper's "
     "analyses exclude it and the release's gene-fitness table omits it. Its values stay "
     "in the deposited fit_logratios.tab",
-    DROP_MEDIUM_NOT_IN_LIBRARY: "'MOPS Rich Defined media_noCarbon' has no MEDIA_LIBRARY "
-    "entry, and Data Set S1's Media tab prints its six micronutrients in mM at values "
-    "from 40,000 to 3,000,000, which no medium contains; a free-text medium joins "
-    "nothing, and an invented recipe is refused",
     DROP_NO_ECK_PAIR: "the release's MG1655 b-number has no one-to-one ECK pair with a "
     "BW25113 locus (absent from the MG1655 annotation, no ECK synonym, or an ECK id "
     "BW25113 lacks or carries on several loci); per gene in identifier_mapping.json",
 }
 #: The source statement a rule rests on: a verbatim quote bound to its sha256. Only the
-#: two rules the source itself states have one. The medium rule rests on this loader's
-#: media library and the ECK rule on its own identifier typing, so neither has an entry
-#: (``DropRuleCount.source`` is None there, and its description says what the rule is).
+#: two rules the source itself states have one. The ECK rule rests on this loader's own
+#: identifier typing, so it has no entry (``DropRuleCount.source`` is None there, and its
+#: description says what the rule is).
 DROP_RULE_SOURCES: dict[str, SourcedValue] = {
     DROP_WITHDRAWN: AUTHOR_WITHDRAWAL.instruction,
     DROP_FAILED_QUALITY: SUCCESS_FIELD,
 }
 
-#: Data Set S1 ``Media`` -> the library object (each quotes Data Set S1's Media tab).
+#: Data Set S1 ``Media`` -> the library object. Each of the first three quotes Data Set
+#: S1's Media tab; the MOPS rich entry is Price 2018 Table S18's recipe for the same label
+#: (Data Set S1's own row prints its micronutrients at unusable amounts) and quotes Data
+#: Set S1's row beside it (#1045 row 16).
 MEDIA_BY_LABEL: dict[str, Media] = {
     "M9 minimal media_noCarbon": M9_NOCARBON_WETMORE2015,
     "M9 minimal media_noNitrogen": M9_NONITROGEN_WETMORE2015,
     "LB": LB_LENNOX,
+    "MOPS Rich Defined media_noCarbon": MOPS_RICH_DEFINED_NOCARBON_PRICE2018,
 }
-#: Data Set S1 ``Media`` values that are dropped, not refused.
-UNLISTED_MEDIA: frozenset[str] = frozenset({"MOPS Rich Defined media_noCarbon"})
 
 GroupKind = Literal["carbon_source", "nitrogen_source", "plain"]
 #: Data Set S1 ``Group`` -> how its Condition_1 enters the environment. ``stress`` is
@@ -1772,7 +1775,9 @@ GROUP_KINDS: dict[str, GroupKind] = {
 }
 #: The media a group may name; a pairing outside this is refused.
 GROUP_MEDIA: dict[GroupKind, frozenset[str]] = {
-    "carbon_source": frozenset({"M9 minimal media_noCarbon"}),
+    "carbon_source": frozenset(
+        {"M9 minimal media_noCarbon", "MOPS Rich Defined media_noCarbon"}
+    ),
     "nitrogen_source": frozenset({"M9 minimal media_noNitrogen"}),
     "plain": frozenset({"LB"}),
 }
@@ -1860,8 +1865,6 @@ def classify_samples(
             drop = DROP_WITHDRAWN
         elif not metrics.successful:
             drop = DROP_FAILED_QUALITY
-        elif media_label in UNLISTED_MEDIA:
-            drop = DROP_MEDIUM_NOT_IN_LIBRARY
         else:
             if media_label not in MEDIA_BY_LABEL:
                 raise ValueError(f"{name}: unknown medium {media_label!r}")
@@ -2292,8 +2295,9 @@ def iter_records(
             )
 
 
-#: What the build writes (measured on the deposited release, 2026-10-11).
-EXPECTED_SAMPLES = 84
+#: What the build writes (84 samples measured on the deposited release 2026-10-11, plus
+#: the 4 MOPS rich samples #1045 row 16 keeps).
+EXPECTED_SAMPLES = 88
 EXPECTED_GENES = 3628
 EXPECTED_RECORDS = EXPECTED_SAMPLES * EXPECTED_GENES
 #: The withdrawn samples, refused: no record of them is stored.
@@ -2390,7 +2394,7 @@ def inventory(specs: Sequence[SampleSpec], identifiers: IdentifierReport) -> Inv
             n_records=sum(1 for s in specs if s.drop_rule == rule)
             * identifiers.n_source_genes,
         )
-        for rule in (DROP_WITHDRAWN, DROP_FAILED_QUALITY, DROP_MEDIUM_NOT_IN_LIBRARY)
+        for rule in (DROP_WITHDRAWN, DROP_FAILED_QUALITY)
     ]
     rules.append(
         DropRuleCount(

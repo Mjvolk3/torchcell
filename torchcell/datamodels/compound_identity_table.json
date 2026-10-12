@@ -54999,6 +54999,19 @@
       "unresolved_reason": null
     },
     {
+      "chebi_id": "CHEBI:16235",
+      "inchikey": "UYTPUPDQBNUYGX-UHFFFAOYSA-N",
+      "name": "guanine",
+      "pubchem_cid": 135398634,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-12",
+      "smiles": "C1=NC2=C(N1)C(=O)NC(=N2)N",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/guanine/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
+    },
+    {
       "chebi_id": "CHEBI:5576",
       "inchikey": "QTDZOWFRBNTPQR-UHFFFAOYSA-N",
       "name": "guvacine",
@@ -58036,6 +58049,19 @@
       "unresolved_reason": null
     },
     {
+      "chebi_id": null,
+      "inchikey": "TXXVQZSTAVIHFD-DKWTVANSSA-M",
+      "name": "L-aspartic acid potassium salt",
+      "pubchem_cid": 23672742,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-12",
+      "smiles": "C(C(C(=O)[O-])N)C(=O)O.[K+]",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/L-aspartic%20acid%20potassium%20salt/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
+    },
+    {
       "chebi_id": "CHEBI:609827",
       "inchikey": "FSBIGDSBMBYOPN-VKHMYHEASA-N",
       "name": "L-canavanine",
@@ -58075,6 +58101,19 @@
       "retrieved_at": "2026-09-12",
       "smiles": "C(C(C(=O)O)N)S",
       "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/L-cysteine/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
+    },
+    {
+      "chebi_id": "CHEBI:91248",
+      "inchikey": "QIJRTFXNRTXDIP-JIZZDEOASA-N",
+      "name": "L-cysteine hydrochloride monohydrate",
+      "pubchem_cid": 23462,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-12",
+      "smiles": "C(C(C(=O)O)N)S.O.Cl",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/L-cysteine%20hydrochloride%20monohydrate/property/Title,InChIKey,ConnectivitySMILES/JSON",
       "synonyms": [],
       "unresolved_reason": null
     },
@@ -74098,6 +74137,19 @@
       "retrieved_at": "2026-10-07",
       "smiles": "OP(=O)(O)[O-].[K+]",
       "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/potassium%20dihydrogen%20phosphate/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
+    },
+    {
+      "chebi_id": "CHEBI:32035",
+      "inchikey": "KWYUFKZDYYNOTN-UHFFFAOYSA-M",
+      "name": "potassium hydroxide",
+      "pubchem_cid": 14797,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-12",
+      "smiles": "[OH-].[K+]",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/potassium%20hydroxide/property/Title,InChIKey,ConnectivitySMILES/JSON",
       "synonyms": [],
       "unresolved_reason": null
     },

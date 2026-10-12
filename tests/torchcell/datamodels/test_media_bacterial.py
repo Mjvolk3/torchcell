@@ -23,6 +23,7 @@ from __future__ import annotations
 import functools
 import os
 import warnings
+from collections import Counter
 from pathlib import Path
 
 import pytest
@@ -42,6 +43,7 @@ from torchcell.datamodels.media import (
     M9_SCHMIDT2016,
     MEDIA_LIBRARY,
     MOPS_MINIMAL,
+    MOPS_RICH_DEFINED_NOCARBON_PRICE2018,
     RCH2_DEFINED_NOCARBON_PRICE2018,
     _check_library,
 )
@@ -396,6 +398,60 @@ def test_rch2_is_price_table_s18_with_the_wolfe_mixes_kept_as_mixtures() -> None
     assert "RCH2_DEFINED_NOCARBON_PRICE2018" in CARBON_FREE_MEDIA
     assert {sv.provenance.sha256 for sv in media.provenance} == {
         "e5dbf3d5c97cfc12f49d7fd83f84bc95c16cbe963309a561fff20f442788b879"
+    }
+
+
+def test_mops_rich_is_the_mops_minimal_base_plus_table_s18s_supplements() -> None:
+    """#1045 row 16: Price 2018 Table S18's 'MOPS Rich Defined media_noCarbon'.
+
+    The fifteen MOPS base rows are value for value MOPS_MINIMAL's (the same table's
+    'MOPS minimal media_noCarbon'), the sulfate row takes the same adjudication, and the
+    supplements are 1.5 mM KOH, 4 nucleobases, 20 amino acids and 5 vitamins or
+    benzoates, every one a single reagent with an InChIKey. No component is the carbon
+    source.
+    """
+    media = MOPS_RICH_DEFINED_NOCARBON_PRICE2018
+    amounts = {
+        c.compound.name: (c.concentration.value, c.concentration.unit)
+        for c in media.components
+        if c.concentration is not None
+    }
+    base = {
+        c.compound.name: (c.concentration.value, c.concentration.unit)
+        for c in MOPS_MINIMAL.components
+        if c.concentration is not None
+    }
+    assert len(media.components) == len(amounts) == 45
+    assert {name: amounts[name] for name in base} == base
+    roles = Counter(c.role for c in media.components)
+    assert roles == {
+        MediaComponentRole.buffer: 2,
+        MediaComponentRole.trace_element: 7,
+        MediaComponentRole.nitrogen_source: 1,
+        MediaComponentRole.bulk_salt: 5,
+        MediaComponentRole.other: 3,
+        MediaComponentRole.nucleobase: 4,
+        MediaComponentRole.amino_acid: 20,
+        MediaComponentRole.vitamin: 3,
+    }
+    assert amounts["L-serine"] == (10.0, ConcentrationUnit.millimolar)
+    assert amounts["potassium hydroxide"] == (1.5, ConcentrationUnit.millimolar)
+    assert amounts["guanine"] == (0.2, ConcentrationUnit.millimolar)
+    sulfate = next(
+        c for c in media.components if c.compound.name == "potassium sulfate"
+    )
+    assert [sv.provenance.citation_key for sv in sulfate.provenance] == [
+        "priceMutantPhenotypesThousands2018",
+        "wetmoreRapidQuantificationMutant2015",
+    ]
+    assert sulfate.note is not None and sulfate.note.startswith("ADJUDICATED")
+    assert all(c.compound.inchikey is not None for c in media.components)
+    assert media.is_fully_characterized
+    assert media.base_medium == "MOPS_MINIMAL"
+    assert "MOPS_RICH_DEFINED_NOCARBON_PRICE2018" in CARBON_FREE_MEDIA
+    assert {sv.provenance.sha256 for sv in media.provenance} == {
+        "e5dbf3d5c97cfc12f49d7fd83f84bc95c16cbe963309a561fff20f442788b879",
+        "428a06cae37867c8d21541f64d80da082e67743e1b1def9238a14e7726bc7150",
     }
 
 

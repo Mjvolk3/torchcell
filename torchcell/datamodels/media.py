@@ -4608,6 +4608,260 @@ RCH2_DEFINED_NOCARBON_PRICE2018 = Media(
 20 RCH2 samples, ten of them Rand 2017's own assays (row 8)."""
 
 
+# --- begin #1045 row 16: Price 2018's MOPS rich defined medium ------------------ #
+# MOPS rich defined medium, no carbon (Price 2018 Supplementary Table 18, rows 302-350 of
+# 'TableS18_Medias'). Wetmore 2015 (4 Keio samples, set1IT067 to set1IT070) and Price 2018
+# (the same 4 samples, re-released) both name 'MOPS Rich Defined media_noCarbon'; the
+# loaders refused them under `medium_not_in_media_library` until this entry (#1045 row
+# 16). The fifteen MOPS base rows are, value for value, the rows of the same table's 'MOPS
+# minimal media_noCarbon' (MOPS_MINIMAL), so the base is MOPS_MINIMAL and the 0.276 mM
+# sulfate row takes MOPS_MINIMAL's adjudication (Price names an alum, Wetmore's own row
+# for this medium names potassium sulfate). Everything else is Price's row as printed:
+# 1.5 mM potassium hydroxide, four nucleobases, twenty amino acids and five vitamins and
+# benzoates, each a single reagent at a stated amount. Wetmore's Data Set S1 row for the
+# same label agrees on every macro row and prints its six micronutrients in mM at 40,000
+# to 3,000,000, which no medium contains, so its amounts are not used.
+# --------------------------------------------------------------------------- #
+_Q_PRICE_MOPS_RICH_BASE = (
+    "Media | MOPS Rich Defined media_noCarbon / Description | MOPS rich media with no "
+    "carbon source / Minimal | =TRUE() / Controlled vocabulary | Concentration | Units "
+    "/ 3-(N-morpholino)propanesulfonic acid | 40 | mM / Tricine | 4 | mM / Iron (II) "
+    "sulfate heptahydrate | 0.01 | mM / Ammonium chloride | 9.5 | mM / Aluminum "
+    "potassium sulfate dodecahydrate | 0.276 | mM / Calcium chloride | 0.0005 | mM / "
+    "Magnesium chloride hexahydrate | 0.525 | mM / Sodium Chloride | 50 | mM / Ammonium "
+    "heptamolybdate tetrahydrate | 3e-09 | M / Boric Acid | 4e-07 | M / Cobalt chloride "
+    "hexahydrate | 3e-08 | M / Copper (II) sulfate pentahydrate | 1e-08 | M / Manganese "
+    "(II) chloride tetrahydrate | 8e-08 | M / Zinc sulfate heptahydrate | 1e-08 | M / "
+    "Potassium phosphate dibasic | 1.32 | mM / Potassium hydroxide | 1.5 | mM"
+)
+_Q_PRICE_MOPS_RICH_NUCLEOBASES = (
+    "Adenine hydrochloride hydrate | 0.2 | mM / Cytosine | 0.2 | mM / Uracil | 0.2 | "
+    "mM / Guanine | 0.2 | mM"
+)
+_Q_PRICE_MOPS_RICH_AMINO_ACIDS = (
+    "L-Alanine | 0.8 | mM / L-Arginine | 5.2 | mM / L-Asparagine | 0.4 | mM / "
+    "L-Aspartic acid potassium salt | 0.4 | mM / L-Glutamic acid monopotassium salt "
+    "monohydrate | 0.66 | mM / L-Glutamine | 0.6 | mM / Glycine | 0.8 | mM / "
+    "L-Histidine | 0.2 | mM / L-Isoleucine | 0.4 | mM / L-Proline | 0.4 | mM / "
+    "L-Serine | 10 | mM / L-Threonine | 0.4 | mM / L-Tryptophan | 0.1 | mM / L-Valine "
+    "| 0.6 | mM / L-Leucine | 0.8 | mM / L-Lysine | 0.4 | mM / L-Methionine | 0.2 | mM "
+    "/ L-Phenylalanine | 0.4 | mM / L-Cysteine hydrochloride monohydrate | 0.1 | mM / "
+    "L-tyrosine | 0.2 | mM"
+)
+_Q_PRICE_MOPS_RICH_VITAMINS = (
+    "Thiamine HCl | 0.01 | mM / calcium pantothenate | 0.01 | mM / 4-Aminobenzoic acid "
+    "| 0.01 | mM / 4-Hydroxybenzoic Acid | 0.01 | mM / 2,3-dihydroxybenzoic acid | 0.01 "
+    "| mM"
+)
+_Q_WETMORE_MOPS_RICH_MICRONUTRIENTS = (
+    "Sodium Chloride | 50 | mM / Ammonium Molybdate\xa0 | 3000000 | mM / Boric Acid | "
+    "40000 | mM / Cobalt Chloride | 300000 | mM / Cupric Sulfate | 100000 | mM / "
+    "Manganese Chloride | 800000 | mM / Zinc Sulfate | 100000 | mM / Potassium "
+    "Phosphate Dibasic | 1.32 | mM / Potassium Hydroxide | 1.5 | mM"
+)
+#: The four row groups of the Table S18 recipe, keyed for the component helper.
+_MOPS_RICH_QUOTES: dict[str, str] = {
+    "base": _Q_PRICE_MOPS_RICH_BASE,
+    "nucleobase": _Q_PRICE_MOPS_RICH_NUCLEOBASES,
+    "amino_acid": _Q_PRICE_MOPS_RICH_AMINO_ACIDS,
+    "vitamin": _Q_PRICE_MOPS_RICH_VITAMINS,
+}
+
+
+def _mops_rich(
+    name: str,
+    role: MediaComponentRole,
+    value: float,
+    unit: ConcentrationUnit,
+    read: str,
+    group: str,
+    *,
+    note: str | None = None,
+) -> MediaComponent:
+    """One Table S18 row of the MOPS rich recipe, cited to its row group."""
+    return _stated(
+        name,
+        role,
+        value,
+        unit,
+        _cite(_PRICE2018_S3, read, _MOPS_RICH_QUOTES[group]),
+        note=note,
+    )
+
+
+_AMINO = MediaComponentRole.amino_acid
+_NUCLEOBASE = MediaComponentRole.nucleobase
+_OTHER = MediaComponentRole.other
+
+MOPS_RICH_DEFINED_NOCARBON_PRICE2018 = Media(
+    name="MOPS rich defined medium, no carbon source (Price 2018 'MOPS Rich Defined "
+    "media_noCarbon')",
+    state="liquid",
+    is_synthetic=True,
+    base_medium="MOPS_MINIMAL",
+    components=[
+        _mops_rich(
+            "3-(N-morpholino)propanesulfonic acid", _BUFFER, 40.0, _MM, "40 mM", "base"
+        ),
+        _mops_rich("tricine", _BUFFER, 4.0, _MM, "4 mM", "base"),
+        _mops_rich(
+            "iron(II) sulfate heptahydrate", _TRACE, 0.01, _MM, "0.01 mM", "base"
+        ),
+        _mops_rich("ammonium chloride", _NSRC, 9.5, _MM, "9.5 mM", "base"),
+        _stated(
+            "potassium sulfate",
+            _SALT,
+            0.276,
+            _MM,
+            _cite(
+                _PRICE2018_S3,
+                "0.276 mM (the row names 'Aluminum potassium sulfate dodecahydrate')",
+                _Q_PRICE_MOPS_RICH_BASE,
+            ),
+            _cite(
+                _WETMORE2015_DS1,
+                "0.276 mM potassium sulfate",
+                _Q_WETMORE_MOPS_K2SO4,
+                note="Wetmore 2015's own row for this same medium label names "
+                "potassium sulfate at the same amount",
+            ),
+            note="ADJUDICATED as in MOPS_MINIMAL: Price 2018's row names an alum, "
+            "Wetmore 2015's row for the same medium names potassium sulfate at the same "
+            "0.276 mM; recorded as potassium sulfate",
+        ),
+        _mops_rich("calcium chloride", _SALT, 0.0005, _MM, "0.0005 mM", "base"),
+        _mops_rich(
+            "magnesium chloride hexahydrate", _SALT, 0.525, _MM, "0.525 mM", "base"
+        ),
+        _mops_rich("sodium chloride", _SALT, 50.0, _MM, "50 mM", "base"),
+        _mops_rich(
+            "ammonium heptamolybdate tetrahydrate", _TRACE, 3e-09, _M, "3e-09 M", "base"
+        ),
+        _mops_rich("boric acid", _TRACE, 4e-07, _M, "4e-07 M", "base"),
+        _mops_rich(
+            "cobalt(II) chloride hexahydrate", _TRACE, 3e-08, _M, "3e-08 M", "base"
+        ),
+        _mops_rich(
+            "copper(II) sulfate pentahydrate", _TRACE, 1e-08, _M, "1e-08 M", "base"
+        ),
+        _mops_rich(
+            "manganese(II) chloride tetrahydrate", _TRACE, 8e-08, _M, "8e-08 M", "base"
+        ),
+        _mops_rich("zinc sulfate heptahydrate", _TRACE, 1e-08, _M, "1e-08 M", "base"),
+        _mops_rich(
+            "dipotassium hydrogen phosphate", _SALT, 1.32, _MM, "1.32 mM", "base"
+        ),
+        _mops_rich(
+            "potassium hydroxide",
+            _OTHER,
+            1.5,
+            _MM,
+            "1.5 mM",
+            "base",
+            note="a base; the table states its amount and no role",
+        ),
+        _mops_rich(
+            "Adenine hydrochloride hydrate",
+            _NUCLEOBASE,
+            0.2,
+            _MM,
+            "0.2 mM",
+            "nucleobase",
+        ),
+        _mops_rich("cytosine", _NUCLEOBASE, 0.2, _MM, "0.2 mM", "nucleobase"),
+        _mops_rich("uracil", _NUCLEOBASE, 0.2, _MM, "0.2 mM", "nucleobase"),
+        _mops_rich("guanine", _NUCLEOBASE, 0.2, _MM, "0.2 mM", "nucleobase"),
+        _mops_rich("L-alanine", _AMINO, 0.8, _MM, "0.8 mM", "amino_acid"),
+        _mops_rich("L-arginine", _AMINO, 5.2, _MM, "5.2 mM", "amino_acid"),
+        _mops_rich("L-asparagine", _AMINO, 0.4, _MM, "0.4 mM", "amino_acid"),
+        _mops_rich(
+            "L-aspartic acid potassium salt", _AMINO, 0.4, _MM, "0.4 mM", "amino_acid"
+        ),
+        _mops_rich(
+            "L-Glutamic acid monopotassium salt monohydrate",
+            _AMINO,
+            0.66,
+            _MM,
+            "0.66 mM",
+            "amino_acid",
+        ),
+        _mops_rich("L-glutamine", _AMINO, 0.6, _MM, "0.6 mM", "amino_acid"),
+        _mops_rich("glycine", _AMINO, 0.8, _MM, "0.8 mM", "amino_acid"),
+        _mops_rich("L-histidine", _AMINO, 0.2, _MM, "0.2 mM", "amino_acid"),
+        _mops_rich("L-isoleucine", _AMINO, 0.4, _MM, "0.4 mM", "amino_acid"),
+        _mops_rich("L-proline", _AMINO, 0.4, _MM, "0.4 mM", "amino_acid"),
+        _mops_rich("L-serine", _AMINO, 10.0, _MM, "10 mM", "amino_acid"),
+        _mops_rich("L-threonine", _AMINO, 0.4, _MM, "0.4 mM", "amino_acid"),
+        _mops_rich("L-tryptophan", _AMINO, 0.1, _MM, "0.1 mM", "amino_acid"),
+        _mops_rich("L-valine", _AMINO, 0.6, _MM, "0.6 mM", "amino_acid"),
+        _mops_rich("L-leucine", _AMINO, 0.8, _MM, "0.8 mM", "amino_acid"),
+        _mops_rich("L-lysine", _AMINO, 0.4, _MM, "0.4 mM", "amino_acid"),
+        _mops_rich("L-methionine", _AMINO, 0.2, _MM, "0.2 mM", "amino_acid"),
+        _mops_rich("L-phenylalanine", _AMINO, 0.4, _MM, "0.4 mM", "amino_acid"),
+        _mops_rich(
+            "L-cysteine hydrochloride monohydrate",
+            _AMINO,
+            0.1,
+            _MM,
+            "0.1 mM",
+            "amino_acid",
+        ),
+        _mops_rich("L-tyrosine", _AMINO, 0.2, _MM, "0.2 mM", "amino_acid"),
+        _mops_rich(
+            "thiamine hydrochloride",
+            _VITAMIN,
+            0.01,
+            _MM,
+            "0.01 mM ('Thiamine HCl')",
+            "vitamin",
+        ),
+        _mops_rich("calcium pantothenate", _VITAMIN, 0.01, _MM, "0.01 mM", "vitamin"),
+        _mops_rich("4-aminobenzoic acid", _VITAMIN, 0.01, _MM, "0.01 mM", "vitamin"),
+        _mops_rich(
+            "4-hydroxybenzoic acid",
+            _OTHER,
+            0.01,
+            _MM,
+            "0.01 mM",
+            "vitamin",
+            note="listed with the vitamins; the table states its amount and no role",
+        ),
+        _mops_rich(
+            "2,3-dihydroxybenzoic acid",
+            _OTHER,
+            0.01,
+            _MM,
+            "0.01 mM",
+            "vitamin",
+            note="listed with the vitamins; the table states its amount and no role",
+        ),
+    ],
+    provenance=[
+        _cite(
+            _PRICE2018_S3,
+            "MOPS Rich Defined media_noCarbon",
+            _Q_PRICE_MOPS_RICH_BASE,
+            note="the medium of Wetmore 2015's and Price 2018's 4 Keio carbon-source "
+            "samples set1IT067 to set1IT070; the carbon source is each sample's "
+            "Condition_1, carried as EnvironmentPhysicalPerturbation(factor="
+            "carbon_source)",
+        ),
+        _cite(
+            _WETMORE2015_DS1,
+            "the same label in the same lab's earlier release; its micronutrient "
+            "amounts are not used",
+            _Q_WETMORE_MOPS_RICH_MICRONUTRIENTS,
+            note="Data Set S1 prints the six micronutrients in mM at 40,000 to "
+            "3,000,000, which no medium contains; Price 2018's table states them in M "
+            "at the MOPS_MINIMAL amounts, and every macro row of the two tables agrees",
+        ),
+    ],
+)
+"""Price 2018's MOPS rich defined medium without carbon: the medium of the 4 Keio
+carbon-source samples Wetmore 2015 and Price 2018 both release (rows 2 and 21)."""
+# --- end #1045 row 16 ------------------------------------------------------------ #
+
+
 #: Which of the fifty bacterial rows (rank in [[plan.bacteria-ontology-genome]]'s table,
 #: first author, year) use each bacterial entry, and how the paper states it. "names" means
 #: the paper names the formulation without printing amounts; every other use is a stated
@@ -4694,6 +4948,11 @@ BACTERIAL_MEDIA_USES: dict[str, tuple[str, ...]] = {
         "8 Borchert 2024: the 20 compendium samples on 'RCH2_defined_noCarbon' (sets 1 "
         "and 5 of the Putida_ML5 library), ten of them Rand 2017's own assays; the "
         "release names the medium and Price 2018 Table S18 states it",
+    ),
+    "MOPS_RICH_DEFINED_NOCARBON_PRICE2018": (
+        "2 Wetmore 2015: Data Set S1 'MOPS Rich Defined media_noCarbon' (4 Keio "
+        "carbon-source experiments, set1IT067 to set1IT070)",
+        "21 Price 2018: Table S18 states the recipe (the same 4 Keio experiments)",
     ),
 }
 """Use map for the bacterial entries; the keys are exactly the bacterial media."""
@@ -5180,6 +5439,7 @@ MEDIA_LIBRARY: dict[str, Media] = {
     "M9_MODIFIED_FANG2025": M9_MODIFIED_FANG2025,
     **JACKSON2020_MEDIA,  # jackson2020: Supplementary file 1, Table 4
     "RCH2_DEFINED_NOCARBON_PRICE2018": RCH2_DEFINED_NOCARBON_PRICE2018,
+    "MOPS_RICH_DEFINED_NOCARBON_PRICE2018": MOPS_RICH_DEFINED_NOCARBON_PRICE2018,
 } | {
     _hm_key(compound, partial): HILLENMEYER_DROPOUT_MEDIA[label]
     for label, compound, partial in _HILLENMEYER_DROPOUTS
@@ -5246,6 +5506,10 @@ CARBON_FREE_MEDIA: dict[str, str] = {
     "RCH2_DEFINED_NOCARBON_PRICE2018": "the carbon source is the variable of the "
     "RB-TnSeq carbon-source experiments (Borchert 2024: glucose, potassium acetate, "
     "levulinic acid, 4-hydroxyvalerate, vanillin or p-coumaric acid)",
+    "MOPS_RICH_DEFINED_NOCARBON_PRICE2018": "no component is the carbon source: the "
+    "carbon source is each sample's Condition_1 (D-galacturonic acid or D-glucose), "
+    "carried as a carbon_source factor; the amino acids and nucleobases are "
+    "supplements the table states",
 }
 
 

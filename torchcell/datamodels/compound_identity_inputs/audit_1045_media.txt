@@ -1,0 +1,15 @@
+# compound_identity_inputs/audit_1045_media.txt
+# Source: removals audit #1045 row 16 (notes/database.removals-audit-since-kg-3.0.2026.10.12.md),
+# the MEDIA_LIBRARY entry for Price 2018 Supplementary Table 18 'MOPS Rich Defined
+# media_noCarbon' ($DATA_ROOT/torchcell-library/priceMutantPhenotypesThousands2018/si/si3.xlsx,
+# sha256 e5dbf3d5c97cfc12f49d7fd83f84bc95c16cbe963309a561fff20f442788b879, sheet
+# TableS18_Medias, rows 302-350). Of that recipe's 40 single substances, these four had no
+# row with an InChIKey on 2026-10-12; every other one already resolves (the MOPS base
+# salts, adenine hydrochloride hydrate, cytosine, uracil, the L-amino acids, the glutamate
+# potassium salt, thiamine hydrochloride, calcium pantothenate and the three benzoic
+# acids). The labels are canonical: media.py spells them this way, each as the reagent
+# the table names (a salt or hydrate is its own InChIKey, the Hillenmeyer convention).
+potassium hydroxide | canonical
+guanine | canonical
+L-aspartic acid potassium salt | canonical
+L-cysteine hydrochloride monohydrate | canonical

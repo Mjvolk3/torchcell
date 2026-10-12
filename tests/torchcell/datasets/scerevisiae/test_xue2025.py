@@ -26,6 +26,8 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import os
+import shutil
 import socket
 from pathlib import Path
 from typing import Any, cast
@@ -623,3 +625,100 @@ def test_generic_hooks_pass_the_frame_through_and_refuse_create_experiment() -> 
     with pytest.raises(NotImplementedError) as err:
         cls.create_experiment(cast(Any, None))
     assert str(err.value) == ""
+
+
+# --------------------------------------------------------------------------------------
+# #887: RGR1, MED4 and TFC7 are stated as deletions, and the records are kept.
+# --------------------------------------------------------------------------------------
+
+#: The three TFs of #887 and the ORF stored for each (TFC7 since #886).
+_ESSENTIAL_IN_SGD = {"RGR1": "YLR071C", "MED4": "YOR174W", "TFC7": "YOR110W"}
+
+
+def _stated_deletions(record: dict[str, Any]) -> list[tuple[str, str, str, str]]:
+    """(ORF, name, perturbation_type, state) of each #887 gene in one stored record."""
+    return [
+        (
+            p["systematic_gene_name"],
+            p["perturbed_gene_name"],
+            p["perturbation_type"],
+            p["state"],
+        )
+        for p in record["experiment"]["genotype"]["perturbations"]
+        if p["perturbed_gene_name"] in _ESSENTIAL_IN_SGD
+    ]
+
+
+def test_essential_gene_strains_are_kept_as_the_release_states_them(
+    tmp_path: Path,
+) -> None:
+    """``R 4d`` (RGR1), ``M-R-T 6d`` (MED4, RGR1, TFC7) and ``M 4d`` (MED4) are stored,
+    one record each beside the chassis-only control, every one of the three genes a
+    ``kanmx_deletion`` with ``state = "absent"``: the release states a deletion count
+    (``4Δ``, ``6Δ``) and nothing else about these alleles (#887). No row is dropped.
+    """
+    values: list[float | None] = [float(v) for v in range(1, 16)]
+    rows: list[Row] = [
+        ("wt BY4741", values),
+        ("+ve Ctrl", values),
+        ("R 4d", values),
+        ("M-R-T 6d", values),
+        ("M 4d", values),
+    ]
+    root = _root(tmp_path, "essential", rows)
+    built = m.FattyAcidXue2025Dataset(root=str(root), genome=_genome())
+    assert len(built) == 4
+    assert [_stated_deletions(built[i]) for i in range(4)] == [
+        [],
+        [("YLR071C", "RGR1", "kanmx_deletion", "absent")],
+        [
+            ("YLR071C", "RGR1", "kanmx_deletion", "absent"),
+            ("YOR110W", "TFC7", "kanmx_deletion", "absent"),
+            ("YOR174W", "MED4", "kanmx_deletion", "absent"),
+        ],
+        [("YOR174W", "MED4", "kanmx_deletion", "absent")],
+    ]
+    assert [
+        len(built[i]["experiment"]["genotype"]["perturbations"]) for i in range(4)
+    ] == [3, 4, 6, 4]
+
+
+_MIRROR_WORKBOOK = Path(
+    os.environ["DATA_ROOT"], "torchcell-library", "xue2025", "data", m.DATA_FILENAME
+)
+
+
+@pytest.mark.data
+@pytest.mark.skipif(
+    not _MIRROR_WORKBOOK.exists(),
+    reason=f"requires the Xue 2025 mirror workbook at {_MIRROR_WORKBOOK}",
+)
+def test_the_released_workbook_keeps_all_176_records_and_the_112(
+    tmp_path: Path,
+) -> None:
+    """The pinned release (sha256 023de80e...) builds 176 records from its 177 rows (the
+    WT row is the reference). 112 carry at least one of RGR1, MED4, TFC7, 46 each; 83
+    carry RGR1 or MED4, the two SGD records as inviable nulls in S288C (Giaever 2002).
+    Each of the 138 perturbations of the three is a ``kanmx_deletion`` with state
+    ``absent``, as the release states it.
+    """
+    root = tmp_path / "ffa_xue2025"
+    (root / "raw").mkdir(parents=True)
+    shutil.copyfile(_MIRROR_WORKBOOK, root / "raw" / m.DATA_FILENAME)
+    built = m.FattyAcidXue2025Dataset(root=str(root), genome=_genome())
+    assert len(built) == 176
+    stated = [_stated_deletions(built[i]) for i in range(len(built))]
+    names = [{name for _, name, _, _ in record} for record in stated]
+    assert sum(1 for record in names if record) == 112
+    assert {
+        gene: sum(gene in record for record in names) for gene in _ESSENTIAL_IN_SGD
+    } == {"RGR1": 46, "MED4": 46, "TFC7": 46}
+    assert sum(1 for record in names if record & {"RGR1", "MED4"}) == 83
+    flat = [p for record in stated for p in record]
+    assert len(flat) == 138
+    assert {(orf, name) for orf, name, _, _ in flat} == {
+        (orf, name) for name, orf in _ESSENTIAL_IN_SGD.items()
+    }
+    assert {(kind, state) for _, _, kind, state in flat} == {
+        ("kanmx_deletion", "absent")
+    }

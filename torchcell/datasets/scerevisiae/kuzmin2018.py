@@ -134,6 +134,13 @@ def _combined_mutant_uncertainty(std_val: Any) -> dict[str, Any]:
 
     Returns empty uncertainty when the SD is unreported (None/NaN); otherwise
     fitness_se is auto-derived by FitnessPhenotype as SD/sqrt(n_samples).
+
+    A released SD of exactly 0 (4 digenic and 5 trigenic rows of Data S1) is stored
+    as released, with the SE of 0 that arithmetic gives, never dropped or replaced by
+    a gap (#894, #895; owner decision 2026-10-12: the uncertainty a source releases
+    is stored as released).
+    The SI defines the column only as "12. Combined mutant fitness standard
+    deviation" (si/si1.md line 427) and states nothing else about these rows.
     """
     if pd.isna(std_val):
         return {"fitness_uncertainty": None, "fitness_uncertainty_type": None}

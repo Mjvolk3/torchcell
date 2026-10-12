@@ -525,6 +525,9 @@ protein fold change phenotype:
 # rebuild, never an increment.
 # And the released test statistic (Wetmore 2015's own release): RB-TnSeq's moderated t,
 # stored because the release states it. Added with a FULL rebuild, never an increment.
+# And the released Z score (#879): Wang 2018's equation (4) on the guide and the gene
+# level. A rescaling of the response the source states, never an uncertainty. Added
+# with a FULL rebuild, never an increment.
 environment response phenotype:
     is_a: phenotypic feature
     represented_as: node
@@ -547,6 +550,7 @@ environment response phenotype:
         environment_response_p_value_adjusted: float
         p_value_adjustment_method: str
         environment_response_t_statistic: float
+        environment_response_z_score: float
 
 # How much of a named product a strain made (ProductTiterPhenotype). Every field but
 # provenance_gaps is projected: enums as their value, and the product, a typed

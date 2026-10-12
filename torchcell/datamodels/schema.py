@@ -3051,7 +3051,9 @@ class PromoterReplacementPerturbation(ExpressionModulationPerturbation, ModelStr
         return self
 
 
-class HeterologousPathwayPerturbation(GeneAdditionPerturbation, ModelStrict):
+class HeterologousPathwayPerturbation(
+    HashableProvenanceGapMixin, GeneAdditionPerturbation, ModelStrict
+):
     """One heterologous gene of an expressed pathway, with its cassette and copy context.
 
     The engineered-chassis production rows. It inherits the gene-addition axis whole
@@ -3066,12 +3068,33 @@ class HeterologousPathwayPerturbation(GeneAdditionPerturbation, ModelStrict):
     symbol). That is the one place the field means the host rather than the identifier's
     own space, and it is checked only when the identifier IS a host locus tag -- which
     it legitimately is for an extra copy of a NATIVE gene in the same pathway.
+
+    ``source_organism`` is stated or a typed ``ProvenanceGap`` (#915). A production
+    paper can name a pathway part by its token alone (Menasalvas 2025's pIY670 writes
+    ``mvaS``, ``mvaE``, ``MKmm``, ``PMDHKQ`` and ``aphA`` and never says which organism
+    each came from), and the leaf previously forced a sentinel string such as
+    ``"unreported"`` into the field, which reads as an organism name. The field stays
+    required with no default, as ``Media.name`` does: ``None`` only beside a gap naming
+    ``source_organism``, its reason and where the source was searched. The widening is
+    on this leaf alone, as ``PromoterReplacementPerturbation`` re-declares ``crispr``:
+    the yeast ``GeneAdditionPerturbation`` loaders state every organism, and their
+    closures do not move.
     """
 
     description: str = (
         "Heterologous pathway gene added on a cassette, with its copy context"
     )
     perturbation_type: Literal["heterologous_pathway"] = "heterologous_pathway"  # type: ignore[assignment]
+    # --- begin #915: a typed gap on the source organism ------------------------- #
+    # The organism the added gene is from, as the source states it; None ONLY with a
+    # ProvenanceGap(field='source_organism') when the source names none. Required, no
+    # default.
+    source_organism: str | None = Field(  # type: ignore[assignment]
+        description="organism the added gene is from, e.g. 'Staphylococcus aureus'; "
+        "None ONLY with a ProvenanceGap(field='source_organism') when the source "
+        "names no organism for this part"
+    )
+    # --- end #915 ---------------------------------------------------------------- #
     gene_namespace: BacterialGeneNamespace = Field(
         description="the HOST genome the construct was built in (not the namespace of "
         "systematic_gene_name, which is usually a heterologous symbol)"
@@ -3111,6 +3134,18 @@ class HeterologousPathwayPerturbation(GeneAdditionPerturbation, ModelStrict):
         """When the identifier is a host locus tag it must be this host's."""
         _check_gene_namespace(self)
         return self
+
+    # --- begin #915: a typed gap on the source organism ------------------------- #
+    @model_validator(mode="after")
+    def _source_organism_stated_or_gapped(self) -> "HeterologousPathwayPerturbation":
+        """``source_organism`` is stated or a typed gap; never a silent ``None``.
+
+        The mixin enforces the converse (a gapped field must be ``None``).
+        """
+        _require_value_or_gap(self, ("source_organism",))
+        return self
+
+    # --- end #915 ---------------------------------------------------------------- #
 
 
 # --------------------------------------------------------------------------- #
@@ -9544,6 +9579,24 @@ class EnvironmentResponsePhenotype(Phenotype, ModelStrict):
     # ----------------------------------------------------------------------- #
     # end ADDITIVE (Wetmore 2015 own release)
     # ----------------------------------------------------------------------- #
+    # ----------------------------------------------------------------------- #
+    # ADDITIVE (#879): the released Z score of the response. Like the t
+    # statistic above it is stored because the release states it, and it never
+    # feeds environment_response_uncertainty or the derived SE. Nothing above
+    # this block changes.
+    # ----------------------------------------------------------------------- #
+    environment_response_z_score: float | None = Field(
+        default=None,
+        description="the Z score the source released for this response, verbatim. "
+        "Its definition is the source's, named in `units` or the dataset's "
+        "provenance; for Wang 2018 it is equation (4), the response divided by the "
+        "standard deviation of a normal fitted to the non-targeting guides' fitness, "
+        "one constant per screen, so it is a released rescaling of the response and "
+        "not a dispersion of it. None when the source releases no Z score.",
+    )
+    # ----------------------------------------------------------------------- #
+    # end ADDITIVE (#879)
+    # ----------------------------------------------------------------------- #
 
     @field_validator("environment_response")
     def validate_response(cls, v: float | None) -> float | None:
@@ -9686,6 +9739,24 @@ class EnvironmentResponsePhenotype(Phenotype, ModelStrict):
                 )
         # ------------------------------------------------------------------- #
         # end ADDITIVE (Wetmore 2015 own release)
+        # ------------------------------------------------------------------- #
+        # ------------------------------------------------------------------- #
+        # ADDITIVE (#879): a released Z score is a finite number and scores a
+        # numeric response.
+        # ------------------------------------------------------------------- #
+        z_score = self.environment_response_z_score
+        if z_score is not None:
+            if not math.isfinite(z_score):
+                raise ValueError(
+                    f"environment_response_z_score must be finite, got {z_score}"
+                )
+            if self.environment_response is None:
+                raise ValueError(
+                    "environment_response_z_score scores a numeric response; set "
+                    "environment_response"
+                )
+        # ------------------------------------------------------------------- #
+        # end ADDITIVE (#879)
         # ------------------------------------------------------------------- #
         return self
 

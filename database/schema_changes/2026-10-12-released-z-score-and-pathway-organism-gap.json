@@ -1,0 +1,676 @@
+{
+  "record_version": 1,
+  "slug": "released-z-score-and-pathway-organism-gap",
+  "date": "2026-10-12",
+  "pr": null,
+  "author_kind": "agent",
+  "base_commit": "7a068d41a8d409dba02c290ad9578e3d7fd217ab",
+  "python_version": "3.13.0",
+  "symbols": [
+    {
+      "symbol": "EnvironmentResponsePhenotype",
+      "status": "modified",
+      "kinds": [
+        "additive_field"
+      ],
+      "fingerprint_before": "6ffc88ac96e18215b5b87d4aa7b7be0a8c92f0825b03bc2cb69366b6544e9cb3",
+      "fingerprint_after": "107993f4a9c8cc7c09c2ed7f9b816c11f5759b8816f4af5d02ddbcf0ad35edc1",
+      "impact": "stale",
+      "reasons": [
+        "added optional field 'environment_response_z_score'",
+        "validator/serializer changed: ['_check']"
+      ]
+    },
+    {
+      "symbol": "HeterologousPathwayPerturbation",
+      "status": "modified",
+      "kinds": [
+        "typed_gap",
+        "contract_tightened"
+      ],
+      "fingerprint_before": "72dde6f31eab69d0ee269f837168729adcd2acc40ceac5ab331481c96521b5be",
+      "fingerprint_after": "f68e8e36af3907ebb91631ecf11cc57c0aef83996b61dd3621a2ba243aeb1fdc",
+      "impact": "breaking",
+      "reasons": [
+        "base classes changed: ['GeneAdditionPerturbation', 'ModelStrict'] -> ['HashableProvenanceGapMixin', 'GeneAdditionPerturbation', 'ModelStrict']",
+        "added required field 'source_organism'",
+        "validator/serializer changed: ['_source_organism_stated_or_gapped']"
+      ]
+    }
+  ],
+  "correctness_argument": "Two changes, each so that a released value is stored as released (owner rule 2026-10-12, 'the data is the data').\n\n(1) EnvironmentResponsePhenotype gains environment_response_z_score (#879), an optional field in its own ADDITIVE block with a validator that requires a finite number and a numeric response. Wang 2018 releases a 'Z score' column beside the fitness on every guide row (Supplementary Data 6-10) and every gene row (Supplementary Data 5); equation (4) defines it as the fitness divided by the standard deviation of a normal fitted to the 400 non-targeting guides. No existing field carries it: it is not an uncertainty (the sigma is the null distribution's scale, so it must never feed environment_response_uncertainty or the derived SE), not a p-value and not the moderated t of RB-TnSeq. Every record that does not set it serializes with None, so no accepted record is refused.\n\n(2) HeterologousPathwayPerturbation.source_organism becomes value-or-ProvenanceGap (#915): the leaf now lists HashableProvenanceGapMixin first and re-declares source_organism as `str | None`, REQUIRED with no default, with a validator (_require_value_or_gap, the Media.name pattern of #901-#903) that refuses a None that carries no gap. Three loaders (Menasalvas 2025, Brunk 2016, Foo 2014) had to write the sentinel string 'unreported' into a field that reads as an organism name, because the field forced a str. A typed gap is the policy's route for a value the source does not state (Rule 3, Rule 5: the field stays required, nothing is weakened). The schema-impact tool reports the re-declaration as 'added required field', which is why contract_tightened is claimed beside typed_gap: the accepted set is every stated organism, as before, plus None beside a gap naming the field. The widening is on this leaf only, as PromoterReplacementPerturbation re-declares crispr, so GeneAdditionPerturbation and the yeast gene-addition closures do not move. The mixin is listed first so the leaf still hashes (Genotype compares perturbations as a set), which a test pins.",
+  "measurement_type_decision": false,
+  "source_quotes": [],
+  "alternatives_rejected": [
+    {
+      "alternative": "store the Wang 2018 Z score nowhere because it is fitness / sigma with sigma constant per screen",
+      "why_rejected": "it is a released column; the owner's rule stores what the source releases, and dropping it leaves the gene-level hit call (Z, FPR, FDR) incomplete on the record"
+    },
+    {
+      "alternative": "carry FPRvalue in a new field",
+      "why_rejected": "the paper states it is a p-value: 'We then took the classical Storey-Tibshirani approach to convert the FPR values (a particular type of P value) to Q values', so environment_response_p_value (#863) carries it and the Q value is the adjusted p-value with its method named"
+    },
+    {
+      "alternative": "make GeneAdditionPerturbation.source_organism optional at the base class",
+      "why_rejected": "moves every yeast gene-addition closure for a gap only bacterial production loaders need; the leaf-level re-declaration has precedent (PromoterReplacementPerturbation.crispr)"
+    },
+    {
+      "alternative": "infer the five pIY670 organisms from Menasalvas Sheet 4's UniProt entry names",
+      "why_rejected": "the sheet never states which part token each enzyme is, so a mapping would be an inference stored as a fact; the owner asked that tokens be mapped only where Sheet 4 states them, and it states none"
+    }
+  ],
+  "served_release": "2026.10.06-4b293d34",
+  "affected_loaders": [
+    {
+      "loader": "torchcell/datasets/ecoli/brunk2016.py",
+      "dataset_classes": [
+        "_MetaboliteBrunk2016Dataset",
+        "MetabolomeBrunk2016Dataset",
+        "ExometaboliteBrunk2016Dataset",
+        "ProteomeBrunk2016Dataset",
+        "BiofuelTiterBrunk2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "HeterologousPathwayPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/foo2014.py",
+      "dataset_classes": [
+        "IsopentenolTiterFoo2014Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "HeterologousPathwayPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/mohiuddin2022.py",
+      "dataset_classes": [
+        "PromoterReporterMohiuddin2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "HeterologousPathwayPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/carruthers2025.py",
+      "dataset_classes": [
+        "IsoprenolTiterCarruthers2025Dataset",
+        "ProteomeCarruthers2025Dataset",
+        "CampaignProteomeCarruthers2025Dataset",
+        "ProteomeFoldChangeCarruthers2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "HeterologousPathwayPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/desiqueira2025.py",
+      "dataset_classes": [
+        "ProteomeDeSiqueira2025Dataset",
+        "ProteomePercentDeSiqueira2025Dataset",
+        "ProteomeLog10PercentDeSiqueira2025Dataset",
+        "IsoprenolTiterDeSiqueira2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "HeterologousPathwayPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/kang2026.py",
+      "dataset_classes": [
+        "IsoprenylAcetateTiterKang2026Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "HeterologousPathwayPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/menasalvas2025.py",
+      "dataset_classes": [
+        "IsoprenolSelectionMenasalvas2025Dataset",
+        "ProteomeMenasalvas2025Dataset",
+        "_MetabolitePhaseDataset",
+        "MetaboliteGrowthPhaseMenasalvas2025Dataset",
+        "MetaboliteProductionPhaseMenasalvas2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "HeterologousPathwayPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/thompson2019_valerolactam.py",
+      "dataset_classes": [
+        "_Thompson2019Dataset",
+        "ValerolactamTiterThompson2019Dataset",
+        "LactamGrowthRateThompson2019Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "EnvironmentResponsePhenotype",
+        "HeterologousPathwayPerturbation"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/caglar2017_doubling_time.py",
+      "dataset_classes": [
+        "DoublingTimeCaglar2017Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/choe2025.py",
+      "dataset_classes": [
+        "CrispriChemgenChoe2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/cui2018.py",
+      "dataset_classes": [
+        "CrispriKnockdownCui2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/fang2025.py",
+      "dataset_classes": [
+        "CrispriGuideFfaEnrichmentFang2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/girgis2009.py",
+      "dataset_classes": [
+        "EnvChemgenGirgis2009Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/hawkins2020.py",
+      "dataset_classes": [
+        "MismatchCrispriFitnessHawkins2020Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/lamoureux2023_growth.py",
+      "dataset_classes": [
+        "GrowthRateLamoureux2023Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/mutalik2020.py",
+      "dataset_classes": [
+        "PhageRbTnseqMutalik2020Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/niu2019.py",
+      "dataset_classes": [
+        "CrisprPineneToleranceNiu2019Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/price2018.py",
+      "dataset_classes": [
+        "RbTnseqPrice2018EcoliDataset",
+        "GeneEssentialityPrice2018EcoliDataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/rousset2018.py",
+      "dataset_classes": [
+        "CrispriScreenRousset2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/schmidt2016_s23_growth_rate.py",
+      "dataset_classes": [
+        "GrowthRateS23Schmidt2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/shiver2016.py",
+      "dataset_classes": [
+        "EnvChemgenShiver2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/wang2015.py",
+      "dataset_classes": [
+        "EnvChemgenWang2015Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/wang2018.py",
+      "dataset_classes": [
+        "CrispriGuideFitnessWang2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/wang2024.py",
+      "dataset_classes": [
+        "EnvChemgenWang2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/wetmore2015.py",
+      "dataset_classes": [
+        "RbTnseqWetmore2015Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/borchert2023.py",
+      "dataset_classes": [
+        "RbTnseqBorchert2023Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/borchert2024.py",
+      "dataset_classes": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/lim2025.py",
+      "dataset_classes": [
+        "IsoprenolToleranceLim2025Dataset",
+        "ProteomeLim2025Dataset",
+        "ProteomeFoldChangeLim2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/royet2025.py",
+      "dataset_classes": [
+        "EnvMetalTnseqRoyet2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/private_torchcell/volk2021_inhibitor_bioscreen.py",
+      "dataset_classes": [
+        "InhibitorBioscreenVolk2021Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/auesukaree2009.py",
+      "dataset_classes": [
+        "EnvChemgenAuesukaree2009Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenAuesukaree2009Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/bloom2019.py",
+      "dataset_classes": [
+        "Bloom2019Dataset"
+      ],
+      "served_classes": [
+        "Bloom2019Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/costanzo2021.py",
+      "dataset_classes": [
+        "EnvChemgenCostanzo2021Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenCostanzo2021Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/dechiara2022.py",
+      "dataset_classes": [
+        "_DeChiara2022Dataset",
+        "_GrowthDeChiara2022Dataset",
+        "DoublingTimeDeChiara2022Dataset",
+        "CellYieldDeChiara2022Dataset",
+        "LifeCycleDeChiara2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/hale2024.py",
+      "dataset_classes": [
+        "CrispriSegregantHale2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/hillenmeyer2008.py",
+      "dataset_classes": [
+        "HetHillenmeyer2008Dataset",
+        "HomHillenmeyer2008Dataset"
+      ],
+      "served_classes": [
+        "HetHillenmeyer2008Dataset",
+        "HomHillenmeyer2008Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/hoepfner2014.py",
+      "dataset_classes": [
+        "EnvChemgenHoepfner2014Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenHoepfner2014Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/lian2019.py",
+      "dataset_classes": [
+        "CrisprMagicLian2019Dataset"
+      ],
+      "served_classes": [
+        "CrisprMagicLian2019Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/mormino2022.py",
+      "dataset_classes": [
+        "CrispriMormino2022Dataset"
+      ],
+      "served_classes": [
+        "CrispriMormino2022Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/mota2024.py",
+      "dataset_classes": [
+        "EnvChemgenMota2024Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenMota2024Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/parsons2006.py",
+      "dataset_classes": [
+        "EnvChemgenParsons2006Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/peter2018.py",
+      "dataset_classes": [
+        "IsolateGrowthPeter2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/piotrowski2017.py",
+      "dataset_classes": [
+        "EnvChemgenPiotrowski2017Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/smith2006.py",
+      "dataset_classes": [
+        "FattyAcidSmith2006Dataset"
+      ],
+      "served_classes": [
+        "FattyAcidSmith2006Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/smith2016.py",
+      "dataset_classes": [
+        "CrispriChemgenSmith2016Dataset"
+      ],
+      "served_classes": [
+        "CrispriChemgenSmith2016Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/vanacloig2022.py",
+      "dataset_classes": [
+        "EnvChemgenVanacloig2022Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenVanacloig2022Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/wildenhain2015.py",
+      "dataset_classes": [
+        "EnvChemgenWildenhain2015Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenWildenhain2015Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/yeastphenome.py",
+      "dataset_classes": [
+        "YeastPhenomeDataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/yoshikawa2009.py",
+      "dataset_classes": [
+        "EnvChemgenYoshikawa2009Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype"
+      ]
+    }
+  ],
+  "served_datasets": [
+    "Bloom2019Dataset",
+    "CrisprMagicLian2019Dataset",
+    "CrispriChemgenSmith2016Dataset",
+    "CrispriMormino2022Dataset",
+    "EnvChemgenAuesukaree2009Dataset",
+    "EnvChemgenCostanzo2021Dataset",
+    "EnvChemgenHoepfner2014Dataset",
+    "EnvChemgenMota2024Dataset",
+    "EnvChemgenVanacloig2022Dataset",
+    "EnvChemgenWildenhain2015Dataset",
+    "FattyAcidSmith2006Dataset",
+    "HetHillenmeyer2008Dataset",
+    "HomHillenmeyer2008Dataset"
+  ],
+  "rebuild_scope": "full_kg_rebuild",
+  "owner_sign_off": {
+    "signed": false,
+    "quote": null,
+    "url": null
+  }
+}

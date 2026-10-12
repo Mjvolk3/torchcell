@@ -17,15 +17,18 @@ Two screens, two datasets (separate roots so the same gene+environment does not 
 L1 uniqueness across the two):
 
 - ``IsobutanolScreenLopez2024Dataset`` (Table S2): the FIRST genome-wide screen. Median
-  fluorescence was measured ONCE per strain. The 4805 released rows include ~190 genes
-  reported twice (the strain measured on two plates); rows are AGGREGATED to one record per
-  resolved ORF (metabolite L1 orf_uniqueness): ``metabolite_level`` = mean fold change,
-  ``n_replicates`` = row count, ``metabolite_level_se`` = sample-SD / sqrt(n) when n >= 2
-  (else ``None``).
+  fluorescence was measured ONCE per strain. Every released row is ONE record
+  (``n_replicates = 1``, ``metabolite_level_se = None``): the 4805 rows include 186
+  genes reported twice (the strain measured on two plates), and those are two records of
+  one deletion, two plate measurements, not a replicate pair to average (2026.10.12,
+  #1045; the previous build averaged them into 4554 records). The metabolite verifier
+  runs this store with ``allow_duplicate_orfs``.
 - ``IsobutanolValidatedLopez2024Dataset`` (Table S3): the VALIDATED re-screen of the strong
   hits (66 up, FC>=2; 161 down, FC<=0.5). Re-screened in TRIPLICATE (``n_replicates = 3``);
   the released ``STD`` is the sample SD, so SE = STD / sqrt(3). YBL071W-A appears in BOTH the
-  up and down blocks (contradictory) and is DROPPED entirely -> 225 records.
+  up and down blocks (FC 3.469 and 0.0757); both rows are stored as released and the
+  contradiction is flagged in the dataset note -> 227 records (the previous build dropped
+  both rows).
 
 FOLD CHANGE (verbatim, dissertation Methods, sha256 525e03b4...): "the ratio of the median
 fluorescence value of the deletion strain over the median fluorescence value of the
@@ -43,8 +46,13 @@ is a free-form string (no enum), set here to ``biosensor_gfp_fluorescence_fold_c
 document exactly what the number is (a median-GFP fold change vs the same-plate WT control,
 NOT an absolute abundance). ``target_metabolite_ids`` is left ``None`` (isobutanol is a
 heterologous-flux product, not modeled against a Yeast9 ``s_NNNN`` id here). Gene ids in the
-source are SYSTEMATIC ORF names, resolved to current SGD R64 ORFs via an injected genome
-(collision-aware, as in Smith 2006).
+source are SYSTEMATIC ORF names and are stored AS RELEASED (upper-cased), as both
+``systematic_gene_name`` and ``perturbed_gene_name``; no genome is consulted (#1045,
+owner rule 2026-10-12). A released name the current annotation renames (e.g. YAL043C-A)
+or no longer carries (e.g. YAR037W) keeps its own name and its record. One Table S2 row,
+``YLR287-A``, is not ORF-shaped at all (the release dropped the strand letter); it is
+counted under ``deferred_to_released_gene_name_leaf`` in ``preprocess/dropped_records.json``
+until the released-gene-name leaf lands, and is the only row without a record.
 
 PROVENANCE / PUBLICATION NOTE: the genome-wide biosensor YKO SCREEN DATA is unpublished
 except in the 2024 dissertation, which has no discoverable DOI/PMID (checked Crossref +
@@ -70,12 +78,12 @@ import os
 import os.path as osp
 import pickle
 import re
-import statistics
 from collections.abc import Callable
 from typing import Any
 
 import lmdb
 import pandas as pd
+from pydantic import BaseModel
 from tqdm import tqdm
 
 from torchcell.data import (
@@ -100,7 +108,6 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
-from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -123,6 +130,63 @@ TARGET_METABOLITE = "isobutanol"
 _SYSTEMATIC_RE = re.compile(r"^Y[A-P][LR]\d{3}[WC](-[A-Z])?$")
 
 
+DEFERRED_RULE = "deferred_to_released_gene_name_leaf"
+DEFERRED_DESCRIPTION = (
+    "the released strain name is not ORF-shaped (YLR287-A: the release dropped the strand "
+    "letter), so it cannot be stored on KanMxDeletionPerturbation, whose "
+    "systematic_gene_name is validated against the ORF pattern; it is stored once the "
+    "released-gene-name leaf lands (feat/schema-released-gene-name-leaf), never resolved "
+    "against the genome and never dropped for good"
+)
+
+
+class DropRule(BaseModel):
+    """One rule that leaves released rows without a record, and the rows it names."""
+
+    rule: str
+    description: str
+    n_records: int
+    items: list[str] = []
+
+
+class DropLog(BaseModel):
+    """The build's accounting: every released row is either a record or listed here."""
+
+    dataset: str
+    source_records: int
+    kept_records: int
+    dropped_records: int
+    rules: list[DropRule]
+
+
+def _write_drop_log(
+    preprocess_dir: str, dataset: str, source: int, kept: int, deferred: list[str]
+) -> None:
+    """Write ``preprocess/dropped_records.json``; the only rule is the leaf deferral."""
+    drop_log = DropLog(
+        dataset=dataset,
+        source_records=source,
+        kept_records=kept,
+        dropped_records=source - kept,
+        rules=[
+            DropRule(
+                rule=DEFERRED_RULE,
+                description=DEFERRED_DESCRIPTION,
+                n_records=len(deferred),
+                items=sorted(deferred),
+            )
+        ],
+    )
+    if len(deferred) != drop_log.dropped_records:
+        raise RuntimeError(
+            f"drop accounting mismatch: {len(deferred)} deferred, "
+            f"{drop_log.dropped_records} rows without a record"
+        )
+    os.makedirs(preprocess_dir, exist_ok=True)
+    with open(osp.join(preprocess_dir, "dropped_records.json"), "w") as handle:
+        handle.write(drop_log.model_dump_json(indent=2))
+
+
 class _IsobutanolLopez2024Base(ExperimentDataset):
     """Shared base for the two Montaño López 2024 isobutanol-biosensor YKO datasets."""
 
@@ -130,13 +194,11 @@ class _IsobutanolLopez2024Base(ExperimentDataset):
         self,
         root: str,
         io_workers: int = 0,
-        genome: SCerevisiaeGenome | None = None,
-        transform: Callable[..., Any] | None = None,
-        pre_transform: Callable[..., Any] | None = None,
+        transform: Any | None = None,
+        pre_transform: Any | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize the dataset; a genome is REQUIRED for systematic-name -> ORF mapping."""
-        self.genome = genome
+        """Initialize the dataset (no genome: every strain is stored as released)."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -179,51 +241,16 @@ class _IsobutanolLopez2024Base(ExperimentDataset):
             copy_verified(src, dest, _XLSX_SHA256)
             log.info("Verified %s (sha256 %s)", dest, _XLSX_SHA256)
 
-    def _require_genome(self) -> SCerevisiaeGenome:
-        """Return the injected genome or raise (systematic-name resolution requires it)."""
-        if self.genome is None:
-            raise RuntimeError(
-                f"{type(self).__name__} requires an injected SCerevisiaeGenome to resolve "
-                f"systematic gene names to current R64 ORF ids; inject SCerevisiaeGenome(...)"
-            )
-        return self.genome
+    @staticmethod
+    def _released_orf(name: str) -> str | None:
+        """The released strain name, upper-cased, when it is ORF-shaped; else None.
 
-    def _resolver(self, systematic_names: list[str]) -> Callable[[str], str | None]:
-        """Build a collision-aware systematic-name -> current-R64-ORF resolver.
-
-        A name already a current R64 ID resolves to itself; an old systematic name follows
-        the genome alias table to its current ID ONLY when that target is not already a
-        directly-present ORF (so a dubious ORF absorbed into a verified neighbor is dropped,
-        not mislabeled -- same rule as Smith 2006).
+        No genome is consulted. The one Table S2 cell that is not ORF-shaped
+        (``YLR287-A``) returns None and is counted, not stored, until the released-gene-name
+        leaf exists.
         """
-        genome = self._require_genome()
-        ids = set(genome.gene_attribute_table["ID"])
-        alias_map = genome.alias_to_systematic
-        direct_orfs = {n for n in systematic_names if n in ids}
-
-        def resolve(name: str) -> str | None:
-            if name in ids:
-                return name
-            if _SYSTEMATIC_RE.match(name):
-                candidates = alias_map.get(name, [])
-                if (
-                    candidates
-                    and candidates[0] in ids
-                    and candidates[0] not in direct_orfs
-                ):
-                    return candidates[0]
-            return None
-
-        return resolve
-
-    def _standard_name_map(self) -> dict[str, str]:
-        """Map current-R64 ORF id -> standard/common gene name (systematic if unnamed)."""
-        genome = self._require_genome()
-        df = genome.gene_attribute_table
-        out: dict[str, str] = {}
-        for orf, gene in zip(df["ID"], df["gene"]):
-            out[str(orf)] = str(gene) if pd.notna(gene) else str(orf)
-        return out
+        upper = name.upper().strip()
+        return upper if _SYSTEMATIC_RE.match(upper) else None
 
     def _environment(self) -> Environment:
         """Aerobic SC-liquid medium; 30 C (standard yeast temp, not explicit in the source)."""
@@ -312,24 +339,22 @@ class IsobutanolScreenLopez2024Dataset(_IsobutanolLopez2024Base):
         self,
         root: str = "data/torchcell/isobutanol_screen_lopez2024",
         io_workers: int = 0,
-        genome: SCerevisiaeGenome | None = None,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize; a genome is REQUIRED for systematic-name -> ORF mapping."""
-        super().__init__(root, io_workers, genome, transform, pre_transform, **kwargs)
+        """Initialize the dataset (no genome: every strain is stored as released)."""
+        super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @post_process
     def process(self) -> None:
-        """Parse Table S2 into one MetaboliteExperiment per resolved ORF; write LMDB.
+        """Parse Table S2 into one MetaboliteExperiment per released row; write LMDB.
 
-        The released table reports ~190 genes twice with a different fold change (the strain
-        was measured on two plates). To satisfy the metabolite L1 orf_uniqueness invariant
-        (exactly one record per resolved ORF), rows are AGGREGATED by resolved current-R64
-        ORF: ``metabolite_level`` = mean fold change across that gene's rows; ``n_replicates``
-        = row count; ``metabolite_level_se`` = sample-SD / sqrt(n) when the gene has >= 2 rows
-        (each row was itself an ``n=1`` median-fluorescence measurement), else ``None``.
+        Every row is a record (``n_replicates = 1``, no SE): a gene the table reports on
+        two plates is two records of one deletion, told apart by their values, not an
+        average. The one row whose strain name is not ORF-shaped (``YLR287-A``) is counted
+        in ``preprocess/dropped_records.json`` under ``deferred_to_released_gene_name_leaf``
+        and stored once that leaf exists.
         """
         verify_raw_files(self.raw_dir, {_XLSX_FILENAME: _XLSX_SHA256})
         xlsx = osp.join(self.raw_dir, _XLSX_FILENAME)
@@ -337,48 +362,32 @@ class IsobutanolScreenLopez2024Dataset(_IsobutanolLopez2024Base):
         df = pd.read_excel(xlsx, sheet_name="Table S2", header=1)
         gene_col, fc_col = "Gene-knockout strain", "Fold change"
 
-        systematic_names = [str(v).upper().strip() for v in df[gene_col].tolist()]
-        resolve = self._resolver(systematic_names)
-        std_map = self._standard_name_map()
         environment = self._environment()
         pub_dump = self._publication().model_dump()
+        ref_dump = self._reference_dump(environment, n=1)
 
-        # Aggregate fold changes by resolved ORF (multiple rows -> one record per ORF).
-        by_orf: dict[str, list[float]] = {}
-        n_unresolved = 0
-        unresolved_examples: set[str] = set()
+        rows: list[tuple[str, float]] = []
+        deferred: list[str] = []
         for _, row in df.iterrows():
-            sysname = str(row[gene_col]).upper().strip()
-            orf = resolve(sysname)
+            released = str(row[gene_col]).strip()
+            orf = self._released_orf(released)
             if orf is None:
-                n_unresolved += 1
-                unresolved_examples.add(sysname)
+                deferred.append(released)
                 continue
-            by_orf.setdefault(orf, []).append(float(row[fc_col]))
+            rows.append((orf, float(row[fc_col])))
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
         os.makedirs(self.processed_dir, exist_ok=True)
         env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(1e11))
         idx = 0
-        n_aggregated = 0
         with env.begin(write=True) as txn:
-            for orf, fcs in tqdm(by_orf.items(), desc="lopez2024-S2"):
-                n = len(fcs)
-                mean_fc = sum(fcs) / n
-                if n >= 2:
-                    n_aggregated += 1
-                    sd = statistics.stdev(fcs)  # sample SD across the gene's rows
-                    se: float | None = sd / math.sqrt(n)
-                else:
-                    se = None
-                # n=1 reference per replicate; the record n mirrors the aggregated row count.
-                ref_dump = self._reference_dump(environment, n=n)
+            for orf, fold_change in tqdm(rows, desc="lopez2024-S2"):
                 experiment = self._experiment(
                     orf=orf,
-                    standard_name=std_map.get(orf, orf),
-                    fold_change=mean_fc,
-                    se=se,
-                    n=n,
+                    standard_name=orf,
+                    fold_change=fold_change,
+                    se=None,
+                    n=1,
                     environment=environment,
                 )
                 txn.put(
@@ -393,13 +402,13 @@ class IsobutanolScreenLopez2024Dataset(_IsobutanolLopez2024Base):
                 )
                 idx += 1
         env.close()
+        _write_drop_log(self.preprocess_dir, self.name, len(df), idx, deferred)
         log.info(
-            "Lopez2024 S2: wrote %d ORF experiments (%d aggregated from >=2 rows; "
-            "%d rows dropped unresolved, e.g. %s)",
+            "Lopez2024 S2: wrote %d row experiments as released (%d rows deferred to the "
+            "released-gene-name leaf: %s)",
             idx,
-            n_aggregated,
-            n_unresolved,
-            sorted(unresolved_examples)[:5],
+            len(deferred),
+            sorted(deferred),
         )
 
 
@@ -413,21 +422,19 @@ class IsobutanolValidatedLopez2024Dataset(_IsobutanolLopez2024Base):
         self,
         root: str = "data/torchcell/isobutanol_validated_lopez2024",
         io_workers: int = 0,
-        genome: SCerevisiaeGenome | None = None,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize; a genome is REQUIRED for systematic-name -> ORF mapping."""
-        super().__init__(root, io_workers, genome, transform, pre_transform, **kwargs)
+        """Initialize the dataset (no genome: every strain is stored as released)."""
+        super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     def _read_blocks(self) -> list[tuple[str, float, float]]:
         """Read Table S3 UP (FC>=2) + DOWN (FC<=0.5) blocks -> [(gene, fc_avg, std), ...].
 
-        CONTRADICTION DROP: YBL071W-A appears in BOTH the UP block (FC 3.469) and the DOWN
-        block (FC 0.0757) of the released table -- a single strain cannot be both a strong
-        up- and down-hit, so no single value can be asserted. Both of its rows are DROPPED
-        entirely (not kept, not merged). FLAGGED FOR REVIEW.
+        YBL071W-A appears in BOTH the UP block (FC 3.469) and the DOWN block (FC 0.0757)
+        of the released table. Both rows are stored as released (2026.10.12, #1045); the
+        contradiction is flagged in the dataset note, not resolved by dropping either.
         """
         xlsx = osp.join(self.raw_dir, _XLSX_FILENAME)
         # header on 0-based row 2; UP block cols A-C, DOWN block cols E-G.
@@ -439,25 +446,20 @@ class IsobutanolValidatedLopez2024Dataset(_IsobutanolLopez2024Base):
         ):
             sub = df[[gcol, fcol, scol]].dropna(subset=[gcol])
             for _, row in sub.iterrows():
-                gene = str(row[gcol]).upper().strip()
-                if gene == "YBL071W-A":  # contradictory up/down hit -> drop entirely
-                    continue
+                gene = str(row[gcol]).strip()
                 blocks.append((gene, float(row[fcol]), float(row[scol])))
         return blocks
 
     @post_process
     def process(self) -> None:
-        """Parse Table S3 (both blocks) into one triplicate record per resolved ORF; write LMDB.
+        """Parse Table S3 (both blocks) into one triplicate record per released row; write LMDB.
 
-        YBL071W-A is dropped upstream (contradictory up/down hit). After resolution every
-        remaining ORF must be unique (metabolite L1 orf_uniqueness); a collision would signal
-        a second contradictory strain and raises rather than silently overwriting.
+        Every row is a record under its released ORF, including both YBL071W-A rows; a
+        name that is not ORF-shaped is counted under ``deferred_to_released_gene_name_leaf``
+        (0 of 227 rows).
         """
         verify_raw_files(self.raw_dir, {_XLSX_FILENAME: _XLSX_SHA256})
         records = self._read_blocks()
-        systematic_names = [g for g, _, _ in records]
-        resolve = self._resolver(systematic_names)
-        std_map = self._standard_name_map()
         environment = self._environment()
         ref_dump = self._reference_dump(environment, n=3)
         pub_dump = self._publication().model_dump()
@@ -466,27 +468,18 @@ class IsobutanolValidatedLopez2024Dataset(_IsobutanolLopez2024Base):
         os.makedirs(self.processed_dir, exist_ok=True)
         env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(1e11))
         idx = 0
-        n_unresolved = 0
-        unresolved_examples: set[str] = set()
-        seen_orf: set[str] = set()
+        deferred: list[str] = []
         with env.begin(write=True) as txn:
-            for sysname, fc_avg, std in tqdm(records, desc="lopez2024-S3"):
-                orf = resolve(sysname)
+            for released, fc_avg, std in tqdm(records, desc="lopez2024-S3"):
+                orf = self._released_orf(released)
                 if orf is None:
-                    n_unresolved += 1
-                    unresolved_examples.add(sysname)
+                    deferred.append(released)
                     continue
-                if orf in seen_orf:
-                    raise RuntimeError(
-                        f"Lopez2024 S3: ORF {orf} (from {sysname}) appears twice after "
-                        f"resolution -- unexpected contradiction; review the source table."
-                    )
-                seen_orf.add(orf)
                 # Triplicate re-screen: released STD is the sample SD -> SE = STD / sqrt(3).
                 se = std / math.sqrt(3)
                 experiment = self._experiment(
                     orf=orf,
-                    standard_name=std_map.get(orf, orf),
+                    standard_name=orf,
                     fold_change=fc_avg,
                     se=se,
                     n=3,
@@ -504,34 +497,29 @@ class IsobutanolValidatedLopez2024Dataset(_IsobutanolLopez2024Base):
                 )
                 idx += 1
         env.close()
+        _write_drop_log(self.preprocess_dir, self.name, len(records), idx, deferred)
         log.info(
-            "Lopez2024 S3: wrote %d validated experiments (%d dropped unresolved, e.g. %s)",
+            "Lopez2024 S3: wrote %d validated experiments as released (%d rows deferred "
+            "to the released-gene-name leaf: %s)",
             idx,
-            n_unresolved,
-            sorted(unresolved_examples)[:5],
+            len(deferred),
+            sorted(deferred),
         )
 
 
 def main() -> None:
-    """Build/load both datasets for interactive debugging (a genome is REQUIRED)."""
+    """Build/load both datasets for interactive debugging."""
     from dotenv import load_dotenv
 
     load_dotenv()
     data_root = os.environ["DATA_ROOT"]
-    genome = SCerevisiaeGenome(
-        genome_root=osp.join(data_root, "data/sgd/genome"),
-        go_root=osp.join(data_root, "data/go"),
-        overwrite=False,
-    )
     screen = IsobutanolScreenLopez2024Dataset(
-        root=osp.join(data_root, "data/torchcell/isobutanol_screen_lopez2024"),
-        genome=genome,
+        root=osp.join(data_root, "data/torchcell/isobutanol_screen_lopez2024")
     )
     print(f"screen len = {len(screen)}")
     print(screen[0])
     validated = IsobutanolValidatedLopez2024Dataset(
-        root=osp.join(data_root, "data/torchcell/isobutanol_validated_lopez2024"),
-        genome=genome,
+        root=osp.join(data_root, "data/torchcell/isobutanol_validated_lopez2024")
     )
     print(f"validated len = {len(validated)}")
     print(validated[0])

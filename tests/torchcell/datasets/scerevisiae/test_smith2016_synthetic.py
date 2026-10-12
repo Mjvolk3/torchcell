@@ -22,17 +22,20 @@ row    #Pool             Guide     ORF        Drug         Concentration  A     
 3      broad_tiling      ERG11_g1  YHR007C    1181-0519    5 uM           -2.0   0.1
 4      broad_tiling      ERG11_g2  YHR007C    Fluconazole  20 uM          (blank) 0.03
 5      broad_tiling      ERG11_g2  YHR007C    Fluconazole  20 uM          0.1    n/a
-6      broad_tiling      GHOST_g1  YZZ999W    Fluconazole  20 uM          0.1    0.01
+6      broad_tiling      GHOST_g1  YOL999W    Fluconazole  20 uM          0.1    0.01
 7      broad_tiling      ERG11_g9  YHR007C    Rapamycin    1 nM           0.5    0.05
 8      broad_tiling      ERG11_g3  " erg11 "  Rapamycin    1 nM           0.25   0.0025
 =====  ================  ========  =========  ===========  =============  =====  ======
 
-Rows 0, 1, 2 and 8 are kept as records 0-3 (row 8 resolves the padded lowercase common
-name through the stub's renamed branch). Row 3 drops on the vendor-code rule (1181-0519
-is PROPRIETARY in the pinned identity table); rows 4 and 5 drop on the no-A/var(A) rule
-(``to_numeric(errors="coerce")`` turns the blank and ``n/a`` into NaN); row 6 drops as
-an unresolved target; row 7 drops because ERG11_g9 has no spacer in Additional file 4.
-So 9 source rows, 4 kept, 5 dropped = 1 + 2 + 1 + 1.
+Rows 0, 1, 2, 3 and 6 are kept as records 0-4, under their released ORF and Gene cells
+(no genome is consulted, #1045): row 3's vendor code 1181-0519 is PROPRIETARY in the
+pinned identity table and is stored under a typed ``inchikey`` gap; row 6's YOL999W is
+stored whatever the annotation says of it, with the ORF as its perturbed name since the
+Gene cell is blank. Rows 4 and 5 drop on the no-A/var(A) rule
+(``to_numeric(errors="coerce")`` turns the blank and ``n/a`` into NaN); row 7 drops
+because ERG11_g9 has no spacer in Additional file 4; row 8's padded `` erg11 `` ORF
+cell is not ORF-shaped and is deferred to the released-gene-name leaf. So 9 source rows,
+5 kept, 4 dropped = 2 + 1 + 1.
 
 Every record stores ``n_samples = 1`` and the released ``var(A)`` verbatim as
 ``UncertaintyType.variance``, so the derived SE is ``sqrt(var / 1)``: 0.2, 0.1414...,
@@ -52,7 +55,7 @@ import socket
 import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import lmdb
 import openpyxl
@@ -89,55 +92,21 @@ from torchcell.literature.manifest import (
     RetrievalMethod,
     RetrievalRecord,
 )
-from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 
-_GENES = {"YHR007C", "YJR066W"}
-_STANDARD = {"ERG11": ["YHR007C"], "TOR1": ["YJR066W"]}
-
-
-class _Resolution:
-    """The two attributes and the one property the loader reads from a resolution."""
-
-    def __init__(self, status: str, systematic: str | None) -> None:
-        self.status = status
-        self.systematic_name = systematic
-
-    @property
-    def is_current_gene(self) -> bool:
-        return self.status in ("current", "renamed")
-
-
-class _StubGenome:
-    """``gene_set``, ``feature_index`` and the resolver: all the genome the loader reads."""
-
-    gene_set = _GENES
-    feature_index = {"standard_to_ids": _STANDARD}
-
-    def resolve_gene_name(self, name: str) -> _Resolution:
-        upper = name.strip().upper()
-        if upper in _GENES:
-            return _Resolution("current", upper)
-        if upper in _STANDARD:
-            return _Resolution("renamed", _STANDARD[upper][0])
-        return _Resolution("retired", upper)
-
-
-def _genome() -> SCerevisiaeGenome:
-    return cast(SCerevisiaeGenome, _StubGenome())
-
-
-_EFFECT_HEADER = ["#Pool", "Guide", "ORF", "Drug", "Concentration", "A", "var(A)"]
+_EFFECT_HEADER = [
+    "#Pool", "Guide", "ORF", "Gene", "Drug", "Concentration", "A", "var(A)"
+]  # fmt: skip
 _EFFECT_ROWS: list[list[Any]] = [
-    ["broad_tiling", "ERG11_g1", "YHR007C", "Fluconazole", "20 uM", -1.5, 0.04],
-    ["gene_tiling_20bp", "ERG11_g1", "YHR007C", "Fluconazole", "20 uM", -0.7, 0.02],
-    ["broad_tiling", "TOR1_g5", "YJR066W", "DMSO", 0.01, 0.3, 0.01],
-    ["broad_tiling", "ERG11_g1", "YHR007C", "1181-0519", "5 uM", -2.0, 0.1],
-    ["broad_tiling", "ERG11_g2", "YHR007C", "Fluconazole", "20 uM", None, 0.03],
-    ["broad_tiling", "ERG11_g2", "YHR007C", "Fluconazole", "20 uM", 0.1, "n/a"],
-    ["broad_tiling", "GHOST_g1", "YZZ999W", "Fluconazole", "20 uM", 0.1, 0.01],
-    ["broad_tiling", "ERG11_g9", "YHR007C", "Rapamycin", "1 nM", 0.5, 0.05],
-    ["broad_tiling", "ERG11_g3", " erg11 ", "Rapamycin", "1 nM", 0.25, 0.0025],
-]
+    ["broad_tiling", "ERG11_g1", "YHR007C", "ERG11", "Fluconazole", "20 uM", -1.5, 0.04],
+    ["gene_tiling_20bp", "ERG11_g1", "YHR007C", "ERG11", "Fluconazole", "20 uM", -0.7, 0.02],
+    ["broad_tiling", "TOR1_g5", "YJR066W", "TOR1", "DMSO", 0.01, 0.3, 0.01],
+    ["broad_tiling", "ERG11_g1", "YHR007C", "ERG11", "1181-0519", "5 uM", -2.0, 0.1],
+    ["broad_tiling", "ERG11_g2", "YHR007C", "ERG11", "Fluconazole", "20 uM", None, 0.03],
+    ["broad_tiling", "ERG11_g2", "YHR007C", "ERG11", "Fluconazole", "20 uM", 0.1, "n/a"],
+    ["broad_tiling", "GHOST_g1", "YOL999W", None, "Fluconazole", "20 uM", 0.1, 0.01],
+    ["broad_tiling", "ERG11_g9", "YHR007C", "ERG11", "Rapamycin", "1 nM", 0.5, 0.05],
+    ["broad_tiling", "ERG11_g3", " erg11 ", "ERG11", "Rapamycin", "1 nM", 0.25, 0.0025],
+]  # fmt: skip
 _SPACERS = {
     "ERG11_g1": "ACGTACGTACGTACGTACGT",
     "ERG11_g2": "TTGCATTGCATTGCATTG",
@@ -174,7 +143,7 @@ def _root(tmp_path: Path, slug: str = "crispri_chemgen_smith2016") -> Path:
 
 @pytest.fixture
 def dataset(tmp_path: Path) -> s.CrispriChemgenSmith2016Dataset:
-    return s.CrispriChemgenSmith2016Dataset(root=str(_root(tmp_path)), genome=_genome())
+    return s.CrispriChemgenSmith2016Dataset(root=str(_root(tmp_path)))
 
 
 _PUBLICATION = Publication(doi=s.DOI, doi_url=f"https://doi.org/{s.DOI}")
@@ -198,7 +167,7 @@ def _environment(drug: str, value: float, unit: ConcentrationUnit) -> Environmen
 
 _FLUCONAZOLE = _environment("Fluconazole", 20.0, ConcentrationUnit.micromolar)
 _DMSO = _environment("DMSO", 1.0, ConcentrationUnit.percent_v_v)
-_RAPAMYCIN = _environment("Rapamycin", 1.0, ConcentrationUnit.nanomolar)
+_VENDOR = _environment("1181-0519", 5.0, ConcentrationUnit.micromolar)
 
 
 def _experiment(
@@ -273,13 +242,16 @@ _EXPECTED = [
         "YJR066W", "TOR1", _SPACERS["TOR1_g5"], "broad_tiling", _DMSO, 0.3, 0.01
     ),
     _experiment(
-        "YHR007C",
-        "ERG11",
-        _SPACERS["ERG11_g3"],
+        "YHR007C", "ERG11", _SPACERS["ERG11_g1"], "broad_tiling", _VENDOR, -2.0, 0.1
+    ),
+    _experiment(
+        "YOL999W",
+        "YOL999W",
+        _SPACERS["GHOST_g1"],
         "broad_tiling",
-        _RAPAMYCIN,
-        0.25,
-        0.0025,
+        _FLUCONAZOLE,
+        0.1,
+        0.01,
     ),
 ]
 
@@ -296,31 +268,38 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def test_build_keeps_four_records_in_row_order_with_exact_records(
+def test_build_keeps_five_records_in_row_order_with_exact_records(
     dataset: s.CrispriChemgenSmith2016Dataset,
 ) -> None:
-    """Records 0-3 are rows 0, 1, 2 and 8 of the effect table, each equal to a hand-built
-    ``EnvironmentResponseExperiment``: the genome's standard name as the perturbed name
-    (row 8's `` erg11 `` is stripped and resolved through the renamed branch to
-    YHR007C/ERG11), the joined spacer, the row's pool, the drug environment, and the SE
-    derived from ``var(A)`` with n = 1: sqrt(0.04) = 0.2, sqrt(0.02) = 0.141421...,
-    sqrt(0.01) = 0.1, sqrt(0.0025) = 0.05. The DMSO record carries the canonical compound
-    name ``dimethyl sulfoxide`` at the sourced 1.0 percent v/v, not the released 0.01.
+    """Records 0-4 are rows 0, 1, 2, 3 and 6 of the effect table, each equal to a
+    hand-built ``EnvironmentResponseExperiment``: the released ``Gene`` cell as the
+    perturbed name (the ORF again where it is blank, row 6), the released ORF whatever
+    the annotation says of it (YOL999W), the joined spacer, the row's pool, the drug
+    environment (row 3's vendor code 1181-0519 stored under a typed ``inchikey`` gap),
+    and the SE derived from ``var(A)`` with n = 1: 0.2, sqrt(0.02), 0.1, sqrt(0.1), 0.1.
+    The DMSO record carries the canonical compound name ``dimethyl sulfoxide`` at the
+    sourced 1.0 percent v/v, not the released 0.01. Row 8's `` erg11 `` ORF cell is not
+    ORF-shaped and is deferred to the released-gene-name leaf.
     """
-    assert len(dataset) == 4
-    assert [dataset[i]["experiment"] for i in range(4)] == [
+    assert len(dataset) == 5
+    assert [dataset[i]["experiment"] for i in range(5)] == [
         e.model_dump() for e in _EXPECTED
     ]
     assert [
         dataset[i]["experiment"]["phenotype"]["environment_response_se"]
-        for i in range(4)
-    ] == [0.2, math.sqrt(0.02), 0.1, 0.05]
+        for i in range(5)
+    ] == [0.2, math.sqrt(0.02), 0.1, math.sqrt(0.1), 0.1]
     dmso = dataset[2]["experiment"]["environment"]["perturbations"]
     assert [(p["compound"]["name"], p["concentration"]) for p in dmso] == [
         (
             "dimethyl sulfoxide",
             {"value": 1.0, "unit": ConcentrationUnit.percent_v_v, "basis": None},
         )
+    ]
+    vendor = dataset[3]["experiment"]["environment"]["perturbations"][0]["compound"]
+    assert vendor["name"] == "1181-0519" and vendor["inchikey"] is None
+    assert [(g["field"], g["reason"]) for g in vendor["provenance_gaps"]] == [
+        ("inchikey", "not_reported_by_primary")
     ]
     assert dataset[0]["publication"] == _PUBLICATION.model_dump()
     assert dataset[0]["publication"] == {
@@ -345,19 +324,20 @@ def test_one_reference_per_drug_environment_and_the_reference_carries_no_n(
     pooled`` (636-645); the reference is built per environment, not per record, so the
     replicate design is asserted on records only.
 
-    The same spacer in two pools (records 0 and 1) shares the Fluconazole 20 uM
-    reference, so ``experiment_reference_index.json`` has three entries with member
-    indices [0, 1], [2], [3], each reference equal to the hand-built one.
+    The same spacer in two pools (records 0 and 1) and the YOL999W guide (record 4)
+    share the Fluconazole 20 uM reference, so ``experiment_reference_index.json`` has
+    three entries with member indices [0, 1, 4], [2], [3], each reference equal to the
+    hand-built one.
     """
     index = json.loads(
         (
             Path(dataset.root) / "preprocess" / "experiment_reference_index.json"
         ).read_text()
     )
-    assert [entry["member_indices"] for entry in index] == [[0, 1], [2], [3]]
-    assert [dataset[i]["reference"] for i in range(4)] == [
+    assert [entry["member_indices"] for entry in index] == [[0, 1, 4], [2], [3]]
+    assert [dataset[i]["reference"] for i in range(5)] == [
         _reference(env).model_dump()
-        for env in (_FLUCONAZOLE, _FLUCONAZOLE, _DMSO, _RAPAMYCIN)
+        for env in (_FLUCONAZOLE, _FLUCONAZOLE, _DMSO, _VENDOR, _FLUCONAZOLE)
     ]
     reference_phenotype = dataset[0]["reference"]["phenotype_reference"]
     assert {
@@ -387,11 +367,11 @@ def test_one_reference_per_drug_environment_and_the_reference_carries_no_n(
 def test_drop_log_accounts_for_every_rule_in_application_order(
     dataset: s.CrispriChemgenSmith2016Dataset,
 ) -> None:
-    """``dropped_records.json``: 9 source rows, 4 kept, 5 dropped = 1 vendor code (row 3,
-    item 1181-0519) + 2 no-A/var(A) (rows 4 and 5: a blank A and a ``n/a`` variance both
-    coerce to NaN) + 1 unresolved target (row 6, item YZZ999W) + 1 guide with no spacer
-    (row 7, item ERG11_g9). The log lists the vendor-code rule first, although the loop
-    checks a missing A or var(A) (smith2016.py line 600) before the vendor code (line 604).
+    """``dropped_records.json``: 9 source rows, 5 kept, 4 dropped = 2 no-A/var(A) (rows
+    4 and 5: a blank A and a ``n/a`` variance both coerce to NaN) + 1 target deferred to
+    the released-gene-name leaf (row 8, `` erg11 ``) + 1 guide with no spacer (row 7,
+    item ERG11_g9). The vendor-code drug is not a drop: it is listed under
+    ``compound_identity_gaps`` with its one record.
     """
     drop_log = json.loads(
         (Path(dataset.root) / "preprocess" / "dropped_records.json").read_text()
@@ -399,22 +379,9 @@ def test_drop_log_accounts_for_every_rule_in_application_order(
     assert drop_log == {
         "dataset": "CrispriChemgenSmith2016Dataset",
         "source_records": 9,
-        "kept_records": 4,
-        "dropped_records": 5,
+        "kept_records": 5,
+        "dropped_records": 4,
         "rules": [
-            {
-                "rule": "drug_is_a_vendor_catalog_code_with_no_released_structure",
-                "scope": "compound",
-                "description": (
-                    "the Drug label is a ChemDiv / ChemBridge / TimTec catalog id and "
-                    "the primary released no structure, SMILES or CAS for it, so "
-                    "resolve_compound_identity returns PROPRIETARY with no InChIKey, "
-                    "ChEBI id or PubChem CID and the compound entity cannot be encoded "
-                    "or joined"
-                ),
-                "n_records": 1,
-                "items": ["1181-0519"],
-            },
             {
                 "rule": "row_has_no_A_or_var_A",
                 "scope": "row",
@@ -426,14 +393,17 @@ def test_drop_log_accounts_for_every_rule_in_application_order(
                 "items": [],
             },
             {
-                "rule": "target_orf_is_not_a_current_genome_gene",
+                "rule": "deferred_to_released_gene_name_leaf",
                 "scope": "row",
                 "description": (
-                    "the target ORF does not resolve to a gene of the current R64 "
-                    "annotation (0 today; all 20 targets are current)"
+                    "the ORF cell is not ORF-shaped, so it cannot be stored on "
+                    "CrisprInterferencePerturbation, whose systematic_gene_name is "
+                    "validated against the ORF pattern; stored once the "
+                    "released-gene-name leaf lands (0 today; all 20 released targets "
+                    "are ORF-shaped)"
                 ),
                 "n_records": 1,
-                "items": ["YZZ999W"],
+                "items": ["erg11"],
             },
             {
                 "rule": "guide_has_no_released_spacer",
@@ -447,6 +417,15 @@ def test_drop_log_accounts_for_every_rule_in_application_order(
                 "items": ["ERG11_g9"],
             },
         ],
+        "compound_identity_gaps": [
+            {
+                "drug": "1181-0519",
+                "compound_name": "1181-0519",
+                "gap_field": "inchikey",
+                "gap_reason": "not_reported_by_primary",
+                "n_records": 1,
+            }
+        ],
     }
     assert drop_log == s.DropLog.model_validate(drop_log).model_dump()
 
@@ -454,8 +433,8 @@ def test_drop_log_accounts_for_every_rule_in_application_order(
 def test_gene_set_build_manifest_and_interned_store(
     dataset: s.CrispriChemgenSmith2016Dataset,
 ) -> None:
-    """``gene_set.json`` is the two resolved ORFs sorted; the build manifest names the
-    root slug, the loader class and module, this host and the worktree HEAD; the
+    """``gene_set.json`` is the three released ORFs sorted; the build manifest names
+    the root slug, the loader class and module, this host and the worktree HEAD; the
     ``interned`` store holds 6 entries: the three distinct environments and the three
     references (each above ``INTERN_MIN_BYTES``), while the four-field DOI-only
     publication stays inline.
@@ -464,8 +443,9 @@ def test_gene_set_build_manifest_and_interned_store(
     assert json.loads((preprocess / "gene_set.json").read_text()) == [
         "YHR007C",
         "YJR066W",
+        "YOL999W",
     ]
-    assert dataset.gene_set == {"YHR007C", "YJR066W"}
+    assert dataset.gene_set == {"YHR007C", "YJR066W", "YOL999W"}
     assert dataset.experiment_class is EnvironmentResponseExperiment
     assert dataset.reference_class is EnvironmentResponseExperimentReference
     manifest = json.loads((preprocess / "build_manifest.json").read_text())
@@ -489,24 +469,24 @@ def test_gene_set_build_manifest_and_interned_store(
     assert _interned_entries(Path(dataset.root)) == 6
 
 
-def test_store_reopens_without_a_genome_and_serves_the_getters(
+def test_store_reopens_without_raw_files_and_serves_the_getters(
     dataset: s.CrispriChemgenSmith2016Dataset,
 ) -> None:
     """With ``processed/lmdb`` present a second instance on the same root skips both
-    ``download()`` and ``process()``, so it needs no genome and no raw files: its four
-    records equal the first instance's, ``get([0, 3])`` returns the two named records
-    as a list while ``dataset[[0, 3]]`` is PyG's two-item subset view of the same records,
-    ``transform_item`` rebuilds the typed objects, and ``repr`` is ``ClassName(4)``.
+    ``download()`` and ``process()``, so it needs no raw files: its five records equal
+    the first instance's, ``get([0, 3])`` returns the two named records as a list while
+    ``dataset[[0, 3]]`` is PyG's two-item subset view of the same records,
+    ``transform_item`` rebuilds the typed objects, and ``repr`` is ``ClassName(5)``.
     The inline hooks: ``create_experiment`` raises ``NotImplementedError`` and
     ``preprocess_raw`` returns its input unchanged.
     """
-    records = [dataset[i] for i in range(4)]
+    records = [dataset[i] for i in range(5)]
     dataset.close_lmdb()
     for name in (s.EFFECT_FILENAME, s.GUIDE_FILENAME):
         (Path(dataset.root) / "raw" / name).unlink()
-    reopened = s.CrispriChemgenSmith2016Dataset(root=dataset.root, genome=None)
-    assert len(reopened) == 4
-    assert [reopened[i] for i in range(4)] == records
+    reopened = s.CrispriChemgenSmith2016Dataset(root=dataset.root)
+    assert len(reopened) == 5
+    assert [reopened[i] for i in range(5)] == records
     assert reopened.get([0, 3]) == [records[0], records[3]]
     subset = reopened[[0, 3]]
     assert len(subset) == 2
@@ -516,36 +496,16 @@ def test_store_reopens_without_a_genome_and_serves_the_getters(
     subset.close_lmdb()
     assert reopened.transform_item(reopened[3]) == {
         "experiment": _EXPECTED[3],
-        "reference": _reference(_RAPAMYCIN),
+        "reference": _reference(_VENDOR),
         "publication": _PUBLICATION,
     }
-    assert repr(reopened) == "CrispriChemgenSmith2016Dataset(4)"
-    assert reopened.gene_set == {"YHR007C", "YJR066W"}
+    assert repr(reopened) == "CrispriChemgenSmith2016Dataset(5)"
+    assert reopened.gene_set == {"YHR007C", "YJR066W", "YOL999W"}
     with pytest.raises(NotImplementedError):
         reopened.create_experiment()
     sentinel = object()
     assert reopened.preprocess_raw(sentinel) is sentinel
     reopened.close_lmdb()
-
-
-def test_genome_is_required_before_the_store_is_opened(tmp_path: Path) -> None:
-    """With the raw workbooks present and ``genome=None`` the resolver (line 563) raises
-    the loader's message before ``_open_write_lmdb`` (592), so no ``processed/lmdb`` is
-    left behind and a retry with a genome builds normally.
-    """
-    root = _root(tmp_path)
-    with pytest.raises(
-        RuntimeError,
-        match=re.escape(
-            "CrispriChemgenSmith2016Dataset requires a genome; "
-            "inject SCerevisiaeGenome(...)"
-        ),
-    ):
-        s.CrispriChemgenSmith2016Dataset(root=str(root), genome=None)
-    assert not (root / "processed" / "lmdb").exists()
-    retry = s.CrispriChemgenSmith2016Dataset(root=str(root), genome=_genome())
-    assert len(retry) == 4
-    retry.close_lmdb()
 
 
 def _staged_workbooks(tmp_path: Path, name: str) -> tuple[Path, str, str]:
@@ -688,7 +648,7 @@ def test_download_links_the_verified_mirror_and_refuses_drift_or_absence(
     naming ``manifest.json`` when absent). Once the fixture workbooks are deposited, a
     root whose ``raw/`` already links the guide workbook keeps that link (``download()``
     only creates a missing one), gets the effect workbook linked beside it and builds
-    the same four records. A
+    the same five records. A
     mirror file whose bytes drift from the manifest is refused naming both digests; a
     removed mirror file is refused naming its path.
     """
@@ -696,7 +656,7 @@ def test_download_links_the_verified_mirror_and_refuses_drift_or_absence(
     monkeypatch.setenv("DATA_ROOT", str(data_root))
     manifest_path = data_root / "torchcell-raw" / s.CITATION_KEY / "manifest.json"
     with pytest.raises(FileNotFoundError, match=re.escape(str(manifest_path))):
-        s.CrispriChemgenSmith2016Dataset(root=str(tmp_path / "a"), genome=_genome())
+        s.CrispriChemgenSmith2016Dataset(root=str(tmp_path / "a"))
 
     staging, effect_sha, guide_sha = _staged_workbooks(tmp_path, "staging")
     monkeypatch.setattr(s, "EFFECT_SHA256", effect_sha)
@@ -707,7 +667,7 @@ def test_download_links_the_verified_mirror_and_refuses_drift_or_absence(
     root = tmp_path / "b"
     (root / "raw").mkdir(parents=True)
     os.symlink(mirror / s.GUIDE_REL, root / "raw" / s.GUIDE_FILENAME)
-    built = s.CrispriChemgenSmith2016Dataset(root=str(root), genome=_genome())
+    built = s.CrispriChemgenSmith2016Dataset(root=str(root))
     assert (root / "raw" / s.EFFECT_FILENAME).is_symlink()
     assert (root / "raw" / s.EFFECT_FILENAME).resolve() == (
         mirror / s.EFFECT_REL
@@ -715,8 +675,8 @@ def test_download_links_the_verified_mirror_and_refuses_drift_or_absence(
     assert (root / "raw" / s.GUIDE_FILENAME).resolve() == (
         mirror / s.GUIDE_REL
     ).resolve()
-    assert len(built) == 4
-    assert [built[i]["experiment"] for i in range(4)] == [
+    assert len(built) == 5
+    assert [built[i]["experiment"] for i in range(5)] == [
         e.model_dump() for e in _EXPECTED
     ]
     built.close_lmdb()
@@ -724,7 +684,7 @@ def test_download_links_the_verified_mirror_and_refuses_drift_or_absence(
     (mirror / s.EFFECT_REL).write_bytes(b"drifted upstream")
     drifted = _sha256(mirror / s.EFFECT_REL)
     with pytest.raises(RawSha256MismatchError) as err:
-        s.CrispriChemgenSmith2016Dataset(root=str(tmp_path / "c"), genome=_genome())
+        s.CrispriChemgenSmith2016Dataset(root=str(tmp_path / "c"))
     assert str(err.value) == (
         f"sha256 mismatch for {mirror / s.EFFECT_REL}: expected {effect_sha}, "
         f"observed {drifted}"
@@ -737,7 +697,7 @@ def test_download_links_the_verified_mirror_and_refuses_drift_or_absence(
             f"required raw artifact missing from mirror: {mirror / s.EFFECT_REL}"
         ),
     ):
-        s.CrispriChemgenSmith2016Dataset(root=str(tmp_path / "d"), genome=_genome())
+        s.CrispriChemgenSmith2016Dataset(root=str(tmp_path / "d"))
 
 
 def test_a_raw_file_off_the_pin_is_refused_at_build_time(
@@ -752,7 +712,7 @@ def test_a_raw_file_off_the_pin_is_refused_at_build_time(
     staged = off_pin_raw(s, [s.EFFECT_FILENAME, s.GUIDE_FILENAME])
     raw = staged.root / "raw" / s.EFFECT_FILENAME
     with pytest.raises(RawSha256MismatchError) as err:
-        s.CrispriChemgenSmith2016Dataset(root=str(staged.root), genome=_genome())
+        s.CrispriChemgenSmith2016Dataset(root=str(staged.root))
     assert str(err.value) == (
         f"sha256 mismatch for {raw}: expected "
         "02962e51e492b0505e8595fc1c80fab5fca8a8c8f05e05969dbff18ddff71cd0, "
@@ -784,9 +744,9 @@ def test_a_drop_log_that_disagrees_with_its_rules_refuses_after_writing_it(
     monkeypatch.setattr(s, "DropLog", inflated)
     root = _root(tmp_path)
     with pytest.raises(RuntimeError) as err:
-        s.CrispriChemgenSmith2016Dataset(root=str(root), genome=_genome())
+        s.CrispriChemgenSmith2016Dataset(root=str(root))
     assert str(err.value) == (
-        "drop accounting mismatch: rules total 5, 6 records missing from the build"
+        "drop accounting mismatch: rules total 4, 5 records missing from the build"
     )
     log = json.loads((root / "preprocess" / "dropped_records.json").read_text())
-    assert log["dropped_records"] == 6
+    assert log["dropped_records"] == 5

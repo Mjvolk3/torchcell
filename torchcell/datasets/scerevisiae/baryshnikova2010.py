@@ -69,8 +69,9 @@ GENOTYPE / REFERENCE: each strain is one gene perturbation in the BY4741 SGA bac
   (``_SV_BACKGROUND_STRAIN``; note the quote is the SI's border-control sentence, the only
   place the mirror names the array background, and the main text's BY4741 sentence is
   scoped to the serial-dilution/actin/RIM101 follow-up strains). The release carries only
-  systematic allele ids (no common names), so ``perturbed_gene_name`` is the resolved
-  systematic ORF and ``strain_id`` is the cross-dataset strain key; the allele names of the
+  systematic allele ids (no common names), so ``perturbed_gene_name`` is the released ORF
+  token (upper-cased, no genome consulted: #1045, 2026.10.12) and ``strain_id`` is the
+  cross-dataset strain key (the raw id verbatim); the allele names of the
   291 TS strains shared with Costanzo 2016 are NOT imported, because the Costanzo strain
   table is not in the raw mirror and a derivation cannot be pinned to it. The reference
   fitness 1.0 is the mode-normalization convention, not an averaged control measurement, so
@@ -388,50 +389,16 @@ XLS_URL = (
 # --------------------------------------------------------------------------- #
 _EXPECTED_ROWS = 6023
 
-#: Raw allele ids whose ORF the CURRENT R64 annotation cannot resolve (retired, merged or
-#: dubious ORFs removed since 2010), frozen so the drop is a documented release fact and
-#: the record-count oracle is ``_EXPECTED_ROWS - len(_UNRESOLVABLE)`` rather than whatever
-#: the genome on disk happens to yield. A build whose drop set differs from this raises.
-_UNRESOLVABLE: MappingProxyType[str, str] = MappingProxyType(
-    {
-        "YAR037W": "deletion",
-        "YAR040C": "deletion",
-        "YAR043C": "deletion",
-        "YAR061W": "deletion",
-        "YAR062W": "deletion",
-        "YCL006C": "deletion",
-        "YCL013W": "deletion",
-        "YCL026C": "deletion",
-        "YCL074W": "deletion",
-        "YCL075W": "deletion",
-        "YDR134C": "deletion",
-        "YER108C": "deletion",
-        "YER109C": "deletion",
-        "YFL056C": "deletion",
-        "YFL057C": "deletion",
-        "YIL080W": "deletion",
-        "YIL167W": "deletion",
-        "YIL168W": "deletion",
-        "YIL170W": "deletion",
-        "YIL171W_damp": "damp",
-        "YIL174W": "deletion",
-        "YIL175W": "deletion",
-        "YIR043C": "deletion",
-        "YLL016W": "deletion",
-        "YLL017W": "deletion",
-        "YOL153C": "deletion",
-        "YOR031W": "deletion",
-        "YPL060C-A": "deletion",
-        "YPL275W": "deletion",
-        "YPL276W": "deletion",
-    }
+#: Every released allele is a record (2026.10.12, #1045): the 30 alleles whose ORF token
+#: the current R64 annotation does not carry as a gene (29 deletions and one DAmP allele,
+#: e.g. YAR037W, YCL006C, YIL171W_damp) are stored under their released ORF, and the 42
+#: whose token R64 lists as a synonym of another locus (e.g. YAL043C-A, YAR044W) keep
+#: their released token too. The previous build dropped the first 30 and renamed the 42.
+RETENTION_RULE = (
+    "no rule drops a Baryshnikova 2010 allele: every released allele id is stored under "
+    "its own ORF token (upper-cased), with the raw id on strain_id; no genome is consulted"
 )
-DROP_RULE = (
-    "a released allele whose ORF token does not resolve to a gene of the current R64 "
-    "annotation (retired, merged or dubious ORF) is dropped; the set is frozen in "
-    "_UNRESOLVABLE and asserted on every build"
-)
-EXPECTED_RECORDS = _EXPECTED_ROWS - len(_UNRESOLVABLE)
+EXPECTED_RECORDS = _EXPECTED_ROWS
 
 #: 30 C carries the deletions and the DAmP hypomorphs; 26 C carries the TS alleles.
 _TEMPERATURE_C: MappingProxyType[str, float] = MappingProxyType(
@@ -585,13 +552,11 @@ class SmfBaryshnikova2010Dataset(ExperimentDataset):
         self,
         root: str = "data/torchcell/smf_baryshnikova2010",
         io_workers: int = 0,
-        genome: SCerevisiaeGenome | None = None,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize the dataset; a genome is REQUIRED to resolve ORFs to current R64."""
-        self.genome = genome
+        """Initialize the dataset (no genome: every allele is stored as released)."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -628,29 +593,6 @@ class SmfBaryshnikova2010Dataset(ExperimentDataset):
             self.raw_dir,
             XLS_SHA256,
         )
-
-    def _resolver(self) -> Callable[[str], str | None]:
-        """Build an ORF -> current-R64-systematic-name resolver from the genome."""
-        if self.genome is None:
-            raise RuntimeError(
-                "SmfBaryshnikova2010Dataset requires a genome for ORF resolution; "
-                "inject SCerevisiaeGenome(...)"
-            )
-        genome = self.genome
-        df = genome.gene_attribute_table
-        ids = set(df["ID"])
-        alias_map = genome.alias_to_systematic
-
-        def resolve(token: str) -> str | None:
-            gene = token.upper()
-            if gene in ids:
-                return gene
-            candidates = alias_map.get(gene, [])
-            if candidates and candidates[0] in ids:
-                return candidates[0]
-            return None
-
-        return resolve
 
     def _read_smf(self) -> pd.DataFrame:
         """Read + validate Supplementary Data 1 (3 columns, no header, composition check)."""
@@ -732,7 +674,6 @@ class SmfBaryshnikova2010Dataset(ExperimentDataset):
     def process(self) -> None:
         """Convert each SMF row into a fitness record; write LMDB."""
         verify_raw_files(self.raw_dir, {XLS_NAME: XLS_SHA256})
-        resolve = self._resolver()
         df = self._read_smf()
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
@@ -750,17 +691,13 @@ class SmfBaryshnikova2010Dataset(ExperimentDataset):
         references = {kind: self._reference(kind) for kind in _TEMPERATURE_C}
         publication = Publication(doi=DOI, doi_url=f"https://doi.org/{DOI}")
 
-        dropped: dict[str, str] = {}
         env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
         idx = 0
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for _, row in tqdm(df.iterrows(), total=len(df), desc="baryshnikova2010"):
                 raw_allele = str(row["allele"])
                 orf_token, kind = _parse_allele(raw_allele)
-                orf = resolve(orf_token)
-                if orf is None:
-                    dropped[raw_allele] = kind
-                    continue
+                orf = orf_token.upper()
                 if raw_allele in dup_ids:
                     occ[raw_allele] = occ.get(raw_allele, 0) + 1
                     strain_id = f"{raw_allele}.{occ[raw_allele]}"
@@ -786,35 +723,23 @@ class SmfBaryshnikova2010Dataset(ExperimentDataset):
         env.close()
         interned_env.close()
 
-        if dropped != dict(_UNRESOLVABLE):
-            raise RuntimeError(
-                "unresolvable allele set drifted from the frozen release constant: "
-                f"unexpected {sorted(set(dropped) - set(_UNRESOLVABLE))}, "
-                f"missing {sorted(set(_UNRESOLVABLE) - set(dropped))}"
-            )
         if idx != EXPECTED_RECORDS:
             raise RuntimeError(f"wrote {idx} records, expected {EXPECTED_RECORDS}")
         with open(osp.join(self.preprocess_dir, "dropped_records.json"), "w") as fh:
             json.dump(
                 {
-                    "rule": DROP_RULE,
+                    "rule": RETENTION_RULE,
                     "n_raw_rows": _EXPECTED_ROWS,
-                    "n_dropped": len(dropped),
+                    "n_dropped": 0,
                     "n_kept": idx,
-                    "dropped_by_kind": {
-                        kind: sum(1 for v in dropped.values() if v == kind)
-                        for kind in sorted(set(dropped.values()))
-                    },
-                    "dropped": dict(sorted(dropped.items())),
                 },
                 fh,
                 indent=2,
             )
         log.info(
-            "Wrote %d Baryshnikova2010 fitness experiments to LMDB (%d dropped: %s)",
+            "Wrote %d Baryshnikova2010 fitness experiments to LMDB (0 dropped: every "
+            "released allele is stored under its own ORF token)",
             idx,
-            len(dropped),
-            sorted(dropped),
         )
 
     def preprocess_raw(self, df: Any, preprocess: dict[str, Any] | None = None) -> Any:

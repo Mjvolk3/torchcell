@@ -81,21 +81,22 @@ The scored strain is formally a double mutant (a neutral-locus natMX query cross
 array strain, ``_NEUTRAL_QUERY``); the neutral marker is NOT put in the genotype, which is
 the same simplification served Costanzo 2016 makes, so the two datasets stay joinable.
 
-GENE RESOLUTION -- every ``Systematic Name`` goes through the SHARED, layered
-``SCerevisiaeGenome.resolve_gene_name`` instead of a raw-FASTA header membership test.
-The FASTA test both dropped 18 strains it should have kept (old systematic names that
-SGD RENAMED, e.g. YAR044W -> YAR042W) and kept 10 it should have dropped (blocked reading
-frames and pseudogenes, which are valid R64 features but not genes). Retention: CURRENT and
-RENAMED are kept (stored under the CURRENT systematic name, with the sheet's own name kept
-as the strain's ``perturbed_gene_name``); NON_GENE_FEATURE and RETIRED are dropped,
-counted, and written to ``dropped_records.json`` beside ``processed/``.
+GENE IDENTITY -- every strain is stored AS RELEASED, under Data File S1's ``Systematic
+Name`` cell, which is also its ``perturbed_gene_name`` when the sheet gives no ``Gene
+Name``. No genome is consulted (#1045, owner rule 2026-10-12: "the data is the data";
+the genome and the experiment are loaded separately and meet through their gene sets at
+modeling time). An ORF the current annotation renames (18 strains, e.g. YAR044W, which
+R64-4-1 lists as YAR042W), calls a blocked reading frame or pseudogene (12, e.g.
+YER108C), or has retired (3: YAR037W, YAR040C, YAR043C) keeps its released name and
+every one of its condition cells; the previous build dropped the last 15 strains (210
+records) and keyed the 18 renamed ones to the current name. ``dropped_records.json``
+beside ``processed/`` records that nothing is dropped and counts the blank cells.
 
 DATA SOURCE (manual-once -> mirror; Science SI is bot-blocked, verified 403 + Cloudflare
 challenge, like Costanzo 2016): Data File S1
 ``Costanzo et al_Data File S1_Conditions_Strains_Fitness.xlsx`` is deposited to
 ``$DATA_ROOT/torchcell-raw/costanzoEnvironmentalRobustnessGlobal2021/`` and sha256-pinned.
-Final: 4414 strains (4396 CURRENT + 18 RENAMED) x 14 conditions minus empty cells =
-61,430 records.
+Final: 4429 strains x 14 conditions minus the 366 blank cells = 61,640 records.
 """
 
 import json
@@ -152,8 +153,6 @@ from torchcell.literature.manifest import (
     RetrievalRecord,
     sha256_file,
 )
-from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
-from torchcell.sequence.genome.scerevisiae.s288c import GeneNameStatus
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import (
     ProvenanceGap,
@@ -444,35 +443,14 @@ MEASUREMENT_UNITS = (
     "released)"
 )
 
-#: Retention rule: a source ORF is kept only when it resolves to a LIVE R64 gene.
-_KEPT_STATUSES = frozenset({GeneNameStatus.CURRENT, GeneNameStatus.RENAMED})
-
-DROP_RULE = (
-    "Systematic Name resolves through SCerevisiaeGenome.resolve_gene_name to a status "
-    "other than CURRENT or RENAMED (a NON_GENE_FEATURE such as a blocked reading frame "
-    "or pseudogene, or a name RETIRED from R64-4-1); the strain and all of its condition "
-    "cells are dropped"
+#: The one retention rule of this dataset: there is none. Every strain of the sheet is
+#: stored under its released ``Systematic Name``; a blank condition cell is a cell the
+#: release carries no value for, and it is counted, not a dropped record.
+RETENTION_RULE = (
+    "no rule drops a Costanzo 2021 strain or cell: every 'Systematic Name' row is stored "
+    "as released, and a blank condition cell (a value the release does not carry) is "
+    "counted under n_blank_cells"
 )
-
-
-class DroppedStrain(BaseModel):
-    """One source ORF the retention rule removed, with what it resolved to."""
-
-    source_name: str = Field(description="the 'Systematic Name' cell, verbatim")
-    status: str = Field(description="GeneNameStatus the shared resolver returned")
-    resolved_to: str | None = Field(
-        default=None, description="what the resolver mapped it to, when anything"
-    )
-    feature_type: str | None = Field(
-        default=None, description="GFF feature type for a NON_GENE_FEATURE"
-    )
-    n_records: int = Field(
-        description="non-empty condition cells lost with this strain"
-    )
-    candidates: list[str] = Field(
-        default_factory=list,
-        description="the live genes an AMBIGUOUS name could mean (empty otherwise)",
-    )
 
 
 class DropLog(BaseModel):
@@ -485,8 +463,9 @@ class DropLog(BaseModel):
     n_kept_records: int
     n_dropped_strains: int
     n_dropped_records: int
-    dropped_by_status: dict[str, int] = Field(default_factory=dict)
-    dropped: list[DroppedStrain] = Field(default_factory=list)
+    n_blank_cells: int = Field(
+        description="(strain, condition) cells the release leaves blank; no record"
+    )
 
 
 class BlankSystematicNameError(ValueError):
@@ -615,13 +594,11 @@ class EnvChemgenCostanzo2021Dataset(ExperimentDataset):
         self,
         root: str = "data/torchcell/env_chemgen_costanzo2021",
         io_workers: int = 0,
-        genome: SCerevisiaeGenome | None = None,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize the dataset; a genome is REQUIRED for R64 ORF resolution."""
-        self.genome = genome
+        """Initialize the dataset (no genome: every strain is stored as released)."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -747,26 +724,18 @@ class EnvChemgenCostanzo2021Dataset(ExperimentDataset):
         ).model_dump()
 
     def _genotype(
-        self,
-        orf: str,
-        source_orf: str,
-        gene_name: str | None,
-        allele: str | None,
-        strain_id: str,
+        self, orf: str, gene_name: str | None, allele: str | None, strain_id: str
     ) -> Genotype:
         """SGA strains: essential -> ts allele; non-essential -> KanMX deletion.
 
         Both carry the SGA ``strain_id`` (Costanzo 2021 is condition-SGA, same assay family
         as Costanzo 2016), so the Sga* perturbation leaves are the correct types. ``orf`` is
-        the CURRENT systematic name the shared resolver returned; ``source_orf`` is the
-        sheet's own name for the strain, and it is what an unnamed strain stores in
-        ``perturbed_gene_name``.
+        the sheet's ``Systematic Name`` cell as released, and it is what an unnamed strain
+        stores in ``perturbed_gene_name``.
 
-        Storing the SOURCE name matters where SGD MERGED two features: the array screened
-        YPR089W (dma5081) and YPR090W (dma5080) as two strains with two measurements, and
-        YPR090W now resolves to YPR089W. They are still two distinct strains, so the
-        source name is what keeps them apart instead of collapsing two measurements into
-        one L1 duplicate.
+        The released name is what keeps two strains apart where SGD has since MERGED two
+        features: the array screened YPR089W (dma5081) and YPR090W (dma5080) as two strains
+        with two measurements, and they stay two records under their two released names.
         """
         if allele is not None:
             return Genotype(
@@ -782,7 +751,7 @@ class EnvChemgenCostanzo2021Dataset(ExperimentDataset):
             perturbations=[
                 SgaKanMxDeletionPerturbation(
                     systematic_gene_name=orf,
-                    perturbed_gene_name=gene_name if gene_name else source_orf,
+                    perturbed_gene_name=gene_name if gene_name else orf,
                     strain_id=strain_id,
                 )
             ]
@@ -796,12 +765,6 @@ class EnvChemgenCostanzo2021Dataset(ExperimentDataset):
         raises ``RawSha256MismatchError`` before any row is read or any store opened.
         """
         verify_raw_files(self.raw_dir, {_S1_FILENAME: _S1_SHA256})
-        if self.genome is None:
-            raise RuntimeError(
-                "EnvChemgenCostanzo2021Dataset requires a genome for R64 ORF "
-                "resolution; inject SCerevisiaeGenome(...)"
-            )
-        resolve = self.genome.resolve_gene_name
         pub_dump = Publication(doi=DOI, doi_url=f"https://doi.org/{DOI}").model_dump()
         ref_dump = self._reference_dump()
 
@@ -823,38 +786,20 @@ class EnvChemgenCostanzo2021Dataset(ExperimentDataset):
         os.makedirs(self.processed_dir, exist_ok=True)
         env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(1e11))
         idx = 0
-        kept_strains = 0
-        dropped: list[DroppedStrain] = []
+        n_blank_cells = 0
         with env.begin(write=True) as txn:
             for _, row in tqdm(frame.iterrows(), total=len(frame), desc="Costanzo2021"):
-                source_orf = str(row["Systematic Name"]).strip()
-                resolution = resolve(source_orf)
-                n_cells = int(
-                    sum(1 for spec in conditions if not pd.isna(row[spec["sheet_col"]]))
-                )
-                if resolution.status not in _KEPT_STATUSES:
-                    dropped.append(
-                        DroppedStrain(
-                            source_name=source_orf,
-                            status=resolution.status.value,
-                            resolved_to=resolution.systematic_name,
-                            feature_type=resolution.feature_type,
-                            n_records=n_cells,
-                            candidates=resolution.candidates,
-                        )
-                    )
-                    continue
-                orf = str(resolution.systematic_name)
-                kept_strains += 1
+                orf = str(row["Systematic Name"]).strip()
                 gene_name = row["Gene Name"]
                 gene_name = None if pd.isna(gene_name) else str(gene_name).strip()
                 allele = row["Allele (Essential genes only)"]
                 allele = None if pd.isna(allele) else str(allele).strip()
                 strain_id = str(row["Strain ID"]).strip()
-                genotype = self._genotype(orf, source_orf, gene_name, allele, strain_id)
+                genotype = self._genotype(orf, gene_name, allele, strain_id)
                 for spec in conditions:
                     value = row[spec["sheet_col"]]
                     if pd.isna(value):
+                        n_blank_cells += 1
                         continue
                     experiment = EnvironmentResponseExperiment(
                         dataset_name=self.name,
@@ -882,31 +827,24 @@ class EnvChemgenCostanzo2021Dataset(ExperimentDataset):
                     idx += 1
         env.close()
 
-        by_status: dict[str, int] = {}
-        for entry in dropped:
-            by_status[entry.status] = by_status.get(entry.status, 0) + 1
         drop_log = DropLog(
             dataset=self.name,
-            rule=DROP_RULE,
+            rule=RETENTION_RULE,
             n_source_strains=len(frame),
-            n_kept_strains=kept_strains,
+            n_kept_strains=len(frame),
             n_kept_records=idx,
-            n_dropped_strains=len(dropped),
-            n_dropped_records=sum(entry.n_records for entry in dropped),
-            dropped_by_status=by_status,
-            dropped=sorted(dropped, key=lambda entry: entry.source_name),
+            n_dropped_strains=0,
+            n_dropped_records=0,
+            n_blank_cells=n_blank_cells,
         )
         with open(osp.join(self.root, _DROPPED_FILENAME), "w") as handle:
             handle.write(drop_log.model_dump_json(indent=2))
         log.info(
-            "Wrote %d Costanzo2021 records from %d/%d strains; dropped %d strains "
-            "(%d records) by rule: %s",
+            "Wrote %d Costanzo2021 records from all %d strains as released; "
+            "%d blank cells carry no record",
             idx,
-            kept_strains,
             len(frame),
-            len(dropped),
-            drop_log.n_dropped_records,
-            by_status,
+            n_blank_cells,
         )
 
     def preprocess_raw(self, df: Any, preprocess: dict[str, Any] | None = None) -> Any:
@@ -924,17 +862,12 @@ def main() -> None:
 
     load_dotenv()
     data_root = os.environ["DATA_ROOT"]
-    genome = SCerevisiaeGenome(
-        genome_root=osp.join(data_root, "data/sgd/genome"),
-        go_root=osp.join(data_root, "data/go"),
-        overwrite=False,
-    )
     root = osp.join(data_root, "data/torchcell/env_chemgen_costanzo2021")
-    dataset = EnvChemgenCostanzo2021Dataset(root=root, genome=genome)
+    dataset = EnvChemgenCostanzo2021Dataset(root=root)
     print(f"len = {len(dataset)}")
     print(dataset[0])
     with open(osp.join(root, _DROPPED_FILENAME)) as handle:
-        print(json.load(handle)["n_dropped_records"])
+        print(json.load(handle)["n_blank_cells"])
 
 
 if __name__ == "__main__":

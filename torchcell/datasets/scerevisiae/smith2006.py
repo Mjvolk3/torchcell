@@ -18,9 +18,12 @@ beta-oxidation. Two readouts on solid agar omnitrays:
 
 RECORD = one (deletion strain x condition) ``EnvironmentResponseExperiment``:
 
-- GENOTYPE: one ``KanMxDeletionPerturbation`` in the BY4742 background. The common name
-  is the GENOME's own standard name for the resolved ORF, not the 2005-era Standard Name
-  column, so one gene carries one spelling across every torchcell dataset.
+- GENOTYPE: one ``KanMxDeletionPerturbation`` in the BY4742 background, named AS RELEASED:
+  ``systematic_gene_name`` is the table's ``Systematic Name`` cell and
+  ``perturbed_gene_name`` its ``Standard Name`` cell (the ORF again where that cell is
+  blank). No genome is consulted (#1045, owner rule 2026-10-12: "the data is the data"):
+  a 2005-era ORF the current annotation renames, merges or no longer calls a gene keeps
+  its released name, and reconciling it to R64 is a modeling-time step.
 - ENVIRONMENT: the shared ``MEDIA_LIBRARY`` medium (``YPBO`` / ``YPBM`` / ``YPBA``),
   whose typed components carry the published recipe INCLUDING the fatty acid or acetate
   as its ``carbon_source`` component. The experimental EDIT is therefore a carbon-source
@@ -44,23 +47,30 @@ SOURCED VALUES (every number is a module-level ``SourcedValue`` anchored to the 
   pinning is within-plate technical replication of the source colony and is not counted.
 - ``Temperature(30.0)`` and ``aerobicity="aerobic"`` from the same incubation sentence.
 
-RECORDS DROPPED (rule + counts written to ``preprocess/dropped_records.json``):
+RECORDS (every released score is a record; ``preprocess/dropped_records.json`` is the
+accounting):
 
-1. ``strain_failed_the_yepd_growth_control``. Column 7 of the released table flags strains
-   with no growth (NG, 263) or low growth (LG, 208) on the YEPD plate the whole set was
-   pinned on before replication, plus one NG/CONT. A clear zone needs a growing patch, so
-   these scores measure the growth failure, not beta-oxidation. MEASURED on the released
-   table: among NG strains 98.1% / 98.9% / 96.2% score the lowest value on oleate /
-   myristate / acetate against 2.0% / 2.2% / 0.3% of unflagged strains, and 79.8% / 76.0%
-   of LG strains score the lowest clear-zone value with 70.7% scoring the middle acetate
-   value. The readout is confounded rather than merely noisy, and nothing in the record
-   could carry the flag (``EnvironmentResponsePhenotype`` has no QC-flag field), so the
-   strains are dropped and counted.
-2. ``systematic_name_does_not_resolve_to_a_current_orf`` and
-   ``alias_resolution_collides_with_a_directly_present_orf``. A name already a current R64
-   id is taken directly; an old systematic name follows the genome alias table ONLY when
-   its target is not already claimed by a direct-id row, so a dubious ORF absorbed into a
-   verified neighbour (YOR240W -> YOR239W, present as ABP140) is dropped, not mislabelled.
+1. ``strain_flagged_on_the_yepd_growth_control`` is CARRIED, not a drop. Column 7 of the
+   released table flags strains with no growth (NG, 263) or low growth (LG, 208) on the
+   YEPD plate the whole set was pinned on before replication, plus one NG/CONT. MEASURED
+   on the released table: among NG strains 98.1% / 98.9% / 96.2% score the lowest value
+   on oleate / myristate / acetate against 2.0% / 2.2% / 0.3% of unflagged strains, and
+   79.8% / 76.0% of LG strains score the lowest clear-zone value with 70.7% scoring the
+   middle acetate value. The scores are the authors' released scores for those strains,
+   so the 1,416 records are stored as released (2026.10.12, #1045); the flag has no slot
+   on ``EnvironmentResponsePhenotype``, so the ledger lists the 472 flagged ORFs under
+   ``carried`` with their record count, and the dataset note carries the measurement
+   above for modeling time. The build before this one dropped them.
+2. Every ``Systematic Name`` is stored as released: the 26 strains whose 2005-era name
+   is not a current R64 gene id (78 records) and the 23 whose name R64 lists as a
+   synonym of another released ORF (69 records, e.g. YOR240W beside YOR239W) are
+   records, under their own released names, which is also what keeps those strain
+   pairs apart. A name that is not ORF-shaped at all raises
+   ``ReleasedNameNotSystematicError`` (0 of 4,770 rows), and a second row for a released
+   ORF raises ``RepeatedStrainRowError`` (0 rows; the release's own legend says duplicated
+   strains were already collapsed).
+3. ``condition_cell_is_blank``: a strain with no score in a condition's column has no
+   record there (the release carries all three scores for every row, so this is 0).
 
 NOT INGESTED (deliberate, recorded here rather than silently): the ``Adherence`` column
 (79 strains, a second released phenotype the paper analyses separately) and the
@@ -427,36 +437,49 @@ class DropRule(BaseModel):
     items: list[str] = []
 
 
+class CarriedFlag(BaseModel):
+    """A released per-strain flag the schema has no slot for: carried, never a drop."""
+
+    flag: str
+    description: str
+    n_records: int
+    items: list[str] = []
+
+
 class DropLog(BaseModel):
-    """Every retention rule applied to a build, in the order they were applied."""
+    """Every retention rule applied to a build, in order, plus what is carried."""
 
     dataset: str
     source_records: int
     kept_records: int
     dropped_records: int
     rules: list[DropRule]
+    carried: list[CarriedFlag] = []
 
 
-class ResolvedStrains(BaseModel):
-    """The strain rows a build keeps, plus the per-rule drop lists."""
+class ReleasedNameNotSystematicError(ValueError):
+    """A ``Systematic Name`` cell that is not an ORF-shaped identifier."""
+
+
+class RepeatedStrainRowError(ValueError):
+    """Two rows name one released ORF, so its scores would be stored twice."""
+
+
+class ReleasedStrains(BaseModel):
+    """The strain rows of a build, every one kept, plus the YEPD-flagged ones."""
 
     orf: list[str]
     common: list[str]
     row_index: list[int]
-    dropped_unresolved: list[str]
-    dropped_alias_collision: list[str]
-    dropped_duplicate: list[str]
-    dropped_yepd_qc: list[str]
+    yepd_flagged: list[str]
 
 
 def canonical_common_names(genome: SCerevisiaeGenome) -> dict[str, str]:
     """``systematic name -> the genome's own standard (common) name``.
 
-    One spelling per gene is what keeps a perturbation from splitting into two graph
-    nodes, and taking it from the genome rather than from the 2005-era Standard Name
-    column is what makes the spelling identical across datasets. Only a standard name
-    that resolves BACK to the gene is used, so the stored pair round-trips through the
-    resolver (the L1 ``canonical_gene_names`` rule).
+    A downstream utility, not loader logic: this loader stores the released Standard
+    Name. Kept for the loaders that still call it. Only a standard name that resolves
+    BACK to the gene is used, so a pair built from it round-trips through the resolver.
     """
     canonical: dict[str, str] = {}
     for standard in genome.feature_index["standard_to_ids"]:
@@ -466,65 +489,49 @@ def canonical_common_names(genome: SCerevisiaeGenome) -> dict[str, str]:
     return canonical
 
 
-def resolve_strains(df: pd.DataFrame, genome: SCerevisiaeGenome) -> ResolvedStrains:
-    """Map every released strain row onto a current R64 ORF, or drop it with a reason.
+def released_strains(df: pd.DataFrame) -> ReleasedStrains:
+    """Every released strain row, named as released; nothing is dropped.
 
-    A name already a current R64 id resolves to itself; an old systematic name follows
-    the genome alias table to its current id ONLY when that target is not already a
-    directly-present ORF, so a dubious ORF absorbed into a verified neighbour is dropped
-    rather than mislabelled as the neighbour's deletion. A strain flagged NG/LG on the
-    YEPD growth control is dropped by rule 1 of the module docstring.
+    The ``Systematic Name`` cell (stripped, upper-cased) is the ORF and the ``Standard
+    Name`` cell the common name (the ORF again where it is blank). No genome is read. A
+    cell that is not ORF-shaped raises ``ReleasedNameNotSystematicError`` with its rows;
+    an ORF on two rows raises ``RepeatedStrainRowError`` naming both rows. A strain the
+    YEPD growth control flags (``YEPD_FAIL_FLAGS``) is listed on ``yepd_flagged`` and
+    kept.
     """
     names = [str(v).upper().strip() for v in df[SYSTEMATIC_COL].tolist()]
+    standards = df[STANDARD_COL].tolist()
     qc = [str(v).upper().strip() for v in df[YEPD_QC_COL].tolist()]
-    ids = set(genome.gene_attribute_table["ID"])
-    alias_map = genome.alias_to_systematic
-    direct = {name for name in names if name in ids}
-    canonical = canonical_common_names(genome)
-
-    orfs: list[str] = []
-    commons: list[str] = []
-    rows: list[int] = []
-    unresolved: list[str] = []
-    collision: list[str] = []
-    duplicate: list[str] = []
-    yepd: list[str] = []
-    seen: set[str] = set()
-    for row, (name, flag) in enumerate(zip(names, qc, strict=True)):
-        if name in ids:
-            orf: str | None = name
-        elif _SYSTEMATIC_RE.match(name):
-            candidates = alias_map.get(name, [])
-            if candidates and candidates[0] in ids and candidates[0] not in direct:
-                orf = candidates[0]
-            elif candidates and candidates[0] in direct:
-                collision.append(name)
-                continue
-            else:
-                unresolved.append(name)
-                continue
-        else:
-            unresolved.append(name)
-            continue
-        assert orf is not None
-        if orf in seen:
-            duplicate.append(name)
-            continue
-        seen.add(orf)
-        if flag in YEPD_FAIL_FLAGS:
-            yepd.append(orf)
-            continue
-        orfs.append(orf)
-        commons.append(canonical.get(orf, orf))
-        rows.append(row)
-    return ResolvedStrains(
-        orf=orfs,
+    malformed = sorted({n for n in names if not _SYSTEMATIC_RE.match(n)})
+    if malformed:
+        raise ReleasedNameNotSystematicError(
+            f"{len(malformed)} 'Systematic Name' cell(s) are not ORF-shaped: "
+            f"{malformed}; a released name with no ORF form needs the released-gene-name "
+            "leaf, not a drop"
+        )
+    first_row: dict[str, int] = {}
+    for row, name in enumerate(names):
+        if name in first_row:
+            raise RepeatedStrainRowError(
+                f"Supplementary Table 1 lists {name} at rows {first_row[name]} and "
+                f"{row}; one strain is one row, refusing to store its scores twice"
+            )
+        first_row[name] = row
+    commons = [
+        name
+        if pd.isna(standard) or not str(standard).strip()
+        else str(standard).strip()
+        for name, standard in zip(names, standards, strict=True)
+    ]
+    return ReleasedStrains(
+        orf=names,
         common=commons,
-        row_index=rows,
-        dropped_unresolved=sorted(unresolved),
-        dropped_alias_collision=sorted(collision),
-        dropped_duplicate=sorted(duplicate),
-        dropped_yepd_qc=sorted(yepd),
+        row_index=list(range(len(names))),
+        yepd_flagged=sorted(
+            name
+            for name, flag in zip(names, qc, strict=True)
+            if flag in YEPD_FAIL_FLAGS
+        ),
     )
 
 
@@ -538,13 +545,11 @@ class FattyAcidSmith2006Dataset(ExperimentDataset):
         self,
         root: str = "data/torchcell/env_chemgen_smith2006",
         io_workers: int = 0,
-        genome: SCerevisiaeGenome | None = None,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize the dataset; a genome is REQUIRED for systematic-name resolution."""
-        self.genome = genome
+        """Initialize the dataset (no genome: every strain is stored as released)."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -655,13 +660,8 @@ class FattyAcidSmith2006Dataset(ExperimentDataset):
     def process(self) -> None:
         """Parse the ordinal score table into per-(strain, condition) records; write LMDB."""
         verify_raw_files(self.raw_dir, {XLS_FILENAME: XLS_SHA256})
-        if self.genome is None:
-            raise RuntimeError(
-                "FattyAcidSmith2006Dataset requires a genome for systematic-name "
-                "resolution; inject SCerevisiaeGenome(...)"
-            )
         df = self._read_table()
-        strains = resolve_strains(df, self.genome)
+        strains = released_strains(df)
         n_conditions = len(CONDITION_SPECS)
         source_records = len(df) * n_conditions
         publication = Publication(
@@ -721,57 +721,15 @@ class FattyAcidSmith2006Dataset(ExperimentDataset):
         env.close()
         interned_env.close()
 
+        flagged = set(strains.yepd_flagged)
+        n_flagged_records = sum(
+            1
+            for orf, row in zip(strains.orf, strains.row_index, strict=True)
+            if orf in flagged
+            for spec in CONDITION_SPECS
+            if not pd.isna(df.iloc[row][spec["column"]])
+        )
         rules = [
-            DropRule(
-                rule="strain_failed_the_yepd_growth_control",
-                scope="strain",
-                description=(
-                    "column 7 of the released table flags the strain as NG (no growth), "
-                    "LG (low growth) or NG/CONT on the YEPD plate the whole deletion set "
-                    "was pinned on before replication onto the fatty-acid plates. A clear "
-                    "zone needs a growing patch, so the score measures the growth-control "
-                    "failure rather than beta-oxidation: among NG strains 98.1/98.9/96.2 "
-                    "percent take the lowest oleate/myristate/acetate value against "
-                    "2.0/2.2/0.3 percent of unflagged strains. Nothing in "
-                    "EnvironmentResponsePhenotype can carry the flag, so the strain is "
-                    "dropped rather than served unflagged"
-                ),
-                n_records=len(strains.dropped_yepd_qc) * n_conditions,
-                items=strains.dropped_yepd_qc,
-            ),
-            DropRule(
-                rule="systematic_name_does_not_resolve_to_a_current_orf",
-                scope="strain",
-                description=(
-                    "the 2005-era systematic name is neither a current R64 gene id nor a "
-                    "genome alias of one, so no gene entity exists to key the record to"
-                ),
-                n_records=len(strains.dropped_unresolved) * n_conditions,
-                items=strains.dropped_unresolved,
-            ),
-            DropRule(
-                rule="alias_resolution_collides_with_a_directly_present_orf",
-                scope="strain",
-                description=(
-                    "the old name aliases to an ORF the SAME release also carries "
-                    "directly (a dubious ORF absorbed into a verified neighbour, e.g. "
-                    "YOR240W -> YOR239W present as ABP140); forcing the alias would store "
-                    "a distinct dubious-ORF strain mislabelled as the neighbour's deletion"
-                ),
-                n_records=len(strains.dropped_alias_collision) * n_conditions,
-                items=strains.dropped_alias_collision,
-            ),
-            DropRule(
-                rule="second_row_for_an_already_resolved_orf",
-                scope="strain",
-                description=(
-                    "a later row resolves to an ORF an earlier row already claimed; the "
-                    "release's own legend says duplicated strains were already collapsed, "
-                    "so a residual duplicate cannot be told apart from the kept strain"
-                ),
-                n_records=len(strains.dropped_duplicate) * n_conditions,
-                items=strains.dropped_duplicate,
-            ),
             DropRule(
                 rule="condition_cell_is_blank",
                 scope="cell",
@@ -781,7 +739,22 @@ class FattyAcidSmith2006Dataset(ExperimentDataset):
                 ),
                 n_records=n_blank_cells,
                 items=[],
-            ),
+            )
+        ]
+        carried = [
+            CarriedFlag(
+                flag="strain_flagged_on_the_yepd_growth_control",
+                description=(
+                    "column 7 of the released table flags the strain as NG (no growth), "
+                    "LG (low growth) or NG/CONT on the YEPD plate the whole deletion set "
+                    "was pinned on before replication onto the fatty-acid plates; the "
+                    "released scores are stored as released and the flag, which "
+                    "EnvironmentResponsePhenotype has no slot for, is carried here and "
+                    "in the dataset note for modeling time"
+                ),
+                n_records=n_flagged_records,
+                items=strains.yepd_flagged,
+            )
         ]
         drop_log = DropLog(
             dataset=self.name,
@@ -789,6 +762,7 @@ class FattyAcidSmith2006Dataset(ExperimentDataset):
             kept_records=idx,
             dropped_records=source_records - idx,
             rules=rules,
+            carried=carried,
         )
         with open(osp.join(self.preprocess_dir, "dropped_records.json"), "w") as handle:
             handle.write(drop_log.model_dump_json(indent=2))
@@ -799,14 +773,12 @@ class FattyAcidSmith2006Dataset(ExperimentDataset):
                 f"{drop_log.dropped_records} records missing from the build"
             )
         log.info(
-            "Smith2006: wrote %d records from %d strains (dropped %d YEPD-QC, %d "
-            "unresolved, %d alias-collision, %d duplicate strains)",
+            "Smith2006: wrote %d records from all %d released strains (%d YEPD-flagged "
+            "strains carried, %d blank cells)",
             idx,
             len(strains.orf),
-            len(strains.dropped_yepd_qc),
-            len(strains.dropped_unresolved),
-            len(strains.dropped_alias_collision),
-            len(strains.dropped_duplicate),
+            len(strains.yepd_flagged),
+            n_blank_cells,
         )
 
     def preprocess_raw(self, df: Any, preprocess: dict[str, Any] | None = None) -> Any:
@@ -824,13 +796,8 @@ def main() -> None:
 
     load_dotenv()
     data_root = os.environ["DATA_ROOT"]
-    genome = SCerevisiaeGenome(
-        genome_root=osp.join(data_root, "data/sgd/genome"),
-        go_root=osp.join(data_root, "data/go"),
-        overwrite=False,
-    )
     root = osp.join(data_root, "data/torchcell/env_chemgen_smith2006")
-    dataset = FattyAcidSmith2006Dataset(root=root, genome=genome)
+    dataset = FattyAcidSmith2006Dataset(root=root)
     print(f"len = {len(dataset)}")
     print(dataset[0])
     print(

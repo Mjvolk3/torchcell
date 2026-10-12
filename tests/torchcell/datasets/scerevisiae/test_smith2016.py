@@ -14,7 +14,10 @@ from typing import cast
 
 import pytest
 
-from torchcell.datamodels.compound_identity import resolve_compound_identity
+from torchcell.datamodels.compound_identity import (
+    resolve_compound_identity,
+    resolved_compound,
+)
 from torchcell.datamodels.media import MEDIA_LIBRARY, SC_URA
 from torchcell.datamodels.schema import (
     AssayType,
@@ -68,10 +71,21 @@ def test_the_released_tamoxifen_alias_is_what_keeps_nsc_180973() -> None:
 
 
 @pytest.mark.parametrize("code", VENDOR_CODES)
-def test_vendor_catalog_codes_are_terminal_and_drop(code: str) -> None:
+def test_vendor_catalog_codes_are_stored_under_a_terminal_identity_gap(
+    code: str,
+) -> None:
+    """A vendor code is PROPRIETARY in the pinned table; its records are stored with the
+    compound named by the released label and a ``not_reported_by_primary`` gap on
+    ``inchikey`` (#1045), never dropped.
+    """
     resolution = resolve_compound_identity(name=code)
     assert not resolution.identified
     assert resolution.status.value == "PROPRIETARY"
+    compound = resolved_compound(code)
+    assert compound.name == code and compound.inchikey is None
+    assert [(g.field, g.reason.value) for g in compound.provenance_gaps] == [
+        ("inchikey", "not_reported_by_primary")
+    ]
 
 
 def test_the_medium_is_the_shared_sc_ura_object() -> None:

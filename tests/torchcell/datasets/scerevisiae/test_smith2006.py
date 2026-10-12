@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import os
 import os.path as osp
-from typing import cast
 
 import pandas as pd
 import pytest
@@ -26,47 +25,15 @@ from torchcell.datamodels.schema import (
     ResponseCategory,
 )
 from torchcell.datasets.scerevisiae import smith2006 as s
-from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 from torchcell.verification.sourced import SourcedValue, audit_sourced_value
-
-_GENES = {"YAL001C", "YAL002W", "YBR001C", "YBR002W"}
-_STANDARD = {"TFC3": ["YAL001C"], "VPS8": ["YAL002W"], "SPO23": ["YBR001C"]}
-
-
-class _Resolution:
-    def __init__(self, status: str, systematic: str | None) -> None:
-        self.status = status
-        self.systematic_name = systematic
-
-    @property
-    def is_current_gene(self) -> bool:
-        return self.status in ("current", "renamed")
-
-
-class _FakeGenome:
-    """The slice of ``SCerevisiaeGenome`` this loader's gene-name policy reads."""
-
-    gene_set = _GENES
-    feature_index = {"standard_to_ids": _STANDARD}
-    gene_attribute_table = pd.DataFrame({"ID": sorted(_GENES)})
-    alias_to_systematic: dict[str, list[str]] = {"YAL003W": ["YAL002W"]}
-
-    def resolve_gene_name(self, name: str) -> _Resolution:
-        upper = name.upper()
-        if upper in _GENES:
-            return _Resolution("current", upper)
-        for standard, ids in _STANDARD.items():
-            if upper == standard:
-                return _Resolution("renamed", ids[0])
-        return _Resolution("retired", None)
 
 
 def _table() -> pd.DataFrame:
-    """Four strains: one clean, one NG, one LG, one unresolvable systematic name."""
+    """Four strains: one clean, one NG, one LG, one with no Standard Name."""
     return pd.DataFrame(
         {
-            s.SYSTEMATIC_COL: ["YAL001C", "YAL002W", "YBR001C", "YZZ999W"],
-            s.STANDARD_COL: ["TFC3", "VPS8", "SPO23", "GHOST"],
+            s.SYSTEMATIC_COL: ["YAL001C", "yal002w", "YBR001C", "YAR037W"],
+            s.STANDARD_COL: ["TFC3", "VPS8", "SPO23", float("nan")],
             s.YEPD_QC_COL: [float("nan"), "NG", "LG", float("nan")],
             "Oleate (YPBO)": [3, 1, 1, 4],
             "Myristae (YPBM)": [4, 1, 2, 3],
@@ -75,34 +42,32 @@ def _table() -> pd.DataFrame:
     )
 
 
-def test_yepd_flagged_strains_are_dropped_and_counted() -> None:
-    strains = s.resolve_strains(_table(), cast(SCerevisiaeGenome, _FakeGenome()))
-    assert strains.orf == ["YAL001C"]
-    assert strains.dropped_yepd_qc == ["YAL002W", "YBR001C"]
-    assert strains.dropped_unresolved == ["YZZ999W"]
+def test_every_released_strain_is_kept_and_the_yepd_flags_are_carried() -> None:
+    strains = s.released_strains(_table())
+    assert strains.orf == ["YAL001C", "YAL002W", "YBR001C", "YAR037W"]
+    assert strains.row_index == [0, 1, 2, 3]
+    assert strains.yepd_flagged == ["YAL002W", "YBR001C"]
 
 
-def test_common_name_comes_from_the_genome_not_the_source_column() -> None:
-    strains = s.resolve_strains(_table(), cast(SCerevisiaeGenome, _FakeGenome()))
-    assert strains.common == ["TFC3"]
-    # ...and it round-trips through the resolver, which is the L1 canonical-name rule.
-    assert _FakeGenome().resolve_gene_name("TFC3").systematic_name == "YAL001C"
+def test_common_name_is_the_released_standard_name_else_the_orf() -> None:
+    strains = s.released_strains(_table())
+    assert strains.common == ["TFC3", "VPS8", "SPO23", "YAR037W"]
 
 
-def test_alias_resolution_that_would_collide_is_dropped_not_relabelled() -> None:
-    table = pd.DataFrame(
-        {
-            s.SYSTEMATIC_COL: ["YAL002W", "YAL003W"],
-            s.STANDARD_COL: ["VPS8", "OLD"],
-            s.YEPD_QC_COL: [float("nan"), float("nan")],
-            "Oleate (YPBO)": [3, 3],
-            "Myristae (YPBM)": [3, 3],
-            "Acetate (YPBA)": [3.0, 3.0],
-        }
-    )
-    strains = s.resolve_strains(table, cast(SCerevisiaeGenome, _FakeGenome()))
-    assert strains.orf == ["YAL002W"]
-    assert strains.dropped_alias_collision == ["YAL003W"]
+def test_a_name_that_is_not_orf_shaped_raises_instead_of_being_dropped() -> None:
+    table = _table()
+    table.loc[3, s.SYSTEMATIC_COL] = "GHOST1"
+    with pytest.raises(s.ReleasedNameNotSystematicError, match=r"\['GHOST1'\]"):
+        s.released_strains(table)
+
+
+def test_a_second_row_for_a_released_orf_raises_naming_both_rows() -> None:
+    table = _table()
+    table.loc[3, s.SYSTEMATIC_COL] = "yal001c"
+    with pytest.raises(
+        s.RepeatedStrainRowError, match=r"lists YAL001C at rows 0 and 3"
+    ):
+        s.released_strains(table)
 
 
 def test_every_condition_uses_a_shared_media_library_object() -> None:

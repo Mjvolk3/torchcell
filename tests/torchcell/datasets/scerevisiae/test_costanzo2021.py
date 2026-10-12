@@ -3,31 +3,28 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/datasets/scerevisiae/test_costanzo2021.py
 """Costanzo 2021 loader: shared media, the ORF retention rule, and dose provenance.
 
-Every test is synthetic: the fitness sheet is monkeypatched and the genome is a stub
-resolver, so nothing here needs the raw mirror or a built LMDB.
+Every test is synthetic: the fitness sheet is monkeypatched, so nothing here needs the
+raw mirror or a built LMDB. No genome is consulted (#1045): every strain is stored under
+its released ``Systematic Name``.
 
 2026.09.30 (Phase 13): a real xlsx in the released layout (a decoy first sheet, then
 ``Diff. Mutant fitness_Conditions`` with the four identity columns and two condition
 columns, one header written ``" benomyl "`` to exercise the strip + lower-case lookup),
-with ``_CONDITIONS`` cut to Benomyl and Galactose and a stub resolver (``_StubGenome``
-plus ``AMB1`` -> AMBIGUOUS and every unknown name -> RETIRED, as the real resolver does).
-Seven rows, in order, with (Benomyl, Galactose):
+with ``_CONDITIONS`` cut to Benomyl and Galactose. Six rows, in order, with (Benomyl,
+Galactose):
 
 1. YAL001C TFC3 dma1 (0.1, 0.2) -> records 0, 1 (KanMX deletion named TFC3)
 2. YFL039C ACT1 act1-101 tsa1 (-0.5, blank) -> record 2 (ts allele)
 3. YFL039C ACT1 act1-102 tsa2 (-0.25, 0.0) -> records 3, 4 (same ORF, a second
    allele: the duplicate identifier; 0.0 is a value, not a blank)
-4. YAR044W (no gene name) dma2 (0.3, blank) -> record 5, stored as YAR042W with
-   ``perturbed_gene_name`` "YAR044W" (the source ORF, line 731)
-5. YER108C (0.9, 0.9) -> dropped, non_gene_feature, 2 cells
-6. YAR037W (0.8, blank) -> dropped, retired, 1 cell
-7. AMB1 (0.7, 0.7) -> dropped, ambiguous, resolved_to None, candidates
-   [YAL001C, YFL039C], 2 cells
+4. YAR044W (no gene name) dma2 (0.3, blank) -> record 5, stored under YAR044W, the
+   released name (R64-4-1 renames it YAR042W; the genome is not consulted)
+5. YER108C (0.9, 0.9) -> records 6, 7 (a blocked reading frame in R64-4-1; stored)
+6. YAR037W (0.8, blank) -> record 8 (retired in R64-4-1; stored)
 
-So 6 records from 4 of 7 strains; 3 strains and 2 + 1 + 2 = 5 cells dropped, by status
-{non_gene_feature: 1, retired: 1, ambiguous: 1}; the ledger is sorted by source name,
-"AMB1" < "YAR037W" < "YER108C". Every record shares the one reference (differential 0 on
-SGA_DM_SELECTION at 26 C), so the reference index is one entry over members 0..5. Records are compared whole against a
+So 9 records from all 6 strains; 0 dropped; 3 blank cells counted in the ledger. Every
+record shares the one reference (differential 0 on SGA_DM_SELECTION at 26 C), so the
+reference index is one entry over members 0..8. Records are compared whole against a
 hand-built ``EnvironmentResponseExperiment``: Benomyl 30 g/L (the "30 mg/mL" cell) on
 SGA_DM_SELECTION, 26.0 C (a derivation, recorded in ``_TEMPERATURE.note``), aerobic, a
 ``duration_hours`` gap; ``n_samples`` 3 screens, no uncertainty (none released).
@@ -42,9 +39,8 @@ creating any mirror directory.
 
 The strain-row contract (issue #524, fixed 2026.10.01): a blank Systematic Name raises
 ``BlankSystematicNameError`` and a strain on two rows (the sheet-row-2 strain again, padded)
-raises ``RepeatedStrainRowError``, both before any store is opened; an AMBIGUOUS drop
-records the resolver's candidate list. The released sheet has neither a blank name nor a
-repeated strain (0 of 4,429 rows), so no stored record changes.
+raises ``RepeatedStrainRowError``, both before any store is opened. The released sheet
+has neither a blank name nor a repeated strain (0 of 4,429 rows).
 """
 
 from __future__ import annotations
@@ -87,44 +83,7 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.scerevisiae import costanzo2021 as c
-from torchcell.sequence.genome.scerevisiae.s288c import (
-    GeneNameResolution,
-    GeneNameStatus,
-    SCerevisiaeGenome,
-)
 from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
-
-_RENAME = {"YAR044W": "YAR042W"}
-_NON_GENE = {"YER108C": ("YER109C", "blocked_reading_frame")}
-_RETIRED = {"YAR037W"}
-
-
-class _StubGenome:
-    """The two methods the loader asks a genome for, with a hand-written answer table."""
-
-    def resolve_gene_name(self, name: str) -> GeneNameResolution:
-        upper = name.upper()
-        if upper in _RENAME:
-            return GeneNameResolution(
-                input_name=name,
-                status=GeneNameStatus.RENAMED,
-                systematic_name=_RENAME[upper],
-            )
-        if upper in _NON_GENE:
-            systematic, feature = _NON_GENE[upper]
-            return GeneNameResolution(
-                input_name=name,
-                status=GeneNameStatus.NON_GENE_FEATURE,
-                systematic_name=systematic,
-                feature_type=feature,
-            )
-        if upper in _RETIRED:
-            return GeneNameResolution(
-                input_name=name, status=GeneNameStatus.RETIRED, systematic_name=upper
-            )
-        return GeneNameResolution(
-            input_name=name, status=GeneNameStatus.CURRENT, systematic_name=upper
-        )
 
 
 def _frame() -> pd.DataFrame:
@@ -168,9 +127,7 @@ def built(
         [s for s in c._CONDITIONS if s["col"] in {"Benomyl", "Galactose"}],
     )
     monkeypatch.setattr(pd, "read_excel", lambda *a, **k: _frame())
-    return c.EnvChemgenCostanzo2021Dataset(
-        root=str(tmp_path), genome=cast(SCerevisiaeGenome, _StubGenome())
-    )
+    return c.EnvChemgenCostanzo2021Dataset(root=str(tmp_path))
 
 
 def test_tunicamycin_is_identified_as_a_mixture_so_its_records_stay() -> None:
@@ -220,32 +177,38 @@ def test_dose_provenance_lives_on_the_condition_not_in_the_phenotype_units() -> 
     assert "2% w/v" in (galactose["dose"].note or "")
 
 
-def test_build_keeps_renamed_orfs_and_drops_non_genes_and_retired(
+def test_build_stores_every_strain_as_released(
     built: c.EnvChemgenCostanzo2021Dataset,
 ) -> None:
-    # YAL001C 2 cells + YFL039C 1 (the galactose cell is empty) + YAR044W 2 = 5
-    assert len(built) == 5
+    """Every non-blank cell of every row is a record: YAL001C 2 + YFL039C 1 + YAR044W 2
+    + YER108C 2 + YAR037W 1 = 8; the ledger says nothing is dropped and counts the two
+    blank cells.
+    """
+    assert len(built) == 8
     log = json.loads(open(osp.join(built.root, c._DROPPED_FILENAME)).read())
-    assert log["n_kept_strains"] == 3 and log["n_dropped_strains"] == 2
-    assert log["dropped_by_status"] == {"non_gene_feature": 1, "retired": 1}
-    assert log["n_dropped_records"] == 3
-    assert "CURRENT or RENAMED" in log["rule"]
-    stored = {entry["source_name"]: entry["resolved_to"] for entry in log["dropped"]}
-    assert stored == {"YER108C": "YER109C", "YAR037W": "YAR037W"}
+    assert log["n_kept_strains"] == 5 and log["n_dropped_strains"] == 0
+    assert log["n_dropped_records"] == 0 and log["n_blank_cells"] == 2
+    assert log["rule"] == c.RETENTION_RULE
 
 
-def test_renamed_orf_is_stored_under_its_current_systematic_name(
+def test_a_renamed_or_retired_orf_keeps_its_released_name(
     built: c.EnvChemgenCostanzo2021Dataset,
 ) -> None:
+    """No genome is consulted: YAR044W (renamed to YAR042W in R64-4-1), YER108C (a
+    blocked reading frame) and YAR037W (retired) are stored under the sheet's own name,
+    which is also the perturbed_gene_name of an unnamed strain.
+    """
     stored = {
         (p["systematic_gene_name"], p["perturbed_gene_name"])
         for i in range(len(built))
         for p in built[i]["experiment"]["genotype"]["perturbations"]
     }
-    # the RENAMED strain is keyed to its CURRENT systematic name, while the sheet's own
-    # name survives as the strain's perturbed_gene_name (what keeps a merged pair apart)
-    assert ("YAR042W", "YAR044W") in stored
-    assert not any(systematic == "YAR044W" for systematic, _ in stored)
+    assert {
+        ("YAR044W", "YAR044W"),
+        ("YER108C", "YER108C"),
+        ("YAR037W", "YAR037W"),
+    } <= stored
+    assert not any(systematic == "YAR042W" for systematic, _ in stored)
 
 
 def test_units_is_one_shared_definition_and_the_axes_are_typed(
@@ -285,30 +248,7 @@ _SHEET_ROWS: list[tuple[Any, ...]] = [
     ("YAR044W", None, None, "dma2", 0.3, None),
     ("YER108C", None, None, "dma3", 0.9, 0.9),
     ("YAR037W", None, None, "dma4", 0.8, None),
-    ("AMB1", None, None, "dma8", 0.7, 0.7),
 ]
-
-
-class _FullStub(_StubGenome):
-    """``_StubGenome`` plus the two statuses it lacks: AMBIGUOUS, and RETIRED for any
-    name it does not know (what the real resolver returns for an off-annotation name).
-    """
-
-    known = {"YAL001C", "YFL039C"} | set(_RENAME) | set(_NON_GENE) | _RETIRED
-
-    def resolve_gene_name(self, name: str) -> GeneNameResolution:
-        if name == "AMB1":
-            return GeneNameResolution(
-                input_name=name,
-                status=GeneNameStatus.AMBIGUOUS,
-                systematic_name=None,
-                candidates=["YAL001C", "YFL039C"],
-            )
-        if name.upper() not in self.known:
-            return GeneNameResolution(
-                input_name=name, status=GeneNameStatus.RETIRED, systematic_name=name
-            )
-        return super().resolve_gene_name(name)
 
 
 def _write_xlsx(
@@ -343,9 +283,7 @@ def sheet_built(
     _two_conditions(monkeypatch)
     (tmp_path / "raw").mkdir()
     _write_xlsx(tmp_path / "raw" / c._S1_FILENAME)
-    return c.EnvChemgenCostanzo2021Dataset(
-        root=str(tmp_path), genome=cast(SCerevisiaeGenome, _FullStub())
-    )
+    return c.EnvChemgenCostanzo2021Dataset(root=str(tmp_path))
 
 
 def _gap() -> list[ProvenanceGap]:
@@ -403,7 +341,7 @@ def _reference() -> dict[str, Any]:
 def test_sheet_build_writes_the_records_in_row_then_condition_order(
     sheet_built: c.EnvChemgenCostanzo2021Dataset,
 ) -> None:
-    """Rows 1, 2, 3, 4 kept; within a row, Benomyl before Galactose; blanks skipped."""
+    """Every row kept as released; within a row, Benomyl before Galactose; blanks skipped."""
     got = [
         (
             p["systematic_gene_name"],
@@ -423,7 +361,10 @@ def test_sheet_build_writes_the_records_in_row_then_condition_order(
         ("YFL039C", "act1-101", "tsa1", benomyl, -0.5),
         ("YFL039C", "act1-102", "tsa2", benomyl, -0.25),
         ("YFL039C", "act1-102", "tsa2", galactose, 0.0),
-        ("YAR042W", "YAR044W", "dma2", benomyl, 0.3),
+        ("YAR044W", "YAR044W", "dma2", benomyl, 0.3),
+        ("YER108C", "YER108C", "dma3", benomyl, 0.9),
+        ("YER108C", "YER108C", "dma3", galactose, 0.9),
+        ("YAR037W", "YAR037W", "dma4", benomyl, 0.8),
     ]
 
 
@@ -490,71 +431,41 @@ def test_ts_allele_edge_record_and_the_medium_condition_record(
 def test_drop_log_is_written_exactly(
     sheet_built: c.EnvChemgenCostanzo2021Dataset,
 ) -> None:
-    """The ledger in full: an AMBIGUOUS drop carries the resolver's two candidates, the
-    other drops an empty candidate list (issue #524).
-    """
+    """The ledger in full: no rule drops a strain or a cell; the blanks are counted."""
     log = json.loads((Path(sheet_built.root) / c._DROPPED_FILENAME).read_text())
     assert log == {
         "dataset": "EnvChemgenCostanzo2021Dataset",
-        "rule": c.DROP_RULE,
-        "n_source_strains": 7,
-        "n_kept_strains": 4,
-        "n_kept_records": 6,
-        "n_dropped_strains": 3,
-        "n_dropped_records": 5,
-        "dropped_by_status": {"non_gene_feature": 1, "retired": 1, "ambiguous": 1},
-        "dropped": [
-            {
-                "source_name": "AMB1",
-                "status": "ambiguous",
-                "resolved_to": None,
-                "feature_type": None,
-                "n_records": 2,
-                "candidates": ["YAL001C", "YFL039C"],
-            },
-            {
-                "source_name": "YAR037W",
-                "status": "retired",
-                "resolved_to": "YAR037W",
-                "feature_type": None,
-                "n_records": 1,
-                "candidates": [],
-            },
-            {
-                "source_name": "YER108C",
-                "status": "non_gene_feature",
-                "resolved_to": "YER109C",
-                "feature_type": "blocked_reading_frame",
-                "n_records": 2,
-                "candidates": [],
-            },
-        ],
+        "rule": c.RETENTION_RULE,
+        "n_source_strains": 6,
+        "n_kept_strains": 6,
+        "n_kept_records": 9,
+        "n_dropped_strains": 0,
+        "n_dropped_records": 0,
+        "n_blank_cells": 3,
     }
 
 
 def test_one_reference_covers_every_record(
     sheet_built: c.EnvChemgenCostanzo2021Dataset,
 ) -> None:
-    """All six records share the one reference, so the index is one entry."""
+    """All nine records share the one reference, so the index is one entry."""
     index = sheet_built.experiment_reference_index
     assert index is not None
     (entry,) = index
-    assert entry.member_indices == [0, 1, 2, 3, 4, 5]
+    assert entry.member_indices == list(range(9))
     assert entry.reference.model_dump() == _reference()
 
 
 def _refused_build(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, extra: tuple[Any, ...]
 ) -> pytest.ExceptionInfo[ValueError]:
-    """Build over the seven rows plus ``extra`` (sheet row 9); return the refusal."""
+    """Build over the seven rows plus ``extra`` (sheet row 8); return the refusal."""
     monkeypatch.delenv("TC_DATA_URL", raising=False)
     _two_conditions(monkeypatch)
     (tmp_path / "raw").mkdir()
     _write_xlsx(tmp_path / "raw" / c._S1_FILENAME, rows=[*_SHEET_ROWS, extra])
     with pytest.raises(ValueError) as err:
-        c.EnvChemgenCostanzo2021Dataset(
-            root=str(tmp_path), genome=cast(SCerevisiaeGenome, _FullStub())
-        )
+        c.EnvChemgenCostanzo2021Dataset(root=str(tmp_path))
     assert not (tmp_path / "processed" / "lmdb").exists()
     assert not (tmp_path / c._DROPPED_FILENAME).exists()
     return err
@@ -563,13 +474,13 @@ def _refused_build(
 def test_a_blank_systematic_name_is_refused_before_any_store(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """A row with no Systematic Name names no strain: refused with its sheet row (9),
+    """A row with no Systematic Name names no strain: refused with its sheet row (8),
     not resolved as the string ``"nan"`` and dropped as RETIRED.
     """
     err = _refused_build(tmp_path, monkeypatch, (None, None, None, "dma9", 0.5, None))
     assert type(err.value) is c.BlankSystematicNameError
     assert str(err.value) == (
-        "Data File S1 sheet rows [9] have a blank 'Systematic Name'; a row without an "
+        "Data File S1 sheet rows [8] have a blank 'Systematic Name'; a row without an "
         "identifier names no strain, refusing to resolve it"
     )
 
@@ -577,13 +488,13 @@ def test_a_blank_systematic_name_is_refused_before_any_store(
 def test_a_whitespace_systematic_name_is_refused_as_blank(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """A name of only spaces is blank after stripping: refused with its sheet row (9),
+    """A name of only spaces is blank after stripping: refused with its sheet row (8),
     not resolved as an empty string.
     """
     err = _refused_build(tmp_path, monkeypatch, ("  ", None, None, "dma9", 0.5, None))
     assert type(err.value) is c.BlankSystematicNameError
     assert str(err.value) == (
-        "Data File S1 sheet rows [9] have a blank 'Systematic Name'; a row without an "
+        "Data File S1 sheet rows [8] have a blank 'Systematic Name'; a row without an "
         "identifier names no strain, refusing to resolve it"
     )
 
@@ -600,7 +511,7 @@ def test_a_repeated_strain_row_is_refused_naming_both_rows(
     )
     assert type(err.value) is c.RepeatedStrainRowError
     assert str(err.value) == (
-        "Data File S1 repeats strain YAL001C (dma1) at sheet rows 2 and 9; one strain "
+        "Data File S1 repeats strain YAL001C (dma1) at sheet rows 2 and 8; one strain "
         "is one row, refusing to store its condition cells twice"
     )
 
@@ -613,9 +524,7 @@ def test_the_same_orf_under_another_strain_id_is_not_a_repeat(
     _two_conditions(monkeypatch)
     (tmp_path / "raw").mkdir()
     _write_xlsx(tmp_path / "raw" / c._S1_FILENAME, rows=_SHEET_ROWS[1:3])
-    dataset = c.EnvChemgenCostanzo2021Dataset(
-        root=str(tmp_path), genome=cast(SCerevisiaeGenome, _FullStub())
-    )
+    dataset = c.EnvChemgenCostanzo2021Dataset(root=str(tmp_path))
     assert [
         dataset[i]["experiment"]["genotype"]["perturbations"][0]["strain_id"]
         for i in range(len(dataset))
@@ -625,15 +534,17 @@ def test_the_same_orf_under_another_strain_id_is_not_a_repeat(
 def test_side_files_gene_set_and_reference_index(
     sheet_built: c.EnvChemgenCostanzo2021Dataset,
 ) -> None:
-    """The gene set holds the CURRENT names only (YAR044W is stored as YAR042W)."""
+    """The gene set holds every RELEASED name (YAR044W, not the R64 name YAR042W)."""
     preprocess = Path(sheet_built.preprocess_dir)
     assert json.loads((preprocess / "gene_set.json").read_text()) == [
         "YAL001C",
-        "YAR042W",
+        "YAR037W",
+        "YAR044W",
+        "YER108C",
         "YFL039C",
     ]
     stored = json.loads((preprocess / "experiment_reference_index.json").read_text())
-    assert [entry["member_indices"] for entry in stored] == [[0, 1, 2, 3, 4, 5]]
+    assert [entry["member_indices"] for entry in stored] == [list(range(9))]
 
 
 def test_every_condition_dose_maps_to_its_typed_concentration() -> None:
@@ -680,21 +591,6 @@ def test_temperature_is_a_recorded_derivation_and_n_samples_counts_screens() -> 
     assert c._VARIANCE_NOTE.value is None
 
 
-def test_process_refuses_without_a_genome(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    monkeypatch.delenv("TC_DATA_URL", raising=False)
-    (tmp_path / "raw").mkdir()
-    (tmp_path / "raw" / c._S1_FILENAME).write_bytes(b"")
-    with pytest.raises(RuntimeError) as err:
-        c.EnvChemgenCostanzo2021Dataset(root=str(tmp_path), genome=None)
-    assert str(err.value) == (
-        "EnvChemgenCostanzo2021Dataset requires a genome for R64 ORF resolution; "
-        "inject SCerevisiaeGenome(...)"
-    )
-    assert not (tmp_path / "processed" / "lmdb").exists()
-
-
 def test_a_sheet_missing_a_condition_column_refuses_with_its_key(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -706,9 +602,7 @@ def test_a_sheet_missing_a_condition_column_refuses_with_its_key(
         tmp_path / "raw" / c._S1_FILENAME, columns=[*_ID_COLUMNS, "Benomyl", "Glucose"]
     )
     with pytest.raises(KeyError, match="^'galactose'$"):
-        c.EnvChemgenCostanzo2021Dataset(
-            root=str(tmp_path), genome=cast(SCerevisiaeGenome, _FullStub())
-        )
+        c.EnvChemgenCostanzo2021Dataset(root=str(tmp_path))
 
 
 def test_a_workbook_without_the_fitness_sheet_refuses(
@@ -723,9 +617,7 @@ def test_a_workbook_without_the_fitness_sheet_refuses(
         ValueError,
         match="^Worksheet named 'Diff. Mutant fitness_Conditions' not found$",
     ):
-        c.EnvChemgenCostanzo2021Dataset(
-            root=str(tmp_path), genome=cast(SCerevisiaeGenome, _FullStub())
-        )
+        c.EnvChemgenCostanzo2021Dataset(root=str(tmp_path))
 
 
 def test_download_refuses_when_the_mirror_file_is_absent(
@@ -774,8 +666,6 @@ def test_a_failed_sha256_check_leaves_nothing_in_raw_and_every_retry_refuses(
     monkeypatch.setenv("DATA_ROOT", str(data_root))
     digest = hashlib.sha256(_mirror_file(data_root).read_bytes()).hexdigest()
     root = str(tmp_path / "build")
-    genome = cast(SCerevisiaeGenome, _FullStub())
-
     mirror = Path(c.raw_mirror_dir(str(data_root))) / c._S1_RAW_RELPATH
     expected = (
         f"sha256 mismatch for {mirror}: expected "
@@ -784,7 +674,7 @@ def test_a_failed_sha256_check_leaves_nothing_in_raw_and_every_retry_refuses(
     )
     for _ in range(2):
         with pytest.raises(RawSha256MismatchError) as err:
-            c.EnvChemgenCostanzo2021Dataset(root=root, genome=genome)
+            c.EnvChemgenCostanzo2021Dataset(root=root)
         assert str(err.value) == expected
         assert os.listdir(Path(root) / "raw") == []
         assert not (Path(root) / "processed").exists()
@@ -805,13 +695,11 @@ def test_download_links_the_mirror_file_and_verifies_the_pin(
         c, "_S1_SHA256", hashlib.sha256(source.read_bytes()).hexdigest()
     )
     root = tmp_path / "build"
-    built = c.EnvChemgenCostanzo2021Dataset(
-        root=str(root), genome=cast(SCerevisiaeGenome, _FullStub())
-    )
+    built = c.EnvChemgenCostanzo2021Dataset(root=str(root))
     raw = root / "raw" / c._S1_FILENAME
     assert raw.is_symlink()
     assert os.readlink(raw) == str(source)
-    assert len(built) == 6
+    assert len(built) == 9
 
 
 def test_a_corrupted_raw_file_refuses_before_processed_exists_and_on_every_retry(
@@ -847,9 +735,7 @@ def test_a_corrupted_raw_file_refuses_before_processed_exists_and_on_every_retry
     assert observed != pin
     for _ in range(2):
         with pytest.raises(RawSha256MismatchError) as err:
-            c.EnvChemgenCostanzo2021Dataset(
-                root=str(root), genome=cast(SCerevisiaeGenome, _FullStub())
-            )
+            c.EnvChemgenCostanzo2021Dataset(root=str(root))
         assert str(err.value) == (
             f"sha256 mismatch for {raw}: expected {pin}, observed {observed}"
         )
@@ -1027,9 +913,7 @@ def test_a_raw_file_off_the_pin_is_refused_at_build_time(
     staged = off_pin_raw(c, [c._S1_FILENAME])
     raw = staged.root / "raw" / c._S1_FILENAME
     with pytest.raises(RawSha256MismatchError) as err:
-        c.EnvChemgenCostanzo2021Dataset(
-            root=str(staged.root), genome=cast(SCerevisiaeGenome, _FullStub())
-        )
+        c.EnvChemgenCostanzo2021Dataset(root=str(staged.root))
     assert str(err.value) == (
         f"sha256 mismatch for {raw}: expected "
         "f6c313de416ce8cc6ae87e2020b4389bd4adeb07cdb6a438aecaf1e45e6228ad, "

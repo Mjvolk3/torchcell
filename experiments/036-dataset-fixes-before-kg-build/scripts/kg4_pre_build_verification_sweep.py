@@ -102,6 +102,17 @@ REGISTRY_RUNNERS: dict[str, str] = {
     "BACTERIAL_PROTEIN_ABUNDANCE_DATASETS": "run_bacterial_protein_abundance",
     "BACTERIAL_METABOLITE_DATASETS": "run_bacterial_metabolite",
     "BACTERIAL_PROTEIN_FOLD_CHANGE_DATASETS": "run_bacterial_protein_fold_change",
+    # 2026-10-12 (#1069): the registries runners.py gained after this sweep was
+    # written; without them their stores read NO_VERIFIER here although a runner owns
+    # them (N'Guessan 2025's segregant-expression gate among them)
+    "EXPRESSION_SCORE_DATASETS": "run_expression_score",
+    "INDUCTION_TIMECOURSE_DATASETS": "run_induction_timecourse",
+    "NATURAL_ISOLATE_RESPONSE_DATASETS": "run_natural_isolate_response",
+    "SEGREGANT_EXPRESSION_DATASETS": "run_segregant_expression",
+    "PSEUDOBULK_UMI_COUNT_DATASETS": "run_pseudobulk_umi_count",
+    "GENOME_ARCHITECTURE_DATASETS": "run_genome_architecture",
+    "SEGREGANT_PERTURBATION_DATASETS": "run_segregant_perturbation",
+    "NATURAL_ISOLATE_DATASETS": "run_natural_isolate",
 }
 
 #: The three morphology runners keep their dataset's root in module constants rather

@@ -24,19 +24,24 @@ BY4741, whose genotype the 2016 paper states ("MATa his3Δ1 leu2Δ0 met15Δ0 ura
 background rides on the reference's ``StrainReferenceGenome``. Each record's genotype is:
 
 - a ``BarcodedKanMxDeletionPerturbation`` (cassette kanMX4, sourced to Giaever 2014; the
-  release publishes no barcode, a typed gap) for 209 of the 242 released ORFs;
-- a ``ConditionalAllelePerturbation`` with ``allele_class=None`` and typed gaps naming Sci
-  Data Table 1 / Cell Systems Table S3 (not mirrored) for the 33 released ORFs that are
-  SGD-essential (``ESSENTIAL_GENE_ORFS``): a haploid kanMX null of an essential gene is
-  not viable, so these strains carry a conditional allele whose identity the release does
-  not carry. They are real measurements, so they are emitted with the gap, not dropped;
+  release publishes no barcode, a typed gap) for every one of the 242 released ORFs,
+  keyed by the released ``orf`` with the released ``sym`` of the row as
+  ``perturbed_gene_name``, both verbatim. 33 of the 242 ORFs are SGD-essential
+  (``ESSENTIAL_GENE_ORFS``, kept as the documented contradiction): a haploid kanMX null
+  of an essential gene is not viable, so those strains must carry some other allele, but
+  both papers call every sentinel a Euroscarf deletion strain and the release names no
+  allele. The owner rule of 2026-10-12 stores what the authors reported and files the
+  contradiction in the dataset note, so they are stored as the deletions the release
+  calls them, never re-typed by an annotation at load time;
 - the EMPTY genotype (the BY4741 background alone) for the released ``wild type`` screen.
 
 The released rows whose ``orf`` is not a systematic name are strain screens, not
-controls: ``NA/NNK1`` is the NNK1 (YKL171W) strain and is mapped to it;
-``NULL/wild type`` is the BY4741 screen; ``NA/TSCII``, ``NULL/YGL11`` and ``NULL/wtn01``
-name no resolvable strain and are held in the ledger under
-``strain_label_unresolved`` until Table 1 is mirrored.
+controls: ``NULL/wild type`` is the BY4741 screen; ``NA/NNK1`` is mapped to YKL171W
+(a synonym route that the released-gene-name leaf of #1067's yeast analogue replaces
+once it exists; until then the mapping keeps the 678 rows served); ``NA/TSCII``,
+``NULL/YGL11`` and ``NULL/wtn01`` name no strain a mirrored source identifies and are
+held in the ledger under ``strain_label_unresolved`` for the same leaf. No genome is
+read at build time.
 
 DATA SOURCE. PubChem BioAssay AID 1159580 (the chemgrid.org/cgm portal is an interactive
 PHP site with no bulk export). Two artifacts are mirrored and sha256-pinned: the per-AID
@@ -45,9 +50,10 @@ the container's OWN sha256 asserted first (``zip_member``), and the AID's PUG-RE
 description JSON (column definitions, the protocol as submitted). Both are read from the raw
 mirror at build time; the URLs are retrieval metadata, not live dependencies.
 
-WHAT THE NUMBER IS. The stored response is the released per-screen ``z_score``, averaged
-over the screens of a (strain, compound) cell exactly as the paper constructs the matrix
-("Z scores were calculated and averaged for the replicate screens"). The z is computed by
+WHAT THE NUMBER IS. The stored response is the released per-screen ``z_score``, one
+record per released screen (the paper averaged them for its matrix, "Z scores were
+calculated and averaged for the replicate screens"; the release carries the per-screen
+values, so those are what is stored and the mean is a modeling-time choice). The z is computed by
 "fitting a normal distribution with N(1,IQR)" to the median-normalized OD of ONE strain's
 screen, so it is IQR-scaled and its 0 is that SAME strain's plate-median growth, not
 BY4741 under the compound. The reference therefore states the vehicle (no-compound)
@@ -55,26 +61,29 @@ environment with z = 0; ``ExperimentReference`` has no genotype slot, so "the sa
 deletion strain" lives in the reference's ``units`` text (the schema gap is recorded in the
 dendron note).
 
-SCREEN COUNTING (measured, and it corrects the previous build). A (strain, compound) cell
-recurs across the four libraries, and the export ALSO re-emits the same datapoint under two
-gene-symbol spellings (``MDH1`` / ``mdh1``): of the 46,195 cells with more than one released
-row, 33,483 contain byte-identical duplicates. Within a cell, two rows sharing a z_score
-share every other data column too, and no two genuinely distinct datapoints of a cell share
-a z_score, so the z value IS the datapoint key. The key is the PARSED value, not the string,
-so ``-4.0`` and ``-4.00`` are one datapoint (measured: 0 of the 428,573 cells hold two z
-strings of equal value, so the parsed key and the string key give the same cells). After
-deduplication the screens-per-cell histogram is {1: 412,368, 2: 14,579, 3: 1,617, 4: 7, 5: 2}. ``n_samples`` is therefore the
-number of contributing SCREENS with ``sample_unit=screen`` (the independent unit; the two
-OD reads inside a screen are the technical duplicate the z already averages), and the
-uncertainty is the sample SD across those screens, or a typed ``ProvenanceGap`` for the
-single-screen cells. The previous build's ``n_samples = 2 x rows`` counted OD reads of
-re-exported duplicates.
+SCREEN COUNTING. A (strain, compound) cell recurs across the libraries, and the export
+ALSO re-emits the same datapoint under two gene-symbol spellings (``MDH1`` / ``mdh1``).
+Within a cell, two rows sharing a z_score share every other data column too, and no two
+genuinely distinct datapoints of a cell share a z_score, so the PARSED z value is the
+datapoint key (``-4.0`` and ``-4.00`` are one datapoint). A re-exported row is a true
+duplicate of the release and collapses onto the first row carrying it (its
+``PUBCHEM_RESULT_TAG`` is listed on the datapoint); every DISTINCT datapoint of a cell is
+its own record, with ``replicate_id`` = the ``PUBCHEM_RESULT_TAG`` of the row it came
+from, ``n_samples = 1`` with ``sample_unit=screen`` (the two OD reads inside a screen are
+the technical duplicate the z already averages), the row's own released call as the
+category, and typed gaps on the per-screen uncertainty (the release carries none) and on
+``screen_id`` (no library or screen column). Earlier builds averaged the 2 to 5 screens
+of a cell into one record with a sample SD; under the owner rule of 2026-10-12 every
+released screen is stored as released.
 
 RECORDS DROPPED (rule + count in ``preprocess/dropped_records.json``, applied in this
-order): ``strain_label_unresolved`` (the TSCII, YGL11 and wtn01 screens), then
-``compound_without_a_structure_identifier`` (the 5 SID-only compounds, which have no CID and
-no SMILES). Everything else is served: all 5,173 CIDs resolve to an InChIKey and a
-canonical PubChem name through the pinned compound-identity table.
+order): ``strain_label_unresolved`` (the TSCII, YGL11 and wtn01 rows, held for the
+released-gene-name leaf), then ``re_exported_duplicate_row`` (the release's own
+byte-identical re-emissions). The 5 SID-only compounds (no CID and no SMILES) are
+STORED: ``resolved_compound`` names them by their SID and attaches the typed
+``inchikey`` gap, and the ledger lists them under
+``compounds_without_a_structure_identifier``; every other CID resolves to an InChIKey
+and a canonical PubChem name through the pinned compound-identity table.
 """
 
 from __future__ import annotations
@@ -91,7 +100,6 @@ import shutil
 from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
-from statistics import fmean, stdev
 from typing import Any, Literal
 
 from pydantic import BaseModel
@@ -115,7 +123,6 @@ from torchcell.datamodels.schema import (
     Compound,
     Concentration,
     ConcentrationUnit,
-    ConditionalAllelePerturbation,
     CultureEnvironment,
     CultureFormat,
     EndpointRule,
@@ -139,7 +146,6 @@ from torchcell.datamodels.schema import (
     StrainEnvironmentResponseExperimentReference,
     StrainReferenceGenome,
     Temperature,
-    UncertaintyType,
 )
 from torchcell.datamodels.strain_background import (
     BRACHMANN_1998,
@@ -149,7 +155,6 @@ from torchcell.datamodels.strain_background import (
     standard_background,
 )
 from torchcell.datasets.dataset_registry import register_dataset
-from torchcell.datasets.scerevisiae.gene_name_reconcile import default_genome
 from torchcell.literature.manifest import (
     ROLE_RAW_DATA,
     ArtifactRecord,
@@ -157,7 +162,6 @@ from torchcell.literature.manifest import (
     RetrievalMethod,
     RetrievalRecord,
 )
-from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import (
     ProvenanceGap,
@@ -447,8 +451,9 @@ COLLECTION = _scidata(
     line="50",
     note="the 2015 paper says the same: 'S. cerevisiae deletion strains were obtained "
     "from the Euroscarf deletion set and are isogenic to BY4741 (Table S3).' The 33 "
-    "SGD-essential released ORFs contradict 'deletion strain' for those strains, whose "
-    "collection is therefore a typed gap (ESSENTIAL_GENE_ORFS)",
+    "SGD-essential released ORFs (ESSENTIAL_GENE_ORFS) contradict 'deletion strain' for "
+    "those strains; they are stored as the release reports them and the contradiction is "
+    "filed in the dataset note",
 )
 WILD_TYPE_SCREEN = _scidata(
     "BY4741 wild type",
@@ -537,21 +542,10 @@ def _wildenhain_sc() -> Media:
 
 WILDENHAIN_SC = _wildenhain_sc()
 
+
 # --------------------------------------------------------------------------- #
 # Strain background (BY4741), the 33 essential-gene strains, non-ORF strain labels
 # --------------------------------------------------------------------------- #
-#: The per-strain roster (allele, collection, accession) that would resolve every
-#: strain-level gap below. NOT mirrored; retrieving it needs the user's go-ahead.
-STRAIN_TABLES = Provenance(
-    source_uri="Sci Data 2016 Table 1 (available online only); Cell Systems 2015 "
-    "Table S3",
-    citation_key=SCIDATA_CITATION_KEY,
-    method="not mirrored: the per-strain sentinel roster ('The 242 different S. "
-    "cerevisiae deletion strains used as sentinels to generate the CGM (Table 1 "
-    "(available online only))', Sci Data paper.md line 50)",
-)
-
-
 def _background_allele(allele: BackgroundAllele) -> BackgroundAllele:
     """The allele with a pending-review gap on its (unpublished) construction."""
     return BackgroundAllele.model_validate(
@@ -589,10 +583,12 @@ BY4741_GENOME = StrainReferenceGenome(
 )
 
 #: The 33 released ORFs that are essential in torchcell's SGD essentiality set (#504
-#: finding 1). A haploid kanMX null of an essential gene is not viable, so each is served
-#: as a ConditionalAllelePerturbation of unknown class. Pinned here (not read at build
-#: time, so the build does not depend on another dataset's store); the test recomputes it
-#: from ESSENTIAL_GENE_SET_SOURCE when that file is present. ILV3 (YJR016C) and SLN1
+#: finding 1): a haploid kanMX null of an essential gene is not viable, so these strains
+#: must carry some other allele the release does not name. They are STORED as the
+#: deletions the release calls them (owner rule 2026-10-12: a reported value that
+#: contradicts an annotation is stored as reported, the contradiction filed in the note).
+#: Pinned here as documentation only; nothing at build time reads it. The test recomputes
+#: it from ESSENTIAL_GENE_SET_SOURCE when that file is present. ILV3 (YJR016C) and SLN1
 #: (YIL147C) are the two whose essentiality is condition/background dependent.
 ESSENTIAL_GENE_ORFS: frozenset[str] = frozenset(
     {
@@ -615,9 +611,10 @@ class NonOrfStrainLabel(BaseModel):
     """How one released (orf, sym) pair whose ``orf`` is not a systematic name is read.
 
     ``mapped_to_orf``: a real gene's strain released without its ORF (served on that
-    ORF, checked against the genome at build time). ``wild_type``: the BY4741 parental
-    screen (served as the empty genotype). ``unresolved``: no strain the mirrored
-    sources name; held in the ledger under ``strain_label_unresolved``.
+    ORF by a pinned map, no genome read; the released-gene-name leaf replaces the map).
+    ``wild_type``: the BY4741 parental screen (served as the empty genotype).
+    ``unresolved``: no strain the mirrored sources name; held in the ledger under
+    ``strain_label_unresolved`` for the same leaf.
     """
 
     orf: str
@@ -842,17 +839,49 @@ class DropRule(BaseModel):
 
 
 class DropLog(BaseModel):
-    """Every retention rule applied to a build, in the order they were applied."""
+    """Every retention rule applied to a build, in the order they were applied.
+
+    ``source_records`` counts released datapoint rows (a row with a z_score);
+    ``kept_records`` the records written, one per distinct released screen.
+    ``compounds_without_a_structure_identifier`` lists the compound identities stored
+    with a typed ``inchikey`` gap (nothing is dropped for them).
+    """
 
     dataset: str
     source_records: int
     kept_records: int
     dropped_records: int
     rules: list[DropRule]
+    compounds_without_a_structure_identifier: list[str] = []
+
+
+class ScreenDatapoint(BaseModel):
+    """One distinct released screen of a (strain, compound) cell: the row as released."""
+
+    #: ``PUBCHEM_RESULT_TAG`` of the first released row carrying this datapoint; the
+    #: record's ``replicate_id``.
+    tag: str
+    z: float
+    #: the row's ``sym`` cell, verbatim (the record's ``perturbed_gene_name``)
+    sym: str
+    non_replicate: str
+    outcome: str
+    bioactivity: str
+    #: tags of the release's own byte-identical re-emissions of this datapoint
+    re_exported_tags: list[str] = []
+
+    def category(self) -> tuple[ResponseCategory, str]:
+        """The row's released call on the shared axis + its verbatim source words."""
+        label = (
+            self.outcome
+            if not self.bioactivity
+            else f"{self.outcome} / {self.bioactivity}"
+        )
+        return OUTCOME_CATEGORY[(self.outcome, self.bioactivity)], label
 
 
 class MatrixCell(BaseModel):
-    """One (strain, compound) cell of the CGM, collapsed over its released screens."""
+    """One (strain, compound) cell of the CGM: its distinct released screens."""
 
     #: the strain key: a systematic ORF (``NA/NNK1`` rows land on YKL171W),
     #: ``WILD_TYPE_KEY`` for the BY4741 screen, or ``"<orf>/<sym>"`` for an unresolved
@@ -861,41 +890,24 @@ class MatrixCell(BaseModel):
     identity: str
     pubchem_cid: int | None
     smiles: str | None
-    #: parsed z_score -> (non-replicate flag, activity outcome, bioactivity), one entry
-    #: per DISTINCT released datapoint (the z value is the datapoint key, so ``-4.0`` and
-    #: ``-4.00`` are one; see the module docstring for the measurement behind that).
-    screens: dict[float, tuple[str, str, str]] = {}
-
-    @property
-    def z_values(self) -> list[float]:
-        """The distinct per-screen z-scores contributing to this cell."""
-        return list(self.screens)
+    #: parsed z_score -> the released screen, one entry per DISTINCT datapoint (the z
+    #: value is the datapoint key, so ``-4.0`` and ``-4.00`` are one)
+    screens: dict[float, ScreenDatapoint] = {}
 
     @property
     def n_screens(self) -> int:
-        """Number of contributing screens (the independent unit of replication)."""
+        """Number of distinct released screens (one record each)."""
         return len(self.screens)
+
+    @property
+    def n_re_exported_rows(self) -> int:
+        """Released rows that re-emit a datapoint this cell already carries."""
+        return sum(len(screen.re_exported_tags) for screen in self.screens.values())
 
     @property
     def all_screens_non_replicating(self) -> bool:
         """Whether EVERY contributing screen's two OD reads failed to replicate."""
-        return all(flag == "1" for flag, _, _ in self.screens.values())
-
-    def category(self) -> tuple[ResponseCategory, str]:
-        """The released curation verdict on the shared axis + its verbatim source words.
-
-        A cell whose screens DISAGREE has no single released call, so it resolves to
-        ``not_determined`` and the label keeps every word the release used.
-        """
-        outcomes = sorted({outcome for _, outcome, _ in self.screens.values()})
-        activities = sorted({bio for _, _, bio in self.screens.values()})
-        if len(outcomes) == 1 and len(activities) == 1:
-            label = (
-                outcomes[0] if not activities[0] else f"{outcomes[0]} / {activities[0]}"
-            )
-            return OUTCOME_CATEGORY[(outcomes[0], activities[0])], label
-        words = [*outcomes, *[bio for bio in activities if bio]]
-        return ResponseCategory.not_determined, " / ".join(words)
+        return all(screen.non_replicate == "1" for screen in self.screens.values())
 
 
 def _parse_z(z_raw: str, orf: str, identity: str) -> float:
@@ -914,22 +926,6 @@ def _parse_z(z_raw: str, orf: str, identity: str) -> float:
     if not math.isfinite(z):
         raise RuntimeError(f"{orf}/{identity}: z_score {z_raw!r} is not finite")
     return z
-
-
-def _canonical_common_names(genome: SCerevisiaeGenome) -> dict[str, str]:
-    """``systematic name -> the genome's own standard (common) name``.
-
-    The release spells 16 ORFs two ways (``TOR1`` and ``Tor1``), which splits one
-    perturbation into two graph nodes. Taking the spelling from the genome instead of
-    from the source is what makes it one node, and identical across datasets. Only a
-    standard name that resolves BACK to the gene is used.
-    """
-    canonical: dict[str, str] = {}
-    for standard in genome.feature_index["standard_to_ids"]:
-        resolution = genome.resolve_gene_name(standard)
-        if resolution.is_current_gene and resolution.systematic_name is not None:
-            canonical.setdefault(resolution.systematic_name, standard)
-    return canonical
 
 
 @register_dataset
@@ -1014,11 +1010,12 @@ class EnvChemgenWildenhain2015Dataset(ExperimentDataset):
     def _collapse_matrix(
         self,
     ) -> tuple[dict[tuple[str, str], MatrixCell], int, dict[tuple[str, str], int]]:
-        """Read the datapoint CSV; collapse to one cell per (strain key, compound).
+        """Read the datapoint CSV; group the released screens per (strain key, compound).
 
-        Identity is the PubChem CID when present, else the SID. Repeated releases of the
-        SAME datapoint (equal parsed z) collapse; distinct screens accumulate. Returns the
-        cells, the datapoint-row count, and the row count of every non-ORF label.
+        Identity is the PubChem CID when present, else the SID. A re-emission of the
+        SAME datapoint (equal parsed z) is listed on the first row's screen; distinct
+        screens accumulate as their own datapoints. Returns the cells, the
+        datapoint-row count, and the row count of every non-ORF label.
         """
         path = osp.join(self.raw_dir, DATA_FILENAME)
         cells: dict[tuple[str, str], MatrixCell] = {}
@@ -1055,11 +1052,25 @@ class EnvChemgenWildenhain2015Dataset(ExperimentDataset):
                         or None,
                     )
                     cells[key] = cell
-                cell.screens[_parse_z(z_raw, strain, identity)] = (
-                    row[idx["non replicate"]].strip(),
-                    row[idx["PUBCHEM_ACTIVITY_OUTCOME"]].strip(),
-                    row[idx["bioactivity"]].strip(),
-                )
+                z = _parse_z(z_raw, strain, identity)
+                tag = row[idx["PUBCHEM_RESULT_TAG"]].strip()
+                if not tag:
+                    raise RuntimeError(
+                        f"{strain}/{identity}: released row has no PUBCHEM_RESULT_TAG; "
+                        "the tag is the record's replicate_id"
+                    )
+                screen = cell.screens.get(z)
+                if screen is None:
+                    cell.screens[z] = ScreenDatapoint(
+                        tag=tag,
+                        z=z,
+                        sym=sym,
+                        non_replicate=row[idx["non replicate"]].strip(),
+                        outcome=row[idx["PUBCHEM_ACTIVITY_OUTCOME"]].strip(),
+                        bioactivity=row[idx["bioactivity"]].strip(),
+                    )
+                else:
+                    screen.re_exported_tags.append(tag)
         log.info(
             "Wildenhain2015: %d datapoints (%d on a non-ORF strain label) -> %d "
             "(strain, compound) cells",
@@ -1172,101 +1183,62 @@ class EnvChemgenWildenhain2015Dataset(ExperimentDataset):
             ),
         )
 
-    def _phenotype(self, cell: MatrixCell) -> EnvironmentResponsePhenotype:
-        """The screen-averaged z-score with its across-screen dispersion, or a typed gap.
+    def _phenotype(self, screen: ScreenDatapoint) -> EnvironmentResponsePhenotype:
+        """One released screen's z-score, as released, with its typed absences.
 
-        Every record also carries a typed gap on ``screen_id``: the release has no
-        library / screen column, and the normalization differs by library
-        (``NORMALIZATION_BY_LIBRARY``).
+        ``replicate_id`` is the row's ``PUBCHEM_RESULT_TAG``. The release carries no
+        per-screen error (typed gaps on both uncertainty fields) and no library / screen
+        column (typed gap on ``screen_id``; the normalization differs by library,
+        ``NORMALIZATION_BY_LIBRARY``).
         """
-        z_values = cell.z_values
-        category, label = cell.category()
-        common: dict[str, Any] = {
-            "measurement_type": Z_SCORE_DEFINITION.value,
-            "assay_type": ASSAY.value,
-            "environment_response": fmean(z_values),
-            "category": category,
-            "category_label": label,
-            "n_samples": cell.n_screens,
-            "sample_unit": SampleUnit.screen,
-            "units": MEASUREMENT_UNITS,
-        }
-        screen_gap = ProvenanceGap(
-            field="screen_id",
-            reason=ProvenanceGapReason.not_reported_by_primary,
-            note="the release has no library, screen or plate column; screens were "
-            "LOWESS- or DMSO-control-normalized by library (Sci Data lines 63-64), so a "
-            "cell's normalization is not recoverable",
-        )
-        if cell.n_screens == 1:
-            return EnvironmentResponsePhenotype(
-                **common,
-                provenance_gaps=[
-                    *(
-                        ProvenanceGap(
-                            field=field,
-                            reason=ProvenanceGapReason.not_reported_by_primary,
-                            note="one released screen for this (strain, compound) cell; "
-                            "a dispersion across screens is undefined at n=1 and the "
-                            "release carries no per-screen error",
-                        )
-                        for field in (
-                            "environment_response_uncertainty",
-                            "environment_response_se",
-                        )
-                    ),
-                    screen_gap,
-                ],
-            )
+        category, label = screen.category()
         return EnvironmentResponsePhenotype(
-            **common,
-            environment_response_uncertainty=stdev(z_values),
-            environment_response_uncertainty_type=UncertaintyType.sample_sd,
-            provenance_gaps=[screen_gap],
+            measurement_type=Z_SCORE_DEFINITION.value,
+            assay_type=ASSAY.value,
+            environment_response=screen.z,
+            category=category,
+            category_label=label,
+            n_samples=1,
+            sample_unit=SampleUnit.screen,
+            units=MEASUREMENT_UNITS,
+            replicate_id=screen.tag,
+            provenance_gaps=[
+                *(
+                    ProvenanceGap(
+                        field=field,
+                        reason=ProvenanceGapReason.not_reported_by_primary,
+                        note="one released screen per record; the release carries no "
+                        "per-screen error",
+                    )
+                    for field in (
+                        "environment_response_uncertainty",
+                        "environment_response_se",
+                    )
+                ),
+                ProvenanceGap(
+                    field="screen_id",
+                    reason=ProvenanceGapReason.not_reported_by_primary,
+                    note="the release has no library, screen or plate column; screens "
+                    "were LOWESS- or DMSO-control-normalized by library (Sci Data lines "
+                    "63-64), so a cell's normalization is not recoverable",
+                ),
+            ],
         )
 
-    def _genotype(self, strain: str, common: str | None) -> Genotype:
+    def _genotype(self, strain: str, released_name: str) -> Genotype:
         """The screened strain's genotype on the BY4741 background.
 
-        The wild-type screen is the empty genotype; one of the 33 essential-gene ORFs
-        is a conditional allele of unknown class (typed gaps naming the strain tables);
-        every other ORF is a kanMX4 Euroscarf haploid deletion with no released barcode.
+        The wild-type screen is the empty genotype; every other strain is the kanMX4
+        Euroscarf haploid deletion the release calls it, keyed by the released ORF with
+        the row's released ``sym`` as its gene name and no released barcode.
         """
         if strain == WILD_TYPE_KEY:
             return Genotype(perturbations=[])
-        assert common is not None
-        if strain in ESSENTIAL_GENE_ORFS:
-            return Genotype(
-                perturbations=[
-                    ConditionalAllelePerturbation(
-                        systematic_gene_name=strain,
-                        perturbed_gene_name=common,
-                        allele_class=None,
-                        collection=None,
-                        provenance_gaps=[
-                            pending_source_review(
-                                "allele_class",
-                                STRAIN_TABLES,
-                                "SGD-essential gene, so a haploid kanMX null is not "
-                                "viable; the allele (ts / DAmP / promoter replacement) "
-                                "is in the strain table, not the release",
-                            ),
-                            pending_source_review(
-                                "collection",
-                                STRAIN_TABLES,
-                                "both papers say Euroscarf deletion collection for "
-                                "every sentinel, which an essential-gene strain "
-                                "contradicts",
-                            ),
-                        ],
-                    )
-                ]
-            )
         return Genotype(
             perturbations=[
                 BarcodedKanMxDeletionPerturbation(
                     systematic_gene_name=strain,
-                    perturbed_gene_name=common,
+                    perturbed_gene_name=released_name,
                     collection=COLLECTION.value,
                     cassette=KANMX4_CASSETTE.value,
                     provenance_gaps=[
@@ -1289,59 +1261,34 @@ class EnvChemgenWildenhain2015Dataset(ExperimentDataset):
             self.raw_dir, {DATA_FILENAME: DATA_SHA256, AID_FILENAME: AID_SHA256}
         )
         cells, n_rows, label_rows = self._collapse_matrix()
-        source_records = len(cells)
 
-        genome = default_genome()
-        gene_set = {gene.upper() for gene in genome.gene_set}
-        canonical = _canonical_common_names(genome)
-        for (orf, sym), label in NON_ORF_STRAIN_LABELS.items():
-            if label.disposition != "mapped_to_orf" or (orf, sym) not in label_rows:
-                continue
-            resolved = genome.resolve_gene_name(sym)
-            if (
-                not resolved.is_current_gene
-                or resolved.systematic_name != label.systematic_gene_name
-            ):
-                raise RuntimeError(
-                    f"strain label {orf}/{sym} is mapped to "
-                    f"{label.systematic_gene_name}, but the genome resolves {sym!r} to "
-                    f"{resolved.systematic_name!r}"
-                )
         unresolved_pairs = {
             f"{orf}/{sym}": (orf, sym)
             for (orf, sym), label in NON_ORF_STRAIN_LABELS.items()
             if label.disposition == "unresolved"
         }
         unresolved = set(unresolved_pairs)
-        orfs = sorted(
-            {cell.orf for cell in cells.values()} - unresolved - {WILD_TYPE_KEY}
-        )
-        off_genome = sorted(
-            orf
-            for orf in orfs
-            if not (
-                (resolution := genome.resolve_gene_name(orf)).is_current_gene
-                and resolution.systematic_name in gene_set
-            )
-        )
-        if off_genome:
-            raise RuntimeError(
-                f"{len(off_genome)} released ORFs are not current R64 genes: "
-                f"{off_genome[:10]}; the release measured 242 current genes when this "
-                "loader was written, so a new drop rule is needed, not a silent skip"
-            )
-        common_names = {orf: canonical.get(orf, orf) for orf in orfs}
-
-        # Rule 1: unresolved strain labels are held, whatever their compound.
+        # Rule 1: unresolved strain labels are held, whatever their compound, until the
+        # released-gene-name leaf exists. Counted in released rows.
         held = {key for key, cell in cells.items() if cell.orf in unresolved}
         held_by_label = {
             label: sum(1 for key in held if cells[key].orf == label)
             for label in sorted(unresolved)
         }
+        n_held_rows = sum(
+            label_rows[unresolved_pairs[label]]
+            for label, n in held_by_label.items()
+            if n
+        )
 
-        # Rule 2: resolve each DISTINCT compound identity of the remaining cells once; a
-        # compound carrying no InChIKey, CID or ChEBI id cannot be encoded, so its cells
-        # are dropped.
+        # Rule 2: the release's own re-emissions of a datapoint collapse onto its first
+        # row (true duplicates; the other tags stay on the datapoint).
+        n_re_exported = sum(
+            cell.n_re_exported_rows for key, cell in cells.items() if key not in held
+        )
+
+        # Every DISTINCT compound identity is resolved once; one with no InChIKey, CID
+        # or ChEBI id is STORED with the typed inchikey gap resolved_compound attaches.
         compounds: dict[str, Compound] = {}
         for key, cell in cells.items():
             if key not in held and cell.identity not in compounds:
@@ -1353,17 +1300,7 @@ class EnvChemgenWildenhain2015Dataset(ExperimentDataset):
             and compound.pubchem_cid is None
             and compound.chebi_id is None
         )
-        unidentified_set = set(unidentified)
-        n_dropped_compound = sum(
-            1
-            for key, cell in cells.items()
-            if key not in held and cell.identity in unidentified_set
-        )
-        names = [
-            compound.name
-            for identity, compound in compounds.items()
-            if identity not in unidentified_set
-        ]
+        names = [compound.name for compound in compounds.values()]
         if len(set(names)) != len(names):
             raise RuntimeError(
                 "two distinct compound identities resolve to the same canonical name, "
@@ -1383,43 +1320,43 @@ class EnvChemgenWildenhain2015Dataset(ExperimentDataset):
         env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
         idx = 0
         n_all_non_replicating = 0
-        by_kind = {"deletion": 0, "conditional_allele": 0, "wild_type": 0}
+        n_cells = 0
+        by_kind = {"deletion": 0, "wild_type": 0}
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for key in tqdm(sorted(cells), desc="Wildenhain2015 CGM"):
                 cell = cells[key]
-                if key in held or cell.identity in unidentified_set:
+                if key in held:
                     continue
+                n_cells += 1
                 if cell.identity not in environments:
                     environments[cell.identity] = self._environment(
                         compounds[cell.identity]
                     )
                 if cell.all_screens_non_replicating:
                     n_all_non_replicating += 1
-                if cell.orf == WILD_TYPE_KEY:
-                    by_kind["wild_type"] += 1
-                elif cell.orf in ESSENTIAL_GENE_ORFS:
-                    by_kind["conditional_allele"] += 1
-                else:
-                    by_kind["deletion"] += 1
-                experiment = StrainEnvironmentResponseExperiment(
-                    dataset_name=self.name,
-                    genotype=self._genotype(cell.orf, common_names.get(cell.orf)),
-                    environment=environments[cell.identity],
-                    phenotype=self._phenotype(cell),
-                )
-                txn.put(
-                    f"{idx}".encode(),
-                    self._intern_record(experiment, reference, publication, itxn),
-                )
-                idx += 1
+                kind = "wild_type" if cell.orf == WILD_TYPE_KEY else "deletion"
+                for z in sorted(cell.screens):
+                    screen = cell.screens[z]
+                    by_kind[kind] += 1
+                    experiment = StrainEnvironmentResponseExperiment(
+                        dataset_name=self.name,
+                        genotype=self._genotype(cell.orf, screen.sym),
+                        environment=environments[cell.identity],
+                        phenotype=self._phenotype(screen),
+                    )
+                    txn.put(
+                        f"{idx}".encode(),
+                        self._intern_record(experiment, reference, publication, itxn),
+                    )
+                    idx += 1
         env.close()
         interned_env.close()
 
         drop_log = DropLog(
             dataset=self.name,
-            source_records=source_records,
+            source_records=n_rows,
             kept_records=idx,
-            dropped_records=source_records - idx,
+            dropped_records=n_rows - idx,
             rules=[
                 DropRule(
                     rule="strain_label_unresolved",
@@ -1427,10 +1364,10 @@ class EnvChemgenWildenhain2015Dataset(ExperimentDataset):
                     description=(
                         "the released orf is not a systematic name and the sym names "
                         "no strain a mirrored source identifies (NON_ORF_STRAIN_LABELS); "
-                        "held until Sci Data Table 1 / Cell Systems Table S3 is "
-                        "mirrored. Items: label (cells, released rows)"
+                        "held for the released-gene-name leaf. Counted in released "
+                        "rows. Items: label (cells, released rows)"
                     ),
-                    n_records=len(held),
+                    n_records=n_held_rows,
                     items=[
                         f"{label} ({n} cells, "
                         f"{label_rows[unresolved_pairs[label]]} rows)"
@@ -1439,36 +1376,40 @@ class EnvChemgenWildenhain2015Dataset(ExperimentDataset):
                     ],
                 ),
                 DropRule(
-                    rule="compound_without_a_structure_identifier",
-                    scope="compound",
+                    rule="re_exported_duplicate_row",
+                    scope="library_row",
                     description=(
-                        "the released row carries no PUBCHEM_CID and no SMILES, so the "
-                        "compound has no InChIKey, CID or ChEBI id to be keyed or "
-                        "joined by; only its submitter SID is known"
+                        "the release re-emits a datapoint it already carries for the "
+                        "cell (same parsed z_score, every other data column equal, "
+                        "typically under a second gene-symbol spelling); the row is a "
+                        "true duplicate and its PUBCHEM_RESULT_TAG is listed on the "
+                        "datapoint it repeats"
                     ),
-                    n_records=n_dropped_compound,
-                    items=unidentified,
+                    n_records=n_re_exported,
+                    items=[],
                 ),
             ],
+            compounds_without_a_structure_identifier=unidentified,
         )
         with open(osp.join(self.preprocess_dir, "dropped_records.json"), "w") as handle:
             handle.write(drop_log.model_dump_json(indent=2))
-        if drop_log.dropped_records != len(held) + n_dropped_compound:
+        if drop_log.dropped_records != n_held_rows + n_re_exported:
             raise RuntimeError(
-                f"drop accounting mismatch: rule total {len(held) + n_dropped_compound}, "
+                f"drop accounting mismatch: rule total {n_held_rows + n_re_exported}, "
                 f"{drop_log.dropped_records} records missing from the build"
             )
         log.info(
-            "Wrote %d Wildenhain2015 records (%d kanMX deletion, %d conditional allele, "
-            "%d wild type; %d held for an unresolved strain label; %d dropped for an "
-            "unidentifiable compound; %d cells whose every screen is non-replicate "
-            "flagged)",
+            "Wrote %d Wildenhain2015 records over %d cells (%d kanMX deletion, %d wild "
+            "type; %d rows held for an unresolved strain label; %d re-exported duplicate "
+            "rows collapsed; %d compounds stored with an inchikey gap; %d cells whose "
+            "every screen is non-replicate flagged)",
             idx,
+            n_cells,
             by_kind["deletion"],
-            by_kind["conditional_allele"],
             by_kind["wild_type"],
-            len(held),
-            n_dropped_compound,
+            n_held_rows,
+            n_re_exported,
+            len(unidentified),
             n_all_non_replicating,
         )
 

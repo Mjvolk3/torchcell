@@ -8,7 +8,7 @@
    experiment pair, read from ``schema.py`` at ``--base`` and in the working tree. The
    new leaf is a sibling, so each must be identical.
 2. **Stale stores still serialize identically.** Every record of each dataset that
-   ``schema_impact`` names (impacted through the grown unions and type maps) is
+   ``schema_impact`` names as impacted through the grown unions and type maps is
    validated through this branch's schema and re-dumped; a record whose dump differs
    from the stored dict would mean the additive leaf changed a stored serialization.
 
@@ -51,6 +51,18 @@ RESULTS = osp.join(
     osp.dirname(osp.dirname(osp.abspath(__file__))),
     "results",
     "potel2018_phosphosite_checks.json",
+)
+#: The bindings this leaf grows: a dataset is stale through the leaf only via these
+#: (the W3110 vocabulary carried in the same PR has its own record and is not measured
+#: here).
+GROWN_BINDINGS: frozenset[str] = frozenset(
+    {
+        "ExperimentType",
+        "ExperimentReferenceType",
+        "PhenotypeType",
+        "EXPERIMENT_TYPE_MAP",
+        "EXPERIMENT_REFERENCE_TYPE_MAP",
+    }
 )
 #: The served proteome leaves and their parent, and the experiment pairs over them.
 PROTEOME_FAMILY: tuple[str, ...] = (
@@ -117,6 +129,9 @@ def stale_round_trips(base: str, data_root: str) -> dict[str, Any]:
     report = build_impact_report(base, REPO)
     out: dict[str, Any] = {}
     for impact in report.impacted_loaders:
+        via = sorted(set(impact.changed_symbols) & GROWN_BINDINGS)
+        if not via:
+            continue
         for name in impact.dataset_classes:
             if name.startswith("_") or name not in dataset_registry:
                 continue
@@ -126,7 +141,7 @@ def stale_round_trips(base: str, data_root: str) -> dict[str, Any]:
             if not osp.isdir(osp.join(root, "processed", "lmdb")):
                 out[name] = {"store": "no dev store on this machine"}
                 continue
-            out[name] = {"via": impact.changed_symbols, **round_trip(root)}
+            out[name] = {"via": via, **round_trip(root)}
     return out
 
 

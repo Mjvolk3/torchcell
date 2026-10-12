@@ -197,3 +197,89 @@ non-filtered (days 2, 4, 8 x 3 technical replicates); the QC-failed sample the l
 highlights in red is `sample_10`. Table S2 lists five water samples (#1 to #5); Table S4
 carries #1 to #3. Measurements:
 [[experiments.036-dataset-fixes-before-kg-build.scripts.manual_deposits_2026_10_12]].
+
+## 2026.10.12 - The loader: all 66,162 Table S4 values, each under its released symbol (#910)
+
+`RbTnseqTeteneva2024Dataset` (`torchcell/datasets/ecoli/teteneva2024.py`, PR #1068)
+stores every value Supplementary Table S4 releases: 11,027 rows (water sample 1: 3,675,
+2: 3,679, 3: 3,673) x 6 conditions = **66,162 records**, one
+`BacterialEnvironmentResponseExperiment` per (row, filtration, sampling day). No row
+is refused and no annotation decides which records exist.
+
+### The gene is stored as released
+
+Owner, 2026-10-12, relayed: "the data is the data!" Each record's genotype is one
+`BacterialReleasedStrainPerturbation` (the released-identifier leaf of #691, landed with
+Nichols 2011): the 'Gene name' verbatim as `systematic_gene_name`, `perturbed_gene_name`
+and `strain_label` (a pooled release labels its row by the gene alone),
+`identifier_kind` 'Gene name' (the column header), `released_kind`
+`transposon_insertion`, `cassette` kanamycin, and the W3110 host namespace
+`ecoli_k12_w3110_refseq_locus_tag`. The leaf refuses a locus tag, and none of the 3,691
+symbols is one.
+
+`ReleasedStrainKind` had no member for a transposon insertion (deletion, affinity tag,
+degron, linked marker, sequence allele, truncation), so it gains `transposon_insertion`
+with the SO pair the placed `TransposonInsertionPerturbation` pins (SO:0001218
+`transgenic_insertion`); the paper states the class of every row:
+
+> For the sake of simplicity, only insertions in the coding gene regions, which were assumed to inactivate the respective gene function, were considered for the assessment of the gene fitness effects.
+
+How the symbols land on the W3110 annotations is a DOWNSTREAM artifact, measured by
+[[experiments.database.scripts.teteneva2024_symbol_annotation]]: 3,607 of 3,691 land on
+exactly one RefSeq gene feature by `/gene` and 3,036 on exactly one GenBank one, and a
+three-step mapping onto RefSeq `Y75_RS` loci places 3,607 + 65 + 9 = 3,681, leaving 10
+(`dcuC`, `dmpG`, `gatA`, `mddA`, `nanS`, `pat`, `rzoD`, `tal`, `tuf`, `wbbL`). None of
+that is loader logic or a record field. An earlier draft of this branch resolved the
+symbols in the loader and kept the 10 out of the store; the owner's correction removed
+that route, and a draft `identifier_kind` field on `TransposonInsertionPerturbation`
+(a field-meaning change) was dropped in favour of the #691 leaf.
+
+### Every value sourced, the paper text in the raw mirror
+
+The library mirror held no Teteneva key on 2026-10-12 (Zotero item `PUKZFNFZ` was filed
+that day and `lit_sync` had not run), so the paper text is the PMC Article Datasets
+object, recorded in the raw mirror by `record_paper_and_texts` with its two derived
+texts:
+
+| file (`torchcell-raw/tetenevaGenomewideScreenGenetic2024/`) | sha256 | how |
+|---|---|---|
+| `paper/PMC11188689.1.txt` | `422bd792...` | `pmc_cloud`, key `PMC11188689.1/PMC11188689.1.txt` |
+| `si/supplementary_table_s2_wrae096.layout.txt` | `78f0ba62...` | `pdftotext -layout -enc UTF-8` (21.01.0) of the deposited Table S2 PDF |
+| `si/supplementary_tables_s3_s4.rendered.txt` | `b2f8ad50...` | both LEGEND sheets and Table S3's red-filled row, openpyxl |
+
+All 33 module quotes and the five Table S2 rows audit against those bytes
+(`test_every_quote_is_in_its_pinned_file_and_the_texts_rerender`, `--data`).
+
+| field | value | source |
+|---|---|---|
+| value | gene fitness, log2 ratio against the day-0 culture, normalized, chromosome running median (window 251) and mode subtracted, centred on 0 | Materials and methods, 'RB-TnSeq data analysis' |
+| `n_samples`, `sample_unit` | technical replicates behind the mean: 3, except 2 for lake water #1 filtered day 4 | "Gene fitness values were then averaged across the technical replicates."; Table S3 legend: "One sample that failed the QC is omitted from the further analysis and is highlighted in red." The red row is `sample_10` (replicate 1, day 4, filtered water, technical replicate 1) |
+| uncertainty | typed gap (`not_reported_by_primary`) | Table S4 releases the mean only |
+| medium | each water sample #1 to #3, filter-sterilized (0.22 um Steritop) or not, a `Media` deriving from the new library base `LAKE_WATER` (composition `intrinsically_undefined`) with its Table S2 row (date, pH, air and water temperature) | 'Water sampling'; Table S2; Fig. 2 legend for the #1-#3 numbering |
+| `duration_hours` | 48, 96, 192 (24 x the stated day) | "Samples for further analysis were taken on Days 2, 4, and 8 of cultivation, ..." |
+| temperature | typed gap (`not_reported_by_primary`) | "incubated without antibiotics at room temperature"; Table S2's temperatures are the lake's at sampling |
+| aerobicity | field default `aerobic`, not sourced (static 24-well plates; the field cannot be None, as in goodall2018 and price2018) | none stated |
+| reference | `W3110 RpoS+` on `ecoli_K12_W3110_ASM1024v1`, RefSeq accession GCF_000010245.2; the typical gene of the same environment, response 0 | "aligned to the E. coli K-12 W3110 reference genome (NCBI reference sequence: NC_007779.1)"; "This normalization removes local biases and ensures that the gene fitness distribution is centred around zero." |
+| background | `W3110 RpoS+`, genotype statement 'RpoS+', no typed allele | "a derivative of the laboratory strain with the restored RpoS activity" (the allele is ref. 14's) |
+
+### Schema and genome tier
+
+- W3110 vocabulary: `BacterialReferenceStrain`, `BacterialAssemblySet`,
+  `BACTERIAL_ASSEMBLY_SETS`, `ASSEMBLY_SET_ACCESSIONS` (GCA_000010245.1 /
+  GCF_000010245.2, from the GCF report), `BacterialGeneNamespace` +
+  `BACTERIAL_LOCUS_TAG_PATTERNS` (`^Y75_RS\d{5}$`). Record
+  `database/schema_changes/2026-10-12-w3110-reference-strain-vocabulary.json`.
+- `ReleasedStrainKind.transposon_insertion` and its SO pair. Record
+  `database/schema_changes/2026-10-12-released-strain-kind-transposon-insertion.json`.
+- Impact (`scripts/schema_impact_check.py --base origin/main` at 464c5cfc3): 60 loader
+  groups stale, 0 breaking; both records' rebuild scope `dev_stores` (no served
+  closure: the newest release snapshot serves no bacterial dataset).
+- `EcoliK12W3110Genome` reads the set RefSeq first
+  ([[torchcell.sequence.genome.ecoli.w3110]]); G2 of the candidate gate now reads
+  W3110. The loader itself reads no genome.
+
+### Candidate verdict
+
+`database/candidates/tetenevaGenomewideScreenGenetic2024.json`, written by
+[[experiments.database.scripts.teteneva2024_candidate_verdict]]: admissible, G1 to G5
+pass (G3: 7 files, 11,100 worksheet rows intact).

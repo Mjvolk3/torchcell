@@ -976,3 +976,20 @@ L3 `fraction_sum_at_most_one`).
 - **A released 0 is a status.** `quantification` covers every site, `phosphosite_intensity` exactly the quantified ones, strictly positive; a stored zero is refused.
 - **The sample is on the leaf.** `sample_label`, `replicate`, and value-or-gap `replicate_unit`, `harvest_growth_phase` and `harvest_optical_density` (the `harvest_optical_density` precedent of `MicroarrayExpressionScorePhenotype`), because `Environment` has no growth-phase slot and adding one would move every served closure.
 - Schema impact vs `origin/main` (`007cd23b0`): 16 symbols (11 added, 5 unions and type maps that gain one member), **0 breaking**. 11 dataset classes read stale only through `ExperimentType` and the type maps; one is served (`EnvChemgenHoepfner2014Dataset`), so the record's scope is `full_kg_rebuild`, which KG 4.0 is. Whether those stores re-serialize identically is measured in [[experiments.036-dataset-fixes-before-kg-build.scripts.potel2018_phosphosite_checks]].
+
+## 2026.10.12 - W3110 joins the strain vocabulary; a released Tn gene call (#910)
+
+- **W3110**: `BacterialReferenceStrain`, `BacterialAssemblySet` /
+  `BACTERIAL_ASSEMBLY_SETS` (`ecoli_K12_W3110_ASM1024v1`), `ASSEMBLY_SET_ACCESSIONS`
+  (GCA_000010245.1, GCF_000010245.2; the versions differ, read off the GCF report), and
+  the namespace `ecoli_k12_w3110_refseq_locus_tag` (`^Y75_RS\d{5}$`, the RefSeq tags:
+  the GenBank annotation has none). Record
+  `database/schema_changes/2026-10-12-w3110-reference-strain-vocabulary.json`.
+- **`ReleasedStrainKind.transposon_insertion`** (SO:0001218 `transgenic_insertion`, the
+  pair `TransposonInsertionPerturbation` pins): a pooled Tn library's gene-level call
+  stored on `BacterialReleasedStrainPerturbation` when the release names the gene only by
+  a symbol (Teteneva 2024 Table S4). Parent `GenePerturbation`, sibling of the placed
+  `TransposonInsertionPerturbation`, which keeps its locus-tag contract unchanged.
+  Record `database/schema_changes/2026-10-12-released-strain-kind-transposon-insertion.json`.
+- Impact at 464c5cfc3: 60 loader groups stale, 0 breaking, no served closure.
+  First consumer: [[torchcell.datasets.ecoli.teteneva2024]].

@@ -220,11 +220,11 @@ sourcing layer.
   mirror and filing it is a curation decision, so every value a loader needs is a typed
   gap rather than a guess.
 - ``teteneva2024`` -- ``RbTnseqTeteneva2024Dataset``: the lake-water RB-TnSeq screen of
-  E. coli K-12 W3110 RpoS+, Supplementary Table S4's gene fitness per (gene, lake water
-  sample, filtration, sampling day), on W3110's own RefSeq ``Y75_RS`` loci (the set
-  ``ecoli_K12_W3110_ASM1024v1`` read RefSeq first, owner route #910). Table S4 names
-  genes by symbol only; three resolution steps place 3,681 of its 3,691 symbols and the
-  rest are kept by name in the resolution ledger, not stored.
+  E. coli K-12 W3110 RpoS+, all 66,162 Supplementary Table S4 gene fitness values, one
+  per (gene, lake water sample, filtration, sampling day). Table S4 names genes by
+  symbol only, and each is stored as released on ``BacterialReleasedStrainPerturbation``
+  (kind ``transposon_insertion``) with no annotation lookup; the reference is the
+  W3110 set ``ecoli_K12_W3110_ASM1024v1`` (#910).
 - ``cai2023`` -- the MCF2Chem record: an aggregation NOT admitted. Its 8,888 production
   records are transcriptions of review tables, not measurements, and they are released
   only through a web server whose API answered 502 the day the row was settled, so there

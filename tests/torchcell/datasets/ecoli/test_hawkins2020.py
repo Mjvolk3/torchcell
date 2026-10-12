@@ -6,16 +6,16 @@
 The hermetic tests write a workbook carrying Table S3's own E. coli header and one row
 per behaviour the loader has to get right: a fully complementary spacer, a singly
 mismatched variant of it, a row with a mean and no SD, a row with no mean at all, and a
-row on a gene that reaches no BW25113 locus. The genomes are the real MG1655 and BW25113
-classes over the synthetic assemblies of
-``tests/torchcell/sequence/genome/_bacterial_fixtures.py``, so nothing reads
+row on a b-number no annotation carries (stored as released: the loader reads no
+genome). The MG1655 genome the verifier reads is the real class over the synthetic
+assembly of ``tests/torchcell/sequence/genome/_bacterial_fixtures.py``, so nothing reads
 ``$DATA_ROOT`` and no network call is permitted.
 
 The ``@pytest.mark.data`` tests read the pinned mirror and assert the numbers the module,
-the dendron note and the PR state: 36,290 released rows, 24,149 stored, 12,104 rows with
-no released fitness, 37 on ``sokE``, 317 genes, 778 negative values, 1,870 records with
-no SD, and a predicted sgRNA activity of exactly 1.0 on every one of the 3,110 parent
-spacers.
+the dendron note and the PR state: 36,290 released rows, 24,186 stored, 12,104 rows with
+no released fitness, 37 of them on ``sokE`` (b4700, retired in ASM584v2, stored), 318
+genes, 778 negative values, 1,873 records with no SD, and a predicted sgRNA activity of
+exactly 1.0 on every one of the 3,110 parent spacers.
 """
 
 from __future__ import annotations
@@ -32,7 +32,6 @@ import pytest
 
 import torchcell.datasets.ecoli.hawkins2020 as h
 from tests.torchcell.sequence.genome._bacterial_fixtures import (
-    BW25113_LOCI,
     MG1655_GAF,
     MG1655_LOCI,
     forbid_network,
@@ -48,30 +47,23 @@ from torchcell.datamodels.schema import (
     SmallMoleculePerturbation,
     UncertaintyType,
 )
-from torchcell.sequence.genome.ecoli.k12 import (
-    BW25113_ASSEMBLY,
-    MG1655_ASSEMBLY,
-    EcoliK12BW25113Genome,
-    EcoliK12MG1655Genome,
-)
+from torchcell.sequence.genome.ecoli.k12 import MG1655_ASSEMBLY, EcoliK12MG1655Genome
 
 #: ``(variant, original, locus_tag, pam, offset, gene, mean, sd, family, predicted)``.
-#: ``b0001`` crosses to ``BW25113_0001`` on ECK0001; ``b0005`` carries ECK0005, which the
-#: synthetic BW25113 annotation puts on two loci, so it is NOT one-to-one and reaches no
-#: locus.
+#: ``b9999`` is a locus of no annotation; it is stored exactly like ``b0001``.
 PARENT = "AAAAAAAAAAAAAAAAAAAA"
 MISMATCHED = "AAAAAAAAAAAAAAAAAAAC"
 NO_SD = "AAAAAAAAAAAAAAAAAACA"
 NO_MEAN = "AAAAAAAAAAAAAAAAACAA"
-UNRESOLVED = "AAAAAAAAAAAAAAAACAAA"
+UNANNOTATED = "AAAAAAAAAAAAAAAACAAA"
 SYNTHETIC: tuple[tuple[Any, ...], ...] = (
     (PARENT, PARENT, "b0001", "CGG", 7, "thrL", 0.42, 0.03, True, 1.0),
     (MISMATCHED, PARENT, "b0001", "CGG", 7, "thrL", 0.91, 0.07, True, 0.33),
     (NO_SD, PARENT, "b0001", "CGG", 7, "thrL", -0.11, None, False, 0.80),
     (NO_MEAN, PARENT, "b0001", "CGG", 7, "thrL", None, None, True, 0.61),
-    (UNRESOLVED, PARENT, "b0005", "TGG", 9, "proB", 0.77, 0.05, True, 0.55),
+    (UNANNOTATED, PARENT, "b9999", "TGG", 9, "ghoX", 0.77, 0.05, True, 0.55),
 )
-STORED = (PARENT, MISMATCHED, NO_SD)
+STORED = (PARENT, MISMATCHED, NO_SD, UNANNOTATED)
 
 
 def _workbook(path: Path, rows: tuple[tuple[Any, ...], ...] = SYNTHETIC) -> Path:
@@ -104,27 +96,21 @@ def mg1655(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> EcoliK12MG1655Gen
     return EcoliK12MG1655Genome(genome_root=str(tmp_path / "mg1655"), overwrite=True)
 
 
-@pytest.fixture
-def bw25113(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> EcoliK12BW25113Genome:
-    """The real BW25113 class over the synthetic assembly; network refused."""
-    tier = write_assembly(tmp_path / "bw-tier", BW25113_ASSEMBLY, BW25113_LOCI)
-    forbid_network(monkeypatch)
-    serve_tier(monkeypatch, tier)
-    return EcoliK12BW25113Genome(genome_root=str(tmp_path / "bw25113"), overwrite=True)
-
-
 # --------------------------------------------------------------------------- #
 # The declared constants and what is refused
 # --------------------------------------------------------------------------- #
 def test_declared_counts_are_the_measured_ones() -> None:
     assert h.EXPECTED_SOURCE_ROWS == 36290
-    assert h.EXPECTED_RECORDS == 24149
-    assert h.EXPECTED_DROPS == {h.DROP_NO_FITNESS: 12104, h.DROP_NO_LOCUS: 37}
+    assert h.EXPECTED_RECORDS == 24186
+    assert h.EXPECTED_GENES == 318
+    assert h.EXPECTED_DROPS == {h.DROP_NO_FITNESS: 12104}
     assert h.EXPECTED_RECORDS + sum(h.EXPECTED_DROPS.values()) == h.EXPECTED_SOURCE_ROWS
-    assert (h.EXPECTED_RELEASED_GENES, h.EXPECTED_GENES) == (318, 317)
+    # every released gene is stored, sokE (b4700) included
+    assert (h.EXPECTED_RELEASED_GENES, h.EXPECTED_GENES) == (318, 318)
     assert h.EXPECTED_PARENT_SPACERS == 3110
-    assert h.EXPECTED_STORED_PARENTS == 2948
-    assert h.UNRESOLVED_BNUMBER == "b4700"
+    assert h.EXPECTED_STORED_PARENTS == 2956
+    assert not hasattr(h, "resolve_targets")
+    assert not hasattr(h, "eck_crosswalk")
 
 
 def test_the_predicted_dose_is_sourced_as_a_model_output_and_never_stored() -> None:
@@ -202,114 +188,76 @@ def test_mismatch_design_refuses_a_double_mismatch_and_a_short_spacer() -> None:
 
 
 # --------------------------------------------------------------------------- #
-# Released b-number -> BW25113 locus
-# --------------------------------------------------------------------------- #
-def test_resolve_targets_crosses_every_b_number_on_its_one_to_one_eck_pair(
-    mg1655: EcoliK12MG1655Genome, bw25113: EcoliK12BW25113Genome
-) -> None:
-    report = h.resolve_targets(["b0001", "b0003", "b0005"], mg1655, bw25113)
-    assert report.resolved["b0001"].bw25113_locus == "BW25113_0001"
-    assert report.resolved["b0001"].eck == "ECK0001"
-    assert report.resolved["b0001"].symbol == "thrL"
-    assert report.resolved["b0001"].numerics_agree is True
-    # ECK0003 sits on BW25113_4412, whose number disagrees with b0003: the crosswalk is
-    # the only route, and the record records that it was used
-    assert report.resolved["b0003"].bw25113_locus == "BW25113_4412"
-    assert report.resolved["b0003"].numerics_agree is False
-    # ECK0005 is carried by two BW25113 loci, so it is not one-to-one and nothing is
-    # guessed
-    assert "b0005" not in report.resolved
-    assert "no one-to-one ECK partner" in report.unresolved["b0005"]
-    assert set(report.stored) == {"b0001", "b0003"}
-
-
-def test_resolve_targets_reports_a_retired_b_number_rather_than_guessing(
-    mg1655: EcoliK12MG1655Genome, bw25113: EcoliK12BW25113Genome
-) -> None:
-    report = h.resolve_targets(["b0001", "b9999"], mg1655, bw25113)
-    assert "retired in the pinned MG1655 assembly" in report.unresolved["b9999"]
-    assert set(report.stored) == {"b0001"}
-
-
-def test_resolve_targets_refuses_an_identifier_that_is_not_a_b_number(
-    mg1655: EcoliK12MG1655Genome, bw25113: EcoliK12BW25113Genome
-) -> None:
-    with pytest.raises(RuntimeError, match="is not a b-number"):
-        h.resolve_targets(["thrL"], mg1655, bw25113)
-
-
-# --------------------------------------------------------------------------- #
 # Retention and the record
 # --------------------------------------------------------------------------- #
-def _verdicts(
-    workbook: Path, mg1655: EcoliK12MG1655Genome, bw25113: EcoliK12BW25113Genome
-) -> dict[str, h.RowVerdict]:
+def _verdicts(workbook: Path) -> dict[str, h.RowVerdict]:
     frame = h.read_ecoli_sheet(workbook)
-    report = h.resolve_targets([str(t) for t in frame[h.COL_LOCUS]], mg1655, bw25113)
     return {
         verdict.spacer: verdict
         for verdict in (
-            h.classify_row(cast(Mapping[str, Any], row), report.stored)
+            h.classify_row(cast(Mapping[str, Any], row))
             for row in frame.to_dict(orient="records")
         )
     }
 
 
-def test_classify_row_drops_a_blank_mean_and_an_unresolvable_gene(
-    workbook: Path, mg1655: EcoliK12MG1655Genome, bw25113: EcoliK12BW25113Genome
-) -> None:
-    verdicts = _verdicts(workbook, mg1655, bw25113)
+def test_classify_row_drops_only_a_blank_mean(workbook: Path) -> None:
+    verdicts = _verdicts(workbook)
     assert [spacer for spacer, v in verdicts.items() if not v.drop_reason] == list(
         STORED
     )
     assert verdicts[NO_MEAN].drop_reason == h.DROP_NO_FITNESS
-    assert verdicts[UNRESOLVED].drop_reason == h.DROP_NO_LOCUS
     # a dropped row still carries what the release said, so the drop is reversible
     assert verdicts[NO_MEAN].predicted_activity == 0.61
-    assert verdicts[UNRESOLVED].fitness == 0.77
+    # a b-number no annotation carries is a record like any other
+    assert verdicts[UNANNOTATED].drop_reason == ""
+    assert (verdicts[UNANNOTATED].b_number, verdicts[UNANNOTATED].released_symbol) == (
+        "b9999",
+        "ghoX",
+    )
     assert verdicts[NO_SD].sd is None
     assert verdicts[NO_SD].family_retained is False
-    assert verdicts[PARENT].bw25113_locus == "BW25113_0001"
 
 
-def test_the_record_carries_the_mismatch_design_and_the_derived_locus(
-    workbook: Path, mg1655: EcoliK12MG1655Genome, bw25113: EcoliK12BW25113Genome
-) -> None:
-    verdicts = _verdicts(workbook, mg1655, bw25113)
-    report = h.resolve_targets(["b0001"], mg1655, bw25113)
-    genotype = h.build_genotype(
-        h.mismatch_design(MISMATCHED, PARENT), report.stored["b0001"], "thrL"
-    )
+def test_classify_row_refuses_an_identifier_that_is_not_a_b_number() -> None:
+    row = {
+        h.COL_VARIANT: PARENT,
+        h.COL_PARENT: PARENT,
+        h.COL_LOCUS: "thrL",
+        h.COL_GENE: "thrL",
+        h.COL_MEAN: 0.4,
+        h.COL_SD: 0.1,
+        h.COL_PREDICTED: 1.0,
+        h.COL_FAMILY: True,
+    }
+    with pytest.raises(RuntimeError, match="is not a b-number"):
+        h.classify_row(row)
+
+
+def test_the_record_carries_the_mismatch_design_and_the_released_b_number() -> None:
+    genotype = h.build_genotype(h.mismatch_design(MISMATCHED, PARENT), "b0001", "thrL")
     (leaf,) = genotype.perturbations
     assert isinstance(leaf, BacterialCrisprInterferencePerturbation)
-    assert leaf.systematic_gene_name == "BW25113_0001"
+    assert leaf.systematic_gene_name == "b0001"
     assert leaf.perturbed_gene_name == "thrL"
-    assert leaf.gene_namespace == "ecoli_k12_bw25113_locus_tag"
+    assert leaf.gene_namespace == "ecoli_k12_mg1655_bnumber"
     assert leaf.expression_direction == "decreased"
-    assert leaf.identifier_mapping is not None
-    assert (
-        leaf.identifier_mapping.source_identifier,
-        leaf.identifier_mapping.route,
-    ) == ("b0001", "eck_crosswalk")
+    assert leaf.identifier_mapping is None
     assert leaf.crispr.guide_sequence == MISMATCHED
     assert leaf.crispr.effector == "dCas9"
     assert leaf.crispr.n_guides == 1
     assert leaf.crispr.library_pool == h.LIBRARY_POOL
     assert f"parent spacer {PARENT}" in leaf.description
-    assert verdicts[MISMATCHED].b_number == "b0001"
 
 
-def test_build_genotype_refuses_a_target_with_no_locus() -> None:
-    target = h.TargetResolution(
-        b_number="b4700",
-        mg1655_locus=None,
-        eck=None,
-        bw25113_locus=None,
-        symbol=None,
-        numerics_agree=None,
-    )
-    with pytest.raises(RuntimeError, match="reached no BW25113 locus"):
-        h.build_genotype(h.mismatch_design(PARENT, PARENT), target, "sokE")
+def test_build_genotype_stores_the_released_symbol_verbatim() -> None:
+    """The release's own spelling is the name, not an annotation's."""
+    (leaf,) = h.build_genotype(
+        h.mismatch_design(PARENT, PARENT), "b4700", "sokE"
+    ).perturbations
+    assert (leaf.systematic_gene_name, leaf.perturbed_gene_name) == ("b4700", "sokE")
+    with pytest.raises(RuntimeError, match="is not a b-number"):
+        h.build_genotype(h.mismatch_design(PARENT, PARENT), "BW25113_0001", "thrL")
 
 
 # --------------------------------------------------------------------------- #
@@ -419,39 +367,16 @@ def _accounting(**overrides: Any) -> h.BuildAccounting:
         "kept_records": h.EXPECTED_RECORDS,
         "dropped_rows": sum(h.EXPECTED_DROPS.values()),
         "dropped_rows_by_reason": dict(h.EXPECTED_DROPS),
-        "stored_genes": 317,
-        "stored_parent_spacers": 2948,
-        "stored_fully_complementary": 2378,
-        "stored_single_mismatch": h.EXPECTED_RECORDS - 2378,
-        "stored_without_sd": 1870,
-        "stored_in_excluded_series": 4863,
+        "stored_genes": 318,
+        "stored_parent_spacers": 2956,
+        "stored_fully_complementary": 2384,
+        "stored_single_mismatch": h.EXPECTED_RECORDS - 2384,
+        "stored_without_sd": 1873,
+        "stored_in_excluded_series": 4865,
         "stored_negative": 778,
-        "unresolved_genes": {"b4700": "retired"},
-        "reconciliation": _reconciliation(),
     }
     fields.update(overrides)
     return h.BuildAccounting(**fields)
-
-
-def _reconciliation() -> Any:
-    """A minimal reconciliation report: 317 current names and one retired."""
-    from torchcell.datasets.bacteria_common import LocusTagReconciliation
-    from torchcell.sequence.genome.base import GeneNameStatus
-
-    return LocusTagReconciliation(
-        label="hawkins2020 b-numbers",
-        assembly_set="ecoli_K12_MG1655_ASM584v2",
-        gene_namespace="ecoli_k12_mg1655_bnumber",
-        unique_names=318,
-        status_histogram={GeneNameStatus.CURRENT: 317, GeneNameStatus.RETIRED: 1},
-        layer_histogram={"locus tag": 317, "not found": 1},
-        remapped=0,
-        kept_on_collision=(),
-        retired_kept=(h.UNRESOLVED_BNUMBER,),
-        ambiguous_kept={},
-        case_insensitive=(),
-        outside_namespace=(),
-    )
 
 
 def test_the_accounting_balances_and_refuses_a_moved_count() -> None:
@@ -459,13 +384,11 @@ def test_the_accounting_balances_and_refuses_a_moved_count() -> None:
     with pytest.raises(RuntimeError, match="!= 36290 released rows"):
         _accounting(kept_records=h.EXPECTED_RECORDS - 1).check()
     with pytest.raises(RuntimeError, match="per-reason drops total"):
-        _accounting(
-            dropped_rows_by_reason={h.DROP_NO_FITNESS: 12104, h.DROP_NO_LOCUS: 36}
-        ).check()
+        _accounting(dropped_rows_by_reason={h.DROP_NO_FITNESS: 12103}).check()
     with pytest.raises(RuntimeError, match="are not the pinned"):
         _accounting(
-            dropped_rows=sum(h.EXPECTED_DROPS.values()),
-            dropped_rows_by_reason={h.DROP_NO_FITNESS: 12141, h.DROP_NO_LOCUS: 0},
+            dropped_rows=12104,
+            dropped_rows_by_reason={h.DROP_NO_FITNESS: 12103, "other": 1},
         ).check()
     with pytest.raises(RuntimeError, match="mismatched !="):
         _accounting(stored_single_mismatch=0).check()
@@ -506,13 +429,14 @@ def test_the_release_measures_what_the_module_declares() -> None:
     assert float(frame.loc[~parents, h.COL_PREDICTED].min()) < 0.0
     mean = frame[h.COL_MEAN].notna()
     assert int((~mean).sum()) == h.EXPECTED_DROPS[h.DROP_NO_FITNESS]
-    sokE = frame[h.COL_LOCUS] == h.UNRESOLVED_BNUMBER
-    assert int((sokE & mean).sum()) == h.EXPECTED_DROPS[h.DROP_NO_LOCUS]
-    kept = mean & ~sokE
-    assert int(kept.sum()) == h.EXPECTED_RECORDS
-    assert int((kept & (frame[h.COL_MEAN] < 0)).sum()) == 778
-    assert int((kept & frame[h.COL_SD].isna()).sum()) == 1870
-    assert int((kept & ~frame[h.COL_FAMILY].astype(bool)).sum()) == 4863
+    sokE = frame[h.COL_LOCUS] == "b4700"
+    assert int((sokE & mean).sum()) == 37
+    kept = mean
+    assert int(kept.sum()) == h.EXPECTED_RECORDS == 24186
+    assert frame.loc[kept, h.COL_LOCUS].nunique() == h.EXPECTED_GENES == 318
+    assert int((kept & (frame[h.COL_MEAN] < 0)).sum()) == h.EXPECTED_NEGATIVE == 778
+    assert int((kept & frame[h.COL_SD].isna()).sum()) == h.EXPECTED_WITHOUT_SD == 1873
+    assert int((kept & ~frame[h.COL_FAMILY].astype(bool)).sum()) == 4865
 
 
 @pytest.mark.data
@@ -548,7 +472,8 @@ def test_the_built_store_holds_the_declared_records() -> None:
     assert summary.n_spacers == h.EXPECTED_RECORDS
     assert summary.malformed_spacers == ()
     assert summary.designs_without_a_parent == ()
-    assert summary.derived_from_a_b_number == h.EXPECTED_RECORDS
+    assert summary.released_b_numbers == h.EXPECTED_RECORDS
+    assert "b4700" in summary.loci
     assert summary.negative_responses == 778
     assert summary.screens == {h.SCREEN_ID: h.EXPECTED_RECORDS}
 
@@ -576,16 +501,14 @@ def _pin(strain: Any, *, background: Any = None, data_root: str | None = None) -
 
 @pytest.fixture
 def mirrored(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-    mg1655: EcoliK12MG1655Genome,
-    bw25113: EcoliK12BW25113Genome,
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mg1655: EcoliK12MG1655Genome
 ) -> Path:
-    """A whole synthetic world: the library mirror, the pins, and the two genomes.
+    """A whole synthetic world: the library mirror, the pins, and the verifier's genome.
 
     ``DATA_ROOT`` points at ``tmp_path``, the workbook's own digest and byte count
-    replace the released ones, and ``bacterial_genome`` hands back the synthetic
-    assemblies, so the build reads nothing outside ``tmp_path``.
+    replace the released ones, and ``bacterial_genome`` hands the verifier the
+    synthetic MG1655 assembly (the build itself reads no genome), so nothing is read
+    outside ``tmp_path``.
     """
     data_root = tmp_path / "root"
     library = data_root / "torchcell-library" / h.CITATION_KEY / "si"
@@ -597,12 +520,12 @@ def mirrored(
     monkeypatch.setattr(h, "EXPECTED_SOURCE_ROWS", len(SYNTHETIC))
     monkeypatch.setattr(h, "EXPECTED_RELEASED_GENES", 2)
     monkeypatch.setattr(h, "EXPECTED_RECORDS", len(STORED))
-    monkeypatch.setattr(h, "EXPECTED_GENES", 1)
+    monkeypatch.setattr(h, "EXPECTED_GENES", 2)
     monkeypatch.setattr(h, "EXPECTED_STORED_PARENTS", 1)
     monkeypatch.setattr(h, "EXPECTED_NEGATIVE", 1)
     monkeypatch.setattr(h, "EXPECTED_WITHOUT_SD", 1)
-    monkeypatch.setattr(h, "EXPECTED_DROPS", {h.DROP_NO_FITNESS: 1, h.DROP_NO_LOCUS: 1})
-    genomes = {"MG1655": mg1655, "BW25113": bw25113}
+    monkeypatch.setattr(h, "EXPECTED_DROPS", {h.DROP_NO_FITNESS: 1})
+    genomes = {"MG1655": mg1655}
     monkeypatch.setattr(
         h, "bacterial_genome", lambda host, strain, data_root=None: genomes[str(strain)]
     )
@@ -653,25 +576,27 @@ def test_the_build_writes_one_record_per_measured_sgrna_and_its_ledger(
     accounting.check()
     assert accounting.released_rows == len(SYNTHETIC)
     assert accounting.kept_records == len(STORED)
-    assert accounting.dropped_rows_by_reason == {
-        h.DROP_NO_FITNESS: 1,
-        h.DROP_NO_LOCUS: 1,
-    }
+    assert accounting.dropped_rows_by_reason == {h.DROP_NO_FITNESS: 1}
+    assert accounting.stored_genes == 2
     assert accounting.stored_fully_complementary == 1
-    assert accounting.stored_single_mismatch == 2
+    assert accounting.stored_single_mismatch == 3
     assert accounting.stored_in_excluded_series == 1
-    assert accounting.unresolved_genes == {
-        "b0005": accounting.unresolved_genes["b0005"]
-    }
-    assert "no one-to-one ECK partner" in accounting.unresolved_genes["b0005"]
     assert any("mismatch_design" not in note for note in accounting.notes)
     assert any("predicted sgRNA ACTIVITY" in note for note in accounting.notes)
+    assert any("sokE (b4700)" in note for note in accounting.notes)
 
     ledger = pd.read_csv(Path(dataset.preprocess_dir, "guide_retention.csv"))
     assert len(ledger) == len(SYNTHETIC)
     assert "predicted_sgrna_activity_not_stored" in ledger.columns
+    assert "bw25113_locus" not in ledger.columns
     dropped = ledger[ledger["drop_reason"].notna()]
-    assert set(dropped["spacer"]) == {NO_MEAN, UNRESOLVED}
+    assert set(dropped["spacer"]) == {NO_MEAN}
+    stored = {
+        p["systematic_gene_name"]: p["perturbed_gene_name"]
+        for i in range(len(dataset))
+        for p in dataset[i]["experiment"]["genotype"]["perturbations"]
+    }
+    assert stored == {"b0001": "thrL", "b9999": "ghoX"}
     # the refused dose survives in the ledger for every row, kept or dropped
     assert (
         float(
@@ -699,15 +624,27 @@ def test_the_build_refuses_a_released_gene_count_that_moved(
         _build(mirrored)
 
 
-def test_every_l0_to_l4_row_passes_on_the_built_store(mirrored: Path) -> None:
+#: The rows that compare stored names with OUR genome reference. They report
+#: findings (the synthetic b9999 is on no locus) and never decide the verdict (#1069).
+GENOME_REFERENCE_ROWS = {"canonical_gene_names", "current_genome_genes"}
+
+
+def _is_genome_reference_row(name: str) -> bool:
+    return name in GENOME_REFERENCE_ROWS or name.startswith("gene_containment_")
+
+
+def test_every_gate_row_passes_on_the_built_store(mirrored: Path) -> None:
     dataset = _build(mirrored)
     report = h.verify_build(dataset.root, expected_count=len(STORED))
     failed = [result.name for result in report.results if not result.passed]
-    assert failed == []
+    assert [name for name in failed if not _is_genome_reference_row(name)] == []
+    # the b-number no annotation carries is a genome-reference finding, not a gate
+    assert all(_is_genome_reference_row(name) for name in failed)
+    assert failed, "b9999 is on no synthetic locus, so the genome rows must report it"
     names = {result.name for result in report.results}
     assert {
         "reference_zero",
-        "stored_loci_are_bw25113_loci_derived_from_the_released_b_number",
+        "stored_loci_are_the_released_b_numbers_on_the_bw25113_pin",
         "guide_spacers_are_twenty_nt_acgt",
         "perturbation_descriptions_state_the_mismatch_design",
         "one_screen_and_the_negative_tail_is_intact",
@@ -718,7 +655,7 @@ def test_every_l0_to_l4_row_passes_on_the_built_store(mirrored: Path) -> None:
 
 
 def test_the_supplementary_rows_fail_on_a_store_that_lost_its_design(
-    mirrored: Path, bw25113: EcoliK12BW25113Genome
+    mirrored: Path,
 ) -> None:
     dataset = _build(mirrored)
     from torchcell.verification.runners import stream_records
@@ -726,8 +663,8 @@ def test_the_supplementary_rows_fail_on_a_store_that_lost_its_design(
     records = list(stream_records(dataset.root))
     summary = h.summarize_store(records)
     assert summary.n_records == len(STORED)
-    assert summary.loci == ("BW25113_0001",)
-    assert summary.derived_from_a_b_number == len(STORED)
+    assert summary.loci == ("b0001", "b9999")
+    assert summary.released_b_numbers == len(STORED)
     assert summary.negative_responses == 1
     assert h.one_screen_and_the_depleted_tail(summary).passed
 
@@ -742,4 +679,6 @@ def test_the_supplementary_rows_fail_on_a_store_that_lost_its_design(
     moved = summary.model_copy(update={"negative_responses": 0})
     assert not h.one_screen_and_the_depleted_tail(moved).passed
     outside = summary.model_copy(update={"loci": ("BW25113_9999",)})
-    assert not h.every_locus_is_derived_and_pinned(outside, bw25113).passed
+    assert not h.every_locus_is_the_released_b_number_and_pinned(outside).passed
+    mapped = summary.model_copy(update={"released_b_numbers": 0})
+    assert not h.every_locus_is_the_released_b_number_and_pinned(mapped).passed

@@ -92,3 +92,14 @@ LB with 100 ug/mL ampicillin at 37 C, 1 mM IPTG inducing the chromosomal dcas9, 
 4. No PubMed id is recorded; the mirror's manifest and the pinned OCR carry only the DOI.
 
 Regenerating script: `experiments/036-dataset-fixes-before-kg-build/scripts/hawkins2020_release_inventory.py`, results `experiments/036-dataset-fixes-before-kg-build/results/hawkins2020_release_inventory.json`.
+
+## 2026.10.12 - Every released b-number stored as released, no ECK lift (genome-gate reversal)
+
+The owner's rule of 2026-10-12 ([[database.genome-gating-sweep.2026.10.12]], rows 181 and 384): the loader reads no annotation and stores every released identifier verbatim. The record now keys its `BacterialCrisprInterferencePerturbation` by the released MG1655 b-number (`locus_tag` column) under `gene_namespace="ecoli_k12_mg1655_bnumber"`, with the released `gene` symbol as `perturbed_gene_name` and no `identifier_mapping`; the reference still pins the BW25113 host assembly (GCA_000750555.1) and its dCas9 cassette. What changed:
+
+- `resolve_targets`, `TargetResolution`, `canonical_symbol`, the ECK crosswalk, `MIN_RESOLVED_FRACTION`, the `ecoli_genome` constructor parameter and the `unresolved_genes` / `reconciliation` fields of `build_accounting.json` are gone. The lift from a b-number to a BW25113 locus is a modeling-time join; the workbook's own `10-15 relfit (eco)` sheet (BW25113_ tags on the same rows, agreeing on all 317 liftable genes) is the released evidence for it, measured by the inventory script.
+- `target_gene_has_no_bw25113_locus` is gone: the 37 fitness-carrying rows on `sokE` (b4700, retired in ASM584v2) are records. The one remaining drop rule is the release's own blank-mean floor (12,104 rows).
+- Pins: `EXPECTED_RECORDS` 24,149 -> 24,186; `EXPECTED_GENES` 317 -> 318; `EXPECTED_STORED_PARENTS` 2,948 -> 2,956; `EXPECTED_WITHOUT_SD` 1,870 -> 1,873 (the sokE rows); 778 negative values and 4,865 records in an excluded series.
+- The supplementary L1 row is now `stored_loci_are_the_released_b_numbers_on_the_bw25113_pin` (every key matches the b-number pattern, carries no mapping, and every record pins BW25113); it reads no annotation. `verify_build` resolves and bounds the L4 universe with the MG1655 genome, the namespace the keys are written in, so the genome-reference rows report b4700 as a finding (#1069) rather than failing a BW25113 containment that no b-number could satisfy.
+
+Released vs stored: 36,290 released rows = 24,186 records + 12,104 rows with no released fitness (the authors' own floor); 318 released genes, 318 stored.

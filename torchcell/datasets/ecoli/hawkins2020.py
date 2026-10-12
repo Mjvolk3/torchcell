@@ -41,8 +41,9 @@ pair; a consumer that wants the measurement reads the phenotype.
 
 RECORD = one released sgRNA with a measured fitness:
 
-- GENOTYPE: one ``BacterialCrisprInterferencePerturbation`` keyed by the target gene's
-  BW25113 locus tag, carrying the mismatched spacer on the shared ``crispr`` construct
+- GENOTYPE: one ``BacterialCrisprInterferencePerturbation`` keyed by the released
+  MG1655 b-number of the target gene (``locus_tag`` column) with the released ``gene``
+  symbol, carrying the mismatched spacer on the shared ``crispr`` construct
   (``effector="dCas9"``, the S. pyogenes dCas9 of the Tn7att PlLac-O1 cassette).
 - ENVIRONMENT: LB with 100 ug/mL ampicillin at 37 C, 1 mM IPTG inducing dCas9, over about
   10 doublings of exponential growth maintained by back dilution.
@@ -51,21 +52,28 @@ RECORD = one released sgRNA with a measured fitness:
   doublings divided by the wild type's over the same time course, so 1.0 is wild-type
   growth and below 1.0 is slower (``FITNESS_DEFINITION``).
 
-WHY ``EnvironmentResponsePhenotype`` AND NOT ``FitnessPhenotype``. 778 of the 24,149
+WHY ``EnvironmentResponsePhenotype`` AND NOT ``FitnessPhenotype``. 778 of the 24,186
 stored values are negative, which is the release's own meaning for a clone actively
 depleted from the pool rather than merely outgrown (``NEGATIVE_FITNESS``).
 ``FitnessPhenotype.validate_fitness`` clamps every non-positive value to 0.0, which would
 erase exactly the strong-knockdown end of the dose axis this paper exists to measure.
 
-THE HOST IS BW25113 AND THE RELEASE NAMES MG1655 b-NUMBERS. Every library strain was
-built in wild-type BW25113 (``HOST_STRAIN``), while Table S3's ``locus_tag`` column is a
-b-number. Each b-number is carried to its BW25113 locus through the one-to-one ECK
-synonym join (``bacteria_common.eck_crosswalk``) and typed on the perturbation as a
-``DerivedIdentifierMapping`` with ``route="eck_crosswalk"``, the Mutalik 2020 pattern. The
-crosswalk is CHECKED rather than trusted: the workbook's own ``10-15 relfit (eco)`` sheet
-names the same rows by ``BW25113_`` tag, and all 317 crossed tags agree with the authors'
-own tag (measured, 0 disagreements;
-``experiments/036-dataset-fixes-before-kg-build/scripts/hawkins2020_release_inventory.py``).
+THE HOST IS BW25113 AND THE RELEASE NAMES MG1655 b-NUMBERS, AND THE RECORD SAYS BOTH.
+Every library strain was built in wild-type BW25113 (``HOST_STRAIN``), which is the
+reference's ``AssemblyReferenceGenome`` (GCA_000750555.1) and strain background, while
+Table S3's ``locus_tag`` column is an MG1655 b-number. The record stores the b-number as
+released, ``gene_namespace="ecoli_k12_mg1655_bnumber"`` (the namespace the identifier is
+written in), and the released ``gene`` symbol as ``perturbed_gene_name``; it carries no
+``identifier_mapping`` because nothing was derived. The loader reads no annotation
+(the owner's rule of 2026-10-12: the data is the data, and the genome is a separate
+layer joined at modeling time). Before that rule each b-number was lifted to its
+BW25113 locus through the one-to-one ECK synonym join and the one gene ASM584v2
+retires, ``sokE`` (``b4700``), was dropped; the lift is now a modeling-time join, and
+the workbook's own ``10-15 relfit (eco)`` sheet, which names the same rows by
+``BW25113_`` tag (all 317 liftable tags agree with the authors' own, measured, 0
+disagreements;
+``experiments/036-dataset-fixes-before-kg-build/scripts/hawkins2020_release_inventory.py``),
+is the released evidence for it.
 
 RECORDS DROPPED (rule + counts in ``preprocess/build_accounting.json``):
 
@@ -73,20 +81,17 @@ RECORDS DROPPED (rule + counts in ``preprocess/build_accounting.json``):
    workbook's column legend defines as "blank values indicate that sgRNAs did not meet
    minimum read count (100 at t0) requirement" and the Methods state as the analysis's
    own floor (``READ_FLOOR``). There is no measurement to store.
-2. ``target_gene_has_no_bw25113_locus`` (37 rows with a fitness, 99 rows in all): the
-   single gene ``sokE`` (``b4700``), which is retired in GenBank ASM584v2 and carries no
-   ECK synonym, so no BW25113 locus can key it. 317 of the 318 released genes resolve.
 
-Retention arithmetic: 36,290 released (sgRNA, gene) rows = 24,149 stored + 12,104 with no
-fitness + 37 on the unresolvable gene. The stored records cover 317 genes and 2,948 parent
-spacers, of which 2,378 are themselves stored as the fully complementary member of their
-series.
+Retention arithmetic: 36,290 released (sgRNA, gene) rows = 24,186 stored + 12,104 with no
+fitness. The stored records cover all 318 released genes (37 of them on ``sokE``) and
+2,956 parent spacers, of which 2,384 are themselves stored as the fully complementary
+member of their series.
 
 THE AUTHORS' OWN SERIES FILTER IS KEPT AS DATA, NOT APPLIED. The released
 ``family_retained`` flag is step 1 of the paper's curve pipeline: a series whose fully
 complementary guide looks non-functional is excluded from the per-gene curves
 (``FAMILY_FILTER``), which is why Table S3 and the curve tables (Table S5, Data S1) are
-different populations. 4,863 of the 24,149 stored records sit in an excluded series. They
+different populations. 4,865 of the 24,186 stored records sit in an excluded series. They
 are stored, because the filter is about whether the series' PREDICTED activity scale is
 trustworthy -- the quantity this loader already refuses -- and not about whether the
 fitness was measured. The flag is kept per row in ``preprocess/guide_retention.csv`` so
@@ -151,13 +156,13 @@ import os
 import os.path as osp
 import re
 import shutil
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Iterable, Mapping
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, ClassVar, Literal, cast
 
 import pandas as pd
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from tqdm import tqdm
 
 from torchcell.data import (
@@ -180,7 +185,6 @@ from torchcell.datamodels.schema import (
     Concentration,
     ConcentrationUnit,
     CrisprConstruct,
-    DerivedIdentifierMapping,
     Environment,
     EnvironmentResponsePhenotype,
     Experiment,
@@ -199,11 +203,8 @@ from torchcell.datamodels.schema import (
 )
 from torchcell.datasets.bacteria_common import (
     STRAIN_GENE_NAMESPACES,
-    LocusTagReconciliation,
     assembly_reference,
     bacterial_genome,
-    eck_crosswalk,
-    reconcile_locus_tags,
 )
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.literature.manifest import (
@@ -213,12 +214,7 @@ from torchcell.literature.manifest import (
     RetrievalMethod,
     RetrievalRecord,
 )
-from torchcell.sequence.genome.ecoli.k12 import (
-    EcoliK12BW25113Genome,
-    EcoliK12Genome,
-    EcoliK12MG1655Genome,
-    EcoliK12StrainName,
-)
+from torchcell.sequence.genome.ecoli.k12 import EcoliK12Genome, EcoliK12StrainName
 from torchcell.verification.report import (
     Level,
     LevelResult,
@@ -297,11 +293,12 @@ SPACER_RE = re.compile(r"^[ACGT]{20}$")
 #: A b-number of the released MG1655 identifier column.
 BNUMBER_RE = re.compile(r"^b\d{4}$")
 
-#: The host the library strains were built in, and the namespace every record is keyed in.
+#: The host the library strains were built in, which the reference pins.
 REFERENCE_STRAIN_NAME: EcoliK12StrainName = "BW25113"
-BW25113_NAMESPACE = STRAIN_GENE_NAMESPACES[REFERENCE_STRAIN_NAME]
-#: The identifier namespace the RELEASE names its targets in.
+#: The identifier namespace the RELEASE names its targets in, and so the namespace every
+#: record's ``systematic_gene_name`` is written in.
 MG1655_STRAIN_NAME: EcoliK12StrainName = "MG1655"
+MG1655_NAMESPACE = STRAIN_GENE_NAMESPACES[MG1655_STRAIN_NAME]
 
 #: The one screen in this dataset: the V2 E. coli essential-gene library over 10 doublings.
 SCREEN_ID = "eco_v2_essential_10_doublings"
@@ -312,21 +309,17 @@ LIBRARY_POOL = "V2 E. coli essential-gene mismatch library (100 sgRNAs per gene)
 EXPECTED_SOURCE_ROWS = 36290
 EXPECTED_PARENT_SPACERS = 3110
 EXPECTED_RELEASED_GENES = 318
-EXPECTED_RECORDS = 24149
-EXPECTED_GENES = 317
-EXPECTED_STORED_PARENTS = 2948
+EXPECTED_RECORDS = 24186
+EXPECTED_GENES = 318
+EXPECTED_STORED_PARENTS = 2956
 #: Stored records whose released value is below 0 (active depletion from the pool) and
 #: whose SD cell is blank. Both are declared oracles, so a regression in either fails.
 EXPECTED_NEGATIVE = 778
-EXPECTED_WITHOUT_SD = 1870
+EXPECTED_WITHOUT_SD = 1873
 
-#: Drop reasons this loader declares; the counts are measured, not stated.
+#: The one drop reason this loader declares; the count is measured, not stated.
 DROP_NO_FITNESS = "sgrna_has_no_released_fitness"
-DROP_NO_LOCUS = "target_gene_has_no_bw25113_locus"
-EXPECTED_DROPS: dict[str, int] = {DROP_NO_FITNESS: 12104, DROP_NO_LOCUS: 37}
-
-#: The gene the release names that ASM584v2 retires, kept here so the drop is nameable.
-UNRESOLVED_BNUMBER = "b4700"
+EXPECTED_DROPS: dict[str, int] = {DROP_NO_FITNESS: 12104}
 
 #: SRA BioProject holding the reads every released fitness was computed from.
 SRA_BIOPROJECT = "PRJNA574461"
@@ -1103,114 +1096,24 @@ def mismatch_design(spacer: str, parent: str) -> MismatchDesign:
 # --------------------------------------------------------------------------- #
 # Identifier resolution: released MG1655 b-number -> BW25113 locus tag
 # --------------------------------------------------------------------------- #
-class TargetResolution(BaseModel):
-    """How one released b-number reached (or failed to reach) a BW25113 locus."""
-
-    model_config = ConfigDict(frozen=True, extra="forbid")
-
-    b_number: str
-    mg1655_locus: str | None
-    eck: str | None
-    bw25113_locus: str | None
-    symbol: str | None
-    numerics_agree: bool | None
-
-
-class TargetResolutionReport(BaseModel):
-    """Every released gene's verdict, plus the MG1655 reconciliation it went through."""
-
-    resolved: dict[str, TargetResolution]
-    unresolved: dict[str, str]
-    reconciliation: LocusTagReconciliation
-
-    @property
-    def stored(self) -> dict[str, TargetResolution]:
-        """Only the genes that reached a BW25113 locus."""
-        return {
-            name: target
-            for name, target in self.resolved.items()
-            if target.bw25113_locus is not None
-        }
-
-
-def canonical_symbol(genome: EcoliK12BW25113Genome, locus: str) -> str | None:
-    """The BW25113 annotation's own gene symbol for a locus, or ``None``."""
-    exact, _ = genome.feature_index["symbol"]
-    for symbol, loci in exact.items():
-        if locus in {str(value) for value in loci}:
-            return str(symbol)
-    return None
-
-
-def resolve_targets(
-    b_numbers: Sequence[str],
-    mg1655: EcoliK12MG1655Genome,
-    bw25113: EcoliK12BW25113Genome,
-) -> TargetResolutionReport:
-    """Carry every released b-number to its BW25113 locus through the one-to-one ECK join.
-
-    The release names MG1655 b-numbers for a BW25113 host, so each name is first
-    reconciled against MG1655 and then crossed on its ECK synonym, the only published 1:1
-    relation between the two namespaces (``bacteria_common.eck_crosswalk``). A name that
-    MG1655 retires, or whose MG1655 locus has no ECK partner, reaches no BW25113 locus and
-    is reported rather than guessed at.
-    """
-    for name in b_numbers:
-        if BNUMBER_RE.match(name) is None:
-            raise RuntimeError(f"released locus_tag {name!r} is not a b-number")
-    names = pd.Series(sorted(set(b_numbers)), dtype=str)
-    stored, report = reconcile_locus_tags(mg1655, names, label="hawkins2020 b-numbers")
-    pair_of = {pair.mg1655: pair for pair in eck_crosswalk(mg1655, bw25113).pairs}
-    resolved: dict[str, TargetResolution] = {}
-    unresolved: dict[str, str] = {}
-    for name, mg_locus in zip(names, stored, strict=True):
-        if name in set(report.retired_kept):
-            unresolved[str(name)] = (
-                "retired in the pinned MG1655 assembly, so no locus and no ECK synonym"
-            )
-            continue
-        pair = pair_of.get(str(mg_locus))
-        if pair is None:
-            unresolved[str(name)] = (
-                f"MG1655 locus {mg_locus} carries no one-to-one ECK partner in BW25113"
-            )
-            continue
-        resolved[str(name)] = TargetResolution(
-            b_number=str(name),
-            mg1655_locus=str(mg_locus),
-            eck=pair.eck,
-            bw25113_locus=pair.bw25113,
-            symbol=canonical_symbol(bw25113, pair.bw25113),
-            numerics_agree=pair.numerics_agree,
-        )
-    return TargetResolutionReport(
-        resolved=resolved, unresolved=unresolved, reconciliation=report
-    )
-
-
 def build_genotype(
-    design: MismatchDesign, target: TargetResolution, released_symbol: str
+    design: MismatchDesign, b_number: str, released_symbol: str
 ) -> Genotype:
-    """One graded dCas9 knockdown of one essential gene.
+    """One graded dCas9 knockdown of one essential gene, keyed as released.
 
-    ``perturbed_gene_name`` is the BW25113 annotation's own symbol when it has one, so a
-    gene carries one spelling across datasets, and the release's own symbol stays in
-    ``preprocess/guide_retention.csv``. ``description`` carries the guide's mismatch
-    design, which is the part of the graded dose that IS measured: what we built, rather
-    than what the model predicts it does.
+    ``systematic_gene_name`` is the released MG1655 b-number and ``perturbed_gene_name``
+    the released symbol, verbatim; no annotation is consulted and no mapping is
+    recorded. ``description`` carries the guide's mismatch design, which is the part of
+    the graded dose that IS measured: what we built, rather than what the model predicts
+    it does.
     """
-    locus = target.bw25113_locus
-    if locus is None:
-        raise RuntimeError(
-            f"{target.b_number} reached no BW25113 locus; it cannot key a perturbation"
-        )
+    if BNUMBER_RE.match(b_number) is None:
+        raise RuntimeError(f"released locus_tag {b_number!r} is not a b-number")
     leaf = BacterialCrisprInterferencePerturbation(
-        systematic_gene_name=locus,
-        perturbed_gene_name=target.symbol or released_symbol,
-        gene_namespace=BW25113_NAMESPACE,
-        identifier_mapping=DerivedIdentifierMapping(
-            source_identifier=target.b_number, route="eck_crosswalk"
-        ),
+        systematic_gene_name=b_number,
+        perturbed_gene_name=released_symbol,
+        gene_namespace=MG1655_NAMESPACE,
+        identifier_mapping=None,
         description=design.description,
         crispr=CrisprConstruct(
             effector="dCas9",
@@ -1239,28 +1142,22 @@ class RowVerdict(BaseModel):
     sd: float | None
     predicted_activity: float
     family_retained: bool
-    bw25113_locus: str | None
     drop_reason: str
 
 
-def classify_row(
-    row: Mapping[str, Any], targets: Mapping[str, TargetResolution]
-) -> RowVerdict:
-    """The verdict for one released row, by this loader's two declared drop rules.
+def classify_row(row: Mapping[str, Any]) -> RowVerdict:
+    """The verdict for one released row, by this loader's one declared drop rule.
 
-    A row is stored when the release carries a fitness for it AND its target gene reached
-    a BW25113 locus. The fitness rule comes first because it is the release's own floor:
-    a blank mean is a measurement that was never made.
+    A row is stored when the release carries a fitness for it; a blank mean is a
+    measurement that was never made (the release's own floor). The identifier is never
+    a reason: every released b-number keys a record.
     """
     fitness = row[COL_MEAN]
     sd = row[COL_SD]
     b_number = str(row[COL_LOCUS])
-    target = targets.get(b_number)
-    reason = ""
-    if pd.isna(fitness):
-        reason = DROP_NO_FITNESS
-    elif target is None:
-        reason = DROP_NO_LOCUS
+    if BNUMBER_RE.match(b_number) is None:
+        raise RuntimeError(f"released locus_tag {b_number!r} is not a b-number")
+    reason = DROP_NO_FITNESS if pd.isna(fitness) else ""
     return RowVerdict(
         spacer=str(row[COL_VARIANT]),
         parent_spacer=str(row[COL_PARENT]),
@@ -1270,7 +1167,6 @@ def classify_row(
         sd=None if pd.isna(sd) else float(sd),
         predicted_activity=float(row[COL_PREDICTED]),
         family_retained=bool(row[COL_FAMILY]),
-        bw25113_locus=None if target is None else target.bw25113_locus,
         drop_reason=reason,
     )
 
@@ -1301,8 +1197,6 @@ class BuildAccounting(BaseModel):
     stored_without_sd: int
     stored_in_excluded_series: int
     stored_negative: int
-    unresolved_genes: dict[str, str]
-    reconciliation: LocusTagReconciliation
     notes: list[str] = []
 
     def check(self) -> None:
@@ -1360,23 +1254,16 @@ class MismatchCrispriFitnessHawkins2020Dataset(ExperimentDataset):
     organism = Organism.ecoli
 
     REFERENCE_STRAIN: ClassVar[Literal["BW25113"]] = "BW25113"
-    #: Measured on the pinned bytes: 317 of the 318 released b-numbers reach a BW25113
-    #: locus (0.9969). The floor sits below that so a small annotation move reports, and
-    #: far above it so a large one stops the build.
-    MIN_RESOLVED_FRACTION: ClassVar[float] = 0.95
 
     def __init__(
         self,
         root: str = "data/torchcell/mismatch_crispri_fitness_hawkins2020",
         io_workers: int = 0,
-        ecoli_genome: EcoliK12Genome | None = None,
         transform: Any | None = None,
         pre_transform: Any | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize; the BW25113 genome keys the records, MG1655 the released names."""
-        self.ecoli_genome = ecoli_genome
-        self._mg1655_genome: EcoliK12MG1655Genome | None = None
+        """Initialize. No genome parameter: the loader reads no annotation."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -1399,54 +1286,19 @@ class MismatchCrispriFitnessHawkins2020Dataset(ExperimentDataset):
         _link_table(self.raw_dir)
         log.info("Hawkins 2020 Table S3 linked into %s (sha256 verified)", self.raw_dir)
 
-    def _genome(self) -> EcoliK12BW25113Genome:
-        """The injected BW25113 genome, or one opened from the genomes tier."""
-        if self.ecoli_genome is None:
-            self.ecoli_genome = bacterial_genome("ecoli", self.REFERENCE_STRAIN)
-        genome: EcoliK12Genome = self.ecoli_genome
-        if not isinstance(genome, EcoliK12BW25113Genome):
-            raise TypeError(
-                f"{self.name} needs the BW25113 genome, got {type(genome).__name__}"
-            )
-        return genome
-
-    def _mg1655(self) -> EcoliK12MG1655Genome:
-        """The MG1655 genome the released b-numbers are reconciled against."""
-        if self._mg1655_genome is None:
-            opened = bacterial_genome("ecoli", MG1655_STRAIN_NAME)
-            if not isinstance(opened, EcoliK12MG1655Genome):
-                raise TypeError(
-                    f"{self.name} resolves released names against MG1655, got "
-                    f"{type(opened).__name__}"
-                )
-            self._mg1655_genome = opened
-        genome = self._mg1655_genome
-        if not isinstance(genome, EcoliK12MG1655Genome):
-            raise TypeError(
-                f"{self.name} resolves released names against MG1655, got "
-                f"{type(genome).__name__}"
-            )
-        return genome
-
     @post_process
     def process(self) -> None:
         """Build one record per released sgRNA with a measured fitness; write LMDB."""
         verify_raw_files(self.raw_dir, {TABLE_S3_FILENAME: TABLE_S3_SHA256})
         frame = read_ecoli_sheet(osp.join(self.raw_dir, TABLE_S3_FILENAME))
-        bw25113 = self._genome()
-        report = resolve_targets(
-            [str(name) for name in frame[COL_LOCUS]], self._mg1655(), bw25113
-        )
-        report.reconciliation.require_resolved(self.MIN_RESOLVED_FRACTION)
         released_genes = int(frame[COL_LOCUS].nunique())
         if released_genes != EXPECTED_RELEASED_GENES:
             raise RuntimeError(
                 f"{released_genes} released genes, not the pinned "
                 f"{EXPECTED_RELEASED_GENES}"
             )
-        targets = report.stored
         verdicts = [
-            classify_row(cast(Mapping[str, Any], row), targets)
+            classify_row(cast(Mapping[str, Any], row))
             for row in frame.to_dict(orient="records")
         ]
         kept = [verdict for verdict in verdicts if not verdict.drop_reason]
@@ -1474,7 +1326,7 @@ class MismatchCrispriFitnessHawkins2020Dataset(ExperimentDataset):
                     dataset_name=self.name,
                     genotype=build_genotype(
                         designs[verdict.spacer],
-                        targets[verdict.b_number],
+                        verdict.b_number,
                         verdict.released_symbol,
                     ),
                     environment=environment,
@@ -1499,7 +1351,6 @@ class MismatchCrispriFitnessHawkins2020Dataset(ExperimentDataset):
                     "parent_spacer": verdict.parent_spacer,
                     "b_number": verdict.b_number,
                     "released_symbol": verdict.released_symbol,
-                    "bw25113_locus": verdict.bw25113_locus or "",
                     "relative_fitness_mean": verdict.fitness,
                     "relative_fitness_sd": verdict.sd,
                     "predicted_sgrna_activity_not_stored": verdict.predicted_activity,
@@ -1510,7 +1361,7 @@ class MismatchCrispriFitnessHawkins2020Dataset(ExperimentDataset):
             ]
         ).to_csv(osp.join(self.preprocess_dir, "guide_retention.csv"), index=False)
 
-        stored_genes = {verdict.bw25113_locus for verdict in kept}
+        stored_genes = {verdict.b_number for verdict in kept}
         stored_parents = {verdict.parent_spacer for verdict in kept}
         parents = sum(
             1 for verdict in kept if designs[verdict.spacer].mismatch_index is None
@@ -1547,8 +1398,6 @@ class MismatchCrispriFitnessHawkins2020Dataset(ExperimentDataset):
                 stored_negative=sum(
                     1 for v in kept if v.fitness is not None and v.fitness < 0
                 ),
-                unresolved_genes=report.unresolved,
-                reconciliation=report.reconciliation,
                 notes=[
                     "the released 'relative fitness (predicted)' column is the linear "
                     "model's predicted sgRNA ACTIVITY, not a predicted fitness, and it "
@@ -1561,14 +1410,16 @@ class MismatchCrispriFitnessHawkins2020Dataset(ExperimentDataset):
                     "MISMATCH DESIGN, on the perturbation's description: the parent "
                     "spacer, the 0-based mismatch position from the 5' end and the base "
                     "substitution, with the 20-nt spacer itself on the CrisprConstruct",
-                    "the host is BW25113 and the release names MG1655 b-numbers: every "
-                    "stored locus tag is DERIVED through the one-to-one ECK synonym "
-                    "join and typed as such on the perturbation. The crosswalk is "
-                    "checked against the authors' own BW25113_ tags on the workbook's "
-                    "10-15 sheet, which agree on all 317 crossed genes",
-                    "the one gene that reaches no BW25113 locus is sokE (b4700), which "
-                    "ASM584v2 retires and which carries no ECK synonym; 37 of its 99 "
-                    "released rows carry a fitness and are dropped",
+                    "the host is BW25113 (the reference's assembly and background) and "
+                    "the release names MG1655 b-numbers: every record stores the "
+                    "released b-number under the MG1655 namespace with the released "
+                    "symbol, no annotation is read and no mapping is recorded; the "
+                    "lift to a BW25113 locus is a modeling-time join, for which the "
+                    "workbook's own 10-15 sheet (BW25113_ tags on the same rows) is the "
+                    "released evidence",
+                    "sokE (b4700), which ASM584v2 retires, is stored like every other "
+                    "gene: 37 of its 99 released rows carry a fitness and are records; "
+                    "the L4 genome-reference rules report it as a finding",
                     "the authors' family_retained flag is stored as data, not applied: "
                     "it is step 1 of the paper's CURVE pipeline, which excludes a "
                     "series whose parent guide looks non-functional, and it bears on "
@@ -1620,7 +1471,9 @@ class StoreSummary(BaseModel):
     designs_without_a_parent: tuple[str, ...]
     screens: dict[str, int]
     pins: tuple[tuple[str, str, str], ...]
-    derived_from_a_b_number: int
+    released_b_numbers: int = Field(
+        description="perturbations keyed by a b-number with no identifier_mapping"
+    )
     negative_responses: int
 
 
@@ -1654,10 +1507,10 @@ def summarize_store(records: Iterable[Mapping[str, Any]]) -> StoreSummary:
                 malformed.add(spacer)
             if _DESIGN_RE.search(str(perturbation["description"])) is None:
                 undescribed.add(spacer)
-            mapping = perturbation.get("identifier_mapping") or {}
             if (
-                mapping.get("route") == "eck_crosswalk"
-                and BNUMBER_RE.match(str(mapping.get("source_identifier"))) is not None
+                perturbation.get("identifier_mapping") is None
+                and BNUMBER_RE.match(str(perturbation["systematic_gene_name"]))
+                is not None
             ):
                 derived += 1
         phenotype = experiment["phenotype"]
@@ -1682,7 +1535,7 @@ def summarize_store(records: Iterable[Mapping[str, Any]]) -> StoreSummary:
         designs_without_a_parent=tuple(sorted(undescribed)),
         screens=dict(sorted(screens.items())),
         pins=tuple(sorted(pins)),
-        derived_from_a_b_number=derived,
+        released_b_numbers=derived,
         negative_responses=negative,
     )
 
@@ -1727,39 +1580,41 @@ def designs_name_their_parent(summary: StoreSummary) -> LevelResult:
     )
 
 
-def every_locus_is_derived_and_pinned(
-    summary: StoreSummary, genome: EcoliK12BW25113Genome
+def every_locus_is_the_released_b_number_and_pinned(
+    summary: StoreSummary,
 ) -> LevelResult:
-    """L1 SUPPLEMENTARY: every stored locus is a BW25113 locus reached from a b-number.
+    """L1 SUPPLEMENTARY: every stored key is a released b-number on the BW25113 pin.
 
-    Two claims in one row, because they are one decision: the records are keyed in the
-    BW25113 namespace the host lives in, and every one of those keys is DERIVED from the
-    MG1655 b-number the release named, with the ECK route typed on the perturbation.
+    Two claims in one row, because they are one decision: the records are keyed by the
+    MG1655 b-number the release named, verbatim and with no mapping, and every record
+    pins the BW25113 host assembly and its dCas9 cassette on the reference. No
+    annotation is read: whether a b-number is a locus of any assembly is what the L4
+    genome-reference rules report.
     """
-    absent = [locus for locus in summary.loci if locus not in genome.genbank.loci]
+    not_b_numbers = [locus for locus in summary.loci if BNUMBER_RE.match(locus) is None]
     expected_pins = {
         ("ecoli_K12_BW25113_ASM75055v1", "GCA_000750555.1", str(HOST_CASSETTE.value))
     }
     passed = (
-        not absent
-        and summary.derived_from_a_b_number == summary.n_records
+        not not_b_numbers
+        and summary.released_b_numbers == summary.n_records
         and set(summary.pins) == expected_pins
     )
     return LevelResult(
         level=Level.L1,
-        name="stored_loci_are_bw25113_loci_derived_from_the_released_b_number",
+        name="stored_loci_are_the_released_b_numbers_on_the_bw25113_pin",
         passed=passed,
         message=(
-            f"SUPPLEMENTARY: {len(summary.loci)} stored loci, {len(absent)} absent from "
-            f"the BW25113 annotation; {summary.derived_from_a_b_number} of "
-            f"{summary.n_records} perturbations carry an eck_crosswalk mapping from a "
-            f"b-number; {len(summary.pins)} distinct (assembly, background) pins"
+            f"SUPPLEMENTARY: {len(summary.loci)} stored loci, {len(not_b_numbers)} not "
+            f"a b-number; {summary.released_b_numbers} of {summary.n_records} "
+            "perturbations keyed by a released b-number with no mapping; "
+            f"{len(summary.pins)} distinct (assembly, background) pins"
         ),
         details={
             "n_loci": len(summary.loci),
-            "absent": absent[:20],
+            "not_b_numbers": not_b_numbers[:20],
             "pins": [list(pin) for pin in summary.pins],
-            "derived": summary.derived_from_a_b_number,
+            "released": summary.released_b_numbers,
         },
     )
 
@@ -1790,25 +1645,25 @@ def one_screen_and_the_depleted_tail(summary: StoreSummary) -> LevelResult:
 def verify_build(
     dataset_root: str,
     *,
-    genome: EcoliK12BW25113Genome | None = None,
+    genome: EcoliK12Genome | None = None,
     data_root: str | None = None,
     expected_count: int = EXPECTED_RECORDS,
 ) -> VerificationReport:
     """Run the environment-response L0-L4 verifier on a built tree and write its report.
 
-    The LMDB is streamed and never materialized: the store holds 24,149 records, and the
+    The LMDB is streamed and never materialized: the store holds 24,186 records, and the
     four supplementary rows come from a second such pass through
-    :func:`summarize_store`. The L4 universe is every GenBank locus of the BW25113
-    assembly the records pin.
+    :func:`summarize_store`. The stored keys are MG1655 b-numbers, so the resolver and
+    the L4 universe are the MG1655 genome's (every GenBank locus of GCA_000005845.2);
+    the genome-reference rows report findings (sokE, b4700, is retired there) and never
+    gate. The BW25113 pin is asserted by the supplementary row.
     """
     from torchcell.verification.environment_response import (
         verify_environment_response_dataset_streaming,
     )
     from torchcell.verification.runners import stream_records
 
-    bw25113 = genome or bacterial_genome("ecoli", REFERENCE_STRAIN_NAME, data_root)
-    if not isinstance(bw25113, EcoliK12BW25113Genome):
-        raise TypeError(f"expected the BW25113 genome, got {type(bw25113).__name__}")
+    mg1655 = genome or bacterial_genome("ecoli", MG1655_STRAIN_NAME, data_root)
     report = verify_environment_response_dataset_streaming(
         stream_records(dataset_root),
         dataset_name="MismatchCrispriFitnessHawkins2020Dataset",
@@ -1827,10 +1682,11 @@ def verify_build(
                 "778 stored values are below 0, which the release defines as active "
                 "depletion from the pool. Uncertainty = the released 'relative fitness "
                 "(stddev)' as sample_sd over n_samples=4 biological replicates, with "
-                "typed gaps on the 1,870 records whose SD cell is blank. Genotype = one "
-                "BacterialCrisprInterferencePerturbation on the target's BW25113 locus "
-                "(DERIVED from the released MG1655 b-number through the one-to-one ECK "
-                "synonym join), effector dCas9, guide_sequence = the released 20-nt "
+                "typed gaps on the 1,873 records whose SD cell is blank. Genotype = one "
+                "BacterialCrisprInterferencePerturbation keyed by the released MG1655 "
+                "b-number with the released symbol (no annotation read, no mapping; "
+                "the host BW25113 is the reference's pin), effector dCas9, "
+                "guide_sequence = the released 20-nt "
                 "mismatched spacer, and the perturbation's description naming the parent "
                 "spacer, the 0-based mismatch position and the base substitution. The "
                 "released 'relative fitness (predicted)' column is the linear model's "
@@ -1841,8 +1697,7 @@ def verify_build(
                 "mM IPTG inducing dCas9 over about 10 doublings. Reference = the "
                 "non-targeting controls' 1.0 by that normalization. DROPPED: 12,104 "
                 "rows whose released mean is blank (the authors' own 100-counts-at-t0 "
-                "floor) and 37 rows on sokE (b4700), which ASM584v2 retires and which "
-                "carries no ECK synonym to BW25113"
+                "floor); every released b-number keys a record, sokE (b4700) included"
             ),
             page=(
                 "Cell Systems 2020 11:523-535.e9 (doi:10.1016/j.cels.2020.09.009); STAR "
@@ -1853,11 +1708,11 @@ def verify_build(
         ),
         expected_count=expected_count,
         reference_unit_scaled=True,
-        sgd_genes=set(bw25113.genbank.loci),
-        resolve_gene_name=bw25113.resolve_gene_name,
+        sgd_genes=set(mg1655.genbank.loci),
+        resolve_gene_name=mg1655.resolve_gene_name,
     )
     summary = summarize_store(stream_records(dataset_root))
-    report.add(every_locus_is_derived_and_pinned(summary, bw25113))
+    report.add(every_locus_is_the_released_b_number_and_pinned(summary))
     report.add(spacers_are_twenty_nt(summary))
     report.add(designs_name_their_parent(summary))
     report.add(one_screen_and_the_depleted_tail(summary))
@@ -1875,10 +1730,7 @@ def main() -> None:
     load_dotenv()
     data_root = _data_root()
     root = osp.join(data_root, "data/torchcell/mismatch_crispri_fitness_hawkins2020")
-    genome = bacterial_genome("ecoli", REFERENCE_STRAIN_NAME, data_root)
-    if not isinstance(genome, EcoliK12BW25113Genome):
-        raise TypeError(f"expected the BW25113 genome, got {type(genome).__name__}")
-    dataset = MismatchCrispriFitnessHawkins2020Dataset(root=root, ecoli_genome=genome)
+    dataset = MismatchCrispriFitnessHawkins2020Dataset(root=root)
     print(f"len = {len(dataset)}")
     accounting = json.loads(
         Path(osp.join(root, "preprocess/build_accounting.json")).read_text()
@@ -1906,7 +1758,7 @@ def main() -> None:
             indent=2,
         )
     )
-    report = verify_build(root, genome=genome, data_root=data_root)
+    report = verify_build(root, data_root=data_root)
     print(report.summary())
     for result in report.results:
         flag = "PASS" if result.passed else "FAIL"

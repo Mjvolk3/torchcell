@@ -53,20 +53,6 @@ first 4,489 rows of its panel); on the deposit those are ``Number`` 0 to 4,488 i
 order, and L4 ``cis_concordance`` tests the map against a permutation null rather than
 assuming it.
 
-**The released SNP positions are BY4742_fixed coordinates, and the records keep them**
-(#1050). Measured over all 41,594 SNPs: the BY allele is the base of
-``BY4742_fixed.fasta`` (the reference the BB-QTL genotyping code indexes,
-``arturrc/bbqtl_inference`` @ ``2b1c89d6``) at every released position and the S288C
-R64-4-1 base at 27,221 (0.654), although the Dryad README names R64-3-1. The owner's
-rule (2026-10-12) is that the data is stored as released and the reference genome
-does not gate it, so the blocks carry the released positions, ``CALL_METHOD`` states
-the finding on every record, and L4 ``marker_reference`` and ``mat_fixation`` report
-it as a finding about the release. ``BY4742_fixed.fasta`` is deposited in the raw
-mirror, and a lift of every SNP to S288C R64-4-1 by the unique exact match of its
-flanks (``lift_snps``; 41,587 lifted, 7 without a match) is the derived table
-``LIFTED_TABLE_REL``, recorded with its processing provenance, for modeling to use; the
-stored records do not read it.
-
 PHENOTYPE (``SingleCellExpressionPhenotype``, the single-cell UMI-count leaf shared with
 Boocock 2025 and Jackson 2020, #1016): UMI counts over the 6,240 released genes, summed
 over the segregant's cells, with each summed cell's barcode, library and UMI total. The
@@ -97,7 +83,6 @@ the four walled Dryad files with the zip they arrived in, as ``manual_browser`` 
 
 from __future__ import annotations
 
-import csv
 import gzip
 import hashlib
 import logging
@@ -109,9 +94,8 @@ import tarfile
 import zipfile
 from collections.abc import Iterator, Mapping, Sequence
 from datetime import UTC, datetime
-from enum import StrEnum
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -155,12 +139,10 @@ from torchcell.literature.manifest import (
     ROLE_RAW_DATA,
     ArtifactRecord,
     Manifest,
-    ProcessingRecord,
     RetrievalMethod,
     RetrievalRecord,
 )
 from torchcell.sequence import GeneSet
-from torchcell.sequence.genome.registry import SGD_S288C_R64
 from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import (
@@ -294,40 +276,6 @@ DRYAD_RECIPE = (
     f"{DRYAD_VERSION_ID})"
 )
 
-#: The reference the released SNP positions sit on (#1050, measured: every one of the
-#: 41,594 BY alleles is its base at the released position, against 0.654 on S288C
-#: R64-4-1): the BY4742 assembly the BB-QTL genotyping code indexes. Deposited in the
-#: raw mirror from the repository at the commit below, it is the source side of the
-#: lift to S288C (``lift_snps``); no record reads it.
-BBQTL_REPO = "arturrc/bbqtl_inference"
-BBQTL_COMMIT = "2b1c89d6a602a8001b3b18dd00e75a8c97950d9d"
-BY4742_NAME = "BY4742_fixed.fasta"
-BY4742_REPO_PATH = f"1_genotype_inference/indexes/{BY4742_NAME}"
-BY4742_REL = f"data/bbqtl/{BY4742_NAME}"
-BY4742_SHA256 = "c2e18c61d0529cf44d5991702f7ee50a3d968b2fa8e97bbc65a35d90b83c6f4e"
-BY4742_BYTES = 12349796
-BY4742_RETRIEVED_AT = "2026-10-12"
-#: The S288C R64-4-1 sequence the SNPs are lifted to (genomes tier, ``registry``).
-S288C_FSA = "S288C_reference_sequence_R64-4-1_20230830.fsa"
-#: The lifted SNP table (``LiftedSnp`` rows), a derived artifact in the raw mirror
-#: written by ``experiments/036-dataset-fixes-before-kg-build/scripts/
-#: nguessan2025_snp_liftover.py``.
-LIFTED_TABLE_NAME = "SNP_list_lifted_S288C_R64-4-1.tsv"
-LIFTED_TABLE_REL = f"derived/{LIFTED_TABLE_NAME}"
-LIFT_SCRIPT = (
-    "experiments/036-dataset-fixes-before-kg-build/scripts/nguessan2025_snp_liftover.py"
-)
-#: The commit the lift ran at (a clean checkout) and what it wrote: 41,587 of 41,594
-#: SNPs lifted (all on the plus strand, none to another chromosome), 7 ``no_match``;
-#: the S288C base at the lifted position is the BY allele for 41,578 of the 41,587
-#: (the other 9 read the RM allele, sites where BY4742 and S288C differ). The table is
-#: for modeling: the stored records keep the released positions (owner, 2026-10-12).
-LIFT_COMMIT = "2a6c9bcfbad791377496443fd23a9527c37191e5"
-LIFTED_TABLE_SHA256 = "18c768d365f7086874f13fa02ffa8ea5c277e71a1ef59ead04b1c3dfb83be211"
-LIFTED_TABLE_BYTES = 2537055
-#: sha256 of the S288C R64-4-1 FASTA the lift read (the genomes-tier manifest's pin).
-S288C_FSA_SHA256 = "dbf065ffc3f5bbaa7554ef53c6861399eecc597fe058df5f81ba557944e3f86b"
-
 #: Grid levels per unit posterior (20 for a step of 0.05); levels run 10..20.
 _LEVELS_PER_UNIT = round(1 / POSTERIOR_STEP)
 
@@ -376,12 +324,8 @@ CALL_METHOD = (
     "distance plus a permutation test against random batches), encoded as runs of "
     "constant called parent (P(RM) > 0.5 calls RM) and constant P(called parent) on a "
     f"{POSTERIOR_STEP} grid; an exact 0.5 is written as parent 1 at 0.5. Block "
-    f"coordinates are the released SNP positions ({SNP_LIST_NAME}), whose Dryad README "
-    "names S288C_reference_genome_R64-3-1_20210421; measured (#1050, "
-    "nguessan2025_snp_coordinate_audit.py): the BY allele is the base of "
-    f"{BY4742_NAME} ({BBQTL_REPO} @ {BBQTL_COMMIT[:8]}) at all 41,594 positions and "
-    "the S288C R64-4-1 base at 27,221 (0.654), so they are BY4742_fixed coordinates; "
-    f"a lift to S288C R64-4-1 is the derived table {LIFTED_TABLE_REL} in the raw mirror"
+    f"coordinates are the SNP positions as released ({SNP_LIST_NAME}), on the reference "
+    "the Dryad README names: S288C_reference_genome_R64-3-1_20210421"
 )
 CROSS = "BBQTL_BYxRM"
 
@@ -885,274 +829,6 @@ def read_reference_genotypes(
 
 
 # --------------------------------------------------------------------------- #
-# Lifting the SNPs from BY4742_fixed to S288C R64-4-1 (#1050)
-# --------------------------------------------------------------------------- #
-class LiftStatus(StrEnum):
-    """How one SNP's flanking sequence matched S288C R64-4-1 (none is ever dropped)."""
-
-    lifted = "lifted"  # exactly one exact match at some flank length
-    no_match = "no_match"  # no exact match at a flank length that fits
-    multiple = "multiple"  # more than one match at every flank length that fits
-    edge = "edge"  # even the shortest flank runs off the BY4742_fixed chromosome
-
-
-class LiftedSnp(ModelStrict):
-    """One released SNP and where its BY4742_fixed flanks match S288C R64-4-1.
-
-    ``chromosome``/``position``/``by``/``rm`` are the released row (BY4742_fixed
-    coordinates, ``Index`` and ``SNP`` as released). ``flank_bp`` is the flank on EACH
-    side of the SNP at which the status was decided and ``hits`` the number of exact
-    matches, both strands, at that flank. The SNP base itself is not part of the match,
-    so the S288C base at the lifted position is an independent check of the lift. The
-    ``s288c_*`` fields are set only for ``lifted``: the 1-based position of the SNP
-    base in S288C R64-4-1, the strand the flanks matched on, and the S288C base there
-    read on that strand.
-    """
-
-    index: int
-    snp: str
-    chromosome: str
-    position: int
-    by: str
-    rm: str
-    status: LiftStatus
-    flank_bp: int
-    hits: int
-    s288c_chromosome: str | None
-    s288c_position: int | None
-    s288c_strand: Literal["+", "-"] | None
-    s288c_base: str | None
-
-
-#: Flank lengths tried, shortest first, on each side of the SNP. A longer flank is
-#: tried only while the shorter one matches more than once: a window with no exact
-#: match cannot gain one by growing. The seed is the ``LIFT_SEED`` bases next to the
-#: SNP on the left of the window, so every exact match is among its seed's occurrences.
-LIFT_FLANKS = (25, 50, 100, 200)
-LIFT_SEED = 25
-_COMPLEMENT = str.maketrans("ACGTN", "TGCAN")
-
-
-def reverse_complement(sequence: str) -> str:
-    """The reverse complement of an ACGTN sequence."""
-    return sequence.translate(_COMPLEMENT)[::-1]
-
-
-def by4742_chromosomes(path: str | Path) -> dict[str, str]:
-    """``BY4742_fixed.fasta``'s 16 nuclear chromosomes (``chr01``..), as ``chrI``..
-
-    The file also holds ``2-micron`` and ``chr17`` (mitochondrion); no SNP is on them.
-    """
-    seqs: dict[str, list[str]] = {}
-    current: list[str] | None = None
-    names = {f"chr{i:02d}": f"chr{r}" for i, r in enumerate(_ROMAN, 1)}
-    with open(path) as handle:
-        for line in handle:
-            if line.startswith(">"):
-                name = line[1:].split()[0]
-                current = None
-                if name in names:
-                    current = seqs[names[name]] = []
-            elif current is not None:
-                current.append(line.strip())
-    missing = sorted(set(_CHROM_ORDER) - set(seqs), key=_CHROM_ORDER.__getitem__)
-    if missing:
-        raise ValueError(f"{path}: no nuclear chromosome {missing}")
-    return {name: "".join(parts).upper() for name, parts in seqs.items()}
-
-
-def s288c_chromosomes(path: str | Path) -> dict[str, str]:
-    """The SGD R64 FASTA's 16 nuclear chromosomes (``[chromosome=I]``..), as ``chrI``.."""
-    seqs: dict[str, list[str]] = {}
-    current: list[str] | None = None
-    with open(path) as handle:
-        for line in handle:
-            if line.startswith(">"):
-                match = re.search(r"\[chromosome=([IVX]+)\]", line)
-                current = None
-                if match is not None:
-                    current = seqs[f"chr{match.group(1)}"] = []
-            elif current is not None:
-                current.append(line.strip())
-    missing = sorted(set(_CHROM_ORDER) - set(seqs), key=_CHROM_ORDER.__getitem__)
-    if missing:
-        raise ValueError(f"{path}: no nuclear chromosome {missing}")
-    return {name: "".join(parts).upper() for name, parts in seqs.items()}
-
-
-def _windows(
-    source: str, center: int, flank: int
-) -> tuple[tuple[str, str], tuple[str, str]] | None:
-    """(left, right) flanks of ``center``, then those of its reverse complement."""
-    if center - flank < 0 or center + 1 + flank > len(source):
-        return None
-    left = source[center - flank : center]
-    right = source[center + 1 : center + 1 + flank]
-    return (left, right), (reverse_complement(right), reverse_complement(left))
-
-
-def lift_snps(
-    snps: Sequence[tuple[int, str, Marker]],
-    source: Mapping[str, str],
-    target: Mapping[str, str],
-    *,
-    flanks: Sequence[int] = LIFT_FLANKS,
-    seed: int = LIFT_SEED,
-) -> list[LiftedSnp]:
-    """Lift each SNP by the unique exact match of its flanks in ``target``.
-
-    ``snps`` are ``(Index, SNP name, Marker)`` in released coordinates on ``source``
-    (BY4742_fixed); ``target`` is S288C R64-4-1. For each flank length the window is
-    the ``flank`` bases left and the ``flank`` bases right of the SNP, the SNP base
-    excluded, searched on both strands of every target chromosome. One match lifts the
-    SNP; none stops at ``no_match``; several try the next flank, and ``multiple``
-    remains when none is left or the next runs off the chromosome. Every SNP is
-    returned, in input order.
-    """
-    if seed > min(flanks) or list(flanks) != sorted(set(flanks)):
-        raise ValueError(
-            f"need seed <= min(flanks) and ascending flanks: {seed} {flanks}"
-        )
-    seeds: dict[str, list[tuple[str, int]]] = {}
-    for _, _, marker in snps:
-        windows = _windows(source[marker.chromosome], marker.position - 1, seed)
-        for left, _ in windows or ():
-            seeds.setdefault(left, [])
-    for name, sequence in target.items():
-        for start in range(len(sequence) - seed + 1):
-            occurrences = seeds.get(sequence[start : start + seed])
-            if occurrences is not None:
-                occurrences.append((name, start + seed))
-    out: list[LiftedSnp] = []
-    for index, snp, marker in snps:
-        center = marker.position - 1
-        status, flank_bp, found = LiftStatus.edge, flanks[0], []
-        for flank in flanks:
-            windows = _windows(source[marker.chromosome], center, flank)
-            if windows is None:
-                break
-            found = [
-                (chrom, at, strand)
-                for (left, right), strand in zip(windows, ("+", "-"))
-                for chrom, at in seeds[left[-seed:]]
-                if target[chrom][at - flank : at] == left
-                and target[chrom][at + 1 : at + 1 + flank] == right
-            ]
-            flank_bp = flank
-            status = (
-                LiftStatus.lifted
-                if len(found) == 1
-                else LiftStatus.no_match
-                if not found
-                else LiftStatus.multiple
-            )
-            if status != LiftStatus.multiple:
-                break
-        hit = found[0] if status == LiftStatus.lifted else None
-        base = None
-        if hit is not None:
-            forward = target[hit[0]][hit[1]]
-            base = forward if hit[2] == "+" else reverse_complement(forward)
-        out.append(
-            LiftedSnp(
-                index=index,
-                snp=snp,
-                chromosome=marker.chromosome,
-                position=marker.position,
-                by=marker.ref,
-                rm=marker.alt,
-                status=status,
-                flank_bp=flank_bp,
-                hits=len(found),
-                s288c_chromosome=None if hit is None else hit[0],
-                s288c_position=None if hit is None else hit[1] + 1,
-                s288c_strand=None if hit is None else hit[2],  # type: ignore[arg-type]
-                s288c_base=base,
-            )
-        )
-    return out
-
-
-LIFTED_TABLE_COLUMNS = tuple(LiftedSnp.model_fields)
-
-
-def write_lifted_table(rows: Sequence[LiftedSnp], path: str | Path) -> None:
-    """The lifted SNP table: tab-separated, ``LIFTED_TABLE_COLUMNS``, empty for None."""
-    with open(path, "w", newline="") as handle:
-        writer = csv.writer(handle, delimiter="\t", lineterminator="\n")
-        writer.writerow(LIFTED_TABLE_COLUMNS)
-        for row in rows:
-            values = row.model_dump(mode="json")
-            writer.writerow(
-                "" if values[c] is None else values[c] for c in LIFTED_TABLE_COLUMNS
-            )
-
-
-def read_lifted_table(path: str | Path) -> list[LiftedSnp]:
-    """Read ``write_lifted_table``'s output; another header raises."""
-    with open(path, newline="") as handle:
-        reader = csv.reader(handle, delimiter="\t")
-        header = tuple(next(reader))
-        if header != LIFTED_TABLE_COLUMNS:
-            raise ValueError(f"{path}: header {header} != {LIFTED_TABLE_COLUMNS}")
-        return [
-            LiftedSnp.model_validate(
-                {c: (v if v != "" else None) for c, v in zip(header, row, strict=True)}
-            )
-            for row in reader
-        ]
-
-
-def read_lifted_markers(
-    snp_list: str | Path, lifted_table: str | Path
-) -> tuple[list[Marker], list[int], int]:
-    """The lifted SNPs as S288C R64-4-1 ``Marker``s, plus their geno columns and the
-    released SNP count (the posteriors on every geno row).
-
-    Every released SNP must have exactly one row in the lifted table, agreeing with
-    ``SNP_list.txt`` on its name, coordinates and alleles. Only ``lifted`` rows become
-    markers, on S288C coordinates, their alleles read on the S288C forward strand;
-    the other statuses stay in the table and have no marker. Two SNPs lifted to one
-    position raise. Sorted by (chromosome, position), as ``read_snp_markers``.
-    """
-    released, _ = read_snp_markers(snp_list)
-    by_index = {m.index: m for m in released}
-    rows = read_lifted_table(lifted_table)
-    if sorted(r.index for r in rows) != sorted(by_index):
-        raise ValueError(f"{lifted_table}: its SNPs are not the released SNPs")
-    markers: list[Marker] = []
-    for row in rows:
-        m = by_index[row.index]
-        released_row = (f"snp{m.column + 1}", m.chromosome, m.position, m.ref, m.alt)
-        if (row.snp, row.chromosome, row.position, row.by, row.rm) != released_row:
-            raise ValueError(
-                f"{lifted_table}: Index {row.index} disagrees with {snp_list}"
-            )
-        if row.status != LiftStatus.lifted:
-            continue
-        if row.s288c_chromosome is None or row.s288c_position is None:
-            raise ValueError(
-                f"{lifted_table}: lifted Index {row.index} has no position"
-            )
-        forward = row.s288c_strand == "+"
-        markers.append(
-            Marker(
-                chromosome=row.s288c_chromosome,
-                position=row.s288c_position,
-                ref=row.by if forward else reverse_complement(row.by),
-                alt=row.rm if forward else reverse_complement(row.rm),
-                index=row.index,
-                column=m.column,
-            )
-        )
-    sites = [(m.chromosome, m.position) for m in markers]
-    if len(set(sites)) != len(sites):
-        raise ValueError(f"{lifted_table}: two SNPs are lifted to one position")
-    ordered = sorted(markers, key=lambda m: (_CHROM_ORDER[m.chromosome], m.position))
-    return ordered, [m.column for m in ordered], len(released)
-
-
-# --------------------------------------------------------------------------- #
 # Posterior blocks
 # --------------------------------------------------------------------------- #
 def encode_reference_posterior(
@@ -1231,9 +907,9 @@ def raw_mirror_dir(data_root: str | None = None) -> Path:
     return Path(data_root or _data_root()) / RAW_DIR_REL
 
 
-def github_url(repo_path: str, repo: str = CODE_REPO, commit: str = CODE_COMMIT) -> str:
-    """The raw URL of one repository file at a pinned commit (sc-eQTL by default)."""
-    return f"https://raw.githubusercontent.com/{repo}/{commit}/{repo_path}"
+def github_url(repo_path: str) -> str:
+    """The raw URL of one repository file at the pinned commit."""
+    return f"https://raw.githubusercontent.com/{CODE_REPO}/{CODE_COMMIT}/{repo_path}"
 
 
 def raw_relpaths() -> dict[str, str]:
@@ -1266,7 +942,6 @@ def deposit_raw_mirror(
     release_dir: str | Path,
     code_dir: str | Path,
     dryad_metadata_dir: str | Path,
-    bbqtl_dir: str | Path,
     retrieved_at: str,
     data_root: str | None = None,
 ) -> Path:
@@ -1280,12 +955,6 @@ def deposit_raw_mirror(
     sha256 (the zip to ours), written whether or not their bytes are on disk, so a
     rebuild names what to deposit; a present one must hash to its pin, and a present
     zip must hold exactly the four members (:func:`check_dryad_archive`).
-    ``BY4742_fixed.fasta`` (#1050) is copied from ``bbqtl_dir`` as a ``direct_url``
-    retrieval of ``arturrc/bbqtl_inference`` at ``BBQTL_COMMIT``, dated
-    ``BY4742_RETRIEVED_AT``, and must hash to ``BY4742_SHA256``. The lifted SNP table is
-    a derived artifact ``LIFT_SCRIPT`` writes into the mirror: it is recorded with its
-    ``ProcessingRecord`` (the script, its commit, the lift parameters, the three inputs'
-    digests) and pinned to ``LIFTED_TABLE_SHA256``, never written here.
     """
     root = raw_mirror_dir(data_root)
     rel = raw_relpaths()
@@ -1382,25 +1051,6 @@ def deposit_raw_mirror(
             ),
             dryad.bytes,
         )
-    by4742 = Path(bbqtl_dir) / BY4742_NAME
-    if _sha256(by4742) != BY4742_SHA256:
-        raise RuntimeError(f"{by4742} does not hash to {BY4742_SHA256}")
-    by4742_url = github_url(BY4742_REPO_PATH, BBQTL_REPO, BBQTL_COMMIT)
-    sources[BY4742_REL] = (
-        by4742,
-        record(
-            RetrievalMethod.direct_url,
-            by4742_url,
-            "torchcell.literature.retrieve.direct_url",
-            BY4742_SHA256,
-            BY4742_RETRIEVED_AT,
-            url=by4742_url,
-            repo=BBQTL_REPO,
-            commit=BBQTL_COMMIT,
-            path=BY4742_REPO_PATH,
-        ),
-        by4742.stat().st_size,
-    )
     archive_rel = f"data/dryad/{DRYAD_ARCHIVE_NAME}"
     sources[archive_rel] = (
         None,
@@ -1436,37 +1086,6 @@ def deposit_raw_mirror(
                 retrieval=retrieval,
             )
         )
-    lifted = root / LIFTED_TABLE_REL
-    if lifted.exists() and _sha256(lifted) != LIFTED_TABLE_SHA256:
-        raise RuntimeError(f"{lifted} exists with a different sha256; refusing")
-    files.append(
-        ArtifactRecord(
-            path=LIFTED_TABLE_REL,
-            role=ROLE_RAW_DATA,
-            bytes=LIFTED_TABLE_BYTES,
-            sha256=LIFTED_TABLE_SHA256,
-            source=(
-                f"derived from data/dryad/{SNP_LIST_NAME}, {BY4742_REL} and genomes "
-                f"tier {SGD_S288C_R64}/{S288C_FSA} by {LIFT_SCRIPT}"
-            ),
-            processing=ProcessingRecord(
-                processor=f"{LIFT_SCRIPT} ({__name__}.lift_snps)",
-                tool="exact flank match, both strands",
-                version=LIFT_COMMIT,
-                params={
-                    "flanks": list(LIFT_FLANKS),
-                    "seed": LIFT_SEED,
-                    "source": BY4742_REL,
-                    "target": f"{SGD_S288C_R64}/{S288C_FSA}",
-                },
-                input_sha256=[
-                    DRYAD_FILES[SNP_LIST_NAME].sha256,
-                    BY4742_SHA256,
-                    S288C_FSA_SHA256,
-                ],
-            ),
-        )
-    )
     manifest = Manifest(
         citation_key=CITATION_KEY,
         doi=PAPER_DOI,
@@ -1479,7 +1098,6 @@ def deposit_raw_mirror(
             f"https://github.com/{CODE_REPO}/tree/{CODE_COMMIT}",
             f"https://doi.org/{DRYAD_DOI}",
             f"https://www.ncbi.nlm.nih.gov/bioproject/{SRA_BIOPROJECT}",
-            f"https://github.com/{BBQTL_REPO}/tree/{BBQTL_COMMIT}",
         ],
         si_expected=[
             f"GitHub {CODE_REPO} @ {CODE_COMMIT[:8]}: the two expression matrices, the "
@@ -1491,13 +1109,8 @@ def deposit_raw_mirror(
             f"#{DRYAD_ISSUE} with the zip they arrived in ({DRYAD_ARCHIVE_NAME}). Every "
             "record depends on them.",
             f"SRA {SRA_BIOPROJECT}: raw reads, not deposited (no loader reads reads)",
-            f"GitHub {BBQTL_REPO} @ {BBQTL_COMMIT[:8]}: {BY4742_REPO_PATH}, the "
-            "reference the released SNP positions sit on (#1050), the source side of "
-            "their lift to S288C R64-4-1",
         ],
-        provenance_complete=all(
-            (root / relpath).exists() for relpath in [*sources, LIFTED_TABLE_REL]
-        ),
+        provenance_complete=all((root / relpath).exists() for relpath in sources),
         created_at=datetime.now(UTC).isoformat(),
     )
     (root / "manifest.json").write_text(manifest.model_dump_json(indent=2))
@@ -1865,14 +1478,7 @@ def sourced_values() -> list[SourcedValue]:
 
 
 def verify_build(dataset_root: str, *, data_root: str | None = None) -> Any:
-    """L0-L4 report for a built store (``segregant_expression_reference_panel``).
-
-    The spec is this dataset's entry in ``runners.SEGREGANT_EXPRESSION_DATASETS``. Its
-    L4 ``marker_reference`` and ``mat_fixation`` read the released SNP positions against
-    S288C and fail on them (#1050): those positions are ``BY4742_fixed`` coordinates.
-    The owner's rule (2026-10-12) is that the reference genome does not gate the data,
-    so those two results are findings about the release, not a failed store.
-    """
+    """L0-L4 report for a built store (``segregant_expression_reference_panel``)."""
     import json
 
     from torchcell.sequence.genome.registry import PETER2018_1011, resolve

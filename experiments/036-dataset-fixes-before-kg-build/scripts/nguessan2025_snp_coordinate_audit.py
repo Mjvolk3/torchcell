@@ -21,10 +21,13 @@ manifest):
   the SNPs, so within the 0.025 grid error) per 20 kb window, the SNPs where it is
   lowest, and the SNP nearest 200,000, the S288C MAT coordinate the verifier reads.
 
-``BY4742_fixed.fasta`` is not in a mirror. It is read from ``--by4742`` and must hash to
-``BY4742_SHA256``; retrieve it with::
-
-    curl -sSfL -o BY4742_fixed.fasta https://raw.githubusercontent.com/arturrc/bbqtl_inference/2b1c89d6a602a8001b3b18dd00e75a8c97950d9d/1_genotype_inference/indexes/BY4742_fixed.fasta
+``BY4742_fixed.fasta`` is not part of the dataset's raw mirror (the loader does not read
+it). It is read from ``--by4742`` and must hash to ``BY4742_SHA256``;
+``nguessan2025_snp_liftover.py --retrieve`` fetches it at the pinned commit, with its
+retrieval record, into
+``$DATA_ROOT/experiments/036-dataset-fixes-before-kg-build/nguessan2025_coordinates/``.
+This audit is a modeling-time measurement; the stored records keep the released
+positions (#1050).
 
 Run from the repo root (a worktree: ``PYTHONPATH=<worktree>``), under slurm::
 

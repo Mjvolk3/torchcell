@@ -508,10 +508,7 @@ def test_build_parents_refuses_an_index_without_rm(tmp_path: Path) -> None:
         m.build_parents(stripped)
 
 
-def _deposit_inputs(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> tuple[Path, Path, Path, Path]:
-    """Release, code, Dryad-metadata and BB-QTL source dirs; the BY4742 pin re-pointed."""
+def _deposit_inputs(tmp_path: Path) -> tuple[Path, Path, Path]:
     release = tmp_path / "release"
     rel.write_release(release)
     code = tmp_path / "code"
@@ -522,24 +519,19 @@ def _deposit_inputs(
     meta.mkdir()
     (meta / m.DRYAD_METADATA).write_text("{}\n")
     (meta / m.DRYAD_LISTING).write_text("{}\n")
-    bbqtl = tmp_path / "bbqtl"
-    bbqtl.mkdir()
-    (bbqtl / m.BY4742_NAME).write_text(">chr01\nACGT\n")
-    monkeypatch.setattr(m, "BY4742_SHA256", rel.sha256(bbqtl / m.BY4742_NAME))
-    return release, code, meta, bbqtl
+    return release, code, meta
 
 
 def test_deposit_records_the_by_hand_dryad_files_as_manual_browser(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path,
 ) -> None:
     """Written before the bytes arrive: the records name what a rebuild deposits."""
-    release, code, meta, bbqtl = _deposit_inputs(tmp_path, monkeypatch)
+    release, code, meta = _deposit_inputs(tmp_path)
     data_root = tmp_path / "root"
     mirror = m.deposit_raw_mirror(
         release_dir=release,
         code_dir=code,
         dryad_metadata_dir=meta,
-        bbqtl_dir=bbqtl,
         retrieved_at="2026-10-11",
         data_root=str(data_root),
     )
@@ -550,33 +542,8 @@ def test_deposit_records_the_by_hand_dryad_files_as_manual_browser(
         [*m.raw_relpaths().values()]
         + [f"code/{p}" for p in m.CODE_FILES]
         + [f"data/dryad/{m.DRYAD_METADATA}", f"data/dryad/{m.DRYAD_LISTING}"]
-        + [archive, m.BY4742_REL, m.LIFTED_TABLE_REL]
+        + [archive]
     )
-    reference = by_path[m.BY4742_REL]
-    assert reference.retrieval is not None
-    assert reference.retrieval.method == RetrievalMethod.direct_url
-    assert reference.retrieval.retrieved_at == m.BY4742_RETRIEVED_AT == "2026-10-12"
-    assert reference.retrieval.source_url == (
-        "https://raw.githubusercontent.com/arturrc/bbqtl_inference/"
-        "2b1c89d6a602a8001b3b18dd00e75a8c97950d9d/1_genotype_inference/indexes/"
-        "BY4742_fixed.fasta"
-    )
-    assert reference.retrieval.params["commit"] == m.BBQTL_COMMIT
-    assert reference.sha256 == m.BY4742_SHA256
-    assert (mirror / m.BY4742_REL).read_text() == ">chr01\nACGT\n"
-    derived = by_path[m.LIFTED_TABLE_REL]
-    assert derived.retrieval is None and derived.processing is not None
-    assert (derived.sha256, derived.bytes) == (m.LIFTED_TABLE_SHA256, 2537055)
-    assert derived.processing.version == m.LIFT_COMMIT
-    assert derived.processing.processor.startswith(m.LIFT_SCRIPT)
-    assert derived.processing.params["flanks"] == [25, 50, 100, 200]
-    assert derived.processing.input_sha256 == [
-        m.DRYAD_FILES[m.SNP_LIST_NAME].sha256,
-        m.BY4742_SHA256,
-        m.S288C_FSA_SHA256,
-    ]
-    assert not (mirror / m.LIFTED_TABLE_REL).exists()
-    assert m.LIFTED_TABLE_NAME not in m.raw_relpaths()
     geno = by_path[f"data/dryad/{m.GENO_NAME}"]
     assert geno.retrieval is not None
     assert geno.retrieval.method == RetrievalMethod.manual_browser
@@ -608,15 +575,12 @@ def test_deposit_records_the_by_hand_dryad_files_as_manual_browser(
         m.manifest_sha256(manifest, "nope")
 
 
-def test_deposit_is_idempotent_and_refuses_a_drifted_file(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    release, code, meta, bbqtl = _deposit_inputs(tmp_path, monkeypatch)
+def test_deposit_is_idempotent_and_refuses_a_drifted_file(tmp_path: Path) -> None:
+    release, code, meta = _deposit_inputs(tmp_path)
     kwargs = dict(
         release_dir=release,
         code_dir=code,
         dryad_metadata_dir=meta,
-        bbqtl_dir=bbqtl,
         retrieved_at="2026-10-11",
         data_root=str(tmp_path / "root"),
     )
@@ -644,42 +608,6 @@ def _dryad(name: str, data: bytes) -> m.DryadFile:
     )
 
 
-def test_deposit_refuses_a_by4742_reference_off_its_pin(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    release, code, meta, bbqtl = _deposit_inputs(tmp_path, monkeypatch)
-    (bbqtl / m.BY4742_NAME).write_text(">chr01\nACGA\n")
-    with pytest.raises(RuntimeError, match="does not hash to"):
-        m.deposit_raw_mirror(
-            release_dir=release,
-            code_dir=code,
-            dryad_metadata_dir=meta,
-            bbqtl_dir=bbqtl,
-            retrieved_at="2026-10-11",
-            data_root=str(tmp_path / "root"),
-        )
-
-
-def test_deposit_refuses_a_lifted_table_off_its_pin(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """The table is the lift script's; deposit only records it and checks its bytes."""
-    release, code, meta, bbqtl = _deposit_inputs(tmp_path, monkeypatch)
-    data_root = tmp_path / "root"
-    table = data_root / m.RAW_DIR_REL / m.LIFTED_TABLE_REL
-    table.parent.mkdir(parents=True)
-    rel.lifted_table(table)
-    with pytest.raises(RuntimeError, match="exists with a different sha256"):
-        m.deposit_raw_mirror(
-            release_dir=release,
-            code_dir=code,
-            dryad_metadata_dir=meta,
-            bbqtl_dir=bbqtl,
-            retrieved_at="2026-10-11",
-            data_root=str(data_root),
-        )
-
-
 def test_check_dryad_archive_accepts_exactly_the_stored_members(tmp_path: Path) -> None:
     members = {"README.txt": b"readme\n", "SNP_list.txt": b"a\tb\n" * 50}
     files = {name: _dryad(name, data) for name, data in members.items()}
@@ -701,7 +629,7 @@ def test_deposit_refuses_an_arrival_zip_without_the_four_members(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """A present zip at its pinned hash must still list exactly the four Dryad files."""
-    release, code, meta, bbqtl = _deposit_inputs(tmp_path, monkeypatch)
+    release, code, meta = _deposit_inputs(tmp_path)
     data_root = tmp_path / "root"
     dryad_dir = data_root / m.RAW_DIR_REL / "data" / "dryad"
     dryad_dir.mkdir(parents=True)
@@ -713,7 +641,6 @@ def test_deposit_refuses_an_arrival_zip_without_the_four_members(
             release_dir=release,
             code_dir=code,
             dryad_metadata_dir=meta,
-            bbqtl_dir=bbqtl,
             retrieved_at="2026-10-11",
             data_root=str(data_root),
         )
@@ -722,13 +649,12 @@ def test_deposit_refuses_an_arrival_zip_without_the_four_members(
 def test_download_refuses_while_the_dryad_files_are_walled(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    release, code, meta, bbqtl = _deposit_inputs(tmp_path, monkeypatch)
+    release, code, meta = _deposit_inputs(tmp_path)
     data_root = tmp_path / "root"
     m.deposit_raw_mirror(
         release_dir=release,
         code_dir=code,
         dryad_metadata_dir=meta,
-        bbqtl_dir=bbqtl,
         retrieved_at="2026-10-11",
         data_root=str(data_root),
     )
@@ -742,13 +668,12 @@ def test_a_store_builds_from_the_mirror_once_the_dryad_files_arrive(
 ) -> None:
     """The by-hand deposit, simulated: download() links every file, process() builds."""
     rel.patch_sizes(monkeypatch)
-    release, code, meta, bbqtl = _deposit_inputs(tmp_path, monkeypatch)
+    release, code, meta = _deposit_inputs(tmp_path)
     data_root = tmp_path / "root"
     mirror = m.deposit_raw_mirror(
         release_dir=release,
         code_dir=code,
         dryad_metadata_dir=meta,
-        bbqtl_dir=bbqtl,
         retrieved_at="2026-10-11",
         data_root=str(data_root),
     )
@@ -789,7 +714,7 @@ def test_every_quote_names_its_pinned_file() -> None:
 
 
 def test_the_class_is_registered_mapped_and_in_the_runner_registry() -> None:
-    """Served as released (#1050): the genome reference does not gate the data."""
+    """Served as released: the genome reference does not gate the data (#1050)."""
     from torchcell.adapters import Nguessan2025Adapter
     from torchcell.datasets.dataset_registry import dataset_registry
     from torchcell.knowledge_graphs.dataset_adapter_map import dataset_adapter_map
@@ -800,12 +725,12 @@ def test_the_class_is_registered_mapped_and_in_the_runner_registry() -> None:
     assert spec["verify_build_module"] == m.__name__
 
 
-def test_every_record_states_the_coordinate_finding() -> None:
-    """The released positions are kept; the call method says what they are."""
-    assert "S288C_reference_genome_R64-3-1_20210421" in m.CALL_METHOD
-    assert "at all 41,594 positions" in m.CALL_METHOD
-    assert "27,221 (0.654)" in m.CALL_METHOD
-    assert m.LIFTED_TABLE_REL in m.CALL_METHOD
+def test_the_call_method_names_the_released_positions_and_their_reference() -> None:
+    """Block coordinates are the SNP positions as released, on the README's reference."""
+    assert m.CALL_METHOD.endswith(
+        "Block coordinates are the SNP positions as released (SNP_list.txt), on the "
+        "reference the Dryad README names: S288C_reference_genome_R64-3-1_20210421"
+    )
 
 
 def test_the_class_declares_its_organism() -> None:
@@ -870,240 +795,3 @@ def test_verify_build_reads_its_runner_entry(
     assert captured["assembly_index"] == {"AAA": "GENOMES_ASSEMBLED/AAA_6.re.fa"}
     assert captured["gene_set"] == {"YAL001C", "YCL001W"}
     assert captured["sgd_genes"] == set(rel.GENES)
-
-
-# --------------------------------------------------------------------------- #
-# Lifting BY4742_fixed SNPs to S288C (#1050)
-# --------------------------------------------------------------------------- #
-def _dna(n: int, seed: int) -> str:
-    return "".join(np.random.default_rng(seed).choice(list("ACGT"), n))
-
-
-def _snp(chrom: str, position: int, source: Mapping[str, str], i: int) -> Marker:
-    base = source[chrom][position - 1]
-    alt = "A" if base != "A" else "C"
-    return Marker(
-        chromosome=chrom, position=position, ref=base, alt=alt, index=i, column=i
-    )
-
-
-def test_lift_snps_assigns_every_status_and_never_drops_a_snp() -> None:
-    """Seed 8, flanks 8/16/32 on synthetic references with known edits.
-
-    chrI: S288C has 7 bp inserted at 50 (+7 shift), a base changed inside the second
-    SNP's left flank, the third SNP's 17-bp core copied onto chrIV (two hits at 8,
-    one at 16), the fourth SNP's 65-bp window copied onto chrIV (two hits at every
-    flank). chrII is reverse complemented in S288C. chrIII's only copy is in chrIV.
-    """
-    a, b, c = _dna(400, 1), _dna(400, 2), _dna(300, 3)
-    source = {"chrI": a, "chrII": b, "chrIII": c}
-    target_i = list(a[:50] + "GATTACA" + a[50:])
-    target_i[198 + 7] = "A" if target_i[198 + 7] != "A" else "C"
-    target = {
-        "chrI": "".join(target_i),
-        "chrII": m.reverse_complement(b),
-        "chrIII": _dna(300, 4),
-        "chrIV": _dna(100, 5) + a[292:309] + _dna(50, 6) + a[318:383] + c,
-    }
-    snps = [
-        (0, "snp1", _snp("chrI", 101, source, 0)),
-        (1, "snp2", _snp("chrI", 201, source, 1)),
-        (2, "snp3", _snp("chrI", 301, source, 2)),
-        (3, "snp4", _snp("chrI", 351, source, 3)),
-        (4, "snp5", _snp("chrI", 5, source, 4)),
-        (5, "snp6", _snp("chrII", 101, source, 5)),
-        (6, "snp7", _snp("chrIII", 151, source, 6)),
-    ]
-    rows = m.lift_snps(snps, source, target, flanks=(8, 16, 32), seed=8)
-    got = [
-        (
-            r.snp,
-            r.status.value,
-            r.flank_bp,
-            r.hits,
-            r.s288c_chromosome,
-            r.s288c_position,
-            r.s288c_strand,
-        )
-        for r in rows
-    ]
-    offset_iv = 100 + 17 + 50 + 65
-    assert got == [
-        ("snp1", "lifted", 8, 1, "chrI", 108, "+"),
-        ("snp2", "no_match", 8, 0, None, None, None),
-        ("snp3", "lifted", 16, 1, "chrI", 308, "+"),
-        ("snp4", "multiple", 32, 2, None, None, None),
-        ("snp5", "edge", 8, 0, None, None, None),
-        ("snp6", "lifted", 8, 1, "chrII", 300, "-"),
-        ("snp7", "lifted", 8, 1, "chrIV", offset_iv + 151, "+"),
-    ]
-    lifted = [r for r in rows if r.status == m.LiftStatus.lifted]
-    assert all(r.s288c_base == r.by for r in lifted)
-    assert [(r.chromosome, r.position, r.by, r.rm) for r in rows] == [
-        (s.chromosome, s.position, s.ref, s.alt) for _, _, s in snps
-    ]
-
-
-def test_lift_snps_reads_the_s288c_base_independently_of_the_match() -> None:
-    """The SNP base is outside the window, so a different S288C base still lifts."""
-    a = _dna(200, 7)
-    target = {"chrI": a[:100] + ("A" if a[100] != "A" else "C") + a[101:]}
-    (row,) = m.lift_snps(
-        [(0, "snp1", _snp("chrI", 101, {"chrI": a}, 0))],
-        {"chrI": a},
-        target,
-        flanks=(8,),
-        seed=8,
-    )
-    assert (row.status, row.s288c_position) == (m.LiftStatus.lifted, 101)
-    assert row.s288c_base != row.by
-
-
-def test_lift_snps_refuses_a_seed_longer_than_a_flank_or_unsorted_flanks() -> None:
-    with pytest.raises(ValueError, match="need seed <= min"):
-        m.lift_snps([], {}, {}, flanks=(8, 16), seed=10)
-    with pytest.raises(ValueError, match="need seed <= min"):
-        m.lift_snps([], {}, {}, flanks=(16, 8), seed=8)
-
-
-def _lifted(i: int, chrom: str, position: int, by: str, rm: str) -> dict[str, Any]:
-    """An identity-lifted row's fields (S288C coordinates equal the released ones)."""
-    return {
-        "index": i,
-        "snp": f"snp{i + 1}",
-        "chromosome": chrom,
-        "position": position,
-        "by": by,
-        "rm": rm,
-        "status": m.LiftStatus.lifted,
-        "flank_bp": 25,
-        "hits": 1,
-        "s288c_chromosome": chrom,
-        "s288c_position": position,
-        "s288c_strand": "+",
-        "s288c_base": by,
-    }
-
-
-def test_the_lifted_table_round_trips_and_refuses_another_header(
-    tmp_path: Path,
-) -> None:
-    rows = [
-        m.LiftedSnp(**{**_lifted(0, "chrI", 300, "G", "C"), "s288c_position": 310}),
-        m.LiftedSnp(
-            **{
-                **_lifted(1, "chrI", 100, "A", "T"),
-                "status": m.LiftStatus.multiple,
-                "flank_bp": 200,
-                "hits": 3,
-                "s288c_chromosome": None,
-                "s288c_position": None,
-                "s288c_strand": None,
-                "s288c_base": None,
-            }
-        ),
-    ]
-    path = tmp_path / "lifted.tsv"
-    m.write_lifted_table(rows, path)
-    assert path.read_text().splitlines()[0].split("\t") == list(m.LIFTED_TABLE_COLUMNS)
-    assert path.read_text().splitlines()[2].endswith("\tmultiple\t200\t3\t\t\t\t")
-    assert m.read_lifted_table(path) == rows
-    path.write_text("index\tsnp\n0\tsnp1\n")
-    with pytest.raises(ValueError, match="header"):
-        m.read_lifted_table(path)
-
-
-def _released_table(tmp_path: Path, **changes: dict[str, Any]) -> tuple[Path, Path]:
-    """The synthetic SNP list and a lifted table of it (identity unless changed)."""
-    snp_list = tmp_path / "snps.txt"
-    snp_list.write_text(rel.snp_list())
-    rows = [
-        m.LiftedSnp(
-            **{
-                **_lifted(i, f"chr{'I' if c == 1 else 'III'}", p, by, rm),
-                **changes.get(snp, {}),
-            }
-        )
-        for i, snp, c, p, by, rm in rel.SNPS
-        if snp != "END"
-    ]
-    table = tmp_path / "lifted.tsv"
-    m.write_lifted_table(rows, table)
-    return snp_list, table
-
-
-def test_read_lifted_markers_keeps_lifted_snps_on_s288c_with_geno_columns(
-    tmp_path: Path,
-) -> None:
-    """snp2 does not lift; snp3 lifts onto the minus strand, so its alleles flip."""
-    snp_list, table = _released_table(
-        tmp_path,
-        snp2={
-            "status": m.LiftStatus.no_match,
-            "hits": 0,
-            "s288c_chromosome": None,
-            "s288c_position": None,
-            "s288c_strand": None,
-            "s288c_base": None,
-        },
-        snp3={"s288c_chromosome": "chrII", "s288c_position": 40, "s288c_strand": "-"},
-    )
-    markers, order, n_snps = m.read_lifted_markers(snp_list, table)
-    assert [(k.chromosome, k.position, k.ref, k.alt, k.column) for k in markers] == [
-        ("chrI", 200, "C", "G", 3),
-        ("chrI", 300, "G", "C", 0),
-        ("chrII", 40, "T", "C", 2),
-    ]
-    assert order == [3, 0, 2]
-    assert n_snps == 4
-
-
-@pytest.mark.parametrize(
-    ("changes", "message"),
-    [
-        ({"snp1": {"position": 301}}, "Index 0 disagrees with"),
-        ({"snp4": {"s288c_position": 300}}, "two SNPs are lifted to one position"),
-        ({"snp1": {"s288c_position": None}}, "lifted Index 0 has no position"),
-    ],
-)
-def test_read_lifted_markers_refuses_a_table_off_the_release(
-    tmp_path: Path, changes: dict[str, dict[str, Any]], message: str
-) -> None:
-    snp_list, table = _released_table(tmp_path, **changes)
-    with pytest.raises(ValueError, match=message):
-        m.read_lifted_markers(snp_list, table)
-
-
-def test_read_lifted_markers_refuses_a_table_missing_a_snp(tmp_path: Path) -> None:
-    snp_list, table = _released_table(tmp_path)
-    lines = table.read_text().splitlines()
-    table.write_text("\n".join(lines[:-1]) + "\n")
-    with pytest.raises(ValueError, match="its SNPs are not the released SNPs"):
-        m.read_lifted_markers(snp_list, table)
-
-
-def test_the_two_fasta_readers_name_chromosomes_as_markers_do(tmp_path: Path) -> None:
-    by = tmp_path / "by.fasta"
-    by.write_text(
-        ">2-micron\nTT\n"
-        + "".join(f">chr{i:02d}\nacg\n" for i in range(1, 17))
-        + ">chr17\nCC\n"
-    )
-    seqs = m.by4742_chromosomes(by)
-    assert sorted(seqs) == sorted(m.CHROMOSOME_TOKEN.values())
-    assert seqs["chrXVI"] == "ACG"
-    sgd = tmp_path / "s288c.fsa"
-    sgd.write_text(
-        "".join(
-            f">ref|NC_{i}| [chromosome={r}]\nacgt\n"
-            for i, r in enumerate(m.CHROMOSOME_TOKEN.values())
-        ).replace("[chromosome=chr", "[chromosome=")
-        + ">ref|NC_001224| [location=mitochondrion]\nGG\n"
-    )
-    assert m.s288c_chromosomes(sgd)["chrIV"] == "ACGT"
-    sgd.write_text(">ref|NC_1| [chromosome=I]\nA\n")
-    with pytest.raises(ValueError, match="no nuclear chromosome"):
-        m.s288c_chromosomes(sgd)
-    by.write_text(">chr01\nA\n")
-    with pytest.raises(ValueError, match="no nuclear chromosome"):
-        m.by4742_chromosomes(by)

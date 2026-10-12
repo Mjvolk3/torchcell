@@ -56,10 +56,9 @@ across records and ``screen_id`` = ``Keio:<sample name>`` keeps them distinct.
   leaf's ``description`` says on every record that the tag is DERIVED that way. 3,768 of
   the release's 3,789 genes map (one pair, b0018 to BW25113_4412, has numbers that
   differ). The 21 without a one-to-one pair are stored too since #1057 (the owner rule
-  of 2026-10-12: the genome does not gate a released row), as the released MG1655
-  b-number in the MG1655 namespace, the ``description`` saying AS RELEASED and naming
-  the status (``no_one_to_one_eck_pair`` or ``not_in_annotation``); the list is in
-  ``identifier_mapping.json``.
+  of 2026-10-12: the data is the data, and the genome does not gate a released row), as
+  the released MG1655 b-number in the MG1655 namespace, the ``description`` saying AS
+  RELEASED; the list is in ``identifier_mapping.json``.
 * Reference: per sample, the typical gene of that sample (fitness 0 by the
   normalization), in the sample's own environment.
 * Environment: Table S5's medium through the media library (``LB`` is ``LB_LENNOX``, the
@@ -116,8 +115,8 @@ ESSENTIALITY (:class:`GeneEssentialityPrice2018EcoliDataset`). Supplementary Tab
   the release's own rule calls them essential. Table S1 corroborates this by leaving
   their ``locus_tag`` (its only BW25113 identifier) empty, and they are the only four
   Keio rows without one. They were dropped until #1057; they are now stored as the
-  released MG1655 b-number with the ``no_one_to_one_eck_pair`` status, the call stated
-  as the release states it and the lesion recorded in ``dropped_records.json``.
+  released MG1655 b-number, the call stated as the release states it and the lesion
+  recorded in ``dropped_records.json``.
 * Reference: the unperturbed BW25113 parent on the same selection plates, viable
   (``is_essential=False``) -- the library was built in it and selected there.
 * Environment: a medium DERIVED from ``LB_LENNOX`` (``base_medium`` ``LB``, so it joins
@@ -217,13 +216,10 @@ from torchcell.datasets.bacteria_common import (
     STRAIN_GENE_NAMESPACES,
     LocusTagReconciliation,
     LocusTagResolutionError,
-    ReleasedIdentifierResolution,
-    ReleasedIdentifierStatus,
     assembly_reference,
     bacterial_genome,
     eck_crosswalk,
     reconcile_locus_tags,
-    status_description,
 )
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.literature.manifest import (
@@ -1271,8 +1267,6 @@ PUBLICATIONS: dict[SampleSource, Publication] = {
 #: The authors' own withdrawal, the same typed reason Wetmore 2015's loader refuses on.
 DROP_DISREGARDED = wetmore.AUTHOR_WITHDRAWAL.rule
 DROP_MOTILITY = "motility_soft_agar_assay"
-#: Not a drop rule since #1057: the status a gene the ECK route cannot place carries.
-DROP_NO_ECK_PAIR = "no_one_to_one_eck_pair"
 
 DROP_RULES: dict[str, str] = {
     DROP_DISREGARDED: "the source's own authors told readers to disregard it: the "
@@ -1286,13 +1280,11 @@ DROP_RULES: dict[str, str] = {
     "at 2%), and the readout is a spatial selection, not growth in a condition",
 }
 #: What a gene the ECK route cannot place IS since #1057 (the owner rule of 2026-10-12:
-#: the genome does not gate a released row): stored under the release's own MG1655
-#: b-number, in the MG1655 namespace, with this status.
+#: the data is the data, and the genome does not gate a released row).
 NO_ECK_PAIR_STATUS = (
-    "the release's MG1655 b-number has no one-to-one ECK pair with a BW25113 locus "
-    "(absent from the MG1655 annotation, no ECK synonym, or an ECK id BW25113 lacks or "
-    "carries on several loci), so it is stored as released in the MG1655 namespace; "
-    "per gene in identifier_mapping.json"
+    "a release gene no one-to-one ECK pair places on a BW25113 locus is stored under "
+    "the release's own MG1655 b-number, in the MG1655 namespace; the route's own "
+    "diagnostics per gene are in identifier_mapping.json"
 )
 #: The source's own statement a rule rests on, verbatim with its sha256. Only the
 #: withdrawal is the source's own; the other two rules are this loader's typing (the
@@ -1563,7 +1555,7 @@ RELEASED_PATTERN = LOCUS_TAG_PATTERNS[RELEASED_NAMESPACE]
 
 class GeneMapping(BaseModel):
     """One release gene: placed on its BW25113 locus through a one-to-one ECK pair, or,
-    when no pair places it, stored as the released MG1655 b-number with a status (#1057).
+    when no pair places it, stored as the released MG1655 b-number (#1057).
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
@@ -1574,7 +1566,6 @@ class GeneMapping(BaseModel):
     perturbed_gene_name: str
     numerics_agree: bool
     gene_namespace: BacterialGeneNamespace = STRAIN_GENE_NAMESPACES[REFERENCE_STRAIN]
-    status: ReleasedIdentifierStatus | None = None
 
 
 class UnmappedGene(BaseModel):
@@ -1611,10 +1602,10 @@ class IdentifierReport(BaseModel):
     n_tag_names: int = Field(
         description="perturbed_gene_name is the locus tag (symbol absent or not unique)"
     )
-    released_as: tuple[ReleasedIdentifierStatus, ...] = Field(
+    released_as: tuple[str, ...] = Field(
         default=(),
         description="the genes the ECK route cannot place, stored as the released "
-        "MG1655 b-number with this status (#1057)",
+        "MG1655 b-number (#1057)",
     )
 
 
@@ -1692,7 +1683,7 @@ def assemble_mapping(
     BW25113 and must return the crosswalk's tag for every one; ``name_of`` gives a
     tag's stored common name. A gene no one-to-one pair places is NOT dropped (#1057):
     it is stored as the released MG1655 b-number in the MG1655 namespace, named by
-    ``released_name_of``, with a typed status. The route must still place at least
+    ``released_name_of``. The route must still place at least
     ``min_fraction`` of the genes, else the build stops (checklist item 4): a route
     that suddenly places fewer is a crosswalk fault, not a release fact. The
     essentiality table has its own, lower floor
@@ -1732,15 +1723,6 @@ def assemble_mapping(
                 f"{label}: {gene.b_number!r} is not an MG1655 b-number in form, so no "
                 "leaf can hold it as released"
             )
-        status = ReleasedIdentifierStatus(
-            released=gene.b_number,
-            stored_as=gene.b_number,
-            gene_namespace=RELEASED_NAMESPACE,
-            resolution=ReleasedIdentifierResolution.not_in_annotation
-            if gene.reason == "b_number_not_in_mg1655_annotation"
-            else ReleasedIdentifierResolution.no_one_to_one_eck_pair,
-            note=gene.reason + (f" ({', '.join(gene.eck)})" if gene.eck else ""),
-        )
         mapping[gene.b_number] = GeneMapping(
             b_number=gene.b_number,
             eck=",".join(gene.eck),
@@ -1748,7 +1730,6 @@ def assemble_mapping(
             perturbed_gene_name=released_name_of(gene.b_number),
             numerics_agree=True,
             gene_namespace=RELEASED_NAMESPACE,
-            status=status,
         )
     report = IdentifierReport(
         n_source_genes=len(b_numbers),
@@ -1768,9 +1749,7 @@ def assemble_mapping(
         reconcile_layer_histogram=dict(reconciliation.layer_histogram),
         n_symbol_names=n_symbol,
         n_tag_names=len(placed) - n_symbol,
-        released_as=tuple(
-            gene.status for gene in mapping.values() if gene.status is not None
-        ),
+        released_as=tuple(gene.b_number for gene in unplaced),
     )
     return mapping, report
 
@@ -1833,20 +1812,19 @@ DESCRIPTION = (
     "release names an MG1655 b-number, mapped to this BW25113 locus through its "
     "one-to-one ECK pair (eck_crosswalk)"
 )
-#: The description of a gene no ECK pair places, which its status sentence extends.
+#: The description of a gene no ECK pair places: what is stored, no more.
 DESCRIPTION_AS_RELEASED = (
     "Tn5 transposon insertion disrupting a gene; gene-level call over the gene's usable "
     "insertion strains (no per-strain barcode or mapped site). Locus tag AS RELEASED: "
-    "the release's MG1655 b-number, in the MG1655 namespace, because no one-to-one ECK "
-    "pair places it on a BW25113 locus"
+    "the release's MG1655 b-number, in the MG1655 namespace"
 )
 
 
 def gene_description(mapping: GeneMapping, base: str, as_released: str) -> str:
-    """``base`` for an ECK-placed gene, else ``as_released`` plus the gene's status."""
-    if mapping.status is None:
+    """``base`` for an ECK-placed gene, else ``as_released``."""
+    if mapping.gene_namespace == STRAIN_GENE_NAMESPACES[REFERENCE_STRAIN]:
         return base
-    return status_description(as_released, mapping.status)
+    return as_released
 
 
 def build_genotype(mapping: GeneMapping) -> Genotype:
@@ -1986,7 +1964,7 @@ def iter_records(
 #: Records the build writes: 151 kept samples x all 3,789 released genes (147 samples
 #: measured 2026-10-07, plus the 4 MOPS rich samples #1045 row 16 keeps; 3,768 genes on a
 #: BW25113 locus through their ECK pair, plus the 21 no pair places, stored as the
-#: released MG1655 b-number with a status since #1057).
+#: released MG1655 b-number since #1057).
 EXPECTED_SAMPLES = 151
 EXPECTED_GENES = 3789
 EXPECTED_RECORDS = EXPECTED_SAMPLES * EXPECTED_GENES
@@ -2384,7 +2362,7 @@ def report(data_root: str | None = None) -> dict[str, Any]:
 ESSENTIAL_DATASET_ROOT_REL = "data/torchcell/gene_essentiality_price2018_ecoli"
 #: Table S1's ``orgId == "Keio"`` rows, and the records they become (measured
 #: 2026-10-07): 324 released rows, 320 of them on a BW25113 locus and, since #1057, the
-#: other 4 (araA, araB, rhaA, rhaB) as the released MG1655 b-number with a status.
+#: other 4 (araA, araB, rhaA, rhaB) as the released MG1655 b-number.
 ESSENTIAL_SOURCE_GENES = 324
 ESSENTIAL_EXPECTED_RECORDS = 324
 #: The ECK route must place at least this fraction of Table S1's Keio genes. It places
@@ -2563,7 +2541,6 @@ class EssentialityInventory(BaseModel):
     released_as_gene_names: tuple[str, ...] = Field(
         description="Table S1's own `name` for each of them (araA, araB, rhaA, rhaB)"
     )
-    released_as_status: str
     released_as_description: str
     gene_class_histogram: dict[str, int]
     rows_without_a_refseq_locus_tag: tuple[str, ...] = Field(
@@ -2635,7 +2612,6 @@ def essentiality_inventory(
         kept_genes=len(genes),
         released_as_genes=unmapped,
         released_as_gene_names=tuple(names[b] for b in unmapped),
-        released_as_status=DROP_NO_ECK_PAIR,
         released_as_description=NO_ECK_PAIR_STATUS,
         gene_class_histogram=dict(sorted(Counter(g.gene_class for g in genes).items())),
         rows_without_a_refseq_locus_tag=without_tag,
@@ -2659,7 +2635,7 @@ def build_essentiality_genotype(mapping: GeneMapping) -> Genotype:
     """A Tn5 insertion in one gene of KEIO_ML9, the call's caveat in its description.
 
     A gene no ECK pair places (the operons BW25113 deletes) is stored as the released
-    MG1655 b-number, its status appended to the caveat (#1057).
+    MG1655 b-number, under the same caveat (#1057).
     """
     return Genotype(
         perturbations=[
@@ -2861,9 +2837,6 @@ class GeneEssentialityPrice2018EcoliDataset(ExperimentDataset):
                     "gene_namespace": placed.gene_namespace,
                     "eck": placed.eck,
                     "perturbed_gene_name": placed.perturbed_gene_name,
-                    "status": None
-                    if placed.status is None
-                    else placed.status.resolution.value,
                     "record": record,
                 }
             )
@@ -2995,7 +2968,7 @@ def essentiality_label_is_qualified(
         1
         for r in records
         for p in r["experiment"]["genotype"]["perturbations"]
-        if not str(p["description"]).startswith(ESSENTIAL_DESCRIPTION)
+        if p["description"] != ESSENTIAL_DESCRIPTION
     )
     return LevelResult(
         level=Level.L3,

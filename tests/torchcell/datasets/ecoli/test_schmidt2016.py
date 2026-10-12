@@ -11,8 +11,8 @@ identities, the environment and phenotype builders, the raw-mirror deposit and a
 assembly pin are in-test objects, so nothing reads ``$DATA_ROOT``.
 
 The ``@pytest.mark.data`` tests read the real mirrors and the dev-tree LMDB and pin the
-numbers the dendron note states: 2,359 released rows, 2,329 protein keys, 14 records,
-the 5 non-host rows, the 7 twice-filed symbols, the 11 unresolved symbols, and that
+numbers the dendron note states: 2,359 released rows, 2,340 protein keys, 19 records,
+the 5 non-host rows, the 7 twice-filed symbols, the 11 symbols stored as released, and that
 Table S6's first two CV headers are swapped.
 """
 
@@ -56,6 +56,8 @@ ROWS: tuple[tuple[str, str, int, str], ...] = (
 )
 KEPT_GENES = ("aceA", "aceB")
 UNRESOLVED = ("ghost",)
+#: Every stored key: the unresolved symbol is stored as released since #1057.
+STORED_GENES = (*KEPT_GENES, *UNRESOLVED)
 #: The four conditions dataset 1 did not cover, as the release's NA cells say.
 DATASET1_MISSING = ("Glycerol + AA", "Xylose", "Mannose", "Fructose")
 IDENTIFIER_HEADERS = (
@@ -159,9 +161,9 @@ def _write_s8(sheet: Any) -> None:
     sheet.append([None] * len(header))
     sheet.append(header)
     dataset2 = [r for r in ROWS if r[2] == 2]
-    # The last dataset-2 row is written twice, so the duplicate-accession rule has an
-    # accession to drop.
-    for gene, uniprot, _, _ in [*dataset2, dataset2[-1]]:
+    # The non-host dataset-2 row is written twice, so the duplicate-accession rule has an
+    # accession to drop (one no record stores, since ghost is stored as released, #1057).
+    for gene, uniprot, _, _ in [*dataset2, dataset2[-2]]:
         row: list[Any] = [uniprot]
         for spec in loaded:
             values = _replicates(gene, spec.s6_column)
@@ -297,8 +299,8 @@ def test_header_index_refuses_a_repeated_name() -> None:
 def test_read_table_s8_drops_a_repeated_accession(workbook: Path) -> None:
     loaded = [c.s6_column for c in sm.CONDITIONS if c.drop is None]
     cells, repeated = sm.read_table_s8(str(workbook), loaded)
-    assert repeated == ("P00006",)
-    assert "P00006" not in cells
+    assert repeated == ("P00005",)
+    assert "P00005" not in cells
     cell = cells["P00001"]["Glucose"]
     assert cell.replicates == pytest.approx(_replicates("aceA", "Glucose"))
     assert cell.median == pytest.approx(cell.median_released)
@@ -331,7 +333,7 @@ def test_released_statistics_check_passes_and_catches_a_drifted_cv(
     loaded = [c.s6_column for c in sm.CONDITIONS if c.drop is None]
     cells, _ = sm.read_table_s8(str(workbook), loaded)
     summary = sm.check_released_statistics(cells)
-    # Four of the five dataset-2 accessions survive: P00006 is filed twice in Table S8.
+    # Four of the five dataset-2 accessions survive: P00005 is filed twice in Table S8.
     assert summary["n_cells"] == (len([r for r in ROWS if r[2] == 2]) - 1) * len(loaded)
     assert summary["worst_median_rtol"] == pytest.approx(0.0)
     assert summary["worst_cv_rtol"] < sm.IDENTITY_RTOL
@@ -362,7 +364,7 @@ def test_cv_header_swap_is_asserted_and_a_corrected_export_would_fail(
     cells, _ = sm.read_table_s8(str(workbook), loaded)
     _, cv_pairs = sm.read_table_s6(str(workbook))
     summary = sm.check_cv_header_swap(cv_pairs, cells)
-    # Every dataset-2 row but the twice-filed P00006 can be checked.
+    # Every dataset-2 row but the twice-filed P00005 can be checked.
     assert summary == {
         "n_rows_checked": len([r for r in ROWS if r[2] == 2]) - 1,
         "swapped": True,
@@ -450,25 +452,31 @@ def _reference_genome() -> AssemblyReferenceGenome:
     )
 
 
-def test_select_proteins_applies_the_three_rules_in_order(
+def test_select_proteins_applies_the_two_rules_in_order(
     workbook: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setattr(sm, "reconcile_locus_tags", _identity_reconciliation)
     monkeypatch.setattr(sm, "MIN_RESOLVED_FRACTION", 0.5)
     rows, _ = sm.read_table_s6(str(workbook))
     selection = sm.select_proteins(rows, FakeGenome(), label="test")  # type: ignore[arg-type]
-    assert [row.gene for row in selection.kept] == list(KEPT_GENES)
-    assert selection.locus_tag == {"P00001": "aceA", "P00002": "aceB"}
-    assert selection.dropped_rows == len(ROWS) - len(KEPT_GENES)
+    # #1057: the unresolved symbol is stored as released, not dropped
+    assert [row.gene for row in selection.kept] == list(STORED_GENES)
+    assert selection.locus_tag == {
+        "P00001": "aceA",
+        "P00002": "aceB",
+        "P00006": "ghost",
+    }
+    assert selection.dropped_rows == len(ROWS) - len(STORED_GENES)
     by_rule = {rule.rule: rule for rule in selection.rules}
     assert by_rule["source_organism_is_not_escherichia_coli"].n_items == 1
     assert by_rule["source_organism_is_not_escherichia_coli"].items == [
         "foreign (P00005, Bacillus subtilis)"
     ]
     assert by_rule["gene_symbol_filed_on_two_released_rows"].n_items == 2
-    assert by_rule["gene_symbol_resolves_to_no_locus_of_the_pinned_assembly"].items == [
-        "ghost (P00006)"
-    ]
+    assert set(by_rule) == {
+        "source_organism_is_not_escherichia_coli",
+        "gene_symbol_filed_on_two_released_rows",
+    }
 
 
 def test_select_proteins_refuses_a_release_below_the_resolution_floor(
@@ -584,18 +592,19 @@ def test_phenotype_skips_na_and_matches_se_to_the_replicate_count(
     cells, _ = sm.read_table_s8(str(workbook), loaded)
 
     glucose = sm.build_phenotype(selection.kept, selection.locus_tag, cells, "Glucose")
-    assert set(glucose.protein_abundance) == set(KEPT_GENES)
+    # #1057: the unresolved symbol is a key too, as released
+    assert set(glucose.protein_abundance) == set(STORED_GENES)
     assert glucose.protein_abundance["aceA"] == pytest.approx(
         _copies("aceA", "Glucose")
     )
-    assert glucose.n_replicates == {"aceA": 3, "aceB": 1}
+    assert {k: glucose.n_replicates[k] for k in KEPT_GENES} == {"aceA": 3, "aceB": 1}
     assert glucose.protein_abundance_se is not None
     assert not math.isnan(glucose.protein_abundance_se["aceA"])
     assert math.isnan(glucose.protein_abundance_se["aceB"])
     assert glucose.measurement_type == sm.MEASUREMENT_TYPE
 
     xylose = sm.build_phenotype(selection.kept, selection.locus_tag, cells, "Xylose")
-    assert set(xylose.protein_abundance) == {"aceA"}
+    assert set(xylose.protein_abundance) == {"aceA", "ghost"}
 
 
 def test_restrict_keeps_only_the_requested_keys_and_refuses_a_missing_one(
@@ -714,7 +723,7 @@ def test_process_builds_one_record_per_loaded_condition(
         ecoli_genome=FakeGenome(),  # type: ignore[arg-type]
     )
     assert len(dataset) == sm.EXPECTED_RECORDS
-    assert dataset.gene_set == set(KEPT_GENES)
+    assert dataset.gene_set == set(STORED_GENES)
 
     items = [dataset.transform_item(dataset[i]) for i in range(len(dataset))]
     assert {len(i["experiment"].genotype.perturbations) for i in items} == {0}
@@ -736,9 +745,9 @@ def test_process_builds_one_record_per_loaded_condition(
     # The four conditions dataset 1 did not cover carry one key fewer (Glycerol + AA is
     # the fourth since #1045 row 17 loaded it).
     by_keys = {len(i["experiment"].phenotype.protein_abundance) for i in items}
-    assert by_keys == {1, 2}
+    assert by_keys == {2, 3}
     assert (
-        len([i for i in items if len(i["experiment"].phenotype.protein_abundance) == 1])
+        len([i for i in items if len(i["experiment"].phenotype.protein_abundance) == 2])
         == 4
     )
     # Every environment is distinct, which is the record identity here.
@@ -753,15 +762,15 @@ def test_process_builds_one_record_per_loaded_condition(
     assert ledger["kept_records"] == sm.EXPECTED_RECORDS
     assert ledger["dropped_records"] == 2
     assert ledger["source_protein_rows"] == len(ROWS)
-    assert ledger["kept_protein_keys"] == len(KEPT_GENES)
-    assert ledger["dropped_protein_rows"] == len(ROWS) - len(KEPT_GENES)
+    assert ledger["kept_protein_keys"] == len(STORED_GENES)
+    assert ledger["dropped_protein_rows"] == len(ROWS) - len(STORED_GENES)
     checks = json.loads((preprocess / "released_statistics_check.json").read_text())
     assert checks["table_s6_cv_header_swap"]["swapped"] is True
     assert checks["median_and_cv_from_replicates"]["worst_median_rtol"] == 0.0
     sourced = json.loads((preprocess / "sourced_values.json").read_text())
     assert sourced["reference_strain"]["value"] == "BW25113"
     identifiers = pd.read_csv(preprocess / "protein_identifiers.csv")
-    assert list(identifiers["released_gene"]) == list(KEPT_GENES)
+    assert list(identifiers["released_gene"]) == list(STORED_GENES)
     conditions = pd.read_csv(preprocess / "conditions.csv")
     assert len(conditions) == sm.EXPECTED_RECORDS
     assert sm.REFERENCE_CONDITION not in set(conditions["s6_column"])
@@ -772,7 +781,14 @@ def test_process_builds_one_record_per_loaded_condition(
         genome=FakeGenome(),  # type: ignore[arg-type]
         expected_count=sm.EXPECTED_RECORDS,
     )
-    assert [(r.level, r.name) for r in report.results if not r.passed] == []
+    # #1057: ghost is stored as released and is no BW25113 locus; only the
+    # genome-reference rows may read that as a failure
+    assert {r.name for r in report.results if not r.passed} <= {
+        "gene_containment_bw25113",
+        "gene_containment_sgd",
+        "current_genome_genes",
+        "canonical_gene_names",
+    }
     assert (preprocess / "verification_report.json").exists()
 
 

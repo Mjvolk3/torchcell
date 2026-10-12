@@ -19,7 +19,7 @@ The ten synthetic Table S2 rows, and what each one exercises:
     b0001   b0004      +4.0    kept, pseudogene recipient
     b0002   b0003      -6.0    dropped: essential donor, a hypomorph
     b0001   b0006      -7.0    dropped: SPA-tagged recipient, a hypomorph
-    b0001   b0010      +3.5    dropped: b0010 is a synonym of b0003, released itself
+    b0001   b0010      +3.5    dropped: b0010 is a synonym of b0003 (issue #753)
     b0001   b0099      -4.0    dropped: on no locus of the annotation
     b0005   b0007      +5.5    kept, Butland et al. screen set
     b0005   b0004      -3.9    dropped: contradictory duplicate
@@ -37,7 +37,6 @@ from __future__ import annotations
 import json
 import os
 import os.path as osp
-from collections import Counter
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
@@ -109,16 +108,16 @@ SYNTHETIC_PAIRS: tuple[tuple[str, str, str, str, float], ...] = (
     ("b0005", "proB", "b0004", "yaaP", 4.1),
     ("b0003", "thrW", "b0001", "thrL", 4.5),
 )
-#: The eight pairs the retention rules keep, as ``(donor, stored recipient, score,
-#: screen)``. Two of them carry a hypomorph: ``b0002`` is the synthetic essential-gene
-#: donor and ``b0006`` the synthetic SPA-tagged recipient, both stored as marked alleles
-#: (#792). Under the owner rule (#1057) ``b0010`` is stored on ``b0003`` although
-#: ``b0003`` is also its own strain, and the unannotated ``b0099`` is stored as released;
-#: only ``JW0098``, which no bacterial leaf can hold, and the duplicate pair are dropped.
+#: The eight pairs the retention rules keep, as ``(donor, recipient, score, screen)``.
+#: Two of them carry a hypomorph: ``b0002`` is the synthetic essential-gene donor and
+#: ``b0006`` the synthetic SPA-tagged recipient, both stored as marked alleles (#792).
+#: ``b0010`` (a /gene_synonym of ``b0003``) and ``b0099`` (on no locus) are stored as
+#: released since #1057; only ``JW0098``, no b-number in form, and the duplicate pair
+#: are dropped.
 KEPT_PAIRS: tuple[tuple[str, str, float, str], ...] = (
     ("b0001", "b0003", -5.0, m.SCREEN_THIS_STUDY),
     ("b0001", "b0004", 4.0, m.SCREEN_THIS_STUDY),
-    ("b0001", "b0003", 3.5, m.SCREEN_THIS_STUDY),
+    ("b0001", "b0010", 3.5, m.SCREEN_THIS_STUDY),
     ("b0001", "b0099", -4.0, m.SCREEN_THIS_STUDY),
     ("b0002", "b0003", -6.0, m.SCREEN_THIS_STUDY),
     ("b0001", "b0006", -7.0, m.SCREEN_THIS_STUDY),
@@ -357,10 +356,9 @@ def test_the_released_counts_are_the_sourced_ones() -> None:
     assert m.N_RELEASED_PAIRS == 42705
     assert m.SIGN_SPLIT == (25239, 17466)
     assert m.N_HYPOMORPHIC_RECIPIENTS == 149
-    # 42,705 released minus 130 + 4; the hypomorph pairs are stored since #792 and
-    # the 583 pairs on a statused id since #1057 (33 + 494 routed, 56 retired)
-    assert m.EXPECTED_RECORDS == 42705 - (130 + 4)
-    assert m.EXPECTED_RECORDS == 41988 + 33 + 494 + 56
+    # 42,705 released minus 130 + 4; the hypomorph pairs are stored since #792, every
+    # b-number in form since #1057 (41,988 before, 583 pairs fewer)
+    assert m.EXPECTED_RECORDS == 42705 - (130 + 4) == 41988 + 583
     assert m.EXPECTED_HYPOMORPH_RECORDS == 1023 + 2479 - 83
 
 
@@ -650,20 +648,10 @@ def test_the_build_ledgers_account_for_every_dropped_row(
     assert ledger["kept_records"] == len(KEPT_PAIRS)
     assert ledger["dropped_records"] == len(SYNTHETIC_PAIRS) - len(KEPT_PAIRS)
     counts = {rule["rule"]: rule["n_records"] for rule in ledger["rules"]}
-    # #1057: b0010 reaches b0003, which the release also names as its own strain; both
-    # are stored, told apart by the mapping. b0099 is stored as released.
+    # #1057: b0010 and b0099 are stored as released; only JW0098 is no b-number
     assert counts == {m.RULE_NOT_A_TAG: 1, m.RULE_DUPLICATE: 2}
     items = {rule["rule"]: rule["items"] for rule in ledger["rules"]}
     assert items[m.RULE_NOT_A_TAG] == ["JW0098"]
-    assert ledger["locus_tag_synonym_routes"] == {"b0010": "b0003"}
-    statuses = {
-        status["released"]: (status["stored_as"], status["resolution"])
-        for status in ledger["identifier_statuses"]
-    }
-    assert statuses == {
-        "b0010": ("b0003", "locus_tag_synonym_shared_locus"),
-        "b0099": ("b0099", "not_in_annotation"),
-    }
     assert ledger["n_aggravating"] == 4
     assert ledger["n_alleviating"] == 4
     assert ledger["screen_id_counts"] == {m.SCREEN_THIS_STUDY: 7, m.SCREEN_BUTLAND: 1}
@@ -726,121 +714,6 @@ def test_the_build_refuses_a_pair_whose_donor_is_not_in_table_s1(
         )
 
 
-def test_a_synonym_of_a_locus_no_other_id_reaches_is_stored_with_its_route(
-    tmp_path: Path,
-    mg1655: EcoliK12MG1655Genome,
-    synthetic_counts: None,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """#1045 row 20: ``b0010`` is a ``/gene_synonym`` of ``b0003`` only.
-
-    With ``b0003`` not released as its own strain, the pair is kept: the stored tag is
-    the locus, the released b-number rides on a ``locus_tag_synonym`` mapping, the
-    symbol is the annotation's own, and the L2 key reads the released id back.
-    """
-    monkeypatch.setattr(m, "N_RELEASED_PAIRS", 2)
-    monkeypatch.setattr(m, "SIGN_SPLIT", (1, 1))
-    path = tmp_path / m.TABLE_S2
-    pairs = (
-        ("b0001", "thrL", "b0010", "newG", 3.5),
-        ("b0005", "proB", "b0007", "insZ", -5.5),
-    )
-    _write_table_s2(path, pairs=pairs)
-    frame = m.read_table_s2(path)
-    donors = {
-        b: m.DonorSpec(
-            b_number=b, gene=gene, is_hypomorph=False, screen_id=m.SCREEN_THIS_STUDY
-        )
-        for b, gene, _, _ in SYNTHETIC_DONORS
-    }
-    retention = m.retain(
-        frame,
-        dataset_name="t",
-        genome=mg1655,
-        donors=donors,
-        hypomorphic_recipients=frozenset(),
-    )
-    assert retention.drop_log.kept_records == 2
-    assert retention.drop_log.locus_tag_synonym_routes == {"b0010": "b0003"}
-    counts = {rule.rule: rule.n_records for rule in retention.drop_log.rules}
-    assert counts == {m.RULE_NOT_A_TAG: 0, m.RULE_DUPLICATE: 0}
-    rows = list(m.stored_rows(retention.kept))
-    routed = rows[0]
-    assert (routed.recipient_tag, routed.recipient_released) == ("b0003", "b0010")
-    assert routed.recipient_gene == "thrW"
-    assert routed.mapping("donor") is None
-    mapping = routed.mapping("recipient")
-    assert mapping is not None
-    assert (mapping.source_identifier, mapping.route) == ("b0010", "locus_tag_synonym")
-    assert rows[1].mapping("recipient") is None
-    status = routed.status("recipient")
-    assert status is not None
-    assert (status.stored_as, status.resolution.value) == ("b0003", "locus_tag_synonym")
-    assert routed.status("donor") is None
-    experiment = m.build_experiment(
-        "t",
-        routed.donor_tag,
-        routed.donor_gene,
-        routed.recipient_tag,
-        routed.recipient_gene,
-        routed.score,
-        routed.screen_id,
-        donor_is_hypomorph=False,
-        recipient_is_hypomorph=False,
-        donor_mapping=routed.mapping("donor"),
-        recipient_mapping=routed.mapping("recipient"),
-        donor_status=routed.status("donor"),
-        recipient_status=routed.status("recipient"),
-    )
-    genotype = experiment.genotype
-    assert isinstance(genotype, Genotype)
-    donor, recipient = genotype.perturbations
-    assert isinstance(recipient, BacterialDeletionPerturbation)
-    assert recipient.identifier_mapping == mapping
-    assert "Released identifier 'b0010' stored as 'b0003'" in recipient.description
-    assert donor.description == m.DELETION_DESCRIPTION
-    assert m.released_id(recipient.model_dump()) == "b0010"
-    assert m.released_id(donor.model_dump()) == "b0001"
-
-
-def test_a_retired_b_number_is_stored_as_released_with_its_status(
-    built: m.GeneInteractionBabu2014Dataset,
-) -> None:
-    """#1057: the genome does not gate a released row; ``b0099`` is not annotated."""
-    items = [built[i] for i in range(len(built))]
-    built.close_lmdb()
-    sides = [
-        p
-        for item in items
-        for p in item["experiment"]["genotype"]["perturbations"]
-        if p["systematic_gene_name"] == "b0099"
-    ]
-    assert len(sides) == 1
-    assert sides[0]["identifier_mapping"] is None
-    assert "(not_in_annotation" in sides[0]["description"]
-
-
-def test_a_synonym_of_a_locus_released_as_its_own_strain_is_stored_beside_it(
-    built: m.GeneInteractionBabu2014Dataset,
-) -> None:
-    """#1057: two strains on one locus are both stored, told apart by the mapping."""
-    items = [built[i] for i in range(len(built))]
-    built.close_lmdb()
-    on_b0003 = sorted(
-        (
-            p["identifier_mapping"]["source_identifier"]
-            if p["identifier_mapping"]
-            else "",
-            item["experiment"]["phenotype"]["gene_interaction"],
-        )
-        for item in items
-        for p in item["experiment"]["genotype"]["perturbations"]
-        if p["systematic_gene_name"] == "b0003"
-        and p["cassette"] == m.RECIPIENT_CASSETTE
-    )
-    assert on_b0003 == sorted([("", -5.0), ("", -6.0), ("b0010", 3.5)])
-
-
 # --------------------------------------------------------------------------- #
 # Verification over the synthetic build
 # --------------------------------------------------------------------------- #
@@ -860,23 +733,16 @@ def test_the_l0_to_l4_gate_passes_on_the_synthetic_build(
         hypomorphic_donors=frozenset({"b0002"}),
         hypomorphic_recipients=frozenset({"b0006"}),
         expected_hypomorph_records=len(KEPT_HYPOMORPH_PAIRS),
-        stored_as_released=frozenset({"b0099"}),
     )
     failures = [result.name for result in report.results if not result.passed]
     assert failures == []
     assert report.passed
-    undeclared = m.verify_records(
-        records,
-        released=released,
-        universe=set(mg1655.genbank.loci),
-        expected_count=len(KEPT_PAIRS),
-        hypomorphic_donors=frozenset({"b0002"}),
-        hypomorphic_recipients=frozenset({"b0006"}),
-        expected_hypomorph_records=len(KEPT_HYPOMORPH_PAIRS),
+    # b0010 (a /gene_synonym of b0003) and b0099 (on no locus) are no locus tags of the
+    # annotation: reported by L4, never failed on (#1057)
+    containment = next(
+        r for r in report.results if r.name == "gene_containment_mg1655_locus_tags"
     )
-    assert [r.name for r in undeclared.results if not r.passed] == [
-        "gene_containment_mg1655_locus_tags"
-    ]
+    assert containment.details["missing_examples"] == ["b0010", "b0099"]
 
 
 def test_released_scores_excludes_the_contradictory_duplicate(
@@ -984,18 +850,6 @@ def test_the_dev_store_ledgers_state_the_measured_build() -> None:
         m.RULE_NOT_A_TAG: 130,
         m.RULE_DUPLICATE: 4,
     }
-    # #1045 row 20 and #1057: 52 b-numbers on a locus_tag_synonym route, 47 of them
-    # onto a locus another released id reaches, plus 6 retired ids stored as released
-    resolutions = Counter(
-        status["resolution"] for status in ledger["identifier_statuses"]
-    )
-    assert resolutions == {
-        "locus_tag_synonym": 5,
-        "locus_tag_synonym_shared_locus": 47,
-        "not_in_annotation": 6,
-    }
-    assert len(ledger["locus_tag_synonym_routes"]) == 52
-    assert ledger["locus_tag_synonym_routes"]["b2654"] == "b4462"
     assert (ledger["n_aggravating"], ledger["n_alleviating"]) == (25149, 17422)
     assert ledger["kept_donors"] == 163
     assert ledger["kept_recipients"] == 3865

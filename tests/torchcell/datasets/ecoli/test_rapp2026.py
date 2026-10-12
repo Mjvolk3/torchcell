@@ -67,7 +67,6 @@ from torchcell.datamodels.schema import (
 from torchcell.datasets.bacteria_common import (
     LOCUS_TAG_PATTERNS,
     LocusTagResolutionError,
-    locus_tag_synonym_mapping,
 )
 from torchcell.literature.manifest import RetrievalMethod, RetrievalRecord
 from torchcell.sequence.genome.ecoli.k12 import MG1655_ASSEMBLY, EcoliK12MG1655Genome
@@ -1403,7 +1402,7 @@ def test_locus_tag_synonym_mapping_reads_the_annotation_s_own_synonym_lists(
 ) -> None:
     """Every condition of the route is checked against the annotation, not assumed."""
     pattern = LOCUS_TAG_PATTERNS["ecoli_k12_mg1655_bnumber"]
-    recovered = locus_tag_synonym_mapping(mg1655, "b0099", "b0005", pattern)
+    recovered = m.locus_tag_synonym_mapping(mg1655, "b0099", "b0005", pattern)
     assert recovered is not None
     assert recovered.model_dump() == {
         "source_identifier": "b0099",
@@ -1412,14 +1411,14 @@ def test_locus_tag_synonym_mapping_reads_the_annotation_s_own_synonym_lists(
     # b0098 is listed by TWO loci (the pseudogene b0004 and the gene b0006), so the
     # route is ambiguous even though resolve_gene_name picks the single gene.
     assert mg1655.resolve_gene_name("b0098").systematic_name == "b0006"
-    assert locus_tag_synonym_mapping(mg1655, "b0098", "b0006", pattern) is None
+    assert m.locus_tag_synonym_mapping(mg1655, "b0098", "b0006", pattern) is None
     # b0001 is a locus tag of this annotation, so nothing was retired.
-    assert locus_tag_synonym_mapping(mg1655, "b0001", "b0005", pattern) is None
+    assert m.locus_tag_synonym_mapping(mg1655, "b0001", "b0005", pattern) is None
     # ECK0005 is a synonym of b0005 but not a tag of the namespace (a gene_symbol or an
     # eck_crosswalk route, never this one).
-    assert locus_tag_synonym_mapping(mg1655, "ECK0005", "b0005", pattern) is None
+    assert m.locus_tag_synonym_mapping(mg1655, "ECK0005", "b0005", pattern) is None
     # b0099's one carrier is b0005, so storing any other locus is not this route.
-    assert locus_tag_synonym_mapping(mg1655, "b0099", "b0006", pattern) is None
+    assert m.locus_tag_synonym_mapping(mg1655, "b0099", "b0006", pattern) is None
 
 
 def _one_strain(gene: str, b_number: str) -> Any:

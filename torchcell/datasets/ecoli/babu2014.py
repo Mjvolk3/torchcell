@@ -110,45 +110,32 @@ Supplementary Table 1.
 
 RETENTION (rules, counts and items in ``preprocess/dropped_records.json``).
 
-Since #1057 (the owner rule of 2026-10-12, "the genome is separate.. it doesn't gate
-anything"), every released row is stored under its released identifier, and what the
-pinned annotation says about that identifier is a STATUS on the record, not a reason to
-drop it (``plan_released_identifiers``; typed ledger in ``identifier_statuses``, the
-status sentence in the perturbation's ``description``, since the leaves have no typed
-status slot). Of the 3,880 released ids, 3,811 are MG1655 locus tags of their own and:
+Every row is stored under the identifiers Table S2 releases (the owner rule of
+2026-10-12, #1057: "the data is the data", and the genome does not gate a released
+row). A released b-number is the record's ``systematic_gene_name`` and the released
+gene name its ``perturbed_gene_name``, whatever the pinned annotation says about them:
+the 6 retired b-numbers (``b0370``, ``b0510``, ``b4091``, ``b4223``, ``b4274``,
+``b4574``) and the 52 the annotation carries as a ``/gene_synonym`` of another locus
+(``b0359``, ``b2654``, ...) are stored as released, with no identifier mapping and no
+resolution in the loader. ``preprocess/identifier_reconciliation.json`` still records
+what the annotation says about every released id. Two rules remove rows:
 
-- 5 b-numbers are a ``/gene_synonym`` of exactly one locus no other released id reaches
-  (``b0500``->``b0501``, ``b0625``->``b4581``, ``b1371``->``b4570``,
-  ``b4103``->``b4583``, ``b4338``->``b4584``; 33 pairs): stored on that locus with a
-  ``locus_tag_synonym`` :class:`DerivedIdentifierMapping` and the annotation's own
-  symbol (status ``locus_tag_synonym``).
-- 47 b-numbers are such a synonym of a locus ANOTHER released id also reaches (494
-  pairs; ``b2654``->``b4462`` where ``b4462`` is its own strain, ``b0359`` and
-  ``b0362``->``b4579``, ...): stored on that locus the same way, the two strains told
-  apart by ``identifier_mapping.source_identifier`` (status
-  ``locus_tag_synonym_shared_locus``). No stored pair puts both sides on one locus.
-- 6 retired b-numbers (``b0370``, ``b0510``, ``b4091``, ``b4223``, ``b4274``, ``b4574``;
-  56 pairs) are stored as released (status ``not_in_annotation``).
-
-Two rules still remove rows:
-
-1. ``b_number_is_not_a_locus_tag_of_the_pinned_annotation`` -- 130 pairs naming one of
-   11 released ids that are not an MG1655 b-number in FORM: ``JW5447``, ``JW5661``,
-   ``cscR`` and eight ``bNNNN.1`` sub-numbered Keio entries. The bacterial leaf's name
-   validator holds a locus-tag-shaped name only, so these cannot be written under the
-   released id without a schema carrier; that is an owner question, not a loader rule.
+1. ``released_id_is_not_a_b_number`` -- 130 pairs naming one of 11 released ids that
+   are not an MG1655 b-number in FORM: ``JW5447``, ``JW5661``, ``cscR`` and eight
+   ``bNNNN.1`` sub-numbered Keio entries. The bacterial leaf's name validator holds a
+   locus-tag-shaped name only, so storing these under the released id needs a schema
+   carrier, which is an owner question rather than a loader rule.
 2. ``contradictory_duplicate_pair`` -- 4 rows, the two ordered (donor, recipient) pairs
    Table S2 releases TWICE with different scores (``b1396__paaI``/``b2863__ygeQ`` at
    -5.19537 and +4.33814; ``b2675__nrdE``/``b4462__ygaR`` at -7.12262 and -5.67666).
    The release gives no rule for choosing, and the two scores of the paaI pair disagree
    in SIGN, so both rows of both pairs are dropped.
 
-130 + 4 = 134 dropped; 42,705 - 134 = 42,571 records (41,988 on main before #1045; the
-583 records on a statused id are the difference), 25,149 aggravating and 17,422
-alleviating, over all 163 donors and 3,865 of the 3,876 recipients. 3,419 of those
-records carry a marked hypomorphic allele on one side or both (1,023 donor-side, 2,479
-recipient-side, 83 both); the one hypomorph pair still dropped names an id of rule 1 on
-its OTHER side.
+130 + 4 = 134 dropped; 42,705 - 134 = 42,571 records (41,988 before #1057 stored the 583
+pairs on a retired or synonym b-number), 25,149 aggravating and 17,422 alleviating, over
+all 163 donors and 3,865 of the 3,876 recipients. 3,419 of those records carry a marked
+hypomorphic allele on one side or both (1,023 donor-side, 2,479 recipient-side, 83 both);
+the one hypomorph pair still dropped names an id of rule 1 on its other side.
 
 RECIPROCAL PAIRS ARE KEPT, AND THEY ARE NOT DUPLICATES. 100 unordered gene pairs appear
 twice because each gene was a donor in its own screen, and the two scores often disagree
@@ -196,7 +183,7 @@ from pathlib import Path
 from typing import Any, ClassVar, Final, Literal
 
 import pandas as pd
-from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
+from pydantic import BaseModel, ConfigDict, TypeAdapter
 from tqdm import tqdm
 
 from torchcell.data import (
@@ -220,7 +207,6 @@ from torchcell.datamodels.schema import (
     BacterialGeneNamespace,
     BacterialMarkedAllelePerturbation,
     BacterialStrainBackground,
-    DerivedIdentifierMapping,
     Environment,
     Experiment,
     ExperimentReference,
@@ -237,13 +223,9 @@ from torchcell.datasets.bacteria_common import (
     LOCUS_TAG_PATTERNS,
     STRAIN_GENE_NAMESPACES,
     LocusTagReconciliation,
-    ReleasedIdentifierStatus,
     assembly_reference,
     bacterial_genome,
-    canonical_symbol,
-    plan_released_identifiers,
     reconcile_locus_tags,
-    status_description,
 )
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.literature.manifest import (
@@ -1257,15 +1239,15 @@ def read_hypomorphic_recipients(path: str | Path) -> frozenset[str]:
 # --------------------------------------------------------------------------- #
 # Retention ledger
 # --------------------------------------------------------------------------- #
-RULE_NOT_A_TAG = "b_number_is_not_a_locus_tag_of_the_pinned_annotation"
+RULE_NOT_A_TAG = "released_id_is_not_a_b_number"
 RULE_DUPLICATE = "contradictory_duplicate_pair"
 
 DROP_RULE_DESCRIPTIONS: dict[str, str] = {
     RULE_NOT_A_TAG: "a released id that is not an MG1655 b-number in FORM (a Keio JW "
     "id, a gene symbol, or a 'bNNNN.1' sub-numbered Keio entry): the bacterial "
     "perturbation leaf's name validator holds a locus-tag-shaped name only, so the pair "
-    "cannot be written under the released id. A retired b-number IS stored, as "
-    "released, with its status (#1045)",
+    "cannot be written under the released id without a schema carrier. A b-number in "
+    "form is stored as released whatever the annotation says about it (#1057)",
     RULE_DUPLICATE: "an ordered (donor, recipient) pair Table S2 releases twice with "
     "different scores. The release gives no rule for choosing between them and one of "
     "the two pairs disagrees in sign, so both rows of both pairs are dropped",
@@ -1300,16 +1282,6 @@ class DropLog(BaseModel):
     n_alleviating: int
     screen_id_counts: dict[str, int]
     rules: list[DropRule]
-    locus_tag_synonym_routes: dict[str, str] = Field(
-        default_factory=dict,
-        description="released b-number -> the locus it is stored under with a "
-        "locus_tag_synonym mapping (#1045 row 20)",
-    )
-    identifier_statuses: list[ReleasedIdentifierStatus] = Field(
-        default_factory=list,
-        description="every released id stored under something other than itself, or as "
-        "itself although the annotation does not carry it, with its status (#1045)",
-    )
 
 
 class ReplicateStructure(BaseModel):
@@ -1393,51 +1365,25 @@ P_VALUE_GAP = ProvenanceGap(
 )
 
 
-#: The two leaves' own default descriptions, which a status note extends (#1045).
-DELETION_DESCRIPTION: str = BacterialDeletionPerturbation.model_fields[
-    "description"
-].default
-MARKED_ALLELE_DESCRIPTION: str = BacterialMarkedAllelePerturbation.model_fields[
-    "description"
-].default
-
-
-def _described(status: ReleasedIdentifierStatus | None, base: str) -> str:
-    """The leaf's description: its own default, extended by the released id's status."""
-    return base if status is None else status_description(base, status)
-
-
-def donor_perturbation(
-    locus_tag: str,
-    symbol: str,
-    mapping: DerivedIdentifierMapping | None = None,
-    status: ReleasedIdentifierStatus | None = None,
-) -> BacterialDeletionPerturbation:
+def donor_perturbation(locus_tag: str, symbol: str) -> BacterialDeletionPerturbation:
     """The donor side: the Hfr C query deletion, marked with ``cat``."""
     return BacterialDeletionPerturbation(
         systematic_gene_name=locus_tag,
         perturbed_gene_name=symbol,
         gene_namespace=MG1655_NAMESPACE,
-        identifier_mapping=mapping,
-        description=_described(status, DELETION_DESCRIPTION),
         collection=DONOR_COLLECTION,
         cassette=DONOR_CASSETTE,
     )
 
 
 def recipient_perturbation(
-    locus_tag: str,
-    symbol: str,
-    mapping: DerivedIdentifierMapping | None = None,
-    status: ReleasedIdentifierStatus | None = None,
+    locus_tag: str, symbol: str
 ) -> BacterialDeletionPerturbation:
     """The recipient side: the arrayed Keio deletion, marked with ``kan``."""
     return BacterialDeletionPerturbation(
         systematic_gene_name=locus_tag,
         perturbed_gene_name=symbol,
         gene_namespace=MG1655_NAMESPACE,
-        identifier_mapping=mapping,
-        description=_described(status, DELETION_DESCRIPTION),
         collection=RECIPIENT_COLLECTION,
         cassette=RECIPIENT_CASSETTE,
     )
@@ -1458,10 +1404,7 @@ HYPOMORPH_RECIPIENT_COLLECTION = SPA_TAG_ESSENTIAL
 
 
 def donor_hypomorph_perturbation(
-    locus_tag: str,
-    symbol: str,
-    mapping: DerivedIdentifierMapping | None = None,
-    status: ReleasedIdentifierStatus | None = None,
+    locus_tag: str, symbol: str
 ) -> BacterialMarkedAllelePerturbation:
     """The donor side of an ESSENTIAL-gene query: a cat-marked hypomorphic allele.
 
@@ -1479,8 +1422,6 @@ def donor_hypomorph_perturbation(
         systematic_gene_name=locus_tag,
         perturbed_gene_name=symbol,
         gene_namespace=MG1655_NAMESPACE,
-        identifier_mapping=mapping,
-        description=_described(status, MARKED_ALLELE_DESCRIPTION),
         collection=DONOR_COLLECTION,
         cassette=DONOR_CASSETTE,
         allele_effect="hypomorphic",
@@ -1488,10 +1429,7 @@ def donor_hypomorph_perturbation(
 
 
 def recipient_hypomorph_perturbation(
-    locus_tag: str,
-    symbol: str,
-    mapping: DerivedIdentifierMapping | None = None,
-    status: ReleasedIdentifierStatus | None = None,
+    locus_tag: str, symbol: str
 ) -> BacterialMarkedAllelePerturbation:
     """The recipient side of a SPA-tagged essential gene: kan in the 3'-UTR, SPA tag.
 
@@ -1505,8 +1443,6 @@ def recipient_hypomorph_perturbation(
         systematic_gene_name=locus_tag,
         perturbed_gene_name=symbol,
         gene_namespace=MG1655_NAMESPACE,
-        identifier_mapping=mapping,
-        description=_described(status, MARKED_ALLELE_DESCRIPTION),
         collection=HYPOMORPH_RECIPIENT_COLLECTION,
         cassette=RECIPIENT_CASSETTE,
         insertion_site=HYPOMORPH_INSERTION_SITE,
@@ -1524,10 +1460,6 @@ def pair_genotype(
     *,
     donor_is_hypomorph: bool,
     recipient_is_hypomorph: bool,
-    donor_mapping: DerivedIdentifierMapping | None = None,
-    recipient_mapping: DerivedIdentifierMapping | None = None,
-    donor_status: ReleasedIdentifierStatus | None = None,
-    recipient_status: ReleasedIdentifierStatus | None = None,
 ) -> Genotype:
     """The double mutant: the donor allele and the recipient allele.
 
@@ -1539,18 +1471,14 @@ def pair_genotype(
     a deletion.
     """
     donor = (
-        donor_hypomorph_perturbation(donor_tag, donor_gene, donor_mapping, donor_status)
+        donor_hypomorph_perturbation(donor_tag, donor_gene)
         if donor_is_hypomorph
-        else donor_perturbation(donor_tag, donor_gene, donor_mapping, donor_status)
+        else donor_perturbation(donor_tag, donor_gene)
     )
     recipient = (
-        recipient_hypomorph_perturbation(
-            recipient_tag, recipient_gene, recipient_mapping, recipient_status
-        )
+        recipient_hypomorph_perturbation(recipient_tag, recipient_gene)
         if recipient_is_hypomorph
-        else recipient_perturbation(
-            recipient_tag, recipient_gene, recipient_mapping, recipient_status
-        )
+        else recipient_perturbation(recipient_tag, recipient_gene)
     )
     return Genotype(perturbations=[donor, recipient])
 
@@ -1649,10 +1577,6 @@ def build_experiment(
     *,
     donor_is_hypomorph: bool,
     recipient_is_hypomorph: bool,
-    donor_mapping: DerivedIdentifierMapping | None = None,
-    recipient_mapping: DerivedIdentifierMapping | None = None,
-    donor_status: ReleasedIdentifierStatus | None = None,
-    recipient_status: ReleasedIdentifierStatus | None = None,
 ) -> BacterialGeneInteractionExperiment:
     """The record of one Table S2 row."""
     return BacterialGeneInteractionExperiment(
@@ -1664,10 +1588,6 @@ def build_experiment(
             recipient_gene,
             donor_is_hypomorph=donor_is_hypomorph,
             recipient_is_hypomorph=recipient_is_hypomorph,
-            donor_mapping=donor_mapping,
-            recipient_mapping=recipient_mapping,
-            donor_status=donor_status,
-            recipient_status=recipient_status,
         ),
         environment=SCREEN_ENVIRONMENT,
         phenotype=phenotype(score, screen_id),
@@ -1716,9 +1636,7 @@ def retain(
     donors: Mapping[str, DonorSpec],
     hypomorphic_recipients: frozenset[str],
 ) -> Retention:
-    """Plan every released id, apply the two retention rules, and refuse a ledger that
-    misses a row.
-    """
+    """Apply the two retention rules, and refuse a ledger that misses a row."""
     unknown = sorted(set(frame["donor_id"]) - set(donors))
     if unknown:
         raise ReleaseContentError(
@@ -1728,22 +1646,11 @@ def retain(
     _, reconciliation = reconcile_locus_tags(
         genome, names, label=f"{dataset_name} Table S2 donor and recipient b-numbers"
     )
-    # #1045 row 20 and the owner rule of 2026-10-12: every released row is stored under
-    # its released identifier, and the annotation's verdict is a status, not a refusal.
-    # A /gene_synonym of exactly one locus is stored there (shared or not); any other id
-    # of b-number form is stored as released; only an id the leaf's name validator
-    # cannot hold (a JW id, a symbol, a sub-numbered entry) is still dropped.
-    plan = plan_released_identifiers(
-        genome,
-        names,
-        pattern=B_NUMBER_PATTERN,
-        namespace=MG1655_NAMESPACE,
-        collision=reconciliation.kept_on_collision,
-    )
-    unholdable = set(plan.unholdable)
-    routed = {name: tag for name, tag in plan.stored_as.items() if name != tag}
-    not_a_tag = frame["donor_id"].isin(unholdable) | frame["recipient_id"].isin(
-        unholdable
+    # #1057: every released id of b-number FORM is stored as released; the annotation's
+    # verdict on it (identifier_reconciliation.json) drops nothing
+    not_b_numbers = sorted(name for name in names if not B_NUMBER_PATTERN.match(name))
+    not_a_tag = frame["donor_id"].isin(not_b_numbers) | frame["recipient_id"].isin(
+        not_b_numbers
     )
     duplicate = frame.duplicated(subset=["donor_id", "recipient_id"], keep=False)
 
@@ -1752,7 +1659,7 @@ def retain(
             rule=RULE_NOT_A_TAG,
             description=DROP_RULE_DESCRIPTIONS[RULE_NOT_A_TAG],
             n_records=int(not_a_tag.sum()),
-            items=sorted(unholdable),
+            items=not_b_numbers,
         ),
         DropRule(
             rule=RULE_DUPLICATE,
@@ -1768,24 +1675,6 @@ def retain(
         donor_is_hypomorph=[donors[b].is_hypomorph for b in kept["donor_id"]],
         recipient_is_hypomorph=[
             b in hypomorphic_recipients for b in kept["recipient_id"]
-        ],
-        donor_tag=[plan.stored_as[b] for b in kept["donor_id"]],
-        recipient_tag=[plan.stored_as[b] for b in kept["recipient_id"]],
-        donor_symbol=[
-            canonical_symbol(genome, routed[b]) if b in routed else g
-            for b, g in zip(kept["donor_id"], kept["donor_gene"], strict=True)
-        ],
-        recipient_symbol=[
-            canonical_symbol(genome, routed[b]) if b in routed else g
-            for b, g in zip(kept["recipient_id"], kept["recipient_gene"], strict=True)
-        ],
-        donor_status=[
-            plan.statuses[b].model_dump_json() if b in plan.statuses else ""
-            for b in kept["donor_id"]
-        ],
-        recipient_status=[
-            plan.statuses[b].model_dump_json() if b in plan.statuses else ""
-            for b in kept["recipient_id"]
         ],
     )
     kept = kept.assign(screen_id=[donors[b].screen_id for b in kept["donor_id"]])
@@ -1815,8 +1704,6 @@ def retain(
             for key, value in kept["screen_id"].value_counts().items()
         },
         rules=rules,
-        locus_tag_synonym_routes=dict(sorted(routed.items())),
-        identifier_statuses=[plan.statuses[name] for name in sorted(plan.statuses)],
     )
     if sum(rule.n_records for rule in rules) != drop_log.dropped_records:
         raise RuntimeError("drop rules do not account for every dropped row")
@@ -1833,75 +1720,20 @@ def retain(
     )
 
 
-class StoredRow(BaseModel):
-    """One retained Table S2 row, as the record builder reads it.
-
-    ``*_tag`` is the stored locus; ``*_released`` is the released b-number, which
-    differs from the tag only for a ``locus_tag_synonym`` route (#1045 row 20).
-    ``*_status`` is the released id's status when it is not a tag of its own (#1057).
-    """
-
-    model_config = ConfigDict(extra="forbid", frozen=True)
-
-    donor_tag: str
-    donor_gene: str
-    donor_released: str
-    recipient_tag: str
-    recipient_gene: str
-    recipient_released: str
-    score: float
-    screen_id: str
-    donor_is_hypomorph: bool
-    recipient_is_hypomorph: bool
-    donor_status: ReleasedIdentifierStatus | None = None
-    recipient_status: ReleasedIdentifierStatus | None = None
-
-    def status(
-        self, side: Literal["donor", "recipient"]
-    ) -> ReleasedIdentifierStatus | None:
-        """The side's released-identifier status, or None for a tag of its own."""
-        return self.donor_status if side == "donor" else self.recipient_status
-
-    def mapping(
-        self, side: Literal["donor", "recipient"]
-    ) -> DerivedIdentifierMapping | None:
-        """The side's ``locus_tag_synonym`` mapping, or None for a verbatim tag."""
-        tag, released = (
-            (self.donor_tag, self.donor_released)
-            if side == "donor"
-            else (self.recipient_tag, self.recipient_released)
-        )
-        if tag == released:
-            return None
-        return DerivedIdentifierMapping(
-            source_identifier=released, route="locus_tag_synonym"
-        )
-
-
-def stored_rows(kept: pd.DataFrame) -> Iterator[StoredRow]:
+def stored_rows(
+    kept: pd.DataFrame,
+) -> Iterator[tuple[str, str, str, str, float, str, bool, bool]]:
     """Every stored row in LMDB order, as the record builder's arguments."""
     for row in kept.itertuples(index=False):
-        yield StoredRow(
-            donor_tag=str(row.donor_tag),
-            donor_gene=str(row.donor_symbol),
-            donor_released=str(row.donor_id),
-            recipient_tag=str(row.recipient_tag),
-            recipient_gene=str(row.recipient_symbol),
-            recipient_released=str(row.recipient_id),
-            score=float(str(row.score)),
-            screen_id=str(row.screen_id),
-            donor_is_hypomorph=bool(row.donor_is_hypomorph),
-            recipient_is_hypomorph=bool(row.recipient_is_hypomorph),
-            donor_status=ReleasedIdentifierStatus.model_validate_json(
-                str(row.donor_status)
-            )
-            if row.donor_status
-            else None,
-            recipient_status=ReleasedIdentifierStatus.model_validate_json(
-                str(row.recipient_status)
-            )
-            if row.recipient_status
-            else None,
+        yield (
+            str(row.donor_id),
+            str(row.donor_gene),
+            str(row.recipient_id),
+            str(row.recipient_gene),
+            float(str(row.score)),
+            str(row.screen_id),
+            bool(row.donor_is_hypomorph),
+            bool(row.recipient_is_hypomorph),
         )
 
 
@@ -1909,15 +1741,14 @@ def stored_rows(kept: pd.DataFrame) -> Iterator[StoredRow]:
 # The dataset
 # --------------------------------------------------------------------------- #
 DATASET_ROOT_REL = "data/torchcell/gene_interaction_babu2014"
-#: Records of the full build: 42,705 released pairs minus 130 pairs on an id the leaf
-#: validator cannot hold (a JW id, ``cscR``, a ``bNNNN.1`` entry) and the 4 rows of the
-#: two contradictory duplicate pairs. 583 records stand on a statused id since #1057
-#: (33 synonym-routed, 494 synonym-routed onto a shared locus, 56 retired b-numbers
-#: stored as released); main stored 41,988.
+#: Records of the full build: 42,705 released pairs minus 130 pairs on an id that is not
+#: a b-number in form and the 4 rows of the two contradictory duplicate pairs. Every
+#: b-number is stored as released since #1057 (41,988 before, when 583 pairs on a retired
+#: or synonym b-number were dropped). The 3,420 hypomorph pairs are STORED since
+#: ``BacterialMarkedAllelePerturbation`` landed (#792); 1 is still dropped by rule 1.
 EXPECTED_RECORDS = 42571
 #: Records whose donor or recipient side is a marked hypomorphic allele rather than a
-#: deletion: 1,023 donor-side, 2,479 recipient-side, 83 both. One of the 3,420 hypomorph
-#: pairs is still dropped, by rule 1 on its other side.
+#: deletion: 1,023 donor-side, 2,479 recipient-side, 83 both.
 EXPECTED_HYPOMORPH_RECORDS = 3419
 
 
@@ -2048,30 +1879,35 @@ class GeneInteractionBabu2014Dataset(ExperimentDataset):
         )
         index = 0
         with env_out.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
-            for row in tqdm(
+            for (
+                donor_tag,
+                donor_gene,
+                recipient_tag,
+                recipient_gene,
+                score,
+                screen_id,
+                donor_hypo,
+                recipient_hypo,
+            ) in tqdm(
                 stored_rows(retention.kept),
                 total=drop_log.kept_records,
                 desc="babu2014",
             ):
                 experiment = build_experiment(
                     self.name,
-                    row.donor_tag,
-                    row.donor_gene,
-                    row.recipient_tag,
-                    row.recipient_gene,
-                    row.score,
-                    row.screen_id,
-                    donor_is_hypomorph=row.donor_is_hypomorph,
-                    recipient_is_hypomorph=row.recipient_is_hypomorph,
-                    donor_mapping=row.mapping("donor"),
-                    recipient_mapping=row.mapping("recipient"),
-                    donor_status=row.status("donor"),
-                    recipient_status=row.status("recipient"),
+                    donor_tag,
+                    donor_gene,
+                    recipient_tag,
+                    recipient_gene,
+                    score,
+                    screen_id,
+                    donor_is_hypomorph=donor_hypo,
+                    recipient_is_hypomorph=recipient_hypo,
                 )
                 txn.put(
                     f"{index}".encode(),
                     self._intern_record(
-                        experiment, references[row.screen_id], PUBLICATION, itxn
+                        experiment, references[screen_id], PUBLICATION, itxn
                     ),
                 )
                 index += 1
@@ -2135,16 +1971,6 @@ VERIFIER_PROVENANCE = Provenance(
 )
 
 
-def released_id(perturbation: Mapping[str, Any]) -> str:
-    """The b-number Table S2 released for a stored side: the mapping's source when the
-    tag was reached by a ``locus_tag_synonym`` route (#1045 row 20), else the tag.
-    """
-    mapping = perturbation.get("identifier_mapping")
-    if mapping is not None:
-        return str(mapping["source_identifier"])
-    return str(perturbation["systematic_gene_name"])
-
-
 def _validate_record(record: Record) -> None:
     """L0: the experiment and its reference validate as the assembly-pinned pair."""
     BacterialGeneInteractionExperiment.model_validate(record["experiment"])
@@ -2195,8 +2021,10 @@ def _l1_hypomorph_sides_are_marked_alleles(
         by_cassette = {str(p["cassette"]): p for p in perturbations}
         donor = by_cassette[DONOR_CASSETTE]
         recipient = by_cassette[RECIPIENT_CASSETTE]
-        donor_hypo = released_id(donor) in hypomorphic_donors
-        recipient_hypo = released_id(recipient) in hypomorphic_recipients
+        donor_hypo = str(donor["systematic_gene_name"]) in hypomorphic_donors
+        recipient_hypo = (
+            str(recipient["systematic_gene_name"]) in hypomorphic_recipients
+        )
         if donor_hypo or recipient_hypo:
             n_hypomorph += 1
         expectations = (
@@ -2251,7 +2079,7 @@ def _l2_scores_match_table_s2(
     for record in records:
         experiment = record["experiment"]
         by_cassette = {
-            str(p["cassette"]): released_id(p)
+            str(p["cassette"]): str(p["systematic_gene_name"])
             for p in experiment["genotype"]["perturbations"]
         }
         key = (by_cassette[DONOR_CASSETTE], by_cassette[RECIPIENT_CASSETTE])
@@ -2312,37 +2140,29 @@ def _l3_screen_sets(records: Sequence[Record]) -> LevelResult:
     )
 
 
-def _l4_containment(
-    records: Sequence[Record],
-    universe: set[str],
-    stored_as_released: frozenset[str] = frozenset(),
-) -> LevelResult:
-    """L4: every perturbed locus is a GenBank locus of the pinned MG1655 assembly, or
-    a released b-number the build stored as released with a ``not_in_annotation``
-    status (#1045, owner rule 2026-10-12: the genome does not gate a released row).
+def _l4_containment(records: Sequence[Record], universe: set[str]) -> LevelResult:
+    """L4: how many perturbed ids are GenBank loci of the pinned MG1655 assembly.
 
-    Only a locus outside both sets fails: that would be an id the build neither
-    resolved nor declared.
+    Reported, not gating (#1057, the owner rule of 2026-10-12: the genome does not gate
+    a released row). Every id is the released b-number; one the annotation does not
+    carry as a locus is listed, and a modeling-time join decides what to do with it.
     """
     perturbed = {
         p["systematic_gene_name"]
         for record in records
         for p in record["experiment"]["genotype"]["perturbations"]
     }
-    outside = perturbed - universe
-    declared = sorted(outside & stored_as_released)
-    missing = sorted(outside - stored_as_released)
+    missing = sorted(perturbed - universe)
     return LevelResult(
         level=Level.L4,
         name="gene_containment_mg1655_locus_tags",
-        passed=bool(perturbed) and not missing,
-        message=f"{len(perturbed) - len(outside)} of {len(perturbed)} perturbed loci "
-        f"are MG1655 GenBank loci; {len(declared)} more are released b-numbers stored "
-        "as released with a not_in_annotation status",
+        passed=bool(perturbed),
+        message=f"{len(perturbed) - len(missing)} of {len(perturbed)} perturbed ids "
+        f"are MG1655 GenBank loci; {len(missing)} are released b-numbers the "
+        "annotation does not carry as a locus, stored as released",
         details={
             "n_perturbed": len(perturbed),
             "n_universe": len(universe),
-            "stored_as_released": declared,
             "missing_examples": missing[:20],
         },
     )
@@ -2358,7 +2178,6 @@ def verify_records(
     hypomorphic_recipients: frozenset[str],
     expected_hypomorph_records: int | None = None,
     dataset_name: str = "gene_interaction_babu2014",
-    stored_as_released: frozenset[str] = frozenset(),
 ) -> VerificationReport:
     """The L0-L4 gate over built records, given the re-read Table S2 and the MG1655
     gene universe.
@@ -2386,7 +2205,7 @@ def verify_records(
     report.add(_l3_screen_sets(records))
     for result in shared_rule_results(records):
         report.add(result)
-    report.add(_l4_containment(records, universe, stored_as_released))
+    report.add(_l4_containment(records, universe))
     return report
 
 
@@ -2448,11 +2267,6 @@ def run_verification(data_root: str | None = None) -> VerificationReport:
         ),
         hypomorphic_recipients=read_hypomorphic_recipients(
             osp.join(abs_root, "raw", BUTLAND_TABLE_S1)
-        ),
-        stored_as_released=frozenset(
-            status.released
-            for status in drops.identifier_statuses
-            if status.stored_as == status.released
         ),
     )
     library_root = Path(base) / "torchcell-library"

@@ -2,7 +2,7 @@
 # [[torchcell.datasets.ecoli.schastnaya2021]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/ecoli/schastnaya2021
 # Test file: tests/torchcell/datasets/ecoli/test_schastnaya2021.py
-"""Schastnaya 2021 metabolome of the KEIO deletion arm of an E. coli phosphosite screen.
+"""Schastnaya 2021 metabolome of an E. coli phosphosite screen: both arms, as released.
 
 Schastnaya, Raguz Nakic, Gruber, Doubleday, Krishnan, Johns, Park, Wang and Sauer 2021
 (Nat Commun 12:5650, doi:10.1038/s41467-021-25988-4) mutated 52 phosphosites on 23
@@ -24,7 +24,7 @@ DATA. Two publisher workbooks from the PMC Article Datasets bucket: Supplementar
 LOG2(FC) block and the same 200 in an adjusted-p-value block) and Supplementary Data 1
 (``si4.xlsx``, the 89 phosphomutant strains with the b-number of their enzyme and
 whether the substitution abolishes or mimics phosphorylation), read to name every
-dropped record in the retention ledger. The MassIVE deposit MSV000087795 holds the raw
+phosphomutant strain with its enzyme. The MassIVE deposit MSV000087795 holds the raw
 spectra, not this matrix, and is NOT mirrored.
 
 STRAIN. ``REFERENCE_STRAIN = "MG1655"``: the wild type the fold change is taken against
@@ -38,21 +38,25 @@ differs from its control's, so that is recorded here, in ``SOURCED_VALUES`` and 
 ``preprocess/strains.csv``, and the deletion carries ``collection`` and ``cassette``
 from Baba.
 
-RECORDS DROPPED (rules + items in ``preprocess/dropped_records.json``). 171 of the 200
-released columns are phosphomutants, and the schema has NO bacterial codon-substitution
-perturbation leaf: ``AllelePerturbation`` is the amino-acid-substitution leaf but
-inherits the R64 systematic-name validator, so ``b2029`` is refused, and the five
-bacterial leaves (deletion, transposon insertion, CRISPRi, promoter replacement,
-heterologous pathway) all assert something the MAGE point mutation is not. Writing one
-of them would state a genotype the paper did not make, so those records are dropped
-under ``phosphosite_substitution_has_no_bacterial_leaf`` and the gap is the finding.
-The 29 kept columns are the 16 KEIO deletion strains over their carbon sources.
+RECORDS. All 200 released columns are records (#1045 row 22, #1057). The 29 KEIO
+deletion columns (16 strains over their carbon sources) carry a
+``BacterialDeletionPerturbation``. The 171 phosphomutant columns (87 strains) were
+dropped under ``phosphosite_substitution_has_no_bacterial_leaf`` until #1057; each is
+now stored as released on ``BacterialReleasedStrainPerturbation``
+(``released_kind=sequence_allele``): ``strain_label`` is the Supplementary Data 3
+column token verbatim (``AceA-S398A``, ``TalB-T33E/T34E/S37E``), and the gene
+identifier is the protein name that token writes (``AceA``), because the leaf refuses a
+locus tag and the release states the substitution at the protein level, with no codon
+or genomic coordinate. Supplementary Data 1's b-number and mutant state for each strain
+are written beside it in ``preprocess/strains.csv``, not on the record.
 
 PHENOTYPE. ``MetabolitePhenotype`` keyed by the released ``Formula``, the neutral
 formula of the deprotonated ion, which is unique over the 464 rows (measured at build
 time). A column's ``nd`` cells are not stored: detection varies by extraction protocol,
 so a record carries 332, 309 or 284 keys, and the build asserts that split against the
-paper's own hot/cold extraction lists. ``target_metabolite_ids`` maps a key to its KEGG
+paper's own hot/cold extraction lists. The 12 TpiA phosphomutant columns (glucose and
+glycerol) detect 232 ions, a subset of their group's 284, which the ledger records
+rather than refuses. ``target_metabolite_ids`` maps a key to its KEGG
 id wherever the row names exactly ONE; a row whose mass cannot separate several KEGG
 compounds is ABSENT from the map rather than assigned one of its candidates, with every
 candidate set in ``preprocess/metabolite_identity.json`` (Rapp 2026's rule; a typed gap
@@ -102,6 +106,7 @@ from torchcell.datamodels.schema import (
     BacterialDeletionPerturbation,
     BacterialMetaboliteExperiment,
     BacterialMetaboliteExperimentReference,
+    BacterialReleasedStrainPerturbation,
     BacterialStrainBackground,
     Concentration,
     ConcentrationUnit,
@@ -114,6 +119,7 @@ from torchcell.datamodels.schema import (
     MediaComponentRole,
     MetabolitePhenotype,
     Publication,
+    ReleasedStrainKind,
     Temperature,
 )
 from torchcell.datasets.bacteria_common import (
@@ -477,14 +483,15 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         "we selected 52 single phosphosites or multiple phosphosites in close proximity "
         "located on 23 enzymes, including transferases, isomerases, oxidoreductases, "
         "and lyases (Fig. 1a and Supplementa",
-        note="the phosphomutant arm, which this loader cannot store",
+        note="the phosphomutant arm, stored since #1057 on the released-strain leaf",
     ),
     "mutation_method": _paper(
         "multiplex automated genome engineering (MAGE)",
         "Genomic point mutations of $E _ { * }$ coli phosphosites were constructed "
         "using MAGE34.",
-        note="the dropped arm's perturbation is a genomic codon substitution; the "
-        "schema has no bacterial leaf for one",
+        note="the phosphomutant arm's perturbation is a genomic codon substitution "
+        "the release states at the protein level only; it is stored as released "
+        "(#1057), with no codon or coordinate",
     ),
     "mutation_scheme": _paper(
         "S/T -> A and Y -> F abolish; S/T -> E mimics",
@@ -519,6 +526,11 @@ if BACTERIAL_ASSEMBLY_SETS[REFERENCE_STRAIN_NAME] != MG1655_ASSEMBLY_SET:
     )
 WILD_TYPE_BACKGROUND_NAME = "MG1655 dmutS kan"
 KNOCKOUT_SUFFIX = " knockout"
+PHOSPHOMUTANT_SEPARATOR = "-"
+#: What a phosphomutant record's gene identifier is: the protein name its token writes.
+PHOSPHOMUTANT_IDENTIFIER_KIND = (
+    "protein name, as the Supplementary Data 3 token writes it"
+)
 NOT_DETECTED = "nd"
 #: Checklist item 4: below this fraction of deletion gene symbols resolving to MG1655
 #: b-numbers the build stops. Every one of the 16 resolves on the pinned annotation.
@@ -804,6 +816,22 @@ class StrainColumn(BaseModel):
         return self.strain[: -len(KNOCKOUT_SUFFIX)].strip()
 
     @property
+    def enzyme(self) -> str:
+        """The gene or protein the column's token names, as the token writes it.
+
+        A knockout token's gene symbol (``aceA``), or a phosphomutant token's protein
+        name, the text before its first ``-`` (``AceA`` of ``AceA-S398A``).
+        """
+        if self.is_knockout:
+            return self.gene_symbol
+        name, separator, substitution = self.strain.partition(PHOSPHOMUTANT_SEPARATOR)
+        if not separator or not name or not substitution:
+            raise TableFormatError(
+                f"phosphomutant token {self.strain!r} is not '<protein>-<substitution>'"
+            )
+        return name
+
+    @property
     def detected_rows(self) -> tuple[int, ...]:
         """Indices of the ions this column detected (the rest are ``nd``)."""
         return tuple(i for i, v in enumerate(self.fold_change) if v is not None)
@@ -817,7 +845,7 @@ class StrainColumn(BaseModel):
     def extraction(self) -> str:
         """``hot`` or ``cold``, from the paper's own list of hot-extraction enzymes."""
         hot = {name.lower() for name in HOT_EXTRACTION_ENZYMES}
-        return "hot" if self.gene_symbol.lower() in hot else "cold"
+        return "hot" if self.enzyme.lower() in hot else "cold"
 
 
 class Sd3Table(BaseModel):
@@ -983,22 +1011,8 @@ def read_sd1(path: str | Path) -> dict[str, PhosphomutantEntry]:
 
 
 # --------------------------------------------------------------------------- #
-# Retention: the deletion columns are kept, the phosphomutant columns are not
+# Retention: every released column is a record (#1057)
 # --------------------------------------------------------------------------- #
-PHOSPHOMUTANT_DROP_RULE = "phosphosite_substitution_has_no_bacterial_leaf"
-PHOSPHOMUTANT_DROP_DESCRIPTION = (
-    "the record's perturbation is a genomic codon substitution at a phosphosite, made "
-    "by MAGE, and the schema has no bacterial sequence-level perturbation leaf: "
-    "AllelePerturbation is the amino-acid-substitution leaf but inherits "
-    "GenePerturbation's R64 systematic-name validator, which refuses a b-number, and "
-    "the five bacterial leaves (bacterial_deletion, transposon_insertion, "
-    "bacterial_crispr_interference, promoter_replacement, heterologous_pathway) each "
-    "assert a genotype this strain does not have. Storing one would state a "
-    "perturbation the paper did not make, so the record is dropped and the missing "
-    "leaf is the finding"
-)
-
-
 class DropRule(BaseModel):
     """One retention rule, the released columns it removed, and why."""
 
@@ -1019,35 +1033,21 @@ class DropLog(BaseModel):
     rules: list[DropRule]
 
 
-def phosphomutant_drop_rule(
-    dropped: Sequence[StrainColumn], entries: Mapping[str, PhosphomutantEntry]
-) -> DropRule:
-    """The dropped phosphomutant columns, one ledger item per distinct strain.
+def check_phosphomutants_named(
+    columns: Sequence[StrainColumn], entries: Mapping[str, PhosphomutantEntry]
+) -> int:
+    """The number of distinct phosphomutant strains, each catalogued in SD1.
 
-    Each item names the strain's enzyme locus and whether the substitution abolishes or
-    mimics phosphorylation, so the blocked arm is legible without the workbook.
+    A column Supplementary Data 1 does not catalogue is refused: its enzyme locus and
+    mutant state could not be written beside it in ``strains.csv``.
     """
-    by_strain: dict[str, list[str]] = {}
-    for column in dropped:
-        by_strain.setdefault(column.strain, []).append(column.carbon_source)
-    items: list[str] = []
-    for strain in sorted(by_strain):
-        entry = entries.get(strain)
-        if entry is None:
-            raise TableFormatError(
-                f"Supplementary Data 3 column {strain!r} is in no Supplementary Data 1 "
-                "row, so its enzyme and mutant state cannot be named"
-            )
-        items.append(
-            f"{strain} ({entry.enzyme_locus}, {entry.mutant_state}): "
-            + ", ".join(sorted(by_strain[strain]))
+    unnamed = sorted({c.strain for c in columns if c.strain not in entries})
+    if unnamed:
+        raise TableFormatError(
+            f"Supplementary Data 3 columns {unnamed} are in no Supplementary Data 1 "
+            "row, so their enzyme and mutant state cannot be named"
         )
-    return DropRule(
-        rule=PHOSPHOMUTANT_DROP_RULE,
-        description=PHOSPHOMUTANT_DROP_DESCRIPTION,
-        n_records=len(dropped),
-        items=items,
-    )
+    return len({c.strain for c in columns})
 
 
 class DetectedIonLedger(BaseModel):
@@ -1064,31 +1064,46 @@ class DetectedIonLedger(BaseModel):
     groups: dict[str, int]
     n_strains: dict[str, int]
     cold_set_shared_across_carbon_sources: bool
+    subset_columns: dict[str, dict[str, int]] = {}
 
 
 def detected_ion_ledger(kept: Sequence[StrainColumn]) -> DetectedIonLedger:
-    """Group the kept columns by (extraction, carbon source), refusing a split by strain."""
+    """Group the columns by (extraction, carbon source); a smaller set must nest.
+
+    A group's detected set is its largest one. A column that detects fewer ions is
+    recorded under ``subset_columns`` when its set is a subset of the group's (measured:
+    the 12 TpiA phosphomutant columns, 232 of 284); a column whose set is not nested is
+    a different extraction, so the build refuses it.
+    """
     masks: dict[str, set[tuple[int, ...]]] = {}
     counts: dict[str, int] = {}
     for column in kept:
         key = f"{column.extraction}|{column.carbon_source}"
         masks.setdefault(key, set()).add(column.detected_rows)
         counts[key] = counts.get(key, 0) + 1
-    mixed = sorted(key for key, found in masks.items() if len(found) > 1)
-    if mixed:
-        raise TableFormatError(
-            f"the detected-ion set differs between strains of {mixed}, so it is not a "
-            "property of the extraction protocol and the carbon source"
-        )
-    cold = {
-        next(iter(found)) for key, found in masks.items() if key.startswith("cold|")
-    }
+    group_set = {key: max(found, key=len) for key, found in masks.items()}
+    subsets: dict[str, dict[str, int]] = {}
+    for column in kept:
+        key = f"{column.extraction}|{column.carbon_source}"
+        largest = set(group_set[key])
+        found = set(column.detected_rows)
+        if found == largest:
+            continue
+        if not found < largest:
+            raise TableFormatError(
+                f"{column.strain} ({key}) detects ions outside its group's set, so the "
+                "detected set is not a property of the extraction protocol and the "
+                "carbon source"
+            )
+        subsets.setdefault(key, {})[column.strain] = len(found)
+    cold = {group_set[key] for key in group_set if key.startswith("cold|")}
     n_ions = len(kept[0].fold_change) if kept else 0
     return DetectedIonLedger(
         n_ions=n_ions,
-        groups={key: len(next(iter(found))) for key, found in sorted(masks.items())},
+        groups={key: len(found) for key, found in sorted(group_set.items())},
         n_strains=dict(sorted(counts.items())),
         cold_set_shared_across_carbon_sources=len(cold) == 1,
+        subset_columns=dict(sorted(subsets.items())),
     )
 
 
@@ -1243,6 +1258,34 @@ def deletion_genotype(resolved: ResolvedDeletion) -> Genotype:
     )
 
 
+def phosphomutant_genotype(column: StrainColumn) -> Genotype:
+    """One MAGE phosphomutant, stored under the token Supplementary Data 3 releases."""
+    return Genotype(
+        perturbations=[
+            BacterialReleasedStrainPerturbation(
+                systematic_gene_name=column.enzyme,
+                perturbed_gene_name=column.enzyme,
+                gene_namespace=STRAIN_GENE_NAMESPACES[REFERENCE_STRAIN_NAME],
+                strain_label=column.strain,
+                identifier_kind=PHOSPHOMUTANT_IDENTIFIER_KIND,
+                released_kind=ReleasedStrainKind.sequence_allele,
+            )
+        ]
+    )
+
+
+def build_phosphomutant_experiment(
+    dataset_name: str, column: StrainColumn, ions: Sequence[IonRow]
+) -> BacterialMetaboliteExperiment:
+    """The record of one phosphomutant strain in one carbon source."""
+    return BacterialMetaboliteExperiment(
+        dataset_name=dataset_name,
+        genotype=phosphomutant_genotype(column),
+        environment=environment(column.carbon_source),
+        phenotype=metabolite_phenotype(ions, column.fold_change),
+    )
+
+
 def build_experiment(
     dataset_name: str, resolved: ResolvedDeletion, ions: Sequence[IonRow]
 ) -> BacterialMetaboliteExperiment:
@@ -1350,38 +1393,45 @@ class MetabolomeSchastnaya2021Dataset(ExperimentDataset):
 
     @post_process
     def process(self) -> None:
-        """Parse Supplementary Data 3 into one record per kept deletion column + LMDB."""
+        """Parse Supplementary Data 3 into one record per released column + LMDB."""
         verify_raw_files(self.raw_dir, DATA_SHA256)
         table = read_sd3(self._raw(SD3_FILE))
         entries = read_sd1(self._raw(SD1_FILE))
 
-        kept_columns = [c for c in table.columns if c.is_knockout]
-        dropped_columns = [c for c in table.columns if not c.is_knockout]
-        drop_rule = phosphomutant_drop_rule(dropped_columns, entries)
-        detected = detected_ion_ledger(kept_columns)
+        knockout_columns = [c for c in table.columns if c.is_knockout]
+        phosphomutant_columns = [c for c in table.columns if not c.is_knockout]
+        n_phosphomutant_strains = check_phosphomutants_named(
+            phosphomutant_columns, entries
+        )
+        detected = detected_ion_ledger(table.columns)
         identities = identity_ledger(table.ions)
 
         genome = self._genome()
         resolved, reconciliation = resolve_deletions(
-            genome, kept_columns, label=f"{self.name} deletion gene symbols"
+            genome, knockout_columns, label=f"{self.name} deletion gene symbols"
         )
+        n_records = len(resolved) + len(phosphomutant_columns)
         drop_log = DropLog(
             dataset=self.name,
             released_columns=len(table.columns),
             source_records=len(table.columns),
-            kept_records=len(resolved),
-            dropped_records=len(table.columns) - len(resolved),
-            rules=[drop_rule],
+            kept_records=n_records,
+            dropped_records=len(table.columns) - n_records,
+            rules=[],
         )
-        if sum(rule.n_records for rule in drop_log.rules) != drop_log.dropped_records:
-            raise RuntimeError("drop rules do not account for every dropped column")
+        if drop_log.dropped_records != 0:
+            raise RuntimeError(
+                f"{drop_log.dropped_records} released columns are not records"
+            )
         log.info(
-            "Schastnaya 2021: %d released columns -> %d records; %d phosphomutant "
-            "columns dropped for the missing bacterial substitution leaf; %d of %d "
-            "ions name one KEGG compound; detected ions per group %s",
+            "Schastnaya 2021: %d released columns -> %d records (%d deletion, %d "
+            "phosphomutant over %d strains); %d of %d ions name one KEGG compound; "
+            "detected ions per group %s",
             len(table.columns),
+            n_records,
             len(resolved),
-            drop_rule.n_records,
+            len(phosphomutant_columns),
+            n_phosphomutant_strains,
             identities.n_single_identity,
             identities.n_ions,
             detected.groups,
@@ -1390,7 +1440,14 @@ class MetabolomeSchastnaya2021Dataset(ExperimentDataset):
         os.makedirs(self.preprocess_dir, exist_ok=True)
         os.makedirs(self.processed_dir, exist_ok=True)
         self._write_ledgers(
-            drop_log, reconciliation, detected, identities, table.ions, resolved
+            drop_log,
+            reconciliation,
+            detected,
+            identities,
+            table.ions,
+            resolved,
+            phosphomutant_columns,
+            entries,
         )
 
         genome_reference = assembly_reference(
@@ -1400,8 +1457,13 @@ class MetabolomeSchastnaya2021Dataset(ExperimentDataset):
             osp.join(self.processed_dir, "lmdb")
         )
         with env_out.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
-            for idx, item in enumerate(tqdm(resolved, desc="schastnaya2021")):
-                experiment = build_experiment(self.name, item, table.ions)
+            experiments = [
+                build_experiment(self.name, item, table.ions) for item in resolved
+            ] + [
+                build_phosphomutant_experiment(self.name, column, table.ions)
+                for column in phosphomutant_columns
+            ]
+            for idx, experiment in enumerate(tqdm(experiments, desc="schastnaya2021")):
                 reference = build_reference(self.name, genome_reference, experiment)
                 txn.put(
                     f"{idx}".encode(),
@@ -1410,7 +1472,7 @@ class MetabolomeSchastnaya2021Dataset(ExperimentDataset):
         env_out.close()
         interned_env.close()
         log.info(
-            "Wrote %d Schastnaya 2021 metabolome experiments to LMDB", len(resolved)
+            "Wrote %d Schastnaya 2021 metabolome experiments to LMDB", len(experiments)
         )
 
     def _write_ledgers(
@@ -1421,8 +1483,15 @@ class MetabolomeSchastnaya2021Dataset(ExperimentDataset):
         identities: IdentityLedger,
         ions: Sequence[IonRow],
         resolved: Sequence[ResolvedDeletion],
+        phosphomutants: Sequence[StrainColumn],
+        entries: Mapping[str, PhosphomutantEntry],
     ) -> None:
-        """The drop log, the reconciliation, the ion tables and the p-value matrix."""
+        """The drop log, the reconciliation, the ion tables and the p-value matrix.
+
+        ``strains.csv`` lists every record in LMDB order: the deletions first, then the
+        phosphomutants with Supplementary Data 1's b-number and mutant state beside the
+        token the record is stored under.
+        """
         out = Path(self.preprocess_dir)
         (out / "dropped_records.json").write_text(drop_log.model_dump_json(indent=2))
         (out / "identifier_reconciliation.json").write_text(
@@ -1458,25 +1527,45 @@ class MetabolomeSchastnaya2021Dataset(ExperimentDataset):
             [
                 {
                     "record": idx,
+                    "arm": "deletion",
                     "released_column": item.column.column,
                     "released_strain": item.column.strain,
                     "gene_symbol": item.column.gene_symbol,
                     "locus_tag": item.locus_tag,
+                    "sd1_enzyme_locus": "",
+                    "sd1_mutant_state": "",
                     "carbon_source": item.column.carbon_source,
                     "extraction": item.column.extraction,
                     "n_detected": item.column.n_detected,
-                    "deletion_background": SOURCED_VALUES["deletion_background"].value,
+                    "strain_background": SOURCED_VALUES["deletion_background"].value,
                     "reference_background": WILD_TYPE_BACKGROUND_NAME,
                 }
                 for idx, item in enumerate(resolved)
             ]
+            + [
+                {
+                    "record": len(resolved) + idx,
+                    "arm": "phosphomutant",
+                    "released_column": column.column,
+                    "released_strain": column.strain,
+                    "gene_symbol": column.enzyme,
+                    "locus_tag": "",
+                    "sd1_enzyme_locus": entries[column.strain].enzyme_locus,
+                    "sd1_mutant_state": entries[column.strain].mutant_state,
+                    "carbon_source": column.carbon_source,
+                    "extraction": column.extraction,
+                    "n_detected": column.n_detected,
+                    "strain_background": WILD_TYPE_BACKGROUND_NAME,
+                    "reference_background": WILD_TYPE_BACKGROUND_NAME,
+                }
+                for idx, column in enumerate(phosphomutants)
+            ]
         ).to_csv(out / "strains.csv", index=False)
+        columns = [item.column for item in resolved] + list(phosphomutants)
         p_values = pd.DataFrame(
             {
-                f"{item.column.strain}|{item.column.carbon_source}": (
-                    item.column.adjusted_p_value
-                )
-                for item in resolved
+                f"{column.strain}|{column.carbon_source}": column.adjusted_p_value
+                for column in columns
             },
             index=[ion.formula for ion in ions],
         )
@@ -1505,9 +1594,9 @@ VERIFIER_PROVENANCE = Provenance(
     source_uri=f"$DATA_ROOT/{RAW_DIR_REL}/data/{SD3_FILE}",
     citation_key=CITATION_KEY,
     sha256=DATA_SHA256[SD3_FILE],
-    method="Supplementary Data 3: one BacterialMetaboliteExperiment per (KEIO deletion "
-    "strain, carbon source), log2 fold change of each annotated ion against the "
-    "MG1655 dmutS wild type; the 171 phosphomutant columns are not stored",
+    method="Supplementary Data 3: one BacterialMetaboliteExperiment per (strain, carbon "
+    "source), the 29 KEIO deletion columns and the 171 phosphomutant columns, log2 fold "
+    "change of each annotated ion against the MG1655 dmutS wild type",
     page="Nat Commun 12:5650, Supplementary Data 3",
 )
 
@@ -1517,7 +1606,11 @@ def _genotype_environment_key(record: Mapping[str, Any]) -> tuple[Any, ...]:
     experiment = record["experiment"]
     perturbations = tuple(
         sorted(
-            (p["systematic_gene_name"], p["perturbation_type"])
+            (
+                p["systematic_gene_name"],
+                p["perturbation_type"],
+                str(p.get("strain_label") or ""),
+            )
             for p in experiment["genotype"]["perturbations"]
         )
     )
@@ -1527,7 +1620,7 @@ def _genotype_environment_key(record: Mapping[str, Any]) -> tuple[Any, ...]:
 def _l1_strain_condition_uniqueness(
     records: Sequence[Mapping[str, Any]],
 ) -> LevelResult:
-    """L1: one record per (deletion set, medium)."""
+    """L1: one record per (strain, medium); a released strain is keyed by its token."""
     seen: dict[tuple[Any, ...], int] = {}
     for record in records:
         key = _genotype_environment_key(record)
@@ -1602,7 +1695,10 @@ def verify_build(
 
     L4 is containment of every deleted b-number in the MG1655 GenBank gene rows the
     records' own ``genome_reference`` pins, read through the verification runners'
-    assembly resolver, plus the provenance audit of every ``SOURCED_VALUES`` entry.
+    assembly resolver, plus the provenance audit of every ``SOURCED_VALUES`` entry. A
+    phosphomutant's released protein name is not a b-number and is not placed, so the
+    containment rule reads the deletion leaves only and lists the released names in its
+    details (#1057: the genome never gates a released record).
     """
     from pydantic import TypeAdapter
 
@@ -1645,7 +1741,16 @@ def verify_build(
         p["systematic_gene_name"]
         for r in records
         for p in r["experiment"]["genotype"]["perturbations"]
+        if p["perturbation_type"] == "bacterial_deletion"
     }
+    released = sorted(
+        {
+            p["systematic_gene_name"]
+            for r in records
+            for p in r["experiment"]["genotype"]["perturbations"]
+            if p["perturbation_type"] == "bacterial_released_strain"
+        }
+    )
     missing = sorted(deleted - universe)
     report.add(
         LevelResult(
@@ -1658,6 +1763,7 @@ def verify_build(
                 "n_deleted": len(deleted),
                 "n_universe": len(universe),
                 "missing": missing[:20],
+                "released_not_placed": released,
             },
         )
     )

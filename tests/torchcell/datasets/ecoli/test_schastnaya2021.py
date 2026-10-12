@@ -48,9 +48,11 @@ from torchcell.data import ManifestPinMismatchError, RawSha256MismatchError
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
+    BacterialReleasedStrainPerturbation,
     BacterialStrainBackground,
     ConcentrationUnit,
     MediaComponentRole,
+    ReleasedStrainKind,
 )
 from torchcell.datasets.bacteria_common import LocusTagResolutionError
 from torchcell.literature.manifest import RetrievalMethod
@@ -340,33 +342,59 @@ def test_read_sd1_refuses_a_wrong_title(tmp_path: Path) -> None:
 # --------------------------------------------------------------------------- #
 # Retention, identity and the detected-ion ledger
 # --------------------------------------------------------------------------- #
-def test_phosphomutant_drop_rule_names_each_strain_with_its_enzyme(
+def test_check_phosphomutants_named_accepts_every_catalogued_strain(
     tmp_path: Path,
 ) -> None:
     _write_sd3(tmp_path / m.SD3_FILE, COLUMNS)
     _write_sd1(tmp_path / m.SD1_FILE)
     table = m.read_sd3(tmp_path / m.SD3_FILE)
     entries = m.read_sd1(tmp_path / m.SD1_FILE)
-    dropped = [c for c in table.columns if not c.is_knockout]
-    rule = m.phosphomutant_drop_rule(dropped, entries)
-    assert rule.rule == m.PHOSPHOMUTANT_DROP_RULE
-    assert rule.n_records == 2
-    assert rule.items == [
-        "ThrL-S2A (b0001, phospho-abolishing): GLUCOSE",
-        "ThrL-S2E (b0001, phospho-mimicking): GLUCOSE",
-    ]
+    phosphomutants = [c for c in table.columns if not c.is_knockout]
+    assert m.check_phosphomutants_named(phosphomutants, entries) == 2
+    assert [c.enzyme for c in phosphomutants] == ["ThrL", "ThrL"]
 
 
-def test_phosphomutant_drop_rule_refuses_a_strain_absent_from_sd1(
+def test_check_phosphomutants_named_refuses_a_strain_absent_from_sd1(
     tmp_path: Path,
 ) -> None:
     _write_sd3(tmp_path / m.SD3_FILE, COLUMNS)
     _write_sd1(tmp_path / m.SD1_FILE, SD1_ROWS[:1])
     table = m.read_sd3(tmp_path / m.SD3_FILE)
     entries = m.read_sd1(tmp_path / m.SD1_FILE)
-    dropped = [c for c in table.columns if not c.is_knockout]
-    with pytest.raises(m.TableFormatError, match="is in no Supplementary Data 1 row"):
-        m.phosphomutant_drop_rule(dropped, entries)
+    phosphomutants = [c for c in table.columns if not c.is_knockout]
+    with pytest.raises(m.TableFormatError, match=r"\['ThrL-S2E'\] are in no"):
+        m.check_phosphomutants_named(phosphomutants, entries)
+
+
+def test_phosphomutant_genotype_stores_the_released_token(tmp_path: Path) -> None:
+    _write_sd3(tmp_path / m.SD3_FILE, COLUMNS)
+    column = m.read_sd3(tmp_path / m.SD3_FILE).columns[2]
+    (perturbation,) = m.phosphomutant_genotype(column).perturbations
+    assert isinstance(perturbation, BacterialReleasedStrainPerturbation)
+    assert (
+        perturbation.systematic_gene_name,
+        perturbation.perturbed_gene_name,
+        perturbation.strain_label,
+        perturbation.identifier_kind,
+        perturbation.released_kind,
+        perturbation.cassette,
+    ) == (
+        "ThrL",
+        "ThrL",
+        "ThrL-S2A",
+        m.PHOSPHOMUTANT_IDENTIFIER_KIND,
+        ReleasedStrainKind.sequence_allele,
+        None,
+    )
+
+
+def test_enzyme_refuses_a_phosphomutant_token_without_a_substitution(
+    tmp_path: Path,
+) -> None:
+    _write_sd3(tmp_path / m.SD3_FILE, COLUMNS)
+    column = m.read_sd3(tmp_path / m.SD3_FILE).columns[2]
+    with pytest.raises(m.TableFormatError, match="is not '<protein>-<substitution>'"):
+        _ = column.model_copy(update={"strain": "ThrL"}).enzyme
 
 
 def test_detected_ion_ledger_groups_by_extraction_and_carbon_source(
@@ -398,8 +426,17 @@ def test_detected_ion_ledger_refuses_a_strain_dependent_set(tmp_path: Path) -> N
     ]
     _write_sd3(tmp_path / m.SD3_FILE, columns)
     kept = [c for c in m.read_sd3(tmp_path / m.SD3_FILE).columns if c.is_knockout]
-    with pytest.raises(m.TableFormatError, match="differs between strains"):
+    with pytest.raises(m.TableFormatError, match="outside its group's set"):
         m.detected_ion_ledger(kept)
+
+
+def test_detected_ion_ledger_records_a_nested_smaller_set(tmp_path: Path) -> None:
+    """The TpiA case: a column detecting a subset of its group's ions is recorded."""
+    _write_sd3(tmp_path / m.SD3_FILE, COLUMNS)
+    ledger = m.detected_ion_ledger(m.read_sd3(tmp_path / m.SD3_FILE).columns)
+    assert ledger.groups == {"cold|ACETATE": 4, "cold|GLUCOSE": 5}
+    assert ledger.n_strains == {"cold|ACETATE": 1, "cold|GLUCOSE": 3}
+    assert ledger.subset_columns == {"cold|GLUCOSE": {"thrA knockout": 4}}
 
 
 def test_identity_ledger_leaves_a_merged_isobaric_set_out_of_the_map(
@@ -534,7 +571,7 @@ def test_build_reference_keeps_the_assembly_pin_through_a_dump(tmp_path: Path) -
 # --------------------------------------------------------------------------- #
 # The hermetic build
 # --------------------------------------------------------------------------- #
-def test_build_keeps_the_two_deletions_and_ledgers_the_phosphomutants(
+def test_build_stores_the_two_deletions_and_the_two_phosphomutants(
     synthetic: Path,
     mg1655: EcoliK12MG1655Genome,
     presence_only_pins: list[Mapping[str, str]],
@@ -543,7 +580,7 @@ def test_build_keeps_the_two_deletions_and_ledgers_the_phosphomutants(
         root=str(synthetic), ecoli_genome=mg1655
     )
     assert presence_only_pins == [m.DATA_SHA256]
-    assert len(dataset) == 2
+    assert len(dataset) == 4
 
     first = dataset[0]["experiment"]
     (perturbation,) = first["genotype"]["perturbations"]
@@ -562,6 +599,16 @@ def test_build_keeps_the_two_deletions_and_ledgers_the_phosphomutants(
     assert second["genotype"]["perturbations"][0]["systematic_gene_name"] == "b0005"
     assert second["environment"]["media"]["name"] == m.MEDIA["ACETATE"].name
 
+    # #1057: the phosphomutants are records, under the token Supplementary Data 3 prints
+    labels = [
+        dataset[i]["experiment"]["genotype"]["perturbations"][0]["strain_label"]
+        for i in (2, 3)
+    ]
+    assert labels == ["ThrL-S2A", "ThrL-S2E"]
+    third = dataset[2]["experiment"]
+    assert third["phenotype"]["metabolite_level"]["C3H5O6P"] == 0.4
+    assert len(third["phenotype"]["metabolite_level"]) == 5
+
     reference = dataset[0]["reference"]
     assert reference["genome_reference"] == REFERENCE.model_dump()
     assert set(reference["phenotype_reference"]["metabolite_level"].values()) == {0.0}
@@ -573,25 +620,32 @@ def test_build_keeps_the_two_deletions_and_ledgers_the_phosphomutants(
         drops["released_columns"],
         drops["kept_records"],
         drops["dropped_records"],
-    ) == (4, 2, 2)
-    (rule,) = drops["rules"]
-    assert rule["rule"] == m.PHOSPHOMUTANT_DROP_RULE
-    assert rule["n_records"] == 2
+    ) == (4, 4, 0)
+    assert drops["rules"] == []
     identity = json.loads((preprocess / "metabolite_identity.json").read_text())
     assert identity["merged_candidates"] == {"C3H4O3": ["C00022", "C00222"]}
     assert identity["target_metabolite_ids_covered"] == 0.8
     detected = json.loads((preprocess / "detected_ion_counts.json").read_text())
-    assert detected["groups"] == {"cold|ACETATE": 4, "cold|GLUCOSE": 4}
+    assert detected["groups"] == {"cold|ACETATE": 4, "cold|GLUCOSE": 5}
+    assert detected["subset_columns"] == {"cold|GLUCOSE": {"thrA knockout": 4}}
     ions = (preprocess / "ions.csv").read_text().splitlines()
     assert ions[0] == (
         "row,formula,mz,n_candidates,kegg_ids,target_metabolite_id,annotation"
     )
     strains = (preprocess / "strains.csv").read_text().splitlines()
-    assert strains[1].startswith("0,5,thrA knockout,thrA,b0002,GLUCOSE,cold,4,BW25113,")
+    assert strains[1].startswith(
+        "0,deletion,5,thrA knockout,thrA,b0002,,,GLUCOSE,cold,4,BW25113,"
+    )
+    assert strains[3].startswith(
+        "2,phosphomutant,7,ThrL-S2A,ThrL,,b0001,phospho-abolishing,GLUCOSE,cold,5,"
+    )
     p_values = (preprocess / "adjusted_p_values.csv").read_text().splitlines()
-    assert p_values[0] == "formula,thrA knockout|GLUCOSE,proB knockout|ACETATE"
-    assert p_values[1] == "C6H12O6,0.01,0.05"
-    assert p_values[3] == "C4H6O4,,"
+    assert p_values[0] == (
+        "formula,thrA knockout|GLUCOSE,proB knockout|ACETATE,ThrL-S2A|GLUCOSE,"
+        "ThrL-S2E|GLUCOSE"
+    )
+    assert p_values[1] == "C6H12O6,0.01,0.05,0.1,0.6"
+    assert p_values[3] == "C4H6O4,,,0.3,0.8"
 
 
 def test_build_verifies_l0_to_l4_on_the_synthetic_tree(
@@ -899,18 +953,18 @@ def test_real_sourced_values_are_verbatim(key: str) -> None:
 
 @pytest.mark.data
 def test_real_build_counts_and_the_gnd_record() -> None:
-    """29 records (200 released columns - 171 phosphomutant); gnd on fructose is
-    b2029 with values read off Supplementary Data 3 by hand.
+    """200 records, one per released column (29 deletion + 171 phosphomutant, #1057);
+    gnd on fructose is b2029 with values read off Supplementary Data 3 by hand.
     """
     from torchcell.verification.runners import load_records
 
     drops = json.loads(
         Path(_built_root(), "preprocess", "dropped_records.json").read_text()
     )
-    assert (drops["released_columns"], drops["kept_records"]) == (200, 29)
-    assert [rule["n_records"] for rule in drops["rules"]] == [171]
+    assert (drops["released_columns"], drops["kept_records"]) == (200, 200)
+    assert drops["rules"] == []
     records = load_records(_built_root())
-    assert len(records) == 29
+    assert len(records) == 200
     (gnd,) = [
         record
         for record in records
@@ -926,11 +980,16 @@ def test_real_build_counts_and_the_gnd_record() -> None:
     assert set(
         gnd["reference"]["phenotype_reference"]["metabolite_level"].values()
     ) == {0.0}
-    deleted = {
-        record["experiment"]["genotype"]["perturbations"][0]["systematic_gene_name"]
-        for record in records
+    by_type: dict[str, set[str]] = {}
+    for record in records:
+        (perturbation,) = record["experiment"]["genotype"]["perturbations"]
+        by_type.setdefault(perturbation["perturbation_type"], set()).add(
+            perturbation.get("strain_label") or perturbation["systematic_gene_name"]
+        )
+    assert {k: len(v) for k, v in by_type.items()} == {
+        "bacterial_deletion": 16,
+        "bacterial_released_strain": 87,
     }
-    assert len(deleted) == 16
 
 
 @pytest.mark.data

@@ -5,8 +5,10 @@
 """Add a journal article to a notes-tex document's PERSONAL Zotero collection, by DOI.
 
 DO NOT RUN THIS WITHOUT AN EXPLICIT, PER-INSTANCE INSTRUCTION FROM THE AUTHOR.
-This is the only script in the repo that creates items in the Zotero library, and
-the library is curated by hand. It is a tool for a person who has decided to cite
+It creates metadata-only items in the Zotero library, and the library is curated
+by hand. (``scripts/zotero_add_paper.py`` is the separate, sanctioned agent path for
+a dataset's primary paper WITH its PDF, in a ``database/<Organism>`` collection.)
+It is a tool for a person who has decided to cite
 something, not a step an agent takes on the way to answering a question about what
 is missing. Naming an absent reference is always fine; adding it is not.
 

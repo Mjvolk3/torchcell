@@ -189,18 +189,33 @@ authors or trust a live URL. Model these records with pydantic.
   a loader or a provenance record is re-located and re-hashed in
   `$DATA_ROOT/torchcell-library/`, because the two pipelines OCR the same PDF
   differently.
-- **NEVER put a paper into Zotero. The library is curated by hand, and an agent
-  writes to it in exactly one way: publishing OUR OWN built PDF.** Do not download,
-  fetch, or deposit a paper into Zotero; do not run
-  `notes-tex/common/zotero_add_ref.py`; do not hand-edit a `references.bib`. Papers
-  that agents retrieve go to the MIRROR (`$DATA_ROOT/torchcell-library/`) via the
-  literature subsystem, which reads Zotero and never writes to it. The one
-  sanctioned write is `zotero_publish.py`, which uploads a built `notes-tex/` or
-  `paper/` PDF into that document's own output collection.
-  - **Adding a reference is a curation decision, and it needs an explicit
-    instruction each time** -- "add X to the library", not "we should cite X".
-    Identifying a missing reference is useful and always allowed; adding it is a
-    separate act that waits for a go-ahead.
+- **Zotero is curated by hand. An agent writes to it in exactly two ways:
+  publishing OUR OWN built PDF, and filing a dataset's primary paper into a
+  `database/<Organism>` collection.** `zotero_publish.py` uploads a built
+  `notes-tex/` or `paper/` PDF into that document's own output collection.
+  `scripts/zotero_add_paper.py` files papers into the GROUP library's (6582362)
+  `database/<Organism>` collections (`database/Escherichia-coli`,
+  `database/Pseudomonas-putida`, `database/Saccharomyces-cerevisiae`), whose purpose
+  is to collect each dataset's primary paper, from the publisher first. Every other
+  paper that agents retrieve goes to the MIRROR (`$DATA_ROOT/torchcell-library/`)
+  via the literature subsystem, which reads Zotero and never writes to it.
+  - **What `scripts/zotero_add_paper.py` may do, and only in a
+    `database/<Organism>` collection:** create an item for a dataset's primary paper
+    WITH its PDF attached (the publisher's version of record first; the raw
+    mirror's recorded copy, the PMC copy or an author copy only when the publisher
+    copy cannot be fetched); attach supplementary PDFs to that item; and attach the
+    article PDF to an existing item that has none. One item per paper: it searches
+    the group library by DOI first and refuses a second item. Write these through
+    the script, never by hand through the API.
+  - **Still forbidden, for every agent and every collection:** a metadata-only item
+    (no `notes-tex/common/zotero_add_ref.py` CrossRef stub without a PDF); any write
+    to a collection outside `database/<Organism>` (the group `paper` collection
+    `W46ATS7B`, the `database` root, the notes-tex and topic collections stay
+    owner-only); editing a citation key; merging items; hand-editing a
+    `references.bib`. Adding a reference anywhere else is a curation decision that
+    needs an explicit instruction each time -- "add X to the library", not "we
+    should cite X". Identifying a missing reference is useful and always allowed;
+    adding it is a separate act that waits for a go-ahead.
   - **Why it is not recoverable by re-running something.** `make bib` regenerates
     `references.bib` FROM the library through Better BibTeX, and `make check` fails
     on any `\cite` key the export no longer contains, so a stray write or deletion

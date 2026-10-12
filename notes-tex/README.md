@@ -172,14 +172,17 @@ clean overlap, since that copy is the curated one.
 
 ### Who may write to the library: almost nobody
 
-**An agent never puts a paper into Zotero.** The library is curated by hand, and
-the only sanctioned write is `zotero_publish.py` uploading a document's OWN built
-PDF into that document's output collection. Retrieved papers belong in the mirror
-at `$DATA_ROOT/torchcell-library/`; the literature subsystem that fills it reads
+**An agent never puts a paper into a notes-tex or topic collection.** The library
+is curated by hand. The sanctioned writes are `zotero_publish.py` uploading a
+document's OWN built PDF into that document's output collection, and
+`scripts/zotero_add_paper.py` filing a dataset's primary paper, with its PDF, into a
+group-library `database/<Organism>` collection (the rule is in the repo
+`CLAUDE.md`). Other retrieved papers belong in the mirror at
+`$DATA_ROOT/torchcell-library/`; the literature subsystem that fills it reads
 Zotero and never writes to it.
 
-`common/zotero_add_ref.py` is the one script that creates library items, and it
-needs an explicit instruction every time it is run. Noticing that a reference is
+`common/zotero_add_ref.py` creates metadata-only library items, and it needs an
+explicit instruction every time it is run. Noticing that a reference is
 missing is not that instruction. The reason is the loop above: `make bib` rebuilds
 `references.bib` from the library, and `make check` fails on any `\cite` key the
 export no longer has, so both an unrequested addition and the later cleanup that

@@ -9,18 +9,22 @@ The sanctioned agent write path into Zotero (owner policy of 2026-10-12, recorde
 ``CLAUDE.md``). In the TorchCell GROUP library (``6582362``) the ``database/<Organism>``
 collections hold the papers the knowledge graph is built from, and their purpose is to
 collect each dataset's primary paper from the publisher. Exactly three writes are
-allowed, all inside one ``database/<Organism>`` collection:
+allowed:
 
-1. create an item for a dataset's primary paper WITH its PDF attached;
+1. create an item for a dataset's primary paper WITH its PDF attached, in the named
+   ``database/<Organism>`` collection;
 2. attach supplementary PDFs to that item (``--si``);
-3. attach the article PDF to an existing item that has none (``--attach-to``).
+3. attach the article PDF to an existing item that has none (``--attach-to``), when
+   the item sits in the named collection or in the ``database`` root, where the owner
+   files dataset papers too. Its collection membership is left as it is.
 
 Everything else is refused: a metadata-only item (an item is created only after its PDF
 has been retrieved and verified, and is deleted again if the upload of that PDF fails),
-any collection outside ``database/`` and the ``database`` root itself, a second item
-for a DOI the library already holds, a second article PDF on an item that has one, a
-file that is not a PDF, and any library other than the group. Citation keys, merges and
-``references.bib`` are never touched.
+a new item outside ``database/<Organism>``, an attachment on an item outside the
+``database`` tree, a second item for a DOI the library already holds, a second article
+PDF on an item that has one, a file that is not a PDF, and any library other than the
+group. Citation keys, collection membership, merges and ``references.bib`` are never
+touched.
 
 The article PDF is taken from the first route that yields verified PDF bytes:
 
@@ -319,8 +323,8 @@ def check_group_library(lib: ZoteroLibrary) -> None:
         )
 
 
-def resolve_collection(lib: ZoteroLibrary, path: str) -> str:
-    """The key of collection ``path`` (``database/<Name>``) in the group library."""
+def resolve_collection(lib: ZoteroLibrary, path: str) -> tuple[str, str]:
+    """Keys of collection ``path`` (``database/<Name>``) and of the ``database`` root."""
     nodes = lib.collection_tree(DATABASE_COLLECTION)
     matches = [n.key for n in nodes if n.path == path]
     if len(matches) != 1:
@@ -329,7 +333,7 @@ def resolve_collection(lib: ZoteroLibrary, path: str) -> str:
             f"collection {path!r}: {len(matches)} matches in the group library; "
             f"the database collections are {available}"
         )
-    return matches[0]
+    return matches[0], nodes[0].key
 
 
 def _fold(text: str) -> str:
@@ -820,13 +824,14 @@ def _attached(file: PdfFile, key: str | None) -> AttachedFile:
 
 
 def _existing_target(
-    lib: ZoteroLibrary, request: AddPaperRequest, collection_key: str
+    lib: ZoteroLibrary, request: AddPaperRequest, collection_key: str, root_key: str
 ) -> dict[str, Any] | None:
     """The item the filing writes to, or None when a new item is to be created.
 
     One item per paper: a DOI the group library already holds is refused unless
-    ``--attach-to`` names that very item, and the item must sit in the named
-    collection, so an attachment never lands on an item outside ``database/``.
+    ``--attach-to`` names that very item. The item must sit in the named collection
+    or in the ``database`` root (where the owner files dataset papers too), so an
+    attachment never lands on an item outside the database tree.
     """
     existing = lib.find_item_by_doi(request.doi)
     if request.attach_to is None:
@@ -847,11 +852,11 @@ def _existing_target(
             f"--attach-to {request.attach_to}: DOI {request.doi} belongs to item "
             f"{existing['key']}"
         )
-    if collection_key not in (existing["data"].get("collections") or []):
+    if not {collection_key, root_key} & set(existing["data"].get("collections") or []):
         raise RefusedError(
-            f"item {existing['key']} is not in {request.collection} "
-            f"({collection_key}); its collections are "
-            f"{existing['data'].get('collections')}"
+            f"item {existing['key']} is in neither {request.collection} "
+            f"({collection_key}) nor the {DATABASE_COLLECTION} root ({root_key}); its "
+            f"collections are {existing['data'].get('collections')}"
         )
     return existing
 
@@ -877,8 +882,8 @@ def add_paper(
         raise RefusedError(f"Crossref does not know {request.doi}")
     identity = paper_identity(work)
     verify_identity(identity, request.doi, request.first_author, request.title_contains)
-    collection_key = resolve_collection(lib, request.collection)
-    target = _existing_target(lib, request, collection_key)
+    collection_key, root_key = resolve_collection(lib, request.collection)
+    target = _existing_target(lib, request, collection_key, root_key)
 
     report = AddPaperReport(
         doi=identity.doi,
@@ -891,6 +896,11 @@ def add_paper(
         dry_run=request.dry_run,
         outcome=Outcome.MANUAL,
     )
+    if target is not None and collection_key not in target["data"]["collections"]:
+        report.notes.append(
+            f"item {report.item_key} sits in the {DATABASE_COLLECTION} root, not in "
+            f"{request.collection}; its collection membership is left as it is"
+        )
     existing_pdfs = [] if target is None else lib.pdf_attachments(str(target["key"]))
     has_main = any(_is_main_article(a) for a in existing_pdfs)
     if has_main and not request.si:

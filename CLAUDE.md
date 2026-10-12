@@ -199,23 +199,26 @@ authors or trust a live URL. Model these records with pydantic.
   is to collect each dataset's primary paper, from the publisher first. Every other
   paper that agents retrieve goes to the MIRROR (`$DATA_ROOT/torchcell-library/`)
   via the literature subsystem, which reads Zotero and never writes to it.
-  - **What `scripts/zotero_add_paper.py` may do, and only in a
-    `database/<Organism>` collection:** create an item for a dataset's primary paper
-    WITH its PDF attached (the publisher's version of record first; the raw
-    mirror's recorded copy, the PMC copy or an author copy only when the publisher
-    copy cannot be fetched); attach supplementary PDFs to that item; and attach the
-    article PDF to an existing item that has none. One item per paper: it searches
-    the group library by DOI first and refuses a second item. Write these through
-    the script, never by hand through the API.
+  - **What `scripts/zotero_add_paper.py` may do, and nothing more:** create an
+    item for a dataset's primary paper WITH its PDF attached, in a
+    `database/<Organism>` collection only (the publisher's version of record first;
+    the raw mirror's recorded copy, the PMC copy or an author copy only when the
+    publisher copy cannot be fetched); attach supplementary PDFs to that item; and
+    attach the article PDF to an existing item that has none, when that item sits
+    in a `database/<Organism>` collection or the `database` root (where the owner
+    files dataset papers too). One item per paper: it searches the group library by
+    DOI first and refuses a second item. Write these through the script, never by
+    hand through the API.
   - **Still forbidden, for every agent and every collection:** a metadata-only item
-    (no `notes-tex/common/zotero_add_ref.py` CrossRef stub without a PDF); any write
-    to a collection outside `database/<Organism>` (the group `paper` collection
-    `W46ATS7B`, the `database` root, the notes-tex and topic collections stay
-    owner-only); editing a citation key; merging items; hand-editing a
-    `references.bib`. Adding a reference anywhere else is a curation decision that
-    needs an explicit instruction each time -- "add X to the library", not "we
-    should cite X". Identifying a missing reference is useful and always allowed;
-    adding it is a separate act that waits for a go-ahead.
+    (no `notes-tex/common/zotero_add_ref.py` CrossRef stub without a PDF); a new
+    item anywhere but `database/<Organism>`; any write to a collection outside the
+    `database` tree (the group `paper` collection `W46ATS7B`, the notes-tex and
+    topic collections stay owner-only); moving an item between collections; editing
+    a citation key; merging items; hand-editing a `references.bib`. Adding a
+    reference anywhere else is a curation decision that needs an explicit
+    instruction each time -- "add X to the library", not "we should cite X".
+    Identifying a missing reference is useful and always allowed; adding it is a
+    separate act that waits for a go-ahead.
   - **Why it is not recoverable by re-running something.** `make bib` regenerates
     `references.bib` FROM the library through Better BibTeX, and `make check` fails
     on any `\cite` key the export no longer contains, so a stray write or deletion

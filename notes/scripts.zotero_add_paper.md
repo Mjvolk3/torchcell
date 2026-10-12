@@ -19,6 +19,6 @@ python scripts/zotero_add_paper.py --doi <doi> --collection database/<Organism> 
 
 - `--first-author` is required and must match Crossref's first author (case- and accent-insensitive), so a mistyped DOI that resolves to another paper is refused before anything is fetched.
 - `--pdf` is tried only after the publisher, the raw mirror and the PMC bucket all fail; `--si` files are attached as given. Both are recorded as `manual_browser` retrievals and need the URL the file came from.
-- `--attach-to` names an existing item that holds the DOI and sits in the named collection; without it, a DOI the library already holds is refused.
+- `--attach-to` names an existing item that holds the DOI and sits in the named collection or the `database` root; without it, a DOI the library already holds is refused.
 - `--dry-run` resolves, fetches and verifies everything and writes nothing.
 - Exit 0 filed (or would file), 2 refused, 3 no route yielded the article PDF (the summary prints the DOI URL to open in a browser; nothing was written).

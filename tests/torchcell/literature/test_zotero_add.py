@@ -323,7 +323,10 @@ def test_check_group_library_refuses_other_libraries(
 def test_resolve_collection(monkeypatch: pytest.MonkeyPatch) -> None:
     """A database child resolves by full path; a missing one lists what exists."""
     lib = _lib(monkeypatch, FakeZot(collections=COLLECTIONS))
-    assert za.resolve_collection(lib, "database/Pseudomonas-putida") == "PPUT"
+    assert za.resolve_collection(lib, "database/Pseudomonas-putida") == (
+        "PPUT",
+        "DBROOT",
+    )
     with pytest.raises(za.RefusedError) as exc:
         za.resolve_collection(lib, "database/Bacillus-subtilis")
     assert "['database/Escherichia-coli', 'database/Pseudomonas-putida']" in str(
@@ -784,7 +787,11 @@ def test_add_paper_refuses_a_doi_the_library_holds(
     [
         ([], "NOPE", "no item in the group library has DOI"),
         ([_item("REAL", ["ECOLI"])], "OTHER", "belongs to item REAL"),
-        ([_item("REAL", ["DBROOT"])], "REAL", "is not in database/Escherichia-coli"),
+        (
+            [_item("REAL", ["PAPER", "PPUT"])],
+            "REAL",
+            "is in neither database/Escherichia-coli",
+        ),
     ],
 )
 def test_add_paper_attach_to_refusals(
@@ -1103,3 +1110,28 @@ def test_main_files_and_writes_the_report(
     assert code == 0
     assert json.loads(report_path.read_text())["outcome"] == "would_file"
     assert "outcome would_file: item -" in capsys.readouterr().out
+
+
+def test_add_paper_attaches_to_an_owner_item_in_the_database_root(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """An item the owner filed in the ``database`` root gets its PDF; nothing moves."""
+    zot = WritableZot(collections=COLLECTIONS, items=[_item("OWNER", ["DBROOT"])])
+    report = za.add_paper(
+        _request(tmp_path, attach_to="OWNER"),
+        _lib(monkeypatch, zot),
+        Server({**_blocked_publisher(), **_pmc_with_pdf()}).client(),
+        upload=recording_upload,
+    )
+    assert (report.outcome, report.item_key, report.created_item) == (
+        za.Outcome.FILED,
+        "OWNER",
+        False,
+    )
+    assert [(f.attachment_key, f.role) for f in report.files] == [("ATT1", "paper")]
+    assert report.notes == [
+        "item OWNER sits in the database root, not in database/Escherichia-coli; "
+        "its collection membership is left as it is"
+    ]
+    assert zot.created == []
+    assert zot.item("OWNER")["data"]["collections"] == ["DBROOT"]

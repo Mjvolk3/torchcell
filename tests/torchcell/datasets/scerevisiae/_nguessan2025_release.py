@@ -131,6 +131,38 @@ def snp_list(rows: list[tuple[int, str, int, int, str, str]] = SNPS) -> str:
     return "\n".join(lines) + "\n"
 
 
+def lifted_table(
+    path: Path, rows: list[tuple[int, str, int, int, str, str]] = SNPS
+) -> None:
+    """A lifted SNP table of ``rows``: every SNP lifted to its own position, + strand.
+
+    The derived artifact the deposit records (#1050); the records do not read it, and
+    the lift itself is tested on its own in ``test_nguessan2025.py``.
+    """
+    m.write_lifted_table(
+        [
+            m.LiftedSnp(
+                index=index,
+                snp=snp,
+                chromosome=m.CHROMOSOME_TOKEN[str(chrom)],
+                position=position,
+                by=by,
+                rm=rm,
+                status=m.LiftStatus.lifted,
+                flank_bp=25,
+                hits=1,
+                s288c_chromosome=m.CHROMOSOME_TOKEN[str(chrom)],
+                s288c_position=position,
+                s288c_strand="+",
+                s288c_base=by,
+            )
+            for index, snp, chrom, position, by, rm in rows
+            if snp != m.SNP_END
+        ],
+        path,
+    )
+
+
 def geno_gz(path: Path, rows: dict[int, list[float]] = GENO) -> None:
     """``geno_data_1.txt.gz``: Number then one posterior per SNP index, tab-separated."""
     with gzip.open(path, "wt") as handle:

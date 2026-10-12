@@ -41,9 +41,11 @@ RECORD = one (deletion strain x condition) ``StrainEnvironmentResponseExperiment
   none is released, a typed gap) from "MATa haploid deletion mutants (~4800) ... obtained
   from Research Genetics"; the cassette kanMX4 is the YKO's (Giaever 2014, which also says
   the YKO strains were "made available to the yeast community by Research Genetics").
-  Two source ORFs that R64 renames keep their records under the current gene with a
-  ``ConstructedOrf`` (YDL038C -> YDL039C, which the release also carries directly, so the
-  relation is ``merged``; YGR272C -> YGR271C-A, relation gapped).
+  Each strain is stored AS RELEASED, under Table S7's ORF cell, which is also its
+  ``perturbed_gene_name`` (the table names strains by ORF only). No genome is consulted
+  (#1045, owner rule 2026-10-12: "the data is the data"): an ORF the current annotation
+  renames (YDL038C, YGR272C) or does not call a gene (14 ORFs, among them YER109C and
+  YIL168W) keeps its released name and its records.
 - REFERENCE GENOME: BY4741 on a ``StrainReferenceGenome``. The SI strain table states
   BY4741's genotype ("BY4741 MATa ura3∆0 leu2∆0 his3∆1 met15∆0"), which sources each
   allele; the paper never says the pool IS BY4741, so the background's ``provenance`` is a
@@ -61,19 +63,23 @@ RECORD = one (deletion strain x condition) ``StrainEnvironmentResponseExperiment
   ``n_samples = 2`` (two fluor-reversed chips per tag), ``sample_unit=technical_replicate``.
 - REFERENCE: per medium, the 1% solvent-control pool on the BY4741 background, log2 ratio 0.
 
-RECORDS DROPPED (rule + counts in ``preprocess/dropped_records.json``, applied in order):
+CELLS WITH NO RECORD (counted in ``preprocess/dropped_records.json``): every released
+ratio is a record (#1045); the only rule is
 
 1. ``ratio_cell_blank_in_release``: the release's two-space blank, a cell whose tags were
    both removed as noise-dominated ("specific tags under a specific condition having an
    intensity smaller than median intensity of the background signal in the control ...
    were ignored").
-2. ``orf_is_not_a_current_gene``: the 2005-era ORF resolves to no current R64 gene
-   (``resolve_gene_name`` status other than current or renamed).
-3. ``compound_without_a_structure_identifier``: the condition's compound carries no
-   InChIKey, CID or ChEBI id after resolution: the seven crude extracts, agelasine E (no
-   PubChem compound) and stichloroside (no congener named). This is the rule Wildenhain,
-   Hoepfner, Hillenmeyer and Vanacloig apply; the extracts are in the release and are a
-   documented refusal, not an omission.
+
+STORED WITH A TYPED COMPOUND-IDENTITY GAP (2026.10.12, #1045 row 19): the nine conditions
+whose compound carries no InChIKey, CID or ChEBI id after resolution (the seven crude
+extracts, agelasine E with no PubChem compound, and stichloroside with no congener named)
+are stored, not dropped. ``resolved_compound`` attaches the typed ``inchikey`` gap it
+attaches to any uncurated label (``deferred_pending_source_review``, the #726 route
+Piotrowski 2017 takes: "an uncurated label is a gap, not a drop"), and
+``preprocess/dropped_records.json`` lists each condition under ``compound_identity_gaps``
+with its record count. The rule that refused them (``compound_without_a_structure_
+identifier``, 36,437 records) is retired.
 
 NOT RELEASED AS RATIOS (counted in the same file, not drops): Table S4 lists 121 strains
 more than Table S7, exactly Table S2's 121 multidrug-sensitive strains, which the authors
@@ -103,7 +109,7 @@ from typing import Any, Literal
 
 import pandas as pd
 import xlrd
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from tqdm import tqdm
 
 from torchcell.data import (
@@ -123,7 +129,6 @@ from torchcell.datamodels.schema import (
     Compound,
     Concentration,
     ConcentrationUnit,
-    ConstructedOrf,
     CultureEnvironment,
     CultureFormat,
     EndpointRule,
@@ -155,8 +160,6 @@ from torchcell.datamodels.strain_background import (
     standard_allele,
 )
 from torchcell.datasets.dataset_registry import register_dataset
-from torchcell.datasets.scerevisiae.hillenmeyer2008 import constructed_orf
-from torchcell.datasets.scerevisiae.smith2006 import canonical_common_names
 from torchcell.literature.manifest import (
     ROLE_RAW_DATA,
     ArtifactRecord,
@@ -164,7 +167,6 @@ from torchcell.literature.manifest import (
     RetrievalMethod,
     RetrievalRecord,
 )
-from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import (
     ProvenanceGap,
@@ -1147,49 +1149,6 @@ def s1_by_name(rows: list[S1Row]) -> dict[str, S1Row]:
 
 
 # --------------------------------------------------------------------------- #
-# Strains
-# --------------------------------------------------------------------------- #
-class StrainResolution(BaseModel):
-    """Table S7 rows resolved onto current R64 genes, or dropped with their status."""
-
-    kept: dict[str, str]
-    constructed: dict[str, ConstructedOrf]
-    dropped: dict[str, str]
-
-
-def _status(resolution: Any) -> str:
-    return str(getattr(resolution.status, "value", resolution.status))
-
-
-def resolve_strains(orfs: list[str], genome: SCerevisiaeGenome) -> StrainResolution:
-    """Source ORF -> current systematic name; a renamed ORF carries a ``ConstructedOrf``.
-
-    A current gene is itself; a renamed one keeps its records under the current gene
-    with a ``ConstructedOrf`` naming the deleted source ORF (``merged`` when two released
-    ORFs land on one gene, Hillenmeyer's rule); any other status (``non_gene_feature``,
-    retired) is dropped by ``orf_is_not_a_current_gene``.
-    """
-    kept: dict[str, str] = {}
-    dropped: dict[str, str] = {}
-    for orf in orfs:
-        resolution = genome.resolve_gene_name(orf)
-        status = _status(resolution)
-        if status in ("current", "renamed") and resolution.systematic_name is not None:
-            kept[orf] = resolution.systematic_name
-        else:
-            dropped[orf] = status
-    sources: dict[str, set[str]] = {}
-    for source, current in kept.items():
-        sources.setdefault(current, set()).add(source)
-    constructed = {
-        source: constructed_orf(source, current, len(sources[current]))
-        for source, current in kept.items()
-        if source != current
-    }
-    return StrainResolution(kept=kept, constructed=constructed, dropped=dropped)
-
-
-# --------------------------------------------------------------------------- #
 # Ledger
 # --------------------------------------------------------------------------- #
 class DropRule(BaseModel):
@@ -1213,8 +1172,22 @@ class ReleaseAccounting(BaseModel):
     ratio_cells_without_a_p_value: int
 
 
+class GappedCompoundCondition(BaseModel):
+    """A condition stored with a typed compound-identity gap, and its record count."""
+
+    condition: str = Field(description="The Table S7 condition label, verbatim.")
+    compound_name: str = Field(description="The stored Compound.name.")
+    gap_field: str = Field(description="The gapped Compound field (inchikey).")
+    gap_reason: ProvenanceGapReason
+    n_records: int
+
+
 class DropLog(BaseModel):
-    """Every retention rule applied to a build, in order, plus the release accounting."""
+    """Every retention rule applied to a build, in order, plus the release accounting.
+
+    ``compound_identity_gaps`` are not drops: those conditions are stored, each compound
+    carrying its typed gap.
+    """
 
     dataset: str
     source_records: int
@@ -1222,6 +1195,7 @@ class DropLog(BaseModel):
     kept_records: int
     dropped_records: int
     rules: list[DropRule]
+    compound_identity_gaps: list[GappedCompoundCondition]
     release: ReleaseAccounting
 
 
@@ -1235,13 +1209,11 @@ class EnvChemgenParsons2006Dataset(ExperimentDataset):
         self,
         root: str = "data/torchcell/env_chemgen_parsons2006",
         io_workers: int = 0,
-        genome: SCerevisiaeGenome | None = None,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize the dataset; a genome is REQUIRED for systematic-name resolution."""
-        self.genome = genome
+        """Initialize the dataset (no genome: every strain is stored as released)."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -1402,18 +1374,17 @@ class EnvChemgenParsons2006Dataset(ExperimentDataset):
         )
 
     @staticmethod
-    def _genotype(
-        orf: str, common: str, constructed: ConstructedOrf | None
-    ) -> Genotype:
-        """One barcoded kanMX4 deletion from the Research Genetics MATa collection."""
+    def _genotype(orf: str) -> Genotype:
+        """One barcoded kanMX4 deletion from the Research Genetics MATa collection,
+        named by Table S7's ORF cell as released (no genome is consulted).
+        """
         return Genotype(
             perturbations=[
                 BarcodedKanMxDeletionPerturbation(
                     systematic_gene_name=orf,
-                    perturbed_gene_name=common,
+                    perturbed_gene_name=orf,
                     collection=POOL_SOURCE.value,
                     cassette=KANMX4_CASSETTE.value,
-                    constructed_orf=constructed,
                     provenance_gaps=[
                         pending_source_review(
                             "barcode",
@@ -1436,11 +1407,6 @@ class EnvChemgenParsons2006Dataset(ExperimentDataset):
     def process(self) -> None:
         """Join Table S7's ratios to Table S4's p-values and Table S1's doses; write LMDB."""
         verify_raw_files(self.raw_dir, {t.filename: t.sha256 for t in RAW_TABLES})
-        if self.genome is None:
-            raise RuntimeError(
-                "EnvChemgenParsons2006Dataset requires a genome for systematic-name "
-                "resolution; inject SCerevisiaeGenome(...)"
-            )
         ratios = self._read_ratio_matrix()
         p_values = self._read_p_value_matrix()
         multidrug = self._read_multidrug_sensitive()
@@ -1456,24 +1422,28 @@ class EnvChemgenParsons2006Dataset(ExperimentDataset):
                 f"sensitive set ({len(p_only)} vs {len(multidrug)})"
             )
 
-        strains = resolve_strains(ratios.orfs, self.genome)
-        canonical = canonical_common_names(self.genome)
-
         compounds: dict[str, Compound] = {}
         doses: dict[str, Concentration] = {}
-        unidentified: list[str] = []
         for spec in CONDITIONS:
             row = s1[spec.s1_name]
             doses[spec.s7_label] = parse_dose(row)
-            compound = resolved_compound(spec.lookup_label)
-            if (
-                compound.inchikey is None
-                and compound.pubchem_cid is None
-                and compound.chebi_id is None
-            ):
-                unidentified.append(spec.s7_label)
-                continue
-            compounds[spec.s7_label] = compound
+            compounds[spec.s7_label] = resolved_compound(spec.lookup_label)
+        # A compound with no structure identifier is stored with the typed inchikey gap
+        # resolved_compound attaches (#726, #1045 row 19), never dropped.
+        gapped = {
+            label: compound
+            for label, compound in compounds.items()
+            if compound.inchikey is None
+            and compound.pubchem_cid is None
+            and compound.chebi_id is None
+        }
+        for label, compound in gapped.items():
+            if [gap.field for gap in compound.provenance_gaps] != ["inchikey"]:
+                raise RuntimeError(
+                    f"{label}: a compound with no identifier must carry exactly the "
+                    "typed inchikey gap"
+                )
+        n_gapped: dict[str, int] = dict.fromkeys(gapped, 0)
         names = [c.name for c in compounds.values()]
         if len(set(names)) != len(names):
             raise RuntimeError(
@@ -1493,17 +1463,13 @@ class EnvChemgenParsons2006Dataset(ExperimentDataset):
                 spec, compounds[spec.s7_label], doses[spec.s7_label]
             )
             for spec in CONDITIONS
-            if spec.s7_label in compounds
         }
-        unidentified_set = set(unidentified)
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
         os.makedirs(self.processed_dir, exist_ok=True)
         env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
         idx = 0
         n_blank = 0
-        n_dropped_strain = 0
-        n_dropped_compound = 0
         n_without_p = 0
         n_p_without_ratio = 0
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
@@ -1513,16 +1479,7 @@ class EnvChemgenParsons2006Dataset(ExperimentDataset):
                 desc="parsons2006",
             ):
                 p_row = p_values.neg_log10[source_orf]
-                current = strains.kept.get(source_orf)
-                genotype = (
-                    None
-                    if current is None
-                    else self._genotype(
-                        current,
-                        canonical.get(current, current),
-                        strains.constructed.get(source_orf),
-                    )
-                )
+                genotype = self._genotype(source_orf)
                 for spec, ratio, neg_log10_p in zip(
                     CONDITIONS, row_values, p_row, strict=True
                 ):
@@ -1530,12 +1487,8 @@ class EnvChemgenParsons2006Dataset(ExperimentDataset):
                         n_blank += 1
                         n_p_without_ratio += neg_log10_p is not None
                         continue
-                    if genotype is None:
-                        n_dropped_strain += 1
-                        continue
-                    if spec.s7_label in unidentified_set:
-                        n_dropped_compound += 1
-                        continue
+                    if spec.s7_label in n_gapped:
+                        n_gapped[spec.s7_label] += 1
                     n_without_p += neg_log10_p is None
                     experiment = StrainEnvironmentResponseExperiment(
                         dataset_name=self.name,
@@ -1573,34 +1526,17 @@ class EnvChemgenParsons2006Dataset(ExperimentDataset):
                         "(NOISE_REMOVAL); there is no ratio to store"
                     ),
                     n_records=n_blank,
-                ),
-                DropRule(
-                    rule="orf_is_not_a_current_gene",
-                    scope="strain",
-                    description=(
-                        "the 2005-era ORF resolves to no current R64 gene "
-                        "(resolve_gene_name status in parentheses), so no gene entity "
-                        "exists to key the deletion to"
-                    ),
-                    n_records=n_dropped_strain,
-                    items=[
-                        f"{orf} ({status})"
-                        for orf, status in sorted(strains.dropped.items())
-                    ],
-                ),
-                DropRule(
-                    rule="compound_without_a_structure_identifier",
-                    scope="condition",
-                    description=(
-                        "the condition's compound carries no InChIKey, CID or ChEBI id "
-                        "after resolution: the seven crude extracts (undefined "
-                        "preparations), agelasine E (no PubChem compound) and "
-                        "stichloroside (no congener named, STICHLOROSIDE_UNSPECIFIED). "
-                        "The rule the other chemogenomic loaders apply"
-                    ),
-                    n_records=n_dropped_compound,
-                    items=sorted(unidentified),
-                ),
+                )
+            ],
+            compound_identity_gaps=[
+                GappedCompoundCondition(
+                    condition=label,
+                    compound_name=gapped[label].name,
+                    gap_field=gapped[label].provenance_gaps[0].field,
+                    gap_reason=gapped[label].provenance_gaps[0].reason,
+                    n_records=n_gapped[label],
+                )
+                for label in sorted(gapped)
             ],
             release=ReleaseAccounting(
                 table_s4_strains=len(p_values.orfs),
@@ -1622,16 +1558,15 @@ class EnvChemgenParsons2006Dataset(ExperimentDataset):
                 f"{drop_log.dropped_records} records missing from the build"
             )
         log.info(
-            "Parsons2006: wrote %d records over %d strains x %d conditions (dropped %d "
-            "blank cells, %d on %d non-gene ORFs, %d on %d unidentified compounds)",
+            "Parsons2006: wrote %d records over %d strains x %d conditions (%d released "
+            "blank cells have no ratio; %d records on %d compounds stored with a typed "
+            "identity gap)",
             idx,
-            len(strains.kept),
+            len(ratios.orfs),
             len(compounds),
             n_blank,
-            n_dropped_strain,
-            len(strains.dropped),
-            n_dropped_compound,
-            len(unidentified),
+            sum(n_gapped.values()),
+            len(gapped),
         )
 
     def preprocess_raw(self, df: Any, preprocess: dict[str, Any] | None = None) -> Any:
@@ -1649,13 +1584,8 @@ def main() -> None:
 
     load_dotenv()
     data_root = os.environ["DATA_ROOT"]
-    genome = SCerevisiaeGenome(
-        genome_root=osp.join(data_root, "data/sgd/genome"),
-        go_root=osp.join(data_root, "data/go"),
-        overwrite=False,
-    )
     root = osp.join(data_root, "data/torchcell/env_chemgen_parsons2006")
-    dataset = EnvChemgenParsons2006Dataset(root=root, genome=genome)
+    dataset = EnvChemgenParsons2006Dataset(root=root)
     print(f"len = {len(dataset)}")
     print(dataset[0])
 

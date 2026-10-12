@@ -71,21 +71,23 @@ class _Recorder:
 def test_adapter_emits_the_strain_resolved_nodes(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """The 11 synthetic records give 11 experiment nodes, three references (one per
-    medium) on ONE BY4741 genome node, and a barcoded kanMX deletion per genotype. The
-    compound nodes carry the pinned table's InChIKeys (sulfometuron-methyl, MMS, the
-    thialysine hydrochloride Table S1's CAS number names) at the Table S1 doses.
+    """The 19 synthetic records (every released ratio, #1045) give 19 experiment nodes,
+    three references (one per medium) on ONE BY4741 genome node, and a barcoded kanMX
+    deletion per genotype. The compound nodes carry the pinned table's InChIKeys
+    (sulfometuron-methyl, MMS, the thialysine hydrochloride Table S1's CAS number names)
+    at the Table S1 doses, and the crude extract, stored with its typed inchikey gap,
+    carries none.
     """
     monkeypatch.delenv("TC_DATA_URL", raising=False)
     monkeypatch.setattr(cell_adapter_module, "wandb", _Recorder())
     dataset = _build(tmp_path, monkeypatch)
-    assert len(dataset) == 11
+    assert len(dataset) == 19
     adapter = EnvChemgenParsons2006Adapter(
         dataset=dataset,
         process_workers=1,
         io_workers=1,
-        chunk_size=11,
-        loader_batch_size=11,
+        chunk_size=19,
+        loader_batch_size=19,
     )
     try:
         nodes = list(adapter.get_nodes())
@@ -96,7 +98,7 @@ def test_adapter_emits_the_strain_resolved_nodes(
     by_label: dict[str, list[Any]] = {}
     for node in nodes:
         by_label.setdefault(node.get_label(), []).append(node)
-    assert len(by_label["experiment"]) == 11
+    assert len(by_label["experiment"]) == 19
     assert len(by_label["experiment reference"]) == 3
     references = [
         json.loads(n.get_properties()["serialized_data"])
@@ -135,18 +137,22 @@ def test_adapter_emits_the_strain_resolved_nodes(
             3.0,
             "uM",
         ),
+        ("Extract 95-57", None, 30.0, "ug/mL"),
     }
     phenotypes = by_label["environment response phenotype"]
     # one node per record plus ONE reference phenotype: the three references' phenotypes
     # are identical (log2 ratio 0, the same units), and phenotype ids are content
-    # hashes, so two records with the same (ratio, p-value) also share an id
-    assert len(phenotypes) == 11 + 1
-    assert len({ph.get_id() for ph in phenotypes}) == 9 + 1
+    # hashes, so two records with the same (ratio, p-value) also share an id. Of the
+    # 8 records the as-released build adds, three extract records repeat an MMS
+    # record's (ratio, p-value) and YIL170W's four carry two distinct pairs
+    # (+1.25 and -1.25, p 0.01), so they add 1 + 2 ids
+    assert len(phenotypes) == 19 + 1
+    assert len({ph.get_id() for ph in phenotypes}) == 9 + 1 + 1 + 2
     assert {p.get_properties()["measurement_type"] for p in phenotypes} == {
         "log2_ratio"
     }
     perturbation_edges = [e for e in edges if e.get_label() == "perturbation member of"]
-    assert len(perturbation_edges) == 11
+    assert len(perturbation_edges) == 19
 
 
 _INIT_CASES = [

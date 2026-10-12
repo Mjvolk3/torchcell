@@ -42,7 +42,7 @@ ESCAPE = 0.3
 # (M_cls), the split (split0) and the init seed (init0) as separate tags.
 ARM_TAGS = ("M_cls", "M_pool", "M_zs", "M_xattn", "MP_cls")
 SPLIT_RE = re.compile(r"split(\d+)")
-VARIANT_RE = re.compile(r"lr[0-9e.-]+|mse|crps|pearson_mse|graphkl[0-9e.-]+|restarts\d+|warmup\d+|stack")
+VARIANT_RE = re.compile(r"lr[0-9e.-]+|b\d+|mse|crps|pearson_mse|graphkl[0-9e.-]+|restarts\d+|warmup\d+|stack")
 REPO = osp.abspath(osp.join(osp.dirname(__file__), "..", "..", ".."))
 RESULTS = osp.join(osp.dirname(osp.dirname(osp.abspath(__file__))), "results")
 TABLES = osp.join(REPO, "notes-tex", "figure-3-gate", "tables")

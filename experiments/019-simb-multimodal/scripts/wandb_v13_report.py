@@ -302,7 +302,7 @@ ROUNDS: dict[str, Round] = {
         max_runs=130,
         label_key="calmorph",
         family_from_match=True,
-        variant_re=r"lr[0-9e.-]+|mse|graphkl[0-9e.-]+|restarts\d+|warmup\d+|stack",
+        variant_re=r"lr[0-9e.-]+|b\d+|mse|crps|pearson_mse|graphkl[0-9e.-]+|restarts\d+|warmup\d+|stack",
     ),
     "v18": Round(
         project="torchcell_019_expr_v18",

@@ -16,6 +16,12 @@ the served rule. That is what this script re-measures: where each of the 1,125 s
 pairs sits once BOTH halves of the array are storable, and the kept-record count the
 pins take.
 
+#1057 (the owner rule of 2026-10-12) re-measured it again: both loaders now store every
+released b-number on its synonym locus or as released, with a status, so a pair is keyed
+by its RELEASED ids (``butland2008.released_id``), and a served pair that this release
+prints under another b-number of the same strain is met by its stored loci
+(``butland2008.served_by_locus``).
+
 This script is the measurement behind the new pins. Nothing here is read from the
 loader's docstring or from a build log: the served side comes from the rebuilt Babu dev
 LMDB and the release side from the sha256-pinned Supplementary Table 4 workbook, and the
@@ -63,7 +69,10 @@ import numpy as np
 from dotenv import load_dotenv
 
 from torchcell.data import verify_raw_files
-from torchcell.datasets.bacteria_common import bacterial_genome
+from torchcell.datasets.bacteria_common import (
+    bacterial_genome,
+    plan_released_identifiers,
+)
 from torchcell.datasets.ecoli import butland2008 as b
 from torchcell.datasets.ecoli.butland2008 import (
     BABU_ROOT_REL,
@@ -75,7 +84,6 @@ from torchcell.datasets.ecoli.butland2008 import (
     RECIPIENT_CASSETTE,
     TABLE_S4,
 )
-from torchcell.sequence.genome.base import GeneNameStatus
 
 RESULTS = "experiments/036-dataset-fixes-before-kg-build/results"
 
@@ -85,6 +93,7 @@ def served_side(served_root: str) -> dict[str, Any]:
     from torchcell.verification.runners import stream_records
 
     pairs: dict[tuple[str, str], str] = {}
+    loci: dict[tuple[str, str], tuple[str, str]] = {}
     screens: Counter[str] = Counter()
     leaves: Counter[str] = Counter()
     butland_leaves: Counter[str] = Counter()
@@ -96,13 +105,17 @@ def served_side(served_root: str) -> dict[str, Any]:
             for leaf in experiment["genotype"]["perturbations"]
         }
         pair = (
-            str(by_cassette[QUERY_CASSETTE]["systematic_gene_name"]),
-            str(by_cassette[RECIPIENT_CASSETTE]["systematic_gene_name"]),
+            b.released_id(by_cassette[QUERY_CASSETTE]),
+            b.released_id(by_cassette[RECIPIENT_CASSETTE]),
         )
         if pair in pairs:
             raise RuntimeError(f"the served store holds {pair} twice")
         screen = str(experiment["phenotype"]["screen_id"])
         pairs[pair] = screen
+        loci[pair] = (
+            str(by_cassette[QUERY_CASSETTE]["systematic_gene_name"]),
+            str(by_cassette[RECIPIENT_CASSETTE]["systematic_gene_name"]),
+        )
         screens[screen] += 1
         signature = "+".join(
             f"{cassette}:{leaf['perturbation_type']}"
@@ -124,6 +137,7 @@ def served_side(served_root: str) -> dict[str, Any]:
         "by_perturbation_leaf": dict(sorted(leaves.items())),
         "butland_screen_by_perturbation_leaf": dict(sorted(butland_leaves.items())),
         "pairs": pairs,
+        "loci": loci,
         "content_ids": content_ids,
     }
 
@@ -139,33 +153,27 @@ def release_side(raw_dir: str) -> dict[str, Any]:
     colonies, zero_colonies = colonies[:, order], zero_colonies[:, order]
     genome = bacterial_genome("ecoli", b.REFERENCE_STRAIN_NAME)
     names = sorted(set(scores.query_tags) | set(scores.recipient_tags))
-    resolutions = {name: genome.resolve_gene_name(name) for name in names}
-    not_a_tag = {
-        name
-        for name, resolved in resolutions.items()
-        if resolved.status in (GeneNameStatus.RETIRED, GeneNameStatus.AMBIGUOUS)
-    }
-    remapped = {
-        name: str(resolved.systematic_name)
-        for name, resolved in resolutions.items()
-        if name not in not_a_tag
-        and resolved.systematic_name is not None
-        and resolved.systematic_name != name
-    }
+    # the loader's own planner: the collision flag only names a status, never where an
+    # id is stored, so it is not needed here
+    plan = plan_released_identifiers(
+        genome,
+        names,
+        pattern=b.B_NUMBER_PATTERN,
+        namespace=b.MG1655_NAMESPACE,
+        collision=(),
+    )
     return {
         "scores": scores,
         "block": b.score_block(scores),
         "colonies": colonies,
         "zero_colonies": zero_colonies,
-        "not_a_tag": not_a_tag,
-        "remapped": remapped,
+        "not_a_tag": set(plan.unholdable),
+        "stored_as": plan.stored_as,
     }
 
 
-def ledger(
-    release: dict[str, Any], served: dict[tuple[str, str], str]
-) -> dict[str, Any]:
-    """Re-apply the five retention rules in the loader's order over every released cell.
+def ledger(release: dict[str, Any], served: b.ServedBabu) -> dict[str, Any]:
+    """Re-apply the four retention rules in the loader's order over every released cell.
 
     The per-cell rule the matrix assigns is also returned per oriented pair, which is
     what locates each served pair in the release. There is no longer a SPA-tag rule:
@@ -179,7 +187,10 @@ def ledger(
         release["colonies"],
         release["zero_colonies"],
     )
-    not_a_tag, remapped = release["not_a_tag"], release["remapped"]
+    not_a_tag, stored_as = release["not_a_tag"], release["stored_as"]
+    by_locus = b.served_by_locus(
+        served, {(q, r) for r in scores.recipient_tags for q in scores.query_tags}
+    )
     rules: Counter[str] = Counter()
     pair_rule: dict[tuple[str, str], set[str]] = {}
     pair_label: dict[tuple[str, str], str] = {}
@@ -193,8 +204,6 @@ def ledger(
             pair = (query_tag, recipient_tag)
             if recipient_tag in not_a_tag:
                 rule = b.RULE_NOT_A_TAG
-            elif recipient_tag in remapped:
-                rule = b.RULE_REMAPPED
             elif recipient_tag == query_tag:
                 rule = b.RULE_SELF_PAIR
             elif (
@@ -202,8 +211,12 @@ def ledger(
                 and float(block[row, column]) == 0.0
             ):
                 rule = b.RULE_CONTRADICTION
-            elif pair in served:
+            elif pair in served.pairs:
                 rule = b.RULE_SERVED
+            elif (query_tag, stored_as[recipient_tag]) in by_locus:
+                rule = b.RULE_SERVED
+                # located under the served pair's own released ids
+                pair = by_locus[(query_tag, stored_as[recipient_tag])]
             else:
                 rule = "stored"
             pair_rule.setdefault(pair, set()).add(rule)
@@ -231,6 +244,9 @@ def ledger(
         "pair_rule": pair_rule,
         "pair_label": pair_label,
         "stored_pairs": stored_pairs,
+        "served_pairs_met_by_locus": sorted(
+            f"{q} -> {r}" for q, r in set(by_locus.values()) & set(pair_rule)
+        ),
     }
 
 
@@ -282,7 +298,7 @@ def stored_side(store_root: str) -> dict[str, Any] | None:
     for record in stream_records(store_root):
         experiment = record["experiment"]
         by_cassette = {
-            str(leaf["cassette"]): str(leaf["systematic_gene_name"])
+            str(leaf["cassette"]): b.released_id(leaf)
             for leaf in experiment["genotype"]["perturbations"]
         }
         pairs.add((by_cassette[QUERY_CASSETTE], by_cassette[RECIPIENT_CASSETTE]))
@@ -308,7 +324,12 @@ def main() -> int:
         pair for pair, screen in served["pairs"].items() if screen == BABU_SCREEN_TAG
     }
     release = release_side(osp.join(butland_root, "raw"))
-    counts = ledger(release, served["pairs"])
+    counts = ledger(
+        release,
+        b.ServedBabu(
+            pairs=served["pairs"], records=served["records"], loci=served["loci"]
+        ),
+    )
     located = locate_served_pairs(
         butland_pairs, counts["pair_rule"], counts["pair_label"]
     )
@@ -336,7 +357,7 @@ def main() -> int:
         "served_babu2014": {
             key: value
             for key, value in served.items()
-            if key not in ("pairs", "content_ids")
+            if key not in ("pairs", "loci", "content_ids")
         },
         "release_butland2008": {
             "released_cells": counts["released_cells"],
@@ -346,6 +367,7 @@ def main() -> int:
             "dropped_by_rule": counts["dropped_by_rule"],
             "kept_by_row_label": counts["kept_by_row_label"],
             "served_rule_cells_by_row_label": counts["served_rule_cells_by_row_label"],
+            "served_pairs_met_by_locus": counts["served_pairs_met_by_locus"],
             "n_queries": len(set(release["scores"].query_tags)),
             "n_recipient_rows": len(release["scores"].recipient_tags),
         },

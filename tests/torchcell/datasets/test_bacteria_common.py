@@ -1018,16 +1018,18 @@ def test_resolve_uniprot_accessions_deduplicates_and_sorts_what_it_was_asked(
 def test_the_synonym_route_is_one_function_for_every_loader(
     synthetic_mg1655: EcoliK12MG1655Genome,
 ) -> None:
-    """Rapp 2026, Babu 2014, Butland 2008 and Girgis 2009 read the one helper.
+    """Rapp 2026 reads the one route helper; Babu 2014, Butland 2008 and Girgis 2009
+    read the one planner built on it (#1057).
 
-    Moved here from ``rapp2026`` so the four loaders cannot drift apart; Rapp keeps the
-    name it always exported. ``canonical_symbol`` is the symbol a routed record carries:
-    the annotation's own, when it resolves back to the stored tag.
+    Moved here from ``rapp2026`` so the loaders cannot drift apart; Rapp keeps the name
+    it always exported. ``canonical_symbol`` is the symbol a routed record carries: the
+    annotation's own, when it resolves back to the stored tag.
     """
     from torchcell.datasets.ecoli import babu2014, butland2008, girgis2009, rapp2026
 
-    for module in (babu2014, butland2008, girgis2009, rapp2026):
-        assert vars(module)["locus_tag_synonym_mapping"] is bc.locus_tag_synonym_mapping
+    assert vars(rapp2026)["locus_tag_synonym_mapping"] is bc.locus_tag_synonym_mapping
+    for module in (babu2014, butland2008, girgis2009):
+        assert vars(module)["plan_released_identifiers"] is bc.plan_released_identifiers
     assert bc.SYNONYM_LAYER == "synonym"
     assert bc.canonical_symbol(synthetic_mg1655, "b0002") == "thrA"
     assert bc.canonical_symbol(synthetic_mg1655, "b0007") == "insZ"
@@ -1036,4 +1038,82 @@ def test_the_synonym_route_is_one_function_for_every_loader(
     assert (
         bc.locus_tag_synonym_mapping(synthetic_mg1655, "b0001", "b0002", pattern)
         is None
+    )
+
+
+@pytest.fixture
+def synonym_mg1655(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> EcoliK12MG1655Genome:
+    """The synthetic assembly with ``b0010`` a synonym of ``b0003`` only and ``b0011`` a
+    synonym of both ``b0003`` and ``b0004``.
+    """
+    loci = [
+        locus.model_copy(
+            update={
+                "synonyms": (
+                    *locus.synonyms,
+                    *(("b0010", "b0011") if locus.tag == "b0003" else ()),
+                    *(("b0011",) if locus.tag == "b0004" else ()),
+                )
+            }
+        )
+        for locus in MG1655_LOCI
+    ]
+    files = write_assembly(tmp_path / "tier", MG1655_ASSEMBLY, loci, MG1655_GAF)
+    forbid_network(monkeypatch)
+    serve_tier(monkeypatch, files)
+    root = tmp_path / "mg1655"
+    root.mkdir()
+    return EcoliK12MG1655Genome(genome_root=str(root), overwrite=False)
+
+
+def test_the_planner_stores_every_released_b_number_with_its_status(
+    synonym_mg1655: EcoliK12MG1655Genome,
+) -> None:
+    """#1057: the annotation's verdict is a status; only a non-tag-shaped id is unheld.
+
+    ``b0001`` is a tag of its own; ``b0010`` routes onto ``b0003`` (shared, because the
+    collision set names it); ``b0011`` is listed by two loci, so it is stored as released
+    and ambiguous; ``b0099`` is not annotated; ``JW0098`` and ``thrA`` are not
+    b-numbers in form, so no bacterial leaf can hold them under the released id.
+    """
+    pattern = bc.LOCUS_TAG_PATTERNS["ecoli_k12_mg1655_bnumber"]
+    plan = bc.plan_released_identifiers(
+        synonym_mg1655,
+        ["b0001", "b0010", "b0011", "b0099", "JW0098", "thrA", "b0001"],
+        pattern=pattern,
+        namespace="ecoli_k12_mg1655_bnumber",
+        collision=["b0010", "b0003"],
+    )
+    assert plan.unholdable == ("JW0098", "thrA")
+    assert plan.stored_as == {
+        "b0001": "b0001",
+        "b0010": "b0003",
+        "b0011": "b0011",
+        "b0099": "b0099",
+    }
+    resolutions = {
+        name: (status.stored_as, status.resolution.value)
+        for name, status in plan.statuses.items()
+    }
+    assert resolutions["b0010"] == ("b0003", "locus_tag_synonym_shared_locus")
+    assert resolutions["b0099"] == ("b0099", "not_in_annotation")
+    assert resolutions["b0011"][0] == "b0011"
+    assert resolutions["b0011"][1] in {
+        "ambiguous_in_annotation",
+        "annotation_remap_without_route",
+    }
+    assert "b0001" not in plan.statuses
+    assert plan.stored_as_released == frozenset({"b0011", "b0099"})
+    assert plan.mapping("b0001") is None
+    mapping = plan.mapping("b0010")
+    assert mapping is not None
+    assert (mapping.source_identifier, mapping.route) == ("b0010", "locus_tag_synonym")
+    status = plan.status("b0099")
+    assert status is not None
+    assert bc.status_description("Base", status) == (
+        "Base. Released identifier 'b0099' stored as 'b0099' (not_in_annotation"
+        + (f": {status.note}" if status.note else "")
+        + ")"
     )

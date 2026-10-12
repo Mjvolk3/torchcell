@@ -270,7 +270,7 @@ Owner's rule, stated 2026-10-12: "the data is the data ... the genome is separat
 
 ### Build and L0-L4 (slurm job 4335)
 
-`build_dataset_lmdb --dataset Nguessan2025Dataset --retire-existing --verify` from the worktree at `a53c938f2` (clean): **2,951 records** in 117 s, gene set 6,326, one reference; 3 min 53 s, 4.33 GB peak RSS (asked 12 GB, sized from job 4320). The two L4 genome-reference rules do not gate; their numbers:
+`build_dataset_lmdb --dataset Nguessan2025Dataset --retire-existing --verify` from the worktree at `a53c938f2` (clean; the same code is `eecbc9271` after the rebase onto `7a068d41a`): **2,951 records** in 117 s, gene set 6,326, one reference; 3 min 53 s, 4.33 GB peak RSS (asked 12 GB, sized from job 4320). The two L4 genome-reference rules do not gate; their numbers:
 
 | level | rule | result |
 |---|---|---|
@@ -289,12 +289,12 @@ The current verifier still scores those two rules as failures, so `--verify` ret
 Measured on the released positions (these numbers describe the release and are not stored on any record):
 
 - [[experiments.036-dataset-fixes-before-kg-build.scripts.nguessan2025_snp_coordinate_audit]] (job 4233): the BY allele is the base of `BY4742_fixed.fasta` (the reference the BB-QTL genotyping code indexes, `arturrc/bbqtl_inference` @ `2b1c89d6`) at all 41,594 released positions and the S288C R64-4-1 base at 27,221 (0.6544). The positions are BY4742_fixed coordinates.
-- [[experiments.036-dataset-fixes-before-kg-build.scripts.nguessan2025_snp_liftover]] (job 4335) lifts every SNP to S288C R64-4-1 by the unique exact match of its flanks, outside the dataset (`$DATA_ROOT/experiments/036-dataset-fixes-before-kg-build/nguessan2025_coordinates/`): 41,587 of 41,594 lifted, 7 `no_match`. On the lifted SNPs `marker_reference` reads 41,578 of 41,587 (0.9998) and `mat_fixation` 0.0438, so on S288C coordinates both rules pass. A model that needs S288C coordinates can read that table; the loader reads nothing from it.
+- [[experiments.036-dataset-fixes-before-kg-build.scripts.nguessan2025_snp_liftover]] (job 4350) lifts every SNP to S288C R64-4-1 by the unique exact match of its flanks, outside the dataset (`$DATA_ROOT/experiments/036-dataset-fixes-before-kg-build/nguessan2025_coordinates/`): 41,587 of 41,594 lifted, 7 `no_match`. On the lifted SNPs `marker_reference` reads 41,578 of 41,587 (0.9998) and `mat_fixation` 0.0438, so on S288C coordinates both rules pass. A model that needs S288C coordinates can read that table; the loader reads nothing from it.
 
 ### Registration, map, runner, pins
 
 - `@register_dataset`, the package export, `dataset_adapter_map` (`Nguessan2025Adapter`, after Boocock 2025), `organism = Organism.scerevisiae`.
 - `runners.SEGREGANT_EXPRESSION_DATASETS["nguessan2025"]` (2,951, `verify_build_module`); `verify_build` reads it.
-- Pins on `007cd23b0`: `dataset_adapter_map` total 154 and the served set names the class (`test_build_time_projection.py`); registry roots 75 (`SEGREGANT_EXPRESSION_DATASETS` addend 2; `test_runners.py`); the bacterial pins stay 86 (`test_bacterial_adapters.py` three asserts, `_bacterial_adapter_cases.py`). `browser_style --check` and the ontology figure: no drift.
+- Pins on `7a068d41a` (unchanged from `007cd23b0`): `dataset_adapter_map` total 154 and the served set names the class (`test_build_time_projection.py`); registry roots 75 (`SEGREGANT_EXPRESSION_DATASETS` addend 2; `test_runners.py`); the bacterial pins stay 86 (`test_bacterial_adapters.py` three asserts, `_bacterial_adapter_cases.py`). `browser_style --check` and the ontology figure: no drift.
 - Candidate gate (job 4335): G1 to G5 pass (G3 37 files intact), **admissible**.
 - `scripts/schema_impact_check.py --base origin/main`: "No schema contract changes vs origin/main."

@@ -1,6 +1,6 @@
 {
   "script": "experiments/036-dataset-fixes-before-kg-build/scripts/nguessan2025_snp_liftover.py",
-  "commit": "a53c938f2ed8efc57c6346c3ad0ef8240d89c13f",
+  "commit": "eecbc9271fb089aa10efabe0547e7d928c735d6b",
   "dirty_tracked_paths": [],
   "params": {
     "flanks": [

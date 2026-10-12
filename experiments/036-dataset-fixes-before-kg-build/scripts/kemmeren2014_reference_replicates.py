@@ -71,13 +71,7 @@ def build(scratch_root: str, data_root: str, workers: int) -> None:
     from torchcell.datasets.scerevisiae.kemmeren2014 import (
         MicroarrayKemmeren2014Dataset,
     )
-    from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 
-    genome = SCerevisiaeGenome(
-        genome_root=osp.join(data_root, "data/sgd/genome"),
-        go_root=osp.join(data_root, "data/go"),
-        overwrite=False,
-    )
     root = osp.join(scratch_root, SLUG)
     raw = osp.join(root, "raw")
     os.makedirs(raw, exist_ok=True)
@@ -85,9 +79,7 @@ def build(scratch_root: str, data_root: str, workers: int) -> None:
         target = osp.join(raw, name)
         if not osp.lexists(target):
             os.symlink(osp.join(data_root, "data/torchcell", SLUG, "raw", name), target)
-    dataset = MicroarrayKemmeren2014Dataset(
-        root=root, genome=genome, process_workers=workers
-    )
+    dataset = MicroarrayKemmeren2014Dataset(root=root, process_workers=workers)
     print(f"built {SLUG}: {len(dataset)} records at {root}")
 
 

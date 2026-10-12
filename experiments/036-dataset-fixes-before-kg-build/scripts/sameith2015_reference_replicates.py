@@ -85,13 +85,7 @@ def build(target_root: str, data_root: str) -> None:
         DmMicroarraySameith2015Dataset,
         SmMicroarraySameith2015Dataset,
     )
-    from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 
-    genome = SCerevisiaeGenome(
-        genome_root=osp.join(data_root, "data/sgd/genome"),
-        go_root=osp.join(data_root, "data/go"),
-        overwrite=False,
-    )
     for slug, cls in (
         (SM_SLUG, SmMicroarraySameith2015Dataset),
         (DM_SLUG, DmMicroarraySameith2015Dataset),
@@ -105,7 +99,7 @@ def build(target_root: str, data_root: str) -> None:
                 os.symlink(
                     osp.join(data_root, "data/torchcell", slug, "raw", name), target
                 )
-        dataset = cls(root=root, genome=genome)
+        dataset = cls(root=root)
         print(f"built {slug}: {len(dataset)} records at {root}")
 
 

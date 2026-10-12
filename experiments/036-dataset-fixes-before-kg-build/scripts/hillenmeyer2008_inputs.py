@@ -6,7 +6,7 @@
 Reads the raw-mirror matrices and key files
 (``$DATA_ROOT/torchcell-raw/hillenmeyerChemicalGenomicPortrait2008/data/``) through the
 LOADER'S OWN parsing functions (``parse_columns``, ``read_matrix_rows``,
-``count_records``), resolving every row id with the read-only S288C genome exactly as
+``count_records``), every row id stored as the release spells it (2026.10.12), exactly as
 ``process()`` does. No full LMDB is built (2.7M + 1.1M records). Reports, per arm:
 
 - the exact record count the new loader writes (the ``expected_count`` oracle) and the
@@ -88,20 +88,7 @@ SLICE_ORFS = {
 MARKER_NAMES = {"YOR202W": "HIS3", "YBR115C": "LYS2", "YLR303W": "MET15/MET17"}
 
 
-def _genome(data_root: str) -> Any:
-    """The read-only S288C genome the loader resolves names with."""
-    from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
-
-    return SCerevisiaeGenome(
-        genome_root=osp.join(data_root, "data/sgd/genome"),
-        go_root=osp.join(data_root, "data/go"),
-        overwrite=False,
-    )
-
-
-def _arm_inputs(
-    arm: str, data_root: str, resolve_name: Any
-) -> tuple[list[h.ColumnSpec], h.MatrixRows]:
+def _arm_inputs(arm: str, data_root: str) -> tuple[list[h.ColumnSpec], h.MatrixRows]:
     """Columns and rows of one arm, through the loader's own functions."""
     spec = h.MATRICES[arm]
     raw = h.raw_mirror_dir(data_root) / "data"
@@ -112,13 +99,7 @@ def _arm_inputs(
         h.read_control_set_map(raw / spec.keyfile),
         h.read_key_conditions(raw / spec.keyfile),
     )
-    rows = h.read_matrix_rows(
-        raw / spec.filename,
-        len(header),
-        h._load_sgd_genes(data_root),
-        resolve_name,
-        arm,
-    )
+    rows = h.read_matrix_rows(raw / spec.filename, len(header), arm)
     return columns, rows
 
 
@@ -164,9 +145,9 @@ def _suspicious(arm: str, data_root: str, rows: h.MatrixRows) -> dict[str, Any]:
     }
 
 
-def measure_arm(arm: str, data_root: str, resolve_name: Any) -> dict[str, Any]:
+def measure_arm(arm: str, data_root: str) -> dict[str, Any]:
     """Every count the note and the report quote for one arm."""
-    columns, rows = _arm_inputs(arm, data_root, resolve_name)
+    columns, rows = _arm_inputs(arm, data_root)
     groups, dropped_groups = h.group_columns(columns)
     n_new = h.count_records(rows.rows, groups)
     background = h.hillenmeyer_background()
@@ -296,14 +277,9 @@ def measure_arm(arm: str, data_root: str, resolve_name: Any) -> dict[str, Any]:
         "conflicts": conflicts,
         "kept_rows": len(rows.rows),
         "kept_current_genes": len({r.orf for r in rows.rows}),
-        "dropped_source_orfs": len(rows.dropped_genes),
         "new_record_count": n_new,
         "old_record_count_dev_store": _old_count(arm, data_root),
         "records_changing_class": n_new,
-        "renamed_source_orfs": len(rows.constructed),
-        "merged_relation_source_orfs": sum(
-            1 for c in rows.constructed.values() if c.relation is not None
-        ),
         "n_genes_fed_by_two_source_orfs": len(merged),
         "genes_fed_by_two_source_orfs": merged,
         "records_per_source_orf_of_those_genes": merged_records,
@@ -320,9 +296,7 @@ def measure_arm(arm: str, data_root: str, resolve_name: Any) -> dict[str, Any]:
     }
 
 
-def sliced_build(
-    arm: str, data_root: str, resolve_name: Any, scratch_root: str
-) -> dict[str, Any]:
+def sliced_build(arm: str, data_root: str, scratch_root: str) -> dict[str, Any]:
     """Run the record builders on SLICE_ARRAYS x SLICE_ORFS into the scratch root."""
     from torchcell.adapters.cell_adapter import CellAdapter
     from torchcell.verification.environment_response import (
@@ -330,17 +304,14 @@ def sliced_build(
     )
     from torchcell.verification.report import Provenance
 
-    columns, rows = _arm_inputs(arm, data_root, resolve_name)
+    columns, rows = _arm_inputs(arm, data_root)
     spec = h.MATRICES[arm]
     raw = h.raw_mirror_dir(data_root) / "data"
     sizes = h.read_control_set_sizes(raw / spec.controls_file)
     chosen = [c for c in columns if c.filename in SLICE_ARRAYS[arm]]
     groups, dropped = h.group_columns(chosen)
     sliced = h.MatrixRows(
-        rows=[r for r in rows.rows if r.source_orf in SLICE_ORFS],
-        dropped_strains=[],
-        dropped_genes={},
-        constructed=rows.constructed,
+        rows=[r for r in rows.rows if r.source_orf in SLICE_ORFS], dropped_strains=[]
     )
     background = h.hillenmeyer_background()
     name = f"{arm.capitalize()}Hillenmeyer2008Dataset"
@@ -373,8 +344,6 @@ def sliced_build(
         dataset_name=f"env_chemgen_hillenmeyer2008_{arm}_slice",
         provenance=Provenance(source_uri=str(raw / spec.filename)),
         expected_count=len(records),
-        sgd_genes=h._load_sgd_genes(data_root),
-        resolve_gene_name=resolve_name,
     )
     adapter = CellAdapter.__new__(CellAdapter)
     first = StrainEnvironmentResponseExperiment.model_validate(records[0]["experiment"])
@@ -406,16 +375,6 @@ def sliced_build(
             Counter(
                 r["experiment"]["environment"]["pre_culture"]["source"] for r in records
             )
-        ),
-        "constructed_orfs": sorted(
-            {
-                json.dumps(p["constructed_orf"]["source_systematic_name"])
-                + ":"
-                + str(p["constructed_orf"]["relation"])
-                for r in records
-                for p in r["experiment"]["genotype"]["perturbations"]
-                if p.get("constructed_orf")
-            }
         ),
         "verifier": [
             {
@@ -491,13 +450,10 @@ def main() -> None:
             json.dump(counts, f, indent=2)
         print(json.dumps(counts, indent=2))
         return
-    resolve_name = _genome(data_root).resolve_gene_name
     result: dict[str, Any] = {"arms": {}, "slice": {}}
     for arm in ("het", "hom"):
-        result["arms"][arm] = measure_arm(arm, data_root, resolve_name)
-        result["slice"][arm] = sliced_build(
-            arm, data_root, resolve_name, args.scratch_root
-        )
+        result["arms"][arm] = measure_arm(arm, data_root)
+        result["slice"][arm] = sliced_build(arm, data_root, args.scratch_root)
     with open(osp.join(RESULTS, "hillenmeyer2008_inputs.json"), "w") as handle:
         json.dump(result, handle, indent=2, default=str)
     with open(

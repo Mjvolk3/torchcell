@@ -122,17 +122,20 @@ resolution in the loader. The 11 recipient ids that are no b-number in form (``J
 ``BacterialReleasedStrainPerturbation`` under the id as released, its strain label the
 released ``<id>__<gene>`` cell and its ``identifier_kind`` the id's form.
 ``preprocess/identifier_reconciliation.json`` still records what the annotation says
-about every released id. One rule removes rows:
+about every released id. No rule removes a row (#1057):
 
-1. ``contradictory_duplicate_pair`` -- 4 rows, the two ordered (donor, recipient) pairs
-   Table S2 releases TWICE with different scores (``b1396__paaI``/``b2863__ygeQ`` at
-   -5.19537 and +4.33814; ``b2675__nrdE``/``b4462__ygaR`` at -7.12262 and -5.67666).
-   The release gives no rule for choosing, and the two scores of the paaI pair disagree
-   in SIGN, so both rows of both pairs are dropped.
+* The two ordered (donor, recipient) pairs Table S2 releases TWICE with different scores
+  (``b1396__paaI``/``b2863__ygeQ`` at -5.19537 and +4.33814; ``b2675__nrdE``/
+  ``b4462__ygaR`` at -7.12262 and -5.67666) were dropped until #1057 as
+  ``contradictory_duplicate_pair``. All four rows are records now, told apart by their
+  row: each one's ``screen_id`` is its donor's screen set plus ``| Table S2 data row
+  <n>`` (the row's 1-based position among the released rows), since the release gives
+  no rule for choosing between them. The pairs are listed in ``dropped_records.json``
+  under ``twice_released_pairs``.
 
-42,705 - 4 = 42,701 records (41,988 before #1057 stored the 713 pairs on a retired,
-synonym or non-b-number id), 25,236 aggravating and 17,465 alleviating, over all 163
-donors and 3,876 recipients. 3,420 of those records carry a marked hypomorphic allele on
+All 42,705 released rows are records (41,988 before #1057, which stored the 713 pairs
+on a retired, synonym or non-b-number id and the 4 twice-released rows), 25,239
+aggravating and 17,466 alleviating, over all 163 donors and 3,876 recipients. 3,420 of those records carry a marked hypomorphic allele on
 one side or both (1,024 donor-side, 2,479 recipient-side, 83 both).
 
 RECIPROCAL PAIRS ARE KEPT, AND THEY ARE NOT DUPLICATES. 100 unordered gene pairs appear
@@ -181,7 +184,7 @@ from pathlib import Path
 from typing import Any, ClassVar, Final, Literal
 
 import pandas as pd
-from pydantic import BaseModel, ConfigDict, TypeAdapter
+from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
 from tqdm import tqdm
 
 from torchcell.data import (
@@ -1240,13 +1243,26 @@ def read_hypomorphic_recipients(path: str | Path) -> frozenset[str]:
 # --------------------------------------------------------------------------- #
 # Retention ledger
 # --------------------------------------------------------------------------- #
-RULE_DUPLICATE = "contradictory_duplicate_pair"
+#: Not a drop rule since #1057: how a pair Table S2 releases twice is stored. Each row
+#: is a record whose ``screen_id`` names its row (:func:`twice_released_screen_id`).
+TWICE_RELEASED = (
+    "an ordered (donor, recipient) pair Table S2 releases twice with different scores; "
+    "the release gives no rule for choosing between them, so both rows are records, "
+    "each screen_id carrying its Table S2 data row"
+)
 
-DROP_RULE_DESCRIPTIONS: dict[str, str] = {
-    RULE_DUPLICATE: "an ordered (donor, recipient) pair Table S2 releases twice with "
-    "different scores. The release gives no rule for choosing between them and one of "
-    "the two pairs disagrees in sign, so both rows of both pairs are dropped"
-}
+
+TWICE_RELEASED_SEPARATOR = " | Table S2 data row "
+
+
+def twice_released_screen_id(screen: str, position: int) -> str:
+    """The ``screen_id`` of one row of a twice-released pair: its screen and its row."""
+    return f"{screen}{TWICE_RELEASED_SEPARATOR}{position + 1}"
+
+
+def screen_set_of(screen_id: str) -> str:
+    """The Table S1 screen set a stored ``screen_id`` names (its row suffix removed)."""
+    return screen_id.split(TWICE_RELEASED_SEPARATOR, 1)[0]
 
 
 class DropRule(BaseModel):
@@ -1277,6 +1293,9 @@ class DropLog(BaseModel):
     n_alleviating: int
     screen_id_counts: dict[str, int]
     rules: list[DropRule]
+    twice_released_pairs: list[str] = Field(
+        default_factory=list, description=TWICE_RELEASED
+    )
 
 
 class ReplicateStructure(BaseModel):
@@ -1668,31 +1687,38 @@ def retain(
             f"Table S1 donors are b-numbers, but Table S2 names donors {released_donors}"
         )
     duplicate = frame.duplicated(subset=["donor_id", "recipient_id"], keep=False)
-
-    rules = [
-        DropRule(
-            rule=RULE_DUPLICATE,
-            description=DROP_RULE_DESCRIPTIONS[RULE_DUPLICATE],
-            n_records=int(duplicate.sum()),
-            items=sorted(
-                {_pair_label(dict(row)) for _, row in frame.loc[duplicate].iterrows()}
-            ),
-        )
-    ]
-    kept = frame.loc[~duplicate].reset_index(drop=True)
+    twice = sorted(
+        {_pair_label(dict(row)) for _, row in frame.loc[duplicate].iterrows()}
+    )
+    rules: list[DropRule] = []
+    kept = frame.reset_index(drop=True)
     kept = kept.assign(
         donor_is_hypomorph=[donors[b].is_hypomorph for b in kept["donor_id"]],
         recipient_is_hypomorph=[
             b in hypomorphic_recipients for b in kept["recipient_id"]
         ],
     )
-    kept = kept.assign(screen_id=[donors[b].screen_id for b in kept["donor_id"]])
+    kept = kept.assign(
+        screen_id=[
+            twice_released_screen_id(donors[b].screen_id, i)
+            if bool(duplicate.iloc[i])
+            else donors[b].screen_id
+            for i, b in enumerate(kept["donor_id"])
+        ]
+    )
     unordered = [
         " <-> ".join(sorted((row["donor_id"], row["recipient_id"])))
         for _, row in kept.iterrows()
     ]
     counts = Counter(unordered)
-    both_ways = {key for key, n in counts.items() if n > 1}
+    # reciprocal = the unordered pair is released in BOTH orientations; a pair released
+    # twice in one orientation (#1057) is not a reciprocal
+    orientations: dict[str, set[tuple[str, str]]] = {}
+    for key, (_, row) in zip(unordered, kept.iterrows(), strict=True):
+        orientations.setdefault(key, set()).add(
+            (str(row["donor_id"]), str(row["recipient_id"]))
+        )
+    both_ways = {key for key, seen in orientations.items() if len(seen) > 1}
     signs: dict[str, set[bool]] = {}
     for key, score in zip(unordered, kept["score"], strict=True):
         if key in both_ways:
@@ -1713,6 +1739,7 @@ def retain(
             for key, value in kept["screen_id"].value_counts().items()
         },
         rules=rules,
+        twice_released_pairs=twice,
     )
     if sum(rule.n_records for rule in rules) != drop_log.dropped_records:
         raise RuntimeError("drop rules do not account for every dropped row")
@@ -1750,11 +1777,10 @@ def stored_rows(
 # The dataset
 # --------------------------------------------------------------------------- #
 DATASET_ROOT_REL = "data/torchcell/gene_interaction_babu2014"
-#: Records of the full build: 42,705 released pairs minus the 4 rows of the two
-#: contradictory duplicate pairs. Every released id is stored as released since #1057
-#: (41,988 before, when 713 pairs on a retired, synonym or non-b-number id were
-#: dropped). All 3,420 hypomorph pairs are STORED (#792).
-EXPECTED_RECORDS = 42701
+#: Records of the full build: all 42,705 released rows (#1057: 41,988 before, when 713
+#: pairs on a retired, synonym or non-b-number id and the 4 rows of the two
+#: twice-released pairs were dropped). All 3,420 hypomorph pairs are STORED (#792).
+EXPECTED_RECORDS = 42705
 #: Records whose donor or recipient side is a marked hypomorphic allele rather than a
 #: deletion: 1,024 donor-side, 2,479 recipient-side, 83 both.
 EXPECTED_HYPOMORPH_RECORDS = 3420
@@ -1878,9 +1904,13 @@ class GeneInteractionBabu2014Dataset(ExperimentDataset):
         self._write_ledgers(retention)
 
         genome_reference = reference_genome()
+        # one reference per stored screen_id: the two screen sets, and the row-named
+        # screen of each twice-released row (#1057), each the chassis scoring 0
         references = {
             screen_id: build_reference(self.name, genome_reference, screen_id)
-            for screen_id in (SCREEN_THIS_STUDY, SCREEN_BUTLAND)
+            for screen_id in sorted(
+                {SCREEN_THIS_STUDY, SCREEN_BUTLAND, *retention.kept["screen_id"]}
+            )
         }
         env_out, interned_env = self._open_write_lmdb(
             osp.join(self.processed_dir, "lmdb")
@@ -2086,10 +2116,14 @@ def _l1_hypomorph_sides_are_marked_alleles(
 
 
 def _l2_scores_match_table_s2(
-    records: Sequence[Record], released: Mapping[tuple[str, str], float]
+    records: Sequence[Record], released: Mapping[tuple[str, str], Sequence[float]]
 ) -> LevelResult:
-    """L2: every stored score is the released cell of its own (donor, recipient) pair."""
+    """L2: every pair's stored scores are its released Table S2 cells, as a multiset.
+
+    A pair released twice must be stored twice with both of its scores (#1057).
+    """
     mismatched: list[str] = []
+    stored_by_pair: dict[tuple[str, str], list[float]] = {}
     for record in records:
         experiment = record["experiment"]
         by_cassette = {
@@ -2098,14 +2132,16 @@ def _l2_scores_match_table_s2(
         }
         key = (by_cassette[DONOR_CASSETTE], by_cassette[RECIPIENT_CASSETTE])
         stored = float(experiment["phenotype"]["gene_interaction"])
-        if key not in released or released[key] != stored:
-            mismatched.append(f"{key[0]}->{key[1]} stored {stored}")
+        stored_by_pair.setdefault(key, []).append(stored)
+    for key, scores in stored_by_pair.items():
+        if key not in released or sorted(released[key]) != sorted(scores):
+            mismatched.append(f"{key[0]}->{key[1]} stored {sorted(scores)}")
     return LevelResult(
         level=Level.L2,
         name="gene_interaction_equals_table_s2_cell",
         passed=bool(records) and not mismatched,
-        message=f"{len(records) - len(mismatched)} of {len(records)} stored scores "
-        "equal their Table S2 cell",
+        message=f"{len(stored_by_pair) - len(mismatched)} of {len(stored_by_pair)} "
+        "stored pairs carry exactly their Table S2 cells",
         details={"n_mismatched": len(mismatched), "examples": mismatched[:20]},
     )
 
@@ -2139,9 +2175,14 @@ def _l3_sign_convention(records: Sequence[Record]) -> LevelResult:
 
 
 def _l3_screen_sets(records: Sequence[Record]) -> LevelResult:
-    """L3: every record names one of Table S1's two screen sets as its ``screen_id``."""
+    """L3: every record names one of Table S1's two screen sets as its ``screen_id``.
+
+    A row of a twice-released pair names its set plus its Table S2 row (#1057), and is
+    counted under that set.
+    """
     counts = Counter(
-        str(record["experiment"]["phenotype"]["screen_id"]) for record in records
+        screen_set_of(str(record["experiment"]["phenotype"]["screen_id"]))
+        for record in records
     )
     expected = {SCREEN_THIS_STUDY, SCREEN_BUTLAND}
     return LevelResult(
@@ -2185,7 +2226,7 @@ def _l4_containment(records: Sequence[Record], universe: set[str]) -> LevelResul
 def verify_records(
     records: Sequence[Record],
     *,
-    released: Mapping[tuple[str, str], float],
+    released: Mapping[tuple[str, str], Sequence[float]],
     universe: set[str],
     expected_count: int,
     hypomorphic_donors: frozenset[str],
@@ -2223,19 +2264,18 @@ def verify_records(
     return report
 
 
-def released_scores(path: str | Path) -> dict[tuple[str, str], float]:
-    """Table S2 re-read as ``(donor b-number, recipient b-number) -> GI score``.
+def released_scores(path: str | Path) -> dict[tuple[str, str], list[float]]:
+    """Table S2 re-read as ``(donor b-number, recipient b-number) -> its GI scores``.
 
-    The two contradictory duplicate pairs are excluded, since they have no single
-    released value; their rows are dropped from the build for exactly that reason.
+    A pair released once has one score; the two pairs Table S2 releases twice carry both,
+    in release order, since both rows are records (#1057).
     """
     frame = read_table_s2(path)
-    duplicate = frame.duplicated(subset=["donor_id", "recipient_id"], keep=False)
-    rows = frame.loc[~duplicate]
-    return {
-        (str(row.donor_id), str(row.recipient_id)): float(str(row.score))
-        for row in rows.itertuples(index=False)
-    }
+    out: dict[tuple[str, str], list[float]] = {}
+    for row in frame.itertuples(index=False):
+        key = (str(row.donor_id), str(row.recipient_id))
+        out.setdefault(key, []).append(float(str(row.score)))
+    return out
 
 
 def _gene_universe(records: Sequence[Record], base: str) -> set[str]:

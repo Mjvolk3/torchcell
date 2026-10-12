@@ -31,3 +31,18 @@ b says three seeds per point (a point is a family score, not one run); panel e's
 reads "share of nonessential genes scored above the gene" instead of "misrank", with the
 bold-name rule in its legend; panel c's title and axis name the 4,674 genome-wide genes
 and chance. Render: `essentiality_gate_sheet_2026-10-12-07-18-07.svg`.
+
+## 2026.10.12 - Two rows of three, the label as panel a, the status key on top
+
+Review: the status key belongs at the top of the sheet, not its foot; panel a should
+introduce the experiment rather than open on the leaderboard; "released 195" is the FCL
+held-out set (the 223 genes Merzbacher 2025 held out of its own training, 195 of them in
+the cell graph); and the genome-wide arms were trained on the 787 FCL-labeled genes
+outside that set (629 train, 158 validation, split `ess_genome_heldout_val0.2_s0`), not
+on the 195. The sheet is now 2 x 3: a the label (a genome with one ORF deleted, the
+deletion strain on YPD, a budding cell for nonessential and a cell with a skull for
+essential; drawn in matplotlib by `panel_concept`, no data), b leaderboard, c resplits,
+d genome-wide read with the training counts read from the split file, e misrank, f
+enrichment with its class names moved inside the axes. Every panel legend uses "GCN, GO
+input"; the top color key names the nine graphs once. Render:
+`essentiality_gate_sheet_2026-10-12-07-53-32.svg`.

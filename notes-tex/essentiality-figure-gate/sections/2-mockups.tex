@@ -24,17 +24,24 @@ letter are the panel's section status (not reviewed) and figure status (on file)
 key at the sheet's foot.
 
 \clearpage
-\tcfig{\figSheet}{\textbf{The sheet proposed for the main text: the held-out score
-against the published comparators, the module form that carries, and the genes still
-missed.} Color is the model family: gray a comparator with nothing learned here, blue a
-learned model reading no metabolic column and no graph, orange CGT reading the metabolic
-solve, red GCN on the gene graphs, purple their equal-weight average; a hatch marks a
-linear program solved inside the training loop. Every panel's legend sits above it.
-Written by \texttt{essentiality\_gate\_sheet.py}, GilaHyper, 2026-10-12. The panel-by-panel
-reading is under the figure.}{fig:sheet}
+\tcfig{\figSheet}{\textbf{The sheet proposed for the main text, two rows of three: the
+label, the held-out score against the published comparators, the repeated splits, the
+genome-wide read, and the genes still missed.} The held-out set everywhere is the FCL
+held-out set: the \gnHeldOut{} genes Merzbacher 2025 held out of its own training that
+the cell graph scores, \gnEssentialHeldOut{} of them essential. Color is the model family:
+gray a comparator with nothing learned here, blue a learned model reading no metabolic
+column and no graph, orange CGT reading the metabolic solve, red GCN over the nine gene
+graphs, purple their equal-weight average; a hatch marks a linear program solved inside
+the training loop. The status key is the first line of the sheet and every panel's
+legend sits above it. Written by \texttt{essentiality\_gate\_sheet.py}, GilaHyper,
+2026-10-12. The panel-by-panel reading is under the figure.}{fig:sheet}
 
 \noindent\textbf{What each panel of Figure~\ref{fig:sheet} reports.}
-\textbf{a}, Every method on the \gnHeldOut{} released held-out genes, best first: the top
+\textbf{a}, The label. One open reading frame is deleted from the genome and the
+deletion strain is grown on YPD: a strain that grows marks its gene nonessential, one
+that cannot marks it essential. Drawn by the sheet script, no data.
+\status{todo}\,\fstat{file}
+\textbf{b}, Every method on the FCL held-out \gnHeldOut{} genes, best first: the top
 rows are averages of GCN with GO input and a form of CGT (the best at \gbestAverage{}
 [\gbestAverageLo{}, \gbestAverageHi{}]), then the CGT forms, GCN with GO input
 (\gfamgoGcn{}), the learned models with no metabolic column, the DCell-style hierarchy
@@ -42,7 +49,7 @@ under the same fold protocol (\gdcellEnsemble{}), the random forest, and the two
 comparators, Flux Cone Learning at \gfclAuroc{} and FBA at \gfbaAuroc{}. Learned models
 are five-fold ensembles, the random forest is one fit on the split file, and intervals
 are gene bootstraps. \status{todo}\,\fstat{file}
-\textbf{b}, The three models fixed in advance on \gnResplits{} other held-out fifths of
+\textbf{c}, The three models fixed in advance on \gnResplits{} other held-out fifths of
 the labeled genes, sorted by the average's AUROC. Each point is one method on one split:
 the seed-mean standardized logit of three seeds, scored once on that split's held-out
 fifth, so a point is a three-seed family score and not one run. CGT with the layer-free
@@ -50,22 +57,25 @@ solve (mean \gresplitMeanlayerfree{}), GCN with GO input (\gresplitMeangoconvolu
 and their average (\gresplitMeanaverage{}), which beats the better single model on
 \gresplitDiffaverageMinusthebettersinglemodelUp{} of
 \gresplitDiffaverageMinusthebettersinglemodelOf{} splits. \status{todo}\,\fstat{file}
-\textbf{c}, The same models trained on the released genes and read on the \ggenomeN{}
-genome-wide genes that carry no GEM reaction (\ggenomeEssential{} essential), pooled over
-seeds with a gene bootstrap; the dashed line is chance. Every bar names its graph and
-its input. The metabolic columns read a constant row here, so CGT with the solve reads
+\textbf{d}, The genome-wide read. Every model here is trained on the \ggenomeLabeled{}
+FCL-labeled genes outside the FCL held-out set (\ggenomeTrain{} train, \ggenomeVal{}
+validation), never on the held-out \gnHeldOut{}, and read once on the \ggenomeN{}
+genome-wide genes the FCL file never labeled (\ggenomeEssential{} essential by SGD
+annotation), pooled over seeds with a gene bootstrap; the dashed line is chance. Every
+bar names its graph and its input. None of the \ggenomeN{} carries a yeast-GEM reaction,
+so the metabolic columns read a constant row here, and CGT with the solve reads
 \ggenlayerFree{} where GCN over the nine graphs with ProtT5 input reads \ggengcnProt{}
 and the physical degree alone, nothing trained, \ggengcnDegree{}. \status{todo}\,\fstat{file}
-\textbf{d}, What the misranked genes of the released \gnHeldOut{} share, per class: the
-chance that a gene carrying the annotation is misranked worse than one without it, 0.5
-(dashed) being no association, for CGT with the layer-free solve (circles) and GCN with
-GO input (squares), filled where the Benjamini-Hochberg $q$ within the family is under 0.1.
-\status{todo}\,\fstat{file}
-\textbf{e}, Every one of the \gnEssentialHeldOut{} essential genes in the released held-out
+\textbf{e}, Every one of the \gnEssentialHeldOut{} essential genes in the FCL held-out
 set, worst first by the two families' mean misrank; the vertical axis is the misrank
 itself, the fraction of nonessential held-out genes each family scores above the gene,
 so 0 is a gene ranked above every nonessential gene. A gene's name is bold where FBA
-calls its deletion viable on YPD, the feature panel d tests. \status{todo}\,\fstat{file}
+calls its deletion viable on YPD, the feature panel f tests. \status{todo}\,\fstat{file}
+\textbf{f}, What the misranked genes of the FCL held-out \gnHeldOut{} share, per class:
+the chance that a gene carrying the annotation is misranked worse than one without it,
+0.5 (dashed) being no association, for CGT with the layer-free solve (circles) and GCN
+with GO input (squares), filled where the Benjamini-Hochberg $q$ within the family is
+under 0.1. \status{todo}\,\fstat{file}
 
 \pfstep{What the sheet leaves to the supplement} The module forms on one backbone and
 their cost (Figure~\ref{fig:goal2}a and b), the store's scale (c), the forms by media and

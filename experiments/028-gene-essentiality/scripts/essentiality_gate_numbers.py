@@ -26,6 +26,7 @@ Writes:
 from __future__ import annotations
 
 import glob
+import gzip
 import json
 import os
 import os.path as osp
@@ -185,6 +186,11 @@ def macros() -> dict[str, str]:
     gh = read("genome_heldout_readout.json")
     m["genomeN"] = fmt(int(gh["n_test_genes"]))
     m["genomeEssential"] = fmt(int(gh["n_test_essential"]))
+    with gzip.open(osp.join(RESULTS, "splits", gh["split"]), "rt") as fh:
+        split = json.load(fh)
+    m["genomeTrain"] = fmt(len(split["train"]))
+    m["genomeVal"] = fmt(len(split["val"]))
+    m["genomeLabeled"] = fmt(len(split["train"]) + len(split["val"]))
     arms = {a["label"]: a for a in gh["arms"]}
     for key, label in GENOME.items():
         a = arms[label]

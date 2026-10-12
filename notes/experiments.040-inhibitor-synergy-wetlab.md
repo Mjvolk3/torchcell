@@ -1011,4 +1011,4 @@ Every arm that already has a copy on GilaHyper is left out; `r3_readout.py` read
 Delta tables once they are pulled. The overview of every scored arm so far, both machines,
 is `scripts/r3_plots.py` ([[experiments.040-inhibitor-synergy-wetlab.scripts.r3_plots]]).
 
-![](./assets/images/040-inhibitor-synergy-wetlab/r3_arms_overview_2026-10-12-04-51-32.svg)
+![](./assets/images/040-inhibitor-synergy-wetlab/r3_arms_overview_2026-10-12-04-52-22.svg)

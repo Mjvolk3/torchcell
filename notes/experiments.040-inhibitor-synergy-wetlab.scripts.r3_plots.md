@@ -20,4 +20,4 @@ arm, against the narrow range of the arm means, is the picture of the noise floo
 experiment note describes; an arm with one run has no spread to show and its row says
 (1).
 
-![](./assets/images/040-inhibitor-synergy-wetlab/r3_arms_overview_2026-10-12-04-51-32.svg)
+![](./assets/images/040-inhibitor-synergy-wetlab/r3_arms_overview_2026-10-12-04-52-22.svg)

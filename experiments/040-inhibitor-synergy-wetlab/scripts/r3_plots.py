@@ -203,7 +203,7 @@ def main() -> None:
                 label="Loewe from the titration fits (growth call)",
             ),
         ],
-        loc="outside upper center",
+        loc="outside lower center",
         ncol=4,
         fontsize=4.8,
         frameon=False,

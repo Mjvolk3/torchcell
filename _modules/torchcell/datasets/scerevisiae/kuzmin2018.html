@@ -123,13 +123,22 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">zipfile</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">UTC</span><span class="p">,</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">download_url</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExperimentDataset</span><span class="p">,</span> <span class="n">Organism</span><span class="p">,</span> <span class="n">post_process</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ExperimentDataset</span><span class="p">,</span>
+    <span class="n">Organism</span><span class="p">,</span>
+    <span class="n">copy_verified</span><span class="p">,</span>
+    <span class="n">link_verified</span><span class="p">,</span>
+    <span class="n">post_process</span><span class="p">,</span>
+    <span class="n">verify_raw_files</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">SGA_TM_SELECTION</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Environment</span><span class="p">,</span>
@@ -153,6 +162,15 @@
     <span class="n">UncertaintyType</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.literature.manifest</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ROLE_RAW_DATA</span><span class="p">,</span>
+    <span class="n">ArtifactRecord</span><span class="p">,</span>
+    <span class="n">Manifest</span><span class="p">,</span>
+    <span class="n">RetrievalMethod</span><span class="p">,</span>
+    <span class="n">RetrievalRecord</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.report</span><span class="w"> </span><span class="kn">import</span> <span class="n">Provenance</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProvenanceGap</span><span class="p">,</span> <span class="n">ProvenanceGapReason</span>
 
 <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -179,6 +197,193 @@
 <span class="c1"># NB: the "12-24 colony measurements" in si1.md line 59 is the QUERY fitness</span>
 <span class="c1"># (col 9, bootstrap), a DIFFERENT column whose std the loader does not store.</span>
 <span class="n">N_SAMPLES_COMBINED_MUTANT</span> <span class="o">=</span> <span class="mi">4</span>
+
+<span class="n">CITATION_KEY</span> <span class="o">=</span> <span class="s2">"kuzminSystematicAnalysisComplex2018"</span>
+<span class="n">RAW_TABLE_NAME</span> <span class="o">=</span> <span class="s2">"aao1729_data_s1.tsv"</span>
+<span class="c1">#: Additional Data S1 as every Kuzmin 2018 loader reads it; the hosted zip and the</span>
+<span class="c1">#: library mirror's ``si/si_data/Data File S1_Raw genetic interaction dataset.tsv``</span>
+<span class="c1">#: hold the same bytes (measured 2026-10-12). Verified before any record is read.</span>
+<span class="n">RAW_TABLE_SHA256</span> <span class="o">=</span> <span class="s2">"c82b60f98590071fcb07b74b672958a5863b58e03b78631e6235cb664ee82afb"</span>
+
+<span class="c1"># --- Additional Data S4: the query strains' fitness standard deviation ------------- #</span>
+<span class="c1"># The SD of a query strain's fitness is released in Additional Data S4 ("This file</span>
+<span class="c1"># contains the fitness standard for single and double mutant query strains.", si1.md</span>
+<span class="c1"># line 462), a file the hosted zip of Data S1 does not carry. It is read from the raw</span>
+<span class="c1"># mirror, where it was deposited from the library mirror's copy (deposit_raw_mirror).</span>
+<span class="c1"># Verbatim from si/si1.md line 59 (sha256 2ec80d05...): "The quantitative scoring</span>
+<span class="c1"># method employed for single and double mutant fitness estimation was described</span>
+<span class="c1"># previously (8), with the exception that bootstrapped means, instead of medians,</span>
+<span class="c1"># across replicates were used in variance estimation and final fitness values. Each</span>
+<span class="c1"># high-density array was screened in triplicate for a total of 6 replicates. Since the</span>
+<span class="c1"># arrays were in 1536-colony format, there are 4 technical replicates of mutants on the</span>
+<span class="c1"># array resulting in a total of between 12 and 24 colony measurements for each fitness</span>
+<span class="c1"># estimate." So the released "St.dev." is a BOOTSTRAP quantity, already an SE of the</span>
+<span class="c1"># estimator (never divided by sqrt(n)), and the colony count is the conservative lower</span>
+<span class="c1"># end of the stated range, as kuzmin2020.py does for its Table S5.</span>
+<span class="n">S4_NAME</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"Data File S4_Fitness standard for single and double mutant query strains.xlsx"</span>
+<span class="p">)</span>
+<span class="n">S4_SHA256</span> <span class="o">=</span> <span class="s2">"2c9ee77dc6f0a08900158f23cecbcad41db6dc4a2555fbc7100fbca455869d51"</span>
+<span class="n">_S4_LIBRARY_RELPATH</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"si/si_data/</span><span class="si">{</span><span class="n">S4_NAME</span><span class="si">}</span><span class="s2">"</span>
+<span class="n">_S4_RAW_RELPATH</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"data/</span><span class="si">{</span><span class="n">S4_NAME</span><span class="si">}</span><span class="s2">"</span>
+<span class="n">N_SAMPLES_QUERY_STRAIN_FITNESS</span> <span class="o">=</span> <span class="mi">12</span>
+<span class="c1"># Data S1 rounds the query fitness to 4 decimals; S4 carries more. A matched pair must</span>
+<span class="c1"># agree to within the rounding (half a unit of the 4th decimal; the largest measured</span>
+<span class="c1"># difference over the 504 matched strains is 5.0e-05).</span>
+<span class="n">_QUERY_FITNESS_ROUNDING_TOL</span> <span class="o">=</span> <span class="mf">5e-5</span> <span class="o">+</span> <span class="mf">1e-9</span>
+<span class="c1">#: A query strain Additional Data S4 lists with a blank Fitness and St.dev.: the release</span>
+<span class="c1">#: states no uncertainty for it (19 Smf and 7 Dmf records).</span>
+<span class="n">S4_BLANK_GAP</span> <span class="o">=</span> <span class="n">ProvenanceGap</span><span class="p">(</span>
+    <span class="n">field</span><span class="o">=</span><span class="s2">"fitness_uncertainty"</span><span class="p">,</span>
+    <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_reported_by_primary</span><span class="p">,</span>
+    <span class="n">looked_in</span><span class="o">=</span><span class="n">Provenance</span><span class="p">(</span>
+        <span class="n">source_uri</span><span class="o">=</span><span class="sa">f</span><span class="s2">"tc://raw/</span><span class="si">{</span><span class="n">CITATION_KEY</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">_S4_RAW_RELPATH</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+        <span class="n">citation_key</span><span class="o">=</span><span class="n">CITATION_KEY</span><span class="p">,</span>
+        <span class="n">sha256</span><span class="o">=</span><span class="n">S4_SHA256</span><span class="p">,</span>
+        <span class="n">page</span><span class="o">=</span><span class="s2">"the row of this query strain's tm number"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"Additional Data S4 lists this query strain with a blank Fitness and "</span>
+    <span class="s2">"St.dev.; no other file of the release states its fitness uncertainty"</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">raw_mirror_dir</span><span class="p">(</span><span class="n">data_root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""``$DATA_ROOT/torchcell-raw/kuzminSystematicAnalysisComplex2018``."""</span>
+    <span class="k">return</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DATA_ROOT"</span><span class="p">],</span> <span class="s2">"torchcell-raw"</span><span class="p">,</span> <span class="n">CITATION_KEY</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">deposit_raw_mirror</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">retrieved_at</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">data_root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Copy Additional Data S4 from the library mirror into the raw mirror; write its</span>
+<span class="sd">    ``manifest.json``.</span>
+
+<span class="sd">    Idempotent by sha256: an existing deposit with the pinned hash is kept, a different</span>
+<span class="sd">    one raises. The library mirror's own record of this file carries no upstream</span>
+<span class="sd">    retrieval; the SI names where the files were released (the Boone-lab supplement</span>
+<span class="sd">    page and DRYAD doi:10.5061/dryad.tt367), recorded as ``si_data_sources``.</span>
+<span class="sd">    """</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">data_root</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DATA_ROOT"</span><span class="p">]</span>
+    <span class="n">source</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="s2">"torchcell-library"</span><span class="p">,</span> <span class="n">CITATION_KEY</span><span class="p">,</span> <span class="n">_S4_LIBRARY_RELPATH</span><span class="p">)</span>
+    <span class="n">dest</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">raw_mirror_dir</span><span class="p">(</span><span class="n">root</span><span class="p">))</span> <span class="o">/</span> <span class="n">_S4_RAW_RELPATH</span>
+    <span class="n">dest</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">dest</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="n">verify_raw_files</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">dest</span><span class="o">.</span><span class="n">parent</span><span class="p">),</span> <span class="p">{</span><span class="n">S4_NAME</span><span class="p">:</span> <span class="n">S4_SHA256</span><span class="p">})</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">copy_verified</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">dest</span><span class="p">,</span> <span class="n">S4_SHA256</span><span class="p">)</span>
+    <span class="n">manifest</span> <span class="o">=</span> <span class="n">Manifest</span><span class="p">(</span>
+        <span class="n">citation_key</span><span class="o">=</span><span class="n">CITATION_KEY</span><span class="p">,</span>
+        <span class="n">doi</span><span class="o">=</span><span class="s2">"10.1126/science.aao1729"</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">"Systematic analysis of complex genetic interactions"</span><span class="p">,</span>
+        <span class="n">library_id</span><span class="o">=</span><span class="s2">"6582362"</span><span class="p">,</span>
+        <span class="n">zotero_item_key</span><span class="o">=</span><span class="s2">"F7BPKWES"</span><span class="p">,</span>
+        <span class="n">files</span><span class="o">=</span><span class="p">[</span>
+            <span class="n">ArtifactRecord</span><span class="p">(</span>
+                <span class="n">path</span><span class="o">=</span><span class="n">_S4_RAW_RELPATH</span><span class="p">,</span>
+                <span class="n">role</span><span class="o">=</span><span class="n">ROLE_RAW_DATA</span><span class="p">,</span>
+                <span class="nb">bytes</span><span class="o">=</span><span class="n">dest</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_size</span><span class="p">,</span>
+                <span class="n">sha256</span><span class="o">=</span><span class="n">S4_SHA256</span><span class="p">,</span>
+                <span class="n">source</span><span class="o">=</span><span class="n">source</span><span class="p">,</span>
+                <span class="n">retrieval</span><span class="o">=</span><span class="n">RetrievalRecord</span><span class="p">(</span>
+                    <span class="n">method</span><span class="o">=</span><span class="n">RetrievalMethod</span><span class="o">.</span><span class="n">local_archive</span><span class="p">,</span>
+                    <span class="n">source_url</span><span class="o">=</span><span class="n">source</span><span class="p">,</span>
+                    <span class="n">retriever</span><span class="o">=</span><span class="s2">"torchcell.literature.retrieve.local_archive"</span><span class="p">,</span>
+                    <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s2">"path"</span><span class="p">:</span> <span class="n">source</span><span class="p">,</span> <span class="s2">"sha256"</span><span class="p">:</span> <span class="n">S4_SHA256</span><span class="p">},</span>
+                    <span class="n">sha256</span><span class="o">=</span><span class="n">S4_SHA256</span><span class="p">,</span>
+                    <span class="n">retrieved_at</span><span class="o">=</span><span class="n">retrieved_at</span><span class="p">,</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">],</span>
+        <span class="n">si_data_sources</span><span class="o">=</span><span class="p">[</span>
+            <span class="s2">"http://boonelab.ccbr.utoronto.ca/supplement/kuzmin2018/supplement.html"</span><span class="p">,</span>
+            <span class="s2">"https://doi.org/10.5061/dryad.tt367"</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="n">si_expected</span><span class="o">=</span><span class="p">[</span>
+            <span class="s2">"Additional Data S4 (Data File S4_Fitness standard for single and double "</span>
+            <span class="s2">"mutant query strains.xlsx): deposited, read by SmfKuzmin2018Dataset and "</span>
+            <span class="s2">"DmfKuzmin2018Dataset for the query strains' fitness SD"</span><span class="p">,</span>
+            <span class="s2">"Additional Data S1 (aao1729_data_s1.tsv): NOT deposited here; the loaders "</span>
+            <span class="s2">"read it from the hosted zip, and the library mirror holds the same bytes "</span>
+            <span class="s2">"(sha256 c82b60f98590071fcb07b74b672958a5863b58e03b78631e6235cb664ee82afb)"</span><span class="p">,</span>
+            <span class="s2">"the library mirror's manifest records no upstream retrieval for its copy "</span>
+            <span class="s2">"of Data S4; the SI names the two locations in si_data_sources"</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="n">provenance_complete</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">created_at</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">UTC</span><span class="p">)</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span>
+    <span class="p">)</span>
+    <span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">raw_mirror_dir</span><span class="p">(</span><span class="n">root</span><span class="p">))</span> <span class="o">/</span> <span class="s2">"manifest.json"</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span>
+        <span class="n">manifest</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">raw_mirror_dir</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_link_s4</span><span class="p">(</span><span class="n">raw_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Symlink Additional Data S4 from the raw mirror into ``raw_dir`` (verified)."""</span>
+    <span class="n">mirror</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">raw_mirror_dir</span><span class="p">(),</span> <span class="n">_S4_RAW_RELPATH</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">osp</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">mirror</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">mirror</span><span class="si">}</span><span class="s2"> is missing: deposit Additional Data S4 into the raw mirror with "</span>
+            <span class="s2">"kuzmin2018.deposit_raw_mirror(), then rebuild (sha256 verified)."</span>
+        <span class="p">)</span>
+    <span class="n">link_verified</span><span class="p">(</span><span class="n">mirror</span><span class="p">,</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">S4_NAME</span><span class="p">),</span> <span class="n">S4_SHA256</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_query_strain_uncertainty</span><span class="p">(</span><span class="n">std_val</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Ontology fields for a query-strain fitness SD (Additional Data S4).</span>
+
+<span class="sd">    A blank S4 SD is a typed gap (``S4_BLANK_GAP``); a released one is a bootstrap SE</span>
+<span class="sd">    over colonies, used as-is (see ``N_SAMPLES_QUERY_STRAIN_FITNESS``).</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">std_val</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">"provenance_gaps"</span><span class="p">:</span> <span class="p">[</span><span class="n">S4_BLANK_GAP</span><span class="p">]}</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"fitness_uncertainty"</span><span class="p">:</span> <span class="n">std_val</span><span class="p">,</span>
+        <span class="s2">"fitness_uncertainty_type"</span><span class="p">:</span> <span class="n">UncertaintyType</span><span class="o">.</span><span class="n">bootstrap_se</span><span class="p">,</span>
+        <span class="s2">"n_samples"</span><span class="p">:</span> <span class="n">N_SAMPLES_QUERY_STRAIN_FITNESS</span><span class="p">,</span>
+        <span class="s2">"sample_unit"</span><span class="p">:</span> <span class="n">SampleUnit</span><span class="o">.</span><span class="n">colony</span><span class="p">,</span>
+    <span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_attach_query_strain_sd</span><span class="p">(</span>
+    <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">df_s4</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">is_query</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Add ``query_strain_sd`` (Additional Data S4 "St.dev.") to the query rows.</span>
+
+<span class="sd">    S4 keys a strain by its bare tm number ("tm3180"); Data S1 by the full strain id</span>
+<span class="sd">    ("YAR002W+YDL227C_tm3180"). Every query row must find its S4 row (all 546 do);</span>
+<span class="sd">    a missing one, or an S4 fitness that differs from Data S1's 4-decimal value by more</span>
+<span class="sd">    than the rounding, is refused rather than joined. Non-query rows get NaN.</span>
+<span class="sd">    """</span>
+    <span class="n">repeated</span> <span class="o">=</span> <span class="n">df_s4</span><span class="p">[</span><span class="s2">"Query Strain ID"</span><span class="p">][</span><span class="n">df_s4</span><span class="p">[</span><span class="s2">"Query Strain ID"</span><span class="p">]</span><span class="o">.</span><span class="n">duplicated</span><span class="p">()]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">repeated</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Additional Data S4 lists query strain(s) </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">repeated</span><span class="p">)</span><span class="si">}</span><span class="s2"> more than once"</span>
+        <span class="p">)</span>
+    <span class="n">s4</span> <span class="o">=</span> <span class="n">df_s4</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">"Query Strain ID"</span><span class="p">)</span>
+    <span class="n">tm</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">is_query</span><span class="p">,</span> <span class="s2">"Query strain ID"</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">"_"</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">str</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">missing</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">tm</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">s4</span><span class="o">.</span><span class="n">index</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">missing</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">missing</span><span class="p">)</span><span class="si">}</span><span class="s2"> query strain(s) are absent from Additional Data S4: "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">missing</span><span class="p">[:</span><span class="mi">10</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+    <span class="n">s4_fitness</span> <span class="o">=</span> <span class="n">tm</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">s4</span><span class="p">[</span><span class="s2">"Fitness"</span><span class="p">])</span>
+    <span class="n">s4_sd</span> <span class="o">=</span> <span class="n">tm</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">s4</span><span class="p">[</span><span class="s2">"St.dev."</span><span class="p">])</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">s4_fitness</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span> <span class="o">!=</span> <span class="n">s4_sd</span><span class="o">.</span><span class="n">isna</span><span class="p">())</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">"Additional Data S4 gives a Fitness without a St.dev. (or the reverse) "</span>
+            <span class="s2">"for a query strain"</span>
+        <span class="p">)</span>
+    <span class="n">gap</span> <span class="o">=</span> <span class="p">(</span><span class="n">s4_fitness</span> <span class="o">-</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">is_query</span><span class="p">,</span> <span class="s2">"Query single/double mutant fitness"</span><span class="p">])</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">gap</span> <span class="o">&gt;</span> <span class="n">_QUERY_FITNESS_ROUNDING_TOL</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">"Additional Data S4 and Data S1 disagree beyond rounding on "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">int</span><span class="p">((</span><span class="n">gap</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">_QUERY_FITNESS_ROUNDING_TOL</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span><span class="si">}</span><span class="s2"> query strain(s) "</span>
+            <span class="sa">f</span><span class="s2">"(max |diff| </span><span class="si">{</span><span class="n">gap</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">); the SD would describe another estimate"</span>
+        <span class="p">)</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">df</span><span class="p">[</span><span class="s2">"query_strain_sd"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"nan"</span><span class="p">)</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">is_query</span><span class="p">,</span> <span class="s2">"query_strain_sd"</span><span class="p">]</span> <span class="o">=</span> <span class="n">s4_sd</span>
+    <span class="k">return</span> <span class="n">df</span>
+
 
 <span class="c1"># Record kinds emitted by DmfKuzmin2018Dataset. Two physically different</span>
 <span class="c1"># double-mutant measurements live in one raw table:</span>
@@ -248,6 +453,13 @@
 
 <span class="sd">    Returns empty uncertainty when the SD is unreported (None/NaN); otherwise</span>
 <span class="sd">    fitness_se is auto-derived by FitnessPhenotype as SD/sqrt(n_samples).</span>
+
+<span class="sd">    A released SD of exactly 0 (4 digenic and 5 trigenic rows of Data S1) is stored</span>
+<span class="sd">    as released, with the SE of 0 that arithmetic gives, never dropped or replaced by</span>
+<span class="sd">    a gap (#894, #895; owner decision 2026-10-12: the uncertainty a source releases</span>
+<span class="sd">    is stored as released). The SI defines the column only as "12. Combined mutant</span>
+<span class="sd">    fitness standard deviation" (si/si1.md line 427) and states nothing else about</span>
+<span class="sd">    these rows.</span>
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">std_val</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">{</span><span class="s2">"fitness_uncertainty"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">"fitness_uncertainty_type"</span><span class="p">:</span> <span class="kc">None</span><span class="p">}</span>
@@ -346,9 +558,9 @@
         <span class="k">return</span> <span class="n">FitnessExperimentReference</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">raw_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>  <span class="c1"># type: ignore[override]  # single raw file as str, base is list[str]</span>
-<span class="w">        </span><span class="sd">"""Return the name of the raw Kuzmin 2018 data file."""</span>
-        <span class="k">return</span> <span class="s2">"aao1729_data_s1.tsv"</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">raw_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Data S1 (from the hosted zip) and Additional Data S4 (from the raw mirror)."""</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">RAW_TABLE_NAME</span><span class="p">,</span> <span class="n">S4_NAME</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">processed_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
@@ -358,11 +570,17 @@
 <div class="viewcode-block" id="SmfKuzmin2018Dataset.download">
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.kuzmin2018.SmfKuzmin2018Dataset.html#torchcell.datasets.scerevisiae.kuzmin2018.SmfKuzmin2018Dataset.download">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">download</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Download the Kuzmin 2018 archive and extract it into the raw directory."""</span>
-        <span class="n">path</span> <span class="o">=</span> <span class="n">download_url</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">url</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">)</span>
-        <span class="k">with</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">)</span> <span class="k">as</span> <span class="n">zip_ref</span><span class="p">:</span>
-            <span class="n">zip_ref</span><span class="o">.</span><span class="n">extractall</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">)</span>
-        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">path</span><span class="p">)</span></div>
+<span class="w">        </span><span class="sd">"""Fetch Data S1 from the hosted zip unless it is in ``raw/``; link S4 in.</span>
+
+<span class="sd">        Data S1 is fetched only when absent so a store whose Data S1 is already in</span>
+<span class="sd">        ``raw/`` gains Additional Data S4 without a network call.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">osp</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">RAW_TABLE_NAME</span><span class="p">)):</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">download_url</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">url</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">)</span>
+            <span class="k">with</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">)</span> <span class="k">as</span> <span class="n">zip_ref</span><span class="p">:</span>
+                <span class="n">zip_ref</span><span class="o">.</span><span class="n">extractall</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="n">_link_s4</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="SmfKuzmin2018Dataset.process">
@@ -370,9 +588,13 @@
     <span class="nd">@post_process</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Preprocess the raw table and write experiment records to the LMDB store."""</span>
-        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_file_names</span><span class="p">),</span> <span class="n">sep</span><span class="o">=</span><span class="s2">"</span><span class="se">\t</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">verify_raw_files</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="p">{</span><span class="n">RAW_TABLE_NAME</span><span class="p">:</span> <span class="n">RAW_TABLE_SHA256</span><span class="p">,</span> <span class="n">S4_NAME</span><span class="p">:</span> <span class="n">S4_SHA256</span><span class="p">}</span>
+        <span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">RAW_TABLE_NAME</span><span class="p">),</span> <span class="n">sep</span><span class="o">=</span><span class="s2">"</span><span class="se">\t</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">df_s4</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">S4_NAME</span><span class="p">))</span>
 
-        <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">preprocess_raw</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">preprocess_raw</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">df_s4</span><span class="p">)</span>
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"data.csv"</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
@@ -398,10 +620,14 @@
 
 <div class="viewcode-block" id="SmfKuzmin2018Dataset.preprocess_raw">
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.kuzmin2018.SmfKuzmin2018Dataset.html#torchcell.datasets.scerevisiae.kuzmin2018.SmfKuzmin2018Dataset.preprocess_raw">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">preprocess_raw</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">preprocess</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">preprocess_raw</span><span class="p">(</span>  <span class="c1"># type: ignore[override]  # dataset-specific signature</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">df_s4</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Clean and reshape the raw Kuzmin table into per-genotype rows."""</span>
+<span class="w">        </span><span class="sd">"""Clean and reshape the raw Kuzmin table into per-genotype rows.</span>
+
+<span class="sd">        The query-strain rows gain ``query_strain_sd`` from Additional Data S4</span>
+<span class="sd">        (``_attach_query_strain_sd``).</span>
+<span class="sd">        """</span>
         <span class="n">df</span><span class="p">[[</span><span class="s2">"Query strain ID_1"</span><span class="p">,</span> <span class="s2">"Query strain ID_2"</span><span class="p">]]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span>
             <span class="s2">"Query strain ID"</span>
         <span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"+"</span><span class="p">,</span> <span class="n">expand</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -465,7 +691,7 @@
             <span class="o">.</span><span class="n">copy</span><span class="p">()</span>
             <span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">df</span></div>
+        <span class="k">return</span> <span class="n">_attach_query_strain_sd</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">df_s4</span><span class="p">,</span> <span class="n">df</span><span class="p">[</span><span class="s2">"smf_type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"query_smf"</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="SmfKuzmin2018Dataset.create_experiment">
@@ -540,9 +766,17 @@
         <span class="k">elif</span> <span class="n">row</span><span class="p">[</span><span class="s2">"smf_type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"array_smf"</span><span class="p">:</span>
             <span class="n">smf_key</span> <span class="o">=</span> <span class="s2">"Array single mutant fitness"</span>
 
-        <span class="c1"># No reported std for single mutants (SMF value comes from Costanzo/query</span>
-        <span class="c1"># estimates); leave uncertainty unset.</span>
-        <span class="n">phenotype</span> <span class="o">=</span> <span class="n">FitnessPhenotype</span><span class="p">(</span><span class="n">fitness</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="n">smf_key</span><span class="p">],</span> <span class="n">fitness_std</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+        <span class="c1"># A query single mutant's SD is released in Additional Data S4 (a bootstrap</span>
+        <span class="c1"># SE, or a typed gap where S4 leaves it blank); an array single mutant's</span>
+        <span class="c1"># fitness comes with no SD in this release, so it carries none.</span>
+        <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="s2">"smf_type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"query_smf"</span><span class="p">:</span>
+            <span class="n">phenotype</span> <span class="o">=</span> <span class="n">FitnessPhenotype</span><span class="p">(</span>
+                <span class="n">fitness</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="n">smf_key</span><span class="p">],</span>
+                <span class="n">fitness_std</span><span class="o">=</span><span class="n">_reported_sd</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"query_strain_sd"</span><span class="p">]),</span>
+                <span class="o">**</span><span class="n">_query_strain_uncertainty</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"query_strain_sd"</span><span class="p">]),</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">phenotype</span> <span class="o">=</span> <span class="n">FitnessPhenotype</span><span class="p">(</span><span class="n">fitness</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="n">smf_key</span><span class="p">],</span> <span class="n">fitness_std</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 
         <span class="c1"># Reference noise = mean combined-mutant SD -&gt; sample_sd over colonies.</span>
         <span class="n">phenotype_reference</span> <span class="o">=</span> <span class="n">FitnessPhenotype</span><span class="p">(</span>
@@ -615,18 +849,24 @@
         <span class="k">return</span> <span class="n">FitnessExperimentReference</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">raw_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>  <span class="c1"># type: ignore[override]  # single raw file as str, base is list[str]</span>
-<span class="w">        </span><span class="sd">"""Return the name of the raw Kuzmin 2018 data file."""</span>
-        <span class="k">return</span> <span class="s2">"aao1729_data_s1.tsv"</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">raw_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Data S1 (from the hosted zip) and Additional Data S4 (from the raw mirror)."""</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">RAW_TABLE_NAME</span><span class="p">,</span> <span class="n">S4_NAME</span><span class="p">]</span>
 
 <div class="viewcode-block" id="DmfKuzmin2018Dataset.download">
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.kuzmin2018.DmfKuzmin2018Dataset.html#torchcell.datasets.scerevisiae.kuzmin2018.DmfKuzmin2018Dataset.download">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">download</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Download the Kuzmin 2018 archive and extract it into the raw directory."""</span>
-        <span class="n">path</span> <span class="o">=</span> <span class="n">download_url</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">url</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">)</span>
-        <span class="k">with</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">)</span> <span class="k">as</span> <span class="n">zip_ref</span><span class="p">:</span>
-            <span class="n">zip_ref</span><span class="o">.</span><span class="n">extractall</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">)</span>
-        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">path</span><span class="p">)</span></div>
+<span class="w">        </span><span class="sd">"""Fetch Data S1 from the hosted zip unless it is in ``raw/``; link S4 in.</span>
+
+<span class="sd">        Data S1 is fetched only when absent so a store whose Data S1 is already in</span>
+<span class="sd">        ``raw/`` gains Additional Data S4 without a network call.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">osp</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">RAW_TABLE_NAME</span><span class="p">)):</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">download_url</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">url</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">)</span>
+            <span class="k">with</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">)</span> <span class="k">as</span> <span class="n">zip_ref</span><span class="p">:</span>
+                <span class="n">zip_ref</span><span class="o">.</span><span class="n">extractall</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="n">_link_s4</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="DmfKuzmin2018Dataset.process">
@@ -634,9 +874,13 @@
     <span class="nd">@post_process</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Preprocess the raw table and write experiment records to the LMDB store."""</span>
-        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_file_names</span><span class="p">),</span> <span class="n">sep</span><span class="o">=</span><span class="s2">"</span><span class="se">\t</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">verify_raw_files</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="p">{</span><span class="n">RAW_TABLE_NAME</span><span class="p">:</span> <span class="n">RAW_TABLE_SHA256</span><span class="p">,</span> <span class="n">S4_NAME</span><span class="p">:</span> <span class="n">S4_SHA256</span><span class="p">}</span>
+        <span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">RAW_TABLE_NAME</span><span class="p">),</span> <span class="n">sep</span><span class="o">=</span><span class="s2">"</span><span class="se">\t</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">df_s4</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">S4_NAME</span><span class="p">))</span>
 
-        <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">preprocess_raw</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">preprocess_raw</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">df_s4</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">subset_n</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">subset_n</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -664,10 +908,14 @@
 
 <div class="viewcode-block" id="DmfKuzmin2018Dataset.preprocess_raw">
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.kuzmin2018.DmfKuzmin2018Dataset.html#torchcell.datasets.scerevisiae.kuzmin2018.DmfKuzmin2018Dataset.preprocess_raw">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">preprocess_raw</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">preprocess</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">preprocess_raw</span><span class="p">(</span>  <span class="c1"># type: ignore[override]  # dataset-specific signature</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">df_s4</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Clean and reshape the raw Kuzmin table into per-genotype rows."""</span>
+<span class="w">        </span><span class="sd">"""Clean and reshape the raw Kuzmin table into per-genotype rows.</span>
+
+<span class="sd">        The query-strain rows gain ``query_strain_sd`` from Additional Data S4</span>
+<span class="sd">        (``_attach_query_strain_sd``).</span>
+<span class="sd">        """</span>
         <span class="n">df</span><span class="p">[[</span><span class="s2">"Query strain ID_1"</span><span class="p">,</span> <span class="s2">"Query strain ID_2"</span><span class="p">]]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span>
             <span class="s2">"Query strain ID"</span>
         <span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"+"</span><span class="p">,</span> <span class="n">expand</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -727,7 +975,9 @@
         <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"'"</span><span class="p">,</span> <span class="s2">"_prime"</span><span class="p">,</span> <span class="n">regex</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"Δ"</span><span class="p">,</span> <span class="s2">"_delta"</span><span class="p">,</span> <span class="n">regex</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">df</span></div>
+        <span class="k">return</span> <span class="n">_attach_query_strain_sd</span><span class="p">(</span>
+            <span class="n">df</span><span class="p">,</span> <span class="n">df_s4</span><span class="p">,</span> <span class="n">df</span><span class="p">[</span><span class="s2">"record_kind"</span><span class="p">]</span> <span class="o">==</span> <span class="n">RECORD_KIND_DOUBLE_MUTANT_QUERY_STRAIN</span>
+        <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="DmfKuzmin2018Dataset.create_experiment">
@@ -792,19 +1042,13 @@
         <span class="n">environment_reference</span> <span class="o">=</span> <span class="n">environment</span><span class="o">.</span><span class="n">model_copy</span><span class="p">()</span>
         <span class="c1"># Phenotype</span>
         <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="s2">"record_kind"</span><span class="p">]</span> <span class="o">==</span> <span class="n">RECORD_KIND_DOUBLE_MUTANT_QUERY_STRAIN</span><span class="p">:</span>
-            <span class="c1"># The SD of these query-strain fitnesses is released in "Data File</span>
-            <span class="c1"># S4_Fitness standard for single and double mutant query strains.xlsx",</span>
-            <span class="c1"># which is NOT among this loader's declared raw files (it declares only</span>
-            <span class="c1"># aao1729_data_s1.tsv out of the hosted zip). So no uncertainty is</span>
-            <span class="c1"># recorded, exactly as SmfKuzmin2018Dataset does for query single-mutant</span>
-            <span class="c1"># fitness. FOLLOW-UP: ingesting it requires adding Data File S4 to the</span>
-            <span class="c1"># raw mirror with a provenance record (source_url + retrieval_command +</span>
-            <span class="c1"># sha256); per the SI it is a bootstrap quantity over 12-24 colony</span>
-            <span class="c1"># measurements, not a sample SD (see kuzmin2020.py's</span>
-            <span class="c1"># N_SAMPLES_QUERY_STRAIN_FITNESS for the verbatim quote).</span>
+            <span class="c1"># The SD of a query strain's fitness is released in Additional Data S4:</span>
+            <span class="c1"># a bootstrap SE over colonies, or a typed gap where S4 leaves it blank.</span>
             <span class="n">fitness</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">"Query single/double mutant fitness"</span><span class="p">]</span>
-            <span class="n">fitness_std</span> <span class="o">=</span> <span class="kc">None</span>
-            <span class="n">uncertainty</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">fitness_std</span> <span class="o">=</span> <span class="n">_reported_sd</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"query_strain_sd"</span><span class="p">])</span>
+            <span class="n">uncertainty</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">_query_strain_uncertainty</span><span class="p">(</span>
+                <span class="n">row</span><span class="p">[</span><span class="s2">"query_strain_sd"</span><span class="p">]</span>
+            <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">fitness</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">"Combined mutant fitness"</span><span class="p">]</span>
             <span class="n">fitness_std</span> <span class="o">=</span> <span class="n">_reported_sd</span><span class="p">(</span>
@@ -880,9 +1124,9 @@
         <span class="k">return</span> <span class="n">FitnessExperimentReference</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">raw_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>  <span class="c1"># type: ignore[override]  # single raw file as str, base is list[str]</span>
-<span class="w">        </span><span class="sd">"""Return the name of the raw Kuzmin 2018 data file."""</span>
-        <span class="k">return</span> <span class="s2">"aao1729_data_s1.tsv"</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">raw_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Additional Data S1, from the hosted zip."""</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">RAW_TABLE_NAME</span><span class="p">]</span>
 
 <div class="viewcode-block" id="TmfKuzmin2018Dataset.download">
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.kuzmin2018.TmfKuzmin2018Dataset.html#torchcell.datasets.scerevisiae.kuzmin2018.TmfKuzmin2018Dataset.download">[docs]</a>
@@ -899,7 +1143,8 @@
     <span class="nd">@post_process</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Preprocess the raw table and write experiment records to the LMDB store."""</span>
-        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_file_names</span><span class="p">),</span> <span class="n">sep</span><span class="o">=</span><span class="s2">"</span><span class="se">\t</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">verify_raw_files</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="p">{</span><span class="n">RAW_TABLE_NAME</span><span class="p">:</span> <span class="n">RAW_TABLE_SHA256</span><span class="p">})</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">RAW_TABLE_NAME</span><span class="p">),</span> <span class="n">sep</span><span class="o">=</span><span class="s2">"</span><span class="se">\t</span><span class="s2">"</span><span class="p">)</span>
 
         <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">preprocess_raw</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">subset_n</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -1132,9 +1377,9 @@
         <span class="k">return</span> <span class="n">GeneInteractionExperimentReference</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">raw_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>  <span class="c1"># type: ignore[override]  # single raw file as str, base is list[str]</span>
-<span class="w">        </span><span class="sd">"""Return the name of the raw Kuzmin 2018 data file."""</span>
-        <span class="k">return</span> <span class="s2">"aao1729_data_s1.tsv"</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">raw_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Additional Data S1, from the hosted zip."""</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">RAW_TABLE_NAME</span><span class="p">]</span>
 
 <div class="viewcode-block" id="DmiKuzmin2018Dataset.download">
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.kuzmin2018.DmiKuzmin2018Dataset.html#torchcell.datasets.scerevisiae.kuzmin2018.DmiKuzmin2018Dataset.download">[docs]</a>
@@ -1151,7 +1396,8 @@
     <span class="nd">@post_process</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Preprocess the raw table and write experiment records to the LMDB store."""</span>
-        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_file_names</span><span class="p">),</span> <span class="n">sep</span><span class="o">=</span><span class="s2">"</span><span class="se">\t</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">verify_raw_files</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="p">{</span><span class="n">RAW_TABLE_NAME</span><span class="p">:</span> <span class="n">RAW_TABLE_SHA256</span><span class="p">})</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">RAW_TABLE_NAME</span><span class="p">),</span> <span class="n">sep</span><span class="o">=</span><span class="s2">"</span><span class="se">\t</span><span class="s2">"</span><span class="p">)</span>
 
         <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">preprocess_raw</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">subset_n</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -1364,9 +1610,9 @@
         <span class="k">return</span> <span class="n">GeneInteractionExperimentReference</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">raw_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>  <span class="c1"># type: ignore[override]  # single raw file as str, base is list[str]</span>
-<span class="w">        </span><span class="sd">"""Return the name of the raw Kuzmin 2018 data file."""</span>
-        <span class="k">return</span> <span class="s2">"aao1729_data_s1.tsv"</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">raw_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Additional Data S1, from the hosted zip."""</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">RAW_TABLE_NAME</span><span class="p">]</span>
 
 <div class="viewcode-block" id="TmiKuzmin2018Dataset.download">
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.kuzmin2018.TmiKuzmin2018Dataset.html#torchcell.datasets.scerevisiae.kuzmin2018.TmiKuzmin2018Dataset.download">[docs]</a>
@@ -1383,7 +1629,8 @@
     <span class="nd">@post_process</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Preprocess the raw table and write experiment records to the LMDB store."""</span>
-        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_file_names</span><span class="p">),</span> <span class="n">sep</span><span class="o">=</span><span class="s2">"</span><span class="se">\t</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">verify_raw_files</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="p">{</span><span class="n">RAW_TABLE_NAME</span><span class="p">:</span> <span class="n">RAW_TABLE_SHA256</span><span class="p">})</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">RAW_TABLE_NAME</span><span class="p">),</span> <span class="n">sep</span><span class="o">=</span><span class="s2">"</span><span class="se">\t</span><span class="s2">"</span><span class="p">)</span>
 
         <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">preprocess_raw</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">subset_n</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>

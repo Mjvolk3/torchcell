@@ -334,6 +334,13 @@
 
 <span class="sd">    Returns empty uncertainty when the SD is unreported (None/NaN); otherwise</span>
 <span class="sd">    fitness_se is auto-derived by FitnessPhenotype as SD/sqrt(n_samples).</span>
+
+<span class="sd">    A released SD of exactly 0 (18 + 15 digenic and 6 + 7 trigenic rows of Tables S1 +</span>
+<span class="sd">    S3) is stored as released, with the SE of 0 that arithmetic gives, never dropped or</span>
+<span class="sd">    replaced by a gap (#897; owner decision 2026-10-12: the uncertainty a source releases is stored</span>
+<span class="sd">    as released). The SI defines the column only as "12. Combined mutant fitness</span>
+<span class="sd">    standard deviation" (si/si1.md lines 229 and 285) and states nothing else about</span>
+<span class="sd">    these rows.</span>
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">std_val</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">{</span><span class="s2">"fitness_uncertainty"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">"fitness_uncertainty_type"</span><span class="p">:</span> <span class="kc">None</span><span class="p">}</span>
@@ -1198,10 +1205,15 @@
         <span class="p">)</span>
         <span class="n">environment_reference</span> <span class="o">=</span> <span class="n">environment</span><span class="o">.</span><span class="n">model_copy</span><span class="p">()</span>
 
+        <span class="c1"># The released triple-mutant SD is a sample SD over colonies, labeled exactly</span>
+        <span class="c1"># as the Dmf digenic SD of the same column (it was stored only as the</span>
+        <span class="c1"># deprecated fitness_std before; owner decision 2026-10-12: "if uncertainty</span>
+        <span class="c1"># exists we cannot be missing it!").</span>
         <span class="n">phenotype</span> <span class="o">=</span> <span class="n">FitnessPhenotype</span><span class="p">(</span>
             <span class="n">fitness</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"fitness"</span><span class="p">],</span>
             <span class="n">fitness_std</span><span class="o">=</span><span class="n">_reported_sd</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"fitness_std"</span><span class="p">]),</span>
             <span class="n">screen_id</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"screen_id"</span><span class="p">],</span>
+            <span class="o">**</span><span class="n">_combined_mutant_uncertainty</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"fitness_std"</span><span class="p">]),</span>
         <span class="p">)</span>
 
         <span class="n">phenotype_reference</span> <span class="o">=</span> <span class="n">FitnessPhenotype</span><span class="p">(</span>

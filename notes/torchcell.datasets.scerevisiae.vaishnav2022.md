@@ -37,7 +37,7 @@ Counted by the inventory script off the sha256-pinned mirror, never from the abs
 | distinct `seq110` sequences | 71,158 | same file |
 | rows whose `origID` is its own `seqID` | 67,690 | same file |
 | groups with no `ExpressionLevel` (refused) | 104 (110 rows) | same file |
-| **records stored** | **71,054** | the build |
+| **records the loader builds** | **71,054** | `read_measurements` on the real files |
 | expression range | 0.3206 to 17.0 | same file |
 | Zenodo defined-medium test-set rows | 5,327 | Zenodo 4436477 |
 | of those, joining the GEO table by `origID` | 5,327, all to distinct `seqID`s | measured |
@@ -55,6 +55,21 @@ the two released per-record values the GEO table does not carry: its `expt` toke
 (`NBT_S288CdU_SCUra`, stored as `library_id`) and `proTotal` (stored as `read_count`), on
 the 5,327 records it covers. The other 65,727 carry `None` for both, which is what the
 release states about them.
+
+### Store build and L0-L4: QUEUED, not yet measured
+
+The dev store is slurm array job **4269** (`991-build-vaishnav2022`, the committed
+`gilahyper_build_dataset_lmdbs_array.slurm` with `--retire-existing --verify`), submitted
+2026-10-12 and still PENDING behind 58 other jobs on the node. So the L0-L4 table is NOT
+in this note yet, and nothing here claims a verified store.
+
+What IS measured, in-process on the real sha256-pinned files rather than on a built store:
+`read_measurements` returns 71,054 rows, 5,327 of them carrying `library_id` and
+`read_count`, and records built from sampled rows carry the 18-97 span. The verifier's own
+run (L0 structural, L1 count and sequence uniqueness, L2 value fidelity and released-value
+fidelity, L3 units, sequence-is-the-genotype and typed gaps, L4 read-count coverage) lands
+in `preprocess/verification_report.json` when the job runs, and this section gets its table
+then.
 
 ### Sourced values
 

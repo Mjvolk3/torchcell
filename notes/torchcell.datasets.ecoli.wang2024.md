@@ -133,3 +133,14 @@ Measured on the release: p = 0 in 94 / 73 / 135 / 109 / 142 / 111 cells per shee
 ### Schema impact
 
 `scripts/schema_impact_check.py --base origin/main`: `EnvironmentResponsePhenotype` modified (three added optional fields, `_check` changed), 36 impacted dataset groups, 0 breaking. Under this branch every environment-response dev store other than Wang 2024 reads stale (40 newly stale against origin/main's code, measured with `--list-stale --include-private` under both trees); this wave precedes the KG 4.0 full rebuild, which remakes them.
+
+## 2026.10.12 - Every released cell stored under its released b-number and name
+
+The owner's rule of 2026-10-12 ([[database.genome-gating-sweep.2026.10.12]], rows 85 and 184): the data is the data, and the genome is a separate layer joined at modeling time. The loader now reads no annotation and stores all 26,514 released cells (4,419 genes x 6 sheets), each `TransposonInsertionPerturbation` keyed by the sheet's `#Orf` b-number with the sheet's `Name` as `perturbed_gene_name`, both verbatim. What changed:
+
+- `resolve_b_numbers`, `canonical_symbol`, `MIN_RESOLVED_FRACTION`, the `ecoli_genome` constructor parameter and `preprocess/identifier_reconciliation.json` are gone. The five b-numbers that are not locus tags of GCA_000005845.2 (`b3036`, `b4223`, `b4590`, `b4700`, `b3681`) are stored exactly like the other 4,414; the L4 genome-reference rules report them as findings (#1069), and a consumer joins the genome at modeling time. Previously 30 cells dropped under `b_number_is_not_a_locus_tag_of_the_pinned_annotation`.
+- The 1,721 no-read cells (`Sum Ctrl` and `Sum Exp` both 0) are stored with the log2FC 0 and p-value 1 the release prints for them, and counted per sheet in `dropped_records.json` as `no_reads_kept` (287, 294, 285, 277, 286, 292). Whether a 0 from no observed mutant is a fitness measurement is a modeling decision; the ledger count is what a consumer filters on. Previously dropped under `no_insertion_reads_in_either_pool`.
+- `EXPECTED_RECORDS` 24,763 -> 26,514; `dropped_records` is 0 and `build_drop_log` refuses a build that stores fewer cells than the sheets release.
+- `experiments/036-dataset-fixes-before-kg-build/scripts/wangGenomeWideScreenRevealsCellular2024_release_inventory.py` measures the annotation split read-only, outside the loader, over the same comparison population as before.
+
+Released vs stored: 26,514 released cells, 26,514 records, 0 dropped; 4,419 released b-numbers, 4,419 stored.

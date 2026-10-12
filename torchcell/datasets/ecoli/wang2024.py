@@ -16,8 +16,8 @@ releases the WHOLE comparison, not the hits: six sheets, one per (dose, time), e
 carrying all 4,419 genes.
 
 RECORD = one (gene x condition) ``BacterialEnvironmentResponseExperiment``.
-4,419 genes x 6 conditions = 26,514 released cells; the stored count and every drop
-are in RETENTION below.
+4,419 genes x 6 conditions = 26,514 released cells, and 26,514 stored records: every
+cell is stored under the b-number and gene name the sheet releases (RETENTION below).
 
 PHENOTYPE. ``EnvironmentResponsePhenotype``, ``measurement_type=log2_ratio``,
 ``assay_type=other``. The number is the sheet's ``log2FC`` column verbatim: TRANSIT's
@@ -68,28 +68,27 @@ discard the 5 percent at each end), so ``barcode``, ``insertion_position`` and
 ``insertion_strand`` are None; their typed absences are in
 :data:`PERTURBATION_FIELD_GAPS` (the leaf has no ``provenance_gaps`` slot).
 
-IDENTIFIERS. ``#Orf`` holds MG1655 b-numbers. A b-number is stored when it IS a locus
-tag of the pinned annotation; any other is dropped with its resolution note, the
-Girgis 2009 rule (issue #753 for the missing retired-tag route). The measured split is
-written to ``preprocess/identifier_reconciliation.json``.
+IDENTIFIERS. ``#Orf`` holds MG1655 b-numbers and ``Name`` the gene name, and both are
+stored verbatim: ``systematic_gene_name`` is the released b-number and
+``perturbed_gene_name`` the released name. The loader reads no annotation: five of the
+4,419 b-numbers (``b3036``, ``b4223``, ``b4590``, ``b4700``, and ``b3681``, a synonym
+of the pseudogene ``b4556`` in GCA_000005845.2) are not locus tags of the pinned
+MG1655 annotation, and their 30 cells are stored exactly like the other 26,484; the L4
+genome-reference rules report them as findings on the store, and a consumer joins the
+genome at modeling time (the owner's rule of 2026-10-12: the data is the data). Before
+that rule the 30 cells were dropped under
+``b_number_is_not_a_locus_tag_of_the_pinned_annotation``.
 
-RETENTION (``preprocess/dropped_records.json``).
-
-1. ``no_insertion_reads_in_either_pool`` -- ``Sum Ctrl`` and ``Sum Exp`` both 0. No
-   mutant of the gene was read in the input OR the treated pool, so there is nothing
-   whose abundance changed; TRANSIT still prints log2FC 0 and p 1 for such a gene, and
-   storing that 0 would assert "no fitness change" for a mutant that was never observed.
-   Measured on the release: the input has no reads for the same 303 genes in all six
-   sheets, and 277 to 294 of them per sheet also have none after treatment, 1,721 cells
-   in all. Every one of them carries log2FC 0. (Hypothesis, untested: most of the 303
-   are genes whose disruption the library does not tolerate.)
-2. ``b_number_is_not_a_locus_tag_of_the_pinned_annotation`` -- 5 genes x 6 conditions
-   = 30 cells: ``b3036``, ``b4223``, ``b4590`` and ``b4700`` are not in the annotation
-   and ``b3681`` is a synonym of the pseudogene ``b4556``. The other 4,414 are locus
-   tags as released, so no record needs a ``DerivedIdentifierMapping``.
-
-26,514 - 1,721 - 30 = 24,763 records. A gene with no input reads but reads after
-treatment (9 to 26 per sheet) is kept: those reads are measured.
+RETENTION (``preprocess/dropped_records.json``). Nothing is dropped: 26,514 released
+cells, 26,514 records. The ledger counts, per sheet, the cells that carry no read in
+either pool (``Sum Ctrl`` and ``Sum Exp`` both 0; 1,721 in all, the same 303 genes
+without input reads in every sheet, 277 to 294 of them per sheet also without reads
+after treatment). TRANSIT prints log2FC 0 and p-value 1 for such a cell and the release
+carries those values, so they are stored as released; whether a 0 from no observed
+mutant means "no fitness change" is a modeling decision, and the ledger's
+``no_reads_kept`` count is what a consumer filters on. Before the owner's rule they
+were dropped under ``no_insertion_reads_in_either_pool``. A gene with no input reads
+but reads after treatment (9 to 26 per sheet) is counted as ``no_input_reads_kept``.
 
 DUPLICATION. Independent of the two rifampicin screens already stored. Spearman r of
 each condition against Choe 2025's CRISPRi rifampicin screen (3.2 ug/mL, about 3,780
@@ -157,7 +156,6 @@ from torchcell.data import (
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import LB
 from torchcell.datamodels.schema import (
-    BACTERIAL_ASSEMBLY_SETS,
     AssayType,
     AssemblyReferenceGenome,
     BacterialAssemblySet,
@@ -179,14 +177,9 @@ from torchcell.datamodels.schema import (
     TransposonInsertionPerturbation,
 )
 from torchcell.datasets.bacteria_common import (
-    LAYER_LOCUS_TAG,
-    LOCUS_TAG_PATTERNS,
     STRAIN_GENE_NAMESPACES,
-    LocusTagReconciliation,
     assembly_reference,
     bacterial_genome,
-    reconcile_locus_tags,
-    resolution_layer,
 )
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.literature.manifest import (
@@ -552,10 +545,6 @@ MIC_MG_PER_L: Final[float] = SOURCED_VALUES["mic_mg_per_l"].value
 N_REPLICATES: Final[int] = SOURCED_VALUES["n_biological_replicates"].value
 #: Every released ``#Orf`` matches this; a value that does not fails the format check.
 B_NUMBER_PATTERN = re.compile(r"^b\d{4}$")
-#: Below this fraction of distinct ``#Orf`` b-numbers that are locus tags of the pinned
-#: MG1655 annotation the build stops: the release was mapped to the same sequence, so a
-#: lower fraction would mean the wrong annotation.
-MIN_RESOLVED_FRACTION = 0.98
 
 _PAPER_LOOKED_IN = Provenance(
     source_uri=PAPER_TEXT_REL,
@@ -1036,39 +1025,18 @@ def adjustment_back_solve(frames: Mapping[str, pd.DataFrame]) -> AdjustmentBackS
 # --------------------------------------------------------------------------- #
 # Identifiers and the retention ledger
 # --------------------------------------------------------------------------- #
-RULE_NO_READS = "no_insertion_reads_in_either_pool"
-RULE_IDENTIFIER = "b_number_is_not_a_locus_tag_of_the_pinned_annotation"
-
-DROP_RULE_DESCRIPTIONS: dict[str, str] = {
-    RULE_NO_READS: "Sum Ctrl and Sum Exp are both 0: no mutant of the gene was read in "
-    "the input or the treated pool, so no abundance changed. TRANSIT prints log2FC 0 "
-    "and p-value 1 for such a gene, and storing that 0 would assert 'no fitness "
-    "change' for a mutant that was never observed",
-    RULE_IDENTIFIER: "the released b-number is not a locus tag of GCA_000005845.2. "
-    "Storing a merged locus needs a DerivedIdentifierMapping and DerivedIdentifierRoute "
-    "has no member for a retired tag of the pinned strain's own namespace (issue #753), "
-    "so every condition's cell for that gene is dropped; each item gives the "
-    "annotation's own resolution note",
-}
-
-
-class DropRule(BaseModel):
-    """One retention rule, the cells it removed, and why."""
-
-    rule: str
-    description: str
-    n_records: int
-    items: list[str] = []
-
-
 class ConditionLedger(BaseModel):
-    """Per-condition counts: released cells, kept records and their sign split."""
+    """Per-condition counts: released cells, the no-read cells among them, sign split."""
 
     sheet: str
     source_cells: int
-    no_reads: int
-    dropped_identifier: int
-    no_input_reads_kept: int
+    no_reads_kept: int = Field(
+        description="cells whose Sum Ctrl and Sum Exp are both 0, stored as released "
+        "(log2FC 0, p-value 1)"
+    )
+    no_input_reads_kept: int = Field(
+        description="cells with no input reads but reads after treatment"
+    )
     kept_records: int
     n_positive: int
     n_negative: int
@@ -1076,74 +1044,19 @@ class ConditionLedger(BaseModel):
 
 
 class DropLog(BaseModel):
-    """The retention ledger of one build, in the order the rules were applied."""
+    """The retention ledger of one build: every released cell is a record."""
 
     dataset: str
     source_loci: int
-    kept_loci: int
     source_records: int
     kept_records: int
     dropped_records: int
     conditions: list[ConditionLedger]
-    rules: list[DropRule]
-
-
-class IdentifierLedger(BaseModel):
-    """The reconciliation of every released b-number, plus the stop threshold."""
-
-    reconciliation: LocusTagReconciliation
-    min_resolved_fraction: float
-    n_locus_tags: int
-    not_a_locus_tag: dict[str, str]
-
-
-def canonical_symbol(genome: EcoliK12Genome, tag: str) -> str:
-    """The annotation's own gene symbol of ``tag`` when it resolves back to ``tag``,
-    else the tag itself, so the stored pair always round-trips through the resolver.
-    """
-    symbol = genome.genbank.loci[tag].symbol
-    if symbol is None:
-        return tag
-    resolution = genome.resolve_gene_name(symbol)
-    return symbol if resolution.systematic_name == tag else tag
-
-
-def resolve_b_numbers(
-    genome: EcoliK12Genome, b_numbers: Sequence[str], *, label: str
-) -> tuple[dict[str, str], IdentifierLedger]:
-    """The kept b-numbers mapped to the annotation's symbol, plus the ledger.
-
-    A b-number is kept when it IS a locus tag of the pinned annotation, the only case
-    in which the stored tag is the one the source released. Stops below
-    :data:`MIN_RESOLVED_FRACTION`.
-    """
-    _, report = reconcile_locus_tags(
-        genome, pd.Series(list(b_numbers), dtype=object), label=label
+    no_reads_kept: int = Field(
+        description="the no-read cells over all sheets, stored as released; a "
+        "consumer deciding that a 0 from no observed mutant is not a measurement "
+        "filters on this count at modeling time"
     )
-    report.require_resolved(MIN_RESOLVED_FRACTION)
-    pattern = LOCUS_TAG_PATTERNS[report.gene_namespace]
-    kept: dict[str, str] = {}
-    unplaced: dict[str, str] = {}
-    for b_number in b_numbers:
-        resolution = genome.resolve_gene_name(b_number)
-        if resolution_layer(genome, resolution) == LAYER_LOCUS_TAG:
-            if pattern.match(b_number) is None:
-                raise SheetFormatError(
-                    f"{b_number} is a locus of {report.assembly_set} but not a "
-                    f"{report.gene_namespace} tag"
-                )
-            kept[b_number] = canonical_symbol(genome, b_number)
-        else:
-            unplaced[b_number] = (
-                f"{resolution.status.value}: {resolution.note or 'no note'}"
-            )
-    ledger = IdentifierLedger(
-        reconciliation=report,
-        min_resolved_fraction=MIN_RESOLVED_FRACTION,
-        n_locus_tags=len(kept),
-        not_a_locus_tag=unplaced,
-    )
-    return kept, ledger
 
 
 def _no_reads(row: Mapping[Hashable, Any]) -> bool:
@@ -1152,7 +1065,7 @@ def _no_reads(row: Mapping[Hashable, Any]) -> bool:
 
 
 class StoredCell(BaseModel):
-    """One kept (gene, condition) cell of Table S2: the values a record carries."""
+    """One (gene, condition) cell of Table S2: the values a record carries."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -1164,18 +1077,16 @@ class StoredCell(BaseModel):
     p_value_adjusted: float
 
 
-def stored_cells(
-    frames: Mapping[str, pd.DataFrame], kept: Mapping[str, str]
-) -> Iterator[StoredCell]:
-    """Every stored cell, condition-major then gene in sheet order (LMDB order)."""
+def stored_cells(frames: Mapping[str, pd.DataFrame]) -> Iterator[StoredCell]:
+    """Every released cell, condition-major then gene in sheet order (LMDB order).
+
+    ``locus_tag`` is the sheet's ``#Orf`` and ``symbol`` its ``Name``, both verbatim.
+    """
     for spec in CONDITIONS:
         for row in frames[spec.sheet].to_dict("records"):
-            symbol = kept.get(row["#Orf"])
-            if symbol is None or _no_reads(row):
-                continue
             yield StoredCell(
-                locus_tag=row["#Orf"],
-                symbol=symbol,
+                locus_tag=str(row["#Orf"]),
+                symbol=str(row["Name"]),
                 spec=spec,
                 log2fc=float(row["log2FC"]),
                 p_value=float(row["p-value"]),
@@ -1184,27 +1095,19 @@ def stored_cells(
 
 
 def build_drop_log(
-    dataset_name: str,
-    frames: Mapping[str, pd.DataFrame],
-    b_numbers: Sequence[str],
-    kept: Mapping[str, str],
+    dataset_name: str, frames: Mapping[str, pd.DataFrame], b_numbers: Sequence[str]
 ) -> DropLog:
-    """The retention ledger of one build, refusing rules that miss a dropped cell."""
-    dropped_identifier = sorted(set(b_numbers) - set(kept))
-    no_reads_items: list[str] = []
+    """The retention ledger of one build, refusing a build that stores fewer cells
+    than the sheets release.
+    """
     ledgers: list[ConditionLedger] = []
     for spec in CONDITIONS:
         signs: Counter[str] = Counter()
-        identifier = no_reads = no_input = 0
+        no_reads = no_input = 0
         for row in frames[spec.sheet].to_dict("records"):
-            if row["#Orf"] not in kept:
-                identifier += 1
-                continue
             if _no_reads(row):
                 no_reads += 1
-                no_reads_items.append(f"{row['#Orf']} {spec.sheet}")
-                continue
-            if row["Sum Ctrl"] == 0:
+            elif row["Sum Ctrl"] == 0:
                 no_input += 1
             value = row["log2FC"]
             signs["positive" if value > 0 else "negative" if value < 0 else "zero"] += 1
@@ -1212,8 +1115,7 @@ def build_drop_log(
             ConditionLedger(
                 sheet=spec.sheet,
                 source_cells=len(frames[spec.sheet]),
-                no_reads=no_reads,
-                dropped_identifier=identifier,
+                no_reads_kept=no_reads,
                 no_input_reads_kept=no_input,
                 kept_records=sum(signs.values()),
                 n_positive=signs["positive"],
@@ -1221,35 +1123,22 @@ def build_drop_log(
                 n_zero=signs["zero"],
             )
         )
-    rules = [
-        DropRule(
-            rule=RULE_NO_READS,
-            description=DROP_RULE_DESCRIPTIONS[RULE_NO_READS],
-            n_records=len(no_reads_items),
-            items=no_reads_items,
-        ),
-        DropRule(
-            rule=RULE_IDENTIFIER,
-            description=DROP_RULE_DESCRIPTIONS[RULE_IDENTIFIER],
-            n_records=len(dropped_identifier) * len(CONDITIONS),
-            items=dropped_identifier,
-        ),
-    ]
     source_records = sum(ledger.source_cells for ledger in ledgers)
     kept_records = sum(ledger.kept_records for ledger in ledgers)
-    drop_log = DropLog(
+    if kept_records != source_records:
+        raise RuntimeError(
+            f"{kept_records} records for {source_records} released cells; every "
+            "released cell is a record"
+        )
+    return DropLog(
         dataset=dataset_name,
         source_loci=len(b_numbers),
-        kept_loci=len(kept),
         source_records=source_records,
         kept_records=kept_records,
-        dropped_records=source_records - kept_records,
+        dropped_records=0,
         conditions=ledgers,
-        rules=rules,
+        no_reads_kept=sum(ledger.no_reads_kept for ledger in ledgers),
     )
-    if sum(rule.n_records for rule in rules) != drop_log.dropped_records:
-        raise RuntimeError("drop rules do not account for every dropped cell")
-    return drop_log
 
 
 # --------------------------------------------------------------------------- #
@@ -1280,7 +1169,7 @@ def environment(spec: ConditionSpec) -> Environment:
 
 
 def insertion_genotype(locus_tag: str, symbol: str) -> Genotype:
-    """The gene-level Tn5 disruption of one MG1655 locus."""
+    """The gene-level Tn5 disruption of one gene, under its released b-number and name."""
     return Genotype(
         perturbations=[
             TransposonInsertionPerturbation(
@@ -1385,11 +1274,9 @@ class EnvChemgenWang2024Dataset(ExperimentDataset):
         io_workers: int = 0,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
-        ecoli_genome: EcoliK12Genome | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize; ``ecoli_genome`` is injected by the build entry points."""
-        self.ecoli_genome = ecoli_genome
+        """Initialize. No genome parameter: the loader reads no annotation."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -1426,47 +1313,28 @@ class EnvChemgenWang2024Dataset(ExperimentDataset):
         link_verified(src, osp.join(self.raw_dir, raw.name), raw.sha256)
         log.info("Wang 2024 Table S2 linked into %s (sha256 verified)", self.raw_dir)
 
-    def _genome(self) -> EcoliK12Genome:
-        """The injected genome, or the reference strain's default cache (a direct run);
-        a genome of another assembly set is refused.
-        """
-        if self.ecoli_genome is None:
-            self.ecoli_genome = bacterial_genome("ecoli", self.REFERENCE_STRAIN)
-        expected = BACTERIAL_ASSEMBLY_SETS[self.REFERENCE_STRAIN]
-        if self.ecoli_genome.ASSEMBLY_SET != expected:
-            raise ValueError(
-                f"{type(self).__name__} needs the {expected} genome, got "
-                f"{self.ecoli_genome.ASSEMBLY_SET}"
-            )
-        return self.ecoli_genome
-
     @post_process
     def process(self) -> None:
         """Parse Table S2 into per-gene, per-condition records + LMDB, checking it."""
         verify_raw_files(self.raw_dir, DATA_SHA256)
         frames = read_table_s2(osp.join(self.raw_dir, DATA_FILE))
         b_numbers = check_sheets_align(frames)
-        kept, identifiers = resolve_b_numbers(
-            self._genome(), b_numbers, label=f"{self.name} Table S2 #Orf"
-        )
-        drop_log = build_drop_log(self.name, frames, b_numbers, kept)
+        drop_log = build_drop_log(self.name, frames, b_numbers)
         adjustment = adjustment_back_solve(frames)
         log.info(
-            "Wang 2024: %d genes x %d conditions = %d cells -> %d records; dropped %s",
+            "Wang 2024: %d genes x %d conditions = %d cells -> %d records; %d no-read "
+            "cells stored as released",
             drop_log.source_loci,
             len(CONDITIONS),
             drop_log.source_records,
             drop_log.kept_records,
-            {rule.rule: rule.n_records for rule in drop_log.rules},
+            drop_log.no_reads_kept,
         )
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
         os.makedirs(self.processed_dir, exist_ok=True)
         out = Path(self.preprocess_dir)
         (out / "dropped_records.json").write_text(drop_log.model_dump_json(indent=2))
-        (out / "identifier_reconciliation.json").write_text(
-            identifiers.model_dump_json(indent=2)
-        )
         (out / "adjustment_back_solve.json").write_text(
             adjustment.model_dump_json(indent=2)
         )
@@ -1491,7 +1359,7 @@ class EnvChemgenWang2024Dataset(ExperimentDataset):
         index = 0
         with env_out.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for cell in tqdm(
-                stored_cells(frames, kept), total=drop_log.kept_records, desc="wang2024"
+                stored_cells(frames), total=drop_log.kept_records, desc="wang2024"
             ):
                 sheet = cell.spec.sheet
                 experiment = build_experiment(self.name, cell, environments[sheet])
@@ -1525,7 +1393,7 @@ class EnvChemgenWang2024Dataset(ExperimentDataset):
 # Verification (L0-L4) of a built tree
 # --------------------------------------------------------------------------- #
 #: Records of the full build: 26,514 cells minus 1,721 no-read and 30 identifier drops.
-EXPECTED_RECORDS = 24763
+EXPECTED_RECORDS = 26514
 
 
 def _l2_released_test(
@@ -1632,8 +1500,8 @@ def verify_build(
             "rifampicin conditions (2, 32, 160 mg/L = 0.25x, 4x, 20x MIC, at 1 and "
             "3 h); one BacterialEnvironmentResponseExperiment per (gene, condition), "
             "gene-level Tn5 TransposonInsertionPerturbation against MG1655, reference "
-            "= the unperturbed parent at log2FC 0; cells with no reads in either pool "
-            "dropped",
+            "= the unperturbed parent at log2FC 0; every released cell stored, the "
+            "no-read cells included",
             page="Table S2 (spectrum.02895-23-s0002.xlsx), all six sheets",
             retrieved=RETRIEVED_AT,
         ),

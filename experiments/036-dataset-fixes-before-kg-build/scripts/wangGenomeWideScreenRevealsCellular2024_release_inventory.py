@@ -46,10 +46,11 @@ from collections import defaultdict
 from typing import Any
 
 import openpyxl
+import pandas as pd
 from dotenv import load_dotenv
 from scipy.stats import spearmanr
 
-from torchcell.datasets.bacteria_common import bacterial_genome
+from torchcell.datasets.bacteria_common import bacterial_genome, reconcile_locus_tags
 from torchcell.datasets.ecoli import wang2024
 from torchcell.verification.runners import stream_records
 
@@ -195,21 +196,29 @@ def main() -> None:
         {r["#Orf"] for r in rows if r["Sum Ctrl"] == 0} for rows in sheets.values()
     ]
 
+    # The loader stores every released cell under its released b-number and Name
+    # (owner's rule of 2026-10-12); this inventory keeps its original comparison
+    # population, the cells with a read in at least one pool, and measures the
+    # annotation split read-only, outside the loader.
     genome = bacterial_genome("ecoli", wang2024.REFERENCE_STRAIN_NAME)
     b_numbers = [r["#Orf"] for r in first]
-    kept, ledger = wang2024.resolve_b_numbers(genome, b_numbers, label="Table S2 #Orf")
+    _, ledger = reconcile_locus_tags(
+        genome, pd.Series(b_numbers, dtype=object), label="Table S2 #Orf"
+    )
+    kept = {r["#Orf"]: r["Name"] for r in first}
+    not_locus = sorted(set(b_numbers) - set(genome.genbank.loci))
     stored = sum(
         1
         for rows in sheets.values()
         for r in rows
-        if r["#Orf"] in kept and not (r["Sum Ctrl"] == 0 and r["Sum Exp"] == 0)
+        if not (r["Sum Ctrl"] == 0 and r["Sum Exp"] == 0)
     )
 
     wang_by_sheet = {
         name: {
             r["#Orf"]: float(r["log2FC"])
             for r in rows
-            if r["#Orf"] in kept and not (r["Sum Ctrl"] == 0 and r["Sum Exp"] == 0)
+            if not (r["Sum Ctrl"] == 0 and r["Sum Exp"] == 0)
         }
         for name, rows in sheets.items()
     }
@@ -256,9 +265,9 @@ def main() -> None:
         "hits_union_paper_cut": len(set().union(*hits.values())),
         "identifiers": {
             "distinct": len(set(b_numbers)),
-            "locus_tags_of_pinned_annotation": len(kept),
-            "not_a_locus_tag": ledger.not_a_locus_tag,
-            "layer_histogram": ledger.reconciliation.layer_histogram,
+            "locus_tags_of_pinned_annotation": len(b_numbers) - len(not_locus),
+            "not_a_locus_tag": not_locus,
+            "layer_histogram": ledger.layer_histogram,
         },
         "stored_records": stored,
         "dropped_records": total_cells - stored,

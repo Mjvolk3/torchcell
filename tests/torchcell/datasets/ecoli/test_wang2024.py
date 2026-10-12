@@ -9,18 +9,17 @@ of ``tests/torchcell/sequence/genome/_bacterial_fixtures.py`` with the network r
 and ``verify_raw_files`` replaced with a presence check (synthetic bytes cannot carry the
 real pin; the pin is asserted by the data-gated tests).
 
-The five synthetic genes, identical input columns on every sheet:
+The five synthetic genes, identical input columns on every sheet; every one is stored
+under its released b-number and Name, and the loader reads no annotation:
 
-    #Orf    annotation            input     post-treatment   fate
-    b0001   thrL, current         reads     reads            kept, log2FC per sheet
-    b0002   thrA, current         0         0                dropped: no reads
-    b0004   yaaP, pseudogene      reads     reads            kept
-    b0005   proB, current         0         reads            kept: reads after
-    b0099   on no locus           reads     reads            dropped: identifier
+    #Orf    annotation            input     post-treatment   ledger
+    b0001   thrL, current         reads     reads            log2FC per sheet
+    b0002   thrA, current         0         0                no_reads_kept (log2FC 0)
+    b0004   yaaP, pseudogene      reads     reads
+    b0005   proB, current         0         reads            no_input_reads_kept
+    b0099   on no locus           reads     reads            stored as released
 
-Four of the five names are locus tags (0.8 < 0.98), so the build fixture lowers
-``MIN_RESOLVED_FRACTION`` and a separate test shows the default stops the build.
-3 kept genes x 6 sheets = 18 records. Each gene carries one p-value on every sheet and
+5 genes x 6 sheets = 30 records. Each gene carries one p-value on every sheet and
 the Benjamini-Hochberg value of the five as its adjusted p-value, printed to 5 decimals
 as the release prints it, so the synthetic workbook passes the back-solve.
 
@@ -62,7 +61,6 @@ from torchcell.datamodels.schema import (
     SampleUnit,
     TransposonInsertionPerturbation,
 )
-from torchcell.datasets.bacteria_common import LocusTagResolutionError
 from torchcell.datasets.dataset_registry import dataset_registry
 from torchcell.literature.manifest import RetrievalMethod, RetrievalRecord
 from torchcell.sequence.genome.ecoli.k12 import MG1655_ASSEMBLY, EcoliK12MG1655Genome
@@ -84,7 +82,9 @@ GENES: tuple[tuple[str, str, int, float, float, float, float], ...] = (
     ("b0005", "proB", 20, 0.0, 0.0, 4.0, 160.0),
     ("b0099", "ghostG", 40, 50.0, 4000.0, 25.0, 2000.0),
 )
-KEPT = ("b0001", "b0004", "b0005")
+KEPT = ("b0001", "b0002", "b0004", "b0005", "b0099")
+#: Names as the synthetic sheet releases them, verbatim.
+NAMES = {gene[0]: gene[1] for gene in GENES}
 #: Per-gene p-value and its BH value over the five genes (5 decimals, as released).
 P_VALUES: dict[str, float] = {
     "b0001": 0.01,
@@ -224,11 +224,8 @@ def synthetic(
 
 
 @pytest.fixture
-def built(
-    synthetic: Path, monkeypatch: pytest.MonkeyPatch, mg1655: EcoliK12MG1655Genome
-) -> m.EnvChemgenWang2024Dataset:
-    monkeypatch.setattr(m, "MIN_RESOLVED_FRACTION", 0.75)
-    return m.EnvChemgenWang2024Dataset(root=str(synthetic), ecoli_genome=mg1655)
+def built(synthetic: Path) -> m.EnvChemgenWang2024Dataset:
+    return m.EnvChemgenWang2024Dataset(root=str(synthetic))
 
 
 # --------------------------------------------------------------------------- #
@@ -482,79 +479,49 @@ def test_check_sheets_align_refuses_a_repeated_id(tmp_path: Path) -> None:
 # --------------------------------------------------------------------------- #
 # Identifiers and the retention ledger
 # --------------------------------------------------------------------------- #
-def test_resolve_b_numbers_keeps_only_locus_tags(
-    mg1655: EcoliK12MG1655Genome, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    monkeypatch.setattr(m, "MIN_RESOLVED_FRACTION", 0.75)
-    kept, ledger = m.resolve_b_numbers(mg1655, [g[0] for g in GENES], label="t")
-    assert kept == {"b0001": "thrL", "b0002": "thrA", "b0004": "yaaP", "b0005": "proB"}
-    assert list(ledger.not_a_locus_tag) == ["b0099"]
-    assert ledger.n_locus_tags == 4
-    assert ledger.min_resolved_fraction == 0.75
-
-
-def test_resolve_b_numbers_stops_below_the_default_threshold(
-    mg1655: EcoliK12MG1655Genome,
-) -> None:
-    with pytest.raises(LocusTagResolutionError):
-        m.resolve_b_numbers(mg1655, [g[0] for g in GENES], label="t")
-
-
-def test_canonical_symbol_falls_back_to_the_tag_without_a_symbol(
-    mg1655: EcoliK12MG1655Genome, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    locus = mg1655.genbank.loci["b0001"]
-    monkeypatch.setitem(
-        mg1655.genbank.loci, "b0001", locus.model_copy(update={"symbol": None})
-    )
-    assert m.canonical_symbol(mg1655, "b0001") == "b0001"
-    assert m.canonical_symbol(mg1655, "b0005") == "proB"
-
-
-def test_build_drop_log_accounts_for_every_cell(table: Path) -> None:
+def test_build_drop_log_counts_every_cell_as_a_record(table: Path) -> None:
     frames = _frames(table)
     b_numbers = m.check_sheets_align(frames)
-    kept = {"b0001": "thrL", "b0002": "thrA", "b0004": "yaaP", "b0005": "proB"}
-    log = m.build_drop_log("ds", frames, b_numbers, kept)
-    assert (log.source_records, log.kept_records, log.dropped_records) == (30, 18, 12)
-    assert {r.rule: r.n_records for r in log.rules} == {
-        m.RULE_NO_READS: 6,
-        m.RULE_IDENTIFIER: 6,
-    }
-    assert log.rules[1].items == ["b0099"]
-    assert log.rules[0].items[0] == "b0002 0.25xMIC-1hour"
+    log = m.build_drop_log("ds", frames, b_numbers)
+    assert (log.source_loci, log.source_records, log.kept_records) == (5, 30, 30)
+    assert log.dropped_records == 0
+    assert log.no_reads_kept == 6
     first = log.conditions[0]
-    assert (first.no_reads, first.dropped_identifier, first.no_input_reads_kept) == (
-        1,
-        1,
-        1,
-    )
-    # sheet 0: thrL -1.5, yaaP -1.25, proB -1.5; sheet 3: 0.0, 0.25, 0.0
-    assert (first.n_positive, first.n_negative, first.n_zero) == (0, 3, 0)
-    assert (log.conditions[3].n_positive, log.conditions[3].n_zero) == (1, 2)
+    assert (first.no_reads_kept, first.no_input_reads_kept) == (1, 1)
+    # sheet 0: thrL -1.5, thrA 0, yaaP -1.25, proB -1.5, ghostG -1.5
+    assert (first.n_positive, first.n_negative, first.n_zero) == (0, 4, 1)
+    # sheet 3: 0.0, 0 (no reads), 0.25, 0.0, 0.0
+    assert (log.conditions[3].n_positive, log.conditions[3].n_zero) == (1, 4)
 
 
-def test_build_drop_log_refuses_rules_that_miss_a_cell(
+def test_build_drop_log_refuses_a_build_that_stores_fewer_cells(
     table: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     frames = _frames(table)
-    rule = m.DropRule
-    monkeypatch.setattr(m, "DropRule", lambda **k: rule(**{**k, "n_records": 0}))
-    with pytest.raises(RuntimeError, match="do not account"):
-        m.build_drop_log("ds", frames, m.check_sheets_align(frames), {"b0001": "x"})
+    ledger = m.ConditionLedger
+    monkeypatch.setattr(
+        m, "ConditionLedger", lambda **k: ledger(**{**k, "kept_records": 0})
+    )
+    with pytest.raises(RuntimeError, match="every released cell is a record"):
+        m.build_drop_log("ds", frames, m.check_sheets_align(frames))
 
 
-def test_stored_cells_skip_dropped_genes_and_no_read_cells(table: Path) -> None:
+def test_stored_cells_carry_every_released_cell_under_its_released_names(
+    table: Path,
+) -> None:
     frames = _frames(table)
-    kept = {"b0001": "thrL", "b0002": "thrA", "b0004": "yaaP", "b0005": "proB"}
-    cells = list(m.stored_cells(frames, kept))
+    cells = list(m.stored_cells(frames))
     assert len(cells) == SYNTHETIC_RECORDS
     assert cells[0] == _cell(m.CONDITIONS[0], -1.5)
-    assert {c.locus_tag for c in cells} == set(KEPT)
-    assert [c.spec.sheet for c in cells[:3]] == [SHEETS[0]] * 3
+    assert [(c.locus_tag, c.symbol) for c in cells[:5]] == list(NAMES.items())
+    assert [c.spec.sheet for c in cells[:5]] == [SHEETS[0]] * 5
     assert {(c.locus_tag, c.p_value, c.p_value_adjusted) for c in cells} == {
         (tag, P_VALUES[tag], ADJUSTED[tag]) for tag in KEPT
     }
+    # the no-read gene is stored with the log2FC 0 the release prints for it
+    assert [c.log2fc for c in cells if c.locus_tag == "b0002"] == [0.0] * 6
+    # the b-number on no locus of any annotation is stored as released
+    assert [c.symbol for c in cells if c.locus_tag == "b0099"] == ["ghostG"] * 6
 
 
 # --------------------------------------------------------------------------- #
@@ -632,7 +599,7 @@ def test_released_test_fidelity_counts_missing_and_changed_values(table: Path) -
 # --------------------------------------------------------------------------- #
 # The hermetic build
 # --------------------------------------------------------------------------- #
-def test_the_build_stores_one_record_per_kept_cell(
+def test_the_build_stores_one_record_per_released_cell(
     built: m.EnvChemgenWang2024Dataset, presence_only_pins: list[Mapping[str, str]]
 ) -> None:
     assert len(built) == SYNTHETIC_RECORDS
@@ -649,7 +616,15 @@ def test_the_built_records_carry_the_released_values(
     assert first["phenotype"]["screen_id"] == "0.25xMIC-1hour"
     assert first["environment"]["duration_hours"] == 1.0
     values = [r["experiment"]["phenotype"]["environment_response"] for r in records]
-    assert values[-3:] == [1.0, 1.25, 1.0]
+    assert values[-5:] == [1.0, 0.0, 1.25, 1.0, 1.0]
+    names = {
+        (
+            r["experiment"]["genotype"]["perturbations"][0]["systematic_gene_name"],
+            r["experiment"]["genotype"]["perturbations"][0]["perturbed_gene_name"],
+        )
+        for r in records
+    }
+    assert names == set(NAMES.items())
     references = {r["reference"]["phenotype_reference"]["screen_id"] for r in records}
     assert references == set(SHEETS)
     assert {
@@ -670,8 +645,8 @@ def test_the_build_writes_every_ledger(built: m.EnvChemgenWang2024Dataset) -> No
     out = Path(built.preprocess_dir)
     log = json.loads((out / "dropped_records.json").read_text())
     assert log["kept_records"] == SYNTHETIC_RECORDS
-    identifiers = json.loads((out / "identifier_reconciliation.json").read_text())
-    assert list(identifiers["not_a_locus_tag"]) == ["b0099"]
+    assert log["dropped_records"] == 0
+    assert not (out / "identifier_reconciliation.json").exists()
     adjustment = json.loads((out / "adjustment_back_solve.json").read_text())
     assert (adjustment["method"], adjustment["rows_per_sheet"]) == (
         "benjamini_hochberg",
@@ -685,17 +660,16 @@ def test_the_build_writes_every_ledger(built: m.EnvChemgenWang2024Dataset) -> No
     ]
 
 
-def test_the_build_refuses_a_genome_of_another_strain(
-    synthetic: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    class Other:
-        ASSEMBLY_SET = "ecoli_K12_BW25113_ASM75055v1"
+def test_the_loader_takes_no_genome() -> None:
+    """The build reads no annotation, so the injector has no parameter to fill."""
+    import inspect
 
-    with pytest.raises(ValueError, match="needs the ecoli_K12_MG1655_ASM584v2 genome"):
-        m.EnvChemgenWang2024Dataset(
-            root=str(synthetic),
-            ecoli_genome=Other(),  # type: ignore[arg-type]
-        )
+    assert (
+        "ecoli_genome"
+        not in inspect.signature(m.EnvChemgenWang2024Dataset.__init__).parameters
+    )
+    assert not hasattr(m, "resolve_b_numbers")
+    assert not hasattr(m, "reconcile_locus_tags")
 
 
 def test_the_dataset_is_registered_and_declares_its_classes() -> None:
@@ -1018,14 +992,19 @@ def test_the_built_store_holds_the_measured_counts() -> None:
     log = json.loads(
         Path(_built_root(), "preprocess", "dropped_records.json").read_text()
     )
-    assert (log["source_loci"], log["kept_loci"]) == (4419, 4414)
+    assert log["source_loci"] == 4419
     assert log["source_records"] == 26514
-    assert log["kept_records"] == m.EXPECTED_RECORDS == 24763
-    assert {rule["rule"]: rule["n_records"] for rule in log["rules"]} == {
-        m.RULE_NO_READS: 1721,
-        m.RULE_IDENTIFIER: 30,
-    }
-    assert [c["no_reads"] for c in log["conditions"]] == [287, 294, 285, 277, 286, 292]
+    assert log["kept_records"] == m.EXPECTED_RECORDS == 26514
+    assert log["dropped_records"] == 0
+    assert log["no_reads_kept"] == 1721
+    assert [c["no_reads_kept"] for c in log["conditions"]] == [
+        287,
+        294,
+        285,
+        277,
+        286,
+        292,
+    ]
 
 
 @pytest.mark.data

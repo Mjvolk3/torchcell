@@ -1,347 +1,796 @@
 # tests/torchcell/datasets/scerevisiae/test_sgd.py
 # [[tests.torchcell.datasets.scerevisiae.test_sgd]]
 # https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/datasets/scerevisiae/test_sgd.py
-"""The SGD essentiality provenance record: the decision, and the measurement behind it.
+"""Hermetic build of the SGD gene-essentiality loader on a fixture dump and a fake Entrez.
 
-Synthetic tests run everywhere. They write per-gene JSON files from scratch in the
-shape SGD's API serves, including a counterfactual annotation that DOES state a medium
-with its physical state, so the storability rule is shown to separate the two rather
-than merely to return 0 on the real bytes.
+The loader reads SGD's per-gene API dump (``$DATA_ROOT/data/sgd/genome/genes/*.json``)
+and refuses bytes off its digest pin, so each build here writes a small dump into
+``tmp_path`` and sets the module pin to that dump's digest. ``Entrez.efetch`` and
+``Entrez.read`` are replaced on ``Bio.Entrez`` itself (the module object the loader
+holds), so ``get_publication_info`` runs for real against canned records.
 
-The ``@pytest.mark.data`` tests read the pinned dump: they re-derive its digest and
-re-measure every count the decision rests on.
+Fixture dump (2026.10.11, #901: allele rule, carried conditions, typed gaps):
+    YAL001C  TFC3: one inviable / null / S288C ``tfc3-Δ`` (PubMed 111) -> record; a
+             viable, a "reduction of function" and a W303 entry -> skipped
+    YBR001C  no phenotype_details -> nothing
+    YCR001W  two ``ycr001w-Δ`` annotations (PubMed 222 and 333) -> two records
+    YDR001C  ATG9: ``atg9-Δ`` under "nitrogen starvation" (PubMed 444) -> record with a
+             nitrogen-source edit; ``atg9-K12A`` and ``atg9Δ10-20`` (PubMed 444, same
+             condition) -> ledgered, never stored
+    YEL001C  ``yel001c-∆`` spelled with U+2206, under "elevated temperature, 37 °C"
+             (PubMed 111) -> record at 37 C
+
+Canned Entrez: 111 has the DOI ``10.1/aaa`` in ELocationID; 222 has a ``pii`` there and the
+DOI ``10.2/bbb`` in ArticleIdList; 333 and 444 have no DOI.
+
+History: the 2024 loader walked ``SCerevisiaeGraph.G_raw`` (a pickle built from the same
+dump), stored every annotation as a whole-gene SGA KanMX deletion on a guessed YEPD
+solid medium at 30 C, and downloaded the dump when fewer than 100 files were present.
 """
 
 from __future__ import annotations
 
+import hashlib
 import json
-import os
-import os.path as osp
+import random
+import time
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
+import pandas as pd
 import pytest
+from Bio import Entrez
 
-import torchcell.datasets.scerevisiae.sgd as m
+from torchcell.datamodels.schema import (
+    Concentration,
+    ConcentrationUnit,
+    Environment,
+    EnvironmentPhysicalPerturbation,
+    GeneEssentialityExperiment,
+    GeneEssentialityExperimentReference,
+    GeneEssentialityPhenotype,
+    Genotype,
+    Media,
+    PhysicalFactor,
+    Publication,
+    ReferenceGenome,
+    SgaKanMxDeletionPerturbation,
+    Temperature,
+)
+from torchcell.datasets.scerevisiae import sgd as m
+from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
 
-DATA_ROOT = os.environ.get("DATA_ROOT")
 
-#: What the pinned dump holds, re-measured by the ``data`` tests.
-REAL_ANNOTATIONS = 1329
-REAL_WITHOUT_CONDITION = 1299
-REAL_WHOLE_GENE_DELETION = 1287
-REAL_OTHER_ALLELE = 42
-REAL_COLLAPSE_KEYS = 9
-REAL_COLLAPSE_EXTRA_RECORDS = 24
-REAL_CONDITION_PAIRS = {
-    "media: 2% glucose": 1,
-    "media: YPD with 2% glucose": 1,
-    "media: nitrogen starvation": 27,
-    "temperature: elevated temperature, 37 °C": 1,
-}
-REAL_EXPERIMENT_TYPES = {"classical genetics": 208, "systematic mutation set": 1121}
+class _Elem(str):
+    """A string carrying Entrez-style ``.attributes`` (as ``Bio.Entrez`` StringElement)."""
+
+    attributes: dict[str, str]
+
+    def __new__(cls, value: str, attributes: dict[str, str]) -> _Elem:
+        obj = super().__new__(cls, value)
+        obj.attributes = attributes
+        return obj
 
 
-# --------------------------------------------------------------------------- #
-# Synthetic SGD per-gene JSON
-# --------------------------------------------------------------------------- #
-def _annotation(
-    annotation_id: int,
-    locus: str,
-    allele: str,
-    pubmed_id: str,
-    *,
-    conditions: tuple[tuple[str, str], ...] = (),
-    mutant_type: str = "null",
-    strain: str = "S288C",
-    phenotype: str = "inviable",
-    experiment: str = "systematic mutation set",
-    note: str | None = None,
-) -> dict[str, Any]:
-    properties: list[dict[str, Any]] = [
-        {
-            "class_type": "BIOITEM",
-            "role": "Allele",
-            "bioitem": {"display_name": allele},
-            "note": None,
-        }
-    ]
-    properties += [
-        {"class_type": kind, "role": None, "note": text} for kind, text in conditions
-    ]
+def _article(elocation: list[_Elem], article_ids: list[_Elem]) -> dict[str, Any]:
     return {
-        "id": annotation_id,
-        "mutant_type": mutant_type,
-        "strain": {"display_name": strain},
-        "phenotype": {"display_name": phenotype},
-        "locus": {"display_name": locus},
-        "reference": {"pubmed_id": pubmed_id},
-        "experiment": {"display_name": experiment},
-        "properties": properties,
-        "note": note,
+        "PubmedArticle": [
+            {
+                "MedlineCitation": {"Article": {"ELocationID": elocation}},
+                "PubmedData": {"ArticleIdList": article_ids},
+            }
+        ]
     }
 
 
-def _write_gene(genes_dir: Path, orf: str, details: list[dict[str, Any]]) -> None:
-    genes_dir.mkdir(parents=True, exist_ok=True)
-    (genes_dir / f"{orf}.json").write_text(
-        json.dumps({"phenotype_details": details}), encoding="utf-8"
-    )
+_RECORDS: dict[str, dict[str, Any]] = {
+    "111": _article([_Elem("10.1/aaa", {"EIdType": "doi"})], []),
+    "222": _article(
+        [_Elem("S0000-1", {"EIdType": "pii"})],
+        [_Elem("22222", {"IdType": "pubmed"}), _Elem("10.2/bbb", {"IdType": "doi"})],
+    ),
+    "333": _article([], [_Elem("33333", {"IdType": "pubmed"})]),
+    "444": _article([], [_Elem("44444", {"IdType": "pubmed"})]),
+}
+
+
+class _Handle:
+    def __init__(self, pubmed_id: str) -> None:
+        self.pubmed_id = pubmed_id
+
+    def close(self) -> None:
+        pass
+
+
+def _install_entrez(monkeypatch: pytest.MonkeyPatch, fail_first: int = 0) -> list[str]:
+    """Patch efetch/read on the module Entrez; the first ``fail_first`` calls raise."""
+    fetched: list[str] = []
+    state = {"failures": fail_first}
+
+    def efetch(**kwargs: Any) -> _Handle:
+        assert kwargs == {
+            "db": "pubmed",
+            "id": kwargs["id"],
+            "rettype": "xml",
+            "retmode": "text",
+        }
+        if state["failures"] > 0:
+            state["failures"] -= 1
+            raise RuntimeError("boom")
+        fetched.append(kwargs["id"])
+        return _Handle(kwargs["id"])
+
+    def read(handle: _Handle) -> dict[str, Any]:
+        return _RECORDS[handle.pubmed_id]
+
+    monkeypatch.setattr(Entrez, "efetch", efetch)
+    monkeypatch.setattr(Entrez, "read", read)
+    return fetched
+
+
+_ANNOTATION_ID = iter(range(1000, 2000))
+
+
+def _annotation(
+    pubmed_id: str,
+    locus: str,
+    allele: str,
+    *,
+    conditions: list[dict[str, Any]] | None = None,
+    note: str | None = None,
+    mutant_type: str = "null",
+    strain: str = "S288C",
+    phenotype: str = "inviable",
+) -> dict[str, Any]:
+    """One ``phenotype_details`` entry in the shape SGD's locus API returns it."""
+    return {
+        "id": next(_ANNOTATION_ID),
+        "mutant_type": mutant_type,
+        "locus": {"display_name": locus},
+        "experiment": {"display_name": "classical genetics"},
+        "strain": {"display_name": strain},
+        "properties": [
+            {
+                "class_type": "BIOITEM",
+                "bioitem": {"display_name": allele},
+                "note": "",
+                "role": "Allele",
+            },
+            *(conditions or []),
+        ],
+        "note": note,
+        "phenotype": {"display_name": phenotype},
+        "reference": {"pubmed_id": int(pubmed_id)},
+    }
+
+
+_NITROGEN = {"class_type": "media", "note": "nitrogen starvation", "unit": ""}
+_HOT = {
+    "class_type": "temperature",
+    "note": "elevated temperature, 37 °C",
+    "unit": "°C",
+}
+
+_DUMP: dict[str, list[dict[str, Any]] | None] = {
+    "YAL001C": [
+        _annotation("111", "TFC3", "tfc3-Δ"),
+        _annotation("111", "TFC3", "tfc3-Δ", phenotype="viable"),
+        _annotation("111", "TFC3", "tfc3-Δ", mutant_type="reduction of function"),
+        _annotation("111", "TFC3", "tfc3-Δ", strain="W303"),
+    ],
+    "YBR001C": None,
+    "YCR001W": [
+        _annotation("222", "YCR001W", "ycr001w-Δ"),
+        _annotation("333", "YCR001W", "ycr001w-Δ"),
+    ],
+    "YDR001C": [
+        _annotation("444", "ATG9", "atg9-Δ", conditions=[_NITROGEN]),
+        _annotation("444", "ATG9", "atg9-K12A", conditions=[_NITROGEN]),
+        _annotation("444", "ATG9", "atg9Δ10-20", conditions=[_NITROGEN], note="n"),
+    ],
+    "YEL001C": [_annotation("111", "YEL001C", "yel001c-∆", conditions=[_HOT])],
+}
+
+
+def _write_dump(data_root: Path, dump: dict[str, list[dict[str, Any]] | None]) -> Path:
+    genes = data_root / "data" / "sgd" / "genome" / "genes"
+    genes.mkdir(parents=True)
+    for orf, details in dump.items():
+        (genes / f"{orf}.json").write_text(
+            json.dumps({"locus": {"format_name": orf}, "phenotype_details": details}),
+            encoding="utf-8",
+        )
+    (genes / "README.txt").write_text("not a gene file", encoding="utf-8")
+    return genes
+
+
+def _pin(monkeypatch: pytest.MonkeyPatch, genes: Path) -> None:
+    monkeypatch.setattr(m, "SGD_GENES_DIGEST", m.sgd_genes_digest(str(genes)))
+
+
+def _build(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    dump: dict[str, list[dict[str, Any]] | None],
+) -> m.GeneEssentialitySgdDataset:
+    data_root = tmp_path / "data_root"
+    monkeypatch.setenv("DATA_ROOT", str(data_root))
+    _pin(monkeypatch, _write_dump(data_root, dump))
+    _install_entrez(monkeypatch)
+    return m.GeneEssentialitySgdDataset(root=str(tmp_path / "gene_essentiality_sgd"))
 
 
 @pytest.fixture
-def genes_dir(tmp_path: Path) -> Path:
-    """Four genes: a plain deletion, two SAC1 alleles under one paper, a point
-    allele, and a viable annotation the selector must not read.
+def dataset(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> m.GeneEssentialitySgdDataset:
+    return _build(tmp_path, monkeypatch, _DUMP)
+
+
+_GENOME = ReferenceGenome(species="Saccharomyces cerevisiae", strain="S288C")
+_PIN = "1cb4ed59556b1534e28eb79ad21135cdb5a149f78dca8df4924f473e39eef409"
+
+
+def _unstated(silence: str) -> Media:
+    """The gapped medium a record must store, spelled out here rather than read from
+    the module: name, state and class each a ``not_carried_by_curation`` gap looked for
+    in the pinned dump, the note quoting what the annotation carries instead.
     """
-    out = tmp_path / "genes"
-    _write_gene(out, "YAL001C", [_annotation(1, "TFC3", "tfc3-Δ", "111")])
-    _write_gene(
-        out,
-        "YKL212W",
-        [
-            _annotation(
-                2,
-                "SAC1",
-                "sac1-Δ",
-                "222",
-                conditions=(("media", "nitrogen starvation"),),
-            ),
-            _annotation(
-                3,
-                "SAC1",
-                "sac1Δ114-503",
-                "222",
-                conditions=(("media", "nitrogen starvation"),),
-            ),
+    note = (
+        "the SGD phenotype annotation states a phenotype ('inviable', mutant_type "
+        "'null', strain 'S288C') and an allele ('<gene>-Δ') but no growth medium: "
+        + silence
+        + "; the medium, if stated, is in the annotation's own reference "
+        "(Publication.pubmed_id)"
+    )
+    return Media(
+        name=None,
+        state=None,
+        is_synthetic=None,
+        provenance_gaps=[
+            ProvenanceGap(
+                field=field,
+                reason=ProvenanceGapReason.not_carried_by_curation,
+                looked_in=m.SGD_DUMP,
+                note=note,
+            )
+            for field in ("name", "state", "is_synthetic")
         ],
     )
-    _write_gene(out, "YBR001C", [_annotation(4, "NTH2", "nth2-111", "333")])
-    _write_gene(
-        out, "YCR001W", [_annotation(5, "DAN4", "dan4-Δ", "444", phenotype="viable")]
+
+
+_NO_CONDITION_ENVIRONMENT = Environment(
+    media=_unstated("phenotype_details[].properties carries no condition property"),
+    temperature=None,
+    provenance_gaps=[m.SGD_TEMPERATURE_GAP],
+)
+_NITROGEN_ENVIRONMENT = Environment(
+    media=_unstated(
+        "its one condition property (class_type 'media') reads 'nitrogen "
+        "starvation', a nutrient edit to a base medium it does not name"
+    ),
+    temperature=None,
+    perturbations=[
+        EnvironmentPhysicalPerturbation(
+            factor=PhysicalFactor.nitrogen_source, description="nitrogen starvation"
+        )
+    ],
+    provenance_gaps=[m.SGD_TEMPERATURE_GAP],
+)
+_HOT_ENVIRONMENT = Environment(
+    media=_unstated(
+        "its one condition property is a temperature ('elevated temperature, "
+        "37 °C', class_type 'temperature'), which names no medium"
+    ),
+    temperature=Temperature(value=37.0),
+)
+
+
+def _experiment(gene: str, locus: str, environment: Environment) -> dict[str, Any]:
+    return GeneEssentialityExperiment(
+        dataset_name="GeneEssentialitySgdDataset",
+        genotype=Genotype(
+            perturbations=[
+                SgaKanMxDeletionPerturbation(
+                    systematic_gene_name=gene,
+                    perturbed_gene_name=locus,
+                    strain_id="S288C",
+                )
+            ]
+        ),
+        environment=environment,
+        phenotype=GeneEssentialityPhenotype(is_essential=True),
+    ).model_dump()
+
+
+def _reference(environment: Environment) -> dict[str, Any]:
+    return GeneEssentialityExperimentReference(
+        dataset_name="GeneEssentialitySgdDataset",
+        genome_reference=_GENOME,
+        environment_reference=environment,
+        phenotype_reference=GeneEssentialityPhenotype(is_essential=False),
+    ).model_dump()
+
+
+def test_one_record_per_whole_gene_deletion_annotation_in_file_order(
+    dataset: m.GeneEssentialitySgdDataset,
+) -> None:
+    """Five records, files in sorted order and annotations in SGD's order: TFC3 once (its
+    other three entries fail the null / S288C / inviable filter), YCR001W twice, ATG9 once
+    (two of its three annotations name another allele) and YEL001C once. Each record's
+    environment is the one its condition property states; the reference is viable in
+    that same environment.
+    """
+    assert len(dataset) == 5
+    expected = [
+        ("YAL001C", "TFC3", _NO_CONDITION_ENVIRONMENT),
+        ("YCR001W", "YCR001W", _NO_CONDITION_ENVIRONMENT),
+        ("YCR001W", "YCR001W", _NO_CONDITION_ENVIRONMENT),
+        ("YDR001C", "ATG9", _NITROGEN_ENVIRONMENT),
+        ("YEL001C", "YEL001C", _HOT_ENVIRONMENT),
+    ]
+    for index, (gene, locus, environment) in enumerate(expected):
+        assert dataset[index]["experiment"] == _experiment(gene, locus, environment)
+        assert dataset[index]["reference"] == _reference(environment)
+    assert [dataset[i]["publication"] for i in range(5)] == [
+        Publication(
+            pubmed_id="111",
+            pubmed_url="https://pubmed.ncbi.nlm.nih.gov/111/",
+            doi="10.1/aaa",
+            doi_url="https://doi.org/10.1/aaa",
+        ).model_dump(),
+        Publication(
+            pubmed_id="222",
+            pubmed_url="https://pubmed.ncbi.nlm.nih.gov/222/",
+            doi="10.2/bbb",
+            doi_url="https://doi.org/10.2/bbb",
+        ).model_dump(),
+        *(
+            Publication(
+                pubmed_id=pmid,
+                pubmed_url=f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/",
+                doi=None,
+                doi_url=None,
+            ).model_dump()
+            for pmid in ("333", "444")
+        ),
+        Publication(
+            pubmed_id="111",
+            pubmed_url="https://pubmed.ncbi.nlm.nih.gov/111/",
+            doi="10.1/aaa",
+            doi_url="https://doi.org/10.1/aaa",
+        ).model_dump(),
+    ]
+
+
+def test_no_record_carries_a_guessed_medium_or_temperature(
+    dataset: m.GeneEssentialitySgdDataset,
+) -> None:
+    """The old loader stored YEPD solid at 30 C on every record. Now every record
+    stores a medium whose name, state and class are ``not_carried_by_curation`` gaps
+    (anchored to the pinned dump), and the temperature is a gap except where SGD states
+    37 C.
+    """
+    for index in range(len(dataset)):
+        environment = dataset[index]["experiment"]["environment"]
+        media = environment["media"]
+        assert (media["name"], media["state"], media["is_synthetic"]) == (
+            None,
+            None,
+            None,
+        )
+        media_gaps = {gap["field"]: gap for gap in media["provenance_gaps"]}
+        assert set(media_gaps) == {"name", "state", "is_synthetic"}
+        for gap in media_gaps.values():
+            assert gap["reason"] == "not_carried_by_curation"
+            assert gap["looked_in"]["sha256"] == _PIN
+        gaps = {gap["field"]: gap for gap in environment["provenance_gaps"]}
+        if index == 4:
+            assert environment["temperature"] == {"value": 37.0, "unit": "Celsius"}
+            assert "temperature" not in gaps
+        else:
+            assert environment["temperature"] is None
+            assert gaps["temperature"]["reason"] == "not_carried_by_curation"
+
+
+def test_other_alleles_are_ledgered_verbatim_not_stored(
+    dataset: m.GeneEssentialitySgdDataset,
+) -> None:
+    """``atg9-K12A`` and ``atg9Δ10-20`` are ledgered with their SGD id, PubMed id,
+    condition and note; the ledger accounts for every inviable null S288C annotation.
+    """
+    ledger = m.SgdDropLog.model_validate_json(
+        (Path(dataset.preprocess_dir) / "dropped_records.json").read_text()
     )
-    return out
-
-
-# --------------------------------------------------------------------------- #
-# The decision
-# --------------------------------------------------------------------------- #
-def test_the_module_registers_no_dataset() -> None:
-    """No dataset class: the source states no medium, so no record can be built."""
-    from torchcell.datasets.dataset_registry import dataset_registry
-
-    assert not any(cls.__module__ == m.__name__ for cls in dataset_registry.values())
-    assert "GeneEssentialitySgdDataset" not in dataset_registry
-
-
-def test_the_removed_class_is_not_importable_from_the_dataset_package() -> None:
-    """The served class is gone from the package namespace, not merely unregistered."""
-    import torchcell.datasets as datasets
-
-    assert not hasattr(datasets, "GeneEssentialitySgdDataset")
-    assert "GeneEssentialitySgdDataset" not in datasets.__all__
-
-
-def test_the_class_is_not_in_the_public_adapter_map() -> None:
-    """Nothing in the KG build can reach the dataset by class or by adapter."""
-    from torchcell.knowledge_graphs.dataset_adapter_map import dataset_adapter_map
-
-    names = {cls.__name__ for cls in dataset_adapter_map}
-    assert "GeneEssentialitySgdDataset" not in names
-    assert not any(
-        adapter.__name__ == "GeneEssentialitySgdAdapter"
-        for adapter in dataset_adapter_map.values()
+    assert (ledger.source_annotations, ledger.kept_records, ledger.dropped_records) == (
+        7,
+        5,
+        2,
     )
+    assert ledger.rule == "allele_not_whole_gene_deletion"
+    assert ledger.sgd_genes_digest == m.SGD_GENES_DIGEST
+    assert [
+        (r.systematic_name, r.allele, r.pubmed_id, r.conditions, r.note)
+        for r in ledger.rows
+    ] == [
+        ("YDR001C", "atg9-K12A", "444", ["media: nitrogen starvation"], None),
+        ("YDR001C", "atg9Δ10-20", "444", ["media: nitrogen starvation"], "n"),
+    ]
+    assert len({r.sgd_annotation_id for r in ledger.rows}) == 2
 
 
-def test_the_condition_pairs_are_the_four_the_dump_carries() -> None:
-    """Each recorded pair says what it is, and none of them is a carryable medium."""
-    assert set(m.SGD_CONDITION_PAIRS) == {
+def test_side_files(dataset: m.GeneEssentialitySgdDataset) -> None:
+    """No raw files, no ``data.csv``; the gene set is the four genes with records and
+    each distinct environment has its own reference.
+    """
+    assert dataset.raw_file_names == []
+    preprocess = Path(dataset.root) / "preprocess"
+    assert not (preprocess / "data.csv").exists()
+    assert json.loads((preprocess / "gene_set.json").read_text()) == [
+        "YAL001C",
+        "YCR001W",
+        "YDR001C",
+        "YEL001C",
+    ]
+    index = json.loads((preprocess / "experiment_reference_index.json").read_text())
+    assert sorted(entry["member_indices"] for entry in index) == [[0, 1, 2], [3], [4]]
+    manifest = json.loads((preprocess / "build_manifest.json").read_text())
+    assert manifest["dataset_name"] == "gene_essentiality_sgd"
+    assert manifest["loader_class"] == "GeneEssentialitySgdDataset"
+    assert manifest["loader_module"] == "torchcell.datasets.scerevisiae.sgd"
+    assert {
+        "GeneEssentialityExperiment",
+        "SgaKanMxDeletionPerturbation",
+        "Environment",
+    } <= set(manifest["closure"])
+
+
+@pytest.mark.parametrize(
+    ("allele", "locus", "whole"),
+    [
+        ("atg8-Δ", "ATG8", True),
+        ("yil102c-A-∆", "YIL102C-A", True),
+        ("ATG8-Δ", "ATG8", True),
+        ("sac1Δ114-503", "SAC1", False),
+        ("cdc24p-∆CH", "CDC24", False),
+        ("cdc42-111", "CDC42", False),
+        ("Nog1-(1-426)", "NOG1", False),
+        ("rsc3-C15G", "RSC30", False),
+        ("atg8-Δ", "ATG80", False),
+    ],
+)
+def test_whole_gene_deletion_is_sgds_gene_delta_name(
+    allele: str, locus: str, whole: bool
+) -> None:
+    """``<gene>-Δ`` with either delta code point and any case; nothing else."""
+    assert m.is_whole_gene_deletion(allele, locus) is whole
+
+
+def test_every_condition_of_the_pinned_dump_maps_to_its_own_environment() -> None:
+    """The four verbatim pairs map to four distinct environments: nitrogen starvation
+    is a qualitative nitrogen-source edit, 2% glucose a carbon-source edit of D-glucose
+    at a basis-free 2 percent, the 37 C pair the temperature, each on a medium whose
+    labels are gaps; the stateless YPD is its stated name on the library YPD base with
+    only the state a gap that quotes it.
+    """
+    conditions = m.SGD_CONDITIONS
+    assert set(conditions) == {
         ("media", "nitrogen starvation"),
         ("media", "2% glucose"),
         ("media", "YPD with 2% glucose"),
         ("temperature", "elevated temperature, 37 °C"),
     }
-    assert all(reason for reason in m.SGD_CONDITION_PAIRS.values())
-
-
-def test_the_dump_provenance_pins_the_digest_it_was_measured_on() -> None:
-    """Every count here is stated of these bytes, so the pin travels with them."""
-    assert m.SGD_DUMP.sha256 == m.SGD_GENES_DIGEST
-    assert m.SGD_DUMP.citation_key == "cherrySGDSaccharomycesGenome1998"
-    assert m.ANNOTATION_SELECTOR == {
-        "mutant_type": "null",
-        "strain": "S288C",
-        "phenotype": "inviable",
+    assert m.SGD_ENVIRONMENT == _NO_CONDITION_ENVIRONMENT
+    assert conditions[("media", "nitrogen starvation")] == _NITROGEN_ENVIRONMENT
+    assert conditions[("temperature", "elevated temperature, 37 °C")] == (
+        _HOT_ENVIRONMENT
+    )
+    assert conditions[("media", "2% glucose")].media == _unstated(
+        "its one condition property (class_type 'media') reads '2% glucose', a "
+        "carbon-source edit to a base medium it does not name"
+    )
+    (glucose,) = conditions[("media", "2% glucose")].perturbations
+    assert isinstance(glucose, EnvironmentPhysicalPerturbation)
+    assert glucose.factor is PhysicalFactor.carbon_source
+    assert glucose.magnitude == Concentration(value=2.0, unit=ConcentrationUnit.percent)
+    assert glucose.agent is not None
+    assert glucose.agent.inchikey == "WQZGKKKJIJFFOK-GASJEMHNSA-N"
+    ypd = conditions[("media", "YPD with 2% glucose")]
+    assert ypd.perturbations == []
+    assert ypd.media is m.SGD_STATELESS_YPD
+    assert (
+        ypd.media.name,
+        ypd.media.state,
+        ypd.media.is_synthetic,
+        ypd.media.base_medium,
+    ) == ("YPD with 2% glucose", None, False, "YPD")
+    assert ypd.media.gapped_fields() == {"state"}
+    (state_gap,) = ypd.media.provenance_gaps
+    assert state_gap.reason is ProvenanceGapReason.not_carried_by_curation
+    assert state_gap.looked_in == m.SGD_DUMP
+    assert "'YPD with 2% glucose'" in str(state_gap.note)
+    assert [g.field for g in ypd.provenance_gaps] == ["temperature"]
+    dumps = {
+        json.dumps(env.model_dump(), sort_keys=True) for env in conditions.values()
     }
+    assert (
+        len(dumps | {json.dumps(m.SGD_ENVIRONMENT.model_dump(), sort_keys=True)}) == 5
+    )
+    assert m.SGD_UNSTATED_MEDIUM.gapped_fields() == {"name", "state", "is_synthetic"}
 
 
-def test_the_two_disagreement_groups_are_disjoint_and_add_to_the_measurement() -> None:
-    """16 conditional plus 7 unconditional are the 23 that survive the allele rule."""
-    conditional = set(m.CONDITIONAL_DISAGREEMENTS)
-    unconditional = set(m.UNCONDITIONAL_DISAGREEMENTS)
-    assert not conditional & unconditional
-    assert len(conditional) == 16
-    assert len(unconditional) == 7
-    assert m.VIABLE_FULL_DELETIONS_SMF_COSTANZO2016 == 4581
-
-
-# --------------------------------------------------------------------------- #
-# The measurement
-# --------------------------------------------------------------------------- #
-def test_only_the_selected_annotations_are_read(genes_dir: Path) -> None:
-    """A viable phenotype is not an essentiality call and is not read."""
-    annotations = m.inviable_null_annotations(str(genes_dir), progress=False)
-    assert [a.sgd_annotation_id for a in annotations] == [1, 4, 2, 3]
-    assert [a.systematic_name for a in annotations] == [
-        "YAL001C",
-        "YBR001C",
-        "YKL212W",
-        "YKL212W",
+def test_an_unknown_condition_refuses_the_build(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A condition pair outside the closed vocabulary is named, never guessed."""
+    dump = dict(_DUMP)
+    dump["YFL001W"] = [
+        _annotation(
+            "111",
+            "DEG1",
+            "deg1-Δ",
+            conditions=[{"class_type": "media", "note": "YPGal", "unit": ""}],
+        )
     ]
+    with pytest.raises(m.SgdConditionError, match=r"YFL001W .*'YPGal'"):
+        _build(tmp_path, monkeypatch, dump)
+    assert not (tmp_path / "gene_essentiality_sgd" / "processed" / "lmdb").exists()
 
 
-def test_an_annotation_with_two_alleles_is_refused(tmp_path: Path) -> None:
-    """One annotation names one allele; two is not a record with a chosen one."""
-    detail = _annotation(9, "TFC3", "tfc3-Δ", "111")
-    detail["properties"].append(
-        {
-            "class_type": "BIOITEM",
-            "role": "Allele",
-            "bioitem": {"display_name": "tfc3-1"},
-            "note": None,
-        }
-    )
-    _write_gene(tmp_path / "genes", "YAL001C", [detail])
-    with pytest.raises(m.SgdAlleleError, match="2 alleles"):
-        m.inviable_null_annotations(str(tmp_path / "genes"), progress=False)
-
-
-@pytest.mark.parametrize(
-    ("allele", "locus", "expected"),
-    [
-        ("tfc3-Δ", "TFC3", True),
-        ("TFC3-Δ", "tfc3", True),
-        ("yil102c-A-∆", "YIL102C-A", True),
-        ("sac1Δ114-503", "SAC1", False),
-        ("cdc42-111", "CDC42", False),
-        ("Nog1-(1-426)", "NOG1", False),
-        ("cdc24p-∆CH", "CDC24", False),
-    ],
-)
-def test_whole_gene_deletion_folds_both_signs_and_case(
-    allele: str, locus: str, expected: bool
+def test_two_kept_annotations_of_one_record_refuse_the_build(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """U+2206 and U+0394 are the same name; anything after the sign is not."""
-    assert m.is_whole_gene_deletion(allele, locus) is expected
+    """The whole-gene allele twice for one gene, condition and paper is one fact twice."""
+    dump = dict(_DUMP)
+    dump["YCR001W"] = [
+        _annotation("222", "YCR001W", "ycr001w-Δ"),
+        _annotation("222", "YCR001W", "ycr001w-Δ"),
+    ]
+    with pytest.raises(m.DuplicateSgdAnnotationError, match="YCR001W"):
+        _build(tmp_path, monkeypatch, dump)
 
 
-def test_no_annotation_states_a_medium_the_schema_can_carry(genes_dir: Path) -> None:
-    """Clause 1 on synthetic bytes: a nutrient edit is not a medium."""
-    annotations = m.inviable_null_annotations(str(genes_dir), progress=False)
-    inventory = m.condition_inventory(annotations)
-    assert inventory.n_annotations == 4
-    assert inventory.n_without_condition == 2
-    assert inventory.pairs == {"media: nitrogen starvation": 2}
-    assert inventory.n_naming_a_medium == 0
-    assert inventory.n_stating_a_physical_state == 0
-    assert inventory.n_storable == 0
+def test_an_annotation_without_one_allele_refuses_the_build(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    detail = _annotation("111", "TFC3", "tfc3-Δ")
+    detail["properties"] = []
+    with pytest.raises(
+        m.SgdAlleleError, match=r"YAL001C.json annotation \d+: 0 alleles"
+    ):
+        _build(tmp_path, monkeypatch, {"YAL001C": [detail]})
 
 
-def test_a_medium_with_a_state_would_be_counted_storable(tmp_path: Path) -> None:
-    """The counterfactual: the rule is not hard-wired to 0."""
-    _write_gene(
-        tmp_path / "genes",
-        "YAL001C",
-        [
-            _annotation(
-                1, "TFC3", "tfc3-Δ", "111", conditions=(("media", "YPD solid plates"),)
-            )
-        ],
-    )
-    annotations = m.inviable_null_annotations(str(tmp_path / "genes"), progress=False)
-    inventory = m.condition_inventory(annotations)
-    assert inventory.n_naming_a_medium == 1
-    assert inventory.n_stating_a_physical_state == 1
-    assert inventory.n_storable == 1
-
-
-def test_the_one_real_medium_names_no_physical_state() -> None:
-    """The one real medium names no state Media.state could be read from.
-
-    SGD writes it ``YPD with 2% glucose``: a medium name and a carbon
-    concentration, and nothing about whether the cells were on a plate or in
-    broth.
+def test_bytes_off_the_pin_and_a_missing_dump_refuse_the_build(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The digest covers every ``.json`` name and its bytes; a non-JSON file does not
+    count. Editing one file, or building with no dump, raises ``SgdDumpDigestError``
+    before any Entrez call or store write.
     """
-    conditions = (("media", "YPD with 2% glucose"),)
-    assert m.names_a_medium(conditions) is True
-    assert m.states_a_physical_state(conditions) is False
-
-
-def test_the_allele_inventory_counts_the_collapse_the_served_store_held(
-    genes_dir: Path,
-) -> None:
-    """Clause 3 on synthetic bytes: two SAC1 alleles under one paper were one record."""
-    annotations = m.inviable_null_annotations(str(genes_dir), progress=False)
-    inventory = m.allele_inventory(annotations)
-    assert inventory.n_annotations == 4
-    assert inventory.n_whole_gene_deletion == 2
-    assert inventory.n_other_allele == 2
-    assert inventory.collapse_keys == {"YKL212W PMID 222": ["sac1-Δ", "sac1Δ114-503"]}
-    assert inventory.n_collapse_extra_records == 1
-
-
-def test_the_experiment_inventory_is_the_primary_layer(genes_dir: Path) -> None:
-    """The shape of what a per-study loader would have to read instead."""
-    annotations = m.inviable_null_annotations(str(genes_dir), progress=False)
-    assert m.experiment_type_inventory(annotations) == {"systematic mutation set": 4}
-
-
-def test_a_missing_dump_is_refused_by_name(tmp_path: Path) -> None:
-    """No download path: a fresh fetch is a new release with its own digest."""
+    data_root = tmp_path / "data_root"
+    monkeypatch.setenv("DATA_ROOT", str(data_root))
+    fetched = _install_entrez(monkeypatch)
     with pytest.raises(m.SgdDumpDigestError, match="does not exist"):
-        m.verify_sgd_dump(str(tmp_path / "absent"))
-
-
-def test_bytes_off_the_pin_are_refused(genes_dir: Path) -> None:
-    """The measurements are stated of the pinned bytes, so other bytes raise."""
+        m.GeneEssentialitySgdDataset(root=str(tmp_path / "a"))
+    genes = _write_dump(data_root, _DUMP)
+    _pin(monkeypatch, genes)
+    (genes / "README.txt").write_text("edited", encoding="utf-8")
+    assert m.sgd_genes_digest(str(genes)) == m.SGD_GENES_DIGEST
+    (genes / "YBR001C.json").write_text("{}", encoding="utf-8")
     with pytest.raises(m.SgdDumpDigestError, match="is not the pinned"):
-        m.verify_sgd_dump(str(genes_dir))
+        m.GeneEssentialitySgdDataset(root=str(tmp_path / "b"))
+    assert fetched == []
+    assert not (tmp_path / "b" / "processed" / "lmdb").exists()
 
 
-def test_the_digest_changes_with_any_gene_file(genes_dir: Path) -> None:
-    """One sha256 over the sorted per-file lines, so any edit moves it."""
-    before = m.sgd_genes_digest(str(genes_dir))
-    _write_gene(genes_dir, "YZZ999W", [])
-    assert m.sgd_genes_digest(str(genes_dir)) != before
+def test_the_digest_is_sha256_over_sorted_name_and_file_sha256_lines(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "B.json").write_bytes(b"b")
+    (tmp_path / "A.json").write_bytes(b"a")
+    lines = [
+        f"A.json {hashlib.sha256(b'a').hexdigest()}",
+        f"B.json {hashlib.sha256(b'b').hexdigest()}",
+    ]
+    assert (
+        m.sgd_genes_digest(str(tmp_path))
+        == hashlib.sha256("\n".join(lines).encode()).hexdigest()
+    )
 
 
-# --------------------------------------------------------------------------- #
-# The pinned dump
-# --------------------------------------------------------------------------- #
+def test_get_publication_info_retries_with_exponential_backoff(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Two failing fetches then success: sleeps 1 s and 2 s (``base_delay * 2**attempt``
+    with the random jitter pinned to 0), prints one retry line per failure, and returns
+    the parsed record.
+    """
+    fetched = _install_entrez(monkeypatch, fail_first=2)
+    sleeps: list[float] = []
+    monkeypatch.setattr(time, "sleep", sleeps.append)
+    monkeypatch.setattr(random, "uniform", lambda a, b: 0.0)
+    assert m.get_publication_info("111") == {
+        "pubmed_id": "111",
+        "pubmed_url": "https://pubmed.ncbi.nlm.nih.gov/111/",
+        "doi": "10.1/aaa",
+        "doi_url": "https://doi.org/10.1/aaa",
+    }
+    assert sleeps == [1, 2]
+    assert fetched == ["111"]
+    assert capsys.readouterr().out == (
+        "Attempt 1 failed. Retrying in 1.00 seconds...\n"
+        "Attempt 2 failed. Retrying in 2.00 seconds...\n"
+    )
+
+
+def test_get_publication_info_gives_up_after_five_attempts(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Five failures: four sleeps (1, 2, 4, 8 s), a final error line, and None."""
+    _install_entrez(monkeypatch, fail_first=5)
+    sleeps: list[float] = []
+    monkeypatch.setattr(time, "sleep", sleeps.append)
+    monkeypatch.setattr(random, "uniform", lambda a, b: 0.0)
+    assert m.get_publication_info("999") is None
+    assert sleeps == [1, 2, 4, 8]
+    assert capsys.readouterr().out.splitlines()[-1] == (
+        "Error fetching info for PubMed ID 999: boom"
+    )
+
+
+def test_create_experiment_raises_when_publication_lookup_fails(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(m, "get_publication_info", lambda pubmed_id: None)
+    annotation = m.SgdAnnotation(
+        sgd_annotation_id=1,
+        systematic_name="YAL001C",
+        locus_display_name="TFC3",
+        allele="tfc3-Δ",
+        pubmed_id="999",
+        experiment="classical genetics",
+        conditions=(),
+        note=None,
+    )
+    with pytest.raises(
+        ValueError,
+        match="Unable to retrieve publication information for PubMed ID: 999",
+    ):
+        m.GeneEssentialitySgdDataset.create_experiment(
+            "GeneEssentialitySgdDataset", annotation, m.SGD_ENVIRONMENT
+        )
+
+
+def test_stored_items_retype_through_the_essentiality_classes(
+    dataset: m.GeneEssentialitySgdDataset,
+) -> None:
+    """``transform_item`` rebuilds each stored item through the declared classes: a
+    ``GeneEssentialityExperiment`` whose phenotype is essential, a
+    ``GeneEssentialityExperimentReference`` whose phenotype is not, and a ``Publication``,
+    each dumping back to exactly the stored dictionary, gapped medium included.
+    """
+    for index in range(len(dataset)):
+        item = dataset[index]
+        typed = dataset.transform_item(item)
+        assert type(typed["experiment"]) is GeneEssentialityExperiment
+        assert type(typed["reference"]) is GeneEssentialityExperimentReference
+        assert type(typed["publication"]) is Publication
+        assert typed["experiment"].model_dump() == item["experiment"]
+        assert typed["reference"].model_dump() == item["reference"]
+        assert typed["publication"].model_dump() == item["publication"]
+        assert typed["experiment"].phenotype.is_essential is True
+        assert typed["reference"].phenotype_reference.is_essential is False
+        assert typed["experiment"].environment.media.gapped_fields() == {
+            "name",
+            "state",
+            "is_synthetic",
+        }
+
+
+def test_publication_is_outside_the_content_hash_so_repeat_annotations_collapse(
+    dataset: m.GeneEssentialitySgdDataset,
+) -> None:
+    """The KG node id of an experiment is the sha256 of its JSON dump, and the stored
+    experiment carries no publication. The two YCR001W records differ only in their
+    publication (PubMed 222 and 333), so they map to one node id; the nitrogen-starved
+    ATG9 record and the 37 C record are their own nodes.
+    """
+    ids = [
+        hashlib.sha256(
+            json.dumps(
+                GeneEssentialityExperiment(**dataset[i]["experiment"]).model_dump()
+            ).encode("utf-8")
+        ).hexdigest()
+        for i in range(len(dataset))
+    ]
+    assert ids[1] == ids[2]
+    assert len(set(ids)) == 4
+
+
+def test_unset_data_root_refuses_the_build(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """With ``DATA_ROOT`` unset the build refuses with the named ``data_root`` error
+    instead of reading a directory relative to the working directory.
+    """
+    monkeypatch.delenv("DATA_ROOT")
+    monkeypatch.chdir(tmp_path)
+    _write_dump(tmp_path / "data", _DUMP)
+    _install_entrez(monkeypatch)
+    root = tmp_path / "gene_essentiality_sgd"
+    with pytest.raises(ValueError) as info:
+        m.GeneEssentialitySgdDataset(root=str(root))
+    assert str(info.value) == (
+        "DATA_ROOT environment variable is not set. Please set it in your .env file."
+    )
+    assert not (root / "processed" / "lmdb").exists()
+
+
+def test_no_raw_stage(dataset: m.GeneEssentialitySgdDataset) -> None:
+    """The loader has no raw files: ``download`` writes nothing into ``raw/`` and
+    ``preprocess_raw`` hands back the very frame it was given, unchanged.
+    """
+    raw = Path(dataset.raw_dir)
+    before = sorted(p.name for p in raw.iterdir()) if raw.exists() else []
+    dataset.download()
+    after = sorted(p.name for p in raw.iterdir()) if raw.exists() else []
+    assert after == before
+    frame = pd.DataFrame({"gene": ["YAL001C"], "is_essential": [True]})
+    returned = dataset.preprocess_raw(frame)
+    assert returned is frame
+
+
+def test_main_builds_the_dataset_under_data_root(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """``main`` roots the dataset at ``$DATA_ROOT/data/torchcell/gene_essentiality_sgd``
+    and prints it; no genome or graph is built, since the source is the dump itself.
+    """
+    monkeypatch.setenv("DATA_ROOT", str(tmp_path))
+    monkeypatch.setattr("dotenv.load_dotenv", lambda *a, **k: False)
+    calls: list[dict[str, Any]] = []
+
+    class _Dataset:
+        def __init__(self, **kwargs: Any) -> None:
+            calls.append(kwargs)
+
+        def __repr__(self) -> str:
+            return "GeneEssentialitySgdDataset(5)"
+
+    monkeypatch.setattr(m, "GeneEssentialitySgdDataset", _Dataset)
+    m.main()
+    assert calls == [{"root": f"{tmp_path}/data/torchcell/gene_essentiality_sgd"}]
+    assert capsys.readouterr().out == "GeneEssentialitySgdDataset(5)\n"
+
+
 @pytest.mark.data
-@pytest.mark.skipif(DATA_ROOT is None, reason="DATA_ROOT unset")
-def test_the_real_dump_matches_the_pin_and_every_recorded_count() -> None:
-    """Every number of the decision, re-measured on the pinned dump."""
-    assert DATA_ROOT is not None
-    real = osp.join(DATA_ROOT, m.SGD_GENES_RELPATH)
-    if not osp.isdir(real):
-        pytest.skip(f"{real} not on this machine")
-    m.verify_sgd_dump(real)
-    annotations = m.inviable_null_annotations(real, progress=False)
-    assert len(annotations) == REAL_ANNOTATIONS
+def test_the_pinned_dump_holds_the_issue_counts() -> None:
+    """On the real ``$DATA_ROOT/data/sgd/genome/genes`` (#901): the digest is the pin;
+    1,329 inviable null S288C annotations; 1,287 name the whole-gene deletion and 42
+    another allele; the kept ones repeat no (gene, condition, PubMed id) key; 21 carry
+    a condition (18 nitrogen starvation, one each of the other three pairs).
+    """
+    import os
+    import os.path as osp
 
-    conditions = m.condition_inventory(annotations)
-    assert conditions.n_without_condition == REAL_WITHOUT_CONDITION
-    assert conditions.pairs == REAL_CONDITION_PAIRS
-    assert conditions.n_naming_a_medium == 1
-    assert conditions.n_stating_a_physical_state == 0
-    assert conditions.n_storable == 0
+    from dotenv import load_dotenv
 
-    alleles = m.allele_inventory(annotations)
-    assert alleles.n_whole_gene_deletion == REAL_WHOLE_GENE_DELETION
-    assert alleles.n_other_allele == REAL_OTHER_ALLELE
-    assert len(alleles.collapse_keys) == REAL_COLLAPSE_KEYS
-    assert alleles.n_collapse_extra_records == REAL_COLLAPSE_EXTRA_RECORDS
-
-    assert m.experiment_type_inventory(annotations) == REAL_EXPERIMENT_TYPES
+    load_dotenv()
+    genes_dir = osp.join(os.environ["DATA_ROOT"], m.SGD_GENES_RELPATH)
+    m.verify_sgd_dump(genes_dir)
+    annotations = m.inviable_null_annotations(genes_dir)
+    kept, dropped = m.split_by_allele(annotations)
+    assert (len(annotations), len(kept), len(dropped)) == (1329, 1287, 42)
+    m.refuse_duplicate_annotations(kept)
+    assert Counter(a.conditions for a in kept if a.conditions) == {
+        (("media", "nitrogen starvation"),): 18,
+        (("media", "2% glucose"),): 1,
+        (("media", "YPD with 2% glucose"),): 1,
+        (("temperature", "elevated temperature, 37 °C"),): 1,
+    }
+    assert Counter(m.condition_environment(a).media.name for a in kept) == {
+        None: 1286,
+        "YPD with 2% glucose": 1,
+    }

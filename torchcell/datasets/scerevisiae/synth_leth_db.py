@@ -1,121 +1,79 @@
+"""SynLethDB-derived yeast synthetic lethality and synthetic rescue datasets.
+
+Gene resolution (issue #597). Every row of ``Yeast_SL.csv`` and ``Yeast_SR.csv`` names
+both genes twice: a gene name (``n1.name``, ``n2.name``) and an NCBI Entrez Gene id
+(``n1.identifier``, ``n2.identifier``). Each side is resolved by its Entrez id through the
+RefSeq R64 annotation ``ncbi_genomic.gff`` (``GeneID`` -> ``locus_tag``), pinned by
+sha256 and read from ``<genome_root>/S288C_reference_genome_R64-4-1_20230830/``. The gene
+name is a cross-check: ``SCerevisiaeGenome.resolve_gene_name`` (standard name before
+alias, the prime of ``IMP2'`` kept) must give the same current gene, or the row is
+dropped under a named rule in ``preprocess/dropped_records.json``. A row naming one gene
+on both sides is dropped too, since the release does not say what such a pair means.
+After resolution no unordered ORF pair may repeat (``DuplicateOrfPairError``).
+
+The old resolution (a name -> ORF dict in which a later gene's alias overwrote an
+earlier gene's standard name, and ``rstrip("'")`` turned ``IMP2'`` into ``IMP2``) stored
+872 of 14,000 SL and 119 of 6,948 SR records under the wrong ORF.
+"""
+
 # torchcell/datasets/scerevisiae/synth_leth_db
 # [[torchcell.datasets.scerevisiae.synth_leth_db]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/synth_leth_db
 # Test file: tests/torchcell/datasets/scerevisiae/test_synth_leth_db.py
-"""SynLethDB 2.0: a provenance record of an aggregation that states no growth condition.
 
-Wang et al. 2022 (Nucleic Acids Res. 51:D1, citation key
-``wangSynLethDB20Webbased2022``) releases ``Yeast_SL.csv`` (14,000 synthetic-lethal gene
-pairs) and ``Yeast_SR.csv`` (6,948 synthetic-rescue pairs), each row an aggregated pair
-with a PubMed id naming the paper it came from. They were served as
-``SynthLethalityYeastSynthLethDbDataset`` and ``SynthRescueYeastSynthLethDbDataset``
-until 2026-10-11.
-
-DECISION: NOT LOADED. This module registers no dataset, in the MCF2Chem 2023
-(:mod:`torchcell.datasets.ecoli.cai2023`) and CeCaFDB 2015
-(:mod:`torchcell.datasets.ecoli.zhang2015`) pattern. ``Environment.media`` is required,
-because a synthetic-lethal call is a growth measurement and a growth measurement
-happened in some medium; a source that does not name the medium cannot produce a
-record, and the schema is not weakened to admit one.
-
-**1. No field of either file states a growth condition.** Both headers are the same
-eight columns, measured by :func:`release_inventory` on the pinned bytes: ``n1.name``,
-``n1.identifier``, ``n2.name``, ``n2.identifier``, ``r.cell_line``, ``r.pubmed_id``,
-``r.source``, ``r.statistic_score``. None names a medium, a temperature, a carbon
-source or a culture state, and ``r.cell_line``, the one column that could carry a
-growth context, is empty on all 20,948 rows. The paper states the same thing of its own
-data model (:data:`SYNLETHDB_ENTRY_FIELDS_QUOTE`): species, PubMed references,
-supporting evidence and cell lines, and nothing about how the cells were grown. So the
-storable-record count is **0 of 14,000 SL** and **0 of 6,948 SR**.
-
-**2. The served stores carried a medium nobody stated.** Until #622 they emitted an
-unsourced ``Media(name="YEPD", state="solid")``; #622 replaced it with a
-composition-deferred stand-in whose own name said the medium was not carried. Both are
-the same error in different words: a stand-in joins no shared medium, and a query that
-groups by medium reads it as a medium somebody stated.
-
-**3. The medium is per source study, so the source studies are the loadable path.**
-Under the 2026-10-10 decomposition policy
-([[torchcell.candidates.aggregation-decomposition]]) a served compendium is a
-processing reference, not the source of record, and each original study inside it is
-loaded from its own release. Measured by :func:`source_decomposition`: the SL file
-cites 1,741 distinct PubMed ids and the SR file 1,918, 3,308 distinct across both, and
-every one of them is an original study whose own paper states its medium. The SL file
-further labels each row's evidence class (``r.source``), 7,721 rows High Throughput,
-4,944 Low Throughput, 1,248 both and 87 Text Mining; the whole SR file is labeled
-BioGRID, so every SR row is a database re-export rather than a reading of the paper its
-PubMed id names.
-
-**4. The SL confidence score is defined, the SR score is not.** The paper defines a
-normalized confidence score for SL pairs only
-(:data:`SYNLETHDB_SL_SCORE_QUOTE`) and says of SR pairs only that they were collected
-(:data:`SYNLETHDB_SR_COLLECTION_QUOTE`). All 14,000 SL rows carry a score, and it is a
-function of the evidence label rather than of the pair: 0.5 for High Throughput, 0.8
-for Low Throughput, 0.9 for both, and one of four values for Text Mining
-(:func:`score_by_source`). 74 SR rows carry a score (-1.0 to -0.2, all
-``r.source`` BioGRID, all PubMed 24470217) that no mirrored document defines; the
-BioGRID 2019 update it cites (:data:`BIOGRID_2019_REFERENCE`) is not in the mirror, so
-those 74 numbers have no sourced meaning and are recorded here rather than stored.
-
-**5. The genes resolve, and the old resolution was wrong** (#597). Each row names both
-genes twice, by name and by NCBI Entrez Gene id, and the id resolves through the pinned
-RefSeq R64 annotation (:func:`load_entrez_to_orf`) while the name is a cross-check
-(``SCerevisiaeGenome.resolve_gene_name``). The resolution that the served stores were
-built with was a name to ORF dict in which a later gene's alias overwrote an earlier
-gene's standard name, and which turned ``IMP2'`` into ``IMP2`` by ``rstrip("'")``: it
-put 872 of 14,000 SL and 119 of 6,948 SR records under the wrong ORF, and produced 9
-duplicate unordered ORF pairs (7 SL, 2 SR) that the Entrez resolution does not. This
-machinery is kept because a per-study loader needs the same map, not because anything
-here builds a store.
-
-Script and committed results:
-``experiments/036-dataset-fixes-before-kg-build/scripts/sgd_synlethdb_findings.py``,
-``results/sgd_synlethdb_findings.json``.
-Finding: [[torchcell.datasets.scerevisiae.synth_leth_db]]. Issues #902, #903, #622.
-"""
-
-from __future__ import annotations
-
+import logging
+import os
 import os.path as osp
+import pickle
 from collections import Counter
-from collections.abc import Mapping
-from typing import Final
+from collections.abc import Callable, Mapping
+from typing import Any
 
+import lmdb
 import pandas as pd
-from pydantic import BaseModel, ConfigDict, Field
+import requests
+from pydantic import BaseModel
+from tqdm import tqdm
 
-from torchcell.data import verify_sha256
+from torchcell.data import (
+    ExperimentDataset,
+    post_process,
+    verify_raw_files,
+    verify_sha256,
+)
+from torchcell.datamodels.schema import (
+    Environment,
+    Genotype,
+    Media,
+    Publication,
+    ReferenceGenome,
+    SgaKanMxDeletionPerturbation,
+    SyntheticLethalityExperiment,
+    SyntheticLethalityExperimentReference,
+    SyntheticLethalityPhenotype,
+    SyntheticRescueExperiment,
+    SyntheticRescueExperimentReference,
+    SyntheticRescuePhenotype,
+)
+from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.verification.report import Provenance
-from torchcell.verification.sourced import SourcedValue
+from torchcell.verification.sourced import (
+    ProvenanceGap,
+    ProvenanceGapReason,
+    SourcedValue,
+)
 
-# --------------------------------------------------------------------------- #
-# Provenance anchors
-# --------------------------------------------------------------------------- #
-#: The raw SynLethDB release files, pinned to the bytes the served builds consumed
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger(__name__)
+
+#: The raw SynLethDB release files, pinned to the bytes the served build consumed
 #: (``$DATA_ROOT/data/torchcell/synth_{lethality,rescue}_yeast_synth_leth_db/raw/``,
 #: 14,000 and 6,948 data rows).
-SL_CSV_NAME: Final = "Yeast_SL.csv"
-SL_CSV_SHA256: Final = (
-    "091e04dbab80044324970feea4a5fc933df0ab7c887042fd87419173129c56ca"
-)
-SR_CSV_NAME: Final = "Yeast_SR.csv"
-SR_CSV_SHA256: Final = (
-    "d84fba780cfa55d59f4844324f5c203f85f09bcfe50bfff6de06169ade2a18f4"
-)
-
-#: The eight columns of both files, verbatim and in order. Not one names a growth
-#: condition, which is clause 1 of the decision.
-SYNLETHDB_COLUMNS: Final[tuple[str, ...]] = (
-    "n1.name",
-    "n1.identifier",
-    "n2.name",
-    "n2.identifier",
-    "r.cell_line",
-    "r.pubmed_id",
-    "r.source",
-    "r.statistic_score",
-)
+SL_CSV_NAME = "Yeast_SL.csv"
+SL_CSV_SHA256 = "091e04dbab80044324970feea4a5fc933df0ab7c887042fd87419173129c56ca"
+SR_CSV_NAME = "Yeast_SR.csv"
+SR_CSV_SHA256 = "d84fba780cfa55d59f4844324f5c203f85f09bcfe50bfff6de06169ade2a18f4"
 
 #: The RefSeq annotation of the R64 assembly (header ``#!genome-build-accession
 #: NCBI_Assembly:GCF_000146045.2``, ``#!annotation-source SGD R64-4-1``) that maps an
@@ -123,26 +81,24 @@ SYNLETHDB_COLUMNS: Final[tuple[str, ...]] = (
 #: ``genome_root``; it is NOT part of the genomes-tier set ``sgd_S288C_R64-4-1_20230830``
 #: (scripts/migrate_genomes_tier.py), and NCBI now serves an R64-5-1 annotation under
 #: the same accession, so these bytes cannot be re-fetched; the pin is the record.
-NCBI_GFF_RELPATH: Final = "S288C_reference_genome_R64-4-1_20230830/ncbi_genomic.gff"
-NCBI_GFF_SHA256: Final = (
-    "8200def54936659721e3f7b4484d725667ed4e23492edefbbca667b8430209c4"
-)
+NCBI_GFF_RELPATH = "S288C_reference_genome_R64-4-1_20230830/ncbi_genomic.gff"
+NCBI_GFF_SHA256 = "8200def54936659721e3f7b4484d725667ed4e23492edefbbca667b8430209c4"
 
 #: SynLethDB 2.0 (Wang 2022, NAR), the release paper of the aggregated CSVs (issue #622).
 #: Its mirror OCR is the only document that says what one SL entry carries.
-SYNLETHDB_CITATION_KEY: Final = "wangSynLethDB20Webbased2022"
-SYNLETHDB_PAPER_SHA256: Final = (
+SYNLETHDB_CITATION_KEY = "wangSynLethDB20Webbased2022"
+SYNLETHDB_PAPER_SHA256 = (
     "acaee2c7e16480fb39656cdf6a5e7ac621c34f08b41433dcab2cebe7daf1f20a"
 )
-SYNLETHDB_PAPER: Final = Provenance(
+_SYNLETHDB_PAPER = Provenance(
     source_uri="paper.md",
     citation_key=SYNLETHDB_CITATION_KEY,
     sha256=SYNLETHDB_PAPER_SHA256,
 )
-
 #: paper.md line 49: the fields an SL entry carries. No growth medium and no growth
-#: temperature, and the released CSV header agrees (:data:`SYNLETHDB_COLUMNS`).
-SYNLETHDB_ENTRY_FIELDS_QUOTE: Final = (
+#: temperature, and the released CSV header agrees (``n1.name, n1.identifier, n2.name,
+#: n2.identifier, r.cell_line, r.pubmed_id, r.source, r.statistic_score``).
+SYNLETHDB_ENTRY_FIELDS_QUOTE = (
     "The species, references to PubMed, supporting evidence, cell lines and other "
     "relevant information about an SL entry are stored as properties of the edge"
 )
@@ -150,87 +106,170 @@ SYNLETHDB_ENTRY_FIELDS_QUOTE: Final = (
 #: paper.md line 38: SynLethDB's second source is BioGRID, reference 22 (the BioGRID
 #: 2019 update, Nucleic Acids Res. 47, D529-D541, DOI 10.1093/nar/gky1079), which is
 #: not in the mirror.
-SYNLETHDB_BIOGRID_SOURCE_QUOTE: Final = (
+SYNLETHDB_BIOGRID_SOURCE_QUOTE = (
     "The second source is public databases containing SL data such as GenomeRNAi (21) "
     "and BioGRID (22)."
 )
-
 #: paper.md line 38: what SynLethDB says about its SR pairs. No SR score is defined
 #: anywhere in the paper; the confidence score it defines is for SL pairs only
-#: (:data:`SYNLETHDB_SL_SCORE_QUOTE`).
-SYNLETHDB_SR_COLLECTION_QUOTE: Final = (
+#: (``SYNLETHDB_SL_SCORE_QUOTE``).
+SYNLETHDB_SR_COLLECTION_QUOTE = (
     "We collected 16 207 SR gene pairs and 5798 non-synthetic lethal (non-SL) gene "
     "pairs from the above three sources"
 )
-
 #: paper.md line 75 (OCR drops the 'fi' ligature, kept verbatim).
-SYNLETHDB_SL_SCORE_QUOTE: Final = (
+SYNLETHDB_SL_SCORE_QUOTE = (
     "we integrated the scores of different types of sources into a normalized "
     "confdence score for every SL pair"
 )
 
 #: Every SynLethDB 2.0 sentence this module rests on, as audited ``SourcedValue``s
 #: (each is a verbatim substring of the pinned ``paper.md``).
-SYNLETHDB_SOURCED_QUOTES: Final[tuple[SourcedValue, ...]] = (
+SYNLETHDB_SOURCED_QUOTES: tuple[SourcedValue, ...] = (
     SourcedValue(
         value="an SL entry carries species, PubMed, evidence and cell line; no medium "
         "and no temperature",
-        provenance=SYNLETHDB_PAPER,
+        provenance=_SYNLETHDB_PAPER,
         quote=SYNLETHDB_ENTRY_FIELDS_QUOTE,
-        note="line 49; the sentence that settles clause 1",
+        note="line 49",
     ),
     SourcedValue(
         value="BioGRID is a source, cited as reference 22",
-        provenance=SYNLETHDB_PAPER,
+        provenance=_SYNLETHDB_PAPER,
         quote=SYNLETHDB_BIOGRID_SOURCE_QUOTE,
         note="line 38",
     ),
     SourcedValue(
         value="SR pairs were collected from the same three sources; no SR score is "
         "defined",
-        provenance=SYNLETHDB_PAPER,
+        provenance=_SYNLETHDB_PAPER,
         quote=SYNLETHDB_SR_COLLECTION_QUOTE,
         note="line 38",
     ),
     SourcedValue(
         value="the confidence score is defined for SL pairs",
-        provenance=SYNLETHDB_PAPER,
+        provenance=_SYNLETHDB_PAPER,
         quote=SYNLETHDB_SL_SCORE_QUOTE,
         note="line 75; OCR drops the 'fi' ligature",
     ),
 )
 
+# --- begin #902/#903: a typed gap on the medium -------------------------------- #
+#: What every SynLethDB medium gap quotes: the paper's own list of what an SL entry
+#: stores, and the released header. Neither carries a condition field, and
+#: ``r.cell_line``, the one column that could carry a growth context, is empty on all
+#: 14,000 SL and 6,948 SR rows (``n_cell_line_stated`` 0 in
+#: ``experiments/036-dataset-fixes-before-kg-build/results/sgd_synlethdb_findings.json``).
+SYNLETHDB_MEDIUM_SILENCE = (
+    "SynLethDB carries no growth medium: paper.md line 49 lists what an SL entry stores "
+    "('" + SYNLETHDB_ENTRY_FIELDS_QUOTE + "') and both released CSVs carry only "
+    "n1.name, n1.identifier, n2.name, n2.identifier, r.cell_line, r.pubmed_id, "
+    "r.source, r.statistic_score, with r.cell_line empty on every row. The medium, if "
+    "stated at all, is in each record's own Publication.pubmed_id. Replaces the #622 "
+    "composition-deferred stand-in medium, which joined no shared medium"
+)
+SYNLETHDB_MEDIUM = Media(
+    name=None,
+    state=None,
+    is_synthetic=None,
+    provenance_gaps=[
+        ProvenanceGap(
+            field=field,
+            reason=ProvenanceGapReason.not_carried_by_curation,
+            looked_in=_SYNLETHDB_PAPER,
+            note=SYNLETHDB_MEDIUM_SILENCE,
+        )
+        for field in ("name", "state", "is_synthetic")
+    ],
+)
+"""The medium of every SL and SR record: a ``Media`` whose name, state and class are
+typed gaps quoting the release's silence, never a guessed YPD or a free-text stand-in."""
+# --- end #902/#903 ------------------------------------------------------------- #
+
+#: The temperature is absent for the same reason (``not_carried_by_curation``).
+SYNLETHDB_TEMPERATURE_GAP = ProvenanceGap(
+    field="temperature",
+    reason=ProvenanceGapReason.not_carried_by_curation,
+    looked_in=_SYNLETHDB_PAPER,
+    note="SynLethDB carries no growth temperature (paper.md line 49 and the CSV "
+    "header); the loader formerly stored an unsourced 30 C",
+)
+
+SYNLETHDB_ENVIRONMENT = Environment(
+    media=SYNLETHDB_MEDIUM,
+    temperature=None,
+    provenance_gaps=[SYNLETHDB_TEMPERATURE_GAP],
+)
+"""Every SL and SR record's environment: neither medium nor temperature is carried."""
+
+# --- begin #903: the SR file's statistic score has no sourced definition -------- #
 #: The BioGRID 2019 update, SynLethDB 2.0's reference 22 (paper.pdf reference list,
-#: "The BioGRID interaction database: update. Nucleic Acids Res., 47, D529-D541"). Not
-#: mirrored; reading it (and each row's own primary paper) is what would define the 74
-#: SR scores of clause 4.
-BIOGRID_2019_REFERENCE: Final = Provenance(
+#: "The BioGRID interaction database: update. Nucleic Acids Res., 47, D529–D541"). Not
+#: mirrored; reading it (and the row's own primary paper) is what would define the
+#: SR scores, so it is the gap's ``resolve_with``.
+BIOGRID_2019_REFERENCE = Provenance(
     source_uri="https://doi.org/10.1093/nar/gky1079",
     method="SynLethDB 2.0 reference 22 (Oughtred et al. 2019, The BioGRID interaction "
     "database: 2019 update, Nucleic Acids Res. 47, D529-D541); not in the mirror",
 )
 
-#: GFF feature types whose ``Dbxref`` ``GeneID`` names a locus (``locus_tag``).
-_NCBI_LOCUS_TYPES: Final = frozenset({"gene", "pseudogene"})
 
-#: What the served stores held under the old name-based resolution (#597), recorded so
-#: the finding does not leave with the stores.
-OLD_RESOLUTION_WRONG_ORF: Final[dict[str, int]] = {
-    "Yeast_SL.csv": 872,
-    "Yeast_SR.csv": 119,
-}
-#: Duplicate unordered ORF pairs the old name map produced, which Entrez resolution does
-#: not: 7 in SL and 2 in SR.
-OLD_RESOLUTION_DUPLICATE_PAIRS: Final[dict[str, int]] = {
-    "Yeast_SL.csv": 7,
-    "Yeast_SR.csv": 2,
+def sr_score_gap(score: float, source: str, pubmed_id: str) -> ProvenanceGap:
+    """The typed absence stored in place of one released SR ``r.statistic_score``.
+
+    ``Yeast_SR.csv`` states a score on 74 of its 6,948 rows (all ``r.source`` BioGRID,
+    all PubMed 24470217, -1.0 to -0.2). SynLethDB 2.0 defines a normalized confidence
+    score for SL pairs only (``SYNLETHDB_SL_SCORE_QUOTE``) and says of SR pairs only
+    that they were collected (``SYNLETHDB_SR_COLLECTION_QUOTE``); the BioGRID
+    documentation it cites is not mirrored. A number with no sourced meaning is not
+    stored as SynLethDB's statistic score: the record keeps ``None`` and this gap,
+    whose note carries the released value verbatim so nothing is lost.
+    """
+    return ProvenanceGap(
+        field="synthetic_rescue_statistic_score",
+        reason=ProvenanceGapReason.deferred_pending_source_review,
+        looked_in=_SYNLETHDB_PAPER,
+        resolve_with=BIOGRID_2019_REFERENCE,
+        note=f"Yeast_SR.csv states r.statistic_score {score!r} (r.source {source}, "
+        f"r.pubmed_id {pubmed_id}); no mirrored source defines it: SynLethDB 2.0 "
+        "defines its confidence score for SL pairs only and cites BioGRID "
+        "(reference 22, not mirrored) for its database-sourced pairs",
+    )
+
+
+# --- end #903 ------------------------------------------------------------------ #
+
+#: GFF feature types whose ``Dbxref`` ``GeneID`` names a locus (``locus_tag``).
+_NCBI_LOCUS_TYPES = frozenset({"gene", "pseudogene"})
+
+#: Drop rules, in the order a row is tested against them.
+RULE_ENTREZ_NOT_IN_GFF = "entrez_id_not_in_ncbi_gff"
+RULE_NAME_DISAGREES = "gene_name_disagrees_with_entrez_id"
+RULE_SELF_PAIR = "same_gene_on_both_sides"
+
+_RULE_DESCRIPTIONS = {
+    RULE_ENTREZ_NOT_IN_GFF: (
+        "an Entrez id on the row has no gene or pseudogene feature in the pinned "
+        "ncbi_genomic.gff, so the side cannot be resolved by its id; the name alone is "
+        "not used in its place"
+    ),
+    RULE_NAME_DISAGREES: (
+        "the gene name on the row does not resolve (standard name before alias, through "
+        "SCerevisiaeGenome.resolve_gene_name) to the current gene its Entrez id maps to, "
+        "so the two identifiers the release gives for one side contradict each other"
+    ),
+    RULE_SELF_PAIR: (
+        "both sides resolve to one gene (the release gives the same name and the same "
+        "Entrez id on both sides); the release does not say what a gene paired with "
+        "itself means, so no meaning is assigned and the row is not stored"
+    ),
 }
 
 
 class BlankPubmedIdError(ValueError):
     """A SynLethDB row with a blank or whitespace-only ``r.pubmed_id``.
 
-    Every row cites its PMID, so a blank one is refused by name. The pinned
+    Every record cites its PMID, so a blank one is refused by name. The pinned
     ``Yeast_SL.csv`` (14,000 rows) and ``Yeast_SR.csv`` (6,948 rows) have none
     (0 empty and 0 whitespace-only cells).
     """
@@ -240,69 +279,51 @@ class EntrezGeneIdConflictError(ValueError):
     """One ``GeneID`` in the NCBI GFF carries two different ``locus_tag`` values."""
 
 
-class ReleaseInventory(BaseModel):
-    """One released file, and whether it states anything a record would need."""
+class DuplicateOrfPairError(ValueError):
+    """Two kept rows resolve to the same unordered ORF pair.
 
-    model_config = ConfigDict(extra="forbid", frozen=True)
-
-    name: str
-    sha256: str
-    columns: list[str] = Field(description="the header, verbatim and in order")
-    n_rows: int
-    n_condition_columns: int = Field(
-        description="columns naming a medium, temperature, carbon source or culture "
-        "state; the count clause 1 rests on"
-    )
-    n_cell_line_stated: int = Field(
-        description="rows with a non-empty r.cell_line, the one column that could "
-        "carry a growth context"
-    )
-    n_scored: int = Field(description="rows with a non-null r.statistic_score")
-    n_storable: int = Field(
-        description="rows that could be stored with a sourced Media; 0 while no column "
-        "states a medium"
-    )
+    With Entrez resolution the pinned files have none; the nine the old name map
+    stored (7 SL, 2 SR) were all artifacts of its alias overwrite.
+    """
 
 
-class SourceDecomposition(BaseModel):
-    """The original studies inside one released file (the decomposition policy)."""
-
-    model_config = ConfigDict(extra="forbid", frozen=True)
-
-    name: str
-    n_rows: int
-    n_source_pubmed_ids: int = Field(
-        description="distinct r.pubmed_id values, i.e. original studies to load from "
-        "their own releases"
-    )
-    n_multi_pubmed_rows: int = Field(
-        description="rows citing more than one PubMed id (';'-joined)"
-    )
-    rows_by_evidence: dict[str, int] = Field(
-        description="row count per r.source evidence label"
-    )
-    pubmed_ids_by_evidence: dict[str, int] = Field(
-        description="distinct PubMed ids per r.source evidence label"
-    )
+class MissingGenomeError(ValueError):
+    """A build was started without the genome the gene cross-check needs."""
 
 
-#: Header terms that would make a column a growth-condition column. Deliberately
-#: generous: the point is that even a generous rule finds none.
-CONDITION_HEADER_TERMS: Final[tuple[str, ...]] = (
-    "media",
-    "medium",
-    "temperature",
-    "carbon",
-    "nitrogen",
-    "glucose",
-    "state",
-    "solid",
-    "liquid",
-    "condition",
-)
+class DroppedRow(BaseModel):
+    """One source row a drop rule removed, with both sides as the release gives them."""
+
+    source_row: int
+    n1_name: str
+    n1_entrez: int
+    n2_name: str
+    n2_entrez: int
+    detail: str
 
 
-def read_synlethdb_csv(path: str) -> pd.DataFrame:
+class DropRule(BaseModel):
+    """One drop rule and the source rows it removed."""
+
+    rule: str
+    description: str
+    n_records: int
+    rows: list[DroppedRow]
+
+
+class DropLog(BaseModel):
+    """Every drop rule applied to a build, and the files the resolution read."""
+
+    dataset: str
+    source_records: int
+    kept_records: int
+    dropped_records: int
+    entrez_source_path: str
+    entrez_source_sha256: str
+    rules: list[DropRule]
+
+
+def _read_synlethdb_csv(path: str) -> pd.DataFrame:
     """Read a SynLethDB CSV with ``r.pubmed_id`` as text, refusing a blank PMID.
 
     A cell that is empty or only whitespace counts as blank.
@@ -329,77 +350,6 @@ def read_synlethdb_csv(path: str) -> pd.DataFrame:
     return df
 
 
-class ConditionColumnFound(ValueError):
-    """A released file carries a column the decision measured absent.
-
-    Clause 1 reads 0 storable rows because no column states a growth condition. A
-    release that grew one invalidates the measurement rather than being absorbed by it,
-    so it raises here instead of being counted.
-    """
-
-
-def release_inventory(path: str, sha256: str) -> ReleaseInventory:
-    """Clause 1, measured: what one released file states, on verified bytes."""
-    verify_sha256(path, sha256)
-    df = read_synlethdb_csv(path)
-    columns = [str(column).lstrip("﻿") for column in df.columns]
-    condition_columns = [
-        column
-        for column in columns
-        if any(term in column.casefold() for term in CONDITION_HEADER_TERMS)
-    ]
-    if condition_columns:
-        raise ConditionColumnFound(
-            f"{path} carries {condition_columns}, which the decision measured absent; "
-            "re-read clause 1 before anything is stored from these bytes"
-        )
-    cell_line = df["r.cell_line"].fillna("").astype(str).str.strip()
-    return ReleaseInventory(
-        name=osp.basename(path),
-        sha256=sha256,
-        columns=columns,
-        n_rows=len(df),
-        n_condition_columns=0,
-        n_cell_line_stated=int(cell_line.ne("").sum()),
-        n_scored=int(df["r.statistic_score"].notna().sum()),
-        n_storable=0,
-    )
-
-
-def source_decomposition(path: str, sha256: str) -> SourceDecomposition:
-    """Clause 3, measured: the original studies one released file aggregates."""
-    verify_sha256(path, sha256)
-    df = read_synlethdb_csv(path)
-    pubmed = df["r.pubmed_id"].astype(str)
-    ids_by_evidence: dict[str, set[str]] = {}
-    for evidence, value in zip(df["r.source"].astype(str), pubmed, strict=True):
-        ids_by_evidence.setdefault(evidence, set()).update(value.split(";"))
-    distinct = {one for value in pubmed for one in value.split(";")}
-    return SourceDecomposition(
-        name=osp.basename(path),
-        n_rows=len(df),
-        n_source_pubmed_ids=len(distinct),
-        n_multi_pubmed_rows=int(pubmed.str.contains(";").sum()),
-        rows_by_evidence=dict(sorted(Counter(df["r.source"].astype(str)).items())),
-        pubmed_ids_by_evidence={
-            evidence: len(ids) for evidence, ids in sorted(ids_by_evidence.items())
-        },
-    )
-
-
-def score_by_source(path: str, sha256: str) -> dict[str, list[float]]:
-    """Clause 4, measured: the distinct scores each evidence label carries."""
-    verify_sha256(path, sha256)
-    df = read_synlethdb_csv(path)
-    out: dict[str, set[float]] = {}
-    for evidence, score in zip(
-        df["r.source"].astype(str), df["r.statistic_score"], strict=True
-    ):
-        if pd.notna(score):
-            out.setdefault(evidence, set()).add(float(score))
-    return {evidence: sorted(scores) for evidence, scores in sorted(out.items())}
-
-
 def ncbi_gff_path(genome: SCerevisiaeGenome) -> str:
     """Where the genome's directory keeps the pinned ``ncbi_genomic.gff``."""
     return osp.join(genome.genome_root, NCBI_GFF_RELPATH)
@@ -408,10 +358,9 @@ def ncbi_gff_path(genome: SCerevisiaeGenome) -> str:
 def load_entrez_to_orf(gff_path: str) -> dict[int, str]:
     """Map every Entrez Gene id in the pinned NCBI GFF to its ORF (``locus_tag``).
 
-    The file is verified against :data:`NCBI_GFF_SHA256` before it is read. Only
-    ``gene`` and ``pseudogene`` features count; a ``GeneID`` that names two different
-    locus tags raises :class:`EntrezGeneIdConflictError`. This is the map a per-study
-    loader of any SynLethDB source paper resolves its gene pairs with (clause 5).
+    The file is verified against ``NCBI_GFF_SHA256`` before it is read. Only ``gene``
+    and ``pseudogene`` features count; a ``GeneID`` that names two different locus
+    tags raises ``EntrezGeneIdConflictError``.
     """
     verify_sha256(gff_path, NCBI_GFF_SHA256)
     mapping: dict[int, str] = {}
@@ -443,39 +392,486 @@ def load_entrez_to_orf(gff_path: str) -> dict[int, str]:
     return mapping
 
 
-def resolved_orf_pairs(
-    df: pd.DataFrame, entrez_to_orf: Mapping[int, str]
-) -> list[tuple[str, str] | None]:
-    """Each row's ORF pair by Entrez id alone, or None when a side is not in the GFF.
+def _resolve_side(
+    name: str, entrez: int, genome: SCerevisiaeGenome, entrez_to_orf: Mapping[int, str]
+) -> tuple[str | None, str | None, str]:
+    """``(orf, None, detail)`` when the side resolves, else ``(None, rule, detail)``."""
+    orf = entrez_to_orf.get(entrez)
+    if orf is None:
+        return None, RULE_ENTREZ_NOT_IN_GFF, f"{name} (Entrez {entrez}): not in the GFF"
+    resolution = genome.resolve_gene_name(name)
+    if resolution.is_current_gene and resolution.systematic_name == orf:
+        return orf, None, f"{name} (Entrez {entrez}) -> {orf}"
+    return (
+        None,
+        RULE_NAME_DISAGREES,
+        f"{name} (Entrez {entrez}) -> {orf} by id, but the name resolves "
+        f"{resolution.status.value} to {resolution.systematic_name} "
+        f"(candidates {resolution.candidates})",
+    )
 
-    The gene-name cross-check needs a genome, so it is not done here; this is the id
-    half of clause 5, which is what a per-study loader starts from.
+
+def resolve_pairs(
+    df: pd.DataFrame, genome: SCerevisiaeGenome, entrez_to_orf: Mapping[int, str]
+) -> pd.DataFrame:
+    """Add ``n{1,2}.systematic_name``, ``drop_rule`` and ``drop_detail`` to every row.
+
+    A side resolves to the ORF its Entrez id maps to, and only when its gene name
+    resolves to that same current gene. A row is dropped by the first rule it meets:
+    a side's Entrez id absent from the GFF, a side's name disagreeing with its id
+    (``n1`` is tested before ``n2``), then both sides being one gene. Kept rows have
+    ``drop_rule`` None.
     """
-    return [
-        None
-        if (orf1 := entrez_to_orf.get(int(e1))) is None
-        or (orf2 := entrez_to_orf.get(int(e2))) is None
-        else (orf1, orf2)
-        for e1, e2 in zip(df["n1.identifier"], df["n2.identifier"], strict=True)
+    n1_orfs: list[str | None] = []
+    n2_orfs: list[str | None] = []
+    rules: list[str | None] = []
+    details: list[str] = []
+    for n1, e1, n2, e2 in zip(
+        df["n1.name"],
+        df["n1.identifier"],
+        df["n2.name"],
+        df["n2.identifier"],
+        strict=True,
+    ):
+        orf1, rule1, detail1 = _resolve_side(n1, int(e1), genome, entrez_to_orf)
+        orf2, rule2, detail2 = _resolve_side(n2, int(e2), genome, entrez_to_orf)
+        rule = rule1 or rule2
+        if rule is None and orf1 == orf2:
+            rule = RULE_SELF_PAIR
+        n1_orfs.append(orf1)
+        n2_orfs.append(orf2)
+        rules.append(rule)
+        details.append(f"n1 {detail1}; n2 {detail2}")
+    out = df.copy()
+    out["n1.systematic_name"] = n1_orfs
+    out["n2.systematic_name"] = n2_orfs
+    out["drop_rule"] = rules
+    out["drop_detail"] = details
+    return out
+
+
+def drop_log(dataset_name: str, resolved: pd.DataFrame, gff_path: str) -> DropLog:
+    """Build the ledger of a resolved frame (from :func:`resolve_pairs`)."""
+    rules = []
+    for rule in (RULE_ENTREZ_NOT_IN_GFF, RULE_NAME_DISAGREES, RULE_SELF_PAIR):
+        hit = resolved[resolved["drop_rule"] == rule]
+        rules.append(
+            DropRule(
+                rule=rule,
+                description=_RULE_DESCRIPTIONS[rule],
+                n_records=len(hit),
+                rows=[
+                    DroppedRow(
+                        source_row=source_row,
+                        n1_name=str(row["n1.name"]),
+                        n1_entrez=int(row["n1.identifier"]),
+                        n2_name=str(row["n2.name"]),
+                        n2_entrez=int(row["n2.identifier"]),
+                        detail=str(row["drop_detail"]),
+                    )
+                    for source_row, row in zip(
+                        hit.index.tolist(), hit.to_dict("records"), strict=True
+                    )
+                ],
+            )
+        )
+    kept = int(resolved["drop_rule"].isna().sum())
+    return DropLog(
+        dataset=dataset_name,
+        source_records=len(resolved),
+        kept_records=kept,
+        dropped_records=len(resolved) - kept,
+        entrez_source_path=gff_path,
+        entrez_source_sha256=NCBI_GFF_SHA256,
+        rules=rules,
+    )
+
+
+def refuse_duplicate_pairs(kept: pd.DataFrame) -> None:
+    """Raise ``DuplicateOrfPairError`` when two kept rows name one unordered ORF pair."""
+    pairs = [
+        frozenset((a, b))
+        for a, b in zip(
+            kept["n1.systematic_name"], kept["n2.systematic_name"], strict=True
+        )
     ]
+    repeated = {pair for pair, n in Counter(pairs).items() if n > 1}
+    if repeated:
+        rows = [
+            int(index)
+            for index, pair in zip(kept.index, pairs, strict=True)
+            if pair in repeated
+        ]
+        raise DuplicateOrfPairError(
+            f"{len(repeated)} ORF pair(s) repeat across kept rows {rows}: "
+            f"{sorted(sorted(p) for p in repeated)}"
+        )
+
+
+def _write_synlethdb_lmdb(
+    dataset: "SynthLethalityYeastSynthLethDbDataset | SynthRescueYeastSynthLethDbDataset",
+    csv_path: str,
+) -> None:
+    """Resolve, ledger and write one SynLethDB file (shared by both datasets)."""
+    genome = _require_genome(dataset.genome)
+    df = _read_synlethdb_csv(csv_path)
+    resolved = dataset.preprocess_raw(df)
+    os.makedirs(dataset.processed_dir, exist_ok=True)
+    os.makedirs(dataset.preprocess_dir, exist_ok=True)
+    ledger = drop_log(dataset.name, resolved, ncbi_gff_path(genome))
+    with open(osp.join(dataset.preprocess_dir, "dropped_records.json"), "w") as f:
+        f.write(ledger.model_dump_json(indent=2))
+    kept = resolved[resolved["drop_rule"].isna()]
+    refuse_duplicate_pairs(kept)
+    if sum(rule.n_records for rule in ledger.rules) != ledger.dropped_records:
+        raise RuntimeError("SynLethDB drop accounting does not add up")
+
+    env = lmdb.open(osp.join(dataset.processed_dir, "lmdb"), map_size=int(1e12))
+    with env.begin(write=True) as txn:
+        for key, (_, row) in enumerate(tqdm(kept.iterrows(), total=len(kept))):
+            experiment, reference, publication = dataset.create_experiment(
+                dataset.name, row
+            )
+            serialized_data = pickle.dumps(
+                {
+                    "experiment": experiment.model_dump(),
+                    "reference": reference.model_dump(),
+                    "publication": publication.model_dump(),
+                }
+            )
+            txn.put(f"{key}".encode(), serialized_data)
+    env.close()
+    log.info(
+        "%s: wrote %d of %d rows (%s)",
+        dataset.name,
+        ledger.kept_records,
+        ledger.source_records,
+        ", ".join(f"{r.rule} {r.n_records}" for r in ledger.rules),
+    )
+
+
+def _require_genome(genome: SCerevisiaeGenome | None) -> SCerevisiaeGenome:
+    if genome is None:
+        raise MissingGenomeError(
+            "SynLethDB gene resolution needs the SCerevisiaeGenome passed as genome="
+        )
+    return genome
+
+
+def _preprocess(genome: SCerevisiaeGenome | None, df: pd.DataFrame) -> pd.DataFrame:
+    resolved_genome = _require_genome(genome)
+    return resolve_pairs(
+        df, resolved_genome, load_entrez_to_orf(ncbi_gff_path(resolved_genome))
+    )
+
+
+@register_dataset
+class SynthLethalityYeastSynthLethDbDataset(ExperimentDataset):
+    """Yeast synthetic lethality gene-pair experiments from SynLethDB."""
+
+    def __init__(
+        self,
+        root: str = "data/torchcell/syn_leth_db_yeast",
+        genome: SCerevisiaeGenome | None = None,
+        io_workers: int = 0,
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
+    ) -> None:
+        """Keep the genome for a build, then release it once the dataset is ready."""
+        self.genome = genome
+        super().__init__(root, io_workers, transform, pre_transform)
+        del self.genome
+
+    @property
+    def raw_file_names(self) -> list[str]:
+        """Return the raw synthetic-lethality CSV filename."""
+        return [SL_CSV_NAME]
+
+    @property
+    def processed_file_names(self) -> list[str]:
+        """Return the processed LMDB directory name."""
+        return ["lmdb"]
+
+    @property
+    def experiment_class(self) -> type[SyntheticLethalityExperiment]:
+        """Return the synthetic-lethality experiment schema class."""
+        return SyntheticLethalityExperiment
+
+    @property
+    def reference_class(self) -> type[SyntheticLethalityExperimentReference]:
+        """Return the synthetic-lethality experiment-reference schema class."""
+        return SyntheticLethalityExperimentReference
+
+    def download(self) -> None:
+        """Download the synthetic-lethality CSV from Google Drive."""
+        url = "https://drive.google.com/uc?export=download&id=1_56ebyBatapNml8S5HlJW7Dz1l0DZZIq"
+        download_path = os.path.join(self.raw_dir, self.raw_file_names[0])
+
+        os.makedirs(self.raw_dir, exist_ok=True)
+        log.info(f"Downloading {url} to {download_path}")
+
+        session = requests.Session()
+        response = session.get(url, stream=True)
+
+        if "download_warning" in response.cookies:
+            params = {"confirm": response.cookies["download_warning"]}
+            response = session.get(url, params=params, stream=True)
+
+        response.raise_for_status()
+
+        with open(download_path, "wb") as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                f.write(chunk)
+
+        log.info("Download completed successfully.")
+
+    def preprocess_raw(
+        self, df: pd.DataFrame, preprocess: dict[str, Any] | None = None
+    ) -> pd.DataFrame:
+        """Resolve both sides of every row by Entrez id (see :func:`resolve_pairs`)."""
+        return _preprocess(self.genome, df)
+
+    @post_process
+    def process(self) -> None:
+        """Verify the raw CSV, resolve and ledger its rows, and write the LMDB."""
+        verify_raw_files(self.raw_dir, {SL_CSV_NAME: SL_CSV_SHA256})
+        log.info("Processing Synthetic Lethality Yeast Data...")
+        _write_synlethdb_lmdb(self, osp.join(self.raw_dir, SL_CSV_NAME))
+
+    @staticmethod
+    def create_experiment(  # type: ignore[override]  # dataset-specific signature
+        dataset_name: str, row: pd.Series
+    ) -> tuple[
+        SyntheticLethalityExperiment, SyntheticLethalityExperimentReference, Publication
+    ]:
+        """Build the experiment, reference, and publication objects for one row."""
+        genome_reference = ReferenceGenome(
+            species="Saccharomyces cerevisiae", strain="S288C"
+        )
+
+        genotype = Genotype(
+            perturbations=[
+                SgaKanMxDeletionPerturbation(
+                    systematic_gene_name=row["n1.systematic_name"],
+                    perturbed_gene_name=row["n1.name"],
+                    strain_id="S288C",
+                ),
+                SgaKanMxDeletionPerturbation(
+                    systematic_gene_name=row["n2.systematic_name"],
+                    perturbed_gene_name=row["n2.name"],
+                    strain_id="S288C",
+                ),
+            ]
+        )
+
+        environment = SYNLETHDB_ENVIRONMENT
+
+        phenotype = SyntheticLethalityPhenotype(
+            is_synthetic_lethal=True,
+            synthetic_lethality_statistic_score=float(row["r.statistic_score"]),
+        )
+
+        phenotype_reference = SyntheticLethalityPhenotype(
+            is_synthetic_lethal=False, synthetic_lethality_statistic_score=None
+        )
+
+        experiment = SyntheticLethalityExperiment(
+            dataset_name=dataset_name,
+            genotype=genotype,
+            environment=environment,
+            phenotype=phenotype,
+        )
+
+        reference = SyntheticLethalityExperimentReference(
+            dataset_name=dataset_name,
+            genome_reference=genome_reference,
+            environment_reference=environment,
+            phenotype_reference=phenotype_reference,
+        )
+
+        publication = Publication(
+            pubmed_id=str(row["r.pubmed_id"]),
+            pubmed_url=f"https://pubmed.ncbi.nlm.nih.gov/{row['r.pubmed_id']}/",
+            doi=None,
+            doi_url=None,
+        )
+        return experiment, reference, publication
+
+
+@register_dataset
+class SynthRescueYeastSynthLethDbDataset(ExperimentDataset):
+    """Yeast synthetic rescue gene-pair experiments from SynLethDB."""
+
+    def __init__(
+        self,
+        root: str = "data/torchcell/syn_rescue_db_yeast",
+        genome: SCerevisiaeGenome | None = None,
+        io_workers: int = 0,
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
+    ) -> None:
+        """Keep the genome for a build, then release it once the dataset is ready."""
+        self.genome = genome
+        super().__init__(root, io_workers, transform, pre_transform)
+        del self.genome
+
+    @property
+    def raw_file_names(self) -> list[str]:
+        """Return the raw synthetic-rescue CSV filename."""
+        return [SR_CSV_NAME]
+
+    @property
+    def processed_file_names(self) -> list[str]:
+        """Return the processed LMDB directory name."""
+        return ["lmdb"]
+
+    @property
+    def experiment_class(self) -> type[SyntheticRescueExperiment]:
+        """Return the synthetic-rescue experiment schema class."""
+        return SyntheticRescueExperiment
+
+    @property
+    def reference_class(self) -> type[SyntheticRescueExperimentReference]:
+        """Return the synthetic-rescue experiment-reference schema class."""
+        return SyntheticRescueExperimentReference
+
+    def download(self) -> None:
+        """Download the synthetic-rescue CSV from Google Drive."""
+        url = "https://drive.google.com/uc?export=download&id=1lBaApm70E05JnkrE1Hwmn8gT1cV5Bzlt"
+        download_path = os.path.join(self.raw_dir, self.raw_file_names[0])
+
+        os.makedirs(self.raw_dir, exist_ok=True)
+        log.info(f"Downloading {url} to {download_path}")
+
+        session = requests.Session()
+        response = session.get(url, stream=True)
+
+        if "download_warning" in response.cookies:
+            params = {"confirm": response.cookies["download_warning"]}
+            response = session.get(url, params=params, stream=True)
+
+        response.raise_for_status()
+
+        with open(download_path, "wb") as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                f.write(chunk)
+
+        log.info("Download completed successfully.")
+
+    def preprocess_raw(
+        self, df: pd.DataFrame, preprocess: dict[str, Any] | None = None
+    ) -> pd.DataFrame:
+        """Resolve both sides of every row by Entrez id (see :func:`resolve_pairs`)."""
+        return _preprocess(self.genome, df)
+
+    @post_process
+    def process(self) -> None:
+        """Verify the raw CSV, resolve and ledger its rows, and write the LMDB."""
+        verify_raw_files(self.raw_dir, {SR_CSV_NAME: SR_CSV_SHA256})
+        log.info("Processing Synthetic Rescue Yeast Data...")
+        _write_synlethdb_lmdb(self, osp.join(self.raw_dir, SR_CSV_NAME))
+
+    @staticmethod
+    def create_experiment(  # type: ignore[override]  # dataset-specific signature
+        dataset_name: str, row: pd.Series
+    ) -> tuple[
+        SyntheticRescueExperiment, SyntheticRescueExperimentReference, Publication
+    ]:
+        """Build the experiment, reference, and publication objects for one row."""
+        genome_reference = ReferenceGenome(
+            species="Saccharomyces cerevisiae", strain="S288C"
+        )
+
+        genotype = Genotype(
+            perturbations=[
+                SgaKanMxDeletionPerturbation(
+                    systematic_gene_name=row["n1.systematic_name"],
+                    perturbed_gene_name=row["n1.name"],
+                    strain_id="S288C",
+                ),
+                SgaKanMxDeletionPerturbation(
+                    systematic_gene_name=row["n2.systematic_name"],
+                    perturbed_gene_name=row["n2.name"],
+                    strain_id="S288C",
+                ),
+            ]
+        )
+
+        environment = SYNLETHDB_ENVIRONMENT
+
+        # #903: a released SR score has no sourced definition, so it is a typed gap
+        score = row["r.statistic_score"]
+        phenotype = SyntheticRescuePhenotype(
+            is_synthetic_rescue=True,
+            synthetic_rescue_statistic_score=None,
+            provenance_gaps=(
+                []
+                if pd.isna(score)
+                else [
+                    sr_score_gap(
+                        float(score), str(row["r.source"]), str(row["r.pubmed_id"])
+                    )
+                ]
+            ),
+        )
+
+        phenotype_reference = SyntheticRescuePhenotype(
+            is_synthetic_rescue=False, synthetic_rescue_statistic_score=None
+        )
+
+        experiment = SyntheticRescueExperiment(
+            dataset_name=dataset_name,
+            genotype=genotype,
+            environment=environment,
+            phenotype=phenotype,
+        )
+
+        reference = SyntheticRescueExperimentReference(
+            dataset_name=dataset_name,
+            genome_reference=genome_reference,
+            environment_reference=environment,
+            phenotype_reference=phenotype_reference,
+        )
+
+        publication = Publication(
+            pubmed_id=str(row["r.pubmed_id"]),
+            pubmed_url=f"https://pubmed.ncbi.nlm.nih.gov/{row['r.pubmed_id']}/",
+            doi=None,
+            doi_url=None,
+        )
+        return experiment, reference, publication
 
 
 def main() -> None:
-    """Re-measure every clause of the decision from the pinned release files."""
+    """Build and inspect both SynLethDB datasets under ``$DATA_ROOT``.
+
+    The roots are the dev-tree directories the knowledge-graph configs read
+    (``torchcell/knowledge_graphs/conf/synth_*_yeast_synth_leth_db.yaml``).
+    """
+    import os
+
     from dotenv import load_dotenv
 
-    from torchcell.graph.sgd import data_root
-
     load_dotenv()
-    root = data_root()
-    for relroot, name, sha in (
-        ("data/torchcell/syn_leth_db_yeast", SL_CSV_NAME, SL_CSV_SHA256),
-        ("data/torchcell/syn_rescue_db_yeast", SR_CSV_NAME, SR_CSV_SHA256),
-    ):
-        path = osp.join(root, relroot, "raw", name)
-        print(release_inventory(path, sha).model_dump_json(indent=2))
-        print(source_decomposition(path, sha).model_dump_json(indent=2))
-        print(score_by_source(path, sha))
+    DATA_ROOT = os.environ["DATA_ROOT"]
+
+    genome = SCerevisiaeGenome(
+        genome_root=osp.join(DATA_ROOT, "data/sgd/genome"),
+        go_root=osp.join(DATA_ROOT, "data/go"),
+        overwrite=False,
+    )
+
+    lethality_dataset = SynthLethalityYeastSynthLethDbDataset(
+        root=osp.join(DATA_ROOT, "data/torchcell/synth_lethality_yeast_synth_leth_db"),
+        genome=genome,
+    )
+    print(lethality_dataset)
+
+    rescue_dataset = SynthRescueYeastSynthLethDbDataset(
+        root=osp.join(DATA_ROOT, "data/torchcell/synth_rescue_yeast_synth_leth_db"),
+        genome=genome,
+    )
+    print(rescue_dataset)
 
 
 if __name__ == "__main__":

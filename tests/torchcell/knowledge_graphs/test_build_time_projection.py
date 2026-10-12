@@ -570,33 +570,10 @@ BACTERIAL_DATASETS = {
 yet."""
 
 
-#: The three adapters job 966 calibrated whose datasets left the served graph on
-#: 2026-10-11: SGD essentiality and both SynLethDB families, whose sources state no
-#: growth medium while ``Environment.media`` is required (owner decision). The three
-#: projection tables keep them so job 966's timing file still calibrates; nothing in
-#: the live adapter map does.
-UNSERVED_SINCE_2026_10_11: frozenset[str] = frozenset(
-    {
-        "GeneEssentialitySgdAdapter",
-        "SynthLethalityYeastSynthLethDbAdapter",
-        "SynthRescueYeastSynthLethDbAdapter",
-    }
-)
-#: Their dataset classes, which no longer exist.
-UNSERVED_DATASETS_SINCE_2026_10_11: frozenset[str] = frozenset(
-    {
-        "GeneEssentialitySgdDataset",
-        "SynthLethalityYeastSynthLethDbDataset",
-        "SynthRescueYeastSynthLethDbDataset",
-    }
-)
-
-
 def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
     """Every pair here is a (dataset, adapter) pair of ``dataset_adapter_map``.
 
-    Finding: the projection covers 33 datasets, 30 of them still in
-    ``dataset_adapter_map`` (107 classes) and 3 unserved since 2026-10-11.
+    Finding: the projection covers 33 of the 110 datasets in ``dataset_adapter_map``.
     The 77 absent ones (``ADAPTER_TO_DATASET``, build_time_projection.py:81-115) include
     the six EnvChemgen chemogenomic sets, both Hillenmeyer 2008 sets, the Nadal-Ribelles
     Perturb-seq set and the 59 bacterial datasets mapped in plan.bacteria-ontology-genome
@@ -609,16 +586,8 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
     from torchcell.knowledge_graphs.dataset_adapter_map import dataset_adapter_map
 
     inverse = {a.__name__: d.__name__ for d, a in dataset_adapter_map.items()}
-    # 2026-10-11: job 966 calibrated three adapters whose datasets then left the served
-    # graph (their sources state no growth medium, which Environment.media requires), so
-    # the three tables keep them -- removing them would stop job 966's own timing file
-    # from calibrating -- while the served map no longer carries them.
-    assert set(ADAPTER_TO_DATASET) - set(inverse) == UNSERVED_SINCE_2026_10_11
-    assert {a: inverse[a] for a in ADAPTER_TO_DATASET if a in inverse} == {
-        a: d for a, d in ADAPTER_TO_DATASET.items() if a in inverse
-    }
-    # 107 (110 less the three unserved since 2026-10-11)
-    # + 1 (Teteneva W3110) + 6 (#844's six P. putida classes) + 2 (#834's two)
+    assert {a: inverse[a] for a in ADAPTER_TO_DATASET} == ADAPTER_TO_DATASET
+    # 110 + 1 (Teteneva W3110) + 6 (#844's six P. putida classes) + 2 (#834's two)
     # + 3 (#826's three bacterial loaders) + 1 (#770's Lim 2025 fold-change loader)
     # + 1 (Wang 2024 rifampicin Tn-seq) + 1 (row 53, Royet 2025's metal Tn-seq)
     # + 2 (Thompson 2019 valerolactam: its titer and its growth-rate families)
@@ -642,7 +611,7 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
     # + 1 (Yoshikawa 2009 ethanol and NaCl growth rates).
     assert (
         len(dataset_adapter_map)
-        == 107
+        == 110
         + 1
         + 6
         + 2
@@ -747,34 +716,42 @@ DATASET_MODULES: dict[str, str] = {
 }
 
 
-def test_every_lmdb_subpath_is_its_loaders_default_root() -> None:
-    """Every subpath in the table is its loader's default ``root``, for every loader
-    that still exists.
-
-    The ``DATASET_LMDB_SUBPATH`` comment (build_time_projection.py:159-161) says the
-    subpaths match each loader's default ``root`` except DmfCostanzo; DmfCostanzo now
-    matches too (its default root was fixed in 9eadc39e2). The two SynLethDB rows used
-    to be the one real exception (the loaders defaulted to ``syn_leth_db_yeast`` /
-    ``syn_rescue_db_yeast`` while the table names the KG conf path), and since
-    2026-10-11 they have no loader at all: the table keeps the three unserved rows so
-    job 966's timing file still calibrates, and nothing can be compared against a class
-    that does not exist.
+def test_lmdb_subpaths_differ_from_loader_default_roots_only_for_synthleth() -> None:
+    """Finding: the ``DATASET_LMDB_SUBPATH`` comment (build_time_projection.py:159-161)
+    says the subpaths match each loader's default ``root`` except DmfCostanzo. Measured:
+    DmfCostanzo now matches (its default root was fixed in 9eadc39e2), and the two
+    SynLethDB datasets do NOT: the loaders default to ``syn_leth_db_yeast`` /
+    ``syn_rescue_db_yeast`` (synth_leth_db.py:488, 621) while the table names
+    ``synth_lethality_yeast_synth_leth_db`` / ``synth_rescue_yeast_synth_leth_db``, the
+    KG conf path (knowledge_graphs/conf/scerevisiae_global_kg.yaml:72). Consequence,
+    checked read-only on GilaHyper 2026.10.06: those two dev-tree directories hold only
+    ``raw/`` (no ``processed/lmdb``), so without ``build_tree`` the gatherer raises on
+    ``lmdb.open`` for them; with ``build_tree`` it falls back to the database tree (14000
+    and 6948 entries, the committed constants), while the dev default-root LMDBs the live
+    rebuild reads (``build_dataset_lmdb.dataset_default_root``) hold 13996 and 6942.
+    Reach: only ``experiments/database/scripts/project_build_time.py`` uses this table;
+    latent. Pinned until the table and the loaders agree (or the comment names the
+    SynLethDB exception).
     """
-    missing = set()
     differ = {}
     for dataset, subpath in DATASET_LMDB_SUBPATH.items():
         module = importlib.import_module(
             f"torchcell.datasets.scerevisiae.{DATASET_MODULES[dataset]}"
         )
-        cls = getattr(module, dataset, None)
-        if cls is None:
-            missing.add(dataset)
-            continue
+        cls = getattr(module, dataset)
         default = inspect.signature(cls.__init__).parameters["root"].default
         if default != subpath:
             differ[dataset] = (default, subpath)
-    assert missing == UNSERVED_DATASETS_SINCE_2026_10_11
-    assert differ == {}
+    assert differ == {
+        "SynthLethalityYeastSynthLethDbDataset": (
+            "data/torchcell/syn_leth_db_yeast",
+            "data/torchcell/synth_lethality_yeast_synth_leth_db",
+        ),
+        "SynthRescueYeastSynthLethDbDataset": (
+            "data/torchcell/syn_rescue_db_yeast",
+            "data/torchcell/synth_rescue_yeast_synth_leth_db",
+        ),
+    }
 
 
 # --- gather_dataset_full_records ---------------------------------------------------

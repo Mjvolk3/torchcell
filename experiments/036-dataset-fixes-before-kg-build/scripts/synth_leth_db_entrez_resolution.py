@@ -54,20 +54,6 @@ from torchcell.sequence.genome.scerevisiae.s288c import (
 )
 
 RESULTS = "experiments/036-dataset-fixes-before-kg-build/results"
-#: Why the SynLethDB arm of this script can no longer run.
-SYNLETHDB_LOADERS_REMOVED = (
-    "the SynLethDB loader classes left the repository on 2026-10-11: "
-    "Environment.media is required and SynLethDB states no growth medium, so the "
-    "source is a provenance record (torchcell/datasets/scerevisiae/synth_leth_db.py) "
-    "that builds no store. The committed results of this script stand as the record "
-    "of what it measured while the loaders existed."
-)
-
-
-class SynLethDbLoaderRemoved(RuntimeError):
-    """This script's SynLethDB arm needs a loader that no longer exists."""
-
-
 SLUGS = {
     "SL": ("synth_lethality_yeast_synth_leth_db", s.SL_CSV_NAME),
     "SR": ("synth_rescue_yeast_synth_leth_db", s.SR_CSV_NAME),
@@ -119,13 +105,12 @@ def _build(scratch_root: str, data_root: str, genome: SCerevisiaeGenome) -> None
             os.symlink(
                 osp.join(data_root, "data/torchcell", slug, "raw", csv_name), link
             )
-        # 2026-10-11: the two SynLethDB loader classes left the repository.
-        # Environment.media is required (owner decision), SynLethDB states no growth
-        # medium, so the source is a provenance record
-        # (torchcell/datasets/scerevisiae/synth_leth_db.py) and builds no store. The
-        # SynLethDB arm of this script therefore cannot be re-run; its committed
-        # results stand as the record of what it measured while the loaders existed.
-        raise SynLethDbLoaderRemoved(SYNLETHDB_LOADERS_REMOVED)
+        cls = (
+            s.SynthLethalityYeastSynthLethDbDataset
+            if label == "SL"
+            else s.SynthRescueYeastSynthLethDbDataset
+        )
+        print(cls(root=root, genome=genome))
 
 
 def _measure(

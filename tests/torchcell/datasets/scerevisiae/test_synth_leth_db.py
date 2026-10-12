@@ -1,408 +1,909 @@
 # tests/torchcell/datasets/scerevisiae/test_synth_leth_db.py
 # [[tests.torchcell.datasets.scerevisiae.test_synth_leth_db]]
 # https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/datasets/scerevisiae/test_synth_leth_db.py
-"""The SynLethDB provenance record: the decision, and the measurement behind it.
+"""SynLethDB yeast synthetic-lethality and synthetic-rescue loaders, built hermetically.
 
-Synthetic tests run everywhere. They write CSVs in the released header, including a
-counterfactual file that DOES carry a medium column, so the condition rule is shown to
-separate the two rather than merely to find nothing in the real bytes.
+2026.10.02 (issue #597): each side of a row is resolved by its Entrez id
+(``n1.identifier`` / ``n2.identifier``) through the pinned NCBI GFF, with the gene name as
+a cross-check through ``SCerevisiaeGenome.resolve_gene_name`` (standard name before
+alias, the prime kept). A row whose Entrez id is not in the GFF, whose name disagrees
+with its id, or that names one gene on both sides is dropped under a named rule in
+``preprocess/dropped_records.json``; a repeated unordered ORF pair refuses the build.
 
-The ``@pytest.mark.data`` tests read the pinned release files and the mirrored paper:
-they verify both sha256 pins, re-measure every count the decision rests on, and audit
-every quote against the pinned ``paper.md``.
+The genome is a duck-typed stub: ``genome_root`` (holding a fixture
+``ncbi_genomic.gff`` at ``NCBI_GFF_RELPATH``), a ``feature_index`` in the shape the
+real genome builds, and the REAL ``SCerevisiaeGenome.resolve_gene_name`` bound onto it,
+so the precedence under test is the genome's own. The module pin ``NCBI_GFF_SHA256`` is
+patched to the fixture GFF's digest for the module. The stub mirrors the two issue
+cases: ``STM1`` is the standard name of YAL012W and an alias of the LATER gene YAL013W
+(the real YLR150W / YPR163C), and ``IMP2`` is the standard name of YAL010C while
+``IMP2'`` is an alias of YAL011W (the real YMR035W / YIL154C).
+
+The raw CSV is written into ``<root>/raw/`` so ``download()`` is never called; the
+build-time CSV pin is swapped for a presence recorder by ``tests/torchcell/conftest.py``.
+Expected records are hand-built from the schema classes. Nothing touches ``$DATA_ROOT``
+except the ``data``-marked test at the end, which resolves the real pinned files.
 """
 
 from __future__ import annotations
 
+import hashlib
+import json
+import math
 import os
 import os.path as osp
+from collections.abc import Iterator
 from pathlib import Path
+from typing import Any, cast
 
-import pandas as pd
 import pytest
+import requests
+from pydantic import ValidationError
 
-import torchcell.datasets.scerevisiae.synth_leth_db as s
-from torchcell.data.experiment_dataset import RawSha256MismatchError
-from torchcell.verification.sourced import audit_sourced_value
-
-DATA_ROOT = os.environ.get("DATA_ROOT")
-
-HEADER = ",".join(s.SYNLETHDB_COLUMNS)
-
-#: What the pinned release files hold, re-measured by the ``data`` tests.
-REAL_SL_ROWS = 14000
-REAL_SR_ROWS = 6948
-REAL_SL_SOURCE_PUBMED_IDS = 1741
-REAL_SR_SOURCE_PUBMED_IDS = 1918
-REAL_SL_ROWS_BY_EVIDENCE = {
-    "High Throughput": 7721,
-    "High Throughput|Low Throughput": 1248,
-    "Low Throughput": 4944,
-    "Text Mining": 87,
-}
-REAL_SL_SCORES_BY_EVIDENCE = {
-    "High Throughput": [0.5],
-    "High Throughput|Low Throughput": [0.9],
-    "Low Throughput": [0.8],
-    "Text Mining": [0.25, 0.5, 0.75, 1.0],
-}
-REAL_SR_SCORED_ROWS = 74
-
-
-def _csv(path: Path, rows: list[str], *, header: str = HEADER) -> str:
-    path.write_text("﻿" + header + "\n" + "\n".join(rows) + "\n", encoding="utf-8")
-    return str(path)
-
-
-def _sha256(path: str) -> str:
-    import hashlib
-
-    with open(path, "rb") as handle:
-        return hashlib.sha256(handle.read()).hexdigest()
-
-
-@pytest.fixture
-def sl_csv(tmp_path: Path) -> tuple[str, str]:
-    """A four-row SL file in the released header, and its sha256."""
-    path = _csv(
-        tmp_path / "Yeast_SL.csv",
-        [
-            "TFC3,851230,SAC1,853646,,18676811,High Throughput,0.5",
-            "NTH2,852033,DAN4,850372,,14764870,Low Throughput,0.8",
-            "ATG1,852754,ATG7,856767,,24470217,High Throughput|Low Throughput,0.9",
-            "GSP1,850990,TRA1,856498,,24125552;19918932,Text Mining,0.25",
-        ],
-    )
-    return path, _sha256(path)
-
-
-# --------------------------------------------------------------------------- #
-# The decision
-# --------------------------------------------------------------------------- #
-def test_the_module_registers_no_dataset() -> None:
-    """No dataset class: no field states a medium, so no record can be built."""
-    from torchcell.datasets.dataset_registry import dataset_registry
-
-    assert not any(cls.__module__ == s.__name__ for cls in dataset_registry.values())
-    assert "SynthLethalityYeastSynthLethDbDataset" not in dataset_registry
-    assert "SynthRescueYeastSynthLethDbDataset" not in dataset_registry
-
-
-def test_the_removed_classes_are_not_importable_from_the_dataset_package() -> None:
-    """Both served classes are gone from the package namespace."""
-    import torchcell.datasets as datasets
-
-    for name in (
-        "SynthLethalityYeastSynthLethDbDataset",
-        "SynthRescueYeastSynthLethDbDataset",
-    ):
-        assert not hasattr(datasets, name)
-        assert name not in datasets.__all__
-
-
-def test_neither_class_is_in_the_public_adapter_map() -> None:
-    """Nothing in the KG build can reach either dataset by class or by adapter."""
-    from torchcell.knowledge_graphs.dataset_adapter_map import dataset_adapter_map
-
-    names = {cls.__name__ for cls in dataset_adapter_map}
-    adapters = {adapter.__name__ for adapter in dataset_adapter_map.values()}
-    assert not names & {
-        "SynthLethalityYeastSynthLethDbDataset",
-        "SynthRescueYeastSynthLethDbDataset",
-    }
-    assert not adapters & {
-        "SynthLethalityYeastSynthLethDbAdapter",
-        "SynthRescueYeastSynthLethDbAdapter",
-    }
-
-
-def test_the_recorded_header_names_no_growth_condition() -> None:
-    """Clause 1 as a constant: eight columns, and not one of them is a condition."""
-    assert len(s.SYNLETHDB_COLUMNS) == 8
-    assert not [
-        column
-        for column in s.SYNLETHDB_COLUMNS
-        if any(term in column.casefold() for term in s.CONDITION_HEADER_TERMS)
-    ]
-
-
-def test_the_old_resolution_record_keeps_both_measurements() -> None:
-    """Clause 5: the wrong-ORF counts outlive the stores they were measured on."""
-    assert s.OLD_RESOLUTION_WRONG_ORF == {"Yeast_SL.csv": 872, "Yeast_SR.csv": 119}
-    assert s.OLD_RESOLUTION_DUPLICATE_PAIRS == {"Yeast_SL.csv": 7, "Yeast_SR.csv": 2}
-
-
-def test_the_unmirrored_biogrid_reference_is_named_not_assumed() -> None:
-    """The 74 SR scores are undefined because this document is not in the mirror."""
-    assert s.BIOGRID_2019_REFERENCE.source_uri == "https://doi.org/10.1093/nar/gky1079"
-    assert "not in the mirror" in str(s.BIOGRID_2019_REFERENCE.method)
-
-
-def test_every_sourced_quote_names_the_pinned_paper() -> None:
-    """Each clause rests on a sentence of one pinned document."""
-    assert len(s.SYNLETHDB_SOURCED_QUOTES) == 4
-    for sourced in s.SYNLETHDB_SOURCED_QUOTES:
-        assert sourced.provenance.sha256 == s.SYNLETHDB_PAPER_SHA256
-        assert sourced.provenance.citation_key == s.SYNLETHDB_CITATION_KEY
-        assert sourced.quote
-
-
-# --------------------------------------------------------------------------- #
-# The measurement
-# --------------------------------------------------------------------------- #
-def test_the_inventory_finds_no_condition_and_no_storable_row(
-    sl_csv: tuple[str, str],
-) -> None:
-    """Clause 1 on synthetic bytes, with the byte-order mark stripped from the header."""
-    path, sha = sl_csv
-    inventory = s.release_inventory(path, sha)
-    assert inventory.columns == list(s.SYNLETHDB_COLUMNS)
-    assert inventory.n_rows == 4
-    assert inventory.n_condition_columns == 0
-    assert inventory.n_cell_line_stated == 0
-    assert inventory.n_scored == 4
-    assert inventory.n_storable == 0
-
-
-def test_a_release_that_grew_a_medium_column_is_refused(tmp_path: Path) -> None:
-    """The counterfactual: a condition column invalidates the measurement, loudly."""
-    path = _csv(
-        tmp_path / "Yeast_SL.csv",
-        ["TFC3,851230,SAC1,853646,,18676811,High Throughput,0.5,YPD"],
-        header=HEADER + ",r.medium",
-    )
-    with pytest.raises(s.ConditionColumnFound, match="r.medium"):
-        s.release_inventory(path, _sha256(path))
-
-
-def test_a_stated_cell_line_is_counted(tmp_path: Path) -> None:
-    """``r.cell_line`` is the one column that could carry a context, so it is counted."""
-    path = _csv(
-        tmp_path / "Yeast_SL.csv",
-        ["TFC3,851230,SAC1,853646,BY4741,18676811,High Throughput,0.5"],
-    )
-    assert s.release_inventory(path, _sha256(path)).n_cell_line_stated == 1
-
-
-def test_bytes_off_the_pin_are_refused(sl_csv: tuple[str, str]) -> None:
-    """Every measurement is stated of verified bytes."""
-    path, _ = sl_csv
-    with pytest.raises(RawSha256MismatchError, match="sha256 mismatch"):
-        s.release_inventory(path, "0" * 64)
-
-
-def test_a_blank_pubmed_id_is_refused_by_name(tmp_path: Path) -> None:
-    """Every row cites its PMID; a blank one is the decomposition's missing link."""
-    path = _csv(
-        tmp_path / "Yeast_SL.csv", ["TFC3,851230,SAC1,853646,,   ,High Throughput,0.5"]
-    )
-    with pytest.raises(s.BlankPubmedIdError, match="blank r.pubmed_id"):
-        s.read_synlethdb_csv(path)
-
-
-def test_the_pubmed_id_stays_text_so_a_multi_paper_row_survives(
-    sl_csv: tuple[str, str],
-) -> None:
-    """Read as a number, one blank cell would turn every PMID into '111.0'."""
-    path, _ = sl_csv
-    frame = s.read_synlethdb_csv(path)
-    assert frame["r.pubmed_id"].tolist() == [
-        "18676811",
-        "14764870",
-        "24470217",
-        "24125552;19918932",
-    ]
-
-
-def test_the_decomposition_counts_the_studies_to_load_instead(
-    sl_csv: tuple[str, str],
-) -> None:
-    """Clause 3 on synthetic bytes: a ';'-joined row cites two studies, not one."""
-    path, sha = sl_csv
-    decomposition = s.source_decomposition(path, sha)
-    assert decomposition.n_rows == 4
-    assert decomposition.n_source_pubmed_ids == 5
-    assert decomposition.n_multi_pubmed_rows == 1
-    assert decomposition.rows_by_evidence == {
-        "High Throughput": 1,
-        "High Throughput|Low Throughput": 1,
-        "Low Throughput": 1,
-        "Text Mining": 1,
-    }
-    assert decomposition.pubmed_ids_by_evidence == {
-        "High Throughput": 1,
-        "High Throughput|Low Throughput": 1,
-        "Low Throughput": 1,
-        "Text Mining": 2,
-    }
-
-
-def test_the_score_is_a_function_of_the_evidence_label(sl_csv: tuple[str, str]) -> None:
-    """Clause 4 on synthetic bytes: one score per label, not one per pair."""
-    path, sha = sl_csv
-    assert s.score_by_source(path, sha) == {
-        "High Throughput": [0.5],
-        "High Throughput|Low Throughput": [0.9],
-        "Low Throughput": [0.8],
-        "Text Mining": [0.25],
-    }
-
-
-def test_an_unscored_row_contributes_no_score(tmp_path: Path) -> None:
-    """The SR file is mostly unscored, so a null must not read as a value."""
-    path = _csv(
-        tmp_path / "Yeast_SR.csv",
-        [
-            "TFC3,851230,SAC1,853646,,18676811,BioGRID,",
-            "NTH2,852033,DAN4,850372,,24470217,BioGRID,-0.83",
-        ],
-    )
-    sha = _sha256(path)
-    assert s.release_inventory(path, sha).n_scored == 1
-    assert s.score_by_source(path, sha) == {"BioGRID": [-0.83]}
-
-
-# --------------------------------------------------------------------------- #
-# Gene resolution (clause 5), the map a per-study loader reuses
-# --------------------------------------------------------------------------- #
-GFF_LINES = (
-    "##gff-version 3",
-    "chrI\tRefSeq\tgene\t1\t100\t.\t+\t.\tID=gene-A;Dbxref=GeneID:851230;"
-    "locus_tag=YAL001C",
-    "chrI\tRefSeq\tpseudogene\t200\t300\t.\t+\t.\tID=gene-B;Dbxref=GeneID:853646;"
-    "locus_tag=YKL212W",
-    "chrI\tRefSeq\tmRNA\t1\t100\t.\t+\t.\tID=rna-A;Dbxref=GeneID:999999;"
-    "locus_tag=YZZ999W",
+from torchcell.data import ExperimentDataset, RawSha256MismatchError
+from torchcell.datamodels.schema import (
+    Genotype,
+    Publication,
+    ReferenceGenome,
+    SgaKanMxDeletionPerturbation,
+    SyntheticLethalityExperiment,
+    SyntheticLethalityExperimentReference,
+    SyntheticLethalityPhenotype,
+    SyntheticRescueExperiment,
+    SyntheticRescueExperimentReference,
+    SyntheticRescuePhenotype,
 )
+from torchcell.datasets.scerevisiae import synth_leth_db as s
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+
+#: The module's real GFF pin, read before the module fixture patches it.
+_REAL_NCBI_GFF_SHA256 = s.NCBI_GFF_SHA256
+
+#: ``(ORF, Entrez id, standard name or None, aliases)`` of the stub genome, in GFF order.
+_GENES: list[tuple[str, int, str | None, list[str]]] = [
+    ("YAL001C", 1001, "TFC3", ["TSV115", "FUN24"]),
+    ("YAL002W", 1002, "VPS8", ["FUN15", "SHARED"]),
+    ("YAL003W", 1003, "EFB1", ["TEF5", "SHARED"]),
+    ("YAL005C", 1005, "SSA1", ["YG100"]),
+    ("YAL010C", 1010, "IMP2", []),
+    ("YAL011W", 1011, "IMP21", ["IMP2'", "IMP2"]),
+    ("YAL012W", 1012, "STM1", ["MPT4"]),
+    ("YAL013W", 1013, "TIF3", ["STM1"]),
+    ("YAL014C", 1014, None, []),
+]
 
 
-def _gff(tmp_path: Path, lines: tuple[str, ...] = GFF_LINES) -> str:
-    path = tmp_path / "ncbi_genomic.gff"
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    return str(path)
-
-
-def test_only_gene_and_pseudogene_features_map_an_entrez_id(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """An mRNA carries the same GeneID; counting it would double-map the locus."""
-    path = _gff(tmp_path)
-    monkeypatch.setattr(s, "NCBI_GFF_SHA256", _sha256(path))
-    assert s.load_entrez_to_orf(path) == {851230: "YAL001C", 853646: "YKL212W"}
-
-
-def test_one_gene_id_naming_two_loci_is_refused(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """A conflicting map would silently put records under the wrong ORF (#597)."""
-    path = _gff(
-        tmp_path,
-        GFF_LINES
-        + (
-            "chrI\tRefSeq\tgene\t400\t500\t.\t+\t.\tID=gene-C;Dbxref=GeneID:851230;"
-            "locus_tag=YBR001C",
-        ),
+def _gff_text() -> str:
+    """A fixture GFF in the RefSeq shape: genes, a pseudogene, and features to skip."""
+    lines = ["##gff-version 3", "#!annotation-source SGD R64-4-1"]
+    for orf, entrez, standard, _ in _GENES:
+        name = f";gene={standard}" if standard else ""
+        lines.append(
+            f"NC_001133.9\tRefSeq\tgene\t1\t100\t.\t+\t.\tID=gene-{orf};"
+            f"Dbxref=GeneID:{entrez}{name};locus_tag={orf}"
+        )
+        lines.append(
+            f"NC_001133.9\tRefSeq\tmRNA\t1\t100\t.\t+\t.\tID=rna-{orf};"
+            f"Dbxref=GeneID:{entrez + 50000};locus_tag=NOT_{orf}"
+        )
+    lines.append(
+        "NC_001133.9\tRefSeq\tpseudogene\t1\t100\t.\t+\t.\tID=gene-YAL099W;"
+        "Dbxref=GeneID:1099,SGD:S000000001;locus_tag=YAL099W"
     )
-    monkeypatch.setattr(s, "NCBI_GFF_SHA256", _sha256(path))
-    with pytest.raises(s.EntrezGeneIdConflictError, match="names both"):
-        s.load_entrez_to_orf(path)
+    return "\n".join(lines) + "\n"
 
 
-def test_a_feature_with_two_gene_ids_is_refused(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """Two cross-references give no single answer, so none is chosen."""
-    path = _gff(
-        tmp_path,
-        (
-            "chrI\tRefSeq\tgene\t1\t100\t.\t+\t.\tID=gene-A;"
-            "Dbxref=GeneID:851230,GeneID:853646;locus_tag=YAL001C",
-        ),
+def _feature_index() -> dict[str, Any]:
+    """The four keys ``SCerevisiaeGenome.feature_index`` builds, from ``_GENES``."""
+    standard: dict[str, list[str]] = {}
+    alias: dict[str, list[str]] = {}
+    for orf, _, name, aliases in _GENES:
+        if name:
+            standard.setdefault(name.upper(), []).append(orf)
+        for a in aliases:
+            alias.setdefault(a.upper(), []).append(orf)
+    return {
+        "genes": {orf for orf, *_ in _GENES},
+        "locus_type": {},
+        "standard_to_ids": standard,
+        "alias_to_ids": alias,
+    }
+
+
+class _StubGenome:
+    """``genome_root``, ``feature_index`` and the real ``resolve_gene_name``."""
+
+    resolve_gene_name = SCerevisiaeGenome.resolve_gene_name
+
+    def __init__(self, genome_root: str) -> None:
+        self.genome_root = genome_root
+        self.feature_index = _feature_index()
+
+
+def _write_gff(genome_root: Path) -> str:
+    path = genome_root / s.NCBI_GFF_RELPATH
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(_gff_text(), encoding="utf-8")
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+@pytest.fixture(scope="module")
+def genome_root(tmp_path_factory: pytest.TempPathFactory) -> Iterator[Path]:
+    """A genome root holding the fixture GFF, with the module pin set to its digest."""
+    root = tmp_path_factory.mktemp("genome")
+    digest = _write_gff(root)
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(s, "NCBI_GFF_SHA256", digest)
+        yield root
+
+
+def _genome(root: Path) -> SCerevisiaeGenome:
+    return cast(SCerevisiaeGenome, _StubGenome(str(root)))
+
+
+_HEADER = (
+    "n1.name,n1.identifier,n2.name,n2.identifier,r.statistic_score,r.pubmed_id,"
+    "r.source\n"
+)
+_SL_ROWS = [
+    "TFC3,1001,VPS8,1002,0.85,12345678,Low Throughput\n",  # 0: standard names
+    "TSV115,1001,EFB1,1003,0.5,23456789,Low Throughput\n",  # 1: an alias
+    "YAL005C,1005,IMP2',1011,0.1,34567890,Low Throughput\n",  # 2: systematic name, primed alias
+    "YAL014C,1014,TEF5,1003,0.3,45678901,Low Throughput\n",  # 3: a name-less ORF
+    "SSA1,1005,VPS8,1002,,56789012,Low Throughput\n",  # 4: empty score
+    "STM1,1012,EFB1,1003,0.2,333;444,Low Throughput\n",  # 5: standard name shadowed by an alias
+    "VPS8,1001,EFB1,1003,0.4,222,Low Throughput\n",  # 6: name disagrees with its Entrez id
+    "TFC3,1001,GHOST,9999,0.4,333,Low Throughput\n",  # 7: Entrez id not in the GFF
+    "TFC3,1001,TSV115,1001,0.7,444,Low Throughput\n",  # 8: one gene on both sides
+    "SHARED,1002,TFC3,1001,0.6,555,Low Throughput\n",  # 9: an alias on two genes (ambiguous)
+]
+_SR_ROWS = [
+    "TFC3,1001,VPS8,1002,0.42,11111111,BioGRID\n",
+    "SSA1,1005,YAL014C,1014,,22222222,BioGRID\n",
+    "EFB1,1003,EFB1,1003,,33333333,BioGRID\n",
+]
+
+_ENVIRONMENT = s.SYNLETHDB_ENVIRONMENT
+_GENOME = ReferenceGenome(species="Saccharomyces cerevisiae", strain="S288C")
+
+
+def _write_raw(root: Path, filename: str, rows: list[str]) -> None:
+    (root / "raw").mkdir(parents=True)
+    (root / "raw" / filename).write_text(_HEADER + "".join(rows), encoding="utf-8")
+
+
+def _pair(systematic: tuple[str, str], perturbed: tuple[str, str]) -> Genotype:
+    return Genotype(
+        perturbations=[
+            SgaKanMxDeletionPerturbation(
+                systematic_gene_name=systematic[0],
+                perturbed_gene_name=perturbed[0],
+                strain_id="S288C",
+            ),
+            SgaKanMxDeletionPerturbation(
+                systematic_gene_name=systematic[1],
+                perturbed_gene_name=perturbed[1],
+                strain_id="S288C",
+            ),
+        ]
     )
-    monkeypatch.setattr(s, "NCBI_GFF_SHA256", _sha256(path))
-    with pytest.raises(s.EntrezGeneIdConflictError, match="2 GeneID"):
-        s.load_entrez_to_orf(path)
 
 
-def test_a_gff_off_the_pin_is_refused(tmp_path: Path) -> None:
-    """The annotation cannot be re-fetched, so the pin is the only acceptance test."""
-    with pytest.raises(RawSha256MismatchError, match="sha256 mismatch"):
-        s.load_entrez_to_orf(_gff(tmp_path))
-
-
-def test_a_row_whose_side_is_absent_resolves_to_nothing() -> None:
-    """Resolution by Entrez id alone, with no name fallback (clause 5)."""
-    frame = pd.DataFrame(
-        {"n1.identifier": [851230, 851230], "n2.identifier": [853646, 999]}
+def _publication(pubmed_id: str) -> Publication:
+    return Publication(
+        pubmed_id=pubmed_id,
+        pubmed_url=f"https://pubmed.ncbi.nlm.nih.gov/{pubmed_id}/",
+        doi=None,
+        doi_url=None,
     )
-    assert s.resolved_orf_pairs(frame, {851230: "YAL001C", 853646: "YKL212W"}) == [
-        ("YAL001C", "YKL212W"),
-        None,
+
+
+@pytest.fixture(scope="module")
+def sl(
+    tmp_path_factory: pytest.TempPathFactory, genome_root: Path
+) -> s.SynthLethalityYeastSynthLethDbDataset:
+    root = tmp_path_factory.mktemp("synlethdb") / "sl"
+    _write_raw(root, s.SL_CSV_NAME, _SL_ROWS)
+    return s.SynthLethalityYeastSynthLethDbDataset(
+        root=str(root), genome=_genome(genome_root)
+    )
+
+
+@pytest.fixture(scope="module")
+def sr(
+    tmp_path_factory: pytest.TempPathFactory, genome_root: Path
+) -> s.SynthRescueYeastSynthLethDbDataset:
+    root = tmp_path_factory.mktemp("synlethdb") / "sr"
+    _write_raw(root, s.SR_CSV_NAME, _SR_ROWS)
+    return s.SynthRescueYeastSynthLethDbDataset(
+        root=str(root), genome=_genome(genome_root)
+    )
+
+
+def _pairs(dataset: ExperimentDataset) -> list[list[tuple[str, str]]]:
+    return [
+        [
+            (p["systematic_gene_name"], p["perturbed_gene_name"])
+            for p in dataset[i]["experiment"]["genotype"]["perturbations"]
+        ]
+        for i in range(len(dataset))
     ]
 
 
-def test_the_gff_path_hangs_off_the_genome_root(tmp_path: Path) -> None:
-    """The pinned annotation sits beside the SGD release files, not in the tier set."""
+def _ledger(dataset: ExperimentDataset) -> s.DropLog:
+    with open(osp.join(dataset.preprocess_dir, "dropped_records.json")) as f:
+        return s.DropLog.model_validate_json(f.read())
 
-    class _Genome:
-        genome_root = str(tmp_path)
 
-    from typing import cast
+# --------------------------------------------------------------------------- #
+# Entrez map
+# --------------------------------------------------------------------------- #
 
-    from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
-    assert s.ncbi_gff_path(cast(SCerevisiaeGenome, _Genome())) == osp.join(
-        str(tmp_path), s.NCBI_GFF_RELPATH
+def test_entrez_map_reads_gene_and_pseudogene_locus_tags_only(
+    genome_root: Path,
+) -> None:
+    """Every ``gene`` feature maps its ``GeneID`` to its ``locus_tag`` and the
+    ``pseudogene`` (with a second, non-GeneID cross-reference) counts too; the
+    ``mRNA`` features (GeneID + 50000, ``NOT_`` locus tags) contribute nothing.
+    """
+    mapping = s.load_entrez_to_orf(str(genome_root / s.NCBI_GFF_RELPATH))
+    assert mapping == {entrez: orf for orf, entrez, *_ in _GENES} | {1099: "YAL099W"}
+
+
+def test_entrez_map_refuses_bytes_off_the_pin(tmp_path: Path) -> None:
+    """The GFF is hashed before it is read: other bytes raise
+    ``RawSha256MismatchError`` naming the file and both digests.
+    """
+    path = tmp_path / "ncbi_genomic.gff"
+    path.write_text(_gff_text() + "# edited\n", encoding="utf-8")
+    with pytest.raises(RawSha256MismatchError, match=str(path)):
+        s.load_entrez_to_orf(str(path))
+
+
+def test_entrez_map_refuses_one_gene_id_on_two_locus_tags(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A ``GeneID`` that names two different locus tags raises
+    ``EntrezGeneIdConflictError`` naming the id and both tags.
+    """
+    path = tmp_path / "ncbi_genomic.gff"
+    path.write_text(
+        _gff_text() + "NC_001134.8\tRefSeq\tgene\t1\t9\t.\t+\t.\tID=gene-YBL001C;"
+        "Dbxref=GeneID:1001;locus_tag=YBL001C\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        s, "NCBI_GFF_SHA256", hashlib.sha256(path.read_bytes()).hexdigest()
+    )
+    with pytest.raises(
+        s.EntrezGeneIdConflictError, match="GeneID 1001 names both YAL001C and YBL001C"
+    ):
+        s.load_entrez_to_orf(str(path))
+
+
+# --------------------------------------------------------------------------- #
+# Synthetic lethality build
+# --------------------------------------------------------------------------- #
+
+
+def test_sl_keeps_six_rows_in_source_order_with_entrez_orfs(
+    sl: s.SynthLethalityYeastSynthLethDbDataset,
+) -> None:
+    """Rows 0-5 are kept as records 0-5 with the ORF each Entrez id names: ``TSV115``
+    (an alias) is YAL001C, ``IMP2'`` keeps its prime and is YAL011W (stripping it would
+    give IMP2 = YAL010C), and ``STM1`` is YAL012W, the gene whose STANDARD name it is,
+    not YAL013W, the later gene listing it as an alias (the old name map's last write).
+    The perturbed name is the raw name (the schema spells the prime ``_prime``).
+    """
+    assert len(sl) == 6
+    assert _pairs(sl) == [
+        [("YAL001C", "TFC3"), ("YAL002W", "VPS8")],
+        [("YAL001C", "TSV115"), ("YAL003W", "EFB1")],
+        [("YAL005C", "YAL005C"), ("YAL011W", "IMP2_prime")],
+        [("YAL003W", "TEF5"), ("YAL014C", "YAL014C")],
+        [("YAL002W", "VPS8"), ("YAL005C", "SSA1")],
+        [("YAL003W", "EFB1"), ("YAL012W", "STM1")],
+    ]
+    assert "genome" not in vars(sl)
+    assert sl.raw_file_names == ["Yeast_SL.csv"]
+    assert sl.processed_file_names == ["lmdb"]
+
+
+def test_sl_common_name_pair_record_matches_the_source_row(
+    sl: s.SynthLethalityYeastSynthLethDbDataset,
+) -> None:
+    """Record 0 (``TFC3,1001,VPS8,1002,0.85,12345678``): two SGA KanMX deletions with
+    ``strain_id="S288C"`` on YAL001C / YAL002W, the ``SYNLETHDB_ENVIRONMENT`` (medium
+    and temperature not carried by SynLethDB, issue #622),
+    ``is_synthetic_lethal True`` with score 0.85; reference ``False`` with score None;
+    publication PMID 12345678 with no DOI.
+    """
+    expected = SyntheticLethalityExperiment(
+        dataset_name="SynthLethalityYeastSynthLethDbDataset",
+        genotype=_pair(("YAL001C", "YAL002W"), ("TFC3", "VPS8")),
+        environment=_ENVIRONMENT,
+        phenotype=SyntheticLethalityPhenotype(
+            is_synthetic_lethal=True, synthetic_lethality_statistic_score=0.85
+        ),
+    )
+    expected_reference = SyntheticLethalityExperimentReference(
+        dataset_name="SynthLethalityYeastSynthLethDbDataset",
+        genome_reference=_GENOME,
+        environment_reference=_ENVIRONMENT,
+        phenotype_reference=SyntheticLethalityPhenotype(
+            is_synthetic_lethal=False, synthetic_lethality_statistic_score=None
+        ),
+    )
+    record = sl[0]
+    assert record["experiment"] == expected.model_dump()
+    assert record["reference"] == expected_reference.model_dump()
+    assert record["publication"] == _publication("12345678").model_dump()
+
+
+def test_sl_nan_statistic_score_is_stored_as_nan_not_none(
+    sl: s.SynthLethalityYeastSynthLethDbDataset,
+) -> None:
+    """Finding: the SL loader does ``float(row["r.statistic_score"])`` with no NaN guard,
+    so an empty score cell is stored as ``nan`` (the SR loader maps the same cell to
+    ``None``). Record 4 (``SSA1,1005,VPS8,1002,,56789012``) pins this asymmetry.
+    """
+    phenotype = sl[4]["experiment"]["phenotype"]
+    assert phenotype["is_synthetic_lethal"] is True
+    assert math.isnan(phenotype["synthetic_lethality_statistic_score"])
+    assert sl[4]["publication"]["pubmed_id"] == "56789012"
+
+
+def test_pmids_are_stored_verbatim_as_text(
+    sl: s.SynthLethalityYeastSynthLethDbDataset,
+) -> None:
+    """Contract: ``r.pubmed_id`` is read as text, so each record stores the cell
+    verbatim, including the two-PMID cell ``"333;444"``, and the URL is built from it.
+    """
+    assert [sl[i]["publication"] for i in range(len(sl))] == [
+        _publication(p).model_dump()
+        for p in ["12345678", "23456789", "34567890", "45678901", "56789012", "333;444"]
+    ]
+    assert sl[5]["publication"]["pubmed_url"] == (
+        "https://pubmed.ncbi.nlm.nih.gov/333;444/"
     )
 
 
+def test_sl_ledger_names_every_dropped_row_and_its_rule(
+    sl: s.SynthLethalityYeastSynthLethDbDataset, genome_root: Path
+) -> None:
+    """``dropped_records.json``: 10 source rows, 6 kept, 4 dropped. Row 6 (``VPS8`` on
+    Entrez 1001, which is TFC3) and row 9 (``SHARED``, an alias of YAL002W and YAL003W,
+    so ambiguous) fail the name cross-check; row 7 (Entrez 9999) is not in the GFF; row
+    8 (``TFC3`` and its alias ``TSV115``, both Entrez 1001) is one gene on both sides.
+    The ledger records the GFF it read and that file's pin.
+    """
+    ledger = _ledger(sl)
+    assert (ledger.source_records, ledger.kept_records, ledger.dropped_records) == (
+        10,
+        6,
+        4,
+    )
+    assert ledger.entrez_source_path == str(genome_root / s.NCBI_GFF_RELPATH)
+    assert ledger.entrez_source_sha256 == s.NCBI_GFF_SHA256
+    by_rule = {r.rule: r for r in ledger.rules}
+    assert list(by_rule) == [
+        "entrez_id_not_in_ncbi_gff",
+        "gene_name_disagrees_with_entrez_id",
+        "same_gene_on_both_sides",
+    ]
+    assert {k: [row.source_row for row in r.rows] for k, r in by_rule.items()} == {
+        "entrez_id_not_in_ncbi_gff": [7],
+        "gene_name_disagrees_with_entrez_id": [6, 9],
+        "same_gene_on_both_sides": [8],
+    }
+    assert [r.n_records for r in ledger.rules] == [1, 2, 1]
+    disagree = by_rule["gene_name_disagrees_with_entrez_id"].rows
+    assert disagree[0].model_dump() == {
+        "source_row": 6,
+        "n1_name": "VPS8",
+        "n1_entrez": 1001,
+        "n2_name": "EFB1",
+        "n2_entrez": 1003,
+        "detail": (
+            "n1 VPS8 (Entrez 1001) -> YAL001C by id, but the name resolves renamed "
+            "to YAL002W (candidates []); n2 EFB1 (Entrez 1003) -> YAL003W"
+        ),
+    }
+    assert disagree[1].detail.startswith(
+        "n1 SHARED (Entrez 1002) -> YAL002W by id, but the name resolves ambiguous "
+        "to None (candidates ['YAL002W', 'YAL003W'])"
+    )
+    assert by_rule["entrez_id_not_in_ncbi_gff"].rows[0].detail == (
+        "n1 TFC3 (Entrez 1001) -> YAL001C; n2 GHOST (Entrez 9999): not in the GFF"
+    )
+
+
+def test_sl_side_files_single_reference_gene_set_and_ledger(
+    sl: s.SynthLethalityYeastSynthLethDbDataset,
+) -> None:
+    """``preprocess/`` holds the ledger, gene set, reference index and manifest but no
+    data.csv; one reference covers members [0..5]; the gene set is the seven kept ORFs
+    (YAL010C, the unprimed IMP2, and YAL013W, the alias-only STM1, are absent).
+    """
+    assert sorted(os.listdir(sl.preprocess_dir)) == [
+        "build_manifest.json",
+        "dropped_records.json",
+        "experiment_reference_index.json",
+        "gene_set.json",
+    ]
+    assert sl.df is None
+    with open(osp.join(sl.preprocess_dir, "gene_set.json")) as f:
+        assert json.load(f) == [
+            "YAL001C",
+            "YAL002W",
+            "YAL003W",
+            "YAL005C",
+            "YAL011W",
+            "YAL012W",
+            "YAL014C",
+        ]
+    with open(osp.join(sl.preprocess_dir, "experiment_reference_index.json")) as f:
+        stored = json.load(f)
+    assert [item["member_indices"] for item in stored] == [[0, 1, 2, 3, 4, 5]]
+    with open(osp.join(sl.preprocess_dir, "build_manifest.json")) as f:
+        manifest = json.load(f)
+    assert manifest["loader_class"] == "SynthLethalityYeastSynthLethDbDataset"
+    assert manifest["loader_module"] == "torchcell.datasets.scerevisiae.synth_leth_db"
+    assert sorted(os.listdir(sl.processed_dir)) == [
+        "lmdb",
+        "pre_filter.pt",
+        "pre_transform.pt",
+    ]
+
+
 # --------------------------------------------------------------------------- #
-# The pinned release
+# Synthetic rescue build
 # --------------------------------------------------------------------------- #
+
+
+def test_sr_records_match_the_source_rows_and_nan_score_becomes_none(
+    sr: s.SynthRescueYeastSynthLethDbDataset,
+) -> None:
+    """Record 0 (``TFC3,1001,VPS8,1002,0.42,11111111``): ``is_synthetic_rescue True``,
+    reference ``False`` / None. The released 0.42 has no sourced definition (#903), so
+    the score is ``None`` with a ``deferred_pending_source_review`` gap whose note
+    carries 0.42, the source and the PMID verbatim. Record 1
+    (``SSA1,1005,YAL014C,1014,,...``): the empty score is ``None`` with NO gap (the
+    release states none). Row 2 (``EFB1`` twice, Entrez 1003 twice) is a self pair and is
+    dropped, so the store holds 2 records.
+    """
+    expected = SyntheticRescueExperiment(
+        dataset_name="SynthRescueYeastSynthLethDbDataset",
+        genotype=_pair(("YAL001C", "YAL002W"), ("TFC3", "VPS8")),
+        environment=_ENVIRONMENT,
+        phenotype=SyntheticRescuePhenotype(
+            is_synthetic_rescue=True,
+            synthetic_rescue_statistic_score=None,
+            provenance_gaps=[s.sr_score_gap(0.42, "BioGRID", "11111111")],
+        ),
+    )
+    expected_reference = SyntheticRescueExperimentReference(
+        dataset_name="SynthRescueYeastSynthLethDbDataset",
+        genome_reference=_GENOME,
+        environment_reference=_ENVIRONMENT,
+        phenotype_reference=SyntheticRescuePhenotype(
+            is_synthetic_rescue=False, synthetic_rescue_statistic_score=None
+        ),
+    )
+    assert len(sr) == 2
+    assert sr[0]["experiment"] == expected.model_dump()
+    assert sr[0]["reference"] == expected_reference.model_dump()
+    assert sr[0]["publication"] == _publication("11111111").model_dump()
+    (gap,) = sr[0]["experiment"]["phenotype"]["provenance_gaps"]
+    assert gap["field"] == "synthetic_rescue_statistic_score"
+    assert gap["reason"] == "deferred_pending_source_review"
+    assert gap["resolve_with"]["source_uri"] == "https://doi.org/10.1093/nar/gky1079"
+    assert gap["note"].startswith(
+        "Yeast_SR.csv states r.statistic_score 0.42 (r.source BioGRID, r.pubmed_id "
+        "11111111)"
+    )
+    second = sr.transform_item(sr[1])
+    assert second["experiment"].phenotype.synthetic_rescue_statistic_score is None
+    assert second["experiment"].phenotype.provenance_gaps == []
+    assert second["experiment"].genotype.systematic_gene_names == ["YAL005C", "YAL014C"]
+    assert second["publication"] == _publication("22222222")
+    assert sr.raw_file_names == ["Yeast_SR.csv"]
+
+
+def test_sr_ledger_side_files_and_gene_set(
+    sr: s.SynthRescueYeastSynthLethDbDataset,
+) -> None:
+    """One reference with members [0, 1]; gene set = the four kept ORFs; the ledger
+    drops source row 2 as a self pair and nothing else.
+    """
+    with open(osp.join(sr.preprocess_dir, "gene_set.json")) as f:
+        assert json.load(f) == ["YAL001C", "YAL002W", "YAL005C", "YAL014C"]
+    with open(osp.join(sr.preprocess_dir, "experiment_reference_index.json")) as f:
+        stored = json.load(f)
+    assert [item["member_indices"] for item in stored] == [[0, 1]]
+    assert stored[0]["reference"]["experiment_reference_type"] == "synthetic rescue"
+    ledger = _ledger(sr)
+    assert ledger.dataset == "SynthRescueYeastSynthLethDbDataset"
+    assert [(r.rule, [x.source_row for x in r.rows]) for r in ledger.rules] == [
+        ("entrez_id_not_in_ncbi_gff", []),
+        ("gene_name_disagrees_with_entrez_id", []),
+        ("same_gene_on_both_sides", [2]),
+    ]
+
+
+# --------------------------------------------------------------------------- #
+# Refusals
+# --------------------------------------------------------------------------- #
+
+_CLASSES = [
+    (s.SynthLethalityYeastSynthLethDbDataset, "Yeast_SL.csv"),
+    (s.SynthRescueYeastSynthLethDbDataset, "Yeast_SR.csv"),
+]
+
+
+@pytest.mark.parametrize(("cls", "filename"), _CLASSES)
+def test_a_repeated_orf_pair_refuses_the_build(
+    tmp_path: Path, genome_root: Path, cls: type[Any], filename: str
+) -> None:
+    """One pair in two orders (rows 0 and 2) and the same pair named by an alias (row
+    3) resolve to one unordered ORF pair: ``DuplicateOrfPairError`` names the rows and
+    the pair, and no record is written.
+    """
+    root = tmp_path / "dup"
+    _write_raw(
+        root,
+        filename,
+        [
+            "TFC3,1001,VPS8,1002,0.2,111\n",
+            "TFC3,1001,EFB1,1003,0.2,111\n",
+            "VPS8,1002,TFC3,1001,0.2,111\n",
+            "TSV115,1001,FUN15,1002,0.2,111\n",
+        ],
+    )
+    with pytest.raises(
+        s.DuplicateOrfPairError,
+        match=r"1 ORF pair\(s\) repeat across kept rows \[0, 2, 3\]: "
+        r"\[\['YAL001C', 'YAL002W'\]\]",
+    ):
+        cls(root=str(root), genome=_genome(genome_root))
+    assert not (root / "processed" / "lmdb").exists()
+
+
+@pytest.mark.parametrize(("cls", "filename"), _CLASSES)
+def test_a_build_without_the_genome_is_refused(
+    tmp_path: Path, cls: type[Any], filename: str
+) -> None:
+    """The name cross-check and the GFF location both come from the genome, so a build
+    started with ``genome=None`` raises ``MissingGenomeError`` before reading the CSV.
+    """
+    root = tmp_path / "nogenome"
+    _write_raw(root, filename, ["TFC3,1001,VPS8,1002,0.2,111\n"])
+    with pytest.raises(s.MissingGenomeError):
+        cls(root=str(root), genome=None)
+
+
+@pytest.mark.parametrize(("cls", "filename"), _CLASSES)
+def test_a_blank_pmid_refuses_the_build_by_name(
+    tmp_path: Path, genome_root: Path, cls: type[Any], filename: str
+) -> None:
+    """Contract: an empty PMID in row 1 and a whitespace-only PMID (``" "``) in row 2
+    are both blank, so ``BlankPubmedIdError`` names the file, the count 2 and the first
+    blank row, before any LMDB is written.
+    """
+    root = tmp_path / "blank_pmid"
+    _write_raw(
+        root,
+        filename,
+        [
+            "TFC3,1001,VPS8,1002,0.2,111\n",
+            "SSA1,1005,VPS8,1002,0.5,\n",
+            "TFC3,1001,EFB1,1003,0.3, \n",
+        ],
+    )
+    with pytest.raises(s.BlankPubmedIdError) as excinfo:
+        cls(root=str(root), genome=_genome(genome_root))
+    assert str(excinfo.value) == (
+        f"{root / 'raw' / filename}: 2 row(s) with a blank r.pubmed_id (first at row 1)"
+    )
+    assert not (root / "processed" / "lmdb").exists()
+
+
+# --------------------------------------------------------------------------- #
+# download, main, item retyping
+# --------------------------------------------------------------------------- #
+
+
+class _Response:
+    def __init__(
+        self, chunks: list[bytes], cookies: dict[str, str], status: int
+    ) -> None:
+        self.cookies = cookies
+        self._chunks = chunks
+        self._status = status
+        self.chunk_sizes: list[int] = []
+
+    def raise_for_status(self) -> None:
+        if self._status != 200:
+            raise requests.HTTPError(f"{self._status} Client Error")
+
+    def iter_content(self, chunk_size: int) -> list[bytes]:
+        self.chunk_sizes.append(chunk_size)
+        return self._chunks
+
+
+def _fake_session(
+    monkeypatch: pytest.MonkeyPatch, responses: list[_Response]
+) -> list[tuple[str, dict[str, str] | None, bool]]:
+    calls: list[tuple[str, dict[str, str] | None, bool]] = []
+
+    class _Session:
+        def get(
+            self, url: str, params: dict[str, str] | None = None, stream: bool = False
+        ) -> _Response:
+            calls.append((url, params, stream))
+            return responses[len(calls) - 1]
+
+    monkeypatch.setattr(requests, "Session", _Session)
+    return calls
+
+
+_DOWNLOADS = [
+    (
+        s.SynthLethalityYeastSynthLethDbDataset,
+        "Yeast_SL.csv",
+        "https://drive.google.com/uc?export=download&id=1_56ebyBatapNml8S5HlJW7Dz1l0DZZIq",
+    ),
+    (
+        s.SynthRescueYeastSynthLethDbDataset,
+        "Yeast_SR.csv",
+        "https://drive.google.com/uc?export=download&id=1lBaApm70E05JnkrE1Hwmn8gT1cV5Bzlt",
+    ),
+]
+
+
+def _bare(cls: type[ExperimentDataset], root: Path) -> ExperimentDataset:
+    dataset = cls.__new__(cls)
+    dataset.root = str(root)
+    return dataset
+
+
+@pytest.mark.parametrize(("cls", "filename", "url"), _DOWNLOADS)
+def test_download_writes_the_streamed_chunks_in_one_request(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    cls: type[ExperimentDataset],
+    filename: str,
+    url: str,
+) -> None:
+    response = _Response([b"n1.name,", b"n2.name\n"], {}, 200)
+    calls = _fake_session(monkeypatch, [response])
+    _bare(cls, tmp_path).download()
+    assert calls == [(url, None, True)]
+    assert response.chunk_sizes == [8192]
+    assert (tmp_path / "raw" / filename).read_bytes() == b"n1.name,n2.name\n"
+
+
+@pytest.mark.parametrize(("cls", "filename", "url"), _DOWNLOADS)
+def test_download_confirms_a_drive_warning_cookie_and_keeps_the_second_body(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    cls: type[ExperimentDataset],
+    filename: str,
+    url: str,
+) -> None:
+    warning = _Response([b"<html>virus scan</html>"], {"download_warning": "tok"}, 200)
+    body = _Response([b"payload"], {}, 200)
+    calls = _fake_session(monkeypatch, [warning, body])
+    _bare(cls, tmp_path).download()
+    assert calls == [(url, None, True), (url, {"confirm": "tok"}, True)]
+    assert warning.chunk_sizes == []
+    assert (tmp_path / "raw" / filename).read_bytes() == b"payload"
+
+
+@pytest.mark.parametrize(("cls", "filename", "url"), _DOWNLOADS)
+def test_download_raises_on_an_http_error_before_writing(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    cls: type[ExperimentDataset],
+    filename: str,
+    url: str,
+) -> None:
+    _fake_session(monkeypatch, [_Response([b"x"], {}, 404)])
+    with pytest.raises(requests.HTTPError) as excinfo:
+        _bare(cls, tmp_path).download()
+    assert str(excinfo.value) == "404 Client Error"
+    assert os.listdir(tmp_path / "raw") == []
+
+
+def test_main_builds_both_datasets_under_data_root(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    genome_root: Path,
+) -> None:
+    """Contract: ``main`` reads the genome from ``$DATA_ROOT`` and builds both datasets
+    under ``$DATA_ROOT/data/torchcell/synth_{lethality,rescue}_yeast_synth_leth_db``,
+    the directories the knowledge-graph configs read; the GFF is read from that
+    genome's root; nothing is written under the working directory.
+    """
+    data_root = tmp_path / "data_root"
+    monkeypatch.setenv("DATA_ROOT", str(data_root))
+    monkeypatch.setattr("dotenv.load_dotenv", lambda *a, **k: False)
+    _write_gff(data_root / "data/sgd/genome")
+    genome_kwargs: list[dict[str, Any]] = []
+
+    class _MainGenome(_StubGenome):
+        def __init__(self, **kwargs: Any) -> None:
+            genome_kwargs.append(kwargs)
+            super().__init__(kwargs["genome_root"])
+
+    monkeypatch.setattr(s, "SCerevisiaeGenome", _MainGenome)
+    sl_root = data_root / "data/torchcell/synth_lethality_yeast_synth_leth_db"
+    sr_root = data_root / "data/torchcell/synth_rescue_yeast_synth_leth_db"
+    _write_raw(sl_root, "Yeast_SL.csv", _SL_ROWS)
+    _write_raw(sr_root, "Yeast_SR.csv", _SR_ROWS)
+    cwd = tmp_path / "cwd"
+    cwd.mkdir()
+    monkeypatch.chdir(cwd)
+    s.main()
+    assert genome_kwargs == [
+        {
+            "genome_root": osp.join(str(data_root), "data/sgd/genome"),
+            "go_root": osp.join(str(data_root), "data/go"),
+            "overwrite": False,
+        }
+    ]
+    lines = capsys.readouterr().out.splitlines()
+    assert "SynthLethalityYeastSynthLethDbDataset(6)" in lines
+    assert "SynthRescueYeastSynthLethDbDataset(2)" in lines
+    assert (sl_root / "processed/lmdb").is_dir()
+    assert (sr_root / "processed/lmdb").is_dir()
+    assert os.listdir(cwd) == []
+
+
+def test_lethality_items_retype_through_the_lethality_classes(
+    sl: s.SynthLethalityYeastSynthLethDbDataset,
+) -> None:
+    """``transform_item`` rebuilds a stored lethality item as a
+    ``SyntheticLethalityExperiment`` with its reference, dumping to exactly the stored
+    dictionaries; a ``SyntheticRescueExperiment`` refuses the lethality item's
+    experiment dictionary.
+    """
+    item = sl[0]
+    typed = sl.transform_item(item)
+    assert type(typed["experiment"]) is SyntheticLethalityExperiment
+    assert type(typed["reference"]) is SyntheticLethalityExperimentReference
+    assert typed["experiment"].model_dump() == item["experiment"]
+    assert typed["reference"].model_dump() == item["reference"]
+    rescue = s.SynthRescueYeastSynthLethDbDataset.__new__(
+        s.SynthRescueYeastSynthLethDbDataset
+    )
+    assert rescue.processed_file_names == ["lmdb"]
+    assert rescue.experiment_class is SyntheticRescueExperiment
+    assert rescue.reference_class is SyntheticRescueExperimentReference
+    with pytest.raises(ValidationError):
+        rescue.experiment_class(**item["experiment"])
+
+
+# --------------------------------------------------------------------------- #
+# The real pinned files (issue #597)
+# --------------------------------------------------------------------------- #
+
+
 @pytest.mark.data
-@pytest.mark.skipif(DATA_ROOT is None, reason="DATA_ROOT unset")
-def test_the_real_release_matches_the_pins_and_every_recorded_count() -> None:
-    """Every number of clauses 1, 3 and 4, re-measured on the pinned release files."""
-    assert DATA_ROOT is not None
-    sl = osp.join(DATA_ROOT, "data/torchcell/syn_leth_db_yeast/raw", s.SL_CSV_NAME)
-    sr = osp.join(DATA_ROOT, "data/torchcell/syn_rescue_db_yeast/raw", s.SR_CSV_NAME)
-    for path in (sl, sr):
-        if not osp.isfile(path):
-            pytest.skip(f"{path} not on this machine")
+def test_real_files_resolve_by_entrez_with_the_issue_counts(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """On the pinned ``Yeast_SL.csv`` / ``Yeast_SR.csv`` with the genome at
+    ``$DATA_ROOT/data/sgd/genome`` and its pinned ``ncbi_genomic.gff``: no name
+    disagrees with its Entrez id; SL drops source row 5232 (``YPR108W-A``, Entrez
+    1466522, absent from the GFF) and the self pairs 3152 (PUS1), 5719 (TAF1) and 8663
+    (SBA1); SR drops the self pairs 370, 1182, 3138, 3154, 6616 and 6672; no unordered
+    ORF pair repeats among kept rows; and every name in the issue's table resolves to
+    its Entrez ORF (``STM1`` -> YLR150W, ..., ``IMP2'`` -> YIL154C).
+    """
+    from dotenv import load_dotenv
 
-    sl_inventory = s.release_inventory(sl, s.SL_CSV_SHA256)
-    assert sl_inventory.n_rows == REAL_SL_ROWS
-    assert sl_inventory.n_cell_line_stated == 0
-    assert sl_inventory.n_scored == REAL_SL_ROWS
-    assert sl_inventory.n_storable == 0
-
-    sr_inventory = s.release_inventory(sr, s.SR_CSV_SHA256)
-    assert sr_inventory.n_rows == REAL_SR_ROWS
-    assert sr_inventory.n_cell_line_stated == 0
-    assert sr_inventory.n_scored == REAL_SR_SCORED_ROWS
-    assert sr_inventory.n_storable == 0
-
-    sl_sources = s.source_decomposition(sl, s.SL_CSV_SHA256)
-    assert sl_sources.n_source_pubmed_ids == REAL_SL_SOURCE_PUBMED_IDS
-    assert sl_sources.rows_by_evidence == REAL_SL_ROWS_BY_EVIDENCE
-
-    sr_sources = s.source_decomposition(sr, s.SR_CSV_SHA256)
-    assert sr_sources.n_source_pubmed_ids == REAL_SR_SOURCE_PUBMED_IDS
-    assert sr_sources.rows_by_evidence == {"BioGRID": REAL_SR_ROWS}
-
-    assert s.score_by_source(sl, s.SL_CSV_SHA256) == REAL_SL_SCORES_BY_EVIDENCE
-    assert list(s.score_by_source(sr, s.SR_CSV_SHA256)) == ["BioGRID"]
+    load_dotenv()
+    data_root = os.environ["DATA_ROOT"]
+    # The module fixture may still hold the fixture GFF's digest; the real file is
+    # checked against the real pin.
+    monkeypatch.setattr(s, "NCBI_GFF_SHA256", _REAL_NCBI_GFF_SHA256)
+    genome = SCerevisiaeGenome(
+        genome_root=osp.join(data_root, "data/sgd/genome"),
+        go_root=osp.join(data_root, "data/go"),
+        overwrite=False,
+    )
+    entrez = s.load_entrez_to_orf(s.ncbi_gff_path(genome))
+    expected_drops = {
+        "synth_lethality_yeast_synth_leth_db": (
+            s.SL_CSV_NAME,
+            {
+                "entrez_id_not_in_ncbi_gff": [5232],
+                "same_gene_on_both_sides": [3152, 5719, 8663],
+            },
+        ),
+        "synth_rescue_yeast_synth_leth_db": (
+            s.SR_CSV_NAME,
+            {"same_gene_on_both_sides": [370, 1182, 3138, 3154, 6616, 6672]},
+        ),
+    }
+    issue_table = {
+        "STM1": "YLR150W",
+        "SDC1": "YDR469W",
+        "MFT1": "YML062C",
+        "NSP1": "YJL041W",
+        "RPL37A": "YLR185W",
+        "CCS1": "YMR038C",
+        "YPK1": "YKL126W",
+        "TAF1": "YGR274C",
+        "SSL2": "YIL143C",
+        "HAP1": "YLR256W",
+        "IMP2'": "YIL154C",
+    }
+    seen: dict[str, set[str]] = {}
+    for slug, (csv_name, drops) in expected_drops.items():
+        df = s._read_synlethdb_csv(
+            osp.join(data_root, "data/torchcell", slug, "raw", csv_name)
+        )
+        resolved = s.resolve_pairs(df, genome, entrez)
+        got = {
+            str(rule): sorted(int(i) for i in group.index)
+            for rule, group in resolved.groupby("drop_rule")
+        }
+        assert got == drops, slug
+        kept = resolved[resolved["drop_rule"].isna()]
+        s.refuse_duplicate_pairs(kept)
+        for side in ("n1", "n2"):
+            for name, orf in zip(
+                kept[f"{side}.name"], kept[f"{side}.systematic_name"], strict=True
+            ):
+                if name in issue_table:
+                    seen.setdefault(name, set()).add(orf)
+    assert seen == {name: {orf} for name, orf in issue_table.items()}
 
 
 @pytest.mark.data
-@pytest.mark.skipif(DATA_ROOT is None, reason="DATA_ROOT unset")
-def test_every_quote_audits_against_the_pinned_paper() -> None:
-    """Each clause's sentence is a verbatim substring of the mirrored OCR."""
-    assert DATA_ROOT is not None
-    library = osp.join(DATA_ROOT, "torchcell-library")
-    paper = osp.join(library, s.SYNLETHDB_CITATION_KEY, "paper.md")
-    if not osp.isfile(paper):
-        pytest.skip(f"{paper} not on this machine")
-    for sourced in s.SYNLETHDB_SOURCED_QUOTES:
-        result = audit_sourced_value(sourced, library)
-        assert result.passed, result.message
+def test_real_files_state_74_undefined_sr_scores_and_four_sl_source_types() -> None:
+    """On the pinned files (#902, #903, and the aggregation record of plan decision 15):
+    ``Yeast_SR.csv`` states a score on 74 of 6,948 rows, every one ``r.source`` BioGRID
+    and PubMed 24470217, from -1.0 to -0.2, so each becomes a typed gap; ``Yeast_SL.csv``
+    names four source types and 1,741 distinct PubMed ids, every SL score in [0.25, 1].
+    """
+    from dotenv import load_dotenv
+
+    load_dotenv()
+    data_root = os.environ["DATA_ROOT"]
+    sr = s._read_synlethdb_csv(
+        osp.join(data_root, "data/torchcell/syn_rescue_db_yeast/raw", s.SR_CSV_NAME)
+    )
+    scored = sr[sr["r.statistic_score"].notna()]
+    assert (len(sr), len(scored)) == (6948, 74)
+    assert set(scored["r.source"]) == {"BioGRID"}
+    assert set(scored["r.pubmed_id"]) == {"24470217"}
+    assert (scored["r.statistic_score"].min(), scored["r.statistic_score"].max()) == (
+        -1.0,
+        -0.2,
+    )
+    gaps = [
+        s.sr_score_gap(float(v), str(src), str(pmid))
+        for v, src, pmid in zip(
+            scored["r.statistic_score"],
+            scored["r.source"],
+            scored["r.pubmed_id"],
+            strict=True,
+        )
+    ]
+    assert {g.reason.value for g in gaps} == {"deferred_pending_source_review"}
+    sl = s._read_synlethdb_csv(
+        osp.join(data_root, "data/torchcell/syn_leth_db_yeast/raw", s.SL_CSV_NAME)
+    )
+    assert sl["r.source"].value_counts().to_dict() == {
+        "High Throughput": 7721,
+        "Low Throughput": 4944,
+        "High Throughput|Low Throughput": 1248,
+        "Text Mining": 87,
+    }
+    assert sl["r.pubmed_id"].nunique() == 1741
+    assert sl["r.statistic_score"].between(0.25, 1.0).all()

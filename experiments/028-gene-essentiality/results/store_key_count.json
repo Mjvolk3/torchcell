@@ -1,0 +1,32 @@
+{
+  "n_records": 13525071,
+  "records_by_perturbation_count": {
+    "1": 5694,
+    "2": 13142645,
+    "3": 376732
+  },
+  "n_distinct_genotypes": 13525071,
+  "n_distinct_media": 3,
+  "media": {
+    "SGA double-mutant selection (SD-MSG, -His/Arg/Lys, +canavanine/thialysine/G418/clonNAT)": 13092670,
+    "SGA triple-mutant selection (SD-MSG, -His/Arg/Lys/Ura, +canavanine/thialysine/G418/clonNAT)": 669700,
+    "YEPD": 5525
+  },
+  "n_records_empty_gem_subset": 8986762,
+  "n_distinct_gem_subsets": 459098,
+  "gem_subsets_by_size": {
+    "0": 1,
+    "1": 1110,
+    "2": 449830,
+    "3": 8157
+  },
+  "n_distinct_keys": 469474,
+  "n_gem_genes": 1161,
+  "store_float32_gb": 7.757588376,
+  "store_float16_gb": 3.878794188,
+  "cpu_hours_per_core": {
+    "interior_point_or_dual_simplex": 19.561416666666663,
+    "pfba": 130.40944444444443
+  },
+  "seconds": 503.61819648742676
+}

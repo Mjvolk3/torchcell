@@ -73,7 +73,19 @@ from torchcell.metabolism.constraints import (
     null_space_basis,
 )
 from torchcell.metabolism.flux_layer import FluxLayer, FluxLayerConfig
-from torchcell.metabolism.parameters import molecular_weight_table, resolve_kcat_table
+from torchcell.metabolism.parameters import (
+    KINETICS_MIRROR,
+    PLAUSIBILITY_RESULT,
+    THERMO_EQUILIBRATOR_MIRROR,
+    VERIFIED_PAIRS_FEATURE,
+    SubstrateMatch,
+    ThermoSource,
+    load_predicted_unit_table,
+    molecular_weight_table,
+    resolve_kcat_table,
+    resolve_km_table,
+    resolve_reaction_delta_g,
+)
 from torchcell.metabolism.yeast_GEM import YeastGEM
 from torchcell.models.cell_graph_transformer_metabolism import (
     CellGraphTransformerMetabolism,
@@ -94,6 +106,10 @@ QUERY_PATH = osp.join(
 OED_MIRROR = osp.join(
     DATA_ROOT, "data/enzyme_kinetics/open_enzyme_database/scerevisiae"
 )
+#: The whole Open Enzyme Database, every organism. It supplies the EC-plus-substrate
+#: homolog tier, which is measured chemistry from a protein that is NOT this organism's and
+#: is tagged apart from the measured tier for exactly that reason.
+HOMOLOG_MIRROR = osp.join(DATA_ROOT, "data/enzyme_kinetics/open_enzyme_database/all")
 
 #: The 19 Mulleder columns in the key-sorted order the Perturbation graph processor emits
 #: (``sorted(metabolite_level)``), paired with the cytosolic yeast-GEM species each one is.
@@ -149,6 +165,26 @@ ARMS: dict[str, dict[str, Any]] = {
         "use_protein_budget": True,
         "use_dissipation_limit": True,
     },
+    # THE PROTEIN NODE (2026-09-09). The abundance head replaces the nominal E_bar with a
+    # predicted per-gene enzyme abundance; the capacity bound is kcat * E_u and the
+    # protein budget is the forward pool constraint on E. Two arms: capacity alone, and
+    # capacity plus the anchored thermodynamics. Dissipation is a readout in both.
+    "flux_capacity": {
+        "flux": True,
+        "thermo_mode": ThermoMode.OFF,
+        "use_enzyme_capacity": True,
+        "use_protein_budget": True,
+        "use_dissipation_limit": False,
+        "use_abundance_head": True,
+    },
+    "flux_abundance": {
+        "flux": True,
+        "thermo_mode": ThermoMode.ANCHORED,
+        "use_enzyme_capacity": True,
+        "use_protein_budget": True,
+        "use_dissipation_limit": False,
+        "use_abundance_head": True,
+    },
     # The exactness-budget arm: mass balance exact by construction, box soft.
     "flux_nullspace": {
         "flux": True,
@@ -158,6 +194,168 @@ ARMS: dict[str, dict[str, Any]] = {
         "use_protein_budget": True,
         "use_dissipation_limit": True,
     },
+    # WAVE 6 (2026-09-10). THE PROJECTION HEAD. `box` and `nullspace` each buy one exact
+    # constraint by giving up the other; `projection` starts at v0 = N z and alternates the
+    # balance projection with the box clip, so both hold, with the one named by
+    # `projection_end` (default balance) exact and the other's residual reported per sample.
+    # The motivation is the Genesis metabolic-grounding target, which asks what fraction of
+    # NOMINATED strains are feasible: a penalty that is small on average says nothing about
+    # the top 100, and a parameterization does.
+    #
+    # `flux_projection` is the structural analog of `flux_off`: no thermodynamics, no
+    # capacity, no budget, so pooled -> flux_projection isolates what routing the prediction
+    # through a feasible flux buys, with no measured parameter involved.
+    "flux_projection": {
+        "flux": True,
+        "parameterization": "projection",
+        "thermo_mode": ThermoMode.OFF,
+        "use_enzyme_capacity": False,
+        "use_protein_budget": False,
+        "use_dissipation_limit": False,
+    },
+    # EVERYTHING ON. Anchored thermodynamics, the predicted-kcat capacity bound through the
+    # abundance head, the forward protein-pool budget, and the dissipation limit, on top of
+    # a flux that is balanced and in-box by construction. This is the arm that answers
+    # whether the physics can be satisfied at once rather than one term at a time; the
+    # dissipation limit is trained against here rather than held out as a readout, so a
+    # model that respects it in this arm has been told to, not discovered it.
+    "flux_projection_anchored": {
+        "flux": True,
+        "parameterization": "projection",
+        "thermo_mode": ThermoMode.ANCHORED,
+        "use_enzyme_capacity": True,
+        "use_protein_budget": True,
+        "use_dissipation_limit": True,
+        "use_abundance_head": True,
+    },
+    # THE DISSIPATION LIMIT HELD OUT (2026-09-14). The Gibbs dissipation limit is a
+    # verification readout, not a training target: a model that stays under 3,700 J/gDW/h
+    # because it was penalized for exceeding it has been told to, not discovered it, and its
+    # dissipation feasibility then says nothing. Every 027 cell on `flux_projection_anchored`
+    # through wave 8 trained against the limit, so this arm is the same everything-on recipe
+    # with that one term off; `g_diss_mean` is still recorded every epoch as a readout.
+    "flux_projection_anchored_nodiss": {
+        "flux": True,
+        "parameterization": "projection",
+        "thermo_mode": ThermoMode.ANCHORED,
+        "use_enzyme_capacity": True,
+        "use_protein_budget": True,
+        "use_dissipation_limit": False,
+        "use_abundance_head": True,
+    },
+    # The same, sampled. `stochastic` on a projection parameterization is read as the LATENT
+    # draw z = mu + sigma eps with a KL against N(0, I), which is the only new boolean an
+    # arm can reach through 026's build_flux_layer; the KL weight is FluxLayerConfig's
+    # `kl_weight` default of 1e-3, since build_flux_layer writes the weights dict itself.
+    "flux_projection_stochastic": {
+        "flux": True,
+        "parameterization": "projection",
+        "thermo_mode": ThermoMode.ANCHORED,
+        "use_enzyme_capacity": True,
+        "use_protein_budget": True,
+        "use_dissipation_limit": True,
+        "use_abundance_head": True,
+        "stochastic": True,
+    },
+    # THE SECOND LAW AS A BOX (2026-09-11). Cells 1689/1690/1708 made mass balance exact
+    # and left the thermodynamics soft, and the soft term closed nothing: on the top 100
+    # predicted strains of job 1708, at a constraint scale of 0.1, the balance criterion was
+    # met by every strain and `thermo_model_violation_frac` still read a median of 0.405, so
+    # the Genesis criterion failed on the deltaG half in every arm run to that point.
+    #
+    # The fix is not a bigger weight. For a reaction whose energy has a known sign, the
+    # second law IS a bound: dG > 0 forbids forward flux, dG < 0 forbids reverse. Writing it
+    # as a bound puts it where the box and the balance already are, and the alternating
+    # projection then ends on a clip that satisfies all three. `tdg` in the parameterization
+    # string is that switch, and `_box` is what makes the clip last, without which the
+    # directional bound would be reported as exact while the balance projection moved the
+    # flux back off it. Twenty alternations, because the balance residual is now the only
+    # loose end and it is the one K buys down.
+    "flux_projection_anchored_tdg": {
+        "flux": True,
+        "parameterization": "projection_k20_box_tdg",
+        "thermo_mode": ThermoMode.ANCHORED,
+        "use_enzyme_capacity": True,
+        "use_protein_budget": True,
+        "use_dissipation_limit": True,
+        "use_abundance_head": True,
+    },
+    # The same, sampled, so the feasibility question can be asked of a DISTRIBUTION over a
+    # nominated strain's flux rather than of one point.
+    "flux_projection_anchored_tdg_stochastic": {
+        "flux": True,
+        "parameterization": "projection_k20_box_tdg",
+        "thermo_mode": ThermoMode.ANCHORED,
+        "use_enzyme_capacity": True,
+        "use_protein_budget": True,
+        "use_dissipation_limit": True,
+        "use_abundance_head": True,
+        "stochastic": True,
+    },
+    # K = 20 alternations instead of 5. The step count rides in the parameterization string
+    # because that field is the only one build_flux_layer forwards; everything else matches
+    # `flux_projection_anchored`, so the pair is a clean read on whether the residual the
+    # projection leaves is large enough to matter to the phenotype.
+    # THE BOX END WITHOUT THE SIGN TIGHTENING (2026-09-11). The control that separates two
+    # explanations of why the tdg head lost the phenotype signal. Measured at initialization
+    # on yeast-GEM with the REAL gene universe, untrained: ending on the clip with NO
+    # thermodynamics in the box takes the flux from 11.9 percent zeros to 44.1 percent and
+    # the balance ratio from 5.4e-9 to 0.27; the sign tightening then takes it to 68.0
+    # percent and collapses 17.1 percent of boxes to a point, against 0.2 percent before it.
+    # So respecting the bounds already costs most of the density on its own, and this arm is
+    # what says whether that alone accounts for the lost signal.
+    "flux_projection_anchored_k20_boxend": {
+        "flux": True,
+        "parameterization": "projection_k20_box",
+        "thermo_mode": ThermoMode.ANCHORED,
+        "use_enzyme_capacity": True,
+        "use_protein_budget": True,
+        "use_dissipation_limit": True,
+        "use_abundance_head": True,
+    },
+    # THE MARGIN. The directional box at its default margin pins 68.0 percent of reactions
+    # below 1e-6 at initialization and 70.6 percent on the trained top-100 strains of job
+    # 1725, whose head scores at chance. `tdgm5` constrains only reactions at least 5 kJ/mol
+    # from equilibrium: at initialization that recovers the mean absolute flux from 0.067 to
+    # 0.184 and costs a second-law violation fraction of 0.123, so it trades exactness for
+    # density rather than buying both. Implemented and tested, NOT run: the box-end control
+    # above is the cheaper discriminator and took the cells.
+    "flux_projection_anchored_tdgm5": {
+        "flux": True,
+        "parameterization": "projection_k20_box_tdgm5",
+        "thermo_mode": ThermoMode.ANCHORED,
+        "use_enzyme_capacity": True,
+        "use_protein_budget": True,
+        "use_dissipation_limit": True,
+        "use_abundance_head": True,
+    },
+    # THE NOMINAL ABUNDANCE PATH WITH THE WIDENED KCAT CEILING. `flux_nullspace`'s switches
+    # with a 2-sigma widening of the k_cat table, which is the only rule that lifts all
+    # three reactions the pFBA reference carries above their box ceiling: no subunit
+    # aggregation rule reaches r_0961, a single-gene unit. The channel is overridden by the
+    # 027 arm file, so the parameterization named here is not what the warm-start cells run.
+    #
+    # It exists as a registry entry rather than as a field in the 027 arm file because
+    # ArmConfig forbids extra keys, so `base_arm` is the only channel an 027 cell has for a
+    # k_cat rule, and `base_arm` is serialized into the result file with the cell.
+    "flux_nullspace_kcat_sigma2": {
+        "flux": True,
+        "parameterization": "nullspace",
+        "thermo_mode": ThermoMode.ANCHORED,
+        "use_enzyme_capacity": True,
+        "use_protein_budget": True,
+        "use_dissipation_limit": True,
+        "kcat_ceiling_sigma_k": 2.0,
+    },
+    "flux_projection_anchored_k20": {
+        "flux": True,
+        "parameterization": "projection_k20",
+        "thermo_mode": ThermoMode.ANCHORED,
+        "use_enzyme_capacity": True,
+        "use_protein_budget": True,
+        "use_dissipation_limit": True,
+        "use_abundance_head": True,
+    },
 }
 
 
@@ -166,6 +364,9 @@ def build_dataset() -> Neo4jCellDataset:
     genome = SCerevisiaeGenome(
         genome_root=osp.join(DATA_ROOT, "data/sgd/genome"),
         go_root=osp.join(DATA_ROOT, "data/go"),
+        # See the note in 027's train_bx.py: the default `overwrite=True` rebuilds
+        # data.db under every worker, which is a write race when workers share a node.
+        overwrite=False,
     )
     graph = SCerevisiaeGraph(
         sgd_root=osp.join(DATA_ROOT, "data/sgd/genome"),
@@ -191,26 +392,242 @@ def build_dataset() -> Neo4jCellDataset:
     )
 
 
+#: Media whose recipe object carries NO provenance and NO concentrations: the composition
+#: is the standard Difco/Sigma formulation named in `torchcell/datamodels/media.py` and
+#: only the uptake magnitudes are sourced (Suthers). A cell bounded by one of these is
+#: running on an UNSOURCED medium, and its result file says so rather than leaving a reader
+#: to assume the bound vector is as well sourced as the kcat table.
+UNSOURCED_MEDIA = frozenset({"SC", "SC-URA"})
+
+
+def media_report(model: Any, media_name: str | None) -> dict[str, Any]:
+    """Apply a medium to ``model``'s exchange bounds, or record that none was applied.
+
+    MUTATES ``model`` when a medium is named: ``MediaBounds.apply`` closes every exchange
+    and opens exactly the named recipe, which is what makes a medium a statement about the
+    whole boundary rather than an additive patch. The wild-type growth rate is measured
+    before and after, because that single number is what says whether the change was a
+    no-op, a loosening or a starvation, and it is the first thing to check when an arm
+    moves after a medium is applied.
+
+    No fallback: a name the ontology does not carry is an error here rather than a silent
+    return to the shipped bounds, which would be a cell that reports a medium it never ran.
+    """
+    if media_name is None:
+        return {
+            "applied": False,
+            "note": (
+                "shipped yeast-GEM 9.0.2 exchange bounds, where all 20 amino-acid "
+                "exchanges have lower_bound 0, i.e. effectively synthetic minimal. This "
+                "is what every 026 and 027 arm before 2026-09-14 ran on."
+            ),
+        }
+    from torchcell.metabolism.media import FBA_MEDIA, media_to_bounds
+
+    assert media_name in FBA_MEDIA, (
+        f"medium {media_name!r} is not in FBA_MEDIA ({sorted(FBA_MEDIA)}). The bound "
+        "vector comes from the ontology recipe or the cell does not run; it is never "
+        "quietly replaced by the shipped bounds."
+    )
+    media = FBA_MEDIA[media_name]
+    growth_before = float(model.slim_optimize())
+    bounds = media_to_bounds(media, model)
+    bounds.apply(model)
+    growth_after = float(model.slim_optimize())
+    # The bound vector is data: written once under DATA_ROOT, hash-named, so every
+    # store and cell that ran on it can name the exact file rather than a code constant.
+    artifact = bounds.write_artifact(
+        osp.join(os.environ["DATA_ROOT"], "data/torchcell/media_bounds")
+    )
+    return {
+        "applied": True,
+        "media_name": media_name,
+        "recipe": media.name,
+        "bounds_artifact": artifact,
+        "bounds_sha256": bounds.sha256(),
+        "state": media.state,
+        "n_components": bounds.n_components,
+        "n_resolved": bounds.n_resolved,
+        "n_exchanges_opened": len(bounds.bounds),
+        "unresolved": bounds.unresolved_names,
+        "excluded_by_role": bounds.excluded_names,
+        "wild_type_growth_before": growth_before,
+        "wild_type_growth_after": growth_after,
+        "provenance": (
+            "UNSOURCED: the recipe object carries no provenance and no concentrations; "
+            "its composition is the standard Difco/Sigma formulation named in "
+            "torchcell/datamodels/media.py and only the uptake magnitudes are Suthers'."
+            if media_name in UNSOURCED_MEDIA
+            else "see the recipe's docstring in torchcell/metabolism/media.py"
+        ),
+    }
+
+
 def build_flux_layer(
     arm: dict[str, Any], model_gene_ids: list[str], hidden_dim: int
 ) -> tuple[FluxLayer | None, dict[str, Any]]:
-    """Construct the flux layer for one arm, with real MW and OED-resolved kcat."""
+    """Construct the flux layer for one arm, with real MW and OED-resolved kcat.
+
+    Four things an arm may now ask for beyond its constraint switches, all keyed off the arm
+    dict so the registry stays the single source of truth:
+
+    * ``kcat_tier``: ``"measured"`` keeps the database tiers and the organism default only;
+      ``"predicted"`` inserts the sequence-predictor tier between them.
+    * ``kcat_homolog_tier``: whether a cross-organism EC-plus-substrate measurement may fill
+      a unit the organism's own assays do not reach. ON by default since 2026-09-11: it is
+      the tier a chassis with no assays of its own would live on, and turning it off is what
+      a yeast-only ablation does. It is tagged apart from the measured tier and the flux
+      layer's coarse split counts it with the predictions, never as a measurement.
+    * ``thermo_source``: which route supplies the standard reaction energies.
+    * ``constraint_warmup_epochs`` / ``constraint_final_scale``: the ramp on the physics.
+
+    **The measured tier is substrate-matched.** ``SubstrateMatch`` is built here for every
+    arm, predicted tier or not, because without it no database row can be checked against
+    the reaction it is being attached to and the resolver accepts none. Keying on the
+    accession alone attached 74 of 148 turnover numbers to a substrate the reaction does not
+    consume; see [[experiments.026-metabolism-flux.kinetic-coverage-closure]].
+    """
     if not arm["flux"]:
         return None, {}
     source = YeastGEM()
+    # THE GROWTH MEDIUM, applied BEFORE the tensors are taken and reported either way.
+    #
+    # Every 026 and 027 arm to date has run on the SHIPPED yeast-GEM boundary, where all 20
+    # amino-acid exchanges have lower_bound 0, i.e. effectively synthetic minimal. That is
+    # right for Mulleder, whose strains are prototrophs on minimal agar, and wrong for
+    # Cachera (solid YPD) and Montano Lopez (SC liquid), both of which supply the very
+    # amino acids their readouts depend on. `media_name` keys
+    # `torchcell.metabolism.media.FBA_MEDIA`; absent, nothing is touched and the layer is
+    # bit-identical to every earlier build.
+    media_meta = media_report(source.model, arm.get("media_name"))
     gem = build_gem_tensors(source.model, model_dir=source.model_dir)
     units = gem.catalytic_units
     mw = molecular_weight_table(source.model_dir, units.gene_ids)
-    kcat = resolve_kcat_table(units, source.model_dir, OED_MIRROR)
+    kcat_tier = arm.get("kcat_tier", "measured")
+    kinetics_dir = osp.join(DATA_ROOT, KINETICS_MIRROR)
+    substrates = SubstrateMatch.from_verified_pairs(
+        osp.join(kinetics_dir, VERIFIED_PAIRS_FEATURE)
+    )
+    homolog_mirror = HOMOLOG_MIRROR if arm.get("kcat_homolog_tier", True) else None
+    # THE TWO KCAT TABLE RULES, forwarded from the arm so they are serialized with the cell.
+    # Both default to what every arm before 2026-09-14 resolved, so an arm that names
+    # neither builds a bit-identical table.
+    #
+    # `complex_aggregation` is a CONVENTION: min is "a complex cannot turn over faster than
+    # its slowest subunit", max is GECKO 3's reading. It moves complexes and leaves the
+    # table's center alone, which is why the median k_cat is 4.27 under min and 4.38 under
+    # max while ATP synthase moves 65x.
+    #
+    # `kcat_ceiling_sigma_k` is an UNCERTAINTY statement on the shipped convention:
+    # k_cat <- k_cat * 10^(k sigma_u) with sigma from parameters.KCAT_SIGMA_LADDER. It is
+    # the only rule that reaches a single-gene unit, which is why r_0961 needs it.
+    #
+    # Applied to the k_cat side only. K_M keeps its own reduction, the maximum, because the
+    # affinity argument is a different one and the parameter review does not contest it.
+    complex_aggregation = arm.get("complex_aggregation", "min")
+    kcat_ceiling_sigma_k = float(arm.get("kcat_ceiling_sigma_k", 0.0))
+    predicted_kcat = predicted_km = None
+    km = None
+    if kcat_tier == "predicted":
+        plausibility = osp.join(EXPERIMENT_ROOT, PLAUSIBILITY_RESULT)
+        predicted_kcat = load_predicted_unit_table(
+            "k_cat",
+            units.n_units,
+            kinetics_dir,
+            plausibility,
+            complex_aggregation=complex_aggregation,
+        )
+        predicted_km = load_predicted_unit_table(
+            "K_M", units.n_units, kinetics_dir, plausibility
+        )
+        km = resolve_km_table(
+            units,
+            source.model_dir,
+            OED_MIRROR,
+            predicted=predicted_km,
+            substrates=substrates,
+            homolog_mirror_dir=homolog_mirror,
+        )
+    elif kcat_tier != "measured":
+        raise ValueError(
+            f"kcat_tier must be 'measured' or 'predicted', got {kcat_tier!r}"
+        )
+    kcat = resolve_kcat_table(
+        units,
+        source.model_dir,
+        OED_MIRROR,
+        predicted=predicted_kcat,
+        substrates=substrates,
+        homolog_mirror_dir=homolog_mirror,
+        complex_aggregation=complex_aggregation,
+        kcat_ceiling_sigma_k=kcat_ceiling_sigma_k,
+    )
+    # THE SHUFFLED-PARAMETER CONTROL. Permuting the resolved kcat vector ACROSS catalytic
+    # units keeps the architecture, the parameter count, the coverage tiers and the value
+    # DISTRIBUTION exactly as they are, and destroys only the correspondence between a
+    # turnover number and the reaction it was measured for. An arm that still beats its
+    # pooled control under this permutation gained something from the architecture rather
+    # than from the measured kinetics, which is the question the control exists to ask.
+    # Seeded and recorded, so the permutation is reproducible from the result file.
+    kcat_shuffle_seed = arm.get("shuffle_kcat_seed")
+    kcat_shuffle_meta: dict[str, Any] = {"applied": False}
+    if kcat_shuffle_seed is not None:
+        generator = np.random.default_rng(int(kcat_shuffle_seed))
+        order = generator.permutation(kcat.values.shape[0])
+        before = float(np.nansum(kcat.values))
+        kcat.values = kcat.values[order]
+        kcat_shuffle_meta = {
+            "applied": True,
+            "seed": int(kcat_shuffle_seed),
+            "n_units": int(order.shape[0]),
+            "n_moved": int((order != np.arange(order.shape[0])).sum()),
+            # The multiset is preserved by construction; the sum is the cheap witness.
+            "value_sum_before": before,
+            "value_sum_after": float(np.nansum(kcat.values)),
+            "note": (
+                "kcat values permuted across catalytic units. Architecture, parameter "
+                "count, tier counts and value distribution are unchanged; only the "
+                "unit-to-value correspondence is destroyed."
+            ),
+        }
+
+    thermo_source = ThermoSource(arm.get("thermo_source", "shipped"))
+    reaction_thermo = None
+    if thermo_source is not ThermoSource.SHIPPED:
+        reaction_thermo = resolve_reaction_delta_g(
+            gem, osp.join(DATA_ROOT, THERMO_EQUILIBRATOR_MIRROR), thermo_source
+        )
     parameterization = arm.get("parameterization", "box")
     cfg = FluxLayerConfig(
         hidden_dim=hidden_dim,
         parameterization=parameterization,
         thermo_mode=arm["thermo_mode"],
+        thermo_source=thermo_source,
+        constraint_warmup_epochs=int(arm.get("constraint_warmup_epochs", 0)),
+        constraint_final_scale=float(arm.get("constraint_final_scale", 1.0)),
+        constraint_delay_epochs=int(arm.get("constraint_delay_epochs", 0)),
         use_enzyme_capacity=arm["use_enzyme_capacity"],
         use_protein_budget=arm["use_protein_budget"],
         use_dissipation_limit=arm["use_dissipation_limit"],
+        use_abundance_head=bool(arm.get("use_abundance_head", False)),
+        # Construction-time: the head's depth (028 round 19); 1 is the shipped linear map.
+        abundance_head_layers=int(arm.get("abundance_head_layers", 1)),
         stochastic=bool(arm.get("stochastic", False)),
+        # CONSTRUCTION-TIME SWITCHES 027's trainer writes into the arm dict before this
+        # call (wave 8). `latent_stochastic` was assigned onto the built layer's config
+        # until now, which works on 'projection' because its spread head is always built;
+        # `log_c_from_latent` creates a module, so it has to be known here. No 026 arm
+        # sets either, and both default to what every earlier build ran.
+        latent_stochastic=bool(arm.get("latent_stochastic", False)),
+        log_c_from_latent=bool(arm.get("log_c_from_latent", False)),
+        # THE WARM START'S THREE CONSTRUCTION-TIME FIELDS. `FluxLayer.__init__` solves or
+        # loads the reference and creates `warm_log_alpha` from these, so they have to be
+        # on the config BEFORE the layer is built; an assignment afterwards is ignored.
+        # All three default to the shipped values, so an arm that names none builds a
+        # bit-identical layer, and a non-warmstart arm never reads them at all.
+        warm_start_reference_table_path=arm.get("warm_start_reference_table_path"),
+        warm_start_alpha_learnable=bool(arm.get("warm_start_alpha_learnable", True)),
+        warm_start_init_rel=float(arm.get("warm_start_init_rel", 0.01)),
         # The physics terms are dimensionless but not automatically COMMENSURATE with the
         # data term. Measured at init on a real batch, the unweighted constraint sum is
         # ~255 against a data loss of ~2, so at weight 1 the model spends every parameter
@@ -242,11 +659,38 @@ def build_flux_layer(
         kcat_per_s=kcat.values,
         molecular_weight_kda=mw.values,
         null_space=basis,
+        reaction_thermo=reaction_thermo,
+        kcat_provenance=[str(p) for p in kcat.provenance],
+        km_mm=None if km is None else km.values,
+        km_provenance=None if km is None else [str(p) for p in km.provenance],
     )
     meta = {
         "coverage": layer.coverage_report(),
+        # UNCHANGED BY THE PREDICTED TIER, deliberately. `experimental_coverage` counts
+        # measurements only, so the preflight floor in 027's `run_cell` still fires when the
+        # Open Enzyme Database mirror is missing, even though the predicted tier would fill
+        # every unit it left empty.
         "kcat_experimental_fraction": float(kcat.experimental_coverage.fraction),
+        "kcat_tier": kcat_tier,
+        "complex_aggregation": complex_aggregation,
+        "kcat_ceiling_sigma_k": kcat_ceiling_sigma_k,
+        "kcat_tier_counts": kcat.tier_counts(),
+        "kcat_notes": kcat.notes,
+        "km_tier_counts": None if km is None else km.tier_counts(),
+        "predicted_kcat_selection": (
+            None if predicted_kcat is None else predicted_kcat.selection.model_dump()
+        ),
+        "predicted_km_selection": (
+            None if predicted_km is None else predicted_km.selection.model_dump()
+        ),
+        "thermo_source": str(thermo_source),
+        "thermo_route_counts": (
+            None if reaction_thermo is None else reaction_thermo.counts
+        ),
+        "thermo_sha256": None if reaction_thermo is None else reaction_thermo.sha256,
         "mw_experimental_fraction": float(mw.experimental_coverage.fraction),
+        "media": media_meta,
+        "kcat_shuffle": kcat_shuffle_meta,
         "met_index": {m: i for i, m in enumerate(gem.met_ids)},
     }
     return layer, meta
@@ -277,6 +721,25 @@ def extract_targets(
        ~11 % of the co-measured genotypes -- so splitting a 20-value block by position is
        wrong roughly nine times in ten. Grouping and matching on width is what makes the
        assignment identity-based.
+
+    THE LIMIT OF WIDTH AS AN IDENTITY, and the guard that makes it audible. Width separates
+    two groups only while no two groups under one label have the SAME width. Two width-1
+    ``metabolite_level`` groups on one genotype -- betaxanthin beside an isobutanol
+    biosensor fold change, say -- both match a width-1 head and are AVERAGED by the
+    ``torch.stack(matched).mean`` below, producing a plausible number from two different
+    assays. A width-1 head that meets such a genotype is therefore refused rather than
+    decoded, with the group sizes in the message.
+
+    THE GUARD IS SCOPED TO WIDTH 1, and deliberately: averaging several groups of the SAME
+    wider width is the intended behavior for genuine replicate experiments, and a head that
+    does not read the colliding groups averages nothing. Measured 2026-09-14 over both
+    builds: ``fig6_pigment_transfer`` carries group-size multisets (1, 19) on 4,432
+    genotypes, (19,) on 246, (1,) on 237 and () on 15, so no 026 or 027 cell run to date
+    meets the condition; ``fig6_build`` carries exactly ONE colliding genotype, record 3363,
+    where two Cachera strains (the ARO4 and the ARO7 deletion, each inside the betaxanthin
+    cassette) aggregate to one deletion key and contribute two width-1 betaxanthin values.
+    A betaxanthin head on that build is refused, which is right; the isobutanol head reads a
+    width-20 column there and is unaffected.
     """
     gene = batch["gene"]
     values = gene.phenotype_values
@@ -317,6 +780,18 @@ def extract_targets(
                 for s in cand_samp.unique(sorted=True).tolist()
             ]
             matched = [g for g in groups if g.numel() == width]
+            if width == 1 and len(matched) > 1:
+                raise AssertionError(
+                    f"genotype {b} of this batch carries {len(matched)} width-1 {label!r} "
+                    f"groups (group sizes {[int(g.numel()) for g in groups]}) and head "
+                    f"{name!r} is width 1, so the two would be averaged into one target -- "
+                    "a betaxanthin colony-color z-score with an isobutanol biosensor fold "
+                    "change, say. Heads sharing a label are separated by group WIDTH "
+                    "because the phenotype dict keys are dropped in collation, and width "
+                    "cannot separate these. Build the dataset from a query carrying at "
+                    "most one width-1 dataset for this label, or decode this head as a "
+                    "column of a wider block."
+                )
             if not matched:
                 continue
             target[b] = torch.stack(matched, dim=0).mean(dim=0)
@@ -472,7 +947,7 @@ def run_arm(
         num_workers=args.num_workers,
         pin_memory=True,
         prefetch=False,
-        follow_batch=["perturbation_indices", "phenotype_values"],
+        follow_batch=["perturbation_indices", "deletion_indices", "phenotype_values"],
     )
     dm.setup()
 

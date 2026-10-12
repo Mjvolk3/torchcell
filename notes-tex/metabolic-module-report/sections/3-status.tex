@@ -1,0 +1,100 @@
+%% notes-tex/metabolic-module-report/sections/3-status.tex
+%% [[experiments.027-betaxanthin-metabolic]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/metabolic-module-report/sections/3-status.tex
+
+\section{Where the training stands\secstatus{todo}}
+\label{sec:status}
+
+The 027 grid on Delta ran 144 cells, six arms over 24 seeds, on Cachera's betaxanthin
+screen with the 019 nine-graph backbone. The anchored module scored $-0.020$ test Spearman
+against $+0.027$ for no module. The prediction dumps show every cell is a constant
+predictor: the largest prediction spread in any cell is 0.8 percent of the target
+spread, the no-module arms sit at the target mean with a training loss of exactly 1.00 from
+epoch 10, and the flux arms at wrong constants. The claim that the thermodynamic anchor
+costs is therefore withdrawn and the module's effect is unmeasured; the same backbone
+reached 0.434 under the 019 trainer, so the defect is in the 027 loop. Two defects precede
+any relaunch: training uses yeast-GEM's shipped exchange bounds, which forbid all
+amino-acid uptake, while the Cachera strains grew in a supplemented medium; and 170 of the
+183 proton-translocating reactions carry a confidently wrong zero, the translocation term
+being computed but off by default.
+
+\textbf{Round 2 has one positive result, and it is not on betaxanthin.} Supervising the
+flux layer's own learned whole-cell concentration, the volume-weighted mixture over the
+compartments each amino acid occupies, as the amino-acid readout beats the pooled control at
+all three seeds: $+0.0145$ mean per-feature Spearman on the pinned test split, standard
+deviation 0.0093, at an epoch selected on validation and never a maximum over epochs, and
+$+0.0198$ (s.d. 0.0136) with the constraint scale at 0. Wave 6's turnover readout on the
+byte-identical arm collapses to a constant, $-0.0494$ against the same control at its two
+seeds, so concentration minus turnover is $+0.0686$ at matched seeds. The learned whole-cell
+medians match the measured medians to 0.036 to 0.037 decades over four orders of magnitude,
+while the per-column held-out Spearman runs only $-0.09$ to $+0.17$ and the unsupervised arm
+reads $-0.0031$, so the agreement is supervision rather than physics. Four caveats travel
+with it: 10.63 percent of Mulleder's measurements sat above the shipped $10^{-2}$~M ceiling,
+so the window was widened to 1~M before the round; five of the six fractional volumes are
+assumed rather than sourced; $n = 3$ carries two degrees of freedom; and betaxanthin parity
+on the one shipped kinetic table is $-0.055$ (s.d. 0.090, $n = 3$), a null rather than a
+cost. Full account, contrasts and caveats in the 027 document.
+%% SOURCE: experiments/027-betaxanthin-metabolic/results/wave7_aa_summary.json and
+%% wave7_parity_summary.json, written by analyze_wave7_aa.py and analyze_wave7_parity.py.
+
+\tcfigh[0.80]{figures/wave7_aa_concentration.pdf}{\textbf{The amino-acid concentration
+  readout against the pooled control.}
+  \textbf{a}, Mean per-feature pinned-test Spearman per readout, one line per seed, so a
+  slope is the paired difference.
+  \textbf{b}, The same statistic per amino acid, learned whole-cell concentration against
+  Mulleder's measurement, by arm.
+  \textbf{c}, Validation Pearson as a centered five-epoch mean, one line per cell colored by
+  its arm, with the selected epoch marked.
+  \textbf{d}, Validation prediction spread ratio against the 0.05 collapse line; the two
+  turnover cells sit on it.
+  \textbf{e}, Three component feasibility criteria per flux cell: mass balance within
+  1 percent holds everywhere, the flux box and the no-uphill criterion nowhere, drawn as a
+  flat mark at zero.
+  \textbf{f}, The same contrast at the 80-epoch budget, two seeds. Figure 5 of the 027
+  document, from \texttt{analyze\_wave7\_aa.py}.}{fig:wave7-aa}
+
+\textbf{What each target can support, measured from each source's own repeats.} A model
+cannot correlate with a measurement better than the measurement correlates with itself, so
+the square root of a target's reliability is the highest Pearson correlation any predictor
+of the true level can reach, and it is what a flat result has to be read against. Six
+metabolite datasets enter the build, three of them decoded by a trained head
+(Table~\ref{tab:target-reliability}). Betaxanthin is the strongest of the three at a
+reliability of 0.84 and a ceiling of 0.92, because the CRI-SPA release averages a median of
+15 colonies per gene; Cachera's own trial-to-trial correlation of 0.765, carried to four
+screens by the Spearman-Brown relation, agrees at 0.93. The flat betaxanthin results are
+therefore a property of the predictor and not of the label. The amino acids sit at 0.42 and
+0.62, and the isobutanol screen at 0.11 and 0.33, which reverses the earlier reading that
+called isobutanol the best-conditioned target: its widely quoted retest of 0.92 was computed
+on the re-screened strong hits alone, and selecting both tails inflates it. Of the three
+context datasets, the lipids and the metabolome could support a head at 0.91 and 0.79, while
+the carotenoid screen's six-level visual score reaches only 0.33. The fourth endpoint,
+essentiality, is bounded instead by how far two curated sources agree, which is 98.8 percent
+of 1{,}121 genes against a majority rate of 86.0 percent.
+%% SOURCE: experiments/027-betaxanthin-metabolic/results/target_reliability.json and
+%% essentiality_label_agreement.json, written by target_reliability_table.py,
+%% isobutanol_retest_reliability.py, mulleder_retest_reliability.py and
+%% essentiality_label_agreement.py.
+
+\input{tables/target_reliability}
+
+\textbf{The parameter tables are closed and the trainer is not.} As of 2026-09-11 the
+formation energies stand at 3{,}801 of 4{,}131 reactions and 2{,}724 of the 2{,}845 that can
+carry flux, and the kinetic tables at 97 measured, 782 homolog, 2{,}831 predicted and 18
+default over 3{,}728 catalytic units, with every value carrying a named route and every gap
+a named failure class (Section~\ref{sec:parameters}). 291 of the 330 unpriced reactions are
+permanently closed, blocked only by species that are not molecules, so no further method
+moves them. Nothing in the parameter tables is now what holds the module back.
+
+\textbf{A third defect precedes a relaunch, and it is now a config value rather than missing
+code.} Every 026 and 027 run so far read
+\texttt{metabolite\_dgf\_prime\_}\allowbreak\texttt{with\_external.parquet}, which predates
+the composition check and therefore still carries the glycogen price taken from a
+four-residue oligomer and the dolichol offset. \texttt{ThermoSource} now carries a
+\texttt{verified} member that resolves the curated tables through their manifest's sha256
+and raises rather than falling back when a hash does not match, and it is the only route in
+which the composition guard has run. No arm asks for it yet.
+
+\textbf{Order of work.} A trainer that reproduces 0.434 on the no-module arm with an abort
+on prediction collapse; the module arms on it, on the dataset's actual medium, reading the
+verified tables; then the merged $\Delta_f G$ and predicted $k_{cat}$ tables, on GilaHyper
+jobs 1663, 1667, 1668 and 1669, carried to a selected epoch.

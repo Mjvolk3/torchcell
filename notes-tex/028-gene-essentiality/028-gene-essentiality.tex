@@ -1,0 +1,76 @@
+%% notes-tex/028-gene-essentiality/028-gene-essentiality.tex
+%% [[experiments.028-gene-essentiality]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/028-gene-essentiality/028-gene-essentiality.tex
+%%
+%% Gene essentiality as an endpoint for the cell graph transformer, with and without the
+%% metabolic module: the comparators (FBA on four media, Flux Cone Learning), the split
+%% protocol, the backbone rounds, and where the gradient goes when the prediction is routed
+%% through the flux layer.
+%%
+%% Build:  make            -> 028-gene-essentiality.pdf
+%%         make check      -> formatting / provenance / style gate
+%%         make plots      -> re-convert the matplotlib panels from ASSET_IMAGES_DIR
+%%
+%% Every number is produced by a committed script under experiments/028-gene-essentiality/
+%% and read back from its results/ tree; the tables under tables/ are generated.
+
+\documentclass[10pt,a4paper]{article}
+\usepackage[draft]{tcdoc}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\emergencystretch=3.5em
+
+\title{\vspace{-1.5em}Gene Essentiality from the Cell Graph\\
+  {\large The backbone against flux balance analysis and Flux Cone Learning,\\and why
+  the solve helps the prediction where the metabolic module does not}}
+\author{Michael Volk}
+\date{\today}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\begin{abstract}
+\noindent
+Gene essentiality is the one endpoint on which a flux model has a published, non-trivial
+score: on the released Merzbacher 2025 yeast split, flux balance analysis reads an AUROC of
+0.69 over all 1,121 labeled genes and Flux Cone Learning 0.73 on the 223 held-out genes.
+This document scores the cell graph transformer on the same held-out genes, puts FBA on
+every medium the ontology defines and a classical ladder of models on the same split, and
+asks two questions. The first is how far the held-out AUROC goes: a width-12 transformer
+reading the chromosome-pathway indicator and ProtT5, with FBA's four growth ratios on its
+logit, scores 0.893 [0.84, 0.94] under Flux Cone Learning's own fold protocol, 0.15 above
+it on the same genes, and every part of the gain is an input the ontology computes for
+every gene at no training cost: a two-layer MLP on the same three inputs reads the
+transformer's per-cell number in six seconds and 0.886 as the same fold ensemble. The
+second is why the solve helps and the metabolic
+module, which is built on the same genome-scale model, does not: routed through the
+module's growth column the prediction never beats the backbone alone, and the rounds
+locate the reason in the layer's constraint set, whose enzyme-capacity ceilings as
+parameterized contain no growing flux, so its alternating projections never reach the
+polytope FBA optimizes over and a linear program under its bounds is infeasible. On the
+genome-scale model's own bounds the module carries the solve, whether handed it as a
+warm start or solving for it in the forward pass with the gradient through the dual,
+and the gated module cell reaches the level of the solve appended as an input. Every
+number here is at a
+validation-selected epoch on a pinned test set, with a gene bootstrap and the across-seed
+range, and every table is generated from the result files.
+\end{abstract}
+
+\vspace{0.5em}
+\tccontents
+\clearpage
+
+\input{sections/1-endpoint}
+\input{sections/2-comparators}
+\input{sections/3-backbone}
+\input{sections/4-module}
+\input{sections/5-families}
+\input{sections/5-findings}
+\input{sections/6-open}
+\input{sections/7-closing}
+\input{sections/8-summary}
+
+\end{document}

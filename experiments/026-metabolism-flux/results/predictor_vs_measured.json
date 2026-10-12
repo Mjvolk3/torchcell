@@ -1,0 +1,146 @@
+{
+  "leakage_caveat": "Every predictor trained on BRENDA and/or SABIO-RK, from which the Open Enzyme Database is itself assembled. An unknown, probably large fraction of these pairs was seen in training, so these are an UPPER BOUND on held-out accuracy.",
+  "enzengdb": {
+    "citation_key": "longEnzymeEngineeringDatabase2026",
+    "doi": "10.1093/nar/gkaf1142",
+    "comparable": false,
+    "reason": "No kcat or KM field (all assay outputs flattened to one untyped fitness_value), no EC, no organism field, and zero S. cerevisiae content across the paper, 140 experiment records and 1,342 analysis rows. Overlap with the 3,728 yeast-GEM catalytic units is zero.",
+    "verified_on": "2026-09-02"
+  },
+  "temperature_window_c": [
+    20.0,
+    40.0
+  ],
+  "parameters": {
+    "k_cat": {
+      "n_measured_pairs_available": 231,
+      "predictors": {
+        "dlkcat": {
+          "n_pairs": 57,
+          "spearman": 0.6557982771280798,
+          "pearson_log10": 0.8112499854754534,
+          "median_abs_error_decades": 0.38353108542070746,
+          "median_bias_decades": -0.1391947001087983,
+          "frac_within_1_decade": 0.8421052631578947,
+          "frac_within_half_decade": 0.5789473684210527
+        },
+        "unikp": {
+          "n_pairs": 58,
+          "spearman": 0.7492847708524288,
+          "pearson_log10": 0.8591313744510588,
+          "median_abs_error_decades": 0.28736684122566547,
+          "median_bias_decades": -0.11336667136874778,
+          "frac_within_1_decade": 0.896551724137931,
+          "frac_within_half_decade": 0.7241379310344828
+        },
+        "eitlem": {
+          "n_pairs": 58,
+          "spearman": 0.6100532204612438,
+          "pearson_log10": 0.8212284785503254,
+          "median_abs_error_decades": 0.23020976684329564,
+          "median_bias_decades": -0.009049205293948287,
+          "frac_within_1_decade": 0.7931034482758621,
+          "frac_within_half_decade": 0.7413793103448276
+        },
+        "turnup": {
+          "n_pairs": 53,
+          "spearman": 0.5059881450946322,
+          "pearson_log10": 0.7227924732463692,
+          "median_abs_error_decades": 0.4447134616264524,
+          "median_bias_decades": 0.003196654690721168,
+          "frac_within_1_decade": 0.8113207547169812,
+          "frac_within_half_decade": 0.5660377358490566
+        },
+        "deepenzyme": {
+          "n_pairs": 57,
+          "spearman": 0.34118752907617356,
+          "pearson_log10": 0.5234285800321946,
+          "median_abs_error_decades": 0.6473857324110401,
+          "median_bias_decades": -0.23034172593334534,
+          "frac_within_1_decade": 0.6666666666666666,
+          "frac_within_half_decade": 0.42105263157894735
+        },
+        "ezkinetics": {
+          "n_pairs": 58,
+          "spearman": 0.7950902897504567,
+          "pearson_log10": 0.8986314417138018,
+          "median_abs_error_decades": 0.3643852524806379,
+          "median_bias_decades": -0.1469846051716936,
+          "frac_within_1_decade": 0.9137931034482759,
+          "frac_within_half_decade": 0.6551724137931034
+        },
+        "catpred": {
+          "n_pairs": 58,
+          "spearman": 0.47045251880963146,
+          "pearson_log10": 0.5772614555899939,
+          "median_abs_error_decades": 0.48989707596359944,
+          "median_bias_decades": 0.18341090716849756,
+          "frac_within_1_decade": 0.7241379310344828,
+          "frac_within_half_decade": 0.5
+        }
+      },
+      "selection_effect": {
+        "median_spread_all_pairs_decades": 1.4480497175399734,
+        "median_spread_measured_pairs_decades": 1.5031634345461828,
+        "n_all_pairs": 3891,
+        "n_measured_pairs": 58
+      }
+    },
+    "K_M": {
+      "n_measured_pairs_available": 231,
+      "predictors": {
+        "unikp": {
+          "n_pairs": 58,
+          "spearman": 0.6111111114002521,
+          "pearson_log10": 0.6003695709580347,
+          "median_abs_error_decades": 0.6064328214939465,
+          "median_bias_decades": -0.08886137002142036,
+          "frac_within_1_decade": 0.7931034482758621,
+          "frac_within_half_decade": 0.39655172413793105
+        },
+        "eitlem": {
+          "n_pairs": 58,
+          "spearman": 0.6154792669332652,
+          "pearson_log10": 0.7011643307955994,
+          "median_abs_error_decades": 0.42334046579454765,
+          "median_bias_decades": 0.015563591871357085,
+          "frac_within_1_decade": 0.8275862068965517,
+          "frac_within_half_decade": 0.603448275862069
+        },
+        "boost_km": {
+          "n_pairs": 57,
+          "spearman": 0.6799546268357981,
+          "pearson_log10": 0.6785179843360472,
+          "median_abs_error_decades": 0.526559653379791,
+          "median_bias_decades": -0.16437758712528228,
+          "frac_within_1_decade": 0.7894736842105263,
+          "frac_within_half_decade": 0.49122807017543857
+        },
+        "ezkinetics": {
+          "n_pairs": 58,
+          "spearman": 0.706964439857072,
+          "pearson_log10": 0.7693254067110139,
+          "median_abs_error_decades": 0.3827407490989472,
+          "median_bias_decades": -0.047622677819524395,
+          "frac_within_1_decade": 0.8793103448275862,
+          "frac_within_half_decade": 0.603448275862069
+        },
+        "catpred": {
+          "n_pairs": 58,
+          "spearman": 0.7830687834392841,
+          "pearson_log10": 0.8391166612879851,
+          "median_abs_error_decades": 0.2918629654002125,
+          "median_bias_decades": -0.0019327052813093715,
+          "frac_within_1_decade": 0.9482758620689655,
+          "frac_within_half_decade": 0.7241379310344828
+        }
+      },
+      "selection_effect": {
+        "median_spread_all_pairs_decades": 1.0027568499674882,
+        "median_spread_measured_pairs_decades": 0.8031228251131816,
+        "n_all_pairs": 3891,
+        "n_measured_pairs": 58
+      }
+    }
+  }
+}

@@ -1,0 +1,305 @@
+{
+  "gem_version": "9.0.2",
+  "cobra_version": "0.30.0",
+  "biomass_reaction": "r_2111",
+  "n_gem_genes": 1161,
+  "label_source": "/scratch/projects/torchcell-scratch/data/merzbacher2025_fcl/deletionprediction-main/data/yeast_essentiality_test_split.csv",
+  "n_labeled": 1121,
+  "n_labeled_in_gem": 1121,
+  "gene_sets": {
+    "all_labeled": 1121,
+    "held_out_223": 223,
+    "ours_195": 195
+  },
+  "bootstrap": {
+    "n": 2000,
+    "seed": 0
+  },
+  "rows": [
+    {
+      "medium": "shipped",
+      "medium_name": "yeast-GEM shipped exchange bounds",
+      "n_exchange_bounds": 0,
+      "wild_type_growth": 0.08584396972646902,
+      "n_genes_deleted": 1121,
+      "n_zero_growth": 186,
+      "seconds": 10.367566347122192,
+      "scores": [
+        {
+          "gene_set": "all_labeled",
+          "n": 1121,
+          "n_essential": 157,
+          "n_in_gem": 1121,
+          "auroc": 0.707323519306499,
+          "auroc_ci_low": 0.6667467784035228,
+          "auroc_ci_high": 0.7490217946461073,
+          "majority_rate": 0.8599464763603926,
+          "accuracy_at_cutoff": {
+            "0.01": 0.840321141837645,
+            "0.05": 0.840321141837645,
+            "0.5": 0.8144513826940232
+          },
+          "recall_essential_at_cutoff": {
+            "0.01": 0.5222929936305732,
+            "0.05": 0.5222929936305732,
+            "0.5": 0.5286624203821656
+          }
+        },
+        {
+          "gene_set": "held_out_223",
+          "n": 223,
+          "n_essential": 31,
+          "n_in_gem": 223,
+          "auroc": 0.6328125,
+          "auroc_ci_low": 0.5432867387175111,
+          "auroc_ci_high": 0.7283195273056811,
+          "majority_rate": 0.8609865470852018,
+          "accuracy_at_cutoff": {
+            "0.01": 0.8251121076233184,
+            "0.05": 0.8251121076233184,
+            "0.5": 0.7937219730941704
+          },
+          "recall_essential_at_cutoff": {
+            "0.01": 0.3548387096774194,
+            "0.05": 0.3548387096774194,
+            "0.5": 0.3548387096774194
+          }
+        },
+        {
+          "gene_set": "ours_195",
+          "n": 195,
+          "n_essential": 31,
+          "n_in_gem": 195,
+          "auroc": 0.6543076317859953,
+          "auroc_ci_low": 0.5617373633852306,
+          "auroc_ci_high": 0.747709049823633,
+          "majority_rate": 0.841025641025641,
+          "accuracy_at_cutoff": {
+            "0.01": 0.841025641025641,
+            "0.05": 0.841025641025641,
+            "0.5": 0.8256410256410256
+          },
+          "recall_essential_at_cutoff": {
+            "0.01": 0.3548387096774194,
+            "0.05": 0.3548387096774194,
+            "0.5": 0.3548387096774194
+          }
+        }
+      ]
+    },
+    {
+      "medium": "SM",
+      "medium_name": "SM (synthetic minimal): YNB vitamins + ammonium sulfate + D-glucose",
+      "n_exchange_bounds": 25,
+      "wild_type_growth": 0.31378145740164565,
+      "n_genes_deleted": 1121,
+      "n_zero_growth": 160,
+      "seconds": 8.00006890296936,
+      "scores": [
+        {
+          "gene_set": "all_labeled",
+          "n": 1121,
+          "n_essential": 157,
+          "n_in_gem": 1121,
+          "auroc": 0.707069138673785,
+          "auroc_ci_low": 0.6662273803893395,
+          "auroc_ci_high": 0.7483847305380913,
+          "majority_rate": 0.8599464763603926,
+          "accuracy_at_cutoff": {
+            "0.01": 0.856378233719893,
+            "0.05": 0.856378233719893,
+            "0.5": 0.8305084745762712
+          },
+          "recall_essential_at_cutoff": {
+            "0.01": 0.4968152866242038,
+            "0.05": 0.4968152866242038,
+            "0.5": 0.5031847133757962
+          }
+        },
+        {
+          "gene_set": "held_out_223",
+          "n": 223,
+          "n_essential": 31,
+          "n_in_gem": 223,
+          "auroc": 0.6423891129032258,
+          "auroc_ci_low": 0.5524980106419118,
+          "auroc_ci_high": 0.7392208293305195,
+          "majority_rate": 0.8609865470852018,
+          "accuracy_at_cutoff": {
+            "0.01": 0.8430493273542601,
+            "0.05": 0.8430493273542601,
+            "0.5": 0.8116591928251121
+          },
+          "recall_essential_at_cutoff": {
+            "0.01": 0.3548387096774194,
+            "0.05": 0.3548387096774194,
+            "0.5": 0.3548387096774194
+          }
+        },
+        {
+          "gene_set": "ours_195",
+          "n": 195,
+          "n_essential": 31,
+          "n_in_gem": 195,
+          "auroc": 0.6655192761605035,
+          "auroc_ci_low": 0.5714285714285714,
+          "auroc_ci_high": 0.7591164975254618,
+          "majority_rate": 0.841025641025641,
+          "accuracy_at_cutoff": {
+            "0.01": 0.8615384615384616,
+            "0.05": 0.8615384615384616,
+            "0.5": 0.8461538461538461
+          },
+          "recall_essential_at_cutoff": {
+            "0.01": 0.3548387096774194,
+            "0.05": 0.3548387096774194,
+            "0.5": 0.3548387096774194
+          }
+        }
+      ]
+    },
+    {
+      "medium": "SC",
+      "medium_name": "SC (synthetic complete): SM + 20 amino acids + uracil + adenine",
+      "n_exchange_bounds": 47,
+      "wild_type_growth": 0.5427815290195271,
+      "n_genes_deleted": 1121,
+      "n_zero_growth": 91,
+      "seconds": 9.397935390472412,
+      "scores": [
+        {
+          "gene_set": "all_labeled",
+          "n": 1121,
+          "n_essential": 157,
+          "n_in_gem": 1121,
+          "auroc": 0.718542696302561,
+          "auroc_ci_low": 0.6765978782241959,
+          "auroc_ci_high": 0.7617188333904727,
+          "majority_rate": 0.8599464763603926,
+          "accuracy_at_cutoff": {
+            "0.01": 0.9072256913470116,
+            "0.05": 0.9072256913470116,
+            "0.5": 0.8813559322033898
+          },
+          "recall_essential_at_cutoff": {
+            "0.01": 0.4585987261146497,
+            "0.05": 0.4585987261146497,
+            "0.5": 0.46496815286624205
+          }
+        },
+        {
+          "gene_set": "held_out_223",
+          "n": 223,
+          "n_essential": 31,
+          "n_in_gem": 223,
+          "auroc": 0.6531418010752689,
+          "auroc_ci_low": 0.5627894837097873,
+          "auroc_ci_high": 0.7530262651899708,
+          "majority_rate": 0.8609865470852018,
+          "accuracy_at_cutoff": {
+            "0.01": 0.8968609865470852,
+            "0.05": 0.8968609865470852,
+            "0.5": 0.8654708520179372
+          },
+          "recall_essential_at_cutoff": {
+            "0.01": 0.3548387096774194,
+            "0.05": 0.3548387096774194,
+            "0.5": 0.3548387096774194
+          }
+        },
+        {
+          "gene_set": "ours_195",
+          "n": 195,
+          "n_essential": 31,
+          "n_in_gem": 195,
+          "auroc": 0.6657159716758458,
+          "auroc_ci_low": 0.5735277316161197,
+          "auroc_ci_high": 0.7586017602687547,
+          "majority_rate": 0.841025641025641,
+          "accuracy_at_cutoff": {
+            "0.01": 0.8871794871794871,
+            "0.05": 0.8871794871794871,
+            "0.5": 0.8717948717948718
+          },
+          "recall_essential_at_cutoff": {
+            "0.01": 0.3548387096774194,
+            "0.05": 0.3548387096774194,
+            "0.5": 0.3548387096774194
+          }
+        }
+      ]
+    },
+    {
+      "medium": "YPD",
+      "medium_name": "YPD-approx (YNB + 20 amino acids; peptone NOT modeled)",
+      "n_exchange_bounds": 45,
+      "wild_type_growth": 0.535201865634343,
+      "n_genes_deleted": 1121,
+      "n_zero_growth": 104,
+      "seconds": 9.855831861495972,
+      "scores": [
+        {
+          "gene_set": "all_labeled",
+          "n": 1121,
+          "n_essential": 157,
+          "n_in_gem": 1121,
+          "auroc": 0.7147203795226894,
+          "auroc_ci_low": 0.6727487306073845,
+          "auroc_ci_high": 0.75649278509322,
+          "majority_rate": 0.8599464763603926,
+          "accuracy_at_cutoff": {
+            "0.01": 0.8974130240856378,
+            "0.05": 0.8974130240856378,
+            "0.5": 0.8715432649420161
+          },
+          "recall_essential_at_cutoff": {
+            "0.01": 0.46496815286624205,
+            "0.05": 0.46496815286624205,
+            "0.5": 0.4713375796178344
+          }
+        },
+        {
+          "gene_set": "held_out_223",
+          "n": 223,
+          "n_essential": 31,
+          "n_in_gem": 223,
+          "auroc": 0.6531418010752689,
+          "auroc_ci_low": 0.5628555088702147,
+          "auroc_ci_high": 0.7534490254872563,
+          "majority_rate": 0.8609865470852018,
+          "accuracy_at_cutoff": {
+            "0.01": 0.8968609865470852,
+            "0.05": 0.8968609865470852,
+            "0.5": 0.8654708520179372
+          },
+          "recall_essential_at_cutoff": {
+            "0.01": 0.3548387096774194,
+            "0.05": 0.3548387096774194,
+            "0.5": 0.3548387096774194
+          }
+        },
+        {
+          "gene_set": "ours_195",
+          "n": 195,
+          "n_essential": 31,
+          "n_in_gem": 195,
+          "auroc": 0.6638473642800944,
+          "auroc_ci_low": 0.5718939393939394,
+          "auroc_ci_high": 0.7559709101382487,
+          "majority_rate": 0.841025641025641,
+          "accuracy_at_cutoff": {
+            "0.01": 0.8871794871794871,
+            "0.05": 0.8871794871794871,
+            "0.5": 0.8717948717948718
+          },
+          "recall_essential_at_cutoff": {
+            "0.01": 0.3548387096774194,
+            "0.05": 0.3548387096774194,
+            "0.5": 0.3548387096774194
+          }
+        }
+      ]
+    }
+  ],
+  "note": "score = -(knockout growth / wild-type growth) on the medium; genes absent from the GEM keep wild-type growth. AUROC with a gene bootstrap; accuracy at ratio cutoffs beside the majority rate."
+}

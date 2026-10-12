@@ -1,0 +1,588 @@
+%% notes-tex/031-betaxanthin-module/sections/3-physics.tex
+\section{Physically constrained stores on the strain, and the store read without the backbone\secstatus{todo}}
+\label{sec:physics}
+
+The module so far carries mass balance and nothing else: one parsimonious vector per
+deletion. On the essentiality endpoint the store ladder (the essentiality document's
+round 113) built the same vector under enzyme ceilings, sampled turnover, GECKO pools
+and a minimization of metabolic adjustment, and none moved the score beyond the seed
+spread. None of those programs had been run on the target model, the cassette strain
+with its markers deleted on YPD, which covers every GEM gene rather than the labeled
+ones. On 2026-09-23 they were, on CPU beside the packs, with reads that need no card.
+
+The second law as fixed directions admits no growth. The direction rule of the
+essentiality study's round 114 (a reaction whose standard energy on the union-external
+route is at least $T$ below zero loses its reverse part, at least $T$ above it its
+forward part; unpriced reactions, the cassette's included, keep the GEM box) leaves the
+parent strain infeasible at both thresholds, as it had on the essentiality model. On the
+cassette strain the 10 kJ/mol rule fixes 1,754 directions forward and 1,068 reverse, and
+97 of them run against the parsimonious wild-type flux; at 30 kJ/mol it fixes 1,071 and
+905 with 69 conflicts. No store is written for an infeasible parent (a store of zero rows
+would be read as every deletion lethal), and the outcome is recorded
+(\texttt{results/target\_physics\_store\_betaxanthin\_sign10.json}, \texttt{\_sign30}).
+Standard energies at 1 M cannot be imposed as directions on this model; a
+thermodynamically consistent program needs the concentrations as variables, which is
+what the driving-force store below does with a linear program.
+
+The stores that do exist. The linear MOMA store on the cassette strain (1,155 genes,
+27 s on eight processes) has 107 lethal deletions against the parsimonious store's 93,
+moves the growth ratio by more than 0.01 on 59 genes, and moves the $\log(1+|v|)$ vector
+on 1,056 genes with a median relative distance of 0.39 to the parsimonious deletion
+vector. The parsimonious store rebuilt on the HiGHS path keeps the 93 lethal deletions,
+moves 17 ratios, and sits at a median distance of 0.015 from the GLPK build. The
+max-min driving-force store (\texttt{target\_driving\_force\_store.py}) solves, per
+deletion, for the metabolite concentrations between 1 $\mu$M and 10 mM that maximize the
+smallest driving force over the reactions the parsimonious flux carries, with transport
+and proton-translocating reactions unconstrained and, in the capped variant, reactions
+priced above 100 kJ/mol set aside; the wild type's max-min driving force is $-1.16$
+kJ/mol over 172 constrained reactions with 32 binding, 1,062 of 1,062 viable deletions
+have a negative optimum, and 451 change the concentration vector. The sampled store
+(\texttt{target\_sampled\_flux\_store.py}) draws six OptGP samples of each deletion's
+cone at 99 percent of its optimum, 1,155 deletions in 6 h on twelve processes, and keeps
+the mean over draws and, in a second store, the per-reaction spread.
+
+Why the MOMA store differs so much from the parsimonious one: the GLPK build is
+degenerate (Table~\ref{tab:store-degeneracy}, from
+\texttt{store\_degeneracy.py}). Among the 1,031 deletions that leave growth unchanged,
+the GLPK store's vector differs from its own wild type's for 1,025, at a median relative
+distance of 0.38 in the encoding the affine reads; the HiGHS rebuild differs for 428
+(median 0.0, ninetieth percentile 0.39)
+and the MOMA store, anchored to one wild-type vector, for 18 (the prototroph's stores
+are in the sibling document). So the parsimonious
+optimum has alternative vertices for a large share of no-effect deletions under either
+solver, and the GLPK path lands on a different one almost every time. Hypothesis
+(untested): the vertex noise is what erased the growth block's signal in round 125, and
+round 139 is the transformer read of the same store without it.
+
+A store without vertices. A faster or better linear solver would pick a third set of
+vertices of the same degenerate optimum, so the vertex noise is removed by the program,
+not the solver: the \texttt{l2} variant of \texttt{target\_physics\_store.py} solves
+the growth LP, then minimizes $\|v\|_2^2$ subject to $Sv=0$, the knocked-out box and
+$v_{biomass}$ held at the LP optimum (less $10^{-6}$ relative), one interior-point QP
+per gene (Clarabel; HiGHS's active-set QP returns a solve error on this 2,831 by 4,177
+model). The squared norm is strictly convex on the optimal face, so each deletion has
+one solution whatever the path to it. The 1,155 genes solve in 49 s with every solve
+converged, the source's 93 lethals and the HiGHS rebuild's 17 moved growth ratios
+reproduced. The minimum-norm point spreads flux where the $\ell_1$ point concentrates
+it: the wild type carries 996 reactions above $10^{-6}$ against the parsimonious
+solution's 426, at an $\ell_1$ norm of 452 against 426. Its degeneracy row
+(Table~\ref{tab:store-degeneracy}) reads 427 no-effect deletions differing from the
+wild type by more than the script's $10^{-6}$ threshold, but at a median relative
+distance of $10^{-8}$ and a ninetieth percentile of $3\times10^{-5}$, against 0.39 for
+the HiGHS store and 0.38 for the GLPK one: interior-point tolerance, not vertex choice.
+On the ladder (Table~\ref{tab:store-baselines}) the minimum-norm store reads 0.068 by
+ridge, 0.126 by nearest neighbors and 0.133 by forest, against the HiGHS $\ell_1$
+store's 0.098, 0.195 and 0.117: less rank under the two distance models, a little more
+under the forest, and the weakest calls of any flux store (0.40 to 2.00). Appended to
+GO it reads 0.068, 0.208 and 0.173 against the $\ell_1$ vector's 0.123, 0.198 and
+0.204: the highest nearest-neighbor read of any genotype-side representation, and less
+by ridge and forest. So removing the vertex noise does not add rank on its own; a
+plausible reason, unverified, is that the $\ell_1$ point's sparsity pattern, which
+reactions carry flux at all, is what the cosine neighborhoods read, and the
+minimum-norm point spreads that pattern over twice the reactions. The transformer's
+affine answers the same way (rounds 181, 182): the store alone reads 0.093 against the
+HiGHS store's 0.130 on the same seeds, under it on five of six, and appended to GO it
+reads 0.204 against the HiGHS vector's 0.211, under it on six of six and within 0.002
+of GO alone. The affine prefers the sparse point to the unique one, and the flux side's
+gain beside the annotation, $+0.012$ on twelve seeds for the $\ell_1$ vector, is not
+carried by the $\ell_2$ point at all.
+
+The store read without the backbone (Table~\ref{tab:store-baselines};
+\texttt{target\_store\_baselines.py}, the 027 ladder's split, standardization and
+selection, with a random forest added, the Flux Cone Learning form on one point per
+deletion). Two things frame the numbers. The screen is genome-wide and the stores cover
+the 1,155 GEM genes, so 3,255 of the 3,494 betaxanthin training genotypes read the
+wild-type row and every store baseline learns from about 240 in-model deletions, while
+the pinned test set is inside the model (628 of 629). And a gene's row is one vector
+with no graph, no sequence and no pathway. Two of the ladder's reads were fragile to
+this degeneracy and are made exact: a nearest-neighbor query on the wild-type row has
+about two thousand identical training rows, so the $k$ neighbors taken by sort order
+were an arbitrary subset that changed between runs, and every training row tied with
+the $k$-th similarity is now averaged in; predictions within $10^{-9}$ count as one
+rank; and the validation criterion is rounded to $10^{-6}$ before the grid is chosen.
+Two consecutive runs then agree to every printed digit. On betaxanthin the GLPK growth
+block carries nothing (ridge $-0.006$, kNN $-0.004$, forest $+0.009$); the whole GLPK
+vector, the one round 117 read, carries 0.097 by kNN; the HiGHS rebuild of the growth
+program carries 0.195 by kNN with a top-50 enrichment of 3.39, the highest rank of any
+flux-side read on this split (the best single transformer arm is 0.121, the best six-seed
+ensemble 0.153, the cosine kNN over ProtT5 0.145, reproduced here at 0.144); the MOMA
+store 0.135 by ridge; the six flux statistics of the parsimonious build 0.145 by kNN;
+the capped driving-force concentrations 0.152 by
+ridge with a top-50 of 3.39, the metabolite side carrying rank linearly. The mean of
+six samples of each deletion's flux cone at 99 percent of optimum carries 0.007 by
+ridge, 0.064 by kNN and 0.102 by forest, below the parsimonious point it is sampled
+around, as the sampled stores sat on essentiality (the essentiality document's round 87). The forest is not the
+best model on any flux representation, so the Flux Cone Learning form does not rescue a
+point representation. Rank and call separate as they did in every transformer round:
+ProtT5 gives the best top-50 (4.59 alone, 4.99 with the GLPK store under a forest), the
+clean flux store the best rank.
+
+The region, not its point. The max-min program returns one concentration vector, but
+the second law does not single it out: every log-concentration vector within the bounds
+whose carried priced reactions all run downhill by at least the optimum is as
+consistent, and that set is a polytope in $\ln c$.
+\texttt{target\_concentration\_polytope\_store.py} samples it per deletion, the region
+slackened by 1 kJ/mol below $B^*$ so it has volume where several reactions bind, by
+coordinate hit-and-run from the point program's solution (a random direction stalls when
+the start sits on the box, as the wild type's does; one metabolite per step does not),
+20,000 burn-in steps, six draws 2,000 steps apart, the metabolites in no constrained
+reaction uniform in the bounds. The chain is seeded from a hash of the polytope rather
+than the row, so two deletions with the same region read the same row; seeded by row,
+every one of the 1,062 viable rows differed from the wild type's, a sampling-noise
+degeneracy of the GLPK kind, and under the polytope hash 455 do, beside the point
+store's 451. The wild type's region constrains 234 of the 2,803 variable metabolites,
+and over those the median spread of $\ln c$ across draws is 2.18 against 2.63 for a
+metabolite the constraints never touch (uniform over four decades), so at this cap the
+second law narrows a typical constrained metabolite by little and the information sits
+in the few it pins; the mean over draws sits a median 0.12 from the point in relative
+distance. Two stores, the mean concentration over draws with the point store's
+statistics and the count of constrained metabolites, and that mean with the per-metabolite
+spread of $\ln c$ appended. On the ladder the polytope mean reads 0.136 by ridge, 0.127
+by kNN and 0.126 by forest, the one flux-side representation that every model reads above
+0.12 (the point gives ridge 0.152 but kNN 0.072 and forest 0.098; the HiGHS flux vector
+gives kNN 0.195 but forest 0.117), and the spread store 0.096, 0.138 and 0.128, so the
+width of the region carries rank the mean does not under nearest neighbors. Round 147
+(w164) is the transformer read of the polytope mean, paired against the point.
+
+The annotation-only family, on the same split (Table~\ref{tab:go-models};
+\texttt{target\_go\_models.py}). The essentiality study read DCell's ontology hierarchy
+and a graph convolution over the GO multi-hot beside the transformer; neither had a
+target head, so both are given one here on the ladder's split: DCell's hierarchy in the
+essentiality script's shared-input form with a linear head on the root's state and
+auxiliary regressions, and a perceptron with one hidden layer of 256 over the gene's
+propagated GO multi-hot (2,341 of 2,366 columns with training support), which is what
+the GO graph convolution reduces to on one deletion per instance; the same perceptron
+over the HiGHS parsimonious store row, over ProtT5 and over their concatenations
+separates the annotation, the sequence and the flux families on one model. Full batch,
+Adam at $10^{-3}$, a masked squared error on standardized targets, 200 epochs, the
+epoch selected on validation per-feature Pearson, six seeds. The GO perceptron reads
+0.200 (sd 0.002 over seeds) with a top-50 enrichment of 4.79, selected at epoch 21 or
+22 on every seed and trained in three seconds a seed: above every transformer arm (the
+best single 0.121, the best six-seed ensemble 0.153), above the HiGHS store's nearest
+neighbors (0.195) and with a call at the best transformer arms' level. The store row
+through the same perceptron reads 0.119 with a top-50 of 2.00, ProtT5 0.103 and 4.13,
+so the two inputs the transformer arms read, ProtT5 with the pathway multi-hot, are
+the weaker two of the three families on this target and the pathway multi-hot is a
+weaker annotation than propagated GO. Concatenation adds no rank: GO with the store
+0.198 (sd 0.041), GO with ProtT5 0.173 with the best calls (4.99 single, 5.39
+ensembled), all three 0.175 and 5.03. DCell's hierarchy over the same columns reads
+0.049 (sd 0.043), selected at epochs 8 to 13, under the perceptron on every seed: the
+one-subsystem-per-term wiring costs three quarters of what the flat annotation carries.
+DCell's own input, a weight vector per (gene, term) annotation pair in place of the
+shared one, reads 0.028 (sd 0.058) with a top-50 of 1.26, and 0.073 with 1.40 when the
+six seeds are averaged; the seeds select anywhere from epoch 0 to 93 and read $-0.057$
+to 0.115. Under a split by gene a held-out gene's columns receive no gradient, so the
+published network places an unseen gene through its random initial columns; that the
+read is not exactly zero is consistent with the trained subsystems responding to how
+many terms the gene lights rather than to which (a hypothesis, untested). The shared
+input is what lets the hierarchy read a gene it has not seen, and with it the hierarchy
+still reads a quarter of the flat perceptron. Width 20, the other point of the
+essentiality study's tune grid, lifts the shared hierarchy to 0.069 (sd 0.036) with a
+top-50 of 3.33 (0.066 and 3.79 ensembled), at 13 to 24 minutes a seed against 7 to 8
+at width 8, and leaves the published input at 0.041 (sd 0.046), three of its six seeds
+never reaching a validation peak in 200 epochs; both stay at a third of the perceptron
+or under. DCell's published sizing, max(20, 0.3 times the genes under the term), is out
+of reach for this implementation, which pads every term to the widest: the root's
+1,650 units would put the edge tensor past 30 GB.
+Two things bound the reading. GO annotation is curated in part from deletion
+phenotypes, respiratory function among them, and the screen's top hits are respiratory
+(the 027 read), so an annotation input can carry the target through the literature the
+target itself produced; the split holds out genes, not annotations. And the transformer
+arms were never given this input: the annotation the backbone reads is the pathway
+multi-hot, and rounds 150 and 151 (w167, w168) put the GO multi-hot in the affine
+slot, alone and appended to the HiGHS store, over every annotated gene, the interface
+every other input has entered through. The same two inputs read by the ladder's three
+models (Table~\ref{tab:store-baselines}) fix what the transformer adds to them: the GO
+multi-hot reads 0.076 by ridge, 0.179 by nearest neighbors and 0.187 by forest with a
+top-50 enrichment of 5.39, the highest call of any genotype-side read on this split; GO with the
+HiGHS vector appended reads 0.123, 0.198 and 0.204 with a top-50 of 4.79. The forest
+over the 6,539 columns round 151's affine reads sits 0.008 under that round's 0.211,
+the size of the round's own seed spread, with the higher call, so on this input the
+transformer's rank is what a backbone-free model of the same columns reaches, and
+averaging its six seeds adds 0.001.
+
+The measured side enters the same ladder. The strain's own M\"ulleder amino-acid pool,
+nineteen concentrations in mM as an affine store over the 4,678 strains the screen
+measured (a strain it did not measure reads the loader's reference, the population
+robust mean per amino acid), reads 0.149 by ridge, 0.285 by nearest neighbors and 0.280
+by forest, with top-50 enrichments of 3.99, 4.19 and 4.79: nineteen columns carry more
+rank than any genotype-side representation and more than any transformer arm (0.216,
+round 171). Appended to GO the pool reads 0.102, 0.174 and 0.264 with a forest call of
+5.99; appended to GO with the HiGHS vector, 0.156, 0.195 and 0.247 with a forest call
+of 6.19, the highest call of any read on this split. The ridge and the nearest-neighbor
+reads fall when the annotation's 2,362 columns join the nineteen while the forest,
+which selects columns, keeps 0.26 and gains the call; a plausible reason, unverified,
+is that the two distance-based models weigh every standardized column alike, so the
+pool is then a hundredth of the input. This read is phenotype to phenotype: the pool is
+a measurement of the same strain in a different screen, on minimal medium, not the
+strain's sequence, and the split by gene holds because the pool row is never the
+betaxanthin target. What it fixes is that the amino-acid data carries betaxanthin
+signal beyond the gene's identity, at a rank above the sequence, the annotation and
+every flux store. The transformer's affine reads the same columns linearly at 0.195
+alone and 0.208 beside GO (rounds 179, 175), above the ridge and under the distance
+models; through a hidden layer of 64 the pool alone reads 0.240 with a six-seed
+ensemble of 0.292, above the nearest neighbors (round 180), and through a layer of 256
+it reads 0.279 (round 187).
+
+The same read without the transformer, on CPU, sets what the columns give a perceptron
+alone (Table~\ref{tab:pool-mlp-sweep}; the GO-models script with the pool as its store
+block, one hidden width per pass, six seeds, at most 14 s a seed). The pool alone
+climbs with width, 0.178, 0.217, 0.219 and 0.236 at 16, 64, 256 and 1024, the last
+with the tightest band (sd 0.007) and a six-seed ensemble of 0.240; GO appended reads
+0.237, 0.232, 0.238 and 0.240 at the same widths, flat in width, sd 0.003 at 1024 with
+an ensemble of 0.241 and the best call of the sweep (top-50 5.16), selecting at epochs
+15 to 16. Two things differ from the transformer's slot. The annotation adds to the
+pool here at every width, 0.02 over the pool alone at 1024 and 0.04 over the GO
+perceptron alone (0.200), where inside the transformer's hidden layer it took the read
+back to the annotation's level (round 185); and the transformer's read of the pool
+alone through 256, 0.279, sits 0.06 above the standalone perceptron at the same width
+and 0.04 above its best width. The two trainings are not one setting under two heads,
+since the perceptron standardizes the columns, trains full batch and selects on a
+smoothed validation curve, so which of those carries the gap is not measured; the
+plain reading is that the columns give a perceptron 0.24 and the transformer's
+hidden slot 0.28, and that the annotation's effect on the pool's read depends on the
+head it enters.
+
+Two of those differences are now measured and neither accounts for the gap. Read under
+the transformer's own encoding, the columns as $\log(1+v)$ rather than standardized, the
+perceptron falls to 0.158 at width 256 and 0.173 at 1,024, and a 1,000-epoch budget
+moves the wider setting only to 0.177, so the raw read is converged and the encoding
+costs the perceptron 0.06. Its best over both encodings is therefore 0.236, and the
+transformer reads the same nineteen columns at 0.279. What remains between them is the
+backbone, the batch of 32 against full batch, the continuous ranked probability score
+against a masked squared error, and the smoothed selection; which of those carries the
+0.043 is not measured, but the budget and the encoding do not.
+
+The two-slot form goes the other way, and this is what the transformer's rounds 197 to
+199 reproduce. When the annotation's columns enter through the store, as they do in the
+transformer's two-slot head, the encoding decides what the linear slot gives: under the
+raw encoding that arm reads 0.243 for GO with both flux programs and the pool and 0.237
+for GO with the pool, and at 1,000 epochs 0.242 and 0.237, where standardizing the same
+columns reads 0.106 and 0.179. Standardizing a binary multi-hot is what costs it, and
+the transformer, which reads its store as $\log(1+v)$, sits with the raw column: its
+three-families two-slot head reads 0.239 against the perceptron's 0.242, within 0.003.
+So on the pool alone the two heads differ by 0.043 with nothing left to explain it but
+the backbone and the fit; on the two-slot form over the same concatenated store they
+agree to a thousandth. A head with two slots, the GO multi-hot through a linear map and the
+pool through the hidden layer, summed before the output so the two never share a
+hidden unit, reads 0.260 at width 256 and 0.265 at 1,024 (sd 0.006, ensemble 0.266,
+top-50 5.36, 23,872 parameters): above the shared layer over the same columns (0.240)
+and the pool alone (0.236) at every width, the highest single-seed read of any
+perceptron in the study and the best call of the sweep. Depth costs the pool alone
+and not the two-slot head: at width 1,024 a second and a third hidden layer take the
+pool alone to 0.185 and 0.195 and the shared layer to 0.247 and 0.243, while the two
+slots hold at 0.262 and 0.258. So what the annotation does to the pool's read is set
+by whether the two share a hidden layer: sharing costs the pool 0.02 to 0.03 in the
+perceptron and 0.03 in the transformer, and a linear slot beside the pool's hidden
+layer adds 0.03 to the pool alone in the perceptron. That head is the transformer arm
+the study has not built. The ladder agrees with the transformer on the flux side: the pool
+with the HiGHS vector appended on the pool's own genes (round 191's store) reads 0.095,
+0.153 and 0.220 by ridge, nearest neighbors and forest against the pool alone's 0.149,
+0.285 and 0.280, under it on every model and by 0.13 for the neighbors
+(Table~\ref{tab:store-baselines}). The second amino-acid screen read the same way,
+Cooper's seventeen relative peaks of the strain as a store on the pool's construction
+(4,313 strains, 8.5 percent of cells missing and carrying the reference 1.0; 466 of
+the ladder's rows are strains Cooper did not measure and carry the reference row),
+reads $-0.001$, 0.094 and 0.113 by ridge, nearest neighbors and forest with calls of
+0.6 to 1.8: a third of M\"ulleder's pool on every model. Cooper's own duplicate
+identifiers agree at a Spearman of 0.06 (the sibling document's Section~4), so the
+columns carry little of the strain to begin with. Through the perceptron
+(Table~\ref{tab:cooper-mlp-betaxanthin}; the pool sweep's arms with Cooper's store)
+the peaks alone read 0.131 at width 256 with calls at chance (top-50 1.03), the
+forest's level, and GO linear beside them 0.233, under GO beside the pool (0.260) by
+0.027. Appended to the pool (36 measured columns, store
+\texttt{YPD\_bx\_aapoolcooper}) the peaks read 0.245 alone against the pool's 0.219
+at the same width, $+0.026$ on three seeds of six, with the pool's spread of 0.042
+brought to 0.010: two seeds of the pool alone select at epoch 18 to 21 under 0.17, and
+with Cooper's columns beside them neither does, so at this width the second screen
+steadies the first more than it adds to it, and against the pool alone at its best
+width (0.236 at 1,024) the gain is 0.009. In the two-slot head the peaks add 0.004 to
+the pool on five seeds of six (0.264 against 0.260, ensembles 0.265 and 0.266): within
+the band, and not a cost. Cooper's peaks are read as a substitute for the pool rather
+than an addition to it: their transformer read through 256, alone, is round 211
+(w230), and the appended form (w228) was withdrawn unstarted.
+
+\input{tables/pool_mlp_sweep}
+
+\input{tables/cooper_mlp}
+
+\subsection{The backbone's head and the slot, separated\secstatus{todo}}
+\label{sec:decomposition}
+
+A store arm predicts $h(z) + a(s)$, the backbone's context head over the cell graph
+plus the slot over the gene's store row, and the two can be read apart: each cell is
+rebuilt from its checkpoint at the selected epoch, the pinned test set is run once as
+trained and once with the slot replaced by zero, and the difference is the slot
+(Table~\ref{tab:head-decomposition}; \texttt{target\_head\_decomposition.py}, the
+rebuilt full prediction agreeing with the reported Spearman to a thousandth on every
+cell). On the pool through 256 (round 187) the head is a constant on two seeds of six,
+with a spread of $10^{-8}$ of the slot's, the transformer blocks' gradient norm at
+0.0000 from epoch 20 and the 75 pinned genes with no pool row all receiving one
+prediction; on the other four the head is live, reads 0.05 to 0.15 on its own, agrees
+with the slot at 0.04 to 0.14, and adds $+0.055$, $+0.046$, $+0.047$ and $-0.020$ to
+the slot's read. Over the six seeds the slot alone reads 0.257 and the backbone adds
+0.021. So the arm's 0.279 is the pool through the hidden layer, fitted by this trainer,
+plus a backbone that adds 0.05 when it survives and nothing when it does not, and the
+0.043 between the transformer and the perceptron over the same columns (0.236) is not
+the graph; Section~\ref{sec:coverage} rebuilds the slot on CPU and finds what it is.
+With the annotation in
+the slot the head is a constant on every seed: the GO affine (round 150), the two-slot
+head (198) and the three families with two slots (199) select at epochs 7 to 15, before
+the blocks have moved, and their reads are the slot's within two ten-thousandths. The flux
+affine (139) is the one arm whose head is live on every seed, with the head's spread
+at the slot's and the two parts agreeing at 0.13; it adds 0.023 there. The pool linear
+(181) and the pool through 64 (182) add 0.004 and $-0.004$.
+
+The graph never reached any of these backbones. The 019 regularizer and the 020 hard
+mask both index the second transformer block, and every cell of this study ran one
+block: the regularizer's loss is 0.0 at every epoch of all 330 one-block cells at seeds
+2700 to 2705 through round 200 and nonzero only on the 24 two-block width-90 cells,
+and the hard mask was never passed.
+The backbone's inputs were the pathway multi-hot and ProtT5 through unmasked,
+unregularized attention over all genes. The layer-pattern ladder on the pool through
+256 (rounds 212 to 216: one block of width 36 with nine heads, two unmasked blocks, two
+blocks with the regularizer on the second, two with the hard mask on the second, and
+three with the hard mask on the second and third) is the first read of the graphs in
+this study, and the release rule on the pool slot (round 210) asks whether a backbone
+that escapes first adds on every seed.
+
+The regularizer's weight is inherited from 019 ($6.5 \times 10^{-5}$) and it is weak at
+this model's scale: on the first live cell (w233, seed 2700) the penalty is 1.74 times
+the data term at epoch 0 and 0.77 times it at epoch 40 (loss 0.849 against a data term
+of 0.479). On the gene-interaction sweep of the same regularizer at width 180
+(\texttt{notes-tex/025-graph-reg-sweep}, three seeds, thirty epochs) a ratio near one
+is where $\lambda = 10^{-3}$ sits, the bottom of that ladder, where the prior's gain is
+within the seeds' noise; the gain there begins where the penalty is fifteen times the
+data term ($\lambda = 10^{-2}$) and grows to 0.02 at $\lambda = 1$ with no turnover
+inside the ladder, and the hard mask reads as no penalty. So the weight was swept here,
+the same cell at $6.5 \times 10^{-4}$ and $6.5 \times 10^{-3}$ (rounds 217 and 218,
+through a \texttt{--graph-reg-lambda} flag added for it), and the ladder is flat: the
+penalty at the selected epoch is 0.8, 6.5 and 60 times the data term at the three
+weights and the arm reads 0.226, 0.236 and 0.243 against the unregularized two blocks'
+0.270, under the control on every seed but one at every weight
+(Section~\ref{sec:rounds}, rounds 215 to 218). A prior a hundred times the 019 weight,
+with the penalty sixty times the data term, moves the read by 0.017 from the 019
+weight and leaves it 0.027 under no prior. On this target the graph prior costs at every
+weight the 025 sweep found a gain.
+
+\input{tables/head_decomposition}
+
+\subsection{What the pool's coverage carries, and the slot rebuilt on CPU\secstatus{todo}}
+\label{sec:coverage}
+
+The slot rebuilt from the checkpoint reproduces the dump to a Spearman of 1.0000 only
+when a gene the pool does not cover reads zeros in every column, as the trainer's solve
+table reads it, and not the wild-type row the perceptron harness and the ladder gave
+it. That row is an indicator: 73 of the 629 pinned genes with a target are strains
+M\"ulleder did not measure, their mean standardized betaxanthin is $-0.26$ against
+$+0.10$ for the 556 she did, and the indicator alone reads the target at 0.196, the
+level of the GO affine. Table~\ref{tab:coverage-split}
+(\texttt{target\_coverage\_split.py}) reads every arm on the two groups. The pool
+through 256 ranks the uncovered genes at the fifth percentile of the covered ones and
+reads 0.212 on the covered genes against 0.279 on all; the pool linear 0.111 against
+0.195, the pool through 64 0.156 against 0.240. The subset is harder for every model,
+the control falling from 0.058 to $-0.013$ and the GO affine from 0.202 to 0.140, so
+the comparison that holds is within the covered genes: there the pool through 256 reads
+0.212 against the annotation's 0.140 and the control's $-0.013$, and the amino-acid
+values themselves add 0.07 over the annotation on the strains that have them. The
+standardized pool (round 204) is the exception that shows the mechanism: standardizing
+puts the zero row near the column means, the uncovered genes land at the 44th
+percentile, and the arm reads 0.189 on the covered genes against 0.182 on all, so the
+0.10 that standardization cost is the indicator and 0.02 of it the values.
+
+With the indicator, the trainer's fit and the affine's first column in hand, the
+transformer's slot is rebuilt on CPU (Table~\ref{tab:pool-fit-variants}). The trainer's
+fit alone on the standardized columns reads 0.164, under the harness's own 0.219, and
+every one of its parts alone reads at or under it (minibatches 0.216, the CRPS 0.214,
+GELU 0.169, weight decay 0.219). The zero row is what moves the read: under the
+$\log(1+v)$ encoding it takes the trainer's fit from 0.179 to 0.268, and with the
+growth ratio prepended the harness reads 0.274 (sd 0.006, ensemble 0.275) on all pinned
+genes and 0.216 on the covered ones, against the transformer's 0.279 and 0.212. A
+perceptron of 5,890 parameters over twenty columns, trained in seconds a seed, is the
+transformer's best arm to within its seed spread, on both groups of genes. The ladder
+(Table~\ref{tab:store-baselines}) read the wild-type row for the uncovered genes, and
+that row is separable too, one exact vector 73 rows share that a forest can make a leaf
+of and a neighbor search ties on: the forest reads 0.226 on the covered genes against
+0.280 on all, the nearest neighbors 0.239 against 0.285, and the ridge, which cannot
+isolate a row, 0.165 against 0.149. On the measured strains the forest over the pool
+(0.226) is the highest read of any model, above the transformer's slot (0.212) and its
+CPU replica (0.216).
+
+The perceptron arms read on the covered genes (Table~\ref{tab:covered-perceptrons})
+put the annotation's place beside the pool on the measured strains. At width 1,024 with
+the wild-type row, GO alone reads 0.148 there (0.200 on all), the pool alone 0.207
+(0.236), GO with the pool in one layer 0.195 (0.240) and GO linear beside the pool
+0.214 (0.265): on the measured strains the annotation adds 0.007 to the pool in the
+two-slot head, and the 0.03 it added on all genes was the ranking of the strains the
+pool never measured, which the annotation reads on its own (the GO affine ranks them
+at the 32nd percentile). Beside the rebuilt slot the linear GO slot reads 0.185 on the
+covered genes against the slot alone's 0.216, and Cooper's peaks substituted for the
+pool in the rebuilt slot read 0.103 (0.093 on all, sd 0.016), half the pool and under
+the annotation. So on the strains that have an amino-acid profile, the profile through
+a hidden layer is worth 0.21 to 0.23 (the forest 0.226, the slot 0.212, its replica
+0.216, the perceptron 0.207), the annotation 0.14 to 0.15, and the two together no more
+than the profile alone.
+
+\input{tables/coverage_split}
+
+\input{tables/pool_fit_variants}
+
+\input{tables/covered_perceptrons}
+
+\input{tables/go_models}
+
+\input{tables/store_degeneracy}
+
+\input{tables/store_baselines}
+
+\subsection{What the graphs carry on their own: label propagation on the pin\secstatus{todo}}
+\label{sec:homophily}
+
+Before a mask or a prior can be asked to help, the target has to be smooth on the graph
+it is given. Table~\ref{tab:graph-homophily} reads that with nothing fitted
+(\texttt{target\_graph\_homophily.py}): every pinned gene is predicted by the mean
+betaxanthin level of its labeled one-hop neighbors, the 3,764 training and validation
+genes with a measurement, in each of the nine graphs the trainer masks and regularizes
+and in their union, and the prediction is scored on the pinned genes with at least one
+labeled neighbor against a degree-matched null in which each gene's labeled neighbors
+are replaced by as many labeled genes drawn at random. STRING coexpression carries the
+target: the mean over 174 labeled neighbors on average reads 0.244 on all 629 pinned
+genes against a null of $-0.005 \pm 0.041$ ($z = 6.1$), with a top-50 of 4.59, and the
+union of the nine reads 0.221 with a top-50 of 5.19. STRING experimental reads 0.166
+($z = 3.1$) and STRING neighborhood 0.195 on the 458 pinned genes it covers ($z = 4.3$).
+The physical graph reads 0.104 over 14 neighbors, within two null deviations, and it is
+the one graph on which a top-decile producer's neighbors are enriched for top-decile
+producers (1.61-fold, Fisher $p = 2.7 \times 10^{-5}$; on the denser graphs every gene
+has a top-decile neighbor and the fold is 1.0). The regulatory, TFLink, fusion,
+co-occurrence and database graphs read between $-0.060$ and 0.060, at their nulls. Two
+hops wash the signal out: within two hops a pinned gene reaches three thousand labeled
+genes and the coexpression mean reads 0.007. The same predictor scored leave-one-out on
+the labeled genes gives the same order at six times the sample (coexpression 0.208 on
+3,721 genes, the union 0.169).
+
+That read is not the pool's coverage indicator (Section~\ref{sec:coverage}): on the 556
+pinned strains M\"ulleder measured, the coexpression mean reads 0.192 and the union
+0.189, against the pool through 256 at 0.212, the forest over the pool at 0.226 and the
+GO affine at 0.140. So the graphs' one-hop propagation of the target is worth 0.19 on
+the measured strains and 0.24 on all of them, from labels alone: under the amino-acid
+profile where the profile exists, and above every genotype-side store the ladder has
+read (the HiGHS vector by nearest neighbors, 0.195). The transformer's graph arms cannot
+read it as they are built: the regularizer and the mask shape attention over gene
+embeddings, and no neighbor's label enters the model, so rounds 213 to 216 ask a
+different question from this table. The direct one is a store
+(\texttt{target\_graph\_label\_store.py}): per graph the labeled-neighbor mean, shifted
+nonnegative so $\log(1 + v)$ stays monotone, and $\log(1 + n)$ of the neighbor count,
+twenty columns over every gene of the genome, a labeled gene's row leave-one-out and no
+pinned label read. The store is transductive: its columns are other strains' measured
+betaxanthin, the training and validation genes' labels (a validation gene never reads
+its own, but validation labels enter the training genes' features, so epoch selection
+on validation is slightly generous), and it has nothing to offer a gene whose neighbors
+were not screened. A gain from it is a semi-supervised gain, not a gain of the
+genotype encoding or of the metabolic module, and it does not scale to a strain whose
+neighbors carry no label. It is read alone through 256 on the pool's recipe (round 219)
+and appended to the pool (220), which pairs the profile against the graphs' own read of
+betaxanthin in one slot.
+
+On the ladder the same store is read by every model beside the pool
+(Table~\ref{tab:store-baselines}). The graphs' twenty columns alone read 0.219 by
+ridge, 0.224 by nearest neighbors and 0.254 by forest, with top-50 calls of 4.99, 5.39
+and 5.79: the highest ridge read of any representation by 0.06, the highest
+nearest-neighbor call, and a store that covers every pinned gene, so none of it is a
+coverage indicator. Appended to the pool, the forest reads 0.284 on all genes and 0.234
+on the 556 the pool covers against 0.280 and 0.226 for the pool alone, the highest
+forest read of the ladder; the nearest neighbors fall from 0.285 to 0.258 and the ridge
+from 0.149 to 0.143. So in a forest the profile and the graphs add, by 0.004 on all
+genes and 0.008 on the measured strains. The transformer's slot does the same
+(rounds 219 and 220): the store alone reads 0.182, under its own ridge, and appended to
+the pool 0.288 against 0.279, $+0.009$ on four seeds of six with the gain on the
+measured strains (0.219 against 0.212), the tightest band and the highest ensemble
+(0.318) of any pool arm. Both reads are transductive.
+
+\input{tables/graph_homophily}
+
+
+\subsection{Inductive reads of the neighborhood\secstatus{todo}}
+\label{sec:inductive}
+
+Every read in this section is inductive: a gene's row is built from what exists for any
+gene of the genome, its annotation, its deletion's flux solution and its position in
+the graphs, and no label of a neighbor and no measurement of the strain enters it. The
+label store of Section~\ref{sec:homophily} showed that the coexpression neighborhood of
+a deleted gene carries betaxanthin; the question here is whether the same neighborhood
+carries it through the genes' own features, which a strain nobody has screened would
+still have.
+
+The neighbor mean of a feature is, per graph, the mean of that feature over a gene's
+one-hop neighbors that carry it, with $\log(1 + n)$ of their count as one more column
+(\texttt{target\_graph\_feature\_store.py}, over STRING coexpression and the union of
+the nine graphs, a gene with no covered neighbor carrying the base store's wild-type
+row). Table~\ref{tab:neighborhood-reads} reads it on the ladder. The neighbor mean of
+the GO multi-hot reads 0.279 by forest, 0.221 by nearest neighbors and 0.183 by ridge,
+against 0.187 by forest for the gene's own multi-hot: the annotation of a gene's
+neighbors reads betaxanthin better than the gene's own annotation by 0.09, and by
+forest it reads at the level of the measured amino-acid pool (0.280), from no
+measurement. The coexpression block alone reads 0.251 and the union alone 0.258, so
+the two graphs add a little to each other. Appending the gene's own multi-hot to its
+neighbors' mean reads 0.271, under the neighbor mean alone. The two count columns
+alone, the degree control, read $-0.003$ by forest, $-0.009$ by ridge and $-0.011$ by
+nearest neighbors: how many neighbors a gene has carries nothing, so the lift is which
+neighbors it has. The same propagation of the parsimonious flux vector reads 0.182 by
+forest against 0.116 for the gene's own vector, with its degree columns at 0.020, and
+appended to the vector 0.189: the neighborhood lifts the flux store too, from a lower
+base to a lower ceiling.
+
+Gradient-boosted trees do not change the order. XGBoost on the rows that carry a value
+(500 rounds at rate 0.05, row subsample 0.8, column subsample 0.5, depth 3 or 6 and
+minimum child weight 1 or 5 selected on validation Pearson, slurm job 2961) reads under
+the forest on every input: the pool 0.224 against 0.280, the pool with the label store
+0.275 against 0.284, the neighbor mean of GO 0.228 against 0.279, GO with its neighbor
+mean 0.249 against 0.271, the label store 0.210 against 0.254, GO 0.180 against 0.187
+and ProtT5 0.130 against 0.143. The gap is widest on the narrow inputs, where boosting
+selected the shallowest trees and still trailed by 0.05, and the ranking of the inputs
+is the forest's under both learners.
+
+The learned form of the neighbor mean is message passing read out at the deleted gene
+(\texttt{target\_gcn\_readout.py}, Table~\ref{tab:message-passing}): two
+graph-convolution layers of width 64 over a gene graph with the multi-hot as input,
+the prediction at the deleted gene's node, which makes the read a function of its
+two-hop neighborhood, an ego net around the perturbation. Trained full batch on the
+training genes' targets with the pinned genes' targets masked from the loss, three
+seeds, the epoch selected on validation Pearson, it reads 0.265 on the union of the
+nine (1,514,071 undirected edges, epochs 564 to 592 of 600) and 0.259 on STRING
+coexpression (996,199 edges, epochs 419 to 552), against 0.199 for the same two layers
+with no graph, a two-layer perceptron on the multi-hot. At the 200-epoch budget the
+union arm read 0.237 with every seed selecting epoch 199, so that read was
+unconverged, and the coexpression arm 0.251. The ego net therefore lands between the
+neighbor mean by nearest neighbors (0.221) and by forest (0.279), and above the
+transformer's inductive incumbent (0.217, round 190) by 0.05, with the same input.
+
+GO as a graph rather than a vector does not read. The incidence graph has a node per
+gene and per GO term, 8,969 in all, and an edge per annotation: either the propagated
+pairs of the multi-hot (271,088 edges) or the direct annotations with the ontology's
+\texttt{is\_a} and \texttt{part\_of} edges between terms (52,830 edges), so that
+propagation is what message passing does rather than what the store did. Two hops from
+a gene reach the genes that share its terms, a co-annotation neighborhood. With the
+gene nodes carrying the multi-hot and the term nodes their identity it reads 0.168 on
+the propagated pairs (epochs 188 to 223 of 600) and 0.141 with the ontology's edges
+(epochs 62 to 73), both under the flat multi-hot's 0.199; with every node a single one,
+so that the read is structure alone, 0.014 and $-0.031$. The annotation carries its
+signal as the gene's own terms and as its neighbors' terms on the gene graphs, not as
+the co-annotation structure, at this depth and budget.
+
+The transformer's perturbation operator is not the bottleneck at this recipe. On a
+single deletion the transform's cross-attention has one key, so its context is a
+linear map of the deleted gene's embedding with no dependence on the querying gene (the
+model's own documented and verified note); rounds 229 to 231 gave it two ReZero blocks,
+the Hadamard pair term and the null sink, and read 0.217, 0.218 and 0.216 against the
+incumbent's 0.216 on the same seeds, the sink selecting the incumbent's epochs exactly.
+Neither is the sequence embedding: the species language-model composite (rounds 232 and
+233) reads 0.219 and, with ESM2 added, 0.216 in place of ProtT5's 0.216. The gap that
+remains is between the forest's read of the neighborhood, 0.279, and the transformer's
+read of the same columns, 0.221, and stacking is the current attempt to close it: the
+forest's out-of-fold prediction as a one-column store reads the pinned genes at 0.269
+by itself and 0.200 through the transformer (round 234), 0.259 on the one seed that
+trained to epoch 194 and 0.247 as a six-seed ensemble.
+
+\input{tables/neighborhood_reads}
+
+\input{tables/message_passing}

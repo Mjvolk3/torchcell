@@ -1,0 +1,142 @@
+%% notes-tex/essentiality-figure-gate/sections/2-mockups.tex
+%% SOURCE: the two sheets are written by experiments/028-gene-essentiality/scripts/
+%% summary_figure.py from the result files named in their captions; every number in a
+%% caption is a macro of tables/gate_numbers.tex written by essentiality_gate_numbers.py.
+
+\section{The mockups\secstatus{todo}}
+\label{sec:mockups}
+
+Result files are under \file{experiments/028-gene-essentiality/results/}. The proposed
+main-text sheet is Figure~\ref{fig:sheet}, two rows of three, drawn from the summary
+figure's readers of \file{028-gene-essentiality} so every number is the same committed
+file; the two original summary sheets follow it for the panels it leaves out. The
+held-out set everywhere is the FCL held-out set: the \gnHeldOut{} genes Merzbacher 2025
+held out of its own training that the cell graph scores, \gnEssentialHeldOut{} of them
+essential; the statistic is the AUROC on those genes under the fold protocol (five
+models trained on five cross-validation files, logits averaged on the held-out genes)
+unless the caption says otherwise, and intervals are gene bootstraps. Two learned
+families carry the figure, named by what they read. CGT is the cell graph transformer:
+attention over the perturbed cell graph, reading ProtT5 and the pathway multi-hot of
+every gene and, in the form kept, the metabolic solve (a pFBA solve done offline, its
+log(1+|v|) flux vector through a zero-initialized affine on the logit). GCN is two-layer
+graph convolution over the union of the nine gene graphs (physical, regulatory, TFLink
+and the six STRING channels), reading the GO multi-hot. They differ in both the
+message-passing form and the inputs, which is why they misrank different genes and why
+their equal-weight average of standardized logits is the best row. A gene's misrank
+under a model is the share of the other class scored on the wrong side of it: for an
+essential gene, the fraction of nonessential genes scored above it. The two marks after
+each panel letter are the panel's section status and figure status, keyed under the
+title of this document.
+
+\clearpage
+\tcfig{\figSheet}{\textbf{Gene essentiality: the label, what ranks the held-out genes
+best, and the genes still missed.} \textbf{a}, The label. One open reading frame is
+deleted from the genome (genes drawn as arrows, the red cross the deletion) and the
+deletion strain is grown on YPD: a strain that grows marks its gene nonessential, one
+that cannot marks it essential. The cell is the yeast of manuscript Figure 1.
+\textbf{b}, One row per idea on the FCL held-out \gnHeldOut{} genes, best first. Gray
+is nothing trained here: the two published methods' released predictions rescored on
+these genes with a gene bootstrap (Flux Cone Learning \gfclAuroc{}, FBA \gfbaAuroc{}).
+Blue is trained here but neither family: DCell on its published inputs and refit on GO
+membership, a random forest and an MLP on sequence, pathway and the FBA ratio with no
+graph. Orange is CGT, with the FBA growth ratio as its only metabolic input, with the
+metabolic solve, and with the solve plus the gene-rule counts; red is GCN over the gene
+graphs, reading GO or the transformer's three inputs; purple is the equal-weight
+average of CGT with the solve and GCN with GO, \gbestAverage{} [\gbestAverageLo{},
+\gbestAverageHi{}]. Learned rows are five-fold ensembles. \textbf{c}, The three models fixed in advance on \gnResplits{} other
+held-out fifths of the labeled genes, sorted by the average; a point is one method on
+one split, the seed-mean standardized logit of three seeds scored once on that split's
+held-out fifth; the average beats the better single model on
+\gresplitDiffaverageMinusthebettersinglemodelUp{} of
+\gresplitDiffaverageMinusthebettersinglemodelOf{} splits. \textbf{d}, The same
+families trained on the \ggenomeLabeled{} FCL-labeled metabolic genes and read once on
+the \ggenomeN{} genome-wide genes outside the metabolic model, where the solve has no
+call: the gene graphs transfer, whatever their input (the untrained physical degree
+alone reads \ggengcnDegree{}), and the metabolic column does not. \textbf{e}, Every one of the
+\gnEssentialHeldOut{} essential held-out genes, worst first by the two families' mean
+misrank, the share of nonessential genes scored above the gene; a name is bold where
+FBA's knockout growth ratio on YPD is 1.0, the deletions FBA cannot see. \textbf{f},
+What the misranked genes share, one axis per class: the chance that a gene carrying
+the feature is misranked worse than one without it, 0.5 (dashed) no association,
+filled where the Benjamini-Hochberg $q$ within the family is under 0.1. Color is the
+family: gray nothing trained here, blue trained here but neither family, orange CGT
+reading the metabolic solve, red GCN over the nine gene graphs, purple their
+equal-weight average. Written by
+\texttt{essentiality\_gate\_sheet.py}, GilaHyper, 2026-10-12.}{fig:sheet}
+
+\pfstep{What each panel decides} Panel b is the claim: on the genes the published
+method held out, the average of the two families reads above Flux Cone Learning and
+above FBA, with the comparators rescored on exactly these genes. The study searched
+many module forms (a cached solve, rule counts, a linear program inside training); the
+sheet shows one row per idea and the full search is \ref{sec:performance}. Panel c is
+the guard against that number being a post hoc choice: the three were fixed before the
+repeated splits ran, and the average wins on nine of ten. Panel d is the reach of the
+metabolic column: it helps on the metabolic genes and has nothing to say off them, where
+the gene graphs alone read \ggengcnDegree{} with nothing trained. Panels e and f are
+the open question the figure hands the reader: the essential genes every model still
+misses, by name, and the one feature they share across both families, a deletion FBA
+calls viable, which is where a model of the cell is still missing something a yeast
+needs.
+
+\pfstep{What the sheet leaves to the supplement} The module forms on one backbone and
+their cost (Figure~\ref{fig:goal2}a and b), the store's scale (c), the forms by media and
+columns (d), the gains on the repeated splits (e and f) and the columns handed to GCN (g).
+The families explainer of \file{028-gene-essentiality} is a draw.io composition and enters
+as a first panel once it is re-exported into this document's figures. Both summary sheets
+below still name CGT "transformer" in their labels; the gate's sheet above is the one
+with unified names, and the two will be regenerated from one script before any panel
+enters the paper.
+
+\clearpage
+\tcfigfit[1.0]{\figGoalOne}{\textbf{Goal 1: the best method on gene essentiality,
+against Flux Cone Learning and FBA.} One color means one thing in every panel: gray a
+comparator with nothing learned here, blue a learned model reading no metabolic column
+and no graph, orange family 1 (CGT), red family 2 (GCN with GO input),
+purple their average; a hatch marks a linear program solved inside the training loop.
+\textbf{a}, Every method on the \gnHeldOut{} held-out genes, best first; the first rows are
+averages of family 2 with a form of family 1 (the best at \gbestAverage{}), the DCell-style
+rows are the comparator under the same fold protocol (\gdcellEnsemble{}
+[\gdcellEnsembleLo{}, \gdcellEnsembleHi{}]), Flux Cone Learning reads \gfclAuroc{} and FBA
+\gfbaAuroc{}. Learned models are five-fold ensembles, the random forest is one fit on the
+split file, and intervals are gene bootstraps.
+\textbf{b}, The layer-free form of family 1 (circles), graph convolution on GO (squares)
+and their average (diamonds), fixed in advance, on \gnResplits{} other held-out fifths of
+the labeled genes, three seeds per split, sorted by the average's AUROC; means
+\gresplitMeanlayerfree{}, \gresplitMeangoconvolution{} and \gresplitMeanaverage{}.
+\textbf{c}, The same models trained on the released genes and read on the \ggenomeN{}
+genome-wide genes that carry no GEM reaction, pooled over seeds with a gene bootstrap; the
+dashed line is chance.
+\textbf{d}, What the misranked genes of the released \gnHeldOut{} share, per class, for
+the two families; filled where the Benjamini-Hochberg $q$ within the family is under 0.1.
+\textbf{e}, Every one of the \gnEssentialHeldOut{} essential genes in the released
+held-out set, worst first by the two families' mean misrank. Written by
+\texttt{summary\_figure.py}. \fstat{file}}{fig:goal1}
+
+\clearpage
+\tcfigfit[1.0]{\figGoalTwo}{\textbf{Goal 2: the form of the metabolic module that
+helps, what it costs, and what a record of one genotype in one medium can carry.} Orange
+is CGT reading any FBA-derived column, blue the same cell with no metabolic
+column, gray a count; a hatch marks a linear program solved inside the training loop.
+\textbf{a}, The forms of the module on one backbone, the pathway multi-hot with ProtT5:
+the bar is the seed mean of the held-out AUROC and each point one seed; no metabolism
+\gladnone{} (\gladnoneSeeds{} seeds, sd \gladnoneSd{}), the single-medium solve with the
+rule counts \gladoneSolveCounts{} (\gladoneSolveCountsSeeds{} seeds, sd
+\gladoneSolveCountsSd{}), the four-media form \gladfourSolveCounts{}.
+\textbf{b}, Wall minutes per cell for the forms of \textbf{a}, as run.
+\textbf{c}, What the layer-free solve costs over the solid-growth build, logarithmic.
+\textbf{d}, The layer-free forms by the number of media whose growth ratio they read and
+by whether they also read the stored flux vector and the six gene-rule counts, on the
+released split; the diamond is the five-fold ensemble (\gladoneSolveCountsEns{} for the
+single medium, \gladfourSolveCountsEns{} for four).
+\textbf{e}, Each form minus the same cell with no metabolism on the \gnResplits{} repeated
+splits: the single-medium form reads \ggainOneMediumOverNone{}, above on
+\ggainOneMediumOverNoneUp{} of \ggainOneMediumOverNoneOf{}.
+\textbf{f}, The share of split-and-seed pairs on which the form scores above the cell with
+no metabolism (\ggainOneMediumOverNonePairsUp{} of \ggainOneMediumOverNonePairs{} for the
+single-medium form); the dashed line is a module that helps on half the runs.
+\textbf{g}, The same columns handed to the second family, graph convolution on GO, on the
+repeated splits: as node features and as a zero-initialized affine on the node's logit,
+each minus the same convolution on GO alone. Written by \texttt{summary\_figure.py} from
+\texttt{simplification\_readout.json} and \texttt{resplit\_readout.json}.
+\fstat{file}}{fig:goal2}
+

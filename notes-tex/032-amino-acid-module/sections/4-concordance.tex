@@ -1,0 +1,205 @@
+%% notes-tex/032-amino-acid-module/sections/4-concordance.tex
+\section{The second amino-acid screen\secstatus{todo}}
+\label{sec:concordance}
+
+The second amino-acid screen does not corroborate the first
+(Table~\ref{tab:amino-acid-concordance}; \texttt{amino\_acid\_dataset\_concordance.py}).
+Cooper 2010 profiled the auxotrophic MATa collection after overnight growth in synthetic
+complete medium by capillary electrophoresis, 17 peaks each a linear ratio to its plate
+mean, four of them composites and lysine split in two; M\"ulleder 2016 measured 19 amino
+acids in mM on the prototrophic collection on minimal medium. Over the 4,051 strains both
+screens hold, the matched pairs correlate at $-0.006$ (alanine) to $+0.059$ (glycine,
+$p$ $2\times10^{-4}$), with glutamate at 0.043 and aspartate at 0.031 the only others
+off zero; the top 5 percent of strains overlap at chance on every pair (the largest
+enrichment 2.2, lysine peak b, 22 of 202 against 10 expected); and across all 17 by 19
+cells the median $|\rho|$ is 0.018 and the maximum 0.127, on an unmatched pair, so the
+matched cells do not stand out from the background. The two retest references bound
+this: M\"ulleder's 194 strains measured twice give a mean Spearman of 0.20 (Pearson on
+$\log_{10}$ 0.43, the 027 read), and Cooper's 47 duplicated genes, paired from the
+loader's ledger against the served rows, give 0.06 (log Pearson 0.10). The Cooper pairs
+are the screen's own within-study replicate agreement: the 47 genes the collection
+carries as two deletion strains, grown from fresh colonies and measured in the same
+run, listed on adjacent rows of the released table (each row already the mean of up to
+two traces, so the instrument's repeat precision on one extract is not recoverable).
+Their rows spread as widely as the whole table (the $\log_{10}$ ratio's sd over the 17
+peaks 0.10 to 0.53 against 0.11 to 0.51, medians 0.29 and 0.28), so the low agreement
+is not a restricted range: a typical gene's released value is not reproduced by the
+same study's second measurement of it, and 0.05 is the reliability ceiling of a Cooper
+strain-level value, against M\"ulleder's 0.20 from the same kind of re-measurement.
+A cross-screen
+correlation cannot exceed roughly the geometric mean of the two, about 0.11, and the
+observed 0.00 to 0.06 is at or below it. Cooper's released table carries almost no
+strain-level signal, so it can neither validate the M\"ulleder target strain by strain
+nor serve as a second one; and the medium and the auxotrophy differ between the screens,
+a biological difference that this replicate agreement cannot separate from noise. What
+the read fixes is the amino-acid endpoint's position: its own retest rank is 0.20, the
+second screen agrees with it at 0.03, and every model above, transformer or ladder,
+sits between 0.00 and 0.06. The retest is the agreement of two single-culture
+measurements of one strain, so it bounds a second screen, not a model: a model scored
+against one measurement is bounded by the square root of the reliability, the share of
+a measurement's variance that is between strains (Table~\ref{tab:mulleder-retest}). On
+the Pearson scale over $\log_{10}$ concentrations that bound averages 0.62 over the
+nineteen amino acids, from 0.00 for asparagine and 0.13 for methionine, whose retest
+spread equals their spread across strains, to 0.85 for glutamine; from the Spearman
+retest of 0.20 the same rule gives about 0.45. The 237 injections of the quality-control
+sample put the instrument's spread at 0.03 to 0.13 in $\log_{10}$ against a
+single-culture spread of 0.16 to 0.27, so the retest noise is culture to culture, not
+analytical. The models sit at a tenth of that bound, not at it: the target is hard to
+learn from single-culture labels, and no input has found more than a tenth of what the
+measurement would let a model read.
+
+\input{tables/amino_acid_concordance}
+
+\input{tables/mulleder_retest}
+
+Cooper's peaks as a target confirm the reliability read from the model side. The 17
+peaks, read from the loader's table by the record's deleted gene on the same pinned
+split every other target uses (816 test genotypes carry a Cooper row, 561 of them
+pinned), fit by the ladder's ridge, nearest neighbors and forest over the same
+representations as the M\"ulleder target (Table~\ref{tab:store-baselines-cooper}),
+read between $-0.025$ and $+0.041$ mean Spearman over the peaks, the two highest
+the forest over the HiGHS store with ProtT5 (0.041) and the ridge over the adjustment
+store (0.039), against a M\"ulleder ladder of 0.00 to 0.06. The flux stores are the
+prototroph's on minimal medium, not Cooper's auxotroph on complete medium, so the
+metabolic rows are a mismatched input here; the annotation and the sequence, which do
+not depend on the medium, read 0.019 and 0.028 at best. A target whose own duplicate
+strains agree at 0.06 gives no model more than 0.04 to find.
+
+\input{tables/store_baselines_cooper}
+
+The reverse direction. The betaxanthin study read the strain's measured amino-acid pool
+as an input and found the ladder's forest carrying it at 0.280 (its Section~3); the
+same store form carries the strain's Cachera betaxanthin score, one signed column
+standardized on the training strains, into this target on the same pinned split
+(Table~\ref{tab:store-baselines}). Alone it reads 0.034 by ridge, 0.026 by nearest
+neighbors and 0.071 by forest, mean Spearman over the nineteen amino acids; appended to
+GO, 0.044, 0.024 and 0.078. The forest over one measured column is above every
+genotype-side representation on this target, and with GO it is the highest read of any
+model, transformer or ladder, 0.078 against the forest over GO alone at 0.063 and the
+GO affine's 0.058. The per-amino-acid reads of the column alone follow the
+cross-endpoint correlations (aspartate 0.185, threonine 0.125, tyrosine 0.084 by
+ridge). As on betaxanthin, this is phenotype to phenotype and it says the shared
+strain-level signal transfers in both directions; on a target whose annotation gain is
+0.009, one measured column is worth more than the annotation.
+
+\subsection{The betaxanthin endpoint against the amino-acid pool\secstatus{todo}}
+\label{sec:cross-target}
+
+The three screens profile the same deletion collection, so a gene both screens hold is
+one paired observation of the two endpoints, and whether a joint model of betaxanthin
+and the amino acids has anything to share is a question the data answer before any model
+is trained (Figure~\ref{fig:cross-target}, Table~\ref{tab:betaxanthin-amino-acid-correlation};
+\texttt{betaxanthin\_amino\_acid\_correlation.py}). Over the 4,477 strains Cachera and
+M\"ulleder both measured, the betaxanthin score correlates with methionine at $+0.130$
+(bootstrap interval 0.100 to 0.157), with threonine at $+0.093$ and aspartate at
+$+0.091$, and against tyrosine at $-0.083$, arginine at $-0.077$ and glutamate at
+$-0.065$; the top 5 percent of strains on the two axes overlap at 3.3 times chance for
+aspartate (37 of 224 against 11.2) and 3.0 times for threonine, and at chance for the
+rest. Each of these sits well under its ceiling, the correlation two perfectly related
+quantities would show through the betaxanthin score's reliability of 0.84 and the amino
+acid's retest (0.20 to 0.54 over the nineteen), so the single-amino-acid reads are weak
+but not at their floor. The pool read is the one that matters for a joint model: a ridge
+from the nineteen standardized log concentrations to the betaxanthin score, fit and
+scored out of fold over five strain folds, reads a Spearman of $+0.226$ (folds 0.182 to
+0.272) against $-0.002$ (sd 0.016) with the target shuffled. A deletion's measured
+amino-acid pool carries about as much rank on its betaxanthin level as the best
+genotype-side model in the betaxanthin study reads from the deleted gene (0.211,
+\texttt{notes-tex/031-betaxanthin-module}, round 151), on a different set of strains and
+from a different kind of input, so the two endpoints share strain-level signal well
+above the noise. Whether the pool adds to the deleted gene or restates it is read on the
+same strains and folds: the same ridge from the gene's propagated GO multi-hot (the
+betaxanthin study's best genotype-side input, 2,362 columns, an all-zero row for the
+557 strains outside the store) reads 0.165, and from GO with the pool appended, the GO
+block scaled to the pool block's variance so one penalty serves both, 0.237 (folds 0.207
+to 0.311), above the pool alone on four folds of five and above GO alone on every fold.
+The pool adds 0.072 beyond the gene's identity, so the amino-acid signal a joint model
+would learn from is not the one the annotation already carries. The Cooper screen gives
+the same picture faintly: no single peak beyond $\pm 0.063$ over the 4,225 shared
+strains, a pool ridge at $+0.083$ against a shuffled $-0.003$, with the peaks' own
+duplicate agreement bounding the ceilings at 0.00 to 0.49; on these strains GO alone
+reads 0.193 and GO with the Cooper pool 0.196, an addition of 0.003. Hypothesis
+(untested): part of the shared signal is a growth or respiratory covariate common to
+both screens, since the betaxanthin screen's top hits are mitochondrial and the pool
+responds to respiratory deficiency.
+
+\tcfigfit[1.0]{figures/betaxanthin_amino_acid_correlation_2026-09-24-21-02-01.pdf}{\textbf{The
+betaxanthin score against each amino-acid quantity, strain by strain.}
+\textbf{a}, Cachera 2023's betaxanthin score against each of M\"ulleder 2016's nineteen
+concentrations over the 4,477 strains both screens hold: the Spearman (bars) with a
+strain-bootstrap 95 percent interval (1,000 draws) and, above each bar, the ceiling a
+correlation could reach through both endpoints' noise, the geometric mean of the
+betaxanthin reliability (0.84) and the amino acid's log10 retest Spearman.
+\textbf{b}, The same against Cooper 2010's seventeen peaks over the 4,225 shared strains,
+the ceiling from Cooper's duplicate-strain agreement (absent where no duplicate pairs
+were measured). Written by \texttt{betaxanthin\_amino\_acid\_correlation.py}.}{fig:cross-target}
+
+\input{tables/betaxanthin_amino_acid_correlation}
+
+\subsection{The third endpoint: isobutanol\secstatus{todo}}
+\label{sec:isobutanol-cross}
+
+The same read on Montano Lopez 2024's isobutanol biosensor, over the 4,360 strains it
+shares with M\"ulleder (the screen holds 4,554), with the fold change read as log10 as
+its own reliability was: the pool predicts the endpoint where the annotation does not.
+Ridge from the nineteen concentrations reads the biosensor out of fold at 0.102, against
+0.017 from the deleted gene's GO multi-hot and 0.098 from the two together, with the
+five folds at 0.056 to 0.132 and permuted labels at $-0.003$. So the measured pool
+carries six times what the gene's annotation carries on this endpoint, and the
+annotation adds nothing beside it, the same ordering as on betaxanthin (0.226 against
+0.165, with the pool adding 0.072 there).
+
+One amino acid at a time the correlations are small and the branched-chain ones are not
+where they sit. The biosensor is a branched-chain reporter by construction, yet leucine
+reads $-0.029$, isoleucine $-0.026$ and valine $+0.004$, every interval covering zero;
+the largest is arginine at $+0.093$ (interval 0.063 to 0.124, top-5 enrichment 2.4),
+then glutamine at $-0.075$, aspartate $-0.051$, threonine $-0.044$ and proline
+$-0.042$. Seven of the nineteen intervals exclude zero. Against a mean ceiling of 0.24,
+set by the geometric mean of the screen's within-screen duplicate agreement (0.31 over
+190 repeated strains) and each amino acid's retest, the pool's 0.102 is about forty
+percent of what the noise allows and no single concentration reaches a fifth of it.
+
+Two readings follow, and only the first is measured. The signal the pool carries about
+the biosensor is spread over the profile rather than held by the amino acids the sensor
+reports, since no single concentration approaches the pool fit. Why the reported
+branched-chain pools are the uncorrelated ones is not established here; a biosensor
+responding to pathway flux rather than to the standing pool would produce it
+(hypothesis, untested), and so would the two screens' different media, M\"ulleder's
+prototroph on minimal medium against the screen's auxotroph on complete medium.
+
+\tcfigfit[1.0]{figures/isobutanol_amino_acid_correlation.pdf}{\textbf{The isobutanol
+biosensor against each amino-acid concentration, strain by strain.} Montano Lopez 2024's
+biosensor fold change (log10) against each of M\"ulleder 2016's nineteen concentrations
+over the 4,360 strains both screens hold, ordered by the correlation: the Spearman
+(bars) with a strain-bootstrap 95 percent interval (1,000 draws) and, as the rules above
+and below each bar, the ceiling a correlation could reach through both endpoints' noise,
+the geometric mean of the screen's within-screen duplicate agreement and the amino acid's
+log10 retest Spearman. Written by
+\texttt{isobutanol\_amino\_acid\_correlation.py}.}{fig:isobutanol-cross}
+
+\subsection{The endpoint matrix, and what a joint model could share\secstatus{todo}}
+\label{sec:endpoint-matrix}
+
+The question behind the isobutanol read is whether a second production endpoint trained
+beside betaxanthin could lift it. What a joint model can share is bounded by the
+strain-level signal the two endpoints hold in common, and the third pair of the matrix
+closes it: Cachera's betaxanthin score against the biosensor over the 4,353 strains both
+screens hold reads $-0.041$ (interval $-0.070$ to $-0.013$) against a ceiling of 0.51,
+eight percent of what the two endpoints' noise allows and on the wrong side of zero.
+The full matrix, each pair read on the strains both screens measured, with the pool
+entries the out-of-fold ridge from the nineteen concentrations and every ceiling
+built by one rule (Table~\ref{tab:endpoint-matrix}): the amino-acid pool shares 56
+percent of its ceiling with betaxanthin and 42 percent with the biosensor, and the two
+production endpoints share 8 percent of theirs with each other.
+
+\input{tables/endpoint_matrix}
+
+The one prior on the design is negative. In August a shared-trunk model of betaxanthin
+with the nineteen amino acids as an auxiliary head read $-0.020$ against betaxanthin
+alone, paired over four seeds with a spread of 0.012, and the auxiliary head tripled the
+run-to-run spread of the betaxanthin read, from 0.007 to 0.023, so detecting a lift of
+0.015 on that design needs about twenty-two seeds an arm. Against a shared signal of
+$-0.041$ the isobutanol version of that design has less to share than the amino-acid one
+that failed, at the same cost. The other endpoint as an input rather than a second
+task is where the campaign's gains have come from, and that is the form the third
+endpoint should take if it is read at all: the amino-acid pool through a hidden layer
+as an input for the biosensor, which the ridge already reads at 0.102.

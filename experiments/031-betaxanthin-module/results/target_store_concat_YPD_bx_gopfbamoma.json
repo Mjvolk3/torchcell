@@ -1,0 +1,11 @@
+{
+  "store": "/scratch/projects/torchcell-scratch/data/torchcell/reference_flux/ess_solve_encodings_YPD_bx_gopfbamoma.npz",
+  "base": "/scratch/projects/torchcell-scratch/data/torchcell/reference_flux/ess_solve_encodings_YPD_bx_gopfba.npz",
+  "append": "/scratch/projects/torchcell-scratch/data/torchcell/reference_flux/ess_solve_encodings_YPD_bx_moma.npz",
+  "n_genes": 6607,
+  "n_genes_with_appended_row": 1155,
+  "n_columns": 10716,
+  "column_layout": "YPD_bx_gopfba (6539) | YPD_bx_moma (4177)",
+  "seconds": 1.0423181056976318,
+  "generated_by": "experiments/031-betaxanthin-module/scripts/target_store_concat.py"
+}

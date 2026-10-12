@@ -1,0 +1,10 @@
+# experiments/027-betaxanthin-metabolic/conf/arm_flux_projection_anchored_nodiss.yaml
+# [[experiments.027-betaxanthin-metabolic.projection-head]]
+#
+# `flux_projection_anchored` with the Gibbs dissipation limit HELD OUT. The limit is a
+# verification readout (user, 2026-09-14): a model that respects it because it was trained
+# against it has been told to, not discovered it. Anchored thermodynamics, the enzyme
+# capacity bound through the abundance head and the protein-pool budget stay on;
+# `g_diss_mean` is recorded every epoch and never enters the loss.
+base_arm: flux_projection_anchored_nodiss
+permute_train_targets: false

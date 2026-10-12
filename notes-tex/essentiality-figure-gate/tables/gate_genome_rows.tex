@@ -1,0 +1,25 @@
+%% SOURCE: experiments/028-gene-essentiality/results/genome_heldout_readout.json,
+%% rows written by essentiality_gate_numbers.py; regenerate, do not edit.
+graph convolution on ProtT5 + FBA ratios & GCN & 3 & 0.759 & [0.740, 0.777] \\
+graph convolution, physical graph, degree and clustering & GCN & 3 & 0.759 & [0.740, 0.777] \\
+graph convolution, union of nine, ProtT5 & GCN & 3 & 0.755 & [0.737, 0.773] \\
+graph convolution on ProtT5 alone, 400 epochs & GCN & 3 & 0.749 & [0.731, 0.768] \\
+graph convolution on the three inputs, 400 epochs & GCN & 3 & 0.744 & [0.725, 0.762] \\
+graph attention, union of nine, degree and clustering & GATv2 & 3 & 0.717 & [0.699, 0.735] \\
+graph attention, physical graph, degree and clustering & GATv2 & 3 & 0.708 & [0.689, 0.728] \\
+graph convolution on GO alone, 400 epochs & GCN & 3 & 0.703 & [0.685, 0.722] \\
+graph convolution on ProtT5 + GO + FBA ratios, 400 epochs & GCN & 3 & 0.702 & [0.682, 0.721] \\
+graph convolution on GO + FBA ratios, 400 epochs & GCN & 3 & 0.700 & [0.680, 0.719] \\
+graph convolution, physical graph, all-ones input & GCN & 3 & 0.686 & [0.668, 0.704] \\
+graph convolution, union of nine, degree and clustering & GCN & 3 & 0.663 & [0.644, 0.683] \\
+graph convolution, union of nine, all-ones input & GCN & 3 & 0.643 & [0.624, 0.661] \\
+layer-free + physical degree and clustering in the affine (round 76) & transformer & 6 & 0.593 & [0.573, 0.613] \\
+pathway multi-hot + ProtT5 + FBA affine (round 22 recipe) & transformer & 6 & 0.572 & [0.552, 0.591] \\
+layer-free log1p vector + affine, pathway + ProtT5 (round 33 form) & transformer & 6 & 0.570 & [0.550, 0.590] \\
+layer-free, store over every gene (wild-type rows; round 76 control) & transformer & 6 & 0.570 & [0.550, 0.590] \\
+cached solve + flux head, pathway + ProtT5 (round 27 form) & transformer & 6 & 0.551 & [0.530, 0.570] \\
+graph convolution, physical graph, ProtT5 & GCN & 3 & 0.544 & [0.523, 0.566] \\
+MLP on ProtT5 alone & MLP & 3 & 0.534 & [0.514, 0.554] \\
+MLP on the three inputs & MLP & 3 & 0.509 & [0.490, 0.528] \\
+FBA knockout ratio on YPD (0 of 4674 genes carry a reaction) & solver & 1 & 0.500 & [0.500, 0.500] \\
+MLP on ProtT5 + FBA ratios & MLP & 3 & 0.481 & [0.462, 0.502] \\

@@ -1,0 +1,1434 @@
+{
+  "protocol": "[[experiments.020-cachera-betaxanthin.merzbacher-comparison]]",
+  "ground_truth": "Merzbacher released labels (yeast_production_validation_split.csv)",
+  "bin_scale_fitted_on": {
+    "split": "train_val_pool",
+    "n_genes": 4082,
+    "min": -2.600495426201653,
+    "max": 2.7043779620586794
+  },
+  "their_baseline_gene_level": {
+    "n_genes": 640,
+    "gene_level_accuracy": 0.7,
+    "majority_class_rate": 0.6734375,
+    "fraction_predicted_medium": 0.9484375,
+    "high_producers_true": 100,
+    "high_producers_found": 18,
+    "high_producer_recall": 0.18,
+    "confusion_matrix": {
+      "true_low": {
+        "pred_low": 6,
+        "pred_medium": 101,
+        "pred_high": 2
+      },
+      "true_medium": {
+        "pred_low": 2,
+        "pred_medium": 424,
+        "pred_high": 5
+      },
+      "true_high": {
+        "pred_low": 0,
+        "pred_medium": 82,
+        "pred_high": 18
+      }
+    }
+  },
+  "their_best_model": "RandomForestClassifier_Resampled",
+  "their_mcc": 0.20519014246043876,
+  "pooled": {
+    "n_runs": 15,
+    "spearman_vs_raw": {
+      "mean": 0.05934256833654988,
+      "sd": 0.06594975859926873,
+      "sem": 0.017028154449424477,
+      "n": 15
+    },
+    "pearson_vs_raw": {
+      "mean": 0.16155279788773047,
+      "sd": 0.12447927823149561,
+      "sem": 0.03214041143590013,
+      "n": 15
+    },
+    "mcc": {
+      "mean": 0.06505315685156231,
+      "sd": 0.07986334902766642,
+      "sem": 0.02062062805043349,
+      "n": 15
+    },
+    "accuracy": {
+      "mean": 0.677829942618675,
+      "sd": 0.006085969076836267,
+      "sem": 0.0015713904586746792,
+      "n": 15
+    },
+    "high_producer_recall": {
+      "mean": 0.043333333333333335,
+      "sd": 0.06043493155767575,
+      "sem": 0.015604232230137549,
+      "n": 15
+    },
+    "fraction_predicted_medium": {
+      "mean": 0.9827856025039123,
+      "sd": 0.027086278345149133,
+      "sem": 0.006993646996100078,
+      "n": 15
+    },
+    "topk_50_high_precision": {
+      "mean": 0.324,
+      "sd": 0.1161772045503887,
+      "sem": 0.029996825228839195,
+      "n": 15
+    },
+    "topk_100_high_precision": {
+      "mean": 0.222,
+      "sd": 0.056845655695299806,
+      "sem": 0.014677485187475796,
+      "n": 15
+    },
+    "mcc_rank_matched": {
+      "mean": 0.0683321162158643,
+      "sd": 0.044059368418676505,
+      "sem": 0.011376080008663407,
+      "n": 15
+    },
+    "accuracy_rank_matched": {
+      "mean": 0.5961398017736046,
+      "sd": 0.0181682627591871,
+      "sem": 0.0046910252730568034,
+      "n": 15
+    },
+    "high_producer_recall_rank_matched": {
+      "mean": 0.12000000000000001,
+      "sd": 0.0550324579550235,
+      "sem": 0.014209319544044393,
+      "n": 15
+    },
+    "fraction_predicted_medium_rank_matched": {
+      "mean": 0.7902973395931142,
+      "sd": 0.0,
+      "sem": 0.0,
+      "n": 15
+    }
+  },
+  "by_setting": {
+    "s00_flux_capacity_e80": {
+      "n_runs": 3,
+      "spearman_vs_raw": {
+        "mean": 0.060585196225834845,
+        "sd": 0.055153862841411834,
+        "sem": 0.03184309755833682,
+        "n": 3
+      },
+      "pearson_vs_raw": {
+        "mean": 0.22763623818401868,
+        "sd": 0.037994470902536326,
+        "sem": 0.021936118003296753,
+        "n": 3
+      },
+      "mcc": {
+        "mean": 0.07330537079970789,
+        "sd": 0.06794451979318152,
+        "sem": 0.039227786792553204,
+        "n": 3
+      },
+      "accuracy": {
+        "mean": 0.6781429316640584,
+        "sd": 0.003938359121163665,
+        "sem": 0.00227381269876926,
+        "n": 3
+      },
+      "high_producer_recall": {
+        "mean": 0.03666666666666667,
+        "sd": 0.04725815626252608,
+        "sem": 0.027284509239574834,
+        "n": 3
+      },
+      "fraction_predicted_medium": {
+        "mean": 0.9906103286384976,
+        "sd": 0.013642876192615573,
+        "sem": 0.007876718242327338,
+        "n": 3
+      },
+      "topk_50_high_precision": {
+        "mean": 0.34,
+        "sd": 0.05291502622129183,
+        "sem": 0.030550504633038947,
+        "n": 3
+      },
+      "topk_100_high_precision": {
+        "mean": 0.21666666666666667,
+        "sd": 0.056862407030773277,
+        "sem": 0.03282952600598702,
+        "n": 3
+      },
+      "mcc_rank_matched": {
+        "mean": 0.10021101369011752,
+        "sd": 0.01436804261281333,
+        "sem": 0.00829539327023579,
+        "n": 3
+      },
+      "accuracy_rank_matched": {
+        "mean": 0.6092853416797078,
+        "sd": 0.005924787006573014,
+        "sem": 0.0034206773731361266,
+        "n": 3
+      },
+      "high_producer_recall_rank_matched": {
+        "mean": 0.14333333333333334,
+        "sd": 0.005773502691896247,
+        "sem": 0.003333333333333327,
+        "n": 3
+      },
+      "fraction_predicted_medium_rank_matched": {
+        "mean": 0.7902973395931142,
+        "sd": 0.0,
+        "sem": 0.0,
+        "n": 3
+      }
+    },
+    "s00_flux_fluxforce_boxforce_e80": {
+      "n_runs": 2,
+      "spearman_vs_raw": {
+        "mean": -0.034639847640150774,
+        "sd": 0.01154927088187341,
+        "sem": 0.008166567758333026,
+        "n": 2
+      },
+      "pearson_vs_raw": {
+        "mean": -0.06375472031982021,
+        "sd": 0.08365217279661306,
+        "sem": 0.05915101864547393,
+        "n": 2
+      },
+      "mcc": {
+        "mean": 0.0,
+        "sd": 0.0,
+        "sem": 0.0,
+        "n": 2
+      },
+      "accuracy": {
+        "mean": 0.6744913928012519,
+        "sd": 0.0,
+        "sem": 0.0,
+        "n": 2
+      },
+      "high_producer_recall": {
+        "mean": 0.0,
+        "sd": 0.0,
+        "sem": 0.0,
+        "n": 2
+      },
+      "fraction_predicted_medium": {
+        "mean": 1.0,
+        "sd": 0.0,
+        "sem": 0.0,
+        "n": 2
+      },
+      "topk_50_high_precision": {
+        "mean": 0.14,
+        "sd": 0.0,
+        "sem": 0.0,
+        "n": 2
+      },
+      "topk_100_high_precision": {
+        "mean": 0.12,
+        "sd": 0.014142135623730952,
+        "sem": 0.01,
+        "n": 2
+      },
+      "mcc_rank_matched": {
+        "mean": 0.0002732001795617495,
+        "sd": 0.016101274700567974,
+        "sem": 0.011385320526519012,
+        "n": 2
+      },
+      "accuracy_rank_matched": {
+        "mean": 0.568075117370892,
+        "sd": 0.00663950029283145,
+        "sem": 0.004694835680751186,
+        "n": 2
+      },
+      "high_producer_recall_rank_matched": {
+        "mean": 0.03,
+        "sd": 0.01414213562373095,
+        "sem": 0.01,
+        "n": 2
+      },
+      "fraction_predicted_medium_rank_matched": {
+        "mean": 0.7902973395931142,
+        "sd": 0.0,
+        "sem": 0.0,
+        "n": 2
+      }
+    },
+    "s00_flux_fluxforce_boxforce_frozen_e80": {
+      "n_runs": 1,
+      "spearman_vs_raw": {
+        "mean": -0.03573221452057288,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "pearson_vs_raw": {
+        "mean": -0.040802570317769356,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "mcc": {
+        "mean": 0.0,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "accuracy": {
+        "mean": 0.6744913928012519,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "high_producer_recall": {
+        "mean": 0.0,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "fraction_predicted_medium": {
+        "mean": 1.0,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "topk_50_high_precision": {
+        "mean": 0.18,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "topk_100_high_precision": {
+        "mean": 0.17,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "mcc_rank_matched": {
+        "mean": 0.015453627548253766,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "accuracy_rank_matched": {
+        "mean": 0.5743348982785602,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "high_producer_recall_rank_matched": {
+        "mean": 0.05,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      },
+      "fraction_predicted_medium_rank_matched": {
+        "mean": 0.7902973395931142,
+        "sd": NaN,
+        "sem": null,
+        "n": 1
+      }
+    },
+    "s00_flux_projection_anchored_e200": {
+      "n_runs": 3,
+      "spearman_vs_raw": {
+        "mean": 0.09952770828328883,
+        "sd": 0.012721323198134469,
+        "sem": 0.007344659372891167,
+        "n": 3
+      },
+      "pearson_vs_raw": {
+        "mean": 0.1975289461751625,
+        "sd": 0.052130592769516954,
+        "sem": 0.030097611768495375,
+        "n": 3
+      },
+      "mcc": {
+        "mean": 0.0951162626884361,
+        "sd": 0.09932549696884968,
+        "sem": 0.057345602412358726,
+        "n": 3
+      },
+      "accuracy": {
+        "mean": 0.6812728221178925,
+        "sd": 0.00916974221765621,
+        "sem": 0.00529415313776329,
+        "n": 3
+      },
+      "high_producer_recall": {
+        "mean": 0.056666666666666664,
+        "sd": 0.06027713773341708,
+        "sem": 0.0348010216963685,
+        "n": 3
+      },
+      "fraction_predicted_medium": {
+        "mean": 0.9890453834115807,
+        "sd": 0.01026203211940843,
+        "sem": 0.005924787006573043,
+        "n": 3
+      },
+      "topk_50_high_precision": {
+        "mean": 0.35333333333333333,
+        "sd": 0.11547005383792515,
+        "sem": 0.06666666666666667,
+        "n": 3
+      },
+      "topk_100_high_precision": {
+        "mean": 0.23666666666666666,
+        "sd": 0.015275252316519465,
+        "sem": 0.008819171036881969,
+        "n": 3
+      },
+      "mcc_rank_matched": {
+        "mean": 0.09262080000577153,
+        "sd": 0.0352625131897348,
+        "sem": 0.020358821482396115,
+        "n": 3
+      },
+      "accuracy_rank_matched": {
+        "mean": 0.6061554512258738,
+        "sd": 0.014540803197461025,
+        "sem": 0.008395136640287494,
+        "n": 3
+      },
+      "high_producer_recall_rank_matched": {
+        "mean": 0.12666666666666668,
+        "sd": 0.04509249752822895,
+        "sem": 0.02603416558635552,
+        "n": 3
+      },
+      "fraction_predicted_medium_rank_matched": {
+        "mean": 0.7902973395931142,
+        "sd": 0.0,
+        "sem": 0.0,
+        "n": 3
+      }
+    },
+    "s00_flux_projection_anchored_fluxforce_e80": {
+      "n_runs": 3,
+      "spearman_vs_raw": {
+        "mean": 0.052624031413160084,
+        "sd": 0.07618575881785142,
+        "sem": 0.04398586836190242,
+        "n": 3
+      },
+      "pearson_vs_raw": {
+        "mean": 0.17136240385083307,
+        "sd": 0.06105905689093069,
+        "sem": 0.03525246293244351,
+        "n": 3
+      },
+      "mcc": {
+        "mean": 0.0,
+        "sd": 0.0,
+        "sem": 0.0,
+        "n": 3
+      },
+      "accuracy": {
+        "mean": 0.6744913928012519,
+        "sd": 0.0,
+        "sem": 0.0,
+        "n": 3
+      },
+      "high_producer_recall": {
+        "mean": 0.0,
+        "sd": 0.0,
+        "sem": 0.0,
+        "n": 3
+      },
+      "fraction_predicted_medium": {
+        "mean": 1.0,
+        "sd": 0.0,
+        "sem": 0.0,
+        "n": 3
+      },
+      "topk_50_high_precision": {
+        "mean": 0.34,
+        "sd": 0.1,
+        "sem": 0.05773502691896258,
+        "n": 3
+      },
+      "topk_100_high_precision": {
+        "mean": 0.26,
+        "sd": 0.05,
+        "sem": 0.02886751345948129,
+        "n": 3
+      },
+      "mcc_rank_matched": {
+        "mean": 0.047079517899695465,
+        "sd": 0.035262513189734807,
+        "sem": 0.020358821482396122,
+        "n": 3
+      },
+      "accuracy_rank_matched": {
+        "mean": 0.587376108502869,
+        "sd": 0.014540803197460964,
+        "sem": 0.00839513664028746,
+        "n": 3
+      },
+      "high_producer_recall_rank_matched": {
+        "mean": 0.11666666666666667,
+        "sd": 0.05131601439446885,
+        "sem": 0.0296273147243853,
+        "n": 3
+      },
+      "fraction_predicted_medium_rank_matched": {
+        "mean": 0.7902973395931142,
+        "sd": 0.0,
+        "sem": 0.0,
+        "n": 3
+      }
+    },
+    "s00_pooled_e200": {
+      "n_runs": 3,
+      "spearman_vs_raw": {
+        "mean": 0.11897987569409042,
+        "sd": 0.013832731581227201,
+        "sem": 0.007986331302049362,
+        "n": 3
+      },
+      "pearson_vs_raw": {
+        "mean": 0.267340404881108,
+        "sd": 0.020426795892543894,
+        "sem": 0.01179341610724176,
+        "n": 3
+      },
+      "mcc": {
+        "mean": 0.15684415076966754,
+        "sd": 0.058078532696592404,
+        "sem": 0.033531656486516105,
+        "n": 3
+      },
+      "accuracy": {
+        "mean": 0.6807511737089201,
+        "sd": 0.009773079809700125,
+        "sem": 0.005642490258942064,
+        "n": 3
+      },
+      "high_producer_recall": {
+        "mean": 0.12333333333333334,
+        "sd": 0.06429100507328638,
+        "sem": 0.037118429085533484,
+        "n": 3
+      },
+      "fraction_predicted_medium": {
+        "mean": 0.9342723004694835,
+        "sd": 0.016561823543440324,
+        "sem": 0.009561973281076353,
+        "n": 3
+      },
+      "topk_50_high_precision": {
+        "mean": 0.43333333333333335,
+        "sd": 0.06429100507328638,
+        "sem": 0.037118429085533484,
+        "n": 3
+      },
+      "topk_100_high_precision": {
+        "mean": 0.26,
+        "sd": 0.010000000000000009,
+        "sem": 0.005773502691896263,
+        "n": 3
+      },
+      "mcc_rank_matched": {
+        "mean": 0.09641590684794452,
+        "sd": 0.021579890998491398,
+        "sem": 0.01245915587706179,
+        "n": 3
+      },
+      "accuracy_rank_matched": {
+        "mean": 0.6077203964527909,
+        "sd": 0.008898655247382379,
+        "sem": 0.005137641002501892,
+        "n": 3
+      },
+      "high_producer_recall_rank_matched": {
+        "mean": 0.17666666666666667,
+        "sd": 0.011547005383792509,
+        "sem": 0.006666666666666664,
+        "n": 3
+      },
+      "fraction_predicted_medium_rank_matched": {
+        "mean": 0.7902973395931142,
+        "sd": 0.0,
+        "sem": 0.0,
+        "n": 3
+      }
+    }
+  },
+  "per_run": [
+    {
+      "n_genes": 639,
+      "accuracy": 0.6823161189358372,
+      "majority_class_rate": 0.6744913928012519,
+      "mcc": 0.13416961808358813,
+      "fraction_predicted_medium": 0.974960876369327,
+      "high_producers_true": 100,
+      "high_producers_found": 9,
+      "high_producer_recall": 0.09,
+      "confusion_matrix": [
+        [
+          0,
+          105,
+          3
+        ],
+        [
+          0,
+          427,
+          4
+        ],
+        [
+          0,
+          91,
+          9
+        ]
+      ],
+      "mcc_rank_matched": 0.10653619176040587,
+      "accuracy_rank_matched": 0.6118935837245696,
+      "high_producer_recall_rank_matched": 0.14,
+      "fraction_predicted_medium_rank_matched": 0.7902973395931142,
+      "confusion_matrix_rank_matched": [
+        [
+          20,
+          84,
+          4
+        ],
+        [
+          65,
+          357,
+          9
+        ],
+        [
+          22,
+          64,
+          14
+        ]
+      ],
+      "file": "flux_capacity_s2700.json",
+      "setting": "s00_flux_capacity_e80",
+      "seed": 2700,
+      "dist": null,
+      "n_scored": 639,
+      "spearman_vs_raw": 0.12253500571372503,
+      "pearson_vs_raw": 0.26345762772884923,
+      "topk_50_high_precision": 0.4,
+      "topk_100_high_precision": 0.28
+    },
+    {
+      "n_genes": 639,
+      "accuracy": 0.6744913928012519,
+      "majority_class_rate": 0.6744913928012519,
+      "mcc": 0.0,
+      "fraction_predicted_medium": 1.0,
+      "high_producers_true": 100,
+      "high_producers_found": 0,
+      "high_producer_recall": 0.0,
+      "confusion_matrix": [
+        [
+          0,
+          108,
+          0
+        ],
+        [
+          0,
+          431,
+          0
+        ],
+        [
+          0,
+          100,
+          0
+        ]
+      ],
+      "mcc_rank_matched": 0.11033129860257887,
+      "accuracy_rank_matched": 0.6134585289514867,
+      "high_producer_recall_rank_matched": 0.15,
+      "fraction_predicted_medium_rank_matched": 0.7902973395931142,
+      "confusion_matrix_rank_matched": [
+        [
+          19,
+          87,
+          2
+        ],
+        [
+          63,
+          358,
+          10
+        ],
+        [
+          25,
+          60,
+          15
+        ]
+      ],
+      "file": "flux_capacity_s2701.json",
+      "setting": "s00_flux_capacity_e80",
+      "seed": 2701,
+      "dist": null,
+      "n_scored": 639,
+      "spearman_vs_raw": 0.04240147651846292,
+      "pearson_vs_raw": 0.23166183428932038,
+      "topk_50_high_precision": 0.3,
+      "topk_100_high_precision": 0.17
+    },
+    {
+      "n_genes": 639,
+      "accuracy": 0.6776212832550861,
+      "majority_class_rate": 0.6744913928012519,
+      "mcc": 0.08574649431553556,
+      "fraction_predicted_medium": 0.9968701095461658,
+      "high_producers_true": 100,
+      "high_producers_found": 2,
+      "high_producer_recall": 0.02,
+      "confusion_matrix": [
+        [
+          0,
+          108,
+          0
+        ],
+        [
+          0,
+          431,
+          0
+        ],
+        [
+          0,
+          98,
+          2
+        ]
+      ],
+      "mcc_rank_matched": 0.08376555070736784,
+      "accuracy_rank_matched": 0.6025039123630673,
+      "high_producer_recall_rank_matched": 0.14,
+      "fraction_predicted_medium_rank_matched": 0.7902973395931142,
+      "confusion_matrix_rank_matched": [
+        [
+          13,
+          92,
+          3
+        ],
+        [
+          63,
+          358,
+          10
+        ],
+        [
+          31,
+          55,
+          14
+        ]
+      ],
+      "file": "flux_capacity_s2702.json",
+      "setting": "s00_flux_capacity_e80",
+      "seed": 2702,
+      "dist": null,
+      "n_scored": 639,
+      "spearman_vs_raw": 0.0168191064453166,
+      "pearson_vs_raw": 0.18778925253388645,
+      "topk_50_high_precision": 0.32,
+      "topk_100_high_precision": 0.2
+    },
+    {
+      "n_genes": 639,
+      "accuracy": 0.6744913928012519,
+      "majority_class_rate": 0.6744913928012519,
+      "mcc": 0.0,
+      "fraction_predicted_medium": 1.0,
+      "high_producers_true": 100,
+      "high_producers_found": 0,
+      "high_producer_recall": 0.0,
+      "confusion_matrix": [
+        [
+          0,
+          108,
+          0
+        ],
+        [
+          0,
+          431,
+          0
+        ],
+        [
+          0,
+          100,
+          0
+        ]
+      ],
+      "mcc_rank_matched": 0.015453627548253766,
+      "accuracy_rank_matched": 0.5743348982785602,
+      "high_producer_recall_rank_matched": 0.05,
+      "fraction_predicted_medium_rank_matched": 0.7902973395931142,
+      "confusion_matrix_rank_matched": [
+        [
+          14,
+          88,
+          6
+        ],
+        [
+          67,
+          348,
+          16
+        ],
+        [
+          26,
+          69,
+          5
+        ]
+      ],
+      "file": "flux_fluxforce_boxforce_frozen_s2700.json",
+      "setting": "s00_flux_fluxforce_boxforce_frozen_e80",
+      "seed": 2700,
+      "dist": "crps",
+      "n_scored": 639,
+      "spearman_vs_raw": -0.03573221452057288,
+      "pearson_vs_raw": -0.040802570317769356,
+      "topk_50_high_precision": 0.18,
+      "topk_100_high_precision": 0.17
+    },
+    {
+      "n_genes": 639,
+      "accuracy": 0.6744913928012519,
+      "majority_class_rate": 0.6744913928012519,
+      "mcc": 0.0,
+      "fraction_predicted_medium": 1.0,
+      "high_producers_true": 100,
+      "high_producers_found": 0,
+      "high_producer_recall": 0.0,
+      "confusion_matrix": [
+        [
+          0,
+          108,
+          0
+        ],
+        [
+          0,
+          431,
+          0
+        ],
+        [
+          0,
+          100,
+          0
+        ]
+      ],
+      "mcc_rank_matched": -0.011112120346957263,
+      "accuracy_rank_matched": 0.5633802816901409,
+      "high_producer_recall_rank_matched": 0.02,
+      "fraction_predicted_medium_rank_matched": 0.7902973395931142,
+      "confusion_matrix_rank_matched": [
+        [
+          16,
+          87,
+          5
+        ],
+        [
+          69,
+          342,
+          20
+        ],
+        [
+          22,
+          76,
+          2
+        ]
+      ],
+      "file": "flux_fluxforce_boxforce_s2700.json",
+      "setting": "s00_flux_fluxforce_boxforce_e80",
+      "seed": 2700,
+      "dist": "crps",
+      "n_scored": 639,
+      "spearman_vs_raw": -0.02647327988181775,
+      "pearson_vs_raw": -0.004603701674346279,
+      "topk_50_high_precision": 0.14,
+      "topk_100_high_precision": 0.11
+    },
+    {
+      "n_genes": 639,
+      "accuracy": 0.6744913928012519,
+      "majority_class_rate": 0.6744913928012519,
+      "mcc": 0.0,
+      "fraction_predicted_medium": 1.0,
+      "high_producers_true": 100,
+      "high_producers_found": 0,
+      "high_producer_recall": 0.0,
+      "confusion_matrix": [
+        [
+          0,
+          108,
+          0
+        ],
+        [
+          0,
+          431,
+          0
+        ],
+        [
+          0,
+          100,
+          0
+        ]
+      ],
+      "mcc_rank_matched": 0.011658520706080762,
+      "accuracy_rank_matched": 0.5727699530516432,
+      "high_producer_recall_rank_matched": 0.04,
+      "fraction_predicted_medium_rank_matched": 0.7902973395931142,
+      "confusion_matrix_rank_matched": [
+        [
+          15,
+          88,
+          5
+        ],
+        [
+          66,
+          347,
+          18
+        ],
+        [
+          26,
+          70,
+          4
+        ]
+      ],
+      "file": "flux_fluxforce_boxforce_s2701.json",
+      "setting": "s00_flux_fluxforce_boxforce_e80",
+      "seed": 2701,
+      "dist": "crps",
+      "n_scored": 639,
+      "spearman_vs_raw": -0.0428064153984838,
+      "pearson_vs_raw": -0.12290573896529415,
+      "topk_50_high_precision": 0.14,
+      "topk_100_high_precision": 0.13
+    },
+    {
+      "n_genes": 639,
+      "accuracy": 0.6744913928012519,
+      "majority_class_rate": 0.6744913928012519,
+      "mcc": 0.0,
+      "fraction_predicted_medium": 1.0,
+      "high_producers_true": 100,
+      "high_producers_found": 0,
+      "high_producer_recall": 0.0,
+      "confusion_matrix": [
+        [
+          0,
+          108,
+          0
+        ],
+        [
+          0,
+          431,
+          0
+        ],
+        [
+          0,
+          100,
+          0
+        ]
+      ],
+      "mcc_rank_matched": 0.007863413863907757,
+      "accuracy_rank_matched": 0.5712050078247262,
+      "high_producer_recall_rank_matched": 0.06,
+      "fraction_predicted_medium_rank_matched": 0.7902973395931142,
+      "confusion_matrix_rank_matched": [
+        [
+          16,
+          87,
+          5
+        ],
+        [
+          72,
+          343,
+          16
+        ],
+        [
+          19,
+          75,
+          6
+        ]
+      ],
+      "file": "flux_projection_anchored_fluxforce_s2700.json",
+      "setting": "s00_flux_projection_anchored_fluxforce_e80",
+      "seed": 2700,
+      "dist": "crps",
+      "n_scored": 639,
+      "spearman_vs_raw": -0.03534768171178058,
+      "pearson_vs_raw": 0.10176439399624858,
+      "topk_50_high_precision": 0.24,
+      "topk_100_high_precision": 0.21
+    },
+    {
+      "n_genes": 639,
+      "accuracy": 0.6744913928012519,
+      "majority_class_rate": 0.6744913928012519,
+      "mcc": 0.0,
+      "fraction_predicted_medium": 1.0,
+      "high_producers_true": 100,
+      "high_producers_found": 0,
+      "high_producer_recall": 0.0,
+      "confusion_matrix": [
+        [
+          0,
+          108,
+          0
+        ],
+        [
+          0,
+          431,
+          0
+        ],
+        [
+          0,
+          100,
+          0
+        ]
+      ],
+      "mcc_rank_matched": 0.057199802812156815,
+      "accuracy_rank_matched": 0.5915492957746479,
+      "high_producer_recall_rank_matched": 0.13,
+      "fraction_predicted_medium_rank_matched": 0.7902973395931142,
+      "confusion_matrix_rank_matched": [
+        [
+          21,
+          84,
+          3
+        ],
+        [
+          76,
+          344,
+          11
+        ],
+        [
+          10,
+          77,
+          13
+        ]
+      ],
+      "file": "flux_projection_anchored_fluxforce_s2701.json",
+      "setting": "s00_flux_projection_anchored_fluxforce_e80",
+      "seed": 2701,
+      "dist": "crps",
+      "n_scored": 639,
+      "spearman_vs_raw": 0.09655408430924574,
+      "pearson_vs_raw": 0.19639943169247406,
+      "topk_50_high_precision": 0.34,
+      "topk_100_high_precision": 0.26
+    },
+    {
+      "n_genes": 639,
+      "accuracy": 0.6744913928012519,
+      "majority_class_rate": 0.6744913928012519,
+      "mcc": 0.0,
+      "fraction_predicted_medium": 1.0,
+      "high_producers_true": 100,
+      "high_producers_found": 0,
+      "high_producer_recall": 0.0,
+      "confusion_matrix": [
+        [
+          0,
+          108,
+          0
+        ],
+        [
+          0,
+          431,
+          0
+        ],
+        [
+          0,
+          100,
+          0
+        ]
+      ],
+      "mcc_rank_matched": 0.07617533702302183,
+      "accuracy_rank_matched": 0.5993740219092332,
+      "high_producer_recall_rank_matched": 0.16,
+      "fraction_predicted_medium_rank_matched": 0.7902973395931142,
+      "confusion_matrix_rank_matched": [
+        [
+          20,
+          88,
+          0
+        ],
+        [
+          73,
+          347,
+          11
+        ],
+        [
+          14,
+          70,
+          16
+        ]
+      ],
+      "file": "flux_projection_anchored_fluxforce_s2702.json",
+      "setting": "s00_flux_projection_anchored_fluxforce_e80",
+      "seed": 2702,
+      "dist": "crps",
+      "n_scored": 639,
+      "spearman_vs_raw": 0.09666569164201509,
+      "pearson_vs_raw": 0.21592338586377657,
+      "topk_50_high_precision": 0.44,
+      "topk_100_high_precision": 0.31
+    },
+    {
+      "n_genes": 639,
+      "accuracy": 0.6917057902973396,
+      "majority_class_rate": 0.6744913928012519,
+      "mcc": 0.19817418481827137,
+      "fraction_predicted_medium": 0.9796557120500783,
+      "high_producers_true": 100,
+      "high_producers_found": 12,
+      "high_producer_recall": 0.12,
+      "confusion_matrix": [
+        [
+          0,
+          108,
+          0
+        ],
+        [
+          0,
+          430,
+          1
+        ],
+        [
+          0,
+          88,
+          12
+        ]
+      ],
+      "mcc_rank_matched": 0.10274108491823286,
+      "accuracy_rank_matched": 0.6103286384976526,
+      "high_producer_recall_rank_matched": 0.17,
+      "fraction_predicted_medium_rank_matched": 0.7902973395931142,
+      "confusion_matrix_rank_matched": [
+        [
+          18,
+          87,
+          3
+        ],
+        [
+          69,
+          355,
+          7
+        ],
+        [
+          20,
+          63,
+          17
+        ]
+      ],
+      "file": "flux_projection_anchored_s2700.json",
+      "setting": "s00_flux_projection_anchored_e200",
+      "seed": 2700,
+      "dist": "crps",
+      "n_scored": 639,
+      "spearman_vs_raw": 0.11021582332129787,
+      "pearson_vs_raw": 0.24668170567083544,
+      "topk_50_high_precision": 0.42,
+      "topk_100_high_precision": 0.24
+    },
+    {
+      "n_genes": 639,
+      "accuracy": 0.6744913928012519,
+      "majority_class_rate": 0.6744913928012519,
+      "mcc": 0.0,
+      "fraction_predicted_medium": 1.0,
+      "high_producers_true": 100,
+      "high_producers_found": 0,
+      "high_producer_recall": 0.0,
+      "confusion_matrix": [
+        [
+          0,
+          108,
+          0
+        ],
+        [
+          0,
+          431,
+          0
+        ],
+        [
+          0,
+          100,
+          0
+        ]
+      ],
+      "mcc_rank_matched": 0.05340469596998381,
+      "accuracy_rank_matched": 0.5899843505477308,
+      "high_producer_recall_rank_matched": 0.08,
+      "fraction_predicted_medium_rank_matched": 0.7902973395931142,
+      "confusion_matrix_rank_matched": [
+        [
+          23,
+          82,
+          3
+        ],
+        [
+          69,
+          346,
+          16
+        ],
+        [
+          15,
+          77,
+          8
+        ]
+      ],
+      "file": "flux_projection_anchored_s2701.json",
+      "setting": "s00_flux_projection_anchored_e200",
+      "seed": 2701,
+      "dist": "crps",
+      "n_scored": 639,
+      "spearman_vs_raw": 0.10291034610743156,
+      "pearson_vs_raw": 0.14285932170410595,
+      "topk_50_high_precision": 0.22,
+      "topk_100_high_precision": 0.22
+    },
+    {
+      "n_genes": 639,
+      "accuracy": 0.6776212832550861,
+      "majority_class_rate": 0.6744913928012519,
+      "mcc": 0.08717460324703695,
+      "fraction_predicted_medium": 0.9874804381846636,
+      "high_producers_true": 100,
+      "high_producers_found": 5,
+      "high_producer_recall": 0.05,
+      "confusion_matrix": [
+        [
+          0,
+          108,
+          0
+        ],
+        [
+          0,
+          428,
+          3
+        ],
+        [
+          0,
+          95,
+          5
+        ]
+      ],
+      "mcc_rank_matched": 0.12171661912909788,
+      "accuracy_rank_matched": 0.6181533646322379,
+      "high_producer_recall_rank_matched": 0.13,
+      "fraction_predicted_medium_rank_matched": 0.7902973395931142,
+      "confusion_matrix_rank_matched": [
+        [
+          24,
+          82,
+          2
+        ],
+        [
+          61,
+          358,
+          12
+        ],
+        [
+          22,
+          65,
+          13
+        ]
+      ],
+      "file": "flux_projection_anchored_s2702.json",
+      "setting": "s00_flux_projection_anchored_e200",
+      "seed": 2702,
+      "dist": "crps",
+      "n_scored": 639,
+      "spearman_vs_raw": 0.08545695542113706,
+      "pearson_vs_raw": 0.2030458111505461,
+      "topk_50_high_precision": 0.42,
+      "topk_100_high_precision": 0.25
+    },
+    {
+      "n_genes": 639,
+      "accuracy": 0.6838810641627543,
+      "majority_class_rate": 0.6744913928012519,
+      "mcc": 0.17857976929025196,
+      "fraction_predicted_medium": 0.9280125195618153,
+      "high_producers_true": 100,
+      "high_producers_found": 15,
+      "high_producer_recall": 0.15,
+      "confusion_matrix": [
+        [
+          6,
+          101,
+          1
+        ],
+        [
+          8,
+          416,
+          7
+        ],
+        [
+          9,
+          76,
+          15
+        ]
+      ],
+      "mcc_rank_matched": 0.11412640544475187,
+      "accuracy_rank_matched": 0.6150234741784038,
+      "high_producer_recall_rank_matched": 0.17,
+      "fraction_predicted_medium_rank_matched": 0.7902973395931142,
+      "confusion_matrix_rank_matched": [
+        [
+          17,
+          89,
+          2
+        ],
+        [
+          64,
+          359,
+          8
+        ],
+        [
+          26,
+          57,
+          17
+        ]
+      ],
+      "file": "pooled_s2700.json",
+      "setting": "s00_pooled_e200",
+      "seed": 2700,
+      "dist": "crps",
+      "n_scored": 639,
+      "spearman_vs_raw": 0.10305672646346517,
+      "pearson_vs_raw": 0.2826541839133506,
+      "topk_50_high_precision": 0.48,
+      "topk_100_high_precision": 0.26
+    },
+    {
+      "n_genes": 639,
+      "accuracy": 0.6697965571205008,
+      "majority_class_rate": 0.6744913928012519,
+      "mcc": 0.0910328421137701,
+      "fraction_predicted_medium": 0.9530516431924883,
+      "high_producers_true": 100,
+      "high_producers_found": 5,
+      "high_producer_recall": 0.05,
+      "confusion_matrix": [
+        [
+          6,
+          102,
+          0
+        ],
+        [
+          11,
+          417,
+          3
+        ],
+        [
+          5,
+          90,
+          5
+        ]
+      ],
+      "mcc_rank_matched": 0.07238023018084883,
+      "accuracy_rank_matched": 0.5978090766823161,
+      "high_producer_recall_rank_matched": 0.17,
+      "fraction_predicted_medium_rank_matched": 0.7902973395931142,
+      "confusion_matrix_rank_matched": [
+        [
+          16,
+          90,
+          2
+        ],
+        [
+          74,
+          349,
+          8
+        ],
+        [
+          17,
+          66,
+          17
+        ]
+      ],
+      "file": "pooled_s2701.json",
+      "setting": "s00_pooled_e200",
+      "seed": 2701,
+      "dist": "crps",
+      "n_scored": 639,
+      "spearman_vs_raw": 0.12802977559749898,
+      "pearson_vs_raw": 0.24414742450372487,
+      "topk_50_high_precision": 0.36,
+      "topk_100_high_precision": 0.27
+    },
+    {
+      "n_genes": 639,
+      "accuracy": 0.6885758998435054,
+      "majority_class_rate": 0.6744913928012519,
+      "mcc": 0.20091984090498058,
+      "fraction_predicted_medium": 0.9217527386541471,
+      "high_producers_true": 100,
+      "high_producers_found": 17,
+      "high_producer_recall": 0.17,
+      "confusion_matrix": [
+        [
+          8,
+          99,
+          1
+        ],
+        [
+          11,
+          415,
+          5
+        ],
+        [
+          8,
+          75,
+          17
+        ]
+      ],
+      "mcc_rank_matched": 0.10274108491823286,
+      "accuracy_rank_matched": 0.6103286384976526,
+      "high_producer_recall_rank_matched": 0.19,
+      "fraction_predicted_medium_rank_matched": 0.7902973395931142,
+      "confusion_matrix_rank_matched": [
+        [
+          16,
+          90,
+          2
+        ],
+        [
+          70,
+          355,
+          6
+        ],
+        [
+          21,
+          60,
+          19
+        ]
+      ],
+      "file": "pooled_s2702.json",
+      "setting": "s00_pooled_e200",
+      "seed": 2702,
+      "dist": "crps",
+      "n_scored": 639,
+      "spearman_vs_raw": 0.12585312502130713,
+      "pearson_vs_raw": 0.27521960622624847,
+      "topk_50_high_precision": 0.46,
+      "topk_100_high_precision": 0.25
+    }
+  ],
+  "generated_by": "experiments/027-betaxanthin-metabolic/scripts/score_fcl_027.py",
+  "dumps": "/scratch/projects/torchcell-scratch/test-predictions-027-wave7",
+  "dump_format": "027",
+  "control": {
+    "control_dumps": "/scratch/projects/torchcell-scratch/test-predictions",
+    "control_result": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/020-cachera-betaxanthin/results/merzbacher_head_to_head.json",
+    "n_runs": 10,
+    "n_dump_files_present": 14,
+    "n_dump_files_named_by_stored_result": 10,
+    "reproduced_exactly": true
+  },
+  "slurm_job_id": "1908"
+}

@@ -10,26 +10,78 @@
 Formation energies were recomputed from eQuilibrator's component contribution, which
 returns a covariance and applies to any organism because it works from structure rather
 than from a curated per-organism file. Summing the resulting table reproduces
-eQuilibrator's own reaction call to $9.1\times10^{-13}$\,kJ\,mol$^{-1}$, so the table is
+eQuilibrator's own reaction call to $6.8\times10^{-13}$\,kJ\,mol$^{-1}$, so the table is
 arithmetically correct. On the chemical reactions both tables cover it agrees with the
-shipped file to a median of 10.11\,kJ\,mol$^{-1}$.
+shipped file to a median of 16.25\,kJ\,mol$^{-1}$, which is worse than the shipped file
+agrees with itself, and is expected once that file is read for what it is: yeast-GEM's
+metabolite and reaction columns come from three sources (yETFL, ModelSEED, dG-predictor)
+under three different matching keys, one of them row position.
+
+\textbf{The shipped columns are also in kilocalories and labeled kilojoules.} They are
+yETFL's values, from Oftadeh et al.\ 2021, copied by yeast-GEM's own curation script with
+no conversion, and yETFL carries \texttt{thermo\_units = 'kcal/mol'};
+regressing our kJ\,mol$^{-1}$ formation energies on yETFL's over 1{,}927 shared metabolites
+gives a slope of 4.187 at Pearson $r = 0.987$. The 33 reactions taken from dG-predictor are
+in kilojoules, so the reaction column mixes two unit systems. Correcting the unit and
+matching the compartment conditions closes the \emph{transport} arm of the disagreement,
+median 17.4 to 5.6\,kJ\,mol$^{-1}$ at $r$ 0.30 to 0.75, and leaves the single-compartment
+cloud where it was, 16.25 to 17.60. Only the second is a disagreement about thermodynamics.
+Every arm below read that column as kilojoules; \texttt{\_read\_delta\_g\_csv} now
+multiplies by 4.184 at parse time, so no later code path can hold a kcal number and call it
+kJ. The 33 reaction-column values that came from dG-predictor are already kJ and are
+over-converted by that factor; they supply 6 of 4{,}131 reactions in the union's
+last-resort fill and nothing else.
 
 The gain is 785 reactions with a real standard error, median 2.30\,kJ\,mol$^{-1}$, and the
 rank-590 covariance factor the layer had recorded as unavailable. The cost is reaction
-coverage: 42.5 percent against the shipped file's 77.7.
+coverage: 66.4 percent against the shipped file's 84.9.
 
-\subsection{Correction: the shortfall is not a mapping gap\secstatus{todo}}
+\subsection{Correction: most of the shortfall was the proton\secstatus{todo}}
 
-The obvious reading of that 42.5 percent is that identifiers are failing to resolve, and
-that better mapping would close it. An audit that implements every available recovery route
-measures otherwise.
+Reaction coverage was 42.5 percent, and that number was read as the price of an
+organism-independent method. Ranking metabolites by how many otherwise-priceable reactions
+each blocks says otherwise: the top twelve blockers were all H$^+$, in twelve compartments,
+blocking 1{,}477 reaction slots between them.
+
+\textbf{The proton is the reference of the Legendre transform, not a compound to be priced
+by it.} \texttt{standard\_dg\_formation} returns nothing for it, correctly, because a bare
+proton has no group decomposition. Left as a missing value it deleted every reaction that
+moves a proton. Setting it to zero, which reproduces eQuilibrator's own reaction call to
+0.0000\,kJ\,mol$^{-1}$ on four proton-carrying balanced reactions, takes coverage from
+1{,}755 reactions to \textbf{2{,}741}, a gain of 986. It does not move the union with the
+shipped table, which stays at 3{,}716: every added reaction was already covered, so what
+improved is independent confirmation rather than coverage.
+
+The fix carries a known error that is worth more attention than the gain. Zero is exact
+within one compartment and wrong across a membrane, where $RT\ln(10)\,\Delta\mathrm{pH}$
+per proton is the entire driving force. \textbf{183 reactions move a proton between
+compartments and 170 are now priced}, each missing that term: previously unpriced, now
+confidently wrong.
+
+\textbf{That term now exists as a separate table.}
+\texttt{torchcell/metabolism/transport.py} evaluates
+$\Delta_r G^t_j = -N_H RT\ln(10)\,\Delta\mathrm{pH} - Fq\,\Delta\Phi$ per reaction from the
+stoichiometry, each metabolite's compartment and its charge, giving a nonzero term on 326
+of the 1{,}468 reactions that cross a membrane. Against yeast-GEM's own column, converted
+out of kcal, the sign agrees on 84.7 percent of the 287 reactions nonzero in both at
+Pearson $r = 0.804$ (\texttt{results/transport\_terms.json}). It is a configuration field,
+\texttt{transport\_delta\_g\_source}, and it defaults to \texttt{off}, so every arm reported
+in this document still carries the zero. The 613 reactions with a nonzero shipped term and a
+zero computed one are the protonation contribution to $N_H$, which needs a species
+distribution per transported compound and is not computed.
+
+\subsection{The remaining shortfall is not a mapping gap\secstatus{todo}}
+
+The next reading is that identifiers are failing to resolve, and that better mapping would
+close what is left. An audit that implements every available recovery route measures
+otherwise.
 
 \textbf{There are two loss channels, and the summary reported only one.} The 332
-``unresolved'' metabolites are the accession-match failures. A further \textbf{375
+``unresolved'' metabolites are the accession-match failures. A further \textbf{361
 metabolites match a cache record that carries no structure and no group vector}, so
 \texttt{standard\_dg\_formation} returns nothing while the tier histogram counts them as
-resolved. Total unpriced is \textbf{707}, not 332. The baseline is 2{,}099 of 2{,}806
-metabolites, 74.80 percent, and 1{,}755 of 4{,}131 reactions, 42.48 percent.
+resolved. Total unpriced is \textbf{693}, not 332. The baseline is 2{,}113 of 2{,}806
+metabolites, 75.30 percent, and 2{,}741 of 4{,}131 reactions, 66.35 percent.
 
 \begin{table}[H]
   \centering
@@ -42,15 +94,15 @@ metabolites, 74.80 percent, and 1{,}755 of 4{,}131 reactions, 42.48 percent.
     \hline
     Step & Metabolites priced & Reactions & $\Delta$ reactions \\
     \hline
-    baseline & 2{,}099 (74.80\%) & 1{,}755 (42.48\%) & -- \\
-    extra identifier namespaces & 2{,}102 & 1{,}764 (42.70\%) & $+9$ \\
-    MetaNetX cross-reference table & 2{,}113 & 1{,}770 (42.85\%) & $+6$ \\
-    InChIKey structure lookup & 2{,}127 (75.80\%) & 1{,}779 (43.06\%) & $+9$ \\
+    baseline & 2{,}113 (75.30\%) & 2{,}741 (66.35\%) & -- \\
+    extra identifier namespaces & 2{,}116 & 2{,}753 (66.64\%) & $+12$ \\
+    MetaNetX cross-reference table & 2{,}127 & 2{,}764 (66.91\%) & $+11$ \\
+    InChIKey structure lookup & 2{,}141 (76.30\%) & 2{,}787 (67.47\%) & $+23$ \\
     \hline
   \end{tabular}
 \end{table}
 
-\textbf{Total recovery is 28 metabolites and 24 reactions, 0.58 percentage points.} The
+\textbf{Total recovery is 28 metabolites and 46 reactions, 1.12 percentage points.} The
 extra namespaces are worth exactly one chemical, hydrogen sulfide. The census explains why:
 the model carries chebi on 2{,}402 metabolites and metanetx on 2{,}251, but biocyc on 29,
 seed on 16, reactome on 2, and no hmdb, lipidmaps or swisslipid at all. Of the 332
@@ -58,11 +110,25 @@ unmatched, \textbf{181 of the 192 distinct chemicals carry no chemical annotatio
 whatsoever}, and the class breakdown is overwhelmingly lipid: phosphatidylinositol 135,
 cardiolipin 62, triacylglycerol 34, phosphatidate 25.
 
-Of the 679 still unpriced, 249 (36.7 percent) are a real ceiling: 185 carry a placeholder
-formula with an R, X or $*$ so no definite structure exists, and 64 are known to
-eQuilibrator but have no group decomposition. The other 430 (63.3 percent) have a definite
+Of the 665 still unpriced, 235 (35.3 percent) are a real ceiling: 185 carry a placeholder
+formula with an R, X or $*$ so no definite structure exists, and 50 are known to
+eQuilibrator but have no group decomposition. The other 430 (64.7 percent) have a definite
 formula and no usable structure anywhere, which is a structure-curation gap rather than a
 limit of the method.
+
+\textbf{Most of that gap is now closed.} 409 of the 430 are lipids whose acyl composition
+is written into the name, and \texttt{lipid\_structure\_writer.py} parses 168 of the 206
+distinct names, writes a structure for each, and reproduces yeast-GEM's own formula on all
+168. \textbf{347 of the 409 metabolite rows are priced}, 289 by finding a compound
+eQuilibrator already holds and 58 through the external p$K_a$ route
+(\texttt{results/lipid\_coverage.json}). The eQuilibrator recomputation moves from 66.35 to
+86.27 percent of reactions and passes the shipped column's 84.85, while the union with the
+shipped table does not move at all, since that table already prices these lipids by name.
+The gain is method consistency rather than coverage. Two conditions hold the values out of
+the built table for now: they are all at pH 7.2 and need re-transforming per compartment,
+and the 48 names priced only through the external route sit 777.5\,kJ\,mol$^{-1}$ off a
+cache value because they were written as the neutral parent rather than the major
+microspecies, a fix that is in progress.
 
 \subsection{A correctness bug in the shipped build, found by the same guard\secstatus{todo}}
 
@@ -76,7 +142,7 @@ The guard that fixes it, comparing heavy-atom composition against the GEM formul
 hydrogen excluded because protonation state legitimately differs, then finds the same class
 of error in the build already in use: \textbf{31 metabolites currently carry a formation
 energy from a compound whose heavy-atom composition disagrees with the GEM formula}, and 14
-of the 1{,}755 covered reactions touch one. Every dolichol species is matched to a C25
+of the covered reactions touch one. Every dolichol species is matched to a C25
 pentaprenyl against the GEM's C20 tetraprenyl; \texttt{glycogen} is matched to a C24
 tetramer against a C6 monomer; \texttt{protein}, \texttt{carbohydrate} and \texttt{sterols}
 are matched to concrete molecules.
@@ -84,17 +150,71 @@ are matched to concrete molecules.
 This does not raise coverage and it is worth more than coverage: it removes 31 wrong
 numbers. It is not yet applied to \texttt{resolve\_compound}, and it should be.
 
-\subsection{Correction: the ChemAxon blocker does not apply here\secstatus{todo}}
+\subsection{Where the ChemAxon license actually binds\secstatus{todo}}
 
-An earlier account of this work stated that pricing a novel compound requires ChemAxon's
-\texttt{cxcalc} for pKa estimation, that no license is available, and that the betaxanthin
-intermediates therefore cannot be priced. The first two clauses are true and the conclusion
-is false: \textbf{all of the pathway's intermediates are already in the compound cache}, so
-nothing about betaxanthin needs a new compound created.
+eQuilibrator's component contribution needs a pKa and majority-microspecies decomposition
+for any compound it has never seen, and it obtains that by shelling out to ChemAxon's
+\texttt{cxcalc}. A compound already in the compound cache ships with that decomposition
+precomputed, so no license is involved. The license binds only on compound \emph{creation}.
+
+\textbf{Two corrections are recorded here rather than folded away.} An earlier account of
+this work stated that the blocker does not apply to betaxanthin because all of the pathway's
+intermediates are in the cache. A probe on 2026-09-04 then reported three of the five as
+absent. The probe was wrong for a reason of its own: it matched the full InChI string, and
+the cache stores the InChI of the major microspecies at pH 7, whose final InChIKey block
+records the protonation state. Matching on the first two InChIKey blocks, the skeleton and
+stereochemistry, finds all five, each with exactly one cache compound, a group vector and
+ChemAxon pKas. The first account was right in its conclusion and wrong in its evidence; the
+probe was wrong in both.
+
+\begin{table}[H]
+  \centering
+  \footnotesize
+  \caption[Betaxanthin pathway resolution]{Every compound of the DeLoache pathway against
+  the eQuilibrator cache, resolved by InChIKey prefix. The formula of all five matches
+  PubChem. The three pathway-specific compounds resolve to the cache's deprotonated
+  microspecies, which is why an exact-InChI match missed them. Energies in kJ\,mol$^{-1}$
+  at pH 7.2, with the component-contribution standard deviation.}
+  \label{tab:bx-cache}
+  %% SOURCE: experiments/026-metabolism-flux/scripts/pathway_thermo.py ->
+  %% results/pathway_thermo_betaxanthin.json, built 2026-09-10T03:59:56Z.
+  \begin{tabular}{@{}llrrl@{}}
+    \hline
+    Compound & Role & $\Delta_f G'^{\circ}$ & $\sigma$ & Status \\
+    \hline
+    L-DOPA & CYP76AD1 hydroxylation product & $-157.7$ & 4.30 & in cache \\
+    dopaquinone & CYP76AD1 oxidase side activity & $-168.3$ & 7.54 & in cache \\
+    leucodopachrome & cyclo-DOPA, spontaneous cyclization & $-233.0$ & 8.79 & in cache \\
+    betalamic acid & DOD product, the reactive aldehyde & $-366.0$ & 8.49 & in cache \\
+    betanidin & violet pigment, competing branch & $-394.9$ & 8.56 & in cache \\
+    \hline
+  \end{tabular}
+\end{table}
+
+\textbf{All five are priced, so the license binds nowhere on this pathway.} A thermodynamic
+statement about the betaxanthin route is available from the cache alone, with the three
+pathway-specific compounds carrying a standard deviation near 8.5 kJ\,mol$^{-1}$ against
+4.3 to 7.5 for the two native precursors.
+
+This does not affect any number reported elsewhere in this document, because the flux layer
+reads yeast-GEM's shipped table and the pathway is heterologous, hence absent from the GEM
+entirely.
 
 For a genuinely novel compound the constraint has also loosened. Upstream
 \texttt{equilibrator-assets} merged support on 2026-08-15 for creating compounds without
 ChemAxon when pKa values are supplied, via \texttt{pkas\_provided\_externally} and
 \texttt{specified\_pkas}. That is master-only; the pinned release 0.6.0 does not contain it.
 What the interface needs is an unannotated list of macroscopic pKa floats, which is a
-weaker requirement than the site-annotated micro-pKa the harder tools produce.
+weaker requirement than the site-annotated micro-pKa the harder tools produce. That route
+was benchmarked on 2026-09-10 against 300 cache compounds whose stored ChemAxon constants
+serve as ground truth: Uni-pKa on its simple enumeration template (Luo et al., \emph{JACS
+Au} 4:3451--3465, 2024), run locally on Apache-2.0 weights, moves the pH 7.2 formation
+energy by 0.91 kJ\,mol$^{-1}$ mean absolute error, median 0.16 and 90th percentile 2.84,
+well inside the 4.3 to 8.8 kJ\,mol$^{-1}$ uncertainty eQuilibrator itself attaches to the
+betaxanthin compounds. MolGpKa reads 1.21 and pKasolver-lite 2.52. So the license is
+replaceable. What the route cannot do on its own is enlarge the
+model: only 16 of the 665 unpriced yeast-GEM metabolites lack nothing but pKas, and the 409
+that could follow needed the lipid structure writer above. With it, the measured reach is
+347 of 665, 52.2 percent. The benchmark, the bridge audit and the reach analysis are in the
+notes \texttt{experiments.026-metabolism-flux.external-pka-route} and
+\texttt{experiments.026-metabolism-flux.lipid-structure-writer}.

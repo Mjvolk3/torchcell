@@ -1,0 +1,663 @@
+{
+ "built_at": "2026-09-11T23:25:09.627484+00:00",
+ "requests_path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/026-metabolism-flux/results/thermo_moiety_requests.json",
+ "requests_sha256": "bc0f9650a4a02dc7f2d8d51ed40d23b5e53869ca1512c271b3e64248e91c1588",
+ "n_requests": 12,
+ "n_priced": 1,
+ "outcomes": {
+  "untrusted_structure": 5,
+  "moiety_does_not_cancel": 5,
+  "priced": 1,
+  "group_in_null_space": 1
+ },
+ "records": [
+  {
+   "reaction_id": "r_0365",
+   "outcome": "untrusted_structure",
+   "delta_r_g0_kj_per_mol": null,
+   "sigma_kj_per_mol": null,
+   "sigma_inf_norm": null,
+   "standard_kj_per_mol": null,
+   "transform_kj_per_mol": null,
+   "unassigned_residual": {},
+   "difference_groups": [],
+   "protonation_normalized": {},
+   "participants": {
+    "s_0560": "reactant_contribution",
+    "s_0805": "reactant_contribution",
+    "s_1309": "no_trusted_structure"
+   },
+   "detail": "a participant has no structure this route can trust"
+  },
+  {
+   "reaction_id": "r_0436",
+   "outcome": "untrusted_structure",
+   "delta_r_g0_kj_per_mol": null,
+   "sigma_kj_per_mol": null,
+   "sigma_inf_norm": null,
+   "standard_kj_per_mol": null,
+   "transform_kj_per_mol": null,
+   "unassigned_residual": {
+    "C": -2.0
+   },
+   "difference_groups": [
+    {
+     "group": "two fused rings =n< [H0 Z0 Mg0]",
+     "difference": -2.0,
+     "training_compounds": 0
+    },
+    {
+     "group": "two fused rings -N< [H0 Z0 Mg0]",
+     "difference": -2.0,
+     "training_compounds": 8
+    },
+    {
+     "group": "-COO [H0 Z-1 Mg0]",
+     "difference": -2.0,
+     "training_compounds": 267
+    },
+    {
+     "group": "2-ring =C< [H0 Z0 Mg0]",
+     "difference": -4.0,
+     "training_compounds": 5
+    },
+    {
+     "group": "(1+1)-ring =C< [H0 Z0 Mg0]",
+     "difference": -2.0,
+     "training_compounds": 14
+    },
+    {
+     "group": "ring =c< [H0 Z0 Mg0]",
+     "difference": -4.0,
+     "training_compounds": 166
+    },
+    {
+     "group": "ring =C< [H0 Z0 Mg0]",
+     "difference": -4.0,
+     "training_compounds": 24
+    },
+    {
+     "group": "ring =C- [H1 Z0 Mg0]",
+     "difference": -1.0,
+     "training_compounds": 20
+    },
+    {
+     "group": "=C- [H1 Z0 Mg0]",
+     "difference": -5.0,
+     "training_compounds": 42
+    },
+    {
+     "group": "=C [H2 Z0 Mg0]",
+     "difference": -2.0,
+     "training_compounds": 11
+    },
+    {
+     "group": "-C- [H2 Z0 Mg0]",
+     "difference": -4.0,
+     "training_compounds": 332
+    },
+    {
+     "group": "-C [H3 Z0 Mg0]",
+     "difference": -4.0,
+     "training_compounds": 196
+    },
+    {
+     "group": "Origin [H0 Z0 Mg0]",
+     "difference": -1.0,
+     "training_compounds": 581
+    }
+   ],
+   "protonation_normalized": {},
+   "participants": {
+    "s_0712": "no_trusted_structure",
+    "s_0799": "proton_excluded",
+    "s_0926": "reactant_contribution",
+    "s_1383": "lenient_decomposition"
+   },
+   "detail": "a participant has no structure this route can trust"
+  },
+  {
+   "reaction_id": "r_0530",
+   "outcome": "priced",
+   "delta_r_g0_kj_per_mol": -440.5385856472731,
+   "sigma_kj_per_mol": 3.168927881547182,
+   "sigma_inf_norm": 1.3374286736362164e-15,
+   "standard_kj_per_mol": -396.82915801153246,
+   "transform_kj_per_mol": -43.70942763574067,
+   "unassigned_residual": {},
+   "difference_groups": [
+    {
+     "group": "-C=O [H1 Z0 Mg0]",
+     "difference": 1.0,
+     "training_compounds": 34
+    },
+    {
+     "group": "-C [H3 Z0 Mg0]",
+     "difference": -1.0,
+     "training_compounds": 196
+    }
+   ],
+   "protonation_normalized": {
+    "-COO [H1 Z0 Mg0]": 1.0
+   },
+   "participants": {
+    "s_0807": "reactant_contribution",
+    "s_0811": "lenient_decomposition",
+    "s_0812": "lenient_decomposition",
+    "s_1200": "reactant_contribution",
+    "s_1205": "reactant_contribution",
+    "s_1278": "reactant_contribution"
+   },
+   "detail": ""
+  },
+  {
+   "reaction_id": "r_0531",
+   "outcome": "untrusted_structure",
+   "delta_r_g0_kj_per_mol": null,
+   "sigma_kj_per_mol": null,
+   "sigma_inf_norm": null,
+   "standard_kj_per_mol": null,
+   "transform_kj_per_mol": null,
+   "unassigned_residual": {
+    "C": 2.0,
+    "Fe": 1.0,
+    "N": 2.0
+   },
+   "difference_groups": [
+    {
+     "group": "-OPO2- [H0 Z-1 Mg0]",
+     "difference": -1.0,
+     "training_compounds": 15
+    },
+    {
+     "group": "-OPO3 [H1 Z-1 Mg0]",
+     "difference": -1.0,
+     "training_compounds": 22
+    },
+    {
+     "group": "ring -n= [H0 Z0 Mg0]",
+     "difference": 2.0,
+     "training_compounds": 138
+    },
+    {
+     "group": "-COO [H0 Z-1 Mg0]",
+     "difference": 2.0,
+     "training_compounds": 267
+    },
+    {
+     "group": "-C(-O)- [H2 Z0 Mg0]",
+     "difference": 1.0,
+     "training_compounds": 130
+    },
+    {
+     "group": "2-ring =C< [H0 Z0 Mg0]",
+     "difference": 4.0,
+     "training_compounds": 5
+    },
+    {
+     "group": "(1+1)-ring =C< [H0 Z0 Mg0]",
+     "difference": 2.0,
+     "training_compounds": 14
+    },
+    {
+     "group": "ring =c< [H0 Z0 Mg0]",
+     "difference": 4.0,
+     "training_compounds": 166
+    },
+    {
+     "group": "ring =C< [H0 Z0 Mg0]",
+     "difference": 4.0,
+     "training_compounds": 24
+    },
+    {
+     "group": "=C- [H1 Z0 Mg0]",
+     "difference": 5.0,
+     "training_compounds": 42
+    },
+    {
+     "group": "=C [H2 Z0 Mg0]",
+     "difference": 1.0,
+     "training_compounds": 11
+    },
+    {
+     "group": "-C- [H2 Z0 Mg0]",
+     "difference": 5.0,
+     "training_compounds": 332
+    },
+    {
+     "group": "-C [H3 Z0 Mg0]",
+     "difference": 4.0,
+     "training_compounds": 196
+    }
+   ],
+   "protonation_normalized": {},
+   "participants": {
+    "s_0191": "group_contribution",
+    "s_0636": "reactant_contribution",
+    "s_0712": "no_trusted_structure",
+    "s_0807": "reactant_contribution",
+    "s_0812": "lenient_decomposition"
+   },
+   "detail": "a participant has no structure this route can trust"
+  },
+  {
+   "reaction_id": "r_0999",
+   "outcome": "moiety_does_not_cancel",
+   "delta_r_g0_kj_per_mol": null,
+   "sigma_kj_per_mol": null,
+   "sigma_inf_norm": null,
+   "standard_kj_per_mol": null,
+   "transform_kj_per_mol": null,
+   "unassigned_residual": {
+    "C": -2.0,
+    "Fe": 1.0,
+    "N": 3.0
+   },
+   "difference_groups": [
+    {
+     "group": "two fused rings =n< [H0 Z0 Mg0]",
+     "difference": -2.0,
+     "training_compounds": 0
+    },
+    {
+     "group": "ring -n= [H0 Z0 Mg0]",
+     "difference": 1.0,
+     "training_compounds": 138
+    },
+    {
+     "group": "two fused rings -N< [H0 Z0 Mg0]",
+     "difference": -2.0,
+     "training_compounds": 8
+    },
+    {
+     "group": "2-ring =C< [H0 Z0 Mg0]",
+     "difference": 2.0,
+     "training_compounds": 5
+    },
+    {
+     "group": "ring =c< [H0 Z0 Mg0]",
+     "difference": -2.0,
+     "training_compounds": 166
+    },
+    {
+     "group": "ring =C< [H0 Z0 Mg0]",
+     "difference": 2.0,
+     "training_compounds": 24
+    },
+    {
+     "group": "ring =C- [H1 Z0 Mg0]",
+     "difference": 1.0,
+     "training_compounds": 20
+    },
+    {
+     "group": "=C- [H1 Z0 Mg0]",
+     "difference": -1.0,
+     "training_compounds": 42
+    }
+   ],
+   "protonation_normalized": {},
+   "participants": {
+    "s_0794": "proton_excluded",
+    "s_0924": "reactant_contribution",
+    "s_1430": "lenient_decomposition",
+    "s_1431": "lenient_decomposition"
+   },
+   "detail": "the atoms no group covers do not match across the two sides: {'C': -2.0, 'Fe': 1.0, 'N': 3.0}"
+  },
+  {
+   "reaction_id": "r_4159",
+   "outcome": "untrusted_structure",
+   "delta_r_g0_kj_per_mol": null,
+   "sigma_kj_per_mol": null,
+   "sigma_inf_norm": null,
+   "standard_kj_per_mol": null,
+   "transform_kj_per_mol": null,
+   "unassigned_residual": {},
+   "difference_groups": [
+    {
+     "group": "-OPO3-OPO2- [H2 Z0 Mg0]",
+     "difference": 1.0,
+     "training_compounds": 0
+    },
+    {
+     "group": "-N- [H1 Z0 Mg0]",
+     "difference": 2.0,
+     "training_compounds": 79
+    },
+    {
+     "group": "-N-CO- [H0 Z0 Mg0]",
+     "difference": 2.0,
+     "training_compounds": 65
+    },
+    {
+     "group": "ring >C-O [H2 Z0 Mg0]",
+     "difference": 3.0,
+     "training_compounds": 174
+    },
+    {
+     "group": "ring -O- [H0 Z0 Mg0]",
+     "difference": 2.0,
+     "training_compounds": 155
+    },
+    {
+     "group": "-C-O [H3 Z0 Mg0]",
+     "difference": 2.0,
+     "training_compounds": 139
+    },
+    {
+     "group": "-O- [H0 Z0 Mg0]",
+     "difference": 1.0,
+     "training_compounds": 23
+    },
+    {
+     "group": "=C- [H1 Z0 Mg0]",
+     "difference": 3.0,
+     "training_compounds": 42
+    },
+    {
+     "group": "=C< [H0 Z0 Mg0]",
+     "difference": 3.0,
+     "training_compounds": 26
+    },
+    {
+     "group": "ring -C< [H1 Z0 Mg0]",
+     "difference": 7.0,
+     "training_compounds": 185
+    },
+    {
+     "group": "-C< [H1 Z0 Mg0]",
+     "difference": 1.0,
+     "training_compounds": 109
+    },
+    {
+     "group": "-C- [H2 Z0 Mg0]",
+     "difference": 8.0,
+     "training_compounds": 332
+    },
+    {
+     "group": "-C [H3 Z0 Mg0]",
+     "difference": 7.0,
+     "training_compounds": 196
+    },
+    {
+     "group": "Origin [H0 Z0 Mg0]",
+     "difference": 1.0,
+     "training_compounds": 581
+    }
+   ],
+   "protonation_normalized": {},
+   "participants": {
+    "s_0795": "proton_excluded",
+    "s_3764": "reactant_contribution",
+    "s_3765": "no_trusted_structure",
+    "s_3766": "reactant_contribution",
+    "s_3767": "lenient_decomposition"
+   },
+   "detail": "a participant has no structure this route can trust"
+  },
+  {
+   "reaction_id": "r_4186",
+   "outcome": "moiety_does_not_cancel",
+   "delta_r_g0_kj_per_mol": null,
+   "sigma_kj_per_mol": null,
+   "sigma_inf_norm": null,
+   "standard_kj_per_mol": null,
+   "transform_kj_per_mol": null,
+   "unassigned_residual": {
+    "O": 1.0
+   },
+   "difference_groups": [
+    {
+     "group": "-S< [H0 Z0 Mg0]",
+     "difference": 1.0,
+     "training_compounds": 0
+    },
+    {
+     "group": "-N [H3 Z1 Mg0]",
+     "difference": 1.0,
+     "training_compounds": 79
+    },
+    {
+     "group": "-COO [H0 Z-1 Mg0]",
+     "difference": 1.0,
+     "training_compounds": 267
+    },
+    {
+     "group": "-C< [H1 Z0 Mg0]",
+     "difference": 1.0,
+     "training_compounds": 109
+    },
+    {
+     "group": "-C- [H2 Z0 Mg0]",
+     "difference": 2.0,
+     "training_compounds": 332
+    },
+    {
+     "group": "-C [H3 Z0 Mg0]",
+     "difference": 1.0,
+     "training_compounds": 196
+    },
+    {
+     "group": "Origin [H0 Z0 Mg0]",
+     "difference": 1.0,
+     "training_compounds": 581
+    }
+   ],
+   "protonation_normalized": {},
+   "participants": {
+    "s_0794": "proton_excluded",
+    "s_0803": "reactant_contribution",
+    "s_1029": "reactant_contribution",
+    "s_1616": "proton_excluded",
+    "s_1620": "proton_excluded",
+    "s_3807": "lenient_decomposition"
+   },
+   "detail": "the atoms no group covers do not match across the two sides: {'O': 1.0}"
+  },
+  {
+   "reaction_id": "r_4197",
+   "outcome": "untrusted_structure",
+   "delta_r_g0_kj_per_mol": null,
+   "sigma_kj_per_mol": null,
+   "sigma_inf_norm": null,
+   "standard_kj_per_mol": null,
+   "transform_kj_per_mol": null,
+   "unassigned_residual": {},
+   "difference_groups": [],
+   "protonation_normalized": {},
+   "participants": {
+    "s_0799": "proton_excluded",
+    "s_1200": "reactant_contribution",
+    "s_1205": "reactant_contribution",
+    "s_3826": "no_trusted_structure",
+    "s_3827": "no_trusted_structure"
+   },
+   "detail": "a participant has no structure this route can trust"
+  },
+  {
+   "reaction_id": "r_4202",
+   "outcome": "moiety_does_not_cancel",
+   "delta_r_g0_kj_per_mol": null,
+   "sigma_kj_per_mol": null,
+   "sigma_inf_norm": null,
+   "standard_kj_per_mol": null,
+   "transform_kj_per_mol": null,
+   "unassigned_residual": {
+    "O": 1.0
+   },
+   "difference_groups": [
+    {
+     "group": "-S< [H0 Z0 Mg0]",
+     "difference": 1.0,
+     "training_compounds": 0
+    },
+    {
+     "group": "-N [H3 Z1 Mg0]",
+     "difference": 1.0,
+     "training_compounds": 79
+    },
+    {
+     "group": "-COO [H0 Z-1 Mg0]",
+     "difference": 1.0,
+     "training_compounds": 267
+    },
+    {
+     "group": "-C< [H1 Z0 Mg0]",
+     "difference": 1.0,
+     "training_compounds": 109
+    },
+    {
+     "group": "-C- [H2 Z0 Mg0]",
+     "difference": 2.0,
+     "training_compounds": 332
+    },
+    {
+     "group": "-C [H3 Z0 Mg0]",
+     "difference": 1.0,
+     "training_compounds": 196
+    },
+    {
+     "group": "Origin [H0 Z0 Mg0]",
+     "difference": 1.0,
+     "training_compounds": 581
+    }
+   ],
+   "protonation_normalized": {},
+   "participants": {
+    "s_0794": "proton_excluded",
+    "s_0803": "reactant_contribution",
+    "s_1029": "reactant_contribution",
+    "s_1616": "proton_excluded",
+    "s_1620": "proton_excluded",
+    "s_3837": "lenient_decomposition"
+   },
+   "detail": "the atoms no group covers do not match across the two sides: {'O': 1.0}"
+  },
+  {
+   "reaction_id": "r_4220",
+   "outcome": "moiety_does_not_cancel",
+   "delta_r_g0_kj_per_mol": null,
+   "sigma_kj_per_mol": null,
+   "sigma_inf_norm": null,
+   "standard_kj_per_mol": null,
+   "transform_kj_per_mol": null,
+   "unassigned_residual": {
+    "O": -4.0,
+    "P": -1.0
+   },
+   "difference_groups": [
+    {
+     "group": "-NO2 [H0 Z0 Mg0]",
+     "difference": 1.0,
+     "training_compounds": 0
+    },
+    {
+     "group": "-N< [H0 Z0 Mg0]",
+     "difference": -1.0,
+     "training_compounds": 3
+    },
+    {
+     "group": "ring >c-O [H1 Z0 Mg0]",
+     "difference": -1.0,
+     "training_compounds": 92
+    },
+    {
+     "group": "ring >c-O [H0 Z-1 Mg0]",
+     "difference": 1.0,
+     "training_compounds": 1
+    },
+    {
+     "group": "[N]-O [H0 Z-1 Mg0]",
+     "difference": -1.0,
+     "training_compounds": 0
+    }
+   ],
+   "protonation_normalized": {},
+   "participants": {
+    "s_0794": "proton_excluded",
+    "s_0803": "reactant_contribution",
+    "s_1322": "reactant_contribution",
+    "s_3859": "lenient_decomposition",
+    "s_3860": "lenient_decomposition"
+   },
+   "detail": "the atoms no group covers do not match across the two sides: {'O': -4.0, 'P': -1.0}"
+  },
+  {
+   "reaction_id": "r_4273",
+   "outcome": "group_in_null_space",
+   "delta_r_g0_kj_per_mol": null,
+   "sigma_kj_per_mol": null,
+   "sigma_inf_norm": 1.0,
+   "standard_kj_per_mol": null,
+   "transform_kj_per_mol": null,
+   "unassigned_residual": {},
+   "difference_groups": [
+    {
+     "group": "-NO2 [H0 Z0 Mg0]",
+     "difference": -1.0,
+     "training_compounds": 0
+    },
+    {
+     "group": "-C- [H2 Z0 Mg0]",
+     "difference": -1.0,
+     "training_compounds": 332
+    },
+    {
+     "group": "-C [H3 Z0 Mg0]",
+     "difference": -1.0,
+     "training_compounds": 196
+    },
+    {
+     "group": "Origin [H0 Z0 Mg0]",
+     "difference": -1.0,
+     "training_compounds": 581
+    }
+   ],
+   "protonation_normalized": {},
+   "participants": {
+    "s_0359": "reactant_contribution",
+    "s_0714": "reactant_contribution",
+    "s_0717": "reactant_contribution",
+    "s_0794": "proton_excluded",
+    "s_0803": "reactant_contribution",
+    "s_1275": "reactant_contribution",
+    "s_3934": "lenient_decomposition",
+    "s_3935": "reactant_contribution"
+   },
+   "detail": "the group difference has an infinite-variance component; groups no training compound carries: ['-NO2 [H0 Z0 Mg0]']"
+  },
+  {
+   "reaction_id": "r_4403",
+   "outcome": "moiety_does_not_cancel",
+   "delta_r_g0_kj_per_mol": null,
+   "sigma_kj_per_mol": null,
+   "sigma_inf_norm": null,
+   "standard_kj_per_mol": null,
+   "transform_kj_per_mol": null,
+   "unassigned_residual": {
+    "O": -8.0,
+    "P": -3.0
+   },
+   "difference_groups": [
+    {
+     "group": "-O- [H0 Z0 Mg0]",
+     "difference": -2.0,
+     "training_compounds": 23
+    },
+    {
+     "group": "Origin [H0 Z0 Mg0]",
+     "difference": -1.0,
+     "training_compounds": 581
+    }
+   ],
+   "protonation_normalized": {},
+   "participants": {
+    "s_0633": "reactant_contribution",
+    "s_0803": "reactant_contribution",
+    "s_1322": "reactant_contribution",
+    "s_4098": "lenient_decomposition"
+   },
+   "detail": "the atoms no group covers do not match across the two sides: {'O': -8.0, 'P': -3.0}"
+  }
+ ]
+}

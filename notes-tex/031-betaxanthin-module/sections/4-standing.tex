@@ -1,0 +1,255 @@
+%% notes-tex/031-betaxanthin-module/sections/4-standing.tex
+\section{Where the module stands on this target\secstatus{todo}}
+\label{sec:standing}
+
+Six things are measured. The whole-vector store affine lifts the width-12 backbone's
+rank to where the width-90 backbone sits and, on the strain as built, lifts its call
+too; the two do not add, at either width. The gain lives in the production half of the
+vector and in a free affine that trains at full rate; it does not come from the first
+epochs, and a release rule on the validation curve keeps it where a fixed late start
+loses it, while a nonlinear head over the store loses it and brings the plateau back.
+The physically stated stores read in the transformer sit at the parsimonious store's
+level: the adjustment store within the seed spread with half its spread and the best
+single-seed call, the clean parsimonious vector a little above it on five seeds of six
+with the best width-12 ensemble, and the driving-force concentrations at the same rank
+with twice the spread; the second law adds a second representation at the flux store's
+level, not a higher one. Without any backbone the clean vector read by nearest
+neighbors carries more rank than any single transformer arm, and the sampled
+driving-force polytope is the one flux-side representation every model reads above
+0.12; in the transformer the polytope's mean reads at the flux store's level on every
+seed above the control, with the best width-12 ensemble rank, and the sampled cone is
+the weakest flux representation. The release rule that lifted the degenerate GLPK
+store adds nothing to the adjustment store and takes from the HiGHS store (rounds 149,
+152); a store without the vertex noise is read best from the first epoch. The
+annotation family sets the level: a perceptron over the propagated GO multi-hot reads
+0.200 in three seconds a seed, above every transformer arm, and the same columns in the
+affine slot read 0.202 with the seeds identical (round 150), the backbone adding
+nothing; the HiGHS vector appended to GO in that affine reads 0.211, above GO alone on
+five seeds of six, the highest rank of the study (round 151). Dropout 0.3 on the store
+arm reads 0.145, the best single-seed rank and call of any store arm, where width 6 to
+90 left the level flat (144, 145). Every arm overfits by epoch 60 and averaging seeds
+is worth more than any representation on the call. On the same split the comparators
+sit below the best arm, the closest by 0.008: a random forest over GO with the HiGHS
+vector, the best arm's own input, 0.204 with a top-50 of 4.79, cosine nearest neighbors
+over the HiGHS store 0.195, the ridge 0.152, nearest neighbors over ProtT5 0.145, the
+Flux Cone Learning random forest 0.039 (Tables~\ref{tab:store-baselines} and
+\ref{tab:target-transfer-comparators}); the best call of any genotype-side read is the
+forest over GO alone, 5.39. The strain's own measured amino-acid pool, nineteen
+columns, reads 0.285 by nearest neighbors and 0.280 by forest on the same split, above
+every genotype-side read and every transformer arm, and appended to GO with the HiGHS
+vector gives the forest the best call of any read, 6.19 (Section~\ref{sec:physics});
+the transformer reading the same columns is queued (175, 176). The
+amino-acid endpoint shares strain-level signal with this one: a deletion's measured
+amino-acid pool, M\"ulleder's nineteen concentrations through a ridge, reads its
+betaxanthin level out of fold at 0.226 over 4,477 strains, and appended to the gene's
+GO multi-hot in the same ridge adds 0.072 to what the annotation reads alone (0.165 to
+0.237), the sibling document's Section~4 (\texttt{notes-tex/032-amino-acid-module}). The three levers on one cell,
+the HiGHS store under the rule with dropout 0.3, read 0.125, under the GLPK store at
+dropout 0.3 alone (round 154): the release is the lever that costs on the clean store.
+The dropout curve turns between 0.3 and 0.5: at 0.5 three seeds of six never leave
+the plateau and the arm falls back to the incumbent's level, 0.125 against 0.121
+(round 155), so 0.3 is a maximum, not a direction. The polytope's spread beside its
+mean adds nothing on single seeds and gives the highest six-seed rank of any flux-side
+width-12 arm, 0.155 (round 156): the region's value is in the ensemble. The GO affine
+under the release rule reads 0.199, the backbone escaping first adding nothing to the
+annotation's single read; the rule buys seed diversity, worth 0.003 on the ensemble
+(0.206, round 158); dropout 0.3 on the same arm moves it by less than a thousandth
+(round 159), so the annotation arm is the affine alone and no setting of the
+transformer around it has moved it; the same holds for the flux-and-annotation affine,
+which dropout 0.3 leaves at 0.212 with the flux gain beside GO reproduced at 0.010
+(161). The polytope's mean appended to that affine takes 0.013 from it on five seeds
+of six and the stack reads under GO alone (163): the metabolite side does not add to
+the annotation the way the flux vector does. On twelve seeds the best arm holds at
+0.214 with a standard error of 0.002, 0.011 above the forest over its own columns and
+0.019 above the nearest-neighbor read of the HiGHS store, with a twelve-seed ensemble
+of 0.216 (round 164). Adding the region's width to that stack costs again, and the
+cost grows with the columns added (0.193, round 166): the metabolite side does not
+enter this affine's read at any width. The adjustment store in place of the
+parsimonious one adds 0.006 to the annotation on every seed against the parsimonious
+vector's 0.009 (round 167): both flux programs enter the annotation's read where the
+metabolite programs do not. Weight decay on the affine's own weights runs 0.211, 0.210,
+0.204 from none to 0.1 to 1.0 (rounds 169, 170), the heavy setting selecting fifty
+epochs later with twice the seed spread: no setting of the transformer and no
+regularization of the affine has moved the annotation arms. The two flux programs
+together beside GO read 0.216, above the parsimonious vector with GO on five seeds of
+six at a paired spread of 0.003 (round 171), the highest single-seed rank of the study
+and the second time the flux side has entered the annotation's read; the call does not
+follow it. On twelve seeds the annotation-only arm reads 0.203 with a standard error of
+0.0005, the study's most reproducible cell, and the flux vector's gain beside it is
+$+0.012$ on eleven of twelve (round 172). Against the affine-free control on the same
+twelve seeds the annotation arm is $+0.127$ on twelve of twelve, and its ensemble,
+0.203, stays twice the control's twelve-seed ensemble of 0.102 (round 173): unlike the
+amino-acid target, where averaging the control's seed noise passed the annotation's
+small gain, here the gain is five times what the averaging recovers. The measured pool in
+the affine adds 0.006 to GO on every seed and nothing beside the HiGHS vector (rounds
+175, 176), a linear read of columns whose signal the ladder's nearest neighbors carry at
+0.285: the slot bounds the read, not the data. On twelve seeds the two flux programs
+beside GO read 0.217 against the parsimonious vector's 0.214, $+0.003$ within a paired
+spread of 0.007 (round 177), so round 171's gain does not hold at its first size and
+the two arms share one level; the three families in one affine read 0.218 (round 178),
+the pool adding nothing beside the flux programs. Every linear combination of the
+annotation with the flux and measured sides reads 0.208 to 0.218: the affine's ceiling
+on this input family. The pool alone in the affine reads 0.195 with the widest seed
+spread and the lowest call of any store arm (round 179), above the ridge on the same
+columns (0.149) and 0.09 under their nearest-neighbor read: the ceiling is the slot's.
+The same columns through a hidden layer of 64 read 0.240, $+0.045$ over the linear
+slot on five of six and the highest single-seed mean of any transformer arm, with a
+six-seed ensemble of 0.292 that passes the ladder's nearest neighbors (round 180): the
+pool's nonlinear signal does reach the transformer once the slot is nonlinear; a
+400-epoch budget selects the same epochs and reads the same values on every seed
+(190), so 0.240 is the arm's level, not a bound. The minimum-norm flux
+store, the unique point with no vertex noise, reads under the sparse HiGHS vertex both
+alone (0.093 against 0.130, round 181) and beside GO (0.204 against 0.211 on six of six,
+round 182): the flux side's gain beside the annotation lives in the sparse solution.
+The annotation appended to the pool in the hidden layer takes the read back to the
+annotation's level, 0.206 with selection at epochs 2 to 4 (185): with GO in the layer
+the arm is the GO affine, and the pool's gain is gone, as the ladder's ridge and
+nearest neighbors lost it when the GO columns joined. On twelve seeds the pool through
+the layer holds at 0.254 with a standard error of 0.012, $+0.051$ over GO alone on
+eleven of twelve, with a twelve-seed ensemble of 0.297 (186): the highest level and
+the highest ensemble of the study, above every ladder read of the same columns, and
+the call under the annotation's throughout. The layer's width matters: through 256 the
+pool reads 0.279 with half the seed spread, $+0.039$ over 64 on five of six and
+$+0.084$ over the linear slot on six of six, the single-seed level at the ladder's
+nearest-neighbor read and the ensemble (0.288) above it (187). Every other family
+appended to the pool inside the layer costs it: the annotation (185, $-0.034$), the
+three families (188, back to the annotation's 0.217) and the flux vector (191,
+$-0.054$, under both parents). The pool's nonlinear read is best taken alone, and the
+head that reads it beside the other families through separate slots is the arm not yet
+built. Without the transformer the same columns give a perceptron 0.236 at width 1,024
+and 0.240 with GO appended, the annotation adding there at every width
+(Section~\ref{sec:physics}): the transformer's hidden slot reads the pool 0.04 above
+any standalone perceptron, and what the annotation does to the pool's read depends on
+the head it enters. The perceptron with two slots, GO linear beside the pool's hidden
+layer, reads 0.265, above the shared layer (0.240) and the pool alone (0.236) at every
+width, and holds under depth where the pool alone falls to 0.19: the annotation adds
+to the pool when the two do not share a hidden unit. That two-slot head inside the
+transformer is the arm in flight. The width curve of the pool's hidden read is 0.240,
+0.262, 0.279 and 0.243 at 64, 128, 256 and 512 on the same seeds (192, 194): a
+maximum at 256, which twelve seeds hold at 0.278 with a standard error of 0.007,
+$+0.075$ over GO alone on twelve of twelve, with a twelve-seed ensemble of 0.296 (193).
+In the transformer the two-slot head reads 0.224 at 64, 0.225 at 128 and 0.225 at 256
+(197, 200, 198), the width of the pool's slot never read,
+above every cell with the annotation in it on every seed with the tightest band and
+the best single-seed call (top-50 5.66), and 0.054 under the pool alone through 256:
+it selects at epochs 5 to 15 on the annotation's early peak, before the pool's slot
+has trained, where the perceptron's two slots selected at 64 to 165. The linear slot at a tenth of the rate (201) moves the
+selection to epochs 55 to 104 and the read to 0.234, $+0.009$ over the full rate and
+$-0.045$ under the pool alone, 0.184 against 0.212 on the covered genes; the hundredth
+(202) reads 0.211 with the widest band, so the rate curve peaks at the tenth and the
+two-slot form is closed under the pool alone. With the three
+families in the two slots, GO and both flux programs linear beside the pool through
+256, the head reads 0.239 with a band of 0.003 (199) and 0.237 over twelve seeds with
+a standard error of 0.001 (208): the flux programs add 0.014 to the annotation's slot
+on every seed, and this is the best arm of the study with the annotation in it, 0.04
+under the pool alone on every seed. A 400-epoch budget leaves the pool through
+256 where 200 epochs left it, the same epoch and the same value on every seed (196), so
+the width curve's maximum is a level. Cells queued: two slots at 128 (200), dropout 0.3
+and the standardized encoding on the pool through 256 (203, 204), on the amino acids
+the score through a hidden layer of 256 with Cooper's peaks linear and through the same
+layer (205 to 207). Cooper's peaks substituted for the pool in the same slot read
+0.111 (211), a third of the pool's 0.279 and twice the affine-free control, 0.111
+against 0.287 on the genes Cooper covers: the two amino-acid screens are not
+interchangeable here, and the screen's own duplicate agreement of 0.06 against
+M\"ulleder's 0.20 bounds what its columns can lend
+(Section~\ref{sec:physics}). Dropout 0.3 inside the transformer
+leaves the pool through 256 at 0.279 with a paired difference of zero (203), and
+standardizing the pool instead of $\log(1+v)$ costs it 0.10 (204). What the
+transformer contributes is now measured (Section~\ref{sec:decomposition}): on the
+pool through 256 the backbone's head is a constant on two seeds of six and adds 0.05
+on the other four, the slot alone reads 0.257 and the arm 0.279; with the annotation
+in the slot the head is a constant on every seed and the read is the slot's. The
+slot's read has two parts (Section~\ref{sec:coverage}): 73 of the 629 pinned genes are
+strains M\"ulleder did not measure, the trainer hands the slot zeros for them, and that
+indicator alone reads the target at 0.196; on the 556 measured strains the pool through
+256 reads 0.212 against the GO affine's 0.140 and the control's $-0.013$, the
+amino-acid values adding 0.07 over the annotation where they exist. A perceptron over
+the growth ratio and the pool with zeros for the uncovered genes, under the trainer's
+fit, reads 0.274 on all genes and 0.216 on the covered ones, the transformer's arm to
+within its seed spread, in seconds a seed on CPU. On the measured strains the profile
+through a hidden layer is worth 0.21 to 0.23 by any model, the annotation 0.14 to 0.15,
+and GO beside the pool adds at most 0.007 to it; Cooper's peaks substituted for the
+pool read 0.10. No cell
+of the study has read the graphs, since the regularizer and the hard mask index a
+second block and every cell ran one. The release rule on the pool slot (210) does not
+make the backbone add: five seeds release at epoch 5 and read 0.255 against 0.281 from
+epoch 0, the sixth never releases and reads 0.005, and the arm's seed spread is the
+widest in the study. The layer-pattern ladder's width control (212), one block of width
+36 with nine heads, reads 0.291 with an ensemble of 0.309, the study's highest, and
+0.214 on the covered genes against width 12's 0.212: the wider backbone buys nothing on
+the measured strains and ranks the unmeasured ones better. Two unmasked blocks of the
+same width (213) read 0.270, under the one block on the unmeasured strains ($-0.015$
+against 0.142) and level on the measured ones (0.207 against 0.214), so the graph
+patterns are read against a depth control under its width control. The hard mask on
+the second block (214) reads 0.228 against 0.270, one of six: it keeps the backbone's
+head from collapsing to a constant (live on five seeds of six against two), and the
+head it keeps alive reads the target at $-0.06$ to 0.07 on its own and costs the arm up
+to 0.10 where its spread rivals the slot's. The regularizer at 019's weight (215) reads
+0.226 against 0.270 on none of six: it keeps the backbone live on every seed and gives
+its head the highest own read of any backbone in the study (0.05 to 0.13), which still
+dilutes the slot. The three-block mask (216) reads 0.247, level with
+the two-block mask and under the unmasked two blocks. The weight ladder is flat: at ten
+and a hundred times the 019 weight, where the penalty is 6.5 and 60 times the data
+term, the prior reads 0.236 and 0.243 (217, 218), under the unregularized two blocks on
+every seed but one, so no weight of the graph prior helps this target. The graphs carry
+the target on their own (Section~\ref{sec:homophily}): the mean betaxanthin level of a
+gene's labeled STRING coexpression neighbors reads the pin at 0.244 with nothing fitted
+and 0.192 on the measured strains, under the profile (0.212) and above every
+genotype-side store. Fed to the slot as a store the propagated label reads 0.182 alone
+and lifts the pool to 0.288 from 0.279 on four seeds of six (219, 220), the study's
+tightest band and highest ensemble (0.318), the gain on the measured strains. Both are
+TRANSDUCTIVE: the store is other strains' labels, it needs the neighbors screened, and
+it has nothing to give a strain outside the screen, so it is a ceiling for a
+semi-supervised read and not a property of the genotype encoding. The essentiality
+recipe's two levers carried to this target, the default affine initialization and the
+four media as a control, leave the flux store at 0.142 and 0.160 against 0.130 (221,
+222): the metabolic module reads betaxanthin at 0.13 to 0.16, under GO alone.
+
+The coverage caveat on every pool number. The M\"ulleder screen measured 556 of the 629
+pinned strains. The trainer hands the slot the reference row for the other 73, which
+sit low on the target, and every pool arm ranks them near the bottom (the uncovered
+strains' mean percentile among the covered is 0.05 to 0.11), so the indicator of
+having been measured reads the target at 0.196 by itself. A pool arm's score on all
+629 strains therefore carries that indicator; the fair number is the score on the 556
+measured strains, where the pool through 256 reads 0.212, the width-36 backbone 0.214
+and the pool with the graphs 0.219, against the GO affine's 0.140 and the control's
+$-0.013$ (Section~\ref{sec:coverage}). No penalty is applied to the full-pin score, and
+none should be read into it: the two numbers answer two questions, how well the strains
+of the screen are ranked and how much the profile's values add where they exist, and
+the document states both wherever a pool arm is read.
+
+What is inductive. Every pool arm reads a measurement of the held-out strain from
+another screen, and every label-store arm reads its neighbors' labels; neither is
+available for a strain nobody has measured, and neither scales past the deletion
+collection. The inductive reads of the transformer, from the gene's annotation and the
+model's own solutions, stand at 0.217 for the three families in one affine (GO with
+both flux programs, twelve seeds, round 190), 0.203 for GO alone and 0.13 to 0.16 for
+the flux store. Against them the profile alone reads 0.280 by forest on the ladder and
+0.278 to 0.291 through the transformer, so the pool CGT does not beat a forest on its
+own input. The best inductive reads of betaxanthin are now on the CPU, from the
+deleted gene's graph neighborhood and nothing else (Section~\ref{sec:inductive}): the
+neighbor mean of GO over coexpression and the union by forest, 0.279, and the two-hop
+ego net over the union, 0.265, both at the level of the measured pool and above the
+transformer's 0.217 with the same annotation, with the degree control at zero. The
+amino-acid profile as a joint training target is null: the co-head adds $+0.001$,
+$+0.003$ and $+0.017$ on the three-family affine, on GO alone and on the control
+(rounds 223 to 225), each within its paired spread. The transformer arms that carry
+the neighborhood in are read (rounds 226 to 228): the neighbor mean of GO as a store
+reads 0.145 through the linear affine and 0.217 through 256, and GO with its neighbor
+mean appended reads 0.221 against GO alone's 0.202 ($+0.019$, six of six), the first
+inductive gain on the transformer and a fifth of the lift the same columns give the
+forest. The perturbation operator's form is not the bottleneck: on a single deletion
+the cross-attention has one key, so its context is a linear map of the deleted gene's
+embedding with no dependence on the querying gene (the model's own documented and
+verified note), and with two ReZero blocks, with the Hadamard pair term and with the
+null sink it reads 0.217, 0.218 and 0.216 against 0.216 on the same seeds (rounds 229
+to 231), the sink selecting the incumbent's epochs exactly; the combined operator
+(w251, job 2991) is running. Neither is the sequence embedding: the species
+language-model composite, FUDT upstream and downstream, ProtT5 and CaLM, reads 0.219 in
+place of ProtT5's 0.216, and with ESM2 added 0.216 (rounds 232 and 233). Stacking is
+the current attempt on the remaining gap: the forest's out-of-fold read of the
+neighborhood as a one-column store reads the pinned genes at 0.269 by itself and 0.200
+through the transformer (round 234), 0.259 on the one seed that trained to epoch 194
+and 0.247 ensembled; the same store under the default affine initialization (w257, job
+3006) and appended to the three-family affine (w255, job 3001), and the co-head at
+weight 0.1 (w256, job 3005), are running or queued and unread.

@@ -21,7 +21,23 @@ leaves gene index space entirely for reaction space $\mathbb{R}^{4131}$ under a 
 externally supplied stoichiometry, and its parameters are tabulated physical constants
 rather than learned weights. It is a physically identified decoder, and its output
 $\nu$ is a latent physical state rather than a phenotype: the phenotypes are read
-\emph{off} it.
+\emph{off} it. Figure~\ref{fig:module} places it against the rest of the transformer.
+
+\tcfigfit[1.0]{figures/cgt_metabolic_module.pdf}{\textbf{The flux module's main components
+  and what feeds them.} Orange is the path from the perturbed gene state to enzyme
+  abundance; purple the fixed yeast-GEM 9.0.2 stoichiometry and bounds; yellow the parameter
+  tables, with a \textbf{dashed} border and a dashed edge marking a table that is built and
+  read by nothing; blue the flux vector; red the soft constraints. Every hard constraint is
+  either exact by construction, as the box and the capacity bound are, or relaxed to a
+  smooth penalty; nothing is enforced by a binary variable, which is what makes the layer
+  differentiable. One box is dashed, the reaction square-root covariance, which the layer
+  accepts and no run constructs. The curated formation-energy tables are solid because
+  \texttt{ThermoSource} gained a \texttt{verified} member that selects them, though no arm
+  reported here asks for it: every measured run took $k_{cat}$ from the Open Enzyme Database
+  at 4.0 percent measured and $\Delta_f G$ from the table shipped with the GEM.
+  Section~\ref{sec:parameters} gives the tables and Section~\ref{sec:coverage} their coverage.
+  Same diagram as in the 026 document; source
+  \texttt{notes/torchcell.models.equivariant\_cell\_graph\_transformer.mermaid.metabolic-module-simple.md}.}{fig:module}
 
 \subsection{A program cannot learn, which is the point\secstatus{todo}}
 
@@ -51,7 +67,7 @@ perturbations cost the same forward pass as a single one.
     enzyme capacity & $\nu_j \le k_{cat} E$ & \textbf{exact}, folded into the box \\
     mass balance & $S\nu = 0$ & soft, scale-relative \\
     second law & $\Delta_r G_j \nu_j < 0$ plus a binary & soft hinge, no binary \\
-    Gibbs dissipation & $g_{\mathrm{diss}} \le g_{\mathrm{lim}}$ & soft hinge \\
+    Gibbs dissipation & $g_{\mathrm{diss}} \le g_{\mathrm{lim}}$ & readout only; hinge available, off by default \\
     protein budget & $\sum_g MW_g E_g \le P_{\mathrm{avail}}$ & soft hinge \\
     \hline
   \end{tabular}
@@ -87,8 +103,34 @@ deliberate choice: bounds are exact and mass balance is soft, not the reverse.
   C_{\mathrm{th}} = \frac{1}{|\mathcal{J}|}\sum_{j\in\mathcal{J}}
     \operatorname{relu}\!\big(\nu_j\,\Delta_r G_j + \epsilon\big),
 \end{equation}
-with $\mathcal{J}$ excluding exchange reactions, the biomass reaction and water transport,
-which cross the system boundary or are lumped and so carry no meaningful reaction energy.
+with $\mathcal{J}$ excluding exchange reactions, the biomass reaction and water transport.
+Thermo-Flux exempts the same three classes (Box~2, ``Reactions where the second law of
+thermodynamics is not applied''), and each is exempt for a different reason. An
+\textbf{exchange reaction} has one participant and no chemistry: it is the bookkeeping
+pseudo-reaction that moves a metabolite across the system boundary, so its ``reaction
+energy'' is the formation energy of one compound rather than a difference between reactant
+and product, and a sign constraint on it would be a constraint on the medium, not on the
+cell. The \textbf{biomass reaction} is a lumped pseudo-reaction whose energy is an
+empirical estimate from elemental composition (Battley 1999), not a sum over components,
+and its direction is the objective rather than something thermodynamics should be asked to
+decide. \textbf{Water transport} between compartments is treated as freely reversible:
+water's activity is fixed at one on both sides by the Alberty convention, the same
+convention that fixes the proton's energy at zero, so the transport carries no driving
+force and a hinge on it would penalize noise. Every other reaction, including every other
+transport process, is inside $\mathcal{J}$.
+
+\textbf{Gibbs dissipation is a readout, not a constraint.} Thermo-Flux introduces the
+dissipation cap separately from its constraint set, as an option, and its only warrant is
+Niebel et al.'s regression: a plateau in $g_{\mathrm{diss}}$ at $-3.7$\,kJ\,gCDW$^{-1}$h$^{-1}$
+above growth rate 0.3\,h$^{-1}$, with the authors' own caveat that a correlated third
+factor cannot be excluded. It is an empirical limit fitted to one organism's physiology,
+not a law. The decision here is to keep $g_{\mathrm{diss}}$ as a logged quantity and never
+as a penalty: a model that respects the limit without being told to has learned something
+about the cell, and a model that violates it has been caught, whereas a model trained to
+sit under it has been told the answer. Every grid reported in this document ran with the
+penalty on, since the code default was on until 2026-09-08; the default is now off, and
+the value stays in the per-epoch log.
+
 The $\epsilon$ is not decoration. The conventional big-M pair admits
 $\nu_j = \Delta_r G_j = 0$ under either value of its binary, so the strict inequality is
 never actually realized, and a smooth version has to name its tolerance rather than inherit

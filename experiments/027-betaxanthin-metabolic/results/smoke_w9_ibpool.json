@@ -1,0 +1,2226 @@
+{
+  "cell": {
+    "arm": "pooled",
+    "base_arm": "pooled",
+    "seed": 2700,
+    "permute_train_targets": false,
+    "epochs": 1,
+    "hidden": 90,
+    "layers": 2,
+    "attention_heads": 9,
+    "batch_size": 128,
+    "num_workers": 2,
+    "lr": 0.001,
+    "weight_decay": 0.0001,
+    "split_seed": 0,
+    "select_smoothing_window": 5,
+    "crps": true,
+    "graph_reg": true,
+    "abort_on_collapse": false,
+    "aux_mulleder": false,
+    "attention_mask": false,
+    "learnable_embedding": false,
+    "pert_heads": 6,
+    "kcat_tier": "measured",
+    "thermo_source": "shipped",
+    "constraint_warmup_epochs": 0,
+    "constraint_scale": 1.0,
+    "constraint_delay_epochs": 0,
+    "head_normalize": false,
+    "head": "isobutanol",
+    "aa_readout": "flux_metabolite",
+    "target_log10_molar": false,
+    "dist": "crps",
+    "bx_readout": "flux_scalar",
+    "volume_table": "assumed",
+    "conc_space": "mixture",
+    "conc_lower_m": 1e-07,
+    "conc_upper_m": 0.01,
+    "flux_parameterization": null,
+    "flux_balance_active_row_set": "dynamic",
+    "flux_balance_active_weight": 0.0,
+    "flux_density_weight": 0.0,
+    "flux_draws": 1,
+    "flux_latent_stochastic": false,
+    "flux_kl_weight": null,
+    "ib_readout": "flux_scalar",
+    "ib_anchors": "one",
+    "target_log10": true,
+    "aa_supervise_columns": null,
+    "apply_media": "none",
+    "flux_log_c_from_latent": false
+  },
+  "select_epoch": 0,
+  "select_rule": "raw_argmax_short_run",
+  "select_val_pearson": 0.07908521592617035,
+  "test": {
+    "pinned": {
+      "n": 504,
+      "spearman": -0.04978985234725202,
+      "pearson": -0.060530178248882294,
+      "top10": {
+        "hits": 1.0,
+        "enrichment": 1.008
+      },
+      "top25": {
+        "hits": 2.0,
+        "enrichment": 0.8064000000000001
+      },
+      "top50": {
+        "hits": 2.0,
+        "enrichment": 0.40320000000000006
+      }
+    },
+    "all": {
+      "n": 789,
+      "spearman": -0.021898824707687708,
+      "pearson": -0.012656297534704208,
+      "top10": {
+        "hits": 0.0,
+        "enrichment": 0.0
+      },
+      "top25": {
+        "hits": 1.0,
+        "enrichment": 0.39949367088607596
+      },
+      "top50": {
+        "hits": 1.0,
+        "enrichment": 0.19974683544303798
+      }
+    }
+  },
+  "history": [
+    {
+      "epoch": 0,
+      "train_loss": 1.4916919996212055,
+      "train_data_loss": 0.5538131149558277,
+      "val_loss": 0.5564316972754055,
+      "val_pearson": 0.07908521592617035,
+      "val_pred_sd_ratio": 0.0009336804505437613,
+      "n_val": 266,
+      "graph_reg_loss": 0.7684488892555237,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    }
+  ],
+  "flux_meta": {
+    "isobutanol": {
+      "dataset_root": "/scratch/projects/torchcell-scratch/data/torchcell/experiments/019-simb-multimodal/fig6_build",
+      "block_keys": [
+        "alanine",
+        "arginine",
+        "asparagine",
+        "aspartate",
+        "glutamate",
+        "glutamine",
+        "glycine",
+        "histidine",
+        "isobutanol",
+        "isoleucine",
+        "leucine",
+        "lysine",
+        "methionine",
+        "phenylalanine",
+        "proline",
+        "serine",
+        "threonine",
+        "tryptophan",
+        "tyrosine",
+        "valine"
+      ],
+      "block_width": 20,
+      "column": 8,
+      "target_space": "log10_fold_change",
+      "held_out": {
+        "dataset": "IsobutanolValidatedLopez2024Dataset",
+        "records": 224,
+        "genes": 224,
+        "genes_absent_from_cell_graph": [],
+        "gene_nodes_flagged": 224,
+        "fraction_of_dataset": 0.01605965012905076,
+        "why": "the validated re-screen is the external direction check; on this build its value was averaged into the screen's by MeanExperimentDeduplicator, so the strains are held out by gene rather than by value."
+      },
+      "note": "the Lopez biosensor fold change was merged into the Mulleder record by MeanExperimentDeduplicator wherever both were measured, so it is read as column 8 of a key-sorted width-20 metabolite_level block rather than as a width-1 group; in fig6_build the width-1 metabolite_level groups are 4,669 betaxanthin records against 189 isobutanol-only ones."
+    },
+    "sampling": {
+      "flux_draws": 1,
+      "latent_stochastic": false
+    }
+  },
+  "pinned_split": {
+    "path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/020-cachera-betaxanthin/results/merzbacher_nested_split.json",
+    "requested": 639,
+    "found": 639,
+    "absent": [],
+    "records": 1801,
+    "fraction_of_dataset": 0.129122454832234
+  },
+  "n_parameters": {
+    "gene_embedding": 0,
+    "embedding_preprocessor": 622439,
+    "cls_token": 90,
+    "transformer_layers": 196740,
+    "perturbation_transform": 98370,
+    "perturbation_head": 16381,
+    "isobutanol_head": 24572,
+    "total": 958592
+  },
+  "wall_time_s": 1046.9926578998566,
+  "code_provenance": {
+    "train_bx.py": "5cb352b4ae6ed9e42337e5d47d69bea847bdf64a1d54a704272fabbeeedcc995",
+    "train_bx.py_path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/027-betaxanthin-metabolic/scripts/train_bx.py",
+    "flux_layer.py": "2af23e14c56f776d83ac5c8a28c3c9ace4cfe089fe0519cd25a21ab23e30396c",
+    "flux_layer.py_path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/torchcell/metabolism/flux_layer.py"
+  },
+  "isobutanol_external_check": {
+    "note": "predictions only; the fractions are computed by analyze_wave9_ib_external.py against the validated re-screen's own fold changes. These strains carry no label in this run: they are masked out of the loss, the validation curve and the test score.",
+    "held_out_dataset": "IsobutanolValidatedLopez2024Dataset",
+    "n_records": 224,
+    "top_k": 30,
+    "top": [
+      {
+        "record_index": 11729,
+        "genes": [
+          "YGL214W"
+        ],
+        "pred_log10_fold_change": 0.014216470532119274
+      },
+      {
+        "record_index": 5251,
+        "genes": [
+          "YOR216C"
+        ],
+        "pred_log10_fold_change": 0.014098549261689186
+      },
+      {
+        "record_index": 5814,
+        "genes": [
+          "YDR227W"
+        ],
+        "pred_log10_fold_change": 0.014040227048099041
+      },
+      {
+        "record_index": 4589,
+        "genes": [
+          "YGR209C"
+        ],
+        "pred_log10_fold_change": 0.01396866049617529
+      },
+      {
+        "record_index": 6234,
+        "genes": [
+          "YPR098C"
+        ],
+        "pred_log10_fold_change": 0.013966085389256477
+      },
+      {
+        "record_index": 5985,
+        "genes": [
+          "YNL109W"
+        ],
+        "pred_log10_fold_change": 0.013947437517344952
+      },
+      {
+        "record_index": 7107,
+        "genes": [
+          "YJR134C"
+        ],
+        "pred_log10_fold_change": 0.013927841559052467
+      },
+      {
+        "record_index": 4753,
+        "genes": [
+          "YCL029C"
+        ],
+        "pred_log10_fold_change": 0.013926692306995392
+      },
+      {
+        "record_index": 7510,
+        "genes": [
+          "YNL183C"
+        ],
+        "pred_log10_fold_change": 0.01390300877392292
+      },
+      {
+        "record_index": 6725,
+        "genes": [
+          "YBR059C"
+        ],
+        "pred_log10_fold_change": 0.013895511627197266
+      },
+      {
+        "record_index": 8525,
+        "genes": [
+          "YOR297C"
+        ],
+        "pred_log10_fold_change": 0.013894477859139442
+      },
+      {
+        "record_index": 5492,
+        "genes": [
+          "YGR078C"
+        ],
+        "pred_log10_fold_change": 0.013880419544875622
+      },
+      {
+        "record_index": 6369,
+        "genes": [
+          "YML034C-A"
+        ],
+        "pred_log10_fold_change": 0.013865005224943161
+      },
+      {
+        "record_index": 4741,
+        "genes": [
+          "YKL023W"
+        ],
+        "pred_log10_fold_change": 0.01385006494820118
+      },
+      {
+        "record_index": 7580,
+        "genes": [
+          "YGL005C"
+        ],
+        "pred_log10_fold_change": 0.013841845095157623
+      },
+      {
+        "record_index": 5324,
+        "genes": [
+          "YLR187W"
+        ],
+        "pred_log10_fold_change": 0.013839752413332462
+      },
+      {
+        "record_index": 6908,
+        "genes": [
+          "YPR013C"
+        ],
+        "pred_log10_fold_change": 0.013829270377755165
+      },
+      {
+        "record_index": 7081,
+        "genes": [
+          "YCL032W"
+        ],
+        "pred_log10_fold_change": 0.013825672678649426
+      },
+      {
+        "record_index": 6171,
+        "genes": [
+          "YKR006C"
+        ],
+        "pred_log10_fold_change": 0.013815836049616337
+      },
+      {
+        "record_index": 8448,
+        "genes": [
+          "YNL153C"
+        ],
+        "pred_log10_fold_change": 0.01381190400570631
+      },
+      {
+        "record_index": 6280,
+        "genes": [
+          "YDR401W"
+        ],
+        "pred_log10_fold_change": 0.013793793506920338
+      },
+      {
+        "record_index": 2525,
+        "genes": [
+          "YOR014W"
+        ],
+        "pred_log10_fold_change": 0.013788027688860893
+      },
+      {
+        "record_index": 8578,
+        "genes": [
+          "YDR320C"
+        ],
+        "pred_log10_fold_change": 0.013769812881946564
+      },
+      {
+        "record_index": 5889,
+        "genes": [
+          "YER072W"
+        ],
+        "pred_log10_fold_change": 0.013769084587693214
+      },
+      {
+        "record_index": 7269,
+        "genes": [
+          "YOR115C"
+        ],
+        "pred_log10_fold_change": 0.013767946511507034
+      },
+      {
+        "record_index": 6731,
+        "genes": [
+          "YKL204W"
+        ],
+        "pred_log10_fold_change": 0.01376018300652504
+      },
+      {
+        "record_index": 5615,
+        "genes": [
+          "YCL010C"
+        ],
+        "pred_log10_fold_change": 0.013757957145571709
+      },
+      {
+        "record_index": 5528,
+        "genes": [
+          "YJL064W"
+        ],
+        "pred_log10_fold_change": 0.01375646609812975
+      },
+      {
+        "record_index": 6346,
+        "genes": [
+          "YNL197C"
+        ],
+        "pred_log10_fold_change": 0.013745032250881195
+      },
+      {
+        "record_index": 2459,
+        "genes": [
+          "YGR238C"
+        ],
+        "pred_log10_fold_change": 0.013736296445131302
+      }
+    ],
+    "bottom": [
+      {
+        "record_index": 11550,
+        "genes": [
+          "YCL023C"
+        ],
+        "pred_log10_fold_change": 0.013337353244423866
+      },
+      {
+        "record_index": 8878,
+        "genes": [
+          "YJL138C"
+        ],
+        "pred_log10_fold_change": 0.01333216205239296
+      },
+      {
+        "record_index": 7770,
+        "genes": [
+          "YBL024W"
+        ],
+        "pred_log10_fold_change": 0.013328249566257
+      },
+      {
+        "record_index": 8767,
+        "genes": [
+          "YOR234C"
+        ],
+        "pred_log10_fold_change": 0.0133280698210001
+      },
+      {
+        "record_index": 7094,
+        "genes": [
+          "YPR032W"
+        ],
+        "pred_log10_fold_change": 0.013324583880603313
+      },
+      {
+        "record_index": 7077,
+        "genes": [
+          "YPL245W"
+        ],
+        "pred_log10_fold_change": 0.013311200775206089
+      },
+      {
+        "record_index": 5702,
+        "genes": [
+          "YJR009C"
+        ],
+        "pred_log10_fold_change": 0.013309158384799957
+      },
+      {
+        "record_index": 6392,
+        "genes": [
+          "YPR079W"
+        ],
+        "pred_log10_fold_change": 0.013293678872287273
+      },
+      {
+        "record_index": 8133,
+        "genes": [
+          "YDR270W"
+        ],
+        "pred_log10_fold_change": 0.013292599469423294
+      },
+      {
+        "record_index": 7176,
+        "genes": [
+          "YNR032W"
+        ],
+        "pred_log10_fold_change": 0.013289598748087883
+      },
+      {
+        "record_index": 6252,
+        "genes": [
+          "YNL279W"
+        ],
+        "pred_log10_fold_change": 0.013288312591612339
+      },
+      {
+        "record_index": 4800,
+        "genes": [
+          "YOR298W"
+        ],
+        "pred_log10_fold_change": 0.013284948654472828
+      },
+      {
+        "record_index": 7905,
+        "genes": [
+          "YJR145C"
+        ],
+        "pred_log10_fold_change": 0.013284857384860516
+      },
+      {
+        "record_index": 4672,
+        "genes": [
+          "YEL065W"
+        ],
+        "pred_log10_fold_change": 0.013280831277370453
+      },
+      {
+        "record_index": 7364,
+        "genes": [
+          "YML048W"
+        ],
+        "pred_log10_fold_change": 0.013280644081532955
+      },
+      {
+        "record_index": 6901,
+        "genes": [
+          "YOR173W"
+        ],
+        "pred_log10_fold_change": 0.013278757221996784
+      },
+      {
+        "record_index": 5548,
+        "genes": [
+          "YJR094W-A"
+        ],
+        "pred_log10_fold_change": 0.013277186080813408
+      },
+      {
+        "record_index": 9201,
+        "genes": [
+          "YKL211C"
+        ],
+        "pred_log10_fold_change": 0.013271578587591648
+      },
+      {
+        "record_index": 11206,
+        "genes": [
+          "YOL047C"
+        ],
+        "pred_log10_fold_change": 0.013271326199173927
+      },
+      {
+        "record_index": 6521,
+        "genes": [
+          "YDR482C"
+        ],
+        "pred_log10_fold_change": 0.013268999755382538
+      },
+      {
+        "record_index": 8527,
+        "genes": [
+          "YGL026C"
+        ],
+        "pred_log10_fold_change": 0.013268017210066319
+      },
+      {
+        "record_index": 7439,
+        "genes": [
+          "YKR075C"
+        ],
+        "pred_log10_fold_change": 0.013265501707792282
+      },
+      {
+        "record_index": 9241,
+        "genes": [
+          "YOR230W"
+        ],
+        "pred_log10_fold_change": 0.01326321717351675
+      },
+      {
+        "record_index": 11284,
+        "genes": [
+          "YML070W"
+        ],
+        "pred_log10_fold_change": 0.01326233334839344
+      },
+      {
+        "record_index": 5878,
+        "genes": [
+          "YHL016C"
+        ],
+        "pred_log10_fold_change": 0.013259101659059525
+      },
+      {
+        "record_index": 8819,
+        "genes": [
+          "YKL011C"
+        ],
+        "pred_log10_fold_change": 0.013243076391518116
+      },
+      {
+        "record_index": 7849,
+        "genes": [
+          "YLR039C"
+        ],
+        "pred_log10_fold_change": 0.013226584531366825
+      },
+      {
+        "record_index": 10729,
+        "genes": [
+          "YBR296C"
+        ],
+        "pred_log10_fold_change": 0.013221288099884987
+      },
+      {
+        "record_index": 6961,
+        "genes": [
+          "YPL178W"
+        ],
+        "pred_log10_fold_change": 0.013202231377363205
+      },
+      {
+        "record_index": 6362,
+        "genes": [
+          "YOR229W"
+        ],
+        "pred_log10_fold_change": 0.013147144578397274
+      }
+    ],
+    "predictions": [
+      {
+        "record_index": 203,
+        "genes": [
+          "YBR169C"
+        ],
+        "pred_log10_fold_change": 0.013378268107771873
+      },
+      {
+        "record_index": 348,
+        "genes": [
+          "YKL055C"
+        ],
+        "pred_log10_fold_change": 0.013502300716936588
+      },
+      {
+        "record_index": 481,
+        "genes": [
+          "YPR127W"
+        ],
+        "pred_log10_fold_change": 0.01360430009663105
+      },
+      {
+        "record_index": 669,
+        "genes": [
+          "YIR027C"
+        ],
+        "pred_log10_fold_change": 0.013346560299396515
+      },
+      {
+        "record_index": 1069,
+        "genes": [
+          "YML129C"
+        ],
+        "pred_log10_fold_change": 0.013607829809188843
+      },
+      {
+        "record_index": 1381,
+        "genes": [
+          "YNL104C"
+        ],
+        "pred_log10_fold_change": 0.013382410630583763
+      },
+      {
+        "record_index": 1436,
+        "genes": [
+          "YKL053W"
+        ],
+        "pred_log10_fold_change": 0.01353205181658268
+      },
+      {
+        "record_index": 1559,
+        "genes": [
+          "YER143W"
+        ],
+        "pred_log10_fold_change": 0.01366775669157505
+      },
+      {
+        "record_index": 1570,
+        "genes": [
+          "YMR098C"
+        ],
+        "pred_log10_fold_change": 0.013573882170021534
+      },
+      {
+        "record_index": 1869,
+        "genes": [
+          "YPL038W"
+        ],
+        "pred_log10_fold_change": 0.013409314677119255
+      },
+      {
+        "record_index": 2125,
+        "genes": [
+          "YNL049C"
+        ],
+        "pred_log10_fold_change": 0.013356554321944714
+      },
+      {
+        "record_index": 2459,
+        "genes": [
+          "YGR238C"
+        ],
+        "pred_log10_fold_change": 0.013736296445131302
+      },
+      {
+        "record_index": 2525,
+        "genes": [
+          "YOR014W"
+        ],
+        "pred_log10_fold_change": 0.013788027688860893
+      },
+      {
+        "record_index": 3014,
+        "genes": [
+          "YLR353W"
+        ],
+        "pred_log10_fold_change": 0.013715678825974464
+      },
+      {
+        "record_index": 3503,
+        "genes": [
+          "YJR087W"
+        ],
+        "pred_log10_fold_change": 0.013707844540476799
+      },
+      {
+        "record_index": 3780,
+        "genes": [
+          "YOR354C"
+        ],
+        "pred_log10_fold_change": 0.013604903593659401
+      },
+      {
+        "record_index": 3803,
+        "genes": [
+          "YPL068C"
+        ],
+        "pred_log10_fold_change": 0.013614552095532417
+      },
+      {
+        "record_index": 4058,
+        "genes": [
+          "YNL250W"
+        ],
+        "pred_log10_fold_change": 0.013666393235325813
+      },
+      {
+        "record_index": 4180,
+        "genes": [
+          "YKL066W"
+        ],
+        "pred_log10_fold_change": 0.013583377003669739
+      },
+      {
+        "record_index": 4405,
+        "genes": [
+          "YAL013W"
+        ],
+        "pred_log10_fold_change": 0.013561677187681198
+      },
+      {
+        "record_index": 4442,
+        "genes": [
+          "YGR291C"
+        ],
+        "pred_log10_fold_change": 0.013700466603040695
+      },
+      {
+        "record_index": 4550,
+        "genes": [
+          "YBR074W"
+        ],
+        "pred_log10_fold_change": 0.013468580320477486
+      },
+      {
+        "record_index": 4589,
+        "genes": [
+          "YGR209C"
+        ],
+        "pred_log10_fold_change": 0.01396866049617529
+      },
+      {
+        "record_index": 4651,
+        "genes": [
+          "YML099C"
+        ],
+        "pred_log10_fold_change": 0.013443825766444206
+      },
+      {
+        "record_index": 4652,
+        "genes": [
+          "YJL118W"
+        ],
+        "pred_log10_fold_change": 0.013414669781923294
+      },
+      {
+        "record_index": 4657,
+        "genes": [
+          "YJR080C"
+        ],
+        "pred_log10_fold_change": 0.013408352620899677
+      },
+      {
+        "record_index": 4672,
+        "genes": [
+          "YEL065W"
+        ],
+        "pred_log10_fold_change": 0.013280831277370453
+      },
+      {
+        "record_index": 4677,
+        "genes": [
+          "YOL019W"
+        ],
+        "pred_log10_fold_change": 0.013685685582458973
+      },
+      {
+        "record_index": 4687,
+        "genes": [
+          "YLR364W"
+        ],
+        "pred_log10_fold_change": 0.013698389753699303
+      },
+      {
+        "record_index": 4739,
+        "genes": [
+          "YDR251W"
+        ],
+        "pred_log10_fold_change": 0.013667100109159946
+      },
+      {
+        "record_index": 4741,
+        "genes": [
+          "YKL023W"
+        ],
+        "pred_log10_fold_change": 0.01385006494820118
+      },
+      {
+        "record_index": 4753,
+        "genes": [
+          "YCL029C"
+        ],
+        "pred_log10_fold_change": 0.013926692306995392
+      },
+      {
+        "record_index": 4774,
+        "genes": [
+          "YPL258C"
+        ],
+        "pred_log10_fold_change": 0.01333913765847683
+      },
+      {
+        "record_index": 4783,
+        "genes": [
+          "YNL065W"
+        ],
+        "pred_log10_fold_change": 0.01341561134904623
+      },
+      {
+        "record_index": 4800,
+        "genes": [
+          "YOR298W"
+        ],
+        "pred_log10_fold_change": 0.013284948654472828
+      },
+      {
+        "record_index": 4867,
+        "genes": [
+          "YER155C"
+        ],
+        "pred_log10_fold_change": 0.013437636196613312
+      },
+      {
+        "record_index": 4869,
+        "genes": [
+          "YHL028W"
+        ],
+        "pred_log10_fold_change": 0.013640161603689194
+      },
+      {
+        "record_index": 4957,
+        "genes": [
+          "YPL212C"
+        ],
+        "pred_log10_fold_change": 0.013549648225307465
+      },
+      {
+        "record_index": 5005,
+        "genes": [
+          "YFR047C"
+        ],
+        "pred_log10_fold_change": 0.013429115526378155
+      },
+      {
+        "record_index": 5017,
+        "genes": [
+          "YOR087W"
+        ],
+        "pred_log10_fold_change": 0.013438328169286251
+      },
+      {
+        "record_index": 5031,
+        "genes": [
+          "YKR055W"
+        ],
+        "pred_log10_fold_change": 0.013559814542531967
+      },
+      {
+        "record_index": 5082,
+        "genes": [
+          "YPL101W"
+        ],
+        "pred_log10_fold_change": 0.013573963195085526
+      },
+      {
+        "record_index": 5125,
+        "genes": [
+          "YMR263W"
+        ],
+        "pred_log10_fold_change": 0.013728233054280281
+      },
+      {
+        "record_index": 5219,
+        "genes": [
+          "YJR099W"
+        ],
+        "pred_log10_fold_change": 0.013688292354345322
+      },
+      {
+        "record_index": 5235,
+        "genes": [
+          "YNL127W"
+        ],
+        "pred_log10_fold_change": 0.01355530135333538
+      },
+      {
+        "record_index": 5251,
+        "genes": [
+          "YOR216C"
+        ],
+        "pred_log10_fold_change": 0.014098549261689186
+      },
+      {
+        "record_index": 5254,
+        "genes": [
+          "YER111C"
+        ],
+        "pred_log10_fold_change": 0.013654815033078194
+      },
+      {
+        "record_index": 5276,
+        "genes": [
+          "YLR410W"
+        ],
+        "pred_log10_fold_change": 0.013607261702418327
+      },
+      {
+        "record_index": 5284,
+        "genes": [
+          "YKL217W"
+        ],
+        "pred_log10_fold_change": 0.013392021879553795
+      },
+      {
+        "record_index": 5306,
+        "genes": [
+          "YGL043W"
+        ],
+        "pred_log10_fold_change": 0.013509456068277359
+      },
+      {
+        "record_index": 5316,
+        "genes": [
+          "YPL261C"
+        ],
+        "pred_log10_fold_change": 0.013641009107232094
+      },
+      {
+        "record_index": 5324,
+        "genes": [
+          "YLR187W"
+        ],
+        "pred_log10_fold_change": 0.013839752413332462
+      },
+      {
+        "record_index": 5357,
+        "genes": [
+          "YHR162W"
+        ],
+        "pred_log10_fold_change": 0.013701473362743855
+      },
+      {
+        "record_index": 5405,
+        "genes": [
+          "YJR121W"
+        ],
+        "pred_log10_fold_change": 0.01353443879634142
+      },
+      {
+        "record_index": 5407,
+        "genes": [
+          "YDR524C"
+        ],
+        "pred_log10_fold_change": 0.013558262959122658
+      },
+      {
+        "record_index": 5432,
+        "genes": [
+          "YOR213C"
+        ],
+        "pred_log10_fold_change": 0.013529147021472454
+      },
+      {
+        "record_index": 5482,
+        "genes": [
+          "YGR281W"
+        ],
+        "pred_log10_fold_change": 0.01344320084899664
+      },
+      {
+        "record_index": 5485,
+        "genes": [
+          "YPR073C"
+        ],
+        "pred_log10_fold_change": 0.013620669022202492
+      },
+      {
+        "record_index": 5492,
+        "genes": [
+          "YGR078C"
+        ],
+        "pred_log10_fold_change": 0.013880419544875622
+      },
+      {
+        "record_index": 5496,
+        "genes": [
+          "YML116W-A"
+        ],
+        "pred_log10_fold_change": 0.013458386063575745
+      },
+      {
+        "record_index": 5500,
+        "genes": [
+          "YJL067W"
+        ],
+        "pred_log10_fold_change": 0.013626502826809883
+      },
+      {
+        "record_index": 5503,
+        "genes": [
+          "YOR369C"
+        ],
+        "pred_log10_fold_change": 0.013499725610017776
+      },
+      {
+        "record_index": 5528,
+        "genes": [
+          "YJL064W"
+        ],
+        "pred_log10_fold_change": 0.01375646609812975
+      },
+      {
+        "record_index": 5548,
+        "genes": [
+          "YJR094W-A"
+        ],
+        "pred_log10_fold_change": 0.013277186080813408
+      },
+      {
+        "record_index": 5583,
+        "genes": [
+          "YPL141C"
+        ],
+        "pred_log10_fold_change": 0.013634170405566692
+      },
+      {
+        "record_index": 5586,
+        "genes": [
+          "YKR036C"
+        ],
+        "pred_log10_fold_change": 0.013535953126847744
+      },
+      {
+        "record_index": 5591,
+        "genes": [
+          "YJL082W"
+        ],
+        "pred_log10_fold_change": 0.013538523577153683
+      },
+      {
+        "record_index": 5593,
+        "genes": [
+          "YMR154C"
+        ],
+        "pred_log10_fold_change": 0.013583969324827194
+      },
+      {
+        "record_index": 5615,
+        "genes": [
+          "YCL010C"
+        ],
+        "pred_log10_fold_change": 0.013757957145571709
+      },
+      {
+        "record_index": 5625,
+        "genes": [
+          "YOR138C"
+        ],
+        "pred_log10_fold_change": 0.013487586751580238
+      },
+      {
+        "record_index": 5676,
+        "genes": [
+          "YDL094C"
+        ],
+        "pred_log10_fold_change": 0.013374474830925465
+      },
+      {
+        "record_index": 5702,
+        "genes": [
+          "YJR009C"
+        ],
+        "pred_log10_fold_change": 0.013309158384799957
+      },
+      {
+        "record_index": 5763,
+        "genes": [
+          "YPL161C"
+        ],
+        "pred_log10_fold_change": 0.013655442744493484
+      },
+      {
+        "record_index": 5785,
+        "genes": [
+          "YBR261C"
+        ],
+        "pred_log10_fold_change": 0.013515935279428959
+      },
+      {
+        "record_index": 5814,
+        "genes": [
+          "YDR227W"
+        ],
+        "pred_log10_fold_change": 0.014040227048099041
+      },
+      {
+        "record_index": 5820,
+        "genes": [
+          "YER056C"
+        ],
+        "pred_log10_fold_change": 0.013453287072479725
+      },
+      {
+        "record_index": 5878,
+        "genes": [
+          "YHL016C"
+        ],
+        "pred_log10_fold_change": 0.013259101659059525
+      },
+      {
+        "record_index": 5889,
+        "genes": [
+          "YER072W"
+        ],
+        "pred_log10_fold_change": 0.013769084587693214
+      },
+      {
+        "record_index": 5894,
+        "genes": [
+          "YJR144W"
+        ],
+        "pred_log10_fold_change": 0.013643731363117695
+      },
+      {
+        "record_index": 5898,
+        "genes": [
+          "YGL168W"
+        ],
+        "pred_log10_fold_change": 0.01346929743885994
+      },
+      {
+        "record_index": 5922,
+        "genes": [
+          "YNL280C"
+        ],
+        "pred_log10_fold_change": 0.013675505295395851
+      },
+      {
+        "record_index": 5985,
+        "genes": [
+          "YNL109W"
+        ],
+        "pred_log10_fold_change": 0.013947437517344952
+      },
+      {
+        "record_index": 6109,
+        "genes": [
+          "YJR001W"
+        ],
+        "pred_log10_fold_change": 0.013696054928004742
+      },
+      {
+        "record_index": 6140,
+        "genes": [
+          "YOR364W"
+        ],
+        "pred_log10_fold_change": 0.013647682964801788
+      },
+      {
+        "record_index": 6156,
+        "genes": [
+          "YLR125W"
+        ],
+        "pred_log10_fold_change": 0.013468815013766289
+      },
+      {
+        "record_index": 6171,
+        "genes": [
+          "YKR006C"
+        ],
+        "pred_log10_fold_change": 0.013815836049616337
+      },
+      {
+        "record_index": 6219,
+        "genes": [
+          "YKL090W"
+        ],
+        "pred_log10_fold_change": 0.013492021709680557
+      },
+      {
+        "record_index": 6234,
+        "genes": [
+          "YPR098C"
+        ],
+        "pred_log10_fold_change": 0.013966085389256477
+      },
+      {
+        "record_index": 6252,
+        "genes": [
+          "YNL279W"
+        ],
+        "pred_log10_fold_change": 0.013288312591612339
+      },
+      {
+        "record_index": 6264,
+        "genes": [
+          "YOR162C"
+        ],
+        "pred_log10_fold_change": 0.013547037728130817
+      },
+      {
+        "record_index": 6265,
+        "genes": [
+          "YOR156C"
+        ],
+        "pred_log10_fold_change": 0.013726649805903435
+      },
+      {
+        "record_index": 6280,
+        "genes": [
+          "YDR401W"
+        ],
+        "pred_log10_fold_change": 0.013793793506920338
+      },
+      {
+        "record_index": 6286,
+        "genes": [
+          "YLR182W"
+        ],
+        "pred_log10_fold_change": 0.013571182265877724
+      },
+      {
+        "record_index": 6289,
+        "genes": [
+          "YGL216W"
+        ],
+        "pred_log10_fold_change": 0.01355689112097025
+      },
+      {
+        "record_index": 6295,
+        "genes": [
+          "YNL162W"
+        ],
+        "pred_log10_fold_change": 0.013355129398405552
+      },
+      {
+        "record_index": 6310,
+        "genes": [
+          "YER068W"
+        ],
+        "pred_log10_fold_change": 0.013564767315983772
+      },
+      {
+        "record_index": 6330,
+        "genes": [
+          "YHR004C"
+        ],
+        "pred_log10_fold_change": 0.013620882295072079
+      },
+      {
+        "record_index": 6346,
+        "genes": [
+          "YNL197C"
+        ],
+        "pred_log10_fold_change": 0.013745032250881195
+      },
+      {
+        "record_index": 6362,
+        "genes": [
+          "YOR229W"
+        ],
+        "pred_log10_fold_change": 0.013147144578397274
+      },
+      {
+        "record_index": 6369,
+        "genes": [
+          "YML034C-A"
+        ],
+        "pred_log10_fold_change": 0.013865005224943161
+      },
+      {
+        "record_index": 6392,
+        "genes": [
+          "YPR079W"
+        ],
+        "pred_log10_fold_change": 0.013293678872287273
+      },
+      {
+        "record_index": 6396,
+        "genes": [
+          "YKR042W"
+        ],
+        "pred_log10_fold_change": 0.013482571579515934
+      },
+      {
+        "record_index": 6496,
+        "genes": [
+          "YBR196C-A"
+        ],
+        "pred_log10_fold_change": 0.013524889014661312
+      },
+      {
+        "record_index": 6501,
+        "genes": [
+          "YJR106W"
+        ],
+        "pred_log10_fold_change": 0.013351121917366982
+      },
+      {
+        "record_index": 6502,
+        "genes": [
+          "YHR044C"
+        ],
+        "pred_log10_fold_change": 0.013570570386946201
+      },
+      {
+        "record_index": 6505,
+        "genes": [
+          "YNL274C"
+        ],
+        "pred_log10_fold_change": 0.013498665764927864
+      },
+      {
+        "record_index": 6521,
+        "genes": [
+          "YDR482C"
+        ],
+        "pred_log10_fold_change": 0.013268999755382538
+      },
+      {
+        "record_index": 6526,
+        "genes": [
+          "YLR414C"
+        ],
+        "pred_log10_fold_change": 0.013439962640404701
+      },
+      {
+        "record_index": 6562,
+        "genes": [
+          "YKL076C"
+        ],
+        "pred_log10_fold_change": 0.013724707067012787
+      },
+      {
+        "record_index": 6633,
+        "genes": [
+          "YDR294C"
+        ],
+        "pred_log10_fold_change": 0.01337625551968813
+      },
+      {
+        "record_index": 6665,
+        "genes": [
+          "YHR029C"
+        ],
+        "pred_log10_fold_change": 0.013562493026256561
+      },
+      {
+        "record_index": 6699,
+        "genes": [
+          "YIL011W"
+        ],
+        "pred_log10_fold_change": 0.01348975021392107
+      },
+      {
+        "record_index": 6704,
+        "genes": [
+          "YDR257C"
+        ],
+        "pred_log10_fold_change": 0.013568274676799774
+      },
+      {
+        "record_index": 6725,
+        "genes": [
+          "YBR059C"
+        ],
+        "pred_log10_fold_change": 0.013895511627197266
+      },
+      {
+        "record_index": 6731,
+        "genes": [
+          "YKL204W"
+        ],
+        "pred_log10_fold_change": 0.01376018300652504
+      },
+      {
+        "record_index": 6734,
+        "genes": [
+          "YML074C"
+        ],
+        "pred_log10_fold_change": 0.013699443079531193
+      },
+      {
+        "record_index": 6748,
+        "genes": [
+          "YDR277C"
+        ],
+        "pred_log10_fold_change": 0.013442372903227806
+      },
+      {
+        "record_index": 6777,
+        "genes": [
+          "YAL056W"
+        ],
+        "pred_log10_fold_change": 0.013481934554874897
+      },
+      {
+        "record_index": 6827,
+        "genes": [
+          "YGL211W"
+        ],
+        "pred_log10_fold_change": 0.013402769342064857
+      },
+      {
+        "record_index": 6882,
+        "genes": [
+          "YBR042C"
+        ],
+        "pred_log10_fold_change": 0.013388149440288544
+      },
+      {
+        "record_index": 6901,
+        "genes": [
+          "YOR173W"
+        ],
+        "pred_log10_fold_change": 0.013278757221996784
+      },
+      {
+        "record_index": 6908,
+        "genes": [
+          "YPR013C"
+        ],
+        "pred_log10_fold_change": 0.013829270377755165
+      },
+      {
+        "record_index": 6961,
+        "genes": [
+          "YPL178W"
+        ],
+        "pred_log10_fold_change": 0.013202231377363205
+      },
+      {
+        "record_index": 6994,
+        "genes": [
+          "YBR150C"
+        ],
+        "pred_log10_fold_change": 0.01352912187576294
+      },
+      {
+        "record_index": 7065,
+        "genes": [
+          "YJL127C"
+        ],
+        "pred_log10_fold_change": 0.013678791001439095
+      },
+      {
+        "record_index": 7077,
+        "genes": [
+          "YPL245W"
+        ],
+        "pred_log10_fold_change": 0.013311200775206089
+      },
+      {
+        "record_index": 7081,
+        "genes": [
+          "YCL032W"
+        ],
+        "pred_log10_fold_change": 0.013825672678649426
+      },
+      {
+        "record_index": 7094,
+        "genes": [
+          "YPR032W"
+        ],
+        "pred_log10_fold_change": 0.013324583880603313
+      },
+      {
+        "record_index": 7107,
+        "genes": [
+          "YJR134C"
+        ],
+        "pred_log10_fold_change": 0.013927841559052467
+      },
+      {
+        "record_index": 7121,
+        "genes": [
+          "YLR451W"
+        ],
+        "pred_log10_fold_change": 0.013581161387264729
+      },
+      {
+        "record_index": 7176,
+        "genes": [
+          "YNR032W"
+        ],
+        "pred_log10_fold_change": 0.013289598748087883
+      },
+      {
+        "record_index": 7210,
+        "genes": [
+          "YPL080C"
+        ],
+        "pred_log10_fold_change": 0.013411560095846653
+      },
+      {
+        "record_index": 7269,
+        "genes": [
+          "YOR115C"
+        ],
+        "pred_log10_fold_change": 0.013767946511507034
+      },
+      {
+        "record_index": 7270,
+        "genes": [
+          "YKR013W"
+        ],
+        "pred_log10_fold_change": 0.013684500940144062
+      },
+      {
+        "record_index": 7278,
+        "genes": [
+          "YCR098C"
+        ],
+        "pred_log10_fold_change": 0.013440273702144623
+      },
+      {
+        "record_index": 7293,
+        "genes": [
+          "YDR337W"
+        ],
+        "pred_log10_fold_change": 0.01342831552028656
+      },
+      {
+        "record_index": 7314,
+        "genes": [
+          "YNL119W"
+        ],
+        "pred_log10_fold_change": 0.013370071537792683
+      },
+      {
+        "record_index": 7364,
+        "genes": [
+          "YML048W"
+        ],
+        "pred_log10_fold_change": 0.013280644081532955
+      },
+      {
+        "record_index": 7365,
+        "genes": [
+          "YLR453C"
+        ],
+        "pred_log10_fold_change": 0.013663860969245434
+      },
+      {
+        "record_index": 7432,
+        "genes": [
+          "YNL010W"
+        ],
+        "pred_log10_fold_change": 0.013552411459386349
+      },
+      {
+        "record_index": 7439,
+        "genes": [
+          "YKR075C"
+        ],
+        "pred_log10_fold_change": 0.013265501707792282
+      },
+      {
+        "record_index": 7442,
+        "genes": [
+          "YPL185W"
+        ],
+        "pred_log10_fold_change": 0.013348185457289219
+      },
+      {
+        "record_index": 7468,
+        "genes": [
+          "YML112W"
+        ],
+        "pred_log10_fold_change": 0.013537322171032429
+      },
+      {
+        "record_index": 7475,
+        "genes": [
+          "YGL107C"
+        ],
+        "pred_log10_fold_change": 0.013604297302663326
+      },
+      {
+        "record_index": 7491,
+        "genes": [
+          "YDR490C"
+        ],
+        "pred_log10_fold_change": 0.013602182269096375
+      },
+      {
+        "record_index": 7510,
+        "genes": [
+          "YNL183C"
+        ],
+        "pred_log10_fold_change": 0.01390300877392292
+      },
+      {
+        "record_index": 7518,
+        "genes": [
+          "YKR080W"
+        ],
+        "pred_log10_fold_change": 0.013363268226385117
+      },
+      {
+        "record_index": 7543,
+        "genes": [
+          "YGR262C"
+        ],
+        "pred_log10_fold_change": 0.013511106371879578
+      },
+      {
+        "record_index": 7550,
+        "genes": [
+          "YLR172C"
+        ],
+        "pred_log10_fold_change": 0.013342726975679398
+      },
+      {
+        "record_index": 7580,
+        "genes": [
+          "YGL005C"
+        ],
+        "pred_log10_fold_change": 0.013841845095157623
+      },
+      {
+        "record_index": 7623,
+        "genes": [
+          "YPR067W"
+        ],
+        "pred_log10_fold_change": 0.013592220842838287
+      },
+      {
+        "record_index": 7688,
+        "genes": [
+          "YCR076C"
+        ],
+        "pred_log10_fold_change": 0.013372932560741901
+      },
+      {
+        "record_index": 7695,
+        "genes": [
+          "YNL264C"
+        ],
+        "pred_log10_fold_change": 0.01353455986827612
+      },
+      {
+        "record_index": 7731,
+        "genes": [
+          "YDR245W"
+        ],
+        "pred_log10_fold_change": 0.013539019040763378
+      },
+      {
+        "record_index": 7751,
+        "genes": [
+          "YKR027W"
+        ],
+        "pred_log10_fold_change": 0.013454968109726906
+      },
+      {
+        "record_index": 7770,
+        "genes": [
+          "YBL024W"
+        ],
+        "pred_log10_fold_change": 0.013328249566257
+      },
+      {
+        "record_index": 7798,
+        "genes": [
+          "YJR098C"
+        ],
+        "pred_log10_fold_change": 0.013676896691322327
+      },
+      {
+        "record_index": 7834,
+        "genes": [
+          "YPL069C"
+        ],
+        "pred_log10_fold_change": 0.013460878282785416
+      },
+      {
+        "record_index": 7849,
+        "genes": [
+          "YLR039C"
+        ],
+        "pred_log10_fold_change": 0.013226584531366825
+      },
+      {
+        "record_index": 7887,
+        "genes": [
+          "YML055W"
+        ],
+        "pred_log10_fold_change": 0.013669252395629883
+      },
+      {
+        "record_index": 7905,
+        "genes": [
+          "YJR145C"
+        ],
+        "pred_log10_fold_change": 0.013284857384860516
+      },
+      {
+        "record_index": 8007,
+        "genes": [
+          "YGR208W"
+        ],
+        "pred_log10_fold_change": 0.013461560942232609
+      },
+      {
+        "record_index": 8012,
+        "genes": [
+          "YDL160C"
+        ],
+        "pred_log10_fold_change": 0.01343141682446003
+      },
+      {
+        "record_index": 8048,
+        "genes": [
+          "YPR101W"
+        ],
+        "pred_log10_fold_change": 0.013557194732129574
+      },
+      {
+        "record_index": 8067,
+        "genes": [
+          "YHL042W"
+        ],
+        "pred_log10_fold_change": 0.013370438478887081
+      },
+      {
+        "record_index": 8092,
+        "genes": [
+          "YDR501W"
+        ],
+        "pred_log10_fold_change": 0.013643864542245865
+      },
+      {
+        "record_index": 8098,
+        "genes": [
+          "YCL036W"
+        ],
+        "pred_log10_fold_change": 0.013439261354506016
+      },
+      {
+        "record_index": 8116,
+        "genes": [
+          "YNL023C"
+        ],
+        "pred_log10_fold_change": 0.013369734399020672
+      },
+      {
+        "record_index": 8133,
+        "genes": [
+          "YDR270W"
+        ],
+        "pred_log10_fold_change": 0.013292599469423294
+      },
+      {
+        "record_index": 8134,
+        "genes": [
+          "YJR139C"
+        ],
+        "pred_log10_fold_change": 0.013388294726610184
+      },
+      {
+        "record_index": 8163,
+        "genes": [
+          "YJL065C"
+        ],
+        "pred_log10_fold_change": 0.01352398656308651
+      },
+      {
+        "record_index": 8183,
+        "genes": [
+          "YDL112W"
+        ],
+        "pred_log10_fold_change": 0.01358853094279766
+      },
+      {
+        "record_index": 8188,
+        "genes": [
+          "YML111W"
+        ],
+        "pred_log10_fold_change": 0.013630911707878113
+      },
+      {
+        "record_index": 8249,
+        "genes": [
+          "YKR044W"
+        ],
+        "pred_log10_fold_change": 0.013421815820038319
+      },
+      {
+        "record_index": 8262,
+        "genes": [
+          "YDL229W"
+        ],
+        "pred_log10_fold_change": 0.013509830459952354
+      },
+      {
+        "record_index": 8268,
+        "genes": [
+          "YDL035C"
+        ],
+        "pred_log10_fold_change": 0.013398749753832817
+      },
+      {
+        "record_index": 8320,
+        "genes": [
+          "YJL006C"
+        ],
+        "pred_log10_fold_change": 0.013418049551546574
+      },
+      {
+        "record_index": 8434,
+        "genes": [
+          "YGL007C-A"
+        ],
+        "pred_log10_fold_change": 0.013587079010903835
+      },
+      {
+        "record_index": 8436,
+        "genes": [
+          "YNL201C"
+        ],
+        "pred_log10_fold_change": 0.013646170496940613
+      },
+      {
+        "record_index": 8448,
+        "genes": [
+          "YNL153C"
+        ],
+        "pred_log10_fold_change": 0.01381190400570631
+      },
+      {
+        "record_index": 8454,
+        "genes": [
+          "YHR121W"
+        ],
+        "pred_log10_fold_change": 0.01366196945309639
+      },
+      {
+        "record_index": 8464,
+        "genes": [
+          "YGR289C"
+        ],
+        "pred_log10_fold_change": 0.01347656175494194
+      },
+      {
+        "record_index": 8488,
+        "genes": [
+          "YDL225W"
+        ],
+        "pred_log10_fold_change": 0.01354890689253807
+      },
+      {
+        "record_index": 8525,
+        "genes": [
+          "YOR297C"
+        ],
+        "pred_log10_fold_change": 0.013894477859139442
+      },
+      {
+        "record_index": 8527,
+        "genes": [
+          "YGL026C"
+        ],
+        "pred_log10_fold_change": 0.013268017210066319
+      },
+      {
+        "record_index": 8578,
+        "genes": [
+          "YDR320C"
+        ],
+        "pred_log10_fold_change": 0.013769812881946564
+      },
+      {
+        "record_index": 8643,
+        "genes": [
+          "YKL162C-A"
+        ],
+        "pred_log10_fold_change": 0.01370455976575613
+      },
+      {
+        "record_index": 8657,
+        "genes": [
+          "YIL014W"
+        ],
+        "pred_log10_fold_change": 0.013465692289173603
+      },
+      {
+        "record_index": 8689,
+        "genes": [
+          "YGL020C"
+        ],
+        "pred_log10_fold_change": 0.013505472801625729
+      },
+      {
+        "record_index": 8767,
+        "genes": [
+          "YOR234C"
+        ],
+        "pred_log10_fold_change": 0.0133280698210001
+      },
+      {
+        "record_index": 8787,
+        "genes": [
+          "YHR123W"
+        ],
+        "pred_log10_fold_change": 0.013593272306025028
+      },
+      {
+        "record_index": 8798,
+        "genes": [
+          "YMR275C"
+        ],
+        "pred_log10_fold_change": 0.013688701204955578
+      },
+      {
+        "record_index": 8807,
+        "genes": [
+          "YGL110C"
+        ],
+        "pred_log10_fold_change": 0.01360988337546587
+      },
+      {
+        "record_index": 8819,
+        "genes": [
+          "YKL011C"
+        ],
+        "pred_log10_fold_change": 0.013243076391518116
+      },
+      {
+        "record_index": 8878,
+        "genes": [
+          "YJL138C"
+        ],
+        "pred_log10_fold_change": 0.01333216205239296
+      },
+      {
+        "record_index": 8884,
+        "genes": [
+          "YCR068W"
+        ],
+        "pred_log10_fold_change": 0.01347422692924738
+      },
+      {
+        "record_index": 9056,
+        "genes": [
+          "YHR031C"
+        ],
+        "pred_log10_fold_change": 0.013499824330210686
+      },
+      {
+        "record_index": 9085,
+        "genes": [
+          "YIR017C"
+        ],
+        "pred_log10_fold_change": 0.013369445689022541
+      },
+      {
+        "record_index": 9088,
+        "genes": [
+          "YKR051W"
+        ],
+        "pred_log10_fold_change": 0.01341570820659399
+      },
+      {
+        "record_index": 9157,
+        "genes": [
+          "YBR046C"
+        ],
+        "pred_log10_fold_change": 0.013647723942995071
+      },
+      {
+        "record_index": 9190,
+        "genes": [
+          "YLR438W"
+        ],
+        "pred_log10_fold_change": 0.013494685292243958
+      },
+      {
+        "record_index": 9201,
+        "genes": [
+          "YKL211C"
+        ],
+        "pred_log10_fold_change": 0.013271578587591648
+      },
+      {
+        "record_index": 9217,
+        "genes": [
+          "YCR044C"
+        ],
+        "pred_log10_fold_change": 0.013460904359817505
+      },
+      {
+        "record_index": 9229,
+        "genes": [
+          "YPL072W"
+        ],
+        "pred_log10_fold_change": 0.013497059233486652
+      },
+      {
+        "record_index": 9241,
+        "genes": [
+          "YOR230W"
+        ],
+        "pred_log10_fold_change": 0.01326321717351675
+      },
+      {
+        "record_index": 9255,
+        "genes": [
+          "YCR053W"
+        ],
+        "pred_log10_fold_change": 0.013511721976101398
+      },
+      {
+        "record_index": 10073,
+        "genes": [
+          "YHL031C"
+        ],
+        "pred_log10_fold_change": 0.013715280219912529
+      },
+      {
+        "record_index": 10106,
+        "genes": [
+          "YBR035C"
+        ],
+        "pred_log10_fold_change": 0.01363052986562252
+      },
+      {
+        "record_index": 10350,
+        "genes": [
+          "YBR133C"
+        ],
+        "pred_log10_fold_change": 0.013423144817352295
+      },
+      {
+        "record_index": 10472,
+        "genes": [
+          "YBR069C"
+        ],
+        "pred_log10_fold_change": 0.01351247914135456
+      },
+      {
+        "record_index": 10729,
+        "genes": [
+          "YBR296C"
+        ],
+        "pred_log10_fold_change": 0.013221288099884987
+      },
+      {
+        "record_index": 11117,
+        "genes": [
+          "YER040W"
+        ],
+        "pred_log10_fold_change": 0.013704274781048298
+      },
+      {
+        "record_index": 11173,
+        "genes": [
+          "YKL163W"
+        ],
+        "pred_log10_fold_change": 0.013555929996073246
+      },
+      {
+        "record_index": 11206,
+        "genes": [
+          "YOL047C"
+        ],
+        "pred_log10_fold_change": 0.013271326199173927
+      },
+      {
+        "record_index": 11284,
+        "genes": [
+          "YML070W"
+        ],
+        "pred_log10_fold_change": 0.01326233334839344
+      },
+      {
+        "record_index": 11550,
+        "genes": [
+          "YCL023C"
+        ],
+        "pred_log10_fold_change": 0.013337353244423866
+      },
+      {
+        "record_index": 11729,
+        "genes": [
+          "YGL214W"
+        ],
+        "pred_log10_fold_change": 0.014216470532119274
+      },
+      {
+        "record_index": 12727,
+        "genes": [
+          "YKL030W"
+        ],
+        "pred_log10_fold_change": 0.013650719076395035
+      },
+      {
+        "record_index": 12838,
+        "genes": [
+          "YML063W"
+        ],
+        "pred_log10_fold_change": 0.013403024524450302
+      },
+      {
+        "record_index": 12905,
+        "genes": [
+          "YPL256C"
+        ],
+        "pred_log10_fold_change": 0.013562419451773167
+      },
+      {
+        "record_index": 13016,
+        "genes": [
+          "YML051W"
+        ],
+        "pred_log10_fold_change": 0.013436849229037762
+      },
+      {
+        "record_index": 13149,
+        "genes": [
+          "YDL201W"
+        ],
+        "pred_log10_fold_change": 0.013457990251481533
+      },
+      {
+        "record_index": 13504,
+        "genes": [
+          "YPR017C"
+        ],
+        "pred_log10_fold_change": 0.0134408138692379
+      },
+      {
+        "record_index": 13582,
+        "genes": [
+          "YPL086C"
+        ],
+        "pred_log10_fold_change": 0.013393307104706764
+      }
+    ],
+    "reproducibility_ceiling": {
+      "screen_up_stayed_up": "59/60",
+      "screen_down_stayed_down": "150/150",
+      "source": "the 222 genes measured in both the screen and the re-screen"
+    }
+  },
+  "calibration": {
+    "available": false,
+    "reason": "the head emitted a point prediction; there is no PIT for it.",
+    "dist": "crps",
+    "group": null,
+    "n_measurements": null,
+    "columns": [],
+    "coverage": {},
+    "coverage_per_feature": {},
+    "pit_ks": null,
+    "pit_ks_per_feature": [],
+    "pit_mean": null,
+    "pit_histogram": []
+  },
+  "concentration_audit": {
+    "available": false,
+    "reason": "the learned log concentration exists only on a flux arm whose thermo_mode is ANCHORED, scored against the amino-acid phenotype; this cell is arm 'pooled' on head 'isobutanol'.",
+    "supervised": false,
+    "conc_space": null,
+    "conc_lower_m": null,
+    "conc_upper_m": null,
+    "volume_fractions": null,
+    "mixture": {},
+    "groups": {}
+  },
+  "feasibility": {
+    "available": false,
+    "reason": "arm 'pooled' has no flux layer, so there is no flux vector and neither mass balance nor the second law is defined for it. Reported as null rather than as zero violations.",
+    "definitions": {
+      "balance_median_ratio": "median over the independent rows i of S of |(Sv)_i| / (omega_i + balance_epsilon), with omega_i = 0.5 sum_j |S_ij v_j| the layer's own turnover. This is FluxLayer.forward's feas_balance_median, per sample instead of batch-reduced.",
+      "balance_max_ratio": "the same ratio, maximized over the independent rows.",
+      "box_violation_frac": "fraction of the 4,131 reactions with v > ub + 1e-4 or v < lb - 1e-4, where (lb, ub) is FluxLayer.dynamic_box at this sample's availability and abundance. The box parameterization satisfies this by construction, so a nonzero value is a bug rather than an infeasibility.",
+      "thermo_model_violation_frac": "fraction of active reactions (delta_r_g0_mask and not thermo_exempt) with v * delta_r_G > thermo_epsilon, using the layer's OWN delta_r_G from reaction_potential, which includes the learned concentration term. Available only when the arm's thermo_mode is not OFF.",
+      "thermo_model_uphill_frac": "mean over active reactions of relu(v dG + eps) / (|v||dG| + eps), the per-sample form of the layer's c_thermo. Available only when thermo_mode is not OFF.",
+      "thermo_standard_state_violation_frac": "fraction of active reactions with v * (delta_r_G0 + delta_r_G_transport) > thermo_epsilon. An AUDIT REFERENCE, not the layer's own term: it evaluates the second law at standard state because an arm with thermo_mode OFF learns no concentrations, so the concentration term RT S^T ln c is absent rather than zero.",
+      "thermo_standard_state_uphill_frac": "the same standard-state driving force in the c_thermo normalization.",
+      "fractions": "fraction of the genotypes in the group meeting each named criterion. 'both_balance_le_1e-02_and_<thermo>_eq_0' is the Genesis criterion: mass balance within 1 percent and no uphill active reaction.",
+      "rank_by": "top-100 groups are the 100 genotypes with the HIGHEST predicted betaxanthin (denormalized head mean), i.e. the strains the model nominates as producers."
+    },
+    "tolerances": {},
+    "n_independent_balance_rows": null,
+    "n_reactions_second_law_applied": null,
+    "thermo_mode": null,
+    "thermo_source": null,
+    "groups": {}
+  }
+}

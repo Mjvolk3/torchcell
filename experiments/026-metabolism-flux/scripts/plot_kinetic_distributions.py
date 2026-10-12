@@ -72,6 +72,11 @@ OUT_DIR = osp.join(ASSET_IMAGES_DIR, "026-metabolism-flux")
 
 # Panel order and labelling follow the paper exactly, so a reader can set the two figures
 # side by side. ``ours`` names the local build; ``theirs`` the authors' released table.
+#
+# EZKinetics is not in the original eight. It is drawn here because the comparison this
+# document makes is between the predictors WE can run, and leaving it out of the
+# distribution figure while ranking it first on accuracy elsewhere would be inconsistent.
+# It has no authors' table, so it carries our curve only, like the other five k_cat panels.
 PANELS: list[dict[str, str]] = [
     {"letter": "a", "predictor": "dlkcat", "parameter": "k_cat", "title": "DLKcat"},
     {"letter": "b", "predictor": "unikp", "parameter": "k_cat", "title": "UniKP-$k_{cat}$"},
@@ -80,14 +85,48 @@ PANELS: list[dict[str, str]] = [
     {"letter": "d", "predictor": "turnup", "parameter": "k_cat", "title": "TurNuP"},
     {"letter": "e", "predictor": "deepenzyme", "parameter": "k_cat",
      "title": "DeepEnzyme"},
-    {"letter": "f", "predictor": "boost_km", "parameter": "K_M", "title": "Boost_KM"},
-    {"letter": "g", "predictor": "unikp", "parameter": "K_M", "title": "UniKP-$K_M$"},
-    {"letter": "h", "predictor": "eitlem", "parameter": "K_M", "title": "EITLEM-$K_M$"},
+    {"letter": "f", "predictor": "ezkinetics", "parameter": "k_cat",
+     "title": "EZKinetics-$k_{cat}$"},
+    {"letter": "g", "predictor": "boost_km", "parameter": "K_M", "title": "Boost_KM"},
+    {"letter": "h", "predictor": "unikp", "parameter": "K_M", "title": "UniKP-$K_M$"},
+    {"letter": "i", "predictor": "eitlem", "parameter": "K_M", "title": "EITLEM-$K_M$"},
+    {"letter": "j", "predictor": "ezkinetics", "parameter": "K_M",
+     "title": "EZKinetics-$K_M$"},
+    {"letter": "k", "predictor": "catpred", "parameter": "k_cat",
+     "title": "CatPred-$k_{cat}$"},
+    {"letter": "l", "predictor": "catpred", "parameter": "K_M",
+     "title": "CatPred-$K_M$"},
 ]
 
+# The three-way split Wu et al.'s Fig. 3 draws. Reserved rather than drawn: their per-pair
+# core and underground tables are in neither released artifact, so only OURS_COLOR has a
+# curve. Three categories take THREE PRIMARIES; underground was the blue slot, which is a
+# secondary and does not belong as the third color of a three-series scheme.
 CORE_COLOR = PLOT_PALETTE[1]  # brick, the core network
-UNDERGROUND_COLOR = PLOT_PALETTE[4]  # steel blue, the underground network
+UNDERGROUND_COLOR = PLOT_PALETTE[2]  # lilac, the underground network
 OURS_COLOR = PLOT_PALETTE[0]  # amber, our independent run
+
+
+#: One predictor, one color, in every figure of this document. Same map as the agreement
+#: and EC-class figures, so a reader comparing them is comparing the same enzymes.
+PREDICTOR_COLOR_INDEX = {
+    "dlkcat": 0, "unikp": 1, "eitlem": 2, "turnup": 3, "deepenzyme": 4, "ezkinetics": 5,
+    "boost_km": 6,
+    # The eighth predictor takes the MUTED tier's red, slot 13. Slots 7 to 12 differ from
+    # the vivid tier in lightness, which the palette reserves for validation against test
+    # within one series; slots 13 to 18 differ in chroma, which is the tier a new category
+    # takes. Slot 12, the muted orange, is the reference band's in the agreement figures.
+    "catpred": 13,
+}
+DISPLAY = {
+    "dlkcat": "DLKcat", "unikp": "UniKP", "eitlem": "EITLEM", "turnup": "TurNuP",
+    "deepenzyme": "DeepEnzyme", "ezkinetics": "EZKinetics", "boost_km": "Boost_KM",
+    "catpred": "CatPred",
+}
+
+
+def predictor_color(name: str) -> str:
+    return PLOT_PALETTE[PREDICTOR_COLOR_INDEX[name] % len(PLOT_PALETTE)]
 
 
 def apply_style() -> None:
@@ -108,17 +147,22 @@ def ecdf(values: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
 
 def draw_curve(ax: plt.Axes, values: np.ndarray, color: str, label: str,
                style: str = "-") -> float:
-    """Plot one empirical CDF in log10 space and mark its median. Returns the median."""
+    """Plot one empirical CDF in log10 space. Returns the median, which is not drawn.
+
+    The original marks each curve's median with a short vertical tick, which works when a
+    panel holds one or two curves. Overlaid, six ticks land at the same height within a few
+    tenths of each other and read as artifacts on the curves rather than as annotations. The
+    median of a cumulative distribution is where it crosses 0.5, so a single reference line
+    at that height shows every median at once and costs no ink per curve. The value is still
+    returned and recorded.
+    """
     ordered, proportion = ecdf(values)
     if len(ordered) == 0:
         return float("nan")
     logged = np.log10(ordered[ordered > 0])
     _, proportion = ecdf(ordered[ordered > 0])
     ax.plot(logged, proportion, color=color, linestyle=style, linewidth=1.0, label=label)
-    median = float(np.median(logged))
-    # The short vertical tick at the median is how the original marks central tendency.
-    ax.plot([median, median], [0.5, 0.62], color=color, linewidth=0.8)
-    return median
+    return float(np.median(logged))
 
 
 def load_ours(predictor: str, parameter: str) -> np.ndarray | None:
@@ -169,59 +213,58 @@ def main() -> None:
         with open(args.paper_tables) as handle:
             mapping = json.load(handle)
 
+    # ONE panel per parameter, every predictor overlaid, rather than one panel per
+    # predictor. Ten separate ECDFs of the same quantity all look alike, and what the
+    # comparison is actually about is how far apart they sit: that is a difference between
+    # curves, and a difference between curves cannot be read across ten panels. The
+    # per-predictor medians are still recorded, so nothing measured is lost.
     fig, axes = plt.subplots(
-        2, 4,
-        figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(88)),
+        1, 2,
+        figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(66)),
         dpi=300,
     )
     record: dict[str, object] = {}
 
-    for panel, ax in zip(PANELS, axes.flatten()):
-        parameter = panel["parameter"]
-        entry: dict[str, object] = {}
-
-        theirs = load_theirs(mapping, panel["predictor"], parameter)
-        if theirs is not None:
-            core, underground = theirs
-            entry["paper_core_n"] = int(len(core))
-            entry["paper_underground_n"] = int(len(underground))
-            entry["paper_core_median_log10"] = draw_curve(
-                ax, core, CORE_COLOR, "core (paper)"
-            )
-            entry["paper_underground_median_log10"] = draw_curve(
-                ax, underground, UNDERGROUND_COLOR, "underground (paper)"
-            )
-
-        ours = load_ours(panel["predictor"], parameter)
-        if ours is not None:
+    for ax, parameter, letter in zip(axes, ("k_cat", "K_M"), "ab"):
+        panels = [p for p in PANELS if p["parameter"] == parameter]
+        for panel in panels:
+            entry: dict[str, object] = {}
+            predictor = panel["predictor"]
+            ours = load_ours(predictor, parameter)
+            if ours is None:
+                continue
             entry["ours_n"] = int(len(ours))
             entry["ours_median_log10"] = draw_curve(
-                ax, ours, OURS_COLOR, "core (ours)", style="--"
+                ax, ours, predictor_color(predictor), DISPLAY[predictor]
             )
+            theirs = load_theirs(mapping, predictor, parameter)
+            if theirs is not None:
+                core, underground = theirs
+                entry["paper_core_n"] = int(len(core))
+                entry["paper_underground_n"] = int(len(underground))
+            record[f"{predictor}_{parameter}"] = entry
 
-        if theirs is None and ours is None:
-            ax.text(0.5, 0.5, "not run", transform=ax.transAxes, ha="center",
-                    va="center", fontsize=6, color="#666666")
-            ax.set_xticks([])
-            ax.set_yticks([])
-        else:
-            unit = "1/s" if parameter == "k_cat" else "mM"
-            symbol = "$k_{cat}$" if parameter == "k_cat" else "$K_M$"
-            ax.set_xlabel(f"log$_{{10}}$ {symbol} ({unit})")
-            ax.set_ylabel("cumulative proportion")
-            ax.set_ylim(0, 1.02)
-            ax.legend(loc="lower right", frameon=False, handlelength=1.4,
-                      handletextpad=0.4, borderpad=0.1)
-
-        ax.set_title(panel["title"], fontsize=6)
-        ax.text(-0.24, 1.06, panel["letter"], transform=ax.transAxes,
-                fontsize=8, fontweight="bold", va="top")
+        # Drawn after the curves so it reads as a reference rather than as data, and thin
+        # enough not to compete with them. Each curve's median is its crossing point.
+        ax.axhline(0.5, color="black", linewidth=0.5, linestyle=":", zorder=1,
+                   label="median (crossing)")
+        unit = "1/s" if parameter == "k_cat" else "mM"
+        symbol = "$k_{cat}$" if parameter == "k_cat" else "$K_M$"
+        ax.set_xlabel(f"log$_{{10}}$ {symbol} ({unit})")
+        ax.set_ylabel("cumulative proportion")
+        ax.set_ylim(0, 1.02)
+        ax.legend(
+            loc="lower left", bbox_to_anchor=(0.0, 1.01), ncol=3, frameon=False,
+            fontsize=6, handlelength=1.2, handletextpad=0.4, borderpad=0.0,
+            columnspacing=1.0,
+        )
+        ax.text(-0.16, 1.30, letter, transform=ax.transAxes, fontsize=8,
+                fontweight="bold", va="top")
         for spine in ax.spines.values():
             spine.set_visible(True)
             spine.set_linewidth(0.5)
-        record[f"{panel['letter']}_{panel['predictor']}_{parameter}"] = entry
 
-    fig.tight_layout()
+    fig.tight_layout(w_pad=2.6)
     savefig_true_size_svg(fig, osp.join(OUT_DIR, f"kinetics_fig3{stamp}.svg"))
     fig.savefig(osp.join(OUT_DIR, f"kinetics_fig3{stamp}.png"), dpi=300)
     plt.close(fig)

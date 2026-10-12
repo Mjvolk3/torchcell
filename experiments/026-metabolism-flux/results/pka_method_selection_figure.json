@@ -1,0 +1,266 @@
+{
+ "built_at": "2026-09-11T06:15:15.048176+00:00",
+ "source_csv": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/026-metabolism-flux/results/pka_method_selection_per_compound.csv",
+ "scores_json": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/026-metabolism-flux/results/pka_method_selection_scores.json",
+ "figure_svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes/assets/images/026-metabolism-flux/pka_method_selection.svg",
+ "figure_png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes/assets/images/026-metabolism-flux/pka_method_selection.png",
+ "n_heldout_compounds": 2100,
+ "working_ph": [
+  5.0,
+  6.2,
+  6.6,
+  7.0,
+  7.1,
+  7.2,
+  7.4,
+  7.8
+ ],
+ "methods_drawn": [
+  "ensemble_top2",
+  "cascade_top3",
+  "cascade_top2",
+  "unipka-simple-template",
+  "per_group_best",
+  "molgpka",
+  "ensemble_top3",
+  "pkasolver"
+ ],
+ "panels": [
+  {
+   "panel": "a",
+   "what": "box of |ddGf'0| at pH 7.2 over the held-out compounds; whiskers at the 10th and 90th percentiles, values clipped up to 1e-3 for the log axis",
+   "values": {
+    "ensemble_top2": {
+     "n": 1744,
+     "median": 0.5021,
+     "p90": 4.477280000000002,
+     "max": 20.9386
+    },
+    "cascade_top3": {
+     "n": 2095,
+     "median": 0.0673,
+     "p90": 4.882200000000013,
+     "max": 9.5868
+    },
+    "cascade_top2": {
+     "n": 2094,
+     "median": 0.0675,
+     "p90": 4.892350000000004,
+     "max": 9.5868
+    },
+    "unipka-simple-template": {
+     "n": 1858,
+     "median": 0.0767,
+     "p90": 5.41114,
+     "max": 9.5868
+    },
+    "per_group_best": {
+     "n": 1858,
+     "median": 0.0767,
+     "p90": 5.41114,
+     "max": 9.5868
+    },
+    "molgpka": {
+     "n": 1980,
+     "median": 0.12965,
+     "p90": 4.003120000000001,
+     "max": 15.5186
+    },
+    "ensemble_top3": {
+     "n": 2090,
+     "median": 0.33145,
+     "p90": 5.24737,
+     "max": 36.7683
+    },
+    "pkasolver": {
+     "n": 2085,
+     "median": 1.4661,
+     "p90": 9.625200000000001,
+     "max": 173.2462
+    }
+   }
+  },
+  {
+   "panel": "b",
+   "what": "p90 of |ddGf'0| at each working compartment pH, held out",
+   "values": {
+    "working_ph": [
+     5.0,
+     6.2,
+     6.6,
+     7.0,
+     7.1,
+     7.2,
+     7.4,
+     7.8
+    ],
+    "p90_by_method": {
+     "ensemble_top2": [
+      7.82678943359673,
+      2.187995038902727,
+      2.1709586334737194,
+      3.503480304188498,
+      4.013852504984448,
+      4.4772808312645305,
+      5.459817668610419,
+      7.7615682695869515
+     ],
+     "cascade_top3": [
+      5.583421407655125,
+      1.8846654157811833,
+      2.4999565878477394,
+      3.944927456788265,
+      4.375729978807744,
+      4.882188153803806,
+      5.979533711439081,
+      8.330862016390645
+     ],
+     "cascade_top2": [
+      5.5845530986023855,
+      1.8851533191331329,
+      2.5016933621974213,
+      3.945524171859916,
+      4.388784915108864,
+      4.892337072831821,
+      5.979835505083668,
+      8.333194320403813
+     ],
+     "unipka-simple-template": [
+      5.556118410640536,
+      1.9373743464664357,
+      2.7515444116069827,
+      4.385042903362136,
+      4.891487403867358,
+      5.411157158134073,
+      6.482064430461604,
+      8.745061334567367
+     ],
+     "per_group_best": [
+      5.556118410640536,
+      1.9373743464664357,
+      2.7515444116069827,
+      4.385042903362136,
+      4.891487403867358,
+      5.411157158134073,
+      6.482064430461604,
+      8.745061334567367
+     ],
+     "molgpka": [
+      8.45793748279595,
+      2.3851084188617278,
+      2.831612993080808,
+      3.363439574882102,
+      3.556996853996365,
+      4.0031035259230014,
+      5.378991997558487,
+      9.33099866705071
+     ],
+     "ensemble_top3": [
+      9.337140483413123,
+      2.65541959319626,
+      2.652061114203139,
+      4.0619902037883335,
+      4.597291819468003,
+      5.247394595476703,
+      6.461412846971508,
+      9.381970622404426
+     ],
+     "pkasolver": [
+      12.579451593168852,
+      3.86962209782846,
+      3.8834460299206524,
+      7.015227597731621,
+      8.27992956558392,
+      9.625157675448056,
+      12.267067480765471,
+      18.120017505333365
+     ]
+    }
+   }
+  },
+  {
+   "panel": "c",
+   "what": "p90 of |ddGf'0| at pH 7.2 by lipid-like stratum, held out",
+   "values": {
+    "ensemble_top2": {
+     "not_lipid_like": 3.146530000000002,
+     "lipid_like": 6.8191500000000005
+    },
+    "cascade_top3": {
+     "not_lipid_like": 2.1958400000000013,
+     "lipid_like": 6.71229
+    },
+    "cascade_top2": {
+     "not_lipid_like": 2.1967800000000004,
+     "lipid_like": 6.71229
+    },
+    "unipka-simple-template": {
+     "not_lipid_like": 2.3592,
+     "lipid_like": 6.779059999999999
+    },
+    "per_group_best": {
+     "not_lipid_like": 2.3592,
+     "lipid_like": 6.779059999999999
+    },
+    "molgpka": {
+     "not_lipid_like": 3.129,
+     "lipid_like": 7.520800000000001
+    },
+    "ensemble_top3": {
+     "not_lipid_like": 4.7585800000000065,
+     "lipid_like": 5.40758
+    },
+    "pkasolver": {
+     "not_lipid_like": 7.60372000000001,
+     "lipid_like": 10.03322
+    }
+   }
+  },
+  {
+   "panel": "d",
+   "what": "failure rate against the worst working-pH p90, held out; the dashed line is the selection rule's failure-rate bound",
+   "values": {
+    "ensemble_top2": {
+     "failure_rate": 0.16952380952380952,
+     "worst_working_p90": 7.82678943359673,
+     "frac_count_match": 0.28211009174311924
+    },
+    "cascade_top3": {
+     "failure_rate": 0.0023809523809523725,
+     "worst_working_p90": 8.330862016390645,
+     "frac_count_match": 0.3379474940334129
+    },
+    "cascade_top2": {
+     "failure_rate": 0.0028571428571428914,
+     "worst_working_p90": 8.333194320403813,
+     "frac_count_match": 0.3376313276026743
+    },
+    "unipka-simple-template": {
+     "failure_rate": 0.11523809523809525,
+     "worst_working_p90": 8.745061334567367,
+     "frac_count_match": 0.3536060279870829
+    },
+    "per_group_best": {
+     "failure_rate": 0.11523809523809525,
+     "worst_working_p90": 8.745061334567367,
+     "frac_count_match": 0.3536060279870829
+    },
+    "molgpka": {
+     "failure_rate": 0.05714285714285716,
+     "worst_working_p90": 9.33099866705071,
+     "frac_count_match": 0.21666666666666667
+    },
+    "ensemble_top3": {
+     "failure_rate": 0.004761904761904745,
+     "worst_working_p90": 9.381970622404426,
+     "frac_count_match": 0.36363636363636365
+    },
+    "pkasolver": {
+     "failure_rate": 0.0071428571428571175,
+     "worst_working_p90": 18.120017505333365,
+     "frac_count_match": 0.3635491606714628
+    }
+   }
+  }
+ ]
+}

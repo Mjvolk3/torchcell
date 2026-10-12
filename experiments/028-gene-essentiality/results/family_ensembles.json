@@ -1,0 +1,161 @@
+{
+ "n_genes": 195,
+ "n_essential": 31,
+ "families": {
+  "pathway + ProtT5 + affine (round 22, 3 seeds)": 3,
+  "flux head, pathway + ProtT5 (rounds 23 and 25, 6 seeds)": 6,
+  "flux head, ProtT5 (rounds 21 and 24, 6 seeds)": 6,
+  "layer-free log1p vector + affine, pathway + ProtT5 (round 33, 6 seeds)": 6,
+  "layer-free log1p, interior-point store (round 36, 6 seeds)": 6,
+  "cached solve + flux head, pathway + ProtT5 (round 27, 6 seeds)": 6,
+  "GO convolution (400 epochs, 3 seeds)": 3,
+  "GO convolution (400 epochs, 6 seeds)": 6
+ },
+ "combinations": [
+  {
+   "families": [
+    "GO convolution (400 epochs, 3 seeds)"
+   ],
+   "n_cells": 3,
+   "auroc": 0.9091266719118803,
+   "ci_low": 0.8521992567181246,
+   "ci_high": 0.9544366364013186
+  },
+  {
+   "families": [
+    "GO convolution (400 epochs, 6 seeds)"
+   ],
+   "n_cells": 6,
+   "auroc": 0.9046026750590087,
+   "ci_low": 0.8468137142126789,
+   "ci_high": 0.9508440120521291
+  },
+  {
+   "families": [
+    "pathway + ProtT5 + affine (round 22, 3 seeds)"
+   ],
+   "n_cells": 3,
+   "auroc": 0.8914240755310778,
+   "ci_low": 0.8323189937800656,
+   "ci_high": 0.9403369545482057
+  },
+  {
+   "families": [
+    "flux head, pathway + ProtT5 (rounds 23 and 25, 6 seeds)"
+   ],
+   "n_cells": 6,
+   "auroc": 0.9108969315499607,
+   "ci_low": 0.8617585131884914,
+   "ci_high": 0.9538053145533089
+  },
+  {
+   "families": [
+    "cached solve + flux head, pathway + ProtT5 (round 27, 6 seeds)"
+   ],
+   "n_cells": 6,
+   "auroc": 0.9179779701022817,
+   "ci_low": 0.8700941455530585,
+   "ci_high": 0.9565340352030637
+  },
+  {
+   "families": [
+    "layer-free log1p vector + affine, pathway + ProtT5 (round 33, 6 seeds)"
+   ],
+   "n_cells": 6,
+   "auroc": 0.9101101494885917,
+   "ci_low": 0.8623240407844929,
+   "ci_high": 0.9509796888704242
+  },
+  {
+   "families": [
+    "GO convolution (400 epochs, 6 seeds)",
+    "layer-free log1p vector + affine, pathway + ProtT5 (round 33, 6 seeds)"
+   ],
+   "n_cells": 12,
+   "auroc": 0.9474822974036192,
+   "ci_low": 0.9095028728938582,
+   "ci_high": 0.9773334901625321
+  },
+  {
+   "families": [
+    "layer-free log1p, interior-point store (round 36, 6 seeds)"
+   ],
+   "n_cells": 6,
+   "auroc": 0.9120771046420142,
+   "ci_low": 0.8646820721391913,
+   "ci_high": 0.9520171825362251
+  },
+  {
+   "families": [
+    "GO convolution (400 epochs, 6 seeds)",
+    "layer-free log1p, interior-point store (round 36, 6 seeds)"
+   ],
+   "n_cells": 12,
+   "auroc": 0.9443351691581432,
+   "ci_low": 0.9014672439904311,
+   "ci_high": 0.9769843525171744
+  },
+  {
+   "families": [
+    "GO convolution (400 epochs, 6 seeds)",
+    "cached solve + flux head, pathway + ProtT5 (round 27, 6 seeds)"
+   ],
+   "n_cells": 12,
+   "auroc": 0.9459087332808812,
+   "ci_low": 0.906068991924255,
+   "ci_high": 0.9768554021813223
+  },
+  {
+   "families": [
+    "GO convolution (400 epochs, 6 seeds)",
+    "pathway + ProtT5 + affine (round 22, 3 seeds)",
+    "cached solve + flux head, pathway + ProtT5 (round 27, 6 seeds)"
+   ],
+   "n_cells": 15,
+   "auroc": 0.9390243902439024,
+   "ci_low": 0.8957562744004461,
+   "ci_high": 0.972978727585084
+  },
+  {
+   "families": [
+    "GO convolution (400 epochs, 3 seeds)",
+    "pathway + ProtT5 + affine (round 22, 3 seeds)"
+   ],
+   "n_cells": 6,
+   "auroc": 0.9331235247836349,
+   "ci_low": 0.8885573531406865,
+   "ci_high": 0.9692082435657785
+  },
+  {
+   "families": [
+    "GO convolution (400 epochs, 3 seeds)",
+    "flux head, pathway + ProtT5 (rounds 23 and 25, 6 seeds)"
+   ],
+   "n_cells": 9,
+   "auroc": 0.9405979543666405,
+   "ci_low": 0.9010055599858231,
+   "ci_high": 0.9771215835524718
+  },
+  {
+   "families": [
+    "GO convolution (400 epochs, 3 seeds)",
+    "flux head, ProtT5 (rounds 21 and 24, 6 seeds)"
+   ],
+   "n_cells": 9,
+   "auroc": 0.9230920535011802,
+   "ci_low": 0.8703731056888576,
+   "ci_high": 0.9659562503697698
+  },
+  {
+   "families": [
+    "GO convolution (400 epochs, 3 seeds)",
+    "pathway + ProtT5 + affine (round 22, 3 seeds)",
+    "flux head, pathway + ProtT5 (rounds 23 and 25, 6 seeds)"
+   ],
+   "n_cells": 12,
+   "auroc": 0.9352871754523997,
+   "ci_low": 0.8891927737168281,
+   "ci_high": 0.9705804785586095
+  }
+ ]
+}

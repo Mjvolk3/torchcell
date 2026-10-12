@@ -1,0 +1,3 @@
+# round 17 (w28): the round-16 cell on folds 3 and 4
+ESS_ARM=pooled ESS_HIDDEN=12 ESS_HEADS=4 ESS_LAYERS=1 ESS_PREPROC=1 ESS_SEED=2700 ESS_EPOCHS=200 ESS_BATCH=32 ESS_POSW=1 ESS_SPLIT=ess_fcl_fold3of5_s0.json.gz ESS_TAG=_w28cspcv ESS_OUT=w28_cspcv3_h12l1p1_e200_s2700 ESS_EXTRA='--node-embeddings normalized_chrom_pathways prot_T5_all --ess-readout fba --ess-solve-features stats_pfba'
+ESS_ARM=pooled ESS_HIDDEN=12 ESS_HEADS=4 ESS_LAYERS=1 ESS_PREPROC=1 ESS_SEED=2700 ESS_EPOCHS=200 ESS_BATCH=32 ESS_POSW=1 ESS_SPLIT=ess_fcl_fold4of5_s0.json.gz ESS_TAG=_w28cspcv ESS_OUT=w28_cspcv4_h12l1p1_e200_s2700 ESS_EXTRA='--node-embeddings normalized_chrom_pathways prot_T5_all --ess-readout fba --ess-solve-features stats_pfba'

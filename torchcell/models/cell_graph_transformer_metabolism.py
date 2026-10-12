@@ -77,6 +77,7 @@ if __name__ == "__main__":
         0, _osp.dirname(_osp.dirname(_osp.dirname(_osp.abspath(__file__))))
     )
 
+import math
 from typing import Any, cast
 
 import torch
@@ -168,6 +169,8 @@ class FluxScalarHead(nn.Module):
         precursor_indices: torch.Tensor,
         use_dense_flux: bool = True,
         param_dim: int = 1,
+        normalize_inputs: bool = False,
+        flux_scale: float = 100.0,
     ) -> None:
         """Build the readout.
 
@@ -176,22 +179,55 @@ class FluxScalarHead(nn.Module):
             precursor_indices: ``[P]`` GEM metabolite indices of the named precursors.
             use_dense_flux: Include the unrestricted ``w^T v`` term.
             param_dim: Distributional parameters.
+            normalize_inputs: Divide both inputs by the layer's own working flux magnitude
+                before reading them, so the head starts on the scale of the standardized
+                target. See the class note on the measured offset. Default ``False``, which
+                reproduces every 026 and 027 run before 2026-09-10.
+            flux_scale: The layer's working flux magnitude in mmol/gDW/h, i.e.
+                ``FluxLayerConfig.flux_scale``. Read only when ``normalize_inputs`` is set,
+                and it must be the SAME value the flux layer was built with, or the head is
+                normalizing by a number that is not its input's scale.
         """
         super().__init__()
         self.register_buffer("precursor_indices", precursor_indices)
         self.output_dim = 1
         self.param_dim = param_dim
         self.use_dense_flux = use_dense_flux
+        self.normalize_inputs = normalize_inputs
+        self.flux_scale = float(flux_scale)
         self.precursor = nn.Linear(int(precursor_indices.numel()), param_dim)
         if use_dense_flux:
             self.dense = nn.Linear(n_reactions, param_dim)
 
     def forward(self, v: torch.Tensor, turnover: torch.Tensor) -> torch.Tensor:
-        """``([B, r], [B, m]) -> [B, 1]`` or ``[B, 1, param_dim]``."""
+        """``([B, r], [B, m]) -> [B, 1]`` or ``[B, 1, param_dim]``.
+
+        WHY THE INPUTS ARE OPTIONALLY DIVIDED BY ``flux_scale``, measured 2026-09-10 by
+        ``experiments/027-betaxanthin-metabolic/scripts/diagnose_head_scale.py`` on one real
+        training batch at initialization. The target is standardized to mean 0, sd 1. The
+        pooled head starts at mean -0.573, sd 0.0074. This head, unnormalized, starts at
+        **mean +7.030**, sd 0.237 -- seven target standard deviations from the target mean.
+        The spread is not the problem; the OFFSET is. It comes from the dense term: 4,131
+        fluxes with mean absolute value 9.87 and maximum 61.1, summed against random
+        weights, give a large constant that the head has to unlearn before it can learn a
+        genotype effect. That is consistent with the wave-5 cells' epoch-0 data loss of 8.5
+        to 14.3 against the pooled arm's 0.49, at a constraint weight of exactly zero.
+
+        Dividing by ``flux_scale`` expresses both inputs in units of the layer's own working
+        flux magnitude: ``v / flux_scale`` is the box coordinate the layer parameterizes,
+        and ``log1p(omega) / log1p(flux_scale)`` is the same scale for a turnover, which
+        carries the same units. Nothing is centered and nothing is learned here, so the
+        head's meaning is unchanged; only the units it reads are.
+        """
         omega = turnover[:, self.precursor_indices].clamp(min=0.0)
-        out: torch.Tensor = self.precursor(torch.log1p(omega))
+        precursor_input = torch.log1p(omega)
+        dense_input = v
+        if self.normalize_inputs:
+            precursor_input = precursor_input / math.log1p(self.flux_scale)
+            dense_input = v / self.flux_scale
+        out: torch.Tensor = self.precursor(precursor_input)
         if self.use_dense_flux:
-            out = out + self.dense(v)
+            out = out + self.dense(dense_input)
         return out.unsqueeze(1) if self.param_dim > 1 else out
 
 
@@ -253,7 +289,9 @@ class ProductScalarHead(nn.Module):
     ) -> torch.Tensor:
         """Return ``[batch, 1]`` (point) or ``[batch, 1, param_dim]`` (distributional)."""
         batch_size = H_genes_pert.shape[0]
-        h = h_CLS.unsqueeze(0).expand(batch_size, -1)
+        # [d] is the shared wild-type token; [batch, d] is the PERTURBED one, which the
+        # parent returns under `perturb_cls` and this model's forward passes here.
+        h = h_CLS if h_CLS.dim() == 2 else h_CLS.unsqueeze(0).expand(batch_size, -1)
         if self.use_gene_pool:
             h = torch.cat([h, H_genes_pert.mean(dim=1)], dim=-1)
         if self.use_pert_pool:
@@ -267,6 +305,40 @@ class ProductScalarHead(nn.Module):
         if self.param_dim > 1:
             out = out.view(batch_size, 1, self.param_dim)
         return cast(torch.Tensor, out)
+
+
+def gene_removal_indices(batch: Any) -> tuple[torch.Tensor, torch.Tensor, str]:
+    """``(indices, batch assignment, source)`` for genes the cell no longer HAS.
+
+    WHY THE FLUX LAYER NEEDS A DIFFERENT INDEX FROM THE BACKBONE. The backbone removes a
+    perturbed gene's node whatever the perturbation was, which is right: the strain's gene
+    content differs from the reference either way. The flux layer's availability gate reads
+    the same index as "this gene product is absent" and closes every reaction whose GPR
+    needs it, and that is only true of a DELETION.
+
+    The case that forced this: the Cachera betaxanthin cassette records ARO4^K229L
+    (YBR249C) and ARO7^G141S (YPR060C) as GeneAddition perturbations
+    (``cachera2023.py:67-113``). Those are feedback-resistant alleles the strain
+    OVERPRODUCES through, and the gate was shutting DAHP synthase and chorismate mutase in
+    every betaxanthin genotype, i.e. closing the exact two steps the experiment opens.
+
+    ``deletion_indices`` is emitted by the graph processors as an additive field. A batch
+    built before it existed does not carry it, so the perturbation index is used and the
+    CHOICE IS RETURNED rather than silently taken, so a run records which one it gated on.
+    """
+    gene = batch["gene"]
+    # Both halves are needed: the per-graph attribute exists on every batch built from a
+    # processed graph that carries it, but the `_batch` assignment exists only when the
+    # DataModule listed `deletion_indices` in follow_batch. A script that builds its own
+    # DataModule without it (the audits) must fall back and record that it did, not raise
+    # (job 1984 died on exactly this).
+    if hasattr(gene, "deletion_indices") and hasattr(gene, "deletion_indices_batch"):
+        return gene.deletion_indices, gene.deletion_indices_batch, "deletion_indices"
+    return (
+        gene.perturbation_indices,
+        gene.perturbation_indices_batch,
+        "perturbation_indices",
+    )
 
 
 def perturbed_gene_pool(
@@ -391,7 +463,9 @@ class MetabolomeVectorHead(nn.Module):
     ) -> torch.Tensor:
         """Return ``[batch, F]`` (point) or ``[batch, F, param_dim]``."""
         batch_size = H_genes_pert.shape[0]
-        h = h_CLS.unsqueeze(0).expand(batch_size, -1)
+        # [d] is the shared wild-type token; [batch, d] is the PERTURBED one, which the
+        # parent returns under `perturb_cls` and this model's forward passes here.
+        h = h_CLS if h_CLS.dim() == 2 else h_CLS.unsqueeze(0).expand(batch_size, -1)
         if self.use_gene_pool:
             h = torch.cat([h, H_genes_pert.mean(dim=1)], dim=-1)
         if self.use_pert_pool:
@@ -473,6 +547,10 @@ class CellGraphTransformerMetabolism(CellGraphTransformer):
                     ),
                     use_dense_flux=bool(spec.get("use_dense_flux", True)),
                     param_dim=int(spec.get("param_dim", 1)),
+                    normalize_inputs=bool(spec.get("normalize_inputs", False)),
+                    # Taken from the LAYER rather than from the spec, so the head cannot be
+                    # told to normalize by a magnitude the layer does not use.
+                    flux_scale=float(self.flux_layer.config.flux_scale),
                 )
             elif kind == "scalar":
                 if output_dim != 1:
@@ -514,7 +592,7 @@ class CellGraphTransformerMetabolism(CellGraphTransformer):
 
     def forward(
         self, cell_graph: HeteroData, batch: HeteroData, *args: Any, **kwargs: Any
-    ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
+    ) -> tuple[torch.Tensor | None, dict[str, torch.Tensor]]:
         """Run the inherited forward, then append the metabolism head outputs.
 
         The encoder, graph-regularization loss and equivariant perturbation operator are
@@ -539,7 +617,11 @@ class CellGraphTransformerMetabolism(CellGraphTransformer):
         mypy accepts as a Liskov-compatible override.)
         """
         predictions, reps = super().forward(cell_graph, batch, *args, **kwargs)
-        h_CLS = reps["h_CLS"]
+        # Under `perturb_cls` the class token went through the perturbation operator and
+        # is strain-specific; the heads read it in place of the wild-type token, which
+        # carries no across-strain variance at all. `h_CLS` stays in `reps` either way.
+        h_CLS_pert = reps.get("h_CLS_pert")
+        h_CLS = reps["h_CLS"] if h_CLS_pert is None else h_CLS_pert
         H_genes_pert = reps["H_genes_pert"]
         head_outputs = cast(dict[str, torch.Tensor], reps["head_outputs"])
         pert_pool = perturbed_gene_pool(
@@ -548,12 +630,9 @@ class CellGraphTransformerMetabolism(CellGraphTransformer):
             batch["gene"].perturbation_indices_batch,
         )
         if self.flux_layer is not None and self.flux_head_names:
-            flux = self.flux_layer(
-                H_genes_pert,
-                pert_pool,
-                batch["gene"].perturbation_indices,
-                batch["gene"].perturbation_indices_batch,
-            )
+            gate_indices, gate_batch, gate_source = gene_removal_indices(batch)
+            self.last_gene_removal_source = gate_source
+            flux = self.flux_layer(H_genes_pert, pert_pool, gate_indices, gate_batch)
             reps["flux"] = flux
             turnover = self.flux_layer.turnover(flux["v"])
             for name in self.flux_head_names:

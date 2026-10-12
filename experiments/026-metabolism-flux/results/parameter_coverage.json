@@ -1,0 +1,76 @@
+{
+  "gem": {
+    "n_reactions": 4131,
+    "n_metabolites": 2806,
+    "n_catalytic_units": 3728
+  },
+  "delta_g_ladder": [
+    {
+      "step": "shipped_only",
+      "n_metabolites_priced": 2389,
+      "n_reactions_priced": 3505,
+      "frac_reactions": 0.8484628419268943,
+      "delta_reactions_vs_previous": 3505
+    },
+    {
+      "step": "recomputed_only",
+      "n_metabolites_priced": 2113,
+      "n_reactions_priced": 2741,
+      "frac_reactions": 0.663519728879206,
+      "delta_reactions_vs_previous": -764
+    },
+    {
+      "step": "union_shipped_recomputed",
+      "n_metabolites_priced": 2511,
+      "n_reactions_priced": 3716,
+      "frac_reactions": 0.8995400629387558,
+      "delta_reactions_vs_previous": 975
+    },
+    {
+      "step": "union_plus_tight_surrogate",
+      "n_metabolites_priced": 2522,
+      "n_reactions_priced": 3730,
+      "frac_reactions": 0.9029290728637134,
+      "delta_reactions_vs_previous": 14
+    },
+    {
+      "step": "union_plus_all_surrogate_NOT_RECOMMENDED",
+      "n_metabolites_priced": 2574,
+      "n_reactions_priced": 3862,
+      "frac_reactions": 0.9348825950133139,
+      "delta_reactions_vs_previous": 132
+    }
+  ],
+  "surrogate": {
+    "n_metabolites_gained": 441,
+    "median_n_surrogates_per_metabolite": 12.0,
+    "spread_kj_per_mol_median": 52.64803893410681,
+    "spread_kj_per_mol_p90": 342.2959333167664,
+    "n_with_spread_under_tight_threshold": 39,
+    "tight_spread_threshold_kj": 5.0
+  },
+  "flux_weighted": {
+    "n_reactions_with_nonzero_fva_width": 2845,
+    "n_of_those_priced_shipped": 2517,
+    "n_of_those_priced_recomputed": 1870,
+    "n_of_those_priced_recommended": 2685,
+    "frac_flux_carrying_priced_shipped": 0.8847100175746925,
+    "frac_flux_carrying_priced_recommended": 0.9437609841827768
+  },
+  "kinetics_consensus": {
+    "k_cat": {
+      "n_units": 3552,
+      "coverage_frac": 0.9527896995708155,
+      "median_value": 4.673171563766491,
+      "median_spread_decades": 1.1384494118276964,
+      "n_units_all_predictors": 2055
+    },
+    "K_M": {
+      "n_units": 3552,
+      "coverage_frac": 0.9527896995708155,
+      "median_value": 0.19932146213810809,
+      "median_spread_decades": 0.8667733574395785,
+      "n_units_all_predictors": 3468
+    }
+  }
+}

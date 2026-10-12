@@ -125,6 +125,9 @@
 
     # GEM
     cobra>=0.29.1
+    # Interior-point QP for the minimum-norm flux stores (031 target_physics_store.py
+    # --variant l2); HiGHS's active-set QP fails on the 2,831 x 4,177 strain model.
+    clarabel>=0.11.1
 
     # Hypergraph - fastjsonschema needed as extra dep for hypernetx
     hypernetx>=2.3.10

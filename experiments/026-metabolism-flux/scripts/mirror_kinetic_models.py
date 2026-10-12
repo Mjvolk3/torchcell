@@ -28,7 +28,6 @@ from torchcell.data.model_mirror import (
     ModelMirror,
     list_mirrors,
     mirror_summary,
-    read_manifest,
     scan_files,
     utc_now,
     write_manifest,
@@ -68,6 +67,12 @@ ROLES: dict[str, dict[str, str]] = {
         "datasets/": "training_data",
     },
     "deepenzyme": {"Weights/": "weights", "Data/": "training_data", "Code/": "source"},
+    "catpred": {
+        "pretrained/production/": "weights",
+        "CatPred-DB/": "training_data",
+        "catpred/": "source",
+        "demo/": "source",
+    },
 }
 
 # One entry per predictor: where it came from, what it can produce, and -- when it cannot
@@ -193,6 +198,80 @@ SPECS: dict[str, dict[str, object]] = {
             "convention as DLKcat."
         ),
     },
+    "ezkinetics": {
+        "clone_dir": "EZKinetics",
+        "display_name": "EZKinetics",
+        "source_url": "https://github.com/le-yuan/EZKinetics",
+        "method": RetrievalMethod.git_clone,
+        "emits": ["k_cat", "K_M", "k_cat_over_K_M"],
+        "inputs": ["sequence", "substrate_smiles", "ph", "temperature"],
+        "runnable": True,
+        "extra_command": None,
+        "notes": (
+            "UNPUBLISHED, manuscript under review, so it carries no DOI and cannot be "
+            "cited; the repository went public under MIT on 2026-04-16. Weights ship IN "
+            "the repository, unlike every other predictor here, as 36 fitted XGBoost "
+            "models over 3 parameters x 4 protein encoders x 3 substrate encoders. "
+            "`inference/predict.py` fixes the combination: ESM2_650M for k_cat, ESM2_3B "
+            "for K_M and k_cat/K_M, ChemBERTa-77M-MTR for the substrate in all three, "
+            "with pH and temperature appended as two extra features (defaults 7.0 and "
+            "25.0). Output is log10, the same convention as UniKP. It is the ONLY "
+            "predictor here that conditions on assay pH and temperature. Both the "
+            "training encoders in code/ and inference/predict.py read repr_layers=[33] "
+            "for BOTH ESM2 sizes, so despite 3B having 36 layers there is no "
+            "train-inference mismatch; this was checked rather than assumed."
+        ),
+    },
+    "catpred": {
+        "clone_dir": "CatPred",
+        "display_name": "CatPred",
+        "citation_key": "boorlaCatPredComprehensiveFramework2025",
+        "source_url": "https://github.com/maranasgroup/CatPred",
+        "method": RetrievalMethod.direct_url,
+        "emits": ["k_cat", "K_M", "K_i"],
+        "inputs": ["sequence", "substrate_smiles"],
+        "runnable": True,
+        "extra_command": (
+            "curl -L -o catpred_code_1.0.1.zip "
+            "https://zenodo.org/api/records/14775002/files/maranasgroup/"
+            "CatPred-1.0.1.zip/content  # 85,722,027 bytes, md5 "
+            "d0e7ab90cf667c15ea90b61fca6f371e, unzip and rename "
+            "maranasgroup-CatPred-fabdf38 to CatPred && "
+            "curl -L -o catpred_capsule_data_update.tar.gz "
+            "https://catpred.s3.us-east-1.amazonaws.com/capsule_data_update.tar.gz  # "
+            "10,207,582,747 bytes, sha256 "
+            "38d4f30215adc3538a10e7baee4df7be6c77dfe16db99f3c202c0497b985349b, then "
+            "tar xzf catpred_capsule_data_update.tar.gz "
+            "data/pretrained/production/kcat data/pretrained/production/km and move both "
+            "to CatPred/pretrained/production/ && "
+            "curl -L -o catpred_db.tar.gz "
+            "https://zenodo.org/api/records/14775076/files/catpred-db.tar.gz/content  # "
+            "1,144,517,378 bytes, md5 38149eb47e149a1cee67ec80834365e1, then copy "
+            "CatPred-DB/data/{kcat,km}/*-random_*.csv into CatPred/CatPred-DB/data/"
+        ),
+        "notes": (
+            "Boorla and Maranas (2025), Nature Communications 16:2072, doi "
+            "10.1038/s41467-025-57215-9. A chemprop fork: a D-MPNN over the substrate "
+            "graph, concatenated with a sequence-attention encoder (rotary positional "
+            "embeddings plus multi-head self-attention) and ESM-2 650M features, into a "
+            "mean-variance head. It is the ONLY predictor in this mirror that emits a "
+            "per-prediction variance: an ensemble of 10 models trained under a negative "
+            "log-likelihood loss gives an aleatoric term (the mean of the ensemble's "
+            "predicted variances) and an epistemic term (the variance of the ensemble's "
+            "means), both on the log10 scale. Output is log10, established by "
+            "reproducing the repository's own demo/batch_kcat_input_output.csv to five "
+            "decimals rather than assumed. No EC number is an input. Structure (E-GNN) "
+            "features are used only by the released K_i model, which this mirror does "
+            "not carry because no schema field, no tier and no measured yeast set "
+            "exists for K_i. Sequences longer than 2,048 residues are truncated by "
+            "esm_utils.py, which affects 6 of the 1,153 GEM proteins. THE PRODUCTION "
+            "WEIGHTS WERE TRAINED ON TRAIN+VALIDATION+TEST: args.json records data_path "
+            "kcat-random_trainvaltest.csv, so the paper's held-out R2 does not describe "
+            "these checkpoints. The three CatPred-DB split tables are mirrored as "
+            "training_data because the leakage against our measured yeast pairs is "
+            "computed from them."
+        ),
+    },
 }
 
 
@@ -224,7 +303,17 @@ def build_mirror(name: str, copy: bool) -> ModelMirror:
         # ``.git`` is excluded on purpose: the mirror pins bytes by sha256, and carrying a
         # 100 MB object store for a history nothing reads makes every verify pass slower
         # without making any value more traceable. The commit is recorded instead.
-        shutil.copytree(source, target, ignore=shutil.ignore_patterns(".git"))
+        # `ignore_dangling_symlinks` is not optional: a released repository can carry a
+        # symlink to something it never shipped, and without this the whole mirror aborts on
+        # it. EZKinetics ships three, `data/{KCAT,KM,KCAT_KM}/sequence/tmp/latest`, left
+        # behind by MMseqs2 scratch directories. A dangling link points at no bytes, so
+        # there is nothing for the sha256 manifest to pin and skipping it loses nothing.
+        shutil.copytree(
+            source,
+            target,
+            ignore=shutil.ignore_patterns(".git"),
+            ignore_dangling_symlinks=True,
+        )
 
     # A weight archive downloaded separately lands beside the clone; fold it in so the
     # mirror is one self-contained, hashed unit.
@@ -236,6 +325,10 @@ def build_mirror(name: str, copy: bool) -> ModelMirror:
     return ModelMirror(
         name=name,
         display_name=cast(str, spec["display_name"]),
+        # The join key into the paper mirror, where the model's paper is held. Absent for
+        # the predictors mirrored before the literature subsystem existed; recorded from
+        # here on so a value can be traced to the paper that describes the model.
+        citation_key=cast("str | None", spec.get("citation_key")),
         emits=cast(list[str], spec["emits"]),
         inputs=cast(list[str], spec["inputs"]),
         method=cast(RetrievalMethod, spec["method"]),

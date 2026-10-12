@@ -1,0 +1,12 @@
+{
+  "store": "/scratch/projects/torchcell-scratch/data/torchcell/reference_flux/ess_solve_encodings_YPD_bx_gogonbr.npz",
+  "base": "/scratch/projects/torchcell-scratch/data/torchcell/reference_flux/ess_solve_encodings_YPD_bx_go.npz",
+  "append": "/scratch/projects/torchcell-scratch/data/torchcell/reference_flux/ess_solve_encodings_YPD_bx_gonbr.npz",
+  "n_genes": 6607,
+  "n_genes_with_appended_row": 6607,
+  "n_columns": 7088,
+  "column_layout": "YPD_bx_go (2362) | YPD_bx_gonbr (4726)",
+  "flux_fields_from": "base",
+  "seconds": 1.1642100811004639,
+  "generated_by": "experiments/031-betaxanthin-module/scripts/target_store_concat.py"
+}

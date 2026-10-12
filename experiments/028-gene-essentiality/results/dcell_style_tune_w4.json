@@ -1,0 +1,75 @@
+{
+  "read": "tune",
+  "protocol": "one deletion per instance, split by gene; class-weighted BCE on the root head plus 0.3 x the mean class-weighted BCE over the non-root term heads; Adam 0.001, 400 epochs, full batch, batch normalization statistics from the training genes; epoch selected by a five-epoch moving average of the validation AUROC; held-out genes scored once at that epoch",
+  "config": {
+    "width": 8,
+    "rule": "fixed",
+    "order": "tanh_bn",
+    "weight_decay": 0.0,
+    "epochs": 400,
+    "lr": 0.001
+  },
+  "hierarchy": {
+    "n_terms": 2366,
+    "n_kept_terms": 2362,
+    "n_edges": 4025,
+    "n_redundant_edges_dropped": 100,
+    "n_strata": 15,
+    "terms_per_stratum": [
+      700,
+      543,
+      385,
+      256,
+      175,
+      114,
+      66,
+      49,
+      37,
+      19,
+      12,
+      5,
+      3,
+      1,
+      1
+    ],
+    "max_children": 24,
+    "n_labeled_genes": 1121,
+    "n_annotation_pairs": 56473
+  },
+  "rows": [],
+  "fold_ensembles": [],
+  "paired": [],
+  "tune": [
+    {
+      "config": {
+        "width": 4,
+        "rule": "fixed",
+        "order": "tanh_bn",
+        "weight_decay": 0.001,
+        "epochs": 400,
+        "lr": 0.001
+      },
+      "n_parameters": 114086,
+      "n_effective_parameters": 114086,
+      "seeds": [
+        2700,
+        2701,
+        2702
+      ],
+      "val_auroc": [
+        0.8827067669172931,
+        0.8360902255639098,
+        0.8730827067669173
+      ],
+      "val_mean": 0.8639598997493735,
+      "val_sd": 0.02009468732190072,
+      "select_epoch": [
+        39,
+        30,
+        49
+      ],
+      "seconds": 769.5091195106506
+    }
+  ],
+  "seconds": 267.13715958595276
+}

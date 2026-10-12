@@ -1,0 +1,12 @@
+# experiments/027-betaxanthin-metabolic/conf/arm_flux_capacity.yaml
+# [[experiments.027-betaxanthin-metabolic]]
+#
+# THE PROTEIN NODE, capacity only. The flux layer predicts a per-gene enzyme abundance
+# E_g from the gene token (a log-space deviation from an equal-molar prior), folds it up
+# the GPR (smooth minimum over complex subunits, sum over isozymes), and caps every flux
+# at kcat * E_u. The protein budget is the forward pool constraint sum_g MW_g E_g <=
+# p_avail, which is what stops the head inflating E until the bound is slack. No
+# thermodynamics, so `flux_off` -> `flux_capacity` isolates what a predicted abundance
+# buys over none. A deletion is still a hard zero on E_g.
+base_arm: flux_capacity
+permute_train_targets: false

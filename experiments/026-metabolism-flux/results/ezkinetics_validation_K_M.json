@@ -1,0 +1,16 @@
+{
+  "parameter": "K_M",
+  "n_rows": 60,
+  "at_true_conditions": {
+    "max_abs_log10_ratio": 0.10195852091302926,
+    "median_abs_log10_ratio": 2.6513757620774698e-05,
+    "p90_abs_log10_ratio": 0.02306579664801568,
+    "n_over_0p01": 10,
+    "n_over_0p05": 2
+  },
+  "at_default_conditions": {
+    "max_abs_log10_ratio": 0.29975077696284436,
+    "median_abs_log10_ratio": 0.024410590290960318
+  },
+  "reproduced": true
+}

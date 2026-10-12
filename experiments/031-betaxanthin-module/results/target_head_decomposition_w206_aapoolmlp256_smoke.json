@@ -1,0 +1,50 @@
+{
+  "generated_by": "experiments/031-betaxanthin-module/scripts/target_head_decomposition.py",
+  "name": "w206_aapoolmlp256_smoke",
+  "statistic": "pinned-test Spearman of the full prediction, of the backbone's context head alone (the affine replaced by zero) and of their difference, the slot; sd ratio and rank agreement between the parts",
+  "summary": {
+    "mean_full_spearman": 0.2672204707110005,
+    "mean_backbone_head_spearman": NaN,
+    "mean_slot_spearman": 0.2672204707110005,
+    "mean_sd_ratio_head_over_slot": 9.851846982655843e-08,
+    "mean_spearman_full_vs_slot": 0.9999999999999999,
+    "mean_spearman_head_vs_slot": NaN,
+    "mean_backbone_adds": 0.0,
+    "n_backbone_adds_positive": 0,
+    "n_cells": 1
+  },
+  "cells": [
+    {
+      "result": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/031-betaxanthin-module/results/w206_bxdelaapoolmlp256_h12l1p1_e200_s2700.json",
+      "checkpoint": "/scratch/projects/torchcell-scratch/checkpoints-031/w206_bxdelaapoolmlp256_h12l1p1_e200_s2700.pt",
+      "seed": 2700,
+      "select_epoch": 78,
+      "n_pinned": 629,
+      "reported_spearman": 0.2672782202134511,
+      "full": {
+        "spearman_vs_target": 0.2672204707110005,
+        "pearson_vs_target": 0.30288457579133693,
+        "sd": 0.15125246345996857,
+        "top50_enrichment": 3.9936507936507937
+      },
+      "backbone_head": {
+        "spearman_vs_target": NaN,
+        "pearson_vs_target": NaN,
+        "sd": 1.4901161193847656e-08,
+        "top50_enrichment": 0.599047619047619
+      },
+      "slot": {
+        "spearman_vs_target": 0.2672204707110005,
+        "pearson_vs_target": 0.3028845747586114,
+        "sd": 0.15125246345996857,
+        "top50_enrichment": 3.9936507936507937
+      },
+      "spearman_head_vs_slot": NaN,
+      "spearman_full_vs_slot": 0.9999999999999999,
+      "spearman_full_vs_head": NaN,
+      "sd_ratio_head_over_slot": 9.851846982655843e-08,
+      "backbone_adds": 0.0
+    }
+  ],
+  "seconds": 36.07202386856079
+}

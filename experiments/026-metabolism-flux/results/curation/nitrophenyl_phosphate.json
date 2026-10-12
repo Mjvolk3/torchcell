@@ -1,0 +1,211 @@
+{
+ "slug": "nitrophenyl_phosphate",
+ "met_ids": ["s_3859", "s_3860"],
+ "gem_name": {
+  "s_3859": "4-nitrophenyl phosphate",
+  "s_3860": "4-nitrophenol"
+ },
+ "gem_formula": {
+  "s_3859": "C6H4NO6P",
+  "s_3860": "C6H4NO3"
+ },
+ "gem_charge": {
+  "s_3859": -2,
+  "s_3860": -1
+ },
+ "compartments": ["c"],
+ "blocked_reactions": ["r_4220"],
+ "kind": "structure",
+ "admission": "tabulated",
+ "value": {
+  "per_metabolite": [
+   {
+    "met_id": "s_3860",
+    "smiles": "[O-]c1ccc(cc1)N(=O)=O",
+    "inchikey": "BTJIUGUIPKRLHP-UHFFFAOYSA-M",
+    "formula": "C6H4NO3-",
+    "charge": -1,
+    "representation_rule": "Write an aromatic or aliphatic nitro group in the PENTAVALENT form N(=O)=O, never in the charge-separated form [N+](=O)[O-]. eQuilibrator's group definition for the nitro group is the SMARTS '[C,c,N,n]N(=O)=O' (equilibrator_group_definitions.csv line 46, group name '-NO2'), which matches only the pentavalent spelling. The two spellings are the SAME molecule (identical RDKit canonical SMILES and identical InChIKey), so this is a representation rewrite, not a structure change. Two mechanical consequences: (1) the literal string must reach equilibrator_assets.molecule.Molecule.FromSmiles (OpenBabel) unmodified, because passing it through RDKit MolToSmiles rewrites it back to the charge-separated form and the decomposition then fails again; (2) LocalCompoundCache.get_compounds() resolves by InChIKey and returns the EXISTING cache row with its stored empty group vector, so handing it the fixed SMILES changes nothing; the group vector computed from the fixed SMILES must be written onto the compound object (or a cache row created that does not already exist). Reusable for any nitro species, including the ethylnitronate row."
+   },
+   {
+    "met_id": "s_3859",
+    "smiles": null,
+    "inchikey": "XZKIHKMTEMTJQX-UHFFFAOYSA-L",
+    "formula": "C6H4NO6P-2",
+    "charge": -2,
+    "representation_rule": "NO working representation found. The pentavalent-nitro rewrite fixes the nitro half but a SECOND, independent gap remains: the group decomposer has no group for an ARYL phosphate ester. On 'O=N(=O)c1ccc(OP(=O)([O-])[O-])cc1' the phosphorus and its three oxygens (atom indices 8, 9, 10, 11) are left unassigned and the decomposition is refused. The same refusal occurs for plain phenyl phosphate 'c1ccccc1OP(=O)([O-])[O-]' with the nitro group absent, while ALIPHATIC phosphate esters (methyl phosphate, sn-glycerol 3-phosphate) decompose cleanly into the '-OPO3 [H0 Z-2 Mg0]' group. So the blocker is the aromatic-carbon-O-PO3 linkage, not the nitro function, and no SMILES rewrite of this molecule resolves it."
+   }
+  ]
+ },
+ "sigma_kj_per_mol": null,
+ "sources": [
+  {
+   "source_url": "file:///home/michaelvolk/.cache/equilibrator/group_definitions.csv",
+   "retrieval_method": "local_equilibrator_cache",
+   "retrieval_command": "cp /home/michaelvolk/.cache/equilibrator/group_definitions.csv $DATA_ROOT/data/torchcell/thermo_equilibrator/curated/nitrophenyl_phosphate/equilibrator_group_definitions.csv  # shipped with the equilibrator-ext env's equilibrator cache (Zenodo compounds.sqlite bundle), 140 lines",
+   "sha256": "17908f75310d55d7e60f7dc6e32e820717e867bd4ec731b33dc5fca787f7366d",
+   "retrieved_at": "2026-09-11T22:07:00Z",
+   "verbatim_quote": "\"-NO2\",0,0,0,\"[C,c,N,n]N(=O)=O\",\"1|2|3\",\"Nitro\",",
+   "location": "equilibrator_group_definitions.csv line 46 (columns NAME, PROTONS, CHARGE, MAGNESIUMS, SMARTS, FOCAL_ATOMS, REMARK, SKIP)"
+  },
+  {
+   "source_url": "local computation, equilibrator-ext env (~/miniconda3/envs/equilibrator-ext/bin/python), equilibrator_assets.group_decompose.GroupDecomposer",
+   "retrieval_method": "local_computation",
+   "retrieval_command": "~/miniconda3/envs/equilibrator-ext/bin/python decomp_check.py > decomposition_probe.json  # 14 SMILES through GroupDecomposer.Decompose(..., raise_exception=True), each verified in RDKit for formula, charge and InChIKey first",
+   "sha256": "b623d3d60c3ef31ed15b2177ce71a5538c1f1275c34ea16046c5e59afcde9cdc",
+   "retrieved_at": "2026-09-11T22:07:00Z",
+   "verbatim_quote": "{\"label\": \"4nph_phenolate_pentavalent\", \"met_id\": \"s_3860\", \"smiles\": \"[O-]c1ccc(cc1)N(=O)=O\", \"rdkit_ok\": true, \"formula\": \"C6H4NO3-\", \"charge\": -1, \"inchikey\": \"BTJIUGUIPKRLHP-UHFFFAOYSA-M\", ... \"decomposes\": true, \"error\": null, \"n_groups\": 7 ... \"group_vector\": \"-NO2 [H0 Z0 Mg0] x 1 | ring >c-O [H0 Z-1 Mg0] x 1 | ring =c- [H1 Z0 Mg0] x 4 | ring =c< [H0 Z0 Mg0] x 1 | Origin [H0 Z0 Mg0] x 1\"}",
+   "location": "decomposition_probe.json, record 1 of 14 (the file also carries the 13 other forms tried, and decomposition_unassigned_atoms.txt sha256 d94576ccd4206922cab4de980491d63a8cc065a9af41055b7681893a46909c4f names the unassigned atoms for each aryl phosphate)"
+  },
+  {
+   "source_url": "https://www.nist.gov/publications/thermodynamics-hydrolysis-reactions-d-galactose-1-phosphate-sn-glycerol-3-phosphate-4",
+   "retrieval_method": "direct_url",
+   "retrieval_command": "curl -sS -m 90 -o nist_landing_goldberg2009_phosphates.html 'https://www.nist.gov/publications/thermodynamics-hydrolysis-reactions-d-galactose-1-phosphate-sn-glycerol-3-phosphate-4'",
+   "sha256": "5aa3291e7ad37dbd40c15c87b1d4e28612f9c259aa855a7a8ccdfd4cdda2c9db",
+   "retrieved_at": "2026-09-11T22:00:00Z",
+   "verbatim_quote": "Calorimetrically determined enthalpies of reaction ΔrH(cal) were measured for reactions (1) to (5) and the apparent equilibrium constant K was measured for reaction (2).",
+   "location": "abstract block of the NIST publication landing page for Goldberg, Lang, Lo, Ross, Tewari, J. Chem. Thermodyn. 41 (2009) 654-665, doi:10.1016/j.jct.2008.12.017; byte offset 69742 of the archived HTML. Reaction (3) is the 4-nitrophenyl phosphate hydrolysis, so only an enthalpy was measured for it; reaction (2) is sn-glycerol 3-phosphate."
+  },
+  {
+   "source_url": "https://tsapps.nist.gov/publication/get_pdf.cfm?pub_id=904030",
+   "retrieval_method": "direct_url",
+   "retrieval_command": "curl -sSL -o decker_goldberg_nitrophenyl_acetate_nist_pub904030.pdf 'https://tsapps.nist.gov/publication/get_pdf.cfm?pub_id=904030'; pdftotext -layout decker_goldberg_nitrophenyl_acetate_nist_pub904030.pdf decker_goldberg_nitrophenyl_acetate_nist_pub904030.txt",
+   "sha256": "92942a81d4cb9124f1fb04ce25dae53a12fe1cd214ff84013aa79edb24c46677",
+   "retrieved_at": "2026-09-11T21:57:00Z",
+   "verbatim_quote": "For the hydrolysis of 4-nitrophenyl phosphate [09GOL/LAN],\n4-nitrophenyl phosphate2-(aq) + H2O(l) = 4-nitrophenol(aq) + HPO2-4 (aq) ΔrH° = -(13.7 ± 0.5) kJ·mol-1     (A)\nIonization data:\n4-nitophenyl phosphate- = H+ + 4-nitophenyl phosphate2- pK = 5.42 and ΔrH° = -9.2 kJ·mol-1                 (B)\nH2PO4- = H+ + HPO2-4                                    pK = 7.198 and ΔrH° = 3.6 kJ·mol-1                 (C)\n\n4-nitophenyl phosphate- + H2O(l) = 4-nitrophenol(aq) + H2PO4-                                              (E)\nΔrH°(E) = ΔrH°(A) + ΔrH°(B) - ΔrH°(C) = -13.7 - 9.2 -3.6 = -26.5 kJ·mol-1",
+   "location": "decker_goldberg_nitrophenyl_acetate_nist_pub904030.txt (sha256 245f0d0203cb07807a94cc1f2b28608ef7d749865f37d705204c42703bd1cd06) lines 1262-1272, on the working-notes pages that follow the References of the NIST author manuscript of Decker, Goldberg, Lang, Michener, 'Thermodynamics of the hydrolysis reactions of 1-naphthyl acetate, 4-nitrophenyl acetate, and 4-nitrophenyl alpha-L-arabinofuranoside'. This is a SECONDARY transcription by the same authors of their own [09GOL/LAN] = Goldberg, Lang, Lo, Ross, Tewari, J. Chem. Thermodyn. 41 (2009) 654-665, whose reference entry appears at line 920 of the same file. The primary tables of that 2009 paper are behind the Elsevier paywall and were not obtained."
+  },
+  {
+   "source_url": "https://tsapps.nist.gov/publication/get_pdf.cfm?pub_id=904030",
+   "retrieval_method": "direct_url",
+   "retrieval_command": "see the preceding source; same artifact",
+   "sha256": "92942a81d4cb9124f1fb04ce25dae53a12fe1cd214ff84013aa79edb24c46677",
+   "retrieved_at": "2026-09-11T21:57:00Z",
+   "verbatim_quote": "4-nitrophenol0 = H+ + 4-nitrophenol-                                                               (22)      7.15        19.4         03MAR/SMI",
+   "location": "decker_goldberg_nitrophenyl_acetate_nist_pub904030.txt line 1095, the pK / ΔrH° table of proton-binding reactions used in the equilibrium model; columns are reaction, number, pK, ΔrH°/(kJ.mol-1), reference. The table footnote (lines 1101-1105) states the standard state is 'the hypothetical ideal solution of unit molality' and that reaction (22) is uncertain by ± 0.01 in pK and ± 2 kJ.mol-1 in ΔrH°."
+  },
+  {
+   "source_url": "https://tsapps.nist.gov/publication/get_pdf.cfm?pub_id=904030",
+   "retrieval_method": "direct_url",
+   "retrieval_command": "see the preceding source; same artifact",
+   "sha256": "92942a81d4cb9124f1fb04ce25dae53a12fe1cd214ff84013aa79edb24c46677",
+   "retrieved_at": "2026-09-11T21:57:00Z",
+   "verbatim_quote": "We then use these ΔfH° values together with the standard enthalpies of solution of 1-naphthol(s) from Hunter et al. [74HUN/TWE] and of 4-nitrophenol(s) from Finch et al. [83FIN/GAR] to calculate ΔfH° = -99.65 kJ·mol-1 for 1-napthol(s) and ΔfH° = -190.53 kJ·mol-1 for 4-nitrophenol(aq).",
+   "location": "decker_goldberg_nitrophenyl_acetate_nist_pub904030.txt lines 800-803, section 3.4 'The standard enthalpies of formation of 1-naphthyl acetate(aq) and of 4-nitrphenyl acetate(aq)'. Note the sentence mislabels the first value as 1-naphthol(s) where the preceding sentence makes clear both derived values are for the aqueous species."
+  },
+  {
+   "source_url": "https://webbook.nist.gov/cgi/cbook.cgi?Name=4-nitrophenol&Units=SI&cTG=on&cTC=on&cTP=on",
+   "retrieval_method": "direct_url",
+   "retrieval_command": "curl -sS -m 90 -o nist_webbook_4nitrophenol.html 'https://webbook.nist.gov/cgi/cbook.cgi?Name=4-nitrophenol&Units=SI&cTG=on&cTC=on&cTP=on'",
+   "sha256": "61f09c6913f9bdde2795b159270ba4700fa5860b8bf0fc5a3e3c6dc011cf14ef",
+   "retrieved_at": "2026-09-11T22:02:00Z",
+   "verbatim_quote": "207.1 &plusmn; 1.1 ... Sabbah and Gouali, 1994 ... 212.4 &plusmn; 1.0 ... Finch, Gardner, et al., 1983",
+   "location": "the condensed-phase ΔfH°solid table of the NIST WebBook entry for 4-nitrophenol, CAS 100-02-7, C6H5NO3. The entry also gives ΔfH°gas of -114.7 ± 1.2 (Sabbah and Gouali 1994) and -117.7 ± 2.0 (Finch et al. 1983) kJ/mol and ΔsubH° 92.39 ± 0.43 kJ/mol. It lists NO Gibbs energy of formation and NO aqueous-phase data, so nothing here is usable as an aqueous ΔfG without a solvation model, which would be 'computed'."
+  }
+ ],
+ "searches": [
+  {
+   "query": "Goldberg thermodynamics hydrolysis 4-nitrophenyl phosphate phosphocreatine 3-phospho-D-glycerate J Chem Thermodynamics 2009",
+   "engine": "WebSearch",
+   "date": "2026-09-11",
+   "outcome": "Found the paper: Goldberg, Lang, Lo, Ross, Tewari, J. Chem. Thermodyn. 41(5) 654-665 (2009), doi:10.1016/j.jct.2008.12.017. NIST landing page and a ScienceDirect abstract page located."
+  },
+  {
+   "query": "https://www.nist.gov/publications/thermodynamics-hydrolysis-reactions-d-galactose-1-phosphate-sn-glycerol-3-phosphate-4",
+   "engine": "WebFetch + curl",
+   "date": "2026-09-11",
+   "outcome": "Full abstract obtained and archived (sha256 5aa3291e...). Establishes that only ΔrH(cal) was measured for reaction (3), the 4-nitrophenyl phosphate hydrolysis; K was measured only for reaction (2)."
+  },
+  {
+   "query": "https://www.sciencedirect.com/science/article/abs/pii/S0021961408003121",
+   "engine": "WebFetch",
+   "date": "2026-09-11",
+   "outcome": "HTTP 403. Elsevier blocks automated fetches; the primary paper's tables were not obtained."
+  },
+  {
+   "query": "NIST TECRDB 4-nitrophenyl phosphate phosphohydrolase enthalpy equilibrium constant EC 3.1.3.1",
+   "engine": "WebSearch",
+   "date": "2026-09-11",
+   "outcome": "Surfaced tsapps.nist.gov/publication/get_pdf.cfm?pub_id=904030, which turned out to be a DIFFERENT Goldberg-group paper (nitrophenyl acetate and arabinofuranoside) but whose deposited manuscript quotes the 2009 phosphate values verbatim. This is the artifact that closed the enthalpy."
+  },
+  {
+   "query": "\"4-nitrophenyl phosphate\" hydrolysis enthalpy \"-13.7\" kJ mol Goldberg 2009 pKa 5.42",
+   "engine": "WebSearch",
+   "date": "2026-09-11",
+   "outcome": "No open copy of the numbers; only the paywalled abstract."
+  },
+  {
+   "query": "NIST Thermodynamics of Enzyme-Catalyzed Reactions Database TECRDB download archive randr.nist.gov enzyme",
+   "engine": "WebSearch",
+   "date": "2026-09-11",
+   "outcome": "Located SRD 74 at randr.nist.gov and its NIST PDR record ECBCC1C130302ED9E04306570681B10754, doi:10.18434/t40w22."
+  },
+  {
+   "query": "https://data.nist.gov/rmm/records/ECBCC1C130302ED9E04306570681B10754",
+   "engine": "curl (NIST PDR API)",
+   "date": "2026-09-11",
+   "outcome": "The record carries no downloadable data component, only a DOI access link back to the live site. TECRDB is not distributed as a file from the PDR."
+  },
+  {
+   "query": "https://randr.nist.gov/enzyme/Default.aspx and https://randr.nist.gov/enzyme/Search.aspx",
+   "engine": "curl",
+   "date": "2026-09-11",
+   "outcome": "NEGATIVE, and this is the load-bearing negative for the TECRDB route: both redirect to /Error.html. The landing page https://randr.nist.gov/Default.aspx does serve, and its Downloads page offers only the BioEqCalc Mathematica package, not the reaction data. The TECRDB search interface is dead, so no TECRDB entry for EC 3.1.3.1 / 3.1.3.2 with 4-nitrophenyl phosphate could be queried."
+  },
+  {
+   "query": "component-contribution TECRDB.csv on gitlab.com/equilibrator and github.com/eladnoor",
+   "engine": "curl",
+   "date": "2026-09-11",
+   "outcome": "Both 404. Checked the local training data instead: neither compound is in eQuilibrator's reactant-contribution training set (631 compounds; compound ids 500 and 3341 both absent), so TECRDB as eQuilibrator ingests it contains no reaction using either species."
+  },
+  {
+   "query": "\"heat of hydrolysis\" \"p-nitrophenyl phosphate\" kcal calorimetric value JACS 1961",
+   "engine": "WebSearch",
+   "date": "2026-09-11",
+   "outcome": "Identified two older primaries worth chasing by hand: Sturtevant, 'The Heat of Hydrolysis of p-Nitrophenylphosphate', J. Am. Chem. Soc. 77 (1955) 255-258 (CrossRef-verified), and Axelrod, 'The Free Energy of Hydrolysis of p-Nitrophenyl Phosphate', Science 114 (1951) 525-526, doi:10.1126/science.114.2968.525. The Science paper is the ONLY ΔrG lead found for this reaction."
+  },
+  {
+   "query": "https://pubs.acs.org/doi/10.1021/ja01607a001 and https://www.science.org/doi/10.1126/science.114.2968.525 and https://cdnsciencepub.com/doi/pdf/10.1139/v58-096",
+   "engine": "WebFetch + curl",
+   "date": "2026-09-11",
+   "outcome": "All three HTTP 403 (ACS, AAAS, Cloudflare). No values extracted."
+  },
+  {
+   "query": "https://webbook.nist.gov/cgi/cbook.cgi?Name=4-nitrophenol",
+   "engine": "WebFetch + curl",
+   "date": "2026-09-11",
+   "outcome": "Gas- and solid-phase ΔfH° only, no ΔfG°, no aqueous phase. Archived (sha256 61f09c69...)."
+  },
+  {
+   "query": "https://api.semanticscholar.org/graph/v1/paper/DOI:10.1016/j.jct.2008.12.017",
+   "engine": "curl",
+   "date": "2026-09-11",
+   "outcome": "isOpenAccess false, openAccessPdf status CLOSED. Confirms no open full text exists for the 2009 paper."
+  }
+ ],
+ "decomposition_check": {
+  "attempted": true,
+  "decomposes": null,
+  "error": "s_3860 decomposes with the pentavalent nitro spelling; s_3859 does not decompose in any form tried, because the group decomposer has no group for an aryl phosphate ester (P and its three oxygens left unassigned).",
+  "smiles_tried": [
+   {"met_id": "s_3860", "smiles": "[O-]c1ccc(cc1)N(=O)=O", "decomposes": true, "error": null},
+   {"met_id": "s_3860", "smiles": "[O-]c1ccc(cc1)[N+](=O)[O-]", "decomposes": false, "error": "GroupDecompositionError: Unable to decompose OBMol into groups"},
+   {"met_id": "s_3860", "smiles": "Oc1ccc(cc1)N(=O)=O", "decomposes": true, "error": null},
+   {"met_id": "s_3860", "smiles": "Oc1ccc(cc1)[N+](=O)[O-]", "decomposes": false, "error": "GroupDecompositionError: Unable to decompose OBMol into groups"},
+   {"met_id": "s_3859", "smiles": "O=N(=O)c1ccc(OP(=O)([O-])[O-])cc1", "decomposes": false, "error": "GroupDecompositionError: unassigned atoms 8, 9, 10, 11 (the phosphate P and its three oxygens)"},
+   {"met_id": "s_3859", "smiles": "[O-][N+](=O)c1ccc(OP(=O)([O-])[O-])cc1", "decomposes": false, "error": "GroupDecompositionError: Unable to decompose OBMol into groups"},
+   {"met_id": "s_3859", "smiles": "O=N(=O)c1ccc(OP(=O)([O-])O)cc1", "decomposes": false, "error": "GroupDecompositionError: unassigned atoms 8, 9, 10, 11 (the phosphate P and its three oxygens)"},
+   {"met_id": "s_3859", "smiles": "[O-][N+](=O)c1ccc(OP(=O)([O-])O)cc1", "decomposes": false, "error": "GroupDecompositionError: Unable to decompose OBMol into groups"},
+   {"met_id": "s_3859", "smiles": "O=N(=O)c1ccc(OP(=O)(O)O)cc1", "decomposes": false, "error": "GroupDecompositionError: Unable to decompose OBMol into groups"},
+   {"met_id": "s_3859", "smiles": "[O-][N+](=O)c1ccc(OP(=O)(O)O)cc1", "decomposes": false, "error": "GroupDecompositionError: Unable to decompose OBMol into groups"},
+   {"met_id": "control", "smiles": "O=N(=O)c1ccccc1", "decomposes": true, "error": null},
+   {"met_id": "control", "smiles": "[O-][N+](=O)c1ccccc1", "decomposes": false, "error": "GroupDecompositionError: Unable to decompose OBMol into groups; isolates the nitro spelling as the sole cause"},
+   {"met_id": "control", "smiles": "[O-]c1ccccc1", "decomposes": true, "error": null},
+   {"met_id": "control", "smiles": "Oc1ccccc1", "decomposes": true, "error": null},
+   {"met_id": "control", "smiles": "c1ccccc1OP(=O)([O-])[O-]", "decomposes": false, "error": "phenyl phosphate with NO nitro group: unassigned atoms 7, 8, 9, 10; isolates the aryl phosphate ester as an independent second blocker"},
+   {"met_id": "control", "smiles": "OCC(O)COP(=O)([O-])[O-]", "decomposes": true, "error": null},
+   {"met_id": "control", "smiles": "COP(=O)([O-])[O-]", "decomposes": true, "error": null}
+  ]
+ },
+ "notes": "WHAT WAS FOUND, in three parts.\n\n1. STRUCTURE, s_3860 (4-nitrophenol / 4-nitrophenolate). SOLVED, and the fix generalizes. eQuilibrator's nitro group definition is the SMARTS '[C,c,N,n]N(=O)=O', so the group decomposer matches only the PENTAVALENT spelling. This is the OPPOSITE of the hypothesis in the curation brief: the charge-separated [N+](=O)[O-] is what FAILS. The nitrobenzene control settles it, decomposing as 'O=N(=O)c1ccccc1' and failing as '[O-][N+](=O)c1ccccc1'. Both the phenolate '[O-]c1ccc(cc1)N(=O)=O' (formula C6H4NO3-, charge -1, exactly the GEM's) and the neutral phenol 'Oc1ccc(cc1)N(=O)=O' decompose. The phenolate group vector is '-NO2 [H0 Z0 Mg0] x 1 | ring >c-O [H0 Z-1 Mg0] x 1 | ring =c- [H1 Z0 Mg0] x 4 | ring =c< [H0 Z0 Mg0] x 1 | Origin x 1'. Injecting the neutral form's group vector in memory and calling ComponentContribution.standard_dg_formation returns a real number, standard dgf = -99.71 kJ/mol, and after Compound.transform at pH 7.2, I = 0.25 M, T = 303.15 K, pMg = 3.0, dgf' = +109.39 kJ/mol; this is a COMPUTED component-contribution estimate that follows once the structure is admitted, not a curated value, and it is quoted only to show the decomposition is productive rather than empty.\n\nWHY THE CACHE IS STUCK, which the integrating code must handle. eQuilibrator's own compound cache already holds both molecules, s_3860 as compound 500 (reached by kegg:C00870, chebi:CHEBI:57917, metanetx.chemical:MNXM526) and s_3859 as compound 3341 (kegg:C03360, chebi:CHEBI:61146, metanetx.chemical:MNXM3867, bigg.metabolite:HC01104). Both store the CHARGE-SEPARATED SMILES and both store an EMPTY group vector, which is why standard_dg_formation returns None for each. Note the GEM's KEGG ids are C03360 and C00870, not the C08297 and C06214 guessed in the brief. LocalCompoundCache.get_compounds() resolves a submitted SMILES by InChIKey and hands back that same stale row, so simply feeding it the corrected string is a no-op, verified. The fix is to decompose the corrected SMILES directly with equilibrator_assets.group_decompose.GroupDecomposer and write the resulting vector onto the compound. Also verified: RDKit's MolToSmiles rewrites N(=O)=O back to [N+](=O)[O-], so any pipeline stage that canonicalizes through RDKit will silently undo the fix.\n\n2. STRUCTURE, s_3859 (4-nitrophenyl phosphate). NOT SOLVED, and it is a different gap. With the nitro group written correctly the decomposition still fails, and the unassigned-atom dump names the phosphorus and its three oxygens. Plain phenyl phosphate with no nitro group fails identically, while methyl phosphate and sn-glycerol 3-phosphate decompose into '-OPO3 [H0 Z-2 Mg0]'. So the phosphate-chain finder does not recognize a phosphate hung off an AROMATIC ring oxygen. Mono-anion, di-anion and fully protonated forms all fail. This cannot be fixed by curating a structure; it needs a group definition or a measured value.\n\nCONSEQUENCE FOR r_4220. The reaction needs both metabolites, so the s_3860 fix alone does NOT unblock r_4220. It does remove s_3860 from the blocking set, and it should be applied because it is reusable.\n\nAN OPTION THAT WAS TRIED AND IS NOT ADMITTED. A group vector for the aryl phosphate can be assembled by hand as nitrobenzene with one 'ring =c- [H1]' promoted to 'ring =c< [H0]' plus one '-OPO3 [H0 Z-2]'. With that injected, ComponentContribution returns standard_dg = -57.9 +/- 2.8 and standard_dg_prime = -62.2 +/- 2.8 kJ/mol for r_4220 at pH 7.2, I = 0.25 M, T = 303.15 K, pMg = 3.0. The machinery is sound, since the same call on the fully decomposable sn-glycerol 3-phosphate hydrolysis control returns -13.0 +/- 2.1 kJ/mol, which is the right size for a phosphomonoester. But -62 kJ/mol is far more negative than a phosphomonoester hydrolysis should be, the hand-built vector has no fitted support for an -OPO3 group on an aromatic carbon, and nothing corroborates the magnitude. This is COMPUTED and it is NOT admitted. It is recorded so nobody repeats it and mistakes it for a result.\n\n3. LITERATURE. The Goldberg 2009 primary is paywalled (Elsevier 403, Semantic Scholar reports openAccessPdf CLOSED), but its 4-nitrophenyl phosphate numbers were recovered VERBATIM from a NIST-deposited author manuscript by the same group on the nitrophenyl ACETATE reactions, which quotes [09GOL/LAN] on its working-notes pages. Recovered, all at the standard state of the hypothetical ideal solution of unit molality:\n  chemical reference reaction, 4-nitrophenyl phosphate(2-)(aq) + H2O(l) = 4-nitrophenol(aq) + HPO4(2-)(aq), drH0 = -(13.7 +/- 0.5) kJ/mol;\n  ionization, 4-nitrophenyl phosphate(-) = H+ + 4-nitrophenyl phosphate(2-), pK = 5.42, drH0 = -9.2 kJ/mol;\n  ionization, H2PO4(-) = H+ + HPO4(2-), pK = 7.198, drH0 = 3.6 kJ/mol;\n  ionization, 4-nitrophenol(0) = H+ + 4-nitrophenol(-), pK = 7.15, drH0 = 19.4 kJ/mol (uncertain by +/- 0.01 and +/- 2), from Marcus and Smith [03MAR/SMI] via the same artifact;\n  derived by the authors, 4-nitrophenyl phosphate(-) + H2O(l) = 4-nitrophenol(aq) + H2PO4(-), drH0 = -26.5 kJ/mol.\nThe temperature is not stated in the quoted lines; Goldberg's standard is T = 298.15 K and that is the reading I would apply, but it is UNVERIFIED from this artifact.\n\nTHIS IS AN ENTHALPY AND ONLY AN ENTHALPY. The archived abstract of the 2009 paper says in so many words that the apparent equilibrium constant was measured for reaction (2), sn-glycerol 3-phosphate, not for reaction (3), ours. A calorimetric drH0 fixes the temperature dependence of the equilibrium, not its position; it cannot be turned into a drG without a second measurement or an entropy. So it is admissible as an ENTHALPY, and it must NOT be entered as a Gibbs energy for r_4220. That is why this record's kind is 'structure' and not 'reaction_energy': there is no drG to record.\n\nTABULATED FORMATION DATA for 4-nitrophenol, for completeness. NIST WebBook gives only gas and solid enthalpies of formation (solid -212.4 +/- 1.0 kJ/mol Finch 1983, -207.1 +/- 1.1 Sabbah 1994; gas -117.7 +/- 2.0 and -114.7 +/- 1.2) and NO Gibbs energy of formation and NO aqueous data. The Goldberg-group manuscript carries these through a solution enthalpy to drfH0 = -190.53 kJ/mol for 4-nitrophenol(aq), again an enthalpy. Converting any of this to an aqueous drfG would require a solvation model, which would make it 'computed' and inadmissible.\n\nWHAT A HUMAN STILL NEEDS TO DO.\n  a. Get the Goldberg 2009 primary through the university subscription (doi:10.1016/j.jct.2008.12.017) and confirm the temperature and ionic strength attached to drH0 = -(13.7 +/- 0.5), and check whether its Table of chemical reference reactions reports a K for reaction (3) obtained from the literature rather than measured. The archived abstract says the equilibrium model 'was then used to calculate thermodynamic property values (equilibrium constants K and standard enthalpies of reaction) for chemical reference reactions', which leaves open that a K for reaction (3) appears in the paper sourced from elsewhere. That is the single highest-value unresolved question in this row.\n  b. Chase Axelrod, 'The Free Energy of Hydrolysis of p-Nitrophenyl Phosphate', Science 114 (1951) 525-526, doi:10.1126/science.114.2968.525. It is the only drG lead found for this exact reaction and it is behind an AAAS 403. If it reports a measured free energy of hydrolysis, that value, not the enthalpy, is what closes r_4220.\n  c. Sturtevant, J. Am. Chem. Soc. 77 (1955) 255-258, is an independent calorimetric drH for the same reaction and would corroborate the -13.7.\n  d. Decide whether to add a group definition for an aryl phosphate ester to eQuilibrator's group set. That is a change to the shared group table with consequences for every aromatic phosphate in the GEM, so it is a decision, not a fix, and it needs the author.\n  e. The TECRDB search interface at randr.nist.gov/enzyme is dead, so if a TECRDB entry for EC 3.1.3.1 or 3.1.3.2 with 4-nitrophenyl phosphate matters, it has to come from the printed compilations (Goldberg and Tewari, J. Phys. Chem. Ref. Data) rather than the web database."
+}

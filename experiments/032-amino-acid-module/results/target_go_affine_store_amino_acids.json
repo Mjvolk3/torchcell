@@ -1,0 +1,13 @@
+{
+  "stores": {
+    "go": "/scratch/projects/torchcell-scratch/data/torchcell/reference_flux/ess_solve_encodings_SM_gem_go.npz",
+    "gopfba": "/scratch/projects/torchcell-scratch/data/torchcell/reference_flux/ess_solve_encodings_SM_gem_gopfba.npz"
+  },
+  "target": "amino_acids",
+  "n_genes": 6607,
+  "n_genes_annotated": 5501,
+  "n_go_terms": 2362,
+  "n_genes_with_flux_row": 1161,
+  "flux_store": "/scratch/projects/torchcell-scratch/data/torchcell/reference_flux/ess_solve_encodings_SM_gem.npz",
+  "seconds": 12.129651546478271
+}

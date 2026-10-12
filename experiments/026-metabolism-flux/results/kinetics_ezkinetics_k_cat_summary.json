@@ -1,0 +1,20 @@
+{
+  "predictor": "ezkinetics",
+  "parameter": "k_cat",
+  "n_rows": 7456,
+  "n_units": 3552,
+  "n_units_total": 3728,
+  "n_genes": 1151,
+  "n_substrates": 1350,
+  "n_distinct_smiles": 724,
+  "coverage_frac": 0.9527896995708155,
+  "value_median": 4.61725926399231,
+  "value_p05": 0.708721399307251,
+  "value_p95": 28.83714532852173,
+  "protein_encoder": "ESM2_650M",
+  "substrate_encoder": "ChemBERTa-77M-MTR",
+  "log_base": 10,
+  "ph": 7.0,
+  "temperature_c": 25.0,
+  "revision": "bf7a89735edd64440cf670e2af49414c68dbcf98"
+}

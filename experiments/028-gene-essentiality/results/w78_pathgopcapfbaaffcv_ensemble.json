@@ -1,0 +1,59 @@
+{
+  "prefix": "w78_pathgopcapfbaaffcv",
+  "n_folds": 5,
+  "n_genes": 195,
+  "n_essential": 31,
+  "folds": [
+    {
+      "stem": "w78_pathgopcapfbaaffcv0_h12l1p1_e200_s2700",
+      "split_file": "ess_fcl_fold0of5_s0.json.gz",
+      "select_epoch": 69,
+      "n_genes": 195,
+      "auroc": 0.9049960660896932,
+      "ci_low": 0.8444103185676995,
+      "ci_high": 0.9524354132801066
+    },
+    {
+      "stem": "w78_pathgopcapfbaaffcv1_h12l1p1_e200_s2700",
+      "split_file": "ess_fcl_fold1of5_s0.json.gz",
+      "select_epoch": 197,
+      "n_genes": 195,
+      "auroc": 0.8802124311565697,
+      "ci_low": 0.805031052027241,
+      "ci_high": 0.9431314069681122
+    },
+    {
+      "stem": "w78_pathgopcapfbaaffcv2_h12l1p1_e200_s2700",
+      "split_file": "ess_fcl_fold2of5_s0.json.gz",
+      "select_epoch": 29,
+      "n_genes": 195,
+      "auroc": 0.8432336742722266,
+      "ci_low": 0.7577712310691325,
+      "ci_high": 0.9150334426527711
+    },
+    {
+      "stem": "w78_pathgopcapfbaaffcv3_h12l1p1_e200_s2700",
+      "split_file": "ess_fcl_fold3of5_s0.json.gz",
+      "select_epoch": 69,
+      "n_genes": 195,
+      "auroc": 0.8727380015735641,
+      "ci_low": 0.8070960880058462,
+      "ci_high": 0.9277229744405829
+    },
+    {
+      "stem": "w78_pathgopcapfbaaffcv4_h12l1p1_e200_s2700",
+      "split_file": "ess_fcl_fold4of5_s0.json.gz",
+      "select_epoch": 47,
+      "n_genes": 195,
+      "auroc": 0.9167977970102281,
+      "ci_low": 0.8686721920949808,
+      "ci_high": 0.9572660098522168
+    }
+  ],
+  "fold_mean_auroc": 0.8835955940204563,
+  "ensemble_auroc": 0.9136506687647522,
+  "ensemble_ci_low": 0.8579256381849235,
+  "ensemble_ci_high": 0.9593686964694949,
+  "seeds_per_fold": 1,
+  "note": "The ensemble is the per-gene mean of the fold models' logits on the released held-out genes, scored once; this is the protocol behind FCL's published test AUROC. The fold mean is the average of K single-model AUROCs and is the number to compare with a single-split cell."
+}

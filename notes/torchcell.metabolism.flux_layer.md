@@ -28,3 +28,391 @@ is a uniform rescaling of the box, not an enzyme constraint, and a loss curve ca
 them apart.
 
 Full write-up: [[experiments.026-metabolism-flux.enzyme-constrained-thermodynamic-flux-layer]]
+
+## 2026.09.10 - The projection parameterization, a latent sampler, and the eQuilibrator covariance
+
+Three additions, all behind new config values, so `box` and `nullspace` and every arm
+configured before today run byte for byte as they did. Verified by
+`tests/torchcell/metabolism/test_flux_layer.py` (48 passed, including the two real-GEM tests
+when `DATA_ROOT` is set) and by `scripts/run-mypy.sh` on the layer, `constraints.py` and the
+test file (strict, clean).
+
+### `parameterization="projection"`
+
+`box` and `nullspace` each buy one exact constraint by giving up the other. `projection`
+starts at the null-space point `v0 = N z` and then alternates two projections `K` times:
+
+- `P_bal(v) = N (N^T v)`, the orthogonal projector onto `ker S`, exact because
+  `constraints.null_space_basis` returns an orthonormal basis;
+- `P_box(v) = clip(v, lb, ub)`, with `lb, ub` the genotype-dependent box from `dynamic_box`,
+  so a deletion's `lb = ub = 0` pins its reaction to zero through every step.
+
+`K` counts the clips (`projection_steps`, default 5). Each is followed by the balance
+projection except, under `projection_end="box"`, the last one.
+
+**Which constraint is exact is decided by which projection runs last, and that is a config
+choice rather than a detail.** `projection_end="balance"` (the default) gives `S v = 0` to
+machine precision and reports the leftover box overshoot; `projection_end="box"` gives the
+bounds to machine precision and reports the leftover balance residual. Finite `K` does not
+reach the intersection, it shrinks whichever residual is left. `projection_method="dykstra"`
+runs Dykstra's correction, whose limit is the NEAREST point of the intersection to `v0`
+rather than merely a point of it.
+
+Measured on yeast-GEM 9.0.2 at initialization, `flux_projection_anchored`, batch 4, one CPU
+forward (the script is the build harness quoted in
+[[experiments.027-betaxanthin-metabolic.projection-head]]):
+
+| quantity | K = 5 | K = 20 |
+|---|---|---|
+| balance ratio, median over independent rows | 4.8e-9 | 5.3e-9 |
+| balance ratio, max over independent rows | 7.2e-5 | 1.5e-4 |
+| `c_box`, mean overshoot / flux_scale | 3.75e-3 | 7.90e-4 |
+| box violation fraction (tol 1e-4) | 0.647 | 0.647 |
+| mean absolute flux | 0.94 | 0.25 |
+
+So mass balance is exact, and the leftover box overshoot falls 4.7x from K=5 to K=20 in
+MAGNITUDE while the FRACTION of reactions outside their bounds does not move. At
+initialization the latent is random and roughly half the reactions are irreversible with
+`lb = 0`, so a sign is wrong on about half of them by construction; the fraction is a
+statement about the untrained latent, not about the projection. The `c_box` penalty is still
+in the loss at weight 0.5, so the leftover is attacked structurally by `K` and by learning at
+the same time.
+
+Cost: `2K` matmuls of `[B, 4131]` against the `4131 x 1538` basis per forward. The basis is
+25 MB and stays on the GPU.
+
+`_validate_null_basis` measures rather than assumes the two properties the projection rests
+on, and refuses a basis that is not orthonormal: `N (N^T v)` is a projector only for an
+orthonormal `N`, and an oblique map still lands in `ker S` but no longer contracts the
+distance to the box, so the alternation need not converge. On yeast-GEM the measured
+orthonormality error is 2.4e-6 and the balance error 3.5e-6, both reported in
+`coverage_report()`.
+
+### `latent_stochastic` and `FluxLayer.sample`
+
+For `projection` and `nullspace`, `z = mu + sigma eps` from an amortized Gaussian, with
+`KL(N(mu, sigma) || N(0, I))` returned as `out["c_kl"]` (the per-sample mean over latent
+dimensions, so one weight serves a 1,538-dimensional yeast basis and a 2-dimensional toy).
+The spread head is a zero-weight linear whose bias is `latent_log_std_init = -3.0`, so every
+genotype starts at sigma 0.050 against a latent of order 1.
+
+`sample(h_genes, context, perturbation_indices, perturbation_indices_batch, n_samples)`
+returns a pydantic `FluxSample` with `v` of shape `[S, B, r]` and five `[S, B]` feasibility
+fields. The genotype chain, the box and the reaction energies are computed once and shared;
+only the latent is redrawn, and the draw is taken regardless of `training`. **Every draw is
+projected**, which is the difference from the 026 stochastic head: that one drew `z` per
+reaction and projected nothing, and its draws had a median balance ratio of 1.98 with 30
+percent thermodynamic violations (`experiments/026-metabolism-flux/results/flux_sampling_demo.json`).
+Drawn here at initialization on the real GEM, the median balance ratio over 8 draws is
+5.5e-9.
+
+`latent_stochastic` is a runtime PROPERTY, not an `__init__` flag, so a cell trained
+deterministically can be switched into a sampler after its weights are loaded, which is what
+`audit_top_strain_feasibility.py` does by setting `config.stochastic`. The spread head is
+therefore built on every projection layer whether or not the run samples, so the flip needs
+no parameter the checkpoint lacks. On `nullspace`, `stochastic` stays the no-op it has always
+been.
+
+### `feasibility(out)`, the canonical per-sample definitions
+
+`[B]` tensors for `balance_ratio_median`, `balance_ratio_max`, `box_violation_frac`,
+`thermo_violation_frac` and `thermo_uphill_frac`. `forward` averages these into scalars for
+the training log, and a batch mean can meet a 95 percent target while a third of the
+individual strains do not, which is the form the Genesis metabolic-grounding target actually
+takes. `forward`'s `feas_balance_median` is the median over the FLATTENED batch and is
+therefore related to, but not the mean of, the per-sample medians.
+
+`thermo_violation_frac` counts active reactions with `v dG > 0`; `thermo_uphill_frac` counts
+only those CARRYING flux (`|v| > 1e-6`), because a reaction at zero flux is not running
+uphill, it is not running.
+
+### The eQuilibrator square-root covariance is available, and the docstring said it was not
+
+The module docstring claimed `Q` was unavailable. It is not. Our recomputation writes
+`$DATA_ROOT/data/torchcell/thermo_equilibrator/formation_sigma.npz`, which holds the
+metabolite square-root factor of the component-contribution covariance as a dense
+`2099 x 590` array. The reaction factor is `Q = S^T Sigma^(1/2)`, `4131 x 590`, and
+`parameters.resolve_reaction_delta_g` already forms exactly this product and keeps only its
+row norms as `ReactionThermoTable.sigma`.
+
+`reaction_sqrt_covariance(thermo_dir, s, met_ids)` keeps the matrix, with its sha256 and its
+coverage mask. `test_real_reaction_covariance_row_norms_equal_the_tabulated_sigma` checks
+`||Q_j|| == table.sigma[j]` on all 1,755 covered reactions of the union route and passes, so
+the covariance path fits the same uncertainty every coverage report prints.
+
+`thermo_uncertainty="covariance"` then replaces the free per-reaction offset with
+`delta_g_error = Q m`, `m` a learned latent of dimension 590 with an `N(0, I)` prior, which
+is Thermo-Flux Eq. (5) as written. The 2,376 reactions with an incompletely covered
+participant set take no offset at all, because a reaction whose error model is unknown should
+not be given a free parameter that looks like one. `"isotropic"` remains the default and is
+what every 026 and 027 run to date fit.
+
+**Unverified:** nothing has been TRAINED on the covariance path yet. Its shape, its prior and its
+agreement with the tabulated sigma are tested; whether it fits differently from the isotropic
+offset is not measured, and reaching it from an 026 arm needs the `build_flux_layer` patch
+recorded in [[experiments.027-betaxanthin-metabolic.projection-head]].
+
+## 2026.09.11 - The second law as a box, not a penalty
+
+`thermo_box`, off by default. Reachable from an 026 arm as the `tdg` token of the
+parameterization string, since that string is the only field `build_flux_layer` forwards.
+
+### Why a penalty could not do it
+
+Wave 6's first four cells made mass balance exact and left the second law as the hinge
+`c_thermo`. On job 1708's top-100 predicted strains, at a constraint scale of 0.1, every
+strain met the balance criterion at every tolerance and `thermo_model_violation_frac` still
+read a median of 0.405. A weight that has to be traded against the data term cannot deliver
+a criterion of the form "95 percent of the top 100 violate nothing", because the trade is
+what the weight is for.
+
+### The observation
+
+For a reaction whose standard energy has a known sign, `v_j dG_j <= 0` is not a penalty at
+all. It is a sign restriction on `v_j`, and a sign restriction is a bound:
+
+- `dG_j > +thermo_epsilon` forces `ub_j <- min(ub_j, 0)`;
+- `dG_j < -thermo_epsilon` forces `lb_j <- max(lb_j, 0)`;
+- `|dG_j| <= thermo_epsilon` leaves the box alone, because near equilibrium the sign is not
+  resolved and forcing one would assert a direction the table does not have.
+
+Reactions outside `dg_mask`, and the ones Thermo-Flux's Box 2 exempts, are untouched.
+
+**The box is per sample**, because `dG` carries the learned concentration term. That is what
+makes it a constraint the model can satisfy rather than one it must fight: to license a flux
+in some direction, the model moves concentrations inside the physiological window until the
+reaction energy has the sign it needs, which is the same degree of freedom Thermo-Flux gives
+its own solver.
+
+Then the alternating projection runs against the tightened box and **ends on the clip**, so
+bounds, enzyme capacity and direction are all exact and only the balance residual is
+reported. `thermo_box` refuses to build on any head that does not end on the box, because a
+head ending on the balance projection would report the second law as exact while the last
+step moved the flux back off it.
+
+The tightening can empty a box, when a reaction carries a strictly positive lower bound and
+an energy that forbids forward flux. The second law wins and the lower bound is dropped to
+meet the upper one, but the count comes back as `feas_thermo_box_emptied_frac` rather than
+being absorbed.
+
+### Measured on yeast-GEM 9.0.2 at initialization, untrained, four samples
+
+| head | balance median (max over samples) | balance max | box violated | second law violated | mean abs flux | reactions carrying flux |
+|---|---|---|---|---|---|---|
+| `projection` (K=5, end balance) | 5e-9 | 4.5e-5 | 0.643 | 0.511 | 1.076 | 0.881 |
+| `projection_k20_box` | 1.4e-2 | 2.000 | 0.000 | 0.130 | 0.194 | 0.237 |
+| `projection_k20_box_tdg` | 0.000 | 2.000 | 0.000 | 0.000 | 0.046 | 0.147 |
+
+All three constraints at once, exactly, with no training and no penalty. The test
+`test_thermo_box_on_the_real_gem_is_exact_and_nearly_balanced` pins it: violation fractions
+0, and the per-sample balance ratio median under 1e-2 on every sample.
+
+### Two things to read carefully
+
+**`c_thermo` runs HIGH on a `tdg` head while it violates nothing.** The hinge is
+`relu(v dG + eps) / (|v||dG| + eps)`, and at `v = 0` both numerator and denominator are
+`eps`, so a reaction the directional box pinned to zero scores exactly 1. Measured on the
+toy network: violation fraction 0, `c_thermo` 0.84. `c_thermo` is kept unchanged only
+because every arm before 2026-09-11 trained against it;
+`feasibility`'s `thermo_violation_frac` and `thermo_uphill_frac` are the readouts. Pinned by
+`test_c_thermo_is_not_a_readout_once_the_second_law_is_a_box`.
+
+**The median balance ratio is passed partly by zeros.** The `tdg` head's balance MAXIMUM is
+2.0, the largest that ratio can take, and only 14.7 percent of reactions carry any flux. A
+median balance ratio of 0 on a flux vector that is 85 percent zeros is not evidence of a
+balanced flux, and the Genesis criterion as currently written does not separate the two.
+Recommendation for the trainer's `criteria_flags`: add a max-based balance tolerance beside
+the median one, and report the fraction of reactions carrying flux next to every feasibility
+number.
+
+### Also landed: the shipped reaction column is two units
+
+`constraints._read_delta_g_csv` multiplied the whole of yeast-GEM 9.0.2's
+`model_rxnDeltaG.csv` by 4.184. The curation script fills that column from yETFL in kcal/mol
+and then fills an index block from dGPredictor in **kJ/mol**, so 33 of the 3,210 priced
+reactions were coming back 4.184x too large while looking entirely ordinary.
+`dgpredictor_reaction_ids` reads the audited id list and `_read_delta_g_csv` now exempts
+those rows at parse time; a missing id list raises rather than skipping the correction.
+`ThermoTable.n_reaction_rows_already_kj` records the count (33 on this GEM) and the sidecar's
+path and sha256 join `source_paths` / `sha256`. Coverage is unchanged at 2,389 metabolites
+and 3,210 reactions. Pinned on a synthetic CSV by
+`test_the_dgpredictor_rows_of_the_shipped_column_are_not_converted`.
+
+## 2026.09.11 - The `fluxforce` Channel: the Second Law as a Differentiable Coupling
+
+### Why a new channel rather than a better margin on the directional box
+
+`_thermo_tighten` decides each priced reaction's allowed sign with `delta_g > eps` inside a
+`torch.where`. The comparison returns a boolean, so **no gradient reaches `log_c_base`
+through the box**: the model cannot move a metabolite pool until a reaction has the sign it
+needs, which is what the method's docstring claimed it could. The only thermodynamic
+gradient a `_tdg` cell has is the soft hinge `c_thermo`. Pinned by
+`test_fluxforce_passes_gradient_to_the_concentrations_and_the_thermo_box_does_not`, which
+takes a loss that is a function of the flux alone: `d(loss)/d(log_c_base)` is `None` on
+`projection_k20_box_tdg` and nonzero on `fluxforce_k20_box`.
+
+### The channel
+
+`fluxforce[_k<N>][_balance|_box]`, parsed by `parse_parameterization` next to `projection`
+and carrying the same two suffixes. On every reaction the table prices and Box 2 does not
+exempt,
+
+$$
+v_j = m_j\,f(\Delta_rG_j),\qquad f(x) = -\tanh\!\Big(\frac{x}{2RT}\Big),\qquad
+m_j = \max(|v^\ell_j|,|v^u_j|)\,\sigma(z_j)\ \ge 0,
+$$
+
+with $f$ the flux-force relation (Beard and Qian; the flux-force efficacy of Noor et al.
+2014), the net of forward and reverse rates at the ratio $e^{-\Delta_rG/RT}$. Unpriced and
+exempt reactions keep the sigmoid box. The flux is clipped to the genotype box and then run
+through the existing alternating projection at the configured `K` and end.
+
+- `flux_force_efficacy(delta_g)` is the function, public so an audit can reproduce a
+  reported efficacy from the `rt_kj_per_mol` the coverage report now carries.
+- `_fluxforce_flux(...)` returns `(v_pre, priced)`, and both `forward` and `sample` call it,
+  so a draw is the same construction with the magnitude logit resampled.
+- The spread head `flux_log_std` is built unconditionally on this kind, zero weights and a
+  constant bias, so a deterministically trained cell can be switched into a sampler after
+  its weights load, exactly as the projection head's posterior head is.
+- `ThermoMode.ANCHORED` is required. No fall back to the box head: a flux-force channel with
+  no reaction energies is the box head wearing a thermodynamic name.
+- No `tdg` token exists on this channel, by construction.
+
+### What is reported
+
+- `v_pre_projection` `[B, r]`, the flux before the projection, which satisfies the second law
+  exactly.
+- `feas_sign_flip_frac`, the fraction of flux-carrying priced reactions whose sign the
+  projection reversed. This is the whole of the second-law violation the channel produces,
+  and it is measured rather than inferred from the thermo fraction.
+- `g_diss_per_sample` `[B]`, `thermo_g_diss_mean` and `g_diss_mean` on every `ANCHORED` arm,
+  penalized or not, so Niebel's limit can serve as a validation readout. Units J/gDW/h;
+  Niebel's yeast limit of 3.7 kJ/gDW/h is the 3,700 that `g_diss_limit` carries. The sum is
+  signed, so a dissipating state is negative.
+
+Untrained on the real yeast-GEM, `fluxforce_k20_box` violates the second law on 0.000 of the
+priced reactions before the projection and 0.318 after it, against the plain projection's
+0.308; the flip fraction is 0.273 and is not moved by the starting magnitude (0.289 with the
+magnitude logit biased by -6, a factor of 22 in the pre-projection flux) or by `K` (0.270 at
+K = 50). Full table and the cells in
+[[experiments.027-betaxanthin-metabolic.wave7-flux-force-head]].
+
+### Box 2 exemptions, as implemented
+
+274 of yeast-GEM 9.0.2's 4,131 reactions are exempt, all exchanges, the biomass reaction
+among them. Thermo-Flux Box 2 also exempts water transport between compartments, and that
+rule does not fire here: it matches the string `H2O` against the reaction ID and this GEM's
+IDs are `r_0001` style, so the 13 reactions that move a water species between two
+compartments and do nothing else are all still constrained. Left as it is, because changing
+the exemption set moves the numbers of every arm already measured.
+
+### The third end token: `fluxforce_k<N>_force`
+
+`projection_end` on this channel takes a value the projection channel does not have.
+`balance` and `box` mean what they always meant, whichever projection runs last. `force`
+ends the alternation on the balance projection and then clips once into the box tightened
+to the direction each reaction's energy licenses, reusing `_thermo_tighten` for the
+tightening. After it, bounds and the second law are both exact and the balance residual is
+the reported leftover, which is the opposite trade from the box end.
+
+It is not the `tdg` head with extra steps. On `tdg` the sign clamp is the WHOLE mechanism,
+so the only path from the flux to the learned concentrations is a `torch.where` and there
+is no gradient. Here the magnitude and the direction that enter the clip are already smooth
+functions of dG, so a reaction the clip leaves alone still carries the derivative; pinned by
+`test_the_force_end_still_passes_gradient_to_the_concentrations`.
+
+Measured at initialization, untrained, real yeast-GEM, batch 4, torch seed 0:
+
+| end | second law violated | box violated | balance median | zeros | sign flips | grad to log_c |
+|---|---|---|---|---|---|---|
+| `box` | 0.318 | 0.000 | 0.597 | 40.5% | 0.273 | 5.76 |
+| `force` | 0.000 | 0.000 | 0.392 | 63.8% | 0.497 | 4.69 |
+| `projection_k20_box_tdg` | 0.000 | 0.000 | n/a | 68.0% | n/a | 0 (no path) |
+
+The force end buys the sign clamp's exactness at 63.8 percent zeros against the clamp's
+68.0, and keeps the concentration gradient. That is the discriminator between the two
+explanations of wave 6: if a `force` cell sustains its escape, the gradient is what the
+clamp cost; if it does not, the cause is the zeroing.
+
+### The fourth end token: `fluxforce_k<N>_boxforce`
+
+`force` restores the direction with a clip that runs AFTER the alternation, so the projection
+converges against a set the flux does not end in and the last clip spends the balance to buy
+exactness. `boxforce` tightens the box first, so every clip inside the alternation is already
+the directional one. Implemented as two lines in `forward`: `_thermo_tighten` before
+`_fluxforce_flux`, and `_project_feasible` reads `end_on_box` as true for it.
+
+Measured untrained on the real yeast-GEM, balance ratio median after the projection, with the
+second law and the box exact in every row:
+
+| K | `force` (clip last) | `boxforce` (direction in the box) |
+|---|---|---|
+| 20 | 0.4025 | 0.1928 |
+| 50 | 0.1805 | 0.0218 |
+| 100 | 0.0574 | 0.0000 |
+| 200 | 0.0000 | not run |
+
+On the trained-cell recipe at K = 100, `boxforce` reads balance median 0.0017, second-law
+violation 0.000, box violation 0.000, sign flips 0.000, and `d(flux sum)/d(log_c_base)`
+= 0.679, against the `tdg` head's identical exactness and zero gradient. It is the first
+setting that passes both halves of the Genesis criterion at initialization. The cost is
+density: 70.7 percent of reactions carry no flux, against `force`'s 64.5 and `tdg`'s 68.0.
+
+The balance MAXIMUM stays at 2.0, its largest possible value, at every K and on every arm
+measured to date: at least one metabolite in the flux is produced and never consumed. That is
+a property of the network and the box, not of a parameterization.
+
+### What the four ends measured, in one table
+
+Eight cells on the betaxanthin head, seeds 2700 to 2702, everything on, constraint scale
+0.0, the shipped verified kcat table. Full ledger and the paired contrasts in
+[[experiments.027-betaxanthin-metabolic.wave7-flux-force-head]].
+
+| channel | second law exact on the top 100 | Genesis, median rule | test Spearman | escapes sustained |
+|---|---|---|---|---|
+| `projection_k20_box_tdg` (the sign clamp, no gradient) | yes | 0.33 | -0.0202 (n = 3) | 0 of 3 |
+| `fluxforce_k20_box` | no | 0.00 | +0.0769 (n = 2) | 2 of 2 |
+| `fluxforce_k20_force` | yes | 0.00 | +0.0627 (n = 3) | 3 of 3 |
+| `fluxforce_k100_boxforce` | yes | **1.00 (3 of 3)** | +0.0563 (n = 3) | 0 of 3 |
+
+The channel exists because the sign clamp reaches exactness by a route that passes no
+gradient to the learned concentrations, and both flux-force ends that reach the same
+exactness score above it, paired: +0.0830 (sd 0.0511) for the force end and +0.0765 (sd
+0.0984) for `boxforce`, both n = 3. The two flux-force ends are indistinguishable from each
+other at -0.0065 (sd 0.0654).
+
+## 2026.09.12 - The Turnover-Density Term, and Dykstra on the Flux-Force Channel
+
+### `density_weight`: pricing a flux that balances by being off
+
+A balance statistic over a mostly-zero flux is a statement about the zeros. Measured
+untrained on the real yeast-GEM, `fluxforce_k100_boxforce` meets the Genesis median rule
+with **5.26 percent** of the independent rows of S turning over above `1e-3 * flux_scale`
+and 28.94 percent of reactions carrying any flux; the plain projection sits at 40.63 and
+57.31 percent and fails the rule. Emptying the network is the degenerate way to satisfy
+balance and nothing in the loss argued against it.
+
+`c_density = mean_i relu(1 - omega_i / (density_turnover_threshold * flux_scale))` over the
+independent rows is that argument: zero for a row at or above the threshold, one for a dead
+row, linear between. `feas_active_row_frac` and `feas_flux_active_frac` report the same
+thing as fractions, on every arm, weighted or not.
+
+Two deliberate properties, both pinned by tests:
+
+- **The threshold is the audit's.** `density_turnover_threshold` defaults to 1e-3, the
+  primary of `audit_top_strain_feasibility.BALANCE_TURNOVER_THRESHOLDS`, so the term the
+  model is trained against and the rule it is judged by are one statistic.
+- **The term is added OUTSIDE `constraint_scale`.** Every 027 cell runs the physics ramp at
+  0.0 or 0.1, and at 0.0 a term inside the product is identically zero: the cell would
+  report a density weight it never applied. At the default weight of 0.0 the term adds
+  exactly zero, so every arm before this date computes the loss it always did.
+
+### `_dykstra` on the flux-force channel
+
+The token was already legal on `projection`; it now parses on `fluxforce` too. Dykstra's
+correction lands on the NEAREST point of the intersection to the pre-projection flux rather
+than on some point of it, and on this network that is worth about a factor of two in flux
+density at no cost in exactness: at K = 100 on `boxforce`, 11.42 percent of rows turn over
+against von Neumann's 5.26, with the second law, the box and the balance median unchanged
+and the forward pass no slower. Raising K instead moves the wrong way, 1.50 percent of rows
+at K = 500, which withdraws the "raise K" recommendation from the wave-7 section above.

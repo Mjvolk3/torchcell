@@ -1,0 +1,62 @@
+%% notes-tex/031-betaxanthin-module/031-betaxanthin-module.tex
+%% [[experiments.031-betaxanthin-module]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/031-betaxanthin-module/031-betaxanthin-module.tex
+%%
+%% Build:  make            -> 031-betaxanthin-module.pdf
+%%         make check      -> formatting / provenance / style gate
+%%
+%% Every number is produced by a committed script under experiments/031-betaxanthin-module/ (the readouts
+%% shared with its sibling live under experiments/031-betaxanthin-module/scripts/) and read
+%% back from the results/ tree; the tables under tables/ are generated, and the numbers typed
+%% into prose are checked by experiments/031-betaxanthin-module/scripts/verify_doc_numbers.py.
+
+\documentclass[10pt,a4paper]{article}
+\usepackage[draft]{tcdoc}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\emergencystretch=3.5em
+
+\title{\vspace{-1.5em}The Metabolic Module on Betaxanthin\\
+  {\large The offline flux store carried to the Cachera screen,\\and what a physically constrained store adds}}
+\author{Michael Volk}
+\date{\today}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\begin{abstract}
+\noindent
+The metabolic module built for gene essentiality (\texttt{notes-tex/028-gene-essentiality})
+carried to the target it was designed for: Cachera's betaxanthin screen, 4,930 deletion
+strains of BY4741 with the pigment cassette on YPD. The module is an offline store, one
+flux vector per deletion from a parsimonious solve on the cassette strain, read through
+a zero-initialized affine on the transformer's logit, and every arm is paired by seed
+against the same backbone without it under the 027 protocol on Merzbacher's pinned test
+genes. The whole-vector store lifts the width-12 backbone's pinned Spearman from 0.079 to
+0.121 and, on the strain as built (the deletion-only graph), lifts the top-50 call too;
+the width-90 backbone without the store reads the same, and the two do not add. The
+gain lives in the production half of the vector and in a free affine, arrives after the
+backbone escapes the constant predictor, and is kept by a release rule on the validation
+curve. Without any backbone the clean parsimonious vector read by nearest neighbors
+carries 0.195, more rank than any single transformer arm, and the max-min driving-force
+concentrations carry 0.152 linearly. The second law as fixed reaction directions leaves
+the strain with no growth; as a linear program in concentrations it is consistent to
+within a kilojoule. Every number is at a validation-selected epoch on the pinned test
+set with the across-seed spread, every table is generated from the result files, and
+the amino-acid half of the campaign is the sibling document
+\texttt{notes-tex/032-amino-acid-module}.
+\end{abstract}
+
+\vspace{0.5em}
+\tccontents
+\clearpage
+
+\input{sections/1-endpoint}
+\input{sections/2-rounds}
+\input{sections/3-physics}
+\input{sections/4-standing}
+
+\end{document}

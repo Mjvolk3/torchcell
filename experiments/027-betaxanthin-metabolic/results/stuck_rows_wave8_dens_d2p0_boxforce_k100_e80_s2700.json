@@ -1,0 +1,269 @@
+{
+  "built_at": "2026-09-12-19-08-27",
+  "result_file": "wave8_dens_d2p0_boxforce_k100_e80_s2700.json",
+  "checkpoint": "/scratch/projects/torchcell-scratch/checkpoints-027/wave8_dens_d2p0_boxforce_k100_e80_s2700.pt",
+  "cell": {
+    "arm": "flux_fluxforce_boxforce",
+    "base_arm": "flux_projection_anchored_k20_boxend",
+    "seed": 2700,
+    "permute_train_targets": false,
+    "epochs": 80,
+    "hidden": 90,
+    "layers": 2,
+    "attention_heads": 9,
+    "batch_size": 128,
+    "num_workers": 2,
+    "lr": 0.001,
+    "weight_decay": 0.0001,
+    "split_seed": 0,
+    "select_smoothing_window": 5,
+    "crps": true,
+    "graph_reg": true,
+    "abort_on_collapse": false,
+    "aux_mulleder": false,
+    "attention_mask": false,
+    "learnable_embedding": false,
+    "pert_heads": 6,
+    "kcat_tier": "predicted",
+    "thermo_source": "union_external",
+    "constraint_warmup_epochs": 20,
+    "constraint_scale": 0.0,
+    "constraint_delay_epochs": 0,
+    "head_normalize": true,
+    "head": "betaxanthin",
+    "aa_readout": "flux_metabolite",
+    "target_log10_molar": false,
+    "dist": "crps",
+    "conc_space": "mixture",
+    "conc_lower_m": 1e-7,
+    "conc_upper_m": 0.01,
+    "flux_parameterization": "fluxforce_k100_boxforce",
+    "flux_density_weight": 2.0,
+    "flux_draws": 1,
+    "flux_latent_stochastic": false,
+    "flux_kl_weight": null
+  },
+  "n_genotypes": 32,
+  "genotype_selection": "the first genotypes of the all-split loader in dataset order, which is not the production ranking; the stuck rows are a property of the network and the box rather than of the prediction, and the per-genotype spread is reported",
+  "flux_active_threshold": 0.00009999999999999999,
+  "turnover_threshold": 0.1,
+  "definitions": {
+    "stuck_row": "an independent row of S whose balance ratio is within 1e-3 of 2.0, its largest possible value, and whose turnover clears the rule's threshold",
+    "unfixable": "no reaction touching the metabolite can supply the opposite-sign contribution under the FINAL box, so no loss term moving v inside that box can balance the row",
+    "sign_clamp": "the side survived the GEM bound, the availability and the capacity and was zeroed by the directional tightening, which reads the layer's own delta_r_G and is therefore the one stage a thermodynamic gradient reaches"
+  },
+  "per_genotype_mean": {
+    "n_independent_rows": 2593,
+    "n_rows_above_turnover": 818,
+    "n_stuck_rows": 288,
+    "n_unfixable_rows": 10,
+    "unfixable_by_cause": {
+      "gem_bound": 9,
+      "availability": 1,
+      "capacity": 0,
+      "sign_clamp": 0,
+      "open": 0
+    },
+    "n_fixable_by_objective": 278,
+    "n_rows_with_no_counterpart_reaction": 0
+  },
+  "totals": {
+    "n_independent_rows": 2593,
+    "n_rows_above_turnover": 26173,
+    "n_stuck_rows": 9219,
+    "n_unfixable_rows": 330,
+    "unfixable_by_cause": {
+      "gem_bound": 297,
+      "availability": 33,
+      "capacity": 0,
+      "sign_clamp": 0,
+      "open": 0
+    },
+    "n_fixable_by_objective": 8889,
+    "n_rows_with_no_counterpart_reaction": 0
+  },
+  "fraction_unfixable_of_stuck": 0.03579563944028637,
+  "fraction_sign_clamp_of_unfixable": 0.0,
+  "top_metabolites": [
+    {
+      "metabolite": "s_0611",
+      "metabolite_index": 466,
+      "genotypes_stuck": 128,
+      "causes": {
+        "gem_bound": 128,
+        "availability": 0,
+        "capacity": 0,
+        "sign_clamp": 0,
+        "open": 0
+      }
+    },
+    {
+      "metabolite": "s_0736",
+      "metabolite_index": 553,
+      "genotypes_stuck": 128,
+      "causes": {
+        "gem_bound": 128,
+        "availability": 0,
+        "capacity": 0,
+        "sign_clamp": 0,
+        "open": 0
+      }
+    },
+    {
+      "metabolite": "s_1109",
+      "metabolite_index": 874,
+      "genotypes_stuck": 128,
+      "causes": {
+        "gem_bound": 128,
+        "availability": 0,
+        "capacity": 0,
+        "sign_clamp": 0,
+        "open": 0
+      }
+    },
+    {
+      "metabolite": "s_1111",
+      "metabolite_index": 876,
+      "genotypes_stuck": 128,
+      "causes": {
+        "gem_bound": 128,
+        "availability": 0,
+        "capacity": 0,
+        "sign_clamp": 0,
+        "open": 0
+      }
+    },
+    {
+      "metabolite": "s_1476",
+      "metabolite_index": 1142,
+      "genotypes_stuck": 128,
+      "causes": {
+        "gem_bound": 128,
+        "availability": 0,
+        "capacity": 0,
+        "sign_clamp": 0,
+        "open": 0
+      }
+    },
+    {
+      "metabolite": "s_3498",
+      "metabolite_index": 1991,
+      "genotypes_stuck": 128,
+      "causes": {
+        "gem_bound": 128,
+        "availability": 0,
+        "capacity": 0,
+        "sign_clamp": 0,
+        "open": 0
+      }
+    },
+    {
+      "metabolite": "s_3744",
+      "metabolite_index": 2237,
+      "genotypes_stuck": 128,
+      "causes": {
+        "gem_bound": 128,
+        "availability": 0,
+        "capacity": 0,
+        "sign_clamp": 0,
+        "open": 0
+      }
+    },
+    {
+      "metabolite": "s_3745",
+      "metabolite_index": 2238,
+      "genotypes_stuck": 128,
+      "causes": {
+        "gem_bound": 128,
+        "availability": 0,
+        "capacity": 0,
+        "sign_clamp": 0,
+        "open": 0
+      }
+    },
+    {
+      "metabolite": "s_3913",
+      "metabolite_index": 2399,
+      "genotypes_stuck": 128,
+      "causes": {
+        "gem_bound": 128,
+        "availability": 0,
+        "capacity": 0,
+        "sign_clamp": 0,
+        "open": 0
+      }
+    },
+    {
+      "metabolite": "s_1377",
+      "metabolite_index": 1057,
+      "genotypes_stuck": 120,
+      "causes": {
+        "gem_bound": 0,
+        "availability": 120,
+        "capacity": 0,
+        "sign_clamp": 0,
+        "open": 0
+      }
+    },
+    {
+      "metabolite": "s_1498",
+      "metabolite_index": 1158,
+      "genotypes_stuck": 31,
+      "causes": {
+        "gem_bound": 31,
+        "availability": 0,
+        "capacity": 0,
+        "sign_clamp": 0,
+        "open": 0
+      }
+    },
+    {
+      "metabolite": "s_0384",
+      "metabolite_index": 278,
+      "genotypes_stuck": 3,
+      "causes": {
+        "gem_bound": 3,
+        "availability": 0,
+        "capacity": 0,
+        "sign_clamp": 0,
+        "open": 0
+      }
+    },
+    {
+      "metabolite": "s_0664",
+      "metabolite_index": 507,
+      "genotypes_stuck": 1,
+      "causes": {
+        "gem_bound": 0,
+        "availability": 1,
+        "capacity": 0,
+        "sign_clamp": 0,
+        "open": 0
+      }
+    },
+    {
+      "metabolite": "s_0345",
+      "metabolite_index": 252,
+      "genotypes_stuck": 1,
+      "causes": {
+        "gem_bound": 0,
+        "availability": 1,
+        "capacity": 0,
+        "sign_clamp": 0,
+        "open": 0
+      }
+    },
+    {
+      "metabolite": "s_0715",
+      "metabolite_index": 540,
+      "genotypes_stuck": 1,
+      "causes": {
+        "gem_bound": 1,
+        "availability": 0,
+        "capacity": 0,
+        "sign_clamp": 0,
+        "open": 0
+      }
+    }
+  ]
+}

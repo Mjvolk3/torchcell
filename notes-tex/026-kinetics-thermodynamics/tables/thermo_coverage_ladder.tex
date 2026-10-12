@@ -1,0 +1,25 @@
+%% notes-tex/026-kinetics-thermodynamics/tables/thermo_coverage_ladder.tex
+%% AUTO-GENERATED -- do not hand-edit. Regenerate with
+%%   PYTHONPATH=. python experiments/026-metabolism-flux/scripts/thermo_route_tables_tex.py
+%% SOURCE: results/parameter_coverage.json, delta_g_ladder and flux_weighted (improve_parameter_coverage.py); the last row from results/reaction_thermo_coverage_final.json (thermo_pipeline_yeast9.py)
+\begin{table}[!htbp]
+  \centering
+  \footnotesize
+  \caption[Coverage ladder]{Every source of a formation energy counted against the whole model, 4{,}131 reactions and 2{,}806 metabolites. A reaction counts only when every participant carries a value, which is the level the flux layer consumes, since the second-law hinge needs the whole stoichiometric sum; the metabolite column sits beside it because a metabolite-level figure is the one usually quoted and it overstates what is usable. The last row is the pipeline as built, which reaches every source above and eight recovery routes besides (Table~\ref{tab:thermo-metabolite-routes}). The shipped row's values are on the wrong scale, being yETFL's in kcal\,mol$^{-1}$ and labeled kilojoules (Section~\ref{sec:shipped-provenance}), so its count is a count of numbers rather than of reactions a consumer can read without a conversion.}
+  \label{tab:ladder}
+  \begin{tabular}{@{}lrrrrp{0.32\textwidth}@{}}
+    \toprule
+    Source & Rxns & \% & Mets & \% & Supplies \\
+    \midrule
+    yeast-GEM shipped column & 3{,}505 & 84.85 & 2{,}389 & 85.14 & kcal-scale point values, no uncertainty, this model only \\
+    eQuilibrator recomputation, baseline & 2{,}741 & 66.35 & 2{,}113 & 75.30 & covariance of rank 590, any organism, any compound with a structure \\
+    union of the two & 3{,}716 & 89.95 & 2{,}511 & 89.49 & covariance where the recomputation reaches, point values elsewhere \\
+    union plus the tight surrogate & 3{,}730 & 90.29 & 2{,}522 & 89.88 & as the union, plus 39 species a same-composition surrogate determines \\
+    union plus every surrogate & 3{,}862 & 93.49 & 2{,}574 & 91.73 & refused: the median surrogate spread is 52.6 kJ/mol, which orients nothing \\
+    \midrule
+    \textbf{as built} & \textbf{3{,}801} & \textbf{92.01} & \textbf{2{,}559} & \textbf{91.20} & one covariance-carrying estimate wherever one exists, and a named route and provenance record on every value \\
+    \bottomrule
+  \end{tabular}
+  \vspace{0.3em}\\
+  {\footnotesize Over the 2{,}845 reactions with nonzero flux-variability width under the wild-type medium, the last row is 2{,}724, 95.75 percent.}
+\end{table}

@@ -1,0 +1,1371 @@
+{
+ "tool": "qupkake-truncated",
+ "tool_version": "qupkake@main",
+ "built_at": "2026-09-10T03:57:26.489209+00:00",
+ "n_requested": 60,
+ "n_ok": 60,
+ "seconds_total": 0.0,
+ "records": [
+  {
+   "compound_id": 2007,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "acidic ladder truncated at rung 3",
+   "predicted_pkas": [
+    3.2898410747049804,
+    2.89674694013589,
+    2.8460078302665552,
+    2.698786
+   ],
+   "site_pkas": [
+    3.683389,
+    3.546737,
+    3.364896,
+    3.866058,
+    3.693889,
+    3.7846,
+    4.150738,
+    3.727922,
+    3.632456,
+    3.406787,
+    3.413886,
+    4.016131,
+    3.734632,
+    3.633648,
+    2.698786
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 5093,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "acidic ladder truncated at rung 3",
+   "predicted_pkas": [
+    7.078696191336753,
+    6.908914602293699,
+    6.507966943395833,
+    2.815946
+   ],
+   "site_pkas": [
+    7.087001,
+    8.448301,
+    7.870332,
+    7.611773,
+    8.120177,
+    6.865172,
+    6.778605,
+    8.793343,
+    7.087156,
+    2.815946
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 7267,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "acidic ladder truncated at rung 3",
+   "predicted_pkas": [
+    6.480344,
+    3.8953480763683714,
+    3.2970103820935743,
+    2.6505707760088577
+   ],
+   "site_pkas": [
+    4.801744,
+    5.63342,
+    4.219366,
+    4.90989,
+    4.449666,
+    6.009396,
+    3.55743,
+    4.899745,
+    3.919569,
+    4.023883,
+    3.293156,
+    3.286424,
+    3.274399,
+    3.168827,
+    6.480344
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 7651,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "acidic ladder truncated at rung 3",
+   "predicted_pkas": [
+    5.667046000646708,
+    2.480050792293042,
+    2.4188706083221723,
+    2.286582
+   ],
+   "site_pkas": [
+    3.265613,
+    3.263504,
+    2.652999,
+    2.711857,
+    2.728096,
+    2.286582,
+    3.842807,
+    3.845513,
+    5.653786
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 11285,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "basic ladder truncated at rung 1",
+   "predicted_pkas": [
+    5.547063,
+    4.314299,
+    2.577998
+   ],
+   "site_pkas": [
+    4.314299,
+    5.547063,
+    2.577998
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 11612,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "acidic ladder truncated at rung 3",
+   "predicted_pkas": [
+    7.034611083724852,
+    6.464643623396629,
+    6.207363880300205,
+    4.78163426303836
+   ],
+   "site_pkas": [
+    6.724964,
+    7.270546,
+    7.247777,
+    7.178007,
+    7.035199,
+    7.244377,
+    7.302864,
+    7.248215,
+    7.084377,
+    7.102336,
+    7.080511,
+    7.006028,
+    7.845857,
+    7.848453,
+    7.868388,
+    7.775484,
+    7.774385,
+    7.775149,
+    4.458,
+    4.50209
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 13063,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "acidic ladder truncated at rung 3",
+   "predicted_pkas": [
+    6.326868271041335,
+    5.4039501363482865,
+    5.026746959246314
+   ],
+   "site_pkas": [
+    5.619953,
+    5.418592,
+    6.256015,
+    6.099271,
+    6.031157,
+    6.041753,
+    6.026532,
+    5.953624,
+    6.225903,
+    6.11752,
+    6.272257,
+    6.91301,
+    6.715422,
+    6.805825
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 14203,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "acidic ladder truncated at rung 3",
+   "predicted_pkas": [
+    6.173747587396385,
+    5.917704430759559,
+    5.298104
+   ],
+   "site_pkas": [
+    6.239835,
+    6.651458,
+    6.387369,
+    6.659551,
+    6.345562,
+    5.298104
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 16344,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "basic ladder truncated at rung 1",
+   "predicted_pkas": [
+    5.020765,
+    1.997268
+   ],
+   "site_pkas": [
+    5.020765,
+    1.997268
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 18497,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "basic ladder truncated at rung 1",
+   "predicted_pkas": [
+    8.655092,
+    1.903652
+   ],
+   "site_pkas": [
+    8.655092,
+    1.903652
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 25216,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "basic ladder truncated at rung 1",
+   "predicted_pkas": [
+    7.743585,
+    7.6499962299231585,
+    3.5670972137597743
+   ],
+   "site_pkas": [
+    7.752025,
+    8.329074,
+    7.743585,
+    3.169289,
+    3.056905,
+    3.030969
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 28499,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "acidic ladder truncated at rung 3",
+   "predicted_pkas": [
+    8.472146067191673,
+    7.218422761925363,
+    6.849289543837031,
+    4.28781
+   ],
+   "site_pkas": [
+    7.322606,
+    7.609652,
+    7.630955,
+    7.707116,
+    7.579674,
+    7.81664,
+    7.988614,
+    7.958819,
+    7.918658,
+    7.924384,
+    8.599545,
+    9.066908,
+    4.28781
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 30586,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "acidic ladder truncated at rung 3",
+   "predicted_pkas": [
+    5.743849543792418,
+    5.181849664074804,
+    4.919203823322796
+   ],
+   "site_pkas": [
+    6.349824,
+    6.112015,
+    6.387377,
+    6.758763,
+    5.363849,
+    5.360677,
+    5.473699,
+    5.436144,
+    5.535258
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 35030,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "acidic ladder truncated at rung 3",
+   "predicted_pkas": [
+    6.848839265139419,
+    4.571672109551647,
+    3.0599257128577335,
+    2.9817318666000103
+   ],
+   "site_pkas": [
+    3.28858,
+    3.954774,
+    3.71579,
+    4.274136,
+    3.674594,
+    4.072455,
+    3.126807,
+    5.026734,
+    5.136623,
+    4.995334,
+    6.350929,
+    6.434248,
+    6.322024
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 35298,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "basic ladder truncated at rung 1",
+   "predicted_pkas": [
+    10.265334,
+    9.230238754437117,
+    7.901749580565063
+   ],
+   "site_pkas": [
+    9.338836,
+    9.885372,
+    10.265334,
+    7.755187,
+    7.358766
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 38532,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "basic ladder truncated at rung 1",
+   "predicted_pkas": [
+    10.836196,
+    9.520406
+   ],
+   "site_pkas": [
+    10.836196,
+    9.520406
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 47439,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "acidic ladder truncated at rung 3",
+   "predicted_pkas": [
+    7.97505,
+    7.794173542136398,
+    7.126069289276757,
+    7.058424310248394
+   ],
+   "site_pkas": [
+    7.924849,
+    7.737344,
+    7.769623,
+    7.558933,
+    8.224483,
+    8.498454,
+    8.159535,
+    7.97505,
+    6.342626,
+    6.175748,
+    6.69116,
+    5.907524,
+    6.305569
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 72560,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    5.0024836411768145
+   ],
+   "site_pkas": [
+    5.187321,
+    5.462624
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 83304,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "acidic ladder truncated at rung 3",
+   "predicted_pkas": [
+    6.006364912887197,
+    5.834995888517874,
+    5.673635120697203
+   ],
+   "site_pkas": [
+    6.650271,
+    6.611279,
+    6.617844,
+    6.632045,
+    6.609891,
+    6.818992,
+    6.61485,
+    6.623162,
+    6.617284,
+    7.238486,
+    6.928777,
+    6.917524,
+    6.913055,
+    6.897509,
+    6.889641,
+    6.917902,
+    6.877192,
+    6.937365,
+    6.795234,
+    6.810179,
+    6.744371,
+    6.755331,
+    6.743597,
+    6.690087,
+    6.759974,
+    6.632763
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 88530,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "acidic ladder truncated at rung 3",
+   "predicted_pkas": [
+    5.216117486179534,
+    3.96495928459211,
+    3.588021855119094,
+    3.319338
+   ],
+   "site_pkas": [
+    5.940885,
+    5.490705,
+    6.080988,
+    6.058823,
+    4.685162,
+    4.21095,
+    4.344503,
+    4.222577,
+    4.149321,
+    5.119479,
+    4.582952,
+    4.549778,
+    4.332685,
+    3.319338
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 92855,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "basic ladder truncated at rung 1",
+   "predicted_pkas": [
+    1.813133
+   ],
+   "site_pkas": [
+    1.813133
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 92910,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "acidic ladder truncated at rung 3",
+   "predicted_pkas": [
+    8.486922267882944,
+    8.436480106470551,
+    6.680857397991485,
+    3.896231
+   ],
+   "site_pkas": [
+    7.247686,
+    7.541072,
+    7.364778,
+    7.096694,
+    9.304914,
+    9.063729,
+    9.275765,
+    9.230057,
+    9.261924,
+    9.19693,
+    8.815546,
+    9.129788,
+    9.487065,
+    9.495323,
+    9.465118,
+    3.896231
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 99199,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "basic ladder truncated at rung 1",
+   "predicted_pkas": [
+    8.897295,
+    1.522442
+   ],
+   "site_pkas": [
+    8.897295,
+    1.522442
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 100064,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "acidic ladder truncated at rung 3",
+   "predicted_pkas": [
+    9.900601910934414,
+    5.08422187096075,
+    4.990146193566556,
+    4.171547544963086
+   ],
+   "site_pkas": [
+    5.161495,
+    8.823006,
+    5.872528,
+    5.449111,
+    5.231051,
+    6.368662,
+    6.429478,
+    4.35554,
+    4.633285,
+    9.216613,
+    8.647554,
+    9.456811,
+    9.321093,
+    8.957098
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 116259,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "acidic ladder truncated at rung 3",
+   "predicted_pkas": [
+    8.296007547562855,
+    7.824252405432486,
+    7.160880418177683,
+    3.512502
+   ],
+   "site_pkas": [
+    8.052389,
+    7.9544,
+    8.286346,
+    8.085505,
+    8.042297,
+    8.021843,
+    8.091578,
+    8.045412,
+    8.340609,
+    8.855333,
+    8.731978,
+    8.536536,
+    8.718165,
+    8.628179,
+    9.17843,
+    9.097536,
+    8.777376,
+    8.963245,
+    9.076619,
+    3.512502
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 116449,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "acidic ladder truncated at rung 3",
+   "predicted_pkas": [
+    4.919156,
+    2.7339433355747857,
+    2.2808251656781366,
+    1.6942304832152997
+   ],
+   "site_pkas": [
+    2.277427,
+    2.261617,
+    2.32163,
+    2.328194,
+    2.499369,
+    2.97543,
+    2.994377,
+    3.028106,
+    3.041951,
+    4.919156
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 118410,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "acidic ladder truncated at rung 3",
+   "predicted_pkas": [
+    3.395417,
+    3.0364976701105992,
+    3.0171597177092404
+   ],
+   "site_pkas": [
+    3.450362,
+    3.698727,
+    3.437986,
+    3.522208,
+    3.572298,
+    3.405539,
+    3.395417
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 126619,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "acidic ladder truncated at rung 3",
+   "predicted_pkas": [
+    8.338523,
+    2.5910867659305046,
+    2.23683342529694,
+    1.9851181965036477
+   ],
+   "site_pkas": [
+    2.946454,
+    2.482695,
+    2.861866,
+    3.30084,
+    2.534266,
+    2.159516,
+    3.885149,
+    2.613733,
+    8.338523
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 128704,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "acidic ladder truncated at rung 3",
+   "predicted_pkas": [
+    9.291183,
+    3.294288004727107,
+    2.8448512087391515,
+    2.1904999748050344
+   ],
+   "site_pkas": [
+    3.15772,
+    3.123342,
+    2.549568,
+    2.983243,
+    2.942961,
+    4.303939,
+    3.969044,
+    3.39244,
+    3.061865,
+    5.835497,
+    4.531915,
+    3.3215,
+    9.291183
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 130164,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "basic ladder truncated at rung 1",
+   "predicted_pkas": [
+    4.575826344440255,
+    1.7526382633431072,
+    1.4774759995115059
+   ],
+   "site_pkas": [
+    3.5367,
+    2.00091,
+    1.946469,
+    1.935557,
+    3.902866,
+    2.530222,
+    2.417199,
+    2.409479,
+    2.519774,
+    2.399871,
+    3.935151,
+    4.141463,
+    4.181614
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 131817,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "acidic ladder truncated at rung 3",
+   "predicted_pkas": [
+    2.44669,
+    1.859502562375045,
+    1.4442613920627494
+   ],
+   "site_pkas": [
+    1.848447,
+    1.735055,
+    3.549818,
+    3.204186,
+    3.218572,
+    3.223849,
+    3.199063,
+    3.200003,
+    2.570814,
+    2.532533,
+    2.566458,
+    2.578785,
+    2.545474,
+    2.44669
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 139422,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "basic ladder truncated at rung 1",
+   "predicted_pkas": [
+    6.183198580964497,
+    4.33984
+   ],
+   "site_pkas": [
+    4.33984,
+    5.59828,
+    5.231285,
+    5.981315
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 143077,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "basic ladder truncated at rung 1",
+   "predicted_pkas": [
+    10.319142,
+    8.855268,
+    7.710018389337229
+   ],
+   "site_pkas": [
+    8.855268,
+    10.319142,
+    7.353296,
+    6.941993,
+    7.300614
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 143541,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "acidic ladder truncated at rung 3",
+   "predicted_pkas": [
+    12.486854,
+    12.330774791080865,
+    8.254909370920222,
+    7.1682687443425115
+   ],
+   "site_pkas": [
+    12.734976,
+    12.548499,
+    10.536349,
+    8.257187,
+    12.486854,
+    6.621128,
+    6.031713,
+    6.85283,
+    6.052481,
+    6.087342
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 354304,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "basic ladder truncated at rung 1",
+   "predicted_pkas": [
+    9.436449,
+    3.149774,
+    2.7931101613578924
+   ],
+   "site_pkas": [
+    2.795938,
+    4.980853,
+    3.149774,
+    9.436449
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 381914,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "basic ladder truncated at rung 1",
+   "predicted_pkas": [
+    1.334133
+   ],
+   "site_pkas": [
+    1.334133
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 423086,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "basic ladder truncated at rung 1",
+   "predicted_pkas": [
+    7.552668,
+    3.128112500088283,
+    2.623094
+   ],
+   "site_pkas": [
+    3.150679,
+    4.423667,
+    2.623094,
+    7.552668
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 439040,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "acidic ladder truncated at rung 3",
+   "predicted_pkas": [
+    4.380298,
+    2.883844,
+    2.6147252605836564
+   ],
+   "site_pkas": [
+    2.883844,
+    2.860232,
+    3.509271,
+    3.131385,
+    4.380298
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 444770,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "acidic ladder truncated at rung 3",
+   "predicted_pkas": [
+    11.34918,
+    10.611647142047477,
+    10.322047699320413,
+    5.07118
+   ],
+   "site_pkas": [
+    10.975951,
+    10.804133,
+    10.670202,
+    10.949521,
+    10.878716,
+    11.34918,
+    5.07118
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 445603,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "basic ladder truncated at rung 1",
+   "predicted_pkas": [
+    11.24236,
+    10.761959292704066,
+    7.064788492453185
+   ],
+   "site_pkas": [
+    11.085737,
+    11.041374,
+    11.24236,
+    6.641177,
+    6.859248
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 447410,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "basic ladder truncated at rung 1",
+   "predicted_pkas": [
+    7.492454947619611
+   ],
+   "site_pkas": [
+    6.798684,
+    6.870828,
+    7.069885,
+    6.749314
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 447438,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "basic ladder truncated at rung 1",
+   "predicted_pkas": [
+    10.416527,
+    9.294534,
+    4.357749656460098
+   ],
+   "site_pkas": [
+    10.416527,
+    9.294534,
+    3.779572,
+    3.809159,
+    4.013956
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 447520,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "basic ladder truncated at rung 1",
+   "predicted_pkas": [
+    8.095390201600608,
+    5.851328021874165
+   ],
+   "site_pkas": [
+    6.763485,
+    5.90804,
+    7.999418,
+    7.337802,
+    6.466879
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 454772,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "basic ladder truncated at rung 1",
+   "predicted_pkas": [
+    11.474899,
+    2.3501374421201024
+   ],
+   "site_pkas": [
+    11.474899,
+    1.523427,
+    1.525089,
+    2.196077
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 458602,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "acidic ladder truncated at rung 3",
+   "predicted_pkas": [
+    6.1287132889454385,
+    5.652147733177611,
+    5.31273474835904
+   ],
+   "site_pkas": [
+    6.286738,
+    6.519693,
+    6.68021,
+    6.817705,
+    6.840474,
+    6.775635,
+    6.686384,
+    6.822992,
+    6.779456,
+    6.670871,
+    6.281602,
+    5.98139,
+    6.312328,
+    6.292563,
+    5.996338,
+    6.369018,
+    6.061796,
+    7.074511,
+    6.832921,
+    6.839893,
+    6.866904,
+    7.003347,
+    6.877185
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 458849,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "basic ladder truncated at rung 1",
+   "predicted_pkas": [
+    4.516334,
+    4.222826333984472,
+    2.020548
+   ],
+   "site_pkas": [
+    4.690596,
+    4.40367,
+    4.516334,
+    2.020548
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 470108,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "basic ladder truncated at rung 1",
+   "predicted_pkas": [
+    8.767692546017193,
+    6.14776803407771
+   ],
+   "site_pkas": [
+    8.328959,
+    6.150639,
+    8.628742,
+    8.205144
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 471375,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "acidic ladder truncated at rung 3",
+   "predicted_pkas": [
+    7.033124438483056,
+    3.375674,
+    3.1343414846752777,
+    3.0402576529046494
+   ],
+   "site_pkas": [
+    4.760181,
+    3.601786,
+    3.331234,
+    3.375674,
+    3.347211,
+    3.335444,
+    6.624425,
+    6.70854,
+    6.16725
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 472030,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "basic ladder truncated at rung 1",
+   "predicted_pkas": [
+    8.289883,
+    4.9070674909551855,
+    3.0889729271181854
+   ],
+   "site_pkas": [
+    3.43254,
+    3.351263,
+    8.289883,
+    4.297122,
+    4.150069,
+    4.195599,
+    4.170989,
+    4.211485
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 472709,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "acidic ladder truncated at rung 3",
+   "predicted_pkas": [
+    4.133298,
+    3.597962019486419,
+    3.527261571486784,
+    3.3736676372731234
+   ],
+   "site_pkas": [
+    3.841153,
+    4.370074,
+    3.957912,
+    4.427185,
+    3.667612,
+    4.133298,
+    2.551113,
+    2.674122,
+    3.186445
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 472999,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "acidic ladder truncated at rung 3",
+   "predicted_pkas": [
+    6.83073436575607,
+    4.890264423966899,
+    3.629290228273663,
+    3.1333186747175223
+   ],
+   "site_pkas": [
+    3.983084,
+    4.296431,
+    4.268933,
+    4.577298,
+    3.653445,
+    3.529705,
+    3.661061,
+    6.892639,
+    7.930349,
+    8.363613,
+    8.45003,
+    4.305804,
+    4.5633,
+    4.319443
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 474177,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "basic ladder truncated at rung 1",
+   "predicted_pkas": [
+    4.81274,
+    4.493666949311874,
+    2.327576467413292
+   ],
+   "site_pkas": [
+    4.980973,
+    4.664754,
+    4.81274,
+    2.007263,
+    2.04501
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 496674,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "acidic ladder truncated at rung 3",
+   "predicted_pkas": [
+    3.0823211316333263,
+    2.9966,
+    2.158659356896902,
+    1.9199147416028066
+   ],
+   "site_pkas": [
+    3.772686,
+    3.713654,
+    3.645906,
+    5.435612,
+    3.853919,
+    4.019737,
+    2.710212,
+    2.952988,
+    2.877648,
+    3.301583,
+    3.090316,
+    3.288714,
+    3.139614,
+    2.810114,
+    2.505499,
+    2.836461,
+    2.682462,
+    2.709559,
+    2.728733,
+    2.9966
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 539930,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "acidic ladder truncated at rung 3",
+   "predicted_pkas": [
+    8.851603,
+    8.705456454812023,
+    8.183042799263799,
+    2.562777
+   ],
+   "site_pkas": [
+    8.734654,
+    8.76848,
+    8.93582,
+    8.73163,
+    9.074274,
+    8.947865,
+    8.851603,
+    2.562777
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 545054,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "basic ladder truncated at rung 1",
+   "predicted_pkas": [
+    3.13923,
+    2.838159,
+    1.34645
+   ],
+   "site_pkas": [
+    2.838159,
+    3.13923,
+    1.34645
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 546903,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "basic ladder truncated at rung 1",
+   "predicted_pkas": [
+    11.538761,
+    11.207181247526279,
+    7.888517688276727
+   ],
+   "site_pkas": [
+    11.369497,
+    11.713238,
+    11.538761,
+    7.514826,
+    7.649717
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 547089,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "acidic ladder truncated at rung 3",
+   "predicted_pkas": [
+    12.153235,
+    11.854870037069867,
+    11.558434028191273,
+    7.853366254063786
+   ],
+   "site_pkas": [
+    12.116133,
+    12.077477,
+    11.934717,
+    12.169797,
+    12.142434,
+    12.153235,
+    7.6255,
+    7.464299
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 550723,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "basic ladder truncated at rung 1",
+   "predicted_pkas": [
+    8.590010894057059,
+    7.813701
+   ],
+   "site_pkas": [
+    7.813701,
+    7.70207,
+    8.529811
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 550928,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "basic ladder truncated at rung 1",
+   "predicted_pkas": [
+    7.754952274798452,
+    7.740959
+   ],
+   "site_pkas": [
+    7.740959,
+    7.171705,
+    7.469444,
+    7.098832
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 556321,
+   "tool": "qupkake-truncated",
+   "ok": true,
+   "error": "acidic ladder truncated at rung 3",
+   "predicted_pkas": [
+    11.699311,
+    11.616499993776177,
+    10.715277240000415,
+    5.505425105813351
+   ],
+   "site_pkas": [
+    10.939353,
+    11.109898,
+    11.923314,
+    11.911822,
+    11.699311,
+    5.074963,
+    5.303979
+   ],
+   "seconds": null
+  }
+ ]
+}

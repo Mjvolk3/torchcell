@@ -1,0 +1,2423 @@
+{
+ "tool": "pkasolver-lite",
+ "tool_version": "v0.3+2.ga6ec86e",
+ "built_at": "2026-09-11T04:01:34.958199+00:00",
+ "n_requested": 171,
+ "n_ok": 88,
+ "seconds_total": 251.02396178245544,
+ "records": [
+  {
+   "compound_id": 848,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.2677030563354492
+  },
+  {
+   "compound_id": 2001,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.7578279972076416
+  },
+  {
+   "compound_id": 3372,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.6529042720794678
+  },
+  {
+   "compound_id": 4767,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.5821518898010254
+  },
+  {
+   "compound_id": 6607,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.6493096351623535
+  },
+  {
+   "compound_id": 8289,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.30243377685547,
+    8.938870086669922,
+    4.6836545944213865
+   ],
+   "site_pkas": [
+    4.6836545944213865,
+    8.938870086669922,
+    9.30243377685547
+   ],
+   "seconds": 1.2555809020996094
+  },
+  {
+   "compound_id": 11241,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.7270255088806152
+  },
+  {
+   "compound_id": 13200,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.5429506301879883
+  },
+  {
+   "compound_id": 15513,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.521550178527832
+  },
+  {
+   "compound_id": 18270,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.49427056312561035
+  },
+  {
+   "compound_id": 20300,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.7253975868225098
+  },
+  {
+   "compound_id": 22134,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 1.0069873332977295
+  },
+  {
+   "compound_id": 24360,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.8149588108062744
+  },
+  {
+   "compound_id": 26323,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.6555242538452148
+  },
+  {
+   "compound_id": 27421,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.7261190414428711
+  },
+  {
+   "compound_id": 28240,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.2917897701263428
+  },
+  {
+   "compound_id": 29406,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.298534631729126
+  },
+  {
+   "compound_id": 30650,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 1.476057529449463
+  },
+  {
+   "compound_id": 31654,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.822417640686036,
+    8.630811653137208
+   ],
+   "site_pkas": [
+    8.630811653137208,
+    9.822417640686036
+   ],
+   "seconds": 1.21211838722229
+  },
+  {
+   "compound_id": 33453,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.3163907527923584
+  },
+  {
+   "compound_id": 35344,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.5945930480957031
+  },
+  {
+   "compound_id": 36564,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.2674078941345215
+  },
+  {
+   "compound_id": 39242,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 1.1578171253204346
+  },
+  {
+   "compound_id": 40151,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.64122714996338,
+    5.476873092651367,
+    3.856764974594116,
+    3.2441860389709474,
+    2.993350238800049
+   ],
+   "site_pkas": [
+    2.993350238800049,
+    3.2441860389709474,
+    3.856764974594116,
+    5.476873092651367,
+    8.64122714996338
+   ],
+   "seconds": 2.822503089904785
+  },
+  {
+   "compound_id": 41551,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.2917158603668213
+  },
+  {
+   "compound_id": 43899,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.31215739250183105
+  },
+  {
+   "compound_id": 45148,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.514377746582031,
+    8.48769453048706,
+    8.436404342651366,
+    8.232303657531737,
+    8.086388740539551,
+    7.726842575073242,
+    7.106700439453125
+   ],
+   "site_pkas": [
+    7.106700439453125,
+    7.726842575073242,
+    8.086388740539551,
+    8.232303657531737,
+    8.436404342651366,
+    8.48769453048706,
+    8.514377746582031
+   ],
+   "seconds": 15.486929655075073
+  },
+  {
+   "compound_id": 46557,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.192417182922363,
+    6.518075103759766,
+    4.8034312915802,
+    4.334347019195556
+   ],
+   "site_pkas": [
+    4.334347019195556,
+    4.8034312915802,
+    6.518075103759766,
+    7.192417182922363
+   ],
+   "seconds": 2.2190654277801514
+  },
+  {
+   "compound_id": 47432,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.5115952491760254
+  },
+  {
+   "compound_id": 49517,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.24312829971313477
+  },
+  {
+   "compound_id": 49969,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.16248583793640137
+  },
+  {
+   "compound_id": 51364,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.3294525146484375
+  },
+  {
+   "compound_id": 55185,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    6.984522094726563
+   ],
+   "site_pkas": [
+    6.984522094726563
+   ],
+   "seconds": 0.5107390880584717
+  },
+  {
+   "compound_id": 57278,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.188342056274415,
+    7.316310272216797
+   ],
+   "site_pkas": [
+    7.316310272216797,
+    9.188342056274415
+   ],
+   "seconds": 0.6348528861999512
+  },
+  {
+   "compound_id": 59288,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.577100276947021,
+    8.33558261871338,
+    8.179257946014404,
+    8.131699047088624,
+    8.09326717376709,
+    7.853663845062256
+   ],
+   "site_pkas": [
+    7.853663845062256,
+    8.09326717376709,
+    8.131699047088624,
+    8.179257946014404,
+    8.33558261871338,
+    8.577100276947021
+   ],
+   "seconds": 3.5849788188934326
+  },
+  {
+   "compound_id": 60069,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.307175102233886,
+    9.267517719268799,
+    7.420545310974121
+   ],
+   "site_pkas": [
+    7.420545310974121,
+    9.267517719268799,
+    9.307175102233886
+   ],
+   "seconds": 1.7468693256378174
+  },
+  {
+   "compound_id": 61575,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.065783958435059,
+    9.06282159805298,
+    9.048535404205323,
+    7.043094329833984
+   ],
+   "site_pkas": [
+    7.043094329833984,
+    9.048535404205323,
+    9.06282159805298,
+    9.065783958435059
+   ],
+   "seconds": 3.8143367767333984
+  },
+  {
+   "compound_id": 63007,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.1909475326538086
+  },
+  {
+   "compound_id": 65268,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "UnpicklingError: pickle data was truncated",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 1.2789652347564697
+  },
+  {
+   "compound_id": 66572,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.2748229503631592
+  },
+  {
+   "compound_id": 68548,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.6222537231445315,
+    7.3574984169006346,
+    7.264633865356445,
+    7.195856380462646,
+    6.2292311477661135,
+    5.996833419799804
+   ],
+   "site_pkas": [
+    5.996833419799804,
+    6.2292311477661135,
+    7.195856380462646,
+    7.264633865356445,
+    7.3574984169006346,
+    7.6222537231445315
+   ],
+   "seconds": 3.2975587844848633
+  },
+  {
+   "compound_id": 73794,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.432291526794433,
+    8.765488224029541,
+    7.848656024932861,
+    7.164207210540772,
+    5.320373544692993,
+    5.125302143096924
+   ],
+   "site_pkas": [
+    5.125302143096924,
+    5.320373544692993,
+    7.164207210540772,
+    7.848656024932861,
+    8.765488224029541,
+    9.432291526794433
+   ],
+   "seconds": 3.101491928100586
+  },
+  {
+   "compound_id": 74749,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    10.383029327392578,
+    9.690689773559571,
+    9.625087432861328,
+    6.256162977218628,
+    4.605447540283203
+   ],
+   "site_pkas": [
+    4.605447540283203,
+    6.256162977218628,
+    9.625087432861328,
+    9.690689773559571,
+    10.383029327392578
+   ],
+   "seconds": 0.8094449043273926
+  },
+  {
+   "compound_id": 77962,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.14717316627502441
+  },
+  {
+   "compound_id": 79044,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.3025522232055664
+  },
+  {
+   "compound_id": 80388,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    10.14375,
+    9.821448936462403,
+    8.365393104553222,
+    8.151988410949707,
+    6.229923858642578,
+    6.170990810394287
+   ],
+   "site_pkas": [
+    6.170990810394287,
+    6.229923858642578,
+    8.151988410949707,
+    8.365393104553222,
+    9.821448936462403,
+    10.14375
+   ],
+   "seconds": 1.4102509021759033
+  },
+  {
+   "compound_id": 81189,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.861337585449219,
+    8.14983612060547
+   ],
+   "site_pkas": [
+    8.14983612060547,
+    8.861337585449219
+   ],
+   "seconds": 0.5144872665405273
+  },
+  {
+   "compound_id": 82275,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.5376367568969727
+  },
+  {
+   "compound_id": 83681,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.31502366065979004
+  },
+  {
+   "compound_id": 89120,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.972910346984863,
+    9.756874313354492,
+    9.651886100769042,
+    9.451099700927735,
+    9.442602653503418,
+    9.310181579589845,
+    8.927287216186523
+   ],
+   "site_pkas": [
+    8.927287216186523,
+    9.310181579589845,
+    9.442602653503418,
+    9.451099700927735,
+    9.651886100769042,
+    9.756874313354492,
+    9.972910346984863
+   ],
+   "seconds": 3.5665290355682373
+  },
+  {
+   "compound_id": 90870,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.3358948230743408
+  },
+  {
+   "compound_id": 92011,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "EOFError: Ran out of input",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.1697537899017334
+  },
+  {
+   "compound_id": 93098,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 1.5889413356781006
+  },
+  {
+   "compound_id": 94699,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.3359520435333252
+  },
+  {
+   "compound_id": 97275,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.4599597454071045
+  },
+  {
+   "compound_id": 98627,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.636642532348633,
+    9.627414016723632,
+    9.555447368621826,
+    9.44242223739624,
+    9.423891105651855,
+    9.41078067779541,
+    9.235086612701416,
+    9.177993850708008,
+    8.803974304199219
+   ],
+   "site_pkas": [
+    8.803974304199219,
+    9.177993850708008,
+    9.235086612701416,
+    9.41078067779541,
+    9.423891105651855,
+    9.44242223739624,
+    9.555447368621826,
+    9.627414016723632,
+    9.636642532348633
+   ],
+   "seconds": 4.475114345550537
+  },
+  {
+   "compound_id": 99600,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.927156753540039,
+    7.738991527557373,
+    7.716633739471436,
+    7.581652965545654,
+    7.535190868377685,
+    7.484538936614991,
+    7.2705063629150395,
+    6.5764807510375975,
+    6.28608118057251
+   ],
+   "site_pkas": [
+    6.28608118057251,
+    6.5764807510375975,
+    7.2705063629150395,
+    7.484538936614991,
+    7.535190868377685,
+    7.581652965545654,
+    7.716633739471436,
+    7.738991527557373,
+    7.927156753540039
+   ],
+   "seconds": 6.563477516174316
+  },
+  {
+   "compound_id": 100565,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.256787910461426,
+    8.229673385620117,
+    8.077692375183105
+   ],
+   "site_pkas": [
+    8.077692375183105,
+    8.229673385620117,
+    9.256787910461426
+   ],
+   "seconds": 1.5774002075195312
+  },
+  {
+   "compound_id": 101801,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    10.340166931152345,
+    8.347787075042724,
+    6.745123844146729,
+    4.692122316360473
+   ],
+   "site_pkas": [
+    4.692122316360473,
+    6.745123844146729,
+    8.347787075042724,
+    10.340166931152345
+   ],
+   "seconds": 0.7549636363983154
+  },
+  {
+   "compound_id": 116127,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.14723563194274902
+  },
+  {
+   "compound_id": 117485,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.236856155395508,
+    9.156866035461427,
+    7.349807529449463
+   ],
+   "site_pkas": [
+    7.349807529449463,
+    9.156866035461427,
+    9.236856155395508
+   ],
+   "seconds": 0.8571054935455322
+  },
+  {
+   "compound_id": 119789,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.880720615386963,
+    8.440374984741212,
+    8.396634979248047,
+    8.319653434753418,
+    7.923524188995361,
+    7.7156878852844235,
+    7.568632469177246
+   ],
+   "site_pkas": [
+    7.568632469177246,
+    7.7156878852844235,
+    7.923524188995361,
+    8.319653434753418,
+    8.396634979248047,
+    8.440374984741212,
+    8.880720615386963
+   ],
+   "seconds": 3.2438511848449707
+  },
+  {
+   "compound_id": 121156,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    6.552183780670166,
+    6.478398914337158,
+    6.206368789672852,
+    6.062358055114746,
+    4.565846433639527,
+    4.322545804977417,
+    4.094277477264404,
+    3.672296199798584,
+    3.503165168762207
+   ],
+   "site_pkas": [
+    3.503165168762207,
+    3.672296199798584,
+    4.094277477264404,
+    4.322545804977417,
+    4.565846433639527,
+    6.062358055114746,
+    6.206368789672852,
+    6.478398914337158,
+    6.552183780670166
+   ],
+   "seconds": 5.061574697494507
+  },
+  {
+   "compound_id": 122146,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.516867599487306,
+    8.799994316101074,
+    7.580375022888184,
+    6.773393421173096,
+    6.295119857788086,
+    5.669081745147705,
+    4.204396934509277,
+    3.2263230895996093
+   ],
+   "site_pkas": [
+    3.2263230895996093,
+    4.204396934509277,
+    5.669081745147705,
+    6.295119857788086,
+    6.773393421173096,
+    7.580375022888184,
+    8.799994316101074,
+    9.516867599487306
+   ],
+   "seconds": 1.857147216796875
+  },
+  {
+   "compound_id": 123472,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.563810997009277,
+    9.515105514526367,
+    9.400343055725097,
+    9.145836124420166,
+    7.314445667266845
+   ],
+   "site_pkas": [
+    7.314445667266845,
+    9.145836124420166,
+    9.400343055725097,
+    9.515105514526367,
+    9.563810997009277
+   ],
+   "seconds": 1.725900411605835
+  },
+  {
+   "compound_id": 125188,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.3150033950805664
+  },
+  {
+   "compound_id": 126619,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.795280952453613,
+    7.269430942535401,
+    6.835907306671142,
+    5.807176151275635,
+    3.4635757923126222
+   ],
+   "site_pkas": [
+    3.4635757923126222,
+    5.807176151275635,
+    6.835907306671142,
+    7.269430942535401,
+    7.795280952453613
+   ],
+   "seconds": 1.4827852249145508
+  },
+  {
+   "compound_id": 128168,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.691265945434571,
+    9.686418266296387,
+    9.657304725646974,
+    9.527155227661133,
+    9.315522022247315,
+    7.804075412750244
+   ],
+   "site_pkas": [
+    7.804075412750244,
+    9.315522022247315,
+    9.527155227661133,
+    9.657304725646974,
+    9.686418266296387,
+    9.691265945434571
+   ],
+   "seconds": 3.1855595111846924
+  },
+  {
+   "compound_id": 129379,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.35532138824463,
+    8.512723693847656,
+    7.073070011138916,
+    6.626306648254395,
+    4.437360858917236,
+    4.299540176391601,
+    3.3259225940704344
+   ],
+   "site_pkas": [
+    3.3259225940704344,
+    4.299540176391601,
+    4.437360858917236,
+    6.626306648254395,
+    7.073070011138916,
+    8.512723693847656,
+    9.35532138824463
+   ],
+   "seconds": 1.8421239852905273
+  },
+  {
+   "compound_id": 130426,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.942478847503662,
+    7.846006660461426,
+    7.794314136505127,
+    7.489646492004394,
+    7.278950748443603,
+    6.532559661865235,
+    6.300044574737549
+   ],
+   "site_pkas": [
+    6.300044574737549,
+    6.532559661865235,
+    7.278950748443603,
+    7.489646492004394,
+    7.794314136505127,
+    7.846006660461426,
+    7.942478847503662
+   ],
+   "seconds": 3.3636832237243652
+  },
+  {
+   "compound_id": 131954,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    10.045920886993407,
+    9.258576927185059,
+    8.837388000488282,
+    8.579585285186768
+   ],
+   "site_pkas": [
+    8.579585285186768,
+    8.837388000488282,
+    9.258576927185059,
+    10.045920886993407
+   ],
+   "seconds": 0.9377837181091309
+  },
+  {
+   "compound_id": 137528,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.489962825775146,
+    7.7194366455078125,
+    6.562602729797363,
+    3.5125701808929444,
+    2.947768497467041
+   ],
+   "site_pkas": [
+    2.947768497467041,
+    3.5125701808929444,
+    6.562602729797363,
+    7.7194366455078125,
+    9.489962825775146
+   ],
+   "seconds": 0.8942513465881348
+  },
+  {
+   "compound_id": 139962,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.256713409423828,
+    8.054714736938477,
+    6.538619499206543,
+    5.2772846603393555,
+    5.168677864074707
+   ],
+   "site_pkas": [
+    5.168677864074707,
+    5.2772846603393555,
+    6.538619499206543,
+    8.054714736938477,
+    9.256713409423828
+   ],
+   "seconds": 1.281592607498169
+  },
+  {
+   "compound_id": 142267,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    4.091930074691772,
+    3.333099536895752,
+    2.8365985488891603,
+    2.790750503540039,
+    2.672460412979126,
+    2.6657873153686524,
+    2.467481460571289,
+    2.440836853981018
+   ],
+   "site_pkas": [
+    2.440836853981018,
+    2.467481460571289,
+    2.6657873153686524,
+    2.672460412979126,
+    2.790750503540039,
+    2.8365985488891603,
+    3.333099536895752,
+    4.091930074691772
+   ],
+   "seconds": 2.7934718132019043
+  },
+  {
+   "compound_id": 148396,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.3037698268890381
+  },
+  {
+   "compound_id": 154546,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.15260791778564453
+  },
+  {
+   "compound_id": 161462,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.015932807922363
+   ],
+   "site_pkas": [
+    7.015932807922363
+   ],
+   "seconds": 0.4546046257019043
+  },
+  {
+   "compound_id": 164243,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.19657278060913086
+  },
+  {
+   "compound_id": 168703,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.4257032871246338
+  },
+  {
+   "compound_id": 178478,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    6.615413627624512
+   ],
+   "site_pkas": [
+    6.615413627624512
+   ],
+   "seconds": 0.72426438331604
+  },
+  {
+   "compound_id": 181195,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.30730700492858887
+  },
+  {
+   "compound_id": 185616,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.15069222450256348
+  },
+  {
+   "compound_id": 190590,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.32968744277954,
+    9.296396713256836,
+    7.6995556640625
+   ],
+   "site_pkas": [
+    7.6995556640625,
+    9.296396713256836,
+    9.32968744277954
+   ],
+   "seconds": 1.0555119514465332
+  },
+  {
+   "compound_id": 196419,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.08762300491333,
+    9.08509843826294,
+    9.078202419281006,
+    6.844478492736816
+   ],
+   "site_pkas": [
+    6.844478492736816,
+    9.078202419281006,
+    9.08509843826294,
+    9.08762300491333
+   ],
+   "seconds": 3.595838785171509
+  },
+  {
+   "compound_id": 201411,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.893177928924561,
+    6.153742980957031,
+    5.755205173492431
+   ],
+   "site_pkas": [
+    5.755205173492431,
+    6.153742980957031,
+    7.893177928924561
+   ],
+   "seconds": 1.7538409233093262
+  },
+  {
+   "compound_id": 206810,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.013416328430175,
+    7.886890640258789
+   ],
+   "site_pkas": [
+    7.886890640258789,
+    9.013416328430175
+   ],
+   "seconds": 0.8175537586212158
+  },
+  {
+   "compound_id": 209126,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.106434898376465,
+    8.095386199951172,
+    8.049334239959716,
+    8.045115928649903,
+    6.605077323913574,
+    6.295318374633789
+   ],
+   "site_pkas": [
+    6.295318374633789,
+    6.605077323913574,
+    8.045115928649903,
+    8.049334239959716,
+    8.095386199951172,
+    8.106434898376465
+   ],
+   "seconds": 5.77106785774231
+  },
+  {
+   "compound_id": 214769,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.1516282558441162
+  },
+  {
+   "compound_id": 217783,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.05728509902954,
+    7.61574722290039
+   ],
+   "site_pkas": [
+    7.61574722290039,
+    9.05728509902954
+   ],
+   "seconds": 0.7200784683227539
+  },
+  {
+   "compound_id": 219757,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.3123311996459961
+  },
+  {
+   "compound_id": 223880,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.31076836585998535
+  },
+  {
+   "compound_id": 225628,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.271920795440673,
+    9.054864807128906,
+    7.363026924133301
+   ],
+   "site_pkas": [
+    7.363026924133301,
+    9.054864807128906,
+    9.271920795440673
+   ],
+   "seconds": 0.9446394443511963
+  },
+  {
+   "compound_id": 229489,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.633442840576173,
+    7.705521583557129
+   ],
+   "site_pkas": [
+    7.705521583557129,
+    8.633442840576173
+   ],
+   "seconds": 0.5831248760223389
+  },
+  {
+   "compound_id": 240404,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.369104747772217
+   ],
+   "site_pkas": [
+    7.369104747772217
+   ],
+   "seconds": 0.5019710063934326
+  },
+  {
+   "compound_id": 247432,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.3218405246734619
+  },
+  {
+   "compound_id": 254077,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    4.776450548171997
+   ],
+   "site_pkas": [
+    4.776450548171997
+   ],
+   "seconds": 0.6995706558227539
+  },
+  {
+   "compound_id": 262557,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.31765270233154297
+  },
+  {
+   "compound_id": 272886,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.717955131530761,
+    7.078954544067383,
+    6.401711387634277
+   ],
+   "site_pkas": [
+    6.401711387634277,
+    7.078954544067383,
+    8.717955131530761
+   ],
+   "seconds": 1.0241920948028564
+  },
+  {
+   "compound_id": 283899,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.30902624130249023
+  },
+  {
+   "compound_id": 290925,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.66514684677124,
+    7.615759315490723,
+    5.5933067512512205,
+    5.155970029830932
+   ],
+   "site_pkas": [
+    5.155970029830932,
+    5.5933067512512205,
+    7.615759315490723,
+    7.66514684677124
+   ],
+   "seconds": 3.367985486984253
+  },
+  {
+   "compound_id": 297808,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.3385605812072754
+  },
+  {
+   "compound_id": 305851,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.576671838760376
+  },
+  {
+   "compound_id": 309674,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.1477830410003662
+  },
+  {
+   "compound_id": 311291,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.5303089618682861
+  },
+  {
+   "compound_id": 312911,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    6.870932006835938
+   ],
+   "site_pkas": [
+    6.870932006835938
+   ],
+   "seconds": 0.4946920871734619
+  },
+  {
+   "compound_id": 316240,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.818151969909668,
+    7.535661392211914,
+    6.97217363357544
+   ],
+   "site_pkas": [
+    6.97217363357544,
+    7.535661392211914,
+    8.818151969909668
+   ],
+   "seconds": 1.1858878135681152
+  },
+  {
+   "compound_id": 325506,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.3001132011413574
+  },
+  {
+   "compound_id": 334776,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.15164709091186523
+  },
+  {
+   "compound_id": 340673,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.405924339294433,
+    9.353780250549317,
+    6.908334560394287
+   ],
+   "site_pkas": [
+    6.908334560394287,
+    9.353780250549317,
+    9.405924339294433
+   ],
+   "seconds": 0.8556008338928223
+  },
+  {
+   "compound_id": 351030,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.09831256866455,
+    9.06990888595581,
+    7.124044570922852
+   ],
+   "site_pkas": [
+    7.124044570922852,
+    9.06990888595581,
+    9.09831256866455
+   ],
+   "seconds": 3.076418876647949
+  },
+  {
+   "compound_id": 358380,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    5.27823974609375
+   ],
+   "site_pkas": [
+    5.27823974609375
+   ],
+   "seconds": 0.7755715847015381
+  },
+  {
+   "compound_id": 367204,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.226665534973144,
+    9.184999713897705,
+    7.128562622070312
+   ],
+   "site_pkas": [
+    7.128562622070312,
+    9.184999713897705,
+    9.226665534973144
+   ],
+   "seconds": 0.9145631790161133
+  },
+  {
+   "compound_id": 368508,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.660295581817627,
+    6.959920616149902,
+    6.25631986618042
+   ],
+   "site_pkas": [
+    6.25631986618042,
+    6.959920616149902,
+    8.660295581817627
+   ],
+   "seconds": 1.0515258312225342
+  },
+  {
+   "compound_id": 370173,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.38359712600708,
+    9.304128246307373,
+    9.243812637329102,
+    6.410636024475098
+   ],
+   "site_pkas": [
+    6.410636024475098,
+    9.243812637329102,
+    9.304128246307373,
+    9.38359712600708
+   ],
+   "seconds": 1.098130464553833
+  },
+  {
+   "compound_id": 372588,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.044425220489503,
+    7.717284660339356
+   ],
+   "site_pkas": [
+    7.717284660339356,
+    9.044425220489503
+   ],
+   "seconds": 0.7257468700408936
+  },
+  {
+   "compound_id": 375509,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    5.634150428771973
+   ],
+   "site_pkas": [
+    5.634150428771973
+   ],
+   "seconds": 0.9876663684844971
+  },
+  {
+   "compound_id": 382786,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.3120896816253662
+  },
+  {
+   "compound_id": 395992,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.1703345775604248
+  },
+  {
+   "compound_id": 409170,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.32980823516845703
+  },
+  {
+   "compound_id": 418134,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    6.829652996063232
+   ],
+   "site_pkas": [
+    6.829652996063232
+   ],
+   "seconds": 0.44439196586608887
+  },
+  {
+   "compound_id": 424820,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    6.245820217132568
+   ],
+   "site_pkas": [
+    6.245820217132568
+   ],
+   "seconds": 1.0448813438415527
+  },
+  {
+   "compound_id": 433675,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.38494133949279785
+  },
+  {
+   "compound_id": 437741,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.32030224800109863
+  },
+  {
+   "compound_id": 439848,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.36391210556030273
+  },
+  {
+   "compound_id": 442969,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.35191774368286133
+  },
+  {
+   "compound_id": 443940,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.33716893196105957
+  },
+  {
+   "compound_id": 445065,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    10.166490287780762,
+    9.88008903503418,
+    5.793769283294678,
+    4.36550277709961,
+    3.454314012527466,
+    3.3748131561279298
+   ],
+   "site_pkas": [
+    3.3748131561279298,
+    3.454314012527466,
+    4.36550277709961,
+    5.793769283294678,
+    9.88008903503418,
+    10.166490287780762
+   ],
+   "seconds": 1.8784255981445312
+  },
+  {
+   "compound_id": 445738,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.3686058521270752
+  },
+  {
+   "compound_id": 447212,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.15461516380310059
+  },
+  {
+   "compound_id": 448774,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.908862724304199,
+    6.257846260070801,
+    5.940456447601318
+   ],
+   "site_pkas": [
+    5.940456447601318,
+    6.257846260070801,
+    7.908862724304199
+   ],
+   "seconds": 1.8748273849487305
+  },
+  {
+   "compound_id": 449873,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.806455459594726,
+    5.356182842254639,
+    4.494201602935791,
+    3.90362678527832,
+    3.4699432373046877
+   ],
+   "site_pkas": [
+    3.4699432373046877,
+    3.90362678527832,
+    4.494201602935791,
+    5.356182842254639,
+    8.806455459594726
+   ],
+   "seconds": 1.7257640361785889
+  },
+  {
+   "compound_id": 451713,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.24639344215393066
+  },
+  {
+   "compound_id": 454133,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.45242977142333984
+  },
+  {
+   "compound_id": 455007,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "EOFError: Ran out of input",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.24007415771484375
+  },
+  {
+   "compound_id": 456658,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 23.41287851333618
+  },
+  {
+   "compound_id": 458089,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.1999797821044922
+  },
+  {
+   "compound_id": 459213,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.44103384017944336
+  },
+  {
+   "compound_id": 461081,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.4994816780090332
+  },
+  {
+   "compound_id": 469110,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.728838691711426,
+    8.735706806182861,
+    3.9952354621887207
+   ],
+   "site_pkas": [
+    3.9952354621887207,
+    8.735706806182861,
+    9.728838691711426
+   ],
+   "seconds": 0.9002735614776611
+  },
+  {
+   "compound_id": 469953,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    10.683098182678222,
+    9.893337154388428,
+    9.28296251296997,
+    6.980554437637329,
+    3.9096470069885254
+   ],
+   "site_pkas": [
+    3.9096470069885254,
+    6.980554437637329,
+    9.28296251296997,
+    9.893337154388428,
+    10.683098182678222
+   ],
+   "seconds": 1.1406424045562744
+  },
+  {
+   "compound_id": 470686,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.6961166858673096
+  },
+  {
+   "compound_id": 471568,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.45279979705810547
+  },
+  {
+   "compound_id": 472302,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.5298540592193604
+  },
+  {
+   "compound_id": 472709,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.26647472381591797
+  },
+  {
+   "compound_id": 473523,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    3.303415508270264,
+    2.8672633838653563
+   ],
+   "site_pkas": [
+    2.8672633838653563,
+    3.303415508270264
+   ],
+   "seconds": 0.741748571395874
+  },
+  {
+   "compound_id": 474391,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.87493824005127
+   ],
+   "site_pkas": [
+    9.87493824005127
+   ],
+   "seconds": 0.6650681495666504
+  },
+  {
+   "compound_id": 475408,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.742638835906982
+   ],
+   "site_pkas": [
+    8.742638835906982
+   ],
+   "seconds": 0.6822836399078369
+  },
+  {
+   "compound_id": 475967,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.6388428211212158
+  },
+  {
+   "compound_id": 490730,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.6963291168212891
+  },
+  {
+   "compound_id": 497748,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.088766403198242,
+    8.644163150787353,
+    8.63247932434082,
+    8.372850570678711,
+    6.889138164520264,
+    6.178564682006836,
+    5.355780220031738
+   ],
+   "site_pkas": [
+    5.355780220031738,
+    6.178564682006836,
+    6.889138164520264,
+    8.372850570678711,
+    8.63247932434082,
+    8.644163150787353,
+    9.088766403198242
+   ],
+   "seconds": 3.4020397663116455
+  },
+  {
+   "compound_id": 500757,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    10.239198532104492,
+    6.258896598815918,
+    5.185349998474121
+   ],
+   "site_pkas": [
+    5.185349998474121,
+    6.258896598815918,
+    10.239198532104492
+   ],
+   "seconds": 1.6799750328063965
+  },
+  {
+   "compound_id": 540512,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.9747459888458252
+  },
+  {
+   "compound_id": 541046,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.247668552398682,
+    9.0130592918396,
+    9.006923847198486,
+    8.848685989379883,
+    7.790493583679199
+   ],
+   "site_pkas": [
+    7.790493583679199,
+    8.848685989379883,
+    9.006923847198486,
+    9.0130592918396,
+    9.247668552398682
+   ],
+   "seconds": 4.51321268081665
+  },
+  {
+   "compound_id": 541723,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.184837913513183,
+    9.16919885635376,
+    9.141892223358154,
+    9.140348453521728,
+    8.983994255065918,
+    8.948442115783692,
+    8.933393898010253,
+    8.822792892456055,
+    8.771926193237304,
+    7.990105266571045
+   ],
+   "site_pkas": [
+    7.990105266571045,
+    8.771926193237304,
+    8.822792892456055,
+    8.933393898010253,
+    8.948442115783692,
+    8.983994255065918,
+    9.140348453521728,
+    9.141892223358154,
+    9.16919885635376,
+    9.184837913513183
+   ],
+   "seconds": 13.438374519348145
+  },
+  {
+   "compound_id": 542884,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.108850135803223,
+    8.487965545654298,
+    4.787632026672363
+   ],
+   "site_pkas": [
+    4.787632026672363,
+    8.487965545654298,
+    9.108850135803223
+   ],
+   "seconds": 0.9578309059143066
+  },
+  {
+   "compound_id": 544069,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.24038434028625488
+  },
+  {
+   "compound_id": 544786,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.68070369720459,
+    9.542874221801759,
+    8.210633220672607
+   ],
+   "site_pkas": [
+    8.210633220672607,
+    9.542874221801759,
+    9.68070369720459
+   ],
+   "seconds": 1.4484477043151855
+  },
+  {
+   "compound_id": 545491,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.245931129455567,
+    9.151823177337647,
+    9.125843315124511,
+    9.110331268310548,
+    8.976176681518554,
+    8.91400733947754,
+    7.9400120544433594
+   ],
+   "site_pkas": [
+    7.9400120544433594,
+    8.91400733947754,
+    8.976176681518554,
+    9.110331268310548,
+    9.125843315124511,
+    9.151823177337647,
+    9.245931129455567
+   ],
+   "seconds": 11.028270959854126
+  },
+  {
+   "compound_id": 546379,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.4858980178833008
+  },
+  {
+   "compound_id": 547114,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.783687210083007,
+    8.607832355499268,
+    7.235141925811767,
+    6.655528545379639,
+    5.23375391960144,
+    4.908492116928101
+   ],
+   "site_pkas": [
+    4.908492116928101,
+    5.23375391960144,
+    6.655528545379639,
+    7.235141925811767,
+    8.607832355499268,
+    8.783687210083007
+   ],
+   "seconds": 2.0437004566192627
+  },
+  {
+   "compound_id": 549222,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.904599380493163,
+    8.651994342803954,
+    8.538111267089844,
+    6.2859186172485355,
+    4.175556440353393
+   ],
+   "site_pkas": [
+    4.175556440353393,
+    6.2859186172485355,
+    8.538111267089844,
+    8.651994342803954,
+    9.904599380493163
+   ],
+   "seconds": 2.6162617206573486
+  },
+  {
+   "compound_id": 550103,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.052719764709472,
+    9.036359100341796,
+    8.813028144836426,
+    6.169066085815429,
+    5.579993705749512
+   ],
+   "site_pkas": [
+    5.579993705749512,
+    6.169066085815429,
+    8.813028144836426,
+    9.036359100341796,
+    9.052719764709472
+   ],
+   "seconds": 2.2011325359344482
+  },
+  {
+   "compound_id": 551180,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.841496238708496,
+    7.282550468444824,
+    6.0657600402832035,
+    5.097155990600586,
+    5.0106645107269285
+   ],
+   "site_pkas": [
+    5.0106645107269285,
+    5.097155990600586,
+    6.0657600402832035,
+    7.282550468444824,
+    8.841496238708496
+   ],
+   "seconds": 1.4004266262054443
+  },
+  {
+   "compound_id": 552169,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.881769790649415,
+    9.058747177124024,
+    6.11433479309082,
+    4.5433433151245115
+   ],
+   "site_pkas": [
+    4.5433433151245115,
+    6.11433479309082,
+    9.058747177124024,
+    9.881769790649415
+   ],
+   "seconds": 1.1684458255767822
+  },
+  {
+   "compound_id": 553182,
+   "tool": "pkasolver-lite",
+   "ok": false,
+   "error": "AssertionError: ",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.4482157230377197
+  },
+  {
+   "compound_id": 553481,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.749725341796875,
+    9.206284561157226,
+    8.410785121917725,
+    6.9688033103942875,
+    5.75231689453125
+   ],
+   "site_pkas": [
+    5.75231689453125,
+    6.9688033103942875,
+    8.410785121917725,
+    9.206284561157226,
+    9.749725341796875
+   ],
+   "seconds": 2.1405189037323
+  },
+  {
+   "compound_id": 555743,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.658921909332276,
+    6.453746452331543,
+    4.445512609481812,
+    4.115704069137573
+   ],
+   "site_pkas": [
+    4.115704069137573,
+    4.445512609481812,
+    6.453746452331543,
+    7.658921909332276
+   ],
+   "seconds": 1.6874613761901855
+  },
+  {
+   "compound_id": 557337,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    4.095789632797241,
+    3.4019309520721435,
+    3.1552189922332765
+   ],
+   "site_pkas": [
+    3.1552189922332765,
+    3.4019309520721435,
+    4.095789632797241
+   ],
+   "seconds": 0.7708184719085693
+  },
+  {
+   "compound_id": 651914,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.035222339630128,
+    8.557051162719727,
+    7.855868034362793,
+    6.83915412902832,
+    5.921204824447631,
+    5.8436502265930175,
+    5.105935134887695,
+    5.0961692523956295,
+    4.561470079421997
+   ],
+   "site_pkas": [
+    4.561470079421997,
+    5.0961692523956295,
+    5.105935134887695,
+    5.8436502265930175,
+    5.921204824447631,
+    6.83915412902832,
+    7.855868034362793,
+    8.557051162719727,
+    9.035222339630128
+   ],
+   "seconds": 4.676441669464111
+  },
+  {
+   "compound_id": 691745,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": 0.7944991588592529
+  },
+  {
+   "compound_id": 693206,
+   "tool": "pkasolver-lite",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.623148288726806,
+    7.6737598705291745,
+    6.168676538467407,
+    5.718841552734375,
+    5.4361237525939945,
+    4.661557664871216,
+    3.397419767379761,
+    3.2066699028015138
+   ],
+   "site_pkas": [
+    3.2066699028015138,
+    3.397419767379761,
+    4.661557664871216,
+    5.4361237525939945,
+    5.718841552734375,
+    6.168676538467407,
+    7.6737598705291745,
+    8.623148288726806
+   ],
+   "seconds": 1.765878677368164
+  }
+ ]
+}

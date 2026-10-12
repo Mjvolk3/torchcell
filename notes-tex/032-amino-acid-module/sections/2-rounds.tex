@@ -1,0 +1,474 @@
+%% notes-tex/032-amino-acid-module/sections/2-rounds.tex
+\section{The rounds\secstatus{todo}}
+\label{sec:rounds}
+
+Round 118 (jobs 2743 and 2744, w135) reads the essentiality store's growth vector on
+the amino-acid medium into the 19-output affine on the mean channel. Round 121 (w138) is
+the amino-acid production store, its 19 ratios and the growth ratio alone, and the whole
+vector with all 42 summary statistics. Round 122 (w139) is the affine-free control on
+the backbone 020 and 027 trained, width 90, nine attention heads, two blocks, where the
+graph regularizer is evaluated. Round 124 (w141) is the deletion-only graph; round 126
+(w143) the whole-vector store affine on it, paired against round 124's control on that
+graph and against round 118's affine on the old one. Round 129 (w146) runs the
+deletion-only control for 300 epochs. Rounds 136 to 143 screen the essentiality
+finalists and the physically constrained stores of Section~\ref{sec:physics}, every one
+at width 12 on the deletion-only graph over six seeds, paired against round 124's
+control and round 126's store: round 136 (w150) the vector with the six rule-count
+columns beside it, the essentiality study's best single model; round 137 (w151) the
+cached solve head, a hidden-256 perceptron over the store, in place of the affine;
+round 138 (w155) the linear minimization-of-metabolic-adjustment store; round 141 (w158)
+the max-min driving-force concentration store; round 143 (w160) the mean of six samples
+of each deletion's flux cone. Round 146 (w163) reads the size question, width 6 with two
+heads against width 12, on the store arm. The stores are written on the prototroph over
+the source store's genes and reaction order, with the growth-ratio column unchanged, so
+each pair isolates the vector.
+
+Round 118 is read. On the amino acids the whole-vector affine into the 19-output mean
+reads 0.025 (sd 0.015) against the control's 0.034 (sd 0.025): $-0.009$ (sd 0.018),
+above on two of six, and both sit under every 027 arm on the same split (0.068, 0.061,
+0.048 at width 90). Two seeds of each arm stayed near a constant predictor (validation
+Pearson 0.01 to 0.02 at selection; one control selected at epoch 2 and scores 0), so the
+width-12 backbone that the essentiality endpoint tuned is under-sized or unstable for
+19 targets at once, and the width arm of round 122 is the test that has to be read
+before any amino-acid affine is. Averaged over seeds the control reads 0.058 and the
+store arm 0.035, so the affine costs a little on this target rather than adding to it.
+
+Round 124 is read (job 2761, 3 h 38 min): the amino-acid control on the deletion-only
+graph, the M\"ulleder strain without the two alleles and the BTS1 copy it never carried.
+It reads 0.049 (sd 0.007) against the old-graph control's 0.034 (sd 0.025), $+0.015$
+paired (sd 0.026), above on five of six. The level is modest; the spread is the finding.
+Every seed of the corrected graph escapes the constant predictor and reads 0.042 to
+0.059, where two seeds of the old graph sat at 0.000 and 0.010, so the collapse round
+118 attributed to the width-12 backbone was in part the graph carrying three genes the
+strain does not have. Ensembled over six seeds it reads 0.062 against 0.058, under 027's
+best at 0.068 and above its context-only cell at 0.061, both at width 90. The
+amino-acid affine arms of rounds 118 and 121 are paired against the old graph; the
+corrected control is the one any further affine on this target is paired against.
+
+Round 121 is read (jobs 2755 and 2756, 4 h 34 min and 4 h 35 min): the amino-acid
+production store, on the old graph. The 19 synthesis ratios with the growth ratio read
+0.031 (sd 0.004) against the control's 0.034, $-0.003$ paired (sd 0.025), above on two
+of six; the growth vector with all 42 summary columns reads 0.023 (sd 0.009), $-0.011$
+paired (sd 0.027), above on two of six. Four of the 20-column arm's seeds were selected
+at validation Pearson 0.005 to 0.025 and still read 0.025 to 0.037 on test, the
+selection blindness of round 117 on a target where the affine has 19 outputs to fill
+from 20 columns. Ensembled over six seeds the two arms read 0.030 and 0.026 against the
+control's 0.058, so neither production summary carries rank the control does not, and
+the amino-acid affine has now been tried three ways on the old graph (the growth vector,
+20 summaries, the vector with 42 summaries) without a gain. Round 126 is the same
+whole-vector affine on the corrected graph, against round 124's control.
+
+Round 126 is read (job 2770, 3 h 40 min): the amino-acid whole-vector affine on the
+corrected graph, the first amino-acid affine paired on the strain as built. It reads
+0.040 (sd 0.005) against the corrected-graph control's 0.049 (sd 0.007), $-0.009$ paired
+(sd 0.011), above on one of six, and ensembled 0.043 against 0.062. Against the old-graph
+affine of round 118 it reads $+0.015$ (sd 0.014), above on six of six, which is the size
+of the graph correction round 124 measured on the control, so the graph and not the
+store is what moved. The affine does on this target what it did on betaxanthin (the sibling
+document) to the seed spread, sd 0.005 against 0.007, and nothing to the level. Four forms of the
+amino-acid store have now been read, the growth vector on either graph and the two
+production summaries, against two controls, and none is above its control; the
+amino-acid module has no gain to report at width 12, and round 122's wide control is
+what says whether width changes that.
+
+The amino-acid half of round 122 is read (jobs 2774 and 2775, 7 h 36 min and 7 h 48
+min): the affine-free control on 027's backbone, width 90, on the old graph, the cell
+round 118 said had to be read before any amino-acid affine. It reads 0.034 (sd 0.010)
+against the width-12 control's 0.034 (sd 0.025), $+0.000$ paired (sd 0.031), above on
+three of six, and ensembled over six seeds 0.050 against 0.058, under the corrected-graph
+control's 0.062 at width 12 and under every 027 arm at this width (0.068, 0.061, 0.048).
+Every wide seed leaves the constant predictor, selected at epochs 10 to 59 with
+validation Pearson 0.09 to 0.13, and the validation loss bottoms at epochs 6 to 21 and
+rises 0.05 to 0.07 by epoch 199. So width does for the amino acids what the graph
+correction did (round 124): it removes the collapsed seeds and tightens the spread (sd
+0.010 against 0.025), and it does nothing to the level. The 027 cells of this form read
+0.061 to 0.068 over three seeds on the same split; the six seeds here read 0.016 to
+0.043, and the difference between the two runs of one architecture is as large as any
+arm effect on this target. With the second amino-acid screen agreeing with the first at
+0.03 and the first's own retest at 0.20 (Section~\ref{sec:physics}), the
+amino-acid endpoint's strain-level rank has no headroom to show an arm effect against,
+and the width read closes the amino-acid backbone question rather than opening one.
+
+Round 129 is read (job 2781, 5 h 34 min): the deletion-only amino-acid control run for
+300 epochs instead of 200, the check that the 200-epoch budget is not cutting the
+amino-acid arms short. It reads 0.049 (sd 0.009) against the 200-epoch control's 0.049
+(sd 0.007), $-0.001$ paired (sd 0.003), above on one of six, and ensembled over six
+seeds 0.060 against 0.062. Four of the six seeds select the same epoch with the same
+score in both runs (148, 88, 75 and 37), since the first 200 epochs of one seed are one
+trajectory; the two whose validation peak moved past epoch 200 (to 287 and 217) read
+0.036 against 0.042 and 0.055 against 0.054. The validation loss bottoms at epochs 20
+to 169 and drifts up by at most 0.014 over the remaining epochs. A hundred more epochs
+change nothing on this target, and the 200-epoch budget stands.
+
+Round 136 is read (job 2786, 3 h 40 min): the essentiality study's best single store,
+the parsimonious vector with the six rule counts (0.934 there), in the affine slot on
+the amino-acid deletion-only graph. It reads 0.033 (sd 0.009) against the affine-free
+control's 0.049 ($-0.016$ paired, sd 0.012, above on one of six) and against the plain
+store affine's 0.040 ($-0.007$, sd 0.013, two of six), ensembled over six seeds 0.037
+against 0.062 and 0.043. The seeds select late (epochs 47 to 186, five of six past
+100) on validation Pearson 0.06 to 0.09, so the arm neither collapses nor escapes
+further than the control does. The rule counts that separate essential from
+non-essential genes carry nothing for the amino-acid rank, and the store affine's small
+loss on this target (round 125) is not recovered by them.
+
+Round 137 is read (job 2787, 3 h 38 min): the cached solve head, a hidden layer of 256
+on the store vector in place of the zero-initialized affine, on the amino-acid
+deletion-only graph. It reads 0.053 (sd 0.008) against the affine-free control's 0.049
+($+0.004$ paired, sd 0.011, above on four of six) and against the store affine's 0.040
+($+0.013$, sd 0.008, six of six), ensembled over six seeds 0.063 against 0.062 and
+0.043. The seeds select at epochs 24 to 192 on validation Pearson 0.07 to 0.10 with the
+validation loss bottoming at 25 to 105. So the head recovers on every seed what the
+affine lost on this target and lands at the control, the highest single amino-acid arm
+of this study (0.033 to 0.049 for the others) and inside the 027 band (0.049 to 0.062).
+The store is not harmful on the amino acids when it is read nonlinearly; it is also not
+helpful, and the ensemble says the same.
+
+Round 138 is read (job 2793, 3 h 40 min): the linear minimization-of-metabolic-adjustment
+store, the nearest feasible flux to the parent's parsimonious flux under each knockout,
+in the affine slot on the deletion-only graph. It reads 0.052 (sd 0.006) against the
+affine-free control's 0.049 ($+0.003$ paired, sd 0.011, above on four of six) and
+against the parsimonious store's 0.040 ($+0.012$, sd 0.008, five of six), ensembled
+over six seeds 0.056 against 0.062 and 0.043. The seeds select at epochs 86 to 197 on
+validation Pearson 0.07 to 0.09, none collapsed. So a store anchored to one wild-type
+vector, which Section~\ref{sec:physics} measures as almost free of the vertex
+degeneracy (11 no-effect rows differ from the wild type's against the parsimonious
+store's 324), does not carry the parsimonious store's loss on this target: the third
+form of the flux vector read here, after the cached solve head (round 137), that
+undoes it, and none rises above the control.
+
+Round 141 is read (job 2796, 3 h 41 min): the metabolite side in the affine slot, the
+max-min driving-force concentrations of Section~\ref{sec:physics} on the prototroph
+(2,806 metabolites in mM with three driving-force statistics, under the 100 kJ/mol
+cap), on the deletion-only graph. It reads 0.045 (sd 0.005) against the affine-free
+control's 0.049 ($-0.005$ paired, sd 0.007, above on two of six) and against the
+parsimonious store's 0.040 ($+0.004$, sd 0.009, five of six), ensembled over six seeds
+0.050 against 0.062 and 0.043. The seeds select at epochs 32 to 146 on validation
+Pearson 0.05 to 0.07, none collapsed. So the concentration vector sits between the
+flux vector and the control, inside the seed spread of both, as every store does on
+this target; the second law adds a representation at the floor's level, as it added
+one at the flux store's level on betaxanthin (the sibling document, round 140).
+
+Round 146 is read (job 2800, 3 h 14 min): the size question from the small side, the
+store arm on the deletion-only graph at width 6 with two attention heads, paired
+against the width-12 store. It reads 0.025 (sd 0.018) against 0.040 ($-0.015$ paired,
+sd 0.017, above on one of six), ensembled over six seeds 0.046 against 0.043. Three
+seeds sit near the constant predictor, selected at epochs 88 to 140 on validation
+Pearson 0.01 to 0.03 and reading 0.003 to 0.015; the three that escape select at 104
+to 192 on 0.06 to 0.12 and read 0.035 to 0.049. So half the width brings back the
+collapse the corrected graph had removed (round 124) on half the seeds, and width 12
+is the floor at which nineteen outputs train on this backbone: with the width-90 read
+of round 122 the size axis is read from 6 to 90, the level does not rise on it, and
+the small end loses seeds.
+
+Round 148 is read (job 2802, 3 h 38 min): the probabilistic metabolite side in the
+affine slot, the mean concentration over six draws of each deletion's driving-force
+polytope (Section~\ref{sec:physics}) with the point store's statistics and the count
+of constrained metabolites, on the deletion-only graph. It reads 0.032 (sd 0.008)
+against the affine-free control's 0.049 ($-0.017$ paired, sd 0.011, above on no seed),
+against the parsimonious store's 0.040 ($-0.008$, sd 0.012, one of six) and against
+the driving-force point's 0.045 ($-0.012$, sd 0.009, no seed), ensembled over six
+seeds 0.035 against 0.062, 0.043 and 0.050. The seeds select at epochs 84 to 184 on
+validation Pearson 0.04 to 0.09, none collapsed. So the region's centroid is the lowest
+of the three metabolite-side reads on this target and under every control on every
+seed, where on betaxanthin it was the highest ensemble (the sibling document, round
+147): 2,810 columns whose draws carry the prototroph's region but not this rank cost
+the affine what the ladder read of them (0.016 by ridge), and the metabolite side on
+the amino acids ends where the flux side did, at or under the control.
+
+Round 143 is read (job 2803, 3 h 40 min): the sampled cone in the affine slot, the
+mean of six OptGP draws of each deletion's flux cone at 99 percent of its optimum
+(Section~\ref{sec:physics}), the Flux Cone Learning representation on this backbone,
+on the deletion-only graph. It reads 0.019 (sd 0.007) against the affine-free
+control's 0.049 ($-0.030$ paired, sd 0.007, above on no seed) and against the
+parsimonious store's 0.040 ($-0.021$, sd 0.010, no seed), ensembled over six seeds
+0.023 against 0.062 and 0.043, the lowest arm of the study. The seeds select at epochs
+104 to 196 on validation Pearson 0.05 to 0.07, none collapsed, and the validation loss
+bottoms at epochs 3 to 21, so the arm spends nearly all of training past its minimum.
+So the cone's mean costs the affine more than any other store on this target, on every
+seed against both controls, as it cost the most on betaxanthin (the sibling document,
+round 142) and read at the ladder's floor here ($-0.004$ by ridge): a deletion's
+feasible region averaged over six draws is the weakest representation of the flux
+family on both targets.
+
+Round 153 is read (job 2808, 3 h 34 min): the GO multi-hot in the affine slot, 2,362
+propagated terms over every annotated gene, into the 19-output head on the
+deletion-only graph, the annotation the backbone never saw. It reads 0.058 (sd 0.001
+over seeds) against the affine-free control's 0.049 ($+0.009$ paired, sd 0.007, above
+on five of six) and against the parsimonious store's 0.040 ($+0.018$, sd 0.005, six of
+six), ensembled over six seeds 0.059 against 0.062 and 0.043: the highest single-seed
+transformer arm on this target, above the cached solve head's 0.053, with the first
+paired gain over the control that holds on five seeds of six. Every seed selects at
+epoch 2 or 3, where the validation Pearson peaks at 0.11 before the backbone has moved,
+and the validation loss bottoms at epochs 1 to 2 and rises by 0.12 to 0.13 by epoch
+199: as on betaxanthin (the sibling document, round 150), the affine's read of the
+binary columns is the whole cell and the seeds read the same number. So annotation in
+the affine slot lifts this target by a hundredth where every metabolic store sat at or
+under the control, to the level the GO perceptron read alone (0.054) and under
+annotation with sequence through a perceptron (0.065); against a strain-level retest
+of 0.20 the gain is real and small, and it is the first.
+
+Round 157 is read (job 2811, 3 h 38 min): the size question from the regularization
+side, the store arm on the deletion-only graph with the transformer's dropout raised
+from 0.1 to 0.3, the lever that lifted betaxanthin's store arm by 0.024 (the sibling
+document, round 145). It reads 0.045 (sd 0.005) against the store at 0.1 at 0.040
+($+0.005$ paired, sd 0.009, above on five of six) and against the affine-free control's
+0.049 ($-0.005$, sd 0.009, two of six), ensembled over six seeds 0.049 against 0.043
+and 0.062. The seeds select at epochs 39 to 187 on validation Pearson 0.05 to 0.08 and
+read 0.038 to 0.051, a band a third as wide as betaxanthin's. So dropout gives the
+store arm back half of what the store costs against the control, on five seeds of six,
+and leaves it under the control: the lever moves this target in the same direction as
+betaxanthin at a fifth of the size, inside the spread, on a target whose whole
+transformer band spans 0.04 to 0.06.
+
+Round 160 is read (job 2815, 3 h 37 min): the HiGHS parsimonious deletion vector with
+the GO multi-hot appended, 4,131 flux columns (the wild-type row for a gene outside the
+GEM) and 2,362 annotation columns in one affine over every annotated gene, into the
+19-output head on the deletion-only graph, the one-model form that read 0.211 on
+betaxanthin (the sibling document, round 151). It reads 0.055 (sd 0.002) against GO
+alone at 0.058 ($-0.003$ paired, sd 0.002, above on no seed) and against the
+parsimonious store alone at 0.040 ($+0.015$, sd 0.004, six of six), ensembled over six
+seeds 0.057 against 0.059 and 0.043. Every seed selects at epoch 2 on validation
+Pearson 0.11 to 0.12, round 153's pattern, and reads 0.051 to 0.059. So where the flux
+vector added 0.009 to the annotation on betaxanthin, on the amino acids it takes 0.003
+from it, on every seed, the same direction as every read the flux row has joined on
+this target: the annotation's small gain over the control stands, and the metabolic
+vector still has nothing to add to it here.
+
+Round 162 is read (job 2817, 3 h 40 min): the same affine, the HiGHS vector with GO
+appended, with transformer dropout 0.3, on the deletion-only graph. It reads 0.055 (sd
+0.002) against the same affine at dropout 0.1 at 0.055 ($+0.000$ paired, sd 0.001,
+above on four of six) and against the store alone at dropout 0.3 at 0.045 ($+0.011$,
+sd 0.007, six of six), ensembled over six seeds 0.056 against 0.057 and 0.049. Every
+seed selects at epoch 2 on validation Pearson 0.11 to 0.12 and reads 0.051 to 0.059, the
+seeds of round 160 to the third decimal. So the transformer's dropout does not enter the
+annotation affine's read on this target either (the sibling document, rounds 159 and
+161), and the affine's margin over the store narrows from 0.015 at dropout 0.1 (round
+160) to 0.011 at 0.3 only because the store arm moved (round 157): the affine over the
+annotation is what this target's best transformer arm is, and the backbone around it
+is not where its level is set.
+
+Round 165 is read (job 2823, 3 h 40 min): the GO affine alone with transformer dropout
+0.3, on the deletion-only graph. It reads 0.058 (sd 0.001) against the GO affine at
+dropout 0.1 at 0.058 ($+0.000$ paired, sd 0.001, above on four of six) and against the
+store alone at dropout 0.3 at 0.045 ($+0.013$, sd 0.005, six of six), ensembled over
+six seeds 0.059 against 0.059 and 0.049. Every seed selects at epoch 2 or 3 on
+validation Pearson 0.11 and reads 0.057 to 0.059. So the third dropout read on this
+target closes the question as the betaxanthin rounds 159 and 161 closed it there: the
+annotation affine, alone or with the flux vector, reads the same number at either
+dropout, and the target's best transformer arm is a linear read of the annotation
+that the backbone does not enter.
+
+Round 168 is read (jobs 2826 and 2827, 3 h 37 min and 3 h 39 min): six more seeds,
+2706 to 2711, of the GO affine and of its affine-free control, so this target's one
+paired gain is read on twelve. The arm reads 0.057 (sd 0.002) against the control's
+0.048 (sd 0.010), $+0.009$ paired (sd 0.010), above on ten of twelve, where the first
+six gave $+0.009$ above on five of six: the gain holds at the same size on twice the
+seeds and its sign is now established on ten of twelve. The two arms differ in
+character more than in level. The annotation arm reads 0.053 to 0.059 over twelve
+seeds, a range of 0.007; the control reads 0.023 to 0.059, a range of 0.036, five
+times as wide, because its score depends on whether its seed leaves the plateau. That
+is what the ensembles show: averaging the twelve control seeds reads 0.067, above the
+twelve-seed annotation ensemble's 0.058 and above every single cell of either arm,
+while averaging the annotation's seeds gains nothing over one of them. So on this
+target the annotation lifts a single seed and seed-averaging lifts the control past
+it: the one paired gain the study has is real at 0.009, and it is smaller than what
+the control's own seed noise is worth when averaged away.
+
+Round 174 is read (job 2833, 3 h 43 min): six more seeds of the flux-and-annotation
+arm, the HiGHS vector with GO in one affine (round 160), so it has the twelve-seed level
+and ensemble the annotation arm has had since round 168. Over twelve it reads 0.056
+(sd 0.003, standard error 0.0007), the seeds 0.051 to 0.060, every one selecting at
+epoch 2 or 3; the annotation arm alone reads 0.057 (sd 0.002) on the same twelve, and
+the flux vector's contribution beside GO, paired by seed, is $-0.002$ (sd 0.003), above
+on two of twelve, where the first six gave $-0.003$ on none of six. The twelve-seed
+ensembles are 0.057 and 0.058. So the reading of round 160 holds at twice the seeds: on
+this target the flux vector takes a little from the annotation on almost every seed,
+where on betaxanthin it adds 0.012 on eleven of twelve.
+
+Round 183 is read (job 2845, 3 h 36 min): the reverse direction in the transformer's
+affine, the strain's measured Cachera betaxanthin score appended to GO, 2,363 columns
+read standardized because the score is signed. It reads 0.053 (sd 0.010) against GO
+alone at 0.058 ($-0.005$ paired, sd 0.010, two of six) and against the control's 0.049
+($+0.004$, sd 0.013, five of six), ensembled 0.056; the seeds read 0.040 to 0.065 and
+select at epochs 2 to 166 on validation Pearson 0.056 to 0.077, where the GO affine
+under log1p selects at epochs 2 to 3 on 0.106 to 0.112. So the column the ladder's
+forest reads at 0.071 alone and 0.078 beside GO adds nothing to the annotation in the
+affine, as the flux vector added nothing (round 174). The pair is not clean: the GO
+affine it is read against encodes the multi-hot as log1p, and this arm's store, the
+score and the multi-hot together, is standardized as one table, so the annotation's
+own columns enter at a different scale and the halved validation correlation may be the
+encoding's, not the score's. GO alone standardized (round 189) is the control that
+separates the two, and the score alone in the affine, one column and no annotation, is
+round 184.
+
+Round 184 is read (job 2846, 3 h 33 min): the strain's betaxanthin score alone in the
+affine, one standardized column and no annotation. It reads 0.060 (sd 0.015) against
+the score with GO at 0.053 ($+0.006$ paired, sd 0.020, four of six), against GO alone
+at 0.058 ($+0.002$, sd 0.016, three of six) and against the control's 0.049 ($+0.010$,
+sd 0.018, four of six); the six-seed ensemble reads 0.073, above the control's
+twelve-seed ensemble of 0.067 and the highest ensemble of any arm on this target. The
+seeds read 0.036 to 0.080 and select at epochs 30 to 151 on validation Pearson 0.098 to
+0.123, the highest validation correlation of any arm, from one column, where the GO
+affine's 2,362 columns give 0.106 to 0.112 and the same column beside GO under the
+standardized encoding gave 0.056 to 0.077 (round 183). So the measured score is the
+one input the transformer reads at the annotation's level on its own and above it
+ensembled, and the annotation appended to it under one standardized table (183) reads
+under either alone: the encoding control (189) decides whether that is the score and
+the annotation failing to add or the multi-hot's scale under standardization. The
+spread, sd 0.015 against the GO affine's 0.001, is the widest of any affine arm on
+this target.
+
+Round 189 is read (job 2855, 3 h 33 min): the encoding control, GO alone standardized
+instead of log1p. It reads 0.053 (sd 0.012) against the log1p GO affine's 0.058
+($-0.005$ paired, sd 0.013, two of six), ensembled 0.061; the seeds read 0.039 to 0.073
+and select at epochs 2 to 196 on validation Pearson 0.036 to 0.075, where the log1p
+affine selects at 2 to 3 on 0.106 to 0.112. Against it the score with GO under the same
+encoding (round 183) is $+0.001$ (sd 0.013, two of six). So round 183's deficit was the
+encoding's: standardizing the multi-hot costs the annotation 0.005 and its early,
+tight selection, and the score appended to it under that encoding adds nothing. The
+score adds to the annotation in the forest (0.078 against 0.063) and not in the affine
+beside it, while alone in the affine it reaches the annotation's level from one column
+(184); the twelve-seed level of that arm is round 195.
+
+Round 195 is read (job 2871, 3 h 30 min): six more seeds of the score alone in the
+affine. The second six read 0.053 (sd 0.006) against the first six's 0.060, and over
+twelve the arm reads 0.056 (sd 0.012), seeds 0.036 to 0.080; paired over the same
+twelve seeds it is $-0.001$ against GO alone (sd 0.011, four of twelve) and $+0.008$
+against the control (sd 0.017, seven of twelve). The twelve-seed ensemble reads 0.072,
+above the control's twelve-seed ensemble of 0.067 and the annotation's 0.058: at
+twelve seeds the score alone is the annotation's single-seed level with six times its
+spread, and its ensemble stays the highest of any arm on this target.
+
+Round 205 is read (job 2891, 3 h 31 min): the betaxanthin score alone through a GELU
+hidden layer of 256, the nonlinear read of one column. It reads 0.078 (sd 0.007)
+against the same column in the linear affine at 0.060 ($+0.018$ paired, sd 0.015, five
+of six) and against GO alone at 0.058 ($+0.020$, sd 0.007, six of six), ensembled
+0.082; the seeds read 0.072 to 0.090 and select at epochs 47 to 197 on validation
+Pearson 0.11 to 0.13. So the hidden layer does on this target what it did on
+betaxanthin: the single measured column read nonlinearly is the highest single-seed
+read of any transformer arm on the amino acids, at the forest's level over GO with the
+score (0.078), above the annotation on every seed, with the highest ensemble of any
+arm. The score store covers 563 of the 564 pinned genes with a target, so no coverage
+indicator enters this read (0.080 on the covered genes).
+
+Round 206 is read (job 2892, 3 h 34 min): Cooper's seventeen relative peaks through a
+GELU hidden layer of 256, the other amino-acid screen read as an input for
+M\"ulleder's nineteen. It reads 0.046 (sd 0.006) against GO alone at 0.058
+($-0.012$ paired, sd 0.006, zero of six), ensembled 0.048; the seeds read 0.037 to
+0.052 and select at epochs 95 to 153 on validation Pearson 0.06 to 0.13. On the 495
+pinned genes Cooper measured it reads 0.040 against the annotation's 0.053, and
+Cooper's coverage carries nothing on this target (the indicator reads 0.005), so the
+comparison is the values alone. The transformer reads the peaks at half the forest's
+0.093 over the same columns and under the annotation on every seed, where the
+perceptron read them at 0.049 and 0.052: on this target the second screen's columns
+reach the trained heads at the perceptron's level and the forest is the only model that
+reads them well.
+
+Round 207 is read (job 2893, 3 h 34 min): the same seventeen peaks in the linear
+affine, the control for round 206. It reads 0.042 (sd 0.008) against the hidden layer's
+0.046 ($+0.004$ for the layer, sd 0.008, four of six), against GO alone at 0.058
+($-0.016$, sd 0.008, zero of six) and against the affine-free control at 0.049
+($-0.007$, sd 0.010, one of six), ensembled 0.050; the seeds read 0.032 to 0.053 and
+select at epochs 78 to 181. On the 495 genes Cooper measured it reads 0.038. So the
+hidden layer buys 0.004 over the linear slot on these columns, inside the seed band,
+and both forms sit under the annotation and under the control: Cooper's peaks in the
+transformer's slot do not reach M\"ulleder's concentrations at all, where the forest
+over the same columns reads 0.093 and beats every input on this target. The two screens
+agree in a tree and not in a trained head.
+
+Rounds 208 to 211 (2026-09-28) carry two essentiality recipes to the profile, the
+growth ratio's medium and the graphs' label propagation of the target, each on the SM
+store affine of round 143 (w143, 0.040) and paired against it and against the control
+(0.049 over the same six seeds); Table~\ref{tab:aa-label-medium} pairs them and
+Table~\ref{tab:aa-label-medium-levels} gives their seed levels and ensembles.
+
+Round 208 is read (job 2939, 3 h 31 min): the four-media control, the shipped, SM, SC
+and YPD growth ratios of every yeast-GEM gene in place of SM's alone, zero
+initialization kept. Four media do not describe the screen's own medium, so this is a
+control for the recipe and not a candidate. It reads 0.042 (sd 0.007) against the SM
+ratio alone at 0.040 ($+0.002$ paired, sd 0.006, five of six) and against the control
+at 0.049 ($-0.007$, sd 0.013, two of six), ensembled 0.052; the seeds read 0.031 to
+0.051 and select at epochs 97 to 193 on validation Pearson 0.054 to 0.123. Three more
+growth columns move the store affine by a fifth of its seed spread.
+
+Round 209 is read (job 2942, 3 h 33 min): the essentiality incumbent's default affine
+initialization on the screen's own medium, the SM store and SM's growth ratio unchanged
+and the zero initialization of the slot removed. It reads 0.046 (sd 0.005) against
+zero initialization at 0.040 ($+0.006$ paired, sd 0.006, five of six), against the
+four-media control at 0.042 ($+0.004$, sd 0.006, four of six) and against the control
+at 0.049 ($-0.003$, sd 0.011, three of six), ensembled 0.051; the seeds read 0.040 to
+0.051 and select at epochs 57 to 181 on validation Pearson 0.068 to 0.098. Default
+initialization returns the store affine to the control's level, which is where the
+parsimonious store sat on every other form it was read in; on the screen's own medium
+the metabolic module carries nothing on the profile through this slot, and the four
+media add nothing to that.
+
+Round 210 is read (job 2943, 3 h 29 min): the graphs' one-hop label propagation of the
+nineteen amino acids as the affine store (\texttt{SM\_aa\_graphlabel}, per graph the
+labeled-neighbor means and the count, 200 columns over every genome gene, leave-one-out
+on the labeled genes, no pinned label read), on the round-143 recipe with the SM ratio.
+TRANSDUCTIVE: every column is another strain's measured profile, so a strain can be
+scored only with its neighbors' labels in hand, and the arm bounds what the graphs
+carry rather than what a model generalizes to a strain nobody's neighbors measured. It
+reads 0.026 (sd 0.010) against the SM store at 0.040 ($-0.014$ paired, sd 0.012, one
+of six) and against the control at 0.049 ($-0.023$, sd 0.010, zero of six), ensembled
+0.034; the seeds read 0.017 to 0.043 and select at epochs 75 to 197 on validation
+Pearson 0.080 to 0.101. The transformer reads the label store under the control on
+every seed, under the ladder's forest over the same columns (0.054) and at its ridge
+(0.020), where on betaxanthin the same store read 0.182 alone and lifted the pool: the
+graphs carry the profile at a quarter of betaxanthin's smoothness
+(Section~\ref{sec:homophily}, 0.063 against 0.244 on coexpression), and two hundred
+columns of that, given to the affine, cost the control what a weak input in the slot
+costs everywhere on this target.
+
+Round 211 is read (job 2944, 3 h 32 min): the label store with the SM parsimonious
+vector appended (\texttt{SM\_aa\_graphlabelpfba}, the label store's gene axis, so a
+gene outside the model carries the wild-type flux), the analog of the recipe that
+lifted essentiality. TRANSDUCTIVE, as round 210. It reads 0.021 (sd 0.007) against the
+SM store at 0.040 ($-0.019$ paired, sd 0.012, zero of six), against the label store
+alone at 0.026 ($-0.006$, sd 0.008, one of six) and against the control at 0.049
+($-0.028$, sd 0.008, zero of six), ensembled 0.027; the seeds read 0.009 to 0.031 and
+select at epochs 85 to 196 on validation Pearson 0.077 to 0.118. The lowest transformer
+read of any store on this target: the flux vector appended to the label store takes
+from it as it took from the annotation (round 160), and the two inputs that together
+lifted essentiality together read under either alone here. The label stores need the
+neighbors' labels at inference, so even where they lift a target they bound the
+transductive case; on this target they lift nothing.
+
+Round 212 is read (job 2976, 4 h 45 min): the reverse co-head, a width-1 betaxanthin
+head trained beside the nineteen-column primary on the control recipe
+(\texttt{--aux-betaxanthin} at weight 1, no store), the first arm of the inductive
+program on this target. INDUCTIVE at the gene level: betaxanthin is a training target
+and never an input, and every pinned gene's betaxanthin record sits in the test block,
+so this is the inductive form of round 205's arm, the measured score as an input
+(0.078). It reads 0.026 (sd 0.012) against the control at 0.049 ($-0.023$ paired, sd
+0.016, one of six) and against the score as an input at 0.078 ($-0.052$, sd 0.008,
+zero of six), ensembled 0.040 against the control's 0.062 on the same six seeds; the
+seeds read 0.015 to 0.045 and select at epochs 28 to 108 on validation Pearson 0.050 to
+0.120. At epoch 0 the betaxanthin head's squared error was about twice the profile's
+data term (loss 1.49 against data 0.49 on seed 2700), the imbalance the forward co-head
+showed on betaxanthin, where the profile as a co-target moved nothing (the betaxanthin
+study's rounds 223 to 225, $+0.001$ over twelve seeds). Predicting both at weight 1 is
+null in one direction and costs the profile in the other; the weight
+(\texttt{--aux-weight}) exists in the trainer and is untested at any value but 1.
+
+Round 213 is read (job 2977, 3 h 30 min): GO with its one-hop neighbor mean appended
+(\texttt{SM\_aa\_gogonbr}, 7,088 columns: the propagated multi-hot beside the mean
+annotation of the deleted gene's neighbors on the STRING coexpression graph and on the
+union of the nine, with $\log(1 + n)$ of each neighbor count) on round 202's recipe
+(GO alone through the linear affine, \texttt{log1p}, zero initialization). INDUCTIVE:
+no label and no measurement enters, and the row of a pinned gene is built as a training
+gene's is. It reads 0.065 (sd 0.005) against GO alone at 0.058 on the same six seeds
+($+0.008$ paired, sd 0.005, five of six) and against the control at 0.049 ($+0.016$,
+sd 0.008, six of six), ensembled 0.067 against GO's 0.059; the seeds read 0.058 to
+0.071 and select at epochs 2 to 4, where GO alone selects at 2 to 3. It is the highest
+inductive read of the profile on the transformer, under the measured betaxanthin score
+as an input (round 205, 0.078, a phenotype input), and it recovers 0.4 of the forest's
+lift on the same columns (0.063 to 0.081 by forest against 0.058 to 0.065 here), the
+fraction the betaxanthin study's round 227 recovered (a fifth). Hypothesis, untested:
+the read is nonlinear in the neighbor-mean columns, as the ladder's ridge and forest
+disagree, and the linear affine cannot shape it.
+
+\input{tables/aa_label_medium_rounds}
+
+\input{tables/target_transfer}

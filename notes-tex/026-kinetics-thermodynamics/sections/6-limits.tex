@@ -7,74 +7,102 @@
 
 \subsection{A predicted turnover number is not a measured one\secstatus{todo}}
 
-Every row in the $k_{cat}$ and $K_M$ builds is a model output. The tables record that in a
-provenance column beside the value, because a number with no provenance becomes
-indistinguishable from a measurement within two steps, and the coverage gate has to be able
-to separate an experimental value, a predicted value and a filled default.
+Every row is a model output, recorded as one in a provenance column. Two predictors trained
+on overlapping data, applied to the same 7{,}351 pairs, disagree by a median factor of about
+three, which is wider than either model's own reported error and is the honest uncertainty
+on any single value.
 
-The size of the distinction is measurable. Two predictors trained on overlapping data,
-applied to the same 7{,}351 pairs, disagree by a median factor of about three. Neither
-model's own reported error is that large. The disagreement is the honest uncertainty on any
-single value, and it is wider than any published accuracy figure would suggest, because
-those figures are computed on held-out data drawn from the same corpus rather than on a
-genome-scale application.
-
-\subsection{Accuracy against the Open Enzyme Database is memorization, not generalization\secstatus{todo}}
-
-Comparing predictions to the Open Enzyme Database looks like validation and is not. The
-database aggregates BRENDA and Sabio-RK, which is what these models were trained on, so a
-matched enzyme-substrate pair is almost certainly inside their training sets. Numbers from
-that comparison are reported here explicitly as memorization checks.
-
-The join also has to be on the \emph{pair}. Joining on enzyme alone compares a prediction
-for one substrate against a measurement for another, and doing so moves one of these
-correlations from 0.98 to 0.82 and another from 0.62 to 0.12. The looser join is the one
-that is easy to write by accident.
+The accuracy of Section~\ref{sec:accuracy} does not narrow it, being an upper bound under
+training leakage. The join also has to be on the \emph{pair}:
+joining on enzyme alone compares a prediction for one substrate against a measurement for
+another, and doing so moves one of these correlations from 0.98 to 0.82 and another from
+0.62 to 0.12. The looser join is the one that is easy to write by accident.
 
 \subsection{$K_M$ is built and deliberately not consumed\secstatus{todo}}
 
-The flux layer does not use $K_M$. The parameter enters only through a saturation factor
-$\eta_{\mathrm{sat}} = \prod_i c_i/(K_{M,i} + c_i)$, which needs intracellular metabolite
-concentrations, and those are measured for 191 of 2{,}806 metabolites, 6.8 percent. Adding
-$K_M$ today would add a parameter and a free variable per reaction with no anchor for
-either.
+$K_M$ would enter the flux layer only through a saturation factor
+$\eta_{\mathrm{sat}} = \prod_i c_i/(K_{M,i} + c_i)$, whose intracellular concentrations are
+measured for 191 of 2{,}806 metabolites, 6.8 percent, so adding it today adds a parameter
+and a free variable per reaction with no anchor for either.
 
 The measured argument for adding it anyway is promiscuity: underground reactions show
 roughly twice the $K_M$ at indistinguishable $k_{cat}$, so a $k_{cat}$-only model cannot
 tell a promiscuous side activity from a native one. The measured argument against is that
-the $K_M$ predictions here are the least reliable of the set, and treating them as constants
-rather than as order-of-magnitude priors would put that unreliability directly into a
-constraint.
+only one of the four $K_M$ predictors clears the EC-median lookup under the admission rule
+(Section~\ref{sec:kinetic-tiers}), so these values are order-of-magnitude priors, not
+constants.
 
-\subsection{The thermodynamic gaps\secstatus{todo}}
+\subsection{What no method reaches\secstatus{todo}}
+\label{sec:unreachable}
 
-Three, in order of how much they bind.
+%% SOURCE: results/reaction_thermo_coverage_final.json (ceiling_ladder: denominator 3,847,
+%% n_closable 21, n_permanently_closed_reactions 291 with permanently_closed_reasons
+%% counted per blocking class and therefore overlapping; metabolite_reasons;
+%% flux_carrying), results/thermo_exclusions.json (by_reason),
+%% results/thermo_tier_d_probe.json (no refused structure reachable by reactant
+%% contribution or a surrogate inside the admitted spread), and
+%% results/kinetic_coverage_closure.json (ceiling: n_default_units 18,
+%% n_reachable_with_open_source_tools 0).
 
-\textbf{Novel compounds need a licensed tool.} Adding a compound eQuilibrator has never
-seen requires pKa estimates from ChemAxon's \texttt{cxcalc}. Without the license the
-compound cache is read-only, so the betaxanthin intermediates that are not already in it
-cannot be priced at all. This is the binding constraint on applying the method to
-heterologous pathways, which is exactly where it is most wanted.
+\textbf{312 of the 3{,}847 chemical reactions carry no energy, and 291 of them never will.}
+A reaction is permanently closed when every species blocking it is not a molecule: a
+placeholder formula naming a family of compounds, a SLIME backbone whose formula is a
+difference formula, or a residue inside a macromolecule. Counted by at least one blocking
+species of each class, those three hold 202, 96 and 3 reactions, and the counts overlap
+where a reaction is blocked by two of them.
+\textbf{The 21 that remain are the whole of what any further method could
+buy}, and the probe that measured them found none of the refused structures reachable by
+the reactant-contribution path or by a surrogate inside the admitted spread, so they need
+new data rather than new code (Section~\ref{sec:permanent}). Counted over the whole model
+the gap is 330 reactions, the extra 18 being exchange, demand, sink and biomass
+pseudoreactions for which a standard reaction energy has no meaning.
 
-\textbf{Coverage fell.} Reaction coverage went from 77.7 percent to 42.5 percent, because a
-reaction needs every participant resolved. The unresolved metabolites are dominated by
-acyl-CoA isomers and combinatorial lipid species, which are chemically ordinary and merely
-un-indexed under the names the model uses.
+\textbf{Five chemistries are refused by the group system rather than by the species.} The
+porphyrin macrocycle has no group, and it holds heme a, heme o, siroheme and ferroheme b;
+the sulfoxide of L-methionine S-oxide has none; the aryl phosphate of 4-nitrophenyl
+phosphate has none. The nitro group is the opposite failure and is worth keeping separate:
+the group exists and sits in the component-contribution null space with 0 of 631 training
+compounds carrying it, so the estimate has infinite variance rather than no value.
+Triphosphate is a third kind, decomposing nowhere and appearing in none of the 3{,}999
+training reactions, so the reactant contribution that prices phosphate and diphosphate
+despite their empty group vectors is closed to it too. \textbf{Curation cannot move any of
+these}: triphosphate's p$K_a$ ladder is measured, admitted and recorded, and it prices
+nothing on its own, because a ladder fixes a transform and there is no untransformed
+energy for it to act on.
 
-\textbf{Compartment pH is not validated.} It is implemented, it produces shifts too large
-to believe, and the pH table is assumed rather than sourced. Until that is diagnosed the
-uniform build is the one to use, which means transport thermodynamics is set to zero by
-construction and the proton motive force is absent from the model.
+\textbf{Novel compounds needed a licensed tool and no longer do.} The selected p$K_a$
+cascade creates a compound eQuilibrator has never seen through
+\texttt{pkas\_provided\_externally}, and it priced 70 of the model's metabolites
+(Section~\ref{sec:pka}). \textbf{What binds is reach rather than accuracy}: the cascade on
+its own reaches only a species that already has a structure and lacks a ladder, so the
+structure writers and not the predictor are what moved coverage. The
+777.5\,kJ\,mol$^{-1}$ protonation-convention offset those values once carried is closed;
+they were resubmitted as their pH 7 major microspecies, which moved them by a median of
+1{,}585\,kJ\,mol$^{-1}$ and left a residual of 0.13.
+
+\textbf{Eighteen catalytic units run on the organism default and no open-source tool reaches
+any of them} (Section~\ref{sec:kinetic-tiers}). Of the 28 substrate rows behind them, 14
+carry an R-group placeholder, which is a curation decision in the model rather than a
+missing structure; 7 are macromolecular species with no formula and need a predictor that
+accepts a protein substrate, which none of the seven mirrored models is; and the substrate
+writer was run on the rest and refused each one.
+
+\textbf{Proton translocation still carries zero in every arm reported here.}
+\texttt{transport\_delta\_g\_source: computed} is off by default, so the 183
+proton-translocating reactions get none of the term Section~\ref{sec:transport-term}
+computes and checks, and the protonation contribution to $N_H$, worth 613 reactions, is
+still unwritten.
+
+\textbf{Compartment pH is assumed, and nothing in the library can settle it.} The values are
+textbook organellar figures recorded as \texttt{assumed} in the build output; the two
+in-library sources tabulate rather than measure them and disagree by 1.2 units on the
+peroxisome (Section~\ref{sec:compartments}).
 
 \subsection{What the mirror records when a predictor cannot run\secstatus{todo}}
 
 All six now run. Where a predictor could not be run at all, the mirror records
 \texttt{runnable: false} with the specific blocker, so that a gap in coverage is never
-mistaken for a modeling choice.
-
-Boost\_KM carried that flag until its weights were read rather than its filenames, and the
-correction is recorded in Section~\ref{sec:mirrors} rather than quietly dropped: the
-repository does ship fitted regressors, and the obstacle was never a missing model. It was
-that UniRep is a TensorFlow~1 mLSTM stepping one residue at a time on CPU, which on a first
-attempt occupied roughly 85 cores. The ESM-1b variant Wu et al. actually used replaces that
-stage with a transformer that embeds all 887 enzymes on one GPU in four minutes.
+mistaken for a modeling choice. Boost\_KM carried that flag wrongly
+(Section~\ref{sec:mirrors}); the real obstacle was that UniRep is a TensorFlow~1 mLSTM stepping one residue at a time on CPU, which on a first attempt
+occupied roughly 85 cores, and the ESM-1b variant Wu et al.\ used embeds all 887 enzymes on
+one GPU in four minutes.

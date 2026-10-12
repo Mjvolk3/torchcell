@@ -1,0 +1,21 @@
+# experiments/027-betaxanthin-metabolic/conf/arm_flux_projection_anchored_fluxforce.yaml
+# [[experiments.027-betaxanthin-metabolic.wave7-flux-force-head]]
+#
+# THE SECOND LAW AS A SMOOTH COUPLING. Everything on, twenty alternations ending on the
+# clip, and the priced reactions take their direction and a magnitude factor from the
+# reaction energy through the flux-force relation v = m f(dG), f(x) = -tanh(x / 2RT),
+# instead of from a sign clamp on the box.
+#
+# The switches are exactly `flux_projection_anchored_k20_boxend`'s, which is why that arm is
+# the base: the two cells then differ in the parameterization string and nothing else, and
+# `flux_projection_anchored_tdg` at the same seeds is the sign-clamp arm. The string itself
+# arrives through TC_FLUX_PARAMETERIZATION=fluxforce_k20_box, because 026's ARMS registry is
+# the single source of truth for the switches and this experiment never redefines it; the
+# layer records what it parsed in flux_meta.coverage.parameterization_raw.
+#
+# MOTIVATION, MEASURED. `_thermo_tighten` decides the sign with `delta_g > eps` inside a
+# torch.where, so no gradient reaches the learned log concentrations through the directional
+# box, and in wave 6 every projection cell without the sign tightening sustained its escape
+# from the betaxanthin mean plateau (6 of 6) and none with it did (0 of 6).
+base_arm: flux_projection_anchored_k20_boxend
+permute_train_targets: false

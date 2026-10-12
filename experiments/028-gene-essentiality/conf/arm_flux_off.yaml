@@ -1,0 +1,14 @@
+# experiments/027-betaxanthin-metabolic/conf/arm_flux_off.yaml
+# [[experiments.027-betaxanthin-metabolic]]
+#
+# The flux layer with its PHYSICS TURNED OFF: stoichiometric mass balance and GPR-derived
+# reaction availability only. No thermodynamics, no enzyme capacity, no protein budget, no
+# dissipation limit.
+#
+# `pooled` -> `flux_off` isolates ONE question: does routing the prediction through the
+# stoichiometric network help AT ALL, independently of any measured parameter? A reviewer
+# who sees only pooled vs flux_anchored cannot tell whether a gain came from the tabulated
+# thermodynamics or merely from the inductive bias of predicting through a network, and that
+# is the first thing they will ask.
+base_arm: flux_off
+permute_train_targets: false

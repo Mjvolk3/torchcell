@@ -1,0 +1,941 @@
+{
+  "statistic": "held-out AUROC at the epoch selected on validation; released: mean and population sd over seeds; resplits: per-split seed mean, mean and sd (ddof 1) over the ten splits, paired difference 006 GO minus current GO",
+  "models": [
+    {
+      "model": "GCN, union of nine",
+      "inputs": "GO (400 epochs)",
+      "released": {
+        "file_006": "graph_baselines_go400_go006.json",
+        "file_current": "graph_baselines_go400.json",
+        "seeds_006": [
+          2700,
+          2701,
+          2702
+        ],
+        "seeds_current": [
+          2700,
+          2701,
+          2702
+        ],
+        "auroc_006": [
+          0.9012588512981905,
+          0.9077498033044847,
+          0.90558615263572
+        ],
+        "auroc_current": [
+          0.9128638867033831,
+          0.9101101494885917,
+          0.9030291109362706
+        ],
+        "mean_006": 0.9048649357461317,
+        "sd_006": 0.002698546502393993,
+        "mean_current": 0.9086677157094152,
+        "sd_current": 0.004142556779158517,
+        "shared_seeds": [
+          2700,
+          2701,
+          2702
+        ],
+        "mean_current_shared_seeds": 0.9086677157094152,
+        "sd_current_shared_seeds": 0.004142556779158517,
+        "difference_shared_seeds": -0.003802779963283487
+      },
+      "resplits": {
+        "files_006": [
+          "graph_baselines_go400_fcl_resplit0_go006.json",
+          "graph_baselines_go400_fcl_resplit1_go006.json",
+          "graph_baselines_go400_fcl_resplit2_go006.json",
+          "graph_baselines_go400_fcl_resplit3_go006.json",
+          "graph_baselines_go400_fcl_resplit4_go006.json",
+          "graph_baselines_go400_fcl_resplit5_go006.json",
+          "graph_baselines_go400_fcl_resplit6_go006.json",
+          "graph_baselines_go400_fcl_resplit7_go006.json",
+          "graph_baselines_go400_fcl_resplit8_go006.json",
+          "graph_baselines_go400_fcl_resplit9_go006.json"
+        ],
+        "files_current": [
+          "graph_baselines_go400_fcl_resplit0.json",
+          "graph_baselines_go400_fcl_resplit1.json",
+          "graph_baselines_go400_fcl_resplit2.json",
+          "graph_baselines_go400_fcl_resplit3.json",
+          "graph_baselines_go400_fcl_resplit4.json",
+          "graph_baselines_go400_fcl_resplit5.json",
+          "graph_baselines_go400_fcl_resplit6.json",
+          "graph_baselines_go400_fcl_resplit7.json",
+          "graph_baselines_go400_fcl_resplit8.json",
+          "graph_baselines_go400_fcl_resplit9.json"
+        ],
+        "n_splits": 10,
+        "mean_006": 0.8666290160642569,
+        "sd_006": 0.01574449243209239,
+        "mean_current": 0.8682354417670682,
+        "sd_current": 0.015180348539029732,
+        "difference_mean": -0.001606425702811276,
+        "difference_sd": 0.005055964175219569,
+        "n_006_higher": 4,
+        "n_006_lower": 6,
+        "splits": [
+          {
+            "split": 0,
+            "seeds_006": [
+              2700,
+              2701,
+              2702
+            ],
+            "seeds_current": [
+              2700,
+              2701,
+              2702
+            ],
+            "mean_006": 0.8824673694779116,
+            "mean_current": 0.8835341365461847,
+            "difference": -0.0010667670682731334
+          },
+          {
+            "split": 1,
+            "seeds_006": [
+              2700,
+              2701,
+              2702
+            ],
+            "seeds_current": [
+              2700,
+              2701,
+              2702
+            ],
+            "mean_006": 0.8852284136546184,
+            "mean_current": 0.8848519076305221,
+            "difference": 0.0003765060240962237
+          },
+          {
+            "split": 2,
+            "seeds_006": [
+              2700,
+              2701,
+              2702
+            ],
+            "seeds_current": [
+              2700,
+              2701,
+              2702
+            ],
+            "mean_006": 0.8714859437751002,
+            "mean_current": 0.8706074297188754,
+            "difference": 0.000878514056224855
+          },
+          {
+            "split": 3,
+            "seeds_006": [
+              2700,
+              2701,
+              2702
+            ],
+            "seeds_current": [
+              2700,
+              2701,
+              2702
+            ],
+            "mean_006": 0.8558609437751005,
+            "mean_current": 0.8569904618473897,
+            "difference": -0.0011295180722892262
+          },
+          {
+            "split": 4,
+            "seeds_006": [
+              2700,
+              2701,
+              2702
+            ],
+            "seeds_current": [
+              2700,
+              2701,
+              2702
+            ],
+            "mean_006": 0.8499623493975904,
+            "mean_current": 0.8627008032128513,
+            "difference": -0.012738453815260842
+          },
+          {
+            "split": 5,
+            "seeds_006": [
+              2700,
+              2701,
+              2702
+            ],
+            "seeds_current": [
+              2700,
+              2701,
+              2702
+            ],
+            "mean_006": 0.8665286144578314,
+            "mean_current": 0.8672816265060241,
+            "difference": -0.0007530120481927804
+          },
+          {
+            "split": 6,
+            "seeds_006": [
+              2700,
+              2701,
+              2702
+            ],
+            "seeds_current": [
+              2700,
+              2701,
+              2702
+            ],
+            "mean_006": 0.8804593373493975,
+            "mean_current": 0.887738453815261,
+            "difference": -0.007279116465863433
+          },
+          {
+            "split": 7,
+            "seeds_006": [
+              2700,
+              2701,
+              2702
+            ],
+            "seeds_current": [
+              2700,
+              2701,
+              2702
+            ],
+            "mean_006": 0.834964859437751,
+            "mean_current": 0.8367846385542169,
+            "difference": -0.0018197791164659138
+          },
+          {
+            "split": 8,
+            "seeds_006": [
+              2700,
+              2701,
+              2702
+            ],
+            "seeds_current": [
+              2700,
+              2701,
+              2702
+            ],
+            "mean_006": 0.87117218875502,
+            "mean_current": 0.8691014056224899,
+            "difference": 0.002070783132530063
+          },
+          {
+            "split": 9,
+            "seeds_006": [
+              2700,
+              2701,
+              2702
+            ],
+            "seeds_current": [
+              2700,
+              2701,
+              2702
+            ],
+            "mean_006": 0.868160140562249,
+            "mean_current": 0.8627635542168676,
+            "difference": 0.005396586345381427
+          }
+        ]
+      }
+    },
+    {
+      "model": "GCN, union of nine",
+      "inputs": "GO+FBA ratios (400 epochs)",
+      "released": {
+        "file_006": "graph_baselines_go400_go006.json",
+        "file_current": "graph_baselines_go400.json",
+        "seeds_006": [
+          2700,
+          2701,
+          2702
+        ],
+        "seeds_current": [
+          2700,
+          2701,
+          2702
+        ],
+        "auroc_006": [
+          0.8981117230527144,
+          0.9046026750590087,
+          0.9028324154209284
+        ],
+        "auroc_current": [
+          0.9049960660896932,
+          0.9061762391817466,
+          0.9152242328874902
+        ],
+        "mean_006": 0.9018489378442172,
+        "sd_006": 0.0027396515100677216,
+        "mean_current": 0.9087988460529767,
+        "sd_current": 0.004568909360132295,
+        "shared_seeds": [
+          2700,
+          2701,
+          2702
+        ],
+        "mean_current_shared_seeds": 0.9087988460529767,
+        "sd_current_shared_seeds": 0.004568909360132295,
+        "difference_shared_seeds": -0.006949908208759514
+      },
+      "resplits": {
+        "files_006": [
+          "graph_baselines_go400_fcl_resplit0_go006.json",
+          "graph_baselines_go400_fcl_resplit1_go006.json",
+          "graph_baselines_go400_fcl_resplit2_go006.json",
+          "graph_baselines_go400_fcl_resplit3_go006.json",
+          "graph_baselines_go400_fcl_resplit4_go006.json",
+          "graph_baselines_go400_fcl_resplit5_go006.json",
+          "graph_baselines_go400_fcl_resplit6_go006.json",
+          "graph_baselines_go400_fcl_resplit7_go006.json",
+          "graph_baselines_go400_fcl_resplit8_go006.json",
+          "graph_baselines_go400_fcl_resplit9_go006.json"
+        ],
+        "files_current": [
+          "graph_baselines_go400_fcl_resplit0.json",
+          "graph_baselines_go400_fcl_resplit1.json",
+          "graph_baselines_go400_fcl_resplit2.json",
+          "graph_baselines_go400_fcl_resplit3.json",
+          "graph_baselines_go400_fcl_resplit4.json",
+          "graph_baselines_go400_fcl_resplit5.json",
+          "graph_baselines_go400_fcl_resplit6.json",
+          "graph_baselines_go400_fcl_resplit7.json",
+          "graph_baselines_go400_fcl_resplit8.json",
+          "graph_baselines_go400_fcl_resplit9.json"
+        ],
+        "n_splits": 10,
+        "mean_006": 0.8675953815261044,
+        "sd_006": 0.017172819882818165,
+        "mean_current": 0.8711533634538153,
+        "sd_current": 0.018020917439128672,
+        "difference_mean": -0.003557981927710874,
+        "difference_sd": 0.010976545977079125,
+        "n_006_higher": 2,
+        "n_006_lower": 8,
+        "splits": [
+          {
+            "split": 0,
+            "seeds_006": [
+              2700,
+              2701,
+              2702
+            ],
+            "seeds_current": [
+              2700,
+              2701,
+              2702
+            ],
+            "mean_006": 0.8802083333333334,
+            "mean_current": 0.8825928714859437,
+            "difference": -0.002384538152610305
+          },
+          {
+            "split": 1,
+            "seeds_006": [
+              2700,
+              2701,
+              2702
+            ],
+            "seeds_current": [
+              2700,
+              2701,
+              2702
+            ],
+            "mean_006": 0.8859814257028112,
+            "mean_current": 0.8839106425702812,
+            "difference": 0.002070783132530063
+          },
+          {
+            "split": 2,
+            "seeds_006": [
+              2700,
+              2701,
+              2702
+            ],
+            "seeds_current": [
+              2700,
+              2701,
+              2702
+            ],
+            "mean_006": 0.8748744979919678,
+            "mean_current": 0.8784513052208837,
+            "difference": -0.003576807228915846
+          },
+          {
+            "split": 3,
+            "seeds_006": [
+              2700,
+              2701,
+              2702
+            ],
+            "seeds_current": [
+              2700,
+              2701,
+              2702
+            ],
+            "mean_006": 0.8550451807228915,
+            "mean_current": 0.8559236947791166,
+            "difference": -0.0008785140562250771
+          },
+          {
+            "split": 4,
+            "seeds_006": [
+              2700,
+              2701,
+              2702
+            ],
+            "seeds_current": [
+              2700,
+              2701,
+              2702
+            ],
+            "mean_006": 0.8556726907630523,
+            "mean_current": 0.8868599397590362,
+            "difference": -0.031187248995983907
+          },
+          {
+            "split": 5,
+            "seeds_006": [
+              2700,
+              2701,
+              2702
+            ],
+            "seeds_current": [
+              2700,
+              2701,
+              2702
+            ],
+            "mean_006": 0.868160140562249,
+            "mean_current": 0.8689131526104417,
+            "difference": -0.0007530120481926694
+          },
+          {
+            "split": 6,
+            "seeds_006": [
+              2700,
+              2701,
+              2702
+            ],
+            "seeds_current": [
+              2700,
+              2701,
+              2702
+            ],
+            "mean_006": 0.8853539156626505,
+            "mean_current": 0.8918800200803213,
+            "difference": -0.006526104417670764
+          },
+          {
+            "split": 7,
+            "seeds_006": [
+              2700,
+              2701,
+              2702
+            ],
+            "seeds_current": [
+              2700,
+              2701,
+              2702
+            ],
+            "mean_006": 0.8295055220883535,
+            "mean_current": 0.8316390562248998,
+            "difference": -0.0021335341365462668
+          },
+          {
+            "split": 8,
+            "seeds_006": [
+              2700,
+              2701,
+              2702
+            ],
+            "seeds_current": [
+              2700,
+              2701,
+              2702
+            ],
+            "mean_006": 0.8674071285140562,
+            "mean_current": 0.8702309236947791,
+            "difference": -0.0028237951807228434
+          },
+          {
+            "split": 9,
+            "seeds_006": [
+              2700,
+              2701,
+              2702
+            ],
+            "seeds_current": [
+              2700,
+              2701,
+              2702
+            ],
+            "mean_006": 0.8737449799196787,
+            "mean_current": 0.8611320281124498,
+            "difference": 0.012612951807228878
+          }
+        ]
+      }
+    },
+    {
+      "model": "GCN, union of nine",
+      "inputs": "ProtT5+GO+FBA ratios (400 epochs)",
+      "released": {
+        "file_006": "graph_baselines_go400_go006.json",
+        "file_current": "graph_baselines_go400.json",
+        "seeds_006": [
+          2700,
+          2701,
+          2702
+        ],
+        "seeds_current": [
+          2700,
+          2701,
+          2702
+        ],
+        "auroc_006": [
+          0.8965381589299765,
+          0.8985051140833988,
+          0.8987018095987411
+        ],
+        "auroc_current": [
+          0.9004720692368214,
+          0.8975216365066876,
+          0.9047993705743509
+        ],
+        "mean_006": 0.8979150275373721,
+        "sd_006": 0.000976899057549871,
+        "mean_current": 0.9009310254392866,
+        "sd_current": 0.0029887939470342336,
+        "shared_seeds": [
+          2700,
+          2701,
+          2702
+        ],
+        "mean_current_shared_seeds": 0.9009310254392866,
+        "sd_current_shared_seeds": 0.0029887939470342336,
+        "difference_shared_seeds": -0.0030159979019145355
+      },
+      "resplits": {
+        "files_006": [
+          "graph_baselines_go400_fcl_resplit0_go006.json",
+          "graph_baselines_go400_fcl_resplit1_go006.json",
+          "graph_baselines_go400_fcl_resplit2_go006.json",
+          "graph_baselines_go400_fcl_resplit3_go006.json",
+          "graph_baselines_go400_fcl_resplit4_go006.json",
+          "graph_baselines_go400_fcl_resplit5_go006.json",
+          "graph_baselines_go400_fcl_resplit6_go006.json",
+          "graph_baselines_go400_fcl_resplit7_go006.json",
+          "graph_baselines_go400_fcl_resplit8_go006.json",
+          "graph_baselines_go400_fcl_resplit9_go006.json"
+        ],
+        "files_current": [
+          "graph_baselines_go400_fcl_resplit0.json",
+          "graph_baselines_go400_fcl_resplit1.json",
+          "graph_baselines_go400_fcl_resplit2.json",
+          "graph_baselines_go400_fcl_resplit3.json",
+          "graph_baselines_go400_fcl_resplit4.json",
+          "graph_baselines_go400_fcl_resplit5.json",
+          "graph_baselines_go400_fcl_resplit6.json",
+          "graph_baselines_go400_fcl_resplit7.json",
+          "graph_baselines_go400_fcl_resplit8.json",
+          "graph_baselines_go400_fcl_resplit9.json"
+        ],
+        "n_splits": 10,
+        "mean_006": 0.8603162650602411,
+        "sd_006": 0.021352498711924114,
+        "mean_current": 0.8636608935742972,
+        "sd_current": 0.02013193845683163,
+        "difference_mean": -0.0033446285140562248,
+        "difference_sd": 0.0037600658995436747,
+        "n_006_higher": 2,
+        "n_006_lower": 8,
+        "splits": [
+          {
+            "split": 0,
+            "seeds_006": [
+              2700,
+              2701,
+              2702
+            ],
+            "seeds_current": [
+              2700,
+              2701,
+              2702
+            ],
+            "mean_006": 0.8707329317269076,
+            "mean_current": 0.8750627510040161,
+            "difference": -0.004329819277108515
+          },
+          {
+            "split": 1,
+            "seeds_006": [
+              2700,
+              2701,
+              2702
+            ],
+            "seeds_current": [
+              2700,
+              2701,
+              2702
+            ],
+            "mean_006": 0.8814006024096385,
+            "mean_current": 0.8787650602409638,
+            "difference": 0.002635542168674676
+          },
+          {
+            "split": 2,
+            "seeds_006": [
+              2700,
+              2701,
+              2702
+            ],
+            "seeds_current": [
+              2700,
+              2701,
+              2702
+            ],
+            "mean_006": 0.8679091365461847,
+            "mean_current": 0.8704191767068273,
+            "difference": -0.0025100401606426015
+          },
+          {
+            "split": 3,
+            "seeds_006": [
+              2700,
+              2701,
+              2702
+            ],
+            "seeds_current": [
+              2700,
+              2701,
+              2702
+            ],
+            "mean_006": 0.8389809236947791,
+            "mean_current": 0.8464482931726908,
+            "difference": -0.007467369477911712
+          },
+          {
+            "split": 4,
+            "seeds_006": [
+              2700,
+              2701,
+              2702
+            ],
+            "seeds_current": [
+              2700,
+              2701,
+              2702
+            ],
+            "mean_006": 0.8746234939759038,
+            "mean_current": 0.8782003012048193,
+            "difference": -0.003576807228915513
+          },
+          {
+            "split": 5,
+            "seeds_006": [
+              2700,
+              2701,
+              2702
+            ],
+            "seeds_current": [
+              2700,
+              2701,
+              2702
+            ],
+            "mean_006": 0.8676581325301206,
+            "mean_current": 0.8682228915662651,
+            "difference": -0.0005647590361445021
+          },
+          {
+            "split": 6,
+            "seeds_006": [
+              2700,
+              2701,
+              2702
+            ],
+            "seeds_current": [
+              2700,
+              2701,
+              2702
+            ],
+            "mean_006": 0.8814633534136546,
+            "mean_current": 0.8875502008032129,
+            "difference": -0.006086847389558336
+          },
+          {
+            "split": 7,
+            "seeds_006": [
+              2700,
+              2701,
+              2702
+            ],
+            "seeds_current": [
+              2700,
+              2701,
+              2702
+            ],
+            "mean_006": 0.8134412650602411,
+            "mean_current": 0.8183985943775101,
+            "difference": -0.004957329317268999
+          },
+          {
+            "split": 8,
+            "seeds_006": [
+              2700,
+              2701,
+              2702
+            ],
+            "seeds_current": [
+              2700,
+              2701,
+              2702
+            ],
+            "mean_006": 0.8489583333333334,
+            "mean_current": 0.8574924698795181,
+            "difference": -0.008534136546184734
+          },
+          {
+            "split": 9,
+            "seeds_006": [
+              2700,
+              2701,
+              2702
+            ],
+            "seeds_current": [
+              2700,
+              2701,
+              2702
+            ],
+            "mean_006": 0.8579944779116465,
+            "mean_current": 0.8560491967871485,
+            "difference": 0.0019452811244979884
+          }
+        ]
+      }
+    },
+    {
+      "model": "dcell_style_shared",
+      "inputs": "GO",
+      "released": {
+        "file_006": "dcell_style_released_go006.json",
+        "file_current": "dcell_style_released.json",
+        "seeds_006": [
+          2700,
+          2701,
+          2702
+        ],
+        "seeds_current": [
+          2700,
+          2701,
+          2702,
+          2703,
+          2704,
+          2705
+        ],
+        "auroc_006": [
+          0.7360346184107002,
+          0.6937450826121164,
+          0.7114476789929189
+        ],
+        "auroc_current": [
+          0.8330055074744296,
+          0.8430369787568843,
+          0.8477576711250984,
+          0.8503147128245476,
+          0.7834382376081825,
+          0.7952399685287176
+        ],
+        "mean_006": 0.7137424600052452,
+        "sd_006": 0.017340717486805896,
+        "mean_current": 0.8254655127196432,
+        "sd_current": 0.02633092727434037,
+        "shared_seeds": [
+          2700,
+          2701,
+          2702
+        ],
+        "mean_current_shared_seeds": 0.8412667191188041,
+        "sd_current_shared_seeds": 0.006151257187691542,
+        "difference_shared_seeds": -0.1275242591135589
+      },
+      "resplits": {
+        "files_006": [
+          "dcell_style_resplits_go006.json"
+        ],
+        "files_current": [
+          "dcell_style_resplits.json"
+        ],
+        "n_splits": 10,
+        "mean_006": 0.781394327309237,
+        "sd_006": 0.027822521922302182,
+        "mean_current": 0.8009663654618473,
+        "sd_current": 0.03611505246163529,
+        "difference_mean": -0.019572038152610337,
+        "difference_sd": 0.04119069514948033,
+        "n_006_higher": 2,
+        "n_006_lower": 8,
+        "splits": [
+          {
+            "split": 0,
+            "seeds_006": [
+              2700,
+              2701,
+              2702
+            ],
+            "seeds_current": [
+              2700,
+              2701,
+              2702
+            ],
+            "mean_006": 0.7992595381526105,
+            "mean_current": 0.8434362449799195,
+            "difference": -0.04417670682730901
+          },
+          {
+            "split": 1,
+            "seeds_006": [
+              2700,
+              2701,
+              2702
+            ],
+            "seeds_current": [
+              2700,
+              2701,
+              2702
+            ],
+            "mean_006": 0.7670055220883535,
+            "mean_current": 0.7979417670682731,
+            "difference": -0.030936244979919647
+          },
+          {
+            "split": 2,
+            "seeds_006": [
+              2700,
+              2701,
+              2702
+            ],
+            "seeds_current": [
+              2700,
+              2701,
+              2702
+            ],
+            "mean_006": 0.8103664658634538,
+            "mean_current": 0.8306350401606425,
+            "difference": -0.020268574297188646
+          },
+          {
+            "split": 3,
+            "seeds_006": [
+              2700,
+              2701,
+              2702
+            ],
+            "seeds_current": [
+              2700,
+              2701,
+              2702
+            ],
+            "mean_006": 0.7862073293172691,
+            "mean_current": 0.8557354417670683,
+            "difference": -0.06952811244979917
+          },
+          {
+            "split": 4,
+            "seeds_006": [
+              2700,
+              2701,
+              2702
+            ],
+            "seeds_current": [
+              2700,
+              2701,
+              2702
+            ],
+            "mean_006": 0.7712098393574297,
+            "mean_current": 0.8143825301204819,
+            "difference": -0.04317269076305219
+          },
+          {
+            "split": 5,
+            "seeds_006": [
+              2700,
+              2701,
+              2702
+            ],
+            "seeds_current": [
+              2700,
+              2701,
+              2702
+            ],
+            "mean_006": 0.7740336345381525,
+            "mean_current": 0.7525100401606425,
+            "difference": 0.021523594377510058
+          },
+          {
+            "split": 6,
+            "seeds_006": [
+              2700,
+              2701,
+              2702
+            ],
+            "seeds_current": [
+              2700,
+              2701,
+              2702
+            ],
+            "mean_006": 0.8374121485943776,
+            "mean_current": 0.7692645582329316,
+            "difference": 0.06814759036144602
+          },
+          {
+            "split": 7,
+            "seeds_006": [
+              2700,
+              2701,
+              2702
+            ],
+            "seeds_current": [
+              2700,
+              2701,
+              2702
+            ],
+            "mean_006": 0.7475527108433736,
+            "mean_current": 0.7585341365461847,
+            "difference": -0.010981425702811132
+          },
+          {
+            "split": 8,
+            "seeds_006": [
+              2700,
+              2701,
+              2702
+            ],
+            "seeds_current": [
+              2700,
+              2701,
+              2702
+            ],
+            "mean_006": 0.749058734939759,
+            "mean_current": 0.8109939759036143,
+            "difference": -0.061935240963855276
+          },
+          {
+            "split": 9,
+            "seeds_006": [
+              2700,
+              2701,
+              2702
+            ],
+            "seeds_current": [
+              2700,
+              2701,
+              2702
+            ],
+            "mean_006": 0.7718373493975904,
+            "mean_current": 0.7762299196787148,
+            "difference": -0.004392570281124386
+          }
+        ]
+      }
+    }
+  ]
+}

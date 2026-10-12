@@ -163,18 +163,33 @@ class SubgraphRepresentation(GraphProcessor):
             for item in data
             for p in cast(Experiment, item["experiment"]).genotype.perturbations
         }
+        # DELETION-ONLY, ADDITIVE (2026-09-14). See the note in `Perturbation.process`:
+        # a GeneAddition perturbation is not a removal, and a consumer that reads
+        # `perturbation_indices` as "this gene is gone" shuts a reaction the strain
+        # actually overproduces through. `remove_subset` is unchanged.
+        deletion_names = {
+            p.systematic_gene_name
+            for item in data
+            for p in cast(Experiment, item["experiment"]).genotype.perturbations
+            if str(p.perturbation_type).endswith("deletion")
+        }
         node_ids = cell_graph["gene"].node_ids
         keep_idx = [i for i, name in enumerate(node_ids) if name not in perturbed_names]
         remove_idx = [i for i, name in enumerate(node_ids) if name in perturbed_names]
+        deletion_idx = [i for i, name in enumerate(node_ids) if name in deletion_names]
 
         self.masks["gene"]["kept"][keep_idx] = True
         self.masks["gene"]["perturbed"][remove_idx] = True
 
         return {
             "perturbed_names": perturbed_names,
+            "deletion_names": deletion_names,
             "keep_subset": torch.tensor(keep_idx, dtype=torch.long, device=self.device),
             "remove_subset": torch.tensor(
                 remove_idx, dtype=torch.long, device=self.device
+            ),
+            "deletion_subset": torch.tensor(
+                deletion_idx, dtype=torch.long, device=self.device
             ),
             "keep_node_ids": [node_ids[i] for i in keep_idx],
         }
@@ -189,6 +204,7 @@ class SubgraphRepresentation(GraphProcessor):
         integrated_subgraph["gene"].num_nodes = len(gene_info["keep_node_ids"])
         integrated_subgraph["gene"].ids_pert = list(gene_info["perturbed_names"])
         integrated_subgraph["gene"].perturbation_indices = gene_info["remove_subset"]
+        integrated_subgraph["gene"].deletion_indices = gene_info["deletion_subset"]
 
         x_full = cell_graph["gene"].x
         integrated_subgraph["gene"].x = x_full[gene_info["keep_subset"]]
@@ -804,18 +820,33 @@ class IncidenceSubgraphRepresentation(GraphProcessor):
             for item in data
             for p in cast(Experiment, item["experiment"]).genotype.perturbations
         }
+        # DELETION-ONLY, ADDITIVE (2026-09-14). See the note in `Perturbation.process`:
+        # a GeneAddition perturbation is not a removal, and a consumer that reads
+        # `perturbation_indices` as "this gene is gone" shuts a reaction the strain
+        # actually overproduces through. `remove_subset` is unchanged.
+        deletion_names = {
+            p.systematic_gene_name
+            for item in data
+            for p in cast(Experiment, item["experiment"]).genotype.perturbations
+            if str(p.perturbation_type).endswith("deletion")
+        }
         node_ids = cell_graph["gene"].node_ids
         keep_idx = [i for i, name in enumerate(node_ids) if name not in perturbed_names]
         remove_idx = [i for i, name in enumerate(node_ids) if name in perturbed_names]
+        deletion_idx = [i for i, name in enumerate(node_ids) if name in deletion_names]
 
         self.masks["gene"]["kept"][keep_idx] = True
         self.masks["gene"]["perturbed"][remove_idx] = True
 
         return {
             "perturbed_names": perturbed_names,
+            "deletion_names": deletion_names,
             "keep_subset": torch.tensor(keep_idx, dtype=torch.long, device=self.device),
             "remove_subset": torch.tensor(
                 remove_idx, dtype=torch.long, device=self.device
+            ),
+            "deletion_subset": torch.tensor(
+                deletion_idx, dtype=torch.long, device=self.device
             ),
             "keep_node_ids": [node_ids[i] for i in keep_idx],
         }
@@ -830,6 +861,7 @@ class IncidenceSubgraphRepresentation(GraphProcessor):
         integrated_subgraph["gene"].num_nodes = len(gene_info["keep_node_ids"])
         integrated_subgraph["gene"].ids_pert = list(gene_info["perturbed_names"])
         integrated_subgraph["gene"].perturbation_indices = gene_info["remove_subset"]
+        integrated_subgraph["gene"].deletion_indices = gene_info["deletion_subset"]
 
         x_full = cell_graph["gene"].x
         integrated_subgraph["gene"].x = x_full[gene_info["keep_subset"]]
@@ -1494,18 +1526,33 @@ class LazySubgraphRepresentation(GraphProcessor):
             for item in data
             for p in cast(Experiment, item["experiment"]).genotype.perturbations
         }
+        # DELETION-ONLY, ADDITIVE (2026-09-14). See the note in `Perturbation.process`:
+        # a GeneAddition perturbation is not a removal, and a consumer that reads
+        # `perturbation_indices` as "this gene is gone" shuts a reaction the strain
+        # actually overproduces through. `remove_subset` is unchanged.
+        deletion_names = {
+            p.systematic_gene_name
+            for item in data
+            for p in cast(Experiment, item["experiment"]).genotype.perturbations
+            if str(p.perturbation_type).endswith("deletion")
+        }
         node_ids = cell_graph["gene"].node_ids
         keep_idx = [i for i, name in enumerate(node_ids) if name not in perturbed_names]
         remove_idx = [i for i, name in enumerate(node_ids) if name in perturbed_names]
+        deletion_idx = [i for i, name in enumerate(node_ids) if name in deletion_names]
 
         self.masks["gene"]["kept"][keep_idx] = True
         self.masks["gene"]["perturbed"][remove_idx] = True
 
         return {
             "perturbed_names": perturbed_names,
+            "deletion_names": deletion_names,
             "keep_subset": torch.tensor(keep_idx, dtype=torch.long, device=self.device),
             "remove_subset": torch.tensor(
                 remove_idx, dtype=torch.long, device=self.device
+            ),
+            "deletion_subset": torch.tensor(
+                deletion_idx, dtype=torch.long, device=self.device
             ),
             "keep_node_ids": [node_ids[i] for i in keep_idx],
         }
@@ -1524,6 +1571,7 @@ class LazySubgraphRepresentation(GraphProcessor):
         ].num_nodes  # Full count
         integrated_subgraph["gene"].ids_pert = list(gene_info["perturbed_names"])
         integrated_subgraph["gene"].perturbation_indices = gene_info["remove_subset"]
+        integrated_subgraph["gene"].deletion_indices = gene_info["deletion_subset"]
 
         # ZERO-COPY: Reference full x tensor (no slicing/copying)
         integrated_subgraph["gene"].x = cell_graph["gene"].x  # [num_nodes, feat_dim]
@@ -1987,11 +2035,21 @@ class Perturbation(GraphProcessor):
     Uses COO format for phenotypes and does not copy the base graph structure.
     """
 
-    def __init__(self) -> None:
-        """Initialize the CPU device used for tensor construction."""
+    def __init__(self, deletion_only: bool = False) -> None:
+        """Initialize the CPU device used for tensor construction.
+
+        Args:
+            deletion_only: When True, ``perturbation_indices`` and the masks carry only
+                the genes whose perturbation type ends with "deletion", so a gene the
+                strain carries as an added or altered allele (the Cachera cassette's
+                ARO4^K229L and ARO7^G141S) stays in the graph and out of the pooled
+                perturbed-gene set. The default keeps every perturbation's gene, which
+                is what every earlier run consumed.
+        """
         super().__init__()
         # Always use CPU for pin_memory compatibility
         self.device = torch.device("cpu")
+        self.deletion_only = deletion_only
 
     def process(
         self,
@@ -2020,10 +2078,31 @@ class Perturbation(GraphProcessor):
             p.systematic_gene_name
             for item in data
             for p in cast(Experiment, item["experiment"]).genotype.perturbations
+            if not self.deletion_only or str(p.perturbation_type).endswith("deletion")
         }
         node_ids = cell_graph["gene"].node_ids
         perturbed_indices = [
             i for i, name in enumerate(node_ids) if name in perturbed_names
+        ]
+        # THE DELETION-ONLY INDEX (2026-09-14), ADDITIVE. `perturbed_names` above collects
+        # EVERY perturbation's gene regardless of type, which is right for the backbone (a
+        # perturbed gene's node is removed either way) and wrong for anything that reads it
+        # as "this gene is gone". The Cachera betaxanthin cassette records ARO4^K229L
+        # (YBR249C) and ARO7^G141S (YPR060C) as GeneAddition perturbations
+        # (cachera2023.py:67-113): those strains OVERPRODUCE through the alleles, and the
+        # flux layer's availability gate was shutting DAHP synthase and chorismate mutase in
+        # every betaxanthin genotype because the two names appeared in
+        # `perturbation_indices`. `deletion_indices` carries only the genes whose
+        # `perturbation_type` ends with "deletion". `perturbation_indices` is UNCHANGED, so
+        # every consumer that has not opted in behaves exactly as before.
+        deletion_names = {
+            p.systematic_gene_name
+            for item in data
+            for p in cast(Experiment, item["experiment"]).genotype.perturbations
+            if str(p.perturbation_type).endswith("deletion")
+        }
+        deletion_indices = [
+            i for i, name in enumerate(node_ids) if name in deletion_names
         ]
 
         # Create perturbation mask: True for perturbed genes
@@ -2039,6 +2118,10 @@ class Perturbation(GraphProcessor):
         processed_graph["gene"].perturbed_genes = list(perturbed_names)
         processed_graph["gene"].perturbation_indices = torch.tensor(
             perturbed_indices, dtype=torch.long, device=self.device
+        )
+        processed_graph["gene"].deleted_genes = sorted(deletion_names)
+        processed_graph["gene"].deletion_indices = torch.tensor(
+            deletion_indices, dtype=torch.long, device=self.device
         )
 
         # Store masks

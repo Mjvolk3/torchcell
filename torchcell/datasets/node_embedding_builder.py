@@ -8,6 +8,7 @@ from torchcell.datasets.codon_frequency import CodonFrequencyDataset
 from torchcell.datasets.codon_language_model import CalmDataset
 from torchcell.datasets.esm2 import Esm2Dataset
 from torchcell.datasets.fungal_up_down_transformer import FungalUpDownTransformerDataset
+from torchcell.datasets.go_term_hot import GOTermEmbeddingDataset
 from torchcell.datasets.nucleotide_transformer import NucleotideTransformerDataset
 
 # Import from sibling submodules directly, not the package __init__, to avoid a
@@ -16,6 +17,8 @@ from torchcell.datasets.one_hot_gene import OneHotGeneDataset
 from torchcell.datasets.protT5 import ProtT5Dataset
 from torchcell.datasets.random_embedding import RandomEmbeddingDataset
 from torchcell.datasets.sgd_gene_graph import GraphEmbeddingDataset
+from torchcell.datasets.sgd_gene_graph_hot import OneHotGraphEmbeddingDataset
+from torchcell.datasets.solve_vector import SolveVectorEmbeddingDataset
 
 
 class NodeEmbeddingBuilder:
@@ -144,6 +147,107 @@ class NodeEmbeddingBuilder:
             "root_path": "data/scerevisiae/sgd_gene_graph_hot",
             "requires_graph": True,
             "model_name": "chrom_pathways",
+        },
+        # The five scaled gene properties and the chromosome one-hot without the pathway
+        # columns: the attribution control for normalized_chrom_pathways (028 round 14).
+        "normalized_chrom": {
+            "class": OneHotGraphEmbeddingDataset,
+            "root_path": "data/scerevisiae/sgd_gene_graph_hot",
+            "requires_graph": True,
+            "model_name": "normalized_chrom",
+        },
+        # The indicator split into its blocks (028 round 22): the pathway multi-hot
+        # alone, the chromosome one-hot alone, the seven scaled properties alone.
+        "pathways": {
+            "class": OneHotGraphEmbeddingDataset,
+            "root_path": "data/scerevisiae/sgd_gene_graph_hot",
+            "requires_graph": True,
+            "model_name": "pathways",
+        },
+        "chromosome": {
+            "class": OneHotGraphEmbeddingDataset,
+            "root_path": "data/scerevisiae/sgd_gene_graph_hot",
+            "requires_graph": True,
+            "model_name": "chromosome",
+        },
+        # Gene Ontology multi-hot (028 round 26): the SGD annotations propagated to
+        # ancestors (is_a and part_of) over terms with ten or more genes, the direct
+        # annotations alone, and one namespace at a time.
+        "go": {
+            "class": GOTermEmbeddingDataset,
+            "root_path": "data/scerevisiae/go_term_hot",
+            "requires_genome": True,
+            "model_name": "go",
+        },
+        "go_direct": {
+            "class": GOTermEmbeddingDataset,
+            "root_path": "data/scerevisiae/go_term_hot",
+            "requires_genome": True,
+            "model_name": "go_direct",
+        },
+        "go_bp": {
+            "class": GOTermEmbeddingDataset,
+            "root_path": "data/scerevisiae/go_term_hot",
+            "requires_genome": True,
+            "model_name": "go_bp",
+        },
+        "go_mf": {
+            "class": GOTermEmbeddingDataset,
+            "root_path": "data/scerevisiae/go_term_hot",
+            "requires_genome": True,
+            "model_name": "go_mf",
+        },
+        "go_cc": {
+            "class": GOTermEmbeddingDataset,
+            "root_path": "data/scerevisiae/go_term_hot",
+            "requires_genome": True,
+            "model_name": "go_cc",
+        },
+        # The deletion's solved flux as a gene embedding (028 round 43): log(1 + |v|)
+        # over the GEM's reactions from a solve store, the pFBA store on YPD and the
+        # stores by other solvers and on synthetic complete medium.
+        "solve_log1p": {
+            "class": SolveVectorEmbeddingDataset,
+            "root_path": "data/scerevisiae/solve_vector",
+            "requires_genome": True,
+            "model_name": "solve_log1p",
+        },
+        "solve_log1p_ipm": {
+            "class": SolveVectorEmbeddingDataset,
+            "root_path": "data/scerevisiae/solve_vector",
+            "requires_genome": True,
+            "model_name": "solve_log1p_ipm",
+        },
+        "solve_log1p_pdlp": {
+            "class": SolveVectorEmbeddingDataset,
+            "root_path": "data/scerevisiae/solve_vector",
+            "requires_genome": True,
+            "model_name": "solve_log1p_pdlp",
+        },
+        "solve_log1p_sc": {
+            "class": SolveVectorEmbeddingDataset,
+            "root_path": "data/scerevisiae/solve_vector",
+            "requires_genome": True,
+            "model_name": "solve_log1p_sc",
+        },
+        # The pFBA vector reduced by PCA before the node (028 round 44).
+        "solve_log1p_pca64": {
+            "class": SolveVectorEmbeddingDataset,
+            "root_path": "data/scerevisiae/solve_vector",
+            "requires_genome": True,
+            "model_name": "solve_log1p_pca64",
+        },
+        "solve_log1p_pca16": {
+            "class": SolveVectorEmbeddingDataset,
+            "root_path": "data/scerevisiae/solve_vector",
+            "requires_genome": True,
+            "model_name": "solve_log1p_pca16",
+        },
+        "normalized_props": {
+            "class": OneHotGraphEmbeddingDataset,
+            "root_path": "data/scerevisiae/sgd_gene_graph_hot",
+            "requires_graph": True,
+            "model_name": "normalized_props",
         },
         # Random embeddings
         "random_1000": {

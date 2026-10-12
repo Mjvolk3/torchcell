@@ -1,0 +1,595 @@
+{
+  "kdraw": {
+    "title": "027 wave 8: K latent draws per forward pass",
+    "n_runs": 30,
+    "tags_any": [
+      "gh_wave8_samp",
+      "gh_wave6_proj"
+    ],
+    "groupby": [
+      "flux_draws",
+      "flux_latent_stochastic"
+    ],
+    "curves": [
+      "val_pearson",
+      "val_pred_sd_ratio",
+      "latent_sigma_p50",
+      "flux_draw_pred_sd",
+      "train_data_loss",
+      "c_kl",
+      "feas_flux_active_frac"
+    ],
+    "scalars": [
+      "test_spearman_pinned",
+      "select_val_pearson"
+    ],
+    "metrics_not_logged_by_any_run": [],
+    "workspace_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx?nw=uo7zfv24xlb",
+    "report_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/reports/027-wave-8:-K-latent-draws-per-forward-pass--VmlldzoxNzkyMjM3OQ==",
+    "panels_per_row": 6
+  },
+  "densbal": {
+    "title": "027 wave 8: turnover density and active-row balance on the boxforce head",
+    "n_runs": 13,
+    "tags_any": [
+      "gh_wave8_dens",
+      "gh_wave8_densbal",
+      "gh_wave7_ff"
+    ],
+    "groupby": [
+      "flux_density_weight",
+      "flux_balance_active_weight"
+    ],
+    "curves": [
+      "val_pearson",
+      "val_pred_sd_ratio",
+      "c_density",
+      "c_balance_active",
+      "feas_active_row_frac",
+      "feas_flux_active_frac",
+      "feas_balance_active_p95",
+      "feas_balance_active_max",
+      "feas_thermo_violation_frac",
+      "feas_box_violation_frac"
+    ],
+    "scalars": [
+      "test_spearman_pinned",
+      "feas/pinned_test_top100/balance_max_ratio_median",
+      "feas/pinned_test_top100/thermo_standard_state_violation_frac_eq_0"
+    ],
+    "metrics_not_logged_by_any_run": [],
+    "workspace_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx?nw=z0gc792dywv",
+    "report_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/reports/027-wave-8:-turnover-density-and-active-row-balance-on-the-boxforce-head--VmlldzoxNzkyMjM3Mw==",
+    "panels_per_row": 6
+  },
+  "aa": {
+    "title": "027 waves 7 and 8: amino-acid readouts on the anchored projection head",
+    "n_runs": 34,
+    "tags_any": [
+      "gh_wave7_aa",
+      "gh_wave8_aa"
+    ],
+    "groupby": [
+      "readout_group",
+      "thermo_source",
+      "volume_table",
+      "conc_space"
+    ],
+    "curves": [
+      "val_pearson",
+      "val_loss",
+      "val_pred_sd_ratio",
+      "train_data_loss",
+      "train_loss"
+    ],
+    "scalars": [
+      "test_mean_spearman_pinned",
+      "conc/pinned_test/mean_spearman",
+      "conc/pinned_test/frac_pred_at_ceiling",
+      "select_val_pearson"
+    ],
+    "metrics_not_logged_by_any_run": [
+      "latent_sigma_p50"
+    ],
+    "workspace_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx?nw=hvk1dcemnhw",
+    "report_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/reports/027-waves-7-and-8:-amino-acid-readouts-on-the-anchored-projection-head--VmlldzoxNzkyMjM4MQ==",
+    "panels_per_row": 6
+  },
+  "bxread": {
+    "title": "027 wave 8: betaxanthin readouts, precursor concentration vs scalar vs pooled",
+    "n_runs": 9,
+    "tags_any": [
+      "gh_wave8_bx"
+    ],
+    "groupby": [
+      "readout_group"
+    ],
+    "curves": [
+      "val_pearson",
+      "val_loss",
+      "val_pred_sd_ratio",
+      "train_data_loss",
+      "feas_flux_active_frac"
+    ],
+    "scalars": [
+      "test_spearman_pinned",
+      "select_val_pearson"
+    ],
+    "metrics_not_logged_by_any_run": [
+      "latent_sigma_p50"
+    ],
+    "workspace_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx?nw=ytr45azlq9y",
+    "report_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/reports/027-wave-8:-betaxanthin-readouts,-precursor-concentration-vs-scalar-vs-pooled--VmlldzoxNzkyMzM5Mg==",
+    "panels_per_row": 6
+  },
+  "aasamp": {
+    "title": "027 wave 8: K latent draws on the amino-acid concentration readout",
+    "n_runs": 6,
+    "tags_any": [
+      "gh_wave8_aasamp"
+    ],
+    "groupby": [
+      "flux_draws"
+    ],
+    "curves": [
+      "val_pearson",
+      "val_loss",
+      "flux_draw_pred_sd",
+      "latent_sigma_p50",
+      "c_kl",
+      "train_data_loss"
+    ],
+    "scalars": [
+      "test_mean_spearman_pinned",
+      "conc/pinned_test/mean_spearman",
+      "select_val_pearson"
+    ],
+    "metrics_not_logged_by_any_run": [],
+    "workspace_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx?nw=2mym7w1el5q",
+    "report_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/reports/027-wave-8:-K-latent-draws-on-the-amino-acid-concentration-readout--VmlldzoxNzkyNzA2NA==",
+    "panels_per_row": 6
+  },
+  "aa_all": {
+    "title": "027: every amino-acid run, all waves",
+    "n_runs": 50,
+    "tags_any": [
+      "mulleder19",
+      "gh_wave6_aa",
+      "gh_wave7_aa",
+      "gh_wave8_aa",
+      "gh_wave8_aasamp"
+    ],
+    "groupby": [
+      "readout_group",
+      "arm",
+      "epochs",
+      "thermo_source",
+      "volume_table",
+      "conc_space",
+      "flux_draws"
+    ],
+    "curves": [
+      "val_pearson",
+      "val_loss",
+      "val_pred_sd_ratio",
+      "train_data_loss",
+      "flux_draw_pred_sd",
+      "latent_sigma_p50"
+    ],
+    "scalars": [
+      "test_mean_spearman_pinned",
+      "conc/pinned_test/mean_spearman",
+      "select_val_pearson"
+    ],
+    "metrics_not_logged_by_any_run": [],
+    "workspace_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx?nw=9wgb2y25y4r",
+    "report_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/reports/027:-every-amino-acid-run,-all-waves--VmlldzoxNzkyNzA5MA==",
+    "panels_per_row": 6
+  },
+  "aa_moduleon": {
+    "title": "027: is the metabolic module on for amino acids? pooled vs flux-coupled vs context-only",
+    "n_runs": 21,
+    "tags_any": [
+      "w7aa",
+      "w8aa_ctxconc",
+      "w8aa_nodiss"
+    ],
+    "groupby": [
+      "readout_group",
+      "arm"
+    ],
+    "curves": [
+      "val_pearson",
+      "val_pred_sd_ratio",
+      "val_loss",
+      "train_data_loss",
+      "train_loss"
+    ],
+    "scalars": [
+      "test_mean_spearman_pinned",
+      "conc/pinned_test/mean_spearman",
+      "select_val_pearson"
+    ],
+    "metrics_not_logged_by_any_run": [
+      "latent_sigma_p50"
+    ],
+    "workspace_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx?nw=yxntcreb2vq",
+    "report_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/reports/027:-is-the-metabolic-module-on-for-amino-acids?-pooled-vs-flux-coupled-vs-context-only--VmlldzoxNzkzNDA5Mw==",
+    "panels_per_row": 6
+  },
+  "bxctx": {
+    "title": "027 wave 9: betaxanthin, precursor concentration vs its context-only control vs scalar vs pooled",
+    "n_runs": 11,
+    "tags_any": [
+      "gh_wave8_bx",
+      "gh_wave9_bx"
+    ],
+    "groupby": [
+      "readout_group",
+      "arm"
+    ],
+    "curves": [
+      "val_pearson",
+      "val_pred_sd_ratio",
+      "val_loss",
+      "train_data_loss",
+      "feas_flux_active_frac"
+    ],
+    "scalars": [
+      "test_spearman_pinned",
+      "select_val_pearson"
+    ],
+    "metrics_not_logged_by_any_run": [
+      "latent_sigma_p50"
+    ],
+    "workspace_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx?nw=sbb0xwvbysg",
+    "report_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/reports/027-wave-9:-betaxanthin,-precursor-concentration-vs-its-context-only-control-vs-scalar-vs-pooled--VmlldzoxNzkzNDA5NQ==",
+    "panels_per_row": 6
+  },
+  "ib": {
+    "title": "027 wave 9: isobutanol (Lopez 2024 biosensor), pooled vs scalar flux vs precursor concentration",
+    "n_runs": 5,
+    "tags_any": [
+      "gh_wave9_ib"
+    ],
+    "groupby": [
+      "readout_group",
+      "constraint_scale",
+      "arm"
+    ],
+    "curves": [
+      "val_pearson",
+      "val_pred_sd_ratio",
+      "val_loss",
+      "train_data_loss",
+      "feas_flux_active_frac"
+    ],
+    "scalars": [
+      "test_spearman_pinned",
+      "select_val_pearson"
+    ],
+    "metrics_not_logged_by_any_run": [
+      "latent_sigma_p50"
+    ],
+    "workspace_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx?nw=dudjpfaxvpd",
+    "report_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/reports/027-wave-9:-isobutanol-(Lopez-2024-biosensor),-pooled-vs-scalar-flux-vs-precursor-concentration--VmlldzoxNzkzNDA5Nw==",
+    "panels_per_row": 6
+  },
+  "warmstart": {
+    "title": "027 wave 9: the warm-started residual head against the boxforce controls (feasibility first)",
+    "n_runs": 14,
+    "tags_any": [
+      "gh_wave9_warmstart",
+      "gh_wave8_dens",
+      "gh_wave8_densbal",
+      "gh_wave7_ff"
+    ],
+    "groupby": [
+      "flux_parameterization",
+      "arm",
+      "flux_balance_active_weight"
+    ],
+    "curves": [
+      "feas_balance_active_max",
+      "feas_balance_active_p95",
+      "feas_flux_active_frac",
+      "feas_active_row_frac",
+      "feas_thermo_violation_frac",
+      "feas_box_violation_frac",
+      "c_balance_active",
+      "c_parsimony",
+      "val_pred_sd_ratio",
+      "val_pearson",
+      "train_data_loss"
+    ],
+    "scalars": [
+      "test_spearman_pinned",
+      "feas/pinned_test_top100/balance_max_ratio_median",
+      "select_val_pearson"
+    ],
+    "metrics_not_logged_by_any_run": [
+      "latent_sigma_p50"
+    ],
+    "workspace_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx?nw=pyqmq58ihgr",
+    "report_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/reports/027-wave-9:-the-warm-started-residual-head-against-the-boxforce-controls-(feasibility-first)--VmlldzoxNzkzNDA5OQ==",
+    "panels_per_row": 6
+  },
+  "ess": {
+    "title": "027 wave 9: gene essentiality, pooled backbone vs biomass flux readout",
+    "n_runs": 15,
+    "tags_any": [
+      "w9esspool",
+      "w9essflux",
+      "w9essshuffled",
+      "w9essgenoref"
+    ],
+    "groupby": [
+      "arm",
+      "flux_shuffle_kcat_seed"
+    ],
+    "curves": [
+      "val_pearson",
+      "val_loss",
+      "val_pred_sd_ratio",
+      "train_data_loss",
+      "train_loss",
+      "feas_balance_active_max",
+      "feas_flux_active_frac"
+    ],
+    "scalars": [
+      "test_auroc_pinned",
+      "test_accuracy_pinned",
+      "test_majority_rate_pinned",
+      "test_recall_essential_pinned",
+      "test_auroc_all",
+      "select_val_pearson"
+    ],
+    "metrics_not_logged_by_any_run": [],
+    "groups": {
+      "w9essflux": {
+        "url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/groups/w9essflux",
+        "run_ids": [
+          "0f5yjgf3",
+          "s8g1cuwm",
+          "7jjuuw1n"
+        ]
+      },
+      "w9esspool": {
+        "url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/groups/w9esspool",
+        "run_ids": [
+          "v62zo8ij",
+          "9lmlnzui",
+          "fytcivaw"
+        ]
+      },
+      "w9esspool_smoke": {
+        "url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/groups/w9esspool_smoke",
+        "run_ids": [
+          "540dihuc"
+        ]
+      }
+    },
+    "workspace_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx?nw=i2i6b7eonfw",
+    "panels_per_row": 6
+  },
+  "loss": {
+    "title": "027 wave 10: betaxanthin loss contrast, CRPS learned sigma vs MSE vs CRPS fixed sigma 0.40",
+    "n_runs": 9,
+    "tags_any": [
+      "w9bxctxprec",
+      "w10bxctxprecmse",
+      "w10bxctxprecsfix"
+    ],
+    "groupby": [
+      "loss_arm"
+    ],
+    "curves": [
+      "val_pearson",
+      "val_loss",
+      "val_pred_sd_ratio",
+      "train_data_loss",
+      "train_loss",
+      "graph_reg_loss"
+    ],
+    "scalars": [
+      "test_spearman_pinned",
+      "test_pearson_pinned",
+      "select_val_pearson"
+    ],
+    "metrics_not_logged_by_any_run": [],
+    "groups": {
+      "w10bxctxprecmse": {
+        "url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/groups/w10bxctxprecmse",
+        "run_ids": [
+          "w0g5yg7j",
+          "kzt46r4k",
+          "57ojzd1o"
+        ]
+      },
+      "w10bxctxprecsfix": {
+        "url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/groups/w10bxctxprecsfix",
+        "run_ids": [
+          "37ei2657",
+          "2cppvy28",
+          "lb4irs2e"
+        ]
+      },
+      "w9bxctxprec": {
+        "url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/groups/w9bxctxprec",
+        "run_ids": [
+          "oi8k8rno",
+          "7rl2fx2s",
+          "xt91nxqb"
+        ]
+      }
+    },
+    "workspace_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx?nw=4k3un065zoc",
+    "panels_per_row": 6
+  },
+  "feasladder": {
+    "title": "027 wave 10: the frozen warm-start head, penalty ladder and the 10-epoch window",
+    "n_runs": 10,
+    "tags_any": [
+      "warmstart_frozen",
+      "warmstart_frozen_e10",
+      "warmstart_frozen_bw00",
+      "warmstart_frozen_bw01",
+      "warmstart_frozen_bw2",
+      "warmstart_frozen_nopen"
+    ],
+    "groupby": [
+      "epochs",
+      "flux_balance_active_weight",
+      "constraint_scale",
+      "flux_parsimony_weight"
+    ],
+    "curves": [
+      "val_pred_sd_ratio",
+      "feas_balance_active_max",
+      "feas_balance_active_p95",
+      "feas_active_row_frac",
+      "feas_flux_active_frac",
+      "feas_box_violation_frac",
+      "feas_thermo_violation_frac",
+      "c_balance_active",
+      "c_parsimony",
+      "c_density",
+      "val_pearson",
+      "train_data_loss"
+    ],
+    "scalars": [
+      "test_spearman_pinned",
+      "feas/pinned_test_top100/balance_max_ratio_median",
+      "feas/pinned_test_top100/box_violation_frac_median",
+      "select_val_pearson"
+    ],
+    "metrics_not_logged_by_any_run": [],
+    "groups": {
+      "warmstart_frozen": {
+        "url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/groups/warmstart_frozen",
+        "run_ids": [
+          "hf3b27fg",
+          "ozyjqone",
+          "pz0aphkf"
+        ]
+      },
+      "warmstart_frozen_bw00": {
+        "url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/groups/warmstart_frozen_bw00",
+        "run_ids": [
+          "gmiqz57i"
+        ]
+      },
+      "warmstart_frozen_bw01": {
+        "url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/groups/warmstart_frozen_bw01",
+        "run_ids": [
+          "1qo2wet7"
+        ]
+      },
+      "warmstart_frozen_bw2": {
+        "url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/groups/warmstart_frozen_bw2",
+        "run_ids": [
+          "xhk2vv4q"
+        ]
+      },
+      "warmstart_frozen_e10": {
+        "url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/groups/warmstart_frozen_e10",
+        "run_ids": [
+          "5998e9az",
+          "wdmdjelt",
+          "kic49mtv"
+        ]
+      },
+      "warmstart_frozen_nopen": {
+        "url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/groups/warmstart_frozen_nopen",
+        "run_ids": [
+          "5w4y7jux"
+        ]
+      }
+    },
+    "workspace_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx?nw=mwzavkv9d8w",
+    "panels_per_row": 6
+  },
+  "esssize": {
+    "title": "027 wave 11: model size against curve stability on gene essentiality",
+    "n_runs": 17,
+    "tags_any": [
+      "w11esssize_h54p2",
+      "w11esssize_h24p1",
+      "w11esssize_h12p1",
+      "w9esspool"
+    ],
+    "groupby": [
+      "hidden",
+      "preprocessor_layers",
+      "layers"
+    ],
+    "curves": [
+      "val_pearson",
+      "val_loss",
+      "train_data_loss",
+      "train_loss",
+      "val_pred_sd_ratio",
+      "grad_norm_mean",
+      "grad_norm_max",
+      "grad_clipped_frac",
+      "grad_norm_embedding_preprocessor_mean",
+      "grad_norm_transformer_layers_mean",
+      "grad_norm_essentiality_head_mean",
+      "graph_reg_loss"
+    ],
+    "scalars": [
+      "test_auroc_pinned",
+      "test_accuracy_pinned",
+      "test_recall_essential_pinned",
+      "select_val_pearson"
+    ],
+    "metrics_not_logged_by_any_run": [],
+    "groups": {
+      "w11esssize_h12p1": {
+        "url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/groups/w11esssize_h12p1",
+        "run_ids": [
+          "bjlk7m7g",
+          "0ojod7g4",
+          "ixk44vrk"
+        ]
+      },
+      "w11esssize_h12p1_smoke": {
+        "url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/groups/w11esssize_h12p1_smoke",
+        "run_ids": [
+          "0a1k5wv7"
+        ]
+      },
+      "w11esssize_h24p1": {
+        "url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/groups/w11esssize_h24p1",
+        "run_ids": [
+          "dqlt6h1c",
+          "w7cc2x38",
+          "su5zilbk"
+        ]
+      },
+      "w11esssize_h54p2": {
+        "url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/groups/w11esssize_h54p2",
+        "run_ids": [
+          "08ogqh8l",
+          "o7mop2xg"
+        ]
+      },
+      "w9esspool": {
+        "url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/groups/w9esspool",
+        "run_ids": [
+          "v62zo8ij",
+          "9lmlnzui",
+          "fytcivaw"
+        ]
+      },
+      "w9esspool_smoke": {
+        "url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/groups/w9esspool_smoke",
+        "run_ids": [
+          "540dihuc"
+        ]
+      }
+    },
+    "workspace_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx?nw=zc8u9y9k6pb",
+    "panels_per_row": 6
+  }
+}

@@ -1,0 +1,452 @@
+{
+  "cell": {
+    "arm": "flux_projection_anchored",
+    "base_arm": "flux_projection_anchored",
+    "seed": 9401,
+    "permute_train_targets": false,
+    "epochs": 1,
+    "hidden": 90,
+    "layers": 2,
+    "attention_heads": 9,
+    "batch_size": 128,
+    "num_workers": 0,
+    "lr": 0.001,
+    "weight_decay": 0.0001,
+    "split_seed": 0,
+    "select_smoothing_window": 5,
+    "crps": true,
+    "graph_reg": true,
+    "abort_on_collapse": false,
+    "aux_mulleder": false,
+    "attention_mask": false,
+    "learnable_embedding": false,
+    "pert_heads": 6,
+    "kcat_tier": "predicted",
+    "thermo_source": "union_external",
+    "constraint_warmup_epochs": 20,
+    "constraint_scale": 0.1,
+    "constraint_delay_epochs": 0,
+    "head_normalize": false,
+    "head": "betaxanthin",
+    "aa_readout": "flux_metabolite",
+    "target_log10_molar": false,
+    "dist": "crps",
+    "bx_readout": "flux_precursor_concentration",
+    "volume_table": "assumed",
+    "conc_space": "mixture",
+    "conc_lower_m": 1e-07,
+    "conc_upper_m": 1.0,
+    "flux_parameterization": null,
+    "flux_balance_active_weight": 0.0,
+    "flux_density_weight": 0.0,
+    "flux_draws": 1,
+    "flux_latent_stochastic": false,
+    "flux_kl_weight": null
+  },
+  "select_epoch": 0,
+  "select_rule": "raw_argmax_short_run",
+  "select_val_pearson": 0.008768944069743156,
+  "test": {
+    "pinned": {
+      "n": 629,
+      "spearman": 0.034948120758665234,
+      "pearson": 0.030185597017407417,
+      "top10": {
+        "hits": 1.0,
+        "enrichment": 0.9984126984126984
+      },
+      "top25": {
+        "hits": 2.0,
+        "enrichment": 0.7987301587301587
+      },
+      "top50": {
+        "hits": 3.0,
+        "enrichment": 0.599047619047619
+      }
+    },
+    "all": {
+      "n": 905,
+      "spearman": 0.012277848678759272,
+      "pearson": -0.004679461941123009,
+      "top10": {
+        "hits": 1.0,
+        "enrichment": 1.0055555555555558
+      },
+      "top25": {
+        "hits": 1.0,
+        "enrichment": 0.40222222222222226
+      },
+      "top50": {
+        "hits": 3.0,
+        "enrichment": 0.6033333333333334
+      }
+    }
+  },
+  "history": [
+    {
+      "epoch": 0,
+      "train_loss": 1.690565540872771,
+      "train_data_loss": 0.717922863261453,
+      "val_loss": 0.5055976443820529,
+      "val_pearson": 0.008768944069743156,
+      "val_pred_sd_ratio": 1.1002398423443083e-05,
+      "n_val": 270,
+      "graph_reg_loss": 0.9701396226882935,
+      "constraint_scale": 0.0,
+      "train_constraint_loss": 0.0,
+      "c_box": 0.004723217418610022,
+      "c_kl": 0.0,
+      "latent_n_draws": 1.0,
+      "feas_box_violation_frac": 0.5955934956155974,
+      "feas_capacity_active_frac": 0.7311741586389213,
+      "c_balance": 1.2293493087586234e-10,
+      "feas_balance_median": 6.010662328013096e-09,
+      "c_density": 0.2074488365444644,
+      "feas_active_row_frac": 0.7743767643796986,
+      "feas_flux_active_frac": 0.8809458613395691,
+      "c_balance_active": 9.457770470614344e-13,
+      "feas_balance_active_max": 4.853888264012218e-05,
+      "feas_balance_active_p95": 1.5854416507612893e-06,
+      "c_thermo": 0.5497124174545551,
+      "feas_thermo_violation_frac": 0.4993039934799589,
+      "g_diss_mean": 1812.1223291857489,
+      "g_diss": 1812.1223291857489,
+      "c_dissipation": 0.07848021256384151,
+      "protein_used": 0.300728323130772,
+      "c_budget": 0.11799162831799738,
+      "feas_budget_ratio": 0.8592237891822025,
+      "c_parsimony": 0.01293938401444205,
+      "c_thermo_prior": 0.0
+    }
+  ],
+  "flux_meta": {
+    "coverage": {
+      "n_reactions": 4131,
+      "n_metabolites": 2806,
+      "n_catalytic_units": 3728,
+      "n_gem_genes": 1161,
+      "n_gem_genes_in_model_universe": 1161,
+      "n_constitutive_genes": 0,
+      "n_reactions_with_gpr": 2709,
+      "n_independent_balance_rows": 2593,
+      "n_reactions_second_law_applied": 3514,
+      "n_reactions_second_law_exempt": 274,
+      "n_reactions_delta_g_known": 3779,
+      "frac_reactions_delta_g_known": 0.9147906303405762,
+      "n_metabolites_delta_f_g_known": 2389,
+      "frac_metabolites_delta_f_g_known": 0.8513898849487305,
+      "kcat_is_default_for_all_units": false,
+      "kcat_tier_counts": {
+        "measured": 97,
+        "predicted": 3613,
+        "default": 18,
+        "unknown": 0
+      },
+      "km_tier_counts": {
+        "measured": 97,
+        "predicted": 3613,
+        "default": 18,
+        "unknown": 0
+      },
+      "km_table_present": true,
+      "thermo_source": "union_external",
+      "thermo_route_counts": {
+        "none": 352,
+        "equilibrator": 3777,
+        "shipped_reaction_column": 2,
+        "known": 3779,
+        "n_reactions": 4131,
+        "sigma_known": 1755,
+        "shipped_reaction_rows_unit_corrected": 33,
+        "shipped_reaction_rows_unit_corrected_and_used": 1
+      },
+      "thermo_metabolite_counts": {
+        "n_metabolites": 2806,
+        "known": 2561,
+        "shipped": 2389,
+        "equilibrator": 2561
+      },
+      "n_reactions_delta_g_sigma_known": 1755,
+      "constraint_warmup_epochs": 20,
+      "constraint_final_scale": 0.1,
+      "constraint_scale_now": 0.1,
+      "mw_is_default_for_all_genes": false,
+      "use_abundance_head": true,
+      "abundance_prior_is_default": true,
+      "abundance_prior_median_mmol_per_gdw": 2.701207449717913e-06,
+      "n_transport_terms_sourced": 0,
+      "transport_term_is_zero": true,
+      "thermo_mode": "anchored",
+      "parameterization": "projection",
+      "parameterization_raw": "projection",
+      "projection_steps": 5,
+      "projection_end": "balance",
+      "projection_method": "alternating",
+      "rt_kj_per_mol": 2.5205293426466997,
+      "n_latent": 1538,
+      "null_basis_orthonormality_error": 2.384185791015625e-06,
+      "null_basis_balance_error": 3.5386530834163246e-06,
+      "thermo_box": false,
+      "thermo_box_margin_kj": 0.0,
+      "latent_stochastic": false,
+      "kl_weight": 0.001,
+      "thermo_uncertainty": "isotropic",
+      "n_delta_g_components": 0,
+      "n_reactions_covariance_covered": 0,
+      "delta_g_sqrt_cov_sha256": null
+    },
+    "kcat_experimental_fraction": 0.02601931330472103,
+    "kcat_tier": "predicted",
+    "kcat_tier_counts": {
+      "measured": 97,
+      "homolog": 782,
+      "predicted": 2831,
+      "default": 18
+    },
+    "kcat_notes": "Open Enzyme Database first (1126 organism rows, substrate-matched against 3710 units), then the EC homolog tier (35753 rows, any organism), then predicted tier = median over ezkinetics, eitlem, unikp (verified tables, admitted by own_class_band against the EC-median lookup at 0.532), then the median of the 879 database-tier values, 9.6 1/s. A complex takes the min over its subunits.",
+    "km_tier_counts": {
+      "measured": 97,
+      "homolog": 782,
+      "predicted": 2831,
+      "default": 18
+    },
+    "predicted_kcat_selection": {
+      "parameter": "k_cat",
+      "statistic": "own_class_band",
+      "baseline_fraction": 0.5319148936170213,
+      "ranked": [
+        [
+          "ezkinetics",
+          0.8297872340425532,
+          0.6986022390928663
+        ],
+        [
+          "eitlem",
+          0.7659574468085106,
+          0.6277574233192427
+        ],
+        [
+          "unikp",
+          0.7446808510638298,
+          0.6049182435213335
+        ],
+        [
+          "dlkcat",
+          0.6595744680851063,
+          0.5167092444816402
+        ],
+        [
+          "turnup",
+          0.6590909090909091,
+          0.5113914110064497
+        ],
+        [
+          "deepenzyme",
+          0.5531914893617021,
+          0.4124545973257825
+        ]
+      ],
+      "selected": [
+        "ezkinetics",
+        "eitlem",
+        "unikp"
+      ],
+      "source_path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/026-metabolism-flux/results/within_class_plausibility.json",
+      "sha256": "7184ea9488bb2570d2c53aa12891faf0f1052b8e6f60cc159e06d249bd29a58b"
+    },
+    "predicted_km_selection": {
+      "parameter": "K_M",
+      "statistic": "own_class_band",
+      "baseline_fraction": 0.48936170212765956,
+      "ranked": [
+        [
+          "ezkinetics",
+          0.6595744680851063,
+          0.5167092444816402
+        ],
+        [
+          "eitlem",
+          0.5106382978723404,
+          0.37242453646853413
+        ],
+        [
+          "unikp",
+          0.46808510638297873,
+          0.3333168698001677
+        ],
+        [
+          "boost_km",
+          0.44680851063829785,
+          0.3141096617157729
+        ]
+      ],
+      "selected": [
+        "ezkinetics"
+      ],
+      "source_path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/026-metabolism-flux/results/within_class_plausibility.json",
+      "sha256": "7184ea9488bb2570d2c53aa12891faf0f1052b8e6f60cc159e06d249bd29a58b"
+    },
+    "thermo_source": "union_external",
+    "thermo_route_counts": {
+      "none": 352,
+      "equilibrator": 3777,
+      "shipped_reaction_column": 2,
+      "known": 3779,
+      "n_reactions": 4131,
+      "sigma_known": 1755,
+      "shipped_reaction_rows_unit_corrected": 33,
+      "shipped_reaction_rows_unit_corrected_and_used": 1
+    },
+    "thermo_sha256": {
+      "met": "179a5aac4221ded673a5bba798870ca4cac9b9d19e955de6a0f25de65a3cee8f",
+      "rxn": "7a66ef5d7892bd65229e908e5eff4cd95e741d6c493ee8645d480a53e2da5796",
+      "dgpredictor_rows": "6a2de44497653d771c01f46f3fc80a2417f50ff9bdf898e14741a1aba5e529d5",
+      "equilibrator_met": "f9b564844e5b3b0946de179672ae7f6b78f2560821a2e3423059ff16400e8871",
+      "shipped_reaction_unit_correction": "6a2de44497653d771c01f46f3fc80a2417f50ff9bdf898e14741a1aba5e529d5",
+      "equilibrator_sigma": "c7f2ff7367a0599a207d86f04e15f817617c2c0c266af025c7a1dc883a6fc4be"
+    },
+    "mw_experimental_fraction": 1.0,
+    "betaxanthin_precursor_mixture": {
+      "tyrosine": [
+        {
+          "compartment": "c",
+          "species": "s_1051",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1053",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "p",
+          "species": "s_1054",
+          "fractional_volume": 0.005
+        },
+        {
+          "compartment": "v",
+          "species": "s_1055",
+          "fractional_volume": 0.18
+        }
+      ],
+      "phenylalanine": [
+        {
+          "compartment": "c",
+          "species": "s_1032",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1034",
+          "fractional_volume": 0.05
+        }
+      ],
+      "chorismate": [
+        {
+          "compartment": "c",
+          "species": "s_0515",
+          "fractional_volume": 0.65
+        }
+      ],
+      "prephenate": [
+        {
+          "compartment": "c",
+          "species": "s_1377",
+          "fractional_volume": 0.65
+        }
+      ],
+      "dahp": [
+        {
+          "compartment": "c",
+          "species": "s_0349",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_0350",
+          "fractional_volume": 0.05
+        }
+      ]
+    },
+    "compartment_volume_fractions": {
+      "fractions": {
+        "c": 0.65,
+        "v": 0.18,
+        "n": 0.1,
+        "m": 0.05,
+        "er": 0.015,
+        "p": 0.005
+      },
+      "sourced": {
+        "c": false,
+        "v": false,
+        "n": true,
+        "m": false,
+        "er": false,
+        "p": false
+      },
+      "source": "Nucleus: Milo and Phillips 2016, Cell Biology by the Numbers, mirrored paper.md sha256 a0b71fc2ec024108cc0d11a6ba08b5b32d6d9174386a73ac377f377364946eae, 'How big is a yeast cell?', citing BNID 100491 and 103952. Every other compartment: textbook exponential-phase values, ASSUMED, not sourced.",
+      "quote": "Prominent components of the cell volume include the nucleus, which takes up about $1 0 \\%$ of the total cell volume (BNID 100491, 103952), the cell wall, often ignored but making up $1 0 { - } 2 5 \\%$ (BNID 104593, 104592) of the total dry mass, and the endoplasmic reticulum and vacuole, which are usually the largest organelles.",
+      "sha256": "a0b71fc2ec024108cc0d11a6ba08b5b32d6d9174386a73ac377f377364946eae",
+      "note": "Five of the six entries are assumed and NEED CURATION. The weights set which compartment dominates a whole-cell average, so they change the physical reading of the prediction; they do not limit what the model can fit, because each compartment's concentration is free inside the window and can compensate for a wrong weight. The fractions sum to 1 over the intracellular compartments, and a compartment where the GEM has no species for an amino acid contributes nothing to that amino acid's average."
+    },
+    "sampling": {
+      "flux_draws": 1,
+      "latent_stochastic": false,
+      "latent_log_std_init": -3.0,
+      "kl_weight": 0.001,
+      "constraint_final_scale": 0.1,
+      "effective_kl_weight": 0.0001
+    }
+  },
+  "pinned_split": {
+    "path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/020-cachera-betaxanthin/results/merzbacher_nested_split.json",
+    "requested": 639,
+    "found": 639,
+    "absent": [],
+    "records": 639,
+    "fraction_of_dataset": 0.12961460446247464
+  },
+  "n_parameters": {
+    "gene_embedding": 0,
+    "embedding_preprocessor": 622439,
+    "cls_token": 90,
+    "transformer_layers": 196740,
+    "perturbation_transform": 98370,
+    "perturbation_head": 16381,
+    "total": 934032,
+    "betaxanthin_head": 12
+  },
+  "wall_time_s": 535.223025560379,
+  "code_provenance": {
+    "train_bx.py": "0bdfbe1810f79fea29a6a8858535fa83247cad4447a7950373b08864339b8b0d",
+    "train_bx.py_path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/027-betaxanthin-metabolic/scripts/train_bx.py",
+    "flux_layer.py": "98a7a8bfc6e0c3a036380c11880ba5d42958828149455356aa8c516dc2e2351f",
+    "flux_layer.py_path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/torchcell/metabolism/flux_layer.py"
+  },
+  "calibration": {
+    "available": false,
+    "reason": "the head emitted a point prediction; there is no PIT for it.",
+    "dist": "crps",
+    "group": null,
+    "n_measurements": null,
+    "columns": [],
+    "coverage": {},
+    "coverage_per_feature": {},
+    "pit_ks": null,
+    "pit_ks_per_feature": [],
+    "pit_mean": null,
+    "pit_histogram": []
+  },
+  "concentration_audit": {
+    "available": false,
+    "reason": "the learned log concentration exists only on a flux arm whose thermo_mode is ANCHORED, scored against the amino-acid phenotype; this cell is arm 'flux_projection_anchored' on head 'betaxanthin'.",
+    "supervised": false,
+    "conc_space": null,
+    "conc_lower_m": null,
+    "conc_upper_m": null,
+    "volume_fractions": null,
+    "mixture": {},
+    "groups": {}
+  }
+}

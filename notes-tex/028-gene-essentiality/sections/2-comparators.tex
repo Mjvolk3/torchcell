@@ -1,0 +1,454 @@
+%% notes-tex/028-gene-essentiality/sections/2-comparators.tex
+%% [[experiments.028-gene-essentiality.scripts.fba_essentiality_baseline]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/028-gene-essentiality/sections/2-comparators.tex
+
+\section{The comparators, computed rather than quoted\secstatus{todo}}
+\label{sec:comparators}
+
+\subsection{Flux balance analysis on four media\secstatus{todo}}
+
+The published FBA comparator is cobrapy \texttt{single\_gene\_deletion} with glucose as the
+carbon source, scored on all 1,121 labeled genes. The phenotype it is compared against was
+called on rich medium, and the model here is scored on the 195 held-out genes, so the
+comparison as published is neither on the same medium nor on the same genes.
+Table~\ref{tab:fba-media} recomputes it on yeast-GEM 9.0.2 under the exchange bounds the
+model ships with and under the three media the ontology defines, with the essentiality
+score being the negative knockout-to-wild-type growth ratio, rounded to $10^{-3}$ so that
+the roughly 900 deletions that grow at 0.99 to 1.00 of the wild type rank as the tie they
+are (without the rounding two identical runs differed by 0.03 AUROC on the held-out genes).
+
+\input{tables/fba_media}
+
+The medium moves the number of lethal deletions by a factor of two and the AUROC by about
+0.01. The published 0.69 on all labeled genes is reproduced to within 0.02.
+
+\subsection{yeast-GEM's own benchmark, and accuracy against balanced accuracy\secstatus{todo}}
+
+yeast-GEM ships its own essentiality benchmark and prints it in its README: on 1,107
+genes, an accuracy of 0.902 with 933 true non-essential, 65 true essential, 94 false
+non-essential and 15 false essential calls. Its release file
+(\texttt{results/external/yeast-GEM-9.1.1/}, version 9.1.1 at commit \texttt{2d594ae},
+2026-08-30) says how: the Kennedy synthetic complete medium is written onto the
+exchanges (every exchange closed, 28 uptakes at $-0.5$, glucose at $-20$, fifteen
+inorganic uptakes open), each gene is deleted through the gene-protein-reaction rules,
+and a deletion is inviable when its growth ratio is below $10^{-6}$; the genes are the
+SGD verified ORFs in the model, and the labels are the Stanford deletion project's
+inviable list of 2011, scored against the model at that one rule, a protocol the
+repository attributes to Heavner and Price (2015). The released split's labels are the
+same truth: on the 1,104 genes both name, the two sources agree on 1,102.
+
+Table~\ref{tab:confusion} puts every scorer in this document at that rule. Two things
+are visible at once. The first is that accuracy is the wrong statistic for this
+endpoint: 86 percent of the genes are nonessential, so a scorer that calls nothing
+essential reads 0.856 on yeast-GEM's set and 0.841 on the 195 held-out genes, and
+yeast-GEM's 0.902 is that floor plus four and a half points; its recall on the
+essential class is 0.41 and its balanced accuracy 0.70. FBA on the previous release, 9.0.2, under the ontology's own synthetic complete
+recipe reads 0.907 on the released labels with a recall of 0.46, the same rule on the
+same truth with a different medium composition, so the 9.1.1 number is reproduced to
+within half a point. The second is where the transformer sits at a threshold: at its loss's
+decision boundary it reads 0.856, the majority floor, with a recall of 0.68 and a
+balanced accuracy of 0.78, and at the threshold that calls 31 genes essential it reads
+0.867 with precision and recall both at 0.58. The released Flux Cone Learning
+predictions at $P(\text{viable}) < 0.5$ call eight genes essential on the 195, all eight
+correctly, for a recall of 0.26. A ranking statistic is what separates the scorers, and
+the balanced accuracies, 0.63 to 0.72 for the solvers and 0.78 for the transformer,
+order them the way the AUROCs do.
+
+\input{tables/confusion}
+
+\subsection{Flux Cone Learning on the same genes\secstatus{todo}}
+
+Recomputed from the authors' released per-gene predictions: 0.7308 on the 223 held-out
+genes (published 0.73) and 0.742 on the 195 genes the model scores. On those same 195 genes
+the released FBA predictions score 0.640, so the published pair overstates FBA by about
+0.06 relative to a head-to-head on one gene set. The paper prints a third number, 0.78
+$\pm$ 0.065 in the legend of its Figure 3a, which is the mean over five cross-validation
+folds drawn inside its 898 training genes; a model scored on the held-out genes is compared
+with the 0.73 line, never with that one.
+
+\subsection{The classical ladder on the same split\secstatus{todo}}
+
+The fitness and expression lines each carry a ladder of models that need no graph and no
+training beyond a solve, and essentiality gets the classification form of it: FBA's growth
+ratio with no fitting, then four model classes ($L_2$ logistic regression, a random
+forest, a radial-basis support vector classifier, cosine nearest neighbors) on each of
+twenty-four gene encodings, every pair fit twice, with and without the four FBA growth
+ratios appended. The encodings are the seventeen the fitness ladder carries (codon
+frequency, the chromosome and pathway indicator, six nucleotide windows, the two FUDT
+embeddings, the species language model, CaLM, ProtT5 and ESM2 with and without dubious
+genes, and their concatenation, \texttt{mixed}) plus seven controls: a one-hot gene
+identity, and standard normal vectors of dimension 1, 10, 100, 1,000, 6,607 (the one-hot's
+width) and 8,192, drawn once at seed 0. A one-hot rung must score chance on held-out genes,
+since every held-out column is zero in training, and a random vector must score chance at
+every width; either scoring above chance would mean the split leaks. Every fitted rung is
+fit on the split file's 629 training genes, its one hyperparameter chosen by five-fold
+stratified cross-validation inside those genes, and scored once on the 158 validation and
+195 held-out genes, on which nothing was chosen. The transformer cells in
+Sections~\ref{sec:backbone} and~\ref{sec:module} train on the same 629 genes and score on
+the same 195. Three further encodings come from the solve itself rather than from the
+sequence, added after round 8 (\texttt{ess\_reference\_flux\_table.py}): the deletion's
+own parsimonious FBA flux vector on YPD (4,131 reactions), that vector's difference from
+the wild-type vector, and eight numbers about the gene's own reactions under the
+wild-type solve and its flux variability at 90 percent of the optimum (reaction count,
+reactions carrying flux, the largest and the summed absolute flux, the largest forced
+flux, the smallest and largest variability range, and the deletion's growth ratio).
+Figure~\ref{fig:ladder} shows all 216 fitted rungs; Table~\ref{tab:ladder} keeps, per
+encoding, the model class whose cross-validation AUROC is highest.
+
+\tcfigfit[1.0]{figures/classical_ladder_2026-09-18-03-11-54.pdf}{\textbf{The classical
+  ladder on the released-label split.} Held-out AUROC on the 195 genes for every model
+  class (color) on every encoding (column), filled without and open with the four FBA
+  growth ratios appended; the dashed line is FBA alone on the shipped medium (0.654), the
+  solid line chance. The last three columns are the solve-derived encodings. The
+  hyperparameter of each mark was chosen by five-fold cross-validation inside the 629
+  training genes. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/logistic\_baselines.py}.}{fig:ladder}
+
+\input{tables/ladder}
+
+The controls behave. The one-hot rung scores 0.506 and the six random widths score 0.45
+to 0.59, chance within the 195-gene noise, and with FBA appended they score 0.56 to 0.69,
+FBA's own number, so no rung reads anything but its features. Without FBA four encodings
+are clear of 0.70: ProtT5 0.732, CaLM 0.734, the
+concatenation 0.768, and the chromosome-pathway indicator 0.775 [0.68, 0.86], each
+level with Flux Cone Learning's 0.742 on the same genes. FBA lifts every one of them:
+logistic regression on ProtT5 with the ratios scores 0.821 [0.74, 0.90] from 1,029
+parameters, the support vector classifier on 64 codon frequencies 0.818 [0.73, 0.90], the
+random forest on CaLM 0.806 [0.72, 0.89], and logistic regression on the 197-dimensional
+chromosome-pathway indicator 0.830 [0.75, 0.90]. The rung with the highest
+cross-validation AUROC, the random forest on CaLM with FBA at 0.850, scores 0.806 on the
+held-out genes; the highest held-out number in the figure, 0.841 for cosine nearest
+neighbors on codon frequency with FBA, is the maximum over 216 rungs and is not a
+selected model. Neither an embedding nor the solver reaches 0.80 alone, and their sum
+does on four encodings. FBA's ratio is a feature the ontology computes for every gene at
+no training cost, so the transformer is measured against 0.80 to 0.83 from here on, not
+against the published 0.73.
+
+The annotation vectors on their own. Logistic regression on the 173-column pathway
+multi-hot alone scores 0.771 [0.68, 0.85] with a cross-validation AUROC of 0.673, and
+with the four ratios 0.822, the level ProtT5 with the ratios reaches from 1,029
+parameters; the chromosome one-hot alone is below chance (0.421) and 0.692 with the
+ratios. The GO multi-hot is the strongest single encoding on the ladder: logistic
+regression on the propagated vector scores 0.808 [0.72, 0.89] with no solve at all,
+above every other encoding without FBA, and 0.833 with the ratios; the random forest on
+it with the ratios scores 0.844 [0.77, 0.91] at a cross-validation AUROC of 0.877, the
+highest of any rung. The propagated form beats the direct annotations under every model
+(0.808 against 0.739 linear without the ratios), and the biological-process namespace
+alone reaches 0.812 with them.
+
+The solve carries more than its growth ratio. The eight reaction statistics under a
+random forest score 0.797 [0.70, 0.88] with no sequence information, and 0.817
+[0.73, 0.90] with the four ratios appended, at the highest cross-validation AUROC in the
+ladder (0.847); the growth ratio alone, which is one of the eight, scores 0.645 on the
+same genes. The full deletion flux vector scores 0.756 under its selected model and
+0.771 under logistic regression, level with ProtT5 and with the pooled transformer, so a
+gene's position in the wild-type flux solution and how much the solve moves when it is
+deleted rank essential genes about as well as its protein sequence does, and the two
+sources are different: no other encoding reaches 0.80 without the solve, and the eight
+statistics come within 0.003 of it with nothing else.
+
+\subsection{Graph-only baselines: message passing over the gene graph\secstatus{todo}}
+
+The Gene\_Graph project (2021 to 2023) classified essential genes by two-layer graph
+convolution and graph attention over YeastMine's physical, genetic and regulatory
+interaction graphs with all-ones node inputs, and saved no number. The same design is
+rerun here on the released split (\texttt{graph\_baselines.py}): transductive node
+classification on one gene graph, where every gene's logit is a function of its
+neighborhood and its own features and no genotype is perturbed, on the physical
+interaction graph and on the union of the nine graphs the transformer reads, with all
+ones, with log degree and the clustering coefficient, or with ProtT5 as inputs, beside
+an MLP on ProtT5 with no graph (Table~\ref{tab:graph-baselines}).
+
+\input{tables/graph_baselines}
+
+Structure alone carries little and structure with sequence carries a lot. With all-ones
+inputs the models read 0.50 to 0.61, chance to the ladder's random-vector level, and with
+degree and clustering 0.58 to 0.70. With ProtT5 the MLP reads 0.754, the ladder's
+logistic rung plus 0.02, and graph convolution over the union of the nine graphs reads
+0.836, 0.829 and 0.836, a seed mean of 0.834 with a spread of 0.003 from 69,825
+parameters: the edges add 0.08 to the protein embedding, the physical graph alone adds
+0.015, and attention adds nothing over convolution on either graph. That cell is above
+the pooled transformer (0.774) and level with the transformer with FBA's four ratios
+(0.821) with no solve at all, and its three seeds select epochs 196 to 197 of 200 with
+the validation curve still rising; at 400 epochs the same cell reads 0.857 and selects
+epochs 392 to 397, so the budget is what bounds it.
+
+The labels alone carry more than any of these models read from the edges
+(Table~\ref{tab:graph-label-propagation}, \texttt{graph\_label\_propagation.py}). Scoring
+every held-out gene by the essential fraction among its labeled neighbors, the 787
+training and validation genes with a call, the STRING coexpression graph reads 0.902 on
+all 195 held-out genes with nothing fitted, over 118 labeled neighbors a gene, against a
+null of $0.509 \pm 0.062$ when each gene's labeled neighbors are replaced by as many
+labeled genes drawn at random ($z = 6.3$). The union of the nine reads 0.897, STRING
+experimental 0.782, STRING neighborhood 0.802 on the 141 genes it covers, STRING
+database 0.720 on 176, the physical graph 0.657 on 125 (within two null deviations) and
+TFLink 0.495; the regulatory graph reaches one held-out gene at one hop. Scored
+leave-one-out on the labeled genes the coexpression fraction reads 0.857 on 787. Two
+hops reach nearly every labeled gene and the read falls (coexpression 0.622; the union
+0.500, every gene reaching all 787). So one round of label propagation over coexpression
+is 0.07 above graph convolution with ProtT5 over the same union (0.834), 0.03 above the
+MLP with the transformer's three inputs (0.870), and 0.01 to 0.02 under the transformer
+on this split (0.912 to 0.920, Section~\ref{sec:round84-98}): what the convolution reads
+from the edges is a part of what the neighbors' labels say outright, and the transformer
+reaches its number without either, since its regularizer and its hard mask index a
+second block that no one-block cell has. The ladder that reads them
+(Section~\ref{sec:pattern-ladder}) finds the second block worth nothing whether
+regularized or masked, and the same propagation handed to the transformer as a store
+reads 0.912 alone and 0.925 beside the solve, the study's highest single cell and a
+transductive one.
+
+\input{tables/graph_label_propagation}
+
+\subsection{Does GO carry essentiality through its mutant-phenotype evidence?\secstatus{todo}}
+\label{sec:go-evidence}
+
+The GO multi-hot is built from the SGD GFF, which carries no evidence codes, so
+annotations SGD inferred from a mutant's phenotype are in it (Section~\ref{sec:endpoint});
+for an essential gene the mutant is usually a conditional allele, so an IMP annotation is
+knowledge obtained by crippling the gene. SGD's per-annotation records in
+\texttt{SCerevisiaeGraph.G\_go} carry the codes, so the vector is rebuilt with and without
+them (\texttt{go\_evidence\_store.py}, Table~\ref{tab:go-evidence}). IMP is not
+concentrated on the essential genes: it is 6.2 percent of their annotations and 8.0
+percent of the non-essential genes'. Graph convolution on the rebuilt vectors reads the
+same with every cut: 0.906 on all the evidence, 0.910 with IMP removed, 0.907 with every
+mutant-derived code removed, 0.900 with as many annotations removed at random, and 0.906
+with every experimental code removed, keeping only electronic, phylogenetic and
+statement evidence, three seeds each, sd 0.001 to 0.005. No cut moves the read by more
+than 0.01, and the mutant-derived cut sits above its random control, so GO's read of
+essentiality on this split is not carried by its mutant-phenotype annotations: the
+electronic and phylogenetic annotations alone read it at 0.906. The rebuilt store holds
+one evidence record per gene and term, so a pair supported by both a mutant phenotype
+and a direct assay carries one of the two codes, and a cut removes the pairs whose stored
+code it names.
+
+\input{tables/go_evidence}
+
+The transformer's inputs move these cells the way they move the transformer, and the
+comparison says where the transformer's number comes from. Given the chromosome-pathway
+indicator and the four FBA ratios as node features beside ProtT5, the MLP with no graph
+reads 0.870, 0.872 and 0.869, a seed mean of 0.870 with a spread of 0.001 in six seconds
+of CPU, which is the round-9 transformer's 0.871 from the same three inputs; graph
+convolution on the union reads 0.847 at 200 epochs and 0.877 at 400, still rising. The
+indicator alone beside ProtT5 lifts the MLP to 0.817 and the convolution to 0.850, the
+ratios alone to 0.803 and 0.832. On this endpoint, then, the three inputs carry the
+number and the architectures on top of them are level: a two-layer MLP, graph
+convolution over the nine graphs, and the perturbed-graph transformer read 0.87 to
+0.88 per cell from the same inputs. Given the transformer's own averaging, five fold
+models on the cross-validation files with their logits averaged on the held-out genes,
+the MLP reads 0.886 [0.82, 0.94] from fold models of 0.866 to 0.892, and the
+convolution at 400 epochs 0.888 [0.83, 0.93] from fold models of 0.807 to 0.897
+(\texttt{graph\_baselines.py --arms folds}), against the transformer's 0.893 [0.84,
+0.94]. Three ensembles within 0.007 of one another, each inside the others' intervals,
+are one number at the resolution of 195 genes, and the MLP's costs thirty seconds.
+
+\subsection{The message-passing architectures, as equations and as baselines\secstatus{todo}}
+\label{sec:mp-architectures}
+
+Every graph model in the comparator set is an instance of message passing: a node's
+representation is updated from an aggregate of its neighbors' representations,
+\begin{equation}
+  h_i^{(k)} = \gamma^{(k)}\Big(h_i^{(k-1)},\ \bigoplus_{j \in \mathcal{N}(i)}
+  \phi^{(k)}\big(h_i^{(k-1)}, h_j^{(k-1)}, e_{ji}\big)\Big),
+\end{equation}
+with $\phi$ the message, $\bigoplus$ a permutation-invariant aggregation and $\gamma$
+the update, which is the form the MATH-490 project set out from and the form the
+Gene\_Graph project's models take. The architectures differ in the three functions,
+and the differences are what the 1-WL result of the next subsection bears on.
+
+\begin{description}
+  \item[GCN] the symmetric-normalized mean with self-loops, $\hat A = A + I$,
+    $\hat d_i = \sum_j \hat A_{ij}$:
+    $h_i' = \Theta^{\top} \sum_{j \in \mathcal{N}(i) \cup \{i\}}
+    \hat A_{ji}\,(\hat d_j \hat d_i)^{-1/2}\, h_j$.
+  \item[GAT and GATv2] attention over the neighborhood,
+    $h_i' = \alpha_{ii}\Theta h_i + \sum_{j \in \mathcal{N}(i)} \alpha_{ij}\Theta h_j$,
+    with
+    \begin{equation*}
+      \alpha_{ij} = \mathrm{softmax}_j\big(a^{\top}\mathrm{LeakyReLU}(\Theta[h_i \| h_j])\big)
+    \end{equation*}
+    in the original form and the nonlinearity applied before the scoring vector in the
+    v2 form, which is what makes the attention a function of both endpoints rather
+    than a ranking of the neighbors alone; four heads here.
+  \item[GraphSAGE] the mean of the neighbors concatenated with the node's own
+    representation, $h_i' = \Theta_1 h_i + \Theta_2\,\mathrm{mean}_{j \in \mathcal{N}(i)} h_j$.
+  \item[GIN] the injective sum with a learned self-weight and a two-layer MLP,
+    $h_i' = \mathrm{MLP}\big((1 + \epsilon)\,h_i + \sum_{j \in \mathcal{N}(i)} h_j\big)$,
+    the aggregator Xu et al.\ (2019) show to be as expressive as the 1-WL test, which
+    the mean and the attention are not.
+  \item[RGCN] one weight per relation over a multigraph, $\mathcal{R}$ the relation set,
+    $h_i' = \Theta_0 h_i + \sum_{r \in \mathcal{R}} \sum_{j \in \mathcal{N}_r(i)}
+    \frac{1}{c_{i,r}}\,\Theta_r h_j$, with $\Theta_r$ a combination of $B$ shared bases
+    so the parameter count does not grow with the relation count ($B = 4$ here).
+  \item[RGAT] the same relation-typed neighborhoods with attention within each
+    relation, $h_i' = \sum_{r \in \mathcal{R}} \sum_{j \in \mathcal{N}_r(i)}
+    \alpha_{ij}^{(r)}\,\Theta_r h_j$, the relational form Gene\_Graph ran on its
+    two-relation graph; here one GATv2 attention per relation on its own edge subset,
+    summed, with no basis sharing, since the basis-shared implementation materializes
+    a weight matrix per edge and 4.87 million typed edges times $64 \times 64$ is 80 GB.
+\end{description}
+
+The nine gene graphs the transformer reads enter the relational models as nine edge
+types on one node set, which is the multigraph the cell graph holds; the union of the
+nine loses the type. Gene\_Graph's dual-primal convolution, which passes messages on
+the line graph as well as the graph, is described there and not rerun, since its
+attention on the primal graph reduces to GAT with self-loops. Table~\ref{tab:graph-relational}
+runs GIN, GraphSAGE, RGCN and RGAT under the protocol of Table~\ref{tab:graph-baselines},
+with ProtT5 alone and with the transformer's three inputs, and
+Table~\ref{tab:graph-split} runs the MLP and GCN with the chromosome-pathway indicator
+split into its blocks, the cheap half of the attribution that Section~\ref{sec:backbone}
+completes on the transformer.
+
+\input{tables/graph_baselines_relational}
+
+Keeping the edge type is worth more than any choice of aggregator. On ProtT5 alone
+the relational models read 0.852 (RGAT) and 0.836 (RGCN) against 0.834 for graph
+convolution over the untyped union at the same 200 epochs, 0.783 for GraphSAGE and
+0.665 for GIN; on the transformer's three inputs RGAT reads 0.887, 0.885 and 0.895
+(mean 0.889), GraphSAGE 0.887, RGCN 0.860, GIN 0.705, against 0.847 for graph
+convolution. RGAT on the three inputs is the strongest of the cheap models in this
+document, level with the transformer's best single cell on the pathway input
+(Section~\ref{sec:round22}) and 0.019 above the MLP on the same three inputs. GIN, the
+aggregator as expressive as the 1-WL test, is the weakest on both inputs and selects
+epochs 171 to 195 on five seeds of six, the sign of a model still moving at the end
+of its budget rather than of a converged one; what the next subsection measures is
+that 1-WL expressiveness is not the axis this endpoint turns on, so the ranking of
+the aggregators here says nothing about it. GraphSAGE, whose only difference from
+graph convolution is the separate weight on the node's own representation, gains
+0.04 on the three inputs and loses 0.05 on ProtT5 alone.
+
+\input{tables/graph_baselines_split}
+
+The pathway block is the indicator. On the MLP, ProtT5 with the FBA ratios reads 0.803
+(Table~\ref{tab:graph-baselines}); adding the 173-column pathway multi-hot lifts it to
+0.880, adding the chromosome one-hot leaves it at 0.809 and adding the seven gene
+properties at 0.798, both within one seed spread of the base, and the full 197-column
+indicator reads 0.870, below the pathway block alone. The pathway block with the four
+ratios and no ProtT5 reads 0.828, above ProtT5 with the ratios, so 177 columns carry
+more of the label than the 1,024-dimensional sequence embedding does. On graph
+convolution at 200 epochs the ordering is the same at a smaller spread (0.846 with the
+pathway block against 0.834 with either other block), with the selected epoch at 196 or
+197 on every seed, the sign that the 200-epoch GCN is still climbing, as the 400-epoch
+rows of Table~\ref{tab:graph-baselines} showed. The one row where the graph matters is
+the pathway multi-hot alone: 0.749 on the MLP and 0.871 with convolution over the union
+of the nine graphs, the largest gain the graph gives any input in this document.
+The Gene Ontology multi-hot, the larger annotation of the same kind, runs under the
+same protocol (Table~\ref{tab:graph-go}); its transformer round is
+Section~\ref{sec:round26}.
+
+\input{tables/graph_baselines_go}
+
+Graph convolution on the GO multi-hot alone reads 0.888, with no sequence embedding
+and no solve, and 0.891 with the four ratios: level with the transformer's best
+single cell and above the MLP on all three of its inputs (0.870). On the MLP the
+same vector beside ProtT5 and the ratios reads 0.855, 0.025 under the pathway block,
+so without the graph GO carries less than the pathways and with it more; the
+propagated form beats the direct annotations on both models (0.887 against 0.877 on
+convolution), and the biological-process namespace alone loses nothing on convolution
+(0.885) and 0.036 on the MLP. Every convolution cell on GO selects its epoch between
+183 and 197, still rising at the end of the budget. The one-column control that marks a
+gene as annotated to any pathway reads 0.774 on the MLP and 0.832 on convolution, the
+level of ProtT5 with the ratios, so the pathway block's gain is which pathway rather
+than whether there is one.
+
+Given its budget, graph convolution on GO alone is the highest single model in this
+document. At 400 epochs it reads 0.912, 0.910 and 0.904 (mean 0.909, sd 0.003), with
+the four ratios 0.908, and beside ProtT5 with the ratios 0.901
+(Table~\ref{tab:graph-go400}): two layers of convolution over the union of the nine
+gene graphs on 2,362 annotation columns, no sequence embedding and no solve, 43
+seconds per seed on one card, above the transformer's best single cell (0.895) and
+above the reported fold ensemble's point (0.893) inside its interval. The three seeds
+still select epochs 382 to 397, but at 800 epochs the number does not move: 0.905,
+0.911 and 0.901 (mean 0.906), 0.907 with the ratios, 0.903 beside ProtT5
+(Table~\ref{tab:graph-go800}), the selected epochs again near the end of the budget
+and the held-out number the same, so the curve is flat past 400 and the selection
+rule is reading noise on its plateau. The sequence embedding and the solve add nothing
+to it at either budget, where on every other input they were the gain.
+
+\input{tables/graph_baselines_go400}
+
+\input{tables/graph_baselines_go800}
+
+On six seeds the number holds. Rerun on seeds 2700 to 2705 so its count matches the
+six-seed module arms (Table~\ref{tab:graph-go400-s6}), the 400-epoch convolution on GO
+alone reads 0.912, 0.909, 0.902, 0.898, 0.901 and 0.905 (mean 0.905, sd 0.005), with
+the ratios 0.899 to 0.913 (mean 0.907) and beside ProtT5 with the ratios 0.895 to
+0.905 (mean 0.900); the first three seeds differ from their earlier runs in the third
+decimal, and every one of the eighteen cells is above the transformer's seed mean on
+any input. The spread over seeds is 0.005, against 0.055 for the module's scalable
+form on the same six seeds (Section~\ref{sec:round27}), whose one unfit run is the
+difference.
+
+\input{tables/graph_baselines_go400_s6}
+
+Under the reported protocol it is the highest number in this document. Five fold
+models of the 400-epoch convolution on GO alone score 0.910, 0.893, 0.918, 0.916 and
+0.907 on the held-out genes, a fold mean of 0.909, and their averaged logits score
+0.917 [0.87, 0.96]; at 800 epochs 0.915 [0.87, 0.95]. Against the transformer's
+reported ensemble (folds 0.860, 0.899, 0.889, 0.876, 0.884; 0.893 [0.84, 0.94]) the
+folds are above on four of five, the fold mean by 0.028 and the ensemble by 0.024,
+with the two intervals overlapping (Table~\ref{tab:ensembles}). The five folds take
+two minutes on one card. With three seeds per fold, each fold's logit the mean of its
+seeds before the folds are averaged, the ensemble reads 0.917 [0.87, 0.95] at 400
+epochs and 0.915 [0.87, 0.95] at 800, the same numbers as one seed per fold (folds
+0.899 to 0.922, mean 0.910), so the ensemble is not sitting on a lucky seed. So the
+three architectures on the three inputs that were one
+number (0.886, 0.888, 0.893) now have a fourth point above them, and what moved it is
+the input and the graph together, not the architecture: the same convolution on the
+three inputs reads 0.888 as an ensemble, and the GO vector without the graph reads
+0.855 on the MLP.
+
+It is the convolution, not message passing in general. On GO alone at 400 epochs
+relational convolution reads 0.843, relational attention 0.844 and GraphSAGE 0.823
+(Table~\ref{tab:graph-go-rel}), 0.07 to 0.09 under the symmetric-normalized mean, where
+on the three inputs those same forms were level with or above it. The pathway
+multi-hot added to GO reads 0.905, nothing on top of GO alone. What the normalized
+mean does that the others do not, on this input, is not measured; hypothesis,
+untested: the signal is the neighborhood's annotations smoothed over the graph, and a
+form with a separate path for the node's own 2,362 columns fits those instead.
+
+\input{tables/graph_baselines_go_rel}
+
+\subsection{The Weisfeiler-Leman test on the deletion graphs\secstatus{todo}}
+
+A message-passing model over a gene graph is bounded by what color refinement can
+separate: two graphs that the 1-WL test assigns the same signature are the same graph to
+it, whatever the model's weights (Xu et al.\ 2019). The transformer's perturbed graph is
+the gene graph with the deleted gene's token removed, so the first question is whether
+single deletions are even distinguishable by structure, and the second is whether
+structure alone ranks them. \texttt{wl\_knockout\_test.py} answers both on the physical
+interaction graph and on the union of the nine graphs the transformer reads
+(Table~\ref{tab:wl}): for every labeled gene it hashes the graph with that gene's node
+removed by color refinement at one, two and three iterations with degree as the initial
+color, counts collisions, and fits logistic regression on the WL subtree kernel's
+feature map of each gene's 2-hop ego graph. Figure~\ref{fig:wl} illustrates the
+refinement and the kernel on a toy pair of six-node graphs, not the yeast graphs.
+
+\input{tables/wl_test}
+
+The test separates the deletions and the kernel does not rank them. On the physical
+graph, one iteration already gives 1,118 distinct signatures among 1,121 deletions, three
+pairs collide, none of the six genes in them is essential, and two more iterations change
+nothing; on the union every deletion has its own signature at one iteration. A single
+deletion changes the degree of every neighbor, and on graphs this dense (139,463 and
+1,516,034 edges) that is enough for the test, so 1-WL expressivity is not what bounds a
+message-passing model on this endpoint. The kernel rung reads 0.490 on the physical
+graph and 0.564 on the union, chance on 195 genes, which is the same reading the
+graph-only baselines gave with all-ones and degree inputs: a gene's neighborhood
+structure, however finely refined, does not say whether the gene is essential, and every
+number above chance in this document comes from what is written on the nodes.
+
+\tcfigfit[1.0]{figures/wl_test.pdf}{\textbf{The 1-WL test and the WL subtree kernel
+  on a toy pair of graphs.} \textbf{a}, Two six-node graphs $G$ and $G'$ with six edges
+  each, every node given the initial color 1; each round of color refinement replaces a
+  node's color by the hash of the multiset $\beta$ of its own color and its neighbors'
+  colors, and the table counts the nodes of each color. \textbf{b}, Round $k = 0$: the
+  multiset at each node (left), the hashed colors (right) and the count of each color;
+  a node's new color is its degree in disguise, and $G'$ alone holds a degree-4 node.
+  \textbf{c}, Round $k = 1$: the same refinement on the round-0 colors, where the two
+  graphs share one of the ten colors. \textbf{d}, The count vector $\phi$ over the
+  colors of rounds 0 and 1, the WL subtree kernel's feature map. \textbf{e}, The kernel
+  of each graph with itself, $\phi^{\top}\phi$. \textbf{f}, The kernel across the pair;
+  the count vectors differ after one round, so the test declares the graphs
+  non-isomorphic. Drawn in draw.io from
+  \texttt{notes/assets/drawio/028-wl-test.drawio}; the yeast deletion graphs are hashed
+  the same way by \texttt{wl\_knockout\_test.py}.}{fig:wl}

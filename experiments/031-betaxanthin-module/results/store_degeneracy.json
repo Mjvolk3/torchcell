@@ -1,0 +1,56 @@
+[
+  {
+    "stem": "YPD_bx",
+    "label": "betaxanthin, parsimonious, cobra pFBA through GLPK",
+    "n_genes": 1155,
+    "n_no_effect": 1031,
+    "n_no_effect_vector_differs": 1025,
+    "median_rel_l2_log1p": 0.38337317907148283,
+    "p90_rel_l2_log1p": 0.38337380180623243
+  },
+  {
+    "stem": "YPD_bx_pfba",
+    "label": "betaxanthin, parsimonious, HiGHS two-stage",
+    "n_genes": 1155,
+    "n_no_effect": 1031,
+    "n_no_effect_vector_differs": 428,
+    "median_rel_l2_log1p": 0.0,
+    "p90_rel_l2_log1p": 0.3899178137483416
+  },
+  {
+    "stem": "YPD_bx_l2",
+    "label": "betaxanthin, minimum-norm flux at maximal growth (Clarabel QP)",
+    "n_genes": 1155,
+    "n_no_effect": 1031,
+    "n_no_effect_vector_differs": 427,
+    "median_rel_l2_log1p": 1.3394733385309138e-08,
+    "p90_rel_l2_log1p": 3.45524251369929e-05
+  },
+  {
+    "stem": "YPD_bx_moma",
+    "label": "betaxanthin, linear MOMA",
+    "n_genes": 1155,
+    "n_no_effect": 973,
+    "n_no_effect_vector_differs": 18,
+    "median_rel_l2_log1p": 2.587374530827755e-08,
+    "p90_rel_l2_log1p": 3.0915224259934666e-08
+  },
+  {
+    "stem": "SM_gem",
+    "label": "amino acids, parsimonious, HiGHS two-stage",
+    "n_genes": 1161,
+    "n_no_effect": 918,
+    "n_no_effect_vector_differs": 324,
+    "median_rel_l2_log1p": 0.0,
+    "p90_rel_l2_log1p": 0.3764904759789347
+  },
+  {
+    "stem": "SM_gem_moma",
+    "label": "amino acids, linear MOMA",
+    "n_genes": 1161,
+    "n_no_effect": 907,
+    "n_no_effect_vector_differs": 11,
+    "median_rel_l2_log1p": 3.8613960564187806e-08,
+    "p90_rel_l2_log1p": 3.8613960564187806e-08
+  }
+]

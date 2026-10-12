@@ -1,0 +1,285 @@
+%% notes-tex/028-gene-essentiality/sections/8-summary.tex
+%% The study's conclusions on one page. The figure is written by
+%% experiments/028-gene-essentiality/scripts/summary_figure.py and the enrichment behind
+%% panels f and g by misclass_enrichment.py; both read the committed result files.
+
+\section{The results on one page\secstatus{todo}}
+\label{sec:summary}
+
+The study had two goals, and this section answers them in that order.
+
+\paragraph{Goal 1: the best held-out score, against Flux Cone Learning and FBA.} On the
+195 released held-out genes the best model scores 0.955 and the best single model 0.934,
+against 0.742 for Flux Cone Learning and 0.640 for FBA on the same genes
+(Figure~\ref{fig:summary}\textbf{a}). The margin of the averaged model over the better
+single model was fixed in advance and holds on nine of ten other held-out fifths
+(Section~\ref{sec:round75}).
+
+\paragraph{Goal 2: a metabolic module that carries to other datasets.} A record in the
+database is one genotype in one environment, so a portable module may read one medium
+only, and it may not solve a program inside the training loop at database scale. The
+form that meets both is an input and no layer: one parsimonious FBA solve per genotype and
+medium, run once offline and cached, read as $\log(1 + |v|)$ by a zero-initialized affine
+on the logit, beside that medium's growth ratio and six counts read off the
+gene-protein-reaction rules. On the ten repeated splits, nine seeds each, that
+single-medium form scores $+0.061$ over the same cell with no metabolism, higher on ten of
+ten splits and on 89 of 90 split-and-seed pairs
+(Figure~\ref{fig:summary-module}\textbf{e} and \textbf{f}), and it matches the four-media form
+there ($+0.002$) and as a five-fold ensemble (0.932 against 0.933), while single cells on
+the released split read 0.912 against 0.920 at nine seeds (Section~\ref{sec:round84-98}). Every form that kept a linear program or a
+projection inside the training loop scored lower and less reliably than this one
+(Figure~\ref{fig:summary-module}\textbf{a}), so the layer is retired and the solve is kept as
+data. The store for the 13.5 million records of the solid-growth build is 469,474
+programs and 71 minutes on 20 cores (Figure~\ref{fig:summary-module}\textbf{c}).
+
+\tcfigfit[1.0]{figures/families_explainer.pdf}{\textbf{The two model families and their
+  average.} Family 1 is the cell graph transformer: gene tokens from the pathway
+  multi-hot and ProtT5, attention regularized toward nine gene graphs, the deleted gene's
+  token pooled to a logit, and a zero-initialized affine that adds the metabolic columns
+  computed offline from yeast-GEM. Family 2 is a two-layer graph convolution over the
+  union of nine gene-gene graphs on the propagated Gene Ontology multi-hot. Each family
+  is a five-fold ensemble, and the average standardizes each model's logits and weights
+  them equally with nothing fitted. The two comparators score the same 195 genes. Drawn
+  by \texttt{notes/assets/drawio/028-families.gen.py}.}{fig:families}
+
+\tcfigfit[1.0]{figures/summary_goal1_2026-09-21-16-02-21.pdf}{\textbf{Goal 1: the best
+  method on gene essentiality, against Flux Cone Learning and FBA.} The families are
+  drawn in Figure~\ref{fig:families}. One color means one thing in every panel: gray a
+  comparator with nothing learned here, blue a learned model reading no metabolic column
+  and no graph, orange family 1, red family 2, purple their average; a hatch marks a
+  linear program solved inside the training loop.
+  \textbf{a}, Every method on the 195 released held-out genes, best first; the first
+  three rows are averages of family 2 with a form of family 1, and the two DCell rows are
+  round 108. Learned models are five-fold ensembles, the random forest is one fit on the
+  split file, and intervals are gene bootstraps.
+  \textbf{b}, The layer-free form of family 1 (circles), graph convolution on the Gene
+  Ontology multi-hot (squares) and their average (diamonds), fixed in advance, on ten
+  other held-out fifths of the labeled genes, three seeds per split, sorted by the
+  average's AUROC.
+  \textbf{c}, The same models trained on the 629 released genes and read on the 4,674
+  genome-wide genes that carry no GEM reaction, pooled over seeds with a gene bootstrap;
+  the dashed line is chance.
+  \textbf{d}, What the misranked genes of the released 195 share, per class: the chance
+  that a gene carrying the annotation is misranked worse than one without it, 0.5
+  (dashed) being no association, for family 1 with the layer-free solve (circles) and
+  family 2 (squares), filled where the Benjamini-Hochberg $q$ within the family is under
+  0.1; the genome-wide set is in Table~\ref{tab:misclass-enrichment}.
+  \textbf{e}, Every one of the 31 essential genes in the released held-out set, worst
+  first by the two families' mean misrank, with the fraction of nonessential genes each
+  family ranks above it; a gene's name is bold where FBA calls its deletion viable on
+  YPD, the feature panel \textbf{d} tests. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/summary\_figure.py}.}{fig:summary}
+
+\tcfigfit[1.0]{figures/summary_goal2_2026-09-21-18-26-54.pdf}{\textbf{Goal 2: the form of
+  the metabolic module that helps, what it costs, and what a record of one genotype in
+  one medium can carry.} Orange is the transformer reading any FBA-derived column, blue
+  the same cell with no metabolic column, gray a count; a hatch marks a linear program
+  solved inside the training loop.
+  \textbf{a}, The forms of the module on one backbone, the pathway multi-hot with ProtT5:
+  the bar is the seed mean of the held-out AUROC and each point one seed; the forced
+  growth column ran on ProtT5 alone, twelve seeds.
+  \textbf{b}, Wall minutes per cell for the forms of \textbf{a}, as run, with up to three
+  cells sharing a card.
+  \textbf{c}, What the layer-free solve costs over the 025 solid-growth build, logarithmic:
+  the records, those whose deletion touches no GEM gene and read the wild-type row, the
+  distinct programs solved once each, and the lethal and uncertified ones among them.
+  \textbf{d}, The layer-free forms by the number of media whose growth ratio they read
+  and by whether they also read the stored flux vector and the six gene-rule counts, on
+  the released split: the bar is the seed mean, each point one seed, the diamond the
+  five-fold ensemble.
+  \textbf{e}, Each form minus the same cell with no metabolism on the ten repeated outer
+  splits: the bar is the mean over splits and each point one split.
+  \textbf{f}, The share of split-and-seed pairs on which the form scores above the cell
+  with no metabolism; the dashed line is a module that helps on half the runs.
+  \textbf{g}, The same columns handed to the second family, graph convolution on GO, on
+  the ten repeated splits at three seeds: as node features (the flux vector, job 2684)
+  and as a zero-initialized affine on the node's logit (job 2691), each minus the same
+  convolution on GO alone. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/summary\_figure.py} from
+  \texttt{results/simplification\_readout.json} and
+  \texttt{results/resplit\_readout.json}.}{fig:summary-module}
+
+\begin{description}
+  \item[The best method is two models averaged, and the best single model is a tie.]
+    Under the fold protocol on the released 195 genes the equal-weight average of graph
+    convolution on GO with the transformer reading the solve scores 0.955 with the solve
+    vector and the gene-rule counts beside it (Section~\ref{sec:round80}), 0.954 with
+    the cached solve head and 0.953 with the layer-free solve, the maximum of thirteen
+    post hoc averages. Alone, the rule-count cell scores 0.934, the layer-free form
+    0.920 and graph convolution on GO 0.917, with overlapping intervals, against Flux
+    Cone Learning's 0.742 and FBA's 0.640 on the same genes
+    (Figure~\ref{fig:summary}\textbf{a} and \textbf{b}). On ten other held-out fifths of the labeled
+    genes, with the average fixed in advance, the average beats the better single model
+    on nine (mean $+0.023$) and graph convolution on GO beats the transformer on nine
+    (Section~\ref{sec:round75}).
+  \item[The highest single cell is transductive, and the best inductive cell is the
+    layer-free solve.] The graphs' one-hop propagation of the training and validation
+    genes' calls, per graph the essential fraction among a gene's labeled neighbors and
+    the log count, reads 0.902 on the held-out genes with nothing fitted
+    (Section~\ref{sec:mp-architectures}); as a store beside the solve it lifts the
+    layer-free cell from 0.908 to 0.925 on six of six seeds, and alone it reads 0.912
+    (Section~\ref{sec:pattern-ladder}). No held-out gene's call is read, but the
+    neighbors' calls come from the screen the model is scored on and a gene whose
+    neighbors were never called reads the zero row, so the number holds only inside a
+    called screen. Against that, the layer-free solve at 0.908 on the same six seeds
+    (0.911 on nine) reads nothing but the genotype and yeast-GEM, and it is the cell
+    that carries to a strain or an organism with no screen behind it. Making the
+    transformer attend along the graphs instead, by regularizer or by hard mask on a
+    second block, reads 0.010 to 0.025 under the same blocks left free.
+  \item[The module form that helps is the one with no layer, and the rules help beside
+    it.] On one backbone the cell
+    with no metabolism reads 0.858 on six seeds, FBA's growth ratios on the logit 0.890,
+    and the deletion's solved flux vector as $\log(1 + |v|)$ on the logit 0.911 on nine
+    (sd 0.007, minimum 0.896; the three extra seeds of each are round 81's controls,
+    which is why the paired reads below quote the six they share with their partner). Every form that keeps a linear program in the training
+    loop reads lower and less reliably: the cached solve with a flux head 0.882 with one
+    seed at 0.772, learned ceilings with a flux head 0.845 with two seeds unfit, the
+    gated growth column 0.867, and the forced growth column 0.699 on twelve seeds. The
+    layer-free form costs 30 minutes per cell with three cells on a card against 83 to
+    100 for the forms that solve in the loop
+    (Figure~\ref{fig:summary-module}\textbf{a} and \textbf{b}). On the ten other held-out
+    fifths the vector's gain over no metabolism holds on ten of ten ($+0.047$) and its
+    gain over the four growth ratios alone does not separate from zero ($+0.011$, sd
+    0.023, seven of ten; Section~\ref{sec:round75}). Six counts of
+    gene-protein-reaction redundancy beside the vector read 0.918 on the released split
+    against 0.908, and 0.862 against 0.843 on the ten fifths, above on six of six seeds
+    and eight of ten splits (Section~\ref{sec:round77}). Against the four ratios alone
+    the counts are worth $+0.012$ and the solve $+0.024$ on the released split
+    (Section~\ref{sec:round82}) and $+0.010$ and $+0.010$ on the ten fifths, so the two
+    halves are complementary and neither is reliably the larger
+    (Section~\ref{sec:round84-98}).
+  \item[Every metabolic column fits inside one experiment.] The four growth ratios are
+    four media, so they read four experiments at once; restricted to the one medium the
+    solve store is built on, the full recipe reads 0.916 against 0.918 at six seeds (0.912 against 0.920 at nine) and the solve-only
+    recipe 0.912 against 0.911, while the ratio alone falls from 0.890 to 0.877
+    (Section~\ref{sec:round83}). The solve supplies from within one environment what the
+    four media were carrying, and the ten fifths agree ($+0.002$ for one medium, above
+    on six of ten). Without the flux vector the restriction is not free: one ratio with the
+    rule counts reads 0.888 against 0.902 for four, and 0.030 under the full recipe on
+    the ten fifths (Section~\ref{sec:round84-98}).
+  \item[The interface is an affine on the logit, and it carries across model families.]
+    The graph family reads the same columns. As node features the flux vector does not
+    help graph convolution on GO ($-0.009$ over the ten fifths, higher on one); as a
+    zero-initialized affine on the node's logit, the transformer's form, the YPD ratio
+    alone reads $+0.011$ (ten of ten), the single-experiment recipe $+0.018$ (nine of
+    ten) and the four-media recipe $+0.021$ (nine of ten)
+    (Figure~\ref{fig:summary-module}\textbf{g}, Section~\ref{sec:family-ensembles}). The
+    module is therefore a set of offline columns and one linear map added to whatever
+    logit a model produces. Handing both families the columns does not improve their
+    average (0.897 against 0.907 on the ten fifths), so the best method keeps the
+    module on one family and averages it with the plain graph convolution. Where every
+    held-out record reads the constant row, the genome-wide 4,674 genes, the affine still
+    does not hurt: graph convolution on GO reads 0.767 with it against 0.702 without.
+  \item[No fundamental or heuristic added to the parsimonious solve improves its
+    columns.] Solved offline on the corrected medium and read through the same affine,
+    every rung of an eleven-store ladder sits at or below the two-stage parsimonious
+    solve on the GEM's own box: plain FBA without parsimony $-0.010$, parsimony inside
+    the objective $-0.004$, metabolic adjustment $-0.002$, turnover ceilings from a
+    measured proteome $+0.000$ to $-0.004$, a turnover-sampled store $+0.003$ on two of
+    six seeds, and GECKO's pool with the usages as program variables and no proteome
+    $-0.011$ at the sourced pool to $-0.004$ at twice it (Sections~\ref{sec:round113}
+    and \ref{sec:round114}, Table~\ref{tab:store-ladder}). Direction constraints from
+    the reaction energies make the wild type infeasible. The pool binds and reallocates
+    per genotype as designed, and the module cannot read a ranking out of it.
+  \item[The medium is data, and correcting it moves the ranking but not the score.] The
+    YPD the stores were built on carried no nucleobases and called thirteen labeled
+    genes lethal that grow; rebuilt with uracil and adenine, and with every bound vector
+    written as a hash-named record the stores cite, the module reads 0.913 against
+    0.916 on the released split and $-0.007$ on the ten fifths, while nearly every
+    held-out gene changes rank (Section~\ref{sec:round112}).
+  \item[The layer-free form scales, and it covers only the genes with a reaction.] Over
+    the 13.5 million records of the solid-growth build the transform is 469,474
+    programs, solved once in 71 minutes on 20 cores and read as a gather in training
+    (Figure~\ref{fig:summary-module}\textbf{c}). Off the metabolic genes every deletion reads
+    one constant row, and the transformer with the layer-free solve scores 0.570 on
+    the 4,674 genome-wide genes where graph convolution on ProtT5 scores 0.755 and the
+    raw degree in the physical graph 0.740 (Figure~\ref{fig:summary}\textbf{c}). A
+    model over the whole database therefore needs both inputs: the solve store for the
+    genes with a GEM reaction, and the gene graphs as a message-passing input for the
+    rest.
+  \item[The two families miss different genes, and the annotations say which.] On the
+    released 195 the essential genes the transformer ranks low are the ones FBA calls
+    viable: the 19 of 31 with a knockout growth ratio of 1.0 have a mean misrank of
+    0.134 against 0.025 for the rest (effect 0.91, $q$ 0.003), and under graph
+    convolution on GO the same feature has no effect (0.51). No biological-process term
+    reaches $q < 0.1$ among the 31 essential genes under either model. The nonessential
+    genes both models rank high sit in steroid biosynthesis (effect 0.85 for the
+    transformer and 0.96 for the graph model) and, for the transformer, in nucleoside
+    triphosphate metabolism (0.88) and monosaccharide biosynthesis (0.83). On the
+    genome-wide set the graph model ranks essential genes low when their degree in the
+    physical graph is under the class median (effect 0.70) and when they act in
+    cytoskeleton organization (0.79) or a microtubule-based process (0.81), and ranks
+    nonessential genes high in ncRNA metabolism (0.90), rRNA processing (0.92), RNA
+    modification (0.92) and cytoplasmic translation (0.85)
+    (Figure~\ref{fig:summary}\textbf{d} and \textbf{e},
+    Table~\ref{tab:misclass-enrichment}). Hypothesis, untested: the graph model scores
+    a gene by its neighborhood, and the nonessential members of the ribosome biogenesis
+    and translation machinery sit in neighborhoods made of essential genes. No essential
+    gene is missed by every predictor: over the ten fifths, where 140 essential genes
+    are held out, none sits below the median nonessential gene under all four learned
+    predictors, and the residual they share is not thin annotation (its correlation with
+    the count of GO terms is $-0.002$) but transporters and cofactor supply that FBA
+    calls viable, which modeling the deletion collection's strain background does not
+    change (Section~\ref{sec:consensus-missed}).
+\end{description}
+
+\input{tables/misclass_enrichment}
+
+\subsection{What was run from the closing list, and what is left out\secstatus{todo}}
+\label{sec:left-to-run}
+
+Nine experiments were listed as able to change a conclusion above. Seven are run, one is
+left as a design note, and one did not complete.
+
+\begin{description}
+  \item[Repeated outer splits for the finalists: run.] Ten stratified re-splits of the
+    1,121 labeled genes at the released proportions, with the finalists and the average
+    fixed in advance (Section~\ref{sec:round75}), later extended to the module's forms
+    and to nine seeds per split (Section~\ref{sec:round84-98}).
+  \item[A rule-aware input for the essential genes the solve calls viable: run.] Six
+    counts read off the gene-protein-reaction rules, beside the vector
+    (Section~\ref{sec:round77}), under the fold protocol (Section~\ref{sec:round80}),
+    alone (Section~\ref{sec:round82}) and column by column
+    (Section~\ref{sec:round84-98}). They help on the fifteen genes holding a reaction of
+    their own and hurt on the four an alternative gene set covers.
+  \item[The gene graphs as an input to the transformer that reads the solve: not run.]
+    Round 76 tried the cheapest form, degree and clustering in the physical graph as
+    affine columns (Section~\ref{sec:round76}). A faithful version would have to take
+    all nine gene graphs, and the transformer already receives those graphs through the
+    regularization of its attention toward them (these cells run with no hard mask), so graph-derived node
+    inputs would duplicate them; testing the inputs properly means relaxing that
+    regularizer at the same time, which is a change to the backbone and not to the
+    module. The averaged model already recovers what the graph family knows.
+  \item[The module on a second model family: run.] Graph convolution on GO reads the
+    columns as an affine on its logit and gains on nine of ten fifths
+    (Section~\ref{sec:family-ensembles}); as node features it does not.
+  \item[DCell's hierarchy and the ontology of the trigenic runs: run.] The ontology's
+    own structure reads the GO multi-hot worse than message passing on either of the two
+    ontologies tried (Section~\ref{sec:round108}).
+  \item[A store sampled around the optimum instead of one point: not measured.] Flux
+    Cone Learning scores a gene by the mean over 124 samples of its cone, and this
+    document's stores are all one point per deletion. \texttt{ess\_sampled\_flux\_store.py}
+    draws ten points per deletion with hit-and-run at thinning ten; measured at 147
+    seconds for five draws of one deletion in one process, it was submitted at sixteen
+    processes on a 24-hour limit (job 2623) and timed out without writing, so the cost
+    under contention is well above that estimate and the question is open.
+  \item[A learned allocation under a pool that binds: run.] With a term that makes
+    the abundance head spend GECKO's pool, the pool binds on every genotype and the
+    forced growth column gains $+0.062$ over round 19 on three of three seeds, the gated
+    readout $+0.010$ on two of three; both stay under the layer-free store
+    (Section~\ref{sec:round115}).
+  \item[A turnover table that is all predictions, and one shuffled: run.] The pool
+    program on the best-ranked predictor alone and on the tiered table permuted over
+    units read the same as the tiered pool ($+0.004$ and $+0.002$, six seeds), while the
+    shuffled table moves the stored vector by two fifths of its norm; the table is not
+    what limits the pool (Section~\ref{sec:round116}).
+  \item[The store on a second phenotype: run.] Carried to the strains the flux layer
+    was built for (Section~\ref{sec:target-transfer}), the whole-vector affine lifts the
+    width-12 backbone's betaxanthin rank to the width-90 backbone's and, on the strain as
+    built, its top-50 call; on the 19 amino acids no arm leaves the noise floor. The two
+    targets are their own documents, \texttt{notes-tex/031-betaxanthin-module} and
+    \texttt{notes-tex/032-amino-acid-module}.
+\end{description}
+
+The construction in which the binding ceilings differ per genotype
+(Section~\ref{sec:open}) stays a design question and is not on this list.

@@ -18,63 +18,105 @@ so far. A dashed edge is built but NOT wired: the table exists, is hash-pinned, 
 by nothing. That distinction is the single most important thing about the current state, and
 the detailed diagram draws several of these edges solid when the code does not have them.
 
+*(The 2026.09.04 diagram is superseded by the revision below; its code fence has been removed so only one diagram renders from this note.)*
+
+## 2026.09.11 - Revision: the tables are wired, the covariance is not
+
+The 2026.09.04 drawing below has been replaced. It marked the predicted $k_{cat}$ table, the
+$K_M$ table and the recomputed $\Delta_f G$ table as built and read by nothing, and all
+three are now read: `build_flux_layer` in `experiments/026-metabolism-flux/scripts/train_flux.py`
+resolves $k_{cat}$ and $K_M$ through the four-tier resolver at the verified predictor
+version with the homolog tier on by default, and `thermo_source` selects among `shipped`,
+`equilibrator`, `union` and `union_external`.
+
+**What is genuinely not wired is the reaction square-root covariance $Q$.** `FluxLayer`
+takes `delta_g_sqrt_cov` and builds the correlated error term from it; `build_flux_layer`
+never constructs one and `train_bx.py` never passes one, so every arm run so far has a
+formation covariance on disk and a reaction potential with no covariance in it. The second
+unwired thing is narrower: `ThermoSource` has no member for
+`verified/metabolite_dgf_prime_with_curation.parquet`, so the curated records, the withdrawn
+mispricings and the composition guard reach no run, and `union_external` still reads the
+table those corrections supersede.
+
+**Read the edge styles.** A solid edge is implemented and carries data. A dashed edge is
+built and read by nothing.
+
 ```mermaid
-%%{init: {'theme':'base','themeVariables':{'background':'#F5EEDD','clusterBkg':'#F5EEDD','clusterBorder':'#E0D6BE','lineColor':'#B7AC93'}}}%%
+%%{init: {'theme':'base','themeVariables':{'background':'#F5EEDD','clusterBkg':'#F5EEDD','clusterBorder':'#E0D6BE','lineColor':'#B7AC93','fontSize':'19px'}}}%%
 graph TD
-  Hpert["Perturbed gene state H_pert<br><i>from the transformer</i>"]
-  Avail["Gene availability a_g<br>0 if deleted, else a sigmoid gate"]
-  Enzyme["Enzyme abundance E_g<br>softmin over complex, sum over isozymes"]
-  Flux["FLUX VECTOR v<br>box: v = lb + (ub - lb) * sigmoid(z)<br>capacity: |v| <= k_cat * E"]
-  Out["Phenotype heads<br>betaxanthin, amino acids, growth"]
+  Hpert["$$\begin{gathered}\text{Perturbed gene state}\\\ H_{\mathrm{pert}}\end{gathered}$$"]
+  Avail["$$\begin{gathered}\text{Gene availability}\ \gamma_g\\\ 0\ \text{if deleted}\end{gathered}$$"]
+  Enzyme["$$\begin{gathered}\text{Enzyme abundance}\ E_j\\\ \text{softmin AND, sum OR}\end{gathered}$$"]
+  Flux["$$\begin{gathered}\textbf{Flux vector}\ \nu \in \mathbb{R}^{4131}\\\ \texttt{box},\ \texttt{nullspace},\\\ \texttt{projection},\ \texttt{fluxforce}\\\ |\nu_j| \le k_{cat,j} E_j\end{gathered}$$"]
+  Out["$$\begin{gathered}\text{Phenotype heads}\\\ \text{betaxanthin, amino acids}\end{gathered}$$"]
 
-  subgraph GEM["Fixed, from yeast-GEM 9.0.2"]
-    direction LR
-    Stoich["Stoichiometry S<br>2806 x 4131"]
-    Bounds["Bounds and media<br>direction only, no capacity"]
+  subgraph GEM["$$\text{Fixed, from yeast-GEM 9.0.2}$$"]
+    direction TB
+    Stoich["$$S \in \mathbb{R}^{2806 \times 4131}$$"]
+    GPR["$$\text{GPR rules}$$"]
+    Bounds["$$\text{Bounds and media}$$"]
   end
 
-  subgraph Tables["Parameter tables (dashed = built, read by nothing)"]
-    direction LR
-    Kcat["k_cat<br>OED, 4.0% measured"]
-    Thermo["delta_f G<br>shipped with the GEM"]
-    KcatPred["k_cat predicted<br>5 models, 95.3%"]
-    ThermoNew["delta_f G recomputed<br>eQuilibrator + covariance"]
-    Km["K_M<br>3 models, 93-95%"]
+  subgraph Tables["$$\text{Parameter tables the layer reads}$$"]
+    direction TB
+    Kcat["$$\begin{gathered}k_{cat},\ \text{four tiers}\\\ 97\,/\,782\,/\,2831\,/\,18\end{gathered}$$"]
+    Km["$$\begin{gathered}K_M\\\ \text{same four tiers}\end{gathered}$$"]
+    Thermo["$$\begin{gathered}\Delta_r G'^{\circ}\\\ \texttt{shipped}\ \text{to}\ \texttt{verified}\end{gathered}$$"]
+    Curated["$$\begin{gathered}\text{Curated}\ \Delta_f G\ \text{tables}\\\ \texttt{ThermoSource.VERIFIED}\end{gathered}$$"]
   end
 
-  subgraph Soft["Soft constraints"]
-    direction LR
-    Mass["Mass balance<br>||Sv||"]
-    Second["Second law<br>relu(v * delta_r G + eps)<br>forbids loops, no binary"]
-    Diss["Gibbs dissipation"]
+  subgraph Unwired["$$\text{Built, read by nothing}$$"]
+    direction TB
+    Qcov["$$\begin{gathered}\text{Covariance}\ Q\\\ \texttt{delta\_g\_sqrt\_cov}\end{gathered}$$"]
+  end
+
+  subgraph Soft["$$\text{Soft constraints}$$"]
+    direction TB
+    Mass["$$\begin{gathered}\text{Mass balance}\\\ \|S\nu\|\ \text{scale-relative}\end{gathered}$$"]
+    Second["$$\begin{gathered}\text{Second law}\\\ \mathrm{relu}(\nu_j \Delta_r G_j + \epsilon)\end{gathered}$$"]
   end
 
   Hpert --> Avail --> Enzyme --> Flux
-  GEM --> Flux
+  GPR --> Enzyme
+  Stoich --> Flux
+  Bounds --> Flux
   Kcat --> Flux
+  Km -.->|"$$\text{carried, not consumed}$$"| Flux
   Thermo --> Second
-  KcatPred -.->|"not wired"| Flux
-  Km -.->|"not wired"| Flux
-  ThermoNew -.->|"not wired"| Second
+  Qcov -.->|"$$\text{not wired}$$"| Second
+  Curated -->|"$$\text{selectable, unrequested}$$"| Thermo
   Flux --> Soft
   Flux --> Out
 
-  classDef learned fill:#FFE6CC,stroke:#BD8800,stroke-width:2px
-  classDef fixed fill:#E1D5E7,stroke:#846592,stroke-width:2px
-  classDef wired fill:#FFF2CC,stroke:#BCA04C,stroke-width:2px
-  classDef unwired fill:#FFFFFF,stroke:#999999,stroke-width:1px,stroke-dasharray:4 3
+  classDef learned fill:#FFE6CC,stroke:#D79B00,stroke-width:2px
+  classDef fixed fill:#E1D5E7,stroke:#9673A6,stroke-width:2px
+  classDef wired fill:#FFF2CC,stroke:#D6B656,stroke-width:2px
+  classDef unwired fill:#FFFFFF,stroke:#666666,stroke-width:1px,stroke-dasharray:4 3
   classDef flux fill:#DAE8FC,stroke:#6C8EBF,stroke-width:3px
-  classDef pen fill:#F8CECC,stroke:#A24A46,stroke-width:2px
-  classDef out fill:#FFE6CC,stroke:#A24A46,stroke-width:3px
+  classDef pen fill:#F8CECC,stroke:#B85450,stroke-width:2px
 
   class Hpert,Avail,Enzyme learned
-  class Stoich,Bounds fixed
-  class Kcat,Thermo wired
-  class KcatPred,ThermoNew,Km unwired
+  class Stoich,GPR,Bounds fixed
+  class Kcat,Km,Thermo,Curated wired
+  class Qcov unwired
   class Flux flux
-  class Mass,Second,Diss pen
-  class Out out
+  class Mass,Second pen
+  class Out learned
 ```
+
+**Where the complex-versus-isozyme split comes from.** It is not inferred from EC numbers
+or from any kinetic table. Each yeast-GEM reaction carries a gene-protein-reaction (GPR)
+rule as a boolean string in the SBML, for example `(YKL060C and YLR044C) or YGR254W`. An
+`and` is a complex whose subunits are all required, so availability folds by a softmin
+(the scarcest subunit limits); an `or` is a set of isozymes that substitute for one
+another, so availability folds by a sum (capacities add). `parse_catalytic_units` in
+`torchcell/metabolism/constraints.py` reads cobra's `gene_reaction_rule` string for every
+reaction, splits on top-level `or` into units and each unit on `and` into subunits, and
+stores the result as index arrays (`CatalyticUnits`); `reaction_availability` in
+`flux_layer.py` applies the softmin and the sum over those arrays. A reaction with no GPR
+keeps availability 1, since an unannotated reaction is one nobody has assigned a gene to,
+not one that no gene catalyzes. The softmin temperature is `softmin_beta` in
+`FluxLayerConfig`.
 
 ### What the five components do
 
@@ -91,3 +133,18 @@ Regenerate the figure asset (name matches this note):
 ```bash
 bash notes/assets/publish/scripts/mermaid_pdf.sh notes/torchcell.models.equivariant_cell_graph_transformer.mermaid.metabolic-module-simple.md
 ```
+
+## 2026.09.15 - Correction: the curated tables have an enum member now
+
+The 2026.09.11 revision said `ThermoSource` had no member for the curated tables. It does:
+`ThermoSource.VERIFIED` (parameters.py), which reads the tables under
+`thermo_equilibrator/verified/` through their manifest sha256 and takes reaction values from
+the verified REACTION table rather than re-summing, because three of the routes behind it are
+reaction-level facts a stoichiometric sum cannot reproduce. `train_flux.py` selects it from
+the arm's `thermo_source`, so it is reachable; what is true is that no arm has asked for it,
+which is a scheduling fact and not a wiring one. The diagram now draws the curated tables
+inside the read set with a solid edge labeled selectable but unrequested.
+
+The square-root covariance is still genuinely unwired: `reaction_sqrt_covariance` is called
+only from the test suite, no experiment script constructs it, and `thermo_uncertainty` stays
+at `isotropic` in every arm, so the correlated error term has never run.

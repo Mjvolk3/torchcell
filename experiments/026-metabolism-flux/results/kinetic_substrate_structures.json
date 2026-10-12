@@ -1,0 +1,93 @@
+{
+  "built_at": "2026-09-11T05:35:35.464408+00:00",
+  "conventions": {
+    "acceptance": "RDKit's formula for the SMILES must equal the GEM's formula, both moved to the neutral species by adding one hydrogen per negative charge",
+    "chain_length": "derived, not chosen: the template is built for every length in range and the GEM's formula selects one",
+    "stereocenters": "acyl double bonds carry the geometry the name states; the CoA moiety and the dolichol alpha carbon are left unspecified, as in the lipid writer"
+  },
+  "n_attempted": 5,
+  "n_written": 2,
+  "n_refused": 3,
+  "structures": [
+    {
+      "name": "dolichyl D-mannosyl phosphate",
+      "met_ids": [
+        "s_0644"
+      ],
+      "chemical_class": "dolichyl_glycoside",
+      "template": "DOLICHYL_MANNOSYL_PHOSPHATE(n_isoprene=4)",
+      "smiles": "OC[C@H]1O[C@H](OP(=O)(O)OCC[C@H](C)CC/C=C(C)/CC/C=C(C)/CCC=C(C)C)[C@@H](O)[C@@H](O)[C@@H]1O",
+      "gem_formula": "C26H47O9P",
+      "gem_charge": 0.0,
+      "rdkit_formula": "C26H47O9P",
+      "formula_match": true,
+      "n_candidates_tried": 10,
+      "failure": null
+    },
+    {
+      "name": "cis-dec-3-enoyl-CoA",
+      "met_ids": [
+        "s_2926"
+      ],
+      "chemical_class": "acyl_CoA",
+      "template": "ACYL_COA(n_carbons=10, double_bond=3, cis)",
+      "smiles": "CCCCCC/C=C\\CC(=O)SCCNC(=O)CCNC(=O)C(O)C(C)(C)COP(=O)(O)OP(=O)(O)OCC1OC(n2cnc3c(N)ncnc32)C(O)C1OP(=O)(O)O",
+      "gem_formula": "C31H52N7O17P3S",
+      "gem_charge": 0.0,
+      "rdkit_formula": "C31H52N7O17P3S",
+      "formula_match": true,
+      "n_candidates_tried": 1,
+      "failure": null
+    },
+    {
+      "name": "N,N'-diformyldityrosine",
+      "met_ids": [
+        "s_1185",
+        "s_1186"
+      ],
+      "chemical_class": "cross_link",
+      "template": "none accepted",
+      "smiles": null,
+      "gem_formula": "C20H22N2O8",
+      "gem_charge": -2.0,
+      "rdkit_formula": "C20H20N2O8",
+      "formula_match": false,
+      "n_candidates_tried": 1,
+      "failure": "no candidate matches the GEM's neutralized composition"
+    },
+    {
+      "name": "phosphatidylethanolamine backbone",
+      "met_ids": [
+        "s_1351",
+        "s_1352",
+        "s_3712"
+      ],
+      "chemical_class": "unhandled",
+      "template": "none accepted",
+      "smiles": null,
+      "gem_formula": "C5H10NO4P",
+      "gem_charge": 0.0,
+      "rdkit_formula": null,
+      "formula_match": false,
+      "n_candidates_tried": 0,
+      "failure": "no template for this name"
+    },
+    {
+      "name": "hydrogen sulfide",
+      "met_ids": [
+        "s_0841",
+        "s_3906",
+        "s_4263"
+      ],
+      "chemical_class": "unhandled",
+      "template": "none accepted",
+      "smiles": null,
+      "gem_formula": "HS",
+      "gem_charge": 0.0,
+      "rdkit_formula": null,
+      "formula_match": false,
+      "n_candidates_tried": 0,
+      "failure": "no template for this name"
+    }
+  ]
+}

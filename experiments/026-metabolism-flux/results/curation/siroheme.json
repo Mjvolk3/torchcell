@@ -1,0 +1,213 @@
+{
+  "slug": "siroheme",
+  "met_ids": ["s_1430"],
+  "gem_name": "siroheme",
+  "gem_formula": "C42H36FeN4O16",
+  "gem_charge": -8,
+  "compartments": ["c"],
+  "blocked_reactions": ["r_0999"],
+  "kind": "structure",
+  "admission": "tabulated",
+  "value": {
+    "smiles": "C[C@@]1(CC(=O)[O-])C2=CC3=[N+]4C(=Cc5c(CCC(=O)[O-])c(CC(=O)[O-])c6[n]5[Fe-2]45[N]2C(=CC2=[N+]5C(=C6)[C@@H](CCC(=O)[O-])[C@]2(C)CC(=O)[O-])[C@H]1CCC(=O)[O-])C(CCC(=O)[O-])=C3CC(=O)[O-]",
+    "inchi": "InChI=1S/C42H46N4O16.Fe/c1-41(17-39(59)60)23(5-9-35(51)52)29-14-27-21(11-37(55)56)19(3-7-33(47)48)25(43-27)13-26-20(4-8-34(49)50)22(12-38(57)58)28(44-26)15-31-42(2,18-40(61)62)24(6-10-36(53)54)30(46-31)16-32(41)45-29;/h13-16,23-24H,3-12,17-18H2,1-2H3,(H10,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62);/q;+2/p-10/t23-,24-,41+,42+;/m1./s1",
+    "inchikey": "DLKSSIHHLYNIKN-QIISWYHFSA-D",
+    "formula": "C42H36FeN4O16",
+    "charge": -8,
+    "microspecies_note": "The GEM species is the octaanion of siroheme: Fe(II) chelated inside the dianionic 7,8,12,13-tetrahydroporphyrin (isobacteriochlorin) macrocycle, with all EIGHT carboxylic acid side chains (four acetate, four propionate) deprotonated and NO carboxylic proton remaining. Derivation of the charge: the neutral free acid is siroheme C42H44FeN4O16 at charge 0 (ChEBI:28599; PDB CCD SRM; KEGG C00748), which is Fe(2+) plus a macrocycle dianion (core sum zero) plus 8 COOH. Removing all 8 carboxylic protons gives C42H44FeN4O16 minus 8 H = C42H36FeN4O16 at charge 0 - 8 = -8, exactly the GEM formula and charge. Every -1 of the net -8 is a carboxylate; the iron center contributes zero net charge because Fe(II) is compensated by the two deprotonated pyrrole nitrogens. ChEBI writes this bookkeeping as [Fe-2] with two [N+] pyrrolic nitrogens, which sums to the same zero core and the same overall -8; the physical oxidation state is Fe(II), not Fe(0) and not a formal Fe(2-). RDKit CalcMolFormula on the SMILES returns C42H36FeN4O16 and GetFormalCharge returns -8, and GetMolFrags returns 1, so the iron is inside the molecular graph rather than a separate ion. ChEBI names this the major species at pH 7.3, which is the microspecies the pipeline wants at pH 7.2. Reaction check: r_0999 is iron(2+) [Fe, +2] + sirohydrochlorin(8-) [C42H38N4O16, -8] -> 2 H+ [+2] + siroheme(8-) [C42H36FeN4O16, -8]; both sides are C42H38FeN4O16 at net charge -6, so the reaction balances elementally and by charge, and cobra check_mass_balance() on r_0999 returns an empty dict. The GEM's sirohydrochlorin formula C42H38N4O16 at -8 is itself an exact match to ChEBI:58351 sirohydrochlorin(8-)."
+  },
+  "sigma_kj_per_mol": null,
+  "sources": [
+    {
+      "source_url": "https://www.ebi.ac.uk/chebi/backend/api/public/compound/60052/",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sS -L -m 60 -o chebi_60052.json \"https://www.ebi.ac.uk/chebi/backend/api/public/compound/60052/\"",
+      "sha256": "b6d4415a777390b631e941d6a5efc8cc16d744b99656a4d839c4e67fb36fb401",
+      "retrieved_at": "2026-09-11T21:51:07Z",
+      "verbatim_quote": "\"definition\":\"A cyclic tetrapyrrole anion obtained by deprotonation of the carboxy groups of siroheme; major species at pH 7.3.\" ... \"chemical_data\":{\"formula\":\"C42H36FeN4O16\",\"charge\":-8,\"mass\":\"908.607\",\"monoisotopic_mass\":\"908.15196\"} ... \"smiles\": \"C[C@@]1(CC(=O)[O-])C2=CC3=[N+]4C(=Cc5c(CCC(=O)[O-])c(CC(=O)[O-])c6[n]5[Fe-2]45[N]2C(=CC2=[N+]5C(=C6)[C@@H](CCC(=O)[O-])[C@]2(C)CC(=O)[O-])[C@H]1CCC(=O)[O-])C(CCC(=O)[O-])=C3CC(=O)[O-]\", \"standard_inchi_key\": \"DLKSSIHHLYNIKN-QIISWYHFSA-D\"",
+      "location": "$DATA_ROOT/data/torchcell/thermo_equilibrator/curated/siroheme/chebi_60052.json, JSON keys definition, chemical_data, default_structure.smiles, default_structure.standard_inchi_key"
+    },
+    {
+      "source_url": "https://www.ebi.ac.uk/chebi/searchId.do?chebiId=CHEBI:60052",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sS -L -A \"Mozilla/5.0\" -o chebi_60052.html \"https://www.ebi.ac.uk/chebi/searchId.do?chebiId=CHEBI:60052\"",
+      "sha256": "30667c3e57c19a4dd24e4f869dadc7a5adf25d7ed5fe15d2c1b6907b011ef8ef",
+      "retrieved_at": "2026-09-11T21:50:00Z",
+      "verbatim_quote": "C42H36FeN4O16",
+      "location": "$DATA_ROOT/data/torchcell/thermo_equilibrator/curated/siroheme/chebi_60052.html, the Formula field of the ChEBI entity page for siroheme(8-); the human-readable page kept as the rendering of the API record above"
+    },
+    {
+      "source_url": "https://www.ebi.ac.uk/chebi/backend/api/public/compound/28599/",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sS -L -m 40 -o chebi_28599.json \"https://www.ebi.ac.uk/chebi/backend/api/public/compound/28599/\"",
+      "sha256": "263547f3894dbcc0fa76f7d4523d8816cf17df94b512fb71d085b458399c0457",
+      "retrieved_at": "2026-09-11T21:51:54Z",
+      "verbatim_quote": "{'formula': 'C42H44FeN4O16', 'charge': 0, 'mass': '916.671', 'monoisotopic_mass': '916.21017'}",
+      "location": "$DATA_ROOT/data/torchcell/thermo_equilibrator/curated/siroheme/chebi_28599.json, chemical_data of CHEBI:28599 siroheme, the neutral conjugate acid used to derive the -8 microspecies"
+    },
+    {
+      "source_url": "https://www.ebi.ac.uk/chebi/backend/api/public/compound/58351/",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sS -L -m 40 -o chebi_58351.json \"https://www.ebi.ac.uk/chebi/backend/api/public/compound/58351/\"",
+      "sha256": "47fb9f83bf9821f31cb0c1c35542f0604602d3960e38d6d3cdd8cac20355a5df",
+      "retrieved_at": "2026-09-11T21:52:00Z",
+      "verbatim_quote": "An octuply-charged cyclic tetrapyrrole anion arising from global deprotonation of the carboxy groups of sirohydrochlorin; major species at pH 7.3. ... {'formula': 'C42H38N4O16', 'charge': -8, 'mass': '854.778', 'monoisotopic_mass': '854.23267'}",
+      "location": "$DATA_ROOT/data/torchcell/thermo_equilibrator/curated/siroheme/chebi_58351.json, definition and chemical_data of CHEBI:58351 sirohydrochlorin(8-), the substrate side of r_0999"
+    },
+    {
+      "source_url": "https://files.rcsb.org/ligands/download/SRM.cif",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sS -L -o SRM.cif \"https://files.rcsb.org/ligands/download/SRM.cif\"",
+      "sha256": "2d5efc7d48b7bb382c48d9ab43d61fdef8eb2ffabb6d3e25a5c5eb221f139a39",
+      "retrieved_at": "2026-09-11T21:49:27Z",
+      "verbatim_quote": "_chem_comp.name                                  SIROHEME\n_chem_comp.formula                               \"C42 H44 Fe N4 O16\"",
+      "location": "$DATA_ROOT/data/torchcell/thermo_equilibrator/curated/siroheme/SRM.cif lines 4 and 7; PDB chemical component dictionary entry SRM, model coordinates from PDB 1AOP"
+    },
+    {
+      "source_url": "https://files.rcsb.org/ligands/download/SRM_ideal.sdf",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sS -L -o SRM_ideal.sdf \"https://files.rcsb.org/ligands/download/SRM_ideal.sdf\"",
+      "sha256": "25ceda1716bfd53e74a3bcd70b198b9a406cf22bcea7404e38191d97fce40cb1",
+      "retrieved_at": "2026-09-11T21:49:27Z",
+      "verbatim_quote": "SRM ideal SDF read by RDKit: formula C42H44FeN4O16-2, formal charge -2, fragments 1",
+      "location": "$DATA_ROOT/data/torchcell/thermo_equilibrator/curated/siroheme/SRM_ideal.sdf; the quote is the RDKit reading of the file, not text inside it. Corroborates connectivity and the 7S,8S,12S,13S stereochemistry with Fe coordinated in one fragment, but its formal-charge bookkeeping (neutral Fe plus two pyrrolide N) sums to -2 rather than the 0 implied by its own C42H44FeN4O16 formula, so it was not used as the charge authority."
+    },
+    {
+      "source_url": "https://rest.kegg.jp/get/C00748",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sS -L -m 60 -o kegg_C00748.txt \"https://rest.kegg.jp/get/C00748\"",
+      "sha256": "4356821c04acea7f927e91e5d9cca125826226953484aaac1782db4f9a91a2c5",
+      "retrieved_at": "2026-09-11T21:57:01Z",
+      "verbatim_quote": "FORMULA     C42H44FeN4O16",
+      "location": "$DATA_ROOT/data/torchcell/thermo_equilibrator/curated/siroheme/kegg_C00748.txt line 3; the same file cross-links ChEBI: 28599 (line 15) and PDB-CCD: SRM (line 16)"
+    },
+    {
+      "source_url": "https://www.metanetx.org/chem_info/MNXM82173",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sS -L -m 60 -o metanetx_MNXM82173.html \"https://www.metanetx.org/chem_info/MNXM82173\"",
+      "sha256": "14241c37f10cf15a2182a68b17046c08733da054137782286c8e57f28b60dd41",
+      "retrieved_at": "2026-09-11T21:57:39Z",
+      "verbatim_quote": "\"inChIKey\": \"DLKSSIHHLYNIKN-QIISWYHFSA-D\", \"molecularFormula\": \"C42H36FeN4O16\", \"molecularWeight\": 908.607, \"smiles\": [\"C[C@@]1(CC(=O)[O-])C2=CC3=[N+]4C(=CC5=C(CCC(=O)[O-])C(CC(=O)[O-])=C6C=C7[C@@H](CCC(=O)[O-])[C@](C)(CC(=O)[O-])C8=[N+]7[Fe-2]4(N2C(=C8)[C@H]1CCC(=O)[O-])N56)C(CCC(=O)[O-])=C3CC(=O)[O-]\"]",
+      "location": "$DATA_ROOT/data/torchcell/thermo_equilibrator/curated/siroheme/metanetx_MNXM82173.html, the embedded schema.org JSON-LD MolecularEntity block for MNXM1104857 (MNXM82173 redirects to it). This is the accession the GEM cites, and it already carries the correct Fe-coordinated structure; RDKit canonicalizes it to the identical SMILES as ChEBI:60052."
+    },
+    {
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/70678579/property/MolecularFormula,MolecularWeight,CanonicalSMILES,IsomericSMILES,InChI,InChIKey,Charge,Title/JSON",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sS -L -m 60 -o pubchem_70678579.json \"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/70678579/property/MolecularFormula,MolecularWeight,CanonicalSMILES,IsomericSMILES,InChI,InChIKey,Charge,Title/JSON\"",
+      "sha256": "756065a494b0c1a57914809c261f965665c1610c564f963c51f668819342770e",
+      "retrieved_at": "2026-09-11T21:57:18Z",
+      "verbatim_quote": "\"MolecularFormula\": \"C42H36FeN4O16-10\", ... \"InChIKey\": \"BGDZOENYZCAFCO-QIISWYHFSA-D\", \"Charge\": -10, \"Title\": \"Siroheme hexaanion\"",
+      "location": "$DATA_ROOT/data/torchcell/thermo_equilibrator/curated/siroheme/pubchem_70678579.json. REJECTED lead: the formula matches but the net charge is -10, not the GEM's -8, and its SMILES ends in \".[Fe]\", a disconnected neutral iron atom. RDKit reads it as two fragments at charge -10. Recorded so the rejection is auditable."
+    },
+    {
+      "source_url": "local probe, no URL",
+      "retrieval_method": "manual_browser",
+      "retrieval_command": "~/miniconda3/envs/equilibrator-ext/bin/python probe/gd.py '<curated siroheme SMILES>' > probe/gd_out.txt 2>&1",
+      "sha256": "3a844f9c383223acf8996e1e9ff992a1df52b6ece55b44499b91d71ffc97f35f",
+      "retrieved_at": "2026-09-11T21:58:30Z",
+      "verbatim_quote": "n group definitions: 163\nFe-bearing group SMARTS: []\nn atoms: 63\nignore_protonations=False: FAILED GroupDecompositionError: Unable to decompose <openbabel.openbabel.OBMol; proxy of <Swig Object of type 'OpenBabel::OBMol *' at 0x7fd7a13e7970> > into groups\nignore_protonations=True: FAILED GroupDecompositionError: Unable to decompose <openbabel.openbabel.OBMol; proxy of <Swig Object of type 'OpenBabel::OBMol *' at 0x7fd7a13e7970> > into groups",
+      "location": "$DATA_ROOT/data/torchcell/thermo_equilibrator/curated/siroheme/probe/gd_out.txt lines 1-5; script probe/gd.py sha256 986f39af90fcedae98cb11f82a50ba442959abc18d6736dc4f09f9d129fc48b3"
+    },
+    {
+      "source_url": "local probe, no URL",
+      "retrieval_method": "manual_browser",
+      "retrieval_command": "~/miniconda3/envs/equilibrator-ext/bin/python probe/detail.py <copy of ~/.cache/equilibrator/compounds.sqlite> > probe/detail_out.txt 2>&1",
+      "sha256": "0ed0a36dea2a410171b7f78a74a5697f7bd2967fdbb9e073bf84283b680a67ee",
+      "retrieved_at": "2026-09-11T21:58:45Z",
+      "verbatim_quote": "atom_bag: {'C': 42, 'O': 16, 'H': 38, 'N': 4, 'e-': 454}\ngroup_vector type: <class 'list'> len: 0\ngroup_vector nonzero: []\npKas: [4.87, 4.5, 4.24, 4.02, 3.82, 3.6, 3.34, 2.97]\n...\ncompound: Compound(id=67540, inchi_key=DLKSSIHHLYNIKN-QIISWYHFSA-D) formula: C42H38N4O16 mass: 908.6110000000001 atom_bag: {'C': 42, 'O': 16, 'H': 38, 'N': 4, 'e-': 454}\ngroup_vector is None: False\nstandard_dg_formation: (None, None, None)",
+      "location": "$DATA_ROOT/data/torchcell/thermo_equilibrator/curated/siroheme/probe/detail_out.txt lines 1-4 and 7-9; script probe/detail.py sha256 1c193ef0704c108dbb7b792006f7d1a0addbc687244aed4256d091b957523575"
+    }
+  ],
+  "searches": [
+    {
+      "query": "siroheme ChEBI 60052 siroheme(8-) formula C42H36FeN4O16 SMILES",
+      "engine": "WebSearch",
+      "date": "2026-09-11",
+      "outcome": "Found CHEBI:60052 as an exact formula and charge match to the GEM species, with an Fe-coordinated SMILES and InChIKey DLKSSIHHLYNIKN-QIISWYHFSA-D. Basis for the retrieval of chebi_60052.json."
+    },
+    {
+      "query": "https://www.ebi.ac.uk/chebi/searchId.do?chebiId=CHEBI:60052 (WebFetch of the ChEBI entity page)",
+      "engine": "WebFetch",
+      "date": "2026-09-11",
+      "outcome": "Confirmed name siroheme(8-), definition naming pH 7.3, formula C42H36FeN4O16, net charge -8, average mass 908.607, and the conjugate-acid relation to CHEBI:28599 siroheme."
+    },
+    {
+      "query": "ChEBI saveStructure.do endpoint for a molfile or SDF of CHEBI:60052",
+      "engine": "curl",
+      "date": "2026-09-11",
+      "outcome": "REJECTED. Both the molfile and the sdf=true form of saveStructure.do return the HTML entity page, not a structure file. Kept under rejected/ so the dead endpoint is on record. The structure was taken from the ChEBI backend API JSON instead."
+    },
+    {
+      "query": "PDB chemical component dictionary SRM (files.rcsb.org/ligands/download/SRM.cif and SRM_ideal.sdf)",
+      "engine": "curl",
+      "date": "2026-09-11",
+      "outcome": "Confirmed the prior lead: SRM is SIROHEME, formula C42 H44 Fe N4 O16, formula weight 916.661, model coordinates from PDB 1AOP, ideal coordinates flagged MetalCoord. Used as corroboration for connectivity and stereochemistry and as the neutral free-acid reference point. Not used as the charge authority: pdbx_formal_charge is '?' and RDKit reads the ideal SDF at net -2, which is inconsistent with its own neutral formula."
+    },
+    {
+      "query": "KEGG C00748 record and molfile (rest.kegg.jp)",
+      "engine": "curl",
+      "date": "2026-09-11",
+      "outcome": "KEGG carries the NEUTRAL free acid, FORMULA C42H44FeN4O16, and cross-links ChEBI: 28599 and PDB-CCD: SRM. It does not carry the -8 microspecies, so the GEM's kegg.compound accession alone cannot supply the species the pipeline needs."
+    },
+    {
+      "query": "MetaNetX chem_info MNXM82173",
+      "engine": "curl",
+      "date": "2026-09-11",
+      "outcome": "MNXM82173 redirects to MNXM1104857 and already carries molecularFormula C42H36FeN4O16, InChIKey DLKSSIHHLYNIKN-QIISWYHFSA-D and an Fe-coordinated SMILES that RDKit canonicalizes identically to ChEBI:60052. This locates the defect: the GEM's accession is fine; eQuilibrator's compound cache is where the iron is lost."
+    },
+    {
+      "query": "PubChem CID 70678579 property table (siroheme hexaanion)",
+      "engine": "curl",
+      "date": "2026-09-11",
+      "outcome": "REJECTED as the structure source. Formula C42H36FeN4O16 matches but Charge is -10 (not -8) and the SMILES carries '.[Fe]', a disconnected neutral iron; RDKit reads two fragments. Its InChIKey BGDZOENYZCAFCO-QIISWYHFSA-D differs from ChEBI's because the InChI lacks the /q;+2 iron-charge layer. The title 'hexaanion' does not match either charge convention."
+    },
+    {
+      "query": "siroheme standard Gibbs energy of formation thermodynamics kJ/mol",
+      "engine": "WebSearch",
+      "date": "2026-09-11",
+      "outcome": "NEGATIVE. No measured or tabulated formation energy for siroheme in any form. Only generic Gibbs-energy tutorials and general reference works were returned."
+    },
+    {
+      "query": "sirohydrochlorin ferrochelatase equilibrium constant thermodynamics Met8p SirB iron insertion",
+      "engine": "WebSearch",
+      "date": "2026-09-11",
+      "outcome": "NEGATIVE for thermodynamics. BRENDA EC 4.99.1.4, the SirB crystal structure (Dalton Trans 2019) and the Met8p bifunctional-enzyme literature describe mechanism, active-site residues and kinetics, but no equilibrium constant or reaction enthalpy for the chelation step."
+    },
+    {
+      "query": "\"sirohydrochlorin ferrochelatase\" EC 4.99.1.4 Rhea 24363 reaction",
+      "engine": "WebSearch",
+      "date": "2026-09-11",
+      "outcome": "Confirmed the reaction identity and Rhea ids 24360-24363 for siroheme + 2 H+ = Fe(2+) + sirohydrochlorin. No thermodynamic quantity attached."
+    },
+    {
+      "query": "https://www.rhea-db.org/rhea/24363 and the Rhea REST JSON/rxn endpoints",
+      "engine": "WebFetch and curl",
+      "date": "2026-09-11",
+      "outcome": "FAILED to retrieve. WebFetch returns HTTP 403 and the .rxn endpoint returns a Cloudflare interstitial; the JSON query endpoint returned count 0. Rhea could not be mirrored, so it carries none of the claims here. The pH-7.3 microspecies claim rests on ChEBI's own definition field instead."
+    },
+    {
+      "query": "NIST Thermodynamics of Enzyme-Catalyzed Reactions TECRDB ferrochelatase siroheme equilibrium",
+      "engine": "WebSearch",
+      "date": "2026-09-11",
+      "outcome": "NEGATIVE. TECRDB covers roughly 400 enzyme-catalyzed reactions from roughly 1000 papers; no entry for a ferrochelatase or for siroheme was surfaced. No TECRDB file ships with the installed equilibrator packages to check locally."
+    },
+    {
+      "query": "Alberty thermodynamic tables heme protoheme standard transformed Gibbs energy formation biochemical species",
+      "engine": "WebSearch",
+      "date": "2026-09-11",
+      "outcome": "NEGATIVE. Alberty's tabulations cover 53 to 64 reactants at 298.15 K and pH 7; heme, protoheme and siroheme are not among the reactants surfaced."
+    },
+    {
+      "query": "iron(II) porphyrin metalation equilibrium constant calorimetry thermodynamics \"formation constant\" siroheme OR sirohydrochlorin OR isobacteriochlorin",
+      "engine": "WebSearch",
+      "date": "2026-09-11",
+      "outcome": "NEGATIVE. The closest hit, Chang and Fajer, J. Am. Chem. Soc. 1980, 102, 848, concerns pi cation radicals of iron(II) isobacteriochlorin model compounds, not a metalation equilibrium constant or a formation energy. Nothing measured is transferable to r_0999."
+    }
+  ],
+  "decomposition_check": {
+    "attempted": true,
+    "decomposes": false,
+    "error": "GroupDecompositionError: Unable to decompose <openbabel OBMol> into groups. Raised by equilibrator_assets.group_decompose.GroupDecomposer.Decompose on the curated siroheme(8-) SMILES under BOTH ignore_protonations=False and ignore_protonations=True. None of the 163 installed group definitions contains iron: the Fe-bearing SMARTS list is empty. Separately, the LocalCompoundCache route that thermo_structure_attempt.py uses does NOT actually test this structure: local.get_compounds([smiles], mol_format='smiles', bypass_chemaxon=True) resolves by InChIKey to the pre-existing cache compound 67540, which stores the correct siroheme InChI, InChIKey and mass but an IRON-FREE SMILES and an iron-free atom_bag {'C': 42, 'O': 16, 'H': 38, 'N': 4, 'e-': 454}, with group_vector == [] (an empty list, not None) and cc.standard_dg_formation returning (None, None, None). cxcalc is not installed in the equilibrator-ext env, so that cache is read-only and cannot create a new compound from the curated structure."
+  },
+  "notes": "WHAT THIS RECORD SUPPLIES: a curated, verified structure for s_1430 that matches the GEM formula and charge exactly. RDKit in the torchcell env reports CalcMolFormula = C42H36FeN4O16, GetFormalCharge = -8, and GetMolFrags = 1 on the SMILES above; the iron is a coordinated atom inside the single molecular graph, not a separate ion. The ChEBI SMILES and the MetaNetX SMILES canonicalize to the identical string, and both give InChIKey DLKSSIHHLYNIKN-QIISWYHFSA-D. Admission is 'tabulated' in the sense of a curated reference-database record (ChEBI three-star entry, independently corroborated by MetaNetX and by the PDB chemical component dictionary), NOT in the sense of a thermodynamic table. NO energy is claimed here and sigma is null.\n\nWHAT THE STRUCTURE DOES NOT FIX: the structure alone will not price s_1430. Two separate obstacles were measured, not assumed. First, eQuilibrator's component contribution has no iron. The installed group_definitions.csv holds 163 group definitions and none of their SMARTS contains Fe, and the decomposer raises GroupDecompositionError on this structure under both protonation settings. So the group-contribution term cannot be formed for any Fe-containing macrocycle, and no amount of better retrieval changes that. Second, and independently, the cache entry the pipeline reaches (compound 67540, created 2019-01-16) is internally inconsistent: right InChI, InChIKey and mass for siroheme(8-), but an iron-stripped SMILES and atom_bag, an empty group vector, and no formation energy. That inconsistency, not the accession, is why the pipeline reports composition_mismatch and no_structure_available. Note for the integrating code agent: thermo_structure_attempt.py tests created.group_vector is not None, which is TRUE for an empty list, so an empty decomposition would be scored as a successful one if the composition check did not catch it first. That test should be len(group_vector) > 0.\n\nNO ENERGY EXISTS TO ADMIT. Seven searches across NIST TECRDB, Alberty-type tables, BRENDA EC 4.99.1.4, the SirB and Met8p structural literature, and the iron-porphyrin metalation literature returned no measured equilibrium constant, no calorimetric enthalpy, and no tabulated formation energy for siroheme, for sirohydrochlorin ferrochelatase, or for an analogous porphyrin metalation. This is a documented negative, not an unchecked gap.\n\nWHAT A HUMAN STILL NEEDS TO DO, in the order that closes r_0999 fastest. (1) Decide the surrogate rule for metal insertion into a macrocycle and write it down, because that is a modeling decision and not a retrieval one. The GEM already prices the other three participants of r_0999: s_0924 iron(2+) at -82.18 kJ/mol and s_1431 sirohydrochlorin at -796.96 kJ/mol (composition_surrogate route) and s_0794 H+ at 0.0, all from thermo_pipeline_yeast9.json. Only s_1430 is missing, so one number closes the reaction. (2) The cheapest defensible rule, and it is a HYPOTHESIS I did not test, is that ferrous insertion into a tetrapyrrole with release of the two pyrrole protons has a small standard reaction energy, so dgf(siroheme(8-)) would be approximated as dgf(sirohydrochlorin(8-)) + dgf(Fe2+) - 2*dgf(H+) + drG_chelation with drG_chelation set to zero and a wide sigma. Anyone adopting it must label it a surrogate with an explicit sigma, and must NOT present it as measured. (3) If a real number is wanted, the honest sources to try next are a quantum-chemistry formation energy for the Fe(II) isobacteriochlorin core (which would be admission 'computed' and stays out of the default route) or a spectrophotometric metalation equilibrium measured for a sirohydrochlorin or isobacteriochlorin model compound, which as far as these searches reach has not been published. (4) Separately from the energy question, someone should decide whether to file the eQuilibrator cache defect upstream: compound 67540's stored SMILES and atom_bag disagree with its own stored InChI and mass. Every Fe-containing macrocycle in the cache is likely to carry the same defect, so it is worth a sweep rather than a one-compound patch.\n\nCONDITIONS: none apply to a structure record. The conditions the pipeline would transform to, if an energy ever arrives, are T = 303.15 K, pH 7.2, ionic strength 0.25 M, pMg 3.0, matching thermo_structure_attempt.py. The ChEBI microspecies is stated by ChEBI to be the major species at pH 7.3, which is the correct microspecies at the pipeline's pH 7.2; the eight carboxylate pKas the eQuilibrator cache stores for the iron-free macrocycle span 2.97 to 4.87, all far below 7.2, so the octaanion is the dominant form there by a wide margin."
+}

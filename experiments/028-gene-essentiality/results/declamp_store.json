@@ -1,0 +1,21 @@
+{
+  "flux_scale": 100.0,
+  "stores": [
+    {
+      "source": "ess_solve_encodings_YPD_simplex.npz",
+      "written": "ess_solve_encodings_YPD_simplexdeclamp.npz",
+      "n_reactions": 4131,
+      "n_columns_dropped": 429,
+      "n_columns_varying_after": 1123,
+      "sum_abs_flux_median_after": 413.8397960585469
+    },
+    {
+      "source": "ess_solve_encodings_YPD.npz",
+      "written": "ess_solve_encodings_YPD_declamp.npz",
+      "n_reactions": 4131,
+      "n_columns_dropped": 1,
+      "n_columns_varying_after": 859,
+      "sum_abs_flux_median_after": 494.5279476946968
+    }
+  ]
+}

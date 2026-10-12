@@ -1,0 +1,8727 @@
+{
+ "built_at": "2026-09-10T18:41:20.767788+00:00",
+ "source_file": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/026-metabolism-flux/results/unresolved_metabolites.json",
+ "n_metabolite_rows": 409,
+ "n_distinct_names": 206,
+ "n_parsed": 168,
+ "n_unparsed": 38,
+ "parsed_rows": 347,
+ "unparsed_rows": 62,
+ "parsed_by_class": {
+  "cardiolipin_CL": 60,
+  "phosphatidylinositol_PI": 30,
+  "triacylglycerol_TAG": 21,
+  "phosphatidylethanolamine_PE": 20,
+  "phosphatidate_PA": 12,
+  "acyl_CoA": 9,
+  "phosphatidylglycerol_PG": 7,
+  "fatty_acid_acyl_chain": 7,
+  "phosphatidylcholine_PC": 2
+ },
+ "unparsed_by_class": {
+  "other": 12,
+  "sphingolipid": 6,
+  "glycan": 4,
+  "protein_linked": 4,
+  "phosphatidylinositol_PI": 3,
+  "triacylglycerol_TAG": 2,
+  "cardiolipin_CL": 1,
+  "sterol_ester": 1,
+  "phosphatidate_PA": 1,
+  "generic_pseudo_metabolite": 1,
+  "phosphatidylcholine_PC": 1,
+  "phosphatidylethanolamine_PE": 1,
+  "phosphatidylglycerol_PG": 1
+ },
+ "unparsed_by_reason": {
+  "no_acyl_composition_in_name": 21,
+  "slime_backbone_pseudo_metabolite": 17
+ },
+ "unparsed_names": [
+  {
+   "name": "(1->3)-beta-D-glucan",
+   "chemical_class": "glycan",
+   "formula": "C6H10O5",
+   "reason": "no_acyl_composition_in_name"
+  },
+  {
+   "name": "(1->6)-beta-D-glucan",
+   "chemical_class": "glycan",
+   "formula": "C6H10O5",
+   "reason": "no_acyl_composition_in_name"
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol backbone",
+   "chemical_class": "phosphatidylinositol_PI",
+   "formula": "C9H15O9P",
+   "reason": "slime_backbone_pseudo_metabolite"
+  },
+  {
+   "name": "6-[6-(2-aminoethylphosphoryl)-alpha-mannosyl-(1->6)-2-(2-aminoethylphosphoryl)-alpha-mannosyl-(1->6)-alpha-2-(2-aminoethylphosphoryl)mannosyl-(1->4)-alpha-glucosaminyl]-O-acyl-1-phosphatidyl-1D-myo-inositol",
+   "chemical_class": "phosphatidylinositol_PI",
+   "formula": "C43H44N9O",
+   "reason": "no_acyl_composition_in_name"
+  },
+  {
+   "name": "Apocytochrome c",
+   "chemical_class": "other",
+   "formula": "C6H10N2O2S2",
+   "reason": "no_acyl_composition_in_name"
+  },
+  {
+   "name": "Cytochrome c",
+   "chemical_class": "other",
+   "formula": "C40H40FeN6O6S2",
+   "reason": "no_acyl_composition_in_name"
+  },
+  {
+   "name": "Dextrin",
+   "chemical_class": "other",
+   "formula": "C12H20O10",
+   "reason": "no_acyl_composition_in_name"
+  },
+  {
+   "name": "Ferricytochrome b5",
+   "chemical_class": "other",
+   "formula": "Fe",
+   "reason": "no_acyl_composition_in_name"
+  },
+  {
+   "name": "Ferrocytochrome b5",
+   "chemical_class": "other",
+   "formula": "Fe",
+   "reason": "no_acyl_composition_in_name"
+  },
+  {
+   "name": "N,N'-Chitobiosyldiphosphodolichol",
+   "chemical_class": "glycan",
+   "formula": "C36H64N2O17P2",
+   "reason": "no_acyl_composition_in_name"
+  },
+  {
+   "name": "Starch",
+   "chemical_class": "glycan",
+   "formula": "C12H22O11",
+   "reason": "no_acyl_composition_in_name"
+  },
+  {
+   "name": "[cytochrome c]-L-lysine",
+   "chemical_class": "protein_linked",
+   "formula": "C6H13N2O",
+   "reason": "no_acyl_composition_in_name"
+  },
+  {
+   "name": "[cytochrome c]-N6-methyl-L-lysine",
+   "chemical_class": "protein_linked",
+   "formula": "C7H15N2O",
+   "reason": "no_acyl_composition_in_name"
+  },
+  {
+   "name": "[protein]-L-lysine",
+   "chemical_class": "protein_linked",
+   "formula": "C6H13N2O",
+   "reason": "no_acyl_composition_in_name"
+  },
+  {
+   "name": "[protein]-N(6)-acetyl-L-lysine",
+   "chemical_class": "protein_linked",
+   "formula": "C8H14N2O2",
+   "reason": "no_acyl_composition_in_name"
+  },
+  {
+   "name": "cardiolipin backbone",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C9H14O9P2",
+   "reason": "slime_backbone_pseudo_metabolite"
+  },
+  {
+   "name": "ceramide backbone",
+   "chemical_class": "sphingolipid",
+   "formula": "HNO2",
+   "reason": "slime_backbone_pseudo_metabolite"
+  },
+  {
+   "name": "chitin",
+   "chemical_class": "other",
+   "formula": "C8H13NO5",
+   "reason": "no_acyl_composition_in_name"
+  },
+  {
+   "name": "chitosan",
+   "chemical_class": "other",
+   "formula": "C6H11NO4",
+   "reason": "no_acyl_composition_in_name"
+  },
+  {
+   "name": "diglyceride backbone",
+   "chemical_class": "triacylglycerol_TAG",
+   "formula": "C3H4O",
+   "reason": "slime_backbone_pseudo_metabolite"
+  },
+  {
+   "name": "ergosterol ester backbone",
+   "chemical_class": "sterol_ester",
+   "formula": "C28H42",
+   "reason": "slime_backbone_pseudo_metabolite"
+  },
+  {
+   "name": "heme a",
+   "chemical_class": "other",
+   "formula": "C49H55FeN4O6",
+   "reason": "no_acyl_composition_in_name"
+  },
+  {
+   "name": "heme o",
+   "chemical_class": "other",
+   "formula": "C49H56FeN4O5",
+   "reason": "no_acyl_composition_in_name"
+  },
+  {
+   "name": "inositol phosphomannosylinositol phosphoceramide backbone",
+   "chemical_class": "sphingolipid",
+   "formula": "C18H33NO23P2",
+   "reason": "slime_backbone_pseudo_metabolite"
+  },
+  {
+   "name": "inositol-P-ceramide backbone",
+   "chemical_class": "sphingolipid",
+   "formula": "C6H12NO10P",
+   "reason": "slime_backbone_pseudo_metabolite"
+  },
+  {
+   "name": "long-chain base backbone",
+   "chemical_class": "sphingolipid",
+   "formula": "H4N",
+   "reason": "slime_backbone_pseudo_metabolite"
+  },
+  {
+   "name": "long-chain base phosphate backbone",
+   "chemical_class": "sphingolipid",
+   "formula": "H3NO3P",
+   "reason": "slime_backbone_pseudo_metabolite"
+  },
+  {
+   "name": "mannan",
+   "chemical_class": "other",
+   "formula": "C6H10O5",
+   "reason": "no_acyl_composition_in_name"
+  },
+  {
+   "name": "mannosylinositol phosphorylceramide backbone",
+   "chemical_class": "sphingolipid",
+   "formula": "C12H22NO15P",
+   "reason": "slime_backbone_pseudo_metabolite"
+  },
+  {
+   "name": "pectin",
+   "chemical_class": "other",
+   "formula": "C6H7O6",
+   "reason": "no_acyl_composition_in_name"
+  },
+  {
+   "name": "phosphatidate backbone",
+   "chemical_class": "phosphatidate_PA",
+   "formula": "C3H5O4P",
+   "reason": "slime_backbone_pseudo_metabolite"
+  },
+  {
+   "name": "phosphatidyl-L-serine backbone",
+   "chemical_class": "generic_pseudo_metabolite",
+   "formula": "C6H10NO6P",
+   "reason": "slime_backbone_pseudo_metabolite"
+  },
+  {
+   "name": "phosphatidylcholine backbone",
+   "chemical_class": "phosphatidylcholine_PC",
+   "formula": "C8H16NO3P",
+   "reason": "slime_backbone_pseudo_metabolite"
+  },
+  {
+   "name": "phosphatidylethanolamine backbone",
+   "chemical_class": "phosphatidylethanolamine_PE",
+   "formula": "C5H10NO4P",
+   "reason": "slime_backbone_pseudo_metabolite"
+  },
+  {
+   "name": "phosphatidylglycerol backbone",
+   "chemical_class": "phosphatidylglycerol_PG",
+   "formula": "C6H11O6P",
+   "reason": "slime_backbone_pseudo_metabolite"
+  },
+  {
+   "name": "sn-2-acyl-1-lysophosphatidylinositol backbone",
+   "chemical_class": "phosphatidylinositol_PI",
+   "formula": "C9H11O10P",
+   "reason": "slime_backbone_pseudo_metabolite"
+  },
+  {
+   "name": "triglyceride backbone",
+   "chemical_class": "triacylglycerol_TAG",
+   "formula": "C3H2",
+   "reason": "slime_backbone_pseudo_metabolite"
+  },
+  {
+   "name": "tyrosyl acetate",
+   "chemical_class": "other",
+   "formula": "C10H12O3",
+   "reason": "no_acyl_composition_in_name"
+  }
+ ],
+ "names": [
+  {
+   "name": "(1->3)-beta-D-glucan",
+   "chemical_class": "glycan",
+   "formula": "C6H10O5",
+   "charge": 0.0,
+   "met_ids": [
+    "s_0001",
+    "s_0002",
+    "s_0003"
+   ],
+   "n_metabolite_rows": 3,
+   "parsed": false,
+   "template": null,
+   "chains": [],
+   "failure": "no_acyl_composition_in_name"
+  },
+  {
+   "name": "(1->6)-beta-D-glucan",
+   "chemical_class": "glycan",
+   "formula": "C6H10O5",
+   "charge": 0.0,
+   "met_ids": [
+    "s_0004"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": false,
+   "template": null,
+   "chains": [],
+   "failure": "no_acyl_composition_in_name"
+  },
+  {
+   "name": "(R)-3-hydroxy-cis-dodec-5-enoyl-CoA",
+   "chemical_class": "acyl_CoA",
+   "formula": "C33H56N7O18P3S",
+   "charge": 0.0,
+   "met_ids": [
+    "s_2910"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "ACYLCOA",
+   "chains": [
+    {
+     "position": null,
+     "n_carbons": 12,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      5
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "stated_in_name",
+     "substituents": {
+      "3": "hydroxy"
+     }
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "(R)-3-hydroxy-cis-hexadec-9-enoyl-CoA",
+   "chemical_class": "acyl_CoA",
+   "formula": "C37H64N7O18P3S",
+   "charge": 0.0,
+   "met_ids": [
+    "s_2908"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "ACYLCOA",
+   "chains": [
+    {
+     "position": null,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "stated_in_name",
+     "substituents": {
+      "3": "hydroxy"
+     }
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "(R)-3-hydroxy-cis-tetradec-7-enoyl-CoA",
+   "chemical_class": "acyl_CoA",
+   "formula": "C35H60N7O18P3S",
+   "charge": 0.0,
+   "met_ids": [
+    "s_2909"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "ACYLCOA",
+   "chains": [
+    {
+     "position": null,
+     "n_carbons": 14,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      7
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "stated_in_name",
+     "substituents": {
+      "3": "hydroxy"
+     }
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "1,2-diacylglycerol 3-diphosphate (1-16:0, 2-16:1)",
+   "chemical_class": "phosphatidate_PA",
+   "formula": "C35H68O11P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3616",
+    "s_3624"
+   ],
+   "n_metabolite_rows": 2,
+   "parsed": true,
+   "template": "DGPP",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "1,2-diacylglycerol 3-diphosphate (1-16:1, 2-16:1)",
+   "chemical_class": "phosphatidate_PA",
+   "formula": "C35H66O11P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3617",
+    "s_3625"
+   ],
+   "n_metabolite_rows": 2,
+   "parsed": true,
+   "template": "DGPP",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "1,2-diacylglycerol 3-diphosphate (1-16:1, 2-18:1)",
+   "chemical_class": "phosphatidate_PA",
+   "formula": "C37H70O11P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3621",
+    "s_3629"
+   ],
+   "n_metabolite_rows": 2,
+   "parsed": true,
+   "template": "DGPP",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "1,2-diacylglycerol 3-diphosphate (1-18:0, 2-16:1)",
+   "chemical_class": "phosphatidate_PA",
+   "formula": "C37H72O11P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3618",
+    "s_3626"
+   ],
+   "n_metabolite_rows": 2,
+   "parsed": true,
+   "template": "DGPP",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "1,2-diacylglycerol 3-diphosphate (1-18:0, 2-18:1)",
+   "chemical_class": "phosphatidate_PA",
+   "formula": "C39H76O11P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3622",
+    "s_3630"
+   ],
+   "n_metabolite_rows": 2,
+   "parsed": true,
+   "template": "DGPP",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "1,2-diacylglycerol 3-diphosphate (1-18:1, 2-16:1)",
+   "chemical_class": "phosphatidate_PA",
+   "formula": "C37H70O11P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3619",
+    "s_3627"
+   ],
+   "n_metabolite_rows": 2,
+   "parsed": true,
+   "template": "DGPP",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "1,2-diacylglycerol 3-diphosphate (1-18:1, 2-18:1)",
+   "chemical_class": "phosphatidate_PA",
+   "formula": "C39H74O11P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3623",
+    "s_3631"
+   ],
+   "n_metabolite_rows": 2,
+   "parsed": true,
+   "template": "DGPP",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "1-monoglyceride (16:0)",
+   "chemical_class": "triacylglycerol_TAG",
+   "formula": "C19H38O4",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3633",
+    "s_3641",
+    "s_3649",
+    "s_3671",
+    "s_3676"
+   ],
+   "n_metabolite_rows": 5,
+   "parsed": true,
+   "template": "MAG1",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "1-monoglyceride (16:1)",
+   "chemical_class": "triacylglycerol_TAG",
+   "formula": "C19H36O4",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3635",
+    "s_3643",
+    "s_3651",
+    "s_3672",
+    "s_3679"
+   ],
+   "n_metabolite_rows": 5,
+   "parsed": true,
+   "template": "MAG1",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "1-monoglyceride (18:0)",
+   "chemical_class": "triacylglycerol_TAG",
+   "formula": "C21H42O4",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3637",
+    "s_3645",
+    "s_3653",
+    "s_3673",
+    "s_3681"
+   ],
+   "n_metabolite_rows": 5,
+   "parsed": true,
+   "template": "MAG1",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol (1-16:1, 2-16:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "formula": "C41H75O13P",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3119",
+    "s_3326",
+    "s_3344",
+    "s_3362",
+    "s_3378",
+    "s_3547"
+   ],
+   "n_metabolite_rows": 6,
+   "parsed": true,
+   "template": "PI",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate (1-16:0, 2-16:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "formula": "C41H79O19P3",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3416",
+    "s_3592",
+    "s_3600"
+   ],
+   "n_metabolite_rows": 3,
+   "parsed": true,
+   "template": "PI35P2",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate (1-16:0, 2-18:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "formula": "C43H83O19P3",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3420",
+    "s_3596",
+    "s_3604"
+   ],
+   "n_metabolite_rows": 3,
+   "parsed": true,
+   "template": "PI35P2",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate (1-16:1, 2-16:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "formula": "C41H77O19P3",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3417",
+    "s_3593",
+    "s_3601"
+   ],
+   "n_metabolite_rows": 3,
+   "parsed": true,
+   "template": "PI35P2",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate (1-16:1, 2-18:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "formula": "C43H81O19P3",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3421",
+    "s_3597",
+    "s_3605"
+   ],
+   "n_metabolite_rows": 3,
+   "parsed": true,
+   "template": "PI35P2",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate (1-18:0, 2-16:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "formula": "C43H83O19P3",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3418",
+    "s_3594",
+    "s_3602"
+   ],
+   "n_metabolite_rows": 3,
+   "parsed": true,
+   "template": "PI35P2",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate (1-18:0, 2-18:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "formula": "C45H87O19P3",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3422",
+    "s_3598",
+    "s_3606"
+   ],
+   "n_metabolite_rows": 3,
+   "parsed": true,
+   "template": "PI35P2",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate (1-18:1, 2-16:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "formula": "C43H81O19P3",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3419",
+    "s_3595",
+    "s_3603"
+   ],
+   "n_metabolite_rows": 3,
+   "parsed": true,
+   "template": "PI35P2",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 3,5-bisphosphate (1-18:1, 2-18:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "formula": "C45H85O19P3",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3423",
+    "s_3599",
+    "s_3607"
+   ],
+   "n_metabolite_rows": 3,
+   "parsed": true,
+   "template": "PI35P2",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 3-phosphate (1-16:0, 2-16:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "formula": "C41H78O16P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3392",
+    "s_3535",
+    "s_3544",
+    "s_3560",
+    "s_3568"
+   ],
+   "n_metabolite_rows": 5,
+   "parsed": true,
+   "template": "PI3P",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 3-phosphate (1-16:0, 2-18:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "formula": "C43H82O16P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3396",
+    "s_3540",
+    "s_3552",
+    "s_3564",
+    "s_3572"
+   ],
+   "n_metabolite_rows": 5,
+   "parsed": true,
+   "template": "PI3P",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 3-phosphate (1-16:1, 2-16:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "formula": "C41H76O16P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3393",
+    "s_3537",
+    "s_3546",
+    "s_3561",
+    "s_3569"
+   ],
+   "n_metabolite_rows": 5,
+   "parsed": true,
+   "template": "PI3P",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 3-phosphate (1-16:1, 2-18:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "formula": "C43H80O16P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3397",
+    "s_3541",
+    "s_3554",
+    "s_3565",
+    "s_3573"
+   ],
+   "n_metabolite_rows": 5,
+   "parsed": true,
+   "template": "PI3P",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 3-phosphate (1-18:0, 2-16:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "formula": "C43H82O16P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3394",
+    "s_3538",
+    "s_3548",
+    "s_3562",
+    "s_3570"
+   ],
+   "n_metabolite_rows": 5,
+   "parsed": true,
+   "template": "PI3P",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 3-phosphate (1-18:1, 2-16:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "formula": "C43H80O16P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3395",
+    "s_3539",
+    "s_3550",
+    "s_3563",
+    "s_3571"
+   ],
+   "n_metabolite_rows": 5,
+   "parsed": true,
+   "template": "PI3P",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate (1-16:0, 2-16:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "formula": "C41H79O19P3",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3400",
+    "s_3408",
+    "s_3496",
+    "s_3608"
+   ],
+   "n_metabolite_rows": 4,
+   "parsed": true,
+   "template": "PI45P2",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate (1-16:0, 2-18:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "formula": "C43H83O19P3",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3404",
+    "s_3412",
+    "s_3505",
+    "s_3612"
+   ],
+   "n_metabolite_rows": 4,
+   "parsed": true,
+   "template": "PI45P2",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate (1-16:1, 2-16:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "formula": "C41H77O19P3",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3401",
+    "s_3409",
+    "s_3499",
+    "s_3609"
+   ],
+   "n_metabolite_rows": 4,
+   "parsed": true,
+   "template": "PI45P2",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate (1-16:1, 2-18:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "formula": "C43H81O19P3",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3405",
+    "s_3413",
+    "s_3507",
+    "s_3613"
+   ],
+   "n_metabolite_rows": 4,
+   "parsed": true,
+   "template": "PI45P2",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate (1-18:0, 2-16:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "formula": "C43H83O19P3",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3402",
+    "s_3410",
+    "s_3501",
+    "s_3610"
+   ],
+   "n_metabolite_rows": 4,
+   "parsed": true,
+   "template": "PI45P2",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate (1-18:1, 2-16:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "formula": "C43H81O19P3",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3403",
+    "s_3411",
+    "s_3503",
+    "s_3611"
+   ],
+   "n_metabolite_rows": 4,
+   "parsed": true,
+   "template": "PI45P2",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 4,5-bisphosphate (1-18:1, 2-18:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "formula": "C45H85O19P3",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3407",
+    "s_3415",
+    "s_3511",
+    "s_3615"
+   ],
+   "n_metabolite_rows": 4,
+   "parsed": true,
+   "template": "PI45P2",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 4-phosphate (1-16:0, 2-16:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "formula": "C41H78O16P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3325",
+    "s_3343",
+    "s_3361",
+    "s_3377",
+    "s_3576",
+    "s_3584"
+   ],
+   "n_metabolite_rows": 6,
+   "parsed": true,
+   "template": "PI4P",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 4-phosphate (1-16:0, 2-18:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "formula": "C43H82O16P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3333",
+    "s_3351",
+    "s_3369",
+    "s_3385",
+    "s_3580",
+    "s_3588"
+   ],
+   "n_metabolite_rows": 6,
+   "parsed": true,
+   "template": "PI4P",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 4-phosphate (1-16:1, 2-16:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "formula": "C41H76O16P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3327",
+    "s_3345",
+    "s_3363",
+    "s_3379",
+    "s_3577",
+    "s_3585"
+   ],
+   "n_metabolite_rows": 6,
+   "parsed": true,
+   "template": "PI4P",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 4-phosphate (1-16:1, 2-18:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "formula": "C43H80O16P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3335",
+    "s_3353",
+    "s_3371",
+    "s_3387",
+    "s_3581",
+    "s_3589"
+   ],
+   "n_metabolite_rows": 6,
+   "parsed": true,
+   "template": "PI4P",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 4-phosphate (1-18:0, 2-16:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "formula": "C43H82O16P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3329",
+    "s_3347",
+    "s_3365",
+    "s_3381",
+    "s_3578",
+    "s_3586"
+   ],
+   "n_metabolite_rows": 6,
+   "parsed": true,
+   "template": "PI4P",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 4-phosphate (1-18:1, 2-16:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "formula": "C43H80O16P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3331",
+    "s_3349",
+    "s_3367",
+    "s_3383",
+    "s_3579",
+    "s_3587"
+   ],
+   "n_metabolite_rows": 6,
+   "parsed": true,
+   "template": "PI4P",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol 4-phosphate (1-18:1, 2-18:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "formula": "C45H84O16P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3339",
+    "s_3357",
+    "s_3375",
+    "s_3391",
+    "s_3583",
+    "s_3591"
+   ],
+   "n_metabolite_rows": 6,
+   "parsed": true,
+   "template": "PI4P",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "1-phosphatidyl-1D-myo-inositol backbone",
+   "chemical_class": "phosphatidylinositol_PI",
+   "formula": "C9H15O9P",
+   "charge": -1.0,
+   "met_ids": [
+    "s_0089"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": false,
+   "template": null,
+   "chains": [],
+   "failure": "slime_backbone_pseudo_metabolite"
+  },
+  {
+   "name": "3-(3-sn-phosphatidyl)-sn-glycerol 1-phosphate (1-16:0, 2-16:1)",
+   "chemical_class": "phosphatidylglycerol_PG",
+   "formula": "C38H74O13P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3220"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "PGP",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "3-(3-sn-phosphatidyl)-sn-glycerol 1-phosphate (1-16:1, 2-16:1)",
+   "chemical_class": "phosphatidylglycerol_PG",
+   "formula": "C38H72O13P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3221"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "PGP",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "3-(3-sn-phosphatidyl)-sn-glycerol 1-phosphate (1-16:1, 2-18:1)",
+   "chemical_class": "phosphatidylglycerol_PG",
+   "formula": "C40H76O13P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3225"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "PGP",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "3-(3-sn-phosphatidyl)-sn-glycerol 1-phosphate (1-18:0, 2-16:1)",
+   "chemical_class": "phosphatidylglycerol_PG",
+   "formula": "C40H78O13P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3222"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "PGP",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "3-(3-sn-phosphatidyl)-sn-glycerol 1-phosphate (1-18:1, 2-16:1)",
+   "chemical_class": "phosphatidylglycerol_PG",
+   "formula": "C40H76O13P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3223"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "PGP",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "3-oxo-cis-dodec-5-enoyl-CoA",
+   "chemical_class": "acyl_CoA",
+   "formula": "C33H54N7O18P3S",
+   "charge": 0.0,
+   "met_ids": [
+    "s_2922"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "ACYLCOA",
+   "chains": [
+    {
+     "position": null,
+     "n_carbons": 12,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      5
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "stated_in_name",
+     "substituents": {
+      "3": "oxo"
+     }
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "3-oxo-cis-tetradec-7-enoyl-CoA",
+   "chemical_class": "acyl_CoA",
+   "formula": "C35H58N7O18P3S",
+   "charge": 0.0,
+   "met_ids": [
+    "s_2921"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "ACYLCOA",
+   "chains": [
+    {
+     "position": null,
+     "n_carbons": 14,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      7
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "stated_in_name",
+     "substituents": {
+      "3": "oxo"
+     }
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "6-[6-(2-aminoethylphosphoryl)-alpha-mannosyl-(1->6)-2-(2-aminoethylphosphoryl)-alpha-mannosyl-(1->6)-alpha-2-(2-aminoethylphosphoryl)mannosyl-(1->4)-alpha-glucosaminyl]-O-acyl-1-phosphatidyl-1D-myo-inositol",
+   "chemical_class": "phosphatidylinositol_PI",
+   "formula": "C43H44N9O",
+   "charge": 0.0,
+   "met_ids": [
+    "s_0332"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": false,
+   "template": null,
+   "chains": [],
+   "failure": "no_acyl_composition_in_name"
+  },
+  {
+   "name": "Apocytochrome c",
+   "chemical_class": "other",
+   "formula": "C6H10N2O2S2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3749"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": false,
+   "template": null,
+   "chains": [],
+   "failure": "no_acyl_composition_in_name"
+  },
+  {
+   "name": "C16:0 chain",
+   "chemical_class": "fatty_acid_acyl_chain",
+   "formula": "C16H32O2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3740"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "FFA",
+   "chains": [
+    {
+     "position": null,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "C16:1 chain",
+   "chemical_class": "fatty_acid_acyl_chain",
+   "formula": "C16H30O2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3741"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "FFA",
+   "chains": [
+    {
+     "position": null,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "C18:0 chain",
+   "chemical_class": "fatty_acid_acyl_chain",
+   "formula": "C18H36O2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3742"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "FFA",
+   "chains": [
+    {
+     "position": null,
+     "n_carbons": 18,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "C18:1 chain",
+   "chemical_class": "fatty_acid_acyl_chain",
+   "formula": "C18H34O2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3743"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "FFA",
+   "chains": [
+    {
+     "position": null,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "C24:0 chain",
+   "chemical_class": "fatty_acid_acyl_chain",
+   "formula": "C24H48O2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3744"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "FFA",
+   "chains": [
+    {
+     "position": null,
+     "n_carbons": 24,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "C26:0 chain",
+   "chemical_class": "fatty_acid_acyl_chain",
+   "formula": "C26H52O2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3745"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "FFA",
+   "chains": [
+    {
+     "position": null,
+     "n_carbons": 26,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "CDP-diacylglycerol (1-16:0, 2-16:1)",
+   "chemical_class": "phosphatidate_PA",
+   "formula": "C44H79N3O15P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3084",
+    "s_3096"
+   ],
+   "n_metabolite_rows": 2,
+   "parsed": true,
+   "template": "CDPDAG",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "CDP-diacylglycerol (1-16:1, 2-18:1)",
+   "chemical_class": "phosphatidate_PA",
+   "formula": "C46H81N3O15P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3089",
+    "s_3106"
+   ],
+   "n_metabolite_rows": 2,
+   "parsed": true,
+   "template": "CDPDAG",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "CDP-diacylglycerol (1-18:0, 2-16:1)",
+   "chemical_class": "phosphatidate_PA",
+   "formula": "C46H83N3O15P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3086",
+    "s_3100"
+   ],
+   "n_metabolite_rows": 2,
+   "parsed": true,
+   "template": "CDPDAG",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "CDP-diacylglycerol (1-18:0, 2-18:1)",
+   "chemical_class": "phosphatidate_PA",
+   "formula": "C48H87N3O15P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3090"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CDPDAG",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "CDP-diacylglycerol (1-18:1, 2-16:1)",
+   "chemical_class": "phosphatidate_PA",
+   "formula": "C46H81N3O15P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3087",
+    "s_3102"
+   ],
+   "n_metabolite_rows": 2,
+   "parsed": true,
+   "template": "CDPDAG",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "Cytochrome c",
+   "chemical_class": "other",
+   "formula": "C40H40FeN6O6S2",
+   "charge": -2.0,
+   "met_ids": [
+    "s_3748"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": false,
+   "template": null,
+   "chains": [],
+   "failure": "no_acyl_composition_in_name"
+  },
+  {
+   "name": "Dextrin",
+   "chemical_class": "other",
+   "formula": "C12H20O10",
+   "charge": 0.0,
+   "met_ids": [
+    "s_4000"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": false,
+   "template": null,
+   "chains": [],
+   "failure": "no_acyl_composition_in_name"
+  },
+  {
+   "name": "Ferricytochrome b5",
+   "chemical_class": "other",
+   "formula": "Fe",
+   "charge": 3.0,
+   "met_ids": [
+    "s_3826"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": false,
+   "template": null,
+   "chains": [],
+   "failure": "no_acyl_composition_in_name"
+  },
+  {
+   "name": "Ferrocytochrome b5",
+   "chemical_class": "other",
+   "formula": "Fe",
+   "charge": 2.0,
+   "met_ids": [
+    "s_3827"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": false,
+   "template": null,
+   "chains": [],
+   "failure": "no_acyl_composition_in_name"
+  },
+  {
+   "name": "N,N'-Chitobiosyldiphosphodolichol",
+   "chemical_class": "glycan",
+   "formula": "C36H64N2O17P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3767"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": false,
+   "template": null,
+   "chains": [],
+   "failure": "no_acyl_composition_in_name"
+  },
+  {
+   "name": "Starch",
+   "chemical_class": "glycan",
+   "formula": "C12H22O11",
+   "charge": 0.0,
+   "met_ids": [
+    "s_4024"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": false,
+   "template": null,
+   "chains": [],
+   "failure": "no_acyl_composition_in_name"
+  },
+  {
+   "name": "[cytochrome c]-L-lysine",
+   "chemical_class": "protein_linked",
+   "formula": "C6H13N2O",
+   "charge": 1.0,
+   "met_ids": [
+    "s_3816"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": false,
+   "template": null,
+   "chains": [],
+   "failure": "no_acyl_composition_in_name"
+  },
+  {
+   "name": "[cytochrome c]-N6-methyl-L-lysine",
+   "chemical_class": "protein_linked",
+   "formula": "C7H15N2O",
+   "charge": 1.0,
+   "met_ids": [
+    "s_3817"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": false,
+   "template": null,
+   "chains": [],
+   "failure": "no_acyl_composition_in_name"
+  },
+  {
+   "name": "[protein]-L-lysine",
+   "chemical_class": "protein_linked",
+   "formula": "C6H13N2O",
+   "charge": 1.0,
+   "met_ids": [
+    "s_4032"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": false,
+   "template": null,
+   "chains": [],
+   "failure": "no_acyl_composition_in_name"
+  },
+  {
+   "name": "[protein]-N(6)-acetyl-L-lysine",
+   "chemical_class": "protein_linked",
+   "formula": "C8H14N2O2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_4033"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": false,
+   "template": null,
+   "chains": [],
+   "failure": "no_acyl_composition_in_name"
+  },
+  {
+   "name": "acylglycerone phosphate (16:1)",
+   "chemical_class": "fatty_acid_acyl_chain",
+   "formula": "C19H35O7P",
+   "charge": 0.0,
+   "met_ids": [
+    "s_2941",
+    "s_2949"
+   ],
+   "n_metabolite_rows": 2,
+   "parsed": true,
+   "template": "ACYLDHAP",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-16:0, 2-16:1, 3-18:1, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C77H144O17P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3314"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-16:0, 2-18:1, 3-16:0, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C75H142O17P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3258"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-16:0, 2-18:1, 3-16:0, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C77H146O17P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3262"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-16:0, 2-18:1, 3-18:0, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C77H146O17P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3260"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 18,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-16:0, 2-18:1, 3-18:1, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C79H148O17P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3318"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-16:1, 2-16:1, 3-16:0, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C73H136O17P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3240"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-16:1, 2-16:1, 3-16:0, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C75H140O17P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3244"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-16:1, 2-16:1, 3-18:0, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C75H140O17P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3242"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 18,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-16:1, 2-16:1, 3-18:1, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C77H142O17P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3315"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-16:1, 2-18:1, 3-16:0, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C75H140O17P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3264"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-16:1, 2-18:1, 3-16:0, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C77H144O17P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3268"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-16:1, 2-18:1, 3-16:1, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C75H138O17P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3265"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-16:1, 2-18:1, 3-16:1, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C77H142O17P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3269"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-16:1, 2-18:1, 3-18:0, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C77H144O17P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3266"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 18,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-16:1, 2-18:1, 3-18:1, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C77H142O17P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3267"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-16:1, 2-18:1, 3-18:1, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C79H146O17P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3319"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-18:0, 2-16:1, 3-16:0, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C75H142O17P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3246"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-18:0, 2-16:1, 3-16:0, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C77H146O17P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3250"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-18:0, 2-16:1, 3-16:1, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C75H140O17P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3247"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-18:0, 2-16:1, 3-16:1, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C77H144O17P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3251"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-18:0, 2-16:1, 3-18:0, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C77H146O17P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3248"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 18,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-18:0, 2-16:1, 3-18:1, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C77H144O17P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3249"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-18:0, 2-16:1, 3-18:1, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C79H148O17P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3316"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-18:1, 2-16:1, 3-16:0, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C75H140O17P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3252"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-18:1, 2-16:1, 3-16:0, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C77H144O17P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3256"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-18:1, 2-16:1, 3-16:1, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C75H138O17P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3253"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-18:1, 2-16:1, 3-16:1, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C77H142O17P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3257"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-18:1, 2-16:1, 3-18:0, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C77H144O17P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3254"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 18,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-18:1, 2-16:1, 3-18:1, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C77H142O17P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3255"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-18:1, 2-16:1, 3-18:1, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C79H146O17P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3317"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-18:1, 2-18:1, 3-16:0, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C77H144O17P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3308"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-18:1, 2-18:1, 3-16:0, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C79H148O17P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3312"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-18:1, 2-18:1, 3-16:1, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C77H142O17P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3309"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-18:1, 2-18:1, 3-16:1, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C79H146O17P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3313"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-18:1, 2-18:1, 3-18:0, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C79H148O17P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3310"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 18,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "cardiolipin (1-18:1, 2-18:1, 3-18:1, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C79H146O17P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3311"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "cardiolipin backbone",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C9H14O9P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3738",
+    "s_3739"
+   ],
+   "n_metabolite_rows": 2,
+   "parsed": false,
+   "template": null,
+   "chains": [],
+   "failure": "slime_backbone_pseudo_metabolite"
+  },
+  {
+   "name": "ceramide backbone",
+   "chemical_class": "sphingolipid",
+   "formula": "HNO2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3721",
+    "s_3722"
+   ],
+   "n_metabolite_rows": 2,
+   "parsed": false,
+   "template": null,
+   "chains": [],
+   "failure": "slime_backbone_pseudo_metabolite"
+  },
+  {
+   "name": "chitin",
+   "chemical_class": "other",
+   "formula": "C8H13NO5",
+   "charge": 0.0,
+   "met_ids": [
+    "s_0509"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": false,
+   "template": null,
+   "chains": [],
+   "failure": "no_acyl_composition_in_name"
+  },
+  {
+   "name": "chitosan",
+   "chemical_class": "other",
+   "formula": "C6H11NO4",
+   "charge": 0.0,
+   "met_ids": [
+    "s_0510"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": false,
+   "template": null,
+   "chains": [],
+   "failure": "no_acyl_composition_in_name"
+  },
+  {
+   "name": "cis-dodec-5-enoyl-CoA",
+   "chemical_class": "acyl_CoA",
+   "formula": "C33H56N7O17P3S",
+   "charge": 0.0,
+   "met_ids": [
+    "s_2895"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "ACYLCOA",
+   "chains": [
+    {
+     "position": null,
+     "n_carbons": 12,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      5
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "stated_in_name",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "cis-tetradec-7-enoyl-CoA",
+   "chemical_class": "acyl_CoA",
+   "formula": "C35H60N7O17P3S",
+   "charge": 0.0,
+   "met_ids": [
+    "s_2893"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "ACYLCOA",
+   "chains": [
+    {
+     "position": null,
+     "n_carbons": 14,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      7
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "stated_in_name",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "diglyceride backbone",
+   "chemical_class": "triacylglycerol_TAG",
+   "formula": "C3H4O",
+   "charge": 0.0,
+   "met_ids": [
+    "s_0620",
+    "s_3732",
+    "s_3733"
+   ],
+   "n_metabolite_rows": 3,
+   "parsed": false,
+   "template": null,
+   "chains": [],
+   "failure": "slime_backbone_pseudo_metabolite"
+  },
+  {
+   "name": "ergosterol ester backbone",
+   "chemical_class": "sterol_ester",
+   "formula": "C28H42",
+   "charge": 0.0,
+   "met_ids": [
+    "s_0672",
+    "s_3709"
+   ],
+   "n_metabolite_rows": 2,
+   "parsed": false,
+   "template": null,
+   "chains": [],
+   "failure": "slime_backbone_pseudo_metabolite"
+  },
+  {
+   "name": "heme a",
+   "chemical_class": "other",
+   "formula": "C49H55FeN4O6",
+   "charge": -3.0,
+   "met_ids": [
+    "s_0811",
+    "s_3714",
+    "s_4332"
+   ],
+   "n_metabolite_rows": 3,
+   "parsed": false,
+   "template": null,
+   "chains": [],
+   "failure": "no_acyl_composition_in_name"
+  },
+  {
+   "name": "heme o",
+   "chemical_class": "other",
+   "formula": "C49H56FeN4O5",
+   "charge": -2.0,
+   "met_ids": [
+    "s_0812"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": false,
+   "template": null,
+   "chains": [],
+   "failure": "no_acyl_composition_in_name"
+  },
+  {
+   "name": "inositol phosphomannosylinositol phosphoceramide backbone",
+   "chemical_class": "sphingolipid",
+   "formula": "C18H33NO23P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_0859",
+    "s_3723"
+   ],
+   "n_metabolite_rows": 2,
+   "parsed": false,
+   "template": null,
+   "chains": [],
+   "failure": "slime_backbone_pseudo_metabolite"
+  },
+  {
+   "name": "inositol-P-ceramide backbone",
+   "chemical_class": "sphingolipid",
+   "formula": "C6H12NO10P",
+   "charge": 0.0,
+   "met_ids": [
+    "s_0892",
+    "s_3724"
+   ],
+   "n_metabolite_rows": 2,
+   "parsed": false,
+   "template": null,
+   "chains": [],
+   "failure": "slime_backbone_pseudo_metabolite"
+  },
+  {
+   "name": "long-chain base backbone",
+   "chemical_class": "sphingolipid",
+   "formula": "H4N",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3726",
+    "s_3727"
+   ],
+   "n_metabolite_rows": 2,
+   "parsed": false,
+   "template": null,
+   "chains": [],
+   "failure": "slime_backbone_pseudo_metabolite"
+  },
+  {
+   "name": "long-chain base phosphate backbone",
+   "chemical_class": "sphingolipid",
+   "formula": "H3NO3P",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3728",
+    "s_3729"
+   ],
+   "n_metabolite_rows": 2,
+   "parsed": false,
+   "template": null,
+   "chains": [],
+   "failure": "slime_backbone_pseudo_metabolite"
+  },
+  {
+   "name": "mannan",
+   "chemical_class": "other",
+   "formula": "C6H10O5",
+   "charge": 0.0,
+   "met_ids": [
+    "s_1107",
+    "s_1108"
+   ],
+   "n_metabolite_rows": 2,
+   "parsed": false,
+   "template": null,
+   "chains": [],
+   "failure": "no_acyl_composition_in_name"
+  },
+  {
+   "name": "mannosylinositol phosphorylceramide backbone",
+   "chemical_class": "sphingolipid",
+   "formula": "C12H22NO15P",
+   "charge": 0.0,
+   "met_ids": [
+    "s_1114",
+    "s_3725"
+   ],
+   "n_metabolite_rows": 2,
+   "parsed": false,
+   "template": null,
+   "chains": [],
+   "failure": "slime_backbone_pseudo_metabolite"
+  },
+  {
+   "name": "monolysocardiolipin (1-16:0, 2-16:1, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C57H108O16P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3284"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "monolysocardiolipin (1-16:0, 2-16:1, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C59H112O16P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3285"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "monolysocardiolipin (1-16:0, 2-18:1, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C59H112O16P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3292"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "monolysocardiolipin (1-16:0, 2-18:1, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C61H116O16P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3293"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "monolysocardiolipin (1-16:1, 2-16:1, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C57H106O16P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3286"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "monolysocardiolipin (1-16:1, 2-16:1, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C59H110O16P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3287"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "monolysocardiolipin (1-16:1, 2-18:1, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C59H110O16P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3294"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "monolysocardiolipin (1-16:1, 2-18:1, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C61H114O16P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3295"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "monolysocardiolipin (1-18:0, 2-16:1, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C59H112O16P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3288"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "monolysocardiolipin (1-18:0, 2-16:1, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C61H116O16P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3289"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "monolysocardiolipin (1-18:1, 2-16:1, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C59H110O16P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3290"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "monolysocardiolipin (1-18:1, 2-16:1, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C61H114O16P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3291"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "monolysocardiolipin (2-16:1, 3-16:0, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C57H108O16P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3270"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "monolysocardiolipin (2-16:1, 3-16:0, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C59H112O16P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3275"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "monolysocardiolipin (2-16:1, 3-16:1, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C57H106O16P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3272"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "monolysocardiolipin (2-16:1, 3-16:1, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C59H110O16P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3276"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "monolysocardiolipin (2-16:1, 3-18:0, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C59H112O16P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3273"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 18,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "monolysocardiolipin (2-16:1, 3-18:1, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C59H110O16P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3274"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "monolysocardiolipin (2-18:1, 3-16:0, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C59H112O16P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3278"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "monolysocardiolipin (2-18:1, 3-16:0, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C61H116O16P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3282"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "monolysocardiolipin (2-18:1, 3-16:1, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C59H110O16P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3279"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "monolysocardiolipin (2-18:1, 3-16:1, 4-18:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C61H114O16P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3283"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "monolysocardiolipin (2-18:1, 3-18:0, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C61H116O16P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3280"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 18,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "monolysocardiolipin (2-18:1, 3-18:1, 4-16:1)",
+   "chemical_class": "cardiolipin_CL",
+   "formula": "C61H114O16P2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3281"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "CL",
+   "chains": [
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 4,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "pectin",
+   "chemical_class": "other",
+   "formula": "C6H7O6",
+   "charge": 0.0,
+   "met_ids": [
+    "s_1309"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": false,
+   "template": null,
+   "chains": [],
+   "failure": "no_acyl_composition_in_name"
+  },
+  {
+   "name": "phosphatidate backbone",
+   "chemical_class": "phosphatidate_PA",
+   "formula": "C3H5O4P",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3730",
+    "s_3731"
+   ],
+   "n_metabolite_rows": 2,
+   "parsed": false,
+   "template": null,
+   "chains": [],
+   "failure": "slime_backbone_pseudo_metabolite"
+  },
+  {
+   "name": "phosphatidyl-L-serine backbone",
+   "chemical_class": "generic_pseudo_metabolite",
+   "formula": "C6H10NO6P",
+   "charge": 0.0,
+   "met_ids": [
+    "s_1337",
+    "s_3710"
+   ],
+   "n_metabolite_rows": 2,
+   "parsed": false,
+   "template": null,
+   "chains": [],
+   "failure": "slime_backbone_pseudo_metabolite"
+  },
+  {
+   "name": "phosphatidyl-N,N-dimethylethanolamine (1-16:0, 2-16:1)",
+   "chemical_class": "phosphatidylethanolamine_PE",
+   "formula": "C39H76NO8P",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3199"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "PDME",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "phosphatidyl-N,N-dimethylethanolamine (1-16:0, 2-18:1)",
+   "chemical_class": "phosphatidylethanolamine_PE",
+   "formula": "C41H80NO8P",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3203"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "PDME",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "phosphatidyl-N,N-dimethylethanolamine (1-16:1, 2-16:1)",
+   "chemical_class": "phosphatidylethanolamine_PE",
+   "formula": "C39H74NO8P",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3200"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "PDME",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "phosphatidyl-N,N-dimethylethanolamine (1-16:1, 2-18:1)",
+   "chemical_class": "phosphatidylethanolamine_PE",
+   "formula": "C41H78NO8P",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3204"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "PDME",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "phosphatidyl-N,N-dimethylethanolamine (1-18:0, 2-16:1)",
+   "chemical_class": "phosphatidylethanolamine_PE",
+   "formula": "C41H80NO8P",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3201"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "PDME",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "phosphatidyl-N,N-dimethylethanolamine (1-18:0, 2-18:1)",
+   "chemical_class": "phosphatidylethanolamine_PE",
+   "formula": "C43H84NO8P",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3205"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "PDME",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "phosphatidyl-N,N-dimethylethanolamine (1-18:1, 2-16:1)",
+   "chemical_class": "phosphatidylethanolamine_PE",
+   "formula": "C41H78NO8P",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3202"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "PDME",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "phosphatidyl-N-methylethanolamine (1-16:0, 2-16:1)",
+   "chemical_class": "phosphatidylethanolamine_PE",
+   "formula": "C38H74NO8P",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3184"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "PMME",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "phosphatidyl-N-methylethanolamine (1-16:0, 2-18:1)",
+   "chemical_class": "phosphatidylethanolamine_PE",
+   "formula": "C40H78NO8P",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3192"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "PMME",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "phosphatidyl-N-methylethanolamine (1-16:1, 2-16:1)",
+   "chemical_class": "phosphatidylethanolamine_PE",
+   "formula": "C38H72NO8P",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3186"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "PMME",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "phosphatidyl-N-methylethanolamine (1-16:1, 2-18:1)",
+   "chemical_class": "phosphatidylethanolamine_PE",
+   "formula": "C40H76NO8P",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3194"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "PMME",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "phosphatidyl-N-methylethanolamine (1-18:0, 2-16:1)",
+   "chemical_class": "phosphatidylethanolamine_PE",
+   "formula": "C40H78NO8P",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3188"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "PMME",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "phosphatidyl-N-methylethanolamine (1-18:0, 2-18:1)",
+   "chemical_class": "phosphatidylethanolamine_PE",
+   "formula": "C42H82NO8P",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3196"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "PMME",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "phosphatidyl-N-methylethanolamine (1-18:1, 2-16:1)",
+   "chemical_class": "phosphatidylethanolamine_PE",
+   "formula": "C40H76NO8P",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3190"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "PMME",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "phosphatidylcholine (1-16:0, 2-16:1)",
+   "chemical_class": "phosphatidylcholine_PC",
+   "formula": "C40H78NO8P",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3207",
+    "s_3296",
+    "s_3448",
+    "s_3693"
+   ],
+   "n_metabolite_rows": 4,
+   "parsed": true,
+   "template": "PC",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "phosphatidylcholine (1-16:0, 2-18:1)",
+   "chemical_class": "phosphatidylcholine_PC",
+   "formula": "C42H82NO8P",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3211",
+    "s_3304",
+    "s_3458",
+    "s_3701"
+   ],
+   "n_metabolite_rows": 4,
+   "parsed": true,
+   "template": "PC",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "phosphatidylcholine backbone",
+   "chemical_class": "phosphatidylcholine_PC",
+   "formula": "C8H16NO3P",
+   "charge": 1.0,
+   "met_ids": [
+    "s_1346",
+    "s_3711"
+   ],
+   "n_metabolite_rows": 2,
+   "parsed": false,
+   "template": null,
+   "chains": [],
+   "failure": "slime_backbone_pseudo_metabolite"
+  },
+  {
+   "name": "phosphatidylethanolamine (1-16:0, 2-16:1)",
+   "chemical_class": "phosphatidylethanolamine_PE",
+   "formula": "C37H72NO8P",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3130",
+    "s_3148",
+    "s_3166",
+    "s_3181",
+    "s_3465",
+    "s_3705"
+   ],
+   "n_metabolite_rows": 6,
+   "parsed": true,
+   "template": "PE",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "phosphatidylethanolamine (1-16:0, 2-18:1)",
+   "chemical_class": "phosphatidylethanolamine_PE",
+   "formula": "C39H76NO8P",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3138",
+    "s_3156",
+    "s_3174",
+    "s_3191",
+    "s_3473",
+    "s_3686"
+   ],
+   "n_metabolite_rows": 6,
+   "parsed": true,
+   "template": "PE",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "phosphatidylethanolamine (1-16:1, 2-18:1)",
+   "chemical_class": "phosphatidylethanolamine_PE",
+   "formula": "C39H74NO8P",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3140",
+    "s_3158",
+    "s_3176",
+    "s_3193",
+    "s_3474",
+    "s_3688"
+   ],
+   "n_metabolite_rows": 6,
+   "parsed": true,
+   "template": "PE",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "phosphatidylethanolamine (1-18:0, 2-16:1)",
+   "chemical_class": "phosphatidylethanolamine_PE",
+   "formula": "C39H76NO8P",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3134",
+    "s_3152",
+    "s_3170",
+    "s_3187",
+    "s_3469",
+    "s_3707"
+   ],
+   "n_metabolite_rows": 6,
+   "parsed": true,
+   "template": "PE",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "phosphatidylethanolamine (1-18:0, 2-18:1)",
+   "chemical_class": "phosphatidylethanolamine_PE",
+   "formula": "C41H80NO8P",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3142",
+    "s_3160",
+    "s_3178",
+    "s_3195",
+    "s_3475",
+    "s_3690"
+   ],
+   "n_metabolite_rows": 6,
+   "parsed": true,
+   "template": "PE",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "phosphatidylethanolamine (1-18:1, 2-18:1)",
+   "chemical_class": "phosphatidylethanolamine_PE",
+   "formula": "C41H78NO8P",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3144",
+    "s_3162",
+    "s_3180",
+    "s_3197",
+    "s_3476",
+    "s_3692"
+   ],
+   "n_metabolite_rows": 6,
+   "parsed": true,
+   "template": "PE",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "phosphatidylethanolamine backbone",
+   "chemical_class": "phosphatidylethanolamine_PE",
+   "formula": "C5H10NO4P",
+   "charge": 0.0,
+   "met_ids": [
+    "s_1351",
+    "s_1352",
+    "s_3712"
+   ],
+   "n_metabolite_rows": 3,
+   "parsed": false,
+   "template": null,
+   "chains": [],
+   "failure": "slime_backbone_pseudo_metabolite"
+  },
+  {
+   "name": "phosphatidylglycerol (1-16:0, 2-16:1)",
+   "chemical_class": "phosphatidylglycerol_PG",
+   "formula": "C38H73O10P",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3227"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "PG",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "phosphatidylglycerol (1-16:1, 2-16:1)",
+   "chemical_class": "phosphatidylglycerol_PG",
+   "formula": "C38H71O10P",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3229"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "PG",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "phosphatidylglycerol backbone",
+   "chemical_class": "phosphatidylglycerol_PG",
+   "formula": "C6H11O6P",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3736",
+    "s_3737"
+   ],
+   "n_metabolite_rows": 2,
+   "parsed": false,
+   "template": null,
+   "chains": [],
+   "failure": "slime_backbone_pseudo_metabolite"
+  },
+  {
+   "name": "sn-2-acyl-1-lysophosphatidylinositol (18:1)",
+   "chemical_class": "phosphatidylinositol_PI",
+   "formula": "C27H51O12P",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3127"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "LPI2",
+   "chains": [
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "sn-2-acyl-1-lysophosphatidylinositol backbone",
+   "chemical_class": "phosphatidylinositol_PI",
+   "formula": "C9H11O10P",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3734",
+    "s_3735"
+   ],
+   "n_metabolite_rows": 2,
+   "parsed": false,
+   "template": null,
+   "chains": [],
+   "failure": "slime_backbone_pseudo_metabolite"
+  },
+  {
+   "name": "trans-2,cis-5-dodecadienoyl-CoA",
+   "chemical_class": "acyl_CoA",
+   "formula": "C33H54N7O17P3S",
+   "charge": 0.0,
+   "met_ids": [
+    "s_2896"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "ACYLCOA",
+   "chains": [
+    {
+     "position": null,
+     "n_carbons": 12,
+     "n_double_bonds": 2,
+     "double_bond_positions": [
+      2,
+      5
+     ],
+     "double_bond_geometry": [
+      "trans",
+      "cis"
+     ],
+     "double_bond_source": "stated_in_name",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "trans-2,cis-5-tetradecadienoyl-CoA",
+   "chemical_class": "acyl_CoA",
+   "formula": "C35H58N7O17P3S",
+   "charge": 0.0,
+   "met_ids": [
+    "s_2901"
+   ],
+   "n_metabolite_rows": 1,
+   "parsed": true,
+   "template": "ACYLCOA",
+   "chains": [
+    {
+     "position": null,
+     "n_carbons": 14,
+     "n_double_bonds": 2,
+     "double_bond_positions": [
+      2,
+      5
+     ],
+     "double_bond_geometry": [
+      "trans",
+      "cis"
+     ],
+     "double_bond_source": "stated_in_name",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "triglyceride (1-16:0, 2-16:1, 3-18:1)",
+   "chemical_class": "triacylglycerol_TAG",
+   "formula": "C53H98O6",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3035",
+    "s_3075"
+   ],
+   "n_metabolite_rows": 2,
+   "parsed": true,
+   "template": "TAG",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "triglyceride (1-16:0, 2-18:1, 3-16:1)",
+   "chemical_class": "triacylglycerol_TAG",
+   "formula": "C53H98O6",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3020",
+    "s_3060"
+   ],
+   "n_metabolite_rows": 2,
+   "parsed": true,
+   "template": "TAG",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "triglyceride (1-16:0, 2-18:1, 3-18:1)",
+   "chemical_class": "triacylglycerol_TAG",
+   "formula": "C55H102O6",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3036",
+    "s_3076"
+   ],
+   "n_metabolite_rows": 2,
+   "parsed": true,
+   "template": "TAG",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "triglyceride (1-16:1, 2-16:1, 3-16:0)",
+   "chemical_class": "triacylglycerol_TAG",
+   "formula": "C51H94O6",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3013",
+    "s_3048"
+   ],
+   "n_metabolite_rows": 2,
+   "parsed": true,
+   "template": "TAG",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "triglyceride (1-16:1, 2-16:1, 3-18:0)",
+   "chemical_class": "triacylglycerol_TAG",
+   "formula": "C53H98O6",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3029",
+    "s_3069"
+   ],
+   "n_metabolite_rows": 2,
+   "parsed": true,
+   "template": "TAG",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 18,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "triglyceride (1-16:1, 2-18:1, 3-16:0)",
+   "chemical_class": "triacylglycerol_TAG",
+   "formula": "C53H98O6",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3014",
+    "s_3050"
+   ],
+   "n_metabolite_rows": 2,
+   "parsed": true,
+   "template": "TAG",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "triglyceride (1-16:1, 2-18:1, 3-16:1)",
+   "chemical_class": "triacylglycerol_TAG",
+   "formula": "C53H96O6",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3022",
+    "s_3062"
+   ],
+   "n_metabolite_rows": 2,
+   "parsed": true,
+   "template": "TAG",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "triglyceride (1-16:1, 2-18:1, 3-18:0)",
+   "chemical_class": "triacylglycerol_TAG",
+   "formula": "C55H102O6",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3030",
+    "s_3070"
+   ],
+   "n_metabolite_rows": 2,
+   "parsed": true,
+   "template": "TAG",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 18,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "triglyceride (1-18:0, 2-16:1, 3-16:0)",
+   "chemical_class": "triacylglycerol_TAG",
+   "formula": "C53H100O6",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3015",
+    "s_3052"
+   ],
+   "n_metabolite_rows": 2,
+   "parsed": true,
+   "template": "TAG",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "triglyceride (1-18:0, 2-16:1, 3-18:1)",
+   "chemical_class": "triacylglycerol_TAG",
+   "formula": "C55H102O6",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3039",
+    "s_3079"
+   ],
+   "n_metabolite_rows": 2,
+   "parsed": true,
+   "template": "TAG",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "triglyceride (1-18:0, 2-18:1, 3-16:1)",
+   "chemical_class": "triacylglycerol_TAG",
+   "formula": "C55H102O6",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3024",
+    "s_3064"
+   ],
+   "n_metabolite_rows": 2,
+   "parsed": true,
+   "template": "TAG",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "triglyceride (1-18:0, 2-18:1, 3-18:0)",
+   "chemical_class": "triacylglycerol_TAG",
+   "formula": "C57H108O6",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3032",
+    "s_3072"
+   ],
+   "n_metabolite_rows": 2,
+   "parsed": true,
+   "template": "TAG",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 18,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "triglyceride (1-18:0, 2-18:1, 3-18:1)",
+   "chemical_class": "triacylglycerol_TAG",
+   "formula": "C57H106O6",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3040",
+    "s_3080"
+   ],
+   "n_metabolite_rows": 2,
+   "parsed": true,
+   "template": "TAG",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "triglyceride (1-18:1, 2-16:1, 3-16:0)",
+   "chemical_class": "triacylglycerol_TAG",
+   "formula": "C53H98O6",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3017",
+    "s_3056"
+   ],
+   "n_metabolite_rows": 2,
+   "parsed": true,
+   "template": "TAG",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 16,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "triglyceride (1-18:1, 2-16:1, 3-16:1)",
+   "chemical_class": "triacylglycerol_TAG",
+   "formula": "C53H96O6",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3025",
+    "s_3065"
+   ],
+   "n_metabolite_rows": 2,
+   "parsed": true,
+   "template": "TAG",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "triglyceride (1-18:1, 2-16:1, 3-18:0)",
+   "chemical_class": "triacylglycerol_TAG",
+   "formula": "C55H102O6",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3033",
+    "s_3073"
+   ],
+   "n_metabolite_rows": 2,
+   "parsed": true,
+   "template": "TAG",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 18,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "triglyceride (1-18:1, 2-18:1, 3-16:1)",
+   "chemical_class": "triacylglycerol_TAG",
+   "formula": "C55H100O6",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3026",
+    "s_3066"
+   ],
+   "n_metabolite_rows": 2,
+   "parsed": true,
+   "template": "TAG",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 16,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "triglyceride (1-18:1, 2-18:1, 3-18:0)",
+   "chemical_class": "triacylglycerol_TAG",
+   "formula": "C57H106O6",
+   "charge": 0.0,
+   "met_ids": [
+    "s_3034",
+    "s_3074"
+   ],
+   "n_metabolite_rows": 2,
+   "parsed": true,
+   "template": "TAG",
+   "chains": [
+    {
+     "position": 1,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 2,
+     "n_carbons": 18,
+     "n_double_bonds": 1,
+     "double_bond_positions": [
+      9
+     ],
+     "double_bond_geometry": [
+      "cis"
+     ],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    },
+    {
+     "position": 3,
+     "n_carbons": 18,
+     "n_double_bonds": 0,
+     "double_bond_positions": [],
+     "double_bond_geometry": [],
+     "double_bond_source": "delta9_convention",
+     "substituents": {}
+    }
+   ],
+   "failure": null
+  },
+  {
+   "name": "triglyceride backbone",
+   "chemical_class": "triacylglycerol_TAG",
+   "formula": "C3H2",
+   "charge": 0.0,
+   "met_ids": [
+    "s_1524",
+    "s_3713"
+   ],
+   "n_metabolite_rows": 2,
+   "parsed": false,
+   "template": null,
+   "chains": [],
+   "failure": "slime_backbone_pseudo_metabolite"
+  },
+  {
+   "name": "tyrosyl acetate",
+   "chemical_class": "other",
+   "formula": "C10H12O3",
+   "charge": 0.0,
+   "met_ids": [
+    "s_4254",
+    "s_4255"
+   ],
+   "n_metabolite_rows": 2,
+   "parsed": false,
+   "template": null,
+   "chains": [],
+   "failure": "no_acyl_composition_in_name"
+  }
+ ]
+}

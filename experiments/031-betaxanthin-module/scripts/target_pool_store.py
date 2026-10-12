@@ -1,0 +1,250 @@
+# experiments/031-betaxanthin-module/scripts/target_pool_store.py
+# [[experiments.031-betaxanthin-module.scripts.target_pool_store]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/031-betaxanthin-module/scripts/target_pool_store
+
+r"""The measured amino-acid pool of a deletion strain as an affine store.
+
+The cross-endpoint read (``experiments/032-amino-acid-module/scripts/
+betaxanthin_amino_acid_correlation.py``, 2026-09-24) found that a deletion's measured
+M\"ulleder amino-acid pool reads its betaxanthin level out of fold at 0.226 through a ridge
+on its own strain folds, and appended to the gene's GO multi-hot adds 0.072 beyond the
+annotation. That read lives on its own folds and its own model. This script writes the
+pool as an affine store over the same gene axis the flux and GO stores use, so the same
+columns are read in the same column as every other arm: the CPU ladder
+(``target_store_baselines.py``, ridge, cosine nearest neighbors and a forest on the
+trainer's pinned split), ``target_store_concat.py`` (the pool appended to GO and to GO
+with the HiGHS vector), and the transformer's affine slot.
+
+Columns: the 19 M\"ulleder 2016 concentrations in mM, stored as released. The trainer's
+``log1p`` encoding and the ladder's ``log(1 + v)`` then map them, and since mM are
+positive the map is monotone, unlike a log of a log. Rows: every ORF of the loader's
+``preprocess/data.csv``, one row per strain. The wild-type row, what a gene the screen
+did not measure reads, is the loader's reference: the population robust mean per amino
+acid (the MCD estimate of the paper's ``robust_summary_statistics`` sheet), carried in
+``preprocess/experiment_reference_index.json``. A missing cell in the released table is
+filled with that reference for its amino acid and counted in the provenance.
+
+What this store is: phenotype to phenotype. It carries a measurement of the same strain
+on minimal medium, not the strain's sequence, so a model over it demonstrates that the
+amino-acid data carries betaxanthin signal beyond the gene's identity, not that the
+module generalizes from genotype; the split by gene still holds, since a held-out gene's
+pool row is that strain's own measurement in a different screen, never the betaxanthin
+target. Stores are never overwritten.
+
+The reverse direction (``--source cachera``, 2026-09-25): the strain's Cachera 2023
+betaxanthin score, the corrected 24 h colony fluorescence, population-centered so
+negative values are ordinary, as a one-column store for the amino-acid target on the
+prototroph's gene axis (``SM_gem_bxscore``). The reference row is the loader's, 0.0. The
+score is signed, so this store is read standardized (the ladder's ``flux: False``, the
+trainer's ``--ess-solve-encoding standardized``), never through ``log(1 + |v|)``, which
+would fold the sign.
+
+Run from the repo root::
+
+    PYTHONHASHSEED=0 PYTHONPATH=$PWD ~/miniconda3/envs/torchcell/bin/python \
+        experiments/031-betaxanthin-module/scripts/target_pool_store.py --out YPD_bx_aapool
+    PYTHONHASHSEED=0 PYTHONPATH=$PWD ~/miniconda3/envs/torchcell/bin/python \
+        experiments/031-betaxanthin-module/scripts/target_pool_store.py \
+        --source cachera --out SM_gem_bxscore
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+import os.path as osp
+import time
+
+import numpy as np
+import pandas as pd
+from dotenv import load_dotenv
+from pydantic import BaseModel, ConfigDict
+
+load_dotenv()
+DATA_ROOT = os.environ["DATA_ROOT"]
+EXPERIMENT_ROOT = os.environ["EXPERIMENT_ROOT"]
+TABLE_DIR = osp.join(DATA_ROOT, "data/torchcell/reference_flux")
+MULLEDER = osp.join(DATA_ROOT, "data/torchcell/amino_acid_mulleder2016")
+CACHERA = osp.join(DATA_ROOT, "data/torchcell/betaxanthin_cachera2023")
+COOPER = osp.join(DATA_ROOT, "data/torchcell/amino_acid_cooper2010")
+#: Per source: the loader's preprocess table, its gene column, the csv columns kept
+#: (csv name -> store column name), whether values must be nonnegative (mM are; the
+#: population-centered score is not), the study that owns the results file.
+SOURCES: dict[str, dict] = {
+    "mulleder": {
+        "root": MULLEDER,
+        "gene_column": "orf",
+        "columns": None,  # every column but the gene's, the 19 amino acids
+        "nonnegative": True,
+        "layout": "Mulleder 2016 intracellular amino-acid concentrations (mM, as released), 19 columns",
+        "study": "031-betaxanthin-module",
+    },
+    "cachera": {
+        "root": CACHERA,
+        "gene_column": "orf",
+        "columns": {"level": "betaxanthin_score"},
+        "nonnegative": False,
+        "layout": "Cachera 2023 betaxanthin score (corrected 24 h colony fluorescence, population-centered), 1 column",
+        "study": "032-amino-acid-module",
+    },
+    "cooper": {
+        "root": COOPER,
+        "gene_column": "perturbed_gene_name",
+        "columns": None,  # every column but the gene's and the record metadata, the 17 peaks
+        "drop_columns": [
+            "systematic_gene_name",
+            "source_name",
+            "name_cell",
+            "row_index",
+        ],
+        "n_columns": 17,
+        "reference_groups": "union",
+        "nonnegative": True,
+        "layout": "Cooper 2010 relative amino-acid peak levels (17 peaks, as released; a missing peak carries the reference 1.0)",
+        "study": "031-betaxanthin-module",
+    },
+}
+
+
+class PoolStoreProvenance(BaseModel):
+    """Where the store's rows come from, and what was filled."""
+
+    model_config = ConfigDict(extra="forbid")
+    source_csv: str
+    source_csv_sha256: str
+    source_build_manifest: dict
+    reference_source: str
+    reference_levels_mM: dict[str, float]
+    n_genes: int
+    n_columns: int
+    n_missing_cells_filled_with_reference: int
+    column_layout: str
+    method: str
+    flux_sha256: str
+    written_by: str = "experiments/031-betaxanthin-module/scripts/target_pool_store.py"
+
+
+def sha256_of(path: str) -> str:
+    h = hashlib.sha256()
+    with open(path, "rb") as fh:
+        for chunk in iter(lambda: fh.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--source", default="mulleder", choices=sorted(SOURCES))
+    ap.add_argument(
+        "--out",
+        default="YPD_bx_aapool",
+        help="store stem, ess_solve_encodings_<out>.npz",
+    )
+    ap.add_argument("--out-dir", default=TABLE_DIR)
+    args = ap.parse_args()
+    started = time.time()
+    src = SOURCES[args.source]
+    root = src["root"]
+    csv_path = osp.join(root, "preprocess", "data.csv")
+    table = pd.read_csv(csv_path).set_index(src["gene_column"])
+    assert not table.index.duplicated().any(), "duplicated ORF in the released table"
+    table = table.drop(columns=src.get("drop_columns", []))
+    if src["columns"] is None:
+        csv_columns = [str(c) for c in table.columns]
+        columns = csv_columns
+        assert len(columns) == src.get("n_columns", 19), columns
+    else:
+        csv_columns = list(src["columns"])
+        columns = [src["columns"][c] for c in csv_columns]
+    with open(osp.join(root, "preprocess", "experiment_reference_index.json")) as fh:
+        refs = json.load(fh)
+    if src.get("reference_groups") == "union":
+        # Cooper's loader keeps one reference group per batch, each naming the peaks that
+        # batch measured, every level the relative 1.0: the union of the keys is the
+        # column set and a key's level must agree wherever it appears.
+        reference: dict[str, float] = {}
+        for group in refs:
+            for k, v in group["reference"]["phenotype_reference"][
+                "metabolite_level"
+            ].items():
+                assert reference.setdefault(k, float(v)) == float(v), (
+                    k,
+                    v,
+                    reference[k],
+                )
+    else:
+        assert len(refs) == 1, f"{len(refs)} reference groups; expected one"
+        reference = refs[0]["reference"]["phenotype_reference"]["metabolite_level"]
+    # The Mulleder reference is keyed by amino acid, the Cachera one by "betaxanthin".
+    ref_keys = list(reference)
+    assert len(ref_keys) == len(columns), (ref_keys, columns)
+    if src["columns"] is None:
+        assert set(reference) == set(columns), set(reference) ^ set(columns)
+        wild = np.array([float(reference[c]) for c in columns], np.float32)
+    else:
+        wild = np.array([float(reference[k]) for k in ref_keys], np.float32)
+    values = table[csv_columns].to_numpy(np.float64)
+    missing = ~np.isfinite(values)
+    n_missing = int(missing.sum())
+    values = np.where(missing, wild[None, :], values).astype(np.float32)
+    assert np.isfinite(values).all(), "a non-finite value after the fill"
+    if src["nonnegative"]:
+        assert (values >= 0).all(), "a negative concentration"
+    with open(osp.join(root, "preprocess", "build_manifest.json")) as fh:
+        manifest = json.load(fh)
+    provenance = PoolStoreProvenance(
+        source_csv=csv_path,
+        source_csv_sha256=sha256_of(csv_path),
+        source_build_manifest=manifest,
+        reference_source=osp.join(
+            root, "preprocess", "experiment_reference_index.json"
+        ),
+        reference_levels_mM={c: float(w) for c, w in zip(columns, wild, strict=True)},
+        n_genes=int(len(table)),
+        n_columns=len(columns),
+        n_missing_cells_filled_with_reference=n_missing,
+        column_layout=src["layout"],
+        method=(
+            f"the strain's own measured phenotype ({args.source}) as affine columns; the "
+            "wild-type row is the loader's reference; written by target_pool_store.py"
+        ),
+        flux_sha256=hashlib.sha256(values.tobytes()).hexdigest(),
+    )
+    os.makedirs(args.out_dir, exist_ok=True)
+    path = osp.join(args.out_dir, f"ess_solve_encodings_{args.out}.npz")
+    assert not osp.exists(path), f"{path} exists; stores are never overwritten"
+    np.savez(
+        path,
+        genes=np.array([str(g) for g in table.index]),
+        v_deletion=values,
+        v_wild_type=wild,
+        rxn_ids=np.array(columns),
+        provenance=np.array(provenance.model_dump_json()),
+    )
+    print(
+        f"{path}: {values.shape}; {n_missing} missing cells filled with the reference",
+        flush=True,
+    )
+    results_dir = osp.join(EXPERIMENT_ROOT, src["study"], "results")
+    os.makedirs(results_dir, exist_ok=True)
+    summary = {
+        "store": path,
+        "n_genes": int(len(table)),
+        "n_columns": len(columns),
+        "columns": columns,
+        "n_missing_cells_filled_with_reference": n_missing,
+        "reference_levels_mM": provenance.reference_levels_mM,
+        "source": args.source,
+        "source_csv_sha256": provenance.source_csv_sha256,
+        "seconds": time.time() - started,
+    }
+    out = osp.join(results_dir, f"target_pool_store_{args.out}.json")
+    with open(out, "w") as fh:
+        json.dump(summary, fh, indent=2)
+    print(out)
+
+
+if __name__ == "__main__":
+    main()

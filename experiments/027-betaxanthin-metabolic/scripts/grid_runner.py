@@ -270,6 +270,9 @@ def main() -> None:
             pinned,
             pin_report,
             on_epoch=lambda row: wandb.log(row, step=int(row["epoch"])),
+            # The grid runs one cell per (arm, seed) and this is the name its dumps have
+            # always had, which audit_prediction_collapse.py reads.
+            dump_stem=f"{arm}_s{seed}",
         )
         pin = result["test"]["pinned"]
         run.summary.update(

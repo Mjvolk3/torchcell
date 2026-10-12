@@ -1,0 +1,75 @@
+{
+  "built_at": "2026-09-12T09:03:09.407059+00:00",
+  "plausibility_shipped": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/026-metabolism-flux/results/within_class_plausibility.json",
+  "plausibility_shipped_sha256": "7184ea9488bb2570d2c53aa12891faf0f1052b8e6f60cc159e06d249bd29a58b",
+  "plausibility_with_catpred": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/026-metabolism-flux/results/within_class_plausibility_with_catpred.json",
+  "plausibility_with_catpred_sha256": "0a87a871afef8a68445a94e4b7506888f36af81ba68bf0bf5f3023b756ce4412",
+  "factor_of_two_decades": 0.3010299956639812,
+  "parameters": [
+    {
+      "parameter": "k_cat",
+      "selected_shipped": [
+        "ezkinetics",
+        "eitlem",
+        "unikp"
+      ],
+      "selected_with_catpred": [
+        "ezkinetics",
+        "eitlem",
+        "unikp"
+      ],
+      "tier_counts_shipped": {
+        "measured": 97,
+        "homolog": 782,
+        "predicted": 2831,
+        "default": 18
+      },
+      "tier_counts_with_catpred": {
+        "measured": 97,
+        "homolog": 782,
+        "predicted": 2831,
+        "default": 18
+      },
+      "n_units": 3728,
+      "n_units_changed": 0,
+      "median_abs_change_decades": 0.0,
+      "p90_abs_change_decades": 0.0,
+      "max_abs_change_decades": 0.0,
+      "n_units_over_factor_two": 0,
+      "frac_units_over_factor_two": 0.0,
+      "n_units_over_one_decade": 0,
+      "median_signed_change_decades": 0.0
+    },
+    {
+      "parameter": "K_M",
+      "selected_shipped": [
+        "ezkinetics"
+      ],
+      "selected_with_catpred": [
+        "ezkinetics",
+        "catpred"
+      ],
+      "tier_counts_shipped": {
+        "measured": 97,
+        "homolog": 782,
+        "predicted": 2831,
+        "default": 18
+      },
+      "tier_counts_with_catpred": {
+        "measured": 97,
+        "homolog": 782,
+        "predicted": 2831,
+        "default": 18
+      },
+      "n_units": 3728,
+      "n_units_changed": 2824,
+      "median_abs_change_decades": 0.15130238773618343,
+      "p90_abs_change_decades": 0.47060512712886204,
+      "max_abs_change_decades": 2.134008559988753,
+      "n_units_over_factor_two": 667,
+      "frac_units_over_factor_two": 0.17891630901287553,
+      "n_units_over_one_decade": 9,
+      "median_signed_change_decades": -0.061242499747463375
+    }
+  ]
+}

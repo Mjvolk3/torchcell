@@ -6,37 +6,32 @@
 
 \subsection{What the original figure claims\secstatus{todo}}
 
-Wu et al. (2026) build Yeast-MetaTwin, a comprehensive metabolic network for
-\emph{S.~cerevisiae} obtained by expanding reaction rules over the yeast metabolome, and
-ask how the resulting \emph{underground} reactions differ kinetically from the
-\emph{core} network already in Yeast9. Their Fig.~3a--h answers it with eight empirical
+Wu et al.~\cite{wuSystematicallyExploringYeast2026} build Yeast-MetaTwin, a comprehensive
+metabolic network for \emph{S.~cerevisiae} obtained by expanding reaction rules over the
+yeast metabolome, and ask how the resulting \emph{underground} reactions, the promiscuous
+side activities of enzymes named for a different
+substrate~\cite{demouraferreiraProteinconstrainedModelsPinpoints2025}, differ kinetically
+from the \emph{core} network already in
+Yeast9~\cite{zhangYeast9ConsensusGenomescale2024}. Their Fig.~3a--h answers it with eight empirical
 cumulative distributions, one per predictor and parameter: $k_{cat}$ from DLKcat, UniKP,
 EITLEM-Kinetics, TurNuP and DeepEnzyme, then $K_M$ from Boost\_KM, UniKP and
 EITLEM-Kinetics. Their conclusion is that underground metabolism is separated from known
 metabolism by $K_M$ rather than by $k_{cat}$.
 
-The construction is taken from their own notebook: sort the values, plot the running
-proportion, and mark each curve's median with a short vertical tick. Their split is on
+The construction is taken from their own notebook (Figure~\ref{fig:kinetics-fig3}). Their
+split is on
 whether a reaction identifier contains \texttt{rxn}, which is how their tables encode a
 predicted rather than a curated reaction.
 
 \subsection{The per-pair predictions behind Fig.~3 were not released\secstatus{todo}}
 
-The intention was to draw two things on each panel: the authors' own released predictions
-split core against underground, and our independent re-run over yeast-GEM. The first is not
-available.
+The authors' own released predictions, split core against underground, are not available.
 
-Their notebook reads its tables from \texttt{Results/kcat\_km\_predict/}, naming each one
-explicitly:
-
-\begin{itemize}\setlength{\itemsep}{0pt}
-  \item \texttt{yeast8U\_kcat\_predict.csv} \quad DLKcat
-  \item \texttt{yeast8U\_unikp.csv} \quad UniKP, both parameters
-  \item \texttt{yeast8U\_kcat\_result\_TurNuP.csv} \quad TurNuP
-  \item \texttt{yeast8U\_km\_km\_predict.csv} \quad Boost\_KM
-\end{itemize}
-
-\noindent That directory is in neither released artifact. The GitHub repository ships \texttt{Results/} with nine subdirectories, none of
+Their notebook reads its tables from \texttt{Results/kcat\_km\_predict/}, naming
+\texttt{yeast8U\_kcat\_predict.csv} for DLKcat, \texttt{yeast8U\_unikp.csv} for UniKP on
+both parameters, \texttt{yeast8U\_kcat\_result\_TurNuP.csv} for TurNuP and
+\texttt{yeast8U\_km\_km\_predict.csv} for Boost\_KM. That directory is in neither released
+artifact. The GitHub repository ships \texttt{Results/} with nine subdirectories, none of
 them \texttt{kcat\_km\_predict}, and its \texttt{source\_data} holds only
 \texttt{fig2-a}, \texttt{fig3-g}, \texttt{fig3-j}, \texttt{fig4-b}, \texttt{fig5-b},
 \texttt{figs11} and \texttt{figS8}; the file named \texttt{fig3-g.csv} contains EC-number
@@ -46,40 +41,45 @@ counts rather than a $K_M$ distribution. The 6.6 GB Zenodo archive
 \textbf{zero} match \texttt{kcat}, \texttt{unikp}, \texttt{turnup}, \texttt{eitlem} or
 \texttt{deepenzyme}.
 
-This is checkable and is stated as a fact about the release rather than as a criticism of
-the work: the Data Availability statement says data for reproducing all figures is
-available on GitHub and Zenodo, and for Fig.~3a--h it is not.
+The Data Availability statement says data for reproducing all figures is available on GitHub
+and Zenodo. The \textbf{underground arm cannot be drawn}, since generating the Yeast-MetaTwin
+reaction set is a separate retrobiosynthesis pipeline this work does not rebuild;
+Figure~\ref{fig:kinetics-fig3} re-derives the curves by running the same published models
+over the same organism from hash-pinned mirrors.
 
-Two consequences follow. The \textbf{underground arm cannot be drawn}, because generating
-the Yeast-MetaTwin reaction set is a separate retrobiosynthesis pipeline that this work
-does not rebuild. And what remains is the stronger half of a reproduction anyway: the
-curves in Figure~\ref{fig:kinetics-fig3} are re-derived by running the same published
-models over the same organism from hash-pinned mirrors, rather than re-plotted from
-someone else's numbers.
-
-\begin{figure}[H]
+\begin{figure}[!htbp]
   \centering
   \includegraphics[width=\textwidth]{figures/kinetics_fig3.pdf}
   \caption[Predicted kinetic parameter distributions, after Wu et al. Fig.~3a--h]{Empirical
-  cumulative distributions of predicted kinetic parameters, following Wu et al. (2026)
-  Fig.~3a--h. Panels a--e are $k_{cat}$, panels f--h are $K_M$; the predictor is named on
-  each panel. Amber dashed is our independent run of the same predictor over yeast-GEM
-  9.0.2, which is the core network. The authors' core and underground curves are absent
-  because the per-pair tables their notebook reads are in neither released artifact, as
-  the text sets out. A short vertical tick marks each curve's median, as in the original.
-  All eight predictors ran, so every panel carries a curve. Generated
+  cumulative distributions of predicted kinetic parameters over yeast-GEM 9.0.2, following
+  the construction of Wu et al. (2026) Fig.~3a--h: values sorted, running proportion
+  plotted. The dotted line at 0.5 is where each curve crosses its own median, which replaces
+  the original's per-curve median tick; six ticks at one height read as marks on the curves
+  rather than as annotations, and one reference line gives every median at once.
+  \textbf{a}, the seven $k_{cat}$ predictors, overlaid rather than given a panel each, since
+  how far apart the predictors sit is a difference between curves and cannot be read across
+  twelve panels. They cross and largely coincide, which is the same fact the per-gene spread
+  of 1.41 orders of magnitude states numerically: a cumulative distribution is invariant to
+  which enzyme got which value. CatPred's is the flattest of the seven, running above the
+  others below the median and below them above it. \textbf{b}, the five $K_M$ predictors,
+  drawn the same way; CatPred and EITLEM sit lowest. EZKinetics and CatPred are included
+  though neither is one of the original eight. The authors'
+  core and underground curves are absent because the per-pair tables their notebook reads
+  are in neither released artifact. Generated
   by
   \texttt{experiments/026-metabolism-flux/scripts/plot\_kinetic\_distributions.py}.}
   \label{fig:kinetics-fig3}
 \end{figure}
 
 \subsection{The log base is not a convention\secstatus{todo}}
+\label{sec:logbase}
 
-Each predictor was validated against something its own authors published, and the exercise
-paid for itself. \textbf{Two of these models exponentiate base 2 and two base 10}, and
-reading either wrong produces turnover numbers that look entirely credible.
+\textbf{Two of these models exponentiate base 2 and four base 10}, and
+reading either wrong produces turnover numbers that look entirely credible: DLKcat
+exponentiates with \texttt{math.pow(2, \ldots)}, and reading that as base 10 inflates every
+turnover number by a power of roughly 3.3.
 
-\begin{table}[H]
+\begin{table}[!htbp]
   \centering
   \footnotesize
   \caption[Author-example validation]{What each predictor was checked against before its
@@ -95,6 +95,10 @@ reading either wrong produces turnover numbers that look entirely credible.
     DeepEnzyme & 137/137 checkpoint tensors match; 3 independent base checks & $\log_2$ \\
     EITLEM & README worked example, 1.3904 vs a stated 1.39 & $\log_{10}$ \\
     TurNuP & tutorial value, 216.114853 vs 216.114853 & $\log_{10}$ \\
+    EZKinetics & 60 rows of the authors' own held-out predictions, median 0.0018 orders of magnitude
+      for $k_{cat}$ and 0.00003 for $K_M$ & $\log_{10}$ \\
+    CatPred & the repository's own shipped demo output, 0.1875471 vs a recorded 0.1875500
+      & $\log_{10}$ \\
     \hline
   \end{tabular}
 \end{table}
@@ -107,17 +111,16 @@ ESM-1b fine-tune that ships only with the prediction-function archive.
 
 \subsection{The comparison between predictors, which the original does not make\secstatus{todo}}
 
-Reading the panels side by side invites a question the paper does not ask: do the
-predictors agree with each other? Four of the five agree on the median $k_{cat}$ to within
-4.0 to 4.2 s$^{-1}$, and that agreement is superficial. Their \emph{per-pair} rank
+Five of the seven agree on the median $k_{cat}$ to within
+4.0 to 4.6 s$^{-1}$, and that agreement is superficial. Their \emph{per-pair} rank
 correlation, on identical enzyme-substrate pairs, ranges from \textbf{0.015 to 0.509}.
 
-\begin{table}[H]
+\begin{table}[!htbp]
   \centering
   \footnotesize
   \caption[Predictor agreement]{Agreement between predictors on identical
   enzyme-substrate pairs, in $\log_{10}$ space. The last column is the median absolute
-  difference in decades. Produced by
+  difference in orders of magnitude. Produced by
   \texttt{experiments/026-metabolism-flux/scripts/compare\_kinetic\_predictors.py}.}
   \label{tab:agreement}
   %% SOURCE: experiments/026-metabolism-flux/results/kinetic_predictor_comparison.json
@@ -144,13 +147,12 @@ correlation, on identical enzyme-substrate pairs, ranges from \textbf{0.015 to 0
 \end{table}
 
 That matters for how Fig.~3 should be read. A shift between two curves within one panel is
-interpreted as a property of underground metabolism; the spread \emph{between} panels, on
-the same pairs, is a factor of three to five. An effect smaller than that sits inside the
-disagreement between the instruments measuring it, which is consistent with the paper's own
-conclusion being framed on $K_M$, where the separation is large, rather than on $k_{cat}$,
-where it is small.
+interpreted as a property of underground metabolism, while the spread \emph{between} panels,
+on the same pairs, is a factor of three to five, so an effect smaller than that sits inside
+the disagreement between the instruments measuring it.
 
-TurNuP is the exception to the median agreement, at 10.8 s$^{-1}$, and its coverage is
+TurNuP~\cite{krollTurnoverNumberPredictions2023} and CatPred, at 10.8 and 9.9 s$^{-1}$,
+are the two exceptions to the median agreement; TurNuP's and its coverage is
 55.2 percent rather than 95. Both follow from the same property: it consumes the
 \emph{whole reaction}, and the authors' code invalidates a reaction as soon as one
 participant lacks a structure. That excludes 1{,}147 of 2{,}540 reactions, almost all
@@ -158,51 +160,420 @@ acyl-chain-resolved lipids.
 
 \subsection{The comparison per gene, which is the unit the model reads\secstatus{todo}}
 
-Table~\ref{tab:agreement} is keyed by enzyme-substrate pair. That is the right key for
-asking whether two models predict the same number for the same measurement, and it is not
-the key the flux layer reads: a catalytic unit draws one $k_{cat}$ per gene. So the
-question that decides whether a predicted table is usable is how far the choice of
-predictor moves \emph{that gene's} value. Figure~\ref{fig:per-gene} answers it, taking each
-gene's value as the median over its pairs in $\log_{10}$ space, separately per predictor.
+Table~\ref{tab:agreement} is keyed by enzyme-substrate pair, and the flux layer reads a
+different key: a catalytic unit draws one $k_{cat}$ per gene. Each gene's value is the median
+over its pairs in $\log_{10}$ space.
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
   \centering
   \includegraphics[width=\textwidth]{figures/per_gene_agreement_k_cat.pdf}
-  \caption[Per-gene agreement between $k_{cat}$ predictors]{Agreement between the five
-  $k_{cat}$ predictors at the level of a gene, over the 980 genes all five cover.
+  \caption[Predictor agreement and accuracy for $k_{cat}$]{\textbf{Agreement between the
+  seven $k_{cat}$ predictors, and their accuracy against measured yeast values.} Panels a to
+  d cover the 980 genes all seven predictors cover; e and f the enzyme-substrate pairs that
+  carry a measured value, 58 for CatPred. One color means one predictor throughout, CatPred
+  the muted red no other predictor uses.
   \textbf{a}, Across-predictor spread per gene, the difference between the highest and
-  lowest predictor in decades; the dashed line is the median, 1.23. \textbf{b}, The same
-  spread against the dynamic range of $k_{cat}$ itself, genes ranked by their median across
-  predictors: the band is the predictor min-max, the line the median. \textbf{c},
-  Gene-level Spearman between predictors; the diagonal is left blank because a predictor
-  against itself is 1 by construction. \textbf{d}, The genes the betaxanthin case study
-  runs on. Above the dotted rule is the Btx cassette, below it the aromatic-amino-acid
-  genes that supply its tyrosine precursor. \texttt{CYP76AD1} and \texttt{DOD} are
-  heterologous and have no reaction in yeast-GEM, so no predictor emits a value for them.
+  lowest predictor in orders of magnitude; the dashed line is the median, \textbf{1.41 orders of magnitude}, a
+  factor of 26, and 80 percent of genes exceed one order of magnitude. Both rose when
+  CatPred was added, from 1.28 and 71 percent over six predictors: a wider spread over more
+  models is what a disagreement that is not shrinking looks like.
+  \textbf{b}, The same spread against the dynamic range of $k_{cat}$ itself, genes ranked by
+  their median across predictors on a percentile axis: the band is the predictor min-max
+  and the black line the median.
+  \textbf{c}, Gene-level Spearman between predictors, with the value written in each cell;
+  the diagonal is blank because a predictor against itself is 1 by construction. The pairs
+  run from 0.01 (DeepEnzyme against EZKinetics) to 0.55 (EZKinetics against UniKP), and
+  CatPred's closest partner is UniKP at 0.44.
+  \textbf{d}, The genes the betaxanthin case study runs on. Above the dotted rule is the Btx
+  cassette, below it the aromatic-amino-acid genes supplying its tyrosine precursor. The
+  shaded band marks \texttt{CYP76AD1} and \texttt{DOD}, which are heterologous and have no
+  reaction in yeast-GEM, so no predictor emits a value for them.
+  \textbf{e}, Predicted against measured $k_{cat}$ on the pairs the Open Enzyme Database
+  mirror supplies for \emph{S. cerevisiae}, wild-type enzymes assayed between 20 and
+  40\,\textdegree C; the dashed line is parity. The shaded band is \textbf{biological
+  plausibility, not a tolerance}: its half width of 0.75 is the median standard deviation of
+  $\log_{10} k_{cat}$ across the distinct enzymes of one EC4 class
+  (Section~\ref{sec:ec-class}), so a point inside it is no further from the truth than two
+  enzymes catalyzing the \emph{same} reaction are from each other. Between 56 and 85 percent
+  of each predictor's points fall inside it, CatPred 66 percent.
+  \textbf{f}, The same comparison ranked, Spearman against median absolute error in orders
+  of magnitude, so the two bars move oppositely for a good predictor. \textbf{These accuracy
+  values are an upper bound rather than an estimate}, for the reason
+  Section~\ref{sec:accuracy} gives.
   Generated by
-  \texttt{experiments/026-metabolism-flux/scripts/plot\_per\_gene\_predictor\_agreement.py}.}
+  \texttt{experiments/026-metabolism-flux/scripts/plot\_per\_gene\_predictor\_agreement.py}
+  from \texttt{compare\_predictors\_to\_measured.py}.}
   \label{fig:per-gene}
 \end{figure}
 
-\textbf{For $k_{cat}$ the disagreement between predictors is larger than the quantity
-being predicted.} The median gene moves 1.23 decades between the highest and lowest
-predictor, a factor of 17, and 67 percent of genes move by more than a full decade. The
-10th-to-90th-percentile range of the consensus estimate across genes is 0.94 decades. The
-ratio is 1.32: choosing a different published predictor moves one gene's turnover number
-further than real enzymes differ from one another. Panel b is that statement drawn, and the
-band never narrows.
+\begin{figure}[!htbp]
+  \centering
+  \includegraphics[width=\textwidth]{figures/within_class_plausibility_k_cat.pdf}
+  \caption[Class plausibility of the $k_{cat}$ predictions, by predictor]{\textbf{How many
+  of each predictor's $k_{cat}$ values fall inside the spread of enzymes doing the same job.}
+  The fraction that Figure~\ref{fig:per-gene}e gives as a range, made the subject and asked
+  four ways.
+  \textbf{a}, Fraction of the measured pairs inside a shared band, as the class is read
+  to fewer EC digits. The band half width at each depth is the median within-class standard
+  deviation over all classes at that depth, 0.75 at EC4 rising to 1.33 at EC1. The dashed
+  line is the EC-median lookup, which predicts each enzyme as the median of the other enzymes
+  sharing its EC number and knows nothing else. At EC4 every predictor beats it, 0.56 to
+  0.85 against 0.53, CatPred 0.66; at EC1 the lookup reaches 0.79 and the predictors 0.77 to
+  0.98, so most of what makes a prediction class-plausible is coarse-class knowledge.
+  \textbf{b}, The EC4 fraction against the fraction inside each pair's \emph{own} class
+  standard deviation, scorable for the 48 pairs whose class holds at least three measured
+  enzymes; whiskers are Wilson 95 percent intervals. The two readings agree within their
+  intervals for every predictor, EZKinetics 0.85 and 0.83, DeepEnzyme 0.56 and 0.55.
+  \textbf{The own-class reading is the one the resolver decides on}: a predictor is admitted
+  when its Wilson lower bound clears the lookup's point fraction of 0.542, which CatPred
+  misses at 32 of 48 and a lower bound of 0.525 (Section~\ref{sec:catpred}).
+  \textbf{c}, The betaxanthin supply genes, one column per (gene, reaction) unit, 23 units
+  over nine genes, none with a measured yeast value, so class plausibility is the only check
+  available. The muted purple band is one standard deviation about the median of the unit's
+  EC4 class across all organisms, in a hue no predictor uses because it is a reference and
+  not a series; the black tick is the class median and the dots the predictors. A unit with
+  no band has a class with fewer than three measured enzymes; ARO1's five reactions are
+  scored against \texttt{1.1.1.25}, the largest of the five classes its pentafunctional
+  annotation carries.
+  \textbf{d}, Fraction of the 16 scorable units inside their class band, by predictor.
+  DLKcat 16 of 16, UniKP 15, DeepEnzyme 13, TurNuP, EZKinetics and CatPred 10, EITLEM 6.
+  EITLEM has
+  the best magnitude accuracy on the measured pairs (Table~\ref{tab:accuracy}) and runs low
+  here, sitting below the class band on ARO1, ARO4 and ARO3.
+  \textbf{e}, The half width of each unit's class band, so d can be read against how wide
+  the target was; the dashed line is the shared EC4 band. The aromatic-pathway classes are
+  1.2 to 1.4 orders of magnitude wide, so a point inside them is a weak statement. Generated
+  by
+  \texttt{experiments/026-metabolism-flux/scripts/plot\_within\_class\_plausibility.py} from
+  \texttt{within\_class\_plausibility.py}.}
+  \label{fig:plausibility-kcat}
+\end{figure}
 
-\textbf{For $K_M$ it is not.} The same construction over the three $K_M$ predictors gives a
-median spread of 0.70 decades against a consensus range of 1.34, a ratio of 0.52, and
-Boost\_KM agrees with UniKP at a gene-level Spearman of 0.75, higher than any pair of
-$k_{cat}$ predictors reaches. Both facts are agreement rather than accuracy, since almost
-none of these pairs has a measured value. Read that way they arrive at Wu et al.'s
-conclusion from the other side: their claim is that underground metabolism separates from
-known metabolism on $K_M$ rather than on $k_{cat}$, and $K_M$ is also the parameter the
-instruments agree on well enough for a separation to be legible.
+\textbf{For $k_{cat}$ the disagreement between predictors is larger than the quantity being
+predicted, and every predictor added has widened it}: spread over consensus range is
+\textbf{1.62} over seven, up from 1.47 over six and 1.32 over five. \textbf{For $K_M$ it is
+not}, at 0.75 over five (Figures~\ref{fig:per-gene}a,b and \ref{fig:per-gene-km}a,b). Both are agreement rather than
+accuracy, since almost none of these pairs has a measured value, and read that way they
+arrive at Wu et al.'s conclusion from the other side.
+
+\begin{figure}[!htbp]
+  \centering
+  \includegraphics[width=\textwidth]{figures/per_gene_agreement_K_M.pdf}
+  \caption[Predictor agreement and accuracy for $K_M$]{\textbf{The same six panels for
+  $K_M$, over the five predictors that emit it.} Panels a to d cover the 1{,}146 genes all
+  five cover; e and f the measured pairs, 58 for CatPred. \textbf{a}, The median
+  across-predictor spread is 0.94 orders of magnitude and 46 percent of genes exceed one
+  order of magnitude, against 80 percent for $k_{cat}$. \textbf{b}, The consensus range
+  across genes, 1.25 orders of magnitude from the 10th to the 90th percentile, is wider than
+  the spread, so the ratio is 0.75. \textbf{c}, Gene-level Spearman runs from 0.25 (EITLEM
+  against EZKinetics) to 0.75 (Boost\_KM against UniKP).
+  \textbf{d}, The betaxanthin genes; the shaded band is the two heterologous cassette
+  members no predictor can score.
+  \textbf{e}, Predicted against measured $K_M$ on the 57 Open Enzyme Database pairs,
+  carrying the same plausibility band as Figure~\ref{fig:per-gene} at $\pm 0.58$ orders of
+  magnitude, which is $K_M$'s own median within-EC4-class spread rather than $k_{cat}$'s.
+  Between 48 and 79 percent of predictions fall inside it, against 56 to 85 percent for
+  $k_{cat}$. \textbf{CatPred is the exception that changes the reading}: at 79 percent it is
+  the only $K_M$ predictor inside the band as often as the better $k_{cat}$ predictors are,
+  and the remaining four sit at 48 to 64 percent.
+  \textbf{f}, The same comparison ranked: CatPred leads on both, $+0.78$ on rank and 0.29
+  orders of magnitude, ahead of EZKinetics at $+0.71$ and EITLEM at 0.42.
+  The same leakage caveat as Figure~\ref{fig:per-gene} applies. Generated by
+  \texttt{plot\_per\_gene\_predictor\_agreement.py --parameter K\_M}.}
+  \label{fig:per-gene-km}
+\end{figure}
+
+\begin{figure}[!htbp]
+  \centering
+  \includegraphics[width=\textwidth]{figures/within_class_plausibility_K_M.pdf}
+  \caption[Class plausibility of the $K_M$ predictions, by predictor]{\textbf{The same
+  five panels for $K_M$, where only CatPred beats the lookup by a margin.}
+  \textbf{a}, The shared band is narrower for $K_M$, 0.58 at EC4 rising to 1.12 at EC1.
+  At EC4 the EC-median lookup reaches 0.59 and CatPred reaches \textbf{0.79}, while the four
+  incumbents crowd it: EITLEM 0.64, EZKinetics 0.62, Boost\_KM 0.54, UniKP 0.48.
+  \textbf{b}, Against each pair's own class band, over the 48 scorable pairs, EZKinetics and
+  CatPred both reach 0.67 and the other three 0.45 to 0.52, against 0.50 for the lookup.
+  Those two are the pair the resolver admits, since only their Wilson lower bounds clear the
+  lookup (Section~\ref{sec:catpred}).
+  \textbf{c}, The betaxanthin units against their $K_M$ class bands. Most predictions sit
+  outside the band, and on the DAHP synthase units (ARO3, ARO4, \texttt{2.5.1.54}) most of
+  the predictors sit a full order of magnitude above the class.
+  \textbf{d}, EITLEM 9 of 16 units inside, EZKinetics 7, UniKP 5, Boost\_KM 4, CatPred 1.
+  \textbf{CatPred wins on the measured pairs and loses here}, which is consistent: the
+  measured pairs are mostly in its training table and the betaxanthin units are not.
+  \textbf{e}, The $K_M$ class bands are 0.5 to 0.65 wide for every pathway class, so d is
+  a stricter test than its $k_{cat}$ counterpart. Same caveat: plausibility against the
+  function across organisms, not accuracy against the yeast enzyme. Generated by
+  \texttt{plot\_within\_class\_plausibility.py --parameter K\_M}.}
+  \label{fig:plausibility-km}
+\end{figure}
+
+\textbf{Class-plausible is not the same as right, and the two parameters separate on it.}
+Every $k_{cat}$ predictor beats the EC-median lookup, and for $K_M$ only CatPred does by a
+margin (Figures~\ref{fig:plausibility-kcat}a and \ref{fig:plausibility-km}a), so on these
+pairs the four incumbent $K_M$ predictors add nothing measurable to knowing the enzyme's
+function and the eighth does. That gain is not held out: 44 of the 58 pairs are in CatPred's
+own training table.
 
 \textbf{The consequence for the flux layer.} An enzyme-constrained bound $v_j \le
 k_{cat,j} E_j$ inherits panel a as its error bar, so a single predictor's table should not
-be treated as the capacity constraint. The registry in
-\texttt{torchcell/datasets/kinetics/} exists for that reason: predictor choice is a
-hyperparameter with a measured effect size, not a settled detail.
+be treated as the capacity constraint; the registry of Section~\ref{sec:mirrors} exists for
+that reason, since predictor choice is a hyperparameter with a measured effect size.
+
+\subsection{Accuracy against measured values, and which database can supply them\secstatus{todo}}
+\label{sec:accuracy}
+
+The Open Enzyme Database mirror carries 1{,}126 measured \emph{S. cerevisiae} records with a
+UniProt accession, a substrate, an assay temperature and a pH. Restricting to wild-type
+enzymes assayed between 20 and 40\,\textdegree C and joining on (accession, substrate) gives
+231 measured pairs, of which \textbf{57} also appear among the yeast-GEM catalytic units the
+predictors were run over. 
+
+\begin{table}[!htbp]
+  \centering
+  \footnotesize
+  \caption[Predictor accuracy against measured yeast values]{Accuracy on the measured
+  pairs. Error is the median absolute $\log_{10}$ ratio, so 0.29 orders of magnitude is a factor of 1.9.
+  Bias is the median signed ratio, negative meaning the predictor runs low. $n$ differs by
+  predictor: 58 pairs for the five extended to the appended coverage rows, 57 for DLKcat and
+  DeepEnzyme and 53 for TurNuP, which were not rerun on them. \textbf{CatPred is last but one
+  on $k_{cat}$ and first on $K_M$}, and 51 of its $k_{cat}$ pairs and 44 of its $K_M$ pairs
+  are in its own training table (Section~\ref{sec:catpred}), so its rows are the least
+  held-out in this table.}
+  \label{tab:accuracy}
+  %% SOURCE: results/predictor_vs_measured.json, compare_predictors_to_measured.py.
+  \begin{tabular}{@{}llrrrrr@{}}
+    \hline
+    Parameter & Predictor & Spearman & Error & Bias & Within 1 dec & $n$ \\
+    \hline
+    $k_{cat}$ & EZKinetics & \textbf{+0.795} & 0.36 & $-0.15$ & \textbf{91.4\%} & 58 \\
+    $k_{cat}$ & UniKP & +0.749 & 0.29 & $-0.11$ & 89.7\% & 58 \\
+    $k_{cat}$ & DLKcat & +0.656 & 0.38 & $-0.14$ & 84.2\% & 57 \\
+    $k_{cat}$ & EITLEM & +0.610 & \textbf{0.23} & $-0.01$ & 79.3\% & 58 \\
+    $k_{cat}$ & TurNuP & +0.506 & 0.44 & $+0.00$ & 81.1\% & 53 \\
+    $k_{cat}$ & CatPred & +0.470 & 0.49 & $+0.18$ & 72.4\% & 58 \\
+    $k_{cat}$ & DeepEnzyme & +0.341 & 0.65 & $-0.23$ & 66.7\% & 57 \\
+    \hline
+    $K_M$ & CatPred & \textbf{+0.783} & \textbf{0.29} & $-0.00$ & \textbf{94.8\%} & 58 \\
+    $K_M$ & EZKinetics & +0.707 & 0.38 & $-0.05$ & 87.9\% & 58 \\
+    $K_M$ & Boost\_KM & +0.680 & 0.53 & $-0.16$ & 78.9\% & 57 \\
+    $K_M$ & EITLEM & +0.615 & 0.42 & $+0.02$ & 82.8\% & 58 \\
+    $K_M$ & UniKP & +0.611 & 0.61 & $-0.09$ & 79.3\% & 58 \\
+    \hline
+  \end{tabular}
+\end{table}
+
+\textbf{The ranking is not the agreement ranking.} EZKinetics leads on rank accuracy, UniKP
+is second, and EITLEM leads on magnitude while placing fourth on rank; DeepEnzyme is last on
+both by a clear margin while sitting mid-pack on agreement. So the pairwise-agreement matrix
+in panel c cannot be read as a quality ordering. On $K_M$
+EZKinetics leads on rank as well, by a smaller margin over Boost\_KM, and its bias of
+$-0.05$ orders of magnitude is the smallest of any predictor on either parameter apart from EITLEM's.
+
+\textbf{The leakage caveat is real and is not a reason to discard the numbers.} Every one of
+these predictors trained on BRENDA or SABIO-RK, from which the Open Enzyme Database is
+itself assembled, so these values are an \textbf{upper bound} on held-out accuracy. A
+predictor that cannot reproduce values it may have trained on has a defect no test set
+forgives, and the ranking between predictors is more robust than any single value because
+the leakage is common to all.
+
+\textbf{The measurable subset is not the easy tail, which was worth checking rather than
+assuming.} Accuracy can only be scored on the best-studied enzymes, so the worry is that
+predictors agree there and the accuracy does not transfer. The across-predictor spread on
+the 58 pairs is \textbf{1.50 orders of magnitude} against \textbf{1.45} over all 3{,}891
+pairs, so the scored subset is if anything harder than the model as a whole and the
+upper-bound caveat stands on leakage alone.
+
+\paragraph{Why the Enzyme Engineering Database supplies no comparison.}
+EnzEngDB~\cite{longEnzymeEngineeringDatabase2026} was read in full and queried read-only on
+2026-09-02. It flattens every assay output into one untyped \texttt{fitness\_value} column
+by explicit design, so it holds \textbf{no $k_{cat}$ and no $K_M$}; it has no EC field and no
+organism field; and it contains \textbf{zero} occurrences of \texttt{yeast},
+\texttt{cerevisiae} or \texttt{Saccharomyces} across the paper, all 140 public experiment
+records and all 1{,}342 analysis rows. Its six scaffolds are bacterial and archaeal, and
+93 percent of its measurements are whole-cell rather than purified enzyme. Overlap with the
+3{,}728 yeast-GEM catalytic units is \textbf{zero}, drawn at zero in
+Figure~\ref{fig:coverage}d. It remains worth mirroring on a different axis, as a
+sequence-level genotype-to-phenotype corpus of designed variants.
+
+\subsection{What that correlation is made of\secstatus{todo}}
+\label{sec:ec-class}
+
+A Pearson of 0.90 across a quantity spanning six orders of magnitude is not self-evidently
+good. If most of that range separates enzyme \emph{classes}, a predictor that has learned
+only which reaction an enzyme catalyzes earns a high correlation while saying nothing about
+what \emph{this} enzyme's turnover number is, which is what a capacity bound reads.
+Separating the two cases needs enzymes of the same function, and yeast cannot supply them:
+its 90 EC4 classes include only four with three or more distinct enzymes. The whole Open Enzyme Database can. It was mirrored under the same provenance
+rules as the yeast slice, 35{,}753 records at \texttt{sha256}
+\texttt{b8d1e652\dots}, of which 22{,}975 are wild-type. Every wild-type row carries a
+$k_{cat}$ \emph{and} a $K_M$, so the two parameters below are measured on one set of rows
+rather than on two independent samples.
+
+\begin{table}[!htbp]
+  \centering
+  \footnotesize
+  \caption[Scales of variation]{Every scale in the same unit. The first three are
+  properties of the measurements; the fourth is a property of the models. Ranges are
+  max minus min except the total, which is a 10th-to-90th-percentile span because a
+  max minus min over 4{,}555 enzymes is set by two outliers.}
+  \label{tab:scales}
+  %% SOURCE: results/ec_class_variance.json, ec_class_variance.py.
+  \begin{tabular}{@{}lrl@{}}
+    \hline
+    Scale & Decades & Basis \\
+    \hline
+    measurement floor & \textbf{0.12} & same enzyme and substrate, physiological window,
+      1{,}126 repeated pairs \\
+    same pair, different conditions & 0.40 & the 506 of those measured at two or more
+      conditions \\
+    within one EC4 class & \textbf{1.77} & 523 classes holding three or more enzymes \\
+    across all enzymes & 3.43 & 4{,}555 enzymes, 10th to 90th percentile \\
+    across predictors, one gene & 1.41 & seven predictors, 980 yeast genes \\
+    \hline
+  \end{tabular}
+\end{table}
+
+\textbf{Enzymes doing the same job differ by far more than the measurement can explain.}
+The median EC4 class spans 1.77 orders of magnitude against a measurement floor of 0.12, a
+factor of 15 (Table~\ref{tab:scales}). So
+the within-class spread is biology rather than noise, and it is the floor for any predictor
+that is really conditioning on function. Three quarters of classes have a standard
+deviation above 0.5 orders of magnitude and 79 percent span more than a full order of magnitude.
+
+\textbf{Knowing the exact EC number explains under half the variance.} The one-way
+intraclass correlation rises from 0.04 at EC1 to \textbf{0.46} at the full four-digit
+number for $k_{cat}$ (0.58 for $K_M$). The intraclass correlation is quoted rather than the
+$R^2$, which reaches 0.59 at EC4, because $R^2$ rises as classes get smaller whether or not
+the class means genuinely differ, and at EC4 the median class holds four enzymes.
+
+\begin{figure}[!htbp]
+  \centering
+  \includegraphics[width=\textwidth]{figures/ec_class_variance.pdf}
+  \caption[What a predictor's correlation is made of]{\textbf{Variation within enzyme
+  function, against the variation a predictor is scored on.}
+  \textbf{a}, Within-class spread read at each EC depth: the bar is the median over classes
+  of the standard deviation of $\log_{10}$ value across the distinct enzymes of one class,
+  the whisker its 90th percentile, and the dashed line the spread with no class labels at
+  all. A standard deviation rather than a range, because a range grows with how many
+  enzymes a class happens to have measured. Reading fewer digits pools unlike chemistry, so
+  the spread has to rise, and it does: for $k_{cat}$, 0.75 orders of magnitude at four
+  digits, 1.11 at three, 1.22 at two, 1.33 at one, against a total spread of 1.37. The
+  three-digit figure is therefore close to no classification at all, and the four-digit
+  number is the only one that describes enzymes catalyzing the same reaction. $K_M$ runs
+  0.58, 0.91, 0.99, 1.12 against 1.16.
+  \textbf{b}, Fraction of variance lying between classes as the EC number is read to more
+  digits, as the one-way random-effects intraclass correlation.
+  \textbf{c}, The three spreads as cumulative distributions on one axis rather than as three
+  summary numbers, which is where the separation is visible: the measurement distribution is
+  almost disjoint from the biological one, and the models sit with biology rather than with
+  the measurement. A third of repeated pairs agree exactly, which is the step at zero.
+  \textbf{d}, Each predictor against a lookup table that predicts every enzyme as the median
+  of the other enzymes sharing its EC number, leaving out the enzyme itself and backing off
+  to a shorter EC prefix when the class holds no other member (54 of 58 resolve at the full
+  four digits). It uses no sequence, no structure and no learning. CatPred is the sixth of
+  seven here and clears the lookup by 0.04.
+  \textbf{e}, The same correlations before and after centering both axes on the class mean,
+  which removes the between-class range by construction. Only the 27 pairs sharing an EC4
+  class with another scored pair can contribute, in 13 classes; the interval is a 95 percent
+  cluster bootstrap resampling whole classes. CatPred behaves like the rest, +0.464 falling
+  to +0.109 with an interval that covers zero.
+  \textbf{f}, The measurement floor, for all repeated pairs and for the subset measured at
+  two or more distinct conditions. Generated by
+  \texttt{experiments/026-metabolism-flux/scripts/plot\_ec\_class\_variance.py} from
+  \texttt{ec\_class\_variance.py}.}
+  \label{fig:ec-class}
+\end{figure}
+
+\textbf{One predictor does not beat a lookup table and two barely do.} The EC-class median
+scores a Spearman of \textbf{0.428} on the same 58 pairs, with 74.1 percent inside a factor
+of ten. DeepEnzyme sits below it, TurNuP and CatPred barely above, while EZKinetics and
+UniKP clear it by a margin a class lookup cannot explain (Table~\ref{tab:accuracy}).
+
+\begin{table}[!htbp]
+  \centering
+  \footnotesize
+  \caption[Correlation before and after removing the class]{Pearson on $\log_{10} k_{cat}$
+  over the 27 pairs that share an EC4 class with another scored pair, before and after both
+  axes are centered on their class mean. The interval is a 95 percent cluster bootstrap over
+  the 13 classes. \textbf{At this sample size only EZKinetics is resolved away from zero,
+  and no two predictors are resolved from each other.}}
+  \label{tab:within-class}
+  %% SOURCE: results/ec_class_variance.json, within_class_accuracy_k_cat.
+  \begin{tabular}{@{}lrrl@{}}
+    \hline
+    Predictor & All pairs & Within class & 95\% interval \\
+    \hline
+    EZKinetics & +0.931 & \textbf{+0.527} & $[+0.07, +0.89]$ \\
+    DLKcat & +0.858 & +0.001 & $[-0.46, +0.53]$ \\
+    UniKP & +0.845 & +0.294 & $[-0.23, +0.68]$ \\
+    EITLEM & +0.811 & +0.149 & $[-0.39, +0.49]$ \\
+    TurNuP & +0.806 & +0.042 & $[-0.26, +0.54]$ \\
+    DeepEnzyme & +0.554 & $-0.156$ & $[-0.65, +0.39]$ \\
+    CatPred & +0.464 & +0.109 & $[-0.41, +0.54]$ \\
+    \hline
+  \end{tabular}
+\end{table}
+
+\textbf{The correlation is mostly the class.} Every predictor loses most of it when the
+between-class range is removed. Read with the lookup-table result, these models rank enzyme \emph{functions} much better
+than they rank enzymes \emph{within} a function, and it is the second that an
+enzyme-constrained bound needs, since a flux model already knows which reaction it is
+parameterizing. What is established is the size of the within-class signal rather than an ordering on it.
+
+\subsection{EZKinetics, the seventh predictor and the only condition-aware one\secstatus{todo}}
+
+EZKinetics (Le Yuan, Zhengyi Zhang and Huimin Zhao) was added after the five above. It is
+\textbf{unpublished}, with the manuscript under review, so it has no DOI and is pinned by
+repository and commit (\texttt{le-yuan/EZKinetics}, MIT since 2026-04-16, revision
+\texttt{bf7a897}) rather than cited. It is also the only predictor here that ships its
+weights inside the repository rather than on figshare, Zenodo or Hugging Face.
+
+\textbf{Which of its 36 models to run is not a matter of taste.} The repository holds three
+parameters crossed with four protein encoders and three substrate encoders, and any pair
+produces numbers. \texttt{inference/predict.py} fixes the combination, and the shipped
+scalers confirm it independently through their feature widths: $k_{cat}$ uses ESM2\_650M
+with ChemBERTa-77M-MTR, $1280 + 384 + 2 = 1666$, and $K_M$ uses ESM2\_3B, $2560 + 384 + 2 =
+2946$. The two extra features are pH and temperature. Output is base 10, the same convention
+as UniKP.
+
+\begin{table}[!htbp]
+  \centering
+  \footnotesize
+  \caption[EZKinetics reproduction]{Reproducing the authors' own held-out predictions, over
+  60 rows of each parameter's test split, as absolute $\log_{10}$ ratio against their
+  shipped \texttt{y\_pred}. Each split carries the assay conditions and aligns row for row
+  with the shipped predictions, verified on all 6{,}676 $k_{cat}$ rows.}
+  \label{tab:ezkinetics-repro}
+  %% SOURCE: results/ezkinetics_validation_{k_cat,K_M}.json, run_ezkinetics_pinned.py --validate.
+  \begin{tabular}{@{}llrrr@{}}
+    \hline
+    Parameter & Conditions passed & Median & p90 & Max \\
+    \hline
+    $k_{cat}$ & true assay pH and temperature & \textbf{0.0018} & 0.032 & 0.077 \\
+    $k_{cat}$ & the 7.0 / 25.0 defaults & 0.046 & -- & 0.766 \\
+    $K_M$ & true assay pH and temperature & \textbf{0.00003} & 0.023 & 0.102 \\
+    $K_M$ & the 7.0 / 25.0 defaults & 0.024 & -- & 0.300 \\
+    \hline
+  \end{tabular}
+\end{table}
+
+\textbf{The reproduction gate is on the median, and that is a deliberate choice.} A
+max-based gate would be the wrong statistic: reproduction here is not bit-exact and cannot
+be, since our ESM2 forward pass runs on different hardware and a different torch build. The
+residual survives setting the protein batch size to 1, so it is not attention over padding;
+beyond that the cause is not established and no explanation is offered. What is established
+is the scale, and 0.03 orders of magnitude at the 90th percentile against an across-predictor
+disagreement of 1.28 orders of magnitude cannot move any conclusion here.
+
+\textbf{Conditioning is worth a median 0.046 orders of magnitude, and we cannot use it}, as
+much as 0.77 on a single row. yeast-GEM carries no per-pair assay pH or temperature, so
+\textbf{the production run is necessarily condition-blind}, at 7.0 and 25.0\,\textdegree C,
+which keeps EZKinetics comparable with the other condition-blind predictors and means its
+Table~\ref{tab:accuracy} accuracy is measured with one input held at a default. It leads both
+rankings anyway. The $K_M$ table was built the same way, with the ESM2\_3B encoder its
+model expects, after the same gate passed at a median of 0.00003 orders of magnitude.
+
+Coverage is 3{,}552 of 3{,}728 catalytic units, the same substrate-structure ceiling
+DLKcat, UniKP and EITLEM hit; median predicted turnover is 4.62\,s$^{-1}$, inside the 3.98
+to 4.17 band the other sequence-plus-SMILES predictors occupy.

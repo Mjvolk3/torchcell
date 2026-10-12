@@ -1,0 +1,235 @@
+# experiments/028-gene-essentiality/scripts/capacity_calibration.py
+# [[experiments.028-gene-essentiality.scripts.capacity_calibration]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/028-gene-essentiality/scripts/capacity_calibration
+
+r"""The smallest enzyme-capacity scale under which the growth LP admits growth.
+
+Round 15 found the anchored layer's growth LP infeasible for every genotype: the
+capacity ceilings, predicted $k_{cat}$ times the abundance head's nominal abundances,
+put the median reaction's upper bound at 0.084 mmol/gDW/h. GECKO handles the same
+mismatch with a saturation factor that scales the whole pool until the wild type grows
+at its measured rate. This script does the calibration on the layer as built: it
+rebuilds the anchored LP cell from a result file at initialization, takes one batch of
+genotypes, and for a geometric grid of scales on the capacity ceilings solves the growth
+LP through the layer's own forward pass, recording the fraction of genotypes whose
+program is feasible and the median growth. The scale to run round 15c at is the smallest
+under which every genotype is feasible and the median growth is at least half of what
+the stoichiometry-only box gives the same genotypes (round 15b: 0.185 at initialization).
+
+    PYTHONHASHSEED=0 CUDA_VISIBLE_DEVICES="" TC_LP_WORKERS=8 PYTHONPATH=$PWD \
+        python experiments/028-gene-essentiality/scripts/capacity_calibration.py \
+        --result w26_lpbio_h12l1p1_e200_s2700.json
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os.path as osp
+import sys
+
+import numpy as np
+import torch
+from dotenv import load_dotenv
+from pydantic import BaseModel
+
+load_dotenv()
+sys.path.insert(0, osp.dirname(osp.abspath(__file__)))
+from train_essentiality import (  # noqa: E402
+    NODE_EMBEDDING_NAMES,
+    RESULTS_DIR,
+    BxCell,
+    build_dataset,
+    build_model_for_cell,
+    dataset_paths,
+    load_config,
+    load_split_file,
+)
+
+from torchcell.datamodules import CellDataModule  # noqa: E402
+
+SCALES = (1.0, 3.0, 10.0, 30.0, 100.0, 300.0, 1000.0, 3000.0, 10000.0)
+REFERENCE_GROWTH = 0.185  # the stoichiometry-only box's median at initialization
+
+
+class ScaleRow(BaseModel):
+    """The growth LP through the layer at one capacity scale."""
+
+    capacity_scale: float
+    n_genotypes: int
+    feasible_frac: float
+    growth_median: float
+    growth_min: float
+    growth_max: float
+    #: Under the elastic program (``--lp-slack-penalty > 0``): the value of the program
+    #: (growth minus the priced slack), the fraction of genotypes with unmet forced flux,
+    #: and the mean unmet flux, mmol/gDW/h. Zero under the hard program.
+    value_median: float = 0.0
+    slack_row_frac: float = 0.0
+    slack_mean: float = 0.0
+    #: The fraction of genotypes on which a bound the genes own carries a dual, which is
+    #: the fraction on which the backbone receives any gradient through the solve.
+    gene_dual_row_frac: float = 0.0
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--result", default="w26_lpbio_h12l1p1_e200_s2700.json")
+    parser.add_argument("--batch-size", type=int, default=32)
+    parser.add_argument(
+        "--thermo-source",
+        default=None,
+        choices=("shipped", "equilibrator", "union", "union_external"),
+        help=(
+            "Override the result file's thermodynamic route. Under the module rounds' "
+            "settings every constraint weight is multiplied by a capacity scale of zero, "
+            "so this is the control that says whether the route reaches the program at "
+            "all. The output file is suffixed with the route."
+        ),
+    )
+    parser.add_argument(
+        "--kcat-tier",
+        default=None,
+        choices=("measured", "predicted"),
+        help=(
+            "Override the result file's kcat tier, so the same calibration runs on the "
+            "tier that was never moved on this endpoint. The output file is suffixed "
+            "with the tier."
+        ),
+    )
+    parser.add_argument(
+        "--lp-slack-penalty",
+        type=float,
+        default=0.0,
+        help=(
+            "Run the elastic program at this price per unit of unmet forced flux "
+            "(round 18); 0 is the hard program. The output file is suffixed _elastic."
+        ),
+    )
+    args = parser.parse_args()
+    with open(osp.join(RESULTS_DIR, args.result)) as fh:
+        result = json.load(fh)
+    cell = BxCell(**result["cell"])
+    if args.kcat_tier is not None:
+        cell = cell.model_copy(update={"kcat_tier": args.kcat_tier})
+    if args.thermo_source is not None:
+        cell = cell.model_copy(update={"thermo_source": args.thermo_source})
+    assert cell.split_file is not None
+    cfg = load_config()
+    NODE_EMBEDDING_NAMES[:] = list(cell.node_embeddings)
+    dataset = build_dataset(cell.head)
+    split = load_split_file(cell.split_file)
+    pinned = {k: {int(i) for i in split[k]} for k in ("train", "val", "test")}
+    device = torch.device("cpu")
+    model, _, _, _ = build_model_for_cell(cell, cfg, dataset, device)
+    layer = model.flux_layer
+    assert layer is not None and layer.parameterization == "lp"
+    dm = CellDataModule(
+        dataset=dataset,
+        cache_dir=osp.join(dataset_paths(cell.head)[0], "data_module_cache"),
+        split_indices=["phenotype_label_index", "perturbation_count_index"],
+        batch_size=args.batch_size,
+        random_seed=cell.split_seed,
+        num_workers=0,
+        pin_memory=False,
+        prefetch=False,
+        follow_batch=["perturbation_indices", "deletion_indices", "phenotype_values"],
+        pinned_split_indices=pinned,
+        drop_unpinned=True,
+    )
+    dm.setup()
+    batch = next(iter(dm.test_dataloader())).to(device)
+    model.eval()
+    rows: list[ScaleRow] = []
+    chosen: float | None = None
+    layer.config.lp_slack_penalty = args.lp_slack_penalty
+    forced = int((layer.lb > 0).sum() + (layer.ub < 0).sum())
+    print(
+        f"forced bounds on the GEM (lb > 0 or ub < 0): {forced}; "
+        f"slack penalty {args.lp_slack_penalty}",
+        flush=True,
+    )
+    # What the tier changes is the ceiling vector itself, so it is measured here rather
+    # than inferred from the feasibility grid: the turnover per catalytic unit, and the
+    # nominal ceiling the box carries at scale 1 over the reactions that have a GPR.
+    kcat = layer.kcat_per_h.detach().cpu().numpy()
+    nominal = np.zeros(layer.n_reactions)
+    np.add.at(nominal, layer.unit_reaction.cpu().numpy(), kcat * 1.0e-3)
+    gpr_mask = layer.has_gpr.cpu().numpy().astype(bool)
+    quantiles = (0.05, 0.25, 0.5, 0.75, 0.95)
+    parameters = {
+        "kcat_tier": cell.kcat_tier,
+        "thermo_source": cell.thermo_source,
+        "constraint_final_scale": float(layer.config.constraint_final_scale),
+        "kcat_tier_counts": dict(layer.kcat_tier_counts),
+        "n_units": int(layer.n_units),
+        "n_gpr_reactions": int(gpr_mask.sum()),
+        "kcat_per_h_quantiles": {
+            str(q): float(v) for q, v in zip(quantiles, np.quantile(kcat, quantiles), strict=True)
+        },
+        "nominal_ceiling_quantiles": {
+            str(q): float(v)
+            for q, v in zip(
+                quantiles, np.quantile(nominal[gpr_mask], quantiles), strict=True
+            )
+        },
+    }
+    print(json.dumps(parameters), flush=True)
+    for scale in SCALES:
+        layer.config.capacity_scale = scale
+        with torch.no_grad():
+            _, reps = model(dataset.cell_graph.to(device), batch)
+        last = layer.lp_solver.last
+        assert last is not None
+        growth = last.growth
+        gpr = layer.has_gpr.cpu().numpy()
+        gene_dual = np.abs(last.d_ub[:, gpr]).sum(axis=1) + np.abs(
+            last.d_lb[:, gpr]
+        ).sum(axis=1)
+        row = ScaleRow(
+            capacity_scale=scale,
+            n_genotypes=int(growth.shape[0]),
+            feasible_frac=float(last.feasible.mean()),
+            growth_median=float(np.median(growth)),
+            growth_min=float(growth.min()),
+            growth_max=float(growth.max()),
+            value_median=float(np.median(last.value)),
+            slack_row_frac=float((last.slack > 1e-9).mean()),
+            slack_mean=float(last.slack.mean()),
+            gene_dual_row_frac=float((gene_dual > 0).mean()),
+        )
+        rows.append(row)
+        print(row.model_dump_json(), flush=True)
+        if (
+            chosen is None
+            and row.feasible_frac >= 0.9
+            and row.growth_median >= 0.5 * REFERENCE_GROWTH
+        ):
+            chosen = scale
+    out = {
+        "result": args.result,
+        "lp_slack_penalty": args.lp_slack_penalty,
+        "n_forced_bounds": forced,
+        "parameters": parameters,
+        "reference_growth": REFERENCE_GROWTH,
+        "rule": (
+            "the smallest scale with at least 90 percent of the batch feasible (the "
+            "lethal deletions are infeasible by right) and a median growth of at least "
+            "half the stoichiometry-only box's"
+        ),
+        "chosen_scale": chosen,
+        "rows": [r.model_dump() for r in rows],
+    }
+    suffix = "_elastic" if args.lp_slack_penalty > 0 else ""
+    if args.kcat_tier is not None:
+        suffix += f"_{args.kcat_tier}"
+    if args.thermo_source is not None:
+        suffix += f"_thermo_{args.thermo_source}"
+    path = osp.join(RESULTS_DIR, f"capacity_calibration{suffix}.json")
+    with open(path, "w") as fh:
+        json.dump(out, fh, indent=2)
+    print(f"chosen scale: {chosen}\n{path}")
+
+
+if __name__ == "__main__":
+    main()

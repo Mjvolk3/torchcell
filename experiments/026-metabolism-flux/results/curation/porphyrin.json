@@ -1,0 +1,191 @@
+{
+ "slug": "porphyrin",
+ "met_ids": ["s_4022", "s_4023"],
+ "gem_name": "porphyrin",
+ "gem_formula": "C20H14N4",
+ "gem_charge": 0,
+ "compartments": ["m", "c"],
+ "blocked_reactions": ["r_4337"],
+ "kind": "not_found",
+ "admission": "none",
+ "value": null,
+ "sigma_kj_per_mol": null,
+ "sources": [
+  {
+   "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/66868/property/MolecularFormula,MolecularWeight,CanonicalSMILES,IsomericSMILES,SMILES,ConnectivitySMILES,InChI,InChIKey,Charge,IUPACName,Title/JSON",
+   "retrieval_method": "direct_url",
+   "retrieval_command": "curl -sS -L -o pubchem_cid66868_properties.json 'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/66868/property/MolecularFormula,MolecularWeight,CanonicalSMILES,IsomericSMILES,SMILES,ConnectivitySMILES,InChI,InChIKey,Charge,IUPACName,Title/JSON'",
+   "sha256": "488b78c1f52d48f073a60242628a4a6a6afa87e3c89b87e36bf7574a8ce7e761",
+   "retrieved_at": "2026-09-11T21:52:59Z",
+   "verbatim_quote": "\"MolecularFormula\": \"C20H14N4\", \"MolecularWeight\": \"310.4\", \"SMILES\": \"C1=CC2=CC3=CC=C(N3)C=C4C=CC(=N4)C=C5C=CC(=N5)C=C1N2\", \"InChI\": \"InChI=1S/C20H14N4/c1-2-14-10-16-5-6-18(23-16)12-20-8-7-19(24-20)11-17-4-3-15(22-17)9-13(1)21-14/h1-12,21-22H\", \"InChIKey\": \"JZRYQZJSTWVBBD-UHFFFAOYSA-N\", \"Charge\": 0, \"Title\": \"Porphyrin\"",
+   "location": "PropertyTable.Properties[0], PubChem CID 66868; local artifact pubchem_cid66868_properties.json"
+  },
+  {
+   "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/66868/JSON",
+   "retrieval_method": "direct_url",
+   "retrieval_command": "curl -sS -L -o pubchem_cid66868_record.json 'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/66868/JSON'",
+   "sha256": "e9311dd4f79dbedfb05b1bbfaa7bfe670d23d1431ac23722c187e2c0cda105a5",
+   "retrieved_at": "2026-09-11T21:52:53Z",
+   "verbatim_quote": "\"id\": {\"id\": {\"cid\": 66868}}",
+   "location": "PC_Compounds[0].id; full PubChem compound record for CID 66868, kept as the structural backstop for the properties extract"
+  },
+  {
+   "source_url": "https://www.ebi.ac.uk/chebi/backend/api/public/compound/CHEBI:8337/",
+   "retrieval_method": "direct_url",
+   "retrieval_command": "curl -sS -L -H 'Accept: application/json' -o chebi_8337_compound.json 'https://www.ebi.ac.uk/chebi/backend/api/public/compound/CHEBI:8337/'",
+   "sha256": "4fcae199ee8ae679f8ae3d9727d5c23c95e3dced037bb6b20735fb7624f44f95",
+   "retrieved_at": "2026-09-11T21:53:58Z",
+   "verbatim_quote": "\"default_structure\": {\"id\": 1910, \"smiles\": \"C1=Cc2cc3ccc(cc4nc(cc5ccc(cc1n2)n5)C=C4)n3\", \"standard_inchi\": \"InChI=1S/C20H14N4/c1-2-14-10-16-5-6-18(23-16)12-20-8-7-19(24-20)11-17-4-3-15(22-17)9-13(1)21-14/h1-12,21,24H/b13-9-,14-10-,15-9-,16-10-,17-11-,18-12-,19-11-,20-12-\", \"standard_inchi_key\": \"RKCAIXNGYQCCAL-CEVVSZFKSA-N\"}",
+   "location": "default_structure of ChEBI:8337 (name \"porphyrin\", synonyms \"porphine\", \"21H,23H-porphine\"); local artifact chebi_8337_compound.json"
+  },
+  {
+   "source_url": "https://www.ebi.ac.uk/ols4/api/ontologies/chebi/terms?iri=http%3A%2F%2Fpurl.obolibrary.org%2Fobo%2FCHEBI_8337",
+   "retrieval_method": "direct_url",
+   "retrieval_command": "curl -sS -L -H 'Accept: application/json' -o ols4_chebi_8337.json 'https://www.ebi.ac.uk/ols4/api/ontologies/chebi/terms?iri=http%3A%2F%2Fpurl.obolibrary.org%2Fobo%2FCHEBI_8337'",
+   "sha256": "c6d3c33ba8c12d9b5dc89c80d45b316098e92d59f75ae561848d7a6b00bdffe8",
+   "retrieved_at": "2026-09-11T21:54:03Z",
+   "verbatim_quote": "\"charge\" : [ 0.0 ], \"database_cross_reference\" : [ \"beilstein:1222991\", \"beilstein:36080\", \"beilstein:622855\", \"cas:101-60-0\", \"gmelin:205920\", \"hmdb:HMDB0000839\", \"kegg.compound:C05113\", \"pubmed:22735334\", \"reaxys:1160988\", \"wikipedia.en:Porphyrin\" ], \"generalized_empirical_formula\" : [ \"C20H14N4\" ]",
+   "location": "_embedded.terms[0].annotation, OLS4 view of CHEBI:8337; this is where CAS 101-60-0 is established, which is the key into the NIST WebBook entry"
+  },
+  {
+   "source_url": "https://webbook.nist.gov/cgi/cbook.cgi?ID=C101600&Units=SI&Mask=2",
+   "retrieval_method": "direct_url",
+   "retrieval_command": "curl -sS -L -A 'Mozilla/5.0 (X11; Linux x86_64) curl provenance capture' -o nist_webbook_C101600_condensed.html 'https://webbook.nist.gov/cgi/cbook.cgi?ID=C101600&Units=SI&Mask=2'",
+   "sha256": "48481d04cae8747519fab07cf081debc45bd9c7544e3b91730e4c16cb8962055",
+   "retrieved_at": "2026-09-11T21:58:30Z",
+   "verbatim_quote": "Quantity Value Units Method Reference Comment ΔfH°solid -1106.9 ± 3.6 kJ/mol Ccb Longo, Finarelli, et al., 1970 ... ΔcH°solid -8764.1 ± 1.8 kJ/mol Ccb Longo, Finarelli, et al., 1970",
+   "location": "NIST Chemistry WebBook SRD 69, species C101600 (21H,23H-porphine, CAS 101-60-0), \"Condensed phase thermochemistry data\" table, compiled by Afeefy, Liebman and Stein; primary reference Longo, F.R.; Finarelli, J.D.; Schmalzbach, E.; Alder, A.D., The enthalpy of formation of porphin, J. Phys. Chem., 1970, 74, 3296-3297. NOT ADMITTED: solid-phase enthalpy of formation, not an aqueous transformed Gibbs energy."
+  },
+  {
+   "source_url": "https://webbook.nist.gov/cgi/cbook.cgi?ID=C101600&Units=SI&Mask=4",
+   "retrieval_method": "direct_url",
+   "retrieval_command": "curl -sS -L -A 'Mozilla/5.0 (X11; Linux x86_64) curl provenance capture' -o nist_webbook_C101600_phasechange.html 'https://webbook.nist.gov/cgi/cbook.cgi?ID=C101600&Units=SI&Mask=4'",
+   "sha256": "61c9474f63720116a95809923b689e68b5406b3998ead145128497f00b704863",
+   "retrieved_at": "2026-09-11T21:59:34Z",
+   "verbatim_quote": "Enthalpy of sublimation ΔsubH (kJ/mol) Temperature (K) Method Reference 87. ± 3. 424. to 507. Fluoresc Stefanov, Stibor, et al., 2004",
+   "location": "NIST Chemistry WebBook SRD 69, species C101600, \"Phase change data\" table, compiled by Acree and Chickos; primary reference Stefanov, A.; Stibor, A.; Dominguez-Clarimon, A.; Arndt, M., Sublimation enthalpy of dye molecules measured using fluorescence, J. Chem. Phys., 2004, 121, 6935. NOT ADMITTED: an enthalpy of sublimation with no entropy and no aqueous solvation free energy, so it opens no route to an aqueous dGf."
+  },
+  {
+   "source_url": "https://webbook.nist.gov/cgi/cbook.cgi?ID=C101600&Units=SI",
+   "retrieval_method": "direct_url",
+   "retrieval_command": "curl -sS -L -A 'Mozilla/5.0 (X11; Linux x86_64) curl provenance capture' -o nist_webbook_C101600_index.html 'https://webbook.nist.gov/cgi/cbook.cgi?ID=C101600&Units=SI'",
+   "sha256": "06a8df3267d382200d2a5c3ed7d502037632fa09c2383846a84bafc5fec46892",
+   "retrieved_at": "2026-09-11T21:58:09Z",
+   "verbatim_quote": "21H,23H-porphine Formula: C20H14N4 Molecular weight: 310.3520 CAS Registry Number: 101-60-0 ... Other data available: Condensed phase thermochemistry data Phase change data Gas phase ion energetics data",
+   "location": "NIST Chemistry WebBook SRD 69 species index page for C101600. The enumerated data classes are the complete NIST holding for this species: no solution-phase and no Gibbs-energy class is listed."
+  },
+  {
+   "source_url": "local eQuilibrator compound cache, file /home/michaelvolk/.cache/equilibrator/compounds.sqlite",
+   "retrieval_method": "local_compound_cache_query",
+   "retrieval_command": "~/miniconda3/envs/equilibrator-ext/bin/python porphyrin_probe.py porphyrin_probe.json /scratch/tmp/.../porphyrin_cache.sqlite  # copy of ~/.cache/equilibrator/compounds.sqlite (sha256 12a28e5a639097d39c7fb03bb740b7ddb204a3da8ee6d4bbac413e8b22e5cb28); equilibrator-api 0.6.0, equilibrator-cache 0.6.2, equilibrator-assets 0.6.0.post29+git.c79e371e, component-contribution 0.6.0, rdkit 2026.3.6, openbabel-wheel 3.1.1.23",
+   "sha256": "685f6f88d95e61049c6a3124478c44e1ea17e3ccf5c17808cc45b1f732b4f1a3",
+   "retrieved_at": "2026-09-11T22:00:59Z",
+   "verbatim_quote": "\"chebi:CHEBI:8337\": {\"id\": 2399, \"formula\": \"C20H14N4\", \"smiles\": \"N1C2=CC=C1C=C1C=CC(C=C3C=CC(C=C4NC(C=C4)=C2)=N3)=N1\", \"inchi_key\": \"RKCAIXNGYQCCAL-CEVVSZFKSA-N\", \"mass\": 310.36, \"atom_bag\": {\"N\": 4, \"C\": 20, \"H\": 14, \"e-\": 162}, \"group_vector_is_none\": false, \"group_vector_repr\": \"[]\", \"group_vector_nonzero\": 0, \"standard_dg_formation_mu\": null, \"sigma_fin_is_none\": true, \"can_be_transformed\": true}",
+   "location": "porphyrin_probe.json, key cache['chebi:CHEBI:8337']. kegg:C05113 and metanetx.chemical:MNXM2714 resolve to the same cache compound 2399 with byte-identical fields. The group vector is present but EMPTY (zero nonzero entries) and standard_dg_formation returns None, so the cache holds a structure and no energy."
+  },
+  {
+   "source_url": "local eQuilibrator group decomposer, equilibrator_assets.group_decompose.GroupDecomposer",
+   "retrieval_method": "group_decomposer_run",
+   "retrieval_command": "~/miniconda3/envs/equilibrator-ext/bin/python porphyrin_probe3.py porphyrin_probe3.json  # and porphyrin_probe2.py / porphyrin_probe4.py",
+   "sha256": "d256ccb1bc02d967f6c24b8b40cac25573bf68816566a81ddfd7918673e0d99a",
+   "retrieved_at": "2026-09-11T22:00:59Z",
+   "verbatim_quote": "\"ok\": false, \"error\": \"GroupDecompositionError: Unable to decompose <openbabel.openbabel.OBMol; proxy of <Swig Object of type 'OpenBabel::OBMol *' at 0x7f26581c9fb0> > into groups\", \"error_class\": \"GroupDecompositionError\", ... \"lenient_n_groups_nonzero\": 8, \"n_unassigned_atoms\": 2",
+   "location": "porphyrin_probe3.json, decomposer['pubchem_cid66868_kekule_as_given']; the same error and the same 2 unassigned atoms for decomposer['rdkit_aromatic_of_pubchem'] and decomposer['chebi_8337_smiles_from_standard_inchi']. Raised at equilibrator_assets/group_decompose.py line 607."
+  }
+ ],
+ "searches": [
+  {
+   "query": "PubChem PUG REST compound/cid/66868 property fetch (porphine, CID 66868)",
+   "engine": "pubchem_pug_rest",
+   "date": "2026-09-11",
+   "outcome": "HIT. C20H14N4, charge 0, InChIKey JZRYQZJSTWVBBD-UHFFFAOYSA-N, title \"Porphyrin\". Structure only, no thermodynamic property."
+  },
+  {
+   "query": "ChEBI backend API compound CHEBI:8337; OLS4 term CHEBI_8337",
+   "engine": "ebi_rest",
+   "date": "2026-09-11",
+   "outcome": "HIT. Name \"porphyrin\", synonyms \"porphine\" and \"21H,23H-porphine\", C20H14N4, charge 0, InChIKey RKCAIXNGYQCCAL-CEVVSZFKSA-N, CAS 101-60-0, KEGG C05113, HMDB0000839. Structure and cross-references only, no thermodynamic property."
+  },
+  {
+   "query": "eQuilibrator compound cache lookup of chebi:CHEBI:8337, kegg:C05113, metanetx.chemical:MNXM2714",
+   "engine": "equilibrator_local_compound_cache",
+   "date": "2026-09-11",
+   "outcome": "HIT on the compound, NULL on the energy. All three accessions resolve to cache compound 2399 (C20H14N4, InChIKey RKCAIXNGYQCCAL-CEVVSZFKSA-N). Its group vector is EMPTY and ComponentContribution.standard_dg_formation returns None."
+  },
+  {
+   "query": "eQuilibrator public search page for porphyrin, https://equilibrator.weizmann.ac.il/search?query=porphyrin",
+   "engine": "curl and WebFetch",
+   "date": "2026-09-11",
+   "outcome": "NOT REACHED. Both clients failed TLS chain validation against equilibrator.weizmann.ac.il (curl exit 60, \"unable to get local issuer certificate\"; WebFetch \"unable to verify the first certificate\"). No artifact stored. The local compound cache query above is the same eQuilibrator compound cache and stands as the authoritative answer."
+  },
+  {
+   "query": "porphine \"Gibbs energy of formation\" aqueous kJ/mol thermodynamic",
+   "engine": "WebSearch",
+   "date": "2026-09-11",
+   "outcome": "MISS. No aqueous formation energy for porphine. Hits were generic group-contribution methodology and substituted metalloporphyrin complexation enthalpies."
+  },
+  {
+   "query": "\"21H,23H-porphine\" NIST WebBook enthalpy of formation",
+   "engine": "WebSearch",
+   "date": "2026-09-11",
+   "outcome": "HIT on a pointer. Located NIST WebBook species C101600 for the UNSUBSTITUTED porphine, which the prior pass had not found; fetched and stored below."
+  },
+  {
+   "query": "porphine standard Gibbs free energy of formation aqueous solution thermodynamic properties CHNOSZ",
+   "engine": "WebSearch",
+   "date": "2026-09-11",
+   "outcome": "MISS. No CHNOSZ or other aqueous-species tabulation for porphine surfaced."
+  },
+  {
+   "query": "equilibrator porphyrin C05113 formation energy group contribution missing",
+   "engine": "WebSearch",
+   "date": "2026-09-11",
+   "outcome": "MISS on a value. Only the general eQuilibrator statement that some structures have no group decomposition and fall outside the method."
+  },
+  {
+   "query": "\"porphine\" OR \"porphin\" aqueous solubility standard state thermodynamic Gibbs energy hydration free energy",
+   "engine": "WebSearch",
+   "date": "2026-09-11",
+   "outcome": "MISS. Only substituted, deliberately water-solubilized porphyrins (tetrakis(methylpyridyl)porphine tosylates and similar). Nothing for the unsubstituted macrocycle."
+  },
+  {
+   "query": "Longo Finarelli Schmalzbach Adler 1970 \"enthalpy of formation of porphin\" J Phys Chem 74 3296",
+   "engine": "WebSearch",
+   "date": "2026-09-11",
+   "outcome": "CONFIRMED the citation behind the NIST condensed-phase row. No aqueous-phase companion value found."
+  }
+ ],
+ "decomposition_check": {
+  "attempted": true,
+  "decomposes": false,
+  "error": "GroupDecompositionError: Unable to decompose <openbabel.openbabel.OBMol ...> into groups (equilibrator_assets/group_decompose.py line 607). In lenient mode (raise_exception=False) the decomposition returns 8 nonzero group types and leaves exactly 2 atoms unassigned; both unassigned atoms are aromatic carbons with three heavy neighbors and no hydrogen.",
+  "smiles_tried": [
+   {
+    "smiles": "C1=CC2=CC3=CC=C(N3)C=C4C=CC(=N4)C=C5C=CC(=N5)C=C1N2",
+    "decomposes": false,
+    "error": "GroupDecompositionError: Unable to decompose <openbabel.openbabel.OBMol ...> into groups. Source: PubChem CID 66868 as given, kekulized. RDKit: C20H14N4, charge 0, InChIKey JZRYQZJSTWVBBD-UHFFFAOYSA-N. 2 unassigned atoms (aromatic C, 3 heavy neighbors, 0 H) at OpenBabel indices 3 and 23."
+   },
+   {
+    "smiles": "C1=Cc2cc3ccc(cc4ccc(cc5nc(cc1n2)C=C5)[nH]4)[nH]3",
+    "decomposes": false,
+    "error": "GroupDecompositionError: Unable to decompose <openbabel.openbabel.OBMol ...> into groups. Source: RDKit aromatic canonicalization of the PubChem structure. RDKit: C20H14N4, charge 0, InChIKey JZRYQZJSTWVBBD-UHFFFAOYSA-N. Same 8 groups, same 2 unassigned atoms as the kekulized form, so aromatic vs kekulized perception is not the cause."
+   },
+   {
+    "smiles": "N1C2=CC=C1C=C1C=CC(C=C3C=CC(C=C4NC(C=C4)=C2)=N3)=N1",
+    "decomposes": false,
+    "error": "GroupDecompositionError: Unable to decompose <openbabel.openbabel.OBMol ...> into groups. Source: the eQuilibrator cache's OWN stored SMILES for compound 2399. RDKit: C20H14N4, charge 0, InChIKey JZRYQZJSTWVBBD-UHFFFAOYSA-N. Same failure, so the cache's empty group vector reproduces from its own structure."
+   },
+   {
+    "smiles": "C1=Cc2cc3ccc(cc4nc(cc5ccc(cc1n2)[nH]5)C=C4)[nH]3",
+    "decomposes": false,
+    "error": "GroupDecompositionError: Unable to decompose <openbabel.openbabel.OBMol ...> into groups. Source: RDKit round trip of the ChEBI:8337 standard InChI, i.e. the 21H,23H (trans) NH tautomer. RDKit: C20H14N4, charge 0, InChIKey RKCAIXNGYQCCAL-UHFFFAOYSA-N. 2 unassigned atoms at OpenBabel indices 5 and 8, so the NH tautomer choice is not the cause either."
+   },
+   {
+    "smiles": "C1=Cc2cc3ccc(cc4nc(cc5ccc(cc1n2)n5)C=C4)n3",
+    "decomposes": true,
+    "error": "DECOMPOSES BUT IS THE WRONG MOLECULE, so it must not be used. This is the ChEBI:8337 default_structure SMILES string verbatim. RDKit parses it as C20H12N4 (InChIKey AJYZYPAMLMSWHG-UHFFFAOYSA-N), two hydrogens short of the GEM formula, because ChEBI writes the pyrrole nitrogens as lowercase n with no [nH]. The decomposer accepts it with 4 nonzero groups. Pricing the GEM species from this decomposition would price a different species; the composition check in thermo_structure_attempt.py rejects exactly this case."
+   }
+  ]
+ },
+ "notes": "DOCUMENTED NEGATIVE. No measured or tabulated aqueous standard transformed Gibbs formation energy exists for porphine (the unsubstituted free-base macrocycle, C20H14N4, charge 0), and eQuilibrator's group decomposer refuses every valid spelling of it, so s_4022 and s_4023 stay unpriced. Recorded for completeness of the metabolite table only.\n\nWHAT THE DECOMPOSER ACTUALLY DOES. Measured, not inferred: equilibrator_assets.group_decompose.GroupDecomposer raises GroupDecompositionError at group_decompose.py line 607 for the kekulized PubChem structure, the RDKit aromatic canonicalization of it, the cache's own stored SMILES for compound 2399, and the 21H,23H tautomer round-tripped from the ChEBI standard InChI. Kekulized vs aromatic and 21H,22H vs 21H,23H both change nothing. With raise_exception=False the decomposition covers the molecule with 8 nonzero group types and leaves exactly 2 atoms unassigned; both are aromatic carbons carrying three heavy neighbors and no hydrogen. Hypothesis (untested): those are the meso or alpha ring-fusion carbons of the macrocycle, for which the component-contribution group table has no entry. I did not confirm which positions they occupy in the ring system.\n\nTHE CACHE ENTRY IS MISLEADING AND SHOULD BE READ CAREFULLY. thermo_accession_sweep.json records has_group_vector=true for compound 2399, which reads as a successful decomposition. It is not one: the vector is present but EMPTY (0 nonzero entries out of a 163-long group basis) and ComponentContribution.standard_dg_formation returns None. The exclusion reason group_decomposition_failed is therefore correct, and the fresh-creation route in thermo_structure_attempt.py cannot rescue it, since the decomposer refuses the same structure the cache already holds.\n\nA TRAP TO AVOID. The ChEBI:8337 default_structure SMILES string, C1=Cc2cc3ccc(cc4nc(cc5ccc(cc1n2)n5)C=C4)n3, DOES decompose (4 nonzero groups). It must not be used: RDKit reads it as C20H12N4, two hydrogens short of the GEM formula, because ChEBI writes both pyrrole nitrogens as bare lowercase n. The ChEBI standard InChI for the same entry is correct at C20H14N4; only the SMILES serialization is short. Any future attempt that feeds ChEBI SMILES straight to the decomposer will appear to succeed and will silently price a different species. thermo_structure_attempt.py's heavy-atom composition check does not catch this one, because the difference is in hydrogens only, which that check deliberately drops.\n\nWHAT THE LITERATURE DOES HOLD, AND WHY IT IS NOT ADMITTED. The prior pass concluded only substituted-porphyrin solid-phase thermochemistry existed. That was too pessimistic: the NIST WebBook carries an entry for the UNSUBSTITUTED compound, species C101600, 21H,23H-porphine, CAS 101-60-0, C20H14N4, the exact molecule. It lists dfH(solid) = -1106.9 +/- 3.6 kJ/mol and dcH(solid) = -8764.1 +/- 1.8 kJ/mol (Longo, Finarelli, Schmalzbach and Alder 1970, J. Phys. Chem. 74, 3296-3297) and dsubH = 87 +/- 3 kJ/mol over 424 to 507 K (Stefanov, Stibor, Dominguez-Clarimon and Arndt 2004, J. Chem. Phys. 121, 6935). None of that is admissible here, for three independent reasons: it is an enthalpy, not a Gibbs energy; the condensed-phase value is the crystalline solid, not an aqueous species; and no entropy and no aqueous solvation free energy is tabulated, so there is no route from these numbers to a dGf'(aq) without computation. The NIST species index page lists exactly three data classes for C101600 (condensed phase thermochemistry, phase change, gas phase ion energetics) and no solution-phase or Gibbs-energy class, which is the direct evidence for the negative. Consistency check I ran on the NIST pair: dfH(solid) = 20*dfH(CO2,g) + 7*dfH(H2O,l) - dcH = -9871.0 + 8764.1 = -1106.9 kJ/mol, so the two rows are internally consistent under combustion to CO2, liquid water and N2. I did not adjudicate whether the 1970 measurement itself is correct, and nothing here depends on it.\n\nWHY THIS ROW DOES NOT BLOCK ANYTHING. r_4337 (yeast-GEM 9.0.2 name \"Iron-sulfur clusters transporter ATM1, mitochondrial\", 7 participants) carries s_4022 at coefficient -1 and s_4023 at coefficient +1, verified in the model YAML. The species is the same molecule on both sides, so its formation energy cancels in the reaction energy and r_4337 prices from ATP hydrolysis alone once the code agent's cancellation-of-same-species rule lands. Caveat for that rule, flagged rather than resolved: the pipeline applies per-compartment pH, ionic strength and pMg (thermo_pipeline.py CompartmentConditions.for_compartment), so the cancellation is exact only for the untransformed formation energy. Whatever residual Legendre-transform difference remains between m and c is a transport term, not a formation term, and I did not measure its size for this species.\n\nARTIFACTS. All fetched files, the probe scripts and their JSON outputs are under $DATA_ROOT/data/torchcell/thermo_equilibrator/curated/porphyrin/. The eQuilibrator compound cache the probes ran against is /home/michaelvolk/.cache/equilibrator/compounds.sqlite, sha256 12a28e5a639097d39c7fb03bb740b7ddb204a3da8ee6d4bbac413e8b22e5cb28, with equilibrator-api 0.6.0, equilibrator-cache 0.6.2, equilibrator-assets 0.6.0.post29+git.c79e371e, component-contribution 0.6.0, rdkit 2026.3.6 and openbabel-wheel 3.1.1.23."
+}

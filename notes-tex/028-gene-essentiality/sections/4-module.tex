@@ -1,0 +1,2387 @@
+%% notes-tex/028-gene-essentiality/sections/4-module.tex
+%% [[experiments.028-gene-essentiality.mermaid.readouts]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/028-gene-essentiality/sections/4-module.tex
+
+\section{The metabolic module: the solve helps, so why not the layer?\secstatus{todo}}
+\label{sec:module}
+
+One linear program per deletion on yeast-GEM ranks essential genes at 0.65 on its own and
+lifts every model in this document by 0.05 when its four growth ratios are appended
+(Sections~\ref{sec:comparators} and~\ref{sec:backbone}). The metabolic module is built on
+the same genome-scale model: the same stoichiometry, the same bounds, the same
+gene-protein-reaction rules closing the deleted gene's reactions. The question of this
+section is why routing the prediction through it does not do what the solve does. The
+rounds answer it in steps: the module neither helps nor hurts on the backbone (rounds 2
+and 4); it adds nothing on top of the solve (round 6); its growth column is not growth
+but a free coordinate, because the layer never reaches the polytope the solve optimizes
+over (the probe, round 7); handed the solve's own point on that polytope, the anchored
+layer's constraint set discards it (round 10) while the GEM's own box keeps it, and the
+gated module cell then reaches the level of the solve appended as an input (round 13);
+a layer that solves the program instead of projecting toward it is infeasible on the
+anchored box, whose capacity ceilings exclude growth (round 15), and on the GEM's box it
+is feasible, ranks above FBA before training, and gated reaches the same level (round
+15b); with the ceilings calibrated to admit growth, the growth column alone ranks the
+held-out genes at 0.84 on one seed and the program's infeasible region absorbs the other
+two (round 15c). The gradient reaches the alternating layer throughout, so its null is
+not a gradient-flow failure; the layer that solves has the linear program's own
+gradient, the dual of the binding bounds. The section closes with what the comparison
+says a layer has to compute to help.
+
+The pooled backbone reads its logit from an MLP on the perturbed context
+(Figure~\ref{fig:readout-pooled}). A flux arm builds the enzyme-constrained thermodynamic
+flux layer on the same context and exposes one physically named quantity, the flux through
+the growth reaction \texttt{r\_2111}. Three readouts put that quantity to different uses,
+and they differ in what the backbone's gradient has to pass through.
+
+\begin{description}
+  \item[biomass (forced)] $\ell = a\,v_{\text{growth}} + b$. The growth column is the
+    only path from the context to the logit, so the module carries the whole prediction or
+    the cell scores chance (Figure~\ref{fig:readout-biomass}). This is FBA's own reading of
+    essentiality with a learned threshold, and it is the wave-9 design.
+  \item[context + growth] $\ell = \mathrm{MLP}(h) + a\,v_{\text{growth}} + b$. Both paths
+    from the first step; the per-module gradient norms say how much of each update the
+    module carries when it is not forced to carry all of it.
+  \item[gated] $\ell = \mathrm{MLP}(h) + g\,(a\,v_{\text{growth}} + b)$ with $g_0 = 0$
+    (Figure~\ref{fig:readout-gated}). At initialization the cell is the pooled model
+    exactly; the gate's trajectory, logged every epoch, says whether the optimizer chose
+    the flux path, and the \texttt{flux\_layer} gradient line says whether gradient reached
+    the layer, which at $g = 0$ it cannot.
+\end{description}
+
+\tcfigfit[0.8]{figures/readout_key.pdf}{\textbf{Color key for the readout diagrams.} White
+  is the input; orange a learned part of the backbone (the context, the abundance head);
+  yellow the flux layer and its capacity terms, dashed where the box is a fixed table
+  (the $k_{cat}$ table); purple the fixed stoichiometry of the GEM; red the prediction and
+  the loss. The key holds for every readout diagram in this section,
+  Figures~\ref{fig:readout-pooled} to~\ref{fig:readout-one-experiment}. Rendered from
+  \texttt{notes/experiments.028-gene-essentiality.mermaid.readouts.md}.}{fig:readout-key}
+
+\tcfigfit[1.0]{figures/readout_1.pdf}{\textbf{The pooled readout.} The backbone alone: one
+  MLP from the perturbed context to a logit, binary cross entropy against the released
+  label. No stoichiometry, no kinetic parameters, no flux. Colors as in
+  Figure~\ref{fig:readout-key}.}{fig:readout-pooled}
+
+\tcfigfit[1.0]{figures/readout_2.pdf}{\textbf{The forced biomass readout.} The context sets
+  each enzyme's abundance (a deleted gene's is zero), the $k_{cat}$ table turns abundances
+  into capacities, and the flux is the projection onto $Sv = 0$ of the capacity-clipped
+  proposal; the logit is an affine of the growth column alone. The thermodynamic penalty
+  is a loss on the flux with no path to the prediction, at scale 0.1 or 0. Colors as in
+  Figure~\ref{fig:readout-key}.}{fig:readout-biomass}
+
+\tcfigfit[1.0]{figures/readout_3.pdf}{\textbf{The gated readout.} The pooled MLP's logit
+  plus the growth affine behind a gate initialized at zero. The gate is a parameter of the
+  readout; its value is written into every epoch row as \texttt{ess\_gate}. Colors as in
+  Figure~\ref{fig:readout-key}.}{fig:readout-gated}
+
+\subsection{What the layer's flux violates\secstatus{todo}}
+
+Every flux arm in this document builds the anchored layer: the predicted $k_{cat}$ tier
+(97 measured, 782 homolog, 2,831 predicted, 18 default catalytic units), the
+union-external reaction energies (3,779 of 4,131 reactions with a $\Delta_r G'$), the
+enzyme-capacity ceiling from the abundance head in the box, and the second law, the
+protein budget and the Gibbs dissipation as penalty terms at the constraint scale. The
+layer logs every one of those residuals each epoch, and Table~\ref{tab:violations}
+reads them at the selected epoch across the module arms. With the balance exact, the
+flux is outside its bounds on 58 to 63 percent of reactions, runs against its reaction
+energy on 44 to 51 percent, uses 0.2 to 7 times the protein pool, and dissipates 5,000
+to 12,000 J/gDW/h against the 3,700 limit, with the penalty on or off; with the bounds
+exact (round 7) the second-law violation falls to a third and the dissipation rises to
+100,000. No arm's flux satisfies the constraints the layer was built to hold, so on
+this endpoint the $k_{cat}$ table and the reaction energies are inputs to a
+projection that does not honor them, which is the precise sense in which the module
+is not the solve.
+
+The Gibbs dissipation is reported here as a diagnostic and nothing else. The Niebel
+limit is an empirical plateau of one organism's physiology, not a constraint of the
+network, and a model that stays under it because it was penalized for exceeding it has
+been told the answer. The anchored arm's registry entry carries the dissipation hinge,
+so the round-2 and round-4 cells at constraint scale 0.1 trained against it; every
+cell of the layer that solves ran at constraint scale 0, where the hinge has weight
+zero, and from round 18 the module cells run on the \texttt{nodiss} entry of the same
+arm, where the term is absent by construction and the rate is logged only.
+
+\input{tables/violations}
+
+\subsection{What holds by construction, and what does not\secstatus{todo}}
+\label{sec:by-construction}
+
+Three constructions of the module appear in this section, and they differ in which
+constraints their flux satisfies exactly, which it satisfies through a penalty, and
+which it satisfies only when the backbone finds a way to. The alternating layer
+(Figure~\ref{fig:module-projection}) writes a proposal in the null space of $S$, so mass
+balance holds at the start, and alternates the balance projection with the box clip
+$K$ times, so whichever of the two runs last holds exactly and the other is a residual;
+the second law, the protein pool and the capacity ceilings are hinges at the constraint
+scale, and Table~\ref{tab:violations} measures what the hinges leave. The layer that
+solves (Figure~\ref{fig:module-lp}) returns the growth optimum of the linear program
+under the layer's bounds, so mass balance, the box and every capacity ceiling hold
+exactly at once, with no penalty in the loss; what it does not guarantee is that a
+program exists, and rounds 15 to 15d measure what happens when it does not. The elastic
+layer that solves (Figure~\ref{fig:module-elastic}) keeps all of that and adds two
+things by construction: the protein pool, by projecting the abundance head's output onto
+the budget before the ceilings are formed, and feasibility, by letting the one forced
+flux in the model, the ATP maintenance reaction's lower bound of 0.7 mmol/gDW/h, go
+unmet at a price. Its zero flux with the maintenance fully unmet satisfies every
+constraint, so the program solves for every genotype at every ceiling, and a genotype
+that cannot meet its maintenance is not absent from the gradient but priced into it.
+Under every construction the second law enters only through the anchored reaction
+energies and the dissipation only as a logged rate. What ``the enzyme-capacity box
+contains no growing flux'' means, stated exactly with the elastic program in hand: at
+the ceilings as parameterized the maintenance flux the model forces cannot be carried,
+the shortfall is 0.54 of 0.70 with zero growth (\texttt{capacity\_calibration.py
+--lp-slack-penalty 1}, 32 held-out genotypes), the hard program's feasible set is
+therefore empty, and the solver returns nothing; from a ceiling scale of 10 the
+shortfall is zero and growth is 0.01, and from 30 the box admits the growth the rounds
+train on.
+
+\input{figures/module_projection}
+
+\subsection{Round 2: the module on the stable backbone, with and without the penalties\secstatus{todo}}
+
+Round 2 (jobs 2182 to 2208) puts the three readouts on the width-12 cell of
+Section~\ref{sec:backbone}, on the released-label split, at three seeds each: the forced
+and gated readouts at constraint scale 0.1 and 0, the context readout at both scales, the
+forced readout at scale 0 with the $k_{cat}$ vector permuted across catalytic units (same
+architecture, no unit-to-value correspondence), and the stoichiometry-only layer
+(\texttt{flux\_off}: no thermodynamics, no capacity) with the forced and context readouts.
+Every flux arm carries the wave-9 flux configuration otherwise: the predicted $k_{cat}$
+tier, the union-external thermodynamic source, twenty warmup epochs, the dataset medium,
+the mixture concentration space. The paired comparator is the round-1 pooled cell on the
+same split at the same batch, weight decay and budget (Table~\ref{tab:w13},
+Figure~\ref{fig:w13}).
+
+The reads were fixed before the numbers: \emph{not hurt} is the gated arm against the
+pooled cell paired by seed, with the gate's trajectory beside it; \emph{help} is the forced
+arm above the pooled cell on three of three seeds and above its shuffled-$k_{cat}$ control;
+the \emph{collapse's cause} is the forced arm at scale 0.1 against scale 0, since on the
+betaxanthin targets the penalty scale was the dose that starved the layer's input.
+
+\input{tables/round_w13}
+
+\tcfigfit[1.0]{figures/w13_readout_2026-09-16-18-16-07.pdf}{\textbf{Round 2, the
+  metabolic module.} \textbf{a}, Validation AUROC per epoch, one thin line per seed and the
+  seed mean per arm. \textbf{b}, The median absolute epoch-to-epoch step of that curve per
+  cell, against the number of labeled validation genes, 158 for every cell in this round.
+  \textbf{c}, Held-out AUROC per cell (points), the seed mean and the gene bootstrap of the
+  pooled per-gene logits (square with interval), beside FBA on four media, Flux Cone
+  Learning and the released FBA predictions on the same 195 genes. \textbf{d}, Gradient norm
+  per module per epoch, seed mean; the dash-dot line is the flux layer. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w13}.}{fig:w13}
+
+\emph{Not hurt} holds. The gated arm at scale 0 scores 0.714, 0.744 and 0.747 against the
+pooled cell's 0.745, 0.722 and 0.708 on the same seeds, two of three above by 0.02 to
+0.04 and one below by 0.03, a seed mean of 0.735 against 0.725; at scale 0.1 the same
+comparison is one of three above. The gate leaves zero and stops: at epoch 80 it reads
+$-0.056$ to $-0.063$ on all six gated cells, and the flux layer's gradient norm sits at
+0.01 to 0.07 against 0.22 to 0.36 on the forced arm's two seeds that train. The optimizer takes a small negative
+weight on the growth affine and the layer receives a tenth of the forced arm's gradient,
+so the gated cell is a pooled cell with a small correction, and it scores like one.
+
+\emph{Help} does not hold. The forced arm at scale 0 scores 0.770, 0.653 and 0.772, two
+of three seeds above the pooled cell and one seed 0.07 below; at scale 0.1 the split is the
+same and the low seed reads 0.585. The shuffled-$k_{cat}$ control, the same layer with the
+catalytic constants permuted across units, scores 0.771, 0.718 and 0.765, a seed mean of
+0.751 against the real table's 0.732, so whatever the growth column carries here does not
+come from the correspondence between units and constants. The forced arm's pooled
+bootstrap, 0.773 [0.68, 0.86], is above Flux Cone Learning's 0.742 and FBA's 0.640 to
+0.666 on the same genes, level with the pooled cell's 0.738, and below the ladder's
+0.80 line.
+
+The collapse on this endpoint is not the penalty's. Seed 2701 falls at both scales, to
+0.585 at 0.1 and 0.653 at 0, and the two runs are the same run: the gradient norms start
+where the other seeds' do, decay within ten epochs to a hundredth of them (preprocessor
+0.002, transformer 0.003 at epoch 80, against 1.0 and 0.5 on seed 2700) and stay there,
+with the training loss flat at 0.46 against 0.34, which is a stalled seed rather than a
+starved layer. The
+stoichiometry-only layer collapses on all three seeds (0.524, 0.631, 0.661), so the
+capacity bound and the thermodynamic term are what keep the growth column informative
+rather than what starve it, the opposite of the betaxanthin reading. Adding the context
+head beside the growth affine without a gate costs 0.06 on the seed mean (0.666 and
+0.667 against 0.725) and puts one seed at 0.56; the same sum behind the zero-initialized
+gate loses nothing.
+
+\subsection{Round 4: the module on the best backbone\secstatus{todo}}
+
+Round 4 (jobs 2246 to 2248, three cells per GPU) repeats the gated readout, the forced
+readout and the shuffled-$k_{cat}$ control at constraint scale 0 on the round-3 cell,
+batch 32 with the class weight at 200 epochs, paired by seed against it
+(Table~\ref{tab:w15}, Figure~\ref{fig:w15}). The reads are the round-2 reads.
+
+\input{tables/round_w15}
+
+\tcfigfit[1.0]{figures/w15_readout_2026-09-16-18-16-17.pdf}{\textbf{Round 4, the module on
+  the round-3 cell.} \textbf{a}, Validation AUROC per epoch, one thin line per seed and the
+  seed mean per arm. \textbf{b}, The median absolute epoch-to-epoch step per cell against
+  the validation size, 158 for every cell. \textbf{c}, Held-out AUROC per cell (points),
+  the seed mean and the gene bootstrap of the pooled per-gene logits (square with
+  interval), beside FBA on four media, Flux Cone Learning and the released FBA predictions
+  on the same 195 genes. \textbf{d}, Gradient norm per module per epoch, seed mean; the
+  dash-dot line is the flux layer. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w15}.}{fig:w15}
+
+Every arm lands within 0.015 of the pooled cell on every seed. The gated readout scores
+0.766, 0.782 and 0.765 against 0.780, 0.769 and 0.773, one of three above; the forced
+readout 0.772, 0.781 and 0.778, two of three above by 0.005 and 0.012 and one below by
+0.008; the shuffled-$k_{cat}$ control 0.785, 0.781 and 0.772, two of three above, a seed
+mean of 0.779 against the real table's 0.777. The gate now moves: it leaves zero after
+epoch 10 and climbs steadily to $-0.17$, $+0.20$ and $+0.11$ at epoch 200, of either sign,
+with the flux layer's gradient at 0.06 to 0.12 against 0.22 to 0.65 in the forced arm.
+The stalled seed of round 2 does not recur under batch 32 with the class weight. On every
+arm the validation curve peaks between epochs 60 and 110 and falls afterwards
+(Figure~\ref{fig:w15}a), so the 200-epoch budget is more than the cell uses and the
+smoothed selection rule is what the number rests on.
+
+The two rounds together answer the two questions. The module does not hurt: on the
+stable backbone and on the best one, the gated cell is the pooled cell to within seed
+noise. The module does not help: the forced growth column, which carries the whole
+prediction, matches the pooled MLP head to within 0.01, and it matches it equally well
+with the catalytic constants permuted, so the growth column is as expressive a readout as
+the head but its $k_{cat}$ content is not what it reads. On this endpoint, at this
+width, the enzyme-constrained flux is a learned nonlinearity over the context rather than
+a physical prior that ranks genes.
+
+\subsection{Round 6: one medium against four, the layer on top of the solve, and two other embeddings\secstatus{todo}}
+
+Round 5 (Section~\ref{sec:backbone}) put FBA's four growth ratios beside the context head
+and reached the ladder's level. Round 6 (jobs 2251 to 2256, three cells per GPU) asks
+three questions of that result on the same cell, batch 32 with the class weight at 200
+epochs, three seeds each, paired against the round-5 cell (Table~\ref{tab:w17},
+Figure~\ref{fig:w17}): whether one medium's ratio carries what four do; whether the flux
+layer adds anything once the solve is present, with the forced growth column plus the
+affine (no context head) and the gated readout plus the affine, both at constraint scale
+0; and whether the backbone on another node embedding does better, on codon frequency (64
+dimensions, the encoding that reaches 0.82 with FBA on the ladder from a support vector
+classifier) and on the species-LM composite the expression line uses (the 5$'$ and 3$'$
+species language model, ProtT5 and CaLM, 3,332 dimensions), with and without the affine.
+
+Figure~\ref{fig:readout-fba} draws the round-5 affine and Figure~\ref{fig:readout-gated-fba}
+the gated readout with that affine beside it.
+
+\tcfigfit[0.9]{figures/readout_4.pdf}{\textbf{The FBA affine, round 5.} The pooled readout
+  (Figure~\ref{fig:readout-pooled}) plus an affine of the deleted gene's
+  knockout-to-wild-type growth ratio on four media, solved offline by FBA and read as a
+  fixed table. No flux layer is in the graph, and the five added parameters are the four
+  weights and the intercept. Colors as in Figure~\ref{fig:readout-key}.}{fig:readout-fba}
+
+\tcfigfit[1.0]{figures/readout_5.pdf}{\textbf{The gated readout beside the FBA affine, round 6.} The gated readout of
+  Figure~\ref{fig:readout-gated} with the affine of Figure~\ref{fig:readout-fba} added to
+  the same logit, so the alternating layer's growth column and the solve's growth ratios
+  reach the prediction side by side. The forced arm of the round drops the context head
+  $\ell_0$ and keeps the other two terms. Colors as in Figure~\ref{fig:readout-key}.}{fig:readout-gated-fba}
+
+\input{tables/round_w17}
+
+\tcfigfit[1.0]{figures/w17_readout_2026-09-16-19-00-53.pdf}{\textbf{Round 6.} \textbf{a},
+  Validation AUROC per epoch, one thin line per seed and the seed mean per arm; the second
+  tier of arms is dashed. \textbf{b}, The median absolute epoch-to-epoch step per cell
+  against the validation size. \textbf{c}, Held-out AUROC per cell (points, hollow for the
+  second tier), the seed mean and the gene bootstrap of the pooled per-gene logits (square
+  with interval), beside FBA on four media, Flux Cone Learning and the released FBA
+  predictions on the same 195 genes. \textbf{d}, Gradient norm per module per epoch, seed
+  mean; the dash-dot line is the flux layer. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w17}.}{fig:w17}
+
+Four media carry more than one. The YPD ratio alone scores 0.819, 0.775 and 0.789
+against 0.814, 0.805 and 0.844 with all four, two of three seeds below by 0.03 to 0.05,
+a seed mean of 0.795 against 0.821; the one column still lifts the pooled cell by 0.02.
+
+The learned layer adds nothing on top of the solve. The forced growth column with the
+affine beside it and no context head scores 0.834, 0.811 and 0.809, a mean of 0.818, and
+the gated readout with the affine 0.810, 0.821 and 0.832, a mean of 0.821, each one of
+three seeds above the round-5 cell and each within its seed spread. The growth column is
+as good a companion to the solve as the MLP head, and no better; its gradient norm, 0.4
+to 1.1 in the forced cells, says the layer trains rather than idles. Put beside rounds 2,
+4 and 5, the pattern is one statement: the module's ranking is what the backbone gives
+it, and the physics that ranks genes on this endpoint is the solve's optimum, which the
+projection layer does not compute.
+
+The embeddings do not move the ceiling. The species-LM composite scores 0.783, 0.779 and
+0.773 without the affine, against ProtT5's 0.780, 0.769 and 0.773 at 2.7 times the
+parameters, and 0.802, 0.825 and 0.822 with it, against 0.814, 0.805 and 0.844: within
+noise both times. The backbone on codon frequency with the affine scores 0.747, 0.682 and
+0.764, a mean of 0.731, below the pooled ProtT5 cell and 0.09 below the ladder's codon
+rung with FBA (0.818), so the 64 codon numbers that a support vector classifier reads
+well are not read well through a 12-wide transformer; the selected epochs (16, 172, 14)
+and the step of 0.013 in panel b say the cell never settled.
+
+\subsection{The growth column is a signed free coordinate\secstatus{todo}}
+
+Four rounds put the layer's growth column level with the pooled head and blind to its
+own $k_{cat}$ table while one linear program per deletion lifts every model by 0.05. The
+probe in Table~\ref{tab:growth-probe} reads the column itself. It rebuilds a forced cell
+from its result file, deletes each of the 982 labeled genes through the same batches
+training used, and reads $v_{\text{growth}}$ at initialization and under the trained
+weights, scoring the negative column against the label (a deletion that stops growth is
+essential) and the column against FBA's ratio.
+
+\input{tables/growth_probe}
+
+At initialization the column carries a weak signal in the right direction: 0.55 on the
+held-out genes and a Spearman of $+0.11$ with the solve, nothing like FBA's 0.65, and no
+deletion reaches zero growth. Training inverts it. Under the round-4 forced cell's weights
+the negative column reads 0.23 on the held-out genes, which is that cell's 0.77 with the
+sign of growth reversed: the affine learned a positive slope, an essential deletion gets
+the \emph{higher} growth, and the column is anticorrelated with the solve ($-0.25$). The
+round-2 forced cell does the same ($0.24$, $-0.26$). The median growth under the trained
+weights is $-1.4$ and $-2.4$ mmol/gDW/h against a wild-type FVA range of 0.48 to 0.54 on
+YPD: for most deletions the column is negative, which growth cannot be.
+
+The column can do this because the arm's alternations end on the balance projection, so
+$Sv = 0$ holds to machine precision and the box does not: 58 percent of reactions sit
+outside their bounds at the selected epoch (0.64 on the round-2 cell, 0.59 on the round-6
+cell), the growth reaction's floor of zero among them. $v_{\text{growth}}$ is then a
+signed, unbounded coordinate the backbone writes through the abundance head, and the
+readout uses it as a free latent. That is the mechanism behind the shuffled-$k_{cat}$
+parity and behind the layer matching the head: the quantity the forced readout reads is
+not growth.
+
+\subsection{Round 7: the growth column with the bounds enforced\secstatus{todo}}
+
+Round 7 (jobs 2257 and 2258, three cells per GPU) puts the forced readout on two layers
+whose bounds hold exactly: the same alternations ending on the clip instead of the
+balance, and the pure box form, $v = \ell + (u - \ell)\,\sigma(z)$, with no projection at
+all. Same cell otherwise, batch 32 with the class weight at 200 epochs, constraint scale
+0, three seeds, paired against the round-4 forced cell and the pooled cell
+(Table~\ref{tab:w18}, Figure~\ref{fig:w18}); the probe runs on every cell
+(Table~\ref{tab:growth-probe}).
+
+Figure~\ref{fig:readout-box} draws the box form.
+
+\tcfigfit[1.0]{figures/readout_6.pdf}{\textbf{The box form, round 7.} The forced readout of
+  Figure~\ref{fig:readout-biomass} with the alternating projections replaced by a sigmoid
+  that places every flux inside its bounds, so the box holds exactly and mass balance is
+  never imposed. The round's other arm keeps the alternations of
+  Figure~\ref{fig:readout-biomass} and ends them on the clip instead of on the balance
+  projection. Colors as in Figure~\ref{fig:readout-key}.}{fig:readout-box}
+
+\input{tables/round_w18}
+
+\tcfigfit[1.0]{figures/w18_readout_2026-09-16-19-40-51.pdf}{\textbf{Round 7, the growth
+  column with the bounds enforced.} \textbf{a}, Validation AUROC per epoch, one thin line
+  per seed and the seed mean per arm. \textbf{b}, The median absolute epoch-to-epoch step
+  per cell against the validation size. \textbf{c}, Held-out AUROC per cell (points), the
+  seed mean and the gene bootstrap of the pooled per-gene logits (square with interval),
+  beside FBA on four media, Flux Cone Learning and the released FBA predictions on the same
+  195 genes. \textbf{d}, Gradient norm per module per epoch, seed mean; the dash-dot line
+  is the flux layer. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w18}.}{fig:w18}
+
+With the clip last, the growth column is zero for every one of the 982 deletions, at
+initialization and after training: the clip pins the growth reaction at its floor, the
+cells score 0.500 exactly on three of three seeds and select epoch 2, and the balance
+residual, the loose end now, is 0.85 to 1.0 of the layer's own turnover. With the box
+form the column lives in $[0, u]$ and starts near $u/2$ (median 45 to 53 mmol/gDW/h
+against a wild-type 0.5); $Sv = 0$ is then never approached, the balance residual reads
+2.0 at every epoch, and the cells score 0.767, 0.609 and 0.785, a seed mean of 0.720
+below the pooled cell's 0.774. The probe on the trained box cells inverts the sign on two
+of three seeds as before (0.23 and 0.22 on the held-out genes, Spearman $-0.25$ and
+$-0.28$ with the solve) and reads 0.61 with $+0.10$ on the third.
+
+The rounds close the module question at the layer rather than at the readout. Whichever
+constraint the layer holds exactly, the other is violated by an amount comparable to the
+fluxes themselves: 58 percent of reactions out of bounds when the balance is exact, a
+balance residual of 0.85 to 2.0 when the bounds are. The alternations never reach the
+polytope that FBA optimizes over, so the growth column is either a free signed
+coordinate, a constant zero, or an unbalanced sigmoid, and none of them is the quantity
+whose optimum over that polytope ranks essential genes at 0.65 on its own and lifts the
+transformer by 0.05. On this endpoint the physics that helps is the solve, and the layer
+would have to reach feasibility before its growth column could carry it.
+
+\subsection{Round 10: the layer warm-started from the deletion's own solve\secstatus{todo}}
+
+If the layer cannot reach the polytope from a free proposal, it can be handed a point on
+it. One parsimonious FBA solve per labeled gene on YPD, the medium the essentiality cell's
+box is built on, gives a reference flux per deletion (\texttt{ess\_reference\_flux\_table.py},
+1,121 genes, 104 of them with zero growth, about eight minutes of CPU), and under the
+warm-start parameterization the layer proposes that reference plus a null-space residual
+of relative size $\alpha$ before its alternations. The growth column then starts at the
+deletion's own pFBA growth rather than at a free coordinate, and the negative of that
+growth ranks the 195 held-out genes at 0.645 on its own. Round 10 (jobs 2284 to 2287)
+runs the forced growth column and the gated column with the context head on the
+anchored layer at constraint scale 0, with $\alpha$ frozen at 0.01, learned from 0.01,
+and frozen at 0.1, each at the three seeds, paired against the round-4 forced and gated
+cells and the round-5 affine (Table~\ref{tab:w21}, Figure~\ref{fig:w21}). Two reads were
+fixed first: the probe at initialization must find the growth column at the solve's level,
+about 0.65 on the held-out genes, or the warm start did not reach the readout; and the
+gated cell passes if it sits at the round-5 affine's 0.82 with three of three seeds above
+the round-4 gated cell.
+
+Figure~\ref{fig:readout-warm} draws the warm-started path.
+
+\tcfigfit[1.0]{figures/readout_7.pdf}{\textbf{The warm-started forced readout on the anchored layer, round 10.}
+  The forced readout of Figure~\ref{fig:readout-biomass} with the proposal changed: the
+  alternations start from the deletion's own parsimonious FBA flux $v_{\text{ref}}$, a
+  fixed table solved offline on YPD, plus a null-space step of relative size $\alpha$
+  whose direction the context sets. The box is still the GEM's bounds tightened by the
+  capacity ceilings. The gated arm of the round puts the same growth column behind the
+  gate of Figure~\ref{fig:readout-gated}. Colors as in Figure~\ref{fig:readout-key}.}{fig:readout-warm}
+
+\input{tables/round_w21}
+
+\tcfigfit[1.0]{figures/w21_readout_2026-09-16-23-52-33.pdf}{\textbf{Round 10, the layer
+  warm-started from the deletion's own solve.} \textbf{a}, Validation AUROC per epoch, one
+  thin line per seed and the seed mean per arm. \textbf{b}, The median absolute
+  epoch-to-epoch step per cell against the validation size. \textbf{c}, Held-out AUROC
+  per cell (points), the seed mean and the gene bootstrap of the pooled per-gene logits
+  (square with interval), beside FBA on four media, Flux Cone Learning and the released
+  FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per module per epoch,
+  seed mean; the dash-dot line is the flux layer. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w21}.}{fig:w21}
+
+Neither read holds. The probe at initialization finds the growth column negative (median
+$-0.07$ to $-0.10$ mmol/gDW/h against references of 0 to 0.5) and anti-correlated with
+the solve it was started from: Spearman $-0.43$ to $-0.44$ against the YPD ratio, and the
+negative column ranks the held-out genes at 0.34 to 0.39, which is the solve's ranking
+with its sign reversed. The layer's own diagnostics say where the reference goes: the
+anchored layer's box is the GEM's bounds tightened by the enzyme-capacity ceilings and the
+second-law directions, the reference violates it on 28 to 39 percent of reactions at
+initialization, and the proposal the alternations return sits 0.45 to 0.57 of the
+reference's norm away from it at $\alpha = 0.01$. The projections that make the flux
+balanced move it half its length off the point it was handed and reverse the growth
+column's correlation with the solve on the way. Trained, the forced cells read 0.629,
+0.706 and 0.776 against the round-4 forced cell's 0.772, 0.781 and 0.778, down on three of
+three seeds, and the probe on their trained weights inverts further (0.22 to 0.41); the
+gated cell reads 0.810, 0.776 and 0.742 against 0.766, 0.782 and 0.765, one seed up and
+two down, with seed 2702 selecting epoch 4 and its gate ending at $-2.0$. Letting $\alpha$
+learn changes nothing on the held-out genes (0.812, 0.772, 0.741) while $\alpha$ grows to
+0.19, 0.02 and 0.11 and the box violation on one seed rises from 0.30 to 0.45, the job-1946
+failure mode in miniature; $\alpha$ frozen at 0.1 reads 0.751. The warm start hands the
+layer the solve and the anchored layer's constraint set does not keep it. Round 13 repeats
+the warm start on the stoichiometry-only layer, whose box is the GEM's own bounds, so the
+reference is inside it by construction.
+
+\subsection{Round 13: the warm start on the stoichiometry-only layer\secstatus{todo}}
+
+Round 13 (jobs 2297 and 2298) repeats the warm start on the stoichiometry-only layer,
+whose box is the GEM's own bounds scaled by the availability gate, with no capacity
+ceiling and no second-law direction, forced and gated, $\alpha$ frozen at 0.01, three
+seeds each (Table~\ref{tab:w24}, Figure~\ref{fig:w24}). The reads are round 10's: the
+probe at initialization at the solve's level, and the gated cell at the round-5
+affine's 0.82 with three of three seeds above the round-4 gated cell.
+
+Figure~\ref{fig:readout-warm-gem} draws the same warm start on this layer.
+
+\tcfigfit[1.0]{figures/readout_8.pdf}{\textbf{The warm-started gated readout on the stoichiometry-only layer,
+  round 13.} The proposal of Figure~\ref{fig:readout-warm} on a layer with no abundance
+  head, no $k_{cat}$ table and no capacity ceiling: a learned availability gate, zero for
+  the deleted gene, scales the GEM's own bounds. The growth column enters behind the
+  zero-initialized gate of Figure~\ref{fig:readout-gated}, and the forced arm reads it
+  alone. Colors as in Figure~\ref{fig:readout-key}.}{fig:readout-warm-gem}
+
+\input{tables/round_w24}
+
+\tcfigfit[1.0]{figures/w24_readout_2026-09-17-00-38-12.pdf}{\textbf{Round 13, the warm
+  start on the stoichiometry-only layer.} \textbf{a}, Validation AUROC per epoch, one
+  thin line per seed and the seed mean per arm. \textbf{b}, The median absolute
+  epoch-to-epoch step per cell against the validation size. \textbf{c}, Held-out AUROC
+  per cell (points), the seed mean and the gene bootstrap of the pooled per-gene logits
+  (square with interval), beside FBA on four media, Flux Cone Learning and the released
+  FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per module per epoch,
+  seed mean; the dash-dot line is the flux layer. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w24}.}{fig:w24}
+
+Both reads hold, and this is the first module cell in the document that carries the
+solve. At initialization the growth column is positive (median 0.38 mmol/gDW/h), its
+Spearman with the solve is $+0.47$ to $+0.57$ across the four media, and its negative
+ranks the held-out genes at 0.683, above FBA's own 0.654 to 0.666 on the same genes; the
+alternations leave the reference where it was, 0.3 percent of its norm away, with a
+box violation of 0.24 to 0.29 that is the availability gate's untrained scaling of the
+bounds rather than a displacement of the flux. The forced cells read 0.654, 0.726 and
+0.612, a mean of 0.664, which is the solve's number: trained, the column keeps its sign
+(Spearman $+0.54$ to $+0.64$) and its ranking (0.62 to 0.67), and the layer's learned
+parts add nothing to it. The gated cells read 0.794, 0.829 and 0.825 against the
+round-4 gated cell's 0.766, 0.782 and 0.765, up by 0.028, 0.047 and 0.060 on three of
+three seeds, a seed mean of 0.816 against the affine's 0.821, and on the two seeds that
+train past epoch 5 the gate ends at $+0.97$ and $+0.90$, the first positive gates in the
+document: the head adds the growth column with its physical sign. The third seed selects
+epoch 5 with its gate at zero and still reads 0.829, the seed-to-seed spread the round-9
+cells also show.
+
+Put beside round 10, the comparison isolates the loss. The same reference on the
+anchored layer arrived sign-reversed and half its norm away; on the GEM's own box it
+arrives intact. The capacity ceilings and the second-law directions, tightened onto a
+flux that was solved without them, are what the projections could not reconcile, and
+the layer that solves (round 15) applies those constraints inside the solve instead of
+after it.
+
+\subsection{Round 15: the layer that solves\secstatus{todo}}
+
+The projection route carries the solve only when handed it. Round 15 replaces the
+alternations with the solve: under the \texttt{lp} parameterization the layer's flux is
+the growth optimum of the linear program $\max\{v_{\text{growth}} : Sv = 0,\ \ell \le v
+\le u\}$ over the layer's own bounds, one HiGHS solve per genotype in a forked pool, and
+the backbone reaches the prediction through the bounds alone, with the gradient the
+bound duals give (\texttt{torchcell.metabolism.lp\_layer}; the envelope theorem, checked
+against finite differences on the GEM). On the anchored layer the bounds are the GEM's
+scaled by availability and capped by the enzyme-capacity ceilings from the abundance
+head, so this is the GECKO construction with a learned enzyme pool. Round 15 (jobs 2304
+to 2306) runs it forced, forced with the second-law box, and gated, three seeds each
+(Table~\ref{tab:w26}, Figure~\ref{fig:w26}); Figure~\ref{fig:module-lp} draws the
+construction.
+
+\input{figures/module_lp}
+
+\input{tables/round_w26}
+
+\tcfigfit[1.0]{figures/w26_readout_2026-09-17-02-26-02.pdf}{\textbf{Round 15, the layer
+  that solves on the anchored box.} \textbf{a}, Validation AUROC per epoch, one thin line
+  per seed and the seed mean per arm. \textbf{b}, The median absolute epoch-to-epoch step
+  per cell against the validation size. \textbf{c}, Held-out AUROC per cell (points), the
+  seed mean and the gene bootstrap of the pooled per-gene logits (square with interval),
+  beside FBA on four media, Flux Cone Learning and the released FBA predictions on the
+  same 195 genes. \textbf{d}, Gradient norm per module per epoch, seed mean; the dash-dot
+  line is the flux layer. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w26}.}{fig:w26}
+
+Every forced cell scores 0.500 exactly and selects epoch 2, because the program is
+infeasible for every genotype at every epoch: the probe finds the growth column at zero
+for all 982 deletions at initialization and under the trained weights. The gated cells
+read 0.771, 0.786 and 0.763, the pooled cell's 0.774, with gates within 0.07 of zero,
+which is the head working alone beside a dead path. The cause is measured on one
+genotype's bounds taken
+from the layer: under the GEM's own bounds the program solves at the wild-type growth of
+0.0858, and under the layer's bounds it has no feasible point, with or without the
+maintenance flux released and with the deleted gene's reactions reopened. What differs
+is the capacity ceiling: the layer's upper bounds have a median of 0.084 mmol/gDW/h and
+a tenth of the reactions below 0.007, against 100 on the GEM, because the predicted
+$k_{cat}$ tier multiplied by the abundance head's nominal abundances gives ceilings two
+to four orders below the fluxes growth needs. The alternating layer never noticed,
+because it never satisfied the box; the solve cannot proceed without it. That is the
+same fact as round 10's, read exactly: the enzyme-capacity box as parameterized contains
+no flux that meets the model's maintenance requirement, let alone one that grows
+(Section~\ref{sec:by-construction} puts the shortfall at 0.54 of 0.70), and every arm
+built on it has been reading a flux off the polytope.
+Round 15b runs the solve on the stoichiometry-only box, where round 13 showed the
+polytope holds growth. The capacity ceiling that admits growth is then calibrated the
+way GECKO calibrates its pool, by one scale on every ceiling
+(\texttt{capacity\_calibration.py}, through the layer's own forward pass on a batch of
+32 held-out genotypes at initialization): the program is infeasible up to a scale of
+10, feasible for 31 of the 32 from a scale of 30 (the thirty-second is lethal) with a
+median growth of 0.042, reaches 0.10 at 100 and 0.20 at 1,000, and at 10,000 returns
+the unconstrained wild type's 0.535, where the ceilings no longer bind. Round 15c runs
+the layer that solves at 100 and 1,000, where bounds the genes own bind at the optimum.
+
+\subsection{Round 15b: the layer that solves on the stoichiometry-only box\secstatus{todo}}
+
+Round 15b (jobs 2314 and 2315) runs the same solve on the stoichiometry-only layer,
+whose bounds are the GEM's scaled by the availability gate, forced and gated, three
+seeds each, beside the round-13 warm-started columns on the same box and the round-5
+affine (Table~\ref{tab:w29}, Figure~\ref{fig:w29}); the read is round 10's.
+Figure~\ref{fig:module-gem-box} draws the layer on this box.
+
+\input{figures/module_gem_box}
+
+\input{tables/round_w29}
+
+\tcfigfit[1.0]{figures/w29_readout_2026-09-17-05-13-17.pdf}{\textbf{Round 15b, the layer
+  that solves on the stoichiometry-only box.} \textbf{a}, Validation AUROC per epoch, one
+  thin line per seed and the seed mean per arm. \textbf{b}, The median absolute
+  epoch-to-epoch step per cell against the validation size. \textbf{c}, Held-out AUROC
+  per cell (points), the seed mean and the gene bootstrap of the pooled per-gene logits
+  (square with interval), beside FBA on four media, Flux Cone Learning and the released
+  FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per module per epoch,
+  seed mean; the dash-dot line is the flux layer. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w29}.}{fig:w29}
+
+The program is feasible here and its growth column is growth from the first forward
+pass: the probe at initialization finds a positive column with 10 percent of the 982
+deletions at exactly zero growth, the lethal ones, a Spearman of $+0.40$ to $+0.50$ with
+FBA's ratio across the four media, and a ranking of 0.734 on the held-out genes, above
+FBA's own 0.654 to 0.666 on the same genes. The layer that solves under the
+availability-scaled box is a better ranker than the unscaled solve before any
+training, which is the uniform enzyme ceiling the gate imposes doing GECKO's work in
+miniature. The gated cells read 0.800, 0.837 and 0.835 against the round-4 gated cell's
+0.766, 0.782 and 0.765, up by 0.034, 0.055 and 0.070 on three of three seeds, a seed
+mean of 0.824 against the affine's 0.821 and a pooled bootstrap of 0.837 [0.76, 0.91]:
+both halves of the read hold, and this is a module cell at the affine's level with the
+solve inside the forward pass and the gradient through it. The seed that trains longest
+(2701, epoch 103) ends with its gate at $+1.42$, the largest positive gate in the
+document, and its growth column ranks the held-out genes at 0.768 on its own after
+training, above its 0.734 at initialization; the other two seeds select epochs 2 and 4
+with gates near zero, so on those the number is the head's early ranking and the
+column's contribution is not read.
+
+The forced cells fail in two ways that are the linear program's own. On two seeds the
+gradient into the backbone is $10^{-14}$ for the whole run and the cell reads 0.669, the
+solve's number with a learned threshold: at the optimum the binding constraints are the
+exchange bounds, which no gene owns, so the duals on the learnable bounds are zero and
+the backbone has nothing to move. On the third seed the early gradient moves the
+availability gate until the program is infeasible for every genotype (epoch 11), the
+column is zero from then on, and the cell reads 0.500; an infeasible program returns no
+gradient, so the state is absorbing. The gated cell avoids both because the head
+carries the loss while the column contributes where its duals are live. A layer that
+solves therefore needs two more things the rounds name: bounds the genes own that bind
+at the optimum (the capacity ceilings, once calibrated to admit growth), and a barrier
+that keeps the program feasible under training.
+
+\subsection{Round 15c: the layer that solves with calibrated capacity ceilings\secstatus{todo}}
+
+Round 15c (jobs 2316 to 2318) runs the solve on the anchored box with the capacity
+ceilings scaled by 100 and by 1,000, the range the calibration put growth in with the
+ceilings still binding, gated at both scales and forced at 100, three seeds each
+(Table~\ref{tab:w30}, Figure~\ref{fig:w30}). Bounds the genes own now bind at the
+optimum: the layer reports 3 to 8 percent of reactions at their capacity ceiling at the
+selected epoch, against zero on the GEM box.
+
+\input{tables/round_w30}
+
+\tcfigfit[1.0]{figures/w30_readout_2026-09-17-08-10-01.pdf}{\textbf{Round 15c, the layer
+  that solves with calibrated capacity ceilings.} \textbf{a}, Validation AUROC per epoch,
+  one thin line per seed and the seed mean per arm. \textbf{b}, The median absolute
+  epoch-to-epoch step per cell against the validation size. \textbf{c}, Held-out AUROC
+  per cell (points), the seed mean and the gene bootstrap of the pooled per-gene logits
+  (square with interval), beside FBA on four media, Flux Cone Learning and the released
+  FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per module per epoch,
+  seed mean; the dash-dot line is the flux layer. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w30}.}{fig:w30}
+
+The forced column carries the prediction alone on one seed. At scale 100 seed 2701
+starts with 87 percent of its genotypes infeasible, is pulled back to none by epoch 50
+by the gradient from the feasible rows, selects epoch 29 and reads 0.8425 on the
+held-out genes: the growth column of a linear program under learned enzyme ceilings,
+with no context head and no appended ratio, at the level of the affine (0.821) and of
+the round-9 backbone's seeds, 0.18 above FBA's own ranking on the same genes. The other
+two seeds enter the absorbing state within five epochs, 97 percent of genotypes
+infeasible from then on, and read 0.500. The probe at initialization reads the column at
+0.730 with a Spearman of $+0.49$ to $+0.55$ against the solve, the same start as the
+GEM box's. The gated cells stay feasible for every genotype throughout and read 0.820,
+0.795 and 0.786 at scale 100 and 0.809, 0.786 and 0.791 at 1,000, three of three seeds
+above the round-4 gated cell at both scales, with gates ending between $+0.05$ and
+$+1.04$, but below the GEM box's 0.824 and the affine's 0.821, so the calibrated
+ceilings cost the gated cell 0.02 to 0.03 against the plain box while binding.
+
+What the one seed shows is the module's upper bound so far: the solve with learned
+capacity ceilings is a 0.84 ranker on its own, and the physics is doing it, since the
+column is growth (10 percent of deletions at exactly zero, the lethal ones) and the
+ceilings bind. What the other two show is that the linear program's infeasible region
+is absorbing under gradient descent on its bounds, which round 15d tests with more slack
+and a smaller step.
+
+\subsection{Round 15d: the forced layer that solves against the absorbing state\secstatus{todo}}
+
+Round 15d (jobs 2319 and 2320) reruns the forced cell at capacity scale 1,000, where
+the calibration leaves ten times the slack, and at scale 100 with the learning rate at
+$3 \times 10^{-4}$, three seeds each (Table~\ref{tab:w31}, Figure~\ref{fig:w31}).
+
+\input{tables/round_w31}
+
+\tcfigfit[1.0]{figures/w31_readout_2026-09-17-10-51-43.pdf}{\textbf{Round 15d, the forced
+  layer that solves against the absorbing state.} \textbf{a}, Validation AUROC per epoch,
+  one thin line per seed and the seed mean per arm. \textbf{b}, The median absolute
+  epoch-to-epoch step per cell against the validation size. \textbf{c}, Held-out AUROC
+  per cell (points), the seed mean and the gene bootstrap of the pooled per-gene logits
+  (square with interval), beside FBA on four media, Flux Cone Learning and the released
+  FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per module per epoch,
+  seed mean; the dash-dot line is the flux layer. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w31}.}{fig:w31}
+
+Slack removes the absorbing state and the step size does not. At scale 1,000 no
+genotype's program is infeasible at any epoch on any seed, and the forced column reads
+0.615, 0.826 and 0.702, a mean of 0.714 with a spread of 0.106: one seed near the
+affine's level and two near the solve's, from a column that is growth throughout. At
+scale 100 with the smaller step two seeds are absorbed by epoch 5 as before and the
+third is infeasible on 73 to 97 percent of genotypes until epoch 100, recovers, and
+selects epoch 119 at 0.745. The absorbing state is a property of how much room the
+ceilings leave, and with room the forced column is a 0.62 to 0.83 ranker whose spread
+across seeds is the largest in the document. Across rounds 15c and 15d the forced
+layer that solves has reached 0.84 and 0.83 on two of nine seeds, so the module can
+carry the whole prediction at the affine's level, and does so unreliably; the gated form
+is the reliable one, and it reads the affine's level on the GEM box.
+
+\subsection{Round 18: the elastic layer that solves, feasible by construction\secstatus{todo}}
+\label{sec:round18}
+
+Rounds 15b to 15d leave the forced layer that solves with one failure mode, the
+absorbing infeasible state, and one unmeasured question, whether the growth column
+alone is a seed-robust 0.83 ranker once that state cannot occur. Round 18 (jobs 2321
+to 2324) removes the state by construction rather than by slack in the ceilings: the
+elastic program of Section~\ref{sec:by-construction}, every forced flux priced at
+$M = 1$ per mmol/gDW/h of shortfall, so that the value the readout sees is growth
+where maintenance is met and a negative number where it is not, and the gradient on the
+ceilings that block maintenance is the dual of the elastic row, of magnitude $M$, in
+place of no gradient at all. The program is solved in micromole units, because HiGHS's
+presolve at its absolute tolerances reads ceilings of $10^{-6}$ as an empty box and
+reports the feasible program infeasible; in those units it solves at the hard program's
+cost. Four cells, three seeds each, all on the \texttt{nodiss} arm: the forced column at
+ceiling scale 100 and 1,000 (the two scales of rounds 15c and 15d), the forced column at
+100 with the protein pool held by construction, and the gated column at 100. The reads
+were fixed before launch: the forced cells pass if all three seeds are above the
+round-4 forced column and none is below 0.80, the level the hard program reached on two
+of nine seeds; the pool cell is read paired against the elastic cell without it; the
+gated cell passes if all three seeds are above the round-4 gated cell with a seed mean
+at or above the GEM box's 0.824. The infeasible fraction reading zero at every epoch is
+a check on the construction, not a result. Beside the score, every cell logs what the
+program did: the fraction of genotypes with unmet maintenance, the fraction on which a
+gene-owned bound carries a dual (the fraction on which the backbone receives any
+gradient through the solve), and the gradient norm of each part of the layer
+(Figure~\ref{fig:lpprobe}). Figure~\ref{fig:module-elastic} draws the construction.
+
+\input{figures/module_elastic}
+
+\tcfigfit[1.0]{figures/lp_probe_2026-09-17-19-03-13.pdf}{\textbf{The layer that solves,
+  probed per epoch.} Seed mean per arm on the cells whose flux is a linear program.
+  \textbf{a}, Validation AUROC. \textbf{b}, The fraction of genotypes whose program was
+  infeasible (solid) and, on the elastic program, the fraction with unmet maintenance
+  (dotted). \textbf{c}, The fraction of gene-owned reactions at their capacity ceiling.
+  \textbf{d}, The fraction of genotypes on which a gene-owned bound carries a dual, logged
+  from round 18. \textbf{e}, The flux layer's share of the summed per-module gradient norm
+  (solid) and the abundance head's share (dotted, round 18). \textbf{f}, The
+  preprocessor's gradient norm. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/lp\_probe\_readout.py}.}{fig:lpprobe}
+
+\input{tables/round_w32}
+
+\tcfigfit[1.0]{figures/w32_readout_2026-09-17-20-00-56.pdf}{\textbf{Round 18, the forced
+  column of the elastic layer that solves.} \textbf{a}, Validation AUROC per epoch, one
+  thin line per seed and the seed mean per arm. \textbf{b}, The median absolute
+  epoch-to-epoch step per cell against the validation size. \textbf{c}, Held-out AUROC
+  per cell (points), the seed mean and the gene bootstrap of the pooled per-gene logits
+  (square with interval), beside FBA on four media, Flux Cone Learning and the released
+  FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per module per epoch,
+  seed mean; the dash-dot line is the flux layer. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w32}.}{fig:w32}
+
+\input{tables/round_w33}
+
+\tcfigfit[1.0]{figures/w33_readout_2026-09-17-19-03-14.pdf}{\textbf{Round 18, the gated
+  column of the elastic layer that solves.} \textbf{a}, Validation AUROC per epoch, one
+  thin line per seed and the seed mean per arm. \textbf{b}, The median absolute
+  epoch-to-epoch step per cell against the validation size. \textbf{c}, Held-out AUROC
+  per cell (points), the seed mean and the gene bootstrap of the pooled per-gene logits
+  (square with interval), beside FBA on four media, Flux Cone Learning and the released
+  FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per module per epoch,
+  seed mean; the dash-dot line is the flux layer. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w33}.}{fig:w33}
+
+The construction did what it was built to do and the score did not follow. On every
+cell no genotype's program is infeasible at any epoch, the maintenance flux is met on
+every genotype at the selected epoch, and a gene-owned bound carries a dual on 88 to 90
+percent of genotypes, so the two seeds that the hard program absorbed at scale 100 now
+train from the first step (Figure~\ref{fig:lpprobe}b, d). The forced column reads 0.704,
+0.741 and 0.697 at scale 100, a seed mean of 0.714 with a spread of 0.02 where the hard
+program's was 0.20, three of three seeds below the round-4 forced column, and none at
+0.80: the read fails on both clauses. At scale 1,000 the elastic cell reads 0.607, 0.826
+and 0.707, the hard program's 0.615, 0.826 and 0.702 to within a seed's noise, which is
+what the construction promises when no program is infeasible, since the two programs are
+then the same program. With the pool held by construction the column reads 0.704, 0.743
+and 0.670: the projection never engaged (the factor stayed at 1 on every batch), so the
+abundance head never asked for more protein than the budget and the cell is the one
+without it. The gated cell reads 0.816, 0.810 and 0.783, three of three above the
+round-4 gated cell and level with the hard gated cell at the same scale (0.800), below
+the GEM box's 0.824, so its read fails on the second clause.
+
+What the histories add is the diagnosis the score alone would not give. The forced
+column is not overfitting through the abundance head: its training loss barely moves,
+from 1.41 to 1.25 on the seed that trains best and from 1.26 to 1.25 on another, against
+1.33 to 0.31 for the alternating layer's forced coordinate (round 4) and 1.26 to 0.17
+for the gated cell beside it, and its validation curve sits at 0.72 to 0.79, the solve's
+own ranking at initialization (0.73) with a learned sign: two seeds spend their first
+sixty epochs at 0.23 to 0.30, the inverted affine, before the sign flips
+(Figure~\ref{fig:w32}a). The gradient is present, since the duals reach the abundance
+head on nine genotypes in ten and it carries $10^{-3}$ to $10^{-2}$ of the summed norm
+(Figure~\ref{fig:lpprobe}e), but the path it travels is stiff: the head is one linear
+map of the width-12 token, twelve weights shared by every gene, trained at the
+backbone's rate, and each step moves ceilings whose duals are of order 0.01 per
+mmol/gDW/h. Under the hard program at scale 1,000 the same probe shows the other
+failure, the backbone's gradient collapsing to $10^{-13}$ after epoch 78 when no
+gene-owned bound binds any longer (Figure~\ref{fig:lpprobe}d, e). Round 19 tests the
+stiffness directly, with the layer's parameters at ten times the learning rate and with
+a two-layer abundance head, and reads the training loss at the selected epoch against
+round 18's 1.25 beside the score.
+
+\subsection{Round 19: the step and the head's capacity\secstatus{todo}}
+\label{sec:round19}
+
+Round 19 (jobs 2326 to 2329) moves the two things that make the path through the
+solve stiff: the flux layer's parameters at ten times the learning rate (a second
+optimizer group), a two-layer abundance head in place of the twelve-weight linear map,
+and both, on the forced elastic column at ceiling scale 100, with both changes behind
+the gate as well, three seeds each (Tables~\ref{tab:w34} and~\ref{tab:w35},
+Figures~\ref{fig:w34} and~\ref{fig:w35}); the read is round 18's, paired against the
+round-18 elastic cells.
+
+\input{tables/round_w34}
+
+\tcfigfit[1.0]{figures/w34_readout_2026-09-17-20-53-08.pdf}{\textbf{Round 19, the forced
+  elastic column with a faster layer and a deeper head.} \textbf{a}, Validation AUROC
+  per epoch, one thin line per seed and the seed mean per arm. \textbf{b}, The median
+  absolute epoch-to-epoch step per cell against the validation size. \textbf{c},
+  Held-out AUROC per cell (points), the seed mean and the gene bootstrap of the pooled
+  per-gene logits (square with interval), beside FBA on four media, Flux Cone Learning
+  and the released FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per
+  module per epoch, seed mean; the dash-dot line is the flux layer. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w34}.}{fig:w34}
+
+\input{tables/round_w35}
+
+\tcfigfit[1.0]{figures/w35_readout_2026-09-17-20-57-56.pdf}{\textbf{Round 19, the gated
+  elastic column with a faster layer and a deeper head.} \textbf{a}, Validation AUROC
+  per epoch, one thin line per seed and the seed mean per arm. \textbf{b}, The median
+  absolute epoch-to-epoch step per cell against the validation size. \textbf{c},
+  Held-out AUROC per cell (points), the seed mean and the gene bootstrap of the pooled
+  per-gene logits (square with interval), beside FBA on four media, Flux Cone Learning
+  and the released FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per
+  module per epoch, seed mean; the dash-dot line is the flux layer. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w35}.}{fig:w35}
+
+Neither lever is the limit. The faster layer reads 0.705, 0.629 and 0.697, below round
+18 on two seeds; the deeper head 0.823, 0.754 and 0.678, above on two, with its best
+seed selected at epoch 2; both together 0.799, 0.691 and 0.669. The training loss at
+the selected epoch is 1.24 to 1.26 in every cell, round 18's number, and where the
+deeper head does fit further later in the run (to 1.07 on two seeds) the validation
+curve has already peaked and decays, so the extra capacity memorizes and does not
+rank. Behind the gate the two changes cost the cell: 0.786, 0.790 and 0.745 against
+the round-18 gated cell's 0.816, 0.810 and 0.783, with the gate ending negative on
+every seed ($-0.51$, $-0.45$, $-0.09$), the head learning to subtract a column the
+faster layer has bent toward the training set. No arm passes either clause. Rounds 18
+and 19 together say that the forced column cannot be fit through the ceilings by any
+of feasibility, slack, step size or head capacity, and the next subsection measures
+why.
+
+\subsection{Why the ceilings cannot carry the ranking\secstatus{todo}}
+\label{sec:dual-overlap}
+
+The gradient the layer that solves hands the backbone is the dual of the bounds that
+bind at the optimum, so what the backbone can learn through the solve is bounded by
+which bounds those are and whether they differ between genotypes.
+\texttt{lp\_dual\_overlap.py} reads them off the elastic cell at initialization on 64
+held-out genotypes at three ceiling scales (\texttt{results/lp\_dual\_overlap.json}).
+At scale 100 the median genotype has six gene-owned reactions at their ceiling, of
+2,709 that carry a gene, and the median Jaccard overlap between two genotypes' binding
+sets is 1.0: the same six reactions bind whichever gene is deleted, with a union of 96
+over the 64 genotypes carried by one outlier genotype with 90 and by the lethal
+deletions, whose programs bind nothing. At scale 30 the median is eight reactions
+with a union of 22, at 1,000 two with a union of four, and the median dual is 0.005 to
+0.009 per mmol/gDW/h throughout. The deleted gene's own reactions never bind, because
+the deletion has already closed them: the gene's identity reaches the value through
+the shape of the polytope, which the head cannot move, and never through a bound the
+head owns. The abundance head can therefore raise or lower one growth level for every
+genotype at once, which the readout's intercept absorbs, and it cannot move one
+genotype's value relative to another's, which is what the labels ask for. That is the
+mechanism behind rounds 18 and 19: the elastic program removes the absorbing state and
+the gradient arrives on nine genotypes in ten, and it arrives on the same six
+ceilings for all of them. What the growth column carries is the solve's own ranking of
+the deletions, 0.73 at initialization, with a learned sign and threshold; the
+constructions that let the module reach the affine's level are the ones that put a
+learned head beside the column (the gated cells, 0.80 to 0.82) rather than behind it.
+
+\subsection{Round 20: the gated forms on six seeds, and the last forced probes\secstatus{todo}}
+\label{sec:round20}
+
+Round 20 (jobs 2332 to 2335) does two things the dual-overlap probe asks for. It puts
+the two gated forms of the layer that solves, the GEM-box cell of round 15b and the
+elastic cell of round 18, on three more seeds (2703 to 2705) so the reliable form is
+read on six, and it runs the two probes of the forced column the probe leaves open:
+the elastic column at ceiling scale 30, where the median genotype has eight binding
+reactions rather than six, with the flux layer at ten times the learning rate, and the
+scale-100 column with the abundance head's reach raised from $e^{3}$ to $e^{6}$, so a
+head that wants to move a ceiling by a decade can (Table~\ref{tab:w36},
+Figure~\ref{fig:w36}). The gated read is round 18's, extended to six seeds: every seed
+above its paired gated cell without the solve (round 4, 0.771), and a seed mean at or
+above the GEM-box gated cell's 0.824. The forced read is unchanged.
+
+\input{tables/round_w36}
+
+\tcfigfit[1.0]{figures/w36_readout_2026-09-17-23-33-07.pdf}{\textbf{Round 20, the gated
+  forms on six seeds and the last forced probes.} \textbf{a}, Validation AUROC per
+  epoch, one thin line per seed and the seed mean per arm. \textbf{b}, The median
+  absolute epoch-to-epoch step per cell against the validation size. \textbf{c},
+  Held-out AUROC per cell (points), the seed mean and the gene bootstrap of the pooled
+  per-gene logits (square with interval), beside FBA on four media, Flux Cone Learning
+  and the released FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per
+  module per epoch, seed mean; the dash-dot line is the flux layer. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w36}.}{fig:w36}
+
+The gated forms are reliable and stop short of the affine. On seeds 2703 to 2705 the
+GEM-box gated cell reads 0.818, 0.807 and 0.787 and the elastic gated cell 0.795,
+0.808 and 0.814; over six seeds the two arms read 0.814 (sd 0.020) and 0.804 (sd 0.013),
+pooled 0.816 and 0.803, twelve seeds of twelve above the gated cell without the solve
+(0.771). Neither reaches the second clause: the GEM-box form's three-seed 0.824 was the
+top of its spread, and six seeds put both forms 0.01 to 0.02 under the affine's 0.821
+(0.814, 0.805 and 0.844 by seed), a gap inside one seed standard deviation of either
+arm. The gate ends at $-0.95$, $0.68$ and $0.80$ on the GEM box and $-1.01$, $-1.41$
+and $-0.79$ on the elastic program: the head uses the column with either sign, and the
+sign is not what the seeds agree on. The forced probes fail as the probe of
+Section~\ref{sec:dual-overlap} predicts. At scale 30 with the faster layer the column
+reads 0.653, 0.548 and 0.690, the middle seed selected at epoch 2 with the maintenance
+slack active on every genotype; at scale 100 with the head's reach at $e^{6}$ it reads
+0.669, 0.619 and 0.669, and the two better seeds end with no gene-owned dual at all,
+the head having pushed every ceiling off the optimum, while the third sits in full
+slack. A wider reach hands the head both exits from the ceilings, above the optimum
+and below the maintenance, and neither one ranks the deletions.
+
+\subsection{Round 21: the gated cell with a head over the solved flux\secstatus{todo}}
+\label{sec:round21}
+
+If the ceilings cannot move one genotype's growth against another's, the thing the
+solve does hold per genotype is the flux vector it returns: round 11 measured the
+deletion's own pFBA vector at 0.77 as an encoding, above its growth ratio at 0.65.
+Round 21 (jobs 2336 and 2337) reads that vector from inside the cell. The
+\texttt{gated\_flux} readout (Figure~\ref{fig:module-gated-flux}) is the round-18
+gated elastic cell plus a zero-initialized linear head over $\log(1 + |v^*_{\mathcal{R}}|)$,
+$v^*$ the optimum the elastic program returns, detached, over all 4,131 reactions or
+over the 274 exchange reactions (the uptake and secretion profile), constraint scale 0,
+three seeds (Table~\ref{tab:w37}, Figure~\ref{fig:w37}). The head's weight norm is
+logged each epoch. The read is paired against the round-18 gated elastic cell by seed,
+the pass being three of three above it and a seed mean at or above the affine's 0.821.
+
+\input{figures/module_gated_flux}
+
+\input{tables/round_w37}
+
+\tcfigfit[1.0]{figures/w37_readout_2026-09-18-01-00-11.pdf}{\textbf{Round 21, the gated
+  elastic cell with a head over the solved flux.} \textbf{a}, Validation AUROC per
+  epoch, one thin line per seed and the seed mean per arm. \textbf{b}, The median
+  absolute epoch-to-epoch step per cell against the validation size. \textbf{c},
+  Held-out AUROC per cell (points), the seed mean and the gene bootstrap of the pooled
+  per-gene logits (square with interval), beside FBA on four media, Flux Cone Learning
+  and the released FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per
+  module per epoch, seed mean; the dash-dot line is the flux layer. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w37}.}{fig:w37}
+
+Both heads pass, and the head over every reaction passes by more. Over all 4,131
+reactions the cell reads 0.883, 0.853 and 0.868 (mean 0.868, sd 0.015; pooled 0.868
+with a gene bootstrap of 0.792 to 0.934), above the round-18 gated elastic cell on
+every seed (0.816, 0.810, 0.783) and 0.047 above the affine's 0.821, which is the first
+module cell to pass a pre-registered read in this document and the first to sit above
+the affine on the ProtT5 backbone. Over the 274 exchange reactions it reads 0.831,
+0.856 and 0.817 (mean 0.835), also above its comparator on every seed and above the
+affine's mean, with one seed selected at epoch 197. Two logged quantities say what
+changed. The training loss at the selected epoch is 0.61 to 0.79, where every forced
+cell of rounds 15 to 20 sat at 1.24 to 1.26: the head fits, and the growth column
+never did. The gate on the growth column ends at 0.01, 0.05 and 0.09 under the full
+head and 0.24 to 0.42 under the exchange head, so the growth column is used little or
+not at all once the head can read the vector behind it, and the head's weight norm
+grows to 3.3 to 5.6 from zero. What is measured is that the flux vector the elastic
+program returns for a deletion, read linearly, ranks the held-out genes at 0.87 on a
+backbone whose own pooled cell ranks them at 0.77. Which part of the cell makes that
+vector informative, the deletion's closure of its reactions through the GPR rules,
+the learned ceilings that reshape the optimum per genotype, or the head's reach over
+the exchange and transport columns, is what Section~\ref{sec:round24} separates.
+
+\subsection{Round 23: the module on the ladder's top input\secstatus{todo}}
+\label{sec:round23}
+
+Every module cell so far sits on the ProtT5 backbone, where the affine adds 0.05 to the
+pooled cell (0.771 to 0.821). Section~\ref{sec:mp-architectures} found the input that
+carries the rest of the ladder, the 173-column pathway multi-hot beside ProtT5, and
+round 22 (Section~\ref{sec:round22}) runs the affine on it. Round 23 (jobs 2341 to
+2344) asks whether the module delivers the same bump there: the three gated forms of
+the layer that solves, the GEM-box solve of round 15b, the elastic solve of round 18
+and the elastic solve with the flux head of round 21, each on ProtT5 with the pathway
+multi-hot, beside the pooled cell on that input with no readout as the module-free
+control, three seeds (Table~\ref{tab:w39}, Figure~\ref{fig:w39}). The read pairs each
+form by seed against the control and against the round-22 affine on the same input: a
+form passes if it is above the control on three seeds of three and at or above the
+affine on three of three.
+
+\input{tables/round_w39}
+
+\tcfigfit[1.0]{figures/w39_readout_2026-09-18-04-50-08.pdf}{\textbf{Round 23, the gated
+  module forms on ProtT5 with the pathway multi-hot.} \textbf{a}, Validation AUROC per
+  epoch, one thin line per seed and the seed mean per arm. \textbf{b}, The median
+  absolute epoch-to-epoch step per cell against the validation size. \textbf{c},
+  Held-out AUROC per cell (points), the seed mean and the gene bootstrap of the pooled
+  per-gene logits (square with interval), beside FBA on four media, Flux Cone Learning
+  and the released FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per
+  module per epoch, seed mean; the dash-dot line is the flux layer. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w39}.}{fig:w39}
+
+The input does most of the work, the affine the rest, and the flux head is the one
+form that reaches past it. The pooled cell on ProtT5 with the pathway multi-hot and
+no readout reads 0.859, 0.859 and 0.862 (mean 0.860), 0.09 above the same cell on
+ProtT5 alone, and the affine on that input reads 0.889, 0.895 and 0.885 (mean 0.890,
+Section~\ref{sec:round22}). The two gated forms without the head sit between: the
+GEM-box solve at 0.862, 0.871 and 0.869 and the elastic solve at 0.859, 0.872 and
+0.869, above the control on three seeds and on two, and below the affine on three of
+three. On seed 2700 the elastic cell's gate ended at exactly zero and its held-out
+score is the control's to four decimals, which is what a closed gate means: the cell
+is the pooled model. The flux head on this input reads 0.897, 0.716 and 0.903. The
+two seeds that fit are the two highest single cells in this document, 0.008 and
+0.018 above the affine on their seeds, with the pooled per-gene logits of all three at
+0.907; the third seed never fit, its training loss 1.02 at the selected epoch against
+0.55 and 0.74, its validation curve flat at 0.69 to 0.72 for 200 epochs where the
+other two pass through a late transition near epoch 80 to a loss of 0.2 to 0.3. So the
+form fails the read as written, above the control on two seeds of three, and its seed
+mean of 0.839 is set by the seed that did not fit. Three more seeds (round 25) read
+0.890, 0.752 and 0.911, the middle one unfit again, so over six seeds the form reads
+0.897, 0.716, 0.903, 0.890, 0.752 and 0.911: four cells at 0.890 to 0.911, the
+highest single transformer cells in the document, and two at 0.72 to 0.75 that never
+left a training loss of 1.0, a seed mean of 0.845 with a standard deviation of 0.087.
+The pooled per-gene logits of the six read 0.910 [0.86, 0.95], the highest bootstrap
+point in the document, the two unfit seeds diluted rather than decisive in the mean
+logit. Hypothesis, untested: the transition is delayed rather than absent on the unfit
+seeds, since the round-21 cells on ProtT5 alone fit by epoch 66 to 91 on every seed
+and the pathway input adds 173 columns the head has to learn around; a longer budget
+on an unfit seed is the direct test.
+
+\subsection{Round 24: what carries the head over the solved flux\secstatus{todo}}
+\label{sec:round24}
+
+Round 21's first pack passed its read (Section~\ref{sec:round21}), and three things
+could be carrying it: the flux vector the program returns under the deletion, which
+the ladder's pFBA-vector encoding put at 0.77 on its own; the learned ceilings, which
+shape that vector per genotype through the abundance head; and the linear head's
+choice of reactions. Round 24 (jobs 2347 to 2349) separates them. The same head over
+the flux of the GEM-box solve (round 15b's program, no ceilings and no abundance head)
+says whether the enzyme-constrained part is needed: at or above round 21 on three seeds
+of three and it is not, below on three of three and it is, anything else undecided at
+this size. The head over the 2,709 gene-owned reactions only says whether the
+exchange and transport columns matter. And the passing cell runs on seeds 2703 to
+2705, so its read stands on six (Table~\ref{tab:w40}, Figure~\ref{fig:w40}).
+
+Figure~\ref{fig:readout-gem-flux} draws the head over the GEM-box solve.
+
+\tcfigfit[1.0]{figures/readout_10.pdf}{\textbf{The solve on the GEM's own box with a flux head, rounds 24 and 27.}
+  The gated flux readout of Figure~\ref{fig:module-gated-flux} with the abundance head,
+  the $k_{cat}$ table and the capacity ceilings removed: the linear program runs on the
+  GEM's bounds scaled by the availability gate (Figure~\ref{fig:module-gem-box}), and a
+  zero-initialized linear head reads $\log(1 + |v^*|)$ of the detached optimum. From
+  round 27 the solver stores each solved program and reuses it when its bounds carry no
+  gradient. Colors as in Figure~\ref{fig:readout-key}.}{fig:readout-gem-flux}
+
+\input{tables/round_w40}
+
+\tcfigfit[1.0]{figures/w40_readout_2026-09-18-03-40-22.pdf}{\textbf{Round 24, what
+  carries the head over the solved flux.} \textbf{a}, Validation AUROC per epoch, one
+  thin line per seed and the seed mean per arm. \textbf{b}, The median absolute
+  epoch-to-epoch step per cell against the validation size. \textbf{c}, Held-out AUROC
+  per cell (points), the seed mean and the gene bootstrap of the pooled per-gene logits
+  (square with interval), beside FBA on four media, Flux Cone Learning and the released
+  FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per module per
+  epoch, seed mean; the dash-dot line is the flux layer. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w40}.}{fig:w40}
+
+The vector carries it, the ceilings sharpen it a little, and the gene-owned columns are
+where it lives. On six seeds the head over every solved flux reads 0.862 (sd 0.013,
+pooled 0.866 with a gene bootstrap of 0.789 to 0.933), every seed above its paired
+gated elastic cell, so the round-21 read holds on six. The same head over the GEM-box
+solve, with nothing learned in the layer, reads 0.873, 0.836 and 0.847 (mean 0.852),
+below the elastic cell on three seeds of three by 0.010, 0.017 and 0.021: by the read
+as written the learned ceilings are needed, and what they add is inside one seed
+standard deviation of either arm. With nothing learned the flux is a function of the
+genotype and the medium alone, and a linear head over it still sits 0.03 above the
+affine and 0.08 above the ladder's linear rung on the deletion pFBA vector (0.771);
+which of the transformer's context head, the class-weighted training, or the
+difference between the program's argmax and the parsimonious point accounts for that
+gap is not measured. The head over the 2,709 gene-owned reactions reads 0.871, 0.860
+and 0.853 (mean 0.861), level with the full head (below on two seeds, above on one),
+where the 274 exchange fluxes alone read 0.835: the uptake and secretion profile is
+the part of the vector that carries least.
+
+\subsection{Round 25: the flux head under the reported protocol\secstatus{todo}}
+\label{sec:round25}
+
+The document's number is a fold ensemble (Section~\ref{sec:backbone}): five models
+trained on the five cross-validation files, their logits averaged on the held-out
+genes. Round 25 (jobs 2352 to 2354) runs the round-23 flux-head cell, the gated
+elastic solve with the head over every solved flux on ProtT5 with the pathway
+multi-hot, under that protocol, and on seeds 2703 to 2705 of the split file so the
+single-split read stands on six seeds and the number of seeds that miss the fitting
+transition is counted out of six rather than three. The ensemble is read beside the
+round-12 ensemble's 0.893 with its gene bootstrap, with no pass rule
+(Table~\ref{tab:ensembles}); the six-seed read is round 23's.
+
+\input{tables/fold_ensembles}
+
+The ensemble is 0.897 [0.84, 0.95], one number with the reported 0.893, and it is made
+of three fold models at 0.90 and two that never fit. The folds read 0.901, 0.702,
+0.859, 0.904 and 0.687; folds 1 and 4 stay at a training loss of 1.0 through their
+budget, the trace seed 2701 showed in round 23, so three of the eight cells of this
+form on the pathway input miss the fitting transition. The fold mean is 0.811 against
+round 12's 0.881, and by the rule round 17 fixed (fold models above round 12's on at
+least four folds of five, here two) the reported number stands. The fit folds are the
+highest fold models in the document; the form's problem is the third of its cells that
+do not fit, and the six-seed read of Table~\ref{tab:w39} says how often.
+
+\subsection{Round 27: the scalable form\secstatus{todo}}
+\label{sec:round27}
+
+What the foundation-model setting can carry is a transform, not a layer. Round 24
+measured that the head over the GEM-box solve, with nothing learned in the layer,
+reads 0.852 on ProtT5, 0.01 to 0.02 under the elastic cell with its ceilings and 0.03
+above the affine; and with nothing learned the flux is a function of the genotype and
+the medium alone, so the program need only be solved once per genotype. Round 27 adds
+that cache to the solver (a solved program is reused whenever its bounds carry no
+gradient) and runs the cached GEM-box head on ProtT5 with the pathway multi-hot on six
+seeds (job 2368, then 2388 to 2390) and on the five folds (2369, then 2391), the cells
+of rounds 23 and 25 with the learned ceilings removed (Table~\ref{tab:w43},
+Figure~\ref{fig:w43};
+Table~\ref{tab:ensembles}). The read is round 23's, and the wall time per cell is
+reported beside the number, since that is what the form is for.
+
+\input{tables/round_w43}
+
+\tcfigfit[1.0]{figures/w43_readout_2026-09-18-08-09-10.pdf}{\textbf{Round 27, the scalable
+  form on the pathway input.} \textbf{a}, Validation AUROC per epoch, one thin line per
+  seed and the seed mean per arm. \textbf{b}, The median absolute epoch-to-epoch step
+  per cell against the validation size. \textbf{c}, Held-out AUROC per cell (points),
+  the seed mean and the gene bootstrap of the pooled per-gene logits (square with
+  interval), beside FBA on four media, Flux Cone Learning and the released FBA
+  predictions on the same 195 genes. \textbf{d}, Gradient norm per module per epoch,
+  seed mean; the dash-dot line is the flux layer. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w43}.}{fig:w43}
+
+The scalable form matches the best cells and, on nine runs, misses the fitting
+transition once. The six-cell pack (job 2368) lost three cells to the launcher's memory
+ceiling; its three survivors, seeds 2701 to 2703, read 0.911, 0.901 and 0.903 (mean
+0.905, sd 0.005) with training losses of 0.53 to 0.77 and selected epochs 55 to 78, and
+their per-gene dumps were overwritten by the rerun, so the table carries their pinned
+numbers without a bootstrap. The rerun of all six seeds in pairs (jobs 2388 to 2390,
+40 GB each) reads 0.902, 0.772, 0.897, 0.917, 0.903 and 0.901 on seeds 2700 to 2705
+(mean 0.882, sd 0.055; pooled 0.917 with a gene bootstrap of 0.871 to 0.957, above
+the elastic form's 0.910 on the same six seeds), selected epochs 42 to 61, training
+losses 0.05 to 0.18 on the five that fit and 1.04 on seed 2701, which never fit. Seed
+2701 is the seed the elastic form never fit at 200 epochs (0.716); the scalable form
+fit it in the first attempt (0.911) and not in the second (0.772), which is round 29's
+finding again, on a form with no learned ceilings in the layer: the
+miss is a chance event of the run and not of the seed or of the layer's ceilings. Over
+the nine runs of this form, eight fit and read 0.897 to 0.917; over the twelve runs of
+the elastic form on the same input (six seeds, five folds and the 400-epoch rerun),
+nine fit (Section~\ref{sec:round29}). The wall time
+was 139 minutes per cell at six cells on one card and 83 minutes at two, against 86
+for the uncached elastic form at three: at either packing the layer's own forward on
+the card, not the solve, is the cost. The cache's hit rate was not logged, and the
+epoch rows say it was probably never hit: the solver reuses a program only when its
+bounds carry no gradient, and this arm keeps a learned availability gate on the bounds
+whose gradient norm is nonzero in the epoch rows ($5 \times 10^{-4}$ at epoch 50 of seed
+2700, with a gene-owned bound carrying a dual on 85 percent of genotypes). The name
+``cached'' for this form in the tables and figures records the intent of the round, not a
+measured reuse; the form that does solve once per genotype is the layer-free one of
+round 33. The
+fold read of this form (job 2391, five cells at 120 GB, 144 minutes per cell at five
+per card) reads 0.912, 0.859, 0.918, 0.910 and 0.901 on the folds (mean 0.900) and
+0.912 [0.86, 0.95] as the fold ensemble, one number with the reported 0.893 and the
+elastic form's 0.897 and under the GO convolution's 0.917
+(Table~\ref{tab:ensembles}); all five folds fit, with the training loss under 0.6
+between epochs 51 and 61, and the fold at 0.859 is the one whose validation curve kept
+rising to its last epochs and selected epoch 192. Under the family protocol of
+Section~\ref{sec:family-ensembles}, the fold models' standardized logits averaged, the
+form reads 0.922 [0.88, 0.96] alone, the highest single transformer family, and 0.954
+[0.92, 0.98] with the GO convolution's fold models, the maximum of the nine fold
+combinations tried and reported as such.
+
+\subsection{Round 29: the unfit seed under a longer budget\secstatus{todo}}
+\label{sec:round29}
+
+A third of the elastic flux-head cells never fit within 200 epochs (rounds 23 to 25),
+and the constant learning rate leaves two readings open: the fitting transition is
+delayed on those seeds, or it is absent. Round 29 reruns the round-23 cell on seed 2701,
+the seed whose 200-epoch run never fit, with the same program and a 400-epoch budget
+(job 2387; Table~\ref{tab:w45}, Figure~\ref{fig:w45}). Because the learning rate is
+constant, the first 200 epochs of the two runs are the same program on the same seed,
+so the pair also reads whether a run is reproducible.
+
+\input{tables/round_w45}
+
+\tcfigfit[1.0]{figures/w45_readout_2026-09-18-07-25-47.pdf}{\textbf{Round 29, the unfit
+  seed under a 400-epoch budget.} \textbf{a}, Validation AUROC per epoch for the two
+  runs of seed 2701. \textbf{b}, The median absolute epoch-to-epoch step per cell
+  against the validation size. \textbf{c}, Held-out AUROC per cell (points) and the gene
+  bootstrap (square with interval), beside FBA on four media, Flux Cone Learning and the
+  released FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per module
+  per epoch; the dash-dot line is the flux layer. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w45}.}{fig:w45}
+
+The transition is neither delayed nor absent on the seed; it is a chance event of the
+run. The 400-epoch run fits between epochs 60 and 80 (training loss 0.98 at epoch 60,
+0.50 at 80, 0.07 at 399), selects epoch 82 and reads 0.889 [0.84, 0.94] on the held-out
+genes, against 0.716 for the 200-epoch run of the same seed, which never left a training
+loss of 0.95. The two runs are not the same trajectory: their training losses differ
+from the first epoch (1.128 against 1.125) and are unrelated by epoch 50 (0.987 against
+0.951), so the seed fixes the initialization and not the path, and the solve inside the
+forward, the sampler and the card's kernels leave the path to chance. What the 200-epoch
+budget could not tell apart, a seed that fits late from a seed that does not fit, is
+therefore the wrong question. Across the seventeen elastic flux-head cells of rounds
+21, 23 and 25 (six on ProtT5, six on the pathway input, five folds), the training loss
+first falls under 0.6 between epochs 39 and 137 in fourteen and never in three, and
+the two latest transitions (epochs 136 and 137) read 0.864 and 0.702 held out, so a
+late transition is no guarantee either. Past the transition the 400-epoch run overfits
+(validation AUROC 0.836 at epoch 82, 0.70 at 399, with the prediction spread growing
+twelvefold), so the longer budget buys nothing after the selected epoch. The scalable
+form of round 27 is not free of the chance: its rerun of the same seed fit in one
+attempt and not in the other (0.911 against 0.772), with the solve cached and nothing
+learned in the layer, so the layer's ceilings are not where the chance enters.
+
+\subsection{Round 32: the chance is the card's kernels\secstatus{todo}}
+\label{sec:round32}
+
+Round 29 left three places for the chance to enter a seeded run with no loader
+workers: the solve inside the forward, the sampler, and the card's kernels. Round 32
+pins the last of them and runs the round-27 cell on seed 2701, the seed that fit in
+one attempt and not in another, twice with cuDNN's autotuner off, its deterministic
+kernels on, torch's deterministic algorithms on (warning rather than failing on an
+operation without one) and cuBLAS's workspace fixed, and twice without, the four in
+one pack on one card (job 2405; Table~\ref{tab:w48}, Figure~\ref{fig:w48}). The read
+is per pair: whether the two pinned runs are one trajectory, and whether the two free
+runs are.
+
+\input{tables/round_w48}
+
+\tcfigfit[1.0]{figures/w48_readout_2026-09-18-16-09-37.pdf}{\textbf{Round 32, seed 2701
+  with the card's kernels pinned and free, and the other five seeds pinned.} \textbf{a},
+  Validation AUROC per epoch for the four runs of seed 2701, the pinned runs of seeds
+  2700 and 2702 to 2705, and the six free round-27 cells. \textbf{b}, The median absolute epoch-to-epoch step per cell against
+  the validation size. \textbf{c}, Held-out AUROC per cell (points) and the gene
+  bootstrap (square with interval), beside FBA on four media, Flux Cone Learning and
+  the released FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per
+  module per epoch; the dash-dot line is the flux layer. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w48}.}{fig:w48}
+
+The chance is the card's. The two pinned runs are identical to four decimals in
+training loss and validation AUROC at every one of the 200 epochs, cross the fitting
+transition at epoch 86, select epoch 91 and read 0.894 [0.84, 0.94] held out, the
+same 195 logits; the two free runs of the same seed differ from their first epoch
+(training loss 1.2827 against 1.2768) and end as a fit run and an unfit one, 0.920
+(transition at epoch 58, selected 52) against 0.782 (no transition, training loss
+1.08 at epoch 199). Nothing in the training path warned under the deterministic
+switch, so every operation the cell runs has a deterministic kernel; the one warning
+of the run is a median inside the post-training feasibility audit. Pinning cost
+about five percent of wall time (205 minutes per cell against 195 at four per card).
+With the run reproducible, whether a seed fits becomes a property of the seed, and
+the fit rate over seeds is round 32's second read: pinned once each, seeds 2700, 2702
+and 2703 fit at epochs 49, 65 and 65 and read 0.897, 0.908 and 0.901 (job 2413; mean
+0.902 over the three), and seeds 2704 and 2705 fit at epochs 40 and 57 and read 0.913
+and 0.901 (job 2419), so the five pinned seeds beside 2701 read 0.897 to 0.913 (mean
+0.904, sd 0.006; pooled 0.911 [0.86, 0.95]) and six pinned seeds fit six times where
+the six free runs of the same seeds fit five (0.882 mean with the miss, 0.917
+pooled). Pinned, the form's number is the seed's, at 141 to 157 minutes per cell at
+two or three per card.
+
+\subsection{Round 45: the layer-free cell under the pinned kernels\secstatus{todo}}
+\label{sec:round45}
+
+The same read on the cell the document ends with, the layer-free form of round 33
+(the $\log(1 + |v|)$ vector in the affine, no layer): seed 2700 twice with the kernels
+pinned and twice free, in one pack on one card (job 2430; Table~\ref{tab:w61},
+Figure~\ref{fig:w61}), and seeds 2701 to 2705 pinned once each (job 2431).
+
+\input{tables/round_w61}
+
+\tcfigfit[1.0]{figures/w61_readout_2026-09-18-16-56-23.pdf}{\textbf{Round 45, the
+  layer-free cell with the card's kernels pinned and free.} \textbf{a}, Validation
+  AUROC per epoch for the four runs of seed 2700, the pinned runs of seeds 2701 to
+  2705, and the six free round-33 cells. \textbf{b}, The median absolute
+  epoch-to-epoch step per cell against the validation size. \textbf{c}, Held-out AUROC
+  per cell (points) and the gene bootstrap (square with interval), beside FBA on four
+  media, Flux Cone Learning and the released FBA predictions on the same 195 genes.
+  \textbf{d}, Gradient norm per module per epoch. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w61}.}{fig:w61}
+
+The pooled cell is not made reproducible by the switch that made the LP cell so. Its
+two pinned runs differ at every one of the 200 epochs, from the first training loss
+on (1.1625 against 1.1564), as the two free runs do (1.1552 against 1.1600), with the
+switch active in both processes (cuDNN's autotuner off, its deterministic kernels
+on, torch's deterministic algorithms on, cuBLAS's workspace fixed) and no operation
+warning that it lacks a deterministic implementation. All four runs fit (training loss
+under 0.6 at epochs 41 to 50) and read 0.911 and 0.911 pinned, 0.905 and 0.916 free,
+at 26 minutes per pinned cell against 22 free at four per card. So the divergence of
+two runs of this cell enters through something torch's deterministic mode does not
+cover, and what it is remains unmeasured (plausible, unverified: a path the LP form
+does not take, since that form's pinned pair was one trajectory); what the round
+settles is that the chance is harmless on this form: pinned once each, seeds 2701 to
+2705 fit at epochs 38 to 65 and read 0.906, 0.899, 0.900, 0.909 and 0.902 (mean
+0.903, sd 0.004; pooled 0.911 [0.86, 0.95]), the free six-seed run's 0.908 and 0.912,
+and every one of the twenty-seven $\log(1 + |v|)$ cells on the split file, pinned or
+free, fit within the budget.
+
+Round 46 brackets the path (job 2433; Table~\ref{tab:w62},
+Figure~\ref{fig:w62}): two more pinned pairs on seed 2700, the layer-free cell on
+ProtT5 alone (no pathway block, the vector in the affine) and the round-22 affine cell
+(pathway multi-hot and ProtT5, the four ratios, no solve columns). The ProtT5-alone
+pair is one trajectory, identical in every logged quantity at every one of the 200
+epochs (training loss 1.2072 at epoch 0 in both, selected epoch 68 in both, 0.878
+[0.81, 0.94] held out, the same logits), so the solve columns, the affine and the
+ProtT5 path are covered by the switch; the pathway pair differs from epoch 0 (1.2322
+against 1.2530) at every epoch and ends at 0.884 and 0.874 with epochs 43 and 32
+selected. The divergence enters with the pathway multi-hot in the pooled arm, and not
+with the multi-hot as such, since the LP cell of round 32 carries the same two
+embeddings under the \texttt{flux\_off} arm and was one trajectory pinned. Which
+operation on the multi-hot in the pooled arm's path lacks a deterministic kernel that
+does not warn is the next bracket (round 49: the pooled arm on pathway and ProtT5 with
+no affine readout, on the pathway multi-hot alone with the affine, and on the GO
+multi-hot with ProtT5 and the affine, each pinned twice).
+
+\input{tables/round_w62}
+
+\tcfigfit[1.0]{figures/w62_readout_2026-09-18-17-27-14.pdf}{\textbf{Round 46, two
+  pinned pairs that bracket the pooled cell's divergence.} \textbf{a}, Validation
+  AUROC per epoch for the ProtT5-alone layer-free pair and the pathway-and-ProtT5
+  affine pair, each run twice with the card's kernels pinned. \textbf{b}, The median
+  absolute epoch-to-epoch step per cell against the validation size. \textbf{c},
+  Held-out AUROC per cell (points) and the gene bootstrap (square with interval),
+  beside FBA on four media, Flux Cone Learning and the released FBA predictions on the
+  same 195 genes. \textbf{d}, Gradient norm per module per epoch. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w62}.}{fig:w62}
+
+Round 49 narrows it to the pathway embedding itself (job 2437; Table~\ref{tab:w65},
+Figure~\ref{fig:w65}): three more pinned pairs on seed 2700 in the pooled arm. The
+round-9 cell (pathway and ProtT5, the plain pooled head, no affine) differs from epoch
+0 (1.2452 against 1.2560) and reads 0.848 and 0.850; the affine on the pathway
+multi-hot alone, with no ProtT5, differs from epoch 0 (1.2303 against 1.2374) and reads
+0.729 and 0.768 with epochs 186 and 57 selected; the affine on the GO multi-hot and
+ProtT5 is one trajectory (1.5831 in both at epoch 0, epoch 123 selected in both, 0.830
+in both, the same logits). So the divergence is neither the readout nor multi-hot
+inputs as a class but the pathway multi-hot's own path: a cell diverges pinned exactly
+when the pathway block is on the node. The pathway dataset is rebuilt at every launch
+(its cell log prints the pathway count each run) and the rebuild enumerates the 173
+pathway columns from a Python set, so the column order can differ between processes
+under Python's per-process hash randomization while the seeded weights do not;
+it is the reading the GO block supports, since that dataset sorts its columns. The
+rebuild at every launch is an unconditional call to the dataset's own process step
+after the base constructor has loaded the cached file, so each run served the column
+order the previous launch, or the previous cell of its own pack, wrote, and rewrote
+the file for the next; with the enumeration sorted and the call removed, two
+processes under different hash seeds build the same 6,607 by 173 matrix (identical
+bytes), and the cached file's columns differ from both.
+
+Rounds 51 and 52 close it (jobs 2441 and 2442; Tables~\ref{tab:w67} and \ref{tab:w68},
+Figures~\ref{fig:w67} and \ref{fig:w68}). On the old code with Python's hash seed
+fixed, the layer-free pair is one trajectory (identical at all 200 epochs, 1.1484 at
+epoch 0, epoch 39 selected, 0.913 in both) where without the hash seed it differed at
+every epoch (round 45), and the round-9 pooled pair still differs (1.2564 against
+1.2516, 0.860 and 0.853): under the old code the first cell of the pack served the
+file the previous launch had written under another hash seed and rewrote it, so the
+pair's two cells saw two column orders, while the pack's third and fourth cells both
+served files written under the fixed seed. On the fixed code with no hash seed, both
+pairs are one trajectory: the round-9 cell identical at all 200 epochs (1.2488 at
+epoch 0, epoch 33 selected, 0.865 in both) and the layer-free cell identical (1.1478,
+epoch 39, 0.912 in both). The chance in the pooled cell was the pathway one-hot's
+column order, an input permuted between processes and not a kernel; with the dataset
+fixed and the card's kernels pinned, every cell in the document is one trajectory
+per seed. The fix does not move the number (round 61, job 2456;
+Table~\ref{tab:w77}, Figure~\ref{fig:w77}): the round-33 cell on the fixed code, six
+free seeds, reads 0.904 (sd 0.010; pooled 0.911 [0.87, 0.95]), fitting at epochs 39
+to 65, against 0.908 and 0.912 on the six seeds that each served the pathway columns
+in the previous launch's order, so the permutation was a per-run relabeling of an
+input the cell reads column by column, and every number in the document stands.
+
+\input{tables/round_w77}
+
+\tcfigfit[1.0]{figures/w77_readout_2026-09-18-20-51-19.pdf}{\textbf{Round 61, the
+  reference cell on the fixed one-hot code.} \textbf{a}, Validation AUROC per epoch,
+  one thin line per seed and the seed mean per arm. \textbf{b}, The median absolute
+  epoch-to-epoch step per cell against the validation size. \textbf{c}, Held-out AUROC
+  per cell (points), the seed mean and the gene bootstrap of the pooled per-gene logits
+  (square with interval), beside FBA on four media, Flux Cone Learning and the released
+  FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per module per
+  epoch, seed mean. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w77}.}{fig:w77}
+
+On the fixed input the free run is already one trajectory per seed (round 64, job
+2463; Table~\ref{tab:w80}, Figure~\ref{fig:w80}). The same six seeds run once each
+with the card's kernels pinned reproduce the six free runs of round 61 exactly: every
+logged quantity is identical at every one of the 200 epochs on every seed, the same
+selected epochs (39, 52, 52, 46, 65 and 42), the same held-out numbers (0.912, 0.914,
+0.901, 0.887, 0.909 and 0.903) and the same logits, at 36 minutes a cell against 30
+free. So the chance the pinned-kernel rounds were chasing on the pooled cell was the
+input permutation alone, the cell's own forward is deterministic on this card
+without the switch, and the switch is worth its 20 percent of wall time only on the
+LP form, whose free runs did diverge (round 32). Under the fold protocol on the fixed
+code (round 66, job 2465, one seed pinned) the cell reads 0.912, 0.911, 0.830, 0.886
+and 0.914 on the folds, the third selecting at epoch 6 before its transition, and
+0.917 [0.87, 0.96] as the ensemble, the permuted input's 0.919; with three seeds per
+fold (jobs 2473 and 2474) the folds read 0.911, 0.909, 0.913, 0.894 and 0.915 as
+seed-mean logits and the ensemble 0.920 [0.87, 0.96], the permuted input's 0.920
+exactly. So the fold numbers stand as well, and the early-selecting fold is the one
+place the form's selection rule, the validation maximum, still picks a pre-transition
+epoch, which the seed mean absorbs.
+
+\input{tables/round_w80}
+
+\tcfigfit[1.0]{figures/w80_readout_2026-09-18-21-51-25.pdf}{\textbf{Round 64, the
+  reported cell pinned on the fixed one-hot code.} \textbf{a}, Validation AUROC per
+  epoch, one thin line per seed and the seed mean per arm; the pinned and free arms on
+  the fixed code coincide. \textbf{b}, The median absolute epoch-to-epoch step per
+  cell against the validation size. \textbf{c}, Held-out AUROC per cell (points), the
+  seed mean and the gene bootstrap of the pooled per-gene logits (square with
+  interval), beside FBA on four media, Flux Cone Learning and the released FBA
+  predictions on the same 195 genes. \textbf{d}, Gradient norm per module per epoch,
+  seed mean. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w80}.}{fig:w80}
+
+\input{tables/round_w67}
+
+\input{tables/round_w68}
+
+\tcfigfit[1.0]{figures/w67_readout_2026-09-18-18-39-14.pdf}{\textbf{Round 51, the
+  hash seed fixed on the old one-hot code.} \textbf{a}, Validation AUROC per epoch for
+  the round-9 pooled pair and the layer-free pair, each run twice with the card's
+  kernels pinned and the hash seed fixed. \textbf{b}, The median absolute
+  epoch-to-epoch step per cell against the validation size. \textbf{c}, Held-out AUROC
+  per cell (points) and the gene bootstrap (square with interval), beside FBA on four
+  media, Flux Cone Learning and the released FBA predictions on the same 195 genes.
+  \textbf{d}, Gradient norm per module per epoch. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w67}.}{fig:w67}
+
+\tcfigfit[1.0]{figures/w68_readout_2026-09-18-18-51-25.pdf}{\textbf{Round 52, the
+  fixed one-hot code without a hash seed.} \textbf{a}, Validation AUROC per epoch for
+  the same two pairs on the code that enumerates the one-hot's columns sorted, each
+  run twice with the card's kernels pinned. \textbf{b}, The median absolute
+  epoch-to-epoch step per cell against the validation size. \textbf{c}, Held-out AUROC
+  per cell (points) and the gene bootstrap (square with interval), beside FBA on four
+  media, Flux Cone Learning and the released FBA predictions on the same 195 genes.
+  \textbf{d}, Gradient norm per module per epoch. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w68}.}{fig:w68}
+
+\input{tables/round_w65}
+
+\tcfigfit[1.0]{figures/w65_readout_2026-09-18-18-07-18.pdf}{\textbf{Round 49, three
+  pinned pairs in the pooled arm.} \textbf{a}, Validation AUROC per epoch for the
+  round-9 pooled pair, the pathway-alone affine pair and the GO-and-ProtT5 affine
+  pair, each run twice with the card's kernels pinned. \textbf{b}, The median absolute
+  epoch-to-epoch step per cell against the validation size. \textbf{c}, Held-out AUROC
+  per cell (points) and the gene bootstrap (square with interval), beside FBA on four
+  media, Flux Cone Learning and the released FBA predictions on the same 195 genes.
+  \textbf{d}, Gradient norm per module per epoch. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w65}.}{fig:w65}
+
+\subsection{Round 31: the layer-free form\secstatus{todo}}
+\label{sec:round31}
+
+Round 27's form still carries a flux layer in the graph: the program is solved once per
+genotype and cached, but the solve runs inside the forward pass, the flux enters through
+the gated head, and the cell takes 83 minutes at two per card. With nothing learned in
+the layer the vector is a function of the genotype and the medium alone, so it can be
+precomputed and appended to the affine's input as columns, with no layer in the graph,
+which is the form a model over the database would use. Round 31 runs that form on the
+pathway input: the deletion's own pFBA flux vector from the reference table
+(\texttt{ess\_reference\_flux\_table.py}, YPD, 4,131 columns, each standardized over the
+labeled genes) appended to the four-ratio affine, alone and with the eight wild-type
+solve statistics beside it, six seeds each in two six-cell packs (jobs 2402 and 2404;
+Table~\ref{tab:w47}, Figure~\ref{fig:w47}). The comparators are the affine and the
+cached-solve head on the same input, and the wall time is the read beside the number.
+
+Figure~\ref{fig:readout-affine-solve} draws the affine with the solve's columns, the form
+round 11 first ran on ProtT5.
+
+\tcfigfit[0.9]{figures/readout_9.pdf}{\textbf{The affine widened with solve features, rounds 11 and 31.} The FBA
+  affine of Figure~\ref{fig:readout-fba} with more columns from the same offline solves:
+  the deletion's parsimonious FBA flux vector over 4,131 reactions and eight statistics
+  of the wild-type solve on the gene's reactions, each column standardized over the
+  labeled genes, under a default-initialized weight. Round 11 ran it on ProtT5 and round
+  31 on ProtT5 with the pathway multi-hot. Colors as in Figure~\ref{fig:readout-key}.}{fig:readout-affine-solve}
+
+\input{tables/round_w47}
+
+\tcfigfit[1.0]{figures/w47_readout_2026-09-18-10-05-08.pdf}{\textbf{Round 31, the
+  layer-free form.} \textbf{a}, Validation AUROC per epoch, one thin line per seed and
+  the seed mean per arm. \textbf{b}, The median absolute epoch-to-epoch step per cell
+  against the validation size. \textbf{c}, Held-out AUROC per cell (points), the seed
+  mean and the gene bootstrap of the pooled per-gene logits (square with interval),
+  beside FBA on four media, Flux Cone Learning and the released FBA predictions on the
+  same 195 genes. \textbf{d}, Gradient norm per module per epoch, seed mean. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w47}.}{fig:w47}
+
+The vector alone reads 0.804, 0.923, 0.741, 0.814, 0.911 and 0.797 on seeds 2700 to
+2705 (mean 0.832, sd 0.071; pooled 0.871 [0.79, 0.94]), under the affine's 0.890 and
+the cached-solve head's 0.917; with the statistics beside it 0.908, 0.849, 0.892,
+0.885, 0.907 and 0.911 (mean 0.892, sd 0.023; pooled 0.901 [0.85, 0.95]), one number
+with the affine. The vector-alone cells select early: four of the six select epochs 2
+to 13, where the training loss is still 0.84 to 0.91 and the fitting transition (the
+training loss under 0.6) comes at epochs 28 to 46, or never on seed 2702, whose loss
+ends at 0.76. On those four the validation curve peaks at 0.81 to 0.85 before the
+backbone fits and falls as it does, so the selected model is the affine's initial
+projection of the vector over an unfit backbone; the two cells that select after the
+transition (seeds 2701 and 2704, epochs 59 and 42) read 0.923 and 0.911, the level of
+the cached-solve head. The affine here is a default-initialized linear layer over
+4,135 columns, a weight norm of 0.59 before any training, where the cached-solve head
+is zero-initialized over $\log(1 + |v^\star|)$ and starts as the backbone alone; whether
+that construction and not the solve inside the graph is the 0.05 is round 33's
+question, in flight at the time of writing (job 2406: the same vector with the solve
+columns zero-initialized, and as $\log(1 + |v|)$ with zero initialization, six seeds
+each). The wall time is 31 minutes per cell at six per card, against 40 for the affine
+at three and 83 for the cached-solve head at two: with the vector precomputed the cell
+costs what the affine costs, and nothing on the card waits on a solver.
+
+\subsection{Round 33: the encoding is the layer-free form's number\secstatus{todo}}
+\label{sec:round33}
+
+Round 31's affine differs from the cached-solve head in two ways, a default rather
+than zero initialization and standardized columns rather than $\log(1 + |v|)$, and
+round 33 crosses them: the same pFBA vector with the solve columns zero-initialized,
+as $\log(1 + |v|)$ under the default initialization, and as $\log(1 + |v|)$
+zero-initialized, six seeds each paired against round 31's cell (jobs 2406, 2407 and
+2408; Table~\ref{tab:w49}, Figure~\ref{fig:w49}).
+
+Figure~\ref{fig:readout-layer-free} draws the form with both changes.
+
+\tcfigfit[0.9]{figures/readout_11.pdf}{\textbf{The layer-free form, round 33.} No flux layer is in the graph. One
+  parsimonious FBA solve per deletion on YPD is run offline, stored as $\log(1 + |v^*|)$
+  over the 4,131 reactions, and read beside the four growth ratios by an affine on the
+  logit whose weights on the stored columns start at zero, so at initialization the cell
+  is the FBA affine of Figure~\ref{fig:readout-fba}. Against
+  Figure~\ref{fig:readout-affine-solve} the encoding and the initialization changed;
+  against Figure~\ref{fig:readout-gem-flux} the solve left the forward pass. Colors as in Figure~\ref{fig:readout-key}.}{fig:readout-layer-free}
+
+\input{tables/round_w49}
+
+\tcfigfit[1.0]{figures/w49_readout_2026-09-18-11-11-40.pdf}{\textbf{Round 33, the
+  layer-free form's encoding and initialization.} \textbf{a}, Validation AUROC per
+  epoch, one thin line per seed and the seed mean per arm. \textbf{b}, The median
+  absolute epoch-to-epoch step per cell against the validation size. \textbf{c},
+  Held-out AUROC per cell (points), the seed mean and the gene bootstrap of the pooled
+  per-gene logits (square with interval), beside FBA on four media, Flux Cone Learning
+  and the released FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per
+  module per epoch, seed mean. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w49}.}{fig:w49}
+
+The encoding is the whole effect and the initialization is none of it. The
+standardized vector reads 0.832 under the default initialization and 0.836
+zero-initialized (0.802, 0.793, 0.820, 0.890, 0.916 and 0.792 on seeds 2700 to 2705;
+pooled 0.868 [0.78, 0.94]), and the zero-initialized cells peak early exactly as the
+default ones did: five of six reach their validation maximum between epochs 1 and 13,
+before the training loss falls, and select epochs 9 to 13 on three, so the early
+peak is not the affine's random projection but what the standardized columns do to
+the backbone's fitting. As $\log(1 + |v|)$ the same vector reads 0.910, 0.919, 0.911,
+0.906, 0.896 and 0.907 under the default initialization (mean 0.908, sd 0.008; pooled
+0.912 [0.87, 0.95]) and 0.913, 0.910, 0.909, 0.913, 0.909 and 0.906 zero-initialized
+(mean 0.910, sd 0.003; pooled 0.910 [0.87, 0.95]), every one of the twelve selecting
+after the transition (epochs 33 to 66), no miss, and the lowest seed-to-seed spread of
+any arm in the document. That is the cached-solve head's number (0.917 pooled from
+0.882 mean with one miss in six) with no layer in the graph, no solver in training and
+no chance of the run to miss the transition, at 31 minutes per cell in a pack of six
+and 11 minutes alone (job 2408). Under the family protocol the form reads 0.910 alone
+and 0.948 [0.91, 0.98] averaged with the six-seed GO convolution, the maximum of the
+thirteen split-file averages tried (Section~\ref{sec:family-ensembles}). Under the
+reported protocol (job 2409, 26 minutes per cell at five per card) the form reads
+0.912, 0.901, 0.838, 0.912 and 0.913 on the folds (mean 0.895) and 0.920 [0.87, 0.96]
+as the fold ensemble, the highest transformer ensemble in the document and one number
+with the GO convolution's 0.917 and the scalable form's 0.912
+(Table~\ref{tab:ensembles}); as a fold family it reads 0.920 alone and 0.953
+[0.92, 0.98] with the GO fold models, level with the scalable form's 0.954
+(Table~\ref{tab:family-ensembles-folds}). With three seeds per fold (job 2412, each
+fold model the seed-mean logit) the folds read 0.913, 0.905, 0.921, 0.904 and 0.910
+(mean 0.911) and the ensemble 0.919 [0.87, 0.96], the single-seed number. The 0.838
+fold selected epoch 6 with its training loss at 1.05, an early peak of the kind the
+standardized encoding produced on every cell; its seed 2702 did the same (epoch 22,
+loss 1.02, 0.841) and its seed 2701 did not (epoch 40, 0.908), and no other fold or
+seed did in the twenty-seven $\log(1 + |v|)$ cells run, so the early peak is rare
+under this encoding and, where it occurs, sits with one fold's validation fifth
+rather than with the seed.
+
+The eight wild-type solve statistics, which lifted the standardized vector from
+0.871 to 0.901 in round 31, cost the $\log(1 + |v|)$ vector 0.02 (round 40, job
+2421; Table~\ref{tab:w56}, Figure~\ref{fig:w56}): beside it they read 0.882, 0.890,
+0.897, 0.893, 0.892 and 0.879 (mean 0.889, sd 0.007; pooled 0.891 [0.83, 0.95]),
+under the vector alone on every seed, with every cell selecting after the transition
+(epochs 33 to 56). The statistics are standardized columns, and what they added to
+a standardized vector they take from an encoded one; the store the cell wants is the
+vector in the head's encoding and nothing beside it.
+
+\input{tables/round_w56}
+
+\tcfigfit[1.0]{figures/w56_readout_2026-09-18-14-32-16.pdf}{\textbf{Round 40, the solve
+  statistics beside the log1p vector.} \textbf{a}, Validation AUROC per epoch, one thin
+  line per seed and the seed mean per arm. \textbf{b}, The median absolute
+  epoch-to-epoch step per cell against the validation size. \textbf{c}, Held-out AUROC
+  per cell (points), the seed mean and the gene bootstrap of the pooled per-gene logits
+  (square with interval), beside FBA on four media, Flux Cone Learning and the released
+  FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per module per
+  epoch, seed mean. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w56}.}{fig:w56}
+
+A nonlinear read of the vector adds nothing to the linear one (round 41, jobs 2422 and
+2423; Table~\ref{tab:w57}, Figure~\ref{fig:w57}). One GELU hidden layer between the
+affine's input and its logit reads 0.915, 0.911, 0.908, 0.907, 0.901 and 0.914 at
+width 64 (mean 0.910, sd 0.005; pooled 0.915 [0.87, 0.95]) and 0.911, 0.909, 0.899,
+0.909, 0.911 and 0.895 at width 256 (mean 0.905; pooled 0.909 [0.86, 0.95]), against
+the linear affine's 0.908 and 0.912, every one of the twelve selecting after the
+transition (epochs 42 to 67). At the resolution of 195 genes the linear read of
+$\log(1 + |v|)$ is the vector's ceiling, and what is left of the head-form question is
+the vector entering the cell's representation rather than its logit.
+
+Figure~\ref{fig:readout-affine-hidden} draws the round-41 read.
+
+\tcfigfit[0.9]{figures/readout_13.pdf}{\textbf{A hidden layer in the affine, round 41.} The path of
+  Figure~\ref{fig:readout-layer-free} with the linear read of the ratios and the stored
+  vector replaced by one GELU hidden layer of width 64 or 256. Colors as in Figure~\ref{fig:readout-key}.}{fig:readout-affine-hidden}
+
+\input{tables/round_w57}
+
+\tcfigfit[1.0]{figures/w57_readout_2026-09-18-15-08-23.pdf}{\textbf{Round 41, a hidden
+  layer in the affine over the log1p vector.} \textbf{a}, Validation AUROC per epoch,
+  one thin line per seed and the seed mean per arm. \textbf{b}, The median absolute
+  epoch-to-epoch step per cell against the validation size. \textbf{c}, Held-out AUROC
+  per cell (points), the seed mean and the gene bootstrap of the pooled per-gene logits
+  (square with interval), beside FBA on four media, Flux Cone Learning and the released
+  FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per module per
+  epoch, seed mean. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w57}.}{fig:w57}
+
+The cell's capacity does not move the number either, until it breaks the fit (round
+48, jobs 2439, 2443 and 2444; Table~\ref{tab:w64}, Figure~\ref{fig:w64}). The
+round-33 cell has 25 thousand parameters. At width 24 (49 thousand) it reads 0.911
+on six seeds (sd 0.005; pooled 0.912 [0.87, 0.95]); at width 48 (125 thousand) 0.910,
+0.917, 0.920, 0.914, 0.909 and 0.913 (mean 0.914, sd 0.004; pooled 0.915 [0.87,
+0.95]), every seed fitting at epochs 29 to 101, the highest seed mean of any single
+arm on the split file and inside the width-12 cell's interval; with two transformer
+blocks (graph regularization off, as every two-block cell runs) 0.909 on three
+(pooled 0.913); at width 24 with the two-layer preprocessor (767 thousand) 0.910 on
+six (pooled 0.912). At width 96 (371 thousand) the cell misses the fitting transition
+on two seeds of three (training loss 0.90 and 0.92 at epoch 199, reading 0.874 and
+0.804) and reads 0.892 on the one that fits, the first layer-free cell on the split
+file to miss. So from 25 to 125 thousand parameters the form reads one number, and
+the transition, not the capacity, is what a wider cell puts at risk. Under the fold
+protocol (round 54, job 2447) the width-48 cell reads 0.881, 0.912, 0.927, 0.880 and
+0.908 on the folds, every fold fit at epochs 34 to 55, and 0.917 [0.87, 0.96] as the
+ensemble on one seed and 0.920 [0.87, 0.96] on three (jobs 2450 and 2451; folds
+0.917, 0.895, 0.919, 0.894 and 0.916 as seed-mean logits), the width-12 cell's 0.919
+on one seed and 0.920 on three (Table~\ref{tab:ensembles}).
+
+\input{tables/round_w64}
+
+\tcfigfit[1.0]{figures/w64_readout_2026-09-18-19-05-21.pdf}{\textbf{Round 48, the
+  capacity of the layer-free cell.} \textbf{a}, Validation AUROC per epoch, one thin
+  line per seed and the seed mean per arm. \textbf{b}, The median absolute
+  epoch-to-epoch step per cell against the validation size. \textbf{c}, Held-out AUROC
+  per cell (points), the seed mean and the gene bootstrap of the pooled per-gene logits
+  (square with interval), beside FBA on four media, Flux Cone Learning and the released
+  FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per module per
+  epoch, seed mean. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w64}.}{fig:w64}
+
+The update budget is not what the form needs either (round 56, job 2449;
+Table~\ref{tab:w72}, Figure~\ref{fig:w72}). At batch 64, half the updates of batch
+32 at the same learning rate and epoch count, the cell reads 0.907, 0.892 and 0.907
+(mean 0.902; pooled 0.909 [0.86, 0.95]), fitting at epochs 45 to 52; at batch 128, a
+quarter of the updates, 0.903, 0.913 and 0.904 (mean 0.907; pooled 0.908 [0.86,
+0.95]), fitting at epochs 60 to 72, with the training loss still at 0.13 to 0.27
+at epoch 199 where batch 32 reaches 0.08 to 0.13. Six cells of six fit and read
+the batch-32 number with a quarter of the optimizer steps, which is the property a
+store-backed model over millions of records needs: the store's read is one gather
+per sample, and the cell's fit does not depend on the step count within a factor
+of four.
+
+\input{tables/round_w72}
+
+\tcfigfit[1.0]{figures/w72_readout_2026-09-18-19-42-20.pdf}{\textbf{Round 56, the
+  batch axis of the layer-free cell.} \textbf{a}, Validation AUROC per epoch, one thin
+  line per seed and the seed mean per arm. \textbf{b}, The median absolute
+  epoch-to-epoch step per cell against the validation size. \textbf{c}, Held-out AUROC
+  per cell (points), the seed mean and the gene bootstrap of the pooled per-gene logits
+  (square with interval), beside FBA on four media, Flux Cone Learning and the released
+  FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per module per
+  epoch, seed mean. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w72}.}{fig:w72}
+
+\subsection{Round 35: the solve does not substitute for the annotation\secstatus{todo}}
+\label{sec:round35}
+
+Since round 14 the open question on the pathway multi-hot has been whether a
+solve-derived quantity would substitute for the annotation. The layer-free form is the
+direct test: the same $\log(1 + |v|)$ vector appended to the affine on ProtT5 alone,
+with no pathway block, six seeds (job 2410; Table~\ref{tab:w51},
+Figure~\ref{fig:w51}), against the affine on ProtT5 (round 5), the cached-solve head on
+ProtT5 (round 24) and the same form with the pathway block (round 33).
+
+\input{tables/round_w51}
+
+\tcfigfit[1.0]{figures/w51_readout_2026-09-18-11-44-05.pdf}{\textbf{Round 35, the
+  layer-free form on ProtT5 alone.} \textbf{a}, Validation AUROC per epoch, one thin
+  line per seed and the seed mean per arm. \textbf{b}, The median absolute
+  epoch-to-epoch step per cell against the validation size. \textbf{c}, Held-out AUROC
+  per cell (points), the seed mean and the gene bootstrap of the pooled per-gene logits
+  (square with interval), beside FBA on four media, Flux Cone Learning and the released
+  FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per module per
+  epoch, seed mean; the dash-dot line is the flux layer where there is one. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w51}.}{fig:w51}
+
+On ProtT5 alone the vector reads 0.878, 0.869, 0.875, 0.829, 0.864 and 0.860 (mean
+0.863, sd 0.018; pooled 0.868 [0.79, 0.94]), above the affine's 0.821 (pooled 0.838)
+and level with the cached-solve head's 0.852 (pooled 0.860) on the same backbone, and
+0.045 under the same form with the pathway block (0.908, pooled 0.912). The six cells
+fit later than their pathway counterparts (training loss under 0.6 at epochs 79 to
+160 against 33 to 66) and select epochs 66 to 160. So the solve adds what the layer's
+head added on this backbone, 0.03 to 0.04 over the affine, and the annotation adds
+0.045 on top of it: the two are not one signal, and the vector does not substitute
+for the pathway block any more than the block substitutes for the vector (0.890 with
+the block and the ratios alone, round 22).
+
+\subsection{Round 43: the solve on the node\secstatus{todo}}
+\label{sec:round43}
+
+Every layer-free cell so far reads the vector at the logit, through the affine. The
+multi-phenotype form wants it in the representation, where every head can read it, so
+round 43 puts the same $\log(1 + |v|)$ vector on the deleted gene's node as a gene
+embedding (\texttt{torchcell/datasets/solve\_vector.py}: 4,131 columns per gene from
+the pFBA store, the zero row for a gene the store does not cover) beside the pathway
+multi-hot and ProtT5, with the four-ratio affine only, and beside it the same with the
+vector in the affine as well, six seeds each (jobs 2425 and 2426; Table~\ref{tab:w59},
+Figure~\ref{fig:w59}).
+
+Figure~\ref{fig:readout-node} draws the node path of this round and of round 44.
+
+\tcfigfit[1.0]{figures/readout_14.pdf}{\textbf{The solve on the node, rounds 43 and 44.} The stored vector enters
+  the representation instead of the logit: each gene's node carries its own deletion
+  vector as an embedding beside the pathway multi-hot and ProtT5, raw in round 43 and
+  reduced to 64 or 16 principal components in round 44. The affine on the logit keeps
+  the four ratios, and one arm of each round keeps the vector there as well. Colors as in Figure~\ref{fig:readout-key}.}{fig:readout-node}
+
+\input{tables/round_w59}
+
+\tcfigfit[1.0]{figures/w59_readout_2026-09-18-15-45-16.pdf}{\textbf{Round 43, the
+  solve on the node.} \textbf{a}, Validation AUROC per epoch, one thin line per seed
+  and the seed mean per arm. \textbf{b}, The median absolute epoch-to-epoch step per
+  cell against the validation size. \textbf{c}, Held-out AUROC per cell (points), the
+  seed mean and the gene bootstrap of the pooled per-gene logits (square with
+  interval), beside FBA on four media, Flux Cone Learning and the released FBA
+  predictions on the same 195 genes. \textbf{d}, Gradient norm per module per epoch,
+  seed mean. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w59}.}{fig:w59}
+
+On the node the vector costs what it adds at the logit. With the ratios alone in the
+affine it reads 0.864, 0.886, 0.873, 0.863, 0.885 and 0.880 (mean 0.875, sd 0.010;
+pooled 0.894 [0.82, 0.95]), under the affine without any vector (0.890) and 0.03
+under the vector in the affine (0.908, pooled 0.912); with the vector in the affine as
+well it reads 0.875, 0.895, 0.892, 0.890, 0.883 and 0.901 (mean 0.889; pooled 0.893),
+the affine-alone number and still under the logit form. Both node arms fit late
+(training loss under 0.6 at epochs 71 to 120 against 33 to 66 for the logit form) and
+select epochs 69 to 118. The 4,131 columns enter the width-12 preprocessor as raw
+input, so the vector's read is a projection with 12 weights per reaction learned
+from 629 genes, most of the cell's parameters, where the affine reads it with one
+weight per reaction on the logit; what the representation path needs is a compact
+vector, and round 44 reduces it before the node.
+
+A compact vector on the node fits on time and still reads nothing the backbone did
+not have (round 44, jobs 2427 to 2429; Table~\ref{tab:w60}, Figure~\ref{fig:w60}).
+The 1,121 $\log(1 + |v|)$ rows are close to low rank: principal components fitted on
+them hold an explained variance of 1.000 at 64 and 0.999 at 16. As the node
+embedding, the 64-component vector reads 0.879, 0.872, 0.888, 0.908, 0.905 and 0.897
+(mean 0.892, sd 0.014; pooled 0.894 [0.84, 0.94]) and the 16-component vector 0.906,
+0.891, 0.906, 0.892, 0.895 and 0.891 (mean 0.897; pooled 0.901 [0.85, 0.95]), the
+affine-alone level (0.890), with transitions at epochs 27 to 57 as the logit form's;
+with the full vector in the affine as well, the 64-component node embedding reads
+0.908, 0.914, 0.907, 0.903, 0.906 and 0.909 (mean 0.908, sd 0.004; pooled 0.909),
+the logit form's number and no more. So the representation path carries the vector
+without cost once it is compact, and carries nothing the logit path does not: at this
+resolution the solve's information about the deleted gene is read at the logit, and
+a representation-borne vector would need a head that reads it there, which the
+context head over the pooled tokens does not.
+
+\input{tables/round_w60}
+
+\tcfigfit[1.0]{figures/w60_readout_2026-09-18-16-20-21.pdf}{\textbf{Round 44, the
+  reduced vector on the node.} \textbf{a}, Validation AUROC per epoch, one thin line
+  per seed and the seed mean per arm. \textbf{b}, The median absolute epoch-to-epoch
+  step per cell against the validation size. \textbf{c}, Held-out AUROC per cell
+  (points), the seed mean and the gene bootstrap of the pooled per-gene logits (square
+  with interval), beside FBA on four media, Flux Cone Learning and the released FBA
+  predictions on the same 195 genes. \textbf{d}, Gradient norm per module per epoch,
+  seed mean. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w60}.}{fig:w60}
+
+\subsection{Round 36: a store from another solver's point\secstatus{todo}}
+\label{sec:round36}
+
+The solve read of Section~\ref{sec:solve-tolerance} is a probe; round 36 is the
+training test. The growth-maximizing program of round 27 was solved once per labeled
+gene by HiGHS 1.15's dual simplex, a vertex, and by its interior point without
+crossover at KKT $10^{-4}$, a point inside the optimal face and the kind of point a
+first-order solve on the card returns (\texttt{ess\_reference\_flux\_table.py
+--solver}, 122 s a store; six of the 1,121 interior-point solves stopped short and
+keep the zero flux), and the round-33 cell was trained over each store, six seeds,
+paired against the pFBA store (job 2411; Table~\ref{tab:w52}, Figure~\ref{fig:w52}).
+
+Figure~\ref{fig:readout-store-solver} draws the form with the store swapped.
+
+\tcfigfit[0.9]{figures/readout_12.pdf}{\textbf{The layer-free form over another solver's point, rounds 36, 38 and
+  42.} The path of Figure~\ref{fig:readout-layer-free} with only the store changed: the
+  growth-maximizing program solved once per deletion by the dual simplex (a vertex), by
+  the interior point without crossover, or by PDLP, each stored in the same encoding,
+  and in round 42 the parsimonious solve on synthetic complete medium. Colors as in Figure~\ref{fig:readout-key}.}{fig:readout-store-solver}
+
+\input{tables/round_w52}
+
+\tcfigfit[1.0]{figures/w52_readout_2026-09-18-12-18-15.pdf}{\textbf{Round 36, the
+  layer-free cell over a store from another solver.} \textbf{a}, Validation AUROC per
+  epoch, one thin line per seed and the seed mean per arm. \textbf{b}, The median
+  absolute epoch-to-epoch step per cell against the validation size. \textbf{c},
+  Held-out AUROC per cell (points), the seed mean and the gene bootstrap of the pooled
+  per-gene logits (square with interval), beside FBA on four media, Flux Cone Learning
+  and the released FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per
+  module per epoch, seed mean. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w52}.}{fig:w52}
+
+The interior point is as good a store as the parsimonious vertex and the growth
+program's own vertex is not. Over the interior-point store the cell reads 0.910,
+0.909, 0.911, 0.905, 0.916 and 0.913 (mean 0.911, sd 0.004; pooled 0.911 [0.86,
+0.95]), every seed selecting after the transition (epochs 52 to 83), against 0.908
+and 0.912 pooled over the pFBA store. Over the dual-simplex vertex it reads 0.767,
+0.887, 0.865, 0.856, 0.786 and 0.878 (mean 0.840, sd 0.051; pooled 0.870 [0.79,
+0.94]): two seeds peak early (epochs 22 and 12, training loss 0.83 and 0.92) and the
+four that fit read 0.856 to 0.887, under every interior-point and pFBA cell. The
+three stores are three points of the same program's optimal face, one growth value
+(Section~\ref{sec:solve-tolerance}); what differs is which flux the point carries on
+the reactions the objective does not pin, and the vertex the dual simplex lands on
+is the one of the three the head reads worst. Plausible mechanism, unverified: a
+vertex of the growth face carries extremal flux through the free directions, the
+loops and the parallel routes, which pFBA's minimum-flux stage removes and the
+interior point spreads, and that extremal flux is what the head cannot use. The
+vectors themselves say what the vertex is made of (Table~\ref{tab:store-stats},
+\texttt{store\_stats.py}): the dual-simplex vertex carries a median total absolute
+flux of 39,129 mmol/gDW/h per genotype with 339 reactions at the layer's $\pm100$
+clamp on every one of the 1,121 genotypes and on the wild type, where the pFBA
+vector carries 495 with none at the clamp, and the interior point and PDLP 2,463
+and 1,973 with nine; the vertex's flux is loops spinning at the bound. The
+description is measured; that this is why the head reads it worst is not. What the
+round settles for the store is that the point a first-order solve on the card
+returns trains the cell to the number the CPU's parsimonious solve does, so the store
+can be built with the batched solver and nothing on the CPU.
+
+\input{tables/store_stats} Under the reported
+protocol (round 37, jobs 2414, 2416 and 2418: five folds, three seeds per fold, each
+fold model the seed-mean logit) the interior-point store reads 0.915, 0.852, 0.887,
+0.884 and 0.926 on the folds (mean 0.893) and 0.912 [0.86, 0.95] as the ensemble,
+0.909 on one seed, against the pFBA store's 0.919 (Table~\ref{tab:ensembles}); folds
+1 and 2 select late on every seed (epochs 95 to 196, training loss 0.05 to 0.30 at
+selection) and read 0.84 to 0.89, where the pFBA store's cells on the same folds
+selected epochs 6 to 60, so the two stores' fold models are one number as ensembles
+and differ in how the cell trains on two of the five folds. As a fold family it
+reads 0.913 alone and 0.951 [0.92, 0.98] with the GO fold models
+(Table~\ref{tab:family-ensembles-folds}).
+
+The PDLP store itself closes the question (round 38, job 2417; Table~\ref{tab:w54},
+Figure~\ref{fig:w54}). The same program solved per gene by HiGHS's PDLP without
+crossover at KKT $10^{-4}$, the algorithm cuOpt runs on the card, written by the
+solve read of Section~\ref{sec:solve-tolerance} (twelve of 1,121 programs stopped
+short and keep the zero flux), trains the round-33 cell to 0.906, 0.901, 0.910,
+0.899, 0.897 and 0.908 (mean 0.903, sd 0.005; pooled 0.907 [0.86, 0.95]), every
+seed selecting after the transition (epochs 41 to 85), one number with the pFBA
+store's 0.912 and the interior point's 0.911. Under the reported protocol (round 39,
+job 2420, one seed) it reads 0.921, 0.859, 0.887, 0.878 and 0.907 on the folds and
+0.909 [0.86, 0.95] as the ensemble, the interior-point store's single-seed 0.909
+against the pFBA store's 0.920, with the same fold, the second, selecting late (epoch
+187) and low on both first-order stores; with three seeds per fold (job 2432, each
+fold model the seed-mean logit) the folds read 0.915, 0.881, 0.884, 0.880 and 0.908
+and the ensemble 0.911 [0.86, 0.95], the interior-point store's three-seed 0.912
+(Table~\ref{tab:ensembles}); as a fold family 0.915 alone and 0.949 [0.91, 0.98]
+with the GO fold models. Three stores from three solvers that stop
+inside or at the parsimonious edge of the optimal face train the cell to one number
+on the split file and to numbers within each other's intervals under the fold
+protocol; the growth vertex alone does not.
+
+The tolerance of the first-order store does not move the number, and its uncertified
+fraction does (rounds 53 and 55, jobs 2445 and 2448; Table~\ref{tab:w69},
+Figure~\ref{fig:w69}). The transfer read of Section~\ref{sec:solve-tolerance} wrote
+PDLP's stores at KKT $10^{-6}$ and $10^{-8}$, with 70 and 320 of the 1,121 programs
+uncertified within 120 s and kept as zero rows against 12 at $10^{-4}$. Over the
+$10^{-6}$ store the cell reads 0.905 (sd 0.007; pooled 0.908 [0.86, 0.95]), the
+$10^{-4}$ store's 0.903 and 0.907, every seed fitting at epochs 47 to 66; over the
+$10^{-8}$ store 0.884, 0.896, 0.875, 0.899, 0.890 and 0.878 (mean 0.887, sd 0.010;
+pooled 0.892 [0.84, 0.94]), every seed fitting at epochs 35 to 50, 0.02 under the
+other two. Twelve and seventy zero rows cost nothing and 320 cost 0.02, and the cost
+is the rows, not the tighter point (round 57, job 2452): the $10^{-8}$ store with its
+uncertified rows filled from the $10^{-6}$ store (250 rows) and the $10^{-4}$ store
+(60), ten rows zero in every store, the second pass a batched solver on the card
+would run, reads 0.906 (sd 0.012; pooled 0.909 [0.86, 0.95]), the $10^{-4}$ and
+$10^{-6}$ stores' number, every seed fitting at epochs 49 to 68. So a first-order
+solver on the card can run at whatever tolerance it certifies most programs at, and
+what it fails to certify it re-solves looser; the store's number does not depend on
+which pass a row came from.
+
+\input{tables/round_w69}
+
+\tcfigfit[1.0]{figures/w69_readout_2026-09-18-20-19-22.pdf}{\textbf{Rounds 53, 55 and
+  57, the PDLP stores at KKT $10^{-6}$ and $10^{-8}$, and the $10^{-8}$ store with its
+  uncertified rows filled.} \textbf{a}, Validation AUROC per
+  epoch, one thin line per seed and the seed mean per arm. \textbf{b}, The median
+  absolute epoch-to-epoch step per cell against the validation size. \textbf{c},
+  Held-out AUROC per cell (points), the seed mean and the gene bootstrap of the pooled
+  per-gene logits (square with interval), beside FBA on four media, Flux Cone Learning
+  and the released FBA predictions on the same 195 genes. \textbf{d}, Gradient norm
+  per module per epoch, seed mean. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w69}.}{fig:w69}
+
+The store's medium does not move the number either (round 42, job 2424;
+Table~\ref{tab:w58}, Figure~\ref{fig:w58}). Every store above is solved on YPD, the
+medium the essentiality calls were scored on; the same two-stage solve with the
+exchanges set to synthetic complete medium (wild-type growth 0.5428 against 0.5352)
+trains the cell to 0.918, 0.914, 0.908, 0.905, 0.915 and 0.901 (mean 0.910, sd 0.007;
+pooled 0.912 [0.87, 0.95]), the YPD store's 0.908 and 0.912, with every seed
+selecting near the transition (epochs 28 to 52). On this endpoint the vector's
+information is the deletion's, not the medium's; whether a store per medium carries
+anything for a phenotype scored across media is the question a database of media
+conditions asks, and the 195 genes scored on one medium cannot.
+
+\input{tables/round_w58}
+
+\tcfigfit[1.0]{figures/w58_readout_2026-09-18-15-17-15.pdf}{\textbf{Round 42, the
+  store on synthetic complete medium.} \textbf{a}, Validation AUROC per epoch, one
+  thin line per seed and the seed mean per arm. \textbf{b}, The median absolute
+  epoch-to-epoch step per cell against the validation size. \textbf{c}, Held-out AUROC
+  per cell (points), the seed mean and the gene bootstrap of the pooled per-gene logits
+  (square with interval), beside FBA on four media, Flux Cone Learning and the released
+  FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per module per
+  epoch, seed mean. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w58}.}{fig:w58}
+
+\input{tables/round_w54}
+
+\tcfigfit[1.0]{figures/w54_readout_2026-09-18-13-58-16.pdf}{\textbf{Round 38, the
+  layer-free cell over the PDLP store.} \textbf{a}, Validation AUROC per epoch, one
+  thin line per seed and the seed mean per arm. \textbf{b}, The median absolute
+  epoch-to-epoch step per cell against the validation size. \textbf{c}, Held-out AUROC
+  per cell (points), the seed mean and the gene bootstrap of the pooled per-gene logits
+  (square with interval), beside FBA on four media, Flux Cone Learning and the released
+  FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per module per
+  epoch, seed mean. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w54}.}{fig:w54}
+
+\subsection{The solve across solvers: the argmax is not unique\secstatus{todo}}
+\label{sec:solve-tolerance}
+
+The head over the solved flux reads one solver's answer. A batched solve on the card
+(NVIDIA's cuOpt) is a first-order method, PDLP, run to a $10^{-4}$ relative tolerance
+in its own benchmark, and it stops at a point of the optimal face rather than at a
+vertex, so before any card is involved the question is whether the head's columns
+survive the change of solver. HiGHS 1.15 carries the PDLP algorithm on the CPU, an
+interior-point solver that can stop before crossover, and the simplex at any
+tolerance, so the round-27 program was solved for every labeled gene five ways
+(Table~\ref{tab:solve-tolerance}). The read on each is the growth value, the
+flux vector's distance from the reference in the head's own encoding, and a linear
+probe over that encoding, fitted on the training genes' reference vectors and scored
+on each solver's held-out vectors, which is what a head trained on exact solves sees
+when it is served another solver's, beside the same probe fitted within each solver.
+
+\input{tables/solve_tolerance}
+
+The growth value is the same under every solver, to $3 \times 10^{-7}$ for the
+simplex at $10^{-4}$ and $7 \times 10^{-6}$ for the interior point, and its ranking of
+the 195 genes is FBA's 0.60 to 0.68 whichever solver produced it. The flux vector is
+not the same: the primal simplex, an exact solve at the same tolerances, lands on
+another vertex of the optimal face and moves 4 percent of the reactions by more than
+0.01 in $\log(1 + |v|)$ (median relative distance 0.37); the dual simplex at
+$10^{-4}$ moves 3 percent; the interior point without crossover and PDLP, which stop
+inside the face, move 16 and 13 percent (0.88 and 0.96). The probe fitted on the
+reference vertices reads 0.756 [0.63, 0.86] on the reference's own held-out vectors
+and 0.54, 0.50, 0.58 and 0.69 on the other four solvers', at chance on the other
+exact vertex, so a head trained on one solver's vertex does not read another's; and
+fitted within each solver it reads 0.67, 0.65, 0.78 and 0.72, the interior point's
+0.776 [0.67, 0.86] one number with the reference vertex's 0.756. The argmax of the
+program is degenerate and the ranking the head extracts is a property of the point
+the solver returns, not of the program; that point is as rankable from inside the
+face as from a vertex, and a head must be trained on the solver it will be served
+with. On the CPU the PDLP solve took 11.7 s a program against 0.1 for the simplex and
+0.09 for the interior point, and reported 12 of 1,121 programs non-optimal within
+120 s, so the card is where PDLP's batch would have to pay for itself; the
+interior-point solve without crossover is the CPU form that returns the same kind of
+point at the simplex's cost.
+
+The read above left the change of tolerance together with the change of point, and
+the transfer read separates them (\texttt{solve\_tolerance\_transfer.py}, job 2436, 93
+minutes at twenty workers; Tables~\ref{tab:solve-tolerance-transfer-solvers},
+\ref{tab:solve-tolerance-transfer} and \ref{tab:solve-tolerance-transfer-moved}): the
+same programs under the interior point without crossover and under PDLP at KKT
+$10^{-4}$, $10^{-6}$ and $10^{-8}$, with a probe fitted on every solver's training
+vectors and scored on every solver's held-out vectors. Two of the six settings do not
+certify: the interior point without crossover reports 1,115 programs optimal at
+$10^{-4}$ and 112 at $10^{-6}$ and $10^{-8}$, and PDLP certifies 1,109, 1,051 and 801
+at 19, 21 and 25 s a program, the $10^{-8}$ shortfall the 120 s cap. Across
+tolerances of one first-order solver the point is the same point: PDLP's $10^{-4}$
+and $10^{-6}$ vectors move 0.6 percent of the reactions against each other (3 percent
+against $10^{-8}$), and the probe fitted at $10^{-4}$ scores the $10^{-6}$ vectors at
+0.709 against its own 0.716, the probe fitted at $10^{-6}$ the $10^{-4}$ vectors at
+0.717 against its own 0.702. Across solvers the same probes lose 0.05 to 0.35 (the
+reference vertex's probe 0.68 on PDLP's points, PDLP's 0.55 on the vertex, the
+interior point's 0.39). So a head trained on a first-order store at one tolerance is
+served at another without loss, and the solver, not the tolerance, is what the store
+and the head must share; the $10^{-6}$ store is written (70 programs uncertified and
+kept as zero flux) for the training read.
+
+\input{tables/solve_tolerance_transfer}
+
+\subsection{Where the gradient goes\secstatus{todo}}
+
+Every cell logs a gradient norm per module each epoch, and read across the module arms
+(Figure~\ref{fig:gradflow}) they say which of the three failure modes each arm is in. On
+the forced arms the whole gradient passes through the layer and the layer passes it on:
+the flux layer carries 10 to 40 percent of the summed module norm and the preprocessor's
+norm climbs to 1 to 3, the same level as under the pooled head, so the backbone is
+trained through the layer and the growth column is a trained, free coordinate that ranks
+no better than the head. On the gated arms the layer carries 0.3 to 3 percent, the head
+carries the rest, and the gate ends between $-0.2$ and $+0.2$ across seeds under
+constraint scale 0 (seed mean $+0.05$) and at $+0.2$ on every seed with the FBA affine
+beside it, so the backbone is trained through the MLP and the flux path is a small
+correction. On the warm-started forced arm with $\alpha$ frozen the
+backbone receives no gradient at all: the preprocessor's norm sits at 0.02 to 0.1 for the
+whole run, two orders below every other arm, because the flux is 99 percent a fixed
+reference and only the two parameters of the growth affine train; the cell is the affine
+on the projected reference, and the projection reversed its sign. The warm-started gated
+arms leave the flux path at 0.3 percent of the gradient and push the gate to $-0.8$,
+which is the head learning to subtract a sign-reversed growth column. None of the arms is
+gradient-starved except the one that was meant to be a fixed function, so the alternating
+module's null on this endpoint is not a gradient-flow problem; the gradient reaches the
+layer, and what that layer computes is not growth. The layer that solves has the
+opposite gradient problem, which rounds 15b and 15c measure: its gradient is exactly the
+dual of the binding bounds, which is zero when no gene-owned bound binds and absent when
+the program is infeasible.
+
+\tcfigfit[1.0]{figures/grad_flow_2026-09-17-00-45-06.pdf}{\textbf{Where the gradient goes on the
+  module arms.} \textbf{a}, The flux layer's share of the summed per-module gradient norm
+  per epoch, seed mean, on every module arm of rounds 4 to 13; solid lines are the forced
+  arms and the pooled reference, dashed the gated arms. \textbf{b}, The preprocessor's
+  gradient norm per epoch, seed mean, on the same arms. \textbf{c}, The gate's value per
+  epoch on the gated arms. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/grad\_flow\_readout.py}.}{fig:gradflow}
+
+\subsection{Why the solve helps and the layer does not\secstatus{todo}}
+
+What FBA contributes to the prediction is one number per deletion: the maximum of growth
+over the polytope $\{Sv = 0,\ \ell \le v \le u\}$ with the deleted gene's reactions
+closed. That number ranks the held-out genes at 0.65 alone, its four-medium version
+lifts a logistic regression, a random forest and the transformer by 0.05 each, and the
+solve has more to give than the number: eight statistics of the gene's reactions under
+the wild-type solve reach 0.80 with no sequence, and the whole deletion flux vector
+0.77. The value is in the optimum over the constraint set and in the flux that attains
+it.
+
+The module holds the same constraint set and computes something else. Its flux is $K$
+alternating projections of a proposal the backbone writes, and the rounds measure, in
+order, that the projections stop short of the polytope (58 percent of reactions out of
+bounds when the balance is exact, a balance residual of 0.85 to 2.0 when the bounds
+are), that the growth column of a flux off the polytope is a free coordinate the readout
+learns to use with either sign (the probe: 0.23 on the held-out genes under trained
+weights, Spearman $-0.25$ with the solve), that the learned parts of the layer are not
+what the column carries (the shuffled-$k_{cat}$ control matches the real table), and
+that the layer's constraint set rejects the solve when the solve is supplied as the
+proposal (round 10: the reference violates the anchored box on a third of its reactions
+and the returned flux sits half the reference's norm away, sign reversed). The gradient
+is not the cause; it reaches the layer on every arm that lets it.
+
+The comparison also bounds what a feasible layer could add. A layer that reached the
+polytope would return a feasible flux, not the optimal one, unless the backbone learned
+to write proposals whose projection is the optimum; the solve finds the optimum by
+construction. And a growth column is one number, where the solve's flux vector scores
+0.11 to 0.13 more AUROC on the ladder than its growth ratio does. A module that helped on this
+endpoint would therefore have to solve rather than project, with the backbone setting
+the bounds it solves under (the capacity ceilings from the abundance head are that
+interface already), and read more of the resulting flux than its growth column. The
+first of those is a linear program per genotype per forward pass with the gradient taken
+through its dual, about 50 milliseconds each. Rounds 13, 15 and 15b test both routes on
+both boxes. On the GEM's own box the solve survives the projections (round 13) and the
+program that solves is feasible and ranks at 0.73 before training (round 15b), and in
+both cases the gated module cell reaches the affine's level, 0.816 and 0.824, three of
+three seeds above the round-4 gated cell, with the growth column entering through a
+positive gate. On the anchored box the projections reverse the solve (round 10) and the
+program has no feasible point (round 15), because the enzyme-capacity ceilings as
+parameterized exclude growth; with those ceilings scaled to admit growth the program
+solves, the ceilings bind, and on one of three seeds the growth column alone ranks the
+held-out genes at 0.84 with no head and no appended ratio (round 15c), the module's
+upper bound so far. The module helps, then, exactly when its flux is on the polytope
+the solve optimizes over, and the constraint set that was meant to make it more than the
+solve is what kept it off until it was calibrated.
+
+\subsection{Why the vertex is the worst store\secstatus{todo}}
+\label{sec:store-discriminability}
+
+Four stores of the same optimal face trained the same cell to 0.912, 0.911, 0.907 and,
+for the growth program's own dual-simplex vertex, 0.840 (Section~\ref{sec:round36}).
+Two candidate readings fail on the numbers, and one survives
+(Table~\ref{tab:store-discriminability}).
+
+\input{tables/store_discriminability}
+
+The first candidate is smoothness: a store whose rows move with the deletion should be
+the one a head can read. It does not order the stores. The correlation between a
+deletion's distance from the wild-type row and its drop in growth is 0.70 for pFBA,
+0.57 for the vertex, 0.56 for the interior point and 0.31 for PDLP, while the trained
+reads put the vertex alone at the bottom and the other three within 0.005 of each
+other. The second candidate is motion at all on the genes that survive: three of the
+four stores return the wild-type row exactly for 59 to 60 percent of the viable
+deletions, and PDLP never does, yet PDLP reads 0.907, level with the stores whose rows
+for those genes carry nothing.
+
+What does separate the vertex is where its variance sits. Its ten widest columns are
+all at the $\pm100$ clamp, the bound at which a loop can spin, against none for pFBA,
+none for the interior point and one for PDLP; its lethal rows sit 36.2 from the
+wild-type row against 14.2, 27.7 and 14.0; and of its 1,548 varying columns only 298
+rank the labeled genes above 0.7 on their own, the fewest of the four, where the
+interior point has 836 of 2,743. So the vertex moves further and in more places than
+the interior point and gets less for it: an extreme point puts its flux on the loops
+the bounds allow, and those columns vary between genotypes without tracking
+essentiality. Stated as a hypothesis, since four stores are an association rather than
+a demonstration: what costs the vertex store 0.07 is loop-carrying columns at the
+clamp, not any failure of its rows to move. A store built from a first-order or
+interior point has no such columns by construction, which is the property to check on
+the next store rather than assume.
+
+No store has a column that does the job alone. The best single column reads 0.735 to
+0.755 across all four, against the 0.84 to 0.91 the trained cells reach, so the affine
+is combining columns in every case and the question is only how many of them carry
+anything.
+
+Round 68 runs the intervention that hypothesis implies. Every reaction that reaches the
+clamp on any genotype is zeroed in a copy of the store, which removes 429 of the vertex
+store's 4,131 columns and exactly one of the pFBA store's, and the same cell is trained
+over each on the six seeds the stores were read with
+(Table~\ref{tab:w84}, Figure~\ref{fig:w84}).
+
+Figure~\ref{fig:readout-declamp} draws the cut.
+
+\tcfigfit[1.0]{figures/readout_15.pdf}{\textbf{The vertex store with its clamp columns dropped, rounds 68 to 70.}
+  The path of Figure~\ref{fig:readout-store-solver} over the dual-simplex vertex store,
+  with every column that reaches the $\pm 100$ flux clamp on any genotype set to zero
+  before the affine reads it, 429 of 4,131 columns. Round 69 drops instead the 429
+  widest columns that never reach the clamp, and round 70 the 25 or the 100 widest clamp
+  columns. Colors as in Figure~\ref{fig:readout-key}.}{fig:readout-declamp}
+
+\input{tables/round_w84}
+
+\tcfigfit[1.0]{figures/w84_readout_2026-09-20-01-28-34.pdf}{\textbf{Round 68, the clamp
+  columns dropped.} \textbf{a}, Validation AUROC per epoch, one thin line per seed and
+  the seed mean per arm. \textbf{b}, The median absolute epoch-to-epoch step per cell
+  against the validation size. \textbf{c}, Held-out AUROC per cell (points), the seed
+  mean and the gene bootstrap of the pooled per-gene logits (square with interval),
+  beside FBA on four media, Flux Cone Learning and the released FBA predictions on the
+  same 195 genes. \textbf{d}, Gradient norm per module per epoch, seed mean. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w84}.}{fig:w84}
+
+The cut recovers most of the vertex store's deficit and does nothing to the control.
+The vertex store goes from 0.840 to 0.888 as a seed mean, up on six of six seeds with a
+paired mean of $+0.049$. The pFBA store, where the same rule removes one column, goes
+from 0.908 to 0.906, up on two seeds of six and down on four, a paired mean of $-0.003$
+inside its own seed spread. So dropping clamp columns is not itself a help, and what it
+removes from the vertex store is most of what that store was costing: the remaining gap
+to the pFBA store is 0.020 against 0.068 before the cut.
+
+Round 69 is the specificity control, and it separates two things the cut does at once.
+Dropping 429 columns from the same store, taken instead as the widest that never reach
+the clamp, leaves 1,119 varying columns against the clamp cut's 1,123, so the two
+interventions differ in which columns go and in little else. The score does not follow:
+that cut reads 0.846, a paired mean of $+0.007$ on two seeds of six, against the clamp
+cut's $+0.049$ on six of six. The seed spread does follow. Both cuts collapse it, from
+0.051 to 0.011 for the clamp columns and to 0.009 for the others, and both remove the
+early peaks, selecting epochs 39 to 86 where the store they were cut from selected 12
+and 22 on its two worst seeds. So the vertex store has two problems and they are not
+the same problem: its widest columns, whatever they are, make the validation curve peak
+early and the seeds disagree, and its clamp columns, specifically, cost it 0.05 of
+AUROC. Only the second is about loops.
+
+Round 73 puts the cut store on the protocol the other stores are read with. Its five
+fold models, standardized logits averaged, read 0.901 [0.85, 0.95] with a fold mean of
+0.872, against the pFBA store's 0.920, the interior point's 0.909 and PDLP's 0.909
+(Table~\ref{tab:ensembles}). The uncut vertex store has no fold number, so this is not
+a paired read, but the cut store lands with the three that never had the deficit rather
+than 0.07 below them, and its residual 0.02 to the pFBA store is what the pooled seeds
+also showed. One of its five folds still selects epoch 12 and reads 0.808, so the early
+peak is reduced rather than gone.
+
+Round 70 places that 0.05 on a few columns rather than on the set. Dropping the 25
+widest clamp columns, 0.6 percent of the store's reactions, reads 0.874, two thirds of
+the way from the uncut store to the full cut; dropping the 100 widest reads 0.896,
+which is the full cut's number and, within a seed spread of 0.022, its ceiling. Cutting
+the remaining 329 buys nothing: all 429 read 0.888, below the 100 and level with it
+inside the spread, though on six of six seeds against the 100's five. So the vertex
+store's deficit is not spread over its loops. It is carried by a hundred columns, and a
+quarter of it by twenty-five of them, out of 4,131. The vertex is a worse store because an extreme point spends its flux on the
+loops its bounds allow, and those columns vary between genotypes without tracking
+essentiality. What the cut does not recover, and what is still open, is the last 0.02.
+
+\subsection{The capacity box under the two $k_{cat}$ tiers\secstatus{todo}}
+\label{sec:kcat-tier}
+
+The module's own parameter sources were fixed for every round: the turnover tier and the
+thermodynamic route were set once and never moved. Rounds 15 and 15c ran the predicted
+tier, 97 assayed catalytic units, 782 from homologs and 2,831 from the sequence
+predictors, 18 on the organism default. What the measured tier does instead is stop
+before the predictors: the same 97 assays, the same 782 homologs, and the remaining
+2,849 units on the default. Since the capacity ceiling of a reaction is its units'
+turnover times their abundance, the tier sets the ceiling vector, and round 15 found
+the anchored program infeasible under whichever ceilings it had. Running the round-15
+calibration on both tiers (Table~\ref{tab:kcat-tier-capacity}) measures which of the
+two boxes that was.
+
+\input{tables/kcat_tier_capacity}
+
+The measured tier is the looser box, and by more than the count of assays would
+suggest. Its median turnover is the organism default, 34,560 per hour against the
+predictors' median of 15,356, so the median nominal ceiling is 34.6 against 16.5
+mmol/gDW/h, and the program admits growth for 56 percent of the batch at a capacity
+scale of 3 where the predicted tier admits none. The two tiers separate further as the
+scale rises: at 1,000, the upper scale round 15c ran, the measured tier's median
+growth is 0.532 against the predicted tier's 0.203, where 0.535 is what both tiers
+reach at 10,000 and the ceilings no longer bind. So on the measured tier the
+capacity constraint is within 0.003 mmol/gDW/h of absent at the scale the module was
+run at, and the tier and the scale are one knob rather than two: a tier with fewer
+predictions is a looser box, which the calibration then scales less. What the
+calibration does not say is how a trained cell reads under the measured tier, since
+round 15c's result is a growth column that ranked the held-out genes at 0.84 on one
+seed of three with the ceilings binding at 3 to 8 percent of reactions, and a box that
+does not bind has no ceilings to bind.
+
+Round 67 trains it. Round 15c's two cells run again at capacity scale 100, where both
+tiers still bind, with the measured tier in place of the predicted one and everything
+else held, six seeds each (Table~\ref{tab:w83}, Figure~\ref{fig:w83}).
+
+\input{tables/round_w83}
+
+\tcfigfit[1.0]{figures/w83_readout_2026-09-20-03-26-13.pdf}{\textbf{Round 67, the
+  capacity ceilings from the measured turnover tier.} \textbf{a}, Validation AUROC per
+  epoch, one thin line per seed and the seed mean per arm. \textbf{b}, The median
+  absolute epoch-to-epoch step per cell against the validation size. \textbf{c},
+  Held-out AUROC per cell (points), the seed mean and the gene bootstrap of the pooled
+  per-gene logits (square with interval), beside FBA on four media, Flux Cone Learning
+  and the released FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per
+  module per epoch, seed mean; the dash-dot line is the flux layer. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w83}.}{fig:w83}
+
+The looser box trades a failure for a ceiling. On the gated cell the tier is worth
+little: 0.800 against 0.812 as seed means, four seeds of six up, a paired mean of
+$+0.012$ against a seed spread of 0.015. On the forced growth column the trade is the
+finding. Under the predicted tier the arm is bimodal: two seeds of six enter the
+absorbing infeasible state and select epoch 2 at 0.500, while two others read above
+0.80, at 0.8425 and 0.8017, for a seed mean of 0.683 with a spread of 0.151. Under the
+measured tier no seed collapses and none exceeds 0.76, the six reading 0.669 to 0.759
+for a mean of 0.707 with a spread of 0.044. So the looser box removes the absorbing
+state, which is what the calibration predicted of a box that admits growth at a third
+of the scale, and it removes the high end with it. Round 15c's 0.84 is not a unique
+event, since a second seed of six reaches 0.80, but it belongs to the tighter box,
+which either collapses or ranks well.
+
+Round 72 asks whether the bimodality can be removed without the high end going with it,
+and the answer is that it cannot, at least by the two constructions that remove it
+(Table~\ref{tab:w89}, Figure~\ref{fig:w89}). The hard program on the tight box, now on
+twelve seeds, collapses on two and clears 0.80 on four, with a mean of 0.699 and a
+spread of 0.115. The two ways of stopping the collapse are the looser turnover tier and
+the elastic program, which prices unmet forced flux instead of refusing the genotype.
+Both work, and both land in the same place: no seed of six at chance, no seed of six
+above 0.80, means of 0.707 and 0.715, spreads of 0.044 and 0.049. Three constructions,
+one mean to within 0.016 and a spread that differs by a factor of two and a half. What
+the collapse buys is not accuracy on average but a tail, and the 0.84 lives in it.
+
+\input{tables/round_w89}
+
+\tcfigfit[1.0]{figures/w89_readout_2026-09-20-05-37-47.pdf}{\textbf{Round 72, the forced
+  growth column under every construction tried.} \textbf{a}, Validation AUROC per epoch,
+  one thin line per seed and the seed mean per arm. \textbf{b}, The median absolute
+  epoch-to-epoch step per cell against the validation size. \textbf{c}, Held-out AUROC
+  per cell (points), the seed mean and the gene bootstrap of the pooled per-gene logits
+  (square with interval), beside FBA on four media, Flux Cone Learning and the released
+  FBA predictions on the same 195 genes. \textbf{d}, Gradient norm per module per epoch,
+  seed mean; the dash-dot line is the flux layer. Written by
+  \texttt{experiments/028-gene-essentiality/scripts/wave12\_readout.py --round w89}.}{fig:w89}
+
+The gated cells do not show any of this. Across the same three programs they read 0.800
+and 0.812, with spreads near 0.015 and no seed at chance, so the gate is what makes the
+column safe to read and what caps it: the arm that never collapses never reaches 0.84
+either. On this endpoint the module's best single number and its worst failure are the
+same construction seen twice.
+
+Two details of the forced readout are worth keeping. Its seeds select epochs 2 to 174,
+so the collapse is visible as an epoch-2 selection rather than as a late failure. And
+three of the six measured-tier seeds read exactly 0.669, which is not a coincidence of
+rounding: the readout is the layer's growth column and nothing else, and it takes only
+19 distinct values over the 195 held-out genes, so the ranking is a partition into 19
+blocks and runs that place the genes in the same blocks score identically.
+
+The other parameter source cannot matter here, and the same calibration is what says
+so. Thermodynamics enters the anchored layer as a loss term, every constraint weight is
+multiplied by a constraint scale the module rounds set to zero, and the sign constraint
+that would put a reaction's direction in the box was never switched on. Rerunning the
+calibration with the route swapped from the merged external table to the model's own
+shipped column leaves the program identical at every capacity scale, feasibility and
+median growth agreeing to the last bit. So the thermodynamic route is recorded
+provenance on these rounds rather than a hyperparameter, and moving it is a question for
+a cell that prices the constraint.
+
+\subsection{The store at the database's scale\secstatus{todo}}
+\label{sec:store-scale}
+
+The layer-free form (Section~\ref{sec:round33}) makes the module a data transform: the
+growth program solved once per genotype and medium, its flux stored as
+$\log(1 + |v^*|)$ and read through an affine at training time, with no solver in the
+loop. What sizes that transform for a model over the whole database is not the record
+count but the number of distinct programs, since the program depends on the genotype
+only through the GEM genes it deletes and on the environment only through the medium:
+a record whose deletions include no GEM gene reads the wild-type row, and two records
+deleting the same GEM genes on the same medium read one row. Table~\ref{tab:store-scale}
+measures that count over the 025 solid-growth build, the largest phenotype table in the
+database (13.5 million records, single to triple deletions on three media), by a cursor
+scan of its LMDB for each record's deleted genes and medium name (job 2469, 8 minutes
+on 20 processes), and then builds the store.
+
+Figure~\ref{fig:readout-store-scale} draws the read at that scale.
+
+\tcfigfit[0.9]{figures/readout_16.pdf}{\textbf{The store at the database's scale.} The layer-free path on the 025
+  solid-growth transformer: a record's deleted GEM genes and its medium form a key, the
+  program is solved once per key offline by the interior point, and at training time
+  each record gathers its row from a table on the host and an affine of the row is added
+  to the transformer's prediction. Colors as in Figure~\ref{fig:readout-key}.}{fig:readout-store-scale}
+
+\input{tables/store_scale}
+
+Two thirds of the records (8,986,762 of 13,525,071) delete no GEM gene and read the
+wild-type row; the rest map onto 459,098 distinct GEM subsets, almost all pairs, and
+469,474 (subset, medium) keys, 3.5 percent of the record count. Solved by the
+interior-point method at $10^{-4}$ with every GEM gene of the key deleted (the round-36
+store's solver, whose point trains to the pFBA store's number), the whole store took 71
+minutes on 20 CPU cores (job 2471; 23.4 CPU hours, 0.18 s per program) and is 8.0 GB
+as float32 over 4,131 reactions, with 62,905 keys lethal under the solve and 2,234
+uncertified, stored as the zero flux as in round 55, where the 320 uncertified rows of
+the $10^{-8}$ store cost 0.02 until they were filled from a looser solve. The build's
+SGA selection media have no FBA recipe (a synthetic dropout with drugs), so every key
+was solved on synthetic complete medium; on this endpoint the SC store reads the YPD
+store's number (round 42), and the store's medium axis is one medium in this build.
+
+At training time the store is a table on the host and the read is a gather: the 025
+transformer wrapped by \texttt{store\_affine.py} in that experiment (one card per arm,
+jobs 2476 to 2479, launched 2026-09-18) looks up each record's row from its deleted
+genes, moves the batch's rows to the card and adds a linear map of them to the logit.
+The arm with the store trains at the control's step rate, 0.37 iterations per second
+on both, so the transform costs nothing measurable per step. Its number is not read:
+the two arms on two seeds have reached epoch 15 of 30, and through that epoch the
+validation Pearson on gene interaction of the store arm is within 0.022 of the
+control's at every epoch, with the sign of the paired difference varying by epoch and
+by seed; the fixed-epoch and best-epoch reads, paired by seed, are written by
+\texttt{store\_affine\_readout.py} when the runs end.
+
+The solvers on the card were not run. Section~\ref{sec:solve-tolerance} settled that a
+first-order point is a store (PDLP, the algorithm NVIDIA's cuOpt batches on the card,
+trains to 0.907 against the interior point's 0.911 and pFBA's 0.912), so the store
+could be built on the card; but with the program count set by the keys and not the
+records, the store over the whole build is an hour of CPU, under two epochs of the
+transformer that reads it (58 minutes per epoch on one card), and a faster solve
+shortens a step that is not the cost. Where a solver on the card would matter is the
+case this endpoint did not need and did not measure: a program re-solved under bounds
+the model learns (the fine-tuning form with the capacity ceilings of round 15c), or a
+medium axis with many recipes, each of which multiplies the programs by the number of
+parameter settings or of media, and a program solved inside the loop rather than
+before it.
+
+\subsection{The forms tested after the layer-free result\secstatus{todo}}
+\label{sec:forms-after-layer-free}
+
+After the layer-free result the module changed only in what the affine reads and, once,
+in how the backbone forms its context: six gene-rule counts beside the stored vector
+(Section~\ref{sec:round77}, Figure~\ref{fig:readout-gpr}), the class token sent through
+the perturbation operator (Section~\ref{sec:round79}, Figure~\ref{fig:readout-cls}), the
+counts with no flux vector (Sections~\ref{sec:round82} and~\ref{sec:round84-98},
+Figure~\ref{fig:readout-counts-only}), and every column restricted to one medium
+(Section~\ref{sec:round83}, Figure~\ref{fig:readout-one-experiment}). Each is a small
+change to the path of Figure~\ref{fig:readout-layer-free}, and the cited sections hold
+the numbers.
+
+\tcfigfit[0.9]{figures/readout_17.pdf}{\textbf{The layer-free form with the gene-rule counts, round 77.} The path
+  of Figure~\ref{fig:readout-layer-free} with six columns appended to the store: counts
+  read off each gene's gene-protein-reaction rules in disjunctive normal form, which need
+  no solve and carry no medium. The affine reads them in the store's $\log(1 + \cdot)$
+  encoding under the same zero initialization. Colors as in Figure~\ref{fig:readout-key}.}{fig:readout-gpr}
+
+\tcfigfit[0.9]{figures/readout_18.pdf}{\textbf{The class token through the perturbation operator, round 79.} The
+  metabolic path is that of Figure~\ref{fig:readout-layer-free} and the change is in the
+  backbone: the class token, encoded once on the wild-type graph, joins the gene tokens
+  as one more query of the perturbation operator over the deleted-gene keys, so the head
+  reads a strain-specific token beside the pooled perturbed genes. No parameter is
+  added. Colors as in Figure~\ref{fig:readout-key}.}{fig:readout-cls}
+
+\tcfigfit[0.9]{figures/readout_19.pdf}{\textbf{The counts without the flux vector, rounds 82 to 98.} The path of
+  Figure~\ref{fig:readout-gpr} with the stored flux vector removed, so the affine reads
+  the growth ratios and the six rule counts only. Round 82 keeps all four media, and the
+  later recipes of Section~\ref{sec:round84-98} read the YPD and SC ratios or the YPD
+  ratio alone. Colors as in Figure~\ref{fig:readout-key}.}{fig:readout-counts-only}
+
+\tcfigfit[0.9]{figures/readout_20.pdf}{\textbf{Every column inside one experiment, round 83.} The path of
+  Figure~\ref{fig:readout-gpr} restricted to one medium: the YPD growth ratio, the flux
+  vector of the YPD solve and the rule counts, which carry no environment, so a record
+  is one genotype in one medium. Colors as in Figure~\ref{fig:readout-key}.}{fig:readout-one-experiment}

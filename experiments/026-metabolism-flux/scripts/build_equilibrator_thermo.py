@@ -86,6 +86,11 @@ IONIC_STRENGTH_M = 0.25
 P_MG = 3.0
 REFERENCE_PH = 7.0
 
+#: The proton, identified by structure rather than by name or accession so that all 14 of
+#: yeast-GEM's compartment-specific H+ entries are caught however they resolved. See the
+#: block in `main` for why it is priced at zero and how that was verified.
+PROTON_INCHI_KEY = "GPRLSGONYQIRFK-UHFFFAOYSA-N"
+
 # Textbook organellar pH. ASSUMED, not sourced from a mirrored paper: treat every value as
 # an assumption that a later revision should replace with a cited measurement. The
 # membrane pseudo-compartments take the pH of the aqueous phase they face.
@@ -115,6 +120,24 @@ ACCESSION_TIERS: list[tuple[str, str]] = [
     ("kegg.compound", "kegg"),
     ("bigg.metabolite", "bigg.metabolite"),
 ]
+
+
+def formation_energy_available(cc, compound) -> bool:
+    """Whether this compound ends up with a transformed formation energy.
+
+    The single definition of "priceable", so the build and every audit that reports
+    coverage agree by construction. Asking ``standard_dg_formation`` directly is the
+    obvious thing and it is wrong for exactly one compound: the proton, which the build
+    prices at zero by the transform's own convention (see the block in ``main``). Two
+    call sites answering this question differently is how a coverage audit ends up
+    reporting a baseline the built table does not have.
+    """
+    if compound is None:
+        return False
+    if compound.inchi_key == PROTON_INCHI_KEY:
+        return True
+    mu, _fin, _inf = cc.standard_dg_formation(compound)
+    return mu is not None
 
 
 def sha256_file(path: str) -> str:
@@ -246,7 +269,25 @@ def main() -> None:
         )
 
         transformed = np.nan
-        if compound is not None and mu is not None:
+        if compound is not None and compound.inchi_key == PROTON_INCHI_KEY:
+            # THE PROTON IS THE REFERENCE OF THE pH TRANSFORM, NOT AN UNPRICEABLE COMPOUND.
+            # `standard_dg_formation` returns None for it, which is correct and is not a
+            # failure: a bare proton has no group decomposition, and its chemical potential
+            # is what the Legendre transform to a fixed pH is defined against. Left as NaN
+            # it silently destroyed the coverage of every reaction that moves a proton,
+            # which in a metabolic network is most of them: 14 proton entries, one per
+            # compartment, blocked 1,477 reaction slots and 1,860 distinct reactions.
+            #
+            # Zero is eQuilibrator's own convention, and it is verified rather than
+            # assumed. On four proton-carrying, mass-balanced reactions (alcohol, lactate
+            # and malate dehydrogenase, and glucose-6-phosphate dehydrogenase) the sum
+            # sum_i S_ij dfG'_i with the proton term set to zero reproduces
+            # `cc.standard_dg_prime` to 0.0000 kJ/mol.
+            #
+            # This is exact at every pH because the transform already carries the pH
+            # dependence of the reaction: the proton does not contribute twice.
+            transformed = 0.0
+        elif compound is not None and mu is not None:
             # The Legendre transform to (pH, I, T, pMg). Adding it to the untransformed
             # formation energy is what makes the value a dfG'o rather than a dfGo.
             correction = compound.transform(

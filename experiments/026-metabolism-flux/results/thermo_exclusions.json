@@ -1,0 +1,3485 @@
+{
+ "built_at": "2026-09-12T00:20:23.625463+00:00",
+ "n_excluded_metabolites": 247,
+ "by_reason": {
+  "group_decomposition_failed": 16,
+  "group_in_null_space": 1,
+  "no_structure_available": 6,
+  "placeholder_formula": 159,
+  "placeholder_structure": 6,
+  "pseudo_metabolite": 55,
+  "recorded_not_admitted": 4
+ },
+ "reactions_blocked_by_reason": {
+  "group_decomposition_failed": 13,
+  "group_in_null_space": 1,
+  "no_structure_available": 10,
+  "placeholder_formula": 99,
+  "placeholder_structure": 3,
+  "pseudo_metabolite": 213,
+  "recorded_not_admitted": 5
+ },
+ "records": [
+  {
+   "met_id": "s_3738",
+   "name": "cardiolipin backbone",
+   "compartment": "mm",
+   "formula": "C9H14O9P2",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 48,
+   "reactions_blocked": [
+    "r_4104",
+    "r_4105",
+    "r_4106",
+    "r_4107",
+    "r_4108",
+    "r_4109",
+    "r_4110",
+    "r_4111",
+    "r_4112",
+    "r_4113",
+    "r_4114",
+    "r_4115",
+    "r_4116",
+    "r_4117",
+    "r_4118",
+    "r_4119",
+    "r_4120",
+    "r_4121",
+    "r_4122",
+    "r_4123",
+    "r_4124",
+    "r_4125",
+    "r_4126",
+    "r_4127",
+    "r_4128",
+    "r_4129",
+    "r_4130",
+    "r_4131",
+    "r_4132",
+    "r_4133",
+    "r_4134",
+    "r_4135",
+    "r_4136",
+    "r_4137",
+    "r_4138",
+    "r_4139",
+    "r_4140",
+    "r_4141",
+    "r_4142",
+    "r_4143",
+    "r_4144",
+    "r_4145",
+    "r_4146",
+    "r_4147",
+    "r_4148",
+    "r_4149",
+    "r_4150",
+    "r_4151"
+   ],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_3713",
+   "name": "triglyceride backbone",
+   "compartment": "erm",
+   "formula": "C3H2",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 32,
+   "reactions_blocked": [
+    "r_4006",
+    "r_4007",
+    "r_4008",
+    "r_4009",
+    "r_4010",
+    "r_4011",
+    "r_4012",
+    "r_4013",
+    "r_4014",
+    "r_4015",
+    "r_4016",
+    "r_4017",
+    "r_4018",
+    "r_4019",
+    "r_4020",
+    "r_4021",
+    "r_4022",
+    "r_4023",
+    "r_4024",
+    "r_4025",
+    "r_4026",
+    "r_4027",
+    "r_4028",
+    "r_4029",
+    "r_4030",
+    "r_4031",
+    "r_4032",
+    "r_4033",
+    "r_4034",
+    "r_4035",
+    "r_4036",
+    "r_4037"
+   ],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_0859",
+   "name": "inositol phosphomannosylinositol phosphoceramide backbone",
+   "compartment": "g",
+   "formula": "C18H33NO23P2",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 10,
+   "reactions_blocked": [
+    "r_1479",
+    "r_1480",
+    "r_1481",
+    "r_1482",
+    "r_1483",
+    "r_1484",
+    "r_1485",
+    "r_1486",
+    "r_1487",
+    "r_1488"
+   ],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_0892",
+   "name": "inositol-P-ceramide backbone",
+   "compartment": "g",
+   "formula": "C6H12NO10P",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 10,
+   "reactions_blocked": [
+    "r_1449",
+    "r_1450",
+    "r_1451",
+    "r_1452",
+    "r_1453",
+    "r_1454",
+    "r_1455",
+    "r_1456",
+    "r_1457",
+    "r_1458"
+   ],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_1114",
+   "name": "mannosylinositol phosphorylceramide backbone",
+   "compartment": "g",
+   "formula": "C12H22NO15P",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 10,
+   "reactions_blocked": [
+    "r_1509",
+    "r_1510",
+    "r_1511",
+    "r_1512",
+    "r_1513",
+    "r_1514",
+    "r_1515",
+    "r_1516",
+    "r_1517",
+    "r_1518"
+   ],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_3721",
+   "name": "ceramide backbone",
+   "compartment": "g",
+   "formula": "HNO2",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 10,
+   "reactions_blocked": [
+    "r_4066",
+    "r_4067",
+    "r_4068",
+    "r_4069",
+    "r_4070",
+    "r_4071",
+    "r_4072",
+    "r_4073",
+    "r_4074",
+    "r_4075"
+   ],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_0089",
+   "name": "1-phosphatidyl-1D-myo-inositol backbone",
+   "compartment": "c",
+   "formula": "C9H15O9P",
+   "charge": -1,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 9,
+   "reactions_blocked": [
+    "r_3963",
+    "r_3964",
+    "r_3965",
+    "r_3966",
+    "r_3967",
+    "r_3968",
+    "r_3969",
+    "r_3970",
+    "r_4063"
+   ],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_3710",
+   "name": "phosphatidyl-L-serine backbone",
+   "compartment": "erm",
+   "formula": "C6H10NO6P",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 8,
+   "reactions_blocked": [
+    "r_3979",
+    "r_3980",
+    "r_3981",
+    "r_3982",
+    "r_3983",
+    "r_3984",
+    "r_3985",
+    "r_3986"
+   ],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_3711",
+   "name": "phosphatidylcholine backbone",
+   "compartment": "erm",
+   "formula": "C8H16NO3P",
+   "charge": 1,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 8,
+   "reactions_blocked": [
+    "r_3988",
+    "r_3989",
+    "r_3990",
+    "r_3991",
+    "r_3992",
+    "r_3993",
+    "r_3994",
+    "r_3995"
+   ],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_3712",
+   "name": "phosphatidylethanolamine backbone",
+   "compartment": "erm",
+   "formula": "C5H10NO4P",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 8,
+   "reactions_blocked": [
+    "r_3997",
+    "r_3998",
+    "r_3999",
+    "r_4000",
+    "r_4001",
+    "r_4002",
+    "r_4003",
+    "r_4004"
+   ],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_3730",
+   "name": "phosphatidate backbone",
+   "compartment": "erm",
+   "formula": "C3H5O4P",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 8,
+   "reactions_blocked": [
+    "r_4080",
+    "r_4081",
+    "r_4082",
+    "r_4083",
+    "r_4084",
+    "r_4085",
+    "r_4086",
+    "r_4087"
+   ],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_3732",
+   "name": "diglyceride backbone",
+   "compartment": "erm",
+   "formula": "C3H4O",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 8,
+   "reactions_blocked": [
+    "r_4088",
+    "r_4089",
+    "r_4090",
+    "r_4091",
+    "r_4092",
+    "r_4093",
+    "r_4094",
+    "r_4095"
+   ],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_1845",
+   "name": "ACP1",
+   "compartment": "m",
+   "formula": "",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 7,
+   "reactions_blocked": [
+    "r_0099",
+    "r_0721",
+    "r_2142",
+    "r_2143",
+    "r_2144",
+    "r_4280",
+    "r_4281"
+   ],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_3736",
+   "name": "phosphatidylglycerol backbone",
+   "compartment": "mm",
+   "formula": "C6H11O6P",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 6,
+   "reactions_blocked": [
+    "r_4098",
+    "r_4099",
+    "r_4100",
+    "r_4101",
+    "r_4102",
+    "r_4103"
+   ],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_0694",
+   "name": "fatty acid backbone",
+   "compartment": "c",
+   "formula": "",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 5,
+   "reactions_blocked": [
+    "r_3975",
+    "r_3976",
+    "r_3977",
+    "r_3978",
+    "r_4063"
+   ],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_0465",
+   "name": "carboxyacetyl-ACP",
+   "compartment": "m",
+   "formula": "C3H3O3SR",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 4,
+   "reactions_blocked": [
+    "r_0721",
+    "r_2142",
+    "r_2143",
+    "r_2144"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_0428",
+   "name": "Arg-tRNA(Arg)",
+   "compartment": "c",
+   "formula": "C6H15N4OR",
+   "charge": 2,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 3,
+   "reactions_blocked": [
+    "r_0209",
+    "r_4047",
+    "r_4239"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_0712",
+   "name": "ferroheme b",
+   "compartment": "m",
+   "formula": "C34H30FeN4O4",
+   "charge": -2,
+   "reason": "recorded_not_admitted",
+   "n_reactions_blocked": 3,
+   "reactions_blocked": [
+    "r_0436",
+    "r_0531",
+    "r_4152"
+   ],
+   "remedy": "a curated record EXISTS and its admission is computed or provisional, so it is reported and not priced; what it would take is a measured or tabulated source"
+  },
+  {
+   "met_id": "s_1254",
+   "name": "octanoyl-ACP",
+   "compartment": "m",
+   "formula": "C8H15OSR",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 3,
+   "reactions_blocked": [
+    "r_2153",
+    "r_4280",
+    "r_4324"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1582",
+   "name": "tRNA(Ala)",
+   "compartment": "c",
+   "formula": "RH",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 3,
+   "reactions_blocked": [
+    "r_0157",
+    "r_4047",
+    "r_4218"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1583",
+   "name": "tRNA(Arg)",
+   "compartment": "c",
+   "formula": "RH",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 3,
+   "reactions_blocked": [
+    "r_0209",
+    "r_4047",
+    "r_4239"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1612",
+   "name": "tRNA(Tyr)",
+   "compartment": "c",
+   "formula": "RH",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 3,
+   "reactions_blocked": [
+    "r_1066",
+    "r_4047",
+    "r_4219"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3746",
+   "name": "lipid backbone",
+   "compartment": "c",
+   "formula": "",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 3,
+   "reactions_blocked": [
+    "r_2108",
+    "r_4062",
+    "r_4063"
+   ],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_3747",
+   "name": "lipid chain",
+   "compartment": "c",
+   "formula": "",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 3,
+   "reactions_blocked": [
+    "r_2108",
+    "r_4064",
+    "r_4065"
+   ],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_3774",
+   "name": "G00011",
+   "compartment": "er",
+   "formula": "C74H122N4O57R",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 3,
+   "reactions_blocked": [
+    "r_4166",
+    "r_4271",
+    "r_4272"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_0329",
+   "name": "6-(alpha-D-glucosaminyl)-1-phosphatidyl-1D-myo-inositol",
+   "compartment": "er",
+   "formula": "C17H28NO17PR2",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_0137",
+    "r_0518"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_0330",
+   "name": "6-(alpha-D-glucosaminyl)-O-acyl-1-phosphatidyl-1D-myo-inositol",
+   "compartment": "er",
+   "formula": "",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_0137",
+    "r_0519"
+   ],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_0334",
+   "name": "6-O-[alpha-D-mannosyl-(1->4)-alpha-D-glucosaminyl]-O-acyl-1-phosphatidyl-1D-myo-inositol",
+   "compartment": "er",
+   "formula": "",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_0519",
+    "r_0520"
+   ],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_0337",
+   "name": "6-O-{2-O-[(2-aminoethyl)phosphoryl]-alpha-D-mannosyl-(1->4)-alpha-D-glucosaminyl}-O-acyl-1-phosphatidyl-1D-myo-inositol",
+   "compartment": "er",
+   "formula": "",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_0520",
+    "r_0521"
+   ],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_0338",
+   "name": "6-O-{alpha-D-mannosyl-(1->2)-alpha-D-mannosyl-(1->6)-2-O-[(2-aminoethyl)phosphoryl]-alpha-D-mannosyl-(1->4)-alpha-D-glucosaminyl}-O-acyl-1-phosphatidyl-1D-myo-inositol",
+   "compartment": "er",
+   "formula": "",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_0522",
+    "r_0523"
+   ],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_0339",
+   "name": "6-O-{alpha-D-mannosyl-(1->6)-2-O-[(2-aminoethyl)phosphoryl]-alpha-D-mannosyl-(1->4)-alpha-D-glucosaminyl}-O-acyl-1-phosphatidyl-1D-myo-inositol",
+   "compartment": "er",
+   "formula": "",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_0521",
+    "r_0522"
+   ],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_0372",
+   "name": "acetyl-ACP",
+   "compartment": "m",
+   "formula": "C2H3OSR",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_0099",
+    "r_2142"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_0404",
+   "name": "Ala-tRNA(Ala)",
+   "compartment": "c",
+   "formula": "C3H7NOR",
+   "charge": 1,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_0157",
+    "r_4047"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_0430",
+   "name": "Asn-tRNA(Asn)",
+   "compartment": "c",
+   "formula": "C4H8N2O2R",
+   "charge": 1,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_0212",
+    "r_4047"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_0432",
+   "name": "Asp-tRNA(Asp)",
+   "compartment": "c",
+   "formula": "C4H6NO3R",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_0220",
+    "r_4047"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_0450",
+   "name": "biomass",
+   "compartment": "c",
+   "formula": "",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_2111",
+    "r_4041"
+   ],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_0542",
+   "name": "Cys-tRNA(Cys)",
+   "compartment": "c",
+   "formula": "C3H7NOSR",
+   "charge": 1,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_0313",
+    "r_4047"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_0628",
+   "name": "dihydrolipoylprotein",
+   "compartment": "m",
+   "formula": "C8H16NOS2R",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_0507",
+    "r_0508"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_0747",
+   "name": "Gln-tRNA(Gln)",
+   "compartment": "c",
+   "formula": "C5H10N2O2R",
+   "charge": 1,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_0478",
+    "r_4047"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_0748",
+   "name": "Glu-tRNA(Glu)",
+   "compartment": "c",
+   "formula": "C5H8NO3R",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_0479",
+    "r_4047"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_0757",
+   "name": "Gly-tRNA(Gly)",
+   "compartment": "c",
+   "formula": "C2H5NOR",
+   "charge": 1,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_0512",
+    "r_4047"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_0832",
+   "name": "His-tRNA(His)",
+   "compartment": "c",
+   "formula": "C6H9N3OR",
+   "charge": 1,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_0539",
+    "r_4047"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_0847",
+   "name": "Ile-tRNA(Ile)",
+   "compartment": "c",
+   "formula": "C6H13NOR",
+   "charge": 1,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_0665",
+    "r_4047"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1077",
+   "name": "Leu-tRNA(Leu)",
+   "compartment": "c",
+   "formula": "C6H13NOR",
+   "charge": 1,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_0701",
+    "r_4047"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1096",
+   "name": "lipid",
+   "compartment": "c",
+   "formula": "",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_2108",
+    "r_4041"
+   ],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_1098",
+   "name": "lipoylprotein",
+   "compartment": "m",
+   "formula": "C8H14NOS2R",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_0506",
+    "r_0508"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1099",
+   "name": "Lys-tRNA(Lys)",
+   "compartment": "c",
+   "formula": "C6H15N2OR",
+   "charge": 2,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_0711",
+    "r_4047"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1148",
+   "name": "Met-tRNA(Met)",
+   "compartment": "c",
+   "formula": "C5H11NOSR",
+   "charge": 1,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_0729",
+    "r_4047"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1149",
+   "name": "Met-tRNA(Met)",
+   "compartment": "m",
+   "formula": "C5H11NOSR",
+   "charge": 1,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_0728",
+    "r_0730"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1309",
+   "name": "pectin",
+   "compartment": "e",
+   "formula": "C6H7O6",
+   "charge": 0,
+   "reason": "group_decomposition_failed",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_0365",
+    "r_1999"
+   ],
+   "remedy": "a DECOMPOSITION is needed: the structure exists and component contribution refuses it, so a pKa predictor changes nothing; monatomic ions are in this class and their energies are tabulated in the thermochemical literature rather than predicted"
+  },
+  {
+   "met_id": "s_1314",
+   "name": "Phe-tRNA(Phe)",
+   "compartment": "c",
+   "formula": "C9H11NOR",
+   "charge": 1,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_0852",
+    "r_4047"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1352",
+   "name": "phosphatidylethanolamine backbone",
+   "compartment": "er",
+   "formula": "C5H10NO4P",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_0520",
+    "r_0523"
+   ],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_1379",
+   "name": "Pro-tRNA(Pro)",
+   "compartment": "c",
+   "formula": "C5H9NOR",
+   "charge": 1,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_0941",
+    "r_4047"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1410",
+   "name": "S(8)-aminomethyldihydrolipoylprotein",
+   "compartment": "m",
+   "formula": "C9H19N2OS2R",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_0506",
+    "r_0507"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1428",
+   "name": "Ser-tRNA(Ser)",
+   "compartment": "c",
+   "formula": "C3H7NO2R",
+   "charge": 1,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_0995",
+    "r_4047"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1491",
+   "name": "Thr-tRNA(Thr)",
+   "compartment": "c",
+   "formula": "C4H9NO2R",
+   "charge": 1,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_1042",
+    "r_4047"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1527",
+   "name": "Trp-tRNA(Trp)",
+   "compartment": "c",
+   "formula": "C11H12N2OR",
+   "charge": 1,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_1057",
+    "r_4047"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1533",
+   "name": "Tyr-tRNA(Tyr)",
+   "compartment": "c",
+   "formula": "C9H11NO2R",
+   "charge": 1,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_1066",
+    "r_4047"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1561",
+   "name": "Val-tRNA(Val)",
+   "compartment": "c",
+   "formula": "C5H11NOR",
+   "charge": 1,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_1089",
+    "r_4047"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1578",
+   "name": "zymosterol intermediate 1c",
+   "compartment": "c",
+   "formula": "C28H43O3",
+   "charge": -1,
+   "reason": "no_structure_available",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_0234",
+    "r_0240"
+   ],
+   "remedy": "a STRUCTURE is needed: a definite formula with no structure in any namespace and no writer that composes one from the name"
+  },
+  {
+   "met_id": "s_1585",
+   "name": "tRNA(Asn)",
+   "compartment": "c",
+   "formula": "RH",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_0212",
+    "r_4047"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1587",
+   "name": "tRNA(Asp)",
+   "compartment": "c",
+   "formula": "RH",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_0220",
+    "r_4047"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1589",
+   "name": "tRNA(Cys)",
+   "compartment": "c",
+   "formula": "RH",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_0313",
+    "r_4047"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1590",
+   "name": "tRNA(Gln)",
+   "compartment": "c",
+   "formula": "RH",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_0478",
+    "r_4047"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1591",
+   "name": "tRNA(Glu)",
+   "compartment": "c",
+   "formula": "RH",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_0479",
+    "r_4047"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1593",
+   "name": "tRNA(Gly)",
+   "compartment": "c",
+   "formula": "RH",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_0512",
+    "r_4047"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1594",
+   "name": "tRNA(His)",
+   "compartment": "c",
+   "formula": "RH",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_0539",
+    "r_4047"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1596",
+   "name": "tRNA(Ile)",
+   "compartment": "c",
+   "formula": "RH",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_0665",
+    "r_4047"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1598",
+   "name": "tRNA(Leu)",
+   "compartment": "c",
+   "formula": "RH",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_0701",
+    "r_4047"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1600",
+   "name": "tRNA(Lys)",
+   "compartment": "c",
+   "formula": "RH",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_0711",
+    "r_4047"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1602",
+   "name": "tRNA(Met)",
+   "compartment": "c",
+   "formula": "RH",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_0729",
+    "r_4047"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1604",
+   "name": "tRNA(Phe)",
+   "compartment": "c",
+   "formula": "RH",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_0852",
+    "r_4047"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1606",
+   "name": "tRNA(Pro)",
+   "compartment": "c",
+   "formula": "RH",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_0941",
+    "r_4047"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1607",
+   "name": "tRNA(Ser)",
+   "compartment": "c",
+   "formula": "RH",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_0995",
+    "r_4047"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1608",
+   "name": "tRNA(Thr)",
+   "compartment": "c",
+   "formula": "RH",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_1042",
+    "r_4047"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1610",
+   "name": "tRNA(Trp)",
+   "compartment": "c",
+   "formula": "RH",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_1057",
+    "r_4047"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1614",
+   "name": "tRNA(Val)",
+   "compartment": "c",
+   "formula": "RH",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_1089",
+    "r_4047"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_2770",
+   "name": "acetoacetyl-ACP",
+   "compartment": "m",
+   "formula": "C4H5O2SR",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_2142",
+    "r_2145"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_2771",
+   "name": "butanoyl-ACP",
+   "compartment": "m",
+   "formula": "C4H7OSR",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_2143",
+    "r_2151"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_2772",
+   "name": "3-oxo-hexanoyl-ACP",
+   "compartment": "m",
+   "formula": "C6H9O2SR",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_2143",
+    "r_2146"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_2773",
+   "name": "hexanoyl-ACP",
+   "compartment": "m",
+   "formula": "C6H11OSR",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_2144",
+    "r_2152"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_2774",
+   "name": "3-oxo-octanoyl-ACP",
+   "compartment": "m",
+   "formula": "C8H13O2SR",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_2144",
+    "r_2147"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_2775",
+   "name": "3-hydroxybutanoyl-ACP",
+   "compartment": "m",
+   "formula": "C4H7O2SR",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_2145",
+    "r_2148"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_2776",
+   "name": "3-hydroxyhexanoyl-ACP",
+   "compartment": "m",
+   "formula": "C6H11O2SR",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_2146",
+    "r_2149"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_2777",
+   "name": "3-hydroxyoctanoyl-ACP",
+   "compartment": "m",
+   "formula": "C8H15O2SR",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_2147",
+    "r_2150"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_2778",
+   "name": "trans-but-2-enoyl-ACP",
+   "compartment": "m",
+   "formula": "C4H5OSR",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_2148",
+    "r_2151"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_2779",
+   "name": "trans-hex-2-enoyl-ACP",
+   "compartment": "m",
+   "formula": "C6H9OSR",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_2149",
+    "r_2152"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_2780",
+   "name": "trans-oct-2-enoyl-ACP",
+   "compartment": "m",
+   "formula": "C8H13OSR",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_2150",
+    "r_2153"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_2920",
+   "name": "3-oxo-cis-hexadec-9-enoyl-CoA",
+   "compartment": "p",
+   "formula": "C37H62N7O18P3S",
+   "charge": 0,
+   "reason": "no_structure_available",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_2277",
+    "r_2289"
+   ],
+   "remedy": "a STRUCTURE is needed: a definite formula with no structure in any namespace and no writer that composes one from the name"
+  },
+  {
+   "met_id": "s_2923",
+   "name": "3-oxo-cis-octadec-9-enoyl-CoA",
+   "compartment": "p",
+   "formula": "C39H66N7O18P3S",
+   "charge": 0,
+   "reason": "no_structure_available",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_2280",
+    "r_2292"
+   ],
+   "remedy": "a STRUCTURE is needed: a definite formula with no structure in any namespace and no writer that composes one from the name"
+  },
+  {
+   "met_id": "s_3709",
+   "name": "ergosterol ester backbone",
+   "compartment": "erm",
+   "formula": "C28H42",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_3971",
+    "r_3972"
+   ],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_3719",
+   "name": "RNA",
+   "compartment": "c",
+   "formula": "",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_4041",
+    "r_4049"
+   ],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_3720",
+   "name": "DNA",
+   "compartment": "c",
+   "formula": "",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_4041",
+    "r_4050"
+   ],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_3728",
+   "name": "long-chain base phosphate backbone",
+   "compartment": "er",
+   "formula": "H3NO3P",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_4077",
+    "r_4079"
+   ],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_3734",
+   "name": "sn-2-acyl-1-lysophosphatidylinositol backbone",
+   "compartment": "erm",
+   "formula": "C9H11O10P",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_4096",
+    "r_4097"
+   ],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_3771",
+   "name": "G00171",
+   "compartment": "er",
+   "formula": "C86H142N4O67R",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_4165",
+    "r_4241"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3773",
+   "name": "G00010",
+   "compartment": "er",
+   "formula": "C80H132N4O62R",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_4165",
+    "r_4166"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3891",
+   "name": "G10694",
+   "compartment": "er",
+   "formula": "C68H112N4O52R",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_4242",
+    "r_4272"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3895",
+   "name": "G00004",
+   "compartment": "er",
+   "formula": "C48H82N2O27P2R",
+   "charge": -2,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_4243",
+    "r_4244"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3896",
+   "name": "G00005",
+   "compartment": "er",
+   "formula": "C54H92N2O32P2R",
+   "charge": -2,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_4244",
+    "r_4310"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3912",
+   "name": "G10599",
+   "compartment": "er",
+   "formula": "C102H172N2O72P2R",
+   "charge": -2,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_4253",
+    "r_4321"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3944",
+   "name": "Apoprotein",
+   "compartment": "m",
+   "formula": "NH2R",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_4280",
+    "r_4281"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3945",
+   "name": "Protein N6-(octanoyl)lysine",
+   "compartment": "m",
+   "formula": "C8H16NOR",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_4280",
+    "r_4323"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3946",
+   "name": "Lipoyl-[acp]",
+   "compartment": "m",
+   "formula": "C8H13OS3R",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_4281",
+    "r_4324"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3947",
+   "name": "Protein N6-(lipoyl)lysine",
+   "compartment": "m",
+   "formula": "C8H14NOS2R",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_4281",
+    "r_4323"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3994",
+   "name": "G10596",
+   "compartment": "er",
+   "formula": "C78H132N2O52P2R",
+   "charge": -2,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_4313",
+    "r_4316"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3995",
+   "name": "G10597",
+   "compartment": "er",
+   "formula": "C84H142N2O57P2R",
+   "charge": -2,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_4314",
+    "r_4316"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_4001",
+   "name": "G10598",
+   "compartment": "er",
+   "formula": "C96H162N2O67P2R",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_4320",
+    "r_4321"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_4004",
+   "name": "Sulfur donor",
+   "compartment": "m",
+   "formula": "",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_4323",
+    "r_4324"
+   ],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_4205",
+   "name": "cofactor",
+   "compartment": "c",
+   "formula": "",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_4041",
+    "r_4598"
+   ],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_4206",
+   "name": "ion",
+   "compartment": "c",
+   "formula": "",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_4041",
+    "r_4599"
+   ],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_4207",
+   "name": "trans-4-hydroxy-L-proline",
+   "compartment": "c",
+   "formula": "C5H9NO3",
+   "charge": 0,
+   "reason": "no_structure_available",
+   "n_reactions_blocked": 2,
+   "reactions_blocked": [
+    "r_0687",
+    "r_4760"
+   ],
+   "remedy": "a STRUCTURE is needed: a definite formula with no structure in any namespace and no writer that composes one from the name"
+  },
+  {
+   "met_id": "s_0084",
+   "name": "1-acylglycerophosphocholine",
+   "compartment": "e",
+   "formula": "C9H20NO7PR",
+   "charge": 1,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_1554"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_0331",
+   "name": "6-(N-acetyl-alpha-D-glucosaminyl)-1-phosphatidyl-1D-myo-inositol",
+   "compartment": "er",
+   "formula": "C19H30NO18PR2",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_0518"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_0332",
+   "name": "6-[6-(2-aminoethylphosphoryl)-alpha-mannosyl-(1->6)-2-(2-aminoethylphosphoryl)-alpha-mannosyl-(1->6)-alpha-2-(2-aminoethylphosphoryl)mannosyl-(1->4)-alpha-glucosaminyl]-O-acyl-1-phosphatidyl-1D-myo-inositol",
+   "compartment": "er",
+   "formula": "C43H44N9O",
+   "charge": 0,
+   "reason": "recorded_not_admitted",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_0523"
+   ],
+   "remedy": "a curated record EXISTS and its admission is computed or provisional, so it is reported and not priced; what it would take is a measured or tabulated source"
+  },
+  {
+   "met_id": "s_0429",
+   "name": "Arg-tRNA(Arg)",
+   "compartment": "m",
+   "formula": "C6H15N4OR",
+   "charge": 2,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_0210"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_0431",
+   "name": "Asn-tRNA(Asn)",
+   "compartment": "m",
+   "formula": "C4H8N2O2R",
+   "charge": 1,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_0213"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_0433",
+   "name": "Asp-tRNA(Asp)",
+   "compartment": "m",
+   "formula": "C4H6NO3R",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_0221"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_0620",
+   "name": "diglyceride backbone",
+   "compartment": "er",
+   "formula": "C3H4O",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_0523"
+   ],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_0672",
+   "name": "ergosterol ester backbone",
+   "compartment": "c",
+   "formula": "C28H42",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4063"
+   ],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_0713",
+   "name": "fMet-tRNA(fMet)",
+   "compartment": "m",
+   "formula": "C6H10NO2SR",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_0728"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_0749",
+   "name": "Glu-tRNA(Glu)",
+   "compartment": "m",
+   "formula": "C5H8NO3R",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_0480"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_0812",
+   "name": "heme o",
+   "compartment": "m",
+   "formula": "C49H56FeN4O5",
+   "charge": -2,
+   "reason": "group_decomposition_failed",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_0531"
+   ],
+   "remedy": "a DECOMPOSITION is needed: the structure exists and component contribution refuses it, so a pKa predictor changes nothing; monatomic ions are in this class and their energies are tabulated in the thermochemical literature rather than predicted"
+  },
+  {
+   "met_id": "s_0833",
+   "name": "His-tRNA(His)",
+   "compartment": "m",
+   "formula": "C6H9N3OR",
+   "charge": 1,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_0540"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_0848",
+   "name": "Ile-tRNA(Ile)",
+   "compartment": "m",
+   "formula": "C6H13NOR",
+   "charge": 1,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_0666"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1078",
+   "name": "Leu-tRNA(Leu)",
+   "compartment": "m",
+   "formula": "C6H13NOR",
+   "charge": 1,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_0702"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1100",
+   "name": "Lys-tRNA(Lys)",
+   "compartment": "m",
+   "formula": "C6H15N2OR",
+   "charge": 2,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_0712"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1315",
+   "name": "Phe-tRNA(Phe)",
+   "compartment": "m",
+   "formula": "C9H11NOR",
+   "charge": 1,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_0853"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1337",
+   "name": "phosphatidyl-L-serine backbone",
+   "compartment": "c",
+   "formula": "C6H10NO6P",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4063"
+   ],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_1346",
+   "name": "phosphatidylcholine backbone",
+   "compartment": "c",
+   "formula": "C8H16NO3P",
+   "charge": 1,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4063"
+   ],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_1351",
+   "name": "phosphatidylethanolamine backbone",
+   "compartment": "c",
+   "formula": "C5H10NO4P",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4063"
+   ],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_1430",
+   "name": "siroheme",
+   "compartment": "c",
+   "formula": "C42H36FeN4O16",
+   "charge": -8,
+   "reason": "group_decomposition_failed",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_0999"
+   ],
+   "remedy": "a DECOMPOSITION is needed: the structure exists and component contribution refuses it, so a pKa predictor changes nothing; monatomic ions are in this class and their energies are tabulated in the thermochemical literature rather than predicted"
+  },
+  {
+   "met_id": "s_1492",
+   "name": "Thr-tRNA(Thr)",
+   "compartment": "m",
+   "formula": "C4H9NO2R",
+   "charge": 1,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_1043"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1524",
+   "name": "triglyceride backbone",
+   "compartment": "c",
+   "formula": "C3H2",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4063"
+   ],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_1528",
+   "name": "Trp-tRNA(Trp)",
+   "compartment": "m",
+   "formula": "C11H12N2OR",
+   "charge": 1,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_1058"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1534",
+   "name": "Tyr-tRNA(Tyr)",
+   "compartment": "m",
+   "formula": "C9H11NO2R",
+   "charge": 1,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_1067"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1562",
+   "name": "Val-tRNA(Val)",
+   "compartment": "m",
+   "formula": "C5H11NOR",
+   "charge": 1,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_1090"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1584",
+   "name": "tRNA(Arg)",
+   "compartment": "m",
+   "formula": "RH",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_0210"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1586",
+   "name": "tRNA(Asn)",
+   "compartment": "m",
+   "formula": "RH",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_0213"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1588",
+   "name": "tRNA(Asp)",
+   "compartment": "m",
+   "formula": "RH",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_0221"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1592",
+   "name": "tRNA(Glu)",
+   "compartment": "m",
+   "formula": "RH",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_0480"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1595",
+   "name": "tRNA(His)",
+   "compartment": "m",
+   "formula": "RH",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_0540"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1597",
+   "name": "tRNA(Ile)",
+   "compartment": "m",
+   "formula": "RH",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_0666"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1599",
+   "name": "tRNA(Leu)",
+   "compartment": "m",
+   "formula": "RH",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_0702"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1601",
+   "name": "tRNA(Lys)",
+   "compartment": "m",
+   "formula": "RH",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_0712"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1603",
+   "name": "tRNA(Met)",
+   "compartment": "m",
+   "formula": "RH",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_0730"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1605",
+   "name": "tRNA(Phe)",
+   "compartment": "m",
+   "formula": "RH",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_0853"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1609",
+   "name": "tRNA(Thr)",
+   "compartment": "m",
+   "formula": "RH",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_1043"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1611",
+   "name": "tRNA(Trp)",
+   "compartment": "m",
+   "formula": "RH",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_1058"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1613",
+   "name": "tRNA(Tyr)",
+   "compartment": "m",
+   "formula": "RH",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_1067"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_1615",
+   "name": "tRNA(Val)",
+   "compartment": "m",
+   "formula": "RH",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_1090"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3714",
+   "name": "heme a",
+   "compartment": "c",
+   "formula": "C49H55FeN4O6",
+   "charge": -3,
+   "reason": "group_decomposition_failed",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4598"
+   ],
+   "remedy": "a DECOMPOSITION is needed: the structure exists and component contribution refuses it, so a pKa predictor changes nothing; monatomic ions are in this class and their energies are tabulated in the thermochemical literature rather than predicted"
+  },
+  {
+   "met_id": "s_3748",
+   "name": "Cytochrome c",
+   "compartment": "m",
+   "formula": "C40H40FeN6O6S2",
+   "charge": -2,
+   "reason": "placeholder_structure",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4152"
+   ],
+   "remedy": "nothing is possible: the only structure that resolves carries an attachment point, so the species is a residue inside a macromolecule rather than a molecule"
+  },
+  {
+   "met_id": "s_3749",
+   "name": "Apocytochrome c",
+   "compartment": "m",
+   "formula": "C6H10N2O2S2",
+   "charge": 0,
+   "reason": "placeholder_structure",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4152"
+   ],
+   "remedy": "nothing is possible: the only structure that resolves carries an attachment point, so the species is a residue inside a macromolecule rather than a molecule"
+  },
+  {
+   "met_id": "s_3754",
+   "name": "L-glutamyl-tRNA(Gln)",
+   "compartment": "m",
+   "formula": "C5H8NO3R",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4155"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3756",
+   "name": "Gln-tRNA(Gln)",
+   "compartment": "m",
+   "formula": "C5H10N2O2R",
+   "charge": 1,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4155"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3767",
+   "name": "N,N'-Chitobiosyldiphosphodolichol",
+   "compartment": "er",
+   "formula": "C36H64N2O17P2",
+   "charge": 0,
+   "reason": "group_in_null_space",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4159"
+   ],
+   "remedy": "a group NOBODY TRAINED ON: the structure decomposes and one of its groups is in the component-contribution null space, so the estimate has infinite variance. Different from a missing group definition: the group exists and no training compound carries it, so the remedy is a measurement of a compound that does, or a microspecies whose groups are covered"
+  },
+  {
+   "met_id": "s_3784",
+   "name": "(sulfur carrier)-H",
+   "compartment": "m",
+   "formula": "R",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4173"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3786",
+   "name": "(sulfur carrier)-SH",
+   "compartment": "m",
+   "formula": "SR",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4173"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3807",
+   "name": "L-methionine (S)-S-oxide",
+   "compartment": "c",
+   "formula": "C5H11NO3S",
+   "charge": 0,
+   "reason": "group_decomposition_failed",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4186"
+   ],
+   "remedy": "a DECOMPOSITION is needed: the structure exists and component contribution refuses it, so a pKa predictor changes nothing; monatomic ions are in this class and their energies are tabulated in the thermochemical literature rather than predicted"
+  },
+  {
+   "met_id": "s_3808",
+   "name": "tRNA(Pro)",
+   "compartment": "m",
+   "formula": "RH",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4187"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3809",
+   "name": "Pro-tRNA(Pro)",
+   "compartment": "m",
+   "formula": "C5H9NOR",
+   "charge": 1,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4187"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3816",
+   "name": "[cytochrome c]-L-lysine",
+   "compartment": "c",
+   "formula": "C6H13N2O",
+   "charge": 1,
+   "reason": "placeholder_structure",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4192"
+   ],
+   "remedy": "nothing is possible: the only structure that resolves carries an attachment point, so the species is a residue inside a macromolecule rather than a molecule"
+  },
+  {
+   "met_id": "s_3817",
+   "name": "[cytochrome c]-N6-methyl-L-lysine",
+   "compartment": "c",
+   "formula": "C7H15N2O",
+   "charge": 1,
+   "reason": "placeholder_structure",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4192"
+   ],
+   "remedy": "nothing is possible: the only structure that resolves carries an attachment point, so the species is a residue inside a macromolecule rather than a molecule"
+  },
+  {
+   "met_id": "s_3819",
+   "name": "L-lysine-[histone]",
+   "compartment": "n",
+   "formula": "C6H13N2OR2",
+   "charge": 1,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4193"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3821",
+   "name": "N6-methyl-L-lysine-[histone]",
+   "compartment": "n",
+   "formula": "C7H15N2OR2",
+   "charge": 1,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4193"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3826",
+   "name": "Ferricytochrome b5",
+   "compartment": "m",
+   "formula": "Fe",
+   "charge": 3,
+   "reason": "recorded_not_admitted",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4197"
+   ],
+   "remedy": "a curated record EXISTS and its admission is computed or provisional, so it is reported and not priced; what it would take is a measured or tabulated source"
+  },
+  {
+   "met_id": "s_3827",
+   "name": "Ferrocytochrome b5",
+   "compartment": "m",
+   "formula": "Fe",
+   "charge": 2,
+   "reason": "recorded_not_admitted",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4197"
+   ],
+   "remedy": "a curated record EXISTS and its admission is computed or provisional, so it is reported and not priced; what it would take is a measured or tabulated source"
+  },
+  {
+   "met_id": "s_3830",
+   "name": "RX",
+   "compartment": "er",
+   "formula": "RX",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4199"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3832",
+   "name": "HX",
+   "compartment": "er",
+   "formula": "X",
+   "charge": -1,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4199"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3833",
+   "name": "R-S-glutathione",
+   "compartment": "er",
+   "formula": "C10H16N3O6SR",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4199"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3834",
+   "name": "RX",
+   "compartment": "c",
+   "formula": "RX",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4200"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3835",
+   "name": "HX",
+   "compartment": "c",
+   "formula": "X",
+   "charge": -1,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4200"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3836",
+   "name": "R-S-glutathione",
+   "compartment": "c",
+   "formula": "C10H16N3O6SR",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4200"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3837",
+   "name": "L-Methionine S-oxide",
+   "compartment": "c",
+   "formula": "C5H11NO3S",
+   "charge": 0,
+   "reason": "group_decomposition_failed",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4202"
+   ],
+   "remedy": "a DECOMPOSITION is needed: the structure exists and component contribution refuses it, so a pKa predictor changes nothing; monatomic ions are in this class and their energies are tabulated in the thermochemical literature rather than predicted"
+  },
+  {
+   "met_id": "s_3842",
+   "name": "RX",
+   "compartment": "p",
+   "formula": "RX",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4207"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3844",
+   "name": "HX",
+   "compartment": "p",
+   "formula": "X",
+   "charge": -1,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4207"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3845",
+   "name": "R-S-glutathione",
+   "compartment": "p",
+   "formula": "C10H16N3O6SR",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4207"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3853",
+   "name": "R-S-Cysteinylglycine",
+   "compartment": "c",
+   "formula": "C5H9N2O3SR",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4215"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3854",
+   "name": "S-Substituted L-cysteine",
+   "compartment": "c",
+   "formula": "C3H6NO2SR",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4215"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3856",
+   "name": "Glycyl-tRNA(Ala)",
+   "compartment": "c",
+   "formula": "C2H5NOR",
+   "charge": 1,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4218"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3857",
+   "name": "D-tyrosyl-tRNA(Tyr)",
+   "compartment": "c",
+   "formula": "C9H11NO2R",
+   "charge": 1,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4219"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3859",
+   "name": "4-nitrophenyl phosphate",
+   "compartment": "c",
+   "formula": "C6H4NO6P",
+   "charge": -2,
+   "reason": "group_decomposition_failed",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4220"
+   ],
+   "remedy": "a DECOMPOSITION is needed: the structure exists and component contribution refuses it, so a pKa predictor changes nothing; monatomic ions are in this class and their energies are tabulated in the thermochemical literature rather than predicted"
+  },
+  {
+   "met_id": "s_3860",
+   "name": "4-nitrophenol",
+   "compartment": "c",
+   "formula": "C6H4NO3",
+   "charge": -1,
+   "reason": "group_decomposition_failed",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4220"
+   ],
+   "remedy": "a DECOMPOSITION is needed: the structure exists and component contribution refuses it, so a pKa predictor changes nothing; monatomic ions are in this class and their energies are tabulated in the thermochemical literature rather than predicted"
+  },
+  {
+   "met_id": "s_3876",
+   "name": "Protein C-terminal S-farnesyl-L-cysteine",
+   "compartment": "c",
+   "formula": "C20H32N2O3SR",
+   "charge": -1,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4233"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3877",
+   "name": "Protein C-terminal S-farnesyl-L-cysteine methyl ester",
+   "compartment": "c",
+   "formula": "C21H35N2O3SR",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4233"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3878",
+   "name": "1-phosphatidyl-1D-myo-inositol",
+   "compartment": "er",
+   "formula": "C11H16O13PR2",
+   "charge": -1,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4234"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3879",
+   "name": "G00143",
+   "compartment": "er",
+   "formula": "C19H29NO18PR2",
+   "charge": -1,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4234"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3884",
+   "name": "generic protein",
+   "compartment": "c",
+   "formula": "C2H4NOR",
+   "charge": 1,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4239"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3885",
+   "name": "L-Arginyl-protein",
+   "compartment": "c",
+   "formula": "C8H17N5O2R",
+   "charge": 2,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4239"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3887",
+   "name": "G00008",
+   "compartment": "er",
+   "formula": "C108H182N2O77P2R",
+   "charge": -2,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4253"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3889",
+   "name": "G00009",
+   "compartment": "er",
+   "formula": "C92H152N4O72R",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4241"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3893",
+   "name": "G01813",
+   "compartment": "er",
+   "formula": "C74H122N4O57R",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4242"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3894",
+   "name": "G00003",
+   "compartment": "er",
+   "formula": "C42H72N2O22P2R",
+   "charge": -2,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4243"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3900",
+   "name": "alpha-D-mannoside",
+   "compartment": "v",
+   "formula": "C6H11O6R",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4246"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3902",
+   "name": "non glycosylated sugar acceptor",
+   "compartment": "v",
+   "formula": "HOR",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4246"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3907",
+   "name": "phosphatidate",
+   "compartment": "m",
+   "formula": "C5H7O8PR2",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4251"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3908",
+   "name": "CDP-diacylglycerol",
+   "compartment": "m",
+   "formula": "C14H19N3O15P2R2",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4251"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3909",
+   "name": "Sulfur donor",
+   "compartment": "c",
+   "formula": "",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4252"
+   ],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_3917",
+   "name": "Apoprotein",
+   "compartment": "c",
+   "formula": "NH2R",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4258"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3918",
+   "name": "Protein N6-(lipoyl)lysine",
+   "compartment": "c",
+   "formula": "C8H14NOS2R",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4258"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3927",
+   "name": "ribonucleoside 5'-triphosphate",
+   "compartment": "c",
+   "formula": "C5H8O13P3R",
+   "charge": -4,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4265"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3928",
+   "name": "ribonucleoside 5'-phosphate",
+   "compartment": "c",
+   "formula": "C5H8O7PR",
+   "charge": -2,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4265"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3929",
+   "name": "2'-deoxyribonucleoside 5'-triphosphate",
+   "compartment": "c",
+   "formula": "C5H8O12P3R",
+   "charge": -4,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4269"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3930",
+   "name": "2'-deoxyribonucleoside 5'-phosphate",
+   "compartment": "c",
+   "formula": "C5H8O6PR",
+   "charge": -2,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4269"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3932",
+   "name": "G00012",
+   "compartment": "er",
+   "formula": "C50H82N4O37R",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4271"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3934",
+   "name": "Ethylnitronate",
+   "compartment": "c",
+   "formula": "C2H5NO2",
+   "charge": 0,
+   "reason": "group_decomposition_failed",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4273"
+   ],
+   "remedy": "a DECOMPOSITION is needed: the structure exists and component contribution refuses it, so a pKa predictor changes nothing; monatomic ions are in this class and their energies are tabulated in the thermochemical literature rather than predicted"
+  },
+  {
+   "met_id": "s_3937",
+   "name": "Acyl-CoA",
+   "compartment": "er",
+   "formula": "C22H31N7O17P3SR",
+   "charge": -4,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4277"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3938",
+   "name": "1-acyl-sn-glycerol 3-phosphate",
+   "compartment": "er",
+   "formula": "C4H6O7PR",
+   "charge": -2,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4277"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3939",
+   "name": "1,2-diacyl-sn-glycerol 3-phosphate",
+   "compartment": "er",
+   "formula": "C5H5O8PR2",
+   "charge": -2,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4277"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3941",
+   "name": "Peptide diphthamide",
+   "compartment": "c",
+   "formula": "C13H22N5O2R2",
+   "charge": 1,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4278"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3993",
+   "name": "G10595",
+   "compartment": "er",
+   "formula": "C72H122N2O47P2R",
+   "charge": -2,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4313"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_4002",
+   "name": "G00149",
+   "compartment": "er",
+   "formula": "C32H60N2O31P2R2",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4322"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_4003",
+   "name": "G00140",
+   "compartment": "er",
+   "formula": "C38H70N2O36P2R2",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4322"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_4006",
+   "name": "S-sulfanyl-[L-cysteine desulfurase]",
+   "compartment": "m",
+   "formula": "",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4325"
+   ],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_4007",
+   "name": "[disordered-form [Fe-S] cluster scaffold protein]",
+   "compartment": "m",
+   "formula": "",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4325"
+   ],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_4008",
+   "name": "S-sulfanyl-[cysteine desulfurase]-[disordered-form scaffold protein] complex",
+   "compartment": "m",
+   "formula": "",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4325"
+   ],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_4028",
+   "name": "RX",
+   "compartment": "m",
+   "formula": "RX",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4201"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_4029",
+   "name": "HX",
+   "compartment": "m",
+   "formula": "X",
+   "charge": -1,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4201"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_4030",
+   "name": "R-S-glutathione",
+   "compartment": "m",
+   "formula": "C10H16N3O6SR",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4201"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_4032",
+   "name": "[protein]-L-lysine",
+   "compartment": "c",
+   "formula": "C6H13N2O",
+   "charge": 1,
+   "reason": "placeholder_structure",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4340"
+   ],
+   "remedy": "nothing is possible: the only structure that resolves carries an attachment point, so the species is a residue inside a macromolecule rather than a molecule"
+  },
+  {
+   "met_id": "s_4033",
+   "name": "[protein]-N(6)-acetyl-L-lysine",
+   "compartment": "c",
+   "formula": "C8H14N2O2",
+   "charge": 0,
+   "reason": "placeholder_structure",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4340"
+   ],
+   "remedy": "nothing is possible: the only structure that resolves carries an attachment point, so the species is a residue inside a macromolecule rather than a molecule"
+  },
+  {
+   "met_id": "s_4098",
+   "name": "triphosphate",
+   "compartment": "c",
+   "formula": "O10P3",
+   "charge": -5,
+   "reason": "group_decomposition_failed",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4403"
+   ],
+   "remedy": "a DECOMPOSITION is needed: the structure exists and component contribution refuses it, so a pKa predictor changes nothing; monatomic ions are in this class and their energies are tabulated in the thermochemical literature rather than predicted"
+  },
+  {
+   "met_id": "s_4099",
+   "name": "triphosphate",
+   "compartment": "e",
+   "formula": "O10P3",
+   "charge": -5,
+   "reason": "group_decomposition_failed",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4528"
+   ],
+   "remedy": "a DECOMPOSITION is needed: the structure exists and component contribution refuses it, so a pKa predictor changes nothing; monatomic ions are in this class and their energies are tabulated in the thermochemical literature rather than predicted"
+  },
+  {
+   "met_id": "s_4176",
+   "name": "L-Methionine S-oxide",
+   "compartment": "e",
+   "formula": "C5H11NO3S",
+   "charge": 0,
+   "reason": "group_decomposition_failed",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4550"
+   ],
+   "remedy": "a DECOMPOSITION is needed: the structure exists and component contribution refuses it, so a pKa predictor changes nothing; monatomic ions are in this class and their energies are tabulated in the thermochemical literature rather than predicted"
+  },
+  {
+   "met_id": "s_4209",
+   "name": "Ferrocytochrome b5",
+   "compartment": "erm",
+   "formula": "",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4196"
+   ],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_4210",
+   "name": "Ferricytochrome b5",
+   "compartment": "erm",
+   "formula": "",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4196"
+   ],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_4265",
+   "name": "alkanesulfonate",
+   "compartment": "c",
+   "formula": "CH3O3SR",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4706"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_4266",
+   "name": "alkanesulfonate",
+   "compartment": "e",
+   "formula": "CH3O3SR",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4709"
+   ],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_4295",
+   "name": "dimethylallyl phosphate",
+   "compartment": "m",
+   "formula": "C5H9O4P",
+   "charge": -2,
+   "reason": "no_structure_available",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4754"
+   ],
+   "remedy": "a STRUCTURE is needed: a definite formula with no structure in any namespace and no writer that composes one from the name"
+  },
+  {
+   "met_id": "s_4313",
+   "name": "ITP",
+   "compartment": "m",
+   "formula": "C10H11N4O14P3",
+   "charge": -4,
+   "reason": "no_structure_available",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4776"
+   ],
+   "remedy": "a STRUCTURE is needed: a definite formula with no structure in any namespace and no writer that composes one from the name"
+  },
+  {
+   "met_id": "s_4332",
+   "name": "heme a",
+   "compartment": "e",
+   "formula": "C49H55FeN4O6",
+   "charge": -3,
+   "reason": "group_decomposition_failed",
+   "n_reactions_blocked": 1,
+   "reactions_blocked": [
+    "r_4780"
+   ],
+   "remedy": "a DECOMPOSITION is needed: the structure exists and component contribution refuses it, so a pKa predictor changes nothing; monatomic ions are in this class and their energies are tabulated in the thermochemical literature rather than predicted"
+  },
+  {
+   "met_id": "s_0811",
+   "name": "heme a",
+   "compartment": "m",
+   "formula": "C49H55FeN4O6",
+   "charge": -3,
+   "reason": "group_decomposition_failed",
+   "n_reactions_blocked": 0,
+   "reactions_blocked": [],
+   "remedy": "a DECOMPOSITION is needed: the structure exists and component contribution refuses it, so a pKa predictor changes nothing; monatomic ions are in this class and their energies are tabulated in the thermochemical literature rather than predicted"
+  },
+  {
+   "met_id": "s_3722",
+   "name": "ceramide backbone",
+   "compartment": "c",
+   "formula": "HNO2",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 0,
+   "reactions_blocked": [],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_3723",
+   "name": "inositol phosphomannosylinositol phosphoceramide backbone",
+   "compartment": "c",
+   "formula": "C18H33NO23P2",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 0,
+   "reactions_blocked": [],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_3724",
+   "name": "inositol-P-ceramide backbone",
+   "compartment": "c",
+   "formula": "C6H12NO10P",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 0,
+   "reactions_blocked": [],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_3725",
+   "name": "mannosylinositol phosphorylceramide backbone",
+   "compartment": "c",
+   "formula": "C12H22NO15P",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 0,
+   "reactions_blocked": [],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_3729",
+   "name": "long-chain base phosphate backbone",
+   "compartment": "c",
+   "formula": "H3NO3P",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 0,
+   "reactions_blocked": [],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_3731",
+   "name": "phosphatidate backbone",
+   "compartment": "c",
+   "formula": "C3H5O4P",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 0,
+   "reactions_blocked": [],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_3733",
+   "name": "diglyceride backbone",
+   "compartment": "c",
+   "formula": "C3H4O",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 0,
+   "reactions_blocked": [],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_3735",
+   "name": "sn-2-acyl-1-lysophosphatidylinositol backbone",
+   "compartment": "c",
+   "formula": "C9H11O10P",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 0,
+   "reactions_blocked": [],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_3737",
+   "name": "phosphatidylglycerol backbone",
+   "compartment": "c",
+   "formula": "C6H11O6P",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 0,
+   "reactions_blocked": [],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_3739",
+   "name": "cardiolipin backbone",
+   "compartment": "c",
+   "formula": "C9H14O9P2",
+   "charge": 0,
+   "reason": "pseudo_metabolite",
+   "n_reactions_blocked": 0,
+   "reactions_blocked": [],
+   "remedy": "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule"
+  },
+  {
+   "met_id": "s_3985",
+   "name": "phospholipid",
+   "compartment": "erm",
+   "formula": "C5H6O8PR3",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 0,
+   "reactions_blocked": [],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_3986",
+   "name": "phospholipid",
+   "compartment": "gm",
+   "formula": "C5H6O8PR3",
+   "charge": 0,
+   "reason": "placeholder_formula",
+   "n_reactions_blocked": 0,
+   "reactions_blocked": [],
+   "remedy": "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it"
+  },
+  {
+   "met_id": "s_4022",
+   "name": "porphyrin",
+   "compartment": "m",
+   "formula": "C20H14N4",
+   "charge": 0,
+   "reason": "group_decomposition_failed",
+   "n_reactions_blocked": 0,
+   "reactions_blocked": [],
+   "remedy": "a DECOMPOSITION is needed: the structure exists and component contribution refuses it, so a pKa predictor changes nothing; monatomic ions are in this class and their energies are tabulated in the thermochemical literature rather than predicted"
+  },
+  {
+   "met_id": "s_4023",
+   "name": "porphyrin",
+   "compartment": "c",
+   "formula": "C20H14N4",
+   "charge": 0,
+   "reason": "group_decomposition_failed",
+   "n_reactions_blocked": 0,
+   "reactions_blocked": [],
+   "remedy": "a DECOMPOSITION is needed: the structure exists and component contribution refuses it, so a pKa predictor changes nothing; monatomic ions are in this class and their energies are tabulated in the thermochemical literature rather than predicted"
+  }
+ ]
+}

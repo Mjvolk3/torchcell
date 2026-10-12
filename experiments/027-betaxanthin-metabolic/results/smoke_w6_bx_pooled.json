@@ -1,0 +1,145 @@
+{
+  "cell": {
+    "arm": "pooled",
+    "base_arm": "pooled",
+    "seed": 9001,
+    "permute_train_targets": false,
+    "epochs": 2,
+    "hidden": 90,
+    "layers": 2,
+    "attention_heads": 9,
+    "batch_size": 128,
+    "num_workers": 2,
+    "lr": 0.001,
+    "weight_decay": 0.0001,
+    "split_seed": 0,
+    "select_smoothing_window": 5,
+    "crps": true,
+    "graph_reg": true,
+    "abort_on_collapse": false,
+    "aux_mulleder": false,
+    "attention_mask": false,
+    "learnable_embedding": false,
+    "pert_heads": 6,
+    "kcat_tier": "measured",
+    "thermo_source": "shipped",
+    "constraint_warmup_epochs": 0,
+    "constraint_scale": 1.0,
+    "constraint_delay_epochs": 0,
+    "head_normalize": false,
+    "head": "betaxanthin"
+  },
+  "select_epoch": 1,
+  "select_rule": "raw_argmax_short_run",
+  "select_val_pearson": 0.03134835511445999,
+  "test": {
+    "pinned": {
+      "n": 629,
+      "spearman": 0.06420810517168389,
+      "pearson": 0.05273730307817459,
+      "top10": {
+        "hits": 1.0,
+        "enrichment": 0.9984126984126984
+      },
+      "top25": {
+        "hits": 3.0,
+        "enrichment": 1.198095238095238
+      },
+      "top50": {
+        "hits": 6.0,
+        "enrichment": 1.198095238095238
+      }
+    },
+    "all": {
+      "n": 905,
+      "spearman": 0.018956035343089185,
+      "pearson": 0.0201241634786129,
+      "top10": {
+        "hits": 2.0,
+        "enrichment": 2.0111111111111115
+      },
+      "top25": {
+        "hits": 4.0,
+        "enrichment": 1.608888888888889
+      },
+      "top50": {
+        "hits": 5.0,
+        "enrichment": 1.0055555555555558
+      }
+    }
+  },
+  "history": [
+    {
+      "epoch": 0,
+      "train_loss": 1.5122424857369785,
+      "train_data_loss": 0.5399796335861601,
+      "val_loss": 0.5185200726544416,
+      "val_pearson": -0.006040981970727444,
+      "val_pred_sd_ratio": 1.9888368115061894e-05,
+      "n_val": 270,
+      "graph_reg_loss": 0.9704625606536865,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 1,
+      "train_loss": 1.4737779272013698,
+      "train_data_loss": 0.5317955746732909,
+      "val_loss": 0.5049910015530057,
+      "val_pearson": 0.03134835511445999,
+      "val_pred_sd_ratio": 0.0001721629814710468,
+      "n_val": 270,
+      "graph_reg_loss": 0.8289814591407776,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    }
+  ],
+  "flux_meta": {},
+  "pinned_split": {
+    "path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/020-cachera-betaxanthin/results/merzbacher_nested_split.json",
+    "requested": 639,
+    "found": 639,
+    "absent": [],
+    "records": 639,
+    "fraction_of_dataset": 0.12961460446247464
+  },
+  "n_parameters": {
+    "gene_embedding": 0,
+    "embedding_preprocessor": 622439,
+    "cls_token": 90,
+    "transformer_layers": 196740,
+    "perturbation_transform": 98370,
+    "perturbation_head": 16381,
+    "betaxanthin_head": 24572,
+    "total": 958592
+  },
+  "wall_time_s": 139.59467220306396,
+  "code_provenance": {
+    "train_bx.py": "9ab493d958ab7332b402d0144c56845c7501b792e521dc9ffb8a56de36e9d322",
+    "train_bx.py_path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/027-betaxanthin-metabolic/scripts/train_bx.py",
+    "flux_layer.py": "5cfa3d01b59168086806c204c13fd96ae31d59e744916aea8b4fa51cb91515cf",
+    "flux_layer.py_path": "/scratch/projects/torchcell-scratch/frozen-027-wave6/torchcell/metabolism/flux_layer.py"
+  },
+  "feasibility": {
+    "available": false,
+    "reason": "arm 'pooled' has no flux layer, so there is no flux vector and neither mass balance nor the second law is defined for it. Reported as null rather than as zero violations.",
+    "definitions": {
+      "balance_median_ratio": "median over the independent rows i of S of |(Sv)_i| / (omega_i + balance_epsilon), with omega_i = 0.5 sum_j |S_ij v_j| the layer's own turnover. This is FluxLayer.forward's feas_balance_median, per sample instead of batch-reduced.",
+      "balance_max_ratio": "the same ratio, maximized over the independent rows.",
+      "box_violation_frac": "fraction of the 4,131 reactions with v > ub + 1e-4 or v < lb - 1e-4, where (lb, ub) is FluxLayer.dynamic_box at this sample's availability and abundance. The box parameterization satisfies this by construction, so a nonzero value is a bug rather than an infeasibility.",
+      "thermo_model_violation_frac": "fraction of active reactions (delta_r_g0_mask and not thermo_exempt) with v * delta_r_G > thermo_epsilon, using the layer's OWN delta_r_G from reaction_potential, which includes the learned concentration term. Available only when the arm's thermo_mode is not OFF.",
+      "thermo_model_uphill_frac": "mean over active reactions of relu(v dG + eps) / (|v||dG| + eps), the per-sample form of the layer's c_thermo. Available only when thermo_mode is not OFF.",
+      "thermo_standard_state_violation_frac": "fraction of active reactions with v * (delta_r_G0 + delta_r_G_transport) > thermo_epsilon. An AUDIT REFERENCE, not the layer's own term: it evaluates the second law at standard state because an arm with thermo_mode OFF learns no concentrations, so the concentration term RT S^T ln c is absent rather than zero.",
+      "thermo_standard_state_uphill_frac": "the same standard-state driving force in the c_thermo normalization.",
+      "fractions": "fraction of the genotypes in the group meeting each named criterion. 'both_balance_le_1e-02_and_<thermo>_eq_0' is the Genesis criterion: mass balance within 1 percent and no uphill active reaction.",
+      "rank_by": "top-100 groups are the 100 genotypes with the HIGHEST predicted betaxanthin (denormalized head mean), i.e. the strains the model nominates as producers."
+    },
+    "tolerances": {},
+    "n_independent_balance_rows": null,
+    "n_reactions_second_law_applied": null,
+    "thermo_mode": null,
+    "thermo_source": null,
+    "groups": {}
+  },
+  "checkpoint_path": "/scratch/tmp/claude-1000/-home-michaelvolk-Documents-projects-torchcell/3f011fa7-9349-40ff-ba31-dd7e7abef90a/scratchpad/checkpoints-smoke2/smoke_w6_bx_pooled.pt"
+}

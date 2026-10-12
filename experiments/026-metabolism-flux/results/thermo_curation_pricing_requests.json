@@ -1,0 +1,57 @@
+{
+ "built_at": "2026-09-12T00:20:23.255909+00:00",
+ "curation_dir": "experiments/026-metabolism-flux/results/curation",
+ "n_requests": 3,
+ "requests_digest": "44f5647e6c1cc14422aa2a806062325cd908a12a61c5e1ecbb754cc9b5913ab0",
+ "requests": [
+  {
+   "smiles": "CC(=O)N[C@H]1[C@@H](OP(=O)(O)OP(=O)(O)OCCC(C)CC/C=C(\\C)CC/C=C(\\C)CCC=C(C)C)O[C@H](CO)[C@@H](O[C@@H]2O[C@H](CO)[C@@H](O)[C@H](O)[C@H]2NC(C)=O)[C@@H]1O",
+   "pkas": [
+    13.43,
+    12.78,
+    5.85,
+    5.25,
+    3.19,
+    1.74
+   ],
+   "p_h": 7.1,
+   "ionic_strength_m": 0.25,
+   "temperature_k": 303.15,
+   "p_mg": 3.0,
+   "slugs": [
+    "chitobiosyl_pp_dolichol"
+   ],
+   "met_ids": [
+    "s_3767"
+   ]
+  },
+  {
+   "smiles": "CCN(=O)=O",
+   "pkas": [],
+   "p_h": 7.2,
+   "ionic_strength_m": 0.25,
+   "temperature_k": 303.15,
+   "p_mg": 3.0,
+   "slugs": [
+    "ethylnitronate"
+   ],
+   "met_ids": [
+    "s_3934"
+   ]
+  },
+  {
+   "smiles": "[O-]c1ccc(cc1)N(=O)=O",
+   "pkas": [],
+   "p_h": 7.2,
+   "ionic_strength_m": 0.25,
+   "temperature_k": 303.15,
+   "p_mg": 3.0,
+   "slugs": [
+    "nitrophenyl_phosphate"
+   ],
+   "met_ids": [
+    "s_3860"
+   ]
+  }
+ ]
+}

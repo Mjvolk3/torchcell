@@ -1,0 +1,162 @@
+{
+ "built_at": "2026-09-09T21:34:59.614900+00:00",
+ "tool": "pkasolver-lite",
+ "conditions": {
+  "p_h": 7.2,
+  "ionic_strength_m": 0.25,
+  "temperature_k": 303.15,
+  "p_mg": 3.0
+ },
+ "n_targets": 9,
+ "n_already_in_cache": 3,
+ "n_no_structure": 1,
+ "n_attempted_creation": 5,
+ "n_priced": 5,
+ "n_failed_group_decomposition": 2,
+ "n_failed_other": 1,
+ "targets": [
+  {
+   "key": "betaxanthin:leucodopachrome",
+   "name": "leucodopachrome",
+   "route": "already_in_cache_by_inchikey",
+   "smiles": "C1[C@H](NC2=CC(=C(C=C21)O)O)C(=O)O",
+   "predicted_pkas": [],
+   "compound_id": 2121,
+   "has_group_vector": true,
+   "n_microspecies": 5,
+   "dgf_prime_kj_per_mol": -233.01224289381292,
+   "sigma_kj_per_mol": 8.788341109135953,
+   "outcome": "priced",
+   "detail": "ok"
+  },
+  {
+   "key": "betaxanthin:betanidin",
+   "name": "betanidin",
+   "route": "already_in_cache_by_inchikey",
+   "smiles": "C1[C@H](N=C(C=C1/C=C/N2[C@@H](CC3=CC(=C(C=C32)O)O)C(=O)O)C(=O)O)C(=O)O",
+   "predicted_pkas": [],
+   "compound_id": 32385,
+   "has_group_vector": true,
+   "n_microspecies": 6,
+   "dgf_prime_kj_per_mol": -394.94399273673685,
+   "sigma_kj_per_mol": 8.555283745194007,
+   "outcome": "priced",
+   "detail": "ok"
+  },
+  {
+   "key": "betaxanthin:betalamic acid",
+   "name": "betalamic acid",
+   "route": "already_in_cache_by_inchikey",
+   "smiles": "C\\1[C@H](NC(=C/C1=C/C=O)C(=O)O)C(=O)O",
+   "predicted_pkas": [],
+   "compound_id": 1874,
+   "has_group_vector": true,
+   "n_microspecies": 4,
+   "dgf_prime_kj_per_mol": -365.9838393748657,
+   "sigma_kj_per_mol": 8.48999762704451,
+   "outcome": "priced",
+   "detail": "ok"
+  },
+  {
+   "key": "audit:ferroheme b",
+   "name": "ferroheme b",
+   "route": "external_pka",
+   "smiles": "C=CC1=C(C)C2=CC3=C(C=C)C(C)=C4C=C5C(C)=C(CCC(=O)[O-])C6=[N+]5[Fe-2]5(N7C(=CC1=[N+]25)C(C)=C(CCC(=O)[O-])C7=C6)N43",
+   "predicted_pkas": [
+    3.3938636112213136,
+    3.3009616470336915
+   ],
+   "compound_id": null,
+   "has_group_vector": null,
+   "n_microspecies": null,
+   "dgf_prime_kj_per_mol": null,
+   "sigma_kj_per_mol": null,
+   "outcome": "failed_group_decomposition",
+   "detail": "method=empty status=failed"
+  },
+  {
+   "key": "audit:phosphatidylethanolamine (1-16:1, 2-16:1)",
+   "name": "phosphatidylethanolamine (1-16:1, 2-16:1)",
+   "route": "external_pka",
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC[C@H](COP(=O)([O-])OCC[NH3+])OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "predicted_pkas": [
+    9.176300086975097,
+    7.220053882598877
+   ],
+   "compound_id": 694325,
+   "has_group_vector": true,
+   "n_microspecies": 3,
+   "dgf_prime_kj_per_mol": 1967.930678541387,
+   "sigma_kj_per_mol": 12.622329359518005,
+   "outcome": "priced",
+   "detail": "ok"
+  },
+  {
+   "key": "audit:1-acylglycerophosphoethanolamine (16:1)",
+   "name": "1-acylglycerophosphoethanolamine (16:1)",
+   "route": "no_structure",
+   "smiles": null,
+   "predicted_pkas": [],
+   "compound_id": null,
+   "has_group_vector": null,
+   "n_microspecies": null,
+   "dgf_prime_kj_per_mol": null,
+   "sigma_kj_per_mol": null,
+   "outcome": "no_structure_in_any_namespace",
+   "detail": null
+  },
+  {
+   "key": "audit:superoxide",
+   "name": "superoxide",
+   "route": "external_pka",
+   "smiles": "[O][O-]",
+   "predicted_pkas": [],
+   "compound_id": null,
+   "has_group_vector": null,
+   "n_microspecies": null,
+   "dgf_prime_kj_per_mol": null,
+   "sigma_kj_per_mol": null,
+   "outcome": "compound_creation_raised",
+   "detail": "MissingPKasError: pkas_provided_externally=True requires specified_pkas for every structure, but 1 of 1 are missing: ['[O][O-]']"
+  },
+  {
+   "key": "audit:N-(4-oxoglutarate)-L-cysteinylglycine",
+   "name": "N-(4-oxoglutarate)-L-cysteinylglycine",
+   "route": "external_pka",
+   "smiles": "O=C([O-])CNC(=O)[C@H](CS)NC(=O)CCC(=O)C(=O)[O-]",
+   "predicted_pkas": [
+    6.84884690284729,
+    6.532162742614746,
+    6.46652382850647,
+    5.6501337432861325,
+    5.607294406890869,
+    5.466563606262207,
+    4.192352333068848,
+    2.9871950817108153
+   ],
+   "compound_id": 694326,
+   "has_group_vector": true,
+   "n_microspecies": 9,
+   "dgf_prime_kj_per_mol": -539.6496464424988,
+   "sigma_kj_per_mol": 4.581527438393985,
+   "outcome": "priced",
+   "detail": "ok"
+  },
+  {
+   "key": "audit:methionyl acetate",
+   "name": "methionyl acetate",
+   "route": "external_pka",
+   "smiles": "CC(=O)OC(=O)C(CCSC)N",
+   "predicted_pkas": [
+    7.871563549041748
+   ],
+   "compound_id": null,
+   "has_group_vector": null,
+   "n_microspecies": null,
+   "dgf_prime_kj_per_mol": null,
+   "sigma_kj_per_mol": null,
+   "outcome": "failed_group_decomposition",
+   "detail": "method=empty status=failed"
+  }
+ ]
+}

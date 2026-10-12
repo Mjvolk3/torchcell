@@ -1,0 +1,105 @@
+{
+  "protocol": "transductive node classification on one gene graph, no perturbation; class-weighted BCE, Adam 1e-3, 200 epochs, width 64, dropout 0.2; epoch selected by a five-epoch moving average of the validation AUROC; scored once on the 195 held-out genes",
+  "rows": [
+    {
+      "model": "RGCN",
+      "graph": "nine typed",
+      "inputs": "GO (400 epochs)",
+      "dim_in": 2362,
+      "n_parameters": 776585,
+      "test_auroc": [
+        0.8310385523210071,
+        0.8290715971675846,
+        0.869394177812746
+      ],
+      "val_auroc": [
+        0.8372932330827068,
+        0.8270676691729324,
+        0.8312781954887218
+      ],
+      "select_epoch": [
+        101,
+        149,
+        91
+      ],
+      "mean": 0.8431681091004459,
+      "sd": 0.01856200848005782,
+      "seconds": 425.0715227127075
+    },
+    {
+      "model": "RGAT",
+      "graph": "nine typed",
+      "inputs": "GO (400 epochs)",
+      "dim_in": 2362,
+      "n_parameters": 2799425,
+      "test_auroc": [
+        0.8355625491738788,
+        0.8430369787568843,
+        0.8577891424075531
+      ],
+      "val_auroc": [
+        0.8649624060150376,
+        0.8360902255639098,
+        0.8586466165413533
+      ],
+      "select_epoch": [
+        34,
+        56,
+        25
+      ],
+      "mean": 0.8454628901127722,
+      "sd": 0.00923468628320322,
+      "seconds": 272.1625061035156
+    },
+    {
+      "model": "GCN",
+      "graph": "union of nine",
+      "inputs": "GO+pathways (400 epochs)",
+      "dim_in": 2535,
+      "n_parameters": 166529,
+      "test_auroc": [
+        0.9063729346970889,
+        0.9008654602675059,
+        0.9047993705743509
+      ],
+      "val_auroc": [
+        0.8225563909774436,
+        0.8204511278195489,
+        0.8297744360902255
+      ],
+      "select_epoch": [
+        388,
+        396,
+        397
+      ],
+      "mean": 0.9040125885129818,
+      "sd": 0.0023162236733091576,
+      "seconds": 42.594364404678345
+    },
+    {
+      "model": "GraphSAGE",
+      "graph": "union of nine",
+      "inputs": "GO (400 epochs)",
+      "dim_in": 2362,
+      "n_parameters": 310721,
+      "test_auroc": [
+        0.8223839496459481,
+        0.8239575137686861,
+        0.8241542092840283
+      ],
+      "val_auroc": [
+        0.8171428571428572,
+        0.8150375939849624,
+        0.8439097744360902
+      ],
+      "select_epoch": [
+        307,
+        380,
+        394
+      ],
+      "mean": 0.8234985575662209,
+      "sd": 0.0007922269848934156,
+      "seconds": 247.146253824234
+    }
+  ]
+}

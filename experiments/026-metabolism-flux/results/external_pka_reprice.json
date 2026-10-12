@@ -1,0 +1,263 @@
+{
+ "built_at": "2026-09-10T19:17:45.968220+00:00",
+ "conditions": {
+  "p_h": 7.2,
+  "ionic_strength_m": 0.25,
+  "temperature_k": 303.15,
+  "p_mg": 3.0
+ },
+ "local_cache_path": "/scratch/projects/torchcell-scratch/tmp/external_pka_reprice_input.sqlite",
+ "local_cache_ph7_path": "/scratch/projects/torchcell-scratch/tmp/external_pka_reprice_ph7.sqlite",
+ "n_targets": 12,
+ "n_priced_both_ways": 9,
+ "residual_input_summary": {
+  "n": 7.0,
+  "mean": -777.5124899375335,
+  "median": -776.1056692149123,
+  "min": -782.8443081609462,
+  "max": -776.1022598941331,
+  "mean_abs": 777.5124899375335
+ },
+ "residual_ph7_summary": {
+  "n": 7.0,
+  "mean": 0.12788348246704118,
+  "median": 0.14371137201260353,
+  "min": 0.07453044279009191,
+  "max": 0.1471206927917592,
+  "mean_abs": 0.12788348246704118
+ },
+ "benchmark_reference_sensitivity": {
+  "n": 284.0,
+  "n_reference_differs": 193.0,
+  "max_abs_change_kj_per_mol": 46.94576210534842,
+  "mean_abs_change_kj_per_mol": 5.41259564468434
+ },
+ "targets": [
+  {
+   "key": "audit:ferroheme b",
+   "name": "ferroheme b",
+   "source": "pilot",
+   "input_smiles": "C=CC1=C(C)C2=CC3=C(C=C)C(C)=C4C=C5C(C)=C(CCC(=O)[O-])C6=[N+]5[Fe-2]5(N7C(=CC1=[N+]25)C(C)=C(CCC(=O)[O-])C7=C6)N43",
+   "ph7_smiles": "C=CC1=C(C)C2=Cc3c(C=C)c(C)c4n3[Fe-2]35n6c(c(C)c(CCC(=O)[O-])c6=CC6=[N+]3C(=C4)C(C)=C6CCC(=O)[O-])=CC1=[N+]25",
+   "pkas": [
+    3.3938636112213136,
+    3.3009616470336915
+   ],
+   "dgf_prime_from_input_kj_per_mol": null,
+   "dgf_prime_from_ph7_kj_per_mol": null,
+   "dgf_prime_cache_kj_per_mol": null,
+   "residual_input_kj_per_mol": null,
+   "residual_ph7_kj_per_mol": null,
+   "convention_shift_kj_per_mol": null,
+   "detail": "input method=empty status=failed; ph7 method=empty status=failed"
+  },
+  {
+   "key": "audit:phosphatidylethanolamine (1-16:1, 2-16:1)",
+   "name": "phosphatidylethanolamine (1-16:1, 2-16:1)",
+   "source": "pilot",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC[C@H](COP(=O)([O-])OCC[NH3+])OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC[C@H](COP(=O)([O-])OCC[NH3+])OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "pkas": [
+    9.176300086975097,
+    7.220053882598877
+   ],
+   "dgf_prime_from_input_kj_per_mol": 1967.930678541387,
+   "dgf_prime_from_ph7_kj_per_mol": 1967.930678541387,
+   "dgf_prime_cache_kj_per_mol": null,
+   "residual_input_kj_per_mol": null,
+   "residual_ph7_kj_per_mol": null,
+   "convention_shift_kj_per_mol": 0.0,
+   "detail": "input compound_id=694325; ph7 compound_id=694325"
+  },
+  {
+   "key": "audit:superoxide",
+   "name": "superoxide",
+   "source": "pilot",
+   "input_smiles": "[O][O-]",
+   "ph7_smiles": null,
+   "pkas": [],
+   "dgf_prime_from_input_kj_per_mol": null,
+   "dgf_prime_from_ph7_kj_per_mol": null,
+   "dgf_prime_cache_kj_per_mol": null,
+   "residual_input_kj_per_mol": null,
+   "residual_ph7_kj_per_mol": null,
+   "convention_shift_kj_per_mol": null,
+   "detail": "no pKa in (0, 14); the bridge cannot express an empty list"
+  },
+  {
+   "key": "audit:N-(4-oxoglutarate)-L-cysteinylglycine",
+   "name": "N-(4-oxoglutarate)-L-cysteinylglycine",
+   "source": "pilot",
+   "input_smiles": "O=C([O-])CNC(=O)[C@H](CS)NC(=O)CCC(=O)C(=O)[O-]",
+   "ph7_smiles": "O=C([O-])CNC(=O)[C@H](CS)NC(=O)CCC(=O)C(=O)[O-]",
+   "pkas": [
+    6.84884690284729,
+    6.532162742614746,
+    6.46652382850647,
+    5.6501337432861325,
+    5.607294406890869,
+    5.466563606262207,
+    4.192352333068848,
+    2.9871950817108153
+   ],
+   "dgf_prime_from_input_kj_per_mol": -539.6496464424988,
+   "dgf_prime_from_ph7_kj_per_mol": -539.6496464424988,
+   "dgf_prime_cache_kj_per_mol": null,
+   "residual_input_kj_per_mol": null,
+   "residual_ph7_kj_per_mol": null,
+   "convention_shift_kj_per_mol": 0.0,
+   "detail": "input compound_id=694326; ph7 compound_id=694326"
+  },
+  {
+   "key": "audit:methionyl acetate",
+   "name": "methionyl acetate",
+   "source": "pilot",
+   "input_smiles": "CC(=O)OC(=O)C(CCSC)N",
+   "ph7_smiles": "CSCCC([NH3+])C(=O)OC(C)=O",
+   "pkas": [
+    7.871563549041748
+   ],
+   "dgf_prime_from_input_kj_per_mol": null,
+   "dgf_prime_from_ph7_kj_per_mol": null,
+   "dgf_prime_cache_kj_per_mol": null,
+   "residual_input_kj_per_mol": null,
+   "residual_ph7_kj_per_mol": null,
+   "convention_shift_kj_per_mol": null,
+   "detail": "input method=empty status=failed; ph7 method=empty status=failed"
+  },
+  {
+   "key": "lipid:phosphatidyl-N,N-dimethylethanolamine (1-16:0, 2-18:1)",
+   "name": "phosphatidyl-N,N-dimethylethanolamine (1-16:0, 2-18:1)",
+   "source": "lipid",
+   "input_smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OCCN(C)C",
+   "ph7_smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)([O-])OCC[NH+](C)C",
+   "pkas": [
+    9.23219108581543,
+    9.027311325073242,
+    8.84673023223877,
+    1.226935863494873
+   ],
+   "dgf_prime_from_input_kj_per_mol": 3157.864562072404,
+   "dgf_prime_from_ph7_kj_per_mol": 2374.945723468668,
+   "dgf_prime_cache_kj_per_mol": 2375.020253911458,
+   "residual_input_kj_per_mol": -782.8443081609462,
+   "residual_ph7_kj_per_mol": 0.07453044279009191,
+   "convention_shift_kj_per_mol": -782.9188386037363,
+   "detail": "input compound_id=694327; ph7 compound_id=694327"
+  },
+  {
+   "key": "lipid:phosphatidyl-N-methylethanolamine (1-16:0, 2-18:1)",
+   "name": "phosphatidyl-N-methylethanolamine (1-16:0, 2-18:1)",
+   "source": "lipid",
+   "input_smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OCCNC",
+   "ph7_smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)([O-])OCC[NH2+]C",
+   "pkas": [
+    9.193157196044922,
+    9.005382537841797,
+    1.2405985593795776
+   ],
+   "dgf_prime_from_input_kj_per_mol": 3058.7561593917835,
+   "dgf_prime_from_ph7_kj_per_mol": 2279.4392869901394,
+   "dgf_prime_cache_kj_per_mol": 2279.53986444579,
+   "residual_input_kj_per_mol": -779.2162949459935,
+   "residual_ph7_kj_per_mol": 0.1005774556506367,
+   "convention_shift_kj_per_mol": -779.3168724016441,
+   "detail": "input compound_id=694328; ph7 compound_id=694328"
+  },
+  {
+   "key": "lipid:phosphatidylethanolamine (1-16:0, 2-16:1)",
+   "name": "phosphatidylethanolamine (1-16:0, 2-16:1)",
+   "source": "lipid",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OCCN",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)([O-])OCC[NH3+]",
+   "pkas": [
+    8.998303413391113,
+    8.872750282287598,
+    1.2574107646942139
+   ],
+   "dgf_prime_from_input_kj_per_mol": 2755.2029093419033,
+   "dgf_prime_from_ph7_kj_per_mol": 1978.9535287549784,
+   "dgf_prime_cache_kj_per_mol": 1979.0946219244365,
+   "residual_input_kj_per_mol": -776.1082874174667,
+   "residual_ph7_kj_per_mol": 0.14109316945814498,
+   "convention_shift_kj_per_mol": -776.2493805869249,
+   "detail": "input compound_id=694329; ph7 compound_id=694329"
+  },
+  {
+   "key": "lipid:phosphatidylethanolamine (1-16:0, 2-18:1)",
+   "name": "phosphatidylethanolamine (1-16:0, 2-18:1)",
+   "source": "lipid",
+   "input_smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OCCN",
+   "ph7_smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)([O-])OCC[NH3+]",
+   "pkas": [
+    8.991924285888672,
+    8.864418983459473,
+    1.2574107646942139
+   ],
+   "dgf_prime_from_input_kj_per_mol": 2939.888477575604,
+   "dgf_prime_from_ph7_kj_per_mol": 2163.6390969886793,
+   "dgf_prime_cache_kj_per_mol": 2163.783173613292,
+   "residual_input_kj_per_mol": -776.1053039623121,
+   "residual_ph7_kj_per_mol": 0.1440766246128078,
+   "convention_shift_kj_per_mol": -776.2493805869249,
+   "detail": "input compound_id=694330; ph7 compound_id=694330"
+  },
+  {
+   "key": "lipid:phosphatidylethanolamine (1-16:1, 2-18:1)",
+   "name": "phosphatidylethanolamine (1-16:1, 2-18:1)",
+   "source": "lipid",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCCN)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)([O-])OCC[NH3+])OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "pkas": [
+    8.98618221282959,
+    8.86594295501709,
+    1.2574108839035034
+   ],
+   "dgf_prime_from_input_kj_per_mol": 2931.9154688152817,
+   "dgf_prime_from_ph7_kj_per_mol": 2155.666088228357,
+   "dgf_prime_cache_kj_per_mol": 2155.8097996003694,
+   "residual_input_kj_per_mol": -776.1056692149123,
+   "residual_ph7_kj_per_mol": 0.14371137201260353,
+   "convention_shift_kj_per_mol": -776.2493805869249,
+   "detail": "input compound_id=694331; ph7 compound_id=694331"
+  },
+  {
+   "key": "lipid:phosphatidylethanolamine (1-18:0, 2-16:1)",
+   "name": "phosphatidylethanolamine (1-18:0, 2-16:1)",
+   "source": "lipid",
+   "input_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCCN",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)([O-])OCC[NH3+]",
+   "pkas": [
+    8.991609573364258,
+    8.864449501037598,
+    1.2574107646942139
+   ],
+   "dgf_prime_from_input_kj_per_mol": 2939.8884795802637,
+   "dgf_prime_from_ph7_kj_per_mol": 2163.639098993339,
+   "dgf_prime_cache_kj_per_mol": 2163.783173613292,
+   "residual_input_kj_per_mol": -776.1053059669716,
+   "residual_ph7_kj_per_mol": 0.1440746199532441,
+   "convention_shift_kj_per_mol": -776.2493805869249,
+   "detail": "input compound_id=694332; ph7 compound_id=694332"
+  },
+  {
+   "key": "lipid:phosphatidylethanolamine (1-18:0, 2-18:1)",
+   "name": "phosphatidylethanolamine (1-18:0, 2-18:1)",
+   "source": "lipid",
+   "input_smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCCN",
+   "ph7_smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)([O-])OCC[NH3+]",
+   "pkas": [
+    8.985255241394043,
+    8.85610580444336,
+    1.2574107646942139
+   ],
+   "dgf_prime_from_input_kj_per_mol": 3124.5739851962812,
+   "dgf_prime_from_ph7_kj_per_mol": 2348.3246046093564,
+   "dgf_prime_cache_kj_per_mol": 2348.471725302148,
+   "residual_input_kj_per_mol": -776.1022598941331,
+   "residual_ph7_kj_per_mol": 0.1471206927917592,
+   "convention_shift_kj_per_mol": -776.2493805869249,
+   "detail": "input compound_id=694333; ph7 compound_id=694333"
+  }
+ ]
+}

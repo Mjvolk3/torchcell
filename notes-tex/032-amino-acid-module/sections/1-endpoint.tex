@@ -1,0 +1,38 @@
+%% notes-tex/032-amino-acid-module/sections/1-endpoint.tex
+\section{The endpoint, the protocol and the stores\secstatus{todo}}
+\label{sec:endpoint}
+
+M\"ulleder's screen measures 19 intracellular amino acids, in mM, on the prototrophic
+deletion collection (markers restored) grown on synthetic minimal medium, one culture
+per strain, 4,678 strains. Every cell is scored under the 027 protocol: Merzbacher's 639
+test genes pinned to test, the epoch selected on validation Pearson (centered five-epoch
+moving average), and the mean per-amino-acid pinned-test Spearman over the 19 reported;
+the comparators are the 027 rounds' own numbers on the same split, read from their
+result files (Table~\ref{tab:target-transfer-comparators}). The backbone is the
+essentiality one (pathway multi-hot with ProtT5, width 12, one block, four attention
+heads, CRPS on the head, 200 epochs), a fifth of the width 027 trained, with a 19-output
+head on the mean channel. The graph regularizer is requested on every cell and never
+evaluated at width 12: it is pinned to the second block, and these cells have one, so
+\texttt{graph\_reg\_loss} is 0 at all 200 epochs. It is inert in the control and in the
+arm alike, so the pairing is unaffected, and every arm is paired by seed over six seeds
+against the same backbone with no affine. The screen's own strain-level rank retest is
+0.20, the agreement of two measurements of one strain, which bounds a second screen; a
+model scored against one measurement is bounded by the square root of the reliability,
+0.62 on the Pearson scale on average over the nineteen amino acids and about 0.45 on
+the Spearman scale (Section~\ref{sec:concordance}, Table~\ref{tab:mulleder-retest}).
+
+The study began inside the essentiality campaign (rounds 118 onward there) and has been
+its own study, 032, since 2026-09-23, with its own results tree, W\&B project and round
+series (A1 onward; the map from the round numbers used here to the A-series is in the
+study's note). The betaxanthin half of the same campaign is the sibling document,
+\texttt{notes-tex/031-betaxanthin-module}, and the essentiality endpoint the backbone and
+the store were built on is \texttt{notes-tex/028-gene-essentiality}.
+
+The store represents the strain, not the wild type. For the amino acids
+(\texttt{aa\_reference\_flux\_table.py}, job 2751) the model is the unmodified prototroph
+on the dataset's medium; per GEM gene one parsimonious growth solve and 19 linear
+programs, each amino acid's synthesis maximum at 90 percent of own growth, kept as
+summary columns beside the growth vector rather than as 19 further vectors. On the graph
+side the processor had removed the two allele genes and the BTS1 copy from every cell
+graph, which this strain never carried; round 124's \texttt{--deletion-only-graph}
+leaves the graph as the strain is.

@@ -1,0 +1,80 @@
+{
+  "protocol": "transductive node classification on one gene graph, no perturbation; class-weighted BCE, Adam 1e-3, 200 epochs, width 64, dropout 0.2; epoch selected by a five-epoch moving average of the validation AUROC; scored once on the 195 held-out genes",
+  "rows": [
+    {
+      "model": "GCN",
+      "graph": "union of nine",
+      "inputs": "GO (400 epochs)",
+      "dim_in": 2456,
+      "n_parameters": 161473,
+      "test_auroc": [
+        0.9010621557828481,
+        0.8961447678992919,
+        0.9036191974822974
+      ],
+      "val_auroc": [
+        0.809924812030075,
+        0.8054135338345865,
+        0.8123308270676691
+      ],
+      "select_epoch": [
+        391,
+        385,
+        397
+      ],
+      "mean": 0.9002753737214791,
+      "sd": 0.0031017246715223778,
+      "seconds": 2865.490293979645
+    },
+    {
+      "model": "GCN",
+      "graph": "union of nine",
+      "inputs": "GO+FBA ratios (400 epochs)",
+      "dim_in": 2460,
+      "n_parameters": 161729,
+      "test_auroc": [
+        0.9057828481510621,
+        0.9046026750590087,
+        0.8988985051140834
+      ],
+      "val_auroc": [
+        0.8195488721804511,
+        0.8123308270676692,
+        0.8129323308270677
+      ],
+      "select_epoch": [
+        394,
+        391,
+        386
+      ],
+      "mean": 0.9030946761080515,
+      "sd": 0.003006004035234099,
+      "seconds": 2909.2817182540894
+    },
+    {
+      "model": "GCN",
+      "graph": "union of nine",
+      "inputs": "ProtT5+GO+FBA ratios (400 epochs)",
+      "dim_in": 3484,
+      "n_parameters": 227265,
+      "test_auroc": [
+        0.8959480723839497,
+        0.9032258064516129,
+        0.9004720692368214
+      ],
+      "val_auroc": [
+        0.801203007518797,
+        0.8087218045112782,
+        0.8030075187969925
+      ],
+      "select_epoch": [
+        384,
+        390,
+        390
+      ],
+      "mean": 0.8998819826907947,
+      "sd": 0.0030002783080638478,
+      "seconds": 2854.7643213272095
+    }
+  ]
+}

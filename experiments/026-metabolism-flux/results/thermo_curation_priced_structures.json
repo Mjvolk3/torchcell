@@ -1,0 +1,74 @@
+{
+ "built_at": "2026-09-11T23:25:03.072898+00:00",
+ "requests_path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/026-metabolism-flux/results/thermo_curation_pricing_requests.json",
+ "requests_sha256": "2330332ff879f243417595f6a86b4dd8fb77e476d265b0dc9a8c75bc5d6e849d",
+ "requests_digest": "44f5647e6c1cc14422aa2a806062325cd908a12a61c5e1ecbb754cc9b5913ab0",
+ "local_cache_path": "/scratch/projects/torchcell-scratch/tmp/thermo_curation.sqlite",
+ "n_requests": 3,
+ "n_priced": 0,
+ "outcomes": {
+  "failed_group_decomposition": 2,
+  "group_in_null_space": 1
+ },
+ "legendre_transform_max_deviation_kj_per_mol": 1.7053025658242404e-13,
+ "records": [
+  {
+   "smiles": "CC(=O)N[C@H]1[C@@H](OP(=O)(O)OP(=O)(O)OCCC(C)CC/C=C(\\C)CC/C=C(\\C)CCC=C(C)C)O[C@H](CO)[C@@H](O[C@@H]2O[C@H](CO)[C@@H](O)[C@H](O)[C@H]2NC(C)=O)[C@@H]1O",
+   "p_h": 7.1,
+   "ionic_strength_m": 0.25,
+   "temperature_k": 303.15,
+   "p_mg": 3.0,
+   "pkas": [
+    13.43,
+    12.78,
+    5.85,
+    5.25,
+    3.19,
+    1.74
+   ],
+   "dgf_prime_kj_per_mol": null,
+   "sigma_kj_per_mol": null,
+   "dgf_untransformed_kj_per_mol": null,
+   "compound_id": 694325,
+   "group_decomposition_ok": true,
+   "n_nonzero_groups": 14,
+   "sigma_inf_norm": 0.9999999999999999,
+   "outcome": "group_in_null_space",
+   "detail": "the structure decomposes and one of its groups is in the component contribution null space, so the estimate has infinite variance"
+  },
+  {
+   "smiles": "CCN(=O)=O",
+   "p_h": 7.2,
+   "ionic_strength_m": 0.25,
+   "temperature_k": 303.15,
+   "p_mg": 3.0,
+   "pkas": [],
+   "dgf_prime_kj_per_mol": null,
+   "sigma_kj_per_mol": null,
+   "dgf_untransformed_kj_per_mol": null,
+   "compound_id": 1907,
+   "group_decomposition_ok": false,
+   "n_nonzero_groups": 0,
+   "sigma_inf_norm": null,
+   "outcome": "failed_group_decomposition",
+   "detail": "the compound's group vector is empty or all zero, so no group covers it"
+  },
+  {
+   "smiles": "[O-]c1ccc(cc1)N(=O)=O",
+   "p_h": 7.2,
+   "ionic_strength_m": 0.25,
+   "temperature_k": 303.15,
+   "p_mg": 3.0,
+   "pkas": [],
+   "dgf_prime_kj_per_mol": null,
+   "sigma_kj_per_mol": null,
+   "dgf_untransformed_kj_per_mol": null,
+   "compound_id": 500,
+   "group_decomposition_ok": false,
+   "n_nonzero_groups": 0,
+   "sigma_inf_norm": null,
+   "outcome": "failed_group_decomposition",
+   "detail": "the compound's group vector is empty or all zero, so no group covers it"
+  }
+ ]
+}

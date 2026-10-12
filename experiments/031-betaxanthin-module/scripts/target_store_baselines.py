@@ -1,0 +1,839 @@
+# experiments/031-betaxanthin-module/scripts/target_store_baselines.py
+# [[experiments.031-betaxanthin-module.scripts.target_store_baselines]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/031-betaxanthin-module/scripts/target_store_baselines
+
+r"""CPU baselines over the metabolic-store representations, on the trainer's pinned split.
+
+The transformer arms of 031 and 032 read a per-gene deletion-flux vector through a
+zero-initialized affine beside the backbone. Whether that vector carries the target on its
+own, without the backbone, is a CPU question: represent each deleted gene by the store row
+and fit the same ladder 027's ``linear_baselines_bx.py`` fits over the protein-language
+embedding (ridge or rank-swept bilinear, cosine nearest neighbors), plus a random forest,
+which is the Flux Cone Learning form (a forest over flux features) on one point per
+deletion instead of a sample of the cone.
+
+Representations (each a row per deleted gene, ``log(1+|v|)`` for flux columns, standardized
+on the training genes; a gene the store does not cover reads the store's wild-type row and
+is counted, since a deletion outside the model is a deletion the model says does nothing):
+
+* the parsimonious store the store-affine arms read (betaxanthin: the growth vector, the
+  production vector and the total demand of the GLPK build, 8,355 columns; amino acids:
+  the HiGHS build on SM, 4,131), and for betaxanthin the growth block alone;
+* the HiGHS parsimonious rebuild (betaxanthin) and the linear MOMA store
+  (``target_physics_store.py``);
+* the six gene-rule counts (``isozyme_affine_store.py``) and the six flux statistics of
+  the parsimonious build (growth, production, ratios, reactions knocked out, distance);
+* ``prot_T5_all``, the reference the 027 ladder used, and its concatenation with the
+  parsimonious store.
+
+Split, targets, standardization, selection (validation per-feature Pearson) and the pinned
+test statistic are the 027 ladder's, imported from it, so a number here sits in the same
+column as the 027 baselines and the transformer arms. Writes
+``results/store_baselines_<target>.json`` in the target's study. Run from the repo root::
+
+    PYTHONPATH=$PWD ~/miniconda3/envs/torchcell/bin/python \
+        experiments/031-betaxanthin-module/scripts/target_store_baselines.py \
+        --target betaxanthin --threads 8
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import os.path as osp
+import sys
+import time
+from typing import Any
+
+import numpy as np
+from dotenv import load_dotenv
+
+load_dotenv()
+DATA_ROOT = os.environ["DATA_ROOT"]
+EXPERIMENT_ROOT = os.environ["EXPERIMENT_ROOT"]
+TABLE_DIR = osp.join(DATA_ROOT, "data/torchcell/reference_flux")
+sys.path.insert(0, osp.join(EXPERIMENT_ROOT, "027-betaxanthin-metabolic", "scripts"))
+import train_bx  # noqa: E402
+from cbm_scoring import assess  # noqa: E402
+from linear_baselines_bx import (  # noqa: E402
+    KNN_GRID,
+    RANK_GRID,
+    RIDGE_GRID,
+    TARGETS,
+    bilinear,
+    embedding_matrix,
+    nmse,
+    open_dataset,
+    per_feature_pearson,
+    read_targets,
+    record_genes,
+)
+
+from torchcell.datamodules import CellDataModule  # noqa: E402
+from torchcell.graph import SCerevisiaeGraph  # noqa: E402
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome  # noqa: E402
+
+STUDY = {
+    "betaxanthin": "031-betaxanthin-module",
+    "amino_acids": "032-amino-acid-module",
+    "cooper": "032-amino-acid-module",
+}
+#: Cooper 2010's 17 CE-LIF peaks (a linear ratio to the plate mean, the auxotroph on
+#: synthetic complete medium), the second deletion-collection amino-acid screen, as a
+#: ladder target (2026-09-25, the user's request for the linear and kNN baselines over
+#: BOTH amino-acid datasets). It is not in the trainer's dataset build, so it is read
+#: from the loader's preprocess table by the record's deleted gene, on the SAME pinned
+#: split as every other target; a genotype with no Cooper row or more than one deleted
+#: gene carries NaN. There is no reference arm in the trainer for it, so the identity
+#: check has nothing to compare against. The stores it is read over are the SM ones
+#: (the prototroph's medium), which is not Cooper's medium; the annotation and
+#: sequence representations do not depend on the medium.
+COOPER_KEYS = [
+    "lysine_related_peak1",
+    "arginine",
+    "gshbiotin",
+    "n_acetylornithine",
+    "leucine+isoleucine+citrulline",
+    "glutamine+valine",
+    "methionine+proline",
+    "threonine",
+    "alanine",
+    "serine",
+    "asparagine+tyrosine",
+    "glycine",
+    "lysine_a",
+    "ornithine",
+    "lysine_b",
+    "glutamate",
+    "aspartate",
+]
+CSV_TARGETS: dict[str, dict[str, Any]] = {
+    "cooper": {
+        **TARGETS["amino_acids"],
+        "columns": COOPER_KEYS,
+        "dump_head": None,
+        "csv": osp.join(
+            DATA_ROOT, "data/torchcell/amino_acid_cooper2010/preprocess/data.csv"
+        ),
+        "gene_column": "perturbed_gene_name",
+    }
+}
+#: (store file stem, column slice or None, flux-encoded or not) per representation.
+REPRESENTATIONS: dict[str, dict[str, Any]] = {
+    "betaxanthin": {
+        "pfba_glpk_full": {"store": "YPD_bx", "block": "v_deletion", "flux": True},
+        "pfba_glpk_growth": {
+            "store": "YPD_bx",
+            "block": "v_deletion",
+            "flux": True,
+            "columns": 4177,
+        },
+        "pfba_highs": {"store": "YPD_bx_pfba", "block": "v_deletion", "flux": True},
+        # The minimum-norm flux at maximal growth (target_physics_store.py --variant l2,
+        # Clarabel QP): strictly convex, one solution per deletion whatever the solver.
+        "pfba_l2": {"store": "YPD_bx_l2", "block": "v_deletion", "flux": True},
+        "moma": {"store": "YPD_bx_moma", "block": "v_deletion", "flux": True},
+        "gpr_counts": {"store": "YPD_bx_gpronly", "block": "v_deletion", "flux": True},
+        "flux_stats": {"store": "YPD_bx", "block": "gene_flux_stats", "flux": False},
+        # The metabolite side (target_driving_force_store.py): concentrations in mM of
+        # the max-min driving-force solution, with the second law over every priced
+        # reaction (mdf) or over those under 100 kJ/mol (mdfcap100); and the sampled cone
+        # (target_sampled_flux_store.py), the mean over draws.
+        "mdf_conc": {"store": "YPD_bx_mdf", "block": "v_deletion", "flux": True},
+        "mdfcap100_conc": {
+            "store": "YPD_bx_mdfcap100",
+            "block": "v_deletion",
+            "flux": True,
+        },
+        "sampled_mean": {
+            "store": "YPD_bx_sampledmean",
+            "block": "v_deletion",
+            "flux": True,
+        },
+        "mdfcap100_poly_mean": {
+            "store": "YPD_bx_mdfcap100polymean",
+            "block": "v_deletion",
+            "flux": True,
+        },
+        "mdfcap100_poly_spread": {
+            "store": "YPD_bx_mdfcap100polyspread",
+            "block": "v_deletion",
+            "flux": True,
+        },
+        # The annotation side (target_go_affine_store.py): the propagated GO multi-hot
+        # over every annotated gene, alone and appended to the HiGHS parsimonious vector.
+        "go": {"store": "YPD_bx_go", "block": "v_deletion", "flux": False},
+        "gopfba": {"store": "YPD_bx_gopfba", "block": "v_deletion", "flux": True},
+        "gol2": {"store": "YPD_bx_gol2", "block": "v_deletion", "flux": True},
+        # The measured side (target_pool_store.py): the strain's own Mulleder amino-acid
+        # pool in mM (log(1 + v), phenotype to phenotype), alone and appended to GO and
+        # to GO with the HiGHS vector (target_store_concat.py).
+        "aa_pool": {"store": "YPD_bx_aapool", "block": "v_deletion", "flux": True},
+        "go_aapool": {"store": "YPD_bx_goaapool", "block": "v_deletion", "flux": True},
+        "gopfba_aapool": {
+            "store": "YPD_bx_gopfbaaapool",
+            "block": "v_deletion",
+            "flux": True,
+        },
+        "aapool_pfba": {
+            "store": "YPD_bx_aapoolpfba",
+            "block": "v_deletion",
+            "flux": True,
+        },
+        "cooper_pool": {
+            "store": "YPD_bx_cooperpool",
+            "block": "v_deletion",
+            "flux": True,
+        },
+        # The graphs' one-hop label propagation of the target
+        # (target_graph_label_store.py, 2026-09-27): per graph the labeled-neighbor mean
+        # shifted nonnegative and log1p of the count, alone and appended to the pool.
+        "graph_label": {"store": "YPD_bx_graphlabel", "block": "v_deletion", "flux": True},
+        "aapool_graphlabel": {
+            "store": "YPD_bx_aapoolgraphlabel",
+            "block": "v_deletion",
+            "flux": True,
+        },
+        # The graphs' one-hop propagation of a gene's OWN features
+        # (target_graph_feature_store.py, 2026-09-28), the INDUCTIVE analogue of the
+        # label store: per graph (coexpression, union) the neighbor mean of the base
+        # feature and log1p of the covered-neighbor count. No label enters.
+        "go_nbr": {"store": "YPD_bx_gonbr", "block": "v_deletion", "flux": False},
+        "pfba_nbr": {"store": "YPD_bx_pfbanbr", "block": "v_deletion", "flux": True},
+        # Its decomposition: one graph's block at a time, and the two degree columns
+        # alone (the control: a read from how many neighbors a gene has, not which).
+        "go_nbr_coexpression": {
+            "store": "YPD_bx_gonbr",
+            "block": "v_deletion",
+            "flux": False,
+            "select": "^string12_0_coexpression_",
+        },
+        "go_nbr_union": {
+            "store": "YPD_bx_gonbr",
+            "block": "v_deletion",
+            "flux": False,
+            "select": "^union_of_9_",
+        },
+        "go_nbr_degree": {
+            "store": "YPD_bx_gonbr",
+            "block": "v_deletion",
+            "flux": False,
+            "select": "_log1p_covered_neighbors$",
+        },
+        "pfba_nbr_degree": {
+            "store": "YPD_bx_pfbanbr",
+            "block": "v_deletion",
+            "flux": False,
+            "select": "_log1p_covered_neighbors$",
+        },
+    },
+    "amino_acids": {
+        "pfba_highs": {"store": "SM_gem", "block": "v_deletion", "flux": True},
+        "moma": {"store": "SM_gem_moma", "block": "v_deletion", "flux": True},
+        "gpr_counts": {"store": "SM_gem_gpronly", "block": "v_deletion", "flux": True},
+        "flux_stats": {"store": "SM_gem", "block": "gene_flux_stats", "flux": False},
+        "mdf_conc": {"store": "SM_gem_mdf", "block": "v_deletion", "flux": True},
+        "mdfcap100_conc": {
+            "store": "SM_gem_mdfcap100",
+            "block": "v_deletion",
+            "flux": True,
+        },
+        "sampled_mean": {
+            "store": "SM_gem_sampledmean",
+            "block": "v_deletion",
+            "flux": True,
+        },
+        "mdfcap100_poly_mean": {
+            "store": "SM_gem_mdfcap100polymean",
+            "block": "v_deletion",
+            "flux": True,
+        },
+        "mdfcap100_poly_spread": {
+            "store": "SM_gem_mdfcap100polyspread",
+            "block": "v_deletion",
+            "flux": True,
+        },
+        "go": {"store": "SM_gem_go", "block": "v_deletion", "flux": False},
+        # The graphs' one-hop propagation of GO (target_graph_feature_store.py,
+        # 2026-09-28), inductive; its degree columns alone are the control.
+        "go_nbr": {"store": "SM_aa_gonbr", "block": "v_deletion", "flux": False},
+        "go_nbr_degree": {
+            "store": "SM_aa_gonbr",
+            "block": "v_deletion",
+            "flux": False,
+            "select": "_log1p_covered_neighbors$",
+        },
+        "gopfba": {"store": "SM_gem_gopfba", "block": "v_deletion", "flux": True},
+        # The reverse of the betaxanthin pool read (target_pool_store.py --source
+        # cachera): the strain's own Cachera betaxanthin score, signed, so standardized
+        # and never log(1 + |v|); alone and appended to GO.
+        "bx_score": {"store": "SM_gem_bxscore", "block": "v_deletion", "flux": False},
+        "go_bxscore": {
+            "store": "SM_gem_gobxscore",
+            "block": "v_deletion",
+            "flux": False,
+        },
+        "cooper_pool": {
+            "store": "YPD_bx_cooperpool",
+            "block": "v_deletion",
+            "flux": True,
+        },
+    },
+}
+REPRESENTATIONS["cooper"] = dict(REPRESENTATIONS["amino_acids"])
+# The graphs' one-hop label propagation of the Mulleder profile
+# (target_graph_label_store.py --target amino_acids, 2026-09-27): per graph the nineteen
+# labeled-neighbor means shifted nonnegative and log1p of the count, 200 columns. Read
+# on the Mulleder target only; the Cooper ladder keeps its own representation set.
+REPRESENTATIONS["amino_acids"]["graph_label"] = {
+    "store": "SM_aa_graphlabel",
+    "block": "v_deletion",
+    "flux": True,
+}
+PRIMARY_STORE = {
+    "betaxanthin": "pfba_glpk_full",
+    "amino_acids": "pfba_highs",
+    "cooper": "pfba_highs",
+}
+FOREST_LEAF_GRID = [1, 5, 20]
+FOREST_TREES = 300
+#: Gradient-boosted trees, opt-in (--models xgb): 500 rounds at a 0.05 learning rate,
+#: row subsampling 0.8 and column subsampling 0.5 per tree, histogram method; the grid
+#: selects the depth and the minimum child weight on the validation Pearson as the
+#: forest's leaf size is selected.
+XGB_FIXED: dict[str, Any] = {
+    "n_estimators": 500,
+    "learning_rate": 0.05,
+    "subsample": 0.8,
+    "colsample_bytree": 0.5,
+    "tree_method": "hist",
+    "multi_strategy": "multi_output_tree",
+}
+XGB_DEPTH_GRID = (3, 6)
+XGB_CHILD_GRID = (1, 5)
+TOP_K = 50
+TOP_FRAC = 0.1
+
+
+def load_store(spec: dict[str, Any]) -> tuple[dict[str, np.ndarray], np.ndarray, int]:
+    """Gene -> encoded row, the encoded wild-type row, the column count."""
+    z = np.load(osp.join(TABLE_DIR, f"ess_solve_encodings_{spec['store']}.npz"))
+    block = z[spec["block"]].astype(np.float64)
+    if spec["block"] == "v_deletion":
+        wild = z["v_wild_type"].astype(np.float64)
+    else:
+        # The statistics of an unchanged genotype: growth and production equal the wild
+        # type's, every ratio 1, every count, flux magnitude and distance of the deleted
+        # gene 0 (the two stores name different statistics; the rule covers both).
+        names = [str(s) for s in z["stat_names"]]
+        wild = np.zeros(block.shape[1])
+        p = json.loads(str(z["provenance"]))
+        for i, name in enumerate(names):
+            if name.endswith("ratio") or name == "btx_ratio_to_wild_type":
+                wild[i] = 1.0
+            elif name == "growth":
+                wild[i] = p["wild_type_growth"]
+            elif name == "btx_at_own_growth_floor":
+                wild[i] = p["wild_type_btx_at_own_growth_floor"]
+    if "columns" in spec:
+        block, wild = block[:, : spec["columns"]], wild[: spec["columns"]]
+    if "select" in spec:
+        # A regular expression over the store's column names (2026-09-28): the
+        # neighbor-feature stores are decomposed into one graph's block and into their
+        # degree columns alone, the control for a read that is only the gene's degree.
+        keep = np.array([bool(re.search(spec["select"], str(c))) for c in z["rxn_ids"]])
+        assert keep.any(), spec["select"]
+        block, wild = block[:, keep], wild[keep]
+    if spec["flux"]:
+        block, wild = np.log1p(np.abs(block)), np.log1p(np.abs(wild))
+    genes = [str(g) for g in z["genes"]]
+    return {g: block[i] for i, g in enumerate(genes)}, wild, int(block.shape[1])
+
+
+#: In-script concatenations, name -> (left representation, right representation).
+CONCAT: dict[str, dict[str, tuple[str, str]]] = {
+    "betaxanthin": {
+        "go+go_nbr": ("go", "go_nbr"),
+        "pfba+pfba_nbr": ("pfba_highs", "pfba_nbr"),
+    },
+    "amino_acids": {"go+go_nbr": ("go", "go_nbr")},
+}
+
+#: The arm whose dump the pinned targets are checked against, per target.
+REFERENCE_ARM = {
+    "betaxanthin": "w140_bxdelstore_h12l1p1_e200_s2700",
+    "amino_acids": "w141_aadel_h12l1p1_e200_s2700",
+}
+
+
+def arm_targets(target: str) -> dict[str, Any]:
+    """{gene -> pinned target} from the reference arm's dump, resolved through its result."""
+    result_path = osp.join(
+        EXPERIMENT_ROOT, STUDY[target], "results", f"{REFERENCE_ARM[target]}.json"
+    )
+    with open(result_path) as fh:
+        result = json.load(fh)
+    with open(result["test"]["dump_path"]) as fh:
+        dump = json.load(fh)
+    assert dump["cell"] == result["cell"], result_path
+    return {
+        rec["genes"][0]: rec["target"]
+        for rec in dump["predictions"]
+        if rec["pinned"] and len(rec["genes"]) == 1 and rec["target"] is not None
+    }
+
+
+def top50_enrichment(pred: np.ndarray, true: np.ndarray) -> tuple[float, int]:
+    finite = np.isfinite(pred) & np.isfinite(true)
+    p, t = pred[finite], true[finite]
+    n_high = max(1, int(round(TOP_FRAC * t.size)))
+    high = set(np.argsort(-t)[:n_high].tolist())
+    hits = sum(1 for i in np.argsort(-p)[:TOP_K].tolist() if i in high)
+    return float((hits / TOP_K) / (n_high / t.size)), int(hits)
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--target", required=True, choices=sorted(STUDY))
+    ap.add_argument("--threads", type=int, default=8)
+    ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--out", default=None)
+    ap.add_argument(
+        "--only",
+        nargs="+",
+        default=None,
+        help=(
+            "read only these representations (and the concatenations they complete); "
+            "requires --out so the study's full ladder file is never overwritten by a subset"
+        ),
+    )
+    ap.add_argument(
+        "--models",
+        nargs="+",
+        default=["ridge", "knn", "forest"],
+        choices=["ridge", "knn", "forest", "xgb"],
+        help=(
+            "which models to fit; the default is the ladder as published, and 'xgb' "
+            "(gradient-boosted trees, 2026-09-28) is opt-in so the study's ladder file "
+            "keeps its three columns"
+        ),
+    )
+    args = ap.parse_args()
+    assert args.only is None or args.out, "--only requires --out"
+    assert set(args.models) == {"ridge", "knn", "forest"} or args.out, (
+        "a model set other than the published three requires --out"
+    )
+    from sklearn.ensemble import RandomForestRegressor
+
+    started = time.time()
+    spec = CSV_TARGETS.get(args.target) or TARGETS[args.target]
+    columns = spec["columns"]
+    rng = np.random.default_rng(args.seed)
+    csv_rows: dict[str, np.ndarray] = {}
+    if "csv" in spec:
+        import pandas as pd
+
+        frame = pd.read_csv(spec["csv"])
+        assert not frame[spec["gene_column"]].duplicated().any(), spec["csv"]
+        frame = frame.set_index(spec["gene_column"])
+        csv_rows = {
+            str(g): frame.loc[g, columns].to_numpy(np.float64) for g in frame.index
+        }
+        print(
+            f"  csv target: {len(csv_rows)} genes with a row in {spec['csv']}",
+            flush=True,
+        )
+
+    cfg = train_bx.load_config()
+    genome = SCerevisiaeGenome(
+        genome_root=osp.join(DATA_ROOT, "data/sgd/genome"),
+        go_root=osp.join(DATA_ROOT, "data/go"),
+        overwrite=False,
+    )
+    graph = SCerevisiaeGraph(
+        sgd_root=osp.join(DATA_ROOT, "data/sgd/genome"),
+        string_root=osp.join(DATA_ROOT, "data/string"),
+        tflink_root=osp.join(DATA_ROOT, "data/tflink"),
+        genome=genome,
+    )
+    dataset = open_dataset(spec, genome, graph)
+    pinned, pinned_report = train_bx.resolve_pinned_test(dataset, cfg)
+    dm = CellDataModule(
+        dataset=dataset,
+        cache_dir=osp.join(DATA_ROOT, spec["dataset_subdir"], "data_module_cache"),
+        split_indices=["phenotype_label_index", "perturbation_count_index"],
+        batch_size=cfg.model.batch_size,
+        random_seed=cfg.data.split_seed,
+        num_workers=0,
+        pin_memory=False,
+        prefetch=False,
+        follow_batch=["perturbation_indices", "deletion_indices", "phenotype_values"],
+        pinned_test_indices=pinned,
+    )
+    dm.setup()
+    base = osp.join(DATA_ROOT, spec["dataset_subdir"])
+    splits = {
+        name: [int(i) for i in getattr(dm, f"{name}_dataset").indices]
+        for name in ("train", "val", "test")
+    }
+    idx_to_genes = record_genes(dataset)
+    with open(osp.join(EXPERIMENT_ROOT, cfg.data.pinned_test_split_file)) as fh:
+        pinned_genes = set(json.load(fh)["split"]["test"])
+
+    y: dict[str, np.ndarray] = {}
+    perts: dict[str, list[list[str]]] = {}
+    keep_pinned: dict[str, np.ndarray] = {}
+    for name, indices in splits.items():
+        genes = [idx_to_genes.get(i, []) for i in indices]
+        if csv_rows:
+            # The csv value of the record's one deleted gene; NaN otherwise.
+            values = np.full((len(indices), len(columns)), np.nan)
+            for i, gs in enumerate(genes):
+                if len(gs) == 1 and gs[0] in csv_rows:
+                    values[i] = csv_rows[gs[0]]
+        else:
+            values = read_targets(base, indices, spec["label"], columns)
+        has = np.isfinite(values).any(axis=1) & np.array([len(g) > 0 for g in genes])
+        y[name] = values[has]
+        perts[name] = [g for g, k in zip(genes, has, strict=True) if k]
+        keep_pinned[name] = np.array(
+            [any(g in pinned_genes for g in gs) for gs in perts[name]]
+        )
+        print(
+            f"  {name}: {int(has.sum())} genotypes with a measurement, "
+            f"{int(keep_pinned[name].sum())} pinned",
+            flush=True,
+        )
+    obs = {name: np.isfinite(y[name]) for name in y}
+    # The identity check the 027 ladder makes, against THIS study's reference arm: its
+    # dump is resolved through the result file, as the readouts resolve it. (The 027
+    # wave-7 directory now also holds dumps with log-scaled targets, which the ladder's
+    # name-order pick lands on for the amino acids.)
+    if spec.get("dump_head") is None:
+        # A csv target has no reference arm in the trainer, so there is no dump to
+        # match; its values were read from one table with a duplicate check above.
+        theirs: dict[str, Any] = {}
+        print("  identity check: no reference arm for this target; skipped", flush=True)
+    else:
+        theirs = arm_targets(args.target)
+    mine = {
+        perts["test"][i][0]: y["test"][i]
+        for i in range(len(perts["test"]))
+        if keep_pinned["test"][i] and len(perts["test"][i]) == 1
+    }
+    shared = sorted(set(mine) & set(theirs))
+    assert not theirs or len(shared) >= 500, (
+        f"only {len(shared)} pinned genes match the dump"
+    )
+    for gene in shared:
+        theirs_vec = np.array(
+            [np.nan if v is None else float(v) for v in np.atleast_1d(theirs[gene])]
+        )
+        assert np.allclose(mine[gene], theirs_vec, equal_nan=True, atol=1e-5), gene
+    print(f"  identity check: {len(shared)} pinned targets match the dump", flush=True)
+
+    mu = np.array(
+        [
+            y["train"][obs["train"][:, f], f].mean()
+            if obs["train"][:, f].any()
+            else 0.0
+            for f in range(len(columns))
+        ]
+    )[None, :]
+    resid_dense = {name: np.where(obs[name], y[name] - mu, 0.0) for name in y}
+
+    def score(
+        pred: np.ndarray,
+        name: str,
+        pinned_only: bool,
+        covered: np.ndarray,
+        full_stats: bool = False,
+    ) -> dict[str, Any]:
+        sel = (
+            keep_pinned[name] if pinned_only else np.ones(len(y[name]), bool)
+        ) & covered
+        n_stat = 2000 if full_stats else 0
+        block: dict[str, Any] = {
+            "per_feature_pearson": per_feature_pearson(
+                pred[sel], y[name][sel], obs[name][sel]
+            ),
+            "nmse": nmse(pred[sel], y[name][sel], mu, obs[name][sel]),
+            "n": int(sel.sum()),
+        }
+        rhos = []
+        per_feature: dict[str, Any] = {}
+        for f, column in enumerate(columns):
+            m = sel & obs[name][:, f]
+            cell = assess(pred[m, f], y[name][m, f], rng, n_perm=n_stat, n_boot=n_stat)
+            per_feature[column] = cell
+            rhos.append(0.0 if cell["spearman"] is None else float(cell["spearman"]))
+        block["mean_spearman"] = float(np.mean(rhos))
+        block["per_feature"] = per_feature
+        if args.target == "betaxanthin":
+            enrichment, hits = top50_enrichment(pred[sel, 0], y[name][sel, 0])
+            block["top50_enrichment"] = enrichment
+            block["top50_hits"] = hits
+        return block
+
+    # ---- representations --------------------------------------------------------------
+    reps: dict[str, dict[str, Any]] = {}
+    not_built: list[str] = []
+    for rep_name, rep_spec in REPRESENTATIONS[args.target].items():
+        if args.only is not None and rep_name not in args.only:
+            continue
+        if not osp.isfile(
+            osp.join(TABLE_DIR, f"ess_solve_encodings_{rep_spec['store']}.npz")
+        ):
+            # A store that has not been built yet is reported as such, not filled.
+            not_built.append(rep_name)
+            print(
+                f"  {rep_name}: store {rep_spec['store']} not built; skipped",
+                flush=True,
+            )
+            continue
+        rows, wild, dim = load_store(rep_spec)
+        p: dict[str, np.ndarray] = {}
+        filled: dict[str, int] = {}
+        # Which rows the store covers (2026-09-27): a row the store does not cover reads
+        # the wild-type row here, where the trainer reads zeros, so the ladder carries no
+        # coverage indicator; the covered-only read is scored beside the pinned read.
+        covered_rows: dict[str, np.ndarray] = {}
+        for name in y:
+            mat = np.zeros((len(perts[name]), dim))
+            cov = np.zeros(len(perts[name]), bool)
+            n_fill = 0
+            for i, genes in enumerate(perts[name]):
+                vecs = [rows[g] for g in genes if g in rows]
+                if vecs:
+                    mat[i], cov[i] = np.mean(vecs, axis=0), True
+                else:
+                    mat[i] = wild
+                    n_fill += 1
+            p[name], filled[name], covered_rows[name] = mat, n_fill, cov
+        reps[rep_name] = {
+            "p": p,
+            "ok": {name: np.ones(len(perts[name]), bool) for name in y},
+            "covered": covered_rows,
+            "dim": dim,
+            "filled_wild_type": filled,
+            "store": rep_spec["store"],
+        }
+    emb = embedding_matrix(("prot_T5_all",), DATA_ROOT, genome, graph)
+    dim = len(next(iter(emb.values())))
+    p_emb: dict[str, np.ndarray] = {}
+    ok_emb: dict[str, np.ndarray] = {}
+    for name in y:
+        mat = np.zeros((len(perts[name]), dim))
+        good = np.zeros(len(perts[name]), bool)
+        for i, genes in enumerate(perts[name]):
+            vecs = [emb[g] for g in genes if g in emb]
+            if vecs:
+                mat[i], good[i] = np.mean(vecs, axis=0), True
+        p_emb[name], ok_emb[name] = mat, good
+    reps["prot_T5_all"] = {
+        "p": p_emb,
+        "ok": ok_emb,
+        "covered": ok_emb,
+        "dim": dim,
+        "filled_wild_type": {},
+        "store": None,
+    }
+    if PRIMARY_STORE[args.target] in reps:
+        primary = reps[PRIMARY_STORE[args.target]]
+        reps[f"{PRIMARY_STORE[args.target]}+prot_T5_all"] = {
+            "p": {n: np.concatenate([primary["p"][n], p_emb[n]], axis=1) for n in y},
+            "ok": ok_emb,
+            "covered": {n: primary["covered"][n] & ok_emb[n] for n in y},
+            "dim": primary["dim"] + dim,
+            "filled_wild_type": primary["filled_wild_type"],
+            "store": primary["store"],
+        }
+    # A gene's own feature beside its neighbors' mean of it (2026-09-28): both halves
+    # present, the concatenation is read as one representation.
+    for name, (left, right) in CONCAT.get(args.target, {}).items():
+        if left in reps and right in reps:
+            reps[name] = {
+                "p": {n: np.concatenate([reps[left]["p"][n], reps[right]["p"][n]], axis=1) for n in y},
+                "ok": {n: reps[left]["ok"][n] & reps[right]["ok"][n] for n in y},
+                "covered": {n: reps[left]["covered"][n] & reps[right]["covered"][n] for n in y},
+                "dim": reps[left]["dim"] + reps[right]["dim"],
+                "filled_wild_type": reps[left]["filled_wild_type"],
+                "store": f"{reps[left]['store']}+{reps[right]['store']}",
+            }
+
+    ranks = [k for k in RANK_GRID if k <= len(columns)]
+    payload: dict[str, Any] = {
+        "generated_by": "experiments/031-betaxanthin-module/scripts/target_store_baselines.py",
+        "target": args.target,
+        "columns": columns,
+        "pinned_split": pinned_report,
+        "n": {name: int(len(y[name])) for name in y},
+        "n_pinned": {name: int(keep_pinned[name].sum()) for name in y},
+        "selection": "validation per-feature Pearson, as the 027 ladder",
+        "statistic": (
+            "pinned test mean Spearman over columns; betaxanthin also the top-50 "
+            "enrichment of true top-10-percent producers among the 50 highest predictions"
+        ),
+        "slurm_job_id": os.environ.get("SLURM_JOB_ID"),
+        "not_built": not_built,
+        "representations": {},
+    }
+
+    for rep_name, rep in reps.items():
+        p, ok = rep["p"], rep["ok"]
+        covered = rep["covered"]
+        pm = p["train"][ok["train"]].mean(axis=0, keepdims=True)
+        ps = p["train"][ok["train"]].std(axis=0, keepdims=True) + 1e-8
+        p = {n: (p[n] - pm) / ps for n in p}
+        r_tr, p_tr = resid_dense["train"][ok["train"]], p["train"][ok["train"]]
+        out: dict[str, Any] = {
+            "dim": rep["dim"],
+            "store": rep["store"],
+            "filled_wild_type": rep["filled_wild_type"],
+            "n_scored": {s: int(ok[s].sum()) for s in ("val", "test")},
+            "n_pinned_covered": int(
+                (keep_pinned["test"] & ok["test"] & covered["test"]).sum()
+            ),
+        }
+
+        def select(cells: list[dict[str, Any]], keys: list[str]) -> dict[str, Any]:
+            # The validation criterion is rounded to 1e-6 and ties go to the LATER
+            # grid point (the stronger ridge, the wider neighborhood, the larger leaf):
+            # the validation target is 98 percent one value on betaxanthin, so an
+            # unrounded argmax flipped between runs on 1e-13 float noise (2026-09-23).
+            best = max(
+                enumerate(cells),
+                key=lambda ic: (
+                    round(float(ic[1]["val"]["per_feature_pearson"]), 6),
+                    ic[0],
+                ),
+            )[1]
+            return {
+                "selected_on_val": {
+                    **{k: best[k] for k in keys},
+                    "val": best["val"],
+                    "test_pinned": score(best["_pred"], "test", True, ok["test"], True),
+                    "test_pinned_covered": (
+                        score(best["_pred"], "test", True, ok["test"] & covered["test"])
+                        if not bool((ok["test"] & covered["test"]).all())
+                        else None
+                    ),
+                },
+                "cells": [
+                    {
+                        **{k: c[k] for k in keys},
+                        "val_per_feature_pearson": c["val"]["per_feature_pearson"],
+                        "test_pinned_mean_spearman": c["test_pinned"]["mean_spearman"],
+                    }
+                    for c in cells
+                ],
+            }
+
+        def evaluate(pred_fn: Any, params: dict[str, Any]) -> dict[str, Any]:
+            cell: dict[str, Any] = dict(params)
+            for name in ("val", "test"):
+                pred = np.zeros_like(y[name])
+                pred[ok[name]] = pred_fn(p[name][ok[name]])
+                # Predictions within 1e-9 are one rank: the no-effect deletions read
+                # rows that differ from the wild type's by float noise, and their
+                # unrounded predictions reordered inside the tie between runs.
+                pred = np.round(pred + mu, 9)
+                cell[name] = score(pred, name, False, ok[name])
+                if name == "test":
+                    cell["test_pinned"] = score(pred, name, True, ok[name])
+                    cell["_pred"] = pred
+            return cell
+
+        # ridge / bilinear
+        if "ridge" in args.models:
+            cells = [
+                evaluate(
+                    lambda q, k=k, r=r: bilinear(r_tr, p_tr, q, k, r),
+                    {"k_gene": k, "ridge": r},
+                )
+                for k in ranks
+                if k <= min(r_tr.shape)
+                for r in RIDGE_GRID
+            ]
+            out["ridge"] = select(cells, ["k_gene", "ridge"])
+        # cosine nearest neighbors
+        e_tr = p_tr / (np.linalg.norm(p_tr, axis=1, keepdims=True) + 1e-12)
+
+        def knn(q: np.ndarray, k: int) -> np.ndarray:
+            # Every training row tied with the k-th nearest (cosine within 1e-9) is
+            # averaged in: a query on the wild-type row has about two thousand
+            # identical training rows, and taking k of them by argsort order made the
+            # prediction an arbitrary subset that changed between runs.
+            e_q = q / (np.linalg.norm(q, axis=1, keepdims=True) + 1e-12)
+            sims = e_q @ e_tr.T
+            kth = -np.partition(-sims, k - 1, axis=1)[:, k - 1 : k]
+            weights = (sims >= kth - 1e-9).astype(float)
+            return (weights @ r_tr) / weights.sum(axis=1, keepdims=True)
+
+        if "knn" in args.models:
+            cells = [evaluate(lambda q, k=k: knn(q, k), {"k": k}) for k in KNN_GRID]
+            out["knn"] = select(cells, ["k"])
+        # random forest, the Flux Cone Learning form on one point per deletion
+        if "forest" in args.models:
+            cells = []
+            for leaf in FOREST_LEAF_GRID:
+                forest = RandomForestRegressor(
+                    n_estimators=FOREST_TREES,
+                    max_features="sqrt",
+                    min_samples_leaf=leaf,
+                    n_jobs=args.threads,
+                    random_state=args.seed,
+                ).fit(p_tr, r_tr if r_tr.shape[1] > 1 else r_tr[:, 0])
+                cells.append(
+                    evaluate(
+                        lambda q, f=forest: np.atleast_2d(f.predict(q)).reshape(len(q), -1),
+                        {"min_samples_leaf": leaf, "n_estimators": FOREST_TREES},
+                    )
+                )
+            out["forest"] = select(cells, ["min_samples_leaf", "n_estimators"])
+        # gradient-boosted trees (2026-09-28): the same inputs and the same selection
+        # rule as the forest, a grid over depth and the minimum child weight, the other
+        # settings fixed (XGB_FIXED). Multi-column targets are fit as one multi-output
+        # model (xgboost's native multi-target trees).
+        if "xgb" in args.models:
+            from xgboost import XGBRegressor
+
+            cells = []
+            for depth in XGB_DEPTH_GRID:
+                for child in XGB_CHILD_GRID:
+                    booster = XGBRegressor(
+                        max_depth=depth,
+                        min_child_weight=child,
+                        n_jobs=args.threads,
+                        random_state=args.seed,
+                        **XGB_FIXED,
+                    ).fit(p_tr, r_tr)
+                    cells.append(
+                        evaluate(
+                            lambda q, b=booster: np.atleast_2d(b.predict(q)).reshape(len(q), -1),
+                            {"max_depth": depth, "min_child_weight": child, **XGB_FIXED},
+                        )
+                    )
+            out["xgb"] = select(cells, ["max_depth", "min_child_weight"])
+        payload["representations"][rep_name] = out
+        line = f"  {rep_name:<28s} dim {rep['dim']:>5d}"
+        for model in args.models:
+            tp = out[model]["selected_on_val"]["test_pinned"]
+            line += f" | {model} rho {tp['mean_spearman']:+.4f}"
+            if "top50_enrichment" in tp:
+                line += f" top50 {tp['top50_enrichment']:.2f}"
+        print(line, flush=True)
+
+    payload["seconds"] = time.time() - started
+    results_dir = osp.join(EXPERIMENT_ROOT, STUDY[args.target], "results")
+    os.makedirs(results_dir, exist_ok=True)
+    out_path = args.out or osp.join(results_dir, f"store_baselines_{args.target}.json")
+    with open(out_path, "w") as fh:
+        json.dump(payload, fh, indent=1)
+    print(f"\nwrote {out_path} in {payload['seconds'] / 60:.1f} min")
+
+
+if __name__ == "__main__":
+    main()

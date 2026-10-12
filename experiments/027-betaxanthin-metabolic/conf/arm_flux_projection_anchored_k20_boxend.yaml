@@ -1,0 +1,18 @@
+# experiments/027-betaxanthin-metabolic/conf/arm_flux_projection_anchored_k20_boxend.yaml
+# [[experiments.027-betaxanthin-metabolic.projection-head]]
+#
+# THE CONTROL THAT ISOLATES THE BOX FROM THE SECOND LAW. Twenty alternations ending on the
+# clip, everything on, but WITHOUT the directional sign tightening.
+#
+# Measured at initialization on yeast-GEM 9.0.2 with the real gene universe, untrained:
+# ending on the clip with no thermodynamics in the box takes the flux from 11.9 percent
+# zeros (balance end) to 44.1 percent, the mean absolute flux from 1.159 to 0.355, and the
+# balance ratio from 5.4e-9 to 0.27. Adding the sign tightening takes it further, to 68.0
+# percent zeros and 0.067. So respecting the bounds, on its own, already costs most of the
+# flux density, and the sign restriction is not the whole story.
+#
+# If this arm scores at chance like the tdg cells did, the cause is respecting the bounds,
+# and the predictive performance of the balance-end head came from flux its own box forbids.
+# If it keeps the signal, the sign tightening is the cause.
+base_arm: flux_projection_anchored_k20_boxend
+permute_train_targets: false

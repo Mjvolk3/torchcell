@@ -1,0 +1,80 @@
+{
+  "gopca16": {
+    "path": "/scratch/projects/torchcell-scratch/data/torchcell/reference_flux/ess_solve_encodings_YPD_gopca16.npz",
+    "method": "the propagated GO multi-hot (registry embedding `go`, SGD annotations propagated over is_a and part_of, terms with >= 10 genes), projected on its first 16 principal components (fitted over the 1,121 genes, explained variance 0.522) and split into positive and negative parts as affine columns over the 1,121 labeled genes; written by go_affine_store.py",
+    "source_store": "/scratch/projects/torchcell-scratch/data/torchcell/reference_flux/ess_solve_encodings_YPD.npz",
+    "source_store_provenance": {
+      "gem": "yeast-GEM-9.0.2",
+      "growth_fraction": 1.0,
+      "flux_scale": 100.0,
+      "method": "pFBA (parsimonious_reference_flux, two scipy HiGHS LPs) with the gene deleted through cobra.manipulation.knock_out_model_genes",
+      "medium": "YPD",
+      "media_report": {
+        "applied": true,
+        "media_name": "YPD",
+        "recipe": "YPD-approx (YNB + 20 amino acids; peptone NOT modeled)",
+        "state": "liquid",
+        "n_components": 45,
+        "n_resolved": 45,
+        "n_exchanges_opened": 45,
+        "unresolved": [],
+        "excluded_by_role": [],
+        "wild_type_growth_before": 0.08584396972646902,
+        "wild_type_growth_after": 0.5352018656343418,
+        "provenance": "see the recipe's docstring in torchcell/metabolism/media.py"
+      },
+      "split_file": "ess_fcl_val0.2_s0.json.gz",
+      "wild_type_growth": 0.5352018792594796,
+      "wild_type_key": "",
+      "n_sets": 1122,
+      "n_lethal_zero_flux": 0,
+      "n_genes_outside_the_gem": 0,
+      "background_genes": [],
+      "python_hash_seed": "0",
+      "flux_sha256": "c7d3d6fe9bd72dbeda88f729fa6fa0bdc7c960c2ccfb90254531b2c22275cd08"
+    },
+    "go_terms_json": "go",
+    "n_go_columns": 32,
+    "n_genes_with_go_annotation": 1120,
+    "n_columns": 32
+  },
+  "gopca16pfba": {
+    "path": "/scratch/projects/torchcell-scratch/data/torchcell/reference_flux/ess_solve_encodings_YPD_gopca16pfba.npz",
+    "method": "the propagated GO multi-hot (registry embedding `go`, SGD annotations propagated over is_a and part_of, terms with >= 10 genes), projected on its first 16 principal components (fitted over the 1,121 genes, explained variance 0.522) and split into positive and negative parts as affine columns over the 1,121 labeled genes; appended to the pFBA deletion vector of ess_solve_encodings_YPD.npz; written by go_affine_store.py",
+    "source_store": "/scratch/projects/torchcell-scratch/data/torchcell/reference_flux/ess_solve_encodings_YPD.npz",
+    "source_store_provenance": {
+      "gem": "yeast-GEM-9.0.2",
+      "growth_fraction": 1.0,
+      "flux_scale": 100.0,
+      "method": "pFBA (parsimonious_reference_flux, two scipy HiGHS LPs) with the gene deleted through cobra.manipulation.knock_out_model_genes",
+      "medium": "YPD",
+      "media_report": {
+        "applied": true,
+        "media_name": "YPD",
+        "recipe": "YPD-approx (YNB + 20 amino acids; peptone NOT modeled)",
+        "state": "liquid",
+        "n_components": 45,
+        "n_resolved": 45,
+        "n_exchanges_opened": 45,
+        "unresolved": [],
+        "excluded_by_role": [],
+        "wild_type_growth_before": 0.08584396972646902,
+        "wild_type_growth_after": 0.5352018656343418,
+        "provenance": "see the recipe's docstring in torchcell/metabolism/media.py"
+      },
+      "split_file": "ess_fcl_val0.2_s0.json.gz",
+      "wild_type_growth": 0.5352018792594796,
+      "wild_type_key": "",
+      "n_sets": 1122,
+      "n_lethal_zero_flux": 0,
+      "n_genes_outside_the_gem": 0,
+      "background_genes": [],
+      "python_hash_seed": "0",
+      "flux_sha256": "c7d3d6fe9bd72dbeda88f729fa6fa0bdc7c960c2ccfb90254531b2c22275cd08"
+    },
+    "go_terms_json": "go",
+    "n_go_columns": 32,
+    "n_genes_with_go_annotation": 1120,
+    "n_columns": 4163
+  }
+}

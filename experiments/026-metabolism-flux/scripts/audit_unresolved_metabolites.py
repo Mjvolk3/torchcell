@@ -506,10 +506,9 @@ def main() -> None:
             compound, tier, _accession = build.resolve_compound(
                 cc, metabolite, smiles_db
             )
-            priceable = False
-            if compound is not None:
-                mu, _fin, _inf = cc.standard_dg_formation(compound)
-                priceable = mu is not None
+            # One shared definition with the build script, so this audit's baseline is the
+            # built table's coverage rather than a second opinion about it.
+            priceable = build.formation_energy_available(cc, compound)
             chemical_cache[key] = (compound, tier, priceable)
         compound, tier, priceable = chemical_cache[key]
 
@@ -594,8 +593,7 @@ def main() -> None:
                 )
             )
             return False
-        mu, _fin, _inf = cc.standard_dg_formation(compound)
-        if mu is None:
+        if not build.formation_energy_available(cc, compound):
             audit.attempts.append(
                 RecoveryAttempt(
                     step=step,

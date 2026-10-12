@@ -1,0 +1,3269 @@
+{
+  "built_at": "2026-09-11T05:41:51.608943+00:00",
+  "sources": {
+    "/scratch/projects/torchcell-scratch/data/enzyme_kinetics/open_enzyme_database/scerevisiae/oed_records.json": "0e4aca9e0872e5b19b7c325dc83c64cc43c9f2fba0d535d417e10a925e683398",
+    "/scratch/projects/torchcell-scratch/data/enzyme_kinetics/open_enzyme_database/all/oed_records.json": "b8d1e652a3e258d5b70837fc807c311228648ef43440b9b866d0737ab89ce1fa",
+    "/scratch/projects/torchcell-scratch/data/torchcell/kinetics/_features/verified_pairs.parquet": "b93b3a8a733dd70ac4558b2ba745abf942804bfc5ba711d0d44bf23c74277400"
+  },
+  "slice_rows": 1126,
+  "database_rows": 35753,
+  "slice_organisms": {
+    "Saccharomyces cerevisiae": 1126
+  },
+  "rows_matching_organism_in_full_database": 1126,
+  "n_distinct_accessions_in_slice": 106,
+  "n_distinct_ec_in_slice": 90,
+  "n_accessions_that_are_gem_genes": 79,
+  "tier_counts_k_cat": {
+    "measured": 97,
+    "homolog": 782,
+    "predicted": 2831,
+    "default": 18
+  },
+  "tier_counts_K_M": {
+    "measured": 97,
+    "homolog": 782,
+    "predicted": 2831,
+    "default": 18
+  },
+  "measured_units": [
+    {
+      "unit_id": 2,
+      "reaction_id": "r_0001",
+      "gene_ids": [
+        "YEL039C",
+        "YEL071W"
+      ],
+      "uniprot": "P00045",
+      "reaction_ec": [
+        "1.1.2.4",
+        "1.1.99.-"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "D-2-hydroxyglutarate",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 4.0,
+      "k_cat_predicted": 2.7681596279144287,
+      "abs_log10_ratio": 0.15986886091769933
+    },
+    {
+      "unit_id": 3,
+      "reaction_id": "r_0001",
+      "gene_ids": [
+        "YEL071W",
+        "YJR048W"
+      ],
+      "uniprot": "P39976",
+      "reaction_ec": [
+        "1.1.2.4",
+        "1.1.99.-"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "D-2-hydroxyglutarate",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 4.0,
+      "k_cat_predicted": 2.7681596279144287,
+      "abs_log10_ratio": 0.15986886091769933
+    },
+    {
+      "unit_id": 6,
+      "reaction_id": "r_0003",
+      "gene_ids": [
+        "YAL060W"
+      ],
+      "uniprot": "P39714",
+      "reaction_ec": [
+        "1.1.1.4"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "erythro-2,3-Butanediol",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 766.667,
+      "k_cat_predicted": 580.9384765625,
+      "abs_log10_ratio": 0.12047662861626814
+    },
+    {
+      "unit_id": 7,
+      "reaction_id": "r_0004",
+      "gene_ids": [
+        "YEL039C",
+        "YML054C"
+      ],
+      "uniprot": "P00045",
+      "reaction_ec": [
+        "1.1.2.3"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "L-Lactate",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 270.0,
+      "k_cat_predicted": 10.544754981994629,
+      "abs_log10_ratio": 1.4083272712360626
+    },
+    {
+      "unit_id": 8,
+      "reaction_id": "r_0004",
+      "gene_ids": [
+        "YJR048W",
+        "YML054C"
+      ],
+      "uniprot": "P00044",
+      "reaction_ec": [
+        "1.1.2.3"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "L-Lactate",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 270.0,
+      "k_cat_predicted": 7.8290114402771,
+      "abs_log10_ratio": 1.5376568364735577
+    },
+    {
+      "unit_id": 15,
+      "reaction_id": "r_0012",
+      "gene_ids": [
+        "YHR037W"
+      ],
+      "uniprot": "P07275",
+      "reaction_ec": [
+        "1.2.1.88"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "1-pyrroline-5-carboxylate",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 1.5,
+      "k_cat_predicted": 2.9933595657348633,
+      "abs_log10_ratio": 0.30006762886210936
+    },
+    {
+      "unit_id": 39,
+      "reaction_id": "r_0028",
+      "gene_ids": [
+        "YPR001W"
+      ],
+      "uniprot": "P43635",
+      "reaction_ec": [
+        "2.3.3.1"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "Propanoyl-CoA",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 5.4,
+      "k_cat_predicted": 7.093112945556641,
+      "abs_log10_ratio": 0.11844311546916468
+    },
+    {
+      "unit_id": 41,
+      "reaction_id": "r_0033",
+      "gene_ids": [
+        "YGL248W"
+      ],
+      "uniprot": "P22434",
+      "reaction_ec": [
+        "3.1.4.17",
+        "3.1.4.53"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "3',5'-cAMP",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 21.0,
+      "k_cat_predicted": 12.779815673828125,
+      "abs_log10_ratio": 0.21569470479390224
+    },
+    {
+      "unit_id": 55,
+      "reaction_id": "r_0044",
+      "gene_ids": [
+        "YDR538W",
+        "YDR539W"
+      ],
+      "uniprot": "P33751",
+      "reaction_ec": [],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "trans-cinnamate",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 3.8,
+      "k_cat_predicted": 4.63082218170166,
+      "abs_log10_ratio": 0.08587450828370871
+    },
+    {
+      "unit_id": 62,
+      "reaction_id": "r_0062",
+      "gene_ids": [
+        "YGR087C"
+      ],
+      "uniprot": "P26263",
+      "reaction_ec": [
+        "4.1.1.-",
+        "4.1.1.1",
+        "4.1.1.43",
+        "4.1.1.74"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "pyruvate",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 9.21,
+      "k_cat_predicted": 13.592735290527344,
+      "abs_log10_ratio": 0.16904722918837625
+    },
+    {
+      "unit_id": 63,
+      "reaction_id": "r_0062",
+      "gene_ids": [
+        "YLR044C"
+      ],
+      "uniprot": "P06169",
+      "reaction_ec": [
+        "4.1.1.-",
+        "4.1.1.1",
+        "4.1.1.43",
+        "4.1.1.74"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "pyruvate",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 12.1,
+      "k_cat_predicted": 33.941978454589844,
+      "abs_log10_ratio": 0.447951783129808
+    },
+    {
+      "unit_id": 64,
+      "reaction_id": "r_0062",
+      "gene_ids": [
+        "YLR134W"
+      ],
+      "uniprot": "P16467",
+      "reaction_ec": [
+        "4.1.1.-",
+        "4.1.1.1",
+        "4.1.1.43",
+        "4.1.1.74"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "pyruvate",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 10.3,
+      "k_cat_predicted": 18.221677780151367,
+      "abs_log10_ratio": 0.2477511378942067
+    },
+    {
+      "unit_id": 67,
+      "reaction_id": "r_0064",
+      "gene_ids": [
+        "YGR087C"
+      ],
+      "uniprot": "P26263",
+      "reaction_ec": [
+        "4.1.1.-",
+        "4.1.1.1",
+        "4.1.1.43",
+        "4.1.1.74"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "pyruvate",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 9.21,
+      "k_cat_predicted": 13.112349510192871,
+      "abs_log10_ratio": 0.1534208866564056
+    },
+    {
+      "unit_id": 68,
+      "reaction_id": "r_0064",
+      "gene_ids": [
+        "YLR044C"
+      ],
+      "uniprot": "P06169",
+      "reaction_ec": [
+        "4.1.1.-",
+        "4.1.1.1",
+        "4.1.1.43",
+        "4.1.1.74"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "pyruvate",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 12.1,
+      "k_cat_predicted": 28.354156494140625,
+      "abs_log10_ratio": 0.3698313617009443
+    },
+    {
+      "unit_id": 69,
+      "reaction_id": "r_0064",
+      "gene_ids": [
+        "YLR134W"
+      ],
+      "uniprot": "P16467",
+      "reaction_ec": [
+        "4.1.1.-",
+        "4.1.1.1",
+        "4.1.1.43",
+        "4.1.1.74"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "pyruvate",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 10.3,
+      "k_cat_predicted": 16.066444396972656,
+      "abs_log10_ratio": 0.19308255064994925
+    },
+    {
+      "unit_id": 77,
+      "reaction_id": "r_0073",
+      "gene_ids": [
+        "YOR163W"
+      ],
+      "uniprot": "Q99321",
+      "reaction_ec": [
+        "2.7.4.21",
+        "2.7.4.24",
+        "3.6.1.52",
+        "3.6.1.60"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "5-PP-InsP5",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 0.06,
+      "k_cat_predicted": 1.8113465309143066,
+      "abs_log10_ratio": 1.4798502932860984
+    },
+    {
+      "unit_id": 89,
+      "reaction_id": "r_0082",
+      "gene_ids": [
+        "YOR163W"
+      ],
+      "uniprot": "Q99321",
+      "reaction_ec": [
+        "3.6.1.52",
+        "3.6.1.60"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "5-PP-InsP5",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 0.06,
+      "k_cat_predicted": 1.8113465309143066,
+      "abs_log10_ratio": 1.4798502932860984
+    },
+    {
+      "unit_id": 102,
+      "reaction_id": "r_0092",
+      "gene_ids": [
+        "YOR163W"
+      ],
+      "uniprot": "Q99321",
+      "reaction_ec": [
+        "2.7.4.21",
+        "2.7.4.24",
+        "3.6.1.52",
+        "3.6.1.60"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "5-PP-InsP5",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 0.06,
+      "k_cat_predicted": 1.8113465309143066,
+      "abs_log10_ratio": 1.4798502932860984
+    },
+    {
+      "unit_id": 104,
+      "reaction_id": "r_0095",
+      "gene_ids": [
+        "YGR087C"
+      ],
+      "uniprot": "P26263",
+      "reaction_ec": [
+        "4.1.1.-",
+        "4.1.1.1",
+        "4.1.1.43",
+        "4.1.1.74"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "pyruvate",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 9.21,
+      "k_cat_predicted": 8.036088943481445,
+      "abs_log10_ratio": 0.0592148953200617
+    },
+    {
+      "unit_id": 105,
+      "reaction_id": "r_0095",
+      "gene_ids": [
+        "YLR044C"
+      ],
+      "uniprot": "P06169",
+      "reaction_ec": [
+        "4.1.1.-",
+        "4.1.1.1",
+        "4.1.1.43",
+        "4.1.1.74"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "pyruvate",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 12.1,
+      "k_cat_predicted": 21.774171829223633,
+      "abs_log10_ratio": 0.25515627548319997
+    },
+    {
+      "unit_id": 106,
+      "reaction_id": "r_0095",
+      "gene_ids": [
+        "YLR134W"
+      ],
+      "uniprot": "P16467",
+      "reaction_ec": [
+        "4.1.1.-",
+        "4.1.1.1",
+        "4.1.1.43",
+        "4.1.1.74"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "pyruvate",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 10.3,
+      "k_cat_predicted": 18.667999267578125,
+      "abs_log10_ratio": 0.2582605504687997
+    },
+    {
+      "unit_id": 191,
+      "reaction_id": "r_0166",
+      "gene_ids": [
+        "YOL086C"
+      ],
+      "uniprot": "P00330",
+      "reaction_ec": [
+        "1.1.1.-",
+        "1.1.1.1",
+        "1.1.1.284"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "Acetaldehyde",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 176.0,
+      "k_cat_predicted": 58.88736343383789,
+      "abs_log10_ratio": 0.4754905577425469
+    },
+    {
+      "unit_id": 199,
+      "reaction_id": "r_0169",
+      "gene_ids": [
+        "YOL086C"
+      ],
+      "uniprot": "P00330",
+      "reaction_ec": [
+        "1.1.1.-",
+        "1.1.1.1",
+        "1.1.1.284"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "Acetaldehyde",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 176.0,
+      "k_cat_predicted": 51.432151794433594,
+      "abs_log10_ratio": 0.5342779733025177
+    },
+    {
+      "unit_id": 206,
+      "reaction_id": "r_0173",
+      "gene_ids": [
+        "YPL061W"
+      ],
+      "uniprot": "P54115",
+      "reaction_ec": [
+        "1.2.1.4"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "Acetaldehyde",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 63.0,
+      "k_cat_predicted": 40.44837951660156,
+      "abs_log10_ratio": 0.19243942229627398
+    },
+    {
+      "unit_id": 211,
+      "reaction_id": "r_0177",
+      "gene_ids": [
+        "YPL061W"
+      ],
+      "uniprot": "P54115",
+      "reaction_ec": [
+        "1.2.1.4"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "Acetaldehyde",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 63.0,
+      "k_cat_predicted": 22.7115535736084,
+      "abs_log10_ratio": 0.44309370649900426
+    },
+    {
+      "unit_id": 216,
+      "reaction_id": "r_0179",
+      "gene_ids": [
+        "YOL086C"
+      ],
+      "uniprot": "P00330",
+      "reaction_ec": [
+        "1.1.1.-",
+        "1.1.1.1",
+        "1.1.1.284"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "Acetaldehyde",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 176.0,
+      "k_cat_predicted": 60.79012680053711,
+      "abs_log10_ratio": 0.46167961854525186
+    },
+    {
+      "unit_id": 223,
+      "reaction_id": "r_0182",
+      "gene_ids": [
+        "YOL086C"
+      ],
+      "uniprot": "P00330",
+      "reaction_ec": [
+        "1.1.1.-",
+        "1.1.1.1",
+        "1.1.1.284"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "Acetaldehyde",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 176.0,
+      "k_cat_predicted": 68.45130157470703,
+      "abs_log10_ratio": 0.4101309573260423
+    },
+    {
+      "unit_id": 232,
+      "reaction_id": "r_0186",
+      "gene_ids": [
+        "YOL086C"
+      ],
+      "uniprot": "P00330",
+      "reaction_ec": [
+        "1.1.1.-",
+        "1.1.1.1",
+        "1.1.1.284"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "Acetaldehyde",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 176.0,
+      "k_cat_predicted": 35.792232513427734,
+      "abs_log10_ratio": 0.6917238797895054
+    },
+    {
+      "unit_id": 275,
+      "reaction_id": "r_0215",
+      "gene_ids": [
+        "YER052C"
+      ],
+      "uniprot": "P10869",
+      "reaction_ec": [
+        "2.7.2.4"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "L-Aspartate",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 46.6,
+      "k_cat_predicted": 13.725058555603027,
+      "abs_log10_ratio": 0.5308717107211651
+    },
+    {
+      "unit_id": 280,
+      "reaction_id": "r_0220",
+      "gene_ids": [
+        "YLL018C"
+      ],
+      "uniprot": "P04802",
+      "reaction_ec": [
+        "6.1.1.12"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "ATP",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 0.83,
+      "k_cat_predicted": 14.61493968963623,
+      "abs_log10_ratio": 1.2457189351509612
+    },
+    {
+      "unit_id": 375,
+      "reaction_id": "r_0300",
+      "gene_ids": [
+        "YNR001C"
+      ],
+      "uniprot": "P00890",
+      "reaction_ec": [
+        "2.3.3.1"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "Acetyl-CoA",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 11.2,
+      "k_cat_predicted": 14.572347640991211,
+      "abs_log10_ratio": 0.11431150064381307
+    },
+    {
+      "unit_id": 376,
+      "reaction_id": "r_0300",
+      "gene_ids": [
+        "YPR001W"
+      ],
+      "uniprot": "P43635",
+      "reaction_ec": [
+        "2.3.3.1"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "Propanoyl-CoA",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 5.4,
+      "k_cat_predicted": 7.093112945556641,
+      "abs_log10_ratio": 0.11844311546916468
+    },
+    {
+      "unit_id": 387,
+      "reaction_id": "r_0309",
+      "gene_ids": [
+        "YGR155W"
+      ],
+      "uniprot": "P32582",
+      "reaction_ec": [
+        "4.2.1.22"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "L-Homocysteine",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 16.8,
+      "k_cat_predicted": 4.8397216796875,
+      "abs_log10_ratio": 0.5404888945548812
+    },
+    {
+      "unit_id": 399,
+      "reaction_id": "r_0322",
+      "gene_ids": [
+        "YKL060C"
+      ],
+      "uniprot": "P14540",
+      "reaction_ec": [
+        "4.1.2.13"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "D-Fructose 1,6-bisphosphate",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 4.14,
+      "k_cat_predicted": 3.0236122608184814,
+      "abs_log10_ratio": 0.1364742433736088
+    },
+    {
+      "unit_id": 428,
+      "reaction_id": "r_0356",
+      "gene_ids": [
+        "YKL152C"
+      ],
+      "uniprot": "P00950",
+      "reaction_ec": [
+        "5.4.2.11"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "2-Phospho-D-glycerate",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 400.0,
+      "k_cat_predicted": 16.075429916381836,
+      "abs_log10_ratio": 1.3958973949375735
+    },
+    {
+      "unit_id": 429,
+      "reaction_id": "r_0357",
+      "gene_ids": [
+        "YOR163W"
+      ],
+      "uniprot": "Q99321",
+      "reaction_ec": [
+        "3.6.1.52",
+        "3.6.1.60"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "5-PP-InsP5",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 0.06,
+      "k_cat_predicted": 1.8372055292129517,
+      "abs_log10_ratio": 1.486006493407235
+    },
+    {
+      "unit_id": 440,
+      "reaction_id": "r_0364",
+      "gene_ids": [
+        "YBR252W"
+      ],
+      "uniprot": "P33317",
+      "reaction_ec": [
+        "3.6.1.23"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "dUTP",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 9.6,
+      "k_cat_predicted": 10.761513710021973,
+      "abs_log10_ratio": 0.0496021302678521
+    },
+    {
+      "unit_id": 443,
+      "reaction_id": "r_0366",
+      "gene_ids": [
+        "YGR254W"
+      ],
+      "uniprot": "P00924",
+      "reaction_ec": [
+        "4.2.1.11"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "3-Phospho-D-glycerate",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 5.07,
+      "k_cat_predicted": 8.413217544555664,
+      "abs_log10_ratio": 0.21995415948582817
+    },
+    {
+      "unit_id": 444,
+      "reaction_id": "r_0366",
+      "gene_ids": [
+        "YHR174W"
+      ],
+      "uniprot": "P00925",
+      "reaction_ec": [
+        "4.2.1.11"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "2-Phospho-D-glycerate",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 19.9,
+      "k_cat_predicted": 13.362820625305176,
+      "abs_log10_ratio": 0.1729549376779788
+    },
+    {
+      "unit_id": 455,
+      "reaction_id": "r_0373",
+      "gene_ids": [
+        "YPL069C"
+      ],
+      "uniprot": "Q12051",
+      "reaction_ec": [
+        "2.5.1.-",
+        "2.5.1.1",
+        "2.5.1.10",
+        "2.5.1.29"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "Isopentenyl diphosphate",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 0.025,
+      "k_cat_predicted": 0.04496823251247406,
+      "abs_log10_ratio": 0.2549658091790996
+    },
+    {
+      "unit_id": 462,
+      "reaction_id": "r_0437",
+      "gene_ids": [
+        "YEL039C",
+        "YKR066C"
+      ],
+      "uniprot": "P00045",
+      "reaction_ec": [
+        "1.11.1.5"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "H2O2",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 1463.0,
+      "k_cat_predicted": 41.637847900390625,
+      "abs_log10_ratio": 1.5457560517118492
+    },
+    {
+      "unit_id": 463,
+      "reaction_id": "r_0437",
+      "gene_ids": [
+        "YJR048W",
+        "YKR066C"
+      ],
+      "uniprot": "P00044",
+      "reaction_ec": [
+        "1.11.1.5"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "H2O2",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 1463.0,
+      "k_cat_predicted": 25.525522232055664,
+      "abs_log10_ratio": 1.7582696899528494
+    },
+    {
+      "unit_id": 481,
+      "reaction_id": "r_0450",
+      "gene_ids": [
+        "YKL060C"
+      ],
+      "uniprot": "P14540",
+      "reaction_ec": [
+        "4.1.2.13"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "D-Fructose 1,6-bisphosphate",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 4.14,
+      "k_cat_predicted": 3.793333053588867,
+      "abs_log10_ratio": 0.037979365809140554
+    },
+    {
+      "unit_id": 484,
+      "reaction_id": "r_0453",
+      "gene_ids": [
+        "YKL216W"
+      ],
+      "uniprot": "P28272",
+      "reaction_ec": [
+        "1.3.98.1"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "Fumarate",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 2.3,
+      "k_cat_predicted": 43.600494384765625,
+      "abs_log10_ratio": 1.2777635777316894
+    },
+    {
+      "unit_id": 494,
+      "reaction_id": "r_0466",
+      "gene_ids": [
+        "YNL241C"
+      ],
+      "uniprot": "P11412",
+      "reaction_ec": [
+        "1.1.1.49"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "D-Glucose 6-phosphate",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 202.4,
+      "k_cat_predicted": 12.003146171569824,
+      "abs_log10_ratio": 1.2269154132979903
+    },
+    {
+      "unit_id": 495,
+      "reaction_id": "r_0467",
+      "gene_ids": [
+        "YBR196C"
+      ],
+      "uniprot": "P12709",
+      "reaction_ec": [
+        "5.3.1.9"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "D-Fructose 6-phosphate",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 247.2,
+      "k_cat_predicted": 923.171630859375,
+      "abs_log10_ratio": 0.5722339836945598
+    },
+    {
+      "unit_id": 507,
+      "reaction_id": "r_0478",
+      "gene_ids": [
+        "YOR168W"
+      ],
+      "uniprot": "P13188",
+      "reaction_ec": [
+        "6.1.1.18"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "L-glutamine",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 1.4,
+      "k_cat_predicted": 2.302163600921631,
+      "abs_log10_ratio": 0.2160081474091301
+    },
+    {
+      "unit_id": 523,
+      "reaction_id": "r_0486",
+      "gene_ids": [
+        "YGR192C"
+      ],
+      "uniprot": "P00359",
+      "reaction_ec": [
+        "1.2.1.12"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "D-Glyceraldehyde 3-phosphate",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 18.162,
+      "k_cat_predicted": 16.837993621826172,
+      "abs_log10_ratio": 0.032873330666018705
+    },
+    {
+      "unit_id": 524,
+      "reaction_id": "r_0486",
+      "gene_ids": [
+        "YJL052W"
+      ],
+      "uniprot": "P00360",
+      "reaction_ec": [
+        "1.2.1.12"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "D-Glyceraldehyde 3-phosphate",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 19.1,
+      "k_cat_predicted": 13.882688522338867,
+      "abs_log10_ratio": 0.13855978748701892
+    },
+    {
+      "unit_id": 525,
+      "reaction_id": "r_0486",
+      "gene_ids": [
+        "YJR009C"
+      ],
+      "uniprot": "P00358",
+      "reaction_ec": [
+        "1.2.1.12"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "D-Glyceraldehyde 3-phosphate",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 8.63,
+      "k_cat_predicted": 20.077640533447266,
+      "abs_log10_ratio": 0.36670187871833876
+    },
+    {
+      "unit_id": 563,
+      "reaction_id": "r_0526",
+      "gene_ids": [
+        "YDL238C"
+      ],
+      "uniprot": "Q07729",
+      "reaction_ec": [
+        "3.5.4.3"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "ammeline",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 2.8,
+      "k_cat_predicted": 9.261734962463379,
+      "abs_log10_ratio": 0.5195343175477248
+    },
+    {
+      "unit_id": 572,
+      "reaction_id": "r_0533",
+      "gene_ids": [
+        "YFR053C"
+      ],
+      "uniprot": "P04806",
+      "reaction_ec": [
+        "2.7.1.1"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "D-Glucose",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 10.2,
+      "k_cat_predicted": 12.14508056640625,
+      "abs_log10_ratio": 0.0758002283532628
+    },
+    {
+      "unit_id": 573,
+      "reaction_id": "r_0533",
+      "gene_ids": [
+        "YGL253W"
+      ],
+      "uniprot": "P04807",
+      "reaction_ec": [
+        "2.7.1.1"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "D-Glucose",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 63.1,
+      "k_cat_predicted": 37.26862335205078,
+      "abs_log10_ratio": 0.2286860083912864
+    },
+    {
+      "unit_id": 575,
+      "reaction_id": "r_0534",
+      "gene_ids": [
+        "YCL040W"
+      ],
+      "uniprot": "P17709",
+      "reaction_ec": [
+        "2.7.1.1",
+        "2.7.1.2"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "D-Glucose",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 0.072,
+      "k_cat_predicted": 0.6403634548187256,
+      "abs_log10_ratio": 0.9490940425820085
+    },
+    {
+      "unit_id": 576,
+      "reaction_id": "r_0534",
+      "gene_ids": [
+        "YFR053C"
+      ],
+      "uniprot": "P04806",
+      "reaction_ec": [
+        "2.7.1.1",
+        "2.7.1.2"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "D-Glucose",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 10.2,
+      "k_cat_predicted": 13.16999626159668,
+      "abs_log10_ratio": 0.1109854799221014
+    },
+    {
+      "unit_id": 577,
+      "reaction_id": "r_0534",
+      "gene_ids": [
+        "YGL253W"
+      ],
+      "uniprot": "P04807",
+      "reaction_ec": [
+        "2.7.1.1",
+        "2.7.1.2"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "D-Glucose",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 63.1,
+      "k_cat_predicted": 40.53910827636719,
+      "abs_log10_ratio": 0.19215516779568922
+    },
+    {
+      "unit_id": 580,
+      "reaction_id": "r_0535",
+      "gene_ids": [
+        "YFR053C"
+      ],
+      "uniprot": "P04806",
+      "reaction_ec": [
+        "2.7.1.1"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "D-Glucose",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 10.2,
+      "k_cat_predicted": 13.16999626159668,
+      "abs_log10_ratio": 0.1109854799221014
+    },
+    {
+      "unit_id": 581,
+      "reaction_id": "r_0535",
+      "gene_ids": [
+        "YGL253W"
+      ],
+      "uniprot": "P04807",
+      "reaction_ec": [
+        "2.7.1.1"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "D-Glucose",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 63.1,
+      "k_cat_predicted": 40.53910827636719,
+      "abs_log10_ratio": 0.19215516779568922
+    },
+    {
+      "unit_id": 595,
+      "reaction_id": "r_0546",
+      "gene_ids": [
+        "YJR139C"
+      ],
+      "uniprot": "P31116",
+      "reaction_ec": [
+        "1.1.1.3"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "L-Aspartate 4-semialdehyde",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 126.0,
+      "k_cat_predicted": 49.80699157714844,
+      "abs_log10_ratio": 0.40308023468213755
+    },
+    {
+      "unit_id": 596,
+      "reaction_id": "r_0547",
+      "gene_ids": [
+        "YJR139C"
+      ],
+      "uniprot": "P31116",
+      "reaction_ec": [
+        "1.1.1.3"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "L-Aspartate 4-semialdehyde",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 126.0,
+      "k_cat_predicted": 49.80699157714844,
+      "abs_log10_ratio": 0.40308023468213755
+    },
+    {
+      "unit_id": 604,
+      "reaction_id": "r_0553",
+      "gene_ids": [
+        "YDR272W"
+      ],
+      "uniprot": "Q05584",
+      "reaction_ec": [
+        "3.1.2.6"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "(R)-S-Mandeloylglutathione",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 35.1,
+      "k_cat_predicted": 43.3281364440918,
+      "abs_log10_ratio": 0.09146289383667425
+    },
+    {
+      "unit_id": 605,
+      "reaction_id": "r_0554",
+      "gene_ids": [
+        "YOR040W"
+      ],
+      "uniprot": "Q12320",
+      "reaction_ec": [
+        "3.1.2.6"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "(R)-S-Mandeloylglutathione",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 38.1,
+      "k_cat_predicted": 484.3664855957031,
+      "abs_log10_ratio": 1.1042491100249792
+    },
+    {
+      "unit_id": 616,
+      "reaction_id": "r_0563",
+      "gene_ids": [
+        "YBR248C"
+      ],
+      "uniprot": "P33734",
+      "reaction_ec": [
+        "2.4.2.-",
+        "4.1.3.-"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "L-glutamine",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 5.2,
+      "k_cat_predicted": 3.072101593017578,
+      "abs_log10_ratio": 0.2285677701147159
+    },
+    {
+      "unit_id": 618,
+      "reaction_id": "r_0565",
+      "gene_ids": [
+        "YHR216W"
+      ],
+      "uniprot": "P38697",
+      "reaction_ec": [
+        "1.1.1.205"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "IMP",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 0.404,
+      "k_cat_predicted": 0.557523250579834,
+      "abs_log10_ratio": 0.13988161851626277
+    },
+    {
+      "unit_id": 619,
+      "reaction_id": "r_0565",
+      "gene_ids": [
+        "YLR432W"
+      ],
+      "uniprot": "P50095",
+      "reaction_ec": [
+        "1.1.1.205"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "IMP",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 0.28,
+      "k_cat_predicted": 0.9991396069526672,
+      "abs_log10_ratio": 0.5524681438638583
+    },
+    {
+      "unit_id": 622,
+      "reaction_id": "r_0567",
+      "gene_ids": [
+        "YGR087C"
+      ],
+      "uniprot": "P26263",
+      "reaction_ec": [
+        "4.1.1.-",
+        "4.1.1.1",
+        "4.1.1.43",
+        "4.1.1.74"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "pyruvate",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 9.21,
+      "k_cat_predicted": 11.17390251159668,
+      "abs_log10_ratio": 0.08394524777590001
+    },
+    {
+      "unit_id": 623,
+      "reaction_id": "r_0567",
+      "gene_ids": [
+        "YLR044C"
+      ],
+      "uniprot": "P06169",
+      "reaction_ec": [
+        "4.1.1.-",
+        "4.1.1.1",
+        "4.1.1.43",
+        "4.1.1.74"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "pyruvate",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 12.1,
+      "k_cat_predicted": 22.864669799804688,
+      "abs_log10_ratio": 0.2763795635805162
+    },
+    {
+      "unit_id": 624,
+      "reaction_id": "r_0567",
+      "gene_ids": [
+        "YLR134W"
+      ],
+      "uniprot": "P16467",
+      "reaction_ec": [
+        "4.1.1.-",
+        "4.1.1.1",
+        "4.1.1.43",
+        "4.1.1.74"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "pyruvate",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 10.3,
+      "k_cat_predicted": 11.837464332580566,
+      "abs_log10_ratio": 0.060421458737052604
+    },
+    {
+      "unit_id": 704,
+      "reaction_id": "r_0667",
+      "gene_ids": [
+        "YPL117C"
+      ],
+      "uniprot": "P15496",
+      "reaction_ec": [
+        "5.3.3.2"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "isopentenyl diphosphate",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 8.27,
+      "k_cat_predicted": 6.016601085662842,
+      "abs_log10_ratio": 0.13815429181833883
+    },
+    {
+      "unit_id": 709,
+      "reaction_id": "r_0672",
+      "gene_ids": [
+        "YHR037W"
+      ],
+      "uniprot": "P07275",
+      "reaction_ec": [
+        "1.2.1.88"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "1-pyrroline-5-carboxylate",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 1.5,
+      "k_cat_predicted": 2.581693649291992,
+      "abs_log10_ratio": 0.23581344738148796
+    },
+    {
+      "unit_id": 710,
+      "reaction_id": "r_0673",
+      "gene_ids": [
+        "YHR037W"
+      ],
+      "uniprot": "P07275",
+      "reaction_ec": [
+        "1.2.1.88"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "1-pyrroline-5-carboxylate",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 1.5,
+      "k_cat_predicted": 3.1962759494781494,
+      "abs_log10_ratio": 0.328553007882323
+    },
+    {
+      "unit_id": 712,
+      "reaction_id": "r_0675",
+      "gene_ids": [
+        "YEL046C"
+      ],
+      "uniprot": "P37303",
+      "reaction_ec": [
+        "4.1.2.48"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "L-allo-Threonine",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 41.0,
+      "k_cat_predicted": 18.879640579223633,
+      "abs_log10_ratio": 0.33679013455141793
+    },
+    {
+      "unit_id": 713,
+      "reaction_id": "r_0676",
+      "gene_ids": [
+        "YMR226C"
+      ],
+      "uniprot": "Q05016",
+      "reaction_ec": [
+        "1.1.1.381"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "L-serine",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 11.0,
+      "k_cat_predicted": 14.241212844848633,
+      "abs_log10_ratio": 0.11215429216193273
+    },
+    {
+      "unit_id": 714,
+      "reaction_id": "r_0678",
+      "gene_ids": [
+        "YBR115C",
+        "YGL154C"
+      ],
+      "uniprot": "P07702",
+      "reaction_ec": [
+        "1.2.1.31",
+        "1.2.1.95",
+        "2.7.8.7"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "D-2-Aminoadipate",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 0.633,
+      "k_cat_predicted": 0.5696329474449158,
+      "abs_log10_ratio": 0.04580860916436252
+    },
+    {
+      "unit_id": 725,
+      "reaction_id": "r_0688",
+      "gene_ids": [
+        "YOL151W"
+      ],
+      "uniprot": "Q12068",
+      "reaction_ec": [
+        "1.1.1.-",
+        "1.1.1.21",
+        "1.1.1.265",
+        "1.1.1.283"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "3-Methylbutanal",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 23.2,
+      "k_cat_predicted": 17.440092086791992,
+      "abs_log10_ratio": 0.12393921113609241
+    },
+    {
+      "unit_id": 727,
+      "reaction_id": "r_0690",
+      "gene_ids": [
+        "YMR226C"
+      ],
+      "uniprot": "Q05016",
+      "reaction_ec": [
+        "1.1.1.381"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "L-serine",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 11.0,
+      "k_cat_predicted": 8.397467613220215,
+      "abs_log10_ratio": 0.11724434759860122
+    },
+    {
+      "unit_id": 731,
+      "reaction_id": "r_0694",
+      "gene_ids": [
+        "YJR078W"
+      ],
+      "uniprot": "P47125",
+      "reaction_ec": [
+        "1.13.11.52"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "D-Tryptophan",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 1.683,
+      "k_cat_predicted": 5.64704704284668,
+      "abs_log10_ratio": 0.5257372896756343
+    },
+    {
+      "unit_id": 733,
+      "reaction_id": "r_0696",
+      "gene_ids": [
+        "YOL151W"
+      ],
+      "uniprot": "Q12068",
+      "reaction_ec": [],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "3-Methylbutanal",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 23.2,
+      "k_cat_predicted": 25.026771545410156,
+      "abs_log10_ratio": 0.03291684432399413
+    },
+    {
+      "unit_id": 734,
+      "reaction_id": "r_0697",
+      "gene_ids": [
+        "YML004C"
+      ],
+      "uniprot": "P50107",
+      "reaction_ec": [
+        "4.4.1.5"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "glutathione-methylglyoxal hemithioacetal",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 2700.0,
+      "k_cat_predicted": 1420.5679931640625,
+      "abs_log10_ratio": 0.27890173880734115
+    },
+    {
+      "unit_id": 758,
+      "reaction_id": "r_0723",
+      "gene_ids": [
+        "YER003C"
+      ],
+      "uniprot": "P29952",
+      "reaction_ec": [
+        "5.3.1.8"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "D-Mannose 6-phosphate",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 20.0,
+      "k_cat_predicted": 16.827177047729492,
+      "abs_log10_ratio": 0.07501873146624287
+    },
+    {
+      "unit_id": 775,
+      "reaction_id": "r_0739",
+      "gene_ids": [
+        "YNR043W"
+      ],
+      "uniprot": "P32377",
+      "reaction_ec": [
+        "4.1.1.33"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "ATP",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 4.9,
+      "k_cat_predicted": 1.7188220024108887,
+      "abs_log10_ratio": 0.4549651756354067
+    },
+    {
+      "unit_id": 800,
+      "reaction_id": "r_0760",
+      "gene_ids": [
+        "YFL017C"
+      ],
+      "uniprot": "P43577",
+      "reaction_ec": [
+        "2.3.1.4"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "Acetyl-CoA",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 0.207,
+      "k_cat_predicted": 0.1775158941745758,
+      "abs_log10_ratio": 0.06673310106141678
+    },
+    {
+      "unit_id": 810,
+      "reaction_id": "r_0766",
+      "gene_ids": [
+        "YPL188W"
+      ],
+      "uniprot": "Q06892",
+      "reaction_ec": [
+        "2.7.1.23",
+        "2.7.1.86"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "NAD+",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 7.4,
+      "k_cat_predicted": 6.852776527404785,
+      "abs_log10_ratio": 0.03336515025086654
+    },
+    {
+      "unit_id": 824,
+      "reaction_id": "r_0772",
+      "gene_ids": [
+        "YPL188W"
+      ],
+      "uniprot": "Q06892",
+      "reaction_ec": [
+        "2.7.1.23",
+        "2.7.1.86"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "NAD+",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 7.4,
+      "k_cat_predicted": 7.92912483215332,
+      "abs_log10_ratio": 0.029993535488108822
+    },
+    {
+      "unit_id": 828,
+      "reaction_id": "r_0781",
+      "gene_ids": [
+        "YGL037C"
+      ],
+      "uniprot": "P53184",
+      "reaction_ec": [
+        "3.5.1.19"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "5-Methylnicotinamide",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 1.75,
+      "k_cat_predicted": 1.7467941045761108,
+      "abs_log10_ratio": 0.0007963311768500431
+    },
+    {
+      "unit_id": 872,
+      "reaction_id": "r_0821",
+      "gene_ids": [
+        "YEL021W"
+      ],
+      "uniprot": "P03962",
+      "reaction_ec": [
+        "4.1.1.23"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "orotidine 5'-phosphate",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 44.0,
+      "k_cat_predicted": 24.042020797729492,
+      "abs_log10_ratio": 0.26248170797999926
+    },
+    {
+      "unit_id": 889,
+      "reaction_id": "r_0854",
+      "gene_ids": [
+        "YDR380W"
+      ],
+      "uniprot": "Q06408",
+      "reaction_ec": [
+        "4.1.1.43"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "4-methylthio-2-oxobutanoic acid",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 7.7,
+      "k_cat_predicted": 3.310999631881714,
+      "abs_log10_ratio": 0.366531592705448
+    },
+    {
+      "unit_id": 894,
+      "reaction_id": "r_0884",
+      "gene_ids": [
+        "YKR097W"
+      ],
+      "uniprot": "P10963",
+      "reaction_ec": [
+        "4.1.1.49"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "CTP",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 8.9,
+      "k_cat_predicted": 13.669279098510742,
+      "abs_log10_ratio": 0.1863556043534536
+    },
+    {
+      "unit_id": 896,
+      "reaction_id": "r_0886",
+      "gene_ids": [
+        "YGR240C",
+        "YMR205C"
+      ],
+      "uniprot": "P16861",
+      "reaction_ec": [
+        "2.7.1.11"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "ATP",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 3.19,
+      "k_cat_predicted": 8.561162948608398,
+      "abs_log10_ratio": 0.42874208020151205
+    },
+    {
+      "unit_id": 897,
+      "reaction_id": "r_0887",
+      "gene_ids": [
+        "YGR240C",
+        "YMR205C"
+      ],
+      "uniprot": "P16861",
+      "reaction_ec": [
+        "2.7.1.11"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "ATP",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 3.19,
+      "k_cat_predicted": 6.837175369262695,
+      "abs_log10_ratio": 0.33108603636696443
+    },
+    {
+      "unit_id": 901,
+      "reaction_id": "r_0889",
+      "gene_ids": [
+        "YHR183W"
+      ],
+      "uniprot": "P38720",
+      "reaction_ec": [
+        "1.1.1.44"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "6-Phospho-D-gluconate",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 28.33,
+      "k_cat_predicted": 12.742809295654297,
+      "abs_log10_ratio": 0.3469813908615561
+    },
+    {
+      "unit_id": 905,
+      "reaction_id": "r_0892",
+      "gene_ids": [
+        "YCR012W"
+      ],
+      "uniprot": "P00560",
+      "reaction_ec": [
+        "2.7.2.3"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "2-Hydroxy-4-phosphonobutyric acid",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 153.0,
+      "k_cat_predicted": 125.070556640625,
+      "abs_log10_ratio": 0.08753634809074123
+    },
+    {
+      "unit_id": 907,
+      "reaction_id": "r_0893",
+      "gene_ids": [
+        "YKL152C"
+      ],
+      "uniprot": "P00950",
+      "reaction_ec": [
+        "5.4.2.11"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "2-Phospho-D-glycerate",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 400.0,
+      "k_cat_predicted": 12.729087829589844,
+      "abs_log10_ratio": 1.497262708237503
+    },
+    {
+      "unit_id": 938,
+      "reaction_id": "r_0929",
+      "gene_ids": [
+        "YMR020W"
+      ],
+      "uniprot": "P50264",
+      "reaction_ec": [
+        "1.5.3.17"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "spermine",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 39.0,
+      "k_cat_predicted": 11.653915405273438,
+      "abs_log10_ratio": 0.5245927457656138
+    },
+    {
+      "unit_id": 940,
+      "reaction_id": "r_0936",
+      "gene_ids": [
+        "YMR020W"
+      ],
+      "uniprot": "P50264",
+      "reaction_ec": [
+        "1.5.3.17"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "spermine",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 39.0,
+      "k_cat_predicted": 13.697065353393555,
+      "abs_log10_ratio": 0.45443707909279385
+    },
+    {
+      "unit_id": 941,
+      "reaction_id": "r_0937",
+      "gene_ids": [
+        "YMR020W"
+      ],
+      "uniprot": "P50264",
+      "reaction_ec": [
+        "1.5.3.17"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "spermine",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 39.0,
+      "k_cat_predicted": 13.697065353393555,
+      "abs_log10_ratio": 0.45443707909279385
+    },
+    {
+      "unit_id": 957,
+      "reaction_id": "r_0958",
+      "gene_ids": [
+        "YGL062W"
+      ],
+      "uniprot": "P11154",
+      "reaction_ec": [
+        "6.4.1.1"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "ATP",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 59.5,
+      "k_cat_predicted": 15.477428436279297,
+      "abs_log10_ratio": 0.5848181611069801
+    },
+    {
+      "unit_id": 958,
+      "reaction_id": "r_0959",
+      "gene_ids": [
+        "YGR087C"
+      ],
+      "uniprot": "P26263",
+      "reaction_ec": [
+        "4.1.1.-",
+        "4.1.1.1",
+        "4.1.1.43",
+        "4.1.1.74"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "pyruvate",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 9.21,
+      "k_cat_predicted": 13.548990249633789,
+      "abs_log10_ratio": 0.16764730004290262
+    },
+    {
+      "unit_id": 959,
+      "reaction_id": "r_0959",
+      "gene_ids": [
+        "YLR044C"
+      ],
+      "uniprot": "P06169",
+      "reaction_ec": [
+        "4.1.1.-",
+        "4.1.1.1",
+        "4.1.1.43",
+        "4.1.1.74"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "pyruvate",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 12.1,
+      "k_cat_predicted": 34.280094146728516,
+      "abs_log10_ratio": 0.4522566356811672
+    },
+    {
+      "unit_id": 960,
+      "reaction_id": "r_0959",
+      "gene_ids": [
+        "YLR134W"
+      ],
+      "uniprot": "P16467",
+      "reaction_ec": [
+        "4.1.1.-",
+        "4.1.1.1",
+        "4.1.1.43",
+        "4.1.1.74"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "pyruvate",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 10.3,
+      "k_cat_predicted": 16.346555709838867,
+      "abs_log10_ratio": 0.2005890342000272
+    },
+    {
+      "unit_id": 961,
+      "reaction_id": "r_0960",
+      "gene_ids": [
+        "YGR087C"
+      ],
+      "uniprot": "P26263",
+      "reaction_ec": [
+        "4.1.1.-",
+        "4.1.1.1",
+        "4.1.1.43",
+        "4.1.1.74"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "pyruvate",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 9.21,
+      "k_cat_predicted": 10.607404708862305,
+      "abs_log10_ratio": 0.061349508794605594
+    },
+    {
+      "unit_id": 962,
+      "reaction_id": "r_0960",
+      "gene_ids": [
+        "YLR044C"
+      ],
+      "uniprot": "P06169",
+      "reaction_ec": [
+        "4.1.1.-",
+        "4.1.1.1",
+        "4.1.1.43",
+        "4.1.1.74"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "pyruvate",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 12.1,
+      "k_cat_predicted": 28.822969436645508,
+      "abs_log10_ratio": 0.3769533509053547
+    },
+    {
+      "unit_id": 963,
+      "reaction_id": "r_0960",
+      "gene_ids": [
+        "YLR134W"
+      ],
+      "uniprot": "P16467",
+      "reaction_ec": [
+        "4.1.1.-",
+        "4.1.1.1",
+        "4.1.1.43",
+        "4.1.1.74"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "pyruvate",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 10.3,
+      "k_cat_predicted": 18.667999267578125,
+      "abs_log10_ratio": 0.2582605504687997
+    },
+    {
+      "unit_id": 965,
+      "reaction_id": "r_0962",
+      "gene_ids": [
+        "YAL038W"
+      ],
+      "uniprot": "P00549",
+      "reaction_ec": [
+        "2.7.1.40"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "ADP",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 20.131,
+      "k_cat_predicted": 23.378402709960938,
+      "abs_log10_ratio": 0.06494948655680552
+    },
+    {
+      "unit_id": 1002,
+      "reaction_id": "r_0982",
+      "gene_ids": [
+        "YOR095C"
+      ],
+      "uniprot": "Q12189",
+      "reaction_ec": [
+        "5.3.1.6"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "D-Ribose 5-phosphate",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 653.0,
+      "k_cat_predicted": 13.577278137207031,
+      "abs_log10_ratio": 1.6821004664463115
+    },
+    {
+      "unit_id": 1006,
+      "reaction_id": "r_0986",
+      "gene_ids": [
+        "YML008C"
+      ],
+      "uniprot": "P25087",
+      "reaction_ec": [
+        "2.1.1.41"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "S-Adenosyl-L-methionine",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 0.01,
+      "k_cat_predicted": 0.006890409626066685,
+      "abs_log10_ratio": 0.16175495907170867
+    },
+    {
+      "unit_id": 1008,
+      "reaction_id": "r_0988",
+      "gene_ids": [
+        "YIR034C"
+      ],
+      "uniprot": "P38998",
+      "reaction_ec": [
+        "1.5.1.7"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "2-Oxoglutarate",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 20.0,
+      "k_cat_predicted": 11.098711967468262,
+      "abs_log10_ratio": 0.2557574148844238
+    },
+    {
+      "unit_id": 1010,
+      "reaction_id": "r_0990",
+      "gene_ids": [
+        "YKL060C"
+      ],
+      "uniprot": "P14540",
+      "reaction_ec": [
+        "4.1.2.13"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "D-Fructose 1,6-bisphosphate",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 4.14,
+      "k_cat_predicted": 2.3061633110046387,
+      "abs_log10_ratio": 0.25411028250011575
+    },
+    {
+      "unit_id": 1060,
+      "reaction_id": "r_1040",
+      "gene_ids": [
+        "YEL046C"
+      ],
+      "uniprot": "P37303",
+      "reaction_ec": [
+        "4.1.2.48"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "L-allo-Threonine",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 41.0,
+      "k_cat_predicted": 18.879640579223633,
+      "abs_log10_ratio": 0.33679013455141793
+    },
+    {
+      "unit_id": 1070,
+      "reaction_id": "r_1049",
+      "gene_ids": [
+        "YPR074C"
+      ],
+      "uniprot": "P23254",
+      "reaction_ec": [
+        "2.2.1.1"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "D-Xylulose 5-phosphate",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 46.3,
+      "k_cat_predicted": 12.666365623474121,
+      "abs_log10_ratio": 0.5629289709327263
+    },
+    {
+      "unit_id": 1072,
+      "reaction_id": "r_1050",
+      "gene_ids": [
+        "YPR074C"
+      ],
+      "uniprot": "P23254",
+      "reaction_ec": [
+        "2.2.1.1"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "D-Xylulose 5-phosphate",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 46.3,
+      "k_cat_predicted": 12.819867134094238,
+      "abs_log10_ratio": 0.5576974668670361
+    },
+    {
+      "unit_id": 1075,
+      "reaction_id": "r_1054",
+      "gene_ids": [
+        "YDR050C"
+      ],
+      "uniprot": "P00942",
+      "reaction_ec": [
+        "5.3.1.1"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "glycerone phosphate",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 564.0,
+      "k_cat_predicted": 1251.4342041015625,
+      "abs_log10_ratio": 0.3461289169231131
+    },
+    {
+      "unit_id": 1085,
+      "reaction_id": "r_1069",
+      "gene_ids": [
+        "YDL103C"
+      ],
+      "uniprot": "P43123",
+      "reaction_ec": [
+        "2.7.7.23"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "N-Acetyl-D-glucosamine 1-phosphate",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 15.42,
+      "k_cat_predicted": 8.727577209472656,
+      "abs_log10_ratio": 0.2471906741777788
+    },
+    {
+      "unit_id": 1249,
+      "reaction_id": "r_1178",
+      "gene_ids": [
+        "YMR058W"
+      ],
+      "uniprot": "P38993",
+      "reaction_ec": [],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "Fe2+",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 0.158,
+      "k_cat_predicted": 0.8071687817573547,
+      "abs_log10_ratio": 0.7083072697274833
+    },
+    {
+      "unit_id": 1452,
+      "reaction_id": "r_1614",
+      "gene_ids": [
+        "YGL101W"
+      ],
+      "uniprot": "P53144",
+      "reaction_ec": [],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "5'-dTMP",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 1.1,
+      "k_cat_predicted": 4.198464393615723,
+      "abs_log10_ratio": 0.5816977892096864
+    },
+    {
+      "unit_id": 1454,
+      "reaction_id": "r_1615",
+      "gene_ids": [
+        "YGL101W"
+      ],
+      "uniprot": "P53144",
+      "reaction_ec": [],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "5'-dTMP",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 1.1,
+      "k_cat_predicted": 4.5766987800598145,
+      "abs_log10_ratio": 0.61915964469037
+    },
+    {
+      "unit_id": 1456,
+      "reaction_id": "r_1616",
+      "gene_ids": [
+        "YGL101W"
+      ],
+      "uniprot": "P53144",
+      "reaction_ec": [],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "5'-dTMP",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 1.1,
+      "k_cat_predicted": 3.58663010597229,
+      "abs_log10_ratio": 0.5132939044481846
+    },
+    {
+      "unit_id": 1458,
+      "reaction_id": "r_1617",
+      "gene_ids": [
+        "YGL101W"
+      ],
+      "uniprot": "P53144",
+      "reaction_ec": [],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "5'-dTMP",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 1.1,
+      "k_cat_predicted": 3.4304471015930176,
+      "abs_log10_ratio": 0.4939580416193827
+    },
+    {
+      "unit_id": 1545,
+      "reaction_id": "r_2115",
+      "gene_ids": [
+        "YOL086C"
+      ],
+      "uniprot": "P00330",
+      "reaction_ec": [
+        "1.1.1.1"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "Acetaldehyde",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 176.0,
+      "k_cat_predicted": 108.74627685546875,
+      "abs_log10_ratio": 0.20909827086613716
+    },
+    {
+      "unit_id": 1553,
+      "reaction_id": "r_2126",
+      "gene_ids": [
+        "YKR043C"
+      ],
+      "uniprot": "P36136",
+      "reaction_ec": [
+        "3.1.3.37"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "D-fructose 1,6-bisphosphate",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 4.9,
+      "k_cat_predicted": 4.609683513641357,
+      "abs_log10_ratio": 0.026524970907288798
+    },
+    {
+      "unit_id": 1554,
+      "reaction_id": "r_2131",
+      "gene_ids": [
+        "YDL066W"
+      ],
+      "uniprot": "P21954",
+      "reaction_ec": [
+        "1.1.1.42"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "isocitrate",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 26.3,
+      "k_cat_predicted": 12.890350341796875,
+      "abs_log10_ratio": 0.30969102745586524
+    },
+    {
+      "unit_id": 1717,
+      "reaction_id": "r_2295",
+      "gene_ids": [
+        "YLR284C"
+      ],
+      "uniprot": "Q05871",
+      "reaction_ec": [
+        "5.3.3.8"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "3-trans-decenoyl-CoA",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 4.4,
+      "k_cat_predicted": null,
+      "abs_log10_ratio": null
+    },
+    {
+      "unit_id": 1718,
+      "reaction_id": "r_2296",
+      "gene_ids": [
+        "YLR284C"
+      ],
+      "uniprot": "Q05871",
+      "reaction_ec": [
+        "5.3.3.8"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "3-trans-decenoyl-CoA",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 4.4,
+      "k_cat_predicted": 4.205773830413818,
+      "abs_log10_ratio": 0.01960676211692582
+    },
+    {
+      "unit_id": 1719,
+      "reaction_id": "r_2297",
+      "gene_ids": [
+        "YLR284C"
+      ],
+      "uniprot": "Q05871",
+      "reaction_ec": [
+        "5.3.3.8"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "3-trans-decenoyl-CoA",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 4.4,
+      "k_cat_predicted": 3.1597037315368652,
+      "abs_log10_ratio": 0.1438063134218202
+    },
+    {
+      "unit_id": 1720,
+      "reaction_id": "r_2298",
+      "gene_ids": [
+        "YLR284C"
+      ],
+      "uniprot": "Q05871",
+      "reaction_ec": [
+        "5.3.3.8"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "3-trans-decenoyl-CoA",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 4.4,
+      "k_cat_predicted": 3.936798572540283,
+      "abs_log10_ratio": 0.048309481932727216
+    },
+    {
+      "unit_id": 1721,
+      "reaction_id": "r_2299",
+      "gene_ids": [
+        "YLR284C"
+      ],
+      "uniprot": "Q05871",
+      "reaction_ec": [
+        "5.3.3.8"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "3-trans-decenoyl-CoA",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 4.4,
+      "k_cat_predicted": 2.589078187942505,
+      "abs_log10_ratio": 0.23030751053210102
+    },
+    {
+      "unit_id": 1722,
+      "reaction_id": "r_2300",
+      "gene_ids": [
+        "YLR284C"
+      ],
+      "uniprot": "Q05871",
+      "reaction_ec": [
+        "5.3.3.8"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "3-trans-decenoyl-CoA",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 4.4,
+      "k_cat_predicted": 3.1398892402648926,
+      "abs_log10_ratio": 0.14653834790028794
+    },
+    {
+      "unit_id": 3284,
+      "reaction_id": "r_4157",
+      "gene_ids": [
+        "YBR022W"
+      ],
+      "uniprot": "P38218",
+      "reaction_ec": [
+        "3.1.3.84",
+        "3.2.2.-"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "ADP-ribose 1''-phosphate",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 0.028,
+      "k_cat_predicted": 0.8792852163314819,
+      "abs_log10_ratio": 1.4969717399625477
+    },
+    {
+      "unit_id": 3422,
+      "reaction_id": "r_4248",
+      "gene_ids": [
+        "YGL196W"
+      ],
+      "uniprot": "P53095",
+      "reaction_ec": [
+        "4.3.1.18"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "D-Serine",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 13.1,
+      "k_cat_predicted": 1.205906629562378,
+      "abs_log10_ratio": 1.0359576129226484
+    },
+    {
+      "unit_id": 3428,
+      "reaction_id": "r_4254",
+      "gene_ids": [
+        "YGR234W"
+      ],
+      "uniprot": "P39676",
+      "reaction_ec": [
+        "1.14.12.17"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "NADH",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 112.0,
+      "k_cat_predicted": 76.36312103271484,
+      "abs_log10_ratio": 0.16633435256109413
+    },
+    {
+      "unit_id": 3429,
+      "reaction_id": "r_4255",
+      "gene_ids": [
+        "YGR234W"
+      ],
+      "uniprot": "P39676",
+      "reaction_ec": [
+        "1.14.12.17"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "NADH",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 112.0,
+      "k_cat_predicted": 65.49774932861328,
+      "abs_log10_ratio": 0.23299164589912463
+    },
+    {
+      "unit_id": 3432,
+      "reaction_id": "r_4260",
+      "gene_ids": [
+        "YJL126W"
+      ],
+      "uniprot": "P47016",
+      "reaction_ec": [
+        "3.5.1.-"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "N-(4-oxoglutaryl)-L-cysteinylglycine",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 3.6,
+      "k_cat_predicted": 5.994776248931885,
+      "abs_log10_ratio": 0.22147047721509402
+    },
+    {
+      "unit_id": 3433,
+      "reaction_id": "r_4261",
+      "gene_ids": [
+        "YJL126W"
+      ],
+      "uniprot": "P47016",
+      "reaction_ec": [
+        "3.5.1.-"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "N-(4-oxoglutaryl)-L-cysteinylglycine",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 3.6,
+      "k_cat_predicted": 5.994776248931885,
+      "abs_log10_ratio": 0.22147047721509402
+    },
+    {
+      "unit_id": 3461,
+      "reaction_id": "r_4279",
+      "gene_ids": [
+        "YLR151C"
+      ],
+      "uniprot": "Q12524",
+      "reaction_ec": [
+        "3.6.1.55"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "CoA-disulfide",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 5.0,
+      "k_cat_predicted": 3.549758195877075,
+      "abs_log10_ratio": 0.14877123375216697
+    },
+    {
+      "unit_id": 3492,
+      "reaction_id": "r_4312",
+      "gene_ids": [
+        "YNL092W"
+      ],
+      "uniprot": "P53934",
+      "reaction_ec": [
+        "2.1.1.22"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "S-Adenosyl-L-methionine",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 0.012,
+      "k_cat_predicted": 0.018847746774554253,
+      "abs_log10_ratio": 0.19607819221470252
+    },
+    {
+      "unit_id": 3611,
+      "reaction_id": "r_4651",
+      "gene_ids": [
+        "YGR087C"
+      ],
+      "uniprot": "P26263",
+      "reaction_ec": [
+        "4.1.1.1"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "pyruvate",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 9.21,
+      "k_cat_predicted": 14.163050651550293,
+      "abs_log10_ratio": 0.18689717813132295
+    },
+    {
+      "unit_id": 3612,
+      "reaction_id": "r_4651",
+      "gene_ids": [
+        "YLR044C"
+      ],
+      "uniprot": "P06169",
+      "reaction_ec": [
+        "4.1.1.1"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "pyruvate",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 12.1,
+      "k_cat_predicted": 30.500368118286133,
+      "abs_log10_ratio": 0.4015197106951089
+    },
+    {
+      "unit_id": 3613,
+      "reaction_id": "r_4651",
+      "gene_ids": [
+        "YLR134W"
+      ],
+      "uniprot": "P16467",
+      "reaction_ec": [
+        "4.1.1.1"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "pyruvate",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 10.3,
+      "k_cat_predicted": 16.681625366210938,
+      "abs_log10_ratio": 0.2094011389338652
+    },
+    {
+      "unit_id": 3616,
+      "reaction_id": "r_4652",
+      "gene_ids": [
+        "YOL086C"
+      ],
+      "uniprot": "P00330",
+      "reaction_ec": [
+        "1.1.1.-",
+        "1.1.1.1",
+        "1.1.1.284"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "Acetaldehyde",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 176.0,
+      "k_cat_predicted": 84.1937026977539,
+      "abs_log10_ratio": 0.3202330583322221
+    },
+    {
+      "unit_id": 3625,
+      "reaction_id": "r_4661",
+      "gene_ids": [
+        "YOL086C"
+      ],
+      "uniprot": "P00330",
+      "reaction_ec": [
+        "1.1.1.-",
+        "1.1.1.1",
+        "1.1.1.284"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "Acetaldehyde",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 176.0,
+      "k_cat_predicted": 58.270389556884766,
+      "abs_log10_ratio": 0.48006474631161056
+    },
+    {
+      "unit_id": 3631,
+      "reaction_id": "r_4669",
+      "gene_ids": [
+        "YGR087C"
+      ],
+      "uniprot": "P26263",
+      "reaction_ec": [
+        "4.1.1.1"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "pyruvate",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 9.21,
+      "k_cat_predicted": 12.101283073425293,
+      "abs_log10_ratio": 0.11857178988541835
+    },
+    {
+      "unit_id": 3632,
+      "reaction_id": "r_4669",
+      "gene_ids": [
+        "YLR044C"
+      ],
+      "uniprot": "P06169",
+      "reaction_ec": [
+        "4.1.1.1"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "pyruvate",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 12.1,
+      "k_cat_predicted": 26.01373863220215,
+      "abs_log10_ratio": 0.3324174021275918
+    },
+    {
+      "unit_id": 3633,
+      "reaction_id": "r_4669",
+      "gene_ids": [
+        "YLR134W"
+      ],
+      "uniprot": "P16467",
+      "reaction_ec": [
+        "4.1.1.1"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "pyruvate",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 10.3,
+      "k_cat_predicted": 12.668200492858887,
+      "abs_log10_ratio": 0.08987770339644217
+    },
+    {
+      "unit_id": 3636,
+      "reaction_id": "r_4670",
+      "gene_ids": [
+        "YOL086C"
+      ],
+      "uniprot": "P00330",
+      "reaction_ec": [
+        "1.1.1.-",
+        "1.1.1.1",
+        "1.1.1.284"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "Acetaldehyde",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 176.0,
+      "k_cat_predicted": 52.01318359375,
+      "abs_log10_ratio": 0.5293992311728659
+    },
+    {
+      "unit_id": 3676,
+      "reaction_id": "r_4718",
+      "gene_ids": [
+        "YPL061W"
+      ],
+      "uniprot": "P54115",
+      "reaction_ec": [
+        "1.2.1.3"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "Acetaldehyde",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 63.0,
+      "k_cat_predicted": 40.44837951660156,
+      "abs_log10_ratio": 0.19243942229627398
+    },
+    {
+      "unit_id": 3678,
+      "reaction_id": "r_4719",
+      "gene_ids": [
+        "YPL061W"
+      ],
+      "uniprot": "P54115",
+      "reaction_ec": [
+        "1.2.1.3"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "Acetaldehyde",
+      "substrate_matches_reaction": false,
+      "match_route": "no_match",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 63.0,
+      "k_cat_predicted": 36.99855422973633,
+      "abs_log10_ratio": 0.23115579571943246
+    },
+    {
+      "unit_id": 3701,
+      "reaction_id": "r_4755",
+      "gene_ids": [
+        "YEL071W"
+      ],
+      "uniprot": "P39976",
+      "reaction_ec": [
+        "1.1.99.40"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "D-2-hydroxyglutarate",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 4.0,
+      "k_cat_predicted": 4.861815929412842,
+      "abs_log10_ratio": 0.08473852090178094
+    },
+    {
+      "unit_id": 3710,
+      "reaction_id": "r_4763",
+      "gene_ids": [
+        "YAL060W"
+      ],
+      "uniprot": "P39714",
+      "reaction_ec": [
+        "1.1.1.-"
+      ],
+      "record_ec": null,
+      "organism": "Saccharomyces cerevisiae",
+      "substrate_assayed": "erythro-2,3-Butanediol",
+      "substrate_matches_reaction": true,
+      "match_route": "substrate_checked",
+      "temperature_c": null,
+      "n_candidates": 0,
+      "k_cat_measured": 766.667,
+      "k_cat_predicted": 580.9384765625,
+      "abs_log10_ratio": 0.12047662861626814
+    }
+  ],
+  "substrate_agreement": {
+    "substrate_does_not_match": 51,
+    "substrate_matches": 97
+  },
+  "dropped_unit_fate": {
+    "predicted": 18,
+    "homolog": 33
+  },
+  "homolog_versus_predicted": {
+    "n_units": 87.0,
+    "homolog_closer": 55.0,
+    "predicted_closer": 32.0,
+    "homolog_median_decades": 0.09449800413173062,
+    "predicted_median_decades": 0.30006762886210936
+  },
+  "matcher_reach": {
+    "uniprot_organism_slice": {
+      "n_units_with_a_candidate_row": 148,
+      "n_units_where_the_substrate_also_matches": 97
+    },
+    "ec_organism_slice": {
+      "n_units_with_a_candidate_row": 231,
+      "n_units_where_the_substrate_also_matches": 146
+    },
+    "ec_any_organism": {
+      "n_units_with_a_candidate_row": 1386,
+      "n_units_where_the_substrate_also_matches": 870
+    }
+  },
+  "disagreements_over_2_decades": [],
+  "disagreement_summary": {
+    "n_compared": 147.0,
+    "median_decades": 0.2477511378942067,
+    "p90_decades": 1.1533156313341844,
+    "max_decades": 1.7582696899528494,
+    "n_over_1_decade": 17.0,
+    "n_over_2_decades": 0.0
+  }
+}

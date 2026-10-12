@@ -1,0 +1,675 @@
+%% notes-tex/028-gene-essentiality/sections/7-closing.tex
+%% [[experiments.028-gene-essentiality]]
+%% The rounds run after the first summary was drawn: each fixes its read in the pack file
+%% before its cells finish, and each table is generated from the cells' result files.
+
+\section{The closing rounds: repeated splits, the rules, and what each simplification costs\secstatus{todo}}
+\label{sec:closing}
+
+The released held-out set has 31 essential genes, so every conclusion drawn on it alone
+is a conclusion about 31 genes. The rounds in this section reread the finalists and the
+module's controls on ten other held-out fifths of the labeled genes, add the
+gene-protein-reaction rules beside the solve, and price each way of making the module
+cheaper or of fitting it inside one experiment per record.
+
+\subsection{Round 75: the finalists on ten repeated outer splits\secstatus{todo}}
+\label{sec:round75}
+
+The released held-out set has 31 essential genes, the finalists' intervals on it overlap,
+and the average's 0.954 is the maximum of eleven averages chosen on those genes. Round 75
+(jobs 2547 to 2567; Table~\ref{tab:resplit}) reads the same models on ten other held-out
+sets, each a class-stratified fifth of the released labeled genes with validation a
+stratified fifth of the rest (\texttt{build\_essentiality\_splits.py --resplit}), three
+seeds per model per split. The models, the equal-weight average and the statistics were
+committed before any cell finished (\texttt{resplit\_readout.py}).
+
+\input{tables/resplit_readout}
+
+The average is the best method and the margin is its own, not a selection. It reads 0.896
+as the mean of ten splits against 0.869 for graph convolution on GO and 0.848 for the
+transformer with the layer-free solve; it is above the transformer on ten of ten
+($+0.048$, sd 0.017), above the graph model on nine ($+0.026$, sd 0.021), and above the
+better of the two on nine ($+0.023$, sd 0.017). The two single models are not the tie the
+released genes showed: graph convolution on GO is above the transformer on nine of ten
+($-0.022$, sd 0.024 for the transformer minus the graph model).
+
+With the single-experiment form of Section~\ref{sec:round84-98} as the transformer family
+(the YPD ratio, the flux vector and the rule counts, six seeds per split, against graph
+convolution on GO at six), the same rule reads 0.907 for the average against 0.871 for
+the graph model and 0.869 for the transformer. The average is above the better of the two
+on ten of ten splits ($+0.029$, sd 0.013), and the two single models tie ($-0.003$, the
+transformer higher on four of ten). On the released genes its five-fold ensemble reads 0.929 alone and 0.953 [0.92, 0.98]
+averaged with the graph family's, against 0.955 for the four-media recipe; that is one
+more post hoc average on those genes and it is not the maximum. The form that goal 2 keeps is therefore also the
+better partner for goal 1.
+
+Every model reads lower on these fifths than on the released held-out genes, the
+transformer's cells 0.843 against 0.908 and the graph model's 0.868 against 0.905 as seed
+means, so the
+released held-out set ranks more easily than a random fifth of the labeled genes. What
+makes it so is not measured.
+
+The module's contribution splits in two on the same backbone. The solve as an input is
+worth $+0.047$ over no metabolism, on ten of ten splits (sd 0.034). Within that, the
+deletion's flux vector over FBA's four growth ratios alone is $+0.011$ (sd 0.023, seven
+of ten), where the released split read $+0.018$ (0.908 against 0.890): the sign agrees
+and the difference does not separate from zero. Doubling the seeds does not separate it
+either (round 78, jobs 2586 to 2595): at six seeds per arm per split the difference is
+$+0.010$ (sd 0.025, eight of ten), the same mean with the same spread, so the power was
+not what the three-seed read lacked. So what the ten splits support is that the solve
+helps and that the four ratios carry most of it, while the 4,131 flux columns add
+little beyond them; six counts of gene-protein-reaction redundancy, on the same splits,
+add about twice as much ($+0.019$, Section~\ref{sec:round77}).
+
+\subsection{Round 76: the physical graph's degree as an input to the transformer\secstatus{todo}}
+\label{sec:round76}
+
+Off the metabolic genes the raw degree in the physical graph ranks the 4,674 genome-wide
+genes at 0.740 with nothing trained, and the transformer with the layer-free solve read
+0.570. Round 76 (jobs 2568 to 2573, six seeds per arm; Table~\ref{tab:genome-heldout})
+gives the transformer that degree the cheapest way, as two more affine columns beside
+the flux vector, the gene's degree and clustering coefficient in the physical graph,
+over a store that covers all 6,607 genes (\texttt{degree\_affine\_store.py}; a gene
+with no deletion vector reads the wild-type vector instead of the all-zero row the
+earlier store gave it).
+
+The control changes nothing, as a constant row should: with wild-type rows and no degree
+the six cells read the earlier arm's numbers to four decimals (mean 0.566, pooled 0.570).
+With the two columns the cells read 0.564 to 0.656 (mean 0.602, sd 0.030; pooled 0.593
+[0.57, 0.61]), above the control on six of six seeds ($+0.036$), and 0.16 under the
+graph convolution's 0.755. On the released split the same store reads 0.906 (sd 0.009)
+against 0.908, so the columns cost nothing there. The degree enters, and an affine
+fitted on 629 metabolic genes takes a fraction of it: among the 787 released training
+and validation genes degree ranks essentiality at 0.59, so the slope the affine can learn from them is small. Hypothesis,
+untested: the gap to the convolution is the training set and not the path, and a
+convolution trained on the same metabolic genes reaches 0.755 because its two layers
+read the neighbors' degrees as well as the gene's own.
+
+\subsection{Round 77: the gene-protein-reaction rules as affine columns\secstatus{todo}}
+\label{sec:round77}
+
+Section~\ref{sec:hard-genes} named what the solve cannot mark: the 19 essential held-out
+genes whose knockout growth ratio is 1.0, four of them covered by an alternative gene set
+on every reaction and fifteen holding a reaction of their own that the biomass objective
+does not need. The flux vector is close to the wild type's on all nineteen either way, so
+round 77 (jobs 2574 to 2585; Table~\ref{tab:gpr-readout}) appends what the vector does not
+carry: six counts read off yeast-GEM's gene-protein-reaction rules in disjunctive normal
+form (\texttt{isozyme\_affine\_store.py}), the gene's reactions, how many its deletion
+alone disables, how many stay enabled, the minimum and mean number of alternative gene
+sets, and its largest complex. All are non-negative, so the affine's $\log(1 + |v|)$
+keeps their order and the columns cost six weights.
+
+They help, and by the smaller of the two mechanisms the section named. On the released
+split six seeds read 0.918 against 0.908 without them, above on six of six; on the ten
+repeated outer splits the seed-mean per split is 0.862 against 0.843, above on eight of
+ten ($+0.019$, sd 0.020). Over the 19 genes the mean misrank falls from 0.134 to 0.120.
+
+The split inside those 19 is where the columns say what they are doing. The fifteen genes
+holding a reaction of their own improve on six seeds of six, from 0.124 to 0.089, while
+the four an alternative gene set covers get worse on six of six, from 0.171 to 0.234. The
+columns state what the deletion's flux vector cannot, that a gene holds a reaction nothing
+else catalyzes, because the program routes around those reactions without needing them;
+and where the rules say a gene is covered the columns push the cell further toward calling
+it dispensable, which is the wrong call on exactly those four. That pattern suggested the
+count of sole reactions was the one useful column; round 84 tested it and the six columns
+are redundant among themselves (Section~\ref{sec:round84-98}). The
+hypothesis Section~\ref{sec:hard-genes} raised, that a paralog-aware input would move the
+covered genes, is refuted on this construction: it moves the others.
+
+\input{tables/gpr_readout}
+
+\subsection{Round 79: the class token through the perturbation operator\secstatus{todo}}
+\label{sec:round79}
+
+Every pooled cell in this document reads the genotype through a mean over the perturbed
+gene tokens, because the class token was sliced off BEFORE the perturbation operator and
+is therefore the encoding of the unperturbed graph, the same vector for every strain. A
+flag that sends it through the operator as one more query over the same deleted-gene keys
+existed on another branch, unlanded and absent from this worktree until it was ported on
+2026-09-20; it adds no parameters and leaves the gene rows bit-identical. Round 79 (jobs
+2597 to 2600; Table~\ref{tab:cls-readout}) is the paired read on the released split.
+
+The token becomes strain-specific and the ranking gets slightly worse. Its across-strain
+spread ends at 0.52 against exactly 0 without the flag, so the mechanism is doing what it
+claims. On the seeds of round 79 alone neither arm separated from zero; round 81 (jobs
+2603 to 2605) completed the pooled arm's pairing and took the layer-free arm to nine
+pairs, and at fifteen pairs the cost is established: the layer-free cell reads 0.905
+against 0.911, a paired difference of $-0.0054$ (95 percent interval $-0.0100$ to
+$-0.0009$, two of nine above), the pooled cell 0.855 against 0.858 ($-0.0028$, one of
+six above), and the two together $-0.0044$ (interval $-0.0075$ to $-0.0012$, twelve of
+fifteen below). It is a small cost, about a third of this cell's seed spread, and it is
+consistent.
+
+The construction explains it. A strain here deletes ONE gene, so the class token's query
+attends over exactly one key and the perturbed token is a function of the wild-type token
+and that gene's token, which the perturbed-gene pool already carries. The flag adds no
+information on a single deletion and widens the head's input, which is the shape of a
+small consistent cost rather than a gain. It has something to add only where a genotype
+perturbs several genes and the pool's mean over them discards their arrangement, which is
+the setting it was written for and not this one. Here it stays off.
+
+\input{tables/cls_readout}
+
+\subsection{Round 80: the rule counts under the reported protocol\secstatus{todo}}
+\label{sec:round80}
+
+Round 77 read the gene-rule columns on single cells. Round 80 (jobs 2601 and 2602) runs
+the same cell on the five folds, so the document's best module form has a number on the
+protocol the reported 0.893 was computed under, and so the two-family average can be
+formed from it.
+
+It is the highest single model in the document on both counts. The five fold models read
+0.9335 [0.890, 0.968] as an ensemble (fold mean 0.9133), against the layer-free form's
+0.920 and graph convolution on GO's 0.917, and 0.930 as a standardized family. Averaged
+with the GO convolution's fold models it reads 0.9550 [0.922, 0.982]
+(Table~\ref{tab:family-ensembles-folds}), a little above the 0.9538 of the cached-solve
+average and the 0.9532 of the layer-free one. That number is now the maximum of thirteen
+post hoc averages rather than eleven, and carries the selection that implies; the three
+best are within 0.002 of one another and their intervals are nearly identical, so what
+the folds establish is that the two families average above either alone, not an ordering
+among the three module forms.
+
+\subsection{Round 82: what each half of the module is worth\secstatus{todo}}
+\label{sec:round82}
+
+Round 77 added six gene-rule counts beside the 4,131-column flux vector and round 78 found
+the vector itself worth little over the four growth ratios, so the two halves have never
+been measured against the same baseline. Round 82 (jobs 2606 to 2609) runs the counts with
+NO flux vector, six seeds and the five folds, completing the factorial
+(Table~\ref{tab:module-factorial}).
+
+Both halves help and the solve is the larger of the two. Against the four growth ratios
+alone the counts are worth $+0.012$ and the vector $+0.024$, paired on the three seeds all
+four arms share, and together they reach 0.918. The fold ensembles order the same way:
+0.909 for the counts alone, 0.920 for the vector alone, 0.934 for both. The counts are
+worth more once the vector is already there than the vector is worth once the counts are
+($+0.020$ against $+0.008$), which is what two partly overlapping signals look like.
+
+This corrects a comparison made in passing after round 78. The counts' $+0.019$ there was
+measured ON TOP of the vector while the vector's $+0.010$ was measured on top of the
+ratios, so the two are different conditionals and cannot be read as a ranking. Against
+one baseline the solve is worth about twice the counts on the released split, and the ten
+repeated splits put them within each other's spread. What survives both readings is that
+each half is worth about a hundredth to two hundredths of AUROC, that they are
+complementary, and that the pair is the best form of the module.
+
+Neither reading changes the practical conclusion. The counts cost no solver, no medium
+and no per-genotype computation, and alone they carry half of what the module contributes
+here; the solve carries the other half and needs one linear program per genotype and
+medium, run once offline.
+
+\input{tables/module_factorial}
+
+\subsection{Round 83: every column inside one experiment\secstatus{todo}}
+\label{sec:round83}
+
+A record in the database is one genotype in one environment, and the four FBA growth
+ratios are four different media, so a cell carrying all four reads four experiments at
+once and cannot be written as one record. The other metabolic columns are already
+admissible: the solved flux vector is a function of genotype and medium and this store is
+YPD, and the gene-rule counts carry no environment at all. Round 83 (jobs 2610 to 2615,
+six seeds per arm) keeps the YPD ratio, drops the other three, and reads the same three
+recipes (Table~\ref{tab:single-experiment}).
+
+The restriction is free wherever the solve is present. The full recipe reads 0.916 against
+0.918 at the round's six seeds (the table's row carries the nine seeds of round 107,
+0.912 against 0.920, Section~\ref{sec:round84-98}), the vector without the counts 0.912 against 0.911, and only the arm with nothing
+else loses anything: the ratio alone reads 0.877 against 0.890. So about a hundredth of
+what the four ratios contributed was the model reading four environments, and the deletion's
+own flux vector supplies it from within one.
+
+That settles the question the endpoint could not answer on its own. Nothing in the module
+as it now stands needs more than one experiment per record, so the form carries to a
+database where the environment is part of the key rather than part of the feature vector.
+
+\input{tables/single_experiment}
+
+\subsection{Round 108: DCell's ontology hierarchy over these splits\secstatus{todo}}
+\label{sec:round108}
+
+Graph convolution on the Gene Ontology multi-hot is the strongest single encoding here,
+which raises the question of whether the ontology's own structure reads it better than
+message passing does. DCell answers that structure directly: one small subsystem per GO
+term, wired child to parent along the ontology, each term's state a function of its
+children's states and of its own gene input, with a linear head on every term at weight
+0.3 beside the root head.
+
+As published it cannot be run on this endpoint. DCell gives every gene its own weight
+into every term it belongs to, and a held-out gene's deletion never appears in training,
+so those weights keep their initialization; measured, that arm reads 0.578 over six
+seeds and 0.651 as a fold ensemble, and it loses to the graph on ten of ten repeated
+splits (Table~\ref{tab:dcell-style}). Replacing the per-gene weights with one shared
+weight on whether the deleted gene carries the term makes the same hierarchy able to rank
+unseen genes, and it learns: 0.825 over six seeds, 0.848 as a fold ensemble. The
+auxiliary per-term losses are worth $+0.026$ on the released split.
+
+It still loses to message passing on the same annotations, by 0.067 over the ten repeated
+splits, below on ten of ten. The hierarchy was sized on validation over ten
+configurations, and the width the data supports is 8, well under the published rule of
+$\max(20, 0.3 n)$ genes per term, whose uncapped form would give a widest subsystem of
+1,651 units and 74.9 million effective parameters against 629 training genes; capped at
+32 it is the worst configuration tried. So the ontology's grouping is not what carries
+the GO signal on this endpoint, and the same annotations read through the gene graphs
+carry it further.
+
+\paragraph{The hierarchy reads the module the same way.} Given the single-experiment
+module as a zero-initialized affine on its root logit (job 2698, three seeds), the
+shared-input hierarchy reads 0.846 against 0.841 on the released split over the same
+seeds and $+0.036$ over the ten repeated splits, higher on ten of ten (sd 0.013). It
+still loses to the plain graph convolution by 0.032, but the interface has now carried
+to a third family, and the hierarchy is the one that gains most from it.
+
+\paragraph{The ontology of the trigenic DCell runs.} The DCell runs of experiments 005
+and 006 read a different Gene Ontology from the 2,362-term multi-hot above: SGD's
+annotations with those inferred from genetic interaction removed, redundant terms
+collapsed, and terms kept at four or more genes, which leaves 2,655 subsystems. Built
+here as a second store (\texttt{go006\_store.py}, jobs 2688 and 2689), it keeps 2,651
+terms as columns, of which 1,421 are among the current 2,362; a labeled gene lights
+34.5 of its columns on average against 46.5 in the current store, and the hierarchy is
+flatter, 14 strata with a widest fan-in of 106 children against 15 and 24. Graph
+convolution does not care which: on the ten repeated splits at three seeds it reads
+$-0.002$ on the trigenic runs' ontology (higher on four of ten) and 0.905 against 0.909
+on the released split. The hierarchy does: the shared-input DCell reads 0.714 against
+0.841 on the released split over the same three seeds and $-0.020$ over the ten splits
+(higher on two of ten, sd 0.041). Those reads used the configuration tuned on the current store; tuned on the trigenic
+store over the same twelve configurations (job 2694), validation prefers width 8 with
+normalization before the nonlinearity (0.876 against 0.873 for the current store's best),
+and at that configuration the released split reads 0.709 over the same three seeds (job
+2700), no better than the first read; and over the ten splits $-0.012$ against the current store (job 2701, higher on five
+of ten, sd 0.038) and $-0.079$ against the graph (none of ten). The current store is
+therefore no worse for the hierarchy under either configuration, and neither ontology
+brings it to the graph's level.
+
+\input{tables/dcell_style}
+
+\input{tables/go006_comparison}
+
+\subsection{Rounds 109 and 110: the module on a backbone with no pathway annotation\secstatus{todo}}
+\label{sec:round109}
+
+Every transformer cell from round 75 onward reads the curated pathway multi-hot beside
+ProtT5, and a dataset outside yeast may carry no such annotation. Rounds 109 and 110 (jobs
+2685, 2686 and 2692) drop it: ProtT5 alone with the single-experiment module, the YPD
+growth ratio, the YPD flux vector and the six gene-rule counts as the affine, against
+ProtT5 alone with nothing on the logit. On the released split at six seeds the module
+takes the cell from 0.771 to 0.883, $+0.112$ paired by seed and higher on six of six,
+the largest gain of any pair in this document; the same pair on the pathway backbone reads
+$+0.058$ (0.858 to 0.916). With the module the annotation-free backbone sits 0.033 under
+the pathway backbone, without it 0.087 under, so the module recovers about two thirds of
+what the pathway annotation supplies. The fold protocol (round 111, job 2699, one seed per
+fold) reads 0.892 [0.83, 0.94] for the annotation-free backbone with the module against
+0.795 [0.71, 0.88] without, beside 0.932 and 0.878 for the pathway backbone. The ten repeated splits (round 109, three seeds per
+split) agree: the module reads $+0.102$ over no metabolism, higher on ten of ten splits
+and on 30 of 30 split-and-seed pairs, against $+0.061$ for the same pair on the pathway
+backbone; with the module the annotation-free backbone sits $-0.027$ under the pathway
+backbone (higher on one of ten), without it $-0.063$ (one of ten).
+
+\subsection{Round 112: the medium corrected, and the store rebuilt on it\secstatus{todo}}
+\label{sec:round112}
+
+Every YPD store in this document was built on Suthers' substitution for YPD, yeast
+nitrogen base with twenty amino acids and glucose, which carries no nucleobases. The
+background probe of Section~\ref{sec:consensus-missed} found what that costs on
+yeast-GEM: a \textit{ura3} deletion alone takes the modeled YPD growth to zero, and 13
+of the 1,121 labeled genes, 12 of them nonessential, read a growth ratio of 0.0 on that
+medium against 1.0 on SC, which differs from it only by uracil and adenine. They are the
+purine and pyrimidine synthesis genes, all in the training set. The recipe is corrected
+(\texttt{torchcell/metabolism/media.py}: YPD-approx now carries the two nucleobases, and
+Suthers' recipe is kept under its own name), every applied bound vector is now written
+under the data root as a hash-named record that each store's provenance cites, and the
+YPD ratio table, the solve store and its rule-count companion were rebuilt on the
+corrected recipe beside the old ones. The rebuild changes the ratio of 78 labeled genes
+and the flux vector of 1,062: the parsimonious solve imports the nucleobases instead of
+making them, so nearly every deletion's vector moves.
+
+Round 112 (jobs 2707 to 2710) reruns the single-experiment recipe on the corrected store
+with nothing else changed. The score does not move and the ranking does. On the released
+split at six seeds the corrected store reads 0.913 against 0.916, $-0.003$ paired by
+seed and higher on three of six, while 182 to 189 of the 195 held-out genes change rank
+on every seed, by a median of 6 to 13 places and up to 97, and among the 31 essential
+genes by up to 46. On the ten repeated splits the corrected store reads $-0.007$ against
+the old one (sd 0.009, higher on two of ten), and its gain over no metabolism is
+$+0.059$ on ten of ten, against $+0.061$ for the old store. So the correction is right on
+provenance and changes which genes the module gets wrong without changing how many.
+Hypothesis, untested: with the nucleobases imported, the parsimonious solve carries less
+flux through the purine and pyrimidine pathways, and the small loss is the information
+those pathway columns held about their own genes. The stores of the earlier rounds are
+left as built, with their provenance naming Suthers' recipe.
+
+\subsection{Round 113: enzyme ceilings, sampled turnover and metabolic adjustment as offline stores\secstatus{todo}}
+\label{sec:round113}
+
+Every kcat and reaction-energy result of Section~\ref{sec:module} was measured inside a
+training loop, through a learned abundance head, where the shuffled kcat table read the
+same as the real one. This round asks the question the layer-free form makes cheap:
+solved offline with nothing learned, does an enzyme-constrained program yield a store
+that helps as columns? \texttt{ess\_kcat\_bounded\_store.py} (job 2711, 32 processes,
+eight minutes for five stores) forms per-reaction capacity ceilings from the predicted
+kcat tier times a measured proteome and solves the same two-stage parsimonious program
+under them, on the corrected YPD medium. The proteome is the one measurement in the
+document's module and is not the design: the design is a latent abundance under a pool,
+and the offline test was run first because it is the cheaper question. Abundance is the
+mean of the 388 wild-type columns of Messner 2023, converted from relative intensity to
+mmol/gDW by mass fraction among the detected proteins times GECKO 3's total protein
+pool; it covers 1,400 of 3,728 catalytic units and 995 of 2,709 gene-carrying reactions,
+and every other reaction keeps the GEM bound. The capacity scale is the smallest on the
+calibration grid at which the wild type keeps 90 percent of its growth, which is the
+round-15 finding again: at the point ceilings that scale is 3,000, no ceiling binds at
+the wild type, and the deletion vectors sit within one percent of the plain store's; at
+one sigma above the point it is 1,000, again with none binding; at two sigma it is 100
+with two binding and a median distance of 0.07. Two further stores change the objective
+rather than the box: ten draws of each unit's turnover from its tier's width, the
+deletion vector stored as the mean and the spread over draws (8,268 columns), and the
+linear minimization of metabolic adjustment, the feasible flux nearest the parsimonious
+wild type with no growth term, which calls 105 genes lethal where the parsimonious
+program calls 91.
+
+None of them separates from the plain store (jobs 2712 to 2715, paired by seed against
+the round-112 cells on the same seeds): the two-sigma ceilings read $+0.000$ over six
+seeds (three of six), the sampled store $+0.003$ (two of six, sd 0.014), the adjustment
+store $-0.002$ (two of six), and the point ceilings $-0.004$ over their three seeds. The
+ceilings are either absent or harmless, the sampled spread carries no ranking the point
+did not, and the adjustment principle's fourteen extra lethal calls do not line up with
+the essential genes any better than parsimony's. So on this endpoint the parsimonious
+solve on the GEM's own box is as good a store as any enzyme-constrained one built from
+these parameters, and the measured proteome is retired from the module with the rest.
+
+
+\subsection{Round 114: the objective ladder, and enzyme allocation with no proteome\secstatus{todo}}
+\label{sec:round114}
+
+The question the measured proteome could not answer fairly is whether a fundamental
+constraint, turnover or reaction energy, adds anything to the parsimonious store once
+the heuristic that carries it is the program's own. GECKO's form is that: one usage
+variable per catalytic unit, each reaction's flux capped by its turnover times its
+units' usage, and one row that keeps the mass-weighted usages inside a total pool, with
+the growth objective pushing usage to the pool's edge. Nothing is measured beyond the
+kcat table, the molecular weights and GECKO 3's three pool constants (total protein 0.5
+g/gDW, metabolic fraction 0.5, saturation 0.5). \texttt{ess\_gecko\_store.py} (jobs 2716
+to 2719) builds that program on the corrected YPD medium, 11,972 variables with 3,710
+units and 2,695 enzyme-constrained reactions, and solves it per deletion with the same
+two-stage parsimony, at the sourced pool of 0.125 g/gDW, at 0.25, with the turnover
+table at its one-sigma upper edge, and with the second stage minimizing enzyme mass
+rather than flux. Beside it sit three rungs that change only the objective: plain FBA
+with no parsimony (the solver's vertex), and parsimony folded into a single objective as
+growth minus a weight times total flux, at weights of 0.001 and 0.0001 per unit growth.
+
+The pool does what it is meant to. It binds at the wild type and for 1,030 of the 1,121
+deletions, the growth objective fills it, and at the sourced constants the wild type
+grows at 0.12 of its unconstrained rate (0.18 at the doubled pool, 0.28 with the wider
+turnover table), the same three-quarters cost the 026 calibration measured for GECKO's
+pool here. The allocation does change per genotype, by little mass: 302 viable
+deletions move some unit's usage and 28 move more than a hundredth of the pool (82 and
+89 under the other two pools). The direction constraints from the reaction energies do
+not survive: fixing every reaction whose energy is beyond 10 kJ/mol leaves 111
+directions in conflict with the wild-type flux and the program infeasible, and 81 at 30
+kJ/mol, most of them transport and exchange reactions, so that rung has no store.
+
+Read as columns (jobs 2720 to 2726, six seeds each, paired by seed against the
+parsimonious store's cells), no rung is above the baseline (Table~\ref{tab:store-ladder}).
+Plain FBA without parsimony reads $-0.010$ (higher on two of six, sd 0.021), the vertex
+being a far less stable object than the parsimonious point (a median distance of 6.1
+against the store, where every other rung is under 1.2). Parsimony inside the
+objective reads $-0.004$ at both weights (two and three of six), so the two-stage form
+loses nothing to the single-objective one. The GECKO rungs read $-0.011$ at the sourced
+pool (one of six), $-0.004$ at the doubled pool (one of six), $-0.005$ with the wider
+turnover table (one of six) and $-0.010$ with parsimony on enzyme mass (two of six). The
+sign is the same on every pool: the tighter the pool, the further below the baseline,
+and the loosest pool is nearest it. So on this endpoint the turnover table and the pool
+add nothing to the parsimonious solve that the module can read, and neither does the
+choice of parsimony form; what the module reads is the parsimonious deletion vector on
+the GEM's own box, and the fundamentals as they are parameterized today move that
+vector without informing it. The hypothesis that the table is the limiting ingredient is
+tested in Section~\ref{sec:round116}.
+
+\input{tables/store_ladder}
+
+\subsection{Round 116: is the turnover table what limits the pool?\secstatus{todo}}
+\label{sec:round116}
+
+The shipped table fills each catalytic unit from the first tier that has a value: a
+yeast assay on a matching substrate (97 units), a cross-organism assay of the same EC
+number (782), the median over the three admitted sequence predictors (2,831), an
+organism constant (18). Whether those tiers would agree on the same unit the table never
+says, so \texttt{kcat\_tier\_agreement.py} evaluates every tier on every unit it reaches
+(the homolog tier with the yeast rows removed). On the 96 units with a yeast assay, the
+best-ranked predictor EZKinetics agrees with it at Spearman 0.79 and a median gap of
+0.34 decades, 82 percent within a decade; the cross-organism homologs agree with the same
+assays at 0.40 and 0.57 decades on 77 units, 65 percent within a decade. Against the
+predictors the homolog tier reads Spearman 0.4 on 845 units with a median gap of 0.75
+decades, and sits 0.2 decades above them. So the tier that overrides the predictions on a
+fifth of the units is the one furthest from the yeast assays where both can be checked
+(caveat: the predictors may have trained on those assays, which would flatter the
+comparison).
+
+Round 116 (jobs 2733 to 2737, w133) then solves the pool program of round 114 on two
+other tables: every unit taken from EZKinetics alone with the database tiers skipped, the
+all-predicted table (wild type at 0.16 of its unconstrained growth), and the tiered
+table with its values permuted over units at a fixed seed, the control that keeps the
+numbers and loses which enzyme they belong to (0.12). Both stores differ from the tiered
+pool store: the median relative distance between their $\log(1+|v|)$ vectors and the
+tiered store's is 0.16 for the predicted table and 0.41 for the shuffled one, so the
+program reads the table. Read as columns on six seeds, paired against the tiered pool,
+the predicted table reads $+0.004$ (sd 0.012, four of six) and the shuffled table
+$+0.002$ (sd 0.006, three of six); against the plain store they read $-0.007$ (one of
+six) and $-0.009$ (one of six), the tiered pool's $-0.011$
+(Table~\ref{tab:store-ladder}). A table with the enzymes on the wrong reactions moves
+the vector by two fifths of its norm and the score by nothing, so what the module reads
+of the pool program does not depend on which enzyme carries which number. The turnover
+table is not the limiting ingredient; the hypothesis of Section~\ref{sec:round114} is
+retracted.
+
+\subsection{The graphs read at last: the layer-pattern ladder and the propagated label\secstatus{todo}}
+\label{sec:pattern-ladder}
+
+No essentiality cell had read the nine gene graphs: the 019 regularizer and the 020
+hard mask both index the second transformer block, every cell of the study ran one, and
+the regularizer's loss is 0.0 at every epoch of every one-block cell. The ladder
+(Table~\ref{tab:pattern-ladder}, \texttt{pattern\_ladder\_readout.py}) reads them on
+the round-33 incumbent recipe at width 36 with nine heads, one relation per head: one
+unmasked block as the width control (w134), two unmasked blocks as the depth control
+(w135), two blocks with the regularizer on the second (w136), two with the hard mask on
+the second (w137), and three with the mask on the second and third (w138). Beside it
+the one-hop propagation of Section~\ref{sec:mp-architectures}'s neighbor read enters
+the affine as a store, per graph the essential fraction among the gene's labeled
+neighbors and the log count, alone (w139) and appended to the pFBA vector (w140). That store is transductive: its
+columns are the training and validation genes' essentiality calls (a gene's own call
+never, the held-out genes' never, validation calls entering the training genes'
+features), so what it adds is a semi-supervised gain, available only where the
+neighbors were screened, and not a gain of the genotype encoding or the metabolic
+module. A gene whose neighbors carry no call reads the zero row, so the store cannot
+be carried to a screen, an organism or a strain background whose neighbors have not
+been called, which is the setting a model over the database has to serve.
+
+The width control is read (job 2906, 27 min): one block of width 36 with nine heads,
+83,373 parameters against the incumbent's 22,773, reads 0.913 (sd 0.006) against the
+incumbent's 0.908 (sd 0.008), $+0.004$ paired (sd 0.006, five of six), the seeds 0.906
+to 0.922 selecting at epochs 33 to 41. The wider backbone is level with the width-12
+one on this split, and it is the graph-free control the four patterns are read
+against.
+The depth control (w135, job 2907, 34 min), two unmasked blocks of width 36 with
+99,393 parameters, reads 0.913 (sd 0.003) against the one block's 0.913 (sd 0.006),
+$+0.001$ paired (sd 0.006, three of six), the seeds 0.910 to 0.917 selecting at epochs
+37 to 79: a second unmasked block changes nothing, so whatever the masked and
+regularized second blocks read is theirs.
+The hard mask (w137, job 2909, 37 min), one of the nine relations burned into each of
+the second block's nine heads with self-loops and the summary token free, reads 0.903
+(sd 0.004) against the two unmasked blocks' 0.913, $-0.010$ paired (sd 0.004, none of
+six above), the seeds 0.899 to 0.910 selecting at epochs 36 to 73. The one pattern
+that forces the second block to attend along the graphs is under the free block on
+every seed, on the target whose labels propagate along those graphs at 0.902
+(Section~\ref{sec:mp-architectures}): attention restricted to a gene's cataloged
+neighbors is not how this model reads them.
+A second masked block (w138, job 2910, 49 min; three blocks, the mask on the second
+and third, 115,413 parameters) reads 0.887 (sd 0.015) against the one masked block's
+0.903 ($-0.016$ paired, sd 0.015, two of six) and the width control's 0.913 ($-0.025$,
+sd 0.016, none of six), the seeds 0.863 to 0.906 selecting at epochs 43 to 132: each
+masked block costs about as much as the last, and the seed spread triples.
+The regularizer (w136; seeds 2700 to 2702 from job 2908, 2703 to 2705 from job 2922,
+75 to 77 min a cell, three cells to a card because the regularized block materializes
+its attention at about 14.5 GB a seed) is live for the first time on this target, its
+loss at most 0.974 in any epoch of any seed against 0.0 on every one-block cell, and
+it reads 0.904 (sd 0.005) against the two unmasked blocks' 0.913, $-0.009$ paired (sd
+0.007, one of six above), the seeds 0.899 to 0.913 selecting at epochs 29 to 38. The
+soft pull toward the graphs costs what the hard mask costs, within a seed deviation,
+so neither way of making the second block attend along the nine relations reads
+anything the free block does not.
+
+The propagated label is a different matter. The store alone (w139, job 2916, 31 min
+a cell), twenty columns for every one of the 6,607 genome genes in place of the 4,131
+solve columns and so 18,662 parameters against the incumbent's 22,773, reads 0.912
+(sd 0.014) against the incumbent's 0.908, $+0.003$ paired (sd 0.019, three of six),
+the seeds 0.892 to 0.926 selecting at epochs 31 to 90: the transformer reading the
+neighbors' calls through the affine is level with the transformer reading the solve,
+and the spread across seeds is twice the incumbent's. Appended to the solve (w140,
+job 2917, 31 min a cell; 4,151 columns on the 1,121 labeled genes, 22,793 parameters)
+the two add: 0.925 (sd 0.006), $+0.017$ over the incumbent (sd 0.010, six of six) and
+$+0.014$ over the store alone (sd 0.013, five of six), the seeds 0.916 to 0.933
+selecting at epochs 35 to 51. That is the highest single-cell read of the study on the
+released split, and the propagation enters the affine as a store, so the model reads a
+number that already carries 0.902 on its own
+(Section~\ref{sec:mp-architectures}), and adds the solve's 0.02 to it. The gain is
+transductive in the sense above: on the 195 held-out genes the model reads the calls
+of their 118 labeled coexpression neighbors a gene, and those calls came from the same
+screen that produced the labels it is scored on. It is the best cell of the study and
+it is not the best inductive cell, which stays round 33's layer-free solve at 0.908 on
+these six seeds (Section~\ref{sec:round33}).
+
+\input{tables/pattern_ladder}
+
+\subsection{The module carried to betaxanthin and the amino acids\secstatus{todo}}
+\label{sec:target-transfer}
+
+From round 117 the module was carried to the two targets the flux layer was built for,
+Cachera's betaxanthin screen and M\"ulleder's 19 amino acids. From 2026-09-23 the two
+targets are their own studies, 031 and 032, with their own results trees, W\&B projects
+and round series, and their reads, the physically constrained stores built on the target
+models, the store read without the backbone, and the second amino-acid screen, are in
+their own documents: \texttt{notes-tex/031-betaxanthin-module} and
+\texttt{notes-tex/032-amino-acid-module}. Both keep this document's protocol (the 027
+split with Merzbacher's 639 genes pinned to test, the epoch selected on validation
+Pearson, every arm paired by seed against the same backbone without the affine) and
+this document's backbone at width 12, and both cite the rounds here by number. In one
+sentence each: on betaxanthin the whole-vector store lifts the width-12 backbone to
+where the width-90 backbone sits and, on the strain as built, lifts its top-50 call, the
+two do not add, and the clean parsimonious vector read by nearest neighbors with no
+backbone carries more rank than any transformer arm; on the amino acids every model at
+either width with or without a store reads between 0.01 and 0.06 against a strain-level
+retest of 0.20, so the endpoint has no headroom to show an arm effect against.
+
+\subsection{Round 115: the learned allocation, with the pool made to bind\secstatus{todo}}
+\label{sec:round115}
+
+The offline pool of round 114 lets the program allocate the enzymes; the construction
+this document was built around lets the backbone allocate them, through the abundance
+head, with the pool held by construction (round 19). That cell measured its projection
+never engaging: the head never asked for the whole budget, so the pool never bound and
+the head's allocation was never a constraint on the flux. Round 115 (jobs 2728 to 2732)
+adds the one term that construction lacked and GECKO's growth objective supplies: outside
+the constraint ramp, the shortfall of the head's protein mass below the pool, so the head
+must spend the budget and can only choose where (\texttt{--flux-pool-fill-weight 1.0},
+everything else as round 19, the elastic program at capacity scale 100, no proteome).
+The term does what it is for: at initialization the pool binds on 95 percent of the
+batch and after one step on all of it, and at the selected epoch the projection factor
+is 0.11 to 0.69 on every cell, where round 19 logged 1.0.
+
+The score follows, within the family of forms that solve in the loop. The forced growth
+column reads 0.766, 0.766 and 0.770 against round 19's 0.704, 0.743 and 0.670, $+0.062$
+paired by seed and above on three of three, with its training loss still on the 1.2
+plateau; the gated readout reads 0.839, 0.770 and 0.832 against the gated elastic
+cell's 0.816, 0.810 and 0.783, $+0.010$ and above on two of three (sd 0.046). So a
+binding pool is what lets the abundance head move the growth column at all, which is
+the mechanism the dual probe named, and it moves it by about a twentieth. Both readouts
+remain well under the layer-free store's 0.911 and under the affine forms that read the
+solve as data, so the ranking of forms in Section~\ref{sec:round84-98} stands. One
+measurement of cost: a cell of this form peaks at 40 GB, so the three-cell packs at 36
+GB died after two hours forty and the lost seeds ran one per job.
+
+
+\subsection{Rounds 84 to 98: what each simplification costs\secstatus{todo}}
+\label{sec:round84-98}
+
+Three simplifications make the module cheaper or easier to carry to another dataset:
+reading one medium instead of four, so that a record stays one genotype in one
+environment; dropping the stored flux vector, so that a record carries one growth ratio
+per medium and no 4,131-column row; and dropping rule-count columns. A growth ratio is
+itself one FBA program per genotype and medium, so dropping the vector saves the second
+program of the parsimonious solve and the storage, not the solver. Rounds 84 to 98 (jobs 2616 to 2667, job 2622 aside) measure each against the
+same baselines on the released split (Table~\ref{tab:simplification-ladder}) and, paired
+by split, on the ten repeated outer splits of Section~\ref{sec:round75}
+(Table~\ref{tab:simplification-paired}). The repeated-split arms that carry the solve were
+extended to nine seeds per split (rounds 89 to 93 and 102 to 103), and the two recipes
+with neither the vector nor four media to six (rounds 100 and 105). Round 101 swapped
+the second medium and round 106 added the fold ensemble with no metabolism.
+
+\paragraph{Every form of the module beats no metabolism.} Against the same cell with no
+metabolic column, on the ten repeated splits at nine seeds each, the one-medium recipe
+with the vector and the counts reads $+0.061$ and the four-media recipe $+0.059$, each
+higher on ten of ten splits and on 89 and 88 of 90 split-and-seed pairs. The vector
+without the counts reads $+0.040$, the counts without the vector $+0.041$ and the four
+ratios alone $+0.028$, each on ten of ten. At six seeds the two-media counts recipe reads
+$+0.036$ and the one-medium counts recipe $+0.032$, each on nine of ten. Round 106 gave
+the no-metabolism cell its fold ensemble at three seeds per fold, 0.878, against 0.932
+for the one-medium recipe under the same protocol.
+
+\paragraph{One medium costs nothing on two protocols and about 0.01 on the third.} With
+the flux vector and the counts kept, the YPD ratio alone against all four ratios reads
+$+0.002$ over the ten splits at nine seeds each, higher on six of ten. The fold ensembles
+agree, 0.932 against 0.934 at one seed per fold and 0.932 against 0.933 at three. The
+cells of the released split do not: at round 83's six seeds they read 0.916 against
+0.918, and round 107 (job 2683) took both recipes to nine seeds, where they read 0.912
+against 0.920, $-0.009$ paired by seed with the one-medium cell higher on one of nine.
+Two of the three added one-medium seeds read under 0.90. So round 83's conclusion holds
+on ten other held-out fifths and as an ensemble, and on the released 195 genes the
+single-seed cost is at most a hundredth.
+
+\paragraph{The solve and the counts are complementary and about equal.} Over the four
+ratios alone the counts are worth $+0.013$ (six of ten) and the vector $+0.012$ (eight
+of ten) on the repeated splits, nine seeds each. Added to the other, the counts are worth
+$+0.019$ (nine of ten) and the vector $+0.018$ (nine of ten). The released split orders them the other way,
+0.911 for the vector over nine seeds against 0.902 for the counts over six, and so do the fold
+ensembles, 0.920 against 0.909. Across the three protocols neither half is reliably the
+larger, and the pair is reliably above either.
+
+\paragraph{The simplifications do not stack.} Once the vector is gone the other media
+carry signal the counts do not replace. With the counts and no flux vector, four ratios read
+0.902 on the released split, the YPD and SC ratios 0.896, and the YPD ratio alone 0.888
+(fold ensembles at three seeds per fold 0.909, 0.909 and 0.898),
+and on the repeated splits at six seeds one medium for four costs $-0.011$ (higher on two
+of ten) while two media for four cost $-0.006$ (two of ten), so the second medium buys
+back about a third of the gap. Round 101 asked whether the second medium matters: the
+YPD and SM ratios read 0.892 per cell and 0.907 as a one-seed fold ensemble, $-0.004$
+against YPD and SC paired by seed (higher on two of six), so synthetic minimal medium
+is no better a partner than synthetic complete. The recipe that respects one experiment and stores no flux vector,
+one ratio with the six counts, reads 0.888 per cell and 0.902 as a fold ensemble against
+0.920 and 0.934 for the full recipe, and $-0.029$ on the repeated splits, lower on ten of
+ten. The cheapest admissible recipe that keeps the full score is therefore the
+one-medium recipe with the vector. Its growth ratio already requires one linear program
+per genotype and medium, run once offline, and the parsimonious solve that yields the
+vector adds a second program on the same model, so the vector is nearly free once the
+ratio is computed.
+
+\paragraph{The six counts are redundant among themselves.} Round 77's misrank pattern
+pointed at the sole-reaction count as the one useful column. Round 84 tested that: beside the vector, that count alone
+reads 0.914, the other five without it 0.918, and all six 0.918, over six seeds each. The
+five without it recover the whole gain ($-0.001$ against all six) and the one alone
+recovers most of it ($+0.006$ over none, higher on five of six seeds), so no single
+column carries it.
+
+\paragraph{The training budget is not a limit.} Round 97 reran the full recipe and the
+counts-alone recipe at 400 epochs. Validation selects the scored epoch, which falls
+between 30 and 76 in all twelve cells, and each 400-epoch cell reproduced its 200-epoch
+partner's trajectory, selected the same epoch and returned the same held-out AUROC to the
+last digit. Nothing after epoch 76 is scored under this selection rule. That
+reproducibility held within one code version on one card; ten fold cells of the
+layer-free form rerun in round 92 under a later code version differ from their first runs
+by up to 0.066 on a single cell, while the three-seed fold ensemble reads 0.921 against
+0.919 on the first runs (round 34).
+
+\paragraph{Three seeds per fold do not move the fold ensembles.} Rounds 92 and 94 took
+each fold model from one seed to the mean logit of three. The ensembles read 0.933 for
+the full recipe, 0.932 for one medium, 0.921 for the vector without counts and 0.909 for
+the counts without the vector, each within 0.001 of its one-seed value.
+
+\input{tables/simplification_ladder}
+\input{tables/simplification_paired}

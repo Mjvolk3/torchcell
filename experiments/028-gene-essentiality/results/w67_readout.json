@@ -1,0 +1,216 @@
+{
+  "round": "w67",
+  "n_cells": 4,
+  "cells": [
+    {
+      "stem": "w67_pathloghash1_h12l1p1_e200_s2700",
+      "arm": "pathloghash1",
+      "seed": 2700,
+      "hidden": 12,
+      "weight_decay": 0.0001,
+      "batch_size": 32,
+      "split_file": "ess_fcl_val0.2_s0.json.gz",
+      "n_parameters": 22773,
+      "n_val": 158,
+      "select_epoch": 39,
+      "select_val_auroc": 0.8427067669172932,
+      "test_auroc_pinned": 0.9132572777340676,
+      "test_auroc_ci_low": 0.8684701908041993,
+      "test_auroc_ci_high": 0.951603814246567,
+      "test_accuracy_pinned": 0.7897435897435897,
+      "test_recall_essential_pinned": 0.8709677419354839,
+      "median_abs_step": 0.0039097744360901965,
+      "val_curve_range": 0.20902255639097744,
+      "wall_time_min": 28.889029546578726,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/zei49fb6"
+    },
+    {
+      "stem": "w67_pathloghash2_h12l1p1_e200_s2700",
+      "arm": "pathloghash2",
+      "seed": 2700,
+      "hidden": 12,
+      "weight_decay": 0.0001,
+      "batch_size": 32,
+      "split_file": "ess_fcl_val0.2_s0.json.gz",
+      "n_parameters": 22773,
+      "n_val": 158,
+      "select_epoch": 39,
+      "select_val_auroc": 0.8427067669172932,
+      "test_auroc_pinned": 0.9132572777340676,
+      "test_auroc_ci_low": 0.8684701908041993,
+      "test_auroc_ci_high": 0.951603814246567,
+      "test_accuracy_pinned": 0.7897435897435897,
+      "test_recall_essential_pinned": 0.8709677419354839,
+      "median_abs_step": 0.0039097744360901965,
+      "val_curve_range": 0.20902255639097744,
+      "wall_time_min": 28.775541643301647,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/j93udbhh"
+    },
+    {
+      "stem": "w67_pathpoolhash1_h12l1p1_e200_s2700",
+      "arm": "pathpoolhash1",
+      "seed": 2700,
+      "hidden": 12,
+      "weight_decay": 0.0001,
+      "batch_size": 32,
+      "split_file": "ess_fcl_val0.2_s0.json.gz",
+      "n_parameters": 18637,
+      "n_val": 158,
+      "select_epoch": 31,
+      "select_val_auroc": 0.8228571428571428,
+      "test_auroc_pinned": 0.8595594020456334,
+      "test_auroc_ci_low": 0.7894001133891795,
+      "test_auroc_ci_high": 0.9260674409460502,
+      "test_accuracy_pinned": 0.8,
+      "test_recall_essential_pinned": 0.7741935483870968,
+      "median_abs_step": 0.0036090225563910616,
+      "val_curve_range": 0.21383458646616538,
+      "wall_time_min": 28.766675082842507,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/w39825xm"
+    },
+    {
+      "stem": "w67_pathpoolhash2_h12l1p1_e200_s2700",
+      "arm": "pathpoolhash2",
+      "seed": 2700,
+      "hidden": 12,
+      "weight_decay": 0.0001,
+      "batch_size": 32,
+      "split_file": "ess_fcl_val0.2_s0.json.gz",
+      "n_parameters": 18637,
+      "n_val": 158,
+      "select_epoch": 54,
+      "select_val_auroc": 0.8237593984962406,
+      "test_auroc_pinned": 0.8530684500393391,
+      "test_auroc_ci_low": 0.7832293715721421,
+      "test_auroc_ci_high": 0.9193796857463524,
+      "test_accuracy_pinned": 0.7589743589743589,
+      "test_recall_essential_pinned": 0.7741935483870968,
+      "median_abs_step": 0.0039097744360903075,
+      "val_curve_range": 0.23639097744360904,
+      "wall_time_min": 28.49022530714671,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_028_gene_essentiality/runs/4gdqk2kc"
+    }
+  ],
+  "arms": [
+    {
+      "arm": "pathpoolhash1",
+      "label": "round-9 pooled cell, kernels pinned, PYTHONHASHSEED=0, old one-hot code, first run",
+      "n_seeds": 1,
+      "seeds": [
+        2700
+      ],
+      "test_auroc_mean": 0.8595594020456334,
+      "test_auroc_sd": 0.0,
+      "test_auroc_values": [
+        0.8595594020456334
+      ],
+      "pooled_auroc": 0.8595594020456334,
+      "pooled_ci_low": 0.7894001133891795,
+      "pooled_ci_high": 0.9260674409460502,
+      "median_abs_step_mean": 0.0036090225563910616,
+      "n_val": 158,
+      "select_epochs": [
+        31
+      ]
+    },
+    {
+      "arm": "pathpoolhash2",
+      "label": "the same, second run",
+      "n_seeds": 1,
+      "seeds": [
+        2700
+      ],
+      "test_auroc_mean": 0.8530684500393391,
+      "test_auroc_sd": 0.0,
+      "test_auroc_values": [
+        0.8530684500393391
+      ],
+      "pooled_auroc": 0.8530684500393391,
+      "pooled_ci_low": 0.7832293715721421,
+      "pooled_ci_high": 0.9193796857463524,
+      "median_abs_step_mean": 0.0039097744360903075,
+      "n_val": 158,
+      "select_epochs": [
+        54
+      ]
+    },
+    {
+      "arm": "pathloghash1",
+      "label": "round-33 layer-free cell, kernels pinned, PYTHONHASHSEED=0, old one-hot code, first run",
+      "n_seeds": 1,
+      "seeds": [
+        2700
+      ],
+      "test_auroc_mean": 0.9132572777340676,
+      "test_auroc_sd": 0.0,
+      "test_auroc_values": [
+        0.9132572777340676
+      ],
+      "pooled_auroc": 0.9132572777340676,
+      "pooled_ci_low": 0.8684701908041993,
+      "pooled_ci_high": 0.951603814246567,
+      "median_abs_step_mean": 0.0039097744360901965,
+      "n_val": 158,
+      "select_epochs": [
+        39
+      ]
+    },
+    {
+      "arm": "pathloghash2",
+      "label": "the same, second run",
+      "n_seeds": 1,
+      "seeds": [
+        2700
+      ],
+      "test_auroc_mean": 0.9132572777340676,
+      "test_auroc_sd": 0.0,
+      "test_auroc_values": [
+        0.9132572777340676
+      ],
+      "pooled_auroc": 0.9132572777340676,
+      "pooled_ci_low": 0.8684701908041993,
+      "pooled_ci_high": 0.951603814246567,
+      "median_abs_step_mean": 0.0039097744360901965,
+      "n_val": 158,
+      "select_epochs": [
+        39
+      ]
+    }
+  ],
+  "comparators_on_195": {
+    "FBA shipped": {
+      "auroc": 0.6543076317859953,
+      "ci_low": 0.5617373633852306,
+      "ci_high": 0.747709049823633
+    },
+    "FBA SM": {
+      "auroc": 0.6655192761605035,
+      "ci_low": 0.5714285714285714,
+      "ci_high": 0.7591164975254618
+    },
+    "FBA SC": {
+      "auroc": 0.6657159716758458,
+      "ci_low": 0.5735277316161197,
+      "ci_high": 0.7586017602687547
+    },
+    "FBA YPD": {
+      "auroc": 0.6638473642800944,
+      "ci_low": 0.5718939393939394,
+      "ci_high": 0.7559709101382487
+    },
+    "FCL": {
+      "auroc": 0.74213217938631,
+      "ci_low": 0.634456337108014,
+      "ci_high": 0.8447953999582288
+    },
+    "FBA (released)": {
+      "auroc": 0.6400472069236822,
+      "ci_low": 0.5190704355381774,
+      "ci_high": 0.7546372814823831
+    }
+  },
+  "bootstrap": {
+    "n": 2000,
+    "seed": 0
+  }
+}

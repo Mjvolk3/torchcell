@@ -1,0 +1,17 @@
+# experiments/027-betaxanthin-metabolic/conf/arm_flux_fluxforce_boxforce.yaml
+# [[experiments.027-betaxanthin-metabolic.wave7-flux-force-head]]
+#
+# THE FLUX-FORCE HEAD WITH THE DIRECTION IN THE BOX, named by the arm file rather than by an
+# environment variable. `flux_parameterization` is serialized with the cell, so a rebuild
+# from a result file reconstructs this arm instead of the base one; wave 7 passed the same
+# string through TC_FLUX_PARAMETERIZATION and a rebuild of job 1755 died on
+# KeyError 'flux_layer.latent_mlp.0.weight' for that reason.
+#
+# The switches are `flux_projection_anchored_k20_boxend`'s, so this arm and the plain
+# projection differ in the channel string and nothing else. Jobs 1767, 1770 and 1771 ran it
+# at density weight 0.0 and met the Genesis median rule on 100 of 100 top strains with only
+# 5.3 percent of independent rows turning over, which is what the wave-8 density sweep is
+# about.
+base_arm: flux_projection_anchored_k20_boxend
+permute_train_targets: false
+flux_parameterization: fluxforce_k100_boxforce

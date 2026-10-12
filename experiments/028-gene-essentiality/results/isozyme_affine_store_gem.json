@@ -1,0 +1,337 @@
+{
+  "store": "/scratch/projects/torchcell-scratch/data/torchcell/reference_flux/ess_solve_encodings_SM_gem_pfbagpr.npz",
+  "shape": [
+    1161,
+    4137
+  ],
+  "columns": [
+    "gpr_n_reactions",
+    "gpr_n_sole",
+    "gpr_n_covered",
+    "gpr_min_alternatives",
+    "gpr_mean_alternatives",
+    "gpr_max_cosubunits"
+  ],
+  "n_genes": 1161,
+  "n_genes_with_a_rule": 1153,
+  "n_genes_with_a_sole_reaction": 742,
+  "n_genes_fully_covered": 411,
+  "largest_rule_terms": 20,
+  "held_out_essential": [
+    {
+      "gene": "YAL038W",
+      "ratio_ypd": 1.0,
+      "gpr_n_reactions": 1.0,
+      "gpr_n_sole": 0.0,
+      "gpr_n_covered": 1.0,
+      "gpr_min_alternatives": 1.0,
+      "gpr_mean_alternatives": 1.0,
+      "gpr_max_cosubunits": 0.0
+    },
+    {
+      "gene": "YBL030C",
+      "ratio_ypd": 1.0,
+      "gpr_n_reactions": 1.0,
+      "gpr_n_sole": 0.0,
+      "gpr_n_covered": 1.0,
+      "gpr_min_alternatives": 2.0,
+      "gpr_mean_alternatives": 2.0,
+      "gpr_max_cosubunits": 0.0
+    },
+    {
+      "gene": "YBR011C",
+      "ratio_ypd": 1.0,
+      "gpr_n_reactions": 1.0,
+      "gpr_n_sole": 1.0,
+      "gpr_n_covered": 0.0,
+      "gpr_min_alternatives": 0.0,
+      "gpr_mean_alternatives": 0.0,
+      "gpr_max_cosubunits": 0.0
+    },
+    {
+      "gene": "YBR110W",
+      "ratio_ypd": 1.0,
+      "gpr_n_reactions": 1.0,
+      "gpr_n_sole": 1.0,
+      "gpr_n_covered": 0.0,
+      "gpr_min_alternatives": 0.0,
+      "gpr_mean_alternatives": 0.0,
+      "gpr_max_cosubunits": 0.0
+    },
+    {
+      "gene": "YBR243C",
+      "ratio_ypd": 1.0,
+      "gpr_n_reactions": 1.0,
+      "gpr_n_sole": 1.0,
+      "gpr_n_covered": 0.0,
+      "gpr_min_alternatives": 0.0,
+      "gpr_mean_alternatives": 0.0,
+      "gpr_max_cosubunits": 0.0
+    },
+    {
+      "gene": "YCR012W",
+      "ratio_ypd": 0.974,
+      "gpr_n_reactions": 1.0,
+      "gpr_n_sole": 1.0,
+      "gpr_n_covered": 0.0,
+      "gpr_min_alternatives": 0.0,
+      "gpr_mean_alternatives": 0.0,
+      "gpr_max_cosubunits": 0.0
+    },
+    {
+      "gene": "YDL015C",
+      "ratio_ypd": 1.0,
+      "gpr_n_reactions": 7.0,
+      "gpr_n_sole": 7.0,
+      "gpr_n_covered": 0.0,
+      "gpr_min_alternatives": 0.0,
+      "gpr_mean_alternatives": 0.0,
+      "gpr_max_cosubunits": 0.0
+    },
+    {
+      "gene": "YDL120W",
+      "ratio_ypd": 1.0,
+      "gpr_n_reactions": 1.0,
+      "gpr_n_sole": 1.0,
+      "gpr_n_covered": 0.0,
+      "gpr_min_alternatives": 0.0,
+      "gpr_mean_alternatives": 0.0,
+      "gpr_max_cosubunits": 0.0
+    },
+    {
+      "gene": "YDR050C",
+      "ratio_ypd": 1.0,
+      "gpr_n_reactions": 1.0,
+      "gpr_n_sole": 1.0,
+      "gpr_n_covered": 0.0,
+      "gpr_min_alternatives": 0.0,
+      "gpr_mean_alternatives": 0.0,
+      "gpr_max_cosubunits": 0.0
+    },
+    {
+      "gene": "YDR062W",
+      "ratio_ypd": 1.0,
+      "gpr_n_reactions": 1.0,
+      "gpr_n_sole": 1.0,
+      "gpr_n_covered": 0.0,
+      "gpr_min_alternatives": 0.0,
+      "gpr_mean_alternatives": 0.0,
+      "gpr_max_cosubunits": 5.0
+    },
+    {
+      "gene": "YDR196C",
+      "ratio_ypd": 0.0,
+      "gpr_n_reactions": 2.0,
+      "gpr_n_sole": 2.0,
+      "gpr_n_covered": 0.0,
+      "gpr_min_alternatives": 0.0,
+      "gpr_mean_alternatives": 0.0,
+      "gpr_max_cosubunits": 0.0
+    },
+    {
+      "gene": "YDR236C",
+      "ratio_ypd": 1.0,
+      "gpr_n_reactions": 2.0,
+      "gpr_n_sole": 2.0,
+      "gpr_n_covered": 0.0,
+      "gpr_min_alternatives": 0.0,
+      "gpr_mean_alternatives": 0.0,
+      "gpr_max_cosubunits": 0.0
+    },
+    {
+      "gene": "YDR302W",
+      "ratio_ypd": 1.0,
+      "gpr_n_reactions": 1.0,
+      "gpr_n_sole": 0.0,
+      "gpr_n_covered": 1.0,
+      "gpr_min_alternatives": 1.0,
+      "gpr_mean_alternatives": 1.0,
+      "gpr_max_cosubunits": 0.0
+    },
+    {
+      "gene": "YDR341C",
+      "ratio_ypd": 0.0,
+      "gpr_n_reactions": 1.0,
+      "gpr_n_sole": 1.0,
+      "gpr_n_covered": 0.0,
+      "gpr_min_alternatives": 0.0,
+      "gpr_mean_alternatives": 0.0,
+      "gpr_max_cosubunits": 0.0
+    },
+    {
+      "gene": "YDR373W",
+      "ratio_ypd": 1.0,
+      "gpr_n_reactions": 8.0,
+      "gpr_n_sole": 8.0,
+      "gpr_n_covered": 0.0,
+      "gpr_min_alternatives": 0.0,
+      "gpr_mean_alternatives": 0.0,
+      "gpr_max_cosubunits": 1.0
+    },
+    {
+      "gene": "YDR454C",
+      "ratio_ypd": 0.0,
+      "gpr_n_reactions": 3.0,
+      "gpr_n_sole": 3.0,
+      "gpr_n_covered": 0.0,
+      "gpr_min_alternatives": 0.0,
+      "gpr_mean_alternatives": 0.0,
+      "gpr_max_cosubunits": 0.0
+    },
+    {
+      "gene": "YFL045C",
+      "ratio_ypd": 0.0,
+      "gpr_n_reactions": 1.0,
+      "gpr_n_sole": 1.0,
+      "gpr_n_covered": 0.0,
+      "gpr_min_alternatives": 0.0,
+      "gpr_mean_alternatives": 0.0,
+      "gpr_max_cosubunits": 0.0
+    },
+    {
+      "gene": "YGL001C",
+      "ratio_ypd": 0.0,
+      "gpr_n_reactions": 2.0,
+      "gpr_n_sole": 2.0,
+      "gpr_n_covered": 0.0,
+      "gpr_min_alternatives": 0.0,
+      "gpr_mean_alternatives": 0.0,
+      "gpr_max_cosubunits": 0.0
+    },
+    {
+      "gene": "YGL055W",
+      "ratio_ypd": 0.0,
+      "gpr_n_reactions": 2.0,
+      "gpr_n_sole": 2.0,
+      "gpr_n_covered": 0.0,
+      "gpr_min_alternatives": 0.0,
+      "gpr_mean_alternatives": 0.0,
+      "gpr_max_cosubunits": 0.0
+    },
+    {
+      "gene": "YGR175C",
+      "ratio_ypd": 0.0,
+      "gpr_n_reactions": 2.0,
+      "gpr_n_sole": 2.0,
+      "gpr_n_covered": 0.0,
+      "gpr_min_alternatives": 0.0,
+      "gpr_mean_alternatives": 0.0,
+      "gpr_max_cosubunits": 0.0
+    },
+    {
+      "gene": "YGR264C",
+      "ratio_ypd": 0.0,
+      "gpr_n_reactions": 1.0,
+      "gpr_n_sole": 1.0,
+      "gpr_n_covered": 0.0,
+      "gpr_min_alternatives": 0.0,
+      "gpr_mean_alternatives": 0.0,
+      "gpr_max_cosubunits": 0.0
+    },
+    {
+      "gene": "YGR277C",
+      "ratio_ypd": 1.0,
+      "gpr_n_reactions": 1.0,
+      "gpr_n_sole": 1.0,
+      "gpr_n_covered": 0.0,
+      "gpr_min_alternatives": 0.0,
+      "gpr_mean_alternatives": 0.0,
+      "gpr_max_cosubunits": 0.0
+    },
+    {
+      "gene": "YIL048W",
+      "ratio_ypd": 1.0,
+      "gpr_n_reactions": 16.0,
+      "gpr_n_sole": 8.0,
+      "gpr_n_covered": 8.0,
+      "gpr_min_alternatives": 0.0,
+      "gpr_mean_alternatives": 0.5,
+      "gpr_max_cosubunits": 0.0
+    },
+    {
+      "gene": "YKL004W",
+      "ratio_ypd": 1.0,
+      "gpr_n_reactions": 80.0,
+      "gpr_n_sole": 80.0,
+      "gpr_n_covered": 0.0,
+      "gpr_min_alternatives": 0.0,
+      "gpr_mean_alternatives": 0.0,
+      "gpr_max_cosubunits": 1.0
+    },
+    {
+      "gene": "YLL018C",
+      "ratio_ypd": 0.0,
+      "gpr_n_reactions": 1.0,
+      "gpr_n_sole": 1.0,
+      "gpr_n_covered": 0.0,
+      "gpr_min_alternatives": 0.0,
+      "gpr_mean_alternatives": 0.0,
+      "gpr_max_cosubunits": 0.0
+    },
+    {
+      "gene": "YML125C",
+      "ratio_ypd": 1.0,
+      "gpr_n_reactions": 2.0,
+      "gpr_n_sole": 0.0,
+      "gpr_n_covered": 2.0,
+      "gpr_min_alternatives": 1.0,
+      "gpr_mean_alternatives": 1.5,
+      "gpr_max_cosubunits": 0.0
+    },
+    {
+      "gene": "YMR113W",
+      "ratio_ypd": 0.0,
+      "gpr_n_reactions": 1.0,
+      "gpr_n_sole": 1.0,
+      "gpr_n_covered": 0.0,
+      "gpr_min_alternatives": 0.0,
+      "gpr_mean_alternatives": 0.0,
+      "gpr_max_cosubunits": 0.0
+    },
+    {
+      "gene": "YMR220W",
+      "ratio_ypd": 0.0,
+      "gpr_n_reactions": 1.0,
+      "gpr_n_sole": 1.0,
+      "gpr_n_covered": 0.0,
+      "gpr_min_alternatives": 0.0,
+      "gpr_mean_alternatives": 0.0,
+      "gpr_max_cosubunits": 0.0
+    },
+    {
+      "gene": "YMR281W",
+      "ratio_ypd": 1.0,
+      "gpr_n_reactions": 1.0,
+      "gpr_n_sole": 1.0,
+      "gpr_n_covered": 0.0,
+      "gpr_min_alternatives": 0.0,
+      "gpr_mean_alternatives": 0.0,
+      "gpr_max_cosubunits": 0.0
+    },
+    {
+      "gene": "YMR296C",
+      "ratio_ypd": 1.0,
+      "gpr_n_reactions": 1.0,
+      "gpr_n_sole": 1.0,
+      "gpr_n_covered": 0.0,
+      "gpr_min_alternatives": 0.0,
+      "gpr_mean_alternatives": 0.0,
+      "gpr_max_cosubunits": 5.0
+    },
+    {
+      "gene": "YNL038W",
+      "ratio_ypd": 1.0,
+      "gpr_n_reactions": 1.0,
+      "gpr_n_sole": 1.0,
+      "gpr_n_covered": 0.0,
+      "gpr_min_alternatives": 0.0,
+      "gpr_mean_alternatives": 0.0,
+      "gpr_max_cosubunits": 5.0
+    }
+  ],
+  "held_out_essential_fba_viable": {
+    "n": 19,
+    "n_fully_covered_by_alternatives": 4,
+    "n_with_a_sole_reaction": 15
+  }
+}

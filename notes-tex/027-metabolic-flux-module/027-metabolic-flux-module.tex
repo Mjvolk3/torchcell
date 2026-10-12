@@ -44,27 +44,43 @@ hash-pinned and attributable to the weights or model version that produced it. T
 would make the layer a reconstruction of a metabolic network rather than a parameterization
 fitted to one organism.
 
-\textbf{None of the three tables built in this work is yet consumed by any measured arm.}
-The predicted $k_{cat}$ tables are not plumbed into the capacity bound, which still resolves
-4.0 percent measured values from the Open Enzyme Database and defaults the rest; the
-recomputed formation energies are not plumbed into the potential, which still reads
-yeast-GEM's shipped file; and $K_M$ has no consumer at all. The module diagram draws those
-edges as solid and the code does not have them. What exists is an audit of what the inputs
-could be, built reproducibly enough to apply to another organism, and every result here
+\textbf{None of the three tables built in this work is consumed by any measured arm here.}
+Every arm below resolves 4.0 percent measured $k_{cat}$ from the Open Enzyme Database and
+defaults the rest, and reads yeast-GEM's shipped formation energies, which are a kcal-scale
+file labeled kilojoules. The resolvers now carry a predicted $k_{cat}$ tier and a merged
+energy route, and the cells exercising them have completed one epoch, so every result here
 should be read as testing the module's structure rather than its parameters.
 
 This document consolidates what was scattered across the 026 and 027 notes: the
 formulation as implemented, the three parameter tables and the sharp distinction between
 those wired in and those merely built, the ablation registry, and every measured number.
-Two corrections to earlier claims are recorded rather than quietly folded in. The
-ChemAxon licensing blocker does not apply to the betaxanthin pathway, whose intermediates
-are already in the compound cache. And the reaction-coverage shortfall is not a
-mapping gap: an audit that recovers every identifier route available gains 0.58
-percentage points, because 375 metabolites match a cache record that carries no structure
-and are counted as resolved while returning no energy.
+Two corrections to earlier claims are recorded rather than quietly folded in. The ChemAxon
+licensing blocker was said not to apply to the betaxanthin pathway; it does, and it binds
+on the compounds that matter, since leucodopachrome, betalamic acid and betanidin are all
+absent from the eQuilibrator compound cache and only the two generic tyrosine precursors
+resolve. And the reaction-coverage shortfall is not a mapping gap: an audit that recovers
+every identifier route available gains 0.58 percentage points, because 375 metabolites
+match a cache record that carries no structure and are counted as resolved while returning
+no energy.
 
-The training runs that test whether the module helps are on Delta as this is written, and
-the preliminary section reports only what has actually been observed.
+The training runs that test whether the module helps have returned complete, and the
+prespecified decision fails on both criteria. Over the full 24 balanced seeds the anchored
+module scores $-0.0196$ test Spearman on the pinned 639-gene split against $+0.0269$ for no
+module at all, a paired gap of $-0.0465 \pm 0.0135$; the excess of that gap over the same
+contrast with the training labels destroyed is $-0.0372$, 95 percent interval
+$[-0.0724, -0.0031]$. The one arm that does not cost anything is \texttt{flux\_off}, which
+keeps the stoichiometry and the box but switches the energies off, at $+0.0388$, level with
+the published Flux Cone Learning baseline.
+
+\textbf{An audit of the prediction dumps then showed that every one of the 144 cells is a
+constant predictor}: the largest prediction spread in any cell is 0.8 percent of the target
+spread, the no-module arms sit at the target mean with a training loss of exactly 1.00
+from epoch 10, and the flux arms sit at wrong constants as far as $-7$ from it. Every
+correlation in the decision is computed from jitter, so the verdict that the module is not
+shown to help stands only because nothing in the grid learned the target, and the stronger
+claim that the thermodynamic anchor costs is withdrawn. The same backbone reached 0.434 on
+this target under the 019 trainer, so the defect is in the 027 training loop, and a trainer
+that reproduces that number on the no-module arm now precedes every other step.
 \end{abstract}
 
 \vspace{0.5em}

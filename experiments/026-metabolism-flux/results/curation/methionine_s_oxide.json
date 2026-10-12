@@ -1,0 +1,232 @@
+{
+  "slug": "methionine_s_oxide",
+  "met_ids": ["s_3837", "s_4176", "s_3807"],
+  "gem_name": "L-Methionine S-oxide (s_3837 [c], s_4176 [e]); L-methionine (S)-S-oxide (s_3807 [c])",
+  "gem_formula": "C5H11NO3S",
+  "gem_charge": 0,
+  "compartments": ["c", "e"],
+  "blocked_reactions": ["r_4186", "r_4202"],
+  "kind": "not_found",
+  "admission": "none",
+  "value": null,
+  "sigma_kj_per_mol": null,
+  "sources": [
+    {
+      "source_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC3766491/",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sSL -H 'User-Agent: Mozilla/5.0 (curation; mjvolk3@illinois.edu)' -o PMC3766491.html https://pmc.ncbi.nlm.nih.gov/articles/PMC3766491/",
+      "sha256": "7d4e999262b34efe671aa1de48bf709d6703ca85bc89f982f7069d86e9dbfb71",
+      "retrieved_at": "2026-09-11T22:00:00Z",
+      "verbatim_quote": "Indeed, the standard redox potential for the two electron reduction of dimethyl sulfoxide is +160 mV [17] while that for cystine is +220 mV [18].",
+      "location": "Kim G, Weiss SJ, Levine RL. Methionine Oxidation and Reduction in Proteins. Biochim Biophys Acta 2014;1840. doi:10.1016/j.bbagen.2013.04.038. Introduction, paragraph beginning 'While cysteine is well-recognized for the ease of its oxidation'. Whitespace normalized from the HTML; reference [17] resolves in that article's reference list to Wood PM, FEBS Lett 1981;124:11-14. This value is for DIMETHYL sulfoxide, NOT for methionine sulfoxide; it is recorded as the nearest analog couple, not as a value for this row."
+    },
+    {
+      "source_url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=7215550&retmode=xml",
+      "retrieval_method": "pmc_oa_api",
+      "retrieval_command": "curl -sSL -o wood1981_pubmed.xml 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=7215550&retmode=xml'",
+      "sha256": "9a9f6e2b7b302137c12bbee13cddd5e43a456cf7c36f6627105bbdf2a4839ab9",
+      "retrieved_at": "2026-09-11T22:00:00Z",
+      "verbatim_quote": "The redox potential for dimethyl sulphoxide reduction to dimethyl sulphide: evaluation and biochemical implications.",
+      "location": "PubmedArticle/MedlineCitation/Article/ArticleTitle; Wood PM, FEBS Lett 1981 Feb 9;124(1):11-14, doi 10.1016/0014-5793(81)80042-7, PMID 7215550. The PubMed record carries NO abstract and the ScienceDirect and Wiley full texts both return HTTP 403, so the +160 mV number itself was not read from the primary source in this pass."
+    },
+    {
+      "source_url": "https://api.semanticscholar.org/graph/v1/paper/DOI:10.1016/0014-5793(81)80042-7?fields=title,abstract,year,authors,venue,externalIds,citationCount",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sSL -o s2_wood1981.json 'https://api.semanticscholar.org/graph/v1/paper/DOI:10.1016/0014-5793(81)80042-7?fields=title,abstract,year,authors,venue,externalIds,citationCount'",
+      "sha256": "1397bb5e487e539f749fa04690b21cd23f6a9466c8337938d116bde9c75e3fa8",
+      "retrieved_at": "2026-09-11T22:00:00Z",
+      "verbatim_quote": "\"openAccessPdf\": {\"url\": \"\", \"status\": \"CLOSED\", \"license\": null, \"disclaimer\": \"Notice: The following paper fields have been elided by the publisher: {'abstract'}",
+      "location": "Root object, openAccessPdf field. Documents that the Wood 1981 abstract is not machine-retrievable; a human with library access must read the paper to quote the primary number."
+    },
+    {
+      "source_url": "https://docs.google.com/spreadsheets/d/1jLIxEXVzE2SAzIB0UxBfcFoHrzjzf9euB6ART2VDE8c/export?format=ods",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sSL -o opentecr.ods 'https://docs.google.com/spreadsheets/d/1jLIxEXVzE2SAzIB0UxBfcFoHrzjzf9euB6ART2VDE8c/export?format=ods'  # link published at https://w3id.org/opentecr/tecrdb which redirects to http://tecrdb.robert-giessmann.de/",
+      "sha256": "102b53fc9dac6f252f15b4f753507483fe4a41ebb873056aa07612ef89496505",
+      "retrieved_at": "2026-09-11T21:57:00Z",
+      "verbatim_quote": "c(MgCl2)=0.0009 M; solute=dimethyl sulfoxide (50% v/v)",
+      "location": "content.xml of the ODS, one of 227 case-insensitive matches for the substring 'sulfoxide'. EVERY one of those 227 matches is 'dimethyl sulfoxide' appearing as a cosolvent or buffer note. Matches for 'methionine sulfoxide' = 0, 'methionine sulphoxide' = 0, 'methionine-S-oxide' = 0, EC '1.8.4.11' = 0, '1.8.4.12' = 0, '1.8.4.13' = 0, '1.8.4.5' = 0. The only EC 1.8.4 entry present is 1.8.4.3 glutathione-CoA-glutathione transhydrogenase. This is the documented negative for the TECRDB route."
+    },
+    {
+      "source_url": "https://webbook.nist.gov/cgi/cbook.cgi?Name=methionine+sulfoxide&Units=SI",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sSL -o nist_name_msox.html 'https://webbook.nist.gov/cgi/cbook.cgi?Name=methionine+sulfoxide&Units=SI'",
+      "sha256": "47a0e21556ef53013d49a23810c5920f91332f8e8fda56783061d5ff4dc77739",
+      "retrieved_at": "2026-09-11T22:02:00Z",
+      "verbatim_quote": "Name Not Found",
+      "location": "Page <title> and heading. The same query for 'L-methionine' returns 'Search Results', so the negative is real and not a broken query. CAS lookups 3226-65-3, 454-41-1 and 7101-76-1 each returned 'Registry Number Not Found'."
+    },
+    {
+      "source_url": "https://www.ebi.ac.uk/chebi/searchId.do?chebiId=CHEBI:49031",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sSL -H 'User-Agent: Mozilla/5.0 (curation)' -o chebi_49031.html 'https://www.ebi.ac.uk/chebi/searchId.do?chebiId=CHEBI:49031'",
+      "sha256": "d6325e8a0e82a4d40ec46eeb24df78bbeb14a40984681963f8f4ec51826bf79f",
+      "retrieved_at": "2026-09-11T22:03:00Z",
+      "verbatim_quote": "ChEBI Name L-methionine (S)-S-oxide ... Definition The (S)-oxido diastereomer of L-methionine S-oxide. ... InChIKey QEFRNWWLZKMPFJ-MFXDVPHUSA-N",
+      "location": "ChEBI entry page, Name/Definition block and Chemical Data block; whitespace normalized and the intervening page furniture elided with '...'. This fixes the identity of GEM s_3807: the (S)-sulfoxide diastereomer, the MsrA substrate, InChIKey QEFRNWWLZKMPFJ-MFXDVPHUSA-N."
+    },
+    {
+      "source_url": "https://www.ebi.ac.uk/chebi/searchId.do?chebiId=CHEBI:17016",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sSL -H 'User-Agent: Mozilla/5.0 (curation)' -o chebi_17016.html 'https://www.ebi.ac.uk/chebi/searchId.do?chebiId=CHEBI:17016'",
+      "sha256": "490fbc87359305a53281429657bb3893ede44b2e837953b8991529c7224eeb94",
+      "retrieved_at": "2026-09-11T22:03:00Z",
+      "verbatim_quote": "ChEBI Name L-methionine S-oxide ... InChIKey QEFRNWWLZKMPFJ-YGVKFDHGSA-N",
+      "location": "ChEBI entry page, Name block and Chemical Data block; whitespace normalized. This fixes the identity of GEM s_3837 and s_4176: the diastereomer-UNSPECIFIED sulfoxide, InChIKey QEFRNWWLZKMPFJ-YGVKFDHGSA-N, despite the BiGG annotation on those species reading metsox_S__L."
+    },
+    {
+      "source_url": "file:///home/michaelvolk/.cache/equilibrator/group_definitions.csv",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "cp ~/.cache/equilibrator/group_definitions.csv equilibrator_group_definitions.csv  # shipped with the equilibrator-assets cache used by this repo's thermo pipeline",
+      "sha256": "17908f75310d55d7e60f7dc6e32e820717e867bd4ec731b33dc5fca787f7366d",
+      "retrieved_at": "2026-09-11T22:05:00Z",
+      "verbatim_quote": "\"-SO2-\",0,0,0,\"[C,c,N,n]S(=O)(=O)[C,c,N,n]\",\"1|2|3\",\"sulfonyl\",\n\"-SOO\",0,-1,0,\"[C,c,N,n]S(=O)[O-]\",\"1|2|3\",\"sulfonyl\",\n\"-SOO\",1,0,0,\"[C,c,N,n]S(=O)[OH]\",\"1|2|3\",\"sulfonyl\",\n\"-S<\",0,0,0,\"[S;H0;X3]\",\"All\",\"sulfonium\",",
+      "location": "Lines 21-24 of 140. The whole table is quoted here for the sulfur groups it DOES define: sulfate, sulfonyl, sulfonium, thioether, thiol, disulfide, thioester. There is NO row whose SMARTS matches a sulfoxide oxygen, i.e. no [C,c]S(=O)[C,c] group and no bare =O on a three-coordinate sulfur. That absence is the root cause of this row."
+    },
+    {
+      "source_url": "local run: equilibrator_assets.group_decompose.GroupDecomposer().Decompose(...)",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "~/miniconda3/envs/equilibrator-ext/bin/python decompose_direct.py  # script archived alongside as decomposer_probe_direct.json",
+      "sha256": "fd90c6eb713347f8570d5a5befb8c805a313ea8d041b1c961bbea2c271ea8098",
+      "retrieved_at": "2026-09-11T22:05:00Z",
+      "verbatim_quote": "Unable to decompose <openbabel.openbabel.OBMol; proxy of <Swig Object of type 'OpenBabel::OBMol *'> > into groups",
+      "location": "decomposer_probe_direct.json, the 'error' field of every one of the 11 sulfoxide entries. Companion fields record unassigned_node_indices = [2] (atomic number 8, the sulfoxide oxygen) for the L-methionine-S-oxide forms and [3] for DMSO, with assigned groups ['-S<', '-N', '-COO', '-C<', '-C-' x2, '-C'] in every case."
+    },
+    {
+      "source_url": "local run: equilibrator_api.ComponentContribution + ~/.cache/equilibrator/cc_params.npz",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "~/miniconda3/envs/equilibrator-ext/bin/python probe.py ./local.sqlite  # cache copied from ~/.cache/equilibrator/compounds.sqlite",
+      "sha256": "dce697c7df1ab003ffa5cc222b71cdab64cc5500ac4df63c307ed09f85e7fede",
+      "retrieved_at": "2026-09-11T21:52:00Z",
+      "verbatim_quote": "\"kegg:C02989\": {\"found\": true, \"id\": 1993, \"inchi_key\": \"QEFRNWWLZKMPFJ-YGVKFDHGSA-N\", \"smiles\": \"CS(=O)CC[C@H]([NH3+])C([O-])=O\", \"formula\": \"C5H11NO3S\", \"has_group_vector\": true, \"group_vector\": \"[]\", \"standard_dg_formation\": null}",
+      "location": "decomposer_probe_cache.json, cache_lookups block. Note the trap: group_vector is not None but is EMPTY, so a 'group_vector is not None' test reports a decomposition that did not happen. Cross-checked against cc_params.npz: compound ids 1993, 1992 and 691225 are absent from the 631-compound reactant-contribution training set, so neither half of component contribution can price this species."
+    }
+  ],
+  "searches": [
+    {
+      "query": "methionine sulfoxide methionine redox potential E°' mV measured standard reduction potential",
+      "engine": "WebSearch",
+      "date": "2026-09-11",
+      "outcome": "No measured E°' for the Met-S-oxide/Met couple. Surfaced the recurring statement that the reduction potential of methionine has never been measured and that small compounds such as dimethyl sulfide are used instead."
+    },
+    {
+      "query": "methionine sulfoxide reductase thioredoxin equilibrium constant thermodynamics reduction potential measurement",
+      "engine": "WebSearch",
+      "date": "2026-09-11",
+      "outcome": "Mechanism and kinetics only (Km values, sulfenic-acid intermediate, resolving cysteines). No equilibrium constant and no reaction free energy for the Msr step."
+    },
+    {
+      "query": "\"methionine sulfoxide\" standard Gibbs energy of formation aqueous thermodynamic table kJ/mol",
+      "engine": "WebSearch",
+      "date": "2026-09-11",
+      "outcome": "Nothing for methionine sulfoxide. Only generic pointers to Alberty 2003 and the CRC handbook."
+    },
+    {
+      "query": "NIST Thermodynamics of Enzyme-Catalyzed Reactions TECRDB \"methionine sulfoxide reductase\" equilibrium constant",
+      "engine": "WebSearch",
+      "date": "2026-09-11",
+      "outcome": "No TECRDB entry surfaced. Led to the openTECR project as the machine-readable successor of the retired xpdb.nist.gov TECRDB."
+    },
+    {
+      "query": "NIST TECRDB Thermodynamics of Enzyme-Catalyzed Reactions database randr.nist.gov enzyme search",
+      "engine": "WebSearch",
+      "date": "2026-09-11",
+      "outcome": "Confirmed the original TECRDB host xpdb.nist.gov is dead; tecrdb.nist.gov does not resolve (getaddrinfo ENOTFOUND). openTECR at https://w3id.org/opentecr/tecrdb is the retrievable copy."
+    },
+    {
+      "query": "openTECR database download equilibrium constants enzyme catalyzed reactions zenodo csv",
+      "engine": "WebSearch",
+      "date": "2026-09-11",
+      "outcome": "Found the ODS export link. Downloaded and searched: zero methionine sulfoxide entries. Documented negative recorded above."
+    },
+    {
+      "query": "\"methionine sulfoxide\" reduction potential \"mV\" measured DTT dithiothreitol equilibrium sulfoxide sulfide couple thermodynamics",
+      "engine": "WebSearch",
+      "date": "2026-09-11",
+      "outcome": "Surfaced the +160 mV DMSO analog value and its host review (PMC3766491). Nothing measured for methionine sulfoxide; DTT appears only as a bulk in-vitro reductant at 20 mM, never as a calibrated redox buffer."
+    },
+    {
+      "query": "\"dimethyl sulfoxide\" \"dimethyl sulfide\" standard redox potential \"+160 mV\" OR \"0.16 V\" two-electron reduction measured E°'",
+      "engine": "WebSearch",
+      "date": "2026-09-11",
+      "outcome": "Identified Wood PM 1981 FEBS Lett 124:11-14 as the primary evaluation of the DMSO/DMS couple. Full text paywalled."
+    },
+    {
+      "query": "\"methionine sulfoxide\" \"methionine\" redox couple standard potential estimated \"0.5 V\" OR \"500 mV\" OR \"E0'\" sulfoxide sulfide biochemistry",
+      "engine": "WebSearch",
+      "date": "2026-09-11",
+      "outcome": "Negative. Confirms the field substitutes the dimethyl sulfide analog because no methionine value exists."
+    },
+    {
+      "query": "\"methionine sulfoxide reductase\" reversible equilibrium constant methionine oxidase Keq measured PNAS 2011 Lim Gladyshev",
+      "engine": "WebSearch",
+      "date": "2026-09-11",
+      "outcome": "Lim, You, Kim, Levine, PNAS 2011;108(26), doi 10.1073/pnas.1101275108, shows MsrA is a stereospecific methionine OXIDASE as well as a reductase, so the chemistry is reversible in principle. The paper reports no equilibrium constant, so it does not close this row."
+    },
+    {
+      "query": "thioredoxin standard redox potential -270 mV Escherichia coli measured Krause Holmgren Aslund JBC active site disulfide E0'",
+      "engine": "WebSearch",
+      "date": "2026-09-11",
+      "outcome": "The thioredoxin half of the couple IS measured: Aslund F, Berndt KD, Holmgren A, J Biol Chem 1997 (PMID 9388218) by direct protein-protein redox equilibria, E°' about -270 mV at pH 7, with the family band quoted as -270 to -300 mV and a later E. coli Trx value of -284.2 +/- 1.0 mV. Recorded but NOT usable alone: without the sulfoxide half potential the reaction energy of r_4186/r_4202 cannot be closed."
+    },
+    {
+      "query": "L-methionine sulfoxide enthalpy of formation combustion calorimetry thermochemistry crystal solution kJ mol-1",
+      "engine": "WebSearch",
+      "date": "2026-09-11",
+      "outcome": "Combustion and formation enthalpies exist for methionine (Roux 2012 J Phys Org Chem; gas-phase -430 +/- 10 kJ/mol) but nothing for the sulfoxide. No route to an aqueous formation energy by calorimetry."
+    },
+    {
+      "query": "\"methionine sulfoxide\" thermodynamically favorable reduction \"free energy\" delta G kJ reaction thioredoxin quantitative estimate",
+      "engine": "WebSearch",
+      "date": "2026-09-11",
+      "outcome": "Kinetics only (Km 0.17 to 2.9 mM across MsrB isoforms). No free energy."
+    },
+    {
+      "query": "sulfoxide sulfide redox couple aqueous standard potential table measured Wood 1981 methionine sulphoxide biochemical implications value",
+      "engine": "WebSearch",
+      "date": "2026-09-11",
+      "outcome": "Wood 1981 confirmed as the citation; abstract elided by the publisher on Semantic Scholar and HTTP 403 on ScienceDirect and Wiley."
+    },
+    {
+      "query": "\"methionine sulfoxide\" \"midpoint potential\" OR \"Em\" OR \"redox equilibrium\" measured titration MsrA reversible oxidase thermodynamic driving force",
+      "engine": "WebSearch",
+      "date": "2026-09-11",
+      "outcome": "Negative. No potentiometric or redox-buffer titration of the Met-S-oxide/Met couple exists in the surfaced literature."
+    },
+    {
+      "query": "Jaramillo-Martinez OR computed hydration free energy methionine sulfoxide JCIM 10.1021/acs.jcim.4c01617 thermodynamics",
+      "engine": "WebSearch",
+      "date": "2026-09-11",
+      "outcome": "Confirms the prior pass's read: JCIM 10.1021/acs.jcim.4c01617 (Jan 2025) computes the Met + H2O2 oxidation free energy profile by QM/MM with classical MD for the reactive-species kinetics. COMPUTED, not measured, and for the peroxide oxidation in a protein context rather than free methionine sulfoxide in water. Stays out of the default route."
+    },
+    {
+      "query": "NIST Chemistry WebBook lookup by name 'methionine sulfoxide' and by CAS 3226-65-3, 454-41-1, 7101-76-1",
+      "engine": "webbook.nist.gov direct query",
+      "date": "2026-09-11",
+      "outcome": "All four return Name Not Found or Registry Number Not Found; the L-methionine control returns Search Results. No NIST thermochemistry for this species."
+    }
+  ],
+  "decomposition_check": {
+    "attempted": true,
+    "decomposes": false,
+    "error": "GroupDecompositionError: 'Unable to decompose ... into groups'. In every sulfoxide representation exactly one heavy atom is left unassigned, and it is always the sulfoxide OXYGEN (atomic number 8). The sulfur itself is assigned in both representations, to the '-S<' sulfonium group whose SMARTS is [S;H0;X3]; the sulfoxide oxygen matches no SMARTS in the 140-row group_definitions.csv. Representation is therefore NOT the cause: S=O and [S+]-[O-] are canonicalized to the same OpenBabel molecule and fail identically, and so do the zwitterion and neutral amino-acid forms and both sulfur diastereomers.",
+    "smiles_tried": [
+      {"smiles": "CS(=O)CC[C@H](N)C(=O)O", "decomposes": false, "error": "unassigned atom index 2, atomic number 8 (sulfoxide oxygen); neutral amino acid, neutral S=O"},
+      {"smiles": "C[S+]([O-])CC[C@H](N)C(=O)O", "decomposes": false, "error": "unassigned atom index 2, atomic number 8; neutral amino acid, charge-separated sulfoxide"},
+      {"smiles": "CS(=O)CC[C@H]([NH3+])C(=O)[O-]", "decomposes": false, "error": "unassigned atom index 2, atomic number 8; zwitterion, neutral S=O"},
+      {"smiles": "C[S+]([O-])CC[C@H]([NH3+])C(=O)[O-]", "decomposes": false, "error": "unassigned atom index 2, atomic number 8; zwitterion, charge-separated sulfoxide"},
+      {"smiles": "CS(=O)CC[C@H]([NH3+])C([O-])=O", "decomposes": false, "error": "unassigned atom index 2, atomic number 8; this is the form eQuilibrator itself stores as compound 1993 for kegg:C02989 / chebi:17016 / bigg metsox_S__L / MNXM2246"},
+      {"smiles": "C[S@](=O)CC[C@H]([NH3+])C([O-])=O", "decomposes": false, "error": "unassigned atom index 2, atomic number 8; the (S)-sulfoxide, eQuilibrator compound 691225 for kegg:C15999 / chebi:49031 / MNXM722780, i.e. GEM s_3807"},
+      {"smiles": "C[S@@](=O)CC[C@H]([NH3+])C([O-])=O", "decomposes": false, "error": "unassigned atom index 2, atomic number 8; the (R)-sulfoxide, eQuilibrator compound 1992"},
+      {"smiles": "C[S@@](=O)CC[C@H](N)C(=O)O", "decomposes": false, "error": "unassigned atom index 2, atomic number 8; (R)-sulfoxide, neutral amino acid"},
+      {"smiles": "C[S@@+]([O-])CC[C@H](N)C(=O)O", "decomposes": false, "error": "unassigned atom index 2, atomic number 8; (R)-sulfoxide, charge-separated"},
+      {"smiles": "C[S@](=O)CC[C@H](N)C(=O)O", "decomposes": false, "error": "unassigned atom index 2, atomic number 8; (S)-sulfoxide, neutral amino acid"},
+      {"smiles": "CS(=O)CCC(N)C(=O)O", "decomposes": false, "error": "unassigned atom index 2, atomic number 8; all stereochemistry dropped, still fails"},
+      {"smiles": "CS(C)=O", "decomposes": false, "error": "CONTROL, dimethyl sulfoxide: unassigned atom index 3, atomic number 8. The failure is generic to the sulfoxide functional group, not to this amino acid."},
+      {"smiles": "CSCC[C@H]([NH3+])C([O-])=O", "decomposes": true, "error": null},
+      {"smiles": "CSC", "decomposes": true, "error": null},
+      {"smiles": "CS(=O)(=O)CC[C@H]([NH3+])C([O-])=O", "decomposes": true, "error": null}
+    ]
+  },
+  "notes": "OUTCOME: negative on both routes. No structure choice fixes the decomposition, and no measured or tabulated thermodynamic value exists for methionine S-oxide.\n\n1. THE STRUCTURE HYPOTHESIS IS DISPROVED, and it is disproved cleanly. Eleven sulfoxide representations were put through equilibrator_assets.group_decompose.GroupDecomposer directly (neutral S=O, charge-separated [S+]-[O-], zwitterion and neutral amino acid, both sulfur diastereomers, and stereochemistry-free), and all eleven fail at exactly one atom: the sulfoxide oxygen. The sulfur is always assigned, to the '-S<' sulfonium group [S;H0;X3], which matches a three-coordinate sulfur in either representation. So S=O versus [S+]-[O-] is not a distinction the decomposer can even see: OpenBabel canonicalizes them to one molecule (all eleven collapse to InChIKey QEFRNWWLZKMPFJ-* and to three existing cache compounds). REUSABLE RULE FOR ALL SULFOXIDES: eQuilibrator's group table defines sulfate (-SO3), sulfonyl (-SO2-), sulfonium (-S<), thioether (-S-), thiol (-S), disulfide and thioester, but NO sulfoxide group. Dimethyl sulfoxide fails identically; methionine, dimethyl sulfide and methionine SULFONE all decompose. Every sulfoxide in the GEM is blocked for this one reason and no amount of structure curation will move any of them. Do not spend another curation pass on sulfoxide SMILES.\n\n2. A TRAP IN THE PIPELINE'S OWN TEST. The cache compounds 1993, 1992 and 691225 all carry group_vector that is NOT None but IS EMPTY ('[]'). Code that tests 'compound.group_vector is not None' (thermo_structure_attempt.py does this) will read that as a successful decomposition. The honest test is 'group_vector is not None and len(group_vector) > 0', or simply whether standard_dg_formation returns a value. Worth fixing in the integrating pass, since it affects every sulfoxide row and the DMSO row.\n\n3. THE REACTANT-CONTRIBUTION HALF IS ALSO EMPTY. Compound ids 1993, 1992 and 691225 are absent from the 631-compound reactant-contribution training set in ~/.cache/equilibrator/cc_params.npz (train_S_index). So both halves of component contribution are unavailable and cc.standard_dg_prime on r_4186 or r_4202 returns the infinite-uncertainty flag (measured: 0.0 +/- 1.0e5 kJ/mol for MetSO + H2 = Met + H2O). A measured value is the only remedy, exactly as the pipeline's own remedy string says.\n\n4. NO MEASURED VALUE EXISTS. Fifteen searches plus three direct database queries. openTECR, the machine-readable copy of NIST TECRDB, has zero methionine sulfoxide entries and no EC 1.8.4.11/12/13; the NIST Chemistry WebBook has no entry under the name or any of three CAS numbers, while the L-methionine control resolves; there is no combustion or solution calorimetry for the sulfoxide; and there is no potentiometric or redox-buffer titration of the Met-S-oxide/Met couple. The literature explicitly says the field substitutes small-molecule analogs because the methionine value was never measured. The only computed number in reach, JCIM 10.1021/acs.jcim.4c01617, is a QM/MM free energy profile for peroxide oxidation of Met in a protein, which is computed and is not this quantity.\n\n5. THE ONE ANALOG, AND A HARD WARNING ABOUT IT. The nearest tabulated value is E°' = +160 mV for the two-electron reduction of DIMETHYL sulfoxide (Wood 1981 FEBS Lett 124:11-14, quoted in Kim/Weiss/Levine 2014). eQuilibrator ALREADY carries that value, and carries it WRONG. Its single DMSO training entry (cc_params.npz column 3997) is the half reaction 'Dimethyl sulfide minus Dimethyl sulfoxide' with b = -30.8752 kJ/mol, which is exactly -2 F (0.160 V) to five figures, so Wood's number is provably the source. But the entry omits the water product, so the fitted dGf(DMSO) is high by the transformed formation energy of water. MEASURED IN THIS PASS, at pH 7.0, I = 0.25 M, 298.15 K: eQuilibrator gives DMSO + NADH = DMS + NAD+ + H2O as -251.05 +/- 3.02 kJ/mol, implying E°'(DMSO/DMS) = +981 mV, against the -92.6 kJ/mol that Wood's +160 mV requires. The 158 kJ/mol gap matches dGf'(H2O) = -156.6 kJ/mol under the same conditions. Controls run at the same time behave: GSSG + NADH gives an implied -239.4 mV against a measured -240 mV, and fumarate + NADH gives -2.8 mV against a measured +31 mV. So DO NOT borrow eQuilibrator's DMSO formation energy as a sulfoxide surrogate, and treat any other eQuilibrator sulfoxide number the same way. This is an upstream defect worth reporting to eQuilibrator.\n\n6. IDENTITY, FIXED FOR THE RECORD, because the GEM is internally inconsistent here. s_3837 [c] and s_4176 [e] are annotated bigg.metabolite=metsox_S__L, a name that asserts the (S) diastereomer, but their chebi=CHEBI:17016 / kegg=C02989 / MNXM2246 annotations all resolve to the diastereomer-UNSPECIFIED species, InChIKey QEFRNWWLZKMPFJ-YGVKFDHGSA-N. s_3807 [c] is the genuine (S)-sulfoxide, CHEBI:49031 / C15999 / MNXM722780, InChIKey QEFRNWWLZKMPFJ-MFXDVPHUSA-N. Both were verified against ChEBI. RDKit confirms C5H11NO3S and formal charge 0 for every candidate SMILES. The diastereomers are distinct substrates in vivo, MsrA taking (S) and MsrB taking (R), and the GEM's r_4186 blocks on the (S) species while r_4202 blocks on the generic one, so the two reactions are not duplicates and a value for one is not automatically a value for the other. Their standard free energies will however be nearly equal, since the diastereomers differ only in configuration at sulfur.\n\nWHAT A HUMAN WOULD STILL NEED TO DO, in decreasing order of payoff:\n(a) Read Wood 1981 FEBS Lett 124:11-14 in full through library access. It is 4 pages, it is an EVALUATION rather than a new measurement, and it may state the underlying thermochemistry (the DMSO and DMS aqueous formation energies it evaluated from) explicitly. If it does, those are tabulated values that could anchor a sulfoxide-to-sulfide group increment, which would then be transferable to methionine sulfoxide as an explicitly provisional value. This is the single highest-value follow-up and it cannot be done by an agent behind the paywall.\n(b) DECIDE whether a Wood-derived sulfoxide-to-sulfide increment may enter as admission 'provisional'. It is not admissible under the current rule, since +160 mV is dimethyl sulfoxide and not methionine sulfoxide, and this record deliberately leaves the row open rather than laundering an analog into a value. If it is admitted later, it must be built from Wood's own numbers and NOT from eQuilibrator's DMSO entry, for the reason in point 5.\n(c) If a value is ever wanted for r_4186 and r_4202 specifically, note that the thioredoxin half is already measured and citable: Aslund, Berndt, Holmgren, J Biol Chem 1997, PMID 9388218, E°' about -270 mV at pH 7 by direct protein-protein redox equilibria, with the thioredoxin-family band quoted at -270 to -300 mV. Only the sulfoxide half is missing.\n(d) Consider whether the reaction is worth measuring. MsrA runs in both directions (Lim, You, Kim, Levine, PNAS 2011, doi 10.1073/pnas.1101275108), so an equilibrium constant against a calibrated thiol-disulfide redox buffer is experimentally reachable and would be the first measured value for this couple.\n(e) Separately, r_4478 and r_4550 are a same-species diffusion and an exchange; they close by the pipeline's own code rules and were not investigated here."
+}

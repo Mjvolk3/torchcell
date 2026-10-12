@@ -5,13 +5,26 @@
 # same object colors used in Fig 1.
 #
 # STRUCTURE: the hue order orange - red - purple - yellow - blue - gray repeats every
-# 6 colors, so a plot with N series takes the first N and the four warm primaries are
-# always used before blue/gray. That is deliberate: it maximizes the primaries and
-# minimizes blue. Each cycle of 6 is a tier of the same six hues:
-#   1-6   primary      (the draw.io Fig 1 colors -- LOCKED, never change these)
-#   7-12  dark         (a uniform 0.73 shade of the primary)
+# 6 colors, so a plot with N series takes the first N and the four primaries are always
+# used before blue/gray. That is deliberate: it maximizes the primaries and minimizes
+# blue. Each cycle of 6 is a tier of the same six hues:
+#   1-6   vivid        (the draw.io Fig 1 colors -- LOCKED, never change these)
+#   7-12  dark         (a uniform 0.73 shade of the vivid tier)
 #   13-18 muted earth  (chroma-reduced siblings: terracotta, rose-brown, dusty mauve,
 #                       sand, slate, taupe)
+#
+# ROLE, which is a different axis from tier and is what the SVG's second bracket row
+# marks. Within every cycle of 6:
+#   slots 1-4  PRIMARY    orange, red, purple, yellow. Interchangeable: any series may
+#                         mix them uniformly, in any order, with no meaning attached to
+#                         which of the four a given category draws.
+#   slots 5-6  SECONDARY  blue, gray. They enter only when a series needs a fifth and a
+#                         sixth color. A two- or three-series plot that reaches for blue
+#                         has skipped a primary and should be changed.
+#
+# The first tier used to be called "primary" as well, which made the word mean two
+# things at once. Tier 1 is "vivid" here so that "primary" names the role and nothing
+# else (writing-style-guide: one term, one meaning).
 #
 # WHY IT STOPS AT 18, and why the tiers differ by CHROMA rather than lightness:
 #   - Lightness is already spoken for. Light-vs-dark encodes validation-vs-test WITHIN a
@@ -29,7 +42,12 @@
 
 import os.path as osp
 
-from torchcell.utils import PLOT_PALETTE, PLOT_PALETTE_FILL, PLOT_PALETTE_NAMES
+from torchcell.utils import (
+    PLOT_NONSERIES_COLORS,
+    PLOT_PALETTE,
+    PLOT_PALETTE_FILL,
+    PLOT_PALETTE_NAMES,
+)
 
 OUT = osp.abspath(osp.join(osp.dirname(__file__), "..", "images", "color-palette.svg"))
 
@@ -40,7 +58,9 @@ PW, GAP = 42, 6
 PITCH = PW + GAP
 X0 = 20
 SLOTS = ["orange", "red", "purple", "yellow", "blue", "gray"]
-TIERS = ["primary", "dark", "muted earth"]
+TIERS = ["vivid", "dark", "muted earth"]
+# (label, first slot in the cycle, last slot in the cycle), 0-based within a cycle of 6.
+ROLES = [("primary 1-4", 0, 3), ("secondary 5-6", 4, 5)]
 
 # SVG <text> does NOT wrap -- an over-long string silently runs off the edge. The previous
 # version put a 182-character subtitle on one line and it ran ~250 px past the canvas. So
@@ -51,6 +71,8 @@ TITLE = "TorchCell plot palette - ordered, green-free (single source of truth)"
 SUB = [
     "Hue slots orange-red-purple-yellow-blue-gray repeat every 6; a series of N takes the"
     " first N, so primaries are spent before blue/gray.",
+    "PRIMARY (orange, red, purple, yellow) mix uniformly in any series, in any order."
+    " SECONDARY (blue, gray) enter only at the fifth and sixth color.",
     "Tiers differ by CHROMA, not lightness -- lightness encodes validation vs test within"
     " a series. Swatch = fill with its line stroke.",
     "Labels are the TRUE color, not the slot: the muted tier's gray slot is a taupe.",
@@ -77,8 +99,11 @@ def main() -> None:
     n = len(PLOT_PALETTE)
     width = X0 * 2 + n * PITCH - GAP
     y_title, y_sub = 26, 46
-    y_tier = y_sub + len(SUB) * 13 + 12  # tracks the subtitle, however many lines it takes
-    y_sw = y_tier + 18
+    y_tier = (
+        y_sub + len(SUB) * 13 + 12
+    )  # tracks the subtitle, however many lines it takes
+    y_role = y_tier + 20  # role band sits between the tier bracket and the swatches
+    y_sw = y_role + 18
     sw_h = 44
     y_line = y_sw + sw_h + 12
     y_fill = y_sw + sw_h + 21
@@ -89,7 +114,9 @@ def main() -> None:
     for t, size in [(TITLE, 15.0), *((s_, 10.0) for s_ in SUB)]:
         if X0 + _width(t, size) > width - 10:
             raise ValueError(f"text overflows the {width}px canvas: {t[:60]}...")
-    name_lines = [_wrap(nm, 7.4, PITCH - 2) for nm in PLOT_PALETTE_NAMES]  # raises if too wide
+    name_lines = [
+        _wrap(nm, 7.4, PITCH - 2) for nm in PLOT_PALETTE_NAMES
+    ]  # raises if too wide
 
     s = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" '
@@ -117,6 +144,24 @@ def main() -> None:
             f'<text x="{(xa + xb) / 2:.0f}" y="{y_tier - 4}" font-size="9.5" '
             f'text-anchor="middle" fill="#444">{name} ({i0 + 1}-{i1 + 1})</text>'
         )
+
+    # one role bracket per (cycle, role): primary covers slots 1-4 of the cycle, secondary
+    # slots 5-6. Drawn per cycle rather than once, because the role repeats with the hue
+    # order and a single bracket over slots 1-4 would read as applying to the whole row.
+    for t in range(len(TIERS)):
+        for label, a, b in ROLES:
+            i0, i1 = t * 6 + a, min(t * 6 + b, n - 1)
+            if i0 >= n:
+                break
+            xa, xb = X0 + i0 * PITCH, X0 + i1 * PITCH + PW
+            s.append(
+                f'<line x1="{xa}" y1="{y_role}" x2="{xb}" y2="{y_role}" stroke="#bbb" '
+                f'stroke-width="0.8"/>'
+            )
+            s.append(
+                f'<text x="{(xa + xb) / 2:.0f}" y="{y_role - 4}" font-size="8.5" '
+                f'text-anchor="middle" fill="#666">{label}</text>'
+            )
 
     for i, (line, fill) in enumerate(zip(PLOT_PALETTE, PLOT_PALETTE_FILL)):
         x = X0 + i * PITCH
@@ -146,18 +191,29 @@ def main() -> None:
                 f'text-anchor="middle" fill="#444">{part}</text>'
             )
 
+    # The NON-SERIES colors, read from torchcell.utils rather than retyped here. They are not a
+    # 19th and 20th color: each is a job (mark a reference region, tint a background) and
+    # the region pair is palette slot 13. The beige pair lived only in this script until
+    # 2026-09-15, which is why a plot that wanted it had to copy the hex out of an image.
     s.append(
         f'<text x="{X0}" y="{y_bg + 15}" font-size="10.5" font-weight="bold" fill="#444">'
-        f"Background</text>"
+        f"Non-series</text>"
     )
-    s.append(
-        f'<rect x="120" y="{y_bg + 4}" width="{PW}" height="20" rx="3" fill="#F5EEDD" '
-        f'stroke="#E0D6BE" stroke-width="2"/>'
-    )
-    s.append(
-        f'<text x="{120 + PW + 8}" y="{y_bg + 15}" font-size="8.5" fill="#333">'
-        f"F5EEDD fill / E0D6BE stroke</text>"
-    )
+    x_role = 120
+    for label, (fill, stroke) in PLOT_NONSERIES_COLORS.items():
+        s.append(
+            f'<rect x="{x_role}" y="{y_bg + 4}" width="{PW}" height="20" rx="3" '
+            f'fill="{fill}" stroke="{stroke}" stroke-width="2"/>'
+        )
+        s.append(
+            f'<text x="{x_role + PW + 8}" y="{y_bg + 11}" font-size="8.5" fill="#333">'
+            f"{label}</text>"
+        )
+        s.append(
+            f'<text x="{x_role + PW + 8}" y="{y_bg + 21}" font-size="7.6" fill="#888">'
+            f"{fill.lstrip('#')} / {stroke.lstrip('#')}</text>"
+        )
+        x_role += PW + 130
     s.append("</svg>")
 
     with open(OUT, "w") as f:

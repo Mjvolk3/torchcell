@@ -1,0 +1,108 @@
+%% notes-tex/028-gene-essentiality/sections/1-endpoint.tex
+%% [[experiments.028-gene-essentiality]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/028-gene-essentiality/sections/1-endpoint.tex
+
+\section{The endpoint, its labels and its splits\secstatus{todo}}
+\label{sec:endpoint}
+
+\subsection{Vocabulary\secstatus{todo}}
+
+\begin{description}
+  \item[AUROC] Area under the receiver operating characteristic, computed as the
+    Mann-Whitney rank statistic with mid-ranks on ties: the probability that a randomly
+    drawn essential gene scores above a randomly drawn nonessential one.
+  \item[backbone] The cell graph transformer over the nine-graph perturbed gene graph with
+    \texttt{prot\_T5\_all} node features unless another encoding is named, read at the
+    pooled perturbed tokens. The \emph{pooled} arm is this backbone with a scalar head and
+    no metabolic module.
+  \item[chromosome-pathway indicator] The 197-dimensional per-gene encoding
+    \texttt{normalized\_chrom\_pathways} (\texttt{sgd\_gene\_graph\_hot.py}): five SGD
+    numeric gene features scaled to $[0, 1]$ (protein length, molecular weight,
+    isoelectric point, the median and the median absolute deviation of the gene's
+    expression), a one-hot of the gene's chromosome, and a multi-hot over the SGD
+    pathways it is annotated to. \emph{chrom-pathway} in figure labels; the name
+    understates it, since five of its columns are continuous gene properties and two of
+    those are expression.
+  \item[FBA affine] The readout that adds $w^\top r + b$ to the backbone's logit, where $r$
+    holds the deleted gene's knockout-to-wild-type growth ratio on each of four media from
+    one FBA solve per gene; the \emph{fba} arm.
+  \item[fold ensemble] Five models trained on the five cross-validation files (each a
+    different fifth of the 787 labeled non-test genes held for validation), their logits
+    averaged on the held-out genes; Flux Cone Learning's own test protocol.
+  \item[gene bootstrap] Resampling the scored genes with replacement (2,000 draws) and
+    reporting the 2.5 and 97.5 percentiles of the statistic.
+  \item[GO multi-hot] The per-gene encoding over Gene Ontology terms
+    (\texttt{go\_term\_hot.py}): one column per term, a gene's row marking the terms SGD
+    annotates it to, propagated to every ancestor through \emph{is\_a} and
+    \emph{part\_of} (the true-path rule), the three namespace roots dropped, and a term
+    kept only if ten or more genes carry it: 2,362 columns over 5,501 annotated genes.
+    \emph{GO direct} keeps the annotated terms alone (2,887 columns, two or more genes);
+    \emph{GO BP}, \emph{MF} and \emph{CC} keep one namespace (1,580, 430, 352). The SGD
+    file carries no evidence codes, so annotations inferred from mutant phenotypes are
+    in the vector.
+  \item[held-out genes] The 223 genes Merzbacher 2025 held out of its own training
+    (\texttt{test = 1} in the released split), of which 195 resolve as single-deletion
+    genotypes in the build. Every model number in this document is on those 195 unless
+    the gene set is named.
+  \item[layer that solves] The metabolic module with its flux replaced by the growth
+    optimum of the linear program under the layer's own bounds, one solve per genotype
+    in the forward pass, the bound duals as its gradient. Its \emph{elastic} form lets
+    the model's one forced flux (ATP maintenance) go unmet at a price, so the program is
+    feasible for every genotype by construction.
+  \item[message passing] The update of a node's representation from an aggregate of its
+    neighbors' representations, $h_i' = \gamma(h_i, \bigoplus_{j \in \mathcal{N}(i)}
+    \phi(h_i, h_j))$; graph convolution (GCN), graph attention (GAT, GATv2), GraphSAGE
+    and the graph isomorphism network (GIN) are choices of $\phi$, $\bigoplus$ and
+    $\gamma$. \emph{Relational} message passing (RGCN, RGAT) keeps one weight or one
+    attention per edge type over a multigraph.
+  \item[metabolic module] The enzyme-constrained thermodynamic flux layer over yeast-GEM
+    9.0.2 that maps the perturbed representation to a flux vector by $K$ alternating
+    projections onto the mass balance $Sv = 0$ and the box of bounds; here it is read at
+    the objective column \texttt{r\_2111} (growth). The \emph{anchored} layer tightens the
+    GEM's box by the enzyme-capacity ceilings and the second-law directions; the
+    \emph{stoichiometry-only} layer keeps the GEM's box.
+  \item[parsimonious FBA] Two linear programs: the growth optimum over the polytope
+    $\{Sv = 0,\ \ell \le v \le u\}$ with the deleted gene's reactions closed through the
+    gene-protein-reaction rules, then the flux of least total absolute value at that
+    optimum. \emph{pFBA}; \emph{the solve} when the object is the optimum rather than the
+    method.
+  \item[released labels] The 1,121 essentiality calls in the released split. The column
+    named \texttt{essential} is a viability flag (1.0 marks a nonessential gene); it is
+    inverted once and the four class counts are asserted against the paper's Methods.
+  \item[selected epoch] The argmax of a centered five-epoch moving average of the
+    validation AUROC. The held-out genes are scored once, at that epoch.
+  \item[solve-derived encodings] Per-gene vectors computed from pFBA rather than from
+    sequence: the deletion's own flux vector, its difference from the wild-type vector,
+    and eight statistics of the gene's reactions under the wild-type solve and its flux
+    variability (\texttt{ess\_reference\_flux\_table.py}).
+  \item[warm start] The flux layer's proposal written as a reference flux plus a
+    null-space residual of relative size $\alpha$, $v = v_{\text{ref}} + \alpha N z$,
+    before the alternations; with a per-genotype table the reference is the deletion's
+    own pFBA flux.
+  \item[Weisfeiler-Leman test] Color refinement: every node starts with a color, and
+    each iteration replaces it by a hash of its own color and the multiset of its
+    neighbors' colors; the multiset of colors after $k$ iterations is the graph's 1-WL
+    signature. Different signatures prove two graphs non-isomorphic; equal signatures
+    prove nothing. A message-passing network is at most as expressive as the test.
+\end{description}
+
+\subsection{Where the labels come from\secstatus{todo}}
+
+The build is a union of the SGD essential-gene list (1,140 genotypes, all essential) and
+the single-mutant fitness screens (Costanzo 2016, Kuzmin 2018; 4,540 genotypes), 5,656
+single-deletion genotypes in all. No fitness value enters any objective: the head is one
+logit scored by binary cross entropy against a 0/1 label, and every genotype whose gene
+carries no label arrives masked. Two label sources are used and named throughout:
+
+\input{tables/splits}
+
+\subsection{The protocol inherited from 027, and what it got wrong\secstatus{todo}}
+
+The wave-9 protocol pinned the held-out genes and let the data module draw train and
+validation at 80/10/10 over the remaining 5,461 records. Of those, 926 carry a label, so
+the validation set held 75 labeled genes with about 12 essential, on which a single AUROC
+read has a Hanley-McNeil standard error near 0.07; 10 percent of the labeled genes sat in
+a random test block nothing reports; and 4,535 unlabeled records were forwarded every epoch
+under a False mask. A split file replaces the draw: it names every record's split, is
+class-stratified, carries the labels it was stratified on, and the trainer drops every
+record it does not name.

@@ -1,0 +1,9 @@
+# experiments/027-betaxanthin-metabolic/conf/arm_flux_abundance.yaml
+# [[experiments.027-betaxanthin-metabolic]]
+#
+# THE PROTEIN NODE with the anchored thermodynamics: `flux_capacity` plus the tabulated
+# formation energies and the second-law penalty. Gibbs dissipation is logged as a readout
+# and is not a penalty. `flux_anchored` -> `flux_abundance` is the E_bar -> E_g contrast
+# with everything else held.
+base_arm: flux_abundance
+permute_train_targets: false

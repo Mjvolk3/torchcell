@@ -1,0 +1,205 @@
+{
+  "generated_by": "experiments/031-betaxanthin-module/scripts/target_head_decomposition.py",
+  "name": "w167_go",
+  "statistic": "pinned-test Spearman of the full prediction, of the backbone's context head alone (the affine replaced by zero) and of their difference, the slot; sd ratio and rank agreement between the parts",
+  "summary": {
+    "mean_full_spearman": 0.20228338378656277,
+    "mean_backbone_head_spearman": NaN,
+    "mean_slot_spearman": 0.20240048576245454,
+    "mean_sd_ratio_head_over_slot": 0.0006490261958891352,
+    "mean_spearman_full_vs_slot": 0.9999967511523593,
+    "mean_spearman_head_vs_slot": NaN,
+    "mean_backbone_adds": -0.00011710197589175075,
+    "n_backbone_adds_positive": 0,
+    "n_cells": 6
+  },
+  "cells": [
+    {
+      "result": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/031-betaxanthin-module/results/w167_bxdelgo_h12l1p1_e200_s2700.json",
+      "checkpoint": "/scratch/projects/torchcell-scratch/checkpoints-031/w167_bxdelgo_h12l1p1_e200_s2700.pt",
+      "seed": 2700,
+      "select_epoch": 8,
+      "n_pinned": 629,
+      "reported_spearman": 0.20291275057104954,
+      "full": {
+        "spearman_vs_target": 0.20291275057104954,
+        "pearson_vs_target": 0.33883734434271795,
+        "sd": 0.24118848145008087,
+        "top50_enrichment": 5.3914285714285715
+      },
+      "backbone_head": {
+        "spearman_vs_target": -0.030655417001994065,
+        "pearson_vs_target": -0.050233160940178774,
+        "sd": 9.326121653430164e-05,
+        "top50_enrichment": 0.7987301587301587
+      },
+      "slot": {
+        "spearman_vs_target": 0.20298208064534173,
+        "pearson_vs_target": 0.3388655373291861,
+        "sd": 0.24118225276470184,
+        "top50_enrichment": 5.3914285714285715
+      },
+      "spearman_head_vs_slot": 0.11023506204432414,
+      "spearman_full_vs_slot": 0.9999977939178962,
+      "spearman_full_vs_head": 0.11061154419220343,
+      "sd_ratio_head_over_slot": 0.00038668359047733247,
+      "backbone_adds": -6.933007429218985e-05
+    },
+    {
+      "result": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/031-betaxanthin-module/results/w167_bxdelgo_h12l1p1_e200_s2701.json",
+      "checkpoint": "/scratch/projects/torchcell-scratch/checkpoints-031/w167_bxdelgo_h12l1p1_e200_s2701.pt",
+      "seed": 2701,
+      "select_epoch": 8,
+      "n_pinned": 629,
+      "reported_spearman": 0.20372791567995763,
+      "full": {
+        "spearman_vs_target": 0.20372791567995763,
+        "pearson_vs_target": 0.342549241909003,
+        "sd": 0.23771968483924866,
+        "top50_enrichment": 5.3914285714285715
+      },
+      "backbone_head": {
+        "spearman_vs_target": -0.017270194509241662,
+        "pearson_vs_target": 0.007619758540539502,
+        "sd": 0.00016836466966196895,
+        "top50_enrichment": 1.198095238095238
+      },
+      "slot": {
+        "spearman_vs_target": 0.20384100455800291,
+        "pearson_vs_target": 0.34257477689925125,
+        "sd": 0.23769821226596832,
+        "top50_enrichment": 5.3914285714285715
+      },
+      "spearman_head_vs_slot": 0.1313864518805224,
+      "spearman_full_vs_slot": 0.9999963834711988,
+      "spearman_full_vs_head": 0.1322882197019939,
+      "sd_ratio_head_over_slot": 0.0007083127275109291,
+      "backbone_adds": -0.00011308887804528656
+    },
+    {
+      "result": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/031-betaxanthin-module/results/w167_bxdelgo_h12l1p1_e200_s2702.json",
+      "checkpoint": "/scratch/projects/torchcell-scratch/checkpoints-031/w167_bxdelgo_h12l1p1_e200_s2702.pt",
+      "seed": 2702,
+      "select_epoch": 10,
+      "n_pinned": 629,
+      "reported_spearman": 0.19996002532533066,
+      "full": {
+        "spearman_vs_target": 0.19996002532533066,
+        "pearson_vs_target": 0.34298146091952525,
+        "sd": 0.2513405382633209,
+        "top50_enrichment": 4.792380952380952
+      },
+      "backbone_head": {
+        "spearman_vs_target": -0.11747428528994656,
+        "pearson_vs_target": -0.20463170280512055,
+        "sd": 0.00021113071125000715,
+        "top50_enrichment": 0.39936507936507937
+      },
+      "slot": {
+        "spearman_vs_target": 0.2000825171081443,
+        "pearson_vs_target": 0.34312116071123194,
+        "sd": 0.2513641119003296,
+        "top50_enrichment": 4.792380952380952
+      },
+      "spearman_head_vs_slot": 0.013618758543670704,
+      "spearman_full_vs_slot": 0.999996564298684,
+      "spearman_full_vs_head": 0.01433065565699511,
+      "sd_ratio_head_over_slot": 0.0008399397484026849,
+      "backbone_adds": -0.00012249178281362183
+    },
+    {
+      "result": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/031-betaxanthin-module/results/w167_bxdelgo_h12l1p1_e200_s2703.json",
+      "checkpoint": "/scratch/projects/torchcell-scratch/checkpoints-031/w167_bxdelgo_h12l1p1_e200_s2703.pt",
+      "seed": 2703,
+      "select_epoch": 11,
+      "n_pinned": 629,
+      "reported_spearman": 0.2013247578253198,
+      "full": {
+        "spearman_vs_target": 0.2013247578253198,
+        "pearson_vs_target": 0.34068157002658966,
+        "sd": 0.25647231936454773,
+        "top50_enrichment": 4.592698412698413
+      },
+      "backbone_head": {
+        "spearman_vs_target": -0.09916314170824134,
+        "pearson_vs_target": -0.24207727401103124,
+        "sd": 3.202441075700335e-05,
+        "top50_enrichment": 0.19968253968253968
+      },
+      "slot": {
+        "spearman_vs_target": 0.20135112028456262,
+        "pearson_vs_target": 0.3407037226586666,
+        "sd": 0.2564784288406372,
+        "top50_enrichment": 4.592698412698413
+      },
+      "spearman_head_vs_slot": -0.0035064649233982337,
+      "spearman_full_vs_slot": 0.9999983846176668,
+      "spearman_full_vs_head": -0.0033931701769379812,
+      "sd_ratio_head_over_slot": 0.0001248620101250708,
+      "backbone_adds": -2.636245924281244e-05
+    },
+    {
+      "result": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/031-betaxanthin-module/results/w167_bxdelgo_h12l1p1_e200_s2704.json",
+      "checkpoint": "/scratch/projects/torchcell-scratch/checkpoints-031/w167_bxdelgo_h12l1p1_e200_s2704.pt",
+      "seed": 2704,
+      "select_epoch": 12,
+      "n_pinned": 629,
+      "reported_spearman": 0.20326845568205956,
+      "full": {
+        "spearman_vs_target": 0.20326845568205956,
+        "pearson_vs_target": 0.34237917521519634,
+        "sd": 0.2646982669830322,
+        "top50_enrichment": 4.592698412698413
+      },
+      "backbone_head": {
+        "spearman_vs_target": NaN,
+        "pearson_vs_target": NaN,
+        "sd": 1.1175870895385742e-08,
+        "top50_enrichment": 0.599047619047619
+      },
+      "slot": {
+        "spearman_vs_target": 0.20326845568205956,
+        "pearson_vs_target": 0.3423791784690357,
+        "sd": 0.2646982669830322,
+        "top50_enrichment": 4.592698412698413
+      },
+      "spearman_head_vs_slot": NaN,
+      "spearman_full_vs_slot": 1.0,
+      "spearman_full_vs_head": NaN,
+      "sd_ratio_head_over_slot": 4.222117055974195e-08,
+      "backbone_adds": 0.0
+    },
+    {
+      "result": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/031-betaxanthin-module/results/w167_bxdelgo_h12l1p1_e200_s2705.json",
+      "checkpoint": "/scratch/projects/torchcell-scratch/checkpoints-031/w167_bxdelgo_h12l1p1_e200_s2705.pt",
+      "seed": 2705,
+      "select_epoch": 8,
+      "n_pinned": 629,
+      "reported_spearman": 0.2025063976356595,
+      "full": {
+        "spearman_vs_target": 0.2025063976356595,
+        "pearson_vs_target": 0.34295032454165403,
+        "sd": 0.23824109137058258,
+        "top50_enrichment": 5.3914285714285715
+      },
+      "backbone_head": {
+        "spearman_vs_target": -0.12229072727386703,
+        "pearson_vs_target": -0.19677888966242263,
+        "sd": 0.0004371003888081759,
+        "top50_enrichment": 0.39936507936507937
+      },
+      "slot": {
+        "spearman_vs_target": 0.2028777362966161,
+        "pearson_vs_target": 0.34324010658628096,
+        "sd": 0.23829056322574615,
+        "top50_enrichment": 5.3914285714285715
+      },
+      "spearman_head_vs_slot": -0.015725169344820888,
+      "spearman_full_vs_slot": 0.9999913806087104,
+      "spearman_full_vs_head": -0.014017609109403787,
+      "sd_ratio_head_over_slot": 0.0018343168776482344,
+      "backbone_adds": -0.00037133866095659385
+    }
+  ],
+  "seconds": 184.0593283176422
+}

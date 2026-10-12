@@ -1,0 +1,2162 @@
+{
+  "generated_at": "2026-09-12T20:08:44.057400+00:00",
+  "kcat_table_expected": {
+    "measured": 97,
+    "homolog": 782,
+    "predicted": 2831,
+    "default": 18
+  },
+  "kcat_table_matches_shipped": true,
+  "thermo": {
+    "n_reactions": 4131,
+    "n_reactions_priced_before": 3779,
+    "n_reactions_priced_after": 3801,
+    "n_reactions_chemical": 3847,
+    "n_reactions_chemical_priced": 3535,
+    "n_reactions_non_chemical": 284,
+    "n_metabolites_priced_before": 2561,
+    "n_metabolites_priced_after": 2559,
+    "ladder": [
+      {
+        "name": "now",
+        "n_reactions_priced": 3535,
+        "fraction_reactions_priced": 0.9188978424746556,
+        "n_flux_carrying_priced": 2724,
+        "fraction_flux_carrying_priced": 0.957469244288225,
+        "what_it_would_take": "nothing; this is the table as built"
+      },
+      {
+        "name": "structures and pka ladders resolved",
+        "n_reactions_priced": 3545,
+        "fraction_reactions_priced": 0.9214972706004679,
+        "n_flux_carrying_priced": 2732,
+        "fraction_flux_carrying_priced": 0.9602811950790862,
+        "what_it_would_take": "a structure from a namespace or a curator for every species that has none, and a pKa ladder inside (0, 14) for every species whose ladder is empty"
+      },
+      {
+        "name": "everything chemically possible resolved",
+        "n_reactions_priced": 3556,
+        "fraction_reactions_priced": 0.9243566415388614,
+        "n_flux_carrying_priced": 2735,
+        "fraction_flux_carrying_priced": 0.961335676625659,
+        "what_it_would_take": "the rung above plus a decomposition or a tabulated value for every structure the group decomposer refuses"
+      }
+    ],
+    "ladder_denominator": 3847,
+    "ladder_partition_check": true,
+    "gains_by_route": {
+      "cancellation": 22,
+      "carrier pseudo pair": 7,
+      "mannan residue value": 3,
+      "conserved moiety": 1
+    },
+    "withdrawn_prices": [
+      {
+        "met_id": "s_0773",
+        "name": "glycogen",
+        "gem_formula": "C6H10O5",
+        "structure_formula": "C24H42O21",
+        "shipped_dgf_prime_kj_per_mol": -1127.2488714149251,
+        "detail": "structure minus GEM = {'O': 16.0, 'C': 18.0}",
+        "withdrawn": false,
+        "re_derived_by_record": "glycogen"
+      },
+      {
+        "met_id": "s_0774",
+        "name": "glycogen",
+        "gem_formula": "C6H10O5",
+        "structure_formula": "C24H42O21",
+        "shipped_dgf_prime_kj_per_mol": -1370.8741520830263,
+        "detail": "structure minus GEM = {'O': 16.0, 'C': 18.0}",
+        "withdrawn": false,
+        "re_derived_by_record": "glycogen"
+      },
+      {
+        "met_id": "s_1578",
+        "name": "zymosterol intermediate 1c",
+        "gem_formula": "C28H43O3",
+        "structure_formula": "C29H46O2",
+        "shipped_dgf_prime_kj_per_mol": 1257.2196102211121,
+        "detail": "structure minus GEM = {'O': -1.0, 'C': 1.0}",
+        "withdrawn": true,
+        "re_derived_by_record": null
+      },
+      {
+        "met_id": "s_2920",
+        "name": "3-oxo-cis-hexadec-9-enoyl-CoA",
+        "gem_formula": "C37H62N7O18P3S",
+        "structure_formula": "C37H60N7O17P3S",
+        "shipped_dgf_prime_kj_per_mol": -575.1030000475957,
+        "detail": "structure minus GEM = {'O': -1.0}",
+        "withdrawn": true,
+        "re_derived_by_record": null
+      },
+      {
+        "met_id": "s_2923",
+        "name": "3-oxo-cis-octadec-9-enoyl-CoA",
+        "gem_formula": "C39H66N7O18P3S",
+        "structure_formula": "C39H64N7O17P3S",
+        "shipped_dgf_prime_kj_per_mol": -395.05494296315646,
+        "detail": "structure minus GEM = {'O': -1.0}",
+        "withdrawn": true,
+        "re_derived_by_record": null
+      },
+      {
+        "met_id": "s_4207",
+        "name": "trans-4-hydroxy-L-proline",
+        "gem_formula": "C5H9NO3",
+        "structure_formula": "C5H4N4O4",
+        "shipped_dgf_prime_kj_per_mol": -118.95706324522263,
+        "detail": "structure minus GEM = {'N': 3.0, 'O': 1.0}",
+        "withdrawn": true,
+        "re_derived_by_record": null
+      },
+      {
+        "met_id": "s_4295",
+        "name": "dimethylallyl phosphate",
+        "gem_formula": "C5H9O4P",
+        "structure_formula": "C8H8O",
+        "shipped_dgf_prime_kj_per_mol": -512.364039418986,
+        "detail": "structure minus GEM = {'P': -1.0, 'C': 3.0, 'O': -3.0}",
+        "withdrawn": true,
+        "re_derived_by_record": null
+      },
+      {
+        "met_id": "s_4313",
+        "name": "ITP",
+        "gem_formula": "C10H11N4O14P3",
+        "structure_formula": "C4H4O4",
+        "shipped_dgf_prime_kj_per_mol": -2531.7224029578247,
+        "detail": "structure minus GEM = {'P': -3.0, 'C': -6.0, 'N': -4.0, 'O': -10.0}",
+        "withdrawn": true,
+        "re_derived_by_record": null
+      }
+    ],
+    "n_accessions_checked": 2414,
+    "n_accessions_matching": 2087,
+    "n_accessions_repeat_unit": 12,
+    "permanently_closed_reactions_by_reason": {
+      "pseudo_metabolite": 202,
+      "placeholder_formula": 96,
+      "placeholder_structure": 3
+    },
+    "unpriced_metabolites_by_reason": {
+      "placeholder_formula": 159,
+      "pseudo_metabolite": 55,
+      "group_decomposition_failed": 16,
+      "no_structure_available": 6,
+      "placeholder_structure": 6,
+      "recorded_not_admitted": 4,
+      "group_in_null_space": 1
+    },
+    "permanent_gap_classes": {
+      "nothing is possible: an R, X or * in the formula means the species is a family of molecules and no single formation energy exists for it": 159,
+      "nothing is possible: a modeling device (a pool, a SLIME backbone, a difference formula), not a molecule": 55,
+      "a curated record EXISTS and its admission is computed or provisional, so it is reported and not priced; what it would take is a measured or tabulated source": 4,
+      "a DECOMPOSITION is needed: the structure exists and component contribution refuses it, so a pKa predictor changes nothing; monatomic ions are in this class and their energies are tabulated in the thermochemical literature rather than predicted": 16,
+      "a STRUCTURE is needed: a definite formula with no structure in any namespace and no writer that composes one from the name": 6,
+      "nothing is possible: the only structure that resolves carries an attachment point, so the species is a residue inside a macromolecule rather than a molecule": 6,
+      "a group NOBODY TRAINED ON: the structure decomposes and one of its groups is in the component-contribution null space, so the estimate has infinite variance. Different from a missing group definition: the group exists and no training compound carries it, so the remedy is a measurement of a compound that does, or a microspecies whose groups are covered": 1
+    },
+    "n_reactions_imbalanced": 205
+  },
+  "curation_records": [
+    {
+      "slug": "chitobiosyl_pp_dolichol",
+      "kind": "polymer_convention",
+      "admission": "tabulated",
+      "admitted": true,
+      "n_metabolites_priced": 0,
+      "n_reactions_closed": 0,
+      "n_reactions_closed_by_cancellation": 0,
+      "what_it_would_take": "a microspecies whose groups component contribution has seen: the structure decomposes and one of its groups is in the null space"
+    },
+    {
+      "slug": "cytochrome_b5",
+      "kind": "carrier_potential",
+      "admission": "provisional",
+      "admitted": false,
+      "n_metabolites_priced": 0,
+      "n_reactions_closed": 0,
+      "n_reactions_closed_by_cancellation": 0,
+      "what_it_would_take": "a measured or tabulated source; the record is reported and never priced at admission=provisional"
+    },
+    {
+      "slug": "cytochrome_c",
+      "kind": "carrier_potential",
+      "admission": "measured",
+      "admitted": true,
+      "n_metabolites_priced": 2,
+      "n_reactions_closed": 7,
+      "n_reactions_closed_by_cancellation": 0,
+      "what_it_would_take": "nothing; every species this record covers is priced"
+    },
+    {
+      "slug": "ethylnitronate",
+      "kind": "structure",
+      "admission": "tabulated",
+      "admitted": true,
+      "n_metabolites_priced": 0,
+      "n_reactions_closed": 0,
+      "n_reactions_closed_by_cancellation": 0,
+      "what_it_would_take": "a group decomposition, or a measured formation energy; not more retrieval"
+    },
+    {
+      "slug": "ferroheme_b",
+      "kind": "pka_ladder",
+      "admission": "provisional",
+      "admitted": false,
+      "n_metabolites_priced": 0,
+      "n_reactions_closed": 0,
+      "n_reactions_closed_by_cancellation": 0,
+      "what_it_would_take": "a measured or tabulated source; the record is reported and never priced at admission=provisional"
+    },
+    {
+      "slug": "glycogen",
+      "kind": "polymer_convention",
+      "admission": "tabulated",
+      "admitted": true,
+      "n_metabolites_priced": 2,
+      "n_reactions_closed": 0,
+      "n_reactions_closed_by_cancellation": 0,
+      "what_it_would_take": "nothing; every species this record covers is priced"
+    },
+    {
+      "slug": "gpi_intermediate",
+      "kind": "formula_correction",
+      "admission": "provisional",
+      "admitted": false,
+      "n_metabolites_priced": 0,
+      "n_reactions_closed": 0,
+      "n_reactions_closed_by_cancellation": 0,
+      "what_it_would_take": "a measured or tabulated source; the record is reported and never priced at admission=provisional"
+    },
+    {
+      "slug": "heme_a",
+      "kind": "structure",
+      "admission": "tabulated",
+      "admitted": true,
+      "n_metabolites_priced": 0,
+      "n_reactions_closed": 1,
+      "n_reactions_closed_by_cancellation": 0,
+      "what_it_would_take": "a group decomposition, or a measured formation energy; not more retrieval"
+    },
+    {
+      "slug": "heme_o",
+      "kind": "structure",
+      "admission": "tabulated",
+      "admitted": true,
+      "n_metabolites_priced": 0,
+      "n_reactions_closed": 1,
+      "n_reactions_closed_by_cancellation": 0,
+      "what_it_would_take": "a group decomposition, or a measured formation energy; not more retrieval"
+    },
+    {
+      "slug": "mannan",
+      "kind": "polymer_convention",
+      "admission": "tabulated",
+      "admitted": true,
+      "n_metabolites_priced": 2,
+      "n_reactions_closed": 3,
+      "n_reactions_closed_by_cancellation": 0,
+      "what_it_would_take": "nothing; every species this record covers is priced"
+    },
+    {
+      "slug": "methionine_s_oxide",
+      "kind": "not_found",
+      "admission": "none",
+      "admitted": false,
+      "n_metabolites_priced": 0,
+      "n_reactions_closed": 0,
+      "n_reactions_closed_by_cancellation": 0,
+      "what_it_would_take": "a measured or tabulated source; the record is reported and never priced at admission=none"
+    },
+    {
+      "slug": "nitrophenyl_phosphate",
+      "kind": "structure",
+      "admission": "tabulated",
+      "admitted": true,
+      "n_metabolites_priced": 0,
+      "n_reactions_closed": 0,
+      "n_reactions_closed_by_cancellation": 0,
+      "what_it_would_take": "a group decomposition, or a measured formation energy; not more retrieval"
+    },
+    {
+      "slug": "pectin",
+      "kind": "polymer_convention",
+      "admission": "tabulated",
+      "admitted": true,
+      "n_metabolites_priced": 0,
+      "n_reactions_closed": 0,
+      "n_reactions_closed_by_cancellation": 0,
+      "what_it_would_take": "a group decomposition, or a measured formation energy; not more retrieval"
+    },
+    {
+      "slug": "porphyrin",
+      "kind": "not_found",
+      "admission": "none",
+      "admitted": false,
+      "n_metabolites_priced": 0,
+      "n_reactions_closed": 0,
+      "n_reactions_closed_by_cancellation": 1,
+      "what_it_would_take": "a measured or tabulated source; the record is reported and never priced at admission=none"
+    },
+    {
+      "slug": "siroheme",
+      "kind": "structure",
+      "admission": "tabulated",
+      "admitted": true,
+      "n_metabolites_priced": 0,
+      "n_reactions_closed": 0,
+      "n_reactions_closed_by_cancellation": 0,
+      "what_it_would_take": "a group decomposition, or a measured formation energy; not more retrieval"
+    },
+    {
+      "slug": "triphosphate",
+      "kind": "pka_ladder",
+      "admission": "measured",
+      "admitted": true,
+      "n_metabolites_priced": 0,
+      "n_reactions_closed": 0,
+      "n_reactions_closed_by_cancellation": 1,
+      "what_it_would_take": "a group decomposition, or a measured formation energy; not more retrieval"
+    }
+  ],
+  "catpred_verdicts": [
+    {
+      "parameter": "k_cat",
+      "lookup_point_fraction": 0.5416666666666666,
+      "n_scorable": 48,
+      "threshold_hits": 33,
+      "predictor_rows": [
+        {
+          "predictor": "ezkinetics",
+          "k": 40,
+          "n": 48,
+          "fraction": 0.8333333333333334,
+          "wilson_lower": 0.704221715987444,
+          "verdict": "admitted"
+        },
+        {
+          "predictor": "eitlem",
+          "k": 37,
+          "n": 48,
+          "fraction": 0.7708333333333334,
+          "wilson_lower": 0.6346073590999655,
+          "verdict": "admitted"
+        },
+        {
+          "predictor": "unikp",
+          "k": 36,
+          "n": 48,
+          "fraction": 0.75,
+          "wilson_lower": 0.6121562719049204,
+          "verdict": "admitted"
+        },
+        {
+          "predictor": "catpred",
+          "k": 32,
+          "n": 48,
+          "fraction": 0.6666666666666666,
+          "wilson_lower": 0.5254010970594798,
+          "verdict": "rejected"
+        },
+        {
+          "predictor": "dlkcat",
+          "k": 31,
+          "n": 47,
+          "fraction": 0.6595744680851063,
+          "wilson_lower": 0.5167092456194193,
+          "verdict": "rejected"
+        },
+        {
+          "predictor": "turnup",
+          "k": 29,
+          "n": 44,
+          "fraction": 0.6590909090909091,
+          "wilson_lower": 0.5113914121793824,
+          "verdict": "rejected"
+        },
+        {
+          "predictor": "deepenzyme",
+          "k": 26,
+          "n": 47,
+          "fraction": 0.5531914893617021,
+          "wilson_lower": 0.4124545983821873,
+          "verdict": "rejected"
+        }
+      ],
+      "admitted_before": [
+        "ezkinetics",
+        "eitlem",
+        "unikp"
+      ],
+      "admitted_after": [
+        "ezkinetics",
+        "eitlem",
+        "unikp"
+      ],
+      "n_units": 3728,
+      "n_units_changed": 0,
+      "median_abs_change_decades": 0.0,
+      "p90_abs_change_decades": 0.0,
+      "max_abs_change_decades": 0.0,
+      "n_units_over_factor_two": 0,
+      "n_units_over_one_decade": 0
+    },
+    {
+      "parameter": "K_M",
+      "lookup_point_fraction": 0.5,
+      "n_scorable": 48,
+      "threshold_hits": 31,
+      "predictor_rows": [
+        {
+          "predictor": "ezkinetics",
+          "k": 32,
+          "n": 48,
+          "fraction": 0.6666666666666666,
+          "wilson_lower": 0.5254010970594798,
+          "verdict": "admitted"
+        },
+        {
+          "predictor": "catpred",
+          "k": 32,
+          "n": 48,
+          "fraction": 0.6666666666666666,
+          "wilson_lower": 0.5254010970594798,
+          "verdict": "admitted"
+        },
+        {
+          "predictor": "eitlem",
+          "k": 25,
+          "n": 48,
+          "fraction": 0.5208333333333334,
+          "wilson_lower": 0.38329232303342803,
+          "verdict": "rejected"
+        },
+        {
+          "predictor": "unikp",
+          "k": 23,
+          "n": 48,
+          "fraction": 0.4791666666666667,
+          "wilson_lower": 0.34471316176951616,
+          "verdict": "rejected"
+        },
+        {
+          "predictor": "boost_km",
+          "k": 21,
+          "n": 47,
+          "fraction": 0.44680851063829785,
+          "wilson_lower": 0.31410966265495277,
+          "verdict": "rejected"
+        }
+      ],
+      "admitted_before": [
+        "ezkinetics"
+      ],
+      "admitted_after": [
+        "ezkinetics",
+        "catpred"
+      ],
+      "n_units": 3728,
+      "n_units_changed": 2824,
+      "median_abs_change_decades": 0.15130238773618343,
+      "p90_abs_change_decades": 0.47060512712886204,
+      "max_abs_change_decades": 2.134008559988753,
+      "n_units_over_factor_two": 667,
+      "n_units_over_one_decade": 9
+    }
+  ],
+  "catpred_overlap": [
+    {
+      "parameter": "k_cat",
+      "levels": {
+        "enzyme": "53/58 (91.4 %)",
+        "pair": "51/58 (87.9 %)",
+        "value": "40/58 (69.0 %)"
+      },
+      "n_gem_accessions": 1148,
+      "n_gem_accessions_in_db": 109,
+      "n_gem_units": 3709
+    },
+    {
+      "parameter": "K_M",
+      "levels": {
+        "enzyme": "48/58 (82.8 %)",
+        "pair": "44/58 (75.9 %)",
+        "value": "30/58 (51.7 %)"
+      },
+      "n_gem_accessions": 1148,
+      "n_gem_accessions_in_db": 193,
+      "n_gem_units": 3709
+    }
+  ],
+  "catpred_uncertainty": [
+    {
+      "parameter": "k_cat",
+      "n_pairs": 58,
+      "n_pairs_not_in_db": 7,
+      "sd_median_decades_total": 0.49219562804465233,
+      "coverage_1_sigma": 0.603448275862069,
+      "coverage_2_sigma": 0.8620689655172413,
+      "rms_z_total": 2.6167246338089623,
+      "rms_z_aleatoric": 4.616564642569738,
+      "rms_z_epistemic": 5.767147989595544,
+      "spearman_sd_vs_abs_error": 0.5699652403949677,
+      "spearman_p": 3.0107615716822364e-6,
+      "mae_by_sd_quartile": [
+        0.11482503937338051,
+        0.3263994642570225,
+        0.42554670008841133,
+        1.1177502406535362
+      ],
+      "combination_rules": {
+        "plain_median": 0.300012080271499,
+        "inverse_variance": 0.33175452181720233,
+        "sd_gated": 0.29848835650406574,
+        "incumbent_median_without_catpred": 0.30794173482449727
+      }
+    },
+    {
+      "parameter": "K_M",
+      "n_pairs": 58,
+      "n_pairs_not_in_db": 14,
+      "sd_median_decades_total": 0.34088731084334833,
+      "coverage_1_sigma": 0.6206896551724138,
+      "coverage_2_sigma": 0.9137931034482759,
+      "rms_z_total": 1.2185065839387614,
+      "rms_z_aleatoric": 2.003744346663645,
+      "rms_z_epistemic": 2.6971198163637164,
+      "spearman_sd_vs_abs_error": 0.6213971515580301,
+      "spearman_p": 1.9381397409111764e-7,
+      "mae_by_sd_quartile": [
+        0.1003509146501192,
+        0.291375319346336,
+        0.36839860474082264,
+        0.45166946543240116
+      ],
+      "combination_rules": {
+        "plain_median": 0.2974941523911638,
+        "inverse_variance": 0.24026578208679178,
+        "sd_gated": 0.31040054143044915,
+        "incumbent_median_without_catpred": 0.3827407490989471
+      }
+    }
+  ],
+  "parity_contrasts": [
+    {
+      "key": "wave7",
+      "name": "the three wave-7 pairs, every flux cell on the shipped table",
+      "rows": [
+        {
+          "seed": 2700,
+          "flux": 0.1277962155676068,
+          "pooled": 0.07983986598405769,
+          "difference": 0.04795634958354912
+        },
+        {
+          "seed": 2701,
+          "flux": 0.04679303293016294,
+          "pooled": 0.13837838802244948,
+          "difference": -0.09158535509228655
+        },
+        {
+          "seed": 2702,
+          "flux": 0.0156869256737098,
+          "pooled": 0.1369877869531605,
+          "difference": -0.1213008612794507
+        }
+      ],
+      "n_pairs": 3,
+      "mean_difference": -0.05497662226272937,
+      "sd_difference": 0.09037228749356696,
+      "t_statistic": -1.053667065740123,
+      "flux_mean": 0.06342539139049318,
+      "flux_sd": 0.05787572661395404,
+      "pooled_mean": 0.11840201365322256,
+      "pooled_sd": 0.03340303680022723,
+      "one_kcat_table": true,
+      "note": ""
+    },
+    {
+      "key": "combined_with_wave6_same_table_group",
+      "name": "wave 7 pooled with the largest wave-6 same-table group",
+      "rows": [
+        {
+          "seed": 2700,
+          "flux": 0.1277962155676068,
+          "pooled": 0.07983986598405769,
+          "difference": 0.04795634958354912
+        },
+        {
+          "seed": 2701,
+          "flux": 0.04679303293016294,
+          "pooled": 0.13837838802244948,
+          "difference": -0.09158535509228655
+        },
+        {
+          "seed": 2702,
+          "flux": 0.0156869256737098,
+          "pooled": 0.1369877869531605,
+          "difference": -0.1213008612794507
+        },
+        {
+          "seed": 2700,
+          "flux": 0.07469212508553086,
+          "pooled": 0.07166497258510016,
+          "difference": 0.003027152500430702
+        },
+        {
+          "seed": 2701,
+          "flux": 0.11852966152842206,
+          "pooled": 0.1057801993933421,
+          "difference": 0.012749462135079964
+        },
+        {
+          "seed": 2703,
+          "flux": 0.0255926405321097,
+          "pooled": -0.0001249148323030431,
+          "difference": 0.025717555364412743
+        }
+      ],
+      "n_pairs": 6,
+      "mean_difference": -0.02057261613137745,
+      "sd_difference": 0.06884082736847168,
+      "t_statistic": -0.7320134594881985,
+      "flux_mean": 0.06818176688625702,
+      "flux_sd": 0.04724023227747158,
+      "pooled_mean": 0.0887543830176345,
+      "pooled_sd": 0.05167190281063063,
+      "one_kcat_table": false,
+      "note": "wave 7 seeds are on the shipped verified table (97/782/2831/18); the wave-6 seeds pooled in here are on default=170/measured=148/predicted=3410. Reported because the six-seed combination was asked for, and labeled because the two halves are not replicates of one another."
+    },
+    {
+      "key": "wave6_reference",
+      "name": "wave 6, its three kcat tables pooled",
+      "rows": [
+        {
+          "seed": 2700,
+          "flux": 0.07469212508553086,
+          "pooled": 0.07166497258510016,
+          "difference": 0.003027152500430702
+        },
+        {
+          "seed": 2701,
+          "flux": 0.11852966152842206,
+          "pooled": 0.1057801993933421,
+          "difference": 0.012749462135079964
+        },
+        {
+          "seed": 2702,
+          "flux": 0.09724066366206432,
+          "pooled": 0.1687285469896339,
+          "difference": -0.07148788332756958
+        },
+        {
+          "seed": 2703,
+          "flux": 0.0255926405321097,
+          "pooled": -0.0001249148323030431,
+          "difference": 0.025717555364412743
+        },
+        {
+          "seed": 2704,
+          "flux": 0.02252365597240031,
+          "pooled": 0.10120799345466532,
+          "difference": -0.078684337482265
+        },
+        {
+          "seed": 2705,
+          "flux": 0.14172514761124977,
+          "pooled": 0.13641025174895532,
+          "difference": 0.005314895862294444
+        }
+      ],
+      "n_pairs": 6,
+      "mean_difference": -0.017227192491269454,
+      "sd_difference": 0.045568494971493276,
+      "t_statistic": -0.9260308318436679,
+      "flux_mean": 0.08005064906529617,
+      "flux_sd": 0.04875165264854465,
+      "pooled_mean": 0.09727784155656562,
+      "pooled_sd": 0.05808201275123655,
+      "one_kcat_table": false,
+      "note": "reproduced here from the wave-6 result files so the two waves are computed by one script under one scoring rule."
+    }
+  ],
+  "feasibility": [
+    {
+      "head": "boxforce",
+      "cell": "wave7_ff_fluxforce_k100_boxforce_e80_s2700",
+      "label": "boxforce s2700",
+      "job_ids": [
+        1767
+      ],
+      "group": "all_top100",
+      "n": 100,
+      "flux_active_frac_median": 0.28019851446151733,
+      "balance_median_ratio": 1.2488200695770502e-8,
+      "balance_max_ratio": 1.9999995231628418,
+      "balance_active_max_ratio": 1.9999995231628418,
+      "balance_active_p95_ratio": 1.9999914169311523,
+      "balance_active_rows": 422.0,
+      "pass_median_rule": 1.0,
+      "pass_max_rule": 0.0,
+      "pass_active_rule": 0.0,
+      "genesis_median_rule": 1.0,
+      "genesis_max_rule": 0.0,
+      "genesis_active_rule": 0.0,
+      "agreement_max_abs_delta": 0.0
+    },
+    {
+      "head": "boxforce",
+      "cell": "wave7_ff_fluxforce_k100_boxforce_e80_s2701",
+      "label": "boxforce s2701",
+      "job_ids": [
+        1770
+      ],
+      "group": "all_top100",
+      "n": 100,
+      "flux_active_frac_median": 0.29097071290016174,
+      "balance_median_ratio": 2.7789106127329433e-8,
+      "balance_max_ratio": 1.9999994039535522,
+      "balance_active_max_ratio": 1.9999994039535522,
+      "balance_active_p95_ratio": 1.9999946355819702,
+      "balance_active_rows": 525.0,
+      "pass_median_rule": 1.0,
+      "pass_max_rule": 0.0,
+      "pass_active_rule": 0.0,
+      "genesis_median_rule": 1.0,
+      "genesis_max_rule": 0.0,
+      "genesis_active_rule": 0.0,
+      "agreement_max_abs_delta": 0.0
+    },
+    {
+      "head": "boxforce",
+      "cell": "wave7_ff_fluxforce_k100_boxforce_e80_s2702",
+      "label": "boxforce s2702",
+      "job_ids": [
+        1771
+      ],
+      "group": "all_top100",
+      "n": 100,
+      "flux_active_frac_median": 0.2975066602230072,
+      "balance_median_ratio": 1.4124299063666967e-8,
+      "balance_max_ratio": 1.999999761581421,
+      "balance_active_max_ratio": 1.999999761581421,
+      "balance_active_p95_ratio": 1.9999958276748657,
+      "balance_active_rows": 539.0,
+      "pass_median_rule": 1.0,
+      "pass_max_rule": 0.0,
+      "pass_active_rule": 0.0,
+      "genesis_median_rule": 1.0,
+      "genesis_max_rule": 0.0,
+      "genesis_active_rule": 0.0,
+      "agreement_max_abs_delta": 0.0
+    },
+    {
+      "head": "force end",
+      "cell": "wave7_ff_fluxforce_k20_force_e200_s2700",
+      "label": "force end s2700",
+      "job_ids": [
+        1755
+      ],
+      "group": "all_top100",
+      "n": 100,
+      "flux_active_frac_median": 0.35693538188934326,
+      "balance_median_ratio": 1.0469615459442139,
+      "balance_max_ratio": 2.0,
+      "balance_active_max_ratio": 2.0,
+      "balance_active_p95_ratio": 1.9999994039535522,
+      "balance_active_rows": 809.0,
+      "pass_median_rule": 0.0,
+      "pass_max_rule": 0.0,
+      "pass_active_rule": 0.0,
+      "genesis_median_rule": 0.0,
+      "genesis_max_rule": 0.0,
+      "genesis_active_rule": 0.0,
+      "agreement_max_abs_delta": 0.03999999999999998
+    },
+    {
+      "head": "force end",
+      "cell": "wave7_ff_fluxforce_k20_force_e200_s2701",
+      "label": "force end s2701",
+      "job_ids": [
+        1761
+      ],
+      "group": "all_top100",
+      "n": 100,
+      "flux_active_frac_median": 0.34519487619400024,
+      "balance_median_ratio": 0.4815978705883026,
+      "balance_max_ratio": 2.0,
+      "balance_active_max_ratio": 2.0,
+      "balance_active_p95_ratio": 1.9999990463256836,
+      "balance_active_rows": 1148.0,
+      "pass_median_rule": 0.0,
+      "pass_max_rule": 0.0,
+      "pass_active_rule": 0.0,
+      "genesis_median_rule": 0.0,
+      "genesis_max_rule": 0.0,
+      "genesis_active_rule": 0.0,
+      "agreement_max_abs_delta": 0.0
+    },
+    {
+      "head": "force end",
+      "cell": "wave7_ff_fluxforce_k20_force_e200_s2702",
+      "label": "force end s2702",
+      "job_ids": [
+        1764
+      ],
+      "group": "all_top100",
+      "n": 100,
+      "flux_active_frac_median": 0.36794963479042053,
+      "balance_median_ratio": 0.320565402507782,
+      "balance_max_ratio": 1.9999998807907104,
+      "balance_active_max_ratio": 1.9999998807907104,
+      "balance_active_p95_ratio": 1.9999994039535522,
+      "balance_active_rows": 1437.0,
+      "pass_median_rule": 0.0,
+      "pass_max_rule": 0.0,
+      "pass_active_rule": 0.0,
+      "genesis_median_rule": 0.0,
+      "genesis_max_rule": 0.0,
+      "genesis_active_rule": 0.0,
+      "agreement_max_abs_delta": 0.0
+    },
+    {
+      "head": "proj plain",
+      "cell": "wave6_proj_flux_projection_s2700",
+      "label": "proj plain s2700",
+      "job_ids": [
+        1689
+      ],
+      "group": "all_top100",
+      "n": 100,
+      "flux_active_frac_median": 0.8811425566673279,
+      "balance_median_ratio": 9.233446007783641e-9,
+      "balance_max_ratio": 0.00004016835009679198,
+      "balance_active_max_ratio": 0.000016615902495686896,
+      "balance_active_p95_ratio": 1.6904311905818759e-6,
+      "balance_active_rows": 2039.0,
+      "pass_median_rule": 1.0,
+      "pass_max_rule": 1.0,
+      "pass_active_rule": 1.0,
+      "genesis_median_rule": null,
+      "genesis_max_rule": null,
+      "genesis_active_rule": null,
+      "agreement_max_abs_delta": 0.0
+    },
+    {
+      "head": "proj plain",
+      "cell": "wave6_proj_flux_projection_s2701",
+      "label": "proj plain s2701",
+      "job_ids": [
+        1690
+      ],
+      "group": "all_top100",
+      "n": 100,
+      "flux_active_frac_median": 0.8811425566673279,
+      "balance_median_ratio": 1.0092185753762806e-8,
+      "balance_max_ratio": 0.000011856822311528958,
+      "balance_active_max_ratio": 0.000010183342965319753,
+      "balance_active_p95_ratio": 1.6555109141336288e-6,
+      "balance_active_rows": 2053.0,
+      "pass_median_rule": 1.0,
+      "pass_max_rule": 1.0,
+      "pass_active_rule": 1.0,
+      "genesis_median_rule": null,
+      "genesis_max_rule": null,
+      "genesis_active_rule": null,
+      "agreement_max_abs_delta": 0.0
+    },
+    {
+      "head": "proj plain",
+      "cell": "wave6_proj_flux_projection_s2702",
+      "label": "proj plain s2702",
+      "job_ids": [
+        1738
+      ],
+      "group": "all_top100",
+      "n": 100,
+      "flux_active_frac_median": 0.8811425566673279,
+      "balance_median_ratio": 9.176143400679848e-9,
+      "balance_max_ratio": 0.00001669756784394849,
+      "balance_active_max_ratio": 0.000013859789760317653,
+      "balance_active_p95_ratio": 1.6676353880029637e-6,
+      "balance_active_rows": 2040.5,
+      "pass_median_rule": 1.0,
+      "pass_max_rule": 1.0,
+      "pass_active_rule": 1.0,
+      "genesis_median_rule": null,
+      "genesis_max_rule": null,
+      "genesis_active_rule": null,
+      "agreement_max_abs_delta": 0.0
+    },
+    {
+      "head": "proj tdg",
+      "cell": "wave6_proj_flux_projection_anchored_tdg_ue_nocstr_s2700",
+      "label": "proj tdg s2700",
+      "job_ids": [
+        1725
+      ],
+      "group": "all_top100",
+      "n": 100,
+      "flux_active_frac_median": 0.2863713502883911,
+      "balance_median_ratio": 3.5230076633752105e-8,
+      "balance_max_ratio": 1.9999998807907104,
+      "balance_active_max_ratio": 1.9999998807907104,
+      "balance_active_p95_ratio": 1.9999977350234985,
+      "balance_active_rows": 938.0,
+      "pass_median_rule": 1.0,
+      "pass_max_rule": 0.0,
+      "pass_active_rule": 0.0,
+      "genesis_median_rule": 1.0,
+      "genesis_max_rule": 0.0,
+      "genesis_active_rule": 0.0,
+      "agreement_max_abs_delta": 0.0
+    },
+    {
+      "head": "proj tdg",
+      "cell": "wave6_proj_flux_projection_anchored_tdg_ue_nocstr_s2701",
+      "label": "proj tdg s2701",
+      "job_ids": [
+        1730
+      ],
+      "group": "all_top100",
+      "n": 100,
+      "flux_active_frac_median": 0.332486093044281,
+      "balance_median_ratio": 0.568152666091919,
+      "balance_max_ratio": 1.9999995231628418,
+      "balance_active_max_ratio": 1.9999995231628418,
+      "balance_active_p95_ratio": 1.9999974966049194,
+      "balance_active_rows": 534.5,
+      "pass_median_rule": 0.0,
+      "pass_max_rule": 0.0,
+      "pass_active_rule": 0.0,
+      "genesis_median_rule": 0.0,
+      "genesis_max_rule": 0.0,
+      "genesis_active_rule": 0.0,
+      "agreement_max_abs_delta": 0.10999999999999999
+    },
+    {
+      "head": "proj tdg",
+      "cell": "wave6_proj_flux_projection_anchored_tdg_ue_nocstr_s2702",
+      "label": "proj tdg s2702",
+      "job_ids": [
+        1731
+      ],
+      "group": "all_top100",
+      "n": 100,
+      "flux_active_frac_median": 0.3212297260761261,
+      "balance_median_ratio": 0.0643015205860138,
+      "balance_max_ratio": 1.999999761581421,
+      "balance_active_max_ratio": 1.999999761581421,
+      "balance_active_p95_ratio": 1.999997615814209,
+      "balance_active_rows": 1086.0,
+      "pass_median_rule": 0.0,
+      "pass_max_rule": 0.0,
+      "pass_active_rule": 0.0,
+      "genesis_median_rule": 0.0,
+      "genesis_max_rule": 0.0,
+      "genesis_active_rule": 0.0,
+      "agreement_max_abs_delta": 0.18999999999999995
+    },
+    {
+      "head": "proj tdg stoch",
+      "cell": "wave6_proj_flux_projection_anchored_tdg_stoch_ue_s2700",
+      "label": "proj tdg stoch s2700",
+      "job_ids": [
+        1726
+      ],
+      "group": "all_top100",
+      "n": 100,
+      "flux_active_frac_median": 0.3643185794353485,
+      "balance_median_ratio": 0.41566532850265503,
+      "balance_max_ratio": 1.9999855756759644,
+      "balance_active_max_ratio": 1.9999855756759644,
+      "balance_active_p95_ratio": 1.9991825819015503,
+      "balance_active_rows": 44.0,
+      "pass_median_rule": 0.0,
+      "pass_max_rule": 0.0,
+      "pass_active_rule": 0.0,
+      "genesis_median_rule": 0.0,
+      "genesis_max_rule": 0.0,
+      "genesis_active_rule": 0.0,
+      "agreement_max_abs_delta": 1.0
+    },
+    {
+      "head": "proj tdgm5",
+      "cell": "wave6_proj_flux_projection_anchored_tdgm5_ue_nocstr_s2700",
+      "label": "proj tdgm5 s2700",
+      "job_ids": [
+        1736
+      ],
+      "group": "all_top100",
+      "n": 100,
+      "flux_active_frac_median": 0.32425564527511597,
+      "balance_median_ratio": 0.08371871709823608,
+      "balance_max_ratio": 1.9999998807907104,
+      "balance_active_max_ratio": 1.9999998807907104,
+      "balance_active_p95_ratio": 1.999998688697815,
+      "balance_active_rows": 1128.0,
+      "pass_median_rule": 0.0,
+      "pass_max_rule": 0.0,
+      "pass_active_rule": 0.0,
+      "genesis_median_rule": 0.0,
+      "genesis_max_rule": 0.0,
+      "genesis_active_rule": 0.0,
+      "agreement_max_abs_delta": 0.8544600938967136
+    },
+    {
+      "head": "proj tdgm5",
+      "cell": "wave6_proj_flux_projection_anchored_tdgm5_ue_nocstr_s2701",
+      "label": "proj tdgm5 s2701",
+      "job_ids": [
+        1737
+      ],
+      "group": "all_top100",
+      "n": 100,
+      "flux_active_frac_median": 0.3517308235168457,
+      "balance_median_ratio": 0.10258069634437561,
+      "balance_max_ratio": 2.0,
+      "balance_active_max_ratio": 2.0,
+      "balance_active_p95_ratio": 1.9999983310699463,
+      "balance_active_rows": 1214.0,
+      "pass_median_rule": 0.0,
+      "pass_max_rule": 0.0,
+      "pass_active_rule": 0.0,
+      "genesis_median_rule": 0.0,
+      "genesis_max_rule": 0.0,
+      "genesis_active_rule": 0.0,
+      "agreement_max_abs_delta": 0.9685598377281948
+    },
+    {
+      "head": "w7 box",
+      "cell": "wave7_parity_nocstr_s2700",
+      "label": "w7 box s2700",
+      "job_ids": [
+        1743
+      ],
+      "group": "all_top100",
+      "n": 100,
+      "flux_active_frac_median": 0.957637369632721,
+      "balance_median_ratio": 1.996825098991394,
+      "balance_max_ratio": 2.0,
+      "balance_active_max_ratio": 2.0,
+      "balance_active_p95_ratio": 1.9999998807907104,
+      "balance_active_rows": 1691.0,
+      "pass_median_rule": 0.0,
+      "pass_max_rule": 0.0,
+      "pass_active_rule": 0.0,
+      "genesis_median_rule": null,
+      "genesis_max_rule": null,
+      "genesis_active_rule": null,
+      "agreement_max_abs_delta": 0.0
+    },
+    {
+      "head": "w7 box",
+      "cell": "wave7_parity_nocstr_s2701",
+      "label": "w7 box s2701",
+      "job_ids": [
+        1752
+      ],
+      "group": "all_top100",
+      "n": 100,
+      "flux_active_frac_median": 0.9697409868240356,
+      "balance_median_ratio": 1.9981800317764282,
+      "balance_max_ratio": 2.0,
+      "balance_active_max_ratio": 2.0,
+      "balance_active_p95_ratio": 2.0,
+      "balance_active_rows": 1685.0,
+      "pass_median_rule": 0.0,
+      "pass_max_rule": 0.0,
+      "pass_active_rule": 0.0,
+      "genesis_median_rule": null,
+      "genesis_max_rule": null,
+      "genesis_active_rule": null,
+      "agreement_max_abs_delta": 0.0
+    },
+    {
+      "head": "w7 box",
+      "cell": "wave7_parity_nocstr_s2702",
+      "label": "w7 box s2702",
+      "job_ids": [
+        1757
+      ],
+      "group": "all_top100",
+      "n": 100,
+      "flux_active_frac_median": 0.9389978051185608,
+      "balance_median_ratio": 1.9978244304656982,
+      "balance_max_ratio": 2.0,
+      "balance_active_max_ratio": 2.0,
+      "balance_active_p95_ratio": 2.0,
+      "balance_active_rows": 1687.0,
+      "pass_median_rule": 0.0,
+      "pass_max_rule": 0.0,
+      "pass_active_rule": 0.0,
+      "genesis_median_rule": null,
+      "genesis_max_rule": null,
+      "genesis_active_rule": null,
+      "agreement_max_abs_delta": 0.0
+    }
+  ],
+  "fluxforce_arms": [
+    {
+      "arm": "fluxforce",
+      "channel": "fluxforce_k20_box",
+      "n": 2,
+      "job_ids": [
+        1745,
+        1749
+      ],
+      "test_spearman_mean": 0.07692153320049434,
+      "test_spearman_sd": 0.0486944709179099,
+      "escaped": 2,
+      "escaped_sustained": 2,
+      "genesis_top100_mean": 0.0,
+      "balance_le_1e_2_top100_mean": 0.0,
+      "second_law_eq_0_top100_mean": 0.0,
+      "sign_flip_frac_mean": 0.27972918193915797
+    },
+    {
+      "arm": "tdg",
+      "channel": "projection_k20_box_tdg",
+      "n": 3,
+      "job_ids": [
+        1725,
+        1730,
+        1731
+      ],
+      "test_spearman_mean": -0.020249398996734565,
+      "test_spearman_sd": 0.03657870009934588,
+      "escaped": 3,
+      "escaped_sustained": 0,
+      "genesis_top100_mean": 0.3333333333333333,
+      "balance_le_1e_2_top100_mean": 0.3333333333333333,
+      "second_law_eq_0_top100_mean": 0.9966666666666667,
+      "sign_flip_frac_mean": null
+    },
+    {
+      "arm": "projection",
+      "channel": "projection_k20_box",
+      "n": 3,
+      "job_ids": [
+        1734,
+        1735,
+        1739
+      ],
+      "test_spearman_mean": 0.026085122750540504,
+      "test_spearman_sd": 0.06556194360245969,
+      "escaped": 3,
+      "escaped_sustained": 3,
+      "genesis_top100_mean": 0.0,
+      "balance_le_1e_2_top100_mean": 0.0,
+      "second_law_eq_0_top100_mean": 0.0,
+      "sign_flip_frac_mean": null
+    },
+    {
+      "arm": "fluxforce_force_e200",
+      "channel": "fluxforce_k20_force",
+      "n": 3,
+      "job_ids": [
+        1755,
+        1761,
+        1764
+      ],
+      "test_spearman_mean": 0.06274129698697184,
+      "test_spearman_sd": 0.015112620556403064,
+      "escaped": 3,
+      "escaped_sustained": 3,
+      "genesis_top100_mean": 0.0,
+      "balance_le_1e_2_top100_mean": 0.0,
+      "second_law_eq_0_top100_mean": 1.0,
+      "sign_flip_frac_mean": 0.5159256634355962
+    },
+    {
+      "arm": "fluxforce_boxforce",
+      "channel": "fluxforce_k100_boxforce",
+      "n": 3,
+      "job_ids": [
+        1767,
+        1770,
+        1771
+      ],
+      "test_spearman_mean": 0.056257786038215345,
+      "test_spearman_sd": 0.07577030193161174,
+      "escaped": 1,
+      "escaped_sustained": 0,
+      "genesis_top100_mean": 1.0,
+      "balance_le_1e_2_top100_mean": 1.0,
+      "second_law_eq_0_top100_mean": 1.0,
+      "sign_flip_frac_mean": 2.18585380976926e-6
+    }
+  ],
+  "fluxforce_contrasts": [
+    {
+      "arm": "fluxforce",
+      "against": "tdg",
+      "n_pairs": 2,
+      "mean_diff": 0.0760682741662529,
+      "sd_diff": 0.046677159320294016
+    },
+    {
+      "arm": "fluxforce",
+      "against": "projection",
+      "n_pairs": 2,
+      "mean_diff": 0.03871927002633158,
+      "sd_diff": 0.1365340197873658
+    },
+    {
+      "arm": "tdg",
+      "against": "projection",
+      "n_pairs": 3,
+      "mean_diff": -0.04633452174727507,
+      "sd_diff": 0.06541671244044289
+    },
+    {
+      "arm": "fluxforce_force_e200",
+      "against": "fluxforce",
+      "n_pairs": 2,
+      "mean_diff": -0.02251616974679818,
+      "sd_diff": 0.042381320124804014
+    },
+    {
+      "arm": "fluxforce_force_e200",
+      "against": "tdg",
+      "n_pairs": 3,
+      "mean_diff": 0.08299069598370641,
+      "sd_diff": 0.051079537361425315
+    },
+    {
+      "arm": "fluxforce_force_e200",
+      "against": "projection",
+      "n_pairs": 3,
+      "mean_diff": 0.03665617423643133,
+      "sd_diff": 0.07541452200825309
+    },
+    {
+      "arm": "fluxforce_boxforce",
+      "against": "fluxforce_force_e200",
+      "n_pairs": 3,
+      "mean_diff": -0.006483510948756499,
+      "sd_diff": 0.06542886664128734
+    },
+    {
+      "arm": "fluxforce_boxforce",
+      "against": "tdg",
+      "n_pairs": 3,
+      "mean_diff": 0.07650718503494991,
+      "sd_diff": 0.09843276036630326
+    }
+  ],
+  "amino_acid_contrasts": [
+    {
+      "key": "e200/conc_vs_pooled",
+      "budget": "e200",
+      "arm_a": "conc",
+      "arm_b": "pooled",
+      "seeds": [
+        2700,
+        2701,
+        2702
+      ],
+      "a_values": [
+        0.06475194831845502,
+        0.06628198203250367,
+        0.05621900983258897
+      ],
+      "b_values": [
+        0.05000596308185038,
+        0.04251715292740564,
+        0.051140326302644964
+      ],
+      "differences": [
+        0.014745985236604635,
+        0.02376482910509803,
+        0.005078683529944006
+      ],
+      "n_pairs": 3,
+      "mean_difference": 0.014529832623882223,
+      "sd_difference": 0.009344947863843442,
+      "t_statistic": 2.693049623894342
+    },
+    {
+      "key": "e200/conc_nocstr_vs_pooled",
+      "budget": "e200",
+      "arm_a": "conc_nocstr",
+      "arm_b": "pooled",
+      "seeds": [
+        2700,
+        2701,
+        2702
+      ],
+      "a_values": [
+        0.06626189207705474,
+        0.07731165498357187,
+        0.059397618664063914
+      ],
+      "b_values": [
+        0.05000596308185038,
+        0.04251715292740564,
+        0.051140326302644964
+      ],
+      "differences": [
+        0.01625592899520436,
+        0.03479450205616623,
+        0.00825729236141895
+      ],
+      "n_pairs": 3,
+      "mean_difference": 0.019769241137596514,
+      "sd_difference": 0.01361298630915191,
+      "t_statistic": 2.5153430187744856
+    },
+    {
+      "key": "e200/turnover_vs_pooled",
+      "budget": "e200",
+      "arm_a": "turnover",
+      "arm_b": "pooled",
+      "seeds": [
+        2700,
+        2701
+      ],
+      "a_values": [
+        0.0023122395913038954,
+        -0.008550861324383749
+      ],
+      "b_values": [
+        0.05000596308185038,
+        0.04251715292740564
+      ],
+      "differences": [
+        -0.047693723490546486,
+        -0.05106801425178939
+      ],
+      "n_pairs": 2,
+      "mean_difference": -0.04938086887116794,
+      "sd_difference": 0.002385983878969975,
+      "t_statistic": -29.26888781391129
+    },
+    {
+      "key": "e200/conc_vs_turnover",
+      "budget": "e200",
+      "arm_a": "conc",
+      "arm_b": "turnover",
+      "seeds": [
+        2700,
+        2701
+      ],
+      "a_values": [
+        0.06475194831845502,
+        0.06628198203250367
+      ],
+      "b_values": [
+        0.0023122395913038954,
+        -0.008550861324383749
+      ],
+      "differences": [
+        0.06243970872715112,
+        0.07483284335688742
+      ],
+      "n_pairs": 2,
+      "mean_difference": 0.06863627604201927,
+      "sd_difference": 0.00876326953684437,
+      "t_statistic": 11.07649970610861
+    },
+    {
+      "key": "e200/conc_vs_conc_nocstr",
+      "budget": "e200",
+      "arm_a": "conc",
+      "arm_b": "conc_nocstr",
+      "seeds": [
+        2700,
+        2701,
+        2702
+      ],
+      "a_values": [
+        0.06475194831845502,
+        0.06628198203250367,
+        0.05621900983258897
+      ],
+      "b_values": [
+        0.06626189207705474,
+        0.07731165498357187,
+        0.059397618664063914
+      ],
+      "differences": [
+        -0.0015099437585997244,
+        -0.0110296729510682,
+        -0.003178608831474944
+      ],
+      "n_pairs": 3,
+      "mean_difference": -0.00523940851371429,
+      "sd_difference": 0.005083451826487831,
+      "t_statistic": -1.7851888946948025
+    },
+    {
+      "key": "e200/pooledq_vs_pooled",
+      "budget": "e200",
+      "arm_a": "pooledq",
+      "arm_b": "pooled",
+      "seeds": [
+        2700,
+        2701,
+        2702
+      ],
+      "a_values": [
+        0.04599590360786484,
+        0.025368901231791748,
+        0.04771752485966315
+      ],
+      "b_values": [
+        0.05000596308185038,
+        0.04251715292740564,
+        0.051140326302644964
+      ],
+      "differences": [
+        -0.004010059473985542,
+        -0.017148251695613893,
+        -0.003422801442981814
+      ],
+      "n_pairs": 3,
+      "mean_difference": -0.00819370420419375,
+      "sd_difference": 0.007760422577464367,
+      "t_statistic": -1.8287550506677874
+    },
+    {
+      "key": "e200/conc_vs_pooledq",
+      "budget": "e200",
+      "arm_a": "conc",
+      "arm_b": "pooledq",
+      "seeds": [
+        2700,
+        2701,
+        2702
+      ],
+      "a_values": [
+        0.06475194831845502,
+        0.06628198203250367,
+        0.05621900983258897
+      ],
+      "b_values": [
+        0.04599590360786484,
+        0.025368901231791748,
+        0.04771752485966315
+      ],
+      "differences": [
+        0.018756044710590176,
+        0.04091308080071192,
+        0.00850148497292582
+      ],
+      "n_pairs": 3,
+      "mean_difference": 0.02272353682807597,
+      "sd_difference": 0.016566038491524587,
+      "t_statistic": 2.375843828566882
+    },
+    {
+      "key": "e80/conc_vs_pooled",
+      "budget": "e80",
+      "arm_a": "conc",
+      "arm_b": "pooled",
+      "seeds": [
+        2700,
+        2701
+      ],
+      "a_values": [
+        0.06796456284297248,
+        0.06207672550543969
+      ],
+      "b_values": [
+        0.04940945048199898,
+        0.03926563697227266
+      ],
+      "differences": [
+        0.018555112360973493,
+        0.02281108853316703
+      ],
+      "n_pairs": 2,
+      "mean_difference": 0.020683100447070262,
+      "sd_difference": 0.0030094296119264168,
+      "t_statistic": 9.71955650607421
+    }
+  ],
+  "concentration_agreement": [
+    {
+      "cell": "wave7_aa_conc_e200_s2700.json",
+      "label": "conc_e200",
+      "seed": 2700,
+      "supervised": true,
+      "mean_spearman": 0.06475422222799312,
+      "mean_median_abs_error_decades": 0.036940386420802065,
+      "min_per_column_spearman": -0.08991011836131788,
+      "max_per_column_spearman": 0.16870735288080474,
+      "frac_pred_at_ceiling": 0.0,
+      "frac_pred_at_floor": 0.0
+    },
+    {
+      "cell": "wave7_aa_conc_e200_s2701.json",
+      "label": "conc_e200",
+      "seed": 2701,
+      "supervised": true,
+      "mean_spearman": 0.06628410438567194,
+      "mean_median_abs_error_decades": 0.03612442079343294,
+      "min_per_column_spearman": -0.03874950408309398,
+      "max_per_column_spearman": 0.134624640215599,
+      "frac_pred_at_ceiling": 0.0,
+      "frac_pred_at_floor": 0.0
+    },
+    {
+      "cell": "wave7_aa_conc_e200_s2702.json",
+      "label": "conc_e200",
+      "seed": 2702,
+      "supervised": true,
+      "mean_spearman": 0.05621930034092941,
+      "mean_median_abs_error_decades": 0.03599746917423449,
+      "min_per_column_spearman": -0.0436631519706593,
+      "max_per_column_spearman": 0.14156232938116378,
+      "frac_pred_at_ceiling": 0.0,
+      "frac_pred_at_floor": 0.0
+    },
+    {
+      "cell": "wave7_aa_conc_nocstr_e200_s2700.json",
+      "label": "conc_nocstr_e200",
+      "seed": 2700,
+      "supervised": true,
+      "mean_spearman": 0.06625999542932581,
+      "mean_median_abs_error_decades": 0.03568366013075176,
+      "min_per_column_spearman": -0.01995513156683271,
+      "max_per_column_spearman": 0.15437071980034597,
+      "frac_pred_at_ceiling": 0.0,
+      "frac_pred_at_floor": 0.0
+    },
+    {
+      "cell": "wave7_aa_conc_nocstr_e200_s2701.json",
+      "label": "conc_nocstr_e200",
+      "seed": 2701,
+      "supervised": true,
+      "mean_spearman": 0.07731050869431419,
+      "mean_median_abs_error_decades": 0.03648181338059275,
+      "min_per_column_spearman": -0.02308055435039202,
+      "max_per_column_spearman": 0.16880628495962077,
+      "frac_pred_at_ceiling": 0.0,
+      "frac_pred_at_floor": 0.0
+    },
+    {
+      "cell": "wave7_aa_conc_nocstr_e200_s2702.json",
+      "label": "conc_nocstr_e200",
+      "seed": 2702,
+      "supervised": true,
+      "mean_spearman": 0.059394076554015386,
+      "mean_median_abs_error_decades": 0.037074418444382515,
+      "min_per_column_spearman": -0.05566748534810351,
+      "max_per_column_spearman": 0.1622102476926335,
+      "frac_pred_at_ceiling": 0.0,
+      "frac_pred_at_floor": 0.0
+    },
+    {
+      "cell": "wave7_aa_conc_s2700.json",
+      "label": "conc",
+      "seed": 2700,
+      "supervised": true,
+      "mean_spearman": 0.0679656449415921,
+      "mean_median_abs_error_decades": 0.035546839237213135,
+      "min_per_column_spearman": -0.03700210042890849,
+      "max_per_column_spearman": 0.16943377854927405,
+      "frac_pred_at_ceiling": 0.0,
+      "frac_pred_at_floor": 0.0
+    },
+    {
+      "cell": "wave7_aa_conc_s2701.json",
+      "label": "conc",
+      "seed": 2701,
+      "supervised": true,
+      "mean_spearman": 0.062077142052280904,
+      "mean_median_abs_error_decades": 0.0361603718054922,
+      "min_per_column_spearman": -0.04193587300966011,
+      "max_per_column_spearman": 0.20234273630866986,
+      "frac_pred_at_ceiling": 0.0,
+      "frac_pred_at_floor": 0.0
+    },
+    {
+      "cell": "wave7_aa_turnover_e200_s2700.json",
+      "label": "turnover_e200",
+      "seed": 2700,
+      "supervised": false,
+      "mean_spearman": -0.0040657551579289875,
+      "mean_median_abs_error_decades": 1.5017663397287067,
+      "min_per_column_spearman": -0.13106687039839962,
+      "max_per_column_spearman": 0.0670696744948081,
+      "frac_pred_at_ceiling": 0.0,
+      "frac_pred_at_floor": 0.0
+    },
+    {
+      "cell": "wave7_aa_turnover_e200_s2701.json",
+      "label": "turnover_e200",
+      "seed": 2701,
+      "supervised": false,
+      "mean_spearman": 0.0071027808289084405,
+      "mean_median_abs_error_decades": 1.241741208653701,
+      "min_per_column_spearman": -0.06813500396152718,
+      "max_per_column_spearman": 0.07560953228986246,
+      "frac_pred_at_ceiling": 0.0,
+      "frac_pred_at_floor": 0.0
+    }
+  ],
+  "window_check": {
+    "dataset_name": "AminoAcidMulleder2016Dataset",
+    "n_records": 4678,
+    "n_measurements": 88882,
+    "conc_lower_m": 1e-7,
+    "conc_upper_m": 0.01,
+    "overall_min_m": 1.60987540662886e-6,
+    "overall_max_m": 0.0954843724609407,
+    "frac_measurements_above_upper": 0.10634324160122409,
+    "frac_measurements_below_lower": 0.0,
+    "n_amino_acids_exceeding_upper": 9,
+    "amino_acids_exceeding_upper": [
+      "alanine",
+      "arginine",
+      "aspartate",
+      "glutamate",
+      "glutamine",
+      "glycine",
+      "serine",
+      "threonine",
+      "tyrosine"
+    ],
+    "recommended_conc_upper_m": 1.0
+  },
+  "ledger": [
+    {
+      "stream": "parity",
+      "cell": "wave7_parity_nocstr_s2700",
+      "job_id": 1743,
+      "run_id": "3hydf4mn",
+      "arm": "flux_capacity",
+      "seed": 2700,
+      "epochs_run": 80,
+      "select_epoch": 66,
+      "kcat_table": "97/782/2831/18 shipped",
+      "score": 0.1277962155676068,
+      "endpoint": "betaxanthin"
+    },
+    {
+      "stream": "parity",
+      "cell": "wave7_parity_pooled_s2700",
+      "job_id": 1748,
+      "run_id": "44v4mjrv",
+      "arm": "pooled",
+      "seed": 2700,
+      "epochs_run": 80,
+      "select_epoch": 66,
+      "kcat_table": "none, no flux layer",
+      "score": 0.07983986598405769,
+      "endpoint": "betaxanthin"
+    },
+    {
+      "stream": "parity",
+      "cell": "wave7_parity_nocstr_s2701",
+      "job_id": 1752,
+      "run_id": "543evk2h",
+      "arm": "flux_capacity",
+      "seed": 2701,
+      "epochs_run": 80,
+      "select_epoch": 36,
+      "kcat_table": "97/782/2831/18 shipped",
+      "score": 0.04679303293016294,
+      "endpoint": "betaxanthin"
+    },
+    {
+      "stream": "parity",
+      "cell": "wave7_parity_pooled_s2701",
+      "job_id": 1756,
+      "run_id": "7c0wbt77",
+      "arm": "pooled",
+      "seed": 2701,
+      "epochs_run": 80,
+      "select_epoch": 54,
+      "kcat_table": "none, no flux layer",
+      "score": 0.13837838802244948,
+      "endpoint": "betaxanthin"
+    },
+    {
+      "stream": "parity",
+      "cell": "wave7_parity_nocstr_s2702",
+      "job_id": 1757,
+      "run_id": "urswqask",
+      "arm": "flux_capacity",
+      "seed": 2702,
+      "epochs_run": 80,
+      "select_epoch": 60,
+      "kcat_table": "97/782/2831/18 shipped",
+      "score": 0.0156869256737098,
+      "endpoint": "betaxanthin"
+    },
+    {
+      "stream": "parity",
+      "cell": "wave7_parity_pooled_s2702",
+      "job_id": 1759,
+      "run_id": "0yjpryqg",
+      "arm": "pooled",
+      "seed": 2702,
+      "epochs_run": 80,
+      "select_epoch": 74,
+      "kcat_table": "none, no flux layer",
+      "score": 0.1369877869531605,
+      "endpoint": "betaxanthin"
+    },
+    {
+      "stream": "flux force",
+      "cell": "wave7_ff_fluxforce_k20_box_ue_nocstr_s2700",
+      "job_id": 1745,
+      "run_id": "7xizwly5",
+      "arm": "fluxforce_k20_box",
+      "seed": 2700,
+      "epochs_run": 80,
+      "select_epoch": 75,
+      "kcat_table": "97/782/2831/18 shipped",
+      "score": 0.04248934260814913,
+      "endpoint": "betaxanthin"
+    },
+    {
+      "stream": "flux force",
+      "cell": "wave7_ff_fluxforce_k20_box_ue_nocstr_s2701",
+      "job_id": 1749,
+      "run_id": "sjp0xuvl",
+      "arm": "fluxforce_k20_box",
+      "seed": 2701,
+      "epochs_run": 80,
+      "select_epoch": 67,
+      "kcat_table": "97/782/2831/18 shipped",
+      "score": 0.11135372379283956,
+      "endpoint": "betaxanthin"
+    },
+    {
+      "stream": "flux force",
+      "cell": "wave7_ff_fluxforce_k20_force_e200_s2700",
+      "job_id": 1755,
+      "run_id": "g8r95ajl",
+      "arm": "fluxforce_k20_force",
+      "seed": 2700,
+      "epochs_run": 200,
+      "select_epoch": 185,
+      "kcat_table": "97/782/2831/18 shipped",
+      "score": 0.04994129171723776,
+      "endpoint": "betaxanthin"
+    },
+    {
+      "stream": "flux force",
+      "cell": "wave7_ff_fluxforce_k20_force_e200_s2701",
+      "job_id": 1761,
+      "run_id": "zppjyyyz",
+      "arm": "fluxforce_k20_force",
+      "seed": 2701,
+      "epochs_run": 200,
+      "select_epoch": 164,
+      "kcat_table": "97/782/2831/18 shipped",
+      "score": 0.05886943519015456,
+      "endpoint": "betaxanthin"
+    },
+    {
+      "stream": "flux force",
+      "cell": "wave7_ff_fluxforce_k20_force_e200_s2702",
+      "job_id": 1764,
+      "run_id": "gh9bxcy4",
+      "arm": "fluxforce_k20_force",
+      "seed": 2702,
+      "epochs_run": 200,
+      "select_epoch": 108,
+      "kcat_table": "97/782/2831/18 shipped",
+      "score": 0.0794131640535232,
+      "endpoint": "betaxanthin"
+    },
+    {
+      "stream": "flux force",
+      "cell": "wave7_ff_fluxforce_k100_boxforce_e80_s2700",
+      "job_id": 1767,
+      "run_id": "efqdjtc5",
+      "arm": "fluxforce_k100_boxforce",
+      "seed": 2700,
+      "epochs_run": 80,
+      "select_epoch": 53,
+      "kcat_table": "97/782/2831/18 shipped",
+      "score": -0.03123283288844603,
+      "endpoint": "betaxanthin"
+    },
+    {
+      "stream": "flux force",
+      "cell": "wave7_ff_fluxforce_k100_boxforce_e80_s2701",
+      "job_id": 1770,
+      "run_id": "hqnd9f5l",
+      "arm": "fluxforce_k100_boxforce",
+      "seed": 2701,
+      "epochs_run": 80,
+      "select_epoch": 19,
+      "kcat_table": "97/782/2831/18 shipped",
+      "score": 0.09957606543246442,
+      "endpoint": "betaxanthin"
+    },
+    {
+      "stream": "flux force",
+      "cell": "wave7_ff_fluxforce_k100_boxforce_e80_s2702",
+      "job_id": 1771,
+      "run_id": "i874m018",
+      "arm": "fluxforce_k100_boxforce",
+      "seed": 2702,
+      "epochs_run": 80,
+      "select_epoch": 43,
+      "kcat_table": "97/782/2831/18 shipped",
+      "score": 0.10043012557062764,
+      "endpoint": "betaxanthin"
+    },
+    {
+      "stream": "amino acid",
+      "cell": "wave7_aa_conc_e200_s2700",
+      "job_id": null,
+      "run_id": "mmb5zyvr",
+      "arm": "flux_projection_anchored, flux_concentration",
+      "seed": 2700,
+      "epochs_run": 200,
+      "select_epoch": 80,
+      "kcat_table": "97/782/2831/18 shipped",
+      "score": 0.06475194831845502,
+      "endpoint": "mulleder19"
+    },
+    {
+      "stream": "amino acid",
+      "cell": "wave7_aa_conc_e200_s2701",
+      "job_id": null,
+      "run_id": "73l6xt1m",
+      "arm": "flux_projection_anchored, flux_concentration",
+      "seed": 2701,
+      "epochs_run": 200,
+      "select_epoch": 70,
+      "kcat_table": "97/782/2831/18 shipped",
+      "score": 0.06628198203250367,
+      "endpoint": "mulleder19"
+    },
+    {
+      "stream": "amino acid",
+      "cell": "wave7_aa_conc_e200_s2702",
+      "job_id": null,
+      "run_id": "jz0n20rv",
+      "arm": "flux_projection_anchored, flux_concentration",
+      "seed": 2702,
+      "epochs_run": 200,
+      "select_epoch": 73,
+      "kcat_table": "97/782/2831/18 shipped",
+      "score": 0.05621900983258897,
+      "endpoint": "mulleder19"
+    },
+    {
+      "stream": "amino acid",
+      "cell": "wave7_aa_conc_nocstr_e200_s2700",
+      "job_id": null,
+      "run_id": "g9zj6pjn",
+      "arm": "flux_projection_anchored, flux_concentration",
+      "seed": 2700,
+      "epochs_run": 200,
+      "select_epoch": 86,
+      "kcat_table": "97/782/2831/18 shipped",
+      "score": 0.06626189207705474,
+      "endpoint": "mulleder19"
+    },
+    {
+      "stream": "amino acid",
+      "cell": "wave7_aa_conc_nocstr_e200_s2701",
+      "job_id": null,
+      "run_id": "r9l0h8ry",
+      "arm": "flux_projection_anchored, flux_concentration",
+      "seed": 2701,
+      "epochs_run": 200,
+      "select_epoch": 86,
+      "kcat_table": "97/782/2831/18 shipped",
+      "score": 0.07731165498357187,
+      "endpoint": "mulleder19"
+    },
+    {
+      "stream": "amino acid",
+      "cell": "wave7_aa_conc_nocstr_e200_s2702",
+      "job_id": null,
+      "run_id": "oh9d27fe",
+      "arm": "flux_projection_anchored, flux_concentration",
+      "seed": 2702,
+      "epochs_run": 200,
+      "select_epoch": 82,
+      "kcat_table": "97/782/2831/18 shipped",
+      "score": 0.059397618664063914,
+      "endpoint": "mulleder19"
+    },
+    {
+      "stream": "amino acid",
+      "cell": "wave7_aa_conc_s2700",
+      "job_id": null,
+      "run_id": "hys609hs",
+      "arm": "flux_projection_anchored, flux_concentration",
+      "seed": 2700,
+      "epochs_run": 80,
+      "select_epoch": 77,
+      "kcat_table": "97/782/2831/18 shipped",
+      "score": 0.06796456284297248,
+      "endpoint": "mulleder19"
+    },
+    {
+      "stream": "amino acid",
+      "cell": "wave7_aa_conc_s2701",
+      "job_id": null,
+      "run_id": "dr9eg7hb",
+      "arm": "flux_projection_anchored, flux_concentration",
+      "seed": 2701,
+      "epochs_run": 80,
+      "select_epoch": 75,
+      "kcat_table": "97/782/2831/18 shipped",
+      "score": 0.06207672550543969,
+      "endpoint": "mulleder19"
+    },
+    {
+      "stream": "amino acid",
+      "cell": "wave7_aa_pooled_e200_s2700",
+      "job_id": null,
+      "run_id": "4h42yrug",
+      "arm": "pooled",
+      "seed": 2700,
+      "epochs_run": 200,
+      "select_epoch": 44,
+      "kcat_table": "none, no flux layer",
+      "score": 0.05000596308185038,
+      "endpoint": "mulleder19"
+    },
+    {
+      "stream": "amino acid",
+      "cell": "wave7_aa_pooled_e200_s2701",
+      "job_id": null,
+      "run_id": "0tcfo06e",
+      "arm": "pooled",
+      "seed": 2701,
+      "epochs_run": 200,
+      "select_epoch": 41,
+      "kcat_table": "none, no flux layer",
+      "score": 0.04251715292740564,
+      "endpoint": "mulleder19"
+    },
+    {
+      "stream": "amino acid",
+      "cell": "wave7_aa_pooled_e200_s2702",
+      "job_id": null,
+      "run_id": "a1mcldj7",
+      "arm": "pooled",
+      "seed": 2702,
+      "epochs_run": 200,
+      "select_epoch": 29,
+      "kcat_table": "none, no flux layer",
+      "score": 0.051140326302644964,
+      "endpoint": "mulleder19"
+    },
+    {
+      "stream": "amino acid",
+      "cell": "wave7_aa_pooled_s2700",
+      "job_id": null,
+      "run_id": "9sglu3o5",
+      "arm": "pooled",
+      "seed": 2700,
+      "epochs_run": 80,
+      "select_epoch": 27,
+      "kcat_table": "none, no flux layer",
+      "score": 0.04940945048199898,
+      "endpoint": "mulleder19"
+    },
+    {
+      "stream": "amino acid",
+      "cell": "wave7_aa_pooled_s2701",
+      "job_id": null,
+      "run_id": "o6xt0hqs",
+      "arm": "pooled",
+      "seed": 2701,
+      "epochs_run": 80,
+      "select_epoch": 61,
+      "kcat_table": "none, no flux layer",
+      "score": 0.03926563697227266,
+      "endpoint": "mulleder19"
+    },
+    {
+      "stream": "amino acid",
+      "cell": "wave7_aa_pooledq_e200_s2700",
+      "job_id": null,
+      "run_id": "rvfhzsko",
+      "arm": "pooled",
+      "seed": 2700,
+      "epochs_run": 200,
+      "select_epoch": 32,
+      "kcat_table": "none, no flux layer",
+      "score": 0.04599590360786484,
+      "endpoint": "mulleder19"
+    },
+    {
+      "stream": "amino acid",
+      "cell": "wave7_aa_pooledq_e200_s2701",
+      "job_id": null,
+      "run_id": "59lut9y9",
+      "arm": "pooled",
+      "seed": 2701,
+      "epochs_run": 200,
+      "select_epoch": 41,
+      "kcat_table": "none, no flux layer",
+      "score": 0.025368901231791748,
+      "endpoint": "mulleder19"
+    },
+    {
+      "stream": "amino acid",
+      "cell": "wave7_aa_pooledq_e200_s2702",
+      "job_id": null,
+      "run_id": "9lx4nngq",
+      "arm": "pooled",
+      "seed": 2702,
+      "epochs_run": 200,
+      "select_epoch": 35,
+      "kcat_table": "none, no flux layer",
+      "score": 0.04771752485966315,
+      "endpoint": "mulleder19"
+    },
+    {
+      "stream": "amino acid",
+      "cell": "wave7_aa_turnover_e200_s2700",
+      "job_id": null,
+      "run_id": "5vv2jm48",
+      "arm": "flux_projection_anchored, flux_metabolite",
+      "seed": 2700,
+      "epochs_run": 200,
+      "select_epoch": 174,
+      "kcat_table": "97/782/2831/18 shipped",
+      "score": 0.0023122395913038954,
+      "endpoint": "mulleder19"
+    },
+    {
+      "stream": "amino acid",
+      "cell": "wave7_aa_turnover_e200_s2701",
+      "job_id": null,
+      "run_id": "sr8bdxgh",
+      "arm": "flux_projection_anchored, flux_metabolite",
+      "seed": 2701,
+      "epochs_run": 200,
+      "select_epoch": 26,
+      "kcat_table": "97/782/2831/18 shipped",
+      "score": -0.008550861324383749,
+      "endpoint": "mulleder19"
+    }
+  ],
+  "pending": [
+    {
+      "stem": "wave6_proj_flux_projection_s2703",
+      "landed": false,
+      "named_by": "driver fill"
+    },
+    {
+      "stem": "wave6_proj_flux_projection_s2704",
+      "landed": false,
+      "named_by": "driver fill"
+    },
+    {
+      "stem": "wave6_proj_flux_projection_s2705",
+      "landed": false,
+      "named_by": "driver fill"
+    },
+    {
+      "stem": "wave7_aa_conc_nocstr_s2700",
+      "landed": false,
+      "named_by": "amino acid"
+    },
+    {
+      "stem": "wave7_aa_conc_nocstr_s2701",
+      "landed": false,
+      "named_by": "amino acid"
+    },
+    {
+      "stem": "wave7_aa_conc_nocstr_s2702",
+      "landed": false,
+      "named_by": "amino acid"
+    },
+    {
+      "stem": "wave7_aa_conc_s2702",
+      "landed": false,
+      "named_by": "amino acid"
+    },
+    {
+      "stem": "wave7_aa_pooled_s2702",
+      "landed": false,
+      "named_by": "amino acid"
+    },
+    {
+      "stem": "wave7_aa_pooledq_e200_s2702",
+      "landed": true,
+      "named_by": "driver fill"
+    },
+    {
+      "stem": "wave7_aa_pooledq_s2700",
+      "landed": false,
+      "named_by": "amino acid"
+    },
+    {
+      "stem": "wave7_aa_pooledq_s2701",
+      "landed": false,
+      "named_by": "amino acid"
+    },
+    {
+      "stem": "wave7_aa_pooledq_s2702",
+      "landed": false,
+      "named_by": "amino acid"
+    },
+    {
+      "stem": "wave7_aa_turnover_e200_s2702",
+      "landed": false,
+      "named_by": "amino acid"
+    },
+    {
+      "stem": "wave7_aa_turnover_s2700",
+      "landed": false,
+      "named_by": "amino acid"
+    },
+    {
+      "stem": "wave7_aa_turnover_s2701",
+      "landed": false,
+      "named_by": "amino acid"
+    },
+    {
+      "stem": "wave7_aa_turnover_s2702",
+      "landed": false,
+      "named_by": "amino acid"
+    },
+    {
+      "stem": "wave7_ff_fluxforce_k20_box_ue_nocstr_s2702",
+      "landed": false,
+      "named_by": "flux force"
+    },
+    {
+      "stem": "wave7_parity_nocstr_s2703",
+      "landed": false,
+      "named_by": "parity"
+    },
+    {
+      "stem": "wave7_parity_nocstr_s2704",
+      "landed": false,
+      "named_by": "parity"
+    },
+    {
+      "stem": "wave7_parity_nocstr_s2705",
+      "landed": false,
+      "named_by": "parity"
+    },
+    {
+      "stem": "wave7_parity_pooled_s2703",
+      "landed": false,
+      "named_by": "parity"
+    },
+    {
+      "stem": "wave7_parity_pooled_s2704",
+      "landed": false,
+      "named_by": "parity"
+    },
+    {
+      "stem": "wave7_parity_pooled_s2705",
+      "landed": false,
+      "named_by": "parity"
+    }
+  ]
+}

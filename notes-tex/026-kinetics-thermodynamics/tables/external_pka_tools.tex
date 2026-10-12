@@ -1,0 +1,24 @@
+%% notes-tex/026-kinetics-thermodynamics/tables/external_pka_tools.tex
+%% AUTO-GENERATED -- do not hand-edit. Regenerate with
+%%   python experiments/026-metabolism-flux/scripts/external_pka_table_tex.py
+%% SOURCE: experiments/026-metabolism-flux/results/external_pka_benchmark.json,
+%% read through `external_pka_benchmark.py table`.
+\begin{table}[H]
+  \centering
+  \footnotesize
+  \caption[External pKa predictors]{Open-source p$K_a$ predictors against the compound cache's own ChemAxon-derived constants, over 300 sampled compounds at pH 7.2, I = 0.25 M, T = 303.15 K, pMg 3. The last three columns are the change in $\Delta_f G'^{\circ}$ when the predicted constants replace the cache's, with the reference microspecies and the untransformed formation energy held fixed, so they isolate the p$K_a$ contribution. \textbf{The two Uni-pKa rows are the same weights and the same code}, and differ only in the microstate enumeration template, which fixes how many rungs a ladder can have before the network is consulted. \textbf{QupKake is unmeasured on this set}: a rung costs a full xTB wave, the run reached 4 of up to 14 rungs, and only 1 of 60 ladders had terminated. Its truncated row scores all 60 with the rungs that ran, so those numbers bound it rather than measure it.}
+  \label{tab:external-pka}
+  \begin{tabular}{@{}lrrrrrrr@{}}
+    \hline
+    \multicolumn{5}{@{}l}{} & \multicolumn{3}{c@{}}{$\Delta_f G'^{\circ}$ error (kJ\,mol$^{-1}$)} \\
+    Tool & $n$ & Scored & Right count & p$K_a$ MAE & MAE & Median & p90 \\
+    \hline
+    pKasolver-lite & 300 & 298 & 0.356 & 2.59 & 2.52 & 0.56 & 6.40 \\
+    MolGpKa & 300 & 294 & 0.248 & 2.83 & 1.21 & 0.34 & 3.20 \\
+    Uni-pKa, full template & 300 & 300 & 0.200 & 2.54 & 2.94 & 1.11 & 7.93 \\
+    Uni-pKa, simple template & 300 & 299 & 0.324 & 2.79 & 0.91 & 0.16 & 2.84 \\
+    QupKake & 60 & 1 & 0.000 & 4.56 & 1.87 & 1.87 & 1.87 \\
+    QupKake, truncated & 60 & 60 & 0.283 & 3.61 & 1.35 & 0.38 & 5.08 \\
+    \hline
+  \end{tabular}
+\end{table}

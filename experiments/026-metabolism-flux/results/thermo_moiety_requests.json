@@ -1,0 +1,1912 @@
+{
+ "built_at": "2026-09-12T00:20:23.463641+00:00",
+ "n_requests": 12,
+ "requests": [
+  {
+   "reaction_id": "r_0365",
+   "participants": [
+    {
+     "met_id": "s_0560",
+     "coefficient": 1.0,
+     "name": "D-galacturonate",
+     "formula": "C6H9O7",
+     "charge": -1,
+     "compartment": "e",
+     "p_h": 5.0,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "galur"
+      ],
+      "chebi": [
+       "CHEBI:12952"
+      ],
+      "kegg.compound": [
+       "C00333"
+      ],
+      "metanetx.chemical": [
+       "MNXM693"
+      ]
+     }
+    },
+    {
+     "met_id": "s_0805",
+     "coefficient": -1.0,
+     "name": "H2O",
+     "formula": "H2O",
+     "charge": 0,
+     "compartment": "e",
+     "p_h": 5.0,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "h2o"
+      ],
+      "chebi": [
+       "CHEBI:15377"
+      ],
+      "kegg.compound": [
+       "C00001"
+      ],
+      "metanetx.chemical": [
+       "MNXM2"
+      ]
+     }
+    },
+    {
+     "met_id": "s_1309",
+     "coefficient": -1.0,
+     "name": "pectin",
+     "formula": "C6H7O6",
+     "charge": 0,
+     "compartment": "e",
+     "p_h": 5.0,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "pectin"
+      ],
+      "chebi": [
+       "CHEBI:17309"
+      ],
+      "kegg.compound": [
+       "C00714"
+      ],
+      "metanetx.chemical": [
+       "MNXM107600"
+      ]
+     }
+    }
+   ],
+   "blocking_met_ids": [
+    "s_1309"
+   ]
+  },
+  {
+   "reaction_id": "r_0436",
+   "participants": [
+    {
+     "met_id": "s_0712",
+     "coefficient": 1.0,
+     "name": "ferroheme b",
+     "formula": "C34H30FeN4O4",
+     "charge": -2,
+     "compartment": "m",
+     "p_h": 7.8,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "pheme"
+      ],
+      "chebi": [
+       "CHEBI:60344"
+      ],
+      "kegg.compound": [
+       "C00032"
+      ],
+      "metanetx.chemical": [
+       "MNXM249"
+      ]
+     }
+    },
+    {
+     "met_id": "s_0799",
+     "coefficient": 2.0,
+     "name": "H+",
+     "formula": "H",
+     "charge": 1,
+     "compartment": "m",
+     "p_h": 7.8,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "h"
+      ],
+      "chebi": [
+       "CHEBI:24636"
+      ],
+      "kegg.compound": [
+       "C00080"
+      ],
+      "metanetx.chemical": [
+       "MNXM1"
+      ]
+     }
+    },
+    {
+     "met_id": "s_0926",
+     "coefficient": -1.0,
+     "name": "iron(2+)",
+     "formula": "Fe",
+     "charge": 2,
+     "compartment": "m",
+     "p_h": 7.8,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "fe2"
+      ],
+      "chebi": [
+       "CHEBI:29033"
+      ],
+      "kegg.compound": [
+       "C14818"
+      ],
+      "metanetx.chemical": [
+       "MNXM111"
+      ]
+     }
+    },
+    {
+     "met_id": "s_1383",
+     "coefficient": -1.0,
+     "name": "protoporphyrin",
+     "formula": "C34H32N4O4",
+     "charge": -2,
+     "compartment": "m",
+     "p_h": 7.8,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "ppp9"
+      ],
+      "chebi": [
+       "CHEBI:36159"
+      ],
+      "kegg.compound": [
+       "C02191"
+      ],
+      "metanetx.chemical": [
+       "MNXM346"
+      ]
+     }
+    }
+   ],
+   "blocking_met_ids": [
+    "s_0712"
+   ]
+  },
+  {
+   "reaction_id": "r_0530",
+   "participants": [
+    {
+     "met_id": "s_0807",
+     "coefficient": 1.0,
+     "name": "H2O",
+     "formula": "H2O",
+     "charge": 0,
+     "compartment": "m",
+     "p_h": 7.8,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "h2o"
+      ],
+      "chebi": [
+       "CHEBI:15377"
+      ],
+      "kegg.compound": [
+       "C00001"
+      ],
+      "metanetx.chemical": [
+       "MNXM2"
+      ]
+     }
+    },
+    {
+     "met_id": "s_0811",
+     "coefficient": 1.0,
+     "name": "heme a",
+     "formula": "C49H55FeN4O6",
+     "charge": -3,
+     "compartment": "m",
+     "p_h": 7.8,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": "[H]C(=O)C1=C(CCC(=O)O)C2=[N]3C1=Cc1c(C)c([C@@H](O)CC/C=C(\\C)CC/C=C(\\C)CCC=C(C)C)c4[n]1[Fe]31[N]3=C(C=c5c(C)c(CCC(=O)[O-])c([n]51)=C2)C(C=C)=C(C)C3=C4",
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "hemeA"
+      ],
+      "chebi": [
+       "CHEBI:24479"
+      ],
+      "kegg.compound": [
+       "C15670"
+      ],
+      "metanetx.chemical": [
+       "MNXM53309"
+      ]
+     }
+    },
+    {
+     "met_id": "s_0812",
+     "coefficient": -1.0,
+     "name": "heme o",
+     "formula": "C49H56FeN4O5",
+     "charge": -2,
+     "compartment": "m",
+     "p_h": 7.8,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": "C=CC1=C(C)C2=[N+]3C1=Cc1c(C)c(CCC(=O)[O-])c4[n]1[Fe-2]31[n]3c(c(C)c([C@@H](O)CC/C=C(\\C)CC/C=C(\\C)CCC=C(C)C)c3=C2)=CC2=[N+]1C(=C4)C(CCC(=O)[O-])=C2C",
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "hemeO"
+      ],
+      "chebi": [
+       "CHEBI:24480"
+      ],
+      "kegg.compound": [
+       "C15672"
+      ],
+      "metanetx.chemical": [
+       "MNXM1278"
+      ]
+     }
+    },
+    {
+     "met_id": "s_1200",
+     "coefficient": 1.0,
+     "name": "NAD",
+     "formula": "C21H26N7O14P2",
+     "charge": -1,
+     "compartment": "m",
+     "p_h": 7.8,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "nad"
+      ],
+      "chebi": [
+       "CHEBI:57540"
+      ],
+      "kegg.compound": [
+       "C00003"
+      ],
+      "metanetx.chemical": [
+       "MNXM8"
+      ]
+     }
+    },
+    {
+     "met_id": "s_1205",
+     "coefficient": -1.0,
+     "name": "NADH",
+     "formula": "C21H27N7O14P2",
+     "charge": -2,
+     "compartment": "m",
+     "p_h": 7.8,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "nadh"
+      ],
+      "chebi": [
+       "CHEBI:57945"
+      ],
+      "kegg.compound": [
+       "C00004"
+      ],
+      "metanetx.chemical": [
+       "MNXM10"
+      ]
+     }
+    },
+    {
+     "met_id": "s_1278",
+     "coefficient": -1.0,
+     "name": "oxygen",
+     "formula": "O2",
+     "charge": 0,
+     "compartment": "m",
+     "p_h": 7.8,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "o2"
+      ],
+      "chebi": [
+       "CHEBI:15379"
+      ],
+      "kegg.compound": [
+       "C00007"
+      ],
+      "metanetx.chemical": [
+       "MNXM4"
+      ]
+     }
+    }
+   ],
+   "blocking_met_ids": [
+    "s_0811",
+    "s_0812"
+   ]
+  },
+  {
+   "reaction_id": "r_0531",
+   "participants": [
+    {
+     "met_id": "s_0191",
+     "coefficient": -1.0,
+     "name": "farnesyl diphosphate",
+     "formula": "C15H25O7P2",
+     "charge": -3,
+     "compartment": "m",
+     "p_h": 7.8,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "frdp"
+      ],
+      "chebi": [
+       "CHEBI:175763"
+      ],
+      "kegg.compound": [
+       "C00448"
+      ],
+      "metanetx.chemical": [
+       "MNXM34"
+      ]
+     }
+    },
+    {
+     "met_id": "s_0636",
+     "coefficient": 1.0,
+     "name": "diphosphate",
+     "formula": "HO7P2",
+     "charge": -3,
+     "compartment": "m",
+     "p_h": 7.8,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "ppi"
+      ],
+      "chebi": [
+       "CHEBI:33019"
+      ],
+      "kegg.compound": [
+       "C00013"
+      ],
+      "metanetx.chemical": [
+       "MNXM11"
+      ]
+     }
+    },
+    {
+     "met_id": "s_0712",
+     "coefficient": -1.0,
+     "name": "ferroheme b",
+     "formula": "C34H30FeN4O4",
+     "charge": -2,
+     "compartment": "m",
+     "p_h": 7.8,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "pheme"
+      ],
+      "chebi": [
+       "CHEBI:60344"
+      ],
+      "kegg.compound": [
+       "C00032"
+      ],
+      "metanetx.chemical": [
+       "MNXM249"
+      ]
+     }
+    },
+    {
+     "met_id": "s_0807",
+     "coefficient": -1.0,
+     "name": "H2O",
+     "formula": "H2O",
+     "charge": 0,
+     "compartment": "m",
+     "p_h": 7.8,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "h2o"
+      ],
+      "chebi": [
+       "CHEBI:15377"
+      ],
+      "kegg.compound": [
+       "C00001"
+      ],
+      "metanetx.chemical": [
+       "MNXM2"
+      ]
+     }
+    },
+    {
+     "met_id": "s_0812",
+     "coefficient": 1.0,
+     "name": "heme o",
+     "formula": "C49H56FeN4O5",
+     "charge": -2,
+     "compartment": "m",
+     "p_h": 7.8,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": "C=CC1=C(C)C2=[N+]3C1=Cc1c(C)c(CCC(=O)[O-])c4[n]1[Fe-2]31[n]3c(c(C)c([C@@H](O)CC/C=C(\\C)CC/C=C(\\C)CCC=C(C)C)c3=C2)=CC2=[N+]1C(=C4)C(CCC(=O)[O-])=C2C",
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "hemeO"
+      ],
+      "chebi": [
+       "CHEBI:24480"
+      ],
+      "kegg.compound": [
+       "C15672"
+      ],
+      "metanetx.chemical": [
+       "MNXM1278"
+      ]
+     }
+    }
+   ],
+   "blocking_met_ids": [
+    "s_0712",
+    "s_0812"
+   ]
+  },
+  {
+   "reaction_id": "r_0999",
+   "participants": [
+    {
+     "met_id": "s_0794",
+     "coefficient": 2.0,
+     "name": "H+",
+     "formula": "H",
+     "charge": 1,
+     "compartment": "c",
+     "p_h": 7.2,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "h"
+      ],
+      "chebi": [
+       "CHEBI:24636"
+      ],
+      "kegg.compound": [
+       "C00080"
+      ],
+      "metanetx.chemical": [
+       "MNXM1"
+      ]
+     }
+    },
+    {
+     "met_id": "s_0924",
+     "coefficient": -1.0,
+     "name": "iron(2+)",
+     "formula": "Fe",
+     "charge": 2,
+     "compartment": "c",
+     "p_h": 7.2,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "fe2"
+      ],
+      "chebi": [
+       "CHEBI:29033"
+      ],
+      "kegg.compound": [
+       "C14818"
+      ],
+      "metanetx.chemical": [
+       "MNXM111"
+      ]
+     }
+    },
+    {
+     "met_id": "s_1430",
+     "coefficient": 1.0,
+     "name": "siroheme",
+     "formula": "C42H36FeN4O16",
+     "charge": -8,
+     "compartment": "c",
+     "p_h": 7.2,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": "C[C@@]1(CC(=O)[O-])C2=CC3=[N+]4C(=Cc5c(CCC(=O)[O-])c(CC(=O)[O-])c6[n]5[Fe-2]45[N]2C(=CC2=[N+]5C(=C6)[C@@H](CCC(=O)[O-])[C@]2(C)CC(=O)[O-])[C@H]1CCC(=O)[O-])C(CCC(=O)[O-])=C3CC(=O)[O-]",
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "sheme"
+      ],
+      "chebi": [
+       "CHEBI:60052"
+      ],
+      "kegg.compound": [
+       "C00748"
+      ],
+      "metanetx.chemical": [
+       "MNXM82173"
+      ]
+     }
+    },
+    {
+     "met_id": "s_1431",
+     "coefficient": -1.0,
+     "name": "sirohydrochlorin",
+     "formula": "C42H38N4O16",
+     "charge": -8,
+     "compartment": "c",
+     "p_h": 7.2,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "scl"
+      ],
+      "chebi": [
+       "CHEBI:58351"
+      ],
+      "kegg.compound": [
+       "C05778"
+      ],
+      "metanetx.chemical": [
+       "MNXM863"
+      ]
+     }
+    }
+   ],
+   "blocking_met_ids": [
+    "s_1430"
+   ]
+  },
+  {
+   "reaction_id": "r_4159",
+   "participants": [
+    {
+     "met_id": "s_0795",
+     "coefficient": 1.0,
+     "name": "H+",
+     "formula": "H",
+     "charge": 1,
+     "compartment": "er",
+     "p_h": 7.1,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "h"
+      ],
+      "chebi": [
+       "CHEBI:24636"
+      ],
+      "kegg.compound": [
+       "C00080"
+      ],
+      "metanetx.chemical": [
+       "MNXM1"
+      ]
+     }
+    },
+    {
+     "met_id": "s_3764",
+     "coefficient": -1.0,
+     "name": "UDP-N-acetyl-alpha-D-glucosamine",
+     "formula": "C17H25N3O17P2",
+     "charge": -2,
+     "compartment": "er",
+     "p_h": 7.1,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "uacgam"
+      ],
+      "chebi": [
+       "CHEBI:57705"
+      ],
+      "kegg.compound": [
+       "C00043"
+      ],
+      "metanetx.chemical": [
+       "MNXM47"
+      ]
+     }
+    },
+    {
+     "met_id": "s_3765",
+     "coefficient": -1.0,
+     "name": "N-Acetyl-D-glucosaminyldiphosphodolichol",
+     "formula": "C28H51NO12P2",
+     "charge": 0,
+     "compartment": "er",
+     "p_h": 7.1,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "naglc2p"
+      ],
+      "chebi": [
+       "CHEBI:18278"
+      ],
+      "kegg.compound": [
+       "C04500"
+      ],
+      "metanetx.chemical": [
+       "MNXM818"
+      ]
+     }
+    },
+    {
+     "met_id": "s_3766",
+     "coefficient": 1.0,
+     "name": "UDP",
+     "formula": "C9H11N2O12P2",
+     "charge": -3,
+     "compartment": "er",
+     "p_h": 7.1,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "udp"
+      ],
+      "chebi": [
+       "CHEBI:58223"
+      ],
+      "kegg.compound": [
+       "C00015"
+      ],
+      "metanetx.chemical": [
+       "MNXM17"
+      ]
+     }
+    },
+    {
+     "met_id": "s_3767",
+     "coefficient": 1.0,
+     "name": "N,N'-Chitobiosyldiphosphodolichol",
+     "formula": "C36H64N2O17P2",
+     "charge": 0,
+     "compartment": "er",
+     "p_h": 7.1,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": "CC(=O)N[C@H]1[C@@H](OP(=O)(O)OP(=O)(O)OCCC(C)CC/C=C(\\C)CC/C=C(\\C)CCC=C(C)C)O[C@H](CO)[C@@H](O[C@@H]2O[C@H](CO)[C@@H](O)[C@H](O)[C@H]2NC(C)=O)[C@@H]1O",
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ]
+     }
+    }
+   ],
+   "blocking_met_ids": [
+    "s_3767"
+   ]
+  },
+  {
+   "reaction_id": "r_4186",
+   "participants": [
+    {
+     "met_id": "s_0794",
+     "coefficient": 1.0,
+     "name": "H+",
+     "formula": "H",
+     "charge": 1,
+     "compartment": "c",
+     "p_h": 7.2,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "h"
+      ],
+      "chebi": [
+       "CHEBI:24636"
+      ],
+      "kegg.compound": [
+       "C00080"
+      ],
+      "metanetx.chemical": [
+       "MNXM1"
+      ]
+     }
+    },
+    {
+     "met_id": "s_0803",
+     "coefficient": -1.0,
+     "name": "H2O",
+     "formula": "H2O",
+     "charge": 0,
+     "compartment": "c",
+     "p_h": 7.2,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "h2o"
+      ],
+      "chebi": [
+       "CHEBI:15377"
+      ],
+      "kegg.compound": [
+       "C00001"
+      ],
+      "metanetx.chemical": [
+       "MNXM2"
+      ]
+     }
+    },
+    {
+     "met_id": "s_1029",
+     "coefficient": -1.0,
+     "name": "L-methionine",
+     "formula": "C5H11NO2S",
+     "charge": 0,
+     "compartment": "c",
+     "p_h": 7.2,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "met__L"
+      ],
+      "chebi": [
+       "CHEBI:16643"
+      ],
+      "kegg.compound": [
+       "C00073"
+      ],
+      "metanetx.chemical": [
+       "MNXM61"
+      ]
+     }
+    },
+    {
+     "met_id": "s_1616",
+     "coefficient": 1.0,
+     "name": "TRX1",
+     "formula": "C6H10N2O2S2R4",
+     "charge": 0,
+     "compartment": "c",
+     "p_h": 7.2,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "trdrd"
+      ],
+      "chebi": [
+       "CHEBI:15033"
+      ],
+      "kegg.compound": [
+       "C00342"
+      ],
+      "metanetx.chemical": [
+       "MNXM96993"
+      ]
+     }
+    },
+    {
+     "met_id": "s_1620",
+     "coefficient": -1.0,
+     "name": "TRX1 disulphide",
+     "formula": "C6H9N2O2S2R4",
+     "charge": 1,
+     "compartment": "c",
+     "p_h": 7.2,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "trdox"
+      ],
+      "chebi": [
+       "CHEBI:18191"
+      ],
+      "kegg.compound": [
+       "C00343"
+      ],
+      "metanetx.chemical": [
+       "MNXM148"
+      ]
+     }
+    },
+    {
+     "met_id": "s_3807",
+     "coefficient": 1.0,
+     "name": "L-methionine (S)-S-oxide",
+     "formula": "C5H11NO3S",
+     "charge": 0,
+     "compartment": "c",
+     "p_h": 7.2,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "chebi": [
+       "CHEBI:49031"
+      ],
+      "kegg.compound": [
+       "C15999"
+      ],
+      "metanetx.chemical": [
+       "MNXM722780"
+      ]
+     }
+    }
+   ],
+   "blocking_met_ids": [
+    "s_3807"
+   ]
+  },
+  {
+   "reaction_id": "r_4197",
+   "participants": [
+    {
+     "met_id": "s_0799",
+     "coefficient": 1.0,
+     "name": "H+",
+     "formula": "H",
+     "charge": 1,
+     "compartment": "m",
+     "p_h": 7.8,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "h"
+      ],
+      "chebi": [
+       "CHEBI:24636"
+      ],
+      "kegg.compound": [
+       "C00080"
+      ],
+      "metanetx.chemical": [
+       "MNXM1"
+      ]
+     }
+    },
+    {
+     "met_id": "s_1200",
+     "coefficient": 1.0,
+     "name": "NAD",
+     "formula": "C21H26N7O14P2",
+     "charge": -1,
+     "compartment": "m",
+     "p_h": 7.8,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "nad"
+      ],
+      "chebi": [
+       "CHEBI:57540"
+      ],
+      "kegg.compound": [
+       "C00003"
+      ],
+      "metanetx.chemical": [
+       "MNXM8"
+      ]
+     }
+    },
+    {
+     "met_id": "s_1205",
+     "coefficient": -1.0,
+     "name": "NADH",
+     "formula": "C21H27N7O14P2",
+     "charge": -2,
+     "compartment": "m",
+     "p_h": 7.8,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "nadh"
+      ],
+      "chebi": [
+       "CHEBI:57945"
+      ],
+      "kegg.compound": [
+       "C00004"
+      ],
+      "metanetx.chemical": [
+       "MNXM10"
+      ]
+     }
+    },
+    {
+     "met_id": "s_3826",
+     "coefficient": -2.0,
+     "name": "Ferricytochrome b5",
+     "formula": "Fe",
+     "charge": 3,
+     "compartment": "m",
+     "p_h": 7.8,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "ficytb5"
+      ],
+      "chebi": [
+       "CHEBI:18097"
+      ],
+      "kegg.compound": [
+       "C00996"
+      ],
+      "metanetx.chemical": [
+       "MNXM1083"
+      ]
+     }
+    },
+    {
+     "met_id": "s_3827",
+     "coefficient": 2.0,
+     "name": "Ferrocytochrome b5",
+     "formula": "Fe",
+     "charge": 2,
+     "compartment": "m",
+     "p_h": 7.8,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "focytb5"
+      ],
+      "kegg.compound": [
+       "C00999"
+      ]
+     }
+    }
+   ],
+   "blocking_met_ids": [
+    "s_3826",
+    "s_3827"
+   ]
+  },
+  {
+   "reaction_id": "r_4202",
+   "participants": [
+    {
+     "met_id": "s_0794",
+     "coefficient": 1.0,
+     "name": "H+",
+     "formula": "H",
+     "charge": 1,
+     "compartment": "c",
+     "p_h": 7.2,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "h"
+      ],
+      "chebi": [
+       "CHEBI:24636"
+      ],
+      "kegg.compound": [
+       "C00080"
+      ],
+      "metanetx.chemical": [
+       "MNXM1"
+      ]
+     }
+    },
+    {
+     "met_id": "s_0803",
+     "coefficient": -1.0,
+     "name": "H2O",
+     "formula": "H2O",
+     "charge": 0,
+     "compartment": "c",
+     "p_h": 7.2,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "h2o"
+      ],
+      "chebi": [
+       "CHEBI:15377"
+      ],
+      "kegg.compound": [
+       "C00001"
+      ],
+      "metanetx.chemical": [
+       "MNXM2"
+      ]
+     }
+    },
+    {
+     "met_id": "s_1029",
+     "coefficient": -1.0,
+     "name": "L-methionine",
+     "formula": "C5H11NO2S",
+     "charge": 0,
+     "compartment": "c",
+     "p_h": 7.2,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "met__L"
+      ],
+      "chebi": [
+       "CHEBI:16643"
+      ],
+      "kegg.compound": [
+       "C00073"
+      ],
+      "metanetx.chemical": [
+       "MNXM61"
+      ]
+     }
+    },
+    {
+     "met_id": "s_1616",
+     "coefficient": 1.0,
+     "name": "TRX1",
+     "formula": "C6H10N2O2S2R4",
+     "charge": 0,
+     "compartment": "c",
+     "p_h": 7.2,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "trdrd"
+      ],
+      "chebi": [
+       "CHEBI:15033"
+      ],
+      "kegg.compound": [
+       "C00342"
+      ],
+      "metanetx.chemical": [
+       "MNXM96993"
+      ]
+     }
+    },
+    {
+     "met_id": "s_1620",
+     "coefficient": -1.0,
+     "name": "TRX1 disulphide",
+     "formula": "C6H9N2O2S2R4",
+     "charge": 1,
+     "compartment": "c",
+     "p_h": 7.2,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "trdox"
+      ],
+      "chebi": [
+       "CHEBI:18191"
+      ],
+      "kegg.compound": [
+       "C00343"
+      ],
+      "metanetx.chemical": [
+       "MNXM148"
+      ]
+     }
+    },
+    {
+     "met_id": "s_3837",
+     "coefficient": 1.0,
+     "name": "L-Methionine S-oxide",
+     "formula": "C5H11NO3S",
+     "charge": 0,
+     "compartment": "c",
+     "p_h": 7.2,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "metsox_S__L"
+      ],
+      "chebi": [
+       "CHEBI:17016"
+      ],
+      "kegg.compound": [
+       "C02989"
+      ],
+      "metanetx.chemical": [
+       "MNXM2246"
+      ]
+     }
+    }
+   ],
+   "blocking_met_ids": [
+    "s_3837"
+   ]
+  },
+  {
+   "reaction_id": "r_4220",
+   "participants": [
+    {
+     "met_id": "s_0794",
+     "coefficient": 1.0,
+     "name": "H+",
+     "formula": "H",
+     "charge": 1,
+     "compartment": "c",
+     "p_h": 7.2,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "h"
+      ],
+      "chebi": [
+       "CHEBI:24636"
+      ],
+      "kegg.compound": [
+       "C00080"
+      ],
+      "metanetx.chemical": [
+       "MNXM1"
+      ]
+     }
+    },
+    {
+     "met_id": "s_0803",
+     "coefficient": -1.0,
+     "name": "H2O",
+     "formula": "H2O",
+     "charge": 0,
+     "compartment": "c",
+     "p_h": 7.2,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "h2o"
+      ],
+      "chebi": [
+       "CHEBI:15377"
+      ],
+      "kegg.compound": [
+       "C00001"
+      ],
+      "metanetx.chemical": [
+       "MNXM2"
+      ]
+     }
+    },
+    {
+     "met_id": "s_1322",
+     "coefficient": 1.0,
+     "name": "phosphate",
+     "formula": "HO4P",
+     "charge": -2,
+     "compartment": "c",
+     "p_h": 7.2,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "pi"
+      ],
+      "chebi": [
+       "CHEBI:43474"
+      ],
+      "kegg.compound": [
+       "C00009"
+      ],
+      "metanetx.chemical": [
+       "MNXM9"
+      ]
+     }
+    },
+    {
+     "met_id": "s_3859",
+     "coefficient": -1.0,
+     "name": "4-nitrophenyl phosphate",
+     "formula": "C6H4NO6P",
+     "charge": -2,
+     "compartment": "c",
+     "p_h": 7.2,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "HC01104"
+      ],
+      "chebi": [
+       "CHEBI:61146"
+      ],
+      "kegg.compound": [
+       "C03360"
+      ],
+      "metanetx.chemical": [
+       "MNXM3867"
+      ]
+     }
+    },
+    {
+     "met_id": "s_3860",
+     "coefficient": 1.0,
+     "name": "4-nitrophenol",
+     "formula": "C6H4NO3",
+     "charge": -1,
+     "compartment": "c",
+     "p_h": 7.2,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": "[O-]c1ccc(cc1)N(=O)=O",
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "4nph"
+      ],
+      "chebi": [
+       "CHEBI:57917"
+      ],
+      "kegg.compound": [
+       "C00870"
+      ],
+      "metanetx.chemical": [
+       "MNXM526"
+      ]
+     }
+    }
+   ],
+   "blocking_met_ids": [
+    "s_3859",
+    "s_3860"
+   ]
+  },
+  {
+   "reaction_id": "r_4273",
+   "participants": [
+    {
+     "met_id": "s_0359",
+     "coefficient": 1.0,
+     "name": "acetaldehyde",
+     "formula": "C2H4O",
+     "charge": 0,
+     "compartment": "c",
+     "p_h": 7.2,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "acald"
+      ],
+      "chebi": [
+       "CHEBI:15343"
+      ],
+      "kegg.compound": [
+       "C00084"
+      ],
+      "metanetx.chemical": [
+       "MNXM75"
+      ]
+     }
+    },
+    {
+     "met_id": "s_0714",
+     "coefficient": 1.0,
+     "name": "FMN",
+     "formula": "C17H18N4O9P",
+     "charge": -3,
+     "compartment": "c",
+     "p_h": 7.2,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "fmn"
+      ],
+      "chebi": [
+       "CHEBI:58210"
+      ],
+      "kegg.compound": [
+       "C00061"
+      ],
+      "metanetx.chemical": [
+       "MNXM119"
+      ]
+     }
+    },
+    {
+     "met_id": "s_0717",
+     "coefficient": -1.0,
+     "name": "FMNH2",
+     "formula": "C17H21N4O9P",
+     "charge": -2,
+     "compartment": "c",
+     "p_h": 7.2,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "fmnh2"
+      ],
+      "chebi": [
+       "CHEBI:57618"
+      ],
+      "kegg.compound": [
+       "C01847"
+      ],
+      "metanetx.chemical": [
+       "MNXM208"
+      ]
+     }
+    },
+    {
+     "met_id": "s_0794",
+     "coefficient": 2.0,
+     "name": "H+",
+     "formula": "H",
+     "charge": 1,
+     "compartment": "c",
+     "p_h": 7.2,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "h"
+      ],
+      "chebi": [
+       "CHEBI:24636"
+      ],
+      "kegg.compound": [
+       "C00080"
+      ],
+      "metanetx.chemical": [
+       "MNXM1"
+      ]
+     }
+    },
+    {
+     "met_id": "s_0803",
+     "coefficient": 1.0,
+     "name": "H2O",
+     "formula": "H2O",
+     "charge": 0,
+     "compartment": "c",
+     "p_h": 7.2,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "h2o"
+      ],
+      "chebi": [
+       "CHEBI:15377"
+      ],
+      "kegg.compound": [
+       "C00001"
+      ],
+      "metanetx.chemical": [
+       "MNXM2"
+      ]
+     }
+    },
+    {
+     "met_id": "s_1275",
+     "coefficient": -1.0,
+     "name": "oxygen",
+     "formula": "O2",
+     "charge": 0,
+     "compartment": "c",
+     "p_h": 7.2,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "o2"
+      ],
+      "chebi": [
+       "CHEBI:15379"
+      ],
+      "kegg.compound": [
+       "C00007"
+      ],
+      "metanetx.chemical": [
+       "MNXM4"
+      ]
+     }
+    },
+    {
+     "met_id": "s_3934",
+     "coefficient": -1.0,
+     "name": "Ethylnitronate",
+     "formula": "C2H5NO2",
+     "charge": 0,
+     "compartment": "c",
+     "p_h": 7.2,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": "CCN(=O)=O",
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "chebi": [
+       "CHEBI:16268"
+      ],
+      "kegg.compound": [
+       "C18091"
+      ],
+      "metanetx.chemical": [
+       "MNXM2143"
+      ]
+     }
+    },
+    {
+     "met_id": "s_3935",
+     "coefficient": 1.0,
+     "name": "Nitrite",
+     "formula": "NO2",
+     "charge": -1,
+     "compartment": "c",
+     "p_h": 7.2,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "no2"
+      ],
+      "chebi": [
+       "CHEBI:16301"
+      ],
+      "kegg.compound": [
+       "C00088"
+      ],
+      "metanetx.chemical": [
+       "MNXM107"
+      ]
+     }
+    }
+   ],
+   "blocking_met_ids": [
+    "s_3934"
+   ]
+  },
+  {
+   "reaction_id": "r_4403",
+   "participants": [
+    {
+     "met_id": "s_0633",
+     "coefficient": 1.0,
+     "name": "diphosphate",
+     "formula": "HO7P2",
+     "charge": -3,
+     "compartment": "c",
+     "p_h": 7.2,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "ppi"
+      ],
+      "chebi": [
+       "CHEBI:33019"
+      ],
+      "kegg.compound": [
+       "C00013"
+      ],
+      "metanetx.chemical": [
+       "MNXM11"
+      ]
+     }
+    },
+    {
+     "met_id": "s_0803",
+     "coefficient": -1.0,
+     "name": "H2O",
+     "formula": "H2O",
+     "charge": 0,
+     "compartment": "c",
+     "p_h": 7.2,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "h2o"
+      ],
+      "chebi": [
+       "CHEBI:15377"
+      ],
+      "kegg.compound": [
+       "C00001"
+      ],
+      "metanetx.chemical": [
+       "MNXM2"
+      ]
+     }
+    },
+    {
+     "met_id": "s_1322",
+     "coefficient": 1.0,
+     "name": "phosphate",
+     "formula": "HO4P",
+     "charge": -2,
+     "compartment": "c",
+     "p_h": 7.2,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "pi"
+      ],
+      "chebi": [
+       "CHEBI:43474"
+      ],
+      "kegg.compound": [
+       "C00009"
+      ],
+      "metanetx.chemical": [
+       "MNXM9"
+      ]
+     }
+    },
+    {
+     "met_id": "s_4098",
+     "coefficient": -1.0,
+     "name": "triphosphate",
+     "formula": "O10P3",
+     "charge": -5,
+     "compartment": "c",
+     "p_h": 7.2,
+     "ionic_strength_m": 0.25,
+     "temperature_k": 303.15,
+     "p_mg": 3.0,
+     "smiles": null,
+     "accessions": {
+      "sbo": [
+       "SBO:0000247"
+      ],
+      "bigg.metabolite": [
+       "pppi"
+      ],
+      "chebi": [
+       "CHEBI:18036"
+      ],
+      "kegg.compound": [
+       "C00536"
+      ],
+      "metanetx.chemical": [
+       "MNXM332"
+      ]
+     }
+    }
+   ],
+   "blocking_met_ids": [
+    "s_4098"
+   ]
+  }
+ ]
+}

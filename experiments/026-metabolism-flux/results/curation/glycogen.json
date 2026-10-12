@@ -1,0 +1,90 @@
+{
+ "slug": "glycogen",
+ "met_ids": [
+  "s_0773",
+  "s_0774"
+ ],
+ "gem_name": "glycogen",
+ "gem_formula": "C6H10O5",
+ "gem_charge": 0,
+ "compartments": [
+  "c",
+  "v"
+ ],
+ "blocked_reactions": [],
+ "kind": "polymer_convention",
+ "admission": "tabulated",
+ "value": {
+  "repeat_unit_smiles": "*O[C@H]1O[C@H](CO)[C@@H](O)[C@H](O)[C@H]1*",
+  "repeat_unit_formula": "C6H10O5",
+  "repeat_unit_charge": 0,
+  "linkage": "alpha-(1->4) glucan backbone; one residue is one alpha-D-glucopyranosyl unit",
+  "end_groups": "none counted; yeast-GEM writes the species as ONE residue, C6H10O5, with no terminal water, which is the per-repeat-unit convention the repeat-unit surrogate route requires",
+  "convention_note": "The GEM species is ONE alpha-1,4-linked glucose residue. The shipped table priced it instead from the BiGG accession's structure, which is the four-residue oligomer C24H42O21, giving -1127.249 kJ/mol in the cytosol and -1370.874 in the vacuole, about 4.6x the residue value. The residue energy here is the same dimer-difference construction the mannan record uses: R = [G(maltose) - G(H2O)] / 2, with maltose the alpha-1,4 dimer, evaluated at each compartment's own conditions.",
+  "preferred_dimer_difference": {
+   "rule": "a disaccharide is two residues plus one water, so R = [G(alpha-1,4-maltose) - G(H2O)] / 2",
+   "dimer_name": "maltose",
+   "dimer_accessions": [
+    "kegg:C00208"
+   ],
+   "dimer_equilibrator_cache_compound_ids": [
+    157
+   ],
+   "dimer_formula": "C12H22O11",
+   "dimer_estimable": true,
+   "dgf_prime_kj_per_mol": {
+    "s_0773": -244.2644139636122,
+    "s_0774": -302.27029708300796
+   },
+   "sigma_kj_per_mol": null,
+   "conditions": {
+    "p_h": {
+     "s_0773": 7.2,
+     "s_0774": 6.2
+    },
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   }
+  },
+  "superseded_accession_prices": {
+   "s_0773": -1127.2488714149251,
+   "s_0774": -1370.8741520830263
+  }
+ },
+ "sigma_kj_per_mol": null,
+ "sources": [
+  {
+   "source_url": "",
+   "retrieval_method": "local_computation",
+   "retrieval_command": "PYTHONPATH=$PWD ~/miniconda3/envs/equilibrator-ext/bin/python experiments/026-metabolism-flux/scripts/thermo_curation_price.py --local-cache $DATA_ROOT/tmp/thermo_curation.sqlite --dimer maltose,kegg:C00208,kegg:C00031,kegg:C00001 --dimer-ph 7.2 --dimer-ph 6.2",
+   "sha256": "5527fe82a1c74159542548f346f2411490ac3df5f9960a91582b9ecc447f108f",
+   "retrieved_at": "2026-09-11T23:24:00.125211+00:00",
+   "verbatim_quote": "{\"name\": \"maltose\", \"dimer_accession\": \"kegg:C00208\", \"dimer_compound_id\": 157, \"dimer_formula\": \"C12H22O11\", \"dimer_estimable\": true, \"residue_dgf_prime_kj_per_mol_at_ph_7.2\": -244.2644139636122, \"residue_dgf_prime_kj_per_mol_at_ph_6.2\": -302.27029708300796}",
+   "location": "experiments/026-metabolism-flux/results/thermo_accession_composition.json, dimer_differences[maltose]"
+  },
+  {
+   "source_url": "https://www.genome.jp/entry/C00208",
+   "retrieval_method": "equilibrator_compound_cache",
+   "retrieval_command": "ComponentContribution().ccache.get_compound('kegg:C00208')",
+   "sha256": "",
+   "retrieved_at": "2026-09-11T23:24:00.125234+00:00",
+   "verbatim_quote": "maltose, cache compound 157, formula C12H22O11",
+   "location": "eQuilibrator compound cache (~/.cache/equilibrator/compounds.sqlite)"
+  }
+ ],
+ "searches": [
+  {
+   "query": "accession-priced metabolites whose structure formula differs from the GEM formula",
+   "engine": "thermo_curation_price.py sweep_accessions over 2414 accession-priced species",
+   "date": "2026-09-11",
+   "outcome": "glycogen s_0773 and s_0774 priced from C24H42O21 against the GEM's C6H10O5"
+  }
+ ],
+ "decomposition_check": {
+  "attempted": true,
+  "decomposes": false,
+  "error": "the repeat unit carries two attachment points, which the group decomposer refuses; the dimer and the monomer both decompose, which is what makes the difference construction available"
+ },
+ "notes": "Written by the integration agent on 2026-09-11 from the accession composition sweep, not by a curation agent. Admission tabulated follows the mannan record's convention for the same construction: the dimer and water energies are eQuilibrator cache values and the arithmetic is the residue definition, not a prediction about glycogen."
+}

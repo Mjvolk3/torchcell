@@ -265,3 +265,70 @@ left unmarked; they are covered by their parent.
 **Do not self-promote a section.** An agent writing or revising a section leaves it `ai`,
 exactly as the paper's editing policy leaves a finished `todo` section for the author to
 promote. Only the author moves a section to `tent` or `read`.
+
+## 2026.09.08 - Every training result links to its W&B run
+
+**A `notes-tex` document that reports a trained result carries the W&B link for every run
+behind it, not just the project.** A table of arm means is a summary of curves that live
+on W&B, and a reader who wants the loss trajectory, the selected epoch or the validation
+curve behind one number should be able to click through to it from the PDF. The paper's
+editing view already colors external URLs, so the links cost nothing visually.
+
+The pattern, established for the 027 document:
+
+- **The trainer records `wandb_run_id` and `wandb_url` in its result JSON** next to the
+  metric it reports (`train_bx.py`, `sweep_flux.py`). A result file without the run URL
+  cannot be indexed afterwards; the 18 early `flux_arms_gpu*.json` runs of 026 are the
+  example, and they have no page.
+- **A script in the experiment folder builds the index and the table**
+  (`experiments/027-betaxanthin-metabolic/scripts/wandb_run_index.py`,
+  `experiments/026-metabolism-flux/scripts/wandb_run_index.py`): it reads the SAME result
+  files the analysis reads, writes `results/wandb_run_index.json` (pydantic records), and
+  emits `notes-tex/<doc>/tables/wandb_runs_<id>.tex` with every cell a
+  `\href{url}{\texttt{run id}}`. The section `\input`s that file next to the summary table
+  it backs. Never type run ids into a section by hand.
+- **Shape of the table.** A balanced grid is seed rows by arm columns (027: 24 by 6). A
+  sweep with uneven cells is one row per grid cell with `seed: id` entries wrapped in a
+  `p{}` column (026). Both fit `\footnotesize` on one page.
+- **The project link appears once in prose** near the first result it backs, and again in
+  the environment table where the entity and project are recorded as facts of the launch.
+
+The 019 documents and the paper's Methods should adopt the same pattern when they next
+report a trained result.
+
+## 2026.09.15 - Showing W&B: grouped runs, train against validation, and a structured takeaway
+
+"Show me the W&B data", "the W&B view", "the W&B groups" are all one request: **the recent
+experiments grouped by the axis that distinguishes them, with a link per group.** A saved
+workspace view and a list of individual run links are both answers to a different question.
+
+**Group by arm, and the W&B group is the unit.** One W&B group holds every seed of one arm,
+and its page at `https://wandb.ai/<entity>/<project>/groups/<group>` shows those seeds with
+aggregated curves. The trainer sets the group from the launcher's arm tag (027's
+`train_bx.py`); a per-job group puts one run in each group and makes the page useless.
+`wandb_views.py` rewrites the group of older runs to the same rule and records each group's
+URL in `results/wandb_views.json`. Give the group URLs first, each alone on its line, then
+the cross-arm saved view. Individual run links stay for naming one example of a phenomenon.
+
+**Every view carries train against validation THREE ways, per pair.** The two curves
+overlaid, then each alone. The overlay is the only place the train-validation gap can be
+read, since a gap cannot be seen across two panels with independent y axes; the isolated
+panels are the only place each curve's shape can be read, since the overlay's axis is set by
+whichever curve has the larger range and flattens the other. In 027 this is
+`TRAIN_VAL_PAIRS` and `train_val_panels` in `wandb_views.py`, placed as the first section of
+the view, above the single-metric curves and the summary bars.
+
+**Answer in the terminal with a structured block, not prose.** Two labeled lines per group:
+
+```
+description: <what was run, in one sentence: arm, target, budget, seeds>
+takeaway:    <what it means, including what it does NOT establish>
+```
+
+then the group URL on its own line. The description is the experiment; the takeaway is the
+reading, and it names the uncertainty that would overturn it (seed spread, a bootstrap
+interval, a collapsed cell) rather than leaving that for the reader to ask.
+
+**Filter failed and crashed runs out of a view.** A crashed run carries the round's tags and
+no epochs, so it sits as an empty row in every group and drags a bar chart's group mean
+toward nothing. Running runs stay in; a launcher smoke goes to its own group.

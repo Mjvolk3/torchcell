@@ -2,17 +2,31 @@
 %% [[experiments.027-betaxanthin-metabolic]]
 %% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/027-metabolic-flux-module/sections/6-preliminary.tex
 
-\section{The run now on Delta\secstatus{todo}}
+\section{The grid on Delta\secstatus{todo}}
 \label{sec:preliminary}
 
-\subsection{What was launched\secstatus{todo}}
+\subsection{What produced the 144 cells\secstatus{todo}}
 
-Job array \texttt{21797666\_[0-8]} on \texttt{bbub-delta-gpu}, partition
-\texttt{gpuA40x4}: nine nodes, four A40 per node, \textbf{two runs per GPU}, so 72 workers.
-Six arms divide 72 into twelve seed-groups, giving twelve seeds per arm, above the ten the
-noise floor requires. Each worker owns its own Optuna database, which is what avoids the
-race that previously had several workers claiming one trial and silently turning four Delta
-cells into duplicates.
+Job array \texttt{21813442\_[1-8]} plus its replacement task \texttt{21814993\_0} on
+\texttt{bfjt-delta-gpu}, partition \texttt{gpuA40x4}: nine nodes, four A40 per node,
+\textbf{two runs per GPU}, so 72 workers, each owning two cells and its own Optuna database.
+Six arms times 24 seeds is 144 cells, sharded by whole seed so that a wall-clock kill leaves
+every arm at the same seed count. Per-worker databases are what avoid the race that had
+several workers claiming one trial from a shared file and silently turning four cells into
+duplicates.
+
+Two earlier attempts are part of the record. Array \texttt{21797666} on \texttt{bbub}, laid
+out as twelve seeds per arm, ran every worker into the embeddings coupling of
+Section~\ref{sec:couplings} (\texttt{No gene embeddings available}) and completed seven
+tasks of six and a half hours each with zero epochs trained. Task 0 of \texttt{21813442}
+lost seven of its eight workers in the first minutes to
+\texttt{FileNotFoundError: data/sgd/genome/data.db}, which is the genome-rebuild race: the
+dataset constructor defaults to \texttt{overwrite=True}, so the first worker to open the
+genome deletes the file the other seven are reading. The fix is \texttt{overwrite=False},
+which the older experiments already pass; tasks 1 to 8 read the corrected script at start
+and task 0 was canceled and resubmitted with fresh Optuna databases, since a canceled
+worker leaves its trial in \texttt{RUNNING} and a reused database would have dropped a cell
+without saying so.
 
 The primary endpoint is Spearman on the pinned Merzbacher 639-gene test split at an epoch
 selected on validation, so the selection set and the reporting set are disjoint. The
@@ -24,7 +38,7 @@ decision rule is the difference of differences in Section~\ref{sec:arms}.
   \caption[Delta environment]{Every environment fact confirmed on the node rather than
   assumed, since the repository's own files disagree about several of them.}
   \label{tab:delta-env}
-  %% SOURCE: the job's own preflight block, slurm/output/027-bxfx_21797666_0.out.
+  %% SOURCE: the job's own preflight block, slurm/output/027-bxfx_21813442_1.out.
   \begin{tabular}{@{}p{0.24\textwidth}p{0.68\textwidth}@{}}
     \hline
     Fact & Value \\
@@ -36,7 +50,8 @@ decision rule is the difference of differences in Section~\ref{sec:arms}.
       directly, no \texttt{conda activate} and no container \\
     GPU & NVIDIA A40, 46{,}068 MiB, four per node \\
     \texttt{NUM\_WORKERS} & 0, forced. Spawned workers re-import off Lustre and stall \\
-    W\&B & online, entity \texttt{zhao-group}, project \texttt{torchcell\_027\_bxfx} \\
+    W\&B & online, entity \texttt{zhao-group}, project
+      \href{https://wandb.ai/zhao-group/torchcell_027_bxfx}{\texttt{torchcell\_027\_bxfx}} \\
     \hline
   \end{tabular}
 \end{table}
@@ -58,6 +73,7 @@ unjoinable at analysis time.
 64-core node would each have defaulted to the node's core count.
 
 \subsection{Three couplings the backbone change forced\secstatus{todo}}
+\label{sec:couplings}
 
 Moving 027 onto the strong backbone broke three things, each found by running a smoke test
 rather than by reading the code, and each silent in a different way.
@@ -77,59 +93,180 @@ validation Pearson $-0.0214$ to $+0.1055$, and computed the pinned test Spearman
 $+0.0261$ on $n = 629$. Two epochs is not a result. What it establishes is that the
 nine-graph \texttt{prot\_T5} backbone builds, trains and scores end to end.
 
-\subsection{Preliminary training results: none, and why\secstatus{todo}}
+\subsection{The prespecified decision, on the full grid\secstatus{todo}}
 
-\textbf{No arm has produced a training epoch, so there is no validation Pearson to compare
-and none is quoted.} At 6.5 hours into a 20-hour allocation, every GPU across every live
-node reads 0\,MiB and 0 percent utilization. Two separate defects account for it, and both
-are now fixed in the launcher.
+All eight array tasks of \texttt{21813442} completed on \texttt{bfjt-delta-gpu}, six to six
+and a half hours each, 64 workers, \textbf{no worker lost}, and the replacement task
+\texttt{21814993} completed in 6:30 with its own eight. 144 cells were written, giving
+\textbf{24 balanced seeds}, which is the number the design called for and more than twice
+the 10 the noise floor requires.
 
-\paragraph{The import is 50 minutes, not 15 seconds.} The launcher called
-\texttt{--create-only} once per worker to build each one's Optuna queue before any GPU work,
-on the stated reasoning that a process ``spends $>$15\,s importing torch before it would
-reach \texttt{create\_study}''. On Delta that import comes off Lustre, and the job's own log
-times it:
+The analysis is \texttt{analyze\_bxfx.py}, written before the grid launched and not edited
+after. It reports no maximum anywhere: the trainer selects the epoch on validation and
+scores on a disjoint test set, so every number is a mean over seeds with its across-seed
+standard error.
 
 \begin{table}[H]
   \centering
   \footnotesize
-  \caption[Create-only timings]{Study-creation timestamps on one array task. Each entry is
-  one process whose entire work is writing an empty SQLite file.}
-  \label{tab:createonly}
-  %% SOURCE: slurm/output/027-bxfx_21797666_8.out, optuna "A new study created" lines.
-  \begin{tabular}{@{}lllllll@{}}
+  \caption[Arm results]{Test Spearman on the pinned 639-gene Merzbacher split, at an epoch
+  selected on validation, over the full 24 balanced seeds. The Flux Cone Learning
+  RandomForest\_Resampled baseline is the published value on the same 639 genes.}
+  \label{tab:armresults}
+  %% SOURCE: experiments/027-betaxanthin-metabolic/results/bxfx_decision.json, written by
+  %% analyze_bxfx.py from the 72 bxfx_w*.json beside it (mirrored from Delta 2026-09-08).
+  \begin{tabular}{@{}lrrr@{}}
     \hline
-    worker & w64 & w65 & w66 & w67 & w68 & w69 \\
-    created & 04:03 & 04:55 & 05:45 & 06:34 & 07:16 & 07:55 \\
+    Arm & Mean & SD & SE \\
+    \hline
+    FCL RF (published) & +0.0391 & -- & -- \\
+    flux\_off (stoichiometry, no energies) & \textbf{+0.0388} & 0.0541 & 0.0110 \\
+    flux\_free & +0.0294 & 0.0417 & 0.0085 \\
+    pooled (no module) & +0.0269 & 0.0506 & 0.0103 \\
+    null\_pooled (permuted) & +0.0076 & 0.0298 & 0.0061 \\
+    null\_anchored (permuted) & $-0.0017$ & 0.0537 & 0.0110 \\
+    flux\_anchored (full module) & \textbf{$-0.0196$} & 0.0544 & 0.0111 \\
     \hline
   \end{tabular}
 \end{table}
 
-Roughly 50 minutes each, and the interval does not shrink, so the Lustre client cache is not
-warming across processes the way the design assumed. Eight sequential calls is about 6.7
-hours per node spent producing nothing. The fix is one process creating every local study,
-which pays the import once; the DDL is still unraced because each study is a separate file
-written sequentially in-process.
+\begin{table}[H]
+  \centering
+  \footnotesize
+  \caption[The prespecified decision]{Both criteria fail. D1 asks whether the paired arm gap
+  exceeds the same gap with the labels destroyed; D2 asks whether the full module beats the
+  published Flux Cone Learning baseline on the same genes.}
+  \label{tab:decision}
+  %% SOURCE: results/bxfx_decision.json.
+  \begin{tabular}{@{}lp{0.60\textwidth}r@{}}
+    \hline
+    Criterion & Value & Result \\
+    \hline
+    D1 & excess over the permuted-label gap $=-0.0372$, 95\% bootstrap CI
+      $[-0.0724, -0.0031]$ & \textbf{FAIL} \\
+    D2 & flux\_anchored $-0.0196 \pm 0.0111$ against FCL RF $+0.0391$ & \textbf{FAIL} \\
+    \hline
+  \end{tabular}
+\end{table}
 
-\paragraph{The preflight checked a directory where a file was needed.} It tested
-\texttt{[[ -d \$DATASET\_DIR ]]} and the genome tree passed, but
-\texttt{data/sgd/genome/data.db}, the gffutils database, was absent. \textbf{Three of the
-nine array tasks lost every worker} to
-\texttt{FileNotFoundError: .../data/sgd/genome/data.db} and exited. A worker hits this
-\emph{after} its full import, so each failure costs a complete Lustre import before anything
-reports. The preflight now tests the files and trees that have to be present rather than the
-directories that contain them.
+\textbf{Verdict: the metabolic module is not shown to improve betaxanthin prediction.}
 
-The database has since been rebuilt on Delta by a worker that reached it first, and it is
-valid: 28{,}322 features, matching the build host exactly. So that fault is self-healed for
-the surviving tasks and cannot recur once the preflight lands.
+Every one of the 144 cells is a W\&B run with its per-epoch curves, and
+Table~\ref{tab:wandb-runs-027} links each by seed and arm, so any number above can be
+followed to the training it came from. The project is
+\href{https://wandb.ai/zhao-group/torchcell_027_bxfx}{\texttt{zhao-group/torchcell\_027\_bxfx}}.
 
-\paragraph{What survives.} Six of nine array tasks are still running with roughly fourteen
-hours left, their workers past study creation and loading datasets. They may yet produce
-cells. Nothing here should be read as a result until they do, and the comparison that
-decides anything is the difference of differences of Section~\ref{sec:arms}, not a single
-validation Pearson.
+\input{tables/wandb_runs_027.tex}
 
-\paragraph{The honest accounting.} Of 72 planned cells, at least 24 are gone with the three
-dead tasks. A resubmit on the fixed launcher would reach its first training step in about an
-hour rather than seven, which is the only version of this run worth scoring.
+\paragraph{The D1 interval moved twice, and the sequence is worth recording.} At the first
+eight balanced seeds it was $[-0.1172, -0.0237]$, excluding zero. At 20 seeds it was
+$[-0.0787, +0.0026]$, including zero, and the claim that the module was \emph{measurably
+worse} was withdrawn on that basis. At the full 24 it is $[-0.0724, -0.0031]$ and excludes
+zero again, by 0.0031. \textbf{The prespecified sample size was 24, so that is the result;
+the two earlier readings were interim looks at a design that had not finished.} The verdict
+was FAIL at every one of the three, which is the part that did not depend on where the
+interval landed. The honest summary of the magnitude is that the anchored module is worse
+than no module by an amount the full design can just resolve from zero, and anyone reading
+$-0.0031$ as a comfortable margin has read it wrong.
+
+\paragraph{The permuted arms are why D1 is not just the raw gap.} With the training labels
+destroyed the same contrast is $-0.0093 \pm 0.0124$. So roughly a fifth of the raw $-0.0465$
+gap is reproduced by an architecture that cannot have learned anything, which is exactly the
+confound D1 exists to subtract and exactly what a comparison against zero would have
+credited to biology.
+
+\paragraph{Stoichiometry alone is the one arm that does not hurt.} \texttt{flux\_off}, which
+keeps the network and the box but switches off the energies, is the top measured arm at
+$+0.0388$ and sits level with the published Flux Cone Learning baseline at $+0.0391$, a
+difference far inside one standard error and not a claim of either direction. Its contrast
+against no module at all is $+0.0118 \pm 0.0144$, indistinguishable from zero.
+\textbf{The cost is specifically in the thermodynamic anchor}: \texttt{flux\_anchored} minus
+\texttt{flux\_free} is $-0.0490 \pm 0.0135$, so learning the potential beats reading the
+tabulated one.
+
+\subsection{Correction: every cell is a constant predictor\secstatus{todo}}
+\label{sec:collapse}
+
+The numbers above were read as a comparison of trained models. An audit of the prediction
+dumps the trainer writes at the selected epoch, \texttt{audit\_prediction\_collapse.py},
+says they are not. \textbf{Every one of the 144 cells outputs a near-constant across the
+905 held-out genotypes.} The largest prediction spread in any cell is 0.8 percent of the
+target spread, and the median across cells is under $10^{-5}$ of it. Pearson and Spearman
+are scale-free, so a correlation can still be computed from the residual jitter, and that
+is what every entry in Tables~\ref{tab:armresults} and \ref{tab:decision} is: the
+correlation of jitter five orders of magnitude below the signal with the truth.
+
+\input{tables/prediction_collapse.tex}
+
+The two families of collapse are different, and the difference explains the arm ordering
+without any biology. The no-module arms sit at the target mean, which is the loss-optimal
+constant under CRPS when the model has found no signal; their training loss reads 1.00 from
+epoch 10 onward, the standardized variance, and never moves again. The flux arms sit at
+constants as far as $-7$ from the mean, so they have not even fit the intercept: their
+training loss is still falling at epoch 199 (12 percent over the last 50 epochs for
+\texttt{flux\_anchored}), driven by the penalty terms rather than the data term. A model
+whose output is a wrong constant scores below a model whose output is the right constant
+on any correlation computed from jitter, and that is the whole of the ``cost of the
+thermodynamic anchor'' reported above.
+
+\textbf{What survives.} The verdict that the module is \emph{not shown} to improve
+betaxanthin prediction stands, because nothing in the grid predicts betaxanthin. The
+stronger reading, that the anchored module is measurably worse and that the cost sits in
+the tabulated energies, is withdrawn: a comparison between two collapsed models says
+nothing about either. The D1 interval excluding zero by 0.0031 is a property of the jitter.
+
+\textbf{Where the defect must be.} The same nine-graph \texttt{prot\_T5} backbone reached
+validation Pearson 0.434 on this target under the 019 Lightning trainer (job 1344,
+Table~\ref{tab:families}), so the target is learnable and the architecture can learn it.
+The 027 loop in \texttt{train\_bx.py} is a hand-written trainer sharing none of that code
+path. Hypothesis, untested: the pooled arm's immediate settle at the mean, within ten
+epochs and at every seed, points at the loss or the inputs rather than at optimization
+noise, and the first things to check are whether the perturbation actually reaches the
+model in this loop, whether the CRPS head's $\log\sigma$ is absorbing the fit, and the
+standardization of the masked pooled target. The trainer also logs no prediction spread,
+which is the one diagnostic that would have caught this at epoch 10 rather than after
+ten node-days; \texttt{pred\_sd\_ratio} goes next to \texttt{val\_loss} in the next
+version.
+
+\paragraph{What this does and does not settle.} Twenty-four seeds, one phenotype, and a
+trainer that did not learn in any arm. \textbf{None of the parameter tables built in this
+work was wired in}, and after the correction above the grid tests neither the module's
+structure nor its parameters. The order of work is now fixed: first a trainer that
+reproduces the 0.434 on the no-module arm, then the module arms on that trainer, and only
+then the merged $\Delta_f G$ table and a predicted $k_{cat}$ table.
+
+\subsection{The plateau, and the recipe that leaves it\secstatus{todo}}
+\label{sec:plateau}
+
+The constants are not a defect in the loop. Twenty-nine single-GPU runs on GilaHyper on
+2026-09-09 (slurm jobs 1610 to 1638, one script and one log per run under
+\texttt{experiments/027-betaxanthin-metabolic/}) show that every betaxanthin run, on every
+trainer and every commit since July, starts on the same mean plateau: a validation
+prediction spread near $10^{-4}$ of the target spread and a training loss of exactly the
+standardized variance. What varies is when a run leaves it, and that is set by the recipe.
+The 019 trainer on today's tree with the July recipe, betaxanthin alone, a Gaussian CRPS head
+and the graph regularizer at $6.5\times10^{-5}$ over two layers, has a spread ratio of 0.003
+at epoch 16, 0.12 at epoch 23 and 0.42 at epoch 28, with validation Pearson 0.20, 0.26, 0.32
+and 0.39 at epochs 23, 24, 27 and 28 and 0.25 to 0.40 through epoch 34 (job 1635). Five
+commits from 2026-07-26 to 07-31 re-run the same way escape at epochs 21 to 24 (jobs 1623,
+1626, 1630, 1632). The August 020 grid, with hard attention masking at six layers and no
+regularizer, escaped at epochs 117 to 157 in its W\&B histories, which is a slower recipe
+rather than a slower code base.
+
+The grid above ran neither element. Its loop sliced $\log\sigma$ off the CRPS head before
+the loss, so the head was scored by MSE, and it never passed the regularizer to the model,
+so \texttt{graph\_reg\_loss} was zero; under that recipe 200 epochs were not enough for any
+of the 144 cells. Both are now switches on \texttt{train\_bx.py}, which also logs the spread
+ratio every epoch; under CRPS plus regularizer its own pooled cell leaves the plateau on
+the same path as the 019 trainer at a slower clock: spread ratio 0.021 at epoch 16, 0.12 at
+epochs 26 to 28, 0.30 to 0.40 at epochs 32 to 35, with validation Pearson 0.15 to 0.28 over
+epochs 27 to 35 (job 1634). A ten-epoch collapse abort, which the first diagnostics ran
+with, would have killed every one of these runs; the abort's patience now defaults to 200.
+The regularizer alone had not lifted the spread by epoch 21 (job 1638), where the combined
+recipe was already at 0.025, so CRPS is doing at least part of the work. The module arms
+under the combined recipe, \texttt{flux\_off} and the new \texttt{flux\_capacity} arm with a
+predicted per-gene enzyme abundance in the capacity bound (jobs 1636, 1637), were still on
+the plateau at epoch 31 with a spread ratio under $10^{-3}$ and their constraint terms
+dominating the loss at 3 to 6 against a data term near 0.5. The flux arms escape later than
+the pooled arm, if they escape at this budget at all, and that is the next measurement: the
+same recipe, a longer budget, and the spread ratio read before any correlation.

@@ -1,0 +1,15 @@
+{
+  "store": "/scratch/projects/torchcell-scratch/data/torchcell/reference_flux/ess_solve_encodings_SM_gem_bxscore.npz",
+  "n_genes": 4719,
+  "n_columns": 1,
+  "columns": [
+    "betaxanthin_score"
+  ],
+  "n_missing_cells_filled_with_reference": 0,
+  "reference_levels_mM": {
+    "betaxanthin_score": 0.0
+  },
+  "source": "cachera",
+  "source_csv_sha256": "6858cdfda0913eec29e52d420fd584a68a741a36a5cbc25c538c7f8e9f208dff",
+  "seconds": 0.010420799255371094
+}

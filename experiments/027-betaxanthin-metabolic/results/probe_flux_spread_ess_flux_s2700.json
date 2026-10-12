@@ -1,0 +1,37 @@
+{
+  "result_file": "wave9_ess_flux_e80_s2700.json",
+  "checkpoint": "/scratch/projects/torchcell-scratch/checkpoints-027/wave9_ess_flux_e80_s2700.pt",
+  "arm": "flux_projection_anchored",
+  "seed": 2700,
+  "head": "essentiality",
+  "select_epoch": 26,
+  "n_genotypes": 933,
+  "n_reactions": 4131,
+  "flux_relative_spread": {
+    "n": 4131,
+    "median": 0.0025125141255557537,
+    "p90": 0.011658698320388794,
+    "maximum": 2.634953260421753,
+    "n_above_threshold": 4131
+  },
+  "flux_absolute_sd": {
+    "n": 4131,
+    "median": 0.0012577668530866504,
+    "p90": 0.005504752974957228,
+    "maximum": 0.1547042578458786,
+    "n_above_threshold": 3698
+  },
+  "context_relative_spread": {
+    "n": 90,
+    "median": 0.002684700069949031,
+    "p90": 0.020352715626358986,
+    "maximum": 1.0026572942733765,
+    "n_above_threshold": 90
+  },
+  "head_input_sd": 0.003149739932268858,
+  "head_input_mean_abs": 0.8868830800056458,
+  "head_input_name": "none",
+  "prediction_sd": 0.003149739932268858,
+  "target_sd": 1.0,
+  "prediction_sd_ratio": 0.003149739932268858
+}

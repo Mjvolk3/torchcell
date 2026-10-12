@@ -1,0 +1,255 @@
+{
+  "protocol": "transductive node classification on one gene graph, no perturbation; class-weighted BCE, Adam 1e-3, 200 epochs, width 64, dropout 0.2; epoch selected by a five-epoch moving average of the validation AUROC; scored once on the 195 held-out genes",
+  "rows": [
+    {
+      "model": "MLP",
+      "graph": "none",
+      "inputs": "ProtT5+pathways+FBA ratios",
+      "dim_in": 1201,
+      "n_parameters": 81153,
+      "test_auroc": [
+        0.8758851298190402,
+        0.8851298190401258,
+        0.8778520849724627
+      ],
+      "val_auroc": [
+        0.8607518796992482,
+        0.8601503759398497,
+        0.8589473684210527
+      ],
+      "select_epoch": [
+        62,
+        56,
+        59
+      ],
+      "mean": 0.8796223446105428,
+      "sd": 0.0039762992919108245,
+      "seconds": 6.16503381729126
+    },
+    {
+      "model": "GCN",
+      "graph": "union of nine",
+      "inputs": "ProtT5+pathways+FBA ratios",
+      "dim_in": 1201,
+      "n_parameters": 81153,
+      "test_auroc": [
+        0.8453973249409914,
+        0.8442171518489379,
+        0.8471675845790716
+      ],
+      "val_auroc": [
+        0.7377443609022557,
+        0.7383458646616542,
+        0.7290225563909773
+      ],
+      "select_epoch": [
+        197,
+        196,
+        197
+      ],
+      "mean": 0.8455940204563337,
+      "sd": 0.0012125125890969561,
+      "seconds": 873.7973029613495
+    },
+    {
+      "model": "MLP",
+      "graph": "none",
+      "inputs": "ProtT5+chromosome+FBA ratios",
+      "dim_in": 1045,
+      "n_parameters": 71169,
+      "test_auroc": [
+        0.8097954366640441,
+        0.8086152635719905,
+        0.8084185680566484
+      ],
+      "val_auroc": [
+        0.8544360902255639,
+        0.8532330827067669,
+        0.8511278195488721
+      ],
+      "select_epoch": [
+        66,
+        64,
+        66
+      ],
+      "mean": 0.8089430894308943,
+      "sd": 0.0006080263896863145,
+      "seconds": 5.093963146209717
+    },
+    {
+      "model": "GCN",
+      "graph": "union of nine",
+      "inputs": "ProtT5+chromosome+FBA ratios",
+      "dim_in": 1045,
+      "n_parameters": 71169,
+      "test_auroc": [
+        0.8391030684500393,
+        0.837332808811959,
+        0.8267112509834775
+      ],
+      "val_auroc": [
+        0.7311278195488722,
+        0.7377443609022556,
+        0.7290225563909775
+      ],
+      "select_epoch": [
+        197,
+        197,
+        196
+      ],
+      "mean": 0.8343823760818253,
+      "sd": 0.005472237507176867,
+      "seconds": 972.2040550708771
+    },
+    {
+      "model": "MLP",
+      "graph": "none",
+      "inputs": "ProtT5+properties+FBA ratios",
+      "dim_in": 1035,
+      "n_parameters": 70529,
+      "test_auroc": [
+        0.7881589299763965,
+        0.8143194335169159,
+        0.7911093627065303
+      ],
+      "val_auroc": [
+        0.8538345864661654,
+        0.8514285714285714,
+        0.8469172932330826
+      ],
+      "select_epoch": [
+        197,
+        74,
+        196
+      ],
+      "mean": 0.7978625753999475,
+      "sd": 0.011698928658507775,
+      "seconds": 7.85944128036499
+    },
+    {
+      "model": "GCN",
+      "graph": "union of nine",
+      "inputs": "ProtT5+properties+FBA ratios",
+      "dim_in": 1035,
+      "n_parameters": 70529,
+      "test_auroc": [
+        0.834185680566483,
+        0.8294649881982691,
+        0.8375295043273013
+      ],
+      "val_auroc": [
+        0.7218045112781954,
+        0.7305263157894737,
+        0.7314285714285714
+      ],
+      "select_epoch": [
+        196,
+        197,
+        197
+      ],
+      "mean": 0.8337267243640177,
+      "sd": 0.003308281094031692,
+      "seconds": 749.0446786880493
+    },
+    {
+      "model": "MLP",
+      "graph": "none",
+      "inputs": "pathways+FBA ratios",
+      "dim_in": 177,
+      "n_parameters": 15617,
+      "test_auroc": [
+        0.8269079464988198,
+        0.8280881195908733,
+        0.8286782061369
+      ],
+      "val_auroc": [
+        0.7989473684210525,
+        0.798045112781955,
+        0.8064661654135339
+      ],
+      "select_epoch": [
+        81,
+        72,
+        84
+      ],
+      "mean": 0.827891424075531,
+      "sd": 0.0007359672279256111,
+      "seconds": 4.157369136810303
+    },
+    {
+      "model": "GCN",
+      "graph": "union of nine",
+      "inputs": "pathways+FBA ratios",
+      "dim_in": 177,
+      "n_parameters": 15617,
+      "test_auroc": [
+        0.8324154209284028,
+        0.8471675845790716,
+        0.8214004720692368
+      ],
+      "val_auroc": [
+        0.6742857142857143,
+        0.694436090225564,
+        0.6622556390977443
+      ],
+      "select_epoch": [
+        197,
+        197,
+        197
+      ],
+      "mean": 0.833661159192237,
+      "sd": 0.01055619627328286,
+      "seconds": 1041.646448135376
+    },
+    {
+      "model": "MLP",
+      "graph": "none",
+      "inputs": "pathways",
+      "dim_in": 173,
+      "n_parameters": 15361,
+      "test_auroc": [
+        0.7186270653029111,
+        0.7607199055861527,
+        0.7685877261998426
+      ],
+      "val_auroc": [
+        0.7183458646616542,
+        0.7150375939849625,
+        0.7087218045112782
+      ],
+      "select_epoch": [
+        89,
+        81,
+        84
+      ],
+      "mean": 0.7493115656963022,
+      "sd": 0.021933681460200454,
+      "seconds": 3.8257360458374023
+    },
+    {
+      "model": "GCN",
+      "graph": "union of nine",
+      "inputs": "pathways",
+      "dim_in": 173,
+      "n_parameters": 15361,
+      "test_auroc": [
+        0.8713611329661684,
+        0.8715578284815106,
+        0.8707710464201416
+      ],
+      "val_auroc": [
+        0.7254135338345865,
+        0.7266165413533835,
+        0.723609022556391
+      ],
+      "select_epoch": [
+        197,
+        197,
+        197
+      ],
+      "mean": 0.8712300026226069,
+      "sd": 0.00033431809032213015,
+      "seconds": 536.2223734855652
+    }
+  ]
+}

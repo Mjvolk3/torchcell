@@ -1,0 +1,12 @@
+{
+  "store": "/scratch/projects/torchcell-scratch/data/torchcell/reference_flux/ess_solve_encodings_YPD_bx_aapoolcooper.npz",
+  "base": "/scratch/projects/torchcell-scratch/data/torchcell/reference_flux/ess_solve_encodings_YPD_bx_aapool.npz",
+  "append": "/scratch/projects/torchcell-scratch/data/torchcell/reference_flux/ess_solve_encodings_YPD_bx_cooperpool.npz",
+  "n_genes": 4678,
+  "n_genes_with_appended_row": 4051,
+  "n_columns": 36,
+  "column_layout": "YPD_bx_aapool (19) | YPD_bx_cooperpool (17)",
+  "flux_fields_from": "none",
+  "seconds": 0.02022576332092285,
+  "generated_by": "experiments/031-betaxanthin-module/scripts/target_store_concat.py"
+}

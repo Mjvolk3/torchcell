@@ -1,0 +1,117 @@
+{
+  "n_cells": 144,
+  "balanced_seeds": [
+    2700,
+    2701,
+    2702,
+    2703,
+    2704,
+    2705,
+    2706,
+    2707,
+    2708,
+    2709,
+    2710,
+    2711,
+    2712,
+    2713,
+    2714,
+    2715,
+    2716,
+    2717,
+    2718,
+    2719,
+    2720,
+    2721,
+    2722,
+    2723
+  ],
+  "arms": [
+    "flux_anchored",
+    "flux_free",
+    "flux_off",
+    "null_anchored",
+    "null_pooled",
+    "pooled"
+  ],
+  "per_arm_test_spearman_pinned": {
+    "flux_anchored": {
+      "n": 24,
+      "mean": -0.01959980246862096,
+      "sd": 0.05442618364856192,
+      "se": 0.01110969821549883
+    },
+    "flux_free": {
+      "n": 24,
+      "mean": 0.029439604550918447,
+      "sd": 0.041685186111663074,
+      "se": 0.008508952983877209
+    },
+    "flux_off": {
+      "n": 24,
+      "mean": 0.03876725453513186,
+      "sd": 0.05405506378603953,
+      "se": 0.011033943690782855
+    },
+    "null_anchored": {
+      "n": 24,
+      "mean": -0.0017377358815372477,
+      "sd": 0.053658527830316306,
+      "se": 0.010953001127767125
+    },
+    "null_pooled": {
+      "n": 24,
+      "mean": 0.007562643424204568,
+      "sd": 0.029772023104727742,
+      "se": 0.006077188768077867
+    },
+    "pooled": {
+      "n": 24,
+      "mean": 0.02693804720868055,
+      "sd": 0.05060087813334593,
+      "se": 0.010328860996954374
+    }
+  },
+  "contrasts": {
+    "flux_anchored-pooled": {
+      "n": 24,
+      "mean": -0.04653784967730151,
+      "sd": 0.06612635757415278,
+      "se": 0.013497986217124997,
+      "why": "the headline: full module vs no module"
+    },
+    "flux_off-pooled": {
+      "n": 24,
+      "mean": 0.01182920732645131,
+      "sd": 0.07037660893966421,
+      "se": 0.014365565144130869,
+      "why": "stoichiometry alone -- is the network the gain?"
+    },
+    "flux_anchored-flux_free": {
+      "n": 24,
+      "mean": -0.049039407019539405,
+      "sd": 0.06623733508012762,
+      "se": 0.013520639405672084,
+      "why": "do the TABULATED energies beat any potential?"
+    },
+    "null_anchored-null_pooled": {
+      "n": 24,
+      "mean": -0.009300379305741817,
+      "sd": 0.06088518762107557,
+      "se": 0.01242813688043783,
+      "why": "the same headline gap with labels destroyed"
+    }
+  },
+  "null_calibration": {
+    "excess": -0.037237470371559694,
+    "ci_lo": -0.07239041718076503,
+    "ci_hi": -0.003092434948530968,
+    "real_gap": -0.04653784967730151,
+    "null_gap": -0.009300379305741817,
+    "p_null_ge_real": 0.99875
+  },
+  "fcl_rf_test_spearman": 0.039064257838781265,
+  "D1_excess_ci_excludes_zero": false,
+  "D2_beats_fcl_by_one_se": false,
+  "verdict": "the metabolic module is NOT shown to improve betaxanthin prediction"
+}

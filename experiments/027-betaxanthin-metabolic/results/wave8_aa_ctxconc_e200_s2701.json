@@ -1,0 +1,3992 @@
+{
+  "cell": {
+    "arm": "pooled",
+    "base_arm": "pooled",
+    "seed": 2701,
+    "permute_train_targets": false,
+    "epochs": 200,
+    "hidden": 90,
+    "layers": 2,
+    "attention_heads": 9,
+    "batch_size": 128,
+    "num_workers": 2,
+    "lr": 0.001,
+    "weight_decay": 0.0001,
+    "split_seed": 0,
+    "select_smoothing_window": 5,
+    "crps": true,
+    "graph_reg": true,
+    "abort_on_collapse": false,
+    "aux_mulleder": false,
+    "attention_mask": false,
+    "learnable_embedding": false,
+    "pert_heads": 6,
+    "kcat_tier": "measured",
+    "thermo_source": "shipped",
+    "constraint_warmup_epochs": 0,
+    "constraint_scale": 1.0,
+    "constraint_delay_epochs": 0,
+    "head_normalize": false,
+    "head": "mulleder19",
+    "aa_readout": "context_concentration",
+    "target_log10_molar": true,
+    "dist": "crps",
+    "bx_readout": "flux_scalar",
+    "volume_table": "assumed",
+    "conc_space": "mixture",
+    "conc_lower_m": 1e-07,
+    "conc_upper_m": 1.0,
+    "flux_parameterization": null,
+    "flux_balance_active_row_set": "dynamic",
+    "flux_balance_active_weight": 0.0,
+    "flux_density_weight": 0.0,
+    "flux_draws": 1,
+    "flux_latent_stochastic": false,
+    "flux_kl_weight": null,
+    "ib_readout": "flux_scalar",
+    "ib_anchors": "one",
+    "target_log10": false,
+    "aa_supervise_columns": null,
+    "apply_media": "none",
+    "flux_log_c_from_latent": false
+  },
+  "select_epoch": 84,
+  "select_rule": "centered_ma_5",
+  "select_val_pearson": 0.14796426884928032,
+  "test": {
+    "pinned": {
+      "n_records": 639,
+      "n_records_with_any_feature": 564,
+      "n_measurements": 10716,
+      "mean_spearman": 0.06010923238239603,
+      "mean_pearson": 0.07923037774468723,
+      "columns": [
+        "alanine",
+        "arginine",
+        "asparagine",
+        "aspartate",
+        "glutamate",
+        "glutamine",
+        "glycine",
+        "histidine",
+        "isoleucine",
+        "leucine",
+        "lysine",
+        "methionine",
+        "phenylalanine",
+        "proline",
+        "serine",
+        "threonine",
+        "tryptophan",
+        "tyrosine",
+        "valine"
+      ],
+      "spearman_per_feature": [
+        0.13229857548891552,
+        0.10648082917130648,
+        0.03259217636469667,
+        0.12772038012502154,
+        0.06690179476528292,
+        0.043623953128862,
+        0.031884195725413775,
+        0.013455251477836458,
+        0.03999725139364131,
+        0.10121167690779719,
+        0.004892561043859903,
+        0.019846896534545404,
+        0.006514965421275352,
+        0.06435143422905412,
+        0.14402722117199002,
+        0.1219899371027484,
+        0.04109914095393736,
+        0.0795216120964431,
+        -0.03633443783710294
+      ],
+      "pearson_per_feature": [
+        0.1372894048690796,
+        0.09997276961803436,
+        0.05472118780016899,
+        0.12498663365840912,
+        0.09784982353448868,
+        0.11645347625017166,
+        0.007990935817360878,
+        0.044295784085989,
+        0.06143995746970177,
+        0.15261223912239075,
+        0.05380335450172424,
+        0.024516990408301353,
+        -0.002248642034828663,
+        0.10756460577249527,
+        0.1966753900051117,
+        0.11106205731630325,
+        -0.012415933422744274,
+        0.11292237788438797,
+        0.01588476449251175
+      ],
+      "n_per_feature": [
+        564,
+        564,
+        564,
+        564,
+        564,
+        564,
+        564,
+        564,
+        564,
+        564,
+        564,
+        564,
+        564,
+        564,
+        564,
+        564,
+        564,
+        564,
+        564
+      ]
+    },
+    "all": {
+      "n_records": 933,
+      "n_records_with_any_feature": 842,
+      "n_measurements": 15998,
+      "mean_spearman": 0.07465665033323084,
+      "mean_pearson": 0.10604910577010167,
+      "columns": [
+        "alanine",
+        "arginine",
+        "asparagine",
+        "aspartate",
+        "glutamate",
+        "glutamine",
+        "glycine",
+        "histidine",
+        "isoleucine",
+        "leucine",
+        "lysine",
+        "methionine",
+        "phenylalanine",
+        "proline",
+        "serine",
+        "threonine",
+        "tryptophan",
+        "tyrosine",
+        "valine"
+      ],
+      "spearman_per_feature": [
+        0.12745158581770655,
+        0.12952387250238168,
+        0.07475929788843698,
+        0.11236547300848135,
+        0.0847111246868239,
+        0.06327323414879744,
+        0.036143603825243856,
+        0.09717470580817376,
+        0.0628124326343033,
+        0.10973585227397153,
+        0.02551445315586484,
+        0.04679343637959522,
+        0.007687686666447143,
+        0.06982129503030662,
+        0.1433001729204426,
+        0.13294112935704103,
+        -0.0038367157121431367,
+        0.08776939272747182,
+        0.010534323212039447
+      ],
+      "pearson_per_feature": [
+        0.15751402080059052,
+        0.18424682319164276,
+        0.11186064034700394,
+        0.16362763941287994,
+        0.10457632690668106,
+        0.06937351077795029,
+        0.03931385278701782,
+        0.17816667258739471,
+        0.05744028463959694,
+        0.2302454262971878,
+        0.09608103334903717,
+        0.04800624027848244,
+        0.008441067300736904,
+        0.10693351179361343,
+        0.15273910760879517,
+        0.16681942343711853,
+        -0.019098056480288506,
+        0.10522740334272385,
+        0.053418081253767014
+      ],
+      "n_per_feature": [
+        842,
+        842,
+        842,
+        842,
+        842,
+        842,
+        842,
+        842,
+        842,
+        842,
+        842,
+        842,
+        842,
+        842,
+        842,
+        842,
+        842,
+        842,
+        842
+      ]
+    },
+    "dump_path": "/scratch/projects/torchcell-scratch/test-predictions-027-wave7/pooled_mulleder19_context_concentration_s2701.json"
+  },
+  "history": [
+    {
+      "epoch": 0,
+      "train_loss": 3.5028414027444246,
+      "train_data_loss": 2.5284505609808297,
+      "val_loss": 0.7066691735102187,
+      "val_pearson": 0.0018609903850837757,
+      "val_pred_sd_ratio": 0.0019141683005727828,
+      "n_val": 5130,
+      "graph_reg_loss": 0.974284291267395,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 1,
+      "train_loss": 1.8236467550540794,
+      "train_data_loss": 0.8514077683974957,
+      "val_loss": 0.6771620365611294,
+      "val_pearson": 0.009410967615335003,
+      "val_pred_sd_ratio": 0.0012403629064608953,
+      "n_val": 5130,
+      "graph_reg_loss": 0.9713307023048401,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 2,
+      "train_loss": 1.7683888714889,
+      "train_data_loss": 0.799584423673564,
+      "val_loss": 0.6060891997279712,
+      "val_pearson": -0.007509815469874363,
+      "val_pred_sd_ratio": 0.0010462564103746492,
+      "n_val": 5130,
+      "graph_reg_loss": 0.9674084186553955,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 3,
+      "train_loss": 1.680402480322739,
+      "train_data_loss": 0.7171017383706981,
+      "val_loss": 0.6442717851486355,
+      "val_pearson": -0.002886274584421986,
+      "val_pred_sd_ratio": 0.0009613131221972013,
+      "n_val": 5130,
+      "graph_reg_loss": 0.9582284688949585,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 4,
+      "train_loss": 1.658619025657917,
+      "train_data_loss": 0.7054042384542268,
+      "val_loss": 0.6283760769790144,
+      "val_pearson": -0.0066697661225733,
+      "val_pred_sd_ratio": 0.0009128233129893871,
+      "n_val": 5130,
+      "graph_reg_loss": 0.9480181336402893,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 5,
+      "train_loss": 1.5973452576275529,
+      "train_data_loss": 0.660378425285734,
+      "val_loss": 0.5613567924871314,
+      "val_pearson": 0.002544701197429707,
+      "val_pred_sd_ratio": 0.000924396929086039,
+      "n_val": 5130,
+      "graph_reg_loss": 0.9239411354064941,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 6,
+      "train_loss": 1.5524259106866245,
+      "train_data_loss": 0.6550172320727644,
+      "val_loss": 0.6439092059813977,
+      "val_pearson": 0.0007005516427422041,
+      "val_pred_sd_ratio": 0.0011518816172610968,
+      "n_val": 5130,
+      "graph_reg_loss": 0.8649210929870605,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 7,
+      "train_loss": 1.4649267648828441,
+      "train_data_loss": 0.6381192351209706,
+      "val_loss": 0.6089529710438749,
+      "val_pearson": 0.01680523404655488,
+      "val_pred_sd_ratio": 0.0014094486250542104,
+      "n_val": 5130,
+      "graph_reg_loss": 0.7964910268783569,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 8,
+      "train_loss": 1.3870986494524726,
+      "train_data_loss": 0.6378113051940655,
+      "val_loss": 0.6150778846666362,
+      "val_pearson": -0.0022340231991716123,
+      "val_pred_sd_ratio": 0.0014243872137740254,
+      "n_val": 5130,
+      "graph_reg_loss": 0.7086377739906311,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 9,
+      "train_loss": 1.3051905960872257,
+      "train_data_loss": 0.6284027305142633,
+      "val_loss": 0.5433736700760691,
+      "val_pearson": 0.009427954258985426,
+      "val_pred_sd_ratio": 0.0012960421093004314,
+      "n_val": 5130,
+      "graph_reg_loss": 0.6520965099334717,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 10,
+      "train_loss": 1.253245604449305,
+      "train_data_loss": 0.620954877343671,
+      "val_loss": 0.5880626715647083,
+      "val_pearson": 0.005697595029089011,
+      "val_pred_sd_ratio": 0.0013906638885505106,
+      "n_val": 5130,
+      "graph_reg_loss": 0.6174752712249756,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 11,
+      "train_loss": 1.1921312891203781,
+      "train_data_loss": 0.5891534439448652,
+      "val_loss": 0.5787131504705775,
+      "val_pearson": 0.02048978052641216,
+      "val_pred_sd_ratio": 0.0014580936495851922,
+      "n_val": 5130,
+      "graph_reg_loss": 0.5949853658676147,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 12,
+      "train_loss": 1.1652218925541844,
+      "train_data_loss": 0.5775175813970894,
+      "val_loss": 0.5405737566436708,
+      "val_pearson": 0.01581697675742601,
+      "val_pred_sd_ratio": 0.0018005592344132694,
+      "n_val": 5130,
+      "graph_reg_loss": 0.5792659521102905,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 13,
+      "train_loss": 1.1517023588049,
+      "train_data_loss": 0.5785401874575121,
+      "val_loss": 0.5534364875064723,
+      "val_pearson": 0.009880436216726116,
+      "val_pred_sd_ratio": 0.0019329925891820733,
+      "n_val": 5130,
+      "graph_reg_loss": 0.5642309188842773,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 14,
+      "train_loss": 1.1292268942142356,
+      "train_data_loss": 0.5670180772912914,
+      "val_loss": 0.5400451511435109,
+      "val_pearson": 0.011248316024552639,
+      "val_pred_sd_ratio": 0.0032629937233746445,
+      "n_val": 5130,
+      "graph_reg_loss": 0.5592197179794312,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 15,
+      "train_loss": 1.1231027019434963,
+      "train_data_loss": 0.5746195809594516,
+      "val_loss": 0.5509505065561038,
+      "val_pearson": 0.022083275841156904,
+      "val_pred_sd_ratio": 0.006187572257323681,
+      "n_val": 5130,
+      "graph_reg_loss": 0.5370959043502808,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 16,
+      "train_loss": 1.0919330284513276,
+      "train_data_loss": 0.563913309368594,
+      "val_loss": 0.5536212616264239,
+      "val_pearson": 0.003760904171749165,
+      "val_pred_sd_ratio": 0.020351240754519637,
+      "n_val": 5130,
+      "graph_reg_loss": 0.5160095691680908,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 17,
+      "train_loss": 1.0334320027252724,
+      "train_data_loss": 0.5453856936816511,
+      "val_loss": 0.5331370928134137,
+      "val_pearson": 0.01607041756965612,
+      "val_pred_sd_ratio": 0.060508933457496916,
+      "n_val": 5130,
+      "graph_reg_loss": 0.4593534767627716,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 18,
+      "train_loss": 0.9910064216317802,
+      "train_data_loss": 0.5484143762752928,
+      "val_loss": 0.563122213560703,
+      "val_pearson": 0.03207492710728394,
+      "val_pred_sd_ratio": 0.049958901332789345,
+      "n_val": 5130,
+      "graph_reg_loss": 0.4274579584598541,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 19,
+      "train_loss": 0.9560970643471027,
+      "train_data_loss": 0.5400287878924402,
+      "val_loss": 0.553892299956978,
+      "val_pearson": 0.019151809331225723,
+      "val_pred_sd_ratio": 0.03460518871188948,
+      "n_val": 5130,
+      "graph_reg_loss": 0.4130854606628418,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 20,
+      "train_loss": 0.9374064494823587,
+      "train_data_loss": 0.5418572384735634,
+      "val_loss": 0.5251185366981908,
+      "val_pearson": 0.03651622403872592,
+      "val_pred_sd_ratio": 0.0455136992723534,
+      "n_val": 5130,
+      "graph_reg_loss": 0.3868942856788635,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 21,
+      "train_loss": 0.9153298961705175,
+      "train_data_loss": 0.5355407348994551,
+      "val_loss": 0.5418787311159844,
+      "val_pearson": 0.02325779052549287,
+      "val_pred_sd_ratio": 0.038230736384560406,
+      "n_val": 5130,
+      "graph_reg_loss": 0.36917173862457275,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 22,
+      "train_loss": 0.9004808787641854,
+      "train_data_loss": 0.5342361813989179,
+      "val_loss": 0.5270809597439237,
+      "val_pearson": 0.029154407954162086,
+      "val_pred_sd_ratio": 0.043522324364044164,
+      "n_val": 5130,
+      "graph_reg_loss": 0.36938220262527466,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 23,
+      "train_loss": 0.8858132896752193,
+      "train_data_loss": 0.5280249601808088,
+      "val_loss": 0.5266215839348806,
+      "val_pearson": 0.03663529862502688,
+      "val_pred_sd_ratio": 0.03724308603590256,
+      "n_val": 5130,
+      "graph_reg_loss": 0.35690635442733765,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 24,
+      "train_loss": 0.8782741509634873,
+      "train_data_loss": 0.5261745617307466,
+      "val_loss": 0.5217205055043479,
+      "val_pearson": 0.04251441175706292,
+      "val_pred_sd_ratio": 0.03979288744985273,
+      "n_val": 5130,
+      "graph_reg_loss": 0.34920549392700195,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 25,
+      "train_loss": 0.8708692398564569,
+      "train_data_loss": 0.5257469693134571,
+      "val_loss": 0.5181762070683708,
+      "val_pearson": 0.047171317335022125,
+      "val_pred_sd_ratio": 0.04113850600429272,
+      "n_val": 5130,
+      "graph_reg_loss": 0.3373171091079712,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 26,
+      "train_loss": 0.8587599663898863,
+      "train_data_loss": 0.5209462940692902,
+      "val_loss": 0.5231295758520651,
+      "val_pearson": 0.0609236728449009,
+      "val_pred_sd_ratio": 0.03622379046129553,
+      "n_val": 5130,
+      "graph_reg_loss": 0.3373565077781677,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 27,
+      "train_loss": 0.8515646868738634,
+      "train_data_loss": 0.5190838154019981,
+      "val_loss": 0.5303472299557216,
+      "val_pearson": 0.05910272023174912,
+      "val_pred_sd_ratio": 0.04149803323181052,
+      "n_val": 5130,
+      "graph_reg_loss": 0.3233294188976288,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 28,
+      "train_loss": 0.8465222593011528,
+      "train_data_loss": 0.5201533426498545,
+      "val_loss": 0.5235690884655214,
+      "val_pearson": 0.056822605847724174,
+      "val_pred_sd_ratio": 0.0442631971091032,
+      "n_val": 5130,
+      "graph_reg_loss": 0.32854586839675903,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 29,
+      "train_loss": 0.8404563295430151,
+      "train_data_loss": 0.5177687334603277,
+      "val_loss": 0.5213941161395513,
+      "val_pearson": 0.06412368680742618,
+      "val_pred_sd_ratio": 0.04525814450492984,
+      "n_val": 5130,
+      "graph_reg_loss": 0.31936103105545044,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 30,
+      "train_loss": 0.8363463734758312,
+      "train_data_loss": 0.5187095455054579,
+      "val_loss": 0.5161268446180556,
+      "val_pearson": 0.04685681448072979,
+      "val_pred_sd_ratio": 0.044238647470544824,
+      "n_val": 5130,
+      "graph_reg_loss": 0.3182721436023712,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 31,
+      "train_loss": 0.8340678626093371,
+      "train_data_loss": 0.5190742488565117,
+      "val_loss": 0.5178475303724263,
+      "val_pearson": 0.042862796996671115,
+      "val_pred_sd_ratio": 0.045926151846192385,
+      "n_val": 5130,
+      "graph_reg_loss": 0.31659212708473206,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 32,
+      "train_loss": 0.8321250245488924,
+      "train_data_loss": 0.5192232245001299,
+      "val_loss": 0.5222085071586029,
+      "val_pearson": 0.0537927926665074,
+      "val_pred_sd_ratio": 0.042157189920544624,
+      "n_val": 5130,
+      "graph_reg_loss": 0.3177904188632965,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 33,
+      "train_loss": 0.831600781144767,
+      "train_data_loss": 0.5220874064955218,
+      "val_loss": 0.5268432676675956,
+      "val_pearson": 0.04271865052808272,
+      "val_pred_sd_ratio": 0.040734776442772465,
+      "n_val": 5130,
+      "graph_reg_loss": 0.3156853914260864,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 34,
+      "train_loss": 0.8311328291893005,
+      "train_data_loss": 0.5235627416906685,
+      "val_loss": 0.5457959567361873,
+      "val_pearson": 0.017618308333974136,
+      "val_pred_sd_ratio": 0.045148690084093494,
+      "n_val": 5130,
+      "graph_reg_loss": 0.30809205770492554,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 35,
+      "train_loss": 0.8221806493298761,
+      "train_data_loss": 0.5189834637888546,
+      "val_loss": 0.5270301328067891,
+      "val_pearson": 0.03418663187001489,
+      "val_pred_sd_ratio": 0.04225769913510272,
+      "n_val": 5130,
+      "graph_reg_loss": 0.3084854185581207,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 36,
+      "train_loss": 0.8169483830188883,
+      "train_data_loss": 0.5166796209483311,
+      "val_loss": 0.5176430774711029,
+      "val_pearson": 0.051128016450859015,
+      "val_pred_sd_ratio": 0.04154805741027782,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2999291718006134,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 37,
+      "train_loss": 0.8110069529763584,
+      "train_data_loss": 0.5154232876054172,
+      "val_loss": 0.5221891258195129,
+      "val_pearson": 0.032621905575261304,
+      "val_pred_sd_ratio": 0.06008589571635974,
+      "n_val": 5130,
+      "graph_reg_loss": 0.29264944791793823,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 38,
+      "train_loss": 0.8070529288259046,
+      "train_data_loss": 0.5161161402176166,
+      "val_loss": 0.5178453174018488,
+      "val_pearson": 0.04265412657772877,
+      "val_pred_sd_ratio": 0.055797781109025606,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2899188995361328,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 39,
+      "train_loss": 0.8014879596644434,
+      "train_data_loss": 0.513516615177023,
+      "val_loss": 0.5090642025596217,
+      "val_pearson": 0.06559929754094858,
+      "val_pred_sd_ratio": 0.06020601980976368,
+      "n_val": 5130,
+      "graph_reg_loss": 0.293124258518219,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 40,
+      "train_loss": 0.795775016833996,
+      "train_data_loss": 0.5121555533902399,
+      "val_loss": 0.5173744097555357,
+      "val_pearson": 0.06484718036862384,
+      "val_pred_sd_ratio": 0.06409734536550547,
+      "n_val": 5130,
+      "graph_reg_loss": 0.28200724720954895,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 41,
+      "train_loss": 0.7965176865972322,
+      "train_data_loss": 0.5158454344190401,
+      "val_loss": 0.5107177496421175,
+      "val_pearson": 0.07347971210746389,
+      "val_pred_sd_ratio": 0.06508952487064035,
+      "n_val": 5130,
+      "graph_reg_loss": 0.27736207842826843,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 42,
+      "train_loss": 0.7900774088399164,
+      "train_data_loss": 0.5116270461986805,
+      "val_loss": 0.5261411135192038,
+      "val_pearson": 0.07839942125505522,
+      "val_pred_sd_ratio": 0.06942203925236275,
+      "n_val": 5130,
+      "graph_reg_loss": 0.27358490228652954,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 43,
+      "train_loss": 0.7905654043986879,
+      "train_data_loss": 0.5144466326154512,
+      "val_loss": 0.516522677832412,
+      "val_pearson": 0.08746619487034255,
+      "val_pred_sd_ratio": 0.07400732330585781,
+      "n_val": 5130,
+      "graph_reg_loss": 0.27536168694496155,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 44,
+      "train_loss": 0.7874552915836203,
+      "train_data_loss": 0.5151685065236585,
+      "val_loss": 0.512201831958912,
+      "val_pearson": 0.08007816039025784,
+      "val_pred_sd_ratio": 0.08050040126238998,
+      "n_val": 5130,
+      "graph_reg_loss": 0.27222636342048645,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 45,
+      "train_loss": 0.7811038144703569,
+      "train_data_loss": 0.5115607853593498,
+      "val_loss": 0.5112777561239796,
+      "val_pearson": 0.08296073242825897,
+      "val_pred_sd_ratio": 0.0774904445401932,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2604786157608032,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 46,
+      "train_loss": 0.7806263504357174,
+      "train_data_loss": 0.5133705909909874,
+      "val_loss": 0.5130710296928301,
+      "val_pearson": 0.08499814150548589,
+      "val_pred_sd_ratio": 0.07144984053938012,
+      "n_val": 5130,
+      "graph_reg_loss": 0.25463882088661194,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 47,
+      "train_loss": 0.7778220443890013,
+      "train_data_loss": 0.5120406541331061,
+      "val_loss": 0.5124259755392986,
+      "val_pearson": 0.10033067011911619,
+      "val_pred_sd_ratio": 0.0932716383157592,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2670310139656067,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 48,
+      "train_loss": 0.7745279340908445,
+      "train_data_loss": 0.5094354358212702,
+      "val_loss": 0.504758011667352,
+      "val_pearson": 0.08918619405870375,
+      "val_pred_sd_ratio": 0.10722808128124789,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2643109858036041,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 49,
+      "train_loss": 0.7704699203885835,
+      "train_data_loss": 0.5084682559144909,
+      "val_loss": 0.5125810351752863,
+      "val_pearson": 0.08597798067096032,
+      "val_pred_sd_ratio": 0.07031414255891975,
+      "n_val": 5130,
+      "graph_reg_loss": 0.26384592056274414,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 50,
+      "train_loss": 0.7671102717004973,
+      "train_data_loss": 0.5078919725171451,
+      "val_loss": 0.5040234541567677,
+      "val_pearson": 0.09532223913916632,
+      "val_pred_sd_ratio": 0.07613909234733958,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2617836892604828,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 51,
+      "train_loss": 0.7650401078421494,
+      "train_data_loss": 0.5085390282088312,
+      "val_loss": 0.5137918096769158,
+      "val_pearson": 0.10566769976561007,
+      "val_pred_sd_ratio": 0.09824577738579951,
+      "n_val": 5130,
+      "graph_reg_loss": 0.24640673398971558,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 52,
+      "train_loss": 0.7635806038461882,
+      "train_data_loss": 0.5076355502523225,
+      "val_loss": 0.5112345764279134,
+      "val_pearson": 0.07967094895674993,
+      "val_pred_sd_ratio": 0.2075334442289252,
+      "n_val": 5130,
+      "graph_reg_loss": 0.253013551235199,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 53,
+      "train_loss": 0.7630969861458088,
+      "train_data_loss": 0.508427047523959,
+      "val_loss": 0.5135218510618451,
+      "val_pearson": 0.11674438669242111,
+      "val_pred_sd_ratio": 0.09333102150182974,
+      "n_val": 5130,
+      "graph_reg_loss": 0.25385189056396484,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 54,
+      "train_loss": 0.763586071030847,
+      "train_data_loss": 0.5094669471526968,
+      "val_loss": 0.5100477430555556,
+      "val_pearson": 0.1131431539788058,
+      "val_pred_sd_ratio": 0.10915071183913633,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2531003952026367,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 55,
+      "train_loss": 0.7577713604631096,
+      "train_data_loss": 0.5068133483672964,
+      "val_loss": 0.5139129341229594,
+      "val_pearson": 0.10799216787869993,
+      "val_pred_sd_ratio": 0.1003822666641913,
+      "n_val": 5130,
+      "graph_reg_loss": 0.24586276710033417,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 56,
+      "train_loss": 0.7534519413421894,
+      "train_data_loss": 0.5052829580060367,
+      "val_loss": 0.5074231777971948,
+      "val_pearson": 0.12092787497921993,
+      "val_pred_sd_ratio": 0.11160159934508174,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2483624517917633,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 57,
+      "train_loss": 0.7541380689061922,
+      "train_data_loss": 0.5063444858994978,
+      "val_loss": 0.5062365972507766,
+      "val_pearson": 0.11528829105296418,
+      "val_pred_sd_ratio": 0.08814877134404685,
+      "n_val": 5130,
+      "graph_reg_loss": 0.24609866738319397,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 58,
+      "train_loss": 0.7537378113845299,
+      "train_data_loss": 0.5065231878181984,
+      "val_loss": 0.5122714631971095,
+      "val_pearson": 0.11731583328525487,
+      "val_pred_sd_ratio": 0.099404594811954,
+      "n_val": 5130,
+      "graph_reg_loss": 0.23884841799736023,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 59,
+      "train_loss": 0.7559707555277594,
+      "train_data_loss": 0.5091346296770819,
+      "val_loss": 0.5128397653442145,
+      "val_pearson": 0.12138944638794974,
+      "val_pred_sd_ratio": 0.10350405150338222,
+      "n_val": 5130,
+      "graph_reg_loss": 0.23961618542671204,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 60,
+      "train_loss": 0.7508064076818269,
+      "train_data_loss": 0.5066551833317198,
+      "val_loss": 0.5089105914675469,
+      "val_pearson": 0.12414645749193273,
+      "val_pred_sd_ratio": 0.13240025231712743,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2378908395767212,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 61,
+      "train_loss": 0.7491262185162512,
+      "train_data_loss": 0.5069069471852533,
+      "val_loss": 0.5085415191352949,
+      "val_pearson": 0.12590715338132882,
+      "val_pred_sd_ratio": 0.12573243814863658,
+      "n_val": 5130,
+      "graph_reg_loss": 0.24308258295059204,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 62,
+      "train_loss": 0.7491254087152153,
+      "train_data_loss": 0.5071453133533741,
+      "val_loss": 0.5101498252467105,
+      "val_pearson": 0.13432996548516185,
+      "val_pred_sd_ratio": 0.0880430721138653,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2351858913898468,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 63,
+      "train_loss": 0.7492252526612118,
+      "train_data_loss": 0.507660875032688,
+      "val_loss": 0.5088852047687851,
+      "val_pearson": 0.1392154353670776,
+      "val_pred_sd_ratio": 0.12597635682476194,
+      "n_val": 5130,
+      "graph_reg_loss": 0.23175321519374847,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 64,
+      "train_loss": 0.7418626074133248,
+      "train_data_loss": 0.5037632810658422,
+      "val_loss": 0.49980010688885845,
+      "val_pearson": 0.13079694121781932,
+      "val_pred_sd_ratio": 0.11355892804108168,
+      "n_val": 5130,
+      "graph_reg_loss": 0.24209414422512054,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 65,
+      "train_loss": 0.7416566630889629,
+      "train_data_loss": 0.5029865328607888,
+      "val_loss": 0.5090198241711592,
+      "val_pearson": 0.1134696986134115,
+      "val_pred_sd_ratio": 0.14142793534617676,
+      "n_val": 5130,
+      "graph_reg_loss": 0.23434242606163025,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 66,
+      "train_loss": 0.7420806884765625,
+      "train_data_loss": 0.5059411145489792,
+      "val_loss": 0.5157050476669103,
+      "val_pearson": 0.11772870674337212,
+      "val_pred_sd_ratio": 0.18612920296819588,
+      "n_val": 5130,
+      "graph_reg_loss": 0.23400555551052094,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 67,
+      "train_loss": 0.7429646418012422,
+      "train_data_loss": 0.5065676960451849,
+      "val_loss": 0.5035721390335648,
+      "val_pearson": 0.1357886298608623,
+      "val_pred_sd_ratio": 0.10773722631366629,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2322196662425995,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 68,
+      "train_loss": 0.7383728664496849,
+      "train_data_loss": 0.5051791965961456,
+      "val_loss": 0.5051791929129736,
+      "val_pearson": 0.1128160034943568,
+      "val_pred_sd_ratio": 0.18814182908911453,
+      "n_val": 5130,
+      "graph_reg_loss": 0.22987234592437744,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 69,
+      "train_loss": 0.7382846947374015,
+      "train_data_loss": 0.5045255371208849,
+      "val_loss": 0.5084864149781463,
+      "val_pearson": 0.11967963244962065,
+      "val_pred_sd_ratio": 0.19214102272924624,
+      "n_val": 5130,
+      "graph_reg_loss": 0.23200610280036926,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 70,
+      "train_loss": 0.7377612837429705,
+      "train_data_loss": 0.5035668847889736,
+      "val_loss": 0.5119503236885888,
+      "val_pearson": 0.1292411422749099,
+      "val_pred_sd_ratio": 0.18811438742436862,
+      "n_val": 5130,
+      "graph_reg_loss": 0.23770728707313538,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 71,
+      "train_loss": 0.7360151615636102,
+      "train_data_loss": 0.5051373253608572,
+      "val_loss": 0.5007958930835389,
+      "val_pearson": 0.1421435506230122,
+      "val_pred_sd_ratio": 0.1401915914918247,
+      "n_val": 5130,
+      "graph_reg_loss": 0.23819491267204285,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 72,
+      "train_loss": 0.7351837281523079,
+      "train_data_loss": 0.5034737823338344,
+      "val_loss": 0.512490556207549,
+      "val_pearson": 0.13979244036109825,
+      "val_pred_sd_ratio": 0.14335403591394424,
+      "n_val": 5130,
+      "graph_reg_loss": 0.22651396691799164,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 73,
+      "train_loss": 0.7330401375375944,
+      "train_data_loss": 0.5036206420125633,
+      "val_loss": 0.5099891142073663,
+      "val_pearson": 0.14017814535059428,
+      "val_pred_sd_ratio": 0.18545185186361013,
+      "n_val": 5130,
+      "graph_reg_loss": 0.22991079092025757,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 74,
+      "train_loss": 0.7357502682455654,
+      "train_data_loss": 0.5048075678019688,
+      "val_loss": 0.5076316193995187,
+      "val_pearson": 0.10464228336748324,
+      "val_pred_sd_ratio": 0.27177950739860535,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2270318567752838,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 75,
+      "train_loss": 0.7315218407532265,
+      "train_data_loss": 0.5040817856788635,
+      "val_loss": 0.5050352070531418,
+      "val_pearson": 0.12771193113325066,
+      "val_pred_sd_ratio": 0.16722961828896873,
+      "n_val": 5130,
+      "graph_reg_loss": 0.22468702495098114,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 76,
+      "train_loss": 0.7285341291592039,
+      "train_data_loss": 0.5017959999627081,
+      "val_loss": 0.5028597588195206,
+      "val_pearson": 0.1355969944086514,
+      "val_pred_sd_ratio": 0.16262722289875933,
+      "n_val": 5130,
+      "graph_reg_loss": 0.23196600377559662,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 77,
+      "train_loss": 0.7282108273999445,
+      "train_data_loss": 0.5027310200806322,
+      "val_loss": 0.5083804124977156,
+      "val_pearson": 0.1317084488140321,
+      "val_pred_sd_ratio": 0.16390313992374822,
+      "n_val": 5130,
+      "graph_reg_loss": 0.21944250166416168,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 78,
+      "train_loss": 0.7269057487619335,
+      "train_data_loss": 0.501884905428722,
+      "val_loss": 0.5093623587030184,
+      "val_pearson": 0.13654488624122582,
+      "val_pred_sd_ratio": 0.1558477019793109,
+      "n_val": 5130,
+      "graph_reg_loss": 0.22196459770202637,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 79,
+      "train_loss": 0.7261514787016243,
+      "train_data_loss": 0.5026185122029535,
+      "val_loss": 0.5116759867231283,
+      "val_pearson": 0.134991206375784,
+      "val_pred_sd_ratio": 0.13452539043991188,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2156430035829544,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 80,
+      "train_loss": 0.7304837621491531,
+      "train_data_loss": 0.5060119084243117,
+      "val_loss": 0.5214722066362466,
+      "val_pearson": 0.09405957505499062,
+      "val_pred_sd_ratio": 0.3598730646465954,
+      "n_val": 5130,
+      "graph_reg_loss": 0.22169983386993408,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 81,
+      "train_loss": 0.729954349583593,
+      "train_data_loss": 0.5037713050842285,
+      "val_loss": 0.5037882962886818,
+      "val_pearson": 0.12000451717329652,
+      "val_pred_sd_ratio": 0.20979458603419757,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2270354926586151,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 82,
+      "train_loss": 0.7199675523001572,
+      "train_data_loss": 0.499009075863608,
+      "val_loss": 0.5086796424077501,
+      "val_pearson": 0.1360674312240199,
+      "val_pred_sd_ratio": 0.2110444954351375,
+      "n_val": 5130,
+      "graph_reg_loss": 0.21669895946979523,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 83,
+      "train_loss": 0.7219184493196422,
+      "train_data_loss": 0.5015599912610548,
+      "val_loss": 0.5113964742619624,
+      "val_pearson": 0.13952990753674194,
+      "val_pred_sd_ratio": 0.12285676088772322,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2207418531179428,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 84,
+      "train_loss": 0.7186760429678292,
+      "train_data_loss": 0.4991582118231675,
+      "val_loss": 0.5028648212871588,
+      "val_pearson": 0.14796426884928032,
+      "val_pred_sd_ratio": 0.15022287478572444,
+      "n_val": 5130,
+      "graph_reg_loss": 0.21578428149223328,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 85,
+      "train_loss": 0.71688646283643,
+      "train_data_loss": 0.4987195576059407,
+      "val_loss": 0.5021230002360502,
+      "val_pearson": 0.13670362836044087,
+      "val_pred_sd_ratio": 0.16545397513791135,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2159179002046585,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 86,
+      "train_loss": 0.7215225532137114,
+      "train_data_loss": 0.5001970920069464,
+      "val_loss": 0.5088227924547697,
+      "val_pearson": 0.13248563067693458,
+      "val_pred_sd_ratio": 0.2160834062256311,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2184048593044281,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 87,
+      "train_loss": 0.7200166541954567,
+      "train_data_loss": 0.5011745547426159,
+      "val_loss": 0.5045454296684637,
+      "val_pearson": 0.13480374367760592,
+      "val_pred_sd_ratio": 0.15905341506004333,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2204264998435974,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 88,
+      "train_loss": 0.7170726348613871,
+      "train_data_loss": 0.4999963476740081,
+      "val_loss": 0.50123649731017,
+      "val_pearson": 0.13483937079773137,
+      "val_pred_sd_ratio": 0.13506736135796496,
+      "n_val": 5130,
+      "graph_reg_loss": 0.21973451972007751,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 89,
+      "train_loss": 0.7173158279780684,
+      "train_data_loss": 0.4997003016800716,
+      "val_loss": 0.5021376522428576,
+      "val_pearson": 0.1317592586733793,
+      "val_pred_sd_ratio": 0.17011442702067525,
+      "n_val": 5130,
+      "graph_reg_loss": 0.21614938974380493,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 90,
+      "train_loss": 0.7144599248623026,
+      "train_data_loss": 0.4979041948400695,
+      "val_loss": 0.5034372965494792,
+      "val_pearson": 0.12829922987638334,
+      "val_pred_sd_ratio": 0.16761783588873713,
+      "n_val": 5130,
+      "graph_reg_loss": 0.22065722942352295,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 91,
+      "train_loss": 0.7122570050173792,
+      "train_data_loss": 0.4977249061239177,
+      "val_loss": 0.5054934406838222,
+      "val_pearson": 0.12533357582594218,
+      "val_pred_sd_ratio": 0.2242943126904337,
+      "n_val": 5130,
+      "graph_reg_loss": 0.21381087601184845,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 92,
+      "train_loss": 0.7165564134203154,
+      "train_data_loss": 0.5004257744756239,
+      "val_loss": 0.5082430774473075,
+      "val_pearson": 0.11422921756380483,
+      "val_pred_sd_ratio": 0.2009132041742927,
+      "n_val": 5130,
+      "graph_reg_loss": 0.21453973650932312,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 93,
+      "train_loss": 0.7142476624455946,
+      "train_data_loss": 0.4995152734476945,
+      "val_loss": 0.5115339848033169,
+      "val_pearson": 0.11709722209917872,
+      "val_pred_sd_ratio": 0.20968886896183617,
+      "n_val": 5130,
+      "graph_reg_loss": 0.21597523987293243,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 94,
+      "train_loss": 0.7120490875737421,
+      "train_data_loss": 0.49761268702046624,
+      "val_loss": 0.503143771582412,
+      "val_pearson": 0.13306051933843838,
+      "val_pred_sd_ratio": 0.17933065091308795,
+      "n_val": 5130,
+      "graph_reg_loss": 0.21600253880023956,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 95,
+      "train_loss": 0.7125219086120869,
+      "train_data_loss": 0.49857555586716223,
+      "val_loss": 0.5079242817839684,
+      "val_pearson": 0.12308093640757234,
+      "val_pred_sd_ratio": 0.16591447905490272,
+      "n_val": 5130,
+      "graph_reg_loss": 0.21453000605106354,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 96,
+      "train_loss": 0.7155734917213177,
+      "train_data_loss": 0.5006231439524683,
+      "val_loss": 0.5060250681975664,
+      "val_pearson": 0.11724726522439405,
+      "val_pred_sd_ratio": 0.21529819188933624,
+      "n_val": 5130,
+      "graph_reg_loss": 0.21161705255508423,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 97,
+      "train_loss": 0.7124020457267761,
+      "train_data_loss": 0.49829384581796055,
+      "val_loss": 0.5105098255893641,
+      "val_pearson": 0.13568234712032504,
+      "val_pred_sd_ratio": 0.16455346032192833,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2141011506319046,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 98,
+      "train_loss": 0.7088601691969509,
+      "train_data_loss": 0.495846734992389,
+      "val_loss": 0.5030431825515123,
+      "val_pearson": 0.13876855107465466,
+      "val_pred_sd_ratio": 0.19236239241926292,
+      "n_val": 5130,
+      "graph_reg_loss": 0.20649215579032898,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 99,
+      "train_loss": 0.70954764094846,
+      "train_data_loss": 0.4967169278654559,
+      "val_loss": 0.5056472391645346,
+      "val_pearson": 0.12913281838164517,
+      "val_pred_sd_ratio": 0.18148739243808545,
+      "n_val": 5130,
+      "graph_reg_loss": 0.21696119010448456,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 100,
+      "train_loss": 0.7077238313082991,
+      "train_data_loss": 0.4957622001911032,
+      "val_loss": 0.5008367646274976,
+      "val_pearson": 0.13790978584438562,
+      "val_pred_sd_ratio": 0.20426996209119497,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2159481942653656,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 101,
+      "train_loss": 0.7075307492552132,
+      "train_data_loss": 0.4954986500328985,
+      "val_loss": 0.5044343409250122,
+      "val_pearson": 0.12642921806362115,
+      "val_pred_sd_ratio": 0.19460856051821457,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2107573002576828,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 102,
+      "train_loss": 0.7051927632298963,
+      "train_data_loss": 0.49369242787361145,
+      "val_loss": 0.5110358641626309,
+      "val_pearson": 0.1210986900229105,
+      "val_pred_sd_ratio": 0.21323706444941068,
+      "n_val": 5130,
+      "graph_reg_loss": 0.20893289148807526,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 103,
+      "train_loss": 0.7084345550372683,
+      "train_data_loss": 0.49616352031970845,
+      "val_loss": 0.5055671082137854,
+      "val_pearson": 0.1291427543190749,
+      "val_pred_sd_ratio": 0.20205165798726835,
+      "n_val": 5130,
+      "graph_reg_loss": 0.21060682833194733,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 104,
+      "train_loss": 0.7071090648914206,
+      "train_data_loss": 0.4964907117958727,
+      "val_loss": 0.5075515598349172,
+      "val_pearson": 0.12621418109751845,
+      "val_pred_sd_ratio": 0.22601946404105738,
+      "n_val": 5130,
+      "graph_reg_loss": 0.21713358163833618,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 105,
+      "train_loss": 0.7068875473121117,
+      "train_data_loss": 0.49444052165952224,
+      "val_loss": 0.5233241744905884,
+      "val_pearson": 0.11036239976161405,
+      "val_pred_sd_ratio": 0.29101574420928955,
+      "n_val": 5130,
+      "graph_reg_loss": 0.21043942868709564,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 106,
+      "train_loss": 0.7088853387997068,
+      "train_data_loss": 0.49660417437553406,
+      "val_loss": 0.5046535737333242,
+      "val_pearson": 0.13863843591197542,
+      "val_pred_sd_ratio": 0.18387495491065478,
+      "n_val": 5130,
+      "graph_reg_loss": 0.21254879236221313,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 107,
+      "train_loss": 0.7085243833476099,
+      "train_data_loss": 0.49642905695685025,
+      "val_loss": 0.5033856903135661,
+      "val_pearson": 0.14272686721462952,
+      "val_pred_sd_ratio": 0.17957678907795957,
+      "n_val": 5130,
+      "graph_reg_loss": 0.21102237701416016,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 108,
+      "train_loss": 0.7044709304283405,
+      "train_data_loss": 0.4932850054625807,
+      "val_loss": 0.5052480121337415,
+      "val_pearson": 0.13798570464438709,
+      "val_pred_sd_ratio": 0.2120478494386924,
+      "n_val": 5130,
+      "graph_reg_loss": 0.20651628077030182,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 109,
+      "train_loss": 0.703158516308357,
+      "train_data_loss": 0.4933697632674513,
+      "val_loss": 0.5109848766066643,
+      "val_pearson": 0.12678800732828677,
+      "val_pred_sd_ratio": 0.2189105600118637,
+      "n_val": 5130,
+      "graph_reg_loss": 0.20855727791786194,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 110,
+      "train_loss": 0.7048647629803625,
+      "train_data_loss": 0.4954074765073842,
+      "val_loss": 0.5047072174488685,
+      "val_pearson": 0.13159474318749026,
+      "val_pred_sd_ratio": 0.20170241476673828,
+      "n_val": 5130,
+      "graph_reg_loss": 0.20786933600902557,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 111,
+      "train_loss": 0.7017860186511072,
+      "train_data_loss": 0.49250310967708455,
+      "val_loss": 0.5120536938048246,
+      "val_pearson": 0.1256666819712049,
+      "val_pred_sd_ratio": 0.24783080855482503,
+      "n_val": 5130,
+      "graph_reg_loss": 0.20689868927001953,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 112,
+      "train_loss": 0.7018253536059939,
+      "train_data_loss": 0.4934907750836734,
+      "val_loss": 0.5025103622942175,
+      "val_pearson": 0.14906878769397736,
+      "val_pred_sd_ratio": 0.20886955488669245,
+      "n_val": 5130,
+      "graph_reg_loss": 0.21012988686561584,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 113,
+      "train_loss": 0.7024234204456724,
+      "train_data_loss": 0.492937072597701,
+      "val_loss": 0.5096268384312561,
+      "val_pearson": 0.13093400825011103,
+      "val_pred_sd_ratio": 0.1998087261852465,
+      "n_val": 5130,
+      "graph_reg_loss": 0.21210840344429016,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 114,
+      "train_loss": 0.70053474039867,
+      "train_data_loss": 0.4907970017400281,
+      "val_loss": 0.5056417186357821,
+      "val_pearson": 0.13768810560730727,
+      "val_pred_sd_ratio": 0.23416974983717265,
+      "n_val": 5130,
+      "graph_reg_loss": 0.21304099261760712,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 115,
+      "train_loss": 0.7006117290463941,
+      "train_data_loss": 0.4918531785751211,
+      "val_loss": 0.5106479756316247,
+      "val_pearson": 0.12182670576792014,
+      "val_pred_sd_ratio": 0.318531367339586,
+      "n_val": 5130,
+      "graph_reg_loss": 0.20950183272361755,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 116,
+      "train_loss": 0.7030752260109474,
+      "train_data_loss": 0.4938732375358713,
+      "val_loss": 0.5074677614208318,
+      "val_pearson": 0.11860178763929166,
+      "val_pred_sd_ratio": 0.2160371436100257,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2205335795879364,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 117,
+      "train_loss": 0.6996730997644621,
+      "train_data_loss": 0.4913178476794013,
+      "val_loss": 0.5119784825494182,
+      "val_pearson": 0.10682632802912083,
+      "val_pred_sd_ratio": 0.2720076884878309,
+      "n_val": 5130,
+      "graph_reg_loss": 0.20825690031051636,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 118,
+      "train_loss": 0.700374800583412,
+      "train_data_loss": 0.49056169493445034,
+      "val_loss": 0.507104147154453,
+      "val_pearson": 0.12124941787241321,
+      "val_pred_sd_ratio": 0.2245878428220749,
+      "n_val": 5130,
+      "graph_reg_loss": 0.20684637129306793,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 119,
+      "train_loss": 0.7003667539563673,
+      "train_data_loss": 0.4906068752551901,
+      "val_loss": 0.515823471337034,
+      "val_pearson": 0.11956926914985831,
+      "val_pred_sd_ratio": 0.29146555850380346,
+      "n_val": 5130,
+      "graph_reg_loss": 0.21123747527599335,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 120,
+      "train_loss": 0.7017452264654225,
+      "train_data_loss": 0.49033455190987424,
+      "val_loss": 0.5113459358438414,
+      "val_pearson": 0.11094278988036278,
+      "val_pred_sd_ratio": 0.2526073063674726,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2131853550672531,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 121,
+      "train_loss": 0.6968632237664585,
+      "train_data_loss": 0.4882403797116773,
+      "val_loss": 0.5069491856744183,
+      "val_pearson": 0.14004840593981116,
+      "val_pred_sd_ratio": 0.24182434536908803,
+      "n_val": 5130,
+      "graph_reg_loss": 0.20870116353034973,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 122,
+      "train_loss": 0.695757557605875,
+      "train_data_loss": 0.4876297054619625,
+      "val_loss": 0.5251494141814769,
+      "val_pearson": 0.09798776574040714,
+      "val_pred_sd_ratio": 0.3508393725282268,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2049325704574585,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 123,
+      "train_loss": 0.6987210080541414,
+      "train_data_loss": 0.48904625609003266,
+      "val_loss": 0.5323546976606284,
+      "val_pearson": 0.09305317773434676,
+      "val_pred_sd_ratio": 0.43178123078848185,
+      "n_val": 5130,
+      "graph_reg_loss": 0.20739249885082245,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 124,
+      "train_loss": 0.6998314795822933,
+      "train_data_loss": 0.489871223425043,
+      "val_loss": 0.523975382724933,
+      "val_pearson": 0.07333363592624664,
+      "val_pred_sd_ratio": 0.3575049191713333,
+      "n_val": 5130,
+      "graph_reg_loss": 0.206593856215477,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 125,
+      "train_loss": 0.6944176904086409,
+      "train_data_loss": 0.4865391141381757,
+      "val_loss": 0.5274585032323648,
+      "val_pearson": 0.10083150344067499,
+      "val_pred_sd_ratio": 0.3794500263113725,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2053070366382599,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 126,
+      "train_loss": 0.6973097016071451,
+      "train_data_loss": 0.48847865647283095,
+      "val_loss": 0.5094228763096978,
+      "val_pearson": 0.11535511852095001,
+      "val_pred_sd_ratio": 0.28021614253520966,
+      "n_val": 5130,
+      "graph_reg_loss": 0.20963487029075623,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 127,
+      "train_loss": 0.6940127816693537,
+      "train_data_loss": 0.48724895407413615,
+      "val_loss": 0.5091056243718018,
+      "val_pearson": 0.1090554836647291,
+      "val_pred_sd_ratio": 0.27358341805244746,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2061702460050583,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 128,
+      "train_loss": 0.6984876414825176,
+      "train_data_loss": 0.4873921213478878,
+      "val_loss": 0.5077610841271473,
+      "val_pearson": 0.10502577421108358,
+      "val_pred_sd_ratio": 0.2356457929862173,
+      "n_val": 5130,
+      "graph_reg_loss": 0.20378035306930542,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 129,
+      "train_loss": 0.6936276328974756,
+      "train_data_loss": 0.48574778745914327,
+      "val_loss": 0.5149379737660666,
+      "val_pearson": 0.09973334153427889,
+      "val_pred_sd_ratio": 0.2969029192861758,
+      "n_val": 5130,
+      "graph_reg_loss": 0.21120233833789825,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 130,
+      "train_loss": 0.692972744333333,
+      "train_data_loss": 0.48485218553707515,
+      "val_loss": 0.5137871428075125,
+      "val_pearson": 0.11801778672164992,
+      "val_pred_sd_ratio": 0.3019862818090539,
+      "n_val": 5130,
+      "graph_reg_loss": 0.209005206823349,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 131,
+      "train_loss": 0.6922401292570706,
+      "train_data_loss": 0.48493991535285424,
+      "val_loss": 0.5100414075349506,
+      "val_pearson": 0.11796125500021797,
+      "val_pred_sd_ratio": 0.2677289733761235,
+      "n_val": 5130,
+      "graph_reg_loss": 0.20651717483997345,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 132,
+      "train_loss": 0.6935493432242295,
+      "train_data_loss": 0.4852643033553814,
+      "val_loss": 0.5254943133794774,
+      "val_pearson": 0.1032228482593047,
+      "val_pred_sd_ratio": 0.34803631431178045,
+      "n_val": 5130,
+      "graph_reg_loss": 0.20627032220363617,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 133,
+      "train_loss": 0.6974180607960142,
+      "train_data_loss": 0.4868594891038434,
+      "val_loss": 0.5332138269733034,
+      "val_pearson": 0.07396960439846705,
+      "val_pred_sd_ratio": 0.49106152747806747,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2149306833744049,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 134,
+      "train_loss": 0.69033217635648,
+      "train_data_loss": 0.4829320095736405,
+      "val_loss": 0.5169437163057383,
+      "val_pearson": 0.10465130405990701,
+      "val_pred_sd_ratio": 0.3362888748708524,
+      "n_val": 5130,
+      "graph_reg_loss": 0.20870038866996765,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 135,
+      "train_loss": 0.6887010479795521,
+      "train_data_loss": 0.48211341479728964,
+      "val_loss": 0.535475952862299,
+      "val_pearson": 0.057697500886493606,
+      "val_pred_sd_ratio": 0.45871691013637345,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2081724852323532,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 136,
+      "train_loss": 0.6949000872414688,
+      "train_data_loss": 0.48541596223568095,
+      "val_loss": 0.5169122766565394,
+      "val_pearson": 0.09166399539007168,
+      "val_pred_sd_ratio": 0.29688201923119395,
+      "n_val": 5130,
+      "graph_reg_loss": 0.20984536409378052,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 137,
+      "train_loss": 0.6922955081380647,
+      "train_data_loss": 0.4827984776990167,
+      "val_loss": 0.508687179595174,
+      "val_pearson": 0.08927585253197896,
+      "val_pred_sd_ratio": 0.23044773191213608,
+      "n_val": 5130,
+      "graph_reg_loss": 0.21007610857486725,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 138,
+      "train_loss": 0.6887681196475851,
+      "train_data_loss": 0.48131993412971497,
+      "val_loss": 0.5156174509148849,
+      "val_pearson": 0.08673115875143067,
+      "val_pred_sd_ratio": 0.2813924943145953,
+      "n_val": 5130,
+      "graph_reg_loss": 0.207312673330307,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 139,
+      "train_loss": 0.6966126746144788,
+      "train_data_loss": 0.4839592791836837,
+      "val_loss": 0.5267286929006,
+      "val_pearson": 0.08736037007091861,
+      "val_pred_sd_ratio": 0.364603938240754,
+      "n_val": 5130,
+      "graph_reg_loss": 0.21787026524543762,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 140,
+      "train_loss": 0.692600219414152,
+      "train_data_loss": 0.4828261661118475,
+      "val_loss": 0.5296105933235867,
+      "val_pearson": 0.08737260005191753,
+      "val_pred_sd_ratio": 0.3632736229582837,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2074924260377884,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 141,
+      "train_loss": 0.6943336046975235,
+      "train_data_loss": 0.48334417671992863,
+      "val_loss": 0.5263927794339364,
+      "val_pearson": 0.0771272049260963,
+      "val_pred_sd_ratio": 0.3551198738185983,
+      "n_val": 5130,
+      "graph_reg_loss": 0.21203173696994781,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 142,
+      "train_loss": 0.6879916293867703,
+      "train_data_loss": 0.47888657553442593,
+      "val_loss": 0.5416808159960176,
+      "val_pearson": 0.07227690542410863,
+      "val_pred_sd_ratio": 0.428049435741023,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2088594287633896,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 143,
+      "train_loss": 0.6919870027180376,
+      "train_data_loss": 0.4819147103819354,
+      "val_loss": 0.5150572183768884,
+      "val_pearson": 0.09867053513268106,
+      "val_pred_sd_ratio": 0.29252647334023524,
+      "n_val": 5130,
+      "graph_reg_loss": 0.20644141733646393,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 144,
+      "train_loss": 0.6872624097199276,
+      "train_data_loss": 0.4800057041233984,
+      "val_loss": 0.5241036666067023,
+      "val_pearson": 0.08915377530808512,
+      "val_pred_sd_ratio": 0.3285219398768325,
+      "n_val": 5130,
+      "graph_reg_loss": 0.21078798174858093,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 145,
+      "train_loss": 0.695698501734898,
+      "train_data_loss": 0.4839988525571494,
+      "val_loss": 0.509777240121109,
+      "val_pearson": 0.11133655876313385,
+      "val_pred_sd_ratio": 0.2794225082585686,
+      "n_val": 5130,
+      "graph_reg_loss": 0.22055521607398987,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 146,
+      "train_loss": 0.691496115306328,
+      "train_data_loss": 0.4792770948903314,
+      "val_loss": 0.5194014699835526,
+      "val_pearson": 0.0850794380530715,
+      "val_pred_sd_ratio": 0.27589143420520584,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2067727893590927,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 147,
+      "train_loss": 0.6895880000344639,
+      "train_data_loss": 0.4799652562059205,
+      "val_loss": 0.5171153821443256,
+      "val_pearson": 0.10342452320343766,
+      "val_pred_sd_ratio": 0.2834721035078952,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2175436019897461,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 148,
+      "train_loss": 0.6987190575435244,
+      "train_data_loss": 0.4819657216812002,
+      "val_loss": 0.5194763362059119,
+      "val_pearson": 0.07954111935472802,
+      "val_pred_sd_ratio": 0.32590185968499435,
+      "n_val": 5130,
+      "graph_reg_loss": 0.21111714839935303,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 149,
+      "train_loss": 0.6906832230502161,
+      "train_data_loss": 0.4811701682107202,
+      "val_loss": 0.5152093482063993,
+      "val_pearson": 0.08618573506215685,
+      "val_pred_sd_ratio": 0.2804791331291199,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2029494196176529,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 150,
+      "train_loss": 0.68798258181276,
+      "train_data_loss": 0.47884247426328985,
+      "val_loss": 0.5190382037246436,
+      "val_pearson": 0.10034761557625116,
+      "val_pred_sd_ratio": 0.31059849968082026,
+      "n_val": 5130,
+      "graph_reg_loss": 0.21129095554351807,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 151,
+      "train_loss": 0.6896389250097603,
+      "train_data_loss": 0.47848075833813897,
+      "val_loss": 0.5177015992400706,
+      "val_pearson": 0.10531212875809472,
+      "val_pred_sd_ratio": 0.3365030422022468,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2119230031967163,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 152,
+      "train_loss": 0.684125240506797,
+      "train_data_loss": 0.47584622379007013,
+      "val_loss": 0.5181407787181713,
+      "val_pearson": 0.08275392440784919,
+      "val_pred_sd_ratio": 0.3114890260131736,
+      "n_val": 5130,
+      "graph_reg_loss": 0.20374134182929993,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 153,
+      "train_loss": 0.6886776130774925,
+      "train_data_loss": 0.47826814240422744,
+      "val_loss": 0.5189794618483873,
+      "val_pearson": 0.09031363976138987,
+      "val_pred_sd_ratio": 0.354714046967657,
+      "n_val": 5130,
+      "graph_reg_loss": 0.21208450198173523,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 154,
+      "train_loss": 0.6911408592914713,
+      "train_data_loss": 0.4793960030736594,
+      "val_loss": 0.5328695137365984,
+      "val_pearson": 0.07778957750844329,
+      "val_pred_sd_ratio": 0.45190072373340007,
+      "n_val": 5130,
+      "graph_reg_loss": 0.20886483788490295,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 155,
+      "train_loss": 0.68373500684212,
+      "train_data_loss": 0.4762168475266161,
+      "val_loss": 0.5270674320689419,
+      "val_pearson": 0.09345917075284217,
+      "val_pred_sd_ratio": 0.35806584593496826,
+      "n_val": 5130,
+      "graph_reg_loss": 0.20669187605381012,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 156,
+      "train_loss": 0.6850878103026028,
+      "train_data_loss": 0.47662996115355655,
+      "val_loss": 0.5255176358288027,
+      "val_pearson": 0.09815983582091958,
+      "val_pred_sd_ratio": 0.37591647317535,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2055135816335678,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 157,
+      "train_loss": 0.6836598679937166,
+      "train_data_loss": 0.4765801450301861,
+      "val_loss": 0.5269653022870218,
+      "val_pearson": 0.06935823875430383,
+      "val_pred_sd_ratio": 0.3306501186207721,
+      "n_val": 5130,
+      "graph_reg_loss": 0.20514243841171265,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 158,
+      "train_loss": 0.6815384811368482,
+      "train_data_loss": 0.4748017068566947,
+      "val_loss": 0.5230957507157651,
+      "val_pearson": 0.09157889894528412,
+      "val_pred_sd_ratio": 0.29630115079252345,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2007199376821518,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 159,
+      "train_loss": 0.6774998081141504,
+      "train_data_loss": 0.4722665712751191,
+      "val_loss": 0.5099150837978192,
+      "val_pearson": 0.12409724947065115,
+      "val_pred_sd_ratio": 0.29170313320661845,
+      "n_val": 5130,
+      "graph_reg_loss": 0.21300145983695984,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 160,
+      "train_loss": 0.6808135098424452,
+      "train_data_loss": 0.4734477637142971,
+      "val_loss": 0.521371269597877,
+      "val_pearson": 0.10201178650420747,
+      "val_pred_sd_ratio": 0.32697414018605886,
+      "n_val": 5130,
+      "graph_reg_loss": 0.20529629290103912,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 161,
+      "train_loss": 0.6810822178577555,
+      "train_data_loss": 0.474176241406079,
+      "val_loss": 0.5213078459801033,
+      "val_pearson": 0.08593896678403805,
+      "val_pred_sd_ratio": 0.32296677874891383,
+      "n_val": 5130,
+      "graph_reg_loss": 0.21402901411056519,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 162,
+      "train_loss": 0.679272331040481,
+      "train_data_loss": 0.47194102714801656,
+      "val_loss": 0.5231182016592044,
+      "val_pearson": 0.09871498701211653,
+      "val_pred_sd_ratio": 0.3529642365480724,
+      "n_val": 5130,
+      "graph_reg_loss": 0.20999933779239655,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 163,
+      "train_loss": 0.6801596612765871,
+      "train_data_loss": 0.4728484708687355,
+      "val_loss": 0.5321834184970075,
+      "val_pearson": 0.07959663838540253,
+      "val_pred_sd_ratio": 0.3946327135751122,
+      "n_val": 5130,
+      "graph_reg_loss": 0.20841160416603088,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 164,
+      "train_loss": 0.6788354762669268,
+      "train_data_loss": 0.47155823275960723,
+      "val_loss": 0.5268354062680844,
+      "val_pearson": 0.09629011330635924,
+      "val_pred_sd_ratio": 0.3827470250819859,
+      "n_val": 5130,
+      "graph_reg_loss": 0.20834025740623474,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 165,
+      "train_loss": 0.6804619924775486,
+      "train_data_loss": 0.4710305178987569,
+      "val_loss": 0.540251944915593,
+      "val_pearson": 0.07722716254647821,
+      "val_pred_sd_ratio": 0.3943688924375333,
+      "n_val": 5130,
+      "graph_reg_loss": 0.22312311828136444,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 166,
+      "train_loss": 0.6916443952198686,
+      "train_data_loss": 0.4778385881719918,
+      "val_loss": 0.5246951067889178,
+      "val_pearson": 0.09149501388157277,
+      "val_pred_sd_ratio": 0.32574915180080816,
+      "n_val": 5130,
+      "graph_reg_loss": 0.21549935638904572,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 167,
+      "train_loss": 0.6813654879043842,
+      "train_data_loss": 0.4719998261024212,
+      "val_loss": 0.526654546488563,
+      "val_pearson": 0.08799798776224059,
+      "val_pred_sd_ratio": 0.36240238970831823,
+      "n_val": 5130,
+      "graph_reg_loss": 0.21264943480491638,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 168,
+      "train_loss": 0.6789865658201021,
+      "train_data_loss": 0.4725917721616811,
+      "val_loss": 0.5292579873960618,
+      "val_pearson": 0.07639368844071501,
+      "val_pred_sd_ratio": 0.37838188833311986,
+      "n_val": 5130,
+      "graph_reg_loss": 0.20559538900852203,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 169,
+      "train_loss": 0.6818812181209696,
+      "train_data_loss": 0.4729158405599923,
+      "val_loss": 0.532971554285834,
+      "val_pearson": 0.08724087947293331,
+      "val_pred_sd_ratio": 0.3359155435311167,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2081562876701355,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 170,
+      "train_loss": 0.6798879627523751,
+      "train_data_loss": 0.4733305840656675,
+      "val_loss": 0.5316918862028661,
+      "val_pearson": 0.07904489759943988,
+      "val_pred_sd_ratio": 0.34349082175054046,
+      "n_val": 5130,
+      "graph_reg_loss": 0.20581217110157013,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 171,
+      "train_loss": 0.6759490658496988,
+      "train_data_loss": 0.4696231206943249,
+      "val_loss": 0.5222853692186739,
+      "val_pearson": 0.0822729070082699,
+      "val_pred_sd_ratio": 0.333641338505243,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2083265334367752,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 172,
+      "train_loss": 0.6717844523232559,
+      "train_data_loss": 0.46588965633819845,
+      "val_loss": 0.5226359079223395,
+      "val_pearson": 0.10997721606767491,
+      "val_pred_sd_ratio": 0.37239119018379013,
+      "n_val": 5130,
+      "graph_reg_loss": 0.20852579176425934,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 173,
+      "train_loss": 0.6735948591396727,
+      "train_data_loss": 0.4660494430311795,
+      "val_loss": 0.5224155894496985,
+      "val_pearson": 0.09915497781414735,
+      "val_pred_sd_ratio": 0.3605581443560751,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2046043872833252,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 174,
+      "train_loss": 0.6781239735669103,
+      "train_data_loss": 0.4700268322023852,
+      "val_loss": 0.5254782693427905,
+      "val_pearson": 0.09078065423589003,
+      "val_pred_sd_ratio": 0.32697452369489166,
+      "n_val": 5130,
+      "graph_reg_loss": 0.22123053669929504,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 175,
+      "train_loss": 0.6733789896142894,
+      "train_data_loss": 0.4650470480836671,
+      "val_loss": 0.5316866660908184,
+      "val_pearson": 0.09894302306010534,
+      "val_pred_sd_ratio": 0.3899737376915781,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2063656449317932,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 176,
+      "train_loss": 0.6693846007873272,
+      "train_data_loss": 0.4628278099257371,
+      "val_loss": 0.5373049314026712,
+      "val_pearson": 0.06478799475160868,
+      "val_pred_sd_ratio": 0.47251049233110326,
+      "n_val": 5130,
+      "graph_reg_loss": 0.20662373304367065,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 177,
+      "train_loss": 0.6756115658529873,
+      "train_data_loss": 0.46679914100416775,
+      "val_loss": 0.5356264824523331,
+      "val_pearson": 0.06218171679325966,
+      "val_pred_sd_ratio": 0.3878697188276994,
+      "n_val": 5130,
+      "graph_reg_loss": 0.20524752140045166,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 178,
+      "train_loss": 0.6732401477879492,
+      "train_data_loss": 0.46433320949817525,
+      "val_loss": 0.5336713526913529,
+      "val_pearson": 0.06265133272513355,
+      "val_pred_sd_ratio": 0.3933178907946536,
+      "n_val": 5130,
+      "graph_reg_loss": 0.20918694138526917,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 179,
+      "train_loss": 0.6729248864897366,
+      "train_data_loss": 0.46544114885659055,
+      "val_loss": 0.5354461164269996,
+      "val_pearson": 0.08404006598223197,
+      "val_pred_sd_ratio": 0.4063140475436261,
+      "n_val": 5130,
+      "graph_reg_loss": 0.20502090454101562,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 180,
+      "train_loss": 0.6704155412213556,
+      "train_data_loss": 0.46359656391472653,
+      "val_loss": 0.5336614597610563,
+      "val_pearson": 0.07806084545231179,
+      "val_pred_sd_ratio": 0.3908585882500598,
+      "n_val": 5130,
+      "graph_reg_loss": 0.20414705574512482,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 181,
+      "train_loss": 0.6673560615243583,
+      "train_data_loss": 0.4627006187521178,
+      "val_loss": 0.526225045782316,
+      "val_pearson": 0.09065864159492776,
+      "val_pred_sd_ratio": 0.3508630308665727,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2069302648305893,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 182,
+      "train_loss": 0.6699153390424005,
+      "train_data_loss": 0.46317094769971123,
+      "val_loss": 0.54403602644714,
+      "val_pearson": 0.06307641025877704,
+      "val_pred_sd_ratio": 0.43366190791130066,
+      "n_val": 5130,
+      "graph_reg_loss": 0.20248325169086456,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 183,
+      "train_loss": 0.6637933233688618,
+      "train_data_loss": 0.4601591270545433,
+      "val_loss": 0.532112603438528,
+      "val_pearson": 0.06718792413104031,
+      "val_pred_sd_ratio": 0.3846053598742736,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2083212435245514,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 184,
+      "train_loss": 0.6626283937487109,
+      "train_data_loss": 0.4577964575126253,
+      "val_loss": 0.5338612576906676,
+      "val_pearson": 0.06823930201904946,
+      "val_pred_sd_ratio": 0.41272155391542537,
+      "n_val": 5130,
+      "graph_reg_loss": 0.20662473142147064,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 185,
+      "train_loss": 0.6619208886705595,
+      "train_data_loss": 0.4574423237093564,
+      "val_loss": 0.5423627529925074,
+      "val_pearson": 0.07795533028088118,
+      "val_pred_sd_ratio": 0.43027079262231527,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2047826498746872,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 186,
+      "train_loss": 0.6627321489926042,
+      "train_data_loss": 0.45760697331921807,
+      "val_loss": 0.5378885429040265,
+      "val_pearson": 0.07199036859368023,
+      "val_pred_sd_ratio": 0.4623019389416042,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2054843306541443,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 187,
+      "train_loss": 0.6717128774215435,
+      "train_data_loss": 0.4648693532779299,
+      "val_loss": 0.5431691844560946,
+      "val_pearson": 0.07754892664716433,
+      "val_pred_sd_ratio": 0.44674449531655563,
+      "n_val": 5130,
+      "graph_reg_loss": 0.19954843819141388,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 188,
+      "train_loss": 0.6624615809013104,
+      "train_data_loss": 0.45821686037655535,
+      "val_loss": 0.5338232088739644,
+      "val_pearson": 0.08205009143995612,
+      "val_pred_sd_ratio": 0.42735146848778977,
+      "n_val": 5130,
+      "graph_reg_loss": 0.20792289078235626,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 189,
+      "train_loss": 0.667143205116535,
+      "train_data_loss": 0.4602025870619149,
+      "val_loss": 0.5245868943123325,
+      "val_pearson": 0.09581129274968254,
+      "val_pred_sd_ratio": 0.35010742670611333,
+      "n_val": 5130,
+      "graph_reg_loss": 0.20271149277687073,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 190,
+      "train_loss": 0.6699884965501982,
+      "train_data_loss": 0.461118594325822,
+      "val_loss": 0.541797630503396,
+      "val_pearson": 0.08418698175075023,
+      "val_pred_sd_ratio": 0.46394155448988866,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2075205147266388,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 191,
+      "train_loss": 0.6627446639126745,
+      "train_data_loss": 0.45757445487482795,
+      "val_loss": 0.5355967382241411,
+      "val_pearson": 0.07213660006068255,
+      "val_pred_sd_ratio": 0.45303483542643097,
+      "n_val": 5130,
+      "graph_reg_loss": 0.20485465228557587,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 192,
+      "train_loss": 0.6762401893221098,
+      "train_data_loss": 0.46246238001461687,
+      "val_loss": 0.5480187488578216,
+      "val_pearson": 0.09395854183056049,
+      "val_pred_sd_ratio": 0.48693680684817464,
+      "n_val": 5130,
+      "graph_reg_loss": 0.20365239679813385,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 193,
+      "train_loss": 0.6653607426018551,
+      "train_data_loss": 0.4587082277084219,
+      "val_loss": 0.5378203959028158,
+      "val_pearson": 0.09520837713621165,
+      "val_pred_sd_ratio": 0.3952366254831615,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2047661691904068,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 194,
+      "train_loss": 0.6634751702177113,
+      "train_data_loss": 0.4585805504486479,
+      "val_loss": 0.5347886232372381,
+      "val_pearson": 0.09254639105577218,
+      "val_pred_sd_ratio": 0.42942138565214055,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2005264163017273,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 195,
+      "train_loss": 0.6620359667416277,
+      "train_data_loss": 0.45769450274007073,
+      "val_loss": 0.5381942183883102,
+      "val_pearson": 0.06877783125903654,
+      "val_pred_sd_ratio": 0.4522391361625571,
+      "n_val": 5130,
+      "graph_reg_loss": 0.20811903476715088,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 196,
+      "train_loss": 0.6583183695530069,
+      "train_data_loss": 0.4551101676348982,
+      "val_loss": 0.5463124741820099,
+      "val_pearson": 0.05793748989603237,
+      "val_pred_sd_ratio": 0.4697407382099252,
+      "n_val": 5130,
+      "graph_reg_loss": 0.20656202733516693,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 197,
+      "train_loss": 0.6674503971790445,
+      "train_data_loss": 0.46010497212409973,
+      "val_loss": 0.5564183136640701,
+      "val_pearson": 0.07670325835811366,
+      "val_pred_sd_ratio": 0.5437370366171786,
+      "n_val": 5130,
+      "graph_reg_loss": 0.2115742713212967,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 198,
+      "train_loss": 0.654369724207911,
+      "train_data_loss": 0.4510571823037904,
+      "val_loss": 0.5479882223564282,
+      "val_pearson": 0.06764280493983901,
+      "val_pred_sd_ratio": 0.4514552833218324,
+      "n_val": 5130,
+      "graph_reg_loss": 0.20415787398815155,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    },
+    {
+      "epoch": 199,
+      "train_loss": 0.6549035207978611,
+      "train_data_loss": 0.4521151791358816,
+      "val_loss": 0.5515863697431241,
+      "val_pearson": 0.06628679792935911,
+      "val_pred_sd_ratio": 0.49998980211584193,
+      "n_val": 5130,
+      "graph_reg_loss": 0.20538851618766785,
+      "constraint_scale": 1.0,
+      "train_constraint_loss": 0.0
+    }
+  ],
+  "flux_meta": {
+    "concentration_mixture": {
+      "alanine": [
+        {
+          "compartment": "c",
+          "species": "s_0955",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_0957",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "v",
+          "species": "s_3759",
+          "fractional_volume": 0.18
+        }
+      ],
+      "arginine": [
+        {
+          "compartment": "c",
+          "species": "s_0965",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_0967",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "v",
+          "species": "s_0968",
+          "fractional_volume": 0.18
+        }
+      ],
+      "asparagine": [
+        {
+          "compartment": "c",
+          "species": "s_0969",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_0971",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "v",
+          "species": "s_0972",
+          "fractional_volume": 0.18
+        }
+      ],
+      "aspartate": [
+        {
+          "compartment": "c",
+          "species": "s_0973",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_0975",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "p",
+          "species": "s_0976",
+          "fractional_volume": 0.005
+        },
+        {
+          "compartment": "v",
+          "species": "s_0977",
+          "fractional_volume": 0.18
+        }
+      ],
+      "glutamate": [
+        {
+          "compartment": "c",
+          "species": "s_0991",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_0993",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "n",
+          "species": "s_0994",
+          "fractional_volume": 0.1
+        },
+        {
+          "compartment": "p",
+          "species": "s_0995",
+          "fractional_volume": 0.005
+        },
+        {
+          "compartment": "v",
+          "species": "s_0996",
+          "fractional_volume": 0.18
+        }
+      ],
+      "glutamine": [
+        {
+          "compartment": "c",
+          "species": "s_0999",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_3755",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "n",
+          "species": "s_1001",
+          "fractional_volume": 0.1
+        },
+        {
+          "compartment": "v",
+          "species": "s_1002",
+          "fractional_volume": 0.18
+        }
+      ],
+      "glycine": [
+        {
+          "compartment": "c",
+          "species": "s_1003",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1005",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "v",
+          "species": "s_3839",
+          "fractional_volume": 0.18
+        }
+      ],
+      "histidine": [
+        {
+          "compartment": "c",
+          "species": "s_1006",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1008",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "v",
+          "species": "s_1009",
+          "fractional_volume": 0.18
+        }
+      ],
+      "isoleucine": [
+        {
+          "compartment": "c",
+          "species": "s_1016",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1018",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "v",
+          "species": "s_1019",
+          "fractional_volume": 0.18
+        }
+      ],
+      "leucine": [
+        {
+          "compartment": "c",
+          "species": "s_1021",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1023",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "v",
+          "species": "s_1024",
+          "fractional_volume": 0.18
+        }
+      ],
+      "lysine": [
+        {
+          "compartment": "c",
+          "species": "s_1025",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1027",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "v",
+          "species": "s_1028",
+          "fractional_volume": 0.18
+        }
+      ],
+      "methionine": [
+        {
+          "compartment": "c",
+          "species": "s_1029",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1031",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "v",
+          "species": "s_3758",
+          "fractional_volume": 0.18
+        }
+      ],
+      "phenylalanine": [
+        {
+          "compartment": "c",
+          "species": "s_1032",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1034",
+          "fractional_volume": 0.05
+        }
+      ],
+      "proline": [
+        {
+          "compartment": "c",
+          "species": "s_1035",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1037",
+          "fractional_volume": 0.05
+        }
+      ],
+      "serine": [
+        {
+          "compartment": "c",
+          "species": "s_1039",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "er",
+          "species": "s_1040",
+          "fractional_volume": 0.015
+        },
+        {
+          "compartment": "m",
+          "species": "s_1042",
+          "fractional_volume": 0.05
+        }
+      ],
+      "threonine": [
+        {
+          "compartment": "c",
+          "species": "s_1045",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1047",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "v",
+          "species": "s_4043",
+          "fractional_volume": 0.18
+        }
+      ],
+      "tryptophan": [
+        {
+          "compartment": "c",
+          "species": "s_1048",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1050",
+          "fractional_volume": 0.05
+        }
+      ],
+      "tyrosine": [
+        {
+          "compartment": "c",
+          "species": "s_1051",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1053",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "p",
+          "species": "s_1054",
+          "fractional_volume": 0.005
+        },
+        {
+          "compartment": "v",
+          "species": "s_1055",
+          "fractional_volume": 0.18
+        }
+      ],
+      "valine": [
+        {
+          "compartment": "c",
+          "species": "s_1056",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1058",
+          "fractional_volume": 0.05
+        }
+      ]
+    },
+    "compartment_volume_fractions": {
+      "fractions": {
+        "c": 0.65,
+        "v": 0.18,
+        "n": 0.1,
+        "m": 0.05,
+        "er": 0.015,
+        "p": 0.005
+      },
+      "sourced": {
+        "c": false,
+        "v": false,
+        "n": true,
+        "m": false,
+        "er": false,
+        "p": false
+      },
+      "source": "Nucleus: Milo and Phillips 2016, Cell Biology by the Numbers, mirrored paper.md sha256 a0b71fc2ec024108cc0d11a6ba08b5b32d6d9174386a73ac377f377364946eae, 'How big is a yeast cell?', citing BNID 100491 and 103952. Every other compartment: textbook exponential-phase values, ASSUMED, not sourced.",
+      "quote": "Prominent components of the cell volume include the nucleus, which takes up about $1 0 \\%$ of the total cell volume (BNID 100491, 103952), the cell wall, often ignored but making up $1 0 { - } 2 5 \\%$ (BNID 104593, 104592) of the total dry mass, and the endoplasmic reticulum and vacuole, which are usually the largest organelles.",
+      "sha256": "a0b71fc2ec024108cc0d11a6ba08b5b32d6d9174386a73ac377f377364946eae",
+      "note": "Five of the six entries are assumed and NEED CURATION. The weights set which compartment dominates a whole-cell average, so they change the physical reading of the prediction; they do not limit what the model can fit, because each compartment's concentration is free inside the window and can compensate for a wrong weight. The fractions sum to 1 over the intracellular compartments, and a compartment where the GEM has no species for an amino acid contributes nothing to that amino acid's average."
+    },
+    "context_concentration": {
+      "n_metabolites": 2806,
+      "conc_lower_m": 1e-07,
+      "conc_upper_m": 1.0,
+      "note": "the flux layer's ANCHORED concentration head (zero base per GEM metabolite + Linear(hidden, n_metabolites) from the perturbed-gene pool, sigmoid into the window) on the pooled backbone with no flux layer, no stoichiometry, no kcat, no thermodynamics and no constraint term; the ablation of `flux_concentration`."
+    },
+    "sampling": {
+      "flux_draws": 1,
+      "latent_stochastic": false
+    }
+  },
+  "pinned_split": {
+    "path": "/scratch/projects/torchcell-scratch/job-snapshots/20260914-034912-gh_wave8_aa_ctxconc_e200_s2701/experiments/020-cachera-betaxanthin/results/merzbacher_nested_split.json",
+    "requested": 639,
+    "found": 639,
+    "absent": [],
+    "records": 639,
+    "fraction_of_dataset": 0.12961460446247464
+  },
+  "n_parameters": {
+    "gene_embedding": 0,
+    "embedding_preprocessor": 622439,
+    "cls_token": 90,
+    "transformer_layers": 196740,
+    "perturbation_transform": 98370,
+    "perturbation_head": 16381,
+    "total": 1192191,
+    "mulleder19_head": 258171
+  },
+  "wall_time_s": 11434.937816381454,
+  "code_provenance": {
+    "train_bx.py": "134d30531dc0e877701014c05207ae5840131e90950e420a1f40c947f85b0648",
+    "train_bx.py_path": "/scratch/projects/torchcell-scratch/job-snapshots/20260914-034912-gh_wave8_aa_ctxconc_e200_s2701/experiments/027-betaxanthin-metabolic/scripts/train_bx.py",
+    "flux_layer.py": "4c62133b32679515c59457746d1517ca47924a94f43bdd8a2ee9fa5cfaaf65ee",
+    "flux_layer.py_path": "/scratch/projects/torchcell-scratch/job-snapshots/20260914-034912-gh_wave8_aa_ctxconc_e200_s2701/torchcell/metabolism/flux_layer.py"
+  },
+  "validation_selection_split": {
+    "note": "the split the epoch was SELECTED on, so this is not held out; reported beside the test block because the pinned test genes carry few amino-acid measurements.",
+    "n_records": 294,
+    "n_records_with_any_feature": 270,
+    "n_measurements": 5130,
+    "mean_spearman": 0.06713528764227429,
+    "mean_pearson": 0.14796433803674422,
+    "columns": [
+      "alanine",
+      "arginine",
+      "asparagine",
+      "aspartate",
+      "glutamate",
+      "glutamine",
+      "glycine",
+      "histidine",
+      "isoleucine",
+      "leucine",
+      "lysine",
+      "methionine",
+      "phenylalanine",
+      "proline",
+      "serine",
+      "threonine",
+      "tryptophan",
+      "tyrosine",
+      "valine"
+    ],
+    "spearman_per_feature": [
+      0.15533526582928092,
+      0.03377194252624712,
+      0.01257999899890893,
+      0.10372915756894967,
+      -0.06408963091879176,
+      0.05535019381190727,
+      0.04827803486015209,
+      0.1445601514318068,
+      0.04779484917291599,
+      0.10519941459223782,
+      0.0815331456559225,
+      0.02520400500884035,
+      0.10824183807436066,
+      0.039729900934943975,
+      0.04924709235857697,
+      0.028902779819617707,
+      0.1769969596485604,
+      0.09314459568313344,
+      0.030060770145640698
+    ],
+    "pearson_per_feature": [
+      0.13941048085689545,
+      0.16789603233337402,
+      0.08101451396942139,
+      0.0326518751680851,
+      0.0056594740599393845,
+      0.19952477514743805,
+      0.01896163821220398,
+      0.22223693132400513,
+      0.1448746919631958,
+      0.06996750831604004,
+      0.1377880573272705,
+      0.1946016103029251,
+      0.22804927825927734,
+      0.24951417744159698,
+      0.24716520309448242,
+      0.10817991197109222,
+      0.298229843378067,
+      0.1901145875453949,
+      0.0754818320274353
+    ],
+    "n_per_feature": [
+      270,
+      270,
+      270,
+      270,
+      270,
+      270,
+      270,
+      270,
+      270,
+      270,
+      270,
+      270,
+      270,
+      270,
+      270,
+      270,
+      270,
+      270,
+      270
+    ]
+  },
+  "aa_column_split": {
+    "supervised": [
+      "alanine",
+      "arginine",
+      "asparagine",
+      "aspartate",
+      "glutamate",
+      "glutamine",
+      "glycine",
+      "histidine",
+      "isoleucine",
+      "leucine",
+      "lysine",
+      "methionine",
+      "phenylalanine",
+      "proline",
+      "serine",
+      "threonine",
+      "tryptophan",
+      "tyrosine",
+      "valine"
+    ],
+    "held_out": [],
+    "note": "the loss and the epoch-selection metric were charged on the supervised columns only; the test scorer is unchanged and reports all 19.",
+    "pinned_supervised_mean_spearman": 0.06010923238239603,
+    "pinned_held_out_mean_spearman": NaN,
+    "all_supervised_mean_spearman": 0.07465665033323084,
+    "all_held_out_mean_spearman": NaN
+  },
+  "calibration": {
+    "available": true,
+    "reason": null,
+    "dist": "crps",
+    "group": "pinned_test",
+    "n_measurements": 10716,
+    "columns": [
+      "alanine",
+      "arginine",
+      "asparagine",
+      "aspartate",
+      "glutamate",
+      "glutamine",
+      "glycine",
+      "histidine",
+      "isoleucine",
+      "leucine",
+      "lysine",
+      "methionine",
+      "phenylalanine",
+      "proline",
+      "serine",
+      "threonine",
+      "tryptophan",
+      "tyrosine",
+      "valine"
+    ],
+    "coverage": {
+      "alpha_0.50": 0.5631765723228455,
+      "alpha_0.80": 0.8178424835205078,
+      "alpha_0.90": 0.890910804271698
+    },
+    "coverage_per_feature": {
+      "alpha_0.50": [
+        0.6152482032775879,
+        0.5265957713127136,
+        0.5709219574928284,
+        0.5992907881736755,
+        0.576241135597229,
+        0.5833333134651184,
+        0.5265957713127136,
+        0.5531914830207825,
+        0.5620567202568054,
+        0.5301418304443359,
+        0.5407801270484924,
+        0.554964542388916,
+        0.5177304744720459,
+        0.6436170339584351,
+        0.563829779624939,
+        0.5301418304443359,
+        0.5496453642845154,
+        0.5514184236526489,
+        0.6046099066734314
+      ],
+      "alpha_0.80": [
+        0.8421986103057861,
+        0.8031914830207825,
+        0.8546099066734314,
+        0.8280141949653625,
+        0.8244680762290955,
+        0.8563829660415649,
+        0.7960993051528931,
+        0.8297872543334961,
+        0.8209219574928284,
+        0.826241135597229,
+        0.8031914830207825,
+        0.8191489577293396,
+        0.7890070676803589,
+        0.8404255509376526,
+        0.7907801270484924,
+        0.7907801270484924,
+        0.7783687710762024,
+        0.8120567202568054,
+        0.8333333134651184
+      ],
+      "alpha_0.90": [
+        0.8918439745903015,
+        0.8918439745903015,
+        0.9255319237709045,
+        0.8847517967224121,
+        0.8847517967224121,
+        0.9166666865348816,
+        0.881205677986145,
+        0.8989361524581909,
+        0.9060283899307251,
+        0.8847517967224121,
+        0.9042553305625916,
+        0.9095744490623474,
+        0.8617021441459656,
+        0.8971630930900574,
+        0.8634752035140991,
+        0.8794326186180115,
+        0.8705673813819885,
+        0.8794326186180115,
+        0.8953900933265686
+      ]
+    },
+    "pit_ks": 0.059126198291778564,
+    "pit_ks_per_feature": [
+      0.12509071826934814,
+      0.05529659986495972,
+      0.06830465793609619,
+      0.09137904644012451,
+      0.0992969274520874,
+      0.11004757881164551,
+      0.03632783889770508,
+      0.07643473148345947,
+      0.05983394384384155,
+      0.1413096785545349,
+      0.03606736660003662,
+      0.08115652203559875,
+      0.19984012842178345,
+      0.09200718998908997,
+      0.11982166767120361,
+      0.14892792701721191,
+      0.07392674684524536,
+      0.10825115442276001,
+      0.11723506450653076
+    ],
+    "pit_mean": 0.48029541969299316,
+    "pit_histogram": [
+      1.2915266698178363,
+      0.7876073044264839,
+      0.8305337070061649,
+      0.9369168158296631,
+      0.9369168158296631,
+      0.9667784182515967,
+      1.0918256984180255,
+      1.160880648943037,
+      1.1216875978619372,
+      1.414706642924151,
+      1.438969421760581,
+      1.1515488109290253,
+      1.0190379259176434,
+      1.0153039759244566,
+      0.8827918761254927,
+      0.8846582437282949,
+      0.7969389663965865,
+      0.7073541646937488,
+      0.6737587046116339,
+      0.8902573465367019
+    ]
+  },
+  "concentration_audit": {
+    "available": true,
+    "reason": null,
+    "supervised": true,
+    "conc_space": "mixture",
+    "conc_lower_m": 1e-07,
+    "conc_upper_m": 1.0,
+    "volume_fractions": {
+      "fractions": {
+        "c": 0.65,
+        "v": 0.18,
+        "n": 0.1,
+        "m": 0.05,
+        "er": 0.015,
+        "p": 0.005
+      },
+      "sourced": {
+        "c": false,
+        "v": false,
+        "n": true,
+        "m": false,
+        "er": false,
+        "p": false
+      },
+      "source": "Nucleus: Milo and Phillips 2016, Cell Biology by the Numbers, mirrored paper.md sha256 a0b71fc2ec024108cc0d11a6ba08b5b32d6d9174386a73ac377f377364946eae, 'How big is a yeast cell?', citing BNID 100491 and 103952. Every other compartment: textbook exponential-phase values, ASSUMED, not sourced.",
+      "quote": "Prominent components of the cell volume include the nucleus, which takes up about $1 0 \\%$ of the total cell volume (BNID 100491, 103952), the cell wall, often ignored but making up $1 0 { - } 2 5 \\%$ (BNID 104593, 104592) of the total dry mass, and the endoplasmic reticulum and vacuole, which are usually the largest organelles.",
+      "sha256": "a0b71fc2ec024108cc0d11a6ba08b5b32d6d9174386a73ac377f377364946eae",
+      "note": "Five of the six entries are assumed and NEED CURATION. The weights set which compartment dominates a whole-cell average, so they change the physical reading of the prediction; they do not limit what the model can fit, because each compartment's concentration is free inside the window and can compensate for a wrong weight. The fractions sum to 1 over the intracellular compartments, and a compartment where the GEM has no species for an amino acid contributes nothing to that amino acid's average."
+    },
+    "mixture": {
+      "alanine": [
+        {
+          "compartment": "c",
+          "species": "s_0955",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_0957",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "v",
+          "species": "s_3759",
+          "fractional_volume": 0.18
+        }
+      ],
+      "arginine": [
+        {
+          "compartment": "c",
+          "species": "s_0965",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_0967",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "v",
+          "species": "s_0968",
+          "fractional_volume": 0.18
+        }
+      ],
+      "asparagine": [
+        {
+          "compartment": "c",
+          "species": "s_0969",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_0971",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "v",
+          "species": "s_0972",
+          "fractional_volume": 0.18
+        }
+      ],
+      "aspartate": [
+        {
+          "compartment": "c",
+          "species": "s_0973",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_0975",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "p",
+          "species": "s_0976",
+          "fractional_volume": 0.005
+        },
+        {
+          "compartment": "v",
+          "species": "s_0977",
+          "fractional_volume": 0.18
+        }
+      ],
+      "glutamate": [
+        {
+          "compartment": "c",
+          "species": "s_0991",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_0993",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "n",
+          "species": "s_0994",
+          "fractional_volume": 0.1
+        },
+        {
+          "compartment": "p",
+          "species": "s_0995",
+          "fractional_volume": 0.005
+        },
+        {
+          "compartment": "v",
+          "species": "s_0996",
+          "fractional_volume": 0.18
+        }
+      ],
+      "glutamine": [
+        {
+          "compartment": "c",
+          "species": "s_0999",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_3755",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "n",
+          "species": "s_1001",
+          "fractional_volume": 0.1
+        },
+        {
+          "compartment": "v",
+          "species": "s_1002",
+          "fractional_volume": 0.18
+        }
+      ],
+      "glycine": [
+        {
+          "compartment": "c",
+          "species": "s_1003",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1005",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "v",
+          "species": "s_3839",
+          "fractional_volume": 0.18
+        }
+      ],
+      "histidine": [
+        {
+          "compartment": "c",
+          "species": "s_1006",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1008",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "v",
+          "species": "s_1009",
+          "fractional_volume": 0.18
+        }
+      ],
+      "isoleucine": [
+        {
+          "compartment": "c",
+          "species": "s_1016",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1018",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "v",
+          "species": "s_1019",
+          "fractional_volume": 0.18
+        }
+      ],
+      "leucine": [
+        {
+          "compartment": "c",
+          "species": "s_1021",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1023",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "v",
+          "species": "s_1024",
+          "fractional_volume": 0.18
+        }
+      ],
+      "lysine": [
+        {
+          "compartment": "c",
+          "species": "s_1025",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1027",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "v",
+          "species": "s_1028",
+          "fractional_volume": 0.18
+        }
+      ],
+      "methionine": [
+        {
+          "compartment": "c",
+          "species": "s_1029",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1031",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "v",
+          "species": "s_3758",
+          "fractional_volume": 0.18
+        }
+      ],
+      "phenylalanine": [
+        {
+          "compartment": "c",
+          "species": "s_1032",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1034",
+          "fractional_volume": 0.05
+        }
+      ],
+      "proline": [
+        {
+          "compartment": "c",
+          "species": "s_1035",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1037",
+          "fractional_volume": 0.05
+        }
+      ],
+      "serine": [
+        {
+          "compartment": "c",
+          "species": "s_1039",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "er",
+          "species": "s_1040",
+          "fractional_volume": 0.015
+        },
+        {
+          "compartment": "m",
+          "species": "s_1042",
+          "fractional_volume": 0.05
+        }
+      ],
+      "threonine": [
+        {
+          "compartment": "c",
+          "species": "s_1045",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1047",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "v",
+          "species": "s_4043",
+          "fractional_volume": 0.18
+        }
+      ],
+      "tryptophan": [
+        {
+          "compartment": "c",
+          "species": "s_1048",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1050",
+          "fractional_volume": 0.05
+        }
+      ],
+      "tyrosine": [
+        {
+          "compartment": "c",
+          "species": "s_1051",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1053",
+          "fractional_volume": 0.05
+        },
+        {
+          "compartment": "p",
+          "species": "s_1054",
+          "fractional_volume": 0.005
+        },
+        {
+          "compartment": "v",
+          "species": "s_1055",
+          "fractional_volume": 0.18
+        }
+      ],
+      "valine": [
+        {
+          "compartment": "c",
+          "species": "s_1056",
+          "fractional_volume": 0.65
+        },
+        {
+          "compartment": "m",
+          "species": "s_1058",
+          "fractional_volume": 0.05
+        }
+      ]
+    },
+    "groups": {
+      "pinned_test": {
+        "n_records": 639,
+        "n_measurements": 10716,
+        "mean_spearman": 0.06010817216849542,
+        "mean_pearson": 0.07923053972128975,
+        "columns": [
+          "alanine",
+          "arginine",
+          "asparagine",
+          "aspartate",
+          "glutamate",
+          "glutamine",
+          "glycine",
+          "histidine",
+          "isoleucine",
+          "leucine",
+          "lysine",
+          "methionine",
+          "phenylalanine",
+          "proline",
+          "serine",
+          "threonine",
+          "tryptophan",
+          "tyrosine",
+          "valine"
+        ],
+        "spearman_per_feature": [
+          0.13231175343072513,
+          0.1064732021816776,
+          0.03262378420395275,
+          0.12771807004297484,
+          0.06690179476528292,
+          0.043623953128862,
+          0.03186941390622364,
+          0.013455251477836458,
+          0.04000865843012981,
+          0.101206725479744,
+          0.004892561043859903,
+          0.01982820123893925,
+          0.006522323373957303,
+          0.06434799021886611,
+          0.14402330250394504,
+          0.12198525582429572,
+          0.04109914095393736,
+          0.0795216120964431,
+          -0.03635772310024002
+        ],
+        "pearson_per_feature": [
+          0.1372894048690796,
+          0.09997253865003586,
+          0.05472264438867569,
+          0.12498600780963898,
+          0.09784994274377823,
+          0.11645405739545822,
+          0.007990711368620396,
+          0.04429514706134796,
+          0.06144203245639801,
+          0.1526118665933609,
+          0.053803950548172,
+          0.024515261873602867,
+          -0.0022463244386017323,
+          0.10756445676088333,
+          0.1966763436794281,
+          0.11106238514184952,
+          -0.01241547241806984,
+          0.11292287707328796,
+          0.015882423147559166
+        ],
+        "n_per_feature": [
+          564,
+          564,
+          564,
+          564,
+          564,
+          564,
+          564,
+          564,
+          564,
+          564,
+          564,
+          564,
+          564,
+          564,
+          564,
+          564,
+          564,
+          564,
+          564
+        ],
+        "median_pred_log10_m": [
+          -2.2123656272888184,
+          -2.519589424133301,
+          -2.9136953353881836,
+          -2.2978463172912598,
+          -1.6629042625427246,
+          -1.555647850036621,
+          -2.7355566024780273,
+          -2.313283681869507,
+          -3.400625228881836,
+          -3.5507662296295166,
+          -3.1093695163726807,
+          -3.9028639793395996,
+          -3.5305981636047363,
+          -2.9470601081848145,
+          -2.6440725326538086,
+          -2.390393018722534,
+          -4.414264678955078,
+          -2.552640914916992,
+          -2.867556571960449
+        ],
+        "median_true_log10_m": [
+          -2.214411973953247,
+          -2.527892589569092,
+          -2.9120676517486572,
+          -2.297950029373169,
+          -1.668257474899292,
+          -1.549070954322815,
+          -2.737980842590332,
+          -2.3219804763793945,
+          -3.3986294269561768,
+          -3.572357416152954,
+          -3.1126627922058105,
+          -3.897916555404663,
+          -3.553074598312378,
+          -2.947680711746216,
+          -2.642658233642578,
+          -2.398325204849243,
+          -4.409867286682129,
+          -2.5657997131347656,
+          -2.8695449829101562
+        ],
+        "median_abs_error_log10": [
+          0.022005438804626465,
+          0.10071742534637451,
+          0.021645188331604004,
+          0.021352052688598633,
+          0.02187478542327881,
+          0.02689117193222046,
+          0.04745495319366455,
+          0.04566669464111328,
+          0.015597939491271973,
+          0.0441136360168457,
+          0.06200134754180908,
+          0.03989279270172119,
+          0.03630661964416504,
+          0.019140958786010742,
+          0.02197432518005371,
+          0.018244624137878418,
+          0.03705239295959473,
+          0.05660653114318848,
+          0.016103267669677734
+        ],
+        "frac_pred_at_ceiling": 0.0,
+        "frac_pred_at_floor": 0.0
+      },
+      "test_all": {
+        "n_records": 933,
+        "n_measurements": 15998,
+        "mean_spearman": 0.07465736125878207,
+        "mean_pearson": 0.10604924414502948,
+        "columns": [
+          "alanine",
+          "arginine",
+          "asparagine",
+          "aspartate",
+          "glutamate",
+          "glutamine",
+          "glycine",
+          "histidine",
+          "isoleucine",
+          "leucine",
+          "lysine",
+          "methionine",
+          "phenylalanine",
+          "proline",
+          "serine",
+          "threonine",
+          "tryptophan",
+          "tyrosine",
+          "valine"
+        ],
+        "spearman_per_feature": [
+          0.12746587979057067,
+          0.12952336929241431,
+          0.0747780859488584,
+          0.11235578632183973,
+          0.0847111246868239,
+          0.06327560664628917,
+          0.03613688954872706,
+          0.09717470580817376,
+          0.06281306633177242,
+          0.10973198142902764,
+          0.02551445315586484,
+          0.04678533542351959,
+          0.007691345452120124,
+          0.06981958654703303,
+          0.14329844237005945,
+          0.13293336757141203,
+          -0.0038278803983833815,
+          0.08776849772638304,
+          0.010540220264353308
+        ],
+        "pearson_per_feature": [
+          0.15751387178897858,
+          0.18424677848815918,
+          0.11186135560274124,
+          0.1636270433664322,
+          0.104576475918293,
+          0.06937377154827118,
+          0.03931388631463051,
+          0.1781664788722992,
+          0.057441651821136475,
+          0.2302452027797699,
+          0.0960812196135521,
+          0.04800538346171379,
+          0.008442305028438568,
+          0.10693337768316269,
+          0.15273958444595337,
+          0.16681958734989166,
+          -0.01909741759300232,
+          0.10522758215665817,
+          0.053417500108480453
+        ],
+        "n_per_feature": [
+          842,
+          842,
+          842,
+          842,
+          842,
+          842,
+          842,
+          842,
+          842,
+          842,
+          842,
+          842,
+          842,
+          842,
+          842,
+          842,
+          842,
+          842,
+          842
+        ],
+        "median_pred_log10_m": [
+          -2.2127151489257812,
+          -2.5185253620147705,
+          -2.913372039794922,
+          -2.2978363037109375,
+          -1.662650227546692,
+          -1.5551836490631104,
+          -2.7357397079467773,
+          -2.312786817550659,
+          -3.400998115539551,
+          -3.550835132598877,
+          -3.108835458755493,
+          -3.903294801712036,
+          -3.5313186645507812,
+          -2.9468038082122803,
+          -2.6438801288604736,
+          -2.390732526779175,
+          -4.414704322814941,
+          -2.553006649017334,
+          -2.867691993713379
+        ],
+        "median_true_log10_m": [
+          -2.2148683071136475,
+          -2.5345921516418457,
+          -2.9120676517486572,
+          -2.297950029373169,
+          -1.668257474899292,
+          -1.549070954322815,
+          -2.737452745437622,
+          -2.3200843334198,
+          -3.3986294269561768,
+          -3.572357416152954,
+          -3.1107442378997803,
+          -3.897916555404663,
+          -3.553074598312378,
+          -2.947680711746216,
+          -2.642561912536621,
+          -2.398325204849243,
+          -4.4104228019714355,
+          -2.5644474029541016,
+          -2.869807481765747
+        ],
+        "median_abs_error_log10": [
+          0.02271115779876709,
+          0.10243988037109375,
+          0.021242737770080566,
+          0.021293282508850098,
+          0.024191856384277344,
+          0.028407752513885498,
+          0.048244476318359375,
+          0.0456082820892334,
+          0.015979528427124023,
+          0.04359602928161621,
+          0.06228959560394287,
+          0.039276838302612305,
+          0.0368654727935791,
+          0.0210036039352417,
+          0.02409672737121582,
+          0.01763010025024414,
+          0.03635668754577637,
+          0.05860030651092529,
+          0.016487479209899902
+        ],
+        "frac_pred_at_ceiling": 0.0,
+        "frac_pred_at_floor": 0.0
+      }
+    }
+  },
+  "feasibility": {
+    "available": false,
+    "reason": "arm 'pooled' has no flux layer, so there is no flux vector and neither mass balance nor the second law is defined for it. Reported as null rather than as zero violations.",
+    "definitions": {
+      "balance_median_ratio": "median over the independent rows i of S of |(Sv)_i| / (omega_i + balance_epsilon), with omega_i = 0.5 sum_j |S_ij v_j| the layer's own turnover. This is FluxLayer.forward's feas_balance_median, per sample instead of batch-reduced.",
+      "balance_max_ratio": "the same ratio, maximized over the independent rows.",
+      "box_violation_frac": "fraction of the 4,131 reactions with v > ub + 1e-4 or v < lb - 1e-4, where (lb, ub) is FluxLayer.dynamic_box at this sample's availability and abundance. The box parameterization satisfies this by construction, so a nonzero value is a bug rather than an infeasibility.",
+      "thermo_model_violation_frac": "fraction of active reactions (delta_r_g0_mask and not thermo_exempt) with v * delta_r_G > thermo_epsilon, using the layer's OWN delta_r_G from reaction_potential, which includes the learned concentration term. Available only when the arm's thermo_mode is not OFF.",
+      "thermo_model_uphill_frac": "mean over active reactions of relu(v dG + eps) / (|v||dG| + eps), the per-sample form of the layer's c_thermo. Available only when thermo_mode is not OFF.",
+      "thermo_standard_state_violation_frac": "fraction of active reactions with v * (delta_r_G0 + delta_r_G_transport) > thermo_epsilon. An AUDIT REFERENCE, not the layer's own term: it evaluates the second law at standard state because an arm with thermo_mode OFF learns no concentrations, so the concentration term RT S^T ln c is absent rather than zero.",
+      "thermo_standard_state_uphill_frac": "the same standard-state driving force in the c_thermo normalization.",
+      "fractions": "fraction of the genotypes in the group meeting each named criterion. 'both_balance_le_1e-02_and_<thermo>_eq_0' is the Genesis criterion: mass balance within 1 percent and no uphill active reaction.",
+      "rank_by": "top-100 groups are the 100 genotypes with the HIGHEST predicted betaxanthin (denormalized head mean), i.e. the strains the model nominates as producers."
+    },
+    "tolerances": {},
+    "n_independent_balance_rows": null,
+    "n_reactions_second_law_applied": null,
+    "thermo_mode": null,
+    "thermo_source": null,
+    "groups": {}
+  },
+  "checkpoint_path": "/scratch/projects/torchcell-scratch/checkpoints-027/wave8_aa_ctxconc_e200_s2701.pt",
+  "wandb_run_id": "57tyvuib",
+  "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/57tyvuib"
+}

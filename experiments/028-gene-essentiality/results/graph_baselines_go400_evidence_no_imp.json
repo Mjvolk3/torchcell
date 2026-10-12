@@ -1,0 +1,80 @@
+{
+  "protocol": "transductive node classification on one gene graph, no perturbation; class-weighted BCE, Adam 1e-3, 200 epochs, width 64, dropout 0.2; epoch selected by a five-epoch moving average of the validation AUROC; scored once on the 195 held-out genes",
+  "rows": [
+    {
+      "model": "GCN",
+      "graph": "union of nine",
+      "inputs": "GO (400 epochs)",
+      "dim_in": 2220,
+      "n_parameters": 146369,
+      "test_auroc": [
+        0.9118804091266719,
+        0.9083398898505114,
+        0.9085365853658537
+      ],
+      "val_auroc": [
+        0.8210526315789474,
+        0.8213533834586466,
+        0.8225563909774436
+      ],
+      "select_epoch": [
+        394,
+        381,
+        397
+      ],
+      "mean": 0.9095856281143457,
+      "sd": 0.0016246409249100176,
+      "seconds": 2799.3601620197296
+    },
+    {
+      "model": "GCN",
+      "graph": "union of nine",
+      "inputs": "GO+FBA ratios (400 epochs)",
+      "dim_in": 2224,
+      "n_parameters": 146625,
+      "test_auroc": [
+        0.9091266719118805,
+        0.8994885916601102,
+        0.9057828481510621
+      ],
+      "val_auroc": [
+        0.8177443609022557,
+        0.8108270676691729,
+        0.8165413533834587
+      ],
+      "select_epoch": [
+        394,
+        383,
+        386
+      ],
+      "mean": 0.9047993705743509,
+      "sd": 0.003995711771621447,
+      "seconds": 2857.275955438614
+    },
+    {
+      "model": "GCN",
+      "graph": "union of nine",
+      "inputs": "ProtT5+GO+FBA ratios (400 epochs)",
+      "dim_in": 3248,
+      "n_parameters": 212161,
+      "test_auroc": [
+        0.9108969315499608,
+        0.9047993705743509,
+        0.9107002360346185
+      ],
+      "val_auroc": [
+        0.813233082706767,
+        0.8111278195488721,
+        0.8156390977443609
+      ],
+      "select_epoch": [
+        397,
+        390,
+        395
+      ],
+      "mean": 0.9087988460529767,
+      "sd": 0.0028291960412262997,
+      "seconds": 2865.9608795642853
+    }
+  ]
+}

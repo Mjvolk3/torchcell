@@ -17,8 +17,7 @@ property of one enzyme acting on one substrate. The key is
 $(\textrm{uniprot}, \textrm{substrate}, \textrm{predictor}, \textrm{parameter})$.
 Collapsing to one row per gene would silently pick a substrate, and collapsing to one row
 per catalytic unit would silently pick a subunit, so the store holds pairs and aggregation
-lives in the resolver. The dataset records what was predicted; the caller decides what the
-layer sees.
+lives in the resolver.
 
 \subsection{Sequences come from the genome, not from the model's bundled table\secstatus{todo}}
 
@@ -34,7 +33,7 @@ protein a predictor sees cannot silently disagree.
 All 1{,}161 yeast-GEM genes resolve as \texttt{current} through the shared gene-name
 reconciler, and all 1{,}161 have a protein sequence, so nothing is lost by the switch.
 Rebuilding DLKcat on genome sequences moved the median $k_{cat}$ from 4.0125 to 4.0116
-s$^{-1}$, which says the two sources agree on content and differ on provenance.
+s$^{-1}$.
 
 Two failures are worth recording because both are silent. \texttt{orf in genome} looks
 safer than indexing and is not: the genome defines no \texttt{\_\_contains\_\_}, so Python
@@ -46,23 +45,19 @@ path; left unset it misses and the constructor tries to fetch \texttt{go.obo} fr
 \subsection{Validation caught a log base\secstatus{todo}}
 
 The DLKcat implementation reproduces the authors' three released example values to four
-decimal places. That check was worth more than its cost, because it caught two defects that
-would otherwise have been invisible in a plausible-looking table.
-
-\textbf{The output is $\log_2$, not $\log_{10}$.} The authors exponentiate with
-\texttt{math.pow(2, \ldots)}. Reading it as base 10 inflates every turnover number by a
-power of roughly 3.3 and still produces numbers that look like credible turnover numbers.
+decimal places, and that check caught two defects that would otherwise have been invisible
+in a plausible-looking table. The first is the exponentiation base, which
+Section~\ref{sec:logbase} tabulates for every predictor whose base was checked.
 
 \textbf{Multi-component SMILES are refused by the model itself.} Its fingerprint pass
 indexes a node list built only from bonded atoms, so a disconnected fragment, such as the
 lone \texttt{[Fe+2]} in the heme SMILES yeast-GEM gives for ferricytochrome $c$, walks off
-the end of the list. Excluding them is what the model does, so the exclusion is recorded
-rather than worked around.
+the end of the list.
 
 \subsection{Embedding on four GPUs\secstatus{todo}}
 
-UniKP's protein half is ProtT5-XL, a 3-billion-parameter encoder, and its pinned
-environment holds CPU-only torch. The embedding is therefore produced once on GPU and
+UniKP's protein half is ProtT5-XL~\cite{elnaggarProtTransUnderstandingLanguage2022}, a
+3-billion-parameter encoder, and its pinned environment holds CPU-only torch. The embedding is therefore produced once on GPU and
 handed across as a content-addressed cache, keyed by a hash of the sequence so that any
 predictor wanting a ProtT5 representation can reuse it and two ORFs with one sequence
 resolve to one vector.
@@ -77,18 +72,56 @@ processes opening the same gffutils SQLite database concurrently raced and made 
 unreadable; since the shards need the genome for nothing but a sequence lookup, the
 dependency was removed rather than serialized.
 
+\subsection{What a predictor is actually missing is a substrate structure\secstatus{todo}}
+\label{sec:substrate-structures}
+
+A predictor takes a protein sequence and a substrate structure. Every gene has a sequence,
+so nothing a predictor fails to price fails for want of a protein, and an audit of the 176
+catalytic units no admitted predictor could price found the same blocker on all 176: no
+structure for any substrate the reaction consumes. None was blocked by an accession, a
+sequence, the complex rule or a predictor crash.
+
+\textbf{Three routes recovered 165 of the 176, and each of them is a mapping rather than a
+model.} An annotation cross-reference priced 27, following the identifier yeast-GEM carries
+through MetaNetX's own cross-reference table to a current entry: the model annotates an
+older MNXref release, so \texttt{MNXM417} for fructose 1,6-bisphosphate is not a row in
+MNXref 4.5 and three reactions had no turnover number for that reason alone. The lipid
+structure writer of Section~\ref{sec:lipids} supplied 48 more from structures it had already
+composed for the thermodynamics. A substrate writer built the remaining two by constructing
+every chain length and keeping the one whose RDKit formula equals the model's, which selects
+dolichol-4 uniquely for dolichyl D-mannosyl phosphate out of $n = 2$ to $11$. Eleven units
+none of the three reached.
+
+\textbf{Acceptance is composition, not similarity.} A candidate structure is admitted only
+when its RDKit formula equals the model's formula with both moved to the neutral species by
+adding one hydrogen per negative charge. That rejects an R-group placeholder outright, since
+\texttt{C4H7O2SR} never equals \texttt{C4H7O2*}, and it is what caught the structures the
+tables were already resting on: of the 1{,}425 distinct substrate structures the first round
+of predictions used, \textbf{97 fail the check}, 35 of them tRNA species the model gives the
+formula \texttt{RH}. Repairing 31 and dropping the rest cost 8 catalytic units and moved
+none of the surviving values by more than one decade for $k_{cat}$.
+
+\textbf{Two table versions are kept and they are not interchangeable.} The \texttt{processed}
+tables are the first round, 3{,}717 units on unchecked structures; the \texttt{verified}
+tables are 3{,}709 units, 1{,}359 distinct structures and none failing the composition
+check. Every predictor was rerun on the verified pairs and both versions are hashed per
+predictor and per parameter in \texttt{results/kinetic\_table\_versions.json}, so a stated
+tier count names the version it belongs to. Section~\ref{sec:kinetic-tiers} reports the
+verified ones.
+
 \subsection{What each predictor cost to run\secstatus{todo}}
 
 %% SOURCE: hand-authored from the mirror manifests written by
 %% experiments/026-metabolism-flux/scripts/mirror_kinetic_models.py; the machine
 %% readable form is experiments/026-metabolism-flux/results/kinetic_model_mirrors.json
-\begin{table}[H]
+\begin{table}[!htbp]
   \centering
   \footnotesize
-  \caption[Predictor status]{The six predictors named in Wu et al.'s Methods, what each
-  emits, and what it took to run here. ``Ships weights'' refers to the repository as
-  cloned; UniKP's fitted regressors are released separately on HuggingFace and are
-  mirrored alongside it.}
+  \caption[Predictor status]{The eight mirrored predictors, what each emits, and what it
+  took to run here. The first six are the set named in Wu et al.'s Methods; EZKinetics and
+  CatPred were added afterwards and have subsections of their own. ``Ships weights'' refers
+  to the repository as cloned; UniKP's fitted regressors are released separately on
+  HuggingFace and are mirrored alongside it.}
   \label{tab:predictors}
   \begin{tabular}{llll}
     \hline
@@ -100,6 +133,86 @@ dependency was removed rather than serialized.
     EITLEM-Kinetics & $k_{cat}$, $K_M$ & Zenodo, 12.3 GB & many checkpoints \\
     Boost\_KM & $K_M$ & yes, two regressors & ESM-1b variant is the one Wu ran \\
     DeepEnzyme & $k_{cat}$ & figshare & uses AlphaFold structures \\
+    EZKinetics & $k_{cat}$, $K_M$ & yes, 36 fitted models & the only condition-aware one \\
+    CatPred & $k_{cat}$, $K_M$, $K_i$ & S3 capsule, 10.2 GB & the only one with a variance \\
     \hline
   \end{tabular}
 \end{table}
+
+\subsection{CatPred, the eighth predictor and the only one that returns a variance\secstatus{todo}}
+\label{sec:catpred}
+
+CatPred~\cite{boorlaCatPredComprehensiveFramework2025} was not in the set Wu et al.\ name and
+was added afterwards. It is a fork of chemprop: the substrate is a directed message-passing
+network over its 2D atom-bond graph, the enzyme is a learned residue embedding carrying
+rotary positional information through multi-head self-attention concatenated with ESM2-650M
+features, and an attentive pooling layer reduces the pair to a fully connected head. No EC
+number is an input, and the structural branch belongs only to the released $K_i$ model.
+
+\textbf{What makes it worth the seat is the head, not the encoder.} It outputs a mean AND a
+variance and is trained under a negative log-likelihood loss, and the release is an ensemble
+of ten differently seeded copies, so one pass gives three numbers: the prediction, an
+aleatoric variance which is the mean of the ten predicted variances, and an epistemic
+variance which is the variance of the ten means. Every other predictor here returns a point
+value, so this is the only place in the parameter tables where a value arrives with a stated
+confidence.
+
+Three checks were needed before any number was written. The output base is $\log_{10}$,
+settled by reproducing the repository's own shipped demo prediction, 0.1875471 against its
+recorded 0.1875500. The pinned \texttt{rotary\_embedding\_torch} version is load-bearing: a
+later release changes a cached-frequency shape and the checkpoints refuse to run at all. And
+the repository's own postprocessing broadcasts the first row's uncertainty to every row, so
+the three terms are recomputed from the ensemble columns rather than read from its output.
+One predictor property follows from the architecture: a substrate with no heavy atom has no
+graph for the message passing, so the bare proton yeast-GEM writes as \texttt{[H+]} is
+refused, which costs 1{,}025 of 7{,}456 pair rows and only 5 catalytic units.
+
+\textbf{For CatPred alone the training overlap is a measurement rather than a caveat.} It
+released its training tables with a UniProt accession on every row, and its production
+weights were fit on train plus validation plus test, which its own \texttt{args.json}
+records. Matching the 58 measured yeast pairs on accession and InChIKey connectivity block,
+51 of the $k_{cat}$ pairs and 44 of the $K_M$ pairs are in that table. The concentration is
+the point: across the whole model only 109 and 193 of 1{,}148 proteins are in it, so the
+enzymes that can be scored are almost all seen while the model as a whole is extrapolating.
+The same leakage is expected for the other seven and cannot be quantified for them.
+
+%% SOURCE: experiments/026-metabolism-flux/results/within_class_plausibility_with_catpred.json
+%% (own_class_band, read through PredictorSelection.from_study) and
+%% experiments/026-metabolism-flux/results/catpred_table_impact.json, both written by
+%% scripts in experiments/026-metabolism-flux/scripts/.
+\begin{table}[!htbp]
+  \centering
+  \footnotesize
+  \caption[CatPred admission]{The selection rule applied to CatPred. A predictor is kept
+  when the Wilson 95 percent lower bound of its own-class EC4 fraction exceeds the point
+  fraction of the EC-median lookup, which knows the enzyme's function and nothing else.
+  CatPred misses the $k_{cat}$ bar by one hit and clears the $K_M$ bar, where it ties the
+  only previously admitted predictor.}
+  \label{tab:catpred-admission}
+  \begin{tabular}{llllll}
+    \hline
+    Parameter & Own-class & Wilson lower & Lookup & Threshold & Verdict \\
+    \hline
+    $k_{cat}$ & 32/48 = 0.667 & 0.525 & 0.542 & 33/48 & rejected \\
+    $K_M$ & 32/48 = 0.667 & 0.525 & 0.500 & 31/48 & admitted \\
+    \hline
+  \end{tabular}
+\end{table}
+
+Admitting it for $K_M$ changes the admitted set from EZKinetics alone to EZKinetics and
+CatPred, which moves 2{,}824 of 3{,}728 catalytic units by a median of 0.151 decades, 667 of
+them by more than a factor of two. \textbf{No capacity bound moves at all}, and that is
+structural: the enzyme constraint is $|v_j| \le k_{cat} E$, saturation-free, so the bound
+scales with $k_{cat}$ alone and the $k_{cat}$ admitted set is unchanged. The tier counts are
+identical on both parameters.
+
+The variance is under-dispersed and it ranks. Coverage of the total predicted interval on
+the 58 measured pairs is 0.603 at one standard deviation against a nominal 0.683 for
+$k_{cat}$ and 0.621 for $K_M$, giving a root mean square standardized residual of 2.62 and
+1.22, so a $k_{cat}$ interval is off by about a factor of two and a half while a $K_M$
+interval is close to honest. What does hold is the ordering: the rank correlation between the
+predicted standard deviation and the absolute error is $+0.570$ for $k_{cat}$ and $+0.621$
+for $K_M$, and the median absolute error rises monotonically across the quartiles of the
+predicted standard deviation, from 0.115 to 1.118 decades for $k_{cat}$. A flux layer can
+therefore spend the variance as an ordering, by widening a bound where the ensemble is
+unsure, long before it can spend it as a calibrated interval.

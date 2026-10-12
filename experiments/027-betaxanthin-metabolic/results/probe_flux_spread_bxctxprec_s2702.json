@@ -1,0 +1,37 @@
+{
+  "result_file": "wave9_bxctxprec_e200_s2702.json",
+  "checkpoint": "/scratch/projects/torchcell-scratch/checkpoints-027/wave9_bxctxprec_e200_s2702.pt",
+  "arm": "pooled",
+  "seed": 2702,
+  "head": "betaxanthin",
+  "select_epoch": 97,
+  "n_genotypes": 933,
+  "n_reactions": 0,
+  "flux_relative_spread": {
+    "n": 0,
+    "median": NaN,
+    "p90": NaN,
+    "maximum": NaN,
+    "n_above_threshold": 0
+  },
+  "flux_absolute_sd": {
+    "n": 0,
+    "median": NaN,
+    "p90": NaN,
+    "maximum": NaN,
+    "n_above_threshold": 0
+  },
+  "context_relative_spread": {
+    "n": 90,
+    "median": 0.6251101493835449,
+    "p90": 1.368107795715332,
+    "maximum": 1.7901934385299683,
+    "n_above_threshold": 90
+  },
+  "head_input_sd": 0.6442014575004578,
+  "head_input_mean_abs": 2.13456130027771,
+  "head_input_name": "precursor_log10_c",
+  "prediction_sd": 0.5830863118171692,
+  "target_sd": 1.0,
+  "prediction_sd_ratio": 0.5830863118171692
+}

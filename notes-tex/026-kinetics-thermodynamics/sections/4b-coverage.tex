@@ -1,0 +1,646 @@
+%% notes-tex/026-kinetics-thermodynamics/sections/4b-coverage.tex
+%% [[experiments.026-metabolism-flux.scripts.improve_parameter_coverage]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/026-kinetics-thermodynamics/sections/4b-coverage.tex
+
+\section{Coverage, route by route\secstatus{todo}}
+\label{sec:coverage}
+
+Every number in this section is produced by a script in
+\texttt{experiments/026-metabolism-flux/}, named in the source note of each figure and
+table; \texttt{thermo\_pipeline\_}\allowbreak\texttt{yeast9.py},
+\texttt{thermo\_curation\_}\allowbreak\texttt{price.py} and
+\texttt{external\_pka\_}\allowbreak\texttt{apply\_selection.py} need the eQuilibrator env
+rather than the torchcell env.
+
+\textbf{A value with no named route is not a value.} Every one of yeast-GEM 9.0.2's 2{,}806
+metabolites carries either a \emph{route}, which says how its formation energy was
+produced, or an \emph{unpriced reason}, which says what stands in the way; the same holds
+for each of the 4{,}131 reactions. The two partition the model exactly, and the partition
+is asserted when the table is written rather than checked afterwards. This section reads
+that partition out, route by route.
+
+\input{tables/thermo_vocabulary}
+
+\subsection{What the tables cover\secstatus{todo}}
+
+\input{tables/thermo_coverage_ladder}
+
+\textbf{3{,}801 of 4{,}131 reactions carry a standard reaction energy, and 2{,}724 of the
+2{,}845 that can carry flux.} Counted over chemical reactions alone, dropping the 284
+exchange, demand, sink and biomass pseudoreactions for which a standard reaction energy has
+no meaning, it is 3{,}535 of 3{,}847. Those three denominators answer three different
+questions and none of them is the headline: the flux-carrying figure bounds what the layer
+can express, the chemical figure is what a thermodynamics claim should quote, and the
+whole-model figure is what a reader compares against yeast-GEM's shipped column.
+
+\textbf{The ladder's first four rows are a comparison of sources and the last is the
+pipeline.} Reading the recomputation's 66.4 percent against the shipped column's 84.9 was
+never the right comparison, because the two price different reactions rather than nested
+ones and only one of them carries an uncertainty. Three things separate them.
+
+\emph{Covariance.} The recomputation returns a square-root factor of the formation-energy
+error covariance, of rank 590 over 2{,}806 metabolites, so a reaction energy comes with an
+uncertainty correlated with every other reaction's in the way component contribution says
+it should be. The shipped file is a column of numbers with no uncertainty of any kind. Of
+the reactions the built table prices, 1{,}770 carry a finite standard error, which is the
+stricter figure and the one a sampler would use.
+
+\emph{Transferability.} The shipped table was assembled by matching
+yETFL~\cite{oftadehGenomescaleMetabolicModel2021} values on the metabolite name string, so
+it exists for this model and no other; the recomputation works from structure and prices
+all five betaxanthin intermediates (Section~\ref{sec:thermo}).
+
+\emph{Transport terms.} \textbf{Neither table carries one, and the module now computes it},
+nonzero on 326 of the 1{,}468 reactions that cross a membrane and agreeing in sign with the
+GEM's own column on 84.7 percent of the 287 nonzero in both
+(Section~\ref{sec:transport-term}, \texttt{results/transport\_terms.json}).
+\textbf{This is the one row where the shipped table has a partial answer the recomputation
+cannot reconstruct}, since yETFL's term carries a protonation contribution this module does
+not.
+
+\subsection{Every value, and the route that produced it\secstatus{todo}}
+\label{sec:routes}
+
+%% SOURCE: results/reaction_thermo_coverage_final.json and
+%% results/thermo_curation_closure.json, drawn by plot_thermo_recovery_routes.py; every
+%% count the panels show is written to results/thermo_recovery_routes_figure.json.
+\begin{figure}[!htbp]
+  \centering
+  \includegraphics[width=\textwidth]{figures/thermo_recovery_routes.pdf}
+  \caption[Route attribution across yeast-GEM 9.0.2]{\textbf{Which route produced each
+  formation and reaction energy, and which failure class holds the rest.} Bars are colored
+  by evidence class, and panels a to d use a logarithmic count axis because the routes span
+  three orders of magnitude.
+  \textbf{a}, The 2{,}559 priced metabolites by route. Two routes reach the eQuilibrator
+  compound cache, one by an identifier the model carries and one by a structure written
+  here from the metabolite's name, and together they account for 2{,}406 of them.
+  \textbf{b}, The 247 metabolites with no value, by failure class. The two largest classes
+  are species that are not molecules.
+  \textbf{c}, The 3{,}801 priced reactions by route. \emph{Mixed routes} is a reaction whose
+  participants came from more than one route, so its uncertainty belongs to no single one,
+  and it is the second largest entry.
+  \textbf{d}, The 330 unpriced reactions by the single failure class that blocks them,
+  which partitions them exactly; \emph{more than one reason} is the class for a reaction
+  blocked by species in two or more of the others.
+  \textbf{e}, The ceiling ladder. Each row is a fraction of the denominator printed in its
+  own tick label, because the before-and-after-curation pair exists only over the whole
+  model while the three rungs are over the 3{,}847 chemical reactions; the run that
+  produced the before figure did not emit a chemical denominator. Curation moved the whole
+  model from 3{,}779 to 3{,}801 reactions. The last rung, 3{,}556, is what would be priced
+  if every structure, ladder and refused decomposition in the model were resolved, so it is
+  the ceiling for any method rather than for this one.
+  \textbf{f}, Reactions priced under four denominators. The reactions no medium lets carry
+  flux hold most of the remaining gap, so the flux-carrying restriction is higher than the
+  whole-model figure rather than lower. Generated by
+  \texttt{experiments/026-metabolism-flux/scripts/plot\_thermo\_recovery\_routes.py}.}
+  \label{fig:thermo-routes}
+\end{figure}
+
+\input{tables/thermo_metabolite_routes}
+
+\input{tables/thermo_reaction_routes}
+
+\input{tables/thermo_route_provenance}
+
+\textbf{The cache is the workhorse and the recovery routes are the tail, and the tail is
+where the errors live.} 2{,}117 metabolites come from an identifier that resolved to a
+compound eQuilibrator already holds, and a further 289 from a structure written here whose
+InChIKey resolved one. The remaining 153 come from seven routes each worth between 2 and 70
+species, and each of those seven had to be built, checked and given a provenance record.
+Their reaction yield is smaller still: 19 reactions carry the cancellation route, 9 the
+external p$K_a$ cascade, 2 a curated structure and 1 a conserved moiety.
+\textbf{Coverage was not what the recovery routes bought.} What they bought is a table in
+which every value names its own method, so a disagreement can be attributed rather than
+argued about.
+
+\subsection{Mapping a model species onto a molecule\secstatus{todo}}
+\label{sec:mapping}
+
+Four mappings sit between the model and an estimator, and each can be silently wrong: an
+identifier can resolve to the wrong compound, a name can be parsed into the wrong
+structure, a polymer's residue can be counted with the wrong end groups, and a curator can
+record a species the model does not actually contain.
+
+%% SOURCE: results/thermo_pipeline_figure.json (namespaces),
+%% results/thermo_curation_closure.json (composition check and curation records),
+%% results/lipid_names_parsed.json, results/lipid_coverage.json,
+%% results/thermo_polymer_repeat_unit.json and results/thermo_acyl_transfer.json; drawn by
+%% plot_molecule_mapping.py, which writes results/molecule_mapping_figure.json.
+\begin{figure}[!htbp]
+  \centering
+  \includegraphics[width=\textwidth]{figures/molecule_mapping.pdf}
+  \caption[From a model species to a molecule]{\textbf{The four mappings between a
+  yeast-GEM species and a molecule an estimator can price.}
+  \textbf{a}, Which namespace resolved each metabolite, in the order
+  \texttt{build\_equilibrator\_thermo.py} tries them, so the bars are disjoint: a
+  metabolite counted under ChEBI is one whose MetaNetX identifier missed. MetaNetX 2{,}265,
+  ChEBI 191, BiGG 11, KEGG 5 and an InChI structure lookup 2, with 332 resolving nothing.
+  \textbf{b}, The composition check over the 2{,}414 accession-priced species: whether the
+  compound the identifier resolved carries the model's own heavy-atom composition. 2{,}087
+  match, 12 are the dolichol family whose structures carry exactly one isoprene unit more
+  than the model's formula, and 8 are a different molecule.
+  \textbf{c}, The lipid structure writer counted in distinct names. 168 of 206 parse, all
+  168 reproduce yeast-GEM's own elemental formula, 120 resolve a compound the cache already
+  holds and 48 need a compound created through the external p$K_a$ route.
+  \textbf{d}, The same writer counted in metabolite rows, which is the count coverage moves
+  by: 347 of 409 rows priced, 289 by cache lookup and 58 through a created compound.
+  \textbf{e}, The two smaller writers. The polymer repeat-unit surrogate prices 4 of 97
+  candidates, refusing the rest because no hydrolysis reaction in the model identifies a
+  monomer; the acyl-transfer writer composes 2 of 3 products and prices none of them,
+  pricing being the p$K_a$ route's job.
+  \textbf{f}, The 16 curation records by admission, split by whether the record closed a
+  species or a reaction. Only \emph{measured} and \emph{tabulated} may price anything, and
+  four of the nine tabulated records still close nothing because the structure they record
+  is one component contribution refuses. Generated by
+  \texttt{experiments/026-metabolism-flux/scripts/plot\_molecule\_mapping.py}.}
+  \label{fig:molecule-mapping}
+\end{figure}
+
+\paragraph{The accession route had no composition check, and eight species were priced as a
+different molecule.} It accepted the first identifier that resolved to a compound carrying
+a formation energy, whatever molecule that compound is. Checking the resolved structure's
+composition against yeast-GEM's own formula, over every accession-priced species, separates
+three populations (Figure~\ref{fig:molecule-mapping}b). \textbf{Six prices are withdrawn and
+the withdrawal costs 10 reactions}, which is the correct direction: a formation energy for
+the wrong molecule is worse than none, because it produces a reaction potential with a
+confident sign.
+
+\input{tables/thermo_accession_mispricings}
+
+\textbf{The 12 dolichols are kept, with the offset recorded.} Every dolichol species in
+yeast-GEM carries the $n = 0$ core formula while every accession structure is the $n = 1$
+molecule, so the offset is one isoprene unit on both sides of any reaction that conserves
+the carrier and cancels there. That is a statement about the reactions these species appear
+in rather than about the values, so the offset is written into the provenance record rather
+than corrected away.
+
+\paragraph{A curation record is a claim with sources, and most of them close nothing.} Each
+of the 16 records carries its own structure, potential, p$K_a$ ladder or polymer convention,
+with a verbatim quote, a retrieval command and a sha256 for every source, and each records
+what the group decomposer said about it. Eleven are admitted and five are not: three are
+provisional, resting on another organism or on a construction rather than a measurement, and
+two record that nothing was found. \textbf{An admitted record still prices nothing when the
+structure it records is one component contribution refuses}, which is four of the nine
+tabulated records and is the honest outcome rather than a failure of the curation.
+
+\input{tables/thermo_curation_records}
+
+\subsection{A p$K_a$ route that does not need the license\secstatus{todo}}
+\label{sec:pka}
+
+\textbf{Coverage of the native network and coverage of an inserted pathway are separate
+problems.} A perturbation understood as an edit to the cell's total genomic content adds
+reactions yeast-GEM never had, carrying compounds absent from the compound cache, which is
+the one case the ChemAxon license governs. Adding such a compound requires the p$K_a$
+constants \texttt{cxcalc} supplies, without which \texttt{LocalCompoundCache} opens
+read-only; that blocker also stands behind every metabolite the structure writers reach and
+the cache does not already hold.
+
+\paragraph{The bridge is an unreleased option, and it takes p$K_a$s and nothing else.}
+\texttt{equilibrator-assets} master merged \texttt{pkas\_provided\_externally} on
+2026-08-15; the last PyPI release, 0.6.0 from January 2024, does not carry it, so the route
+runs from a clone pinned at commit \texttt{c79e371e}. The caller passes a dictionary keyed
+by the exact structure string, valued by a list of \emph{macroscopic} constants, and the
+option lifts read-only mode without ChemAxon. Charge and the proton ladder are then derived
+from the structure rather than supplied: the atom bag comes from the SMILES through Open
+Babel, and the microspecies mapping is indexed off the hydrogen count and the number of
+supplied constants above pH 7. \textbf{The reference microspecies is therefore whatever
+protonation state the caller wrote the structure in, and that choice is worth
+776 kJ\,mol$^{-1}$.} Pricing 7 written lipids from their neutral structures left a residual
+of $-777.5$ kJ\,mol$^{-1}$ against the same compounds in the cache; submitting the pH 7
+major microspecies instead leaves $+0.13$, range 0.07 to 0.15. The difference sits in two
+entries of the 163-long group vector, one for the phosphate and one for the amine, so it is
+the untransformed group-contribution term rather than the transform. \textbf{Submit the
+pH 7 major microspecies.} The error is silent otherwise: standard InChI normalizes mobile
+protons, so the two conventions share an InChIKey and a single local cache returns the
+compound the first call created, which is why the comparison needs two caches that cannot
+see each other.
+
+\paragraph{The validation set is the cache's own constants, which is what makes it a test.}
+No open-source predictor was trained to reproduce ChemAxon, so the cache is an independent
+reference rather than a leaked one. 2{,}400 compounds are drawn from the 694{,}324 the cache
+holds, stratified on constant count, functional group, mass and whether the compound is
+lipid-like, and the 2{,}100 outside the pinned seed-17 300 are what every number below is
+measured on. The pinned 300 are excluded because ensemble membership was fitted on them.
+
+\paragraph{The rule is a tail bound at every compartment pH, not an average error.} A method
+is scored by the \emph{worst} per-pH 90th percentile of
+$|\Delta_f G'^{\circ}(\textrm{predicted}) - \Delta_f G'^{\circ}(\textrm{cache})|$ over the
+eight pHs the pipeline transforms at, subject to a failure rate of at most 0.02, breaking
+ties on the pH 7.2 median and then on cost. Three choices in that sentence are doing work.
+The p90 rather than the mean, because the fill-in is a tail risk and one wrongly signed
+reaction potential is what a second-law hinge acts on. The worst pH rather than the mean
+over pHs, because a metabolite is priced at its own compartment's pH and a good cytosol
+score would otherwise hide a bad vacuole one. And a failure-rate bound rather than a scored
+error, because a method that cannot answer leaves a gap rather than a cheap answer.
+
+\input{tables/pka_method_selection}
+
+\input{tables/pka_p90_by_ph}
+
+\textbf{No single tool is admissible except the worst one.} Uni-pKa on the simple
+enumeration template carries the smallest error of any single tool and returns no ladder for
+11.5 percent of the compounds; MolGpKa fails on 5.7 percent, and 126 of its 2{,}400 empty
+ladders come back with no error at all, 93 of them lipid-like. Only pKasolver-lite clears
+the failure bound alone, at more than twice everyone else's error. \textbf{So the selected
+method is a cascade rather than a tool}: Uni-pKa's answer where it has one, MolGpKa's where
+it does not, pKasolver-lite's where neither does. Composition rather than averaging, because
+a median is undefined at a rank where the best member returned nothing.
+
+\textbf{The choice between the three-member and the two-member cascade is a tie the rule
+breaks arbitrarily}, 8.331 against 8.333 kJ\,mol$^{-1}$, a difference of 0.02 percent. The
+rule picks the three-member cascade because it is deterministic; the two-member one is the
+defensible cheaper choice and nothing measured here separates them.
+
+%% SOURCE: results/external_pka_applied.json, results/pka_method_selection.json and
+%% results/pka_method_selection_figure.json, drawn by plot_pka_outside_equilibrator.py,
+%% which writes results/pka_outside_equilibrator_figure.json.
+\begin{figure}[!htbp]
+  \centering
+  \includegraphics[width=\textwidth]{figures/pka_outside_equilibrator.pdf}
+  \caption[The external pKa route on yeast-GEM]{\textbf{What the selected cascade was asked
+  to do on yeast-GEM 9.0.2, and how large the two shifts a ladder controls are.} A target is
+  one distinct structure; several model species can share one, and the 52 targets that yield
+  a value carry the 70 metabolite rows the route table counts, 68 of them from a target with
+  an ionizable center.
+  \textbf{a}, The 55 targets by where they came from, partitioned by outcome. 48 are lipids
+  the structure writer composed and the cache does not hold, 5 are species needing only a
+  ladder, and 2 are acyl-transfer products. Three fail at compound creation and one is
+  created as a single microspecies because a SMARTS scan finds no ionizable center in it,
+  which is the correct answer rather than an error.
+  \textbf{b}, Which cascade member answered. Uni-pKa on the simple template served 53 and
+  pKasolver-lite 1, so the cascade degenerates to its first member on this population and
+  earns its place on the benchmark rather than here.
+  \textbf{c}, Ladder length, the number of constants inside pH 0 to 14 the cascade returned.
+  Two is the mode, as expected for a phosphodiester lipid headgroup.
+  \textbf{d}, The Legendre-transform error a ladder carries, as the p90 of
+  $|\Delta\Delta_f G'^{\circ}|$ at each of the eight working compartment pHs over the
+  2{,}100 held-out benchmark compounds. The mitochondrial matrix at pH 7.8 is the worst
+  column, 8.33 kJ\,mol$^{-1}$, against 4.88 at pH 7.2, which is why the rule reads the worst
+  pH rather than the cytosolic one.
+  \textbf{e}, The reference-microspecies shift, which is three orders of magnitude larger
+  than the ladder error: the signed change in each target's transformed formation energy
+  when the pH 7 major microspecies replaces the neutral parent the writer emitted, median
+  $-1{,}585$ kJ\,mol$^{-1}$ over the 50 targets priced both ways. Generated by
+  \texttt{experiments/026-metabolism-flux/scripts/plot\_pka\_outside\_equilibrator.py}.}
+  \label{fig:pka-outside}
+\end{figure}
+
+\textbf{An earlier 300-compound benchmark at pH 7.2 alone ranks the tools the same way and
+carries three breakdowns the 2{,}400-compound run does not repeat}, per functional group,
+per ladder length, and each tool's shift against each other tool's
+(Table~\ref{tab:external-pka}, Figure~\ref{fig:external-pka}). Two of its findings are load
+bearing. The enumeration template rather than the network decides Uni-pKa's answer: the same
+weights and the same code on the full template give 2.94 kJ\,mol$^{-1}$ against the simple
+template's 0.91, because the enumerator walks outward from the neutral parent and the rungs
+it adds are near pH 7 by construction, which is where the transform is most sensitive. And
+the tools do not agree with each other: MolGpKa against pKasolver-lite gives $r = 0.085$,
+with a median absolute difference between two tools' shifts larger than the best tool's own
+median error against the cache.
+
+\input{tables/external_pka_tools}
+
+%% SOURCE: results/external_pka_per_compound.csv, with every number the panels show
+%% written to results/external_pka_figure.json; figure by plot_external_pka.py.
+\begin{figure}[!htbp]
+  \centering
+  \includegraphics[width=\textwidth]{figures/external_pka_benchmark.pdf}
+  \caption[Open-source pKa predictors against the cache]{\textbf{Four open-source p$K_a$
+  predictors against the compound cache's ChemAxon constants, on 300 compounds at pH 7.2.}
+  This is the earlier and smaller benchmark; the selection of Table~\ref{tab:pka-selection}
+  runs on 2{,}100 held-out compounds at eight pHs and supersedes its ranking.
+  \textbf{a}, Predicted against cache p$K_a$, paired by rank over the shorter of the two
+  lists, on 1{,}010 pairs for pKasolver-lite, 1{,}021 for MolGpKa, 1{,}043 for the full
+  template, 596 for the simple template and 167 for truncated QupKake; the simple template is
+  the only cloud that follows the identity line, with 0.374 of its pairs inside 1 p$K_a$ unit
+  against MolGpKa's 0.358, the full template's 0.267 and pKasolver-lite's 0.258, on half as
+  many pairs.
+  \textbf{b}, Signed change in $\Delta_f G'^{\circ}$ per compound; every median sits just
+  below zero, so what separates the tools is tail width, at 5th percentiles of $-12.19$
+  kJ\,mol$^{-1}$ for pKasolver-lite, $-11.22$ for the full template, $-3.93$ for MolGpKa and
+  $-2.87$ for the simple template.
+  \textbf{c}, The same shift split by the number of constants the cache holds, where the full
+  template's error grows monotonically from 0.64 to 5.43 kJ\,mol$^{-1}$ across the six strata
+  while the simple template's spans 0.14 to 2.13.
+  \textbf{d}, The same shift split by functional group; the simple template is the smallest
+  in all four, 1.03 against MolGpKa's 1.35 on amine, 0.71 against 1.00 on carboxylate, 1.08
+  against 1.18 on phenol and 1.75 against 2.33 on phosphate.
+  \textbf{e}, Fraction of compounds whose constant count matches the cache's, 0.356
+  pKasolver-lite, 0.324 simple template, 0.248 MolGpKa, 0.200 full template, which ranks the
+  tools differently from the energy columns.
+  \textbf{f}, Each tool's per-compound shift against pKasolver-lite's, which is the question
+  of whether the predictors agree with one another: they do not, at $r = 0.085$ for MolGpKa
+  and 0.268 for the simple template, with median absolute differences of 0.74 and 0.62
+  kJ\,mol$^{-1}$, larger than the simple template's own median error against the cache.
+  QupKake is drawn only as its truncated row. Generated by
+  \texttt{experiments/026-metabolism-flux/scripts/plot\_external\_pka.py}.}
+  \label{fig:external-pka}
+\end{figure}
+
+\textbf{A ladder that is wrong is worth about ten kilojoules, and a reference microspecies
+that is wrong is worth about eight hundred.} Those two are the whole error budget of this
+route, and they are not comparable in size. The ladder error is measured against the cache's
+own constants and runs to a p90 of 8.33 kJ\,mol$^{-1}$ at the worst compartment pH; the
+reference-microspecies error is a fixed offset in the group-contribution term and moved the
+48 written lipids by a median of 1{,}585 kJ\,mol$^{-1}$ when it was corrected. A worked case
+of the first is triphosphate: the cache stores a six-microspecies ladder one rung too far in
+both directions, and against the measured ladder the two Legendre transforms differ by
+\textbf{12.762 kJ\,mol$^{-1}$}. That is what the cached ladder would inject into
+\texttt{r\_4403} the day an anchor for triphosphate exists, so the measured ladder is
+recorded now and prices nothing on its own.
+
+\textbf{Magnesium is the gap this route cannot close.} \texttt{specified\_pkas} carries
+proton dissociation constants only, and \texttt{Compound.transform} reads magnesium through
+the microspecies table that is materialized once at creation, so a constant appended
+afterwards commits and changes nothing. Omitting them costs 0.0018 to 4.12 kJ\,mol$^{-1}$ at
+pMg 3 on the benchmark compounds that carry any, always in the direction of
+under-stabilizing the compound, and up to 9.43 at pMg 2. Carrying a constant over by
+substructure is worse than omitting it: bucketing eQuilibrator's own 535-compound table by
+ionizable phosphate steps leaves a within-bucket standard deviation of 1.6 to 3.3 log units,
+and a p$K_d$ off by 2 costs 10.87 kJ\,mol$^{-1}$ on 5-formyl-THF and 11.14 on ADP against
+4.12 and 1.10 for having no constant at all.
+
+One interface defect belongs with these. The guard tests truthiness rather than presence, so
+an empty list, the correct answer for a compound with no constant between pH 0 and 14, raises
+rather than creating a single-microspecies compound. Downstream the route tests for an
+ionizable center by SMARTS instead of reading a tool's error string, because the three
+cascade members word ``nothing here'' three different ways and one of them words it as an
+error.
+
+\subsection{Writing the missing lipid structures\secstatus{todo}}
+\label{sec:lipids}
+
+The 409 metabolite rows with a definite formula and no structure in any namespace are lipids
+whose acyl composition is written into the name, so the structure is derivable from the name
+even though no database indexes it. \texttt{lipid\_structure\_writer.py} parses each name
+into a headgroup template and a list of acyl chains, assembles the SMILES in RDKit, and
+prices the result two ways.
+
+\textbf{168 of the 206 distinct names parse, covering 347 of the 409 metabolite rows, and
+all 168 reproduce yeast-GEM's own elemental formula exactly.} The 38 that do not split into
+17 SLIME backbone pseudo-metabolites, whose formula is a difference formula rather than a
+molecule, and 21 names with no acyl composition to read: glycans, hemes, cytochromes,
+protein-linked lysines and a GPI anchor. Every double bond is placed at $\Delta$-9 and cis,
+a convention yeast-GEM's \texttt{16:1} does not state; the written free acids hash to the
+InChIKeys of palmitoleic and oleic acid, which is what the build asserts rather than the
+convention.
+
+\textbf{All 168 price, 120 by finding a compound eQuilibrator already holds and 48 through
+the external p$K_a$ route.} The cache lookup is a route the coverage audit had no structure
+to key on, and it checks the structures independently: 120 written InChIKeys resolve a
+compound nobody here drew.
+
+\textbf{What this buys is method consistency rather than coverage.} The eQuilibrator route
+moves from 66.35 to 86.27 percent of reactions, passing the shipped column's 84.85, and
+every one of those values now comes from one group-contribution method with an uncertainty
+attached. \textbf{The union with the shipped table does not move at all}, staying at 3{,}716
+reactions, because that table already prices these lipids by name out of yETFL and
+ModelSEED.
+
+%% SOURCE: results/lipid_names_parsed.json, results/lipid_structures.json,
+%% results/lipid_priced.json (dgf_route_difference_same_protonation_kj_per_mol) and
+%% results/lipid_coverage.json, all written by lipid_structure_writer.py; figure by
+%% plot_lipid_structures.py.
+\begin{figure}[!htbp]
+  \centering
+  \includegraphics[width=\textwidth]{figures/lipid_structure_writer.pdf}
+  \caption[The lipid structure writer: reach, coverage and uncertainty]{\textbf{What the
+  lipid structure writer reached, and what it bought.}
+  \textbf{a}, The 206 distinct names by yeast-GEM chemical class, each bar partitioned into
+  the five mutually exclusive stages of the pipeline. No name is lost to a formula mismatch
+  and none to a written structure that failed to price, so those two segments are empty
+  everywhere; the whole loss is the 38 names the parser refuses.
+  \textbf{b}, Reactions of 4{,}131 with every participant priced, at four levels of
+  aggregation, before the written lipids, with the 120 names that resolve an existing cache
+  compound, and with all 168. Dashed, the shipped metabolite column's 84.85 percent. The
+  eQuilibrator recomputation crosses it; the union with the shipped table and the
+  flux-carrying restriction do not move.
+  \textbf{c}, Uncertainty on the formation energy, one value per distinct name: the 113
+  lipid names the recomputed table already prices, the 120 written names priced by cache
+  lookup, and the 48 priced through a created compound. Medians 13.19, 14.79 and
+  18.92\,kJ\,mol$^{-1}$, so a written structure is priced no less certainly than a lipid the
+  table already held. Generated by
+  \texttt{experiments/026-metabolism-flux/scripts/plot\_lipid\_structures.py}.}
+  \label{fig:lipid-writer}
+\end{figure}
+
+\subsection{Composition matching cannot buy coverage\secstatus{todo}}
+
+455 unpriced metabolites have a heavy-atom composition that the compound cache can already
+decompose, which invites pricing them from a same-composition surrogate. The test is to
+price every cache compound of the same composition and measure how far apart they land.
+
+\textbf{They land far apart.} Across the 441 metabolites that gain a value, the median
+spread within a composition is \textbf{52.6\,kJ/mol} and the 90th percentile is
+342\,kJ/mol. Only \textbf{39} fall below 5\,kJ/mol. At 303\,K, $RT\ln 10$ is 5.8\,kJ/mol,
+so the median surrogate is uncertain by roughly nine orders of magnitude in the equilibrium
+constant, which is not a constraint on a sign. Wiring all 441 in would report coverage of
+93.49 percent, three and a half points above the union, on values that cannot orient a
+reaction. The 39 tight ones are offered and 12 are taken by the built table, the rest
+refused: \textbf{a resolution rate and a usable rate are different quantities}, and only the
+second constrains a model. The 5\,kJ/mol admission bound is a judgment rather than a
+measured threshold, $RT\ln 10$ rounded down.
+
+\subsection{What is left, and which of it is permanent\secstatus{todo}}
+\label{sec:permanent}
+
+\input{tables/thermo_unpriced_classes}
+
+\textbf{291 of the 330 unpriced reactions are closed for good.} A reaction is permanently
+closed when every metabolite blocking it is not a molecule: a placeholder formula naming a
+family, a SLIME backbone whose formula is a difference formula, or a residue inside a
+macromolecule. No p$K_a$ predictor, structure writer, decomposer or literature table changes
+any of those. The 21 that remain are what the last two rungs of
+Figure~\ref{fig:thermo-routes}e would close, and the probe that measured them found none of
+the refused structures reachable by the reactant-contribution path or by a surrogate inside
+the admitted spread, so that rung needs new data rather than new code.
+
+\textbf{Five chemistries are permanently refused for a reason that is about eQuilibrator's
+group system rather than about the species.} The porphyrin macrocycle has no group, so heme
+a, heme o, siroheme and ferroheme b decompose nowhere and are closable only at the reaction
+level where the macrocycle cancels. The sulfoxide of L-methionine S-oxide has no group.
+4-nitrophenyl phosphate, an aryl phosphate, has none either. The nitro group is the opposite
+case and is worth separating: the group \emph{exists} and sits in the component-contribution
+null space, carried by 0 of 631 training compounds, so the estimate has infinite variance
+rather than no value. Triphosphate is a fourth kind again: it decomposes nowhere and appears
+in none of the 3{,}999 training reactions, so the reactant-contribution path that prices
+phosphate and diphosphate despite their empty group vectors is closed to it too. Placeholder
+and R-group species are the fifth, and are a property of the model.
+
+\paragraph{Five defects in yeast-GEM 9.0.2 were found while curating, and they are upstream
+rather than ours.} Heme a's declared charge of $-3$ is chemically unreachable: no
+microspecies of \texttt{C49H55FeN4O6} carries it, the ferrous dianion being
+\texttt{C49H54FeN4O6} at $-2$, so every curated structure fails a strict charge comparison
+against the model. \texttt{r\_0530}'s stoichiometry disagrees with EC 1.17.99.9, which
+matters beside the $-440.539$ kJ\,mol$^{-1}$ the conserved-moiety route prices it at. Pectin
+\texttt{s\_1309} is written at charge 0 and the galacturonate residue is $-1$, which is why
+that reaction fails a charge balance. \texttt{s\_3934}, named ``Ethylnitronate'', is
+nitroethane: the reaction it appears in balances only with \texttt{C2H5NO2} at charge 0, and
+the nitronate anion leaves it short one hydrogen and one negative charge. And
+\texttt{s\_0332}'s GPI formula was invented by a solver in 2018 rather than derived, which
+is why walking the pathway from the last intermediate that carries a formula gives a
+different one. The dolichol convention above is a sixth, and unlike these five it is
+internally consistent and merely undocumented.
+
+\subsection{The kinetic tables, tier by tier\secstatus{todo}}
+\label{sec:kinetic-tiers}
+
+\input{tables/kinetic_tiers}
+
+%% SOURCE: results/kinetic_coverage_closure.json and
+%% results/parameter_coverage_selected.json, with the Wilson intervals read from
+%% results/within_class_plausibility.json; drawn by plot_kinetics_tiers.py, which writes
+%% results/kinetics_tiers_figure.json.
+\begin{figure}[!htbp]
+  \centering
+  \includegraphics[width=\textwidth]{figures/kinetics_tiers.pdf}
+  \caption[Kinetic tiers and the admission rule]{\textbf{What the resolved $k_{cat}$ and
+  $K_M$ tables are made of, and the rule that decides which predictors may fill them.}
+  \textbf{a}, The four tiers over the 3{,}728 catalytic units, on a logarithmic count axis.
+  97 units carry a measurement of the modeled organism's own protein on a substrate the
+  reaction consumes, 782 a measurement of the same chemistry in another organism, 2{,}831 a
+  predictor median and 18 the organism default.
+  \textbf{b}, The same counts under each table version. Keying the measured tier on a
+  substrate match rather than on the accession alone takes it from 148 units to 97, which is
+  a correction rather than a loss: 51 of the 148 accession matches were assaying a substrate
+  the reaction does not consume. Verifying every substrate structure moved 8 units onto the
+  default. The homolog tier recovers 33 of those 51, whose chemistry is measured elsewhere,
+  and 18 fall to a predictor.
+  \textbf{c}, The admission rule. Each point is a predictor's fraction of measured pairs
+  landing inside the band of enzymes sharing its own EC4 class, with the study's Wilson 95
+  percent interval; the dashed line is the EC-median lookup's point fraction for that
+  parameter. A predictor is admitted only when its lower bound clears the line, which keeps
+  EZKinetics, EITLEM and UniKP for $k_{cat}$ and EZKinetics and CatPred for $K_M$. EITLEM's
+  $K_M$ lower bound is 0.383 against the lookup's 0.500, so it is refused on the parameter
+  it is admitted on for turnover, and CatPred is refused on turnover while clearing the bar
+  on affinity, the mirror of the same split.
+  \textbf{d}, The 28 substrate rows behind the 18 units still on the default, by why no
+  open-source tool reaches them. Generated by
+  \texttt{experiments/026-metabolism-flux/scripts/plot\_kinetics\_tiers.py}.}
+  \label{fig:kinetics-tiers}
+\end{figure}
+
+\textbf{Two and a half percent of the model's turnover numbers are measurements of its own
+enzymes, and a further 21 percent are measurements of the same chemistry somewhere else.}
+The homolog tier is the largest single change of this round and it is deliberately not
+counted as experimental: a cross-organism EC match is a real measurement of a real enzyme,
+and not of the enzyme in this model. Where both are available it is also the better
+estimate, closer to the measured value than the predictor median on 55 of the 87 units
+carrying both, at a median absolute error of 0.094 decades against 0.300.
+
+\input{tables/kinetic_default_units}
+
+\textbf{Eighteen units reach the organism default and none of them is reachable with an
+open-source tool.} Fourteen of the 28 substrate rows behind them carry an R-group
+placeholder, which is a curation decision in the model rather than a missing structure;
+seven are macromolecular species with no formula, which need a predictor that accepts a
+protein substrate and all eight mirrored models take a small-molecule SMILES; five have no
+candidate structure in any mirrored catalog and the substrate writer was run on them and
+refused each one; two are cytochrome c, where the model writes only the heme part of a
+protein-bound species. \textbf{A substrate the writer tried and refused counts as
+unreachable whatever its reason class}, which is what makes this a ceiling rather than a
+backlog.
+
+\subsection{The kinetic ceiling is substrate structure, not the models\secstatus{todo}}
+
+DLKcat, UniKP, EITLEM and EZKinetics cover exactly the same 3{,}552 of 3{,}728 catalytic
+units on the unverified tables, and DeepEnzyme covers 3{,}546. Four independently trained
+models agreeing to the unit is not a coincidence about the models: every gene has a
+sequence, so the binding constraint is whether the substrate has a structure to featurize.
+\textbf{The 95.3 percent ceiling is a property of the inputs, and no better predictor moves
+it.} Two structure routes moved it instead. Resolving an outdated MetaNetX cross-reference
+priced 27 substrates, and supplying the lipid writer's own structures priced 48 more,
+between them closing 165 of the 176 units that had no prediction at all. TurNuP's 55.2
+percent is a model limitation rather than an input one (Section~\ref{sec:accuracy}).
+
+The consensus tables take the per-unit median across the admitted predictors in log space
+and carry the across-predictor spread beside it. \textbf{For $k_{cat}$ that spread has a
+median of 0.74 orders of magnitude over the three admitted predictors and the 3{,}709 units
+all three price}, down from 1.14 across all predictors, and 30.1 percent of units still
+disagree by more than a factor of ten. It is concentrated rather than uniform: units whose
+substrate has fewer than 12 heavy atoms sit at 0.55 decades and those above 60 heavy atoms
+at 1.38, and two-gene units at 1.20 against 0.71 for single-gene ones. A $k_{cat}$ consensus
+at 0.74 is still a factor of five, so the table is an order-of-magnitude prior rather than a
+measurement. \textbf{For $K_M$ the admitted set became two when CatPred was scored, so a
+spread exists there for the first time}, and it is narrow: a median of 0.30 orders of
+magnitude over 3{,}701 units with 8.6 percent past a factor of ten. Two models agreeing is
+not two models being right, and the within-class study remains the honest uncertainty.
+%% SOURCE: results/kinetic_predictor_spread_with_catpred.json (overall,
+%% by_substrate_heavy_atoms, by_complex_size), written by kinetic_predictor_spread.py
+%% --suffix _with_catpred; the 1.14 across all predictors is
+%% results/parameter_coverage_selected_with_catpred.json, k_cat.all_predictors.
+
+%% SOURCE: results/parameter_coverage.json (panels a-f) and
+%% results/parameter_coverage_selected_with_catpred.json (panels e, g, h: the rule, the
+%% per-predictor statistic, and both spread distributions), both written by
+%% plot_parameter_coverage.py; the plausibility fractions come from
+%% results/within_class_plausibility.json.
+\begin{figure}[!htbp]
+  \centering
+  \includegraphics[width=\textwidth]{figures/parameter_coverage.pdf}
+  \caption[Parameter coverage across yeast-GEM 9.0.2]{\textbf{Coverage of the three
+  parameter tables across yeast-GEM 9.0.2, and what coverage means.}
+  \textbf{a}, Reactions with every participant priced, by source. The union of the shipped
+  table and the eQuilibrator recomputation exceeds either alone by 211 reactions, because
+  the two price different reactions rather than nested ones.
+  \textbf{b}, Spread of formation energy across cache compounds sharing a metabolite's
+  heavy-atom composition. The dashed line is the 5\,kJ/mol threshold below which a
+  composition is taken to determine the energy; 39 of 441 clear it, so composition matching
+  is rejected as a coverage route.
+  \textbf{c}, Metabolites with no accession match, by chemical class; orange is a lipid
+  species and red is anything else. The gap is lipids: phosphatidylinositol, cardiolipin
+  and triacylglycerol species alone account for 231 of 332.
+  \textbf{d}, Per-predictor coverage of the 3{,}728 catalytic units. Six of the seven
+  $k_{cat}$ predictors and four of the five $K_M$ predictors sit at the same
+  95.1 to 95.3 percent ceiling, which is set by substrate structure availability rather than by any
+  model. TurNuP's 55.2 percent is its own limitation. The two red bars are what measured
+  sources supply on the accession key alone, before the substrate match of
+  Section~\ref{sec:kinetic-tiers} corrects them: the Open Enzyme Database prices 138 units,
+  3.7 percent, and EnzEngDB prices none, since it holds no $k_{cat}$ or $K_M$ field and no
+  \emph{S. cerevisiae} content (Section~\ref{sec:accuracy}).
+  \textbf{e}, Across-predictor spread per catalytic unit, over the \emph{admitted}
+  predictors of panels g and h. Restricting to three of the seven $k_{cat}$ predictors takes
+  the median spread from 1.14 to \textbf{0.72 orders of magnitude} and the fraction of units
+  disagreeing by more than a factor of ten from 61.8 to 29.3 percent. The red outline is the
+  spread across the distinct enzymes of one EC4 class, rescaled since it counts 523 classes
+  rather than 3{,}698 units, so its shape and not its height is the comparison. \textbf{Even
+  after selection the $k_{cat}$ spread sits inside the biological one rather than below it.}
+  \textbf{f}, The same coverage counted over all reactions and over only the 2{,}845 that
+  can carry flux at nonzero FVA width. Restricting to reactions the medium permits raises
+  the recommended union from 90.3 to 94.4 percent.
+  \textbf{g}, Within-class plausibility for the admitted $k_{cat}$ predictors, against the
+  EC-median lookup drawn hatched. The rule reads the Wilson lower bound against the lookup's
+  point fraction of 0.542: EZKinetics 0.704, EITLEM 0.635 and UniKP 0.612 clear it, and
+  CatPred 0.525, DLKcat 0.517, TurNuP 0.511 and DeepEnzyme 0.412 do not. Accuracy on the
+  measured pairs is deliberately not in the rule, since a recalled value lands inside a
+  class band no more readily than a correct one, and CatPred is the case that makes the
+  distinction concrete: 51 of its 58 $k_{cat}$ pairs are in its own training table
+  (Section~\ref{sec:catpred}).
+  \textbf{h}, The same for $K_M$, where the rule now keeps \textbf{two}: EZKinetics and
+  CatPred both clear the lookup's 0.500 at a lower bound of 0.525, and EITLEM 0.383,
+  UniKP 0.345 and Boost\_KM 0.314 do not. A predictor a table lookup beats is not evidence
+  about the enzyme.}
+  \label{fig:coverage}
+\end{figure}
+
+\subsection{Changelog\secstatus{todo}}
+
+\textbf{2026-09-11.} Coverage closed. Formation energies: 3{,}801 of 4{,}131 reactions
+priced, 3{,}535 of the 3{,}847 chemical ones and 2{,}724 of the 2{,}845 that can carry flux,
+each value carrying one of nine routes and each gap one of seven failure classes. Eight
+accession prices were found to be for a different molecule, six of them withdrawn. Sixteen
+curation records landed, eleven admitted. Kinetics: 97 measured, 782 homolog, 2{,}831
+predicted and 18 default over 3{,}728 catalytic units, on tables whose every substrate
+structure passes a composition check. This section was rewritten around the route
+attribution; the earlier version reported the recomputation at 66.4 percent, which is now
+the baseline row of Table~\ref{tab:ladder} rather than the result.
+
+\textbf{2026-09-12.} CatPred added as the eighth mirrored predictor and folded into every
+predictor comparison in this document: the distribution, agreement, plausibility, EC-class,
+coverage and tier figures all now carry eight series, and the accuracy, status and
+within-class tables eight rows. It is refused for $k_{cat}$ by one hit at 32 of 48 and
+admitted for $K_M$, which gives that parameter two admitted predictors and a spread for the
+first time. \texttt{predictor\_vs\_measured} and \texttt{ec\_class\_variance} were
+regenerated at the same time and recovered one measured pair each of the five predictors
+that had been extended to the appended coverage rows, so their scorable set moved from 57
+to 58 and the own-class denominator from 47 to 48.

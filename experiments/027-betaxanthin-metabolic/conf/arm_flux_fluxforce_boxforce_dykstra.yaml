@@ -1,0 +1,11 @@
+# experiments/027-betaxanthin-metabolic/conf/arm_flux_fluxforce_boxforce_dykstra.yaml
+# [[experiments.027-betaxanthin-metabolic.wave7-flux-force-head]]
+#
+# The boxforce channel with Dykstra's correction in place of von Neumann's alternation.
+# Everything else is `arm_flux_fluxforce_boxforce.yaml`, so the pair differs in the
+# projection METHOD and nothing else. Measured untrained on the real yeast-GEM at K = 100:
+# rows turning over 5.26 percent to 11.42 percent, second law 0.000, box 0.000, balance
+# median 0.0000 in both, and no cost in wall time.
+base_arm: flux_projection_anchored_k20_boxend
+permute_train_targets: false
+flux_parameterization: fluxforce_k100_boxforce_dykstra

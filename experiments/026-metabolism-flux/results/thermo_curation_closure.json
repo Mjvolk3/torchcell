@@ -1,0 +1,4588 @@
+{
+ "built_at": "2026-09-12T00:20:31.712340+00:00",
+ "curation_dir": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/026-metabolism-flux/results/curation",
+ "coverage_path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/026-metabolism-flux/results/reaction_thermo_coverage_final.json",
+ "coverage_sha256": "b0c64748af977654567db9de6c3c319b06ece8177ce8418c06b52872f9605f0b",
+ "baseline_path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/026-metabolism-flux/results/thermo_curation_baseline.json",
+ "baseline_built_at": "2026-09-11T07:10:57.205448+00:00",
+ "n_records": 16,
+ "n_admitted": 11,
+ "n_recorded_not_admitted": 5,
+ "n_reactions": 4131,
+ "n_reactions_priced_before": 3779,
+ "n_reactions_priced_after": 3801,
+ "n_reactions_chemical": 3847,
+ "n_reactions_chemical_priced": 3535,
+ "n_reactions_non_chemical": 284,
+ "n_reactions_cancelled": 22,
+ "n_metabolites_priced_before": 2561,
+ "n_metabolites_priced_after": 2559,
+ "ladder_before": [],
+ "ladder_after": [
+  {
+   "name": "now",
+   "n_reactions_priced": 3535,
+   "fraction_reactions_priced": 0.9188978424746556,
+   "n_flux_carrying_priced": 2724,
+   "fraction_flux_carrying_priced": 0.957469244288225,
+   "reasons_resolved": {},
+   "what_it_would_take": "nothing; this is the table as built",
+   "evidence": ""
+  },
+  {
+   "name": "structures_and_pka_ladders_resolved",
+   "n_reactions_priced": 3545,
+   "fraction_reactions_priced": 0.9214972706004679,
+   "n_flux_carrying_priced": 2732,
+   "fraction_flux_carrying_priced": 0.9602811950790862,
+   "reasons_resolved": {
+    "no_structure_available": 10
+   },
+   "what_it_would_take": "a structure from a namespace or a curator for every species that has none, and a pKa ladder inside (0, 14) for every species whose ladder is empty",
+   "evidence": "no measurement here says these are obtainable; the rung is what WOULD close"
+  },
+  {
+   "name": "everything_chemically_possible_resolved",
+   "n_reactions_priced": 3556,
+   "fraction_reactions_priced": 0.9243566415388614,
+   "n_flux_carrying_priced": 2735,
+   "fraction_flux_carrying_priced": 0.961335676625659,
+   "reasons_resolved": {
+    "no_structure_available": 10,
+    "group_decomposition_failed": 8,
+    "recorded_not_admitted": 3,
+    "group_in_null_space": 1
+   },
+   "what_it_would_take": "the rung above plus a decomposition or a tabulated value for every structure the group decomposer refuses",
+   "evidence": "thermo_tier_d_probe.json measured that none of the remaining refused structures is reachable by the reactant-contribution path or by a surrogate within the admitted spread, so this rung needs new data rather than new code"
+  }
+ ],
+ "ladder_denominator": 3847,
+ "ladder_denominator_note": "chemical reactions only; 284 exchange, demand, sink and biomass pseudoreactions excluded as non_chemical",
+ "ladder_n_closable": 21,
+ "ladder_n_permanently_closed": 291,
+ "ladder_partition_check": true,
+ "rows": [
+  {
+   "slug": "cytochrome_c",
+   "kind": "carrier_potential",
+   "admission": "measured",
+   "admitted": true,
+   "met_ids": [
+    "s_0709",
+    "s_0710"
+   ],
+   "blocked_reactions": [
+    "r_0001",
+    "r_0002",
+    "r_0004",
+    "r_0437",
+    "r_0438",
+    "r_0439",
+    "r_4382"
+   ],
+   "value_summary": "E'0 272.0 mV vs SHE, n=1, Saccharomyces cerevisiae",
+   "sigma_kj_per_mol": 0.19,
+   "n_sources": 10,
+   "first_source_url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6177310/",
+   "first_source_sha256": "9edfa93cacc1be188ef396046da1b88b9098c31cf4770d99e3bfd063987d6d68",
+   "n_searches": 10,
+   "decomposition": "not attempted",
+   "structure_route_outcome": "",
+   "n_metabolites_priced": 2,
+   "n_reactions_closed": 7,
+   "reactions_closed": [
+    "r_0001",
+    "r_0002",
+    "r_0004",
+    "r_0437",
+    "r_0438",
+    "r_0439",
+    "r_4382"
+   ],
+   "n_reactions_closed_by_cancellation": 0,
+   "reactions_closed_by_cancellation": [],
+   "reasons_now": {},
+   "what_it_would_take": "nothing; every species this record covers is priced"
+  },
+  {
+   "slug": "mannan",
+   "kind": "polymer_convention",
+   "admission": "tabulated",
+   "admitted": true,
+   "met_ids": [
+    "s_1107",
+    "s_1108"
+   ],
+   "blocked_reactions": [
+    "r_0362",
+    "r_1932",
+    "r_4048"
+   ],
+   "value_summary": "repeat unit C6H10O5, curated dGf'0 s_1107 -248.7, s_1108 -254.5",
+   "sigma_kj_per_mol": 1.4391761136736134,
+   "n_sources": 11,
+   "first_source_url": "https://www.ebi.ac.uk/chebi/backend/api/public/compound/CHEBI%3A27912/",
+   "first_source_sha256": "5f8e67d04438a611fac6ae7799eb838826f570451e85c9420a1241db9f1d3ed1",
+   "n_searches": 16,
+   "decomposition": "refused",
+   "structure_route_outcome": "",
+   "n_metabolites_priced": 2,
+   "n_reactions_closed": 3,
+   "reactions_closed": [
+    "r_0362",
+    "r_1932",
+    "r_4048"
+   ],
+   "n_reactions_closed_by_cancellation": 0,
+   "reactions_closed_by_cancellation": [],
+   "reasons_now": {},
+   "what_it_would_take": "nothing; every species this record covers is priced"
+  },
+  {
+   "slug": "heme_a",
+   "kind": "structure",
+   "admission": "tabulated",
+   "admitted": true,
+   "met_ids": [
+    "s_0811",
+    "s_3714",
+    "s_4332"
+   ],
+   "blocked_reactions": [
+    "r_0530"
+   ],
+   "value_summary": "SMILES [H]C(=O)C1=C(CCC(=O)O)C2=[N]3C1=Cc1c(C)c([C@@H](O)CC/C=C(\\C)CC/C=C(\\C)CCC=C(C)C)c4[n]1[Fe]31[N]3=C(C=c5c(C)c(CCC(=O)[O-])c([n]51)=C2)C(C=C)=C(C)C3=C4, formula C49H55FeN4O6",
+   "sigma_kj_per_mol": null,
+   "n_sources": 7,
+   "first_source_url": "https://www.ebi.ac.uk/chebi/backend/api/public/compound/61715/",
+   "first_source_sha256": "dff387d569e7371e120d90cfe9bd0b797dcf549ad6dd9ed46ea747458ef580bb",
+   "n_searches": 15,
+   "decomposition": "refused",
+   "structure_route_outcome": "",
+   "n_metabolites_priced": 0,
+   "n_reactions_closed": 1,
+   "reactions_closed": [
+    "r_0530"
+   ],
+   "n_reactions_closed_by_cancellation": 0,
+   "reactions_closed_by_cancellation": [],
+   "reasons_now": {
+    "group_decomposition_failed": 3
+   },
+   "what_it_would_take": "a group decomposition, or a measured formation energy; not more retrieval"
+  },
+  {
+   "slug": "heme_o",
+   "kind": "structure",
+   "admission": "tabulated",
+   "admitted": true,
+   "met_ids": [
+    "s_0812"
+   ],
+   "blocked_reactions": [
+    "r_0530",
+    "r_0531"
+   ],
+   "value_summary": "SMILES C=CC1=C(C)C2=[N+]3C1=Cc1c(C)c(CCC(=O)[O-])c4[n]1[Fe-2]31[n]3c(c(C)c([C@@H](O)CC/C=C(\\C)CC/C=C(\\C)CCC=C(C)C)c3=C2)=CC2=[N+]1C(=C4)C(CCC(=O)[O-])=C2C, formula C49H56FeN4O5",
+   "sigma_kj_per_mol": null,
+   "n_sources": 7,
+   "first_source_url": "https://www.ebi.ac.uk/chebi/backend/api/public/compound/60530/",
+   "first_source_sha256": "652ef4f76d3c684622840b83957384f597143390e8409b423b008bcf6537667f",
+   "n_searches": 14,
+   "decomposition": "refused",
+   "structure_route_outcome": "",
+   "n_metabolites_priced": 0,
+   "n_reactions_closed": 1,
+   "reactions_closed": [
+    "r_0530"
+   ],
+   "n_reactions_closed_by_cancellation": 0,
+   "reactions_closed_by_cancellation": [],
+   "reasons_now": {
+    "group_decomposition_failed": 1
+   },
+   "what_it_would_take": "a group decomposition, or a measured formation energy; not more retrieval"
+  },
+  {
+   "slug": "chitobiosyl_pp_dolichol",
+   "kind": "polymer_convention",
+   "admission": "tabulated",
+   "admitted": true,
+   "met_ids": [
+    "s_3767"
+   ],
+   "blocked_reactions": [
+    "r_4159"
+   ],
+   "value_summary": "repeat unit C36H64N2O17P2, no linkage stated",
+   "sigma_kj_per_mol": 14.054751715812303,
+   "n_sources": 14,
+   "first_source_url": "https://www.ebi.ac.uk/chebi/backend/api/public/compound/12427/",
+   "first_source_sha256": "1c539d0b72bf52c18200fa19176f3a5824886dfe64869ed8360b79308da6b945",
+   "n_searches": 11,
+   "decomposition": "decomposes",
+   "structure_route_outcome": "group_in_null_space",
+   "n_metabolites_priced": 0,
+   "n_reactions_closed": 0,
+   "reactions_closed": [],
+   "n_reactions_closed_by_cancellation": 0,
+   "reactions_closed_by_cancellation": [],
+   "reasons_now": {
+    "group_in_null_space": 1
+   },
+   "what_it_would_take": "a microspecies whose groups component contribution has seen: the structure decomposes and one of its groups is in the null space"
+  },
+  {
+   "slug": "cytochrome_b5",
+   "kind": "carrier_potential",
+   "admission": "provisional",
+   "admitted": false,
+   "met_ids": [
+    "s_3826",
+    "s_3827"
+   ],
+   "blocked_reactions": [
+    "r_4197"
+   ],
+   "value_summary": "E'0 5.5 mV vs SHE, n=1, Bos taurus",
+   "sigma_kj_per_mol": 1.93,
+   "n_sources": 10,
+   "first_source_url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4484759/",
+   "first_source_sha256": "87ee6904b4c5597799b60c8717ccc3320ce0881fe29e76eafa7a33e473262b25",
+   "n_searches": 17,
+   "decomposition": "not attempted",
+   "structure_route_outcome": "",
+   "n_metabolites_priced": 0,
+   "n_reactions_closed": 0,
+   "reactions_closed": [],
+   "n_reactions_closed_by_cancellation": 0,
+   "reactions_closed_by_cancellation": [],
+   "reasons_now": {
+    "recorded_not_admitted": 2
+   },
+   "what_it_would_take": "a measured or tabulated source; the record is reported and never priced at admission=provisional"
+  },
+  {
+   "slug": "ethylnitronate",
+   "kind": "structure",
+   "admission": "tabulated",
+   "admitted": true,
+   "met_ids": [
+    "s_3934"
+   ],
+   "blocked_reactions": [
+    "r_4273"
+   ],
+   "value_summary": "SMILES CCN(=O)=O, formula C2H5NO2",
+   "sigma_kj_per_mol": null,
+   "n_sources": 11,
+   "first_source_url": "https://www.ebi.ac.uk/chebi/backend/api/public/compound/16268/",
+   "first_source_sha256": "206462700e12386347e3082fda8a3500747a7994437934b96088133fc30c867a",
+   "n_searches": 12,
+   "decomposition": "decomposes",
+   "structure_route_outcome": "failed_group_decomposition",
+   "n_metabolites_priced": 0,
+   "n_reactions_closed": 0,
+   "reactions_closed": [],
+   "n_reactions_closed_by_cancellation": 0,
+   "reactions_closed_by_cancellation": [],
+   "reasons_now": {
+    "group_decomposition_failed": 1
+   },
+   "what_it_would_take": "a group decomposition, or a measured formation energy; not more retrieval"
+  },
+  {
+   "slug": "ferroheme_b",
+   "kind": "pka_ladder",
+   "admission": "provisional",
+   "admitted": false,
+   "met_ids": [
+    "s_0712"
+   ],
+   "blocked_reactions": [
+    "r_0436",
+    "r_0531",
+    "r_4152"
+   ],
+   "value_summary": "pKa ladder [4.75, 4.15]",
+   "sigma_kj_per_mol": null,
+   "n_sources": 9,
+   "first_source_url": "https://pubmed.ncbi.nlm.nih.gov/9666570/",
+   "first_source_sha256": "7264a6466c5b04961e6a5bfb18a46cf9ed0f4136deb40af9cc9a81b0adc299fa",
+   "n_searches": 15,
+   "decomposition": "refused",
+   "structure_route_outcome": "",
+   "n_metabolites_priced": 0,
+   "n_reactions_closed": 0,
+   "reactions_closed": [],
+   "n_reactions_closed_by_cancellation": 0,
+   "reactions_closed_by_cancellation": [],
+   "reasons_now": {
+    "recorded_not_admitted": 1
+   },
+   "what_it_would_take": "a measured or tabulated source; the record is reported and never priced at admission=provisional"
+  },
+  {
+   "slug": "glycogen",
+   "kind": "polymer_convention",
+   "admission": "tabulated",
+   "admitted": true,
+   "met_ids": [
+    "s_0773",
+    "s_0774"
+   ],
+   "blocked_reactions": [],
+   "value_summary": "repeat unit C6H10O5, curated dGf'0 s_0773 -244.3, s_0774 -302.3",
+   "sigma_kj_per_mol": null,
+   "n_sources": 2,
+   "first_source_url": "",
+   "first_source_sha256": "5527fe82a1c74159542548f346f2411490ac3df5f9960a91582b9ecc447f108f",
+   "n_searches": 1,
+   "decomposition": "refused",
+   "structure_route_outcome": "",
+   "n_metabolites_priced": 2,
+   "n_reactions_closed": 0,
+   "reactions_closed": [],
+   "n_reactions_closed_by_cancellation": 0,
+   "reactions_closed_by_cancellation": [],
+   "reasons_now": {},
+   "what_it_would_take": "nothing; every species this record covers is priced"
+  },
+  {
+   "slug": "gpi_intermediate",
+   "kind": "formula_correction",
+   "admission": "provisional",
+   "admitted": false,
+   "met_ids": [
+    "s_0332"
+   ],
+   "blocked_reactions": [
+    "r_0523"
+   ],
+   "value_summary": "formula -> C55H100N3O39P3R2",
+   "sigma_kj_per_mol": null,
+   "n_sources": 17,
+   "first_source_url": "file:///scratch/projects/torchcell-scratch/data/torchcell/yeast-GEM/yeast-GEM-9.0.2/model/yeast-GEM.xml",
+   "first_source_sha256": "9fd2c572cace73c2ea835205617313554d1bf89f4ef077f49defbdfa219a4ad7",
+   "n_searches": 17,
+   "decomposition": "not attempted",
+   "structure_route_outcome": "",
+   "n_metabolites_priced": 0,
+   "n_reactions_closed": 0,
+   "reactions_closed": [],
+   "n_reactions_closed_by_cancellation": 0,
+   "reactions_closed_by_cancellation": [],
+   "reasons_now": {
+    "recorded_not_admitted": 1
+   },
+   "what_it_would_take": "a measured or tabulated source; the record is reported and never priced at admission=provisional"
+  },
+  {
+   "slug": "methionine_s_oxide",
+   "kind": "not_found",
+   "admission": "none",
+   "admitted": false,
+   "met_ids": [
+    "s_3837",
+    "s_4176",
+    "s_3807"
+   ],
+   "blocked_reactions": [
+    "r_4186",
+    "r_4202"
+   ],
+   "value_summary": "nothing found",
+   "sigma_kj_per_mol": null,
+   "n_sources": 10,
+   "first_source_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC3766491/",
+   "first_source_sha256": "7d4e999262b34efe671aa1de48bf709d6703ca85bc89f982f7069d86e9dbfb71",
+   "n_searches": 17,
+   "decomposition": "refused",
+   "structure_route_outcome": "",
+   "n_metabolites_priced": 0,
+   "n_reactions_closed": 0,
+   "reactions_closed": [],
+   "n_reactions_closed_by_cancellation": 0,
+   "reactions_closed_by_cancellation": [],
+   "reasons_now": {
+    "group_decomposition_failed": 3
+   },
+   "what_it_would_take": "a measured or tabulated source; the record is reported and never priced at admission=none"
+  },
+  {
+   "slug": "nitrophenyl_phosphate",
+   "kind": "structure",
+   "admission": "tabulated",
+   "admitted": true,
+   "met_ids": [
+    "s_3859",
+    "s_3860"
+   ],
+   "blocked_reactions": [
+    "r_4220"
+   ],
+   "value_summary": "per metabolite: s_3860=a structure, s_3859=none",
+   "sigma_kj_per_mol": null,
+   "n_sources": 7,
+   "first_source_url": "file:///home/michaelvolk/.cache/equilibrator/group_definitions.csv",
+   "first_source_sha256": "17908f75310d55d7e60f7dc6e32e820717e867bd4ec731b33dc5fca787f7366d",
+   "n_searches": 13,
+   "decomposition": "mixed",
+   "structure_route_outcome": "failed_group_decomposition",
+   "n_metabolites_priced": 0,
+   "n_reactions_closed": 0,
+   "reactions_closed": [],
+   "n_reactions_closed_by_cancellation": 0,
+   "reactions_closed_by_cancellation": [],
+   "reasons_now": {
+    "group_decomposition_failed": 2
+   },
+   "what_it_would_take": "a group decomposition, or a measured formation energy; not more retrieval"
+  },
+  {
+   "slug": "pectin",
+   "kind": "polymer_convention",
+   "admission": "tabulated",
+   "admitted": true,
+   "met_ids": [
+    "s_1309"
+   ],
+   "blocked_reactions": [
+    "r_0365",
+    "r_1999"
+   ],
+   "value_summary": "repeat unit C6H7O6, alpha-(1->4) glycosidic, the homogalactu",
+   "sigma_kj_per_mol": null,
+   "n_sources": 18,
+   "first_source_url": "file:///scratch/projects/torchcell-scratch/data/torchcell/yeast-GEM/yeast-GEM-9.0.2/model/yeast-GEM.xml",
+   "first_source_sha256": "9fd2c572cace73c2ea835205617313554d1bf89f4ef077f49defbdfa219a4ad7",
+   "n_searches": 13,
+   "decomposition": "refused",
+   "structure_route_outcome": "",
+   "n_metabolites_priced": 0,
+   "n_reactions_closed": 0,
+   "reactions_closed": [],
+   "n_reactions_closed_by_cancellation": 0,
+   "reactions_closed_by_cancellation": [],
+   "reasons_now": {
+    "group_decomposition_failed": 1
+   },
+   "what_it_would_take": "a group decomposition, or a measured formation energy; not more retrieval"
+  },
+  {
+   "slug": "porphyrin",
+   "kind": "not_found",
+   "admission": "none",
+   "admitted": false,
+   "met_ids": [
+    "s_4022",
+    "s_4023"
+   ],
+   "blocked_reactions": [
+    "r_4337"
+   ],
+   "value_summary": "nothing found",
+   "sigma_kj_per_mol": null,
+   "n_sources": 9,
+   "first_source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/66868/property/MolecularFormula,MolecularWeight,CanonicalSMILES,IsomericSMILES,SMILES,ConnectivitySMILES,InChI,InChIKey,Charge,IUPACName,Title/JSON",
+   "first_source_sha256": "488b78c1f52d48f073a60242628a4a6a6afa87e3c89b87e36bf7574a8ce7e761",
+   "n_searches": 10,
+   "decomposition": "refused",
+   "structure_route_outcome": "",
+   "n_metabolites_priced": 0,
+   "n_reactions_closed": 0,
+   "reactions_closed": [],
+   "n_reactions_closed_by_cancellation": 1,
+   "reactions_closed_by_cancellation": [
+    "r_4337"
+   ],
+   "reasons_now": {
+    "group_decomposition_failed": 2
+   },
+   "what_it_would_take": "a measured or tabulated source; the record is reported and never priced at admission=none"
+  },
+  {
+   "slug": "siroheme",
+   "kind": "structure",
+   "admission": "tabulated",
+   "admitted": true,
+   "met_ids": [
+    "s_1430"
+   ],
+   "blocked_reactions": [
+    "r_0999"
+   ],
+   "value_summary": "SMILES C[C@@]1(CC(=O)[O-])C2=CC3=[N+]4C(=Cc5c(CCC(=O)[O-])c(CC(=O)[O-])c6[n]5[Fe-2]45[N]2C(=CC2=[N+]5C(=C6)[C@@H](CCC(=O)[O-])[C@]2(C)CC(=O)[O-])[C@H]1CCC(=O)[O-])C(CCC(=O)[O-])=C3CC(=O)[O-], formula C42H36FeN4O16",
+   "sigma_kj_per_mol": null,
+   "n_sources": 11,
+   "first_source_url": "https://www.ebi.ac.uk/chebi/backend/api/public/compound/60052/",
+   "first_source_sha256": "b6d4415a777390b631e941d6a5efc8cc16d744b99656a4d839c4e67fb36fb401",
+   "n_searches": 14,
+   "decomposition": "refused",
+   "structure_route_outcome": "",
+   "n_metabolites_priced": 0,
+   "n_reactions_closed": 0,
+   "reactions_closed": [],
+   "n_reactions_closed_by_cancellation": 0,
+   "reactions_closed_by_cancellation": [],
+   "reasons_now": {
+    "group_decomposition_failed": 1
+   },
+   "what_it_would_take": "a group decomposition, or a measured formation energy; not more retrieval"
+  },
+  {
+   "slug": "triphosphate",
+   "kind": "pka_ladder",
+   "admission": "measured",
+   "admitted": true,
+   "met_ids": [
+    "s_4098",
+    "s_4099"
+   ],
+   "blocked_reactions": [
+    "r_4403",
+    "r_4369",
+    "r_4528"
+   ],
+   "value_summary": "pKa ladder [7.77, 5.4]",
+   "sigma_kj_per_mol": null,
+   "n_sources": 10,
+   "first_source_url": "https://data.nist.gov/od/ds/mds2-2124/NBS_Tables_with_ErratumValues.csv",
+   "first_source_sha256": "cb8a8b8b94a287e6e8c82eed8bad2cf9b611d574d1cfd95c8528d318dfef4b44",
+   "n_searches": 16,
+   "decomposition": "refused",
+   "structure_route_outcome": "",
+   "n_metabolites_priced": 0,
+   "n_reactions_closed": 0,
+   "reactions_closed": [],
+   "n_reactions_closed_by_cancellation": 1,
+   "reactions_closed_by_cancellation": [
+    "r_4369"
+   ],
+   "reasons_now": {
+    "group_decomposition_failed": 2
+   },
+   "what_it_would_take": "a group decomposition, or a measured formation energy; not more retrieval"
+  }
+ ],
+ "n_open_reactions": 330,
+ "open_by_reason": {
+  "blocked_by_metabolite": 312,
+  "non_chemical": 18
+ },
+ "open_reactions": [
+  {
+   "reaction_id": "r_0099",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0372",
+    "s_1845"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula",
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_0137",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0329",
+    "s_0330"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula",
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_0157",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0404",
+    "s_1582"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_0209",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0428",
+    "s_1583"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_0210",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0429",
+    "s_1584"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_0212",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0430",
+    "s_1585"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_0213",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0431",
+    "s_1586"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_0220",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0432",
+    "s_1587"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_0221",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0433",
+    "s_1588"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_0234",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_1578"
+   ],
+   "blocking_reasons": [
+    "no_structure_available"
+   ]
+  },
+  {
+   "reaction_id": "r_0240",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_1578"
+   ],
+   "blocking_reasons": [
+    "no_structure_available"
+   ]
+  },
+  {
+   "reaction_id": "r_0313",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0542",
+    "s_1589"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_0365",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_1309"
+   ],
+   "blocking_reasons": [
+    "group_decomposition_failed"
+   ]
+  },
+  {
+   "reaction_id": "r_0436",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0712"
+   ],
+   "blocking_reasons": [
+    "recorded_not_admitted"
+   ]
+  },
+  {
+   "reaction_id": "r_0478",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0747",
+    "s_1590"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_0479",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0748",
+    "s_1591"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_0480",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0749",
+    "s_1592"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_0506",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_1098",
+    "s_1410"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_0507",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0628",
+    "s_1410"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_0508",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0628",
+    "s_1098"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_0512",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0757",
+    "s_1593"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_0518",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0329",
+    "s_0331"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_0519",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0330",
+    "s_0334"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_0520",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0334",
+    "s_0337",
+    "s_1352"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_0521",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0337",
+    "s_0339"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_0522",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0338",
+    "s_0339"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_0523",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0332",
+    "s_0338",
+    "s_0620",
+    "s_1352"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite",
+    "recorded_not_admitted"
+   ]
+  },
+  {
+   "reaction_id": "r_0531",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0712",
+    "s_0812"
+   ],
+   "blocking_reasons": [
+    "group_decomposition_failed",
+    "recorded_not_admitted"
+   ]
+  },
+  {
+   "reaction_id": "r_0539",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0832",
+    "s_1594"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_0540",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0833",
+    "s_1595"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_0665",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0847",
+    "s_1596"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_0666",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0848",
+    "s_1597"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_0687",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_4207"
+   ],
+   "blocking_reasons": [
+    "no_structure_available"
+   ]
+  },
+  {
+   "reaction_id": "r_0701",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_1077",
+    "s_1598"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_0702",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_1078",
+    "s_1599"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_0711",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_1099",
+    "s_1600"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_0712",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_1100",
+    "s_1601"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_0721",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0465",
+    "s_1845"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula",
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_0728",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0713",
+    "s_1149"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_0729",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_1148",
+    "s_1602"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_0730",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_1149",
+    "s_1603"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_0852",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_1314",
+    "s_1604"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_0853",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_1315",
+    "s_1605"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_0941",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_1379",
+    "s_1606"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_0995",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_1428",
+    "s_1607"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_0999",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_1430"
+   ],
+   "blocking_reasons": [
+    "group_decomposition_failed"
+   ]
+  },
+  {
+   "reaction_id": "r_1042",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_1491",
+    "s_1608"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_1043",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_1492",
+    "s_1609"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_1057",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_1527",
+    "s_1610"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_1058",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_1528",
+    "s_1611"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_1066",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_1533",
+    "s_1612"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_1067",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_1534",
+    "s_1613"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_1089",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_1561",
+    "s_1614"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_1090",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_1562",
+    "s_1615"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_1449",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0892"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_1450",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0892"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_1451",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0892"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_1452",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0892"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_1453",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0892"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_1454",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0892"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_1455",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0892"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_1456",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0892"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_1457",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0892"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_1458",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0892"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_1479",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0859"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_1480",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0859"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_1481",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0859"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_1482",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0859"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_1483",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0859"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_1484",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0859"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_1485",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0859"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_1486",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0859"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_1487",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0859"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_1488",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0859"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_1509",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_1114"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_1510",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_1114"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_1511",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_1114"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_1512",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_1114"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_1513",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_1114"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_1514",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_1114"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_1515",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_1114"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_1516",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_1114"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_1517",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_1114"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_1518",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_1114"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_1554",
+   "reason": "non_chemical",
+   "non_chemical": true,
+   "blocking_met_ids": [
+    "s_0084"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_1999",
+   "reason": "non_chemical",
+   "non_chemical": true,
+   "blocking_met_ids": [
+    "s_1309"
+   ],
+   "blocking_reasons": [
+    "group_decomposition_failed"
+   ]
+  },
+  {
+   "reaction_id": "r_2108",
+   "reason": "non_chemical",
+   "non_chemical": true,
+   "blocking_met_ids": [
+    "s_1096",
+    "s_3746",
+    "s_3747"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_2111",
+   "reason": "non_chemical",
+   "non_chemical": true,
+   "blocking_met_ids": [
+    "s_0450"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_2142",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0372",
+    "s_0465",
+    "s_1845",
+    "s_2770"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula",
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_2143",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0465",
+    "s_1845",
+    "s_2771",
+    "s_2772"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula",
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_2144",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0465",
+    "s_1845",
+    "s_2773",
+    "s_2774"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula",
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_2145",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_2770",
+    "s_2775"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_2146",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_2772",
+    "s_2776"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_2147",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_2774",
+    "s_2777"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_2148",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_2775",
+    "s_2778"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_2149",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_2776",
+    "s_2779"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_2150",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_2777",
+    "s_2780"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_2151",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_2771",
+    "s_2778"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_2152",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_2773",
+    "s_2779"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_2153",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_1254",
+    "s_2780"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_2277",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_2920"
+   ],
+   "blocking_reasons": [
+    "no_structure_available"
+   ]
+  },
+  {
+   "reaction_id": "r_2280",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_2923"
+   ],
+   "blocking_reasons": [
+    "no_structure_available"
+   ]
+  },
+  {
+   "reaction_id": "r_2289",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_2920"
+   ],
+   "blocking_reasons": [
+    "no_structure_available"
+   ]
+  },
+  {
+   "reaction_id": "r_2292",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_2923"
+   ],
+   "blocking_reasons": [
+    "no_structure_available"
+   ]
+  },
+  {
+   "reaction_id": "r_3963",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0089"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_3964",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0089"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_3965",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0089"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_3966",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0089"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_3967",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0089"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_3968",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0089"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_3969",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0089"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_3970",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0089"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_3971",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3709"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_3972",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3709"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_3975",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0694"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_3976",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0694"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_3977",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0694"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_3978",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0694"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_3979",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3710"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_3980",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3710"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_3981",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3710"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_3982",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3710"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_3983",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3710"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_3984",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3710"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_3985",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3710"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_3986",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3710"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_3988",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3711"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_3989",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3711"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_3990",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3711"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_3991",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3711"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_3992",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3711"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_3993",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3711"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_3994",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3711"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_3995",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3711"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_3997",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3712"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_3998",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3712"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_3999",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3712"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4000",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3712"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4001",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3712"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4002",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3712"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4003",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3712"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4004",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3712"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4006",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3713"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4007",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3713"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4008",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3713"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4009",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3713"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4010",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3713"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4011",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3713"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4012",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3713"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4013",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3713"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4014",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3713"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4015",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3713"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4016",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3713"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4017",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3713"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4018",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3713"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4019",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3713"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4020",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3713"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4021",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3713"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4022",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3713"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4023",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3713"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4024",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3713"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4025",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3713"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4026",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3713"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4027",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3713"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4028",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3713"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4029",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3713"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4030",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3713"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4031",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3713"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4032",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3713"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4033",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3713"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4034",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3713"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4035",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3713"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4036",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3713"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4037",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3713"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4041",
+   "reason": "non_chemical",
+   "non_chemical": true,
+   "blocking_met_ids": [
+    "s_0450",
+    "s_1096",
+    "s_3719",
+    "s_3720",
+    "s_4205",
+    "s_4206"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4047",
+   "reason": "non_chemical",
+   "non_chemical": true,
+   "blocking_met_ids": [
+    "s_0404",
+    "s_0428",
+    "s_0430",
+    "s_0432",
+    "s_0542",
+    "s_0747",
+    "s_0748",
+    "s_0757",
+    "s_0832",
+    "s_0847",
+    "s_1077",
+    "s_1099",
+    "s_1148",
+    "s_1314",
+    "s_1379",
+    "s_1428",
+    "s_1491",
+    "s_1527",
+    "s_1533",
+    "s_1561",
+    "s_1582",
+    "s_1583",
+    "s_1585",
+    "s_1587",
+    "s_1589",
+    "s_1590",
+    "s_1591",
+    "s_1593",
+    "s_1594",
+    "s_1596",
+    "s_1598",
+    "s_1600",
+    "s_1602",
+    "s_1604",
+    "s_1606",
+    "s_1607",
+    "s_1608",
+    "s_1610",
+    "s_1612",
+    "s_1614"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_4049",
+   "reason": "non_chemical",
+   "non_chemical": true,
+   "blocking_met_ids": [
+    "s_3719"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4050",
+   "reason": "non_chemical",
+   "non_chemical": true,
+   "blocking_met_ids": [
+    "s_3720"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4062",
+   "reason": "non_chemical",
+   "non_chemical": true,
+   "blocking_met_ids": [
+    "s_3746"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4063",
+   "reason": "non_chemical",
+   "non_chemical": true,
+   "blocking_met_ids": [
+    "s_0089",
+    "s_0672",
+    "s_0694",
+    "s_1337",
+    "s_1346",
+    "s_1351",
+    "s_1524",
+    "s_3746"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4064",
+   "reason": "non_chemical",
+   "non_chemical": true,
+   "blocking_met_ids": [
+    "s_3747"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4065",
+   "reason": "non_chemical",
+   "non_chemical": true,
+   "blocking_met_ids": [
+    "s_3747"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4066",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3721"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4067",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3721"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4068",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3721"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4069",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3721"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4070",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3721"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4071",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3721"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4072",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3721"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4073",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3721"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4074",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3721"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4075",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3721"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4077",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3728"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4079",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3728"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4080",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3730"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4081",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3730"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4082",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3730"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4083",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3730"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4084",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3730"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4085",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3730"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4086",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3730"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4087",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3730"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4088",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3732"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4089",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3732"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4090",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3732"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4091",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3732"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4092",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3732"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4093",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3732"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4094",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3732"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4095",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3732"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4096",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3734"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4097",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3734"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4098",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3736"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4099",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3736"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4100",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3736"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4101",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3736"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4102",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3736"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4103",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3736"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4104",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4105",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4106",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4107",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4108",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4109",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4110",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4111",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4112",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4113",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4114",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4115",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4116",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4117",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4118",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4119",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4120",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4121",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4122",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4123",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4124",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4125",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4126",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4127",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4128",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4129",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4130",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4131",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4132",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4133",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4134",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4135",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4136",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4137",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4138",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4139",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4140",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4141",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4142",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4143",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4144",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4145",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4146",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4147",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4148",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4149",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4150",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4151",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3738"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4152",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0712",
+    "s_3748",
+    "s_3749"
+   ],
+   "blocking_reasons": [
+    "placeholder_structure",
+    "recorded_not_admitted"
+   ]
+  },
+  {
+   "reaction_id": "r_4155",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3754",
+    "s_3756"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_4159",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3767"
+   ],
+   "blocking_reasons": [
+    "group_in_null_space"
+   ]
+  },
+  {
+   "reaction_id": "r_4165",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3771",
+    "s_3773"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_4166",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3773",
+    "s_3774"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_4173",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3784",
+    "s_3786"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_4186",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3807"
+   ],
+   "blocking_reasons": [
+    "group_decomposition_failed"
+   ]
+  },
+  {
+   "reaction_id": "r_4187",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3808",
+    "s_3809"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_4192",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3816",
+    "s_3817"
+   ],
+   "blocking_reasons": [
+    "placeholder_structure"
+   ]
+  },
+  {
+   "reaction_id": "r_4193",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3819",
+    "s_3821"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_4196",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_4209",
+    "s_4210"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4197",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3826",
+    "s_3827"
+   ],
+   "blocking_reasons": [
+    "recorded_not_admitted"
+   ]
+  },
+  {
+   "reaction_id": "r_4199",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3830",
+    "s_3832",
+    "s_3833"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_4200",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3834",
+    "s_3835",
+    "s_3836"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_4201",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_4028",
+    "s_4029",
+    "s_4030"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_4202",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3837"
+   ],
+   "blocking_reasons": [
+    "group_decomposition_failed"
+   ]
+  },
+  {
+   "reaction_id": "r_4207",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3842",
+    "s_3844",
+    "s_3845"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_4215",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3853",
+    "s_3854"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_4218",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_1582",
+    "s_3856"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_4219",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_1612",
+    "s_3857"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_4220",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3859",
+    "s_3860"
+   ],
+   "blocking_reasons": [
+    "group_decomposition_failed"
+   ]
+  },
+  {
+   "reaction_id": "r_4233",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3876",
+    "s_3877"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_4234",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3878",
+    "s_3879"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_4239",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_0428",
+    "s_1583",
+    "s_3884",
+    "s_3885"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_4241",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3771",
+    "s_3889"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_4242",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3891",
+    "s_3893"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_4243",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3894",
+    "s_3895"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_4244",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3895",
+    "s_3896"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_4246",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3900",
+    "s_3902"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_4251",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3907",
+    "s_3908"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_4252",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3909"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4253",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3887",
+    "s_3912"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_4258",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3917",
+    "s_3918"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_4265",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3927",
+    "s_3928"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_4269",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3929",
+    "s_3930"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_4271",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3774",
+    "s_3932"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_4272",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3774",
+    "s_3891"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_4273",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3934"
+   ],
+   "blocking_reasons": [
+    "group_decomposition_failed"
+   ]
+  },
+  {
+   "reaction_id": "r_4277",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3937",
+    "s_3938",
+    "s_3939"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_4278",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3941"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_4280",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_1254",
+    "s_1845",
+    "s_3944",
+    "s_3945"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula",
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4281",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_1845",
+    "s_3944",
+    "s_3946",
+    "s_3947"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula",
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4310",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3896"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_4313",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3993",
+    "s_3994"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_4314",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3995"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_4316",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3994",
+    "s_3995"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_4320",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_4001"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_4321",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3912",
+    "s_4001"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_4322",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_4002",
+    "s_4003"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_4323",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_3945",
+    "s_3947",
+    "s_4004"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula",
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4324",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_1254",
+    "s_3946",
+    "s_4004"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula",
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4325",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_4006",
+    "s_4007",
+    "s_4008"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4340",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_4032",
+    "s_4033"
+   ],
+   "blocking_reasons": [
+    "placeholder_structure"
+   ]
+  },
+  {
+   "reaction_id": "r_4403",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_4098"
+   ],
+   "blocking_reasons": [
+    "group_decomposition_failed"
+   ]
+  },
+  {
+   "reaction_id": "r_4528",
+   "reason": "non_chemical",
+   "non_chemical": true,
+   "blocking_met_ids": [
+    "s_4099"
+   ],
+   "blocking_reasons": [
+    "group_decomposition_failed"
+   ]
+  },
+  {
+   "reaction_id": "r_4550",
+   "reason": "non_chemical",
+   "non_chemical": true,
+   "blocking_met_ids": [
+    "s_4176"
+   ],
+   "blocking_reasons": [
+    "group_decomposition_failed"
+   ]
+  },
+  {
+   "reaction_id": "r_4598",
+   "reason": "non_chemical",
+   "non_chemical": true,
+   "blocking_met_ids": [
+    "s_3714",
+    "s_4205"
+   ],
+   "blocking_reasons": [
+    "group_decomposition_failed",
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4599",
+   "reason": "non_chemical",
+   "non_chemical": true,
+   "blocking_met_ids": [
+    "s_4206"
+   ],
+   "blocking_reasons": [
+    "pseudo_metabolite"
+   ]
+  },
+  {
+   "reaction_id": "r_4706",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_4265"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_4709",
+   "reason": "non_chemical",
+   "non_chemical": true,
+   "blocking_met_ids": [
+    "s_4266"
+   ],
+   "blocking_reasons": [
+    "placeholder_formula"
+   ]
+  },
+  {
+   "reaction_id": "r_4754",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_4295"
+   ],
+   "blocking_reasons": [
+    "no_structure_available"
+   ]
+  },
+  {
+   "reaction_id": "r_4760",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_4207"
+   ],
+   "blocking_reasons": [
+    "no_structure_available"
+   ]
+  },
+  {
+   "reaction_id": "r_4776",
+   "reason": "blocked_by_metabolite",
+   "non_chemical": false,
+   "blocking_met_ids": [
+    "s_4313"
+   ],
+   "blocking_reasons": [
+    "no_structure_available"
+   ]
+  },
+  {
+   "reaction_id": "r_4780",
+   "reason": "non_chemical",
+   "non_chemical": true,
+   "blocking_met_ids": [
+    "s_4332"
+   ],
+   "blocking_reasons": [
+    "group_decomposition_failed"
+   ]
+  }
+ ],
+ "carrier_refusals": {
+  "r_0365": "untrusted_structure: a participant has no structure this route can trust",
+  "r_0436": "untrusted_structure: a participant has no structure this route can trust",
+  "r_0531": "untrusted_structure: a participant has no structure this route can trust",
+  "r_0999": "moiety_does_not_cancel: the atoms no group covers do not match across the two sides: {'C': -2.0, 'Fe': 1.0, 'N': 3.0}",
+  "r_4159": "untrusted_structure: a participant has no structure this route can trust",
+  "r_4186": "moiety_does_not_cancel: the atoms no group covers do not match across the two sides: {'O': 1.0}",
+  "r_4197": "untrusted_structure: a participant has no structure this route can trust",
+  "r_4202": "moiety_does_not_cancel: the atoms no group covers do not match across the two sides: {'O': 1.0}",
+  "r_4220": "moiety_does_not_cancel: the atoms no group covers do not match across the two sides: {'O': -4.0, 'P': -1.0}",
+  "r_4273": "group_in_null_space: the group difference has an infinite-variance component; groups no training compound carries: ['-NO2 [H0 Z0 Mg0]']",
+  "r_4403": "moiety_does_not_cancel: the atoms no group covers do not match across the two sides: {'O': -8.0, 'P': -3.0}"
+ },
+ "accession_sweep": {
+  "n_checked": 2414,
+  "n_match": 2087,
+  "n_repeat_unit_multiple": 12,
+  "n_other": 8,
+  "repeat_unit": "C5H8",
+  "repeat_unit_offsets": {
+   "+1": 12
+  },
+  "family_consistent": true,
+  "other": [
+   {
+    "met_id": "s_0773",
+    "name": "glycogen",
+    "gem_formula": "C6H10O5",
+    "structure_formula": "C24H42O21",
+    "shipped_dgf_prime_kj_per_mol": -1127.2488714149251,
+    "detail": "structure minus GEM = {'O': 16.0, 'C': 18.0}"
+   },
+   {
+    "met_id": "s_0774",
+    "name": "glycogen",
+    "gem_formula": "C6H10O5",
+    "structure_formula": "C24H42O21",
+    "shipped_dgf_prime_kj_per_mol": -1370.8741520830263,
+    "detail": "structure minus GEM = {'O': 16.0, 'C': 18.0}"
+   },
+   {
+    "met_id": "s_1578",
+    "name": "zymosterol intermediate 1c",
+    "gem_formula": "C28H43O3",
+    "structure_formula": "C29H46O2",
+    "shipped_dgf_prime_kj_per_mol": 1257.2196102211121,
+    "detail": "structure minus GEM = {'O': -1.0, 'C': 1.0}"
+   },
+   {
+    "met_id": "s_2920",
+    "name": "3-oxo-cis-hexadec-9-enoyl-CoA",
+    "gem_formula": "C37H62N7O18P3S",
+    "structure_formula": "C37H60N7O17P3S",
+    "shipped_dgf_prime_kj_per_mol": -575.1030000475957,
+    "detail": "structure minus GEM = {'O': -1.0}"
+   },
+   {
+    "met_id": "s_2923",
+    "name": "3-oxo-cis-octadec-9-enoyl-CoA",
+    "gem_formula": "C39H66N7O18P3S",
+    "structure_formula": "C39H64N7O17P3S",
+    "shipped_dgf_prime_kj_per_mol": -395.05494296315646,
+    "detail": "structure minus GEM = {'O': -1.0}"
+   },
+   {
+    "met_id": "s_4207",
+    "name": "trans-4-hydroxy-L-proline",
+    "gem_formula": "C5H9NO3",
+    "structure_formula": "C5H4N4O4",
+    "shipped_dgf_prime_kj_per_mol": -118.95706324522263,
+    "detail": "structure minus GEM = {'N': 3.0, 'O': 1.0}"
+   },
+   {
+    "met_id": "s_4295",
+    "name": "dimethylallyl phosphate",
+    "gem_formula": "C5H9O4P",
+    "structure_formula": "C8H8O",
+    "shipped_dgf_prime_kj_per_mol": -512.364039418986,
+    "detail": "structure minus GEM = {'P': -1.0, 'C': 3.0, 'O': -3.0}"
+   },
+   {
+    "met_id": "s_4313",
+    "name": "ITP",
+    "gem_formula": "C10H11N4O14P3",
+    "structure_formula": "C4H4O4",
+    "shipped_dgf_prime_kj_per_mol": -2531.7224029578247,
+    "detail": "structure minus GEM = {'P': -3.0, 'C': -6.0, 'N': -4.0, 'O': -10.0}"
+   }
+  ],
+  "dimer_differences": []
+ },
+ "moiety_outcomes": {
+  "untrusted_structure": 5,
+  "moiety_does_not_cancel": 5,
+  "priced": 1,
+  "group_in_null_space": 1
+ },
+ "moiety_rows": [
+  {
+   "reaction_id": "r_0365",
+   "outcome": "untrusted_structure",
+   "delta_r_g0_kj_per_mol": null,
+   "sigma_kj_per_mol": null,
+   "detail": "a participant has no structure this route can trust"
+  },
+  {
+   "reaction_id": "r_0436",
+   "outcome": "untrusted_structure",
+   "delta_r_g0_kj_per_mol": null,
+   "sigma_kj_per_mol": null,
+   "detail": "a participant has no structure this route can trust"
+  },
+  {
+   "reaction_id": "r_0530",
+   "outcome": "priced",
+   "delta_r_g0_kj_per_mol": -440.5385856472731,
+   "sigma_kj_per_mol": 3.168927881547182,
+   "detail": ""
+  },
+  {
+   "reaction_id": "r_0531",
+   "outcome": "untrusted_structure",
+   "delta_r_g0_kj_per_mol": null,
+   "sigma_kj_per_mol": null,
+   "detail": "a participant has no structure this route can trust"
+  },
+  {
+   "reaction_id": "r_0999",
+   "outcome": "moiety_does_not_cancel",
+   "delta_r_g0_kj_per_mol": null,
+   "sigma_kj_per_mol": null,
+   "detail": "the atoms no group covers do not match across the two sides: {'C': -2.0, 'Fe': 1.0, 'N': 3.0}"
+  },
+  {
+   "reaction_id": "r_4159",
+   "outcome": "untrusted_structure",
+   "delta_r_g0_kj_per_mol": null,
+   "sigma_kj_per_mol": null,
+   "detail": "a participant has no structure this route can trust"
+  },
+  {
+   "reaction_id": "r_4186",
+   "outcome": "moiety_does_not_cancel",
+   "delta_r_g0_kj_per_mol": null,
+   "sigma_kj_per_mol": null,
+   "detail": "the atoms no group covers do not match across the two sides: {'O': 1.0}"
+  },
+  {
+   "reaction_id": "r_4197",
+   "outcome": "untrusted_structure",
+   "delta_r_g0_kj_per_mol": null,
+   "sigma_kj_per_mol": null,
+   "detail": "a participant has no structure this route can trust"
+  },
+  {
+   "reaction_id": "r_4202",
+   "outcome": "moiety_does_not_cancel",
+   "delta_r_g0_kj_per_mol": null,
+   "sigma_kj_per_mol": null,
+   "detail": "the atoms no group covers do not match across the two sides: {'O': 1.0}"
+  },
+  {
+   "reaction_id": "r_4220",
+   "outcome": "moiety_does_not_cancel",
+   "delta_r_g0_kj_per_mol": null,
+   "sigma_kj_per_mol": null,
+   "detail": "the atoms no group covers do not match across the two sides: {'O': -4.0, 'P': -1.0}"
+  },
+  {
+   "reaction_id": "r_4273",
+   "outcome": "group_in_null_space",
+   "delta_r_g0_kj_per_mol": null,
+   "sigma_kj_per_mol": null,
+   "detail": "the group difference has an infinite-variance component; groups no training compound carries: ['-NO2 [H0 Z0 Mg0]']"
+  },
+  {
+   "reaction_id": "r_4403",
+   "outcome": "moiety_does_not_cancel",
+   "delta_r_g0_kj_per_mol": null,
+   "sigma_kj_per_mol": null,
+   "detail": "the atoms no group covers do not match across the two sides: {'O': -8.0, 'P': -3.0}"
+  }
+ ],
+ "formula_overrides": [],
+ "n_reactions_imbalanced": 205,
+ "notes": "Before and after are two runs of thermo_pipeline_yeast9.py, the first without --curation-dir and under the pricing rules that predate this round. The chemical denominator exists only in the after run, so the two whole-model fractions are the comparable pair and the chemical fraction is the honest one."
+}

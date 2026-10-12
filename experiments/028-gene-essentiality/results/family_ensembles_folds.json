@@ -1,0 +1,240 @@
+{
+ "n_genes": 195,
+ "n_essential": 31,
+ "families": {
+  "flux head, pathway + ProtT5, five folds (round 25)": 5,
+  "indicator + ProtT5 + affine, five folds (round 12)": 5,
+  "cached solve + flux head, pathway + ProtT5, five folds (round 27)": 5,
+  "layer-free log1p vector + affine, pathway + ProtT5, five folds (round 34)": 5,
+  "+ GPR redundancy counts, pathway + ProtT5, five folds (round 80)": 5,
+  "gene-rule counts, no solve, five folds (round 82)": 5,
+  "YPD ratio + vector + counts, pathway + ProtT5, five folds (rounds 84 to 98)": 5,
+  "layer-free log1p, interior-point store, five folds (round 37)": 5,
+  "layer-free log1p, PDLP store, five folds (round 39)": 5,
+  "GO convolution, five folds (400 epochs)": 5,
+  "GO convolution with the module as an affine, five folds (job 2695)": 5
+ },
+ "combinations": [
+  {
+   "families": [
+    "GO convolution, five folds (400 epochs)"
+   ],
+   "n_cells": 5,
+   "auroc": 0.9171911880409127,
+   "ci_low": 0.8701693248587723,
+   "ci_high": 0.9547051019644727
+  },
+  {
+   "families": [
+    "indicator + ProtT5 + affine, five folds (round 12)"
+   ],
+   "n_cells": 5,
+   "auroc": 0.8973249409913455,
+   "ci_low": 0.8388882590658752,
+   "ci_high": 0.9437665478312537
+  },
+  {
+   "families": [
+    "flux head, pathway + ProtT5, five folds (round 25)"
+   ],
+   "n_cells": 5,
+   "auroc": 0.8973249409913454,
+   "ci_low": 0.8405333577173855,
+   "ci_high": 0.9437020302228635
+  },
+  {
+   "families": [
+    "cached solve + flux head, pathway + ProtT5, five folds (round 27)"
+   ],
+   "n_cells": 5,
+   "auroc": 0.921518489378442,
+   "ci_low": 0.877397206937299,
+   "ci_high": 0.9587197295434855
+  },
+  {
+   "families": [
+    "layer-free log1p vector + affine, pathway + ProtT5, five folds (round 34)"
+   ],
+   "n_cells": 5,
+   "auroc": 0.9197482297403619,
+   "ci_low": 0.872535264668011,
+   "ci_high": 0.9572524662038728
+  },
+  {
+   "families": [
+    "GO convolution, five folds (400 epochs)",
+    "layer-free log1p vector + affine, pathway + ProtT5, five folds (round 34)"
+   ],
+   "n_cells": 10,
+   "auroc": 0.9531864673485444,
+   "ci_low": 0.9202450379696347,
+   "ci_high": 0.9787244799173891
+  },
+  {
+   "families": [
+    "+ GPR redundancy counts, pathway + ProtT5, five folds (round 80)"
+   ],
+   "n_cells": 5,
+   "auroc": 0.9299763965381589,
+   "ci_low": 0.8856419152839271,
+   "ci_high": 0.9662600505232768
+  },
+  {
+   "families": [
+    "GO convolution, five folds (400 epochs)",
+    "+ GPR redundancy counts, pathway + ProtT5, five folds (round 80)"
+   ],
+   "n_cells": 10,
+   "auroc": 0.9549567269866246,
+   "ci_low": 0.9216161616161616,
+   "ci_high": 0.9819843763080162
+  },
+  {
+   "families": [
+    "YPD ratio + vector + counts, pathway + ProtT5, five folds (rounds 84 to 98)"
+   ],
+   "n_cells": 5,
+   "auroc": 0.9293863099921322,
+   "ci_low": 0.8847081245969706,
+   "ci_high": 0.9656572172934538
+  },
+  {
+   "families": [
+    "GO convolution, five folds (400 epochs)",
+    "YPD ratio + vector + counts, pathway + ProtT5, five folds (rounds 84 to 98)"
+   ],
+   "n_cells": 10,
+   "auroc": 0.9527930763178599,
+   "ci_low": 0.9153503027918842,
+   "ci_high": 0.9804567156975511
+  },
+  {
+   "families": [
+    "GO convolution with the module as an affine, five folds (job 2695)"
+   ],
+   "n_cells": 5,
+   "auroc": 0.9299763965381589,
+   "ci_low": 0.876704751849297,
+   "ci_high": 0.9691325181441336
+  },
+  {
+   "families": [
+    "GO convolution with the module as an affine, five folds (job 2695)",
+    "YPD ratio + vector + counts, pathway + ProtT5, five folds (rounds 84 to 98)"
+   ],
+   "n_cells": 10,
+   "auroc": 0.9407946498819827,
+   "ci_low": 0.8937512976227551,
+   "ci_high": 0.9758102802215706
+  },
+  {
+   "families": [
+    "gene-rule counts, no solve, five folds (round 82)"
+   ],
+   "n_cells": 5,
+   "auroc": 0.9091266719118805,
+   "ci_low": 0.8582053289918175,
+   "ci_high": 0.9543759699019659
+  },
+  {
+   "families": [
+    "GO convolution, five folds (400 epochs)",
+    "gene-rule counts, no solve, five folds (round 82)"
+   ],
+   "n_cells": 10,
+   "auroc": 0.9476789929189614,
+   "ci_low": 0.9083584205591463,
+   "ci_high": 0.9787187907370573
+  },
+  {
+   "families": [
+    "layer-free log1p, interior-point store, five folds (round 37)"
+   ],
+   "n_cells": 5,
+   "auroc": 0.9130605822187254,
+   "ci_low": 0.8677048915425066,
+   "ci_high": 0.9532356033275874
+  },
+  {
+   "families": [
+    "GO convolution, five folds (400 epochs)",
+    "layer-free log1p, interior-point store, five folds (round 37)"
+   ],
+   "n_cells": 10,
+   "auroc": 0.9508261211644373,
+   "ci_low": 0.915822791646145,
+   "ci_high": 0.9781525899314361
+  },
+  {
+   "families": [
+    "layer-free log1p, PDLP store, five folds (round 39)"
+   ],
+   "n_cells": 5,
+   "auroc": 0.9154209284028324,
+   "ci_low": 0.8699938271604938,
+   "ci_high": 0.9537122998355646
+  },
+  {
+   "families": [
+    "GO convolution, five folds (400 epochs)",
+    "layer-free log1p, PDLP store, five folds (round 39)"
+   ],
+   "n_cells": 10,
+   "auroc": 0.9486624704956726,
+   "ci_low": 0.9123343593323902,
+   "ci_high": 0.9775822861657228
+  },
+  {
+   "families": [
+    "GO convolution, five folds (400 epochs)",
+    "indicator + ProtT5 + affine, five folds (round 12)"
+   ],
+   "n_cells": 10,
+   "auroc": 0.9435483870967742,
+   "ci_low": 0.9028514797223237,
+   "ci_high": 0.9749839678193537
+  },
+  {
+   "families": [
+    "GO convolution, five folds (400 epochs)",
+    "flux head, pathway + ProtT5, five folds (round 25)"
+   ],
+   "n_cells": 10,
+   "auroc": 0.9494492525570417,
+   "ci_low": 0.912239824924475,
+   "ci_high": 0.9771896297696191
+  },
+  {
+   "families": [
+    "GO convolution, five folds (400 epochs)",
+    "cached solve + flux head, pathway + ProtT5, five folds (round 27)"
+   ],
+   "n_cells": 10,
+   "auroc": 0.9537765538945713,
+   "ci_low": 0.921271292064811,
+   "ci_high": 0.977577540106952
+  },
+  {
+   "families": [
+    "GO convolution, five folds (400 epochs)",
+    "indicator + ProtT5 + affine, five folds (round 12)",
+    "flux head, pathway + ProtT5, five folds (round 25)"
+   ],
+   "n_cells": 15,
+   "auroc": 0.9445318646734855,
+   "ci_low": 0.906664705882353,
+   "ci_high": 0.9738365078433237
+  },
+  {
+   "families": [
+    "GO convolution, five folds (400 epochs)",
+    "indicator + ProtT5 + affine, five folds (round 12)",
+    "cached solve + flux head, pathway + ProtT5, five folds (round 27)"
+   ],
+   "n_cells": 15,
+   "auroc": 0.9468922108575925,
+   "ci_low": 0.9124621056233047,
+   "ci_high": 0.9757516712606533
+  }
+ ]
+}

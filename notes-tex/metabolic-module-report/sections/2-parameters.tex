@@ -1,0 +1,100 @@
+%% notes-tex/metabolic-module-report/sections/2-parameters.tex
+%% [[experiments.026-metabolism-flux.scripts.plot_per_gene_predictor_agreement]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/metabolic-module-report/sections/2-parameters.tex
+
+\section{What the parameter tables are worth\secstatus{todo}}
+\label{sec:parameters}
+
+Six published $k_{cat}$ predictors (DLKcat, UniKP, EITLEM, TurNuP, DeepEnzyme, EZKinetics)
+and four $K_M$ predictors were run from hash-pinned mirrors over 95.3 percent of yeast-GEM's
+3{,}728 catalytic units, the ceiling set by substrate structure availability. Per gene, the
+unit the capacity bound reads (Figure~\ref{fig:agreement}), the median gene moves 1.28
+orders of magnitude between the highest and lowest predictor and 71 percent move by more
+than one order, against a consensus range across genes of 0.87. On the 57 measured yeast
+pairs, EZKinetics leads on rank at Spearman
+0.79 and EITLEM on magnitude at 0.23 orders median error, an upper bound: every predictor
+trained on the literature those measurements come from.
+
+\tcfigh[0.86]{figures/per_gene_agreement_k_cat.pdf}{\textbf{Agreement between the six
+  $k_{cat}$ predictors, and their accuracy against measured yeast values.} Panels a to d
+  cover the 980 genes all six predictors cover; e and f the 57 measured pairs.
+  \textbf{a}, Across-predictor spread per gene; dashed, the median of 1.28 orders of
+  magnitude. \textbf{b}, The same spread against the dynamic range of $k_{cat}$, genes
+  ranked by their median. \textbf{c}, Gene-level Spearman between predictors, 0.01 to 0.55.
+  \textbf{d}, The betaxanthin supply genes; the shaded band marks the two heterologous
+  cassette members with no yeast-GEM reaction. \textbf{e}, Predicted against measured; the
+  band's half width of 0.75 is the median standard deviation of $\log_{10} k_{cat}$ within
+  one EC4 class. \textbf{f}, Spearman and median absolute error, ranked. Figure 6 of the 026
+  document, from \texttt{plot\_per\_gene\_predictor\_agreement.py}.}{fig:agreement}
+
+\textbf{Most of that plausibility is coarse-class knowledge} (Figure~\ref{fig:plausibility}).
+Against the EC4 band every predictor beats the EC-median lookup, 56 to 84 percent against
+53; at EC1 the lookup already reaches 79 percent, and for $K_M$ no predictor beats the
+lookup at all. On the nine unmeasured betaxanthin supply genes, four of six $k_{cat}$
+predictors are class-plausible and no $K_M$ predictor is.
+
+\textbf{Where the kinetic values come from.} The resolved $k_{cat}$ and $K_M$ tables cover
+all 3{,}728 catalytic units on four tiers, tried in order: 97 units, 2.6 percent, carry a
+measurement of yeast's own protein on a substrate the reaction consumes; 782, 21.0 percent,
+a measurement of the same EC number and substrate in another organism; 2{,}831, 75.9
+percent, the median over the predictors an admission rule keeps, which is EZKinetics, EITLEM
+and UniKP for $k_{cat}$ and EZKinetics alone for $K_M$; and 18 the organism default. The
+mix is therefore about a quarter measured and three quarters estimated, and the homolog tier
+is counted with the estimates wherever an experimental fraction is quoted, because a
+measurement of another organism's enzyme is not a measurement of this one. The 18 defaults
+are a ceiling rather than a backlog: 14 of the 28 substrate rows behind them carry an
+R-group placeholder, 7 are macromolecular species with no formula, and the structure writer
+was run on the rest and refused each.
+
+\textbf{Where the thermodynamic values come from.} The table is recomputed with eQuilibrator
+component contribution, which returns a covariance the shipped point values cannot, and it
+now prices \textbf{3{,}801 of 4{,}131 reactions}, 3{,}535 of the 3{,}847 chemical ones and
+\textbf{2{,}724 of the 2{,}845 that can carry flux}. Every value names one of nine routes
+and every gap one of seven failure classes (Figure~\ref{fig:routes}). The mix is dominated
+by one evidence class: 2{,}494 of the 2{,}559 priced species are estimated by component
+contribution, 59 read from a table, 4 fixed by a curation record and 2 gauged from a
+measured midpoint potential. \textbf{Coverage is not what the eight recovery routes past the
+plain accession lookup bought}; between them they price 153 species. What they bought is a
+table in which every value names its own method.
+
+\tcfigh[0.98]{figures/thermo_recovery_routes.pdf}{\textbf{Which route produced each
+  formation and reaction energy, and which failure class holds the rest.} Bars are colored
+  by evidence class; panels a to d use a logarithmic count axis.
+  \textbf{a}, The 2{,}559 priced metabolites by route.
+  \textbf{b}, The 247 with no value, by failure class.
+  \textbf{c}, The 3{,}801 priced reactions by route; \emph{mixed routes} is a reaction whose
+  participants came from more than one.
+  \textbf{d}, The 330 unpriced reactions by the single class that blocks them.
+  \textbf{e}, The ceiling ladder, each row against the denominator in its own tick label.
+  The last rung, 3{,}556 of 3{,}847 chemical reactions, is what would be priced if every
+  structure, ladder and refused decomposition were resolved, so it is the ceiling for any
+  method rather than for this one.
+  \textbf{f}, Reactions priced under four denominators. Figure 11 of the 026 document, from
+  \texttt{plot\_thermo\_recovery\_routes.py}.}{fig:routes}
+
+\textbf{The shipped file is in kilocalories and labeled kilojoules}, copied verbatim from
+yETFL by yeast-GEM's curation script: regressing our table on yETFL's over 1{,}927 shared
+metabolites gives a slope of 4.187 at $r = 0.987$. Correcting that and matching compartment
+conditions closes the transport arm of the disagreement, median 17.4 to 5.6 kJ\,mol$^{-1}$,
+leaving the single-compartment cloud at 17.6, the genuine estimator difference.
+
+\textbf{Two recovery routes are worth naming because they are error sources as much as
+coverage.} Structures written from the metabolite's own name price 347 lipid rows, and 48 of
+them need a compound eQuilibrator has never seen, created through a p$K_a$ cascade selected
+against the compound cache's own constants on 2{,}100 held-out compounds. That cascade's
+ladder error runs to a 90th percentile of 8.33 kJ\,mol$^{-1}$ at the worst compartment pH,
+while writing the same structure as its neutral parent rather than its pH 7 major
+microspecies moves the answer by a median of 1{,}585 kJ\,mol$^{-1}$, so the reference
+convention and not the predictor is what has to be got right. A composition check over the
+2{,}414 accession-priced species also found 8 priced as a different molecule, 6 of which are
+withdrawn.
+
+\tcfigh[0.86]{figures/within_class_plausibility_k_cat.pdf}{\textbf{How many of each
+  predictor's $k_{cat}$ values fall inside the spread of enzymes doing the same job.}
+  \textbf{a}, Fraction of the 57 measured pairs inside a shared band as the class is read
+  to fewer EC digits; dashed, the EC-median lookup. \textbf{b}, The EC4 fraction against
+  each pair's own class band, Wilson 95 percent intervals. \textbf{c}, The 23 betaxanthin
+  supply units against one standard deviation of their EC4 class. \textbf{d}, Fraction of
+  the 16 scorable units inside, by predictor: DLKcat 16 of 16, UniKP 15, EITLEM 6.
+  \textbf{e}, Each unit's class band half width. Figure 7 of the 026 document, from
+  \texttt{plot\_within\_class\_plausibility.py}.}{fig:plausibility}

@@ -1,0 +1,159 @@
+{
+  "figure": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes/assets/images/028-gene-essentiality/grad_flow_2026-09-17-05-17-43.svg",
+  "arms": [
+    {
+      "arm": "b32posw200",
+      "label": "batch 32 + class weight, 200 epochs",
+      "n_seeds": 3,
+      "flux_share_first_last": [
+        0.0,
+        0.0
+      ],
+      "preprocessor_first_last": [
+        0.3897026985126115,
+        2.199724473138172
+      ],
+      "gate_last": 0.0
+    },
+    {
+      "arm": "bio_s0",
+      "label": "growth column only, constraints 0 (round-3 levers)",
+      "n_seeds": 3,
+      "flux_share_first_last": [
+        0.25359551110317274,
+        0.09591824123084829
+      ],
+      "preprocessor_first_last": [
+        0.6971080288850576,
+        2.8918294225714973
+      ],
+      "gate_last": 0.0
+    },
+    {
+      "arm": "biofba",
+      "label": "growth column + FBA ratios, no context head",
+      "n_seeds": 3,
+      "flux_share_first_last": [
+        0.2186418914730206,
+        0.06869671513457594
+      ],
+      "preprocessor_first_last": [
+        0.5798101328225894,
+        3.168392283718287
+      ],
+      "gate_last": 0.0
+    },
+    {
+      "arm": "biobox",
+      "label": "growth column only, box parameterization",
+      "n_seeds": 3,
+      "flux_share_first_last": [
+        0.4016931604697472,
+        0.16210119802402356
+      ],
+      "preprocessor_first_last": [
+        1.3558375545336425,
+        1.2385328942117766
+      ],
+      "gate_last": 0.0
+    },
+    {
+      "arm": "warmbio",
+      "label": "growth column, pFBA warm start, alpha 0.01 frozen",
+      "n_seeds": 3,
+      "flux_share_first_last": [
+        0.021565963566987544,
+        0.026214677940188762
+      ],
+      "preprocessor_first_last": [
+        0.01851013510817016,
+        0.14268829597533392
+      ],
+      "gate_last": 0.0
+    },
+    {
+      "arm": "warmoffbio",
+      "label": "growth column, GEM box only, pFBA warm start, alpha 0.01 frozen",
+      "n_seeds": 3,
+      "flux_share_first_last": [
+        0.013518523554783899,
+        0.0026012492730728824
+      ],
+      "preprocessor_first_last": [
+        0.03130308302202966,
+        7.479714420016473e-06
+      ],
+      "gate_last": 0.0
+    },
+    {
+      "arm": "gate_s0",
+      "label": "gated growth column, constraints 0 (round-3 levers)",
+      "n_seeds": 3,
+      "flux_share_first_last": [
+        0.0015913876095688152,
+        0.017094497288603575
+      ],
+      "preprocessor_first_last": [
+        0.47888579003595755,
+        3.3675646276888807
+      ],
+      "gate_last": 0.048699612418810524
+    },
+    {
+      "arm": "gatefba",
+      "label": "gated growth column + FBA ratios",
+      "n_seeds": 3,
+      "flux_share_first_last": [
+        0.0010946619529178271,
+        0.025050538459920002
+      ],
+      "preprocessor_first_last": [
+        0.6606601777857708,
+        2.5538970639940857
+      ],
+      "gate_last": 0.1907954066991806
+    },
+    {
+      "arm": "warmgate",
+      "label": "gated column + context, pFBA warm start, alpha 0.01 frozen",
+      "n_seeds": 3,
+      "flux_share_first_last": [
+        0.00014004192678752797,
+        0.003468911734481012
+      ],
+      "preprocessor_first_last": [
+        0.4782649182834011,
+        2.78174912866123
+      ],
+      "gate_last": -0.8184115638335546
+    },
+    {
+      "arm": "warmgatealpha",
+      "label": "gated column + context, pFBA warm start, alpha learned",
+      "n_seeds": 3,
+      "flux_share_first_last": [
+        0.0001400190921737755,
+        0.013809008803416565
+      ],
+      "preprocessor_first_last": [
+        0.4782649255545149,
+        3.531274391101469
+      ],
+      "gate_last": -0.8927787759651741
+    },
+    {
+      "arm": "warmoffgate",
+      "label": "gated column + context, GEM box only, pFBA warm start, alpha 0.01 frozen",
+      "n_seeds": 3,
+      "flux_share_first_last": [
+        8.994437833605552e-05,
+        0.014465673756239071
+      ],
+      "preprocessor_first_last": [
+        0.35458871389702235,
+        2.964815630214328
+      ],
+      "gate_last": 0.31463420391082764
+    }
+  ]
+}

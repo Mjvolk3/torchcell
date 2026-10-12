@@ -1,0 +1,84 @@
+{
+  "arms": [
+    {
+      "arm": "layer-free solve vector in the affine",
+      "seeds": [
+        2700,
+        2701,
+        2702,
+        2703,
+        2704,
+        2705,
+        2706,
+        2707,
+        2708
+      ],
+      "with_flag": [
+        0.9067663257277734,
+        0.9114870180959874,
+        0.9128638867033831,
+        0.8992918961447679,
+        0.8983084185680567,
+        0.8967348544453186,
+        0.8979150275373722,
+        0.9120771046420142,
+        0.9114870180959874
+      ],
+      "without_flag": [
+        0.9103068450039339,
+        0.9193548387096774,
+        0.9108969315499607,
+        0.9059795436664044,
+        0.8955546813532651,
+        0.9073564122738002,
+        0.9140440597954367,
+        0.9179779701022817,
+        0.9142407553107789
+      ],
+      "mean_with": 0.9052146166622956,
+      "mean_without": 0.9106346708628377,
+      "mean_difference": -0.0054200542005419855,
+      "sd_difference": 0.005932832953508329,
+      "n_positive": 2,
+      "n": 9,
+      "cls_strain_sd_with": 0.5216184755166372,
+      "cls_strain_sd_without": 0.0
+    },
+    {
+      "arm": "pooled cell, no solve and no affine",
+      "seeds": [
+        2700,
+        2701,
+        2702,
+        2703,
+        2704,
+        2705
+      ],
+      "with_flag": [
+        0.8577891424075531,
+        0.8550354051927616,
+        0.8621164437450826,
+        0.8568056648308419,
+        0.8485444531864673,
+        0.8505114083398898
+      ],
+      "without_flag": [
+        0.8585759244689221,
+        0.8589693154996066,
+        0.8623131392604249,
+        0.8540519276160503,
+        0.8613296616837136,
+        0.8524783634933124
+      ],
+      "mean_with": 0.8551337529504327,
+      "mean_without": 0.8579530553370049,
+      "mean_difference": -0.002819302386572279,
+      "sd_difference": 0.0053545514714179255,
+      "n_positive": 1,
+      "n": 6,
+      "cls_strain_sd_with": 0.6033239563306173,
+      "cls_strain_sd_without": 0.0
+    }
+  ],
+  "note": "Paired by seed, the same split and the same program; the flag adds no parameters. cls_strain_sd is the last epoch row's across-strain spread of the class token, exactly 0 without the flag because the token is then the encoding of the unperturbed graph. At one deleted gene the token's query attends over one key, so what it can add over the perturbed-gene pool is the wild-type token beside it."
+}

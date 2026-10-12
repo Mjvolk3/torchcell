@@ -1,0 +1,26 @@
+# experiments/027-betaxanthin-metabolic/conf/arm_flux_warmstart_boxforce.yaml
+# [[experiments.026-metabolism-flux.physics-gates-2026-09-14]]
+#
+# THE WARM-STARTED RESIDUAL HEAD, on the same switches every boxforce cell runs.
+#
+# The channel is the only thing that differs from arm_flux_fluxforce_boxforce.yaml, so this
+# arm and that one are a paired contrast: the same box, the same K = 100 alternation, the
+# same directional tightening before it, and a different place for the alternation to start.
+#
+# WHAT THE CHANNEL DOES. v_pre = clip(v_ref, box) + alpha * ||clip(v_ref)|| * N z / ||N z||,
+# with v_ref a pFBA solution of the unperturbed GEM computed inside the layer's build step
+# from S, the bounds and the objective column, and alpha one learned scalar starting at 0.01.
+#
+# MEASURED BASIS. The trained fluxforce_k100_boxforce head of job 1784 emits a proposal at a
+# relative distance of 0.990 from the feasible set, i.e. the projection discards 99 percent
+# of it (results/probe_trained_proposal_distance_wave8_dens_d2p0_boxforce_k100_e80_s2700.json,
+# 32 genotypes), and the alternation cannot repair an O(1)-wrong proposal at any K
+# (results/probe_projrate.json, K = 20 to 5000).
+#
+# CAVEAT, AND IT IS WHY THE CELLS ON THIS ARM ARE NOT AUTOMATICALLY WORTH RUNNING. The
+# initialization check on the real GEM does NOT reach the regime the synthetic probe
+# predicts: results/probe_warmstart_init.json. Read that file before submitting a cell on
+# this arm.
+base_arm: flux_projection_anchored_k20_boxend
+permute_train_targets: false
+flux_parameterization: warmstart_k100_boxforce

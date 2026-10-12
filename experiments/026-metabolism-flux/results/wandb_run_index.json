@@ -1,0 +1,888 @@
+{
+  "project_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep",
+  "n_runs": 98,
+  "runs": [
+    {
+      "grid": "arms",
+      "label": "arms-pooled",
+      "arm": "pooled",
+      "seed": 101,
+      "wandb_run_id": "czltmzp7",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/czltmzp7",
+      "peak_val_pearson": 0.0680711139930048
+    },
+    {
+      "grid": "arms",
+      "label": "arms-flux_off",
+      "arm": "flux_off",
+      "seed": 101,
+      "wandb_run_id": "cvghzlru",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/cvghzlru",
+      "peak_val_pearson": 0.09570407153988102
+    },
+    {
+      "grid": "arms",
+      "label": "arms-flux_free",
+      "arm": "flux_free",
+      "seed": 101,
+      "wandb_run_id": "oyppbowh",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/oyppbowh",
+      "peak_val_pearson": 0.09784151621844847
+    },
+    {
+      "grid": "arms",
+      "label": "arms-flux_anchored",
+      "arm": "flux_anchored",
+      "seed": 101,
+      "wandb_run_id": "u3iq97id",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/u3iq97id",
+      "peak_val_pearson": 0.15148893496205096
+    },
+    {
+      "grid": "arms",
+      "label": "arms-flux_nullspace",
+      "arm": "flux_nullspace",
+      "seed": 101,
+      "wandb_run_id": "lw7cdqt5",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/lw7cdqt5",
+      "peak_val_pearson": 0.0
+    },
+    {
+      "grid": "arms",
+      "label": "arms-pooled",
+      "arm": "pooled",
+      "seed": 102,
+      "wandb_run_id": "amie33pg",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/amie33pg",
+      "peak_val_pearson": 0.031839298070339056
+    },
+    {
+      "grid": "arms",
+      "label": "arms-flux_off",
+      "arm": "flux_off",
+      "seed": 102,
+      "wandb_run_id": "875pwhhp",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/875pwhhp",
+      "peak_val_pearson": 0.07921114059892506
+    },
+    {
+      "grid": "arms",
+      "label": "arms-flux_free",
+      "arm": "flux_free",
+      "seed": 102,
+      "wandb_run_id": "8h54lhih",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/8h54lhih",
+      "peak_val_pearson": 0.06113104515553257
+    },
+    {
+      "grid": "arms",
+      "label": "arms-flux_anchored",
+      "arm": "flux_anchored",
+      "seed": 102,
+      "wandb_run_id": "ot19w48c",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/ot19w48c",
+      "peak_val_pearson": 0.06026207868518615
+    },
+    {
+      "grid": "arms",
+      "label": "arms-flux_nullspace",
+      "arm": "flux_nullspace",
+      "seed": 102,
+      "wandb_run_id": "boqtw6j0",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/boqtw6j0",
+      "peak_val_pearson": 0.07117007207465863
+    },
+    {
+      "grid": "arms",
+      "label": "arms-pooled",
+      "arm": "pooled",
+      "seed": 103,
+      "wandb_run_id": "7pxleywm",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/7pxleywm",
+      "peak_val_pearson": 0.08154355080501888
+    },
+    {
+      "grid": "arms",
+      "label": "arms-flux_off",
+      "arm": "flux_off",
+      "seed": 103,
+      "wandb_run_id": "74ucn3q9",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/74ucn3q9",
+      "peak_val_pearson": 0.09235840966347203
+    },
+    {
+      "grid": "arms",
+      "label": "arms-flux_free",
+      "arm": "flux_free",
+      "seed": 103,
+      "wandb_run_id": "hum6hv7i",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/hum6hv7i",
+      "peak_val_pearson": 0.14253433314438807
+    },
+    {
+      "grid": "arms",
+      "label": "arms-flux_anchored",
+      "arm": "flux_anchored",
+      "seed": 103,
+      "wandb_run_id": "g3iazwin",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/g3iazwin",
+      "peak_val_pearson": 0.12586943981474802
+    },
+    {
+      "grid": "arms",
+      "label": "arms-flux_nullspace",
+      "arm": "flux_nullspace",
+      "seed": 103,
+      "wandb_run_id": "wgv3ogwk",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/wgv3ogwk",
+      "peak_val_pearson": 0.04749857398096713
+    },
+    {
+      "grid": "arms",
+      "label": "arms-pooled",
+      "arm": "pooled",
+      "seed": 104,
+      "wandb_run_id": "h9o1xexz",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/h9o1xexz",
+      "peak_val_pearson": 0.06761917934407409
+    },
+    {
+      "grid": "arms",
+      "label": "arms-flux_off",
+      "arm": "flux_off",
+      "seed": 104,
+      "wandb_run_id": "d6fufo9v",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/d6fufo9v",
+      "peak_val_pearson": 0.0548136098102593
+    },
+    {
+      "grid": "arms",
+      "label": "arms-flux_free",
+      "arm": "flux_free",
+      "seed": 104,
+      "wandb_run_id": "rdqxfngq",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/rdqxfngq",
+      "peak_val_pearson": 0.08937811995563955
+    },
+    {
+      "grid": "arms",
+      "label": "arms-flux_anchored",
+      "arm": "flux_anchored",
+      "seed": 104,
+      "wandb_run_id": "4mx9l38a",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/4mx9l38a",
+      "peak_val_pearson": 0.15026049785130488
+    },
+    {
+      "grid": "arms",
+      "label": "arms-flux_nullspace",
+      "arm": "flux_nullspace",
+      "seed": 104,
+      "wandb_run_id": "3x9sgbve",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/3x9sgbve",
+      "peak_val_pearson": 0.009489985617362896
+    },
+    {
+      "grid": "arms",
+      "label": "arms-pooled",
+      "arm": "pooled",
+      "seed": 105,
+      "wandb_run_id": "71ftm5fd",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/71ftm5fd",
+      "peak_val_pearson": 0.06654314410473729
+    },
+    {
+      "grid": "arms",
+      "label": "arms-flux_off",
+      "arm": "flux_off",
+      "seed": 105,
+      "wandb_run_id": "90m94xzu",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/90m94xzu",
+      "peak_val_pearson": 0.12446652359342167
+    },
+    {
+      "grid": "arms",
+      "label": "arms-flux_free",
+      "arm": "flux_free",
+      "seed": 105,
+      "wandb_run_id": "gi56ouut",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/gi56ouut",
+      "peak_val_pearson": 0.15542786020119206
+    },
+    {
+      "grid": "arms",
+      "label": "arms-flux_anchored",
+      "arm": "flux_anchored",
+      "seed": 105,
+      "wandb_run_id": "gzs9e901",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/gzs9e901",
+      "peak_val_pearson": 0.11685105545472192
+    },
+    {
+      "grid": "arms",
+      "label": "arms-flux_nullspace",
+      "arm": "flux_nullspace",
+      "seed": 105,
+      "wandb_run_id": "87j1nvb4",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/87j1nvb4",
+      "peak_val_pearson": 0.10288719491884438
+    },
+    {
+      "grid": "arms",
+      "label": "arms-pooled",
+      "arm": "pooled",
+      "seed": 106,
+      "wandb_run_id": "561svy7h",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/561svy7h",
+      "peak_val_pearson": 0.02844181886481544
+    },
+    {
+      "grid": "arms",
+      "label": "arms-flux_off",
+      "arm": "flux_off",
+      "seed": 106,
+      "wandb_run_id": "qx017bn6",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/qx017bn6",
+      "peak_val_pearson": 0.026104687977330527
+    },
+    {
+      "grid": "arms",
+      "label": "arms-flux_free",
+      "arm": "flux_free",
+      "seed": 106,
+      "wandb_run_id": "3j67e7ou",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/3j67e7ou",
+      "peak_val_pearson": 0.06985073178444352
+    },
+    {
+      "grid": "arms",
+      "label": "arms-flux_anchored",
+      "arm": "flux_anchored",
+      "seed": 106,
+      "wandb_run_id": "1gav5w61",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/1gav5w61",
+      "peak_val_pearson": 0.0995849742417747
+    },
+    {
+      "grid": "arms",
+      "label": "arms-flux_nullspace",
+      "arm": "flux_nullspace",
+      "seed": 106,
+      "wandb_run_id": "dgojsxba",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/dgojsxba",
+      "peak_val_pearson": 0.03424752301422293
+    },
+    {
+      "grid": "arms",
+      "label": "arms-pooled",
+      "arm": "pooled",
+      "seed": 107,
+      "wandb_run_id": "pq8nj79f",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/pq8nj79f",
+      "peak_val_pearson": 0.012004951046546678
+    },
+    {
+      "grid": "arms",
+      "label": "arms-flux_off",
+      "arm": "flux_off",
+      "seed": 107,
+      "wandb_run_id": "1epiwuli",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/1epiwuli",
+      "peak_val_pearson": 0.03394537825247796
+    },
+    {
+      "grid": "arms",
+      "label": "arms-flux_free",
+      "arm": "flux_free",
+      "seed": 107,
+      "wandb_run_id": "3v3j67wv",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/3v3j67wv",
+      "peak_val_pearson": 0.15918081639976847
+    },
+    {
+      "grid": "arms",
+      "label": "arms-flux_anchored",
+      "arm": "flux_anchored",
+      "seed": 107,
+      "wandb_run_id": "p8i6sp2v",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/p8i6sp2v",
+      "peak_val_pearson": 0.14103078188552987
+    },
+    {
+      "grid": "arms",
+      "label": "arms-flux_nullspace",
+      "arm": "flux_nullspace",
+      "seed": 107,
+      "wandb_run_id": "fay4r3sn",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/fay4r3sn",
+      "peak_val_pearson": 0.018727633501121263
+    },
+    {
+      "grid": "arms",
+      "label": "arms-pooled",
+      "arm": "pooled",
+      "seed": 108,
+      "wandb_run_id": "u4nh0znr",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/u4nh0znr",
+      "peak_val_pearson": 0.01682666464811244
+    },
+    {
+      "grid": "arms",
+      "label": "arms-flux_off",
+      "arm": "flux_off",
+      "seed": 108,
+      "wandb_run_id": "0klqi5gj",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/0klqi5gj",
+      "peak_val_pearson": 0.11251696853203369
+    },
+    {
+      "grid": "arms",
+      "label": "arms-flux_free",
+      "arm": "flux_free",
+      "seed": 108,
+      "wandb_run_id": "yepgwwki",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/yepgwwki",
+      "peak_val_pearson": 0.08982358140591541
+    },
+    {
+      "grid": "arms",
+      "label": "arms-flux_anchored",
+      "arm": "flux_anchored",
+      "seed": 108,
+      "wandb_run_id": "qm9fddw2",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/qm9fddw2",
+      "peak_val_pearson": 0.11857911067800804
+    },
+    {
+      "grid": "arms",
+      "label": "arms-flux_nullspace",
+      "arm": "flux_nullspace",
+      "seed": 108,
+      "wandb_run_id": "zw2up11b",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/zw2up11b",
+      "peak_val_pearson": 0.0
+    },
+    {
+      "grid": "arms",
+      "label": "arms-pooled",
+      "arm": "pooled",
+      "seed": 109,
+      "wandb_run_id": "bw06snzd",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/bw06snzd",
+      "peak_val_pearson": 0.057580429510815004
+    },
+    {
+      "grid": "arms",
+      "label": "arms-flux_off",
+      "arm": "flux_off",
+      "seed": 109,
+      "wandb_run_id": "luid55f0",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/luid55f0",
+      "peak_val_pearson": 0.12743517809196508
+    },
+    {
+      "grid": "arms",
+      "label": "arms-flux_free",
+      "arm": "flux_free",
+      "seed": 109,
+      "wandb_run_id": "5q0zos2c",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/5q0zos2c",
+      "peak_val_pearson": 0.07715262199284999
+    },
+    {
+      "grid": "arms",
+      "label": "arms-flux_anchored",
+      "arm": "flux_anchored",
+      "seed": 109,
+      "wandb_run_id": "c4i363am",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/c4i363am",
+      "peak_val_pearson": 0.11000279743505656
+    },
+    {
+      "grid": "arms",
+      "label": "arms-flux_nullspace",
+      "arm": "flux_nullspace",
+      "seed": 109,
+      "wandb_run_id": "e7cbxan6",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/e7cbxan6",
+      "peak_val_pearson": 0.01772833055551515
+    },
+    {
+      "grid": "arms",
+      "label": "arms-pooled",
+      "arm": "pooled",
+      "seed": 110,
+      "wandb_run_id": "60ks7mhg",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/60ks7mhg",
+      "peak_val_pearson": -0.014135175327499987
+    },
+    {
+      "grid": "arms",
+      "label": "arms-flux_off",
+      "arm": "flux_off",
+      "seed": 110,
+      "wandb_run_id": "29p85yl7",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/29p85yl7",
+      "peak_val_pearson": 0.09039921908331272
+    },
+    {
+      "grid": "arms",
+      "label": "arms-flux_free",
+      "arm": "flux_free",
+      "seed": 110,
+      "wandb_run_id": "flkf5wzn",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/flkf5wzn",
+      "peak_val_pearson": 0.07782400949908042
+    },
+    {
+      "grid": "arms",
+      "label": "arms-flux_anchored",
+      "arm": "flux_anchored",
+      "seed": 110,
+      "wandb_run_id": "kbc0h7bv",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/kbc0h7bv",
+      "peak_val_pearson": 0.07753643398615029
+    },
+    {
+      "grid": "arms",
+      "label": "arms-flux_nullspace",
+      "arm": "flux_nullspace",
+      "seed": 110,
+      "wandb_run_id": "m1h0dbd2",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/m1h0dbd2",
+      "peak_val_pearson": 0.07949891102337912
+    },
+    {
+      "grid": "null",
+      "label": "null-pooled",
+      "arm": "pooled",
+      "seed": 301,
+      "wandb_run_id": "tb9lscvb",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/tb9lscvb",
+      "peak_val_pearson": 0.08486462751896703
+    },
+    {
+      "grid": "null",
+      "label": "null-flux_anchored",
+      "arm": "flux_anchored",
+      "seed": 301,
+      "wandb_run_id": "avo7djgs",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/avo7djgs",
+      "peak_val_pearson": 0.058137951592137305
+    },
+    {
+      "grid": "null",
+      "label": "null-pooled",
+      "arm": "pooled",
+      "seed": 302,
+      "wandb_run_id": "kkd93q06",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/kkd93q06",
+      "peak_val_pearson": 0.019240991127554986
+    },
+    {
+      "grid": "null",
+      "label": "null-flux_anchored",
+      "arm": "flux_anchored",
+      "seed": 302,
+      "wandb_run_id": "adcfdc1w",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/adcfdc1w",
+      "peak_val_pearson": 0.09487155493526456
+    },
+    {
+      "grid": "null",
+      "label": "null-pooled",
+      "arm": "pooled",
+      "seed": 303,
+      "wandb_run_id": "n994wqto",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/n994wqto",
+      "peak_val_pearson": 0.0708196352504629
+    },
+    {
+      "grid": "null",
+      "label": "null-flux_anchored",
+      "arm": "flux_anchored",
+      "seed": 303,
+      "wandb_run_id": "io7ugt8m",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/io7ugt8m",
+      "peak_val_pearson": 0.11334805144535466
+    },
+    {
+      "grid": "null",
+      "label": "null-pooled",
+      "arm": "pooled",
+      "seed": 304,
+      "wandb_run_id": "6aqns9oo",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/6aqns9oo",
+      "peak_val_pearson": 0.011551481876740429
+    },
+    {
+      "grid": "null",
+      "label": "null-flux_anchored",
+      "arm": "flux_anchored",
+      "seed": 304,
+      "wandb_run_id": "xy8srp0b",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/xy8srp0b",
+      "peak_val_pearson": 0.21102288959534043
+    },
+    {
+      "grid": "null",
+      "label": "null-pooled",
+      "arm": "pooled",
+      "seed": 305,
+      "wandb_run_id": "03ew8rkh",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/03ew8rkh",
+      "peak_val_pearson": 0.1421296917945795
+    },
+    {
+      "grid": "null",
+      "label": "null-flux_anchored",
+      "arm": "flux_anchored",
+      "seed": 305,
+      "wandb_run_id": "qv527rhn",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/qv527rhn",
+      "peak_val_pearson": 0.08607686423049972
+    },
+    {
+      "grid": "null",
+      "label": "null-pooled",
+      "arm": "pooled",
+      "seed": 306,
+      "wandb_run_id": "1hx74zr4",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/1hx74zr4",
+      "peak_val_pearson": 0.07893974121355422
+    },
+    {
+      "grid": "null",
+      "label": "null-flux_anchored",
+      "arm": "flux_anchored",
+      "seed": 306,
+      "wandb_run_id": "up6z1xil",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/up6z1xil",
+      "peak_val_pearson": 0.06328317568810542
+    },
+    {
+      "grid": "null",
+      "label": "null-pooled",
+      "arm": "pooled",
+      "seed": 307,
+      "wandb_run_id": "on67lnig",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/on67lnig",
+      "peak_val_pearson": 0.07897628484072985
+    },
+    {
+      "grid": "null",
+      "label": "null-flux_anchored",
+      "arm": "flux_anchored",
+      "seed": 307,
+      "wandb_run_id": "29wn2436",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/29wn2436",
+      "peak_val_pearson": 0.1433281684374277
+    },
+    {
+      "grid": "null",
+      "label": "null-pooled",
+      "arm": "pooled",
+      "seed": 308,
+      "wandb_run_id": "7760u2hw",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/7760u2hw",
+      "peak_val_pearson": 0.1266584956160628
+    },
+    {
+      "grid": "null",
+      "label": "null-flux_anchored",
+      "arm": "flux_anchored",
+      "seed": 308,
+      "wandb_run_id": "1bxevt3l",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/1bxevt3l",
+      "peak_val_pearson": 0.14702200246112707
+    },
+    {
+      "grid": "null",
+      "label": "null-pooled",
+      "arm": "pooled",
+      "seed": 309,
+      "wandb_run_id": "pi8kis29",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/pi8kis29",
+      "peak_val_pearson": 0.10579701305927698
+    },
+    {
+      "grid": "null",
+      "label": "null-flux_anchored",
+      "arm": "flux_anchored",
+      "seed": 309,
+      "wandb_run_id": "kb5r11yd",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/kb5r11yd",
+      "peak_val_pearson": 0.07987979400280035
+    },
+    {
+      "grid": "null",
+      "label": "null-pooled",
+      "arm": "pooled",
+      "seed": 310,
+      "wandb_run_id": "987qwj8g",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/987qwj8g",
+      "peak_val_pearson": 0.10280939995791369
+    },
+    {
+      "grid": "null",
+      "label": "null-flux_anchored",
+      "arm": "flux_anchored",
+      "seed": 310,
+      "wandb_run_id": "p7v9kj0l",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/p7v9kj0l",
+      "peak_val_pearson": 0.07991144027013422
+    },
+    {
+      "grid": "null",
+      "label": "null-pooled",
+      "arm": "pooled",
+      "seed": 311,
+      "wandb_run_id": "3djkhboa",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/3djkhboa",
+      "peak_val_pearson": 0.05046938189675712
+    },
+    {
+      "grid": "null",
+      "label": "null-flux_anchored",
+      "arm": "flux_anchored",
+      "seed": 311,
+      "wandb_run_id": "hkfm29ji",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/hkfm29ji",
+      "peak_val_pearson": 0.15582067774019873
+    },
+    {
+      "grid": "null",
+      "label": "null-pooled",
+      "arm": "pooled",
+      "seed": 312,
+      "wandb_run_id": "cm1aem7j",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/cm1aem7j",
+      "peak_val_pearson": 0.10096461141080613
+    },
+    {
+      "grid": "null",
+      "label": "null-flux_anchored",
+      "arm": "flux_anchored",
+      "seed": 312,
+      "wandb_run_id": "3c6k5fmd",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/3c6k5fmd",
+      "peak_val_pearson": 0.10322395197873413
+    },
+    {
+      "grid": "reg",
+      "label": "reg-flux_anchored-lr0.001-wd0.0001-h32",
+      "arm": "flux_anchored",
+      "seed": 201,
+      "wandb_run_id": "0kru961j",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/0kru961j",
+      "peak_val_pearson": 0.12606439767047337
+    },
+    {
+      "grid": "reg",
+      "label": "reg-flux_anchored-lr0.001-wd0.0001-h64",
+      "arm": "flux_anchored",
+      "seed": 201,
+      "wandb_run_id": "24ku9gob",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/24ku9gob",
+      "peak_val_pearson": 0.12685366136433357
+    },
+    {
+      "grid": "reg",
+      "label": "reg-flux_anchored-lr0.001-wd0.01-h32",
+      "arm": "flux_anchored",
+      "seed": 201,
+      "wandb_run_id": "gigbzsy8",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/gigbzsy8",
+      "peak_val_pearson": 0.15700374072388845
+    },
+    {
+      "grid": "reg",
+      "label": "reg-flux_anchored-lr0.001-wd0.01-h64",
+      "arm": "flux_anchored",
+      "seed": 201,
+      "wandb_run_id": "rtcriynx",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/rtcriynx",
+      "peak_val_pearson": 0.13372686104742618
+    },
+    {
+      "grid": "reg",
+      "label": "reg-flux_anchored-lr0.0003-wd0.0001-h32",
+      "arm": "flux_anchored",
+      "seed": 201,
+      "wandb_run_id": "vew8wglq",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/vew8wglq",
+      "peak_val_pearson": 0.06892583468073159
+    },
+    {
+      "grid": "reg",
+      "label": "reg-flux_anchored-lr0.0003-wd0.0001-h64",
+      "arm": "flux_anchored",
+      "seed": 201,
+      "wandb_run_id": "nux1vvp8",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/nux1vvp8",
+      "peak_val_pearson": 0.04936162612995106
+    },
+    {
+      "grid": "reg",
+      "label": "reg-flux_anchored-lr0.0003-wd0.01-h32",
+      "arm": "flux_anchored",
+      "seed": 201,
+      "wandb_run_id": "2x0g4fyx",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/2x0g4fyx",
+      "peak_val_pearson": 0.06513957481932799
+    },
+    {
+      "grid": "reg",
+      "label": "reg-flux_anchored-lr0.0003-wd0.01-h64",
+      "arm": "flux_anchored",
+      "seed": 201,
+      "wandb_run_id": "9z732rhv",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/9z732rhv",
+      "peak_val_pearson": 0.04701045435353171
+    },
+    {
+      "grid": "reg",
+      "label": "reg-flux_anchored-lr0.0001-wd0.0001-h32",
+      "arm": "flux_anchored",
+      "seed": 201,
+      "wandb_run_id": "m8kkt9sl",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/m8kkt9sl",
+      "peak_val_pearson": 0.07162047297711702
+    },
+    {
+      "grid": "reg",
+      "label": "reg-flux_anchored-lr0.0001-wd0.0001-h64",
+      "arm": "flux_anchored",
+      "seed": 201,
+      "wandb_run_id": "wdkjyjz6",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/wdkjyjz6",
+      "peak_val_pearson": 0.08233973863049228
+    },
+    {
+      "grid": "reg",
+      "label": "reg-flux_anchored-lr0.0001-wd0.01-h32",
+      "arm": "flux_anchored",
+      "seed": 201,
+      "wandb_run_id": "soki18gv",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/soki18gv",
+      "peak_val_pearson": 0.07642687915294022
+    },
+    {
+      "grid": "reg",
+      "label": "reg-flux_anchored-lr0.0001-wd0.01-h64",
+      "arm": "flux_anchored",
+      "seed": 201,
+      "wandb_run_id": "ptzdqpll",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/ptzdqpll",
+      "peak_val_pearson": 0.04784273554536345
+    },
+    {
+      "grid": "reg",
+      "label": "reg-flux_anchored-lr0.001-wd0.0001-h32",
+      "arm": "flux_anchored",
+      "seed": 202,
+      "wandb_run_id": "1xtp6xqd",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/1xtp6xqd",
+      "peak_val_pearson": 0.10442305522735218
+    },
+    {
+      "grid": "reg",
+      "label": "reg-flux_anchored-lr0.001-wd0.0001-h64",
+      "arm": "flux_anchored",
+      "seed": 202,
+      "wandb_run_id": "vt0deb5v",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/vt0deb5v",
+      "peak_val_pearson": 0.09981143125158515
+    },
+    {
+      "grid": "reg",
+      "label": "reg-flux_anchored-lr0.001-wd0.01-h32",
+      "arm": "flux_anchored",
+      "seed": 202,
+      "wandb_run_id": "3307ovbt",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/3307ovbt",
+      "peak_val_pearson": 0.08847258395323439
+    },
+    {
+      "grid": "reg",
+      "label": "reg-flux_anchored-lr0.001-wd0.01-h64",
+      "arm": "flux_anchored",
+      "seed": 202,
+      "wandb_run_id": "ck53jtqk",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/ck53jtqk",
+      "peak_val_pearson": 0.125445462486984
+    },
+    {
+      "grid": "reg",
+      "label": "reg-flux_anchored-lr0.0003-wd0.0001-h32",
+      "arm": "flux_anchored",
+      "seed": 202,
+      "wandb_run_id": "lskpseis",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/lskpseis",
+      "peak_val_pearson": 0.007621778900757808
+    },
+    {
+      "grid": "reg",
+      "label": "reg-flux_anchored-lr0.0003-wd0.0001-h64",
+      "arm": "flux_anchored",
+      "seed": 202,
+      "wandb_run_id": "57imkx5o",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/57imkx5o",
+      "peak_val_pearson": 0.0820285223661392
+    },
+    {
+      "grid": "reg",
+      "label": "reg-flux_anchored-lr0.0003-wd0.01-h32",
+      "arm": "flux_anchored",
+      "seed": 202,
+      "wandb_run_id": "ys9qw09i",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/ys9qw09i",
+      "peak_val_pearson": -0.0032693773157711306
+    },
+    {
+      "grid": "reg",
+      "label": "reg-flux_anchored-lr0.0003-wd0.01-h64",
+      "arm": "flux_anchored",
+      "seed": 202,
+      "wandb_run_id": "3mix6sa1",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/3mix6sa1",
+      "peak_val_pearson": 0.0785677226493371
+    },
+    {
+      "grid": "reg",
+      "label": "reg-flux_anchored-lr0.0001-wd0.0001-h32",
+      "arm": "flux_anchored",
+      "seed": 202,
+      "wandb_run_id": "ocnkovj6",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/ocnkovj6",
+      "peak_val_pearson": -0.013753324111330739
+    },
+    {
+      "grid": "reg",
+      "label": "reg-flux_anchored-lr0.0001-wd0.0001-h64",
+      "arm": "flux_anchored",
+      "seed": 202,
+      "wandb_run_id": "1ub1q45o",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/1ub1q45o",
+      "peak_val_pearson": 0.03947833723136454
+    },
+    {
+      "grid": "reg",
+      "label": "reg-flux_anchored-lr0.0001-wd0.01-h32",
+      "arm": "flux_anchored",
+      "seed": 202,
+      "wandb_run_id": "7914cdgv",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/7914cdgv",
+      "peak_val_pearson": 0.025825664517046536
+    },
+    {
+      "grid": "reg",
+      "label": "reg-flux_anchored-lr0.0001-wd0.01-h64",
+      "arm": "flux_anchored",
+      "seed": 202,
+      "wandb_run_id": "1sebhjhx",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_026_flux_sweep/runs/1sebhjhx",
+      "peak_val_pearson": 0.007191846977784922
+    }
+  ]
+}

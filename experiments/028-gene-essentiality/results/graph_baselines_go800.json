@@ -1,0 +1,80 @@
+{
+  "protocol": "transductive node classification on one gene graph, no perturbation; class-weighted BCE, Adam 1e-3, 200 epochs, width 64, dropout 0.2; epoch selected by a five-epoch moving average of the validation AUROC; scored once on the 195 held-out genes",
+  "rows": [
+    {
+      "model": "GCN",
+      "graph": "union of nine",
+      "inputs": "GO (800 epochs)",
+      "dim_in": 2362,
+      "n_parameters": 155457,
+      "test_auroc": [
+        0.9049960660896932,
+        0.9107002360346184,
+        0.9012588512981904
+      ],
+      "val_auroc": [
+        0.8559398496240602,
+        0.8574436090225563,
+        0.8466165413533835
+      ],
+      "select_epoch": [
+        777,
+        784,
+        788
+      ],
+      "mean": 0.9056517178075006,
+      "sd": 0.0038822112098314686,
+      "seconds": 84.96509838104248
+    },
+    {
+      "model": "GCN",
+      "graph": "union of nine",
+      "inputs": "GO+FBA ratios (800 epochs)",
+      "dim_in": 2366,
+      "n_parameters": 155713,
+      "test_auroc": [
+        0.9053894571203777,
+        0.9108969315499607,
+        0.9075531077891423
+      ],
+      "val_auroc": [
+        0.8514285714285714,
+        0.8616541353383459,
+        0.8586466165413533
+      ],
+      "select_epoch": [
+        768,
+        790,
+        769
+      ],
+      "mean": 0.9079464988198268,
+      "sd": 0.002265558948750457,
+      "seconds": 85.18089485168457
+    },
+    {
+      "model": "GCN",
+      "graph": "union of nine",
+      "inputs": "ProtT5+GO+FBA ratios (800 epochs)",
+      "dim_in": 3390,
+      "n_parameters": 221249,
+      "test_auroc": [
+        0.9046026750590087,
+        0.9022423288749016,
+        0.9026357199055862
+      ],
+      "val_auroc": [
+        0.8478195488721805,
+        0.8445112781954888,
+        0.8363909774436089
+      ],
+      "select_epoch": [
+        769,
+        751,
+        792
+      ],
+      "mean": 0.9031602412798322,
+      "sd": 0.0010325213577251457,
+      "seconds": 85.21676397323608
+    }
+  ]
+}

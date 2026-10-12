@@ -1,0 +1,219 @@
+%% notes-tex/028-gene-essentiality/sections/6-open.tex
+%% [[experiments.028-gene-essentiality]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/028-gene-essentiality/sections/6-open.tex
+
+\section{Open\secstatus{todo}}
+\label{sec:open}
+
+The held-out number is close to saturated: the round-12 ensemble's interval, 0.893
+[0.84, 0.94], spans what 195 genes with 31 essential can resolve, and every lever on the
+transformer side has been moved (width, depth, the preprocessor, the budget, the class
+weight, six encodings). What remains is attribution and the module.
+
+\begin{itemize}
+  \item The pathway multi-hot carries the round-9 gain (rounds 14 and 22, and the split
+    on the cheap models); the deletion's own flux vector does not substitute for it
+    (round 35: 0.868 on ProtT5 alone against 0.912 with the block, and the block
+    without the vector 0.890), so the two carry different information. Which
+    pathways, and what in the annotation the solve cannot see, is not measured.
+  \item The round-16 cell (the round-11 affine on the round-9 backbone) and the round-9
+    cell are one cell to the resolution of 195 genes (rounds 16 and 17); a larger
+    held-out set, such as the genome-wide labels scored on genes the released split
+    never touched, is what would separate them.
+  \item The MLP, the graph convolution and the transformer on the same three inputs are
+    one number as fold ensembles (0.886, 0.888, 0.893), and graph convolution on GO
+    alone is 0.917 above them with overlapping intervals. On the 4,674 genome-wide
+    genes the released split never touched (round 30) the architectures separate:
+    the graph convolution transfers at 0.75 and the GO margin does not survive
+    (0.70), while the MLP and the transformer's recipe read 0.51 and 0.57. Open on
+    that set: whether a model trained on the metabolic genes transfers because it
+    reads essentiality or because it reads what the graph encodes about SGD-annotated
+    against deletion-collection genes (label origin coincides with class there, and
+    for a viable deletion the two are close to one definition). Degree and clustering
+    alone reach the 0.75 on that set, so the question is what degree in the physical
+    graph measures there; a genome-wide set whose nonessential labels come from the
+    same source as the essential ones would separate origin from class, and the
+    physical graph's own coverage of the deletion collection against the SGD
+    inviable set is the first thing to count.
+  \item The GO multi-hot is the ladder's strongest encoding and the cheap models take
+    it (graph convolution 0.887), and the transformer does not (0.833 beside ProtT5,
+    a cost of 0.04 beside the pathway block, round 26), and a cell 350 times wider
+    reads it the same (round 28), so capacity is not the reason. What separates 173
+    sparse pathway columns from 2,362 dense GO columns in this backbone is not
+    measured; a per-block projection, the GO vector entering as its own token, and
+    the pooled readout itself are the untested constructions, and the answer decides
+    whether annotation vectors scale as inputs to this backbone.
+  \item The forced growth column is closed by the dual-overlap probe
+    (Section~\ref{sec:dual-overlap}): the ceilings that bind are the same for every
+    genotype, so no step size, head or reach trains it (rounds 18 to 20). A construction
+    that changes which bounds bind per genotype, such as ceilings the deleted gene's
+    neighbors own, or an objective other than biomass, since the layer that solves
+    accepts any objective column, is untested.
+  \item The head over the solved flux is the module's number, and the form that scales
+    (round 27: the program solved once per genotype, nothing learned in the layer, a
+    zero-initialized head) reads 0.90 to 0.92 on eight runs of nine and misses the
+    fitting transition on one, where the learned-ceiling form misses it on three cells
+    in seventeen, and reads 0.912 [0.86, 0.95] under the fold protocol with all five
+    folds fit. Open on it: what in the forward makes the transition a chance event of
+    the run rather than of the seed (round 29: the same seed and program fit at epoch
+    70 in one run and never in another, the two diverging from the first epoch, and
+    the scalable form repeats it with the solve cached and nothing learned in the
+    layer); round 32 closed it: pinning the card's kernels makes two runs of the seed
+    one trajectory, so the chance was the kernels, and pinned, six seeds fit six
+    times, so the miss is a property of the free run and not of any seed; the pooled
+    layer-free cell's two pinned runs are not one trajectory (round 45), with no
+    operation warning under the deterministic mode, and round 46 places the
+    divergence with the pathway multi-hot in the pooled arm (the ProtT5-alone
+    layer-free pair is one trajectory, the pathway-and-ProtT5 affine pair with no
+    solve columns is not, and the LP cell carries both embeddings under another arm
+    and was one trajectory), and round 49 with the pathway embedding itself (the
+    pathway multi-hot alone with the affine and pathway-and-ProtT5 with the plain
+    pooled head both diverge pinned, GO-and-ProtT5 with the affine is one
+    trajectory); the pathway dataset was rebuilt at every launch and enumerated its
+    173 columns from a Python set, so each process served a column permutation the
+    previous one wrote, and with the enumeration sorted and the rebuild removed both
+    cells pinned are one trajectory (rounds 51 and 52) and the free run is the pinned
+    run on every seed (round 64), so the chance in the pooled cell is closed, it was
+    an input and not a kernel, and the pinned-kernel switch is needed only on the LP
+    form;
+    the cache's hit rate and where the wall time goes when the solve is cached, since
+    six cached cells on one card ran no faster per cell than three uncached; and the
+    multi-phenotype form, the flux in the cell representation rather than on the
+    logit: a hidden layer over the vector reads no more than the linear affine
+    (round 41), the raw vector as a node embedding through the preprocessor reads
+    0.03 under the logit form and under no vector at all (round 43), and reduced to
+    64 or 16 principal components it fits on time and reads the affine-alone number
+    on the node and the logit form's number only when the vector is in the affine as
+    well (round 44). So the representation path carries the vector without cost once
+    it is compact and reads nothing from it that the logit does not; what is open is
+    a head that reads a representation-borne vector, the deleted gene's own token
+    rather than the pooled context, and the vector as its own token.
+  \item The two model families, annotation through the graph and the solve through
+    the transformer, miss different genes, and their post hoc average reads 0.954 under
+    the fold protocol (the GO convolution with the scalable form). The one model
+    tried, the solve's columns on the node beside GO under the convolution, reads the
+    GO-alone number (0.909), so the average's gain is not the graph model's to take
+    from those columns, and the transformer with GO on the node beside the solve in
+    the affine reads 0.866, the round-26 cost with the solve as with the ratios
+    (round 47); GO on the logit through the affine, the path the solve takes, costs
+    nothing and adds nothing (0.901 with the vector, round 50), the affine
+    memorizing the training genes through 2,362 binary columns by epoch 20, and
+    neither weight decay (round 59) nor reducing GO to 64 components before the
+    affine (round 60: 0.906, the solve-alone number, fitting on time) recovers any of
+    the average; so on this backbone the two families stay two models, and what is
+    untested is a learned weighting of their logits and the transformer's affine
+    read of the solve beside a graph-convolved GO token, while the average's number
+    carries the selection of the best of eleven.
+  \item The layer that solves has the wrong shape for a training loop: the program runs
+    on the CPU inside the forward pass, the GPU waits on it (0 to 13 percent
+    utilization sampled during round 19, against a 1.6 hour cell where the alternating
+    layer takes 19 minutes), and the bytes moved are not the cost, the synchronization
+    is. With nothing learned in the solve (round 27) the cost leaves the loop
+    entirely: the program is solved once per distinct genotype and medium, offline,
+    and stored as a feature, and no solver runs in training. Round 31 measured that
+    form: the deletion's pFBA vector precomputed and appended to the affine reads
+    0.871 pooled alone and 0.901 with the solve statistics at 31 minutes per cell
+    against 83 for the solve inside the graph, under the cached-solve head's 0.917,
+    with four of six vector cells selecting an epoch before the fitting transition;
+    round 33 closed the 0.05 with the encoding alone: as $\log(1 + |v|)$ the vector
+    reads 0.896 to 0.919 on twelve of twelve runs, 0.912 pooled, with nothing in the
+    graph and 11 minutes a cell, and 0.920 as a fold ensemble. What remains open on
+    the form is why standardized columns make the backbone peak before it fits (and
+    why one $\log(1 + |v|)$ fold cell in seventeen still did). The count that sizes
+    the store is measured (Section~\ref{sec:store-scale}): over the 13.5 million
+    records of the solid-growth build, 469,474 distinct (GEM subset, medium) keys,
+    solved in 71 minutes on 20 cores, and read at the control's step rate by the
+    transformer trained over that build, whose number is not yet read. On this
+    endpoint the store solved on synthetic complete medium reads the YPD store's
+    number (round 42), and the build's selection media have no FBA recipe, so
+    whether the medium axis of the store carries anything is a question for a
+    phenotype scored across media with recipes.
+    Where a solve must stay in the loop, the fine-tuning form with learned ceilings,
+    three constructions would remove the synchronization, in order of how much they
+    change: a batched first-order solve on the card, which NVIDIA's cuOpt offers as
+    PDLP with a batch mode for many small programs at a benchmark tolerance of
+    $10^{-4}$ relative; a per-genotype basis warm start of the simplex through HiGHS's
+    own interface, which keeps the exact solve and the exact duals; a smooth
+    interior-point solve at a fixed barrier, which changes what the layer computes
+    and belongs to its own rounds. The read that had to come first is in
+    (Section~\ref{sec:solve-tolerance}): the program's argmax is degenerate, another
+    exact vertex already breaks a head trained on the reference vertex (the probe at
+    chance), and a point inside the optimal face, PDLP's or the interior point's, is
+    as rankable as a vertex when the head is trained on it, and rounds 36 and 38
+    trained the cell over an interior-point store to 0.911 and over the PDLP store,
+    the card's algorithm, to 0.907, the pFBA store's number, where the growth
+    program's own vertex trained to 0.840. So the solver is part of the module's
+    definition, the store and the head must be built from one solver, the card's
+    first-order point is a store, and across tolerances of one first-order solver
+    the point is the same point: PDLP at $10^{-4}$ and $10^{-6}$ move 0.6 percent of
+    the reactions against each other and a probe fitted on either scores the other
+    at its own within-solver number (0.709 and 0.717 against 0.716 and 0.702), where
+    across solvers the same probe loses 0.05 to 0.35 (Section~\ref{sec:solve-tolerance});
+    the cell trains to the same number over the $10^{-6}$ store (round 53), and the
+    $10^{-8}$ store with 320 programs uncertified reads 0.02 under it until those rows
+    are filled from the looser solves (rounds 55 and 57), so the store's cost is its
+    uncertified fraction and a second pass recovers it. Why the dual simplex's vertex is
+    the worst store of the four is answered by an intervention rather than by an
+    association (Section~\ref{sec:store-discriminability}): zeroing every column that
+    reaches the clamp, where a loop can spin, lifts that store from 0.840 to 0.888 on
+    six of six seeds, while the same rule on the pFBA store, where it cuts one column,
+    moves it by $-0.003$. What stays open is the last 0.020 to the pFBA store,
+    and whether a store solved so that no column reaches the clamp beats one cut after
+    the fact.
+  \item Of the module's own parameter sources, the $k_{cat}$ tier is measured at
+    initialization and the thermodynamic route is measured to be inert: with the
+    constraint scale at zero and the sign constraint off, swapping the route leaves the
+    program identical at every capacity scale, so it is provenance on these rounds and
+    not a hyperparameter. The tier sets how
+    tight the capacity box is before any scaling: the measured tier leaves 2,849 of
+    3,728 catalytic units on the organism default, whose turnover is above the
+    predictors' median, so its median ceiling is twice the predicted tier's and its
+    program admits growth at a capacity scale of 3 where the predicted tier admits
+    none; at the scale round 15c ran, the measured tier's ceilings are within 0.003
+    mmol/gDW/h of not binding (Section~\ref{sec:kcat-tier}). Trained at the scale where
+    both tiers bind on six seeds, the looser box trades a failure for a ceiling: the
+    gated cell gains $+0.012$, about its seed spread, and the forced growth column
+    stops collapsing into the absorbing infeasible state, none of six against two of
+    six, while no longer reaching above 0.76 where the tighter box reaches 0.84 and
+    0.80. Round 72 closes that: the bimodality cannot be removed without the high end going
+    with it, by either construction that removes it. On twelve seeds the hard program
+    collapses on two and clears 0.80 on four (mean 0.699, spread 0.115), while the
+    looser tier and the elastic program each put six of six between 0.63 and 0.76
+    (means 0.707 and 0.715, spreads near 0.045). Three constructions share one mean and
+    differ only in spread, so the collapse buys a tail rather than accuracy. What is
+    open is a construction that changes which bounds bind per genotype, since every
+    arm here binds the same ceilings for every genotype
+    (Section~\ref{sec:dual-overlap}).
+\end{itemize}
+
+\subsection{What the closing rounds settled\secstatus{todo}}
+\label{sec:open-closed}
+
+Four of the questions above were answered after this section was written, and the answers
+are in Sections~\ref{sec:closing} and~\ref{sec:summary}.
+
+A rule-aware input exists and helps, but not where it was expected: six counts read off
+the gene-protein-reaction rules raise the released split from 0.908 to 0.918 and improve
+the fifteen essential genes that hold a reaction of their own, while making the four an
+alternative gene set covers worse (Section~\ref{sec:round77}); the six columns are
+redundant among themselves (Section~\ref{sec:round84-98}).
+
+The deleted gene's own token was tried. Routing the class token through the perturbation
+operator gives the readout a strain-specific token beside the pooled one at no extra
+parameters, and on single deletions it is a small consistent cost, not a gain
+(Section~\ref{sec:round79}).
+
+The medium axis of the store does carry something on this endpoint, and only where the
+flux vector is absent. With the vector present one medium scores what four do
+($+0.002$ over ten repeated splits); with the vector gone the growth ratios of four media
+are worth $+0.012$ over one, and two media recover about a third of that
+(Section~\ref{sec:round84-98}).
+
+The averaging of the two families was read off the released 195 genes, where 0.955 is the
+maximum of thirteen post hoc averages. Fixed in advance on ten other held-out fifths, the
+equal-weight average still beats the better single model on nine of ten
+(Section~\ref{sec:round75}), so the margin is not the selection.
+
+What remains open is unchanged: a learned weighting of the two families' logits, a
+construction whose binding ceilings differ per genotype, and the store's value on a
+second phenotype, which belongs to that phenotype's experiment rather than to this one.

@@ -1,0 +1,177 @@
+{
+  "slug": "heme_o",
+  "met_ids": ["s_0812"],
+  "gem_name": "heme o",
+  "gem_formula": "C49H56FeN4O5",
+  "gem_charge": -2,
+  "compartments": ["m"],
+  "blocked_reactions": ["r_0530", "r_0531"],
+  "kind": "structure",
+  "admission": "tabulated",
+  "value": {
+    "smiles": "C=CC1=C(C)C2=[N+]3C1=Cc1c(C)c(CCC(=O)[O-])c4[n]1[Fe-2]31[n]3c(c(C)c([C@@H](O)CC/C=C(\\C)CC/C=C(\\C)CCC=C(C)C)c3=C2)=CC2=[N+]1C(=C4)C(CCC(=O)[O-])=C2C",
+    "inchi": "InChI=1S/C49H60N4O5.Fe/c1-10-35-31(6)40-26-45-49(46(54)19-13-18-30(5)17-12-16-29(4)15-11-14-28(2)3)34(9)41(53-45)24-38-32(7)36(20-22-47(55)56)43(51-38)27-44-37(21-23-48(57)58)33(8)39(52-44)25-42(35)50-40;/h10,14,16,18,24-27,46,54H,1,11-13,15,17,19-23H2,2-9H3,(H4,50,51,52,53,55,56,57,58);/q;+2/p-4/b29-16+,30-18+,38-24-,39-25-,40-26-,41-24-,42-25-,43-27-,44-27-,45-26-;/t46-;/m0./s1",
+    "inchikey": "FISPASSVCDRERW-ARQJTVBPSA-J",
+    "formula": "C49H56FeN4O5",
+    "charge": -2,
+    "microspecies_note": "The chosen microspecies is the DOUBLY DEPROTONATED PROPIONATE form of ferrous heme o, ChEBI:60530 ferroheme o(2-), defined by ChEBI as 'The cyclic tetrapyrrole anion that is ferroheme o protonated to pH 7.3.' Charge accounting: the two ring propionic acids are written as carboxylates C(=O)[O-] contributing -2, and the Fe(II)-porphyrin core is net neutral (ChEBI writes it as [Fe-2] chelated by two [N+] pyrrolenine nitrogens and two neutral pyrrole-type [n] nitrogens; the same core can equivalently be drawn as [Fe+2] with two [N-] donors or with dative N->Fe bonds, all of which give the identical molecular formula and net charge). Iron is INSIDE the molecular graph: RDKit parses the SMILES as a SINGLE fragment with the Fe atom carrying explicit degree 4 to the four macrocycle nitrogens, not as a porphyrin plus a separate [Fe+2] ion. RDKit CalcMolFormula returns 'C49H56FeN4O5-2' and Chem.GetFormalCharge returns -2, matching the yeast-GEM 9.0.2 row for s_0812 exactly. The conjugate acid (both propionates protonated, net charge 0) is ChEBI:36301 ferroheme o, C49H58FeN4O5, SMILES 'C=CC1=C(C)C2=Cc3c([C@@H](O)CC/C=C(\\C)CC/C=C(\\C)CCC=C(C)C)c(C)c4[n]3[Fe]35[N]2=C1C=c1c(C)c(CCC(=O)O)c([n]13)=CC1=[N]5C(=C4)C(C)=C1CCC(=O)O'; that neutral form is the one to hand to a pKa predictor or to eQuilibrator compound creation, which builds its own protonation ladder. Stereochemistry: (1S) at the carbinol carbon and (4E,8E) in the farnesyl-derived chain, which is the all-trans geometry delivered by (2E,6E)-farnesyl diphosphate. RDKit regenerates the InChIKey as FISPASSVCDRERW-SCCPKUNWSA-J rather than ChEBI's FISPASSVCDRERW-ARQJTVBPSA-J: the connectivity block (FISPASSVCDRERW) and the charge block (J) agree, and only the stereo block differs because RDKit drops the ten macrocycle ring double-bond stereo descriptors that ChEBI records in its b-layer. Stereochemistry does not enter the eQuilibrator group decomposition, so this difference is cosmetic for the pipeline but is recorded so a later hash comparison does not read as a mismatch."
+  },
+  "sigma_kj_per_mol": null,
+  "sources": [
+    {
+      "source_url": "https://www.ebi.ac.uk/chebi/backend/api/public/compound/60530/",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sSL -o chebi_60530_api.json \"https://www.ebi.ac.uk/chebi/backend/api/public/compound/60530/\"",
+      "sha256": "652ef4f76d3c684622840b83957384f597143390e8409b423b008bcf6537667f",
+      "retrieved_at": "2026-09-11T21:51:00Z",
+      "verbatim_quote": "\"chemical_data\":{\"formula\":\"C49H56FeN4O5\",\"charge\":-2,\"mass\":\"836.855\",\"monoisotopic_mass\":\"836.36111\"}",
+      "location": "$DATA_ROOT/data/torchcell/thermo_equilibrator/curated/heme_o/chebi_60530_api.json, key chemical_data; the SMILES and standard InChI sit in the sibling key default_structure. The entry is ChEBI:60530, ascii_name 'ferroheme o(2-)', 3-star (manually curated), UniProt name 'Fe(II)-heme o'."
+    },
+    {
+      "source_url": "https://www.ebi.ac.uk/chebi/backend/api/public/compound/36301/",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sSL -o chebi_36301_api.json \"https://www.ebi.ac.uk/chebi/backend/api/public/compound/36301/\"",
+      "sha256": "3ad48eb18d942c268852076d6a3d06968a63404a51fde1664144cb670d6f369f",
+      "retrieved_at": "2026-09-11T21:51:00Z",
+      "verbatim_quote": "A ferroheme having a methyl group at ring position 8 and an isoprenoid chain at position 2.",
+      "location": "$DATA_ROOT/data/torchcell/thermo_equilibrator/curated/heme_o/chebi_36301_api.json, key definition. This is ChEBI:36301 ferroheme o, C49H58FeN4O5 charge 0, the conjugate acid of ChEBI:60530, cross referenced to PDBeChem HEO. Fetched to establish the neutral member of the pair and to confirm the same Fe-coordinated skeleton."
+    },
+    {
+      "source_url": "https://www.rhea-db.org/rhea?query=RHEA%3A28070&columns=rhea-id,equation,chebi,chebi-id,ec&format=tsv&limit=5",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sSL -A \"Mozilla/5.0\" -o rhea_28070_participants.tsv \"https://www.rhea-db.org/rhea?query=RHEA%3A28070&columns=rhea-id,equation,chebi,chebi-id,ec&format=tsv&limit=5\"",
+      "sha256": "8d952858217cdc1f39c26eaf8f1a6183df9d19071f06c577138b10c372ad7560",
+      "retrieved_at": "2026-09-11T22:01:00Z",
+      "verbatim_quote": "RHEA:28070\theme b + (2E,6E)-farnesyl diphosphate + H2O = Fe(II)-heme o + diphosphate\tferroheme b(2-);2-trans,6-trans-farnesyl diphosphate(3-);water;ferroheme o(2-);diphosphate(3-)\tCHEBI:60344;CHEBI:175763;CHEBI:15377;CHEBI:60530;CHEBI:33019\tEC:2.5.1.141",
+      "location": "$DATA_ROOT/data/torchcell/thermo_equilibrator/curated/heme_o/rhea_28070_participants.tsv, data row 1. This is the identity anchor: the Rhea reference reaction for EC 2.5.1.141 (heme o synthase, yeast COX10/YPL172C = yeast-GEM r_0531) names ferroheme o(2-) CHEBI:60530 as the product and ferroheme b(2-) CHEBI:60344 as the substrate, and CHEBI:60344 is C34H30FeN4O4 charge -2, which equals the yeast-GEM row for s_0712 ferroheme b. Both microspecies choices therefore agree with the GEM's own convention."
+    },
+    {
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/15719509/property/MolecularFormula,MolecularWeight,CanonicalSMILES,IsomericSMILES,SMILES,ConnectivitySMILES,InChI,InChIKey,Charge,IUPACName/JSON",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sSL -o pubchem_cid15719509_properties.json \"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/15719509/property/MolecularFormula,MolecularWeight,CanonicalSMILES,IsomericSMILES,SMILES,ConnectivitySMILES,InChI,InChIKey,Charge,IUPACName/JSON\"",
+      "sha256": "1b07bb2bf16aa45bcfe5921ec851effb29ee8018fb947d173cf3e6bf770edd57",
+      "retrieved_at": "2026-09-11T21:49:00Z",
+      "verbatim_quote": "\"SMILES\": \"CC1=C(C2=CC3=NC(=CC4=C(C(=C([N-]4)C=C5C(=C(C(=N5)C=C1[N-]2)C=C)C)C(CC/C=C(\\\\C)/CC/C=C(\\\\C)/CCC=C(C)C)O)C)C(=C3CCC(=O)O)C)CCC(=O)O.[Fe+2]\"",
+      "location": "$DATA_ROOT/data/torchcell/thermo_equilibrator/curated/heme_o/pubchem_cid15719509_properties.json, PropertyTable.Properties[0].SMILES. This documents the DEFECT rather than the fix: PubChem's heme O record is the disconnected porphyrin-21,23-diide plus a separate [Fe+2] counter ion, net charge 0, and this exact string is the smiles field the yeast-GEM 9.0.2 yml carries for s_0812. It is the reason a structure lookup along the GEM's own accessions cannot satisfy the C49H56FeN4O5 / -2 row."
+    },
+    {
+      "source_url": "https://files.rcsb.org/ligands/download/HEO.cif",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sSL -o pdb_ccd_HEO.cif \"https://files.rcsb.org/ligands/download/HEO.cif\"",
+      "sha256": "b8e025ffd3e5e86535d4be0441a2a18bd07bba61d17b2f8b2147fad4624a83c5",
+      "retrieved_at": "2026-09-11T21:52:00Z",
+      "verbatim_quote": "_chem_comp.name                                  \"HEME O\" \n_chem_comp.formula                               \"C49 H58 Fe N4 O5\" ",
+      "location": "$DATA_ROOT/data/torchcell/thermo_equilibrator/curated/heme_o/pdb_ccd_HEO.cif, the _chem_comp block. Independent structural confirmation from the PDB chemical component dictionary: the HEO InChI connectivity layer 'C49H60N4O5.Fe/c1-10-35-31(6)40-26-45-49(46(54)19-13-18-30(5)17-12-16-29(4)15-11-14-28(2)3)...' is character-for-character identical to ChEBI:60530's, and HEO's SMILES bonds Fe to all four macrocycle nitrogens. HEO's InChIKey (FRKORVCRVCLRBA) differs from ChEBI's because the PDB entry records the 4-ene as Z while ChEBI and PubChem record it as E; the E assignment is the one consistent with the (2E,6E)-farnesyl diphosphate substrate named in RHEA:28070, so the ChEBI geometry is preferred."
+    },
+    {
+      "source_url": "file://$DATA_ROOT/data/torchcell/yeast-GEM/yeast-GEM-9.0.2/model/yeast-GEM.yml",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "sed -n '8515,8530p' $DATA_ROOT/data/torchcell/yeast-GEM/yeast-GEM-9.0.2/model/yeast-GEM.yml",
+      "sha256": "ecfe5f816471f2f62921c9448cdd5bf9803263aaf9aa91da02d1969077786aad",
+      "retrieved_at": "2026-09-11T21:47:00Z",
+      "verbatim_quote": "      - id: \"s_0812\"\n      - name: \"heme o\"\n      - compartment: \"m\"\n      - formula: \"C49H56FeN4O5\"\n      - charge: -2",
+      "location": "yeast-GEM.yml lines 8518-8522 (metabolite s_0812). The same file's reactions r_0530 (line 45888) and r_0531 (line 45911) are the two blocked reactions. Elemental check performed against this file: r_0531 as C15H25O7P2(3-) + C34H30FeN4O4(2-) + H2O -> HO7P2(3-) + C49H56FeN4O5(2-) balances to C49H57FeN4O12P2 and net charge -5 on both sides, and r_0530 as C49H56FeN4O5(2-) + C21H27N7O14P2(2-) + O2 -> H2O + C49H55FeN4O6(3-) + C21H26N7O14P2(-) balances to C70H83FeN11O21P2 and net charge -4 on both sides, so the -2 microspecies is the one the GEM's own stoichiometry requires."
+    },
+    {
+      "source_url": "https://www.metabolomicsworkbench.org/rest/compound/regno/163805/all/",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sSL -o mw_regno_163805.json \"https://www.metabolomicsworkbench.org/rest/compound/regno/163805/all/\"",
+      "sha256": "99b3b5784a09d2dd920f0881dae02b8de2eef48d418b51e4d53c39fdb69dfdc2",
+      "retrieved_at": "2026-09-11T22:00:00Z",
+      "verbatim_quote": "{\"regno\":\"163805\",\"formula\":\"C49H60FeN4O5\",\"exactmass\":\"840.390200\",\"inchi_key\":\"GDXFIEPRSJRAGX-BSMVMXCYSA-N\",\"name\":\"Heme O\",\"sys_name\":\"3-[18-(2-carboxyethyl)-13-ethenyl-8-[(4E,8E)-1-hydroxy-5,9,13-trimethyltetradeca-4,8,12-trienyl]-3,7,12,17-tetramethyl-22,23-dihydroporphyrin-2-yl]propanoic acid;iron(2+)\"",
+      "location": "$DATA_ROOT/data/torchcell/thermo_equilibrator/curated/heme_o/mw_regno_163805.json, whole record. Recorded as a REJECTED lead: the prior pass suggested this row as a structure source, but its formula is C49H60FeN4O5, two hydrogens heavier than heme O, and its systematic name says '22,23-dihydroporphyrin', which is a chlorin (a reduced macrocycle), not a porphyrin. Its iron is also a disconnected ;iron(2+) and its SMILES field carries a literal U+0004 control character. It is not heme O and must not be used."
+    }
+  ],
+  "searches": [
+    {
+      "query": "heme O CHEBI:24480 SMILES InChI iron protoporphyrin farnesylhydroxyethyl",
+      "engine": "WebSearch",
+      "date": "2026-09-11",
+      "outcome": "Established that ChEBI:24480 heme o is C49H58FeN4O5 and pointed to ChEBI:36301 ferroheme o as the Fe(II) form. Direct API retrieval later showed ChEBI:24480 has default_structure = null, so the accession the GEM cites carries no structure at all."
+    },
+    {
+      "query": "HMDB0001162 heme O C49H58FeN4O5 SMILES InChIKey",
+      "engine": "WebSearch",
+      "date": "2026-09-11",
+      "outcome": "Gave PubChem CID 15719509 and the InChIKey connectivity stem FISPASSVCDRERW, both later confirmed by direct retrieval. Did not itself yield a coordinated SMILES."
+    },
+    {
+      "query": "https://www.ebi.ac.uk/chebi/CHEBI:36301",
+      "engine": "WebFetch",
+      "date": "2026-09-11",
+      "outcome": "HIT. Fe-coordinated SMILES for the neutral ferroheme o, and named its conjugate base ferroheme o(2-) CHEBI:60530."
+    },
+    {
+      "query": "https://www.ebi.ac.uk/chebi/CHEBI:60530",
+      "engine": "WebFetch",
+      "date": "2026-09-11",
+      "outcome": "HIT, and the answer for this row: C49H56FeN4O5, charge -2, Fe inside the graph."
+    },
+    {
+      "query": "ChEBI public API compound records 60530, 36301, 24480, 60344",
+      "engine": "curl",
+      "date": "2026-09-11",
+      "outcome": "Archived the machine-readable records. Confirmed CHEBI:24480 (the accession yeast-GEM cites) has no structure, and CHEBI:60344 ferroheme b(2-) is C34H30FeN4O4 charge -2, matching the GEM's s_0712."
+    },
+    {
+      "query": "PubChem PUG REST properties for CID 15719509",
+      "engine": "curl",
+      "date": "2026-09-11",
+      "outcome": "Confirmed PubChem's heme O is the disconnected porphyrin diide plus [Fe+2], byte-identical to the yeast-GEM smiles field for s_0812. Documents the defect, not the fix."
+    },
+    {
+      "query": "PDB chemical component dictionary HEO",
+      "engine": "curl",
+      "date": "2026-09-11",
+      "outcome": "Independent Fe-coordinated structure with an identical InChI connectivity layer. Differs only in the 4-ene geometry (Z in the PDB, E in ChEBI and PubChem); E is preferred as the geometry consistent with the (2E,6E)-farnesyl diphosphate substrate."
+    },
+    {
+      "query": "Rhea query CHEBI:60530, then RHEA:28070 participants",
+      "engine": "curl",
+      "date": "2026-09-11",
+      "outcome": "HIT. RHEA:28070 (EC 2.5.1.141) is yeast-GEM r_0531 and names CHEBI:60530 as the product; RHEA:63388 (EC 1.17.99.9) is the heme a synthase step corresponding to r_0530. This is the identity proof that the GEM row and ChEBI:60530 are the same species."
+    },
+    {
+      "query": "Metabolomics Workbench REST compound regno 163805",
+      "engine": "curl",
+      "date": "2026-09-11",
+      "outcome": "REJECTED. Formula C49H60FeN4O5 and a '22,23-dihydroporphyrin' (chlorin) systematic name, so it is not heme O; the SMILES is also disconnected and contains a control character. The prior pass's lead was wrong."
+    },
+    {
+      "query": "HMDB0001162 record, tried both https://hmdb.ca/metabolites/HMDB0001162.xml (curl) and the HTML page (WebFetch)",
+      "engine": "curl + WebFetch",
+      "date": "2026-09-11",
+      "outcome": "BLOCKED. curl returns a Cloudflare 'Just a moment...' interstitial and WebFetch returns HTTP 403. The lead could not be verified at the source and was not needed: ChEBI, PubChem, PDB and Rhea agree on the skeleton independently. Retrieving HMDB would require a manual browser session."
+    },
+    {
+      "query": "standard Gibbs free energy of formation heme protoporphyrin IX iron calorimetric measurement kJ/mol",
+      "engine": "WebSearch",
+      "date": "2026-09-11",
+      "outcome": "NEGATIVE. No calorimetric or equilibrium formation energy for heme, protoporphyrin IX or any Fe-porphyrin surfaced."
+    },
+    {
+      "query": "Alberty standard transformed Gibbs energy formation heme cytochrome thermodynamic tables biochemical",
+      "engine": "WebSearch",
+      "date": "2026-09-11",
+      "outcome": "NEGATIVE. The Alberty and Goldberg tables cover 53 reactants at 298.15 K, pH 7, I = 0, 0.1 and 0.25 M; no heme or porphyrin reactant is among them."
+    },
+    {
+      "query": "eQuilibrator heme porphyrin group contribution cannot decompose formation energy missing",
+      "engine": "WebSearch",
+      "date": "2026-09-11",
+      "outcome": "Corroborates the measured decomposition failure below as a known component-contribution limitation, and names the standard workaround: treat a conserved non-decomposable moiety as a black-box pseudo-group added to the group incidence matrix, which cancels in any reaction that conserves it."
+    },
+    {
+      "query": "\"heme O synthase\" OR \"protoheme IX farnesyltransferase\" equilibrium constant Keq thermodynamics reversibility measured",
+      "engine": "WebSearch",
+      "date": "2026-09-11",
+      "outcome": "NEGATIVE. No measured equilibrium constant for EC 2.5.1.141 surfaced, so a reaction_energy record for r_0531 is not available either."
+    }
+  ],
+  "decomposition_check": {
+    "attempted": true,
+    "decomposes": false,
+    "error": "GroupDecompositionError: Unable to decompose <openbabel.openbabel.OBMol ...> into groups. Raised by equilibrator_assets.group_decompose.GroupDecomposer().Decompose(mol, ignore_protonations=False, raise_exception=True), the exact call equilibrator_assets.generate_compound._populate_compound_information makes, run under ~/miniconda3/envs/equilibrator-ext/bin/python on the curated ferroheme o(2-) SMILES. The neutral conjugate acid CHEBI:36301 fails identically. The full LocalCompoundCache(pkas_provided_externally=True).get_compounds(..., mol_format='smiles', bypass_chemaxon=True, specified_pkas=...) route used by lipid_structure_writer.py also returns status 'failed' with no compound created. Scope of the failure was measured, not assumed: acetate and farnesol decompose, while protoporphyrin IX free base (CHEBI:15430), ferroheme b(2-) (CHEBI:60344), ferroheme o(2-) (CHEBI:60530) and an iron-free heme o macrocycle all fail, so the barrier is the porphyrin macrocycle itself and NOT the coordinated iron. Probe scripts and logs: $DATA_ROOT/data/torchcell/thermo_equilibrator/curated/heme_o/decomposition_probe.py (sha256 85f33e812b7145c11090007f829a468b5bac06020f66203654c17f651174617e), decomposition_probe.log (sha256 3660ec3e70eb9f54f68a76c1c8dd53152174f0c308ee07301d3d1fc385163d21), decomposition_probe_context.py (sha256 2a5a07483583897237afe218433f877b7f1f7b14075936e45685d1db195ed89e), decomposition_probe_context.log (sha256 ce9e7ec5cf7560982b3e6fb501333a980cc072679d3f8b67024ab71f63038e15)."
+  },
+  "notes": "WHAT THIS RECORD DELIVERS. A curated, Fe-coordinated structure for yeast-GEM 9.0.2 s_0812 whose RDKit formula and formal charge equal the GEM row exactly: CalcMolFormula 'C49H56FeN4O5-2', GetFormalCharge -2, one connected fragment, Fe explicit degree 4. Verification script and log: $DATA_ROOT/data/torchcell/thermo_equilibrator/curated/heme_o/rdkit_verify.py (sha256 79ad343ae64951f5eff11846783d270258d57f89547986f2936ba4942234ef57) and rdkit_verify.log (sha256 ead11519686cfdd407baed1796397ac76884017e8f7e24c41b8d065ae86ffc6c), run under ~/miniconda3/envs/torchcell/bin/python. The structure is ChEBI:60530, a 3-star manually curated entry, and Rhea's reference reaction for the enzyme yeast-GEM assigns to r_0531 uses that same ChEBI species, so the identification does not rest on name matching. WHY THE admission FIELD SAYS 'tabulated'. The admission enum has no 'curated' member, and the user's rule admits curated structures to the default route alongside measured and tabulated energies; 'tabulated' is used here to mean an admitted curated reference-database record. This record carries NO energy of any kind, so nothing in it should be read as a formation or reaction energy. sigma_kj_per_mol is null for the same reason. WHY THE EXCLUSION REASON WAS RIGHT AND WHY THE STRUCTURE STILL DOES NOT UNBLOCK THE REACTIONS. The exclusion reason 'no_structure_available' is confirmed at the source: ChEBI:24480, the accession the GEM cites, has default_structure = null, and the only SMILES the GEM's accession set reaches, PubChem CID 15719509, is a porphyrin dianion plus a disconnected [Fe+2] at net charge 0, which is why thermo_structure_attempt.py recorded outcome 'composition_mismatch' for s_0812. The curated structure fixes that, but it does NOT price the metabolite: the component-contribution group decomposer refuses every porphyrin tested, iron-free ones included, so the pipeline reason for s_0812 should move from 'no_structure_available' to 'group_decomposition_failed'. That reclassification is the concrete, measured contribution of this record beyond the SMILES itself. WHAT A HUMAN STILL NEEDS TO DO. (1) Decide the route for porphyrins as a class rather than for heme o alone. Two of the three participants of r_0531 are unpriced in the current pipeline (s_0812 heme o and s_0712 ferroheme b, whose reason is 'no_pka_prediction' with final_blocker 'structure_absent_from_cache'), and r_0530 additionally needs s_0811 heme a. Pricing heme o alone unblocks neither reaction. (2) The most defensible route is a conserved-moiety pseudo-group: the Fe-porphyrin macrocycle is conserved across r_0530 and r_0531, so adding it to the group incidence matrix as a black-box group makes both reaction energies well defined without ever asserting a formation energy for the macrocycle. Under that route r_0531 reduces to a farnesyl transfer from diphosphate to a hydroxyl, and r_0530 to a two-step methyl-to-formyl oxidation, both of which the decomposer can handle for the changing part. This requires a code change in the thermo pipeline, not more retrieval, and it needs the user's sign-off because it changes what the default route is allowed to do. (3) A literature formation energy is the alternative, and searching did not find one: no calorimetric or equilibrium value for any Fe-porphyrin, no heme reactant in the Alberty and Goldberg transformed-formation tables, and no measured Keq for EC 2.5.1.141. A surrogate would therefore be computed, not measured, and under the stated admission rule it stays out of the default route. (4) If the pipeline later wants the neutral form for a pKa ladder, use the ChEBI:36301 SMILES recorded in microspecies_note; the two propionate pKas are NOT supplied here, because the only value available would be a generic carboxylate estimate and that would be a provisional single-source number. (5) HMDB0001162 was never verified at the source because HMDB is behind Cloudflare; if a human wants that cross reference in the record, it needs a manual browser retrieval. CONDITIONS. None apply: this record carries a structure, not an energy, so T, pH, ionic strength and pMg are not attributes of it. For context, the pipeline that consumes it runs at T = 303.15 K, pH 7.2, ionic strength 0.25 M, pMg 3.0 (constants in experiments/026-metabolism-flux/scripts/thermo_structure_attempt.py). ChEBI's own definition fixes the -2 microspecies at pH 7.3, which is within 0.1 pH unit of the pipeline's pH and is not a source of ambiguity for a pair of carboxylates whose pKa is near 4.8."
+}

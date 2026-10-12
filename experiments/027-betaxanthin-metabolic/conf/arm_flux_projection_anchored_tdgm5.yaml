@@ -1,0 +1,20 @@
+# experiments/027-betaxanthin-metabolic/conf/arm_flux_projection_anchored_tdgm5.yaml
+# [[experiments.027-betaxanthin-metabolic.projection-head]]
+#
+# THE DIRECTIONAL BOX WITH A 5 kJ/mol MARGIN. Identical to
+# `flux_projection_anchored_tdg` except that only reactions whose |delta_r_G| exceeds
+# 5 kJ/mol get a sign restriction; the rest keep both directions.
+#
+# WHY. Job 1725 met the Genesis criterion at 0.98 and scored at chance on the phenotype
+# (-0.0006 against pooled's 0.0717 at the same seed). The diagnosis from its checkpoint:
+# 70.6 percent of reactions on the top-100 strains sit below 1e-6 in absolute flux, against
+# 11.9 percent for the untightened projection head, and the median absolute flux is 0.0
+# against 1.02. The alternating projection's residual trace falls smoothly to 2e-6 rather
+# than oscillating, so the feasible set is reachable, not empty; it is simply concentrated
+# near the origin.
+#
+# A reaction half a kJ/mol from equilibrium has a sign the tabulated energy cannot resolve,
+# so pinning it spends a degree of freedom and buys no thermodynamics. The margin releases
+# exactly those.
+base_arm: flux_projection_anchored_tdgm5
+permute_train_targets: false

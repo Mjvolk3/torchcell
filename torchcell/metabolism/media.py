@@ -404,6 +404,33 @@ class MediaBounds(ModelStrict):
             if r.outcome == "excluded_by_role"
         ]
 
+    def sha256(self) -> str:
+        """Content hash of the bound vector, the identity a store records."""
+        import hashlib
+
+        return hashlib.sha256(
+            self.model_dump_json(exclude={"resolutions"}).encode()
+        ).hexdigest()
+
+    def write_artifact(self, root: str) -> str:
+        """Write this bound vector under ``root`` as a versioned, hash-named record.
+
+        A medium is data, not a code constant: a store built from it records the
+        artifact's path and hash, and a changed recipe becomes a new file beside the old
+        one rather than an overwrite. Returns the path written (or already present).
+        """
+        import os
+        import os.path as osp
+
+        digest = self.sha256()
+        stem = re.sub(r"[^A-Za-z0-9]+", "_", self.media_name)[:60].strip("_")
+        path = osp.join(root, f"{stem}__{self.model_id}__{digest[:12]}.json")
+        os.makedirs(root, exist_ok=True)
+        if not osp.isfile(path):
+            with open(path, "w") as fh:
+                fh.write(self.model_dump_json(indent=2))
+        return path
+
     def apply(self, model: cobra.Model) -> None:
         """Close every exchange on ``model``, then open exactly this medium.
 
@@ -808,14 +835,41 @@ SC_URA_FBA = Media(
 )
 """Ozaydin beta-carotene's medium: SC with uracil withheld to select the URA3 plasmid."""
 
-YPD_APPROX_FBA = Media(
-    name="YPD-approx (YNB + 20 amino acids; peptone NOT modeled)",
+YPD_SUTHERS_FBA = Media(
+    name="YPD-approx, Suthers (YNB + 20 amino acids; no nucleobases; peptone NOT modeled)",
     state="liquid",
     is_synthetic=True,
     base_medium="YPD_approx",
     components=[*SM_FBA.components, *_SC_AMINO_ACIDS],
 )
+"""Suthers' substitution for YPD, verbatim: no nucleobases.
+
+Kept under its own name because every YPD store built before 2026-09-22 used it. It
+is wrong for a deletion collection: yeast extract supplies uracil and adenine (the
+BY4741 background is ura3-delta-0 and grows on YPD), and on yeast-GEM 9 this recipe
+calls every purine and pyrimidine synthesis deletion lethal. MEASURED
+(experiments/028-gene-essentiality/scripts/fba_background_probe.py, 2026-09-21): a
+ura3 deletion alone takes YPD growth from 0.535 to 0, and 13 of the 1,121 labeled
+essentiality genes, 12 of them nonessential, read a growth ratio of 0.0 here against
+1.0 on SC, which differs from this recipe only by the two nucleobases.
+"""
+
+YPD_APPROX_FBA = Media(
+    name="YPD-approx (YNB + 20 amino acids + uracil + adenine; peptone NOT modeled)",
+    state="liquid",
+    is_synthetic=True,
+    base_medium="YPD_approx",
+    components=[*SM_FBA.components, *_SC_AMINO_ACIDS, _URACIL, _ADENINE],
+)
 """Ohya morphology's medium, APPROXIMATED, and the name says which.
+
+Suthers' substitution plus the two nucleobases of the SC supplement. The nucleobases are
+a modeling decision, stated rather than sourced from Suthers: yeast extract is a
+nucleotide-rich digest, and the deletion collection's strain (BY4741, ura3-delta-0)
+grows on bench YPD, which it could not do if the medium carried no uracil. With
+``YPD_SUTHERS_FBA`` the model contradicts that observation (see its docstring). The
+bound vector is therefore identical to ``SC_FBA``; the separate object exists because
+the two assert different things about the bench.
 
 Real YPD is ``is_synthetic=False``: peptone-derived peptides and yeast-extract lipids
 have no representation in a GEM. This object is ``is_synthetic=True`` because it is not
@@ -836,4 +890,5 @@ FBA_MEDIA: dict[str, Media] = {
     "SC": SC_FBA,
     "SC-URA": SC_URA_FBA,
     "YPD": YPD_APPROX_FBA,
+    "YPD-suthers": YPD_SUTHERS_FBA,
 }

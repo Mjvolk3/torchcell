@@ -1,0 +1,27 @@
+{
+  "source_store": "/scratch/projects/torchcell-scratch/data/torchcell/reference_flux/ess_solve_encodings_YPD.npz",
+  "n_genes": 6607,
+  "n_genes_with_own_deletion_vector": 1121,
+  "n_genes_reading_the_wild_type_vector": 5486,
+  "n_reaction_columns": 4131,
+  "physical_graph_edges": 139463,
+  "degree_median": 18.0,
+  "degree_max": 3608.0,
+  "n_genes_degree_zero": 886,
+  "stores": {
+    "pfbawt": {
+      "path": "/scratch/projects/torchcell-scratch/data/torchcell/reference_flux/ess_solve_encodings_YPD_pfbawt.npz",
+      "shape": [
+        6607,
+        4131
+      ]
+    },
+    "pfbawtdegree": {
+      "path": "/scratch/projects/torchcell-scratch/data/torchcell/reference_flux/ess_solve_encodings_YPD_pfbawtdegree.npz",
+      "shape": [
+        6607,
+        4133
+      ]
+    }
+  }
+}

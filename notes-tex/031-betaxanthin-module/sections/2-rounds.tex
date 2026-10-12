@@ -1,0 +1,1353 @@
+%% notes-tex/031-betaxanthin-module/sections/2-rounds.tex
+\section{The rounds\secstatus{todo}}
+\label{sec:rounds}
+
+Round 117 (jobs 2741 and 2742, w134) reads the whole betaxanthin vector through the
+zero-initialized affine. Round 119 (jobs 2749 and 2750, w136) reads two summary columns
+only, the growth ratio and the production ratio, and separately the whole vector with
+the affine in its own optimizer group at weight decay 0.1 and a tenth of the rate. Round
+120 (w137) is the deletion-only graph, and the six rule-count columns of the
+essentiality study's round 77 over every GEM gene. Round 122 (w139) is the affine-free
+control on the backbone 020 and 027 trained, width 90, nine attention heads, two
+blocks, where the graph regularizer is evaluated; a first build at width 48 with four
+heads died in that term on every cell (jobs 2757 and 2758, the round-8 failure the
+essentiality document records). Round 123 (w140) puts the store affine on that backbone,
+and on the deletion-only graph at width 12; round 125 (w142) splits the store into its
+growth block and its production block, 4,178 and 4,177 columns, each read alone. Round
+127 (w144) adds six seeds to the best cell. Round 128 (w145) is the store on the
+deletion-only graph at width 90, and round 132 (w149) the wide control on that graph
+without the store, which completes the width-90 two-by-two of graph against store.
+Rounds 130 and 131 (w147, w148) answer the plateau finding of rounds 117, 123 and 125
+directly: the store on the deletion-only graph with the affine's parameters frozen
+(\texttt{--ess-affine-start-epoch}) until epoch 40, and separately until the trailing
+five-epoch mean of validation Pearson reaches 0.15
+(\texttt{--ess-affine-start-val-pearson}), so the backbone escapes before the affine can
+carry the target. A zero-initialized affine without gradient contributes exactly 0, so
+each cell is its control until the start epoch, which the result records. Rounds 133 to
+142 screen the essentiality finalists and the physically constrained stores of
+Section~\ref{sec:physics}, every one at width 12 on the deletion-only graph over six
+seeds, paired against round 120's control on that graph and against round 123's store on
+it: round 133 (w152) the vector with the six rule-count columns beside it, the
+essentiality study's best single model; round 134 (w153) the cached solve head, a
+hidden-256 perceptron over the store, in place of the affine; round 135 (w154) the linear
+minimization-of-metabolic-adjustment store; round 139 (w156) the parsimonious store
+rebuilt on the HiGHS two-stage path the essentiality stores use; round 140 (w157) the
+max-min driving-force concentration store; round 142 (w159) the mean of six samples of
+each deletion's flux cone. Rounds 144 and 145 (w161, w162) read the size question on the
+best cell, width 6 with two heads and transformer dropout 0.3 against the incumbent
+width 12 at 0.1. The stores are written on the target model over the source store's
+genes and reaction order, with the growth-ratio column unchanged, so each pair isolates
+the vector.
+
+Round 117 is read (Table~\ref{tab:target-transfer}). On betaxanthin the whole-vector
+affine reads a pinned Spearman of 0.121 (sd 0.011 over six seeds) against the control's
+0.079 (sd 0.056): $+0.043$ paired by seed (sd 0.049), above on five of six. What the
+seeds show is a change of character more than of level: the control's score depends on
+whether its seed leaves the plateau (0.024 to 0.174), the store arm's does not (0.102 to
+0.133). Three store seeds were selected on the plateau, at validation Pearson $-0.02$
+and epochs 127 to 181, and still read 0.12 to 0.13 on test, so the affine's linear read
+of the strain's flux vector carries that rank on its own, on a test set that is 636 of
+639 GEM genes. The selection rule cannot see it: the pool the validation set is drawn
+from holds 275 GEM genes in 4,082, and the affine reads a constant row on every other
+gene, so validation Pearson is nearly blind to the one term that scores on the pinned
+test. Averaged over the six seeds the store arm reads 0.135 (the two seed triples 0.146
+and 0.133) and the control 0.076, against 027's precursor readout at 0.131 over three
+seeds at width 90, its context-only control at 0.115, and the cosine kNN at 0.145. On
+the metric the task is about, the top-50 enrichment of the highest producers, the order
+reverses: 3.49 for the store arm against 4.06 for the control on single seeds, 4.39
+against 4.59 ensembled (a 10 percent base rate, so 35 to 46 percent precision). The
+vector lifts the rank correlation of a small backbone to where 027's larger one sat and
+does not lift its top-50 call.
+
+Rounds 119 and 120 are read, and they locate the round-117 gain in the whole vector
+read through a free affine. The two summary columns read 0.101 (sd 0.061) against the
+control's 0.079, $+0.023$ paired (sd 0.072), above on four of six: three seeds were
+selected at epoch 197 at validation Pearson 0.04 to 0.05 and read 0.13 on test, the
+round-117 pattern, and one seed reads $-0.021$, so the level comes with the control's
+spread rather than the whole vector's. Ensembled over six seeds it reads 0.071, under the
+control's 0.076, and its single-seed top-50 enrichment is 3.03. The whole vector with the
+affine decayed and slowed reads 0.073 (sd 0.017), $-0.005$ paired (sd 0.058), above on
+three of six; three of its seeds were selected at epoch 2 at validation Pearson 0, where
+the affine has taken two steps, and read 0.05 to 0.08. So the rate the affine trains at
+is part of what round 117 measured, and slowing it returns the arm to the control. The
+deletion-only graph without an affine reads 0.058 (sd 0.075), $-0.020$ paired (sd
+0.076), above on two of six, with one seed at $-0.089$ and every selection between
+epochs 3 and 69; the six rule-count columns read 0.074 (sd 0.059), $-0.004$ paired (sd
+0.092), above on two of six. Neither the graph nor the rule counts moves the rank, in
+either direction, beyond the seed spread. One read cuts across all four: the six-seed
+ensemble's top-50 enrichment is 4.8 to 5.2 for every arm of rounds 119 and 120 against
+3.0 to 3.6 for their single seeds, and 4.59 for the control's ensemble, so on the call
+the task is about, averaging seeds is worth more than any of these representations, as
+it was on the essentiality endpoint (the essentiality document's fold-ensemble section). Each ensemble is one
+number with no spread, so that ordering among the arms is not a measurement.
+
+The deletion-only half of round 123 is read (job 2760, 3 h 34 min for six cells at a
+32.6 GB peak): the store affine on the graph that carries the two alleles, the strain as
+built. Against the deletion-only graph without the affine it reads 0.121 (sd 0.025)
+against 0.058, $+0.063$ paired (sd 0.065), above on six of six; against the round-117
+store arm on the old graph it reads $-0.000$ paired (sd 0.017), above on four of six, so
+the rank the affine carries is the same on either graph. What changes is where the
+seeds are selected and what the call is worth. Five of six were selected off the
+plateau, at validation Pearson 0.20 to 0.27 and epochs 46 to 105, where round 117's
+seeds sat on it at $-0.02$; the sixth (seed 2704) was selected on the plateau at epoch
+149 and its pinned predictions are rank-identical to round 117's seed 2704 (Spearman 1.0
+between the two arms, largest difference 0.004), which is what a plateau cell is: the
+affine's read of the store and nothing from the graph. The top-50 enrichment is 4.93 on
+single seeds against 3.49 for the store on the old graph, 3.39 for the deletion-only
+graph alone and 4.06 for the control, and 5.59 ensembled over six seeds, the highest of
+any arm; the six-seed rank is 0.131. So the strain represented as built is the first
+cell where the store lifts both the rank and the call, and it is the arm the width and
+block rounds are now measured against.
+
+The betaxanthin half of round 122 is read (jobs 2762 and 2763, 7 h 11 min and 7 h 23
+min for three cells each at a 16.5 GB peak): the affine-free control on 027's backbone,
+width 90, nine heads, two blocks, on the old graph. It reads 0.109 (sd 0.053) against
+the width-12 control's 0.079, $+0.030$ paired (sd 0.079), above on four of six, with a
+top-50 enrichment of 4.73 against 4.06; ensembled over six seeds 0.134 and 5.59, where
+027's own three-seed cell of this form read 0.115. Every wide seed leaves the plateau,
+selected at epochs 9 to 107 with validation Pearson 0.16 to 0.36, where the width-12
+arms lose a third of their seeds to it; the validation loss bottoms at a median epoch of
+42 and then rises by 0.01 to 0.11 to epoch 199, and two seeds fall back to a constant
+predictor by the end. So width buys the escape and the early peak, and 200 epochs is
+four times what these cells use. Against the width-12 store affine on the corrected
+graph (0.121, 4.93, ensembled 0.131 and 5.59), the seven-times-wider backbone without
+the store reads the same on every measure, which is the size of the store's
+contribution at width 12. Whether the two add is round 128 (w145), the store on the
+corrected graph at width 90.
+
+The wide half of round 123 is read (jobs 2766 and 2767, 7 h 25 min and 7 h 20 min):
+the store affine on 027's backbone, old graph. It reads 0.134 (sd 0.020) against the
+wide control's 0.109, $+0.025$ paired (sd 0.051), above on four of six, and ensembled
+over six seeds 0.153, the highest rank of any cell on this split, above 027's precursor
+readout at 0.131 and the cosine kNN at 0.145. The call moves the other way, as in round
+117: top-50 enrichment 4.09 against the wide control's 4.73 on single seeds and 5.19
+against 5.59 ensembled. The seeds show why. Four of the six were selected on the plateau,
+at validation Pearson $-0.06$ to $0.06$ and epochs 9 to 196, where the wide control had
+no plateau seed at all; the two that escaped were selected at 0.29 and 0.30. So at width
+90 the affine's read of the store carries the rank on its own while the backbone stays
+constant on most seeds, and the top-50 call, which the escaped backbone supplies,
+follows the escape rate. On the old graph the width-12 store had three plateau seeds of
+six and the corrected graph one; round 128 puts the store on the corrected graph at
+width 90.
+
+Round 125 is read (jobs 2768 and 2769, 4 h 29 min and 4 h 38 min): the whole vector's
+two blocks read alone, at width 12 on the old graph, each paired against the whole
+vector of round 117 and against the control. The growth block alone, 4,178 columns,
+reads 0.033 (sd 0.021): $-0.088$ paired against the whole vector (sd 0.029), above on
+no seed, and $-0.046$ against the control (sd 0.064), above on one of six, with a top-50
+enrichment of 3.06; ensembled 0.059. The production block alone, 4,177 columns, reads
+0.091 (sd 0.040): $-0.030$ against the whole vector (sd 0.034), above on one of six, and
+$+0.013$ against the control (sd 0.021), above on five of six, top-50 3.63; ensembled
+0.112. So the rank the affine carries lives in the production half, the parsimonious
+solve at 90 percent of the knockout's own growth with the betaxanthin demand as the
+objective, and the growth half carries none of it on its own and costs the control
+0.046 when read alone; yet the whole vector beats the production half by 0.030 on five
+of six seeds, so the growth columns add to the production columns what they subtract
+from the backbone. Three seeds of each half were selected on the plateau, as with the
+whole vector, and the validation loss bottoms at a median epoch of 53 on both.
+
+Round 127 is read (job 2771, 3 h 40 min): six more seeds, 2706 to 2711, of the store on
+the corrected graph, so the best betaxanthin cell has twelve. The new six read 0.058 to
+0.138, mean 0.111, every one selected off the plateau at validation Pearson 0.15 to
+0.22, so over twelve seeds the arm reads 0.116 (sd 0.027, standard error 0.008) with a
+top-50 enrichment of 4.86. Averaging all twelve reads 0.129 and 5.39 against 0.131 and
+5.59 for the first six, so the ensemble has saturated at six on this cell: the second
+six seeds add nothing to the rank or the call, and the ensemble numbers of the transfer
+arms, one draw each, are read as sitting within about 0.02 and 0.2 of where more seeds
+would put them.
+
+Round 128 is read (jobs 2772 and 2773, 7 h 04 min and 7 h 31 min for three cells each):
+the store affine on 027's backbone, width 90, on the deletion-only graph, the fourth cell
+of the width-90 two-by-two. It reads 0.120 (sd 0.024) against the wide control on the old
+graph at 0.109, $+0.011$ paired (sd 0.067), above on three of six, and against the
+width-12 store on the same graph at 0.121, $-0.001$ paired (sd 0.035), above on three
+of six; top-50 enrichment 4.43 against 4.73 and 4.93. Ensembled over six seeds it reads
+0.147 and 4.99, under the old-graph wide store's 0.153 and the width-12 corrected-graph
+store's 5.59. What the graph correction changes at width 90 is the plateau, as it did at
+width 12: every seed is selected off it, at epochs 21 to 50 with validation Pearson 0.22
+to 0.28, where the old-graph wide store had four plateau seeds of six. The rank does not
+follow. Width buys the escape (round 122), the store buys the rank at width 12 (round
+123), and put together on the strain as built they read what either reads alone, so the
+two contributions do not add, and the seed spread (sd 0.024) is the smallest of the four
+wide cells. The validation loss bottoms at epochs 8 to 42 and rises 0.09 to 0.15 by epoch
+199 on every seed, the round-122 pattern, so these seven-hour cells spend six hours past
+their minimum. Round 132 (w149), the wide control on this graph, completes the square.
+
+Rounds 130 and 131 are read (jobs 2782 and 2783, 3 h 52 min and 3 h 46 min), the two
+schedules for the store affine on the deletion-only graph. Round 130 holds the affine at
+zero until epoch 40: it reads 0.074 (sd 0.046) against the store arm's 0.121 ($-0.047$
+paired, sd 0.053, above on two of six) and against the affine-free control's 0.058
+($+0.016$, sd 0.068, four of six), top-50 3.86 against 4.93 and 3.39, and ensembled over
+six seeds 0.129 with a top-50 of 5.79 against 0.131 and 5.59. The affine started at
+epoch 40 in every seed, and five of the six seeds select their epoch before it (10, 32,
+34, 25 and 38; the sixth at 76), so the selected cell is the affine-free trajectory in
+five seeds of six: the validation peak the affine-free model reaches before epoch 40 is
+not overtaken once the affine arrives. Round 131 releases the affine from epoch 5 once
+the trailing validation Pearson reaches 0.15: the release came at epochs 5, 6, 25, 31, 6
+and 40, and the seeds select at 2, 57, 35, 32, 78 and 38, four of them after the
+release. It reads 0.110 (sd 0.050), $-0.010$ against the store arm (sd 0.052, one of
+six) and $+0.052$ against the control (sd 0.035, six of six), top-50 4.66, ensembled
+0.120 with a top-50 of 6.19, the highest ensemble call of any betaxanthin arm. The seed
+whose release fell at epoch 40 is the same trajectory in both rounds (0.016 at epoch 38
+in each), a check that the schedule and not the seed is what separates them. So the
+store's gain does not come from the first epochs: the affine released after the model
+leaves the constant predictor reads the store arm's level and its best call, and the
+affine held to epoch 40 loses the level because the selected epoch comes first. A
+release rule on the validation curve costs nothing and keeps the gain; a fixed late
+start does not.
+
+Round 132 is read (jobs 2784 and 2785, 7 h 18 min and 7 h 08 min for three cells
+each): the width-90 backbone on the deletion-only graph without the store, the last
+cell of the width-90 two-by-two. It reads 0.092 (sd 0.043) against the old-graph wide
+control's 0.109 ($-0.017$ paired, sd 0.080, above on two of six), top-50 4.49 against
+4.73, and ensembled over six seeds 0.122 with a top-50 of 5.19 against 0.134 and 5.59.
+Every seed is selected off the plateau, at epochs 19 to 56 with validation Pearson 0.22
+to 0.29, and the validation loss bottoms at epochs 26 to 53 and rises by 0.08 to 0.17
+by epoch 199, the largest rise of any arm. The square is now paired on its second
+diagonal: the store on this graph at width 90 (round 128) against this control reads
+$+0.028$ (sd 0.037, above on four of six), with top-50 4.43 against 4.49. So at width
+90 the graph correction takes 0.017 off the control and the store puts 0.028 back, the
+store's contribution on the strain as built is the same 0.03 at width 90 as it is at
+width 12 against the old-graph control, and none of the four wide cells beats the
+width-12 store on the same graph (0.121, top-50 4.93). Width costs seven hours a cell
+and buys nothing the width-12 store does not have.
+
+Round 134 is read (job 2788, 3 h 42 min): the cached solve head, a hidden layer of 256
+over the store vector in place of the zero-initialized affine, on the deletion-only
+graph. It reads 0.070 (sd 0.049) against the affine-free control's 0.058 ($+0.012$
+paired, sd 0.074, above on three of six) and against the store affine's 0.121
+($-0.051$, sd 0.061, one of six), top-50 3.89 against 3.39 and 4.93, and ensembled over
+six seeds 0.095 with a top-50 of 5.39 against 0.082 and 0.131. Two seeds never leave the
+constant predictor: their validation Pearson peaks at $-0.024$ and 0.003 over the 200
+epochs, they are selected at epoch 2 and read 0.038 and 0.005. The four that escape are
+selected at epochs 43 to 94 with validation Pearson 0.18 to 0.26 and read 0.043 to
+0.136, at the affine's level on two seeds and under it on two. So the head that
+recovered the affine's loss on the amino acids (the sibling document, round 137) loses
+the affine's gain here and brings back the plateau the deletion-only graph had removed:
+a zero-initialized affine contributes 0 until it learns and cannot hold the backbone
+down, and a randomly initialized perceptron over 8,355 columns can. The linear read of
+the store is the one that travels.
+
+Round 135 is read (job 2792, 3 h 37 min): the linear minimization-of-metabolic-adjustment
+store, the nearest feasible flux to the parent's parsimonious flux under each knockout,
+in the affine slot on the deletion-only graph. It reads 0.107 (sd 0.018) against the
+affine-free control's 0.058 ($+0.049$ paired, sd 0.064, above on five of six) and
+against the parsimonious store's 0.121 ($-0.014$, sd 0.029, one of six), with a top-50
+enrichment of 4.99 against 3.39 and 4.93, the highest single-seed call of any arm, and
+ensembled over six seeds 0.115 with a top-50 of 5.79 against 0.082 and 0.131. Five
+seeds are selected off the plateau at epochs 30 to 59 with validation Pearson 0.22 to
+0.26; the sixth is selected on it at epoch 3 and still reads 0.098, the affine's read of
+the store alone, as in round 117. So a store anchored to one wild-type vector, which
+Section~\ref{sec:physics} measures as almost free of the vertex degeneracy (18 no-effect
+rows differ from the wild type's against the parsimonious store's 1,025), reads the
+parsimonious store's rank to within the seed spread with half its spread and a better
+call. The adjustment program is a second physically stated store that carries the
+target in the transformer; whether the degeneracy itself costs rank is round 139, the
+parsimonious store on one solver path.
+
+Round 133 is read (job 2789, 3 h 45 min): the parsimonious vector with the six
+rule-count columns beside it, the essentiality study's best single store, in the affine
+slot on the deletion-only graph. It reads 0.114 (sd 0.019) against the affine-free
+control's 0.058 ($+0.056$ paired, sd 0.056, above on five of six) and against the plain
+store's 0.121 ($-0.007$, sd 0.023, one of six), top-50 3.96 against 3.39 and 4.93, and
+ensembled over six seeds 0.137 with a top-50 of 4.79 against 0.082 and 0.131, the
+highest six-seed rank of any width-12 arm. Five seeds are selected off the plateau at
+epochs 47 to 91 with validation Pearson 0.18 to 0.27; the sixth sits on it to epoch 183
+and reads 0.118, the store's rank without the backbone. So the six columns that lifted
+the essentiality score keep the store's rank here, cost its single-seed call a point of
+enrichment, and add to the seed ensemble what they take from the single seed. On the
+amino acids the same columns read below both controls (the sibling document, round
+136).
+
+Round 139 is read (job 2794, 3 h 39 min): the parsimonious store rebuilt on the HiGHS
+two-stage path the essentiality stores use, the vector without the GLPK build's vertex
+noise (Section~\ref{sec:physics}: 428 no-effect rows differ from the wild type's
+against 1,025), in the affine slot on the deletion-only graph. It reads 0.130 (sd
+0.034) against the affine-free control's 0.058 ($+0.072$ paired, sd 0.067, above on
+five of six) and against the GLPK store's 0.121 ($+0.009$, sd 0.041, five of six),
+top-50 4.46 against 3.39 and 4.93, and ensembled over six seeds 0.148 with a top-50 of
+5.79 against 0.082 and 0.131, the highest six-seed rank of any width-12 arm and within
+0.005 of the width-90 store's 0.153. Five seeds select off the plateau at epochs 30 to
+94 with validation Pearson 0.21 to 0.26 and read 0.076 to 0.149; the sixth is selected
+on it at epoch 2 with validation Pearson 0.02 and reads 0.160, the highest single cell
+of any arm, the affine's linear read of the clean vector with nothing from the backbone
+(the GLPK store's plateau cells read 0.12 to 0.13). So the vertex noise costs the
+store about 0.01 of rank on five seeds of six and 0.02 on the ensemble, the clean
+vector read alone carries more than the GLPK vector read alone, and the hypothesis of
+Section~\ref{sec:physics} reads as measured in that direction and small: one solver
+path is the right build, and it is not what separates the store from the width-90
+ensemble.
+
+Round 140 is read (job 2795, 3 h 35 min): the metabolite side in the affine slot, the
+max-min driving-force concentrations of Section~\ref{sec:physics} (2,831 metabolites
+in mM with the driving force, the count of constrained reactions and the count binding,
+under the 100 kJ/mol cap), on the deletion-only graph. It reads 0.118 (sd 0.055) against
+the affine-free control's 0.058 ($+0.059$ paired, sd 0.055, above on five of six) and
+against the GLPK flux store's 0.121 ($-0.003$, sd 0.037, two of six), top-50 4.06
+against 3.39 and 4.93, and ensembled over six seeds 0.133 with a top-50 of 4.99 against
+0.082 and 0.131. The seeds spread more than the flux store's: two read 0.167, selected
+at epochs 23 and 6 (the second on validation Pearson 0.13, before the backbone has
+escaped), and two read 0.058 and 0.040, selected at 106 and 50 after the validation
+loss had risen. So the concentration vector, a different physical quantity from the
+flux vector and derived from it by a program that adds the second law, carries the same
+rank in the transformer as the flux vector it is built on, with twice the spread and a
+weaker call; the ladder read it the same way (0.152 by ridge against the HiGHS store's
+0.195 by nearest neighbors). What the second law adds on this target is a second
+representation at the flux store's level, not a higher one.
+
+Round 142 is read (job 2797, 3 h 39 min): the sampled cone in the affine slot, the mean
+of six OptGP draws of each deletion's flux cone at 99 percent of its optimum
+(Section~\ref{sec:physics}), the Flux Cone Learning representation on this backbone,
+on the deletion-only graph. It reads 0.088 (sd 0.022) against the affine-free control's
+0.058 ($+0.030$ paired, sd 0.070, above on four of six) and against the GLPK
+parsimonious store's 0.121 ($-0.033$, sd 0.024, above on no seed), top-50 2.90 against
+3.39 and 4.93, and ensembled over six seeds 0.083 with a top-50 of 3.00 against 0.082
+and 0.131. Every seed selects off the plateau, at epochs 35 to 138 with validation
+Pearson 0.11 to 0.25, and reads 0.072 to 0.131. So the cone's mean carries less rank
+than the optimum it is sampled around, on every seed, and takes the call below the
+control's, the same order the ladder read without a backbone (0.007 by ridge, 0.064 by
+nearest neighbors against the point's 0.195): on this target a deletion's feasible
+region averaged over six draws is a worse representation than one optimum inside it,
+as the sampled stores were on the essentiality endpoint (the essentiality document,
+round 87), and the representation the Flux Cone Learning comparison rests on does not
+travel to the transformer.
+
+Round 144 is read (job 2798, 3 h 12 min): the size question from the small side, the
+store arm on the deletion-only graph at width 6 with two attention heads, half the
+incumbent's width, paired against the width-12 store. It reads 0.113 (sd 0.038)
+against 0.121 ($-0.008$ paired, sd 0.055, above on four of six), top-50 4.19 against
+4.93, and ensembled over six seeds 0.129 with a top-50 of 5.39 against 0.131 and 5.59.
+Four seeds select off the plateau at epochs 39 to 86 with validation Pearson 0.20 to
+0.25 and read 0.110 to 0.137; two never leave it, selected at epochs 185 and 197 on
+validation Pearson $-0.02$ and 0.02, and read 0.136 and 0.039, the first the affine's
+read of the store alone and the second the collapse. So at half the width the level is
+the width-12 store's within the seed spread and the plateau the deletion-only graph had
+removed returns on a third of the seeds, as it did under the solve head (round 134): the
+backbone is not too big for this target at width 12, and width 6 is where the escape
+starts to fail. With the width-90 reads of rounds 122 to 132 the size axis is now read
+from 6 to 90 and the level does not move on it.
+
+Round 145 is read (job 2799, 3 h 34 min): the size question from the regularization
+side, the store arm on the deletion-only graph with the transformer's dropout raised
+from the incumbent 0.1 to 0.3, paired against the store at 0.1. It reads 0.145 (sd
+0.018) against 0.121 ($+0.024$ paired, sd 0.040, above on four of six), the highest
+single-seed rank of any arm on this target (the HiGHS store 0.130, the width-90 store
+0.134), with a top-50 enrichment of 5.03 against 4.93, the highest single-seed call,
+and ensembled over six seeds 0.149 with a top-50 of 5.79 against 0.131 and 5.59, the
+highest width-12 ensemble rank by 0.001 over the HiGHS store. Five seeds select off the
+plateau at epochs 39 to 81 with validation Pearson 0.20 to 0.25 and read 0.135 to
+0.180, the tightest escaped band of any arm; the sixth sits on the plateau to epoch 149
+and reads 0.133, the affine alone. So the backbone that every width from 6 to 90 left
+at one level moves when it is regularized harder: the paired gain is inside the seed
+spread on the mean and on four seeds of six, but the level, the call and the ensemble
+are each the best a single width-12 arm has read, and the direction the user's
+question pointed at, a model too free for 3,494 genotypes, reads as measured. Rounds
+154 and 155 (w171, w172) put dropout 0.3 on the HiGHS store under the release rule,
+the three best levers on one cell, and read dropout 0.5 on the store arm.
+
+Round 147 is read (job 2801, 3 h 39 min): the probabilistic metabolite side in the
+affine slot, the mean concentration over six draws of each deletion's driving-force
+polytope (Section~\ref{sec:physics}) with the point store's statistics and the count
+of constrained metabolites, on the deletion-only graph. It reads 0.125 (sd 0.041)
+against the affine-free control's 0.058 ($+0.067$ paired, sd 0.047, above on six of
+six), against the GLPK flux store's 0.121 ($+0.004$, sd 0.047, four of six) and
+against the driving-force point's 0.118 ($+0.008$, sd 0.054, three of six), top-50
+3.69 against 3.39, 4.93 and 4.06, and ensembled over six seeds 0.151 with a top-50 of
+5.59 against 0.082, 0.131 and 0.133, the highest six-seed rank of any width-12 arm.
+Every seed selects off the plateau, at epochs 10 to 76 on validation Pearson 0.15 to
+0.28, and reads 0.055 to 0.168. So the region's mean carries what its point carries
+and what the flux vector carries, on every seed above the control, and averages to the
+best rank a width-12 cell has reached, while its single-seed call is the weakest of the
+three: the second law's region, read as its centroid, is a third representation at the
+flux store's level, with more to give the ensemble than the point and less to give the
+call. The width of the region, the spread store the ladder read at 0.138 by nearest
+neighbors, has not been read in the transformer.
+
+Round 149 is read (job 2804, 3 h 35 min): round 131's release rule on round 135's
+store, the linear adjustment store with the affine frozen until epoch 5 and until the
+trailing validation Pearson reaches 0.15, on the deletion-only graph. It reads 0.106
+(sd 0.034) against the adjustment store with the affine from epoch 0 at 0.107
+($-0.001$ paired, sd 0.038, above on three of six) and against the GLPK store under
+the same rule at 0.110 ($-0.004$, sd 0.063, two of six), top-50 4.53 against 4.99 and
+4.66, and ensembled over six seeds 0.105 with a top-50 of 5.59 against 0.115 and 5.79
+and 0.120 and 6.19. The release came at epochs 5, 5, 22, 30, 9 and 5, and the seeds
+select at 2, 51, 76, 43, 6 and 32, two of them before the release on early validation
+peaks of 0.26 and 0.17, reading 0.117 and 0.058. So the rule that kept the GLPK
+store's level with the best ensemble call (round 131) neither adds to nor takes from
+the adjustment store's level and costs its call a point of enrichment on single seeds
+and on the ensemble: the adjustment store, anchored to one wild-type vector and free of
+the vertex noise, did not need the backbone to escape first, and the release rule's
+gain in round 131 reads as specific to the degenerate store it was measured on.
+
+Round 150 is read (job 2805, 3 h 39 min): the GO multi-hot in the affine slot, 2,362
+propagated terms over every annotated gene (Section~\ref{sec:physics}), on the
+deletion-only graph, the interface the flux stores enter through and the annotation
+the backbone never saw. It reads 0.202 (sd 0.001 over seeds) against the affine-free
+control's 0.058 ($+0.144$ paired, sd 0.075, above on six of six) and against the GLPK
+store's 0.121 ($+0.082$, sd 0.025, six of six), with a top-50 enrichment of 5.03
+against 3.39 and 4.93, and ensembled over six seeds 0.202 with a top-50 of 4.99: the
+highest single-seed rank of any transformer arm on this target, at the level the GO
+perceptron read on its own (0.200), with the best single-seed call tied with round 145,
+and the first arm whose ensemble adds nothing, because the six seeds read the same
+number. Every seed selects at epochs 8 to 12 on validation Pearson 0.25, the validation
+loss bottoms at epochs 1 to 3 and rises by 0.13 to 0.18 by epoch 199, and the seeds
+differ in the third decimal: the affine's linear read of the binary columns is the
+whole cell, learned in ten epochs and memorized thereafter, and the backbone, which
+escapes to the same 0.25 on every seed, adds nothing the affine did not already have.
+So the transformer is not what limits the annotation family on this target; the
+annotation it was given was. What remains is whether the flux vector adds to GO in the
+one model, round 151, and whether either adds to the other's call.
+
+Round 151 is read (job 2806, 3 h 38 min): the HiGHS parsimonious deletion vector with
+the GO multi-hot appended, 4,177 flux columns (the wild-type row for a gene outside the
+GEM) and 2,362 annotation columns in one affine over every annotated gene, on the
+deletion-only graph. It reads 0.211 (sd 0.007) against the HiGHS store alone at 0.130
+($+0.081$ paired, sd 0.032, above on six of six) and against GO alone at 0.202
+($+0.009$, sd 0.007, five of six), with a top-50 enrichment of 4.83 against 4.46 and
+5.03, and ensembled over six seeds 0.212 with a top-50 of 4.99 against 0.148 and 0.202,
+the highest rank of the study on single seeds and on the ensemble. Every seed selects
+at epochs 8 to 13 on validation Pearson 0.24 to 0.26 and reads 0.202 to 0.220, the
+round-150 pattern with a wider band. So the flux vector adds to the annotation in the
+one model, by 0.009 on five seeds of six against a paired spread of 0.007, where the
+perceptron on the same two blocks read no gain (0.198 against 0.200 with a spread of
+0.041): the affine on the logit is the interface on which the two families add, and
+what the flux store contributes beside GO is a tenth of what GO contributes beside the
+flux store. The call does not follow the rank: 4.83 sits under GO alone's 5.03, as the
+flux store's call sat under the control's in every round that read it beside a stronger
+input.
+
+Round 152 is read (job 2807, 3 h 40 min): round 131's release rule on the HiGHS
+parsimonious store, the affine frozen until epoch 5 and until the trailing validation
+Pearson reaches 0.15, on the deletion-only graph. It reads 0.108 (sd 0.021) against
+the HiGHS store with the affine from epoch 0 at 0.130 ($-0.022$ paired, sd 0.042, above
+on two of six) and against the GLPK store under the same rule at 0.110 ($-0.002$, sd
+0.058, two of six), top-50 3.99 against 4.46 and 4.66, and ensembled over six seeds
+0.139 with a top-50 of 4.99 against 0.148 and 5.79 and 0.120 and 6.19. The release came
+at epochs 5, 5, 22, 30, 9 and 5, the same epochs as round 149 on the same seeds, and
+the seeds select at 2, 2, 95, 121, 55 and 43, two of them before the release on early
+validation peaks of 0.26 and 0.21, reading 0.117 and 0.126. The HiGHS store's plateau
+seed, which read 0.160 from the affine alone at epoch 2 with the backbone at validation
+0.02, releases at epoch 9 under the rule, selects at 55 and reads 0.117. So the rule
+takes from the clean vector what it added to the degenerate one: the HiGHS store under
+the rule reads at the GLPK store's level under the rule, below the HiGHS store free
+from epoch 0 on four seeds of six, on the call and on the ensemble, and the pair with
+round 149 closes the question the rule opened in round 131. The gain was the vertex
+noise's, held off until the backbone had something to say; a store without that noise
+is read best from the first epoch.
+
+Round 154 is read (job 2809, 3 h 40 min): the three best levers on one cell, the HiGHS
+parsimonious store (round 139), the affine released on escape (round 131) and
+transformer dropout 0.3 (round 145), on the deletion-only graph. It reads 0.125 (sd
+0.036) against the same cell without the dropout (round 152) at 0.108 ($+0.017$ paired,
+sd 0.018, above on five of six) and against the GLPK store at dropout 0.3 (round 145)
+at 0.145 ($-0.020$, sd 0.052, three of six), top-50 4.36 against 3.99 and 5.03, and
+ensembled over six seeds 0.148 with a top-50 of 4.39 against 0.139 and 4.99 and 0.149
+and 5.79. Dropout delays the escape the rule waits for: the release came at epochs 17,
+5, 24, 44, 18 and 5 against 5, 5, 22, 30, 9 and 5 without it, every seed selects after
+its release, at 54 to 136 on validation Pearson 0.21 to 0.25, and the seeds read 0.060
+to 0.155, the lowest the one released last. So dropout gives back about half of what the
+release rule took from the HiGHS store (0.130 free from epoch 0, 0.108 under the rule,
+0.125 under the rule with dropout), and the three levers together sit under the two
+that do not fight: the GLPK store at dropout 0.3 keeps the higher rank and the higher
+call, on single seeds and on the ensemble. The lever that costs on the clean store is
+the release, and dropout does not repair it.
+
+Round 155 is read (job 2810, 3 h 38 min): the dropout curve's third point, the store
+arm on the deletion-only graph at transformer dropout 0.5, paired against 0.3 (round
+145) and 0.1 (the incumbent). It reads 0.125 (sd 0.017) against 0.145 at 0.3 ($-0.019$
+paired, sd 0.019, above on two of six) and against 0.121 at 0.1 ($+0.005$, sd 0.039,
+three of six), top-50 4.16 against 5.03 and 4.93, and ensembled over six seeds 0.127
+with a top-50 of 5.59 against 0.149 and 5.79 and 0.131 and 5.59. Three seeds never
+leave the plateau: their validation Pearson sits at $-0.03$ to $-0.02$ through epoch
+199, they select at 149 to 181 and read 0.124 to 0.133, the affine alone; the three
+that escape select at epochs 68 to 156 on validation Pearson 0.16 to 0.24 and read
+0.094 to 0.140, no higher. So the curve turns between 0.3 and 0.5: at 0.5 the
+regularization that lifted the backbone at 0.3 keeps half the seeds from escaping at
+all, and the seeds that do escape read at the affine's level, so the arm sits at the
+incumbent's level with the incumbent's spread and a weaker call. Dropout 0.3 stands as
+the setting, and its gain in round 145 reads as a maximum of the curve, not a monotone
+trend to push further.
+
+Round 156 is read (job 2812, 3 h 41 min): the width of the region, the driving-force
+polytope's mean concentration with the per-metabolite spread of $\ln c$ over draws
+appended (5,666 columns; the ladder read this store at 0.138 by nearest neighbors
+against the mean's 0.127), in the affine slot on the deletion-only graph. It reads
+0.116 (sd 0.041) against the polytope mean alone (round 147) at 0.125 ($-0.010$
+paired, sd 0.062, above on three of six) and against the GLPK store's 0.121 ($-0.005$,
+sd 0.048, four of six), top-50 3.73 against 3.69 and 4.93, and ensembled over six seeds
+0.155 with a top-50 of 4.59 against 0.151 and 5.59 and 0.131 and 5.59, the highest
+six-seed rank of any flux-side width-12 arm (the polytope mean 0.151, dropout 0.3
+0.149, the HiGHS store 0.148). Two seeds escape only partly, selecting at epochs 38 and
+118 on validation Pearson 0.09 and 0.10 and reading 0.061 and 0.089; the other four
+select at 59 to 152 on 0.23 to 0.30 and read 0.097 to 0.164. So the spread adds
+nothing to the mean on single seeds, inside a spread twice the difference, and the
+seeds disagree more than the mean's did; averaged, that disagreement is what the
+ensemble gains from, and the region's width joins the region's mean as a representation
+whose value is in the ensemble rather than in any one read.
+
+Round 158 is read (job 2813, 3 h 40 min): the GO affine under round 131's release
+rule, frozen until epoch 5 and until the trailing validation Pearson reaches 0.15, on
+the deletion-only graph; round 150 read the affine memorizing the annotation in ten
+epochs before the backbone moved, and the release asks whether a backbone that escapes
+first adds anything to that read. It reads 0.199 (sd 0.007) against the GO affine from
+epoch 0 at 0.202 ($-0.003$ paired, sd 0.007, above on four of six) and against the
+GLPK store under the same rule at 0.110 ($+0.089$, sd 0.047, six of six), top-50 4.89
+against 5.03 and 4.66, and ensembled over six seeds 0.206 with a top-50 of 5.19 against
+0.202 and 4.99 and 0.120 and 6.19. The release came at epochs 5, 5, 20, 42, 8 and 27,
+and every seed selects 6 to 11 epochs after it, at 14 to 48, on validation Pearson 0.24
+to 0.28: the affine learns the annotation in the same ten epochs whether the backbone
+has escaped or not, the two seeds released last read lowest (0.191 and 0.189), and the
+seeds now differ where round 150's did not (sd 0.007 against 0.001), so the ensemble
+gains 0.003 over the identical-seed ensemble and its call rises to 5.19. So the
+backbone escaping first adds nothing to the annotation's single read and takes a little
+from it when the escape is late; what the rule buys is seed diversity, worth 0.003 on
+the ensemble, on an arm whose value was never in the backbone.
+
+Round 159 is read (job 2814, 3 h 40 min): the GO affine with transformer dropout 0.3,
+round 145's lever on the annotation arm, on the deletion-only graph. It reads 0.202 (sd
+0.002) against the GO affine at dropout 0.1 at 0.202 ($-0.001$ paired, sd 0.001, above
+on no seed) and against the GLPK store at dropout 0.3 at 0.145 ($+0.057$, sd 0.019, six
+of six), top-50 4.89 against 5.03 and 5.03, and ensembled over six seeds 0.202 with a
+top-50 of 4.79 against 0.202 and 4.99 and 0.149 and 5.79. Every seed selects at epochs
+8 to 14 on validation Pearson 0.24 to 0.25 and reads 0.198 to 0.203, round 150's
+pattern to the third decimal. So the dropout that lifted the store arm by 0.024 moves
+the annotation arm by less than a thousandth, the same way on every seed: the lever
+acts on the backbone, and on this arm the backbone contributes nothing for it to act
+on. Taken with round 158, the annotation arm is the affine and the affine alone, and no
+setting of the transformer around it has moved it.
+
+Round 161 is read (job 2816, 3 h 40 min): the campaign's two best levers on one cell,
+the HiGHS vector with GO appended in the affine (round 151) with transformer dropout
+0.3 (round 145), on the deletion-only graph. It reads 0.212 (sd 0.007) against the
+same affine at dropout 0.1 at 0.211 ($+0.000$ paired, sd 0.001, above on two of six)
+and against GO alone at dropout 0.3 at 0.202 ($+0.010$, sd 0.007, five of six), top-50
+4.89 against 4.83 and 4.89, and ensembled over six seeds 0.213 with a top-50 of 4.99
+against 0.212 and 4.99 and 0.202 and 4.79. Every seed selects at epochs 7 to 13 on
+validation Pearson 0.24 to 0.26 and reads 0.202 to 0.220. So the two levers do not
+add: dropout leaves the flux-and-annotation affine where it was, to the fourth decimal
+on the mean, as it left the annotation affine in round 159, and the flux vector's gain
+beside GO reproduces at dropout 0.3 (0.010 on five seeds of six, against 0.009 at
+0.1). The best cell of the study is the affine over the two blocks, at either dropout,
+and what the transformer is set to around it does not enter the read.
+
+Round 163 is read (job 2821, 3 h 39 min): the physics stack on the annotation, the
+HiGHS vector, GO and the driving-force polytope's mean concentration (round 147) in
+one affine over every annotated gene, 9,374 columns joined by
+\texttt{target\_store\_concat.py} with the polytope's wild-type row for a gene outside
+the GEM, on the deletion-only graph. It reads 0.198 (sd 0.011) against the same affine
+without the polytope (round 151) at 0.211 ($-0.013$ paired, sd 0.009, above on one of
+six) and against the polytope mean alone at 0.125 ($+0.073$, sd 0.045, six of six),
+top-50 4.46 against 4.83 and 3.69, and ensembled over six seeds 0.201 with a top-50 of
+4.59 against 0.212 and 4.99 and 0.151 and 5.59. Every seed selects at epochs 4 to 15
+on validation Pearson 0.25 to 0.27 and reads 0.180 to 0.213, a band five times wider
+than round 151's. So the 2,835 concentration columns take 0.013 from the affine that
+carried GO and the flux vector, on five seeds of six, and take its call with it, where
+the flux vector's 4,177 columns had added 0.009 beside GO: the metabolite side, which
+matched the flux vector in the affine on its own (round 147), does not add to the
+annotation the way the flux vector does, and the stack reads under GO alone (0.202).
+Hypothesis (untested): the affine's linear read over 3,494 training genotypes, most of
+them the wild-type row on every physics column, is diluted rather than informed by a
+third block whose rows the flux block already distinguishes.
+
+Round 164 is read (job 2822, 3 h 36 min): six more seeds, 2706 to 2711, of round
+151's cell, the HiGHS vector with GO appended in the affine, so the study's best arm
+has a twelve-seed level and ensemble. The second six read 0.218 (sd 0.009) against the
+first six's 0.211 (sd 0.007); over twelve the level is 0.214 (sd 0.008, standard error
+0.002), the seeds select at epochs 6 to 13 and read 0.202 to 0.232, and the twelve-seed
+ensemble reads 0.216 with a top-50 of 4.99 against 0.212 and 4.99 for six, the single
+seeds' mean call 4.98. So the best arm's level holds on twelve seeds, at 0.214 with a
+standard error of 0.002, which puts it 0.011 above the random forest over the same
+columns (0.204, Section~\ref{sec:physics}) and 0.019 above the nearest-neighbor read
+of the HiGHS store (0.195), the two closest backbone-free reads on this split; the
+ensemble gains 0.004 from the second six and the call does not move.
+
+Round 166 is read (job 2824, 3 h 39 min): the same stack with the region's width, the
+HiGHS vector, GO and the polytope's mean with the per-metabolite spread of $\ln c$,
+12,205 columns in one affine on the deletion-only graph. It reads 0.193 (sd 0.015)
+against the flux-and-annotation affine (round 151) at 0.211 ($-0.018$ paired, sd 0.016,
+above on two of six) and against the same stack with the mean alone (round 163) at
+0.198 ($-0.005$, sd 0.018, two of six), top-50 4.23 against 4.83 and 4.46, and
+ensembled over six seeds 0.201 with a top-50 of 4.59, the same ensemble as the mean
+alone. The seeds select at epochs 9 to 27 on validation Pearson 0.22 to 0.28 and read
+0.175 to 0.213, twice round 163's band and three times round 151's. So the second
+physics block costs what the first cost again, and the cost grows with the columns
+added: 2,835 concentration columns took 0.013, another 2,831 spread columns take 0.005
+more, while the seed spread doubles at each step. The metabolite side does not enter
+this affine's read at any width, and the study's best cell remains the flux vector with
+the annotation and nothing else.
+
+Round 167 is read (job 2825, 3 h 39 min): which flux program adds most beside the
+annotation, the linear adjustment store (round 135) in place of the parsimonious vector
+in the flux-and-annotation affine, 6,539 columns on the deletion-only graph. It reads
+0.208 (sd 0.003) against GO alone at 0.202 ($+0.006$ paired, sd 0.003, above on six of
+six) and against the parsimonious vector with GO at 0.211 ($-0.004$, sd 0.006, two of
+six), top-50 4.46 against 5.03 and 4.83, and ensembled over six seeds 0.209 with a
+top-50 of 4.39 against 0.202 and 0.212. The seeds select at epochs 8 to 16 on validation
+Pearson 0.24 to 0.27 and read 0.205 to 0.212. So the adjustment store adds to the
+annotation as the parsimonious vector does, on every seed, and adds a little less: what
+the flux side contributes beside GO is 0.006 from the store anchored to one wild-type
+vector against 0.009 from the parsimonious rebuild, a difference inside the paired
+spread. Both physically stated flux programs enter the annotation's read where the
+metabolite programs do not, and the parsimonious vector stays the best of them.
+
+Round 169 is read (job 2828, 3 h 40 min): the one setting left that acts on the
+affine's own read, its weight decay. Round 151's cell, the HiGHS vector with GO in the
+affine on the deletion-only graph, with the affine in its own optimizer group at weight
+decay 0.1 and the full rate (round 119 read decay and a tenth of the rate together on
+the degenerate store and lost the gain, so the rate is left alone). It reads 0.210
+(sd 0.007) against no decay at 0.211 ($-0.002$ paired, sd 0.008, above on four of six),
+top-50 4.66 against 4.83, and ensembled over six seeds 0.211 with a top-50 of 4.79
+against 0.212 and 4.99. The seeds select at epochs 8 to 16 on validation Pearson 0.24 to
+0.27 and read 0.199 to 0.221; on five seeds the arm and its control select at the same
+epoch and differ by under 0.004, and the sixth selects seven epochs later and reads
+0.018 under. So a thousandfold increase in the decay on the affine's weights leaves the
+selected epochs and the read where they were. The affine over the annotation and the
+flux vector is read within its first sixteen epochs, and regularizing it does not move
+that read either.
+
+Round 170 is read (job 2829, 3 h 40 min): the second point of the curve, the same cell
+at affine weight decay 1.0. It reads 0.204 (sd 0.012) against no decay at 0.211
+($-0.007$ paired, sd 0.013, above on one of six) and against decay 0.1 at 0.210
+($-0.005$, sd 0.013, two of six), top-50 4.76 against 4.83 and 4.66, and ensembled over
+six seeds 0.208 with a top-50 of 4.99 against 0.212 and 0.211. The seeds select at
+epochs 34 to 114 on validation Pearson 0.25 to 0.27, against 8 to 16 for both lighter
+settings, and read 0.190 to 0.218, a spread of 0.012 against 0.007. So the decay curve
+runs 0.211, 0.210, 0.204 from none to 0.1 to 1.0: flat, then down, with the heavy
+setting slowing the affine so its read arrives fifty epochs later and spreads more
+across seeds. The affine's own regularization does not lift the annotation arm any more
+than the transformer's settings did, and the study's best cell stays round 151's as
+built.
+
+Round 171 is read (job 2830, 3 h 36 min): the two flux programs that each add to the
+annotation, read together. The parsimonious vector and the adjustment store both
+appended to GO in one affine, 10,716 columns on the deletion-only graph. It reads 0.216
+(sd 0.007) against the parsimonious vector with GO (round 151) at 0.211 ($+0.004$
+paired, sd 0.003, above on five of six) and against the adjustment store with GO (round
+167) at 0.208 ($+0.008$, sd 0.006, five of six), top-50 4.73 against 4.83 and 4.46, and
+ensembled over six seeds 0.217 with a top-50 of 4.59 against 0.212 and 0.209. The seeds
+select at epochs 9 to 14 on validation Pearson 0.25 to 0.26 and read 0.206 to 0.223. So
+the two programs add: what the adjustment store carries beside the annotation is not
+all inside what the parsimonious vector carries, and the two together give the highest
+single-seed rank of the study, 0.216, at a paired spread of 0.003 against the previous
+best. The call does not follow, 4.73 against 4.83 on single seeds and 4.59 against 4.99
+ensembled. The flux side enters the annotation's read a second time where the
+metabolite side (rounds 163, 166) did not enter it once.
+
+Round 172 is read (job 2831, 3 h 40 min): six more seeds, 2706 to 2711, of the
+annotation-only arm, GO alone in the affine (round 150), so it has the twelve-seed level
+the flux-and-annotation arm has had since round 164. The second six read 0.204
+(sd 0.002) against the first six's 0.202 (sd 0.001); over twelve, 0.203 (sd 0.002,
+standard error 0.0005), the seeds reading 0.200 to 0.207 and selecting at epochs 7 to
+14; the twelve-seed ensemble reads 0.203 with a top-50 of 4.99, as the six-seed one
+did. The flux vector's gain beside GO, read paired over the same twelve seeds, is
+$+0.012$ (sd 0.009), above on eleven of twelve, where the first six gave $+0.009$ on
+five of six: 0.214 against 0.203. The annotation arm is the study's most reproducible
+cell, its twelve seeds inside 0.007 of one another, and what the flux vector adds to it
+is four times its seed spread.
+
+Round 173 is read (job 2832, 3 h 41 min): six more seeds of the affine-free control on
+the deletion-only graph (round 132's cell), so the annotation arm's gain is read paired
+over twelve seeds, the comparison the amino-acid study made in its round 168. The
+control's second six read 0.094 (sd 0.017) against the first six's 0.058 (sd 0.075);
+over twelve 0.076 (sd 0.055), the seeds reading $-0.089$ to 0.126 and selecting at
+epochs 3 to 69, since a control seed's score depends on whether and when it escapes the
+plateau. The GO affine against it, paired over the same twelve seeds, is $+0.127$ (sd
+0.054), above on twelve of twelve, 0.203 against 0.076, top-50 4.99 against 4.06. The
+twelve-seed ensemble of the control reads 0.102 with a top-50 of 5.59, against 0.082
+and 4.79 from its first six: averaging the control's seed noise away is worth 0.026 of
+rank and 0.8 of call, and the annotation's twelve-seed ensemble, 0.203, stays twice
+the control's. On this target the amino-acid study's finding does not repeat: there,
+the control's ensemble passed the annotation's because the annotation's gain (0.009)
+was smaller than the control's seed noise; here the gain is 0.127 and five times what
+the control's ensemble recovers.
+
+Rounds 175 and 176 are read (jobs 2836 and 2837, 3 h 38 min and 3 h 42 min): the
+measured side in the transformer's affine, the strain's own M\"ulleder amino-acid pool
+(Section~\ref{sec:physics}), appended to GO and to GO with the HiGHS vector. With GO the
+pool reads 0.208 (sd 0.002) against GO alone at 0.202 ($+0.006$ paired, sd 0.002,
+above on six of six), top-50 4.89 against 5.03, ensembled 0.209 with a top-50 of 4.79;
+the seeds select at epochs 7 to 13. Beside the HiGHS vector the pool reads 0.208
+(sd 0.009) against 0.211 without it ($-0.003$, sd 0.014, two of six) and 0.000 against
+the pool with GO alone (three of six), with the seed spread quadrupled; ensembled 0.209
+and 4.79. So the affine reads the nineteen columns as the ridge does, a small addition
+to the annotation, where the ladder's nearest neighbors and forest read them at 0.285
+and 0.280 on their own: the pool's signal is there and it is not linear in the
+concentrations. The transformer's read of the pool is bounded by the slot it enters
+through, not by the data; the pool alone in the affine and through a hidden layer of
+64 are queued to say which (179, 180).
+
+Round 177 is read (job 2839, 3 h 40 min): six more seeds of round 171's cell, both flux
+programs beside GO, so the study's best single-seed arm has the twelve-seed level its
+two comparators have. The second six read 0.219 (sd 0.003) against the first six's
+0.216 (sd 0.007); over twelve, 0.217 (sd 0.005, standard error 0.0015), the seeds
+0.206 to 0.223 selecting at epochs 5 to 14; the twelve-seed ensemble reads 0.218 with
+a top-50 of 4.79 against 0.217 and 4.59 from six. Paired over the same twelve seeds
+against the parsimonious vector with GO, the second program's gain is $+0.003$
+(sd 0.007), above on eight of twelve, where the first six gave $+0.004$ on five of six
+at a paired spread of 0.003: on the second six the two arms read the same, 0.219 against
+0.218. So the gain of round 171 does not hold at the size the first six gave it; the
+adjustment store beside the parsimonious vector is worth 0.003 within a paired spread
+of 0.007, and the two arms share one level, 0.214 to 0.217 on twelve seeds.
+
+Round 178 is read (job 2840, 3 h 40 min): the three families in one affine, GO with
+both flux programs and the strain's measured amino-acid pool, 10,735 columns on the
+deletion-only graph. It reads 0.218 (sd 0.002) against both flux programs with GO
+(round 171) at 0.216 ($+0.002$ paired, sd 0.008, three of six) and against the pool
+with GO and the parsimonious vector (round 176) at 0.208 ($+0.010$, sd 0.009, five of
+six), top-50 4.63 against 4.73 and 4.66, ensembled 0.218 with a top-50 of 4.59. The
+seeds select at epochs 10 to 14 on validation Pearson 0.25 to 0.27 and read 0.216 to
+0.221, the tightest band of any store arm. So the pool adds nothing beside the two flux
+programs, as it added nothing beside one (round 176), and every linear combination of
+the annotation with the flux side and the measured side reads between 0.208 and
+0.218: the affine's ceiling on this input family, with the measured side's nonlinear
+signal (0.285 by nearest neighbors on the pool alone) the one thing it does not reach.
+
+Round 179 is read (job 2841, 3 h 36 min): the strain's measured amino-acid pool alone
+in the affine, nineteen columns and no annotation, on the deletion-only graph. It reads
+0.195 (sd 0.029) against the affine-free control's 0.058 ($+0.137$ paired, sd 0.088, six
+of six) and against GO alone at 0.202 ($-0.008$, sd 0.030, four of six), top-50 2.53
+against 3.39 and 5.03, the lowest call of any store arm, ensembled 0.211 with a top-50
+of 3.00. The seeds select at epochs 13 to 32 on validation Pearson 0.33 to 0.41, the
+highest validation correlation of any arm in the study against the annotation arm's 0.26,
+and read 0.150 to 0.220, a spread twenty times the annotation arm's. Beside the ladder on
+the same columns the affine sits above the ridge (0.149) and 0.09 under the nearest
+neighbors (0.285) and the forest (0.280): the pool's linear read in the transformer is
+a little more than a ridge and far short of what the distance models take from the same
+nineteen numbers, and its validation-to-test gap is the widest of any arm. So the
+affine's ceiling of round 178 is the slot's, not the backbone's, and the hidden layer
+of 64 over the same columns (round 180) is the direct test of whether the transformer
+can read the pool nonlinearly at all.
+
+Round 180 is read (job 2842, 3 h 41 min): the pool alone through one GELU hidden layer
+of 64 in the affine slot, the same nineteen columns as round 179 read nonlinearly. It
+reads 0.240 (sd 0.048) against the linear affine's 0.195 ($+0.045$ paired, sd 0.047,
+five of six) and against the control's 0.058 ($+0.182$, sd 0.099, six of six), the
+highest single-seed mean of any transformer arm in the study, above every linear cell's
+0.208 to 0.218; top-50 4.03 against 2.53 and 3.39. The six-seed ensemble reads 0.292
+with a top-50 of 5.79, above the ladder's nearest neighbors (0.285) and forest (0.280)
+on the same columns and 0.074 above the best linear ensemble (0.218, round 178). The
+seeds read 0.159 to 0.300 on validation Pearson 0.35 to 0.38, and select at epochs 13
+to 197: one seed selects three epochs before the budget's end, so its peak is not
+established and the level of this arm is a lower bound on what a longer budget reads.
+The hidden layer does what round 134's hidden layer of 256 over the flux store did not:
+here the nonlinear head lifts the read by 0.045 where there it lost 0.02, so the pool
+carries signal that a hidden layer recovers and the flux vector does not. The
+annotation with the pool through the same hidden layer, the pool through a layer of
+256, the three families through 64 and six more seeds of this arm are queued (rounds
+185 to 188).
+
+Round 181 is read (job 2843, 3 h 40 min): the minimum-norm flux store alone in the
+affine, the $\ell_2$ point at maximal growth (Section~\ref{sec:physics}) with no vertex
+noise. It reads 0.093 (sd 0.013) against the HiGHS parsimonious store on the same seeds
+(round 139) at 0.130 ($-0.037$ paired, sd 0.043, one of six) and against the control's
+0.058 ($+0.035$, sd 0.076, four of six), top-50 4.59 against 4.46 and 3.39, ensembled
+0.094 with a top-50 of 5.19. The seeds read 0.070 to 0.107 and select at epochs 3 to
+64. On the ladder the same store reads 0.068, 0.126 and 0.133 by ridge, nearest
+neighbors and forest against the HiGHS store's 0.098, 0.195 and 0.117, so the
+transformer's affine and the distance models agree: the unique interior point carries
+less rank than the sparse vertex, and the vertex noise the release rule was built
+around is not what the affine was reading.
+
+Round 182 is read (job 2844, 3 h 40 min): the minimum-norm store appended to GO, 6,539
+columns. It reads 0.204 (sd 0.005) against the HiGHS vector with GO (round 151) at
+0.211 ($-0.007$ paired, sd 0.007, zero of six) and against GO alone at 0.202 ($+0.002$,
+sd 0.005, four of six), top-50 4.36 against 4.83 and 5.03, ensembled 0.206 with a
+top-50 of 4.39. The seeds read 0.198 to 0.212 and select at epochs 8 to 16, the
+annotation arm's band. So the flux side's gain beside the annotation, $+0.009$ on six
+seeds and $+0.012$ on twelve for the $\ell_1$ vector, is absent for the $\ell_2$ point
+on every seed: whatever the affine reads from the flux vector beside GO lives in the
+sparse solution, and the nearest-neighbor read of the same columns at 0.208, the best
+kNN of any genotype-side representation, does not reach the transformer.
+
+Round 185 is read (job 2847, 3 h 33 min): GO with the measured pool, 2,381 columns,
+through the same hidden layer of 64. It reads 0.206 (sd 0.006) against the pool alone
+through the layer at 0.240 ($-0.034$ paired, sd 0.052, one of six), against the same
+columns in the linear affine at 0.208 ($-0.002$, sd 0.008, three of six) and against
+GO alone at 0.202 ($+0.004$, sd 0.007, three of six), top-50 4.59 against 4.03, 4.89
+and 5.03, ensembled 0.208 with a top-50 of 4.99. The seeds select at epochs 2 to 4 on
+validation Pearson 0.22 to 0.29, the earliest selection of any arm, where the pool
+alone through the layer selects at 13 to 197 on 0.35 to 0.38. So the annotation
+appended to the pool takes the nonlinear read back to the annotation's own level: with
+GO in the layer the arm behaves as the GO affine does, in its level, its seed band and
+its early selection, and the pool's 0.034 is gone. The ladder read the same thing on
+the same columns, ridge and nearest neighbors falling when the 2,362 GO columns joined
+the nineteen and only the forest keeping the pool's rank (Section~\ref{sec:physics}).
+A plausible reason, unverified, is that a layer of 64 over 2,381 columns fits the
+annotation's columns in the first epochs and the nineteen pool columns never set its
+selection; a layer that sees the pool and the annotation through separate slots is
+the arm that would separate the two.
+
+Round 186 is read (job 2848, 3 h 34 min): six more seeds of the pool through the
+hidden layer of 64. The second six read 0.268 (sd 0.032) against the first six's 0.240,
+and over twelve the arm reads 0.254 (sd 0.041, standard error 0.012), seeds 0.159 to
+0.300, selecting at epochs 4 to 197; the twelve-seed ensemble reads 0.297 with a top-50
+of 5.79. Paired over the same twelve seeds the arm is $+0.178$ over the affine-free
+control on twelve of twelve and $+0.051$ over GO alone on eleven of twelve, with a
+top-50 of 4.24 against the annotation's 4.99. So the hidden-layer read of the pool
+holds at its second size: the highest single-seed level and the highest ensemble of any
+transformer arm, the ensemble above the ladder's nearest neighbors and forest on the
+same columns, the spread twenty times the annotation arm's, and the call under the
+annotation's on every count.
+
+Round 187 is read (job 2853, 3 h 30 min): the pool alone through a hidden layer of
+256. It reads 0.279 (sd 0.023) against the layer of 64 at 0.240 ($+0.039$ paired, sd
+0.051, five of six) and against the linear slot at 0.195 ($+0.084$, sd 0.035, six of
+six), top-50 4.69 against 4.03 and 2.53, ensembled 0.288 with a top-50 of 5.19. The
+seeds read 0.242 to 0.303 and select at epochs 29 to 138 on validation Pearson 0.36 to
+0.40, half the spread of the layer of 64 and the highest validation correlation of any
+arm. So the width of the nonlinear read matters on these nineteen columns: 64 to 256
+adds 0.039 with the seed band halved, and the single-seed level now sits at the
+ladder's nearest-neighbor read of the same columns (0.285) with the ensemble above it.
+The layer of 128 and the layer of 512 are queued (rounds 194, 192), with six more seeds
+of this arm (193).
+
+Round 188 is read (job 2854, 3 h 34 min): the three families, GO with both flux
+programs and the pool, through the hidden layer of 64. It reads 0.217 (sd 0.009)
+against the same columns in the linear affine at 0.218 ($-0.002$ paired, sd 0.009, two
+of six), against GO with the pool through the layer at 0.206 ($+0.011$, sd 0.014, five
+of six) and against the pool alone through the layer at 0.240 ($-0.023$, sd 0.046, one
+of six), top-50 4.53, ensembled 0.227 with a top-50 of 4.19. The seeds read 0.200 to
+0.226 and select at epochs 5 to 20 on validation Pearson 0.25 to 0.27. With the
+annotation in the layer the read is again the annotation's, as in round 185, and the
+flux programs add their usual 0.01 beside it: the layer does not separate the nineteen
+pool columns from the 10,716 others.
+
+Round 191 is read (job 2865, 3 h 33 min): the pool with the HiGHS parsimonious vector
+appended on the pool's own 4,678 genes, 4,196 columns with 815 genes carrying a flux
+row and the rest the flux wild type, through the hidden layer of 64. It reads 0.186
+(sd 0.035) against the pool alone through the layer at 0.240 ($-0.054$ paired, sd
+0.058, one of six) and against the HiGHS store alone in the linear affine at 0.130
+($+0.056$, sd 0.024, six of six), top-50 2.90 against 4.03 and 4.46, ensembled 0.207
+with a top-50 of 4.59. The seeds read 0.138 to 0.234 and select at epochs 29 to 66 on
+validation Pearson 0.34 to 0.37. So the flux columns take from the pool's read as the
+annotation columns did, by 0.054 against the annotation's 0.034, and unlike the
+annotation they do not bring their own level with them: the layer over the joined
+store reads under both the pool through the layer and the annotation affine. Every
+store appended to the pool inside one hidden layer has cost it (rounds 185, 188, 191),
+so the pool's nonlinear read is best taken alone, and a head that reads the pool and
+the other families through separate slots is the arm that would test whether they add.
+
+Round 190 is read (job 2864, 6 h 55 min): the pool through the hidden layer of 64
+with a budget of 400 epochs, the same six seeds as round 180. Every seed selects the
+epoch it selected under 200 and reads the same value to the fourth digit, 0.240 (sd
+0.048) with a paired difference of exactly zero: the validation curve never passes its
+first 200 epochs' peak in the second 200, on the seed that selected at 197 as on the
+others. So round 180's level was not a lower bound set by the budget, and the
+selection at 197 was a peak, not a truncation.
+
+Round 192 is read (job 2868, 3 h 35 min): the pool through a hidden layer of 512. It
+reads 0.243 (sd 0.048) against the layer of 256 at 0.279 ($-0.036$ paired, sd 0.059,
+one of six) and against the layer of 64 at 0.240 ($+0.003$, sd 0.072, three of six),
+top-50 4.36, ensembled 0.278 with a top-50 of 5.59; the seeds read 0.181 to 0.289 and
+select at epochs 2 to 91 on validation Pearson 0.36 to 0.39. The width past 256 gives
+back what 256 gained and brings the layer of 64's seed spread with it.
+
+Round 193 is read (job 2869, 3 h 34 min): six more seeds of the pool through 256. The
+second six read 0.277 (sd 0.029) against the first six's 0.279, and over twelve the arm
+reads 0.278 (sd 0.025, standard error 0.007), seeds 0.241 to 0.313, selecting at
+epochs 29 to 141; the twelve-seed ensemble reads 0.296 with a top-50 of 5.19. Paired
+over the same twelve seeds the arm is $+0.024$ over the layer of 64 on nine of twelve,
+$+0.075$ over GO alone on twelve of twelve and $+0.202$ over the affine-free control on
+twelve of twelve, with a top-50 of 4.61 against the annotation's 4.99. The level holds
+at its second size with a band half the layer of 64's.
+
+Round 194 is read (job 2870, 3 h 34 min): the pool through a hidden layer of 128. It
+reads 0.262 (sd 0.028) against the layer of 64 at 0.240 ($+0.022$ paired, sd 0.069,
+four of six) and against 256 at 0.279 ($-0.017$, sd 0.042, one of six), top-50 4.53,
+ensembled 0.279 with a top-50 of 5.19; the seeds read 0.214 to 0.290 and select at
+epochs 21 to 51 on validation Pearson 0.36 to 0.41. So the width curve of the pool's
+hidden read is 0.240, 0.262, 0.279, 0.243 at 64, 128, 256 and 512 on the same six
+seeds: a maximum at 256, which twelve seeds hold at 0.278, and the ensembles 0.292,
+0.279, 0.288 and 0.278 within 0.015 of one another at every width, so the width sets
+the single-seed level and its spread more than what six seeds averaged read.
+
+Rounds 197 and 198 are read (jobs 2877 and 2878, 3 h 36 min each): the two-slot head
+in the transformer's affine, GO's 2,362 columns through a linear map beside the pool's
+nineteen through a GELU hidden layer of 64 (197) or 256 (198), the two summed. At 64
+it reads 0.224 (sd 0.003) against the same columns through one shared layer at 0.206
+($+0.018$ paired, sd 0.007, six of six), against the same columns in the linear affine
+at 0.208 ($+0.016$, sd 0.003, six of six), against GO alone at 0.202 ($+0.022$, sd
+0.003, six of six) and against the pool alone through 64 at 0.240 ($-0.016$, sd 0.049,
+two of six), with a top-50 of 5.66, the best single-seed call of any transformer arm,
+ensembled 0.225 with a top-50 of 5.79. At 256 it reads 0.225 (sd 0.005), $+0.001$
+against the two slots at 64 and $-0.054$ against the pool alone through 256 (0.279,
+sd 0.020, zero of six), ensembled 0.226. Both select at epochs 5 to 15 on validation
+Pearson 0.27 to 0.29, the annotation affine's schedule (8 to 12 on 0.25), where the
+pool alone through the layer selects at 29 to 141 on 0.36 to 0.40. So in the
+transformer the two slots do not do what they did in the perceptron: the head is the
+best arm with the annotation in it, above every GO cell on every seed with the tightest
+band and the best call, and it does not reach the pool alone, because the linear slot
+sets the selection before the pool's slot has trained. The perceptron trained full
+batch and selected at epochs 64 to 165; here the annotation's map at the backbone's
+rate peaks and turns within fifteen epochs. The linear slot at a tenth and a hundredth
+of the rate, in its own parameter group, is queued (rounds 201, 202).
+
+Round 199 is read (job 2879, 3 h 34 min): the three families with two slots, GO and
+both flux programs (10,716 columns) through the linear map beside the pool's nineteen
+through a hidden layer of 256. It reads 0.239 (sd 0.003) against the same columns in
+the linear affine at 0.218 ($+0.021$ paired, sd 0.004, six of six), against the same
+columns through one shared layer of 64 at 0.217 ($+0.023$, sd 0.010, six of six),
+against GO alone in the linear slot beside the pool through 256 at 0.225 ($+0.014$, sd
+0.004, six of six) and against the pool alone through 256 at 0.279 ($-0.040$, sd
+0.022, zero of six), top-50 5.32, ensembled 0.241 with a top-50 of 5.19; the seeds
+read 0.235 to 0.243 and select at epochs 7 to 12 on validation Pearson 0.27 to 0.28.
+So the flux programs in the linear slot add 0.014 to the annotation's slot on every
+seed, as they added 0.012 to the annotation alone (round 172), and the two-slot head
+over the three families is the best arm of the study with the annotation in it, at
+0.239 with the tightest band of any store arm; it selects on the same early schedule as
+the other two-slot heads and stays 0.04 under the pool alone.
+
+Round 196 is read (job 2873, 7 h 30 min): the pool through 256 with a budget of 400
+epochs, the same six seeds as round 187. As at width 64 (round 190), every seed selects
+the epoch it selected under 200 and reads the same value, 0.279 (sd 0.023), a paired
+difference of exactly zero on six of six: the validation curve never passes its first
+200 epochs' peak. The width curve's maximum is a level, not a budget.
+
+Round 204 is read (job 2886, 4 h 0 min): the pool through 256 read standardized
+instead of $\log(1+v)$, the perceptron sweep's encoding. It reads 0.182 (sd 0.017)
+against the $\log(1+v)$ read at 0.279 ($-0.097$ paired, sd 0.023, zero of six),
+top-50 3.99 against 4.69, ensembled 0.187; the seeds read 0.160 to 0.207 and select
+at epochs 2 to 8 on validation Pearson 0.22 to 0.27, where the $\log(1+v)$ cells
+select at 29 to 138 on 0.36 to 0.40. So the encoding that lifted the perceptron over
+the same columns (0.236 standardized against 0.173 raw, Section~\ref{sec:physics})
+costs the transformer's slot 0.10, and every seed selects within eight epochs, the
+schedule of the annotation's affine. Section~\ref{sec:coverage} reads why: a gene the
+pool does not cover reads zeros, standardizing moves that row to the column means, and
+on the covered genes the standardized arm reads 0.189 against 0.212, so most of the
+0.10 is the coverage indicator and 0.02 of it the values.
+
+Round 203 is read (job 2885, 3 h 58 min): the pool through 256 with dropout 0.3 inside
+the transformer, against 0.1. It reads 0.279 (sd 0.018) against 0.279 (sd 0.023), a
+paired difference of $-0.000$ (sd 0.028, three of six), top-50 4.56 against 4.69,
+ensembled 0.293 with a top-50 of 5.59; the seeds select at epochs 32 to 138. On two
+seeds of six the two cells' pinned predictions agree to a Spearman of 1.0000 with the
+same selected epoch, although their training curves differ from the first epoch; on the
+other four they agree at 0.91 to 0.98, above the 0.91 that two seeds of the same arm
+agree to (\texttt{target\_prediction\_agreement.py}). A change inside the
+transformer that leaves a seed's prediction untouched did not reach the prediction,
+and Section~\ref{sec:decomposition} measures why: on those two seeds the backbone's
+head is a constant on the pinned genes and the prediction is the slot alone.
+
+Round 200 is read (job 2880, 4 h 0 min): the two-slot head at a hidden width of 128,
+GO linear beside the pool through 128. It reads 0.225 (sd 0.005) against the pool
+alone through 128 at 0.262 ($-0.037$ paired, sd 0.026, one of six), against the two
+slots at 64 at 0.224 ($+0.001$, sd 0.005, three of six) and against the two slots at
+256 at 0.225 ($+0.000$, sd 0.004, four of six), top-50 5.49 against 4.53, 5.66 and
+4.99, ensembled 0.225 with a top-50 of 5.79; the seeds read 0.216 to 0.231 and select
+at epochs 7 to 10 on validation Pearson 0.27 to 0.29. So the width of the pool's slot
+does not enter the two-slot read at all, 0.224, 0.225 and 0.225 at 64, 128 and 256,
+where the pool alone moves from 0.240 to 0.262 to 0.279 over the same widths: with the
+annotation in the linear slot the cell selects on the annotation's schedule, before
+the pool's slot and the backbone have trained (Section~\ref{sec:decomposition}), and
+the hidden slot's width is never read. The linear slot at a lower rate (201, 202) is
+the arm that can change this.
+
+Round 201 is read (job 2887, 3 h 41 min): the two-slot head at 256 with the linear GO
+slot in its own parameter group at a tenth of the rate. It reads 0.234 (sd 0.015)
+against both slots at the full rate at 0.225 ($+0.009$ paired, sd 0.013, four of six)
+and against the pool alone through 256 at 0.279 ($-0.045$, sd 0.024, zero of six),
+top-50 5.56 against 4.99 and 4.69, ensembled 0.239 with a top-50 of 5.79; the seeds
+read 0.215 to 0.247 and select at epochs 55 to 104 on validation Pearson 0.29 to 0.33,
+where the full-rate head selected at 9 to 15 on 0.27 to 0.29. So the slower slot does
+what it was built to do, the cell selecting after the pool's slot has trained with a
+higher validation correlation, and the read moves 0.009 for it; it stays 0.045 under
+the pool alone. On the covered genes it reads 0.184 against the pool alone's 0.212 and
+the full-rate head's 0.171, and it ranks the uncovered genes at the 34th percentile
+where the pool alone puts them at the fifth (Section~\ref{sec:coverage}): with the
+annotation's linear slot beside it, the head no longer separates the strains the pool
+never measured, and the covered-gene read stays under the pool's. The annotation in a
+linear slot costs the pool on both groups of genes, at either rate.
+
+Round 202 is read (job 2888, 3 h 41 min): the linear GO slot at a hundredth of the
+rate. It reads 0.211 (sd 0.027) against the full rate at 0.225 ($-0.014$ paired, sd
+0.028, two of six), against the tenth at 0.234 ($-0.023$, sd 0.025, one of six) and
+against the pool alone at 0.279 ($-0.068$, sd 0.044, zero of six), top-50 5.26,
+ensembled 0.241 with a top-50 of 5.39; the seeds read 0.180 to 0.242 and select at
+epochs 34 to 197 on validation Pearson 0.30 to 0.34, with the widest band of the three
+rates; on the covered genes it reads 0.166. So the rate curve of the linear slot is
+0.225, 0.234 and 0.211 at the full rate, a tenth and a hundredth, a maximum at the
+tenth that stays 0.045 under the pool alone: a slot that learns too slowly to set the
+early selection also learns too slowly to add, and the two-slot form is closed on this
+target with the pool alone above every version of it.
+
+Round 208 is read (job 2890, 3 h 39 min): six more seeds of the three families with
+two slots (round 199). The second six read 0.236 (sd 0.005) against the first six's
+0.239, and over twelve the arm reads 0.237 (sd 0.004, standard error 0.001), seeds
+0.230 to 0.243, selecting at epochs 6 to 14 on validation Pearson 0.27 to 0.29; the
+twelve-seed ensemble reads 0.240 with a top-50 of 4.99. Paired over the same twelve
+seeds the arm is $+0.035$ over GO alone on twelve of twelve, $+0.023$ over GO with the
+HiGHS vector on twelve of twelve and $-0.041$ under the pool alone through 256 on zero
+of twelve. On the covered genes over the twelve seeds it reads 0.186 against the
+pool's 0.206 and the annotation's 0.142. The level of the best arm with the annotation
+in it is 0.237 with the tightest band of any store arm, 0.04 under the pool alone on
+every seed and on both groups of genes.
+
+Round 210 is read (job 2896, 3 h 33 min): the pool through 256 with the slot frozen
+until epoch 5 and until the trailing validation Pearson reaches 0.15, round 131's
+release rule, asked because the decomposition found the backbone's head a constant on
+two seeds of six (Section~\ref{sec:decomposition}). Five seeds of six released at
+epoch 5 and read 0.255 (sd 0.027) against 0.281 for the same five from epoch 0; the
+sixth never released, its validation correlation peaking at 0.16 against the rule's
+0.15 threshold, and it reads 0.005. Over six seeds the arm reads 0.213 with a standard
+deviation of 0.105, the widest band of any arm in the study, ensembled 0.251; the
+released seeds select at epochs 30 to 138 on validation Pearson 0.37 to 0.42, the
+highest validation correlations recorded here, where the slot from epoch 0 selects on
+0.36 to 0.40. On the covered genes the arm reads 0.154 against 0.212. So a backbone
+that trains alone for five epochs reaches a higher validation correlation and a lower
+test read, and on one seed the rule prevents the slot from ever opening: holding the
+slot back does not make the backbone add, it makes the cell depend on the backbone's
+escape. The pool slot from epoch 0 stays the arm.
+
+Round 211 is read (job 2897, 3 h 30 min): Cooper's seventeen relative peaks through a
+hidden layer of 256, substituting for M\"ulleder's nineteen concentrations in the same
+slot. It reads 0.111 (sd 0.025) against the pool's 0.279 ($-0.168$ paired, sd 0.022,
+zero of six) and against the affine-free control's 0.058 ($+0.052$, sd 0.061, six of
+six), top-50 2.73 against 4.69 and 3.39, ensembled 0.139; the seeds read 0.088 to 0.155
+and select at epochs 44 to 137 on validation Pearson 0.18 to 0.34. Cooper's store covers
+554 of the 629 pinned genes, a different 554 from the pool's, and its coverage carries
+nothing here (the indicator reads $-0.051$), so the read is the values: 0.111 on the
+genes it covers against the pool's 0.287 on the same genes. So the two amino-acid
+screens are not interchangeable as a predictor of this strain's betaxanthin. Cooper's
+peaks carry a third of what M\"ulleder's concentrations carry and twice what no store
+carries, which matches the ladder over the same columns (forest 0.113 against 0.280) and
+Cooper's own duplicate agreement of 0.06 against M\"ulleder's retest of 0.20: the
+screen's own reliability bounds what its columns can lend.
+
+Round 212 is read (job 2898, 3 h 03 min): the pool through 256 on a one-block backbone
+of width 36 with nine heads, 84,907 parameters against the width-12 cell's 24,283, the
+width control for the layer-pattern ladder (the mask and the regularizer map the nine
+relations onto nine heads, so the ladder runs at nine). It reads 0.291 (sd 0.023)
+against width 12's 0.279 ($+0.012$ paired, sd 0.032, four of six), top-50 5.26 against
+4.69, ensembled 0.309 with a top-50 of 5.59, the highest ensemble of the study at any
+seed count; the seeds read 0.261 to 0.310 and select at epochs 24 to 95 on validation
+Pearson 0.37 to 0.39. On the covered genes it reads 0.214 against width 12's 0.212, so
+the wider backbone is worth nothing on the strains with a measured profile and the whole
+gain is in ranking the 73 strains without one, 0.142 against 0.095. The regularizer's
+loss is 0.0 at every epoch here too, since one block carries no regularized head: this
+cell is graph-free by construction and is the control the three graph patterns are read
+against (213 to 216).
+
+Round 213 is read (job 2899, 3 h 48 min): the pool through 256 on two unmasked blocks
+of width 36 (the $[S, S]$ pattern, 100,927 parameters), the depth control for the
+masked patterns. It reads 0.270 (sd 0.023) against the one-block width-36 cell's 0.291
+($-0.021$ paired, sd 0.036, three of six), top-50 4.13 against 5.26, ensembled 0.282
+with a top-50 of 4.19; the seeds read 0.235 to 0.306 and select at epochs 34 to 194.
+On the covered genes it reads 0.207 against 0.214, and on the 73 uncovered strains
+$-0.015$ against 0.142: the second unmasked block gives back the whole of what the
+wider one-block backbone gained on the unmeasured strains and nothing on the measured
+ones, so the three graph patterns (214 to 216) are read against a depth control that
+sits under its own width control and under the width-12 incumbent (0.279). The
+regularizer's loss is 0.0 here too.
+
+Round 214 is read (job 2901, 4 h 22 min): the pool through 256 on two blocks of width
+36 with the 020 hard mask on the second, one of the nine relations burned into each of
+its nine heads with self-loops and the summary token free, the first cell of the study
+whose attention is shaped by the graphs. It reads 0.228 (sd 0.048) against the unmasked
+two blocks' 0.270 ($-0.042$ paired, sd 0.044, one of six), top-50 3.66 against 4.13,
+ensembled 0.253 with a top-50 of 5.79; the seeds read 0.159 to 0.277 and select at
+epochs 21 to 194. On the covered genes it reads 0.161 against 0.207, on the uncovered
+0.049 against $-0.015$. Where the loss went is in the decomposition
+(Table~\ref{tab:head-decomposition}): on the unmasked control the backbone's head is a
+constant on four seeds of six and adds $-0.016$ and $+0.035$ on the two where it is
+live; under the mask it is live on five of six, and on the two seeds where its spread
+rivals the slot's it costs the arm 0.081 and 0.105 (the head's own read of the target
+0.071 and $-0.004$ there), while on the one seed where it stays a constant the two
+cells' predictions agree at 1.0000 and read 0.277 alike. The slot alone reads 0.261
+under the mask against 0.267 unmasked. So the mask does what a graph prior is for, it
+keeps the backbone from collapsing to a constant, and the backbone it keeps alive reads
+betaxanthin at $-0.06$ to 0.07 on its own and subtracts from the slot: attention shaped
+by the graphs carries no more of this target than unshaped attention did, and the
+graphs' own read (0.244 by one hop of label propagation, Section~\ref{sec:homophily})
+is not what either backbone learns.
+
+Round 215 is read (jobs 2900 and 2923, 6 h 53 min and 7 h 00 min): the pool through 256
+on two blocks of width 36 with 019's KL regularizer on the second at the 019 weight, the
+first cell of the campaign on which the regularizer is not inert. The regularized block
+holds its attention in memory, about 14.5 GB a seed, and the pack's six concurrent seeds
+ran a 46 GB card out of memory at the start, so seeds 2703 to 2705 ran as a three-seed
+pack. It reads 0.226 (sd 0.023) against the unmasked two blocks' 0.270 ($-0.044$
+paired, sd 0.033, none of six), top-50 4.16 against 4.13, ensembled 0.241 with a top-50
+of 4.79; the seeds read 0.201 to 0.263 and select at epochs 12 to 102 on validation
+Pearson 0.33 to 0.40, and the regularizer's loss at the selected epoch is 0.34 to 0.44
+against a data term of 0.46 to 0.50. On the covered genes it reads 0.152, on the
+uncovered 0.031. The prior moves every seed's prediction (agreement with the unmasked
+twin 0.66 to 0.81 against 0.88 to 0.99 between the control's own seeds) and it moves the
+backbone: its head is live on all six seeds with a spread 1.0 to 2.2 times the slot's,
+and its own read of the target, 0.045 to 0.130, is the highest of any backbone head in
+the study, above the masked head's $-0.06$ to 0.07 and the unmasked live heads' $-0.10$
+and 0.09. It still subtracts, by 0.002 to 0.046, because a head that reads 0.1 with a
+spread twice the slot's dilutes a slot that reads 0.25 (the slot alone 0.250 here). So
+at the 019 weight the graph prior is the one intervention that makes the backbone read
+betaxanthin at all, and what it reads is under half of what the graphs carry by label
+propagation; the weight ladder (217, 218) asks whether a stronger prior raises it.
+
+Round 216 is read (job 2902, 5 h 42 min): the pool through 256 on three blocks of
+width 36, the first unmasked and the second and third hard-masked (the $[S, M, M]$
+pattern). It reads 0.247 (sd 0.043) against the two-block mask's 0.228 ($+0.019$
+paired, sd 0.079, three of six) and against the width-12 one-block incumbent's 0.279
+($-0.032$, sd 0.061, three of six), top-50 3.39 against 3.66 and 4.69, ensembled 0.261
+with a top-50 of 3.59, the lowest calls of the pattern ladder; the seeds read 0.176 to
+0.283 and select at epochs 23 to 170 on validation Pearson 0.36 to 0.41. On the covered
+genes it reads 0.183, on the uncovered 0.075. The decomposition
+(Table~\ref{tab:head-decomposition}) is the two-block mask's again: the backbone's head
+is a constant on three seeds of six, and on the three where it is live it reads the
+target at 0.025 to 0.074 on its own and costs the arm 0.006, 0.037 and 0.077, the
+slot alone reading 0.267. The predictions agree with the unmasked two blocks' at 0.74
+to 0.98 by seed, lowest on the two seeds where the live head costs most. A second
+masked block does not change what one does: the mask keeps a head alive that reads
+betaxanthin under 0.08 and dilutes the slot on the seeds where it is live.
+
+Round 217 is read (jobs 2924 and 2925, 7 h 11 min and 7 h 16 min, three seeds a pack
+for the memory): the round-215 cell with the regularizer at ten times the 019 weight
+($6.5 \times 10^{-4}$), where the penalty at the selected epoch is 2.95 to 3.65 against
+a data term of 0.46 to 0.51. It reads 0.236 (sd 0.018) against the 019 weight's 0.226
+($+0.010$ paired, sd 0.016, four of six) and against the unmasked two blocks' 0.270
+($-0.034$, sd 0.030, one of six), top-50 3.93 against 4.16 and 4.13, ensembled 0.245
+with a top-50 of 4.39; the seeds read 0.210 to 0.258 and select at epochs 15 to 194 on
+validation Pearson 0.31 to 0.40. On the covered genes it reads 0.158, on the uncovered
+0.061. The backbone's head is live on every seed with a spread 0.6 to 1.2 times the
+slot's, reads the target at 0.024 to 0.076 on its own, and subtracts 0.006 to 0.042,
+the slot alone reading 0.260; the predictions agree with the unmasked twin's at 0.73
+to 0.85. A prior ten times heavier moves the backbone less than the 019 weight did
+(its head's own read falls from 0.05 to 0.13 to 0.02 to 0.08) and costs the arm the
+same.
+
+Round 218 is read (jobs 2926 and 2927, 7 h 01 min and 7 h 13 min): the same cell at a
+hundred times the 019 weight ($6.5 \times 10^{-3}$), the penalty at the selected epoch
+28.4 to 30.3 against a data term of 0.48 to 0.50, sixty times the data term. It reads
+0.243 (sd 0.031) against the 019 weight's 0.226 ($+0.017$ paired, sd 0.037, five of
+six) and against the unmasked two blocks' 0.270 ($-0.027$, sd 0.025, none of six),
+top-50 4.29 against 4.16 and 4.13, ensembled 0.255 with a top-50 of 4.79; the seeds
+read 0.186 to 0.271 and select at epochs 74 to 189, later than either lighter weight,
+on validation Pearson 0.29 to 0.40. On the covered genes it reads 0.172, on the
+uncovered 0.127. The head is live on every seed with a spread 0.45 to 0.94 times the
+slot's, reads $-0.007$ to 0.116 on its own, and moves the arm by $+0.001$ to $-0.078$,
+the slot alone reading 0.269; the predictions agree with the unmasked twin's at 0.77
+to 0.89. So the weight ladder is flat: 0.226, 0.236 and 0.243 at one, ten and a
+hundred times the 019 weight, every point under the unregularized two blocks on every
+seed but one, and the slot alone reads 0.25 to 0.27 at every weight. Where the 025
+sweep found the prior's gain, at a penalty fifteen to fifteen hundred times the data
+term, this target finds a cost that shrinks with the weight and never turns. The
+backbone the prior keeps alive reads betaxanthin at 0.02 to 0.13, under half of the
+0.244 the graphs carry by label propagation (Section~\ref{sec:homophily}), and it never
+adds to the slot.
+
+Round 219 is read (job 2914, 3 h 35 min): the graphs' one-hop label propagation of
+betaxanthin as the store (\texttt{YPD\_bx\_graphlabel}, twenty columns over every gene
+of the genome, Section~\ref{sec:homophily}) through 256 on the width-12 one-block
+recipe of round 187, so the graphs and the pool are read in the same slot with the same
+encoding. The arm is TRANSDUCTIVE: its columns are the training and validation genes'
+measured betaxanthin, and a gene whose neighbors were not screened has nothing to
+read, so a gain here is a semi-supervised gain that does not carry to a strain outside
+the screen. It reads 0.182 (sd 0.041) against the pool's 0.279 ($-0.097$ paired, sd
+0.041, zero of six) and against the affine-free control's 0.058 ($+0.124$, sd 0.052,
+six of six), top-50 4.86 against 4.69 and 3.39, ensembled 0.213 with a top-50 of 5.79;
+the seeds read 0.125 to 0.227 and select at epochs 44 to 197 on validation Pearson 0.25
+to 0.28. The store covers every pinned gene, so none of this is a coverage indicator,
+and the split by the pool's coverage runs the other way from the pool's: 0.120 on the
+556 strains M\"ulleder measured against the pool's 0.212, and 0.287 on the 73 it did
+not against the pool's 0.095. The same twenty columns read 0.254 by forest and 0.219
+by ridge on the ladder, so the transformer's hidden slot reads the propagated label
+under its own ridge, where it read the pool above every ladder model: the label store's
+signal is linear and the slot's nonlinearity buys nothing on it.
+
+Round 220 is read (job 2915, 3 h 31 min): the pool with the label-propagation store
+appended in the same slot through 256 (\texttt{YPD\_bx\_aapoolgraphlabel}, the pool's
+gene axis so the 73 uncovered pinned genes keep their zero row), TRANSDUCTIVE for the
+same reason as round 219. It reads 0.288 (sd 0.013) against the pool alone's 0.279
+($+0.009$ paired, sd 0.017, four of six), against the label store alone's 0.182
+($+0.106$, sd 0.044, six of six) and against the one-block width-36 backbone's 0.291
+($-0.003$, sd 0.021, three of six), top-50 4.99 against 4.69, ensembled 0.318 with a
+top-50 of 5.59, the highest six-seed ensemble of the study; the seeds read 0.273 to
+0.310, the tightest band of any pool arm, and select at epochs 33 to 192 on validation
+Pearson 0.36 to 0.42. On the measured strains it reads 0.219 against the pool's 0.212,
+and on the unmeasured 0.087 against 0.095. So the graphs add to the profile what the
+ladder's forest said they would (0.284 against 0.280 on all genes, 0.234 against 0.226
+on the measured strains): under a hundredth, on four seeds of six, with the whole of it
+on the measured strains. The gain is real at the ensemble and at the band, and it is a
+gain the model can only have where the neighbors were screened.
+
+Round 221 is read (job 2937, 3 h 35 min), a CONTROL: the essentiality incumbent's
+four-media recipe carried to this target, the HiGHS parsimonious store of round 139
+with the growth-ratio columns for the shipped medium, SM, SC and YPD from the scan over
+every yeast-GEM gene (\texttt{fba\_ratio\_all\_gem\_genes.csv}) in place of YPD alone.
+The screen was run on YPD, so four media do not describe it and the arm is not a
+candidate. It reads 0.160 (sd 0.022) against the YPD store's 0.130 ($+0.030$ paired, sd
+0.040, five of six), top-50 4.23 against 4.46, ensembled 0.188; the seeds read 0.120
+to 0.182 and select at epochs 40 to 191 on validation Pearson 0.03 to 0.30. Three of
+the four columns are the same number for every gene outside the GEM and differ from
+YPD's only on the 1,161 genes the model carries, and what they add is a ranking of
+those genes by how their deletion's growth defect changes with the medium.
+
+Round 222 is read (job 2941, 3 h 34 min): the essentiality incumbent's default affine
+initialization carried to this target on the screen's own medium, the HiGHS store with
+YPD's growth ratio as in round 139 and \texttt{--ess-solve-zero-init} removed, the
+essentiality document's incumbent recipe. It reads 0.142 (sd 0.036)
+against the zero-initialized store's 0.130 ($+0.012$ paired, sd 0.024, five of six) and
+against the four-media control's 0.160 ($-0.019$, sd 0.047, one of six), top-50 4.49
+against 4.46, ensembled 0.163; the seeds read 0.080 to 0.178, the widest band of the
+three, and select at epochs 2 to 114 on validation Pearson 0.02 to 0.27. So the
+essentiality recipe's two levers, the initialization and the media, move the flux
+store by 0.01 and 0.03 on this target, and the metabolic module's best read of
+betaxanthin stays at 0.13 to 0.16: under GO alone (0.203), a half of the profile's
+0.279 and under the graphs' label propagation (0.182). Where it works on essentiality,
+where a gene's growth ratio is the label's own quantity, it does not carry to a
+production level the flux balance does not represent.
+
+Round 223 is read (jobs 2945 and 2946, 6 h 39 min and 6 h 52 min for six seeds each),
+the first arm of the inductive program: the three-family affine of round 190 (GO with
+the HiGHS parsimonious vector and the MOMA vector) with the trainer's nineteen-column
+M\"ulleder amino-acid head trained beside the betaxanthin head
+(\texttt{--aux-mulleder}, the 019 co-head, a masked mean-squared error on the
+standardized profile at weight 1), selection and scoring on betaxanthin alone. The
+co-head is INDUCTIVE at the gene level: the profile is a training target, never an
+input, and every pinned gene's M\"ulleder record sits in the test block beside its
+betaxanthin record, so nothing of a held-out strain is read. Over twelve seeds paired
+with round 190's twelve it reads 0.219 (sd 0.006) against 0.217 (sd 0.005), $+0.001$
+paired (sd 0.007, eight of twelve), top-50 4.91 against 4.94, ensembled 0.218 against
+0.217 on the first six seeds and 0.220 against 0.218 on all twelve; the seeds read
+0.207 to 0.226 and select at epochs 6 to 14 on validation Pearson 0.24 to 0.26, the
+same early epochs as the control. The co-head's term is not small: at epoch 0 the
+training loss is 1.55 against a data term of 0.53, so the profile's error is 1.9 times
+the betaxanthin error, and the network is fit to the profile as much as to the target.
+It moves nothing. A weight other than 1 (\texttt{--aux-weight}, added with this round)
+has not been run.
+
+Round 224 is read (job 2947, 6 h 53 min): the same co-head on GO alone, the round-167
+recipe. It reads 0.205 (sd 0.003) against 0.202 (sd 0.001) on the same six seeds
+($+0.003$ paired, sd 0.004, four of six), top-50 5.06 against 5.03, ensembled 0.206
+against 0.202; the seeds read 0.201 to 0.208 and select at epochs 5 to 12 on validation
+Pearson 0.25 to 0.26. Nothing again, on the tightest arm of the study.
+
+Round 225 is read (job 2948, 6 h 49 min): the co-head on the affine-free control, the
+round-137 recipe, the arm on which a shared representation had the most room. It reads
+0.075 (sd 0.035) against 0.058 (sd 0.075) on the same six seeds ($+0.017$ paired, sd
+0.096, three of six), top-50 4.43 against 3.39, ensembled 0.108 against 0.082; the seeds
+read 0.024 to 0.125 and select at epochs 32 to 147 on validation Pearson 0.23 to 0.31.
+The validation Pearson is the highest of the three co-head arms and the pinned read is
+the control's: the profile as a co-target fits the validation genes and carries nothing
+to the pin. Across the three rounds the amino-acid profile as a joint training target
+adds $+0.001$, $+0.003$ and $+0.017$, each within its paired spread, so the 0.06 to
+0.08 the profile adds as an input (rounds 206 to 220) is not reachable through the
+representation the two heads share, at least at weight 1.
+
+Round 226 is read (job 2973, 3 h 32 min): the graphs' one-hop propagation of GO as a
+store, the neighbor mean (Section~\ref{sec:inductive}) of the propagated GO multi-hot
+over STRING coexpression and over the union of the nine graphs with $\log(1+n)$ of the
+covered-neighbor count, 4,726 columns (\texttt{YPD\_bx\_gonbr}), on the round-167
+recipe: the linear affine under \texttt{log1p} with zero initialization, GO's own
+multi-hot replaced by the neighbors'. INDUCTIVE: no label and no measurement enters,
+and a pinned gene's row is built exactly as a training gene's. It reads 0.145 (sd
+0.072) against GO alone's 0.202 (sd 0.001) on the same six seeds ($-0.058$ paired, sd
+0.071, one of six), top-50 4.26 against 5.03, ensembled 0.149 against 0.202; the seeds
+read 0.027 to 0.210 and select at epochs 6 to 165 on validation Pearson 0.12 to 0.19,
+the widest seed spread of any GO arm. On the pool's coverage (Section~\ref{sec:coverage},
+every gene carries a row here so no indicator enters) the covered strains read 0.089
+and the uncovered 0.246. The same 4,726 columns read 0.279 by forest and 0.183 by ridge
+on the ladder, so through the linear slot the store loses to the annotation it was
+built from.
+
+Round 227 is read (job 2974, 3 h 36 min): GO with its neighbor mean appended
+(\texttt{YPD\_bx\_gogonbr}, 7,088 columns, the concatenation of round 167's store and
+round 226's), the same linear affine. INDUCTIVE. It reads 0.221 (sd 0.004) against
+0.202 ($+0.019$ paired, sd 0.005, six of six), top-50 5.86 against 5.03, ensembled 0.221
+against 0.202; the seeds read 0.215 to 0.227 and select at epochs 3 to 8 on validation
+Pearson 0.22 to 0.23. Against the propagation alone it is $+0.076$ (sd 0.073, six of
+six). On the covered strains it reads 0.159 against GO's 0.140, on the uncovered 0.329.
+This is the first inductive gain on the transformer, and it edges the three-family
+affine of round 190 (0.217, twelve seeds) with GO and the graphs alone. The gain is a
+fifth of what the same columns give the forest: the forest lifts GO from 0.187 to 0.279
+on the ladder, the affine lifts it from 0.202 to 0.221.
+
+Round 228 is read (job 2975, 3 h 37 min): the propagation store of round 226 through a
+hidden layer of 256 (\texttt{--ess-solve-head-hidden 256}, the round-206 pool recipe),
+the arm for a read the ladder found nonlinear (ridge 0.183, forest 0.279). INDUCTIVE.
+It reads 0.217 (sd 0.013), $+0.073$ over the linear affine of round 226 (sd 0.076, six
+of six) and $-0.062$ under the pool through the same layer (round 206, 0.279; sd 0.033,
+none of six), top-50 5.03, ensembled 0.232; the seeds read 0.204 to 0.235 and select at
+epochs 14 to 128 on validation Pearson 0.13 to 0.19. The hidden layer holds 1,211,095
+of the cell's 1,229,275 parameters against 5,198 in the linear head. On the covered
+strains it reads 0.161, on the uncovered 0.253. The layer recovers the linear slot's
+loss and no more: through 256 the store reads GO alone's level, where the forest reads
+the pool's. Hypothesis, untested: the slot reads the columns through a twelve-wide
+backbone token and one affine map, and the forest's read of the neighborhood is a
+conjunction of many columns that neither form reaches; the test is the forest itself,
+trained out of fold on the training genes and its prediction fed as a one-column
+inductive store (stacking), which is planned and not run.
+
+Round 229 is read (job 2978, 4 h 8 min): the perturbation operator with two stacked
+cross-attention blocks under ReZero residuals, the second block's feedforward at
+multiple 1 (\texttt{--pert-layers 2 --pert-residual rezero --pert-extra-ffn-mult 1}),
+on the round-190 recipe (GO with both flux programs in one affine), the first rung of
+the operator ladder. INDUCTIVE. On a single deletion the transform's cross-attention
+has one key, so its context is a linear map of the deleted gene's embedding with no
+dependence on the querying gene (the model's own documented note, verified there); the
+ladder gives the operator depth and the two constructions that make it query
+dependent. It reads 0.217 (sd 0.004) against round 190's 0.216 on the same six seeds,
+$+0.001$ (sd 0.010, three of six), top-50 4.89 against 4.73, ensembled 0.220; the seeds
+read 0.210 to 0.220 and select at epochs 7 to 15 on validation Pearson 0.24 to 0.26,
+where round 190 selects at 9 to 14. The second block adds 986 parameters to the
+transform (2,870 against 1,884). Depth alone changes nothing.
+
+Round 230 is read (job 2979, 3 h 43 min): the multiplicative pair term
+$h_i \odot (1 + \gamma(c))$ added beside the additive context
+(\texttt{--pert-hadamard add}), one block, on the same recipe. INDUCTIVE. It reads
+0.218 (sd 0.006), $+0.002$ over round 190 (sd 0.010, four of six), top-50 5.03,
+ensembled 0.220; the seeds read 0.206 to 0.225 and select at epochs 7 to 13 on
+validation 0.24 to 0.25. The pair term adds 312 parameters (2,196 against 1,884) and
+moves nothing.
+
+Round 231 is read (job 2990, 4 h 35 min): the null sink (\texttt{--pert-null-sink}: a
+zero key and value column with a learned logit offset from 0.0, trainable, the attended
+output rescaled to undo the sink's attenuation), so that the single real key's weight
+is $\sigma(q_i \cdot k_p / \sqrt{d} - b)$ and depends on the querying gene. INDUCTIVE.
+It reads 0.216 (sd 0.006), $+0.0001$ over round 190 (sd 0.0005, four of six), and
+selects the identical epochs (14, 12, 9, 11, 11, 11) on validation 0.25 to 0.26: the
+sink's one scalar leaves the cell's predictions where they were. Ensembled 0.216,
+top-50 4.69. Three rungs read the incumbent exactly, so the operator's form is not the
+bottleneck at this recipe; the combined operator (w251, job 2991) is running and unread.
+
+Round 232 is read (job 2992, 3 h 33 min): the species language-model composite
+sequence embedding, FUDT upstream and downstream over the flanking DNA, ProtT5 over the
+protein and CaLM over the codons (\texttt{--node-embeddings pathways fudt\_upstream
+fudt\_downstream prot\_T5\_all calm}, the set the expression line and the essentiality
+study's round 17 used), in place of ProtT5 alone on the round-190 recipe; every
+betaxanthin cell before it ran on ProtT5 alone. INDUCTIVE. It reads 0.219 (sd 0.004),
+$+0.003$ over round 190 (sd 0.007, three of six), top-50 4.76 against 4.73, ensembled
+0.220; the seeds read 0.212 to 0.223 and select at epochs 8 to 14 on validation 0.24 to
+0.26. The preprocessor grows from 14,400 to 42,048 parameters for the wider input and
+the read does not move.
+
+Round 233 is read (job 2993, 3 h 34 min): the composite of round 232 with ESM2 (650M,
+all genes) added. INDUCTIVE. It reads 0.216 (sd 0.005), $-0.0002$ against round 190
+(sd 0.010, three of six) and $-0.004$ against the composite (sd 0.007, two of six),
+ensembled 0.217; the seeds read 0.207 to 0.220 and select at epochs 9 to 13 on
+validation 0.25 to 0.26; the preprocessor holds 57,408 parameters. The sequence
+embedding is not the bottleneck on this target: four species models in place of one
+read the incumbent's level.
+
+Round 234 is read (job 3000, 3 h 32 min): the forest's read of the GO neighbor mean as
+a ONE-column store (\texttt{YPD\_bx\_gonbrforest}, \texttt{target\_forest\_stack\_store.py},
+slurm job 2989): the ladder's forest (300 trees, square-root features, leaf size 5
+selected on validation Pearson 0.314) fit on the training genes' standardized targets,
+its value for a training gene from a forest that never saw that gene's label (five
+folds, out-of-fold Spearman 0.236 on the 3,494 training genes) and for every other gene
+from the forest fit on the whole training split, the column shifted nonnegative and
+read through the round-167 recipe's linear affine under zero initialization and
+$\log(1 + v)$. INDUCTIVE: the forest reads annotation only, so the row exists for any
+gene with neighbors, and no pinned gene's label is read anywhere. The column by itself
+reads the 629 pinned genes at Spearman 0.269 (\texttt{target\_stack\_column\_read.py})
+and the 270 validation genes at 0.150. The transformer reads 0.200 (sd 0.032),
+$-0.003$ against GO alone (round 167, 0.202; sd 0.032, two of six) and $+0.055$ over
+the neighbor mean through the same affine (round 226, 0.145; sd 0.075, four of six),
+top-50 5.26; the seeds read 0.174 to 0.259 and select at epochs 10 to 194 on validation
+Pearson 0.32 to 0.34. The spread is the epoch: the one seed that selected epoch 194
+reads 0.259, the column's own level, and the five that selected epochs 10 to 29 read
+under it; the six-seed ensemble reads 0.247 with top-50 6.19. The affine head holds 473
+parameters. Hypothesis, untested: the zero-initialized slot learns the column late,
+and the validation split, where the column reads 0.150, cannot tell the epochs apart
+until it has. The same store under the default affine initialization (w257, job 3006)
+is queued, the store appended to the round-190 affine (w255, job 3001) is running, and
+the co-head at weight 0.1 (w256, job 3005) is running; none is read.
+
+\input{tables/target_transfer}

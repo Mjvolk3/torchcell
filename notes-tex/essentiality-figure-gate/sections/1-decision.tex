@@ -1,0 +1,68 @@
+%% notes-tex/essentiality-figure-gate/sections/1-decision.tex
+%% SOURCE: every number is a macro of tables/gate_numbers.tex, written by
+%% experiments/028-gene-essentiality/scripts/essentiality_gate_numbers.py from
+%% results/fcl_comparison.json, family_ensembles_folds.json, resplit_readout.json,
+%% simplification_readout.json, genome_heldout_readout.json and dcell_style_folds.json.
+%% The earlier document named here is the notes-tex directory 028-gene-essentiality.
+
+\section{The decision\secstatus{todo}}
+\label{sec:decision}
+
+Gene essentiality is to be its own main-text figure, separated from fitness and
+interactions, because the study behind it is closed on its two goals and its figure can
+carry a claim the others cannot yet. Every model number here is on the \gnHeldOut{} genes
+of the \gnReleasedHeldOut{} that Merzbacher 2025 held out of its own training and that
+resolve as single-deletion genotypes in the build, \gnEssentialHeldOut{} of them
+essential, with the epoch chosen on validation folds that never contain them. Nothing here
+is approved. The sheets are the summary figures of \file{028-gene-essentiality}, and the
+symbol after each panel letter says only whether the values behind it are on file.
+
+\pfstep{Where the full record is} \file{028-gene-essentiality} holds the study: the
+endpoint, its labels and splits; the comparators and how Flux Cone Learning's published
+numbers were reproduced (five-fold mean \gfclPublishedCv{} published, \gfclRecomputedCv{}
+recomputed); the backbone rounds; every form of the metabolic module and why the layer
+was retired; the two model families and their average; the hard genes; and the summary
+on one page. This document takes its result files and asks what a figure can claim.
+
+\pfstep{Three statements are on file} First, the held-out score. The best method is an
+equal-weight average of two families, \gbestAverageNames{}, at \gbestAverage{} AUROC
+[\gbestAverageLo{}, \gbestAverageHi{}] on the \gnHeldOut{} genes; the best single model
+reads \gbestSingle{} [\gbestSingleLo{}, \gbestSingleHi{}], against \gfclAuroc{} for Flux
+Cone Learning and \gfbaAuroc{} [\gfbaAurocLo{}, \gfbaAurocHi{}] for FBA on the same
+genes. On \gnResplits{} other held-out fifths of the labeled genes, with the average fixed
+in advance, it beats the better single model on
+\gresplitDiffaverageMinusthebettersinglemodelUp{} of
+\gresplitDiffaverageMinusthebettersinglemodelOf{}
+(\gresplitDiffaverageMinusthebettersinglemodel{}). Second, the module form that carries.
+A single-medium parsimonious solve per genotype, run once offline and read as an affine
+on the logit beside six gene-rule counts, lifts the same cell with no metabolism by
+\ggainOneMediumOverNone{} on the \gnResplits{} repeated splits, higher on
+\ggainOneMediumOverNoneUp{} of \ggainOneMediumOverNoneOf{} splits and on
+\ggainOneMediumOverNonePairsUp{} of \ggainOneMediumOverNonePairs{} split-and-seed pairs,
+and it matches the four-media form (\goneMinusFour{}, \goneMinusFourUp{} of
+\goneMinusFourOf{} splits). Every form that kept a linear program inside the training
+loop scored lower, so the layer is retired and the solve is kept as data. Third, the
+limit. Off the metabolic genes every deletion reads one constant row, and on the
+\ggenomeN{} genome-wide genes that carry no GEM reaction (\ggenomeEssential{} essential)
+CGT with the solve reads \ggenlayerFree{} [\ggenlayerFreeLo{},
+\ggenlayerFreeHi{}] where GCN on ProtT5 over the union of nine gene graphs
+reads \ggengcnProt{} [\ggengcnProtLo{}, \ggengcnProtHi{}].
+
+\pfstep{The regime question, settled by naming it} The highest single cell in the
+study is transductive: the one-hop propagation of the training and validation genes'
+calls through the gene graphs. It is not on the proposed main-text sheet, because its
+number holds only inside a called screen. Every bar proposed for the main text is
+inductive, reading the gene and the metabolic model and nothing measured on the screen's
+other genes, and the sheet's key says so. \regimekey{}
+
+\pfstep{The claims the main-text figure would make} First, that on the released held-out
+genes the method beats the published Flux Cone Learning and FBA by a margin the gene
+bootstrap separates: on file. Second, that the metabolic model enters best as data, one
+offline solve per genotype and medium read through an affine, and that this form carries
+across the two model families: on file. Third, that the metabolic module covers only
+the genes with a reaction and the gene graphs cover the rest, so a model over the whole
+database needs both inputs: on file. Fourth, that the hard genes share an annotation
+(isozyme redundancy): on file in \file{028-gene-essentiality}, not yet read into this
+document's numbers. The figure enters the paper when the composition of
+\ref{sec:mockups} is drawn at Nature size from the same result files and the author
+approves each claim's sentence.

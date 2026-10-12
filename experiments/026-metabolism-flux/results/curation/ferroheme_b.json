@@ -1,0 +1,147 @@
+{
+ "slug": "ferroheme_b",
+ "met_ids": ["s_0712"],
+ "gem_name": "ferroheme b",
+ "gem_formula": "C34H30FeN4O4",
+ "gem_charge": -2,
+ "compartments": ["m"],
+ "blocked_reactions": ["r_0436", "r_0531", "r_4152"],
+ "kind": "pka_ladder",
+ "admission": "provisional",
+ "value": {
+  "pkas": [4.75, 4.15],
+  "site_assignments": [
+   "propionate carboxylate, statistically higher macroscopic rung (pK_int + log10 2)",
+   "propionate carboxylate, statistically lower macroscopic rung (pK_int - log10 2)"
+  ],
+  "species": "ferrous",
+  "medium": "aqueous surfactant micelles (SDS or Triton X-100), NOT aqueous monomeric heme",
+  "intrinsic_pka": 4.45,
+  "reported_range": [4.4, 4.5],
+  "T_K": 300.15,
+  "ionic_strength_M": 0.2,
+  "n_ionizable_sites_in_window": 2,
+  "derivation": "Das and Medhi 1998 report ONE macroscopic apparent pKa for 'the heme propionate' of the ferrous species, 4.4 to 4.5, inferred from the pH dependence of the square-wave midpoint potential (dE/dpH about -59 mV) of (PPIX)Fe in aqueous SDS, Triton X-100 and CTAB micelles. The eQuilibrator compound bridge needs one rung per proton, so the single value 4.45 is split over the two equivalent, remote propionates by the statistical factor log10 2 = 0.301, giving 4.75 and 4.15. The split is a construction, not a measurement; the measured content of this record is the single number 4.45 and its 4.4 to 4.5 range.",
+  "pyrrole_nh_note": "the two pyrrole NH of the free base are consumed by Fe(II) coordination, so no pyrrole rung belongs in the ladder; the eQuilibrator cache's own four-rung list for this InChIKey includes two such rungs and is therefore for the wrong species",
+  "not_admitted_to_default_route": true
+ },
+ "sigma_kj_per_mol": null,
+ "sources": [
+  {
+   "source_url": "https://pubmed.ncbi.nlm.nih.gov/9666570/",
+   "retrieval_method": "pubmed_eutils_efetch",
+   "retrieval_command": "curl -sS -o pubmed_9666570.xml 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=9666570&retmode=xml'",
+   "sha256": "7264a6466c5b04961e6a5bfb18a46cf9ed0f4136deb40af9cc9a81b0adc299fa",
+   "retrieved_at": "2026-09-11T21:54:00Z",
+   "verbatim_quote": "The dependence of mid-point potential on pH indicates that the heme propionate undergoes a redox-linked changed in pKa from 3.2-3.5 in the ferric form to 4.4-4.5 in the ferrous form (27 degrees C, mu = 0.2 M). The change in the mid-point potential per unit change in pH. delta E/delta pH, is ca. -59 mV.",
+   "location": "AbstractText, Das D K and Medhi O K, J Inorg Biochem 70(2):83-90 (1998), doi 10.1016/s0162-0134(98)10002-8; artifact file $DATA_ROOT/data/torchcell/thermo_equilibrator/curated/ferroheme_b/pubmed_9666570.xml"
+  },
+  {
+   "source_url": "https://pubmed.ncbi.nlm.nih.gov/9666570/",
+   "retrieval_method": "pubmed_eutils_efetch",
+   "retrieval_command": "curl -sS -o pubmed_9666570.xml 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=9666570&retmode=xml'",
+   "sha256": "7264a6466c5b04961e6a5bfb18a46cf9ed0f4136deb40af9cc9a81b0adc299fa",
+   "retrieved_at": "2026-09-11T21:54:00Z",
+   "verbatim_quote": "The proton equilibrium in aqueous surfactant solutions of hemin, (PPIX)Fe(H2O)+2, involving the propionic acid groups is reported (PPIX = protoporphyrinato IX). The surfactant used are sodium dodecyl sulphate (SDS), triton X-100 (TX-100) and hexadecyl trimethylammonium bromide (CTAB). The pKa values, determined spectroscopically from the pH variations of the Soret absorption, are found at ca. 3.5 in SDS and TX-100 micelles.",
+   "location": "AbstractText, same record; this is the medium statement that makes the value micellar rather than aqueous, and it also shows the directly titrated value is the FERRIC one"
+  },
+  {
+   "source_url": "file:///home/michaelvolk/.cache/equilibrator/compounds.sqlite",
+   "retrieval_method": "local_compound_cache_extract",
+   "retrieval_command": "sqlite3 read of tables compounds, compound_identifiers, compound_microspecies for id in (236, 495078); pickle.loads on atom_bag, dissociation_constants, group_vector; written to equilibrator_cache_heme_extract.json",
+   "sha256": "d9cc78ea4220df6b5968ced8a2d937c64b4cc702d861560b1905e95ed9e3efcb",
+   "retrieved_at": "2026-09-11T22:00:00Z",
+   "verbatim_quote": "\"inchi_key\": \"KABFMIBPWCXCRK-RGGAHWMASA-J\", \"smiles\": \"CC1=C(CCC([O-])=O)C2=NC1=CC1=C(C)C(C=C)=C(N1)C=C1NC(=CC3=NC(=C2)C(CCC([O-])=O)=C3C)C(C=C)=C1C\", \"atom_bag\": {\"C\": 34, \"O\": 4, \"N\": 4, \"H\": 32, \"e-\": 298}, \"dissociation_constants_chemaxon\": [5.06, 4.5, 4.08, 3.62], \"group_vector_length\": 0",
+   "location": "equilibrator_cache_heme_extract.json, compounds[0] (cache compound id 236; the sha256 of the source cache file /home/michaelvolk/.cache/equilibrator/compounds.sqlite is 12a28e5a639097d39c7fb03bb740b7ddb204a3da8ee6d4bbac413e8b22e5cb28)"
+  },
+  {
+   "source_url": "https://www.ebi.ac.uk/ols4/api/ontologies/chebi/terms?iri=http%3A%2F%2Fpurl.obolibrary.org%2Fobo%2FCHEBI_60344",
+   "retrieval_method": "direct_url",
+   "retrieval_command": "curl -sS -L -o chebi_60344_ols4.json 'https://www.ebi.ac.uk/ols4/api/ontologies/chebi/terms?iri=http%3A%2F%2Fpurl.obolibrary.org%2Fobo%2FCHEBI_60344'",
+   "sha256": "3e28fd6e947dffd292f16cabae1d66a79b779f48c37872ecebb4a7cb5cc2e30c",
+   "retrieved_at": "2026-09-11T21:58:00Z",
+   "verbatim_quote": "\"label\": \"ferroheme b(2-)\", \"description\": [\"Dicarboxylate anion of ferroheme <em>b</em>; major species at pH 7.3.\"], \"charge\": [-2.0], \"generalized_empirical_formula\": [\"C34H30FeN4O4\"], \"inchi_key_string\": [\"KABFMIBPWCXCRK-RGGAHWMASA-J\"], \"smiles_string\": [\"C=CC1=C(C)C2=Cc3c(C=C)c(C)c4[n]3[Fe-2]35[n]6c(c(C)c(CCC(=O)[O-])c6=CC6=[N+]3C(=C4)C(C)=C6CCC(=O)[O-])=CC1=[N+]25\"]",
+   "location": "_embedded.terms[0] of chebi_60344_ols4.json; confirms the GEM species s_0712 is CHEBI:60344, both propionates deprotonated, Fe(II) coordinated"
+  },
+  {
+   "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/53356659/JSON",
+   "retrieval_method": "direct_url",
+   "retrieval_command": "curl -sS -o pubchem_cid_53356659.json 'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/53356659/JSON'",
+   "sha256": "ce6f213768f24da158dbbe57e61eaa6073b240ab1f0515cbc324fed3e95ed0c5",
+   "retrieved_at": "2026-09-11T21:49:00Z",
+   "verbatim_quote": "\"Molecular Formula\": \"C34H32FeN4O4-2\"; SMILES|Absolute: \"CC1=C(C2=CC3=NC(=CC4=C(C(=C([N-]4)C=C5C(=C(C(=N5)C=C1[N-]2)C=C)C)C=C)C)C(=C3CCC(=O)O)C)CCC(=O)O.[Fe]\"",
+   "location": "PC_Compounds[0].props of pubchem_cid_53356659.json; the prior pass's lead named this record as the row's structure, but its -2 charge sits on the two pyrrolide nitrogens with BOTH propionic acids protonated and the iron drawn as a disconnected atom, so it is a different microspecies from the GEM's ferroheme b(2-)"
+  },
+  {
+   "source_url": "local run",
+   "retrieval_method": "local_tool_run",
+   "retrieval_command": "cd $DATA_ROOT/unipka/Uni-pKa/enumerator && $DATA_ROOT/envs/unipka/bin/python main.py ensemble -i smiles.tsv -o ensemble.tsv -u 2 -l -4 -t simple_smarts_pattern.tsv ; then MolGpKa predict_acid/predict_base under ~/miniconda3/envs/pka-tools on CPU, and pkasolver.query.calculate_microstate_pka_values under ~/miniconda3/envs/pkasolver-env on CPU",
+   "sha256": "0f6d4be02ec12393c2e2b47b6c0cdfafad7dbc8e0d2068960ef94a39ca199da2",
+   "retrieved_at": "2026-09-11T22:01:00Z",
+   "verbatim_quote": "\"diagnosis\": \"the Fe-coordinated row is EMPTY at every charge level. main.py FILTER_PATTERNS contains the SMARTS '[*-2]', and sanitize_checker returns False for any microstate matching it; [Fe-2] matches it once, so every enumerated heme microstate is discarded and no macrostate pair reaches the model.\"",
+   "location": "predictor_check_ferroheme_b.json, unipka_simple_template.diagnosis; the raw enumerator output is unipka_enumerator_ensemble.tsv sha256 4b8963ac6b9afba904a88af70f3ab5847c3d38031bb6b3397db40da1861b5ff1"
+  },
+  {
+   "source_url": "local run",
+   "retrieval_method": "local_tool_run",
+   "retrieval_command": "~/miniconda3/envs/equilibrator-ext/bin/python -c \"from equilibrator_assets.group_decompose import GroupDecomposer; from equilibrator_assets.molecule import Molecule; GroupDecomposer().Decompose(Molecule.FromSmiles(s), ignore_protonations=False, raise_exception=True)\"",
+   "sha256": "50fce71ee249a546107542aecd539ce40d0947f3d370951d0bf863c3bdd4ff22",
+   "retrieved_at": "2026-09-11T22:02:00Z",
+   "verbatim_quote": "\"fe_neutral\": {\"decomposes\": false, \"error\": \"GroupDecompositionError: Unable to decompose <openbabel.openbabel.OBMol; ...> into groups\"}, \"ppix_neutral\": {\"decomposes\": false, \"error\": \"GroupDecompositionError: Unable to decompose <openbabel.openbabel.OBMol; ...> into groups\"}, \"frag_neutral\": {\"decomposes\": true, \"nonzero_groups\": 7}",
+   "location": "group_decomposition_check.json, results; the iron-free macrocycle fails too, so the porphyrin ring itself is what component contribution cannot decompose"
+  },
+  {
+   "source_url": "https://pubmed.ncbi.nlm.nih.gov/19572726/",
+   "retrieval_method": "pubmed_eutils_efetch",
+   "retrieval_command": "curl -sS -o pubmed_19572726.xml 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=19572726&retmode=xml'",
+   "sha256": "98393ba03046aec889b431cd55119ae6f72de6aea323f8a60f7210a41f36c062",
+   "retrieved_at": "2026-09-11T22:03:00Z",
+   "verbatim_quote": "Fe(III)PPIX has been found to form monomers, pi-pi dimers, mu-oxo dimers, and pi-stacked aggregates of mu-oxo dimers depending on concentration, pH, the presence of salts, temperature, and solvent identity. This highlights the complexity of the behavior of Fe(III)PPIX in solution.",
+   "location": "AbstractText, Asher C, de Villiers K A, Egan T J, Inorg Chem 48(16):7994-8003 (2009), doi 10.1021/ic900647y; the reason no aqueous monomeric titration of free heme exists to be admitted"
+  },
+  {
+   "source_url": "https://api.crossref.org/works/10.1016/0021-9797(81)90272-1",
+   "retrieval_method": "direct_url",
+   "retrieval_command": "curl -sS -H 'User-Agent: torchcell-curation/1.0 (mailto:mjvolk3@illinois.edu)' -o crossref_jcis1981.json 'https://api.crossref.org/works/10.1016%2F0021-9797(81)90272-1'",
+   "sha256": "fdf6040947986af9bce5907c62298e1bf56227170815826fae3788df364b76e4",
+   "retrieved_at": "2026-09-11T21:59:00Z",
+   "verbatim_quote": "Acid—base properties of protoporphyrin IX; its dimethyl ester and heme solubilized on surfactant micelles: spectrophotometric and fluorometric titration",
+   "location": "message.title of crossref_jcis1981.json; Savitski A P, Vorobyova E V, Berezin I V, Ugarova N N, J Colloid Interface Sci 84:175-181 (1981). METADATA ONLY: the full text is behind ScienceDirect, which returned HTTP 403 to WebFetch, so its numeric pKa values were NOT read and are not in this record. It is the strongest remaining lead for a titrated heme propionate value, and it is micellar as well."
+  }
+ ],
+ "searches": [
+  {"query": "propionate pKa ferrous protoporphyrin IX aqueous solution measured heme", "engine": "WebSearch", "date": "2026-09-11", "outcome": "found Das and Medhi 1998 (J Inorg Biochem 70:83-90), the ferrous 4.4 to 4.5 micellar value; this is the value the record carries"},
+  {"query": "\"heme propionate\" pKa measured JACS iron protoporphyrin IX model compound proton-coupled electron transfer", "engine": "WebSearch", "date": "2026-09-11", "outcome": "Kim et al. JACS 133:8544 (2011) measures PCET on a PPIX monomethyl ester in ACETONITRILE, not water; not admissible for an aqueous ladder"},
+  {"query": "hemin aqueous solution acid dissociation constant propionic acid groups pKa aggregation dimerization monomeric", "engine": "WebSearch", "date": "2026-09-11", "outcome": "no aqueous monomeric value; surfaced the aggregation literature (Cvjetan and Walde, Q Rev Biophys 2023) and a secondary claim of PPIX propionate pKa 3.68 and 4.96 whose primary source could not be reached"},
+  {"query": "ferrochelatase reaction equilibrium constant thermodynamics protoporphyrin IX Fe2+ pH dependence proton stoichiometry", "engine": "WebSearch", "date": "2026-09-11", "outcome": "no measured Keq or dGr for r_0436; only kinetics (kchel 0.97 per s, Ks 16.3 uM at pH 8.1) and a binding enthalpy for the porphyrin-enzyme complex"},
+  {"query": "protoporphyrin IX propionic acid pKa 3.68 4.96 spectrophotometric titration measured", "engine": "WebSearch", "date": "2026-09-11", "outcome": "traced to Savitski et al. 1981, J Colloid Interface Sci 84:175-181, but ScienceDirect returned HTTP 403 and the numbers were not confirmed against the paper"},
+  {"query": "Fe(II) protoporphyrin IX ferrous heme pKa propionate \"aqueous\" titration Biochemistry deoxyheme dithionite", "engine": "WebSearch", "date": "2026-09-11", "outcome": "no direct aqueous ferrous titration; the search summary asserted pKas of 8.7 and 10.9 for a heme propionate and coordinated water, which was checked and REFUTED, see next row"},
+  {"query": "\"8.7\" \"10.9\" pKa heme propionic acid coordinated water Fe(II) protoporphyrin IX aqueous solution high pH Silver Wilson", "engine": "WebSearch", "date": "2026-09-11", "outcome": "the engine attributed these to Silver et al., JBIC 27:297-313 (2022); the full text was fetched from Europe PMC (PMC8960585) and grepped, and it contains NEITHER value and no propionate pKa at all. Discarded as a search-summary artifact."},
+  {"query": "eQuilibrator heme protoheme formation energy component contribution group decomposition iron metal complexes not supported", "engine": "WebSearch", "date": "2026-09-11", "outcome": "no published heme-specific statement; the local group-decomposition run settled the question instead"},
+  {"query": "\"ferric heme b in aqueous micellar and vesicular systems\" Quarterly Reviews of Biophysics state-of-the-art challenges monomeric speciation", "engine": "WebSearch", "date": "2026-09-11", "outcome": "Cvjetan and Walde, Q Rev Biophys 56:e2 (2023); a review confirming that free heme b is studied in micelles or vesicles precisely because aqueous heme is not monomeric"},
+  {"query": "free heme propionate carboxylate pKa water potentiometric titration \"protoporphyrin IX\" iron measured non-micellar aqueous DMSO cosolvent", "engine": "WebSearch", "date": "2026-09-11", "outcome": "returned only the same micellar and acetonitrile studies; no non-micellar aqueous propionate pKa for free heme was found"},
+  {"query": "cytochrome c heme lyase thioether bond formation equilibrium reversible pH dependence thermodynamics free energy", "engine": "WebSearch", "date": "2026-09-11", "outcome": "no measured equilibrium constant or dGr for r_4152; the product is protein-bound heme, so a small-molecule thermodynamic value is not expected to exist"},
+  {"query": "ferrochelatase EC 4.99.1.1 equilibrium constant Keq NIST thermodynamics of enzyme-catalyzed reactions TECRDB protoheme", "engine": "WebSearch", "date": "2026-09-11", "outcome": "no TECRDB entry surfaced for EC 4.99.1.1; documented negative for the reaction-energy route"},
+  {"query": "Gibbs energy of formation heme protoheme thermodynamic estimate group contribution literature kJ/mol standard", "engine": "WebSearch", "date": "2026-09-11", "outcome": "no published dGf for heme or protoheme; documented negative for the formation-energy route"},
+  {"query": "\"heme propionate\" AND \"pKa\"", "engine": "Europe PMC REST search API", "date": "2026-09-11", "outcome": "204 hits, all protein-bound hemes. The best open-access review (Role of Propionate Side Chain in Heme-Containing Metalloenzymes, PMC12679310) was fetched and grepped: every pKa in it is for a propionate inside a protein (for example about 5.9 oxidized and about 7.0 reduced in Pseudomonas aeruginosa cytochrome c551), none for free heme in solution"},
+  {"query": "Acid-base properties of protoporphyrin IX dimethyl ester heme surfactant micelles", "engine": "PubMed esearch", "date": "2026-09-11", "outcome": "0 hits; the 1981 J Colloid Interface Sci paper is not indexed in PubMed, so only Crossref metadata was obtainable"}
+ ],
+ "decomposition_check": {
+  "attempted": true,
+  "decomposes": false,
+  "error": "GroupDecompositionError: Unable to decompose <openbabel.openbabel.OBMol ...> into groups. Measured with equilibrator_assets.group_decompose.GroupDecomposer on four structures: the Fe-coordinated neutral and dianion BOTH fail, and the iron-stripped protoporphyrin IX neutral and dianion ALSO fail; the propionate control fragment Cc1[nH]ccc1CCC(=O)O decomposes into 7 nonzero groups. The eQuilibrator cache's own entry agrees: compound 236 has group_vector of length 0. The brief's premise that this structure decomposes is therefore wrong for this row."
+ },
+ "predictor_check": {
+  "uni_pka": "FAILS, and the mechanism is exact. The enumerator (Uni-pKa/enumerator/main.py, simple_smarts_pattern.tsv) emits an empty ensemble row for the Fe-coordinated SMILES at every charge from -4 to +2, so no macrostate pair reaches the model and the pipeline's error 'no macrostate pair survived enumeration and inference' follows. Cause: FILTER_PATTERNS in main.py lists the SMARTS '[*-2]' as an unreasonable structure, and [Fe-2] matches it exactly once; sanitize_checker returns False for every heme microstate. Measured directly. The same run enumerates the iron-stripped macrocycle over charges -3 to +1 and the propionate fragment over -2 to 0, so the tool is fine on both non-metal inputs. Inference was not run for the heme because there was no rung to score, not for GPU reasons.",
+  "molgpka": "SUCCEEDS on the Fe-coordinated NEUTRAL form and returns exactly the two propionates: acidic sites 4.371 and 4.598, no basic sites (CPU, ~/miniconda3/envs/pka-tools). It returns an EMPTY result on the Fe-coordinated DIANION, which is the form the apply pipeline handed it, so the pipeline's empty MolGpKa ladder for this row is an input-protonation-form artifact rather than a tool limit. Iron-stripped free acid: acidic 4.352, 4.352 (propionates) and 12.389, 12.389 (pyrrole NH), basic 5.016, 4.931, 2.587, 2.520. Propionate fragment: acidic 4.623 and 13.390, basic 2.556.",
+  "pkasolver_lite": "SUCCEEDS on both Fe forms and gives the same ladder either way, [3.394, 3.301]; this is what the cascade actually used. dimorphite-dl inside pkasolver rejects every pyrrole-N protonated Fe microstate as a poorly formed SMILES, so it walks only the two propionates, which is the right site set but about 1.1 pKa units below the measured micellar ferrous value. Iron-stripped free acid: 8 rungs from 8.769 down to 4.068, most of them spurious. Propionate fragment: 11.757, 6.635, 4.254.",
+  "on_which_smiles": {
+   "fe_neutral": "C=CC1=C(C)C2=CC3=C(C=C)C(C)=C4C=C5C(C)=C(CCC(=O)O)C6=[N+]5[Fe-2]5(N7C(=CC1=[N+]25)C(C)=C(CCC(=O)O)C7=C6)N43",
+   "fe_dianion": "C=CC1=C(C)C2=CC3=C(C=C)C(C)=C4C=C5C(C)=C(CCC(=O)[O-])C6=[N+]5[Fe-2]5(N7C(=CC1=[N+]25)C(C)=C(CCC(=O)[O-])C7=C6)N43",
+   "ppix_neutral": "CC1=C(CCC(O)=O)C2=NC1=CC1=C(C)C(C=C)=C(N1)C=C1NC(=CC3=NC(=C2)C(CCC(O)=O)=C3C)C(C=C)=C1C",
+   "ppix_dianion": "CC1=C(CCC([O-])=O)C2=NC1=CC1=C(C)C(C=C)=C(N1)C=C1NC(=CC3=NC(=C2)C(CCC([O-])=O)=C3C)C(C=C)=C1C",
+   "frag_neutral": "Cc1[nH]ccc1CCC(=O)O"
+  }
+ },
+ "notes": "Three corrections to the row's premise, all measured in this pass.\n\n1. The cascade did not return nothing. pKasolver-lite returned [3.394, 3.301] for this row and the cascade used it (external_pka_apply_ladders_pkasolver.json and external_pka_apply_combined.json, members_used ['pkasolver']). What failed afterwards was compound creation, recorded as outcome 'compound_creation_failed', detail 'method=empty status=failed' in external_pka_applied.json. The exclusion reason 'no_pka_prediction' in thermo_exclusions.json predates that run and no longer describes the blocker.\n\n2. The structure does NOT decompose. Component contribution fails on the Fe complex AND on the iron-stripped macrocycle; only the propionate control fragment decomposes. The porphyrin ring is the ceiling, not the iron and not the pKa ladder. Consequence: supplying the ladder below will not price s_0712. r_0436, r_0531 and r_4152 stay blocked until a formation energy for heme b arrives from outside component contribution.\n\n3. The eQuilibrator cache entry for this compound is internally inconsistent and should not be trusted as a structure source. Compounds 236 and 495078 carry the correct InChIKey KABFMIBPWCXCRK-RGGAHWMASA-J and an InChI whose formula layer is C34H34N4O4.Fe with /q;+2/p-4, but their stored SMILES has NO iron and their atom_bag is {C 34, O 4, N 4, H 32, e- 298}, which is the iron-free dianion (the electron count checks out only without Fe). That is exactly why every accession route in unresolved_metabolites.json returned composition_mismatch for s_0712. The cache's four pKas [5.06, 4.50, 4.08, 3.62] and its five microspecies from charge -2 (32 H) to +2 (36 H) are ChemAxon predictions for the METAL-FREE porphyrin: two carboxylate rungs plus two pyrrole-N protonations that cannot exist once Fe(II) occupies the core. Admission for that list is 'computed', and it is for the wrong species on top of that.\n\nOn the recommended ladder. No measured pKa for ferrous heme propionate in aqueous monomeric solution was found, and the aggregation literature says why one is unlikely to exist: free heme b in water is a mixture of monomer, pi-pi dimer, mu-oxo dimer and stacked aggregates set by concentration, pH, salt and solvent (Asher 2009), which is what drives every quantitative study into micelles, vesicles or organic co-solvent. The one usable number is therefore Das and Medhi 1998, 4.4 to 4.5 for the ferrous species at 27 C and mu = 0.2 M in SDS, Triton X-100 or CTAB micelles, and even that is a redox-linked inference from dE/dpH rather than a direct titration of the ferrous species; the directly titrated Soret value in that paper, about 3.5, is the FERRIC one. Admission is 'provisional' and this ladder stays out of the default route.\n\nOrdering of the candidates, for the record: measured micellar ferrous 4.45 (this record) > MolGpKa on the neutral Fe form, 4.371 and 4.598, which lands within 0.1 to 0.2 of it and is the only predictor output that does > pKasolver-lite 3.394 and 3.301, about 1.1 low and closer to the FERRIC micellar value > the cache's ChemAxon list, wrong species. The MolGpKa agreement is a coincidence worth noting, not evidence: it was measured on one compound.\n\nWhat a human still needs to do, in priority order.\n(a) Decide the route. A pKa ladder cannot price this metabolite. Either accept the three reactions as permanently unpriced, or source a dGf for heme b from outside component contribution (a calorimetric or electrochemical value, or a quantum-chemical one carried as 'computed'). No published dGf for heme or protoheme was found, and no TECRDB Keq for EC 4.99.1.1, so this is currently an open gap rather than a lookup.\n(b) Read Savitski et al. 1981, J Colloid Interface Sci 84:175-181, through institutional access. It titrates the propionic acid residues of both protoporphyrin IX and heme and is the only remaining primary source that might give two separate site values rather than one lumped number. It is still micellar, so at best it upgrades the ladder's shape, not its admission class.\n(c) Fix the cache entry's missing iron, or teach the accession path to reject a cache hit whose atom_bag composition disagrees with its own InChI. The current behavior silently reports composition_mismatch and gives no hint that the cache, not the GEM, is the party that is wrong.\n(d) Two pipeline defects worth fixing independently of this row. MolGpKa is being fed the anionic target SMILES rather than the neutral parent, which empties its ladder on any already-deprotonated input. The Uni-pKa enumerator's '[*-2]' filter rejects every metal-complex microstate, so Uni-pKa is structurally unavailable for the whole metal-complex class, not just heme.\n(e) If a two-rung ladder is ever wanted for a related, decomposable metal-free porphyrin, use the statistical split recorded in value.derivation and label it as such; do not present 4.75 and 4.15 as two measured site pKas."
+}

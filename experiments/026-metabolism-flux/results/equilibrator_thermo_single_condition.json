@@ -1,8 +1,8 @@
 {
   "gem_model_sha256": "9fd2c572cace73c2ea835205617313554d1bf89f4ef077f49defbdfa219a4ad7",
   "n_metabolites": 2806,
-  "n_metabolites_resolved": 2099,
-  "frac_metabolites_resolved": 0.748039914468995,
+  "n_metabolites_resolved": 2113,
+  "frac_metabolites_resolved": 0.7530292230933714,
   "resolution_tiers": {
     "metanetx.chemical": 2265,
     "None": 332,
@@ -12,8 +12,8 @@
     "inchi": 2
   },
   "n_reactions": 4131,
-  "n_reactions_all_participants_known": 1755,
-  "frac_reactions_all_participants_known": 0.42483660130718953,
+  "n_reactions_all_participants_known": 2741,
+  "frac_reactions_all_participants_known": 0.663519728879206,
   "n_reactions_estimable": 1673,
   "frac_reactions_estimable": 0.40498668603243765,
   "reaction_sigma_median_kj_per_mol": 3.703044548534684e-15,
@@ -25,5 +25,5 @@
     "p_mg": 3.0,
     "p_h": "uniform 7.0"
   },
-  "built_at": "2026-09-04T03:22:18.879195+00:00"
+  "built_at": "2026-09-06T19:35:14.616526+00:00"
 }

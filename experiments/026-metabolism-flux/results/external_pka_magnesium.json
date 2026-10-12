@@ -1,0 +1,539 @@
+{
+ "built_at": "2026-09-10T20:17:02.121815+00:00",
+ "conditions": {
+  "p_h": 7.2,
+  "ionic_strength_m": 0.25,
+  "temperature_k": 303.15
+ },
+ "p_mg_values": [
+  2.0,
+  3.0,
+  5.0
+ ],
+ "n_cache_compounds": 694324,
+ "n_cache_compounds_with_mg": 534,
+ "mg_table_path": "/scratch/projects/torchcell-scratch/envs/equilibrator/lib/python3.11/site-packages/equilibrator_assets/data/magnesium_pkds.csv",
+ "mg_table_sha256": "b87ee2e6a89676953dc92f77bbaa641643ccb26051e8e78c2728f49cea6e2ba9",
+ "mg_table_rows": 1495,
+ "mg_table_distinct_compounds": 535,
+ "mg_table_references": {
+  "Du 2018": 1495
+ },
+ "n_sample": 300,
+ "n_sample_with_mg": 7,
+ "n_sample_with_phosphate": 44,
+ "costs": [
+  {
+   "compound_id": 91,
+   "inchi_key": "COLNVLDHVKWLRT-QMMMGPOBSA-N",
+   "name": "L-Phenylalanine",
+   "stratum": "n_pka_2",
+   "n_mg_constants": 2,
+   "mg_constants": [
+    {
+     "number_protons": 10.0,
+     "number_magnesiums": 1.0,
+     "p_kd": 2.10771600309
+    },
+    {
+     "number_protons": 11.0,
+     "number_magnesiums": 1.0,
+     "p_kd": -0.7711688784016759
+    }
+   ],
+   "n_microspecies_total": 5,
+   "n_microspecies_with_mg": 2,
+   "dgf_prime_full_kj_per_mol": {
+    "pmg_2": 468.4865688328719,
+    "pmg_3": 468.5026032407552,
+    "pmg_5": 468.50437327243014
+   },
+   "dgf_prime_no_mg_kj_per_mol": {
+    "pmg_2": 468.5043911578841,
+    "pmg_3": 468.5043911578841,
+    "pmg_5": 468.5043911578841
+   },
+   "omission_cost_kj_per_mol": {
+    "pmg_2": 0.017822325012161855,
+    "pmg_3": 0.0017879171288655016,
+    "pmg_5": 0.00001788545392855667
+   },
+   "wrong_pkd_cost_kj_per_mol": {
+    "pmg_2_shift_+2": -1.255972861013504,
+    "pmg_2_shift_-2": 0.0176293629882025,
+    "pmg_3_shift_+2": -0.15875910698457574,
+    "pmg_3_shift_-2": 0.0017686202613731439,
+    "pmg_5_shift_+2": -0.0016393021836051958,
+    "pmg_5_shift_-2": 0.000017692484505005268
+   }
+  },
+  {
+   "compound_id": 411,
+   "inchi_key": "KHWCHTKSEGGWEX-RRKCRQDMSA-L",
+   "name": "DAMP",
+   "stratum": "n_pka_4",
+   "n_mg_constants": 3,
+   "mg_constants": [
+    {
+     "number_protons": 12.0,
+     "number_magnesiums": 1.0,
+     "p_kd": 2.5367066344516602
+    },
+    {
+     "number_protons": 13.0,
+     "number_magnesiums": 1.0,
+     "p_kd": 0.314785943508403
+    },
+    {
+     "number_protons": 14.0,
+     "number_magnesiums": 1.0,
+     "p_kd": -0.966422253567874
+    }
+   ],
+   "n_microspecies_total": 8,
+   "n_microspecies_with_mg": 3,
+   "dgf_prime_full_kj_per_mol": {
+    "pmg_2": 507.21986311684276,
+    "pmg_3": 507.6947912374997,
+    "pmg_5": 507.75294859040264
+   },
+   "dgf_prime_no_mg_kj_per_mol": {
+    "pmg_2": 507.7535429418734,
+    "pmg_3": 507.7535429418734,
+    "pmg_5": 507.7535429418734
+   },
+   "omission_cost_kj_per_mol": {
+    "pmg_2": 0.5336798250306174,
+    "pmg_3": 0.058751704373662506,
+    "pmg_5": 0.0005943514707382747
+   },
+   "wrong_pkd_cost_kj_per_mol": {
+    "pmg_2_shift_+2": -7.350905551036874,
+    "pmg_2_shift_-2": 0.5272746748307213,
+    "pmg_3_shift_+2": -2.8611763777503825,
+    "pmg_3_shift_-2": 0.05811045601086562,
+    "pmg_5_shift_+2": -0.05390625157389195,
+    "pmg_5_shift_-2": 0.0005879381790805382
+   }
+  },
+  {
+   "compound_id": 269,
+   "inchi_key": "RZZPDXZPRHQOCG-OJAKKHQRSA-M",
+   "name": "CDPcholine",
+   "stratum": "n_pka_5",
+   "n_mg_constants": 2,
+   "mg_constants": [
+    {
+     "number_protons": 24.0,
+     "number_magnesiums": 1.0,
+     "p_kd": 0.937437937169037
+    },
+    {
+     "number_protons": 25.0,
+     "number_magnesiums": 1.0,
+     "p_kd": 0.102332349923422
+    }
+   ],
+   "n_microspecies_total": 8,
+   "n_microspecies_with_mg": 2,
+   "dgf_prime_full_kj_per_mol": {
+    "pmg_2": 1063.9777608671195,
+    "pmg_3": 1063.985836661534,
+    "pmg_5": 1063.9867265814935
+   },
+   "dgf_prime_no_mg_kj_per_mol": {
+    "pmg_2": 1063.986735572188,
+    "pmg_3": 1063.986735572188,
+    "pmg_5": 1063.986735572188
+   },
+   "omission_cost_kj_per_mol": {
+    "pmg_2": 0.008974705068567346,
+    "pmg_3": 0.0008989106540866487,
+    "pmg_5": 8.990694595922832e-6
+   },
+   "wrong_pkd_cost_kj_per_mol": {
+    "pmg_2_shift_+2": -0.7109316348655739,
+    "pmg_2_shift_-2": 0.008877704869973968,
+    "pmg_3_shift_+2": -0.08108359275138355,
+    "pmg_3_shift_-2": 0.000889210466084478,
+    "pmg_5_shift_+2": -0.0008241823759362887,
+    "pmg_5_shift_-2": 8.89369243850524e-6
+   }
+  },
+  {
+   "compound_id": 848,
+   "inchi_key": "YCWUVLPMLLBDCU-STQMWFEESA-L",
+   "name": "5forthf",
+   "stratum": "n_pka_5",
+   "n_mg_constants": 4,
+   "mg_constants": [
+    {
+     "number_protons": 21.0,
+     "number_magnesiums": 1.0,
+     "p_kd": 5.427648767095821
+    },
+    {
+     "number_protons": 22.0,
+     "number_magnesiums": 1.0,
+     "p_kd": 3.51114928795804
+    },
+    {
+     "number_protons": 23.0,
+     "number_magnesiums": 1.0,
+     "p_kd": 1.9195485399449301
+    },
+    {
+     "number_protons": 24.0,
+     "number_magnesiums": 1.0,
+     "p_kd": 0.562939632725415
+    }
+   ],
+   "n_microspecies_total": 10,
+   "n_microspecies_with_mg": 4,
+   "dgf_prime_full_kj_per_mol": {
+    "pmg_2": 918.2556890803249,
+    "pmg_3": 923.569794142462,
+    "pmg_5": 927.584485336373
+   },
+   "dgf_prime_no_mg_kj_per_mol": {
+    "pmg_2": 927.6863079182418,
+    "pmg_3": 927.6863079182418,
+    "pmg_5": 927.6863079182418
+   },
+   "omission_cost_kj_per_mol": {
+    "pmg_2": 9.430618837916882,
+    "pmg_3": 4.116513775779822,
+    "pmg_5": 0.10182258186887339
+   },
+   "wrong_pkd_cost_kj_per_mol": {
+    "pmg_2_shift_+2": -11.350203718804778,
+    "pmg_2_shift_-2": 8.503252717082887,
+    "pmg_3_shift_+2": -10.869612574186476,
+    "pmg_3_shift_-2": 4.006828436806131,
+    "pmg_5_shift_+2": -3.861843110272389,
+    "pmg_5_shift_-2": 0.1007017489083637
+   }
+  },
+  {
+   "compound_id": 74429,
+   "inchi_key": "FZLJPEPAYPUMMR-RTRLPJTCSA-N\n",
+   "name": "N-Acetyl-D-glucosamine 1-phosphate",
+   "stratum": "n_pka_5",
+   "n_mg_constants": 3,
+   "mg_constants": [
+    {
+     "number_protons": 13.0,
+     "number_magnesiums": 1.0,
+     "p_kd": 3.2630071376574903
+    },
+    {
+     "number_protons": 14.0,
+     "number_magnesiums": 1.0,
+     "p_kd": 1.66424750727304
+    },
+    {
+     "number_protons": 15.0,
+     "number_magnesiums": 1.0,
+     "p_kd": -0.571683371455701
+    }
+   ],
+   "n_microspecies_total": 9,
+   "n_microspecies_with_mg": 3,
+   "dgf_prime_full_kj_per_mol": {
+    "pmg_2": 592.8557295030248,
+    "pmg_3": 592.9284323088447,
+    "pmg_5": 592.9365592305817
+   },
+   "dgf_prime_no_mg_kj_per_mol": {
+    "pmg_2": 592.936641454597,
+    "pmg_3": 592.936641454597,
+    "pmg_5": 592.936641454597
+   },
+   "omission_cost_kj_per_mol": {
+    "pmg_2": 0.0809119515721477,
+    "pmg_3": 0.00820914575228926,
+    "pmg_5": 0.00008222401527291368
+   },
+   "wrong_pkd_cost_kj_per_mol": {
+    "pmg_2_shift_+2": -3.427255889984508,
+    "pmg_2_shift_-2": 0.08002496656251878,
+    "pmg_3_shift_+2": -0.657619575253193,
+    "pmg_3_shift_-2": 0.008120433196381782,
+    "pmg_5_shift_+2": -0.0075273912814282085,
+    "pmg_5_shift_-2": 0.00008133687424560776
+   }
+  },
+  {
+   "compound_id": 36269,
+   "inchi_key": "SRNWOUGRCWSEMX-TYASJMOZSA-L",
+   "name": "ADPribose",
+   "stratum": "n_pka_6",
+   "n_mg_constants": 3,
+   "mg_constants": [
+    {
+     "number_protons": 19.0,
+     "number_magnesiums": 1.0,
+     "p_kd": 3.49564633575356
+    },
+    {
+     "number_protons": 20.0,
+     "number_magnesiums": 1.0,
+     "p_kd": 2.38535148161084
+    },
+    {
+     "number_protons": 21.0,
+     "number_magnesiums": 1.0,
+     "p_kd": 1.4320102911316601
+    }
+   ],
+   "n_microspecies_total": 10,
+   "n_microspecies_with_mg": 3,
+   "dgf_prime_full_kj_per_mol": {
+    "pmg_2": 891.1155536957745,
+    "pmg_3": 891.1599929414864,
+    "pmg_5": 891.1649294626529
+   },
+   "dgf_prime_no_mg_kj_per_mol": {
+    "pmg_2": 891.1649793758855,
+    "pmg_3": 891.1649793758855,
+    "pmg_5": 891.1649793758855
+   },
+   "omission_cost_kj_per_mol": {
+    "pmg_2": 0.04942568011108506,
+    "pmg_3": 0.004986434399143036,
+    "pmg_5": 0.00004991323260128411
+   },
+   "wrong_pkd_cost_kj_per_mol": {
+    "pmg_2_shift_+2": -2.5769324608639863,
+    "pmg_2_shift_-2": 0.04888721129862006,
+    "pmg_3_shift_+2": -0.41973914145717117,
+    "pmg_3_shift_-2": 0.0049325823382559975,
+    "pmg_5_shift_+2": -0.0045721359125536765,
+    "pmg_5_shift_-2": 0.000049374706350135966
+   }
+  },
+  {
+   "compound_id": 325,
+   "inchi_key": "HAAZLUGHYHWQIW-KVQBGUIXSA-J",
+   "name": "DGTP",
+   "stratum": "n_pka_6",
+   "n_mg_constants": 5,
+   "mg_constants": [
+    {
+     "number_protons": 11.0,
+     "number_magnesiums": 1.0,
+     "p_kd": 8.334056534552209
+    },
+    {
+     "number_protons": 12.0,
+     "number_magnesiums": 1.0,
+     "p_kd": 5.95806256807652
+    },
+    {
+     "number_protons": 13.0,
+     "number_magnesiums": 1.0,
+     "p_kd": 3.8520672493673396
+    },
+    {
+     "number_protons": 14.0,
+     "number_magnesiums": 1.0,
+     "p_kd": 2.39738197033066
+    },
+    {
+     "number_protons": 15.0,
+     "number_magnesiums": 1.0,
+     "p_kd": 1.17820572465599
+    }
+   ],
+   "n_microspecies_total": 12,
+   "n_microspecies_with_mg": 5,
+   "dgf_prime_full_kj_per_mol": {
+    "pmg_2": 530.5963183757794,
+    "pmg_3": 535.8990224447078,
+    "pmg_5": 539.863449887639
+   },
+   "dgf_prime_no_mg_kj_per_mol": {
+    "pmg_2": 539.9626976877008,
+    "pmg_3": 539.9626976877008,
+    "pmg_5": 539.9626976877008
+   },
+   "omission_cost_kj_per_mol": {
+    "pmg_2": 9.366379311921378,
+    "pmg_3": 4.063675242992986,
+    "pmg_5": 0.09924780006178935
+   },
+   "wrong_pkd_cost_kj_per_mol": {
+    "pmg_2_shift_+2": -11.348643199142202,
+    "pmg_2_shift_-2": 8.459100227385647,
+    "pmg_3_shift_+2": -10.856807592141308,
+    "pmg_3_shift_-2": 3.956759323054939,
+    "pmg_5_shift_+2": -3.812389004417355,
+    "pmg_5_shift_-2": 0.09815586514798724
+   }
+  },
+  {
+   "compound_id": 10,
+   "inchi_key": "XTWYTFMLZFPYCI-KQYNXXCUSA-K",
+   "name": "ADP",
+   "stratum": "not_sampled",
+   "n_mg_constants": 4,
+   "mg_constants": [
+    {
+     "number_protons": 12.0,
+     "number_magnesiums": 1.0,
+     "p_kd": 4.555099365619999
+    },
+    {
+     "number_protons": 13.0,
+     "number_magnesiums": 1.0,
+     "p_kd": 2.75928259323
+    },
+    {
+     "number_protons": 14.0,
+     "number_magnesiums": 1.0,
+     "p_kd": 0.183806862817498
+    },
+    {
+     "number_protons": 12.0,
+     "number_magnesiums": 2.0,
+     "p_kd": 1.8012617581099999
+    }
+   ],
+   "n_microspecies_total": 11,
+   "n_microspecies_with_mg": 4,
+   "dgf_prime_full_kj_per_mol": {
+    "pmg_2": 540.5859016694765,
+    "pmg_3": 544.4919351815607,
+    "pmg_5": 545.5785583406663
+   },
+   "dgf_prime_no_mg_kj_per_mol": {
+    "pmg_2": 545.5920901981649,
+    "pmg_3": 545.5920901981649,
+    "pmg_5": 545.5920901981649
+   },
+   "omission_cost_kj_per_mol": {
+    "pmg_2": 5.006188528688426,
+    "pmg_3": 1.1001550166041625,
+    "pmg_5": 0.01353185749860586
+   },
+   "wrong_pkd_cost_kj_per_mol": {
+    "pmg_2_shift_+2": -17.73282845710594,
+    "pmg_2_shift_-2": 4.863665152095223,
+    "pmg_3_shift_+2": -11.144655265995993,
+    "pmg_3_shift_-2": 1.085558195182216,
+    "pmg_5_shift_+2": -1.0195347412167166,
+    "pmg_5_shift_-2": 0.013385496252794837
+   }
+  },
+  {
+   "compound_id": 20,
+   "inchi_key": "XCCTYIAWTASOJW-XVFCMESISA-K",
+   "name": "UDP",
+   "stratum": "not_sampled",
+   "n_mg_constants": 4,
+   "mg_constants": [
+    {
+     "number_protons": 9.0,
+     "number_magnesiums": 1.0,
+     "p_kd": 7.2417838005824295
+    },
+    {
+     "number_protons": 11.0,
+     "number_magnesiums": 1.0,
+     "p_kd": 4.63009936562
+    },
+    {
+     "number_protons": 12.0,
+     "number_magnesiums": 1.0,
+     "p_kd": 2.46173291041
+    },
+    {
+     "number_protons": 13.0,
+     "number_magnesiums": 1.0,
+     "p_kd": -0.07709728531360902
+    }
+   ],
+   "n_microspecies_total": 10,
+   "n_microspecies_with_mg": 4,
+   "dgf_prime_full_kj_per_mol": {
+    "pmg_2": 495.64267018076754,
+    "pmg_3": 497.4783144651271,
+    "pmg_5": 497.7945021946935
+   },
+   "dgf_prime_no_mg_kj_per_mol": {
+    "pmg_2": 497.79790739757067,
+    "pmg_3": 497.79790739757067,
+    "pmg_5": 497.79790739757067
+   },
+   "omission_cost_kj_per_mol": {
+    "pmg_2": 2.1552372168031297,
+    "pmg_3": 0.3195929324435838,
+    "pmg_5": 0.003405202877161173
+   },
+   "wrong_pkd_cost_kj_per_mol": {
+    "pmg_2_shift_+2": -10.03558201952643,
+    "pmg_2_shift_-2": 2.118738832470058,
+    "pmg_3_shift_+2": -6.24392250545759,
+    "pmg_3_shift_-2": 0.3159192060344367,
+    "pmg_5_shift_+2": -0.2941377351060055,
+    "pmg_5_shift_-2": 0.003368439081214092
+   }
+  }
+ ],
+ "substructure_buckets": [
+  {
+   "n_phosphate_steps": 0,
+   "n_constants": 616,
+   "n_compounds": 334,
+   "pkd_mean": 0.8590129117064714,
+   "pkd_sd": 1.579662365599905,
+   "pkd_min": -3.05541056852877,
+   "pkd_max": 15.2942586490461
+  },
+  {
+   "n_phosphate_steps": 1,
+   "n_constants": 19,
+   "n_compounds": 4,
+   "pkd_mean": 4.579192047004842,
+   "pkd_sd": 3.280938794315866,
+   "pkd_min": -0.046628082822811,
+   "pkd_max": 11.2807897273681
+  },
+  {
+   "n_phosphate_steps": 2,
+   "n_constants": 427,
+   "n_compounds": 130,
+   "pkd_mean": 1.9878841983628113,
+   "pkd_sd": 1.9714966992122236,
+   "pkd_min": -2.48587341039761,
+   "pkd_max": 8.12367464109223
+  },
+  {
+   "n_phosphate_steps": 3,
+   "n_constants": 74,
+   "n_compounds": 20,
+   "pkd_mean": 2.7427997429618,
+   "pkd_sd": 2.3554981394103787,
+   "pkd_min": -1.11102624520425,
+   "pkd_max": 7.59595606533137
+  },
+  {
+   "n_phosphate_steps": 4,
+   "n_constants": 288,
+   "n_compounds": 44,
+   "pkd_mean": 1.6698852727427387,
+   "pkd_sd": 3.0115242470077774,
+   "pkd_min": -3.68274070363029,
+   "pkd_max": 9.4557874715826
+  },
+  {
+   "n_phosphate_steps": 5,
+   "n_constants": 12,
+   "n_compounds": 2,
+   "pkd_mean": 3.3445402310610715,
+   "pkd_sd": 3.042827313510649,
+   "pkd_min": -1.2550897440856201,
+   "pkd_max": 9.09856290568106
+  }
+ ]
+}

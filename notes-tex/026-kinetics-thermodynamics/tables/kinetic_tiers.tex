@@ -1,0 +1,20 @@
+%% notes-tex/026-kinetics-thermodynamics/tables/kinetic_tiers.tex
+%% AUTO-GENERATED -- do not hand-edit. Regenerate with
+%%   PYTHONPATH=. python experiments/026-metabolism-flux/scripts/kinetic_tier_tables_tex.py
+%% SOURCE: results/kinetic_coverage_closure.json, parameters.k_cat.variants.verified_substrate_key_with_homolog.tier_counts; tier definitions declared in kinetic_tier_tables_tex.py
+\begin{table}[!htbp]
+  \centering
+  \footnotesize
+  \caption[Kinetic tiers]{The four tiers a turnover number or Michaelis constant is drawn from, tried in this order over the 3{,}728 catalytic units of yeast-GEM 9.0.2. $k_{cat}$ and $K_M$ resolve on the same keys and land on the same counts, because a unit that has one measured has the other. The homolog tier is measured and is nonetheless folded in with the predictions wherever an experimental fraction is reported, since a measurement of another organism's enzyme is not a measurement of this one.}
+  \label{tab:kinetic-tiers}
+  \begin{tabular}{@{}p{0.18\textwidth}p{0.27\textwidth}p{0.28\textwidth}rr@{}}
+    \toprule
+    Tier & Keyed on & Evidence about & Units & Share \\
+    \midrule
+    measured, this organism & the unit's own UniProt accession in the Open Enzyme Database mirror, and the assay substrate matched by InChIKey connectivity block to a substrate the reaction consumes & this protein doing this chemistry & 97 & 2.6\% \\
+    measured, same EC, another organism & an EC number annotated on the reaction plus the same substrate match, in any organism & the chemistry, not this protein, so it is never counted as a measurement of the modeled organism & 782 & 21.0\% \\
+    predicted & the protein sequence and the substrate structure & the median over the predictors the within-class study admits, which is EZKinetics, EITLEM and UniKP for $k_{cat}$ and EZKinetics alone for $K_M$ & 2{,}831 & 75.9\% \\
+    organism default & nothing; it is the fallback & the median of the values the database tiers placed in this same table, so it is a summary of the organism rather than of the unit & 18 & 0.5\% \\
+    \bottomrule
+  \end{tabular}
+\end{table}

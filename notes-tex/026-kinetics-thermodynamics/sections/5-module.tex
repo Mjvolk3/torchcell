@@ -8,31 +8,198 @@ Figure~\ref{fig:cgt-module} places the flux module inside the cell graph transfo
 module is neither of the two instrument classes the architecture previously had: a Type I
 instrument maps a representation to a representation and a Type II instrument maps a
 representation to a measured output, while the flux module maps a representation to a
-\emph{flux vector}, a latent physical state from which phenotypes are then read. It sits
-between them.
+\emph{flux vector}, a latent physical state from which phenotypes are then read.
 
-Three of its inputs are parameter tables rather than learned weights, and those three are
-what this document builds. The $k_{cat}$ table sets the upper bound of the box that the
-flux is parameterized inside, so it fixes what fluxes are reachable at all. The formation
-energies set the reaction potential whose sign the second-law penalty acts on, which is
-what makes that penalty a physical statement rather than a regularizer. The $K_M$ table is
-built and not yet enabled, for the reason Section~\ref{sec:limits} gives.
+Three of its inputs are parameter tables rather than learned weights. The $k_{cat}$ table
+bounds the box the flux is parameterized inside; the formation energies set the reaction
+potential whose sign the second-law penalty acts on; the $K_M$ table is built and not yet
+enabled, for the reason Section~\ref{sec:limits} gives.
 
-The heterologous cassette enters as a typed perturbation on the genome-scale model, which
-is what puts a betaxanthin pathway and a gene deletion inside the same object rather than
-in two parallel code paths.
+\subsection{Why these two tables, in two equations\secstatus{todo}}
 
-\tcfigfit[1.0]{figures/cgt_metabolic_module.pdf}{The cell graph transformer with the
-  enzyme-constrained thermodynamic flux module. Purple marks inputs and the hash-pinned
-  parameter tables built here; orange the embeddings and the Type I perturbation operators;
-  red the transformer layers and the outputs; yellow the graph regularization, the
-  invariant readouts and the soft constraints; blue the metabolic module, whose color slot
-  was unused in the previous version of this diagram so the new content separates at a
-  glance. Every hard constraint is either exact by construction, as the box and the
-  capacity bound are, or relaxed to a smooth penalty; nothing is enforced by a binary
-  variable, which is what makes the layer differentiable and what removes the mixed-integer
-  cost a per-genotype thermodynamic program pays. The dashed $K_M$ edge marks a table that
-  exists but is not yet consumed. Scaled to the text block: the source renders at 211.7 mm
-  wide against a 182 mm block, so this is not shown at true print size. Source:
-  \texttt{notes/torchcell.models.equivariant\_cell\_graph\_transformer.mermaid.metabolic-module.md},
-  rendered by \texttt{notes/assets/publish/scripts/mermaid\_pdf.sh}.}{fig:cgt-module}
+%% SOURCE: torchcell/metabolism/flux_layer.py -- gene_abundance (E_g, r =
+%% config.abundance_log_range = 3.0), the E0 prior in __init__
+%% (abundance_prior_budget_fraction * p_avail / sum MW), unit_abundance (the -beta power
+%% mean, beta = config.softmin_beta = 8.0), dynamic_box (the capacity intersection and the
+%% no-GPR case), forward (v = lb + (ub-lb) sigmoid z, c_budget, the legacy E_bar = 1e-3
+%% branch under use_abundance_head = False). The K_M absence is a grep of that file and of
+%% torchcell/metabolism/ for K_M, km and saturation: the only hits are the thermodynamic
+%% log-concentration term and a docstring in enzyme_kinetics.py stating the intended
+%% eta_sat form, which is not implemented. Arm numbers from the "2026.09.09 - The protein
+%% node" section of
+%% [[experiments.026-metabolism-flux.enzyme-constrained-thermodynamic-flux-layer]].
+\paragraph{$k_{cat}$ is what lets a genotype change a flux.} The genotype reaches the flux
+through a predicted enzyme level, not through a gate. Write $h_g$ for the perturbed cell's
+embedding of GEM gene $g$, $\gamma_g \in \{0,1\}$ for whether that gene is present,
+$E^0_g$ for a prior abundance in mmol\,gDW$^{-1}$, $w$ for a learned readout vector and $r$
+for the range, in natural-log units, the head may move a gene away from its prior:
+\begin{equation}
+  E_g \;=\; \gamma_g\,E^0_g\,\exp\!\big(r\tanh(w^{\!\top}h_g)\big),
+  \qquad r = 3 .
+  \label{eq:abundance}
+\end{equation}
+The $\tanh$ bounds the deviation, so a gene stays within a factor of $e^{3}$, about 20, of
+its prior in either direction and no gene can be driven to zero by the head alone. A
+deletion is the one thing that can: it sets $\gamma_g = 0$ exactly. The prior is
+equal-molar, $E^0_g = \tfrac{1}{2}P_{\mathrm{avail}}/\sum_g MW_g$, because no measured
+proteome is passed in; $MW_g$ is the gene product's molecular weight in kDa and
+$P_{\mathrm{avail}}$ the protein pool defined below.
+
+A catalytic unit is a complex, and a complex is limited by its scarcest subunit. Over the
+subunit set $C_u$ of unit $u$, with $\beta = 8$:
+\begin{equation}
+  E_u \;=\; \Big(\sum_{g\in C_u} E_g^{-\beta}\Big)^{-1/\beta},
+  \label{eq:complex}
+\end{equation}
+a power mean of exponent $-\beta$, which approaches $\min_{g\in C_u} E_g$ as $\beta$ grows.
+\textbf{Deleting one subunit therefore takes the whole complex down, not a share of it},
+which is what a heteromeric enzyme does and what a sum over subunits would get wrong.
+
+The capacity bound is then the product of a turnover number and an amount of enzyme, summed
+over the units that catalyze the reaction. With $\rho(u)$ the reaction unit $u$ serves:
+\begin{equation}
+  |\nu_j| \;\le\; \sum_{u\,:\,\rho(u)=j} k_{cat,u}\,E_u .
+  \label{eq:capacity}
+\end{equation}
+Isozymes add, since either enzyme can carry the flux on its own. A reaction with no gene
+annotation is left uncapped, because an unannotated reaction is one nobody assigned a gene
+to rather than one no gene catalyzes.
+
+The pool is finite, so the abundances are priced against a budget:
+\begin{equation}
+  \sum_g MW_g E_g \;\le\; P_{\mathrm{avail}},
+  \qquad
+  C_{\mathrm{bud}} \;=\; \Big[\,\sum_g MW_g E_g\big/P_{\mathrm{avail}} - 1\,\Big]_{+},
+  \qquad P_{\mathrm{avail}} = 0.35\ \mathrm{g\,gDW^{-1}},
+  \label{eq:budget}
+\end{equation}
+which is GECKO's constraint~\cite{chenReconstructionSimulationAnalysis2024}. It is a
+\emph{penalty} rather than a projection: nothing
+renormalizes $E_g$, so a trained model can overspend the pool and pay for it. That makes
+$C_{\mathrm{bud}}$ a reported quantity as well as a loss term, and it is what couples the
+genes to each other. A deletion frees mass that the remaining genes can take.
+
+\textbf{Only the product $k_{cat,u}E_u$ reaches the bound, and that fixes what the head can
+be said to predict.} Equation~\eqref{eq:capacity} never sees $E_u$ alone, so the head is
+identifiable only up to that product: a $k_{cat}$ that is low by a factor of ten and an
+abundance that is high by ten give the same ceiling and the same loss. Read that way the
+head is predicting an enzyme \emph{capacity}, and the $k_{cat}$ table sets the units it is
+expressed in rather than pinning its value. It is also why the across-predictor spread of
+Section~\ref{sec:accuracy} is not simply absorbed: it moves $k_{cat,u}$ per unit, so it
+changes which reactions are tight relative to each other, and that is a shape the head has
+to undo gene by gene rather than with one scale factor.
+
+\textbf{$K_M$ appears nowhere in Equations~\eqref{eq:abundance} to \eqref{eq:budget}, and
+that is the code rather than a simplification for the page.} The capacity is
+$k_{cat,u}E_u$ with nothing multiplying it, and a saturation factor would need
+intracellular concentrations that exist for 6.8 percent of the metabolites.
+
+\textbf{Two branches exist and the one described here is not the default.} The abundance
+head is off unless an arm turns it on; with it off the layer falls back to a scalar
+availability $c_j \in [0,1]$ folded from the same $\gamma_g$ and a nominal constant
+$\bar E = 10^{-3}$, giving $|\nu_j| \le c_j \sum_u k_{cat,u}\bar E$, and the budget is
+computed from the enzyme demand \emph{implied} by a flux,
+$e_g = \sum_{u \ni g} |\nu_{\rho(u)}| / k_{cat,u}$, rather than from a predicted abundance.
+The measured consequence is in the flux-layer note: median capacity is
+19.1\,mmol\,gDW$^{-1}$h$^{-1}$ under the constant, against 0.18 and 0.11 under the two
+abundance arms, and \texttt{feas\_capacity\_active\_frac} is 0.0 for all three at
+initialization. \textbf{The bound is not yet observed to bind}, under either branch.
+
+A measured proteome would replace $E^0_g$ rather than the head, and one exists in the same
+project: Zelezniak's 726 proteins across 97 kinase deletions. That is the change that would
+turn the prior from an equal-molar placeholder into a quantity.
+
+Without Equation~\eqref{eq:capacity} the only limits on $\nu_j$ are yeast-GEM's own bounds,
+and those carry no capacity at all: \textbf{4{,}129 of 4{,}131 reactions sit at $\pm1000$ or
+$0$}, which encodes direction and on-off and nothing else. A gene deletion would then have
+no route to change the \emph{magnitude} of any flux. 
+
+\paragraph{$\Delta_r G$ enters as a term in the loss, not as a constraint.} The idea, before
+any implementation detail, is two lines. A reaction should run downhill,
+\begin{equation}
+  \nu_j\,\Delta_r G_j \;\le\; 0,
+  \label{eq:downhill}
+\end{equation}
+and where it does not, we charge for it:
+\begin{equation}
+  \mathcal{L} \;=\; \mathcal{L}_{\mathrm{data}}
+  \;+\; \lambda_{\mathrm{th}} \sum_j \big[\,\nu_j\,\Delta_r G_j\,\big]_{+}.
+  \label{eq:simple}
+\end{equation}
+The bracket is zero whenever Equation~\eqref{eq:downhill} holds and positive when it does
+not: no solver and no binary variable, and the tabulated formation energies are what make
+$\Delta_r G_j$ a measured quantity rather than a free parameter.
+
+\textbf{This is a training-time penalty, and at inference nothing enforces it.} The flux
+still comes from the box, so a trained model can emit a thermodynamically infeasible flux;
+what training buys is a model that mostly does not. The layer therefore reports
+\texttt{feas\_thermo\_violation\_frac}, the fraction of reactions with $\nu_j\Delta_r G_j >
+0$, so the question is answered by measurement at evaluation rather than by assertion. 
+
+\medskip
+\noindent The form actually implemented adds a tolerance and a normalization:
+\begin{equation}
+  \mathcal{L}
+  = \mathcal{L}_{\mathrm{data}}
+  \;+\; \lambda_{\mathrm{th}}\,
+  \underbrace{\frac{1}{|\mathcal{J}|}\sum_{j\in\mathcal{J}}
+    \frac{\big[\,\nu_j\,\Delta_r G_j + \epsilon\,\big]_{+}}
+         {|\nu_j|\,|\Delta_r G_j| + \epsilon}}_{C_{\mathrm{th}}},
+  \qquad
+  \Delta_r G_j = \Delta_r G'^{\circ}_j + RT\!\!\sum_{i \neq \mathrm{H}^+}\!\! S_{ij}\ln c_i,
+  \label{eq:secondlaw}
+\end{equation}
+where $\mathcal{J}$ runs over reactions with a known $\Delta_r G$, excluding exchange,
+biomass and water transport, and $\epsilon$ is a tolerance the strict inequality of
+Equation~\eqref{eq:downhill} needs once it is made smooth. The tabulated formation
+energies supply $\Delta_r G'^{\circ}_j$, which is the one place this document's thermodynamic
+table reaches the model.
+
+\textbf{The normalization is load-bearing, not cosmetic.} The raw hinge
+$[\nu_j \Delta_r G_j]_+$ carries units and, measured at initialization on a real batch, is
+about \textbf{72 against a data loss of about 1}. An unnormalized term of that size does not
+regularize the model, it replaces it. Dividing by $|\nu_j||\Delta_r G_j|$ caps each
+reaction's contribution at 1 and turns $C_{\mathrm{th}}$ into the fraction of the available
+driving force running uphill, which is also the quantity worth reporting.
+
+Why it earns its place: because $\Delta_r G$ is a difference of potentials it sums to zero
+around any cycle, so no cycle can run downhill at every step, and
+Equation~\eqref{eq:secondlaw} therefore penalizes internal loops. Capacity does not do this.
+Requiring growth at 90 percent of optimum narrows 2{,}316 reactions, 56.1 percent of the
+network, and leaves \textbf{427 reactions still free to take any value in $\pm1000$}, all of
+them internal loops. Only the thermodynamic term removes those, and it does so with no
+binary variable, which is what a loopless flux balance program needs one for.
+
+\tcfigfit[1.0]{figures/cgt_metabolic_module.pdf}{\textbf{The flux module's main components
+  and what feeds them.} Color is semantic and holds across this document: orange is the
+  learned path from the perturbed gene state to enzyme abundance and on to the phenotype
+  heads; purple the fixed yeast-GEM 9.0.2 stoichiometry, bounds and gene-protein-reaction
+  rules; yellow the parameter tables; blue the flux vector; red the soft constraints. A
+  solid edge carries data in a run; a dashed edge and a dashed white box mark something
+  built and read by nothing. Every hard constraint is either exact by construction, as the
+  box and the capacity bound are, or relaxed to a smooth penalty; nothing is enforced by a
+  binary variable, which is what makes the layer differentiable and what removes the
+  mixed-integer cost a per-genotype thermodynamic program pays.
+  \textbf{One thing is still unwired, and it is not a parameter table.}
+  \texttt{FluxLayer} accepts the reaction square-root covariance as
+  \texttt{delta\_g\_sqrt\_cov} and builds the correlated error term from it;
+  \texttt{build\_flux\_layer} constructs none and \texttt{train\_bx.py} passes none, so every
+  arm run so far has a formation covariance on disk and a reaction potential with no
+  covariance in it, and it is the only thing on that list.
+  \texttt{ThermoSource} gained a \texttt{verified} member, which resolves the curated tables
+  through their manifest's sha256 and reads the reaction values out of the verified reaction
+  table rather than re-summing them, since cancellation, the conserved moiety and the
+  shipped reaction column are reaction-level facts a stoichiometric sum cannot reproduce. It
+  is the only route in which the accession composition guard has run, so the glycogen and
+  dolichol mispricings are absent from it and present in every other route.
+  $K_M$ is resolved on the same four tiers and handed to the layer as
+  \texttt{km\_mm}, and no term consumes it (Section~\ref{sec:limits}). The four-tier
+  $k_{cat}$ counts drawn here are what \texttt{kcat\_tier: predicted} resolves; the default
+  \texttt{measured} drops the predicted tier and leaves those units on the organism default.
+  Source:
+  \texttt{notes/torchcell.models.equivariant\_cell\_graph\_transformer.}
+  \texttt{mermaid.metabolic-module-simple.md}, rendered by
+  \texttt{notes/assets/publish/scripts/mermaid\_pdf.sh}; its labels print at a median of
+  5.7 pt at this width. The full diagram, with the transformer stack and the Type I and
+  Type II instruments, is not reproduced here because at this page width its labels print
+  near 2 pt, under the 5 pt floor.}{fig:cgt-module}

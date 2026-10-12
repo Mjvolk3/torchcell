@@ -1,0 +1,802 @@
+{
+ "built_at": "2026-09-11T06:39:38.783782+00:00",
+ "n_targets": 55,
+ "n_metabolite_rows": 75,
+ "sources": {
+  "acyl_transfer_writer": 2,
+  "lipid_external_pka": 48,
+  "tier_a_pilot": 5
+ },
+ "targets": [
+  {
+   "key": "lipid:1,2-diacylglycerol 3-diphosphate (1-16:0, 2-16:1)",
+   "name": "1,2-diacylglycerol 3-diphosphate (1-16:0, 2-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3616",
+    "s_3624"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OP(=O)(O)O",
+   "gem_formula": "C35H68O11P2",
+   "previous_dgf_prime_kj_per_mol": 2552.8988933634223,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "lipid:1,2-diacylglycerol 3-diphosphate (1-16:1, 2-16:1)",
+   "name": "1,2-diacylglycerol 3-diphosphate (1-16:1, 2-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3617",
+    "s_3625"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OP(=O)(O)O)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "gem_formula": "C35H66O11P2",
+   "previous_dgf_prime_kj_per_mol": 2544.925519350499,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "lipid:1,2-diacylglycerol 3-diphosphate (1-16:1, 2-18:1)",
+   "name": "1,2-diacylglycerol 3-diphosphate (1-16:1, 2-18:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3621",
+    "s_3629"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OP(=O)(O)O)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "gem_formula": "C37H70O11P2",
+   "previous_dgf_prime_kj_per_mol": 2729.6140710393556,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "lipid:1,2-diacylglycerol 3-diphosphate (1-18:0, 2-16:1)",
+   "name": "1,2-diacylglycerol 3-diphosphate (1-18:0, 2-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3618",
+    "s_3626"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OP(=O)(O)O",
+   "gem_formula": "C37H72O11P2",
+   "previous_dgf_prime_kj_per_mol": 2737.5874450522783,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "lipid:1,2-diacylglycerol 3-diphosphate (1-18:0, 2-18:1)",
+   "name": "1,2-diacylglycerol 3-diphosphate (1-18:0, 2-18:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3622",
+    "s_3630"
+   ],
+   "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OP(=O)(O)O",
+   "gem_formula": "C39H76O11P2",
+   "previous_dgf_prime_kj_per_mol": 2922.2759967411343,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "lipid:1,2-diacylglycerol 3-diphosphate (1-18:1, 2-16:1)",
+   "name": "1,2-diacylglycerol 3-diphosphate (1-18:1, 2-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3619",
+    "s_3627"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)(O)OP(=O)(O)O",
+   "gem_formula": "C37H70O11P2",
+   "previous_dgf_prime_kj_per_mol": 2729.6140710393556,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "lipid:CDP-diacylglycerol (1-16:1, 2-18:1)",
+   "name": "CDP-diacylglycerol (1-16:1, 2-18:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3089",
+    "s_3106"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OP(=O)(O)OCC1OC(n2ccc(N)nc2=O)C(O)C1O)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "gem_formula": "C46H81N3O15P2",
+   "previous_dgf_prime_kj_per_mol": 2878.8127121697044,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "lipid:CDP-diacylglycerol (1-18:0, 2-16:1)",
+   "name": "CDP-diacylglycerol (1-18:0, 2-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3086",
+    "s_3100"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OP(=O)(O)OCC1OC(n2ccc(N)nc2=O)C(O)C1O",
+   "gem_formula": "C46H83N3O15P2",
+   "previous_dgf_prime_kj_per_mol": 2886.7859879930083,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "lipid:CDP-diacylglycerol (1-18:1, 2-16:1)",
+   "name": "CDP-diacylglycerol (1-18:1, 2-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3087",
+    "s_3102"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)(O)OP(=O)(O)OCC1OC(n2ccc(N)nc2=O)C(O)C1O",
+   "gem_formula": "C46H81N3O15P2",
+   "previous_dgf_prime_kj_per_mol": 2878.8127138561813,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "lipid:acylglycerone phosphate (16:1)",
+   "name": "acylglycerone phosphate (16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_2941",
+    "s_2949"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(=O)COP(=O)(O)O",
+   "gem_formula": "C19H35O7P",
+   "previous_dgf_prime_kj_per_mol": 1220.6209104384538,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "lipid:cardiolipin (1-16:0, 2-18:1, 3-18:0, 4-16:1)",
+   "name": "cardiolipin (1-16:0, 2-18:1, 3-18:0, 4-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3260"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "gem_formula": "C77H146O17P2",
+   "previous_dgf_prime_kj_per_mol": 5474.450315682995,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "lipid:cardiolipin (1-18:0, 2-16:1, 3-16:0, 4-18:1)",
+   "name": "cardiolipin (1-18:0, 2-16:1, 3-16:0, 4-18:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3250"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "gem_formula": "C77H146O17P2",
+   "previous_dgf_prime_kj_per_mol": 5474.450315682995,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-16:0, 2-16:1, 4-16:1)",
+   "name": "monolysocardiolipin (1-16:0, 2-16:1, 4-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3284"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "gem_formula": "C57H108O16P2",
+   "previous_dgf_prime_kj_per_mol": 3870.741734198655,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-16:0, 2-16:1, 4-18:1)",
+   "name": "monolysocardiolipin (1-16:0, 2-16:1, 4-18:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3285"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "gem_formula": "C59H112O16P2",
+   "previous_dgf_prime_kj_per_mol": 4055.4302845513553,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-16:0, 2-18:1, 4-16:1)",
+   "name": "monolysocardiolipin (1-16:0, 2-18:1, 4-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3292"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "gem_formula": "C59H112O16P2",
+   "previous_dgf_prime_kj_per_mol": 4055.4302858875158,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-16:0, 2-18:1, 4-18:1)",
+   "name": "monolysocardiolipin (1-16:0, 2-18:1, 4-18:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3293"
+   ],
+   "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "gem_formula": "C61H116O16P2",
+   "previous_dgf_prime_kj_per_mol": 4240.118837576372,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-16:1, 2-16:1, 4-16:1)",
+   "name": "monolysocardiolipin (1-16:1, 2-16:1, 4-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3286"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "gem_formula": "C57H106O16P2",
+   "previous_dgf_prime_kj_per_mol": 3862.7683581814995,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-16:1, 2-16:1, 4-18:1)",
+   "name": "monolysocardiolipin (1-16:1, 2-16:1, 4-18:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3287"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "gem_formula": "C59H110O16P2",
+   "previous_dgf_prime_kj_per_mol": 4047.4569098703555,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-16:1, 2-18:1, 4-16:1)",
+   "name": "monolysocardiolipin (1-16:1, 2-18:1, 4-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3294"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "gem_formula": "C59H110O16P2",
+   "previous_dgf_prime_kj_per_mol": 4047.456909870361,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-16:1, 2-18:1, 4-18:1)",
+   "name": "monolysocardiolipin (1-16:1, 2-18:1, 4-18:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3295"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "gem_formula": "C61H114O16P2",
+   "previous_dgf_prime_kj_per_mol": 4232.145461559217,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-18:0, 2-16:1, 4-16:1)",
+   "name": "monolysocardiolipin (1-18:0, 2-16:1, 4-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3288"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "gem_formula": "C59H112O16P2",
+   "previous_dgf_prime_kj_per_mol": 4055.430285887525,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-18:0, 2-16:1, 4-18:1)",
+   "name": "monolysocardiolipin (1-18:0, 2-16:1, 4-18:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3289"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "gem_formula": "C61H116O16P2",
+   "previous_dgf_prime_kj_per_mol": 4240.1188362402245,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-18:1, 2-16:1, 4-16:1)",
+   "name": "monolysocardiolipin (1-18:1, 2-16:1, 4-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3290"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "gem_formula": "C59H110O16P2",
+   "previous_dgf_prime_kj_per_mol": 4047.4569118746035,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-18:1, 2-16:1, 4-18:1)",
+   "name": "monolysocardiolipin (1-18:1, 2-16:1, 4-18:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3291"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "gem_formula": "C61H114O16P2",
+   "previous_dgf_prime_kj_per_mol": 4232.145462227303,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-16:1, 3-16:0, 4-16:1)",
+   "name": "monolysocardiolipin (2-16:1, 3-16:0, 4-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3270"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "gem_formula": "C57H108O16P2",
+   "previous_dgf_prime_kj_per_mol": 3870.741734198655,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-16:1, 3-16:0, 4-18:1)",
+   "name": "monolysocardiolipin (2-16:1, 3-16:0, 4-18:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3275"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "gem_formula": "C59H112O16P2",
+   "previous_dgf_prime_kj_per_mol": 4055.4302858875158,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-16:1, 3-16:1, 4-16:1)",
+   "name": "monolysocardiolipin (2-16:1, 3-16:1, 4-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3272"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "gem_formula": "C57H106O16P2",
+   "previous_dgf_prime_kj_per_mol": 3862.7683581814995,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-16:1, 3-16:1, 4-18:1)",
+   "name": "monolysocardiolipin (2-16:1, 3-16:1, 4-18:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3276"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "gem_formula": "C59H110O16P2",
+   "previous_dgf_prime_kj_per_mol": 4047.456909870361,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-16:1, 3-18:0, 4-16:1)",
+   "name": "monolysocardiolipin (2-16:1, 3-18:0, 4-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3273"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "gem_formula": "C59H112O16P2",
+   "previous_dgf_prime_kj_per_mol": 4055.430285887525,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-16:1, 3-18:1, 4-16:1)",
+   "name": "monolysocardiolipin (2-16:1, 3-18:1, 4-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3274"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "gem_formula": "C59H110O16P2",
+   "previous_dgf_prime_kj_per_mol": 4047.4569118746035,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-18:1, 3-16:0, 4-16:1)",
+   "name": "monolysocardiolipin (2-18:1, 3-16:0, 4-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3278"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "gem_formula": "C59H112O16P2",
+   "previous_dgf_prime_kj_per_mol": 4055.4302845513553,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-18:1, 3-16:0, 4-18:1)",
+   "name": "monolysocardiolipin (2-18:1, 3-16:0, 4-18:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3282"
+   ],
+   "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "gem_formula": "C61H116O16P2",
+   "previous_dgf_prime_kj_per_mol": 4240.118837576372,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-18:1, 3-16:1, 4-16:1)",
+   "name": "monolysocardiolipin (2-18:1, 3-16:1, 4-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3279"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "gem_formula": "C59H110O16P2",
+   "previous_dgf_prime_kj_per_mol": 4047.4569098703555,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-18:1, 3-16:1, 4-18:1)",
+   "name": "monolysocardiolipin (2-18:1, 3-16:1, 4-18:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3283"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "gem_formula": "C61H114O16P2",
+   "previous_dgf_prime_kj_per_mol": 4232.145461559217,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-18:1, 3-18:0, 4-16:1)",
+   "name": "monolysocardiolipin (2-18:1, 3-18:0, 4-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3280"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "gem_formula": "C61H116O16P2",
+   "previous_dgf_prime_kj_per_mol": 4240.1188362402245,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-18:1, 3-18:1, 4-16:1)",
+   "name": "monolysocardiolipin (2-18:1, 3-18:1, 4-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3281"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "gem_formula": "C61H114O16P2",
+   "previous_dgf_prime_kj_per_mol": 4232.145462227303,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "lipid:phosphatidyl-N,N-dimethylethanolamine (1-16:0, 2-16:1)",
+   "name": "phosphatidyl-N,N-dimethylethanolamine (1-16:0, 2-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3199"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OCCN(C)C",
+   "gem_formula": "C39H76NO8P",
+   "previous_dgf_prime_kj_per_mol": 2973.1796841024848,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "lipid:phosphatidyl-N,N-dimethylethanolamine (1-16:1, 2-16:1)",
+   "name": "phosphatidyl-N,N-dimethylethanolamine (1-16:1, 2-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3200"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCCN(C)C)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "gem_formula": "C39H74NO8P",
+   "previous_dgf_prime_kj_per_mol": 2965.2085582041027,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "lipid:phosphatidyl-N,N-dimethylethanolamine (1-16:1, 2-18:1)",
+   "name": "phosphatidyl-N,N-dimethylethanolamine (1-16:1, 2-18:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3204"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCCN(C)C)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "gem_formula": "C41H78NO8P",
+   "previous_dgf_prime_kj_per_mol": 3149.8933951733147,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "lipid:phosphatidyl-N,N-dimethylethanolamine (1-18:0, 2-16:1)",
+   "name": "phosphatidyl-N,N-dimethylethanolamine (1-18:0, 2-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3201"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCCN(C)C",
+   "gem_formula": "C41H80NO8P",
+   "previous_dgf_prime_kj_per_mol": 3157.864603583874,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "lipid:phosphatidyl-N,N-dimethylethanolamine (1-18:0, 2-18:1)",
+   "name": "phosphatidyl-N,N-dimethylethanolamine (1-18:0, 2-18:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3205"
+   ],
+   "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCCN(C)C",
+   "gem_formula": "C43H84NO8P",
+   "previous_dgf_prime_kj_per_mol": 3342.5496289284383,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "lipid:phosphatidyl-N,N-dimethylethanolamine (1-18:1, 2-16:1)",
+   "name": "phosphatidyl-N,N-dimethylethanolamine (1-18:1, 2-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3202"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)(O)OCCN(C)C",
+   "gem_formula": "C41H78NO8P",
+   "previous_dgf_prime_kj_per_mol": 3149.893462111543,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "lipid:phosphatidyl-N-methylethanolamine (1-16:0, 2-16:1)",
+   "name": "phosphatidyl-N-methylethanolamine (1-16:0, 2-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3184"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OCCNC",
+   "gem_formula": "C38H74NO8P",
+   "previous_dgf_prime_kj_per_mol": 2874.0697616101465,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "lipid:phosphatidyl-N-methylethanolamine (1-16:1, 2-16:1)",
+   "name": "phosphatidyl-N-methylethanolamine (1-16:1, 2-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3186"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCCNC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "gem_formula": "C38H72NO8P",
+   "previous_dgf_prime_kj_per_mol": 2866.0968248499203,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "lipid:phosphatidyl-N-methylethanolamine (1-16:1, 2-18:1)",
+   "name": "phosphatidyl-N-methylethanolamine (1-16:1, 2-18:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3194"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCCNC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "gem_formula": "C40H76NO8P",
+   "previous_dgf_prime_kj_per_mol": 3050.783301276386,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "lipid:phosphatidyl-N-methylethanolamine (1-18:0, 2-16:1)",
+   "name": "phosphatidyl-N-methylethanolamine (1-18:0, 2-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3188"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCCNC",
+   "gem_formula": "C40H78NO8P",
+   "previous_dgf_prime_kj_per_mol": 3058.75616520277,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "lipid:phosphatidyl-N-methylethanolamine (1-18:0, 2-18:1)",
+   "name": "phosphatidyl-N-methylethanolamine (1-18:0, 2-18:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3196"
+   ],
+   "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCCNC",
+   "gem_formula": "C42H82NO8P",
+   "previous_dgf_prime_kj_per_mol": 3243.442529788641,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "lipid:phosphatidyl-N-methylethanolamine (1-18:1, 2-16:1)",
+   "name": "phosphatidyl-N-methylethanolamine (1-18:1, 2-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3190"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)(O)OCCNC",
+   "gem_formula": "C40H76NO8P",
+   "previous_dgf_prime_kj_per_mol": 3050.783296564563,
+   "previous_route": "external_pka",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "written structure, priced through the bridge on the neutral parent with MolGpKa pKas"
+  },
+  {
+   "key": "tier_a:ferroheme b",
+   "name": "ferroheme b",
+   "source": "tier_a_pilot",
+   "met_ids": [
+    "s_0712"
+   ],
+   "smiles": "C=CC1=C(C)C2=CC3=C(C=C)C(C)=C4C=C5C(C)=C(CCC(=O)[O-])C6=[N+]5[Fe-2]5(N7C(=CC1=[N+]25)C(C)=C(CCC(=O)[O-])C7=C6)N43",
+   "gem_formula": "",
+   "previous_dgf_prime_kj_per_mol": null,
+   "previous_route": "failed_group_decomposition",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "method=empty status=failed"
+  },
+  {
+   "key": "tier_a:phosphatidylethanolamine (1-16:1, 2-16:1)",
+   "name": "phosphatidylethanolamine (1-16:1, 2-16:1)",
+   "source": "tier_a_pilot",
+   "met_ids": [
+    "s_3132",
+    "s_3150",
+    "s_3168",
+    "s_3185",
+    "s_3467",
+    "s_3706"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC[C@H](COP(=O)([O-])OCC[NH3+])OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "gem_formula": "",
+   "previous_dgf_prime_kj_per_mol": 1967.930678541387,
+   "previous_route": "priced",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "ok"
+  },
+  {
+   "key": "tier_a:superoxide",
+   "name": "superoxide",
+   "source": "tier_a_pilot",
+   "met_ids": [
+    "s_3813",
+    "s_3931"
+   ],
+   "smiles": "[O][O-]",
+   "gem_formula": "",
+   "previous_dgf_prime_kj_per_mol": null,
+   "previous_route": "compound_creation_raised",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "MissingPKasError: pkas_provided_externally=True requires specified_pkas for every structure, but 1 of 1 are missing: ['[O][O-]']"
+  },
+  {
+   "key": "tier_a:N-(4-oxoglutarate)-L-cysteinylglycine",
+   "name": "N-(4-oxoglutarate)-L-cysteinylglycine",
+   "source": "tier_a_pilot",
+   "met_ids": [
+    "s_3923",
+    "s_3924"
+   ],
+   "smiles": "O=C([O-])CNC(=O)[C@H](CS)NC(=O)CCC(=O)C(=O)[O-]",
+   "gem_formula": "",
+   "previous_dgf_prime_kj_per_mol": -539.6496464424988,
+   "previous_route": "priced",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "ok"
+  },
+  {
+   "key": "tier_a:methionyl acetate",
+   "name": "methionyl acetate",
+   "source": "tier_a_pilot",
+   "met_ids": [
+    "s_4256",
+    "s_4257"
+   ],
+   "smiles": "CC(=O)OC(=O)C(CCSC)N",
+   "gem_formula": "",
+   "previous_dgf_prime_kj_per_mol": null,
+   "previous_route": "failed_group_decomposition",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "method=empty status=failed"
+  },
+  {
+   "key": "acyl:tyrosyl acetate",
+   "name": "tyrosyl acetate",
+   "source": "acyl_transfer_writer",
+   "met_ids": [
+    "s_4254",
+    "s_4255"
+   ],
+   "smiles": "CC(=O)OCCc1ccc(O)cc1",
+   "gem_formula": "C10H12O3",
+   "previous_dgf_prime_kj_per_mol": null,
+   "previous_route": "none",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "composed from r_4687 (alcohol acetyltransferase (tyrosol)) by acylating tyrosol"
+  },
+  {
+   "key": "acyl:methionyl acetate",
+   "name": "methionyl acetate",
+   "source": "acyl_transfer_writer",
+   "met_ids": [
+    "s_4256",
+    "s_4257"
+   ],
+   "smiles": "CSCCCOC(C)=O",
+   "gem_formula": "C6H12O2S",
+   "previous_dgf_prime_kj_per_mol": null,
+   "previous_route": "none",
+   "previous_convention": "neutral parent submitted to the compound bridge",
+   "note": "composed from r_4690 (alcohol acetyltransferase (methionol)) by acylating methionol"
+  }
+ ]
+}

@@ -1,0 +1,100 @@
+%% notes-tex/032-amino-acid-module/sections/5-standing.tex
+\section{Where the module stands on this target\secstatus{todo}}
+\label{sec:standing}
+
+The amino-acid endpoint is noisy, and every model reads at a tenth of what the noise
+allows. Its own strain-level retest is 0.20, the second screen agrees with it at 0.03,
+and every model, transformer or ladder, at either width, with or without a store, reads
+between 0.00 and 0.06. Four forms of the store affine sit at or under their control; the
+solve head recovers the affine's loss and lands at the control; width, 100 more epochs
+and the rule counts change nothing. What the campaign fixes is the target's position
+rather than the module's: the retest of 0.20 bounds a second screen, the bound on a
+model against one measurement is its square root, about 0.45 on the Spearman scale and
+0.62 on the Pearson (Section~\ref{sec:concordance}), and every arm reads at a tenth of
+it, so the arms differ within a band that is small against the ceiling and against the
+seed spread alike. The physically
+stated stores read in the transformer confirm it from the other side: the adjustment
+store and the driving-force concentrations each sit between the parsimonious store and
+the control inside both spreads, so the parsimonious store's small loss is specific to
+that build and nothing metabolic rises above the control. The one read above the
+transformer band is annotation with sequence through a perceptron, 0.065, and the flux
+row lowers every read it joins. The sampled cone (round 143, 0.019) and the polytope
+mean (148, 0.032) read under every other store; width 6 (146, 0.025) brings the
+collapse back; dropout 0.3 on the store arm (157, 0.045) returns half of what the store
+costs and stays under the control. GO in the affine slot (153, 0.058) is the one
+transformer arm above its control on five seeds of six, at the GO perceptron's level;
+the HiGHS vector appended to it in the same affine takes 0.003 from it on every seed
+(160), where on betaxanthin it added 0.009, and dropout 0.3 around that affine moves it
+by less than a thousandth (162), as does dropout around the GO affine alone (165): as
+on betaxanthin, the annotation arm is the affine alone. On twelve seeds the
+annotation's gain holds at 0.009, above the control on ten of twelve, but averaging
+the control's twelve seeds reads 0.067, above the annotation's twelve-seed ensemble and
+above every single cell of either arm (168): the gain is real and smaller than what the
+control's own seed noise is worth when averaged away. The flux vector beside GO on
+twelve seeds is $-0.002$, above the annotation alone on two of twelve (174): what adds
+0.012 on betaxanthin takes on this target, at any seed count read. The one input that
+moves the target is measured, not inferred: the strain's own betaxanthin score, a single
+column, reads 0.071 by forest and 0.078 appended to GO, the highest read of any model on
+this target (Section~\ref{sec:concordance}). In the transformer's affine the same
+column beside GO reads 0.053, under the GO affine on four of six (183), with the pair
+confounded by the store's encoding; the column alone reads 0.060 with the highest
+validation correlation and, ensembled, the highest test rank of any arm on this target,
+0.073 (184). The measured score is the one input the transformer reads at the
+annotation's level from a single column. The encoding control settles the pair:
+standardizing GO costs the affine 0.005 and its early selection, and beside GO under
+that encoding the score is $+0.001$ (189), so the score adds to the annotation in the
+forest and not in the affine. On twelve seeds the score alone holds the annotation's
+single-seed level (0.056 against 0.057) with six times its spread, and its twelve-seed
+ensemble, 0.072, stays the highest of any arm on this target (195). Through a hidden
+layer of 256 the same column reads 0.078 (sd 0.007), $+0.018$ over its linear read on
+five of six and $+0.020$ over the annotation on six of six, ensembled 0.082 (205): the
+highest single-seed transformer read and the highest ensemble on this target. The
+highest read of any model, though, is the other amino-acid screen: Cooper's seventeen peaks predict
+M\"ulleder's nineteen at 0.093 by forest, above GO with the score (0.078), the score
+alone (0.071) and GO alone (0.063), so the two screens read each other better than
+either reads its own gene's annotation (Section~\ref{sec:physics}). The third endpoint
+agrees: the pool predicts the isobutanol biosensor out of fold at 0.102 against the
+annotation's 0.017 (Section~\ref{sec:isobutanol-cross}). On all three targets a measured
+phenotype of the same strain is worth more than the gene's annotation. Through a
+perceptron Cooper's peaks alone read 0.052, under the annotation and half the forest,
+and GO linear beside them 0.068, the highest single-seed read of any perceptron on
+this target (Section~\ref{sec:physics}). The transformer reads the same columns
+through a hidden layer of 256 at 0.046 and in the linear affine at 0.042, both under
+the annotation on every seed and under the affine-free control, and half the forest's
+read of them (206, 207): the forest is the only model that reads Cooper's peaks above
+the annotation, so the two screens agree in a tree and not in a trained head. On the graphs the profile is barely smooth: the mean profile of a gene's
+labeled STRING coexpression neighbors reads M\"ulleder's nineteen at 0.063 and Cooper's
+peaks at 0.062 (Section~\ref{sec:homophily}), at the annotation's level and a quarter
+of what the same graph carries for betaxanthin (0.244).
+The two essentiality recipes carried to this target close the same way: the growth
+ratio's medium moves the store affine within its seed spread (four media 0.042, the
+screen's own SM under default initialization 0.046, against the control's 0.049 over
+the same six seeds; rounds 208, 209), and the graphs' label propagation reads under the
+control on every seed (0.026 alone, 0.021 with the SM store appended; 210, 211). Both
+label stores are transductive, other strains' measured profiles, so they bound what a
+model with the neighbors' labels in hand could read, not what generalizes to a strain
+nobody's neighbors measured, and on this target that bound sits under the control.
+What remains is the inductive setting: a model that takes the gene, its annotation, the
+model's flux and the graphs' structure, and no measurement of the strain or of its
+neighbors, the one design that scales to a strain nobody measured. Under it the profile
+is read at 0.058 by the annotation and 0.049 by the control against a ceiling of 0.62
+on the Pearson scale, and the one input that lifts it, the strain's own betaxanthin
+score (0.078 through a hidden layer of 256, round 205), is a measurement. The lift runs
+one way: the measured pool lifts betaxanthin by 0.20 in the betaxanthin study's
+transformer (0.278 against 0.076 over twelve seeds), where the measured score lifts the
+profile by 0.03. The inductive form of that cross-read, a co-target in place of an
+input, is read in both directions at weight 1: the profile beside the betaxanthin head
+moves betaxanthin by $+0.001$ over twelve seeds (the betaxanthin study's rounds 223 to
+225), and the betaxanthin head beside the profile costs the profile 0.023 (round 212,
+0.026 against 0.049, one of six seeds). The conditional VAE (Section~\ref{sec:cvae})
+puts the gap in one model: a held-out strain's profile is rebuilt at 0.75 mean Spearman
+from a latent that saw its measurement and at 0.05 from the latent its genotype implies,
+the same as a direct map, so the profile is autoencodable from itself and not from the
+genotype, and a sampled profile for a strain nobody measured is bounded by that 0.05.
+What lifts the profile inductively is the annotation of the deleted gene's graph
+neighbors: GO with its one-hop neighbor mean appended reads 0.081 by forest against
+0.063 for GO alone (\texttt{store\_baselines\_amino\_acids\_nbr.json}, the degree
+columns alone 0.021), and the same columns on the transformer read 0.065 against GO's
+0.058 (round 213, $+0.008$, five of six seeds), the highest inductive read of the
+profile on the transformer and 0.4 of the forest's lift. Nothing else is pending on
+this target.

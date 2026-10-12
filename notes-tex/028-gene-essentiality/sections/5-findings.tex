@@ -1,0 +1,254 @@
+%% notes-tex/028-gene-essentiality/sections/5-findings.tex
+%% [[experiments.028-gene-essentiality]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/028-gene-essentiality/sections/5-findings.tex
+
+\section{Findings\secstatus{todo}}
+\label{sec:findings}
+
+The two questions the document opened with have the following answers on the released
+Merzbacher 2025 split, every number at a validation-selected epoch on the 195 held-out
+genes with a gene bootstrap, and every gain attributed by a paired, pre-registered read.
+
+\begin{description}
+  \item[The held-out number is 0.893 {[0.84, 0.94]}.] A width-12 cell graph transformer
+    reading the chromosome-pathway indicator and ProtT5, with FBA's four growth ratios on
+    its logit, under Flux Cone Learning's own five-fold ensemble protocol; 0.15 above
+    Flux Cone Learning's 0.742 on the same genes and 0.06 above the classical ladder's
+    best rung. Its per-cell mean over seven seeds is 0.869.
+  \item[The inputs are the number.] The gain over the backbone alone (0.774) is the four
+    solver ratios (to 0.821) and the pathway multi-hot beside the protein embedding (to
+    0.871); the five gene properties in the same encoding, expression included, add
+    nothing, and neither do width, depth, the preprocessor, ESM2, codon frequency or the
+    species-LM composite. A two-layer MLP on the same three inputs reads 0.870 per cell in
+    six seconds and 0.886 as a fold ensemble; graph convolution over the nine gene graphs
+    reads 0.888. Three architectures are one number at this resolution.
+  \item[The pathway multi-hot is the indicator.] Split into its blocks, the 197-column
+    encoding's gain is the 173 pathway columns: with ProtT5 and the ratios they read
+    0.880 on the MLP and 0.890 on the transformer, above the full encoding (0.870 and
+    0.871), while the chromosome one-hot (0.809, 0.822) and the seven properties
+    (0.798, 0.824) sit at the level of ProtT5 with the ratios. On the transformer the
+    pathway columns need the sequence embedding beside them (0.766 alone); on the MLP
+    they do not (0.828). The pooled transformer on ProtT5 with the pathway multi-hot and
+    no readout reads 0.860. The solve does not substitute for the annotation: the
+    deletion's flux vector on ProtT5 alone reads 0.868 pooled, the same vector with
+    the pathway block 0.912, and the block with the ratios alone 0.890
+    (Section~\ref{sec:round35}).
+  \item[Keeping the edge type is the one architectural choice that registers.] Of the
+    message-passing forms of MATH-490 and Gene\_Graph on the transformer's three inputs,
+    relational attention over the nine graphs as nine edge types reads 0.889, GraphSAGE
+    0.887, relational convolution 0.860, graph convolution over the untyped union 0.847
+    and the graph isomorphism network 0.705, against the MLP's 0.870. The 1-WL-expressive
+    aggregator is the weakest, and the typed-edge attention is level with the
+    transformer's best single cell.
+  \item[GO through the graph is the highest number in the document.] Two layers of
+    graph convolution over the union of the nine gene graphs on the propagated GO
+    multi-hot alone, no sequence and no solve, read 0.912, 0.910 and 0.904 at 400
+    epochs, 43 seconds per seed, and under the reported five-fold protocol 0.917
+    [0.87, 0.96] against the transformer's 0.893 [0.84, 0.94], the folds above on four
+    of five and the same 0.917 with three seeds per fold; the curve is flat past 400
+    epochs, the sequence embedding and the
+    ratios add nothing to it, and on six seeds it reads 0.898 to 0.912 (mean 0.905,
+    sd 0.005) with no run that misses. On the ladder GO is
+    the strongest single encoding (0.808 linear, 0.844 with a random forest and the
+    ratios). The transformer is the one model that does not take it: 0.833 beside
+    ProtT5 and a cost of 0.04 beside the pathway block.
+  \item[The genes every model misses are the ones the solve misses.] Thirteen of the
+    fifteen hardest essential held-out genes have a knockout growth ratio of 1.0 (CDC19
+    covered by PYK2, PET9 by AAC1 and AAC3), and the hardest nonessential genes are
+    metabolic paralogs (TDH1, TDH2, TDH3, PFK1, PFK2) the annotation vectors make look
+    essential; the seven transformer arms agree on their failures at a Spearman of 0.4
+    to 0.9, and the GO convolution fails elsewhere (0.15 to 0.4 with them), halving the
+    misrank on
+    FRQ1, AUR1, PGA3, LCB1 and LCB2 and repairing twelve of the misranked paralogs.
+    Of the 19 essential held-out genes the solve calls viable, four are covered by an
+    alternative gene set on every reaction and fifteen have a reaction of their own
+    that the growth program does not need, so what the solve misses is mostly a
+    requirement outside the biomass objective and only partly isozyme cover, and the
+    two model families miss different parts of it
+    (Section~\ref{sec:hard-genes}). Averaging their existing predictions with equal
+    weight and nothing fitted scores 0.948 [0.91, 0.98] on the split-file cells (the
+    six-seed GO convolution with the six-seed layer-free form, from 0.905 and 0.910
+    alone; 0.946 with the scalable form) and 0.954 [0.92, 0.98] under the fold
+    protocol, from families at 0.917 and 0.922 alone (the GO convolution's fold models
+    with the scalable form's): the maximum of the fifteen and eleven post hoc averages
+    tried, reported as such; one model over both inputs, the solve's columns beside
+    GO under the convolution, reads the GO-alone 0.909 and recovers none of it, GO on
+    the node beside the solve in the transformer's affine reads 0.866, the round-26
+    cost, and GO as affine columns beside the solve reads 0.901, the solve-alone
+    number, memorizing the training genes by epoch 20, and 0.906 reduced to 64
+    components, fitting on time; the two families stay two models
+    (Section~\ref{sec:family-ensembles}).
+  \item[Off the metabolic genes, only the graph transfers.] On the 4,674 genome-wide
+    genes the released split never labeled (974 essential by SGD, 3,700 nonessential by
+    a fitness record, none with a GEM reaction, so FBA reads exactly 0.5 and label
+    origin coincides with class), models trained on the 629 released genes read: the
+    MLP on the transformer's inputs 0.509, the transformer's reported recipe 0.572,
+    the scalable module form 0.551 and the layer-free form 0.570 (the solve is one constant row on every one of them, the wild-type flux for the
+    scalable form and an all-zero row for the layer-free form, whose store covers the
+    labeled genes only, and the scalable form's six seeds span 0.480 to
+    0.579),
+    graph convolution on ProtT5 alone 0.749, on the three inputs 0.744, on GO alone
+    0.702, degree and clustering alone through the physical graph 0.753, and the raw
+    degree in the physical graph, nothing trained, 0.740 (0.594 on the released 195).
+    The GO convolution's margin is a property of the metabolic genes; off them the
+    number is the gene's degree in the protein interaction graph, a genome-wide signal
+    the metabolic genes barely vary in, which any input through the graph reaches and
+    no input without it does. The other way, the
+    genome-wide labels as training data leave the GO convolution at 0.913 on the 195
+    and cost the three-input models 0.03 to 0.05 (Section~\ref{sec:round30}).
+  \item[Structure is not the signal.] The 1-WL test separates 1,118 of 1,121
+    single-deletion graphs on the physical graph and all of them on the union, so
+    expressivity does not bound a message-passing model here, and the WL kernel, all-ones
+    and degree inputs all rank at chance. What is written on the nodes carries the number.
+  \item[Accuracy is the wrong statistic.] yeast-GEM's own benchmark reports 0.902 on a
+    gene set whose majority class alone gives 0.856, with recall 0.41; FBA on 9.0.2
+    reproduces it at 0.907, the released labels agree with the Stanford list on 1,102 of
+    1,104 shared genes, and the transformer's balanced accuracy at the loss's decision
+    boundary is 0.78 against 0.63 to 0.72 for the solvers.
+  \item[The solve carries the module's value, and the alternating layer cannot compute it.]
+    Routed through the module's growth column the prediction never beats the backbone
+    alone. The layer's alternating projections never reach the polytope the solve
+    optimizes over: with the balance exact the box is violated on 58 percent of reactions,
+    the second law on half, the protein pool by up to seven times, the dissipation limit
+    by three; the growth column is a free signed coordinate the readout learns to use
+    with either sign; the $k_{cat}$ content is unread (the shuffled table matches); and
+    handed the solve's own point, the anchored constraint set discards it.
+  \item[The enzyme-capacity box as parameterized contains no growing flux.] A linear
+    program under the layer's bounds is infeasible for every genotype, because the
+    predicted $k_{cat}$ tier times the nominal abundances caps the median reaction at
+    0.084 mmol/gDW/h. Every anchored arm in this document read a flux off the polytope
+    for that reason. Scaled by 30 or more the box admits growth; the ceilings still bind
+    up to a scale near 3,000.
+  \item[On the polytope, the module helps.] On the GEM's own box the solve survives the
+    projections and the program that solves is feasible and ranks the held-out genes at
+    0.73 before training, above FBA's 0.66; the gated module cell reaches the level of the
+    solve appended as an input, 0.816 by warm start and 0.824 by the layer that solves,
+    three of three seeds above the round-4 gated cell, with the growth column entering
+    through a positive gate. On six seeds the two gated forms read 0.814 (GEM box) and
+    0.804 (elastic program, feasible by construction), twelve seeds of twelve above the
+    gated cell without the solve and 0.01 to 0.02 under the affine.
+  \item[The ceilings cannot carry the ranking, so the forced growth column cannot be
+    trained.] With the program elastic, feasible for every genotype and its gradient
+    arriving on nine genotypes in ten, the forced column still reads 0.70 to 0.74 and
+    its training loss never leaves 1.25, under ten times the learning rate, a deeper
+    head, a wider reach and two ceiling scales. The dual-overlap probe measures why: the
+    same six gene-owned ceilings bind whichever gene is deleted (median Jaccard 1.0), and
+    the deleted gene's own reactions never bind because the deletion has closed them, so
+    the head can move one growth level for every genotype and cannot move one genotype
+    against another.
+  \item[The solve's flux vector, read by a linear head, is the module's number.] The
+    gated elastic cell with a zero-initialized linear head over $\log(1 + |v^*|)$ of the
+    solved flux reads 0.883, 0.853 and 0.868 on the ProtT5 backbone, the first module
+    cell to pass a pre-registered read, 0.047 above the FBA affine on that backbone and
+    with the growth column's gate ending near zero. Over the 274 exchange fluxes alone it
+    reads 0.835. On ProtT5 with the pathway multi-hot the same cell reads 0.897 and 0.903
+    on two seeds, the two highest single cells in the document and above the affine on
+    that input (0.890), and 0.716 on a third seed whose training loss never fell. The
+    vector carries it: with nothing learned in the layer the same head reads 0.852,
+    the ceilings add 0.01 to 0.02, and the gene-owned columns hold it (0.861 against
+    0.835 for the exchanges). Under the fold-ensemble protocol on the pathway input it
+    reads 0.897 [0.84, 0.95], one number with the reported 0.893, from three fold
+    models at 0.90 and two that never fit; three of this form's seventeen cells miss
+    the fitting transition within 200 epochs, and the miss is a chance event of the run
+    and not of the seed: the unfit seed rerun under the same program fits at epoch 70
+    and reads 0.889, the two runs diverging from their first epoch
+    (Sections~\ref{sec:round24}, \ref{sec:round25} and~\ref{sec:round29}). The chance
+    is the card's kernels: with cuDNN's autotuner off, deterministic kernels on and
+    cuBLAS's workspace fixed, two runs of that seed are identical to four decimals at
+    every epoch, both fit at epoch 86 and read 0.894, where two free runs of the same
+    seed read 0.920 and 0.782, at a five percent cost in wall time; pinned, six seeds
+    fit six times and read 0.894 to 0.913 (Section~\ref{sec:round32}). The form
+    that scales, the program solved once per genotype with nothing learned in the
+    layer and its flux read through a zero-initialized head, reads 0.897 to 0.917 on
+    eight of nine runs over six seeds (pooled 0.917 [0.87, 0.96] on the six-seed
+    rerun, above the elastic form's 0.910), and misses the transition on the ninth,
+    a seed it had fit in the previous attempt, so the chance is not in the ceilings;
+    under the fold protocol it reads 0.912 [0.86, 0.95] with all five folds fit, one
+    number with the reported 0.893 (Section~\ref{sec:round27}). Metabolism enters the cell as a
+    perturbation-conditional transform that holds mass balance and the bounds exactly,
+    costs nothing on the card, and cannot hurt at initialization. With no layer in the
+    graph at all, the deletion's pFBA vector precomputed and appended to the affine's
+    input (round 31), the cell reads 0.871 pooled alone and 0.901 with the solve
+    statistics beside it, at 31 minutes per cell against 83, and four of the six
+    vector cells select an epoch before the backbone's fitting transition over a
+    default-initialized 4,135-column affine, where the two that select after it read
+    0.923 and 0.911 (Section~\ref{sec:round31}). The encoding is the whole of that
+    gap: the same vector as $\log(1 + |v|)$ reads 0.896 to 0.919 on twelve of twelve
+    runs (0.912 pooled; zero initialization changes nothing, standardized columns
+    zero-initialized still peak early), the cached-solve head's number with no layer,
+    no solver in training, no missed transition and the lowest spread in the
+    document, at 11 minutes alone on a card, and 0.920 [0.87, 0.96] as a fold
+    ensemble, the document's highest transformer ensemble, one number with the GO
+    convolution's 0.917; the eight solve statistics beside it cost 0.02 on every
+    seed, and a hidden layer over it reads no more than the linear affine (0.915 and
+    0.909 pooled at widths 64 and 256), nor does the cell's capacity from 25 to 125
+    thousand parameters (width 48 reads 0.914 on six seeds), while at width 96 the
+    cell misses the fitting transition on two seeds of three
+    (Section~\ref{sec:round33}); with the card's
+    kernels pinned five more seeds read 0.899 to 0.909, though two pinned runs of this
+    cell were not one trajectory as the LP cell's were, through the pathway
+    multi-hot itself (every pinned pair with the pathway block on the node diverged
+    from epoch 0, every pair without it, ProtT5 alone or GO and ProtT5, was one
+    trajectory), an input rebuilt from a Python set at every launch and served in the
+    column order the previous process wrote, not a kernel; with the dataset fixed
+    both cells pinned are one trajectory and the free run of this cell is the pinned
+    run on all six seeds, so the switch is needed only on the LP form
+    (Section~\ref{sec:round45}). On the node
+    instead of the logit, as a gene embedding through the preprocessor, the same
+    vector reads 0.875 (pooled 0.894) alone and 0.889 with the affine columns too,
+    under the affine without any vector, and fits late; reduced to 64 or 16
+    principal components it fits on time and reads 0.894 and 0.901 pooled, the
+    affine-alone level, and 0.909 with the full vector in the affine as well, the
+    logit form's number and no more (Section~\ref{sec:round43}).
+  \item[The solve's argmax is not unique, and the head reads the solver's point.]
+    The round-27 program solved for every labeled gene by five solvers gives one
+    growth value (to $10^{-5}$, FBA's 0.60 to 0.68 on the 195 whichever solver) and
+    five flux vectors: another exact vertex moves 4 percent of the reactions in the
+    head's encoding, a point inside the optimal face 13 to 16 percent. A probe fitted
+    on the reference vertices reads 0.756 on them and 0.50 to 0.69 on the other
+    solvers' vectors, at chance on the other exact vertex; fitted within each solver it
+    reads 0.65 to 0.78, the interior point's 0.776 level with the vertex's. The store
+    and the head must come from one solver, and a point inside the face, which is
+    what a first-order solve on the card returns, ranks as well as a vertex; across
+    tolerances of one such solver the point is the same point (PDLP at $10^{-4}$ and
+    $10^{-6}$ move 0.6 percent of the reactions against each other and a probe
+    fitted on either scores the other at its own number), so the solver and not the
+    tolerance is what the store and the head must share
+    (Section~\ref{sec:solve-tolerance}). Trained over such a store the layer-free
+    cell reads 0.911 on six of six seeds, the pFBA store's number, and 0.912 as a
+    three-seed fold ensemble against the pFBA store's 0.919; over the PDLP store, the
+    card's algorithm on the CPU, 0.903 on six of six (pooled 0.907) and 0.911 as a
+    three-seed fold ensemble, and 0.905 over the same solver's store at $10^{-6}$,
+    where the $10^{-8}$ store with 320 of 1,121 programs uncertified and kept as zero
+    rows reads 0.887 and 0.906 once those rows are filled from the looser solves;
+    over the pFBA store solved on synthetic complete medium instead of
+    YPD, 0.912, the same number; where the growth
+    program's own dual-simplex vertex reads 0.840 with two early peaks
+    (Section~\ref{sec:round36}): the store can be built by the batched solver on the
+    card, and not every point of the face is a good store.
+  \item[Where the gradient goes is not the problem.] On the alternating layer the
+    gradient reaches the flux layer on every arm that lets it; the backbone's
+    preprocessor, three quarters of the parameters, is where fitting continues after the
+    validation curve peaks.
+\end{description}
+
+What carries forward to a model trained over every phenotype in the database is the
+part of this that did not depend on the 195 genes. Metabolism enters as a
+perturbation-conditional data transform: the genome-scale program solved once per
+genotype and medium on the GEM's own box, cached, and read through a zero-initialized
+head over $\log(1 + |v^*|)$, which cost nothing on the card, held mass balance and the
+bounds exactly, read 0.90 to 0.92 on eight runs of nine where the affine read 0.89, and
+cannot hurt at initialization; over the 13.5 million records of the solid-growth build
+that transform is 469,474 programs, an hour on 20 cores, read as a gather at the
+control's step rate (Section~\ref{sec:store-scale}); the learned enzyme-constrained layer, whose ceilings
+added 0.01 to 0.02 at five times the wall time and whose forced growth column could
+not be trained, is a fine-tuning module and not a backbone component. Annotation
+vectors enter through message passing over the gene graphs and not through the
+transformer's token: the GO multi-hot read 0.917 through two layers of convolution
+and 0.833 through the transformer, and the pathway block's gain on the transformer
+was the one annotation it took. The gene graphs enter as a message-passing input and
+not as a regularizer, since off the metabolic genes the models without the graph as
+an input fell to chance and the ones with it held 0.75. What the 195 genes could not
+decide, which of three architectures on the same inputs is better, the genome-wide
+set decided for the graph; what neither set can decide is whether that transfer is
+essentiality or the deletion collection's coverage.

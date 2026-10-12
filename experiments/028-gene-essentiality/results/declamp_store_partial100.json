@@ -1,0 +1,13 @@
+{
+  "flux_scale": 100.0,
+  "stores": [
+    {
+      "source": "ess_solve_encodings_YPD_simplex.npz",
+      "written": "ess_solve_encodings_YPD_simplexdeclamp100.npz",
+      "rule": "the 100 widest clamp columns",
+      "n_clamp_columns": 429,
+      "n_columns_dropped": 100,
+      "n_columns_varying_after": 1448
+    }
+  ]
+}

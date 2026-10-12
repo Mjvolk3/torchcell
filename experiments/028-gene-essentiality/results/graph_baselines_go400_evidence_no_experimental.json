@@ -1,0 +1,80 @@
+{
+  "protocol": "transductive node classification on one gene graph, no perturbation; class-weighted BCE, Adam 1e-3, 200 epochs, width 64, dropout 0.2; epoch selected by a five-epoch moving average of the validation AUROC; scored once on the 195 held-out genes",
+  "rows": [
+    {
+      "model": "GCN",
+      "graph": "union of nine",
+      "inputs": "GO (400 epochs)",
+      "dim_in": 1670,
+      "n_parameters": 111169,
+      "test_auroc": [
+        0.9067663257277734,
+        0.9063729346970889,
+        0.9042092840283241
+      ],
+      "val_auroc": [
+        0.8189473684210526,
+        0.8174436090225564,
+        0.8165413533834587
+      ],
+      "select_epoch": [
+        397,
+        397,
+        397
+      ],
+      "mean": 0.9057828481510621,
+      "sd": 0.0011242085103253575,
+      "seconds": 2824.5047528743744
+    },
+    {
+      "model": "GCN",
+      "graph": "union of nine",
+      "inputs": "GO+FBA ratios (400 epochs)",
+      "dim_in": 1674,
+      "n_parameters": 111425,
+      "test_auroc": [
+        0.9040125885129818,
+        0.906372934697089,
+        0.9051927616050355
+      ],
+      "val_auroc": [
+        0.8105263157894737,
+        0.8198496240601504,
+        0.8171428571428572
+      ],
+      "select_epoch": [
+        397,
+        388,
+        397
+      ],
+      "mean": 0.9051927616050355,
+      "sd": 0.0009636072945646616,
+      "seconds": 2872.4429426193237
+    },
+    {
+      "model": "GCN",
+      "graph": "union of nine",
+      "inputs": "ProtT5+GO+FBA ratios (400 epochs)",
+      "dim_in": 2698,
+      "n_parameters": 176961,
+      "test_auroc": [
+        0.9012588512981904,
+        0.8973249409913454,
+        0.8953579858379228
+      ],
+      "val_auroc": [
+        0.814436090225564,
+        0.8129323308270676,
+        0.8018045112781954
+      ],
+      "select_epoch": [
+        388,
+        397,
+        397
+      ],
+      "mean": 0.8979805927091529,
+      "sd": 0.0024532240930854824,
+      "seconds": 2850.013611316681
+    }
+  ]
+}

@@ -1,0 +1,73 @@
+{
+ "built_at": "2026-09-12T03:58:22.389241+00:00",
+ "applied_json": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/026-metabolism-flux/results/external_pka_applied.json",
+ "decision_json": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/026-metabolism-flux/results/pka_method_selection.json",
+ "selection_figure_json": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/026-metabolism-flux/results/pka_method_selection_figure.json",
+ "figure_svg": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes/assets/images/026-metabolism-flux/pka_outside_equilibrator.svg",
+ "figure_png": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes/assets/images/026-metabolism-flux/pka_outside_equilibrator.png",
+ "method": "cascade_top3",
+ "cascade_members": [
+  "unipka-simple-template",
+  "molgpka",
+  "pkasolver"
+ ],
+ "n_targets": 55,
+ "n_priced": 51,
+ "n_metabolite_rows_priced": 68,
+ "n_pipeline_metabolites_on_this_route": 70,
+ "targets_by_source_and_outcome": {
+  "acyl_transfer_writer": {
+   "priced": 1,
+   "priced_no_ionizable_center": 1,
+   "compound_creation_failed": 0
+  },
+  "lipid_external_pka": {
+   "priced": 48,
+   "priced_no_ionizable_center": 0,
+   "compound_creation_failed": 0
+  },
+  "tier_a_pilot": {
+   "priced": 2,
+   "priced_no_ionizable_center": 0,
+   "compound_creation_failed": 3
+  }
+ },
+ "served_by_member": {
+  "Uni-pKa, simple template": 53,
+  "pKasolver-lite": 1,
+  "no member needed": 1
+ },
+ "ladder_lengths": {
+  "0": 1,
+  "1": 3,
+  "2": 41,
+  "3": 10
+ },
+ "working_ph": [
+  5.0,
+  6.2,
+  6.6,
+  7.0,
+  7.1,
+  7.2,
+  7.4,
+  7.8
+ ],
+ "cascade_p90_by_ph": [
+  5.583421407655125,
+  1.8846654157811833,
+  2.4999565878477394,
+  3.944927456788265,
+  4.375729978807744,
+  4.882188153803806,
+  5.979533711439081,
+  8.330862016390645
+ ],
+ "convention_shift_kj_per_mol": {
+  "n": 50.0,
+  "median": -1585.2453327290507,
+  "min": -1985.3369905009367,
+  "max": 3.175751980139921,
+  "median_absolute": 1585.2453327290507
+ }
+}

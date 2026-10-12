@@ -1,0 +1,197 @@
+{
+  "slug": "cytochrome_c",
+  "met_ids": [
+    "s_0709",
+    "s_0710"
+  ],
+  "gem_name": "ferricytochrome c / ferrocytochrome c",
+  "gem_formula": "C42H44FeN8O8S2R4 / C42H45FeN8O8S2R4",
+  "gem_charge": 0,
+  "compartments": [
+    "m"
+  ],
+  "blocked_reactions": [
+    "r_0001",
+    "r_0002",
+    "r_0004",
+    "r_0437",
+    "r_0438",
+    "r_0439",
+    "r_4382"
+  ],
+  "kind": "carrier_potential",
+  "admission": "measured",
+  "value": {
+    "e_prime_mv": 272.0,
+    "n_electrons": 1,
+    "T_K": 295.15,
+    "pH": 7.4,
+    "ionic_strength_M": 0.1,
+    "organism": "Saccharomyces cerevisiae",
+    "protein": "iso-1-cytochrome c (CYC1, YJR048W), WT* mimic K72A/C102S, untrimethylated, expressed in E. coli",
+    "method": "cyclic voltammetry (0.02 and 0.1 V/s), saturated calomel reference converted to SHE",
+    "vs": "SHE",
+    "partner_couple_e_prime_mv": null
+  },
+  "sigma_kj_per_mol": 0.19,
+  "sources": [
+    {
+      "source_url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6177310/",
+      "retrieval_method": "pmc_oa_api",
+      "retrieval_command": "curl -sS -o /scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/cytochrome_c/pmc6177310_deng2018_biochemistry.xml \"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pmc&id=6177310&retmode=xml\"",
+      "sha256": "9edfa93cacc1be188ef396046da1b88b9098c31cf4770d99e3bfd063987d6d68",
+      "retrieved_at": "2026-09-11T22:03:57Z",
+      "verbatim_quote": "Table 2. Reduction Potentials a of Yeast Iso -1 Ferric Cyt c Variants | Variant | E m (mV) vs. SHE | pH 6.0 0.1 M Pi | pH 6.0 0.1 M Cl − | pH 6.0 0.1 M acetate | pH 7.4 0.1 M Pi | WT b | 290 c | WT* | 286 | 287 | 288 | 272 (274±4) d | K79G | 276 | 274 | 278 | 265 (266±2) d | ... | a All the reduction potentials (±2 mV vs . SHE) were measured using cyclic voltammetry unless otherwise indicated. Buffers used here were 0.1 M sodium phosphate (Pi) at pH 6.0 and 7.4, and 20 mM MES at pH 6.0 with 0.1 M sodium chloride or 0.1 M sodium acetate.",
+      "location": "Deng Y, Zhong F, Alden SL, Hoke KR, Pletneva EV (2018) 'The K79G Mutation Reshapes the Heme Crevice and Alters Redox Properties of Cytochrome c', Biochemistry 57(40), doi 10.1021/acs.biochem.8b00650, PMID 30142276, PMC6177310. Table 2 and its footnotes (JATS <table-wrap>, read after stripping XML tags from the saved artifact). Footnote c marks the WT value as taken from their reference 15, Rosell FI, Ferrer JC, Mauk AG (1998) J Am Chem Soc 120:11234-11245. Footnote d marks the parenthesized values as spectroelectrochemistry in 0.1 M sodium phosphate at pH 7.4, from their reference 28."
+    },
+    {
+      "source_url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6177310/",
+      "retrieval_method": "pmc_oa_api",
+      "retrieval_command": "curl -sS -o /scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/cytochrome_c/pmc6177310_deng2018_biochemistry.xml \"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pmc&id=6177310&retmode=xml\"",
+      "sha256": "9edfa93cacc1be188ef396046da1b88b9098c31cf4770d99e3bfd063987d6d68",
+      "retrieved_at": "2026-09-11T22:03:57Z",
+      "verbatim_quote": "The reduction potential of WT* (K72A/C102S) measured at pH 6 (286 mV) is not significantly different from that (290 mV) of WT under the same conditions.",
+      "location": "Same article, Results, subsection 'Heme Iron Reduction Potentials'. This is the evidence that the WT* mimic may stand for authentic wild-type yeast iso-1-cyt c to within about 4 mV."
+    },
+    {
+      "source_url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6177310/",
+      "retrieval_method": "pmc_oa_api",
+      "retrieval_command": "curl -sS -o /scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/cytochrome_c/pmc6177310_deng2018_biochemistry.xml \"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pmc&id=6177310&retmode=xml\"",
+      "sha256": "9edfa93cacc1be188ef396046da1b88b9098c31cf4770d99e3bfd063987d6d68",
+      "retrieved_at": "2026-09-11T22:03:57Z",
+      "verbatim_quote": "The temperature of the room was recorded before each experiment, and measured electrode potentials E SCE were converted to the Standard Hydrogen Electrode E SHE , based on E SHE = E SCE + 243 mV at 22 °C.",
+      "location": "Same article, Materials and Methods, cyclic voltammetry paragraph. Working electrode with dialysis membrane, Pt counter electrode, saturated calomel reference, scan rates 0.02 and 0.1 V/s. This fixes T at about 295 K."
+    },
+    {
+      "source_url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6177310/",
+      "retrieval_method": "pmc_oa_api",
+      "retrieval_command": "curl -sS -o /scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/cytochrome_c/pmc6177310_deng2018_biochemistry.xml \"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pmc&id=6177310&retmode=xml\"",
+      "sha256": "9edfa93cacc1be188ef396046da1b88b9098c31cf4770d99e3bfd063987d6d68",
+      "retrieved_at": "2026-09-11T22:03:57Z",
+      "verbatim_quote": "The downward shift in potential of 14 mV for WT* and 11 mV for K79G from pH 6 to 7.4 in sodium phosphate is similar to that reported elsewhere for WT.",
+      "location": "Same article, Results, subsection 'Heme Iron Reduction Potentials'. This is the measured pH dependence used to move between the pH 6.0 and pH 7.4 entries."
+    },
+    {
+      "source_url": "https://pubmed.ncbi.nlm.nih.gov/2853358/",
+      "retrieval_method": "pmc_oa_api",
+      "retrieval_command": "curl -sS -o /scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/cytochrome_c/pubmed_2853358_cutler1987_abstract.txt \"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=2853358&rettype=abstract&retmode=text\"",
+      "sha256": "e5a11d3e875acf45e7d977d549e7da6877aed3af302ecd6ba081cfff6a561539",
+      "retrieved_at": "2026-09-11T22:03:57Z",
+      "verbatim_quote": "The threonine-107 iso-1-cytochrome c demonstrated fully reversible electrochemical behaviour and a mid-point reduction potential of 272 mV versus NHE.",
+      "location": "Cutler RL, Pielak GJ, Mauk AG, Smith M (1987) Protein Eng 1(2):95-99, PMID 2853358. Abstract. Independent laboratory, Saccharomyces cerevisiae iso-1-cytochrome c with the standard C107T (yeast numbering; C102 in the alignment numbering) background. pH, temperature and ionic strength are not stated in the abstract and the full text is paywalled."
+    },
+    {
+      "source_url": "https://pubmed.ncbi.nlm.nih.gov/2545252/",
+      "retrieval_method": "pmc_oa_api",
+      "retrieval_command": "curl -sS -o /scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/cytochrome_c/pubmed_2545252_cutler1989_abstract.txt \"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=2545252&rettype=abstract&retmode=text\"",
+      "sha256": "a1d2e63954a45c53fb1cebe0a08bb3e0313ba0f98a6bfe341049285b4e125a42",
+      "retrieved_at": "2026-09-11T22:03:57Z",
+      "verbatim_quote": "As the electron-withdrawing character of the residue at position 38 decreases, the reduction potential of the protein also decreases, with the largest decrease (ca. 50 mV) observed for the Ala variant.",
+      "location": "Cutler RL, Davies AM, Creighton S, Warshel A, Moore GR, Smith M, Mauk AG (1989) Biochemistry 28(8):3188-97, PMID 2545252. Abstract. Recorded because the user named it; it reports shifts of yeast iso-1-cyt c variants, not an absolute wild-type value."
+    },
+    {
+      "source_url": "https://pubmed.ncbi.nlm.nih.gov/2174257/",
+      "retrieval_method": "pmc_oa_api",
+      "retrieval_command": "curl -sS -o /scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/cytochrome_c/pubmed_2174257_rafferty1990_abstract.txt \"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=2174257&rettype=abstract&retmode=text\"",
+      "sha256": "e0f350caf877d5ba052c78bb5d131f80bf104e520193492f165ce81a8c7bf891",
+      "retrieved_at": "2026-09-11T22:03:57Z",
+      "verbatim_quote": "The reduction potential of cytochrome c is lowered by as little as 10 mV (Tyr-82) or by as much as 43 mV (Gly-82; pH 6.0) as the result of these substitutions.",
+      "location": "Rafferty SP, Pearce LL, Barker PD, Guillemette JG, Kay CM, Smith M, Mauk AG (1990) Biochemistry 29(40):9365-9, PMID 2174257. Abstract. Recorded because the user named it; like Cutler 1989 it reports shifts, not an absolute wild-type value."
+    },
+    {
+      "source_url": "https://pubmed.ncbi.nlm.nih.gov/16620116/",
+      "retrieval_method": "pmc_oa_api",
+      "retrieval_command": "curl -sS -o /scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/cytochrome_c/pubmed_16620116_bortolotti2006_abstract.txt \"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=16620116&rettype=abstract&retmode=text\"",
+      "sha256": "dac8a39e175a53faa3416913cf11e52ac2418091cc0d4d9ac2f331a054aaeb3a",
+      "retrieved_at": "2026-09-11T22:03:57Z",
+      "verbatim_quote": "The E degrees ' value at pH 7 (+370 mV vs SHE) is approximately 100 mV higher than that for the protein in solution.",
+      "location": "Bortolotti CA, Battistuzzi G, Borsari M, Facci P, Ranieri A, Sola M (2006) J Am Chem Soc 128(16):5444-51, PMID 16620116. Abstract. Native Saccharomyces cerevisiae iso-1-cytochrome c immobilized on gold. Two uses: it implies a solution value near +270 mV at pH 7, and it is a warning that immobilized measurements are not on the same scale as solution ones."
+    },
+    {
+      "source_url": "https://www.rhea-db.org/rhea?query=RHEA:11436&columns=rhea-id,equation,ec,chebi-id&format=tsv",
+      "retrieval_method": "direct_url",
+      "retrieval_command": "curl -sS -o /scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/cytochrome_c/rhea_11436_cytochrome_c_oxidase.tsv \"https://www.rhea-db.org/rhea?query=RHEA:11436&columns=rhea-id,equation,ec,chebi-id&format=tsv\"",
+      "sha256": "805a8cce8e5632283964fd81656a441d910f4f4d229f79af89ae7004e868257f",
+      "retrieved_at": "2026-09-11T22:03:57Z",
+      "verbatim_quote": "RHEA:11436\t4 Fe(II)-[cytochrome c] + O2 + 8 H(+)(in) = 4 Fe(III)-[cytochrome c] + 2 H2O + 4 H(+)(out)\tEC:7.1.1.9\tCHEBI:29033;CHEBI:15379;CHEBI:15378;CHEBI:29034;CHEBI:15377",
+      "location": "Rhea TSV export, single data row. Same carrier class pattern as cytochrome b5: Fe(II)-[cytochrome c] is CHEBI:29033 iron(2+) and Fe(III)-[cytochrome c] is CHEBI:29034 iron(3+), attached to the named polypeptide."
+    },
+    {
+      "source_url": "https://pubmed.ncbi.nlm.nih.gov/1647980/",
+      "retrieval_method": "pmc_oa_api",
+      "retrieval_command": "curl -sS -o /scratch/projects/torchcell-scratch/data/torchcell/thermo_equilibrator/curated/cytochrome_c/pubmed_1647980_thurgood1991_abstract.txt \"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=1647980&rettype=abstract&retmode=text\"",
+      "sha256": "d819e38b478cc9b1883edb1ed48e96d387e7b4d1cc17ee3dd6b7dd3ad33ba03e",
+      "retrieved_at": "2026-09-11T22:03:57Z",
+      "verbatim_quote": "The structure of the Ala38 variant of yeast iso-1-cytochrome c, in which the previously unchanged Arg38 has been replaced, has been characterised by NMR.",
+      "location": "Thurgood AG et al. (1991) FEBS Lett 284(2):173-7, PMID 1647980. Abstract. Retained only as a pointer to the Cutler 1989 potential work; carries no potential of its own."
+    }
+  ],
+  "searches": [
+    {
+      "query": "yeast iso-1-cytochrome c reduction potential 290 mV Rafferty Mauk 1990 Biochemistry position 82",
+      "engine": "WebSearch",
+      "date": "2026-09-11",
+      "outcome": "confirmed Rafferty 1990 reports shifts only, not an absolute wild-type value"
+    },
+    {
+      "query": "Battistuzzi Borsari Sola redox thermodynamics yeast iso-1-cytochrome c 0.290 V 25 C pH 7 reduction potential",
+      "engine": "WebSearch",
+      "date": "2026-09-11",
+      "outcome": "surfaced Bortolotti 2006 (immobilized, +370 mV at pH 7); no free solution value at pH 7"
+    },
+    {
+      "query": "WebFetch https://pmc.ncbi.nlm.nih.gov/articles/PMC1222387/",
+      "engine": "WebFetch",
+      "date": "2026-09-11",
+      "outcome": "Lett and Guillemette 2002 reports only the +117 mV shift of Y48K; no wild-type absolute value"
+    },
+    {
+      "query": "esearch pmc: \"iso-1-cytochrome c\" AND \"290 mV\"",
+      "engine": "NCBI eutils esearch (db=pmc, full text)",
+      "date": "2026-09-11",
+      "outcome": "7 hits; PMC6177310 (Deng 2018) carries Table 2 with WT and WT* values and full conditions, and became the admitted source"
+    },
+    {
+      "query": "esearch pmc: \"iso-1-cytochrome\" AND \"reduction potential of 290\"",
+      "engine": "NCBI eutils esearch (db=pmc, full text)",
+      "date": "2026-09-11",
+      "outcome": "0 hits"
+    },
+    {
+      "query": "esearch pubmed: Cutler RL[Author] AND cytochrome c",
+      "engine": "NCBI eutils esearch (db=pubmed)",
+      "date": "2026-09-11",
+      "outcome": "3 hits; Cutler 1987 Protein Eng gives 272 mV vs NHE for the C107T background"
+    },
+    {
+      "query": "esearch pubmed: Battistuzzi G[Author] AND iso-1-cytochrome c",
+      "engine": "NCBI eutils esearch (db=pubmed)",
+      "date": "2026-09-11",
+      "outcome": "12 hits; all report alkaline transition thermodynamics or immobilized protein, not a free solution E'0 at pH 7"
+    },
+    {
+      "query": "esearch pubmed: Battistuzzi G[Author] AND cytochrome c AND redox thermodynamics",
+      "engine": "NCBI eutils esearch (db=pubmed)",
+      "date": "2026-09-11",
+      "outcome": "23 hits; the 1997 Biochemistry survey covers beef heart and bacterial c2, not yeast"
+    },
+    {
+      "query": "Rhea TSV export for RHEA:11436",
+      "engine": "Rhea REST",
+      "date": "2026-09-11",
+      "outcome": "cytochrome c oxidase written with Fe(II)-[cytochrome c] / Fe(III)-[cytochrome c], CHEBI:29033 and CHEBI:29034"
+    },
+    {
+      "query": "cobra: read yeast-GEM 9.0.2 and list every metabolite and reaction whose name contains 'cytochrome'",
+      "engine": "local model query",
+      "date": "2026-09-11",
+      "outcome": "found s_0709, s_0710, s_3748, s_3749, s_3816, s_3817 plus reactions r_0001, r_0002, r_0004, r_0437, r_0438, r_0439, r_4152, r_4192, r_4382"
+    }
+  ],
+  "decomposition_check": {
+    "attempted": false,
+    "decomposes": null,
+    "error": null
+  },
+  "notes": "ADMISSION IS MEASURED, and the organism is right: this is Saccharomyces cerevisiae iso-1-cytochrome c (CYC1, YJR048W). The admitted number is 272 mV vs SHE at pH 7.4 in 0.1 M sodium phosphate, about 22 degrees C (295 K), by cyclic voltammetry, reported to +/- 2 mV (Deng 2018, Table 2). The protein measured is WT* (K72A/C102S), the standard E. coli expressed mimic; the same table shows it sits within 4 mV of authentic wild type at pH 6.0 (286 versus 290 mV), so the mimic penalty is smaller than the pH 6 to pH 7.4 shift.\n\nWHY pH 7.4 AND NOT pH 6.0. The authentic wild-type entry in the same table is 290 mV, but at pH 6.0 and taken from Rosell, Ferrer and Mauk (1998) J Am Chem Soc 120:11234-11245 rather than measured in Deng 2018. The thermodynamics pipeline works near pH 7, and the pH dependence is measured in the same paper: 14 mV down from pH 6.0 to pH 7.4 for WT*. Choosing the pH 7.4 entry keeps every condition traceable to a measurement in the archived artifact. If a code agent prefers the authentic wild-type protein it should use 290 mV at pH 6.0 and carry that pH.\n\nCORROBORATION. Spectroelectrochemistry on the same WT* at pH 7.4 in 0.1 M sodium phosphate gives 274 +/- 4 mV (Deng 2018, Table 2 footnote d). An independent laboratory measured 272 mV vs NHE for the C107T background (Cutler 1987, Protein Eng 1:95-99), although that abstract does not state pH, temperature or ionic strength. Bortolotti 2006 measured +370 mV at pH 7 for the protein immobilized on gold and states this is about 100 mV above the solution value, implying about +270 mV in solution. Four independent handles land between 270 and 276 mV, which is why this record is admitted rather than provisional.\n\nSIGMA. sigma_kj_per_mol = 0.19 kJ/mol = n F dE with n = 1 and dE = 2 mV, the reported measurement uncertainty. This does NOT cover the pH transfer: moving from pH 7.4 to pH 7.0 is worth roughly 4 mV (0.4 kJ/mol) by the measured 14 mV per 1.4 pH unit slope, and the WT versus WT* difference is worth about 4 mV more. A defensible total for a pH 7.0 application is about 1 kJ/mol per electron.\n\nn_electrons is per carrier molecule (1). The GEM reactions supply the stoichiometry: r_0001, r_0002, r_0004, r_0439 and r_4382 move 2 electrons through 2 cytochrome c molecules, r_0437 moves 2, r_0438 moves 1 as written (0.25 O2 per cytochrome c).\n\nNO SINGLE PARTNER COUPLE. Unlike cytochrome b5, cytochrome c has no NADH partner anywhere in yeast-GEM, so partner_couple_e_prime_mv is null. Each blocked reaction needs its own partner potential: r_0001, r_0002 (D-lactate/pyruvate) and r_0004 (L-lactate/pyruvate) against the lactate couple, r_0437 against H2O2/H2O, r_0438 against O2/H2O, r_0439 against ubiquinol/ubiquinone, r_4382 against thiosulfate/tetrathionate. Only the cytochrome c side is supplied by this record.\n\nGEM DETAIL AND SCOPE. met_ids are the redox pair s_0709 ferricytochrome c [m] (C42H44FeN8O8S2R4, charge 0) and s_0710 ferrocytochrome c [m] (C42H45FeN8O8S2R4, charge 0), both excluded with reason placeholder_formula because of the R group. The carrier potential route replaces the formation energies these two would have needed, so all seven listed reactions become priceable.\n\nr_4152 IS NOT COVERED, and the task brief is mistaken on this point. r_4152 'Cytochrome c apocytochrome-c-lyase' is s_3748 Cytochrome c [m] <=> s_0712 + s_3749 Apocytochrome c [m]. Those species (s_3748, formula C40H40FeN6O6S2, charge -2, and s_3749, C6H10N2O2S2, charge 0) are excluded for placeholder_structure, and the chemistry is thioether bond formation between heme vinyls and apoprotein cysteines, not electron transfer. A midpoint potential cannot price it. The same holds for r_4192 (cytochrome c lysine N-methyltransferase, s_3816 and s_3817), which is a methyl transfer. Both need a different remedy.\n\nRHEA REPRESENTATION. Rhea models cytochrome c exactly as it models cytochrome b5: RHEA:11436 (cytochrome c oxidase, EC 7.1.1.9) is written as '4 Fe(II)-[cytochrome c] + O2 + 8 H(+)(in) = 4 Fe(III)-[cytochrome c] + 2 H2O + 4 H(+)(out)', with the two carrier states resolving to CHEBI:29033 iron(2+) and CHEBI:29034 iron(3+) attached to the named polypeptide. One carrier class, two oxidation states, a midpoint potential, no formation energy: that is the shape the code agent should build.\n\nWHAT A HUMAN STILL NEEDS TO DO. (1) Decide pH 7.4 versus pH 6.0 and whether to interpolate to the compartment pH used by the flux model, and record that choice. (2) Decide whether the WT* mimic is acceptable or whether the authentic trimethylated yeast protein is required. (3) If the pH profile matters, obtain Rosell, Ferrer and Mauk (1998) J Am Chem Soc 120:11234-11245, which measured the wild-type potential across pH, and deposit it in the mirror; it is paywalled and is quoted here only secondhand through Deng 2018 Table 2. (4) Supply partner potentials for the six distinct partner couples listed above, or price those halves from eQuilibrator where the small molecules decompose."
+}

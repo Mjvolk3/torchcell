@@ -1,0 +1,56 @@
+{
+  "generated_by": "experiments/028-gene-essentiality/scripts/graph_label_propagation.py",
+  "store": "/scratch/projects/torchcell-scratch/data/torchcell/reference_flux/ess_solve_encodings_ess_graphlabel.npz",
+  "shape": [
+    6607,
+    20
+  ],
+  "columns": [
+    "physical_nbr_essential_fraction",
+    "physical_log1p_labeled_neighbors",
+    "regulatory_nbr_essential_fraction",
+    "regulatory_log1p_labeled_neighbors",
+    "tflink_nbr_essential_fraction",
+    "tflink_log1p_labeled_neighbors",
+    "string12_0_neighborhood_nbr_essential_fraction",
+    "string12_0_neighborhood_log1p_labeled_neighbors",
+    "string12_0_fusion_nbr_essential_fraction",
+    "string12_0_fusion_log1p_labeled_neighbors",
+    "string12_0_cooccurence_nbr_essential_fraction",
+    "string12_0_cooccurence_log1p_labeled_neighbors",
+    "string12_0_coexpression_nbr_essential_fraction",
+    "string12_0_coexpression_log1p_labeled_neighbors",
+    "string12_0_experimental_nbr_essential_fraction",
+    "string12_0_experimental_log1p_labeled_neighbors",
+    "string12_0_database_nbr_essential_fraction",
+    "string12_0_database_log1p_labeled_neighbors",
+    "union_of_9_nbr_essential_fraction",
+    "union_of_9_log1p_labeled_neighbors"
+  ],
+  "provenance": {
+    "method": "one-hop label propagation: the essential fraction among a gene's labeled neighbors in each graph and log1p of their count; written by graph_label_propagation.py --write-store",
+    "split": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/028-gene-essentiality/results/splits/ess_fcl_val0.2_s0.json.gz",
+    "n_labeled_genes": 787,
+    "n_held_out_genes_excluded": 195,
+    "labeled_base_rate": 0.1588310038119441,
+    "graphs": [
+      "physical",
+      "regulatory",
+      "tflink",
+      "string12_0_neighborhood",
+      "string12_0_fusion",
+      "string12_0_cooccurence",
+      "string12_0_coexpression",
+      "string12_0_experimental",
+      "string12_0_database",
+      "union_of_9"
+    ],
+    "n_genes": 6607,
+    "n_columns": 20,
+    "column_layout": "per graph: <graph>_nbr_essential_fraction, <graph>_log1p_labeled_neighbors",
+    "leave_one_out": true,
+    "fill_for_no_labeled_neighbor": "the labeled base rate; count 0",
+    "python_hash_seed": "0",
+    "flux_sha256": "6bc54e19a4b7beba456e8583fb09dc14d85f001d397ab6f179a9e0924e68787b"
+  }
+}

@@ -1,0 +1,20 @@
+# experiments/027-betaxanthin-metabolic/conf/arm_flux_projection_anchored.yaml
+# [[experiments.027-betaxanthin-metabolic.projection-head]]
+#
+# EVERYTHING ON, on top of a flux that is balanced and in-box by construction: anchored
+# thermodynamics on the union deltaG table, the enzyme-capacity bound through the predicted
+# per-gene abundance head, the forward protein-pool budget, and the Gibbs dissipation limit.
+#
+# The question this arm asks is not whether any single term helps. It is whether the whole
+# constraint set can be satisfied at once without collapsing the prediction, which is what
+# job 1678 showed happening at a constraint scale of 0.1 under the BOX parameterization: the
+# cell escaped the mean plateau at epoch 41 and reached val Pearson 0.199, then went to zero
+# spread with the constraint term at 1.3 percent of the data loss. With balance and the box
+# exact, those two terms contribute nothing to the gradient, so a collapse here would have to
+# come from the physics terms rather than from the stoichiometry.
+#
+# The dissipation limit is TRAINED AGAINST in this arm rather than held out. A model that
+# stays under 3,700 J/gDW/h here has been told to; only an arm with the limit off can be
+# said to have discovered it.
+base_arm: flux_projection_anchored
+permute_train_targets: false

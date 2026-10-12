@@ -1,0 +1,59 @@
+{
+  "prefix": "w90_pathlogsimplexdeclampcv",
+  "n_folds": 5,
+  "n_genes": 195,
+  "n_essential": 31,
+  "folds": [
+    {
+      "stem": "w90_pathlogsimplexdeclampcv0_h12l1p1_e200_s2700",
+      "split_file": "ess_fcl_fold0of5_s0.json.gz",
+      "select_epoch": 72,
+      "n_genes": 195,
+      "auroc": 0.8764752163650669,
+      "ci_low": 0.81627564839092,
+      "ci_high": 0.9304156403798416
+    },
+    {
+      "stem": "w90_pathlogsimplexdeclampcv1_h12l1p1_e200_s2700",
+      "split_file": "ess_fcl_fold1of5_s0.json.gz",
+      "select_epoch": 12,
+      "n_genes": 195,
+      "auroc": 0.8076317859952793,
+      "ci_low": 0.7158269197655293,
+      "ci_high": 0.8869086134453781
+    },
+    {
+      "stem": "w90_pathlogsimplexdeclampcv2_h12l1p1_e200_s2700",
+      "split_file": "ess_fcl_fold2of5_s0.json.gz",
+      "select_epoch": 63,
+      "n_genes": 195,
+      "auroc": 0.9134539732494098,
+      "ci_low": 0.8650477718360071,
+      "ci_high": 0.9562401260504202
+    },
+    {
+      "stem": "w90_pathlogsimplexdeclampcv3_h12l1p1_e200_s2700",
+      "split_file": "ess_fcl_fold3of5_s0.json.gz",
+      "select_epoch": 90,
+      "n_genes": 195,
+      "auroc": 0.8619197482297404,
+      "ci_low": 0.7903498104945731,
+      "ci_high": 0.9289000905133052
+    },
+    {
+      "stem": "w90_pathlogsimplexdeclampcv4_h12l1p1_e200_s2700",
+      "split_file": "ess_fcl_fold4of5_s0.json.gz",
+      "select_epoch": 51,
+      "n_genes": 195,
+      "auroc": 0.8979150275373721,
+      "ci_low": 0.8479822940373237,
+      "ci_high": 0.942974078390745
+    }
+  ],
+  "fold_mean_auroc": 0.8714791502753737,
+  "ensemble_auroc": 0.9008654602675059,
+  "ensemble_ci_low": 0.8524364306726468,
+  "ensemble_ci_high": 0.9468248454039304,
+  "seeds_per_fold": 1,
+  "note": "The ensemble is the per-gene mean of the fold models' logits on the released held-out genes, scored once; this is the protocol behind FCL's published test AUROC. The fold mean is the average of K single-model AUROCs and is the number to compare with a single-split cell."
+}

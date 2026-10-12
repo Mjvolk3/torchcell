@@ -1,0 +1,227 @@
+%% notes-tex/032-amino-acid-module/sections/3-physics.tex
+\section{Physically constrained stores on the prototroph, and the store read without the backbone\secstatus{todo}}
+\label{sec:physics}
+
+The module so far carries mass balance and nothing else: one parsimonious vector per
+deletion. On the essentiality endpoint the store ladder (the essentiality document's
+round 113) built the same vector under enzyme ceilings, sampled turnover, GECKO pools
+and a minimization of metabolic adjustment, and none moved the score beyond the seed
+spread. None of those programs had been run on the prototroph on minimal medium, which
+covers every GEM gene rather than the labeled ones. On 2026-09-23 they were, on CPU
+beside the packs, with reads that need no card.
+
+The second law as fixed directions admits no growth. The direction rule of the
+essentiality study's round 114 (a reaction whose standard energy on the union-external
+route is at least $T$ below zero loses its reverse part, at least $T$ above it its
+forward part; unpriced reactions keep the GEM box) leaves the prototroph infeasible at
+both thresholds, as it had on the essentiality model, with 84 fixed directions running
+against the parsimonious wild-type flux at 10 kJ/mol and 44 at 30 kJ/mol. No store is
+written for an infeasible parent, and the outcome is recorded
+(\texttt{results/target\_physics\_store\_amino\_acids\_sign10.json}, \texttt{\_sign30}).
+Standard energies at 1 M cannot be imposed as directions on this model; a
+thermodynamically consistent program needs the concentrations as variables, which is
+what the driving-force store below does with a linear program.
+
+The stores that do exist. The linear MOMA store on the prototroph (1,161 genes) has 175
+lethal deletions against the parsimonious store's 161, moves the growth ratio by more
+than 0.01 on 63 genes, and moves the $\log(1+|v|)$ vector on 567 genes with a median
+relative distance of 0.0 to the parsimonious deletion vector. Among the 918 deletions
+that leave growth unchanged, the HiGHS parsimonious store's vector differs from its own
+wild type's for 324 (Table~\ref{tab:store-degeneracy}, from
+\texttt{store\_degeneracy.py}) and the MOMA store's, anchored to one wild-type vector,
+for 11: the parsimonious optimum has alternative vertices for a third of the no-effect
+deletions on this model too, fewer than on the cassette strain (the sibling document).
+The max-min driving-force store (\texttt{target\_driving\_force\_store.py}) solves, per
+deletion, for the metabolite concentrations between 1 $\mu$M and 10 mM that maximize the
+smallest driving force over the reactions the parsimonious flux carries, with transport
+and proton-translocating reactions unconstrained and, in the capped variant, reactions
+priced above 100 kJ/mol set aside; the sampled store
+(\texttt{target\_sampled\_flux\_store.py}) draws six OptGP samples of each deletion's
+cone at 99 percent of its optimum and keeps the mean over draws and the per-reaction
+spread.
+
+The store read without the backbone (Table~\ref{tab:store-baselines};
+\texttt{target\_store\_baselines.py}, the 027 ladder's split, standardization and
+selection, with a random forest added, the Flux Cone Learning form on one point per
+deletion; nearest neighbors average every training row tied at the $k$-th similarity,
+predictions within $10^{-9}$ count as one rank, and the validation criterion is rounded
+to $10^{-6}$, so two runs agree to every digit). The screen is genome-wide and the
+stores cover the GEM genes, so most training genotypes read the wild-type row and a
+gene's row is one vector with no graph, no sequence and no pathway. On the amino acids
+every flux or sequence representation under every model sits between $-0.004$ and
+0.058 (the HiGHS store 0.022 by kNN, ProtT5 0.052 by forest, the two concatenated
+0.058), where the 027 bilinear ridge read 0.045 and the transformer arms 0.049 to
+0.062. The GO multi-hot on the same ladder reads 0.044 by ridge, 0.025 by nearest
+neighbors and 0.063 by forest, and with the HiGHS vector appended 0.046, 0.029 and
+0.062, so the annotation that lifted betaxanthin's ladder to 0.204 lifts this one from
+0.058 to 0.063, beside the GO perceptron's 0.054 and the GO affine's 0.058 (round 153):
+the annotation reaches the same band as every other input on this target. The sampled cone
+(1,161 deletions, 161 lethal, six OptGP draws each at 99 percent of optimum, 4.3 h on
+twelve processes after the model copy's simplex cycling was removed with presolve and
+the warm-up's warm starts kept) reads $-0.004$, 0.031 and 0.023 by ridge, kNN and
+forest, its mean a median 5.9 relative distance from the parsimonious point; round 143
+(w160) is its transformer read. The driving-force
+polytope sampled per deletion (\texttt{target\_concentration\_polytope\_store.py}, the
+method in the sibling document: the region below the max-min optimum by 1 kJ/mol,
+coordinate hit-and-run, six draws, the chain seeded from a hash of the polytope) has on
+the prototroph a wild-type region of 249 constrained reactions with 59 binding over 319
+of the 2,778 variable metabolites, a median spread of $\ln c$ across draws of 2.08 over
+them against 2.62 for an unconstrained one, and 405 viable rows whose mean differs from
+the wild type's; its mean and spread stores read 0.016, 0.011 and 0.008 and 0.018,
+0.009 and 0.001 by ridge, kNN and forest, the floor of the ladder. Round 148 (w165) is
+the transformer read of the polytope mean.
+
+The annotation-only family, on the same split (Table~\ref{tab:go-models};
+\texttt{target\_go\_models.py}, the method in the sibling document): DCell's hierarchy
+with a 19-output head on the root's state, and a perceptron with one hidden layer of
+256 over the propagated GO multi-hot, over the HiGHS store row, over ProtT5 and over
+their concatenations, six seeds at 200 epochs, the epoch selected on validation
+per-feature Pearson. The GO perceptron reads 0.054 (sd 0.002 over seeds), ProtT5 0.054
+(sd 0.008), and the two together 0.065 (sd 0.003), ensembled 0.069, the highest
+single-seed read of anything on this target (the transformer arms 0.033 to 0.053 at
+width 12, the 027 arms 0.049 to 0.062 at width 90); DCell's hierarchy reads 0.035 (sd
+0.015). The store row alone reads 0.019, and appending it lowers every read it joins,
+GO from 0.054 to 0.042 and GO with ProtT5 from 0.065 to 0.045, the same sign the
+transformer's affine gave the parsimonious store (round 126). So on the amino acids the
+flux vector costs a perceptron what it costs the transformer, and annotation with
+sequence sets the level, 0.065 against a strain-level retest of 0.20
+(Section~\ref{sec:concordance}).
+
+\input{tables/go_models}
+
+The strain's measured betaxanthin score through the same perceptrons, on CPU
+(Table~\ref{tab:score-mlp-sweep}; the GO-models script with the score as its store
+block, one hidden width per pass, six seeds, seconds a seed): the score alone reads
+0.050, 0.054 and 0.055 at widths 16, 256 and 1,024, the two wider settings selecting
+at epoch 198 of 200; a 400-epoch rerun of those two settings reads 0.055 and 0.053,
+selecting at 398 and at 321 to 384, so the longer budget finds no higher peak and
+the score-alone perceptron's level is 0.055 at any width; GO with the score reads 0.056,
+0.064 and 0.066, ensembled 0.066 at 1,024 with a band of 0.002 and selection at epochs
+10 to 11. Against the GO perceptron alone (0.054) the score adds 0.012 at the widest
+setting, the same direction as the forest's 0.015 (Section~\ref{sec:concordance}) and
+the opposite of the transformer's affine, where beside GO under one encoding it adds
+0.001 (round 189). So on this target too the score adds to the annotation in a head
+trained alone and not in the transformer's slot; the forest over the same columns,
+0.078, stays the highest read of any model.
+
+
+The other amino-acid screen read as an input is the highest of any model on this target.
+Cooper's seventeen relative peaks, the store the betaxanthin document's
+Section~3 also reads, predict M\"ulleder's nineteen concentrations on the ladder at
+0.033, 0.057 and 0.093 by ridge, nearest neighbors and forest, against 0.063 for the
+forest over GO alone, 0.078 for GO with the betaxanthin score and 0.071 for that score
+alone. So the ordering of inputs on this target is measured-to-measured first, then a
+measured endpoint from another pathway, then the annotation, and the two amino-acid
+screens read each other better than either reads its own gene's annotation, on 842 test
+genotypes of which 102 carry the reference row because Cooper did not measure them.
+Through the perceptron (Table~\ref{tab:cooper-mlp-amino-acids}) the peaks alone read
+0.049 at width 256 and 0.052 at 1,024, half the forest's 0.093 over the same columns
+and under the GO perceptron (0.054): the forest reads Cooper's columns as it reads
+the betaxanthin score, better than any trained head does. Beside GO the peaks add: in
+one hidden layer 0.064 and 0.065, and GO linear beside the peaks' hidden layer of
+1,024 reads 0.068 (sd 0.003, ensemble 0.070), above GO with ProtT5 (0.065) and GO with
+the betaxanthin score (0.066), the highest single-seed read of any perceptron on this
+target. So the ordering the forest gives is the perceptron's too: the peaks alone
+under the annotation, and the peaks beside it above every other pair. The
+transformer's read of the same columns, through the linear affine and through a hidden
+layer of 256, is queued (rounds 206, 207).
+
+\input{tables/score_mlp_sweep}
+
+\input{tables/cooper_mlp}
+
+\input{tables/store_degeneracy}
+
+\input{tables/store_baselines}
+
+\subsection{What the graphs carry on their own: label propagation on the pin\secstatus{todo}}
+\label{sec:homophily}
+
+The read that finds betaxanthin smooth on STRING coexpression (0.244 by the mean over a
+pinned gene's labeled one-hop neighbors, \texttt{target\_graph\_homophily.py} in the
+betaxanthin study) is repeated on both amino-acid screens
+(Tables~\ref{tab:graph-homophily-amino-acids} and \ref{tab:graph-homophily-cooper}):
+every pinned gene predicted by the mean profile of its labeled training and validation
+neighbors in each graph, the Spearman per amino acid averaged over the columns, against
+a degree-matched null of as many labeled genes drawn at random. On M\"ulleder's
+nineteen the coexpression mean reads 0.063 (null $-0.001 \pm 0.015$, $z = 4.4$), the
+union of the nine 0.054 ($z = 3.7$) and STRING experimental 0.042 ($z = 3.0$); the
+physical graph reads 0.008 and the six others under 0.04. Leave-one-out on the 3,790
+labeled genes the coexpression mean reads 0.110. On Cooper's seventeen peaks the order
+and the level are the same: coexpression 0.062 ($z = 3.6$), the union 0.044, the
+database channel 0.027. So the amino-acid profile is a quarter as smooth on the graphs
+as betaxanthin is (0.06 against 0.24 on the one graph that carries either), close to the
+ratio of the two screens' reliabilities (0.20 against 0.84), and the graphs' own read of
+the profile sits at the level of the annotation (GO 0.058) and of the transformer's
+control (0.049), under the forest over Cooper's peaks (0.093). Written as a store
+(\texttt{target\_graph\_label\_store.py}: per graph the nineteen labeled-neighbor
+means, shifted nonnegative, and $\log(1 + n)$ of the count, 200 columns over every
+gene) and read on the ladder (Table~\ref{tab:store-baselines}), it reads 0.020 by
+ridge, 0.002 by nearest neighbors and 0.054 by forest, under the annotation by every
+model and under the one coexpression mean it was built from: two hundred columns
+give the forest nothing the single graph's mean did not carry. In the transformer's affine the same
+store reads 0.026 alone and 0.021 with the SM parsimonious vector appended, under the
+control on every seed (rounds 210 and 211, Section~\ref{sec:rounds}).
+
+\input{tables/graph_homophily}
+
+\input{tables/graph_homophily_cooper}
+
+\subsection{How autoencodable the profile is from the genotype: a conditional VAE\secstatus{todo}}
+\label{sec:cvae}
+
+The profile compresses well from itself: four dimensions of a PCA fitted on the training
+strains rebuild 0.58 of a held-out strain's standardized $\log(1 + \text{mM})$ profile,
+an autoencoder of the same width 0.62, and eight dimensions 0.77 and 0.80
+(\texttt{aa\_profile\_reconstruction.py}). Predicting an eight-dimensional autoencoder
+latent from the annotation and decoding it reads the pinned strains at 0.080 by ridge,
+where the direct map from the annotation to the nineteen reads 0.077
+(\texttt{aa\_latent\_regression.py}), so the latent detour is a tie. The conditional
+VAE (\texttt{aa\_conditional\_vae.py}, job 2984, 52 min on CPU) puts both facts in one
+model and asks whether the strain's latent can be reached from its genotype. An encoder
+$q(z \mid y, x)$ reads the measured profile $y$ and the genotype features $x$ of the
+deleted gene, a conditional prior $p(z \mid x)$ reads the genotype alone, a decoder
+$p(y \mid z, h_x)$ rebuilds the profile from the latent and a two-layer embedding $h_x$
+of the features, and a linear head on $z$ reads the strain's Cachera betaxanthin score,
+the discriminator. Two routes reach the latent, and the distance between them is the
+answer: the \emph{posterior route} decodes a held-out strain from $q(z \mid y, x)$, which
+needs the measurement, and the \emph{prior route} decodes it from $p(z \mid x)$, which a
+strain nobody measured also has. The loss is the Gaussian reconstruction, $\beta$ times
+the KL divergence from the posterior to the conditional prior, and $\lambda$ times the
+head's squared error on the posterior latent. Features: the propagated GO multi-hot, its
+one-hop neighbor mean over the graphs (\texttt{SM\_aa\_gonbr}, the annotation of the
+deleted gene's coexpression and union neighbors, no label), ProtT5, and the three
+together, each standardized on the training strains; the grid is a latent of 4 or 8,
+$\beta$ of 1.0 or 0.1 and $\lambda$ of 0 or 1, three seeds, 300 epochs, the epoch and
+the cell selected on the validation prior-route mean Spearman. Of the 4,678 profiled
+strains 3,292 are fitted, 822 validate and 564 are pinned and held out of every fit, 563
+of them with a betaxanthin score. \emph{Calibration} is the fraction of true values
+inside the central 90 percent of 64 profiles sampled from the conditional prior, 0.90
+when the samples are calibrated (Tables~\ref{tab:aa-cvae} and
+\ref{tab:aa-cvae-baselines}).
+
+The posterior route reconstructs a pinned strain's profile at up to 0.747 mean Spearman
+and $R^2$ 0.62 (the neighbor mean, latent 8, $\beta$ 0.1, seeds 0.741 to 0.755), and
+ProtT5 with the head on reaches 0.742 and 0.59. The prior route reads 0.036 to 0.073
+over every cell of the grid, and the plain MLP from the same features with no latent
+reads 0.045 to 0.066: the latent holds what the measurement supplied and nothing the
+genotype can reach beyond what a direct map already reaches, which is the tie of
+\texttt{aa\_latent\_regression.py} again, now with the prior fitted jointly. The
+betaxanthin head reads the prior latent at most at 0.172 (the neighbor mean, $\beta$ 1,
+$\lambda$ 1; seed sd 0.031) against 0.130 (sd 0.039) for the MLP from the same features
+and 0.151 for the MLP from GO, within the seed spread of either; on the posterior latent
+it reads up to 0.221, a read that needs the measured profile. The prior samples are
+underdispersed: the central 90 percent covers 0.11 to 0.76 of the true values across
+the grid, 0.69 on the best-reconstructing cell, so a sampled profile understates the
+spread the genotype leaves open. With the head on and the three feature sets together
+the latent collapses toward the prior: the KL falls to 0.08 and 0.20 per strain, the
+posterior route to 0.096 and 0.097, and the selected epochs sit at 2 to 5, so the
+model gives up the profile to serve the head. The profile is autoencodable from itself
+and not from the genotype; a decoder fed a genotype-only latent returns the population
+profile with a small strain-specific shift, and the sampling use of such a model, a
+distribution over profiles for a strain nobody measured, is bounded by the same 0.05
+to 0.07 the direct maps read.
+
+\input{tables/aa_cvae}
+
+\input{tables/aa_cvae_baselines}

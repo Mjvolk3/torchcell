@@ -1,0 +1,1362 @@
+{
+  "generated_at": "2026-09-11-08-55-11",
+  "betaxanthin_parity": {
+    "metric": "pinned test Spearman (betaxanthin)",
+    "arm_a": "nocstr",
+    "arm_b": "pooled",
+    "seeds": [
+      2700,
+      2701,
+      2703
+    ],
+    "a_values": [
+      0.07469212508553086,
+      0.11852966152842206,
+      0.0255926405321097
+    ],
+    "b_values": [
+      0.07166497258510016,
+      0.1057801993933421,
+      -0.0001249148323030431
+    ],
+    "differences": [
+      0.003027152500430702,
+      0.012749462135079964,
+      0.025717555364412743
+    ],
+    "n_pairs": 3,
+    "mean_difference": 0.013831389999974469,
+    "sd_difference": 0.01138382718865134,
+    "t_statistic": 2.1044478119923093,
+    "t_statistic_note": "paired t = mean(difference) / (sd(difference) / sqrt(n)) on n=3 seeds, df=2. Reported for its sign and magnitude; at this n it is a summary of the spread, not a significance claim.",
+    "a_mean": 0.07293814238202087,
+    "a_sd": 0.0464933308057232,
+    "b_mean": 0.05910675238204641,
+    "b_sd": 0.05405788541728234,
+    "missing": [],
+    "excluded_physics_mismatch": {
+      "2702": "flux layer built from kcat[default=30,homolog=782,measured=96,predicted=2820] thermo[union,known=3722,equilibrator_met=bdcff9c8,equilibrator_sigma=c7f2ff73,met=179a5aac,rxn=7a66ef5d,shipped_reaction_unit_correction=6a2de444], the other cells from kcat[default=170,measured=148,predicted=3410] thermo[union,known=3722,equilibrator_met=bdcff9c8,equilibrator_sigma=c7f2ff73,met=179a5aac,rxn=7a66ef5d]; not a replicate of them.",
+      "2704": "flux layer built from kcat[default=10,measured=148,predicted=3570] thermo[union,known=3722,equilibrator_met=bdcff9c8,equilibrator_sigma=c7f2ff73,met=179a5aac,rxn=7a66ef5d,shipped_reaction_unit_correction=6a2de444], the other cells from kcat[default=170,measured=148,predicted=3410] thermo[union,known=3722,equilibrator_met=bdcff9c8,equilibrator_sigma=c7f2ff73,met=179a5aac,rxn=7a66ef5d]; not a replicate of them.",
+      "2705": "flux layer built from kcat[default=10,measured=148,predicted=3570] thermo[union,known=3722,equilibrator_met=bdcff9c8,equilibrator_sigma=c7f2ff73,met=179a5aac,rxn=7a66ef5d,shipped_reaction_unit_correction=6a2de444], the other cells from kcat[default=170,measured=148,predicted=3410] thermo[union,known=3722,equilibrator_met=bdcff9c8,equilibrator_sigma=c7f2ff73,met=179a5aac,rxn=7a66ef5d]; not a replicate of them."
+    },
+    "physics_key_used": "kcat[default=170,measured=148,predicted=3410] thermo[union,known=3722,equilibrator_met=bdcff9c8,equilibrator_sigma=c7f2ff73,met=179a5aac,rxn=7a66ef5d]"
+  },
+  "amino_acid_parity": {
+    "metric": "mean per-feature test Spearman (mulleder19)",
+    "arm_a": "nocstr",
+    "arm_b": "pooled",
+    "seeds": [
+      2700,
+      2701,
+      2702
+    ],
+    "a_values": [
+      0.027538496464909107,
+      0.0005213249242075233,
+      0.010345455054238594
+    ],
+    "b_values": [
+      0.06627851808298879,
+      0.0319842001176061,
+      0.05602911888899604
+    ],
+    "differences": [
+      -0.038740021618079684,
+      -0.031462875193398576,
+      -0.04568366383475744
+    ],
+    "n_pairs": 3,
+    "mean_difference": -0.038628853548745234,
+    "sd_difference": 0.007111046065824634,
+    "t_statistic": -9.408902201620764,
+    "t_statistic_note": "paired t = mean(difference) / (sd(difference) / sqrt(n)) on n=3 seeds, df=2. Reported for its sign and magnitude; at this n it is a summary of the spread, not a significance claim.",
+    "a_mean": 0.01280175881445174,
+    "a_sd": 0.013675048834894588,
+    "b_mean": 0.05143061236319698,
+    "b_sd": 0.017603543901117038,
+    "missing": [],
+    "excluded_physics_mismatch": {},
+    "physics_key_used": "kcat[default=10,measured=148,predicted=3570] thermo[union,known=3722,equilibrator_met=bdcff9c8,equilibrator_sigma=c7f2ff73,met=179a5aac,rxn=7a66ef5d,shipped_reaction_unit_correction=6a2de444]"
+  },
+  "betaxanthin_parity_by_physics": {
+    "kcat[default=170,measured=148,predicted=3410] thermo[union,known=3722,equilibrator_met=bdcff9c8,equilibrator_sigma=c7f2ff73,met=179a5aac,rxn=7a66ef5d]": {
+      "metric": "pinned test Spearman (betaxanthin)",
+      "arm_a": "nocstr",
+      "arm_b": "pooled",
+      "seeds": [
+        2700,
+        2701,
+        2703
+      ],
+      "a_values": [
+        0.07469212508553086,
+        0.11852966152842206,
+        0.0255926405321097
+      ],
+      "b_values": [
+        0.07166497258510016,
+        0.1057801993933421,
+        -0.0001249148323030431
+      ],
+      "differences": [
+        0.003027152500430702,
+        0.012749462135079964,
+        0.025717555364412743
+      ],
+      "n_pairs": 3,
+      "mean_difference": 0.013831389999974469,
+      "sd_difference": 0.01138382718865134,
+      "t_statistic": 2.1044478119923093,
+      "t_statistic_note": "paired t = mean(difference) / (sd(difference) / sqrt(n)) on n=3 seeds, df=2. Reported for its sign and magnitude; at this n it is a summary of the spread, not a significance claim.",
+      "a_mean": 0.07293814238202087,
+      "a_sd": 0.0464933308057232,
+      "b_mean": 0.05910675238204641,
+      "b_sd": 0.05405788541728234,
+      "missing": [],
+      "excluded_physics_mismatch": {},
+      "physics_key_used": "kcat[default=170,measured=148,predicted=3410] thermo[union,known=3722,equilibrator_met=bdcff9c8,equilibrator_sigma=c7f2ff73,met=179a5aac,rxn=7a66ef5d]"
+    },
+    "kcat[default=30,homolog=782,measured=96,predicted=2820] thermo[union,known=3722,equilibrator_met=bdcff9c8,equilibrator_sigma=c7f2ff73,met=179a5aac,rxn=7a66ef5d,shipped_reaction_unit_correction=6a2de444]": {
+      "metric": "pinned test Spearman (betaxanthin)",
+      "arm_a": "nocstr",
+      "arm_b": "pooled",
+      "seeds": [
+        2702
+      ],
+      "a_values": [
+        0.09724066366206432
+      ],
+      "b_values": [
+        0.1687285469896339
+      ],
+      "differences": [
+        -0.07148788332756958
+      ],
+      "n_pairs": 1,
+      "mean_difference": -0.07148788332756958,
+      "sd_difference": null,
+      "t_statistic": null,
+      "t_statistic_note": "paired t = mean(difference) / (sd(difference) / sqrt(n)) on n=1 seeds, df=0. Reported for its sign and magnitude; at this n it is a summary of the spread, not a significance claim.",
+      "a_mean": 0.09724066366206432,
+      "a_sd": null,
+      "b_mean": 0.1687285469896339,
+      "b_sd": null,
+      "missing": [],
+      "excluded_physics_mismatch": {},
+      "physics_key_used": "kcat[default=30,homolog=782,measured=96,predicted=2820] thermo[union,known=3722,equilibrator_met=bdcff9c8,equilibrator_sigma=c7f2ff73,met=179a5aac,rxn=7a66ef5d,shipped_reaction_unit_correction=6a2de444]"
+    },
+    "kcat[default=10,measured=148,predicted=3570] thermo[union,known=3722,equilibrator_met=bdcff9c8,equilibrator_sigma=c7f2ff73,met=179a5aac,rxn=7a66ef5d,shipped_reaction_unit_correction=6a2de444]": {
+      "metric": "pinned test Spearman (betaxanthin)",
+      "arm_a": "nocstr",
+      "arm_b": "pooled",
+      "seeds": [
+        2704,
+        2705
+      ],
+      "a_values": [
+        0.02252365597240031,
+        0.14172514761124977
+      ],
+      "b_values": [
+        0.10120799345466532,
+        0.13641025174895532
+      ],
+      "differences": [
+        -0.078684337482265,
+        0.005314895862294444
+      ],
+      "n_pairs": 2,
+      "mean_difference": -0.03668472080998528,
+      "sd_difference": 0.05939642751240914,
+      "t_statistic": -0.8734537054524515,
+      "t_statistic_note": "paired t = mean(difference) / (sd(difference) / sqrt(n)) on n=2 seeds, df=1. Reported for its sign and magnitude; at this n it is a summary of the spread, not a significance claim.",
+      "a_mean": 0.08212440179182504,
+      "a_sd": 0.084288183065382,
+      "b_mean": 0.11880912260181031,
+      "b_sd": 0.024891755552972853,
+      "missing": [],
+      "excluded_physics_mismatch": {},
+      "physics_key_used": "kcat[default=10,measured=148,predicted=3570] thermo[union,known=3722,equilibrator_met=bdcff9c8,equilibrator_sigma=c7f2ff73,met=179a5aac,rxn=7a66ef5d,shipped_reaction_unit_correction=6a2de444]"
+    }
+  },
+  "betaxanthin_parity_heterogeneous": {
+    "metric": "pinned test Spearman (betaxanthin) (PHYSICS-HETEROGENEOUS, every seed pooled regardless of table)",
+    "arm_a": "nocstr",
+    "arm_b": "pooled",
+    "seeds": [
+      2700,
+      2701,
+      2702,
+      2703,
+      2704,
+      2705
+    ],
+    "a_values": [
+      0.07469212508553086,
+      0.11852966152842206,
+      0.09724066366206432,
+      0.0255926405321097,
+      0.02252365597240031,
+      0.14172514761124977
+    ],
+    "b_values": [
+      0.07166497258510016,
+      0.1057801993933421,
+      0.1687285469896339,
+      -0.0001249148323030431,
+      0.10120799345466532,
+      0.13641025174895532
+    ],
+    "differences": [
+      0.003027152500430702,
+      0.012749462135079964,
+      -0.07148788332756958,
+      0.025717555364412743,
+      -0.078684337482265,
+      0.005314895862294444
+    ],
+    "n_pairs": 6,
+    "mean_difference": -0.017227192491269454,
+    "sd_difference": 0.045568494971493276,
+    "t_statistic": -0.9260308318436679,
+    "t_statistic_note": "paired t = mean(difference) / (sd(difference) / sqrt(n)) on n=6 seeds, df=5. Reported for its sign and magnitude; at this n it is a summary of the spread, not a significance claim.",
+    "a_mean": 0.08005064906529617,
+    "a_sd": 0.04875165264854465,
+    "b_mean": 0.09727784155656562,
+    "b_sd": 0.05808201275123655,
+    "missing": [],
+    "excluded_physics_mismatch": {},
+    "physics_key_used": "mixed"
+  },
+  "amino_acid_parity_by_physics": {
+    "kcat[default=10,measured=148,predicted=3570] thermo[union,known=3722,equilibrator_met=bdcff9c8,equilibrator_sigma=c7f2ff73,met=179a5aac,rxn=7a66ef5d,shipped_reaction_unit_correction=6a2de444]": {
+      "metric": "mean per-feature test Spearman (mulleder19)",
+      "arm_a": "nocstr",
+      "arm_b": "pooled",
+      "seeds": [
+        2700,
+        2701,
+        2702
+      ],
+      "a_values": [
+        0.027538496464909107,
+        0.0005213249242075233,
+        0.010345455054238594
+      ],
+      "b_values": [
+        0.06627851808298879,
+        0.0319842001176061,
+        0.05602911888899604
+      ],
+      "differences": [
+        -0.038740021618079684,
+        -0.031462875193398576,
+        -0.04568366383475744
+      ],
+      "n_pairs": 3,
+      "mean_difference": -0.038628853548745234,
+      "sd_difference": 0.007111046065824634,
+      "t_statistic": -9.408902201620764,
+      "t_statistic_note": "paired t = mean(difference) / (sd(difference) / sqrt(n)) on n=3 seeds, df=2. Reported for its sign and magnitude; at this n it is a summary of the spread, not a significance claim.",
+      "a_mean": 0.01280175881445174,
+      "a_sd": 0.013675048834894588,
+      "b_mean": 0.05143061236319698,
+      "b_sd": 0.017603543901117038,
+      "missing": [],
+      "excluded_physics_mismatch": {},
+      "physics_key_used": "kcat[default=10,measured=148,predicted=3570] thermo[union,known=3722,equilibrator_met=bdcff9c8,equilibrator_sigma=c7f2ff73,met=179a5aac,rxn=7a66ef5d,shipped_reaction_unit_correction=6a2de444]"
+    }
+  },
+  "amino_acid_parity_heterogeneous": {
+    "metric": "mean per-feature test Spearman (mulleder19) (PHYSICS-HETEROGENEOUS, every seed pooled regardless of table)",
+    "arm_a": "nocstr",
+    "arm_b": "pooled",
+    "seeds": [
+      2700,
+      2701,
+      2702
+    ],
+    "a_values": [
+      0.027538496464909107,
+      0.0005213249242075233,
+      0.010345455054238594
+    ],
+    "b_values": [
+      0.06627851808298879,
+      0.0319842001176061,
+      0.05602911888899604
+    ],
+    "differences": [
+      -0.038740021618079684,
+      -0.031462875193398576,
+      -0.04568366383475744
+    ],
+    "n_pairs": 3,
+    "mean_difference": -0.038628853548745234,
+    "sd_difference": 0.007111046065824634,
+    "t_statistic": -9.408902201620764,
+    "t_statistic_note": "paired t = mean(difference) / (sd(difference) / sqrt(n)) on n=3 seeds, df=2. Reported for its sign and magnitude; at this n it is a summary of the spread, not a significance claim.",
+    "a_mean": 0.01280175881445174,
+    "a_sd": 0.013675048834894588,
+    "b_mean": 0.05143061236319698,
+    "b_sd": 0.017603543901117038,
+    "missing": [],
+    "excluded_physics_mismatch": {},
+    "physics_key_used": "mixed"
+  },
+  "amino_acid_proj_vs_pooled": {
+    "metric": "mean per-feature test Spearman (mulleder19), projection vs pooled",
+    "arm_a": "proj",
+    "arm_b": "pooled",
+    "seeds": [
+      2700,
+      2701,
+      2702
+    ],
+    "a_values": [
+      -0.012213024654427822,
+      0.01745623168841727,
+      0.03132966158139944
+    ],
+    "b_values": [
+      0.06627851808298879,
+      0.0319842001176061,
+      0.05602911888899604
+    ],
+    "differences": [
+      -0.07849154273741661,
+      -0.014527968429188833,
+      -0.024699457307596602
+    ],
+    "n_pairs": 3,
+    "mean_difference": -0.03923965615806735,
+    "sd_difference": 0.03437146704069332,
+    "t_statistic": -1.9773691375128069,
+    "t_statistic_note": "paired t = mean(difference) / (sd(difference) / sqrt(n)) on n=3 seeds, df=2. Reported for its sign and magnitude; at this n it is a summary of the spread, not a significance claim.",
+    "a_mean": 0.01219095620512963,
+    "a_sd": 0.022243734524447722,
+    "b_mean": 0.05143061236319698,
+    "b_sd": 0.017603543901117038,
+    "missing": [],
+    "excluded_physics_mismatch": {},
+    "physics_key_used": "kcat[default=10,measured=148,predicted=3570] thermo[union,known=3722,equilibrator_met=bdcff9c8,equilibrator_sigma=c7f2ff73,met=179a5aac,rxn=7a66ef5d,shipped_reaction_unit_correction=6a2de444]"
+  },
+  "amino_acid_proj_vs_nocstr": {
+    "metric": "mean per-feature test Spearman (mulleder19), projection vs box flux",
+    "arm_a": "proj",
+    "arm_b": "nocstr",
+    "seeds": [
+      2700,
+      2701,
+      2702
+    ],
+    "a_values": [
+      -0.012213024654427822,
+      0.01745623168841727,
+      0.03132966158139944
+    ],
+    "b_values": [
+      0.027538496464909107,
+      0.0005213249242075233,
+      0.010345455054238594
+    ],
+    "differences": [
+      -0.03975152111933693,
+      0.016934906764209747,
+      0.02098420652716084
+    ],
+    "n_pairs": 3,
+    "mean_difference": -0.000610802609322113,
+    "sd_difference": 0.03395726860707029,
+    "t_statistic": -0.031155072128541808,
+    "t_statistic_note": "paired t = mean(difference) / (sd(difference) / sqrt(n)) on n=3 seeds, df=2. Reported for its sign and magnitude; at this n it is a summary of the spread, not a significance claim.",
+    "a_mean": 0.01219095620512963,
+    "a_sd": 0.022243734524447722,
+    "b_mean": 0.01280175881445174,
+    "b_sd": 0.013675048834894588,
+    "missing": [],
+    "excluded_physics_mismatch": {},
+    "physics_key_used": "kcat[default=10,measured=148,predicted=3570] thermo[union,known=3722,equilibrator_met=bdcff9c8,equilibrator_sigma=c7f2ff73,met=179a5aac,rxn=7a66ef5d,shipped_reaction_unit_correction=6a2de444]"
+  },
+  "amino_acid_extra": {
+    "allon_s2700": {
+      "cell": "wave6_aa_allon_s2700.json",
+      "select_epoch": 8,
+      "mean_spearman_pinned": 0.010440652404410156,
+      "mean_pearson_pinned": 0.013431065973188532,
+      "mean_spearman_all_test": 0.007097569652352725
+    }
+  },
+  "feasibility": [
+    {
+      "cell": "wave5_g7_flux_capacity_nocstr_s2700.json",
+      "arm": "flux_capacity",
+      "seed": 2700,
+      "head": "betaxanthin",
+      "select_epoch": 72,
+      "available": false,
+      "reason": "the cell predates the wave-6 feasibility block; its result file carries no 'feasibility' key.",
+      "n_top": null,
+      "n_population": null,
+      "top_fractions": {},
+      "population_fractions": {},
+      "top_medians": {},
+      "population_medians": {}
+    },
+    {
+      "cell": "wave5_g7_flux_capacity_nocstr_s2701.json",
+      "arm": "flux_capacity",
+      "seed": 2701,
+      "head": "betaxanthin",
+      "select_epoch": 71,
+      "available": false,
+      "reason": "the cell predates the wave-6 feasibility block; its result file carries no 'feasibility' key.",
+      "n_top": null,
+      "n_population": null,
+      "top_fractions": {},
+      "population_fractions": {},
+      "top_medians": {},
+      "population_medians": {}
+    },
+    {
+      "cell": "wave5_g7_flux_capacity_nocstr_s2702.json",
+      "arm": "flux_capacity",
+      "seed": 2702,
+      "head": "betaxanthin",
+      "select_epoch": 62,
+      "available": true,
+      "reason": null,
+      "n_top": 100,
+      "n_population": 4930,
+      "top_fractions": {
+        "balance_median_ratio_le_1e-01": 0.0,
+        "balance_median_ratio_le_1e-02": 0.0,
+        "balance_median_ratio_le_1e-03": 0.0,
+        "box_violation_frac_eq_0": 1.0,
+        "thermo_standard_state_violation_frac_eq_0": 0.0,
+        "thermo_standard_state_violation_frac_le_1e-02": 0.0,
+        "both_balance_le_1e-02_and_thermo_standard_state_eq_0": 0.0
+      },
+      "population_fractions": {
+        "balance_median_ratio_le_1e-01": 0.0,
+        "balance_median_ratio_le_1e-02": 0.0,
+        "balance_median_ratio_le_1e-03": 0.0,
+        "box_violation_frac_eq_0": 1.0,
+        "thermo_standard_state_violation_frac_eq_0": 0.0,
+        "thermo_standard_state_violation_frac_le_1e-02": 0.0,
+        "both_balance_le_1e-02_and_thermo_standard_state_eq_0": 0.0
+      },
+      "top_medians": {
+        "balance_median_ratio": 1.9977025985717773,
+        "balance_max_ratio": 2.0,
+        "box_violation_frac": 0.0,
+        "thermo_standard_state_violation_frac": 0.3467974364757538,
+        "thermo_standard_state_uphill_frac": 0.47419339418411255
+      },
+      "population_medians": {
+        "balance_median_ratio": 1.9960875511169434,
+        "balance_max_ratio": 2.0,
+        "box_violation_frac": 0.0,
+        "thermo_standard_state_violation_frac": 0.3335256576538086,
+        "thermo_standard_state_uphill_frac": 0.4742109775543213
+      }
+    },
+    {
+      "cell": "wave5_g7_flux_capacity_nocstr_s2703.json",
+      "arm": "flux_capacity",
+      "seed": 2703,
+      "head": "betaxanthin",
+      "select_epoch": 53,
+      "available": false,
+      "reason": "the cell predates the wave-6 feasibility block; its result file carries no 'feasibility' key.",
+      "n_top": null,
+      "n_population": null,
+      "top_fractions": {},
+      "population_fractions": {},
+      "top_medians": {},
+      "population_medians": {}
+    },
+    {
+      "cell": "wave5_g7_flux_capacity_nocstr_s2704.json",
+      "arm": "flux_capacity",
+      "seed": 2704,
+      "head": "betaxanthin",
+      "select_epoch": 74,
+      "available": true,
+      "reason": null,
+      "n_top": 100,
+      "n_population": 4930,
+      "top_fractions": {
+        "balance_median_ratio_le_1e-01": 0.0,
+        "balance_median_ratio_le_1e-02": 0.0,
+        "balance_median_ratio_le_1e-03": 0.0,
+        "box_violation_frac_eq_0": 1.0,
+        "thermo_standard_state_violation_frac_eq_0": 0.0,
+        "thermo_standard_state_violation_frac_le_1e-02": 0.0,
+        "both_balance_le_1e-02_and_thermo_standard_state_eq_0": 0.0
+      },
+      "population_fractions": {
+        "balance_median_ratio_le_1e-01": 0.0,
+        "balance_median_ratio_le_1e-02": 0.0,
+        "balance_median_ratio_le_1e-03": 0.0,
+        "box_violation_frac_eq_0": 1.0,
+        "thermo_standard_state_violation_frac_eq_0": 0.0,
+        "thermo_standard_state_violation_frac_le_1e-02": 0.0,
+        "both_balance_le_1e-02_and_thermo_standard_state_eq_0": 0.0
+      },
+      "top_medians": {
+        "balance_median_ratio": 1.9971426725387573,
+        "balance_max_ratio": 2.0,
+        "box_violation_frac": 0.0,
+        "thermo_standard_state_violation_frac": 0.3323715925216675,
+        "thermo_standard_state_uphill_frac": 0.4663683772087097
+      },
+      "population_medians": {
+        "balance_median_ratio": 1.9921443462371826,
+        "balance_max_ratio": 2.0,
+        "box_violation_frac": 0.0,
+        "thermo_standard_state_violation_frac": 0.2925562560558319,
+        "thermo_standard_state_uphill_frac": 0.48944640159606934
+      }
+    },
+    {
+      "cell": "wave5_g7_flux_capacity_nocstr_s2705.json",
+      "arm": "flux_capacity",
+      "seed": 2705,
+      "head": "betaxanthin",
+      "select_epoch": 42,
+      "available": true,
+      "reason": null,
+      "n_top": 100,
+      "n_population": 4930,
+      "top_fractions": {
+        "balance_median_ratio_le_1e-01": 0.0,
+        "balance_median_ratio_le_1e-02": 0.0,
+        "balance_median_ratio_le_1e-03": 0.0,
+        "box_violation_frac_eq_0": 1.0,
+        "thermo_standard_state_violation_frac_eq_0": 0.0,
+        "thermo_standard_state_violation_frac_le_1e-02": 0.0,
+        "both_balance_le_1e-02_and_thermo_standard_state_eq_0": 0.0
+      },
+      "population_fractions": {
+        "balance_median_ratio_le_1e-01": 0.0,
+        "balance_median_ratio_le_1e-02": 0.0,
+        "balance_median_ratio_le_1e-03": 0.0,
+        "box_violation_frac_eq_0": 1.0,
+        "thermo_standard_state_violation_frac_eq_0": 0.0,
+        "thermo_standard_state_violation_frac_le_1e-02": 0.0,
+        "both_balance_le_1e-02_and_thermo_standard_state_eq_0": 0.0
+      },
+      "top_medians": {
+        "balance_median_ratio": 1.9983272552490234,
+        "balance_max_ratio": 2.0,
+        "box_violation_frac": 0.0,
+        "thermo_standard_state_violation_frac": 0.34852853417396545,
+        "thermo_standard_state_uphill_frac": 0.4726913571357727
+      },
+      "population_medians": {
+        "balance_median_ratio": 1.9580504894256592,
+        "balance_max_ratio": 2.0,
+        "box_violation_frac": 0.0,
+        "thermo_standard_state_violation_frac": 0.34852853417396545,
+        "thermo_standard_state_uphill_frac": 0.4489850401878357
+      }
+    },
+    {
+      "cell": "wave5_g8_pooled_s2700.json",
+      "arm": "pooled",
+      "seed": 2700,
+      "head": "betaxanthin",
+      "select_epoch": 77,
+      "available": false,
+      "reason": "the cell predates the wave-6 feasibility block; its result file carries no 'feasibility' key.",
+      "n_top": null,
+      "n_population": null,
+      "top_fractions": {},
+      "population_fractions": {},
+      "top_medians": {},
+      "population_medians": {}
+    },
+    {
+      "cell": "wave5_g8_pooled_s2701.json",
+      "arm": "pooled",
+      "seed": 2701,
+      "head": "betaxanthin",
+      "select_epoch": 76,
+      "available": false,
+      "reason": "the cell predates the wave-6 feasibility block; its result file carries no 'feasibility' key.",
+      "n_top": null,
+      "n_population": null,
+      "top_fractions": {},
+      "population_fractions": {},
+      "top_medians": {},
+      "population_medians": {}
+    },
+    {
+      "cell": "wave5_g8_pooled_s2702.json",
+      "arm": "pooled",
+      "seed": 2702,
+      "head": "betaxanthin",
+      "select_epoch": 65,
+      "available": false,
+      "reason": "the cell predates the wave-6 feasibility block; its result file carries no 'feasibility' key.",
+      "n_top": null,
+      "n_population": null,
+      "top_fractions": {},
+      "population_fractions": {},
+      "top_medians": {},
+      "population_medians": {}
+    },
+    {
+      "cell": "wave5_g8_pooled_s2703.json",
+      "arm": "pooled",
+      "seed": 2703,
+      "head": "betaxanthin",
+      "select_epoch": 40,
+      "available": false,
+      "reason": "arm 'pooled' has no flux layer, so there is no flux vector and neither mass balance nor the second law is defined for it. Reported as null rather than as zero violations.",
+      "n_top": null,
+      "n_population": null,
+      "top_fractions": {},
+      "population_fractions": {},
+      "top_medians": {},
+      "population_medians": {}
+    },
+    {
+      "cell": "wave5_g8_pooled_s2704.json",
+      "arm": "pooled",
+      "seed": 2704,
+      "head": "betaxanthin",
+      "select_epoch": 75,
+      "available": false,
+      "reason": "arm 'pooled' has no flux layer, so there is no flux vector and neither mass balance nor the second law is defined for it. Reported as null rather than as zero violations.",
+      "n_top": null,
+      "n_population": null,
+      "top_fractions": {},
+      "population_fractions": {},
+      "top_medians": {},
+      "population_medians": {}
+    },
+    {
+      "cell": "wave5_g8_pooled_s2705.json",
+      "arm": "pooled",
+      "seed": 2705,
+      "head": "betaxanthin",
+      "select_epoch": 77,
+      "available": false,
+      "reason": "arm 'pooled' has no flux layer, so there is no flux vector and neither mass balance nor the second law is defined for it. Reported as null rather than as zero violations.",
+      "n_top": null,
+      "n_population": null,
+      "top_fractions": {},
+      "population_fractions": {},
+      "top_medians": {},
+      "population_medians": {}
+    },
+    {
+      "cell": "wave6_aa_allon_s2700.json",
+      "arm": "flux_capacity",
+      "seed": 2700,
+      "head": "mulleder19",
+      "select_epoch": 8,
+      "available": true,
+      "reason": null,
+      "n_top": null,
+      "n_population": 4930,
+      "top_fractions": {},
+      "population_fractions": {
+        "balance_median_ratio_le_1e-01": 0.0,
+        "balance_median_ratio_le_1e-02": 0.0,
+        "balance_median_ratio_le_1e-03": 0.0,
+        "box_violation_frac_eq_0": 1.0,
+        "thermo_standard_state_violation_frac_eq_0": 0.0,
+        "thermo_standard_state_violation_frac_le_1e-02": 0.0,
+        "both_balance_le_1e-02_and_thermo_standard_state_eq_0": 0.0
+      },
+      "top_medians": {},
+      "population_medians": {
+        "balance_median_ratio": 1.9875469207763672,
+        "balance_max_ratio": 2.0,
+        "box_violation_frac": 0.0,
+        "thermo_standard_state_violation_frac": 0.2521638572216034,
+        "thermo_standard_state_uphill_frac": 0.5088192224502563
+      }
+    },
+    {
+      "cell": "wave6_aa_nocstr_s2700.json",
+      "arm": "flux_capacity",
+      "seed": 2700,
+      "head": "mulleder19",
+      "select_epoch": 72,
+      "available": true,
+      "reason": null,
+      "n_top": null,
+      "n_population": 4930,
+      "top_fractions": {},
+      "population_fractions": {
+        "balance_median_ratio_le_1e-01": 0.0,
+        "balance_median_ratio_le_1e-02": 0.0,
+        "balance_median_ratio_le_1e-03": 0.0,
+        "box_violation_frac_eq_0": 1.0,
+        "thermo_standard_state_violation_frac_eq_0": 0.0,
+        "thermo_standard_state_violation_frac_le_1e-02": 0.0,
+        "both_balance_le_1e-02_and_thermo_standard_state_eq_0": 0.0
+      },
+      "top_medians": {},
+      "population_medians": {
+        "balance_median_ratio": 1.9934227466583252,
+        "balance_max_ratio": 2.0,
+        "box_violation_frac": 0.0,
+        "thermo_standard_state_violation_frac": 0.31852278113365173,
+        "thermo_standard_state_uphill_frac": 0.46919429302215576
+      }
+    },
+    {
+      "cell": "wave6_aa_nocstr_s2701.json",
+      "arm": "flux_capacity",
+      "seed": 2701,
+      "head": "mulleder19",
+      "select_epoch": 33,
+      "available": true,
+      "reason": null,
+      "n_top": null,
+      "n_population": 4930,
+      "top_fractions": {},
+      "population_fractions": {
+        "balance_median_ratio_le_1e-01": 0.0,
+        "balance_median_ratio_le_1e-02": 0.0,
+        "balance_median_ratio_le_1e-03": 0.0,
+        "box_violation_frac_eq_0": 1.0,
+        "thermo_standard_state_violation_frac_eq_0": 0.0,
+        "thermo_standard_state_violation_frac_le_1e-02": 0.0,
+        "both_balance_le_1e-02_and_thermo_standard_state_eq_0": 0.0
+      },
+      "top_medians": {},
+      "population_medians": {
+        "balance_median_ratio": 1.993678092956543,
+        "balance_max_ratio": 2.0,
+        "box_violation_frac": 0.0,
+        "thermo_standard_state_violation_frac": 0.29861509799957275,
+        "thermo_standard_state_uphill_frac": 0.46590226888656616
+      }
+    },
+    {
+      "cell": "wave6_aa_nocstr_s2702.json",
+      "arm": "flux_capacity",
+      "seed": 2702,
+      "head": "mulleder19",
+      "select_epoch": 12,
+      "available": true,
+      "reason": null,
+      "n_top": null,
+      "n_population": 4930,
+      "top_fractions": {},
+      "population_fractions": {
+        "balance_median_ratio_le_1e-01": 0.0,
+        "balance_median_ratio_le_1e-02": 0.0,
+        "balance_median_ratio_le_1e-03": 0.0,
+        "box_violation_frac_eq_0": 1.0,
+        "thermo_standard_state_violation_frac_eq_0": 0.0,
+        "thermo_standard_state_violation_frac_le_1e-02": 0.0,
+        "both_balance_le_1e-02_and_thermo_standard_state_eq_0": 0.0
+      },
+      "top_medians": {},
+      "population_medians": {
+        "balance_median_ratio": 1.9954429864883423,
+        "balance_max_ratio": 2.0,
+        "box_violation_frac": 0.0,
+        "thermo_standard_state_violation_frac": 0.30900171399116516,
+        "thermo_standard_state_uphill_frac": 0.4770699143409729
+      }
+    },
+    {
+      "cell": "wave6_aa_pooled_s2700.json",
+      "arm": "pooled",
+      "seed": 2700,
+      "head": "mulleder19",
+      "select_epoch": 30,
+      "available": false,
+      "reason": "arm 'pooled' has no flux layer, so there is no flux vector and neither mass balance nor the second law is defined for it. Reported as null rather than as zero violations.",
+      "n_top": null,
+      "n_population": null,
+      "top_fractions": {},
+      "population_fractions": {},
+      "top_medians": {},
+      "population_medians": {}
+    },
+    {
+      "cell": "wave6_aa_pooled_s2701.json",
+      "arm": "pooled",
+      "seed": 2701,
+      "head": "mulleder19",
+      "select_epoch": 46,
+      "available": false,
+      "reason": "arm 'pooled' has no flux layer, so there is no flux vector and neither mass balance nor the second law is defined for it. Reported as null rather than as zero violations.",
+      "n_top": null,
+      "n_population": null,
+      "top_fractions": {},
+      "population_fractions": {},
+      "top_medians": {},
+      "population_medians": {}
+    },
+    {
+      "cell": "wave6_aa_pooled_s2702.json",
+      "arm": "pooled",
+      "seed": 2702,
+      "head": "mulleder19",
+      "select_epoch": 27,
+      "available": false,
+      "reason": "arm 'pooled' has no flux layer, so there is no flux vector and neither mass balance nor the second law is defined for it. Reported as null rather than as zero violations.",
+      "n_top": null,
+      "n_population": null,
+      "top_fractions": {},
+      "population_fractions": {},
+      "top_medians": {},
+      "population_medians": {}
+    },
+    {
+      "cell": "wave6_aa_proj_s2700.json",
+      "arm": "flux_projection",
+      "seed": 2700,
+      "head": "mulleder19",
+      "select_epoch": 26,
+      "available": true,
+      "reason": null,
+      "n_top": null,
+      "n_population": 4930,
+      "top_fractions": {},
+      "population_fractions": {
+        "balance_median_ratio_le_1e-01": 1.0,
+        "balance_median_ratio_le_1e-02": 1.0,
+        "balance_median_ratio_le_1e-03": 1.0,
+        "box_violation_frac_eq_0": 0.0,
+        "thermo_standard_state_violation_frac_eq_0": 0.0,
+        "thermo_standard_state_violation_frac_le_1e-02": 0.0,
+        "both_balance_le_1e-02_and_thermo_standard_state_eq_0": 0.0
+      },
+      "top_medians": {},
+      "population_medians": {
+        "balance_median_ratio": 1.0146299356250665e-9,
+        "balance_max_ratio": 0.001339872949756682,
+        "box_violation_frac": 0.5935608744621277,
+        "thermo_standard_state_violation_frac": 0.3964223861694336,
+        "thermo_standard_state_uphill_frac": 0.585133969783783
+      }
+    },
+    {
+      "cell": "wave6_aa_proj_s2701.json",
+      "arm": "flux_projection",
+      "seed": 2701,
+      "head": "mulleder19",
+      "select_epoch": 76,
+      "available": true,
+      "reason": null,
+      "n_top": null,
+      "n_population": 4930,
+      "top_fractions": {},
+      "population_fractions": {
+        "balance_median_ratio_le_1e-01": 1.0,
+        "balance_median_ratio_le_1e-02": 1.0,
+        "balance_median_ratio_le_1e-03": 1.0,
+        "box_violation_frac_eq_0": 0.0,
+        "thermo_standard_state_violation_frac_eq_0": 0.0,
+        "thermo_standard_state_violation_frac_le_1e-02": 0.0,
+        "both_balance_le_1e-02_and_thermo_standard_state_eq_0": 0.0
+      },
+      "top_medians": {},
+      "population_medians": {
+        "balance_median_ratio": 3.1950564416405314e-9,
+        "balance_max_ratio": 0.00002559645326982718,
+        "box_violation_frac": 0.3522149622440338,
+        "thermo_standard_state_violation_frac": 0.4425850808620453,
+        "thermo_standard_state_uphill_frac": 0.6201134920120239
+      }
+    },
+    {
+      "cell": "wave6_aa_proj_s2702.json",
+      "arm": "flux_projection",
+      "seed": 2702,
+      "head": "mulleder19",
+      "select_epoch": 77,
+      "available": true,
+      "reason": null,
+      "n_top": null,
+      "n_population": 4930,
+      "top_fractions": {},
+      "population_fractions": {
+        "balance_median_ratio_le_1e-01": 1.0,
+        "balance_median_ratio_le_1e-02": 1.0,
+        "balance_median_ratio_le_1e-03": 1.0,
+        "box_violation_frac_eq_0": 0.0,
+        "thermo_standard_state_violation_frac_eq_0": 0.0,
+        "thermo_standard_state_violation_frac_le_1e-02": 0.0,
+        "both_balance_le_1e-02_and_thermo_standard_state_eq_0": 0.0
+      },
+      "top_medians": {},
+      "population_medians": {
+        "balance_median_ratio": 4.709830747628985e-9,
+        "balance_max_ratio": 0.00010048097465187311,
+        "box_violation_frac": 0.34664732217788696,
+        "thermo_standard_state_violation_frac": 0.4382573366165161,
+        "thermo_standard_state_uphill_frac": 0.6167299151420593
+      }
+    }
+  ],
+  "per_cell": {
+    "wave5_g7_flux_capacity_nocstr_s2700.json": {
+      "arm": "flux_capacity",
+      "seed": 2700,
+      "head": "betaxanthin",
+      "select_epoch": 72,
+      "select_rule": "centered_ma_5",
+      "select_val_pearson": 0.1959475874900818,
+      "score": 0.07469212508553086,
+      "n_pinned": 629,
+      "epochs_run": 80,
+      "epochs_configured": 80,
+      "final_val_pred_sd_ratio": 0.26930999755859375,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/tn4k11yq",
+      "code_provenance": null,
+      "checkpoint_path": null,
+      "physics_key": "kcat[default=170,measured=148,predicted=3410] thermo[union,known=3722,equilibrator_met=bdcff9c8,equilibrator_sigma=c7f2ff73,met=179a5aac,rxn=7a66ef5d]"
+    },
+    "wave5_g7_flux_capacity_nocstr_s2701.json": {
+      "arm": "flux_capacity",
+      "seed": 2701,
+      "head": "betaxanthin",
+      "select_epoch": 71,
+      "select_rule": "centered_ma_5",
+      "select_val_pearson": 0.27631479501724243,
+      "score": 0.11852966152842206,
+      "n_pinned": 629,
+      "epochs_run": 80,
+      "epochs_configured": 80,
+      "final_val_pred_sd_ratio": 0.2901414930820465,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/yu2c4ztr",
+      "code_provenance": null,
+      "checkpoint_path": null,
+      "physics_key": "kcat[default=170,measured=148,predicted=3410] thermo[union,known=3722,equilibrator_met=bdcff9c8,equilibrator_sigma=c7f2ff73,met=179a5aac,rxn=7a66ef5d]"
+    },
+    "wave5_g7_flux_capacity_nocstr_s2702.json": {
+      "arm": "flux_capacity",
+      "seed": 2702,
+      "head": "betaxanthin",
+      "select_epoch": 62,
+      "select_rule": "centered_ma_5",
+      "select_val_pearson": 0.26085323095321655,
+      "score": 0.09724066366206432,
+      "n_pinned": 629,
+      "epochs_run": 80,
+      "epochs_configured": 80,
+      "final_val_pred_sd_ratio": 0.36009812355041504,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/vt8efqwd",
+      "code_provenance": {
+        "train_bx.py": "9ab493d958ab7332b402d0144c56845c7501b792e521dc9ffb8a56de36e9d322",
+        "train_bx.py_path": "/scratch/projects/torchcell-scratch/job-snapshots/20260911-002031-gh_wave6_nocstr_s2702/experiments/027-betaxanthin-metabolic/scripts/train_bx.py",
+        "flux_layer.py": "5cfa3d01b59168086806c204c13fd96ae31d59e744916aea8b4fa51cb91515cf",
+        "flux_layer.py_path": "/scratch/projects/torchcell-scratch/job-snapshots/20260911-002031-gh_wave6_nocstr_s2702/torchcell/metabolism/flux_layer.py"
+      },
+      "checkpoint_path": "/scratch/projects/torchcell-scratch/checkpoints-027/wave5_g7_flux_capacity_nocstr_s2702.pt",
+      "physics_key": "kcat[default=30,homolog=782,measured=96,predicted=2820] thermo[union,known=3722,equilibrator_met=bdcff9c8,equilibrator_sigma=c7f2ff73,met=179a5aac,rxn=7a66ef5d,shipped_reaction_unit_correction=6a2de444]"
+    },
+    "wave5_g7_flux_capacity_nocstr_s2703.json": {
+      "arm": "flux_capacity",
+      "seed": 2703,
+      "head": "betaxanthin",
+      "select_epoch": 53,
+      "select_rule": "centered_ma_5",
+      "select_val_pearson": 0.23905493319034576,
+      "score": 0.0255926405321097,
+      "n_pinned": 629,
+      "epochs_run": 80,
+      "epochs_configured": 80,
+      "final_val_pred_sd_ratio": 0.41077733039855957,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/8kjiq88j",
+      "code_provenance": null,
+      "checkpoint_path": null,
+      "physics_key": "kcat[default=170,measured=148,predicted=3410] thermo[union,known=3722,equilibrator_met=bdcff9c8,equilibrator_sigma=c7f2ff73,met=179a5aac,rxn=7a66ef5d]"
+    },
+    "wave5_g7_flux_capacity_nocstr_s2704.json": {
+      "arm": "flux_capacity",
+      "seed": 2704,
+      "head": "betaxanthin",
+      "select_epoch": 74,
+      "select_rule": "centered_ma_5",
+      "select_val_pearson": 0.23857222497463226,
+      "score": 0.02252365597240031,
+      "n_pinned": 629,
+      "epochs_run": 80,
+      "epochs_configured": 80,
+      "final_val_pred_sd_ratio": 0.3524307906627655,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/4xwoupv1",
+      "code_provenance": {
+        "train_bx.py": "9ab493d958ab7332b402d0144c56845c7501b792e521dc9ffb8a56de36e9d322",
+        "train_bx.py_path": "/scratch/projects/torchcell-scratch/job-snapshots/20260911-002107-gh_wave6_parity_nocstr_s2704/experiments/027-betaxanthin-metabolic/scripts/train_bx.py",
+        "flux_layer.py": "5cfa3d01b59168086806c204c13fd96ae31d59e744916aea8b4fa51cb91515cf",
+        "flux_layer.py_path": "/scratch/projects/torchcell-scratch/frozen-027-wave6/torchcell/metabolism/flux_layer.py"
+      },
+      "checkpoint_path": "/scratch/projects/torchcell-scratch/checkpoints-027/wave5_g7_flux_capacity_nocstr_s2704.pt",
+      "physics_key": "kcat[default=10,measured=148,predicted=3570] thermo[union,known=3722,equilibrator_met=bdcff9c8,equilibrator_sigma=c7f2ff73,met=179a5aac,rxn=7a66ef5d,shipped_reaction_unit_correction=6a2de444]"
+    },
+    "wave5_g7_flux_capacity_nocstr_s2705.json": {
+      "arm": "flux_capacity",
+      "seed": 2705,
+      "head": "betaxanthin",
+      "select_epoch": 42,
+      "select_rule": "centered_ma_5",
+      "select_val_pearson": 0.28518980741500854,
+      "score": 0.14172514761124977,
+      "n_pinned": 629,
+      "epochs_run": 80,
+      "epochs_configured": 80,
+      "final_val_pred_sd_ratio": 0.4728364944458008,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/g1036fdm",
+      "code_provenance": {
+        "train_bx.py": "9ab493d958ab7332b402d0144c56845c7501b792e521dc9ffb8a56de36e9d322",
+        "train_bx.py_path": "/scratch/projects/torchcell-scratch/job-snapshots/20260911-002118-gh_wave6_parity_nocstr_s2705/experiments/027-betaxanthin-metabolic/scripts/train_bx.py",
+        "flux_layer.py": "5cfa3d01b59168086806c204c13fd96ae31d59e744916aea8b4fa51cb91515cf",
+        "flux_layer.py_path": "/scratch/projects/torchcell-scratch/frozen-027-wave6/torchcell/metabolism/flux_layer.py"
+      },
+      "checkpoint_path": "/scratch/projects/torchcell-scratch/checkpoints-027/wave5_g7_flux_capacity_nocstr_s2705.pt",
+      "physics_key": "kcat[default=10,measured=148,predicted=3570] thermo[union,known=3722,equilibrator_met=bdcff9c8,equilibrator_sigma=c7f2ff73,met=179a5aac,rxn=7a66ef5d,shipped_reaction_unit_correction=6a2de444]"
+    },
+    "wave5_g8_pooled_s2700.json": {
+      "arm": "pooled",
+      "seed": 2700,
+      "head": "betaxanthin",
+      "select_epoch": 77,
+      "select_rule": "centered_ma_5",
+      "select_val_pearson": 0.2021656185388565,
+      "score": 0.07166497258510016,
+      "n_pinned": 629,
+      "epochs_run": 80,
+      "epochs_configured": 80,
+      "final_val_pred_sd_ratio": 0.3737678527832031,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/qmafa4l2",
+      "code_provenance": null,
+      "checkpoint_path": null,
+      "physics_key": null
+    },
+    "wave5_g8_pooled_s2701.json": {
+      "arm": "pooled",
+      "seed": 2701,
+      "head": "betaxanthin",
+      "select_epoch": 76,
+      "select_rule": "centered_ma_5",
+      "select_val_pearson": 0.30675333738327026,
+      "score": 0.1057801993933421,
+      "n_pinned": 629,
+      "epochs_run": 80,
+      "epochs_configured": 80,
+      "final_val_pred_sd_ratio": 0.38954484462738037,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/ewfvj5we",
+      "code_provenance": null,
+      "checkpoint_path": null,
+      "physics_key": null
+    },
+    "wave5_g8_pooled_s2702.json": {
+      "arm": "pooled",
+      "seed": 2702,
+      "head": "betaxanthin",
+      "select_epoch": 65,
+      "select_rule": "centered_ma_5",
+      "select_val_pearson": 0.32677173614501953,
+      "score": 0.1687285469896339,
+      "n_pinned": 629,
+      "epochs_run": 80,
+      "epochs_configured": 80,
+      "final_val_pred_sd_ratio": 0.45276638865470886,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/bqwipewv",
+      "code_provenance": null,
+      "checkpoint_path": null,
+      "physics_key": null
+    },
+    "wave5_g8_pooled_s2703.json": {
+      "arm": "pooled",
+      "seed": 2703,
+      "head": "betaxanthin",
+      "select_epoch": 40,
+      "select_rule": "centered_ma_5",
+      "select_val_pearson": 0.2203850895166397,
+      "score": -0.0001249148323030431,
+      "n_pinned": 629,
+      "epochs_run": 80,
+      "epochs_configured": 80,
+      "final_val_pred_sd_ratio": 0.3408297598361969,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/ka0weap4",
+      "code_provenance": {
+        "train_bx.py": "9ab493d958ab7332b402d0144c56845c7501b792e521dc9ffb8a56de36e9d322",
+        "train_bx.py_path": "/scratch/projects/torchcell-scratch/job-snapshots/20260911-002101-gh_wave6_pooled_s2703/experiments/027-betaxanthin-metabolic/scripts/train_bx.py",
+        "flux_layer.py": "5cfa3d01b59168086806c204c13fd96ae31d59e744916aea8b4fa51cb91515cf",
+        "flux_layer.py_path": "/scratch/projects/torchcell-scratch/job-snapshots/20260911-002101-gh_wave6_pooled_s2703/torchcell/metabolism/flux_layer.py"
+      },
+      "checkpoint_path": "/scratch/projects/torchcell-scratch/checkpoints-027/wave5_g8_pooled_s2703.pt",
+      "physics_key": null
+    },
+    "wave5_g8_pooled_s2704.json": {
+      "arm": "pooled",
+      "seed": 2704,
+      "head": "betaxanthin",
+      "select_epoch": 75,
+      "select_rule": "centered_ma_5",
+      "select_val_pearson": 0.26097604632377625,
+      "score": 0.10120799345466532,
+      "n_pinned": 629,
+      "epochs_run": 80,
+      "epochs_configured": 80,
+      "final_val_pred_sd_ratio": 0.29057687520980835,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/0vase0v2",
+      "code_provenance": {
+        "train_bx.py": "9ab493d958ab7332b402d0144c56845c7501b792e521dc9ffb8a56de36e9d322",
+        "train_bx.py_path": "/scratch/projects/torchcell-scratch/job-snapshots/20260911-002113-gh_wave6_parity_pooled_s2704/experiments/027-betaxanthin-metabolic/scripts/train_bx.py",
+        "flux_layer.py": "5cfa3d01b59168086806c204c13fd96ae31d59e744916aea8b4fa51cb91515cf",
+        "flux_layer.py_path": "/scratch/projects/torchcell-scratch/frozen-027-wave6/torchcell/metabolism/flux_layer.py"
+      },
+      "checkpoint_path": "/scratch/projects/torchcell-scratch/checkpoints-027/wave5_g8_pooled_s2704.pt",
+      "physics_key": null
+    },
+    "wave5_g8_pooled_s2705.json": {
+      "arm": "pooled",
+      "seed": 2705,
+      "head": "betaxanthin",
+      "select_epoch": 77,
+      "select_rule": "centered_ma_5",
+      "select_val_pearson": 0.3038289546966553,
+      "score": 0.13641025174895532,
+      "n_pinned": 629,
+      "epochs_run": 80,
+      "epochs_configured": 80,
+      "final_val_pred_sd_ratio": 0.3641440272331238,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/e2ud87nr",
+      "code_provenance": {
+        "train_bx.py": "9ab493d958ab7332b402d0144c56845c7501b792e521dc9ffb8a56de36e9d322",
+        "train_bx.py_path": "/scratch/projects/torchcell-scratch/job-snapshots/20260911-002124-gh_wave6_parity_pooled_s2705/experiments/027-betaxanthin-metabolic/scripts/train_bx.py",
+        "flux_layer.py": "5cfa3d01b59168086806c204c13fd96ae31d59e744916aea8b4fa51cb91515cf",
+        "flux_layer.py_path": "/scratch/projects/torchcell-scratch/frozen-027-wave6/torchcell/metabolism/flux_layer.py"
+      },
+      "checkpoint_path": "/scratch/projects/torchcell-scratch/checkpoints-027/wave5_g8_pooled_s2705.pt",
+      "physics_key": null
+    },
+    "wave6_aa_allon_s2700.json": {
+      "arm": "flux_capacity",
+      "seed": 2700,
+      "head": "mulleder19",
+      "select_epoch": 8,
+      "select_rule": "centered_ma_5",
+      "select_val_pearson": 0.026560141606942603,
+      "score": 0.010440652404410156,
+      "n_pinned": 10716,
+      "epochs_run": 80,
+      "epochs_configured": 80,
+      "final_val_pred_sd_ratio": 0.0001370647693527653,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/hbnp7cgy",
+      "code_provenance": {
+        "train_bx.py": "9ab493d958ab7332b402d0144c56845c7501b792e521dc9ffb8a56de36e9d322",
+        "train_bx.py_path": "/scratch/projects/torchcell-scratch/job-snapshots/20260911-002204-gh_wave6_aa_allon_s2700/experiments/027-betaxanthin-metabolic/scripts/train_bx.py",
+        "flux_layer.py": "5cfa3d01b59168086806c204c13fd96ae31d59e744916aea8b4fa51cb91515cf",
+        "flux_layer.py_path": "/scratch/projects/torchcell-scratch/frozen-027-wave6/torchcell/metabolism/flux_layer.py"
+      },
+      "checkpoint_path": "/scratch/projects/torchcell-scratch/checkpoints-027/wave6_aa_allon_s2700.pt",
+      "physics_key": "kcat[default=10,measured=148,predicted=3570] thermo[union,known=3722,equilibrator_met=bdcff9c8,equilibrator_sigma=c7f2ff73,met=179a5aac,rxn=7a66ef5d,shipped_reaction_unit_correction=6a2de444]"
+    },
+    "wave6_aa_nocstr_s2700.json": {
+      "arm": "flux_capacity",
+      "seed": 2700,
+      "head": "mulleder19",
+      "select_epoch": 72,
+      "select_rule": "centered_ma_5",
+      "select_val_pearson": 0.0577519815415144,
+      "score": 0.027538496464909107,
+      "n_pinned": 10716,
+      "epochs_run": 80,
+      "epochs_configured": 80,
+      "final_val_pred_sd_ratio": 0.060349093560178424,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/i8c6ftuw",
+      "code_provenance": {
+        "train_bx.py": "9ab493d958ab7332b402d0144c56845c7501b792e521dc9ffb8a56de36e9d322",
+        "train_bx.py_path": "/scratch/projects/torchcell-scratch/job-snapshots/20260911-002131-gh_wave6_aa_nocstr_s2700/experiments/027-betaxanthin-metabolic/scripts/train_bx.py",
+        "flux_layer.py": "5cfa3d01b59168086806c204c13fd96ae31d59e744916aea8b4fa51cb91515cf",
+        "flux_layer.py_path": "/scratch/projects/torchcell-scratch/frozen-027-wave6/torchcell/metabolism/flux_layer.py"
+      },
+      "checkpoint_path": "/scratch/projects/torchcell-scratch/checkpoints-027/wave6_aa_nocstr_s2700.pt",
+      "physics_key": "kcat[default=10,measured=148,predicted=3570] thermo[union,known=3722,equilibrator_met=bdcff9c8,equilibrator_sigma=c7f2ff73,met=179a5aac,rxn=7a66ef5d,shipped_reaction_unit_correction=6a2de444]"
+    },
+    "wave6_aa_nocstr_s2701.json": {
+      "arm": "flux_capacity",
+      "seed": 2701,
+      "head": "mulleder19",
+      "select_epoch": 33,
+      "select_rule": "centered_ma_5",
+      "select_val_pearson": 0.0511685576731045,
+      "score": 0.0005213249242075233,
+      "n_pinned": 10716,
+      "epochs_run": 80,
+      "epochs_configured": 80,
+      "final_val_pred_sd_ratio": 0.0559272510489743,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/ze5c431a",
+      "code_provenance": {
+        "train_bx.py": "9ab493d958ab7332b402d0144c56845c7501b792e521dc9ffb8a56de36e9d322",
+        "train_bx.py_path": "/scratch/projects/torchcell-scratch/job-snapshots/20260911-002141-gh_wave6_aa_nocstr_s2701/experiments/027-betaxanthin-metabolic/scripts/train_bx.py",
+        "flux_layer.py": "5cfa3d01b59168086806c204c13fd96ae31d59e744916aea8b4fa51cb91515cf",
+        "flux_layer.py_path": "/scratch/projects/torchcell-scratch/frozen-027-wave6/torchcell/metabolism/flux_layer.py"
+      },
+      "checkpoint_path": "/scratch/projects/torchcell-scratch/checkpoints-027/wave6_aa_nocstr_s2701.pt",
+      "physics_key": "kcat[default=10,measured=148,predicted=3570] thermo[union,known=3722,equilibrator_met=bdcff9c8,equilibrator_sigma=c7f2ff73,met=179a5aac,rxn=7a66ef5d,shipped_reaction_unit_correction=6a2de444]"
+    },
+    "wave6_aa_nocstr_s2702.json": {
+      "arm": "flux_capacity",
+      "seed": 2702,
+      "head": "mulleder19",
+      "select_epoch": 12,
+      "select_rule": "centered_ma_5",
+      "select_val_pearson": 0.03572687450306196,
+      "score": 0.010345455054238594,
+      "n_pinned": 10716,
+      "epochs_run": 80,
+      "epochs_configured": 80,
+      "final_val_pred_sd_ratio": 0.07799688084541183,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/yz68df6l",
+      "code_provenance": {
+        "train_bx.py": "9ab493d958ab7332b402d0144c56845c7501b792e521dc9ffb8a56de36e9d322",
+        "train_bx.py_path": "/scratch/projects/torchcell-scratch/job-snapshots/20260911-002152-gh_wave6_aa_nocstr_s2702/experiments/027-betaxanthin-metabolic/scripts/train_bx.py",
+        "flux_layer.py": "5cfa3d01b59168086806c204c13fd96ae31d59e744916aea8b4fa51cb91515cf",
+        "flux_layer.py_path": "/scratch/projects/torchcell-scratch/frozen-027-wave6/torchcell/metabolism/flux_layer.py"
+      },
+      "checkpoint_path": "/scratch/projects/torchcell-scratch/checkpoints-027/wave6_aa_nocstr_s2702.pt",
+      "physics_key": "kcat[default=10,measured=148,predicted=3570] thermo[union,known=3722,equilibrator_met=bdcff9c8,equilibrator_sigma=c7f2ff73,met=179a5aac,rxn=7a66ef5d,shipped_reaction_unit_correction=6a2de444]"
+    },
+    "wave6_aa_pooled_s2700.json": {
+      "arm": "pooled",
+      "seed": 2700,
+      "head": "mulleder19",
+      "select_epoch": 30,
+      "select_rule": "centered_ma_5",
+      "select_val_pearson": 0.10298835654056777,
+      "score": 0.06627851808298879,
+      "n_pinned": 10716,
+      "epochs_run": 80,
+      "epochs_configured": 80,
+      "final_val_pred_sd_ratio": 0.2777770157707365,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/7jxtzs3v",
+      "code_provenance": {
+        "train_bx.py": "9ab493d958ab7332b402d0144c56845c7501b792e521dc9ffb8a56de36e9d322",
+        "train_bx.py_path": "/scratch/projects/torchcell-scratch/job-snapshots/20260911-002136-gh_wave6_aa_pooled_s2700/experiments/027-betaxanthin-metabolic/scripts/train_bx.py",
+        "flux_layer.py": "5cfa3d01b59168086806c204c13fd96ae31d59e744916aea8b4fa51cb91515cf",
+        "flux_layer.py_path": "/scratch/projects/torchcell-scratch/frozen-027-wave6/torchcell/metabolism/flux_layer.py"
+      },
+      "checkpoint_path": "/scratch/projects/torchcell-scratch/checkpoints-027/wave6_aa_pooled_s2700.pt",
+      "physics_key": null
+    },
+    "wave6_aa_pooled_s2701.json": {
+      "arm": "pooled",
+      "seed": 2701,
+      "head": "mulleder19",
+      "select_epoch": 46,
+      "select_rule": "centered_ma_5",
+      "select_val_pearson": 0.11379097372685608,
+      "score": 0.0319842001176061,
+      "n_pinned": 10716,
+      "epochs_run": 80,
+      "epochs_configured": 80,
+      "final_val_pred_sd_ratio": 0.1525685040182189,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/0x4yo7vg",
+      "code_provenance": {
+        "train_bx.py": "9ab493d958ab7332b402d0144c56845c7501b792e521dc9ffb8a56de36e9d322",
+        "train_bx.py_path": "/scratch/projects/torchcell-scratch/job-snapshots/20260911-002147-gh_wave6_aa_pooled_s2701/experiments/027-betaxanthin-metabolic/scripts/train_bx.py",
+        "flux_layer.py": "5cfa3d01b59168086806c204c13fd96ae31d59e744916aea8b4fa51cb91515cf",
+        "flux_layer.py_path": "/scratch/projects/torchcell-scratch/frozen-027-wave6/torchcell/metabolism/flux_layer.py"
+      },
+      "checkpoint_path": "/scratch/projects/torchcell-scratch/checkpoints-027/wave6_aa_pooled_s2701.pt",
+      "physics_key": null
+    },
+    "wave6_aa_pooled_s2702.json": {
+      "arm": "pooled",
+      "seed": 2702,
+      "head": "mulleder19",
+      "select_epoch": 27,
+      "select_rule": "centered_ma_5",
+      "select_val_pearson": 0.11837445459279575,
+      "score": 0.05602911888899604,
+      "n_pinned": 10716,
+      "epochs_run": 80,
+      "epochs_configured": 80,
+      "final_val_pred_sd_ratio": 0.3203201556676312,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/ipci2bpd",
+      "code_provenance": {
+        "train_bx.py": "9ab493d958ab7332b402d0144c56845c7501b792e521dc9ffb8a56de36e9d322",
+        "train_bx.py_path": "/scratch/projects/torchcell-scratch/job-snapshots/20260911-002157-gh_wave6_aa_pooled_s2702/experiments/027-betaxanthin-metabolic/scripts/train_bx.py",
+        "flux_layer.py": "5cfa3d01b59168086806c204c13fd96ae31d59e744916aea8b4fa51cb91515cf",
+        "flux_layer.py_path": "/scratch/projects/torchcell-scratch/frozen-027-wave6/torchcell/metabolism/flux_layer.py"
+      },
+      "checkpoint_path": "/scratch/projects/torchcell-scratch/checkpoints-027/wave6_aa_pooled_s2702.pt",
+      "physics_key": null
+    },
+    "wave6_aa_proj_s2700.json": {
+      "arm": "flux_projection",
+      "seed": 2700,
+      "head": "mulleder19",
+      "select_epoch": 26,
+      "select_rule": "centered_ma_5",
+      "select_val_pearson": 0.021088093329270027,
+      "score": -0.012213024654427822,
+      "n_pinned": 10716,
+      "epochs_run": 80,
+      "epochs_configured": 80,
+      "final_val_pred_sd_ratio": 0.0005703894486558918,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/0sa5sis4",
+      "code_provenance": {
+        "train_bx.py": "c9862598f51712fb04ca16628ffa230764448c118b7427d1c949242a8ef7578e",
+        "train_bx.py_path": "/scratch/projects/torchcell-scratch/job-snapshots/20260911-054810-gh_wave6_aa_proj_s2700/experiments/027-betaxanthin-metabolic/scripts/train_bx.py",
+        "flux_layer.py": "5cfa3d01b59168086806c204c13fd96ae31d59e744916aea8b4fa51cb91515cf",
+        "flux_layer.py_path": "/scratch/projects/torchcell-scratch/frozen-027-wave6/torchcell/metabolism/flux_layer.py"
+      },
+      "checkpoint_path": "/scratch/projects/torchcell-scratch/checkpoints-027/wave6_aa_proj_s2700.pt",
+      "physics_key": "kcat[default=10,measured=148,predicted=3570] thermo[union,known=3722,equilibrator_met=bdcff9c8,equilibrator_sigma=c7f2ff73,met=179a5aac,rxn=7a66ef5d,shipped_reaction_unit_correction=6a2de444]"
+    },
+    "wave6_aa_proj_s2701.json": {
+      "arm": "flux_projection",
+      "seed": 2701,
+      "head": "mulleder19",
+      "select_epoch": 76,
+      "select_rule": "centered_ma_5",
+      "select_val_pearson": 0.07887177938889516,
+      "score": 0.01745623168841727,
+      "n_pinned": 10716,
+      "epochs_run": 80,
+      "epochs_configured": 80,
+      "final_val_pred_sd_ratio": 0.1169007420539856,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/7vhb6aki",
+      "code_provenance": {
+        "train_bx.py": "c9862598f51712fb04ca16628ffa230764448c118b7427d1c949242a8ef7578e",
+        "train_bx.py_path": "/scratch/projects/torchcell-scratch/job-snapshots/20260911-054817-gh_wave6_aa_proj_s2701/experiments/027-betaxanthin-metabolic/scripts/train_bx.py",
+        "flux_layer.py": "5cfa3d01b59168086806c204c13fd96ae31d59e744916aea8b4fa51cb91515cf",
+        "flux_layer.py_path": "/scratch/projects/torchcell-scratch/frozen-027-wave6/torchcell/metabolism/flux_layer.py"
+      },
+      "checkpoint_path": "/scratch/projects/torchcell-scratch/checkpoints-027/wave6_aa_proj_s2701.pt",
+      "physics_key": "kcat[default=10,measured=148,predicted=3570] thermo[union,known=3722,equilibrator_met=bdcff9c8,equilibrator_sigma=c7f2ff73,met=179a5aac,rxn=7a66ef5d,shipped_reaction_unit_correction=6a2de444]"
+    },
+    "wave6_aa_proj_s2702.json": {
+      "arm": "flux_projection",
+      "seed": 2702,
+      "head": "mulleder19",
+      "select_epoch": 77,
+      "select_rule": "centered_ma_5",
+      "select_val_pearson": 0.0407741842485082,
+      "score": 0.03132966158139944,
+      "n_pinned": 10716,
+      "epochs_run": 80,
+      "epochs_configured": 80,
+      "final_val_pred_sd_ratio": 0.12287804739255655,
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/qzotcqen",
+      "code_provenance": {
+        "train_bx.py": "c9862598f51712fb04ca16628ffa230764448c118b7427d1c949242a8ef7578e",
+        "train_bx.py_path": "/scratch/projects/torchcell-scratch/job-snapshots/20260911-054826-gh_wave6_aa_proj_s2702/experiments/027-betaxanthin-metabolic/scripts/train_bx.py",
+        "flux_layer.py": "5cfa3d01b59168086806c204c13fd96ae31d59e744916aea8b4fa51cb91515cf",
+        "flux_layer.py_path": "/scratch/projects/torchcell-scratch/frozen-027-wave6/torchcell/metabolism/flux_layer.py"
+      },
+      "checkpoint_path": "/scratch/projects/torchcell-scratch/checkpoints-027/wave6_aa_proj_s2702.pt",
+      "physics_key": "kcat[default=10,measured=148,predicted=3570] thermo[union,known=3722,equilibrator_met=bdcff9c8,equilibrator_sigma=c7f2ff73,met=179a5aac,rxn=7a66ef5d,shipped_reaction_unit_correction=6a2de444]"
+    }
+  },
+  "missing_files": [],
+  "figure_path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes/assets/images/027-betaxanthin-metabolic/wave6_parity_and_feasibility_2026-09-11-08-55-11.svg"
+}

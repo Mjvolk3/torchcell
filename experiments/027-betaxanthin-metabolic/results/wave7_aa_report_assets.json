@@ -1,0 +1,35 @@
+{
+ "built_at": "2026-09-12T20:23:36.693077+00:00",
+ "summary_json": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/027-betaxanthin-metabolic/results/wave7_aa_summary.json",
+ "summary_sha256": "73143b38ee36e2940631d1f933ff1088ef01877daffe01382b2adc97d802c916",
+ "summary_generated_at": "2026-09-12-15-23-35",
+ "primary_budget": "e200",
+ "contrasts_emitted": [
+  "e200/conc_vs_pooled",
+  "e200/conc_nocstr_vs_pooled",
+  "e200/turnover_vs_pooled",
+  "e200/conc_vs_turnover",
+  "e200/conc_vs_conc_nocstr",
+  "e200/pooledq_vs_pooled"
+ ],
+ "assets": [
+  {
+   "path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes-tex/027-metabolic-flux-module/tables/wave7_aa_contrasts.tex",
+   "sha256": "c2992fd216c86aa589cfb7eaa52aa675f0f8635f81c1ff6755c96e9bee4d8604",
+   "source_path": null,
+   "source_sha256": null
+  },
+  {
+   "path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes/assets/images/027-betaxanthin-metabolic/wave7_aa_concentration.svg",
+   "sha256": "36661bf634c50cb0ff1de0ab509841fadc4b3dadf2a4b578ce2e0a2b5e3ed6d0",
+   "source_path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes/assets/images/027-betaxanthin-metabolic/wave7_aa_concentration_2026-09-12-15-23-35.svg",
+   "source_sha256": "36661bf634c50cb0ff1de0ab509841fadc4b3dadf2a4b578ce2e0a2b5e3ed6d0"
+  },
+  {
+   "path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes/assets/images/027-betaxanthin-metabolic/wave7_aa_concentration.png",
+   "sha256": "cc9269aa7e24d3190d71f689aee5ac2886382fd1f1904d46724a0942a64635f8",
+   "source_path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/notes/assets/images/027-betaxanthin-metabolic/wave7_aa_concentration_2026-09-12-15-23-35.png",
+   "source_sha256": "cc9269aa7e24d3190d71f689aee5ac2886382fd1f1904d46724a0942a64635f8"
+  }
+ ]
+}

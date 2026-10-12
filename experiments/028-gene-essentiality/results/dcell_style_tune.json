@@ -1,0 +1,260 @@
+{
+  "read": "tune",
+  "protocol": "one deletion per instance, split by gene; class-weighted BCE on the root head plus 0.3 x the mean class-weighted BCE over the non-root term heads; Adam 0.001, 400 epochs, full batch, batch normalization statistics from the training genes; epoch selected by a five-epoch moving average of the validation AUROC; held-out genes scored once at that epoch",
+  "config": {
+    "width": 8,
+    "order": "tanh_bn",
+    "weight_decay": 0.0,
+    "epochs": 400,
+    "lr": 0.001
+  },
+  "hierarchy": {
+    "n_terms": 2366,
+    "n_kept_terms": 2362,
+    "n_edges": 4025,
+    "n_redundant_edges_dropped": 100,
+    "n_strata": 15,
+    "terms_per_stratum": [
+      700,
+      543,
+      385,
+      256,
+      175,
+      114,
+      66,
+      49,
+      37,
+      19,
+      12,
+      5,
+      3,
+      1,
+      1
+    ],
+    "max_children": 24,
+    "n_labeled_genes": 1121,
+    "n_annotation_pairs": 56473
+  },
+  "rows": [],
+  "fold_ensembles": [],
+  "paired": [],
+  "tune": [
+    {
+      "config": {
+        "width": 8,
+        "order": "tanh_bn",
+        "weight_decay": 0.0,
+        "epochs": 400,
+        "lr": 0.001
+      },
+      "seeds": [
+        2700,
+        2701,
+        2702
+      ],
+      "val_auroc": [
+        0.882406015037594,
+        0.8198496240601505,
+        0.870375939849624
+      ],
+      "val_mean": 0.8575438596491228,
+      "val_sd": 0.027102548769869894,
+      "select_epoch": [
+        34,
+        6,
+        9
+      ],
+      "seconds": 2833.5795838832855
+    },
+    {
+      "config": {
+        "width": 8,
+        "order": "tanh_bn",
+        "weight_decay": 0.001,
+        "epochs": 400,
+        "lr": 0.001
+      },
+      "seeds": [
+        2700,
+        2701,
+        2702
+      ],
+      "val_auroc": [
+        0.8917293233082707,
+        0.836390977443609,
+        0.8905263157894737
+      ],
+      "val_mean": 0.8728822055137845,
+      "val_sd": 0.02580786832634241,
+      "select_epoch": [
+        34,
+        9,
+        20
+      ],
+      "seconds": 2823.1175332069397
+    },
+    {
+      "config": {
+        "width": 8,
+        "order": "bn_tanh",
+        "weight_decay": 0.0,
+        "epochs": 400,
+        "lr": 0.001
+      },
+      "seeds": [
+        2700,
+        2701,
+        2702
+      ],
+      "val_auroc": [
+        0.865263157894737,
+        0.8421052631578948,
+        0.8297744360902255
+      ],
+      "val_mean": 0.8457142857142858,
+      "val_sd": 0.014711245736712347,
+      "select_epoch": [
+        42,
+        25,
+        99
+      ],
+      "seconds": 2909.045514822006
+    },
+    {
+      "config": {
+        "width": 8,
+        "order": "bn_tanh",
+        "weight_decay": 0.001,
+        "epochs": 400,
+        "lr": 0.001
+      },
+      "seeds": [
+        2700,
+        2701,
+        2702
+      ],
+      "val_auroc": [
+        0.8781954887218045,
+        0.8276691729323309,
+        0.8249624060150377
+      ],
+      "val_mean": 0.8436090225563911,
+      "val_sd": 0.024481276902217988,
+      "select_epoch": [
+        25,
+        15,
+        12
+      ],
+      "seconds": 3005.0321822166443
+    },
+    {
+      "config": {
+        "width": 20,
+        "order": "tanh_bn",
+        "weight_decay": 0.0,
+        "epochs": 400,
+        "lr": 0.001
+      },
+      "seeds": [
+        2700,
+        2701,
+        2702
+      ],
+      "val_auroc": [
+        0.8562406015037595,
+        0.8225563909774437,
+        0.7993984962406016
+      ],
+      "val_mean": 0.8260651629072683,
+      "val_sd": 0.02333794968184687,
+      "select_epoch": [
+        346,
+        3,
+        8
+      ],
+      "seconds": 6642.320114135742
+    },
+    {
+      "config": {
+        "width": 20,
+        "order": "tanh_bn",
+        "weight_decay": 0.001,
+        "epochs": 400,
+        "lr": 0.001
+      },
+      "seeds": [
+        2700,
+        2701,
+        2702
+      ],
+      "val_auroc": [
+        0.8240601503759399,
+        0.8267669172932332,
+        0.8279699248120301
+      ],
+      "val_mean": 0.826265664160401,
+      "val_sd": 0.0016350382386265633,
+      "select_epoch": [
+        16,
+        4,
+        263
+      ],
+      "seconds": 6874.3988173007965
+    },
+    {
+      "config": {
+        "width": 20,
+        "order": "bn_tanh",
+        "weight_decay": 0.0,
+        "epochs": 400,
+        "lr": 0.001
+      },
+      "seeds": [
+        2700,
+        2701,
+        2702
+      ],
+      "val_auroc": [
+        0.8601503759398497,
+        0.865263157894737,
+        0.8550375939849623
+      ],
+      "val_mean": 0.8601503759398496,
+      "val_sd": 0.004174568985194494,
+      "select_epoch": [
+        11,
+        7,
+        27
+      ],
+      "seconds": 6494.963589668274
+    },
+    {
+      "config": {
+        "width": 20,
+        "order": "bn_tanh",
+        "weight_decay": 0.001,
+        "epochs": 400,
+        "lr": 0.001
+      },
+      "seeds": [
+        2700,
+        2701,
+        2702
+      ],
+      "val_auroc": [
+        0.8815037593984962,
+        0.8649624060150375,
+        0.8526315789473683
+      ],
+      "val_mean": 0.8663659147869675,
+      "val_sd": 0.011828724322746067,
+      "select_epoch": [
+        16,
+        9,
+        319
+      ],
+      "seconds": 5766.4205322265625
+    }
+  ],
+  "seconds": 5214.846373319626
+}

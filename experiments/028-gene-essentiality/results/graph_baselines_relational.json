@@ -1,0 +1,205 @@
+{
+  "protocol": "transductive node classification on one gene graph, no perturbation; class-weighted BCE, Adam 1e-3, 200 epochs, width 64, dropout 0.2; epoch selected by a five-epoch moving average of the validation AUROC; scored once on the 195 held-out genes",
+  "rows": [
+    {
+      "model": "GIN",
+      "graph": "union of nine",
+      "inputs": "ProtT5",
+      "dim_in": 1024,
+      "n_parameters": 78147,
+      "test_auroc": [
+        0.6957120377655389,
+        0.5826121164437451,
+        0.7179386309992132
+      ],
+      "val_auroc": [
+        0.5963909774436091,
+        0.6207518796992482,
+        0.6793984962406014
+      ],
+      "select_epoch": [
+        186,
+        171,
+        195
+      ],
+      "mean": 0.6654209284028324,
+      "sd": 0.059253578599385945,
+      "seconds": 55.66981911659241
+    },
+    {
+      "model": "GraphSAGE",
+      "graph": "union of nine",
+      "inputs": "ProtT5",
+      "dim_in": 1024,
+      "n_parameters": 139457,
+      "test_auroc": [
+        0.7840283241542093,
+        0.7848151062155784,
+        0.7800944138473642
+      ],
+      "val_auroc": [
+        0.7801503759398496,
+        0.7846616541353384,
+        0.7831578947368422
+      ],
+      "select_epoch": [
+        87,
+        77,
+        82
+      ],
+      "mean": 0.7829792814057172,
+      "sd": 0.0020650427154503105,
+      "seconds": 60.232407569885254
+    },
+    {
+      "model": "RGCN",
+      "graph": "nine typed",
+      "inputs": "ProtT5",
+      "dim_in": 1024,
+      "n_parameters": 348425,
+      "test_auroc": [
+        0.8444138473642802,
+        0.8282848151062157,
+        0.8357592446892211
+      ],
+      "val_auroc": [
+        0.7470676691729324,
+        0.7606015037593985,
+        0.7503759398496241
+      ],
+      "select_epoch": [
+        119,
+        87,
+        81
+      ],
+      "mean": 0.8361526357199057,
+      "sd": 0.0065905228812636,
+      "seconds": 94.1124758720398
+    },
+    {
+      "model": "RGAT",
+      "graph": "nine typed",
+      "inputs": "ProtT5",
+      "dim_in": 1024,
+      "n_parameters": 1258049,
+      "test_auroc": [
+        0.8530684500393392,
+        0.8650668764752164,
+        0.8389063729346972
+      ],
+      "val_auroc": [
+        0.8123308270676691,
+        0.7981954887218046,
+        0.8021052631578947
+      ],
+      "select_epoch": [
+        196,
+        111,
+        113
+      ],
+      "mean": 0.8523472331497509,
+      "sd": 0.010692149822018972,
+      "seconds": 134.1527132987976
+    },
+    {
+      "model": "GIN",
+      "graph": "union of nine",
+      "inputs": "ProtT5+chrom-pathway+FBA ratios",
+      "dim_in": 1225,
+      "n_parameters": 91011,
+      "test_auroc": [
+        0.6638473642800945,
+        0.743705743509048,
+        0.7063335955940205
+      ],
+      "val_auroc": [
+        0.569624060150376,
+        0.6147368421052632,
+        0.6063157894736841
+      ],
+      "select_epoch": [
+        195,
+        182,
+        177
+      ],
+      "mean": 0.704628901127721,
+      "sd": 0.03262432293740781,
+      "seconds": 66.28133964538574
+    },
+    {
+      "model": "GraphSAGE",
+      "graph": "union of nine",
+      "inputs": "ProtT5+chrom-pathway+FBA ratios",
+      "dim_in": 1225,
+      "n_parameters": 165185,
+      "test_auroc": [
+        0.8857199055861527,
+        0.8896538158929976,
+        0.8845397324940991
+      ],
+      "val_auroc": [
+        0.8944360902255639,
+        0.8950375939849624,
+        0.8944360902255639
+      ],
+      "select_epoch": [
+        98,
+        93,
+        92
+      ],
+      "mean": 0.8866378179910832,
+      "sd": 0.002186379753544856,
+      "seconds": 65.65826559066772
+    },
+    {
+      "model": "RGCN",
+      "graph": "nine typed",
+      "inputs": "ProtT5+chrom-pathway+FBA ratios",
+      "dim_in": 1225,
+      "n_parameters": 412745,
+      "test_auroc": [
+        0.8473642800944139,
+        0.8678206136900078,
+        0.8658536585365852
+      ],
+      "val_auroc": [
+        0.837593984962406,
+        0.8406015037593985,
+        0.8439097744360903
+      ],
+      "select_epoch": [
+        181,
+        139,
+        134
+      ],
+      "mean": 0.8603461841070024,
+      "sd": 0.009214647831503157,
+      "seconds": 115.40313220024109
+    },
+    {
+      "model": "RGAT",
+      "graph": "nine typed",
+      "inputs": "ProtT5+chrom-pathway+FBA ratios",
+      "dim_in": 1225,
+      "n_parameters": 1489601,
+      "test_auroc": [
+        0.8874901652242329,
+        0.8845397324940991,
+        0.894571203776554
+      ],
+      "val_auroc": [
+        0.8261654135338347,
+        0.8177443609022556,
+        0.8330827067669173
+      ],
+      "select_epoch": [
+        153,
+        84,
+        118
+      ],
+      "mean": 0.8888670338316286,
+      "sd": 0.0042094678518947515,
+      "seconds": 135.42083954811096
+    }
+  ]
+}

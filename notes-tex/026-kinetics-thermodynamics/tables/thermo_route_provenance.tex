@@ -1,0 +1,29 @@
+%% notes-tex/026-kinetics-thermodynamics/tables/thermo_route_provenance.tex
+%% AUTO-GENERATED -- do not hand-edit. Regenerate with
+%%   PYTHONPATH=. python experiments/026-metabolism-flux/scripts/thermo_route_tables_tex.py
+%% SOURCE: prose declared in thermo_route_tables_tex.py; route list from results/reaction_thermo_coverage_final.json
+\begin{table}[!htbp]
+  \centering
+  \footnotesize
+  \caption[Route provenance]{Which committed script documents and produces each route. A route present in \file{results/thermo\_pipeline\_yeast9.json} with no entry here makes \file{thermo\_route\_tables\_tex.py} raise, so the table cannot fall behind the pipeline.}
+  \label{tab:route-provenance}
+  \begin{tabular}{@{}p{0.24\textwidth}p{0.66\textwidth}@{}}
+    \toprule
+    Route & Produced and documented by \\
+    \midrule
+    cache, by accession & \texttt{build\_equilibrator\_thermo.py, thermo\_accession\_sweep.py} \\
+    cache, by written structure & \texttt{lipid\_structure\_writer.py} \\
+    external pKa cascade & \texttt{external\_pka\_apply\_selection.py} \\
+    shipped metabolite column & \texttt{yeast9\_delta\_g\_provenance.py} \\
+    CODATA ion table & \texttt{fetch\_ion\_formation\_energies.py, thermo\_ion\_gauge\_check.py} \\
+    composition surrogate & \texttt{improve\_parameter\_coverage.py} \\
+    repeat-unit surrogate & \texttt{thermo\_polymer\_repeat\_unit.py} \\
+    curated structure or convention & \texttt{thermo\_curation\_price.py, results/curation/} \\
+    carrier potential & \texttt{thermo\_curation\_price.py, results/curation/cytochrome\_c.json} \\
+    mixed routes & \texttt{thermo\_pipeline\_yeast9.py} \\
+    cancellation & \texttt{thermo\_pipeline\_yeast9.py} \\
+    shipped reaction column & \texttt{thermo\_dgpredictor\_rows.py} \\
+    conserved moiety & \texttt{thermo\_curation\_price.py} \\
+    \bottomrule
+  \end{tabular}
+\end{table}

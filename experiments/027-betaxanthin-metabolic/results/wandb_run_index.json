@@ -1,0 +1,1302 @@
+{
+  "project_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx",
+  "n_runs": 144,
+  "runs": [
+    {
+      "arm": "pooled",
+      "seed": 2700,
+      "worker": 5,
+      "wandb_run_id": "8x6oiic5",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/8x6oiic5",
+      "test_spearman_pinned": -0.027451600738410364,
+      "select_epoch": 12
+    },
+    {
+      "arm": "flux_off",
+      "seed": 2700,
+      "worker": 2,
+      "wandb_run_id": "rxaa1jqp",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/rxaa1jqp",
+      "test_spearman_pinned": 0.028989687990456477,
+      "select_epoch": 86
+    },
+    {
+      "arm": "flux_free",
+      "seed": 2700,
+      "worker": 1,
+      "wandb_run_id": "uews7le8",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/uews7le8",
+      "test_spearman_pinned": -0.032245886298134706,
+      "select_epoch": 140
+    },
+    {
+      "arm": "flux_anchored",
+      "seed": 2700,
+      "worker": 0,
+      "wandb_run_id": "wsjte9kr",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/wsjte9kr",
+      "test_spearman_pinned": 0.008560886219731719,
+      "select_epoch": 106
+    },
+    {
+      "arm": "null_pooled",
+      "seed": 2700,
+      "worker": 4,
+      "wandb_run_id": "7aa0oazt",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/7aa0oazt",
+      "test_spearman_pinned": -0.0641826177370728,
+      "select_epoch": 49
+    },
+    {
+      "arm": "null_anchored",
+      "seed": 2700,
+      "worker": 3,
+      "wandb_run_id": "9ft3217z",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/9ft3217z",
+      "test_spearman_pinned": 0.002250479629965881,
+      "select_epoch": 79
+    },
+    {
+      "arm": "pooled",
+      "seed": 2701,
+      "worker": 11,
+      "wandb_run_id": "za1p0euu",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/za1p0euu",
+      "test_spearman_pinned": 0.09050229358253864,
+      "select_epoch": 66
+    },
+    {
+      "arm": "flux_off",
+      "seed": 2701,
+      "worker": 8,
+      "wandb_run_id": "k7bdmx0c",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/k7bdmx0c",
+      "test_spearman_pinned": 0.09624442566672604,
+      "select_epoch": 185
+    },
+    {
+      "arm": "flux_free",
+      "seed": 2701,
+      "worker": 7,
+      "wandb_run_id": "8fuby5nh",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/8fuby5nh",
+      "test_spearman_pinned": 0.03109129615803775,
+      "select_epoch": 181
+    },
+    {
+      "arm": "flux_anchored",
+      "seed": 2701,
+      "worker": 6,
+      "wandb_run_id": "6wdet72a",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/6wdet72a",
+      "test_spearman_pinned": 0.019459314897965523,
+      "select_epoch": 134
+    },
+    {
+      "arm": "null_pooled",
+      "seed": 2701,
+      "worker": 10,
+      "wandb_run_id": "uhh02hos",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/uhh02hos",
+      "test_spearman_pinned": -0.01228344600778299,
+      "select_epoch": 3
+    },
+    {
+      "arm": "null_anchored",
+      "seed": 2701,
+      "worker": 9,
+      "wandb_run_id": "xa25q15s",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/xa25q15s",
+      "test_spearman_pinned": -0.04024982640698404,
+      "select_epoch": 60
+    },
+    {
+      "arm": "pooled",
+      "seed": 2702,
+      "worker": 17,
+      "wandb_run_id": "begcedhj",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/begcedhj",
+      "test_spearman_pinned": 0.060316840799396226,
+      "select_epoch": 2
+    },
+    {
+      "arm": "flux_off",
+      "seed": 2702,
+      "worker": 14,
+      "wandb_run_id": "gpw2ddcl",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/gpw2ddcl",
+      "test_spearman_pinned": 0.003101299881739132,
+      "select_epoch": 102
+    },
+    {
+      "arm": "flux_free",
+      "seed": 2702,
+      "worker": 13,
+      "wandb_run_id": "w8r8k8vi",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/w8r8k8vi",
+      "test_spearman_pinned": 0.08430018566876572,
+      "select_epoch": 125
+    },
+    {
+      "arm": "flux_anchored",
+      "seed": 2702,
+      "worker": 12,
+      "wandb_run_id": "vr4t8xef",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/vr4t8xef",
+      "test_spearman_pinned": 0.016325891492805406,
+      "select_epoch": 168
+    },
+    {
+      "arm": "null_pooled",
+      "seed": 2702,
+      "worker": 16,
+      "wandb_run_id": "wbemdgt1",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/wbemdgt1",
+      "test_spearman_pinned": 0.0,
+      "select_epoch": 87
+    },
+    {
+      "arm": "null_anchored",
+      "seed": 2702,
+      "worker": 15,
+      "wandb_run_id": "qn32rlpb",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/qn32rlpb",
+      "test_spearman_pinned": 0.0706565215213602,
+      "select_epoch": 67
+    },
+    {
+      "arm": "pooled",
+      "seed": 2703,
+      "worker": 23,
+      "wandb_run_id": "rqydt43t",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/rqydt43t",
+      "test_spearman_pinned": 0.08518673404181074,
+      "select_epoch": 2
+    },
+    {
+      "arm": "flux_off",
+      "seed": 2703,
+      "worker": 20,
+      "wandb_run_id": "hznxj8mf",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/hznxj8mf",
+      "test_spearman_pinned": 0.09540360886009966,
+      "select_epoch": 168
+    },
+    {
+      "arm": "flux_free",
+      "seed": 2703,
+      "worker": 19,
+      "wandb_run_id": "x0pbj45b",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/x0pbj45b",
+      "test_spearman_pinned": 0.05266326805438057,
+      "select_epoch": 188
+    },
+    {
+      "arm": "flux_anchored",
+      "seed": 2703,
+      "worker": 18,
+      "wandb_run_id": "cyqo4dfs",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/cyqo4dfs",
+      "test_spearman_pinned": 0.10209871927507919,
+      "select_epoch": 171
+    },
+    {
+      "arm": "null_pooled",
+      "seed": 2703,
+      "worker": 22,
+      "wandb_run_id": "a7g89vvx",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/a7g89vvx",
+      "test_spearman_pinned": 0.0,
+      "select_epoch": 136
+    },
+    {
+      "arm": "null_anchored",
+      "seed": 2703,
+      "worker": 21,
+      "wandb_run_id": "v1kly7fl",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/v1kly7fl",
+      "test_spearman_pinned": 0.048896453531736786,
+      "select_epoch": 183
+    },
+    {
+      "arm": "pooled",
+      "seed": 2704,
+      "worker": 29,
+      "wandb_run_id": "snv8hgv9",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/snv8hgv9",
+      "test_spearman_pinned": 0.10192214323256131,
+      "select_epoch": 2
+    },
+    {
+      "arm": "flux_off",
+      "seed": 2704,
+      "worker": 26,
+      "wandb_run_id": "k6o32p3r",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/k6o32p3r",
+      "test_spearman_pinned": 0.09590832547585124,
+      "select_epoch": 137
+    },
+    {
+      "arm": "flux_free",
+      "seed": 2704,
+      "worker": 25,
+      "wandb_run_id": "nqx5rj0d",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/nqx5rj0d",
+      "test_spearman_pinned": 0.03460926020228136,
+      "select_epoch": 126
+    },
+    {
+      "arm": "flux_anchored",
+      "seed": 2704,
+      "worker": 24,
+      "wandb_run_id": "yrklkmip",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/yrklkmip",
+      "test_spearman_pinned": -0.06580110612267433,
+      "select_epoch": 194
+    },
+    {
+      "arm": "null_pooled",
+      "seed": 2704,
+      "worker": 28,
+      "wandb_run_id": "c5f52r4m",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/c5f52r4m",
+      "test_spearman_pinned": -0.01945734323532332,
+      "select_epoch": 4
+    },
+    {
+      "arm": "null_anchored",
+      "seed": 2704,
+      "worker": 27,
+      "wandb_run_id": "qh3bot4l",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/qh3bot4l",
+      "test_spearman_pinned": -0.009034421808107103,
+      "select_epoch": 96
+    },
+    {
+      "arm": "pooled",
+      "seed": 2705,
+      "worker": 35,
+      "wandb_run_id": "giope3y3",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/giope3y3",
+      "test_spearman_pinned": 0.02732653880914974,
+      "select_epoch": 59
+    },
+    {
+      "arm": "flux_off",
+      "seed": 2705,
+      "worker": 32,
+      "wandb_run_id": "pz2lordy",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/pz2lordy",
+      "test_spearman_pinned": -0.03981309263686758,
+      "select_epoch": 9
+    },
+    {
+      "arm": "flux_free",
+      "seed": 2705,
+      "worker": 31,
+      "wandb_run_id": "jrazf1w2",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/jrazf1w2",
+      "test_spearman_pinned": -0.027214732163077522,
+      "select_epoch": 80
+    },
+    {
+      "arm": "flux_anchored",
+      "seed": 2705,
+      "worker": 30,
+      "wandb_run_id": "a30w9wqj",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/a30w9wqj",
+      "test_spearman_pinned": -0.0005610798387137122,
+      "select_epoch": 46
+    },
+    {
+      "arm": "null_pooled",
+      "seed": 2705,
+      "worker": 34,
+      "wandb_run_id": "7xitbs73",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/7xitbs73",
+      "test_spearman_pinned": 0.0062246107119996764,
+      "select_epoch": 32
+    },
+    {
+      "arm": "null_anchored",
+      "seed": 2705,
+      "worker": 33,
+      "wandb_run_id": "7xfqqt4i",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/7xfqqt4i",
+      "test_spearman_pinned": -0.05762450599408514,
+      "select_epoch": 117
+    },
+    {
+      "arm": "pooled",
+      "seed": 2706,
+      "worker": 41,
+      "wandb_run_id": "0zai3k2o",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/0zai3k2o",
+      "test_spearman_pinned": 0.054185872394620346,
+      "select_epoch": 29
+    },
+    {
+      "arm": "flux_off",
+      "seed": 2706,
+      "worker": 38,
+      "wandb_run_id": "dikzkekb",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/dikzkekb",
+      "test_spearman_pinned": -0.030765178621719805,
+      "select_epoch": 83
+    },
+    {
+      "arm": "flux_free",
+      "seed": 2706,
+      "worker": 37,
+      "wandb_run_id": "4a4q3f8u",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/4a4q3f8u",
+      "test_spearman_pinned": -0.011101660550985491,
+      "select_epoch": 114
+    },
+    {
+      "arm": "flux_anchored",
+      "seed": 2706,
+      "worker": 36,
+      "wandb_run_id": "5xidffpp",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/5xidffpp",
+      "test_spearman_pinned": -0.11346202856278136,
+      "select_epoch": 76
+    },
+    {
+      "arm": "null_pooled",
+      "seed": 2706,
+      "worker": 40,
+      "wandb_run_id": "uamf2txt",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/uamf2txt",
+      "test_spearman_pinned": 0.0430657594395128,
+      "select_epoch": 16
+    },
+    {
+      "arm": "null_anchored",
+      "seed": 2706,
+      "worker": 39,
+      "wandb_run_id": "88xk57iy",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/88xk57iy",
+      "test_spearman_pinned": 0.018237049821090656,
+      "select_epoch": 63
+    },
+    {
+      "arm": "pooled",
+      "seed": 2707,
+      "worker": 47,
+      "wandb_run_id": "95rjfqng",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/95rjfqng",
+      "test_spearman_pinned": -0.04070802605304265,
+      "select_epoch": 9
+    },
+    {
+      "arm": "flux_off",
+      "seed": 2707,
+      "worker": 44,
+      "wandb_run_id": "81ekfjmg",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/81ekfjmg",
+      "test_spearman_pinned": 0.09624442566672604,
+      "select_epoch": 193
+    },
+    {
+      "arm": "flux_free",
+      "seed": 2707,
+      "worker": 43,
+      "wandb_run_id": "xsiqkeyj",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/xsiqkeyj",
+      "test_spearman_pinned": -0.009492644273024544,
+      "select_epoch": 80
+    },
+    {
+      "arm": "flux_anchored",
+      "seed": 2707,
+      "worker": 42,
+      "wandb_run_id": "oioaj7i3",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/oioaj7i3",
+      "test_spearman_pinned": -0.0419790630141854,
+      "select_epoch": 64
+    },
+    {
+      "arm": "null_pooled",
+      "seed": 2707,
+      "worker": 46,
+      "wandb_run_id": "v8cgxgxl",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/v8cgxgxl",
+      "test_spearman_pinned": -0.007226520874523831,
+      "select_epoch": 2
+    },
+    {
+      "arm": "null_anchored",
+      "seed": 2707,
+      "worker": 45,
+      "wandb_run_id": "0luciagx",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/0luciagx",
+      "test_spearman_pinned": -0.12494448680018104,
+      "select_epoch": 153
+    },
+    {
+      "arm": "pooled",
+      "seed": 2708,
+      "worker": 53,
+      "wandb_run_id": "59v554vc",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/59v554vc",
+      "test_spearman_pinned": 0.0,
+      "select_epoch": 95
+    },
+    {
+      "arm": "flux_off",
+      "seed": 2708,
+      "worker": 50,
+      "wandb_run_id": "wp105j57",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/wp105j57",
+      "test_spearman_pinned": 0.06350101881927428,
+      "select_epoch": 122
+    },
+    {
+      "arm": "flux_free",
+      "seed": 2708,
+      "worker": 49,
+      "wandb_run_id": "ifevr877",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/ifevr877",
+      "test_spearman_pinned": 0.01252706098997878,
+      "select_epoch": 179
+    },
+    {
+      "arm": "flux_anchored",
+      "seed": 2708,
+      "worker": 48,
+      "wandb_run_id": "qiutr4ut",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/qiutr4ut",
+      "test_spearman_pinned": -0.010172912067750372,
+      "select_epoch": 20
+    },
+    {
+      "arm": "null_pooled",
+      "seed": 2708,
+      "worker": 52,
+      "wandb_run_id": "de4bcbje",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/de4bcbje",
+      "test_spearman_pinned": 0.016531859528300934,
+      "select_epoch": 27
+    },
+    {
+      "arm": "null_anchored",
+      "seed": 2708,
+      "worker": 51,
+      "wandb_run_id": "qz6pkjjb",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/qz6pkjjb",
+      "test_spearman_pinned": 0.0016838607803107933,
+      "select_epoch": 23
+    },
+    {
+      "arm": "pooled",
+      "seed": 2709,
+      "worker": 59,
+      "wandb_run_id": "mav09tv8",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/mav09tv8",
+      "test_spearman_pinned": 0.04857002044483999,
+      "select_epoch": 77
+    },
+    {
+      "arm": "flux_off",
+      "seed": 2709,
+      "worker": 56,
+      "wandb_run_id": "1np2cfqm",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/1np2cfqm",
+      "test_spearman_pinned": 0.09624442566672604,
+      "select_epoch": 184
+    },
+    {
+      "arm": "flux_free",
+      "seed": 2709,
+      "worker": 55,
+      "wandb_run_id": "fxcf4jz7",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/fxcf4jz7",
+      "test_spearman_pinned": 0.0048950135909169665,
+      "select_epoch": 163
+    },
+    {
+      "arm": "flux_anchored",
+      "seed": 2709,
+      "worker": 54,
+      "wandb_run_id": "lacbpgws",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/lacbpgws",
+      "test_spearman_pinned": -0.0017497975217787773,
+      "select_epoch": 61
+    },
+    {
+      "arm": "null_pooled",
+      "seed": 2709,
+      "worker": 58,
+      "wandb_run_id": "6hkoxvfs",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/6hkoxvfs",
+      "test_spearman_pinned": 0.006818227572831724,
+      "select_epoch": 4
+    },
+    {
+      "arm": "null_anchored",
+      "seed": 2709,
+      "worker": 57,
+      "wandb_run_id": "pj4evfkt",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/pj4evfkt",
+      "test_spearman_pinned": 0.04241595088103359,
+      "select_epoch": 149
+    },
+    {
+      "arm": "pooled",
+      "seed": 2710,
+      "worker": 65,
+      "wandb_run_id": "cwbpa00w",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/cwbpa00w",
+      "test_spearman_pinned": 0.011924372791513937,
+      "select_epoch": 24
+    },
+    {
+      "arm": "flux_off",
+      "seed": 2710,
+      "worker": 62,
+      "wandb_run_id": "binsbobp",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/binsbobp",
+      "test_spearman_pinned": 0.0388245998872276,
+      "select_epoch": 172
+    },
+    {
+      "arm": "flux_free",
+      "seed": 2710,
+      "worker": 61,
+      "wandb_run_id": "nm1f8ait",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/nm1f8ait",
+      "test_spearman_pinned": 0.09031038082001847,
+      "select_epoch": 184
+    },
+    {
+      "arm": "flux_anchored",
+      "seed": 2710,
+      "worker": 60,
+      "wandb_run_id": "3yoig7nj",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/3yoig7nj",
+      "test_spearman_pinned": 0.05716076293398744,
+      "select_epoch": 131
+    },
+    {
+      "arm": "null_pooled",
+      "seed": 2710,
+      "worker": 64,
+      "wandb_run_id": "wwoz8ar3",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/wwoz8ar3",
+      "test_spearman_pinned": 0.0,
+      "select_epoch": 122
+    },
+    {
+      "arm": "null_anchored",
+      "seed": 2710,
+      "worker": 63,
+      "wandb_run_id": "eo70l2cz",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/eo70l2cz",
+      "test_spearman_pinned": -0.05023575950854572,
+      "select_epoch": 92
+    },
+    {
+      "arm": "pooled",
+      "seed": 2711,
+      "worker": 71,
+      "wandb_run_id": "ltij10df",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/ltij10df",
+      "test_spearman_pinned": -0.030421833036836078,
+      "select_epoch": 4
+    },
+    {
+      "arm": "flux_off",
+      "seed": 2711,
+      "worker": 68,
+      "wandb_run_id": "8w5mp191",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/8w5mp191",
+      "test_spearman_pinned": 0.00885393907018585,
+      "select_epoch": 3
+    },
+    {
+      "arm": "flux_free",
+      "seed": 2711,
+      "worker": 67,
+      "wandb_run_id": "xmdz0udy",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/xmdz0udy",
+      "test_spearman_pinned": -0.009396743744576538,
+      "select_epoch": 86
+    },
+    {
+      "arm": "flux_anchored",
+      "seed": 2711,
+      "worker": 66,
+      "wandb_run_id": "zj3avco2",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/zj3avco2",
+      "test_spearman_pinned": -0.007998698528335743,
+      "select_epoch": 20
+    },
+    {
+      "arm": "null_pooled",
+      "seed": 2711,
+      "worker": 70,
+      "wandb_run_id": "xtx53e8c",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/xtx53e8c",
+      "test_spearman_pinned": 0.0,
+      "select_epoch": 25
+    },
+    {
+      "arm": "null_anchored",
+      "seed": 2711,
+      "worker": 69,
+      "wandb_run_id": "e0fw796e",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/e0fw796e",
+      "test_spearman_pinned": -0.017885044057029474,
+      "select_epoch": 174
+    },
+    {
+      "arm": "pooled",
+      "seed": 2712,
+      "worker": 5,
+      "wandb_run_id": "e8qq2r1n",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/e8qq2r1n",
+      "test_spearman_pinned": -0.015413146657360443,
+      "select_epoch": 2
+    },
+    {
+      "arm": "flux_off",
+      "seed": 2712,
+      "worker": 2,
+      "wandb_run_id": "cq43i62s",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/cq43i62s",
+      "test_spearman_pinned": -0.07456764674743477,
+      "select_epoch": 39
+    },
+    {
+      "arm": "flux_free",
+      "seed": 2712,
+      "worker": 1,
+      "wandb_run_id": "aqzg9g4s",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/aqzg9g4s",
+      "test_spearman_pinned": 0.04752003922290994,
+      "select_epoch": 197
+    },
+    {
+      "arm": "flux_anchored",
+      "seed": 2712,
+      "worker": 0,
+      "wandb_run_id": "umim4rir",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/umim4rir",
+      "test_spearman_pinned": -0.029142680145557397,
+      "select_epoch": 153
+    },
+    {
+      "arm": "null_pooled",
+      "seed": 2712,
+      "worker": 4,
+      "wandb_run_id": "9q6qlw93",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/9q6qlw93",
+      "test_spearman_pinned": -0.007120465675505137,
+      "select_epoch": 2
+    },
+    {
+      "arm": "null_anchored",
+      "seed": 2712,
+      "worker": 3,
+      "wandb_run_id": "duahs4vx",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/duahs4vx",
+      "test_spearman_pinned": 0.0692287585725941,
+      "select_epoch": 67
+    },
+    {
+      "arm": "pooled",
+      "seed": 2713,
+      "worker": 11,
+      "wandb_run_id": "45kgbz4h",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/45kgbz4h",
+      "test_spearman_pinned": 0.0,
+      "select_epoch": 13
+    },
+    {
+      "arm": "flux_off",
+      "seed": 2713,
+      "worker": 8,
+      "wandb_run_id": "p4a4qjlq",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/p4a4qjlq",
+      "test_spearman_pinned": 0.08355992463465906,
+      "select_epoch": 130
+    },
+    {
+      "arm": "flux_free",
+      "seed": 2713,
+      "worker": 7,
+      "wandb_run_id": "ooy1aeep",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/ooy1aeep",
+      "test_spearman_pinned": 0.10052160577851846,
+      "select_epoch": 160
+    },
+    {
+      "arm": "flux_anchored",
+      "seed": 2713,
+      "worker": 6,
+      "wandb_run_id": "nrjaasjb",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/nrjaasjb",
+      "test_spearman_pinned": -0.004725402806591345,
+      "select_epoch": 120
+    },
+    {
+      "arm": "null_pooled",
+      "seed": 2713,
+      "worker": 10,
+      "wandb_run_id": "14s3p794",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/14s3p794",
+      "test_spearman_pinned": 0.0,
+      "select_epoch": 123
+    },
+    {
+      "arm": "null_anchored",
+      "seed": 2713,
+      "worker": 9,
+      "wandb_run_id": "y1cigozb",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/y1cigozb",
+      "test_spearman_pinned": -0.023302178800796804,
+      "select_epoch": 156
+    },
+    {
+      "arm": "pooled",
+      "seed": 2714,
+      "worker": 17,
+      "wandb_run_id": "mhzjpht8",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/mhzjpht8",
+      "test_spearman_pinned": 0.06256676574296545,
+      "select_epoch": 2
+    },
+    {
+      "arm": "flux_off",
+      "seed": 2714,
+      "worker": 14,
+      "wandb_run_id": "33o585r6",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/33o585r6",
+      "test_spearman_pinned": -0.04752914816003226,
+      "select_epoch": 96
+    },
+    {
+      "arm": "flux_free",
+      "seed": 2714,
+      "worker": 13,
+      "wandb_run_id": "3auf26jw",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/3auf26jw",
+      "test_spearman_pinned": 0.029954570697341268,
+      "select_epoch": 54
+    },
+    {
+      "arm": "flux_anchored",
+      "seed": 2714,
+      "worker": 12,
+      "wandb_run_id": "bimxb7sr",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/bimxb7sr",
+      "test_spearman_pinned": 0.038931333262894004,
+      "select_epoch": 136
+    },
+    {
+      "arm": "null_pooled",
+      "seed": 2714,
+      "worker": 16,
+      "wandb_run_id": "l7l8r41e",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/l7l8r41e",
+      "test_spearman_pinned": 0.0,
+      "select_epoch": 93
+    },
+    {
+      "arm": "null_anchored",
+      "seed": 2714,
+      "worker": 15,
+      "wandb_run_id": "yndjhzp6",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/yndjhzp6",
+      "test_spearman_pinned": 0.009579273711633845,
+      "select_epoch": 168
+    },
+    {
+      "arm": "pooled",
+      "seed": 2715,
+      "worker": 23,
+      "wandb_run_id": "h3irz6pe",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/h3irz6pe",
+      "test_spearman_pinned": -0.03702246732244696,
+      "select_epoch": 2
+    },
+    {
+      "arm": "flux_off",
+      "seed": 2715,
+      "worker": 20,
+      "wandb_run_id": "szv1pyd1",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/szv1pyd1",
+      "test_spearman_pinned": 0.06292265670513458,
+      "select_epoch": 196
+    },
+    {
+      "arm": "flux_free",
+      "seed": 2715,
+      "worker": 19,
+      "wandb_run_id": "8hqzdkq2",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/8hqzdkq2",
+      "test_spearman_pinned": 0.04388900685478774,
+      "select_epoch": 104
+    },
+    {
+      "arm": "flux_anchored",
+      "seed": 2715,
+      "worker": 18,
+      "wandb_run_id": "731g0frn",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/731g0frn",
+      "test_spearman_pinned": -0.13146367089186003,
+      "select_epoch": 107
+    },
+    {
+      "arm": "null_pooled",
+      "seed": 2715,
+      "worker": 22,
+      "wandb_run_id": "wdbhnjn5",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/wdbhnjn5",
+      "test_spearman_pinned": 0.01725758243380469,
+      "select_epoch": 4
+    },
+    {
+      "arm": "null_anchored",
+      "seed": 2715,
+      "worker": 21,
+      "wandb_run_id": "15lutdk9",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/15lutdk9",
+      "test_spearman_pinned": 0.04717160064518082,
+      "select_epoch": 174
+    },
+    {
+      "arm": "pooled",
+      "seed": 2716,
+      "worker": 29,
+      "wandb_run_id": "eoo2dvad",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/eoo2dvad",
+      "test_spearman_pinned": 0.0640088139575441,
+      "select_epoch": 13
+    },
+    {
+      "arm": "flux_off",
+      "seed": 2716,
+      "worker": 26,
+      "wandb_run_id": "6z9vh6le",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/6z9vh6le",
+      "test_spearman_pinned": 0.0479453192597062,
+      "select_epoch": 2
+    },
+    {
+      "arm": "flux_free",
+      "seed": 2716,
+      "worker": 25,
+      "wandb_run_id": "4vmfl47g",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/4vmfl47g",
+      "test_spearman_pinned": -0.05156051708818916,
+      "select_epoch": 6
+    },
+    {
+      "arm": "flux_anchored",
+      "seed": 2716,
+      "worker": 24,
+      "wandb_run_id": "ageh81z9",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/ageh81z9",
+      "test_spearman_pinned": -0.04098745304927783,
+      "select_epoch": 37
+    },
+    {
+      "arm": "null_pooled",
+      "seed": 2716,
+      "worker": 28,
+      "wandb_run_id": "h56o8g95",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/h56o8g95",
+      "test_spearman_pinned": 0.04316279501117602,
+      "select_epoch": 37
+    },
+    {
+      "arm": "null_anchored",
+      "seed": 2716,
+      "worker": 27,
+      "wandb_run_id": "oh0x0swg",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/oh0x0swg",
+      "test_spearman_pinned": -0.05534093136132805,
+      "select_epoch": 4
+    },
+    {
+      "arm": "pooled",
+      "seed": 2717,
+      "worker": 35,
+      "wandb_run_id": "fahajjn1",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/fahajjn1",
+      "test_spearman_pinned": 0.0,
+      "select_epoch": 49
+    },
+    {
+      "arm": "flux_off",
+      "seed": 2717,
+      "worker": 32,
+      "wandb_run_id": "q4dfso6d",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/q4dfso6d",
+      "test_spearman_pinned": -0.013843561573226505,
+      "select_epoch": 86
+    },
+    {
+      "arm": "flux_free",
+      "seed": 2717,
+      "worker": 31,
+      "wandb_run_id": "b10ecc2e",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/b10ecc2e",
+      "test_spearman_pinned": 0.09064830143574025,
+      "select_epoch": 154
+    },
+    {
+      "arm": "flux_anchored",
+      "seed": 2717,
+      "worker": 30,
+      "wandb_run_id": "w7v7cxdi",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/w7v7cxdi",
+      "test_spearman_pinned": -0.13015234358467118,
+      "select_epoch": 61
+    },
+    {
+      "arm": "null_pooled",
+      "seed": 2717,
+      "worker": 34,
+      "wandb_run_id": "vdgwczs2",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/vdgwczs2",
+      "test_spearman_pinned": 0.005150341328006858,
+      "select_epoch": 47
+    },
+    {
+      "arm": "null_anchored",
+      "seed": 2717,
+      "worker": 33,
+      "wandb_run_id": "kc734t2l",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/kc734t2l",
+      "test_spearman_pinned": -0.007468212499835875,
+      "select_epoch": 145
+    },
+    {
+      "arm": "pooled",
+      "seed": 2718,
+      "worker": 41,
+      "wandb_run_id": "trlnwz1v",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/trlnwz1v",
+      "test_spearman_pinned": 0.014709154438405337,
+      "select_epoch": 23
+    },
+    {
+      "arm": "flux_off",
+      "seed": 2718,
+      "worker": 38,
+      "wandb_run_id": "af9vvwpe",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/af9vvwpe",
+      "test_spearman_pinned": 0.11661707311576532,
+      "select_epoch": 177
+    },
+    {
+      "arm": "flux_free",
+      "seed": 2718,
+      "worker": 37,
+      "wandb_run_id": "gvowlp9w",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/gvowlp9w",
+      "test_spearman_pinned": 0.0811261406180011,
+      "select_epoch": 132
+    },
+    {
+      "arm": "flux_anchored",
+      "seed": 2718,
+      "worker": 36,
+      "wandb_run_id": "te3t2svi",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/te3t2svi",
+      "test_spearman_pinned": -0.0437735738489321,
+      "select_epoch": 59
+    },
+    {
+      "arm": "null_pooled",
+      "seed": 2718,
+      "worker": 40,
+      "wandb_run_id": "ljnwivnr",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/ljnwivnr",
+      "test_spearman_pinned": 0.0025601247072740475,
+      "select_epoch": 29
+    },
+    {
+      "arm": "null_anchored",
+      "seed": 2718,
+      "worker": 39,
+      "wandb_run_id": "u3gzp530",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/u3gzp530",
+      "test_spearman_pinned": -0.08783796924091722,
+      "select_epoch": 149
+    },
+    {
+      "arm": "pooled",
+      "seed": 2719,
+      "worker": 47,
+      "wandb_run_id": "bmyxtq7a",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/bmyxtq7a",
+      "test_spearman_pinned": -0.010901068215967367,
+      "select_epoch": 3
+    },
+    {
+      "arm": "flux_off",
+      "seed": 2719,
+      "worker": 44,
+      "wandb_run_id": "otcxl9pt",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/otcxl9pt",
+      "test_spearman_pinned": 0.07521890555874143,
+      "select_epoch": 20
+    },
+    {
+      "arm": "flux_free",
+      "seed": 2719,
+      "worker": 43,
+      "wandb_run_id": "dl47veg8",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/dl47veg8",
+      "test_spearman_pinned": 0.036631558045107517,
+      "select_epoch": 2
+    },
+    {
+      "arm": "flux_anchored",
+      "seed": 2719,
+      "worker": 42,
+      "wandb_run_id": "tvi275q8",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/tvi275q8",
+      "test_spearman_pinned": -0.050184125208797975,
+      "select_epoch": 144
+    },
+    {
+      "arm": "null_pooled",
+      "seed": 2719,
+      "worker": 46,
+      "wandb_run_id": "us70savs",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/us70savs",
+      "test_spearman_pinned": -0.013257487718757422,
+      "select_epoch": 3
+    },
+    {
+      "arm": "null_anchored",
+      "seed": 2719,
+      "worker": 45,
+      "wandb_run_id": "jw7r3c3t",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/jw7r3c3t",
+      "test_spearman_pinned": -0.002904580255224631,
+      "select_epoch": 63
+    },
+    {
+      "arm": "pooled",
+      "seed": 2720,
+      "worker": 53,
+      "wandb_run_id": "gt4v9lhn",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/gt4v9lhn",
+      "test_spearman_pinned": 0.1176348799013613,
+      "select_epoch": 55
+    },
+    {
+      "arm": "flux_off",
+      "seed": 2720,
+      "worker": 50,
+      "wandb_run_id": "fu06w3xw",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/fu06w3xw",
+      "test_spearman_pinned": 0.01095634665771038,
+      "select_epoch": 87
+    },
+    {
+      "arm": "flux_free",
+      "seed": 2720,
+      "worker": 49,
+      "wandb_run_id": "bujbzgpm",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/bujbzgpm",
+      "test_spearman_pinned": 0.020224757731599943,
+      "select_epoch": 44
+    },
+    {
+      "arm": "flux_anchored",
+      "seed": 2720,
+      "worker": 48,
+      "wandb_run_id": "8gzhglaf",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/8gzhglaf",
+      "test_spearman_pinned": -0.02413430977328479,
+      "select_epoch": 71
+    },
+    {
+      "arm": "null_pooled",
+      "seed": 2720,
+      "worker": 52,
+      "wandb_run_id": "r2bhzfst",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/r2bhzfst",
+      "test_spearman_pinned": 0.0022711521496910237,
+      "select_epoch": 110
+    },
+    {
+      "arm": "null_anchored",
+      "seed": 2720,
+      "worker": 51,
+      "wandb_run_id": "1g716ke9",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/1g716ke9",
+      "test_spearman_pinned": 0.0959121242005685,
+      "select_epoch": 23
+    },
+    {
+      "arm": "pooled",
+      "seed": 2721,
+      "worker": 59,
+      "wandb_run_id": "ubllusbn",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/ubllusbn",
+      "test_spearman_pinned": -0.04058673936665917,
+      "select_epoch": 4
+    },
+    {
+      "arm": "flux_off",
+      "seed": 2721,
+      "worker": 56,
+      "wandb_run_id": "ya55ia5u",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/ya55ia5u",
+      "test_spearman_pinned": 0.0486615940122816,
+      "select_epoch": 89
+    },
+    {
+      "arm": "flux_free",
+      "seed": 2721,
+      "worker": 55,
+      "wandb_run_id": "o13lpzyw",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/o13lpzyw",
+      "test_spearman_pinned": 0.04491175675310385,
+      "select_epoch": 167
+    },
+    {
+      "arm": "flux_anchored",
+      "seed": 2721,
+      "worker": 54,
+      "wandb_run_id": "xve395ii",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/xve395ii",
+      "test_spearman_pinned": 0.008474828603772602,
+      "select_epoch": 88
+    },
+    {
+      "arm": "null_pooled",
+      "seed": 2721,
+      "worker": 58,
+      "wandb_run_id": "8a10vkgw",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/8a10vkgw",
+      "test_spearman_pinned": 0.02262847126788331,
+      "select_epoch": 2
+    },
+    {
+      "arm": "null_anchored",
+      "seed": 2721,
+      "worker": 57,
+      "wandb_run_id": "mlxb61ps",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/mlxb61ps",
+      "test_spearman_pinned": 0.06487111076868017,
+      "select_epoch": 185
+    },
+    {
+      "arm": "pooled",
+      "seed": 2722,
+      "worker": 65,
+      "wandb_run_id": "2fx6zu6z",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/2fx6zu6z",
+      "test_spearman_pinned": 0.0012128632507958624,
+      "select_epoch": 2
+    },
+    {
+      "arm": "flux_off",
+      "seed": 2722,
+      "worker": 62,
+      "wandb_run_id": "4ogrdcz3",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/4ogrdcz3",
+      "test_spearman_pinned": -0.0041770514004618505,
+      "select_epoch": 9
+    },
+    {
+      "arm": "flux_free",
+      "seed": 2722,
+      "worker": 61,
+      "wandb_run_id": "8hszg7jv",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/8hszg7jv",
+      "test_spearman_pinned": 0.043462591004282,
+      "select_epoch": 169
+    },
+    {
+      "arm": "flux_anchored",
+      "seed": 2722,
+      "worker": 60,
+      "wandb_run_id": "kx308jej",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/kx308jej",
+      "test_spearman_pinned": -0.005140857862781537,
+      "select_epoch": 92
+    },
+    {
+      "arm": "null_pooled",
+      "seed": 2722,
+      "worker": 64,
+      "wandb_run_id": "pni6hr7c",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/pni6hr7c",
+      "test_spearman_pinned": 0.10282137653928553,
+      "select_epoch": 6
+    },
+    {
+      "arm": "null_anchored",
+      "seed": 2722,
+      "worker": 63,
+      "wandb_run_id": "1m9bffbv",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/1m9bffbv",
+      "test_spearman_pinned": 0.0015110426820043373,
+      "select_epoch": 110
+    },
+    {
+      "arm": "pooled",
+      "seed": 2723,
+      "worker": 71,
+      "wandb_run_id": "e8i19jo7",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/e8i19jo7",
+      "test_spearman_pinned": 0.10895072101155327,
+      "select_epoch": 74
+    },
+    {
+      "arm": "flux_off",
+      "seed": 2723,
+      "worker": 68,
+      "wandb_run_id": "d3blys8c",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/d3blys8c",
+      "test_spearman_pinned": 0.07191221105389649,
+      "select_epoch": 44
+    },
+    {
+      "arm": "flux_free",
+      "seed": 2723,
+      "worker": 67,
+      "wandb_run_id": "edumtzy4",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/edumtzy4",
+      "test_spearman_pinned": -0.0017241002857409417,
+      "select_epoch": 152
+    },
+    {
+      "arm": "flux_anchored",
+      "seed": 2723,
+      "worker": 66,
+      "wandb_run_id": "ymt5m7mw",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/ymt5m7mw",
+      "test_spearman_pinned": -0.01997789310516509,
+      "select_epoch": 140
+    },
+    {
+      "arm": "null_pooled",
+      "seed": 2723,
+      "worker": 70,
+      "wandb_run_id": "nqo9mnla",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/nqo9mnla",
+      "test_spearman_pinned": 0.03653902274010855,
+      "select_epoch": 78
+    },
+    {
+      "arm": "null_anchored",
+      "seed": 2723,
+      "worker": 69,
+      "wandb_run_id": "4nr0mfzs",
+      "wandb_url": "https://wandb.ai/zhao-group/torchcell_027_bxfx/runs/4nr0mfzs",
+      "test_spearman_pinned": -0.037291971170018506,
+      "select_epoch": 78
+    }
+  ]
+}

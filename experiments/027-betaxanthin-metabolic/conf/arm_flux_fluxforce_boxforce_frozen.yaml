@@ -1,0 +1,12 @@
+# experiments/027-betaxanthin-metabolic/conf/arm_flux_fluxforce_boxforce_frozen.yaml
+# [[experiments.027-betaxanthin-metabolic.wave7-flux-force-head]]
+#
+# The boxforce channel with the active-row set FROZEN at the first forward, so the
+# active-row balance term cannot be satisfied by killing a row. Everything else is
+# `arm_flux_fluxforce_boxforce.yaml`. Job 1795 ran the dynamic set at the same weights and
+# took the penalized set from 422 rows to 5 while the p95 fell to 1.7175, which is the
+# artifact this arm exists to remove.
+base_arm: flux_projection_anchored_k20_boxend
+permute_train_targets: false
+flux_parameterization: fluxforce_k100_boxforce
+flux_balance_active_row_set: frozen

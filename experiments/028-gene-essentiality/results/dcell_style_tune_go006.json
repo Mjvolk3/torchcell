@@ -1,0 +1,405 @@
+{
+  "read": "tune",
+  "protocol": "one deletion per instance, split by gene; class-weighted BCE on the root head plus 0.3 x the mean class-weighted BCE over the non-root term heads; Adam 0.001, 400 epochs, full batch, batch normalization statistics from the training genes; epoch selected by a five-epoch moving average of the validation AUROC; held-out genes scored once at that epoch",
+  "config": {
+    "width": 8,
+    "rule": "fixed",
+    "order": "tanh_bn",
+    "weight_decay": 0.0,
+    "epochs": 400,
+    "lr": 0.001
+  },
+  "hierarchy": {
+    "n_terms": 2655,
+    "n_kept_terms": 2651,
+    "n_edges": 4100,
+    "n_redundant_edges_dropped": 2058,
+    "n_strata": 14,
+    "terms_per_stratum": [
+      1302,
+      640,
+      331,
+      164,
+      93,
+      56,
+      30,
+      16,
+      11,
+      7,
+      2,
+      1,
+      1,
+      1
+    ],
+    "max_children": 106,
+    "n_labeled_genes": 1121,
+    "n_annotation_pairs": 43074
+  },
+  "go_dir": "/scratch/projects/torchcell-scratch/data/scerevisiae/go_term_hot_dcell006/processed",
+  "rows": [],
+  "fold_ensembles": [],
+  "paired": [],
+  "tune": [
+    {
+      "config": {
+        "width": 4,
+        "rule": "fixed",
+        "order": "tanh_bn",
+        "weight_decay": 0.0,
+        "epochs": 400,
+        "lr": 0.001
+      },
+      "n_parameters": 121355,
+      "n_effective_parameters": 121355,
+      "seeds": [
+        2700,
+        2701,
+        2702
+      ],
+      "val_auroc": [
+        0.7792481203007519,
+        0.779248120300752,
+        0.7864661654135339
+      ],
+      "val_mean": 0.7816541353383459,
+      "val_sd": 0.0034026190974390264,
+      "select_epoch": [
+        69,
+        284,
+        34
+      ],
+      "seconds": 1287.779218673706
+    },
+    {
+      "config": {
+        "width": 4,
+        "rule": "fixed",
+        "order": "tanh_bn",
+        "weight_decay": 0.001,
+        "epochs": 400,
+        "lr": 0.001
+      },
+      "n_parameters": 121355,
+      "n_effective_parameters": 121355,
+      "seeds": [
+        2700,
+        2701,
+        2702
+      ],
+      "val_auroc": [
+        0.7798496240601505,
+        0.7828571428571429,
+        0.7693233082706767
+      ],
+      "val_mean": 0.77734335839599,
+      "val_sd": 0.005802424512676813,
+      "select_epoch": [
+        96,
+        52,
+        233
+      ],
+      "seconds": 1303.8479540348053
+    },
+    {
+      "config": {
+        "width": 4,
+        "rule": "fixed",
+        "order": "bn_tanh",
+        "weight_decay": 0.0,
+        "epochs": 400,
+        "lr": 0.001
+      },
+      "n_parameters": 121355,
+      "n_effective_parameters": 121355,
+      "seeds": [
+        2700,
+        2701,
+        2702
+      ],
+      "val_auroc": [
+        0.8381954887218045,
+        0.8487218045112781,
+        0.8240601503759398
+      ],
+      "val_mean": 0.8369924812030075,
+      "val_sd": 0.010103950266784224,
+      "select_epoch": [
+        38,
+        55,
+        63
+      ],
+      "seconds": 1317.5775036811829
+    },
+    {
+      "config": {
+        "width": 4,
+        "rule": "fixed",
+        "order": "bn_tanh",
+        "weight_decay": 0.001,
+        "epochs": 400,
+        "lr": 0.001
+      },
+      "n_parameters": 121355,
+      "n_effective_parameters": 121355,
+      "seeds": [
+        2700,
+        2701,
+        2702
+      ],
+      "val_auroc": [
+        0.8706766917293233,
+        0.8490225563909776,
+        0.8345864661654135
+      ],
+      "val_mean": 0.8514285714285714,
+      "val_sd": 0.014831672789098261,
+      "select_epoch": [
+        311,
+        53,
+        52
+      ],
+      "seconds": 1322.5088806152344
+    },
+    {
+      "config": {
+        "width": 8,
+        "rule": "fixed",
+        "order": "tanh_bn",
+        "weight_decay": 0.0,
+        "epochs": 400,
+        "lr": 0.001
+      },
+      "n_parameters": 371255,
+      "n_effective_parameters": 371255,
+      "seeds": [
+        2700,
+        2701,
+        2702
+      ],
+      "val_auroc": [
+        0.7732330827067669,
+        0.8192481203007519,
+        0.8078195488721804
+      ],
+      "val_mean": 0.8001002506265665,
+      "val_sd": 0.01956249123957234,
+      "select_epoch": [
+        343,
+        66,
+        3
+      ],
+      "seconds": 2575.876580476761
+    },
+    {
+      "config": {
+        "width": 8,
+        "rule": "fixed",
+        "order": "tanh_bn",
+        "weight_decay": 0.001,
+        "epochs": 400,
+        "lr": 0.001
+      },
+      "n_parameters": 371255,
+      "n_effective_parameters": 371255,
+      "seeds": [
+        2700,
+        2701,
+        2702
+      ],
+      "val_auroc": [
+        0.778045112781955,
+        0.8270676691729323,
+        0.8054135338345865
+      ],
+      "val_mean": 0.8035087719298245,
+      "val_sd": 0.020058644806533524,
+      "select_epoch": [
+        373,
+        67,
+        310
+      ],
+      "seconds": 2804.0577800273895
+    },
+    {
+      "config": {
+        "width": 8,
+        "rule": "fixed",
+        "order": "bn_tanh",
+        "weight_decay": 0.0,
+        "epochs": 400,
+        "lr": 0.001
+      },
+      "n_parameters": 371255,
+      "n_effective_parameters": 371255,
+      "seeds": [
+        2700,
+        2701,
+        2702
+      ],
+      "val_auroc": [
+        0.8442105263157895,
+        0.8222556390977445,
+        0.833984962406015
+      ],
+      "val_mean": 0.833483709273183,
+      "val_sd": 0.008970050509580944,
+      "select_epoch": [
+        40,
+        48,
+        23
+      ],
+      "seconds": 2827.72447681427
+    },
+    {
+      "config": {
+        "width": 8,
+        "rule": "fixed",
+        "order": "bn_tanh",
+        "weight_decay": 0.001,
+        "epochs": 400,
+        "lr": 0.001
+      },
+      "n_parameters": 371255,
+      "n_effective_parameters": 371255,
+      "seeds": [
+        2700,
+        2701,
+        2702
+      ],
+      "val_auroc": [
+        0.8631578947368421,
+        0.8989473684210526,
+        0.8667669172932331
+      ],
+      "val_mean": 0.8762907268170426,
+      "val_sd": 0.016088273525201566,
+      "select_epoch": [
+        47,
+        349,
+        283
+      ],
+      "seconds": 2780.0798773765564
+    },
+    {
+      "config": {
+        "width": 20,
+        "rule": "fixed",
+        "order": "tanh_bn",
+        "weight_decay": 0.0,
+        "epochs": 400,
+        "lr": 0.001
+      },
+      "n_parameters": 1908155,
+      "n_effective_parameters": 1908155,
+      "seeds": [
+        2700,
+        2701,
+        2702
+      ],
+      "val_auroc": [
+        0.7819548872180451,
+        0.7957894736842105,
+        0.7981954887218045
+      ],
+      "val_mean": 0.7919799498746868,
+      "val_sd": 0.00715651861556882,
+      "select_epoch": [
+        10,
+        81,
+        84
+      ],
+      "seconds": 7551.159415006638
+    },
+    {
+      "config": {
+        "width": 20,
+        "rule": "fixed",
+        "order": "tanh_bn",
+        "weight_decay": 0.001,
+        "epochs": 400,
+        "lr": 0.001
+      },
+      "n_parameters": 1908155,
+      "n_effective_parameters": 1908155,
+      "seeds": [
+        2700,
+        2701,
+        2702
+      ],
+      "val_auroc": [
+        0.8303759398496241,
+        0.8087218045112783,
+        0.8583458646616542
+      ],
+      "val_mean": 0.8324812030075188,
+      "val_sd": 0.020313557643029497,
+      "select_epoch": [
+        75,
+        94,
+        172
+      ],
+      "seconds": 7418.321824550629
+    },
+    {
+      "config": {
+        "width": 20,
+        "rule": "fixed",
+        "order": "bn_tanh",
+        "weight_decay": 0.0,
+        "epochs": 400,
+        "lr": 0.001
+      },
+      "n_parameters": 1908155,
+      "n_effective_parameters": 1908155,
+      "seeds": [
+        2700,
+        2701,
+        2702
+      ],
+      "val_auroc": [
+        0.8757894736842106,
+        0.8357894736842105,
+        0.8640601503759399
+      ],
+      "val_mean": 0.858546365914787,
+      "val_sd": 0.016788912299749874,
+      "select_epoch": [
+        21,
+        58,
+        66
+      ],
+      "seconds": 6547.743394374847
+    },
+    {
+      "config": {
+        "width": 20,
+        "rule": "fixed",
+        "order": "bn_tanh",
+        "weight_decay": 0.001,
+        "epochs": 400,
+        "lr": 0.001
+      },
+      "n_parameters": 1908155,
+      "n_effective_parameters": 1908155,
+      "seeds": [
+        2700,
+        2701,
+        2702
+      ],
+      "val_auroc": [
+        0.883609022556391,
+        0.8598496240601504,
+        0.8682706766917294
+      ],
+      "val_mean": 0.8705764411027569,
+      "val_sd": 0.009835807588099044,
+      "select_epoch": [
+        18,
+        193,
+        205
+      ],
+      "seconds": 5572.746257543564
+    }
+  ],
+  "seconds": 6292.635096549988
+}

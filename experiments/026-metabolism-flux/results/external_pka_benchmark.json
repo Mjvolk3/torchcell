@@ -1,0 +1,605 @@
+{
+ "built_at": "2026-09-10T22:05:59.275542+00:00",
+ "validation_set_path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/026-metabolism-flux/results/external_pka_validation_set.json",
+ "n_validation_compounds": 300,
+ "conditions": {
+  "p_h": 7.2,
+  "ionic_strength_m": 0.25,
+  "temperature_k": 303.15,
+  "p_mg": 3.0
+ },
+ "magnesium_gap": {
+  "n_sampled_with_magnesium_constants": 7,
+  "note": "specified_pkas carries proton dissociation constants only, so a compound built through the external-pKa path has no magnesium microspecies; both transforms here are proton-only"
+ },
+ "tools": [
+  {
+   "tool": "pkasolver-lite",
+   "n_attempted": 300,
+   "n_ok": 298,
+   "frac_ok": 0.9933333333333333,
+   "n_count_match": 106,
+   "frac_count_match": 0.35570469798657717,
+   "pka_mae_paired": 2.593524977968843,
+   "pka_mae_n": 298,
+   "ddgf_mae_kj_per_mol": 2.51967864979472,
+   "ddgf_median_abs_kj_per_mol": 0.5585745227717211,
+   "ddgf_p90_abs_kj_per_mol": 6.402447005551577,
+   "ddgf_n": 298,
+   "by_stratum": {
+    "n_pka_1": {
+     "n": 50,
+     "n_ok": 50,
+     "n_count_match": 29,
+     "frac_count_match": 0.58,
+     "pka_mae": 1.7102066265106202,
+     "ddgf_mae_kj_per_mol": 0.4375397136477841
+    },
+    "n_pka_2": {
+     "n": 50,
+     "n_ok": 50,
+     "n_count_match": 21,
+     "frac_count_match": 0.42,
+     "pka_mae": 1.8954416081428531,
+     "ddgf_mae_kj_per_mol": 0.6587196332445945
+    },
+    "n_pka_3": {
+     "n": 50,
+     "n_ok": 50,
+     "n_count_match": 20,
+     "frac_count_match": 0.4,
+     "pka_mae": 2.962375929737091,
+     "ddgf_mae_kj_per_mol": 1.2009860580014668
+    },
+    "n_pka_4": {
+     "n": 50,
+     "n_ok": 49,
+     "n_count_match": 15,
+     "frac_count_match": 0.30612244897959184,
+     "pka_mae": 2.7637228613970226,
+     "ddgf_mae_kj_per_mol": 2.010499735671486
+    },
+    "n_pka_5": {
+     "n": 50,
+     "n_ok": 50,
+     "n_count_match": 12,
+     "frac_count_match": 0.24,
+     "pka_mae": 3.0436228008047737,
+     "ddgf_mae_kj_per_mol": 3.7610077623390534
+    },
+    "n_pka_6": {
+     "n": 50,
+     "n_ok": 49,
+     "n_count_match": 9,
+     "frac_count_match": 0.1836734693877551,
+     "pka_mae": 3.2013403054386576,
+     "ddgf_mae_kj_per_mol": 7.131369229168953
+    }
+   },
+   "by_group": {
+    "amine": {
+     "n": 137,
+     "n_ok": 137,
+     "n_count_match": 33,
+     "frac_count_match": 0.24087591240875914,
+     "pka_mae": 2.681875988003111,
+     "ddgf_mae_kj_per_mol": 1.9151380349589062
+    },
+    "carboxylate": {
+     "n": 103,
+     "n_ok": 103,
+     "n_count_match": 44,
+     "frac_count_match": 0.42718446601941745,
+     "pka_mae": 2.476649424900129,
+     "ddgf_mae_kj_per_mol": 1.951051168849436
+    },
+    "phenol": {
+     "n": 103,
+     "n_ok": 102,
+     "n_count_match": 44,
+     "frac_count_match": 0.43137254901960786,
+     "pka_mae": 2.2858941269232558,
+     "ddgf_mae_kj_per_mol": 3.894942326853661
+    },
+    "phosphate": {
+     "n": 44,
+     "n_ok": 43,
+     "n_count_match": 11,
+     "frac_count_match": 0.2558139534883721,
+     "pka_mae": 3.5579611073427415,
+     "ddgf_mae_kj_per_mol": 3.2771631057588904
+    }
+   }
+  },
+  {
+   "tool": "molgpka",
+   "n_attempted": 300,
+   "n_ok": 294,
+   "frac_ok": 0.98,
+   "n_count_match": 73,
+   "frac_count_match": 0.24829931972789115,
+   "pka_mae_paired": 2.8328452889668707,
+   "pka_mae_n": 294,
+   "ddgf_mae_kj_per_mol": 1.2141996375952644,
+   "ddgf_median_abs_kj_per_mol": 0.33767494209081406,
+   "ddgf_p90_abs_kj_per_mol": 3.199531971524896,
+   "ddgf_n": 294,
+   "by_stratum": {
+    "n_pka_1": {
+     "n": 50,
+     "n_ok": 47,
+     "n_count_match": 23,
+     "frac_count_match": 0.48936170212765956,
+     "pka_mae": 3.208711785641324,
+     "ddgf_mae_kj_per_mol": 0.2980989930964004
+    },
+    "n_pka_2": {
+     "n": 50,
+     "n_ok": 49,
+     "n_count_match": 12,
+     "frac_count_match": 0.24489795918367346,
+     "pka_mae": 2.636408237473389,
+     "ddgf_mae_kj_per_mol": 0.9095322775851814
+    },
+    "n_pka_3": {
+     "n": 50,
+     "n_ok": 50,
+     "n_count_match": 12,
+     "frac_count_match": 0.24,
+     "pka_mae": 3.042492370378976,
+     "ddgf_mae_kj_per_mol": 1.2363176048036684
+    },
+    "n_pka_4": {
+     "n": 50,
+     "n_ok": 49,
+     "n_count_match": 12,
+     "frac_count_match": 0.24489795918367346,
+     "pka_mae": 2.829018429328507,
+     "ddgf_mae_kj_per_mol": 1.513234875339222
+    },
+    "n_pka_5": {
+     "n": 50,
+     "n_ok": 49,
+     "n_count_match": 10,
+     "frac_count_match": 0.20408163265306123,
+     "pka_mae": 2.8338122533208963,
+     "ddgf_mae_kj_per_mol": 1.2776705565671314
+    },
+    "n_pka_6": {
+     "n": 50,
+     "n_ok": 50,
+     "n_count_match": 4,
+     "frac_count_match": 0.08,
+     "pka_mae": 2.4651947085230415,
+     "ddgf_mae_kj_per_mol": 1.9965342554441656
+    }
+   },
+   "by_group": {
+    "amine": {
+     "n": 137,
+     "n_ok": 137,
+     "n_count_match": 9,
+     "frac_count_match": 0.06569343065693431,
+     "pka_mae": 3.653623686401897,
+     "ddgf_mae_kj_per_mol": 1.3479513305108366
+    },
+    "carboxylate": {
+     "n": 103,
+     "n_ok": 100,
+     "n_count_match": 29,
+     "frac_count_match": 0.29,
+     "pka_mae": 3.195487139823939,
+     "ddgf_mae_kj_per_mol": 0.997284829389753
+    },
+    "phenol": {
+     "n": 103,
+     "n_ok": 102,
+     "n_count_match": 36,
+     "frac_count_match": 0.35294117647058826,
+     "pka_mae": 1.5228272320717422,
+     "ddgf_mae_kj_per_mol": 1.1809150775958182
+    },
+    "phosphate": {
+     "n": 44,
+     "n_ok": 42,
+     "n_count_match": 11,
+     "frac_count_match": 0.2619047619047619,
+     "pka_mae": 2.6037079818956124,
+     "ddgf_mae_kj_per_mol": 2.328268397507032
+    }
+   }
+  },
+  {
+   "tool": "unipka",
+   "n_attempted": 300,
+   "n_ok": 300,
+   "frac_ok": 1.0,
+   "n_count_match": 60,
+   "frac_count_match": 0.2,
+   "pka_mae_paired": 2.542860056131151,
+   "pka_mae_n": 300,
+   "ddgf_mae_kj_per_mol": 2.9401804553889312,
+   "ddgf_median_abs_kj_per_mol": 1.1137056415982443,
+   "ddgf_p90_abs_kj_per_mol": 7.926739252190342,
+   "ddgf_n": 300,
+   "by_stratum": {
+    "n_pka_1": {
+     "n": 50,
+     "n_ok": 50,
+     "n_count_match": 11,
+     "frac_count_match": 0.22,
+     "pka_mae": 2.9534240438461308,
+     "ddgf_mae_kj_per_mol": 0.63612540745866
+    },
+    "n_pka_2": {
+     "n": 50,
+     "n_ok": 50,
+     "n_count_match": 8,
+     "frac_count_match": 0.16,
+     "pka_mae": 2.080887571811676,
+     "ddgf_mae_kj_per_mol": 0.8362589104351309
+    },
+    "n_pka_3": {
+     "n": 50,
+     "n_ok": 50,
+     "n_count_match": 11,
+     "frac_count_match": 0.22,
+     "pka_mae": 2.4179248141606653,
+     "ddgf_mae_kj_per_mol": 2.257035226138051
+    },
+    "n_pka_4": {
+     "n": 50,
+     "n_ok": 50,
+     "n_count_match": 13,
+     "frac_count_match": 0.26,
+     "pka_mae": 2.351575086514155,
+     "ddgf_mae_kj_per_mol": 3.982573041988291
+    },
+    "n_pka_5": {
+     "n": 50,
+     "n_ok": 50,
+     "n_count_match": 9,
+     "frac_count_match": 0.18,
+     "pka_mae": 2.734317889490127,
+     "ddgf_mae_kj_per_mol": 4.498985716840223
+    },
+    "n_pka_6": {
+     "n": 50,
+     "n_ok": 50,
+     "n_count_match": 8,
+     "frac_count_match": 0.16,
+     "pka_mae": 2.7190309309641525,
+     "ddgf_mae_kj_per_mol": 5.430104429473232
+    }
+   },
+   "by_group": {
+    "amine": {
+     "n": 137,
+     "n_ok": 137,
+     "n_count_match": 36,
+     "frac_count_match": 0.26277372262773724,
+     "pka_mae": 2.552488247277383,
+     "ddgf_mae_kj_per_mol": 1.8467983820771752
+    },
+    "carboxylate": {
+     "n": 103,
+     "n_ok": 103,
+     "n_count_match": 14,
+     "frac_count_match": 0.13592233009708737,
+     "pka_mae": 2.843775547806885,
+     "ddgf_mae_kj_per_mol": 2.490565884431578
+    },
+    "phenol": {
+     "n": 103,
+     "n_ok": 103,
+     "n_count_match": 23,
+     "frac_count_match": 0.22330097087378642,
+     "pka_mae": 2.0360531867561216,
+     "ddgf_mae_kj_per_mol": 4.517145875888703
+    },
+    "phosphate": {
+     "n": 44,
+     "n_ok": 44,
+     "n_count_match": 2,
+     "frac_count_match": 0.045454545454545456,
+     "pka_mae": 2.638368333068761,
+     "ddgf_mae_kj_per_mol": 3.3972062224091855
+    }
+   }
+  },
+  {
+   "tool": "unipka-simple-template",
+   "n_attempted": 300,
+   "n_ok": 299,
+   "frac_ok": 0.9966666666666667,
+   "n_count_match": 97,
+   "frac_count_match": 0.32441471571906355,
+   "pka_mae_paired": 2.7903369115613645,
+   "pka_mae_n": 299,
+   "ddgf_mae_kj_per_mol": 0.9107460635699098,
+   "ddgf_median_abs_kj_per_mol": 0.15973439206277362,
+   "ddgf_p90_abs_kj_per_mol": 2.8440921551422433,
+   "ddgf_n": 299,
+   "by_stratum": {
+    "n_pka_1": {
+     "n": 50,
+     "n_ok": 50,
+     "n_count_match": 49,
+     "frac_count_match": 0.98,
+     "pka_mae": 0.5147964626312255,
+     "ddgf_mae_kj_per_mol": 0.13584287952999374
+    },
+    "n_pka_2": {
+     "n": 50,
+     "n_ok": 50,
+     "n_count_match": 31,
+     "frac_count_match": 0.62,
+     "pka_mae": 1.444969941043854,
+     "ddgf_mae_kj_per_mol": 0.4649856993154481
+    },
+    "n_pka_3": {
+     "n": 50,
+     "n_ok": 50,
+     "n_count_match": 16,
+     "frac_count_match": 0.32,
+     "pka_mae": 2.723454485193889,
+     "ddgf_mae_kj_per_mol": 0.7912038670757926
+    },
+    "n_pka_4": {
+     "n": 50,
+     "n_ok": 49,
+     "n_count_match": 1,
+     "frac_count_match": 0.02040816326530612,
+     "pka_mae": 3.9163785261037396,
+     "ddgf_mae_kj_per_mol": 1.0766350502792827
+    },
+    "n_pka_5": {
+     "n": 50,
+     "n_ok": 50,
+     "n_count_match": 0,
+     "frac_count_match": 0.0,
+     "pka_mae": 3.8966649218082425,
+     "ddgf_mae_kj_per_mol": 0.8723570560983785
+    },
+    "n_pka_6": {
+     "n": 50,
+     "n_ok": 50,
+     "n_count_match": 0,
+     "frac_count_match": 0.0,
+     "pka_mae": 4.268277964878083,
+     "ddgf_mae_kj_per_mol": 2.1267696088547505
+    }
+   },
+   "by_group": {
+    "amine": {
+     "n": 137,
+     "n_ok": 137,
+     "n_count_match": 34,
+     "frac_count_match": 0.24817518248175183,
+     "pka_mae": 2.322647209875195,
+     "ddgf_mae_kj_per_mol": 1.0300771686314694
+    },
+    "carboxylate": {
+     "n": 103,
+     "n_ok": 103,
+     "n_count_match": 47,
+     "frac_count_match": 0.4563106796116505,
+     "pka_mae": 2.84124221099619,
+     "ddgf_mae_kj_per_mol": 0.7058221936579228
+    },
+    "phenol": {
+     "n": 103,
+     "n_ok": 103,
+     "n_count_match": 30,
+     "frac_count_match": 0.2912621359223301,
+     "pka_mae": 2.598253776355855,
+     "ddgf_mae_kj_per_mol": 1.0780167707005215
+    },
+    "phosphate": {
+     "n": 44,
+     "n_ok": 43,
+     "n_count_match": 8,
+     "frac_count_match": 0.18604651162790697,
+     "pka_mae": 4.596425531169241,
+     "ddgf_mae_kj_per_mol": 1.7542438203723607
+    }
+   }
+  },
+  {
+   "tool": "qupkake",
+   "n_attempted": 60,
+   "n_ok": 1,
+   "frac_ok": 0.016666666666666666,
+   "n_count_match": 0,
+   "frac_count_match": 0.0,
+   "pka_mae_paired": 4.557516358823186,
+   "pka_mae_n": 1,
+   "ddgf_mae_kj_per_mol": 1.8656550073184235,
+   "ddgf_median_abs_kj_per_mol": 1.8656550073184235,
+   "ddgf_p90_abs_kj_per_mol": 1.8656550073184235,
+   "ddgf_n": 1,
+   "by_stratum": {
+    "n_pka_1": {
+     "n": 10,
+     "n_ok": 0,
+     "n_count_match": 0,
+     "frac_count_match": null,
+     "pka_mae": null,
+     "ddgf_mae_kj_per_mol": null
+    },
+    "n_pka_2": {
+     "n": 10,
+     "n_ok": 0,
+     "n_count_match": 0,
+     "frac_count_match": null,
+     "pka_mae": null,
+     "ddgf_mae_kj_per_mol": null
+    },
+    "n_pka_3": {
+     "n": 10,
+     "n_ok": 1,
+     "n_count_match": 0,
+     "frac_count_match": 0.0,
+     "pka_mae": 4.557516358823186,
+     "ddgf_mae_kj_per_mol": 1.8656550073184235
+    },
+    "n_pka_4": {
+     "n": 10,
+     "n_ok": 0,
+     "n_count_match": 0,
+     "frac_count_match": null,
+     "pka_mae": null,
+     "ddgf_mae_kj_per_mol": null
+    },
+    "n_pka_5": {
+     "n": 10,
+     "n_ok": 0,
+     "n_count_match": 0,
+     "frac_count_match": null,
+     "pka_mae": null,
+     "ddgf_mae_kj_per_mol": null
+    },
+    "n_pka_6": {
+     "n": 10,
+     "n_ok": 0,
+     "n_count_match": 0,
+     "frac_count_match": null,
+     "pka_mae": null,
+     "ddgf_mae_kj_per_mol": null
+    }
+   },
+   "by_group": {
+    "amine": {
+     "n": 30,
+     "n_ok": 0,
+     "n_count_match": 0,
+     "frac_count_match": null,
+     "pka_mae": null,
+     "ddgf_mae_kj_per_mol": null
+    },
+    "carboxylate": {
+     "n": 21,
+     "n_ok": 0,
+     "n_count_match": 0,
+     "frac_count_match": null,
+     "pka_mae": null,
+     "ddgf_mae_kj_per_mol": null
+    },
+    "phenol": {
+     "n": 22,
+     "n_ok": 1,
+     "n_count_match": 0,
+     "frac_count_match": 0.0,
+     "pka_mae": 4.557516358823186,
+     "ddgf_mae_kj_per_mol": 1.8656550073184235
+    },
+    "phosphate": {
+     "n": 8,
+     "n_ok": 0,
+     "n_count_match": 0,
+     "frac_count_match": null,
+     "pka_mae": null,
+     "ddgf_mae_kj_per_mol": null
+    }
+   }
+  },
+  {
+   "tool": "qupkake-truncated",
+   "n_attempted": 60,
+   "n_ok": 60,
+   "frac_ok": 1.0,
+   "n_count_match": 17,
+   "frac_count_match": 0.2833333333333333,
+   "pka_mae_paired": 3.612520831936874,
+   "pka_mae_n": 60,
+   "ddgf_mae_kj_per_mol": 1.3481969686050101,
+   "ddgf_median_abs_kj_per_mol": 0.3783621826972876,
+   "ddgf_p90_abs_kj_per_mol": 5.078877908978541,
+   "ddgf_n": 60,
+   "by_stratum": {
+    "n_pka_1": {
+     "n": 10,
+     "n_ok": 10,
+     "n_count_match": 3,
+     "frac_count_match": 0.3,
+     "pka_mae": 1.712805894761961,
+     "ddgf_mae_kj_per_mol": 0.0499844496920673
+    },
+    "n_pka_2": {
+     "n": 10,
+     "n_ok": 10,
+     "n_count_match": 4,
+     "frac_count_match": 0.4,
+     "pka_mae": 2.095869119815762,
+     "ddgf_mae_kj_per_mol": 0.4490632606357451
+    },
+    "n_pka_3": {
+     "n": 10,
+     "n_ok": 10,
+     "n_count_match": 5,
+     "frac_count_match": 0.5,
+     "pka_mae": 2.5683316425937988,
+     "ddgf_mae_kj_per_mol": 1.2654707955209346
+    },
+    "n_pka_4": {
+     "n": 10,
+     "n_ok": 10,
+     "n_count_match": 5,
+     "frac_count_match": 0.5,
+     "pka_mae": 3.93695454410323,
+     "ddgf_mae_kj_per_mol": 1.568772291976154
+    },
+    "n_pka_5": {
+     "n": 10,
+     "n_ok": 10,
+     "n_count_match": 0,
+     "frac_count_match": 0.0,
+     "pka_mae": 5.121930070268638,
+     "ddgf_mae_kj_per_mol": 0.8921574900235101
+    },
+    "n_pka_6": {
+     "n": 10,
+     "n_ok": 10,
+     "n_count_match": 0,
+     "frac_count_match": 0.0,
+     "pka_mae": 6.239233720077851,
+     "ddgf_mae_kj_per_mol": 3.86373352378165
+    }
+   },
+   "by_group": {
+    "amine": {
+     "n": 30,
+     "n_ok": 30,
+     "n_count_match": 9,
+     "frac_count_match": 0.3,
+     "pka_mae": 3.2338496218572605,
+     "ddgf_mae_kj_per_mol": 1.3956616984335313
+    },
+    "carboxylate": {
+     "n": 21,
+     "n_ok": 21,
+     "n_count_match": 8,
+     "frac_count_match": 0.38095238095238093,
+     "pka_mae": 2.974250149094737,
+     "ddgf_mae_kj_per_mol": 0.8591801807204812
+    },
+    "phenol": {
+     "n": 22,
+     "n_ok": 22,
+     "n_count_match": 6,
+     "frac_count_match": 0.2727272727272727,
+     "pka_mae": 4.37176649206722,
+     "ddgf_mae_kj_per_mol": 1.8073800469196561
+    },
+    "phosphate": {
+     "n": 8,
+     "n_ok": 8,
+     "n_count_match": 3,
+     "frac_count_match": 0.375,
+     "pka_mae": 3.563441508333519,
+     "ddgf_mae_kj_per_mol": 3.2918011893344357
+    }
+   }
+  }
+ ]
+}

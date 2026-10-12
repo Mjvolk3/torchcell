@@ -1,0 +1,141 @@
+{
+  "generated_by": "experiments/028-gene-essentiality/scripts/go_evidence_store.py",
+  "split": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/028-gene-essentiality/results/splits/ess_fcl_val0.2_s0.json.gz",
+  "n_triples": 66404,
+  "n_pairs_unresolved_in_obo": 0,
+  "code_counts": {
+    "IEA": 27972,
+    "IBA": 9656,
+    "IDA": 8183,
+    "IMP": 6967,
+    "ND": 5487,
+    "HDA": 4112,
+    "IGI": 1921,
+    "IPI": 853,
+    "RCA": 517,
+    "IC": 210,
+    "ISS": 177,
+    "TAS": 131,
+    "ISA": 66,
+    "HMP": 63,
+    "NAS": 38,
+    "ISM": 21,
+    "IEP": 14,
+    "HGI": 13,
+    "ISO": 3
+  },
+  "code_share_by_class": {
+    "essential": {
+      "IEA": 0.5959697732997481,
+      "IBA": 0.12644836272040302,
+      "IDA": 0.10327455919395466,
+      "HDA": 0.0836272040302267,
+      "IMP": 0.0619647355163728,
+      "IGI": 0.00906801007556675,
+      "RCA": 0.00654911838790932,
+      "IPI": 0.004030226700251889,
+      "ND": 0.003526448362720403,
+      "NAS": 0.003022670025188917,
+      "IC": 0.0015113350125944584,
+      "ISS": 0.0010075566750629723,
+      "_n_pairs": 1985.0
+    },
+    "nonessential": {
+      "IEA": 0.5642563399588759,
+      "IBA": 0.14718985606579849,
+      "IDA": 0.08670322138450993,
+      "IMP": 0.08036326250856751,
+      "HDA": 0.07359492803289924,
+      "IGI": 0.02099040438656614,
+      "ND": 0.00822481151473612,
+      "RCA": 0.006254283755997258,
+      "TAS": 0.0037697052775873888,
+      "ISS": 0.0029129540781357094,
+      "IPI": 0.0026559287183002054,
+      "IC": 0.0012851267991775188,
+      "ISA": 0.0008567511994516792,
+      "IEP": 0.0004283755997258396,
+      "HMP": 0.0004283755997258396,
+      "NAS": 8.567511994516793e-05,
+      "_n_pairs": 11672.0
+    }
+  },
+  "mutant_codes": [
+    "HGI",
+    "HMP",
+    "IGI",
+    "IMP"
+  ],
+  "non_experimental_codes": [
+    "IBA",
+    "IC",
+    "IEA",
+    "IKR",
+    "ISA",
+    "ISM",
+    "ISO",
+    "ISS",
+    "NAS",
+    "RCA",
+    "TAS"
+  ],
+  "statistic": "held-out AUROC on the released 195 genes of L2 logistic regression on the store's multi-hot, C selected on the validation genes, refit on train+val",
+  "stores": [
+    {
+      "name": "all",
+      "store_dir": "/scratch/projects/torchcell-scratch/data/scerevisiae/go_term_hot_evidence_all/processed",
+      "n_pairs_kept": 66404,
+      "n_pairs_removed": 0,
+      "n_columns": 2636,
+      "n_labeled_genes_without_a_column": 0,
+      "logistic_c": 30.0,
+      "logistic_val_auroc": 0.8640601503759399,
+      "logistic_test_auroc": 0.7513768686073958
+    },
+    {
+      "name": "no_imp",
+      "store_dir": "/scratch/projects/torchcell-scratch/data/scerevisiae/go_term_hot_evidence_no_imp/processed",
+      "n_pairs_kept": 59437,
+      "n_pairs_removed": 6967,
+      "n_columns": 2220,
+      "n_labeled_genes_without_a_column": 0,
+      "logistic_c": 10.0,
+      "logistic_val_auroc": 0.8336842105263159,
+      "logistic_test_auroc": 0.7922895357985839
+    },
+    {
+      "name": "no_mutant",
+      "store_dir": "/scratch/projects/torchcell-scratch/data/scerevisiae/go_term_hot_evidence_no_mutant/processed",
+      "n_pairs_kept": 57440,
+      "n_pairs_removed": 8964,
+      "n_columns": 2017,
+      "n_labeled_genes_without_a_column": 0,
+      "logistic_c": 10.0,
+      "logistic_val_auroc": 0.8261654135338347,
+      "logistic_test_auroc": 0.7859952793076319
+    },
+    {
+      "name": "random_matched",
+      "store_dir": "/scratch/projects/torchcell-scratch/data/scerevisiae/go_term_hot_evidence_random_matched/processed",
+      "n_pairs_kept": 57440,
+      "n_pairs_removed": 8964,
+      "n_columns": 2456,
+      "n_labeled_genes_without_a_column": 0,
+      "logistic_c": 30.0,
+      "logistic_val_auroc": 0.8736842105263158,
+      "logistic_test_auroc": 0.7850118017309206
+    },
+    {
+      "name": "no_experimental",
+      "store_dir": "/scratch/projects/torchcell-scratch/data/scerevisiae/go_term_hot_evidence_no_experimental/processed",
+      "n_pairs_kept": 38791,
+      "n_pairs_removed": 27613,
+      "n_columns": 1670,
+      "n_labeled_genes_without_a_column": 1,
+      "logistic_c": 30.0,
+      "logistic_val_auroc": 0.8243609022556392,
+      "logistic_test_auroc": 0.7899291896144768
+    }
+  ],
+  "seconds": 6.238371849060059
+}

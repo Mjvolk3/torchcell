@@ -234,8 +234,15 @@ class CellDataModule(L.LightningDataModule):
         val_batch_size: int | None = None,
         pinned_test_indices: Iterable[int] | None = None,
         pinned_split_indices: Mapping[str, Iterable[int]] | None = None,
+        drop_unpinned: bool = False,
     ) -> None:
         """Store dataloader/split configuration and compute the split indices.
+
+        ``drop_unpinned`` (only with ``pinned_split_indices``) leaves every record the
+        mapping does not name out of ALL three splits instead of seed-assigning it around
+        the pinned ones. A supervised subset that is a small fraction of a build (the 028
+        essentiality labels name 1,121 of 5,656 genotypes) otherwise spends most of every
+        epoch forwarding records whose loss mask is False.
 
         ``pinned_test_indices`` forces those record indices into the TEST split, overriding
         the random assignment. It reproduces an EXTERNAL split inside ours -- e.g. Merzbacher
@@ -284,6 +291,11 @@ class CellDataModule(L.LightningDataModule):
                 assert not overlap, (
                     f"pinned_split_indices overlap across splits: {sorted(overlap)[:5]}..."
                 )
+        assert not drop_unpinned or self.pinned_split_indices, (
+            "drop_unpinned needs pinned_split_indices; with nothing pinned it would drop "
+            "every record."
+        )
+        self.drop_unpinned = drop_unpinned
         self.split_indices = (
             split_indices
             if isinstance(split_indices, list)
@@ -334,7 +346,8 @@ class CellDataModule(L.LightningDataModule):
             parts.append(f"{split}:" + ",".join(map(str, sorted(indices))))
             n_pinned += len(indices)
         payload = "|".join(parts).encode()
-        return f"_pin{n_pinned}-{hashlib.sha256(payload).hexdigest()[:8]}"
+        drop = "-drop" if self.drop_unpinned else ""
+        return f"_pin{n_pinned}-{hashlib.sha256(payload).hexdigest()[:8]}{drop}"
 
     def _load_or_compute_index(self) -> None:
         os.makedirs(self.cache_dir, exist_ok=True)
@@ -505,9 +518,15 @@ class CellDataModule(L.LightningDataModule):
                     f"({len(requested) - len(pinned)} requested indices are outside "
                     "the dataset)."
                 )
+            if self.drop_unpinned:
+                for split_name in ("train", "val", "test"):
+                    final_splits[split_name] &= self.pinned_split_indices.get(
+                        split_name, set()
+                    )
             log.info(
                 f"Splits after full pinning: train={len(final_splits['train'])} "
                 f"val={len(final_splits['val'])} test={len(final_splits['test'])}"
+                + (" (unpinned records dropped)" if self.drop_unpinned else "")
             )
 
         # Create DataModuleIndexDetails object

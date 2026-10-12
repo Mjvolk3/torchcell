@@ -1,0 +1,1007 @@
+# experiments/027-betaxanthin-metabolic/scripts/wandb_views.py
+# [[experiments.027-betaxanthin-metabolic.scripts.wandb_views]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/027-betaxanthin-metabolic/scripts/wandb_views
+"""Saved W&B workspace views and reports for the 027 contrasts, built from the API.
+
+Each contrast is a ``ViewSpec``: a tag filter that selects its runs, the config keys the
+runs are grouped by, and the metrics its panels show. The script saves one workspace view
+(the project page with those filters, grouping and panels applied) and one report (the
+same panels, once grouped by the contrast key and once by seed) per contrast, and writes
+their URLs to ``results/wandb_views.json``.
+
+Panels are only built for metrics that at least one matched run has logged, so a spec can
+name a metric that older runs lack without producing an empty chart.
+
+Usage, from the worktree root::
+
+    python experiments/027-betaxanthin-metabolic/scripts/wandb_views.py --contrast all   # views only; add --report for reports
+    python experiments/027-betaxanthin-metabolic/scripts/wandb_views.py --contrast kdraw
+    python experiments/027-betaxanthin-metabolic/scripts/wandb_views.py --name "my view" \
+        --tags gh_wave8_samp --groupby flux_draws --metrics val_pearson,latent_sigma_p50
+
+The ad-hoc form (``--name`` with ``--tags``) builds a one-off view and report from the
+command line without editing this file. A contrast whose URLs are already recorded in
+``wandb_views.json`` is updated in place (same links); ``--new`` forces fresh ones.
+``--per-row`` sets the panels per row (default 6, narrow panels for an ultrawide).
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import os.path as osp
+import re
+from typing import Any
+
+import wandb
+import wandb_workspaces.reports.v2 as wr
+import wandb_workspaces.workspaces as ws
+from dotenv import load_dotenv
+from pydantic import BaseModel, Field
+
+load_dotenv()
+
+ENTITY = "zhao-group"
+PROJECT = "torchcell_027_bxfx"
+EXPERIMENT_ROOT = os.getenv(
+    "EXPERIMENT_ROOT", osp.join(osp.dirname(osp.dirname(osp.dirname(__file__))))
+)
+RESULTS_DIR = osp.join(EXPERIMENT_ROOT, "027-betaxanthin-metabolic", "results")
+
+
+class ViewSpec(BaseModel):
+    """One contrast: which runs, how they are grouped, what the panels show."""
+
+    key: str = Field(description="Short slug used on the command line.")
+    title: str = Field(description="Title of the saved view and the report.")
+    description: str = Field(
+        description="One paragraph shown at the top of the report."
+    )
+    tags_any: list[str] = Field(
+        description="Runs carrying ANY of these W&B tags are selected."
+    )
+    groupby: list[str] = Field(
+        description="Config keys the workspace groups by, outermost first."
+    )
+    curves: list[str] = Field(
+        description="Per-epoch metrics drawn as line plots against the step."
+    )
+    scalars: list[str] = Field(
+        default_factory=list,
+        description="Summary metrics drawn as bar charts, one bar per group.",
+    )
+    drop_failed: bool = Field(
+        default=True,
+        description=(
+            "Filter out runs whose state is failed or crashed. The four essentiality "
+            "crashes (jobs 1990, 1991, 1997, 1998) carry the round's tags and no epochs; "
+            "left in, they sit as empty rows in every group and pull the group mean of a "
+            "bar chart toward nothing. Running runs stay in."
+        ),
+    )
+
+
+SPECS: dict[str, ViewSpec] = {
+    "kdraw": ViewSpec(
+        key="kdraw",
+        title="027 wave 8: K latent draws per forward pass",
+        description=(
+            "Betaxanthin, plain projection head, constraint scale 0, 80 epochs. Sampled "
+            "arms at K = 1, 16 and 128 draws per genotype per forward pass, paired by seed "
+            "against the deterministic wave-6 cells at seeds 2703 to 2705. Read the paired "
+            "difference per seed, never the raw score: the deterministic column alone spans "
+            "0.001 to 0.104 across seeds."
+        ),
+        tags_any=["gh_wave8_samp", "gh_wave6_proj"],
+        groupby=["flux_draws", "flux_latent_stochastic"],
+        curves=[
+            "val_pearson",
+            "val_pred_sd_ratio",
+            "latent_sigma_p50",
+            "flux_draw_pred_sd",
+            "train_data_loss",
+            "c_kl",
+            "feas_flux_active_frac",
+        ],
+        scalars=["test_spearman_pinned", "select_val_pearson"],
+    ),
+    "densbal": ViewSpec(
+        key="densbal",
+        title="027 wave 8: turnover density and active-row balance on the boxforce head",
+        description=(
+            "Betaxanthin, flux-force boxforce channel (K = 100), constraint scale 0, 80 "
+            "epochs. Density weight 0 (wave-7 control), 0.5 and 2.0, and the combined "
+            "density 0.5 plus active-row balance 0.5 cell. The honest feasibility rule is "
+            "the active-row balance max and p95 on the top 100 strains; the median rule "
+            "passes trivially when most rows carry no flux."
+        ),
+        tags_any=["gh_wave8_dens", "gh_wave8_densbal", "gh_wave7_ff"],
+        groupby=["flux_density_weight", "flux_balance_active_weight"],
+        curves=[
+            "val_pearson",
+            "val_pred_sd_ratio",
+            "c_density",
+            "c_balance_active",
+            "feas_active_row_frac",
+            "feas_flux_active_frac",
+            "feas_balance_active_p95",
+            "feas_balance_active_max",
+            "feas_thermo_violation_frac",
+            "feas_box_violation_frac",
+        ],
+        scalars=[
+            "test_spearman_pinned",
+            "feas/pinned_test_top100/balance_max_ratio_median",
+            "feas/pinned_test_top100/thermo_standard_state_violation_frac_eq_0",
+        ],
+    ),
+    "aa": ViewSpec(
+        key="aa",
+        title="027 waves 7 and 8: amino-acid readouts on the anchored projection head",
+        description=(
+            "Mulleder amino acids (19 features, 564 pinned genes), 200 epochs. Readout "
+            "arms: pooled control, turnover, whole-cell concentration mixture; the "
+            "concentration arm on the shipped versus verified thermodynamic tables and on "
+            "the assumed versus sourced compartment volumes, and in the whole-cell mixture "
+            "versus the cytosol alone. Score is the mean per-feature pinned test Spearman "
+            "at the validation-selected epoch."
+        ),
+        tags_any=["gh_wave7_aa", "gh_wave8_aa"],
+        groupby=["readout_group", "thermo_source", "volume_table", "conc_space"],
+        curves=[
+            "val_pearson",
+            "val_loss",
+            "val_pred_sd_ratio",
+            "train_data_loss",
+            "train_loss",
+            "latent_sigma_p50",
+        ],
+        scalars=[
+            "test_mean_spearman_pinned",
+            "conc/pinned_test/mean_spearman",
+            "conc/pinned_test/frac_pred_at_ceiling",
+            "select_val_pearson",
+        ],
+    ),
+    "aa_all": ViewSpec(
+        key="aa_all",
+        title="027: every amino-acid run, all waves",
+        description=(
+            "Every cell whose head is the 19 Mulleder amino acids, waves 6 to 8, selected "
+            "by the head tag and every amino-acid wave tag so nothing is left out: pooled "
+            "controls, the wave-6 flux heads, turnover and concentration readouts, the "
+            "thermodynamic-table and volume-fraction ablations, and the K-draw cells. "
+            "Grouped by readout first, then by the ablation keys and the draw count. "
+            "Score is the mean per-feature pinned test Spearman at the validation-selected "
+            "epoch; budgets differ (80 versus 200 epochs), so pair within a budget."
+        ),
+        # The head tag alone misses the 14 wave-6 and early wave-7 cells that predate
+        # it; the wave tags plus the head tag select all 45 runs whose config head is
+        # mulleder19 (checked against the config filter on 2026-09-13).
+        tags_any=[
+            "mulleder19",
+            "gh_wave6_aa",
+            "gh_wave7_aa",
+            "gh_wave8_aa",
+            "gh_wave8_aasamp",
+        ],
+        groupby=[
+            "readout_group",
+            "arm",
+            "epochs",
+            "thermo_source",
+            "volume_table",
+            "conc_space",
+            "flux_draws",
+        ],
+        curves=[
+            "val_pearson",
+            "val_loss",
+            "val_pred_sd_ratio",
+            "train_data_loss",
+            "flux_draw_pred_sd",
+            "latent_sigma_p50",
+        ],
+        scalars=[
+            "test_mean_spearman_pinned",
+            "conc/pinned_test/mean_spearman",
+            "select_val_pearson",
+        ],
+    ),
+    "aasamp": ViewSpec(
+        key="aasamp",
+        title="027 wave 8: K latent draws on the amino-acid concentration readout",
+        description=(
+            "Mulleder amino acids, concentration readout with the draw-dependent "
+            "concentration (log_c_from_latent), verified thermodynamic tables, constraint "
+            "scale 0.1, 200 epochs. K = 64 against K = 1 draws per genotype per forward "
+            "pass, both sampled, paired by seed 2700 to 2702. Read the paired difference; "
+            "the across-draw prediction sd and the latent sigma show whether the draws are "
+            "still distinct at the selected epoch."
+        ),
+        tags_any=["gh_wave8_aasamp"],
+        groupby=["flux_draws"],
+        curves=[
+            "val_pearson",
+            "val_loss",
+            "flux_draw_pred_sd",
+            "latent_sigma_p50",
+            "c_kl",
+            "train_data_loss",
+        ],
+        scalars=[
+            "test_mean_spearman_pinned",
+            "conc/pinned_test/mean_spearman",
+            "select_val_pearson",
+        ],
+    ),
+    "bxread": ViewSpec(
+        key="bxread",
+        title="027 wave 8: betaxanthin readouts, precursor concentration vs scalar vs pooled",
+        description=(
+            "Betaxanthin (Cachera), 200 epochs, matched settings at each seed. Arms: "
+            "precursor-concentration readout (the same concentration mechanism the "
+            "amino acids use, read on tyrosine and its shikimate precursors), the 026 "
+            "scalar flux head, and the pooled control with no metabolic module. Score is "
+            "the pinned test Spearman at the validation-selected epoch."
+        ),
+        tags_any=["gh_wave8_bx"],
+        groupby=["readout_group"],
+        curves=[
+            "val_pearson",
+            "val_loss",
+            "val_pred_sd_ratio",
+            "train_data_loss",
+            "latent_sigma_p50",
+            "feas_flux_active_frac",
+        ],
+        scalars=["test_spearman_pinned", "select_val_pearson"],
+    ),
+    "aa_moduleon": ViewSpec(
+        key="aa_moduleon",
+        title="027: is the metabolic module on for amino acids? pooled vs flux-coupled vs context-only",
+        description=(
+            "Mulleder amino acids, 200 epochs, seeds 2700 to 2702 (plus 2703 on the "
+            "concentration arm). The rank-1 read of the 2026-09-14 plan: the flux-coupled "
+            "concentration readout (flux_concentration, wave 7) against the context-only "
+            "concentration readout with no flux layer (context_concentration, wave 8) and "
+            "the pooled control, plus the no-dissipation twin of the concentration arm. "
+            "The kill rule was |ctxconc - conc| under 0.010 on the mean per-feature pinned "
+            "test Spearman; measured paired mean +0.0019 (jobs 1899/1930/1931), so the "
+            "module is off for this readout. Group by readout, then arm."
+        ),
+        tags_any=["w7aa", "w8aa_ctxconc", "w8aa_nodiss"],
+        groupby=["readout_group", "arm"],
+        curves=[
+            "val_pearson",
+            "val_pred_sd_ratio",
+            "val_loss",
+            "train_data_loss",
+            "train_loss",
+            "latent_sigma_p50",
+        ],
+        scalars=[
+            "test_mean_spearman_pinned",
+            "conc/pinned_test/mean_spearman",
+            "select_val_pearson",
+        ],
+    ),
+    "bxctx": ViewSpec(
+        key="bxctx",
+        title="027 wave 9: betaxanthin, precursor concentration vs its context-only control vs scalar vs pooled",
+        description=(
+            "Betaxanthin (Cachera), 200 epochs, matched settings at each seed. The wave-8 "
+            "three-way (precursor-concentration readout, 026 scalar flux head, pooled) "
+            "plus the wave-9 context-only precursor readout on the pooled backbone with no "
+            "flux layer (bxctxprec). Rank-4 read of the 2026-09-14 plan: |bxctxprec - "
+            "bxprec| above the 0.012 paired sd means the layer does the work on this "
+            "target; seed 2700 reads 0.079 vs 0.140 (job 1932). Group by readout."
+        ),
+        tags_any=["gh_wave8_bx", "gh_wave9_bx"],
+        groupby=["readout_group", "arm"],
+        curves=[
+            "val_pearson",
+            "val_pred_sd_ratio",
+            "val_loss",
+            "train_data_loss",
+            "latent_sigma_p50",
+            "feas_flux_active_frac",
+        ],
+        scalars=["test_spearman_pinned", "select_val_pearson"],
+    ),
+    "ib": ViewSpec(
+        key="ib",
+        title="027 wave 9: isobutanol (Lopez 2024 biosensor), pooled vs scalar flux vs precursor concentration",
+        description=(
+            "Isobutanol YKO biosensor screen (log10 fold change, 504 pinned Merzbacher "
+            "test genes, the 224 validated re-screen genes masked). Arms: pooled control, "
+            "scalar flux head on the isobutanol pathway with product column r_1866, and "
+            "the precursor-concentration readout on the 2-isopropylmalate pool the Leu3p "
+            "biosensor binds; the scale-0 precursor cell is the mechanism test for the "
+            "flat seed-2700 cell (job 1928). The linear baseline to clear is 0.198 (kNN on "
+            "chromatin-pathway embeddings, job 1912). Group by readout and constraint scale."
+        ),
+        tags_any=["gh_wave9_ib"],
+        groupby=["readout_group", "constraint_scale", "arm"],
+        curves=[
+            "val_pearson",
+            "val_pred_sd_ratio",
+            "val_loss",
+            "train_data_loss",
+            "latent_sigma_p50",
+            "feas_flux_active_frac",
+        ],
+        scalars=["test_spearman_pinned", "select_val_pearson"],
+    ),
+    "warmstart": ViewSpec(
+        key="warmstart",
+        title="027 wave 9: the warm-started residual head against the boxforce controls (feasibility first)",
+        description=(
+            "Betaxanthin, 200 epochs. The warm-started head (v_pre = pFBA reference + "
+            "alpha N z, nominal abundance path, the 47-reaction thermo exemption, the "
+            "TFA-consistent concentration init, the normalized availability fold, a "
+            "two-sigma kcat ceiling, active-row balance 0.5 on a frozen row set, parsimony "
+            "1e-3) against the wave-7 and wave-8 boxforce cells. At initialization it reads "
+            "active-row balance max 0.031 and p95 0.002 with 82 active rows against the "
+            "pFBA reference's 82 (jobs 1937 and 1945); the honest rule is max and p95 "
+            "under 1e-2 on the top 100 at the selected epoch. Read the feasibility curves "
+            "before the score."
+        ),
+        tags_any=[
+            "gh_wave9_warmstart",
+            "gh_wave8_dens",
+            "gh_wave8_densbal",
+            "gh_wave7_ff",
+        ],
+        groupby=["flux_parameterization", "arm", "flux_balance_active_weight"],
+        curves=[
+            "feas_balance_active_max",
+            "feas_balance_active_p95",
+            "feas_flux_active_frac",
+            "feas_active_row_frac",
+            "feas_thermo_violation_frac",
+            "feas_box_violation_frac",
+            "c_balance_active",
+            "c_parsimony",
+            "val_pred_sd_ratio",
+            "val_pearson",
+            "train_data_loss",
+            "latent_sigma_p50",
+        ],
+        scalars=[
+            "test_spearman_pinned",
+            "feas/pinned_test_top100/balance_max_ratio_median",
+            "select_val_pearson",
+        ],
+    ),
+    "ess": ViewSpec(
+        key="ess",
+        title="027 wave 9: gene essentiality, pooled backbone vs biomass flux readout",
+        description=(
+            "Gene essentiality on the released Merzbacher FCL split (195 pinned test "
+            "genes, 31 essential), 80 epochs, seeds 2700 to 2702. Arms: the pooled "
+            "backbone with no metabolic module, and the anchored projection head read "
+            "on the biomass column r_2111 of the flux vector. Headline is the pinned "
+            "test AUROC at the validation-selected epoch against the published "
+            "comparators, FCL 0.73 and FBA 0.69; accuracy is reported beside the "
+            "majority-class rate of 0.841 because a constant predictor matches it. "
+            "Measured so far: pooled 0.793, 0.788, 0.578 and flux 0.540, 0.758 (jobs "
+            "2008, 2009, 2021 to 2023); both arms swing by about 0.2 across seeds, so "
+            "read the paired contrast and not one pair. Group by arm."
+        ),
+        tags_any=["w9esspool", "w9essflux", "w9essshuffled", "w9essgenoref"],
+        groupby=["arm", "flux_shuffle_kcat_seed"],
+        curves=[
+            "val_pearson",
+            "val_loss",
+            "val_pred_sd_ratio",
+            "train_data_loss",
+            "train_loss",
+            "feas_balance_active_max",
+            "feas_flux_active_frac",
+        ],
+        scalars=[
+            "test_auroc_pinned",
+            "test_accuracy_pinned",
+            "test_majority_rate_pinned",
+            "test_recall_essential_pinned",
+            "test_auroc_all",
+            "select_val_pearson",
+        ],
+    ),
+    "loss": ViewSpec(
+        key="loss",
+        title="027 wave 10: betaxanthin loss contrast, CRPS learned sigma vs MSE vs CRPS fixed sigma 0.40",
+        description=(
+            "Betaxanthin, context-precursor readout on the pooled backbone, 200 epochs, "
+            "seeds 2700 to 2702, byte-identical apart from the loss. Arms: Gaussian CRPS "
+            "with a learned spread (wave 9), squared error, and CRPS with the spread held "
+            "at sqrt(1 - reliability) = 0.40 from the measured retest reliability of 0.84. "
+            "Paired by seed on the pinned test Spearman: CRPS 0.115, MSE 0.087 (minus "
+            "0.028, 3 of 3 negative), fixed 0.041 (minus 0.074, 2 of 3 negative), from "
+            "loss_contrast.py. The prediction spread ratio shows whether an arm is "
+            "collapsed rather than merely worse. Group by loss arm."
+        ),
+        tags_any=["w9bxctxprec", "w10bxctxprecmse", "w10bxctxprecsfix"],
+        groupby=["loss_arm"],
+        curves=[
+            "val_pearson",
+            "val_loss",
+            "val_pred_sd_ratio",
+            "train_data_loss",
+            "train_loss",
+            "graph_reg_loss",
+        ],
+        scalars=["test_spearman_pinned", "test_pearson_pinned", "select_val_pearson"],
+    ),
+    "esssize": ViewSpec(
+        key="esssize",
+        title="027 wave 11: model size against curve stability on gene essentiality",
+        description=(
+            "Gene essentiality, pooled arm with no flux layer, 80 epochs, seeds 2700 to "
+            "2702. The wave-9 backbone at width 90 carries 958,501 parameters against about "
+            "926 supervised genotypes, and its validation AUROC moves by a median of 0.034 "
+            "to 0.072 between ADJACENT epochs. The ladder drops the width to 54, 24 and 12, "
+            "and the lower two rungs also drop the embedding preprocessor to one layer, "
+            "which is what actually shrinks the model: at width 12 with a shallow "
+            "preprocessor the cell is 16,874 parameters, 57 times smaller than the "
+            "baseline. Read the validation curve's smoothness and the gradient-norm panels, "
+            "not the test AUROC, which at 31 essential genes among 195 has a bootstrap "
+            "interval about 0.17 wide and cannot separate these cells. Group by width, then "
+            "preprocessor depth."
+        ),
+        tags_any=[
+            "w11esssize_h54p2",
+            "w11esssize_h24p1",
+            "w11esssize_h12p1",
+            "w9esspool",
+        ],
+        groupby=["hidden", "preprocessor_layers", "layers"],
+        curves=[
+            "val_pearson",
+            "val_loss",
+            "train_data_loss",
+            "train_loss",
+            "val_pred_sd_ratio",
+            "grad_norm_mean",
+            "grad_norm_max",
+            "grad_clipped_frac",
+            "grad_norm_embedding_preprocessor_mean",
+            "grad_norm_transformer_layers_mean",
+            "grad_norm_essentiality_head_mean",
+            "graph_reg_loss",
+        ],
+        scalars=[
+            "test_auroc_pinned",
+            "test_accuracy_pinned",
+            "test_recall_essential_pinned",
+            "select_val_pearson",
+        ],
+    ),
+    "feasladder": ViewSpec(
+        key="feasladder",
+        title="027 wave 10: the frozen warm-start head, penalty ladder and the 10-epoch window",
+        description=(
+            "Betaxanthin, warm-started residual head with the frozen active-row set "
+            "(K = 100, boxforce). Cells: the wave-9 200-epoch frozen cells at seeds 2700 "
+            "to 2702, the 10-epoch cells at the same seeds (selection forced into the "
+            "window where feasibility survives; the audits read 0.98 of the whole "
+            "population inside Genesis at all three seeds with 81 active balance rows "
+            "against the reference's 82, and 0.43 to 0.71 on the model's own top 100), "
+            "and the seed-2700 balance-weight ladder 0.0, 0.1, 0.5 (the wave-9 value), "
+            "2.0 plus the cell with every penalty off. The prediction spread ratio and "
+            "the active-row balance max are the two curves to read together: the "
+            "penalties buy balance by flattening the flux across genotypes. Group by "
+            "budget, then balance weight, then constraint scale."
+        ),
+        tags_any=[
+            "warmstart_frozen",
+            "warmstart_frozen_e10",
+            "warmstart_frozen_bw00",
+            "warmstart_frozen_bw01",
+            "warmstart_frozen_bw2",
+            "warmstart_frozen_nopen",
+        ],
+        groupby=[
+            "epochs",
+            "flux_balance_active_weight",
+            "constraint_scale",
+            "flux_parsimony_weight",
+        ],
+        curves=[
+            "val_pred_sd_ratio",
+            "feas_balance_active_max",
+            "feas_balance_active_p95",
+            "feas_active_row_frac",
+            "feas_flux_active_frac",
+            "feas_box_violation_frac",
+            "feas_thermo_violation_frac",
+            "c_balance_active",
+            "c_parsimony",
+            "c_density",
+            "val_pearson",
+            "train_data_loss",
+        ],
+        scalars=[
+            "test_spearman_pinned",
+            "feas/pinned_test_top100/balance_max_ratio_median",
+            "feas/pinned_test_top100/box_violation_frac_median",
+            "select_val_pearson",
+        ],
+    ),
+}
+
+
+#: Which readout key each head records. A pooled cell still records the head's DEFAULT
+#: readout (aa_readout=flux_metabolite, bx_readout=flux_scalar, ib_readout=flux_scalar)
+#: although it builds no flux layer, so grouping by the raw key files the no-module
+#: controls under a flux readout. `readout_group` is the honest label, written onto each
+#: run's config once so the workspace can group by it.
+READOUT_KEY_BY_HEAD = {"mulleder19": "aa_readout", "isobutanol": "ib_readout"}
+POOLED_NO_MODULE = "pooled_no_module"
+
+
+def readout_group(run: Any) -> str:
+    """The label a run is grouped under: its readout, or the no-module control."""
+    cfg = run.config
+    key = READOUT_KEY_BY_HEAD.get(str(cfg.get("head")), "bx_readout")
+    readout = cfg.get(key)
+    if isinstance(readout, str) and readout.startswith("context_"):
+        return readout
+    if cfg.get("arm") == "pooled":
+        return POOLED_NO_MODULE
+    return str(readout or cfg.get("arm") or "unknown")
+
+
+def loss_arm(run: Any) -> str:
+    """The loss a run trained under, as one label the workspace can group by.
+
+    The config carries it as two fields, `crps` (bool) and `crps_sigma_fixed` (float or
+    absent on runs that predate the flag), and W&B groups on one key at a time.
+    """
+    cfg = run.config
+    if not cfg.get("crps"):
+        return "mse"
+    fixed = cfg.get("crps_sigma_fixed")
+    if fixed is None:
+        return "crps_learned_sigma"
+    return f"crps_sigma_fixed_{float(fixed):.2f}"
+
+
+def annotate_readout_group(runs: list[Any]) -> int:
+    """Write `readout_group` and `loss_arm` onto every matched run where missing or stale."""
+    changed = 0
+    for run in runs:
+        labels = {"readout_group": readout_group(run), "loss_arm": loss_arm(run)}
+        stale = {k: v for k, v in labels.items() if run.config.get(k) != v}
+        if stale:
+            for k, v in stale.items():
+                run.config[k] = v
+            run.update()
+            changed += 1
+    return changed
+
+
+#: Tags train_bx.py derives from the cell rather than from the launcher: the project
+#: markers, the host, the head, the arm, the seed, the draw count and the `--wandb-group`
+#: wave tag. Whatever tag is left after removing these is the launcher's `--tag`, the
+#: arm-level label that names the run's W&B group.
+HOSTS = ("gilahyper",)
+#: A run whose budget is at most this many epochs is a launcher smoke, not a cell.
+SMOKE_EPOCHS = 2
+
+
+def arm_tag(run: Any) -> str:
+    """The launcher's arm-level tag on a run, the name its W&B group takes.
+
+    Falls back to the wave tag (`--wandb-group`) for runs launched without a `--tag`.
+    """
+    cfg = run.config
+    derived = {
+        "027",
+        "bxfx",
+        str(cfg.get("head")),
+        str(cfg.get("arm")),
+        f"seed{cfg.get('seed')}",
+        f"k{cfg.get('flux_draws')}",
+        *HOSTS,
+    }
+    wave = [t for t in run.tags if t.startswith("gh_")]
+    rest = [
+        t
+        for t in run.tags
+        if t not in derived and t not in wave and not re.fullmatch(r"(seed|k)\d+", t)
+    ]
+    if len(rest) == 1:
+        return rest[0]
+    assert len(rest) == 0 and len(wave) == 1, (
+        f"run {run.id} has an ambiguous arm tag: {run.tags}"
+    )
+    return wave[0]
+
+
+def regroup_by_arm(runs: list[Any]) -> dict[str, list[str]]:
+    """Put every seed of one arm in one W&B group and name each run `<arm tag>_seed<k>`.
+
+    The trainer wrote a per-job group until 2026-09-15, so each group page held one run.
+    Failed and crashed runs keep their old group so the arm's page shows only runs that
+    produced epochs. Returns the group name -> run ids it now holds.
+    """
+    groups: dict[str, list[str]] = {}
+    for run in runs:
+        if run.state in ("failed", "crashed"):
+            continue
+        tag = arm_tag(run)
+        if int(run.config.get("epochs", 0)) <= SMOKE_EPOCHS:
+            # A launcher smoke (the 2-epoch essentiality check, job 2004) carries the
+            # arm's tag; it goes to its own group so the arm's page holds real budgets.
+            tag = f"{tag}_smoke"
+        name = f"{tag}_seed{run.config.get('seed')}"
+        if run.group != tag or run.display_name != name:
+            run.group = tag
+            run.display_name = name
+            run.update()
+        groups.setdefault(tag, []).append(run.id)
+    return groups
+
+
+def group_url(group: str) -> str:
+    return f"https://wandb.ai/{ENTITY}/{PROJECT}/groups/{group}"
+
+
+def runset_filters(spec: ViewSpec) -> list[Any]:
+    """The tag filter, plus the state filter that drops failed and crashed runs."""
+    filters: list[Any] = [ws.Tags().isin(spec.tags_any)]
+    if spec.drop_failed:
+        filters.append(ws.Metric("State") != "failed")
+        filters.append(ws.Metric("State") != "crashed")
+    return filters
+
+
+def matched_runs(api: wandb.Api, spec: ViewSpec) -> list[Any]:
+    """The runs the spec's tag filter selects, fetched once to validate the metrics."""
+    return list(
+        api.runs(
+            f"{ENTITY}/{PROJECT}",
+            filters={"tags": {"$in": spec.tags_any}},
+            per_page=200,
+        )
+    )
+
+
+def present_metrics(runs: list[Any], wanted: list[str]) -> list[str]:
+    """Keep the metrics at least one matched run has in its summary."""
+    logged: set[str] = set()
+    for run in runs:
+        logged.update(k for k in run.summary.keys() if not k.startswith("_"))
+    return [m for m in wanted if m in logged]
+
+
+# PANEL GEOMETRY. The W&B panel grid is 24 columns wide; a panel's width is a column count
+# and its height a row count. The default is six narrow panels per row (4 columns each,
+# 5 rows tall): the views are read on a 38-inch ultrawide, where the previous 3-per-row
+# layout stretched every chart to a third of the screen and pushed the grid off the bottom.
+GRID_COLUMNS = 24
+PANELS_PER_ROW = 6
+PANEL_ROWS = 5
+
+
+def panel_layout(i: int, offset_rows: int = 0) -> Any:
+    w = GRID_COLUMNS // PANELS_PER_ROW
+    return wr.Layout(
+        x=(i % PANELS_PER_ROW) * w,
+        y=(offset_rows + i // PANELS_PER_ROW) * PANEL_ROWS,
+        w=w,
+        h=PANEL_ROWS,
+    )
+
+
+def rows_for(n_panels: int) -> int:
+    return (n_panels + PANELS_PER_ROW - 1) // PANELS_PER_ROW
+
+
+#: Train/validation pairs drawn as a TRIPLE: the two overlaid, then each alone. The overlay
+#: is where overfitting is read, because the gap between the curves is the quantity and a
+#: gap cannot be seen across two panels with independent y axes. The isolated panels are
+#: where the shape of each curve is read, because the overlay's axis is set by whichever
+#: curve has the larger range and flattens the other. Convention requested 2026-09-15: a
+#: W&B view of a training round carries both.
+TRAIN_VAL_PAIRS = (("train_data_loss", "val_loss"), ("train_loss", "val_loss"))
+
+
+def train_val_panels(present: list[str], groupby: str | None) -> list[Any]:
+    """For each train/val pair both runs have logged: overlay, train alone, val alone."""
+    panels: list[Any] = []
+    index = 0
+    for train_metric, val_metric in TRAIN_VAL_PAIRS:
+        if train_metric not in present or val_metric not in present:
+            continue
+        for title, ys in (
+            (f"{train_metric} vs {val_metric}", [train_metric, val_metric]),
+            (train_metric, [train_metric]),
+            (val_metric, [val_metric]),
+        ):
+            panels.append(
+                wr.LinePlot(
+                    title=title,
+                    x="epoch",
+                    y=list(ys),
+                    groupby=groupby,
+                    groupby_aggfunc="mean" if groupby else None,
+                    groupby_rangefunc="minmax" if groupby else None,
+                    smoothing_type="none",
+                    legend_position="south",
+                    layout=panel_layout(index),
+                )
+            )
+            index += 1
+    return panels
+
+
+def line_panels(metrics: list[str], groupby: str | None) -> list[Any]:
+    panels: list[Any] = []
+    for i, metric in enumerate(metrics):
+        panels.append(
+            wr.LinePlot(
+                title=metric,
+                # Every row train_bx logs carries `epoch`, and the user reads curves by
+                # epoch, never by W&B's step counter.
+                x="epoch",
+                y=[metric],
+                groupby=groupby,
+                groupby_aggfunc="mean" if groupby else None,
+                groupby_rangefunc="minmax" if groupby else None,
+                smoothing_type="none",
+                legend_position="south",
+                layout=panel_layout(i),
+            )
+        )
+    return panels
+
+
+def bar_panels(metrics: list[str], offset_rows: int) -> list[Any]:
+    panels: list[Any] = []
+    for i, metric in enumerate(metrics):
+        panels.append(
+            wr.BarPlot(
+                title=metric,
+                metrics=[metric],
+                orientation="h",
+                layout=panel_layout(i, offset_rows),
+            )
+        )
+    return panels
+
+
+def workspace_sections(curves: list[str], scalars: list[str]) -> list[Any]:
+    """Ranked sections: the train/validation triples first, then the curves, then the bars.
+
+    Each W&B section carries its own panel grid, so the layouts restart at zero per section
+    rather than needing a running offset.
+    """
+    sections: list[Any] = []
+    paired = train_val_panels(curves, groupby=None)
+    if paired:
+        sections.append(
+            ws.Section(name="train vs validation", panels=paired, is_open=True)
+        )
+    sections.append(
+        ws.Section(
+            name="curves", panels=line_panels(curves, groupby=None), is_open=True
+        )
+    )
+    sections.append(
+        ws.Section(
+            name="scalars", panels=bar_panels(scalars, offset_rows=0), is_open=True
+        )
+    )
+    return sections
+
+
+def workspace_runset(spec: ViewSpec) -> Any:
+    return ws.RunsetSettings(
+        filters=runset_filters(spec),
+        groupby=[ws.Config(k) for k in spec.groupby],
+        order=[ws.Ordering(ws.Config("seed"), ascending=True)],
+    )
+
+
+def build_workspace(
+    spec: ViewSpec, curves: list[str], scalars: list[str], existing_url: str | None
+) -> str:
+    """Save the project workspace view and return its URL.
+
+    With ``existing_url`` the saved view is updated in place so a link the user already
+    has keeps working; without it a new view is created.
+    """
+    if existing_url:
+        workspace = ws.Workspace.from_url(existing_url)
+        workspace.name = spec.title
+        workspace.sections = workspace_sections(curves, scalars)
+        workspace.runset_settings = workspace_runset(spec)
+        workspace.save()
+        return str(workspace.url)
+    workspace = ws.Workspace(
+        entity=ENTITY,
+        project=PROJECT,
+        name=spec.title,
+        sections=workspace_sections(curves, scalars),
+        runset_settings=workspace_runset(spec),
+    )
+    workspace.save_as_new_view()
+    return str(workspace.url)
+
+
+def report_blocks(spec: ViewSpec, curves: list[str], scalars: list[str]) -> list[Any]:
+    """One grid grouped by the contrast key and one by seed."""
+    primary = spec.groupby[0]
+    grids: list[Any] = []
+    for label, group_key in (
+        (f"grouped by {primary}", primary),
+        ("grouped by seed", "seed"),
+    ):
+        runset = wr.Runset(
+            entity=ENTITY,
+            project=PROJECT,
+            name=f"{spec.title} ({label})",
+            filters=runset_filters(spec),
+            groupby=[group_key],
+        )
+        grids.append(wr.H2(text=label))
+        grids.append(
+            wr.PanelGrid(
+                runsets=[runset],
+                panels=line_panels(curves, groupby=group_key)
+                + bar_panels(scalars, offset_rows=rows_for(len(curves))),
+            )
+        )
+    return [wr.H1(text=spec.title), wr.P(text=spec.description), *grids]
+
+
+def build_report(
+    spec: ViewSpec, curves: list[str], scalars: list[str], existing_url: str | None
+) -> str:
+    """Save the report and return its URL, updating in place when a URL is known."""
+    if existing_url:
+        report = wr.Report.from_url(existing_url)
+        report.title = spec.title
+        report.description = spec.description
+        report.width = "fluid"
+        report.blocks = report_blocks(spec, curves, scalars)
+        report.save()
+        return str(report.url)
+    report = wr.Report(
+        entity=ENTITY,
+        project=PROJECT,
+        title=spec.title,
+        description=spec.description,
+        width="fluid",
+        blocks=report_blocks(spec, curves, scalars),
+    )
+    report.save()
+    return str(report.url)
+
+
+def adhoc_spec(args: argparse.Namespace) -> ViewSpec:
+    return ViewSpec(
+        key="adhoc",
+        title=args.name,
+        description=args.description or f"Ad-hoc view: tags {args.tags}.",
+        tags_any=args.tags.split(","),
+        groupby=args.groupby.split(",") if args.groupby else ["seed"],
+        curves=args.metrics.split(",") if args.metrics else ["val_pearson"],
+        scalars=args.scalars.split(",") if args.scalars else ["test_spearman_pinned"],
+    )
+
+
+def main() -> None:
+    global PANELS_PER_ROW
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--contrast", default=None, help=" | ".join([*SPECS, "all"]))
+    parser.add_argument("--name", default=None, help="Ad-hoc view title (with --tags).")
+    parser.add_argument(
+        "--tags", default=None, help="Comma-separated tags, ANY matches."
+    )
+    parser.add_argument("--groupby", default=None, help="Comma-separated config keys.")
+    parser.add_argument(
+        "--metrics", default=None, help="Comma-separated curve metrics."
+    )
+    parser.add_argument("--scalars", default=None, help="Comma-separated bar metrics.")
+    parser.add_argument("--description", default=None)
+    parser.add_argument(
+        "--report",
+        action="store_true",
+        help=(
+            "Also build (or update) the paired report. Off by default since 2026-09-14: "
+            "the saved workspace view, the project page with the filters, grouping and "
+            "panels applied, is what gets reviewed; a report is opt-in."
+        ),
+    )
+    parser.add_argument("--no-workspace", action="store_true")
+    parser.add_argument(
+        "--per-row",
+        type=int,
+        default=PANELS_PER_ROW,
+        help="Panels per grid row (24-column grid; 6 -> narrow panels for an ultrawide).",
+    )
+    parser.add_argument(
+        "--new",
+        action="store_true",
+        help="Create fresh views instead of updating the URLs recorded in wandb_views.json.",
+    )
+    args = parser.parse_args()
+    assert GRID_COLUMNS % args.per_row == 0, "--per-row must divide 24"
+    PANELS_PER_ROW = args.per_row
+
+    if args.name:
+        assert args.tags, "--name needs --tags"
+        specs = [adhoc_spec(args)]
+    else:
+        assert args.contrast, "give --contrast or --name/--tags"
+        keys = list(SPECS) if args.contrast == "all" else args.contrast.split(",")
+        specs = [SPECS[k] for k in keys]
+
+    api = wandb.Api(timeout=60)
+    out_path = osp.join(RESULTS_DIR, "wandb_views.json")
+    record: dict[str, Any] = {}
+    if osp.exists(out_path):
+        with open(out_path) as fh:
+            record = json.load(fh)
+
+    for spec in specs:
+        runs = matched_runs(api, spec)
+        relabeled = annotate_readout_group(runs)
+        if relabeled:
+            print(f"[{spec.key}] readout_group written on {relabeled} runs")
+        groups = regroup_by_arm(runs)
+        curves = present_metrics(runs, spec.curves)
+        scalars = present_metrics(runs, spec.scalars)
+        missing = [m for m in spec.curves + spec.scalars if m not in curves + scalars]
+        entry: dict[str, Any] = {
+            "title": spec.title,
+            "n_runs": len(runs),
+            "tags_any": spec.tags_any,
+            "groupby": spec.groupby,
+            "curves": curves,
+            "scalars": scalars,
+            "metrics_not_logged_by_any_run": missing,
+            # One W&B group per arm: the page at each URL shows that arm's seeds together
+            # with their aggregated curves, which is how the round is reviewed.
+            "groups": {
+                tag: {"url": group_url(tag), "run_ids": ids}
+                for tag, ids in sorted(groups.items())
+            },
+        }
+        prior = {} if args.new else record.get(spec.key, {})
+        if not args.no_workspace:
+            entry["workspace_url"] = build_workspace(
+                spec, curves, scalars, prior.get("workspace_url")
+            )
+        if args.report:
+            entry["report_url"] = build_report(
+                spec, curves, scalars, prior.get("report_url")
+            )
+        elif prior.get("report_url"):
+            entry["report_url"] = prior["report_url"]
+        entry["panels_per_row"] = PANELS_PER_ROW
+        record[spec.key] = entry
+        print(
+            f"[{spec.key}] {len(runs)} runs; {len(curves)} curves, {len(scalars)} bars"
+        )
+        for label in ("workspace_url", "report_url"):
+            if label in entry:
+                print(f"  {label}: {entry[label]}")
+        for tag, block in entry["groups"].items():
+            print(f"  group {tag} ({len(block['run_ids'])} runs): {block['url']}")
+        if missing:
+            print(f"  not logged by any matched run: {missing}")
+
+    os.makedirs(RESULTS_DIR, exist_ok=True)
+    with open(out_path, "w") as fh:
+        json.dump(record, fh, indent=2)
+    print(out_path)
+
+
+if __name__ == "__main__":
+    main()

@@ -47,15 +47,34 @@ Related: [[paper.proof-writing-standard]], [[paper.nature-biotech.figures]],
   Full rules in `CLAUDE.md` "Figure & Plotting Standards".
 - **18 colors** = orange · red · purple · yellow · blue · gray, repeated 3 times; a series of
   N takes the first N (primaries spent before blue/gray). Green-free.
+- **PRIMARY four vs SECONDARY two.** Within every cycle of six, **orange, red, purple and
+  yellow are the primaries**: interchangeable, mixable uniformly in any series in any order,
+  with nothing encoded by which of the four a category draws. **Blue and gray are
+  secondary** and enter only when a series needs a fifth and a sixth color. A two- or
+  three-series panel drawn in blue has skipped a primary and is wrong, even though every
+  color in it is in the palette. Taking the first N of the ordered list gives this for free;
+  the rule is for the plots that pick colors by hand. A reference REGION (a plausibility
+  band, a class band) is not a series and must take a color no series in that figure uses,
+  usually a muted-tier hue.
+- **"Primary" names the ROLE, not the first tier.** Tier 1 is `vivid`, tier 2 `dark`, tier 3
+  `muted earth`. Tier 1 used to be called "primary" as well, which made the word mean two
+  things at once.
 - Tiers differ by **chroma, not lightness** (lightness encodes validation-vs-test within a
   series). 18 is the ceiling; cap new colors at `C* <= 36`; for >18 series disambiguate with
   hatching, not more color.
 - **Use the LINE/border colors** (`PLOT_PALETTE`) for plot marks; the pale `PLOT_PALETTE_FILL`
   is only the lighter member of a two-level bar (validation = line color, test = fill).
-  Hatches/edges solid black. Draw.io Fig 1 primaries (1--6) are **LOCKED**.
+  Hatches/edges solid black. Draw.io Fig 1 vivid colors (1--6) are **LOCKED**.
 
 ## Figures
 
+- **Every panel gets its own description in the caption, starting with its bold letter;
+  never merge two panels into one clause.** `\textbf{e}, \textbf{f}, Accuracy on the 57
+  pairs` names two panels and identifies neither. Write them as separate sentences, even
+  when the second is one clause (`\textbf{f}, The same comparison ranked.`). Check it on
+  every caption in a document, not only the one that was flagged: the defect is silent,
+  nothing in `make check` looks for it, and the test is mechanical, that the bold letters
+  read `a, b, c, ...` in order with each appearing only at the head of its own sentence.
 - **Panel width is STRICT; height is loose.** Use `torchcell.utils.PANEL_WIDTHS_MM`
   (full 179 / wide 118.9 / half 88 / third 57.8 / sixth 28.3 mm) + `mm_to_in`; height
   `<= MAX_HEIGHT_MM` (170). Box all four spines (~0.5 pt). Arial 6 pt, `svg.fonttype: none`.

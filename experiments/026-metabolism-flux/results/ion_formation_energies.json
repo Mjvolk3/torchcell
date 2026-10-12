@@ -1,0 +1,473 @@
+{
+ "built_at": "2026-09-11T06:33:21.237664+00:00",
+ "citation": "Cox, J. D., Wagman, D. D. and Medvedev, V. A. (1989). CODATA Key Values for Thermodynamics. Hemisphere Publishing Corporation, New York.",
+ "source_url": "https://www.science.co.il/chemistry/databases/Codata-key-values-for-thermodynamics.pdf",
+ "retrieval_method": "direct_url",
+ "retrieval_command": "curl -sSL -o codata-key-values-for-thermodynamics.pdf 'https://www.science.co.il/chemistry/databases/Codata-key-values-for-thermodynamics.pdf'",
+ "retrieved_at": "2026-09-11T06:33:20.448535+00:00",
+ "pdf_path": "/scratch/projects/torchcell-scratch/data/torchcell/ion_formation_energies/codata-key-values-for-thermodynamics.pdf",
+ "pdf_sha256": "89ffacd10624f19820ab534eccc5ca379566db2787e6e9c09e0736f80d9e7ae6",
+ "text_path": "/scratch/projects/torchcell-scratch/data/torchcell/ion_formation_energies/codata-key-values-for-thermodynamics.txt",
+ "text_sha256": "74e66a67afc5d6935ed8a308ae4eb4d23478cc00cfb10642489b874f811bba09",
+ "extraction_command": "pdftotext -layout codata-key-values-for-thermodynamics.pdf codata-key-values-for-thermodynamics.txt",
+ "pdftotext_version": "pdftotext version 21.01.0",
+ "source_temperature_k": 298.15,
+ "source_standard_state_pressure_pa": 100000.0,
+ "proton_convention_verified": true,
+ "derivation": "M(standard state) + z H+(aq) -> M^z(aq) + (z/2) H2(g); d_rH = d_fH(ion); d_rS = S(ion) + (z/2) S(H2) - S(element per atom); d_fG(T) = d_rH - T d_rS, with d_fH(H+,aq) = 0 and S(H+,aq) = 0 by the source's own convention and d_rS taken temperature independent over the 5 K extrapolation",
+ "transform": "a bare ion has no dissociable protons and no magnesium binding, so the Legendre transform reduces to the extended Debye-Huckel term: d_fG'0 = d_fG0 - alpha(T) / (1/sqrt(I) + 1.6) * z^2, with alpha(T) = a1 T - a2 T^2 + a3 T^3, a1 = 9.20483e-3, a2 = 1.284668e-5, a3 = 4.95199e-8 kJ/mol per K power",
+ "transform_matches_equilibrator": true,
+ "transform_max_abs_deviation_kj_per_mol": 8.881784197001252e-16,
+ "check_source": "NBS tables (Wagman et al. 1982) as reproduced in the CRC Handbook; a different evaluation of the same measurements, used only to check the derivation",
+ "check_tolerance_kj_per_mol": 2.0,
+ "max_deviation_from_check_kj_per_mol": 0.7738464999999906,
+ "report_conditions": {
+  "temperature_k": 303.15,
+  "ionic_strength_m": 0.25
+ },
+ "n_entries": 8,
+ "entries": [
+  {
+   "element": "K",
+   "charge": 1,
+   "species": "K+1(aq)",
+   "formation_reaction": "K(cr) + 1 H+(aq) -> K+1(aq) + 0.5 H2(g)",
+   "source_values": [
+    {
+     "substance": "K+",
+     "state": "aq",
+     "quantity": "delta_f_H(298.15 K)",
+     "value": -252.14,
+     "uncertainty": 0.08,
+     "unit": "kJ/mol",
+     "verbatim_line": "K+                  aq                 -252.14±0.08     101.20±0.20"
+    },
+    {
+     "substance": "K+",
+     "state": "aq",
+     "quantity": "S(298.15 K)",
+     "value": 101.2,
+     "uncertainty": 0.2,
+     "unit": "J/K/mol",
+     "verbatim_line": "K+                  aq                 -252.14±0.08     101.20±0.20"
+    },
+    {
+     "substance": "K",
+     "state": "cr",
+     "quantity": "S(298.15 K)",
+     "value": 64.68,
+     "uncertainty": 0.2,
+     "unit": "J/K/mol",
+     "verbatim_line": "K                   cr                 0                64.68±0.20            7.088±0"
+    },
+    {
+     "substance": "H2",
+     "state": "g",
+     "quantity": "S(298.15 K)",
+     "value": 130.68,
+     "uncertainty": 0.003,
+     "unit": "J/K/mol",
+     "verbatim_line": "H2                  g                  0                130.680±0.003         8.468±0"
+    }
+   ],
+   "delta_f_h_kj_per_mol": -252.14,
+   "entropy_ion_j_per_mol_k": 101.2,
+   "entropy_element_per_atom_j_per_mol_k": 64.68,
+   "entropy_h2_j_per_mol_k": 130.68,
+   "delta_r_s_j_per_mol_k": 101.86000000000001,
+   "delta_f_g_298_15_kj_per_mol": -282.50955899999997,
+   "delta_f_g_at_report_temperature_kj_per_mol": -283.01885899999996,
+   "report_temperature_k": 303.15,
+   "nbs_check_delta_f_g_kj_per_mol": -283.27,
+   "deviation_from_nbs_kj_per_mol": 0.7604410000000144,
+   "delta_f_g_prime_at_report_conditions_kj_per_mol": -283.8492570738729
+  },
+  {
+   "element": "Na",
+   "charge": 1,
+   "species": "Na+1(aq)",
+   "formation_reaction": "Na(cr) + 1 H+(aq) -> Na+1(aq) + 0.5 H2(g)",
+   "source_values": [
+    {
+     "substance": "Na+",
+     "state": "aq",
+     "quantity": "delta_f_H(298.15 K)",
+     "value": -240.34,
+     "uncertainty": 0.06,
+     "unit": "kJ/mol",
+     "verbatim_line": "Na+                 aq                 -240.34±0.06     58.45±0.15"
+    },
+    {
+     "substance": "Na+",
+     "state": "aq",
+     "quantity": "S(298.15 K)",
+     "value": 58.45,
+     "uncertainty": 0.15,
+     "unit": "J/K/mol",
+     "verbatim_line": "Na+                 aq                 -240.34±0.06     58.45±0.15"
+    },
+    {
+     "substance": "Na",
+     "state": "cr",
+     "quantity": "S(298.15 K)",
+     "value": 51.3,
+     "uncertainty": 0.2,
+     "unit": "J/K/mol",
+     "verbatim_line": "Na                  cr                 0                51.30±0.20            6.460±0"
+    },
+    {
+     "substance": "H2",
+     "state": "g",
+     "quantity": "S(298.15 K)",
+     "value": 130.68,
+     "uncertainty": 0.003,
+     "unit": "J/K/mol",
+     "verbatim_line": "H2                  g                  0                130.680±0.003         8.468±0"
+    }
+   ],
+   "delta_f_h_kj_per_mol": -240.34,
+   "entropy_ion_j_per_mol_k": 58.45,
+   "entropy_element_per_atom_j_per_mol_k": 51.3,
+   "entropy_h2_j_per_mol_k": 130.68,
+   "delta_r_s_j_per_mol_k": 72.49000000000001,
+   "delta_f_g_298_15_kj_per_mol": -261.9528935,
+   "delta_f_g_at_report_temperature_kj_per_mol": -262.3153435,
+   "report_temperature_k": 303.15,
+   "nbs_check_delta_f_g_kj_per_mol": -261.905,
+   "deviation_from_nbs_kj_per_mol": -0.04789350000004333,
+   "delta_f_g_prime_at_report_conditions_kj_per_mol": -263.1457415738729
+  },
+  {
+   "element": "Ca",
+   "charge": 2,
+   "species": "Ca+2(aq)",
+   "formation_reaction": "Ca(cr) + 2 H+(aq) -> Ca+2(aq) + 1 H2(g)",
+   "source_values": [
+    {
+     "substance": "Ca+2",
+     "state": "aq",
+     "quantity": "delta_f_H(298.15 K)",
+     "value": -543.0,
+     "uncertainty": 1.0,
+     "unit": "kJ/mol",
+     "verbatim_line": "Ca+2                aq                 -543.0±1.0       -56.2±1.0"
+    },
+    {
+     "substance": "Ca+2",
+     "state": "aq",
+     "quantity": "S(298.15 K)",
+     "value": -56.2,
+     "uncertainty": 1.0,
+     "unit": "J/K/mol",
+     "verbatim_line": "Ca+2                aq                 -543.0±1.0       -56.2±1.0"
+    },
+    {
+     "substance": "Ca",
+     "state": "cr",
+     "quantity": "S(298.15 K)",
+     "value": 41.59,
+     "uncertainty": 0.4,
+     "unit": "J/K/mol",
+     "verbatim_line": "Ca                  cr                 0                41.59±0.40            5.736±0"
+    },
+    {
+     "substance": "H2",
+     "state": "g",
+     "quantity": "S(298.15 K)",
+     "value": 130.68,
+     "uncertainty": 0.003,
+     "unit": "J/K/mol",
+     "verbatim_line": "H2                  g                  0                130.680±0.003         8.468±0"
+    }
+   ],
+   "delta_f_h_kj_per_mol": -543.0,
+   "entropy_ion_j_per_mol_k": -56.2,
+   "entropy_element_per_atom_j_per_mol_k": 41.59,
+   "entropy_h2_j_per_mol_k": 130.68,
+   "delta_r_s_j_per_mol_k": 32.89,
+   "delta_f_g_298_15_kj_per_mol": -552.8061535,
+   "delta_f_g_at_report_temperature_kj_per_mol": -552.9706035,
+   "report_temperature_k": 303.15,
+   "nbs_check_delta_f_g_kj_per_mol": -553.58,
+   "deviation_from_nbs_kj_per_mol": 0.7738464999999906,
+   "delta_f_g_prime_at_report_conditions_kj_per_mol": -556.2921957954917
+  },
+  {
+   "element": "Zn",
+   "charge": 2,
+   "species": "Zn+2(aq)",
+   "formation_reaction": "Zn(cr) + 2 H+(aq) -> Zn+2(aq) + 1 H2(g)",
+   "source_values": [
+    {
+     "substance": "Zn+2",
+     "state": "aq",
+     "quantity": "delta_f_H(298.15 K)",
+     "value": -153.39,
+     "uncertainty": 0.2,
+     "unit": "kJ/mol",
+     "verbatim_line": "Zn+2                  aq                    -153.39±0.20         -109.8±0.5"
+    },
+    {
+     "substance": "Zn+2",
+     "state": "aq",
+     "quantity": "S(298.15 K)",
+     "value": -109.8,
+     "uncertainty": 0.5,
+     "unit": "J/K/mol",
+     "verbatim_line": "Zn+2                  aq                    -153.39±0.20         -109.8±0.5"
+    },
+    {
+     "substance": "Zn",
+     "state": "cr",
+     "quantity": "S(298.15 K)",
+     "value": 41.63,
+     "uncertainty": 0.15,
+     "unit": "J/K/mol",
+     "verbatim_line": "Zn                    cr                    0                    41.63±0.15             5.657±0"
+    },
+    {
+     "substance": "H2",
+     "state": "g",
+     "quantity": "S(298.15 K)",
+     "value": 130.68,
+     "uncertainty": 0.003,
+     "unit": "J/K/mol",
+     "verbatim_line": "H2                  g                  0                130.680±0.003         8.468±0"
+    }
+   ],
+   "delta_f_h_kj_per_mol": -153.39,
+   "entropy_ion_j_per_mol_k": -109.8,
+   "entropy_element_per_atom_j_per_mol_k": 41.63,
+   "entropy_h2_j_per_mol_k": 130.68,
+   "delta_r_s_j_per_mol_k": -20.749999999999993,
+   "delta_f_g_298_15_kj_per_mol": -147.2033875,
+   "delta_f_g_at_report_temperature_kj_per_mol": -147.0996375,
+   "report_temperature_k": 303.15,
+   "nbs_check_delta_f_g_kj_per_mol": -147.06,
+   "deviation_from_nbs_kj_per_mol": -0.14338749999998868,
+   "delta_f_g_prime_at_report_conditions_kj_per_mol": -150.42122979549166
+  },
+  {
+   "element": "Cu",
+   "charge": 2,
+   "species": "Cu+2(aq)",
+   "formation_reaction": "Cu(cr) + 2 H+(aq) -> Cu+2(aq) + 1 H2(g)",
+   "source_values": [
+    {
+     "substance": "Cu+2",
+     "state": "aq",
+     "quantity": "delta_f_H(298.15 K)",
+     "value": 64.9,
+     "uncertainty": 1.0,
+     "unit": "kJ/mol",
+     "verbatim_line": "Cu+2                aq                 64.9±1.0         -98±4"
+    },
+    {
+     "substance": "Cu+2",
+     "state": "aq",
+     "quantity": "S(298.15 K)",
+     "value": -98.0,
+     "uncertainty": 4.0,
+     "unit": "J/K/mol",
+     "verbatim_line": "Cu+2                aq                 64.9±1.0         -98±4"
+    },
+    {
+     "substance": "Cu",
+     "state": "cr",
+     "quantity": "S(298.15 K)",
+     "value": 33.15,
+     "uncertainty": 0.08,
+     "unit": "J/K/mol",
+     "verbatim_line": "Cu                  cr                 0                33.15±0.08            5.004±0"
+    },
+    {
+     "substance": "H2",
+     "state": "g",
+     "quantity": "S(298.15 K)",
+     "value": 130.68,
+     "uncertainty": 0.003,
+     "unit": "J/K/mol",
+     "verbatim_line": "H2                  g                  0                130.680±0.003         8.468±0"
+    }
+   ],
+   "delta_f_h_kj_per_mol": 64.9,
+   "entropy_ion_j_per_mol_k": -98.0,
+   "entropy_element_per_atom_j_per_mol_k": 33.15,
+   "entropy_h2_j_per_mol_k": 130.68,
+   "delta_r_s_j_per_mol_k": -0.46999999999999176,
+   "delta_f_g_298_15_kj_per_mol": 65.0401305,
+   "delta_f_g_at_report_temperature_kj_per_mol": 65.0424805,
+   "report_temperature_k": 303.15,
+   "nbs_check_delta_f_g_kj_per_mol": 65.49,
+   "deviation_from_nbs_kj_per_mol": -0.44986949999999126,
+   "delta_f_g_prime_at_report_conditions_kj_per_mol": 61.720888204508356
+  },
+  {
+   "element": "Cd",
+   "charge": 2,
+   "species": "Cd+2(aq)",
+   "formation_reaction": "Cd(cr) + 2 H+(aq) -> Cd+2(aq) + 1 H2(g)",
+   "source_values": [
+    {
+     "substance": "Cd+2",
+     "state": "aq",
+     "quantity": "delta_f_H(298.15 K)",
+     "value": -75.92,
+     "uncertainty": 0.6,
+     "unit": "kJ/mol",
+     "verbatim_line": "Cd+2                aq                 -75.92±0.60      -72.8±1.5"
+    },
+    {
+     "substance": "Cd+2",
+     "state": "aq",
+     "quantity": "S(298.15 K)",
+     "value": -72.8,
+     "uncertainty": 1.5,
+     "unit": "J/K/mol",
+     "verbatim_line": "Cd+2                aq                 -75.92±0.60      -72.8±1.5"
+    },
+    {
+     "substance": "Cd",
+     "state": "cr",
+     "quantity": "S(298.15 K)",
+     "value": 51.8,
+     "uncertainty": 0.15,
+     "unit": "J/K/mol",
+     "verbatim_line": "Cd                  cr                 0                51.80±0.15            6.247±0"
+    },
+    {
+     "substance": "H2",
+     "state": "g",
+     "quantity": "S(298.15 K)",
+     "value": 130.68,
+     "uncertainty": 0.003,
+     "unit": "J/K/mol",
+     "verbatim_line": "H2                  g                  0                130.680±0.003         8.468±0"
+    }
+   ],
+   "delta_f_h_kj_per_mol": -75.92,
+   "entropy_ion_j_per_mol_k": -72.8,
+   "entropy_element_per_atom_j_per_mol_k": 51.8,
+   "entropy_h2_j_per_mol_k": 130.68,
+   "delta_r_s_j_per_mol_k": 6.0800000000000125,
+   "delta_f_g_298_15_kj_per_mol": -77.732752,
+   "delta_f_g_at_report_temperature_kj_per_mol": -77.763152,
+   "report_temperature_k": 303.15,
+   "nbs_check_delta_f_g_kj_per_mol": -77.612,
+   "deviation_from_nbs_kj_per_mol": -0.12075200000001018,
+   "delta_f_g_prime_at_report_conditions_kj_per_mol": -81.08474429549165
+  },
+  {
+   "element": "Mg",
+   "charge": 2,
+   "species": "Mg+2(aq)",
+   "formation_reaction": "Mg(cr) + 2 H+(aq) -> Mg+2(aq) + 1 H2(g)",
+   "source_values": [
+    {
+     "substance": "Mg+2",
+     "state": "aq",
+     "quantity": "delta_f_H(298.15 K)",
+     "value": -467.0,
+     "uncertainty": 0.6,
+     "unit": "kJ/mol",
+     "verbatim_line": "Mg+2                aq                 -467.0±0.6       -137±4"
+    },
+    {
+     "substance": "Mg+2",
+     "state": "aq",
+     "quantity": "S(298.15 K)",
+     "value": -137.0,
+     "uncertainty": 4.0,
+     "unit": "J/K/mol",
+     "verbatim_line": "Mg+2                aq                 -467.0±0.6       -137±4"
+    },
+    {
+     "substance": "Mg",
+     "state": "cr",
+     "quantity": "S(298.15 K)",
+     "value": 32.67,
+     "uncertainty": 0.1,
+     "unit": "J/K/mol",
+     "verbatim_line": "Mg                  cr                 0                32.67±0.10            4.998±0"
+    },
+    {
+     "substance": "H2",
+     "state": "g",
+     "quantity": "S(298.15 K)",
+     "value": 130.68,
+     "uncertainty": 0.003,
+     "unit": "J/K/mol",
+     "verbatim_line": "H2                  g                  0                130.680±0.003         8.468±0"
+    }
+   ],
+   "delta_f_h_kj_per_mol": -467.0,
+   "entropy_ion_j_per_mol_k": -137.0,
+   "entropy_element_per_atom_j_per_mol_k": 32.67,
+   "entropy_h2_j_per_mol_k": 130.68,
+   "delta_r_s_j_per_mol_k": -38.989999999999995,
+   "delta_f_g_298_15_kj_per_mol": -455.3751315,
+   "delta_f_g_at_report_temperature_kj_per_mol": -455.1801815,
+   "report_temperature_k": 303.15,
+   "nbs_check_delta_f_g_kj_per_mol": -454.8,
+   "deviation_from_nbs_kj_per_mol": -0.5751314999999977,
+   "delta_f_g_prime_at_report_conditions_kj_per_mol": -458.50177379549166
+  },
+  {
+   "element": "Cl",
+   "charge": -1,
+   "species": "Cl-1(aq)",
+   "formation_reaction": "Cl2(g)/2 + -1 H+(aq) -> Cl-1(aq) + -0.5 H2(g)",
+   "source_values": [
+    {
+     "substance": "Cl-",
+     "state": "aq",
+     "quantity": "delta_f_H(298.15 K)",
+     "value": -167.08,
+     "uncertainty": 0.1,
+     "unit": "kJ/mol",
+     "verbatim_line": "Cl-                 aq                 -167.080±0.10    56.60±0.20"
+    },
+    {
+     "substance": "Cl-",
+     "state": "aq",
+     "quantity": "S(298.15 K)",
+     "value": 56.6,
+     "uncertainty": 0.2,
+     "unit": "J/K/mol",
+     "verbatim_line": "Cl-                 aq                 -167.080±0.10    56.60±0.20"
+    },
+    {
+     "substance": "Cl2",
+     "state": "g",
+     "quantity": "S(298.15 K)",
+     "value": 223.081,
+     "uncertainty": 0.01,
+     "unit": "J/K/mol",
+     "verbatim_line": "Cl2                 g                  0                223.081±0.010         9.181±0"
+    },
+    {
+     "substance": "H2",
+     "state": "g",
+     "quantity": "S(298.15 K)",
+     "value": 130.68,
+     "uncertainty": 0.003,
+     "unit": "J/K/mol",
+     "verbatim_line": "H2                  g                  0                130.680±0.003         8.468±0"
+    }
+   ],
+   "delta_f_h_kj_per_mol": -167.08,
+   "entropy_ion_j_per_mol_k": 56.6,
+   "entropy_element_per_atom_j_per_mol_k": 111.5405,
+   "entropy_h2_j_per_mol_k": 130.68,
+   "delta_r_s_j_per_mol_k": -120.28049999999999,
+   "delta_f_g_298_15_kj_per_mol": -131.21836892500002,
+   "delta_f_g_at_report_temperature_kj_per_mol": -130.61696642500002,
+   "report_temperature_k": 303.15,
+   "nbs_check_delta_f_g_kj_per_mol": -131.228,
+   "deviation_from_nbs_kj_per_mol": 0.009631074999987277,
+   "delta_f_g_prime_at_report_conditions_kj_per_mol": -131.44736449887293
+  }
+ ],
+ "elements_not_in_source": [],
+ "cancellation_note": "In a reaction elementally balanced in the ion's element, the ion's absolute formation energy enters with coefficients summing to zero and cancels exactly, as does the ionic-strength term whenever the compartments share an ionic strength. These values therefore change no balanced reaction's energy; they matter only for reactions that are not elementally balanced, which in a GEM are the exchange, sink and biomass pseudo-reactions."
+}

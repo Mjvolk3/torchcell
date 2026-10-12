@@ -1,0 +1,262 @@
+{
+  "generated_by": "experiments/032-amino-acid-module/scripts/aa_latent_regression.py",
+  "split": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/020-cachera-betaxanthin/results/merzbacher_nested_split.json",
+  "n_strains": 4678,
+  "n_pinned": 564,
+  "statistic": "pinned held-out mean Spearman over the 19 amino acids of the decoded prediction; 'direct' regresses the standardized log1p profile itself",
+  "rows": [
+    {
+      "representation": "go",
+      "codec": "direct",
+      "model": "ridge",
+      "param": 10000.0,
+      "pinned_mean_spearman": 0.07730317516107905
+    },
+    {
+      "representation": "go",
+      "codec": "direct",
+      "model": "knn",
+      "param": 25.0,
+      "pinned_mean_spearman": 0.04271619356802472
+    },
+    {
+      "representation": "go",
+      "codec": "pca2",
+      "model": "ridge",
+      "param": 10000.0,
+      "pinned_mean_spearman": 0.05547319971638274
+    },
+    {
+      "representation": "go",
+      "codec": "pca2",
+      "model": "knn",
+      "param": 25.0,
+      "pinned_mean_spearman": 0.007092570135441044
+    },
+    {
+      "representation": "go",
+      "codec": "ae2",
+      "model": "ridge",
+      "param": 3162.2776601683795,
+      "pinned_mean_spearman": 0.06759953820920027
+    },
+    {
+      "representation": "go",
+      "codec": "ae2",
+      "model": "knn",
+      "param": 25.0,
+      "pinned_mean_spearman": 0.006599227611454774
+    },
+    {
+      "representation": "go",
+      "codec": "pca4",
+      "model": "ridge",
+      "param": 10000.0,
+      "pinned_mean_spearman": 0.07519586598591534
+    },
+    {
+      "representation": "go",
+      "codec": "pca4",
+      "model": "knn",
+      "param": 25.0,
+      "pinned_mean_spearman": 0.037110959044172144
+    },
+    {
+      "representation": "go",
+      "codec": "ae4",
+      "model": "ridge",
+      "param": 10000.0,
+      "pinned_mean_spearman": 0.07766371389378685
+    },
+    {
+      "representation": "go",
+      "codec": "ae4",
+      "model": "knn",
+      "param": 25.0,
+      "pinned_mean_spearman": 0.05130909616935596
+    },
+    {
+      "representation": "go",
+      "codec": "pca8",
+      "model": "ridge",
+      "param": 10000.0,
+      "pinned_mean_spearman": 0.07933550868329116
+    },
+    {
+      "representation": "go",
+      "codec": "pca8",
+      "model": "knn",
+      "param": 25.0,
+      "pinned_mean_spearman": 0.04479789544623284
+    },
+    {
+      "representation": "go",
+      "codec": "ae8",
+      "model": "ridge",
+      "param": 10000.0,
+      "pinned_mean_spearman": 0.07982842130190859
+    },
+    {
+      "representation": "go",
+      "codec": "ae8",
+      "model": "knn",
+      "param": 25.0,
+      "pinned_mean_spearman": 0.044632723377119904
+    },
+    {
+      "representation": "go",
+      "codec": "pca12",
+      "model": "ridge",
+      "param": 10000.0,
+      "pinned_mean_spearman": 0.08338511202176875
+    },
+    {
+      "representation": "go",
+      "codec": "pca12",
+      "model": "knn",
+      "param": 25.0,
+      "pinned_mean_spearman": 0.04552833066214629
+    },
+    {
+      "representation": "go",
+      "codec": "ae12",
+      "model": "ridge",
+      "param": 10000.0,
+      "pinned_mean_spearman": 0.07849922564504469
+    },
+    {
+      "representation": "go",
+      "codec": "ae12",
+      "model": "knn",
+      "param": 25.0,
+      "pinned_mean_spearman": 0.0360554675977936
+    },
+    {
+      "representation": "graph_label",
+      "codec": "direct",
+      "model": "ridge",
+      "param": 10000.0,
+      "pinned_mean_spearman": 0.02087154357642859
+    },
+    {
+      "representation": "graph_label",
+      "codec": "direct",
+      "model": "knn",
+      "param": 25.0,
+      "pinned_mean_spearman": 0.04068813817600538
+    },
+    {
+      "representation": "graph_label",
+      "codec": "pca2",
+      "model": "ridge",
+      "param": 10000.0,
+      "pinned_mean_spearman": -0.032639496512850544
+    },
+    {
+      "representation": "graph_label",
+      "codec": "pca2",
+      "model": "knn",
+      "param": 25.0,
+      "pinned_mean_spearman": 0.018383901768960167
+    },
+    {
+      "representation": "graph_label",
+      "codec": "ae2",
+      "model": "ridge",
+      "param": 10000.0,
+      "pinned_mean_spearman": -0.04103471142491928
+    },
+    {
+      "representation": "graph_label",
+      "codec": "ae2",
+      "model": "knn",
+      "param": 25.0,
+      "pinned_mean_spearman": 0.012962058613353249
+    },
+    {
+      "representation": "graph_label",
+      "codec": "pca4",
+      "model": "ridge",
+      "param": 10000.0,
+      "pinned_mean_spearman": 0.015245244321017534
+    },
+    {
+      "representation": "graph_label",
+      "codec": "pca4",
+      "model": "knn",
+      "param": 25.0,
+      "pinned_mean_spearman": 0.041706201826354185
+    },
+    {
+      "representation": "graph_label",
+      "codec": "ae4",
+      "model": "ridge",
+      "param": 10000.0,
+      "pinned_mean_spearman": 0.017980044113445923
+    },
+    {
+      "representation": "graph_label",
+      "codec": "ae4",
+      "model": "knn",
+      "param": 25.0,
+      "pinned_mean_spearman": 0.02728190719856339
+    },
+    {
+      "representation": "graph_label",
+      "codec": "pca8",
+      "model": "ridge",
+      "param": 10000.0,
+      "pinned_mean_spearman": 0.020120103312836025
+    },
+    {
+      "representation": "graph_label",
+      "codec": "pca8",
+      "model": "knn",
+      "param": 25.0,
+      "pinned_mean_spearman": 0.04478021609513236
+    },
+    {
+      "representation": "graph_label",
+      "codec": "ae8",
+      "model": "ridge",
+      "param": 10000.0,
+      "pinned_mean_spearman": 0.01826608573904146
+    },
+    {
+      "representation": "graph_label",
+      "codec": "ae8",
+      "model": "knn",
+      "param": 25.0,
+      "pinned_mean_spearman": 0.04132172185688556
+    },
+    {
+      "representation": "graph_label",
+      "codec": "pca12",
+      "model": "ridge",
+      "param": 10000.0,
+      "pinned_mean_spearman": 0.021822243318531706
+    },
+    {
+      "representation": "graph_label",
+      "codec": "pca12",
+      "model": "knn",
+      "param": 25.0,
+      "pinned_mean_spearman": 0.041870227264537055
+    },
+    {
+      "representation": "graph_label",
+      "codec": "ae12",
+      "model": "ridge",
+      "param": 3162.2776601683795,
+      "pinned_mean_spearman": 0.017349594651729017
+    },
+    {
+      "representation": "graph_label",
+      "codec": "ae12",
+      "model": "knn",
+      "param": 25.0,
+      "pinned_mean_spearman": 0.03741920992961138
+    }
+  ],
+  "seconds": 31.12929058074951
+}

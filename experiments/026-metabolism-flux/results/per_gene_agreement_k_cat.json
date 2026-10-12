@@ -1,33 +1,128 @@
 {
   "parameter": "k_cat",
   "predictors": [
+    "catpred",
     "deepenzyme",
     "dlkcat",
     "eitlem",
+    "ezkinetics",
     "turnup",
     "unikp"
   ],
-  "n_genes_any": 1151,
+  "n_genes_any": 1153,
   "n_genes_all_predictors": 980,
-  "spread_median_decades": 1.2325851210799015,
-  "spread_p90_decades": 2.1897359959907683,
-  "spread_frac_above_1_decade": 0.6724489795918367,
-  "central_p10_p90_range_decades": 0.9363828136415604,
-  "spread_over_signal": 1.3163260827977188,
+  "spread_median_decades": 1.4092309991049503,
+  "spread_p90_decades": 2.4535214738476783,
+  "spread_frac_above_1_decade": 0.8010204081632653,
+  "central_p10_p90_range_decades": 0.8718433549197493,
+  "spread_over_signal": 1.616380960126336,
   "gene_level_spearman": {
+    "catpred|deepenzyme": 0.10432270768508072,
+    "catpred|dlkcat": 0.15406945066276473,
+    "catpred|eitlem": 0.3657070229485909,
+    "catpred|ezkinetics": 0.393389179135563,
+    "catpred|turnup": 0.3466775899411353,
+    "catpred|unikp": 0.43551765871872106,
     "deepenzyme|dlkcat": 0.2648588373953965,
-    "deepenzyme|eitlem": 0.04944233238125067,
+    "deepenzyme|eitlem": 0.04953504794232082,
+    "deepenzyme|ezkinetics": 0.011182344533073468,
     "deepenzyme|turnup": 0.05878337144152679,
-    "deepenzyme|unikp": 0.03601762222324039,
-    "dlkcat|eitlem": 0.1532337440133381,
+    "deepenzyme|unikp": 0.035060868235873795,
+    "dlkcat|eitlem": 0.15297234557861547,
+    "dlkcat|ezkinetics": 0.12722035189722058,
     "dlkcat|turnup": 0.15186330728764907,
-    "dlkcat|unikp": 0.2592798250706484,
-    "eitlem|turnup": 0.30900422021980284,
-    "eitlem|unikp": 0.48050954842886406,
-    "turnup|unikp": 0.4204587979879932
+    "dlkcat|unikp": 0.25849305637871384,
+    "eitlem|ezkinetics": 0.3872966760889662,
+    "eitlem|turnup": 0.3097649377677617,
+    "eitlem|unikp": 0.4811110011364305,
+    "ezkinetics|turnup": 0.3204684824268276,
+    "ezkinetics|unikp": 0.5535799743756445,
+    "turnup|unikp": 0.4199823757429782
   },
   "cassette_genes_absent_from_all_predictors": [
     "CYP76AD1",
     "DOD"
-  ]
+  ],
+  "within_class_band_decades": 0.7502902419306464,
+  "frac_predictions_inside_within_class_band": {
+    "catpred": 0.6551724137931034,
+    "deepenzyme": 0.5614035087719298,
+    "dlkcat": 0.6842105263157895,
+    "eitlem": 0.7758620689655172,
+    "ezkinetics": 0.8448275862068966,
+    "turnup": 0.6981132075471698,
+    "unikp": 0.8275862068965517
+  },
+  "accuracy_vs_measured": {
+    "dlkcat": {
+      "n_pairs": 57,
+      "spearman": 0.6557982771280798,
+      "pearson_log10": 0.8112499854754534,
+      "median_abs_error_decades": 0.38353108542070746,
+      "median_bias_decades": -0.1391947001087983,
+      "frac_within_1_decade": 0.8421052631578947,
+      "frac_within_half_decade": 0.5789473684210527
+    },
+    "unikp": {
+      "n_pairs": 58,
+      "spearman": 0.7492847708524288,
+      "pearson_log10": 0.8591313744510588,
+      "median_abs_error_decades": 0.28736684122566547,
+      "median_bias_decades": -0.11336667136874778,
+      "frac_within_1_decade": 0.896551724137931,
+      "frac_within_half_decade": 0.7241379310344828
+    },
+    "eitlem": {
+      "n_pairs": 58,
+      "spearman": 0.6100532204612438,
+      "pearson_log10": 0.8212284785503254,
+      "median_abs_error_decades": 0.23020976684329564,
+      "median_bias_decades": -0.009049205293948287,
+      "frac_within_1_decade": 0.7931034482758621,
+      "frac_within_half_decade": 0.7413793103448276
+    },
+    "turnup": {
+      "n_pairs": 53,
+      "spearman": 0.5059881450946322,
+      "pearson_log10": 0.7227924732463692,
+      "median_abs_error_decades": 0.4447134616264524,
+      "median_bias_decades": 0.003196654690721168,
+      "frac_within_1_decade": 0.8113207547169812,
+      "frac_within_half_decade": 0.5660377358490566
+    },
+    "deepenzyme": {
+      "n_pairs": 57,
+      "spearman": 0.34118752907617356,
+      "pearson_log10": 0.5234285800321946,
+      "median_abs_error_decades": 0.6473857324110401,
+      "median_bias_decades": -0.23034172593334534,
+      "frac_within_1_decade": 0.6666666666666666,
+      "frac_within_half_decade": 0.42105263157894735
+    },
+    "ezkinetics": {
+      "n_pairs": 58,
+      "spearman": 0.7950902897504567,
+      "pearson_log10": 0.8986314417138018,
+      "median_abs_error_decades": 0.3643852524806379,
+      "median_bias_decades": -0.1469846051716936,
+      "frac_within_1_decade": 0.9137931034482759,
+      "frac_within_half_decade": 0.6551724137931034
+    },
+    "catpred": {
+      "n_pairs": 58,
+      "spearman": 0.47045251880963146,
+      "pearson_log10": 0.5772614555899939,
+      "median_abs_error_decades": 0.48989707596359944,
+      "median_bias_decades": 0.18341090716849756,
+      "frac_within_1_decade": 0.7241379310344828,
+      "frac_within_half_decade": 0.5
+    }
+  },
+  "accuracy_n_pairs": 57,
+  "selection_effect": {
+    "median_spread_all_pairs_decades": 1.4480497175399734,
+    "median_spread_measured_pairs_decades": 1.5031634345461828,
+    "n_all_pairs": 3891,
+    "n_measured_pairs": 58
+  }
 }

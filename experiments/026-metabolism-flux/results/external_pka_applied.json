@@ -1,0 +1,2196 @@
+{
+ "built_at": "2026-09-11T06:52:52.657978+00:00",
+ "method": "cascade_top3",
+ "members": [
+  "unipka-simple-template",
+  "molgpka",
+  "pkasolver"
+ ],
+ "decision_path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/kinetics-equilibrator-datasets/experiments/026-metabolism-flux/results/pka_method_selection.json",
+ "decision_sha256": "73a53fcf015a47e5aae879ff5aee33d87c9145fa075705a6d54a6e1c457aa15f",
+ "local_cache_path": "/scratch/projects/torchcell-scratch/tmp/pka_apply_selection.sqlite",
+ "conditions": {
+  "p_h": 7.2,
+  "ionic_strength_m": 0.25,
+  "temperature_k": 303.15,
+  "p_mg": 3.0
+ },
+ "convention": "the pH 7 major microspecies is submitted to the compound bridge, which is the microstate the eQuilibrator cache references its own compounds to; submitting the neutral parent instead moved dGf'0 by a mean of 777.5 kJ/mol on the 7 targets external_pka_reprice.json priced both ways",
+ "n_targets": 55,
+ "n_priced": 51,
+ "n_metabolite_rows_priced": 68,
+ "outcomes": {
+  "compound_creation_failed": 3,
+  "priced": 51,
+  "priced_no_ionizable_center": 1
+ },
+ "records": [
+  {
+   "key": "lipid:1,2-diacylglycerol 3-diphosphate (1-16:0, 2-16:1)",
+   "name": "1,2-diacylglycerol 3-diphosphate (1-16:0, 2-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3616",
+    "s_3624"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OP(=O)(O)O",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)([O-])OP(=O)([O-])[O-]",
+   "submitted_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)([O-])OP(=O)([O-])[O-]",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    8.17376356124878,
+    6.190067863464355,
+    1.2664432525634766
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694325,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 567.6701667417124,
+   "sigma_kj_per_mol": 13.13399700864884,
+   "previous_dgf_prime_kj_per_mol": 2552.8988933634223,
+   "change_kj_per_mol": -1985.22872662171,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "lipid:1,2-diacylglycerol 3-diphosphate (1-16:1, 2-16:1)",
+   "name": "1,2-diacylglycerol 3-diphosphate (1-16:1, 2-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3617",
+    "s_3625"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OP(=O)(O)O)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)([O-])OP(=O)([O-])[O-])OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "submitted_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)([O-])OP(=O)([O-])[O-])OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    8.145377349853515,
+    6.140676784515381,
+    1.2993181228637696
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694326,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 559.5885288495624,
+   "sigma_kj_per_mol": 13.23245218581297,
+   "previous_dgf_prime_kj_per_mol": 2544.925519350499,
+   "change_kj_per_mol": -1985.3369905009367,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "lipid:1,2-diacylglycerol 3-diphosphate (1-16:1, 2-18:1)",
+   "name": "1,2-diacylglycerol 3-diphosphate (1-16:1, 2-18:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3621",
+    "s_3629"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OP(=O)(O)O)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)([O-])OP(=O)([O-])[O-])OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "submitted_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)([O-])OP(=O)([O-])[O-])OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    8.166041660308839,
+    6.218300628662109,
+    1.3017658233642577
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694327,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 744.3552965471958,
+   "sigma_kj_per_mol": 13.875796090842622,
+   "previous_dgf_prime_kj_per_mol": 2729.6140710393556,
+   "change_kj_per_mol": -1985.2587744921598,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "lipid:1,2-diacylglycerol 3-diphosphate (1-18:0, 2-16:1)",
+   "name": "1,2-diacylglycerol 3-diphosphate (1-18:0, 2-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3618",
+    "s_3626"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OP(=O)(O)O",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)([O-])OP(=O)([O-])[O-]",
+   "submitted_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)([O-])OP(=O)([O-])[O-]",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    8.228743171691894,
+    6.21159143447876,
+    1.3335033416748048
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694328,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 752.563051648262,
+   "sigma_kj_per_mol": 13.794233531291697,
+   "previous_dgf_prime_kj_per_mol": 2737.5874450522783,
+   "change_kj_per_mol": -1985.0243934040163,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "lipid:1,2-diacylglycerol 3-diphosphate (1-18:0, 2-18:1)",
+   "name": "1,2-diacylglycerol 3-diphosphate (1-18:0, 2-18:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3622",
+    "s_3630"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OP(=O)(O)O",
+   "ph7_smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)([O-])OP(=O)([O-])[O-]",
+   "submitted_smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)([O-])OP(=O)([O-])[O-]",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    8.21386079788208,
+    6.315182209014893,
+    1.3493809700012207
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694329,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 937.1944356708141,
+   "sigma_kj_per_mol": 14.466090902290892,
+   "previous_dgf_prime_kj_per_mol": 2922.2759967411343,
+   "change_kj_per_mol": -1985.0815610703203,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "lipid:1,2-diacylglycerol 3-diphosphate (1-18:1, 2-16:1)",
+   "name": "1,2-diacylglycerol 3-diphosphate (1-18:1, 2-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3619",
+    "s_3627"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)(O)OP(=O)(O)O",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)([O-])OP(=O)([O-])[O-]",
+   "submitted_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)([O-])OP(=O)([O-])[O-]",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    8.160947132110596,
+    6.182173347473144,
+    1.2902033805847168
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694330,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 744.336494481694,
+   "sigma_kj_per_mol": 13.875796090842622,
+   "previous_dgf_prime_kj_per_mol": 2729.6140710393556,
+   "change_kj_per_mol": -1985.2775765576616,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "lipid:CDP-diacylglycerol (1-16:1, 2-18:1)",
+   "name": "CDP-diacylglycerol (1-16:1, 2-18:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3089",
+    "s_3106"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OP(=O)(O)OCC1OC(n2ccc(N)nc2=O)C(O)C1O)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)([O-])OP(=O)([O-])OCC1OC(n2ccc(N)nc2=O)C(O)C1O)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "submitted_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)([O-])OP(=O)([O-])OCC1OC(n2ccc(N)nc2=O)C(O)C1O)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    7.0105382919311525,
+    4.494888830184936,
+    2.0648206233978272
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694331,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 932.9332395070555,
+   "sigma_kj_per_mol": 14.40486375050971,
+   "previous_dgf_prime_kj_per_mol": 2878.8127121697044,
+   "change_kj_per_mol": -1945.8794726626488,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "lipid:CDP-diacylglycerol (1-18:0, 2-16:1)",
+   "name": "CDP-diacylglycerol (1-18:0, 2-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3086",
+    "s_3100"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OP(=O)(O)OCC1OC(n2ccc(N)nc2=O)C(O)C1O",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)([O-])OP(=O)([O-])OCC1OC(n2ccc(N)nc2=O)C(O)C1O",
+   "submitted_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)([O-])OP(=O)([O-])OCC1OC(n2ccc(N)nc2=O)C(O)C1O",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    7.08694019317627,
+    4.452067041397095,
+    2.2568967819213865
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694332,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 941.3121366819519,
+   "sigma_kj_per_mol": 14.21224675643152,
+   "previous_dgf_prime_kj_per_mol": 2886.7859879930083,
+   "change_kj_per_mol": -1945.4738513110565,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "lipid:CDP-diacylglycerol (1-18:1, 2-16:1)",
+   "name": "CDP-diacylglycerol (1-18:1, 2-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3087",
+    "s_3102"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)(O)OP(=O)(O)OCC1OC(n2ccc(N)nc2=O)C(O)C1O",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)([O-])OP(=O)([O-])OCC1OC(n2ccc(N)nc2=O)C(O)C1O",
+   "submitted_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)([O-])OP(=O)([O-])OCC1OC(n2ccc(N)nc2=O)C(O)C1O",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    7.020970630645752,
+    4.542785596847534,
+    1.9848018646240235
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694333,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 932.9888851433984,
+   "sigma_kj_per_mol": 14.40486375050971,
+   "previous_dgf_prime_kj_per_mol": 2878.8127138561813,
+   "change_kj_per_mol": -1945.8238287127829,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "lipid:acylglycerone phosphate (16:1)",
+   "name": "acylglycerone phosphate (16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_2941",
+    "s_2949"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(=O)COP(=O)(O)O",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(=O)COP(=O)([O-])[O-]",
+   "submitted_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(=O)COP(=O)([O-])[O-]",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    7.264231491088867,
+    1.2170817375183105
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694334,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 136.25872287753964,
+   "sigma_kj_per_mol": 6.082153353042659,
+   "previous_dgf_prime_kj_per_mol": 1220.6209104384538,
+   "change_kj_per_mol": -1084.3621875609142,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "lipid:cardiolipin (1-16:0, 2-18:1, 3-18:0, 4-16:1)",
+   "name": "cardiolipin (1-16:0, 2-18:1, 3-18:0, 4-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3260"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "submitted_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    6.70005989074707,
+    2.1555278301239014
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694335,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 3889.204922738723,
+   "sigma_kj_per_mol": 26.680309956733954,
+   "previous_dgf_prime_kj_per_mol": 5474.450315682995,
+   "change_kj_per_mol": -1585.2453929442722,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "lipid:cardiolipin (1-18:0, 2-16:1, 3-16:0, 4-18:1)",
+   "name": "cardiolipin (1-18:0, 2-16:1, 3-16:0, 4-18:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3250"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "submitted_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    6.70005989074707,
+    2.1617085933685303
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694335,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 3889.204922738723,
+   "sigma_kj_per_mol": 26.680309956733954,
+   "previous_dgf_prime_kj_per_mol": 5474.450315682995,
+   "change_kj_per_mol": -1585.2453929442722,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-16:0, 2-16:1, 4-16:1)",
+   "name": "monolysocardiolipin (1-16:0, 2-16:1, 4-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3284"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "submitted_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    6.44567461013794,
+    2.2403554916381836
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694336,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 2285.496461684826,
+   "sigma_kj_per_mol": 19.680399528659112,
+   "previous_dgf_prime_kj_per_mol": 3870.741734198655,
+   "change_kj_per_mol": -1585.2452725138291,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-16:0, 2-16:1, 4-18:1)",
+   "name": "monolysocardiolipin (1-16:0, 2-16:1, 4-18:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3285"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "submitted_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    6.5519530296325685,
+    2.173512172698975
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694337,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 2470.160751522599,
+   "sigma_kj_per_mol": 20.36550962523934,
+   "previous_dgf_prime_kj_per_mol": 4055.4302845513553,
+   "change_kj_per_mol": -1585.269533028756,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-16:0, 2-18:1, 4-16:1)",
+   "name": "monolysocardiolipin (1-16:0, 2-18:1, 4-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3292"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "submitted_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    6.568549537658692,
+    2.171133041381836
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694338,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 2470.1564319932636,
+   "sigma_kj_per_mol": 20.36550962523934,
+   "previous_dgf_prime_kj_per_mol": 4055.4302858875158,
+   "change_kj_per_mol": -1585.2738538942522,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-16:0, 2-18:1, 4-18:1)",
+   "name": "monolysocardiolipin (1-16:0, 2-18:1, 4-18:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3293"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "ph7_smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "submitted_smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    6.509060478210449,
+    2.2485281467437743
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694339,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 2654.859773632859,
+   "sigma_kj_per_mol": 21.057011776809688,
+   "previous_dgf_prime_kj_per_mol": 4240.118837576372,
+   "change_kj_per_mol": -1585.2590639435134,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-16:1, 2-16:1, 4-16:1)",
+   "name": "monolysocardiolipin (1-16:1, 2-16:1, 4-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3286"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "submitted_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    6.380238246917725,
+    2.0507981300354006
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694340,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 2277.5354577246317,
+   "sigma_kj_per_mol": 19.77803526150571,
+   "previous_dgf_prime_kj_per_mol": 3862.7683581814995,
+   "change_kj_per_mol": -1585.2329004568678,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-16:1, 2-16:1, 4-18:1)",
+   "name": "monolysocardiolipin (1-16:1, 2-16:1, 4-18:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3287"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "submitted_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    6.380146503448486,
+    2.059279537200928
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694341,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 2462.2240255359507,
+   "sigma_kj_per_mol": 20.451588214748384,
+   "previous_dgf_prime_kj_per_mol": 4047.4569098703555,
+   "change_kj_per_mol": -1585.2328843344048,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-16:1, 2-18:1, 4-16:1)",
+   "name": "monolysocardiolipin (1-16:1, 2-18:1, 4-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3294"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "submitted_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    6.386521053314209,
+    2.044916343688965
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694342,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 2462.2228972024545,
+   "sigma_kj_per_mol": 20.451588214748384,
+   "previous_dgf_prime_kj_per_mol": 4047.456909870361,
+   "change_kj_per_mol": -1585.2340126679064,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-16:1, 2-18:1, 4-18:1)",
+   "name": "monolysocardiolipin (1-16:1, 2-18:1, 4-18:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3295"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "submitted_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    6.373730278015136,
+    2.0923898220062256
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694343,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 2646.9136970928926,
+   "sigma_kj_per_mol": 21.132253741397818,
+   "previous_dgf_prime_kj_per_mol": 4232.145461559217,
+   "change_kj_per_mol": -1585.2317644663249,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-18:0, 2-16:1, 4-16:1)",
+   "name": "monolysocardiolipin (1-18:0, 2-16:1, 4-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3288"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(COC(=O)CCCCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "submitted_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(COC(=O)CCCCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    6.5215106964111325,
+    2.2167789459228517
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694344,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 2470.168282397332,
+   "sigma_kj_per_mol": 20.36550962523934,
+   "previous_dgf_prime_kj_per_mol": 4055.430285887525,
+   "change_kj_per_mol": -1585.262003490193,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-18:0, 2-16:1, 4-18:1)",
+   "name": "monolysocardiolipin (1-18:0, 2-16:1, 4-18:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3289"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "submitted_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    6.6613517761230465,
+    2.1374929904937745
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694345,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 2654.81776745712,
+   "sigma_kj_per_mol": 21.057011776809688,
+   "previous_dgf_prime_kj_per_mol": 4240.1188362402245,
+   "change_kj_per_mol": -1585.3010687831043,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-18:1, 2-16:1, 4-16:1)",
+   "name": "monolysocardiolipin (1-18:1, 2-16:1, 4-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3290"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "submitted_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    6.522093200683594,
+    2.1993006229400636
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694346,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 2462.1947689165704,
+   "sigma_kj_per_mol": 20.451588214748384,
+   "previous_dgf_prime_kj_per_mol": 4047.4569118746035,
+   "change_kj_per_mol": -1585.262142958033,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "lipid:monolysocardiolipin (1-18:1, 2-16:1, 4-18:1)",
+   "name": "monolysocardiolipin (1-18:1, 2-16:1, 4-18:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3291"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "submitted_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    6.5947648048400875,
+    2.162624788284302
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694347,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 2646.864463451229,
+   "sigma_kj_per_mol": 21.132253741397818,
+   "previous_dgf_prime_kj_per_mol": 4232.145462227303,
+   "change_kj_per_mol": -1585.2809987760743,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-16:1, 3-16:0, 4-16:1)",
+   "name": "monolysocardiolipin (2-16:1, 3-16:0, 4-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3270"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "submitted_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    6.445874500274658,
+    2.23921480178833
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694336,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 2285.496461684826,
+   "sigma_kj_per_mol": 19.680399528659112,
+   "previous_dgf_prime_kj_per_mol": 3870.741734198655,
+   "change_kj_per_mol": -1585.2452725138291,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-16:1, 3-16:0, 4-18:1)",
+   "name": "monolysocardiolipin (2-16:1, 3-16:0, 4-18:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3275"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "submitted_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    6.568829727172852,
+    2.168603229522705
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694338,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 2470.1564319932636,
+   "sigma_kj_per_mol": 20.36550962523934,
+   "previous_dgf_prime_kj_per_mol": 4055.4302858875158,
+   "change_kj_per_mol": -1585.2738538942522,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-16:1, 3-16:1, 4-16:1)",
+   "name": "monolysocardiolipin (2-16:1, 3-16:1, 4-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3272"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "submitted_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    6.381453895568848,
+    2.057048034667969
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694340,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 2277.5354577246317,
+   "sigma_kj_per_mol": 19.77803526150571,
+   "previous_dgf_prime_kj_per_mol": 3862.7683581814995,
+   "change_kj_per_mol": -1585.2329004568678,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-16:1, 3-16:1, 4-18:1)",
+   "name": "monolysocardiolipin (2-16:1, 3-16:1, 4-18:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3276"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "submitted_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    6.388695335388183,
+    2.0436521053314207
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694342,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 2462.2228972024545,
+   "sigma_kj_per_mol": 20.451588214748384,
+   "previous_dgf_prime_kj_per_mol": 4047.456909870361,
+   "change_kj_per_mol": -1585.2340126679064,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-16:1, 3-18:0, 4-16:1)",
+   "name": "monolysocardiolipin (2-16:1, 3-18:0, 4-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3273"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(COC(=O)CCCCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "submitted_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(COC(=O)CCCCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    6.51876916885376,
+    2.2201443672180177
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694344,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 2470.168282397332,
+   "sigma_kj_per_mol": 20.36550962523934,
+   "previous_dgf_prime_kj_per_mol": 4055.430285887525,
+   "change_kj_per_mol": -1585.262003490193,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-16:1, 3-18:1, 4-16:1)",
+   "name": "monolysocardiolipin (2-16:1, 3-18:1, 4-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3274"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "submitted_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    6.523099136352539,
+    2.202026700973511
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694346,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 2462.1947689165704,
+   "sigma_kj_per_mol": 20.451588214748384,
+   "previous_dgf_prime_kj_per_mol": 4047.4569118746035,
+   "change_kj_per_mol": -1585.262142958033,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-18:1, 3-16:0, 4-16:1)",
+   "name": "monolysocardiolipin (2-18:1, 3-16:0, 4-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3278"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "submitted_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    6.548603248596192,
+    2.173512172698975
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694337,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 2470.160751522599,
+   "sigma_kj_per_mol": 20.36550962523934,
+   "previous_dgf_prime_kj_per_mol": 4055.4302845513553,
+   "change_kj_per_mol": -1585.269533028756,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-18:1, 3-16:0, 4-18:1)",
+   "name": "monolysocardiolipin (2-18:1, 3-16:0, 4-18:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3282"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)(O)OCC(O)COP(=O)(O)OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "ph7_smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "submitted_smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(CO)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    6.504743576049805,
+    2.243733263015747
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694339,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 2654.859773632859,
+   "sigma_kj_per_mol": 21.057011776809688,
+   "previous_dgf_prime_kj_per_mol": 4240.118837576372,
+   "change_kj_per_mol": -1585.2590639435134,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-18:1, 3-16:1, 4-16:1)",
+   "name": "monolysocardiolipin (2-18:1, 3-16:1, 4-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3279"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "submitted_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    6.380146503448486,
+    2.059279537200928
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694341,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 2462.2240255359507,
+   "sigma_kj_per_mol": 20.451588214748384,
+   "previous_dgf_prime_kj_per_mol": 4047.4569098703555,
+   "change_kj_per_mol": -1585.2328843344048,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-18:1, 3-16:1, 4-18:1)",
+   "name": "monolysocardiolipin (2-18:1, 3-16:1, 4-18:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3283"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "submitted_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    6.374225997924805,
+    2.0923898220062256
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694343,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 2646.9136970928926,
+   "sigma_kj_per_mol": 21.132253741397818,
+   "previous_dgf_prime_kj_per_mol": 4232.145461559217,
+   "change_kj_per_mol": -1585.2317644663249,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-18:1, 3-18:0, 4-16:1)",
+   "name": "monolysocardiolipin (2-18:1, 3-18:0, 4-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3280"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "submitted_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    6.6613517761230465,
+    2.1374929904937745
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694345,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 2654.81776745712,
+   "sigma_kj_per_mol": 21.057011776809688,
+   "previous_dgf_prime_kj_per_mol": 4240.1188362402245,
+   "change_kj_per_mol": -1585.3010687831043,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "lipid:monolysocardiolipin (2-18:1, 3-18:1, 4-16:1)",
+   "name": "monolysocardiolipin (2-18:1, 3-18:1, 4-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3281"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "submitted_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)([O-])OCC(O)COP(=O)([O-])OCC(CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    6.5947648048400875,
+    2.162624788284302
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694347,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 2646.864463451229,
+   "sigma_kj_per_mol": 21.132253741397818,
+   "previous_dgf_prime_kj_per_mol": 4232.145462227303,
+   "change_kj_per_mol": -1585.2809987760743,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "lipid:phosphatidyl-N,N-dimethylethanolamine (1-16:0, 2-16:1)",
+   "name": "phosphatidyl-N,N-dimethylethanolamine (1-16:0, 2-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3199"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OCCN(C)C",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)([O-])OCC[NH+](C)C",
+   "submitted_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)([O-])OCC[NH+](C)C",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    8.425689315795898,
+    2.5637056827545166
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694348,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 2190.0484665318213,
+   "sigma_kj_per_mol": 14.204287834403317,
+   "previous_dgf_prime_kj_per_mol": 2973.1796841024848,
+   "change_kj_per_mol": -783.1312175706635,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "lipid:phosphatidyl-N,N-dimethylethanolamine (1-16:1, 2-16:1)",
+   "name": "phosphatidyl-N,N-dimethylethanolamine (1-16:1, 2-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3200"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCCN(C)C)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)([O-])OCC[NH+](C)C)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "submitted_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)([O-])OCC[NH+](C)C)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    8.483922958374023,
+    2.524780607223511
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694349,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 2182.1180051928977,
+   "sigma_kj_per_mol": 14.264442866407116,
+   "previous_dgf_prime_kj_per_mol": 2965.2085582041027,
+   "change_kj_per_mol": -783.090553011205,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "lipid:phosphatidyl-N,N-dimethylethanolamine (1-16:1, 2-18:1)",
+   "name": "phosphatidyl-N,N-dimethylethanolamine (1-16:1, 2-18:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3204"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCCN(C)C)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)([O-])OCC[NH+](C)C)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "submitted_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)([O-])OCC[NH+](C)C)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    8.450736045837402,
+    2.595752477645874
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694350,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 2366.782701278731,
+   "sigma_kj_per_mol": 14.901914236179357,
+   "previous_dgf_prime_kj_per_mol": 3149.8933951733147,
+   "change_kj_per_mol": -783.1106938945836,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "lipid:phosphatidyl-N,N-dimethylethanolamine (1-18:0, 2-16:1)",
+   "name": "phosphatidyl-N,N-dimethylethanolamine (1-18:0, 2-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3201"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCCN(C)C",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)([O-])OCC[NH+](C)C",
+   "submitted_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)([O-])OCC[NH+](C)C",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    8.390899658203125,
+    2.625607633590698
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694351,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 2374.7089410043727,
+   "sigma_kj_per_mol": 14.85575933716715,
+   "previous_dgf_prime_kj_per_mol": 3157.864603583874,
+   "change_kj_per_mol": -783.1556625795015,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "lipid:phosphatidyl-N,N-dimethylethanolamine (1-18:0, 2-18:1)",
+   "name": "phosphatidyl-N,N-dimethylethanolamine (1-18:0, 2-18:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3205"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCCN(C)C",
+   "ph7_smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)([O-])OCC[NH+](C)C",
+   "submitted_smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)([O-])OCC[NH+](C)C",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    8.36227798461914,
+    2.6989235401153566
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694352,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 2559.372930462793,
+   "sigma_kj_per_mol": 15.518804208765424,
+   "previous_dgf_prime_kj_per_mol": 3342.5496289284383,
+   "change_kj_per_mol": -783.1766984656451,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "lipid:phosphatidyl-N,N-dimethylethanolamine (1-18:1, 2-16:1)",
+   "name": "phosphatidyl-N,N-dimethylethanolamine (1-18:1, 2-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3202"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)(O)OCCN(C)C",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)([O-])OCC[NH+](C)C",
+   "submitted_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)([O-])OCC[NH+](C)C",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    8.410147094726563,
+    2.5670021533966065
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694353,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 2366.7513378423114,
+   "sigma_kj_per_mol": 14.901914236179357,
+   "previous_dgf_prime_kj_per_mol": 3149.893462111543,
+   "change_kj_per_mol": -783.1421242692318,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "lipid:phosphatidyl-N-methylethanolamine (1-16:0, 2-16:1)",
+   "name": "phosphatidyl-N-methylethanolamine (1-16:0, 2-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3184"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OCCNC",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)([O-])OCC[NH2+]C",
+   "submitted_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCC)COP(=O)([O-])OCC[NH2+]C",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    9.865256309509277,
+    2.8418843269348146
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694354,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 2094.846016281004,
+   "sigma_kj_per_mol": 13.346873250318602,
+   "previous_dgf_prime_kj_per_mol": 2874.0697616101465,
+   "change_kj_per_mol": -779.2237453291427,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "lipid:phosphatidyl-N-methylethanolamine (1-16:1, 2-16:1)",
+   "name": "phosphatidyl-N-methylethanolamine (1-16:1, 2-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3186"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCCNC)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)([O-])OCC[NH2+]C)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "submitted_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)([O-])OCC[NH2+]C)OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    9.74323558807373,
+    2.793364095687866
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694355,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 2086.867813298114,
+   "sigma_kj_per_mol": 13.479213307134291,
+   "previous_dgf_prime_kj_per_mol": 2866.0968248499203,
+   "change_kj_per_mol": -779.2290115518063,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "lipid:phosphatidyl-N-methylethanolamine (1-16:1, 2-18:1)",
+   "name": "phosphatidyl-N-methylethanolamine (1-16:1, 2-18:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3194"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)(O)OCCNC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)([O-])OCC[NH2+]C)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "submitted_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OCC(COP(=O)([O-])OCC[NH2+]C)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    9.817633628845215,
+    2.8419135570526124
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694356,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 2271.559461478624,
+   "sigma_kj_per_mol": 14.125300756653806,
+   "previous_dgf_prime_kj_per_mol": 3050.783301276386,
+   "change_kj_per_mol": -779.2238397977617,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "lipid:phosphatidyl-N-methylethanolamine (1-18:0, 2-16:1)",
+   "name": "phosphatidyl-N-methylethanolamine (1-18:0, 2-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3188"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCCNC",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)([O-])OCC[NH2+]C",
+   "submitted_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)([O-])OCC[NH2+]C",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    9.83845272064209,
+    2.86134672164917
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694357,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 2279.5336113252015,
+   "sigma_kj_per_mol": 14.011175205334037,
+   "previous_dgf_prime_kj_per_mol": 3058.75616520277,
+   "change_kj_per_mol": -779.2225538775683,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "lipid:phosphatidyl-N-methylethanolamine (1-18:0, 2-18:1)",
+   "name": "phosphatidyl-N-methylethanolamine (1-18:0, 2-18:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3196"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OCCNC",
+   "ph7_smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)([O-])OCC[NH2+]C",
+   "submitted_smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)([O-])OCC[NH2+]C",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    9.874726104736329,
+    2.9209385395050047
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694358,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 2464.223423255102,
+   "sigma_kj_per_mol": 14.6865564954478,
+   "previous_dgf_prime_kj_per_mol": 3243.442529788641,
+   "change_kj_per_mol": -779.2191065335392,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "lipid:phosphatidyl-N-methylethanolamine (1-18:1, 2-16:1)",
+   "name": "phosphatidyl-N-methylethanolamine (1-18:1, 2-16:1)",
+   "source": "lipid_external_pka",
+   "met_ids": [
+    "s_3190"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)(O)OCCNC",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)([O-])OCC[NH2+]C",
+   "submitted_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC(COC(=O)CCCCCCC/C=C\\CCCCCCCC)COP(=O)([O-])OCC[NH2+]C",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    9.819205474853515,
+    2.8254743576049806
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694359,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 2271.5595252716425,
+   "sigma_kj_per_mol": 14.125300756653806,
+   "previous_dgf_prime_kj_per_mol": 3050.783296564563,
+   "change_kj_per_mol": -779.2237712929204,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "tier_a:ferroheme b",
+   "name": "ferroheme b",
+   "source": "tier_a_pilot",
+   "met_ids": [
+    "s_0712"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "pkasolver"
+   ],
+   "smiles": "C=CC1=C(C)C2=CC3=C(C=C)C(C)=C4C=C5C(C)=C(CCC(=O)[O-])C6=[N+]5[Fe-2]5(N7C(=CC1=[N+]25)C(C)=C(CCC(=O)[O-])C7=C6)N43",
+   "ph7_smiles": "C=CC1=C(C)C2=Cc3c(C=C)c(C)c4n3[Fe-2]35n6c(c(C)c(CCC(=O)[O-])c6=CC6=[N+]3C(=C4)C(C)=C6CCC(=O)[O-])=CC1=[N+]25",
+   "submitted_smiles": "C=CC1=C(C)C2=Cc3c(C=C)c(C)c4n3[Fe-2]35n6c(c(C)c(CCC(=O)[O-])c6=CC6=[N+]3C(=C4)C(C)=C6CCC(=O)[O-])=CC1=[N+]25",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    3.3938636112213136,
+    3.3009616470336915
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": null,
+   "group_decomposition_ok": null,
+   "dgf_prime_kj_per_mol": null,
+   "sigma_kj_per_mol": null,
+   "previous_dgf_prime_kj_per_mol": null,
+   "change_kj_per_mol": null,
+   "outcome": "compound_creation_failed",
+   "detail": "method=empty status=failed"
+  },
+  {
+   "key": "tier_a:phosphatidylethanolamine (1-16:1, 2-16:1)",
+   "name": "phosphatidylethanolamine (1-16:1, 2-16:1)",
+   "source": "tier_a_pilot",
+   "met_ids": [
+    "s_3132",
+    "s_3150",
+    "s_3168",
+    "s_3185",
+    "s_3467",
+    "s_3706"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC[C@H](COP(=O)([O-])OCC[NH3+])OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "ph7_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC[C@H](COP(=O)([O-])OCC[NH3+])OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "submitted_smiles": "CCCCCC/C=C\\CCCCCCCC(=O)OC[C@H](COP(=O)([O-])OCC[NH3+])OC(=O)CCCCCCC/C=C\\CCCCCC",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    9.62911777496338,
+    2.778149652481079
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694360,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 1971.1064305215268,
+   "sigma_kj_per_mol": 12.622329359518005,
+   "previous_dgf_prime_kj_per_mol": 1967.930678541387,
+   "change_kj_per_mol": 3.175751980139921,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "tier_a:superoxide",
+   "name": "superoxide",
+   "source": "tier_a_pilot",
+   "met_ids": [
+    "s_3813",
+    "s_3931"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "[O][O-]",
+   "ph7_smiles": null,
+   "submitted_smiles": "[O][O-]",
+   "convention": "NEUTRAL PARENT submitted: no pH 7 state was available",
+   "pkas": [
+    8.326695156097411
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": null,
+   "group_decomposition_ok": null,
+   "dgf_prime_kj_per_mol": null,
+   "sigma_kj_per_mol": null,
+   "previous_dgf_prime_kj_per_mol": null,
+   "change_kj_per_mol": null,
+   "outcome": "compound_creation_failed",
+   "detail": "method=empty status=failed"
+  },
+  {
+   "key": "tier_a:N-(4-oxoglutarate)-L-cysteinylglycine",
+   "name": "N-(4-oxoglutarate)-L-cysteinylglycine",
+   "source": "tier_a_pilot",
+   "met_ids": [
+    "s_3923",
+    "s_3924"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "O=C([O-])CNC(=O)[C@H](CS)NC(=O)CCC(=O)C(=O)[O-]",
+   "ph7_smiles": "O=C([O-])CNC(=O)[C@H](CS)NC(=O)CCC(=O)C(=O)[O-]",
+   "submitted_smiles": "O=C([O-])CNC(=O)[C@H](CS)NC(=O)CCC(=O)C(=O)[O-]",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    9.284785270690918,
+    4.569518089294434,
+    3.5053726196289063
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694361,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": -539.6128848638721,
+   "sigma_kj_per_mol": 4.581527438393985,
+   "previous_dgf_prime_kj_per_mol": -539.6496464424988,
+   "change_kj_per_mol": 0.0367615786267379,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "tier_a:methionyl acetate",
+   "name": "methionyl acetate",
+   "source": "tier_a_pilot",
+   "met_ids": [
+    "s_4256",
+    "s_4257"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CC(=O)OC(=O)C(CCSC)N",
+   "ph7_smiles": "CSCCC([NH3+])C(=O)OC(C)=O",
+   "submitted_smiles": "CSCCC([NH3+])C(=O)OC(C)=O",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    6.509706497192383
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": null,
+   "group_decomposition_ok": null,
+   "dgf_prime_kj_per_mol": null,
+   "sigma_kj_per_mol": null,
+   "previous_dgf_prime_kj_per_mol": null,
+   "change_kj_per_mol": null,
+   "outcome": "compound_creation_failed",
+   "detail": "method=empty status=failed"
+  },
+  {
+   "key": "acyl:tyrosyl acetate",
+   "name": "tyrosyl acetate",
+   "source": "acyl_transfer_writer",
+   "met_ids": [
+    "s_4254",
+    "s_4255"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [
+    "unipka-simple-template"
+   ],
+   "smiles": "CC(=O)OCCc1ccc(O)cc1",
+   "ph7_smiles": "CC(=O)OCCc1ccc(O)cc1",
+   "submitted_smiles": "CC(=O)OCCc1ccc(O)cc1",
+   "convention": "pH 7 major microspecies submitted to the compound bridge",
+   "pkas": [
+    9.805440139770507
+   ],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 694362,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 134.42170926663084,
+   "sigma_kj_per_mol": 3.392332693447038,
+   "previous_dgf_prime_kj_per_mol": null,
+   "change_kj_per_mol": null,
+   "outcome": "priced",
+   "detail": ""
+  },
+  {
+   "key": "acyl:methionyl acetate",
+   "name": "methionyl acetate",
+   "source": "acyl_transfer_writer",
+   "met_ids": [
+    "s_4256",
+    "s_4257"
+   ],
+   "method": "cascade_top3",
+   "method_version": "unipka-simple-template=unipkainfer 0.2.0, molgpka=MolGpKa@4dc8352, pkasolver=pkasolver v0.3+2.ga6ec86e",
+   "weights_sha256": {
+    "molgpka:weight_acid.pth": "e0cb05874937f17a4df6943f37beff1c76d14d760787c57d553ac56390147b39",
+    "molgpka:weight_base.pth": "212021f43168208bd67a5c15750f9a176cf4d5906d73a85718f4b15ff8d4b95d"
+   },
+   "members_used": [],
+   "smiles": "CSCCCOC(C)=O",
+   "ph7_smiles": null,
+   "submitted_smiles": "CSCCCOC(C)=O",
+   "convention": "NEUTRAL PARENT submitted: no pH 7 state was available",
+   "pkas": [],
+   "conditions": {
+    "p_h": 7.2,
+    "ionic_strength_m": 0.25,
+    "temperature_k": 303.15,
+    "p_mg": 3.0
+   },
+   "compound_id": 91176,
+   "group_decomposition_ok": true,
+   "dgf_prime_kj_per_mol": 233.35716744656997,
+   "sigma_kj_per_mol": null,
+   "previous_dgf_prime_kj_per_mol": null,
+   "change_kj_per_mol": null,
+   "outcome": "priced_no_ionizable_center",
+   "detail": "every member of the selected method returned an empty ladder and the structure matches no ionizable-center SMARTS, so the compound was created as a single microspecies"
+  }
+ ]
+}

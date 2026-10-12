@@ -1,0 +1,200 @@
+{
+  "metric": "per-epoch validation AUROC (logged as val_pearson on a binary head)",
+  "cells": [
+    {
+      "result_file": "wave9_ess_pool_e80_s2700.json",
+      "hidden": 90,
+      "preprocessor_layers": 2,
+      "layers": 2,
+      "attention_heads": 9,
+      "seed": 2700,
+      "n_parameters": 958501,
+      "n_epochs": 80,
+      "select_epoch": 60,
+      "median_abs_step": 0.03367003367003363,
+      "curve_range": 0.49831649831649827,
+      "step_to_range": 0.06756756756756749,
+      "diff_autocorrelation": -0.3370039231200116,
+      "final_minus_peak": -0.03872053872053871,
+      "grad_norm_mean": null,
+      "grad_clipped_frac": null
+    },
+    {
+      "result_file": "wave9_ess_pool_e80_s2701.json",
+      "hidden": 90,
+      "preprocessor_layers": 2,
+      "layers": 2,
+      "attention_heads": 9,
+      "seed": 2701,
+      "n_parameters": 958501,
+      "n_epochs": 80,
+      "select_epoch": 60,
+      "median_abs_step": 0.0572390572390572,
+      "curve_range": 0.606060606060606,
+      "step_to_range": 0.0944444444444444,
+      "diff_autocorrelation": -0.4494324802855748,
+      "final_minus_peak": -0.031986531986531896,
+      "grad_norm_mean": null,
+      "grad_clipped_frac": null
+    },
+    {
+      "result_file": "wave9_ess_pool_e80_s2702.json",
+      "hidden": 90,
+      "preprocessor_layers": 2,
+      "layers": 2,
+      "attention_heads": 9,
+      "seed": 2702,
+      "n_parameters": 958501,
+      "n_epochs": 80,
+      "select_epoch": 28,
+      "median_abs_step": 0.07154882154882158,
+      "curve_range": 0.6346801346801347,
+      "step_to_range": 0.11273209549071622,
+      "diff_autocorrelation": -0.2282461956863021,
+      "final_minus_peak": -0.2592592592592593,
+      "grad_norm_mean": null,
+      "grad_clipped_frac": null
+    },
+    {
+      "result_file": "wave11_ess_pool_h12l1p1_e80_s2700.json",
+      "hidden": 12,
+      "preprocessor_layers": 1,
+      "layers": 1,
+      "attention_heads": 4,
+      "seed": 2700,
+      "n_parameters": 16874,
+      "n_epochs": 80,
+      "select_epoch": 43,
+      "median_abs_step": 0.006734006734006703,
+      "curve_range": 0.531986531986532,
+      "step_to_range": 0.012658227848101208,
+      "diff_autocorrelation": 0.26815424317058234,
+      "final_minus_peak": -0.03367003367003374,
+      "grad_norm_mean": 0.7529530550752367,
+      "grad_clipped_frac": 0.0
+    },
+    {
+      "result_file": "wave11_ess_pool_h24l1p1_e80_s2700.json",
+      "hidden": 24,
+      "preprocessor_layers": 1,
+      "layers": 1,
+      "attention_heads": 8,
+      "seed": 2700,
+      "n_parameters": 42098,
+      "n_epochs": 80,
+      "select_epoch": 5,
+      "median_abs_step": 0.005050505050505083,
+      "curve_range": 0.11784511784511786,
+      "step_to_range": 0.04285714285714313,
+      "diff_autocorrelation": -0.10907291553696136,
+      "final_minus_peak": -0.11784511784511786,
+      "grad_norm_mean": 0.3647491778646197,
+      "grad_clipped_frac": 0.0
+    },
+    {
+      "result_file": "wave11_ess_pool_h24l1p1_e80_s2701.json",
+      "hidden": 24,
+      "preprocessor_layers": 1,
+      "layers": 1,
+      "attention_heads": 8,
+      "seed": 2701,
+      "n_parameters": 42098,
+      "n_epochs": 80,
+      "select_epoch": 4,
+      "median_abs_step": 0.006734006734006703,
+      "curve_range": 0.15656565656565657,
+      "step_to_range": 0.043010752688171845,
+      "diff_autocorrelation": -0.35684128960246914,
+      "final_minus_peak": -0.062289562289562284,
+      "grad_norm_mean": 0.5859980911016465,
+      "grad_clipped_frac": 0.0
+    },
+    {
+      "result_file": "wave11_ess_pool_h24l1p1_e80_s2702.json",
+      "hidden": 24,
+      "preprocessor_layers": 1,
+      "layers": 1,
+      "attention_heads": 8,
+      "seed": 2702,
+      "n_parameters": 42098,
+      "n_epochs": 80,
+      "select_epoch": 47,
+      "median_abs_step": 0.008417508417508324,
+      "curve_range": 0.3114478114478114,
+      "step_to_range": 0.027027027027026727,
+      "diff_autocorrelation": -0.10323454042423501,
+      "final_minus_peak": -0.023569023569023573,
+      "grad_norm_mean": 0.7966751447745732,
+      "grad_clipped_frac": 0.0
+    }
+  ],
+  "configurations": [
+    {
+      "label": "h12_p1_l1",
+      "hidden": 12,
+      "preprocessor_layers": 1,
+      "layers": 1,
+      "n_parameters": 16874,
+      "seeds": [
+        2700
+      ],
+      "median_abs_step_by_seed": {
+        "2700": 0.006734006734006703
+      },
+      "mean_median_abs_step": 0.006734006734006703,
+      "select_epoch_by_seed": {
+        "2700": 43
+      },
+      "select_epoch_spread": 0
+    },
+    {
+      "label": "h24_p1_l1",
+      "hidden": 24,
+      "preprocessor_layers": 1,
+      "layers": 1,
+      "n_parameters": 42098,
+      "seeds": [
+        2700,
+        2701,
+        2702
+      ],
+      "median_abs_step_by_seed": {
+        "2700": 0.005050505050505083,
+        "2701": 0.006734006734006703,
+        "2702": 0.008417508417508324
+      },
+      "mean_median_abs_step": 0.006734006734006703,
+      "select_epoch_by_seed": {
+        "2700": 5,
+        "2701": 4,
+        "2702": 47
+      },
+      "select_epoch_spread": 43
+    },
+    {
+      "label": "h90_p2_l2",
+      "hidden": 90,
+      "preprocessor_layers": 2,
+      "layers": 2,
+      "n_parameters": 958501,
+      "seeds": [
+        2700,
+        2701,
+        2702
+      ],
+      "median_abs_step_by_seed": {
+        "2700": 0.03367003367003363,
+        "2701": 0.0572390572390572,
+        "2702": 0.07154882154882158
+      },
+      "mean_median_abs_step": 0.0541526374859708,
+      "select_epoch_by_seed": {
+        "2700": 60,
+        "2701": 60,
+        "2702": 28
+      },
+      "select_epoch_spread": 32
+    }
+  ],
+  "note": "The endpoint of the size ladder is the curve, not the test AUROC: at 31 essential genes among 195 the AUROC bootstrap interval is about 0.17 wide and cannot separate these cells. A median absolute step that falls with model size says capacity drove the instability; one that does not says the cause is elsewhere, and the 16 percent positive rate and the batch size of 128 against about 851 training rows are the next candidates."
+}

@@ -1,0 +1,109 @@
+{
+  "n_reactions": 4131,
+  "n_priced_union_external": 3779,
+  "n_priced_verified": 3801,
+  "sha256_union_external": {
+    "met": "179a5aac4221ded673a5bba798870ca4cac9b9d19e955de6a0f25de65a3cee8f",
+    "rxn": "7a66ef5d7892bd65229e908e5eff4cd95e741d6c493ee8645d480a53e2da5796",
+    "dgpredictor_rows": "6a2de44497653d771c01f46f3fc80a2417f50ff9bdf898e14741a1aba5e529d5",
+    "equilibrator_met": "f9b564844e5b3b0946de179672ae7f6b78f2560821a2e3423059ff16400e8871",
+    "shipped_reaction_unit_correction": "6a2de44497653d771c01f46f3fc80a2417f50ff9bdf898e14741a1aba5e529d5",
+    "equilibrator_sigma": "c7f2ff7367a0599a207d86f04e15f817617c2c0c266af025c7a1dc883a6fc4be"
+  },
+  "sha256_verified": {
+    "met": "179a5aac4221ded673a5bba798870ca4cac9b9d19e955de6a0f25de65a3cee8f",
+    "rxn": "7a66ef5d7892bd65229e908e5eff4cd95e741d6c493ee8645d480a53e2da5796",
+    "dgpredictor_rows": "6a2de44497653d771c01f46f3fc80a2417f50ff9bdf898e14741a1aba5e529d5",
+    "verified_manifest": "ad424e2afd37235cf8ac51244cf02da58898a789a9b911b7eb1a9e5fa8dc7e95",
+    "verified_met": "fd813d01c8a417dd4b1a3002440d52c8cadd51732535368ea8e7661f56678a45",
+    "verified_reaction": "bc790922db8066952236adca4555fc3c3f467cb5d8428294b7b26abbfdba89ef",
+    "equilibrator_sigma": "c7f2ff7367a0599a207d86f04e15f817617c2c0c266af025c7a1dc883a6fc4be"
+  },
+  "counts_union_external": {
+    "none": 352,
+    "equilibrator": 3777,
+    "shipped_reaction_column": 2,
+    "known": 3779,
+    "n_reactions": 4131,
+    "sigma_known": 1755,
+    "shipped_reaction_rows_unit_corrected": 33,
+    "shipped_reaction_rows_unit_corrected_and_used": 1
+  },
+  "counts_verified": {
+    "mixed": 872,
+    "cache_accession": 2751,
+    "none": 330,
+    "shipped_reaction_column": 1,
+    "conserved_moiety": 1,
+    "curated_structure": 2,
+    "repeat_unit_surrogate": 2,
+    "literature_table": 11,
+    "cache_structure": 122,
+    "external_pka": 9,
+    "shipped_table": 9,
+    "cancelled_participants": 19,
+    "composition_surrogate": 2,
+    "known": 3801,
+    "n_reactions": 4131,
+    "sigma_known": 1751,
+    "sigma_from_covariance_factor": 1750,
+    "sigma_from_the_verified_table": 1,
+    "curation_records": 16
+  },
+  "n_changed": 5,
+  "n_newly_priced": 32,
+  "n_lost": 10,
+  "max_abs_change_kj_per_mol": 1068.6038818359375,
+  "median_abs_change_kj_per_mol": 882.9844360351562,
+  "n_amino_acid_reactions": 269,
+  "n_amino_acid_reactions_changed": 0,
+  "amino_acid_changes": [],
+  "betaxanthin_precursor_changes": [],
+  "largest_changes": [
+    {
+      "reaction": "r_0464",
+      "delta_g_union_external": 1061.4886474609375,
+      "delta_g_verified": -7.115205764770508,
+      "change_kj_per_mol": -1068.6038818359375,
+      "kind": "value_changed",
+      "touches_amino_acid": [],
+      "touches_betaxanthin_precursor": []
+    },
+    {
+      "reaction": "r_0463",
+      "delta_g_union_external": 875.8690185546875,
+      "delta_g_verified": -7.11544132232666,
+      "change_kj_per_mol": -882.9844360351562,
+      "kind": "value_changed",
+      "touches_amino_acid": [],
+      "touches_betaxanthin_precursor": []
+    },
+    {
+      "reaction": "r_0510",
+      "delta_g_union_external": -904.5502319335938,
+      "delta_g_verified": -21.565805435180664,
+      "change_kj_per_mol": 882.9844360351562,
+      "kind": "value_changed",
+      "touches_amino_acid": [],
+      "touches_betaxanthin_precursor": []
+    },
+    {
+      "reaction": "r_0511",
+      "delta_g_union_external": 892.515625,
+      "delta_g_verified": 9.531193733215332,
+      "change_kj_per_mol": -882.9844360351562,
+      "kind": "value_changed",
+      "touches_amino_acid": [],
+      "touches_betaxanthin_precursor": []
+    },
+    {
+      "reaction": "r_1174",
+      "delta_g_union_external": -243.62527465820312,
+      "delta_g_verified": -58.005882263183594,
+      "change_kj_per_mol": 185.619384765625,
+      "kind": "value_changed",
+      "touches_amino_acid": [],
+      "touches_betaxanthin_precursor": []
+    }
+  ]
+}

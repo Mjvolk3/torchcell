@@ -1,0 +1,4511 @@
+{
+ "tool": "unipka-simple-template",
+ "tool_version": "unipkainfer 0.2.0",
+ "built_at": "2026-09-10T18:39:22.043204+00:00",
+ "n_requested": 300,
+ "n_ok": 299,
+ "seconds_total": 121.37762999534607,
+ "records": [
+  {
+   "compound_id": 458849,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    4.368061065673828
+   ],
+   "site_pkas": [
+    4.368061065673828
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 454772,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    2.5437150955200196
+   ],
+   "site_pkas": [
+    2.5437150955200196
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 99199,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    10.246512985229492
+   ],
+   "site_pkas": [
+    10.246512985229492
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 381914,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    1.5724906921386719
+   ],
+   "site_pkas": [
+    1.5724906921386719
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 92855,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    5.003340244293213
+   ],
+   "site_pkas": [
+    5.003340244293213
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 18497,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.701748085021972
+   ],
+   "site_pkas": [
+    9.701748085021972
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 38532,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.683849716186524
+   ],
+   "site_pkas": [
+    9.683849716186524
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 16344,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    4.961668872833252
+   ],
+   "site_pkas": [
+    4.961668872833252
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 447410,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.589696407318115
+   ],
+   "site_pkas": [
+    7.589696407318115
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 11285,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    5.005036544799805
+   ],
+   "site_pkas": [
+    5.005036544799805
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 127434,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    4.543537139892578
+   ],
+   "site_pkas": [
+    4.543537139892578
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 24284,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    3.7740214824676515
+   ],
+   "site_pkas": [
+    3.7740214824676515
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 4794,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    4.9531248092651365
+   ],
+   "site_pkas": [
+    4.9531248092651365
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 121738,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    12.578674507141113,
+    10.458869743347169
+   ],
+   "site_pkas": [
+    12.578674507141113,
+    10.458869743347169
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 131512,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.205891609191895
+   ],
+   "site_pkas": [
+    8.205891609191895
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 63631,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    6.609396743774414
+   ],
+   "site_pkas": [
+    6.609396743774414
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 58955,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.238543891906739
+   ],
+   "site_pkas": [
+    9.238543891906739
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 51347,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.179969787597656
+   ],
+   "site_pkas": [
+    9.179969787597656
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 24247,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    3.5681326389312744
+   ],
+   "site_pkas": [
+    3.5681326389312744
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 309902,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.031588077545166
+   ],
+   "site_pkas": [
+    7.031588077545166
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 25740,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    4.622191047668457
+   ],
+   "site_pkas": [
+    4.622191047668457
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 89955,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    4.984216403961182
+   ],
+   "site_pkas": [
+    4.984216403961182
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 449627,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    2.8408435344696046
+   ],
+   "site_pkas": [
+    2.8408435344696046
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 691618,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    4.527312564849853
+   ],
+   "site_pkas": [
+    4.527312564849853
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 119848,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    4.780671501159668
+   ],
+   "site_pkas": [
+    4.780671501159668
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 557077,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    3.2444782733917235
+   ],
+   "site_pkas": [
+    3.2444782733917235
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 480668,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    5.045659160614013
+   ],
+   "site_pkas": [
+    5.045659160614013
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 73771,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.493661308288575
+   ],
+   "site_pkas": [
+    9.493661308288575
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 454087,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    6.823315620422363
+   ],
+   "site_pkas": [
+    6.823315620422363
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 469404,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    2.6892721176147463
+   ],
+   "site_pkas": [
+    2.6892721176147463
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 31053,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    6.084326267242432
+   ],
+   "site_pkas": [
+    6.084326267242432
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 15606,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    5.023296737670899
+   ],
+   "site_pkas": [
+    5.023296737670899
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 22973,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    5.068268299102783
+   ],
+   "site_pkas": [
+    5.068268299102783
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 13442,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    4.773053073883057
+   ],
+   "site_pkas": [
+    4.773053073883057
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 308012,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.54258098602295
+   ],
+   "site_pkas": [
+    9.54258098602295
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 457203,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    3.857248306274414
+   ],
+   "site_pkas": [
+    3.857248306274414
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 92809,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    4.962964344024658
+   ],
+   "site_pkas": [
+    4.962964344024658
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 15949,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    5.101364803314209
+   ],
+   "site_pkas": [
+    5.101364803314209
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 471597,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.978830909729004
+   ],
+   "site_pkas": [
+    8.978830909729004
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 8289,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    4.785699367523193
+   ],
+   "site_pkas": [
+    4.785699367523193
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 28087,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    4.662381839752197
+   ],
+   "site_pkas": [
+    4.662381839752197
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 35344,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.027658271789551
+   ],
+   "site_pkas": [
+    9.027658271789551
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 474345,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.959988021850586
+   ],
+   "site_pkas": [
+    9.959988021850586
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 692714,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.407403945922852
+   ],
+   "site_pkas": [
+    9.407403945922852
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 42164,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    4.63949499130249
+   ],
+   "site_pkas": [
+    4.63949499130249
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 38181,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.815171813964843
+   ],
+   "site_pkas": [
+    9.815171813964843
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 101670,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    4.437615871429443
+   ],
+   "site_pkas": [
+    4.437615871429443
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 80220,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.741048431396484
+   ],
+   "site_pkas": [
+    8.741048431396484
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 61050,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    5.651728248596191
+   ],
+   "site_pkas": [
+    5.651728248596191
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 91745,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.787112236022949
+   ],
+   "site_pkas": [
+    7.787112236022949
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 439040,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    2.514675426483154
+   ],
+   "site_pkas": [
+    2.514675426483154
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 550723,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    10.533429908752442,
+    8.588355255126952
+   ],
+   "site_pkas": [
+    10.533429908752442,
+    8.588355255126952
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 470108,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.894343376159668,
+    3.2499414920806884
+   ],
+   "site_pkas": [
+    8.894343376159668,
+    3.2499414920806884
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 472030,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    3.6192737579345704,
+    1.3102073669433594
+   ],
+   "site_pkas": [
+    3.6192737579345704,
+    1.3102073669433594
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 139422,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    6.0739038467407225,
+    4.332925701141358
+   ],
+   "site_pkas": [
+    6.0739038467407225,
+    4.332925701141358
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 5093,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.667835521697998
+   ],
+   "site_pkas": [
+    7.667835521697998
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 354304,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.614284896850586,
+    2.550542640686035
+   ],
+   "site_pkas": [
+    9.614284896850586,
+    2.550542640686035
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 35298,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.289604473114014
+   ],
+   "site_pkas": [
+    8.289604473114014
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 474177,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.86126594543457,
+    3.6274468421936037
+   ],
+   "site_pkas": [
+    7.86126594543457,
+    3.6274468421936037
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 447520,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.844529056549073,
+    3.57226619720459
+   ],
+   "site_pkas": [
+    7.844529056549073,
+    3.57226619720459
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 125071,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    11.063421249389648,
+    9.095935440063476
+   ],
+   "site_pkas": [
+    11.063421249389648,
+    9.095935440063476
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 88558,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.66929588317871,
+    5.477699279785156
+   ],
+   "site_pkas": [
+    9.66929588317871,
+    5.477699279785156
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 550640,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.977240943908692,
+    8.391740989685058
+   ],
+   "site_pkas": [
+    9.977240943908692,
+    8.391740989685058
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 649980,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.268879508972168,
+    4.669091033935547
+   ],
+   "site_pkas": [
+    9.268879508972168,
+    4.669091033935547
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 36412,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.542331504821777
+   ],
+   "site_pkas": [
+    7.542331504821777
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 11965,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.871382045745849,
+    1.9327868461608886
+   ],
+   "site_pkas": [
+    7.871382045745849,
+    1.9327868461608886
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 100236,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.694021034240723
+   ],
+   "site_pkas": [
+    9.694021034240723
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 47367,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.28597526550293,
+    2.846033525466919
+   ],
+   "site_pkas": [
+    9.28597526550293,
+    2.846033525466919
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 309825,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.794418430328369
+   ],
+   "site_pkas": [
+    7.794418430328369
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 542984,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    3.2384527206420897
+   ],
+   "site_pkas": [
+    3.2384527206420897
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 78379,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    5.90046796798706,
+    4.0148498058319095
+   ],
+   "site_pkas": [
+    5.90046796798706,
+    4.0148498058319095
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 692317,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.244972991943359,
+    2.9449635982513427
+   ],
+   "site_pkas": [
+    7.244972991943359,
+    2.9449635982513427
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 140987,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.4364595413208
+   ],
+   "site_pkas": [
+    8.4364595413208
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 475175,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.726239013671876
+   ],
+   "site_pkas": [
+    8.726239013671876
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 125052,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.128378677368165
+   ],
+   "site_pkas": [
+    8.128378677368165
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 31654,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.176342391967774
+   ],
+   "site_pkas": [
+    8.176342391967774
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 473559,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    12.852919769287109,
+    8.813873100280762
+   ],
+   "site_pkas": [
+    12.852919769287109,
+    8.813873100280762
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 551719,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.201869773864747,
+    6.901278877258301
+   ],
+   "site_pkas": [
+    9.201869773864747,
+    6.901278877258301
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 164828,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.798956298828125,
+    1.3140271186828614
+   ],
+   "site_pkas": [
+    7.798956298828125,
+    1.3140271186828614
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 497864,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.396739387512207,
+    4.351974582672119
+   ],
+   "site_pkas": [
+    7.396739387512207,
+    4.351974582672119
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 550435,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.455724143981934,
+    8.1248779296875
+   ],
+   "site_pkas": [
+    8.455724143981934,
+    8.1248779296875
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 129418,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.899721145629883,
+    9.021012115478516
+   ],
+   "site_pkas": [
+    9.899721145629883,
+    9.021012115478516
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 443383,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.459232139587402
+   ],
+   "site_pkas": [
+    7.459232139587402
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 91,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.272993278503417,
+    2.3691696166992187
+   ],
+   "site_pkas": [
+    9.272993278503417,
+    2.3691696166992187
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 36564,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    4.519599342346192,
+    3.2209929466247558
+   ],
+   "site_pkas": [
+    4.519599342346192,
+    3.2209929466247558
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 29362,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    6.009055423736572,
+    2.949233961105347
+   ],
+   "site_pkas": [
+    6.009055423736572,
+    2.949233961105347
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 36494,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.798068237304687
+   ],
+   "site_pkas": [
+    9.798068237304687
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 23924,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    10.318914413452148,
+    5.26345796585083
+   ],
+   "site_pkas": [
+    10.318914413452148,
+    5.26345796585083
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 43426,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    10.847415542602539
+   ],
+   "site_pkas": [
+    10.847415542602539
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 120861,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    11.934285163879395,
+    9.313065147399902
+   ],
+   "site_pkas": [
+    11.934285163879395,
+    9.313065147399902
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 130406,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    11.624402046203613,
+    8.876638793945313,
+    0.47347660064697267
+   ],
+   "site_pkas": [
+    11.624402046203613,
+    8.876638793945313,
+    0.47347660064697267
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 132626,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    5.137854194641113
+   ],
+   "site_pkas": [
+    5.137854194641113
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 310405,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    11.528342628479004,
+    10.198402976989746,
+    4.961955738067627
+   ],
+   "site_pkas": [
+    11.528342628479004,
+    10.198402976989746,
+    4.961955738067627
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 119252,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.395923042297364,
+    4.398785972595215
+   ],
+   "site_pkas": [
+    8.395923042297364,
+    4.398785972595215
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 10525,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.798142242431641,
+    2.4459566116333007
+   ],
+   "site_pkas": [
+    9.798142242431641,
+    2.4459566116333007
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 136554,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.259222316741944,
+    1.9184460639953613
+   ],
+   "site_pkas": [
+    8.259222316741944,
+    1.9184460639953613
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 449622,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    6.55012149810791,
+    1.6533894538879395,
+    1.416966152191162
+   ],
+   "site_pkas": [
+    6.55012149810791,
+    1.6533894538879395,
+    1.416966152191162
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 548123,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.0149507522583
+   ],
+   "site_pkas": [
+    8.0149507522583
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 549933,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.947935867309571,
+    8.4047025680542
+   ],
+   "site_pkas": [
+    9.947935867309571,
+    8.4047025680542
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 81189,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    11.36931266784668,
+    8.042603492736816
+   ],
+   "site_pkas": [
+    11.36931266784668,
+    8.042603492736816
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 472999,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    3.93237943649292,
+    2.490448474884033
+   ],
+   "site_pkas": [
+    3.93237943649292,
+    2.490448474884033
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 550928,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    10.450261878967286,
+    7.5212760925292965
+   ],
+   "site_pkas": [
+    10.450261878967286,
+    7.5212760925292965
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 118410,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    10.2730712890625,
+    5.457339477539063,
+    3.7802637100219725
+   ],
+   "site_pkas": [
+    10.2730712890625,
+    5.457339477539063,
+    3.7802637100219725
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 14203,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.006730270385741,
+    8.783762168884277,
+    6.407800006866455
+   ],
+   "site_pkas": [
+    9.006730270385741,
+    8.783762168884277,
+    6.407800006866455
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 423086,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.13579273223877,
+    4.514406013488769,
+    3.480122709274292
+   ],
+   "site_pkas": [
+    9.13579273223877,
+    4.514406013488769,
+    3.480122709274292
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 143077,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.732486534118653,
+    8.236596298217773
+   ],
+   "site_pkas": [
+    9.732486534118653,
+    8.236596298217773
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 545054,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    3.412443447113037
+   ],
+   "site_pkas": [
+    3.412443447113037
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 7651,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.161482524871826,
+    3.3241549491882325,
+    1.038463020324707
+   ],
+   "site_pkas": [
+    7.161482524871826,
+    3.3241549491882325,
+    1.038463020324707
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 47439,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.911678504943847,
+    7.682829570770264
+   ],
+   "site_pkas": [
+    9.911678504943847,
+    7.682829570770264
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 72560,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    10.309417343139648,
+    6.420761966705323
+   ],
+   "site_pkas": [
+    10.309417343139648,
+    6.420761966705323
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 40724,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.116348266601562,
+    8.405029010772704,
+    5.303524303436279
+   ],
+   "site_pkas": [
+    9.116348266601562,
+    8.405029010772704,
+    5.303524303436279
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 455507,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.304025459289551,
+    4.531219100952148
+   ],
+   "site_pkas": [
+    7.304025459289551,
+    4.531219100952148
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 77962,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    10.52812671661377,
+    8.69750518798828,
+    8.628308296203613
+   ],
+   "site_pkas": [
+    10.52812671661377,
+    8.69750518798828,
+    8.628308296203613
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 469452,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    2.991674518585205
+   ],
+   "site_pkas": [
+    2.991674518585205
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 454458,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.56949291229248
+   ],
+   "site_pkas": [
+    9.56949291229248
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 90042,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    5.345223426818848
+   ],
+   "site_pkas": [
+    5.345223426818848
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 48284,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    3.750307321548462
+   ],
+   "site_pkas": [
+    3.750307321548462
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 92168,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    11.25288257598877,
+    6.079034233093262,
+    2.7824518203735353
+   ],
+   "site_pkas": [
+    11.25288257598877,
+    6.079034233093262,
+    2.7824518203735353
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 546975,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.802059745788574
+   ],
+   "site_pkas": [
+    8.802059745788574
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 308639,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.550872135162353
+   ],
+   "site_pkas": [
+    7.550872135162353
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 370173,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    2.4787721633911133
+   ],
+   "site_pkas": [
+    2.4787721633911133
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 440710,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    5.051233577728271
+   ],
+   "site_pkas": [
+    5.051233577728271
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 540096,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    11.206699752807618,
+    4.798229694366455
+   ],
+   "site_pkas": [
+    11.206699752807618,
+    4.798229694366455
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 447293,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    2.1677977561950685
+   ],
+   "site_pkas": [
+    2.1677977561950685
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 553936,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    3.7259328842163084
+   ],
+   "site_pkas": [
+    3.7259328842163084
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 118486,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.37132225036621,
+    2.2205023765563965
+   ],
+   "site_pkas": [
+    9.37132225036621,
+    2.2205023765563965
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 74926,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    11.201599884033204,
+    8.30954532623291,
+    8.042237186431885
+   ],
+   "site_pkas": [
+    11.201599884033204,
+    8.30954532623291,
+    8.042237186431885
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 1645,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    3.648699140548706
+   ],
+   "site_pkas": [
+    3.648699140548706
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 476663,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    4.667594718933105
+   ],
+   "site_pkas": [
+    4.667594718933105
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 30567,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.833751487731934,
+    8.072193241119384,
+    6.762123775482178
+   ],
+   "site_pkas": [
+    9.833751487731934,
+    8.072193241119384,
+    6.762123775482178
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 459213,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.758912563323975
+   ],
+   "site_pkas": [
+    7.758912563323975
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 449832,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.41733341217041
+   ],
+   "site_pkas": [
+    7.41733341217041
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 548430,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.3562414169311525
+   ],
+   "site_pkas": [
+    7.3562414169311525
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 44887,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    10.172030258178712
+   ],
+   "site_pkas": [
+    10.172030258178712
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 98038,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    10.63075122833252,
+    7.826797771453857
+   ],
+   "site_pkas": [
+    10.63075122833252,
+    7.826797771453857
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 66171,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.699901962280274,
+    8.702736091613769,
+    7.97043514251709
+   ],
+   "site_pkas": [
+    9.699901962280274,
+    8.702736091613769,
+    7.97043514251709
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 311291,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.01002607345581
+   ],
+   "site_pkas": [
+    7.01002607345581
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 472299,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    6.987668800354004,
+    3.988460922241211
+   ],
+   "site_pkas": [
+    6.987668800354004,
+    3.988460922241211
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 50182,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    3.6731590747833254
+   ],
+   "site_pkas": [
+    3.6731590747833254
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 15513,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.56613712310791,
+    9.188924407958984,
+    6.983395767211914
+   ],
+   "site_pkas": [
+    9.56613712310791,
+    9.188924407958984,
+    6.983395767211914
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 74023,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.347649955749512,
+    8.569324684143066,
+    7.092752933502197
+   ],
+   "site_pkas": [
+    9.347649955749512,
+    8.569324684143066,
+    7.092752933502197
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 475,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.092132377624512,
+    4.216234731674194,
+    2.7034977436065675
+   ],
+   "site_pkas": [
+    9.092132377624512,
+    4.216234731674194,
+    2.7034977436065675
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 9738,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.625792503356934
+   ],
+   "site_pkas": [
+    9.625792503356934
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 33453,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    11.646179962158204,
+    9.146464920043945,
+    3.4195909976959227
+   ],
+   "site_pkas": [
+    11.646179962158204,
+    9.146464920043945,
+    3.4195909976959227
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 447469,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    6.43188591003418
+   ],
+   "site_pkas": [
+    14.261215209960938,
+    6.43188591003418
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 67786,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.175295639038087,
+    8.878084659576416,
+    7.364624309539795
+   ],
+   "site_pkas": [
+    9.175295639038087,
+    8.878084659576416,
+    7.364624309539795
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 25228,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.892786598205566
+   ],
+   "site_pkas": [
+    7.892786598205566
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 21628,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.311341476440429,
+    8.814669513702393,
+    7.46046028137207
+   ],
+   "site_pkas": [
+    9.311341476440429,
+    8.814669513702393,
+    7.46046028137207
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 552169,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.379393672943115
+   ],
+   "site_pkas": [
+    8.379393672943115
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 453552,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.588367080688476
+   ],
+   "site_pkas": [
+    8.588367080688476
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 546903,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.225540828704834
+   ],
+   "site_pkas": [
+    7.225540828704834
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 30586,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.659683418273925,
+    8.07433042526245,
+    7.542572021484375
+   ],
+   "site_pkas": [
+    8.659683418273925,
+    8.07433042526245,
+    7.542572021484375
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 13063,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.932417297363282,
+    7.722701740264893
+   ],
+   "site_pkas": [
+    9.932417297363282,
+    7.722701740264893
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 539930,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    11.121849822998048,
+    9.293825721740722,
+    3.0296674728393556
+   ],
+   "site_pkas": [
+    11.121849822998048,
+    9.293825721740722,
+    3.0296674728393556
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 126619,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.1660888671875,
+    3.293966293334961
+   ],
+   "site_pkas": [
+    8.1660888671875,
+    3.293966293334961
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 447438,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    3.66346697807312
+   ],
+   "site_pkas": [
+    3.66346697807312
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 88530,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.585426902770996,
+    4.499947738647461
+   ],
+   "site_pkas": [
+    8.585426902770996,
+    4.499947738647461
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 143541,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.218533515930176
+   ],
+   "site_pkas": [
+    7.218533515930176
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 25216,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.762031745910644,
+    3.122877311706543
+   ],
+   "site_pkas": [
+    9.762031745910644,
+    3.122877311706543
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 472709,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.791879463195801,
+    3.4045517444610596
+   ],
+   "site_pkas": [
+    9.791879463195801,
+    3.4045517444610596
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 123118,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.476048755645752
+   ],
+   "site_pkas": [
+    7.476048755645752
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 472418,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    10.000018882751466,
+    3.628532123565674
+   ],
+   "site_pkas": [
+    10.000018882751466,
+    3.628532123565674
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 281,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    6.234077644348145,
+    1.6230917930603028
+   ],
+   "site_pkas": [
+    6.234077644348145,
+    1.6230917930603028
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 117312,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.720418548583984,
+    5.837351322174072,
+    1.4556895256042481
+   ],
+   "site_pkas": [
+    7.720418548583984,
+    5.837351322174072,
+    1.4556895256042481
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 455694,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    0.5871170997619629
+   ],
+   "site_pkas": [
+    0.5871170997619629
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 458999,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.932432746887207
+   ],
+   "site_pkas": [
+    14.65516471862793,
+    8.932432746887207
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 101801,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    11.571045112609863,
+    11.305209350585937,
+    7.052309989929199
+   ],
+   "site_pkas": [
+    11.571045112609863,
+    11.305209350585937,
+    7.052309989929199
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 101100,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    11.505994987487792,
+    9.100585556030273
+   ],
+   "site_pkas": [
+    11.505994987487792,
+    9.100585556030273
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 455975,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    10.647150993347168,
+    9.012495040893555
+   ],
+   "site_pkas": [
+    10.647150993347168,
+    9.012495040893555
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 127398,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    5.528658771514893,
+    4.974666786193848,
+    2.8257545471191405
+   ],
+   "site_pkas": [
+    5.528658771514893,
+    4.974666786193848,
+    2.8257545471191405
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 11220,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    6.429818630218506,
+    1.9195409774780274
+   ],
+   "site_pkas": [
+    6.429818630218506,
+    1.9195409774780274
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 471072,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    6.587831211090088,
+    5.127617740631104,
+    3.4036076068878174
+   ],
+   "site_pkas": [
+    6.587831211090088,
+    5.127617740631104,
+    3.4036076068878174
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 90211,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.666812705993653,
+    8.256908130645751,
+    7.010873889923095
+   ],
+   "site_pkas": [
+    9.666812705993653,
+    8.256908130645751,
+    7.010873889923095
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 44900,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.069552421569824,
+    8.36359224319458,
+    7.254535484313965
+   ],
+   "site_pkas": [
+    9.069552421569824,
+    8.36359224319458,
+    7.254535484313965
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 422560,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    2.4994225978851317
+   ],
+   "site_pkas": [
+    2.4994225978851317
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 544926,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    3.4566596508026124
+   ],
+   "site_pkas": [
+    3.4566596508026124
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 66197,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.320565032958985,
+    8.296570777893066,
+    4.279601526260376
+   ],
+   "site_pkas": [
+    8.320565032958985,
+    8.296570777893066,
+    4.279601526260376
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 452145,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    3.3300158977508545,
+    1.9174152851104735
+   ],
+   "site_pkas": [
+    3.3300158977508545,
+    1.9174152851104735
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 460655,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    10.309152030944825,
+    6.9115887641906735
+   ],
+   "site_pkas": [
+    10.309152030944825,
+    6.9115887641906735
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 473981,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    6.286252975463867,
+    5.450568962097168,
+    3.2418401718139647
+   ],
+   "site_pkas": [
+    6.286252975463867,
+    5.450568962097168,
+    3.2418401718139647
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 98745,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    11.180270957946778,
+    7.627122306823731
+   ],
+   "site_pkas": [
+    11.180270957946778,
+    7.627122306823731
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 460704,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    11.163974571228028,
+    11.07716407775879,
+    10.015399169921874,
+    6.88698787689209
+   ],
+   "site_pkas": [
+    11.163974571228028,
+    11.07716407775879,
+    10.015399169921874,
+    6.88698787689209
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 411,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    6.716540241241455,
+    4.774915981292724,
+    1.8705738544464112
+   ],
+   "site_pkas": [
+    6.716540241241455,
+    4.774915981292724,
+    1.8705738544464112
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 47152,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    10.59345588684082,
+    6.894728946685791
+   ],
+   "site_pkas": [
+    10.59345588684082,
+    6.894728946685791
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 430337,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.372891139984131,
+    5.679073715209961,
+    1.7605024337768556
+   ],
+   "site_pkas": [
+    7.372891139984131,
+    5.679073715209961,
+    1.7605024337768556
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 47105,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.956591796875,
+    7.606724739074707,
+    5.479507064819336
+   ],
+   "site_pkas": [
+    8.956591796875,
+    7.606724739074707,
+    5.479507064819336
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 66503,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.639342498779296,
+    8.39248867034912,
+    8.023546695709229
+   ],
+   "site_pkas": [
+    9.639342498779296,
+    8.39248867034912,
+    8.023546695709229
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 499699,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    6.829330635070801
+   ],
+   "site_pkas": [
+    6.829330635070801
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 40719,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.415511131286621,
+    8.501715087890625,
+    7.512234306335449
+   ],
+   "site_pkas": [
+    9.415511131286621,
+    8.501715087890625,
+    7.512234306335449
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 119061,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.3305939674377445
+   ],
+   "site_pkas": [
+    7.3305939674377445
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 119834,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    5.1681437492370605
+   ],
+   "site_pkas": [
+    5.1681437492370605
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 225738,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.243127632141114
+   ],
+   "site_pkas": [
+    8.243127632141114
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 46096,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.37536392211914,
+    4.216008138656616,
+    3.158765172958374
+   ],
+   "site_pkas": [
+    8.37536392211914,
+    4.216008138656616,
+    3.158765172958374
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 91051,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.84349765777588,
+    8.2129695892334,
+    8.054100608825683
+   ],
+   "site_pkas": [
+    9.84349765777588,
+    8.2129695892334,
+    8.054100608825683
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 27421,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.984481048583984,
+    7.879327964782715
+   ],
+   "site_pkas": [
+    9.984481048583984,
+    7.879327964782715
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 539949,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.43887996673584,
+    2.4420825958251955
+   ],
+   "site_pkas": [
+    9.43887996673584,
+    2.4420825958251955
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 455423,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.25335693359375,
+    4.322650575637818
+   ],
+   "site_pkas": [
+    7.25335693359375,
+    4.322650575637818
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 475809,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    3.651598596572876
+   ],
+   "site_pkas": [
+    3.651598596572876
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 38785,
+   "tool": "unipka-simple-template",
+   "ok": false,
+   "error": "no macrostate pair survived enumeration and inference",
+   "predicted_pkas": [],
+   "site_pkas": [],
+   "seconds": null
+  },
+  {
+   "compound_id": 451173,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.426215171813965,
+    8.092977333068848,
+    6.908067893981934
+   ],
+   "site_pkas": [
+    8.426215171813965,
+    8.092977333068848,
+    6.908067893981934
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 471375,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.833167839050294,
+    4.313998079299926,
+    3.1860461711883543
+   ],
+   "site_pkas": [
+    8.833167839050294,
+    4.313998079299926,
+    3.1860461711883543
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 128704,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.607048797607423,
+    3.5663225173950197
+   ],
+   "site_pkas": [
+    8.607048797607423,
+    3.5663225173950197
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 444770,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    5.20981502532959
+   ],
+   "site_pkas": [
+    5.20981502532959
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 28499,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.138878250122071
+   ],
+   "site_pkas": [
+    7.138878250122071
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 445603,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.2376124382019045
+   ],
+   "site_pkas": [
+    7.2376124382019045
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 556321,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    5.2096607208251955
+   ],
+   "site_pkas": [
+    5.2096607208251955
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 2007,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    3.5359922885894775
+   ],
+   "site_pkas": [
+    3.5359922885894775
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 35030,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.199250888824463,
+    2.948435974121094
+   ],
+   "site_pkas": [
+    7.199250888824463,
+    2.948435974121094
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 92910,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.632197380065918
+   ],
+   "site_pkas": [
+    8.632197380065918
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 547089,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.596695137023925
+   ],
+   "site_pkas": [
+    8.596695137023925
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 65321,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.21205539703369,
+    8.66995849609375,
+    7.01656436920166
+   ],
+   "site_pkas": [
+    9.21205539703369,
+    8.66995849609375,
+    7.01656436920166
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 12614,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    10.007069778442382,
+    8.30727653503418,
+    3.500235605239868
+   ],
+   "site_pkas": [
+    10.007069778442382,
+    8.30727653503418,
+    3.500235605239868
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 451189,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.243406867980957,
+    5.749198246002197,
+    2.962306785583496
+   ],
+   "site_pkas": [
+    8.243406867980957,
+    5.749198246002197,
+    2.962306785583496
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 269,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    5.342420291900635,
+    4.489801216125488
+   ],
+   "site_pkas": [
+    5.342420291900635,
+    4.489801216125488
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 4766,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.131840896606445,
+    4.4806215286254885,
+    3.136082315444946
+   ],
+   "site_pkas": [
+    9.131840896606445,
+    4.4806215286254885,
+    3.136082315444946
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 45278,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    12.743601989746093,
+    10.28508644104004
+   ],
+   "site_pkas": [
+    12.743601989746093,
+    10.28508644104004
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 75178,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    10.143659400939942,
+    9.969261360168456,
+    8.354735374450684
+   ],
+   "site_pkas": [
+    10.143659400939942,
+    9.969261360168456,
+    8.354735374450684
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 65688,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    10.725887298583984,
+    5.291504383087158
+   ],
+   "site_pkas": [
+    10.725887298583984,
+    5.291504383087158
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 31293,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.295617866516114,
+    8.803666687011718,
+    7.820349025726318
+   ],
+   "site_pkas": [
+    9.295617866516114,
+    8.803666687011718,
+    7.820349025726318
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 49517,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.27564115524292
+   ],
+   "site_pkas": [
+    8.27564115524292
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 51278,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.923504257202149,
+    5.159450244903565,
+    3.972504806518555
+   ],
+   "site_pkas": [
+    9.923504257202149,
+    5.159450244903565,
+    3.972504806518555
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 45834,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    6.202492427825928,
+    2.043320894241333
+   ],
+   "site_pkas": [
+    6.202492427825928,
+    2.043320894241333
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 121853,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.756531143188477,
+    4.302568101882935
+   ],
+   "site_pkas": [
+    8.756531143188477,
+    4.302568101882935
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 49578,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    11.236660575866699,
+    10.34555492401123,
+    8.729806327819825
+   ],
+   "site_pkas": [
+    11.236660575866699,
+    10.34555492401123,
+    8.729806327819825
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 40339,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    10.62405185699463,
+    8.290802955627441,
+    7.820936870574951
+   ],
+   "site_pkas": [
+    10.62405185699463,
+    8.290802955627441,
+    7.820936870574951
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 460749,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.636651420593262,
+    5.195933055877686,
+    4.133420658111572,
+    3.1042550086975096
+   ],
+   "site_pkas": [
+    8.636651420593262,
+    5.195933055877686,
+    4.133420658111572,
+    3.1042550086975096
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 91864,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.17413158416748,
+    8.347058868408203,
+    8.2019681930542
+   ],
+   "site_pkas": [
+    9.17413158416748,
+    8.347058868408203,
+    8.2019681930542
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 693144,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.460207557678222,
+    4.340241289138794,
+    2.8521732807159426
+   ],
+   "site_pkas": [
+    9.460207557678222,
+    4.340241289138794,
+    2.8521732807159426
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 472933,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    6.423402786254883,
+    1.936628818511963
+   ],
+   "site_pkas": [
+    6.423402786254883,
+    1.936628818511963
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 848,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    11.327285194396973,
+    8.802229499816894,
+    5.793209552764893,
+    4.268525457382202
+   ],
+   "site_pkas": [
+    11.327285194396973,
+    8.802229499816894,
+    5.793209552764893,
+    4.268525457382202
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 471564,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.034396266937256,
+    3.8970783233642576,
+    2.9666444778442385
+   ],
+   "site_pkas": [
+    8.034396266937256,
+    3.8970783233642576,
+    2.9666444778442385
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 74429,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    6.3307453155517575,
+    1.9082361221313477
+   ],
+   "site_pkas": [
+    6.3307453155517575,
+    1.9082361221313477
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 138059,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    10.93860034942627,
+    5.070411109924317,
+    3.2448183059692384
+   ],
+   "site_pkas": [
+    10.93860034942627,
+    5.070411109924317,
+    3.2448183059692384
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 4069,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    6.289968395233155,
+    1.9442628860473632
+   ],
+   "site_pkas": [
+    6.289968395233155,
+    1.9442628860473632
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 68470,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.155989265441894,
+    7.773013973236084,
+    4.358820056915283
+   ],
+   "site_pkas": [
+    9.155989265441894,
+    7.773013973236084,
+    4.358820056915283
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 496474,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.188750839233398,
+    7.670987606048584,
+    4.610103893280029
+   ],
+   "site_pkas": [
+    9.188750839233398,
+    7.670987606048584,
+    4.610103893280029
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 6975,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.684226417541504,
+    7.955312061309814,
+    4.823858070373535,
+    3.2839738368988036
+   ],
+   "site_pkas": [
+    8.684226417541504,
+    7.955312061309814,
+    4.823858070373535,
+    3.2839738368988036
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 496367,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.67564640045166,
+    8.550198554992676,
+    5.401518440246582
+   ],
+   "site_pkas": [
+    8.67564640045166,
+    8.550198554992676,
+    5.401518440246582
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 75538,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    6.874996948242187,
+    6.117662620544434,
+    3.446013164520264,
+    1.520820951461792
+   ],
+   "site_pkas": [
+    6.874996948242187,
+    6.117662620544434,
+    3.446013164520264,
+    1.520820951461792
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 1428,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.865494537353516,
+    5.540889263153076
+   ],
+   "site_pkas": [
+    9.865494537353516,
+    5.540889263153076
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 553182,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.210290145874023
+   ],
+   "site_pkas": [
+    9.210290145874023
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 691983,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    10.515347671508788,
+    5.299975490570068
+   ],
+   "site_pkas": [
+    10.515347671508788,
+    5.299975490570068
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 556390,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    10.680118179321289,
+    10.400547790527344,
+    6.1439313888549805
+   ],
+   "site_pkas": [
+    10.680118179321289,
+    10.400547790527344,
+    6.1439313888549805
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 93901,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.645526695251466,
+    8.951292610168457,
+    3.428418445587158
+   ],
+   "site_pkas": [
+    9.645526695251466,
+    8.951292610168457,
+    3.428418445587158
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 692314,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    6.281362915039063,
+    3.934549331665039,
+    3.0313003063201904
+   ],
+   "site_pkas": [
+    6.281362915039063,
+    3.934549331665039,
+    3.0313003063201904
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 116127,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    13.513661766052246,
+    10.744419479370118,
+    6.880253887176513
+   ],
+   "site_pkas": [
+    13.513661766052246,
+    10.744419479370118,
+    6.880253887176513
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 472926,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    6.259678936004638,
+    1.9925503730773926
+   ],
+   "site_pkas": [
+    6.259678936004638,
+    1.9925503730773926
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 2194,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    4.224512100219727,
+    2.6961450576782227
+   ],
+   "site_pkas": [
+    4.224512100219727,
+    2.6961450576782227
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 472977,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    6.346167659759521,
+    1.9350866317749023
+   ],
+   "site_pkas": [
+    6.346167659759521,
+    1.9350866317749023
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 116456,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.229833602905273,
+    2.2934534549713135
+   ],
+   "site_pkas": [
+    9.229833602905273,
+    2.2934534549713135
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 83304,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.287003993988037,
+    7.817042064666748,
+    7.1408278465271
+   ],
+   "site_pkas": [
+    8.287003993988037,
+    7.817042064666748,
+    7.1408278465271
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 496674,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.422618198394775,
+    4.248150777816773,
+    2.9226559162139893
+   ],
+   "site_pkas": [
+    7.422618198394775,
+    4.248150777816773,
+    2.9226559162139893
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 116449,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.281725883483887,
+    5.898569774627686,
+    3.279247760772705,
+    3.107237386703491
+   ],
+   "site_pkas": [
+    7.281725883483887,
+    5.898569774627686,
+    3.279247760772705,
+    3.107237386703491
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 130164,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    6.159424781799316,
+    5.270789718627929,
+    1.903289222717285,
+    1.3234556198120118
+   ],
+   "site_pkas": [
+    6.159424781799316,
+    5.270789718627929,
+    1.903289222717285,
+    1.3234556198120118
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 11612,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.300389862060547,
+    7.5106329917907715
+   ],
+   "site_pkas": [
+    9.300389862060547,
+    7.5106329917907715
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 116259,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    11.58888874053955,
+    9.14022331237793
+   ],
+   "site_pkas": [
+    11.58888874053955,
+    9.14022331237793
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 131817,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.149161052703858,
+    5.520545959472656,
+    2.132931613922119
+   ],
+   "site_pkas": [
+    7.149161052703858,
+    5.520545959472656,
+    2.132931613922119
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 7267,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    10.096701049804688,
+    5.57502498626709,
+    3.9328293323516847
+   ],
+   "site_pkas": [
+    10.096701049804688,
+    5.57502498626709,
+    3.9328293323516847
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 100064,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    10.789632987976074,
+    7.105450534820557
+   ],
+   "site_pkas": [
+    14.020832824707032,
+    10.789632987976074,
+    7.105450534820557
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 458602,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    10.411528587341309,
+    7.089886951446533
+   ],
+   "site_pkas": [
+    10.411528587341309,
+    7.089886951446533
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 141716,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.768880462646484,
+    7.2410331726074215
+   ],
+   "site_pkas": [
+    9.768880462646484,
+    7.2410331726074215
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 556670,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.18969612121582,
+    6.348002338409424,
+    2.629655885696411,
+    1.5501944541931152
+   ],
+   "site_pkas": [
+    7.18969612121582,
+    6.348002338409424,
+    2.629655885696411,
+    1.5501944541931152
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 89833,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    10.065469551086426,
+    8.092405414581298,
+    3.8246427536010743
+   ],
+   "site_pkas": [
+    10.065469551086426,
+    8.092405414581298,
+    3.8246427536010743
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 7045,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.432452964782716,
+    6.396533966064453,
+    4.574496078491211,
+    4.178764343261719
+   ],
+   "site_pkas": [
+    8.432452964782716,
+    6.396533966064453,
+    4.574496078491211,
+    4.178764343261719
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 121156,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    6.953786087036133,
+    6.129057121276856,
+    3.3257874488830566,
+    1.9672367095947265
+   ],
+   "site_pkas": [
+    6.953786087036133,
+    6.129057121276856,
+    3.3257874488830566,
+    1.9672367095947265
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 14056,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    10.701345062255859,
+    7.820826435089112
+   ],
+   "site_pkas": [
+    10.701345062255859,
+    7.820826435089112
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 67963,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    6.772759056091308,
+    5.463077640533447,
+    2.79619779586792,
+    2.4842466354370116
+   ],
+   "site_pkas": [
+    6.772759056091308,
+    5.463077640533447,
+    2.79619779586792,
+    2.4842466354370116
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 23850,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    3.3435826301574707
+   ],
+   "site_pkas": [
+    3.3435826301574707
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 50277,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.207238674163818,
+    6.31905517578125,
+    2.5844341278076173,
+    1.6033191680908203
+   ],
+   "site_pkas": [
+    7.207238674163818,
+    6.31905517578125,
+    2.5844341278076173,
+    1.6033191680908203
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 28237,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.218307495117188,
+    7.879703617095947,
+    5.588304042816162,
+    3.382504606246948
+   ],
+   "site_pkas": [
+    9.218307495117188,
+    7.879703617095947,
+    5.588304042816162,
+    3.382504606246948
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 77903,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.856871795654296,
+    8.349482917785645,
+    3.528524160385132
+   ],
+   "site_pkas": [
+    8.856871795654296,
+    8.349482917785645,
+    3.528524160385132
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 25426,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.756074714660645,
+    6.171745491027832,
+    4.33435583114624,
+    3.390553855895996
+   ],
+   "site_pkas": [
+    9.756074714660645,
+    6.171745491027832,
+    4.33435583114624,
+    3.390553855895996
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 97923,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    10.533176231384278,
+    9.330045318603515
+   ],
+   "site_pkas": [
+    10.533176231384278,
+    9.330045318603515
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 50273,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    11.171771049499512,
+    8.403611755371093,
+    5.1787923812866214,
+    3.762533712387085
+   ],
+   "site_pkas": [
+    11.171771049499512,
+    8.403611755371093,
+    5.1787923812866214,
+    3.762533712387085
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 88627,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.344279479980468,
+    7.591731548309326,
+    4.531108856201172
+   ],
+   "site_pkas": [
+    8.344279479980468,
+    7.591731548309326,
+    4.531108856201172
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 142267,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    4.252796077728272,
+    3.3387022018432617
+   ],
+   "site_pkas": [
+    4.252796077728272,
+    3.3387022018432617
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 66711,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.289405059814452,
+    4.115650796890259,
+    3.1307398319244384
+   ],
+   "site_pkas": [
+    9.289405059814452,
+    4.115650796890259,
+    3.1307398319244384
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 36269,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    6.463839054107666,
+    4.362579393386841,
+    2.3587072849273683
+   ],
+   "site_pkas": [
+    6.463839054107666,
+    4.362579393386841,
+    2.3587072849273683
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 97275,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.294552612304688,
+    8.116333961486816,
+    7.936532783508301,
+    3.0255453109741213
+   ],
+   "site_pkas": [
+    8.294552612304688,
+    8.116333961486816,
+    7.936532783508301,
+    3.0255453109741213
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 65696,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.714096832275391,
+    8.255353736877442,
+    7.359700393676758
+   ],
+   "site_pkas": [
+    8.714096832275391,
+    8.255353736877442,
+    7.359700393676758
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 80027,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.642753601074219,
+    7.562059783935547,
+    6.008967781066895
+   ],
+   "site_pkas": [
+    7.642753601074219,
+    7.562059783935547,
+    6.008967781066895
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 47173,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.906039047241212,
+    8.781033134460449,
+    4.841831398010254
+   ],
+   "site_pkas": [
+    8.906039047241212,
+    8.781033134460449,
+    4.841831398010254
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 3945,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    11.195501899719238,
+    9.528386116027832,
+    9.41211986541748,
+    6.700650978088379
+   ],
+   "site_pkas": [
+    11.195501899719238,
+    9.528386116027832,
+    9.41211986541748,
+    6.700650978088379
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 27261,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    10.46147632598877,
+    6.942095375061035
+   ],
+   "site_pkas": [
+    10.46147632598877,
+    6.942095375061035
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 2001,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.965804862976075,
+    2.0224793434143065
+   ],
+   "site_pkas": [
+    8.965804862976075,
+    2.0224793434143065
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 93481,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    10.59001865386963,
+    8.257799530029297
+   ],
+   "site_pkas": [
+    10.59001865386963,
+    8.257799530029297
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 313831,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    6.882472896575928,
+    4.940222454071045,
+    2.30310959815979
+   ],
+   "site_pkas": [
+    6.882472896575928,
+    4.940222454071045,
+    2.30310959815979
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 18770,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.637178993225097
+   ],
+   "site_pkas": [
+    8.637178993225097
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 3184,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    6.690359973907471,
+    5.757856655120849,
+    3.605446767807007,
+    2.1257457733154297
+   ],
+   "site_pkas": [
+    6.690359973907471,
+    5.757856655120849,
+    3.605446767807007,
+    2.1257457733154297
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 16209,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.4659930229187,
+    8.458964252471924,
+    7.382425689697266
+   ],
+   "site_pkas": [
+    8.4659930229187,
+    8.458964252471924,
+    7.382425689697266
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 469398,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    5.108369541168213,
+    4.592329788208008,
+    2.8673341274261475
+   ],
+   "site_pkas": [
+    5.108369541168213,
+    4.592329788208008,
+    2.8673341274261475
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 137828,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.206433868408203,
+    3.2139981269836424
+   ],
+   "site_pkas": [
+    7.206433868408203,
+    3.2139981269836424
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 74524,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    7.329222583770752,
+    6.1609907150268555,
+    3.0983805656433105,
+    1.5799174785614014
+   ],
+   "site_pkas": [
+    7.329222583770752,
+    6.1609907150268555,
+    3.0983805656433105,
+    1.5799174785614014
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 122975,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.042062759399414
+   ],
+   "site_pkas": [
+    9.042062759399414
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 553125,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.992868995666504
+   ],
+   "site_pkas": [
+    8.992868995666504
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 325,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    6.533523273468018,
+    5.7431317329406735,
+    2.2723622798919676,
+    1.2152976036071776
+   ],
+   "site_pkas": [
+    6.533523273468018,
+    5.7431317329406735,
+    2.2723622798919676,
+    1.2152976036071776
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 28240,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    8.148783874511718,
+    6.635230922698975,
+    4.852890968322754,
+    2.334038782119751
+   ],
+   "site_pkas": [
+    8.148783874511718,
+    6.635230922698975,
+    4.852890968322754,
+    2.334038782119751
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 122019,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    13.30517635345459,
+    7.011194801330566,
+    3.0835290908813477
+   ],
+   "site_pkas": [
+    13.30517635345459,
+    7.011194801330566,
+    3.0835290908813477
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 458491,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    10.038665199279786,
+    3.088402271270752
+   ],
+   "site_pkas": [
+    10.038665199279786,
+    3.088402271270752
+   ],
+   "seconds": null
+  },
+  {
+   "compound_id": 65699,
+   "tool": "unipka-simple-template",
+   "ok": true,
+   "error": null,
+   "predicted_pkas": [
+    9.859010124206543,
+    9.21630687713623,
+    5.132025098800659
+   ],
+   "site_pkas": [
+    9.859010124206543,
+    9.21630687713623,
+    5.132025098800659
+   ],
+   "seconds": null
+  }
+ ]
+}

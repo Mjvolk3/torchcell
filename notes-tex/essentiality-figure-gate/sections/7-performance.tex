@@ -1,0 +1,51 @@
+%% notes-tex/essentiality-figure-gate/sections/7-performance.tex
+%% SOURCE: tables/gate_family_rows.tex and tables/gate_genome_rows.tex, written by
+%% experiments/028-gene-essentiality/scripts/essentiality_gate_numbers.py from
+%% results/family_ensembles_folds.json and results/genome_heldout_readout.json. Every row
+%% is a committed result file.
+
+\clearpage
+\section{Every ensemble and every genome-wide arm\secstatus{todo}}
+\label{sec:performance}
+
+Every fold ensemble and post hoc average on the \gnHeldOut{} released held-out genes,
+best first, with its gene-bootstrap interval; then every arm read on the \ggenomeN{}
+genome-wide genes with no GEM reaction, pooled over its cells.
+
+{\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{104mm}>{\raggedright\arraybackslash}p{20mm}rrl@{}}
+  \caption[]{The \gnCombinations{} fold ensembles and averages on the released held-out
+  genes. Rows written by \texttt{essentiality\_gate\_numbers.py}.}
+  \label{tab:families}\\
+  \toprule
+  models & kind & cells & AUROC & 95\,\% interval \\
+  \midrule
+  \endfirsthead
+  \toprule
+  models & kind & cells & AUROC & 95\,\% interval \\
+  \midrule
+  \endhead
+  \bottomrule
+  \endlastfoot
+  \input{tables/gate_family_rows}
+\end{longtable}}
+
+{\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{104mm}>{\raggedright\arraybackslash}p{20mm}rrl@{}}
+  \caption[]{Every arm on the genome-wide genes with no GEM reaction, pooled AUROC over
+  cells with a gene bootstrap. Rows written by \texttt{essentiality\_gate\_numbers.py}.}
+  \label{tab:genome}\\
+  \toprule
+  arm & kind & cells & AUROC & 95\,\% interval \\
+  \midrule
+  \endfirsthead
+  \toprule
+  arm & kind & cells & AUROC & 95\,\% interval \\
+  \midrule
+  \endhead
+  \bottomrule
+  \endlastfoot
+  \input{tables/gate_genome_rows}
+\end{longtable}}

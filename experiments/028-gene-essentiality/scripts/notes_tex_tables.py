@@ -1,0 +1,3369 @@
+# experiments/028-gene-essentiality/scripts/notes_tex_tables.py
+# [[experiments.028-gene-essentiality.scripts.notes_tex_tables]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/028-gene-essentiality/scripts/notes_tex_tables.py
+
+r"""Generate every table of notes-tex/028-gene-essentiality from the results tree.
+
+Nothing in the document's tables is typed by hand: each ``tables/<name>.tex`` is written
+here from a result file, with a ``%% SOURCE:`` line naming it, so a regenerated result
+regenerates the table.
+
+    python experiments/028-gene-essentiality/scripts/notes_tex_tables.py
+"""
+
+from __future__ import annotations
+
+import glob
+import gzip
+import json
+import os
+import os.path as osp
+from typing import Any
+
+from dotenv import load_dotenv
+
+load_dotenv()
+EXPERIMENT_ROOT = os.environ["EXPERIMENT_ROOT"]
+RESULTS = osp.join(EXPERIMENT_ROOT, "028-gene-essentiality", "results")
+TABLES = osp.join(
+    osp.dirname(EXPERIMENT_ROOT), "notes-tex", "028-gene-essentiality", "tables"
+)
+MEDIUM_LABEL = {
+    "shipped": "shipped bounds (glucose minimal, aerobic)",
+    "SM": "SM, synthetic minimal",
+    "SC": "SC, synthetic complete",
+    "YPD": "YPD approximation (no peptone)",
+}
+
+#: Every table marks the best value of a column in bold, and a round table marks an arm
+#: whose seeds are all above (or all below) the first arm's on the same seeds with an
+#: arrow, which is the paired sign test the pre-registered reads use.
+BEST_NOTE = "Bold marks the highest value in a column."
+PAIRED_NOTE = (
+    " $\\uparrow$ ($\\downarrow$) marks an arm whose held-out AUROC is above (below) the "
+    "first arm's on every one of the same three seeds."
+)
+
+
+def fmt(v: float, best: float, digits: int = 3) -> str:
+    """``v`` to ``digits`` places, in bold when it is the column's best."""
+    text = f"{v:.{digits}f}"
+    return f"\\textbf{{{text}}}" if abs(v - best) < 10 ** -(digits + 1) else text
+
+
+def paired_mark(seeds: list[float], reference: list[float]) -> str:
+    """The arrow for three of three seeds above or below the reference arm's."""
+    if len(seeds) != 3 or len(reference) != 3:
+        return ""
+    if all(a > b for a, b in zip(seeds, reference, strict=True)):
+        return " $\\uparrow$"
+    if all(a < b for a, b in zip(seeds, reference, strict=True)):
+        return " $\\downarrow$"
+    return ""
+
+
+#: Column fitting. A label column that wraps onto two or three lines reads as two or three
+#: rows, so every table with a paragraph (``p{..}``) column is laid out here from the
+#: widths of its own cells rather than from a width typed into the generator: the
+#: paragraph columns become one-line ``l`` columns whenever the table then fits the text
+#: block, first at the document's 4 pt column separation, then at 3 pt and 2.5 pt, and at
+#: \footnotesize before the generator's own \scriptsize. Only a table that fits at neither
+#: keeps paragraph columns, and those then take all the width the other columns leave,
+#: set ragged right with a hanging indent so a wrapped label still reads as one row.
+TEXT_WIDTH_MM = 182.0
+#: Kept free at the right margin: the glyph table ignores kerning and ligatures, which is
+#: an error of about one percent of a label, so a table estimated to fit also fits on
+#: the page.
+FIT_MARGIN_MM = 2.0
+#: A secondary paragraph column narrower than this is kept on one line.
+TWO_LINE_MIN_MM = 30.0
+PT_TO_MM = 0.35146
+TABCOLSEP_PT = (4.0, 3.0, 2.5)
+#: Latin Modern Roman advance widths in em, measured with \settowidth at \footnotesize in
+#: this document's preamble (lmr8). \scriptsize (lmr7) sets the same text 0.9384 as wide
+#: on average, which is 7.507 pt of this table.
+GLYPH_EM = {
+    " ": 0.354, "!": 0.295, '"': 0.403, "#": 0.885, "$": 0.531, "%": 0.885, "&": 0.826,
+    "'": 0.295, "(": 0.413, ")": 0.413, "*": 0.531, "+": 0.826, ",": 0.295, "-": 0.354,
+    ".": 0.295, "/": 0.531, "0": 0.531, "1": 0.531, "2": 0.531, "3": 0.531, "4": 0.531,
+    "5": 0.531, "6": 0.531, "7": 0.531, "8": 0.531, "9": 0.531, ":": 0.295, ";": 0.295,
+    "<": 0.826, "=": 0.826, ">": 0.826, "?": 0.502, "@": 0.826, "A": 0.796, "B": 0.752,
+    "C": 0.767, "D": 0.811, "E": 0.723, "F": 0.693, "G": 0.834, "H": 0.796, "I": 0.383,
+    "J": 0.545, "K": 0.825, "L": 0.664, "M": 0.973, "N": 0.796, "O": 0.826, "P": 0.723,
+    "Q": 0.826, "R": 0.782, "S": 0.590, "T": 0.767, "U": 0.796, "V": 0.796, "W": 1.091,
+    "X": 0.796, "Y": 0.796, "Z": 0.649, "[": 0.295, "]": 0.295, "^": 0.556, "_": 0.796,
+    "`": 0.295, "a": 0.531, "b": 0.590, "c": 0.472, "d": 0.590, "e": 0.472, "f": 0.325,
+    "g": 0.531, "h": 0.590, "i": 0.295, "j": 0.325, "k": 0.561, "l": 0.295, "m": 0.885,
+    "n": 0.590, "o": 0.531, "p": 0.590, "q": 0.561, "r": 0.414, "s": 0.419, "t": 0.413,
+    "u": 0.590, "v": 0.561, "w": 0.767, "x": 0.561, "y": 0.561, "z": 0.472, "|": 0.295,
+    "~": 0.556,
+}  # fmt: skip
+SIZE_PT = {"\\footnotesize": 8.0, "\\scriptsize": 7.507}
+#: Latin Modern Mono is one advance width per size, in em of SIZE_PT.
+TT_EM = {"\\footnotesize": 0.531, "\\scriptsize": 0.495}
+BOLD_FACTOR = 1.155
+#: The italic is 1.02 of the upright at \footnotesize and 1.05 at \scriptsize.
+ITALIC_FACTOR = 1.05
+#: Math symbols the tables use, in em; a relation or binary operator between two operands
+#: also takes its surrounding math space, added in ``_math_em``.
+MATH_SYMBOL_EM = {
+    "\\uparrow": 0.531, "\\downarrow": 0.531, "\\rho": 0.544, "\\sum": 1.111,
+    "\\log": 1.357, "\\pm": 0.826,
+}  # fmt: skip
+SCRIPT_FACTOR = 0.87
+HANG = ">{\\raggedright\\hangindent=1em\\hangafter=1\\arraybackslash}"
+
+
+def _group(text: str, start: int) -> tuple[str, int]:
+    """The brace group opening at ``text[start]`` and the index just past it."""
+    if text[start] != "{":
+        raise ValueError(f"expected a brace group at {start} in {text!r}")
+    depth = 0
+    for i in range(start, len(text)):
+        depth += {"{": 1, "}": -1}.get(text[i], 0)
+        if depth == 0:
+            return text[start + 1 : i], i + 1
+    raise ValueError(f"unbalanced braces in {text!r}")
+
+
+def _math_em(math: str) -> float:
+    """Width in em of an inline math span's contents."""
+    em, i, operand_before = 0.0, 0, False
+    math = math.replace(" ", "").replace("\\_", "_")
+    while i < len(math):
+        ch = math[i]
+        if ch == "\\":
+            j = i + 1
+            while j < len(math) and math[j].isalpha():
+                j += 1
+            em += MATH_SYMBOL_EM[math[i:j]]
+            i, operand_before = j, True
+        elif ch in "^_":
+            if math[i + 1] == "{":
+                script, i = _group(math, i + 1)
+            else:
+                script, i = math[i + 1], i + 2
+            em += SCRIPT_FACTOR * _math_em(script) + 0.06
+        elif ch in "{}":
+            i += 1
+        else:
+            em += GLYPH_EM[
+                "+" if ch == "-" else ch
+            ]  # a math minus is as wide as a plus
+            if ch in "+-<>=" and operand_before and i + 1 < len(math):
+                em += 2 * 0.25
+            operand_before = ch not in "+-<>="
+            i += 1
+    return em
+
+
+def _text_em(text: str, size: str) -> float:
+    """Natural width in em of one table cell's TeX source, on one line."""
+    em, i = 0.0, 0
+    while i < len(text):
+        ch = text[i]
+        if ch == "$":
+            j = text.index("$", i + 1)
+            em += _math_em(text[i + 1 : j])
+            i = j + 1
+        elif ch == "\\":
+            j = i + 1
+            while j < len(text) and text[j].isalpha():
+                j += 1
+            command = text[i:j]
+            if command == "\\":  # an escaped character such as \_ or \%
+                em += GLYPH_EM[text[j]]
+                i = j + 1
+            elif command in ("\\textbf", "\\texttt", "\\textit", "\\emph"):
+                inner, i = _group(text, j)
+                if command == "\\texttt":
+                    em += TT_EM[size] * len(inner.replace("\\", ""))
+                else:
+                    factor = BOLD_FACTOR if command == "\\textbf" else ITALIC_FACTOR
+                    em += factor * _text_em(inner, size)
+            elif command == "\\quad":
+                em += 1.0625
+                i = j
+                if i < len(text) and text[i] == " ":
+                    i += 1
+            else:
+                raise ValueError(f"no width rule for {command} in table cell {text!r}")
+        elif ch in "{}":
+            i += 1
+        else:
+            em += GLYPH_EM[ch]
+            i += 1
+    return em
+
+
+def _cell_mm(cell: str, size: str) -> float:
+    return _text_em(" ".join(cell.split()), size) * SIZE_PT[size] * PT_TO_MM
+
+
+def _parse_spec(spec: str) -> list[str]:
+    """Column tokens of a tabular preamble, without the ``@{}`` at either end."""
+    columns, i = [], 0
+    while i < len(spec):
+        if spec[i] == "@":
+            _, i = _group(spec, i + 1)
+        elif spec[i] == "p":
+            width, i = _group(spec, i + 1)
+            columns.append(f"p{{{width}}}")
+        elif spec[i] in "lrc":
+            columns.append(spec[i])
+            i += 1
+        else:
+            raise ValueError(f"no rule for column type {spec[i]!r} in {spec!r}")
+    return columns
+
+
+def _rows(block: str) -> list[list[tuple[int, str]]]:
+    """Each table row as ``(columns spanned, cell source)`` pairs."""
+    rows = []
+    for line in block.split("\\\\"):
+        line = " ".join(
+            part
+            for part in line.split("\n")
+            if not part.strip().startswith(("\\hline", "\\end", "\\caption", "\\label"))
+        ).strip()
+        if not line:
+            continue
+        cells = []
+        for cell in line.split(" & "):
+            cell = cell.strip()
+            if cell.startswith("\\multicolumn"):
+                n, k = _group(cell, len("\\multicolumn"))
+                _, k = _group(cell, k)
+                inner, _ = _group(cell, k)
+                cells.append((int(n), inner))
+            else:
+                cells.append((1, cell))
+        rows.append(cells)
+    return rows
+
+
+def _natural_mm(
+    rows: list[list[tuple[int, str]]], n_columns: int, size: str
+) -> list[float]:
+    """Natural one-line width of every column, spans pushed into their last column."""
+    widths = [0.0] * n_columns
+    spans = []
+    for row in rows:
+        j = 0
+        for n, cell in row:
+            if n == 1:
+                widths[j] = max(widths[j], _cell_mm(cell, size))
+            else:
+                spans.append((j, j + n, _cell_mm(cell, size)))
+            j += n
+        if j != n_columns:
+            raise ValueError(f"row has {j} columns, the preamble {n_columns}: {row}")
+    sep = 2 * TABCOLSEP_PT[0] * PT_TO_MM
+    for a, b, need in spans:
+        have = sum(widths[a:b]) + sep * (b - a - 1)
+        widths[b - 1] += max(0.0, need - have)
+    return widths
+
+
+def _fit_tabular(block: str, size: str) -> tuple[str, str, float] | None:
+    """Re-lay one tabular or longtable; ``(block, size, tabcolsep)`` or None if no p column."""
+    env = "longtable" if "\\begin{longtable}" in block else "tabular"
+    start = block.index(f"\\begin{{{env}}}") + len(f"\\begin{{{env}}}")
+    spec, after = _group(block, start)
+    columns = _parse_spec(spec)
+    flexible = [j for j, c in enumerate(columns) if c.startswith("p{")]
+    if not flexible:
+        return None
+    inner = block[after : block.index(f"\\end{{{env}}}")]
+    if env == "longtable":
+        # The caption and label are the longtable's first "row"; the head repeats after
+        # \endfirsthead, so the rows after it carry every width.
+        inner = inner[inner.index("\\endfirsthead") + len("\\endfirsthead") :]
+    rows = _rows(inner)
+    sizes = ["\\footnotesize", size] if size == "\\scriptsize" else [size]
+    available = TEXT_WIDTH_MM - FIT_MARGIN_MM
+    for try_size in sizes:
+        widths = _natural_mm(rows, len(columns), try_size)
+        for sep_pt in TABCOLSEP_PT:
+            seps = 2 * sep_pt * PT_TO_MM * (len(columns) - 1)
+            if sum(widths) + seps <= available:
+                fitted = ["l" if j in flexible else c for j, c in enumerate(columns)]
+                new_spec = "@{}" + "".join(fitted) + "@{}"
+                return (
+                    block[:start] + f"{{{new_spec}}}" + block[after:],
+                    try_size,
+                    sep_pt,
+                )
+    # No one-line layout fits, so the paragraph columns share what the fixed columns
+    # leave. The first of them is the row's label and is served first: it takes its
+    # natural width less what the others need to set in two lines (a short one in one
+    # line), and never less than an equal share. The others then split the remainder,
+    # each capped at its own natural width, the narrowest served first.
+    sep_pt = TABCOLSEP_PT[-1]
+    widths = _natural_mm(rows, len(columns), size)
+    seps = 2 * sep_pt * PT_TO_MM * (len(columns) - 1)
+    budget = (
+        available - seps - sum(w for j, w in enumerate(widths) if j not in flexible)
+    )
+    label, rest = flexible[0], flexible[1:]
+    floor = sum(
+        widths[j] + 1.0 if widths[j] <= TWO_LINE_MIN_MM else widths[j] / 2 + 2.0
+        for j in rest
+    )
+    granted = {
+        label: min(widths[label] + 1.0, max(budget - floor, budget / len(flexible)))
+    }
+    budget -= granted[label]
+    for k, j in enumerate(sorted(rest, key=lambda j: widths[j])):
+        granted[j] = min(widths[j] + 1.0, budget / (len(rest) - k))
+        budget -= granted[j]
+    fitted = [
+        f"{HANG}p{{{granted[j]:.1f}mm}}" if j in flexible else c
+        for j, c in enumerate(columns)
+    ]
+    new_spec = "@{}" + "".join(fitted) + "@{}"
+    return block[:start] + f"{{{new_spec}}}" + block[after:], size, sep_pt
+
+
+def fit_columns(body: str) -> str:
+    """Lay out every table of ``body`` that has a paragraph column; see ``TEXT_WIDTH_MM``."""
+    out = []
+    for block in body.split("\\begin{table}"):
+        if "p{" not in block:
+            out.append(block)
+            continue
+        size = "\\scriptsize" if "\\scriptsize\n" in block else "\\footnotesize"
+        fitted = _fit_tabular(block, size)
+        if fitted is None:
+            out.append(block)
+            continue
+        block, new_size, sep_pt = fitted
+        if sep_pt != TABCOLSEP_PT[0]:
+            new_size += f"\n  \\setlength{{\\tabcolsep}}{{{sep_pt:g}pt}}"
+        out.append(block.replace(f"{size}\n", f"{new_size}\n", 1))
+    return "\\begin{table}".join(out)
+
+
+def write(name: str, body: str, source: str) -> str:
+    os.makedirs(TABLES, exist_ok=True)
+    path = osp.join(TABLES, f"{name}.tex")
+    with open(path, "w") as fh:
+        fh.write(
+            f"%% notes-tex/028-gene-essentiality/tables/{name}.tex\n"
+            "%% GENERATED by experiments/028-gene-essentiality/scripts/notes_tex_tables.py\n"
+            f"%% SOURCE: {source}\n" + fit_columns(body)
+        )
+    return path
+
+
+def fba_media() -> str:
+    src = osp.join(RESULTS, "fba_essentiality_by_medium.json")
+    with open(src) as fh:
+        report = json.load(fh)
+    rows = []
+    scored = [{s["gene_set"]: s for s in row["scores"]} for row in report["rows"]]
+    best = {
+        k: max(by[k]["auroc"] for by in scored)
+        for k in ("all_labeled", "held_out_223", "ours_195")
+    }
+    for row, by in zip(report["rows"], scored, strict=True):
+        a, h, o = by["all_labeled"], by["held_out_223"], by["ours_195"]
+        rows.append(
+            f"    {MEDIUM_LABEL[row['medium']]} & {row['wild_type_growth']:.3f} & "
+            f"{row['n_zero_growth']} & {fmt(a['auroc'], best['all_labeled'])} & "
+            f"{fmt(h['auroc'], best['held_out_223'])} & "
+            f"{fmt(o['auroc'], best['ours_195'])} [{o['auroc_ci_low']:.2f}, "
+            f"{o['auroc_ci_high']:.2f}] \\\\"
+        )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[FBA essentiality by medium]{FBA single-gene deletion on yeast-GEM "
+        f"{report['gem_version']} (cobrapy {report['cobra_version']}), scored as the negative "
+        "knockout-to-wild-type growth ratio rounded to $10^{-3}$. AUROC on all "
+        f"{report['n_labeled']:,} labeled genes, on the 223 held-out genes, and on the 195 "
+        "held-out genes the model scores with a 2,000-draw gene bootstrap interval. "
+        f"{report['n_labeled_in_gem']} of the labeled genes are in the GEM; the rest keep "
+        f"wild-type growth. {BEST_NOTE}}}\n  \\label{{tab:fba-media}}\n"
+        "  \\begin{tabular}{@{}lrrrrl@{}}\n    \\hline\n"
+        "    medium & WT growth (1/h) & lethal & all 1,121 & held-out 223 & our 195 [95\\% CI] \\\\\n"
+        "    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("fba_media", body, "results/fba_essentiality_by_medium.json")
+
+
+def splits() -> str:
+    paths = sorted(glob.glob(osp.join(RESULTS, "splits", "ess_*_val*_s0.json.gz")))
+    rows = []
+    for path in paths:
+        with gzip.open(path, "rt") as fh:
+            r = json.load(fh)["report"]
+        source = (
+            "released (1,121)"
+            if r["label_source"] == "fcl"
+            else f"released + SGD essential + viable fitness ({r['n_genes_labeled']:,})"
+        )
+        stem = osp.basename(path).replace(".json.gz", "").replace("_", "\\_")
+        rows.append(
+            f"    \\texttt{{{stem}}} & {source} & {r['train_genes']:,} ({r['train_essential']}) & "
+            f"{r['val_genes']:,} ({r['val_essential']}) & {r['test_genes']} ({r['test_essential']}) \\\\"
+        )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[Split files]{The split files, one per label source: genes per split "
+        "with the essential count in parentheses. The test block is the released held-out "
+        "genes under either source; validation is a class-stratified fifth of the "
+        "remaining labeled genes at seed 0. Under the genome source the released label "
+        "wins on every disagreement (12 genes).}\n  \\label{tab:splits}\n"
+        "  \\begin{tabular}{@{}llrrr@{}}\n    \\hline\n"
+        "    split file & labels & train (ess) & val (ess) & test (ess) \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("splits", body, "results/splits/ess_*_val0.2_s0.json.gz")
+
+
+ROUND_CAPTIONS = {
+    "w12": (
+        "Round 1, the backbone",
+        "Width 12, one block, one-layer preprocessor, 80 epochs, seeds 2700 to 2702. Held-out "
+        "AUROC on the 195 genes: the seed mean with its standard deviation, the three seeds, "
+        "the gene bootstrap of the pooled per-gene logits, the epochs selected on validation, "
+        "and the median absolute epoch-to-epoch step of the validation curve.",
+    ),
+    "w13": (
+        "Round 2, the metabolic module",
+        "The round-1 pooled cell on the released-label split (\\texttt{fcl}) and the same cell with the prediction routed through the "
+        "flux layer: the growth column alone (forced), the context head plus the growth "
+        "affine, and that affine behind a zero-initialized gate, at constraint scale 0.1 and "
+        "0, with the shuffled-kcat control and the stoichiometry-only layer.",
+    ),
+    "w14": (
+        "Round 3, more optimization and the fold ensemble",
+        "Batch 32 with the class weight at 80 and 200 epochs, batch 32 alone at 200 epochs, "
+        "and the five fold models of the cross-validation files, each on its own fold.",
+    ),
+    "w15": (
+        "Round 4, the module on the round-3 levers",
+        "The round-3 pooled cell (batch 32, class weight, 200 epochs) and the same cell with "
+        "the prediction routed through the flux layer at constraint scale 0: the gated "
+        "readout, the forced growth column, and the forced growth column with the kcat "
+        "vector shuffled.",
+    ),
+    "w16": (
+        "Round 5, FBA's growth ratios as an input",
+        "The round-3 pooled cell and the same cell with an affine of FBA's four per-medium "
+        "growth ratios for the deleted gene added to the context head, at three seeds, and "
+        "that readout on the five cross-validation folds whose logits are averaged on the "
+        "held-out genes.",
+    ),
+    "w17": (
+        "Round 6, one medium, the layer on top of the solve, and two other embeddings",
+        "The round-3 pooled cell and the round-5 FBA-readout cell, then: the FBA affine on "
+        "the YPD ratio alone; the forced and the gated growth column of the flux layer "
+        "with the FBA affine beside them (constraint scale 0); and the pooled backbone "
+        "opened on codon frequency, and on the species-LM composite (5' and 3' species LM, "
+        "ProtT5, CaLM), with and without the FBA affine. Batch 32, class weight, 200 "
+        "epochs, seeds 2700 to 2702.",
+    ),
+    "w18": (
+        "Round 7, the growth column with the bounds enforced",
+        "The round-3 pooled cell, the round-4 forced growth column (projection ending on "
+        "the balance, box open), and the forced growth column on two layers whose bounds "
+        "hold exactly: the projection ending on the box, and the pure box "
+        "parameterization. Constraint scale 0, batch 32, class weight, 200 epochs, seeds "
+        "2700 to 2702.",
+    ),
+    "w19": (
+        "Round 8, width and depth on the FBA cell",
+        "The round-5 cell (width 12, one block, one-layer preprocessor, context head plus "
+        "the FBA affine) against the same readout at width 24 and 48, at two blocks, and "
+        "with the two-layer preprocessor. Batch 32, class weight, 200 epochs, seeds 2700 "
+        "to 2702.",
+    ),
+    "w20": (
+        "Round 9, the FBA affine on the ladder's other encodings",
+        "The round-5 cell (ProtT5 backbone, context head plus the FBA affine) against the "
+        "same cell opened on the chromosome-pathway indicator, on the indicator "
+        "concatenated with ProtT5, on ESM2, and on the ladder's seven-encoding "
+        "concatenation. Width 12, one block, batch 32, class weight, 200 epochs, seeds "
+        "2700 to 2702.",
+    ),
+    "w21": (
+        "Round 10, the flux layer warm-started from the deletion's own solve",
+        "The pooled cell, the round-4 forced and gated growth columns, and the round-5 "
+        "FBA affine, against the forced and gated growth columns whose layer proposes "
+        "the deletion's own parsimonious FBA flux on YPD plus a null-space residual of "
+        "relative size alpha, with alpha frozen at 0.01, learned, or frozen at 0.1. "
+        "Constraint scale 0, batch 32, class weight, 200 epochs, seeds 2700 to 2702.",
+    ),
+    "w22": (
+        "Round 11, the affine widened with the solve",
+        "The round-5 cell (context head plus an affine of the four FBA growth ratios) "
+        "against the same cell whose affine also reads the eight statistics of the "
+        "deleted gene's reactions under the wild-type pFBA solve and its variability, "
+        "the deletion's own pFBA flux vector (4,131 columns), or both; every column "
+        "standardized over the labeled genes. Width 12, one block, batch 32, class "
+        "weight, 200 epochs, seeds 2700 to 2702.",
+    ),
+    "w24": (
+        "Round 13, the warm start on the stoichiometry-only layer",
+        "The pooled cell, the round-4 forced and gated columns and the round-10 "
+        "warm-started columns on the anchored layer, against the same warm start on the "
+        "stoichiometry-only layer, whose box is the GEM's own bounds rather than the "
+        "capacity- and second-law-tightened one, so the deletion's pFBA reference sits "
+        "inside it. Alpha frozen at 0.01, constraint scale 0, batch 32, class weight, "
+        "200 epochs, seeds 2700 to 2702.",
+    ),
+    "w23": (
+        "Round 12, the passing cell confirmed",
+        "The round-5 cell (ProtT5 backbone, context head plus the FBA affine) and its "
+        "five fold models, against the round-9 cell (chromosome-pathway indicator "
+        "concatenated with ProtT5, same readout) on seven seeds, 2700 to 2706, and on the "
+        "five cross-validation folds whose logits are averaged on the held-out genes. "
+        "Width 12, one block, batch 32, class weight, 200 epochs.",
+    ),
+    "w25": (
+        "Round 14, attribution inside the chromosome-pathway indicator",
+        "The round-5 cell, the round-9 cells on the indicator alone and with ProtT5, and "
+        "the same two cells on the indicator without its pathway columns "
+        "(\\texttt{normalized\\_chrom}: the five gene properties and the chromosome "
+        "one-hot), all with the FBA affine. Width 12, one block, batch 32, class weight, "
+        "200 epochs, seeds 2700 to 2702.",
+    ),
+    "w26": (
+        "Round 15, the layer that solves",
+        "The pooled cell, the round-4 forced and gated growth columns and the round-5 "
+        "FBA affine, against a flux layer whose flux is the growth optimum of a linear "
+        "program under the layer's own bounds (availability and the enzyme-capacity "
+        "ceiling from the abundance head), with the bound duals as its gradient: the "
+        "forced growth column, the same with the box tightened to the second-law "
+        "direction before the solve, and the gated column with the context head. "
+        "Constraint scale 0, batch 32, class weight, 200 epochs, seeds 2700 to 2702.",
+    ),
+    "w27": (
+        "Round 16, the round-9 backbone with the round-11 affine",
+        "The round-5 cell, the round-9 cell (chromosome-pathway indicator with ProtT5), "
+        "the round-11 cell (ProtT5 with the widened affine), and the round-9 backbone "
+        "with the widened affine: the four ratios and the pFBA vector, and those plus "
+        "the eight statistics. Width 12, one block, batch 32, class weight, 200 epochs, "
+        "seeds 2700 to 2702.",
+    ),
+    "w28": (
+        "Round 17, the round-16 cell on the five folds",
+        "The round-9 and round-16 cells on the split file, the round-12 fold models of the "
+        "round-9 cell, and the five fold models of the round-16 cell (chromosome-pathway "
+        "indicator with ProtT5, the affine reading the four ratios, the eight statistics "
+        "and the pFBA vector), whose logits are averaged on the held-out genes. Width 12, "
+        "one block, batch 32, class weight, 200 epochs.",
+    ),
+    "w29": (
+        "Round 15b, the layer that solves on the stoichiometry-only box",
+        "The pooled cell, the round-5 FBA affine and the round-13 warm-started columns on "
+        "the stoichiometry-only layer, against the growth LP under that layer's box (the "
+        "GEM's bounds scaled by availability, no capacity ceiling): the forced growth "
+        "column and the gated column with the context head. Constraint scale 0, batch "
+        "32, class weight, 200 epochs, seeds 2700 to 2702.",
+    ),
+    "w30": (
+        "Round 15c, the layer that solves with calibrated capacity ceilings",
+        "The pooled cell, the round-5 FBA affine and the round-15b cells on the GEM box, "
+        "against the growth LP on the anchored box with the enzyme-capacity ceilings "
+        "scaled by 100 and by 1,000 (capacity\\_calibration.py: the program admits "
+        "growth from a scale of 30 and the ceilings stop binding near 10,000), forced "
+        "and gated. Constraint scale 0, batch 32, class weight, 200 epochs, seeds 2700 "
+        "to 2702.",
+    ),
+    "w31": (
+        "Round 15d, the forced layer that solves against the absorbing state",
+        "The pooled cell, the round-5 FBA affine and the round-15c forced cell at "
+        "capacity scale 100, against the same cell at scale 1,000 and at scale 100 with "
+        "the learning rate at $3 \\times 10^{-4}$. Constraint scale 0, batch 32, class "
+        "weight, 200 epochs, seeds 2700 to 2702.",
+    ),
+    "w32": (
+        "Round 18, the forced column of the elastic layer that solves",
+        "The round-4 forced column of the alternating layer (the paired comparator), the "
+        "round-5 FBA affine and the hard program's forced cells at capacity scale 100 and "
+        "1,000 (rounds 15c and 15d), against the elastic program (every forced flux "
+        "priced at 1 per mmol/gDW/h of shortfall, feasible for every genotype by "
+        "construction) at scale 100 and 1,000, and at 100 with the protein pool held by "
+        "construction. Arm \\texttt{flux\\_projection\\_anchored\\_nodiss}, constraint "
+        "scale 0, batch 32, class weight, 200 epochs, seeds 2700 to 2702.",
+    ),
+    "w33": (
+        "Round 18, the gated column of the elastic layer that solves",
+        "The round-4 gated cell (the paired comparator), the round-5 FBA affine, the "
+        "gated hard program on the GEM box (round 15b) and at capacity scale 100 (round "
+        "15c), against the gated elastic program at scale 100. Arm "
+        "\\texttt{flux\\_projection\\_anchored\\_nodiss}, constraint scale 0, batch 32, "
+        "class weight, 200 epochs, seeds 2700 to 2702.",
+    ),
+    "w34": (
+        "Round 19, the forced elastic column with a faster layer and a deeper head",
+        "The round-18 forced elastic cell at capacity scale 100 (the paired comparator), "
+        "the round-4 forced column and the round-5 FBA affine, against the same elastic "
+        "cell with the flux layer's parameters at ten times the learning rate, with a "
+        "two-layer abundance head, and with both. Arm "
+        "\\texttt{flux\\_projection\\_anchored\\_nodiss}, constraint scale 0, batch 32, "
+        "class weight, 200 epochs, seeds 2700 to 2702.",
+    ),
+    "w36": (
+        "Round 20, the gated forms on six seeds and the last forced probes",
+        "The round-4 gated cell (the paired comparator) and the round-5 affine, against "
+        "the gated layer that solves on the GEM box (round 15b, seeds 2700 to 2702) and "
+        "on seeds 2703 to 2705, the gated elastic cell at capacity scale 100 (round 18) "
+        "and on seeds 2703 to 2705, and two last probes of the forced elastic column: "
+        "at ceiling scale 30 with the flux layer at ten times the learning rate, and at "
+        "100 with the abundance head's reach doubled to $e^6$. Constraint scale 0, "
+        "batch 32, class weight, 200 epochs.",
+    ),
+    "w37": (
+        "Round 21, the gated elastic cell with a head over the solved flux",
+        "The round-18 gated elastic cell (the paired comparator) and the round-5 affine, "
+        "against the same cell with a zero-initialized linear head over "
+        "$\\log(1 + |v^*|)$ of the solved flux, over all 4,131 reactions and over the "
+        "274 exchange reactions. Constraint scale 0, batch 32, class weight, 200 epochs, "
+        "seeds 2700 to 2702.",
+    ),
+    "w38": (
+        "Round 22, the chromosome-pathway indicator split into its blocks",
+        "The round-9 cell (the paired comparator: the 197-column indicator beside ProtT5 "
+        "with the FBA affine), the round-5 affine on ProtT5 alone, and the round-14 "
+        "cell (properties and chromosome, no pathways), against the same recipe with "
+        "one block at a time: the 173-column pathway multi-hot, the 17-column "
+        "chromosome one-hot, the seven scaled properties, and the pathway block alone "
+        "without ProtT5. Batch 32, class weight, 200 epochs, seeds 2700 to 2702.",
+    ),
+    "w40": (
+        "Round 24, what carries the head over the solved flux",
+        "The round-18 gated elastic cell, the round-5 affine on ProtT5 and the round-9 "
+        "affine on the chromosome-pathway indicator with ProtT5 (the comparators), the "
+        "round-21 cells (the head over all solved fluxes, on six seeds once seeds 2703 to "
+        "2705 land; the head over the 274 exchange fluxes), against the head over the "
+        "2,709 gene-owned fluxes, and the head over the flux of the GEM-box solve with "
+        "no learned ceilings. Constraint scale 0, batch 32, class weight, 200 epochs.",
+    ),
+    "w51": (
+        "Round 35, the layer-free form on ProtT5 alone",
+        "The round-5 affine on ProtT5, the round-24 head over the cached GEM-box solve "
+        "on ProtT5 and the round-33 layer-free cell with the pathway multi-hot (the "
+        "comparators), against the deletion's pFBA vector as $\\log(1 + |v|)$ appended "
+        "to the affine on ProtT5 alone. Batch 32, class weight, 200 epochs, seeds 2700 "
+        "to 2705 where run.",
+    ),
+    "w52": (
+        "Round 36, the layer-free cell over a store from another solver",
+        "The round-33 cell (the pFBA vector as $\\log(1 + |v|)$ appended to the affine, "
+        "pathway multi-hot and ProtT5, no layer; the comparator) against the same cell "
+        "over the growth program solved per gene by HiGHS 1.15's dual simplex (a vertex) "
+        "and by its interior point without crossover at KKT $10^{-4}$ (a point inside "
+        "the optimal face). Batch 32, class weight, 200 epochs, seeds 2700 to 2705.",
+    ),
+    "w54": (
+        "Round 38, the layer-free cell over the PDLP store",
+        "The round-33 cell over the pFBA store and over the interior-point store (the "
+        "comparators), against the same cell over the growth program solved per gene "
+        "by HiGHS 1.15's PDLP without crossover at KKT $10^{-4}$, the algorithm a "
+        "batched solve on the card runs, written by \\texttt{solve\\_tolerance\\_read.py}. "
+        "Batch 32, class weight, 200 epochs, seeds 2700 to 2705.",
+    ),
+    "w56": (
+        "Round 40, the solve statistics beside the log1p vector",
+        "Round 31's cell with the eight wild-type solve statistics beside the "
+        "standardized vector and round 33's cell with the $\\log(1 + |v|)$ vector alone "
+        "(the comparators), against the statistics beside the $\\log(1 + |v|)$ vector. "
+        "Batch 32, class weight, 200 epochs, seeds 2700 to 2705.",
+    ),
+    "w57": (
+        "Round 41, a hidden layer in the affine over the log1p vector",
+        "Round 33's cell, the linear affine over the media ratios and the "
+        "$\\log(1 + |v|)$ vector (the comparator), against the same cell with one GELU "
+        "hidden layer of width 64 or 256 between that input and the logit. Batch 32, "
+        "class weight, 200 epochs, seeds 2700 to 2705.",
+    ),
+    "w58": (
+        "Round 42, the store on synthetic complete medium",
+        "Round 33's cell over the pFBA store built on YPD (the comparator) against the "
+        "same cell over the pFBA store built on synthetic complete medium, the solve's "
+        "exchanges set to SC and everything else the same. Batch 32, class weight, 200 "
+        "epochs, seeds 2700 to 2705.",
+    ),
+    "w59": (
+        "Round 43, the solved flux on the node",
+        "The round-22 affine on ProtT5 with the pathway multi-hot and the round-33 cell "
+        "with the $\\log(1 + |v|)$ vector appended to the affine (the comparators), "
+        "against the same vector entering as a node embedding beside the pathway "
+        "multi-hot and ProtT5, with the four-ratio affine only. Batch 32, class weight, "
+        "200 epochs, seeds 2700 to 2705.",
+    ),
+    "w60": (
+        "Round 44, the reduced vector on the node",
+        "The round-33 cell (the vector in the affine) and the round-43 cell (the raw "
+        "4,131-column vector as the node embedding) as the comparators, against the "
+        "vector reduced by principal components fitted on the covered genes' "
+        "$\\log(1 + |v|)$ rows, 64 and 16 components, as the node embedding with the "
+        "four-ratio affine, and the 64-component embedding with the full vector in the "
+        "affine as well. Batch 32, class weight, 200 epochs, seeds 2700 to 2705.",
+    ),
+    "w80": (
+        "Round 64, the reported cell pinned on the fixed one-hot code",
+        "The round-33 cell on the fixed code, six free seeds (round 61) and the same "
+        "six seeds with the card's kernels pinned once each, beside the six seeds "
+        "pinned on the permuted input (round 45, seed 2700's first run and seeds 2701 "
+        "to 2705). Batch 32, class weight, 200 epochs.",
+    ),
+    "w84": (
+        "Round 68, the clamp-carrying columns dropped from two stores",
+        "The layer-free $\\log(1 + |v|)$ cell over the pFBA store and over the growth "
+        "program's dual-simplex vertex store, each beside the same store with every "
+        "reaction that reaches the $\\pm100$ clamp on any genotype zeroed "
+        "(\\texttt{declamp\\_store.py}: 1 of 4,131 columns from the pFBA store, 429 from "
+        "the vertex store), and beside the specificity control, the vertex store with "
+        "the same 429 columns taken instead as the widest that never reach the clamp "
+        "(round 69, \\texttt{--mode topvar}), and beside the dose, the 25 and the 100 "
+        "widest of those 429 clamp columns dropped instead of all of them (round 70, "
+        "\\texttt{--mode partial}). Batch 32, class weight, 200 epochs, seeds 2700 to "
+        "2705.",
+    ),
+    "w89": (
+        "Round 72, the forced growth column under every construction tried",
+        "The growth column of the layer that solves, read on the capacity box at scale "
+        "100 under the hard program (twelve seeds) and under the two constructions that "
+        "remove its absorbing infeasible state: the looser measured turnover tier and "
+        "the elastic program with unmet forced flux priced. The gated cells of the same "
+        "two programs are shown for reference. Constraint scale 0, batch 32, class "
+        "weight, 200 epochs.",
+    ),
+    "w83": (
+        "Round 67, the capacity ceilings from the measured turnover tier",
+        "Round 15c's two cells at capacity scale 100, where both turnover tiers still "
+        "bind, on the predicted tier they were run with and on the measured tier, which "
+        "leaves 2,849 of 3,728 catalytic units on the organism default and is the looser "
+        "box (Section~\\ref{sec:kcat-tier}). Forced and gated, constraint scale 0, batch "
+        "32, class weight, 200 epochs, seeds 2700 to 2705.",
+    ),
+    "w77": (
+        "Round 61, the reference cell on the fixed one-hot code",
+        "The round-33 cell (six free seeds, each having served the pathway one-hot in "
+        "the column order the previous launch wrote) against the same cell on the code "
+        "that enumerates the columns sorted and processes only when the file is absent, "
+        "six free seeds. Batch 32, class weight, 200 epochs, seeds 2700 to 2705.",
+    ),
+    "w76": (
+        "Rounds 60 and 63, the GO multi-hot reduced before the affine",
+        "The round-33 cell and the round-50 cells (the full GO multi-hot as affine "
+        "columns, alone and with the vector) as the comparators, against the GO "
+        "multi-hot projected on its first 64 and its first 16 principal components "
+        "fitted over the 1,121 labeled genes and split into positive and negative parts "
+        "(128 and 32 columns, so the $\\log(1 + |v|)$ encoding keeps the sign), alone "
+        "and with the vector. Batch 32, class weight, 200 epochs; seeds 2700 to 2705 "
+        "(2700 to 2702 at 16 components).",
+    ),
+    "w75": (
+        "Round 59, weight decay on the GO affine columns",
+        "The round-33 cell (the vector alone in the affine) and the round-50 cell (GO "
+        "and the vector as affine columns, AdamW weight decay $10^{-4}$) as the "
+        "comparators, against the round-50 cell with weight decay 0.1 and 1.0. Batch "
+        "32, class weight, 200 epochs; seeds 2700 to 2705 for the comparators, 2700 to "
+        "2702 for the rest.",
+    ),
+    "w72": (
+        "Round 56, the batch axis of the layer-free cell",
+        "The round-33 cell at batch 32 (seeds 2700 to 2705) against the same cell at "
+        "batch 64 and at batch 128 (seeds 2700 to 2702), all at 200 epochs, so the "
+        "larger batches see a half and a quarter of the updates. Class weight, the "
+        "same learning rate.",
+    ),
+    "w69": (
+        "Rounds 53, 55 and 57, the PDLP stores at KKT $10^{-6}$ and $10^{-8}$",
+        "The round-33 cell over the pFBA store and over the PDLP store at KKT "
+        "$10^{-4}$ (round 38, 12 programs uncertified) as the comparators, against the "
+        "same cell over the PDLP stores at KKT $10^{-6}$ (70 of 1,121 programs "
+        "uncertified within 120 s and kept as zero flux) and $10^{-8}$ (320 "
+        "uncertified) written by the transfer read, and over the $10^{-8}$ store with "
+        "its uncertified rows filled from the $10^{-6}$ and $10^{-4}$ stores. Batch 32, "
+        "class weight, 200 epochs, seeds 2700 to 2705.",
+    ),
+    "w67": (
+        "Round 51, the hash seed fixed on the old one-hot code",
+        "The round-9 pooled cell (pathway multi-hot and ProtT5, the plain pooled head) "
+        "and the round-33 layer-free cell, each run twice on seed 2700 with the card's "
+        "kernels pinned and Python's hash seed fixed, on the code that rebuilt the "
+        "pathway one-hot from a set at every launch. Batch 32, class weight, 200 "
+        "epochs; the read is per pair.",
+    ),
+    "w68": (
+        "Round 52, the fixed one-hot code without a hash seed",
+        "The same two cells run twice each on seed 2700 with the card's kernels pinned "
+        "and no hash seed, on the code that enumerates the one-hot's columns sorted and "
+        "processes only when the file is absent. Batch 32, class weight, 200 epochs; "
+        "the read is per pair.",
+    ),
+    "w66": (
+        "Round 50, GO on the logit instead of the node",
+        "The round-33 cell and the round-47 GO-on-node cells as the comparators, against "
+        "the GO multi-hot (2,362 propagated terms) entering as affine columns through the "
+        "solve store path, encoded as $\\log(1 + |v|)$ (0 or 0.693 per term): GO alone "
+        "beside the four ratios with pathway and ProtT5 on the node, GO appended to the "
+        "pFBA vector (the one-model GO + layer-free form on the logit), the same on "
+        "ProtT5 alone, and the round-47 GO-on-node cell run to 400 epochs. Batch 32, "
+        "class weight; seeds 2700 to 2705 for the round-33 cell, 2700 to 2702 for the "
+        "rest.",
+    ),
+    "w65": (
+        "Round 49, the second bracket of the pooled cell's divergence",
+        "Three pinned pairs on seed 2700 in the pooled arm: the round-9 cell (pathway "
+        "multi-hot and ProtT5, the plain pooled head, no affine readout), the affine "
+        "cell on the pathway multi-hot alone, and the affine cell on the GO multi-hot "
+        "and ProtT5, each run twice with the card's kernels pinned as in round 32. "
+        "Batch 32, class weight, 200 epochs; the read is per pair.",
+    ),
+    "w64": (
+        "Round 48, the capacity of the layer-free cell",
+        "The round-33 cell (width 12, one block, one-layer preprocessor, the "
+        "$\\log(1 + |v|)$ vector in the affine) against the same cell at widths 24, 48 "
+        "and 96, with two transformer blocks (graph regularization off, as every "
+        "two-block cell runs), and at width 24 with the two-layer preprocessor (the "
+        "round-28 wide recipe). Batch 32, class weight, 200 epochs, seeds 2700 to 2705 "
+        "(2700 to 2702 at width 96 and with two blocks).",
+    ),
+    "w63": (
+        "Round 47, the GO multi-hot beside the layer-free solve in one transformer",
+        "The round-33 cell and the round-26 GO cells (GO beside ProtT5, and GO beside "
+        "the pathway block and ProtT5, the four ratios only) as the comparators, "
+        "against GO beside the pathway block and ProtT5 with the $\\log(1 + |v|)$ vector "
+        "in the affine, GO in place of the pathway block with the vector, and GO beside "
+        "the pathway block and ProtT5 without the vector run in the same pack. Batch 32, "
+        "class weight, 200 epochs; seeds 2700 to 2705 for the round-33 cell, 2700 to "
+        "2702 for the rest.",
+    ),
+    "w62": (
+        "Round 46, bracketing the pooled cell's divergence",
+        "Two pinned pairs on seed 2700: the round-22 affine cell (pathway multi-hot and "
+        "ProtT5, the four ratios only, no solve columns) and the layer-free cell on "
+        "ProtT5 alone (no pathway block), each run twice with the card's kernels pinned "
+        "as in round 32. Batch 32, class weight, 200 epochs; the read is per pair.",
+    ),
+    "w61": (
+        "Round 45, the layer-free cell with the card's kernels pinned",
+        "The round-33 cell (the $\\log(1 + |v|)$ vector in the affine, pathway multi-hot "
+        "and ProtT5, no layer) on seed 2700 run twice with cuDNN's autotuner off, its "
+        "deterministic kernels on, torch's deterministic algorithms on and cuBLAS's "
+        "workspace pinned, and twice without, in one pack on one card. Batch 32, class "
+        "weight, 200 epochs; the read is per pair.",
+    ),
+    "w48": (
+        "Round 32, the unfit seed with the card's kernels pinned",
+        "The round-27 cell (the head over the cached GEM-box solve, pathway multi-hot "
+        "and ProtT5) on seed 2701 run twice with cuDNN's autotuner off, its "
+        "deterministic kernels on, torch's deterministic algorithms on and cuBLAS's "
+        "workspace pinned, and twice without, in one pack on one card. Batch 32, class "
+        "weight, 200 epochs; the read is per pair.",
+    ),
+    "w49": (
+        "Round 33, the layer-free form's encoding and initialization",
+        "The round-27 head over the cached solve (the comparator) and round 31's cell, "
+        "the deletion's pFBA vector standardized under the affine's default "
+        "initialization, against the same vector with the solve columns "
+        "zero-initialized, the vector as $\\log(1 + |v|)$ under the default "
+        "initialization, and as $\\log(1 + |v|)$ zero-initialized, the flux head's own "
+        "construction with no layer in the graph. Batch 32, class weight, 200 epochs, "
+        "seeds 2700 to 2705.",
+    ),
+    "w47": (
+        "Round 31, the layer-free form",
+        "The round-22 affine on ProtT5 with the pathway multi-hot and the round-27 head "
+        "over the cached GEM-box solve (the comparators), against the deletion's own "
+        "pFBA flux vector precomputed and appended to the affine's input with no flux "
+        "layer in the graph, and the same with the eight wild-type solve statistics "
+        "beside it. Batch 32, class weight, 200 epochs, seeds 2700 to 2705.",
+    ),
+    "w45": (
+        "Round 29, the unfit seed under a 400-epoch budget",
+        "The round-23 flux-head cell on ProtT5 with the pathway multi-hot, seed 2701, "
+        "whose 200-epoch run never fit, beside the same program and seed run for 400 "
+        "epochs. Batch 32, class weight, one seed; the two runs diverge from the first "
+        "epoch, so the pair reads a chance event, not a delay.",
+    ),
+    "w44": (
+        "Round 28, the GO cells with a wider cell",
+        "The round-5 affine on ProtT5, the round-22 pathway cell and the two round-26 "
+        "GO cells at width 12 with a one-layer preprocessor (the comparators), against "
+        "the same GO cells at width 24 with a two-layer preprocessor. Batch 32, class "
+        "weight, 200 epochs, seeds 2700 to 2702.",
+    ),
+    "w43": (
+        "Round 27, the scalable form on the pathway input",
+        "The pooled control on ProtT5 with the pathway multi-hot, the round-22 affine on "
+        "that input, and the round-23 flux head on the elastic solve (the comparators), "
+        "against the same head over the GEM-box solve with nothing learned in the layer "
+        "and the program cached per genotype, seeds 2700 to 2705. Constraint scale 0, "
+        "batch 32, class weight, 200 epochs.",
+    ),
+    "w42": (
+        "Round 26, the Gene Ontology multi-hot as a backbone input",
+        "The round-5 affine on ProtT5, the round-9 indicator cell and the round-22 "
+        "pathway cell (the comparators), against the round-9 recipe with the GO "
+        "multi-hot beside ProtT5 (the SGD annotations propagated to their ancestors "
+        "over terms with ten or more genes, 2,362 columns), the biological-process "
+        "namespace alone beside ProtT5 (1,580 columns), the GO multi-hot alone, and GO "
+        "with the pathway multi-hot beside ProtT5. Batch 32, class weight, 200 epochs, "
+        "seeds 2700 to 2702.",
+    ),
+    "w39": (
+        "Round 23, the gated module forms on the ladder's top input",
+        "The pooled cell on ProtT5 with the pathway multi-hot and no readout (the "
+        "module-free control) and the round-22 FBA affine on that input (the paired "
+        "comparator), against the three gated forms of the layer that solves on the same "
+        "input: the GEM-box solve (round 15b), the elastic solve at capacity scale 100 "
+        "(round 18) and the elastic solve with the head over the solved flux (round 21). "
+        "Constraint scale 0, batch 32, class weight, 200 epochs, seeds 2700 to 2702.",
+    ),
+    "w35": (
+        "Round 19, the gated elastic column with a faster layer and a deeper head",
+        "The round-18 gated elastic cell at capacity scale 100 (the paired comparator), "
+        "the round-4 gated cell and the round-5 FBA affine, against the gated elastic "
+        "cell with the two-layer abundance head and the flux layer at ten times the "
+        "learning rate. Arm \\texttt{flux\\_projection\\_anchored\\_nodiss}, constraint "
+        "scale 0, batch 32, class weight, 200 epochs, seeds 2700 to 2702.",
+    ),
+}
+
+
+#: Shorter forms of phrases in the arm labels of the round readouts, applied by
+#: ``round_table`` tier by tier and only to a table whose labels would otherwise wrap.
+#: Every short form is one the readouts already use for the same thing in another arm.
+ROUND_LABEL_TIERS: tuple[tuple[tuple[str, str], ...], ...] = (
+    (
+        ("ProtT5 backbone", "ProtT5"),
+        ("the card's kernels pinned", "kernels pinned"),
+        ("the round-", "round-"),
+        ("a head over", "head over"),
+    ),
+    (
+        ("the elastic layer that solves, capacity x", "elastic solve, x"),
+        ("the layer that solves, GEM box", "GEM-box solve"),
+        ("GO multi-hot + pathway multi-hot + ProtT5", "GO + pathway + ProtT5"),
+        ("pathway multi-hot + ProtT5", "pathway + ProtT5"),
+        ("log(1 + |v|)", "log1p"),
+    ),
+    (
+        ("gated column + context + head over", "gated + head over"),
+        ("head over the solved flux (all reactions)", "head over all solved fluxes"),
+        ("elastic solve, capacity x", "elastic solve, x"),
+    ),
+)
+
+
+def round_label(label: str, depth: int) -> str:
+    """An arm label as TeX, shortened by the first ``depth`` tiers."""
+    for tier in ROUND_LABEL_TIERS[:depth]:
+        for long_form, short_form in tier:
+            label = label.replace(long_form, short_form)
+    # Inline math passes through; outside it an underscore is escaped and a plus is set
+    # as the binary operator.
+    parts = label.split("$")
+    parts[::2] = [p.replace("_", "\\_").replace("+", "$+$") for p in parts[::2]]
+    return "$".join(parts)
+
+
+def round_table(round_key: str) -> str | None:
+    """One row per arm of a round's readout, from ``results/<round>_readout.json``."""
+    src = osp.join(RESULTS, f"{round_key}_readout.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        report = json.load(fh)
+    rows = []
+    arms = report["arms"]
+    best_mean = max(a["test_auroc_mean"] for a in arms)
+    best_pooled = max(
+        a["pooled_auroc"] for a in arms if a.get("pooled_auroc") is not None
+    )
+    reference = list(arms[0]["test_auroc_values"])
+    for i, a in enumerate(arms):
+        values = list(a["test_auroc_values"])
+        # Seven seeds do not fit the column; give the range and the count instead.
+        seeds = (
+            ", ".join(f"{v:.3f}" for v in values)
+            if len(values) <= 3
+            else f"{min(values):.3f} to {max(values):.3f} ({len(values)})"
+        )
+        if i > 0:
+            seeds += paired_mark(values, reference)
+        pooled = (
+            f"{fmt(a['pooled_auroc'], best_pooled)} [{a['pooled_ci_low']:.2f}, "
+            f"{a['pooled_ci_high']:.2f}]"
+            if a.get("pooled_auroc") is not None
+            else "--"
+        )
+        epochs = (
+            ", ".join(str(e) for e in a["select_epochs"])
+            if len(values) <= 3
+            else f"{min(a['select_epochs'])} to {max(a['select_epochs'])}"
+        )
+        rows.append(
+            f"{fmt(a['test_auroc_mean'], best_mean)} & "
+            f"{a['test_auroc_sd']:.3f} & {seeds} & {pooled} & {epochs} & "
+            f"{a['median_abs_step_mean']:.4f} \\\\"
+        )
+    short, long = ROUND_CAPTIONS[round_key]
+    # \scriptsize is the floor, not the choice: ``fit_columns`` sets the table at
+    # \footnotesize whenever its arm labels then fit on one line in the 182 mm block.
+    # The arm labels are shortened one tier at a time, and only until every label of the
+    # table fits on one line; a table whose labels fit as written keeps them as written.
+    for depth in range(len(ROUND_LABEL_TIERS) + 1):
+        labels = [round_label(a["label"], depth) for a in arms]
+        body = (
+            "\\begin{table}[H]\n  \\centering\n  \\scriptsize\n"
+            f"  \\caption[{short}]{{{short}. {long} {BEST_NOTE}{PAIRED_NOTE}}}\n"
+            f"  \\label{{tab:{round_key}}}\n"
+            "  \\begin{tabular}{@{}p{52mm}rrlllr@{}}\n    \\hline\n"
+            "    arm & mean & sd & seeds & pooled [95\\% CI] & selected epochs & val step \\\\\n"
+            "    \\hline\n"
+            + "\n".join(
+                f"    {label} & {row}" for label, row in zip(labels, rows, strict=True)
+            )
+            + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+        )
+        if HANG not in fit_columns(body):
+            break
+    return write(f"round_{round_key}", body, f"results/{round_key}_readout.json")
+
+
+def logistic_baselines() -> str | None:
+    """The classical ladder, from ``results/logistic_baselines.json``."""
+    src = osp.join(RESULTS, "logistic_baselines.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        report = json.load(fh)
+    # The table carries the FBA rungs and, per encoding, the best model with and without
+    # the FBA ratios; the full grid is the figure's job.
+    rows = []
+    for r in report["rows"]:
+        if r["model"] == "FBA growth":
+            rows.append(
+                f"    FBA growth & {r['encoding'].replace('_', chr(92) + '_')} & -- & -- & "
+                f"{r['val_auroc']:.3f} & {r['test_auroc']:.3f} "
+                f"[{r['test_ci_low']:.2f}, {r['test_ci_high']:.2f}] \\\\"
+            )
+    fitted = [r for r in report["rows"] if r["model"] != "FBA growth"]
+    encodings = list(dict.fromkeys(r["encoding"] for r in fitted))
+    chosen: list[tuple[str, bool, dict]] = []
+    for enc in encodings:
+        for with_fba in (False, True):
+            cands = [
+                r for r in fitted if r["encoding"] == enc and r["with_fba"] == with_fba
+            ]
+            if not cands:
+                continue
+            r = max(cands, key=lambda x: x["cv_auroc"])
+            chosen.append((enc, with_fba, r))
+    best = {
+        k: max(r[k] for _, _, r in chosen)
+        for k in ("cv_auroc", "val_auroc", "test_auroc")
+    }
+    for enc, with_fba, r in chosen:
+        rows.append(
+            f"    {enc.replace('_', chr(92) + '_')}{' $+$ FBA' if with_fba else ''} & "
+            f"{r['model']} ({r['hyperparameter'].replace('_', chr(92) + '_')}) & "
+            f"{r['dim']:,} & {fmt(r['cv_auroc'], best['cv_auroc'])} & "
+            f"{fmt(r['val_auroc'], best['val_auroc'])} & "
+            f"{fmt(r['test_auroc'], best['test_auroc'])} [{r['test_ci_low']:.2f}, "
+            f"{r['test_ci_high']:.2f}] \\\\"
+        )
+    # A longtable: 52 rows at \footnotesize plus the caption overran a page as a fixed
+    # [H] float once the ladder figure grew to 95 mm.
+    body = (
+        "\\begingroup\n\\footnotesize\n"
+        "\\begin{longtable}{@{}llrrrl@{}}\n"
+        "  \\caption[Classical ladder]{The classical ladder on the released-label split "
+        f"(\\texttt{{{report['split_file'].replace('_', chr(92) + '_')}}}). Per encoding, "
+        "the model class whose five-fold cross-validation AUROC inside the 629 training "
+        "genes is highest, with and without FBA's four growth ratios appended; the "
+        "validation genes and the 195 held-out genes "
+        f"({report['n_test_essential']} essential) are scored once, on genes no fit "
+        "touched, the held-out number with a 2,000-draw gene bootstrap. FBA alone is not "
+        f"fitted. Every model and encoding is in Figure~\\ref{{fig:ladder}}. {BEST_NOTE}}}\n"
+        "  \\label{tab:ladder}\\\\\n"
+        "    \\hline\n"
+        "    encoding & best model (chosen) & dim & CV & val & held-out [95\\% CI] \\\\\n"
+        "    \\hline\n  \\endfirsthead\n"
+        "    \\hline\n"
+        "    encoding & best model (chosen) & dim & CV & val & held-out [95\\% CI] \\\\\n"
+        "    \\hline\n  \\endhead\n"
+        "    \\hline\n  \\endfoot\n"
+        "    \\hline\n  \\endlastfoot\n"
+        + "\n".join(rows)
+        + "\n\\end{longtable}\n\\endgroup\n"
+    )
+    return write("ladder", body, "results/logistic_baselines.json")
+
+
+def growth_probe() -> str | None:
+    """The flux growth probe, one row per (cell, weights), from ``flux_growth_probe_*.json``."""
+    paths = sorted(glob.glob(osp.join(RESULTS, "flux_growth_probe_*.json")))
+    if not paths:
+        return None
+    rows = []
+    for path in paths:
+        with open(path) as fh:
+            probe = json.load(fh)
+        stem = osp.basename(path).replace("flux_growth_probe_", "").replace(".json", "")
+        cell = stem.replace("_h12l1p1", "").replace("_", "\\_")
+        for b in probe["blocks"]:
+            sp = b["spearman_vs_fba"]
+
+            def rho(v: float) -> str:
+                # A constant column has no rank correlation; the cell says so.
+                return "--" if v != v else f"{v:+.2f}"
+
+            rows.append(
+                f"    \\texttt{{{cell}}} & {b['weights']} & {b['growth_median']:.2f} & "
+                f"{b['auroc_train']:.3f} & {b['auroc_val']:.3f} & {b['auroc_test']:.3f} & "
+                f"{rho(sp['shipped'])} & {rho(sp['YPD'])} \\\\"
+            )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[Flux growth probe]{The flux layer's growth column, read for every "
+        "labeled deletion at initialization and under the cell's trained weights "
+        "(\\texttt{flux\\_growth\\_probe.py}). Median $v_{\\text{growth}}$ over the 982 "
+        "labeled deletions (mmol/gDW/h; the wild type's FVA range on YPD is 0.48 to 0.54); "
+        "AUROC of the NEGATIVE growth column against the released label on the train, "
+        "validation and held-out genes, so 0.5 is chance and a value below 0.5 is a ranking "
+        "with the sign of growth inverted; Spearman of the column against FBA's "
+        "knockout-to-wild-type ratio on the shipped bounds and on YPD.}\n"
+        "  \\label{tab:growth-probe}\n"
+        "  \\begin{tabular}{@{}llrrrrrr@{}}\n    \\hline\n"
+        "    cell & weights & median $v$ & train & val & held-out & $\\rho$ shipped & "
+        "$\\rho$ YPD \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("growth_probe", body, "results/flux_growth_probe_*.json")
+
+
+#: (result glob, label) for the constraint-violation table, in figure order.
+VIOLATION_ARMS: list[tuple[str, str]] = [
+    ("w13_fluxbio_h12l1p1_e80_s*.json", "r2 forced, scale 0.1"),
+    ("w13_fluxbio_s0_h12l1p1_e80_s*.json", "r2 forced, scale 0"),
+    ("w13_fluxgate_h12l1p1_e80_s*.json", "r2 gated, scale 0.1"),
+    ("w15_bio_s0_h12l1p1_e200_s*.json", "r4 forced, scale 0"),
+    ("w15_gate_s0_h12l1p1_e200_s*.json", "r4 gated, scale 0"),
+    ("w17_biofba_h12l1p1_e200_s*.json", "r6 forced + FBA affine"),
+    ("w18_bioprojbox_h12l1p1_e200_s*.json", "r7 forced, clip last"),
+    ("w18_biobox_h12l1p1_e200_s*.json", "r7 forced, box form"),
+    ("w21_warmbio_h12l1p1_e200_s*.json", "r10 forced, warm start"),
+    ("w21_warmgate_h12l1p1_e200_s*.json", "r10 gated, warm start"),
+    ("w24_warmoffbio_h12l1p1_e200_s*.json", "r13 forced, GEM box, warm start"),
+    ("w24_warmoffgate_h12l1p1_e200_s*.json", "r13 gated, GEM box, warm start"),
+]
+VIOLATION_KEYS = (
+    "feas_balance_median",
+    "feas_box_violation_frac",
+    "feas_thermo_violation_frac",
+    "feas_budget_ratio",
+    "g_diss",
+)
+
+
+def violations() -> str:
+    """What the layer's flux violates at the selected epoch, seed mean per module arm."""
+    rows = []
+    for pattern, label in VIOLATION_ARMS:
+        files = sorted(glob.glob(osp.join(RESULTS, pattern)))
+        if not files:
+            continue
+        per_key: dict[str, list[float]] = {k: [] for k in VIOLATION_KEYS}
+        for f in files:
+            with open(f) as fh:
+                r = json.load(fh)
+            row = next(x for x in r["history"] if x.get("epoch") == r["select_epoch"])
+            for k in VIOLATION_KEYS:
+                if row.get(k) is not None:
+                    per_key[k].append(float(row[k]))
+        mean = {k: sum(v) / len(v) if v else float("nan") for k, v in per_key.items()}
+        rows.append(
+            f"    {label} & {len(files)} & {mean['feas_balance_median']:.1e} & "
+            f"{mean['feas_box_violation_frac']:.2f} & "
+            f"{mean['feas_thermo_violation_frac']:.2f} & {mean['feas_budget_ratio']:.1f} & "
+            f"{mean['g_diss']:,.0f} \\\\"
+        )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\scriptsize\n"
+        "  \\caption[What the layer's flux violates]{What the layer's flux violates at the "
+        "selected epoch, seed mean per module arm: the median mass-balance residual "
+        "$|Sv|$ over metabolites; the fraction of reactions outside their bounds; the "
+        "fraction of reactions running against their reaction energy "
+        "($v_j\\,\\Delta_r G'_j > 0$); the enzyme budget used as a multiple of the "
+        "protein pool; and the Gibbs dissipation in J/gDW/h against the 3,700 limit. "
+        "Rounds are abbreviated r2 to r13. Every arm builds the anchored layer (predicted $k_{cat}$ tier, union-external "
+        "$\\Delta G$) unless it names the GEM box. Constraint scale 0 means no penalty "
+        "on any of these terms; 0.1 penalizes all of them.}\n"
+        "  \\label{tab:violations}\n"
+        "  \\begin{tabular}{@{}lrrrrrr@{}}\n    \\hline\n"
+        "    arm & cells & $|Sv|$ median & box & second law & budget & dissipation \\\\\n"
+        "    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("violations", body, "results/<module arm>.json histories")
+
+
+def confusion() -> str | None:
+    """Every scorer at yeast-GEM's rule: the confusion matrix and its derived rates."""
+    src = osp.join(RESULTS, "essentiality_confusion.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        report = json.load(fh)
+    rows_in = report["rows"]
+    best = {
+        k: max(r[k] for r in rows_in)
+        for k in ("accuracy", "precision", "recall", "specificity", "balanced_accuracy")
+    }
+    rows = []
+    for r in rows_in:
+        rows.append(
+            f"    {r['scorer']} & {r['rule']} & {r['gene_set']} & {r['n_essential']}/{r['n']:,} & "
+            f"{r['tp']}/{r['fn']}/{r['fp']}/{r['tn']} & "
+            f"{fmt(r['accuracy'], best['accuracy'])} ({r['majority_accuracy']:.3f}) & "
+            f"{fmt(r['precision'], best['precision'])} & {fmt(r['recall'], best['recall'])} & "
+            f"{fmt(r['specificity'], best['specificity'])} & "
+            f"{fmt(r['balanced_accuracy'], best['balanced_accuracy'])} \\\\"
+        )
+    agree = report["label_agreement"]
+    body = (
+        "\\begingroup\n\\scriptsize\n"
+        "\\begin{longtable}{@{}p{30mm}p{20mm}p{24mm}rrrrrrr@{}}\n"
+        "  \\caption[Every scorer at yeast-GEM's rule]{Every scorer at the rule yeast-GEM "
+        "reports its benchmark with: a deletion is called essential when the criterion "
+        "in the rule column holds, and the call is scored against the label as a "
+        "confusion matrix with essential as the positive class (TP/FN/FP/TN). Accuracy "
+        "is followed by the majority class's share of the gene set in parentheses; "
+        "precision and recall are for the essential class; balanced accuracy is the mean "
+        "of recall and specificity. yeast-GEM 9.1.1's row is its own release file on its "
+        "own labels (the Stanford deletion project's inviable list over the model's "
+        f"verified ORFs); those labels and the released split agree on "
+        f"{int(agree['agree_frac'] * agree['n_genes_in_both'])} of the "
+        f"{agree['n_genes_in_both']:,} genes both name. Every other row is on the "
+        "released labels. The transformer is the round-12 fold ensemble at the loss's "
+        "decision boundary and at the threshold that calls as many genes essential as "
+        f"the labels hold. {BEST_NOTE}}}\n"
+        "  \\label{tab:confusion}\\\\\n"
+        "    \\hline\n"
+        "    scorer & rule & gene set & ess/n & TP/FN/FP/TN & acc (maj) & prec & rec & spec & bal \\\\\n"
+        "    \\hline\n  \\endfirsthead\n"
+        "    \\hline\n"
+        "    scorer & rule & gene set & ess/n & TP/FN/FP/TN & acc (maj) & prec & rec & spec & bal \\\\\n"
+        "    \\hline\n  \\endhead\n"
+        "    \\hline\n  \\endfoot\n"
+        "    \\hline\n  \\endlastfoot\n"
+        + "\n".join(rows)
+        + "\n\\end{longtable}\n\\endgroup\n"
+    )
+    return write("confusion", body, "results/essentiality_confusion.json")
+
+
+def graph_baselines() -> str | None:
+    """Message passing over the gene graph, no perturbation: the Gene_Graph design rerun."""
+    src = osp.join(RESULTS, "graph_baselines.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        report = json.load(fh)
+    rows_in = list(report["rows"])
+    extra = osp.join(RESULTS, "graph_baselines_extra.json")
+    if osp.isfile(extra):
+        with open(extra) as fh:
+            rows_in += json.load(fh)["rows"]
+    best = max(r["mean"] for r in rows_in)
+    rows = []
+    for r in rows_in:
+        seeds = ", ".join(f"{v:.3f}" for v in r["test_auroc"])
+        epochs = ", ".join(str(e) for e in r["select_epoch"])
+        rows.append(
+            f"    {r['model']} & {r['graph']} & {r['inputs'].replace('+', ' $+$ ')} & "
+            f"{r['dim_in']:,} & {r['n_parameters']:,} & {fmt(r['mean'], best)} & "
+            f"{r['sd']:.3f} & {seeds} & {epochs} \\\\"
+        )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\scriptsize\n"
+        "  \\caption[Graph-only baselines]{Graph-only baselines on the released split: "
+        "transductive node classification on one gene graph with no genotype perturbed, "
+        "two layers of width 64, class-weighted binary cross entropy, 200 epochs, the "
+        "epoch selected by a five-epoch moving average of the validation AUROC, scored "
+        "once on the 195 held-out genes at seeds 2700 to 2702. The graph is the physical "
+        "interaction graph or the union of the nine gene graphs the transformer reads; the "
+        "inputs are all ones (the Gene\\_Graph design), log degree with the clustering "
+        "coefficient, ProtT5, or ProtT5 with the chromosome-pathway indicator and the four "
+        "FBA growth ratios as node features; two arms run 400 epochs. The MLP rows have no "
+        "graph. "
+        f"{BEST_NOTE}}}\n  \\label{{tab:graph-baselines}}\n"
+        "  \\begin{tabular}{@{}llp{30mm}rrrrll@{}}\n    \\hline\n"
+        "    model & graph & inputs & dim & params & mean & sd & seeds & selected epochs \\\\\n"
+        "    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write(
+        "graph_baselines",
+        body,
+        "results/graph_baselines.json, results/graph_baselines_extra.json",
+    )
+
+
+def graph_baselines_more(stem: str, short: str, caption: str, label: str) -> str | None:
+    """One more graph-baselines table from ``results/graph_baselines_<stem>.json``."""
+    src = osp.join(RESULTS, f"graph_baselines_{stem}.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        rows_in = list(json.load(fh)["rows"])
+    best = max(r["mean"] for r in rows_in)
+    rows = []
+    for r in rows_in:
+        seeds = ", ".join(f"{v:.3f}" for v in r["test_auroc"])
+        epochs = ", ".join(str(e) for e in r["select_epoch"])
+        rows.append(
+            f"    {r['model']} & {r['graph']} & {r['inputs'].replace('+', ' $+$ ')} & "
+            f"{r['dim_in']:,} & {r['n_parameters']:,} & {fmt(r['mean'], best)} & "
+            f"{r['sd']:.3f} & {seeds} & {epochs} \\\\"
+        )
+    # Six seeds per row overflow the text block as one-line columns, so past three
+    # seeds the seed and epoch columns wrap.
+    wide = max(len(r["test_auroc"]) for r in rows_in) > 3
+    spec = "@{}llp{26mm}rrrrp{34mm}p{26mm}@{}" if wide else "@{}llp{30mm}rrrrll@{}"
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\scriptsize\n"
+        f"  \\caption[{short}]{{{caption} {BEST_NOTE}}}\n  \\label{{{label}}}\n"
+        f"  \\begin{{tabular}}{{{spec}}}\n    \\hline\n"
+        "    model & graph & inputs & dim & params & mean & sd & seeds & selected epochs \\\\\n"
+        "    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write(
+        f"graph_baselines_{stem}", body, f"results/graph_baselines_{stem}.json"
+    )
+
+
+def graph_baselines_relational() -> str | None:
+    """GIN, GraphSAGE, RGCN and RGAT on the split."""
+    return graph_baselines_more(
+        "relational",
+        "Message-passing architectures",
+        "The message-passing architectures of the MATH-490 and Gene\\_Graph projects on "
+        "the released split, the protocol of Table~\\ref{tab:graph-baselines}: GIN and "
+        "GraphSAGE on the union of the nine graphs, and RGCN and RGAT with the nine "
+        "graphs as nine edge types (RGCN with a basis decomposition of four bases; RGAT "
+        "as one GATv2 attention per relation, summed, since the basis-shared form holds "
+        "a weight matrix per edge), with ProtT5 alone and with the transformer's three "
+        "inputs as node features, 200 epochs, seeds 2700 to 2702.",
+        "tab:graph-relational",
+    )
+
+
+def graph_baselines_split() -> str | None:
+    """The chromosome-pathway indicator split into its blocks on the MLP and on GCN."""
+    return graph_baselines_more(
+        "split",
+        "The indicator split, cheap models",
+        "The chromosome-pathway indicator split into its three blocks (the 173-column "
+        "pathway multi-hot, the 17-column chromosome one-hot, the seven scaled gene "
+        "properties), each beside ProtT5 and the four FBA ratios, and the pathway block "
+        "with the ratios and alone, on the MLP with no graph and on graph convolution "
+        "over the union of the nine graphs, the protocol of "
+        "Table~\\ref{tab:graph-baselines}, seeds 2700 to 2702.",
+        "tab:graph-split",
+    )
+
+
+def graph_baselines_go() -> str | None:
+    """The GO multi-hot on the MLP and on GCN."""
+    return graph_baselines_more(
+        "go",
+        "The GO multi-hot, cheap models",
+        "The Gene Ontology multi-hot on the MLP with no graph and on graph convolution "
+        "over the union of the nine graphs, the protocol of "
+        "Table~\\ref{tab:graph-baselines}: the propagated vector (2,362 columns), the "
+        "biological-process namespace (1,580) and the direct annotations (2,887), each "
+        "beside ProtT5 and the four FBA ratios; the propagated vector with the ratios "
+        "and alone; the propagated vector with the pathway multi-hot beside ProtT5 "
+        "and the ratios; and, as the control for the pathway block, one column that "
+        "marks a gene annotated to any pathway (517 of 6,607 genes) beside ProtT5 and "
+        "the ratios. Seeds 2700 to 2702.",
+        "tab:graph-go",
+    )
+
+
+def graph_baselines_go400() -> str | None:
+    """Graph convolution on GO at 400 epochs."""
+    return graph_baselines_more(
+        "go400",
+        "Graph convolution on GO, 400 epochs",
+        "Graph convolution over the union of the nine graphs on the propagated GO "
+        "multi-hot at a 400-epoch budget, since every 200-epoch cell on it selected its "
+        "epoch between 183 and 197: GO alone, GO with the four FBA ratios, and GO beside "
+        "ProtT5 with the ratios. The protocol of Table~\\ref{tab:graph-baselines} "
+        "otherwise; seeds 2700 to 2702.",
+        "tab:graph-go400",
+    )
+
+
+def graph_baselines_go400_s6() -> str | None:
+    """Graph convolution on GO at 400 epochs, six seeds."""
+    return graph_baselines_more(
+        "go400_s6",
+        "Graph convolution on GO, 400 epochs, six seeds",
+        "The three rows of Table~\\ref{tab:graph-go400} on seeds 2700 to 2705, so the "
+        "graph convolution's count matches the six-seed module arms of "
+        "Section~\\ref{sec:round27}. The first three seeds are reruns of the "
+        "Table~\\ref{tab:graph-go400} cells and differ from them in the third decimal.",
+        "tab:graph-go400-s6",
+    )
+
+
+def graph_baselines_go_solve() -> str | None:
+    """Graph convolution on GO with the deletion's solved flux on the same node."""
+    return graph_baselines_more(
+        "go_solve",
+        "One model over the annotation and the solve",
+        "The deletion's pFBA flux vector as $\\log(1 + |v|)$ (the round-33 encoding, "
+        "4,131 columns, zero for a gene the store does not cover) as a node input: "
+        "alone, beside the GO multi-hot, and beside GO with the four FBA ratios, on the "
+        "MLP (200 epochs) and on graph convolution over the union of the nine graphs "
+        "(400 epochs, as Table~\\ref{tab:graph-go400}). The protocol of "
+        "Table~\\ref{tab:graph-baselines} otherwise; seeds 2700 to 2702.",
+        "tab:graph-go-solve",
+    )
+
+
+def graph_baselines_go400_genome() -> str | None:
+    """Graph convolution on GO trained on the genome-wide labels, read on the released 195."""
+    return graph_baselines_more(
+        "go400_genome",
+        "Graph convolution on GO trained on the genome-wide labels",
+        "The three rows of Table~\\ref{tab:graph-go400} trained on the genome-wide "
+        "labels (split \\texttt{ess\\_genome\\_val0.2\\_s0}: 4,368 train and 1,093 "
+        "validation genes, the released labels where the file has them and SGD or a "
+        "fitness record elsewhere) and read on the same 195 released held-out genes, "
+        "seeds 2700 to 2702.",
+        "tab:graph-go400-genome",
+    )
+
+
+def graph_baselines_extra_genome() -> str | None:
+    """The three-input cheap models trained on the genome-wide labels, read on the 195."""
+    return graph_baselines_more(
+        "extra_genome",
+        "Cheap models on the three inputs trained on the genome-wide labels",
+        "The MLP and graph convolution on the transformer's inputs "
+        "(Table~\\ref{tab:graph-baselines}) trained on the genome-wide labels "
+        "(split \\texttt{ess\\_genome\\_val0.2\\_s0}) and read on the same 195 released "
+        "held-out genes, seeds 2700 to 2702.",
+        "tab:graph-extra-genome",
+    )
+
+
+def graph_baselines_go800() -> str | None:
+    """Graph convolution on GO at 800 epochs."""
+    return graph_baselines_more(
+        "go800",
+        "Graph convolution on GO, 800 epochs",
+        "The three rows of Table~\\ref{tab:graph-go400} at an 800-epoch budget, since "
+        "at 400 the three seeds still selected epochs 382 to 397. Seeds 2700 to 2702.",
+        "tab:graph-go800",
+    )
+
+
+def graph_baselines_go_rel() -> str | None:
+    """The typed-edge models and GraphSAGE on GO alone; convolution on GO with pathways."""
+    return graph_baselines_more(
+        "go_rel",
+        "Other message passing on GO",
+        "Relational convolution and relational attention over the nine graphs as nine "
+        "edge types on the propagated GO multi-hot alone, GraphSAGE over the union on "
+        "it, and graph convolution over the union on GO with the pathway multi-hot, all "
+        "at 400 epochs, the protocol of Table~\\ref{tab:graph-baselines} otherwise; "
+        "seeds 2700 to 2702.",
+        "tab:graph-go-rel",
+    )
+
+
+def genome_heldout() -> str | None:
+    """Round 30: every model on the 4,674 genome-wide genes the released split never labeled."""
+    src = osp.join(RESULTS, "genome_heldout_readout.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        report = json.load(fh)
+    arms = report["arms"]
+    best = max(a["mean"] for a in arms)
+    rows = []
+    for a in arms:
+        cells = ", ".join(f"{v:.3f}" for v in a["cell_aurocs"])
+        if a["pooled_auroc"] is None:
+            pooled = "--"
+        else:
+            lo, hi = a["pooled_ci"]
+            pooled = f"{a['pooled_auroc']:.3f} [{lo:.2f}, {hi:.2f}]"
+        epochs = ", ".join(str(e) for e in a["select_epochs"]) or "--"
+        rows.append(
+            f"    {a['label']} & {a['n_cells']} & {cells} & {fmt(a['mean'], best)} & "
+            f"{a['sd']:.3f} & {pooled} & {epochs} \\\\"
+        )
+    # Six cells per row set on one line leave the arm labels too little of the text
+    # block, so past three cells the per-cell column wraps rather than the label.
+    wide = max(len(a["cell_aurocs"]) for a in arms) > 3
+    spec = "@{}p{58mm}rp{30mm}rrlp{22mm}@{}" if wide else "@{}p{58mm}rlrrlp{22mm}@{}"
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\scriptsize\n"
+        "  \\caption[Round 30, the genome-wide held-out genes]{Round 30, the genome-wide "
+        "labels as a larger held-out set. Every model is trained on the released labeled "
+        "genes outside the released held-out set (629 train, 158 val, the split "
+        "\\texttt{ess\\_genome\\_heldout\\_val0.2\\_s0}) and read once on the "
+        f"{report['n_test_genes']:,} genes the released file never labeled, "
+        f"{report['n_test_essential']:,} of them essential by SGD annotation and the rest "
+        "nonessential by a fitness record, so label origin coincides with class on this "
+        "set. None of these genes carries a yeast-GEM reaction, so FBA's knockout ratio "
+        "is 1.0 on every one and the solve has no call. Cells are seeds 2700 to 2702; the "
+        "pooled column scores the seed-mean logit with a 2,000-draw gene bootstrap. "
+        f"{BEST_NOTE}}}\n  \\label{{tab:genome-heldout}}\n"
+        f"  \\begin{{tabular}}{{{spec}}}\n    \\hline\n"
+        "    arm & cells & per cell & mean & sd & pooled [95\\% CI] & selected epochs \\\\\n"
+        "    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("genome_heldout", body, "results/genome_heldout_readout.json")
+
+
+def degree_by_class() -> str | None:
+    """Raw degree as an essentiality score, per graph, on three gene sets."""
+    src = osp.join(RESULTS, "degree_by_class.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        reads = json.load(fh)["reads"]
+    # One row per graph, the three gene sets as columns; the single graphs drop the
+    # ``one:`` prefix and the physical graph appears once.
+    sets = [
+        "genome held-out (4,674)",
+        "released held-out (195)",
+        "released train + val (787)",
+    ]
+    by_graph: dict[str, dict[str, dict[str, Any]]] = {}
+    for r in reads:
+        name = r["graph"].removeprefix("one:").replace("string12_0_", "STRING ")
+        by_graph.setdefault(name, {})[r["gene_set"]] = r
+    best = {s: max(by_graph[g][s]["auroc"] for g in by_graph) for s in sets}
+    rows = []
+    for name, cells in by_graph.items():
+        parts = []
+        for s in sets:
+            r = cells[s]
+            parts.append(
+                f"{fmt(r['auroc'], best[s])} [{r['ci'][0]:.2f}, {r['ci'][1]:.2f}] & "
+                f"{r['median_degree_essential']:.0f} / {r['median_degree_nonessential']:.0f}"
+            )
+        rows.append(f"    {name.replace('_', ' ')} & " + " & ".join(parts) + " \\\\")
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\scriptsize\n"
+        "  \\caption[Degree as the score]{The gene's degree in each graph as the "
+        "essentiality score, nothing trained, on the 4,674 genome-wide held-out genes "
+        "of round 30, the 195 released held-out genes, and the 787 released genes the "
+        "models train and validate on. AUROC of degree with a 2,000-draw gene "
+        "bootstrap, and the median degree of the essential against the nonessential "
+        "genes in that set. Bold marks the highest AUROC in a column. Written by "
+        "\\texttt{experiments/028-gene-essentiality/scripts/degree\\_by\\_class.py}.}\n"
+        "  \\label{tab:degree-by-class}\n"
+        "  \\begin{tabular}{@{}lllllll@{}}\n    \\hline\n"
+        "    & \\multicolumn{2}{l}{genome held-out (4,674)} & "
+        "\\multicolumn{2}{l}{released held-out (195)} & "
+        "\\multicolumn{2}{l}{released train + val (787)} \\\\\n"
+        "    graph & AUROC & median ess / non & AUROC & median ess / non & AUROC & "
+        "median ess / non \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("degree_by_class", body, "results/degree_by_class.json")
+
+
+def wl_test() -> str | None:
+    """1-WL on the single-deletion graphs, and the WL kernel as a rung."""
+    src = osp.join(RESULTS, "wl_knockout_test.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        report = json.load(fh)
+    rows = []
+    for r in report["tests"]:
+        rows.append(
+            f"    {r['graph']} & {r['n_edges']:,} & {r['iterations']} & "
+            f"{r['n_deletions']:,} & {r['n_distinct_hashes']:,} & {r['n_in_collision']} & "
+            f"{r['largest_collision']} & {r['essential_in_collision']} & "
+            f"{r['seconds'] / 60:.0f} \\\\"
+        )
+    kernel = "; ".join(
+        f"{k['graph']}: C = {k['C']:g}, CV {k['cv_auroc']:.3f}, validation "
+        f"{k['val_auroc']:.3f}, held-out {k['test_auroc']:.3f}"
+        for k in report["kernel_rungs"]
+    )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[The 1-WL test on the deletion graphs]{The 1-WL test on the "
+        "single-deletion graphs. For every labeled gene the gene graph with that gene's "
+        "node removed is hashed by Weisfeiler-Leman color refinement with degree as the "
+        "initial color; a collision is a set of deletions with one hash, which no "
+        "1-WL-bounded message-passing model can tell apart by structure. The WL kernel "
+        f"rung is logistic regression on the bag of colors of each gene's 2-hop ego "
+        "graph refined for three iterations, hashed to 1,024 bins, with C chosen by "
+        f"five-fold cross-validation inside the training genes: {kernel}.}}\n"
+        "  \\label{tab:wl}\n"
+        "  \\begin{tabular}{@{}lrrrrrrrr@{}}\n    \\hline\n"
+        "    graph & edges & $k$ & deletions & distinct & in collision & largest & "
+        "essential & min \\\\\n"
+        "    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("wl_test", body, "results/wl_knockout_test.json")
+
+
+#: Fold-ensemble prefixes (``results/<prefix>_ensemble.json``) and what the cell is.
+ENSEMBLE_LABELS = {
+    "w14_cv": "round 3: pooled transformer, ProtT5, no readout",
+    "w16_fbacv": "round 5: ProtT5 + FBA affine",
+    "w23_chromprotcv": "round 12: chromosome-pathway indicator + ProtT5 + FBA affine (the reported number)",
+    "w28_cspcv": "round 17: chromosome-pathway indicator + ProtT5 + the widened affine (ratios, statistics, pFBA vector)",
+    "w41_pathfluxcv": "round 25: pathway multi-hot + ProtT5, gated elastic solve + the head over the solved flux",
+    "w43_pathoffcv": "round 27: pathway multi-hot + ProtT5, the head over the cached GEM-box solve (nothing learned in the layer)",
+    "w50_pathlogfreecv": "round 34: pathway multi-hot + ProtT5, the deletion's pFBA vector as $\\log(1 + |v|)$ appended to the affine (no layer)",
+    "w50_pathlogfreecv_s3": "round 34: the same, three seeds per fold (each fold model the seed-mean logit)",
+    "w53_pathlogipmcv": "round 37: the same cell over the interior-point store (HiGHS ipm, no crossover, KKT $10^{-4}$)",
+    "w53_pathlogipmcv_s3": "round 37: the interior-point store, three seeds per fold",
+    "w55_pathlogpdlpcv": "round 39: the same cell over the PDLP store (HiGHS PDLP, no crossover, KKT $10^{-4}$)",
+    "w90_pathlogsimplexdeclampcv": "round 73: the same cell over the dual-simplex vertex store with its 429 clamp-carrying columns dropped",
+    "w55_pathlogpdlpcv_s3": "round 39: the PDLP store, three seeds per fold",
+    "w70_pathlogh48cv": "round 54: the layer-free cell at width 48, one seed per fold",
+    "w70_pathlogh48cv_s3": "round 54: the width-48 cell, three seeds per fold",
+    "w74_pathgopfbaaffcv": "round 58: GO and the $\\log(1 + |v|)$ vector as affine columns, one seed per fold",
+    "w74_pathgopfbaaffcv_s2": "round 58: the same, two seeds per fold",
+    "w78_pathgopcapfbaaffcv": "round 62: GO reduced to 64 components and the vector as affine columns, one seed per fold",
+    "w78_pathgopcapfbaaffcv_s3": "round 62: the same, three seeds per fold",
+    "w82_pathlogfixedcv": "round 66: the round-33 cell on the fixed one-hot code, kernels pinned, one seed per fold",
+    "w82_pathlogfixedcv_s3": "round 66: the same, three seeds per fold",
+}
+
+
+def fold_ensembles() -> str | None:
+    """Every five-fold ensemble scored on the held-out genes, one row per cell."""
+    rows = []
+    for prefix, label in ENSEMBLE_LABELS.items():
+        src = osp.join(RESULTS, f"{prefix}_ensemble.json")
+        if not osp.isfile(src):
+            continue
+        with open(src) as fh:
+            e = json.load(fh)
+        folds = ", ".join(f"{f['auroc']:.3f}" for f in e["folds"])
+        rows.append(
+            (
+                label,
+                e["n_folds"],
+                folds,
+                e["fold_mean_auroc"],
+                e["ensemble_auroc"],
+                e["ensemble_ci_low"],
+                e["ensemble_ci_high"],
+            )
+        )
+    # The cheap architectures' fold ensembles (graph_baselines.py --arms folds|go_folds)
+    # are written in their own shape; they sit in the same table.
+    cheap = {
+        "graph_baselines_folds.json": {
+            "MLP": "MLP on the transformer's three inputs (no graph)",
+            "GCN": "graph convolution on the three inputs, 400 epochs",
+        },
+        "graph_baselines_go_folds.json": {
+            "GCN400": "graph convolution on the GO multi-hot alone, 400 epochs",
+            "GCN800": "graph convolution on the GO multi-hot alone, 800 epochs",
+        },
+        "graph_baselines_go_folds_s3.json": {
+            "GCN400": "graph convolution on GO alone, 400 epochs, three seeds per fold",
+            "GCN800": "graph convolution on GO alone, 800 epochs, three seeds per fold",
+        },
+    }
+    for fname, labels in cheap.items():
+        src = osp.join(RESULTS, fname)
+        if not osp.isfile(src):
+            continue
+        with open(src) as fh:
+            report = json.load(fh)
+        for arm, label in labels.items():
+            a = report["arms"].get(arm)
+            if a is None:
+                continue
+            folds = ", ".join(f"{v:.3f}" for v in a["fold_aurocs"])
+            rows.append(
+                (
+                    label,
+                    len(a["fold_aurocs"]),
+                    folds,
+                    a["fold_mean"],
+                    a["ensemble_auroc"],
+                    a["ensemble_ci"][0],
+                    a["ensemble_ci"][1],
+                )
+            )
+    if not rows:
+        return None
+    best = max(r[4] for r in rows)
+    body_rows = [
+        f"    {label} & {n} & {folds} & {fmean:.3f} & {fmt(ens, best)} [{lo:.2f}, {hi:.2f}] \\\\"
+        for label, n, folds, fmean, ens, lo, hi in rows
+    ]
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[Fold ensembles]{Every fold ensemble in the document on the 195 "
+        "held-out genes: five models trained on the five cross-validation files (each "
+        "a different fifth of the 787 labeled non-test genes held for validation), their "
+        "per-gene logits averaged and scored once, Flux Cone Learning's own test "
+        "protocol. Fold AUROCs are the single models on the held-out genes; the "
+        "ensemble carries a 2,000-draw gene bootstrap. "
+        "Written by \\texttt{cv\\_ensemble\\_readout.py}. " + BEST_NOTE + "}\n"
+        "  \\label{tab:ensembles}\n"
+        "  \\begin{tabular}{@{}p{62mm}rlrl@{}}\n    \\hline\n"
+        "    cell & folds & fold AUROCs & fold mean & ensemble [95\\% CI] \\\\\n    \\hline\n"
+        + "\n".join(body_rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("fold_ensembles", body, "results/<prefix>_ensemble.json")
+
+
+#: The per-gene starting vectors built as datasets in the source tree: registry name ->
+#: (what it is, how it is built, the source module). Widths are read from the built
+#: tensors, never typed.
+GENE_ENCODINGS = {
+    "prot_T5_all": (
+        "protein language model embedding",
+        "ProtT5 mean-pooled over the protein sequence",
+        "protT5.py",
+    ),
+    "pathways": (
+        "pathway multi-hot",
+        "one column per SGD pathway a gene is annotated to",
+        "sgd\\_gene\\_graph\\_hot.py",
+    ),
+    "chromosome": (
+        "chromosome one-hot",
+        "one column per chromosome",
+        "sgd\\_gene\\_graph\\_hot.py",
+    ),
+    "normalized_props": (
+        "scaled gene properties",
+        "protein length, molecular weight, isoelectric point, expression median and "
+        "median absolute deviation, scaled to [0, 1]",
+        "sgd\\_gene\\_graph\\_hot.py",
+    ),
+    "normalized_chrom_pathways": (
+        "chromosome-pathway indicator",
+        "the three blocks above concatenated",
+        "sgd\\_gene\\_graph\\_hot.py",
+    ),
+    "go": (
+        "GO multi-hot, propagated",
+        "SGD GO annotations propagated to ancestors (is\\_a, part\\_of), roots "
+        "dropped, terms with ten or more genes",
+        "go\\_term\\_hot.py",
+    ),
+    "go_direct": (
+        "GO multi-hot, direct",
+        "the annotated terms only, terms with two or more genes",
+        "go\\_term\\_hot.py",
+    ),
+    "go_bp": (
+        "GO biological process",
+        "the propagated vector restricted to one namespace",
+        "go\\_term\\_hot.py",
+    ),
+    "go_mf": ("GO molecular function", "as above", "go\\_term\\_hot.py"),
+    "go_cc": ("GO cellular component", "as above", "go\\_term\\_hot.py"),
+}
+
+
+def gene_encodings() -> str | None:
+    """The gene starting vectors as datasets: name, width, genes covered, construction."""
+    import torch
+
+    root = osp.join(os.environ["DATA_ROOT"], "data/scerevisiae")
+    paths = {
+        "prot_T5_all": "protT5_embedding/processed/prot_t5_xl_uniref50_all.pt",
+        "pathways": "sgd_gene_graph_hot/processed/pathways.pt",
+        "chromosome": "sgd_gene_graph_hot/processed/chromosome.pt",
+        "normalized_props": "sgd_gene_graph_hot/processed/normalized_props.pt",
+        "normalized_chrom_pathways": (
+            "sgd_gene_graph_hot/processed/normalized_chrom_pathways.pt"
+        ),
+        "go": "go_term_hot/processed/go.pt",
+        "go_direct": "go_term_hot/processed/go_direct.pt",
+        "go_bp": "go_term_hot/processed/go_bp.pt",
+        "go_mf": "go_term_hot/processed/go_mf.pt",
+        "go_cc": "go_term_hot/processed/go_cc.pt",
+    }
+    rows = []
+    for name, (what, how, module) in GENE_ENCODINGS.items():
+        path = osp.join(root, paths[name])
+        if not osp.isfile(path):
+            continue
+        # On the CPU: the files were saved from a card, and this script counts
+        # columns; with every card allocated to a slurm job the default load fails.
+        data, _slices = torch.load(path, weights_only=False, map_location="cpu")
+        # One embedding per file; its key is the dataset's model name, which for
+        # ProtT5 differs from the registry name.
+        emb = next(iter(data.embeddings.values()))
+        n_genes = emb.shape[0]
+        width = emb.shape[1]
+        nonzero = int((emb.abs().sum(dim=1) > 0).sum())
+        rows.append(
+            f"    \\texttt{{{name.replace('_', chr(92) + '_')}}} & {what} & {width:,} & "
+            f"{nonzero:,} / {n_genes:,} & {how} & \\texttt{{{module}}} \\\\"
+        )
+    if not rows:
+        return None
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\scriptsize\n"
+        "  \\caption[Gene starting vectors as datasets]{The per-gene starting vectors "
+        "used in this document, each a dataset in the source tree registered under its "
+        "name in \\texttt{NodeEmbeddingBuilder} so any model opens it by name. Width is "
+        "the column count of the built tensor; covered is the number of genes with a "
+        "nonzero row over the genes the dataset holds. Written by "
+        "\\texttt{notes\\_tex\\_tables.py} from the built tensors.}\n"
+        "  \\label{tab:gene-encodings}\n"
+        "  \\begin{tabular}{@{}lp{28mm}rrp{58mm}l@{}}\n    \\hline\n"
+        "    name & what & width & covered & construction & module \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("gene_encodings", body, "the built embedding tensors under DATA_ROOT")
+
+
+def hard_genes() -> str | None:
+    """The fifteen hardest held-out genes of each class, from ``results/hard_genes.json``."""
+    src = osp.join(RESULTS, "hard_genes.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        report = json.load(fh)
+    arms = list(report["arms"])
+    # Column codes, spelled out in the caption, so nine columns fit the text block.
+    short = {a: f"A{k + 1}" for k, a in enumerate(arms)}
+    legend = "; ".join(f"{short[a]}: {a}" for a in arms)
+    by_gene = {g["gene"]: g for g in report["genes"]}
+    rows = []
+    for label, genes in (
+        ("essential", report["hardest_essential"]),
+        ("nonessential", report["hardest_nonessential"]),
+    ):
+        rows.append(
+            f"    \\multicolumn{{{4 + len(arms)}}}{{@{{}}l}}{{\\emph{{{label} genes}}}} \\\\"
+        )
+        for gene in genes:
+            g = by_gene[gene]
+            cells = " & ".join(f"{g['misrank'][a]:.2f}" for a in arms)
+            ratio = "" if g["fba_ratio_ypd"] is None else f"{g['fba_ratio_ypd']:.2f}"
+            rows.append(
+                f"    {gene} & {cells} & {ratio} & {g['n_pathways']} & {g['n_go_terms']} \\\\"
+            )
+    head = " & ".join(short[a] for a in arms)
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\scriptsize\n"
+        "  \\caption[The hardest held-out genes]{The fifteen held-out genes of each "
+        "class the best cells misrank most, sorted by the mean misrank over the arms. "
+        "A gene's misrank in one cell is the fraction of the other class on the wrong "
+        "side of it (for an essential gene, the nonessential genes scoring above it; "
+        "for a nonessential gene, the essential genes scoring below it), averaged over "
+        "the arm's cells; one minus the class mean of the misrank is that class's share "
+        "of the AUROC. FBA is the knockout-to-wild-type growth ratio on YPD; pathways "
+        "and GO the gene's counts in the pathway multi-hot and the propagated GO vector. "
+        f"Arms: {legend}. "
+        "Written by \\texttt{hard\\_genes.py} from the per-gene prediction dumps.}\n"
+        "  \\label{tab:hard-genes}\n"
+        f"  \\begin{{tabular}}{{@{{}}l{'r' * len(arms)}rrr@{{}}}}\n    \\hline\n"
+        f"    gene & {head} & FBA & pathways & GO \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("hard_genes", body, "results/hard_genes.json")
+
+
+def _family_table(stem: str, short: str, caption: str, label: str) -> str | None:
+    src = osp.join(RESULTS, f"{stem}.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        report = json.load(fh)
+    best = max(c["auroc"] for c in report["combinations"])
+    rows = [
+        f"    {' $+$ '.join(c['families'])} & {c['n_cells']} & "
+        f"{fmt(c['auroc'], best)} [{c['ci_low']:.2f}, {c['ci_high']:.2f}] \\\\"
+        for c in report["combinations"]
+    ]
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        f"  \\caption[{short}]{{{caption} " + BEST_NOTE + "}\n"
+        f"  \\label{{{label}}}\n"
+        "  \\begin{tabular}{@{}p{118mm}rl@{}}\n    \\hline\n"
+        "    average of & cells & AUROC [95\\% CI] \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write(stem, body, f"results/{stem}.json")
+
+
+def family_ensembles() -> str | None:
+    """Post hoc averages of the two model families, split-file cells."""
+    return _family_table(
+        "family_ensembles",
+        "Averages of the two model families",
+        "Post hoc averages of existing predictions on the 195 held-out genes: each "
+        "family's per-cell logits are standardized and averaged over its seeds, "
+        "families are averaged with equal weight, and the mean is scored once with a "
+        "2,000-draw gene bootstrap. Nothing is fitted and every average tried is "
+        "listed, so the best row is the maximum of seven post hoc choices, not a "
+        "selected model. Written by \\texttt{family\\_ensembles.py}.",
+        "tab:family-ensembles",
+    )
+
+
+def family_ensembles_folds() -> str | None:
+    """The same averages under the fold protocol."""
+    return _family_table(
+        "family_ensembles_folds",
+        "Averages of the two model families, fold protocol",
+        "The same post hoc averages under the reported protocol: each family is its "
+        "five fold models (one seed per fold, the cross-validation files of "
+        "Section~\\ref{sec:backbone}), standardized per fold and averaged, families "
+        "averaged with equal weight, scored once on the 195 held-out genes with a "
+        "2,000-draw gene bootstrap. Six averages tried, all listed. Written by "
+        "\\texttt{family\\_ensembles.py --folds}.",
+        "tab:family-ensembles-folds",
+    )
+
+
+def store_stats() -> str | None:
+    """What the four solve stores carry, per genotype."""
+    src = osp.join(RESULTS, "store_stats.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        r = json.load(fh)
+    rows = [
+        f"    {s['store']} & {s['n_zero_rows']} & {s['sum_abs_flux_median']:,.0f} & "
+        f"{s['n_carrying_median']:,.0f} & {s['n_at_clamp_median']:.0f} & "
+        f"{s['frac_genes_with_any_clamp'] * 100:.0f} & {s['growth_median']:.4f} & "
+        f"{s['log1p_rel_l2_to_pfba_median']:.2f} & "
+        f"{s['frac_moved_gt_0_01_vs_pfba_mean'] * 100:.1f} \\\\"
+        for s in r["stores"]
+    ]
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\scriptsize\n"
+        "  \\caption[What the solve stores carry]{The four solve stores over the 1,121 "
+        "labeled genes, one flux vector per single-gene deletion of the same "
+        "growth-maximizing program (YPD, the GEM box clamped to $\\pm100$ mmol/gDW/h): "
+        "rows the solver reported non-optimal and stored as the zero flux; the median "
+        "total absolute flux per genotype; the median number of reactions carrying "
+        "flux above $10^{-6}$; the median number of reactions at the $\\pm100$ clamp, "
+        "and the share of genotypes with any; the median growth; and the vector's "
+        "distance from the pFBA store's in the head's encoding (median relative $L_2$ "
+        "of $\\log(1 + |v|)$, and the mean share of reactions moved by more than "
+        "0.01). Written by \\texttt{store\\_stats.py}.}\n"
+        "  \\label{tab:store-stats}\n"
+        "  \\begin{tabular}{@{}p{38mm}rrrrrrrr@{}}\n    \\hline\n"
+        "    store & zero rows & $\\sum|v|$ & carrying & at clamp & any clamp (\\%) & "
+        "growth & rel. $L_2$ & moved (\\%) \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("store_stats", body, "results/store_stats.json")
+
+
+def store_discriminability() -> str | None:
+    """What a head can read off each store, beside what training it gave."""
+    src = osp.join(RESULTS, "store_discriminability.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        r = json.load(fh)
+    short = {
+        "pFBA (two-stage, scipy HiGHS)": "pFBA",
+        "dual simplex (vertex)": "dual simplex",
+        "interior point, no crossover": "interior point",
+        "PDLP, no crossover": "PDLP",
+    }
+    best = max(s["trained_auroc"] for s in r["stores"])
+    rows = [
+        f"    {short[s['store']]} & {fmt(s['trained_auroc'], best)} & "
+        f"{s['spearman_distance_growth_drop']:+.2f} & "
+        f"{s['frac_viable_rows_identical_to_wild_type'] * 100:.0f} & "
+        f"{s['median_distance_lethal']:.1f} & {s['n_columns_varying']:,} & "
+        f"{s['variance_share_top10'] * 100:.0f} & {s['n_clamp_columns_in_top10']} & "
+        f"{s['best_single_column_auroc']:.3f} & {s['n_columns_auroc_above_0_7']:,} \\\\"
+        for s in r["stores"]
+    ]
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\scriptsize\n"
+        "  \\caption[What a head can read off each store]{The four stores of the same "
+        f"growth program's optimal face over the {r['n_genes']:,} labeled genes, in the "
+        "affine's encoding $\\log(1 + |v|)$, beside the AUROC the layer-free cell "
+        "reached over each (rounds 36 and 38, six seeds pooled). Columns: the Spearman "
+        "correlation between a deletion's distance from the wild-type row and its drop "
+        "in growth; the share of viable deletions whose row IS the wild-type row; the "
+        "median distance of a lethal deletion's row; the number of reactions whose "
+        "encoded column varies at all; the share of the total column variance in the "
+        "ten widest columns and how many of those touch the $\\pm100$ clamp, where a "
+        "loop can spin; and what one column can do, the best single-column AUROC and "
+        "the number of columns above 0.7. Written by "
+        "\\texttt{store\\_discriminability.py}.}\n"
+        "  \\label{tab:store-discriminability}\n"
+        "  \\begin{tabular}{@{}p{22mm}rrrrrrrrr@{}}\n    \\hline\n"
+        "    store & trained & $\\rho$ & wt rows (\\%) & lethal dist. & varying & "
+        "top 10 (\\%) & clamp & best col. & $>0.7$ \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("store_discriminability", body, "results/store_discriminability.json")
+
+
+def misclass_enrichment() -> str | None:
+    """What the misranked genes of each held-out set share, per model and class."""
+    src = osp.join(RESULTS, "misclass_enrichment.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        r = json.load(fh)
+    rows = []
+    for f in r["families"]:
+        rows.append(
+            f"    \\multicolumn{{5}}{{@{{}}l}}{{\\textit{{{f['held_out_set']}; {f['model']}; "
+            f"{f['gene_class']} ({f['n_genes']:,} genes, {f['n_terms_tested']:,} terms, "
+            f"{f['n_terms_q_below_0_1']:,} at $q < 0.1$)}}}} \\\\"
+        )
+        for t in f["named_features"] + f["top_specific"][:4]:
+            q = f"{t['q']:.3f}" if t["q"] >= 0.001 else "$<$0.001"
+            # The rows to read. On the genome-wide set 4,674 genes put q below 0.1 for
+            # nearly every term, so significance alone marks almost everything; the mark
+            # is significance AND a substantive effect, three annotated genes in four
+            # misranked worse than an unannotated one. The test is one-sided, so the
+            # arrow is up.
+            hit = t["q"] < 0.1 and t["effect"] >= 0.75
+            name = f"\\textbf{{{t['name']}}}" if hit else t["name"]
+            annotated = f"{t['mean_misrank_annotated']:.3f}"
+            effect = f"{t['effect']:.2f} ({q})"
+            if hit:
+                annotated = f"\\textbf{{{annotated}}} $\\uparrow$"
+                effect = f"\\textbf{{{effect}}}"
+            rows.append(
+                f"    \\quad {name} & {t['n_annotated']:,} & "
+                f"{annotated} & {t['mean_misrank_rest']:.3f} & {effect} \\\\"
+            )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\scriptsize\n"
+        "  \\caption[What the misranked genes share]{What the misranked genes of each "
+        "held-out set share, per model and class. A gene's misrank is the fraction of the "
+        "other class on the wrong side of it, averaged over the model's cells; a term is "
+        "tested within one class by a one-sided Mann-Whitney $U$ of the annotated genes' "
+        "misrank against the rest, and the effect is $U$ as a probability, the chance an "
+        "annotated gene is misranked worse than an unannotated one (0.5 is no association), "
+        "with the Benjamini-Hochberg $q$ within the family in parentheses. Rows per "
+        "family: the two named features where both sides hold five genes, then the four "
+        "best specific biological-process terms (at most 5 percent of the class or 12 "
+        "genes, near-duplicates removed). A row is bold with $\\uparrow$ where the "
+        "association is both established and substantive, $q < 0.1$ and an effect of "
+        "0.75 or more; on the genome-wide set almost every term clears $q$ alone, so "
+        "the effect is what separates them. Written by "
+        "\\texttt{misclass\\_enrichment.py}.}\n"
+        "  \\label{tab:misclass-enrichment}\n"
+        "  \\begin{tabular}{@{}p{92mm}rrrr@{}}\n    \\hline\n"
+        "    term & genes & misrank, annotated & misrank, rest & effect ($q$) \\\\\n"
+        "    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("misclass_enrichment", body, "results/misclass_enrichment.json")
+
+
+def resplit_readout() -> str | None:
+    """Round 75: the finalists and the module's controls on ten repeated outer splits."""
+    src = osp.join(RESULTS, "resplit_readout.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        r = json.load(fh)
+    cells = r["seed_mean_auroc_per_split"]
+    rows = []
+    for i, s in enumerate(r["splits"]):
+        best = max(s["layer_free"], s["go_convolution"], s["average"])
+        rows.append(
+            f"    {s['resplit']} & {fmt(s['layer_free'], best)} & "
+            f"{fmt(s['go_convolution'], best)} & {fmt(s['average'], best)} & "
+            f"{cells['layer_free'][i]:.3f} & {cells['fba_ratio_affine'][i]:.3f} & "
+            f"{cells['no_metabolism'][i]:.3f} \\\\"
+        )
+    m = r["mean_auroc"]
+    rows.append("    \\hline")
+    rows.append(
+        f"    mean & {m['layer_free']:.3f} & {m['go_convolution']:.3f} & "
+        f"{m['average']:.3f} & {sum(cells['layer_free']) / 10:.3f} & "
+        f"{sum(cells['fba_ratio_affine']) / 10:.3f} & "
+        f"{sum(cells['no_metabolism']) / 10:.3f} \\\\"
+    )
+    rows.append("    \\hline")
+    for d in r["differences"]:
+        rows.append(
+            f"    \\multicolumn{{4}}{{@{{}}l}}{{{d['name']}}} & "
+            f"\\multicolumn{{3}}{{l}}{{${d['mean']:+.3f}$ (sd {d['sd']:.3f}), positive on "
+            f"{d['n_positive']} of {d['n_splits']}}} \\\\"
+        )
+    n = r["splits"][0]
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[Round 75: ten repeated outer splits]{Round 75, the finalists on ten "
+        "repeated outer splits. Each test block is a class-stratified fifth of the released "
+        f"labeled genes ({n['n_test']} genes, {n['n_test_essential']} essential), validation "
+        "a stratified fifth of the rest. Left: the AUROC of the three-seed family score "
+        "(standardized logits averaged over seeds) of the transformer with the layer-free "
+        "solve, of graph convolution on GO at 400 epochs, and of their equal-weight "
+        "average, fixed before any cell finished; best of the three in bold. Right: the "
+        "seed-mean AUROC per cell of the layer-free cell and its two controls on the same "
+        "backbone. Below: the paired differences across the ten splits. The test blocks "
+        "overlap, so the differences are not independent and no $p$-value is given. "
+        "Written by \\texttt{resplit\\_readout.py}.}\n"
+        "  \\label{tab:resplit}\n"
+        "  \\begin{tabular}{@{}lrrrrrr@{}}\n    \\hline\n"
+        "    split & layer-free & GO conv. & average & layer-free, cells & FBA ratios, "
+        "cells & no metabolism, cells \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("resplit_readout", body, "results/resplit_readout.json")
+
+
+def gpr_readout() -> str | None:
+    """Round 77: the gene-protein-reaction redundancy columns beside the solve vector."""
+    src = osp.join(RESULTS, "gpr_readout.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        r = json.load(fh)
+    order = [
+        ("released_auroc", "released split, held-out AUROC", True),
+        ("resplit_auroc", "ten repeated outer splits, AUROC", True),
+        (
+            "released_misrank_fba_viable_essential",
+            "misrank, the 19 essential genes FBA calls viable",
+            False,
+        ),
+        (
+            "released_misrank_sole_reaction",
+            "of them, the 15 holding a reaction of their own",
+            False,
+        ),
+        (
+            "released_misrank_covered_by_alternatives",
+            "of them, the 4 an alternative gene set covers",
+            False,
+        ),
+    ]
+    rows = []
+    for key, label, higher_is_better in order:
+        p = r[key]
+        best = (
+            max(p["mean_with"], p["mean_without"])
+            if higher_is_better
+            else min(p["mean_with"], p["mean_without"])
+        )
+        rows.append(
+            f"    {label} & {fmt(p['mean_with'], best)} & "
+            f"{fmt(p['mean_without'], best)} & {p['mean_difference']:+.4f} & "
+            f"{p['sd_difference']:.4f} & {p['n_positive']} of {p['n']} \\\\"
+        )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[Round 77: the gene-rule redundancy columns]{Round 77, six columns of "
+        "gene-protein-reaction redundancy appended to the deletion's flux vector in the "
+        "affine (\\texttt{isozyme\\_affine\\_store.py}: reactions, sole reactions, covered "
+        "reactions, minimum and mean alternative gene sets, co-subunits), against the same "
+        "cell without them. Rows one and two are held-out AUROC, six seeds on the released "
+        "split and ten split means of three seeds each; rows three to five are the mean "
+        "misrank of the essential held-out genes whose FBA knockout growth ratio is 1.0, "
+        "for which a LOWER value is better and the sign count therefore counts the seeds "
+        "made worse. Better of the two in bold. Written by "
+        "\\texttt{gpr\\_readout.py}.}\n"
+        "  \\label{tab:gpr-readout}\n"
+        "  \\begin{tabular}{@{}p{62mm}rrrrl@{}}\n    \\hline\n"
+        "    quantity & with & without & difference & sd & positive \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("gpr_readout", body, "results/gpr_readout.json")
+
+
+def cls_readout() -> str | None:
+    """Round 79: the class token through the perturbation operator, paired by seed."""
+    src = osp.join(RESULTS, "cls_readout.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        r = json.load(fh)
+    rows = []
+    for a in r["arms"]:
+        best = max(a["mean_with"], a["mean_without"])
+        rows.append(
+            f"    {a['arm']} & {a['n']} & {fmt(a['mean_with'], best)} & "
+            f"{fmt(a['mean_without'], best)} & {a['mean_difference']:+.4f} & "
+            f"{a['sd_difference']:.4f} & {a['n_positive']} of {a['n']} & "
+            f"{a['cls_strain_sd_with']:.2f} \\\\"
+        )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[Round 79: the perturbed class token]{Round 79, the class token sent "
+        "through the perturbation operator as query row 0 over the same deleted-gene keys "
+        "(\\texttt{perturb\\_cls}, ported from the 025 branch), against the identical cell "
+        "without it, paired by seed on the released split. No parameters are added and the "
+        "gene rows are unchanged. The last column is the across-strain spread of the class "
+        "token at the final epoch, which is exactly 0 without the flag because the token is "
+        "then the encoding of the unperturbed graph. Written by "
+        "\\texttt{cls\\_readout.py}.}\n"
+        "  \\label{tab:cls-readout}\n"
+        "  \\begin{tabular}{@{}p{52mm}rrrrrlr@{}}\n    \\hline\n"
+        "    arm & seeds & with & without & difference & sd & positive & token sd \\\\\n"
+        "    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("cls_readout", body, "results/cls_readout.json")
+
+
+def module_factorial() -> str | None:
+    """Round 82: the solve vector and the rule counts, each alone and together."""
+    import glob
+
+    import numpy as np
+
+    arms = [
+        ("four growth ratios only", "w38_protpathfba", None),
+        ("+ gene-rule counts, no solve", "w101_pathgpronly", "w101_pathgpronlycv"),
+        (
+            "+ solved flux vector, no counts",
+            "w49_pathfbapfbalogfree",
+            "w50_pathlogfreecv",
+        ),
+        ("+ both", "w96_pathloggpr", "w99_pathloggprcv"),
+    ]
+
+    def cells(stem: str) -> list[float]:
+        return [
+            json.load(open(p))["test"]["pinned"]["auroc"]
+            for p in sorted(
+                glob.glob(osp.join(RESULTS, f"{stem}_h12l1p1_e200_s27*.json"))
+            )
+        ]
+
+    values = {stem: cells(stem) for _, stem, _ in arms}
+    best_cell = max(float(np.mean(v)) for v in values.values())
+    folds: dict[str, float] = {}
+    for _, stem, cv in arms:
+        if cv and osp.isfile(osp.join(RESULTS, f"{cv}_ensemble.json")):
+            with open(osp.join(RESULTS, f"{cv}_ensemble.json")) as fh:
+                folds[stem] = float(json.load(fh)["ensemble_auroc"])
+    best_fold = max(folds.values()) if folds else 0.0
+    rows = []
+    for label, stem, _ in arms:
+        v = np.array(values[stem])
+        fold = (
+            fmt(folds[stem], best_fold) if stem in folds else "\\multicolumn{1}{c}{--}"
+        )
+        rows.append(
+            f"    {label} & {len(v)} & {fmt(float(v.mean()), best_cell)} & "
+            f"{v.std(ddof=1):.3f} & {fold} \\\\"
+        )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[Round 82: the solve and the rules, each alone]{Round 82, what each "
+        "half of the module is worth on the same backbone, the pathway multi-hot with "
+        "ProtT5 and the four FBA growth ratios on the logit. The solved flux vector is "
+        "4,131 columns from one linear program per genotype; the gene-rule counts are six "
+        "columns read off yeast-GEM's rules with no solver. Columns: the number of seeds, "
+        "their mean held-out AUROC and its spread, and the five-fold ensemble where one "
+        "was run. Best of each column in bold. Written by "
+        "\\texttt{notes\\_tex\\_tables.py} from the cells' own result files.}\n"
+        "  \\label{tab:module-factorial}\n"
+        "  \\begin{tabular}{@{}p{62mm}rrrr@{}}\n    \\hline\n"
+        "    affine columns & seeds & cell mean & sd & fold ensemble \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("module_factorial", body, "results/ (the cells named in the rows)")
+
+
+def single_experiment_ablation() -> str | None:
+    """Round 83: the same recipes with every column defined inside ONE experiment."""
+    import glob
+
+    import numpy as np
+
+    rows_spec = [
+        ("growth ratio alone", "w38_protpathfba", "w102_ypdonly"),
+        ("+ solved flux vector", "w49_pathfbapfbalogfree", "w102_ypdvec"),
+        ("+ vector and rule counts", "w96_pathloggpr", "w102_ypdgpr"),
+    ]
+
+    def cells(stem: str) -> np.ndarray:
+        return np.array(
+            [
+                json.load(open(p))["test"]["pinned"]["auroc"]
+                for p in sorted(
+                    glob.glob(osp.join(RESULTS, f"{stem}_h12l1p1_e200_s27*.json"))
+                )
+            ]
+        )
+
+    rows = []
+    for label, four_stem, one_stem in rows_spec:
+        four, one = cells(four_stem), cells(one_stem)
+        if not len(one):
+            return None
+        best = max(float(four.mean()), float(one.mean()))
+        rows.append(
+            f"    {label} & {len(four)} & {fmt(float(four.mean()), best)} & "
+            f"{len(one)} & {fmt(float(one.mean()), best)} & "
+            f"{one.mean() - four.mean():+.3f} \\\\"
+        )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[Round 83: the single-experiment ablation]{Round 83, every affine "
+        "column restricted to what ONE experiment defines. The four FBA growth ratios are "
+        "four different media, so a cell carrying all four reads four experiments at once, "
+        "which a genotype-by-environment record cannot; the solved flux vector is already "
+        "one medium (YPD) and the gene-rule counts carry no environment at all. The right "
+        "block keeps the YPD ratio and drops the other three. Seed means of the held-out "
+        "AUROC, better of each row in bold. Written by \\texttt{notes\\_tex\\_tables.py} "
+        "from the cells' own result files.}\n"
+        "  \\label{tab:single-experiment}\n"
+        "  \\begin{tabular}{@{}p{52mm}rrrrr@{}}\n    \\hline\n"
+        "    affine columns & seeds & four media & seeds & YPD only & change \\\\\n"
+        "    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("single_experiment", body, "results/ (the cells named in the rows)")
+
+
+def simplification_ladder() -> str | None:
+    """Rounds 83 to 98: media and flux vector, each recipe on the released split."""
+    src = osp.join(RESULTS, "simplification_readout.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        ladder = json.load(fh)["ladder"]
+    best_cell = max(r["cell_mean"] for r in ladder)
+    ones = [r["fold_ensemble_one_seed"] for r in ladder]
+    threes = [r["fold_ensemble_three_seeds"] for r in ladder]
+    best_one = max(v for v in ones if v is not None)
+    best_three = max(v for v in threes if v is not None)
+    dash = "\\multicolumn{1}{c}{--}"
+    rows = []
+    for r in ladder:
+        one, three = r["fold_ensemble_one_seed"], r["fold_ensemble_three_seeds"]
+        rows.append(
+            f"    {r['label']} & {r['media']} & {'yes' if r['solver'] else 'no'} & "
+            f"{len(r['seeds'])} & {fmt(r['cell_mean'], best_cell)} & {r['cell_sd']:.3f} & "
+            f"{fmt(one, best_one) if one is not None else dash} & "
+            f"{fmt(three, best_three) if three is not None else dash} \\\\"
+        )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[Rounds 83 to 98: media and flux vector on the released split]{What the "
+        "affine columns cost and what they score, on the same backbone (pathway multi-hot "
+        "with ProtT5). Media is the number of FBA growth ratios on the logit, each a "
+        "different environment; vector says whether the recipe also reads the stored flux "
+        "vector of the parsimonious solve. Every ratio is itself one FBA program per "
+        "genotype and medium, run once offline. Columns: seeds, their mean held-out AUROC and "
+        "its spread, and the five-fold ensemble at one seed per fold and at three. Best "
+        "of each column in bold. Written by \\texttt{notes\\_tex\\_tables.py} from "
+        "\\texttt{results/simplification\\_readout.json}.}\n"
+        "  \\label{tab:simplification-ladder}\n"
+        "  \\begin{tabular}{@{}p{58mm}rlrrrrr@{}}\n    \\hline\n"
+        "    affine columns & media & vector & seeds & cell mean & sd & folds, 1 seed & "
+        "folds, 3 seeds \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write(
+        "simplification_ladder", body, "results/simplification_readout.json (ladder)"
+    )
+
+
+def simplification_paired() -> str | None:
+    """Rounds 84 to 99: every paired difference the simplification rounds fixed."""
+    src = osp.join(RESULTS, "simplification_readout.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        report = json.load(fh)
+    blocks = [
+        ("ten repeated outer splits, unit = split", report["resplit"]),
+        ("rule-count subsets on the released split, unit = seed", report["subsets"]),
+        ("400 epochs against 200 on the released split, unit = seed", report["budget"]),
+    ]
+    rows = []
+    for title, items in blocks:
+        rows.append(f"    \\multicolumn{{7}}{{@{{}}l}}{{\\textit{{{title}}}}} \\\\")
+        for p in items:
+            lo, hi = min(p["seeds_per_unit"]), max(p["seeds_per_unit"])
+            depth = f"{lo}" if lo == hi else f"{lo} to {hi}"
+            rows.append(
+                f"    {p['name']} & {p['n']} & {depth} & {p['mean_a']:.3f} & "
+                f"{p['mean_b']:.3f} & ${p['mean_difference']:+.4f}$ ({p['sd_difference']:.4f}) & "
+                f"{p['n_positive']}/{p['n']} \\\\"
+            )
+        rows.append("    \\hline")
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[Rounds 84 to 99: the paired differences]{Every paired difference "
+        "the simplification rounds fixed in advance, first recipe minus second. On the "
+        "repeated splits the unit is a split, scored as the mean over the seeds both arms "
+        "ran; the test blocks overlap, so no p-value is given. Columns: units, seeds per "
+        "unit, the two means, the mean difference with its standard deviation over units, "
+        "and the units on which the first recipe scored higher. Written by "
+        "\\texttt{notes\\_tex\\_tables.py} from "
+        "\\texttt{results/simplification\\_readout.json}.}\n"
+        "  \\label{tab:simplification-paired}\n"
+        "  \\begin{tabular}{@{}p{66mm}rlrrrr@{}}\n    \\hline\n"
+        "    first minus second & units & seeds & first & second & difference (sd) & "
+        "higher \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write(
+        "simplification_paired", body, "results/simplification_readout.json (paired)"
+    )
+
+
+def dcell_style() -> str | None:
+    """Round 108: DCell's hierarchy over these splits, in two input forms."""
+    src = osp.join(RESULTS, "dcell_style_folds.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        folds = {e["arm"]: e for e in json.load(fh)["fold_ensembles"]}
+    with open(osp.join(RESULTS, "dcell_style_released.json")) as fh:
+        released = {r["model"]: r for r in json.load(fh)["rows"]}
+    with open(osp.join(RESULTS, "dcell_style_resplits.json")) as fh:
+        resplits = {p["arm"]: p for p in json.load(fh)["paired"]}
+    for extra in (
+        "dcell_style_resplits_published.json",
+        "dcell_style_resplits_affine.json",
+    ):
+        path = osp.join(RESULTS, extra)
+        if osp.isfile(path):
+            with open(path) as fh:
+                resplits.update({p["arm"]: p for p in json.load(fh)["paired"]})
+    affine_released = osp.join(RESULTS, "dcell_style_released_affine.json")
+    if osp.isfile(affine_released):
+        with open(affine_released) as fh:
+            released.update({r["model"]: r for r in json.load(fh)["rows"]})
+    rows_spec = [
+        ("DCell hierarchy, GO membership on each term", "dcell_style_shared"),
+        ("the same, no auxiliary term losses", "dcell_style_shared_noaux"),
+        ("DCell's published per-gene input", "dcell_published_input"),
+    ]
+    if "dcell_style_shared_affine" in released:
+        rows_spec.insert(
+            1,
+            (
+                "the same, the module as an affine on the root",
+                "dcell_style_shared_affine",
+            ),
+        )
+    best_cell = max(released[k]["mean"] for _, k in rows_spec)
+    best_fold = max(folds[k]["ensemble_auroc"] for _, k in rows_spec if k in folds)
+    dash = "\\multicolumn{1}{c}{--}"
+    rows = []
+    for label, key in rows_spec:
+        cell, fold = released[key], folds.get(key)
+        pair = resplits.get(key)
+        against = (
+            f"${pair['difference_mean']:+.3f}$ ({pair['difference_sd']:.3f}), "
+            f"{pair['n_arm_above']}/{pair['n_splits']}"
+            if pair
+            else dash
+        )
+        rows.append(
+            f"    {label} & {len(cell['test_auroc'])} & "
+            f"{fmt(cell['mean'], best_cell)} & {cell['sd']:.3f} & "
+            f"{fmt(fold['ensemble_auroc'], best_fold) if fold else dash} & {against} \\\\"
+        )
+    gcn = resplits["dcell_style_shared"]
+    rows.append("    \\hline")
+    rows.append(
+        f"    graph convolution on the same GO & 6 & 0.905 & 0.005 & 0.918 & "
+        f"{gcn['gcn_mean']:.3f} over ten splits \\\\"
+    )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[Round 108: DCell over these splits]{Round 108, DCell's ontology "
+        "hierarchy on this endpoint. Every term of the Gene Ontology gets a small "
+        "subsystem whose state is a function of its children's states and its own gene "
+        "input, wired along the same 2,362-term multi-hot the graph baselines read, with "
+        "DCell's auxiliary per-term heads at weight 0.3. The published input gives each "
+        "gene its own weight into each term, which a held-out gene's deletion never "
+        "trains, so the first two rows replace it with one shared weight on whether the "
+        "deleted gene carries the term. Columns: seeds on the released split, their mean "
+        "held-out AUROC and its spread, the five-fold ensemble on the same 195 genes, and "
+        "the paired difference against graph convolution on the same annotations over ten "
+        "repeated outer splits with the count of splits the row wins. Test blocks overlap "
+        "across splits, so no p-value. Width and normalization were chosen on validation "
+        "over ten configurations. Written by \\texttt{notes\\_tex\\_tables.py} from "
+        "\\texttt{dcell\\_style\\_baseline.py}.}\n"
+        "  \\label{tab:dcell-style}\n"
+        "  \\begin{tabular}{@{}p{62mm}rrrrl@{}}\n    \\hline\n"
+        "    model & seeds & cell mean & sd & fold ensemble & "
+        "against the graph, ten splits \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("dcell_style", body, "results/dcell_style_*.json")
+
+
+def consensus_missed() -> str | None:
+    """The essential genes no predictor ranks well, on the ten repeated splits."""
+    src = osp.join(RESULTS, "consensus_missed.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        report = json.load(fh)
+    predictors = report["predictors"]
+    learned = predictors[:-1]
+    essential = sorted(
+        (g for g in report["genes"] if g["essential"] == 1),
+        key=lambda g: -g["consensus"],
+    )[:12]
+    rows = []
+    for g in essential:
+        low = min(g["misrank"][p] for p in learned)
+        cells = " & ".join(
+            f"\\textbf{{{g['misrank'][p]:.2f}}}"
+            if p in learned and g["misrank"][p] == low
+            else f"{g['misrank'][p]:.2f}"
+            for p in predictors
+        )
+        rows.append(
+            f"    \\textit{{{g['name']}}} & {g['gene']} & {g['n_splits_held_out']} & "
+            f"{cells} & {g['fba_ratio_ypd']:.2f} & {g['n_go_terms']} & "
+            f"{g['physical_degree']} \\\\"
+        )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[Essential genes every predictor ranks low]{The twelve essential "
+        "genes with the highest consensus misrank over the ten repeated outer splits. A "
+        "misrank is the share of the nonessential genes of the same test block that "
+        "score above the gene, averaged over seeds and over the splits that hold the gene "
+        "out (held), so 0 is a perfect rank and 0.5 the median nonessential gene. The "
+        "consensus is the lowest of the four learned predictors, in bold: the transformer "
+        "with the single-experiment module (nine seeds per split), the same transformer "
+        "with no metabolic column (nine), graph convolution on GO (six) and the DCell "
+        "hierarchy with a shared input (three). FBA scores one minus the YPD growth ratio "
+        "and is not part of the consensus. Ratio is the FBA knockout growth ratio on YPD, "
+        "GO the count of propagated biological-process terms, degree the physical "
+        "interaction degree. Written by \\texttt{notes\\_tex\\_tables.py} from "
+        "\\texttt{consensus\\_missed.py}.}\n"
+        "  \\label{tab:consensus-missed}\n"
+        "  \\begin{tabular}{@{}llrrrrrrrrr@{}}\n    \\hline\n"
+        "    gene & systematic & held & module & no metab. & GO conv. & DCell & FBA & "
+        "ratio & GO & degree \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("consensus_missed", body, "results/consensus_missed.json")
+
+
+def go006_comparison() -> str | None:
+    """The trigenic DCell runs' ontology against the current store, both GO models."""
+    src = osp.join(RESULTS, "go006_comparison.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        models = json.load(fh)["models"]
+    labels = {
+        ("GCN, union of nine", "GO (400 epochs)"): "graph convolution on GO",
+        (
+            "GCN, union of nine",
+            "GO+FBA ratios (400 epochs)",
+        ): "graph convolution on GO and the four ratios",
+        (
+            "GCN, union of nine",
+            "ProtT5+GO+FBA ratios (400 epochs)",
+        ): "graph convolution on ProtT5, GO and the ratios",
+        ("dcell_style_shared", "GO"): "DCell hierarchy, shared input",
+    }
+    rows = []
+    for m in models:
+        rel, res = m["released"], m["resplits"]
+        rows.append(
+            f"    {labels[(m['model'], m['inputs'])]} & {rel['mean_006']:.3f} & "
+            f"{rel['mean_current_shared_seeds']:.3f} & {res['mean_006']:.3f} & "
+            f"{res['mean_current']:.3f} & ${res['difference_mean']:+.3f}$ "
+            f"({res['difference_sd']:.3f}) & {res['n_006_higher']}/{res['n_splits']} \\\\"
+        )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[The trigenic DCell runs' ontology against the current store]{The two "
+        "GO-reading models on the ontology the trigenic DCell runs of experiments 005 and "
+        "006 used (2,651 columns: SGD annotations without those inferred from genetic "
+        "interaction, redundant terms collapsed, four or more genes per term) and on the "
+        "current store (2,362 columns: propagated annotations, ten or more genes per term). "
+        "Three seeds per cell throughout, the current store's released value over the same "
+        "three seeds. Columns: the released split, the mean over the ten repeated outer "
+        "splits, the paired difference of the trigenic runs' ontology minus the current one "
+        "with its spread over splits, and the splits it is higher on. Written by "
+        "\\texttt{notes\\_tex\\_tables.py} from \\texttt{go006\\_compare.py}.}\n"
+        "  \\label{tab:go006-comparison}\n"
+        "  \\begin{tabular}{@{}p{58mm}rrrrlr@{}}\n    \\hline\n"
+        "    model & released, trigenic & released, current & ten splits, trigenic & "
+        "ten splits, current & difference & higher \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("go006_comparison", body, "results/go006_comparison.json")
+
+
+def store_ladder() -> str | None:
+    """Rounds 112 to 114: the offline stores as the module's columns, one baseline."""
+    src = osp.join(RESULTS, "simplification_readout.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        pairs = {r["name"]: r for r in json.load(fh)["released_pairs"]}
+
+    def summary(name: str) -> dict:
+        path = osp.join(RESULTS, name)
+        if not osp.isfile(path):
+            return {}
+        with open(path) as fh:
+            return json.load(fh)
+
+    #: (row label, objective, enzyme constraint, summary file, released pair name)
+    rungs = [
+        (
+            "plain FBA, growth only",
+            "growth",
+            "none",
+            "ess_gecko_store_plainfba.json",
+            "plain FBA, no parsimony against the plain store, released split",
+        ),
+        (
+            "parsimony in the objective, weight 0.001",
+            "growth minus 0.001 total flux",
+            "none",
+            "ess_gecko_store_pfbalambda3.json",
+            "parsimony in the objective, lambda 1e-3 against the plain store, released split",
+        ),
+        (
+            "parsimony in the objective, weight 0.0001",
+            "growth minus 0.0001 total flux",
+            "none",
+            "ess_gecko_store_pfbalambda4.json",
+            "parsimony in the objective, lambda 1e-4 against the plain store, released split",
+        ),
+        (
+            "minimization of metabolic adjustment",
+            "nearest to wild type",
+            "none",
+            "ess_kcat_bounded_store_moma.json",
+            "MOMA store against the plain store, released split",
+        ),
+        (
+            "kcat ceilings, measured proteome, point",
+            "growth, then least flux",
+            "fixed ceilings",
+            "ess_kcat_bounded_store_point.json",
+            "kcat point ceilings against the plain store, released split",
+        ),
+        (
+            "kcat ceilings, measured proteome, two sigma up",
+            "growth, then least flux",
+            "fixed ceilings",
+            "ess_kcat_bounded_store_sigma2.json",
+            "kcat two-sigma ceilings against the plain store, released split",
+        ),
+        (
+            "kcat sampled, mean and spread",
+            "growth, then least flux",
+            "fixed ceilings, ten draws",
+            "ess_kcat_bounded_store_sampled.json",
+            "kcat-sampled store against the plain store, released split",
+        ),
+        (
+            "GECKO pool 0.125",
+            "growth, then least flux",
+            "usages under the pool",
+            "ess_gecko_store_pool125.json",
+            "GECKO pool 0.125 against the plain store, released split",
+        ),
+        (
+            "GECKO pool 0.25",
+            "growth, then least flux",
+            "usages under the pool",
+            "ess_gecko_store_pool250.json",
+            "GECKO pool 0.25 against the plain store, released split",
+        ),
+        (
+            "GECKO pool 0.125, kcat one sigma up",
+            "growth, then least flux",
+            "usages under the pool",
+            "ess_gecko_store_pool125s1.json",
+            "GECKO pool 0.125, kcat one sigma up against the plain store, released split",
+        ),
+        (
+            "GECKO pool 0.125, parsimony on enzyme mass",
+            "growth, then least enzyme",
+            "usages under the pool",
+            "ess_gecko_store_pool125minenz.json",
+            "GECKO pool 0.125, parsimony on enzyme mass against the plain store, released split",
+        ),
+        (
+            "GECKO pool 0.125, every unit EZKinetics",
+            "growth, then least flux",
+            "usages under the pool",
+            "ess_gecko_store_pool125ezk.json",
+            "GECKO pool 0.125, all units EZKinetics against the plain store, released split",
+        ),
+        (
+            "GECKO pool 0.125, shuffled kcat table",
+            "growth, then least flux",
+            "usages under the pool",
+            "ess_gecko_store_pool125shuf.json",
+            "GECKO pool 0.125, shuffled table against the plain store, released split",
+        ),
+    ]
+    dash = "\\multicolumn{1}{c}{--}"
+    rows = [
+        "    parsimonious FBA (the kept form) & growth, then least flux & none & 1.00 & 91 & "
+        "\\multicolumn{1}{c}{0} & \\multicolumn{1}{c}{baseline} & \\multicolumn{1}{c}{--} \\\\"
+    ]
+    for label, objective, enzyme, summ, pair_name in rungs:
+        m = summary(summ)
+        if not m:
+            continue
+        growth = m.get("wild_type_growth_fraction")
+        if growth is None:
+            wt = m.get("wild_type_growth")
+            growth = wt / 0.5428 if wt else None
+        pair = pairs.get(pair_name)
+        against = (
+            f"${pair['mean_difference']:+.3f}$ ({pair['sd_difference']:.3f}) & "
+            f"{pair['n_positive']}/{pair['n']}"
+            if pair
+            else f"{dash} & {dash}"
+        )
+        rows.append(
+            f"    {label} & {objective} & {enzyme} & "
+            f"{growth:.2f} & {m['n_lethal']} & "
+            f"{m['median_relative_l2_log1p_to_plain']:.2f} & {against} \\\\"
+        )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[Rounds 113 and 114: the offline stores as the module's columns]{The "
+        "objective and enzyme-constraint ladder, every rung an offline program per "
+        "deletion on the corrected YPD medium, stored and read as the kept form reads the "
+        "parsimonious solve (the YPD ratio, the vector as $\\log(1+|v|)$, the six rule "
+        "counts, a zero-initialized affine on the logit, pathway multi-hot with ProtT5). "
+        "Growth is the wild type's under the program as a fraction of the unconstrained "
+        "value; lethal the deletions with no growth; distance the median relative "
+        "$\\ell_2$ between a deletion's $\\log(1+|v|)$ and the parsimonious store's over the "
+        "1,121 labeled genes. Difference is the held-out AUROC on the released split "
+        "minus the parsimonious store's cell on the same seed, mean and spread over "
+        "seeds, and the seeds on which the rung is higher. The GECKO rungs allocate one "
+        "usage per catalytic unit under GECKO 3's yeast pool with no proteome; the kcat "
+        "ceiling rungs use a measured proteome and are not the design. Written by "
+        "\\texttt{notes\\_tex\\_tables.py} from \\texttt{ess\\_gecko\\_store.py}, "
+        "\\texttt{ess\\_kcat\\_bounded\\_store.py} and \\texttt{simplification\\_readout.py}.}\n"
+        "  \\label{tab:store-ladder}\n"
+        "  \\begin{tabular}{@{}p{50mm}p{26mm}p{24mm}rrrlr@{}}\n    \\hline\n"
+        "    store & objective & enzyme constraint & growth & lethal & distance & "
+        "difference & higher \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write(
+        "store_ladder",
+        body,
+        "results/ess_gecko_store_*.json, results/ess_kcat_bounded_store_*.json",
+    )
+
+
+def kcat_tier_capacity() -> str | None:
+    """The capacity box under the two kcat tiers, at initialization."""
+    srcs = {
+        t: osp.join(RESULTS, f"capacity_calibration_{t}.json")
+        for t in ("measured", "predicted")
+    }
+    if not all(osp.isfile(p) for p in srcs.values()):
+        return None
+    data = {}
+    for tier, path in srcs.items():
+        with open(path) as fh:
+            data[tier] = json.load(fh)
+    scales = [r["capacity_scale"] for r in data["measured"]["rows"]]
+    par = {t: data[t]["parameters"] for t in data}
+    counts = {t: par[t]["kcat_tier_counts"] for t in par}
+    head = " & ".join(f"{s:,.0f}" for s in scales)
+    rows = []
+    for tier in ("measured", "predicted"):
+        c = counts[tier]
+        rows.append(
+            f"    {tier}, units measured / predicted / default & "
+            f"\\multicolumn{{{len(scales)}}}{{l}}{{{c['measured']:,} / "
+            f"{c['predicted']:,} / {c['default']:,} of {par[tier]['n_units']:,}}} \\\\"
+        )
+        q = par[tier]["kcat_per_h_quantiles"]
+        rows.append(
+            f"    {tier}, $k_{{cat}}$ per hour (median, 5th to 95th) & "
+            f"\\multicolumn{{{len(scales)}}}{{l}}{{{q['0.5']:,.0f} "
+            f"({q['0.05']:,.0f} to {q['0.95']:,.0f})}} \\\\"
+        )
+        q = par[tier]["nominal_ceiling_quantiles"]
+        rows.append(
+            f"    {tier}, nominal ceiling (median, 5th to 95th) & "
+            f"\\multicolumn{{{len(scales)}}}{{l}}{{{q['0.5']:,.1f} "
+            f"({q['0.05']:,.1f} to {q['0.95']:,.1f})}} \\\\"
+        )
+    rows.append("    \\hline")
+    for tier in ("measured", "predicted"):
+        by_scale = {r["capacity_scale"]: r for r in data[tier]["rows"]}
+        rows.append(
+            f"    {tier}, genotypes feasible & "
+            + " & ".join(f"{by_scale[s]['feasible_frac']:.2f}" for s in scales)
+            + " \\\\"
+        )
+        rows.append(
+            f"    {tier}, median growth & "
+            + " & ".join(f"{by_scale[s]['growth_median']:.3f}" for s in scales)
+            + " \\\\"
+        )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\scriptsize\n"
+        "  \\caption[The capacity box under the two $k_{cat}$ tiers]{The anchored "
+        "layer's growth program at initialization under each $k_{cat}$ tier, over one "
+        "batch of 32 held-out genotypes and a geometric grid of capacity scales: the "
+        "share of genotypes whose program is feasible and the median growth, "
+        "mmol/gDW/h. The upper block is the parameter table each tier resolves, with "
+        "the nominal ceiling the box carries at scale 1 over the 2,709 reactions that "
+        "have a gene-protein-reaction rule; the coarse counts place the homolog tier "
+        "with the predictions, so the measured tier's 782 are homolog values and its "
+        "97 are assays. The measured tier leaves 2,849 of 3,728 catalytic units on the "
+        "organism default, which is larger than most predicted turnovers, so its box "
+        "is the looser of the two. Written by "
+        "\\texttt{capacity\\_calibration.py --kcat-tier \\{measured,predicted\\}} from "
+        "the round-15 cell.}\n"
+        "  \\label{tab:kcat-tier-capacity}\n"
+        f"  \\begin{{tabular}}{{@{{}}p{{54mm}}{'r' * len(scales)}@{{}}}}\n    \\hline\n"
+        f"    capacity scale & {head} \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write(
+        "kcat_tier_capacity",
+        body,
+        "results/capacity_calibration_measured.json + results/capacity_calibration_predicted.json",
+    )
+
+
+def store_scale() -> str | None:
+    """The store keyed over the whole solid-growth build: its count and its build."""
+    keys_src = osp.join(RESULTS, "store_key_count.json")
+    build_src = osp.join(RESULTS, "solid_growth_store_SC_ipm.json")
+    if not (osp.isfile(keys_src) and osp.isfile(build_src)):
+        return None
+    with open(keys_src) as fh:
+        k = json.load(fh)
+    with open(build_src) as fh:
+        b = json.load(fh)
+    by_pert = k["records_by_perturbation_count"]
+    by_size = k["gem_subsets_by_size"]
+    build_min = b["seconds"] / 60
+    rows = [
+        ("records in the build", f"{k['n_records']:,}"),
+        (
+            "records by deletions (1 / 2 / 3)",
+            f"{by_pert['1']:,} / {by_pert['2']:,} / {by_pert['3']:,}",
+        ),
+        ("distinct media in the build", f"{k['n_distinct_media']}"),
+        (
+            "records deleting no GEM gene (read the wild-type row)",
+            f"{k['n_records_empty_gem_subset']:,}",
+        ),
+        ("GEM genes among the deleted", f"{k['n_gem_genes']:,}"),
+        (
+            "distinct GEM subsets by size (1 / 2 / 3)",
+            f"{by_size['1']:,} / {by_size['2']:,} / {by_size['3']:,}",
+        ),
+        ("distinct (GEM subset, medium) keys", f"{k['n_distinct_keys']:,}"),
+        ("store as float32 (GB, estimated)", f"{k['store_float32_gb']:.1f}"),
+        (
+            "CPU hours per core, estimated (interior point / pFBA)",
+            f"{k['cpu_hours_per_core']['interior_point_or_dual_simplex']:.0f} / "
+            f"{k['cpu_hours_per_core']['pfba']:.0f}",
+        ),
+        ("scan of the build (s)", f"{k['seconds']:.0f}"),
+        ("\\hline build", ""),
+        ("solver, medium", f"HiGHS {b['solver']} at $10^{{-4}}$, {b['medium']}"),
+        ("keys solved", f"{b['n_keys']:,}"),
+        ("records the keys serve", f"{b['n_records_served']:,}"),
+        ("wall (min) at 20 workers", f"{build_min:.0f}"),
+        ("lethal keys (growth 0 under the solve)", f"{b['n_lethal']:,}"),
+        (
+            "uncertified keys stored as the zero flux",
+            f"{b['n_uncertified_zero_flux']:,}",
+        ),
+        ("wild-type growth", f"{b['wild_type_growth']:.4f}"),
+    ]
+    lines = []
+    for name, value in rows:
+        if name.startswith("\\hline"):
+            lines.append(
+                f"    \\hline\n    \\multicolumn{{2}}{{@{{}}l}}{{\\emph{{{name[7:]}}}}} \\\\"
+            )
+        else:
+            lines.append(f"    {name} & {value} \\\\")
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[The store at the database's scale]{The solve store keyed by (GEM gene "
+        "subset, medium) over the 025 solid-growth build. The count (upper block) is a "
+        "cursor scan of the build's LMDB for each record's deleted genes and medium name, "
+        "written by \\texttt{store\\_key\\_count.py}; the build (lower block) solves the "
+        "round-27 growth program once per key with every GEM gene of the key deleted, "
+        "written by \\texttt{solid\\_growth\\_store.py} (job 2471). The build's selection "
+        "media have no FBA recipe, so every key is solved on synthetic complete medium and "
+        "keeps its own medium name; the store's medium axis is therefore one medium in "
+        "this build. The scan counts a record under every medium name it carries, so the "
+        "records served exceed the records in the build by the number of records that "
+        "name two media.}\n"
+        "  \\label{tab:store-scale}\n"
+        "  \\begin{tabular}{@{}p{95mm}l@{}}\n    \\hline\n"
+        "    quantity & value \\\\\n    \\hline\n"
+        + "\n".join(lines)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write(
+        "store_scale",
+        body,
+        "results/store_key_count.json + results/solid_growth_store_SC_ipm.json",
+    )
+
+
+def solve_tolerance() -> str | None:
+    """The round-27 program under five solvers: growth, the flux vector, and a probe."""
+    src = osp.join(RESULTS, "solve_tolerance_read.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        r = json.load(fh)
+    labels = {
+        "simplex_exact": "dual simplex, default tolerances (reference)",
+        "simplex_primal_exact": "primal simplex, default tolerances (another exact vertex)",
+        "simplex_1e-4": "dual simplex, feasibility tolerances $10^{-4}$",
+        "ipm_nocross_1e-4": "interior point, no crossover, KKT $10^{-4}$",
+        "pdlp_1e-4": "PDLP (the cuOpt algorithm, on the CPU), KKT $10^{-4}$",
+    }
+    reads = r["reads"]
+    best_within = max(x["probe_auroc_test_fit_within"] for x in reads)
+    rows = []
+    for x in reads:
+        rows.append(
+            f"    {labels[x['solver']]} & {x['n_optimal']}/{x['n_genes']} & "
+            f"{x['seconds_median']:.2f} & {x['growth_ratio_auroc_test']:.3f} & "
+            f"{x['frac_reactions_moved_gt_0_01_mean'] * 100:.1f} & "
+            f"{x['log1p_flux_relative_l2_median']:.2f} & "
+            f"{x['probe_auroc_test_fit_on_reference']:.3f} "
+            f"[{x['probe_auroc_test_fit_on_reference_ci'][0]:.2f}, "
+            f"{x['probe_auroc_test_fit_on_reference_ci'][1]:.2f}] & "
+            f"{fmt(x['probe_auroc_test_fit_within'], best_within)} "
+            f"[{x['probe_auroc_test_fit_within_ci'][0]:.2f}, "
+            f"{x['probe_auroc_test_fit_within_ci'][1]:.2f}] \\\\"
+        )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\scriptsize\n"
+        "  \\caption[The solve across solvers]{The round-27 program (the GEM box "
+        "clamped to $\\pm100$ mmol/gDW/h, YPD on the exchanges, the gene's reactions "
+        "closed through the GPR, maximize growth) solved for every one of the 1,121 "
+        f"labeled genes by five solvers of HiGHS {r['highs_version']}, one thread each. "
+        "``Optimal'' counts the programs the solver reported optimal within "
+        f"{r['time_limit_s']:.0f} s; ``s'' is the median wall clock per solve; ``growth "
+        "AUROC'' scores $1 - $ the knockout-to-wild-type growth ratio on the 195 "
+        "held-out genes; ``moved'' is the mean fraction of the 4,131 reactions whose "
+        "$\\log(1 + |v|)$ differs from the reference's by more than 0.01, and ``rel. "
+        "$L_2$'' the median relative distance of that vector. The probe is a logistic "
+        "regression over $\\log(1 + |v|)$ ($C = 0.01$, balanced) fitted on the 629 "
+        "training genes: ``fit on reference'' is fitted on the reference solver's "
+        "vectors and scored on this solver's held-out vectors, what a head trained on "
+        "exact solves sees when served another solver's; ``fit within'' is fitted and "
+        "scored on this solver's own. Gene bootstrap, 2,000 draws. Written by "
+        "\\texttt{solve\\_tolerance\\_read.py}. Bold marks the highest within-solver "
+        "probe.}\n"
+        "  \\label{tab:solve-tolerance}\n"
+        "  \\begin{tabular}{@{}p{44mm}rrrrrll@{}}\n    \\hline\n"
+        "    solver & optimal & s & growth AUROC & moved (\\%) & rel. $L_2$ & "
+        "probe, fit on reference & probe, fit within \\\\\n    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("solve_tolerance", body, "results/solve_tolerance_read.json")
+
+
+def solve_tolerance_transfer() -> str | None:
+    """The same solver at three tolerances: a probe fitted on one, scored on another."""
+    src = osp.join(RESULTS, "solve_tolerance_transfer.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        r = json.load(fh)
+    labels = {
+        "simplex_exact": "dual simplex, default (anchor)",
+        "ipm_nocross_1e-4": "interior point $10^{-4}$",
+        "ipm_nocross_1e-6": "interior point $10^{-6}$",
+        "ipm_nocross_1e-8": "interior point $10^{-8}$",
+        "pdlp_1e-4": "PDLP $10^{-4}$",
+        "pdlp_1e-6": "PDLP $10^{-6}$",
+        "pdlp_1e-8": "PDLP $10^{-8}$",
+    }
+    short = {
+        "simplex_exact": "simplex",
+        "ipm_nocross_1e-4": "ipm $10^{-4}$",
+        "ipm_nocross_1e-6": "ipm $10^{-6}$",
+        "ipm_nocross_1e-8": "ipm $10^{-8}$",
+        "pdlp_1e-4": "PDLP $10^{-4}$",
+        "pdlp_1e-6": "PDLP $10^{-6}$",
+        "pdlp_1e-8": "PDLP $10^{-8}$",
+    }
+    # A setting that certified fewer than half the programs served mostly zero
+    # vectors (the interior point at 1e-6 and 1e-8: 112 of 1,121); the probe over them
+    # is not a read of a store, so those rows and columns are dropped from the
+    # matrices and reported in the summary table's optimal count.
+    live = [x["solver"] for x in r["solvers"] if x["n_optimal"] * 2 >= r["n_genes"]]
+    pair = {(p["fit"], p["score"]): p for p in r["pairs"]}
+    summary_rows = []
+    for x in r["solvers"]:
+        summary_rows.append(
+            f"    {labels[x['solver']]} & {x['n_optimal']}/{r['n_genes']} & "
+            f"{x['seconds_median']:.2f} & {x['iterations_median']:.0f} & "
+            f"{x['growth_ratio_max_abs_diff_vs_reference']:.1e} & "
+            f"{x['growth_ratio_auroc_test']:.3f} \\\\"
+        )
+    diag_best = max(pair[(s, s)]["probe_auroc_test"] for s in live)
+    matrix_rows = []
+    for fit in live:
+        cells = []
+        for score in live:
+            p = pair[(fit, score)]
+            v = p["probe_auroc_test"]
+            cell = f"{v:.3f}"
+            if fit == score:
+                cell = fmt(v, diag_best)
+            cells.append(cell)
+        matrix_rows.append(f"    {short[fit]} & " + " & ".join(cells) + " \\\\")
+    dist_rows = []
+    for fit in live:
+        cells = []
+        for score in live:
+            p = pair[(fit, score)]
+            cells.append(f"{p['frac_reactions_moved_gt_0_01_mean'] * 100:.1f}")
+        dist_rows.append(f"    {short[fit]} & " + " & ".join(cells) + " \\\\")
+    head = " & ".join(short[s] for s in live)
+    n_live = len(live)
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\scriptsize\n"
+        "  \\caption[The solve across tolerances]{The round-27 program for the 1,121 "
+        f"labeled genes under HiGHS {r['highs_version']}'s dual simplex, its interior "
+        "point without crossover and its PDLP, the last two at KKT tolerances "
+        "$10^{-4}$, $10^{-6}$ and $10^{-8}$, one thread each, "
+        f"{r['time_limit_s']:.0f} s per solve. ``Optimal'' counts the programs the "
+        "solver certified; a program it did not certify keeps the zero flux. ``s'' and "
+        "``iterations'' are medians per solve; ``growth diff.'' is the largest absolute "
+        "difference of the knockout-to-wild-type growth ratio from the simplex's, and "
+        "``growth AUROC'' scores $1 - $ that ratio on the 195 held-out genes. Written "
+        "by \\texttt{solve\\_tolerance\\_transfer.py}.}\n"
+        "  \\label{tab:solve-tolerance-transfer-solvers}\n"
+        "  \\begin{tabular}{@{}p{40mm}rrrrr@{}}\n    \\hline\n"
+        "    solver & optimal & s & iterations & growth diff. & growth AUROC \\\\\n"
+        "    \\hline\n" + "\n".join(summary_rows) + "\n    \\hline\n  \\end{tabular}\n"
+        "\\end{table}\n\n"
+        "\\begin{table}[H]\n  \\centering\n  \\scriptsize\n"
+        "  \\caption[The probe across tolerances]{A logistic regression over "
+        "$\\log(1 + |v|)$ ($C = 0.01$, balanced, standardized on the fitting solver's "
+        "training genes) fitted on the 629 training genes' vectors from the row's solver "
+        "and scored on the 195 held-out genes' vectors from the column's, AUROC; the "
+        "diagonal is the within-solver read, an off-diagonal cell within a family is the "
+        "transfer across tolerance and across families the transfer across point. "
+        "Settings that certified fewer than half the programs are omitted. Bold marks the highest "
+        "within-solver probe. Written by \\texttt{solve\\_tolerance\\_transfer.py}.}\n"
+        "  \\label{tab:solve-tolerance-transfer}\n"
+        f"  \\begin{{tabular}}{{@{{}}p{{34mm}}{'r' * n_live}@{{}}}}\n    \\hline\n"
+        f"    fitted on / scored on & {head} \\\\\n    \\hline\n"
+        + "\n".join(matrix_rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n\n"
+        "\\begin{table}[H]\n  \\centering\n  \\scriptsize\n"
+        "  \\caption[The vectors across tolerances]{The mean percentage of the 4,131 "
+        "reactions whose $\\log(1 + |v|)$ differs by more than 0.01 between the row's "
+        "and the column's solver, over the 1,121 programs. Written by "
+        "\\texttt{solve\\_tolerance\\_transfer.py}.}\n"
+        "  \\label{tab:solve-tolerance-transfer-moved}\n"
+        f"  \\begin{{tabular}}{{@{{}}p{{34mm}}{'r' * n_live}@{{}}}}\n    \\hline\n"
+        f"    solver & {head} \\\\\n    \\hline\n"
+        + "\n".join(dist_rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write(
+        "solve_tolerance_transfer", body, "results/solve_tolerance_transfer.json"
+    )
+
+
+LABEL_PROPAGATION_GRAPHS = [
+    ("physical", "physical"),
+    ("regulatory", "regulatory"),
+    ("tflink", "TFLink"),
+    ("string12_0_neighborhood", "STRING neighborhood"),
+    ("string12_0_fusion", "STRING fusion"),
+    ("string12_0_cooccurence", "STRING co-occurrence"),
+    ("string12_0_coexpression", "STRING coexpression"),
+    ("string12_0_experimental", "STRING experimental"),
+    ("string12_0_database", "STRING database"),
+    ("union_of_9", "union of nine"),
+]
+
+
+def graph_label_propagation() -> str | None:
+    """The labeled-neighbor essential fraction on the held-out genes, per graph and reach."""
+    src = osp.join(RESULTS, "graph_label_propagation.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        d = json.load(fh)
+    by = {(r["graph"], r["hops"]): r for r in d["reads"]}
+    rows = []
+    for graph, label in LABEL_PROPAGATION_GRAPHS:
+        for hops in (1, 2):
+            r = by[(graph, hops)]
+
+            def f(key: str, fmt: str) -> str:
+                v = r[key]
+                return "--" if v != v else format(v, fmt)
+
+            rows.append(
+                f"    {label} & {hops} & {r['n_test_covered']} & "
+                f"{r['mean_labeled_neighbors']:.0f} & {f('auroc_covered', '.3f')} & "
+                f"{r['auroc_filled']:.3f} & {f('null_mean', '.3f')} $\\pm$ {f('null_sd', '.3f')} & "
+                f"{f('z', '+.1f')} & {r['labeled_loo_auroc']:.3f} & {r['n_labeled_covered']} \\\\"
+            )
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[Label propagation of essentiality on the graphs]{Essentiality read on "
+        "the held-out genes by the essential fraction among a gene's labeled neighbors, per "
+        f"graph and reach, with nothing fitted. Labeled genes are the {d['n_labeled']} "
+        "training and validation genes of the released split (base rate "
+        f"{d['labeled_base_rate']:.3f}); ``covered'' is how many of the {d['n_test']} held-out "
+        "genes have at least one labeled gene within the reach and ``neighbors'' their mean "
+        "number; ``AUROC'' is read on the covered genes and ``filled'' on all held-out genes "
+        "with the base rate where no labeled gene is reached; ``null'' is the mean and "
+        f"standard deviation of the covered read over {d['permutations']} draws in which each "
+        "gene's labeled neighbors are replaced by as many labeled genes drawn at random, "
+        "and $z$ the read's distance from it; ``LOO'' the predictor scored leave-one-out on "
+        "the $n$ labeled genes with a labeled neighbor (within two hops nearly every labeled "
+        "gene reaches nearly every other and the leave-one-out mean is then anti-correlated "
+        "with the gene's own label, so the two-hop LOO column is not a read). The regulatory "
+        "and TFLink graphs are made undirected. Written by \\texttt{notes\\_tex\\_tables.py} "
+        "from \\texttt{results/graph\\_label\\_propagation.json} "
+        "(\\texttt{graph\\_label\\_propagation.py}).}\n"
+        "  \\label{tab:graph-label-propagation}\n"
+        "  \\begin{tabular}{@{}lrrrrrrrrr@{}}\n    \\hline\n"
+        "    graph & hops & covered & neighbors & AUROC & filled & null & $z$ & LOO & $n$ \\\\\n"
+        "    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write(
+        "graph_label_propagation", body, "results/graph_label_propagation.json"
+    )
+
+
+
+def pattern_ladder() -> str | None:
+    """The layer-pattern ladder and the propagated-label stores, arm against control."""
+    src = osp.join(RESULTS, "pattern_ladder_readout.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        d = json.load(fh)
+    rows = []
+    for p in d["pairs"]:
+        a, c = p["arm"], p["control"]
+        rows.append(
+            f"    {p['name']} & {a['pack']} & {a['n_parameters']:,} & "
+            f"{a['mean_auroc']:.3f} $\\pm$ {a['sd_auroc']:.3f} & "
+            f"{c['mean_auroc']:.3f} $\\pm$ {c['sd_auroc']:.3f} & "
+            f"{p['mean_difference']:+.3f} $\\pm$ {p['sd_difference']:.3f} & "
+            f"{p['n_positive']}/{p['n']} & {a['min_select_epoch']}--{a['max_select_epoch']} & "
+            f"{a['max_graph_reg_loss']:.3g} \\\\"
+        )
+    for name in d["pending"]:
+        rows.append(f"    {name} & pending & -- & -- & -- & -- & -- & -- & -- \\\\")
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[The layer-pattern ladder and the propagated label]{The layer-pattern "
+        "ladder on the round-33 incumbent recipe at width 36 with nine heads (w134 to w138) "
+        "and the graphs' one-hop label propagation of essentiality as the affine store on the "
+        "width-12 recipe (w139, w140), each arm against its control on the same six seeds: "
+        "held-out AUROC at the validation-selected epoch (mean $\\pm$ sd), the paired "
+        "difference, the seeds on which the arm is above, the range of selected epochs, and "
+        "the largest value the regularizer's loss took in any epoch of any seed (0 where no "
+        "block is regularized). Written by \\texttt{notes\\_tex\\_tables.py} from "
+        "\\texttt{results/pattern\\_ladder\\_readout.json} "
+        "(\\texttt{pattern\\_ladder\\_readout.py}).}\n"
+        "  \\label{tab:pattern-ladder}\n"
+        "  \\begin{tabular}{@{}p{58mm}lrrrrrrr@{}}\n    \\hline\n"
+        "    pair & arm & parameters & arm & control & paired & above & epochs & reg loss \\\\\n"
+        "    \\hline\n"
+        + "\n".join(rows)
+        + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write("pattern_ladder", body, "results/pattern_ladder_readout.json")
+
+
+
+GO_EVIDENCE_CUTS = [
+    ("all", "every G\\_go annotation"),
+    ("no_imp", "IMP removed"),
+    ("no_mutant", "IMP, IGI, HMP, HGI removed"),
+    ("random_matched", "as many removed at random"),
+    ("no_experimental", "computational and statement codes only"),
+]
+
+
+def go_evidence() -> str | None:
+    """GO cut by evidence code: the store sizes and the GO models' held-out reads."""
+    src = osp.join(RESULTS, "go_evidence_store.json")
+    if not osp.isfile(src):
+        return None
+    with open(src) as fh:
+        d = json.load(fh)
+    stores = {r["name"]: r for r in d["stores"]}
+    rows = []
+    for name, label in GO_EVIDENCE_CUTS:
+        gcn = osp.join(RESULTS, f"graph_baselines_go400_evidence_{name}.json")
+        if not osp.isfile(gcn):
+            return None
+        with open(gcn) as fh:
+            g = {r["inputs"]: r for r in json.load(fh)["rows"]}
+        st = stores[name]
+        cells = [
+            f"{g[k]['mean']:.3f} $\\pm$ {g[k]['sd']:.3f}"
+            for k in ("GO (400 epochs)", "GO+FBA ratios (400 epochs)", "ProtT5+GO+FBA ratios (400 epochs)")
+        ]
+        rows.append(
+            f"    {label} & {st['n_pairs_kept']:,} & {st['n_columns']:,} & "
+            f"{st['logistic_test_auroc']:.3f} & " + " & ".join(cells) + " \\\\"
+        )
+    share = d["code_share_by_class"]
+    body = (
+        "\\begin{table}[H]\n  \\centering\n  \\footnotesize\n"
+        "  \\caption[GO cut by evidence code]{The GO multi-hot rebuilt from SGD's "
+        "per-annotation evidence codes (\\texttt{SCerevisiaeGraph.G\\_go}), with the "
+        "mutant-derived evidence removed, a count-matched random removal as the control, "
+        "and only computational and statement evidence kept; every store propagated "
+        "through \\emph{is\\_a} and \\emph{part\\_of}, roots dropped, a column kept at ten "
+        "genes. Held-out AUROC on the released 195 genes: L2 logistic regression (one "
+        "fit), and graph convolution over the union of the nine graphs at 400 epochs, "
+        "three seeds (mean $\\pm$ sd), on GO alone, GO with the four FBA ratios, and "
+        "ProtT5 with both. IMP is "
+        f"{100 * share['essential'].get('IMP', 0):.1f} percent of the labeled essential "
+        f"genes' annotations and {100 * share['nonessential'].get('IMP', 0):.1f} percent "
+        "of the non-essential genes'. Written by \\texttt{notes\\_tex\\_tables.py} from "
+        "\\texttt{results/go\\_evidence\\_store.json} and "
+        "\\texttt{results/graph\\_baselines\\_go400\\_evidence\\_*.json} "
+        "(\\texttt{go\\_evidence\\_store.py}, \\texttt{graph\\_baselines.py --arms go400 "
+        "--go-dir}).}\n"
+        "  \\label{tab:go-evidence}\n"
+        "  \\begin{tabular}{@{}p{50mm}rrrrrr@{}}\n    \\hline\n"
+        "    evidence & pairs & columns & logistic & GCN GO & GCN GO+FBA & GCN ProtT5+GO+FBA \\\\\n"
+        "    \\hline\n" + "\n".join(rows) + "\n    \\hline\n  \\end{tabular}\n\\end{table}\n"
+    )
+    return write(
+        "go_evidence",
+        body,
+        "results/go_evidence_store.json, results/graph_baselines_go400_evidence_*.json",
+    )
+
+
+
+def main() -> None:
+    paths = [
+        wl_test(),
+        solve_tolerance_transfer(),
+        solve_tolerance(),
+        store_stats(),
+        store_scale(),
+        kcat_tier_capacity(),
+        store_discriminability(),
+        misclass_enrichment(),
+        resplit_readout(),
+        gpr_readout(),
+        cls_readout(),
+        module_factorial(),
+        single_experiment_ablation(),
+        simplification_ladder(),
+        simplification_paired(),
+        dcell_style(),
+        consensus_missed(),
+        go006_comparison(),
+        store_ladder(),
+        graph_baselines(),
+        graph_label_propagation(),
+        pattern_ladder(),
+        go_evidence(),
+        graph_baselines_relational(),
+        graph_baselines_split(),
+        graph_baselines_go(),
+        graph_baselines_go400(),
+        graph_baselines_go400_s6(),
+        graph_baselines_go_solve(),
+        graph_baselines_go800(),
+        graph_baselines_go_rel(),
+        genome_heldout(),
+        degree_by_class(),
+        graph_baselines_go400_genome(),
+        graph_baselines_extra_genome(),
+        fold_ensembles(),
+        gene_encodings(),
+        hard_genes(),
+        family_ensembles(),
+        family_ensembles_folds(),
+        fba_media(),
+        splits(),
+        logistic_baselines(),
+        growth_probe(),
+        violations(),
+        confusion(),
+    ]
+    paths.extend(round_table(k) for k in ROUND_CAPTIONS)
+    for path in paths:
+        if path is not None:
+            print(path)
+
+
+if __name__ == "__main__":
+    main()

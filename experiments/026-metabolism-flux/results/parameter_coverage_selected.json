@@ -1,0 +1,52 @@
+{
+  "selection_rule": "own-class EC4 band, keeping a predictor whose Wilson 95 percent lower bound exceeds the EC-median lookup's point fraction. One rule, applied by PredictorSelection.from_study in torchcell/metabolism/parameters.py, which is the rule the flux layer runs",
+  "predictor_table_version": "verified",
+  "parameters": {
+    "k_cat": {
+      "selected": [
+        "ezkinetics",
+        "eitlem",
+        "unikp"
+      ],
+      "lookup_statistic": 0.5319148936170213,
+      "statistic": {
+        "dlkcat": 0.6595744680851063,
+        "unikp": 0.7446808510638298,
+        "eitlem": 0.7659574468085106,
+        "turnup": 0.6590909090909091,
+        "deepenzyme": 0.5531914893617021,
+        "ezkinetics": 0.8297872340425532
+      },
+      "n_units_all_selected": 3709,
+      "spread_median_decades": 0.7197898335741739,
+      "spread_p90_decades": 1.4654780817580164,
+      "spread_frac_above_1_decade": 0.2928012941493664,
+      "all_predictors": {
+        "n_units": 3552,
+        "spread_median_decades": 1.1384494118276964,
+        "spread_frac_above_1_decade": 0.6179617117117117
+      }
+    },
+    "K_M": {
+      "selected": [
+        "ezkinetics"
+      ],
+      "lookup_statistic": 0.48936170212765956,
+      "statistic": {
+        "unikp": 0.46808510638297873,
+        "eitlem": 0.5106382978723404,
+        "boost_km": 0.44680851063829785,
+        "ezkinetics": 0.6595744680851063
+      },
+      "n_units_all_selected": 3709,
+      "spread_median_decades": 0.0,
+      "spread_p90_decades": 0.0,
+      "spread_frac_above_1_decade": 0.0,
+      "all_predictors": {
+        "n_units": 3552,
+        "spread_median_decades": 0.8667733574395785,
+        "spread_frac_above_1_decade": 0.42117117117117114
+      }
+    }
+  }
+}

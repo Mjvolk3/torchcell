@@ -338,10 +338,15 @@
 <span class="sd">       written here, since in a family run the runner writes it.</span>
 
 <span class="sd">    A module whose entry point needs an argument this CLI cannot supply (a ``family``,</span>
-<span class="sd">    an ``arm``, a dataset ``name`` -- the modules that build several stores) does NOT</span>
-<span class="sd">    match: those stores are either held by a registry, which is rule 1, or verified by</span>
-<span class="sd">    their family runner, which reads every store in the family and is not a per-dataset</span>
-<span class="sd">    build step.</span>
+<span class="sd">    an ``arm``, a dataset ``name``) does NOT match: those stores are either held by a</span>
+<span class="sd">    registry, which is rule 1, or verified by their family runner, which reads every</span>
+<span class="sd">    store in the family and is not a per-dataset build step.</span>
+
+<span class="sd">    Rule 3 resolves by MODULE, so every store a module builds reaches the same</span>
+<span class="sd">    ``verify_build``. A module that builds several stores (``campos2018``,</span>
+<span class="sd">    ``dechiara2022``, ``muenzner2024``) therefore picks the gate from the store root's</span>
+<span class="sd">    basename and refuses a root that is none of its stores; one that ignored the root</span>
+<span class="sd">    would run one store's gate on another's records.</span>
 <span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification</span><span class="w"> </span><span class="kn">import</span> <span class="n">runners</span>
 

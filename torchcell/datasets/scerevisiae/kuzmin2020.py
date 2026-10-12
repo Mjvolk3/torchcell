@@ -221,12 +221,12 @@ def _combined_mutant_uncertainty(std_val: Any) -> dict[str, Any]:
     Returns empty uncertainty when the SD is unreported (None/NaN); otherwise
     fitness_se is auto-derived by FitnessPhenotype as SD/sqrt(n_samples).
 
-    A released SD of exactly 0 (18 + 15 digenic rows of Tables S1 + S3) is stored as
-    released, with the SE of 0 that arithmetic gives, never dropped or replaced by a
-    gap (#897; owner decision 2026-10-12: the uncertainty a source releases is stored
-    as released).
-    The SI defines the column only as "12. Combined mutant fitness standard
-    deviation" (si/si1.md line 229) and states nothing else about these rows.
+    A released SD of exactly 0 (18 + 15 digenic and 6 + 7 trigenic rows of Tables S1 +
+    S3) is stored as released, with the SE of 0 that arithmetic gives, never dropped or
+    replaced by a gap (#897; owner decision 2026-10-12: the uncertainty a source releases is stored
+    as released). The SI defines the column only as "12. Combined mutant fitness
+    standard deviation" (si/si1.md lines 229 and 285) and states nothing else about
+    these rows.
     """
     if pd.isna(std_val):
         return {"fitness_uncertainty": None, "fitness_uncertainty_type": None}
@@ -1048,10 +1048,15 @@ class TmfKuzmin2020Dataset(ExperimentDataset):
         )
         environment_reference = environment.model_copy()
 
+        # The released triple-mutant SD is a sample SD over colonies, labeled exactly
+        # as the Dmf digenic SD of the same column (it was stored only as the
+        # deprecated fitness_std before; owner decision 2026-10-12: "if uncertainty
+        # exists we cannot be missing it!").
         phenotype = FitnessPhenotype(
             fitness=row["fitness"],
             fitness_std=_reported_sd(row["fitness_std"]),
             screen_id=row["screen_id"],
+            **_combined_mutant_uncertainty(row["fitness_std"]),
         )
 
         phenotype_reference = FitnessPhenotype(

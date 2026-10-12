@@ -68,6 +68,7 @@ from typing import Any
 import pandas as pd
 import pytest
 
+from tests.torchcell.datasets.scerevisiae import _kuzmin2018_s4 as s4
 from torchcell.datamodels.media import SGA_TM_SELECTION
 from torchcell.datamodels.schema import (
     Environment,
@@ -152,6 +153,24 @@ NUP60_TM802 = SgaKanMxDeletionPerturbation(
 )
 
 
+#: Additional Data S4 for the fixture's query strains: the single query tsq508 and the
+#: double query tm801 state a fitness and an SD; tm802 is blank (a typed gap); the two
+#: unknown-array strains are listed so a join never refuses before the array check.
+S4_ROWS: list[s4.S4Row] = [
+    ("tsq508", 0.83, 0.012),
+    ("tm801", 0.55, 0.02),
+    ("tm802", None, None),
+    ("tm3180", 0.9, 0.01),
+    ("tm2550", 0.9, 0.01),
+]
+
+
+@pytest.fixture(autouse=True)
+def synthetic_s4(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> Path:
+    """Every build links this module's synthetic S4 from a throwaway raw mirror."""
+    return s4.install(monkeypatch, tmp_path, S4_ROWS)
+
+
 def write_raw(root: Path, rows: list[list[Any]]) -> None:
     """Write ``rows`` as the tab-separated raw table under ``root/raw``."""
     (root / "raw").mkdir(parents=True)
@@ -182,6 +201,30 @@ def sample_sd(sd: float) -> dict[str, Any]:
 def fitness(name: str, perturbations: list[Any], value: float, sd: float | None) -> Any:
     """A Kuzmin 2018 fitness experiment dump (SD labeled only when given)."""
     extra = sample_sd(sd) if sd is not None else {}
+    return FitnessExperiment(
+        dataset_name=name,
+        genotype=Genotype(perturbations=perturbations),
+        environment=ENVIRONMENT,
+        phenotype=FitnessPhenotype(fitness=value, fitness_std=sd, **extra),
+    ).model_dump()
+
+
+def query_fitness(
+    name: str, perturbations: list[Any], value: float, sd: float | None
+) -> Any:
+    """A query-strain fitness dump: its Additional Data S4 SD as a bootstrap SE over
+    12 colonies, or the S4-blank typed gap when S4 states none.
+    """
+    extra: dict[str, Any] = (
+        {
+            "fitness_uncertainty": sd,
+            "fitness_uncertainty_type": UncertaintyType.bootstrap_se,
+            "n_samples": 12,
+            "sample_unit": SampleUnit.colony,
+        }
+        if sd is not None
+        else {"provenance_gaps": [k.S4_BLANK_GAP]}
+    )
     return FitnessExperiment(
         dataset_name=name,
         genotype=Genotype(perturbations=perturbations),
@@ -234,17 +277,20 @@ def stored(ds: Any, key: str) -> list[dict[str, Any]]:
 
 
 def test_smf_allele_query_and_ts_array_singles(tmp_path: Path) -> None:
-    """Smf: nth2-5001 (ts, 0.8) and gem1_delta (KanMX, 0.95) array singles, then the
-    digenic query single cdc28-4 (allele, 0.83, full query strain id); the shared
-    reference SD is the NaN-skipping mean over all four rows, 0.036666666666666674.
+    """Smf: nth2-5001 (ts, 0.8) and gem1_delta (KanMX, 0.95) array singles with no SD,
+    then the digenic query single cdc28-4 (allele, 0.83, full query strain id) with its
+    Additional Data S4 SD 0.012 as a bootstrap SE (fitness_se 0.012, not divided); the
+    shared reference SD is the NaN-skipping mean over all four rows,
+    0.036666666666666674.
     """
     name = "SmfKuzmin2018Dataset"
     ds = build(tmp_path, k.SmfKuzmin2018Dataset)
     assert stored(ds, "experiment") == [
         fitness(name, [NTH2_TS], 0.8, None),
         fitness(name, [GEM1], 0.95, None),
-        fitness(name, [cdc28(TSQ)], 0.83, None),
+        query_fitness(name, [cdc28(TSQ)], 0.83, 0.012),
     ]
+    assert ds[2]["experiment"]["phenotype"]["fitness_se"] == 0.012
     reference_sd = (0.05 + 0.02 + 0.04) / 3
     assert reference_sd == 0.036666666666666674
     assert stored(ds, "reference") == [fitness_reference(name, reference_sd)] * 3
@@ -256,7 +302,8 @@ def test_smf_allele_query_and_ts_array_singles(tmp_path: Path) -> None:
 def test_dmf_allele_pairs_and_blank_sd(tmp_path: Path) -> None:
     """Dmf: the two digenic crosses (allele query x ts array, allele query x KanMX
     array), then the two trigenic query strains, each an allele + deletion pair tagged
-    with the full strain id and carrying no uncertainty. The reference SD is the digenic
+    with the full strain id: tm801 carries its Additional Data S4 SD 0.02 as a bootstrap
+    SE, tm802 (blank in S4) the typed S4-blank gap. The reference SD is the digenic
     mean with the blank skipped, 0.05. Record 0's blank SD is stored as ``fitness_std``
     None with every uncertainty field None, not as a float NaN.
     """
@@ -267,14 +314,14 @@ def test_dmf_allele_pairs_and_blank_sd(tmp_path: Path) -> None:
     expected = [
         fitness(name, [cdc28(TSQ), NTH2_TS], 0.61, None),
         fitness(name, [cdc28(TSQ), GEM1], 0.72, 0.05),
-        fitness(name, [cdc28(TM801), PML39_TM801], 0.55, None),
-        fitness(name, [NUP60_TM802, cdc28(TM802)], 0.66, None),
+        query_fitness(name, [cdc28(TM801), PML39_TM801], 0.55, 0.02),
+        query_fitness(name, [NUP60_TM802, cdc28(TM802)], 0.66, None),
     ]
     assert experiments == expected
     assert [e["phenotype"]["fitness_se"] for e in experiments] == [
         None,
         0.025,
-        None,
+        0.02,
         None,
     ]
     assert stored(ds, "reference") == [fitness_reference(name, 0.05)] * 4
@@ -413,7 +460,7 @@ def test_repeated_digenic_row_gives_smf_one_single_per_allele(tmp_path: Path) ->
     smf = build(tmp_path, k.SmfKuzmin2018Dataset, rows)
     assert stored(smf, "experiment") == [
         fitness("SmfKuzmin2018Dataset", [GEM1], 0.95, None),
-        fitness("SmfKuzmin2018Dataset", [cdc28(TSQ)], 0.83, None),
+        query_fitness("SmfKuzmin2018Dataset", [cdc28(TSQ)], 0.83, 0.012),
     ]
 
 
@@ -430,7 +477,7 @@ def test_subset_n_samples_rows_with_seed_42(tmp_path: Path) -> None:
     dmf = build(tmp_path, k.DmfKuzmin2018Dataset, subset_n=2)
     assert stored(dmf, "experiment") == [
         fitness("DmfKuzmin2018Dataset", [cdc28(TSQ), GEM1], 0.72, 0.05),
-        fitness("DmfKuzmin2018Dataset", [NUP60_TM802, cdc28(TM802)], 0.66, None),
+        query_fitness("DmfKuzmin2018Dataset", [NUP60_TM802, cdc28(TM802)], 0.66, None),
     ]
     assert (
         stored(dmf, "reference")
@@ -466,7 +513,8 @@ def test_download_extracts_the_hosted_zip_and_removes_it(
 ) -> None:
     """With no raw file and no ``TC_DATA_URL``, the build calls ``download_url`` once
     with the hosted archive URL and the raw directory; the zip is extracted there and
-    deleted, and the build proceeds on the extracted table.
+    deleted, and the build proceeds on the extracted table. Smf and Dmf also link
+    Additional Data S4 in from the raw mirror (the autouse synthetic one).
     """
     monkeypatch.delenv("TC_DATA_URL", raising=False)
     table = tmp_path / "table.tsv"
@@ -485,7 +533,10 @@ def test_download_extracts_the_hosted_zip_and_removes_it(
     ds = cls(root=str(root))
     assert calls == [(URL, str(root / "raw"))]
     assert cls.url == URL
-    assert sorted(os.listdir(root / "raw")) == [RAW_NAME]
+    linked = (
+        [k.S4_NAME] if cls in (k.SmfKuzmin2018Dataset, k.DmfKuzmin2018Dataset) else []
+    )
+    assert sorted(os.listdir(root / "raw")) == sorted([RAW_NAME, *linked])
     assert len(ds) == n
 
 
@@ -534,9 +585,14 @@ def test_items_retype_through_the_declared_classes(
 _RAW = osp.join(
     os.environ["DATA_ROOT"], "data/torchcell/dmf_kuzmin2018/raw/aao1729_data_s1.tsv"
 )
+# Additional Data S4 in the raw mirror, by its real path (the autouse fixture points
+# ``k.raw_mirror_dir`` at a synthetic mirror, so the path is fixed here, at import).
+_S4 = osp.join(
+    os.environ["DATA_ROOT"], "torchcell-raw", k.CITATION_KEY, "data", k.S4_NAME
+)
 _needs_raw = pytest.mark.skipif(
-    not osp.exists(_RAW),
-    reason=f"requires the Kuzmin 2018 raw Data S1 TSV at {_RAW} (absent in CI)",
+    not (osp.exists(_RAW) and osp.exists(_S4)),
+    reason=f"requires the Kuzmin 2018 Data S1 TSV at {_RAW} and Data S4 at {_S4}",
 )
 
 # The digenic row used by the regression test, addressed by strain ids (stable under
@@ -546,9 +602,11 @@ _DIGENIC_ARRAY_STRAIN = "YAL048C_dma5203"
 _DIGENIC_FITNESS = 0.8103
 _DIGENIC_FITNESS_SD = 0.0463
 
-# A double-mutant query strain of the trigenic screens, with its released fitness.
+# A double-mutant query strain of the trigenic screens, with its released fitness
+# (Data S1, 4 decimals) and its Additional Data S4 SD (S4 Fitness 0.51276).
 _QUERY_STRAIN = "YAR002W+YML107C_tm2550"
 _QUERY_STRAIN_FITNESS = 0.5128
+_QUERY_STRAIN_SD = 0.017
 
 
 @pytest.fixture(scope="module")
@@ -563,7 +621,7 @@ def built(raw: pd.DataFrame) -> tuple[Any, pd.DataFrame]:
     from torchcell.datasets.scerevisiae.kuzmin2018 import DmfKuzmin2018Dataset
 
     dataset = DmfKuzmin2018Dataset.__new__(DmfKuzmin2018Dataset)
-    return dataset, dataset.preprocess_raw(raw.copy())
+    return dataset, dataset.preprocess_raw(raw.copy(), pd.read_excel(_S4))
 
 
 @pytest.mark.data
@@ -635,13 +693,13 @@ def test_query_strain_record_is_the_query_pair(built: tuple[Any, pd.DataFrame]) 
         p.systematic_gene_name for p in perturbations
     }
 
-    # Released value, no uncertainty (the SD lives in Data File S4, not a raw file
-    # of this loader).
+    # Released value; its SD is Additional Data S4's, a bootstrap SE used as-is.
     assert experiment.phenotype.fitness == pytest.approx(_QUERY_STRAIN_FITNESS)
-    assert experiment.phenotype.fitness_std is None
-    assert experiment.phenotype.fitness_se is None
-    assert experiment.phenotype.fitness_uncertainty is None
-    assert experiment.phenotype.fitness_uncertainty_type is None
+    assert experiment.phenotype.fitness_std == _QUERY_STRAIN_SD
+    assert experiment.phenotype.fitness_se == _QUERY_STRAIN_SD
+    assert experiment.phenotype.fitness_uncertainty == _QUERY_STRAIN_SD
+    assert experiment.phenotype.fitness_uncertainty_type is UncertaintyType.bootstrap_se
+    assert experiment.phenotype.n_samples == k.N_SAMPLES_QUERY_STRAIN_FITNESS
 
 
 @pytest.mark.data

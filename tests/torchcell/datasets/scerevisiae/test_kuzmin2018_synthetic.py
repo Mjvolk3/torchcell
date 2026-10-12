@@ -40,6 +40,7 @@ import lmdb
 import pandas as pd
 import pytest
 
+from tests.torchcell.datasets.scerevisiae import _kuzmin2018_s4 as s4
 from torchcell.data.data import ExperimentReferenceIndex
 from torchcell.datamodels.media import SGA_TM_SELECTION
 from torchcell.datamodels.schema import (
@@ -63,6 +64,7 @@ from torchcell.datasets.scerevisiae.kuzmin2018 import (
     N_SAMPLES_COMBINED_MUTANT,
     RECORD_KIND_DIGENIC_ARRAY_CROSS,
     RECORD_KIND_DOUBLE_MUTANT_QUERY_STRAIN,
+    S4_BLANK_GAP,
     DmfKuzmin2018Dataset,
     DmiKuzmin2018Dataset,
     SmfKuzmin2018Dataset,
@@ -118,6 +120,17 @@ GEM1 = SgaKanMxDeletionPerturbation(
 NTH2_TS = SgaTsAllelePerturbation(
     systematic_gene_name="YBR001C", perturbed_gene_name="nth2-5001", strain_id=ARRAY_TSA
 )  # fmt: skip
+
+
+#: Additional Data S4 for the two query strains: tm3180 (the digenic single query, a
+#: stated SD) and tm2550 (the trigenic double query, blank in S4: a typed gap).
+S4_ROWS: list[s4.S4Row] = [("tm3180", 0.9, 0.011), ("tm2550", None, None)]
+
+
+@pytest.fixture(autouse=True)
+def synthetic_s4(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> Path:
+    """Every build links this module's synthetic S4 from a throwaway raw mirror."""
+    return s4.install(monkeypatch, tmp_path, S4_ROWS)
 
 
 def write_raw(root: Path, rows: list[list[Any]]) -> None:
@@ -223,8 +236,9 @@ def test_smf_records(tmp_path: Path) -> None:
     Array single-mutant fitness is "Array single mutant fitness" (0.95 for gem1Δ,
     0.8 for nth2-5001); the query single is "Query single/double mutant fitness"
     (0.9) named without the hoΔ half, strain id the full query strain. The trigenic
-    query (a double mutant) yields no single-mutant record. No SD is reported for
-    single mutants, so every phenotype has ``fitness_std`` None and no uncertainty.
+    query (a double mutant) yields no single-mutant record. The array singles carry no
+    SD; the query single carries its Additional Data S4 SD (0.011 for tm3180) as a
+    bootstrap SE over 12 colonies.
     """
     ds = build(tmp_path, SmfKuzmin2018Dataset)
     assert len(ds) == 3
@@ -245,7 +259,14 @@ def test_smf_records(tmp_path: Path) -> None:
             dataset_name="SmfKuzmin2018Dataset",
             genotype=Genotype(perturbations=[NUP60_DIGENIC]),
             environment=ENVIRONMENT,
-            phenotype=FitnessPhenotype(fitness=0.9, fitness_std=None),
+            phenotype=FitnessPhenotype(
+                fitness=0.9,
+                fitness_std=0.011,
+                fitness_uncertainty=0.011,
+                fitness_uncertainty_type=UncertaintyType.bootstrap_se,
+                n_samples=12,
+                sample_unit=SampleUnit.colony,
+            ),
         ),
     ]
     assert dumps(experiments(ds)) == dumps(expected)
@@ -303,8 +324,8 @@ def test_dmf_records(tmp_path: Path) -> None:
     fitness 0.8103 / SD 0.0463 (se 0.02315) and 0.7 / 0.03 (se 0.015). The trigenic
     query strain ``YAR002W+YML107C_tm2550`` becomes one record whose genotype is the
     query PAIR (both tagged with the full strain id, no array gene) with fitness
-    0.5128 from "Query single/double mutant fitness" and no SD (Data File S4 is not a
-    raw file of this loader).
+    0.5128 from "Query single/double mutant fitness"; Additional Data S4 lists tm2550
+    with a blank SD, so it carries no uncertainty and the typed S4-blank gap.
     """
     ds = build(tmp_path, DmfKuzmin2018Dataset)
     assert len(ds) == 3
@@ -329,7 +350,9 @@ def test_dmf_records(tmp_path: Path) -> None:
             dataset_name="DmfKuzmin2018Dataset",
             genotype=Genotype(perturbations=[NUP60_TRIGENIC, PML39_TRIGENIC]),
             environment=ENVIRONMENT,
-            phenotype=FitnessPhenotype(fitness=0.5128, fitness_std=None),
+            phenotype=FitnessPhenotype(
+                fitness=0.5128, fitness_std=None, provenance_gaps=[S4_BLANK_GAP]
+            ),
         ),
     ]
     assert dumps(experiments(ds)) == dumps(expected)

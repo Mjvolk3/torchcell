@@ -458,14 +458,33 @@ def test_array_strain_type_is_matched_case_sensitively(
 
 def test_tmf_allele_first_query_and_ts_array(tmp_path: Path) -> None:
     """Tmf: tm801 against the ts array (0.3 / 0.02) and gem1 (0.25 / 0.03); the allele
-    sits in query slot 1 with the split strain id "YBR160W"; no uncertainty labels and a
-    reference SD of (0.02 + 0.03) / 2 = 0.025.
+    sits in query slot 1 with the split strain id "YBR160W"; each released SD is labeled
+    ``sample_sd`` over 4 colonies (se 0.01, 0.015), as the Dmf digenic SD of the same
+    column is; the reference SD (0.02 + 0.03) / 2 = 0.025 stays unlabeled.
     """
     name = "TmfKuzmin2020Dataset"
     ds = build(tmp_path, k.TmfKuzmin2020Dataset)
     assert stored(ds, "experiment") == [
-        fitness(name, [CDC28_SPLIT, PML39_SPLIT, NTH2_TS], 0.3, 0.02, screen_id=MAIN),
-        fitness(name, [CDC28_SPLIT, PML39_SPLIT, GEM1], 0.25, 0.03, screen_id=PILOT),
+        fitness(
+            name,
+            [CDC28_SPLIT, PML39_SPLIT, NTH2_TS],
+            0.3,
+            0.02,
+            screen_id=MAIN,
+            **labeled(0.02, UncertaintyType.sample_sd, 4),
+        ),
+        fitness(
+            name,
+            [CDC28_SPLIT, PML39_SPLIT, GEM1],
+            0.25,
+            0.03,
+            screen_id=PILOT,
+            **labeled(0.03, UncertaintyType.sample_sd, 4),
+        ),
+    ]
+    assert [ds[i]["experiment"]["phenotype"]["fitness_se"] for i in range(2)] == [
+        0.01,
+        0.015,
     ]
     assert (0.02 + 0.03) / 2 == 0.025
     assert stored(ds, "reference") == [fitness_reference(name, 0.025)] * 2
@@ -483,7 +502,14 @@ def test_tmf_blank_sd_is_stored_as_none(tmp_path: Path) -> None:
     assert experiments[0]["phenotype"]["fitness_std"] is None
     assert experiments == [
         fitness(name, [CDC28_SPLIT, PML39_SPLIT, NTH2_TS], 0.3, None, screen_id=MAIN),
-        fitness(name, [CDC28_SPLIT, PML39_SPLIT, GEM1], 0.25, 0.03, screen_id=PILOT),
+        fitness(
+            name,
+            [CDC28_SPLIT, PML39_SPLIT, GEM1],
+            0.25,
+            0.03,
+            screen_id=PILOT,
+            **labeled(0.03, UncertaintyType.sample_sd, 4),
+        ),
     ]
     assert stored(ds, "reference") == [fitness_reference(name, 0.03)] * 2
 
@@ -781,6 +807,7 @@ def test_a_triple_in_both_screens_keeps_both_with_the_s1_array_name(
             0.3,
             0.02,
             screen_id=MAIN,
+            **labeled(0.02, UncertaintyType.sample_sd, 4),
         ),  # fmt: skip
         fitness(
             "TmfKuzmin2020Dataset",
@@ -788,6 +815,7 @@ def test_a_triple_in_both_screens_keeps_both_with_the_s1_array_name(
             0.28,
             0.01,
             screen_id=PILOT,
+            **labeled(0.01, UncertaintyType.sample_sd, 4),
         ),  # fmt: skip
     ]
     tmi = build(tmp_path, k.TmiKuzmin2020Dataset, s3_rows=s3_rows)

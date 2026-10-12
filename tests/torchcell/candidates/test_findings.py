@@ -67,7 +67,8 @@ def test_aggregation_records() -> None:
         == 33
     )
     assert (lim.n_source_studies, lim.value_origin) == (21, "re_measured")
-    assert (borchert.n_source_studies, borchert.n_sources_mirrored) == (5, 5)
+    # 5 + 1 (#908: Thompson 2019 lysine, raw-mirrored, attributed its four samples)
+    assert (borchert.n_source_studies, borchert.n_sources_mirrored) == (6, 6)
 
 
 def test_evidence_is_the_modules_own_sourced_values() -> None:

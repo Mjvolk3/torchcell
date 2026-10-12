@@ -34,7 +34,7 @@ NOT STORED, each with its fate in ``preprocess/samples.json`` and counted in
   ``SDM_noCarbon``, set5's sulfur sources on ``M63_no_sulfur``): an unattributed release;
   whether it counts as a study to load is an open owner decision of #931.
 
-RECORDS. One ``BacterialEnvironmentResponseExperiment`` per (mapped gene, stored sample):
+RECORDS. One ``BacterialEnvironmentResponseExperiment`` per (released locus, stored sample):
 
 * the value is the browser's gene fitness (``FitByExp_Keio.fit``), a signed log2 ratio
   normalized so the typical gene is 0; the browser's moderated t is stored verbatim in
@@ -43,10 +43,12 @@ RECORDS. One ``BacterialEnvironmentResponseExperiment`` per (mapped gene, stored
 * genotype: one ``TransposonInsertionPerturbation`` per gene in the sample's own
   ``mutantLibrary`` (``Keio_ML9a`` for all six); the transposon is None, because no
   deposited byte states it for ``Keio_ML9a`` (Price 2018 Table S20 states Tn5 for
-  ``KEIO_ML9``, and the relation of the two library names is not stated). The browser
-  names a numeric ``locusId`` whose ``Gene.sysName`` is the MG1655 b-number; each is placed
-  on its BW25113 locus through its one-to-one ECK pair (``price2018.map_genes``), the route
-  recorded in ``identifier_mapping``;
+  ``KEIO_ML9``, and the relation of the two library names is not stated). Every gene is
+  stored under the locus tag the deposit gives it, ``Gene.sysName`` (an MG1655 b-number,
+  namespace ``ecoli_k12_mg1655_bnumber``), with ``Gene.gene`` as its common name; no
+  assembly is consulted and none decides what is stored (owner, 2026-10-12: "the genome
+  is separate.. it doesn't gate anything"). The reference genome states the library
+  strain, BW25113 (``Organism.strain``);
 * environment: the sample's ``media`` through :data:`MEDIA_BY_LABEL`, its carbon source as
   an ``EnvironmentPhysicalPerturbation``, ``temperature``, aerobic. ``nGenerations`` is
   empty for all six, so the duration is a typed gap;
@@ -60,10 +62,10 @@ import json
 import logging
 import os
 import os.path as osp
-from collections.abc import Callable, Iterator, Mapping, Sequence
+from collections.abc import Callable, Iterator, Sequence
 from typing import Any, ClassVar, Final
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict
 from tqdm import tqdm
 
 from torchcell.data import (
@@ -82,7 +84,6 @@ from torchcell.datamodels.schema import (
     BacterialEnvironmentResponseExperimentReference,
     Concentration,
     ConcentrationUnit,
-    DerivedIdentifierMapping,
     Environment,
     EnvironmentPhysicalPerturbation,
     EnvironmentResponsePhenotype,
@@ -107,7 +108,6 @@ from torchcell.datasets.ecoli import price2018
 from torchcell.datasets.ecoli import wetmore2015 as wetmore
 from torchcell.sequence.genome.ecoli.k12 import (
     EcoliK12BW25113Genome,
-    EcoliK12Genome,
     EcoliK12MG1655Genome,
     EcoliK12StrainName,
 )
@@ -285,71 +285,28 @@ def build_environment(e: fb.FbExperiment) -> Environment:
 
 
 # --------------------------------------------------------------------------- #
-# Genes
+# Genes, as the deposit names them
 # --------------------------------------------------------------------------- #
-class GenePlacement(BaseModel):
-    """The deposit's loci placed on BW25113 through their b-numbers."""
-
-    model_config = ConfigDict(frozen=True, extra="forbid")
-
-    mapping: dict[str, price2018.GeneMapping] = Field(
-        description="locusId -> its placement"
-    )
-    no_sys_name: tuple[str, ...] = Field(
-        description="loci with values whose Gene.sysName is empty (no b-number)"
-    )
-    identifiers: price2018.IdentifierReport
-
-
-def place_genes(
-    loci: Sequence[str],
-    genes: Mapping[str, fb.FbGene],
-    mg1655: EcoliK12MG1655Genome,
-    bw25113: EcoliK12BW25113Genome,
-    *,
-    label: str,
-) -> GenePlacement:
-    """Each locus's b-number on its BW25113 locus (``price2018.map_genes``).
-
-    A locus whose b-number repeats is refused: the placement keys by b-number.
-    """
-    by_b: dict[str, str] = {}
-    missing: list[str] = []
-    for locus in loci:
-        b = genes[locus].sys_name
-        if b is None:
-            missing.append(locus)
-            continue
-        if b in by_b:
-            raise ValueError(f"b-number {b} names loci {by_b[b]} and {locus}")
-        by_b[b] = locus
-    mapping, identifiers = price2018.map_genes(list(by_b), mg1655, bw25113, label=label)
-    return GenePlacement(
-        mapping={by_b[b]: m for b, m in mapping.items()},
-        no_sys_name=tuple(missing),
-        identifiers=identifiers,
-    )
-
-
+#: The browser's Keio ``Gene.sysName`` is an MG1655 b-number; the records keep it in that
+#: namespace. The library strain is BW25113 (``Organism.strain``), which the reference
+#: genome states; no assembly decides what is stored (owner, 2026-10-12: "the genome is
+#: separate.. it doesn't gate anything").
+GENE_NAMESPACE: Final = STRAIN_GENE_NAMESPACES["MG1655"]
 DESCRIPTION = (
     "Transposon insertion disrupting a gene; gene-level call over the gene's usable "
-    "insertion strains (no per-strain barcode or mapped site). Locus tag DERIVED: the "
-    "Fitness Browser names a locusId whose Gene.sysName is an MG1655 b-number, mapped "
-    "to this BW25113 locus through its one-to-one ECK pair (eck_crosswalk)"
+    "insertion strains (no per-strain barcode or mapped site). Locus tag as the Fitness "
+    "Browser gives it (Gene.sysName, an MG1655 b-number); the library strain is BW25113"
 )
 
 
-def build_genotype(m: price2018.GeneMapping, library: str) -> Genotype:
-    """A transposon insertion in one gene of the sample's library."""
+def build_genotype(gene: fb.ReleasedGene, library: str) -> Genotype:
+    """A transposon insertion in one gene of the sample's library, as released."""
     return Genotype(
         perturbations=[
             TransposonInsertionPerturbation(
-                systematic_gene_name=m.locus_tag,
-                perturbed_gene_name=m.perturbed_gene_name,
-                gene_namespace=STRAIN_GENE_NAMESPACES[REFERENCE_STRAIN],
-                identifier_mapping=DerivedIdentifierMapping(
-                    source_identifier=m.b_number, route="eck_crosswalk"
-                ),
+                systematic_gene_name=gene.tag,
+                perturbed_gene_name=gene.name,
+                gene_namespace=GENE_NAMESPACE,
                 description=DESCRIPTION,
                 library_pool=library,
             )
@@ -425,7 +382,7 @@ def iter_records(
     dataset_name: str,
     stored: Sequence[fb.FbExperiment],
     values: fb.FbValues,
-    placement: GenePlacement,
+    genes: Sequence[fb.ReleasedGene],
     genome_reference: AssemblyReferenceGenome,
 ) -> Iterator[
     tuple[
@@ -435,11 +392,8 @@ def iter_records(
     ]
 ]:
     """Every record, sample by sample then gene by sorted locusId."""
-    rows = [
-        (i, placement.mapping[locus])
-        for i, locus in enumerate(values.loci)
-        if locus in placement.mapping
-    ]
+    if tuple(g.locus_id for g in genes) != values.loci:
+        raise ValueError("the gene rows are not the value matrix's loci")
     for j, e in enumerate(stored):
         if values.experiments[j] != e.exp_name:
             raise ValueError(f"column {j} is {values.experiments[j]}, not {e.exp_name}")
@@ -448,11 +402,11 @@ def iter_records(
             dataset_name, environment, genome_reference, e.screen_id
         )
         publication = SOURCE_STUDIES[str(e.pub_id)].publication
-        for i, mapping in rows:
+        for i, gene in enumerate(genes):
             yield (
                 BacterialEnvironmentResponseExperiment(
                     dataset_name=dataset_name,
-                    genotype=build_genotype(mapping, e.mutant_library),
+                    genotype=build_genotype(gene, e.mutant_library),
                     environment=environment,
                     phenotype=build_phenotype(
                         float(values.fitness[i, j]), float(values.t[i, j]), e.screen_id
@@ -466,9 +420,9 @@ def iter_records(
 # --------------------------------------------------------------------------- #
 # Inventory
 # --------------------------------------------------------------------------- #
-#: Measured on the 2026-10-12 deposit: 6 stored samples x 3,768 placed genes.
+#: Measured on the 2026-10-12 deposit: 6 stored samples x 3,789 released loci.
 EXPECTED_SAMPLES: Final = 6
-EXPECTED_GENES: Final = 3768
+EXPECTED_GENES: Final = 3789
 EXPECTED_RECORDS: Final = EXPECTED_SAMPLES * EXPECTED_GENES
 
 
@@ -482,16 +436,13 @@ class LoaderInventory(BaseModel):
     fates_by_publication: dict[str, dict[str, int]]
     fate_descriptions: dict[fb.Fate, str]
     stored_samples: tuple[str, ...]
-    n_loci_with_values: int
-    n_placed_genes: int
-    no_sys_name: tuple[str, ...]
-    unmapped_by_reason: dict[str, int]
+    n_loci: int
     stored_records: int
     studies: dict[str, fb.SourceStudy]
 
 
 def loader_inventory(
-    decisions: Sequence[fb.SampleDecision], placement: GenePlacement, n_loci: int
+    decisions: Sequence[fb.SampleDecision], n_loci: int
 ) -> LoaderInventory:
     """The accounting of one build."""
     stored = tuple(d.exp_name for d in decisions if d.fate == "stored")
@@ -501,11 +452,8 @@ def loader_inventory(
         fates_by_publication=fb.fate_counts_by_publication(decisions),
         fate_descriptions=dict(fb.FATE_DESCRIPTIONS),
         stored_samples=stored,
-        n_loci_with_values=n_loci,
-        n_placed_genes=len(placement.mapping),
-        no_sys_name=placement.no_sys_name,
-        unmapped_by_reason=placement.identifiers.unmapped_by_reason,
-        stored_records=len(stored) * len(placement.mapping),
+        n_loci=n_loci,
+        stored_records=len(stored) * n_loci,
         studies=dict(SOURCE_STUDIES),
     )
 
@@ -525,13 +473,11 @@ class FitnessBrowserEcoliDataset(ExperimentDataset):
         self,
         root: str = DATASET_ROOT_REL,
         io_workers: int = 0,
-        ecoli_genome: EcoliK12Genome | None = None,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize; ``ecoli_genome`` is the BW25113 genome the build entry points inject."""
-        self.ecoli_genome = ecoli_genome
+        """Initialize; no genome is read, the deposit names every gene."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -556,21 +502,9 @@ class FitnessBrowserEcoliDataset(ExperimentDataset):
         os.makedirs(self.raw_dir, exist_ok=True)
         link_verified(source, osp.join(self.raw_dir, RAW_FILE), fb.FEBA.sha256)
 
-    def _bw25113(self) -> EcoliK12BW25113Genome:
-        """The injected genome, or the BW25113 genome reopened read-only (direct runs)."""
-        genome = (
-            bacterial_genome("ecoli", REFERENCE_STRAIN)
-            if self.ecoli_genome is None
-            else self.ecoli_genome
-        )
-        if not isinstance(genome, EcoliK12BW25113Genome):
-            raise TypeError(f"expected the BW25113 genome, got {type(genome).__name__}")
-        self.ecoli_genome = genome
-        return genome
-
     @post_process
     def process(self) -> None:
-        """Build one record per (placed gene, stored sample) and the preprocess reports."""
+        """Build one record per (released locus, stored sample) and the preprocess reports."""
         verify_raw_files(self.raw_dir, {RAW_FILE: fb.FEBA.sha256})
         feba = fb.Feba(osp.join(self.raw_dir, RAW_FILE), verify=False)
         fb.check_studies(SOURCE_STUDIES, feba.publications())
@@ -580,15 +514,9 @@ class FitnessBrowserEcoliDataset(ExperimentDataset):
             e for e, d in zip(experiments, decisions, strict=True) if d.fate == "stored"
         ]
         values = feba.values(ORG_ID, [e.exp_name for e in stored])
-        genes = feba.genes(ORG_ID)
+        genes = fb.released_genes(values.loci, feba.genes(ORG_ID))
         feba.close()
-        mg1655 = bacterial_genome("ecoli", "MG1655")
-        if not isinstance(mg1655, EcoliK12MG1655Genome):
-            raise TypeError(f"expected the MG1655 genome, got {type(mg1655).__name__}")
-        placement = place_genes(
-            values.loci, genes, mg1655, self._bw25113(), label=self.name
-        )
-        counts = loader_inventory(decisions, placement, len(values.loci))
+        counts = loader_inventory(decisions, len(genes))
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
         os.makedirs(self.processed_dir, exist_ok=True)
@@ -600,7 +528,7 @@ class FitnessBrowserEcoliDataset(ExperimentDataset):
                     self.name,
                     stored,
                     values,
-                    placement,
+                    genes,
                     assembly_reference(REFERENCE_STRAIN),
                 ),
                 total=counts.stored_records,
@@ -623,7 +551,7 @@ class FitnessBrowserEcoliDataset(ExperimentDataset):
                 {**d.model_dump(mode="json"), "experiment": e.model_dump(mode="json")}
                 for e, d in zip(experiments, decisions, strict=True)
             ],
-            "identifier_mapping.json": placement.identifiers.model_dump(mode="json"),
+            "genes.json": [g.model_dump(mode="json") for g in genes],
         }
         for name, payload in payloads.items():
             with open(osp.join(self.preprocess_dir, name), "w") as handle:
@@ -657,17 +585,25 @@ def deposit_fitness(
     mg1655: EcoliK12MG1655Genome,
     bw25113: EcoliK12BW25113Genome,
 ) -> dict[str, dict[str, float]]:
-    """The deposit's fitness of ``names`` by sample and BW25113 tag (placed genes only)."""
+    """The deposit's fitness of ``names``, keyed the way the served stores key genes.
+
+    MEASUREMENT ONLY: these are samples this loader does not store (G4). The served Price
+    2018 and Wetmore 2015 stores key a gene by the BW25113 tag their loaders placed it on
+    through the ECK crosswalk (``price2018.map_genes``), so the same placement aligns the
+    deposit's b-numbers to compare values; a b-number it cannot place is left out of the
+    comparison. Nothing here decides what this loader stores.
+    """
     values = feba.values(ORG_ID, names)
-    placement = place_genes(
-        values.loci, feba.genes(ORG_ID), mg1655, bw25113, label="verify"
-    ).mapping
+    genes = fb.released_genes(values.loci, feba.genes(ORG_ID))
+    mapping, _ = price2018.map_genes(
+        [g.tag for g in genes], mg1655, bw25113, label="L4 alignment"
+    )
     out: dict[str, dict[str, float]] = {}
     for j, name in enumerate(values.experiments):
         out[name] = {
-            placement[locus].locus_tag: float(values.fitness[i, j])
-            for i, locus in enumerate(values.loci)
-            if locus in placement
+            mapping[g.tag].locus_tag: float(values.fitness[i, j])
+            for i, g in enumerate(genes)
+            if g.tag in mapping
         }
     return out
 
@@ -712,7 +648,9 @@ def verify_build(
 ) -> VerificationReport:
     """The environment-response L0-L4 gate on a built tree, plus the L4 compendium rows.
 
-    The L4 rows read the deposit's values of every Keio sample the served Price 2018 and
+    The gene universe of the L1 and L4 gene rules is the deposit's own Keio
+    ``Gene.sysName`` set, with no resolver: the stored tags are the deposit's, and no
+    assembly decides anything about them. The L4 rows read the deposit's values of every Keio sample the served Price 2018 and
     Wetmore 2015 stores hold, against those stores read-only: the samples this loader
     does NOT store because their publication is loaded from its own release (G4). Price
     2018's release is the browser's, so its bar is identity (Pearson r 0.999999); Wetmore
@@ -725,23 +663,24 @@ def verify_build(
     from torchcell.verification.runners import stream_records
 
     root = fb.data_root(data_root)
+    feba = fb.Feba(osp.join(dataset_root, "raw", RAW_FILE), verify=False)
+    released = {g.sys_name for g in feba.genes(ORG_ID).values() if g.sys_name}
+    report = verify_environment_response_dataset_streaming(
+        stream_records(dataset_root),
+        dataset_name=FitnessBrowserEcoliDataset.__name__,
+        provenance=fb.FEBA_PROVENANCE,
+        expected_count=expected_count,
+        sgd_genes=released,
+        gene_universe_label="the deposit's Keio Gene.sysName",
+        min_containment=1.0,
+    )
+    report.add(stored_publications_match(dataset_root))
     genome = bacterial_genome("ecoli", REFERENCE_STRAIN, root)
     mg1655 = bacterial_genome("ecoli", "MG1655", root)
     if not isinstance(genome, EcoliK12BW25113Genome) or not isinstance(
         mg1655, EcoliK12MG1655Genome
     ):
         raise TypeError("the K-12 genomes resolved to the wrong classes")
-    report = verify_environment_response_dataset_streaming(
-        stream_records(dataset_root),
-        dataset_name=FitnessBrowserEcoliDataset.__name__,
-        provenance=fb.FEBA_PROVENANCE,
-        expected_count=expected_count,
-        sgd_genes=set(genome.genbank.loci),
-        min_containment=1.0,
-        resolve_gene_name=genome.resolve_gene_name,
-    )
-    report.add(stored_publications_match(dataset_root))
-    feba = fb.Feba(osp.join(dataset_root, "raw", RAW_FILE), verify=False)
     experiments = {e.exp_name for e in feba.experiments(ORG_ID)}
     checks: dict[str, fb.CompendiumCheck] = {}
     for rel, bar, name in (

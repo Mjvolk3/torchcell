@@ -33,8 +33,9 @@ RECORDS. One ``BacterialEnvironmentResponseExperiment`` per (locus, stored sampl
   in ``environment_response_se``;
 * genotype: one ``TransposonInsertionPerturbation`` per locus in the sample's own
   ``mutantLibrary`` (``Putida_ML5`` or ``Putida_ML5_JBEI``), the transposon Borchert 2024
-  sources (``borchert2024.TRANSPOSON``); the browser's ``locusId`` is the GenBank locus tag,
-  reconciled against the KT2440 annotation;
+  sources (``borchert2024.TRANSPOSON``), under the locus tag the deposit gives it
+  (``Gene.sysName``) and its ``Gene.gene`` symbol; no assembly is consulted (owner,
+  2026-10-12: "the genome is separate.. it doesn't gate anything");
 * environment: built exactly as ``borchert2024.build_environment`` builds it from the same
   columns (the medium through ``borchert2024.MEDIA_BY_LABEL``, ``condition_1`` as the
   carbon or nitrogen source, ``condition_2`` as DMSO or the 20-amino-acid mix and its
@@ -53,7 +54,6 @@ import pickle
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from typing import Any, ClassVar, Final, Literal
 
-import pandas as pd
 from pydantic import BaseModel, ConfigDict
 from tqdm import tqdm
 
@@ -88,15 +88,9 @@ from torchcell.datamodels.schema import (
     TransposonInsertionPerturbation,
 )
 from torchcell.datasets import fitness_browser as fb
-from torchcell.datasets.bacteria_common import (
-    LocusTagReconciliation,
-    assembly_reference,
-    bacterial_genome,
-    reconcile_locus_tags,
-)
+from torchcell.datasets.bacteria_common import assembly_reference
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.datasets.pputida import borchert2024 as b24
-from torchcell.sequence.genome.pputida.kt2440 import PPutidaKT2440Genome
 from torchcell.verification.report import Level, LevelResult, VerificationReport
 from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
 
@@ -559,13 +553,11 @@ class FitnessBrowserPutidaDataset(ExperimentDataset):
         self,
         root: str = DATASET_ROOT_REL,
         io_workers: int = 0,
-        pputida_genome: PPutidaKT2440Genome | None = None,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize; ``pputida_genome`` is injected by the build entry points."""
-        self.pputida_genome = pputida_genome
+        """Initialize; no genome is read, the deposit names every gene."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -590,13 +582,6 @@ class FitnessBrowserPutidaDataset(ExperimentDataset):
         os.makedirs(self.raw_dir, exist_ok=True)
         link_verified(source, osp.join(self.raw_dir, RAW_FILE), fb.FEBA.sha256)
 
-    def _genome(self) -> PPutidaKT2440Genome:
-        if (
-            self.pputida_genome is None
-        ):  # a direct run; the build entry points inject it
-            self.pputida_genome = bacterial_genome("pputida", self.REFERENCE_STRAIN)
-        return self.pputida_genome
-
     def _pointer(self, obj: Any, hint: str, itxn: Any) -> Any:
         """``obj``'s dump, interned exactly as ``_intern_record`` interns it."""
         holder = {"value": obj.model_dump()}
@@ -615,18 +600,10 @@ class FitnessBrowserPutidaDataset(ExperimentDataset):
             e for e, d in zip(experiments, decisions, strict=True) if d.fate == "stored"
         ]
         values = feba.values(ORG_ID, [e.exp_name for e in stored])
+        genes = fb.released_genes(values.loci, feba.genes(ORG_ID))
         feba.close()
-        genome = self._genome()
-        tags_series, reconciliation = reconcile_locus_tags(
-            genome, pd.Series(values.loci), label=self.name
-        )
-        reconciliation.require_resolved(0.99)
-        tags = [str(t) for t in tags_series]
-        names = b24.perturbed_gene_names(
-            genome, [t for t in tags if t in genome.genbank.loci]
-        )
         genome_reference = assembly_reference(REFERENCE_STRAIN)
-        counts = loader_inventory(decisions, len(tags))
+        counts = loader_inventory(decisions, len(genes))
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
         os.makedirs(self.processed_dir, exist_ok=True)
@@ -642,14 +619,16 @@ class FitnessBrowserPutidaDataset(ExperimentDataset):
             )
             publication = SOURCE_STUDIES[str(e.pub_id)].publication
             with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
-                env_ptr = self._pointer(environment, environment.media.name, itxn)
+                env_ptr = self._pointer(
+                    environment, environment.media.stated_name, itxn
+                )
                 ref_ptr = self._pointer(reference, reference.dataset_name, itxn)
                 pub_ptr = self._pointer(publication, "publication", itxn)
-                for i, tag in enumerate(tags):
-                    key = (tag, e.mutant_library)
+                for i, gene in enumerate(genes):
+                    key = (gene.tag, e.mutant_library)
                     if key not in genotypes:
                         genotypes[key] = build_genotype(
-                            tag, names.get(tag, tag), e.mutant_library
+                            gene.tag, gene.name, e.mutant_library
                         ).model_dump()
                     phenotype = build_phenotype(
                         float(values.fitness[i, j]), float(values.t[i, j]), e.screen_id
@@ -683,7 +662,7 @@ class FitnessBrowserPutidaDataset(ExperimentDataset):
             raise RuntimeError(
                 f"wrote {idx} records, inventory says {counts.stored_records}"
             )
-        self._write_reports(experiments, decisions, counts, reconciliation)
+        self._write_reports(experiments, decisions, counts, genes)
         log.info("Wrote %d %s records to LMDB", idx, self.name)
 
     def _check_record(
@@ -716,16 +695,16 @@ class FitnessBrowserPutidaDataset(ExperimentDataset):
         experiments: Sequence[fb.FbExperiment],
         decisions: Sequence[fb.SampleDecision],
         counts: LoaderInventory,
-        reconciliation: LocusTagReconciliation,
+        genes: Sequence[fb.ReleasedGene],
     ) -> None:
-        """``dropped_records.json``, ``samples.json``, ``locus_tag_reconciliation.json``."""
+        """``dropped_records.json``, ``samples.json``, ``genes.json``."""
         payloads: dict[str, Any] = {
             "dropped_records.json": counts.model_dump(mode="json"),
             "samples.json": [
                 {**d.model_dump(mode="json"), "experiment": e.model_dump(mode="json")}
                 for e, d in zip(experiments, decisions, strict=True)
             ],
-            "locus_tag_reconciliation.json": reconciliation.model_dump(mode="json"),
+            "genes.json": [g.model_dump(mode="json") for g in genes],
         }
         for name, payload in payloads.items():
             with open(osp.join(self.preprocess_dir, name), "w") as handle:
@@ -826,14 +805,17 @@ def verify_build(
     preprocess = osp.join(dataset_root, "preprocess")
     with open(osp.join(preprocess, "compendium_cross_check.json"), "w") as handle:
         handle.write(check.model_dump_json(indent=2))
-    genome = bacterial_genome("pputida", REFERENCE_STRAIN, root)
+    feba = fb.Feba(osp.join(dataset_root, "raw", RAW_FILE), verify=False)
+    released = {g.sys_name for g in feba.genes(ORG_ID).values() if g.sys_name}
+    feba.close()
     report = verify_environment_response_dataset_streaming(
         stream_records(dataset_root),
         dataset_name=FitnessBrowserPutidaDataset.__name__,
         provenance=fb.FEBA_PROVENANCE,
         expected_count=expected_count,
-        sgd_genes=set(genome.genbank.loci),
-        resolve_gene_name=genome.resolve_gene_name,
+        sgd_genes=released,
+        gene_universe_label="the deposit's Putida Gene.sysName",
+        min_containment=1.0,
     )
     report.add(stored_publications_match(stream_records(dataset_root), samples))
     report.add(fb.compendium_check_result(check, "compendium_cross_check_borchert2024"))

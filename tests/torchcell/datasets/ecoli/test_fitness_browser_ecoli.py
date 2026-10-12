@@ -33,7 +33,6 @@ from torchcell.datamodels.schema import (
 from torchcell.datasets import fitness_browser as fb
 from torchcell.datasets.ecoli import price2018
 from torchcell.datasets.ecoli import wetmore2015 as wetmore
-from torchcell.sequence.genome.ecoli.k12 import EcoliK12MG1655Genome
 
 PRICE21B = fe.SOURCE_STUDIES["Price21b"]
 
@@ -163,28 +162,17 @@ def test_environment_is_the_medium_the_carbon_source_and_the_temperature() -> No
         fe.build_environment(_exp(media="LB"))
 
 
-def _mapping(b: str, tag: str, name: str) -> price2018.GeneMapping:
-    return price2018.GeneMapping(
-        b_number=b,
-        eck="ECK0001",
-        locus_tag=tag,
-        perturbed_gene_name=name,
-        numerics_agree=True,
-    )
-
-
 def test_genotype_phenotype_and_reference() -> None:
-    (perturbation,) = fe.build_genotype(
-        _mapping("b0002", "BW25113_0002", "thrA"), "Keio_ML9a"
-    ).perturbations
+    gene = fb.ReleasedGene(locus_id="100", tag="b0002", name="thrA")
+    (perturbation,) = fe.build_genotype(gene, "Keio_ML9a").perturbations
     assert isinstance(perturbation, TransposonInsertionPerturbation)
-    assert perturbation.systematic_gene_name == "BW25113_0002"
+    # the locus tag the deposit gives, in its own namespace; nothing derived
+    assert perturbation.systematic_gene_name == "b0002"
     assert perturbation.perturbed_gene_name == "thrA"
+    assert perturbation.gene_namespace == "ecoli_k12_mg1655_bnumber"
+    assert perturbation.identifier_mapping is None
     assert perturbation.library_pool == "Keio_ML9a"
     assert perturbation.transposon is None
-    assert perturbation.identifier_mapping is not None
-    assert perturbation.identifier_mapping.source_identifier == "b0002"
-    assert perturbation.gene_namespace == "ecoli_k12_bw25113_locus_tag"
 
     se = 0.25
     t = -0.8 / math.sqrt(0.01 + se**2)
@@ -217,7 +205,7 @@ def _reference() -> AssemblyReferenceGenome:
 GENES = [
     ("Keio", "100", "b0002", "thrA", 1),
     ("Keio", "101", "b0003", "thrB", 1),
-    ("Keio", "102", None, None, 9),
+    ("Keio", "102", "b4700", None, 6),
 ]
 PUBLICATIONS = [
     (s.pub_id, s.browser_title, s.browser_url) for s in fe.SOURCE_STUDIES.values()
@@ -267,37 +255,6 @@ def _write(path: Path) -> Path:
     )
 
 
-def _placement(
-    loci: Any, genes: Any, mg1655: Any, bw25113: Any, *, label: str
-) -> fe.GenePlacement:
-    identifiers = price2018.IdentifierReport(
-        n_source_genes=2,
-        n_mapped=2,
-        mapped_fraction=1.0,
-        min_fraction=0.99,
-        numeric_disagreements=(),
-        unmapped=(),
-        unmapped_by_reason={},
-        reconcile_status_histogram={},
-        reconcile_layer_histogram={},
-        n_symbol_names=2,
-        n_tag_names=0,
-    )
-    return fe.GenePlacement(
-        mapping={
-            "100": _mapping("b0002", "BW25113_0002", "thrA"),
-            "101": _mapping("b0003", "BW25113_0003", "thrB"),
-        },
-        no_sys_name=("102",),
-        identifiers=identifiers,
-    )
-
-
-class _FakeMG1655(EcoliK12MG1655Genome):
-    def __init__(self) -> None:
-        """No genome is read."""
-
-
 def test_process_stores_only_the_unloaded_attributed_samples(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -308,13 +265,14 @@ def test_process_stores_only_the_unloaded_attributed_samples(
     monkeypatch.setattr(
         fb, "FEBA", fb.FEBA.model_copy(update={"sha256": file_sha256(path)})
     )
-    monkeypatch.setattr(fe, "place_genes", _placement)
     monkeypatch.setattr(fe, "assembly_reference", lambda strain: _reference())
-    monkeypatch.setattr(fe, "bacterial_genome", lambda *a, **k: _FakeMG1655())
-    monkeypatch.setattr(fe.FitnessBrowserEcoliDataset, "_bw25113", lambda self: None)
+    monkeypatch.setattr(
+        fe, "bacterial_genome", lambda *a, **k: pytest.fail("a genome was read")
+    )
 
     dataset = fe.FitnessBrowserEcoliDataset(root=str(root))
-    assert len(dataset) == 2 * 2
+    # every released locus of every stored sample, the one without a symbol included
+    assert len(dataset) == 2 * 3
     first = dataset.transform_item(dataset[0])
     assert first["experiment"].phenotype.screen_id == "Keio:set52IT047"
     assert first["experiment"].phenotype.environment_response == pytest.approx(0.4)
@@ -323,7 +281,13 @@ def test_process_stores_only_the_unloaded_attributed_samples(
     )
     assert first["publication"].doi == PRICE21B.doi
     (perturbation,) = first["experiment"].genotype.perturbations
-    assert perturbation.systematic_gene_name == "BW25113_0002"
+    assert perturbation.systematic_gene_name == "b0002"
+    assert perturbation.perturbed_gene_name == "thrA"
+    tags = {
+        dataset[i]["experiment"]["genotype"]["perturbations"][0]["systematic_gene_name"]
+        for i in range(len(dataset))
+    }
+    assert tags == {"b0002", "b0003", "b4700"}
     screens = {
         dataset[i]["experiment"]["phenotype"]["screen_id"] for i in range(len(dataset))
     }
@@ -336,8 +300,14 @@ def test_process_stores_only_the_unloaded_attributed_samples(
         "unattributed_release": 1,
         "stored": 2,
     }
-    assert counts["stored_records"] == 4
-    assert counts["no_sys_name"] == ["102"]
+    assert counts["stored_records"] == 6
+    assert counts["n_loci"] == 3
+    genes = json.loads((preprocess / "genes.json").read_text())
+    assert [(g["tag"], g["name"]) for g in genes] == [
+        ("b0002", "thrA"),
+        ("b0003", "thrB"),
+        ("b4700", "b4700"),
+    ]
     samples = json.loads((preprocess / "samples.json").read_text())
     assert [(s["exp_name"], s["fate"]) for s in samples] == [
         ("set1IT003", "own_release_loaded"),

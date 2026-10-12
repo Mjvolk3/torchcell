@@ -16,7 +16,6 @@ import os.path as osp
 from pathlib import Path
 from typing import Any
 
-import pandas as pd
 import pytest
 
 import torchcell.datasets.pputida.fitness_browser_putida as fp
@@ -32,9 +31,7 @@ from torchcell.datamodels.schema import (
     TransposonInsertionPerturbation,
 )
 from torchcell.datasets import fitness_browser as fb
-from torchcell.datasets.bacteria_common import LocusTagReconciliation
 from torchcell.datasets.pputida import borchert2024 as b24
-from torchcell.sequence.genome.base import GeneNameResolution, GeneNameStatus
 
 
 def _exp(name: str = "set1IT001", **cells: Any) -> fb.FbExperiment:
@@ -225,54 +222,6 @@ def _reference() -> AssemblyReferenceGenome:
     )
 
 
-def _identity_reconciliation(
-    genome: Any, names: pd.Series, *, label: str
-) -> tuple[pd.Series, LocusTagReconciliation]:
-    return names, LocusTagReconciliation(
-        label=label,
-        assembly_set="pputida_KT2440_ASM756v2",
-        gene_namespace="pputida_kt2440_locus_tag",
-        unique_names=len(names),
-        status_histogram={
-            s: (len(names) if s is GeneNameStatus.CURRENT else 0)
-            for s in GeneNameStatus
-        },
-        layer_histogram={"locus tag": len(names)},
-        remapped=0,
-        kept_on_collision=(),
-        retired_kept=(),
-        ambiguous_kept={},
-        case_insensitive=(),
-        outside_namespace=(),
-    )
-
-
-class _Locus:
-    def __init__(self, symbol: str | None) -> None:
-        self.symbol = symbol
-
-
-class _Annotation:
-    def __init__(self, loci: dict[str, _Locus]) -> None:
-        self.loci = loci
-
-
-class FakeGenome:
-    """Two loci; ``parB`` resolves back to PP_0001."""
-
-    def __init__(self) -> None:
-        """PP_0001 with the symbol parB, PP_0002 with none."""
-        self.genbank = _Annotation({"PP_0001": _Locus("parB"), "PP_0002": _Locus(None)})
-
-    def resolve_gene_name(self, name: str) -> GeneNameResolution:
-        """``parB`` is PP_0001; anything else is itself."""
-        return GeneNameResolution(
-            input_name=name,
-            status=GeneNameStatus.CURRENT,
-            systematic_name="PP_0001" if name == "parB" else name,
-        )
-
-
 def _write(path: Path) -> Path:
     experiments = [
         experiment_row("Putida", "set1IT001", 1, pubId="Thompson20"),
@@ -317,7 +266,10 @@ def _write(path: Path) -> Path:
         path,
         experiments=experiments,
         publications=PUBLICATIONS,
-        genes=[("Putida", g, g, None, 1) for g in GENES],
+        genes=[
+            ("Putida", "PP_0001", "PP_0001", "parB", 1),
+            ("Putida", "PP_0002", "PP_0002", None, 1),
+        ],
         fitness={"Putida": fitness},
     )
 
@@ -332,13 +284,15 @@ def test_process_builds_one_record_per_locus_and_stored_sample(
     monkeypatch.setattr(
         fb, "FEBA", fb.FEBA.model_copy(update={"sha256": file_sha256(path)})
     )
-    monkeypatch.setattr(fp, "reconcile_locus_tags", _identity_reconciliation)
     monkeypatch.setattr(fp, "assembly_reference", lambda strain: _reference())
-
-    dataset = fp.FitnessBrowserPutidaDataset(
-        root=str(root),
-        pputida_genome=FakeGenome(),  # type: ignore[arg-type]
+    monkeypatch.setattr(
+        fp,
+        "reconcile_locus_tags",
+        lambda *a, **k: pytest.fail("a genome was read"),
+        raising=False,
     )
+
+    dataset = fp.FitnessBrowserPutidaDataset(root=str(root))
     assert len(dataset) == 2 * len(GENES)
     first = dataset.transform_item(dataset[0])
     (perturbation,) = first["experiment"].genotype.perturbations
@@ -347,6 +301,12 @@ def test_process_builds_one_record_per_locus_and_stored_sample(
     assert first["experiment"].phenotype.screen_id == "Putida:set1IT001"
     assert first["experiment"].phenotype.environment_response == pytest.approx(0.5)
     assert first["publication"].doi == fp.SOURCE_STUDIES["Thompson20"].doi
+    second = dataset.transform_item(dataset[1])
+    (unnamed,) = second["experiment"].genotype.perturbations
+    assert (unnamed.systematic_gene_name, unnamed.perturbed_gene_name) == (
+        "PP_0002",
+        "PP_0002",
+    )
     last = dataset.transform_item(dataset[len(dataset) - 1])
     assert last["publication"].doi == fp.SOURCE_STUDIES["Schmidt22"].doi
     assert last["experiment"].environment.media == b24.FB_MOPS_GLUCOSE_NO_NITROGEN

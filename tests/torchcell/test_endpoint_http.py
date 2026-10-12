@@ -12,9 +12,9 @@ import httpx
 
 from torchcell import endpoint_http
 from torchcell.endpoint_http import (
-    API_KEY_VAR,
     CHUNK,
     DEFAULT_TIMEOUT,
+    DEFAULT_URL,
     URL_VAR,
     HttpClient,
 )
@@ -37,7 +37,9 @@ def test_leaf_module_imports_nothing_from_torchcell() -> None:
 
 
 def test_shared_names_are_the_tc_data_contract() -> None:
-    assert (URL_VAR, API_KEY_VAR) == ("TC_DATA_URL", "TC_DATA_API_KEY")
+    assert URL_VAR == "TC_DATA_URL"
+    assert DEFAULT_URL == "http://torchcell-database.ncsa.illinois.edu:8724"
+    assert not hasattr(endpoint_http, "API_KEY_VAR")
     assert DEFAULT_TIMEOUT == 120.0
     assert CHUNK == 1 << 20
 

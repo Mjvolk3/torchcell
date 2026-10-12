@@ -895,7 +895,7 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
         """The verified local path of ``ref``'s file, fetched into the cache if needed.
 
         ``torchcell.artifacts.materialize`` over the environment's ``DATA_ROOT`` and
-        tc-data (``TC_DATA_URL``), the same sources the raw stage's resolvability gate
+        tc-data (``TC_DATA_URL`` when set, else the public endpoint), the same sources the raw stage's resolvability gate
         checked the ref against at build time. Models call this when they need bytes.
         """
         return materialize_artifact(ref)

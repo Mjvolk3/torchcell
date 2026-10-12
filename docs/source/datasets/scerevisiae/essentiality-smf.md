@@ -110,21 +110,21 @@ What the query returned from the served release, and what the conversion, the ag
 
 ## Getting the data
 
-Each dataset's built store is packaged as an archive for the `tc-data` download endpoint ({doc}`../../guide/downloads`). The endpoint runs on the database host and its store holds both archives (see the downloads guide for the tunnel and the key); with the variables unset, both loaders build their stores from the source files instead.
+Each dataset's built store is packaged as an archive for the `tc-data` download endpoint ({doc}`../../guide/downloads`). The endpoint is public (no key) and its store holds both archives. The client reaches it with no configuration; a loader prefers the download only when `TC_DATA_URL` is set, and with it unset, both loaders build their stores from the source files instead.
 
 | dataset | loader | store slug |
 |---|---|---|
 | SGD essentiality | `torchcell.datasets.scerevisiae.sgd.GeneEssentialitySgdDataset` | `gene_essentiality_sgd` |
 | Costanzo 2016 SMF | `torchcell.datasets.scerevisiae.costanzo2016.SmfCostanzo2016Dataset` | `smf_costanzo2016` |
 
-From Python, with `TC_DATA_URL` and `TC_DATA_API_KEY` set:
+From Python (no key; `TC_DATA_URL` overrides the public endpoint when set):
 
 ```python
 from pathlib import Path
 
 from torchcell.datasets.client import DatasetClient, unpack_artifact
 
-client = DatasetClient.from_env()  # TC_DATA_URL, TC_DATA_API_KEY
+client = DatasetClient.from_env()  # TC_DATA_URL if set, else the public endpoint
 for slug in ("gene_essentiality_sgd", "smf_costanzo2016"):
     artifact = client.select(slug)  # newest supported row on this major.minor
     if artifact is None:
@@ -136,9 +136,8 @@ for slug in ("gene_essentiality_sgd", "smf_costanzo2016"):
 With curl, one dataset at a time (the archive name comes from the index row):
 
 ```bash
-curl -H "X-API-Key: $TC_DATA_API_KEY" "$TC_DATA_URL/datasets/smf_costanzo2016"
-curl -C - -H "X-API-Key: $TC_DATA_API_KEY" \
-  -o "$ARCHIVE" "$TC_DATA_URL/datasets/smf_costanzo2016/$ARCHIVE"
+curl "$TC_DATA_URL/datasets/smf_costanzo2016"
+curl -C - -o "$ARCHIVE" "$TC_DATA_URL/datasets/smf_costanzo2016/$ARCHIVE"
 sha256sum "$ARCHIVE"   # must equal the row's archive_sha256
 mkdir -p data/torchcell/smf_costanzo2016
 tar -xf "$ARCHIVE" -C data/torchcell/smf_costanzo2016

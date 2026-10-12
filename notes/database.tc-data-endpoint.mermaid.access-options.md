@@ -48,4 +48,29 @@ flowchart LR
 
 A collaborator cannot use B, so the choice for sharing is between A and C. C is the end state: a `handle_path /data/*` block in the Caddyfile that reverse-proxies to the tc-data container, 443 opened in the security group, and `TC_DATA_URL` set to `https://torchcell-database.ncsa.illinois.edu/data`.
 
-Rendered: `notes/assets/pdf-output/database.tc-data-endpoint.mermaid.access-options.pdf` (`bash notes/assets/publish/scripts/mermaid_pdf.sh notes/database.tc-data-endpoint.mermaid.access-options.md`).
+Rendered: `notes/assets/pdf-output/database.tc-data-endpoint.mermaid.access-options-1.pdf` (`bash notes/assets/publish/scripts/mermaid_pdf.sh notes/database.tc-data-endpoint.mermaid.access-options.md`; the unsuffixed pdf, svg and png are this same figure from the first render).
+
+## 2026.10.12 - Resolved: public read on 8724, no key
+
+The decision collapsed the three lanes into one. tc-data serves anonymously (the key existed only to name a downloader; every file it serves is published data, and paper content is withheld by role), so nothing secret travels and plain HTTP on 8724 carries the same exposure the Neo4j bolt port has. Integrity comes from the pointer: every `tc://` ref pins a sha256 the resolver checks after download. The 8724 rule went into the `remote HTTP/HTTPS` security group on 2026.10.12; HTTPS through `tc-proxy` remains optional polish.
+
+```mermaid
+flowchart LR
+  classDef user fill:#FFE6CC,stroke:#D79B00
+  classDef kg fill:#F8CECC,stroke:#B85450
+  classDef svc fill:#FFF2CC,stroke:#D6B656
+  classDef store fill:#E1D5E7,stroke:#9673A6
+
+  U["anyone with torchcell installed<br/>no key, no account"]:::user
+  N["Neo4j knowledge graph<br/>records + tc:// pointers with sha256"]:::kg
+  T["tc-data on Radiant, port 8724<br/>public read, paper roles withheld"]:::svc
+  F["Taiga files<br/>raw, genomes, objects"]:::store
+
+  U -->|Cypher| N
+  N -->|pointers| U
+  U -->|"GET tc://tier/key/path"| T
+  T --> F
+  F -->|"bytes, sha256 verified on arrival"| U
+```
+
+Rendered: `notes/assets/pdf-output/database.tc-data-endpoint.mermaid.access-options-2.pdf`.

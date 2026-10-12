@@ -1637,33 +1637,28 @@ class _HttpResponse:
 
 class _TcData:
     """An ``HttpClient`` answering manifest GETs by URL (a status and body, or a raised
-    transport error); records each URL and the headers it carried.
+    transport error); records each URL requested (tc-data is public, so no header).
     """
 
     def __init__(self, answers: dict[str, tuple[int, bytes] | Exception]) -> None:
         self.answers = answers
-        self.calls: list[tuple[str, dict[str, str]]] = []
+        self.calls: list[str] = []
 
-    def get(self, url: str, *, headers: Any) -> _HttpResponse:
-        self.calls.append((url, dict(headers)))
+    def get(self, url: str) -> _HttpResponse:
+        self.calls.append(url)
         answer = self.answers[url]
         if isinstance(answer, Exception):
             raise answer
         return _HttpResponse(*answer)
 
-    def stream(self, method: str, url: str, *, headers: Any) -> Any:
+    def stream(self, method: str, url: str, *, headers: Any = None) -> Any:
         raise AssertionError(f"the probe downloads nothing, asked for {url}")
-
-
-SECRET_KEY = "TCDATA-SECRET-123"
 
 
 @pytest.fixture
 def probe_env(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
-    """No repo ``.env`` is read (calls counted), the key is the distinctive
-    ``TCDATA-SECRET-123`` (so a test can assert it never reaches stdout), and
-    ``httpx.Client`` builds the ``_TcData`` the test puts under ``"http"`` (timeouts
-    recorded).
+    """No repo ``.env`` is read (calls counted), and ``httpx.Client`` builds the
+    ``_TcData`` the test puts under ``"http"`` (timeouts recorded).
     """
     state: dict[str, Any] = {"dotenv": 0, "timeouts": [], "http": _TcData({})}
 
@@ -1677,7 +1672,6 @@ def probe_env(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
         return http
 
     monkeypatch.setattr(releases, "load_dotenv", load_dotenv)
-    monkeypatch.setenv("TC_DATA_API_KEY", SECRET_KEY)
     monkeypatch.setattr(httpx, "Client", client)
     return state
 
@@ -1715,8 +1709,8 @@ def test_cli_artifacts_ok_when_every_pointer_is_listed_with_its_sha256(
     probe_env: dict[str, Any],
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    """A file two datasets share counts once; each key's manifest is fetched once, with
-    the key in the header; the request timeout is ``--tc-data-timeout``.
+    """A file two datasets share counts once; each key's manifest is fetched once (no
+    key: tc-data is public); the request timeout is ``--tc-data-timeout``.
     """
     _serve(monkeypatch, _with_refs({"DsA": [EMB_A, EMB_B], "DsB": [EMB_A]}))
     probe_env["http"] = _TcData(
@@ -1726,7 +1720,7 @@ def test_cli_artifacts_ok_when_every_pointer_is_listed_with_its_sha256(
     assert capsys.readouterr().out == (
         "ok\t2/2\tevery pointer listed by tc-data with its sha256\n"
     )
-    assert probe_env["http"].calls == [(ESM2_URL, {"X-API-Key": SECRET_KEY})]
+    assert probe_env["http"].calls == [ESM2_URL]
     assert probe_env["timeouts"] == [2.5]
     assert probe_env["dotenv"] == 1
 
@@ -1738,7 +1732,6 @@ def test_cli_artifacts_ok_without_asking_tc_data_when_nothing_is_pointed_at(
 ) -> None:
     """Recorded and empty for every dataset: ok 0, and no client is built."""
     _serve(monkeypatch, _with_refs({"DsA": [], "DsB": []}))
-    monkeypatch.delenv("TC_DATA_API_KEY")
     assert main(_artifacts()) == 0
     assert capsys.readouterr().out == "ok\t0\tthe release points at no artifact file\n"
     assert probe_env["timeouts"] == []
@@ -1791,7 +1784,7 @@ def test_cli_artifacts_fails_naming_missing_and_mismatched_pointers(
         "fail\t1/5\t3 missing, 1 sha256 mismatch: tc://objects/esm2/b.npy, "
         "tc://objects/esm2/c.npy, tc://raw/gone/x.tsv, ...\n"
     )
-    assert [url for url, _ in probe_env["http"].calls] == [ESM2_URL, GONE_URL]
+    assert probe_env["http"].calls == [ESM2_URL, GONE_URL]
     assert main(_artifacts("--json")) == 0
     report = json.loads(capsys.readouterr().out)
     assert (report["state"], report["code"], report["release"]) == (
@@ -1811,22 +1804,6 @@ def test_cli_artifacts_fails_naming_missing_and_mismatched_pointers(
     ]
 
 
-def test_cli_artifacts_fails_when_the_api_key_is_unset(
-    monkeypatch: pytest.MonkeyPatch,
-    probe_env: dict[str, Any],
-    capsys: pytest.CaptureFixture[str],
-) -> None:
-    """The line names the variable (default or ``--api-key-env``), never a value."""
-    _serve(monkeypatch, _with_refs({"DsA": [EMB_A], "DsB": []}))
-    monkeypatch.delenv("TC_DATA_API_KEY")
-    assert main(_artifacts()) == 0
-    assert capsys.readouterr().out == "fail\tn/a\tTC_DATA_API_KEY unset\n"
-    monkeypatch.setenv("TC_DATA_API_KEY", SECRET_KEY)
-    assert main(_artifacts("--api-key-env", "OPS_TC_DATA_KEY")) == 0
-    assert capsys.readouterr().out == "fail\tn/a\tOPS_TC_DATA_KEY unset\n"
-    assert probe_env["timeouts"] == []
-
-
 def test_cli_artifacts_fails_when_tc_data_is_unreachable_or_refuses(
     monkeypatch: pytest.MonkeyPatch,
     probe_env: dict[str, Any],
@@ -1843,10 +1820,10 @@ def test_cli_artifacts_fails_when_tc_data_is_unreachable_or_refuses(
     assert capsys.readouterr().out == (
         "fail\tn/a\ttc-data unreachable: [Errno 111] Connection refused\n"
     )
-    probe_env["http"] = _TcData({ESM2_URL: (401, b"")})
+    probe_env["http"] = _TcData({ESM2_URL: (500, b"")})
     assert main(_artifacts()) == 0
     assert capsys.readouterr().out == (
-        f"fail\tn/a\ttc-data unreachable: {ESM2_URL}: HTTP 401\n"
+        f"fail\tn/a\ttc-data unreachable: {ESM2_URL}: HTTP 500\n"
     )
 
 

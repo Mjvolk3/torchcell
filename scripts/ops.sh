@@ -33,7 +33,7 @@
 #   OPS_RADIANT_USER / OPS_RADIANT_PASSWORD    default torchcell / torchcell
 #   OPS_TC_LIT_URL                             default http://localhost:8723
 #   OPS_RADIANT_TC_DATA                        default http://torchcell-database.ncsa.illinois.edu:8724
-#                                              (tc-data on Radiant; its key is TC_DATA_API_KEY)
+#                                              (tc-data on Radiant; public, no key)
 #   OPS_BROWSER_URL                            default http://localhost:7474
 #   OPS_TIMEOUT_SECONDS                        default 5 (curl); the bolt probes get 4x
 #   OPS_HOSTS                                  default "gilahyper,radiant"; a host that is
@@ -45,8 +45,8 @@
 # pointer set at the stamp (kg_manifest artifact-refs), so nothing is scanned here.
 #   ✓ N/N  every pointer listed with its sha256; ✓ 0  the release points at no file
 #   ! n/a  no release node, or the release predates pointer recording
-#   ✗ k/N  m missing, s sha256 mismatch: tc://... ; ✗ n/a  TC_DATA_API_KEY unset,
-#          tc-data unreachable: <error>, or the host did not answer; ✗ ERR  the python
+#   ✗ k/N  m missing, s sha256 mismatch: tc://... ; ✗ n/a  tc-data unreachable:
+#          <error>, or the host did not answer; ✗ ERR  the python
 #          call itself failed or timed out
 # The radiant block also probes tc-data's /health just before it.
 #

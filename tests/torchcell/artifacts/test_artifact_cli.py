@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.torchcell.artifacts._fakes import sha, write_tier
+from tests.torchcell.artifacts._fakes import offline_tc_data, sha, write_tier
 from torchcell.artifacts.__main__ import main
 from torchcell.artifacts.resolve import ArtifactUnresolvableError, ResolvedArtifact
 from torchcell.literature.manifest import Manifest, ProcessingRecord
@@ -20,9 +20,11 @@ URI = "tc://raw/k/data/f.tsv"
 
 @pytest.fixture(autouse=True)
 def _no_remote(monkeypatch: pytest.MonkeyPatch) -> None:
-    """The CLI builds its remote from the environment; make that empty."""
-    monkeypatch.setattr("dotenv.load_dotenv", lambda *a, **k: False)
+    """The CLI builds its remote from the environment (the public tc-data by default);
+    stub that remote to a miss so no request leaves the process.
+    """
     monkeypatch.delenv("TC_DATA_URL", raising=False)
+    offline_tc_data(monkeypatch)
 
 
 def test_resolve_prints_the_resolved_artifact(

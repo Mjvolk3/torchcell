@@ -5,8 +5,8 @@
 
 """Client for the ``tc-data`` endpoint: pick, download, verify and unpack an artifact.
 
-``DatasetClient`` talks to ``torchcell.datasets.server`` over httpx with the
-``X-API-Key`` header. ``select`` applies the compatibility rule (the newest
+``DatasetClient`` talks to ``torchcell.datasets.server`` over httpx; the endpoint is a
+public read-only mirror, so no request carries a key. ``select`` applies the compatibility rule (the newest
 ``supported`` row of a slug whose ``torchcell_version`` shares the installed
 ``major.minor``); ``download`` streams the archive to ``<dest>.part``, resumes with a
 ``Range`` request when a partial file exists, verifies the sha256 against the index row
@@ -22,7 +22,8 @@ sha256 and size come from the key's ``/files`` row; the server's ``X-Artifact-SH
 must equal that row and the completed bytes must hash to it, or the partial file is
 removed and :class:`ArtifactIntegrityError` is raised.
 
-Environment: ``TC_DATA_URL`` and ``TC_DATA_API_KEY`` (``DatasetClient.from_env``).
+Environment: ``TC_DATA_URL`` overrides the public endpoint ``DEFAULT_URL``
+(``DatasetClient.from_env``).
 """
 
 from __future__ import annotations
@@ -37,16 +38,15 @@ from urllib.parse import quote
 import httpx
 
 from torchcell import __version__
-from torchcell.api_keys import API_KEY_HEADER
 from torchcell.datasets.artifact import (
     ArtifactIndex,
     DatasetArtifact,
     ManifestFileListing,
 )
 from torchcell.endpoint_http import (  # noqa: F401  (re-exported names)
-    API_KEY_VAR,
     CHUNK,
     DEFAULT_TIMEOUT,
+    DEFAULT_URL,
     URL_VAR,
     HttpClient,
 )
@@ -86,30 +86,28 @@ class ArtifactIntegrityError(RuntimeError):
 
 
 class DatasetClient:
-    """Keyed HTTP client for one ``tc-data`` endpoint."""
+    """HTTP client for one ``tc-data`` endpoint (the public one by default)."""
 
     def __init__(
         self,
-        url: str,
-        api_key: str,
+        url: str = DEFAULT_URL,
         http: HttpClient | None = None,
         timeout: float = DEFAULT_TIMEOUT,
     ) -> None:
         """``url`` is the endpoint base (no trailing slash needed); ``http`` injects a client."""
         self.url = url.rstrip("/")
-        self._headers = {API_KEY_HEADER: api_key}
         self._http: HttpClient = (
             http if http is not None else httpx.Client(timeout=timeout)
         )
 
     @classmethod
     def from_env(cls, http: HttpClient | None = None) -> Self:
-        """Build from ``TC_DATA_URL`` and ``TC_DATA_API_KEY`` (``KeyError`` if unset)."""
-        return cls(os.environ[URL_VAR], os.environ[API_KEY_VAR], http=http)
+        """Build on ``TC_DATA_URL`` when set, else on the public endpoint ``DEFAULT_URL``."""
+        return cls(os.environ.get(URL_VAR, DEFAULT_URL), http=http)
 
     def _get(self, path: str) -> Any:
         url = f"{self.url}{path}"
-        response = self._http.get(url, headers=self._headers)
+        response = self._http.get(url)
         if response.status_code >= 400:
             raise EndpointError(url, response.status_code)
         return response
@@ -263,9 +261,7 @@ class DatasetClient:
         The status must be 206 for a resume and 200 otherwise, and the server's
         ``X-Artifact-SHA256`` must equal ``expected_sha256`` before a byte is written.
         """
-        headers = dict(self._headers)
-        if offset:
-            headers["Range"] = f"bytes={offset}-"
+        headers = {"Range": f"bytes={offset}-"} if offset else {}
         expected_status = 206 if offset else 200
         url = f"{self.url}{path}"
         with self._http.stream("GET", url, headers=headers) as response:

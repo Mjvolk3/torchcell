@@ -24,14 +24,13 @@ from torchcell.data.experiment_dataset import ExperimentDataset
 from torchcell.datamodels.schema import FitnessExperiment, FitnessExperimentReference
 from torchcell.datasets.artifact import ArtifactIndex
 from torchcell.datasets.client import DatasetClient
-from torchcell.datasets.server import DataKeys, DataServerConfig, create_app
+from torchcell.datasets.server import DataServerConfig, create_app
 from torchcell.provenance.build_manifest import MANIFEST_FILENAME, BuildManifest
 
 SCRIPTS = Path(__file__).resolve().parents[3] / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 import package_dataset_lmdb as pkg  # type: ignore[import-not-found]  # noqa: E402
 
-KEY = "dataset-key"
 SLUG = "smf_fake"
 
 
@@ -120,7 +119,6 @@ def _serve(root: Path, dataset_dir: Path) -> TestClient:
         raw_root=raw,
         genomes_root=root / "genomes",
         objects_root=root / "objects",
-        keys=DataKeys.from_pairs(f"t:{KEY}"),
     )
     return TestClient(create_app(config))
 
@@ -129,11 +127,10 @@ def _point_client_at(
     monkeypatch: pytest.MonkeyPatch, http: TestClient, url: str = "http://testserver"
 ) -> None:
     monkeypatch.setenv("TC_DATA_URL", url)
-    monkeypatch.setenv("TC_DATA_API_KEY", KEY)
     monkeypatch.setattr(
         DatasetClient,
         "from_env",
-        classmethod(lambda cls, http_=None: cls(url, KEY, http=http)),
+        classmethod(lambda cls, http_=None: cls(url, http=http)),
     )
 
 

@@ -7,6 +7,10 @@ Tier roots are built under ``tmp_path`` with real ``manifest.json`` files writte
 literature manifest helpers (``build_manifest`` + ``write_manifest``) or, for genomes, by
 ``registry.deposit_assembly_set``. ``FakeRemote`` serves manifests and bytes from dicts
 and records every call, so a test can assert that nothing was downloaded.
+
+tc-data is public and the package carries its URL, so a resolve without a ``client``
+always builds a remote on ``DEFAULT_URL``. ``offline_tc_data`` stubs that remote's two
+calls to a miss, so a test of the no-remote path never opens a connection.
 """
 
 from __future__ import annotations
@@ -14,8 +18,10 @@ from __future__ import annotations
 import hashlib
 from pathlib import Path
 
+import pytest
+
 from torchcell.artifacts.ref import ArtifactRef, Tier
-from torchcell.artifacts.resolve import RemoteMissError
+from torchcell.artifacts.resolve import RemoteMissError, TcDataSource
 from torchcell.artifacts.tiers import MANIFEST_TIER_DIRS, TierManifest
 from torchcell.literature.manifest import (
     ArtifactRecord,
@@ -30,6 +36,28 @@ from torchcell.sequence.genome.registry import (
 )
 
 CREATED_AT = "2026-10-07T00:00:00+00:00"
+OFFLINE = "offline in tests"
+
+
+def offline_tc_data(monkeypatch: pytest.MonkeyPatch) -> None:
+    """No ``.env`` is read, and the default tc-data remote misses without a request.
+
+    ``TcDataSource.manifest`` and ``.download`` raise ``RemoteMissError`` naming
+    ``OFFLINE``, so the resolver's last source reads ``tc-data <url> manifest: offline in
+    tests``.
+    """
+
+    def manifest(self: TcDataSource, tier: Tier, key: str) -> TierManifest:
+        raise RemoteMissError(OFFLINE)
+
+    def download(
+        self: TcDataSource, tier: Tier, key: str, path: str, dest: Path
+    ) -> None:
+        raise RemoteMissError(OFFLINE)
+
+    monkeypatch.setattr("dotenv.load_dotenv", lambda *a, **k: False)
+    monkeypatch.setattr(TcDataSource, "manifest", manifest)
+    monkeypatch.setattr(TcDataSource, "download", download)
 
 
 def sha(data: bytes) -> str:

@@ -57,7 +57,6 @@ import argparse
 import csv
 import hashlib
 import json
-import os
 import subprocess
 import sys
 from collections import defaultdict
@@ -84,7 +83,6 @@ PINNED_ALIAS = "pinned"
 DEFAULT_VERSION = LATEST_ALIAS
 SYSTEM_DATABASES = ("system",)
 _COMMIT_CHARS = 8
-DEFAULT_TC_DATA_API_KEY_ENV = "TC_DATA_API_KEY"
 #: How many failing pointers the one-line ``artifacts`` verdict names.
 _FAILING_SHOWN = 3
 
@@ -950,8 +948,6 @@ def artifact_probe(
     release: KgRelease | None,
     *,
     tc_data_url: str,
-    api_key: str | None,
-    api_key_env: str = DEFAULT_TC_DATA_API_KEY_ENV,
     http: Any = None,
     timeout_s: float = 5.0,
 ) -> ArtifactProbe:
@@ -959,8 +955,8 @@ def artifact_probe(
 
     The checks run in the order that needs the least: a store without a release node or
     a release that predates pointer recording is a warning (nothing to check), a release
-    pointing at no file is ok without asking tc-data, and only then are the key and the
-    endpoint required. ``http`` injects the client (tests).
+    pointing at no file is ok without asking tc-data, and only then is the endpoint
+    asked (tc-data is public, so no key is needed). ``http`` injects the client (tests).
     """
     import httpx
 
@@ -983,11 +979,7 @@ def artifact_probe(
             detail="the release points at no artifact file",
             release=tag,
         )
-    if not api_key:
-        return ArtifactProbe(
-            state="fail", code="n/a", detail=f"{api_key_env} unset", release=tag
-        )
-    source = TcDataSource(tc_data_url, api_key, http=http, timeout=timeout_s)
+    source = TcDataSource(tc_data_url, http=http, timeout=timeout_s)
     try:
         checks = classify_pointers(release.artifact_refs, source)
     except (RemoteEndpointError, httpx.HTTPError) as exc:
@@ -1191,12 +1183,6 @@ def main(argv: list[str] | None = None) -> int:
     p_art.add_argument(
         "--tc-data-timeout", type=float, default=5.0, help="seconds per tc-data request"
     )
-    p_art.add_argument(
-        "--api-key-env",
-        default=DEFAULT_TC_DATA_API_KEY_ENV,
-        help="the environment variable holding the tc-data key (read after the repo "
-        ".env is loaded; the key itself is never printed)",
-    )
     p_art.add_argument("--json", action="store_true")
 
     args = parser.parse_args(argv)
@@ -1362,11 +1348,7 @@ def main(argv: list[str] | None = None) -> int:
             )
         else:
             probe = artifact_probe(
-                served,
-                tc_data_url=args.tc_data_url,
-                api_key=os.environ.get(args.api_key_env),
-                api_key_env=args.api_key_env,
-                timeout_s=args.tc_data_timeout,
+                served, tc_data_url=args.tc_data_url, timeout_s=args.tc_data_timeout
             )
         # flushed: ops.sh bounds this process, and a hung driver thread can hold exit
         print(

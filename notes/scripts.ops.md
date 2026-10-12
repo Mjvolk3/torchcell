@@ -72,3 +72,7 @@ After that build, a GilaHyper run will read ✗ until two things exist, and the 
 ## 2026.10.10 - `candidates`: the quote-slice audit of the candidate verdicts
 
 `bash scripts/ops.sh candidates [args]` runs `python -m torchcell.candidates audit` with `PYTHONPATH` set to the checkout: every quoted evidence slice in `database/candidates/` is re-read against the literature and raw mirrors (sha256, then the whitespace- and soft-hyphen-normalized quote, #758). It is data-gated and run by hand or under slurm, never from cron (decision 12 of [[plan.dataset-admission-pipeline.2026.10.10]]). The usage line is now `{status|releases|health|sync|candidates}`.
+
+## 2026.10.12 - tc-data needs no key and port 8724 is open
+
+The `artifacts` line no longer has a `TC_DATA_API_KEY unset` state: tc-data is public (`releases artifacts` lost `--api-key-env`). The radiant `tc-data` probe reads 200 from GilaHyper since the security-group rule for 8724 went in on 2026.10.12 ([[database.tc-data-endpoint]]).

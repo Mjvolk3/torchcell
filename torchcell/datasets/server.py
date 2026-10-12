@@ -3,11 +3,14 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/server.py
 # Test file: tests/torchcell/datasets/test_datasets_server.py
 
-"""``tc-data``: keyed read-only HTTP endpoint for packaged datasets and the file tiers.
+"""``tc-data``: public read-only HTTP endpoint for packaged datasets and the file tiers.
 
-Serves four directory trees over the network, with the same key scheme as the
-literature endpoint (``torchcell.literature.server``): named API keys stored as sha256
-hashes, presented in the ``X-API-Key`` header, compared constant-time.
+Serves four directory trees over the network with no key on any route: everything here
+is published data (packaged datasets, SI and raw data files, reference genomes, derived
+objects). The one thing withheld is paper content: in the raw and objects tiers a
+manifest record whose ``role`` starts with ``paper_`` (``WITHHELD_ROLE_PREFIX``) is
+dropped from ``/manifest`` and ``/files`` and its bytes answer 404. Papers are served by
+the keyed literature endpoint (``torchcell.literature.server``), not here.
 
 - The artifact store ``$TC_DATA_ROOT``: ``index.json`` (an ``ArtifactIndex``) and one
   ``<slug>/<archive>`` per packaged dataset, written by
@@ -33,11 +36,9 @@ hashes, presented in the ``X-API-Key`` header, compared constant-time.
   raw mirror must exist at startup; a genomes or objects root that is absent on disk
   lists no keys and answers every other route of its tier 404.
 
-Swagger UI is on at ``/docs`` (``/openapi.json`` for the schema); ``/health`` needs no
-key. Configuration is environment-driven: ``TC_DATA_ROOT``, ``TC_DATA_RAW_ROOT``,
-``TC_DATA_GENOMES_ROOT``, ``TC_DATA_OBJECTS_ROOT``, ``TC_DATA_HOST``, ``TC_DATA_PORT``
-(8724), and keys from ``TC_DATA_KEYS_FILE`` (JSON ``{name: sha256hex}``, preferred) or
-``TC_DATA_API_KEYS`` (``name:key,...``).
+Swagger UI is on at ``/docs`` (``/openapi.json`` for the schema). Configuration is
+environment-driven: ``TC_DATA_ROOT``, ``TC_DATA_RAW_ROOT``, ``TC_DATA_GENOMES_ROOT``,
+``TC_DATA_OBJECTS_ROOT``, ``TC_DATA_HOST`` and ``TC_DATA_PORT`` (8724).
 """
 
 from __future__ import annotations
@@ -50,12 +51,10 @@ from typing import Self
 
 import uvicorn
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI, HTTPException, Request, status
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
-from fastapi.security import APIKeyHeader
 from pydantic import BaseModel, ConfigDict, Field
 
-from torchcell.api_keys import API_KEY_HEADER, ApiKeys, print_minted_key
 from torchcell.datasets.artifact import (
     INDEX_FILENAME,
     ArtifactIndex,
@@ -73,29 +72,15 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 APP_TITLE = "torchcell dataset endpoint"
-APP_VERSION = "1.1.0"
+APP_VERSION = "2.0.0"
 DEFAULT_PORT = 8724
 RAW_SUBDIR = "torchcell-raw"
 GENOMES_SUBDIR = GENOMES_DIR
 OBJECTS_SUBDIR = "torchcell-objects"
-KEYS_FILE_VAR = "TC_DATA_KEYS_FILE"
-INLINE_KEYS_VAR = "TC_DATA_API_KEYS"
 ARCHIVE_MEDIA_TYPE = "application/x-xz"
 FILE_MEDIA_TYPE = "application/octet-stream"
-
-
-class DataKeys(ApiKeys):
-    """The shared :class:`ApiKeys` model bound to the ``TC_DATA_*`` variables."""
-
-    @classmethod
-    def from_pairs(cls, spec: str, env_name: str = INLINE_KEYS_VAR) -> Self:
-        """Parse ``name1:key1,name2:key2`` plaintext pairs, hashing each key."""
-        return super().from_pairs(spec, env_name=env_name)
-
-    @classmethod
-    def from_env(cls) -> Self:
-        """Load keys from ``TC_DATA_KEYS_FILE`` (preferred) or ``TC_DATA_API_KEYS``."""
-        return cls.from_env_names(KEYS_FILE_VAR, INLINE_KEYS_VAR)
+#: Manifest roles never listed or served (paper_pdf, paper_text, paper_ocr, ...).
+WITHHELD_ROLE_PREFIX = "paper_"
 
 
 def _tier_root_from_env(var: str, subdir: str) -> Path:
@@ -117,7 +102,6 @@ class DataServerConfig(BaseModel):
     objects_root: Path = Field(
         description="The objects tier (one dir per object key); may be absent."
     )
-    keys: DataKeys
     host: str = "0.0.0.0"
     port: int = DEFAULT_PORT
 
@@ -140,7 +124,6 @@ class DataServerConfig(BaseModel):
             raw_root=raw_root,
             genomes_root=_tier_root_from_env("TC_DATA_GENOMES_ROOT", GENOMES_SUBDIR),
             objects_root=_tier_root_from_env("TC_DATA_OBJECTS_ROOT", OBJECTS_SUBDIR),
-            keys=DataKeys.from_env(),
             host=os.environ.get("TC_DATA_HOST", "0.0.0.0"),
             port=int(os.environ.get("TC_DATA_PORT", str(DEFAULT_PORT))),
         )
@@ -194,23 +177,6 @@ class FileTier(BaseModel):
     root: Path
     key_noun: str = Field(description='"citation key", "assembly set", "object key".')
     list_bare_keys: bool
-
-
-_api_key_scheme = APIKeyHeader(name=API_KEY_HEADER, auto_error=False)
-
-
-def require_key(
-    request: Request, api_key: str | None = Depends(_api_key_scheme)
-) -> str:
-    """Auth dependency: resolve + validate the ``X-API-Key`` header, return its name."""
-    config: DataServerConfig = request.app.state.config
-    name = config.keys.verify(api_key) if api_key else None
-    if name is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="invalid or missing API key",
-        )
-    return name
 
 
 def _load_index(config: DataServerConfig) -> ArtifactIndex:
@@ -281,6 +247,34 @@ def _list_tier_keys(tier: FileTier) -> list[str]:
         and not p.name.startswith("_")
         and (tier.list_bare_keys or (p / MANIFEST_FILENAME).is_file())
     )
+
+
+def _is_withheld(record: ArtifactRecord) -> bool:
+    """Whether a manifest record is paper content, which tc-data never lists or serves."""
+    return record.role.startswith(WITHHELD_ROLE_PREFIX)
+
+
+def _public_files(files: Sequence[ArtifactRecord]) -> list[ArtifactRecord]:
+    """The manifest records tc-data publishes: every record that is not paper content."""
+    return [f for f in files if not _is_withheld(f)]
+
+
+def _public_manifest(manifest: Manifest) -> Manifest:
+    """A literature-shaped manifest with its paper records removed."""
+    return manifest.model_copy(update={"files": _public_files(manifest.files)})
+
+
+def _serve_public_file(
+    base: Path, files: Sequence[ArtifactRecord], rel_path: str
+) -> FileResponse:
+    """Serve a raw or objects file; a paper record is 404 ``paper content is not served``.
+
+    The withheld check comes first so the detail names the reason; every other path
+    goes through :func:`_serve_listed_file` over the public records.
+    """
+    if any(f.path == rel_path and _is_withheld(f) for f in files):
+        raise HTTPException(status_code=404, detail="paper content is not served")
+    return _serve_listed_file(base, _public_files(files), rel_path)
 
 
 def _file_listing(files: Sequence[ArtifactRecord]) -> list[ManifestFileListing]:
@@ -356,19 +350,20 @@ def create_app(config: DataServerConfig) -> FastAPI:
     app = FastAPI(
         title=APP_TITLE,
         summary=(
-            "Keyed read-only access to packaged torchcell datasets, the raw mirror, "
-            "the genomes tier and the objects tier."
+            "Public read-only access to packaged torchcell datasets, the raw mirror, "
+            "the genomes tier and the objects tier; no key; paper content withheld."
         ),
         description=(
-            "Every route except `/health` needs an `X-API-Key` header. Dataset "
-            "archives are `tar.xz` files holding a built dataset's `processed/` "
+            "No route needs a key. Dataset archives are `tar.xz` files holding a built dataset's `processed/` "
             "(LMDB) and `preprocess/` (build manifest, gene set, reference index) "
             "directories; verify a download against `X-Artifact-SHA256` or the "
             "index row's `archive_sha256`. The raw mirror serves the source files "
             "each dataset loader consumed, the genomes tier serves reference and "
             "isolate assembly sets, and the objects tier serves derived bytes that "
             "graph records point at (embeddings, matrices, indexed FASTA); each is "
-            "hash-pinned by its key's `manifest.json`."
+            "hash-pinned by its key's `manifest.json`. Paper content (manifest "
+            "roles beginning `paper_`) is withheld from the raw and objects tiers: "
+            "it is not listed and its bytes answer 404."
         ),
         version=APP_VERSION,
     )
@@ -379,7 +374,7 @@ def create_app(config: DataServerConfig) -> FastAPI:
 
     @app.get("/health", response_model=Health, tags=["service"])
     def health() -> Health:
-        """Liveness: artifact and per-tier key counts, and the served roots. No key."""
+        """Liveness: artifact and per-tier key counts, and the served roots."""
         index_path = config.store_root / INDEX_FILENAME
         n_artifacts = (
             len(ArtifactIndex.load(index_path).artifacts) if index_path.is_file() else 0
@@ -397,7 +392,7 @@ def create_app(config: DataServerConfig) -> FastAPI:
         )
 
     @app.get("/datasets", response_model=ArtifactIndex, tags=["datasets"])
-    def list_datasets(_: str = Depends(require_key)) -> ArtifactIndex:
+    def list_datasets() -> ArtifactIndex:
         """The whole artifact index (`index.json`): one row per packaged archive.
 
         Each row names the dataset slug, the loader class, the `torchcell_version`
@@ -411,9 +406,7 @@ def create_app(config: DataServerConfig) -> FastAPI:
     @app.get(
         "/datasets/{slug}", response_model=list[DatasetArtifact], tags=["datasets"]
     )
-    def list_dataset_artifacts(
-        slug: str, _: str = Depends(require_key)
-    ) -> list[DatasetArtifact]:
+    def list_dataset_artifacts(slug: str) -> list[DatasetArtifact]:
         """Every packaged version of one dataset slug (404 if none is indexed)."""
         rows = _load_index(config).for_slug(slug)
         if not rows:
@@ -421,9 +414,7 @@ def create_app(config: DataServerConfig) -> FastAPI:
         return rows
 
     @app.get("/datasets/{slug}/{archive}", tags=["datasets"])
-    def get_dataset_archive(
-        slug: str, archive: str, _: str = Depends(require_key)
-    ) -> FileResponse:
+    def get_dataset_archive(slug: str, archive: str) -> FileResponse:
         """Stream one archive named by an index row.
 
         Responds with `X-Artifact-SHA256` (the row's `archive_sha256`) and
@@ -441,42 +432,43 @@ def create_app(config: DataServerConfig) -> FastAPI:
         )
 
     @app.get("/raw", response_model=RawKeyListing, tags=["raw"])
-    def list_raw_keys(_: str = Depends(require_key)) -> RawKeyListing:
+    def list_raw_keys() -> RawKeyListing:
         """Citation keys present in the raw mirror (dynamic; a new key needs no restart)."""
         keys = _list_tier_keys(raw)
         return RawKeyListing(citation_keys=keys, count=len(keys))
 
     @app.get("/raw/{citation_key}/manifest", response_model=Manifest, tags=["raw"])
-    def get_raw_manifest(citation_key: str, _: str = Depends(require_key)) -> Manifest:
-        """A key's `manifest.json` verbatim: per-file role, bytes, sha256, retrieval."""
-        return _literature_manifest(raw, _tier_key_dir(raw, citation_key))
+    def get_raw_manifest(citation_key: str) -> Manifest:
+        """A key's `manifest.json` without paper records: role, bytes, sha256, retrieval."""
+        return _public_manifest(
+            _literature_manifest(raw, _tier_key_dir(raw, citation_key))
+        )
 
     @app.get(
         "/raw/{citation_key}/files",
         response_model=list[ManifestFileListing],
         tags=["raw"],
     )
-    def list_raw_files(
-        citation_key: str, _: str = Depends(require_key)
-    ) -> list[ManifestFileListing]:
-        """The files a key's manifest lists, with role, bytes and sha256."""
+    def list_raw_files(citation_key: str) -> list[ManifestFileListing]:
+        """The public files a key's manifest lists, with role, bytes and sha256."""
         return _file_listing(
-            _literature_manifest(raw, _tier_key_dir(raw, citation_key)).files
+            _public_files(
+                _literature_manifest(raw, _tier_key_dir(raw, citation_key)).files
+            )
         )
 
     @app.get("/raw/{citation_key}/artifact/{rel_path:path}", tags=["raw"])
-    def get_raw_artifact(
-        citation_key: str, rel_path: str, _: str = Depends(require_key)
-    ) -> FileResponse:
+    def get_raw_artifact(citation_key: str, rel_path: str) -> FileResponse:
         """Stream one raw file; `X-Artifact-SHA256` carries the manifest hash.
 
-        Only files the manifest lists are served; `Range` requests are honored.
+        Only files the manifest lists are served, never paper content (404 `paper
+        content is not served`); `Range` requests are honored.
         """
         base = _tier_key_dir(raw, citation_key)
-        return _serve_listed_file(base, _literature_manifest(raw, base).files, rel_path)
+        return _serve_public_file(base, _literature_manifest(raw, base).files, rel_path)
 
     @app.get("/genomes", response_model=GenomeSetListing, tags=["genomes"])
-    def list_genome_sets(_: str = Depends(require_key)) -> GenomeSetListing:
+    def list_genome_sets() -> GenomeSetListing:
         """Assembly sets with a `manifest.json` (empty when the genomes root is absent)."""
         sets = _list_tier_keys(genomes)
         return GenomeSetListing(assembly_sets=sets, count=len(sets))
@@ -486,9 +478,7 @@ def create_app(config: DataServerConfig) -> FastAPI:
         response_model=GenomeManifest,
         tags=["genomes"],
     )
-    def get_genome_manifest(
-        assembly_set: str, _: str = Depends(require_key)
-    ) -> GenomeManifest:
+    def get_genome_manifest(assembly_set: str) -> GenomeManifest:
         """A set's `GenomeManifest`: organism, release, and per-file role, bytes, sha256."""
         return _genome_manifest(
             genomes, _tier_key_dir(genomes, assembly_set), assembly_set
@@ -499,17 +489,13 @@ def create_app(config: DataServerConfig) -> FastAPI:
         response_model=list[ManifestFileListing],
         tags=["genomes"],
     )
-    def list_genome_files(
-        assembly_set: str, _: str = Depends(require_key)
-    ) -> list[ManifestFileListing]:
+    def list_genome_files(assembly_set: str) -> list[ManifestFileListing]:
         """The files a set's manifest lists, with role, bytes and sha256."""
         base = _tier_key_dir(genomes, assembly_set)
         return _file_listing(_genome_manifest(genomes, base, assembly_set).files)
 
     @app.get("/genomes/{assembly_set}/artifact/{rel_path:path}", tags=["genomes"])
-    def get_genome_artifact(
-        assembly_set: str, rel_path: str, _: str = Depends(require_key)
-    ) -> FileResponse:
+    def get_genome_artifact(assembly_set: str, rel_path: str) -> FileResponse:
         """Stream one genomes-tier file; `X-Artifact-SHA256` carries the manifest hash.
 
         Only files the manifest lists are served; `Range` requests are honored.
@@ -519,7 +505,7 @@ def create_app(config: DataServerConfig) -> FastAPI:
         return _serve_listed_file(base, manifest.files, rel_path)
 
     @app.get("/objects", response_model=ObjectKeyListing, tags=["objects"])
-    def list_object_keys(_: str = Depends(require_key)) -> ObjectKeyListing:
+    def list_object_keys() -> ObjectKeyListing:
         """Object keys with a `manifest.json` (empty when the objects root is absent)."""
         keys = _list_tier_keys(objects)
         return ObjectKeyListing(object_keys=keys, count=len(keys))
@@ -527,33 +513,34 @@ def create_app(config: DataServerConfig) -> FastAPI:
     @app.get(
         "/objects/{object_key}/manifest", response_model=Manifest, tags=["objects"]
     )
-    def get_object_manifest(object_key: str, _: str = Depends(require_key)) -> Manifest:
-        """A key's `manifest.json` verbatim (literature `Manifest` shape)."""
-        return _literature_manifest(objects, _tier_key_dir(objects, object_key))
+    def get_object_manifest(object_key: str) -> Manifest:
+        """A key's `manifest.json` without paper records (literature `Manifest` shape)."""
+        return _public_manifest(
+            _literature_manifest(objects, _tier_key_dir(objects, object_key))
+        )
 
     @app.get(
         "/objects/{object_key}/files",
         response_model=list[ManifestFileListing],
         tags=["objects"],
     )
-    def list_object_files(
-        object_key: str, _: str = Depends(require_key)
-    ) -> list[ManifestFileListing]:
-        """The files a key's manifest lists, with role, bytes and sha256."""
+    def list_object_files(object_key: str) -> list[ManifestFileListing]:
+        """The public files a key's manifest lists, with role, bytes and sha256."""
         return _file_listing(
-            _literature_manifest(objects, _tier_key_dir(objects, object_key)).files
+            _public_files(
+                _literature_manifest(objects, _tier_key_dir(objects, object_key)).files
+            )
         )
 
     @app.get("/objects/{object_key}/artifact/{rel_path:path}", tags=["objects"])
-    def get_object_artifact(
-        object_key: str, rel_path: str, _: str = Depends(require_key)
-    ) -> FileResponse:
+    def get_object_artifact(object_key: str, rel_path: str) -> FileResponse:
         """Stream one objects-tier file; `X-Artifact-SHA256` carries the manifest hash.
 
-        Only files the manifest lists are served; `Range` requests are honored.
+        Only files the manifest lists are served, never paper content (404 `paper
+        content is not served`); `Range` requests are honored.
         """
         base = _tier_key_dir(objects, object_key)
-        return _serve_listed_file(
+        return _serve_public_file(
             base, _literature_manifest(objects, base).files, rel_path
         )
 
@@ -567,19 +554,14 @@ def create_app_from_env() -> FastAPI:
 
 
 def main() -> None:
-    """CLI: run the server, or ``--gen-key NAME`` to mint a key."""
+    """CLI: run the server (``--host`` / ``--port`` override the environment)."""
     import argparse
 
     load_dotenv()
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--gen-key", metavar="NAME", help="Mint a key and exit.")
     parser.add_argument("--host", default=None, help="Override TC_DATA_HOST.")
     parser.add_argument("--port", type=int, default=None, help="Override TC_DATA_PORT.")
     args = parser.parse_args()
-
-    if args.gen_key:
-        print_minted_key(args.gen_key, KEYS_FILE_VAR)
-        return
 
     config = DataServerConfig.from_env()
     host = args.host or config.host

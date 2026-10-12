@@ -13,8 +13,8 @@ whose sha256 disagrees with the manifest raises ``ArtifactIntegrityError`` at on
 
 Every claim in ``results/artifact_tier_e2e.json`` is measured here: sources, verified
 flags, byte counts, cache paths and wall-clock seconds per step. The tc-data server is
-``torchcell.datasets.server`` run as a subprocess with the local tiers as its roots and a
-key minted for this run, so the bytes travel over a real socket.
+``torchcell.datasets.server`` run as a subprocess with the local tiers as its roots (the
+endpoint is public, so no key), and the bytes travel over a real socket.
 
 Usage (from the repo root, the torchcell env)::
 
@@ -36,7 +36,6 @@ from pathlib import Path
 import httpx
 from dotenv import load_dotenv
 
-from torchcell.api_keys import mint_key
 from torchcell.artifacts import ArtifactIntegrityError, TcDataSource, check, resolve
 from torchcell.datasets.scerevisiae.caudal2024 import (
     refgene_member_ref,
@@ -75,7 +74,7 @@ def first_member(slice_path: Path) -> tuple[str, str]:
     raise LookupError(f"{slice_path} records no <gene>.fasta#<token> member ref")
 
 
-def start_server(data_root: str, port: int, api_key: str) -> subprocess.Popen[bytes]:
+def start_server(data_root: str, port: int) -> subprocess.Popen[bytes]:
     env = dict(os.environ)
     env.update(
         {
@@ -83,12 +82,10 @@ def start_server(data_root: str, port: int, api_key: str) -> subprocess.Popen[by
             "TC_DATA_RAW_ROOT": osp.join(data_root, "torchcell-raw"),
             "TC_DATA_GENOMES_ROOT": osp.join(data_root, "torchcell-genomes"),
             "TC_DATA_OBJECTS_ROOT": osp.join(data_root, "torchcell-objects"),
-            "TC_DATA_API_KEYS": f"e2e:{api_key}",
             "TC_DATA_HOST": "127.0.0.1",
             "TC_DATA_PORT": str(port),
         }
     )
-    env.pop("TC_DATA_KEYS_FILE", None)
     proc = subprocess.Popen(
         [sys.executable, "-m", "torchcell.datasets.server"],
         env=env,
@@ -135,11 +132,10 @@ def main() -> int:
         out["wrong_sha256"] = f"ArtifactIntegrityError: {exc}"[:200]
 
     port = free_port()
-    api_key, _ = mint_key("e2e")
-    proc = start_server(data_root, port, api_key)
+    proc = start_server(data_root, port)
     try:
         url = f"http://127.0.0.1:{port}"
-        client = TcDataSource(url, api_key)
+        client = TcDataSource(url)
         with tempfile.TemporaryDirectory(prefix="artifact-e2e-") as empty:
             t0 = time.perf_counter()
             ok = check(ref, data_root=empty, client=client)

@@ -6,7 +6,7 @@
     "path": "/scratch/projects/torchcell-scratch/torchcell-genomes/peter2018_1011_assemblies/allReferenceGenesWithSNPsAndIndelsInferred.tar.gz",
     "source": "local",
     "verified": true,
-    "seconds": 0.293
+    "seconds": 0.108
   },
   "wrong_sha256": "ArtifactIntegrityError: tc://genomes/peter2018_1011_assemblies/allReferenceGenesWithSNPsAndIndelsInferred.tar.gz#YAL002W.fasta#AAB_YAL002W_VPS8: local genomes manifest /scratch/projects/torchcell-scra",
   "remote_check": {
@@ -19,13 +19,13 @@
     "source": "remote",
     "verified": true,
     "bytes": 160823369,
-    "seconds": 0.33,
-    "mb_per_s": 487.7
+    "seconds": 0.41,
+    "mb_per_s": 391.8
   },
   "remote_again": {
     "same_path": true,
     "source": "remote",
     "verified": true,
-    "seconds": 0.106
+    "seconds": 0.107
   }
 }

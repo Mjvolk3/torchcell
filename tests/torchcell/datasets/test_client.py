@@ -11,6 +11,10 @@ pin that the client checks both; a file changed on disk after its manifest was w
 is the same tamper seen from the server side. The raw mirror gets the same three
 methods (``raw_manifest``, ``raw_files``, ``download_raw_file``) on the same path,
 pinned here on a 25-byte CSV under one manifested citation key.
+
+2026.10.12 (public read-only): the client sends no key. ``DatasetClient()`` defaults to
+the public ``DEFAULT_URL``, ``from_env`` prefers ``TC_DATA_URL`` when set, and the only
+header a request carries is ``Range`` on a resume.
 """
 
 import hashlib
@@ -37,11 +41,11 @@ from torchcell.datasets.client import (
     EndpointError,
     unpack_artifact,
 )
-from torchcell.datasets.server import DataKeys, DataServerConfig, create_app
+from torchcell.datasets.server import DataServerConfig, create_app
+from torchcell.endpoint_http import DEFAULT_URL
 from torchcell.literature.manifest import ArtifactRecord, Manifest
 from torchcell.sequence.genome.registry import GenomeManifest
 
-KEY = "client-key"
 PAYLOAD = bytes(range(256)) * 20
 PAYLOAD_SHA = hashlib.sha256(PAYLOAD).hexdigest()
 ARCHIVE = archive_name("smf_fake", "1.2.1", PAYLOAD_SHA)
@@ -146,9 +150,8 @@ def _client(root: Path, artifact: DatasetArtifact) -> DatasetClient:
         raw_root=raw,
         genomes_root=_genomes(root),
         objects_root=_objects(root),
-        keys=DataKeys.from_pairs(f"t:{KEY}"),
     )
-    return DatasetClient("http://testserver/", KEY, http=TestClient(create_app(config)))
+    return DatasetClient("http://testserver/", http=TestClient(create_app(config)))
 
 
 def test_index_and_artifacts_round_trip_through_http(tmp_path: Path) -> None:
@@ -189,7 +192,7 @@ def test_download_resumes_a_partial_file_with_a_range_request(
 
     monkeypatch.setattr(client._http, "stream", spy)
     client.download(_artifact(), dest)
-    assert [h["Range"] for h in seen] == ["bytes=1000-"]
+    assert seen == [{"Range": "bytes=1000-"}]
     assert dest.read_bytes() == PAYLOAD
 
 
@@ -234,15 +237,17 @@ def test_download_raises_on_an_http_error(tmp_path: Path) -> None:
         )
 
 
-def test_from_env_reads_url_and_key(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_from_env_reads_url_with_the_public_default(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Unset ``TC_DATA_URL`` is the public endpoint; set, it wins (trailing slash
+    stripped). ``DatasetClient()`` with no arguments is the public endpoint too.
+    """
+    monkeypatch.delenv("TC_DATA_URL", raising=False)
+    assert DatasetClient.from_env(http=httpx.Client()).url == DEFAULT_URL
+    assert DatasetClient(http=httpx.Client()).url == DEFAULT_URL
     monkeypatch.setenv("TC_DATA_URL", "http://radiant:8724/")
-    monkeypatch.setenv("TC_DATA_API_KEY", "k")
-    client = DatasetClient.from_env(http=httpx.Client())
-    assert client.url == "http://radiant:8724"
-    assert client._headers == {"X-API-Key": "k"}
-    monkeypatch.delenv("TC_DATA_API_KEY")
-    with pytest.raises(KeyError, match="TC_DATA_API_KEY"):
-        DatasetClient.from_env()
+    assert DatasetClient.from_env(http=httpx.Client()).url == "http://radiant:8724"
 
 
 def _tar_xz(members: dict[str, bytes]) -> bytes:
@@ -311,13 +316,13 @@ class TamperingHttp:
         self._header = header
         self._body = body
 
-    def get(self, url: str, *, headers: Mapping[str, str]) -> Any:
+    def get(self, url: str) -> Any:
         """Buffered GETs (listings, manifests) pass through untouched."""
-        return self._inner.get(url, headers=headers)
+        return self._inner.get(url)
 
     @contextmanager
     def stream(
-        self, method: str, url: str, *, headers: Mapping[str, str]
+        self, method: str, url: str, *, headers: Mapping[str, str] | None = None
     ) -> Iterator[_TamperedStream]:
         """The ASGI stream with the header and/or body rewritten."""
         with self._inner.stream(method, url, headers=headers) as response:
@@ -330,7 +335,7 @@ def _tampering_client(
     plain = _client(root, _artifact())
     assert isinstance(plain._http, TestClient)
     return DatasetClient(
-        "http://testserver", KEY, http=TamperingHttp(plain._http, header, body)
+        "http://testserver", http=TamperingHttp(plain._http, header, body)
     )
 
 
@@ -393,7 +398,7 @@ def test_tier_download_resumes_a_partial_file_with_a_range_request(
 
     monkeypatch.setattr(client._http, "stream", spy)
     client.download_genome_file(GENOME_SET, GENOME_FILE, dest)
-    assert [h["Range"] for h in seen] == ["bytes=1000-"]
+    assert seen == [{"Range": "bytes=1000-"}]
     assert dest.read_bytes() == PAYLOAD
 
 
@@ -487,7 +492,7 @@ def test_raw_download_verifies_and_resumes_with_a_range_request(
 
     monkeypatch.setattr(client._http, "stream", spy)
     client.download_raw_file(RAW_KEY, RAW_FILE, resumed)
-    assert [h["Range"] for h in seen] == ["bytes=5-"]
+    assert seen == [{"Range": "bytes=5-"}]
     assert resumed.read_bytes() == RAW_CSV
 
 

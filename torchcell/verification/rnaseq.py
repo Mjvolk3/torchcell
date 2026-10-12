@@ -29,7 +29,7 @@ from __future__ import annotations
 import json
 import math
 from collections import Counter
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from typing import Any
 
 from torchcell.verification.levels import (

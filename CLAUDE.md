@@ -856,6 +856,10 @@ fingerprints, the BioCypher graph schema, and the adapter code it was serialized
   `torchcell.database.build_dataset_lmdb`), builds the new store beside the served one on
   `/db`, validates it, then swaps directories under `tc-neo4j-readonly` (minutes of
   downtime; the old store stays as `data.superseded.<ts>` for rollback).
+  `KG_ORGANISMS` (default `scerevisiae,ecoli,pputida`; `sbatch
+  --export=ALL,KG_ORGANISMS=scerevisiae` for a yeast-only store) picks the organisms the
+  rebuilt store serves, and the preflight, the generator and the manifest all use that
+  one set, so check it with `build_dataset_lmdb --list-stale --organisms <set>`.
 
 **`EXPERIMENT_ROOT`**
 

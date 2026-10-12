@@ -76,3 +76,7 @@ After that build, a GilaHyper run will read ✗ until two things exist, and the 
 ## 2026.10.12 - tc-data needs no key and port 8724 is open
 
 The `artifacts` line no longer has a `TC_DATA_API_KEY unset` state: tc-data is public (`releases artifacts` lost `--api-key-env`). The radiant `tc-data` probe reads 200 from GilaHyper since the security-group rule for 8724 went in on 2026.10.12 ([[database.tc-data-endpoint]]).
+
+## 2026.10.12 - The ORGANISMS column
+
+The release table has an `ORGANISMS` column after `DATASETS`: the organism set the release's `KgRelease` node records (`scerevisiae`, `scerevisiae,ecoli,pputida`, ...), `unrecorded` for a node written before the organism switch (KG 3.0 reads that way), `-` where the database has no release node. A yeast-only store is therefore visible as such rather than as a short dataset count ([[torchcell.knowledge_graphs.releases]], section 2026.10.12). `default_release` matches the release id by pattern, so the extra column moves nothing it reads.

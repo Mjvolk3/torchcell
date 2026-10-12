@@ -322,3 +322,7 @@ The next FULL rebuild rewrites every entry through the fixed resolver. Tests:
 `test_adapter_schema_consistency.py::test_every_mapped_dataset_fingerprints_the_conf_its_adapter_loads`
 (all 103 mapped adapters, 102 public and 1 private: the conf the gate resolves equals the
 file the adapter opens at construction, and no two datasets share a conf) and the multi-class synthetic module tests in `test_kg_manifest_admission.py`.
+
+## 2026.10.12 - The organism set is an admission check
+
+A store built with `KG_ORGANISMS` records its organism set in the manifest, and `admit` blocks a dataset whose loader declares an organism outside it: a yeast-only KG 4.0 does not silently become a mixed graph through an increment. To grow the store into another organism, admit with `--widen-organisms` (`WIDEN_ORGANISMS=1` in the increment script); `record` then writes the widened set. A manifest from before the switch reads its set off the served datasets' classes. Details in [[torchcell.knowledge_graphs.kg_manifest]], section 2026.10.12.

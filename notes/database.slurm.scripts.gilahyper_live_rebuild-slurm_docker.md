@@ -243,3 +243,20 @@ which is the same number by construction.
 Tests: `tests/torchcell/database/test_live_rebuild_slurm.py` (5) pins that the preflight
 calls `mapped_store_status`, that the superseded inline compare is gone from the script,
 and that the preflight, the dev fence and the generator still read one switch.
+
+## 2026.10.12 - `KG_ORGANISMS`: a live rebuild of a chosen set of organisms
+
+`KG_ORGANISMS` (default `scerevisiae,ecoli,pputida`) is the organism set the new store serves. KG 4.0 can be run yeast-only:
+
+```bash
+sbatch --export=ALL,KG_ORGANISMS=scerevisiae database/slurm/scripts/gilahyper_live_rebuild-slurm_docker.slurm
+# two or more organisms: export from the caller, sbatch splits --export on commas
+KG_ORGANISMS=ecoli,pputida sbatch --export=ALL database/slurm/scripts/gilahyper_live_rebuild-slurm_docker.slurm
+```
+
+- Validated right after `INCLUDE_PRIVATE`, in bash, against `^(scerevisiae|ecoli|pputida)(,(scerevisiae|ecoli|pputida))*$`, then rewritten in enum order (`pputida,scerevisiae` becomes `scerevisiae,pputida`; a repeated name collapses). Anything else stops the job with the value it refused. `tests/torchcell/database/test_live_rebuild_slurm.py` pins the bash list to the `Organism` members, so a new organism fails a test until the script names it.
+- ONE set narrows every walk of the map: the freshness preflight (`mapped_store_status(..., organisms=parse_organisms(sys.argv[3]))`, so `N_DATASETS` counts that set's datasets and a stale store of another organism does not block), the dev fence before and after generation, and the generator (`--organisms $KG_ORGANISMS`). The validation step's `Dataset` count and per-dataset experiment counts are against that same `N_DATASETS`.
+- The config line (`...; include private 1; organisms scerevisiae`), the preflight line and the `DONE` line print the set. `kg_manifest bootstrap --organisms "$KG_ORGANISMS"` records it, and from the manifest it reaches the release snapshot and the `KgRelease` node ([[torchcell.knowledge_graphs.kg_manifest]], [[torchcell.knowledge_graphs.releases]]).
+- A `RESUME_JOB` must be submitted with the set the resumed job generated: the script reads `; organisms <set>` from the old log and stops on a mismatch, or on a log from before this change that names none (the grep carries `|| true`, because under `set -e` and `pipefail` an empty grep would end the job silently).
+
+`gilahyper_uncapped_build-slurm_docker.slurm` is left unchanged: it is superseded for full builds, has not run since the genomes mount, and has no preflight, fence or manifest step for the set to narrow. Run directly, the generator still takes `--organisms` there.

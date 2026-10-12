@@ -166,3 +166,7 @@ I think that we just set process workers to max, then threads to some percentage
 
 - It is becoming apparent that the most sensitive parameter for controlling memory is `chunk_size`.  
 - Moved to #wandb.tcdb.docker_v_m1_study_002
+
+## 2026.10.12 - The organism gate on the hardcoded list
+
+`--organisms` is read the same way as in [[torchcell.knowledge_graphs.create_scerevisiae_kg_small]] and `create_kg`, and the hardcoded dataset list passes `refuse_organism_mismatch` after the private refusal. The list is yeast (Costanzo 2016 dmf), so the gate only ever refuses a bacteria-only invocation, by name and before anything is instantiated (`test_a_bacteria_only_organism_set_refuses_the_hardcoded_yeast_list`).

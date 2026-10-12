@@ -71,3 +71,13 @@ Added `ManifestPinMismatchError(relpath, recorded, pin)`, with the message `raw-
 ## 2026.10.11 - An interned genotype is resolved by the sequential gene set
 
 `compute_gene_set_sequential` reads the genotype through the loaded `interned` table. A natural-isolate store (De Chiara 2022, [[torchcell.datasets.scerevisiae.dechiara2022]]) interns each isolate's genotype once, since it is constant across that isolate's records; a store whose genotypes are inline reads exactly as before. `knowledge_graphs.subset.select_indices` got the same resolution.
+
+## 2026.10.12 - `Organism`: the host organism is declared on the loader class
+
+`Organism(StrEnum)` sits beside `Visibility` with three members in build order: `scerevisiae`, `ecoli`, `pputida`. `ExperimentDataset` annotates `organism: ClassVar[Organism]` and gives it NO value, unlike `visibility`, whose `public` default is correct for every published loader. An organism default would be wrong for two of three packages, so a loader that forgot the declaration must fail rather than inherit one.
+
+- `dataset_organism(cls)` returns the declaration or raises `OrganismUndeclared` naming the class.
+- `ALL_ORGANISMS` is the set of a build that names none; `parse_organisms("scerevisiae,ecoli")` is the spelling `--organisms` and `KG_ORGANISMS` take (an empty, unknown or repeated name raises); `format_organisms` and `ordered_organisms` write a set in enum order, which is how every log, manifest and release spells it.
+- Every registered `ExperimentDataset` declares one: the 153 mapped classes (152 public, 1 private) and `YeastPhenomeDataset`, which is registered but not mapped. The line is `organism = Organism.<x>` directly after the class docstring (after `visibility` on the private Bioscreen loader), 154 lines in 107 loader modules. `tests/torchcell/datasets/test_dataset_organism.py` holds each declaration to the package the loader lives in (`torchcell.datasets.<organism>`, with `private_torchcell` being yeast).
+
+The enum lives here and not in a new `torchcell/datasets/organism.py`: importing anything under `torchcell.datasets` runs the package `__init__`, which imports every loader, and the loaders import this module. The knowledge-graph build reads the attribute through [[torchcell.knowledge_graphs.dataset_adapter_map]].

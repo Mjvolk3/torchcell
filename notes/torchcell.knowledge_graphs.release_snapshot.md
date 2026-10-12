@@ -45,3 +45,7 @@ Applied 2026-10-06 to the three committed snapshots: `2026.09.21-ab6d8c5d` paire
 ## 2026.10.08 - The snapshot carries the pointer set
 
 `KgReleaseSnapshot.artifact_refs: dict[str, list[ArtifactPointer]] | None`, filled by `snapshot_from_manifest` through `kg_manifest.manifest_artifact_refs` (None when any entry is unrecorded). The committed snapshots predate it and load with None; a snapshot written from now on carries the key (as `null` until the build records pointers), so its first key is `artifact_refs`. Test: `test_snapshot_carries_the_pointer_set_through_write_and_load`.
+
+## 2026.10.12 - `organisms` in the committed snapshot
+
+`KgReleaseSnapshot.organisms` (the manifest's set) and `SnapshotDataset.organism` (each entry's declaration) are written into `database/releases/<release>.json`; both are `None` for a release whose manifest predates the switch, which is every snapshot committed so far. Neither enters `composite_sha256`, which stays a hash over content. [[experiments.034-showcase-datasets.scripts.served_dataset_counts]] groups the served-counts page by them.

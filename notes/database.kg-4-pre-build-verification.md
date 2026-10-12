@@ -345,3 +345,17 @@ The 16 rows of the sweep table (`--table`):
 | `gene_essentiality_sgd` | 1329 | `run_gene_essentiality[GENE_ESSENTIALITY_DATASETS:gene_essentiality_sgd]` | FAIL: L1 one_record_per_gene_and_publication, L4 no_viable_deletion_in_smf_costanzo2016, L3 media_membership (17 rules) | 2026-10-09T12:41:30 | `6c3ff3994a` | `data/torchcell/gene_essentiality_sgd/preprocess/verification_report.json` |
 | `syn_leth_db_yeast` | 13996 | `run_synthetic_pairs[SYNTHETIC_PAIR_DATASETS:syn_leth_db_yeast]` | FAIL: L3 media_membership (21 rules) | 2026-10-09T12:32:04 | `6c3ff3994a` | `data/torchcell/syn_leth_db_yeast/preprocess/verification_report.json` |
 | `syn_rescue_db_yeast` | 6942 | `run_synthetic_pairs[SYNTHETIC_PAIR_DATASETS:syn_rescue_db_yeast]` | FAIL: L2 score_defined_by_source, L3 media_membership (19 rules) | 2026-10-09T12:32:16 | `6c3ff3994a` | `data/torchcell/syn_rescue_db_yeast/preprocess/verification_report.json` |
+
+## 2026.10.12 - Running the preflight for one organism set
+
+The live rebuild can now serve a subset of organisms (`KG_ORGANISMS`, [[database.slurm.scripts.gilahyper_live_rebuild-slurm_docker]]), and its freshness preflight walks only that set's map. The owner-side checks take the same set, so the list to rebuild from is the list the job would refuse on:
+
+```bash
+# the stores a yeast-only in-house build reads that are not fresh
+PYTHONPATH=. python -m torchcell.database.build_dataset_lmdb --list-stale --include-private --organisms scerevisiae
+# one per bacterium, or both
+PYTHONPATH=. python -m torchcell.database.build_dataset_lmdb --list-stale --include-private --organisms ecoli
+PYTHONPATH=. python -m torchcell.database.build_dataset_lmdb --list-stale --include-private --organisms ecoli,pputida
+```
+
+On 2026-10-12 the three per-organism lists were 3 (yeast: `Boocock2025Dataset`, `TfDeletionPseudobulkJackson2020Dataset`, the private `InhibitorBioscreenVolk2021Dataset`), 24 (E. coli) and 28 (P. putida), which together are exactly the 55 the unfiltered list names ([[torchcell.database.build_dataset_lmdb]]). A yeast-only KG 4.0 is blocked by those 3 stores alone. The verification sweep above still walks the whole map; to verify one organism's stores, pass each class to `--dataset`.

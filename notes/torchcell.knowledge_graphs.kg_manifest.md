@@ -124,3 +124,15 @@ in name. Three tests on it:
 The synthetic-source tests that already existed (`class_conf_names` scoping, the refusal
 of a class binding zero or two confs) are unchanged; these sit beside them and cover the
 gate end to end instead of the parser.
+
+## 2026.10.12 - The manifest records the organism set it serves
+
+A build can now be asked for a subset of organisms ([[torchcell.knowledge_graphs.dataset_adapter_map]]), so "every mapped dataset" is no longer what a store holds by definition. The manifest says which set it holds.
+
+- `KgBuildManifest.organisms: list[OrganismName] | None` is the set the full build was asked for, in `Organism` order. `bootstrap --organisms <set>` is REQUIRED (the live rebuild passes `KG_ORGANISMS`), and a served dataset whose loader declares an organism outside the stated set is an error naming it, not a recorded contradiction.
+- `KgDatasetEntry.organism` is the loader's declaration, written by the bootstrap and by `record`.
+- `OrganismName` is `Literal["scerevisiae", "ecoli", "pputida"]`, a string for a JSON readable without torchcell, held to the enum by `test_the_enum_order_and_the_manifest_literal_agree`.
+- `served_organisms(manifest)` is the recorded set, or, for a manifest written before this change (both fields `None`), the organisms the served datasets' classes declare. Every build before the switch took the whole map, so the served classes are the honest answer; KG 3.0's 51 datasets read `scerevisiae`. `show` prints the line and says which way it was read.
+- `admit` compares: a dataset whose organism is outside `served_organisms` BLOCKS ("declares organism ecoli and the served store holds scerevisiae only; ... --widen-organisms (or rebuild with KG_ORGANISMS naming it)"). `admit --widen-organisms` lets it through; the report carries `organism` and `widens_organisms`, and `record` adds the organism to `KgBuildManifest.organisms` (computed before the new entry joins, so a pre-switch manifest widens from its served set) with the event note `organisms widened scerevisiae -> scerevisiae,ecoli`. A same-organism admission with the flag widens nothing.
+
+Tests: the four `organism` tests in `tests/torchcell/knowledge_graphs/test_kg_manifest_admission.py` (bootstrap set and refusal, block then widen, no-op widen, pre-switch manifest through `show` and a batch record). The toy loaders there now declare `organism` like real ones.

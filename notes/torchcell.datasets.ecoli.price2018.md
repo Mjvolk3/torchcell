@@ -635,3 +635,22 @@ Report `verification_report.json` (written 2026-10-11 08:03 UTC):
 | L4 | `gene_containment_sgd` | pass | 1.000 of 320 measured genes are BW25113 genes (>= 1.0) |
 | L4 | `current_genome_genes` | pass | every one of the 320 measured systematic names is a gene of the current genome |
 | L1 | `stored_tags_are_loci_of_the_pinned_assembly` | pass | SUPPLEMENTARY: 320 stored tags, statuses {'current': 320}; 0 do not resolve to themselves |
+
+### After the rebase onto main
+
+The stores above were built at the branch's pre-rebase commit `cb310e339`. Rebasing onto
+main, where the Parsons 2006 and De Chiara 2022 loaders had landed, changed two of this
+dataset's labels ([[torchcell.datamodels.compound_identity]], 2026.10.11):
+
+- `Doxycycline hyclate` now resolves to the Parsons 2006 row, PubChem CID 54705095
+  (`DWBSXBGBGHKWOT-WBYAVNBMSA-N`, the record PubChem titles "Doxycycline hyclate"), not the
+  CID 54686183 (`UHHHTIKWXBRCLT-VDBOFHIQSA-N`, titled Doryx) the pass first adopted and the
+  RB-TnSeq store above carries. Table S4's CAS 24390-14-5 looked up by name returns CID 54686183, so the CAS
+  cross-check is now 53 of 63 in agreement; this tenth disagreement is a second PubChem record
+  of the same salt, kept for the reason the other four of that kind are.
+- `Potassium acetate` is renamed, case only, to `potassium acetate`, because De Chiara 2022
+  spells the same compound in lowercase and a key spelled two ways takes the lowercase
+  canonical spelling. Its InChIKey and CID do not change.
+
+The RB-TnSeq store carries both labels and takes both changes at its next build; every dev
+store is stale on main anyway.

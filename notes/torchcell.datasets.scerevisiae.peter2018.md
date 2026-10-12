@@ -100,3 +100,14 @@ Why a new verifier family: the environment-response verifier keys a strain on `(
 ### Next build
 
 The store is a dev-tree build only. Admission: the full KG 4.0 rebuild (the `MeasurementType` change marks 38 served dataset groups stale, so incremental admission does not apply). Adapter conf `isolate_growth_peter2018_adapter.yaml` serves the compact genotype (no per-perturbation nodes, as Caudal 2024) plus environment-perturbation nodes. The adapter is not in the build-time projection's calibration tables (no timing yet); each record's genotype node re-serializes the isolate's ~5,000 perturbations, 35 times per isolate, and that cost has not been measured.
+
+## 2026.10.11 - KCl and ribose resolve through the #726 curator pass's rows
+
+Rebasing the #726 compound-curator branch onto main gave two of this loader's compounds a
+row ([[torchcell.datamodels.compound_identity]], 2026.10.11): `potassium chloride` (the
+YPDKCL2M condition) now carries PubChem CID 4873 and `WCUXLLCKKVVCTQ-UHFFFAOYSA-M` instead
+of a `deferred_pending_source_review` gap on `inchikey`, and the YPRIBOSE medium's bare
+`ribose` resolves to `D-ribose` (CID 10975657, `SRBFZHDQGSBBOR-SOOFDHNKSA-N`), PubChem's
+reading of the bare name, so that component is renamed. No loader code changed; the test
+pins both. The `inchikey` deferred-gap count in the verification table above (1,942: KCl and
+ribose) describes the store as built before this; the next build has none from these two.

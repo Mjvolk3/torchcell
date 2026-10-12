@@ -447,3 +447,56 @@ filled) and `Potassium Chloride` becomes `potassium chloride` with PubChem's
 and so names no dataset, because the compound table is not in the schema closure; that is
 the #726 hazard, and it is why the store measurement exists. KG 4.0 is a full rebuild, so
 this is in scope; it is not an increment.
+
+## 2026.10.11 - The #726 pass rebased onto main: doxycycline hyclate joins the Parsons 2006 row, potassium acetate goes lowercase (#1008)
+
+Main gained the Parsons 2006, Messner 2021 and Jackson 2020 rows (5,533 rows to 5,578,
+sha256 `2771b19b...`) while the pass above was on its branch. Row by row the two sides are
+disjoint, with one exception: both added a row named `doxycycline hyclate`, main's at
+PubChem CID 54705095 (the record PubChem titles "Doxycycline hyclate", keyed by Parsons
+Table S1's CAS 24390-14-5) and the pass's at CID 54686183 (titled Doryx, what the name index
+answers). The table refuses a key claimed twice. Two input-list edits resolve it, each by a
+rule the list already states, and the pass was then rerun against main's table
+(`compound_curator_726_860.py --write` on a copy of the 2026-10-10 response cache, which
+gained three PubChem responses: `$DATA_ROOT/tmp/pubchem_curator_cache_726_860_2026-10-11.json`,
+437 responses, sha256 `6baf585f...`; input list sha256 `a9262d85...`):
+
+- **`doxycycline hyclate | cid=54705095`.** Where two PubChem records are one substance, the
+  record another label of it already resolves to is taken (the N-Acetyl-D-Glucosamine
+  precedent), so the label folds into main's row and the salt stays one node. Girgis 2009
+  already resolved through that row on main. Price 2018's Table S4 CAS, looked up by name,
+  returns CID 54686183, so the CAS cross-check reads 53 of 63 in agreement; the tenth is a
+  second record of the same substance and form, kept for the same reason as the other four
+  of that kind.
+- **`potassium acetate | canonical`**, lowercase. Main's De Chiara 2022 media spell it so
+  (`SPORULATION_KAC` and the loader's YPA pre-culture), and a key spelled two ways takes the
+  lowercase spelling, as `isopropanol` did. Price 2018 and Borchert 2024 records spelled
+  `Potassium acetate` rename, case only. This also closes #1008: the KAc sporulation medium's
+  potassium acetate now carries PubChem CID 517044 and `SCVFZCLFOSHCOH-UHFFFAOYSA-M` instead
+  of a typed gap, so `SPORULATION_KAC`'s `media_identity` digest moves (re-pinned in
+  `test_media_bacterial.py`) and `test_media_library.py` lists only cellobiose as gapped.
+  De Chiara 2022 is not in the served KG v2.0.
+
+Measured on the rerun: 178 labels, the same statuses (166 RESOLVED, 4 RESOLVED_MIXTURE, 3
+UNDEFINED_MIXTURE, 5 UNRESOLVED_PUBLIC); 145 rows added and 27 labels folded; table 5,578 to
+5,723 rows, sha256 `2771b19b...` to `77fbc85b...`, re-pinned in `_TABLE_SHA256`. The rerun's
+table equals, byte for byte, a row-level three-way merge of the two sides without the
+pass's doxycycline hyclate row, before the potassium acetate edit. Lookup-key diff against
+main's table (`compound_identity_table_diff.py`): 177 keys added, 0 renamed, 0 lost, 0
+removed, 0 identifier changes, so no existing row moved. The two edited labels reach, in
+the branch's store scan (`store_reach_after.json`), only the Price 2018, Girgis 2009 and
+Borchert 2024 stores, none of them served, so Hoepfner 2014 (`D-Sorbitol`, `Potassium
+Chloride`) is still the only served dataset the pass touches.
+
+Two loaders that landed on main after the store scan also reach the pass's rows, found by
+their tests rather than by a scan (their stores were not rescanned): Peter 2018's `potassium
+chloride` (the 2 M KCl condition) gains CID 4873 and `WCUXLLCKKVVCTQ-UHFFFAOYSA-M` in place
+of a `deferred_pending_source_review` gap, and its bare `ribose` becomes `D-ribose` (CID
+10975657), the reading PubChem gives the bare name and Tong 2020's `Ribose` already takes;
+and De Chiara 2022's potassium acetate, above. Neither dataset is in the served KG v2.0.
+
+The dev stores this branch rebuilt carry the pre-rebase rows for these two labels: the
+Price 2018 RB-TnSeq and Girgis 2009 stores hold doxycycline hyclate at CID 54686183, and the
+Price 2018 and Borchert 2024 stores hold `Potassium acetate`. Their L0-L4 tables describe
+those stores as built at `cb310e339`; every dev store is stale again on main after later
+schema changes, and the KG 4.0 full rebuild takes the merged table.

@@ -18,4 +18,8 @@ its InChIKey gap now closes. `--classes-file` writes the stale classes as the
 Before the rebuild (`results/compound_curator_726_860_store_reach_before.json`): 40 stale
 stores of 43 that hold a curated label, 0 unreadable; the three fresh ones hold only labels
 whose rows add no identifier (casamino acids in the two Campos 2018 stores, pinene in Niu
-2019). After the rebuild: `results/compound_curator_726_860_store_reach_after.json`.
+2019). After the rebuild (slurm arrays 3809 and 3836, at the branch's pre-rebase
+`cb310e339`; `results/compound_curator_726_860_store_reach_after.json`): 0 stale stores of
+the 42 that hold a curated label, 0 unreadable. MetabolomeSchastnaya2021Dataset left the
+set: its rebuilt store names the compound `fructose`, the existing row's name, which is
+not one of the pass's input labels (`D-fructose` was).

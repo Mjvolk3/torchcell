@@ -562,3 +562,15 @@ served Hoepfner 2014 records, so this is the full-rebuild case, which KG 4.0 is.
 pre-existing `MEDIA_LIBRARY` key's `media_identity` digest moved
 (`test_media_bacterial.py`, all 54 pinned keys pass), and the new entry is a distinct node
 from every other bacterial entry.
+
+## 2026.10.11 - After rebasing the RCH2 entry onto main: `SPORULATION_KAC`'s potassium acetate resolves (#1008)
+
+Rebased onto main, the library holds 101 keys (70 pinned in `PRE_EXISTING_MEDIA_DIGESTS`,
+31 declared in `BACTERIAL_MEDIA_USES`), the RCH2 entry among them. The #726 curator pass
+gave potassium acetate a row, now spelled in lowercase because De Chiara 2022 writes it so
+([[torchcell.datamodels.compound_identity]], 2026.10.11), so the 2% potassium acetate of
+`SPORULATION_KAC` carries PubChem CID 517044 and `SCVFZCLFOSHCOH-UHFFFAOYSA-M` instead of
+the typed `inchikey` gap the "SPORULATION_KAC and PBS" section records, which closes #1008. Its
+`media_identity` digest moved from `d81369e4...` to `1bf48466...` and is re-pinned; it is
+the one pinned key that moved, and De Chiara 2022 is not in the served KG v2.0. The
+library's only remaining gapped substance is cellobiose.

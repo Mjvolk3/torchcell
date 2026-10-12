@@ -375,3 +375,46 @@ glucose no-nitrogen MOPS 492,128; Borchert 2023's modified M9 369,096; RCH2 94,6
 The Rand 2017 attribution is untouched by the medium change: the ten samples keep the
 `rand2017` source study and its notes (the acetate pair attributed by the Methods quote
 only; the set5 glucose pair at the release's 20 mM against the Methods' 40 mM control).
+
+### L0-L4 after the rebuild
+
+Written by the rebuild itself (slurm 3836, `build_dataset_lmdb --verify` through
+`torchcell.datasets.pputida.borchert2024.verify_build`) at the branch's pre-rebase commit
+`cb310e339`. It describes the store as built at that commit; every dev store is stale again
+on main after later schema changes.
+
+#### `RbTnseqBorchert2024Dataset`
+
+1,466,920 records; store built 2026-10-11 07:13 UTC; 1 report(s); verdict **PASS**.
+
+Report `verification_report.json` (written 2026-10-11 11:28 UTC):
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 1466920 records validated |
+| L1 | `count` | pass | observed 1466920, expected 1466920 |
+| L1 | `pair_uniqueness` | pass | 1466920 unique (study, strain, condition) records, one each |
+| L2 | `value_fidelity` | pass | 1466920 values checked |
+| L2 | `se_nonnegative` | pass | 953091 values checked |
+| L2 | `interval_orientation` | pass | 0 of 0 stored intervals do not bracket their value, as declared |
+| L3 | `measurement_type_consistent` | pass | single measurement_type: 'log2_ratio' |
+| L3 | `reference_zero` | pass | numeric rule: reference response == 0 for all 1466920 records |
+| L3 | `environment_perturbed` | pass | all 1466920 experiments carry an environmental edit (perturbation, non-baseline temperature, or non-baseline media; baseline temp=30.0, media='MOPS minimal medium, no carbon source (Neidhardt 1974 formulation as tabulated by Price 2018)') |
+| L1 | `provenance_gaps` | pass | 7952533 documented provenance gaps over 1466920/1466920 records; 0 deferred field(s): []; 43487080 undeclared None values over 18 carrier fields (top: Compound.inchi x21109452, Compound.chebi_id x4883424, Environment.dilution_rate_per_hour x1466920, EnvironmentResponsePhenotype.category x1466920, EnvironmentResponsePhenotype.category_label x1466920) |
+| L1 | `canonical_gene_names` | pass | 4732 systematic names, one canonical spelling each, each current in the genome |
+| L2 | `uncertainty_sanity` | pass | 0 labeled uncertainties, none a zero dispersion; 0 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | pass | environment edits: 1944852 compound references carry a structure identifier; 104104 declare a typed gap (2 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | pass | medium components: 18009992 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | pass | 605696 records on a shared MEDIA_LIBRARY medium, 861224 on a medium deriving from one (4 distinct media) |
+| L4 | `gene_containment_sgd` | pass | 1.000 of 4732 measured genes are reference genes (>= 0.9) |
+| L4 | `current_genome_genes` | pass | every one of the 4732 measured systematic names is a gene of the current genome |
+
+### After the rebase onto main
+
+The store's `Potassium acetate` compound references (6 across its interned environments,
+`results/compound_curator_726_860_store_reach_after.json`) carry the spelling the row had at
+`cb310e339`. Main's De Chiara 2022 media spell the same compound `potassium acetate`, so
+after the rebase the row's canonical spelling is lowercase
+([[torchcell.datamodels.compound_identity]], 2026.10.11) and the next build renames these
+references, case only; the InChIKey (`SCVFZCLFOSHCOH-UHFFFAOYSA-M`) and CID (517044) do
+not change.

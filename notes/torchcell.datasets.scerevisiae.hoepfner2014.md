@@ -387,3 +387,57 @@ The sliced build (every row, the CMB 4008/4013/4016/4017/4019 columns plus 2 oth
 - The 50% detection threshold and the glucose exclusion are decisions, not sourced values; either can be reversed.
 - No schema slot records the IC30 assay on the environment, nor a per-strain background mutation; both live in `sourced_values.json` and the flag file.
 - The dev store `$DATA_ROOT/data/torchcell/env_chemgen_hoepfner2014` must be rebuilt under slurm; the per-record numbers above come from the stream, and `--dev-lmdb` re-tallies them from the rebuilt store.
+
+## 2026.10.11 - Two compounds take the curated rows of the #726 pass (a served-node change)
+
+The #726 curator pass ([[torchcell.datamodels.compound_identity]], 2026.10.11) added rows
+whose lookup keys two of this dataset's compounds use: `D-Sorbitol` (folded into the
+existing `sorbitol` row, CID 5780) and `Potassium Chloride` (the new `potassium chloride`
+row the RCH2 medium needed, CID 4873). Both were stored with an InChIKey derived from
+Hoepfner's own SMILES; a curated row outranks that route (`resolved_compound`), so on the
+store rebuilt by slurm array 3809 (task 10):
+
+| compound before | after | InChIKey |
+|---|---|---|
+| `D-Sorbitol` (no CID) | `sorbitol`, CID 5780 | `FBPFZTCFMRRESA-JGWLITMVSA-N`, unchanged |
+| `Potassium Chloride` (no CID) | `potassium chloride`, CID 4873 | `WCUXLLCKKVVCTQ-UHFFFAOYSA-N` (from the SMILES `[K+].Cl`) -> `WCUXLLCKKVVCTQ-UHFFFAOYSA-M` (PubChem's KCl) |
+
+This dataset is in the served KG v2.0, so these are the only served compound nodes the pass
+moves, and they move only in a full rebuild; KG 4.0 is one. `schema_impact_check.py` does
+not see it (the compound table is outside the schema closure); the store-reach scan does.
+No loader code changed.
+
+### L0-L4 after the rebuild
+
+Verified by `gh_compound_curator_726_860_verify.slurm` (slurm 3872, task 1, 27,589 s) at
+the branch's pre-rebase commit `cb310e339`, through the family runner
+`run_environment_response[ENVIRONMENT_RESPONSE_DATASETS:env_chemgen_hoepfner2014]`: 17
+rules, 0 failed. The build CLI's `--verify` has no per-dataset entry point for this module.
+The table describes the store as built at that commit; every dev store is stale again on
+main after later schema changes, so it is evidence for these two rows, not for the next build.
+
+#### `EnvChemgenHoepfner2014Dataset`
+
+3,083,827 records; store built 2026-10-11 06:51 UTC; 1 report(s); verdict **PASS**.
+
+Report `verification_report.json` (written 2026-10-11 15:43 UTC):
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 3083827 records validated |
+| L1 | `count` | pass | observed 3083827, expected 3083827 |
+| L1 | `pair_uniqueness` | pass | 3083827 unique (study, strain, condition) records, one each |
+| L2 | `value_fidelity` | pass | 3083827 values checked |
+| L2 | `se_nonnegative` | pass | 0 values checked |
+| L2 | `interval_orientation` | pass | 0 of 0 stored intervals do not bracket their value, as declared |
+| L3 | `measurement_type_consistent` | pass | single measurement_type: 'sensitivity_score' |
+| L3 | `reference_zero` | pass | numeric rule: reference response == 0 for all 3083827 records |
+| L3 | `environment_perturbed` | pass | all 3083827 experiments carry an environmental edit (perturbation, non-baseline temperature, or non-baseline media; baseline temp=30.0, media='YPD (yeast extract / peptone / dextrose), liquid') |
+| L1 | `provenance_gaps` | pass | 21100573 documented provenance gaps over 3083827/3083827 records; 7 deferred field(s): ['barcode', 'deleted_span', 'duration_generations', 'duration_hours', 'endpoint', 'relation', 'replaced_allele']; 138691787 undeclared None values over 26 carrier fields (top: Compound.inchi x24393760, Compound.chebi_id x20951019, Compound.pubchem_cid x14542015, Compound.inchikey x12335308, Compound.smiles x12335308) |
+| L1 | `canonical_gene_names` | pass | 5825 systematic names, one canonical spelling each (28 merged-ORF aliases), each current in the genome |
+| L2 | `uncertainty_sanity` | pass | 0 labeled uncertainties, none a zero dispersion; 2995564 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | pass | environment edits: 5890798 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | pass | medium components: 3083827 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | pass | 3083827 records on a shared MEDIA_LIBRARY medium, 0 on a medium deriving from one (1 distinct media) |
+| L4 | `gene_containment_sgd` | pass | 1.000 of 5825 measured genes are S288C reference genes (>= 0.9) |
+| L4 | `current_genome_genes` | pass | every one of the 5825 measured systematic names is a gene of the current genome |

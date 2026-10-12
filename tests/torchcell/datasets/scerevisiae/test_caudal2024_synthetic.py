@@ -505,6 +505,8 @@ def test_side_files_gene_set_reference_index_and_strain_list(
         "Temperature",
         "TemperatureUnit",
         "_ARTIFACT_SHA256",
+        # #901/#902/#903: Media's label validator calls the shared gap helper
+        "_require_value_or_gap",
         "_validate_so_id",
     ]
     assert dataset.experiment_class is RNASeqExpressionExperiment

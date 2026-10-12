@@ -590,6 +590,30 @@ protein synthesis rate phenotype:
         censoring: str
 # --- end #857 ---
 
+# --- begin #921: the phosphosite intensity family ---
+# Per-site phosphopeptide precursor intensity in one sample
+# (PhosphositeIntensityPhenotype): the three dicts keyed by site key
+# (<proteins>|<residue>|<positions>) are JSON strings, the sites' identification
+# records as the JSON of their model_dump; the sample's enums as their value. Every
+# field but provenance_gaps is projected, named by its field.
+phosphosite intensity phenotype:
+    is_a: phenotypic feature
+    represented_as: node
+    properties:
+        graph_level: str
+        label_name: str
+        label_statistic_name: str
+        phosphosite_intensity: str
+        quantification: str
+        sites: str
+        measurement_type: str
+        sample_label: str
+        replicate: int
+        replicate_unit: str
+        harvest_growth_phase: str
+        harvest_optical_density: float
+# --- end #921 ---
+
 # A fitted net-flux map (FluxPhenotype): signed per-reaction fluxes and their
 # confidence bounds as JSON strings; confidence_level and n_samples are scalars of the
 # whole fit. label_statistic_name is null by design (an interval is not one number).
@@ -863,6 +887,7 @@ phenotype member of:
             product titer phenotype,
             protein turnover phenotype,
             protein synthesis rate phenotype,
+            phosphosite intensity phenotype,
             flux phenotype,
             promoter activity phenotype,
             pooled sort seq expression phenotype,

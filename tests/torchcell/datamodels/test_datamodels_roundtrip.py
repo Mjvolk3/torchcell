@@ -54,6 +54,21 @@ FIELD_VALUES: dict[str, Any] = {
     "feature_universe_sha256": "a" * 64,
 }
 
+# One released Potel 2018 Table 2 row (gnd S86), shared by the two #921 examples.
+_PHOSPHOSITE_EXAMPLE: dict[str, Any] = {
+    "protein_ids": ["P00350"],
+    "protein_id_namespace": "uniprotkb_accession",
+    "gene_names": ["gnd"],
+    "positions": [86],
+    "residue": "S",
+    "sequence_windows": ["LLMVKAGAGTDAAIDSLKPYLDKGDIIIDGG"],
+    "localization_probability": 0.999615,
+    "posterior_error_probability": 4.27602e-05,
+    "identification_score": 66.401,
+    "delta_score": 58.487,
+    "diagnostic_peak": False,
+}
+
 # One call of each shape the #731 leaves carry, as released rows of the Lim 2025
 # ``Fig 2B_Mutation List`` sheet. Shared by the four EXAMPLES entries below so the site
 # id and the span designation agree with the call they name.
@@ -210,6 +225,21 @@ EXAMPLES: dict[str, dict[str, Any]] = {
         "rate_unit": "molecules_per_generation",
         "generation_time_minutes": 21.5,
         "measurement_type": "ribosome_profiling_footprint_density",
+    },
+    # #921: a site's key must be its own (proteins|residue|positions) and its window
+    # must center on its residue, so the phosphosite family carries a released row
+    # (Potel 2018 Table 2, gnd S86) rather than generic placeholders.
+    "torchcell.datamodels.schema.Phosphosite": _PHOSPHOSITE_EXAMPLE,
+    "torchcell.datamodels.schema.PhosphositeIntensityPhenotype": {
+        "phosphosite_intensity": {"P00350|S|86": 2714000.0},
+        "quantification": {"P00350|S|86": "quantified"},
+        "sites": {"P00350|S|86": _PHOSPHOSITE_EXAMPLE},
+        "measurement_type": "fe3_imac_lc_msms_maxquant_summed_xic",
+        "sample_label": "Intensity glucose_exp1",
+        "replicate": 1,
+        "replicate_unit": "technical_replicate",
+        "harvest_growth_phase": "exponential",
+        "harvest_optical_density": 0.6,
     },
     "torchcell.datamodels.schema.PresenceAbsencePerturbation": {
         "systematic_gene_name": "YAL001C",

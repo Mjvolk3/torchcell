@@ -7099,6 +7099,308 @@ class ProteinFoldChangeExperiment(Experiment, ModelStrict):
 # --- end #770 ------------------------------------------------------------------- #
 
 
+# --- begin #921: the phosphosite intensity family ------------------------------ #
+# A mass-spectrometry proteome measurement AT A RESIDUE: the precursor signal of the
+# phosphopeptides that carry one modified site, per sample. A SIBLING of
+# ``ProteinAbundancePhenotype`` under ``Phenotype`` (the schema has no proteome parent
+# class; inserting one would change the bases of the served protein-abundance leaf),
+# not a mode of it: a site intensity moves with the site's occupancy AND with its
+# protein's abundance, so keying it on a protein in the abundance leaf would put two
+# quantities under one label (#921). Potel 2018 (E. coli, PXD008369) is the first
+# consumer; Leutert 2023 (yeast) releases the same per-sample shape beside a
+# differential one, which would be a further sibling (a ratio is a meaning change).
+class PhosphoResidue(StrEnum):
+    """The phosphorylated amino acid of a site, by its one-letter code.
+
+    S, T and Y carry an O-phosphate. H carries an N-phosphate, the residue Potel 2018
+    exists to measure: its first author's dissertation, Chapter V (the reprint of the
+    paper), "high ΔG of hydrolysis of the phosphoramidate bond makes the
+    phosphohistidine relatively" unstable, which is why acidic enrichment had missed it
+    (``torchcell-raw/potelWidespreadBacterialProtein2018/paper/thesis/
+    Potel.pdftotext.txt``, sha256 ``05a50657...``). The member value is the letter the
+    release writes in its ``Amino acid`` column.
+    """
+
+    serine = "S"
+    threonine = "T"
+    tyrosine = "Y"
+    histidine = "H"
+
+    @property
+    def is_phosphohistidine(self) -> bool:
+        """True for the N-phosphorylated histidine, False for the three O-phosphates."""
+        return self is PhosphoResidue.histidine
+
+
+class ProteinIdNamespace(StrEnum):
+    """The identifier space a phosphosite's protein ids are written in.
+
+    One member today, the UniProtKB accession a proteomics search database keys on
+    (Potel 2018 searched the "reviewed E. coli K12 database (Uniprot, March 2016)").
+    A release keyed on another namespace (a yeast systematic ORF) is a new member with
+    its own pattern, so the ids of two namespaces never compare as one.
+    """
+
+    uniprotkb_accession = "uniprotkb_accession"
+
+
+PROTEIN_ID_PATTERNS: dict[ProteinIdNamespace, str] = {
+    ProteinIdNamespace.uniprotkb_accession: UNIPROT_ACCESSION_PATTERN
+}
+"""The pattern every protein id of each namespace must match."""
+
+
+class PhosphositeQuantification(StrEnum):
+    """Whether a released site carries a precursor intensity in one sample.
+
+    ``not_quantified`` is the released ``0`` of a MaxQuant intensity column: the site
+    was identified in the experiment but no precursor signal was assigned to it in this
+    sample. It is a status and never a value, because a zero intensity is not a
+    measurement of zero phosphorylation, and never a dropped key, because the site's
+    identification belongs to the record whether or not this sample quantified it.
+    """
+
+    quantified = "quantified"
+    not_quantified = "not_quantified"
+
+
+class CultureGrowthPhase(StrEnum):
+    """The growth phase a batch culture was harvested in, as the source names it.
+
+    Part of the SAMPLE, not of the environment: the medium, temperature and aeration of
+    an exponential and a stationary harvest of one culture are the same, and what
+    differs is when the cells were taken, which is the ``harvest_optical_density``
+    precedent of ``MicroarrayExpressionScorePhenotype``. ``exponential`` is the source's
+    "mid-log phase".
+    """
+
+    exponential = "exponential"
+    stationary = "stationary"
+
+
+PHOSPHOSITE_KEY_SEPARATOR = "|"
+"""Separates the three parts of a phosphosite key: proteins, residue, positions."""
+PHOSPHOSITE_LIST_SEPARATOR = ";"
+"""Joins the members of a multi-protein site, the release's own ``;``."""
+
+
+class Phosphosite(ModelStrict):
+    """One phosphosite as its release identifies it, with the evidence for the call.
+
+    A site the search could not assign to one protein is NOT split: Potel 2018 lists 42
+    of its 2,129 sites on more than one gene (``pflB;tdcE;grcA`` at ``734;738;101``;
+    ``tufA;tufB`` at ``313;313`` under the one accession ``P0CE47``), and the record
+    keeps the released lists in the released order. ``positions`` pairs one 1-based
+    position with each gene name (the Table 2 legend: "Gene names, the gene name of
+    proteins" and "Positions, the position of identified phosphosite within the protein
+    associated with"), while ``protein_ids`` may be shorter, since one accession can
+    stand for identical proteins of two genes.
+
+    The identification fields are the release's per-site evidence, constant across its
+    samples: the localization probability, and the posterior error probability, search
+    score and delta score of the best phosphopeptide carrying the site, with whether a
+    diagnostic immonium ion was seen. ``sequence_windows`` are the residues around the
+    site (``_`` pads a protein terminus), one per distinct protein sequence, and each
+    must center on ``residue``.
+    """
+
+    protein_ids: list[str] = Field(
+        description="the protein ids the release assigns the site to, in its order"
+    )
+    protein_id_namespace: ProteinIdNamespace = Field(
+        description="the identifier space of protein_ids"
+    )
+    gene_names: list[str] = Field(
+        description="the gene names the release lists for the site, in its order"
+    )
+    positions: list[int] = Field(
+        description="1-based residue position of the site in each gene's protein, "
+        "paired with gene_names"
+    )
+    residue: PhosphoResidue = Field(description="the phosphorylated amino acid")
+    sequence_windows: list[str] = Field(
+        description="the released sequence window(s) centered on the site, one per "
+        "distinct protein sequence; '_' pads a terminus"
+    )
+    localization_probability: float = Field(
+        description="probability the phosphate sits on this residue, in [0, 1]"
+    )
+    posterior_error_probability: float = Field(
+        description="posterior error probability of the best phosphopeptide carrying "
+        "the site, in [0, 1]"
+    )
+    identification_score: float = Field(
+        description="search-engine score of that best phosphopeptide (Andromeda for a "
+        "MaxQuant release)"
+    )
+    delta_score: float = Field(
+        description="score difference to the second-best peptide with a different "
+        "sequence"
+    )
+    diagnostic_peak: bool = Field(
+        description="whether a diagnostic immonium ion was observed in the spectra "
+        "identifying the site"
+    )
+
+    @model_validator(mode="after")
+    def _check_site(self) -> "Phosphosite":
+        """Ids in their namespace, paired positions, centered windows, probabilities."""
+        if not self.protein_ids:
+            raise ValueError("a phosphosite names at least one protein id")
+        pattern = PROTEIN_ID_PATTERNS[self.protein_id_namespace]
+        for protein_id in self.protein_ids:
+            if not re.match(pattern, protein_id):
+                raise ValueError(
+                    f"{protein_id!r} is not a {self.protein_id_namespace} id"
+                )
+        if not self.gene_names or any(not name for name in self.gene_names):
+            raise ValueError("a phosphosite names at least one non-empty gene name")
+        if len(self.positions) != len(self.gene_names):
+            raise ValueError(
+                f"{len(self.positions)} positions for {len(self.gene_names)} gene "
+                "names; the release pairs one position with each gene"
+            )
+        if any(position < 1 for position in self.positions):
+            raise ValueError(f"positions are 1-based, got {self.positions}")
+        if not self.sequence_windows:
+            raise ValueError("a phosphosite carries at least one sequence window")
+        for window in self.sequence_windows:
+            if len(window) % 2 == 0:
+                raise ValueError(f"window {window!r} has no center residue")
+            if window[len(window) // 2] != self.residue.value:
+                raise ValueError(
+                    f"window {window!r} does not center on {self.residue.value}"
+                )
+        for name in ("localization_probability", "posterior_error_probability"):
+            value = getattr(self, name)
+            if not math.isfinite(value) or not 0.0 <= value <= 1.0:
+                raise ValueError(f"{name} is {value}, not a probability in [0, 1]")
+        for name in ("identification_score", "delta_score"):
+            if not math.isfinite(getattr(self, name)):
+                raise ValueError(f"{name} must be finite")
+        return self
+
+    def key(self) -> str:
+        """The site's record key: released proteins, residue and positions, verbatim.
+
+        ``P00350|S|86`` for a one-protein site and ``P09373;P42632;P68066|S|734;738;101``
+        for a site the release lists on three, so a multi-protein site is one key and
+        never three guessed ones.
+        """
+        return PHOSPHOSITE_KEY_SEPARATOR.join(
+            (
+                PHOSPHOSITE_LIST_SEPARATOR.join(self.protein_ids),
+                self.residue.value,
+                PHOSPHOSITE_LIST_SEPARATOR.join(str(p) for p in self.positions),
+            )
+        )
+
+
+class PhosphositeIntensityPhenotype(Phenotype, ModelStrict):
+    """Per-site phosphopeptide precursor intensity in ONE sample, as released.
+
+    One record is one sample (one enrichment and injection). ``sites`` holds every site
+    the release identifies, keyed by :meth:`Phosphosite.key`; ``quantification`` says
+    for each of them whether this sample assigned it an intensity; and
+    ``phosphosite_intensity`` holds the released number for exactly the quantified
+    ones. A released ``0`` is therefore ``not_quantified`` and absent from the intensity
+    map, never a stored zero and never a dropped site. The number is the instrument's
+    summed precursor signal on its own arbitrary scale (``measurement_type`` names the
+    acquisition and the software), so two samples compare only within one release.
+
+    The sample is described where it is measured: ``sample_label`` is the release's own
+    name for the column, ``replicate`` its replicate number, ``replicate_unit`` whether
+    that replicate is a biological or a technical one, and ``harvest_growth_phase`` /
+    ``harvest_optical_density`` when the culture was taken. Each of the last three is a
+    value or a typed ``ProvenanceGap``: Potel 2018 calls its twelve samples "n=12
+    biological replicates" in two SI legends while its reporting summary and the
+    dissertation reprint call each condition's three "technical triplicates", so the
+    unit is a gap until the published Online Methods are read (#922), not a pick.
+    """
+
+    graph_level: str = "node"
+    label_name: str = "phosphosite_intensity"
+    label_statistic_name: str | None = None
+
+    phosphosite_intensity: dict[str, float] = Field(
+        description="site key -> the released precursor intensity, for the sites this "
+        "sample quantified; strictly positive"
+    )
+    quantification: dict[str, PhosphositeQuantification] = Field(
+        description="site key -> whether this sample quantified the site, for every "
+        "site the release identifies"
+    )
+    sites: dict[str, Phosphosite] = Field(
+        description="site key -> the site's proteins, residue, positions and "
+        "identification evidence"
+    )
+    measurement_type: str = Field(
+        description="the acquisition and quantification, e.g. "
+        "'fe3_imac_lc_msms_maxquant_summed_xic'"
+    )
+    sample_label: str = Field(
+        description="the release's own name for this sample's column, verbatim"
+    )
+    replicate: int = Field(description="the release's replicate number, 1-based")
+    replicate_unit: SampleUnit | None = Field(
+        default=None,
+        description="what one replicate is (biological or technical); None only with "
+        "a ProvenanceGap",
+    )
+    harvest_growth_phase: CultureGrowthPhase | None = Field(
+        default=None,
+        description="the growth phase the culture was harvested in; None only with a "
+        "ProvenanceGap",
+    )
+    harvest_optical_density: float | None = Field(
+        default=None,
+        description="OD600 of the culture at harvest, as the source states it; None "
+        "only with a ProvenanceGap",
+    )
+
+    @model_validator(mode="after")
+    def validate_phosphosite_intensity(self) -> "PhosphositeIntensityPhenotype":
+        """Keys agree across the three maps; intensities positive; sample fields set."""
+        if not self.sites:
+            raise ValueError("sites cannot be empty")
+        for key, site in self.sites.items():
+            if site.key() != key:
+                raise ValueError(
+                    f"site key {key!r} is not its site's key {site.key()!r}"
+                )
+        if set(self.quantification) != set(self.sites):
+            raise ValueError("quantification keys must match sites keys")
+        quantified = {
+            key
+            for key, status in self.quantification.items()
+            if status is PhosphositeQuantification.quantified
+        }
+        if set(self.phosphosite_intensity) != quantified:
+            raise ValueError(
+                "phosphosite_intensity keys must be exactly the quantified sites"
+            )
+        for key, value in self.phosphosite_intensity.items():
+            if not math.isfinite(value) or value <= 0.0:
+                raise ValueError(
+                    f"phosphosite_intensity for {key} is {value}; an unquantified "
+                    "site is a not_quantified status, never a stored zero"
+                )
+        if not self.sample_label or not self.measurement_type:
+            raise ValueError("sample_label and measurement_type are non-empty")
+        if self.replicate < 1:
+            raise ValueError(f"replicate is 1-based, got {self.replicate}")
+        od = self.harvest_optical_density
+        if od is not None and (not math.isfinite(od) or od <= 0.0):
+            raise ValueError(f"harvest_optical_density must be positive, got {od}")
+        _require_value_or_gap(
+            self, ("replicate_unit", "harvest_growth_phase", "harvest_optical_density")
+        )
+        return self
+
+
+# --- end #921 ------------------------------------------------------------------- #
+
+
 class AssayType(StrEnum):
     """HOW an environment-response readout was physically measured (experimental design).
 
@@ -9695,6 +9997,28 @@ class BacterialProteinFoldChangeExperiment(Experiment, ModelStrict):
 # --- end #770 ------------------------------------------------------------------- #
 
 
+# --- begin #921: the phosphosite intensity family ------------------------------ #
+class BacterialPhosphositeIntensityExperimentReference(
+    ExperimentReference, ModelStrict
+):
+    """Assembly-pinned reference for a bacterial phosphosite-intensity experiment."""
+
+    experiment_reference_type: str = "bacterial_phosphosite_intensity"
+    genome_reference: AssemblyReferenceGenome
+    phenotype_reference: PhosphositeIntensityPhenotype
+
+
+class BacterialPhosphositeIntensityExperiment(Experiment, ModelStrict):
+    """Bacterial phosphoproteome experiment: per-site intensities in one sample."""
+
+    experiment_type: str = "bacterial_phosphosite_intensity"
+    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
+    phenotype: PhosphositeIntensityPhenotype
+
+
+# --- end #921 ------------------------------------------------------------------- #
+
+
 class BacterialMetaboliteExperimentReference(ExperimentReference, ModelStrict):
     """Assembly-pinned reference for a bacterial metabolite experiment."""
 
@@ -10507,6 +10831,7 @@ PhenotypeType = (
     | ProductTiterPhenotype
     | ProteinTurnoverPhenotype
     | ProteinSynthesisRatePhenotype  # issue #857
+    | PhosphositeIntensityPhenotype  # issue #921
     | FluxPhenotype
     | PromoterActivityPhenotype
     | PooledSortSeqExpressionPhenotype  # Vaishnav 2022 (#991)
@@ -10558,6 +10883,7 @@ ExperimentType = (
     # --- begin #770: the protein fold-change family ---
     | BacterialProteinFoldChangeExperiment
     # --- end #770 ---
+    | BacterialPhosphositeIntensityExperiment  # issue #921
     | BacterialMetaboliteExperiment
     | BacterialRNASeqExpressionExperiment
     | BacterialVisualScoreExperiment
@@ -10609,6 +10935,7 @@ ExperimentReferenceType = (
     # --- begin #770: the protein fold-change family ---
     | BacterialProteinFoldChangeExperimentReference
     # --- end #770 ---
+    | BacterialPhosphositeIntensityExperimentReference  # issue #921
     | BacterialMetaboliteExperimentReference
     | BacterialRNASeqExpressionExperimentReference
     | BacterialVisualScoreExperimentReference
@@ -10660,6 +10987,9 @@ EXPERIMENT_TYPE_MAP = {
     # --- begin #770: the protein fold-change family ---
     "bacterial_protein_fold_change": BacterialProteinFoldChangeExperiment,
     # --- end #770 ---
+    "bacterial_phosphosite_intensity": (  # issue #921
+        BacterialPhosphositeIntensityExperiment
+    ),
     "bacterial_metabolite": BacterialMetaboliteExperiment,
     "bacterial_rnaseq_expression": BacterialRNASeqExpressionExperiment,
     "bacterial_visual_score": BacterialVisualScoreExperiment,
@@ -10716,6 +11046,9 @@ EXPERIMENT_REFERENCE_TYPE_MAP = {
     # --- begin #770: the protein fold-change family ---
     "bacterial_protein_fold_change": (BacterialProteinFoldChangeExperimentReference),
     # --- end #770 ---
+    "bacterial_phosphosite_intensity": (  # issue #921
+        BacterialPhosphositeIntensityExperimentReference
+    ),
     "bacterial_metabolite": BacterialMetaboliteExperimentReference,
     "bacterial_rnaseq_expression": BacterialRNASeqExpressionExperimentReference,
     "bacterial_visual_score": BacterialVisualScoreExperimentReference,

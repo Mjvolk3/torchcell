@@ -329,6 +329,12 @@ class CellAdapter:
                 self._protein_synthesis_rate_phenotype_node,
             ),
             # --- end #857 ---
+            # --- begin #921: the phosphosite intensity family ---
+            (
+                "phosphosite intensity phenotype (chunked)",
+                self._phosphosite_intensity_phenotype_node,
+            ),
+            # --- end #921 ---
             ("flux phenotype (chunked)", self._flux_phenotype_node),
             (
                 "promoter activity phenotype (chunked)",
@@ -441,6 +447,12 @@ class CellAdapter:
                 self._get_protein_synthesis_rate_phenotype_reference_nodes,
             ),
             # --- end #857 ---
+            # --- begin #921: the phosphosite intensity family ---
+            (
+                "phosphosite intensity phenotype reference",
+                self._get_phosphosite_intensity_phenotype_reference_nodes,
+            ),
+            # --- end #921 ---
             ("flux phenotype reference", self._get_flux_phenotype_reference_nodes),
             (
                 "promoter activity phenotype reference",
@@ -2886,6 +2898,76 @@ class CellAdapter:
         return nodes
 
     # --- end #857 ---
+
+    # --- begin #921: the phosphosite intensity family ---
+    @staticmethod
+    def _phosphosite_intensity_properties(phenotype: Any) -> dict[str, Any]:
+        """Node properties of a ``PhosphositeIntensityPhenotype`` (either side)."""
+        replicate_unit = phenotype.replicate_unit
+        phase = phenotype.harvest_growth_phase
+        return {
+            "graph_level": phenotype.graph_level,
+            "label_name": phenotype.label_name,
+            "label_statistic_name": phenotype.label_statistic_name,
+            "phosphosite_intensity": json.dumps(phenotype.phosphosite_intensity),
+            "quantification": json.dumps(
+                {key: status.value for key, status in phenotype.quantification.items()}
+            ),
+            "sites": json.dumps(
+                {
+                    key: site.model_dump(mode="json")
+                    for key, site in phenotype.sites.items()
+                }
+            ),
+            "measurement_type": phenotype.measurement_type,
+            "sample_label": phenotype.sample_label,
+            "replicate": phenotype.replicate,
+            "replicate_unit": (
+                replicate_unit.value if replicate_unit is not None else None
+            ),
+            "harvest_growth_phase": phase.value if phase is not None else None,
+            "harvest_optical_density": phenotype.harvest_optical_density,
+        }
+
+    @data_chunker
+    def _phosphosite_intensity_phenotype_node(
+        self, data: dict[str, Any], method_name: str
+    ) -> BioCypherNode:
+        phenotype = data["experiment"].phenotype
+        phenotype_id = hashlib.sha256(
+            json.dumps(phenotype.model_dump()).encode("utf-8")
+        ).hexdigest()
+        return BioCypherNode(
+            node_id=phenotype_id,
+            preferred_id=f"phenotype_{phenotype_id}",
+            node_label="phosphosite intensity phenotype",
+            properties=self._phosphosite_intensity_properties(phenotype),
+        )
+
+    def _get_phosphosite_intensity_phenotype_reference_nodes(
+        self,
+    ) -> list[BioCypherNode]:
+        nodes = []
+        seen_node_ids: set[str] = set()
+        for data in tqdm(self.dataset.experiment_reference_index):
+            phenotype = data.reference.phenotype_reference
+            phenotype_id = hashlib.sha256(
+                json.dumps(phenotype.model_dump()).encode("utf-8")
+            ).hexdigest()
+            if phenotype_id in seen_node_ids:
+                continue
+            seen_node_ids.add(phenotype_id)
+            nodes.append(
+                BioCypherNode(
+                    node_id=phenotype_id,
+                    preferred_id="phosphosite intensity phenotype",
+                    node_label="phosphosite intensity phenotype",
+                    properties=self._phosphosite_intensity_properties(phenotype),
+                )
+            )
+        return nodes
+
+    # --- end #921 ---
 
     @staticmethod
     def _flux_properties(phenotype: Any) -> dict[str, Any]:

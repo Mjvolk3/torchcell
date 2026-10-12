@@ -1,0 +1,484 @@
+{
+  "record_version": 1,
+  "slug": "phosphosite-intensity-leaf",
+  "date": "2026-10-12",
+  "pr": null,
+  "author_kind": "agent",
+  "base_commit": "007cd23b0631e18574606da9164c9d78dbc01577",
+  "python_version": "3.13.0",
+  "symbols": [
+    {
+      "symbol": "BacterialPhosphositeIntensityExperiment",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "06d7b6f045469b83957440d6514982a276edfefb042b05ebaaa983778b5719b7",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "BacterialPhosphositeIntensityExperimentReference",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "739a305daf3522fcdb705fc63d3fcdb25c91b499d5cab22d52e27958839eaf65",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "CultureGrowthPhase",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "e147152911a87a3a4d88a08c5e93a743000932ff395b9e1e25085c809ac50667",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "EXPERIMENT_REFERENCE_TYPE_MAP",
+      "status": "modified",
+      "kinds": [
+        "enum_member_added"
+      ],
+      "fingerprint_before": "4aed17de23e781b9b0e29febf5998ae80436766acf05f6f0653ef1681953dde4",
+      "fingerprint_after": "febd72bb348a45b2296a12c230ae7b7c5e4e64f13c494f7a868302d9d9ca8890",
+      "impact": "stale",
+      "reasons": [
+        "gained members [\"'bacterial_phosphosite_intensity': BacterialPhosphositeIntensityExperimentReference\"]"
+      ]
+    },
+    {
+      "symbol": "EXPERIMENT_TYPE_MAP",
+      "status": "modified",
+      "kinds": [
+        "enum_member_added"
+      ],
+      "fingerprint_before": "1f03bad63e2bf27bdcefcb27bf82ba5456bca5193d59adc196a32b501ad0b6df",
+      "fingerprint_after": "02c0dbd291a35af67475a9f074227278da98be5dedef041eb113e79c128c0722",
+      "impact": "stale",
+      "reasons": [
+        "gained members [\"'bacterial_phosphosite_intensity': BacterialPhosphositeIntensityExperiment\"]"
+      ]
+    },
+    {
+      "symbol": "ExperimentReferenceType",
+      "status": "modified",
+      "kinds": [
+        "enum_member_added"
+      ],
+      "fingerprint_before": "30879d544129dc3d2bcf3cd6d12da8de05bde847a8963f658b61d565f41cd588",
+      "fingerprint_after": "94e422ffc115d1a0fbadddc789d5d9b9bec3619f4a710628737fe03a3ae5273f",
+      "impact": "stale",
+      "reasons": [
+        "gained members ['BacterialPhosphositeIntensityExperimentReference']"
+      ]
+    },
+    {
+      "symbol": "ExperimentType",
+      "status": "modified",
+      "kinds": [
+        "enum_member_added"
+      ],
+      "fingerprint_before": "a7044ea3512cb05556e56d95356f09cfdbd9c5828b128c17440eabf8afee9d10",
+      "fingerprint_after": "3ae5cad84798397c00853c154fa4655563d90675bb6f613bb65772cb04115554",
+      "impact": "stale",
+      "reasons": [
+        "gained members ['BacterialPhosphositeIntensityExperiment']"
+      ]
+    },
+    {
+      "symbol": "PHOSPHOSITE_KEY_SEPARATOR",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "de2d7f875f3b511724194f7de3925341284d159d11f95d040dd31086df018784",
+      "impact": "stale",
+      "reasons": [
+        "new module-level binding"
+      ]
+    },
+    {
+      "symbol": "PHOSPHOSITE_LIST_SEPARATOR",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "a11d7e522ded60436b1373591b07bd79977a621212b69a8e4a4e22df4c93f817",
+      "impact": "stale",
+      "reasons": [
+        "new module-level binding"
+      ]
+    },
+    {
+      "symbol": "PROTEIN_ID_PATTERNS",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "51c21727d2d3ae39d7997ebf5b55e3ee0a11c3def6de26a5ab61e6e54e353101",
+      "impact": "stale",
+      "reasons": [
+        "new module-level binding"
+      ]
+    },
+    {
+      "symbol": "PhenotypeType",
+      "status": "modified",
+      "kinds": [
+        "enum_member_added"
+      ],
+      "fingerprint_before": "54c9d19ae5648759e45ac776b7b177a404054c325e991af3b7038e1d8db98682",
+      "fingerprint_after": "cb0a46e0358ced31c0d94e4cbe9520349285e8c68741763ac8d1fdad4fc27389",
+      "impact": "stale",
+      "reasons": [
+        "gained members ['PhosphositeIntensityPhenotype']"
+      ]
+    },
+    {
+      "symbol": "PhosphoResidue",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "d082bd03b65f9dd9147075fb76a9022a0714f95b221cdaed50640b034ebe2dce",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "Phosphosite",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "212305c60ec73945220413d556b3fd7d31036c4e278963d3803f042f5b763cba",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "PhosphositeIntensityPhenotype",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "9e670ed3e617b459988388596def7764335f42c0ddf68d685e9615a46730bbef",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "PhosphositeQuantification",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "2e24d4f8dc3b3282241593e29dffe6a156517f3f64c186e09c1032e7852be630",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "ProteinIdNamespace",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "5fb44aa8d1d5b15bd174f0393532a2816f4361991b36a5ca6143edba6076fd5e",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    }
+  ],
+  "correctness_argument": "Potel 2018 (Nature Methods 15:187, PXD008369) releases one per-record artifact, Supplementary Table 2: 2,129 phosphosites (S 1,220, T 501, Y 162, H 246) each with a MaxQuant summed-XIC intensity in 12 samples, a localization probability, the PEP, Andromeda score and delta score of the best phosphopeptide and a diagnostic-peak flag (measured by experiments/036-dataset-fixes-before-kg-build/scripts/potel2018_release_inventory.py). No served class can hold it (#921): none of the 21 Phenotype subclasses has a site, residue or modification field, and ProteinAbundancePhenotype is keyed by protein with a protein abundance as its number. A site intensity is the precursor signal of the phosphopeptides carrying one modified residue, so it moves with the site's occupancy AND its protein's abundance; storing it under a protein key in the abundance leaf would change what that leaf's number means (a Rule 3 meaning change) and put two quantities under one label. By Rule 6 the physical measurement is the same family as protein abundance (LC-MS/MS precursor intensity) but the released quantity differs in what it is keyed on and what it measures, so it is a SIBLING leaf, not a field on the abundance leaf and not a child of it. The schema has no proteome parent class; inserting one would change the bases of the served ProteinAbundancePhenotype (a closure change across six served proteome stores), so the new leaf is a direct Phenotype subclass beside it, and the test pins ProteinAbundancePhenotype.__bases__ unchanged. Everything added is additive: eight new classes, three new bindings, and one new member in each of the five unions/type maps that let L0 and the KG dispatch the new experiment pair. schema_impact reports 0 breaking; the five modified bindings re-stale 11 dev-store datasets through ExperimentType / the type maps (their records serialize identically). The leaf states only what the release determines: the 42 multi-gene sites are one key each, in the released order (proteins|residue|positions), never split; a released 0 (12,095 of 25,548 cells) is a typed not_quantified status, never a stored zero and never a dropped site; and the replicate unit, which the release states both ways (two SI legends say 'n=12 biological replicates', the reporting summary and the dissertation reprint say technical triplicates), is value-or-gap rather than a pick. Growth phase and harvest OD are sample fields on the leaf (the harvest_optical_density precedent of MicroarrayExpressionScorePhenotype), because Environment has no growth-phase slot and adding one would move every served closure.",
+  "measurement_type_decision": true,
+  "source_quotes": [
+    {
+      "value": "per-sample MaxQuant summed XIC of the phosphopeptides carrying the site",
+      "provenance": {
+        "source_uri": "data/41592_2018_BFnmeth4580_MOESM4_ESM.legends.txt",
+        "citation_key": "potelWidespreadBacterialProtein2018",
+        "sha256": "a85a3a155971d28456c6b3661b96bc662dfc46310c1c0d487283cb4e8dcfb57d",
+        "method": "deterministic text rendering of the Description sheet of Supplementary Table 2 (raw mirror)",
+        "page": "Supplementary Table 2, Description, column 17",
+        "retrieved": null
+      },
+      "quote": "17. Intensity glucose_exp1, summed up eXtracted Ion Current (XIC) of all isotopic clusters associated with the identified phosphopeptdie sequence in the 1st replicate of glucose-fed exponential E. coli cells.",
+      "note": null
+    },
+    {
+      "value": "a per-site localization probability",
+      "provenance": {
+        "source_uri": "data/41592_2018_BFnmeth4580_MOESM4_ESM.legends.txt",
+        "citation_key": "potelWidespreadBacterialProtein2018",
+        "sha256": "a85a3a155971d28456c6b3661b96bc662dfc46310c1c0d487283cb4e8dcfb57d",
+        "method": "deterministic text rendering of the Description sheet of Supplementary Table 2 (raw mirror)",
+        "page": "Supplementary Table 2, Description, column 5",
+        "retrieved": null
+      },
+      "quote": "5. Localization prob, the probability of phosphosite assignment.",
+      "note": null
+    },
+    {
+      "value": "one position per protein a site is associated with",
+      "provenance": {
+        "source_uri": "data/41592_2018_BFnmeth4580_MOESM4_ESM.legends.txt",
+        "citation_key": "potelWidespreadBacterialProtein2018",
+        "sha256": "a85a3a155971d28456c6b3661b96bc662dfc46310c1c0d487283cb4e8dcfb57d",
+        "method": "deterministic text rendering of the Description sheet of Supplementary Table 2 (raw mirror)",
+        "page": "Supplementary Table 2, Description, column 4",
+        "retrieved": null
+      },
+      "quote": "4. Positions, the position of identified phosphosite within the protein associated with.",
+      "note": null
+    },
+    {
+      "value": "UniProtKB accessions of the K-12 reference proteome are the protein ids",
+      "provenance": {
+        "source_uri": "paper/thesis/Potel.pdftotext.txt",
+        "citation_key": "potelWidespreadBacterialProtein2018",
+        "sha256": "05a506579dcbc869d056af2bc81ecabf4f82debb4a84dda73b7b35075fdbd81f",
+        "method": "pdftotext -layout of the first author's dissertation, Chapter V reprints the paper (raw mirror)",
+        "page": "Chapter V, Materials and Methods, data analysis",
+        "retrieved": null
+      },
+      "quote": "E. coli K12 database (Uniprot, March 2016)",
+      "note": null
+    },
+    {
+      "value": "histidine carries an N-phosphate (phosphoramidate)",
+      "provenance": {
+        "source_uri": "paper/thesis/Potel.pdftotext.txt",
+        "citation_key": "potelWidespreadBacterialProtein2018",
+        "sha256": "05a506579dcbc869d056af2bc81ecabf4f82debb4a84dda73b7b35075fdbd81f",
+        "method": "pdftotext -layout of the first author's dissertation, Chapter V reprints the paper (raw mirror)",
+        "page": "Chapter V, Introduction",
+        "retrieved": null
+      },
+      "quote": "high \u0394G of hydrolysis of the phosphoramidate bond makes the phosphohistidine relatively",
+      "note": null
+    },
+    {
+      "value": "the twelve samples are called biological replicates by two SI legends",
+      "provenance": {
+        "source_uri": "si/41592_2018_BFnmeth4580_MOESM1_ESM.pdftotext.txt",
+        "citation_key": "potelWidespreadBacterialProtein2018",
+        "sha256": "4dee5c2a098fdaf95cfbe899c773348fe01281d535f9147708ffc9be79bd40de",
+        "method": "pdftotext -layout of Supplementary Text and Figures (raw mirror)",
+        "page": "Supplementary Figure 3 legend",
+        "retrieved": null
+      },
+      "quote": "The same UV profiles were observed for the n=12 biological replicates.",
+      "note": null
+    },
+    {
+      "value": "and technical triplicates by the reporting summary",
+      "provenance": {
+        "source_uri": "si/41592_2018_BFnmeth4580_MOESM2_ESM.pdftotext.txt",
+        "citation_key": "potelWidespreadBacterialProtein2018",
+        "sha256": "9951a1ac02a5090d343134b97440acf618757c369e12310cc3b4ba23ee37ee43",
+        "method": "pdftotext -layout of the Life Sciences Reporting Summary (raw mirror)",
+        "page": "Life Sciences Reporting Summary, 1. Sample size",
+        "retrieved": null
+      },
+      "quote": "we made technical triplicates (after digestion, before enrichment) of each",
+      "note": null
+    }
+  ],
+  "alternatives_rejected": [
+    {
+      "alternative": "Key each site as '<locus>_<residue><position>' in ProteinAbundancePhenotype (the issue's first sketch)",
+      "why_rejected": "It changes what a served leaf's key and number mean (a protein -> a site, an abundance -> a site precursor signal), a Rule 3 meaning change, and pools two quantities under one label in six served proteome stores' leaf."
+    },
+    {
+      "alternative": "Insert a ProteomePhenotype parent above ProteinAbundancePhenotype, ProteinFoldChangePhenotype and the new leaf",
+      "why_rejected": "It changes the bases of served classes, so every served proteome closure moves (breaking) for a grouping no query needs today; the DAG placement is stated in the docstrings and pinned by a test instead."
+    },
+    {
+      "alternative": "Store a released 0 as an intensity of 0.0, or drop the site from that sample's record",
+      "why_rejected": "A MaxQuant 0 is 'not quantified', not zero phosphorylation; storing it as a value fabricates a measurement, and dropping it loses the site's identification for that sample. A typed status keeps both honest."
+    },
+    {
+      "alternative": "Split each multi-protein site into one key per gene",
+      "why_rejected": "The search could not assign the peptide to one protein (e.g. tufA;tufB under one accession P0CE47); splitting would invent three measurements where the release made one."
+    },
+    {
+      "alternative": "Put growth phase on Environment (or CultureEnvironment)",
+      "why_rejected": "Environment is in every served closure and CultureEnvironment in the chemogenomic ones; a new field there moves them all. The harvest point is part of the sample, which the leaf describes."
+    }
+  ],
+  "served_release": "2026.10.06-4b293d34",
+  "affected_loaders": [
+    {
+      "loader": "torchcell/datasets/ecoli/caglar2017.py",
+      "dataset_classes": [
+        "RnaseqCaglar2017Dataset",
+        "ProteomeCaglar2017Dataset",
+        "ProteinFoldChangeCaglar2017Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ExperimentType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/gupta2024.py",
+      "dataset_classes": [
+        "ProteinTurnoverGupta2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ExperimentType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/ishii2007.py",
+      "dataset_classes": [
+        "_Ishii2007Dataset",
+        "MetabolomeIshii2007Dataset",
+        "ProteomeIshii2007Dataset",
+        "FluxIshii2007Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ExperimentType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/li2014.py",
+      "dataset_classes": [
+        "ProteinSynthesisRateLi2014Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ExperimentType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/schastnaya2021.py",
+      "dataset_classes": [
+        "MetabolomeSchastnaya2021Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ExperimentType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/desiqueira2025.py",
+      "dataset_classes": [
+        "ProteomeDeSiqueira2025Dataset",
+        "ProteomePercentDeSiqueira2025Dataset",
+        "ProteomeLog10PercentDeSiqueira2025Dataset",
+        "IsoprenolTiterDeSiqueira2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ExperimentType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/lim2022.py",
+      "dataset_classes": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ExperimentType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/private_torchcell/volk2021_inhibitor_bioscreen.py",
+      "dataset_classes": [
+        "InhibitorBioscreenVolk2021Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ExperimentType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/dechiara2022.py",
+      "dataset_classes": [
+        "_DeChiara2022Dataset",
+        "_GrowthDeChiara2022Dataset",
+        "DoublingTimeDeChiara2022Dataset",
+        "CellYieldDeChiara2022Dataset",
+        "LifeCycleDeChiara2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EXPERIMENT_REFERENCE_TYPE_MAP",
+        "EXPERIMENT_TYPE_MAP"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/hoepfner2014.py",
+      "dataset_classes": [
+        "EnvChemgenHoepfner2014Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenHoepfner2014Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "ExperimentType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/piotrowski2017.py",
+      "dataset_classes": [
+        "EnvChemgenPiotrowski2017Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ExperimentType"
+      ]
+    }
+  ],
+  "served_datasets": [
+    "EnvChemgenHoepfner2014Dataset"
+  ],
+  "rebuild_scope": "full_kg_rebuild",
+  "owner_sign_off": {
+    "signed": false,
+    "quote": null,
+    "url": null
+  }
+}

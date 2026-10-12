@@ -80,7 +80,13 @@ LANE_ROOTS: dict[str, tuple[str, ...]] = {
         "Solvent",
         "Temperature",
     ),
-    "phenotype": ("Phenotype",),
+    "phenotype": (
+        "Phenotype",
+        # One identified phosphosite (#921): the proteins, residue and positions a
+        # phosphosite-intensity phenotype keys its values on, with the evidence for the
+        # call. It is part of what was measured, so it sits on the phenotype lane.
+        "Phosphosite",
+    ),
     "experiment": ("Experiment", "ExperimentReference"),
     # ArtifactRef: the sha256-pinned pointer from a record to off-graph bytes.
     "provenance": (

@@ -47,6 +47,7 @@ from torchcell.knowledge_graphs.kg_manifest import (
     SCHEMA_CONFIG_RELPATH,
     cell_adapter_surface,
 )
+from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
 
 REPO_ROOT = Path(torchcell.__file__).resolve().parent.parent
 SCHEMA = yaml.safe_load((REPO_ROOT / SCHEMA_CONFIG_RELPATH).read_text(encoding="utf-8"))
@@ -234,6 +235,55 @@ def _synthesis(**kw: Any) -> s.ProteinSynthesisRatePhenotype:
     )
     fields.update(kw)
     return s.ProteinSynthesisRatePhenotype(**fields)
+
+
+# #921: two released Potel 2018 Table 2 sites, one on one protein and one the release
+# lists on two genes under one accession (EF-Tu, tufA;tufB).
+_GND_S86 = s.Phosphosite(
+    protein_ids=["P00350"],
+    protein_id_namespace=s.ProteinIdNamespace.uniprotkb_accession,
+    gene_names=["gnd"],
+    positions=[86],
+    residue=s.PhosphoResidue.serine,
+    sequence_windows=["LLMVKAGAGTDAAIDSLKPYLDKGDIIIDGG"],
+    localization_probability=0.999615,
+    posterior_error_probability=4.27602e-05,
+    identification_score=66.401,
+    delta_score=58.487,
+    diagnostic_peak=False,
+)
+_TUF_H119 = s.Phosphosite(
+    protein_ids=["P0CE47"],
+    protein_id_namespace=s.ProteinIdNamespace.uniprotkb_accession,
+    gene_names=["tufA", "tufB"],
+    positions=[119, 119],
+    residue=s.PhosphoResidue.histidine,
+    sequence_windows=["LVVAATDGPMPQTREHILLGRQVGVPYIIVF"],
+    localization_probability=0.5,
+    posterior_error_probability=0.001,
+    identification_score=80.0,
+    delta_score=20.0,
+    diagnostic_peak=True,
+)
+
+
+def _phosphosite(**kw: Any) -> s.PhosphositeIntensityPhenotype:
+    fields: dict[str, Any] = dict(
+        phosphosite_intensity={"P00350|S|86": 2714000.0},
+        quantification={
+            "P00350|S|86": s.PhosphositeQuantification.quantified,
+            "P0CE47|H|119;119": s.PhosphositeQuantification.not_quantified,
+        },
+        sites={"P00350|S|86": _GND_S86, "P0CE47|H|119;119": _TUF_H119},
+        measurement_type="fe3_imac_lc_msms_maxquant_summed_xic",
+        sample_label="Intensity glucose_exp1",
+        replicate=1,
+        replicate_unit=s.SampleUnit.technical_replicate,
+        harvest_growth_phase=s.CultureGrowthPhase.exponential,
+        harvest_optical_density=0.6,
+    )
+    fields.update(kw)
+    return s.PhosphositeIntensityPhenotype(**fields)
 
 
 def _flux(**kw: Any) -> s.FluxPhenotype:
@@ -755,6 +805,53 @@ def test_protein_synthesis_rate_phenotype_node_projects_dicts_as_json() -> None:
     )
 
 
+def test_phosphosite_intensity_phenotype_node_projects_maps_and_sites_as_json() -> None:
+    """#921: the three site-keyed maps are JSON strings, a site its model_dump; the
+    sample's enums are their values, and a gapped sample field projects as None.
+    """
+    phenotype = _phosphosite()
+    [node] = _run(
+        "phosphosite intensity phenotype (chunked)", _phenotype_record(phenotype)
+    )
+    pid = _sha(phenotype)
+    assert (node.get_id(), node.get_label(), node.get_preferred_id()) == (
+        pid,
+        "phosphosite intensity phenotype",
+        f"phenotype_{pid}",
+    )
+    props = node.get_properties()
+    assert json.loads(props.pop("sites")) == {
+        "P00350|S|86": _GND_S86.model_dump(mode="json"),
+        "P0CE47|H|119;119": _TUF_H119.model_dump(mode="json"),
+    }
+    assert props == {
+        "graph_level": "node",
+        "label_name": "phosphosite_intensity",
+        "label_statistic_name": None,
+        "phosphosite_intensity": '{"P00350|S|86": 2714000.0}',
+        "quantification": (
+            '{"P00350|S|86": "quantified", "P0CE47|H|119;119": "not_quantified"}'
+        ),
+        "measurement_type": "fe3_imac_lc_msms_maxquant_summed_xic",
+        "sample_label": "Intensity glucose_exp1",
+        "replicate": 1,
+        "replicate_unit": "technical_replicate",
+        "harvest_growth_phase": "exponential",
+        "harvest_optical_density": 0.6,
+        "id": pid,
+        "preferred_id": f"phenotype_{pid}",
+    }
+    gap = ProvenanceGap(
+        field="replicate_unit",
+        reason=ProvenanceGapReason.deferred_pending_source_review,
+    )
+    gapped = _run(
+        "phosphosite intensity phenotype (chunked)",
+        _phenotype_record(_phosphosite(replicate_unit=None, provenance_gaps=[gap])),
+    )[0].get_properties()
+    assert gapped["replicate_unit"] is None
+
+
 def test_protein_turnover_phenotype_node_projects_dicts_as_json() -> None:
     """Every dict is one JSON string, including #753's bounds and censoring map."""
     phenotype = _turnover(
@@ -1080,6 +1177,11 @@ def test_bacterial_morphology_optional_fields_project_as_none() -> None:
             [_synthesis(), _synthesis(), _synthesis(generation_time_minutes=56.3)],
         ),
         (
+            "phosphosite intensity phenotype reference",
+            "phosphosite intensity phenotype",
+            [_phosphosite(), _phosphosite(), _phosphosite(replicate=2)],
+        ),
+        (
             "flux phenotype reference",
             "flux phenotype",
             [_flux(), _flux(), _flux(net_flux={"PGI": 1.0})],
@@ -1151,6 +1253,10 @@ NEW_CLASSES = {
         "protein synthesis rate phenotype (chunked)",
         s.ProteinSynthesisRatePhenotype,
     ),
+    "phosphosite intensity phenotype": (
+        "phosphosite intensity phenotype (chunked)",
+        s.PhosphositeIntensityPhenotype,
+    ),
     "flux phenotype": ("flux phenotype (chunked)", s.FluxPhenotype),
     "promoter activity phenotype": (
         "promoter activity phenotype (chunked)",
@@ -1210,6 +1316,10 @@ def test_emitted_properties_equal_the_declared_properties_at_run_time() -> None:
             "protein synthesis rate phenotype (chunked)",
             _phenotype_record(_synthesis()),
         )[0],
+        "phosphosite intensity phenotype": _run(
+            "phosphosite intensity phenotype (chunked)",
+            _phenotype_record(_phosphosite()),
+        )[0],
     }
     for label, node in emitted.items():
         assert node.get_label() == label
@@ -1266,6 +1376,12 @@ def test_the_new_methods_are_registered_and_the_served_edges_name_the_new_classe
         "microarray expression score phenotype reference": (
             "_get_microarray_expression_score_phenotype_reference_nodes"
         ),
+        "phosphosite intensity phenotype (chunked)": (
+            "_phosphosite_intensity_phenotype_node"
+        ),
+        "phosphosite intensity phenotype reference": (
+            "_get_phosphosite_intensity_phenotype_reference_nodes"
+        ),
     }.items():
         assert table[name] == fn
     assert SCHEMA["perturbation member of"]["source"] == [
@@ -1280,11 +1396,13 @@ def test_the_new_methods_are_registered_and_the_served_edges_name_the_new_classe
     # merged into it, #1016), De Chiara 2022's yeast life cycle phenotype and Puddu
     # 2019's genome architecture, joined after the bacterial ones. The pooled sort-seq
     # expression leaf (#991) and the biosensor fluorescence leaf (#990) sit directly
-    # after the promoter-activity class they are siblings of.
-    assert sources[-12:] == [
+    # after the promoter-activity class they are siblings of; #921's phosphosite
+    # intensity phenotype sits beside the protein synthesis-rate leaf.
+    assert sources[-13:] == [
         "product titer phenotype",
         "protein turnover phenotype",
         "protein synthesis rate phenotype",
+        "phosphosite intensity phenotype",
         "flux phenotype",
         "promoter activity phenotype",
         "pooled sort seq expression phenotype",

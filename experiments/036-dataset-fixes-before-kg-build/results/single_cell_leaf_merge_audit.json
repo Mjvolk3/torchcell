@@ -161,5 +161,46 @@
       "distinct_library_barcode_pairs": 6595,
       "reference_phenotype_json_bytes": 444075
     }
+  },
+  "old-vs-new:/scratch/projects/torchcell-scratch/data/torchcell/tf_deletion_pseudobulk_jackson2020/processed.superseded.20261012-080117": {
+    "n_records": 784,
+    "n_references": 11,
+    "dropped_or_changed": {
+      "changed:experiment.phenotype.measurement_type": 784,
+      "changed:reference.phenotype_reference.measurement_type": 11
+    },
+    "added": {
+      "experiment.environment.media.provenance_gaps": 784,
+      "experiment.environment.pre_culture.medium.provenance_gaps": 784,
+      "experiment.phenotype.cell_cycle_stage_counts": 784,
+      "experiment.phenotype.cell_libraries": 784,
+      "experiment.phenotype.library_cell_counts": 784,
+      "experiment.phenotype.provenance_gaps[field=cell_cycle_stage_counts]": 784,
+      "reference.environment_reference.media.provenance_gaps": 11,
+      "reference.environment_reference.pre_culture.medium.provenance_gaps": 11,
+      "reference.phenotype_reference.cell_cycle_stage_counts": 11,
+      "reference.phenotype_reference.cell_libraries": 11,
+      "reference.phenotype_reference.library_cell_counts": 11,
+      "reference.phenotype_reference.provenance_gaps[field=cell_cycle_stage_counts]": 11
+    }
+  },
+  "old-vs-new:/scratch/projects/torchcell-scratch/data/torchcell/boocock2025/processed.superseded.20261012-080305": {
+    "n_records": 79516,
+    "n_references": 4,
+    "dropped_or_changed": {},
+    "added": {
+      "experiment.environment.media.provenance_gaps": 79516,
+      "experiment.phenotype.cell_barcodes": 79516,
+      "experiment.phenotype.cell_libraries": 79516,
+      "experiment.phenotype.cell_total_umis": 79516,
+      "experiment.phenotype.marker_umi_count": 79516,
+      "experiment.phenotype.provenance_gaps[field=marker_umi_count]": 79516,
+      "reference.environment_reference.media.provenance_gaps": 4,
+      "reference.phenotype_reference.cell_barcodes": 4,
+      "reference.phenotype_reference.cell_libraries": 4,
+      "reference.phenotype_reference.cell_total_umis": 4,
+      "reference.phenotype_reference.marker_umi_count": 4,
+      "reference.phenotype_reference.provenance_gaps[field=marker_umi_count]": 4
+    }
   }
 }

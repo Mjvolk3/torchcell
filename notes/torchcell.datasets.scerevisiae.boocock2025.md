@@ -201,3 +201,35 @@ Rebuilt with `build_dataset_lmdb --dataset Boocock2025Dataset --retire-existing 
 | L4 | `gene_containment_sgd` | pass | 5,623/5,623 analysis transcripts are S288C genes; 6,504 spanned genes |
 
 Schema impact (`scripts/schema_impact_check.py --base origin/main`): 5 changed symbols, all breaking, 3 datasets (`Boocock2025Dataset`, `TfDeletionPseudobulkJackson2020Dataset`, `Nguessan2025Dataset`); none is served, and KG 4.0 is a full rebuild.
+
+## 2026.10.12 - The leaf's measurement_type is pinned to scrnaseq_umi_count (PR #1052), store rebuilt
+
+`SingleCellExpressionPhenotype.measurement_type` is now `Literal["scrnaseq_umi_count"]`: Boocock 2025, Jackson 2020 and N'Guessan 2025 are all 10x Chromium 3' UMI counts (this release: "loaded onto the Chromium device using either the Single Cell $3 ^ { \prime }$ Solution V2 or V3 kit.", `paper.md` sha256 `a2920750e12fb9977f36a687bb9f73aa0382527de84270b44609a3338bbeafe4`, section "Single-cell library preparation"), so one leaf takes one tag. Boocock's records already stored the leaf default, so no value changes; the leaf's contract fingerprint moved, which re-staled the store. Decision and record: [[torchcell.datamodels.eqtl-data-model]] (2026.10.12), `database/schema_changes/2026-10-12-single-cell-umi-one-tag.json`.
+
+Rebuilt with `build_dataset_lmdb --dataset Boocock2025Dataset --retire-existing --verify` at `de33b6b15` (the branch rebased on main `007cd23b0`), slurm job 4314: 79,516 records, 4 references, build 2,265 s, job 54.6 min, peak RSS 11.3 GB, every rule passes.
+
+| level | rule | result |
+|---|---|---|
+| L0 | `structural` | 79,516 of 79,516 records validate as segregant_expression experiments |
+| L1 | `count` | 79,516 (expected 79,516) |
+| L1 | `panel_counts` | Ap 393, A 27,744, B 44,784, 3004 6,595 |
+| L1 | `segregant_uniqueness` | 79,516 unique (panel, segregant) keys, 0 duplicates |
+| L1 | `provenance_gaps` | 79,516 documented gaps (the marker gap, one each) |
+| L1 | `canonical_gene_names` | no gene perturbations to check |
+| L2 | `uncertainty_sanity` | 0 labeled uncertainties |
+| L2 | `value_fidelity` | counts, totals, partitions and summed cells equal the release |
+| L2 | `mosaic_round_trip` | worst de novo posterior error 0.0250, bound 0.025 |
+| L2 | `reference_pseudobulk` | each panel's reference is the sum of its cells |
+| L3 | `compound_identity`, `media_compound_identity` | 0 environment edits; 79,909 medium compound references identified |
+| L3 | `media_membership` | 79,123 on a library medium, 393 on one deriving from it |
+| L3 | `table_s4` | cells, analysis transcripts and median UMI per panel equal Table S4 |
+| L3 | `pooled_panel` | 393 segregants, median 17.0 cells, 277 above ten; agreement 0.9212 on 2,641 markers (paper 0.925, tolerance 0.01) |
+| L3 | `sourced_values` | 35 of 35 quotes present in the pinned bytes |
+| L4 | `parents_pinned` | 6 parents; BY is the S288C reference |
+| L4 | `mat_orientation` | P(parent 2) at MAT: Ap 0.0127, A 0.2114, B 0.6417, 3004 0.2526 |
+| L4 | `marker_reference` | 2,000 of 2,000 sampled markers carry the S288C base |
+| L4 | `gene_containment_sgd` | 5,623 of 5,623 analysis transcripts are S288C genes; 6,504 spanned |
+
+`old-vs-new` (slurm job 4315, `experiments/036-dataset-fixes-before-kg-build/scripts/single_cell_leaf_merge_audit.py`) against `processed.superseded.20261012-080305`, the store dev-store array 4011 built at `1475b8cf1`: 79,516 records and 4 references paired, **0 stored values dropped or changed**. That baseline predates #1038 and #985 on main, so the fields it lists as added come from those two PRs, none from this change: the #1038 merge fields (`cell_barcodes`, `cell_libraries`, `cell_total_umis`, `marker_umi_count` with its gap) and the #985 `provenance_gaps` on `environment.media`.
+
+Candidate verdict re-gated at the rebased commit: G1 to G5 pass, admissible.

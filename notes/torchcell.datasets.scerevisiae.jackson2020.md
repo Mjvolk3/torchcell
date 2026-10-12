@@ -189,3 +189,33 @@ Rebuilt with `build_dataset_lmdb --dataset TfDeletionPseudobulkJackson2020Datase
 | L4 | feature_ids_corroborated | 6,829 un-mangled columns equal `TRIZOL_BULK.tsv` |
 
 Candidate verdict re-gated with `--phenotype-class SingleCellExpressionPhenotype`: G1 to G5 pass, admissible (`database/candidates/jacksonGeneRegulatoryNetwork2020.json`).
+
+## 2026.10.12 - measurement_type is the leaf's one tag, scrnaseq_umi_count (PR #1052), store rebuilt
+
+The records no longer carry `scrnaseq_pseudobulk_umi_count`. Jackson 2020 is the same physical measurement as Boocock 2025 and N'Guessan 2025, 10x Chromium 3' UMI counts (`CHEMISTRY_QUOTE`: "Single cell library preparation was done using the $ 1 0 \times$ Genomics Chromium ${ \boldsymbol { 3 ^ { \prime } } }$ v2 Single Cell Gene Expression Kit", `paper.md` sha256 `453924f3d5ed998e99695768cf5b4067f2dbac3fb0af53dcbf8fd9017f199697`), so rule 6 case 1 of [[torchcell.datamodels.schema-change-policy]] gives the three one leaf and one tag. "Pseudobulk" is this loader's analysis step, the per-strain sum, which `n_cells` and the per-cell lists already record; the design difference stays in the experiment pair (`PseudobulkUmiCountExperiment`, unchanged). `SingleCellExpressionPhenotype.measurement_type` is now `Literal["scrnaseq_umi_count"]`, the loader's `MEASUREMENT_TYPE` constant is gone, and every record takes the leaf default. Decision, quotes and alternatives: [[torchcell.datamodels.eqtl-data-model]] (2026.10.12) and `database/schema_changes/2026-10-12-single-cell-umi-one-tag.json`.
+
+Rebuilt with `build_dataset_lmdb --dataset TfDeletionPseudobulkJackson2020Dataset --retire-existing --verify` at `de33b6b15` (the branch rebased on main `007cd23b0`), slurm job 4313: 784 records, 11 references, build 42 s, every rule passes.
+
+| level | rule | result |
+|---|---|---|
+| L0 | structural | 784 records and 11 references validated |
+| L1 | count | 784 of 784 |
+| L1 | strain_condition_uniqueness | 784 unique pairs, exactly the pairs holding a cell |
+| L1 | strain_identity | 72 strains, one barcode and one gene each, 12 genes |
+| L1 | provenance_gaps | 1,568 documented gaps over 784 records |
+| L1 | canonical_gene_names | 12 systematic names, each current |
+| L2 | release_fidelity | every record equals a fresh re-sum of the released matrix |
+| L2 | reference_fidelity | 11 references, each the pooled HO-control cells |
+| L2 | release_totals | 38,225 cells and 83,703,440 UMIs |
+| L2 | uncertainty_sanity | 0 labeled uncertainties |
+| L3 | measurement_type_consistent | `scrnaseq_umi_count` |
+| L3 | feature_universe | one 6,827-feature universe, every key inside it |
+| L3 | conditions_documented | 11 environments |
+| L3 | sourced_values | 134 audited |
+| L3 | compound_identity, media_compound_identity, media_membership | 140, 11,214 references identified; 572 library media, 212 deriving |
+| L4 | feature_containment | 0.99927 (floor 0.999) |
+| L4 | feature_ids_corroborated | 6,829 un-mangled columns equal `TRIZOL_BULK.tsv` |
+
+What changed in a record, measured by `experiments/036-dataset-fixes-before-kg-build/scripts/single_cell_leaf_merge_audit.py` `old-vs-new` (slurm job 4315) against `processed.superseded.20261012-080117`, the store dev-store array 4011 built at `1475b8cf1`: 784 records and 11 references paired; the only stored values changed are `measurement_type`, on 784 records and 11 references. That baseline predates #1038 and #985 on main, so the comparison also lists fields those two PRs added, none of them from this change: the #1038 merge fields (`cell_cycle_stage_counts` with its gap, `cell_libraries`, `library_cell_counts`) and the #985 `provenance_gaps` on `Media` (on `environment.media` and `environment.pre_culture.medium`). Nothing was dropped.
+
+Candidate verdict re-gated at the rebased commit: G1 to G5 pass, admissible.

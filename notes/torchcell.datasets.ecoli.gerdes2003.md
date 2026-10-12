@@ -78,7 +78,14 @@ Owner rule of 2026-10-12: the data is the data, and the genome never gates a rec
 
 ### What changed
 
-(filled in with the Gerdes 2003 reversal: every Table S1 row a record; the 4,208 rows with a well-formed b-number no other row carries on `TransposonInsertionPerturbation` under the b-number verbatim; the 83 others (64 with no Blattner ID, `b0018.1`, the 18 rows of 9 duplicated b-numbers) on the released-transposon leaf under their ERGO id; X and ? calls stored with `is_essential=None`, a typed gap and `released_call`)
+| before (dev store built 2026-10-11) | after |
+|---|---|
+| 3,618 records on `TransposonInsertionPerturbation` under the locus `reconcile_locus_tags` resolved the Blattner ID to (29 remapped with `identifier_mapping` `locus_tag_synonym`) | 4,291 records: 4,208 rows whose Blattner ID is a well-formed b-number no other row carries, on `TransposonInsertionPerturbation` under that b-number verbatim with `identifier_mapping=None`; 83 rows on `BacterialReleasedTransposonPerturbation` (PR #1077's leaf) under their ERGO id, Table S1's unique row identifier |
+| `no_blattner_id` 64, `blattner_id_on_two_rows` 18, `blattner_id_not_on_one_mg1655_locus` 96 dropped | the 64 and the 18 (9 b-numbers the table lists twice, insertion-sequence copies with their own calls) and `b0018.1` are the 83 ERGO-keyed records; the 96 are stored under their released b-number, and the L4 finding reports how many of all released b-numbers the annotation carries |
+| `not_covered_call` (X) 306 and `ambiguous_call` (?) 189 dropped | stored with `is_essential=None`, a typed `ProvenanceGap(field="is_essential", not_reported_by_primary)` carrying the page's own definition, and `released_call` `X` or `?`; E, N and N* rows carry their token in `released_call` too |
+| `identifier_reconciliation.json` written | not written; the Blattner ID of every row stays a column of `calls.csv` beside `identifier_kind` and `systematic_gene_name` |
+
+Count arithmetic: 4,291 rows = 4,208 b-number records + 83 ERGO records (64 + 1 + 18); calls as released, 619 E, 3,114 N, 6 N*, 331 X, 221 ?. Nothing dropped. The released-transposon leaf is group 2's (`feat/schema-bacterial-released-constructs`, PR #1077), cherry-picked onto this branch until it lands.
 
 ### L0-L4 after the rebuild
 

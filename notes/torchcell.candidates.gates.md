@@ -44,3 +44,7 @@ A second crash on the same scan is a data defect, not this function's: `torchcel
 ## 2026.10.11 - Folding a measured decomposition into G1
 
 `DecompositionRecord` (citation key + sources) is what the experiment-036 audit writes under its results file's `decompositions` key; `read_decompositions` validates only that key and refuses a key decomposed twice. `decompose` returns the aggregation record with the sources and the counts they imply: studies and mirrored from the decomposition, `net_new_vs_served` under its documented rule (a study whose DOI is no dataset module's own DOI, a DOI-less study included). `with_decomposition` applies it to a `G1Run` and refuses a G1 that did not settle on an aggregation. Nothing in this module measures a decomposition.
+
+## 2026.10.12 - G2 checks the background, not the records
+
+G2 asks one question of a candidate: does the strain BACKGROUND it names resolve to a genomes-tier assembly (`assembly_set`), or, for a segregant panel, to a declared probabilistic representation over its parents (`haplotype_mosaic`)? It is run once per candidate row and is not a per-record gate. Owner, 2026-10-12: "the genome is separate.. it doesn't gate anything... we do that at modeling time if it is an issue." Once a dataset is admitted, no record is dropped, refused or failed because a released gene name or position disagrees with that assembly; that comparison is a `report`-class verification finding ([[torchcell.verification.report]]). Only the docstrings of `gates.py` changed.

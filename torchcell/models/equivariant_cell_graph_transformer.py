@@ -1633,7 +1633,8 @@ class CrossAttnHead(nn.Module):
         """Forward pass of the cross-attention head.
 
         Args:
-            h_CLS: [d] whole-cell CLS representation.
+            h_CLS: [d] the shared wild-type CLS, or [batch, d] the perturbed CLS
+                (``CellGraphTransformer.perturb_cls``), as :class:`GlobalHead` takes it.
             H_genes_pert: [batch, N, d] equivariant perturbed gene embeddings.
 
         Returns:
@@ -1644,8 +1645,8 @@ class CrossAttnHead(nn.Module):
 
         # Keys/values = {CLS} U {perturbed gene tokens}: [batch, N+1, d].
         cls_tok = (
-            h_CLS.unsqueeze(0).expand(batch_size, -1).unsqueeze(1)
-        )  # [batch, 1, d]
+            h_CLS if h_CLS.dim() == 2 else h_CLS.unsqueeze(0).expand(batch_size, -1)
+        ).unsqueeze(1)  # [batch, 1, d]
         kv = torch.cat([cls_tok, H_genes_pert], dim=1)  # [batch, N+1, d]
 
         # F learned queries, shared across the batch: [batch, F, d].

@@ -270,10 +270,10 @@ class Figure:
             f"text;html=1;whiteSpace=wrap;align=right;verticalAlign=top;spacing=0;"
             f"fontFamily=Arial;fontSize={FONT};fontColor=#000000;strokeColor=none;"
             f"fillColor=none;",
-            x + w - 200,
-            y + 1,
-            198,
-            12,
+            x + w - 118,
+            y + 2,
+            114,
+            26,
         )
 
     def text(

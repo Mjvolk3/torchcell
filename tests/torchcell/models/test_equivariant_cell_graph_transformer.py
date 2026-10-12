@@ -378,6 +378,28 @@ def test_global_head_pert_summary_reads_the_perturbed_gene_tokens() -> None:
         head(reps["h_CLS"], reps["H_genes_pert"])
 
 
+def test_cross_attention_head_takes_the_perturbed_cls() -> None:
+    """The S3 decoder accepts the [batch, d] CLS that ``perturb_cls`` produces (round v25
+    task 2428203_3 crashed expanding it as a vector) and returns one row per strain.
+    """
+    heads = {"global": {"output_dim": 7, "decoder": "s3_xattn", "num_heads": NUM_HEADS}}
+    model = CellGraphTransformer(
+        gene_num=GENE_NUM,
+        hidden_channels=HIDDEN,
+        num_transformer_layers=NUM_LAYERS,
+        num_attention_heads=NUM_HEADS,
+        cell_graph=_make_cell_graph(),
+        heads_config=heads,
+        perturb_cls=True,
+    )
+    model.eval()
+    cg, batch = _make_cell_graph(), _make_batch()
+    with torch.no_grad():
+        _, reps = model(cg, batch)
+    assert reps["h_CLS_pert"].shape == (BATCH_SIZE, HIDDEN)
+    assert reps["head_outputs"]["global"].shape == (BATCH_SIZE, 7)
+
+
 def test_perturb_cls_makes_the_global_readout_strain_specific() -> None:
     """With ``perturb_cls`` the CLS differs by strain and the gene rows do not change.
 

@@ -196,10 +196,10 @@ def panel_target_reliability() -> None:
     ax.set_xlabel("replicate reliability per CalMorph feature")
     ax.set_ylabel("features (n)")
     ax.set_ylim(0, 34)
-    ax.text(0.03, 0.96, f"ceiling (sqrt reliability), mean:\nmoving set {ctx['ceiling_moving_mean']:.3f}, all 278 {ctx['ceiling_all_mean']:.3f}", transform=ax.transAxes, ha="left", va="top", fontsize=6)
+    ax.text(0.98, 0.74, f"ceiling (sqrt reliability), mean:\nmoving set {ctx['ceiling_moving_mean']:.3f}, all 278 {ctx['ceiling_all_mean']:.3f}", transform=ax.transAxes, ha="right", va="top", fontsize=6)
     ax.legend(loc="upper right", **LEGEND)
     _box(ax)
-    fig.subplots_adjust(left=0.16, right=0.98, bottom=0.2, top=0.95)
+    fig.subplots_adjust(left=0.2, right=0.98, bottom=0.2, top=0.95)
     _save(fig, "target_reliability")
 
 
@@ -229,7 +229,7 @@ def panel_genotype_only() -> None:
     ax.set_ylabel(SCORE_LABEL)
     ax.set_title("genotype only (inductive)")
     _box(ax)
-    fig.subplots_adjust(left=0.16, right=0.98, bottom=0.3, top=0.9)
+    fig.subplots_adjust(left=0.2, right=0.98, bottom=0.3, top=0.9)
     _save(fig, "genotype_only")
 
 
@@ -293,7 +293,7 @@ def panel_paired_difference() -> None:
         _box(ax)
     axes[0].set_ylabel("difference, val Pearson per feature")
     axes[0].set_ylim(-0.05, 0.3)
-    fig.subplots_adjust(left=0.18, right=0.98, bottom=0.24, top=0.82, wspace=0.08)
+    fig.subplots_adjust(left=0.2, right=0.98, bottom=0.24, top=0.82, wspace=0.08)
     _save(fig, "paired_difference")
 
 
@@ -315,7 +315,7 @@ def panel_fit_diagnostic() -> None:
     _grid(ax, 0.2, 0.1, axis="x")
     fig.legend(handles=ax.get_legend_handles_labels()[0], loc="upper left", bbox_to_anchor=(0.02, 1.0), ncol=1, handletextpad=0.4, labelspacing=0.25, **LEGEND)
     _box(ax)
-    fig.subplots_adjust(left=0.18, right=0.98, bottom=0.15, top=0.6)
+    fig.subplots_adjust(left=0.2, right=0.98, bottom=0.15, top=0.6)
     _save(fig, "fit_diagnostic")
 
 
@@ -336,7 +336,7 @@ def panel_ladder() -> None:
     _grid(ax, 0.1, 0.05)
     fig.legend(handles=ax.get_legend_handles_labels()[0], loc="upper left", bbox_to_anchor=(0.02, 1.0), ncol=1, handletextpad=0.4, labelspacing=0.25, **LEGEND)
     _box(ax)
-    fig.subplots_adjust(left=0.18, right=0.98, bottom=0.15, top=0.62)
+    fig.subplots_adjust(left=0.2, right=0.98, bottom=0.15, top=0.62)
     _save(fig, "ladder")
 
 

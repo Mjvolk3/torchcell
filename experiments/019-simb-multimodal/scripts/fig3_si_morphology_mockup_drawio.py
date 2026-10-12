@@ -35,6 +35,18 @@ from fig3_mockup_drawio import (  # noqa: E402
 BAND_PAD = 4.0
 
 
+def _svg_height(name: str) -> float:
+    """The declared height of a true-size panel SVG, in draw.io units."""
+    import re
+
+    from fig3_mockup_drawio import IMG_DIR
+
+    with open(osp.join(IMG_DIR, f"{name}.svg"), encoding="utf-8") as fh:
+        tag = re.search(r"<svg[^>]*>", fh.read(4000))
+    assert tag is not None
+    return float(re.search(r'height="([\d.]+)"', tag.group(0)).group(1))  # type: ignore[union-attr]
+
+
 def _panel(fig: Figure, name: str, x: float, y: float, letter: str, status: str) -> float:
     h = fig.image(name, x, y)
     fig.letter(letter, x, y, status)
@@ -67,14 +79,12 @@ def mockup() -> Figure:
     h_b = _panel(fig, "fig3_si_morph_target_reliability", COL3[1], y1, "b", "ready")
     h_c = _panel(fig, "fig3_si_morph_genotype_only", COL3[2], y1, "c", "ready")
     y2 = y1 + max(h_a, h_b, h_c) + ROW_GAP
-    # the transductive row: every panel reads the strain's own measurement
-    band_h = 0.0
-    h_d = fig.image("fig3_si_morph_measured_input", 0.0, y2 + BAND_PAD)
-    h_e = fig.image("fig3_si_morph_paired_difference", COL_HALF2, y2 + BAND_PAD)
-    band_h = max(h_d, h_e) + 2 * BAND_PAD
+    # The transductive row: every panel reads the strain's own measurement. The band is
+    # drawn first, so the panels sit on it (draw.io stacks cells in insertion order).
+    band_h = max(_svg_height("fig3_si_morph_measured_input"), _svg_height("fig3_si_morph_paired_difference")) + 2 * BAND_PAD
     fig.band(-BAND_PAD, y2, FULL + 2 * BAND_PAD, band_h, "transductive: the strain's own measurement as input")
-    fig.letter("d", 0.0, y2 + BAND_PAD, "partial")
-    fig.letter("e", COL_HALF2, y2 + BAND_PAD, "partial")
+    _panel(fig, "fig3_si_morph_measured_input", 0.0, y2 + BAND_PAD, "d", "partial")
+    _panel(fig, "fig3_si_morph_paired_difference", COL_HALF2, y2 + BAND_PAD, "e", "partial")
     y3 = y2 + band_h + ROW_GAP
     h_f = _panel(fig, "fig3_si_morph_fit_diagnostic", COL3[0], y3, "f", "ready")
     h_g = _panel(fig, "fig3_si_morph_ladder", COL3[1], y3, "g", "ready")

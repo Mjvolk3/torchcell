@@ -96,6 +96,25 @@ repos:
         files: ^torchcell/datamodels/(schema|pydant)\.py$
         require_serial: true
 
+      # Schema-change record tripwire (scripts/check_schema_change_records.py): every
+      # schema symbol whose contract fingerprint moved since origin/main's merge base is
+      # named by exactly one staged database/schema_changes/<date>-<slug>.json, with the
+      # same before/after fingerprints; a removal, rename, loosening, meaning change or
+      # removed enum member needs the owner's sign-off in it. A NEW symbol no served
+      # closure holds is exempt (printed for the PR body). Index vs merge base, like
+      # candidate-verdicts; fires on the loaders too, since a loader that starts
+      # importing a symbol moves it into a served closure. TORCHCELL_SCHEMA_RECORD_ACK=1
+      # passes a commit (never TORCHCELL_SCHEMA_ACK, which acknowledges the rebuild);
+      # the enforcement test (tests/torchcell/datamodels/test_schema_change_records.py)
+      # still blocks the landing. Policy: notes/torchcell.datamodels.schema-change-policy.md
+      - id: schema-change-records
+        name: schema-change records (a schema change carries its argument)
+        entry: bash scripts/run-in-env.sh python scripts/check_schema_change_records.py
+        language: system
+        pass_filenames: false
+        files: ^(torchcell/datamodels/(schema|pydant)\.py|torchcell/datasets/.*\.py|database/(schema_changes|releases)/.*\.json)$
+        require_serial: true
+
       # Supported-query drift gate: when an input of a supported query can have moved (the
       # schema surface, the BioCypher schema config, the cell adapter, a shipped .cql, the
       # registry package, a committed release snapshot), check every registered query

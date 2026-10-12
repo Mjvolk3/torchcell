@@ -1018,3 +1018,30 @@ def test_resolve_uniprot_accessions_deduplicates_and_sorts_what_it_was_asked(
     )
     assert resolution.requested == 2
     assert resolution.resolved_fraction == 1.0
+
+
+# --------------------------------------------------------------------------- #
+# #1045 row 20: the locus_tag_synonym route, shared by every bacterial loader
+# --------------------------------------------------------------------------- #
+def test_the_synonym_route_is_one_function_for_every_loader(
+    synthetic_mg1655: EcoliK12MG1655Genome,
+) -> None:
+    """Rapp 2026, Babu 2014, Butland 2008 and Girgis 2009 read the one helper.
+
+    Moved here from ``rapp2026`` so the four loaders cannot drift apart; Rapp keeps the
+    name it always exported. ``canonical_symbol`` is the symbol a routed record carries:
+    the annotation's own, when it resolves back to the stored tag.
+    """
+    from torchcell.datasets.ecoli import babu2014, butland2008, girgis2009, rapp2026
+
+    for module in (babu2014, butland2008, girgis2009, rapp2026):
+        assert vars(module)["locus_tag_synonym_mapping"] is bc.locus_tag_synonym_mapping
+    assert bc.SYNONYM_LAYER == "synonym"
+    assert bc.canonical_symbol(synthetic_mg1655, "b0002") == "thrA"
+    assert bc.canonical_symbol(synthetic_mg1655, "b0007") == "insZ"
+    pattern = bc.LOCUS_TAG_PATTERNS["ecoli_k12_mg1655_bnumber"]
+    # b0001 is a tag of this annotation in its own right, so nothing was retired
+    assert (
+        bc.locus_tag_synonym_mapping(synthetic_mg1655, "b0001", "b0002", pattern)
+        is None
+    )

@@ -123,3 +123,94 @@ K-12 lineage token rule (MG1655 and BW25113 resolve and read), not through an NC
 assembly: none is in the genomes tier, and the records pin MG1655 with an NCM3722
 background and a genotype gap. G4 compared no dev store; the value comparison is the
 separate duplication measurement above (0 exact matches, independent).
+
+## 2026.10.12 - The Science supplement is deposited: 37 C and NQ393's genotype are typed (#853, #906)
+
+The owner downloaded the Science supplementary materials in a browser (#853's
+proof-of-work wall), and they are deposited under
+`$DATA_ROOT/torchcell-raw/balakrishnanPrinciplesGeneRegulation2022/` as `SI_DEPOSIT`
+(`manual_browser`, arrived 2026-10-12 03:41 CDT, `DEPOSIT.md` and `SHA256SUMS.txt` in
+both `si/` and `data/`):
+
+| file | bytes | sha256 | holds |
+|---|---|---|---|
+| `si/science.abk2066_sm.pdf` | 5,001,449 | `e925a839...` | Supplementary Materials, 65 pages |
+| `si/science.abk2066_mdar_reproducibility_checklist.pdf` | 158,999 | `f6016e8d...` | MDAR checklist, 4 pages |
+| `data/science.abk2066_tables_s3_to_s7.zip` | 4,006,966 | `f7624ba6...` | the publisher's archive of Tables S3 to S7 |
+| `data/science.abk2066_table_s3.xlsx` | 1,752,886 | `5b9c05f5...` | zip member |
+| `data/science.abk2066_table_s4.xlsx` | 989,547 | `f27a3cba...` | zip member |
+| `data/science.abk2066_table_s5.xlsx` | 302,611 | `3b948e49...` | zip member |
+| `data/science.abk2066_table_s6.xlsx` | 764,426 | `b5b51f1a...` | zip member |
+| `data/science.abk2066_table_s7.xlsx` | 346,049 | `4ca3e389...` | zip member |
+
+Each member is checked byte for byte against the zip (`verify_deposit`).
+`record_si_deposit` also writes the SM PDF's `pdftotext -layout -enc UTF-8` text
+(`si/science.abk2066_sm.layout.txt`, sha256 `3ae343b2...`, with its processing record),
+which is now the loader's third consumed file: eight SI quotes are checked against it at
+build time (21 quotes in all).
+
+**Table S3 against GEO.** The Science copy is cell-identical to the GEO copy in the two
+sheets the loader reads apart from 33 float cells that differ in the last binary digit
+(max relative difference 2.2e-16); sheet 3 (not consumed) differs in two nitrogen cells.
+Full table and Tables S4 to S7 in
+[[experiments.036-dataset-fixes-before-kg-build.scripts.manual_deposits_2026_10_12]].
+
+**What the SI types, quoted from the layout text:**
+
+- Temperature: "cultures were grown at 37℃ and shaken at 240 r.p.m in a water bath
+  shaker" (Materials and Methods, "Strains and growth conditions"). Every environment now
+  carries `Temperature(37.0)`; the temperature `ProvenanceGap` is gone.
+- NQ393, Table S1 row: "NCM3722, ∆gdhA, PLlac-01-" / "gltBD" (the cell wraps), reference
+  Hui et al. 2015. The GDH-null background is a deletion of gdhA, so NQ393 now carries a
+  `BacterialDeletionPerturbation` of `gdhA` (b1761) beside its GOGAT promoter swap, whose
+  `promoter_name` changes from "Plac" (Table S3's "Plac-GOGAT") to Table S1's "PLlac-01".
+  Seven records change genotype.
+- NQ1243 and NQ1390, Table S1 rows: both "NCM3722, Pu-ptsG", "titration of glucose
+  uptake", Basan et al. 2015. The SI never mentions xylR, so the Ptet and lacIq-promoter
+  drivers (from Mori 2021) stay untyped and the two strains still share one typed
+  genotype. **#906 stays open for the xylR cassettes**; its NQ393 half is closed.
+- NCM3722, Table S1 row: "Wild-type E. coli K-12", Soupene et al. 2003. Its lesions
+  relative to MG1655 stay a `deferred_pending_source_review` gap, now looked up in Table
+  S1.
+- The media: the SI names "M9, glucose" and "MOPS, ..." (Table S2) and states no recipe;
+  "Culturing techniques and growth determination procedures were consistent between this
+  and previous studies(7, 10, 57)." So the base salts stay `composition_deferred`, now to
+  references 7, 10 and 57 (Dai 2016, Mori 2021, Basan 2015).
+
+**Table S2 is not the RNA-seq sample sheet.** Its translation-limitation rows read "M9
+glucose, 0μM Cm" to "8μM Cm" while Table S3 puts the R-limitation RNA-seq samples in
+MOPS with 10 mM NH4Cl, and its IPTG doses (90, 40, 30, 25, 20 µM) differ from Table S3's
+(60, 40, 28, 20 µM). The loader keeps Table S3's per-sample medium, the release's own
+statement for the samples it stores.
+
+**Table S6, the candidate (#853).** Per-gene protein, mRNA and gene concentrations,
+translation and transcription initiation rates, mRNA degradation rates (2,696 genes in
+the reference condition, 2,883 C-limited), translational burstiness and promoter
+on-rates, two conditions; inventory in the script note. No loader yet.
+
+Build: slurm job 4159 (`--retire-existing --verify`), 28 records, gene set 4,176, two
+references; the previous store is `*.superseded.20261012-055002`.
+
+### L0-L4 after the rebuild
+
+| level | rule | result |
+|---|---|---|
+| L0 | structural | PASS, 28 records validated |
+| L1 | count | PASS, 28 of 28 |
+| L1 | replicate_groups | PASS, 28 distinct profiles over 15 (genotype, environment) groups |
+| L2 | number_fraction_value_fidelity | PASS, 116,928 values |
+| L3 | fraction_sum_at_most_one | PASS, 56 profiles sum to 0.975420 .. 0.997159 |
+| L3 | measurement_type_consistent | PASS, `rnaseq_mrna_number_fraction` |
+| L3 | reference_finite | PASS, 116,928 values |
+| L4 | gene_containment_assembly | PASS, 1.000 of 4,176 keys are MG1655 (ASM584v2) genes |
+
+Generated tables: `experiments/036-dataset-fixes-before-kg-build/results/manual_deposits_2026_10_12_verification_tables.txt`.
+
+### Candidate gate, re-run
+
+`python -m torchcell.candidates gate --citation-key balakrishnanPrinciplesGeneRegulation2022
+--phenotype-class MrnaNumberFractionPhenotype --proposed-class
+MrnaFractionBalakrishnan2022Dataset --issue 854 --write` rewrote
+`database/candidates/balakrishnanPrinciplesGeneRegulation2022.json`: still
+**admissible**, G1 to G5 pass. G3 now reads 11 raw files and 36,351 worksheet rows, all
+intact (it read 2 files and 8,735 rows before the deposit).

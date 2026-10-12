@@ -149,3 +149,51 @@ verdict is clean.
 - `tests/torchcell/datasets/ecoli/test_teteneva2024.py`
 - `torchcell/sequence/genome/registry.py` (`ECOLI_K12_W3110`)
 - `scripts/provision_bacterial_genomes.py` (the set and its ten digests)
+
+## 2026.10.12 - The SI is deposited and Table S4 measured: the genes are named by symbol only (#910)
+
+The owner filed the paper in Zotero (group item `PUKZFNFZ`, #910) and downloaded five
+supplementary files from the ISME Journal page in a browser; they are deposited under
+`$DATA_ROOT/torchcell-raw/tetenevaGenomewideScreenGenetic2024/si/` (`SI_DEPOSIT`,
+`manual_browser`, arrived 2026-10-12 03:40 CDT, `DEPOSIT.md` and `SHA256SUMS.txt`
+beside them) and the key's `manifest.json` is CREATED. All five are byte-identical to
+the PMC Article Datasets objects of the same name under `PMC11188689.1/`, fetched and
+compared on 2026-10-12, which each record names as its scripted equivalent:
+
+| file | bytes | sha256 | holds |
+|---|---|---|---|
+| `supplementary_figure_s1_wrae096.pdf` | 354,566 | `65bcac7a...` | hierarchical clustering of gene fitness |
+| `supplementary_figure_s2_wrae096.pdf` | 251,076 | `d88f962b...` | PCA of gene fitness per water sample |
+| `supplementary_table_s2_wrae096.pdf` | 36,151 | `c41e8b17...` | date, pH, air and water temperature of five lake water samples |
+| `supplementary_table_s3_wrae096.xlsx` | 14,056 | `5cec5dd2...` | sequencing QC of 63 samples |
+| `supplementary_table_s4_wrae096.xlsx` | 1,809,613 | `678bbe6c...` | gene fitness, principal components, Euclidean distance |
+
+Not downloaded: Supplementary Table S1 and Figures S3 and S4 (in the bucket; nothing
+reads them). The paper text is in neither mirror yet; `lit_sync` mirrors `PUKZFNFZ` on
+its next run, and the tripwire test now waits for exactly that.
+
+**Table S4, measured** (`table_s4_inventory`, re-derived by the `--data` test): 11,027
+gene-by-water-sample rows (water sample 1: 3,675, 2: 3,679, 3: 3,673), six fitness
+columns (filtered and non-filtered water at days 2, 4 and 8), **66,162 non-empty
+fitness values** (the schedule's count, now off the pinned bytes), and **3,691 genes
+named only by gene symbol** (column `Gene name`; no b-number, JW number or locus tag).
+The legend calls them "Gene fitness values" and names no statistic, so the scale stays
+the `phenotype_statistic` gap until the paper text is read.
+
+**The identifier finding for the owner's route decision (gate 1a).** Whichever member is
+read, a symbol route is needed. By `/gene` alone (`symbol_routes`):
+
+| annotation member | land on one gene feature | on two or more | on none |
+|---|---|---|---|
+| GenBank `GCA_000010245.1` (no locus tags) | 3,036 | 0 | 655 |
+| RefSeq `GCF_000010245.2` (`Y75_RS` tags) | 3,607 | 44 | 40 |
+
+So a RefSeq-primary route resolves 3,607 of 3,691 symbols uniquely before any synonym
+rule, and the GenBank route 3,036. The choice, and the synonym rule that closes the
+remainder, is the owner's (#910); no loader is written.
+
+Table S3: 63 samples, per water sample 3 controls (day 0), 9 filtered and 9
+non-filtered (days 2, 4, 8 x 3 technical replicates); the QC-failed sample the legend
+highlights in red is `sample_10`. Table S2 lists five water samples (#1 to #5); Table S4
+carries #1 to #3. Measurements:
+[[experiments.036-dataset-fixes-before-kg-build.scripts.manual_deposits_2026_10_12]].

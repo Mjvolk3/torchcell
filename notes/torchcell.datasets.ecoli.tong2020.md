@@ -322,3 +322,71 @@ Report `verification_report_MG1655.json` (written 2026-10-11 06:13 UTC):
 | L4 | `current_genome_genes` | pass | every one of the 70 measured systematic names is a gene of the current genome |
 | L1 | `pair_uniqueness_with_environment_perturbations` | pass | SUPPLEMENTARY: 2100 unique (strain, environment incl. perturbations) pairs, 0 duplicated |
 | L1 | `stored_tags_are_loci_of_the_pinned_assembly` | pass | SUPPLEMENTARY: 70 stored tags, statuses {'current': 69, 'non_gene_feature': 1}; 0 do not resolve to themselves |
+
+## 2026.10.12 - The CarPE concentrations are deposited and every carbon source is dosed (#788 item 3)
+
+The owner printed the Carbon Phenotype Explorer's "carbon conditions" tab to PDF in a
+browser (Chrome 154, "Show 50 entries"), and it is deposited as
+`$DATA_ROOT/torchcell-raw/tongGeneDispensabilityEscherichia2020/data/carpe/CarPE.pdf`
+(2 pages, 67,116 B, sha256 `c0451d14...`, arrived 2026-10-12 03:41 CDT), with
+`DEPOSIT.md` and `SHA256SUMS.txt` beside it (`CARPE_DEPOSIT`, `manual_browser`).
+`record_carpe_deposit` writes two derived files beside it and adds all three to the
+manifest, each with its processing record:
+
+- `CarPE.layout.txt`: `pdftotext -layout -enc UTF-8` (poppler 21.01.0) of the PDF,
+  sha256 `7ce5f26a...`. The print is born digital (Skia), so the text layer is exact. Every
+  concentration quote is a substring of this file.
+- `carpe_carbon_conditions.csv`: the parsed table (`parse_carpe_layout`), columns
+  `carbon_source, supplier, product_code, concentration_mM`, 30 rows, sha256 `1076c9ea...`.
+
+The tab's footer reads "Showing 1 to 32 of 32 entries" and the text layer carries 30
+rows: the other two are the empty rows above "Adenosine" on page 1 (seen on the rendered
+page). The 30 are the 30 Table S1A columns, paired by compound (the row names the
+reagent):
+
+| Table S1A column | CarPE row | mM |
+|---|---|---|
+| Galactose | D-galactose anhydrous | 20 |
+| L-alanine | L-Alanine | 40 |
+| D-alanine | D-Alanine | 40 |
+| Mannose | D-(+)-Mannose | 20 |
+| Glucosamine | D-(+)-Glucosamine hydrocloride | 20 |
+| Thymidine | Thymidine | 12 |
+| Adenosine | Adenosine | 12 |
+| Saccharate | D-Saccharic Acid Potassium Salt | 20 |
+| Acetate | Sodium acetate | 60 |
+| α-ketoglutarate | alpha-Ketoglutaric Acid | 24 |
+| Malate | L-Malic Acid | 30 |
+| Succinate | Succinic Acid | 30 |
+| Fumarate | Fumaric Acid | 30 |
+| Ribose | D-(-)-Ribose | 24 |
+| Fucose | L-Fucose | 20 |
+| Glycerol | Glycerol | 40 |
+| Lactate | Sodium L-Lactate | 40 |
+| Oxaloacetate | Oxaloacetic acid | 30 |
+| Pyruvate | Sodium pyruvate | 40 |
+| Galacturonate | D-Galacturonic acid sodium salt | 20 |
+| Maltose | D-Maltose monohydrate | 10 |
+| Fructose | D-(-)-Fructose | 20 |
+| Trehalose | D-trehalose dihydrate | 10 |
+| Mannitol | D-Mannitol | 20 |
+| Sorbitol | D-Sorbitol | 20 |
+| Glucuronate | D-Glucuronic acid sodium salt | 20 |
+| Gluconate | D-Gluconic acid sodium salt | 20 |
+| Xylose | D-Xylose | 24 |
+| Glucose | Glucose | 20 |
+| N-acetyl Glucosamine | N-acetyl-D-glucosamine | 15 |
+
+**What changed in the records.** Every record's carbon-source
+`EnvironmentPhysicalPerturbation` now carries `magnitude = Concentration(value, mM)`
+from `CARBON_CONCENTRATION_MM` (one `SourcedValue` per column, quoting its exact layout
+line), and the `magnitude` `ProvenanceGap` is gone from all 111,420 records. `process`
+links the layout text into `raw/` (pinned in the manifest), re-parses it and refuses a
+build whose parse differs from the quoted doses (`check_carpe_table`).
+
+**The paper's equal-carbon rule holds on the doses.** "Concentrations were picked so
+that all carbon sources resulted in the same amount of carbon added." The new
+supplementary L2 row `carbon_equivalence_of_the_carpe_doses` multiplies each stored dose
+by the carbon atoms of its agent's SMILES; the result is one value across all 30
+sources, 120 mM carbon (20 mM glucose x 6), which cross-checks both the parse and the
+column pairing.

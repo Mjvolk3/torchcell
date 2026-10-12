@@ -236,6 +236,7 @@ def macros(
         m[f"n{arm}Train"] = fmt(int(sub.loc[("N0_screen_mean", "train")]["n"]))
         m[f"n{arm}Val"] = fmt(int(sub.loc[("N0_screen_mean", "val")]["n"]))
         m[f"n{arm}Test"] = fmt(int(sub.loc[("N0_screen_mean", "test")]["n"]))
+        m["nTriples"] = fmt(sum(int(sub.loc[("N0_screen_mean", s)]["n"]) for s in ("train", "val", "test")))
         for _, p in paired[paired["arm"] == arm].iterrows():
             key = f"pair{arm}{p['a']}{p['b']}"
             m[key] = signed(float(p["gain"]))

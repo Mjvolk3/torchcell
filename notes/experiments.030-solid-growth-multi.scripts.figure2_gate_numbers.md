@@ -38,3 +38,15 @@ given the same terms as inputs.
 Build: `make numbers && make plots && make && make check` in the document directory
 (8 pages, gate clean on 2026-10-12). GilaHyper job 4111 refreshes the ladder's W&B rows
 so the interaction and fitness windows share the same synced epochs.
+
+## 2026.10.12 - The datasets and splits figure
+
+`notes/assets/drawio/030-datasets-splits.gen.py` writes `030-datasets-splits.drawio`, the
+gate's Figure 1: the three builds of the same screens (010 triples only; the 025 closure
+pool with merged labels; the 030 per-entry pool), one triple's seven records under the
+published identity with filled chips for training records and dashed white chips for
+withheld ones on each arm, and the two arms with every count read from the split
+artifacts. On arm R only the triple's own fitness and score are withheld; on arm Q the
+held-out query pair's double leaves as well, and the singles, the array gene and the
+array-side doubles stay. Exported headlessly (draw.io 32.4.1 under xvfb) to
+`figures/030-datasets-splits.pdf`, vector with two fonts, 178 mm wide.

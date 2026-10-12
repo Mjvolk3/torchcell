@@ -2997,9 +2997,7 @@ def run_natural_isolate_response(data_root: str) -> bool:
 #: Each entry names the loader module whose ``verify_build`` gates its store
 #: (``verify_build_module``): Boocock 2025's de novo cells and pooled panel
 #: (``segregant_expression``), and N'Guessan 2025's reference-panel pseudobulk
-#: (``segregant_expression_reference_panel``), whose released SNP positions are
-#: ``BY4742_fixed`` coordinates, so its two L4 genome-reference rules report a finding
-#: about the release (#1050).
+#: (``segregant_expression_reference_panel``).
 SEGREGANT_EXPRESSION_DATASETS: dict[str, dict[str, Any]] = {
     "boocock2025": {
         "root": "data/torchcell/boocock2025",

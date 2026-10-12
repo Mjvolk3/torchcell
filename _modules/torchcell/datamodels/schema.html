@@ -4037,6 +4037,156 @@
 <span class="c1"># --------------------------------------------------------------------------- #</span>
 
 
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># ADDITIVE (#691, Nichols 2011): a bacterial strain stored under the identifier its</span>
+<span class="c1"># source released, with no lookup against any assembly. A new leaf and its enum;</span>
+<span class="c1"># nothing above this block changes.</span>
+<span class="c1">#</span>
+<span class="c1"># Every bacterial leaf above requires ``systematic_gene_name`` to be a locus tag of a</span>
+<span class="c1"># pinned assembly, so a loader must resolve the released name through the genome</span>
+<span class="c1"># before it can store a record, and a name the annotation lacks is refused. The owner</span>
+<span class="c1"># rule of 2026-10-12 is that the genome never gates a record: a strain is stored as the</span>
+<span class="c1"># source names it. Nichols 2011 labels its 3,979 strains by ECK accession and symbol</span>
+<span class="c1"># (``ECK1963-HCHA``); 41 of its ECK-only labels and the ECK5000-series sRNA labels are</span>
+<span class="c1"># in no BW25113 annotation, nine designed alleles are released as a protein change</span>
+<span class="c1"># only (``LPXC(G210S)``), and twelve labels head two rows each. This leaf stores all of</span>
+<span class="c1"># them as released.</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ReleasedStrainKind</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""What a source's own strain label says the strain is, read off that label.</span>
+
+<span class="sd">    The members are the classes a released strain label states, not a reading of the</span>
+<span class="sd">    strain's sequence: Nichols 2011 marks its rows with a suffix (none, ``- SPA``,</span>
+<span class="sd">    ``- DAS``, ``- Linked``, ``- Allele``, ``- Truncation``) and the paper says what</span>
+<span class="sd">    each set of strains is.</span>
+
+<span class="sd">    - ``deletion``: the gene (or, for a multi-gene label, each listed gene) is deleted.</span>
+<span class="sd">    - ``affinity_tag``: an in-frame affinity tag fused to the product (``- SPA``).</span>
+<span class="sd">    - ``degron``: a degron fused to the product (``- DAS``).</span>
+<span class="sd">    - ``linked_marker``: a selectable cassette linked to the wild-type allele, the</span>
+<span class="sd">      control of an allele series (``- Linked``).</span>
+<span class="sd">    - ``sequence_allele``: a designed allele the label states as a change (a point</span>
+<span class="sd">      substitution, an in-frame deletion or a duplication; ``- Allele``).</span>
+<span class="sd">    - ``truncation``: a truncated gene (``- Truncation``).</span>
+<span class="sd">    """</span>
+
+    <span class="n">deletion</span> <span class="o">=</span> <span class="s2">"deletion"</span>
+    <span class="n">affinity_tag</span> <span class="o">=</span> <span class="s2">"affinity_tag"</span>
+    <span class="n">degron</span> <span class="o">=</span> <span class="s2">"degron"</span>
+    <span class="n">linked_marker</span> <span class="o">=</span> <span class="s2">"linked_marker"</span>
+    <span class="n">sequence_allele</span> <span class="o">=</span> <span class="s2">"sequence_allele"</span>
+    <span class="n">truncation</span> <span class="o">=</span> <span class="s2">"truncation"</span>
+
+
+<span class="n">RELEASED_STRAIN_KIND_SO</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">ReleasedStrainKind</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">ReleasedStrainKind</span><span class="o">.</span><span class="n">deletion</span><span class="p">:</span> <span class="p">(</span><span class="s2">"SO:0000159"</span><span class="p">,</span> <span class="s2">"deletion"</span><span class="p">),</span>
+    <span class="n">ReleasedStrainKind</span><span class="o">.</span><span class="n">affinity_tag</span><span class="p">:</span> <span class="p">(</span><span class="s2">"SO:0001218"</span><span class="p">,</span> <span class="s2">"transgenic_insertion"</span><span class="p">),</span>
+    <span class="n">ReleasedStrainKind</span><span class="o">.</span><span class="n">degron</span><span class="p">:</span> <span class="p">(</span><span class="s2">"SO:0001218"</span><span class="p">,</span> <span class="s2">"transgenic_insertion"</span><span class="p">),</span>
+    <span class="n">ReleasedStrainKind</span><span class="o">.</span><span class="n">linked_marker</span><span class="p">:</span> <span class="p">(</span><span class="s2">"SO:0001218"</span><span class="p">,</span> <span class="s2">"transgenic_insertion"</span><span class="p">),</span>
+    <span class="n">ReleasedStrainKind</span><span class="o">.</span><span class="n">sequence_allele</span><span class="p">:</span> <span class="p">(</span><span class="s2">"SO:0001060"</span><span class="p">,</span> <span class="s2">"sequence_variant"</span><span class="p">),</span>
+    <span class="n">ReleasedStrainKind</span><span class="o">.</span><span class="n">truncation</span><span class="p">:</span> <span class="p">(</span><span class="s2">"SO:0000159"</span><span class="p">,</span> <span class="s2">"deletion"</span><span class="p">),</span>
+<span class="p">}</span>
+<span class="sd">"""Sequence Ontology mechanism of each released kind, every pair one the schema</span>
+<span class="sd">already pins: the deletion leaves' ``deletion``, the marked-allele and degron leaves'</span>
+<span class="sd">``transgenic_insertion`` and the generic ``sequence_variant`` of the AXIS-3 root. A</span>
+<span class="sd">truncation removes part of the gene, which is a deletion."""</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BacterialReleasedStrainPerturbation</span><span class="p">(</span><span class="n">GenePerturbation</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One gene of a bacterial strain, identified only by what its source released.</span>
+
+<span class="sd">    ``systematic_gene_name`` is the source's own gene identifier, verbatim (Nichols</span>
+<span class="sd">    2011: the ECK accession of the row label), and ``perturbed_gene_name`` the source's</span>
+<span class="sd">    gene name, verbatim (the label's upper-case symbol, ``HCHA``). Nothing is looked up:</span>
+<span class="sd">    no assembly decides whether the record exists, and no derived locus tag is stored,</span>
+<span class="sd">    so the record says exactly what the release says and a crosswalk to an annotation is</span>
+<span class="sd">    a separate, later act. ``strain_label`` is the release's whole strain identifier</span>
+<span class="sd">    (``ECK1205/1207/1209-RDLABC``), shared by every gene of a multi-gene strain, and is</span>
+<span class="sd">    what keeps two strains of one gene apart (``ECK0055-C-IMP-DAS-KAN - DAS`` and</span>
+<span class="sd">    ``ECK0055-B-IMP-DAS+4-KAN - DAS``). ``released_kind`` is the class the label states.</span>
+
+<span class="sd">    It is NOT placed under the presence/absence or sequence axis classes, because the</span>
+<span class="sd">    axis is a property of the kind (a deletion and an affinity tag are both stored</span>
+<span class="sd">    here); ``mechanism_so`` gives the Sequence Ontology pair of the kind, from</span>
+<span class="sd">    :data:`RELEASED_STRAIN_KIND_SO`. It is a sibling of the placed bacterial leaves, and</span>
+<span class="sd">    it refuses a locus tag of any bacterial namespace: a released tag of the pinned</span>
+<span class="sd">    assembly is stored on those leaves, so one kind of record never sits in two classes.</span>
+
+<span class="sd">    ``gene_namespace`` names the host the study writes its strains against (Nichols</span>
+<span class="sd">    2011: "During the entire study, BW25113 is referred to as wild-type"), as it does for</span>
+<span class="sd">    a heterologous gene on an addition leaf; the identifier is not a tag of it, so the</span>
+<span class="sd">    namespace check has nothing to compare.</span>
+<span class="sd">    """</span>
+
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">"Bacterial gene perturbation identified by the source's own strain label and "</span>
+        <span class="s2">"gene identifier, not placed on an assembly"</span>
+    <span class="p">)</span>
+    <span class="n">perturbation_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"bacterial_released_strain"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">"bacterial_released_strain"</span>
+    <span class="p">)</span>
+    <span class="n">gene_namespace</span><span class="p">:</span> <span class="n">BacterialGeneNamespace</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the host namespace the study writes its strains against; the "</span>
+        <span class="s2">"released identifier is not a tag of it"</span>
+    <span class="p">)</span>
+    <span class="n">strain_label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the source's whole strain identifier, verbatim (a row or column "</span>
+        <span class="s2">"label), shared by every gene of a multi-gene strain"</span>
+    <span class="p">)</span>
+    <span class="n">identifier_kind</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"what systematic_gene_name is, as the source writes it (e.g. 'ECK "</span>
+        <span class="s2">"accession')"</span>
+    <span class="p">)</span>
+    <span class="n">released_kind</span><span class="p">:</span> <span class="n">ReleasedStrainKind</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"what the source's label says the strain is"</span>
+    <span class="p">)</span>
+    <span class="n">cassette</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the selectable marker the source names for the strain, verbatim "</span>
+        <span class="s2">"(e.g. 'kanamycin'); None when unstated"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">collection</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the strain set the source names for this strain, verbatim; None "</span>
+        <span class="s2">"when the source does not say which of its sets a strain belongs to"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"systematic_gene_name"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_sys_gene_name</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The released identifier verbatim, and never a locus tag of a namespace."""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">v</span> <span class="ow">or</span> <span class="n">v</span> <span class="o">!=</span> <span class="n">v</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"systematic_gene_name must be the released identifier verbatim, got "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">v</span><span class="si">!r}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">_namespace_of_locus_tag</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">v</span><span class="si">!r}</span><span class="s2"> is a bacterial locus tag; a released tag of a pinned assembly "</span>
+                <span class="s2">"is stored on the placed bacterial leaves"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_label</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"BacterialReleasedStrainPerturbation"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The strain label and identifier kind are verbatim, non-empty strings."""</span>
+        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"strain_label"</span><span class="p">,</span> <span class="s2">"identifier_kind"</span><span class="p">):</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span> <span class="ow">or</span> <span class="n">value</span> <span class="o">!=</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2"> must be a non-empty verbatim string"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mechanism_so</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""(SO id, SO name) of this perturbation's released kind."""</span>
+        <span class="k">return</span> <span class="n">RELEASED_STRAIN_KIND_SO</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">released_kind</span><span class="p">]</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># End ADDITIVE (#691).</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+
+
 <span class="n">SgaPerturbationType</span> <span class="o">=</span> <span class="p">(</span>
     <span class="n">SgaKanMxDeletionPerturbation</span>
     <span class="o">|</span> <span class="n">SgaNatMxDeletionPerturbation</span>
@@ -4077,6 +4227,8 @@
     <span class="o">|</span> <span class="n">BacterialMarkedAllelePerturbation</span>
     <span class="o">|</span> <span class="n">BacterialDegronPerturbation</span>
     <span class="o">|</span> <span class="n">BacterialCrisprActivationPerturbation</span>
+    <span class="c1"># a strain stored under its released identifier (#691)</span>
+    <span class="o">|</span> <span class="n">BacterialReleasedStrainPerturbation</span>
 <span class="p">)</span>
 
 

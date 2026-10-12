@@ -4,7 +4,7 @@
   "date": "2026-10-12",
   "pr": null,
   "author_kind": "agent",
-  "base_commit": "c40f480e53bf621caee96c4518039301fd475ce9",
+  "base_commit": "3259ed278c0c30dfcfd68d8efcd57f31cbe27b72",
   "python_version": "3.13.0",
   "symbols": [
     {
@@ -386,6 +386,17 @@
       "loader": "torchcell/datasets/ecoli/li2014.py",
       "dataset_classes": [
         "ProteinSynthesisRateLi2014Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ExperimentType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/li2021.py",
+      "dataset_classes": [
+        "FluxLi2021Dataset"
       ],
       "served_classes": [],
       "impact": "stale",

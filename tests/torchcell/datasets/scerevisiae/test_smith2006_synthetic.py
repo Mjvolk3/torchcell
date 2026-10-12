@@ -8,24 +8,22 @@
 not installed, xlrd 2 only reads), so the raw file is a placeholder and
 ``FattyAcidSmith2006Dataset._read_table`` (the file-loader boundary, one line) is
 monkeypatched to return the table as that call would; everything downstream runs for
-real. The genome is a duck-typed stub carrying the five attributes the name policy
-reads.
+real. No genome is consulted (#1045): every row is stored under its released names.
 
-Table rows (Systematic Name, Glucose (YEPD) flag, oleate, myristate, acetate):
+Table rows (Systematic Name, Standard Name, Glucose (YEPD) flag, oleate, myristate,
+acetate):
 
-    0 YAL001C  -    3    4  3.0    kept: 3 records (common name TFC3 from the genome)
-    1 yal002w  NG   1    1  1.0    YEPD growth-control failure: dropped
-    2 YAL003W  -    3    3  3.0    alias of YAL002W, which is present directly: collision
-    3 YBR099W  -    1    2  2.5    alias of YBR002W (not present directly): 3 records
-    4 YZZ999W  -    not a systematic pattern: unresolved
-    5 YPL999C  -    systematic pattern, no alias: unresolved
-    6 GHOST1   -    unresolved
-    7 YAL001C  -    second row for YAL001C: duplicate
-    8 YCR001W  -    -    1  1.0    blank oleate cell: 2 records
+    0 YAL001C TFC3   -    3    4  3.0    3 records, common name TFC3 as released
+    1 yal002w VPS8   NG   1    1  1.0    YEPD growth-control flag: 3 records, flag carried
+    2 YAL003W -      -    3    3  3.0    an R64 synonym of YAL002W: 3 records under YAL003W
+    3 YBR099W -      -    1    2  2.5    an R64 synonym of YBR002W: 3 records under YBR099W
+    4 YPL999C -      -    3    3  3.0    no R64 gene: 3 records under YPL999C
+    5 YCR001W -      -    -    1  1.0    blank oleate cell: 2 records
 
-Records: 3 + 3 + 2 = 8 of 9 rows x 3 conditions = 27; the 19 dropped are YEPD 1 x 3,
-unresolved 3 x 3, collision 1 x 3, duplicate 1 x 3 and one blank cell. References are
-one per condition: oleate [0, 3], myristate [1, 4, 6], acetate [2, 5, 7].
+Records: 3 + 3 + 3 + 3 + 3 + 2 = 17 of 6 rows x 3 conditions = 18; the one missing is
+the blank cell. A name that is not ORF-shaped (``GHOST1``) and a second row for a released
+ORF raise before any store is opened. References are one per condition: oleate
+[0, 3, 6, 9, 12], myristate [1, 4, 7, 10, 13, 15], acetate [2, 5, 8, 11, 14, 16].
 """
 
 from __future__ import annotations
@@ -35,7 +33,7 @@ import json
 import os
 import re
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import pandas as pd
 import pytest
@@ -63,43 +61,9 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.scerevisiae import smith2006 as s
-from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 
 _DATASET = "FattyAcidSmith2006Dataset"
-_GENES = {"YAL001C", "YAL002W", "YBR002W", "YCR001W"}
-_STANDARD = {"TFC3": ["YAL001C"], "VPS8": ["YAL002W"], "FAKE": ["YCR001W"]}
 _NAN = float("nan")
-
-
-class _Resolution:
-    def __init__(self, status: str, systematic: str | None) -> None:
-        self.status = status
-        self.systematic_name = systematic
-
-    @property
-    def is_current_gene(self) -> bool:
-        return self.status in ("current", "renamed")
-
-
-class _FakeGenome:
-    """The slice of ``SCerevisiaeGenome`` the Smith name policy reads."""
-
-    gene_set = _GENES
-    feature_index = {"standard_to_ids": _STANDARD}
-    gene_attribute_table = pd.DataFrame({"ID": sorted(_GENES)})
-    alias_to_systematic: dict[str, list[str]] = {
-        "YAL003W": ["YAL002W"],
-        "YBR099W": ["YBR002W"],
-    }
-
-    def resolve_gene_name(self, name: str) -> _Resolution:
-        if name in ("TFC3", "VPS8"):
-            return _Resolution("renamed", _STANDARD[name][0])
-        return _Resolution("retired", None)
-
-
-def _genome() -> SCerevisiaeGenome:
-    return cast(SCerevisiaeGenome, _FakeGenome())
 
 
 def _table() -> pd.DataFrame:
@@ -110,16 +74,14 @@ def _table() -> pd.DataFrame:
                 "yal002w",
                 "YAL003W",
                 "YBR099W",
-                "YZZ999W",
                 "YPL999C",
-                "GHOST1",
-                "YAL001C",
                 "YCR001W",
             ],
-            s.YEPD_QC_COL: [_NAN, "NG", _NAN, _NAN, _NAN, _NAN, _NAN, _NAN, _NAN],
-            "Oleate (YPBO)": [3, 1, 3, 1, 3, 3, 3, 3, _NAN],
-            "Myristae (YPBM)": [4, 1, 3, 2, 3, 3, 3, 3, 1],
-            "Acetate (YPBA)": [3.0, 1.0, 3.0, 2.5, 3.0, 3.0, 3.0, 3.0, 1.0],
+            s.STANDARD_COL: ["TFC3", "VPS8", _NAN, _NAN, _NAN, _NAN],
+            s.YEPD_QC_COL: [_NAN, "NG", _NAN, _NAN, _NAN, _NAN],
+            "Oleate (YPBO)": [3, 1, 3, 1, 3, _NAN],
+            "Myristae (YPBM)": [4, 1, 3, 2, 3, 1],
+            "Acetate (YPBA)": [3.0, 1.0, 3.0, 2.5, 3.0, 1.0],
         }
     )
 
@@ -134,7 +96,7 @@ def dataset(
     raw = tmp_path / "smith" / "raw"
     raw.mkdir(parents=True)
     (raw / s.XLS_FILENAME).write_bytes(b"placeholder: _read_table is stubbed")
-    return s.FattyAcidSmith2006Dataset(root=str(tmp_path / "smith"), genome=_genome())
+    return s.FattyAcidSmith2006Dataset(root=str(tmp_path / "smith"))
 
 
 _CARBON = {
@@ -266,24 +228,32 @@ _EXPECTED = [
     _experiment("YAL001C", "TFC3", "oleate", 3.0, _C.no_change, "wild_type"),
     _experiment("YAL001C", "TFC3", "myristate", 4.0, _C.enhanced, "enhanced"),
     _experiment("YAL001C", "TFC3", "acetate", 3.0, _C.no_change, "wild_type"),
-    _experiment("YBR002W", "YBR002W", "oleate", 1.0, _C.severely_reduced, "defective"),
-    _experiment("YBR002W", "YBR002W", "myristate", 2.0, _C.reduced, "reduced"),
+    _experiment("YAL002W", "VPS8", "oleate", 1.0, _C.severely_reduced, "defective"),
+    _experiment("YAL002W", "VPS8", "myristate", 1.0, _C.severely_reduced, "defective"),
+    _experiment("YAL002W", "VPS8", "acetate", 1.0, _C.severely_reduced, "poor"),
+    _experiment("YAL003W", "YAL003W", "oleate", 3.0, _C.no_change, "wild_type"),
+    _experiment("YAL003W", "YAL003W", "myristate", 3.0, _C.no_change, "wild_type"),
+    _experiment("YAL003W", "YAL003W", "acetate", 3.0, _C.no_change, "wild_type"),
+    _experiment("YBR099W", "YBR099W", "oleate", 1.0, _C.severely_reduced, "defective"),
+    _experiment("YBR099W", "YBR099W", "myristate", 2.0, _C.reduced, "reduced"),
     _experiment(
-        "YBR002W", "YBR002W", "acetate", 2.5, _C.mildly_reduced, "intermediate"
+        "YBR099W", "YBR099W", "acetate", 2.5, _C.mildly_reduced, "intermediate"
     ),
+    _experiment("YPL999C", "YPL999C", "oleate", 3.0, _C.no_change, "wild_type"),
+    _experiment("YPL999C", "YPL999C", "myristate", 3.0, _C.no_change, "wild_type"),
+    _experiment("YPL999C", "YPL999C", "acetate", 3.0, _C.no_change, "wild_type"),
     _experiment(
         "YCR001W", "YCR001W", "myristate", 1.0, _C.severely_reduced, "defective"
     ),
     _experiment("YCR001W", "YCR001W", "acetate", 1.0, _C.severely_reduced, "poor"),
 ]
-_REFERENCES = ["oleate", "myristate", "acetate", "oleate", "myristate", "acetate"]
-_REFERENCES += ["myristate", "acetate"]
+_REFERENCES = ["oleate", "myristate", "acetate"] * 5 + ["myristate", "acetate"]
 
 
-def test_eight_records_in_strain_then_condition_order(
+def test_seventeen_records_in_strain_then_condition_order(
     dataset: s.FattyAcidSmith2006Dataset,
 ) -> None:
-    assert len(dataset) == 8
+    assert len(dataset) == 17
     for i, expected in enumerate(_EXPECTED):
         assert dataset[i]["experiment"] == expected
         assert dataset[i]["reference"] == _reference(_REFERENCES[i])
@@ -301,7 +271,7 @@ def test_eight_records_in_strain_then_condition_order(
 def test_drop_log_accounts_for_every_missing_record(
     dataset: s.FattyAcidSmith2006Dataset,
 ) -> None:
-    """27 source records, 8 kept, 19 dropped across the five rules."""
+    """18 source records, 17 kept, 1 dropped (the blank cell); the YEPD flag is carried."""
     log = json.loads(
         (Path(dataset.root) / "preprocess" / "dropped_records.json").read_text()
     )
@@ -310,27 +280,14 @@ def test_drop_log_accounts_for_every_missing_record(
         log["source_records"],
         log["kept_records"],
         log["dropped_records"],
-    ) == (_DATASET, 27, 8, 19)
+    ) == (_DATASET, 18, 17, 1)
     assert [
         (rule["rule"], rule["scope"], rule["n_records"], rule["items"])
         for rule in log["rules"]
-    ] == [
-        ("strain_failed_the_yepd_growth_control", "strain", 3, ["YAL002W"]),
-        (
-            "systematic_name_does_not_resolve_to_a_current_orf",
-            "strain",
-            9,
-            ["GHOST1", "YPL999C", "YZZ999W"],
-        ),
-        (
-            "alias_resolution_collides_with_a_directly_present_orf",
-            "strain",
-            3,
-            ["YAL003W"],
-        ),
-        ("second_row_for_an_already_resolved_orf", "strain", 3, ["YAL001C"]),
-        ("condition_cell_is_blank", "cell", 1, []),
-    ]
+    ] == [("condition_cell_is_blank", "cell", 1, [])]
+    assert [
+        (flag["flag"], flag["n_records"], flag["items"]) for flag in log["carried"]
+    ] == [("strain_flagged_on_the_yepd_growth_control", 3, ["YAL002W"])]
 
 
 def test_side_files_gene_set_and_reference_index(
@@ -339,14 +296,17 @@ def test_side_files_gene_set_and_reference_index(
     preprocess = Path(dataset.root) / "preprocess"
     assert json.loads((preprocess / "gene_set.json").read_text()) == [
         "YAL001C",
-        "YBR002W",
+        "YAL002W",
+        "YAL003W",
+        "YBR099W",
         "YCR001W",
+        "YPL999C",
     ]
     index = json.loads((preprocess / "experiment_reference_index.json").read_text())
     assert sorted(entry["member_indices"] for entry in index) == [
-        [0, 3],
-        [1, 4, 6],
-        [2, 5, 7],
+        [0, 3, 6, 9, 12],
+        [1, 4, 7, 10, 13, 15],
+        [2, 5, 8, 11, 14, 16],
     ]
     manifest = json.loads((preprocess / "build_manifest.json").read_text())
     assert (manifest["dataset_name"], manifest["loader_class"]) == ("smith", _DATASET)
@@ -359,21 +319,18 @@ def test_side_files_gene_set_and_reference_index(
     assert dataset.preprocess_raw(frame) is frame
 
 
-def test_process_refuses_to_run_without_a_genome(
+def test_a_name_that_is_not_orf_shaped_refuses_before_any_store(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr(
-        s.FattyAcidSmith2006Dataset, "_read_table", lambda self: _table()
-    )
+    table = _table()
+    table.loc[4, s.SYSTEMATIC_COL] = "GHOST1"
+    monkeypatch.setattr(s.FattyAcidSmith2006Dataset, "_read_table", lambda self: table)
     raw = tmp_path / "smith" / "raw"
     raw.mkdir(parents=True)
     (raw / s.XLS_FILENAME).write_bytes(b"placeholder")
-    with pytest.raises(
-        RuntimeError,
-        match=r"FattyAcidSmith2006Dataset requires a genome for systematic-name "
-        r"resolution; inject SCerevisiaeGenome\(\.\.\.\)",
-    ):
+    with pytest.raises(s.ReleasedNameNotSystematicError):
         s.FattyAcidSmith2006Dataset(root=str(tmp_path / "smith"))
+    assert not (tmp_path / "smith" / "processed" / "lmdb").exists()
 
 
 _XLS_BYTES = b"synthetic Supplementary Table 1 bytes"
@@ -414,14 +371,12 @@ def test_download_links_the_deposited_mirror_file_then_builds(
     monkeypatch.setattr(
         s.FattyAcidSmith2006Dataset, "_read_table", lambda self: _table()
     )
-    dataset = s.FattyAcidSmith2006Dataset(
-        root=str(tmp_path / "smith"), genome=_genome()
-    )
+    dataset = s.FattyAcidSmith2006Dataset(root=str(tmp_path / "smith"))
     link = tmp_path / "smith" / "raw" / s.XLS_FILENAME
     assert os.readlink(link) == str(
         data_root / "torchcell-raw" / s.CITATION_KEY / "data" / s.XLS_FILENAME
     )
-    assert len(dataset) == 8
+    assert len(dataset) == 17
     with pytest.raises(KeyError, match="data/nope is not in the raw-mirror manifest"):
         s.manifest_sha256(manifest, "data/nope")
 
@@ -434,7 +389,7 @@ def test_download_refuses_changed_or_missing_mirror_bytes(
     mirror.write_bytes(b"changed")
     got = hashlib.sha256(b"changed").hexdigest()
     with pytest.raises(RawSha256MismatchError) as err:
-        s.FattyAcidSmith2006Dataset(root=str(tmp_path / "a"), genome=_genome())
+        s.FattyAcidSmith2006Dataset(root=str(tmp_path / "a"))
     assert str(err.value) == (
         f"sha256 mismatch for {mirror}: expected "
         f"{hashlib.sha256(_XLS_BYTES).hexdigest()}, observed {got}"
@@ -445,7 +400,7 @@ def test_download_refuses_changed_or_missing_mirror_bytes(
         RuntimeError,
         match=re.escape(f"required raw artifact missing from mirror: {mirror}"),
     ):
-        s.FattyAcidSmith2006Dataset(root=str(tmp_path / "b"), genome=_genome())
+        s.FattyAcidSmith2006Dataset(root=str(tmp_path / "b"))
 
 
 def test_deposit_refuses_bytes_that_are_not_the_pin(
@@ -486,7 +441,7 @@ def test_a_raw_file_off_the_pin_is_refused_at_build_time(
     staged = off_pin_raw(s, [s.XLS_FILENAME])
     raw = staged.root / "raw" / s.XLS_FILENAME
     with pytest.raises(RawSha256MismatchError) as err:
-        s.FattyAcidSmith2006Dataset(root=str(staged.root), genome=_genome())
+        s.FattyAcidSmith2006Dataset(root=str(staged.root))
     assert str(err.value) == (
         f"sha256 mismatch for {raw}: expected "
         "7048663ffa4890478724e6e371f434baccc7160e6d8250df9a777a26c6b283a4, "
@@ -505,10 +460,10 @@ def test_a_drop_log_that_disagrees_with_its_rules_refuses_after_writing_it(
 ) -> None:
     """``DropLog`` is patched to report one more dropped record than the build lost.
 
-    The rules still total 19 (3 + 9 + 3 + 3 + 1, as in
-    ``test_drop_log_accounts_for_every_missing_record``) while the log says 20, so the
+    The rules still total 1 (the blank cell, as in
+    ``test_drop_log_accounts_for_every_missing_record``) while the log says 2, so the
     build raises the exact mismatch message; the log is written before the check, so the
-    tampered 20 is on disk for inspection.
+    tampered 2 is on disk for inspection.
     """
     real = s.DropLog
 
@@ -524,11 +479,11 @@ def test_a_drop_log_that_disagrees_with_its_rules_refuses_after_writing_it(
     raw.mkdir(parents=True)
     (raw / s.XLS_FILENAME).write_bytes(b"placeholder: _read_table is stubbed")
     with pytest.raises(RuntimeError) as err:
-        s.FattyAcidSmith2006Dataset(root=str(tmp_path / "smith"), genome=_genome())
+        s.FattyAcidSmith2006Dataset(root=str(tmp_path / "smith"))
     assert str(err.value) == (
-        "drop accounting mismatch: rules total 19, 20 records missing from the build"
+        "drop accounting mismatch: rules total 1, 2 records missing from the build"
     )
     log = json.loads(
         (tmp_path / "smith" / "preprocess" / "dropped_records.json").read_text()
     )
-    assert log["dropped_records"] == 20
+    assert log["dropped_records"] == 2

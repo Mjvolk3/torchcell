@@ -111,13 +111,11 @@ def test_reference_is_the_normalization_convention_not_a_measurement() -> None:
     assert environment_reference.temperature.value == 26.0
 
 
-def test_record_count_oracle_is_derived_from_the_release() -> None:
+def test_record_count_oracle_is_the_release_row_count() -> None:
+    """Every released allele is a record (#1045): no frozen drop set, 6023 records."""
     assert b._EXPECTED_ROWS == 6023
-    assert len(b._UNRESOLVABLE) == 30
-    assert b.EXPECTED_RECORDS == b._EXPECTED_ROWS - len(b._UNRESOLVABLE) == 5993
-    # the frozen set is 29 deletions + the one DAmP allele
-    kinds = sorted(b._UNRESOLVABLE.values())
-    assert kinds.count("deletion") == 29 and kinds.count("damp") == 1
+    assert b.EXPECTED_RECORDS == b._EXPECTED_ROWS == 6023
+    assert not hasattr(b, "_UNRESOLVABLE")
     assert b._SV_COMPOSITION.value == {"deletion": 4635, "damp": 1082, "ts": 306}
     assert sum(b._SV_COMPOSITION.value.values()) == b._EXPECTED_ROWS
 

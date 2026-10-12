@@ -3,16 +3,13 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/datasets/scerevisiae/test_baryshnikova2010_synthetic.py
 """Baryshnikova 2010 SMF loader built end to end on a seven-row synthetic workbook.
 
-The loader's ``process()`` is guarded by three release self-checksums (row count 6023,
-composition 4635/1082/306, the frozen 30-id ``_UNRESOLVABLE`` drop set) that only the real
-release satisfies, so the build tests repoint those four module constants at the fixture
-with ``monkeypatch`` (the YeastPhenome precedent) and one test pins the unpatched
-checksums' exact rejections. The workbook is written with openpyxl under the release's
-``.xls`` name; pandas sniffs the zip signature and reads it with openpyxl, so
-``_read_smf`` runs unchanged.
-
-Stub genome: current ORFs YAL001C, YAL003W, YBR001C, YBR156C, YDL227C; aliases
-YAL002W -> YAL003W (target current) and YAR037W -> YAR999W (target not current).
+The loader's ``process()`` is guarded by release self-checksums (row count 6023,
+composition 4635/1082/306, the record count) that only the real release satisfies, so the
+build tests repoint those module constants at the fixture with ``monkeypatch`` (the
+YeastPhenome precedent) and one test pins the unpatched checksums' exact rejections. The
+workbook is written with openpyxl under the release's ``.xls`` name; pandas sniffs the zip
+signature and reads it with openpyxl, so ``_read_smf`` runs unchanged. No genome is
+consulted (#1045): every allele is stored under its released ORF token.
 
 Fixture rows (allele, fitness, SE), in file order, and what each becomes:
 
@@ -20,15 +17,15 @@ Fixture rows (allele, fitness, SE), in file order, and what each becomes:
     1  YDL227C          1.000155  0.002  deletion, duplicated id -> strain_id YDL227C.1
     2  YBR001C_damp     0.70      0.020  DAmP, 30 C, n_samples gap, record 2
     3  YBR156C_tsq236   0.50      0.050  TS, 26 C, n_samples gap, record 3
-    4  YAR037W          1.02      0.004  alias target not current -> dropped
-    5  YDL227C          1.031582  0.003  second copy -> strain_id YDL227C.2, record 4
-    6  yal002w          0.88      0.011  lowercase alias -> ORF YAL003W, record 5
+    4  YAR037W          1.02      0.004  retired in R64-4-1: stored as released, record 4
+    5  YDL227C          1.031582  0.003  second copy -> strain_id YDL227C.2, record 5
+    6  yal002w          0.88      0.011  lowercase: ORF YAL002W (upper-cased), record 6
 
-Composition 5 deletion + 1 damp + 1 ts = 7 rows; 6 records. The bootstrap SE column is
+Composition 5 deletion + 1 damp + 1 ts = 7 rows; 7 records. The bootstrap SE column is
 stored as ``fitness_uncertainty`` with type ``bootstrap_se`` and is never divided by
 sqrt(n). The deletion and DAmP references are identical objects (BY4741, SGA selection
 plate, 30 C, fitness 1.0), so the reference index has two entries: 30 C with members
-[0, 1, 2, 4, 5] and 26 C with member [3].
+[0, 1, 2, 4, 5, 6] and 26 C with member [3].
 """
 
 from __future__ import annotations
@@ -39,8 +36,7 @@ import os
 import socket
 import subprocess
 from pathlib import Path
-from types import MappingProxyType
-from typing import Any, cast
+from typing import Any
 
 import openpyxl
 import pandas as pd
@@ -65,29 +61,12 @@ from torchcell.datamodels.schema import (
 )
 from torchcell.datasets.scerevisiae import baryshnikova2010 as m
 from torchcell.literature.manifest import ROLE_RAW_DATA, ArtifactRecord, Manifest
-from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
 
 _SI_SHA = "f85ea57ce9f5ec60b633b837ff2c5ee18cc65e113db2f034b892739690d8046e"
 _CITATION_KEY = "baryshnikovaQuantitativeAnalysisFitness2010"
 _DOI = "10.1038/nmeth.1534"
-
-
-class _StubGenome:
-    """The two genome attributes ``_resolver`` reads."""
-
-    gene_attribute_table = pd.DataFrame(
-        {"ID": ["YAL001C", "YAL003W", "YBR001C", "YBR156C", "YDL227C"]}
-    )
-    alias_to_systematic: dict[str, list[str]] = {
-        "YAL002W": ["YAL003W"],
-        "YAR037W": ["YAR999W"],
-    }
-
-
-def _genome() -> SCerevisiaeGenome:
-    return cast(SCerevisiaeGenome, _StubGenome())
 
 
 _ROWS: list[tuple[str, float, float]] = [
@@ -117,10 +96,9 @@ def _patch_release(
     *,
     n_rows: int = 7,
     composition: dict[str, int] | None = None,
-    unresolvable: dict[str, str] | None = None,
-    expected_records: int = 6,
+    expected_records: int = 7,
 ) -> None:
-    """Repoint the four release self-checksums at the fixture."""
+    """Repoint the three release self-checksums at the fixture."""
     monkeypatch.setattr(m, "_EXPECTED_ROWS", n_rows)
     monkeypatch.setattr(
         m,
@@ -128,9 +106,6 @@ def _patch_release(
         m._SV_COMPOSITION.model_copy(
             update={"value": composition or {"deletion": 5, "damp": 1, "ts": 1}}
         ),
-    )
-    monkeypatch.setattr(
-        m, "_UNRESOLVABLE", MappingProxyType(unresolvable or {"YAR037W": "deletion"})
     )
     monkeypatch.setattr(m, "EXPECTED_RECORDS", expected_records)
 
@@ -146,7 +121,7 @@ def dataset(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> m.SmfBaryshnikova2010Dataset:
     _patch_release(monkeypatch)
-    return m.SmfBaryshnikova2010Dataset(root=str(_root(tmp_path)), genome=_genome())
+    return m.SmfBaryshnikova2010Dataset(root=str(_root(tmp_path)))
 
 
 def _environment(temperature: float) -> Environment:
@@ -237,22 +212,24 @@ def _records(
     return out
 
 
-def test_seven_rows_build_six_records_in_file_order(
+def test_seven_rows_build_seven_records_in_file_order(
     dataset: m.SmfBaryshnikova2010Dataset,
 ) -> None:
-    """Row 4 (YAR037W, alias target YAR999W is not current) is the one drop. The
-    deletion rows store n = 80 at 30 C; the DAmP row stores n = None at 30 C; the TS row
-    stores n = None at 26 C. Record 0 is checked field by field against a hand-built
-    ``FitnessExperiment``: fitness 0.95, bootstrap SE 0.010 used as is, 80 screens.
+    """Every row is a record, under its released ORF token (row 4, YAR037W, is retired
+    in R64-4-1 and stored anyway). The deletion rows store n = 80 at 30 C; the DAmP row
+    stores n = None at 30 C; the TS row stores n = None at 26 C. Record 0 is checked
+    field by field against a hand-built ``FitnessExperiment``: fitness 0.95, bootstrap
+    SE 0.010 used as is, 80 screens.
     """
-    assert len(dataset) == 6
+    assert len(dataset) == 7
     assert _records(dataset) == [
         ("sga_kanmx_deletion", "YAL001C", "YAL001C", "YAL001C", 0.95, 0.010, 80, 30.0),
         ("sga_kanmx_deletion", "YDL227C", "YDL227C", "YDL227C.1", 1.000155, 0.002, 80, 30.0),
         ("damp", "YBR001C", "YBR001C", "YBR001C_damp", 0.70, 0.020, None, 30.0),
         ("temperature_sensitive_allele", "YBR156C", "YBR156C", "YBR156C_tsq236", 0.50, 0.050, None, 26.0),
+        ("sga_kanmx_deletion", "YAR037W", "YAR037W", "YAR037W", 1.02, 0.004, 80, 30.0),
         ("sga_kanmx_deletion", "YDL227C", "YDL227C", "YDL227C.2", 1.031582, 0.003, 80, 30.0),
-        ("sga_kanmx_deletion", "YAL003W", "YAL003W", "yal002w", 0.88, 0.011, 80, 30.0),
+        ("sga_kanmx_deletion", "YAL002W", "YAL002W", "yal002w", 0.88, 0.011, 80, 30.0),
     ]  # fmt: skip
     assert (
         dataset[0]["experiment"]
@@ -323,20 +300,18 @@ def test_query_side_rows_gap_n_samples_and_the_ts_row_runs_at_26c(
     assert dataset[3]["reference"] == _reference(26.0)
 
 
-def test_alias_row_stores_the_resolved_orf_as_perturbed_name_and_the_raw_id_as_strain(
+def test_a_lowercase_row_stores_its_own_token_upper_cased_and_the_raw_id_as_strain(
     dataset: m.SmfBaryshnikova2010Dataset,
 ) -> None:
-    """Finding: for an alias row the record's ``perturbed_gene_name`` is the RESOLVED
-    current ORF (YAL003W), not the released token; only ``strain_id`` keeps the raw id,
-    verbatim including its lowercase (``yal002w``). Hoepfner 2014 keeps the source ORF
-    as ``perturbed_gene_name`` for a renamed row; this loader does not.
+    """The record's names are the released ORF token (``yal002w`` upper-cased to
+    YAL002W, not the R64 synonym YAL003W); ``strain_id`` keeps the raw id verbatim.
     """
-    (perturbation,) = dataset[5]["experiment"]["genotype"]["perturbations"]
+    (perturbation,) = dataset[6]["experiment"]["genotype"]["perturbations"]
     assert (
         perturbation
         == SgaKanMxDeletionPerturbation(
-            systematic_gene_name="YAL003W",
-            perturbed_gene_name="YAL003W",
+            systematic_gene_name="YAL002W",
+            perturbed_gene_name="YAL002W",
             strain_id="yal002w",
         ).model_dump()
     )
@@ -355,7 +330,7 @@ def test_reference_index_merges_the_deletion_and_damp_references(
             Path(dataset.root) / "preprocess" / "experiment_reference_index.json"
         ).read_text()
     )
-    assert [entry["member_indices"] for entry in index] == [[0, 1, 2, 4, 5], [3]]
+    assert [entry["member_indices"] for entry in index] == [[0, 1, 2, 4, 5, 6], [3]]
     assert index[0]["reference"] == _reference(30.0)
     assert index[1]["reference"] == _reference(26.0)
 
@@ -363,29 +338,24 @@ def test_reference_index_merges_the_deletion_and_damp_references(
 def test_side_files_gene_set_drop_ledger_and_build_manifest(
     dataset: m.SmfBaryshnikova2010Dataset,
 ) -> None:
-    """``gene_set.json`` is the five resolved ORFs sorted (YDL227C once), the drop ledger
-    records the one dropped allele under its kind, and the build manifest names the root
-    slug, the loader and this git HEAD.
+    """``gene_set.json`` is the six released ORFs sorted (YDL227C once), the ledger
+    records that nothing is dropped, and the build manifest names the root slug, the
+    loader and this git HEAD.
     """
     preprocess = Path(dataset.root) / "preprocess"
     assert json.loads((preprocess / "gene_set.json").read_text()) == [
         "YAL001C",
-        "YAL003W",
+        "YAL002W",
+        "YAR037W",
         "YBR001C",
         "YBR156C",
         "YDL227C",
     ]
     assert json.loads((preprocess / "dropped_records.json").read_text()) == {
-        "rule": (
-            "a released allele whose ORF token does not resolve to a gene of the "
-            "current R64 annotation (retired, merged or dubious ORF) is dropped; the set "
-            "is frozen in _UNRESOLVABLE and asserted on every build"
-        ),
+        "rule": m.RETENTION_RULE,
         "n_raw_rows": 7,
-        "n_dropped": 1,
-        "n_kept": 6,
-        "dropped_by_kind": {"deletion": 1},
-        "dropped": {"YAR037W": "deletion"},
+        "n_dropped": 0,
+        "n_kept": 7,
     }
     manifest = json.loads((preprocess / "build_manifest.json").read_text())
     head = subprocess.run(
@@ -425,9 +395,7 @@ def test_unpatched_self_checksums_reject_any_file_but_the_release(
     with pytest.raises(
         RuntimeError, match=r"SMF row-count self-checksum failed: 7 != 6023"
     ):
-        m.SmfBaryshnikova2010Dataset(
-            root=str(_root(tmp_path, "rows")), genome=_genome()
-        )
+        m.SmfBaryshnikova2010Dataset(root=str(_root(tmp_path, "rows")))
     root = tmp_path / "composition"
     _write_xls(
         root / "raw" / "SupplementaryData1_SMF.xls",
@@ -440,44 +408,19 @@ def test_unpatched_self_checksums_reject_any_file_but_the_release(
             r"\{'deletion': 4635, 'damp': 1082, 'ts': 306\}"
         ),
     ):
-        m.SmfBaryshnikova2010Dataset(root=str(root), genome=_genome())
+        m.SmfBaryshnikova2010Dataset(root=str(root))
 
 
-def test_drop_set_drift_and_record_count_oracles_raise_after_the_write(
+def test_the_record_count_oracle_raises_after_the_write(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """A frozen set naming YAR040C while the build drops YAR037W raises with both
-    differences listed; a correct set with ``EXPECTED_RECORDS`` 5 raises ``wrote 6
-    records, expected 5``. Both raise after the LMDB is written.
+    """``EXPECTED_RECORDS`` 5 against seven written rows raises ``wrote 7 records,
+    expected 5``, after the LMDB is written.
     """
-    _patch_release(monkeypatch, unresolvable={"YAR040C": "deletion"})
-    with pytest.raises(
-        RuntimeError,
-        match=(
-            r"unresolvable allele set drifted from the frozen release constant: "
-            r"unexpected \['YAR037W'\], missing \['YAR040C'\]"
-        ),
-    ):
-        m.SmfBaryshnikova2010Dataset(
-            root=str(_root(tmp_path, "drift")), genome=_genome()
-        )
-    assert (tmp_path / "drift" / "processed" / "lmdb").is_dir()
     _patch_release(monkeypatch, expected_records=5)
-    with pytest.raises(RuntimeError, match=r"wrote 6 records, expected 5"):
-        m.SmfBaryshnikova2010Dataset(
-            root=str(_root(tmp_path, "count")), genome=_genome()
-        )
-
-
-def test_a_genome_is_required_before_the_file_is_read(tmp_path: Path) -> None:
-    with pytest.raises(
-        RuntimeError,
-        match=(
-            "SmfBaryshnikova2010Dataset requires a genome for ORF resolution; "
-            r"inject SCerevisiaeGenome\(\.\.\.\)"
-        ),
-    ):
-        m.SmfBaryshnikova2010Dataset(root=str(_root(tmp_path)), genome=None)
+    with pytest.raises(RuntimeError, match=r"wrote 7 records, expected 5"):
+        m.SmfBaryshnikova2010Dataset(root=str(_root(tmp_path, "count")))
+    assert (tmp_path / "count" / "processed" / "lmdb").is_dir()
 
 
 def _mirror_manifest(xls: Path, sha256: str) -> Manifest:
@@ -512,7 +455,7 @@ def test_download_links_the_mirror_file_after_verifying_it_against_the_module_pi
     mirror = data_root / "torchcell-raw" / _CITATION_KEY
     manifest_path = mirror / "manifest.json"
     with pytest.raises(FileNotFoundError, match=str(manifest_path)):
-        m.SmfBaryshnikova2010Dataset(root=str(tmp_path / "a"), genome=_genome())
+        m.SmfBaryshnikova2010Dataset(root=str(tmp_path / "a"))
     xls = mirror / "data" / "SupplementaryData1_SMF.xls"
     staged = tmp_path / "staged.xls"
     _write_xls(staged, _ROWS)
@@ -521,13 +464,13 @@ def test_download_links_the_mirror_file_after_verifying_it_against_the_module_pi
     with pytest.raises(
         RuntimeError, match=f"required raw artifact missing from mirror: {xls}"
     ):
-        m.SmfBaryshnikova2010Dataset(root=str(tmp_path / "b"), genome=_genome())
+        m.SmfBaryshnikova2010Dataset(root=str(tmp_path / "b"))
     xls.parent.mkdir()
     xls.write_bytes(staged.read_bytes())
     digest = hashlib.sha256(xls.read_bytes()).hexdigest()
     monkeypatch.setattr(m, "XLS_SHA256", digest)
     with pytest.raises(ManifestPinMismatchError) as off_manifest:
-        m.SmfBaryshnikova2010Dataset(root=str(tmp_path / "c"), genome=_genome())
+        m.SmfBaryshnikova2010Dataset(root=str(tmp_path / "c"))
     assert str(off_manifest.value) == (
         f"raw-mirror manifest records sha256 {'0' * 64} for "
         f"data/SupplementaryData1_SMF.xls, but the loader pins {digest}"
@@ -536,23 +479,23 @@ def test_download_links_the_mirror_file_after_verifying_it_against_the_module_pi
     monkeypatch.setattr(m, "XLS_SHA256", "f" * 64)
     manifest_path.write_text(_mirror_manifest(xls, "f" * 64).model_dump_json())
     with pytest.raises(RawSha256MismatchError) as off_bytes:
-        m.SmfBaryshnikova2010Dataset(root=str(tmp_path / "c2"), genome=_genome())
+        m.SmfBaryshnikova2010Dataset(root=str(tmp_path / "c2"))
     assert str(off_bytes.value) == (
         f"sha256 mismatch for {xls}: expected {'f' * 64}, observed {digest}"
     )
     assert list((tmp_path / "c2" / "raw").iterdir()) == []
     monkeypatch.setattr(m, "XLS_SHA256", digest)
     manifest_path.write_text(_mirror_manifest(xls, digest).model_dump_json())
-    dataset = m.SmfBaryshnikova2010Dataset(root=str(tmp_path / "d"), genome=_genome())
+    dataset = m.SmfBaryshnikova2010Dataset(root=str(tmp_path / "d"))
     # a raw file already in place is left alone: download() only links what is absent
     raw_e = tmp_path / "e" / "raw"
     raw_e.mkdir(parents=True)
     (raw_e / "SupplementaryData1_SMF.xls").write_bytes(xls.read_bytes())
-    m.SmfBaryshnikova2010Dataset(root=str(tmp_path / "e"), genome=_genome()).download()
+    m.SmfBaryshnikova2010Dataset(root=str(tmp_path / "e")).download()
     assert not (raw_e / "SupplementaryData1_SMF.xls").is_symlink()
     link = tmp_path / "d" / "raw" / "SupplementaryData1_SMF.xls"
     assert link.is_symlink() and os.readlink(link) == str(xls)
-    assert len(dataset) == 6
+    assert len(dataset) == 7
     assert m.manifest_sha256(m.load_manifest(str(data_root)), m.XLS_REL) == digest
     with pytest.raises(
         KeyError, match="data/other.xls is not in the raw-mirror manifest"
@@ -629,7 +572,7 @@ def test_a_raw_file_off_the_pin_is_refused_at_build_time(
     staged = off_pin_raw(m, ["SupplementaryData1_SMF.xls"])
     raw = staged.root / "raw" / "SupplementaryData1_SMF.xls"
     with pytest.raises(RawSha256MismatchError) as err:
-        m.SmfBaryshnikova2010Dataset(root=str(staged.root), genome=_genome())
+        m.SmfBaryshnikova2010Dataset(root=str(staged.root))
     assert str(err.value) == (
         f"sha256 mismatch for {raw}: expected "
         "086bfadf2684f28940500dd87e3be74c53a957448d2016f7a02370540da8a04e, "

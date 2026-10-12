@@ -15,7 +15,8 @@ replicate samples of each of the thirteen culture conditions.
 
 RECORD = one (guide x antibiotic) ``BacterialEnvironmentResponseExperiment``:
 
-- GENOTYPE: one ``BacterialCrisprInterferencePerturbation`` on the
+- GENOTYPE: one ``BacterialCrisprInterferencePerturbation`` keyed by the gene's
+  released Table S2 b-number with its released symbol, on the
   ``ecoli_k12_mg1655_bnumber`` namespace, whose ``crispr`` construct carries the
   effector ``dCas9``, the 20 nt spacer joined from Table S6 by the guide's released
   genomic coordinates, and ``n_guides`` = the number of Table S1 guides of that gene.
@@ -61,15 +62,9 @@ antibiotic with replicate 1 of LB would assert a pairing the release never state
 replicate count rides on ``n_samples = 2`` instead.
 
 ARITHMETIC CHECKS RUN AT BUILD TIME (``preprocess/extraction.json``), each of which
-stops the build:
+stops the build; neither reads a genome:
 
-1. ``spacer_matches_the_released_window``: for every one of the 39,577 Table S1 guides
-   that Table S6 names, the Table S6 spacer is the first 20 nt of the 23 nt MG1655
-   window the row's Start and End delimit, in the orientation whose remaining 3 nt are
-   an NGG PAM (19,183 on the reverse read, 20,394 on the forward read, none both ways,
-   none neither). Spacer, coordinates and pinned assembly are therefore mutually
-   consistent, measured, not assumed.
-2. ``enrichment_ratio_reproduced``: the median over a gene's Table S1 guides of
+1. ``enrichment_ratio_reproduced``: the median over a gene's Table S1 guides of
    (condition mean abundance / library mean abundance) equals Table S2's released ER for
    all 4,192 genes with no zero-abundance library guide, in all 13 conditions (54,496
    cells, max absolute difference 5.0e-5, which is Table S2's 4-decimal rounding). The
@@ -78,52 +73,55 @@ stops the build:
    dataset: that guide's ratio is infinite, which moves an even-length median, and the
    paper does not state how it handled it. The library columns are used for nothing else;
    the stored statistic does not divide by them.
-3. ``library_coverage_reproduced``: 39,580 Table S1 rows minus the 6 whose two library
+2. ``library_coverage_reproduced``: 39,580 Table S1 rows minus the 6 whose two library
    samples are both zero = 39,574, the paper's own "39,574 sgRNA sequences were present
    in the initial library".
 
+The spacer-against-window check (every Table S6 spacer is the first 20 nt of the 23 nt
+window the row's Start and End delimit on the MG1655 sequence, in the orientation whose
+remaining 3 nt are an NGG PAM; measured 19,183 on the reverse read, 20,394 on the
+forward read, none both ways, none neither, over the 39,577 joined guides) compares the
+release with OUR pinned sequence, so it runs in ``run_verification`` as the
+``spacer_matches_the_released_window_on_the_pinned_sequence`` row, a genome-reference
+finding (#1069), and not in the build.
+
 IDENTIFIERS. Table S1 names a guide's gene by symbol only; Table S2 is the released
-symbol-to-b-number table and its 4,198 symbols are exactly Table S1's. Each released
-b-number goes through ``reconcile_locus_tags`` against MG1655 GCA_000005845.2 (4,194 of
-4,198 resolve: 4,070 current loci, 124 pseudogene loci that resolve to themselves, 4
-through an ECK ``gene_synonym``). ``perturbed_gene_name`` is the pinned annotation's own
-symbol for the stored locus when it resolves back to it, so one locus carries one
-spelling; 213 of the 4,194 resolved symbols are an older spelling of the current one
-(``yadD`` for ``rpnC``, ``ligT`` for ``thpR``). No ECK crosswalk is needed: the screen
-host IS MG1655, so the released b-numbers are already in the stored namespace.
+symbol-to-b-number table and its 4,198 symbols are exactly Table S1's. The record
+stores the Table S2 b-number as ``systematic_gene_name`` and the released symbol as
+``perturbed_gene_name``, both verbatim, and the loader reads no annotation (the
+owner's rule of 2026-10-12: the data is the data, and the genome is a separate layer
+joined at modeling time). The L4 genome-reference rows report what the pinned
+GCA_000005845.2 makes of the stored names: measured before the rule, 4,194 of the
+4,198 b-numbers resolve to one locus (b0017 insL1, b4590 ybfK and b4694 yagP are no
+locus, symbol or synonym, and b4659 yabP matches both b0056 and b0057), 213 released
+symbols are an older spelling of the annotation's (``yadD`` for ``rpnC``, ``ligT`` for
+``thpR``), and for 301 guides the released Start-End window lies outside the span of
+the locus the b-number resolves to (the IS families, 58 guides under ``insC1`` and 38
+under ``insH1`` against loci of 366 and 981 bp, and the Qin prophage cluster
+b1548-b1578, where the released symbol-to-b-number column and the released coordinate
+columns disagree by a shift) with 12 more (9 ``lomR``, 3 ``insO``) on the opposite
+strand. Those 3,960 records (17 + 301 + 12 guides x 12 antibiotics) were dropped under
+three genome rules before the owner's rule and are stored now; the window and strand
+observations are a modeling-time matter and are recorded in the dataset note.
 
 RECORDS DROPPED (rule, counts and items in ``preprocess/dropped_records.json``):
 
-1. ``b_number_is_not_in_the_mg1655_annotation`` (17 guides, 4 genes): b0017 (insL1),
-   b4590 (ybfK), b4694 (yagP) are no locus, symbol or synonym of GCA_000005845.2, and
-   b4659 (yabP) matches both b0056 and b0057.
-2. ``guide_window_does_not_overlap_the_resolved_locus`` (301 guides, 66 genes): the
-   row's released Start-End lies outside the span of the locus its released b-number
-   resolves to, so the stored gene identity would not be supported by the stored
-   coordinates. The RefSeq NC_000913.3 spans the paper designed against are identical to
-   the GenBank ones for every one of them, so this is not an annotation-version
-   difference. Two groups dominate: the IS families, whose released symbol does not name
-   one locus (58 guides under ``insC1`` and 38 under ``insH1``, against loci of 366 and
-   981 bp, which at one guide per 100 nt is arithmetically impossible), and the Qin
-   prophage cluster b1548-b1578 (``ydfK``, ``rem``, ``dicA``, ``flxA``, ``hokD``, ...),
-   where the released symbol-to-b-number column and the released coordinate columns
-   disagree by a shift.
-3. ``guide_strand_disagrees_with_the_resolved_locus`` (12 guides: 9 ``lomR``, 3
-   ``insO``): the window overlaps the locus but the released Strand is the opposite of
-   the locus's, so the row and the resolved locus name different genes.
-4. ``guide_has_no_spacer_in_table_s6`` (1 guide, ``ypjA`` 2778354-2778376): Table S1
-   releases three coordinate pairs Table S6 does not; the other two belong to genes rule
-   1 already removed. A guide with no spacer has no strain identity in a guide library.
-5. ``abundance_is_zero_in_the_untreated_lb_control`` (283 guides): both LB replicates are
-   0, so the log2 ratio has a zero denominator in all twelve conditions. A pseudocount
-   would fabricate the value.
-6. ``abundance_is_zero_in_the_antibiotic`` (1,023 cells): both replicates of that one
-   antibiotic are 0 for a guide whose LB control is not, so that one record's log2 ratio
-   is negative infinity. This is the strongest depletion a pooled screen can show and it
-   has no finite log2; the honest answer is one dropped record, never a pseudocount.
+1. ``guide_has_no_spacer_in_table_s6`` (3 guides: ``ypjA`` 2778354-2778376 and two
+   guides of the IS families, which the earlier rules used to remove first): Table S1
+   releases three coordinate pairs Table S6 does not. A guide with no spacer has no
+   strain identity in a guide library.
+2. ``abundance_is_zero_in_the_untreated_lb_control``: both LB replicates are 0, so the
+   log2 ratio has a zero denominator in all twelve conditions. A pseudocount would
+   fabricate the value.
+3. ``abundance_is_zero_in_the_antibiotic``: both replicates of that one antibiotic are 0
+   for a guide whose LB control is not, so that one record's log2 ratio is negative
+   infinity. This is the strongest depletion a pooled screen can show and it has no
+   finite log2; the honest answer is one dropped record, never a pseudocount.
 
-39,580 - 17 - 301 - 12 - 1 - 283 = 38,966 guides kept; 38,966 x 12 - 1,023 = 466,569
-records over 4,156 MG1655 loci.
+39,580 - 3 - 283 = 39,294 guides kept; 39,294 x 12 - 1,026 = 470,502 records over all
+4,198 released b-numbers (measured on the pinned bytes; the three zero-antibiotic cells
+and two spacerless guides beyond the earlier counts belonged to guides the genome rules
+used to remove first).
 
 DATA SOURCE. Table S1 (``mmc2.xlsx``), Table S2 (``mmc3.xlsx``) and Table S6
 (``mmc5.xlsx``), all three from the PMC Article Datasets bucket prefix ``PMC12063145.1``
@@ -181,7 +179,6 @@ from torchcell.data import (
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import LB
 from torchcell.datamodels.schema import (
-    BACTERIAL_ASSEMBLY_SETS,
     AssayType,
     AssemblyReferenceGenome,
     BacterialCrisprInterferencePerturbation,
@@ -207,10 +204,7 @@ from torchcell.datamodels.schema import (
 )
 from torchcell.datasets.bacteria_common import (
     STRAIN_GENE_NAMESPACES,
-    LocusTagReconciliation,
     assembly_reference,
-    bacterial_genome,
-    reconcile_locus_tags,
 )
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.literature.manifest import (
@@ -224,7 +218,7 @@ from torchcell.literature.provenance import run_retriever
 from torchcell.literature.retrieve import pmc_cloud_url
 from torchcell.sequence.genome.bacterial import BacterialGenome
 from torchcell.sequence.genome.base import GeneNameStatus
-from torchcell.sequence.genome.ecoli.k12 import EcoliK12Genome, EcoliK12StrainName
+from torchcell.sequence.genome.ecoli.k12 import EcoliK12StrainName
 from torchcell.verification.report import (
     Level,
     LevelResult,
@@ -847,9 +841,8 @@ N_REPLICATES = 2
 
 PUBLICATION = Publication(doi=PAPER_DOI, doi_url=f"https://doi.org/{PAPER_DOI}")
 
-#: Fraction of the released b-numbers that must resolve to one MG1655 locus. Measured on
-#: the release: 4,194 of 4,198 (0.999). Below it the build stops and reports.
-MIN_RESOLVED_FRACTION = 0.99
+#: A released b-number of Table S2, the form every stored key has.
+B_NUMBER_RE = re.compile(r"^b\d{4}$")
 
 #: The paper's own count of guides present in the initial library, which the build
 #: reproduces from Table S1 (a module constant so a test can state its own).
@@ -861,7 +854,7 @@ ER_TOLERANCE = 1e-3
 
 #: The frozen record-count oracle: 38,966 kept guides x 12 antibiotics, minus the 1,023
 #: (guide, antibiotic) cells whose antibiotic abundance is zero.
-EXPECTED_RECORDS = 466569
+EXPECTED_RECORDS = 470502
 
 
 # --------------------------------------------------------------------------- #
@@ -1335,37 +1328,13 @@ def check_library_coverage(s1: pd.DataFrame) -> CoverageCheck:
 # --------------------------------------------------------------------------- #
 # Identifiers: the released b-number to the pinned MG1655 locus
 # --------------------------------------------------------------------------- #
-class LocusResolutionError(ValueError):
-    """Too few released b-numbers resolve to a locus of the pinned assembly."""
-
-
-def canonical_symbol(genome: BacterialGenome[Any], tag: str) -> str:
-    """The genome's own gene symbol for ``tag`` when it resolves back to ``tag``.
-
-    One spelling per locus is what keeps a perturbation from splitting into two graph
-    nodes, so the symbol comes from the pinned annotation and not from the release's Gene
-    column. A locus with no symbol, or whose symbol resolves elsewhere, is named by its
-    tag.
-    """
-    symbol = genome.genbank.loci[tag].symbol
-    if symbol is None:
-        return tag
-    return symbol if genome.resolve_gene_name(symbol).systematic_name == tag else tag
-
-
 class GeneIdentity(BaseModel):
-    """One released gene symbol and the MG1655 locus its b-number resolves to."""
+    """One Table S2 gene: its released symbol, b-number and guide count, verbatim."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     released_symbol: str
     b_number: str
-    locus_tag: str
-    symbol: str
-    """The pinned annotation's own symbol, which is what records store."""
-    start: int
-    end: int
-    strand: str
     released_guide_count: int
     """Table S2's own ``gRNA #`` for the gene."""
 
@@ -1376,8 +1345,8 @@ class GuideIdentity(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     row: int
-    locus_tag: str
-    symbol: str
+    b_number: str
+    released_symbol: str
     spacer: str
     n_guides: int
     """Table S1 guides of this gene, which is what the record's ``n_guides`` carries."""
@@ -1385,37 +1354,27 @@ class GuideIdentity(BaseModel):
     antibiotic_abundance: dict[str, float]
 
 
-def resolve_genes(
-    s2: pd.DataFrame, genome: BacterialGenome[Any], *, label: str
-) -> tuple[dict[str, GeneIdentity], tuple[str, ...], LocusTagReconciliation]:
-    """Map each released gene symbol to its MG1655 locus through its released b-number.
+def gene_identities(s2: pd.DataFrame) -> dict[str, GeneIdentity]:
+    """Each released gene symbol with the b-number and guide count Table S2 releases.
 
-    Returns the per-symbol identities, the released symbols whose b-number resolves to no
-    single locus, and the reconciliation report.
+    No annotation is read: the b-number is stored as released. A cell that is not a
+    b-number in form refuses the build, because the leaf cannot key it.
     """
-    stored, report = reconcile_locus_tags(genome, s2["b number"], label=label)
-    report.require_resolved(MIN_RESOLVED_FRACTION)
-    loci = genome.genbank.loci
-    unresolved: list[str] = []
     identities: dict[str, GeneIdentity] = {}
-    for symbol, b_number, tag, count in zip(
-        s2["Name"], s2["b number"], stored, s2["gRNA #"], strict=True
+    for symbol, b_number, count in zip(
+        s2["Name"], s2["b number"], s2["gRNA #"], strict=True
     ):
-        if tag not in loci:
-            unresolved.append(str(symbol))
-            continue
-        locus = loci[tag]
+        if B_NUMBER_RE.match(str(b_number)) is None:
+            raise TableLayoutError(
+                f"Table S2 gives {symbol!r} the b-number {b_number!r}, which is not a "
+                "b-number in form"
+            )
         identities[str(symbol)] = GeneIdentity(
             released_symbol=str(symbol),
             b_number=str(b_number),
-            locus_tag=tag,
-            symbol=canonical_symbol(genome, tag),
-            start=locus.start,
-            end=locus.end,
-            strand=locus.strand,
             released_guide_count=int(count),
         )
-    return identities, tuple(sorted(unresolved)), report
+    return identities
 
 
 # --------------------------------------------------------------------------- #
@@ -1446,15 +1405,15 @@ class DropLog(BaseModel):
 
 
 class IdentifierLedger(BaseModel):
-    """What the identifier step did, written to ``preprocess/``."""
+    """What the identifier step did, written to ``preprocess/``.
+
+    No annotation is read: the ledger counts the released genes and the stored keys,
+    and records where Table S2's guide count disagrees with Table S1's rows.
+    """
 
     dataset: str
     released_genes: int
-    resolved_genes: int
-    kept_genes: int
-    reconciliation: LocusTagReconciliation
-    released_symbol_differs_from_annotation: dict[str, str]
-    """``{released symbol: the pinned annotation's symbol for the same locus}``."""
+    stored_genes: int
     released_guide_count_differs_from_table_s1: dict[str, dict[str, int]]
     """``{gene: {"table_s1": n, "table_s2": n}}`` where the two counts disagree."""
 
@@ -1465,9 +1424,6 @@ class RetentionResult(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     kept: list[GuideIdentity]
-    unresolved_b_number: list[str]
-    outside_locus: list[str]
-    strand_disagreement: list[str]
     missing_spacer: list[str]
     zero_control: int
     zero_antibiotic_cells: int
@@ -1483,20 +1439,17 @@ def select_guides(
     s1: pd.DataFrame,
     spacers: Mapping[tuple[int, int], str],
     identities: Mapping[str, GeneIdentity],
-    unresolved: Sequence[str],
 ) -> RetentionResult:
-    """Apply the six retention rules to Table S1 and build the kept guides' identities.
+    """Apply the three retention rules to Table S1 and build the kept guides' identities.
 
     The rules run in the module docstring's order, so a guide appears under the first
     rule that removes it. The initial-library columns are not consulted: the stored
-    statistic divides the antibiotic abundance by the untreated LB abundance.
+    statistic divides the antibiotic abundance by the untreated LB abundance. No
+    annotation is read: the released Start, End and Strand are kept in
+    ``preprocess/guide_windows.csv`` and never decide a record.
     """
-    unresolved_set = set(unresolved)
     counts = Counter(s1["Gene"])
     kept: list[GuideIdentity] = []
-    dropped_unresolved: list[str] = []
-    dropped_outside: list[str] = []
-    dropped_strand: list[str] = []
     dropped_spacer: list[str] = []
     zero_control = 0
     zero_cells = 0
@@ -1506,7 +1459,6 @@ def select_guides(
     genes: list[str] = [str(value) for value in s1["Gene"].tolist()]
     starts: list[int] = [int(value) for value in s1["Start"].tolist()]
     ends: list[int] = [int(value) for value in s1["End"].tolist()]
-    strands: list[str] = [str(value) for value in s1["Strand"].tolist()]
     control: list[float] = [
         float(value)
         for value in s1[[f"{CONTROL_LABEL}_1", f"{CONTROL_LABEL}_2"]]
@@ -1527,16 +1479,7 @@ def select_guides(
         start = starts[row]
         end = ends[row]
         item = _guide_label(gene, start, end)
-        if gene in unresolved_set or gene not in identities:
-            dropped_unresolved.append(item)
-            continue
         identity = identities[gene]
-        if start > identity.end or end < identity.start:
-            dropped_outside.append(item)
-            continue
-        if strands[row] != identity.strand:
-            dropped_strand.append(item)
-            continue
         spacer = spacers.get((start, end))
         if spacer is None:
             dropped_spacer.append(item)
@@ -1554,8 +1497,8 @@ def select_guides(
         kept.append(
             GuideIdentity(
                 row=row,
-                locus_tag=identity.locus_tag,
-                symbol=identity.symbol,
+                b_number=identity.b_number,
+                released_symbol=identity.released_symbol,
                 spacer=str(spacer),
                 n_guides=counts[gene],
                 control_abundance=control[row],
@@ -1564,9 +1507,6 @@ def select_guides(
         )
     return RetentionResult(
         kept=kept,
-        unresolved_b_number=dropped_unresolved,
-        outside_locus=dropped_outside,
-        strand_disagreement=dropped_strand,
         missing_spacer=dropped_spacer,
         zero_control=zero_control,
         zero_antibiotic_cells=zero_cells,
@@ -1582,38 +1522,6 @@ def drop_log(dataset: str, s1_rows: int, result: RetentionResult) -> DropLog:
     """The retention ledger, with every dropped record accounted for by a rule."""
     n_abx = len(CONDITIONS)
     rules = [
-        DropRule(
-            rule="b_number_is_not_in_the_mg1655_annotation",
-            scope="guide",
-            description="the released b-number of the guide's gene is no locus tag, "
-            "symbol or synonym of GCA_000005845.2, or matches more than one locus, so "
-            "no locus of the pinned assembly can be written for the knockdown",
-            n_guides=len(result.unresolved_b_number),
-            n_records=len(result.unresolved_b_number) * n_abx,
-            items=result.unresolved_b_number,
-        ),
-        DropRule(
-            rule="guide_window_does_not_overlap_the_resolved_locus",
-            scope="guide",
-            description="the row's released Start-End window lies outside the span of "
-            "the locus its released b-number resolves to, so the stored gene identity "
-            "would not be supported by the stored coordinates. The RefSeq NC_000913.3 "
-            "spans the library was designed against are identical to the GenBank ones "
-            "for every one of these, so it is not an annotation-version difference",
-            n_guides=len(result.outside_locus),
-            n_records=len(result.outside_locus) * n_abx,
-            items=result.outside_locus,
-        ),
-        DropRule(
-            rule="guide_strand_disagrees_with_the_resolved_locus",
-            scope="guide",
-            description="the window overlaps the locus but the row's released Strand is "
-            "the opposite of the locus's, so the row and the resolved locus name "
-            "different genes",
-            n_guides=len(result.strand_disagreement),
-            n_records=len(result.strand_disagreement) * n_abx,
-            items=result.strand_disagreement,
-        ),
         DropRule(
             rule="guide_has_no_spacer_in_table_s6",
             scope="guide",
@@ -1763,12 +1671,12 @@ def environment(condition: ScreenCondition) -> Environment:
 
 
 def knockdown_genotype(guide: GuideIdentity) -> Genotype:
-    """The one CRISPRi knockdown this guide is, on its MG1655 locus tag."""
+    """The one CRISPRi knockdown this guide is, keyed by its released b-number."""
     return Genotype(
         perturbations=[
             BacterialCrisprInterferencePerturbation(
-                systematic_gene_name=guide.locus_tag,
-                perturbed_gene_name=guide.symbol,
+                systematic_gene_name=guide.b_number,
+                perturbed_gene_name=guide.released_symbol,
                 gene_namespace=GENE_NAMESPACE,
                 crispr=CrisprConstruct(
                     effector=EFFECTOR,
@@ -1825,11 +1733,9 @@ class CrispriChemgenChoe2025Dataset(ExperimentDataset):
         io_workers: int = 0,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
-        ecoli_genome: EcoliK12Genome | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize; ``ecoli_genome`` is injected by the build entry points."""
-        self.ecoli_genome = ecoli_genome
+        """Initialize. No genome parameter: the loader reads no annotation."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -1871,18 +1777,6 @@ class CrispriChemgenChoe2025Dataset(ExperimentDataset):
     def _raw(self, name: str) -> str:
         return osp.join(self.raw_dir, name)
 
-    def _genome(self) -> EcoliK12Genome:
-        """The injected genome, or the reference strain's default cache (a direct run)."""
-        if self.ecoli_genome is None:
-            self.ecoli_genome = bacterial_genome("ecoli", self.REFERENCE_STRAIN)
-        expected = BACTERIAL_ASSEMBLY_SETS[self.REFERENCE_STRAIN]
-        if self.ecoli_genome.ASSEMBLY_SET != expected:
-            raise ValueError(
-                f"{type(self).__name__} needs the {expected} genome, got "
-                f"{self.ecoli_genome.ASSEMBLY_SET}"
-            )
-        return self.ecoli_genome
-
     @post_process
     def process(self) -> None:
         """Parse the three workbooks into per-(guide, antibiotic) records; write LMDB."""
@@ -1898,32 +1792,16 @@ class CrispriChemgenChoe2025Dataset(ExperimentDataset):
                 f"{len(released_genes - set(s1['Gene']))} only in S2"
             )
 
-        genome = self._genome()
         coverage = check_library_coverage(s1)
         er = check_enrichment_ratios(s1, s2)
-        identities, unresolved, reconciliation = resolve_genes(
-            s2, genome, label=self.name
-        )
+        identities = gene_identities(s2)
         spacer_map = spacer_by_window(s6)
-        joined = s1.assign(
-            spacer=pd.Series(
-                [
-                    spacer_map.get((int(start), int(end)))
-                    for start, end in zip(s1["Start"], s1["End"], strict=True)
-                ],
-                index=s1.index,
-                dtype="object",
-            )
-        )
-        spacers = check_spacers(joined, genome)
-        result = select_guides(s1, spacer_map, identities, unresolved)
+        result = select_guides(s1, spacer_map, identities)
         ledger = drop_log(self.name, len(s1), result)
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
         os.makedirs(self.processed_dir, exist_ok=True)
-        self._write_ledgers(
-            ledger, result, identities, reconciliation, coverage, er, spacers
-        )
+        self._write_ledgers(ledger, result, identities, s1, coverage, er)
 
         reference = build_reference(
             self.name, assembly_reference(self.REFERENCE_STRAIN)
@@ -1960,15 +1838,11 @@ class CrispriChemgenChoe2025Dataset(ExperimentDataset):
                 f"wrote {idx} records, the drop ledger expects {ledger.kept_records}"
             )
         log.info(
-            "Choe 2025: wrote %d records from %d guides over %d loci; dropped %d "
-            "unresolved, %d outside-locus, %d strand-disagreeing, %d spacerless, %d "
-            "zero-control guides and %d zero-antibiotic cells",
+            "Choe 2025: wrote %d records from %d guides over %d released b-numbers; "
+            "dropped %d spacerless, %d zero-control guides and %d zero-antibiotic cells",
             idx,
             len(result.kept),
-            len({guide.locus_tag for guide in result.kept}),
-            len(result.unresolved_b_number),
-            len(result.outside_locus),
-            len(result.strand_disagreement),
+            len({guide.b_number for guide in result.kept}),
             len(result.missing_spacer),
             result.zero_control,
             result.zero_antibiotic_cells,
@@ -1979,37 +1853,44 @@ class CrispriChemgenChoe2025Dataset(ExperimentDataset):
         ledger: DropLog,
         result: RetentionResult,
         identities: Mapping[str, GeneIdentity],
-        reconciliation: LocusTagReconciliation,
+        s1: pd.DataFrame,
         coverage: CoverageCheck,
         er: ErCheck,
-        spacers: SpacerCheck,
     ) -> None:
-        """The drop log, the identifier ledger and the three fidelity checks."""
+        """The drop log, the identifier ledger, the released windows and the checks.
+
+        ``guide_windows.csv`` keeps every Table S1 row's released gene, b-number,
+        Start, End and Strand verbatim, so a modeling-time join against any annotation
+        has the released coordinates beside the stored key.
+        """
         out = Path(self.preprocess_dir)
         (out / "dropped_records.json").write_text(ledger.model_dump_json(indent=2))
         identifier_ledger = IdentifierLedger(
             dataset=self.name,
-            released_genes=reconciliation.unique_names,
-            resolved_genes=len(identities),
-            kept_genes=len({guide.locus_tag for guide in result.kept}),
-            reconciliation=reconciliation,
-            released_symbol_differs_from_annotation={
-                identity.released_symbol: identity.symbol
-                for identity in identities.values()
-                if identity.released_symbol != identity.symbol
-            },
+            released_genes=len(identities),
+            stored_genes=len({guide.b_number for guide in result.kept}),
             released_guide_count_differs_from_table_s1=result.guide_counts,
         )
         (out / "identifier_reconciliation.json").write_text(
             identifier_ledger.model_dump_json(indent=2)
         )
+        pd.DataFrame(
+            {
+                "gene": [str(value) for value in s1["Gene"].tolist()],
+                "b_number": [
+                    identities[str(value)].b_number for value in s1["Gene"].tolist()
+                ],
+                "start": [int(value) for value in s1["Start"].tolist()],
+                "end": [int(value) for value in s1["End"].tolist()],
+                "strand": [str(value) for value in s1["Strand"].tolist()],
+            }
+        ).to_csv(out / "guide_windows.csv", index=False)
         (out / "extraction.json").write_text(
             json.dumps(
                 {
                     "raw_sha256": DATA_SHA256,
                     "library_coverage": coverage.model_dump(),
                     "enrichment_ratio": er.model_dump(),
-                    "spacer_window": spacers.model_dump(),
                 },
                 indent=2,
                 default=list,
@@ -2051,7 +1932,9 @@ VERIFIER_PROVENANCE = Provenance(
         "dispersion is a typed gap. Genotype = BacterialCrisprInterferencePerturbation on "
         "the MG1655 locus the released b-number resolves to, effector dCas9, "
         "guide_sequence = the 20 nt Table S6 spacer joined by the row's released genomic "
-        "window, n_guides = the gene's Table S1 guide count; the spacer is what keeps "
+        "window, n_guides = the gene's Table S1 guide count; the key is the released "
+        "Table S2 b-number with the released symbol, no annotation read; the spacer is "
+        "what keeps "
         "sibling guides of one gene distinct strains. Environment = LB Miller plus the "
         "35 ug/mL chloramphenicol and 100 ug/mL ampicillin of the screening cultures, at "
         "37 C, shaken, aerobic, plus the condition's antibiotic at its Table S3 dose "
@@ -2062,11 +1945,11 @@ VERIFIER_PROVENANCE = Provenance(
         "sampling OD600. Reference = the same clone in untreated LB, log2(1) = 0. Build "
         "checks: every spacer is the 20 nt of its released MG1655 window with an NGG PAM; "
         "Table S2's ER reproduced to 5.0e-5 over 4,192 genes x 13 conditions; the paper's "
-        "own 39,574 library-present guides reproduced. DROPPED: 17 guides on an "
-        "unresolvable b-number, 301 whose window misses the resolved locus (IS families "
-        "and the Qin prophage cluster), 12 with the opposite strand, 1 with no Table S6 "
-        "spacer, 283 with a zero untreated-LB control, and 1,023 (guide, antibiotic) "
-        "cells with a zero antibiotic abundance (negative infinity, never a pseudocount)"
+        "own 39,574 library-present guides reproduced. DROPPED: 3 guides with no Table "
+        "S6 spacer, the guides with a zero untreated-LB control, and the (guide, "
+        "antibiotic) cells with a zero antibiotic abundance (negative infinity, never a "
+        "pseudocount); every released b-number keys a record, and the spacer-against-"
+        "window check on the pinned sequence is a verification finding"
     ),
     page=(
         "iScience 2025 28:112435 (doi:10.1016/j.isci.2025.112435); Table S1 "
@@ -2119,13 +2002,60 @@ def stored_tags_are_loci(
     )
 
 
+def spacers_match_their_released_windows(
+    dataset_root: str, genome: BacterialGenome[Any]
+) -> LevelResult:
+    """L2, genome-reference: every stored spacer is the 20 nt of its released window.
+
+    The build keeps every Table S1 row's released Start and End in
+    ``preprocess/guide_windows.csv`` and Table S6's spacers in the linked workbook; this
+    row joins them and reads the 23 nt window off OUR pinned MG1655 sequence
+    (:func:`check_spacers`). A spacer that is not its window's first 20 nt with an NGG
+    PAM, in either orientation, is reported here, never a reason to refuse a record.
+    """
+    windows = pd.read_csv(osp.join(dataset_root, "preprocess", "guide_windows.csv"))
+    s6 = read_table_s6(osp.join(dataset_root, "raw", TABLE_S6_FILE))
+    spacer_map = spacer_by_window(s6)
+    joined = windows.rename(columns={"start": "Start", "end": "End"}).assign(
+        spacer=pd.Series(
+            [
+                spacer_map.get((int(start), int(end)))
+                for start, end in zip(windows["start"], windows["end"], strict=True)
+            ],
+            index=windows.index,
+            dtype="object",
+        )
+    )
+    try:
+        check = check_spacers(joined, genome)
+        n_neither = check.n_neither
+        examples: tuple[str, ...] = check.examples_neither
+        details = check.model_dump()
+    except TableLayoutError as error:
+        n_neither = -1
+        examples = (str(error),)
+        details = {"error": str(error), "n_neither": n_neither}
+    return LevelResult(
+        level=Level.L2,
+        name="spacer_matches_the_released_window_on_the_pinned_sequence",
+        passed=n_neither == 0,
+        message=(
+            f"{len(joined[joined['spacer'].notna()])} joined spacers; "
+            f"{n_neither} not the 20 nt of their released window with an NGG PAM on "
+            "the pinned MG1655 sequence"
+        ),
+        details={**details, "examples": list(examples[:5])},
+    )
+
+
 def run_verification(data_root: str | None = None) -> VerificationReport:
     """Run the environment-response family verifier (L0-L4) on the built dev LMDB.
 
     The gene universe and the resolver are MG1655's, the host the records are written
-    against; the dataset is streamed, so 466,569 records are never materialized. Two
-    supplementary rows are appended: the pseudogene-tolerant locus check and the
-    provenance audit of every ``SOURCED_VALUES`` entry. The report is written to
+    against; the dataset is streamed, so 466,569 records are never materialized. Three
+    supplementary rows are appended: the pseudogene-tolerant locus check, the
+    spacer-against-window check on the pinned sequence (both genome-reference findings,
+    #1069) and the provenance audit of every ``SOURCED_VALUES`` entry. The report is written to
     ``preprocess/verification_report.json``.
     """
     from torchcell.verification.environment_response import (
@@ -2155,6 +2085,7 @@ def run_verification(data_root: str | None = None) -> VerificationReport:
         resolve_gene_name=genome.resolve_gene_name,
     )
     report.add(stored_tags_are_loci(stream_records(abs_root), genome))
+    report.add(spacers_match_their_released_windows(abs_root, genome))
     library = Path(base) / "torchcell-library"
     for value in SOURCED_VALUES.values():
         report.add(audit_sourced_value(value, library))

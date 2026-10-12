@@ -22,8 +22,8 @@ The ten synthetic Table S2 rows, and what each one exercises:
     b0001   b0010      +3.5    dropped: b0010 is a synonym of b0003 (issue #753)
     b0001   b0099      -4.0    dropped: on no locus of the annotation
     b0005   b0007      +5.5    kept, Butland et al. screen set
-    b0005   b0004      -3.9    dropped: contradictory duplicate
-    b0005   b0004      +4.1    dropped: contradictory duplicate
+    b0005   b0004      -3.9    kept: a pair released twice, told apart by its row
+    b0005   b0004      +4.1    kept: a pair released twice, told apart by its row
     b0003   b0001      +4.5    kept, the reciprocal of row 1 with the opposite sign
 
 Four records survive. Data-gated tests (``--data``) read the real raw mirrors and the
@@ -110,12 +110,12 @@ SYNTHETIC_PAIRS: tuple[tuple[str, str, str, str, float], ...] = (
     ("b0005", "proB", "b0004", "yaaP", 4.1),
     ("b0003", "thrW", "b0001", "thrL", 4.5),
 )
-#: The nine pairs the retention rule keeps, as ``(donor, recipient, score, screen)``.
+#: Every released row, as ``(donor, recipient, score, screen)`` (#1057: nothing drops).
 #: Two of them carry a hypomorph: ``b0002`` is the synthetic essential-gene donor and
 #: ``b0006`` the synthetic SPA-tagged recipient, both stored as marked alleles (#792).
 #: ``b0010`` (a /gene_synonym of ``b0003``), ``b0099`` (on no locus) and ``JW0098`` (no
-#: b-number in form, on the released-strain leaf) are stored as released since #1057;
-#: only the duplicate pair is dropped.
+#: b-number in form, on the released-strain leaf) are stored as released; the pair
+#: released twice is stored twice, each row's screen_id naming its Table S2 row.
 KEPT_PAIRS: tuple[tuple[str, str, float, str], ...] = (
     ("b0001", "b0003", -5.0, m.SCREEN_THIS_STUDY),
     ("b0001", "b0004", 4.0, m.SCREEN_THIS_STUDY),
@@ -125,6 +125,8 @@ KEPT_PAIRS: tuple[tuple[str, str, float, str], ...] = (
     ("b0002", "b0003", -6.0, m.SCREEN_THIS_STUDY),
     ("b0001", "b0006", -7.0, m.SCREEN_THIS_STUDY),
     ("b0005", "b0007", 5.5, m.SCREEN_BUTLAND),
+    ("b0005", "b0004", -3.9, f"{m.SCREEN_BUTLAND} | Table S2 data row 9"),
+    ("b0005", "b0004", 4.1, f"{m.SCREEN_BUTLAND} | Table S2 data row 10"),
     ("b0003", "b0001", 4.5, m.SCREEN_THIS_STUDY),
 )
 #: Of those, the ones whose donor or recipient is the hypomorph.
@@ -361,7 +363,8 @@ def test_the_released_counts_are_the_sourced_ones() -> None:
     assert m.N_HYPOMORPHIC_RECIPIENTS == 149
     # 42,705 released minus the 4 duplicate rows; the hypomorph pairs are stored since
     # #792, every released id since #1057 (41,988 before, 713 pairs fewer)
-    assert m.EXPECTED_RECORDS == 42705 - 4 == 41988 + 713
+    # #1057: every released row, the 713 on a released id and the 4 twice-released
+    assert m.EXPECTED_RECORDS == 42705 == 41988 + 713 + 4
     assert m.EXPECTED_HYPOMORPH_RECORDS == 1024 + 2479 - 83
 
 
@@ -652,13 +655,18 @@ def test_the_build_ledgers_account_for_every_dropped_row(
     ledger = json.loads((preprocess / "dropped_records.json").read_text())
     assert ledger["source_records"] == len(SYNTHETIC_PAIRS)
     assert ledger["kept_records"] == len(KEPT_PAIRS)
-    assert ledger["dropped_records"] == len(SYNTHETIC_PAIRS) - len(KEPT_PAIRS)
-    counts = {rule["rule"]: rule["n_records"] for rule in ledger["rules"]}
-    # #1057: b0010, b0099 and JW0098 are stored as released; only the duplicate drops
-    assert counts == {m.RULE_DUPLICATE: 2}
-    assert ledger["n_aggravating"] == 5
-    assert ledger["n_alleviating"] == 4
-    assert ledger["screen_id_counts"] == {m.SCREEN_THIS_STUDY: 8, m.SCREEN_BUTLAND: 1}
+    assert ledger["dropped_records"] == 0 == len(SYNTHETIC_PAIRS) - len(KEPT_PAIRS)
+    # #1057: no rule drops a row; the twice-released pair is named, not dropped
+    assert ledger["rules"] == []
+    assert ledger["twice_released_pairs"] == ["b0005__proB -> b0004__yaaP"]
+    assert ledger["n_aggravating"] == 6
+    assert ledger["n_alleviating"] == 5
+    assert ledger["screen_id_counts"] == {
+        m.SCREEN_THIS_STUDY: 8,
+        m.SCREEN_BUTLAND: 1,
+        f"{m.SCREEN_BUTLAND} | Table S2 data row 9": 1,
+        f"{m.SCREEN_BUTLAND} | Table S2 data row 10": 1,
+    }
 
 
 def test_the_build_records_the_reciprocal_pair_and_its_sign_disagreement(
@@ -774,12 +782,19 @@ def test_the_l0_to_l4_gate_passes_on_the_synthetic_build(
     assert containment.details["missing_examples"] == ["JW0098", "b0010", "b0099"]
 
 
-def test_released_scores_excludes_the_contradictory_duplicate(
+def test_released_scores_carries_both_cells_of_a_twice_released_pair(
     raw_dir: Path, synthetic_counts: None
 ) -> None:
     released = m.released_scores(raw_dir / m.TABLE_S2)
-    assert ("b0005", "b0004") not in released
-    assert released[("b0001", "b0003")] == -5.0
+    assert released[("b0005", "b0004")] == [-3.9, 4.1]
+    assert released[("b0001", "b0003")] == [-5.0]
+
+
+def test_screen_set_of_strips_the_row_of_a_twice_released_screen_id() -> None:
+    screen = m.twice_released_screen_id(m.SCREEN_BUTLAND, 8)
+    assert screen == f"{m.SCREEN_BUTLAND} | Table S2 data row 9"
+    assert m.screen_set_of(screen) == m.SCREEN_BUTLAND
+    assert m.screen_set_of(m.SCREEN_THIS_STUDY) == m.SCREEN_THIS_STUDY
 
 
 # --------------------------------------------------------------------------- #
@@ -875,15 +890,20 @@ def test_the_dev_store_ledgers_state_the_measured_build() -> None:
     ledger = json.loads((preprocess / "dropped_records.json").read_text())
     assert ledger["source_records"] == m.N_RELEASED_PAIRS
     assert ledger["kept_records"] == m.EXPECTED_RECORDS
-    assert {rule["rule"]: rule["n_records"] for rule in ledger["rules"]} == {
-        m.RULE_DUPLICATE: 4
-    }
-    assert (ledger["n_aggravating"], ledger["n_alleviating"]) == (25236, 17465)
+    assert ledger["rules"] == []
+    assert len(ledger["twice_released_pairs"]) == 2
+    assert (ledger["n_aggravating"], ledger["n_alleviating"]) == (25239, 17466)
     assert ledger["kept_donors"] == 163
     assert ledger["kept_recipients"] == 3876
+    # the 4 twice-released rows are This Study donors (b1396, b2675), each named by its
+    # Table S2 data row (#1057)
     assert ledger["screen_id_counts"] == {
         m.SCREEN_THIS_STUDY: 41572,
         m.SCREEN_BUTLAND: 1129,
+        **{
+            f"{m.SCREEN_THIS_STUDY} | Table S2 data row {row}": 1
+            for row in (14491, 14492, 21859, 21860)
+        },
     }
     report = json.loads((preprocess / "verification_report.json").read_text())
     assert all(result["passed"] for result in report["results"])

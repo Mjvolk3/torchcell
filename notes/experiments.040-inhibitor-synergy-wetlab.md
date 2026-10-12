@@ -1185,6 +1185,24 @@ twins); GilaHyper runs 4326 (van cell, two processes) with 4327 (lambda_host 3) 
 last old-readout round-4 job, 4282. The queued round-4 remainder and round 6 (4061 to
 4068, 4212, 4213, 4227) are cancelled.
 
+**First reading, the van cell arm complete (job 4326, three folds, seed 0).** The
+equivalence on the public side holds: compound-cold centered Spearman 0.348 / 0.335 /
+0.393 at the selected step against the round-3 gene readout's 0.309 / 0.344 / 0.332 on
+Delta, within the same-config machine noise (median 0.06). The target overfits in
+magnitude exactly as before: train loss 1.1 to 0.1, validation loss flat from epoch 20
+(0.75, 0.68), test loss flat at its fold's level. The host side did not move: per-well
+predictions (`r3_host_predictions.py`) range 0.41 to 1.02 over the single-agent
+conditions with Spearman 0.435 against the titration (gene readout 0.47 to 1.00, 0.448),
+and the combinations read 0.63 / 0.60 / 0.59 at one, two and three inhibitors (gene
+readout 0.66 / 0.65 / 0.63), growth AUROC 0.556 against 0.602. Sharing the head did not
+by itself make the host read dose or compose. The two arms behind it on card A are the
+direct tests (host weight 3, dose FiLM through the shared head), and round 8 (`r3_sweep.py
+--wave 8`, GilaHyper 4364 to 4369 chained behind round 7, Delta six more jobs) re-asks
+the round-5 questions under the cell readout: anchors-only (zero-shot through the shared
+head), the fine-tune on the titration, fold seeds 1 and 2, the 96-condition auxiliary
+batch and auxiliary weight 3 on the two-source arm. The last old-readout job (4282) was
+cancelled so both cards carry the cell readout.
+
 Round 7 is the first time this was computed. An audit of the earlier environment work
 (019, 030, 031, 033, 035, 038) finds no model that read a no-deletion record and the
 deletion strains through one head: 035 and 038 put the compound token in front of the

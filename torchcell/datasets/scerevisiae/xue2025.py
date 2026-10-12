@@ -67,6 +67,19 @@ are not released. We therefore model each deletion as ``KanMxDeletionPerturbatio
 DOCUMENTED REPRESENTATIVE -- the asserted fact is ``state = "absent"`` (the gene is deleted),
 NOT the KanMX marker identity. Do not read marker fidelity into these records.
 
+ESSENTIAL GENES STATED AS DELETIONS (#887): the release states RGR1 (YLR071C), MED4
+(YOR174W) and TFC7 (YOR110W) as deletions in the haploid chassis (``R 4Δ``, ``M 4Δ``,
+``T 4Δ``; 46 records each, 112 of 176 carry at least one). SGD records the null of RGR1
+and of MED4 as inviable in S288C (Giaever 2002; the two ``gene_essentiality_sgd``
+records), and the null of TFC7 as inviable only in a non-S288C background (Manaud 1998,
+strain "Other"). The release states no allele: its one file names each strain by a
+deletion count, and no cell of either sheet names a truncation, DAmP, degron,
+conditional, hypomorph or partial allele. Under the owner decision of 2026-10-12 every
+record is kept as the release states it; the conflict belongs on the record as a typed
+flag, for which the schema has no carrier yet. Measured by
+``experiments/036-dataset-fixes-before-kg-build/scripts/
+keep_records_887_sd_zero_inventory.py``.
+
 ENVIRONMENT (in-house-assumed, FLAGGED): the media name and temperature are NOT in this data
 file (in-house engineering data). We use ``Media(name="SC (FFA production)", state="liquid")``
 and ``Temperature(value=30.0)`` (standard yeast cultivation temperature; user-approved

@@ -97,19 +97,26 @@ Kept: 11,975 conditions (8,410 RIKEN, 3,565 NCI/NIH/GSK), 289 strains (gene set 
 
 ### Verification (L0-L4)
 
-The final store was built by slurm job 3925 (`gilahyper_build_dataset_lmdbs_array.slurm`, `--retire-existing --verify`, 3,435,820 records, ledgers as above, twin labels recorded); its full streamed verification is still running at the time of writing (about 8 ms per record, so about 8 h) and writes `preprocess/verification_report.json`, retiring the build manifest if any rule fails. A SAMPLED run over the first 60,000 records of the first build (identical records except the pre-culture quote corrected since) passed every rule; it is partial, not the store's result:
+Slurm job 3925 (`gilahyper_build_dataset_lmdbs_array.slurm`: `build_dataset_lmdb --retire-existing --verify`) built the store and streamed the environment-response verifier over all of it: `env_chemgen_piotrowski2017: PASS` in 9 h 06 min, report `preprocess/verification_report.json`.
 
-| level | rule | sampled result (60,000 records) |
+| level | rule | result |
 |---|---|---|
-| L0 | structural | 60,000 validated |
-| L1 | count | 60,000 of 60,000 |
-| L1 | pair_uniqueness | 60,000 unique (study, strain, condition) |
-| L1 | provenance_gaps | 360,414 typed gaps; deferred fields `relation`, `deleted_span` |
-| L1 | canonical_gene_names | 289 systematic names, one spelling each, each current |
-| L2 | value_fidelity / se_nonnegative / interval_orientation / uncertainty_sanity | pass (no SE or interval stored) |
+| L0 | structural | 3,435,820 records validated |
+| L1 | count | observed 3,435,820, expected 3,435,820 |
+| L1 | pair_uniqueness | 3,435,820 unique (study, strain, condition) records |
+| L1 | provenance_gaps | 20,648,915 typed gaps over 3,435,820 of 3,435,820 records; deferred fields `deleted_span`, `inchikey`, `relation` |
+| L1 | canonical_gene_names | 289 systematic names, one canonical spelling each, each current |
+| L2 | value_fidelity | 3,435,820 values checked |
+| L2 | se_nonnegative | 0 values (no SE released) |
+| L2 | interval_orientation | 0 of 0 stored intervals |
+| L2 | uncertainty_sanity | 0 labeled uncertainties; 0 records with n_samples >= 2 and no uncertainty |
 | L3 | measurement_type_consistent | `z_score` only |
-| L3 | reference_zero | reference 0 for all records |
-| L3 | environment_perturbed | every record carries an edit |
-| L3 | compound_identity / media_compound_identity | pass (no gapped compound among these records) |
-| L3 | media_membership | all on a medium deriving from `YP` |
-| L4 | gene_containment_sgd / current_genome_genes | 1.000 of 289; every name a current gene |
+| L3 | reference_zero | reference 0 for all 3,435,820 records |
+| L3 | environment_perturbed | every record carries an edit (baseline 30 C, YPGal liquid) |
+| L3 | compound_identity | 6,864,140 references carry an identifier; 7,500 declare a typed gap (26 distinct compounds) |
+| L3 | media_compound_identity | 3,435,820 references identified, 0 gapped |
+| L3 | media_membership | all 3,435,820 on a medium deriving from `YP` |
+| L4 | gene_containment_sgd | 1.000 of 289 genes are S288C reference genes |
+| L4 | current_genome_genes | every one of the 289 names is a current gene |
+
+The compound rule counts a released SMILES as an identifier (`ontology_checks.IDENTITY_FIELDS`), so of the 33 conditions with an `inchikey` gap the 26 with no structure at all are the verifier's 26 gapped compounds (7,500 references); the 7 with a SMILES and no InChI read as identified. The references are twice the records because the DMSO vehicle is a compound too.

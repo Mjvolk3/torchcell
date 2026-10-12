@@ -859,7 +859,7 @@ def test_yeastphenome_screens_do_not_serve_this_paper() -> None:
 
 
 # --------------------------------------------------------------------------- #
-# Sourcing audits (skip when the mirrors are absent)
+# Sourcing audits (``--data``; skip when the mirrors are absent)
 # --------------------------------------------------------------------------- #
 def _data_root() -> Path | None:
     root = os.environ.get("DATA_ROOT")
@@ -874,6 +874,7 @@ def _library_root() -> Path | None:
     return library if (library / y.CITATION_KEY / y.PAPER_MD).exists() else None
 
 
+@pytest.mark.data
 @pytest.mark.skipif(_library_root() is None, reason="literature mirror not present")
 def test_every_sourced_value_is_a_verbatim_quote_in_its_pinned_mirror() -> None:
     root = _library_root()
@@ -890,6 +891,7 @@ _GFF = (
 )
 
 
+@pytest.mark.data
 @pytest.mark.skipif(
     _data_root() is None or not (_data_root() or Path()).joinpath(_GFF).exists(),
     reason="R64-4-1 genomes tier not present",
@@ -922,6 +924,7 @@ def test_every_new_pin_matches_its_sgd_history_bytes() -> None:
     assert [n for n in notes if "YDL134C-A" in n] == ["<b>Name:</b> YDL134C-A"]
 
 
+@pytest.mark.data
 @pytest.mark.skipif(
     _data_root() is None
     or not (_data_root() or Path())

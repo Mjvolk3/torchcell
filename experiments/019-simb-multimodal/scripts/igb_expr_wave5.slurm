@@ -640,6 +640,21 @@ case "$STAGE" in
           JOBS_EXPLICIT=1
           RUNS_PER_GPU=1; STAGE_CONFIG=cgt_morph_v24
           EXTRA_OV="trainer.max_epochs=1200 data_module.batch_size=128 +data_module.materialize=true data_module.persistent_workers=true wandb.project=torchcell_019_morph_v25" ;;
+  # v25c (2026-10-11, same project): the loss axis beyond MSE. Morphology trains the
+  # 19-quantile pinball; the global heads of the other campaigns trained MSE or CRPS, and
+  # the metric is Pearson per feature, so the Gaussian CRPS and the pearson_mse objective
+  # (torchcell/losses/distributional.py) run on M_cls and M_zs at lr 1e-3, split seeds 0
+  # to 3: 16 one-card tasks.
+  #   sbatch -J 019-morph2w3-loss -p cabbi --gres=gpu:1 --cpus-per-task=5 --mem=60g \
+  #       --time=0-16:00:00 --array=0-15%8 --export=ALL,W5_STAGE=morph_v25c,... igb_expr_wave5.slurm
+  morph_v25c) JOBS=(); SWEEP_OV=()
+          for s in 0 1 2 3; do for arm in M_cls M_zs; do for dist in crps pearson_mse; do
+            JOBS+=("${arm}_s${s}:0")
+            SWEEP_OV+=("multitask.dist=${dist} regression_task.optimizer.lr=1e-3 wandb.tags=[v25c,${arm},${dist},lr1e-3,split${s},init0]")
+          done; done; done
+          JOBS_EXPLICIT=1
+          RUNS_PER_GPU=1; STAGE_CONFIG=cgt_morph_v24
+          EXTRA_OV="trainer.max_epochs=1200 data_module.batch_size=128 +data_module.materialize=true data_module.persistent_workers=true wandb.project=torchcell_019_morph_v25" ;;
   scale_n) JOBS=(); SWEEP_OV=()
           for wl in 45:6e-4 90:3e-4 180:1.5e-4 360:7.5e-5; do for s in 0 1 2; do
             JOBS+=("S_mask_s${s}:0")

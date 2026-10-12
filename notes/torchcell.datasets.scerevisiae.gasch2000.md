@@ -82,5 +82,6 @@ The issue's "every release carries log2 ratios against the same culture at time 
 - **Refusals by source.** The 7 diauxic-shift columns are DeRisi et al. 1997's arrays ("along with previously-published data (DeRisi et al., 1997)"), so they belong to a DeRisi loader, not to this citation. The YAP1 overexpression column has no construct in the methods or Table 1.
 - **Vocabulary.** H2O2, menadione sodium bisulfite, DTT, diamide and sorbitol as compounds; the MSN2 and MSN4 plasmid overexpression (the promoter is not stated in the methods: a typed gap); `yap1::KANMX4` and `msn2::KANMX4 msn4::URA3` deletions; the media shifts (YPD, SCD, YNB without amino acids, limiting ammonium sulfate).
 - **`n_replicates`** is a typed gap: one column per array, no statement of spots averaged per gene.
+- **Keys, under the owner rule of 2026-10-12** (the data is the data; no released row dropped on genome or annotation grounds; no resolution status): every one of the 6,152 rows is keyed by its released `UID`, verbatim, with no resolution against R64. The rule covers rows and genes; whether it also lifts the G2 host gate (storing `DBY7286` as released, with no typed background) is an owner question, not taken here.
 
 No store exists, so there is no L0-L4 table.

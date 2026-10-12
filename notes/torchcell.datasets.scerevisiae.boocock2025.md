@@ -165,3 +165,39 @@ The Zenodo deposit (record 12695128, doi 10.5281/zenodo.12695127) is one `additi
 9 changed symbols, 0 breaking: `SegregantExpressionExperiment`, `SegregantExpressionExperimentReference` and `SingleCellExpressionPhenotype` added; the `SegregantGenotype` and `SingleCellExpressionPhenotype` validators; `ExperimentType`, `ExperimentReferenceType`, `PhenotypeType`, `EXPERIMENT_TYPE_MAP` and `EXPERIMENT_REFERENCE_TYPE_MAP` gained members. Stale, rebuilt by the KG 4.0 full build: `Bloom2019Dataset` (via `SegregantGenotype`), `Boocock2025Dataset`, and the 17 loaders whose closure holds `ExperimentType` (Caglar 2017 x3, Gupta 2024, Ishii 2007 x4, Li 2014, Schastnaya 2021, De Siqueira 2025 x4, Lim 2022, Volk 2021 bioscreen, Hoepfner 2014). The supported-query drift the pre-commit hook reports names `ProvenanceGapMixin` and `SampleUnit`, no symbol of this change, and is pre-existing at the base `d88f3865c`.
 
 Candidate gate: `python -m torchcell.candidates gate --row "Boocock 2025" --table yeast --phenotype-class SingleCellExpressionPhenotype --write`: G1 to G5 pass, outcome admissible (`database/candidates/boocockSinglecellEQTLMapping2025.json`).
+
+## 2026.10.11 - One single-cell leaf with Jackson 2020 (#1016), store rebuilt
+
+Owner decision (#1016): one class for Boocock 2025's and Jackson 2020's single-cell UMI counts, unless merging loses data. Measured lossless, so `SingleCellExpressionPhenotype` is now the leaf for both (and for N'Guessan 2025); the field-by-field table, the deciding fields and the cost are in [[torchcell.datamodels.eqtl-data-model]] (2026.10.11, #1016). The experiment pair, the mosaic genotype and the panel-pseudobulk reference are unchanged.
+
+What changed in a Boocock record, measured by `experiments/036-dataset-fixes-before-kg-build/scripts/single_cell_leaf_merge_audit.py`:
+
+- Before the merge (`round-trip` on the retired store `processed.superseded.20261011-220231`): all 79,516 records and 4 references round-trip through the merged field set with no stored value dropped or changed. `total_umis` equals the stored gene counts on 35,156 records and exceeds them on 44,360 (173,191 UMIs in all on transcripts outside the analysis set), which is why the merged class bounds the total from below instead of requiring Jackson's equality.
+- After the rebuild (`old-vs-new`, 79,516 records and 4 references paired by key): 0 stored values dropped or changed. Added to every record and reference: `cell_barcodes`, `cell_libraries` and `cell_total_umis` (each summed cell's release barcode, `cell.cycle.df` `named_dataset` library and `barcode.features` `nUMI`), and `marker_umi_count=None` with `MARKER_GAP` (`not_reported_by_primary`). The gap's source is a new sourced value, `SOURCED["alignment_reference"]`: "Sequencing reads were analyzed using Cellranger (version 5.01) using the S2888C reference genome (SGD, R64-2-1)" (paper.md, OCR's "S2888C" kept verbatim): no cassette sequence is named, where Jackson 2020 states adding its two.
+- A bare barcode does not name a cell: every panel's libraries reuse barcodes (Ap 7,124 cells and 7,105 distinct barcodes, A 27,744 and 27,713, B 44,784 and 44,603, 3004 6,595 and 6,520; `cells` mode), so the pair (library, barcode) is the cell's identity, as the de novo `segregant_id` already wrote it. The pooled panel's records now say which matched cells they sum, which the pre-merge store did not record.
+
+Rebuilt with `build_dataset_lmdb --dataset Boocock2025Dataset --retire-existing --verify` at `78ec49eb5` as slurm job 3973 (`gilahyper_build_dataset_lmdbs_array.slurm` with this worktree as `TORCHCELL_SRC`): build 2,046 s (the pre-merge build took about 13 min; the per-cell lists make each panel reference 0.44 to 2.16 MB of JSON, re-serialized for every record interned), peak RSS 11.2 GB, every rule passes:
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 79516/79516 records validate as segregant_expression experiments |
+| L1 | `count` | pass | 79516 records (expected 79516) |
+| L1 | `panel_counts` | pass | records per panel {'Ap': 393, 'A': 27744, 'B': 44784, '3004': 6595} |
+| L1 | `segregant_uniqueness` | pass | 79516 unique (panel, segregant) keys, 0 duplicates |
+| L1 | `provenance_gaps` | pass | 79516 documented provenance gaps over 79516/79516 records (the marker gap, one each) |
+| L1 | `canonical_gene_names` | pass | no gene perturbations to check |
+| L2 | `uncertainty_sanity` | pass | 0 labeled uncertainties |
+| L2 | `value_fidelity` | pass | every record's counts, totals, partitions and summed cells equal the release; every record gaps marker_umi_count |
+| L2 | `mosaic_round_trip` | pass | worst de novo posterior error 0.0250, bound 0.025 |
+| L2 | `reference_pseudobulk` | pass | each panel's reference is the sum of its cells (and lists every cell) |
+| L3 | `compound_identity`, `media_compound_identity` | pass | 0 environment edits; 79,909 medium compound references identified |
+| L3 | `media_membership` | pass | 79,123 records on a library medium, 393 on one deriving from it |
+| L3 | `table_s4` | pass | cells, analysis transcripts and median UMI per panel equal Table S4 |
+| L3 | `pooled_panel` | pass | 393 segregants, median 17.0 cells, 277 with more than ten; agreement 0.9212 on 2,641 shared markers |
+| L3 | `sourced_values` | pass | 35/35 quotes present in the pinned bytes (the alignment-reference quote is new) |
+| L4 | `parents_pinned` | pass | 6 parents; BY is the S288C reference |
+| L4 | `mat_orientation` | pass | P(parent 2) at MAT {'Ap': 0.0127, 'A': 0.2114, 'B': 0.6417, '3004': 0.2526} |
+| L4 | `marker_reference` | pass | 2,000 of 2,000 sampled markers carry the S288C base |
+| L4 | `gene_containment_sgd` | pass | 5,623/5,623 analysis transcripts are S288C genes; 6,504 spanned genes |
+
+Schema impact (`scripts/schema_impact_check.py --base origin/main`): 5 changed symbols, all breaking, 3 datasets (`Boocock2025Dataset`, `TfDeletionPseudobulkJackson2020Dataset`, `Nguessan2025Dataset`); none is served, and KG 4.0 is a full rebuild.

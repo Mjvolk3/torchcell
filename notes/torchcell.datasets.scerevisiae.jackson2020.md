@@ -158,3 +158,34 @@ The tar-member records name `torchcell.literature.retrieve.tar_member`, which la
 ### Candidate gate
 
 `python -m torchcell.candidates gate --row "Jackson 2020" --table yeast --phenotype-class PseudobulkUmiCountPhenotype --write`: G1 to G5 pass, `admissible` (`database/candidates/jacksonGeneRegulatoryNetwork2020.json`). The ledger command refused a second 2026.10.11 section ("one ledger per day"), so no ledger section was written.
+
+## 2026.10.11 - The phenotype is now SingleCellExpressionPhenotype (#1016), store rebuilt
+
+Owner decision (#1016): one class for Boocock 2025's and Jackson 2020's single-cell UMI counts, unless merging loses data. Measured lossless (field-by-field table and the deciding fields in [[torchcell.datamodels.eqtl-data-model]], 2026.10.11 #1016 section), so `PseudobulkUmiCountPhenotype` is gone and Jackson's records carry `SingleCellExpressionPhenotype`. The experiment pair keeps its name (`PseudobulkUmiCountExperiment`, experiment type `pseudobulk_umi_count`) because its genotype is gene-keyed and its reference and environment types are narrowed, and the graph node class is now `single cell expression phenotype` (the `pseudobulk umi count phenotype` node class is removed from the schema config, the adapter and the conf).
+
+What changed in a Jackson record, measured by `experiments/036-dataset-fixes-before-kg-build/scripts/single_cell_leaf_merge_audit.py` (`old-vs-new`, retired store `processed.superseded.20261011-220009` against the rebuilt one): 784 records and 11 references paired, **0 stored values dropped or changed**. Added to every record and reference: `cell_libraries` (each cell's release `Condition`, its library: "This final data matrix is assembled from 11 independent single-cell sequencing batches, each corresponding to a single shake flask with a different growth condition.", `BATCH_QUOTE`), `library_cell_counts` (one key, that label), and `cell_cycle_stage_counts=None` with a `not_reported_by_primary` gap (`CELL_CYCLE_GAP`: the release's five metadata columns carry no stage; Figure 3 clusters cells by cell-cycle marker expression without releasing a per-cell label). `measurement_type` stays `scrnaseq_pseudobulk_umi_count`, as written.
+
+One check moved from the class to the verifier: the old leaf required `total_umis` to equal the gene plus marker counts. The shared leaf only bounds it from below (Boocock's total covers features outside its stored universe), so L2 `release_fidelity` now requires the equality for Jackson, whose every released feature is stored; it held on 784 of 784 records before the merge (`round-trip` mode on the retired store) and after.
+
+Rebuilt with `build_dataset_lmdb --dataset TfDeletionPseudobulkJackson2020Dataset --retire-existing --verify` at `78ec49eb5` (23 s build): every rule passes.
+
+| level | rule | result |
+|---|---|---|
+| L0 | structural | 784 records and 11 references validated |
+| L1 | count | 784 of 784 |
+| L1 | strain_condition_uniqueness | 784 unique pairs, exactly the pairs holding a cell |
+| L1 | strain_identity | 72 strains, one barcode and one gene each, 12 genes x 6 |
+| L1 | provenance_gaps | 1,568 documented gaps over 784 records (the temperature and the stage partition, one each) |
+| L1 | canonical_gene_names | 12 systematic names, each current |
+| L2 | release_fidelity | every record equals a fresh re-sum (genes, markers, totals, barcodes, libraries, per-cell totals), each total exactly its gene plus marker counts |
+| L2 | reference_fidelity | 11 references, each the pooled HO-control cells |
+| L2 | release_totals | 38,225 cells and 83,703,440 UMIs |
+| L3 | measurement_type_consistent | `scrnaseq_pseudobulk_umi_count` |
+| L3 | feature_universe | one 6,827-feature universe, every key inside it |
+| L3 | conditions_documented | 11 environments |
+| L3 | sourced_values | 134 audited |
+| L3 | compound_identity, media_compound_identity, media_membership | 140, 11,214 references identified; 572 library media, 212 restated YPD |
+| L4 | feature_containment | 0.99927 (floor 0.999) |
+| L4 | feature_ids_corroborated | 6,829 un-mangled columns equal `TRIZOL_BULK.tsv` |
+
+Candidate verdict re-gated with `--phenotype-class SingleCellExpressionPhenotype`: G1 to G5 pass, admissible (`database/candidates/jacksonGeneRegulatoryNetwork2020.json`).

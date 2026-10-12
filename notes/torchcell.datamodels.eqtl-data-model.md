@@ -204,3 +204,66 @@ N'Guessan 2025 ([[torchcell.datasets.scerevisiae.nguessan2025]]), the third of t
 - **No cell-cycle stage is released**, so `SingleCellExpressionPhenotype.cell_cycle_stage_counts` became `dict | None`, required, with a None carrying a `ProvenanceGap`. Schema impact: Boocock 2025 and N'Guessan 2025 only (Boocock's dev store needs one rebuild).
 
 The candidate row is corrected (authors N'Guessan, Tong, Heydari, Nguyen Ba; doi 10.7554/eLife.93906; not a Bloom-lineage panel) and its verdict is blocked:wall at G3. Not measured yet: the genotype cardinality at 41,594 markers, about 13 to 19 times Boocock's de novo marker counts.
+
+## 2026.10.11 - One single-cell UMI-count leaf for Boocock 2025 and Jackson 2020 (#1016)
+
+Owner decision on #1016: use one class for the two single-cell UMI-count leaves unless it loses data. Measured: it does not, so Jackson 2020's `PseudobulkUmiCountPhenotype` was merged into Boocock 2025's `SingleCellExpressionPhenotype` (the better name: 79,123 Boocock records and 12 Jackson records are single cells, which "pseudobulk" would mislabel) and N'Guessan 2025's loader moved with it.
+
+### How it was decided
+
+`experiments/036-dataset-fixes-before-kg-build/scripts/single_cell_leaf_merge_audit.py` (`round-trip` mode) streamed every stored phenotype of the two dev stores as built BEFORE the merge, through a candidate class carrying both leaves' fields (the source-specific ones nullable with a typed gap), and compared every stored field of the dump with the stored value and its JSON type. A merge counts as lossless only if no stored value is dropped, coerced, or given a second meaning.
+
+| store (pre-merge) | records | references | round-tripped | dropped or changed | total = stored counts | total > stored counts |
+|---|---|---|---|---|---|---|
+| Boocock 2025 (`processed.superseded.20261011-220231`) | 79,516 | 4 | 79,516 + 4 | 0 | 35,156 | 44,360 (173,191 UMIs outside the stored universe) |
+| Jackson 2020 (`processed.superseded.20261011-220009`) | 784 | 11 | 784 + 11 | 0 | 784 | 0 |
+
+### Field by field
+
+| field | Boocock 2025 leaf (before) | Jackson 2020 leaf (before) | merged `SingleCellExpressionPhenotype` | same type and meaning? |
+|---|---|---|---|---|
+| `umi_count` | nonzero counts over the analysis transcripts (`Yr`), S288C ids | nonzero counts over every released gene feature, R64 ids, markers excluded | nonzero counts over the record's pinned universe | yes: the universe is pinned per record by the next two fields |
+| `n_features`, `feature_universe_sha256` | size and sha256 of the universe | same | same | yes |
+| `n_cells` | cells summed (1 for a de novo cell) | cells summed | same | yes |
+| `total_umis` | `nUMI` over every feature; at least the stored counts | every released feature; exactly genes plus markers | every feature the source counted; at least the stored counts | yes: the same all-feature library size. Jackson's equality is a property of its release (every feature stored), now checked by its L2 rather than the class |
+| `marker_umi_count` | none | `KANMX`, `NATMX`, zeros kept | dict, or None with a typed gap | Jackson identical; Boocock gapped (reads counted against SGD R64-2-1, no cassette named) |
+| `cell_cycle_stage_counts` | authors' five stages; None only with a gap (N'Guessan) | none | dict, or None with a typed gap | Boocock identical; Jackson gapped (no per-cell stage released) |
+| `library_cell_counts` | cells per 10x library | none | cells per library, the count of `cell_libraries` | Boocock identical; Jackson filled: one 10x batch per flask, so the release `Condition` is the library |
+| `cell_barcodes` | none (a de novo cell's barcode sits in its `segregant_id`) | droplet barcodes, unique | droplet barcodes as released | Jackson identical; Boocock filled from `barcode.features` |
+| `cell_libraries` | none | none | each cell's library, aligned | new: Boocock reuses a barcode across a panel's libraries, so only (library, barcode) names a cell |
+| `cell_total_umis` | none | per-cell totals, sum to `total_umis` | same | Jackson identical; Boocock filled from per-cell `nUMI` |
+| `measurement_type` | `scrnaseq_umi_count` | `scrnaseq_pseudobulk_umi_count` | free tag, kept as each loader wrote it | yes; two tags for one assay remain (open decision below) |
+
+What stays separate, because merging it would lose meaning: the experiment pairs and their references. Boocock's `SegregantExpressionExperiment` holds a haplotype mosaic and its reference is the panel pseudobulk on the S288C reference genome; Jackson's `PseudobulkUmiCountExperiment` holds a gene-keyed barcoded deletion with a `StrainReferenceGenome` (FY4/FY5) and a `CultureEnvironment`, and its reference is the pooled HO-deletion controls of the flask. Only the phenotype leaf is shared.
+
+### Which cells were summed
+
+The merged leaf requires the summed cells for every source, because all three releases carry them: Jackson stored them already, Boocock's `segData.RDS` has each cell's barcode, library and `nUMI`, and N'Guessan's matrix rows are cells. A bare barcode does not name a Boocock cell:
+
+| Boocock panel (reference, every cell) | cells | distinct bare barcodes | distinct (library, barcode) pairs | reference phenotype JSON |
+|---|---|---|---|---|
+| Ap (2 libraries) | 7,124 | 7,105 | 7,124 | 437,686 B |
+| A (2 libraries) | 27,744 | 27,713 | 27,744 | 1,329,914 B |
+| B (4 libraries) | 44,784 | 44,603 | 44,784 | 2,162,352 B |
+| 3004 (2 libraries) | 6,595 | 6,520 | 6,595 | 444,075 B |
+
+So the merged leaf carries `cell_libraries` beside `cell_barcodes` and refuses a repeated (library, barcode) pair, not a repeated barcode; `library_cell_counts` must equal the count of `cell_libraries`. Jackson's eleven references are unchanged by this rule: one library each, every barcode distinct (976 of 976 in YPD, the condition with the most cells). The per-cell lists also answer which cells a pooled Boocock segregant summed, which the pre-merge store did not record.
+
+### Schema impact and stores
+
+`scripts/schema_impact_check.py --base origin/main`: 5 changed symbols, all breaking (`PseudobulkUmiCountPhenotype` removed and dropped from `PhenotypeType`; `SingleCellExpressionPhenotype` gains four required fields and a changed validator; the Jackson experiment pair's phenotype type changes), 3 impacted datasets: `Boocock2025Dataset`, `TfDeletionPseudobulkJackson2020Dataset`, `Nguessan2025Dataset`. Acceptable: none of the three is served (KG 3.0 holds none), and KG 4.0 is a full rebuild. The graph has one node class fewer (`pseudobulk umi count phenotype` removed; 44 node classes).
+
+Both dev stores were rebuilt from `78ec49eb5` and verified L0 to L4 (tables in [[torchcell.datasets.scerevisiae.boocock2025]] and [[torchcell.datasets.scerevisiae.jackson2020]]). `old-vs-new` mode paired each retired store with its rebuild record by record:
+
+| store | records paired | references paired | old values dropped or changed | added |
+|---|---|---|---|---|
+| Boocock 2025 | 79,516 | 4 | 0 | `cell_barcodes`, `cell_libraries`, `cell_total_umis`, `marker_umi_count` (None) and its gap, on every record and reference |
+| Jackson 2020 | 784 | 11 | 0 | `cell_libraries`, `library_cell_counts`, `cell_cycle_stage_counts` (None) and its gap, on every record and reference |
+
+### Cost
+
+Requiring the summed cells on a reference makes Boocock's references large (the JSON sizes above: up to 2.16 MB for panel B, against Jackson's largest of 125,972 B, the RAPA flask), and the build re-serializes the whole reference for every record it interns. Measured from job 3973: the Boocock build took 2,046 s (34 min; peak RSS 11.2 GB) where the pre-merge build took about 13 min (its directories and manifest are timestamped 09:00 and 09:13), and `experiment_reference_index.json` grew from 2,315,245 to 11,514,915 bytes. The interned store grew from 3.7 to 3.8 GB, since each reference is stored once. Not measured: the per-record read cost of the larger reference through `__getitem__`. Hypothesis (untested): a consumer that validates the reference once per record pays that cost once per record, so a full pass over panel B is slower than before; the KG build's adapter is such a consumer.
+
+### Open owner decision
+
+`measurement_type` is still two tags for one assay (`scrnaseq_umi_count` on Boocock and N'Guessan, `scrnaseq_pseudobulk_umi_count` on Jackson). The class carries both verbatim; making them one is a value change for whichever dataset moves, so it was not done here.

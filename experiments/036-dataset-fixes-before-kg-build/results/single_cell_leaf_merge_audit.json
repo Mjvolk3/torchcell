@@ -1,0 +1,165 @@
+{
+  "round-trip:/scratch/projects/torchcell-scratch/data/torchcell/tf_deletion_pseudobulk_jackson2020/processed.superseded.20261011-220009": {
+    "records": {
+      "gaps_kept": 784,
+      "round_tripped": 784
+    },
+    "references": {
+      "gaps_kept": 11,
+      "round_tripped": 11
+    },
+    "n_references": 11,
+    "record_totals": {
+      "equal_to_stored_counts": 784
+    },
+    "umis_outside_stored_counts": 0,
+    "measurement_types": {
+      "scrnaseq_pseudobulk_umi_count": 784
+    }
+  },
+  "old-vs-new:/scratch/projects/torchcell-scratch/data/torchcell/tf_deletion_pseudobulk_jackson2020/processed.superseded.20261011-220009": {
+    "n_records": 784,
+    "n_references": 11,
+    "dropped_or_changed": {},
+    "added": {
+      "experiment.phenotype.cell_cycle_stage_counts": 784,
+      "experiment.phenotype.cell_libraries": 784,
+      "experiment.phenotype.library_cell_counts": 784,
+      "experiment.phenotype.provenance_gaps[field=cell_cycle_stage_counts]": 784,
+      "reference.phenotype_reference.cell_cycle_stage_counts": 11,
+      "reference.phenotype_reference.cell_libraries": 11,
+      "reference.phenotype_reference.library_cell_counts": 11,
+      "reference.phenotype_reference.provenance_gaps[field=cell_cycle_stage_counts]": 11
+    }
+  },
+  "round-trip:/scratch/projects/torchcell-scratch/data/torchcell/boocock2025/processed.superseded.20261011-220231": {
+    "records": {
+      "gaps_kept": 79516,
+      "round_tripped": 79516
+    },
+    "references": {
+      "gaps_kept": 4,
+      "round_tripped": 4
+    },
+    "n_references": 4,
+    "record_totals": {
+      "above_stored_counts": 44360,
+      "equal_to_stored_counts": 35156
+    },
+    "umis_outside_stored_counts": 173191,
+    "measurement_types": {
+      "scrnaseq_umi_count": 79516
+    }
+  },
+  "cells:/scratch/projects/torchcell-scratch/data/torchcell/tf_deletion_pseudobulk_jackson2020": {
+    "YPD": {
+      "n_cells": 976,
+      "distinct_barcodes": 976,
+      "distinct_library_barcode_pairs": 976,
+      "reference_phenotype_json_bytes": 119384
+    },
+    "YPDDiauxic": {
+      "n_cells": 314,
+      "distinct_barcodes": 314,
+      "distinct_library_barcode_pairs": 314,
+      "reference_phenotype_json_bytes": 97805
+    },
+    "YPDRapa": {
+      "n_cells": 932,
+      "distinct_barcodes": 932,
+      "distinct_library_barcode_pairs": 932,
+      "reference_phenotype_json_bytes": 125972
+    },
+    "YPEtOH": {
+      "n_cells": 134,
+      "distinct_barcodes": 134,
+      "distinct_library_barcode_pairs": 134,
+      "reference_phenotype_json_bytes": 87920
+    },
+    "MinimalGlucose": {
+      "n_cells": 204,
+      "distinct_barcodes": 204,
+      "distinct_library_barcode_pairs": 204,
+      "reference_phenotype_json_bytes": 92557
+    },
+    "MinimalEtOH": {
+      "n_cells": 26,
+      "distinct_barcodes": 26,
+      "distinct_library_barcode_pairs": 26,
+      "reference_phenotype_json_bytes": 67263
+    },
+    "Glutamine": {
+      "n_cells": 148,
+      "distinct_barcodes": 148,
+      "distinct_library_barcode_pairs": 148,
+      "reference_phenotype_json_bytes": 89254
+    },
+    "Proline": {
+      "n_cells": 65,
+      "distinct_barcodes": 65,
+      "distinct_library_barcode_pairs": 65,
+      "reference_phenotype_json_bytes": 71094
+    },
+    "AmmoniumSulfate": {
+      "n_cells": 121,
+      "distinct_barcodes": 121,
+      "distinct_library_barcode_pairs": 121,
+      "reference_phenotype_json_bytes": 79921
+    },
+    "Urea": {
+      "n_cells": 147,
+      "distinct_barcodes": 147,
+      "distinct_library_barcode_pairs": 147,
+      "reference_phenotype_json_bytes": 78406
+    },
+    "CStarve": {
+      "n_cells": 239,
+      "distinct_barcodes": 239,
+      "distinct_library_barcode_pairs": 239,
+      "reference_phenotype_json_bytes": 84582
+    }
+  },
+  "old-vs-new:/scratch/projects/torchcell-scratch/data/torchcell/boocock2025/processed.superseded.20261011-220231": {
+    "n_records": 79516,
+    "n_references": 4,
+    "dropped_or_changed": {},
+    "added": {
+      "experiment.phenotype.cell_barcodes": 79516,
+      "experiment.phenotype.cell_libraries": 79516,
+      "experiment.phenotype.cell_total_umis": 79516,
+      "experiment.phenotype.marker_umi_count": 79516,
+      "experiment.phenotype.provenance_gaps[field=marker_umi_count]": 79516,
+      "reference.phenotype_reference.cell_barcodes": 4,
+      "reference.phenotype_reference.cell_libraries": 4,
+      "reference.phenotype_reference.cell_total_umis": 4,
+      "reference.phenotype_reference.marker_umi_count": 4,
+      "reference.phenotype_reference.provenance_gaps[field=marker_umi_count]": 4
+    }
+  },
+  "cells:/scratch/projects/torchcell-scratch/data/torchcell/boocock2025": {
+    "00_BYxRM_480MatA_1,00_BYxRM_480MatA_2": {
+      "n_cells": 7124,
+      "distinct_barcodes": 7105,
+      "distinct_library_barcode_pairs": 7124,
+      "reference_phenotype_json_bytes": 437686
+    },
+    "03_ByxRM_51-_1-2,04_ByxRM_51-": {
+      "n_cells": 27744,
+      "distinct_barcodes": 27713,
+      "distinct_library_barcode_pairs": 27744,
+      "reference_phenotype_json_bytes": 1329914
+    },
+    "01_2444_44_1-2,02_2444_44-,07_2444-cross-1,07_2444-cross-2": {
+      "n_cells": 44784,
+      "distinct_barcodes": 44603,
+      "distinct_library_barcode_pairs": 44784,
+      "reference_phenotype_json_bytes": 2162352
+    },
+    "10_3004_cross_10k_Feb_21,11_3004_cross_5k_Feb_21": {
+      "n_cells": 6595,
+      "distinct_barcodes": 6520,
+      "distinct_library_barcode_pairs": 6595,
+      "reference_phenotype_json_bytes": 444075
+    }
+  }
+}

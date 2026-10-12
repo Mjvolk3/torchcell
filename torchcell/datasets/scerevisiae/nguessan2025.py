@@ -49,9 +49,10 @@ permutation null rather than assuming it.
 
 PHENOTYPE (``SingleCellExpressionPhenotype``, the single-cell UMI-count leaf shared with
 Boocock 2025 and Jackson 2020, #1016): UMI counts over the 6,240 released genes, summed
-over the segregant's cells, with each summed cell's barcode, library and UMI total. The authors kept every feature "EXPRESSED IN AT LEAST
-1 CELL", so a dropped feature has zero UMIs in every cell and a cell's row sum is its UMI
-total over every feature (Table 1's median 5,158). No cell-cycle stage is released, so
+over the segregant's cells, with each summed cell's barcode, library and UMI total. The
+authors kept every feature "EXPRESSED IN AT LEAST 1 CELL", so a dropped feature has zero
+UMIs in every cell and a cell's row sum is its UMI total over every feature (Table 1's
+median 5,158). No cell-cycle stage is released, so
 ``cell_cycle_stage_counts`` is a typed gap. Every barcode carries CellRanger's GEM-group
 suffix ``-1``, the single library, which is ``library_cell_counts``' one label. The
 released features are S288C CDS only, so ``marker_umi_count`` is a typed gap. The

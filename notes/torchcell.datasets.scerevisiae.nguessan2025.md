@@ -154,3 +154,12 @@ Expression measured on the release supports the MAT rule's premise (inventory `m
 2. Rewrite the raw manifest (`deposit_raw_mirror`) so the four records are on disk; re-gate (G3 should pass) and write the verdict.
 3. Add `@register_dataset`, the `VERIFICATION_SPEC` entry in `runners.SEGREGANT_EXPRESSION_DATASETS` (with a module dispatch in `run_segregant_expression`), the dataset-to-adapter map entry and the pins in `test_build_time_projection.py` and `test_runners.py`.
 4. `build_dataset_lmdb --dataset Nguessan2025Dataset --retire-existing --verify`, then record the L0 to L4 table here.
+
+## 2026.10.11 - On the merged single-cell leaf (#1016)
+
+`SingleCellExpressionPhenotype` is now the one single-cell UMI-count leaf for Boocock 2025, Jackson 2020 and this loader ([[torchcell.datamodels.eqtl-data-model]], #1016 section). Two consequences here, both in `pseudobulk()`:
+
+- Each record names the cells it sums: `cell_barcodes` (the release barcodes), `cell_libraries` (the GEM-group label `library_of` already derives, so `library_cell_counts` is their count) and `cell_total_umis` (each cell's row sum over the released genes, which the docstring already takes as its all-feature total).
+- `marker_umi_count` is None with `MARKER_GAP` (`not_reported_by_primary`): CellRanger "mapped the scRNA-seq reads to the reference genome" (paper.md, Methods) with no cassette sequence named, and `Table_expressed_genes.csv` lists 6,240 features, every one an S288C CDS id (`^Y[A-P][LR]\d{3}[WC](-[A-Z])?_CDS$`, 6,240 of 6,240, measured on the raw-mirror file).
+
+The verifier ([[torchcell.verification.segregant_expression_reference_panel]]) compares the three per-cell lists against the assigned cells and requires both gaps. The class is still unregistered and no store is built (#1014), so these are exercised by the synthetic release in the tests only.

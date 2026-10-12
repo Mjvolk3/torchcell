@@ -62,3 +62,19 @@ solve" and "GCN, GO input"; the top color key names the nine graphs once. Column
 three of 58 mm, all titles on the panel line, 5 pt tick labels on the bar panels. The
 `\statuskey` macro of the root tex prints the key above the sheet. Render:
 `essentiality_gate_sheet_2026-10-12-08-12-52.svg`.
+
+## 2026.10.12 - One row per idea, a strict grid, the key under the document title
+
+Review: the status key goes under the document's title, not on the figure; panel a
+loses its title and uses one cell tint (orange); the grid must align; the leaderboard
+has to be principled for a general reader after a wide search over module forms; f
+splits by class. The sheet now keeps one row per idea in b (two published methods and
+DCell as released and rescored, random forest, MLP with no graph, CGT with the FBA
+ratio, CGT with the metabolic solve, GCN with GO, their average) through `KEEP_B`, and
+five rows in d through `KEEP_D`, each with names for a general reader (`LABEL`,
+`LABEL_D`); the full search stays in the performance section. Geometry: three columns
+whose axes share a right edge (56, 118, 177 mm), two rows whose axes share top and
+bottom (row 1 44 mm, row 2 40 mm), one band per row of letter, legend, title. Panel f
+is two stacked axes, one per gene class, with the class named inside the axes. The
+`\statuskey` macro prints under `\maketitle`. Render:
+`essentiality_gate_sheet_2026-10-12-08-37-10.svg`.

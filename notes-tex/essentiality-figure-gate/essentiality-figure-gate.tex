@@ -43,22 +43,11 @@ measured call or phenotype of other genes in the same screen (the label-propagat
 store), which holds only inside a called screen; \emph{comparator}, a published method
 scored on the same genes with nothing learned here.}
 
-%% The key to the two marks after every panel letter, printed above each sheet.
+%% The key to the two marks after every panel letter, printed once under the title.
 \newcommand{\statuskey}{\noindent{\footnotesize\textcolor{tcgray}{\emph{Section status}}
 \status{todo}~not done, agents may edit freely \quad \status{tent}~author-reviewed \quad
 \status{final}~final \qquad \textcolor{tcgray}{\emph{Figure status}} \fstat{file}~on file
 \quad \fstat{partial}~partial \quad \fstat{idea}~idea only}\par\vspace{0.4em}}
-
-%% A sheet with the status key printed inside its float, directly above the image.
-\newcommand{\tcfigkeyed}[3]{%
-  \begin{figure}[htbp]\centering
-  \sbox{\tcfigbox}{\includegraphics{#1}}%
-  \begin{minipage}{\wd\tcfigbox}%
-    \statuskey
-    \usebox{\tcfigbox}\par\vspace{2pt}
-    \caption[]{#2}\label{#3}%
-  \end{minipage}
-  \end{figure}}
 
 \title{\vspace{-1.5em}Gene Essentiality Gate\\
   {\large The Held-Out Score, the Module Form That Carries, and the Panels Proposed for
@@ -68,6 +57,7 @@ scored on the same genes with nothing learned here.}
 
 \begin{document}
 \maketitle
+\statuskey
 \thispagestyle{empty}
 
 \tccontents

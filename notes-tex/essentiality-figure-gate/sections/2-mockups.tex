@@ -25,42 +25,48 @@ message-passing form and the inputs, which is why they misrank different genes a
 their equal-weight average of standardized logits is the best row. A gene's misrank
 under a model is the share of the other class scored on the wrong side of it: for an
 essential gene, the fraction of nonessential genes scored above it. The two marks after
-each panel letter are the panel's section status and figure status, keyed below.
+each panel letter are the panel's section status and figure status, keyed under the
+title of this document.
 
 \clearpage
-\tcfigkeyed{\figSheet}{\textbf{Gene essentiality: the label, what ranks the held-out genes
+\tcfig{\figSheet}{\textbf{Gene essentiality: the label, what ranks the held-out genes
 best, and the genes still missed.} \textbf{a}, The label. One open reading frame is
 deleted from the genome and the deletion strain is grown on YPD: a strain that grows
-marks its gene nonessential, one that cannot marks it essential. The cells are the three
-of manuscript Figure 1. \textbf{b}, Every method on the FCL held-out \gnHeldOut{} genes,
-best first. Learned models are five-fold ensembles; the two published comparators are
-the authors' released per-gene predictions rescored on these \gnHeldOut{} genes with the
-same gene bootstrap, Flux Cone Learning at \gfclAuroc{} and FBA at \gfbaAuroc{}; the best
-average reads \gbestAverage{} [\gbestAverageLo{}, \gbestAverageHi{}]. \textbf{c}, The
-three models fixed in advance on \gnResplits{} other held-out fifths of the labeled genes,
-sorted by the average; each point is one method on one split, the seed-mean standardized
-logit of three seeds scored once on that split's held-out fifth; the average beats the
-better single model on \gresplitDiffaverageMinusthebettersinglemodelUp{} of
-\gresplitDiffaverageMinusthebettersinglemodelOf{} splits. \textbf{d}, The same families
-trained on the \ggenomeLabeled{} FCL-labeled genes outside the held-out set and read
-once on the \ggenomeN{} genome-wide genes the FCL file never labeled, none of which
-carries a yeast-GEM reaction: the metabolic solve has no call there, so only the graphs
-and sequence transfer, and the untrained physical degree reads \ggengcnDegree{}.
-\textbf{e}, Every one of the \gnEssentialHeldOut{} essential held-out genes, worst first
-by the two families' mean misrank; a name is bold where FBA's knockout growth ratio on
-YPD is 1.0, the deletions FBA cannot see. \textbf{f}, What the misranked genes share:
-per class, the chance that a gene carrying the feature is misranked worse than one
-without it, 0.5 (dashed) no association, filled where the Benjamini-Hochberg $q$ within
-the family is under 0.1. Color is the family: gray a comparator with nothing learned
-here, blue a learned model reading no metabolic column and no graph, orange CGT reading
-the metabolic solve, red GCN over the nine gene graphs, purple their equal-weight
-average; a hatch marks a linear program solved inside the training loop. Written by
+marks its gene nonessential, one that cannot marks it essential. The cell is the yeast
+of manuscript Figure 1. \textbf{b}, One row per idea on the FCL held-out \gnHeldOut{}
+genes, best first: the two published methods and DCell as their authors released them,
+rescored on these genes with a gene bootstrap (Flux Cone Learning \gfclAuroc{}, FBA
+\gfbaAuroc{}); a random forest and an MLP that read the same columns with no graph;
+CGT with the FBA growth ratio as its only metabolic input and CGT with the metabolic
+solve; GCN over the gene graphs reading GO; and the equal-weight average of the last
+two, \gbestAverage{} [\gbestAverageLo{}, \gbestAverageHi{}]. Learned rows are five-fold
+ensembles. \textbf{c}, The three models fixed in advance on \gnResplits{} other
+held-out fifths of the labeled genes, sorted by the average; a point is one method on
+one split, the seed-mean standardized logit of three seeds scored once on that split's
+held-out fifth; the average beats the better single model on
+\gresplitDiffaverageMinusthebettersinglemodelUp{} of
+\gresplitDiffaverageMinusthebettersinglemodelOf{} splits. \textbf{d}, The same
+families trained on the \ggenomeLabeled{} FCL-labeled metabolic genes and read once on
+the \ggenomeN{} genome-wide genes outside the metabolic model, where the solve has no
+call: the gene graphs transfer (the untrained physical degree alone reads
+\ggengcnDegree{}) and the metabolic column does not. \textbf{e}, Every one of the
+\gnEssentialHeldOut{} essential held-out genes, worst first by the two families' mean
+misrank, the share of nonessential genes scored above the gene; a name is bold where
+FBA's knockout growth ratio on YPD is 1.0, the deletions FBA cannot see. \textbf{f},
+What the misranked genes share, one axis per class: the chance that a gene carrying
+the feature is misranked worse than one without it, 0.5 (dashed) no association,
+filled where the Benjamini-Hochberg $q$ within the family is under 0.1. Color is the
+family: gray a published method with nothing learned here, blue a learned model
+reading no graph and no metabolic model, orange CGT reading the metabolic solve, red
+GCN over the nine gene graphs, purple their equal-weight average. Written by
 \texttt{essentiality\_gate\_sheet.py}, GilaHyper, 2026-10-12.}{fig:sheet}
 
 \pfstep{What each panel decides} Panel b is the claim: on the genes the published
 method held out, the average of the two families reads above Flux Cone Learning and
-above FBA, with the comparators rescored on exactly these genes. Panel c is the
-guard against that number being a post hoc choice: the three were fixed before the
+above FBA, with the comparators rescored on exactly these genes. The study searched
+many module forms (a cached solve, rule counts, a linear program inside training); the
+sheet shows one row per idea and the full search is \ref{sec:performance}. Panel c is
+the guard against that number being a post hoc choice: the three were fixed before the
 repeated splits ran, and the average wins on nine of ten. Panel d is the reach of the
 metabolic column: it helps on the metabolic genes and has nothing to say off them, where
 the gene graphs alone read \ggengcnDegree{} with nothing trained. Panels e and f are

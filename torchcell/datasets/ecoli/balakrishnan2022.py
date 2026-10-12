@@ -52,26 +52,32 @@ STRAINS AND GENOTYPES. Every record is written against the MG1655 GenBank assemb
 with an ``NCM3722`` background (no NCM3722 assembly is in the genomes tier; the Gupta
 2024 precedent). The released strain column names NCM3722, NQ1243, NQ1390 and NQ393,
 and its description cells name the edits: "Titratable glucose uptake (Pu-ptsG)" and
-"Titratable ammonia assimilation (Plac-GOGAT)". Table S1 (the strain table) is behind
-the proof-of-work page (#853), so the construction is quoted from the same lab's
-mirrored Mori 2021 Appendix, which describes these same strains:
+"Titratable ammonia assimilation (Plac-GOGAT)". Table S1 of the Supplementary
+Materials (deposited by hand on 2026-10-12, #853) is the strain table, quoted from the
+PDF's pinned ``pdftotext`` layout; the same lab's Mori 2021 Appendix describes the
+titration mechanism:
 
 - NQ1243 and NQ1390: ``PromoterReplacementPerturbation`` of ``ptsG`` (b1101) by the
-  inducible ``Pu`` promoter, expression decreased. The xylR activator each carries
-  (driven by Ptet in NQ1243 and by a lacIq promoter in NQ1390) is NOT typed: no mirrored
-  source states its location or integration site (:data:`UNTYPED_EDITS`). The two
-  strains therefore share one typed genotype and differ only in that untyped driver.
-- NQ393: ``PromoterReplacementPerturbation`` of ``gltB`` (b3212, the first gene of the
-  GOGAT operon) by ``Plac``, expression decreased ("low GOGAT expression"). Its
-  "GDH-null background" is NOT typed: the allele (deletion or point lesion) of ``gdhA``
-  is not stated in any mirrored source.
+  inducible ``Pu`` promoter, expression decreased. Table S1 lists both as "NCM3722,
+  Pu-ptsG". The xylR activator each carries (driven by Ptet in NQ1243 and by a lacIq
+  promoter in NQ1390, per Mori 2021) is NOT typed: Table S1 and the rest of the
+  Supplementary Materials never mention xylR, so no mirrored source states its location
+  or integration site (:data:`UNTYPED_EDITS`, #906). The two strains therefore share
+  one typed genotype and differ only in that untyped driver.
+- NQ393: Table S1 reads "NCM3722, ∆gdhA, PLlac-01-gltBD". So its GDH-null background
+  is a ``BacterialDeletionPerturbation`` of ``gdhA`` (b1761), and its GOGAT edit a
+  ``PromoterReplacementPerturbation`` of ``gltB`` (b3212, the first gene of the gltBD
+  operon) by ``PLlac-01``, expression decreased ("low GOGAT expression"). Table S3's
+  description cell calls the same construct "Plac-GOGAT".
 
 THE ENVIRONMENT. The release names the base medium ("M9", "MOPS"), the carbon source
 ("0.2% glucose"), the nitrogen source ("11.34 mM (NH4)2SO4", "10 mM NH4Cl") and the
-supplement (3MBA, IPTG, chloramphenicol, in uM). The base-medium recipes and the culture
-temperature are in the walled SI Methods, so each medium is a loader-local object whose
-base composition is a deferral (``composition_deferred``) beside the stated nitrogen
-salt, and the temperature is a ``ProvenanceGap``. Three nitrogen cells read
+supplement (3MBA, IPTG, chloramphenicol, in uM). The Supplementary Materials state the
+temperature ("cultures were grown at 37℃ and shaken at 240 r.p.m in a water bath
+shaker") and give no base-medium recipe: they say culturing followed their references
+7, 10 and 57. So each medium is a loader-local object whose base composition is a
+deferral (``composition_deferred``) to those references beside the stated nitrogen
+salt, and every environment carries 37 C. Three nitrogen cells read
 "(NH4)2SO5", "SO6" and "SO7" on the consecutive rows ``a2_1``, ``a3_1``, ``a4_1``
 (:data:`NITROGEN_FILL_SERIES`); no such salts exist, the digit increments by one down
 consecutive rows from the "(NH4)2SO4" above them, and every other M9 row reads
@@ -84,11 +90,14 @@ medium's wild-type condition: ``c5`` and ``c0_1`` (NCM3722 in M9) for the C- and
 A-limitation series, ``r0`` and ``r0_1`` (NCM3722 in MOPS) for the R-limitation series,
 stored as the per-gene mean of the two libraries with ``n_libraries=2``.
 
-DATA. Two files are consumed from this paper and deposited under
+DATA. Two files are consumed from this paper's scripted retrievals and deposited under
 ``$DATA_ROOT/torchcell-raw/balakrishnanPrinciplesGeneRegulation2022/data/``: the GEO
 ``GSE205717_Processed_data_Table_S3.xlsx`` (direct URL) and the author-manuscript text
-``PMC9804519.1.txt`` (PMC Article Datasets bucket). The Mori 2021 Appendix is read from
-its own raw mirror and checked against its own pin.
+``PMC9804519.1.txt`` (PMC Article Datasets bucket). The owner's manual deposit of the
+Science supplement (:data:`SI_DEPOSIT`: the Supplementary Materials PDF, the MDAR
+checklist and Tables S3 to S7) is recorded beside them, and the SI PDF's layout text
+(``si/science.abk2066_sm.layout.txt``) is the third consumed file. The Mori 2021
+Appendix is read from its own raw mirror and checked against its own pin.
 """
 
 from __future__ import annotations
@@ -102,6 +111,7 @@ import os.path as osp
 import pickle
 import shutil
 import statistics
+import subprocess
 from collections.abc import Callable, Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
@@ -124,6 +134,7 @@ from torchcell.data import (
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
     BacterialAssemblySet,
+    BacterialDeletionPerturbation,
     BacterialGeneNamespace,
     BacterialStrainBackground,
     ComponentDefinition,
@@ -147,6 +158,7 @@ from torchcell.datamodels.schema import (
     PromoterReplacementPerturbation,
     Publication,
     SmallMoleculePerturbation,
+    Temperature,
 )
 from torchcell.datasets.bacteria_common import (
     BACTERIAL_ASSEMBLY_SETS,
@@ -157,10 +169,20 @@ from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.datasets.ecoli import mori2021
 from torchcell.literature.manifest import (
     ROLE_RAW_DATA,
+    ROLE_SI_PDF,
+    ROLE_SI_TEXT,
     ArtifactRecord,
     Manifest,
+    ProcessingRecord,
     RetrievalMethod,
     RetrievalRecord,
+)
+from torchcell.literature.manual_deposit import (
+    DepositedFile,
+    ManualDeposit,
+    artifact_records,
+    extend_manifest,
+    write_deposit_records,
 )
 from torchcell.literature.provenance import run_retriever
 from torchcell.sequence import GeneSet
@@ -224,17 +246,141 @@ RETRIEVALS: dict[str, RetrievalRecord] = {
 MORI_APPENDIX = "mori2021_si1.docx"
 MORI_APPENDIX_SHA256 = mori2021.DATA_SHA256[mori2021.APPENDIX]
 MORI_APPENDIX_RELPATH = mori2021.MIRROR_RELPATH[mori2021.APPENDIX]
-RAW_SHA256: dict[str, str] = {**DATA_SHA256, MORI_APPENDIX: MORI_APPENDIX_SHA256}
 
-#: Released locations this loader does NOT mirror, with why.
+# --- begin SI deposit (issues #853 and #906, 2026-10-12) ------------------------- #
+#: The Science supplementary materials, downloaded by the owner in a browser.
+SI_PAGE = f"https://www.science.org/doi/{PAPER_DOI}"
+SI_PDF = "science.abk2066_sm.pdf"
+SI_PDF_RELPATH = f"si/{SI_PDF}"
+SI_PDF_SHA256 = "e925a839d31051d3b209bf79f2527a2c8497e0d3e37f21b8c9b3d37c6c372e09"
+#: The SI PDF's text layer as ``pdftotext`` lays it out: the source of every SI quote.
+SI_TEXT = "science.abk2066_sm.layout.txt"
+SI_TEXT_RELPATH = f"si/{SI_TEXT}"
+SI_TEXT_SHA256 = "3ae343b242d0be1bfb50da5dcd2660cb21d6a35b85ffc68c871a57b7fe94b8ce"
+PDFTOTEXT_ARGS: tuple[str, ...] = ("-layout", "-enc", "UTF-8")
+PDFTOTEXT_VERSION = "pdftotext version 21.01.0"
+TABLES_ZIP = "science.abk2066_tables_s3_to_s7.zip"
+_ARRIVED = "2026-10-12T03:41:{:02d}-05:00"
+
+
+def _table_member(table: str, sha256: str, size: int, holds: str) -> DepositedFile:
+    name = f"science.abk2066_table_{table}.xlsx"
+    return DepositedFile(
+        path=f"data/{name}",
+        role=ROLE_RAW_DATA,
+        sha256=sha256,
+        bytes=size,
+        original_filename=name,
+        arrived_at=_ARRIVED.format(16),
+        container=f"data/{TABLES_ZIP}",
+        description=holds,
+    )
+
+
+SI_DEPOSIT = ManualDeposit(
+    citation_key=CITATION_KEY,
+    doi=PAPER_DOI,
+    title=PAPER_TITLE,
+    source_url=SI_PAGE,
+    retrieval_command=(
+        f"open {SI_PAGE} in a browser, open 'Supplementary Materials', download the "
+        "Supplementary Materials PDF, the MDAR Reproducibility Checklist and the "
+        f"Tables S3 to S7 zip; copy the two PDFs unchanged to si/ and the zip to data/, "
+        "unzip it into data/ beside itself, then verify every sha256"
+    ),
+    retrieved_by="the owner (mjvolk3), browser download",
+    deposited_at="2026-10-12",
+    issues=(853, 906),
+    note="the publisher's own supplement, which PMC serves only behind a proof-of-work "
+    "page (#853). The five tables arrive as one zip whose members carry the "
+    "2022-11-30 timestamps of the publisher's archive; each unpacked member is checked "
+    "against the zip. Table S3 is the release the loader reads from GEO; this copy is "
+    "compared with it cell for cell (experiment 036, manual_deposits_2026_10_12)",
+    files=(
+        DepositedFile(
+            path=SI_PDF_RELPATH,
+            role=ROLE_SI_PDF,
+            sha256=SI_PDF_SHA256,
+            bytes=5001449,
+            original_filename=SI_PDF,
+            arrived_at=_ARRIVED.format(18),
+            description="Supplementary Materials, 65 pages: Materials and Methods, "
+            "Supplementary Text, Figs. S1 to S14, Tables S1 (strains) and S2 (growth "
+            "conditions), References",
+        ),
+        DepositedFile(
+            path="si/science.abk2066_mdar_reproducibility_checklist.pdf",
+            role=ROLE_SI_PDF,
+            sha256="f6016e8d3915489b2980d756e6d6722f273adfa564aadfd0ec98d8b32df9299e",
+            bytes=158999,
+            original_filename="science.abk2066_mdar_reproducibility_checklist.pdf",
+            arrived_at=_ARRIVED.format(13),
+            description="the MDAR Reproducibility Checklist, 4 pages",
+        ),
+        DepositedFile(
+            path=f"data/{TABLES_ZIP}",
+            role=ROLE_RAW_DATA,
+            sha256="f7624ba6bb6e9e54e8e09f290b7da82b9ba6efb9814dbe481807ed44ba522625",
+            bytes=4006966,
+            original_filename=TABLES_ZIP,
+            arrived_at=_ARRIVED.format(16),
+            description="the publisher's archive of Tables S3 to S7, five members",
+        ),
+        _table_member(
+            "s3",
+            "5b9c05f5920a8d7b7c2d8b16e0772383130326d2de2c1ad43d89c345de22aa84",
+            1752886,
+            "Table S3, transcriptomics: the four sheets of the GEO copy the loader reads",
+        ),
+        _table_member(
+            "s4",
+            "f27a3cba3d347b789d908003f932e896c4c328871bc60c2e2f6d607e43c74905",
+            989547,
+            "Table S4, proteomics: sample description and protein number fractions",
+        ),
+        _table_member(
+            "s5",
+            "3b948e49c71cfee11db804448385dcacc7b9938691fd61518957fbbd6b556378",
+            302611,
+            "Table S5, fold changes of relative translation efficiency per limitation",
+        ),
+        _table_member(
+            "s6",
+            "b5b51f1a612a3c31dcd097e37fa4d41901180e76025d98d43e868b954d632ae5",
+            764426,
+            "Table S6, per-gene expression parameters in the reference and the "
+            "C-limited condition",
+        ),
+        _table_member(
+            "s7",
+            "4ca3e38968e6b5f7db5a0acb82215531557af179a6bbaad3080ba2d16b8b243e",
+            346049,
+            "Table S7, protein mass fractions across growth conditions (Mori 2021)",
+        ),
+    ),
+)
+
+#: Released locations this loader does NOT consume, with why.
 NOT_MIRRORED = (
-    "Supplementary Information PDF and Tables S4-S7: behind the PMC proof-of-work page "
-    "(issue #853); no value is read from them",
+    "Supplementary Materials PDF, the MDAR checklist and Tables S3-S7 (the publisher's "
+    "zip and its five members): DEPOSITED 2026-10-12 by the owner (manual_browser, "
+    "issues #853 and #906) under si/ and data/. The loader quotes the SI PDF's "
+    f"pdftotext layout ({SI_TEXT_RELPATH}) for the temperature and the Table S1 "
+    "genotypes; Tables S4-S7 are recorded and not consumed. Table S6 (per-gene mRNA "
+    "degradation rates, promoter on-rates and translation initiation rates) is a "
+    "candidate dataset of its own (#853)",
     "Table S3 sheets '3 - RNAseq-deg (description)' and '4 - RNAseq-deg (fractions)': "
     "rifampicin decay time courses whose derived rates are Table S6 (#853); fitting "
     "them here would store a derivation, not the release",
     "GEO GSE205717 raw FASTQ: no loader re-quantifies reads",
 )
+#: Every file ``raw/`` holds: this paper's two, the sister Appendix, the SI layout text.
+RAW_SHA256: dict[str, str] = {
+    **DATA_SHA256,
+    MORI_APPENDIX: MORI_APPENDIX_SHA256,
+    SI_TEXT: SI_TEXT_SHA256,
+}
+# --- end SI deposit ----------------------------------------------------------------- #
 
 # --------------------------------------------------------------------------- #
 # Verbatim quotes, each a substring of the pinned bytes (``check_quotes``)
@@ -289,6 +435,28 @@ _Q_MORI_NQ393 = (
     "the pre-culture of NQ393 (an NCM3722 derivative with low GOGAT expression in "
     "GDH-null background"
 )
+#: Supplementary Materials lines, verbatim from the pinned layout text (#853).
+_Q_SI_TEMPERATURE = (
+    "cultures were grown at 37℃ and shaken at 240 r.p.m in a water bath shaker"
+)
+_Q_SI_CULTURING = (
+    "and growth determination procedures were consistent between this and previous "
+    "studies(7, 10, 57)."
+)
+_Q_SI_TABLE_S1 = "Table S1. Strains used in this study."
+_Q_SI_NCM3722 = (
+    "NCM3722       Wild-type E. coli K-12      reference and parental strain"
+)
+_Q_SI_NQ1243 = (
+    "NQ1243        NCM3722, Pu-ptsG            titration of glucose uptake           "
+    "Basan et al., 2015"
+)
+_Q_SI_NQ1390 = (
+    "NQ1390        NCM3722, Pu-ptsG            titration of glucose uptake           "
+    "Basan et al., 2015"
+)
+_Q_SI_NQ393 = "NCM3722, ∆gdhA, PLlac-01-   titration of Nitrogen assimilation"
+_Q_SI_NQ393_OPERON = "gltBD                       (A-limitation)"
 #: Description-sheet cells, verbatim.
 _Q_PU_PTSG = "Titratable glucose uptake (Pu-ptsG)"
 _Q_PLAC_GOGAT = "Titratable ammonia assimilation (Plac-GOGAT)"
@@ -309,6 +477,16 @@ MORI_QUOTES: dict[str, str] = {
     "nq393": _Q_MORI_NQ393,
 }
 WORKBOOK_QUOTES: dict[str, str] = {"pu_ptsg": _Q_PU_PTSG, "plac_gogat": _Q_PLAC_GOGAT}
+SI_QUOTES: dict[str, str] = {
+    "temperature": _Q_SI_TEMPERATURE,
+    "culturing": _Q_SI_CULTURING,
+    "table_s1": _Q_SI_TABLE_S1,
+    "ncm3722": _Q_SI_NCM3722,
+    "nq1243": _Q_SI_NQ1243,
+    "nq1390": _Q_SI_NQ1390,
+    "nq393": _Q_SI_NQ393,
+    "nq393_operon": _Q_SI_NQ393_OPERON,
+}
 
 PAPER = Provenance(
     source_uri=MIRROR_RELPATH[PAPER_TXT],
@@ -325,6 +503,13 @@ MORI_APPENDIX_SOURCE = Provenance(
     citation_key=mori2021.CITATION_KEY,
     sha256=MORI_APPENDIX_SHA256,
 )
+SI_SOURCE = Provenance(
+    source_uri=SI_TEXT_RELPATH,
+    citation_key=CITATION_KEY,
+    sha256=SI_TEXT_SHA256,
+    method=f"{PDFTOTEXT_VERSION} {' '.join(PDFTOTEXT_ARGS)} of {SI_PDF_RELPATH} "
+    f"(sha256 {SI_PDF_SHA256}), the owner's manual deposit (torchcell-raw mirror)",
+)
 
 
 def _paper(value: object, quote: str, *, note: str | None = None) -> SourcedValue:
@@ -335,6 +520,11 @@ def _paper(value: object, quote: str, *, note: str | None = None) -> SourcedValu
 def _table(value: object, quote: str, *, note: str | None = None) -> SourcedValue:
     """A ``SourcedValue`` quoting a cell or row rendering of the pinned Table S3."""
     return SourcedValue(value=value, provenance=TABLE_S3_SOURCE, quote=quote, note=note)
+
+
+def _si(value: object, quote: str, *, note: str | None = None) -> SourcedValue:
+    """A ``SourcedValue`` quoting the pinned layout text of the Supplementary Materials."""
+    return SourcedValue(value=value, provenance=SI_SOURCE, quote=quote, note=note)
 
 
 def _mori(value: object, quote: str, *, note: str | None = None) -> SourcedValue:
@@ -365,11 +555,53 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
     "methods_in_supplement": _paper(
         None,
         _Q_METHODS_IN_SM,
-        note="why the media recipes, the temperature and the genotypes are not quoted "
-        "from this paper: they are in the Supplementary Material behind #853",
+        note="the main text defers growth and strains to the Supplementary Material, "
+        "deposited by hand on 2026-10-12 (#853) and quoted below as _si values",
     ),
+    "temperature_c": _si(
+        37.0,
+        _Q_SI_TEMPERATURE,
+        note="the Supplementary Materials' 'Strains and growth conditions': every "
+        "culture of the study, the RNA-seq ones included",
+    ),
+    "media_recipes_deferred": _si(
+        None,
+        _Q_SI_CULTURING,
+        note="the Supplementary Materials name the base media only (Table S2 cells "
+        "'M9, glucose' and 'MOPS, ...') and state no recipe: culturing is stated to "
+        "follow references 7, 10 and 57 (Dai 2016, Mori 2021, Basan 2015). So the base "
+        "salts stay composition_deferred, now to those three papers",
+    ),
+    "strain_table": _si("Table S1", _Q_SI_TABLE_S1),
+    "ncm3722_wild_type": _si(
+        "Wild-type E. coli K-12",
+        _Q_SI_NCM3722,
+        note="the parental strain; Table S1 cites Soupene et al. 2003 for it and no "
+        "lesion relative to MG1655",
+    ),
+    "nq1243_genotype": _si(
+        "NCM3722, Pu-ptsG",
+        _Q_SI_NQ1243,
+        note="identical to NQ1390's row; the xylR driver that tells them apart is not "
+        "in Table S1 nor anywhere else in the Supplementary Materials (#906 stays open)",
+    ),
+    "nq1390_genotype": _si("NCM3722, Pu-ptsG", _Q_SI_NQ1390),
+    "nq393_gdha_deletion": _si(
+        "gdhA",
+        _Q_SI_NQ393,
+        note="the GDH-null background is a deletion of gdhA ('∆gdhA'), typed as a "
+        "BacterialDeletionPerturbation of b1761 (#906)",
+    ),
+    "nq393_gogat_promoter": _si(
+        "PLlac-01",
+        _Q_SI_NQ393,
+        note="the cell wraps after 'PLlac-01-' onto 'gltBD' (quoted as "
+        "nq393_operon): the PLlac-01 promoter drives the gltBD operon. Table S3's "
+        "description cell calls the same construct 'Plac-GOGAT'",
+    ),
+    "nq393_operon": _si("gltBD", _Q_SI_NQ393_OPERON),
     "geo": _paper(GEO_SERIES, _Q_GEO),
-    "strain_table": _paper("Tables S1 and S2", _Q_STRAIN_TABLE),
+    "strain_and_condition_tables": _paper("Tables S1 and S2", _Q_STRAIN_TABLE),
     "pu_ptsg": _table("Pu-ptsG", _Q_PU_PTSG),
     "plac_gogat": _table("Plac-GOGAT", _Q_PLAC_GOGAT),
     "derivatives": _mori(["NQ1243", "NQ1390", "NQ393"], _Q_MORI_DERIVATIVES),
@@ -529,20 +761,20 @@ REFERENCE_SAMPLES: dict[str, tuple[str, str]] = {
 # --------------------------------------------------------------------------- #
 # Genotype
 # --------------------------------------------------------------------------- #
-_LOOKED_IN_PAPER = Provenance(
-    source_uri=MIRROR_RELPATH[PAPER_TXT],
-    citation_key=CITATION_KEY,
-    sha256=DATA_SHA256[PAPER_TXT],
-    method="PMC Article Datasets author-manuscript text",
-    page="Materials and Methods (deferred to the Supplementary Material)",
-)
 NCM3722_GENOTYPE_GAP = ProvenanceGap(
     field="genotype_statement",
     reason=ProvenanceGapReason.deferred_pending_source_review,
-    looked_in=_LOOKED_IN_PAPER,
-    note="the main text names 'E. coli K-12 strain NCM3722' and defers the strain "
-    "table to Table S1, which is behind the PMC proof-of-work page (#853); NCM3722's "
-    "lesions relative to the pinned MG1655 assembly are unknown rather than empty",
+    looked_in=Provenance(
+        source_uri=SI_TEXT_RELPATH,
+        citation_key=CITATION_KEY,
+        sha256=SI_TEXT_SHA256,
+        method="Supplementary Materials layout text (manual deposit, #853)",
+        page="Table S1. Strains used in this study.",
+    ),
+    note="Table S1 calls NCM3722 'Wild-type E. coli K-12' and cites Soupene et al. "
+    "2003 for it; neither it nor the NCM3722 genome paper (Brown and Jun 2015, the SI's "
+    "reference 56) is mirrored, so NCM3722's lesions relative to the pinned MG1655 "
+    "assembly are unknown rather than empty",
 )
 NCM3722_BACKGROUND = BacterialStrainBackground(
     name=MEASURED_STRAIN,
@@ -553,15 +785,30 @@ NCM3722_BACKGROUND = BacterialStrainBackground(
 )
 PTSG = ("ptsG", "b1101")
 GLTB = ("gltB", "b3212")
+GDHA = ("gdhA", "b1761")
+#: NQ393's GOGAT promoter, as Table S1 names it (#906).
+NQ393_PROMOTER = "PLlac-01"
 #: Released edits that no record types, and why.
 UNTYPED_EDITS: dict[str, str] = {
     "NQ1243 xylR (Ptet)": "the activator the Pu promoter needs; no mirrored source "
-    "states its location, so a gene-addition leaf would assert a localization",
-    "NQ1390 xylR (lacIq promoter)": "as for NQ1243; the two strains share one typed "
-    "genotype because of this",
-    "NQ393 GDH-null": "the gdhA allele (deletion or point lesion) is not stated in any "
-    "mirrored source, so a deletion leaf would assert a mechanism",
+    "states its location (Table S1 lists NQ1243 as 'NCM3722, Pu-ptsG' and the "
+    "Supplementary Materials never mention xylR), so a gene-addition leaf would assert "
+    "a localization",
+    "NQ1390 xylR (lacIq promoter)": "as for NQ1243, whose Table S1 row it repeats; the "
+    "two strains share one typed genotype because of this",
 }
+
+
+def _deletion(gene: tuple[str, str]) -> BacterialDeletionPerturbation:
+    symbol, tag = gene
+    return BacterialDeletionPerturbation(
+        systematic_gene_name=tag,
+        perturbed_gene_name=symbol,
+        gene_namespace=GENE_NAMESPACE,
+        identifier_mapping=DerivedIdentifierMapping(
+            source_identifier=symbol, route="gene_symbol"
+        ),
+    )
 
 
 def _promoter(gene: tuple[str, str], promoter: str, native: str | None) -> Any:
@@ -587,13 +834,15 @@ def strain_genotype(strain: str) -> Genotype:
     if strain in ("NQ1243", "NQ1390"):
         return Genotype(perturbations=[_promoter(PTSG, "Pu", "ptsG promoter")])
     if strain == "NQ393":
-        return Genotype(perturbations=[_promoter(GLTB, "Plac", None)])
+        return Genotype(
+            perturbations=[_deletion(GDHA), _promoter(GLTB, NQ393_PROMOTER, None)]
+        )
     raise ValueError(f"{strain!r} is not a strain this release names")
 
 
 def check_gene_symbols(genome: EcoliK12Genome) -> None:
-    """The two typed promoter targets resolve to the declared b-numbers."""
-    for symbol, tag in (PTSG, GLTB):
+    """The typed edit targets resolve to the declared b-numbers."""
+    for symbol, tag in (PTSG, GLTB, GDHA):
         resolved = genome.resolve_gene_name(symbol).systematic_name
         if resolved != tag:
             raise RuntimeError(f"{symbol} resolves to {resolved}, declared {tag}")
@@ -602,15 +851,12 @@ def check_gene_symbols(genome: EcoliK12Genome) -> None:
 # --------------------------------------------------------------------------- #
 # Environment
 # --------------------------------------------------------------------------- #
-TEMPERATURE_GAP = ProvenanceGap(
-    field="temperature",
-    reason=ProvenanceGapReason.deferred_pending_source_review,
-    looked_in=_LOOKED_IN_PAPER,
-    note="the culture temperature is in the Supplementary Material Methods, behind #853",
-)
+#: Where the base-medium recipes are: the SI states culturing follows its references
+#: 7, 10 and 57 and gives no recipe (``SOURCED_VALUES["media_recipes_deferred"]``).
 _DEFERS_TO_SI = (
-    "Balakrishnan 2022 Supplementary Material, Materials and Methods (behind the PMC "
-    "proof-of-work page, issue #853)"
+    "Balakrishnan 2022 Supplementary Materials, 'Growth rate determination': culturing "
+    "consistent with references 7, 10 and 57 (Dai et al. 2016, Mori et al. 2021, "
+    "Basan et al. 2015); no recipe in the SI"
 )
 
 
@@ -618,7 +864,7 @@ def _medium(label: str, base: str, salt: str, amount_mm: float, quote: str) -> M
     """A base medium the release names, its base salts deferred, its nitrogen stated."""
     return Media(
         name=f"{label} minimal medium with {quote} as the nitrogen source, base salts "
-        "deferred to the SI (Balakrishnan 2022)",
+        "deferred to the SI's cited protocols (Balakrishnan 2022)",
         state="liquid",
         is_synthetic=True,
         base_medium=base,
@@ -630,10 +876,14 @@ def _medium(label: str, base: str, salt: str, amount_mm: float, quote: str) -> M
                 ),
                 role=MediaComponentRole.other,
                 definition=ComponentDefinition.composition_deferred,
-                provenance=[_table(label, label)],
-                note="the release names the base medium and no amount of any base "
-                f"salt; base_medium names the {base} family it belongs to and asserts "
-                "none of that object's amounts",
+                provenance=[
+                    _table(label, label),
+                    SOURCED_VALUES["media_recipes_deferred"],
+                ],
+                note="the release and the Supplementary Materials name the base medium "
+                "and no amount of any base salt; base_medium names the "
+                f"{base} family it belongs to and asserts none of that object's "
+                "amounts",
                 defers_to=[_DEFERS_TO_SI],
             ),
             MediaComponent(
@@ -675,7 +925,7 @@ def _supplement(cell: str) -> SmallMoleculePerturbation:
 
 
 def build_environment(medium: str, supplement: str | None) -> Environment:
-    """The released medium, 0.2% glucose, and the supplement when there is one."""
+    """The released medium at 37 C, 0.2% glucose, and the supplement when there is one."""
     perturbations: list[EnvironmentPerturbationType] = [
         EnvironmentPhysicalPerturbation(
             factor=PhysicalFactor.carbon_source,
@@ -687,9 +937,8 @@ def build_environment(medium: str, supplement: str | None) -> Environment:
         perturbations.append(_supplement(supplement))
     return Environment(
         media=MEDIA[medium],
-        temperature=None,
+        temperature=Temperature(value=SOURCED_VALUES["temperature_c"].value),
         perturbations=perturbations,
-        provenance_gaps=[TEMPERATURE_GAP],
     )
 
 
@@ -727,8 +976,15 @@ def check_quotes(paths: Mapping[str, str]) -> dict[str, int]:
     for name, quote in WORKBOOK_QUOTES.items():
         if quote not in rendered:
             raise RuntimeError(f"Table S3 quote {name!r} is not a row rendering")
+    si_text = Path(paths[SI_TEXT]).read_text(encoding="utf-8")
+    for name, quote in SI_QUOTES.items():
+        if quote not in si_text:
+            raise RuntimeError(f"Supplementary Materials quote {name!r} is not pinned")
     return {
-        "n_quotes_checked": len(PAPER_QUOTES) + len(MORI_QUOTES) + len(WORKBOOK_QUOTES)
+        "n_quotes_checked": len(PAPER_QUOTES)
+        + len(MORI_QUOTES)
+        + len(WORKBOOK_QUOTES)
+        + len(SI_QUOTES)
     }
 
 
@@ -949,7 +1205,11 @@ def retrieve_raw_files(dest_dir: str | Path) -> dict[str, Path]:
 
 
 def deposit_raw_mirror(*, source_dir: str | Path, data_root: str | None = None) -> Path:
-    """Write the raw mirror plus its manifest; idempotent by sha256, never overwrites."""
+    """Write the raw mirror plus its manifest; idempotent by sha256, never overwrites.
+
+    The manifest is EXTENDED, never rewritten, so the SI deposit
+    :func:`record_si_deposit` adds survives a re-run.
+    """
     root = raw_mirror_dir(data_root)
     records: list[ArtifactRecord] = []
     for name, relpath in MIRROR_RELPATH.items():
@@ -973,22 +1233,103 @@ def deposit_raw_mirror(*, source_dir: str | Path, data_root: str | None = None) 
                 retrieval=RETRIEVALS[name],
             )
         )
-    manifest = Manifest(
+    path = root / "manifest.json"
+    if not path.exists():
+        path.write_text(
+            Manifest(
+                citation_key=CITATION_KEY,
+                doi=PAPER_DOI,
+                title=PAPER_TITLE,
+                provenance_complete=False,
+                created_at=datetime.now(UTC).isoformat(),
+            ).model_dump_json(indent=2)
+        )
+    extend_manifest(
+        root,
+        records,
         citation_key=CITATION_KEY,
         doi=PAPER_DOI,
         title=PAPER_TITLE,
-        files=records,
+        si_expected=list(NOT_MIRRORED),
         si_data_sources=[
             *(str(r.source_url) for r in RETRIEVALS.values()),
             f"https://pmc.ncbi.nlm.nih.gov/articles/{PMC_ID}/",
             f"https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc={GEO_SERIES}",
         ],
-        si_expected=list(NOT_MIRRORED),
-        provenance_complete=False,
-        created_at=datetime.now(UTC).isoformat(),
     )
-    (root / "manifest.json").write_text(manifest.model_dump_json(indent=2))
     return root
+
+
+def pdftotext_version() -> str:
+    """The ``pdftotext`` version line, recorded as the extraction's provenance."""
+    result = subprocess.run(
+        ["pdftotext", "-v"], capture_output=True, text=True, check=True
+    )
+    return (result.stderr or result.stdout).strip().split("\n")[0]
+
+
+def si_layout_text(pdf_path: str | Path) -> str:
+    """The SI PDF's text layer, ``pdftotext -layout -enc UTF-8``."""
+    result = subprocess.run(
+        ["pdftotext", *PDFTOTEXT_ARGS, str(pdf_path), "-"],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return result.stdout
+
+
+def si_text_record(size: int) -> ArtifactRecord:
+    """The manifest record of the SI layout text, derived from the deposited PDF."""
+    return ArtifactRecord(
+        path=SI_TEXT_RELPATH,
+        role=ROLE_SI_TEXT,
+        bytes=size,
+        sha256=SI_TEXT_SHA256,
+        source=f"derived from {SI_PDF_RELPATH}",
+        processing=ProcessingRecord(
+            processor="torchcell.datasets.ecoli.balakrishnan2022.si_layout_text",
+            tool="pdftotext",
+            version=PDFTOTEXT_VERSION,
+            params={"args": list(PDFTOTEXT_ARGS)},
+            input_sha256=[SI_PDF_SHA256],
+        ),
+    )
+
+
+def record_si_deposit(data_root: str | None = None) -> Path:
+    """Record the owner's SI deposit and its layout text in the raw mirror's manifest.
+
+    Verifies the eight deposited files (each unpacked table against the zip), writes
+    ``DEPOSIT.md`` and ``SHA256SUMS.txt`` in ``si/`` and ``data/``, extracts the SI
+    PDF's layout text beside it (refusing a text that does not hash to
+    ``SI_TEXT_SHA256`` or a different ``pdftotext``), and extends ``manifest.json``.
+    """
+    root = raw_mirror_dir(data_root)
+    write_deposit_records(SI_DEPOSIT, root)
+    version = pdftotext_version()
+    if version != PDFTOTEXT_VERSION:
+        raise RuntimeError(f"{version!r} is not the pinned {PDFTOTEXT_VERSION!r}")
+    text = si_layout_text(root / SI_PDF_RELPATH).encode("utf-8")
+    got = hashlib.sha256(text).hexdigest()
+    if got != SI_TEXT_SHA256:
+        raise RuntimeError(
+            f"{SI_TEXT_RELPATH}: produced {got}, pinned {SI_TEXT_SHA256}"
+        )
+    dest = root / SI_TEXT_RELPATH
+    if dest.exists() and _sha256(dest) != SI_TEXT_SHA256:
+        raise RuntimeError(f"{dest} exists with a different sha256; refusing")
+    if not dest.exists():
+        dest.write_bytes(text)
+    return extend_manifest(
+        root,
+        [*artifact_records(SI_DEPOSIT), si_text_record(len(text))],
+        citation_key=CITATION_KEY,
+        doi=PAPER_DOI,
+        title=PAPER_TITLE,
+        si_expected=list(NOT_MIRRORED),
+        si_data_sources=[SI_PAGE],
+    )
 
 
 def load_manifest(data_root: str | None = None) -> Manifest:
@@ -1033,8 +1374,8 @@ class MrnaFractionBalakrishnan2022Dataset(ExperimentDataset):
 
     @property
     def raw_file_names(self) -> list[str]:
-        """The two files of this paper plus the sister Appendix, linked from mirrors."""
-        return [*DATA_SHA256, MORI_APPENDIX]
+        """This paper's two files, the sister Appendix and the SI layout text."""
+        return [*DATA_SHA256, MORI_APPENDIX, SI_TEXT]
 
     def download(self) -> None:
         """Link the mirrored files into ``raw/`` after checking manifests and sha256."""
@@ -1049,6 +1390,12 @@ class MrnaFractionBalakrishnan2022Dataset(ExperimentDataset):
                 osp.join(self.raw_dir, name),
                 DATA_SHA256[name],
             )
+        check_manifest_pin(SI_TEXT_RELPATH, pins[SI_TEXT_RELPATH], SI_TEXT_SHA256)
+        link_verified(
+            raw_mirror_dir(data_root) / SI_TEXT_RELPATH,
+            osp.join(self.raw_dir, SI_TEXT),
+            SI_TEXT_SHA256,
+        )
         mori_manifest = mori2021.load_manifest(data_root)
         check_manifest_pin(
             MORI_APPENDIX_RELPATH,

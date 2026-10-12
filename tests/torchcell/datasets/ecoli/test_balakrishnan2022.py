@@ -34,10 +34,13 @@ import torchcell.datasets.ecoli.mori2021 as mori2021
 from torchcell.data import file_sha256
 from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
+    BacterialDeletionPerturbation,
     EnvironmentPhysicalPerturbation,
     PromoterReplacementPerturbation,
     SmallMoleculePerturbation,
 )
+from torchcell.literature.manifest import RetrievalMethod
+from torchcell.literature.manual_deposit import extend_manifest, verify_deposit
 from torchcell.sequence.genome.base import GeneNameStatus
 
 #: ``(gene, locus)`` per synthetic row, one per row rule.
@@ -64,7 +67,7 @@ class FakeGenome:
         """``ptsg`` is what the ptsG symbol resolves to, to test a moved pin."""
         self.gene_set = GENE_SET
         self.genbank = SimpleNamespace(loci=LOCI)
-        self._symbols = {"ptsG": ptsg, "gltB": "b3212"}
+        self._symbols = {"ptsG": ptsg, "gltB": "b3212", "gdhA": "b1761"}
 
     def resolve_gene_name(self, name: str) -> Any:
         """The two promoter targets by symbol; any other name as itself."""
@@ -137,6 +140,7 @@ def write_release(raw: Path) -> dict[str, str]:
         " ".join(bk.PAPER_QUOTES.values()), encoding="utf-8"
     )
     write_docx(raw / bk.MORI_APPENDIX, list(bk.MORI_QUOTES.values()))
+    (raw / bk.SI_TEXT).write_text("\n".join(bk.SI_QUOTES.values()), encoding="utf-8")
     return {name: str(raw / name) for name in bk.RAW_SHA256}
 
 
@@ -156,7 +160,7 @@ def test_twenty_nine_described_samples_become_twenty_eight_records() -> None:
     assert {s.sample for s in bk.LOADED} == set(bk.RELEASED_HEADERS)
 
 
-def test_strain_genotypes_type_only_the_sourced_promoter_swaps() -> None:
+def test_strain_genotypes_type_the_table_s1_edits() -> None:
     assert bk.strain_genotype("NCM3722").perturbations == []
     for strain in ("NQ1243", "NQ1390"):
         [edit] = bk.strain_genotype(strain).perturbations
@@ -166,25 +170,37 @@ def test_strain_genotypes_type_only_the_sourced_promoter_swaps() -> None:
             "Pu",
             True,
         )
-    [gogat] = bk.strain_genotype("NQ393").perturbations
+    gdha, gogat = bk.strain_genotype("NQ393").perturbations
+    assert isinstance(gdha, BacterialDeletionPerturbation)
+    assert (gdha.systematic_gene_name, gdha.perturbed_gene_name) == ("b1761", "gdhA")
+    assert gdha.identifier_mapping is not None
+    assert gdha.identifier_mapping.route == "gene_symbol"
     assert isinstance(gogat, PromoterReplacementPerturbation)
-    assert (gogat.systematic_gene_name, gogat.promoter_name) == ("b3212", "Plac")
+    assert (gogat.systematic_gene_name, gogat.promoter_name) == ("b3212", "PLlac-01")
     assert gogat.expression_direction == "decreased"
+    assert set(bk.UNTYPED_EDITS) == {
+        "NQ1243 xylR (Ptet)",
+        "NQ1390 xylR (lacIq promoter)",
+    }
     with pytest.raises(ValueError, match="not a strain"):
         bk.strain_genotype("MG1655")
 
 
 def test_gene_symbols_must_resolve_to_the_declared_b_numbers() -> None:
     bk.check_gene_symbols(FakeGenome())  # type: ignore[arg-type]
+    assert bk.GDHA == ("gdhA", "b1761")
     with pytest.raises(RuntimeError, match="ptsG resolves to b9999"):
         bk.check_gene_symbols(FakeGenome(ptsg="b9999"))  # type: ignore[arg-type]
 
 
-def test_environment_carries_glucose_the_supplement_and_a_temperature_gap() -> None:
+def test_environment_carries_glucose_the_supplement_and_37_c() -> None:
     env = bk.build_environment("M9", "300 µM 3MBA")
     assert env.media is bk.M9_BALAKRISHNAN2022
-    assert env.temperature is None
-    assert [g.field for g in env.provenance_gaps] == ["temperature"]
+    assert env.temperature is not None and env.temperature.value == 37.0
+    assert env.provenance_gaps == []
+    assert (
+        bk.SOURCED_VALUES["temperature_c"].provenance.source_uri == bk.SI_TEXT_RELPATH
+    )
     carbon, dose = env.perturbations
     assert isinstance(carbon, EnvironmentPhysicalPerturbation)
     assert carbon.magnitude is not None and carbon.magnitude.value == 0.2
@@ -200,6 +216,8 @@ def test_media_defer_the_base_and_state_the_nitrogen_salt() -> None:
     assert nitrogen.concentration is not None
     assert deferred.definition.value == "composition_deferred"
     assert deferred.defers_to == [bk._DEFERS_TO_SI]
+    assert "references 7, 10 and 57" in bk._DEFERS_TO_SI
+    assert bk.SOURCED_VALUES["media_recipes_deferred"] in deferred.provenance
     assert (nitrogen.compound.name, nitrogen.concentration.value) == (
         "ammonium sulfate",
         11.34,
@@ -211,16 +229,18 @@ def test_media_defer_the_base_and_state_the_nitrogen_salt() -> None:
 # --------------------------------------------------------------------------- #
 # Released-bytes checks
 # --------------------------------------------------------------------------- #
-def test_check_quotes_reads_all_three_files(release: dict[str, str]) -> None:
-    assert bk.check_quotes(release) == {"n_quotes_checked": 13}
+def test_check_quotes_reads_all_four_files(release: dict[str, str]) -> None:
+    assert bk.check_quotes(release) == {"n_quotes_checked": 21}
 
 
-@pytest.mark.parametrize("which", [bk.PAPER_TXT, bk.MORI_APPENDIX, bk.TABLE_S3])
+@pytest.mark.parametrize(
+    "which", [bk.PAPER_TXT, bk.MORI_APPENDIX, bk.TABLE_S3, bk.SI_TEXT]
+)
 def test_check_quotes_refuses_a_file_missing_a_quote(
     release: dict[str, str], which: str
 ) -> None:
     raw = Path(release[which])
-    if which == bk.PAPER_TXT:
+    if which in (bk.PAPER_TXT, bk.SI_TEXT):
         raw.write_text("nothing", encoding="utf-8")
     elif which == bk.MORI_APPENDIX:
         write_docx(raw, ["nothing"])
@@ -331,6 +351,22 @@ def test_publication_and_mirror_paths_follow_the_citation_key(tmp_path: Path) ->
     }
 
 
+def test_the_si_deposit_records_eight_files_five_of_them_zip_members() -> None:
+    deposit = bk.SI_DEPOSIT
+    assert deposit.issues == (853, 906)
+    assert deposit.directories() == ("data", "si")
+    members = [f for f in deposit.files if f.container is not None]
+    assert [f.name for f in members] == [
+        f"science.abk2066_table_s{n}.xlsx" for n in range(3, 8)
+    ]
+    assert {f.container for f in members} == {f"data/{bk.TABLES_ZIP}"}
+    assert len(deposit.files) == 8
+    record = bk.si_text_record(165750)
+    assert record.processing is not None
+    assert record.processing.input_sha256 == [bk.SI_PDF_SHA256]
+    assert record.processing.params == {"args": ["-layout", "-enc", "UTF-8"]}
+
+
 # --------------------------------------------------------------------------- #
 # Mirror, download and an end-to-end build
 # --------------------------------------------------------------------------- #
@@ -341,6 +377,7 @@ def _patch_pins(monkeypatch: pytest.MonkeyPatch, release: dict[str, str]) -> Non
     )
     monkeypatch.setattr(bk, "RAW_SHA256", shas)
     monkeypatch.setattr(bk, "MORI_APPENDIX_SHA256", shas[bk.MORI_APPENDIX])
+    monkeypatch.setattr(bk, "SI_TEXT_SHA256", shas[bk.SI_TEXT])
 
 
 def test_deposit_writes_the_manifest_is_idempotent_and_refuses_bad_bytes(
@@ -369,6 +406,17 @@ def test_download_links_this_mirror_and_the_mori_appendix(
     data_root = tmp_path / "root"
     bk.deposit_raw_mirror(
         source_dir=Path(release[bk.TABLE_S3]).parent, data_root=str(data_root)
+    )
+    si_text = Path(release[bk.SI_TEXT]).read_bytes()
+    mirror = bk.raw_mirror_dir(str(data_root))
+    (mirror / "si").mkdir()
+    (mirror / bk.SI_TEXT_RELPATH).write_bytes(si_text)
+    extend_manifest(
+        mirror,
+        [bk.si_text_record(len(si_text))],
+        citation_key=bk.CITATION_KEY,
+        doi=bk.PAPER_DOI,
+        title=bk.PAPER_TITLE,
     )
     mori = SimpleNamespace(
         load_manifest=lambda root: "manifest",
@@ -422,7 +470,9 @@ def test_process_builds_twenty_eight_records_and_verifies(
     items = [dataset.transform_item(dataset[i]) for i in range(len(dataset))]
     assert {i["reference"].genome_reference.strain for i in items} == {"NCM3722"}
     assert {i["reference"].phenotype_reference.n_libraries for i in items} == {2}
-    assert sum(len(i["experiment"].genotype.perturbations) for i in items) == 15
+    # NQ1243 and NQ1390 (8 records) carry one edit each, NQ393 (7 records) two
+    assert sum(len(i["experiment"].genotype.perturbations) for i in items) == 22
+    assert {i["experiment"].environment.temperature.value for i in items} == {37.0}
     dataset.close_lmdb()
 
     preprocess = Path(dataset.preprocess_dir)
@@ -484,9 +534,28 @@ def test_raw_mirror_matches_every_pin_and_every_quote() -> None:
         assert file_sha256(path) == bk.DATA_SHA256[name]
     mori = mori2021.raw_mirror_dir(data_root) / bk.MORI_APPENDIX_RELPATH
     assert file_sha256(str(mori)) == bk.MORI_APPENDIX_SHA256
-    assert bk.check_quotes({**paths, bk.MORI_APPENDIX: str(mori)}) == {
-        "n_quotes_checked": 13
-    }
+    si_text = root / bk.SI_TEXT_RELPATH
+    assert file_sha256(str(si_text)) == bk.SI_TEXT_SHA256
+    assert bk.check_quotes(
+        {**paths, bk.MORI_APPENDIX: str(mori), bk.SI_TEXT: str(si_text)}
+    ) == {"n_quotes_checked": 21}
+    assert bk.si_layout_text(root / bk.SI_PDF_RELPATH) == si_text.read_text()
+
+
+@pytest.mark.data
+def test_the_si_deposit_is_recorded_in_the_raw_mirror() -> None:
+    root = bk.raw_mirror_dir(_data_root())
+    verify_deposit(bk.SI_DEPOSIT, root)
+    held = {r.path: r for r in bk.load_manifest(str(root.parent.parent)).files}
+    for f in bk.SI_DEPOSIT.files:
+        retrieval = held[f.path].retrieval
+        assert retrieval is not None
+        assert retrieval.method is RetrievalMethod.manual_browser
+        assert held[f.path].sha256 == f.sha256
+    assert held[bk.SI_TEXT_RELPATH].sha256 == bk.SI_TEXT_SHA256
+    for directory in ("si", "data"):
+        assert (root / directory / "DEPOSIT.md").is_file()
+        assert (root / directory / "SHA256SUMS.txt").is_file()
 
 
 @pytest.mark.data

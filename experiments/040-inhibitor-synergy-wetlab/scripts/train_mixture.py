@@ -1222,17 +1222,24 @@ def train_seed(
                 van_heldout = heldout_loss(
                     vanacloig, matrix, std, conditions[vanacloig.spec.name], fold.test
                 )
+                van_val_loss = heldout_loss(
+                    vanacloig, matrix, std, conditions[vanacloig.spec.name], fold.val
+                )
             else:
                 val = centered_val_score(
                     vanacloig.y, matrix, conditions[vanacloig.spec.name], fold.val
                 )
                 test = centered_val_score(vanacloig.y, matrix, pool, fold.test)
                 van_heldout = heldout_loss(vanacloig, matrix, std, fold.test)
+                # the validation compounds' loss in the training loss's own units;
+                # in-sample under fit_on: pool, as the validation score is
+                van_val_loss = heldout_loss(vanacloig, matrix, std, fold.val)
             record = {
                 "step": step + 1,
                 "epoch": (step + 1) / steps_per_epoch,
                 "gene_loss": float(gene_loss.detach()),
                 "heldout_loss_vanacloig": van_heldout,
+                "val_loss_vanacloig": van_val_loss,
                 **{
                     f"heldout_loss_{name}": heldout_loss(
                         ctx.data.source(name),
@@ -1244,6 +1251,11 @@ def train_seed(
                 },
                 "host_loss": float(host_loss.detach()),
                 "total_loss": float(total.detach()),
+                # every term of the objective is logged, weighted or not: the graph
+                # penalty (KL of the regularized heads' attention to the nine graph
+                # priors) is computed on every step and scaled by cgt_lambda, zero in
+                # every round so far
+                "graph_penalty": float(sum(penalties).detach()) if penalties else 0.0,
                 "grad_norm": float(grad_norm),
                 "lr": float(scheduler.get_last_lr()[0]),
                 "val_centered_mean": val,

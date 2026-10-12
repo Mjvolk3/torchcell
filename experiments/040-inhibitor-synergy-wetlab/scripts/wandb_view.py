@@ -70,6 +70,11 @@ CURVES = {
     # sources) plus lambda_host times the host loss; logged by the trainer since round
     # 5b, derived from gene_loss and host_loss for earlier runs
     "curve/total_loss": "total_loss",
+    # the target's own training loss (loss_vanacloig on multi-source runs, the gene
+    # loss itself on single-source runs), its loss on the four validation compounds
+    # (logged by the trainer since round 5b), and its loss on the held-out compounds
+    "curve/train_loss_vanacloig": "train_loss_vanacloig",
+    "curve/validation_loss_vanacloig": "val_loss_vanacloig",
     "curve/held_out_centered_spearman": "test_centered_mean",
     "curve/validation_centered_spearman": "val_centered_mean",
     "curve/gene_loss_standardized_mse": "gene_loss",
@@ -166,6 +171,15 @@ SECTIONS: list[tuple[str, list[tuple[str, list[str]]]]] = [
         "3 loss",
         [
             (
+                "TRAIN vs VALIDATION vs HELD-OUT loss on the target (Vanacloig), "
+                "standardized MSE; validation logged from round 5b on",
+                [
+                    "curve/train_loss_vanacloig",
+                    "curve/validation_loss_vanacloig",
+                    "curve/heldout_loss_vanacloig",
+                ],
+            ),
+            (
                 "TOTAL loss, the stepped objective (gene + aux_weight x auxiliary + "
                 "lambda_host x host), by epoch",
                 ["curve/total_loss"],
@@ -217,6 +231,10 @@ def machines_from_logs() -> dict[str, str]:
 
 
 MACHINE_OF_RUN = machines_from_logs()
+#: curve keys added after the first re-log of a round's runs; ``--add-total`` logs the
+#: ones a run lacks and stamps ``curves_version``
+CURVES_VERSION = 2
+ADDED_SINCE_FIRST_RELOG = ["curve/total_loss", "curve/train_loss_vanacloig"]
 
 
 def arm_of(name: str) -> str:
@@ -240,6 +258,14 @@ def curves(history: pd.DataFrame, lambda_host: float = 1.0) -> pd.DataFrame:
             if f"{prefix}total_loss" not in history and f"{prefix}host_loss" in history:
                 history[f"{prefix}total_loss"] = (
                     history[column] + lambda_host * history[f"{prefix}host_loss"]
+                )
+            # the target's own training loss: logged by name on multi-source runs,
+            # and equal to the gene loss on single-source runs
+            if f"{prefix}train_loss_vanacloig" not in history:
+                history[f"{prefix}train_loss_vanacloig"] = (
+                    history[f"{prefix}loss_vanacloig"]
+                    if f"{prefix}loss_vanacloig" in history
+                    else history[column]
                 )
     rows = []
     for column in history.columns:
@@ -405,7 +431,7 @@ def main() -> None:
     parser.add_argument(
         "--add-total",
         action="store_true",
-        help="log curve/total_loss to every re-logged run that lacks it, then stop",
+        help="log the curve keys added since a run's re-log (total, train loss) and stop",
     )
     parser.add_argument(
         "--relabel-only",
@@ -420,11 +446,17 @@ def main() -> None:
         api = wandb.Api()
         n = 0
         for run in api.runs(f"{ENTITY}/{PROJECT}", filters={"config.view": VIEW_TAG}):
-            if run.config.get("total_relogged"):
+            if run.config.get("curves_version", 0) >= CURVES_VERSION:
                 continue
             history = run.history(samples=100000, pandas=True)
             curve = curves(history, float(run.config.get("lambda_host", 1.0)))
-            if "curve/total_loss" not in curve:
+            present = {c for c in history.columns if c.startswith("curve/")}
+            missing = [
+                k for k in ADDED_SINCE_FIRST_RELOG if k in curve and k not in present
+            ]
+            if not missing:
+                run.config["curves_version"] = CURVES_VERSION
+                run.update()
                 continue
             live = wandb.init(
                 entity=ENTITY,
@@ -438,10 +470,14 @@ def main() -> None:
             )
             live.define_metric(X)
             live.define_metric("curve/*", step_metric=X)
-            for epoch, value in curve["curve/total_loss"].items():
-                if pd.notna(value):
-                    live.log({X: int(epoch), "curve/total_loss": float(value)})
-            live.config.update({"total_relogged": True}, allow_val_change=True)
+            for epoch, row in curve[missing].iterrows():
+                values = {k: float(v) for k, v in row.items() if pd.notna(v)}
+                if values:
+                    live.log({X: int(epoch)} | values)
+            live.config.update(
+                {"curves_version": CURVES_VERSION, "total_relogged": True},
+                allow_val_change=True,
+            )
             live.finish()
             n += 1
             print(f"total loss -> {run.name} {run.id}", flush=True)

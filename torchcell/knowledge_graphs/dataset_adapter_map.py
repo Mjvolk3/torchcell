@@ -69,6 +69,7 @@ from torchcell.adapters import (
     EnvMetalTnseqRoyet2025Adapter,
     ExometaboliteBrunk2016Adapter,
     FattyAcidXue2025Adapter,
+    FitnessContrastBorchert2023Adapter,
     FluxIshii2007Adapter,
     FluxLi2021Adapter,
     GeneEssentialityBaba2006Adapter,
@@ -309,6 +310,9 @@ from torchcell.datasets.ecoli.wetmore2015 import RbTnseqWetmore2015Dataset
 from torchcell.datasets.pputida.banerjee2024 import IsoprenolTiterBanerjee2024Dataset
 from torchcell.datasets.pputida.banerjee2025 import ProteomeBanerjee2025Dataset
 from torchcell.datasets.pputida.borchert2023 import RbTnseqBorchert2023Dataset
+from torchcell.datasets.pputida.borchert2023_contrast import (
+    FitnessContrastBorchert2023Dataset,
+)
 from torchcell.datasets.pputida.borchert2024 import RbTnseqBorchert2024Dataset
 from torchcell.datasets.pputida.carruthers2025 import (
     CampaignProteomeCarruthers2025Dataset,
@@ -612,6 +616,7 @@ dataset_adapter_map: dict[type, type] = {
     EnvChemgenWang2024Dataset: EnvChemgenWang2024Adapter,
     ProteomeBanerjee2025Dataset: ProteomeBanerjee2025Adapter,
     RbTnseqBorchert2023Dataset: RbTnseqBorchert2023Adapter,
+    FitnessContrastBorchert2023Dataset: FitnessContrastBorchert2023Adapter,
     RbTnseqBorchert2024Dataset: RbTnseqBorchert2024Adapter,
     FitnessBrowserPutidaDataset: RbTnseqFitnessBrowserPutidaAdapter,
     IsoprenolTiterCarruthers2025Dataset: IsoprenolTiterCarruthers2025Adapter,

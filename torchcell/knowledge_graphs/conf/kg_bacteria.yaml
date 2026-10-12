@@ -117,6 +117,7 @@ datasets:
   - FitnessBrowserEcoliDataset
   - RbTnseqTeteneva2024Dataset
   - RbTnseqBorchert2023Dataset
+  - FitnessContrastBorchert2023Dataset
   - ProteomeBanerjee2025Dataset
   - RbTnseqBorchert2024Dataset
   - FitnessBrowserPutidaDataset

@@ -29,6 +29,9 @@ from .boocock2025_adapter import Boocock2025Adapter as Boocock2025Adapter
 from .borchert2023_adapter import (
     RbTnseqBorchert2023Adapter as RbTnseqBorchert2023Adapter,
 )
+from .borchert2023_contrast_adapter import (
+    FitnessContrastBorchert2023Adapter as FitnessContrastBorchert2023Adapter,
+)
 from .borchert2024_adapter import (
     RbTnseqBorchert2024Adapter as RbTnseqBorchert2024Adapter,
 )
@@ -600,6 +603,7 @@ ecoli_adapters = [
 pputida_adapters = [
     "ProteomeBanerjee2025Adapter",
     "RbTnseqBorchert2023Adapter",
+    "FitnessContrastBorchert2023Adapter",
     "RbTnseqBorchert2024Adapter",
     "RbTnseqFitnessBrowserPutidaAdapter",
     "CampaignProteomeCarruthers2025Adapter",

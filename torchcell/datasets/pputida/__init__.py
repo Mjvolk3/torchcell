@@ -48,6 +48,9 @@ from .banerjee2024 import (
 )
 from .banerjee2025 import ProteomeBanerjee2025Dataset as ProteomeBanerjee2025Dataset
 from .borchert2023 import RbTnseqBorchert2023Dataset as RbTnseqBorchert2023Dataset
+from .borchert2023_contrast import (
+    FitnessContrastBorchert2023Dataset as FitnessContrastBorchert2023Dataset,
+)
 from .borchert2024 import RbTnseqBorchert2024Dataset as RbTnseqBorchert2024Dataset
 from .carruthers2025 import (
     IsoprenolTiterCarruthers2025Dataset as IsoprenolTiterCarruthers2025Dataset,

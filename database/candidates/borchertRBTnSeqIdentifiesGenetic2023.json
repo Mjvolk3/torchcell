@@ -1,0 +1,475 @@
+{
+  "citation_key": "borchertRBTnSeqIdentifiesGenetic2023",
+  "table": "bacteria",
+  "row_name": "Borchert 2023 lignin tolerance",
+  "gates": [
+    {
+      "gate": "G1",
+      "outcome": "pass",
+      "reason": "primary: status='candidate', klass='Transposon fitness', no aggregation marker",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G2",
+      "outcome": "pass",
+      "reason": "assembly_set: KT2440 -> pputida_KT2440_ASM756v2 resolves and reads",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G3",
+      "outcome": "pass",
+      "reason": "15 file(s) in library+raw, 879888 worksheet row(s) counted; all intact",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G4",
+      "outcome": "fail",
+      "reason": "already held: accession PRJNA856070 in torchcell/datasets/pputida/borchert2024.py",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G5",
+      "outcome": "unmeasured",
+      "reason": "not evaluated: G4 stopped the run",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    }
+  ],
+  "zotero_item": "present",
+  "source_kind": "primary",
+  "aggregation": null,
+  "g2": {
+    "branch": "assembly_set",
+    "outcome": "resolvable_readable",
+    "hosts": [
+      {
+        "name": "KT2440",
+        "assembly_set": "pputida_KT2440_ASM756v2",
+        "resolvable": true,
+        "readable": true
+      }
+    ]
+  },
+  "g3": {
+    "citation_key": "borchertRBTnSeqIdentifiesGenetic2023",
+    "trees_read": [
+      "library",
+      "raw"
+    ],
+    "files": [
+      {
+        "tree": "library",
+        "path": "si/si1.xlsx",
+        "role": "si_data",
+        "bytes": 70872248,
+        "sha256_manifest": "b80c6866c6fbb95696067532f4890951fcbbf2dc72f4351df0bdec86956a0784",
+        "sha256_disk": "b80c6866c6fbb95696067532f4890951fcbbf2dc72f4351df0bdec86956a0784",
+        "retrieval_method": "direct_url",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Read_Me",
+            "rows": 28
+          },
+          {
+            "sheet": "Exp1_All_Poolcount",
+            "rows": 186958
+          },
+          {
+            "sheet": "Exp2_All_Poolcount",
+            "rows": 186958
+          },
+          {
+            "sheet": "Figure_2_growth_data",
+            "rows": 142
+          },
+          {
+            "sheet": "Figure_3_growth_data",
+            "rows": 385
+          },
+          {
+            "sheet": "Figure_4_growth_data",
+            "rows": 181
+          },
+          {
+            "sheet": "Figure_5_growth_data",
+            "rows": 304
+          },
+          {
+            "sheet": "Figure_6_growth_data",
+            "rows": 122
+          },
+          {
+            "sheet": "Glu_v_M9_Glu_4CA",
+            "rows": 5003
+          },
+          {
+            "sheet": "Glu_v_Glu_4HBA",
+            "rows": 5002
+          },
+          {
+            "sheet": "Glu_v_Glu_4HBald",
+            "rows": 4998
+          },
+          {
+            "sheet": "Glu_v_Glu_FA",
+            "rows": 5003
+          },
+          {
+            "sheet": "Glu_v_Glu_VA",
+            "rows": 5001
+          },
+          {
+            "sheet": "Glu_v_Glu_Van",
+            "rows": 5001
+          },
+          {
+            "sheet": "Glu_v_Glu_PCA",
+            "rows": 4932
+          },
+          {
+            "sheet": "Glu_v_Glu_AA",
+            "rows": 4994
+          },
+          {
+            "sheet": "Glu_v_Glu_GA",
+            "rows": 5001
+          },
+          {
+            "sheet": "Glu_v_Glu_LA",
+            "rows": 5000
+          },
+          {
+            "sheet": "Glu_v_Glu_Na2SO4",
+            "rows": 4999
+          },
+          {
+            "sheet": "Glu_v_Glu_NaCl",
+            "rows": 5001
+          },
+          {
+            "sheet": "Glu_FA_v_Glu_PCA",
+            "rows": 4931
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si2.pdf",
+        "role": "si_pdf",
+        "bytes": 1139512,
+        "sha256_manifest": "1d9ec72bc0f126c8cbe0bbd93e248b32174e073d3ec15535f5c3e280c45c923f",
+        "sha256_disk": "1d9ec72bc0f126c8cbe0bbd93e248b32174e073d3ec15535f5c3e280c45c923f",
+        "retrieval_method": "direct_url",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si2/0b911cf696ee172f557baab005917cce8d7f4d04d24b7fbf33d4a233832c778c.jpg",
+        "role": "ocr_image",
+        "bytes": 694783,
+        "sha256_manifest": "ae68ad15114339b964d00a4aeed31333faa426b7095440c7a1aac3f2cb7b3f62",
+        "sha256_disk": "ae68ad15114339b964d00a4aeed31333faa426b7095440c7a1aac3f2cb7b3f62",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si2/39cbe0805bd3691df62e935ca8234edeba6ad4eae97cf485a60ee7470fdac583.jpg",
+        "role": "ocr_image",
+        "bytes": 623113,
+        "sha256_manifest": "231ad621511a4f31f6a3e8d3b83ff2c0931e0a9d1506aa828b48a51cc8e8fada",
+        "sha256_disk": "231ad621511a4f31f6a3e8d3b83ff2c0931e0a9d1506aa828b48a51cc8e8fada",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si2/5d0ea88dab9137205082b7531854f11d87618f9f37735a5db9b732920ee27d08.jpg",
+        "role": "ocr_image",
+        "bytes": 38041,
+        "sha256_manifest": "baadbbf70107c54bc4a7ab551a0b669a4b389bfb40aeda14acc8fca8180ee982",
+        "sha256_disk": "baadbbf70107c54bc4a7ab551a0b669a4b389bfb40aeda14acc8fca8180ee982",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si2/5e35951048a638a0bcf31a3a2d751837ab247d6e0ef0806b1ff69221475aa901.jpg",
+        "role": "ocr_image",
+        "bytes": 338585,
+        "sha256_manifest": "45ff8b2cf9ca892c47c4de1543dac035bb05e926922365af127c399d547c41e5",
+        "sha256_disk": "45ff8b2cf9ca892c47c4de1543dac035bb05e926922365af127c399d547c41e5",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si2/953fd91252ac7c45e16123c04436e8c0dc33ffb60a8fe120540f2f8084965902.jpg",
+        "role": "ocr_image",
+        "bytes": 172759,
+        "sha256_manifest": "c7fa6933ea3bc9980beaaa3ebcc8d6d3d32fdb57657ba1d9646b2766dde400d6",
+        "sha256_disk": "c7fa6933ea3bc9980beaaa3ebcc8d6d3d32fdb57657ba1d9646b2766dde400d6",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si2/968c61e6fe69f8fae5f17f2a34ab7f89bcc1088108aeb032a274dabf8fb30c59.jpg",
+        "role": "ocr_image",
+        "bytes": 116470,
+        "sha256_manifest": "03852b5f888fecc56cd008f7413ca960353b4f8244b09bf432eac9efbcf1ff4a",
+        "sha256_disk": "03852b5f888fecc56cd008f7413ca960353b4f8244b09bf432eac9efbcf1ff4a",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si2/b105ee60adce96dca154f794967b446cbc04fc30aebf2bf205bfda080ab79fe7.jpg",
+        "role": "ocr_image",
+        "bytes": 163285,
+        "sha256_manifest": "3644cd13c56baa78e47714039655729415a50066b2b69004314e2396e6ad9650",
+        "sha256_disk": "3644cd13c56baa78e47714039655729415a50066b2b69004314e2396e6ad9650",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si2/f5e5961afb377f05de68e3cbfb4992e63cbd8add02000dfa13f640a01b029003.jpg",
+        "role": "ocr_image",
+        "bytes": 246896,
+        "sha256_manifest": "bd70012c16dad91ef976d7c55f1e015bd7af4892e8924c67a11f43076f2f0f04",
+        "sha256_disk": "bd70012c16dad91ef976d7c55f1e015bd7af4892e8924c67a11f43076f2f0f04",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si2.md",
+        "role": "si_ocr",
+        "bytes": 27622,
+        "sha256_manifest": "568d7edfa237314d9ac775b1cb4bd69645dbf4e3ba4ba03e106f1f5760c23891",
+        "sha256_disk": "568d7edfa237314d9ac775b1cb4bd69645dbf4e3ba4ba03e106f1f5760c23891",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si2_content_list.json",
+        "role": "ocr_layout",
+        "bytes": 32227,
+        "sha256_manifest": "231cc416fc281e3b64f47a1f91208adea5afc2585cd78f004db7fba2509ebf4c",
+        "sha256_disk": "231cc416fc281e3b64f47a1f91208adea5afc2585cd78f004db7fba2509ebf4c",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si2_middle.json",
+        "role": "ocr_layout",
+        "bytes": 283558,
+        "sha256_manifest": "c506cbbbbb55514d175f17156024305965d523fb450ff4ed4be3a0ebd266da9f",
+        "sha256_disk": "c506cbbbbb55514d175f17156024305965d523fb450ff4ed4be3a0ebd266da9f",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si2_ocr_provenance.json",
+        "role": "ocr_provenance",
+        "bytes": 976,
+        "sha256_manifest": "47c205cf29ff9009c82b9b968496236ce01b216a0a994e6e00cfc24f40331c40",
+        "sha256_disk": "47c205cf29ff9009c82b9b968496236ce01b216a0a994e6e00cfc24f40331c40",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "data/si1.xlsx",
+        "role": "raw_data",
+        "bytes": 70872248,
+        "sha256_manifest": "b80c6866c6fbb95696067532f4890951fcbbf2dc72f4351df0bdec86956a0784",
+        "sha256_disk": "b80c6866c6fbb95696067532f4890951fcbbf2dc72f4351df0bdec86956a0784",
+        "retrieval_method": "direct_url",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Read_Me",
+            "rows": 28
+          },
+          {
+            "sheet": "Exp1_All_Poolcount",
+            "rows": 186958
+          },
+          {
+            "sheet": "Exp2_All_Poolcount",
+            "rows": 186958
+          },
+          {
+            "sheet": "Figure_2_growth_data",
+            "rows": 142
+          },
+          {
+            "sheet": "Figure_3_growth_data",
+            "rows": 385
+          },
+          {
+            "sheet": "Figure_4_growth_data",
+            "rows": 181
+          },
+          {
+            "sheet": "Figure_5_growth_data",
+            "rows": 304
+          },
+          {
+            "sheet": "Figure_6_growth_data",
+            "rows": 122
+          },
+          {
+            "sheet": "Glu_v_M9_Glu_4CA",
+            "rows": 5003
+          },
+          {
+            "sheet": "Glu_v_Glu_4HBA",
+            "rows": 5002
+          },
+          {
+            "sheet": "Glu_v_Glu_4HBald",
+            "rows": 4998
+          },
+          {
+            "sheet": "Glu_v_Glu_FA",
+            "rows": 5003
+          },
+          {
+            "sheet": "Glu_v_Glu_VA",
+            "rows": 5001
+          },
+          {
+            "sheet": "Glu_v_Glu_Van",
+            "rows": 5001
+          },
+          {
+            "sheet": "Glu_v_Glu_PCA",
+            "rows": 4932
+          },
+          {
+            "sheet": "Glu_v_Glu_AA",
+            "rows": 4994
+          },
+          {
+            "sheet": "Glu_v_Glu_GA",
+            "rows": 5001
+          },
+          {
+            "sheet": "Glu_v_Glu_LA",
+            "rows": 5000
+          },
+          {
+            "sheet": "Glu_v_Glu_Na2SO4",
+            "rows": 4999
+          },
+          {
+            "sheet": "Glu_v_Glu_NaCl",
+            "rows": 5001
+          },
+          {
+            "sheet": "Glu_FA_v_Glu_PCA",
+            "rows": 4931
+          }
+        ]
+      }
+    ],
+    "walls": []
+  },
+  "g4_key": {
+    "doi": "10.1016/j.ymben.2023.04.007",
+    "pmid": null,
+    "accessions": [
+      "PRJNA856070"
+    ],
+    "hits": [
+      {
+        "key_kind": "doi",
+        "key": "10.1016/j.ymben.2023.04.007",
+        "where": "torchcell/datasets/pputida/borchert2023.py",
+        "relation": "own"
+      },
+      {
+        "key_kind": "doi",
+        "key": "10.1016/j.ymben.2023.04.007",
+        "where": "torchcell/datasets/pputida/borchert2023_contrast.py",
+        "relation": "own"
+      },
+      {
+        "key_kind": "doi",
+        "key": "10.1016/j.ymben.2023.04.007",
+        "where": "torchcell/datasets/pputida/borchert2024.py",
+        "relation": "mentioned"
+      },
+      {
+        "key_kind": "accession",
+        "key": "PRJNA856070",
+        "where": "torchcell/datasets/pputida/borchert2024.py",
+        "relation": "primary_of_other"
+      }
+    ],
+    "pmid_checked": false
+  },
+  "g4_value": null,
+  "g5": null,
+  "decided_at": "2026-10-12",
+  "torchcell_commit": "232e5d17882b668d27ccfe3bdb5e97dbcafd8a04"
+}

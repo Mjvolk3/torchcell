@@ -2,7 +2,7 @@
   "record_version": 1,
   "slug": "flux-control-map-gap-exchange-fluxes-optical-density",
   "date": "2026-10-12",
-  "pr": null,
+  "pr": 1070,
   "author_kind": "agent",
   "base_commit": "464c5cfc3d83fc6212e8b6a3d91da89e847d4b34",
   "python_version": "3.13.0",

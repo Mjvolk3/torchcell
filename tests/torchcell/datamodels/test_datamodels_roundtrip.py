@@ -160,6 +160,24 @@ EXAMPLES: dict[str, dict[str, Any]] = {
             ],
         },
     },
+    # #991: the generic builder's "x" is not DNA, and the leaf's whole point is that
+    # the promoter sequence IS the genotype, so the example is a real released construct
+    # (Vaishnav 2022 origID HQ_28, GSE163045 MolEvol SC-Ura table, abbreviated insert).
+    "torchcell.datamodels.schema.VariablePromoterReporterPerturbation": {
+        "systematic_gene_name": "addgene127546:YFP",
+        "perturbed_gene_name": "YFP",
+        "source_organism": "synthetic construct",
+        "is_heterologous": True,
+        "localization": "episomal_cen_plasmid",
+        "promoter_variant_id": "HQ_28",
+        "promoter_sequence": (
+            "TGCATTTTTTTCACATCAAAAGTAGGTTCTTGCAGCATTCTGATGCACGTATAGGCGCGATGG"
+            "ATGGCAGCGGGAATGCGGTTAAGCGGTGGATCAAGGTTACGGCTGTT"
+        ),
+        "scaffold_name": "pTpA",
+        "variable_region_start": 18,
+        "variable_region_end": 97,
+    },
     "torchcell.datamodels.schema.Concentration": {"value": 1.0, "unit": "mM"},
     "torchcell.datamodels.schema.EnvironmentResponsePhenotype": {
         "measurement_type": "log2_ratio",

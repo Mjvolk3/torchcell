@@ -335,6 +335,14 @@ class CellAdapter:
                 self._promoter_activity_phenotype_node,
             ),
             (
+                "pooled sort seq expression phenotype (chunked)",
+                self._pooled_sort_seq_expression_phenotype_node,
+            ),
+            (
+                "biosensor fluorescence phenotype (chunked)",
+                self._biosensor_fluorescence_phenotype_node,
+            ),
+            (
                 "bacterial morphology phenotype (chunked)",
                 self._bacterial_morphology_phenotype_node,
             ),
@@ -437,6 +445,14 @@ class CellAdapter:
             (
                 "promoter activity phenotype reference",
                 self._get_promoter_activity_phenotype_reference_nodes,
+            ),
+            (
+                "pooled sort seq expression phenotype reference",
+                self._get_pooled_sort_seq_expression_phenotype_reference_nodes,
+            ),
+            (
+                "biosensor fluorescence phenotype reference",
+                self._get_biosensor_fluorescence_phenotype_reference_nodes,
             ),
             (
                 "bacterial morphology phenotype reference",
@@ -2996,6 +3012,148 @@ class CellAdapter:
                 )
             )
         return nodes
+
+    # --- begin #991: the pooled sort-seq expression family ---
+    @staticmethod
+    def _pooled_sort_seq_expression_properties(phenotype: Any) -> dict[str, Any]:
+        """Node properties of a ``PooledSortSeqExpressionPhenotype``.
+
+        Every value is a scalar: one record is one library sequence's estimate, so this
+        family has no dict-valued field. ``sequence_id`` is the identity key a pooled
+        assay carries in place of the sibling's ``well_id``; the sequence itself stays on
+        the genotype's perturbation node, so it is not duplicated here.
+        """
+        uncertainty_type = phenotype.expression_level_uncertainty_type
+        sample_unit = phenotype.sample_unit
+        return {
+            "graph_level": phenotype.graph_level,
+            "label_name": phenotype.label_name,
+            "label_statistic_name": phenotype.label_statistic_name,
+            "expression_level": phenotype.expression_level,
+            "expression_level_se": phenotype.expression_level_se,
+            "expression_level_uncertainty": phenotype.expression_level_uncertainty,
+            "expression_level_uncertainty_type": (
+                uncertainty_type.value if uncertainty_type is not None else None
+            ),
+            "n_samples": phenotype.n_samples,
+            "sample_unit": sample_unit.value if sample_unit is not None else None,
+            "sequence_id": phenotype.sequence_id,
+            "library_id": phenotype.library_id,
+            "read_count": phenotype.read_count,
+            "readout": phenotype.readout.value,
+            "reporter_gene": phenotype.reporter_gene,
+            "expression_units": phenotype.expression_units,
+        }
+
+    @data_chunker
+    def _pooled_sort_seq_expression_phenotype_node(
+        self, data: dict[str, Any], method_name: str
+    ) -> BioCypherNode:
+        phenotype = data["experiment"].phenotype
+        phenotype_id = hashlib.sha256(
+            json.dumps(phenotype.model_dump()).encode("utf-8")
+        ).hexdigest()
+        return BioCypherNode(
+            node_id=phenotype_id,
+            preferred_id=f"phenotype_{phenotype_id}",
+            node_label="pooled sort seq expression phenotype",
+            properties=self._pooled_sort_seq_expression_properties(phenotype),
+        )
+
+    def _get_pooled_sort_seq_expression_phenotype_reference_nodes(
+        self,
+    ) -> list[BioCypherNode]:
+        nodes = []
+        seen_node_ids: set[str] = set()
+        for data in tqdm(self.dataset.experiment_reference_index):
+            phenotype = data.reference.phenotype_reference
+            phenotype_id = hashlib.sha256(
+                json.dumps(phenotype.model_dump()).encode("utf-8")
+            ).hexdigest()
+            if phenotype_id in seen_node_ids:
+                continue
+            seen_node_ids.add(phenotype_id)
+            nodes.append(
+                BioCypherNode(
+                    node_id=phenotype_id,
+                    preferred_id="pooled sort seq expression phenotype",
+                    node_label="pooled sort seq expression phenotype",
+                    properties=self._pooled_sort_seq_expression_properties(phenotype),
+                )
+            )
+        return nodes
+
+    # --- end #991 ---
+
+    # --- begin #990: the biosensor fluorescence family ---
+    @staticmethod
+    def _biosensor_fluorescence_properties(phenotype: Any) -> dict[str, Any]:
+        """Node properties of a ``BiosensorFluorescencePhenotype``.
+
+        ``sensed_metabolite`` projects the typed ``Compound``'s name, the spelling the
+        environment lane's compounds carry, so the sensed metabolite joins the compound
+        layer; the compound's own identifiers travel in the serialized record.
+        """
+        uncertainty_type = phenotype.biosensor_signal_uncertainty_type
+        sample_unit = phenotype.sample_unit
+        return {
+            "graph_level": phenotype.graph_level,
+            "label_name": phenotype.label_name,
+            "label_statistic_name": phenotype.label_statistic_name,
+            "biosensor_signal": phenotype.biosensor_signal,
+            "biosensor_signal_se": phenotype.biosensor_signal_se,
+            "biosensor_signal_uncertainty": phenotype.biosensor_signal_uncertainty,
+            "biosensor_signal_uncertainty_type": (
+                uncertainty_type.value if uncertainty_type is not None else None
+            ),
+            "n_samples": phenotype.n_samples,
+            "sample_unit": sample_unit.value if sample_unit is not None else None,
+            "sensed_metabolite": phenotype.sensed_metabolite.name,
+            "sensor_name": phenotype.sensor_name,
+            "reporter_gene": phenotype.reporter_gene,
+            "readout": phenotype.readout.value,
+            "signal_units": phenotype.signal_units,
+        }
+
+    @data_chunker
+    def _biosensor_fluorescence_phenotype_node(
+        self, data: dict[str, Any], method_name: str
+    ) -> BioCypherNode:
+        phenotype = data["experiment"].phenotype
+        phenotype_id = hashlib.sha256(
+            json.dumps(phenotype.model_dump()).encode("utf-8")
+        ).hexdigest()
+        return BioCypherNode(
+            node_id=phenotype_id,
+            preferred_id=f"phenotype_{phenotype_id}",
+            node_label="biosensor fluorescence phenotype",
+            properties=self._biosensor_fluorescence_properties(phenotype),
+        )
+
+    def _get_biosensor_fluorescence_phenotype_reference_nodes(
+        self,
+    ) -> list[BioCypherNode]:
+        nodes = []
+        seen_node_ids: set[str] = set()
+        for data in tqdm(self.dataset.experiment_reference_index):
+            phenotype = data.reference.phenotype_reference
+            phenotype_id = hashlib.sha256(
+                json.dumps(phenotype.model_dump()).encode("utf-8")
+            ).hexdigest()
+            if phenotype_id in seen_node_ids:
+                continue
+            seen_node_ids.add(phenotype_id)
+            nodes.append(
+                BioCypherNode(
+                    node_id=phenotype_id,
+                    preferred_id="biosensor fluorescence phenotype",
+                    node_label="biosensor fluorescence phenotype",
+                    properties=self._biosensor_fluorescence_properties(phenotype),
+                )
+            )
+        return nodes
+
+    # --- end #990 ---
 
     @staticmethod
     def _bacterial_morphology_properties(phenotype: Any) -> dict[str, Any]:

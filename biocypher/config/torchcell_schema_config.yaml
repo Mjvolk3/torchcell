@@ -635,6 +635,65 @@ promoter activity phenotype:
         reporter_gene: str
         activity_units: str
         well_id: str
+# --- begin #991: the pooled sort-seq expression family ---
+# Expression of ONE pooled-library sequence, estimated from its reads across the sort
+# bins (PooledSortSeqExpressionPhenotype; Vaishnav 2022). A SIBLING of `promoter
+# activity phenotype`, not a reuse: that class is served (Mohiuddin 2022) and its
+# required well_id is its identity rule, which a pooled library cannot supply.
+# sequence_id is the identity key in a well's place, read_count the release's own
+# measure of how well determined the estimate is, and library_id the sort it belongs to
+# (null when unreleased). Every property is named by its field so the phenotype <-> node
+# class bijection (torchcell/datamodels/ontology_checks.py) matches it without an alias
+# table.
+pooled sort seq expression phenotype:
+    is_a: phenotypic feature
+    represented_as: node
+    properties:
+        graph_level: str
+        label_name: str
+        label_statistic_name: str
+        expression_level: float
+        expression_level_se: float
+        expression_level_uncertainty: float
+        expression_level_uncertainty_type: str
+        n_samples: int
+        sample_unit: str
+        sequence_id: str
+        library_id: str
+        read_count: int
+        readout: str
+        reporter_gene: str
+        expression_units: str
+# --- end #991 ---
+
+# --- begin #990: the biosensor fluorescence family ---
+# A biosensor reporter's signal, standing for the metabolite it senses
+# (BiosensorFluorescencePhenotype; Zhang 2020's trpR-GFP device reports intracellular
+# tryptophan, not the five varied promoters). sensed_metabolite projects the typed
+# Compound's name, the same spelling the environment lane's compounds carry, so a query
+# joins a sensed metabolite to the compound layer without the phenotype composing a
+# medium. A SIBLING of `metabolite phenotype`: that class holds a metabolite QUANTITY,
+# while this one holds a proxy signal in its own units.
+biosensor fluorescence phenotype:
+    is_a: phenotypic feature
+    represented_as: node
+    properties:
+        graph_level: str
+        label_name: str
+        label_statistic_name: str
+        biosensor_signal: float
+        biosensor_signal_se: float
+        biosensor_signal_uncertainty: float
+        biosensor_signal_uncertainty_type: str
+        n_samples: int
+        sample_unit: str
+        sensed_metabolite: str
+        sensor_name: str
+        reporter_gene: str
+        readout: str
+        signal_units: str
+# --- end #990 ---
+
 # A bacterial strain's cell-morphology profile from one microscopy assay
 # (BacterialMorphologyPhenotype, issue #774). The dict-valued fields serialize to JSON
 # strings, the CalMorph convention; `assay` names the vocabulary the keys belong to, so a
@@ -806,6 +865,8 @@ phenotype member of:
             protein synthesis rate phenotype,
             flux phenotype,
             promoter activity phenotype,
+            pooled sort seq expression phenotype,
+            biosensor fluorescence phenotype,
             bacterial morphology phenotype,
             mrna number fraction phenotype,
             single cell expression phenotype,

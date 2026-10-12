@@ -64,6 +64,7 @@ from torchcell.datamodels.schema import (
     NaturalGeneAbsencePerturbation,
     NaturalGenePresencePerturbation,
     PresenceAbsencePerturbation,
+    PromoterDrivenGeneIntegrationPerturbation,
     PromoterReplacementPerturbation,
     ReleasedStrainKind,
     SequencePerturbation,
@@ -77,6 +78,7 @@ from torchcell.datamodels.schema import (
     SuppressorAllelePerturbation,
     TransposonInsertionPerturbation,
     TsAllelePerturbation,
+    VariablePromoterReporterPerturbation,
     VariantCallMode,
     VariantFrequencyBasis,
     VariantSiteKind,
@@ -252,6 +254,37 @@ FACTORY: dict[type[GenePerturbation], dict[str, Any]] = {
         source_organism="Xanthophyllomyces dendrorhous",
         is_heterologous=True,
         localization="episomal_2micron",
+    ),
+    # #990 Zhang 2020: TRP2 re-integrated at EasyClone XII-5 under pTEF1, one of the
+    # five genes of the cluster. An extra copy of a NATIVE gene, so the identity is the
+    # real systematic name rather than a CURIE.
+    PromoterDrivenGeneIntegrationPerturbation: dict(
+        systematic_gene_name="YER090W",
+        perturbed_gene_name="TRP2",
+        source_organism="Saccharomyces cerevisiae",
+        is_heterologous=False,
+        localization="chromosomal_integration",
+        promoter_name="pTEF1",
+        integration_locus="EasyClone XII-5",
+    ),
+    # #991 Vaishnav 2022: the HQ_28 construct of the GSE163045 MolEvol SC-Ura table.
+    # The added gene is the plasmid's YFP reporter, so its identity is a CURIE in the
+    # namespace of the deposited plasmid, as the heterologous gene-addition example
+    # above is one in its source organism's.
+    VariablePromoterReporterPerturbation: dict(
+        systematic_gene_name="addgene127546:YFP",
+        perturbed_gene_name="YFP",
+        source_organism="synthetic construct",
+        is_heterologous=True,
+        localization="episomal_cen_plasmid",
+        promoter_variant_id="HQ_28",
+        promoter_sequence=(
+            "TGCATTTTTTTCACATCAAAAGTAGGTTCTTGCAGCATTCTGATGCACGTATAGGCGCGATGG"
+            "ATGGCAGCGGGAATGCGGTTAAGCGGTGGATCAAGGTTACGGCTGTT"
+        ),
+        scaffold_name="pTpA",
+        variable_region_start=18,
+        variable_region_end=97,
     ),
     NaturalGeneAbsencePerturbation: {**_SYS, "strain_id": "AAB", **_URI},
     NaturalGenePresencePerturbation: dict(

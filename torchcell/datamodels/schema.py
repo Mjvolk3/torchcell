@@ -3860,6 +3860,200 @@ class BacterialReleasedStrainPerturbation(GenePerturbation, ModelStrict):
 # --------------------------------------------------------------------------- #
 
 
+# --------------------------------------------------------------------------- #
+# begin ADDITIVE (#991 Vaishnav 2022, #990 Zhang 2020): the promoter as part of the
+# genome's content.
+#
+# A promoter is an edit to the total genomic content of the cell, so it belongs on the
+# genotype, not on the phenotype that reads it. Two releases blocked on that and no
+# existing leaf holds either:
+#
+#   - Zhang 2020 re-integrates five genes as one cluster at EasyClone XII-5, each gene
+#     driven by one of six promoters (30 promoters, 6^5 designs). The measured variable
+#     IS which promoter drives which gene.
+#   - Vaishnav 2022 measures an 80 bp variable insert in the promoter of a YFP reporter
+#     on a CEN plasmid. The measured variable IS the promoter's sequence.
+#
+# ``PromoterReplacementPerturbation`` is the bacterial sibling: it asserts that a host
+# gene's NATIVE promoter was removed and a characterized part put in its place
+# (SO:1000032 ``delins``), and its required ``gene_namespace`` plus locus-tag validator
+# refuse ``YKR097W``. Neither release replaces a native promoter: both ADD a gene that
+# arrives with its own promoter, so both leaves sit on the gene-addition axis
+# (``state="present"``, SO:0000667 ``insertion``) and inherit its relaxed name validator,
+# which a heterologous reporter needs.
+#
+# They are two leaves rather than one because the promoter means a different thing in
+# each: a named, characterized part whose sequence the release need not deposit, versus a
+# sequence that is itself the measured quantity and is required. A promoter field added to
+# ``GeneAdditionPerturbation`` instead would change the meaning of a SERVED class (it is in
+# the closure of the metabolite, morphology and product-titer loaders), which the schema
+# rules reserve for a written correctness argument; a new leaf moves no served class.
+# --------------------------------------------------------------------------- #
+def _validate_dna_sequence(value: str, field: str) -> str:
+    """A released DNA sequence: non-empty, unambiguous, upper-case ACGT.
+
+    Rejecting a lower-case or IUPAC-ambiguous string is deliberate: a promoter sequence
+    is an identity key here (two records differing by one base are two genotypes), so a
+    case-folded or degenerate spelling would silently split or merge identities. A
+    release that carries ambiguity codes needs its own typed decision, not a cast.
+    """
+    if not value:
+        raise ValueError(f"{field} cannot be empty")
+    if set(value) - set("ACGT"):
+        raise ValueError(
+            f"{field} must be upper-case unambiguous DNA (ACGT), got {value[:32]!r}"
+        )
+    return value
+
+
+class PromoterDrivenGeneIntegrationPerturbation(GeneAdditionPerturbation, ModelStrict):
+    """A gene integrated at a named locus, driven by the promoter part named here.
+
+    The combinatorial-promoter rows: a gene is re-integrated into the genome (an extra
+    copy of a native gene, or a heterologous gene) and the cassette carrying it supplies
+    the promoter, so the strain's expression of that gene is set by WHICH promoter was
+    chosen. Zhang 2020 varies exactly that, five genes at a time, and the choice is the
+    experiment's independent variable; without this leaf the record could say the gene
+    was added but not what drives it, and 275 distinct designs would collapse onto one
+    genotype.
+
+    ``integration_locus`` is REQUIRED here (the parent leaves it optional, because a
+    plasmid-borne addition has none): an integrated promoter-gene pair that does not say
+    where it landed cannot be told from a second copy elsewhere, and the landing site is
+    part of what sets expression. ``promoter_sequence`` is the part's sequence when the
+    release deposits it and ``None`` when it names the part only -- a named part with no
+    deposited sequence is the common case, and inventing one from a strain database would
+    not be the release's own value.
+
+    The INDUCER of an inducible part is not here: it is a ``SmallMoleculePerturbation``
+    on the environment, the one canonical encoding the bacterial
+    ``PromoterReplacementPerturbation.is_inducible`` docstring sets out.
+    """
+
+    description: str = (
+        "Gene integrated at a named locus, driven by the named promoter part"
+    )
+    perturbation_type: Literal["promoter_driven_gene_integration"] = (
+        "promoter_driven_gene_integration"  # type: ignore[assignment]
+    )
+    promoter_name: str = Field(
+        description="the promoter part driving this gene, verbatim (e.g. 'pTEF1')"
+    )
+    promoter_sequence: str | None = Field(
+        default=None,
+        description="sequence of the promoter part, when the release deposits it; None "
+        "when the release names the part without its sequence",
+    )
+    integration_locus: str = Field(
+        description="the integration site the cassette landed at, verbatim (e.g. "
+        "'EasyClone XII-5'); required on this leaf, unlike the parent"
+    )
+    is_inducible: bool = Field(
+        default=False,
+        description="True when the part is inducible rather than constitutive. The "
+        "INDUCER and its dose are a SmallMoleculePerturbation on the environment, never "
+        "restated here.",
+    )
+
+    @model_validator(mode="after")
+    def _check_promoter(self) -> "PromoterDrivenGeneIntegrationPerturbation":
+        """The promoter and the locus are named; a deposited sequence is real DNA."""
+        for name in ("promoter_name", "integration_locus"):
+            if not getattr(self, name).strip():
+                raise ValueError(f"{name} cannot be empty")
+        if self.promoter_sequence is not None:
+            _validate_dna_sequence(self.promoter_sequence, "promoter_sequence")
+        return self
+
+
+class VariablePromoterReporterPerturbation(GeneAdditionPerturbation, ModelStrict):
+    """A reporter gene whose promoter carries a variable sequence, stored verbatim.
+
+    The massively-parallel-reporter rows: one library member is a reporter construct
+    (Vaishnav 2022: YFP plus a constitutive RFP and a URA3 marker on a low-copy CEN
+    plasmid) whose promoter holds a variable insert, and that insert's SEQUENCE is the
+    independent variable of the experiment. The sequence-level genotype axis is the whole
+    point of the leaf, so ``promoter_sequence`` is REQUIRED and carries the released
+    bases verbatim; ``variable_region_start`` / ``variable_region_end`` are the 1-based
+    inclusive span of the variable part inside it, so the constant scaffold is not
+    duplicated per record and the insert stays recoverable.
+
+    ``promoter_variant_id`` is the source's own identifier of the variant (Vaishnav's
+    ``origID``, e.g. ``HQ_28``). It is the label a release's design tables join on, and
+    two variants with the same sequence under different design labels are distinguishable
+    by it. ``scaffold_name`` is the source's name for the constant promoter context the
+    insert sits in (``pTpA``), which is part of what the measured level is relative to:
+    the same 80-mer in another scaffold is another construct.
+
+    Distinct from ``PromoterDrivenGeneIntegrationPerturbation`` on the two axes that
+    matter: there the promoter is a named characterized part whose sequence is optional
+    and the gene is integrated at a required locus; here the promoter is a sequence that
+    must be present and the construct is normally episomal, so the parent's
+    ``localization`` carries the plasmid context and ``integration_locus`` stays None.
+    """
+
+    description: str = (
+        "Reporter gene driven by a promoter carrying a variable released sequence"
+    )
+    perturbation_type: Literal["variable_promoter_reporter"] = (
+        "variable_promoter_reporter"  # type: ignore[assignment]
+    )
+    promoter_variant_id: str = Field(
+        description="the source's own identifier of this promoter variant, verbatim "
+        "(e.g. Vaishnav 2022 origID 'HQ_28')"
+    )
+    promoter_sequence: str = Field(
+        description="the released promoter sequence of this construct, verbatim "
+        "(scaffold plus variable insert, as the release writes it)"
+    )
+    scaffold_name: str = Field(
+        description="the source's name for the constant promoter scaffold the variable "
+        "region sits in (e.g. 'pTpA')"
+    )
+    variable_region_start: int | None = Field(
+        default=None,
+        description="1-based inclusive start of the variable region within "
+        "promoter_sequence; None when the release does not define the span",
+    )
+    variable_region_end: int | None = Field(
+        default=None,
+        description="1-based inclusive end of the variable region within "
+        "promoter_sequence; None when the release does not define the span",
+    )
+
+    @model_validator(mode="after")
+    def _check_variant(self) -> "VariablePromoterReporterPerturbation":
+        """The variant is identified, its sequence is real DNA, and the span fits it."""
+        for name in ("promoter_variant_id", "scaffold_name"):
+            if not getattr(self, name).strip():
+                raise ValueError(f"{name} cannot be empty")
+        _validate_dna_sequence(self.promoter_sequence, "promoter_sequence")
+        start, end = self.variable_region_start, self.variable_region_end
+        if (start is None) != (end is None):
+            raise ValueError(
+                "variable_region_start and variable_region_end must both be set or "
+                "both be None (half a span does not locate the insert)"
+            )
+        if start is not None and end is not None:
+            if start < 1:
+                raise ValueError(f"variable_region_start is 1-based, got {start}")
+            if end < start:
+                raise ValueError(
+                    f"variable_region_end {end} is before variable_region_start {start}"
+                )
+            if end > len(self.promoter_sequence):
+                raise ValueError(
+                    f"variable_region_end {end} is past the end of promoter_sequence "
+                    f"({len(self.promoter_sequence)} bases)"
+                )
+        return self
+
+
+# --------------------------------------------------------------------------- #
+# end ADDITIVE (#991, #990)
+# --------------------------------------------------------------------------- #
+
+
 SgaPerturbationType = (
     SgaKanMxDeletionPerturbation
     | SgaNatMxDeletionPerturbation
@@ -3888,6 +4082,8 @@ GenePerturbationType = (
     | CrisprActivationPerturbation
     | CrisprInterferencePerturbation
     | InduciblePromoterInsertionPerturbation  # Hackett 2020 (additive)
+    | PromoterDrivenGeneIntegrationPerturbation  # Zhang 2020 (#990, additive)
+    | VariablePromoterReporterPerturbation  # Vaishnav 2022 (#991, additive)
     | BacterialDeletionPerturbation
     | TransposonInsertionPerturbation
     | BacterialCrisprInterferencePerturbation
@@ -8668,6 +8864,13 @@ class ReporterReadout(StrEnum):
     - ``microscopy_fluorescence``: fluorescence quantified from images.
     - ``luminescence``: a luciferase or other light-emitting reporter.
     - ``enzymatic_activity``: a reporter enzyme's activity (e.g. Miller units).
+    - ``sort_seq_fluorescence``: fluorescence read by sorting a POOLED library into
+      expression bins and sequencing each bin, so a sequence's level is estimated from
+      its read distribution over the bins rather than read off one well or one cell
+      (a sort-seq / massively parallel reporter assay; Vaishnav 2022, de Boer 2020).
+      Added for #991: the four instrument members above all return a reading per well
+      or per cell, which a pooled assay never produces, so a sort-seq estimate stored
+      under one of them would claim a sample unit it does not have.
     """
 
     plate_reader_fluorescence = "plate_reader_fluorescence"
@@ -8675,6 +8878,7 @@ class ReporterReadout(StrEnum):
     microscopy_fluorescence = "microscopy_fluorescence"
     luminescence = "luminescence"
     enzymatic_activity = "enzymatic_activity"
+    sort_seq_fluorescence = "sort_seq_fluorescence"  # ADDITIVE (#991)
 
 
 class PromoterActivityPhenotype(Phenotype, ModelStrict):
@@ -8972,6 +9176,381 @@ class PromoterActivityExperiment(Experiment, ModelStrict):
     experiment_type: str = "promoter_activity"
     genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
     phenotype: PromoterActivityPhenotype
+
+
+# --------------------------------------------------------------------------- #
+# begin ADDITIVE (#991 Vaishnav 2022): a POOLED sequence-to-expression readout.
+#
+# A sort-seq / massively parallel reporter assay measures a whole library at once: the
+# pooled culture is sorted into expression bins, every bin is sequenced, and each
+# sequence's expression level is estimated from its own read distribution over the bins.
+# ``PromoterActivityPhenotype`` (served: Mohiuddin 2022) cannot hold that, and the honest
+# reason is its ``well_id``, which is REQUIRED there for a measured reason: an arrayed
+# reporter library holds one promoter in several wells, so without the well two readings
+# of one promoter under one condition would collide into a single L1 identity. A pooled
+# library has no well at all. Making ``well_id`` optional would make the served class's
+# identity rule conditional for every record that already carries one, so this is a
+# SIBLING leaf under ``Phenotype`` whose identity key is the sequence the release names.
+#
+# The two leaves are the same technology at one level (a fluorescent reporter's signal
+# stands for transcription from the promoter driving it) and genuinely different at the
+# level that decides what the number can be compared with: a plate reader or cytometer
+# returns one reading per well, while a sort-seq estimate is a read-weighted average of
+# bin indices for one sequence out of millions. ``ReporterReadout`` gains
+# ``sort_seq_fluorescence`` to name that instrument.
+# --------------------------------------------------------------------------- #
+class PooledSortSeqExpressionPhenotype(Phenotype, ModelStrict):
+    """Expression of ONE library sequence, estimated from its reads across sort bins.
+
+    For a sort-seq massively parallel reporter assay (Vaishnav 2022 / de Boer 2020 GPRA):
+    the strain carries a reporter whose promoter holds the library sequence, the pooled
+    culture is sorted into expression bins by the reporter's signal, every bin is
+    sequenced, and the sequence's expression level is the average of the bins it was
+    observed in, weighted by how often it was observed in each. The measured entity is
+    the SEQUENCE, which is why this is its own family:
+
+    - ``PromoterActivityPhenotype`` is an arrayed reporter library: one reading per well,
+      and its required ``well_id`` is what keeps two wells of one promoter L1-distinct. A
+      pooled library has no well, and the key that keeps two readings distinct is the
+      source's own sequence identifier.
+    - the expression families (``MicroarrayExpressionPhenotype``,
+      ``RNASeqExpressionPhenotype``, ``PseudobulkExpressionPhenotype``) are genome-wide
+      dicts of one strain's transcriptome. Here one construct is measured in a pool of
+      millions, and the number is a reporter proxy for transcription from the sequence,
+      not a count of a native transcript.
+
+    ``expression_level`` is the estimate AS RELEASED, in ``expression_units``: nothing is
+    rescaled here, because the bin scale is set by the sorter's configuration on the day
+    (de Boer 2020 Methods: "The FACS configuration varied between experiments (for
+    example, different laser intensities), resulting in different baseline expression
+    values"), so a value is comparable within its library and not across sorts.
+
+    ``sequence_id`` is the source's own identifier of the measured sequence, verbatim;
+    the sequence itself lives on the genotype
+    (``VariablePromoterReporterPerturbation.promoter_sequence``), so it is stored once.
+    ``library_id`` is the source's own label for the library or sort the reading came
+    from, ``None`` when the release carries none; ``read_count`` is the number of
+    observations the estimate averaged, which is the release's own measure of how well
+    determined it is (de Boer 2020 restricts its high-quality analysis to sequences with
+    at least 100 reads).
+
+    The uncertainty ontology mirrors the sibling: ``expression_level_se`` is the DERIVED,
+    ML-facing SE, auto-filled from a source-reported uncertainty and its type via
+    ``derive_se``. A source that releases a dispersion of unstated kind leaves both None
+    with a ``ProvenanceGap``, never a typed guess.
+    """
+
+    graph_level: str = "node"
+    label_name: str = "expression_level"
+    label_statistic_name: str | None = "expression_level_se"
+
+    expression_level: float = Field(
+        description="the expression estimate as released, in expression_units"
+    )
+    expression_level_se: float | None = Field(
+        default=None,
+        description="standard error of the estimate (primary uncertainty statistic)",
+    )
+    expression_level_uncertainty: float | None = Field(
+        default=None,
+        description="source-reported uncertainty number, verbatim (meaning given by "
+        "expression_level_uncertainty_type)",
+    )
+    expression_level_uncertainty_type: UncertaintyType | None = Field(
+        default=None,
+        description="what expression_level_uncertainty IS (sample_sd, ...)",
+    )
+    n_samples: int | None = Field(
+        default=None,
+        description="number of independent replicate measurements of the estimate; a "
+        "read is NOT a replicate (see read_count)",
+    )
+    sample_unit: SampleUnit | None = Field(
+        default=None,
+        description="what one sample in n_samples is (biological_replicate, ...)",
+    )
+    sequence_id: str = Field(
+        description="the source's own identifier of the measured sequence, verbatim; "
+        "the identity key a pooled library has in place of a well"
+    )
+    library_id: str | None = Field(
+        default=None,
+        description="the source's own label for the library or sort this reading came "
+        "from (e.g. Vaishnav 2022 expt 'NBT_S288CdU_SCUra'); None when unreleased",
+    )
+    read_count: int | None = Field(
+        default=None,
+        description="observations (reads) the estimate averaged over, as released; None "
+        "when the release carries no per-sequence count",
+    )
+    readout: ReporterReadout = Field(
+        description="HOW the reporter signal was read (sort_seq_fluorescence, ...)"
+    )
+    reporter_gene: str = Field(
+        description="the reporter the library sequence drives, verbatim (e.g. 'YFP')"
+    )
+    expression_units: str = Field(
+        description="human-readable definition and units of the estimate, including the "
+        "bin scale and what it is normalized against"
+    )
+
+    @field_validator("expression_level")
+    def validate_expression_level(cls, v: float) -> float:
+        """Reject a non-finite estimate (NaN or infinity is not a measurement)."""
+        if not math.isfinite(v):
+            raise ValueError(f"expression_level must be finite, got {v}")
+        return v
+
+    @field_validator("n_samples")
+    def validate_n_samples(cls, v: int | None) -> int | None:
+        """n_samples is a positive integer or None."""
+        if v is not None and (not isinstance(v, int) or v < 1):
+            raise ValueError(f"n_samples must be a positive integer or None, got: {v}")
+        return v
+
+    @field_validator("read_count")
+    def validate_read_count(cls, v: int | None) -> int | None:
+        """A released read count is a positive integer (an estimate needs one read)."""
+        if v is not None and (not isinstance(v, int) or v < 1):
+            raise ValueError(f"read_count must be a positive integer or None, got: {v}")
+        return v
+
+    @model_validator(mode="before")
+    @classmethod
+    def _fill_expression_se(cls, data: Any) -> Any:
+        """Derive the ML-facing SE from the reported uncertainty (frozen -> fill first)."""
+        if not isinstance(data, dict):
+            return data
+        unc = data.get("expression_level_uncertainty")
+        typ = data.get("expression_level_uncertainty_type")
+        if unc is None or typ is None or data.get("expression_level_se") is not None:
+            return data
+        typ = UncertaintyType(typ)
+        n = data.get("n_samples")
+        if typ in (UncertaintyType.sample_sd, UncertaintyType.variance) and n is None:
+            return data
+        data["expression_level_se"] = derive_se(unc, typ, n)
+        return data
+
+    @model_validator(mode="after")
+    def _check(self) -> "PooledSortSeqExpressionPhenotype":
+        """Enforce the uncertainty invariant and non-empty identifiers."""
+        if not self.sequence_id.strip():
+            raise ValueError("sequence_id cannot be empty")
+        if self.library_id is not None and not self.library_id.strip():
+            raise ValueError("library_id is a released label or None, never blank")
+        if not self.reporter_gene.strip():
+            raise ValueError("reporter_gene cannot be empty")
+        if not self.expression_units.strip():
+            raise ValueError("expression_units cannot be empty")
+        unc, typ = (
+            self.expression_level_uncertainty,
+            self.expression_level_uncertainty_type,
+        )
+        if (unc is None) != (typ is None):
+            raise ValueError(
+                "expression_level_uncertainty and its type must both be set or both be "
+                "None (no unlabelled uncertainty)"
+            )
+        if typ in (UncertaintyType.sample_sd, UncertaintyType.variance) and (
+            self.n_samples is None or self.sample_unit is None
+        ):
+            raise ValueError(f"n_samples and sample_unit are required for {typ}")
+        return self
+
+
+class PooledSortSeqExpressionExperimentReference(ExperimentReference, ModelStrict):
+    """Reference context for a pooled sort-seq expression experiment.
+
+    A yeast pair, so ``genome_reference`` stays the plain ``ReferenceGenome`` every yeast
+    family uses; the bacterial pairs narrow it to ``AssemblyReferenceGenome`` because
+    their genotypes are locus tags of a pinned assembly.
+    """
+
+    experiment_reference_type: str = "pooled_sort_seq_expression"
+    phenotype_reference: PooledSortSeqExpressionPhenotype
+
+
+class PooledSortSeqExpressionExperiment(Experiment, ModelStrict):
+    """Experiment measuring one library sequence's expression in a pooled sort-seq."""
+
+    experiment_type: str = "pooled_sort_seq_expression"
+    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
+    phenotype: PooledSortSeqExpressionPhenotype
+
+
+# --------------------------------------------------------------------------- #
+# end ADDITIVE (#991)
+# --------------------------------------------------------------------------- #
+
+
+# --------------------------------------------------------------------------- #
+# begin ADDITIVE (#990 Zhang 2020): a BIOSENSOR fluorescence readout.
+#
+# Zhang 2020's reporter is a trpR-based biosensor: its GFP reports the strain's
+# INTRACELLULAR TRYPTOPHAN, not transcription from any of the five varied promoters. Two
+# existing homes would both misname it:
+#
+#   - ``PromoterActivityPhenotype`` (and the pooled sibling above) say the measured
+#     entity is the promoter driving the reporter. Here the promoters are the genotype's
+#     independent variable and the reporter answers a metabolite, so attributing the
+#     signal to the promoter would assert a measurement nobody made.
+#   - ``MeasurementType.biosensor_readout`` exists, but it lives on
+#     ``EnvironmentResponsePhenotype``, whose verifier requires an environmental edit on
+#     every record; a biosensor strain grown in one medium has none.
+#
+# ``MetabolitePhenotype`` is the nearest neighbour and stays what it is: a metabolite
+# QUANTITY (titer, pool size) in its own units. A biosensor signal is a proxy whose
+# calibration to concentration the release may never state, so storing it as a metabolite
+# quantity would silently promote a fluorescence rate to a concentration. This leaf keeps
+# the signal in its own units and NAMES the sensed metabolite as a typed ``Compound``, so
+# the record joins the shared compound layer without claiming to be a titer. The
+# conversion between the two, where a release publishes a calibration, is a conversion
+# entry, not a reinterpretation of the stored number.
+# --------------------------------------------------------------------------- #
+class BiosensorFluorescencePhenotype(Phenotype, ModelStrict):
+    """A biosensor reporter's signal, standing for the metabolite it senses.
+
+    The strain carries a sensor (a transcription factor plus its operator, an RNA
+    aptamer, an enzyme-coupled device) fused to a fluorescent reporter, and the released
+    number is that reporter's signal, which responds to the intracellular level of
+    ``sensed_metabolite``. ``biosensor_signal`` is the value AS RELEASED, in
+    ``signal_units`` (Zhang 2020: a specific GFP synthesis rate in MFI per hour), and
+    nothing is converted to a concentration here: a signal becomes a concentration only
+    through a calibration the release has to publish.
+
+    ``sensor_name`` is the device as the source names it, so two releases using different
+    sensors for one metabolite stay distinguishable (their dynamic ranges differ);
+    ``reporter_gene`` is the fluorophore; ``readout`` names the instrument, which decides
+    what the number can be compared with (a plate-reader population average is not a
+    cytometer's per-cell summary).
+    """
+
+    graph_level: str = "node"
+    label_name: str = "biosensor_signal"
+    label_statistic_name: str | None = "biosensor_signal_se"
+
+    biosensor_signal: float = Field(
+        description="the biosensor reporter's signal as released, in signal_units"
+    )
+    biosensor_signal_se: float | None = Field(
+        default=None,
+        description="standard error of the signal (primary uncertainty statistic)",
+    )
+    biosensor_signal_uncertainty: float | None = Field(
+        default=None,
+        description="source-reported uncertainty number, verbatim (meaning given by "
+        "biosensor_signal_uncertainty_type)",
+    )
+    biosensor_signal_uncertainty_type: UncertaintyType | None = Field(
+        default=None,
+        description="what biosensor_signal_uncertainty IS (sample_sd, ...)",
+    )
+    n_samples: int | None = Field(
+        default=None,
+        description="number of independent replicate measurements of the signal",
+    )
+    sample_unit: SampleUnit | None = Field(
+        default=None,
+        description="what one sample in n_samples is (biological_replicate, ...)",
+    )
+    sensed_metabolite: Compound = Field(
+        description="the metabolite the sensor reports, as a typed Compound (the join "
+        "key into the shared compound layer); NOT a claim that a concentration was read"
+    )
+    sensor_name: str = Field(
+        description="the biosensor device as the source names it, verbatim (e.g. "
+        "'trpR-based tryptophan biosensor')"
+    )
+    reporter_gene: str = Field(
+        description="the reporter the sensor drives, verbatim (e.g. 'GFP')"
+    )
+    readout: ReporterReadout = Field(
+        description="HOW the reporter signal was read (plate reader, cytometer, ...)"
+    )
+    signal_units: str = Field(
+        description="human-readable definition and units of the signal, including "
+        "whether it is a rate, normalized, or background-subtracted"
+    )
+
+    @field_validator("biosensor_signal")
+    def validate_signal(cls, v: float) -> float:
+        """Reject a non-finite signal (NaN or infinity is not a measurement)."""
+        if not math.isfinite(v):
+            raise ValueError(f"biosensor_signal must be finite, got {v}")
+        return v
+
+    @field_validator("n_samples")
+    def validate_n_samples(cls, v: int | None) -> int | None:
+        """n_samples is a positive integer or None."""
+        if v is not None and (not isinstance(v, int) or v < 1):
+            raise ValueError(f"n_samples must be a positive integer or None, got: {v}")
+        return v
+
+    @model_validator(mode="before")
+    @classmethod
+    def _fill_signal_se(cls, data: Any) -> Any:
+        """Derive the ML-facing SE from the reported uncertainty (frozen -> fill first)."""
+        if not isinstance(data, dict):
+            return data
+        unc = data.get("biosensor_signal_uncertainty")
+        typ = data.get("biosensor_signal_uncertainty_type")
+        if unc is None or typ is None or data.get("biosensor_signal_se") is not None:
+            return data
+        typ = UncertaintyType(typ)
+        n = data.get("n_samples")
+        if typ in (UncertaintyType.sample_sd, UncertaintyType.variance) and n is None:
+            return data
+        data["biosensor_signal_se"] = derive_se(unc, typ, n)
+        return data
+
+    @model_validator(mode="after")
+    def _check(self) -> "BiosensorFluorescencePhenotype":
+        """Enforce the uncertainty invariant and non-empty identifiers."""
+        for name in ("sensor_name", "reporter_gene", "signal_units"):
+            if not getattr(self, name).strip():
+                raise ValueError(f"{name} cannot be empty")
+        if not self.sensed_metabolite.name.strip():
+            raise ValueError("sensed_metabolite must name a compound")
+        unc, typ = (
+            self.biosensor_signal_uncertainty,
+            self.biosensor_signal_uncertainty_type,
+        )
+        if (unc is None) != (typ is None):
+            raise ValueError(
+                "biosensor_signal_uncertainty and its type must both be set or both be "
+                "None (no unlabelled uncertainty)"
+            )
+        if typ in (UncertaintyType.sample_sd, UncertaintyType.variance) and (
+            self.n_samples is None or self.sample_unit is None
+        ):
+            raise ValueError(f"n_samples and sample_unit are required for {typ}")
+        return self
+
+
+class BiosensorFluorescenceExperimentReference(ExperimentReference, ModelStrict):
+    """Reference context for a biosensor fluorescence experiment.
+
+    The reference is the platform strain of the same screen read with the same sensor,
+    which is a real measurement rather than a derived baseline. A yeast pair, so
+    ``genome_reference`` is the plain ``ReferenceGenome``.
+    """
+
+    experiment_reference_type: str = "biosensor_fluorescence"
+    phenotype_reference: BiosensorFluorescencePhenotype
+
+
+class BiosensorFluorescenceExperiment(Experiment, ModelStrict):
+    """Experiment reading a metabolite through a biosensor's fluorescent reporter."""
+
+    experiment_type: str = "biosensor_fluorescence"
+    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
+    phenotype: BiosensorFluorescencePhenotype
+
+
+# --------------------------------------------------------------------------- #
+# end ADDITIVE (#990)
+# --------------------------------------------------------------------------- #
 
 
 class BacterialFitnessExperimentReference(ExperimentReference, ModelStrict):
@@ -9892,6 +10471,8 @@ PhenotypeType = (
     | ProteinSynthesisRatePhenotype  # issue #857
     | FluxPhenotype
     | PromoterActivityPhenotype
+    | PooledSortSeqExpressionPhenotype  # Vaishnav 2022 (#991)
+    | BiosensorFluorescencePhenotype  # Zhang 2020 (#990)
     | BacterialMorphologyPhenotype  # issue #774
     | MrnaNumberFractionPhenotype  # issue #854
     | SingleCellExpressionPhenotype  # boocock2025
@@ -9929,6 +10510,8 @@ ExperimentType = (
     | ProteinSynthesisRateExperiment  # issue #857
     | FluxExperiment
     | PromoterActivityExperiment
+    | PooledSortSeqExpressionExperiment  # Vaishnav 2022 (#991)
+    | BiosensorFluorescenceExperiment  # Zhang 2020 (#990)
     | BacterialFitnessExperiment
     | BacterialEnvironmentResponseExperiment
     | BacterialGeneInteractionExperiment
@@ -9978,6 +10561,8 @@ ExperimentReferenceType = (
     | ProteinSynthesisRateExperimentReference  # issue #857
     | FluxExperimentReference
     | PromoterActivityExperimentReference
+    | PooledSortSeqExpressionExperimentReference  # Vaishnav 2022 (#991)
+    | BiosensorFluorescenceExperimentReference  # Zhang 2020 (#990)
     | BacterialFitnessExperimentReference
     | BacterialEnvironmentResponseExperimentReference
     | BacterialGeneInteractionExperimentReference
@@ -10027,6 +10612,8 @@ EXPERIMENT_TYPE_MAP = {
     "protein_synthesis_rate": ProteinSynthesisRateExperiment,  # issue #857
     "flux": FluxExperiment,
     "promoter_activity": PromoterActivityExperiment,
+    "pooled_sort_seq_expression": PooledSortSeqExpressionExperiment,  # #991
+    "biosensor_fluorescence": BiosensorFluorescenceExperiment,  # #990
     "bacterial_fitness": BacterialFitnessExperiment,
     "bacterial_environment_response": BacterialEnvironmentResponseExperiment,
     "bacterial_gene_interaction": BacterialGeneInteractionExperiment,
@@ -10079,6 +10666,10 @@ EXPERIMENT_REFERENCE_TYPE_MAP = {
     "protein_synthesis_rate": ProteinSynthesisRateExperimentReference,  # issue #857
     "flux": FluxExperimentReference,
     "promoter_activity": PromoterActivityExperimentReference,
+    "pooled_sort_seq_expression": (  # #991
+        PooledSortSeqExpressionExperimentReference
+    ),
+    "biosensor_fluorescence": BiosensorFluorescenceExperimentReference,  # #990
     "bacterial_fitness": BacterialFitnessExperimentReference,
     "bacterial_environment_response": BacterialEnvironmentResponseExperimentReference,
     "bacterial_gene_interaction": BacterialGeneInteractionExperimentReference,

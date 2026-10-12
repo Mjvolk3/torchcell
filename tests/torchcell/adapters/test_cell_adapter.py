@@ -398,6 +398,8 @@ NODE_METHODS = [
     "protein synthesis rate phenotype (chunked)",
     "flux phenotype (chunked)",
     "promoter activity phenotype (chunked)",
+    "pooled sort seq expression phenotype (chunked)",
+    "biosensor fluorescence phenotype (chunked)",
     "bacterial morphology phenotype (chunked)",
     "mrna number fraction phenotype (chunked)",
     "single cell expression phenotype (chunked)",
@@ -424,6 +426,8 @@ NODE_METHODS = [
     "protein synthesis rate phenotype reference",
     "flux phenotype reference",
     "promoter activity phenotype reference",
+    "pooled sort seq expression phenotype reference",
+    "biosensor fluorescence phenotype reference",
     "bacterial morphology phenotype reference",
     "mrna number fraction phenotype reference",
     "single cell expression phenotype reference",
@@ -456,7 +460,7 @@ EDGE_METHODS = [
 def test_supported_method_names_are_the_registration_tables_in_order(
     recorder: _WandbRecorder,
 ) -> None:
-    """77 node methods and 17 edge methods, in the order ``__init__`` registers them;
+    """81 node methods and 17 edge methods, in the order ``__init__`` registers them;
     every "(chunked)" name maps to a decorated handler and every other name to a
     ``_get_`` collector, which is how ``get_nodes`` routes them.
     """

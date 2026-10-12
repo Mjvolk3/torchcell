@@ -1278,13 +1278,17 @@ def test_the_new_methods_are_registered_and_the_served_edges_name_the_new_classe
     sources = SCHEMA["phenotype member of"]["source"]
     # The yeast single-cell leaf (Boocock 2025; Jackson 2020's pseudobulk UMI counts
     # merged into it, #1016), De Chiara 2022's yeast life cycle phenotype and Puddu
-    # 2019's genome architecture, joined after the bacterial ones.
-    assert sources[-10:] == [
+    # 2019's genome architecture, joined after the bacterial ones. The pooled sort-seq
+    # expression leaf (#991) and the biosensor fluorescence leaf (#990) sit directly
+    # after the promoter-activity class they are siblings of.
+    assert sources[-12:] == [
         "product titer phenotype",
         "protein turnover phenotype",
         "protein synthesis rate phenotype",
         "flux phenotype",
         "promoter activity phenotype",
+        "pooled sort seq expression phenotype",
+        "biosensor fluorescence phenotype",
         "bacterial morphology phenotype",
         "mrna number fraction phenotype",
         "single cell expression phenotype",

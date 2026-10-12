@@ -131,10 +131,12 @@ def test_kuzmin2018_keeps_its_9_released_zero_sds() -> None:
     reason=f"requires the Kuzmin 2020 Tables S1, S3 and S5 in {_RAW_2020}",
 )
 def test_kuzmin2020_keeps_its_33_released_zero_sd_digenic_rows() -> None:
-    """Tables S1 and S3 release 18 and 15 digenic rows with an SD of exactly 0 (and 6
-    and 7 trigenic ones, which no fitness loader stores), each with a released P-value of
-    exactly 0. The Dmf frame keeps all 33 digenic rows, tagged with the screen they came
-    from, and every one of them builds into a record carrying the 0 as released.
+    """Tables S1 and S3 release 18 and 15 digenic rows with an SD of exactly 0, and 6 and
+    7 trigenic ones, each with a released P-value of exactly 0. The Dmf frame keeps all
+    33 digenic rows, tagged with the screen they came from, and every one of them builds
+    into a record carrying the 0 as released. (``TmfKuzmin2020Dataset`` keeps the 13
+    trigenic rows but stores every released SD only as ``fitness_std``, with no labeled
+    uncertainty; that is a separate finding, not pinned here.)
     """
     df_s1, df_s3, df_s5 = (
         pd.read_excel(osp.join(_RAW_2020, name), skiprows=1) for name in _TABLES_2020

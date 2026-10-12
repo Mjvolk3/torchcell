@@ -2,8 +2,8 @@
 #SBATCH --job-name=036-887-sd0
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=2
-#SBATCH --mem=48G
-#SBATCH --time=06:00:00
+#SBATCH --mem=32G
+#SBATCH --time=02:00:00
 #SBATCH --output=/home/michaelvolk/Documents/projects/torchcell.worktrees/fix/keep-records-887-sd-zero/experiments/036-dataset-fixes-before-kg-build/slurm/output/%j_%x.out
 #SBATCH --error=/home/michaelvolk/Documents/projects/torchcell.worktrees/fix/keep-records-887-sd-zero/experiments/036-dataset-fixes-before-kg-build/slurm/output/%j_%x.out
 #SBATCH --no-requeue

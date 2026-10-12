@@ -1092,3 +1092,54 @@ against a hundred thousand gene cells, so the dose channel has almost nothing to
 the host side; a host head with its own dose-response form (a Hill curve whose IC50 and
 slope the model predicts per compound) would make the single-agent curve the thing the
 model outputs rather than something it has to discover from 180 points.
+
+## 2026.10.12 - The top row redrawn, the isoboles as observed fitness, and what one epoch visits
+
+The main sheet's top row and its isobole panel are redrawn
+(`scripts/figure_gate_panels.py`, sheet `gate_main_2026-10-12-08-00-57`):
+
+- **a** is now the six inhibitors as skeletal structures. RDKit lays each molecule out
+  from its curated SMILES (`results/profile_fingerprint_check.csv`; formic and lactic
+  acid from `mixture_data.IDENTITY_GAP_SMILES`) and the bonds are drawn as matplotlib
+  lines, so the structures stay vector in the SVG. The host's IC50 from the titration
+  fit sits under each; the two furans and the four weak acids are the families a
+  dilute-acid hydrolysate carries them in.
+- **b** reads the trainer's own counts (`*_counts.csv`, written beside every run) rather
+  than the 033 store axes, so the bars are what a four-source run trains on: Vanacloig
+  97,772 cells over 3,587 genes and 28 compounds; Hoepfner HOP 1,234,523 cells, 275
+  conditions; Hillenmeyer HET 2,345,856 cells, 401 conditions; Wildenhain 406,460 cells
+  over 209 genes and 5,173 compounds; 4,084,611 cells in all. Each bar carries the
+  screen's culture from the loaders' sourced values: Vanacloig is anaerobic and static
+  (SynBase), Hoepfner aerobic at 550 rpm (YPD), Hillenmeyer YPD with no aeration
+  statement, Wildenhain aerobic and static (SC), and the Bioscreen readout aerobic YPD
+  (the archive states no shaking; the Bioscreen C is run shaken). The oxygen mismatch
+  between the deletion profiles and the host readout is now on the sheet.
+- **c** merges the model strip and the scoring boxes.
+- **l** shows observed fitness per cell (white at none) instead of observed minus Bliss,
+  with the Bliss front in red and the Loewe front in purple, each where the rule's
+  predicted fitness crosses the growth threshold, a heavy border around each grid, and
+  the model's monotone front dotted as before.
+
+The public combinations are Hillenmeyer HET's 26 pairs (5FU x MTX, LV x MTX, FK506 x
+NaCl, FLC x ITC, 5FU x LV, 5FC x FLC, 5FC x AmB, FK506 x LiCl, 5FC x KTC, 5FC x ITC;
+`results/het_pair_matching.csv`), the ones panel h composes. Vanacloig's 32 compounds
+are singles; no public screen in the pool carries a hydrolysate mixture.
+
+**What one epoch visits.** A step draws 128 strains per source through the cell graph
+transformer and scores them on every fitted Vanacloig condition (18 of 28 per fold: 6
+test and 4 validation held out) but on only 24 drawn conditions of each auxiliary
+source (`cond_batch`); 29 steps make an epoch, 4,350 steps a run. So a 150-epoch run
+sees every fitted Vanacloig cell 150 times, each auxiliary source 13.4 million times
+(Hoepfner 10.8 passes, Hillenmeyer 5.7, Wildenhain 33) and the 209 host records 333
+times. Measured on an A40: 0.49 s per step one-source (2,127 s per fold-seed, job
+22806796), 1.8 s per step four-source (7,841 s, job 22806799). The transformer forward
+over 128 strains is the cost; conditions are nearly free in the readout.
+
+**Logging and the queue.** Jobs 4058 and 4059 on GilaHyper had started at 05:51 and
+05:57, before the logging commit at 06:48, so they were cancelled and resubmitted as
+4282 and 4284 (van p1 at two processes, vanhop p0 at one); every Delta 040 job was still
+pending and starts on the new code (trainer md5 identical on both machines). The held
+GilaHyper jobs are now two `afterany` chains behind 4282 and 4284, so two cards stay
+busy without a releaser. The two resubmitted jobs waited behind CPU-only work: the node
+had 4 to 12 CPUs and 15 to 47 GB free with two cards idle, so their requests were cut to
+2 CPUs and 15 GB each.

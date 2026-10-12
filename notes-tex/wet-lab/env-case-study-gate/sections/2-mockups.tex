@@ -59,17 +59,22 @@ block is marked idea even though its counts are on file. \\
 \end{tabular}}
 
 \clearpage
-\tcfigfit[0.66]{\figMain}{\textbf{The sheet proposed for the main text, the
+\tcfigfit[0.58]{\figMain}{\textbf{The sheet proposed for the main text, the
 four-by-three of the experiment note.}
-\textbf{a}, The task as one strip; a draw.io composition replaces it.
-\status{todo}\,\fstat{idea}
-\textbf{b}, What is trained on: compounds per source on a logarithmic axis, each bar
-annotated with the cells or wells behind it. The Bioscreen runs carry
-\hydnInhibitors{} compounds against \hydnPoolCompounds{} in the pooled table, and the
-screen supplying the deletion profiles carries \hydnVanacloigCompounds{}.
-\status{todo}\,\fstat{file}
-\textbf{c}, How a model is scored, and the two bars it must beat; a layout whose numbers
-are on file. \status{todo}\,\fstat{idea}
+\textbf{a}, The six inhibitors as skeletal structures from their curated SMILES, in the
+two families a dilute-acid hydrolysate carries, with the host's half-maximal dose from
+its titration fit under each. \status{todo}\,\fstat{file}
+\textbf{b}, What the mixture trainer reads, from the counts a four-source run writes:
+compounds per source, each bar annotated with its cells, genes and conditions and the
+culture it was screened in. The task's profiles are \hydnVanacloigCells{} anaerobic,
+static cells over \hydnVanacloigCompounds{} compounds; the auxiliary screens add
+\hydnHoepfnerCells{}, \hydnHillenmeyerCells{} and \hydnWildenhainCells{} aerobic cells,
+\hydnFourSourceCells{} in all. The host readout is aerobic, shaken YPD, a different
+oxygen regime from the profiles. The anchors and the titration are trained on; the
+combinations and the isobole grids never. \status{todo}\,\fstat{file}
+\textbf{c}, The model in one strip, a compound token with its dose in front of the gene
+tokens, read at the deleted genes or at the gene mean, and how each side is scored and
+against what. A layout whose numbers are on file. \status{todo}\,\fstat{idea}
 \textbf{d}, The ladder, ten best arms of \hydladderNArms{}: nested ridge on fingerprint
 counts reads \hydladderRidge{}, the next arm \hydladderSecond{}, the tenth
 \hydladderTenth{}. \status{todo}\,\fstat{file}
@@ -117,8 +122,10 @@ model (single source, trained on the anchors and the titration, mean over
 \hydmodelFolds{} folds): the same predicted fitness at one, two and three inhibitors,
 growth AUROC \hydmodelAuroc{}, fitness Spearman \hydmodelGrownSpearman{}. The host
 head does not compose. \status{todo}\,\fstat{file}
-\textbf{l}, The \hydnIsoboles{} isobole grids as observed minus Bliss, the Loewe front
-drawn and the cells that grew marked. Mean excess: \hydisoboleExTwoSixExcess{},
+\textbf{l}, The \hydnIsoboles{} isobole grids as observed fitness, white at none, with
+the cells that grew marked and each rule's front drawn where its predicted fitness
+crosses the growth threshold: Bliss in red, Loewe in purple. Mean observed minus Bliss
+over the \hydisoboleExTwoSixCells{} interior cells: \hydisoboleExTwoSixExcess{},
 \hydisoboleExTwoSevenExcess{} and \hydisoboleExTwoEightExcess{}, the last a single run
 with growth islands and flagged. Dotted, the model's front after the monotone closure:
 it sits at the grid's edge on every run, because a head that predicts the same fitness
@@ -135,9 +142,16 @@ at every dose calls every cell alive; the closure drops
 \toprule
 \multicolumn{2}{@{}l}{\textbf{Sources for \cref{fig:main}}} \\
 \midrule
-a & Nothing from a file; a layout of the proposed model. Status: idea. \\
-b & \file{033/store_axes.csv}, \file{033/pool_totals.csv}, \file{wetlab_wells.csv}.
-Status: on file. \\
+a & \file{profile_fingerprint_check.csv} (the curated SMILES) and
+\file{scripts/mixture_data.py} \texttt{IDENTITY\_GAP\_SMILES} for formic and lactic
+acid; \file{single_agent_fits.csv} for the half-maximal doses. The structures are
+RDKit 2D coordinates drawn as lines. Status: on file. \\
+b & \file{results/mixture-delta/r3_vanhophetwil_e150_p0/*_f0_counts.csv}, the
+per-source counts \file{scripts/train_mixture.py} writes beside every run; the culture
+conditions are the loaders' sourced values (\file{vanacloig2022.py},
+\file{hoepfner2014.py}, \file{hillenmeyer2008.py}, \file{wildenhain2015.py},
+\file{private_torchcell/bioscreen.py}; the Bioscreen archive states no shaking, so
+``shaken'' is the operator's statement). Status: on file. \\
 c & \file{038/ladder/ladder_r2_scores.csv}, \file{mixture_scores.csv}; the boxes are a
 layout. Status: idea. \\
 d & \file{038/ladder/ladder_r2_summary.csv}, centered target, full compound count.

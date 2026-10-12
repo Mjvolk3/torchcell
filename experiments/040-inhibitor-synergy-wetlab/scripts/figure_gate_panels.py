@@ -68,9 +68,12 @@ from matplotlib.colors import LinearSegmentedColormap, Normalize  # noqa: E402
 from matplotlib.lines import Line2D  # noqa: E402
 from matplotlib.patches import FancyArrowPatch, FancyBboxPatch, Patch  # noqa: E402
 from matplotlib.ticker import MultipleLocator  # noqa: E402
+from rdkit import Chem  # noqa: E402
+from rdkit.Chem import AllChem  # noqa: E402
 from sklearn.metrics import roc_auc_score  # noqa: E402
 
 sys.path.insert(0, osp.dirname(osp.abspath(__file__)))
+from mixture_data import IDENTITY_GAP_SMILES  # noqa: E402
 from mixture_rules import monotone_alive  # noqa: E402
 
 from torchcell.timestamp import timestamp  # noqa: E402
@@ -162,6 +165,10 @@ RED = PLOT_PALETTE[1]
 #: to palette red for a signed one. No amber or yellow colormap anywhere.
 CMAP_PLAIN = LinearSegmentedColormap.from_list("plain", ["#FFFFFF", SLATE], N=256)
 CMAP_SIGNED = LinearSegmentedColormap.from_list("signed", [BLUE, "#FFFFFF", RED], N=256)
+#: observed fitness on the isobole grids: white at none, the measured color at full
+CMAP_FITNESS = LinearSegmentedColormap.from_list(
+    "fitness", ["#FFFFFF", SRC_COLOR["measured"]], N=256
+)
 
 #: Figure status symbols, a set of their own so they cannot be read as the section
 #: status glyphs (check, square, cross), which are the author's approval marks.
@@ -325,6 +332,32 @@ class Reads:
         self.curve_enc = self.folds(osp.join(R038, "factorized", "r17_curve"))
         self.cgt_compounds = self.compound_scores()
         self.convergence = self.csv(osp.join(R040, "r3_convergence_arms.csv"))
+        #: what one four-source run of the mixture trainer read, per source: the cells,
+        #: genes, compounds and conditions it trains on, and the host records by split
+        #: (``train_mixture.py`` writes ``<name>_counts.csv`` beside every run's scores;
+        #: the counts are the whole source and do not depend on the fold)
+        self.counts = self.csv(
+            sorted(
+                glob.glob(
+                    osp.join(
+                        R040,
+                        "mixture-delta",
+                        "r3_vanhophetwil_e150_p0",
+                        "*_f0_counts.csv",
+                    )
+                )
+            )[0]
+        )
+        #: the curated-identity SMILES of every profiled compound; formic and lactic
+        #: acid carry an identity gap and are the trainer's own SMILES
+        self.smiles = {
+            r.compound: r.smiles
+            for r in self.csv(
+                osp.join(R040, "profile_fingerprint_check.csv")
+            ).itertuples()
+            if isinstance(r.smiles, str)
+        }
+        self.smiles.update(IDENTITY_GAP_SMILES)
 
     def compound_scores(self) -> pd.DataFrame:
         """Every held-out compound's score from every round-3 and round-4 run."""
@@ -1042,118 +1075,258 @@ def concept_marks(ax: Any, marks: list[tuple[float, float, str]]) -> None:
 # -------------------------------------------------------------------- the main sheet
 
 
-def draw_concept_inset(ax: Any, R: Reads) -> None:
-    """Panel a: the task in one strip, the concept sheet's first block compressed."""
-    blank(ax, 100, 46)
-    box(
-        ax,
-        1,
-        33,
-        44,
-        11,
-        "a compound\nand its molar dose",
-        SRC_COLOR["measured"],
-        SRC_FILL["measured"],
-        fs=4.4,
+def structure(ax: Any, smiles: str, cx: float, cy: float, width: float) -> None:
+    """One skeletal structure as vector lines, centered on (cx, cy), ``width`` wide.
+
+    RDKit lays the molecule out (its 2D coordinates, Kekulized so a furan ring draws
+    with explicit double bonds); the bonds are matplotlib lines, so the structure stays
+    vector in the SVG like every other mark, and the heteroatoms are text. Carbons are
+    the vertices, as in a skeletal formula.
+    """
+    mol = Chem.MolFromSmiles(smiles)
+    assert mol is not None, smiles
+    Chem.Kekulize(mol, clearAromaticFlags=True)
+    AllChem.Compute2DCoords(mol)
+    conf = mol.GetConformer()
+    xy = np.array(
+        [
+            [conf.GetAtomPosition(i).x, conf.GetAtomPosition(i).y]
+            for i in range(mol.GetNumAtoms())
+        ]
     )
-    box(
-        ax,
-        1,
-        18,
-        44,
-        11,
-        "a strain: a deletion, or\nthe bAID host with none",
-        SRC_COLOR["measured"],
-        SRC_FILL["measured"],
-        fs=4.4,
-    )
-    arrow(ax, 45, 38, 54, 30)
-    arrow(ax, 45, 23, 54, 26)
-    box(
-        ax,
+    xy -= xy.mean(axis=0)
+    span = max(np.ptp(xy[:, 0]), 1.0)
+    scale = width / span
+    xy = xy * scale + np.array([cx, cy])
+    rings = [set(r) for r in mol.GetRingInfo().AtomRings()]
+    for bond in mol.GetBonds():
+        i, j = bond.GetBeginAtomIdx(), bond.GetEndAtomIdx()
+        p, q = xy[i], xy[j]
+        ax.plot([p[0], q[0]], [p[1], q[1]], color="black", linewidth=0.5, zorder=3)
+        if bond.GetBondTypeAsDouble() == 2.0:
+            d = q - p
+            n = np.array([-d[1], d[0]]) / np.linalg.norm(d) * 0.13 * scale
+            ring = next((r for r in rings if i in r and j in r), None)
+            if ring is not None:
+                # the second line goes inside the ring, toward its center, and is
+                # shortened so it reads as a ring double bond
+                center = xy[list(ring)].mean(axis=0)
+                if np.dot(center - (p + q) / 2, n) < 0:
+                    n = -n
+                p2, q2 = p + n + 0.15 * d, q + n - 0.15 * d
+            else:
+                p2, q2 = p + n, q + n
+            ax.plot(
+                [p2[0], q2[0]], [p2[1], q2[1]], color="black", linewidth=0.5, zorder=3
+            )
+    for atom in mol.GetAtoms():
+        if atom.GetSymbol() == "C":
+            continue
+        label = atom.GetSymbol() + ("H" if atom.GetTotalNumHs() == 1 else "")
+        x, y = xy[atom.GetIdx()]
+        ax.text(
+            x,
+            y,
+            label,
+            fontsize=4.4,
+            ha="center",
+            va="center",
+            zorder=4,
+            bbox={"boxstyle": "square,pad=0.08", "facecolor": "white", "linewidth": 0},
+        )
+
+
+#: The six inhibitors as the archive and the loaders name them, in the two families a
+#: hydrolysate carries them in: the furan aldehydes from sugar dehydration, and the
+#: weak acids (``INHIB`` order within each family).
+INHIB_FAMILY = {
+    "furan aldehydes": ["FF", "HMF"],
+    "weak acids": ["AA", "FA", "LVA", "LA"],
+}
+
+
+def draw_molecules(ax: Any, R: Reads) -> None:
+    """Panel a: the six inhibitors drawn, with the host's half-maximal dose under each."""
+    blank(ax, 100, 50)
+    fits = {ab: R.fit("ex21", ab) for ab in INHIB}
+    # the two furans sit on the upper row with the pretreatment note beside them; the
+    # four acids share the lower row. (center x, center y, drawn width)
+    placements = {
+        "FF": (13, 38, 13),
+        "HMF": (38, 38, 19),
+        "AA": (11, 13, 10),
+        "FA": (34, 13, 8),
+        "LVA": (60, 13, 18),
+        "LA": (86, 13, 13),
+    }
+    for family, y_label in (("furan aldehydes", 49), ("weak acids", 24.5)):
+        ax.text(
+            1, y_label, family, fontsize=4.6, style="italic", ha="left", va="center"
+        )
+    for ab, (cx, cy, w) in placements.items():
+        structure(ax, R.smiles[INHIB_LONG[ab]], cx, cy + 2.0, w)
+        fit = fits[ab]
+        ax.text(
+            cx,
+            cy - 6.5,
+            f"{INHIB_NAME[ab]}\nIC50 {float(fit.ic50_g_per_l):.2g} g/L",
+            fontsize=4.2,
+            ha="center",
+            va="top",
+            linespacing=1.15,
+        )
+    ax.text(
         54,
-        18,
-        44,
-        26,
-        "cell graph transformer:\na compound token in front\nof the gene tokens",
-        SRC_COLOR["cgt"],
-        SRC_FILL["cgt"],
-        fs=4.4,
+        38,
+        "dilute-acid pretreatment of\nlignocellulose: pentoses dehydrate\n"
+        "to furfural, hexoses to 5-HMF;\n5-HMF opens to levulinic and\n"
+        "formic acid; acetyl groups release\nacetic acid. The host meets\n"
+        "them together, at once.",
+        fontsize=4.0,
+        ha="left",
+        va="center",
+        linespacing=1.2,
     )
-    box(
-        ax,
-        1,
-        2,
-        44,
-        11,
-        "read at the deleted genes:\nthe deletion profile",
-        SRC_COLOR["cgt"],
-        "white",
-        fs=4.4,
-    )
-    box(
-        ax,
-        54,
-        2,
-        44,
-        11,
-        "read at the mean over genes:\nthe host's growth",
-        SRC_COLOR["cgt"],
-        "white",
-        fs=4.4,
-    )
-    arrow(ax, 64, 18, 40, 13)
-    arrow(ax, 82, 18, 82, 13)
-    title(ax, "the task: a compound as a token the genes read")
+    title(ax, "the six inhibitors, the host's IC50 under each")
+
+
+#: Culture condition of each gene-level source and of the host readout, from the
+#: loaders' sourced values: vanacloig2022.py ``AEROBICITY``/``STATIC_CULTURE``,
+#: hoepfner2014.py ``shaking_rpm`` (550) and ``aerobicity``, hillenmeyer2008.py (the SOM
+#: states no vessel, volume or shaking; aerobicity is the schema default),
+#: wildenhain2015.py ``STATIC_INCUBATION_RPM`` (0) and ``aerobicity``, and
+#: private_torchcell/bioscreen.py (aerobic liquid YPD at 30 C; the archive states no
+#: shaking, ``SHAKING_GAP``; the Bioscreen C is run shaken, per the operator).
+CULTURE = {
+    "vanacloig": "anaerobic, static, SynBase",
+    "hoepfner_hop": "aerobic, 550 rpm, YPD",
+    "hillenmeyer_het": "YPD; aeration not stated",
+    "wildenhain": "aerobic, static, SC",
+    "host": "aerobic, shaken (operator), YPD",
+}
+SOURCE_TITLE = {
+    "vanacloig": "Vanacloig 2022, the task",
+    "hoepfner_hop": "Hoepfner 2014 HOP",
+    "hillenmeyer_het": "Hillenmeyer 2008 HET",
+    "wildenhain": "Wildenhain 2015",
+}
+HOST_TITLE = {
+    "host_anchor": "public IC30 anchors",
+    "host_ex21": "ex21 single-agent titration",
+    "host_ex23": "ex23 combinations",
+    "host_isobole": "ex26 to ex28 isobole grids",
+}
 
 
 def draw_sources(ax: Any, R: Reads) -> None:
-    """Panel b: what is trained on, compounds per source with the cells annotated."""
-    wc = wet_counts(R)
-    axes_df = R.axes.copy()
-    axes_df = axes_df.sort_values("compounds", ascending=False)
-    labels = list(axes_df.dataset) + ["Bioscreen 2021 (private)"]
-    counts = list(axes_df.compounds.astype(int)) + [len(INHIB)]
-    cells = list(axes_df.cells.astype(int)) + [wc["n_wells"]]
-    units = ["cells"] * len(axes_df) + ["wells"]
-    srcs = ["measured"] * len(labels)
-    y = np.arange(len(labels))[::-1]
-    for yi, c, n, unit, src in zip(y, counts, cells, units, srcs):
+    """Panel b: what the mixture trainer reads, per source, with its culture condition."""
+    c = R.counts.set_index("source")
+    rows_: list[tuple[str, str, int, str, bool]] = []
+    for src in ["vanacloig", "hoepfner_hop", "hillenmeyer_het", "wildenhain"]:
+        r = c.loc[src]
+        detail = (
+            f"{int(r.n_cells):,} cells, {int(r.n_genes):,} genes"
+            if r.n_conditions == r.n_compounds
+            else f"{int(r.n_cells):,} cells, {int(r.n_genes):,} genes, "
+            f"{int(r.n_conditions)} conditions"
+        )
+        rows_.append(
+            (
+                SOURCE_TITLE[src],
+                f"{detail}\n{CULTURE[src]}",
+                int(r.n_compounds),
+                src,
+                True,
+            )
+        )
+    for split in ["host_anchor", "host_ex21", "host_ex23", "host_isobole"]:
+        r = c.loc[split]
+        unit = "conditions" if split == "host_anchor" else "wells"
+        n = int(r.n_conditions) if split == "host_anchor" else int(r.n_cells)
+        detail = f"{n:,} {unit}" + (
+            f", {int(r.n_conditions)} conditions" if split != "host_anchor" else ""
+        )
+        trained = split in ("host_anchor", "host_ex21")
+        rows_.append((HOST_TITLE[split], detail, int(r.n_compounds), split, trained))
+    # the four gene-level sources on top, a gap, then the host records by split
+    y = np.array([9, 8, 7, 6, 3, 2, 1, 0], dtype=float)
+    for yi, (_label, detail, n_cmp, _src, trained) in zip(y, rows_):
         ax.barh(
             yi,
-            c,
+            n_cmp,
             height=0.7,
-            color=SRC_COLOR[src],
+            color=SRC_COLOR["measured"] if trained else SRC_FILL["measured"],
             edgecolor="black",
             linewidth=0.4,
             zorder=2,
         )
         ax.text(
-            c * 1.25,
+            n_cmp * 1.3,
             yi,
-            f"{n:,} {unit}",
-            fontsize=4.2,
+            detail,
+            fontsize=3.9,
             ha="left",
             va="center",
             color="black",
+            linespacing=1.1,
             zorder=3,
         )
     ax.set_yticks(y)
-    ax.set_yticklabels(labels, fontsize=4.6)
+    ax.set_yticklabels([r[0] for r in rows_], fontsize=4.2)
+    ax.set_ylim(-0.6, 9.6)
     ax.set_xscale("log")
-    ax.set_xlim(0.7, 2.5e4)
+    ax.set_xlim(0.7, 3e6)
     ax.set_xlabel("compounds in the source")
     ax.grid(axis="x", which="major", color="#DDDDDD", linewidth=0.3, zorder=0)
     ax.set_axisbelow(True)
-    num(
-        "nVanacloigCompounds",
-        int(axes_df[axes_df.dataset.str.startswith("Vanacloig")].compounds.iloc[0]),
+    ax.text(
+        0.85,
+        4.4,
+        "the host readout, " + CULTURE["host"],
+        fontsize=4.2,
+        style="italic",
+        ha="left",
+        va="center",
     )
-    title(ax, "what is trained on, and what is held back")
+    v = c.loc["vanacloig"]
+    num("nVanacloigCompounds", int(v.n_compounds))
+    num("nVanacloigCells", int(v.n_cells))
+    num("nVanacloigGenes", int(v.n_genes))
+    num(
+        "nFourSourceCells",
+        int(
+            c.loc[
+                ["vanacloig", "hoepfner_hop", "hillenmeyer_het", "wildenhain"]
+            ].n_cells.sum()
+        ),
+    )
+    num("nHoepfnerCells", int(c.loc["hoepfner_hop"].n_cells))
+    num("nHillenmeyerCells", int(c.loc["hillenmeyer_het"].n_cells))
+    num("nWildenhainCells", int(c.loc["wildenhain"].n_cells))
+    num("nAnchorsFour", int(c.loc["host_anchor"].n_conditions))
+    n = panel_legend(
+        ax,
+        [
+            Patch(
+                facecolor=SRC_COLOR["measured"],
+                edgecolor="black",
+                linewidth=0.4,
+                label="trained on",
+            ),
+            Patch(
+                facecolor=SRC_FILL["measured"],
+                edgecolor="black",
+                linewidth=0.4,
+                label="held out, the wet-lab test",
+            ),
+        ],
+        ncol=2,
+    )
+    title(ax, "what the trainer reads, and under what culture", n)
 
 
 def draw_evaluation(ax: Any, R: Reads) -> None:
-    """Panel c: the evaluation scheme, public folds beside the wet-lab test."""
+    """Panel c: the model in one strip, and how it is scored on each side."""
     blank(ax, 100, 46)
     wc = wet_counts(R)
     loewe = R.score("served", "all", "loewe_ex21")
@@ -1163,52 +1336,70 @@ def draw_evaluation(ax: Any, R: Reads) -> None:
     box(
         ax,
         1,
+        33,
+        28,
+        12,
+        "a compound token\nwith its\nlog-molar dose",
+        SRC_COLOR["measured"],
+        SRC_FILL["measured"],
+        fs=4.0,
+    )
+    arrow(ax, 29, 39, 33, 39)
+    box(
+        ax,
+        33,
+        33,
+        32,
+        12,
+        "cell graph\ntransformer: the token\nin front of the genes",
+        SRC_COLOR["cgt"],
+        SRC_FILL["cgt"],
+        fs=4.0,
+    )
+    arrow(ax, 65, 41, 69, 42.5)
+    arrow(ax, 65, 37, 69, 35.5)
+    box(
+        ax,
+        69,
+        39.5,
         30,
+        5.5,
+        "deleted genes: a profile",
+        SRC_COLOR["cgt"],
+        "white",
+        fs=4.0,
+    )
+    box(
+        ax, 69, 33, 30, 5.5, "gene mean: host growth", SRC_COLOR["cgt"], "white", fs=4.0
+    )
+    box(
+        ax,
+        1,
+        17,
         98,
-        14,
+        13,
         f"public screens: compound-cold folds, {n_fit} compounds fitted,\n"
-        "the held-out compound's centered Spearman against its ceiling",
+        "the held-out compound's centered Spearman against its ceiling;\n"
+        "the bar is nested ridge on fingerprint counts",
         SRC_COLOR["ridge"],
         SRC_FILL["ridge"],
-        fs=4.4,
-    )
-    box(
-        ax,
-        1,
-        15,
-        47,
-        12,
-        f"growth over {wc['n_combinations']}\ncombinations: AUROC",
-        SRC_COLOR["loewe"],
-        SRC_FILL["loewe"],
-        fs=4.4,
-    )
-    box(
-        ax,
-        52,
-        15,
-        47,
-        12,
-        f"fitness over the {wc['n_grew_served']}\nthat grew: Spearman",
-        SRC_COLOR["bliss"],
-        SRC_FILL["bliss"],
-        fs=4.4,
+        fs=4.2,
     )
     box(
         ax,
         1,
         1,
         98,
-        11,
-        f"the bar a model must beat: Loewe at AUROC {loewe.auroc:.3f}, "
-        f"Bliss at Spearman {bliss.spearman:.3f}",
-        "black",
-        "white",
-        fs=4.4,
+        13,
+        f"wet lab: growth over {wc['n_combinations']} combinations (AUROC) and fitness\n"
+        f"over the {wc['n_grew_served']} that grew (Spearman), against the two rules;\n"
+        f"the bars are Loewe at AUROC {loewe.auroc:.3f} and Bliss at Spearman "
+        f"{bliss.spearman:.3f}",
+        SRC_COLOR["loewe"],
+        SRC_FILL["loewe"],
+        fs=4.2,
     )
-    arrow(ax, 25, 15, 25, 12)
-    arrow(ax, 75, 15, 75, 12)
-    title(ax, "how a model is scored, and against what")
+    title(ax, "the model, and how it is scored")
 
 
 def draw_ladder(ax: Any, R: Reads) -> None:
@@ -1789,13 +1980,13 @@ def draw_combinations(ax: Any, R: Reads) -> None:
 
 
 def draw_isoboles(ax: Any, R: Reads) -> None:
-    """Panel l: the three isobole grids as excess over Bliss, with the Loewe front."""
+    """Panel l: the three isobole grids as observed fitness, with each rule's front."""
     cells = R.isobole_cells
     runs = list(R.isobole_sum.run)
     # Each run has its OWN dose ladder. Indexing every run into one pooled ladder left
     # each grid as a few sparse stripes, which is what a shared axis costs here.
     gap = 1.6
-    norm = Normalize(vmin=-0.6, vmax=0.6)
+    norm = Normalize(vmin=0.0, vmax=1.2)
     x0 = 0.0
     ny = 0
     for run in runs:
@@ -1811,7 +2002,7 @@ def draw_isoboles(ax: Any, R: Reads) -> None:
                     (x0 + i, j),
                     1,
                     1,
-                    facecolor=CMAP_SIGNED(norm(float(r.excess_over_bliss))),
+                    facecolor=CMAP_FITNESS(norm(float(r.observed_mean))),
                     edgecolor="#CCCCCC",
                     linewidth=0.2,
                     zorder=2,
@@ -1826,23 +2017,40 @@ def draw_isoboles(ax: Any, R: Reads) -> None:
                     color="black",
                     zorder=4,
                 )
-        # The Loewe front is where the rule's predicted fitness crosses the growth
-        # threshold, not where it is merely positive: the rule predicts a fitness for
-        # every cell, so a positive-value test puts the front on the grid's edge.
-        front = sub[
-            sub.loewe >= float(R.isobole_sum[R.isobole_sum.run == run].tau.iloc[0])
-        ]
-        if len(front):
-            edge = front.groupby("acetic_acid_g_per_l").inhibitor_g_per_l.max()
-            xs = [x0 + doses_x.index(v) + 1.0 for v in edge.to_numpy()]
-            ys = [doses_y.index(v) + 0.5 for v in edge.index.to_numpy()]
-            ax.plot(xs, ys, color=SRC_COLOR["loewe"], linewidth=0.8, zorder=5)
+        ax.add_patch(
+            plt.Rectangle(
+                (x0, 0),
+                nx,
+                ny,
+                facecolor="none",
+                edgecolor="black",
+                linewidth=0.9,
+                zorder=6,
+            )
+        )
         srow = R.isobole_sum[R.isobole_sum.run == run].iloc[0]
+        tau = float(srow.tau)
+        # A rule's front is where its predicted fitness crosses the growth threshold,
+        # not where it is merely positive: the rule predicts a fitness for every cell,
+        # so a positive-value test puts the front on the grid's edge.
+        for column, src, style in (("bliss", "bliss", "-"), ("loewe", "loewe", "-")):
+            front = sub[sub[column] >= tau]
+            if len(front):
+                edge = front.groupby("acetic_acid_g_per_l").inhibitor_g_per_l.max()
+                xs = [x0 + doses_x.index(v) + 1.0 for v in edge.to_numpy()]
+                ys = [doses_y.index(v) + 0.5 for v in edge.index.to_numpy()]
+                ax.plot(
+                    xs,
+                    ys,
+                    color=SRC_COLOR[src],
+                    linewidth=0.8,
+                    linestyle=style,
+                    zorder=5,
+                )
         # The model's front: its predicted fitness per cell against the same growth
         # threshold, then the monotone closure (growth never returns as either dose
         # rises), so the front is read on the rules' own axis; the cells the closure
         # drops are the predicted surface's growth islands.
-        tau = float(srow.tau)
         hp = R.host_mean(MODEL_ARM)
         hp = hp[hp.run == run]
         grid = np.full((len(doses_y), len(doses_x)), np.nan)
@@ -1892,6 +2100,7 @@ def draw_isoboles(ax: Any, R: Reads) -> None:
         num(f"isobole{key}Lo", float(srow.mean_excess_lo))
         num(f"isobole{key}Hi", float(srow.mean_excess_hi))
         num(f"isobole{key}Cells", int(srow.n_interior_cells))
+        num(f"isobole{key}Grew", int(srow.n_interior_grew))
         num(f"isobole{key}BlissGrowNone", int(srow.n_interior_bliss_grow_observed_none))
         num(f"isobole{key}LoeweGrowNone", int(srow.n_interior_loewe_grow_observed_none))
         x0 += nx + gap
@@ -1900,14 +2109,17 @@ def draw_isoboles(ax: Any, R: Reads) -> None:
     ax.set_xticks([])
     ax.set_yticks([])
     ax.set_xlabel("inhibitor dose increasing to the right, acetic acid upward")
-    sm = plt.cm.ScalarMappable(cmap=CMAP_SIGNED, norm=norm)
+    sm = plt.cm.ScalarMappable(cmap=CMAP_FITNESS, norm=norm)
     cb = ax.figure.colorbar(sm, ax=ax, fraction=0.028, pad=0.015)
-    cb.set_label("observed minus Bliss", fontsize=4.6)
+    cb.set_label("observed fitness", fontsize=4.6)
     cb.ax.tick_params(labelsize=4.4, length=1.5)
     cb.outline.set_linewidth(0.4)
     n = panel_legend(
         ax,
         [
+            Line2D(
+                [], [], color=SRC_COLOR["bliss"], linewidth=0.8, label="Bliss front"
+            ),
             Line2D(
                 [], [], color=SRC_COLOR["loewe"], linewidth=0.8, label="Loewe front"
             ),
@@ -1931,7 +2143,7 @@ def draw_isoboles(ax: Any, R: Reads) -> None:
         ],
         ncol=2,
     )
-    title(ax, "the three isobole grids", n)
+    title(ax, "the three isobole grids: observed fitness, each rule's front", n)
 
 
 def fig_main(R: Reads) -> dict[str, str]:
@@ -1939,7 +2151,7 @@ def fig_main(R: Reads) -> dict[str, str]:
     fig = new_sheet(214)
     fig.get_layout_engine().set(rect=(0, 0.012, 1, 0.962))
     axes = rows(fig, 4, 3)
-    draw_concept_inset(axes[0], R)
+    draw_molecules(axes[0], R)
     draw_sources(axes[1], R)
     draw_evaluation(axes[2], R)
     draw_ladder(axes[3], R)
@@ -1966,7 +2178,7 @@ def fig_main(R: Reads) -> dict[str, str]:
             # panel does not draw it), f curve (encoder arm not rerun), g dose, h the
             # composition rule, i profiles (the transformer's are not scored yet),
             # j to l the wet lab (the rules are on file, the model is running).
-            "todo",
+            "ready",
             "ready",
             "todo",
             "ready",

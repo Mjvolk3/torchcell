@@ -495,10 +495,14 @@ def test_a_tolerance_gene_is_an_extra_copy_of_a_native_gene() -> None:
     assert perturbation.copy_number == 1.0
 
 
-def test_the_rfp_control_carries_an_unreported_source_organism() -> None:
-    """The reporter's origin is never stated, so it is the explicit sentinel."""
+def test_the_rfp_control_carries_a_typed_organism_gap() -> None:
+    """The reporter's origin is never stated, so it is a typed gap (#915)."""
     perturbation = foo.overexpression_perturbation("rfp", "rfp", "pBbS5k-rfp")
-    assert perturbation.source_organism == foo.SOURCE_ORGANISM_UNREPORTED
+    assert perturbation.source_organism is None
+    assert perturbation.gapped_fields() == {"source_organism"}
+    assert perturbation.provenance_gaps[0].note == foo.REPORTER_ORGANISM_GAP_NOTE
+    tolerance = foo.overexpression_perturbation("metR", "b3828", "pBbS5k-metR")
+    assert tolerance.provenance_gaps == []
     assert perturbation.is_heterologous is True
     assert perturbation.pathway_name == foo.PATHWAY_REPORTER
 

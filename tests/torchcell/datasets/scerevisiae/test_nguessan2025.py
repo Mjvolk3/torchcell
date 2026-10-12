@@ -24,7 +24,7 @@ from tests.torchcell.datasets.scerevisiae import _nguessan2025_release as rel
 from tests.torchcell.datasets.scerevisiae._boocock2025_release import (
     _write_genomes_tier,
 )
-from torchcell.data.experiment_dataset import RawSha256MismatchError
+from torchcell.data.experiment_dataset import Organism, RawSha256MismatchError
 from torchcell.datamodels.identity import media_identity
 from torchcell.datamodels.media import YPD_LIQUID
 from torchcell.datamodels.schema import (
@@ -713,24 +713,28 @@ def test_every_quote_names_its_pinned_file() -> None:
     assert spec["provenance"].citation_key == m.CITATION_KEY
 
 
-def test_the_store_is_held_out_of_the_runner_and_the_map() -> None:
-    """Registered, but neither verified by run_all nor served (#1050).
+def test_the_store_is_held_out_of_the_registry_the_runner_and_the_map() -> None:
+    """Not registered, verified by run_all or served until #1050 is fixed.
 
     The store builds and fails L4 marker_reference and mat_fixation: the deposited SNP
     positions are on BY4742_fixed.fasta, not on the S288C reference the records name.
-    Lifting the hold means moving ``VERIFICATION_SPEC`` into the runner registry and
-    mapping the adapter, which this test then refuses until it is rewritten.
+    Lifting the hold means registering the class, moving ``VERIFICATION_SPEC`` into the
+    runner registry and mapping the adapter, which this test then refuses until it is
+    rewritten.
     """
+    from torchcell.datasets.dataset_registry import dataset_registry
     from torchcell.knowledge_graphs.dataset_adapter_map import dataset_adapter_map
 
+    assert "Nguessan2025Dataset" not in dataset_registry
     assert "nguessan2025" not in runners.SEGREGANT_EXPRESSION_DATASETS
     assert m.Nguessan2025Dataset not in dataset_adapter_map
 
 
-def test_the_class_is_registered_under_its_name() -> None:
-    from torchcell.datasets.dataset_registry import dataset_registry
+def test_the_class_declares_its_organism() -> None:
+    from torchcell.data.experiment_dataset import dataset_organism
 
-    assert dataset_registry["Nguessan2025Dataset"] is m.Nguessan2025Dataset
+    assert "organism" in vars(m.Nguessan2025Dataset)
+    assert dataset_organism(m.Nguessan2025Dataset) is Organism.scerevisiae
 
 
 _LIBRARY = Path("/scratch/projects/torchcell-scratch")

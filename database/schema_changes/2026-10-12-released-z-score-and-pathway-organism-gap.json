@@ -2,9 +2,9 @@
   "record_version": 1,
   "slug": "released-z-score-and-pathway-organism-gap",
   "date": "2026-10-12",
-  "pr": null,
+  "pr": 1072,
   "author_kind": "agent",
-  "base_commit": "464c5cfc3d83fc6212e8b6a3d91da89e847d4b34",
+  "base_commit": "c6e6b671436428fdc6df90c71d077b63f715094e",
   "python_version": "3.13.0",
   "symbols": [
     {
@@ -13,8 +13,8 @@
       "kinds": [
         "additive_field"
       ],
-      "fingerprint_before": "6ffc88ac96e18215b5b87d4aa7b7be0a8c92f0825b03bc2cb69366b6544e9cb3",
-      "fingerprint_after": "107993f4a9c8cc7c09c2ed7f9b816c11f5759b8816f4af5d02ddbcf0ad35edc1",
+      "fingerprint_before": "feeebeb75826b959a01714ecdd6bb3add256abda902f72bb6deff7aec1c11aba",
+      "fingerprint_after": "8f3221dffe20606e12e311e4ada39da59bed34ee2c642ab044502931473debc9",
       "impact": "stale",
       "reasons": [
         "added optional field 'environment_response_z_score'",
@@ -99,6 +99,17 @@
       ]
     },
     {
+      "loader": "torchcell/datasets/pputida/banerjee2024.py",
+      "dataset_classes": [
+        "IsoprenolTiterBanerjee2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "HeterologousPathwayPerturbation"
+      ]
+    },
+    {
       "loader": "torchcell/datasets/pputida/carruthers2025.py",
       "dataset_classes": [
         "IsoprenolTiterCarruthers2025Dataset",
@@ -168,6 +179,17 @@
       ]
     },
     {
+      "loader": "torchcell/datasets/ecoli/baba2006_growth.py",
+      "dataset_classes": [
+        "GrowthYieldBaba2006Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype"
+      ]
+    },
+    {
       "loader": "torchcell/datasets/ecoli/caglar2017_doubling_time.py",
       "dataset_classes": [
         "DoublingTimeCaglar2017Dataset"
@@ -204,6 +226,17 @@
       "loader": "torchcell/datasets/ecoli/fang2025.py",
       "dataset_classes": [
         "CrispriGuideFfaEnrichmentFang2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/fitness_browser_ecoli.py",
+      "dataset_classes": [
+        "FitnessBrowserEcoliDataset"
       ],
       "served_classes": [],
       "impact": "stale",
@@ -323,6 +356,17 @@
       ]
     },
     {
+      "loader": "torchcell/datasets/ecoli/teteneva2024.py",
+      "dataset_classes": [
+        "RbTnseqTeteneva2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype"
+      ]
+    },
+    {
       "loader": "torchcell/datasets/ecoli/wang2015.py",
       "dataset_classes": [
         "EnvChemgenWang2015Dataset"
@@ -382,6 +426,17 @@
       "loader": "torchcell/datasets/pputida/borchert2024.py",
       "dataset_classes": [
         "RbTnseqBorchert2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/fitness_browser_putida.py",
+      "dataset_classes": [
+        "FitnessBrowserPutidaDataset"
       ],
       "served_classes": [],
       "impact": "stale",

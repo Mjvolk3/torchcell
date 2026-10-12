@@ -158,6 +158,11 @@
     <span class="n">UncertaintyType</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.systematic_name_currency</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SystematicNameGenome</span><span class="p">,</span>
+    <span class="n">sga_systematic_name_currency</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.scerevisiae.s288c</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCerevisiaeGenome</span>
 
 <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -243,6 +248,19 @@
 
 
 <span class="c1"># ============================================================================</span>
+<span class="c1"># Released systematic names (#893, #930, #979)</span>
+<span class="c1"># ============================================================================</span>
+<span class="c1"># Data File S1 names 35 strains by an ORF the R64-4-1 annotation no longer carries as a</span>
+<span class="c1"># locus. Every build checks each released systematic name against the injected genome</span>
+<span class="c1"># through ``systematic_name_currency``: a renamed ORF would map to its current name (none</span>
+<span class="c1"># of the 35 is a rename), and a retired ORF (7) or an ORF merged into a longer locus (28)</span>
+<span class="c1"># is refused with its typed reason. A refused strain's rows are removed AFTER the</span>
+<span class="c1"># reference noise is computed, so the reference stays the release's statistic and no</span>
+<span class="c1"># other record changes; the count and the names refused are written to</span>
+<span class="c1"># ``preprocess/systematic_name_ledger.json``.</span>
+
+
+<span class="c1"># ============================================================================</span>
 <span class="c1"># Fitness</span>
 <div class="viewcode-block" id="SmfCostanzo2016Dataset">
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.costanzo2016.SmfCostanzo2016Dataset.html#torchcell.datasets.scerevisiae.costanzo2016.SmfCostanzo2016Dataset">[docs]</a>
@@ -261,9 +279,11 @@
         <span class="n">io_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
         <span class="n">transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">pre_transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">genome</span><span class="p">:</span> <span class="n">SystematicNameGenome</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Initialize the SMF dataset under ``root`` via the base dataset."""</span>
+<span class="w">        </span><span class="sd">"""Initialize the SMF dataset; a build needs ``genome`` to check ORF names."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="o">=</span> <span class="n">genome</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">io_workers</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="nd">@property</span>
@@ -316,9 +336,12 @@
         <span class="p">(</span><span class="n">phenotype_reference_std_26</span><span class="p">,</span> <span class="n">phenotype_reference_std_30</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">compute_phenotype_reference_std</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
         <span class="p">)</span>
+        <span class="n">currency</span> <span class="o">=</span> <span class="n">sga_systematic_name_currency</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">currency</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="p">[</span><span class="s2">"Systematic gene name"</span><span class="p">])</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
         <span class="c1"># Save preprocssed df - mainly for quick stats</span>
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">currency</span><span class="o">.</span><span class="n">write_ledger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">)</span>
         <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"data.csv"</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Processing SMF Files..."</span><span class="p">)</span>
@@ -602,9 +625,11 @@
         <span class="n">io_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
         <span class="n">transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">pre_transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">genome</span><span class="p">:</span> <span class="n">SystematicNameGenome</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Initialize the dataset with optional subsetting and batched IO."""</span>
+<span class="w">        </span><span class="sd">"""Initialize the dataset; a build needs ``genome`` to check ORF names."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="o">=</span> <span class="n">genome</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">io_workers</span> <span class="o">=</span> <span class="n">io_workers</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">subset_n</span> <span class="o">=</span> <span class="n">subset_n</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="n">batch_size</span>
@@ -754,6 +779,11 @@
 
         <span class="c1"># Functions for data filtering... duplicates selection,</span>
         <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">preprocess_raw</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+        <span class="n">currency</span> <span class="o">=</span> <span class="n">sga_systematic_name_currency</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">currency</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+            <span class="n">df</span><span class="p">,</span> <span class="p">[</span><span class="s2">"Query Systematic Name"</span><span class="p">,</span> <span class="s2">"Array Systematic Name"</span><span class="p">]</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">currency</span><span class="o">.</span><span class="n">write_ledger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">)</span>
 
         <span class="c1"># Subset</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">subset_n</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -1001,9 +1031,11 @@
         <span class="n">io_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
         <span class="n">transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">pre_transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">genome</span><span class="p">:</span> <span class="n">SystematicNameGenome</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Initialize the dataset with optional subsetting and batched IO."""</span>
+<span class="w">        </span><span class="sd">"""Initialize the dataset; a build needs ``genome`` to check ORF names."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="o">=</span> <span class="n">genome</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">io_workers</span> <span class="o">=</span> <span class="n">io_workers</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">subset_n</span> <span class="o">=</span> <span class="n">subset_n</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="n">batch_size</span>
@@ -1129,6 +1161,11 @@
 
         <span class="c1"># Functions for data filtering... duplicates selection,</span>
         <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">preprocess_raw</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+        <span class="n">currency</span> <span class="o">=</span> <span class="n">sga_systematic_name_currency</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">currency</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+            <span class="n">df</span><span class="p">,</span> <span class="p">[</span><span class="s2">"Query Systematic Name"</span><span class="p">,</span> <span class="s2">"Array Systematic Name"</span><span class="p">]</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">currency</span><span class="o">.</span><span class="n">write_ledger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">)</span>
 
         <span class="c1"># Subset</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">subset_n</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -1327,10 +1364,17 @@
     <span class="n">load_dotenv</span><span class="p">()</span>
     <span class="n">DATA_ROOT</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"DATA_ROOT"</span><span class="p">)</span>
     <span class="k">assert</span> <span class="n">DATA_ROOT</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">"DATA_ROOT must be set"</span>
+    <span class="n">genome</span> <span class="o">=</span> <span class="n">SCerevisiaeGenome</span><span class="p">(</span>
+        <span class="n">genome_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_ROOT</span><span class="p">,</span> <span class="s2">"data/sgd/genome"</span><span class="p">),</span>
+        <span class="n">go_root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_ROOT</span><span class="p">,</span> <span class="s2">"data/go"</span><span class="p">),</span>
+        <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
 
     <span class="c1"># Single mutant fitness</span>
     <span class="n">dataset</span> <span class="o">=</span> <span class="n">SmfCostanzo2016Dataset</span><span class="p">(</span>
-        <span class="n">root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_ROOT</span><span class="p">,</span> <span class="s2">"data/torchcell/smf_costanzo2016"</span><span class="p">),</span> <span class="n">io_workers</span><span class="o">=</span><span class="mi">10</span>
+        <span class="n">root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_ROOT</span><span class="p">,</span> <span class="s2">"data/torchcell/smf_costanzo2016"</span><span class="p">),</span>
+        <span class="n">io_workers</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+        <span class="n">genome</span><span class="o">=</span><span class="n">genome</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dataset</span><span class="p">))</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">dataset</span><span class="p">[</span><span class="mi">100</span><span class="p">])</span>
@@ -1338,6 +1382,7 @@
     <span class="c1"># Double mutant fitness</span>
     <span class="n">dataset</span> <span class="o">=</span> <span class="n">DmfCostanzo2016Dataset</span><span class="p">(</span>
         <span class="n">root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_ROOT</span><span class="p">,</span> <span class="s2">"data/torchcell/dmf_costanzo2016_1e5"</span><span class="p">),</span>
+        <span class="n">genome</span><span class="o">=</span><span class="n">genome</span><span class="p">,</span>
         <span class="n">io_workers</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
         <span class="n">batch_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e4</span><span class="p">),</span>
         <span class="n">subset_n</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e5</span><span class="p">),</span>
@@ -1347,6 +1392,7 @@
 
     <span class="n">dataset</span> <span class="o">=</span> <span class="n">DmfCostanzo2016Dataset</span><span class="p">(</span>
         <span class="n">root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_ROOT</span><span class="p">,</span> <span class="s2">"data/torchcell/dmf_costanzo2016_5e5"</span><span class="p">),</span>
+        <span class="n">genome</span><span class="o">=</span><span class="n">genome</span><span class="p">,</span>
         <span class="n">io_workers</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
         <span class="n">batch_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e4</span><span class="p">),</span>
         <span class="n">subset_n</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">5e5</span><span class="p">),</span>
@@ -1356,6 +1402,7 @@
 
     <span class="n">dataset</span> <span class="o">=</span> <span class="n">DmfCostanzo2016Dataset</span><span class="p">(</span>
         <span class="n">root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_ROOT</span><span class="p">,</span> <span class="s2">"data/torchcell/dmf_costanzo2016"</span><span class="p">),</span>
+        <span class="n">genome</span><span class="o">=</span><span class="n">genome</span><span class="p">,</span>
         <span class="n">io_workers</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
         <span class="n">batch_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e4</span><span class="p">),</span>
     <span class="p">)</span>
@@ -1365,6 +1412,7 @@
     <span class="c1"># Interactions</span>
     <span class="n">dataset</span> <span class="o">=</span> <span class="n">DmiCostanzo2016Dataset</span><span class="p">(</span>
         <span class="n">root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_ROOT</span><span class="p">,</span> <span class="s2">"data/torchcell/dmi_costanzo2016_1e5"</span><span class="p">),</span>
+        <span class="n">genome</span><span class="o">=</span><span class="n">genome</span><span class="p">,</span>
         <span class="n">io_workers</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
         <span class="n">subset_n</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e5</span><span class="p">),</span>
     <span class="p">)</span>
@@ -1373,6 +1421,7 @@
 
     <span class="n">dataset</span> <span class="o">=</span> <span class="n">DmiCostanzo2016Dataset</span><span class="p">(</span>
         <span class="n">root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_ROOT</span><span class="p">,</span> <span class="s2">"data/torchcell/dmi_costanzo2016_5e5"</span><span class="p">),</span>
+        <span class="n">genome</span><span class="o">=</span><span class="n">genome</span><span class="p">,</span>
         <span class="n">io_workers</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
         <span class="n">subset_n</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">5e5</span><span class="p">),</span>
     <span class="p">)</span>
@@ -1380,7 +1429,9 @@
     <span class="nb">print</span><span class="p">(</span><span class="n">dataset</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 
     <span class="n">dataset</span> <span class="o">=</span> <span class="n">DmiCostanzo2016Dataset</span><span class="p">(</span>
-        <span class="n">root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_ROOT</span><span class="p">,</span> <span class="s2">"data/torchcell/dmi_costanzo2016"</span><span class="p">),</span> <span class="n">io_workers</span><span class="o">=</span><span class="mi">10</span>
+        <span class="n">root</span><span class="o">=</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_ROOT</span><span class="p">,</span> <span class="s2">"data/torchcell/dmi_costanzo2016"</span><span class="p">),</span>
+        <span class="n">io_workers</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+        <span class="n">genome</span><span class="o">=</span><span class="n">genome</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dataset</span><span class="p">))</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">dataset</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>

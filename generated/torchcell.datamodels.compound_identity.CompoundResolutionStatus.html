@@ -141,6 +141,8 @@
 <li><p><code class="docutils literal notranslate"><span class="pre">RESOLVED</span></code>: the table maps the name/CID to a structure (an InChIKey).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">RESOLVED_FROM_SMILES</span></code>: no table row, but the caller’s released SMILES
 parsed and yielded an InChIKey (the Hoepfner route).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">RESOLVED_FROM_INCHI</span></code>: no table row, but the caller’s released standard InChI
+parsed and its InChIKey is the hash of that string (the Piotrowski route).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">RESOLVED_MIXTURE</span></code>: identified as a substance by ChEBI and/or a PubChem CID,
 but no single-molecule InChIKey exists. Tunicamycin is at least ten homologues
 (ChEBI:29699); agar’s PubChem InChIKey belongs to the agarobiose repeat unit,

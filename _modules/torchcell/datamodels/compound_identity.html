@@ -166,6 +166,15 @@
 <span class="sd">concanamycin A's curated PubChem key and its SMILES-derived key differ in the stereo</span>
 <span class="sd">block. A curated row therefore always wins, and the derivation route is reported as</span>
 <span class="sd">``RESOLVED_FROM_SMILES``.</span>
+
+<span class="sd">A third route hashes a RELEASED standard InChI (:func:`inchikey_from_inchi`), for a</span>
+<span class="sd">dataset that publishes the InChI itself (Piotrowski 2017 Supplementary Data Set 4 prints an</span>
+<span class="sd">OpenBabel InChI beside each SMILES). The InChIKey is by definition the hash of the standard</span>
+<span class="sd">InChI, so hashing the released string reproduces the source's own identity, where parsing</span>
+<span class="sd">its SMILES and writing a new InChI adds a perception step: over Piotrowski's 11,919 rows</span>
+<span class="sd">carrying both, the two keys differ in 194 (176 in the protonation block only). The curated</span>
+<span class="sd">row outranks this route too, and the two derived routes are exclusive per call, never a</span>
+<span class="sd">fallback chain.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -219,6 +228,8 @@
 <span class="sd">    - ``RESOLVED``: the table maps the name/CID to a structure (an InChIKey).</span>
 <span class="sd">    - ``RESOLVED_FROM_SMILES``: no table row, but the caller's released SMILES</span>
 <span class="sd">      parsed and yielded an InChIKey (the Hoepfner route).</span>
+<span class="sd">    - ``RESOLVED_FROM_INCHI``: no table row, but the caller's released standard InChI</span>
+<span class="sd">      parsed and its InChIKey is the hash of that string (the Piotrowski route).</span>
 <span class="sd">    - ``RESOLVED_MIXTURE``: identified as a substance by ChEBI and/or a PubChem CID,</span>
 <span class="sd">      but no single-molecule InChIKey exists. Tunicamycin is at least ten homologues</span>
 <span class="sd">      (ChEBI:29699); agar's PubChem InChIKey belongs to the agarobiose repeat unit,</span>
@@ -235,6 +246,7 @@
 
     <span class="n">RESOLVED</span> <span class="o">=</span> <span class="s2">"RESOLVED"</span>
     <span class="n">RESOLVED_FROM_SMILES</span> <span class="o">=</span> <span class="s2">"RESOLVED_FROM_SMILES"</span>
+    <span class="n">RESOLVED_FROM_INCHI</span> <span class="o">=</span> <span class="s2">"RESOLVED_FROM_INCHI"</span>
     <span class="n">RESOLVED_MIXTURE</span> <span class="o">=</span> <span class="s2">"RESOLVED_MIXTURE"</span>
     <span class="n">UNRESOLVED_PUBLIC</span> <span class="o">=</span> <span class="s2">"UNRESOLVED_PUBLIC"</span>
     <span class="n">UNDEFINED_MIXTURE</span> <span class="o">=</span> <span class="s2">"UNDEFINED_MIXTURE"</span>
@@ -447,6 +459,25 @@
 
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">inchikey_from_inchi</span><span class="p">(</span><span class="n">inchi</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The InChIKey of a released standard InChI, or ``None`` if RDKit cannot read it.</span>
+
+<span class="sd">    The key is hashed from the RELEASED string (``InchiToInchiKey``), not from an InChI</span>
+<span class="sd">    regenerated off the parsed molecule, so it is the source's own identity. The InChI</span>
+<span class="sd">    library hashes any string it is handed, so the string is first read back into a</span>
+<span class="sd">    molecule (``MolFromInchi``) and refused when that fails; ``None`` is a measurement,</span>
+<span class="sd">    not a swallowed error. RDKit is imported lazily, as in :func:`inchikey_from_smiles`.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">rdkit</span><span class="w"> </span><span class="kn">import</span> <span class="n">Chem</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">rdkit.Chem</span><span class="w"> </span><span class="kn">import</span> <span class="n">inchi</span> <span class="k">as</span> <span class="n">rdkit_inchi</span>
+
+    <span class="n">molecule</span> <span class="o">=</span> <span class="n">Chem</span><span class="o">.</span><span class="n">MolFromInchi</span><span class="p">(</span><span class="n">inchi</span><span class="p">,</span> <span class="n">sanitize</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">treatWarningAsError</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>  <span class="c1"># type: ignore[no-untyped-call]  # RDKit untyped</span>
+    <span class="k">if</span> <span class="n">molecule</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">rdkit_inchi</span><span class="o">.</span><span class="n">InchiToInchiKey</span><span class="p">(</span><span class="n">inchi</span><span class="p">)</span>  <span class="c1"># type: ignore[no-untyped-call]  # RDKit untyped</span>
+    <span class="k">return</span> <span class="n">key</span> <span class="ow">or</span> <span class="kc">None</span>
+
+
 <div class="viewcode-block" id="resolve_compound_identity_from_smiles">
 <a class="viewcode-back" href="../../../generated/torchcell.datamodels.compound_identity.resolve_compound_identity_from_smiles.html#torchcell.datamodels.compound_identity.resolve_compound_identity_from_smiles">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">resolve_compound_identity_from_smiles</span><span class="p">(</span>
@@ -484,6 +515,7 @@
     <span class="n">roles</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">known_proprietary</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">derive_from_smiles</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">derive_from_inchi</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Compound</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Build a ``Compound`` fill-or-gap through the resolver (the loader entrypoint).</span>
 
@@ -496,7 +528,11 @@
 <span class="sd">    Structure fields merge ADDITIVELY: a caller-supplied field (hoepfner's ``smiles``,</span>
 <span class="sd">    wildenhain's ``pubchem_cid``) always wins; the resolver only fills what is still</span>
 <span class="sd">    ``None``. With ``derive_from_smiles=True`` an unmatched label whose SMILES parses</span>
-<span class="sd">    gets an RDKit-derived InChIKey, but a curated row always outranks that route.</span>
+<span class="sd">    gets an RDKit-derived InChIKey, but a curated row always outranks that route. With</span>
+<span class="sd">    ``derive_from_inchi=True`` an unmatched label whose released ``inchi`` reads back</span>
+<span class="sd">    gets the hash of that string instead (:func:`inchikey_from_inchi`); the two derived</span>
+<span class="sd">    routes are exclusive, so asking for both raises rather than chaining one behind the</span>
+<span class="sd">    other.</span>
 
 <span class="sd">    When no InChIKey can be filled, a typed ``ProvenanceGap`` is attached on</span>
 <span class="sd">    ``inchikey``: ``not_reported_by_primary`` when the absence is terminal (a vendor</span>
@@ -504,9 +540,27 @@
 <span class="sd">    ``deferred_pending_source_review`` (the growable worklist). The gap is asserted ONLY</span>
 <span class="sd">    on the ``None`` field, honoring the ``ProvenanceGapMixin`` invariant.</span>
 <span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">derive_from_smiles</span> <span class="ow">and</span> <span class="n">derive_from_inchi</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">"derive_from_smiles and derive_from_inchi are exclusive routes; pick one"</span>
+        <span class="p">)</span>
     <span class="n">resolution</span> <span class="o">=</span> <span class="n">resolve_compound_identity</span><span class="p">(</span>
         <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">pubchem_cid</span><span class="o">=</span><span class="n">pubchem_cid</span><span class="p">,</span> <span class="n">known_proprietary</span><span class="o">=</span><span class="n">known_proprietary</span>
     <span class="p">)</span>
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="n">derive_from_inchi</span>
+        <span class="ow">and</span> <span class="n">inchi</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="ow">and</span> <span class="n">resolution</span><span class="o">.</span><span class="n">inchikey</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="ow">and</span> <span class="ow">not</span> <span class="n">resolution</span><span class="o">.</span><span class="n">curated</span>
+    <span class="p">):</span>
+        <span class="n">from_inchi</span> <span class="o">=</span> <span class="n">inchikey_from_inchi</span><span class="p">(</span><span class="n">inchi</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">from_inchi</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">resolution</span> <span class="o">=</span> <span class="n">resolution</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span>
+                <span class="n">update</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s2">"status"</span><span class="p">:</span> <span class="n">CompoundResolutionStatus</span><span class="o">.</span><span class="n">RESOLVED_FROM_INCHI</span><span class="p">,</span>
+                    <span class="s2">"inchikey"</span><span class="p">:</span> <span class="n">from_inchi</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
     <span class="k">if</span> <span class="p">(</span>
         <span class="n">derive_from_smiles</span>
         <span class="ow">and</span> <span class="n">smiles</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>

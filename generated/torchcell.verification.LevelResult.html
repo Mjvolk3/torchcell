@@ -126,10 +126,31 @@
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">LevelResult</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level:</span> <span class="pre">~torchcell.verification.report.Level</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name:</span> <span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">passed:</span> <span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">message:</span> <span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">details:</span> <span class="pre">dict[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">~typing.Any]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchcell/verification/report.html#LevelResult"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.verification.LevelResult" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference external" href="https://pydantic.dev/docs/validation/latest/api/pydantic/base_model/#pydantic.BaseModel" title="(in Pydantic v0.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></a></p>
 <p>The outcome of a single L-level check.</p>
+<p><code class="docutils literal notranslate"><span class="pre">passed</span></code> is the rule’s own outcome (does the rule hold). What that outcome DOES is
+<a class="reference internal" href="#torchcell.verification.LevelResult.finding_class" title="torchcell.verification.LevelResult.finding_class"><code class="xref py py-attr docutils literal notranslate"><span class="pre">finding_class</span></code></a>, derived from the rule’s name, so a renamed result
+(<code class="docutils literal notranslate"><span class="pre">model_copy(update={&quot;name&quot;:</span> <span class="pre">...})</span></code>, which skips validation) is reclassified with
+it and no caller can pass a genome rule off as a gate.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="torchcell.verification.LevelResult.model_config">
 <span class="sig-name descname"><span class="pre">model_config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">ConfigDict</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'extra':</span> <span class="pre">'forbid'}</span></em><a class="headerlink" href="#torchcell.verification.LevelResult.model_config" title="Link to this definition"></a></dt>
 <dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchcell.verification.LevelResult.finding_class">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">finding_class</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">FindingClass</span></em><a class="headerlink" href="#torchcell.verification.LevelResult.finding_class" title="Link to this definition"></a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">gate</span></code> or <code class="docutils literal notranslate"><span class="pre">report</span></code>, from the rule’s name (<code class="xref py py-func docutils literal notranslate"><span class="pre">finding_class_of()</span></code>).</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchcell.verification.LevelResult.is_open_finding">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_open_finding</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)"><span class="pre">bool</span></a></em><a class="headerlink" href="#torchcell.verification.LevelResult.is_open_finding" title="Link to this definition"></a></dt>
+<dd><p>listed under the verdict, not failed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A report-class rule that does not hold</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>

@@ -121,16 +121,25 @@
 <span class="sd">and WHETHER it passed the universal L0-L4 record-level gate (``VerificationReport``</span>
 <span class="sd">of ``LevelResult``). The level-check building blocks that produce ``LevelResult``s</span>
 <span class="sd">live in ``torchcell.verification.levels``.</span>
+
+<span class="sd">Every rule result carries a typed :class:`FindingClass`. A ``gate`` rule tests the</span>
+<span class="sd">data's fidelity to its release and decides the verdict; a ``report`` rule compares the</span>
+<span class="sd">data with OUR genome reference and is listed under the verdict with its statistic,</span>
+<span class="sd">never failing a store. The class is a property of the rule, read from one registry</span>
+<span class="sd">(:data:`GENOME_REFERENCE_RULES`, :data:`GENOME_REFERENCE_RULE_PREFIXES`) by</span>
+<span class="sd">:func:`finding_class_of`, so a rule rendered by any verifier, a family runner or a</span>
+<span class="sd">loader's own gate is classified the same way.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mapping</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntEnum</span><span class="p">,</span> <span class="n">StrEnum</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Final</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">model_validator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">computed_field</span><span class="p">,</span> <span class="n">model_validator</span>
 
 
 <div class="viewcode-block" id="Level">
@@ -247,10 +256,95 @@
 
 
 
+<span class="k">class</span><span class="w"> </span><span class="nc">FindingClass</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""What a rule's outcome does to the store's verdict (owner, 2026-10-12).</span>
+
+<span class="sd">    The owner's rule, verbatim: "the data is the data!!!! it is what they reported ...</span>
+<span class="sd">    we don't drop raw data unless they themselves pull it! ... the genome is separate..</span>
+<span class="sd">    it doesn't gate anything... we do that at modeling time if it is an issue."</span>
+<span class="sd">    """</span>
+
+    <span class="c1">#: The data's fidelity to its release: L0 structure, L1 counts and uniqueness, L2</span>
+    <span class="c1">#: value fidelity to the released bytes and uncertainty sanity, L3 vocabulary,</span>
+    <span class="c1">#: reference, compound and media membership, L4 agreement with another release.</span>
+    <span class="c1">#: Every gate rule must hold for the store to PASS.</span>
+    <span class="n">gate</span> <span class="o">=</span> <span class="s2">"gate"</span>
+    <span class="c1">#: The data compared with OUR genome reference: a released name or position</span>
+    <span class="c1">#: against the annotation (containment, name currency, canonical spellings, locus</span>
+    <span class="c1">#: resolution, reference alleles at markers, MAT and cis positions, assembly and</span>
+    <span class="c1">#: parent pins). Reported with its statistic under the verdict; never a FAIL, and</span>
+    <span class="c1">#: never a reason to retire a store's build manifest.</span>
+    <span class="n">report</span> <span class="o">=</span> <span class="s2">"report"</span>
+
+
+<span class="c1">#: Rules whose subject is the genome reference rather than the data's fidelity to its</span>
+<span class="c1">#: release, by exact name. Each one keeps its computation; only what it gates changes.</span>
+<span class="n">GENOME_REFERENCE_RULES</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="c1"># verification.common (every family that passes a resolver or a gene universe);</span>
+        <span class="c1"># its ``measured_genes_present`` row reads no annotation (it asks whether any</span>
+        <span class="c1"># record carries a gene perturbation at all), so it stays a gate</span>
+        <span class="s2">"canonical_gene_names"</span><span class="p">,</span>
+        <span class="s2">"current_genome_genes"</span><span class="p">,</span>
+        <span class="c1"># yeast family verifiers: alleles, markers and positions on the R64 annotation,</span>
+        <span class="c1"># parent assemblies in the genomes tier, ids against the annotation's gene set</span>
+        <span class="s2">"marker_reference"</span><span class="p">,</span>
+        <span class="s2">"mat_fixation"</span><span class="p">,</span>
+        <span class="s2">"mat_orientation"</span><span class="p">,</span>
+        <span class="s2">"cis_concordance"</span><span class="p">,</span>
+        <span class="s2">"variant_reference"</span><span class="p">,</span>
+        <span class="s2">"parents_pinned"</span><span class="p">,</span>
+        <span class="s2">"induced_gene_containment"</span><span class="p">,</span>
+        <span class="s2">"s288c_gene_containment"</span><span class="p">,</span>
+        <span class="s2">"pangenome_orf_containment"</span><span class="p">,</span>
+        <span class="s2">"feature_containment"</span><span class="p">,</span>
+        <span class="s2">"deleted_gene_containment_sgd"</span><span class="p">,</span>
+        <span class="s2">"promoter_gene_is_a_locus"</span><span class="p">,</span>
+        <span class="c1"># bacterial loaders' own gates: stored identifiers against the pinned assembly</span>
+        <span class="s2">"promoter_genes_in_the_host_gene_universe"</span><span class="p">,</span>
+        <span class="s2">"stored_tags_are_loci"</span><span class="p">,</span>
+        <span class="s2">"stored_tags_are_loci_of_the_pinned_assembly"</span><span class="p">,</span>
+        <span class="s2">"stored_targets_are_loci_of_the_pinned_assembly"</span><span class="p">,</span>
+        <span class="s2">"stored_protein_keys_are_loci_of_the_pinned_assembly"</span><span class="p">,</span>
+        <span class="s2">"stored_loci_are_bw25113_loci_derived_from_the_released_b_number"</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+
+<span class="c1">#: Rule families one helper renders under several names: ``gene_containment_&lt;universe&gt;``</span>
+<span class="c1">#: (S288C, an assembly, a strain's locus tags, another store's deletion set keyed by</span>
+<span class="c1">#: resolved names), the protein and perturbed-locus containment rows, every</span>
+<span class="c1">#: ``assembly_pin*`` row (the record's pinned assembly is the genome reference itself),</span>
+<span class="c1">#: and ``no_viable_deletion_in_&lt;store&gt;`` (an essentiality annotation judged against</span>
+<span class="c1">#: another paper's deletion strains through the shared gene key: a gene-set judgment</span>
+<span class="c1">#: across releases, not this store's fidelity to its own bytes).</span>
+<span class="n">GENOME_REFERENCE_RULE_PREFIXES</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"gene_containment_"</span><span class="p">,</span>
+    <span class="s2">"perturbed_gene_containment_"</span><span class="p">,</span>
+    <span class="s2">"protein_and_perturbed_locus_containment_"</span><span class="p">,</span>
+    <span class="s2">"assembly_pin"</span><span class="p">,</span>
+    <span class="s2">"no_viable_deletion_in_"</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">finding_class_of</span><span class="p">(</span><span class="n">rule_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FindingClass</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""``report`` for a genome-reference rule, ``gate`` for every other rule."""</span>
+    <span class="k">if</span> <span class="n">rule_name</span> <span class="ow">in</span> <span class="n">GENOME_REFERENCE_RULES</span> <span class="ow">or</span> <span class="n">rule_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span>
+        <span class="n">GENOME_REFERENCE_RULE_PREFIXES</span>
+    <span class="p">):</span>
+        <span class="k">return</span> <span class="n">FindingClass</span><span class="o">.</span><span class="n">report</span>
+    <span class="k">return</span> <span class="n">FindingClass</span><span class="o">.</span><span class="n">gate</span>
+
+
 <div class="viewcode-block" id="LevelResult">
 <a class="viewcode-back" href="../../../generated/torchcell.verification.LevelResult.html#torchcell.verification.LevelResult">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">LevelResult</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""The outcome of a single L-level check."""</span>
+<span class="w">    </span><span class="sd">"""The outcome of a single L-level check.</span>
+
+<span class="sd">    ``passed`` is the rule's own outcome (does the rule hold). What that outcome DOES is</span>
+<span class="sd">    :attr:`finding_class`, derived from the rule's name, so a renamed result</span>
+<span class="sd">    (``model_copy(update={"name": ...})``, which skips validation) is reclassified with</span>
+<span class="sd">    it and no caller can pass a genome rule off as a gate.</span>
+<span class="sd">    """</span>
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
 
@@ -258,7 +352,37 @@
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">passed</span><span class="p">:</span> <span class="nb">bool</span>
     <span class="n">message</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">details</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span></div>
+    <span class="n">details</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"before"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_read_serialized_finding_class</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Accept the ``finding_class`` a written report carries, if it is the rule's.</span>
+
+<span class="sd">        A report serialized under a different classification is stale against this</span>
+<span class="sd">        registry and is refused rather than silently reclassified.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">"finding_class"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">data</span>
+        <span class="n">stated</span> <span class="o">=</span> <span class="n">FindingClass</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">"finding_class"</span><span class="p">])</span>
+        <span class="n">derived</span> <span class="o">=</span> <span class="n">finding_class_of</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]))</span>
+        <span class="k">if</span> <span class="n">stated</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">derived</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"rule </span><span class="si">{</span><span class="n">data</span><span class="p">[</span><span class="s1">'name'</span><span class="p">]</span><span class="si">!r}</span><span class="s2"> was written as </span><span class="si">{</span><span class="n">stated</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">, but the registry "</span>
+                <span class="sa">f</span><span class="s2">"classifies it </span><span class="si">{</span><span class="n">derived</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">; regenerate the report"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">value</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">key</span> <span class="o">!=</span> <span class="s2">"finding_class"</span><span class="p">}</span>
+
+    <span class="nd">@computed_field</span>  <span class="c1"># type: ignore[prop-decorator]</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">finding_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FindingClass</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""``gate`` or ``report``, from the rule's name (:func:`finding_class_of`)."""</span>
+        <span class="k">return</span> <span class="n">finding_class_of</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_open_finding</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""A report-class rule that does not hold: listed under the verdict, not failed."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">finding_class</span> <span class="ow">is</span> <span class="n">FindingClass</span><span class="o">.</span><span class="n">report</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">passed</span></div>
 
 
 
@@ -274,9 +398,29 @@
     <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">LevelResult</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
 
     <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">gate_results</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">LevelResult</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""The results that decide the verdict (``finding_class`` ``gate``)."""</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">results</span> <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">finding_class</span> <span class="ow">is</span> <span class="n">FindingClass</span><span class="o">.</span><span class="n">gate</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">findings</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">LevelResult</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""The genome-reference results (``finding_class`` ``report``), held or not."""</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">results</span> <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">finding_class</span> <span class="ow">is</span> <span class="n">FindingClass</span><span class="o">.</span><span class="n">report</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">open_findings</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">LevelResult</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""The genome-reference results that do not hold, listed under the verdict."""</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">results</span> <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">is_open_finding</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">passed</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""True only if every recorded level passed (empty report is NOT passed)."""</span>
-        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">results</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">passed</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">results</span><span class="p">)</span>
+<span class="w">        </span><span class="sd">"""True only if every GATE result passed; a report without one is NOT passed.</span>
+
+<span class="sd">        A genome-reference finding never enters the verdict, whatever it says: a store</span>
+<span class="sd">        whose only failing rows are ``report`` rows passes, with those rows listed.</span>
+<span class="sd">        """</span>
+        <span class="n">gates</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gate_results</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">gates</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">passed</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">gates</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">levels_covered</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="n">Level</span><span class="p">]:</span>
@@ -294,12 +438,27 @@
 <div class="viewcode-block" id="VerificationReport.summary">
 <a class="viewcode-back" href="../../../generated/torchcell.verification.VerificationReport.html#torchcell.verification.VerificationReport.summary">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">summary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""One-line-per-level human-readable summary of the report."""</span>
-        <span class="n">head</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="s1">'PASS'</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">passed</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">'FAIL'</span><span class="si">}</span><span class="s2">"</span>
+<span class="w">        </span><span class="sd">"""The verdict, one line per gate rule, then the genome findings under it.</span>
+
+<span class="sd">        A gate row is ``[ok]`` or ``[XX]``; a genome-reference row is ``[ok]`` when the</span>
+<span class="sd">        reference agrees and ``[rp]`` (reported) when it does not.</span>
+<span class="sd">        """</span>
+        <span class="n">open_findings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">open_findings</span>
+        <span class="n">head</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="s1">'PASS'</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">passed</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">'FAIL'</span><span class="si">}</span><span class="s2">"</span> <span class="o">+</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">" (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">open_findings</span><span class="p">)</span><span class="si">}</span><span class="s2"> genome finding(s) reported, not gated)"</span>
+            <span class="k">if</span> <span class="n">open_findings</span>
+            <span class="k">else</span> <span class="s2">""</span>
+        <span class="p">)</span>
         <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">head</span><span class="p">]</span>
-        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">results</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">level</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gate_results</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">level</span><span class="p">):</span>
             <span class="n">mark</span> <span class="o">=</span> <span class="s2">"ok"</span> <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">passed</span> <span class="k">else</span> <span class="s2">"XX"</span>
             <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  [</span><span class="si">{</span><span class="n">mark</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">level</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">findings</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">findings</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">level</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">findings</span><span class="p">:</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"  genome-reference findings (reported, never gated):"</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">findings</span><span class="p">:</span>
+                <span class="n">mark</span> <span class="o">=</span> <span class="s2">"ok"</span> <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">passed</span> <span class="k">else</span> <span class="s2">"rp"</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  [</span><span class="si">{</span><span class="n">mark</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">level</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="k">return</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span></div>
 </div>
 

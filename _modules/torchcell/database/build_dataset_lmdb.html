@@ -161,7 +161,10 @@
 <span class="sd">build writes a build manifest and nothing else. Resolution order is</span>
 <span class="sd">:func:`resolve_verifier`; a verification that raises or fails retires the build manifest</span>
 <span class="sd">(:func:`retire_manifest`), so an unverified store reads ``no_manifest`` rather than</span>
-<span class="sd">``fresh`` and is rebuilt before the graph is built from it.</span>
+<span class="sd">``fresh`` and is rebuilt before the graph is built from it. "Fails" is the report's</span>
+<span class="sd">verdict, which only ``gate`` rules decide: a genome-reference finding</span>
+<span class="sd">(``FindingClass.report``: containment, name currency, assembly pins) is printed under</span>
+<span class="sd">the verdict and never retires a manifest.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -430,6 +433,10 @@
 <span class="sd">    such and keeps its manifest: its family runner is what covers it, and that runner</span>
 <span class="sd">    reads every store in the family.</span>
 
+<span class="sd">    The verdict is :attr:`VerificationReport.passed`, which only ``gate`` rules decide;</span>
+<span class="sd">    each report's genome-reference findings are printed in its summary and counted on</span>
+<span class="sd">    the PASS line, and none of them retires a manifest.</span>
+
 <span class="sd">    ``except Exception`` is the point of the flag: a raising verifier is turned into a</span>
 <span class="sd">    retired manifest and a non-zero exit, not into a silent pass.</span>
 <span class="sd">    """</span>
@@ -465,7 +472,11 @@
     <span class="n">failed</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">dataset_name</span> <span class="k">for</span> <span class="n">report</span> <span class="ow">in</span> <span class="n">reports</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">report</span><span class="o">.</span><span class="n">passed</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">failed</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">refuse</span><span class="p">(</span><span class="sa">f</span><span class="s2">"verification FAILED for </span><span class="si">{</span><span class="n">failed</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"verification PASSED: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">reports</span><span class="p">)</span><span class="si">}</span><span class="s2"> report(s) by </span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">n_findings</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">open_findings</span><span class="p">)</span> <span class="k">for</span> <span class="n">report</span> <span class="ow">in</span> <span class="n">reports</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"verification PASSED: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">reports</span><span class="p">)</span><span class="si">}</span><span class="s2"> report(s) by </span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2">; "</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">n_findings</span><span class="si">}</span><span class="s2"> genome-reference finding(s) reported, not gated"</span>
+    <span class="p">)</span>
     <span class="k">return</span> <span class="kc">True</span>
 
 

@@ -133,9 +133,29 @@
 </dd></dl>
 
 <dl class="py property">
+<dt class="sig sig-object py" id="torchcell.verification.VerificationReport.gate_results">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">gate_results</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="torchcell.verification.LevelResult.html#torchcell.verification.LevelResult" title="torchcell.verification.report.LevelResult"><span class="pre">LevelResult</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#torchcell.verification.VerificationReport.gate_results" title="Link to this definition"></a></dt>
+<dd><p>The results that decide the verdict (<code class="docutils literal notranslate"><span class="pre">finding_class</span></code> <code class="docutils literal notranslate"><span class="pre">gate</span></code>).</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchcell.verification.VerificationReport.findings">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">findings</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="torchcell.verification.LevelResult.html#torchcell.verification.LevelResult" title="torchcell.verification.report.LevelResult"><span class="pre">LevelResult</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#torchcell.verification.VerificationReport.findings" title="Link to this definition"></a></dt>
+<dd><p>The genome-reference results (<code class="docutils literal notranslate"><span class="pre">finding_class</span></code> <code class="docutils literal notranslate"><span class="pre">report</span></code>), held or not.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchcell.verification.VerificationReport.open_findings">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">open_findings</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="torchcell.verification.LevelResult.html#torchcell.verification.LevelResult" title="torchcell.verification.report.LevelResult"><span class="pre">LevelResult</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#torchcell.verification.VerificationReport.open_findings" title="Link to this definition"></a></dt>
+<dd><p>The genome-reference results that do not hold, listed under the verdict.</p>
+</dd></dl>
+
+<dl class="py property">
 <dt class="sig sig-object py" id="torchcell.verification.VerificationReport.passed">
 <em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">passed</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)"><span class="pre">bool</span></a></em><a class="headerlink" href="#torchcell.verification.VerificationReport.passed" title="Link to this definition"></a></dt>
-<dd><p>True only if every recorded level passed (empty report is NOT passed).</p>
+<dd><p>True only if every GATE result passed; a report without one is NOT passed.</p>
+<p>A genome-reference finding never enters the verdict, whatever it says: a store
+whose only failing rows are <code class="docutils literal notranslate"><span class="pre">report</span></code> rows passes, with those rows listed.</p>
 </dd></dl>
 
 <dl class="py property">
@@ -153,7 +173,9 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="torchcell.verification.VerificationReport.summary">
 <span class="sig-name descname"><span class="pre">summary</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a></span></span><a class="reference internal" href="../_modules/torchcell/verification/report.html#VerificationReport.summary"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.verification.VerificationReport.summary" title="Link to this definition"></a></dt>
-<dd><p>One-line-per-level human-readable summary of the report.</p>
+<dd><p>The verdict, one line per gate rule, then the genome findings under it.</p>
+<p>A gate row is <code class="docutils literal notranslate"><span class="pre">[ok]</span></code> or <code class="docutils literal notranslate"><span class="pre">[XX]</span></code>; a genome-reference row is <code class="docutils literal notranslate"><span class="pre">[ok]</span></code> when the
+reference agrees and <code class="docutils literal notranslate"><span class="pre">[rp]</span></code> (reported) when it does not.</p>
 </dd></dl>
 
 </dd></dl>

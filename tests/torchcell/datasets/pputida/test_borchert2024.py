@@ -306,6 +306,51 @@ def test_rand2017_owns_its_two_days_and_nothing_beside_them() -> None:
     assert bt.SOURCE_STUDIES["rand2017"].publication.doi == "10.1038/s41564-017-0028-z"
 
 
+def test_thompson2019_lysine_owns_its_four_content_matched_samples() -> None:
+    """#908: the four samples Thompson 2019 lysine's Table S1 matches, and no others."""
+
+    def _sample(exp_name: str, set_name: str) -> bt.SampleMetadata:
+        return bt.SampleMetadata(
+            exp_name=exp_name,
+            set_name=set_name,
+            exp_desc="x",
+            exp_group="carbon source",
+            mutant_library="Putida_ML5_JBEI",
+            person="test",
+            media="MOPS minimal media_noCarbon",
+            temperature=30.0,
+            aerobic="Aerobic",
+            total_rep=2,
+            rep=1,
+            condition_1="L-Lysine",
+            units_1="mM",
+            concentration_1=10.0,
+            condition_2=None,
+            units_2=None,
+            concentration_2=None,
+        )
+
+    for name, column in bt.THOMPSON2019_LYSINE_SAMPLES.items():
+        sample = _sample(exp_name=name, set_name=name[:4])
+        attribution = bt.attribute_sample(sample)
+        assert attribution.study == "thompson2019_lysine"
+        assert attribution.basis == "source_release_content_match"
+        assert attribution.note == f"Table S1 column {column!r}"
+        assert set(attribution.evidence) <= set(bt.SOURCED_VALUES)
+    assert sorted(bt.THOMPSON2019_LYSINE_SAMPLES) == [
+        "set6IT057",
+        "set7IT044",
+        "set7IT055",
+        "set7IT062",
+    ]
+    # the browser names three more set7 samples Thompson18; they stay with the compendium
+    other = bt.attribute_sample(_sample(exp_name="set7IT042", set_name="set7"))
+    assert other.study == "borchert2024"
+    study = bt.SOURCE_STUDIES["thompson2019_lysine"]
+    assert study.publication.doi == "10.1128/mBio.02577-18"
+    assert study.citation_key == "thompsonMassivelyParallelFitness2019"
+
+
 def test_set12_thompson_conditions_and_the_set101_protocatechuate_pair() -> None:
     def sample(set_name: str, c1: str, c2: str | None) -> bt.SampleMetadata:
         return bt.SampleMetadata(
@@ -725,6 +770,7 @@ def test_process_builds_one_record_per_gene_and_kept_sample(
         "borchert2023": 1,
         "borchert2024": 3,
         "rand2017": 1,
+        "thompson2019_lysine": 0,
     }
     uncertainty = json.loads((preprocess / "uncertainty.json").read_text())
     assert sum(uncertainty["record_counts"].values()) == len(dataset)

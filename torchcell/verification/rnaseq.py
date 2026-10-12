@@ -341,7 +341,11 @@ def verify_rnaseq_dataset(
         count_bad = 0
         count_n = 0
         for rec in records:
-            for v in rec["experiment"]["phenotype"]["expression_count"].values():
+            # #964: a release with no counts stores a typed gap, which has no values.
+            counts = rec["experiment"]["phenotype"]["expression_count"]
+            if counts is None:
+                continue
+            for v in counts.values():
                 count_n += 1
                 if not isinstance(v, int) or isinstance(v, bool) or v < 0:
                     count_bad += 1

@@ -289,6 +289,7 @@ from .goodall2018 import (
 from .gupta2024 import (
     ProteinTurnoverGupta2024Dataset as ProteinTurnoverGupta2024Dataset,
 )
+from .guzman2018 import RnaseqGuzman2018Dataset as RnaseqGuzman2018Dataset
 from .hawkins2020 import (
     MismatchCrispriFitnessHawkins2020Dataset as MismatchCrispriFitnessHawkins2020Dataset,
 )

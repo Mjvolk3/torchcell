@@ -281,11 +281,26 @@ class MeanExperimentDeduplicator(Deduplicator):
         if isinstance(first, RNASeqExpressionPhenotype):
             rna = cast(list[RNASeqExpressionPhenotype], phenotypes)
             n_mapped = [p.n_mapped_reads for p in rna if p.n_mapped_reads is not None]
+            counts = [p.expression_count for p in rna]
+            # #964: a record whose release has no counts carries a typed gap; a mean
+            # over records that include one has no summed count either, so it inherits
+            # the gap rather than summing a partial set.
+            gaps = [
+                gap
+                for p in rna
+                for gap in p.provenance_gaps
+                if gap.field == "expression_count"
+            ]
             return RNASeqExpressionPhenotype(
                 expression_tpm=_mean_float_dict([p.expression_tpm for p in rna]),
-                expression_count=_sum_int_dict([p.expression_count for p in rna]),
+                expression_count=(
+                    None
+                    if any(c is None for c in counts)
+                    else _sum_int_dict([c for c in counts if c is not None])
+                ),
                 measurement_type=first.measurement_type,
                 n_mapped_reads=int(sum(n_mapped)) if n_mapped else None,
+                provenance_gaps=gaps[:1],
             )
         if isinstance(first, CalMorphPhenotype):
             morph = cast(list[CalMorphPhenotype], phenotypes)

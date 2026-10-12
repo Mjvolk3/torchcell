@@ -7726,9 +7726,15 @@ class RNASeqExpressionPhenotype(Phenotype, ModelStrict):
         ),
         repr=False,
     )
-    expression_count: dict[str, int] = Field(
+    # ADDITIVE (#964, Guzman 2018): value-or-gap. A release that publishes TPM and no
+    # read counts (GEO GSE117303's ``deseq2-tpm.csv``) stores its TPM with
+    # ``expression_count`` None beside a ProvenanceGap on it; every other record keeps
+    # its counts, so no stored record changes meaning.
+    expression_count: dict[str, int] | None = Field(
         description=(
-            "SortedDict of per-gene raw mapped-read counts; same keys as expression_tpm."
+            "SortedDict of per-gene raw mapped-read counts; same keys as expression_tpm. "
+            "None ONLY with a ProvenanceGap on 'expression_count' (a release with no "
+            "counts)"
         ),
         repr=False,
     )
@@ -7770,7 +7776,8 @@ class RNASeqExpressionPhenotype(Phenotype, ModelStrict):
     def convert_and_validate_count(cls, v: Any) -> Any:  # raw pre-validation input
         """Coerce counts to a SortedDict; require non-negative integers."""
         if v is None:
-            raise ValueError("expression_count cannot be None")
+            # #964: a typed gap; validate_matching_keys requires the gap.
+            return v
         if not isinstance(v, dict):
             raise ValueError(
                 f"expression_count must be a per-gene dict, got {type(v).__name__}"
@@ -7789,6 +7796,13 @@ class RNASeqExpressionPhenotype(Phenotype, ModelStrict):
     @model_validator(mode="after")
     def validate_matching_keys(self) -> "RNASeqExpressionPhenotype":
         """expression_count must cover exactly the same genes as expression_tpm."""
+        if self.expression_count is None:
+            if "expression_count" not in self.gapped_fields():
+                raise ValueError(
+                    "expression_count is None without a ProvenanceGap on it (a release "
+                    "with no counts is a typed gap, never a silent None)"
+                )
+            return self
         if set(self.expression_count.keys()) != set(self.expression_tpm.keys()):
             raise ValueError(
                 "expression_count must have the same keys as expression_tpm"

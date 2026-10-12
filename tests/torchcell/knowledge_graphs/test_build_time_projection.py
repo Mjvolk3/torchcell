@@ -509,6 +509,7 @@ BACTERIAL_DATASETS = {
     "GeneEssentialityBaba2006Dataset",
     "GeneEssentialityGerdes2003Dataset",
     "GeneEssentialityGoodall2018Dataset",
+    "RnaseqGuzman2018Dataset",
     "GeneEssentialityPrice2018EcoliDataset",
     "GeneInteractionBabu2014Dataset",
     "MrnaFractionBalakrishnan2022Dataset",
@@ -625,7 +626,8 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
     # + 1 (#921, Potel 2018 phosphosite intensities),
     # + 1 (row 39, Banerjee 2024 isoprenol titers)
     # + 1 (#910, Teteneva 2024's lake-water RB-TnSeq, the first W3110 dataset).
-    # + 2 (#800 Li 2021 13C-MFA maps, #927 Baba 2006 Table 3 OD600).
+    # + 2 (#800 Li 2021 13C-MFA maps, #927 Baba 2006 Table 3 OD600)
+    # + 1 (#964, Guzman 2018's own GEO release).
     assert (
         len(dataset_adapter_map)
         == 110
@@ -664,6 +666,7 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
         + 1
         + 1
         + 2
+        + 1
     )
     served = {d.__name__ for d in dataset_adapter_map}
     assert served - set(ADAPTER_TO_DATASET.values()) == BACTERIAL_DATASETS | {

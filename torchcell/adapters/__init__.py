@@ -154,6 +154,7 @@ from .goodall2018_adapter import (
 from .gupta2024_adapter import (
     ProteinTurnoverGupta2024Adapter as ProteinTurnoverGupta2024Adapter,
 )
+from .guzman2018_adapter import RnaseqGuzman2018Adapter as RnaseqGuzman2018Adapter
 from .hackett2020_adapter import (
     InductionTimecourseHackett2020Adapter as InductionTimecourseHackett2020Adapter,
 )
@@ -542,6 +543,7 @@ ecoli_adapters = [
     "GrowthYieldBaba2006Adapter",
     "GeneEssentialityGerdes2003Adapter",
     "GeneEssentialityGoodall2018Adapter",
+    "RnaseqGuzman2018Adapter",
     "GeneEssentialityPrice2018EcoliAdapter",
     "ProteinTurnoverGupta2024Adapter",
     "ProteinSynthesisRateLi2014Adapter",

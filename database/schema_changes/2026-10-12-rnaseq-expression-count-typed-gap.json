@@ -1,0 +1,134 @@
+{
+  "record_version": 1,
+  "slug": "rnaseq-expression-count-typed-gap",
+  "date": "2026-10-12",
+  "pr": null,
+  "author_kind": "agent",
+  "base_commit": "a03e2615f07c15d07a22b392201feae05b3bb8e7",
+  "python_version": "3.13.0",
+  "symbols": [
+    {
+      "symbol": "RNASeqExpressionPhenotype",
+      "status": "modified",
+      "kinds": [
+        "typed_gap"
+      ],
+      "fingerprint_before": "3136b56ffaa71f965ac179d782f5b540b398771c682822b00d6a8da92e96504f",
+      "fingerprint_after": "1bd8731da47fa00ae3c61cf81bfdd4b7e1996d2caf907487b655ef4da583addb",
+      "impact": "breaking",
+      "reasons": [
+        "field 'expression_count' type changed: dict[str, int] -> dict[str, int] | None",
+        "validator/serializer changed: ['convert_and_validate_count', 'validate_matching_keys']"
+      ]
+    }
+  ],
+  "correctness_argument": "Guzman 2018 (#964) deposits its RNA-seq as one processed file, GEO GSE117303's deseq2-tpm.csv.gz: TPM for 14 libraries and no read counts, although the Methods describe counting with summarizeOverlaps. RNASeqExpressionPhenotype required expression_count, so the study's own release could not be stored at all (owner rule 2026-10-12: every released value is stored; an unstated value is a typed gap). expression_count stays required and becomes value-or-gap: None ONLY beside a ProvenanceGap on 'expression_count' naming the file it was looked for in; the matching-keys rule still applies whenever counts are present. No record the old contract accepted changes meaning: every stored record carries counts and validates unchanged. The record-merging path (mean_experiment_deduplicate) makes a merge that includes a gapped record a gap rather than summing a partial set, and the RNA-seq verifier skips gapped counts. Breaking for the served RNA-seq closures by fingerprint only; lands with the KG 4.0 full rebuild.",
+  "measurement_type_decision": false,
+  "source_quotes": [
+    {
+      "value": "GSE117303",
+      "provenance": {
+        "source_uri": "paper/PMC6296033.1.txt",
+        "citation_key": "guzmanReframingGeneEssentiality2018",
+        "sha256": "392b5f3d016ddeb5158fb8bb22b3e61af7d6b65c62fdd2653432a58a7fc46b71",
+        "method": null,
+        "page": null,
+        "retrieved": null
+      },
+      "quote": "The RNAseq data is available in the Gene Expression Omnibus (GEO) database under the accession number GSE117303.",
+      "note": null
+    }
+  ],
+  "alternatives_rejected": [
+    {
+      "alternative": "A TPM-only sibling leaf",
+      "why_rejected": "Same physical measurement and the same released quantity (TPM) as RNASeqExpressionPhenotype; policy Rule 6 case 1 reuses the leaf, and a missing companion value is a typed gap (Rule 3)."
+    },
+    {
+      "alternative": "Back-solve counts from TPM",
+      "why_rejected": "Counts cannot be recovered from TPM without the unreleased library sizes and gene lengths; it would invent values."
+    }
+  ],
+  "served_release": "2026.10.06-4b293d34",
+  "affected_loaders": [
+    {
+      "loader": "torchcell/datasets/ecoli/caglar2017.py",
+      "dataset_classes": [
+        "RnaseqCaglar2017Dataset",
+        "ProteomeCaglar2017Dataset",
+        "ProteinFoldChangeCaglar2017Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "RNASeqExpressionPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/guzman2018.py",
+      "dataset_classes": [
+        "RnaseqGuzman2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "RNASeqExpressionPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/lamoureux2023.py",
+      "dataset_classes": [
+        "RnaseqLamoureux2023Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "RNASeqExpressionPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/lamoureux2023_public_k12.py",
+      "dataset_classes": [
+        "RnaseqPublicK12Lamoureux2023Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "RNASeqExpressionPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/lim2022.py",
+      "dataset_classes": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "RNASeqExpressionPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/caudal2024.py",
+      "dataset_classes": [
+        "CaudalPanTranscriptome2024Dataset"
+      ],
+      "served_classes": [
+        "CaudalPanTranscriptome2024Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "RNASeqExpressionPhenotype"
+      ]
+    }
+  ],
+  "served_datasets": [
+    "CaudalPanTranscriptome2024Dataset"
+  ],
+  "rebuild_scope": "full_kg_rebuild",
+  "owner_sign_off": {
+    "signed": false,
+    "quote": null,
+    "url": null
+  }
+}

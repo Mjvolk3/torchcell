@@ -146,6 +146,7 @@ from torchcell.adapters import (
     RbTnseqTeteneva2024Adapter,
     RbTnseqWetmore2015Adapter,
     RnaseqCaglar2017Adapter,
+    RnaseqGuzman2018Adapter,
     RnaseqLamoureux2023Adapter,
     RnaseqPublicK12Lamoureux2023Adapter,
     TargetedMetabolomeRapp2026Adapter,
@@ -194,6 +195,7 @@ from torchcell.datasets.ecoli.gerdes2003 import GeneEssentialityGerdes2003Datase
 from torchcell.datasets.ecoli.girgis2009 import EnvChemgenGirgis2009Dataset
 from torchcell.datasets.ecoli.goodall2018 import GeneEssentialityGoodall2018Dataset
 from torchcell.datasets.ecoli.gupta2024 import ProteinTurnoverGupta2024Dataset
+from torchcell.datasets.ecoli.guzman2018 import RnaseqGuzman2018Dataset
 from torchcell.datasets.ecoli.hawkins2020 import (
     MismatchCrispriFitnessHawkins2020Dataset,
 )
@@ -539,6 +541,17 @@ BACTERIAL: list[Bacterial] = [
         GeneEssentialityGoodall2018Dataset,
         "gene essentiality phenotype",
         env_perturbation=False,
+    ),
+    # Guzman 2018's own release (#964): a Keio deletion plus breseq calls on the 12
+    # deletion-strain libraries; carbon source and kanamycin are medium components.
+    _case(
+        RnaseqGuzman2018Adapter,
+        "guzman2018",
+        "rnaseq_guzman2018",
+        RnaseqGuzman2018Dataset,
+        RNASEQ,
+        env_perturbation=False,
+        variant=True,
     ),
     _case(
         ProteinTurnoverGupta2024Adapter,

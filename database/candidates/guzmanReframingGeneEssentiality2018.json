@@ -1,0 +1,182 @@
+{
+  "citation_key": "guzmanReframingGeneEssentiality2018",
+  "table": "bacteria",
+  "row_name": "Guzman 2018 adaptive flexibility",
+  "gates": [
+    {
+      "gate": "G1",
+      "outcome": "pass",
+      "reason": "primary: status='candidate', klass='Transcriptome', no aggregation marker",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G2",
+      "outcome": "pass",
+      "reason": "assembly_set: BW25113 -> ecoli_K12_BW25113_ASM75055v1 resolves and reads",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G3",
+      "outcome": "pass",
+      "reason": "3 file(s) in raw, 68 worksheet row(s) counted; all intact",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G4",
+      "outcome": "pass",
+      "reason": "no key held by another module (0 mention(s)); no PMID check; values not compared (no dev store named)",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G5",
+      "outcome": "pass",
+      "reason": "RNASeqExpressionPhenotype exists; compounds resolve",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    }
+  ],
+  "zotero_item": "absent",
+  "source_kind": "primary",
+  "aggregation": null,
+  "g2": {
+    "branch": "assembly_set",
+    "outcome": "resolvable_readable",
+    "hosts": [
+      {
+        "name": "BW25113",
+        "assembly_set": "ecoli_K12_BW25113_ASM75055v1",
+        "resolvable": true,
+        "readable": true
+      }
+    ]
+  },
+  "g3": {
+    "citation_key": "guzmanReframingGeneEssentiality2018",
+    "trees_read": [
+      "raw"
+    ],
+    "files": [
+      {
+        "tree": "raw",
+        "path": "si/12918_2018_653_MOESM4_ESM.xlsx",
+        "role": "raw_data",
+        "bytes": 52939,
+        "sha256_manifest": "97e587ad5586da20a613055698d46ad10fbe2d1d1a8e0eeb95848a4a67e6f57d",
+        "sha256_disk": "97e587ad5586da20a613055698d46ad10fbe2d1d1a8e0eeb95848a4a67e6f57d",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Description",
+            "rows": 3
+          },
+          {
+            "sheet": "thrA",
+            "rows": 7
+          },
+          {
+            "sheet": "serB",
+            "rows": 12
+          },
+          {
+            "sheet": "ptsI",
+            "rows": 15
+          },
+          {
+            "sheet": "metL",
+            "rows": 3
+          },
+          {
+            "sheet": "metC",
+            "rows": 4
+          },
+          {
+            "sheet": "carA",
+            "rows": 5
+          },
+          {
+            "sheet": "cysK",
+            "rows": 2
+          },
+          {
+            "sheet": "proA",
+            "rows": 7
+          },
+          {
+            "sheet": "proB",
+            "rows": 10
+          }
+        ]
+      },
+      {
+        "tree": "raw",
+        "path": "data/GSE117303_deseq2-tpm.csv.gz",
+        "role": "raw_data",
+        "bytes": 350295,
+        "sha256_manifest": "590b94e9b36be11f52a2681903face3ceef5a35e80bdcf0619d04297c3fdf282",
+        "sha256_disk": "590b94e9b36be11f52a2681903face3ceef5a35e80bdcf0619d04297c3fdf282",
+        "retrieval_method": "direct_url",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "data/GSE117303_series_matrix.txt.gz",
+        "role": "raw_data",
+        "bytes": 3555,
+        "sha256_manifest": "5a1c437a591442ec83aabb7bb4caf9b66f289f82de6065a9636bf41dd1ad9302",
+        "sha256_disk": "5a1c437a591442ec83aabb7bb4caf9b66f289f82de6065a9636bf41dd1ad9302",
+        "retrieval_method": "direct_url",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      }
+    ],
+    "walls": []
+  },
+  "g4_key": {
+    "doi": "10.1186/s12918-018-0653-z",
+    "pmid": null,
+    "accessions": [
+      "GSE117303"
+    ],
+    "hits": [
+      {
+        "key_kind": "doi",
+        "key": "10.1186/s12918-018-0653-z",
+        "where": "torchcell/datasets/ecoli/guzman2018.py",
+        "relation": "own"
+      },
+      {
+        "key_kind": "accession",
+        "key": "GSE117303",
+        "where": "torchcell/datasets/ecoli/guzman2018.py",
+        "relation": "own"
+      }
+    ],
+    "pmid_checked": false
+  },
+  "g4_value": null,
+  "g5": {
+    "phenotype_class": "RNASeqExpressionPhenotype",
+    "class_exists": true,
+    "unresolved_compounds": [],
+    "proposed_class": "RnaseqGuzman2018Dataset"
+  },
+  "decided_at": "2026-10-12",
+  "torchcell_commit": "a03e2615f07c15d07a22b392201feae05b3bb8e7"
+}

@@ -797,7 +797,11 @@ def test_rnaseq_repr_and_sorted_dict_passthrough() -> None:
         ({"expression_tpm": None}, "expression_tpm cannot be None"),
         ({"expression_tpm": {}}, "expression_tpm cannot be empty"),
         ({"expression_tpm": {"YAL001C": -1.0}}, "Invalid TPM for gene YAL001C: -1.0"),
-        ({"expression_count": None}, "expression_count cannot be None"),
+        # #964: None is admitted only beside a typed gap on it.
+        (
+            {"expression_count": None},
+            "expression_count is None without a ProvenanceGap",
+        ),
         (
             {"expression_count": [50, 0]},
             "expression_count must be a per-gene dict, got list",

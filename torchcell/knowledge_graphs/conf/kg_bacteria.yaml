@@ -75,6 +75,7 @@ datasets:
   - GeneEssentialityGerdes2003Dataset
   - EnvChemgenGirgis2009Dataset
   - GeneEssentialityGoodall2018Dataset
+  - RnaseqGuzman2018Dataset
   - ProteinTurnoverGupta2024Dataset
   - MetabolomeIshii2007Dataset
   - ProteomeIshii2007Dataset

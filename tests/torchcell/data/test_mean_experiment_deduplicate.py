@@ -545,6 +545,26 @@ def test_rnaseq_duplicates_average_tpm_and_sum_counts_and_mapped_reads(
     assert no_reads.n_mapped_reads is None
 
 
+def test_rnaseq_duplicates_with_a_count_gap_keep_the_gap(tmp_path: Any) -> None:
+    """#964: a record with gapped counts makes the merged counts a gap, not a partial sum."""
+    from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
+
+    gap = ProvenanceGap(
+        field="expression_count", reason=ProvenanceGapReason.not_reported_by_primary
+    )
+    gapped = RNASeqExpressionPhenotype(
+        expression_tpm={"A": 10.0}, expression_count=None, provenance_gaps=[gap]
+    )
+    counted = RNASeqExpressionPhenotype(
+        expression_tpm={"A": 30.0}, expression_count={"A": 3}
+    )
+    merged = _dedup(tmp_path)._merge_phenotype([gapped, counted])
+    assert isinstance(merged, RNASeqExpressionPhenotype)
+    assert merged.expression_count is None
+    assert merged.gapped_fields() == {"expression_count"}
+    assert dict(merged.expression_tpm) == {"A": 20.0}
+
+
 def test_calmorph_duplicates_average_features_and_the_present_cv(tmp_path: Any) -> None:
     """Calmorph {C101_A1B: 1, C101_C: 4} and {C101_A1B: 3} -> {C101_A1B: 2, C101_C: 4};
     the coefficient of variation is the plain MEAN over the records that carry one (only

@@ -5581,6 +5581,41 @@ CANDIDATES: list[Candidate] = [
             ),
         ],
     ),
+    # Plan decision 16 (#964): a study PRECISE-1K re-quantifies, loaded from its own
+    # GEO release with the compendium as an L4 cross-check.
+    Candidate(
+        name="Guzman 2018 adaptive flexibility",
+        organism="E. coli",
+        citation="Guzman GI, Sandberg TE, LaCroix RA, Nyerges A, Papp H, de Raad M, "
+        "King ZA, Hefner Y, Northen TR, Notebaart RA, Pal C, Palsson BO, Papp B, Feist "
+        "AM. Reframing gene essentiality in terms of adaptive flexibility. BMC Syst "
+        "Biol 2018;12:143",
+        url="https://doi.org/10.1186/s12918-018-0653-z",
+        klass="Transcriptome",
+        tier=2,
+        genotypes_n=7,
+        genotypes="wild-type BW25113 and six evolved Keio deletion strains (thrA, serB, "
+        "ptsI; clones and flask-1 populations)",
+        env_n=1,
+        env="M9 with 2 g/L D-glucose",
+        instances_n=14,
+        instances_basis="reported",
+        phenotype="RNA-seq TPM",
+        dim=4329,
+        dim_basis="reported",
+        seq_basis="evolved-WGS",
+        modality="RNA-seq of evolved Keio deletion strains",
+        why="GEO GSE117303 releases one TPM matrix of 14 libraries (biological "
+        "duplicates of seven strains) on BW25113 locus tags, and Additional file 4 "
+        "releases the breseq calls of each strain against CP009273.1 with their "
+        "frequencies. PRECISE-1K re-quantifies the same 14 libraries (p1k_00219 to "
+        "p1k_00232) and serves none of them; the study's own release is loaded "
+        "(#964). The release carries no read counts.",
+        accession="GEO GSE117303; PMC6296033 Additional file 4",
+        accession_confirmed=True,
+        status="candidate",
+        confidence="sourced",
+    ),
 ]
 
 EXCLUDED: list[Excluded] = [

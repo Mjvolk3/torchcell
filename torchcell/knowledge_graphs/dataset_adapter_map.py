@@ -158,6 +158,7 @@ from torchcell.adapters import (
     RbTnseqTeteneva2024Adapter,
     RbTnseqWetmore2015Adapter,
     RnaseqCaglar2017Adapter,
+    RnaseqGuzman2018Adapter,
     RnaseqLamoureux2023Adapter,
     RnaseqPublicK12Lamoureux2023Adapter,
     ScmdOhnuki2018Adapter,
@@ -238,6 +239,7 @@ from torchcell.datasets.ecoli.gerdes2003 import GeneEssentialityGerdes2003Datase
 from torchcell.datasets.ecoli.girgis2009 import EnvChemgenGirgis2009Dataset
 from torchcell.datasets.ecoli.goodall2018 import GeneEssentialityGoodall2018Dataset
 from torchcell.datasets.ecoli.gupta2024 import ProteinTurnoverGupta2024Dataset
+from torchcell.datasets.ecoli.guzman2018 import RnaseqGuzman2018Dataset
 from torchcell.datasets.ecoli.hawkins2020 import (
     MismatchCrispriFitnessHawkins2020Dataset,
 )
@@ -546,6 +548,7 @@ dataset_adapter_map: dict[type, type] = {
     GrowthYieldBaba2006Dataset: GrowthYieldBaba2006Adapter,
     GeneEssentialityGerdes2003Dataset: GeneEssentialityGerdes2003Adapter,
     GeneEssentialityGoodall2018Dataset: GeneEssentialityGoodall2018Adapter,
+    RnaseqGuzman2018Dataset: RnaseqGuzman2018Adapter,
     ProteinTurnoverGupta2024Dataset: ProteinTurnoverGupta2024Adapter,
     MetabolomeIshii2007Dataset: MetabolomeIshii2007Adapter,
     ProteomeIshii2007Dataset: ProteomeIshii2007Adapter,

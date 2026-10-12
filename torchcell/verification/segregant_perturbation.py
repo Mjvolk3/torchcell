@@ -40,7 +40,7 @@ from __future__ import annotations
 import math
 import os.path as osp
 from collections import Counter
-from collections.abc import Callable, Iterable
+from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
 
@@ -151,7 +151,6 @@ def verify_segregant_perturbation_streaming(
     library_root: str | Path | None,
     raw_root: str | Path | None,
     resolve_gene_name: Any,
-    resolve_orf: Callable[[str], str | None],
     sgd_genes: set[str],
 ) -> VerificationReport:
     """Single-pass L0-L4 gate (see the module docstring).
@@ -160,9 +159,11 @@ def verify_segregant_perturbation_streaming(
     the SGD R64-4-1 sequence and ``variant_table`` the 3S table (both resolved from the
     genomes tier by the caller), ``parent_files`` maps each parent's pinned tier path to
     its file on disk. ``resolve_gene_name`` is the genome's resolver (the shared
-    canonical-name rule) and ``resolve_orf`` the loader's ORF-to-current-gene map. ``library_root`` / ``raw_root`` are the roots the paper and code
-    quotes audit against; ``None`` skips the L3 provenance audit (a synthetic release has
-    no mirror to audit).
+    canonical-name rule). The stored target ORF is compared with the released
+    ``gene_orf`` cell byte for byte: the loader stores it as released and resolves
+    nothing. ``library_root`` / ``raw_root`` are the roots the paper and code quotes
+    audit against; ``None`` skips the L3 provenance audit (a synthetic release has no
+    mirror to audit).
     """
     from torchcell.datamodels.schema import (
         EXPERIMENT_TYPE_MAP,
@@ -280,7 +281,7 @@ def verify_segregant_perturbation_streaming(
             float(released.error[row]),
             released.genotype[row],
             released.guide[row],
-            resolve_orf(released.orf[row]),
+            released.orf[row],
         )
         if stored != expected:
             n_mismatch += 1

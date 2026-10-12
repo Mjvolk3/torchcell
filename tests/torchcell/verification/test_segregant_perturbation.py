@@ -71,7 +71,6 @@ def _verify(
         library_root=None,
         raw_root=None,
         resolve_gene_name=genome.resolve_gene_name,
-        resolve_orf=h.orf_resolver(genome),  # type: ignore[arg-type]
         sgd_genes=_SGD,
     )
 

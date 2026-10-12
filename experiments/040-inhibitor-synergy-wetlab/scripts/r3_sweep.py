@@ -463,6 +463,45 @@ def round6_arms() -> list[dict[str, object]]:
     ]
 
 
+def round7_arms() -> list[dict[str, object]]:
+    """Round 7: every record is a cell. ``readout: cell`` reads the public screens and
+    the host through ONE head, the host as the record with the empty genotype (its own
+    source token, scale and shift, no gene bias), so the two readouts of the main sheet
+    are two measurements of one cell state rather than a gene head and a host head. The
+    single-source arm is the equivalence check on the public side (the gene-level
+    computation is unchanged in form); the dose arm asks whether a host that shares the
+    gene-level head can now read dose; the two- and three-source arms ask whether more
+    cells of the same record type move the shared head; ``lambda_host`` 3 weights the
+    host records, which are 209 against the gene cells, inside the shared head.
+    """
+    specs = [
+        ("van_e150_cell", "van", {}),
+        ("van_e150_cell_film", "van", {"dose": "film"}),
+        ("van_e150_cell_lh3", "van", {"lambda_host": 3.0}),
+        ("vanhop_e150_cell", "vanhop", {}),
+        ("vanhophet_e150_cell", "vanhophet", {}),
+    ]
+    out: list[dict[str, object]] = []
+    for name, sources, overrides in specs:
+        out.append(arm(name, sources, 150, readout="cell", **overrides))
+    # the seed twins (seeds 1 and 2, as wave 2's ``_s12`` configs), so each arm reads
+    # as a three-seed ensemble once both files are in; GilaHyper runs the seed-0 files,
+    # Delta runs both
+    for name, sources, overrides in specs:
+        out.append(
+            arm(
+                name,
+                sources,
+                150,
+                readout="cell",
+                name_suffix="_s12",
+                seeds=[1, 2],
+                **overrides,
+            )
+        )
+    return out
+
+
 def configs(spec: dict[str, object], folds: list[int]) -> list[dict[str, object]]:
     """One config per fold of ``spec``."""
     out = []
@@ -525,16 +564,19 @@ def main() -> None:
         "--wave",
         type=int,
         default=1,
-        choices=(1, 2, 3, 4, 5, 6),
+        choices=(1, 2, 3, 4, 5, 6, 7),
         help=(
             "1 writes the r3_* screen, 2 the r3w2_* second wave, 3 the r4_* seed"
-            " ensemble, 4 the r5_* Delta round, 5 the r5b_* convergence follow-up"
+            " ensemble, 4 the r5_* Delta round, 5 the r5b_* convergence follow-up,"
+            " 6 the r6_* graph regularization, 7 the r7_* cell readout"
         ),
     )
     args = parser.parse_args()
     os.makedirs(args.out_dir, exist_ok=True)
     os.makedirs(RESULTS, exist_ok=True)
-    prefix = {1: "r3", 2: "r3w2", 3: "r4", 4: "r5", 5: "r5b", 6: "r6"}[args.wave]
+    prefix = {1: "r3", 2: "r3w2", 3: "r4", 4: "r5", 5: "r5b", 6: "r6", 7: "r7"}[
+        args.wave
+    ]
     waves = {
         1: arms,
         2: wave2_arms,
@@ -542,6 +584,7 @@ def main() -> None:
         4: round5_arms,
         5: round5b_arms,
         6: round6_arms,
+        7: round7_arms,
     }
     specs = waves[args.wave]()
     label = {
@@ -551,6 +594,7 @@ def main() -> None:
         4: "ROUND 5",
         5: "ROUND 5B",
         6: "ROUND 6",
+        7: "ROUND 7",
     }[args.wave]
 
     rows, lines = [], []

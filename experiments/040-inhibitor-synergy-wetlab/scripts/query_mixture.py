@@ -215,7 +215,7 @@ class Model:
                 e = self.model.tokens(medium)
                 _, pooled, token = self.model.medium_state(h, e, None)
                 out[np.array(medium.rows)] = (
-                    self.model.host_fitness(pooled, token).float().cpu().numpy()
+                    self.model.host_logits(pooled, token, e).float().cpu().numpy()
                 )
         return out
 

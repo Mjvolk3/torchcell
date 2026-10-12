@@ -1143,3 +1143,44 @@ GilaHyper jobs are now two `afterany` chains behind 4282 and 4284, so two cards 
 busy without a releaser. The two resubmitted jobs waited behind CPU-only work: the node
 had 4 to 12 CPUs and 15 to 47 GB free with two cards idle, so their requests were cut to
 2 CPUs and 15 GB each.
+
+## 2026.10.12 - Round 7: every record is a cell
+
+The framework claim of this case study is that one cell graph transformer handles a gene
+perturbation and an environment perturbation (a compound, a mixture) as the same kind of
+instance: a cell with a genotype set and an environment set, from which a phenotype is
+read. Rounds 1 to 6 did not compute that. The trainer's step was a pass over genes, the
+public screens were read at the deleted genes through a gene head, and the bAID host had
+its own sigmoid head reached with no genotype; the per-gene bias was indexed by the
+first gene of the strain (`strain[:, 0]`), so a two-deletion genotype would have read one
+bias and dropped the other. The shared encoder (`EquivariantCellGraphTransformer`) was
+already set-general, which is how 030 batches one- to three-deletion records and 031
+batches multi-edit strains; the special case was 040's wrapper.
+
+`readout: cell` in `train_mixture.py` makes the host the record with the EMPTY genotype
+set: its perturbed-gene blocks are zero, it has no gene bias, it carries its own source
+token, scale and shift, and it shares every other weight with the gene-level records,
+through the one head. The gene bias is now summed over the set, so a strain with two
+deletions carries both. The compound-free medium (the uninhibited anchor) has no compound
+token, and the mean over an empty set is NaN: the first smoke (job 4310) died at "no
+step was selected" with the host loss NaN from step 2, and the offset is zero for that
+medium now. The gene-level computation is unchanged in form, so the single-source arm
+under `cell` is the equivalence check on the public side.
+
+Round 7 (`r3_sweep.py --wave 7`, `results/r7_plan.csv`): `van_e150_cell`,
+`van_e150_cell_film` (a host that shares the gene-level head reading dose),
+`van_e150_cell_lh3` (the 209 host records weighted 3 inside the shared head),
+`vanhop_e150_cell`, `vanhophet_e150_cell`; folds 0 to 2, one seed, 25 estimated A40
+hours. Delta triage before this: `r5b_vanwil_e300` (two jobs, 300 epochs; every run
+selects before 135) and `r5b_vanhet_e150` (three jobs; the source-combining null is
+already measured on vanhop and vanhophet) cancelled, 22829495 to 22829497 and 22829501
+to 22829502; the 36 remaining round-5 and 5b jobs (partition ensemble, regularization
+grid, selector, the `cond_batch` 96 and `aux_weight` arms) stay, since they answer the
+questions the cell readout inherits.
+
+What is NOT yet general, stated so it is not mistaken for done: the batch is still
+grouped by genotype (one encoder forward per strain against its conditions), which is a
+cache rather than the data model, and no 040 source carries a multi-gene genotype, so
+the set path is exercised only by the empty set (host) and by the unit check of the bias
+sum; aerobicity, shaking, medium and temperature are environment attributes the record
+carries in the schema and the model does not yet see.

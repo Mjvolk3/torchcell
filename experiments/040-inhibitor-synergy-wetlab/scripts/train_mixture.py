@@ -28,6 +28,13 @@ genes summed, the strain's own post-deletion rows from the encoder's deletion op
 the mean of ``H^c`` over genes, and the compound token after it read the genome, beside a
 per-source gene bias and a compound offset. The fifth block is the source token.
 
+EVERY RECORD IS A CELL under ``readout: cell`` (round 7): a genotype SET in a medium,
+read through that one head. The host is the record with the EMPTY set, so its two
+perturbed-gene blocks are zero and it carries no gene bias; it has its own source token,
+scale and shift and shares every other weight with the gene-level records. The gene bias
+is summed over the set, so a strain with two deletions carries both. Under
+``readout: gene`` (rounds 1 to 6) the host has its own sigmoid head on the medium alone.
+
 A STEP trains every active gene source (one gene batch each, against the fitted
 conditions) and the host records together: the loss is the sum of each source's masked
 MSE on its standardized values (the auxiliary sources weighted by ``aux_weight``) plus
@@ -199,6 +206,15 @@ class MixtureConfig(BaseModel):
     #: a per-source scale and shift on the shared head's output (one decoder, one linear
     #: head per label), beside the per-source gene bias every arm carries
     source_head: bool = False
+    #: WHAT A RECORD IS. ``gene``: the public screens are read at the deleted genes
+    #: through the gene head and the host through its own sigmoid head on the medium
+    #: alone (rounds 1 to 6). ``cell``: every record is a cell, a genotype SET in a
+    #: medium, read through ONE head; the host is the record with the EMPTY set, so its
+    #: perturbed-gene blocks are zero, it carries no gene bias, it has its own source
+    #: token, scale and shift, and it shares every other weight with the gene-level
+    #: records. The gene-level computation is unchanged in form, so ``cell`` with one
+    #: source reproduces ``gene`` on the public side up to the host's gradient.
+    readout: Literal["gene", "cell"] = "gene"
     #: write a checkpoint per (fold, seed)
     checkpoint: bool = True
     require_molar_dose: bool = True
@@ -513,9 +529,17 @@ class MixtureModel(nn.Module):
         d = cfg.cgt_dim
         self.gene_bias = nn.Embedding(n_sources * n_nodes, 1)
         nn.init.zeros_(self.gene_bias.weight)
-        self.source_token = nn.Embedding(n_sources, d)
+        #: under ``readout: cell`` the host is one more source, the empty genotype, with
+        #: its own token, scale and shift and no gene bias
+        self.host_source = n_sources
+        n_tokens = n_sources + 1 if cfg.readout == "cell" else n_sources
+        self.source_token = nn.Embedding(n_tokens, d)
         nn.init.normal_(self.source_token.weight, std=0.02)
         if cfg.source_encoding == "attributes":
+            assert cfg.readout == "gene", (
+                "readout: cell gives the host its own source token; the attribute "
+                "encoding has no attribute row for the empty genotype yet"
+            )
             assert source_attributes is not None and n_attribute_values is not None
             self.register_buffer(
                 "source_attributes",
@@ -529,8 +553,8 @@ class MixtureModel(nn.Module):
                 nn.init.normal_(emb.weight, std=0.02)
         # one decoder, one linear head per source: scale 1 and shift 0 at the start, so
         # the arm starts as the shared head
-        self.source_scale = nn.Embedding(n_sources, 1)
-        self.source_shift = nn.Embedding(n_sources, 1)
+        self.source_scale = nn.Embedding(n_tokens, 1)
+        self.source_shift = nn.Embedding(n_tokens, 1)
         nn.init.ones_(self.source_scale.weight)
         nn.init.zeros_(self.source_shift.weight)
         self.compound = nn.Sequential(
@@ -623,16 +647,28 @@ class MixtureModel(nn.Module):
 
     def gene_logits(
         self,
-        env: torch.Tensor,
-        h_del: torch.Tensor,
+        env: torch.Tensor | None,
+        h_del: torch.Tensor | None,
         pooled: torch.Tensor,
         token: torch.Tensor,
-        strain: torch.Tensor,
+        strain: torch.Tensor | None,
         source_index: int,
         e: torch.Tensor,
     ) -> torch.Tensor:
-        """[B, C] predictions on the standardized target for the source's conditions."""
-        b, c, d = env.shape
+        """[B, C] predictions on the standardized target for the source's conditions.
+
+        ``strain`` is ``[B, order]``: the gene bias is summed over the genotype's set, so
+        a strain with two deletions carries both. ``strain`` ``None`` is the EMPTY
+        genotype (the host under ``readout: cell``): the perturbed-gene blocks are zero
+        and there is no gene bias, so the cell is read at its gene mean and its medium
+        alone, through the same head and with its own source scale and shift.
+        """
+        c, d = pooled.shape
+        if env is None or h_del is None:
+            assert strain is None, "an empty genotype reads no perturbed rows"
+            env = torch.zeros(1, c, d, device=pooled.device, dtype=pooled.dtype)
+            h_del = torch.zeros(1, d, device=pooled.device, dtype=pooled.dtype)
+        b = env.shape[0]
         source = self.source_vector(source_index, env.device)
         state = torch.cat(
             [
@@ -644,13 +680,42 @@ class MixtureModel(nn.Module):
             ],
             dim=-1,
         )
-        gene = self.gene_bias(source_index * self.n_nodes + strain[:, 0])
-        base = gene + self.offset(e.mean(1)).T
+        if strain is None:
+            gene = torch.zeros(b, 1, device=env.device, dtype=torch.float32)
+        else:
+            gene = self.gene_bias(source_index * self.n_nodes + strain).sum(dim=1)
+        # the compound-free medium (the host's uninhibited anchor) has no compound
+        # token, and the mean over an empty set is NaN; its offset is zero
+        if e.shape[1]:
+            base = gene + self.offset(e.mean(1)).T
+        else:
+            base = gene.expand(b, c)
         head = self.gene_head(self.gene_norm(state.float())).squeeze(-1)
-        if self.cfg.source_head:
+        if self.cfg.source_head or source_index == self.host_source:
             index = torch.full((1,), source_index, dtype=torch.long, device=env.device)
             head = head * self.source_scale(index) + self.source_shift(index)
         return base + head
+
+    def host_logits(
+        self, pooled: torch.Tensor, token: torch.Tensor, e: torch.Tensor
+    ) -> torch.Tensor:
+        """[C] host fitness per medium: the sigmoid head, or the shared head at the empty set."""
+        if self.cfg.readout == "gene":
+            return self.host_fitness(pooled, token)
+        return self.gene_logits(None, None, pooled, token, None, self.host_source, e)[0]
+
+    def host_parameters(self) -> list[nn.Parameter]:
+        """What a host fine-tune unfreezes: the host head, or the shared head and tokens."""
+        if self.cfg.readout == "gene":
+            return list(self.host_head.parameters()) + list(self.host_norm.parameters())
+        modules = [
+            self.gene_head,
+            self.gene_norm,
+            self.source_token,
+            self.source_scale,
+            self.source_shift,
+        ]
+        return [p for module in modules for p in module.parameters()]
 
     def source_vector(self, source_index: int, device: torch.device) -> torch.Tensor:
         """[1, d] the source's token: learned per source, or the sum of its attributes."""
@@ -927,7 +992,7 @@ def predict_host(
             e = model.tokens(medium)
             _, pooled, token = model.medium_state(h, e, None)
             out[np.array(medium.rows)] = (
-                model.host_fitness(pooled, token).float().cpu().numpy()
+                model.host_logits(pooled, token, e).float().cpu().numpy()
             )
     return out
 
@@ -1184,7 +1249,7 @@ def train_seed(
                 predicted = predicted.index_copy(
                     0,
                     torch.tensor(medium.rows, device=device),
-                    model.host_fitness(pooled, token).float(),
+                    model.host_logits(pooled, token, e).float(),
                 )
         host_loss = ((predicted - host_fitness[picked]) ** 2).mean()
 
@@ -1330,7 +1395,7 @@ def finetune_host(
     assert records, "the fine-tune stage has no ex21 record"
     for parameter in model.parameters():
         parameter.requires_grad_(False)
-    trainable = list(model.host_head.parameters()) + list(model.host_norm.parameters())
+    trainable = model.host_parameters()
     if cfg.finetune_scope == "host_head+env_encoder":
         trainable += model.env_parameters()
     for parameter in trainable:
@@ -1363,7 +1428,7 @@ def finetune_host(
                     predicted = predicted.index_copy(
                         0,
                         torch.tensor(medium.rows, device=device),
-                        model.host_fitness(pooled, token).float(),
+                        model.host_logits(pooled, token, e).float(),
                     )
             loss = ((predicted - observed[picked]) ** 2).mean()
             optimizer.zero_grad(set_to_none=True)

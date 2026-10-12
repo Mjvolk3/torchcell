@@ -1139,10 +1139,12 @@ def _l3_provenance_audit(library_root: str) -> LevelResult:
 def _l4_sgd_containment(
     records: Sequence[dict[str, Any]], genome: SCerevisiaeGenome
 ) -> LevelResult:
-    """L4: every deleted ORF is an R64 locus by its own id.
+    """L4 finding: which deleted ORFs are R64 loci by their own id.
 
     A locus is a gene or a non-gene locus such as FLO8's blocked reading frame; the
-    non-gene ones are named in the details.
+    non-gene ones and any ORF R64 does not carry are named in the details. A FINDING,
+    never a gate (owner rule, 2026-10-12: the genome is a separate layer and does not
+    fail a store), so the row always passes and the message carries the count.
     """
     deleted = {
         record["experiment"]["genotype"]["perturbations"][0]["systematic_gene_name"]
@@ -1155,9 +1157,10 @@ def _l4_sgd_containment(
     return LevelResult(
         level=Level.L4,
         name="deleted_gene_containment_sgd",
-        passed=not missing,
-        message=f"{len(deleted) - len(missing)} of {len(deleted)} deleted ORFs are R64 "
-        f"loci ({len(non_gene)} of them non-gene loci)",
+        passed=True,
+        message=f"finding: {len(deleted) - len(missing)} of {len(deleted)} deleted ORFs "
+        f"are R64 loci ({len(non_gene)} of them non-gene loci, {len(missing)} not in "
+        "R64)",
         details={"n_deleted": len(deleted), "missing": missing, "non_gene": non_gene},
     )
 
@@ -1171,8 +1174,9 @@ def verify_build(
     """L0-L4 for a built store, re-reading the released bytes from the raw mirror.
 
     L0-L3 are the family gate (:mod:`torchcell.verification.expression_score`) plus
-    the exact released-value comparison and the sourced-quote audit; L4 is SGD
-    containment and the matched-strain agreement with the Kemmeren 2014 dev store.
+    the exact released-value comparison and the sourced-quote audit; L4 is the SGD
+    containment finding (reported, never failing) and the matched-strain agreement
+    with the Kemmeren 2014 dev store.
     """
     from torchcell.verification.expression_score import (
         l4_matched_profile_agreement,

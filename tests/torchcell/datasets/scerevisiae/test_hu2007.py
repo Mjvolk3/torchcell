@@ -466,6 +466,14 @@ def test_process_stores_a_deleted_orf_r64_does_not_carry_under_its_released_name
         for r in load_records(str(root))
     )
     assert strains == ["YAL001C", "YPL999C"]
+    # ... and the L4 containment row reports it as a finding without failing
+    result = h._l4_sgd_containment(load_records(str(root)), _genome())
+    assert result.passed
+    assert result.details["missing"] == ["YPL999C"]
+    assert result.message == (
+        "finding: 1 of 2 deleted ORFs are R64 loci (0 of them non-gene loci, "
+        "1 not in R64)"
+    )
 
 
 # --------------------------------------------------------------------------- #

@@ -64,10 +64,35 @@
     "name": "v25 inductive round by cell",
     "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25?nw=xbewyhsxbtr"
   },
+  "morph_v25/M_cls_crps_lr1e-3": {
+    "id": "2z49lon5v83",
+    "name": "M_cls_crps_lr1e-3: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25?nw=2z49lon5v83"
+  },
+  "morph_v25/M_cls_graphkl1_lr3e-4": {
+    "id": "6a58si8gt4h",
+    "name": "M_cls_graphkl1_lr3e-4: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25?nw=6a58si8gt4h"
+  },
+  "morph_v25/M_cls_graphkl1e-2_lr3e-4": {
+    "id": "orjlf0ws1o7",
+    "name": "M_cls_graphkl1e-2_lr3e-4: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25?nw=orjlf0ws1o7"
+  },
   "morph_v25/M_cls_lr1e-3": {
     "id": "repnuddne0k",
     "name": "M_cls_lr1e-3: one line per split",
     "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25?nw=repnuddne0k"
+  },
+  "morph_v25/M_cls_lr1e-3_mse": {
+    "id": "oaon8rnjheu",
+    "name": "M_cls_lr1e-3_mse: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25?nw=oaon8rnjheu"
+  },
+  "morph_v25/M_cls_lr1e-3_pearson_mse": {
+    "id": "eidleug0sam",
+    "name": "M_cls_lr1e-3_pearson_mse: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25?nw=eidleug0sam"
   },
   "morph_v25/M_cls_lr3e-3": {
     "id": "rwdnusmjg1u",
@@ -78,6 +103,26 @@
     "id": "7r9amf7kzpx",
     "name": "M_cls_lr3e-4: one line per split",
     "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25?nw=7r9amf7kzpx"
+  },
+  "morph_v25/M_cls_lr3e-4_mse": {
+    "id": "4n99berr19v",
+    "name": "M_cls_lr3e-4_mse: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25?nw=4n99berr19v"
+  },
+  "morph_v25/M_pool_b128_lr3e-4": {
+    "id": "7tbcl19qylw",
+    "name": "M_pool_b128_lr3e-4: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25?nw=7tbcl19qylw"
+  },
+  "morph_v25/M_pool_b32_lr3e-4": {
+    "id": "mqfnf3810fg",
+    "name": "M_pool_b32_lr3e-4: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25?nw=mqfnf3810fg"
+  },
+  "morph_v25/M_pool_b64_lr3e-4": {
+    "id": "po99duoy9g5",
+    "name": "M_pool_b64_lr3e-4: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25?nw=po99duoy9g5"
   },
   "morph_v25/M_pool_lr1e-3": {
     "id": "4rifv7kcgxm",
@@ -104,10 +149,45 @@
     "name": "M_xattn_lr3e-3: one line per split",
     "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25?nw=k9f34pj9ull"
   },
+  "morph_v25/M_xattn_lr3e-4": {
+    "id": "h823jprysjp",
+    "name": "M_xattn_lr3e-4: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25?nw=h823jprysjp"
+  },
+  "morph_v25/M_zs_b128_lr3e-4": {
+    "id": "1f6ctu9bnby",
+    "name": "M_zs_b128_lr3e-4: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25?nw=1f6ctu9bnby"
+  },
+  "morph_v25/M_zs_b32_lr3e-4": {
+    "id": "j9od6nqlort",
+    "name": "M_zs_b32_lr3e-4: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25?nw=j9od6nqlort"
+  },
+  "morph_v25/M_zs_b64_lr3e-4": {
+    "id": "q9los88egq4",
+    "name": "M_zs_b64_lr3e-4: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25?nw=q9los88egq4"
+  },
+  "morph_v25/M_zs_crps_lr1e-3": {
+    "id": "y8ic2b3s12p",
+    "name": "M_zs_crps_lr1e-3: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25?nw=y8ic2b3s12p"
+  },
   "morph_v25/M_zs_lr1e-3": {
     "id": "8cqn43mrvzc",
     "name": "M_zs_lr1e-3: one line per split",
     "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25?nw=8cqn43mrvzc"
+  },
+  "morph_v25/M_zs_lr1e-3_mse": {
+    "id": "h9mtipkoh1a",
+    "name": "M_zs_lr1e-3_mse: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25?nw=h9mtipkoh1a"
+  },
+  "morph_v25/M_zs_lr1e-3_pearson_mse": {
+    "id": "ldazjxl2ptc",
+    "name": "M_zs_lr1e-3_pearson_mse: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25?nw=ldazjxl2ptc"
   },
   "morph_v25/M_zs_lr3e-3": {
     "id": "183tsbckfqe",
@@ -118,6 +198,11 @@
     "id": "sp9tk23cbzu",
     "name": "M_zs_lr3e-4: one line per split",
     "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25?nw=sp9tk23cbzu"
+  },
+  "morph_v25/M_zs_lr3e-4_mse": {
+    "id": "s8pk039xhfo",
+    "name": "M_zs_lr3e-4_mse: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25?nw=s8pk039xhfo"
   },
   "v16": {
     "id": "jvc4d5ajdy1",

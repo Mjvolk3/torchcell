@@ -3,30 +3,40 @@
 \begin{table}[htbp]
   \centering
   \footnotesize
-  \caption[Round v25, inductive morphology]{Round v25 by cell (arm plus recipe), genotype only on fig3_core, 116 moving features. The window is the mean validation Pearson per feature over epochs 1{,}000 to 1{,}199 of finished runs; the escape fraction is the share of runs whose training Pearson exceeded 0.3 at any epoch; the training fit is at the last logged epoch. A cell with unfinished runs is partial. Bold, the best finished window mean. \src{experiments/019-simb-multimodal/scripts/morph_v25_readout.py}}
+  \caption[Round v25, inductive morphology]{Round v25 by cell (arm plus recipe), genotype only on fig3_core, 116 moving features. The window is the mean validation Pearson per feature over epochs 400 to 499 of finished runs (the 1{,}200-epoch runs of the first wave also carry their 1{,}000 to 1{,}199 mean in the json); the escape fraction is the share of runs whose training Pearson exceeded 0.3 at any epoch; the training fit is at the last logged epoch. A cell with unfinished runs is partial. Bold, the best finished window mean. \src{experiments/019-simb-multimodal/scripts/morph_v25_readout.py}}
   \label{tab:morph-v25}
   \begin{tabular}{@{}lrrrrr@{}}
     \toprule
     cell & runs (n) & finished (n) & window mean val Pearson per feature (s.d.) & escape fraction & train Pearson per feature, last epoch (mean) \\
     \midrule
-    \texttt{M\_xattn\_lr3e-4} & 1 & 1 & \textbf{0.121} & 1 of 1 & 0.65 \\
-    \texttt{M\_pool\_lr3e-4} & 2 & 2 & 0.102 (0.028) & 2 of 2 & 0.55 \\
-    \texttt{M\_zs\_lr3e-4} & 2 & 2 & 0.075 (0.057) & 2 of 2 & 0.29 \\
-    \texttt{M\_cls\_lr3e-3} & 2 & 2 & 0.039 (0.007) & 0 of 2 & 0.12 \\
-    \texttt{M\_xattn\_lr3e-3} & 1 & 1 & 0.037 & 0 of 1 & 0.09 \\
-    \texttt{M\_pool\_lr3e-3} & 2 & 2 & 0.037 (0.005) & 0 of 2 & 0.11 \\
-    \texttt{M\_zs\_lr3e-3} & 2 & 2 & 0.036 (0.004) & 0 of 2 & 0.11 \\
-    \texttt{M\_zs\_lr1e-3} & 2 & 2 & 0.036 (0.005) & 0 of 2 & 0.08 \\
-    \texttt{M\_cls\_lr1e-3} & 2 & 2 & 0.036 (0.005) & 0 of 2 & 0.11 \\
-    \texttt{M\_pool\_lr1e-3} & 2 & 2 & 0.035 (0.004) & 0 of 2 & 0.09 \\
-    \texttt{M\_cls\_lr3e-4} & 2 & 2 & 0.032 (0.003) & 0 of 2 & 0.09 \\
-    \texttt{M\_xattn\_lr1e-3} & 2 & 2 & 0.031 (0.004) & 0 of 2 & 0.07 \\
-    \texttt{M\_pool\_b64\_lr3e-4} & 3 & 0 & partial & 0 of 3 &  \\
-    \texttt{M\_zs\_b128\_lr3e-4} & 6 & 0 & partial & 0 of 6 &  \\
-    \texttt{M\_zs\_b32\_lr3e-4} & 3 & 0 & partial & 0 of 3 &  \\
-    \texttt{M\_pool\_b32\_lr3e-4} & 3 & 0 & partial & 0 of 3 &  \\
-    \texttt{M\_pool\_b128\_lr3e-4} & 6 & 0 & partial & 0 of 6 &  \\
-    \texttt{M\_zs\_b64\_lr3e-4} & 3 & 0 & partial & 0 of 3 &  \\
+    \texttt{M\_zs\_lr3e-4\_mse} & 4 & 4 & \textbf{0.147 (0.025)} & 4 of 4 & 0.47 \\
+    \texttt{M\_xattn\_lr3e-4} & 2 & 2 & 0.141 (0.010) & 2 of 2 & 0.71 \\
+    \texttt{M\_pool\_lr3e-4} & 3 & 3 & 0.100 (0.072) & 2 of 3 & 0.39 \\
+    \texttt{M\_zs\_lr3e-4} & 3 & 3 & 0.087 (0.084) & 3 of 3 & 0.35 \\
+    \texttt{M\_cls\_graphkl1\_lr3e-4} & 1 & 1 & 0.077 & 0 of 1 & 0.12 \\
+    \texttt{M\_cls\_graphkl1e-2\_lr3e-4} & 2 & 2 & 0.077 (0.031) & 2 of 2 & 0.49 \\
+    \texttt{M\_zs\_crps\_lr1e-3} & 4 & 4 & 0.043 (0.018) & 0 of 4 & 0.10 \\
+    \texttt{M\_cls\_crps\_lr1e-3} & 4 & 4 & 0.042 (0.016) & 0 of 4 & 0.10 \\
+    \texttt{M\_cls\_lr3e-4} & 4 & 4 & 0.040 (0.016) & 0 of 4 & 0.09 \\
+    \texttt{M\_cls\_lr1e-3\_mse} & 4 & 4 & 0.040 (0.018) & 0 of 4 & 0.10 \\
+    \texttt{M\_zs\_lr1e-3\_mse} & 4 & 4 & 0.040 (0.016) & 0 of 4 & 0.10 \\
+    \texttt{M\_cls\_lr3e-4\_mse} & 4 & 4 & 0.038 (0.017) & 0 of 4 & 0.07 \\
+    \texttt{M\_cls\_lr3e-3} & 3 & 3 & 0.037 (0.004) & 0 of 3 & 0.11 \\
+    \texttt{M\_zs\_lr3e-3} & 3 & 3 & 0.036 (0.005) & 0 of 3 & 0.11 \\
+    \texttt{M\_pool\_lr3e-3} & 3 & 3 & 0.036 (0.004) & 0 of 3 & 0.11 \\
+    \texttt{M\_xattn\_lr3e-3} & 3 & 3 & 0.035 (0.004) & 0 of 3 & 0.11 \\
+    \texttt{M\_cls\_lr1e-3} & 3 & 3 & 0.035 (0.004) & 0 of 3 & 0.10 \\
+    \texttt{M\_zs\_lr1e-3} & 3 & 3 & 0.035 (0.004) & 0 of 3 & 0.08 \\
+    \texttt{M\_pool\_lr1e-3} & 3 & 3 & 0.034 (0.004) & 0 of 3 & 0.09 \\
+    \texttt{M\_xattn\_lr1e-3} & 3 & 3 & 0.029 (0.004) & 0 of 3 & 0.07 \\
+    \texttt{M\_zs\_lr1e-3\_pearson\_mse} & 4 & 4 & 0.000 (0.000) & 0 of 4 & 0.00 \\
+    \texttt{M\_cls\_lr1e-3\_pearson\_mse} & 4 & 4 & 0.000 (0.000) & 0 of 4 & 0.00 \\
+    \texttt{M\_pool\_b64\_lr3e-4} & 6 & 0 & partial & 0 of 6 & 0.11 \\
+    \texttt{M\_zs\_b128\_lr3e-4} & 12 & 0 & partial & 3 of 12 & 0.24 \\
+    \texttt{M\_zs\_b32\_lr3e-4} & 6 & 0 & partial & 0 of 6 & 0.11 \\
+    \texttt{M\_pool\_b32\_lr3e-4} & 6 & 0 & partial & 0 of 6 & 0.13 \\
+    \texttt{M\_pool\_b128\_lr3e-4} & 12 & 0 & partial & 0 of 12 & 0.09 \\
+    \texttt{M\_zs\_b64\_lr3e-4} & 6 & 0 & partial & 1 of 6 & 0.23 \\
     \bottomrule
   \end{tabular}
 \end{table}

@@ -207,7 +207,7 @@ The candidate row is corrected (authors N'Guessan, Tong, Heydari, Nguyen Ba; doi
 
 ## 2026.10.11 - One single-cell UMI-count leaf for Boocock 2025 and Jackson 2020 (#1016)
 
-Owner decision on #1016: use one class for the two single-cell UMI-count leaves unless it loses data. Measured: it does not, so Jackson 2020's `PseudobulkUmiCountPhenotype` was merged into Boocock 2025's `SingleCellExpressionPhenotype` (the better name: 79,123 Boocock records and 12 Jackson records are single cells, which "pseudobulk" would mislabel) and N'Guessan 2025's loader moved with it.
+Owner decision on #1016: use one class for the two single-cell UMI-count leaves unless it loses data. Measured: it does not, so Jackson 2020's `PseudobulkUmiCountPhenotype` was merged into Boocock 2025's `SingleCellExpressionPhenotype` (the better name: Boocock's 79,123 de novo records are one cell each, which "pseudobulk" would mislabel) and N'Guessan 2025's loader moved with it.
 
 ### How it was decided
 

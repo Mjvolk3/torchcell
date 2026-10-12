@@ -80,8 +80,11 @@ loader_closure``). ``wang2015.py``'s closure is 69 symbols and equals the 69 the
 ``env_chemgen_wang2015`` store records; adding ``BacterialFitnessExperiment``,
 ``BacterialFitnessExperimentReference`` and ``FitnessPhenotype`` to its imports raises it
 to 72, which would mark that store STALE for a change touching none of its 46 records.
-The pinned artifact, the SI parsers, the strain resolver, the media object and the
+The pinned artifact, the SI parsers, the strain identities, the media object and the
 sourced values are imported FROM ``wang2015`` instead, so there is one copy of each.
+Every record's genotype is the paper's own gene symbol on
+``BacterialReleasedStrainPerturbation`` (owner rule of 2026-10-12: the data is the data,
+no annotation is read in the build), exactly as ``wang2015``'s records.
 
 DATA. The one consumed file is ``si1.pdf``, the same pinned SI ``wang2015.py`` consumes
 from the same raw mirror under the same sha256, read with the same
@@ -129,14 +132,10 @@ from torchcell.datamodels.schema import (
     Temperature,
     UncertaintyType,
 )
-from torchcell.datasets.bacteria_common import (
-    BACTERIAL_ASSEMBLY_SETS,
-    assembly_reference,
-    bacterial_genome,
-)
+from torchcell.datasets.bacteria_common import assembly_reference
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.datasets.ecoli import wang2015 as wg
-from torchcell.sequence.genome.ecoli.k12 import EcoliK12Genome, EcoliK12StrainName
+from torchcell.sequence.genome.ecoli.k12 import EcoliK12StrainName
 from torchcell.verification.report import (
     Level,
     LevelResult,
@@ -383,11 +382,9 @@ class GrowthWang2015Dataset(ExperimentDataset):
         io_workers: int = 0,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
-        ecoli_genome: EcoliK12Genome | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize; ``ecoli_genome`` is injected by the build entry points."""
-        self.ecoli_genome = ecoli_genome
+        """Initialize; no genome is read, the released identifiers are stored."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -430,18 +427,6 @@ class GrowthWang2015Dataset(ExperimentDataset):
         """Absolute path of one linked raw file."""
         return osp.join(self.raw_dir, name)
 
-    def _genome(self) -> EcoliK12Genome:
-        """The injected genome, or the reference strain's default cache."""
-        if self.ecoli_genome is None:
-            self.ecoli_genome = bacterial_genome("ecoli", self.REFERENCE_STRAIN)
-        expected = BACTERIAL_ASSEMBLY_SETS[self.REFERENCE_STRAIN]
-        if self.ecoli_genome.ASSEMBLY_SET != expected:
-            raise ValueError(
-                f"{type(self).__name__} needs the {expected} genome, got "
-                f"{self.ecoli_genome.ASSEMBLY_SET}"
-            )
-        return self.ecoli_genome
-
     @post_process
     def process(self) -> None:
         """Parse Table S3's no-isoprenol column into 46 fitness records + the LMDB."""
@@ -467,25 +452,12 @@ class GrowthWang2015Dataset(ExperimentDataset):
         keio = wg.keio_entries_for(mutants, entries)
         span = check_fitness_range(mutants, parent)
 
-        genome = self._genome()
-        resolved, unresolved, ledger = wg.resolve_strains(
-            genome, mutants, keio, label=self.name
-        )
-        drop_log = wg.DropLog(
-            dataset=self.name,
-            table_rows=len(rows),
-            reference_rows=[PARENT_STRAIN],
-            source_records=len(mutants),
-            kept_records=len(resolved),
-            dropped_records=len(mutants) - len(resolved),
-            rules=[unresolved],
-        )
-        if sum(rule.n_records for rule in drop_log.rules) != drop_log.dropped_records:
-            raise RuntimeError("drop rules do not account for every dropped strain")
+        resolved = wg.strain_identities(mutants, keio)
+        drop_log = wg.empty_drop_log(self.name, rows, resolved)
         if drop_log.kept_records != EXPECTED_RECORDS:
             raise RuntimeError(
-                f"{drop_log.kept_records} records survive strain resolution, the module "
-                f"declares {EXPECTED_RECORDS}"
+                f"{drop_log.kept_records} deletion rows, the module declares "
+                f"{EXPECTED_RECORDS}"
             )
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
@@ -507,7 +479,7 @@ class GrowthWang2015Dataset(ExperimentDataset):
         env_out.close()
         interned_env.close()
 
-        self._write_ledgers(drop_log, ledger, digest, parent, resolved, span)
+        self._write_ledgers(drop_log, digest, parent, resolved, span)
         log.info(
             "Wang 2015 Table S3 no-isoprenol column: %d records (+ %d %s reference); "
             "fitness %.6f to %.6f, median %.6f",
@@ -522,18 +494,14 @@ class GrowthWang2015Dataset(ExperimentDataset):
     def _write_ledgers(
         self,
         drop_log: wg.DropLog,
-        ledger: wg.IdentifierLedger,
         digest: str,
         parent: wg.TableS3Row,
         resolved: Sequence[wg.StrainIdentity],
         span: FitnessRange,
     ) -> None:
-        """The drop log, the identifier ledger, the extraction record and the table."""
+        """The drop log, the extraction record and the table."""
         out = Path(self.preprocess_dir)
         (out / "dropped_records.json").write_text(drop_log.model_dump_json(indent=2))
-        (out / "identifier_reconciliation.json").write_text(
-            ledger.model_dump_json(indent=2)
-        )
         (out / "extraction.json").write_text(
             json.dumps(
                 {
@@ -583,8 +551,6 @@ class GrowthWang2015Dataset(ExperimentDataset):
                 "record": None,
                 "strain": parent.strain,
                 "keio_token": None,
-                "locus_tag": None,
-                "symbol": None,
                 "od600_without": parent.od600_without,
                 "sd_without": parent.sd_without,
                 "fitness": 1.0,
@@ -596,8 +562,6 @@ class GrowthWang2015Dataset(ExperimentDataset):
                 "record": index,
                 "strain": identity.row.strain,
                 "keio_token": identity.keio_token,
-                "locus_tag": identity.locus_tag,
-                "symbol": identity.symbol,
                 "od600_without": identity.row.od600_without,
                 "sd_without": identity.row.sd_without,
                 "fitness": fitness_phenotype(identity.row, parent).fitness,
@@ -639,14 +603,15 @@ def verify_build(
     dataset_root: str,
     data_root: str | None = None,
     *,
-    genome: EcoliK12Genome | None = None,
+    genome: Any | None = None,
     expected_count: int = EXPECTED_RECORDS,
 ) -> VerificationReport:
-    """Run the fitness L0-L4 gate over a built tree and write the report.
+    """Run the fitness L0-L3 gate, the L4 genome finding, and the audit; write the report.
 
-    The gene universe and the canonical-name resolver are the record's own pinned
-    BW25113 assembly, not the yeast default, which is what the landed Campos 2018 and
-    Schmidt 2016 Table S24 loaders do for the same collection. Every ``SOURCED_VALUES``
+    No resolver and no gene universe are handed to the family verifier: every record
+    carries the gene symbol the paper releases, and the genome never gates a record.
+    The L4 row is ``wang2015``'s finding, how many released symbols the pinned BW25113
+    annotation places, and it passes whatever the count is. Every ``SOURCED_VALUES``
     entry is additionally audited against the literature mirror, as ``wang2015``'s own
     verifier does.
     """
@@ -665,10 +630,13 @@ def verify_build(
         dataset_name=osp.basename(osp.normpath(dataset_root)),
         provenance=VERIFIER_PROVENANCE,
         expected_count=expected_count,
-        sgd_genes=set(genome.genbank.loci),
-        gene_universe_label=f"BW25113 ({genome.ASSEMBLY_SET})",
-        resolve_gene_name=genome.resolve_gene_name,
     )
+    symbols = {
+        str(p["systematic_gene_name"])
+        for record in records
+        for p in record["experiment"]["genotype"]["perturbations"]
+    }
+    report.add(wg.released_symbols_finding(symbols, genome))
     report.add(l2_se_is_never_the_conditioned_one(records))
     if data_root is not None:
         library = Path(data_root) / "torchcell-library"

@@ -74,3 +74,26 @@ The JW id resolves as a BW25113 `gene_synonym`; every record carries `identifier
 
 - Loader `torchcell/datasets/ecoli/baba2006.py`; tests `tests/torchcell/datasets/ecoli/test_baba2006.py`
 - Adapter `torchcell/adapters/baba2006_adapter.py`, conf `torchcell/adapters/conf/gene_essentiality_baba2006_adapter.yaml`
+
+## 2026.10.12 - Every released row stored under its released identifier (genome-gate reversal)
+
+Owner rule of 2026-10-12: the data is the data, and the genome never gates a record. The loader no longer calls `reconcile_locus_tags`, drops no row for an identifier the pinned annotation lacks, and writes no resolver output onto a record; the join of a released identifier to a locus is a downstream act over the gene set, and the verifier's L4 genome row is a finding (`passed=True`, with counts), never a gate. The sweep that found the gates is [[database.genome-gating-sweep.2026.10.12]].
+
+### What changed
+
+| before (dev store built 2026-10-11) | after |
+|---|---|
+| 4,116 records on `BacterialDeletionPerturbation`, each a BW25113 locus tag derived from the JW id (`identifier_mapping` `jw_synonym`) | 4,378 records on `BacterialReleasedStrainPerturbation`: `systematic_gene_name` = the Keio JW id verbatim, `perturbed_gene_name` = the released gene name (the JW id where Table 3 prints `none`), `strain_label` = the JW id, `identifier_kind` "Keio JW id", `released_kind` deletion |
+| `jw_id_not_on_one_bw25113_locus`: 172 rows dropped (125 the annotation does not carry, 47 sharing a locus with another JW id) | all 172 stored; the L4 finding reports how many JW ids the annotation places and how many share a locus |
+| `not_targeted`: 90 N.A. rows dropped | all 90 stored with `is_essential=None`, a typed `ProvenanceGap(field="is_essential", not_reported_by_primary)` and `released_call="N.A."` |
+| `identifier_reconciliation.json` written | not written; the ECK accession and b-number of each row stay released columns of `calls.csv` |
+
+Count arithmetic: 4,378 Table 3 rows = 3,985 obtained (`is_essential=False`) + 303 not obtained (`True`, Table 6 exactly) + 90 not targeted (`None`). Nothing dropped; `dropped_records.json` carries `rules: []`.
+
+Typed gaps per record class: the 90 N.A. rows gap `is_essential`; every other gap (the selection plates' incubation time) is unchanged.
+
+The schema change behind the None call (additive): [[torchcell.datamodels.schema]] `GeneEssentialityPhenotype.is_essential: bool | None` and `released_call`, record `database/schema_changes/2026-10-12-essentiality-released-call-gap-and-released-strain-construction.json`.
+
+### L0-L4 after the rebuild
+
+(L0-L4 table filled in after the rebuild)

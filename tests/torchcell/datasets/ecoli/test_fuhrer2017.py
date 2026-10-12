@@ -13,19 +13,19 @@ the refusal test and by the data-gated tests). The deposit of the synthetic fram
 the deposit's alphabetical column order:
 
     column  name   Table EV1A entries                      raw columns
-    1       hokC   JW4367 b0001 (ready)                    4   -> BW25113_0001 by JW id;
-                                                               the NAME resolves to 4412
-    2       ilvG   JW3740 b3767, JW3741 b3768 (ready)      8   -> pooled, dropped
-    3       thrA   JW0001 b0002 (ready)                    4   -> BW25113_0002
-    4       thrL   JW8888 b0099 (ready)                    4   -> JW id retired, dropped;
-                                                               the NAME is hokC's locus
+    1       hokC   JW4367 b0001 (ready)                    4   -> record, JW4367
+    2       ilvG   JW3740 b3767, JW3741 b3768 (ready)      8   -> record, pooled: JW3740
+                                                               and JW3741, n = 4
+    3       thrA   JW0001 b0002 (ready)                    4   -> record, JW0001
+    4       thrL   JW8888 b0099 (ready)                    4   -> record, JW8888 (in no
+                                                               annotation; a finding)
     5       wt     (none)                                  8   -> reference, n = 4
-    6       yaaQ   JW9999 b9999 (ready)                    4   -> JW id retired, dropped
+    6       yaaQ   JW9999 b9999 (ready)                    4   -> record, JW9999 (same)
 
 Each z-score row is a permutation of the standardized 1..6 scores (median 0, SD 1 over
-the six columns), so the build's standardization check passes. Two of the four JW ids
-resolve, below the 0.95 default, so the success path lowers ``MIN_RESOLVED_FRACTION``
-to 0.5 and a separate test shows the default stops the build.
+the six columns), so the build's standardization check passes. No genome is read in the
+build (owner rule of 2026-10-12: the data is the data); the L4 row of the verifier
+reports which JW ids the synthetic annotation places.
 
 Data-gated tests (``@pytest.mark.data``) read the real raw mirror and the built dev-tree
 LMDB under ``$DATA_ROOT`` (they never build it): the manifest pins, the provenance audit
@@ -58,10 +58,10 @@ from torchcell.data import ManifestPinMismatchError, RawSha256MismatchError
 from torchcell.datamodels.media import M9_GLUCOSE_CASEIN_FUHRER2017
 from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
+    BacterialReleasedStrainPerturbation,
     Environment,
     Temperature,
 )
-from torchcell.datasets.bacteria_common import LocusTagResolutionError
 from torchcell.literature.manifest import RetrievalMethod, RetrievalRecord
 from torchcell.sequence.genome.ecoli.k12 import BW25113_ASSEMBLY, EcoliK12BW25113Genome
 from torchcell.verification.sourced import audit_sourced_value
@@ -241,28 +241,36 @@ def test_ion_keys_are_mode_and_one_based_row() -> None:
     assert m.ion_key("pos", 4365) == "pos_4365"
 
 
-def test_select_strains_keeps_single_entries_and_drops_pools() -> None:
-    """One record per single-entry name; the shared name is a pooled drop; wt is the
+def test_select_strains_keeps_every_mutant_column_and_lists_the_pools() -> None:
+    """One record per mutant column; the shared name is a pooled record; wt is the
     reference with 8 raw columns = 4 cultures.
     """
     selection = m.select_strains(COLUMNS, _entries(), RAW_COUNTS)
-    assert [(s.column, s.deposit_name, s.entry.jw_id) for s in selection.strains] == [
-        (0, "hokC", "JW4367"),
-        (2, "thrA", "JW0001"),
-        (3, "thrL", "JW8888"),
-        (5, "yaaQ", "JW9999"),
+    assert [(s.column, s.deposit_name, s.jw_ids) for s in selection.strains] == [
+        (0, "hokC", ["JW4367"]),
+        (1, "ilvG", ["JW3740", "JW3741"]),
+        (2, "thrA", ["JW0001"]),
+        (3, "thrL", ["JW8888"]),
+        (5, "yaaQ", ["JW9999"]),
     ]
-    assert [s.n_biological for s in selection.strains] == [2, 2, 2, 2]
+    assert [s.n_biological for s in selection.strains] == [2, 4, 2, 2, 2]
+    assert [s.is_pooled for s in selection.strains] == [
+        False,
+        True,
+        False,
+        False,
+        False,
+    ]
     assert (selection.wt_column, selection.wt_raw_columns) == (4, 8)
     assert selection.wt_n_biological == 4
-    assert selection.pooled.rule == "pooled_keio_entries"
-    assert selection.pooled.items == [
+    assert selection.pooled == [
         "ilvG: JW3740 b3767 (ready to distribute), JW3741 b3768 (ready to "
         "distribute); 2 loci"
     ]
+    assert selection.unlisted == []
 
 
-def test_select_strains_names_a_same_locus_pool() -> None:
+def test_select_strains_names_a_same_locus_pool_as_one_jw_id() -> None:
     entries = [
         m.KeioEntry(
             jw_id="JW5182", blattner_id="b1185", gene_name="dsbB", delivery_status=s
@@ -270,22 +278,49 @@ def test_select_strains_names_a_same_locus_pool() -> None:
         for s in ("ready to distribute", "Eliminated; wrong primers")
     ]
     selection = m.select_strains(["dsbB", "wt"], entries, {"dsbB": 8, "wt": 4})
-    assert selection.strains == []
-    assert selection.pooled.items == [
+    (strain,) = selection.strains
+    assert (strain.jw_ids, strain.n_biological, len(strain.entries)) == (
+        ["JW5182"],
+        4,
+        2,
+    )
+    assert selection.pooled == [
         "dsbB: JW5182 b1185 (ready to distribute), JW5182 b1185 (Eliminated; wrong "
         "primers); same locus"
     ]
+    (perturbation,) = m.deletion_genotype(strain).perturbations
+    assert perturbation.systematic_gene_name == "JW5182"
+
+
+def test_select_strains_stores_an_unlisted_name_and_a_non_ready_entry() -> None:
+    entries = [
+        m.KeioEntry(
+            jw_id="JW0001",
+            blattner_id="b0002",
+            gene_name="thrA",
+            delivery_status="Eliminated; weak growth",
+        )
+    ]
+    selection = m.select_strains(
+        ["nope", "thrA", "wt"], entries, {"nope": 4, "thrA": 4, "wt": 4}
+    )
+    assert selection.unlisted == ["nope"]
+    unlisted, listed = selection.strains
+    (p,) = m.deletion_genotype(unlisted).perturbations
+    assert isinstance(p, BacterialReleasedStrainPerturbation)
+    assert (p.systematic_gene_name, p.identifier_kind, p.strain_label) == (
+        "nope",
+        m.DEPOSIT_NAME_KIND,
+        "nope",
+    )
+    (q,) = m.deletion_genotype(listed).perturbations
+    assert isinstance(q, BacterialReleasedStrainPerturbation)
+    assert (q.systematic_gene_name, q.identifier_kind) == ("JW0001", m.IDENTIFIER_KIND)
 
 
 @pytest.mark.parametrize(
     ("columns", "counts", "error", "message"),
     [
-        (
-            ["nope", "wt"],
-            {"nope": 4, "wt": 4},
-            m.UnmappedDepositColumnError,
-            "deposit column 1 'nope' matches no Table EV1A entry",
-        ),
         (
             ["thrA", "wt"],
             {"thrA": 6, "wt": 4},
@@ -301,22 +336,6 @@ def test_select_strains_refuses_unexpected_deposits(
 ) -> None:
     with pytest.raises(error, match=message.replace("(", r"\(").replace(")", r"\)")):
         m.select_strains(columns, _entries(), counts)
-
-
-def test_select_strains_refuses_an_undistributed_single_entry() -> None:
-    entries = [
-        m.KeioEntry(
-            jw_id="JW0001",
-            blattner_id="b0002",
-            gene_name="thrA",
-            delivery_status="Eliminated; weak growth",
-        )
-    ]
-    with pytest.raises(m.UndistributedKeioEntryError) as err:
-        m.select_strains(["thrA", "wt"], entries, {"thrA": 4, "wt": 4})
-    assert str(err.value) == (
-        "'thrA' (JW0001) has Keio status 'Eliminated; weak growth'"
-    )
 
 
 def test_ion_alignment_counts_rows_nearest_their_own_index() -> None:
@@ -368,20 +387,16 @@ def test_metabolite_phenotype_carries_the_clone_count_and_the_se_gap() -> None:
     assert phenotype.gapped_fields() == {"metabolite_level_se"}
 
 
-def test_build_experiment_is_one_keio_deletion_on_the_bw25113_namespace() -> None:
+def test_build_experiment_is_one_keio_deletion_under_its_released_jw_id() -> None:
     entry = m.KeioEntry(
         jw_id="JW0001",
         blattner_id="b0002",
         gene_name="thrA",
         delivery_status="ready to distribute",
     )
-    resolved = m.ResolvedStrain(
-        strain=m.KeioStrain(column=2, deposit_name="thrA", entry=entry, raw_columns=4),
-        locus_tag="BW25113_0002",
-        symbol="thrA",
-    )
+    strain = m.KeioStrain(column=2, deposit_name="thrA", entries=[entry], raw_columns=4)
     experiment = m.build_experiment(
-        "MetabolomeFuhrer2017Dataset", resolved, ["neg_0001"], [1.5], m.environment()
+        "MetabolomeFuhrer2017Dataset", strain, ["neg_0001"], [1.5], m.environment()
     )
     dumped = experiment.model_dump()
     assert dumped["experiment_type"] == "bacterial_metabolite"
@@ -394,26 +409,24 @@ def test_build_experiment_is_one_keio_deletion_on_the_bw25113_namespace() -> Non
             "perturbed_gene_name",
             "perturbation_type",
             "gene_namespace",
+            "strain_label",
+            "identifier_kind",
+            "released_kind",
             "collection",
             "cassette",
             "construction",
-            "state",
         )
     } == {
-        "systematic_gene_name": "BW25113_0002",
+        "systematic_gene_name": "JW0001",
         "perturbed_gene_name": "thrA",
-        "perturbation_type": "bacterial_deletion",
+        "perturbation_type": "bacterial_released_strain",
         "gene_namespace": "ecoli_k12_bw25113_locus_tag",
+        "strain_label": "thrA",
+        "identifier_kind": "Keio JW id",
+        "released_kind": "deletion",
         "collection": "KEIO knockout collection",
         "cassette": "kanamycin cassette flanked by FLP recognition target sites",
-        "construction": {
-            "strain_accession": "JW0001",
-            "lab": None,
-            "batch": None,
-            "plate": None,
-            "well": None,
-        },
-        "state": "absent",
+        "construction": None,
     }
     assert dumped["phenotype"]["metabolite_level"] == {"neg_0001": 1.5}
     assert dumped["phenotype"]["n_replicates"] == {"neg_0001": 2}
@@ -438,44 +451,54 @@ def test_build_reference_keeps_the_assembly_pin_through_a_dump() -> None:
 # --------------------------------------------------------------------------- #
 # Hermetic build
 # --------------------------------------------------------------------------- #
-def test_build_two_records_with_the_wt_reference_and_ledgers(
+def test_build_five_records_with_the_wt_reference_and_ledgers(
     synthetic: Path,
     monkeypatch: pytest.MonkeyPatch,
-    bw25113: EcoliK12BW25113Genome,
     presence_only_pins: list[Mapping[str, str]],
 ) -> None:
-    """Two records, hokC (JW4367) and thrA (JW0001); ilvG is pooled and the JW ids of
-    thrL and yaaQ are retired, all ledgered. hokC's record is BW25113_0001 (thrL), the JW
-    id's locus, while its deposit NAME resolves to BW25113_4412; that disagreement is
-    ledgered, and the dropped thrL's name is marked as resolving to that kept locus.
+    """Five records, one per mutant column, each under the JW id(s) Table EV1A lists
+    for its name: ilvG is a pooled record with two JW ids, thrL and yaaQ carry JW ids
+    the synthetic annotation does not have and are records all the same.
     """
-    monkeypatch.setattr(m, "MIN_RESOLVED_FRACTION", 0.5)
-    dataset = m.MetabolomeFuhrer2017Dataset(root=str(synthetic), ecoli_genome=bw25113)
+    monkeypatch.setattr(m, "EXPECTED_RECORDS", 5)
+    dataset = m.MetabolomeFuhrer2017Dataset(root=str(synthetic))
     assert presence_only_pins == [m.DATA_SHA256]
-    assert len(dataset) == 2
+    assert len(dataset) == 5
     keys = ["neg_0001", "neg_0002", "neg_0003", "pos_0001", "pos_0002"]
 
     first = dataset[0]["experiment"]
-    assert (
-        first["genotype"]["perturbations"][0]["systematic_gene_name"] == "BW25113_0001"
+    (hokc,) = first["genotype"]["perturbations"]
+    assert (hokc["systematic_gene_name"], hokc["perturbed_gene_name"]) == (
+        "JW4367",
+        "hokC",
     )
-    assert first["genotype"]["perturbations"][0]["perturbed_gene_name"] == "thrL"
-    assert first["genotype"]["perturbations"][0]["construction"][
-        "strain_accession"
-    ] == ("JW4367")
+    assert hokc["strain_label"] == "hokC"
     assert first["phenotype"]["metabolite_level"] == dict(
         zip(keys, [Z6[0], Z6[5], Z6[2], Z6[1], Z6[3]], strict=True)
     )
     assert first["phenotype"]["n_replicates"] == dict.fromkeys(keys, 2)
     assert first["environment"] == _expected_environment()
 
-    second = dataset[1]["experiment"]
-    assert (
-        second["genotype"]["perturbations"][0]["systematic_gene_name"] == "BW25113_0002"
+    pooled = dataset[1]["experiment"]
+    assert [p["systematic_gene_name"] for p in pooled["genotype"]["perturbations"]] == [
+        "JW3740",
+        "JW3741",
+    ]
+    assert {p["strain_label"] for p in pooled["genotype"]["perturbations"]} == {"ilvG"}
+    assert pooled["phenotype"]["n_replicates"] == dict.fromkeys(keys, 4)
+    assert pooled["phenotype"]["metabolite_level"] == dict(
+        zip(keys, [Z6[1], Z6[4], Z6[0], Z6[2], Z6[5]], strict=True)
     )
+
+    second = dataset[2]["experiment"]
+    assert second["genotype"]["perturbations"][0]["systematic_gene_name"] == "JW0001"
     assert second["phenotype"]["metabolite_level"] == dict(
         zip(keys, [Z6[2], Z6[3], Z6[4], Z6[0], Z6[1]], strict=True)
     )
+    assert [
+        dataset[i]["experiment"]["genotype"]["perturbations"][0]["systematic_gene_name"]
+        for i in (3, 4)
+    ] == ["JW8888", "JW9999"]
 
     reference = dataset[0]["reference"]
     assert reference["genome_reference"] == REFERENCE.model_dump()
@@ -488,80 +511,54 @@ def test_build_two_records_with_the_wt_reference_and_ledgers(
     preprocess = synthetic / "preprocess"
     drops = json.loads((preprocess / "dropped_records.json").read_text())
     assert (
+        drops["deposit_columns"],
         drops["source_records"],
         drops["kept_records"],
         drops["dropped_records"],
-    ) == (5, 2, 3)
-    assert [(r["rule"], r["items"]) for r in drops["rules"]] == [
-        (
-            "pooled_keio_entries",
-            [
-                "ilvG: JW3740 b3767 (ready to distribute), JW3741 b3768 (ready to "
-                "distribute); 2 loci"
-            ],
-        ),
-        (
-            "jw_id_not_on_a_bw25113_locus",
-            [
-                "JW8888 (thrL, b0099): retired; the name resolves renamed "
-                "BW25113_0001, a kept record's locus",
-                "JW9999 (yaaQ, b9999): retired; the name resolves retired yaaQ",
-            ],
-        ),
-    ]
-    ledger = json.loads((preprocess / "identifier_reconciliation.json").read_text())
-    assert ledger["symbol_disagreements"] == [
-        {
-            "deposit_name": "hokC",
-            "jw_id": "JW4367",
-            "jw_locus": "BW25113_0001",
-            "name_resolution": "renamed BW25113_4412",
-        }
-    ]
-    assert ledger["reconciliation"]["status_histogram"]["renamed"] == 2
-    assert ledger["reconciliation"]["status_histogram"]["retired"] == 2
+        drops["rules"],
+    ) == (6, 5, 5, 0, [])
+    assert (
+        "ilvG: JW3740 b3767 (ready to distribute), JW3741 b3768 (ready to "
+        "distribute); 2 loci"
+    ) in drops["notes"]
+    assert not (preprocess / "identifier_reconciliation.json").exists()
     ions = (preprocess / "ions.csv").read_text().splitlines()
     assert ions[0] == "key,mode,ion_index,deposit_mz,table_ev1b_mz"
     assert ions[1] == "neg_0001,neg,1,100.0,100.001"
     strains = (preprocess / "strains.csv").read_text().splitlines()
+    assert strains[0] == (
+        "record,deposit_column,deposit_name,jw_ids,blattner_ids,delivery_statuses,"
+        "n_entries,n_biological"
+    )
     assert strains[1:] == [
-        "0,1,hokC,JW4367,b0001,BW25113_0001,thrL,2",
-        "1,3,thrA,JW0001,b0002,BW25113_0002,thrA,2",
+        "0,1,hokC,JW4367,b0001,ready to distribute,1,2",
+        "1,2,ilvG,JW3740;JW3741,b3767;b3768,ready to distribute;ready to distribute,"
+        "2,4",
+        "2,3,thrA,JW0001,b0002,ready to distribute,1,2",
+        "3,4,thrL,JW8888,b0099,ready to distribute,1,2",
+        "4,6,yaaQ,JW9999,b9999,ready to distribute,1,2",
     ]
     scale = json.loads((preprocess / "zscore_scale.json").read_text())
     assert [s["mode"] for s in scale] == ["neg", "pos"]
 
 
-def test_build_stops_below_the_resolution_threshold(
-    synthetic: Path, bw25113: EcoliK12BW25113Genome
-) -> None:
-    """Two of four JW ids resolve (0.500 < 0.95): the build stops, nothing dropped."""
-    with pytest.raises(LocusTagResolutionError, match=r"2 of 4 names \(0\.500\)"):
-        m.MetabolomeFuhrer2017Dataset(root=str(synthetic), ecoli_genome=bw25113)
-    assert not (synthetic / "processed" / "lmdb").exists()
-
-
-def test_build_refuses_a_genome_of_another_strain(
-    synthetic: Path, monkeypatch: pytest.MonkeyPatch, bw25113: EcoliK12BW25113Genome
-) -> None:
-    monkeypatch.setattr(
-        m, "BACTERIAL_ASSEMBLY_SETS", {"BW25113": "ecoli_K12_MG1655_ASM584v2"}
-    )
-    with pytest.raises(ValueError, match="needs the ecoli_K12_MG1655_ASM584v2 genome"):
-        m.MetabolomeFuhrer2017Dataset(root=str(synthetic), ecoli_genome=bw25113)
-
-
-def test_build_refuses_a_design_other_than_two_by_two(
-    synthetic: Path, bw25113: EcoliK12BW25113Genome
-) -> None:
+def test_build_refuses_a_design_other_than_two_by_two(synthetic: Path) -> None:
     study = synthetic / "raw" / m.STUDY_JSON
     study.write_text(study.read_text().replace("2 Biological", "3 Biological"))
     with pytest.raises(ValueError, match="S-BSST5 design '3 Biological"):
-        m.MetabolomeFuhrer2017Dataset(root=str(synthetic), ecoli_genome=bw25113)
+        m.MetabolomeFuhrer2017Dataset(root=str(synthetic))
+
+
+def test_build_refuses_a_column_count_other_than_the_declared_one(
+    synthetic: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(m, "EXPECTED_RECORDS", 6)
+    with pytest.raises(ValueError, match="5 mutant columns, the module declares 6"):
+        m.MetabolomeFuhrer2017Dataset(root=str(synthetic))
 
 
 def test_process_verifies_the_real_pins(
-    synthetic: Path, monkeypatch: pytest.MonkeyPatch, bw25113: EcoliK12BW25113Genome
+    synthetic: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """With the real check back, the synthetic study JSON is refused by its pin."""
     from torchcell.data import verify_raw_files
@@ -570,7 +567,28 @@ def test_process_verifies_the_real_pins(
     with pytest.raises(
         RawSha256MismatchError, match=f"expected {m.DATA_SHA256[m.STUDY_JSON]}"
     ):
-        m.MetabolomeFuhrer2017Dataset(root=str(synthetic), ecoli_genome=bw25113)
+        m.MetabolomeFuhrer2017Dataset(root=str(synthetic))
+
+
+def test_run_verification_reports_the_jw_ids_as_a_finding(
+    synthetic: Path,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    bw25113: EcoliK12BW25113Genome,
+) -> None:
+    monkeypatch.setattr(m, "EXPECTED_RECORDS", 5)
+    root = tmp_path / "data" / "torchcell" / "metabolome_fuhrer2017"
+    root.parent.mkdir(parents=True)
+    synthetic.rename(root)
+    m.MetabolomeFuhrer2017Dataset(root=str(root))
+    monkeypatch.setattr(m, "bacterial_genome", lambda *a, **k: bw25113)
+    monkeypatch.setattr(m, "SOURCED_VALUES", {})
+    report = m.run_verification(str(tmp_path))
+    assert report.passed, report.summary()
+    finding = report.results[-1]
+    assert finding.name == "gene_containment_bw25113_jw_synonyms" and finding.passed
+    assert finding.details["n_identifiers"] == 6
+    assert finding.details["unplaced"] == ["JW3740", "JW3741", "JW8888", "JW9999"]
 
 
 # --------------------------------------------------------------------------- #
@@ -749,29 +767,34 @@ def test_real_sourced_values_are_verbatim(key: str) -> None:
 
 @pytest.mark.data
 def test_real_build_counts_and_the_thra_record() -> None:
-    """3,735 records (3,806 mutant columns - 25 pooled - 46 JW ids off BW25113); thrA
-    (JW0001) is BW25113_0002 with values read off the deposit by hand.
+    """3,806 records, one per mutant column, 25 of them pooled names with two or
+    three JW ids; thrA (JW0001) with values read off the deposit by hand.
     """
     from torchcell.verification.runners import load_records
 
     drops = json.loads(
         Path(_built_root(), "preprocess", "dropped_records.json").read_text()
     )
-    assert (drops["source_records"], drops["kept_records"]) == (3806, 3735)
-    assert [r["n_records"] for r in drops["rules"]] == [25, 46]
+    assert (drops["source_records"], drops["kept_records"], drops["rules"]) == (
+        3806,
+        3806,
+        [],
+    )
     records = load_records(_built_root())
-    assert len(records) == 3735
+    assert len(records) == 3806
+    assert (
+        sum(1 for r in records if len(r["experiment"]["genotype"]["perturbations"]) > 1)
+        == 20
+    )
     (thra,) = [
         r
         for r in records
-        if r["experiment"]["genotype"]["perturbations"][0]["construction"][
-            "strain_accession"
-        ]
+        if r["experiment"]["genotype"]["perturbations"][0]["systematic_gene_name"]
         == "JW0001"
     ]
     perturbation = thra["experiment"]["genotype"]["perturbations"][0]
-    assert perturbation["systematic_gene_name"] == "BW25113_0002"
     assert perturbation["perturbed_gene_name"] == "thrA"
+    assert perturbation["strain_label"] == "thrA"
     levels = thra["experiment"]["phenotype"]["metabolite_level"]
     assert len(levels) == 3169 + 4365
     assert {k: levels[k] for k in HAND_CHECKED_THRA} == HAND_CHECKED_THRA

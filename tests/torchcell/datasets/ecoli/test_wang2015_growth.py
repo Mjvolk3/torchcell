@@ -133,7 +133,6 @@ def synthetic(
     monkeypatch.setattr(wg, "pdftotext_version", lambda: "pdftotext version test")
     monkeypatch.setattr(wg, "TABLE_S3_SHA256", SYNTHETIC_DIGEST)
     monkeypatch.setattr(wg, "TABLE_S3_MUTANTS", SYNTHETIC_RECORDS)
-    monkeypatch.setattr(wg, "MIN_RESOLVED_FRACTION", 0.5)
     monkeypatch.setattr(gw, "assembly_reference", lambda strain, **_: REFERENCE)
     monkeypatch.setattr(gw, "EXPECTED_SOURCE_ROWS", SYNTHETIC_ROWS)
     monkeypatch.setattr(gw, "EXPECTED_RECORDS", SYNTHETIC_RECORDS)
@@ -246,19 +245,14 @@ def test_check_fitness_range_refuses_a_clamp_a_zero_sd_and_a_drifted_range(
 def test_build_experiment_and_reference_round_trip() -> None:
     parent = _row("BW25113", 8.0, 0.10)
     identity = wg.StrainIdentity(
-        row=_row(f"BW{D}thrA", 4.0, 0.20),
-        locus_tag="BW25113_0002",
-        symbol="thrA",
-        keio_token="JW0001",
-        mdt_family="ABC",
-        keio_accession="JW0001",
+        row=_row(f"BW{D}thrA", 4.0, 0.20), keio_token="JW0001", mdt_family="ABC"
     )
     env = gw.environment()
     experiment = gw.build_experiment("growth_wang2015", identity, parent, env)
     assert isinstance(experiment, BacterialFitnessExperiment)
     genotype = experiment.genotype
     assert not isinstance(genotype, list)
-    assert [p.systematic_gene_name for p in genotype.perturbations] == ["BW25113_0002"]
+    assert [p.systematic_gene_name for p in genotype.perturbations] == ["thrA"]
     assert experiment.phenotype.fitness == 0.5
     reference = gw.build_reference("growth_wang2015", REFERENCE, env, parent)
     assert isinstance(reference, BacterialFitnessExperimentReference)
@@ -272,7 +266,7 @@ def test_build_experiment_and_reference_round_trip() -> None:
 def test_process_builds_one_record_per_mutant_with_the_parent_reference(
     synthetic: Path, bw25113: EcoliK12BW25113Genome
 ) -> None:
-    dataset = gw.GrowthWang2015Dataset(root=str(synthetic), ecoli_genome=bw25113)
+    dataset = gw.GrowthWang2015Dataset(root=str(synthetic))
     assert len(dataset) == SYNTHETIC_RECORDS
     items = [dataset.transform_item(dataset[i]) for i in range(len(dataset))]
     assert {len(i["experiment"].genotype.perturbations) for i in items} == {1}
@@ -305,7 +299,7 @@ def test_process_builds_one_record_per_mutant_with_the_parent_reference(
     frame = pd.read_csv(preprocess / "no_isoprenol.csv")
     assert len(frame) == SYNTHETIC_RECORDS + 1
     assert frame["fitness"].tolist()[0] == 1.0
-    assert (preprocess / "identifier_reconciliation.json").exists()
+    assert not (preprocess / "identifier_reconciliation.json").exists()
 
 
 def test_process_refuses_a_table_whose_row_count_moved(
@@ -313,7 +307,7 @@ def test_process_refuses_a_table_whose_row_count_moved(
 ) -> None:
     monkeypatch.setattr(gw, "EXPECTED_SOURCE_ROWS", SYNTHETIC_ROWS + 1)
     with pytest.raises(wg.TableExtractionError, match="the module declares"):
-        gw.GrowthWang2015Dataset(root=str(synthetic), ecoli_genome=bw25113)
+        gw.GrowthWang2015Dataset(root=str(synthetic))
 
 
 def test_process_refuses_a_digest_other_than_the_pin(
@@ -321,13 +315,13 @@ def test_process_refuses_a_digest_other_than_the_pin(
 ) -> None:
     monkeypatch.setattr(wg, "TABLE_S3_SHA256", "0" * 64)
     with pytest.raises(wg.TableExtractionError, match="parsed Table S3 sha256"):
-        gw.GrowthWang2015Dataset(root=str(synthetic), ecoli_genome=bw25113)
+        gw.GrowthWang2015Dataset(root=str(synthetic))
 
 
 def test_verify_build_passes_every_level_on_the_fitness_gate(
     synthetic: Path, bw25113: EcoliK12BW25113Genome
 ) -> None:
-    dataset = gw.GrowthWang2015Dataset(root=str(synthetic), ecoli_genome=bw25113)
+    dataset = gw.GrowthWang2015Dataset(root=str(synthetic))
     dataset.close_lmdb()
     report = gw.verify_build(
         str(synthetic), genome=bw25113, expected_count=SYNTHETIC_RECORDS
@@ -337,6 +331,7 @@ def test_verify_build_passes_every_level_on_the_fitness_gate(
     names = [r.name for r in report.results]
     assert "se_is_not_the_conditioned_derivation" in names
     assert "reference_one" in names
+    assert "gene_containment_bw25113_released_symbols" in names
 
 
 def test_l2_rule_catches_a_stored_se_below_the_conditioned_derivation() -> None:
@@ -472,13 +467,3 @@ def test_download_links_every_pinned_mirror_file_and_refuses_an_absent_one(
     (data_root / wg.RAW_DIR_REL / pinned[0].mirror_relpath).unlink()
     with pytest.raises(RuntimeError, match="missing from mirror"):
         dataset.download()
-
-
-def test_the_genome_guard_refuses_an_assembly_other_than_bw25113(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    dataset = gw.GrowthWang2015Dataset.__new__(gw.GrowthWang2015Dataset)
-    wrong = type("WrongGenome", (), {"ASSEMBLY_SET": "ecoli_K12_MG1655_ASM584v2"})()
-    dataset.ecoli_genome = wrong
-    with pytest.raises(ValueError, match="needs the ecoli_K12_BW25113_ASM75055v1"):
-        dataset._genome()

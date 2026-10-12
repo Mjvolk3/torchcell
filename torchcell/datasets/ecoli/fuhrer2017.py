@@ -30,23 +30,32 @@ the KEIO knockout collection (Baba et al, 2006)" and never names the background;
 2006 (mirrored) does: "E. coli K-12 strain BW25113". Records pin
 ``assembly_reference("BW25113")`` and the ``ecoli_k12_bw25113_locus_tag`` namespace.
 
-IDENTIFIERS. The deposit labels strains by GENE NAME, and on the BW25113 GenBank
-annotation 11 kept names do not resolve to the locus of their own strain's JW id: five
-resolve to another locus (``ecpD``, ``rarA``, ``rbn``, ``ykgB``, ``zupT``), four are
-ambiguous and two retired (``identifier_reconciliation.json``, written at build time).
-The strain's identity is its Keio JW id, which the BW25113 GenBank file carries as a
-``gene_synonym``. So each name is joined to Table EV1A, and the JW id goes through
-``reconcile_locus_tags`` on the BW25113 genome. A JW id
-that annotation does not carry is kept as given by the reconciler and its record is
-dropped (rule ``jw_id_not_on_a_bw25113_locus``); no cross-strain (MG1655 b-number
-through ECK) mapping is used, because a derived mapping must be recorded on the record
-and the deletion leaf has no field for it.
+IDENTIFIERS, STORED AS RELEASED (owner rule of 2026-10-12: the data is the data, and
+the genome never gates a record). The deposit labels each strain column by GENE NAME,
+and the paper's Table EV1A ties that name to its Keio JW id, Blattner number and
+delivery status. The record stores exactly that: one
+``BacterialReleasedStrainPerturbation`` per Table EV1A entry the column name matches,
+with the JW id as ``systematic_gene_name``, the entry's gene name as
+``perturbed_gene_name``, the deposit column name as ``strain_label``,
+``identifier_kind`` "Keio JW id" and ``released_kind`` deletion. No annotation is read
+in the build: no JW id is resolved to a BW25113 locus, no column is dropped because the
+annotation lacks its id, and the Blattner number and the delivery status stay released
+columns of ``preprocess/strains.csv``. A column name matching no Table EV1A entry (none
+on the pinned deposit) would be stored under the name itself. The join of a JW id to a
+BW25113 ``gene_synonym`` is a downstream act over the gene set; the verifier's L4 row
+reports how many JW ids the pinned annotation places and gates on none of it.
 
-RECORDS DROPPED (rules + items in ``preprocess/dropped_records.json``): a deposit column
-whose name matches MORE than one Table EV1A entry (``pooled_keio_entries``: the raw
-matrix carries four columns per entry under that one name, so the released value
-summarizes two or three Keio strains, 20 of them of different loci), and a JW id not on
-a BW25113 locus. The ``wt`` column is the reference, not a record.
+POOLED COLUMNS. 25 deposit names match two or three Table EV1A entries, and the raw
+matrix carries four columns per entry under that one name, so the released z-score of
+such a column summarizes two or three Keio strains (20 of them over different Blattner
+numbers; 5 are one JW id listed twice with two delivery statuses, e.g. ``dsbB``
+JW5182 "ready to distribute" and "Eliminated; wrong primers"). Each is a record whose
+genotype names every DISTINCT JW id the name matches, with ``n_replicates`` from the
+whole raw column count, and ``dropped_records.json`` lists them: the value is stored as
+the deposit released it, and what it pools is stated rather than hidden.
+
+RECORDS DROPPED: none. Every one of the 3,806 mutant columns is a record; the ``wt``
+column is the reference.
 
 PHENOTYPE. ``MetabolitePhenotype`` keyed ``neg_NNNN`` / ``pos_NNNN`` (the 1-based ion
 row, which is Table EV1B's ``Ion Index``; ``preprocess/ions.csv`` gives each key's m/z in
@@ -89,27 +98,23 @@ from torchcell.data import (
 )
 from torchcell.datamodels.media import M9_GLUCOSE_CASEIN_FUHRER2017
 from torchcell.datamodels.schema import (
-    BACTERIAL_ASSEMBLY_SETS,
     AssemblyReferenceGenome,
-    BacterialDeletionPerturbation,
     BacterialMetaboliteExperiment,
     BacterialMetaboliteExperimentReference,
+    BacterialReleasedStrainPerturbation,
     Environment,
     Experiment,
     ExperimentReference,
     Genotype,
     MetabolitePhenotype,
     Publication,
-    StrainConstruction,
+    ReleasedStrainKind,
     Temperature,
 )
 from torchcell.datasets.bacteria_common import (
-    LOCUS_TAG_PATTERNS,
     STRAIN_GENE_NAMESPACES,
-    LocusTagReconciliation,
     assembly_reference,
     bacterial_genome,
-    reconcile_locus_tags,
 )
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.literature.manifest import (
@@ -120,8 +125,8 @@ from torchcell.literature.manifest import (
     RetrievalRecord,
 )
 from torchcell.literature.provenance import run_retriever
-from torchcell.sequence.genome.base import GeneNameResolution
-from torchcell.sequence.genome.ecoli.k12 import EcoliK12Genome, EcoliK12StrainName
+from torchcell.sequence.genome.base import GeneNameStatus
+from torchcell.sequence.genome.ecoli.k12 import EcoliK12StrainName
 from torchcell.verification.report import (
     Level,
     LevelResult,
@@ -511,11 +516,12 @@ CASSETTE: str = SOURCED_VALUES["cassette"].value
 
 MEASUREMENT_TYPE = "fia_tof_ms_ion_modified_z_score"
 WILD_TYPE_COLUMN = "wt"
-READY_STATUS = "ready to distribute"
-#: Checklist item 4: below this fraction of JW ids resolving to BW25113 locus tags the
-#: build stops. The BW25113 GenBank file carries 4,334 JW synonyms, so a fraction this low
-#: would mean the wrong file or the wrong strain, not a handful of merged pseudogenes.
-MIN_RESOLVED_FRACTION = 0.95
+#: What ``systematic_gene_name`` is on a record whose column name Table EV1A lists.
+IDENTIFIER_KIND = "Keio JW id"
+#: What it is on a column name Table EV1A does not list (none on the pinned deposit).
+DEPOSIT_NAME_KIND = "deposit column name"
+#: Every mutant column of the deposit is a record: 3,807 columns minus ``wt``.
+EXPECTED_RECORDS = 3806
 #: Minimum share of Table EV1B ions whose nearest deposit m/z is the same row; below it
 #: the ``neg_NNNN`` / ``pos_NNNN`` keys would not mean Table EV1B's Ion Index.
 MIN_ION_ALIGNMENT = 0.999
@@ -710,13 +716,6 @@ class RawColumnCountError(ValueError):
     """A strain whose raw-matrix column count is not 4 per Table EV1A entry."""
 
 
-class UndistributedKeioEntryError(ValueError):
-    """A single-entry strain whose Keio status is not 'ready to distribute'.
-
-    The pinned Table EV1A has none among the deposit's columns.
-    """
-
-
 class NonFiniteZScoreError(ValueError):
     """A z-score cell that is not a finite number (the pinned matrices have none)."""
 
@@ -890,19 +889,31 @@ def zscore_scale(mode: IonMode, matrix: FloatMatrix) -> ZScoreScale:
 # Strain selection and the retention ledger
 # --------------------------------------------------------------------------- #
 class KeioStrain(BaseModel):
-    """One deposit column kept as one Keio strain, before locus-tag reconciliation."""
+    """One deposit column, with every Table EV1A entry its name matches (one for a
+    single Keio strain, two or three for a pooled name, none for an unlisted name).
+    """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     column: int
     deposit_name: str
-    entry: KeioEntry
+    entries: list[KeioEntry]
     raw_columns: int
 
     @property
     def n_biological(self) -> int:
         """Independent clones: raw columns over the technical injections per clone."""
         return self.raw_columns // TECHNICAL_REPLICATES
+
+    @property
+    def jw_ids(self) -> list[str]:
+        """The distinct JW ids the name matches, in Table EV1A order."""
+        return list(dict.fromkeys(e.jw_id for e in self.entries))
+
+    @property
+    def is_pooled(self) -> bool:
+        """The deposit value summarizes more than one Table EV1A entry."""
+        return len(self.entries) > 1
 
 
 class DropRule(BaseModel):
@@ -915,7 +926,7 @@ class DropRule(BaseModel):
 
 
 class DropLog(BaseModel):
-    """Every retention rule applied to a build, in the order they were applied."""
+    """The retention ledger of one build: every mutant column is a record."""
 
     dataset: str
     deposit_columns: int
@@ -924,15 +935,17 @@ class DropLog(BaseModel):
     kept_records: int
     dropped_records: int
     rules: list[DropRule]
+    notes: list[str] = []
 
 
 class StrainSelection(BaseModel):
-    """The deposit columns kept as candidate strains, the wild type, and the drops."""
+    """Every mutant deposit column as a strain, the wild type, and the pooled names."""
 
     strains: list[KeioStrain]
     wt_column: int
     wt_raw_columns: int
-    pooled: DropRule
+    pooled: list[str]
+    unlisted: list[str]
 
     @property
     def wt_n_biological(self) -> int:
@@ -945,19 +958,20 @@ def select_strains(
     entries: Sequence[KeioEntry],
     raw_column_counts: Mapping[str, int],
 ) -> StrainSelection:
-    """Keep each deposit column that is exactly one Keio strain.
+    """Every deposit column but ``wt`` as one strain record, exactly as released.
 
-    ``wt`` is the reference. A name matching no Table EV1A entry, a raw column count
-    other than 4 per entry, or a single entry that is not 'ready to distribute' is
-    refused by name (the pinned deposit has none). A name matching several entries is
-    dropped under ``pooled_keio_entries``: its released value summarizes more than one
-    Keio strain.
+    A name matching several Table EV1A entries is a pooled strain (listed in
+    ``pooled``, stored with every JW id); a name matching none (``unlisted``; the
+    pinned deposit has none) is stored under the name itself. A raw column count other
+    than 4 per entry, or a ``wt`` count that is not whole technical replicates, is
+    refused by name: that is the deposit's own shape, not a genome question.
     """
     by_name: dict[str, list[KeioEntry]] = {}
     for entry in entries:
         by_name.setdefault(entry.gene_name, []).append(entry)
     strains: list[KeioStrain] = []
     pooled_items: list[str] = []
+    unlisted: list[str] = []
     wt: tuple[int, int] | None = None
     for column, name in enumerate(column_names):
         raw = raw_column_counts.get(name, 0)
@@ -967,15 +981,13 @@ def select_strains(
             wt = (column, raw)
             continue
         matched = by_name.get(name, [])
-        if not matched:
-            raise UnmappedDepositColumnError(
-                f"deposit column {column + 1} {name!r} matches no Table EV1A entry"
-            )
-        if raw != RAW_COLUMNS_PER_STRAIN * len(matched):
+        if raw != RAW_COLUMNS_PER_STRAIN * max(1, len(matched)):
             raise RawColumnCountError(
                 f"{name!r}: {raw} raw columns for {len(matched)} Table EV1A entries "
                 f"(expected {RAW_COLUMNS_PER_STRAIN} each)"
             )
+        if not matched:
+            unlisted.append(name)
         if len(matched) > 1:
             loci = sorted({e.blattner_id for e in matched})
             pooled_items.append(
@@ -985,14 +997,10 @@ def select_strains(
                 )
                 + ("; same locus" if len(loci) == 1 else f"; {len(loci)} loci")
             )
-            continue
-        entry = matched[0]
-        if entry.delivery_status != READY_STATUS:
-            raise UndistributedKeioEntryError(
-                f"{name!r} ({entry.jw_id}) has Keio status {entry.delivery_status!r}"
-            )
         strains.append(
-            KeioStrain(column=column, deposit_name=name, entry=entry, raw_columns=raw)
+            KeioStrain(
+                column=column, deposit_name=name, entries=matched, raw_columns=raw
+            )
         )
     if wt is None:
         raise UnmappedDepositColumnError("the deposit has no 'wt' column")
@@ -1000,125 +1008,37 @@ def select_strains(
         strains=strains,
         wt_column=wt[0],
         wt_raw_columns=wt[1],
-        pooled=DropRule(
-            rule="pooled_keio_entries",
-            description="the deposit name matches more than one Table EV1A entry and "
-            "the raw matrix carries 4 columns per entry under that name, so the "
-            "released value summarizes several Keio strains, not one genotype",
-            n_records=len(pooled_items),
-            items=pooled_items,
-        ),
+        pooled=pooled_items,
+        unlisted=unlisted,
     )
 
 
-class SymbolDisagreement(BaseModel):
-    """A kept strain whose deposit NAME does not resolve to its JW id's locus.
-
-    The name resolves to another locus, is ambiguous, or is retired on the BW25113
-    annotation; the record keeps the JW id's locus either way.
-    """
-
-    deposit_name: str
-    jw_id: str
-    jw_locus: str
-    name_resolution: str
-
-
-class IdentifierLedger(BaseModel):
-    """The JW reconciliation report plus what the deposit names would have said."""
-
-    reconciliation: LocusTagReconciliation
-    min_resolved_fraction: float
-    symbol_disagreements: list[SymbolDisagreement]
-
-
-def canonical_symbol(genome: EcoliK12Genome, tag: str) -> str:
-    """The annotation's own gene symbol of ``tag`` when it resolves back to ``tag``,
-    else the tag itself, so the stored pair always round-trips through the resolver.
-    """
-    symbol = genome.genbank.loci[tag].symbol
-    if symbol is None:
-        return tag
-    resolution = genome.resolve_gene_name(symbol)
-    return symbol if resolution.systematic_name == tag else tag
-
-
-class ResolvedStrain(BaseModel):
-    """A kept Keio strain with its BW25113 locus tag and the annotation's symbol."""
-
-    model_config = ConfigDict(extra="forbid", frozen=True)
-
-    strain: KeioStrain
-    locus_tag: str
-    symbol: str
-
-
-def resolve_strains(
-    genome: EcoliK12Genome, strains: Sequence[KeioStrain], *, label: str
-) -> tuple[list[ResolvedStrain], DropRule, IdentifierLedger]:
-    """Reconcile each strain's JW id on ``genome`` and drop the ones off its namespace.
-
-    Stops (``LocusTagResolutionError``) below ``MIN_RESOLVED_FRACTION``. A JW id the
-    reconciler keeps as given (retired, ambiguous, or colliding with another JW id) is
-    not a locus tag the deletion leaf accepts; its record is dropped with the reason.
-    """
-    jw = pd.Series([s.entry.jw_id for s in strains], dtype=object)
-    stored, report = reconcile_locus_tags(genome, jw, label=label)
-    report.require_resolved(MIN_RESOLVED_FRACTION)
-    pattern = LOCUS_TAG_PATTERNS[report.gene_namespace]
-    kept: list[ResolvedStrain] = []
-    unplaced: list[tuple[KeioStrain, str, GeneNameResolution]] = []
-    disagreements: list[SymbolDisagreement] = []
-    for strain, tag in zip(strains, stored.tolist(), strict=True):
-        name_res = genome.resolve_gene_name(strain.deposit_name)
-        if pattern.match(tag) is None:
-            jw_res = genome.resolve_gene_name(strain.entry.jw_id)
-            reason = (
-                "kept as given on collision"
-                if strain.entry.jw_id in report.kept_on_collision
-                else jw_res.status.value
-            )
-            unplaced.append((strain, reason, name_res))
-            continue
-        if name_res.systematic_name != tag:
-            disagreements.append(
-                SymbolDisagreement(
-                    deposit_name=strain.deposit_name,
-                    jw_id=strain.entry.jw_id,
-                    jw_locus=tag,
-                    name_resolution=f"{name_res.status.value} "
-                    f"{name_res.systematic_name}",
-                )
-            )
-        kept.append(
-            ResolvedStrain(
-                strain=strain, locus_tag=tag, symbol=canonical_symbol(genome, tag)
-            )
-        )
-    held = {item.locus_tag for item in kept}
-    dropped = [
-        f"{strain.entry.jw_id} ({strain.deposit_name}, {strain.entry.blattner_id}): "
-        f"{reason}; the name resolves {name_res.status.value} "
-        f"{name_res.systematic_name}"
-        + (", a kept record's locus" if name_res.systematic_name in held else "")
-        for strain, reason, name_res in unplaced
-    ]
-    rule = DropRule(
-        rule="jw_id_not_on_a_bw25113_locus",
-        description="the strain's Keio JW id is not a gene_synonym of exactly one "
-        "BW25113 GenBank locus (retired, ambiguous, or shared with another kept JW "
-        "id), so no locus tag of the pinned namespace names its deletion; each item "
-        "says what the deposit name resolves to and whether a kept record already "
-        "holds that locus",
-        n_records=len(dropped),
-        items=dropped,
+def build_drop_log(dataset_name: str, selection: StrainSelection) -> DropLog:
+    """The retention ledger: every mutant column is a record, nothing is dropped."""
+    n = len(selection.strains)
+    return DropLog(
+        dataset=dataset_name,
+        deposit_columns=n + 1,
+        reference_columns=[WILD_TYPE_COLUMN],
+        source_records=n,
+        kept_records=n,
+        dropped_records=0,
+        rules=[],
+        notes=[
+            "every mutant deposit column is a record under the Keio JW id(s) Table "
+            "EV1A lists for its name (BacterialReleasedStrainPerturbation); no "
+            "annotation is read and no column is dropped for a JW id the BW25113 "
+            "GenBank file does not carry",
+            f"{len(selection.pooled)} deposit names match more than one Table EV1A "
+            "entry (the raw matrix carries 4 columns per entry under that name), so "
+            "their released value summarizes several Keio strains: each is one record "
+            "whose genotype names every distinct JW id, listed here verbatim",
+            *selection.pooled,
+            f"{len(selection.unlisted)} deposit names match no Table EV1A entry and "
+            "are stored under the name itself",
+            *selection.unlisted,
+        ],
     )
-    ledger = IdentifierLedger(
-        reconciliation=report,
-        min_resolved_fraction=MIN_RESOLVED_FRACTION,
-        symbol_disagreements=disagreements,
-    )
-    return kept, rule, ledger
 
 
 # --------------------------------------------------------------------------- #
@@ -1156,37 +1076,61 @@ def environment() -> Environment:
     )
 
 
-def deletion_genotype(resolved: ResolvedStrain) -> Genotype:
-    """The one Keio deletion, named by its BW25113 locus tag."""
+def _released_perturbation(
+    strain: KeioStrain, identifier: str, gene_name: str, kind: str
+) -> BacterialReleasedStrainPerturbation:
+    return BacterialReleasedStrainPerturbation(
+        systematic_gene_name=identifier,
+        perturbed_gene_name=gene_name,
+        gene_namespace=STRAIN_GENE_NAMESPACES["BW25113"],
+        strain_label=strain.deposit_name,
+        identifier_kind=kind,
+        released_kind=ReleasedStrainKind.deletion,
+        collection=COLLECTION,
+        cassette=CASSETTE,
+    )
+
+
+def deletion_genotype(strain: KeioStrain) -> Genotype:
+    """The Keio deletion(s) a deposit column names, exactly as released.
+
+    One perturbation per distinct JW id Table EV1A lists for the column name (a JW id
+    listed twice with two delivery statuses is one strain id, so one perturbation),
+    each carrying the entry's own gene name; a name Table EV1A does not list is stored
+    under the name itself.
+    """
+    if not strain.entries:
+        return Genotype(
+            perturbations=[
+                _released_perturbation(
+                    strain, strain.deposit_name, strain.deposit_name, DEPOSIT_NAME_KIND
+                )
+            ]
+        )
+    first_of: dict[str, KeioEntry] = {}
+    for entry in strain.entries:
+        first_of.setdefault(entry.jw_id, entry)
     return Genotype(
         perturbations=[
-            BacterialDeletionPerturbation(
-                systematic_gene_name=resolved.locus_tag,
-                perturbed_gene_name=resolved.symbol,
-                gene_namespace=STRAIN_GENE_NAMESPACES["BW25113"],
-                collection=COLLECTION,
-                cassette=CASSETTE,
-                construction=StrainConstruction(
-                    strain_accession=resolved.strain.entry.jw_id
-                ),
-            )
+            _released_perturbation(strain, jw_id, entry.gene_name, IDENTIFIER_KIND)
+            for jw_id, entry in first_of.items()
         ]
     )
 
 
 def build_experiment(
     dataset_name: str,
-    resolved: ResolvedStrain,
+    strain: KeioStrain,
     keys: Sequence[str],
     values: Sequence[float],
     env: Environment,
 ) -> BacterialMetaboliteExperiment:
-    """The record of one Keio strain."""
+    """The record of one deposit column."""
     return BacterialMetaboliteExperiment(
         dataset_name=dataset_name,
-        genotype=deletion_genotype(resolved),
+        genotype=deletion_genotype(strain),
         environment=env,
-        phenotype=metabolite_phenotype(keys, values, resolved.strain.n_biological),
+        phenotype=metabolite_phenotype(keys, values, strain.n_biological),
     )
 
 
@@ -1224,11 +1168,9 @@ class MetabolomeFuhrer2017Dataset(ExperimentDataset):
         io_workers: int = 0,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
-        ecoli_genome: EcoliK12Genome | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize; ``ecoli_genome`` is injected by the build entry points."""
-        self.ecoli_genome = ecoli_genome
+        """Initialize; no genome is read, the released JW ids are stored."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -1270,20 +1212,6 @@ class MetabolomeFuhrer2017Dataset(ExperimentDataset):
     def _raw(self, name: str) -> str:
         return osp.join(self.raw_dir, name)
 
-    def _genome(self) -> EcoliK12Genome:
-        """The injected genome, or the reference strain's default cache (a direct run);
-        a genome of another assembly set is refused.
-        """
-        if self.ecoli_genome is None:
-            self.ecoli_genome = bacterial_genome("ecoli", self.REFERENCE_STRAIN)
-        expected = BACTERIAL_ASSEMBLY_SETS[self.REFERENCE_STRAIN]
-        if self.ecoli_genome.ASSEMBLY_SET != expected:
-            raise ValueError(
-                f"{type(self).__name__} needs the {expected} genome, got "
-                f"{self.ecoli_genome.ASSEMBLY_SET}"
-            )
-        return self.ecoli_genome
-
     @post_process
     def process(self) -> None:
         """Parse the S-BSST5 matrices and Table EV1 into per-strain records + LMDB."""
@@ -1324,38 +1252,25 @@ class MetabolomeFuhrer2017Dataset(ExperimentDataset):
         stacked = np.vstack([matrices["neg"], matrices["pos"]])
 
         selection = select_strains(column_names, entries, raw_column_counts)
-        genome = self._genome()
-        resolved, unresolved, ledger = resolve_strains(
-            genome, selection.strains, label=f"{self.name} Keio JW ids"
-        )
-        mutant_columns = len(column_names) - 1
-        drop_log = DropLog(
-            dataset=self.name,
-            deposit_columns=len(column_names),
-            reference_columns=[WILD_TYPE_COLUMN],
-            source_records=mutant_columns,
-            kept_records=len(resolved),
-            dropped_records=mutant_columns - len(resolved),
-            rules=[selection.pooled, unresolved],
-        )
-        if sum(r.n_records for r in drop_log.rules) != drop_log.dropped_records:
-            raise RuntimeError("drop rules do not account for every dropped column")
+        drop_log = build_drop_log(self.name, selection)
+        if drop_log.kept_records != EXPECTED_RECORDS:
+            raise ValueError(
+                f"{drop_log.kept_records} mutant columns, the module declares "
+                f"{EXPECTED_RECORDS}"
+            )
         log.info(
-            "Fuhrer 2017: %d deposit mutant columns -> %d records; %d pooled names, "
-            "%d JW ids off the BW25113 namespace; JW statuses %s; %d deposit names "
-            "do not resolve to their JW id's locus",
-            mutant_columns,
-            len(resolved),
-            selection.pooled.n_records,
-            unresolved.n_records,
-            {s.value: n for s, n in ledger.reconciliation.status_histogram.items()},
-            len(ledger.symbol_disagreements),
+            "Fuhrer 2017: %d deposit mutant columns -> %d records under their released "
+            "JW ids (%d pooled names, %d unlisted names); nothing dropped",
+            drop_log.source_records,
+            drop_log.kept_records,
+            len(selection.pooled),
+            len(selection.unlisted),
         )
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
         os.makedirs(self.processed_dir, exist_ok=True)
         self._write_ledgers(
-            drop_log, ledger, alignments, scales, deposit_mz, ev1b_mz, resolved
+            drop_log, alignments, scales, deposit_mz, ev1b_mz, selection.strains
         )
 
         env = environment()
@@ -1371,9 +1286,9 @@ class MetabolomeFuhrer2017Dataset(ExperimentDataset):
             osp.join(self.processed_dir, "lmdb")
         )
         with env_out.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
-            for idx, item in enumerate(tqdm(resolved, desc="fuhrer2017")):
+            for idx, item in enumerate(tqdm(selection.strains, desc="fuhrer2017")):
                 experiment = build_experiment(
-                    self.name, item, keys, stacked[:, item.strain.column].tolist(), env
+                    self.name, item, keys, stacked[:, item.column].tolist(), env
                 )
                 txn.put(
                     f"{idx}".encode(),
@@ -1381,24 +1296,23 @@ class MetabolomeFuhrer2017Dataset(ExperimentDataset):
                 )
         env_out.close()
         interned_env.close()
-        log.info("Wrote %d Fuhrer 2017 metabolome experiments to LMDB", len(resolved))
+        log.info(
+            "Wrote %d Fuhrer 2017 metabolome experiments to LMDB",
+            len(selection.strains),
+        )
 
     def _write_ledgers(
         self,
         drop_log: DropLog,
-        ledger: IdentifierLedger,
         alignments: Sequence[IonAlignment],
         scales: Sequence[ZScoreScale],
         deposit_mz: Mapping[IonMode, Sequence[float]],
         ev1b_mz: Mapping[IonMode, Sequence[float]],
-        resolved: Sequence[ResolvedStrain],
+        strains: Sequence[KeioStrain],
     ) -> None:
-        """The drop log, identifier ledger, ion checks, ion and strain tables."""
+        """The drop log, ion checks, ion and strain tables."""
         out = Path(self.preprocess_dir)
         (out / "dropped_records.json").write_text(drop_log.model_dump_json(indent=2))
-        (out / "identifier_reconciliation.json").write_text(
-            ledger.model_dump_json(indent=2)
-        )
         (out / "ion_alignment.json").write_text(
             json.dumps(
                 [a.model_dump() | {"agreement": a.agreement} for a in alignments],
@@ -1425,15 +1339,15 @@ class MetabolomeFuhrer2017Dataset(ExperimentDataset):
             [
                 {
                     "record": idx,
-                    "deposit_column": r.strain.column + 1,
-                    "deposit_name": r.strain.deposit_name,
-                    "jw_id": r.strain.entry.jw_id,
-                    "blattner_id": r.strain.entry.blattner_id,
-                    "locus_tag": r.locus_tag,
-                    "symbol": r.symbol,
-                    "n_biological": r.strain.n_biological,
+                    "deposit_column": r.column + 1,
+                    "deposit_name": r.deposit_name,
+                    "jw_ids": ";".join(e.jw_id for e in r.entries),
+                    "blattner_ids": ";".join(e.blattner_id for e in r.entries),
+                    "delivery_statuses": ";".join(e.delivery_status for e in r.entries),
+                    "n_entries": len(r.entries),
+                    "n_biological": r.n_biological,
                 }
-                for idx, r in enumerate(resolved)
+                for idx, r in enumerate(strains)
             ]
         ).to_csv(out / "strains.csv", index=False)
 
@@ -1459,20 +1373,47 @@ VERIFIER_PROVENANCE = Provenance(
 )
 
 
+#: Resolver outcomes that place a released identifier on one locus of the annotation.
+PLACED_STATUSES = frozenset(
+    {GeneNameStatus.CURRENT, GeneNameStatus.RENAMED, GeneNameStatus.NON_GENE_FEATURE}
+)
+
+
+def released_jw_ids_finding(identifiers: set[str], genome: Any) -> LevelResult:
+    """L4 FINDING, never a gate: how many released JW ids the pinned BW25113 GenBank
+    annotation carries as a ``gene_synonym`` (read through the genome's resolver here,
+    in the verifier, and nowhere in the build). A JW id the annotation lacks is still
+    a released measurement of a strain the screen grew.
+    """
+    placed = sorted(
+        s for s in identifiers if genome.resolve_gene_name(s).status in PLACED_STATUSES
+    )
+    unplaced = sorted(identifiers - set(placed))
+    return LevelResult(
+        level=Level.L4,
+        name="gene_containment_bw25113_jw_synonyms",
+        passed=True,
+        message=f"{len(placed)} of {len(identifiers)} released identifiers resolve to "
+        f"a BW25113 locus through the annotation's resolver; {len(unplaced)} do not "
+        "(a finding, not a gate)",
+        details={
+            "n_identifiers": len(identifiers),
+            "n_placed": len(placed),
+            "unplaced": unplaced[:50],
+        },
+    )
+
+
 def run_verification(data_root: str | None = None) -> VerificationReport:
-    """Run the metabolite family verifier (L0-L3) plus the bacterial L4 containment
-    and the provenance audit of every ``SOURCED_VALUES`` entry on the built dev LMDB,
-    and write ``preprocess/verification_report.json``.
+    """Run the metabolite family verifier (L0-L3), the L4 genome FINDING and the
+    provenance audit of every ``SOURCED_VALUES`` entry on the built dev LMDB, and write
+    ``preprocess/verification_report.json``.
     """
     from torchcell.verification.metabolite import (
         metabolite_gene_set,
         verify_metabolite_dataset,
     )
-    from torchcell.verification.runners import (
-        _gene_set_for_reference,
-        _write_report,
-        load_records,
-    )
+    from torchcell.verification.runners import _write_report, load_records
 
     base = data_root or _data_root()
     abs_root = osp.join(base, "data/torchcell/metabolome_fuhrer2017")
@@ -1487,28 +1428,8 @@ def run_verification(data_root: str | None = None) -> VerificationReport:
         expected_count=drops.kept_records,
         reference_centered=False,
     )
-    references = {
-        json.dumps(r["reference"]["genome_reference"], sort_keys=True) for r in records
-    }
-    universe: set[str] = set()
-    for ref in references:
-        universe |= _gene_set_for_reference(json.loads(ref), base)
-    deleted = metabolite_gene_set(records)
-    missing = sorted(deleted - universe)
-    report.add(
-        LevelResult(
-            level=Level.L4,
-            name="gene_containment_bw25113_locus_tags",
-            passed=not missing,
-            message=f"{len(deleted) - len(missing)} of {len(deleted)} deleted loci are "
-            "BW25113 GenBank gene rows",
-            details={
-                "n_deleted": len(deleted),
-                "n_universe": len(universe),
-                "missing_examples": missing[:20],
-            },
-        )
-    )
+    genome = bacterial_genome("ecoli", "BW25113", base)
+    report.add(released_jw_ids_finding(metabolite_gene_set(records), genome))
     for value in SOURCED_VALUES.values():
         report.add(audit_sourced_value(value, sourced_value_root(value, base)))
     _write_report(report, osp.join(abs_root, "preprocess"))

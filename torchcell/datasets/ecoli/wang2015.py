@@ -14,8 +14,9 @@ biological replicates. It is the only per-strain table of the tolerance screen.
 RECORD = one Keio deletion strain under 0.5% (v/v) isoprenol, a
 ``BacterialEnvironmentResponseExperiment``:
 
-- GENOTYPE: one ``BacterialDeletionPerturbation`` on the BW25113 locus-tag namespace,
-  collection "Keio collection" (Wang's wording), cassette from Baba 2006.
+- GENOTYPE: one ``BacterialReleasedStrainPerturbation`` under the gene symbol of the
+  Table S3 strain label, verbatim, with the Table S2 Keio number as the strain's
+  accession, collection "Keio collection" (Wang's wording), cassette from Baba 2006.
 - ENVIRONMENT: ``YT_2X`` at 30 C, shaken, 12 h, plus two edits: the medium's stated pH
   7.0 (``PhysicalFactor.ph``; the adjusting acid or base is a typed gap) and isoprenol at
   0.5 ``percent_v/v`` (``SmallMoleculePerturbation``).
@@ -48,24 +49,24 @@ deletion mutants came from the Keio collection; Baba 2006 (mirrored) is the Keio
 construction paper. Records pin ``assembly_reference("BW25113")`` and the
 ``ecoli_k12_bw25113_locus_tag`` namespace.
 
-IDENTIFIERS. Table S3 labels a strain only by gene name (``BWΔacrA``); Table S2 adds a
-Keio number. On the BW25113 GenBank annotation, which carries the Keio JW numbers as
-``gene_synonym``, 41 of the 46 Table S2 numbers name the locus their strain's gene name
-names and 5 do not: ``acrA``/``acrB`` and ``emrK``/``emrY`` are swapped pairs (acrB's is
-printed ``JJW0452``, not a Keio number at all; its well-formed reading JW0452 is acrA's),
-and ``mdtD``'s ``JW2077`` is the number of ``gatB`` (it repeats the digits of mdtD's
-Blattner number b2077). The paper's own Table S4
-measured an ``acrB`` transcript in the strain it calls BWΔacrA and an ``acrA`` transcript
-in BWΔacrB (``SOURCED_VALUES["identity_evidence_*"]``), so for those two the strain is
-not the deletion its Table S2 number names. The record's locus is therefore the one the
-strain NAME resolves to, through ``reconcile_locus_tags`` on BW25113; the Table S2 number
-is stored as ``construction.strain_accession`` only when it names that same locus, and
-every disagreement is written to ``preprocess/identifier_reconciliation.json`` with its
-evidence.
+IDENTIFIERS, STORED AS RELEASED (owner rule of 2026-10-12: the data is the data, and
+the genome never gates a record). Table S3 labels a strain only by gene name
+(``BWΔacrA``); Table S2 adds a Keio number. The record stores exactly that: the gene
+symbol as ``systematic_gene_name`` and ``perturbed_gene_name``, the whole label as
+``strain_label``, and the Keio number verbatim as ``construction.strain_accession``,
+the malformed ``JJW0452`` included. No annotation is read in the build: the join of a
+symbol to a BW25113 locus is a downstream act over the gene set, and the verifier's
+L4 row reports how many symbols the pinned annotation places without gating on it.
+What the release itself contradicts is recorded, not acted on: the paper's own Table
+S4 measured an ``acrB`` transcript in the strain it calls BWΔacrA and an ``acrA``
+transcript in BWΔacrB (``SOURCED_VALUES["identity_evidence_*"]``), so for those two
+the strain may not be the deletion its Table S2 number names; ``acrA``/``acrB`` and
+``emrK``/``emrY`` carry each other's numbers, and ``mdtD``'s ``JW2077`` repeats the
+digits of its Blattner number. Those five are findings for the dataset note, never a
+reason to alter or drop a record.
 
-RECORDS DROPPED (rule + items in ``preprocess/dropped_records.json``): a strain name that
-does not resolve to exactly one BW25113 locus (``strain_name_not_on_a_bw25113_locus``;
-none on the pinned table). The BW25113 row is the reference, not a record.
+RECORDS DROPPED: none. Every one of the 46 deletion rows is a record and the BW25113
+row is the reference (``preprocess/dropped_records.json`` says so with ``rules: []``).
 
 UNCERTAINTY. Table S3 gives a sample SD for each of the four OD600 means a record is
 computed from, not for the ratio itself, and the per-replicate ODs are not released; the
@@ -117,12 +118,11 @@ from torchcell.data import (
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import YT_2X
 from torchcell.datamodels.schema import (
-    BACTERIAL_ASSEMBLY_SETS,
     AssayType,
     AssemblyReferenceGenome,
-    BacterialDeletionPerturbation,
     BacterialEnvironmentResponseExperiment,
     BacterialEnvironmentResponseExperimentReference,
+    BacterialReleasedStrainPerturbation,
     Compound,
     Concentration,
     ConcentrationUnit,
@@ -135,18 +135,15 @@ from torchcell.datamodels.schema import (
     MeasurementType,
     PhysicalFactor,
     Publication,
+    ReleasedStrainKind,
     SampleUnit,
     SmallMoleculePerturbation,
     StrainConstruction,
     Temperature,
 )
 from torchcell.datasets.bacteria_common import (
-    LOCUS_TAG_PATTERNS,
     STRAIN_GENE_NAMESPACES,
-    LocusTagReconciliation,
     assembly_reference,
-    bacterial_genome,
-    reconcile_locus_tags,
 )
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.literature.manifest import (
@@ -158,7 +155,8 @@ from torchcell.literature.manifest import (
     RetrievalRecord,
 )
 from torchcell.literature.provenance import run_retriever
-from torchcell.sequence.genome.ecoli.k12 import EcoliK12Genome, EcoliK12StrainName
+from torchcell.sequence.genome.base import GeneNameStatus
+from torchcell.sequence.genome.ecoli.k12 import EcoliK12StrainName
 from torchcell.verification.report import (
     Level,
     LevelResult,
@@ -523,10 +521,9 @@ TABLE_S3_MUTANTS = 46
 #: sha256 of the parsed Table S3 (``table_s3_digest``), measured on the pinned SI PDF
 #: with poppler 21.01.0; any extraction drift changes it and stops the build.
 TABLE_S3_SHA256 = "ce6d952c1058695fe5912353de563faa0224ad5ce8c16c5a8812e62da3b41093"
-#: Checklist item 4: below this fraction of strain names resolving to BW25113 locus tags
-#: the build stops. All 46 resolve on the pinned annotation, so a lower fraction (more
-#: than 2 of 46 unresolved) would mean a parse error or the wrong genome.
-MIN_RESOLVED_FRACTION = 0.95
+#: What ``systematic_gene_name`` is on every record: the gene symbol of the Table S3
+#: strain label, as the paper writes it.
+IDENTIFIER_KIND = "gene symbol of the Table S3 strain label"
 #: Fig. 1C's bin edges (percent growth inhibition), used by the count checks.
 SUSCEPTIBLE_EDGE = 52.5
 VERY_SUSCEPTIBLE_EDGE = 57.5
@@ -957,140 +954,54 @@ class DropLog(BaseModel):
 
 
 class StrainIdentity(BaseModel):
-    """A Table S3 strain on its BW25113 locus, with Table S2's number when it agrees."""
+    """A Table S3 strain exactly as released: its label, gene name and Table S2 row."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     row: TableS3Row
-    locus_tag: str
-    symbol: str
     keio_token: str
     mdt_family: str
-    keio_accession: str | None
+
+    @property
+    def gene_name(self) -> str:
+        """The gene symbol of the ``BWΔ`` label, the record's identifier."""
+        return self.row.gene_name
 
 
-class KeioDisagreement(BaseModel):
-    """A strain whose Table S2 number does not name the locus its gene name names."""
+def strain_identities(
+    mutants: Sequence[TableS3Row], keio: Mapping[str, TableS2Entry]
+) -> list[StrainIdentity]:
+    """Every Table S3 deletion strain, with its Table S2 number and family, verbatim.
 
-    gene_name: str
-    name_locus: str
-    keio_token: str
-    keio_resolution: str
-    keio_locus_symbol: str | None
-    evidence: list[str]
-
-
-class IdentifierLedger(BaseModel):
-    """Both reconciliations (names, Table S2 numbers) and where they disagree."""
-
-    names: LocusTagReconciliation
-    keio_numbers: LocusTagReconciliation
-    min_resolved_fraction: float
-    n_keio_agree: int
-    keio_disagreements: list[KeioDisagreement]
-
-
-def canonical_symbol(genome: EcoliK12Genome, tag: str) -> str:
-    """The annotation's own gene symbol of ``tag`` when it resolves back to ``tag``,
-    else the tag itself, so the stored pair always round-trips through the resolver.
+    Nothing is resolved: the gene symbol of the strain label is the record's identifier,
+    the Table S2 number is stored as the strain's accession exactly as printed (the
+    malformed ``JJW0452`` and the five numbers the paper's own Table S4 contradicts
+    included; ``SOURCED_VALUES["identity_evidence_*"]`` record that evidence), and the
+    join to a BW25113 locus is a downstream act over the gene set.
     """
-    symbol = genome.genbank.loci[tag].symbol
-    if symbol is None:
-        return tag
-    resolution = genome.resolve_gene_name(symbol)
-    return symbol if resolution.systematic_name == tag else tag
-
-
-def resolve_strains(
-    genome: EcoliK12Genome,
-    mutants: Sequence[TableS3Row],
-    keio: Mapping[str, TableS2Entry],
-    *,
-    label: str,
-) -> tuple[list[StrainIdentity], DropRule, IdentifierLedger]:
-    """Place each strain on BW25113 by its gene name and cross-check Table S2's number.
-
-    Stops (``LocusTagResolutionError``) below ``MIN_RESOLVED_FRACTION``. A name the
-    reconciler keeps as given (retired, ambiguous, or colliding with another name) is not
-    a locus tag the deletion leaf accepts; its record is dropped with the reason. A Table
-    S2 number that names another locus (or none) does not move the record: it is ledgered
-    and not stored.
-    """
-    names = pd.Series([row.gene_name for row in mutants], dtype=object)
-    stored, name_report = reconcile_locus_tags(
-        genome, names, label=f"{label} Table S3 strain names"
-    )
-    name_report.require_resolved(MIN_RESOLVED_FRACTION)
-    tokens = pd.Series(
-        [keio[row.gene_name].keio_token for row in mutants], dtype=object
-    )
-    stored_tokens, keio_report = reconcile_locus_tags(
-        genome, tokens, label=f"{label} Table S2 Keio numbers"
-    )
-    pattern = LOCUS_TAG_PATTERNS[name_report.gene_namespace]
-    kept: list[StrainIdentity] = []
-    dropped: list[str] = []
-    disagreements: list[KeioDisagreement] = []
-    for row, tag, token_tag in zip(
-        mutants, stored.tolist(), stored_tokens.tolist(), strict=True
-    ):
-        entry = keio[row.gene_name]
-        if pattern.match(tag) is None:
-            resolution = genome.resolve_gene_name(row.gene_name)
-            reason = (
-                "kept as given on collision"
-                if row.gene_name in name_report.kept_on_collision
-                else resolution.status.value
-            )
-            dropped.append(
-                f"{row.strain} (Table S2 {entry.keio_token}): {reason} "
-                f"{resolution.systematic_name}"
-            )
-            continue
-        agrees = token_tag == tag
-        if not agrees:
-            token_resolution = genome.resolve_gene_name(entry.keio_token)
-            disagreements.append(
-                KeioDisagreement(
-                    gene_name=row.gene_name,
-                    name_locus=tag,
-                    keio_token=entry.keio_token,
-                    keio_resolution=f"{token_resolution.status.value} "
-                    f"{token_resolution.systematic_name}",
-                    keio_locus_symbol=(
-                        genome.genbank.loci[token_tag].symbol
-                        if pattern.match(token_tag)
-                        else None
-                    ),
-                    evidence=list(IDENTITY_EVIDENCE.get(row.gene_name, ())),
-                )
-            )
-        kept.append(
-            StrainIdentity(
-                row=row,
-                locus_tag=tag,
-                symbol=canonical_symbol(genome, tag),
-                keio_token=entry.keio_token,
-                mdt_family=entry.mdt_family,
-                keio_accession=entry.keio_token if agrees else None,
-            )
+    return [
+        StrainIdentity(
+            row=row,
+            keio_token=keio[row.gene_name].keio_token,
+            mdt_family=keio[row.gene_name].mdt_family,
         )
-    rule = DropRule(
-        rule="strain_name_not_on_a_bw25113_locus",
-        description="the Table S3 strain name is not a symbol or synonym of exactly one "
-        "BW25113 GenBank locus (retired, ambiguous, or shared with another strain "
-        "name), so no locus tag of the pinned namespace names its deletion",
-        n_records=len(dropped),
-        items=dropped,
+        for row in mutants
+    ]
+
+
+def empty_drop_log(
+    dataset_name: str, rows: Sequence[TableS3Row], identities: Sequence[StrainIdentity]
+) -> DropLog:
+    """The retention ledger: every deletion row is a record, nothing is dropped."""
+    return DropLog(
+        dataset=dataset_name,
+        table_rows=len(rows),
+        reference_rows=[PARENT_STRAIN],
+        source_records=len(identities),
+        kept_records=len(identities),
+        dropped_records=0,
+        rules=[],
     )
-    ledger = IdentifierLedger(
-        names=name_report,
-        keio_numbers=keio_report,
-        min_resolved_fraction=MIN_RESOLVED_FRACTION,
-        n_keio_agree=len(kept) - len(disagreements),
-        keio_disagreements=disagreements,
-    )
-    return kept, rule, ledger
 
 
 # --------------------------------------------------------------------------- #
@@ -1157,21 +1068,19 @@ def environment() -> Environment:
 
 
 def deletion_genotype(identity: StrainIdentity) -> Genotype:
-    """The one Keio deletion, on its BW25113 locus tag."""
-    construction = (
-        StrainConstruction(strain_accession=identity.keio_accession)
-        if identity.keio_accession is not None
-        else None
-    )
+    """The one Keio deletion, under the gene symbol and Keio number the paper releases."""
     return Genotype(
         perturbations=[
-            BacterialDeletionPerturbation(
-                systematic_gene_name=identity.locus_tag,
-                perturbed_gene_name=identity.symbol,
+            BacterialReleasedStrainPerturbation(
+                systematic_gene_name=identity.gene_name,
+                perturbed_gene_name=identity.gene_name,
                 gene_namespace=STRAIN_GENE_NAMESPACES["BW25113"],
+                strain_label=identity.row.strain,
+                identifier_kind=IDENTIFIER_KIND,
+                released_kind=ReleasedStrainKind.deletion,
                 collection=COLLECTION,
                 cassette=CASSETTE,
-                construction=construction,
+                construction=StrainConstruction(strain_accession=identity.keio_token),
             )
         ]
     )
@@ -1218,11 +1127,9 @@ class EnvChemgenWang2015Dataset(ExperimentDataset):
         io_workers: int = 0,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
-        ecoli_genome: EcoliK12Genome | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize; ``ecoli_genome`` is injected by the build entry points."""
-        self.ecoli_genome = ecoli_genome
+        """Initialize; no genome is read, the released identifiers are stored."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -1264,20 +1171,6 @@ class EnvChemgenWang2015Dataset(ExperimentDataset):
     def _raw(self, name: str) -> str:
         return osp.join(self.raw_dir, name)
 
-    def _genome(self) -> EcoliK12Genome:
-        """The injected genome, or the reference strain's default cache (a direct run);
-        a genome of another assembly set is refused.
-        """
-        if self.ecoli_genome is None:
-            self.ecoli_genome = bacterial_genome("ecoli", self.REFERENCE_STRAIN)
-        expected = BACTERIAL_ASSEMBLY_SETS[self.REFERENCE_STRAIN]
-        if self.ecoli_genome.ASSEMBLY_SET != expected:
-            raise ValueError(
-                f"{type(self).__name__} needs the {expected} genome, got "
-                f"{self.ecoli_genome.ASSEMBLY_SET}"
-            )
-        return self.ecoli_genome
-
     @post_process
     def process(self) -> None:
         """Parse Tables S2 and S3 of the SI PDF into per-strain records + LMDB."""
@@ -1294,33 +1187,18 @@ class EnvChemgenWang2015Dataset(ExperimentDataset):
         keio = keio_entries_for(mutants, entries)
         checks = reported_count_checks(mutants, keio)
 
-        genome = self._genome()
-        resolved, unresolved, ledger = resolve_strains(
-            genome, mutants, keio, label=self.name
-        )
-        drop_log = DropLog(
-            dataset=self.name,
-            table_rows=len(rows),
-            reference_rows=[PARENT_STRAIN],
-            source_records=len(mutants),
-            kept_records=len(resolved),
-            dropped_records=len(mutants) - len(resolved),
-            rules=[unresolved],
-        )
-        if sum(r.n_records for r in drop_log.rules) != drop_log.dropped_records:
-            raise RuntimeError("drop rules do not account for every dropped strain")
+        resolved = strain_identities(mutants, keio)
+        drop_log = empty_drop_log(self.name, rows, resolved)
         log.info(
-            "Wang 2015: %d Table S3 strains -> %d records; names %s; %d Table S2 Keio "
-            "numbers name another locus or none",
+            "Wang 2015: %d Table S3 strains -> %d records under their released gene "
+            "symbols, nothing dropped",
             len(mutants),
             len(resolved),
-            {s.value: n for s, n in ledger.names.status_histogram.items()},
-            len(ledger.keio_disagreements),
         )
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
         os.makedirs(self.processed_dir, exist_ok=True)
-        self._write_ledgers(drop_log, ledger, checks, digest, parent, resolved)
+        self._write_ledgers(drop_log, checks, digest, parent, resolved)
 
         env = environment()
         reference = build_reference(
@@ -1343,18 +1221,14 @@ class EnvChemgenWang2015Dataset(ExperimentDataset):
     def _write_ledgers(
         self,
         drop_log: DropLog,
-        ledger: IdentifierLedger,
         checks: Sequence[CountCheck],
         digest: str,
         parent: TableS3Row,
         resolved: Sequence[StrainIdentity],
     ) -> None:
-        """The drop log, identifier ledger, extraction checks and the strain table."""
+        """The drop log, extraction checks and the strain table."""
         out = Path(self.preprocess_dir)
         (out / "dropped_records.json").write_text(drop_log.model_dump_json(indent=2))
-        (out / "identifier_reconciliation.json").write_text(
-            ledger.model_dump_json(indent=2)
-        )
         (out / "extraction.json").write_text(
             json.dumps(
                 {
@@ -1374,9 +1248,6 @@ class EnvChemgenWang2015Dataset(ExperimentDataset):
                 "strain": parent.strain,
                 "mdt_family": None,
                 "keio_token": None,
-                "keio_accession": None,
-                "locus_tag": None,
-                "symbol": None,
                 "od600_without": parent.od600_without,
                 "sd_without": parent.sd_without,
                 "od600_with": parent.od600_with,
@@ -1390,9 +1261,6 @@ class EnvChemgenWang2015Dataset(ExperimentDataset):
                 "strain": item.row.strain,
                 "mdt_family": item.mdt_family,
                 "keio_token": item.keio_token,
-                "keio_accession": item.keio_accession,
-                "locus_tag": item.locus_tag,
-                "symbol": item.symbol,
                 "od600_without": item.row.od600_without,
                 "sd_without": item.row.sd_without,
                 "od600_with": item.row.od600_with,
@@ -1429,17 +1297,53 @@ VERIFIER_PROVENANCE = Provenance(
 )
 
 
+#: Resolver outcomes that place a released identifier on one locus of the annotation.
+PLACED_STATUSES = frozenset(
+    {GeneNameStatus.CURRENT, GeneNameStatus.RENAMED, GeneNameStatus.NON_GENE_FEATURE}
+)
+
+
+def released_symbols_finding(symbols: set[str], genome: Any) -> LevelResult:
+    """L4 FINDING: how the released gene symbols land on the pinned BW25113 annotation.
+
+    A report, never a gate: a symbol the annotation does not carry is still a released
+    measurement of a strain the paper grew. The resolver is read here, in the verifier,
+    and nowhere in the build.
+    """
+    placed = sorted(
+        s for s in symbols if genome.resolve_gene_name(s).status in PLACED_STATUSES
+    )
+    unplaced = sorted(symbols - set(placed))
+    return LevelResult(
+        level=Level.L4,
+        name="gene_containment_bw25113_released_symbols",
+        passed=True,
+        message=f"{len(placed)} of {len(symbols)} released gene symbols resolve to a "
+        f"BW25113 locus through the annotation's resolver; {len(unplaced)} do not "
+        "(a finding, not a gate)",
+        details={
+            "n_symbols": len(symbols),
+            "n_placed": len(placed),
+            "unplaced": unplaced[:50],
+        },
+    )
+
+
 def run_verification(data_root: str | None = None) -> VerificationReport:
-    """Run the environment-response family verifier (L0-L3) with the BW25113 resolver,
-    the bacterial L4 containment, and the provenance audit of every ``SOURCED_VALUES``
-    entry on the built dev LMDB; write ``preprocess/verification_report.json``.
+    """Run the environment-response family verifier (L0-L3), the L4 genome FINDING,
+    and the provenance audit of every ``SOURCED_VALUES`` entry on the built dev LMDB;
+    write ``preprocess/verification_report.json``.
+
+    No resolver is handed to the verifier: the records carry the paper's own gene
+    symbols, and the genome never gates a record. The L4 row reports how many of those
+    symbols are a gene symbol or synonym of the pinned BW25113 annotation (through the
+    genome's resolver, read here only), and passes whatever the count is.
     """
     from torchcell.verification.environment_response import (
         environment_response_gene_set,
         verify_environment_response_dataset,
     )
     from torchcell.verification.runners import (
-        _gene_set_for_reference,
         _genome_for_reference,
         _write_report,
         load_records,
@@ -1463,25 +1367,8 @@ def run_verification(data_root: str | None = None) -> VerificationReport:
         dataset_name=EnvChemgenWang2015Dataset.__name__,
         provenance=VERIFIER_PROVENANCE,
         expected_count=drops.kept_records,
-        resolve_gene_name=genome.resolve_gene_name,
     )
-    universe = _gene_set_for_reference(reference, base)
-    deleted = environment_response_gene_set(records)
-    missing = sorted(deleted - universe)
-    report.add(
-        LevelResult(
-            level=Level.L4,
-            name="gene_containment_bw25113_locus_tags",
-            passed=not missing,
-            message=f"{len(deleted) - len(missing)} of {len(deleted)} deleted loci are "
-            "BW25113 GenBank gene rows",
-            details={
-                "n_deleted": len(deleted),
-                "n_universe": len(universe),
-                "missing_examples": missing[:20],
-            },
-        )
-    )
+    report.add(released_symbols_finding(environment_response_gene_set(records), genome))
     library = Path(base) / "torchcell-library"
     for value in SOURCED_VALUES.values():
         report.add(audit_sourced_value(value, library))

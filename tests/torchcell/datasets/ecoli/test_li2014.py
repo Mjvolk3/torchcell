@@ -85,12 +85,34 @@ ROWS: tuple[tuple[str, Any, Any, Any], ...] = (
     ("insZ", 9, 9, 9),
     ("ambA", 3, 3, 3),
 )
-#: Plain cells per column, and the keys left once every typed refusal is applied.
+#: Plain cells per column; every plain cell is a key under its released gene name.
 PLAIN = {"complete": 7, "minimal": 7, "complete_without_methionine": 5}
 STORED = {
-    "complete": {"b0001": 10.0, "b0002": 20.0},
-    "minimal": {"b0001": 5.0, "b0003": 4.0},
-    "complete_without_methionine": {"b0002": 7.0, "b0003": 0.0},
+    "complete": {
+        "thrL": 10.0,
+        "thrA": 20.0,
+        "thrC": 30.0,
+        "yaaX": 31.0,
+        "thrA+thrB": 50.0,
+        "insZ": 9.0,
+        "ambA": 3.0,
+    },
+    "minimal": {
+        "thrL": 5.0,
+        "thrB": 4.0,
+        "thrC": 6.0,
+        "yaaX": 7.0,
+        "thrA+thrB": 60.0,
+        "insZ": 9.0,
+        "ambA": 3.0,
+    },
+    "complete_without_methionine": {
+        "thrA": 7.0,
+        "thrB": 0.0,
+        "thrC": 8.0,
+        "insZ": 9.0,
+        "ambA": 3.0,
+    },
 }
 
 
@@ -138,9 +160,9 @@ def test_the_three_media_are_the_si_media_with_their_doubling_times() -> None:
         "complete_without_methionine": "MOPS complete without methionine",
     }
     assert {k: (v.plain_cells, v.stored_keys) for k, v in by_key.items()} == {
-        "complete": (3041, 3025),
-        "minimal": (3362, 3346),
-        "complete_without_methionine": (2241, 2226),
+        "complete": (3041, 3041),
+        "minimal": (3362, 3362),
+        "complete_without_methionine": (2241, 2241),
     }
     assert li.EVALUATED_GENES.value == by_key["complete"].plain_cells
     for spec in li.MEDIA:
@@ -195,17 +217,6 @@ def test_the_phenotype_is_per_generation_and_declares_what_is_not_released() -> 
 def test_the_publication_is_this_paper() -> None:
     publication = li.publication()
     assert (publication.doi, publication.pubmed_id) == (li.DOI, "24766808")
-
-
-def test_a_name_outside_the_namespace_without_a_typed_reason_stops_the_build() -> None:
-    class Reconciliation:
-        retired_kept = ("insZ",)
-        ambiguous_kept: dict[str, tuple[str, ...]] = {}
-        kept_on_collision: tuple[str, ...] = ()
-        outside_namespace = ("insZ", "mystery")
-
-    with pytest.raises(RuntimeError, match="no typed reason"):
-        li.name_refusals(cast(Any, Reconciliation()))
 
 
 # --------------------------------------------------------------------------- #
@@ -291,7 +302,7 @@ def test_the_loader_stores_plain_cells_and_refuses_the_rest_by_type(
     tmp_path: Path, mirrored: Path, genome: EcoliK12MG1655Genome
 ) -> None:
     root = tmp_path / "dataset"
-    dataset = li.ProteinSynthesisRateLi2014Dataset(root=str(root), ecoli_genome=genome)
+    dataset = li.ProteinSynthesisRateLi2014Dataset(root=str(root))
     assert len(dataset) == li.EXPECTED_RECORDS
     assert dataset.gene_set == set()
     by_medium = _by_medium(dataset)
@@ -307,23 +318,10 @@ def test_the_loader_stores_plain_cells_and_refuses_the_rest_by_type(
     assert sorted(refused[1:]) == sorted(
         [
             "complete,thrB,[2],below_read_count_gate",
-            "complete,thrC,30,two_rows_one_locus",
-            "complete,yaaX,31,two_rows_one_locus",
-            "complete,thrA+thrB,50,merged_pair_one_value_two_loci",
-            "complete,insZ,9,name_retired_in_assembly",
-            "complete,ambA,3,name_ambiguous_in_assembly",
             "minimal,thrA,[1],below_read_count_gate",
-            "minimal,thrC,6,two_rows_one_locus",
-            "minimal,yaaX,7,two_rows_one_locus",
-            "minimal,thrA+thrB,60,merged_pair_one_value_two_loci",
-            "minimal,insZ,9,name_retired_in_assembly",
-            "minimal,ambA,3,name_ambiguous_in_assembly",
             "complete_without_methionine,thrL,[3],below_read_count_gate",
-            "complete_without_methionine,thrC,8,two_rows_one_locus",
             "complete_without_methionine,yaaX,[1],below_read_count_gate",
             "complete_without_methionine,thrA+thrB,[9],below_read_count_gate",
-            "complete_without_methionine,insZ,9,name_retired_in_assembly",
-            "complete_without_methionine,ambA,3,name_ambiguous_in_assembly",
         ]
     )
     accounting = li.BuildAccounting.model_validate_json(
@@ -345,7 +343,7 @@ def test_the_verifier_passes_on_the_synthetic_build_and_fails_a_wrong_count(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     root = tmp_path / "dataset"
-    li.ProteinSynthesisRateLi2014Dataset(root=str(root), ecoli_genome=genome)
+    li.ProteinSynthesisRateLi2014Dataset(root=str(root))
     monkeypatch.setattr(
         li, "_l3_quotes_are_verbatim", lambda data_root: l3_convention("quotes", True)
     )
@@ -357,6 +355,16 @@ def test_the_verifier_passes_on_the_synthetic_build_and_fails_a_wrong_count(
         "assembly_pin_is_mg1655_genbank",
         "stored_protein_keys_are_loci_of_the_pinned_assembly",
     }
+    finding = next(
+        r
+        for r in report.results
+        if r.name == "stored_protein_keys_are_loci_of_the_pinned_assembly"
+    )
+    # insZ and the merged pair are in no annotation, ambA is ambiguous (2 loci),
+    # yaaX is a synonym of thrC's locus: all stored, all reported, none gated
+    assert finding.passed
+    assert finding.details["unplaced"] == ["ambA", "insZ", "thrA+thrB"]
+    assert finding.details["on_shared_locus"] == ["thrC", "yaaX"]
     assert (root / "preprocess" / "verification_report.json").is_file()
     assert not li.verify_build(str(root), genome=genome, expected_count=2).passed
 
@@ -371,9 +379,7 @@ def test_a_plain_cell_count_off_its_pin_stops_the_build(
         li, "MEDIA", (li.MEDIA[0].model_copy(update={"plain_cells": 6}), *li.MEDIA[1:])
     )
     with pytest.raises(RuntimeError, match="7 plain cells, not the pinned 6"):
-        li.ProteinSynthesisRateLi2014Dataset(
-            root=str(tmp_path / "dataset"), ecoli_genome=genome
-        )
+        li.ProteinSynthesisRateLi2014Dataset(root=str(tmp_path / "dataset"))
 
 
 def test_a_header_that_is_not_the_pinned_one_stops_the_build(
@@ -388,19 +394,7 @@ def test_a_header_that_is_not_the_pinned_one_stops_the_build(
         (li.MEDIA[0].model_copy(update={"column": "MOPS rich"}), *li.MEDIA[1:]),
     )
     with pytest.raises(RuntimeError, match="Table S1 header"):
-        li.ProteinSynthesisRateLi2014Dataset(
-            root=str(tmp_path / "dataset"), ecoli_genome=genome
-        )
-
-
-def test_a_direct_run_opens_the_mg1655_genome_itself(
-    mirrored: Path, genome: EcoliK12MG1655Genome
-) -> None:
-    dataset = li.ProteinSynthesisRateLi2014Dataset.__new__(
-        li.ProteinSynthesisRateLi2014Dataset
-    )
-    dataset.ecoli_genome = None
-    assert dataset._genome() is genome
+        li.ProteinSynthesisRateLi2014Dataset(root=str(tmp_path / "dataset"))
 
 
 def test_the_loader_declares_its_schema_pair_and_its_raw_file() -> None:

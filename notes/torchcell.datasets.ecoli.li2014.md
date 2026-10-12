@@ -82,3 +82,22 @@ Verdict: not a duplicate. No shared key carries the same number in any store, an
 
 - Loader: `torchcell/datasets/ecoli/li2014.py`; tests `tests/torchcell/datasets/ecoli/test_li2014.py`
 - Adapter: `torchcell/adapters/li2014_adapter.py`, conf `torchcell/adapters/conf/protein_synthesis_rate_li2014_adapter.yaml`
+
+## 2026.10.12 - Every released row stored under its released identifier (genome-gate reversal)
+
+Owner rule of 2026-10-12: the data is the data, and the genome never gates a record. The loader no longer calls `reconcile_locus_tags`, drops no row for an identifier the pinned annotation lacks, and writes no resolver output onto a record; the join of a released identifier to a locus is a downstream act over the gene set, and the verifier's L4 genome row is a finding (`passed=True`, with counts), never a gate. The sweep that found the gates is [[database.genome-gating-sweep.2026.10.12]].
+
+### What changed
+
+| before (dev store built 2026-10-10) | after |
+|---|---|
+| `synthesis_rate` keyed by the MG1655 b-number `reconcile_locus_tags` derived from each gene name (4,059 names remapped) | keyed by the released Table S1 gene name verbatim (`thrL`, `tufA+tufB`, `ecpD`, `yagW`, ...), asserted unique over the 4,095 rows |
+| 47 plain cells refused on genome grounds: `name_retired_in_assembly` 18, `name_ambiguous_in_assembly` 15, `two_rows_one_locus` 8, `merged_pair_one_value_two_loci` 6 | all 47 stored |
+| per-medium keys 3,025 / 3,346 / 2,226 | 3,041 / 3,362 / 2,241 (= the plain-cell counts) |
+| `[n]` cells refused (`below_read_count_gate`, 3,641) | unchanged: the source's own read-count gate, kept in `refused_cells.csv` with the cell text verbatim |
+
+The three records and their typed gaps (`n_replicates`, `synthesis_rate_se`) are unchanged. `build_accounting.json` no longer carries a reconciliation block.
+
+### L0-L4 after the rebuild
+
+(L0-L4 table filled in after the rebuild)

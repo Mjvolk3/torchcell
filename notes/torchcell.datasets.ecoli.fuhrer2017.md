@@ -197,3 +197,24 @@ measurement type, 18 of 18 sourced values verbatim at their pinned sha256; L4 3,
   linkage to iML1515 is not decided.
 - Not registered in `torchcell/verification/runners.py`'s `METABOLITE_DATASETS` (outside this
   branch's files); `run_verification` here runs the same verifier.
+
+## 2026.10.12 - Every released row stored under its released identifier (genome-gate reversal)
+
+Owner rule of 2026-10-12: the data is the data, and the genome never gates a record. The loader no longer calls `reconcile_locus_tags`, drops no row for an identifier the pinned annotation lacks, and writes no resolver output onto a record; the join of a released identifier to a locus is a downstream act over the gene set, and the verifier's L4 genome row is a finding (`passed=True`, with counts), never a gate. The sweep that found the gates is [[database.genome-gating-sweep.2026.10.12]].
+
+### What changed
+
+| before (dev store built 2026-10-07) | after |
+|---|---|
+| 3,735 records on `BacterialDeletionPerturbation`, each a BW25113 locus tag derived from the Table EV1A JW id, with the JW id as `construction.strain_accession` | 3,806 records on `BacterialReleasedStrainPerturbation`: `systematic_gene_name` = the JW id verbatim, `perturbed_gene_name` = the Table EV1A gene name, `strain_label` = the deposit column name, `identifier_kind` "Keio JW id" |
+| `jw_id_not_on_a_bw25113_locus`: 46 columns dropped | all 46 stored; the L4 finding reports how many JW ids the annotation places |
+| `pooled_keio_entries`: 25 columns dropped | all 25 stored as one record each whose genotype names every distinct JW id the name matches (2 or 3; the five same-JW pairs such as `dsbB` collapse to one), `n_replicates` from the whole raw column count; `dropped_records.json` lists them verbatim |
+| `UndistributedKeioEntryError`, `UnmappedDepositColumnError` build stops | removed; a non-ready delivery status is a released column of `strains.csv`, an unlisted name (none on the pinned deposit) is stored under the name itself |
+
+Count arithmetic: 3,807 deposit columns = `wt` (the reference) + 3,806 records. Nothing dropped.
+
+`strains.csv` columns: `record, deposit_column, deposit_name, jw_ids, blattner_ids, delivery_statuses, n_entries, n_biological` (the Blattner numbers are released, not record fields).
+
+### L0-L4 after the rebuild
+
+(L0-L4 table filled in after the rebuild)

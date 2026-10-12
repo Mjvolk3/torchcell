@@ -24,12 +24,18 @@ a number the authors did not evaluate, and it is not a censored bound either: th
 gate is on footprint COUNT, not on the rate, so 683 plain MOPS-complete values sit at
 or below the largest bracketed value of that column.
 
-A plain cell that cannot carry one locus is refused too, each with its own typed
-reason (:class:`RefusalReason`): a merged-pair row (``tufA+tufB``, one value for two
-loci), a name the pinned assembly retires, a name that resolves to several loci, and
-the two pairs of rows whose names resolve to ONE locus (``ecpD``/``yagW``,
-``mscM``/``yjeP``), where a gene-level record cannot hold two values. Every refused
-cell is written to ``preprocess/refused_cells.csv`` with the cell text verbatim.
+Every plain cell is stored under the gene name Table S1 prints, verbatim (owner rule
+of 2026-10-12: the data is the data, and the genome never gates a record): the keys of
+``synthesis_rate`` are the release's own ``Gene`` column (``thrL``, ``tufA+tufB``,
+``ecpD``, ``yagW``, ...), unique over the 4,095 rows, which the build asserts. No
+annotation is read: nothing is resolved to an MG1655 b-number, and no cell is refused
+because the pinned assembly retires its name, carries it on several loci, or carries
+two released names on one locus. The join of a released name to a b-number is a
+downstream act over the gene set; the verifier's L4 row reports how many names the
+pinned annotation places and gates on none of it. Per medium the stored key count is
+therefore the plain-cell count: 3,041 + 3,362 + 2,241 = 8,644 cells over the three
+records. Every bracketed cell is written to ``preprocess/refused_cells.csv`` with the
+cell text verbatim.
 
 WHAT IS NOT STORED, AND WHY.
 
@@ -68,7 +74,6 @@ from pathlib import Path
 from typing import Any, ClassVar, Literal
 
 import openpyxl
-import pandas as pd
 from pydantic import BaseModel, ConfigDict
 from tqdm import tqdm
 
@@ -104,14 +109,10 @@ from torchcell.datamodels.schema import (
     SynthesisRateUnit,
     Temperature,
 )
-from torchcell.datasets.bacteria_common import (
-    LocusTagReconciliation,
-    assembly_reference,
-    bacterial_genome,
-    reconcile_locus_tags,
-)
+from torchcell.datasets.bacteria_common import assembly_reference, bacterial_genome
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.literature.manifest import Manifest
+from torchcell.sequence.genome.base import GeneNameStatus
 from torchcell.sequence.genome.ecoli.k12 import EcoliK12Genome, EcoliK12MG1655Genome
 from torchcell.verification.levels import (
     l0_structural,
@@ -322,7 +323,7 @@ class MediumSpec(BaseModel):
     generation_time_source: SourcedValue
     #: Plain integer cells of the column, measured on the pinned workbook.
     plain_cells: int
-    #: Records' keys after the typed refusals, measured on the pinned workbook.
+    #: Records' keys: every plain cell, measured on the pinned workbook.
     stored_keys: int
 
     @property
@@ -340,7 +341,7 @@ MEDIA: tuple[MediumSpec, ...] = (
         generation_time_minutes=21.5,
         generation_time_source=DOUBLING_COMPLETE_AND_DROPOUT,
         plain_cells=3041,
-        stored_keys=3025,
+        stored_keys=3041,
     ),
     MediumSpec(
         key="minimal",
@@ -350,7 +351,7 @@ MEDIA: tuple[MediumSpec, ...] = (
         generation_time_minutes=56.3,
         generation_time_source=DOUBLING_MINIMAL,
         plain_cells=3362,
-        stored_keys=3346,
+        stored_keys=3362,
     ),
     MediumSpec(
         key="complete_without_methionine",
@@ -360,7 +361,7 @@ MEDIA: tuple[MediumSpec, ...] = (
         generation_time_minutes=26.5,
         generation_time_source=DOUBLING_COMPLETE_AND_DROPOUT,
         plain_cells=2241,
-        stored_keys=2226,
+        stored_keys=2241,
     ),
 )
 REFERENCE_MEDIUM = "complete"
@@ -432,18 +433,12 @@ _BRACKET = re.compile(r"^\[(\d+)\]$")
 
 
 class RefusalReason(StrEnum):
-    """Why one released cell of Table S1 is not a key of any record."""
+    """Why one released cell of Table S1 is not a key of any record: the source's own
+    read-count gate, and nothing a genome decided.
+    """
 
     #: ``[n]``: a gene the authors did not evaluate (<=128 footprints), back-solved.
     below_read_count_gate = "below_read_count_gate"
-    #: ``tufA+tufB``: one value released for two loci.
-    merged_pair_one_value_two_loci = "merged_pair_one_value_two_loci"
-    #: the pinned assembly retires the name (IS elements, the dnaX frameshift split).
-    name_retired_in_assembly = "name_retired_in_assembly"
-    #: the name resolves to several loci of the pinned assembly.
-    name_ambiguous_in_assembly = "name_ambiguous_in_assembly"
-    #: two released rows resolve to ONE locus, so a gene-level key cannot hold both.
-    two_rows_one_locus = "two_rows_one_locus"
 
 
 class TableS1Row(BaseModel):
@@ -464,6 +459,9 @@ def read_table_s1(path: str | Path) -> tuple[tuple[str, ...], list[TableS1Row]]:
     body = [
         TableS1Row(gene=str(row[0]), cells=(row[1], row[2], row[3])) for row in rows[1:]
     ]
+    repeated = sorted(g for g, n in Counter(r.gene for r in body).items() if n > 1)
+    if repeated:
+        raise ValueError(f"Table S1 repeats gene names {repeated[:5]}")
     return header, body
 
 
@@ -494,31 +492,10 @@ class MediumValues(BaseModel):
     refused: list[RefusedCell]
 
 
-def name_refusals(reconciliation: LocusTagReconciliation) -> dict[str, RefusalReason]:
-    """Typed refusal of every single gene name that does not reach one locus."""
-    out: dict[str, RefusalReason] = {}
-    for name in reconciliation.retired_kept:
-        out[name] = RefusalReason.name_retired_in_assembly
-    for name in reconciliation.ambiguous_kept:
-        out[name] = RefusalReason.name_ambiguous_in_assembly
-    for name in reconciliation.kept_on_collision:
-        out[name] = RefusalReason.two_rows_one_locus
-    unaccounted = set(reconciliation.outside_namespace) - set(out)
-    if unaccounted:
-        raise RuntimeError(
-            f"{sorted(unaccounted)} fall outside the namespace with no typed reason"
-        )
-    return out
-
-
 def medium_values(
-    column: int,
-    medium: MediumSpec,
-    rows: Sequence[TableS1Row],
-    locus_of: Mapping[str, str],
-    refusals: Mapping[str, RefusalReason],
+    column: int, medium: MediumSpec, rows: Sequence[TableS1Row]
 ) -> MediumValues:
-    """Plain cells keyed by locus tag, and every other cell with its typed reason."""
+    """Plain cells keyed by the released gene name; bracketed cells with their reason."""
     rates: dict[str, float] = {}
     refused: list[RefusedCell] = []
     for row in rows:
@@ -534,22 +511,9 @@ def medium_values(
                 )
             )
             continue
-        reason = (
-            RefusalReason.merged_pair_one_value_two_loci
-            if "+" in row.gene
-            else refusals.get(row.gene)
-        )
-        if reason is not None:
-            refused.append(
-                RefusedCell(
-                    medium=medium.key, gene=row.gene, cell=str(cell), reason=reason
-                )
-            )
-            continue
-        locus = locus_of[row.gene]
-        if locus in rates:
-            raise RuntimeError(f"{medium.key}: locus {locus} is keyed twice")
-        rates[locus] = float(value)
+        if row.gene in rates:
+            raise RuntimeError(f"{medium.key}: gene {row.gene} is keyed twice")
+        rates[row.gene] = float(value)
     return MediumValues(synthesis_rate=rates, refused=refused)
 
 
@@ -642,7 +606,6 @@ class BuildAccounting(BaseModel):
     per_medium_keys: dict[str, int]
     per_medium_refusals: dict[str, dict[str, int]]
     per_medium_zero_rates: dict[str, int]
-    reconciliation: LocusTagReconciliation
 
     def check(self) -> None:
         """Kept + refused cells of every medium add up to the released rows."""
@@ -671,13 +634,11 @@ class ProteinSynthesisRateLi2014Dataset(ExperimentDataset):
         self,
         root: str = "data/torchcell/protein_synthesis_rate_li2014",
         io_workers: int = 0,
-        ecoli_genome: EcoliK12MG1655Genome | None = None,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize; the MG1655 genome resolves Table S1's gene names."""
-        self.ecoli_genome = ecoli_genome
+        """Initialize; no genome is read, Table S1's gene names are the keys."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -708,17 +669,6 @@ class ProteinSynthesisRateLi2014Dataset(ExperimentDataset):
             TABLE_S1_SHA256,
         )
 
-    def _genome(self) -> EcoliK12MG1655Genome:
-        """The injected MG1655 genome, or one opened from the genomes tier."""
-        if self.ecoli_genome is None:
-            genome = bacterial_genome("ecoli", self.REFERENCE_STRAIN)
-            if not isinstance(genome, EcoliK12MG1655Genome):
-                raise RuntimeError(
-                    f"{self.REFERENCE_STRAIN} resolved to {type(genome).__name__}"
-                )
-            self.ecoli_genome = genome
-        return self.ecoli_genome
-
     @post_process
     def process(self) -> None:
         """Build one synthesis-rate record per released medium; write LMDB."""
@@ -730,13 +680,6 @@ class ProteinSynthesisRateLi2014Dataset(ExperimentDataset):
         if len(rows) != SOURCE_ROWS:
             raise RuntimeError(f"{len(rows)} Table S1 rows, not {SOURCE_ROWS}")
 
-        single = [row.gene for row in rows if "+" not in row.gene]
-        stored, reconciliation = reconcile_locus_tags(
-            self._genome(), pd.Series(single), label=self.name
-        )
-        refusals = name_refusals(reconciliation)
-        locus_of = dict(zip(single, (str(tag) for tag in stored), strict=True))
-
         by_medium: dict[str, MediumValues] = {}
         for column, spec in enumerate(MEDIA):
             plain = sum(1 for row in rows if plain_value(row.cells[column]) is not None)
@@ -744,7 +687,7 @@ class ProteinSynthesisRateLi2014Dataset(ExperimentDataset):
                 raise RuntimeError(
                     f"{spec.key}: {plain} plain cells, not the pinned {spec.plain_cells}"
                 )
-            values = medium_values(column, spec, rows, locus_of, refusals)
+            values = medium_values(column, spec, rows)
             if len(values.synthesis_rate) != spec.stored_keys:
                 raise RuntimeError(
                     f"{spec.key}: {len(values.synthesis_rate)} stored keys, not the "
@@ -787,7 +730,7 @@ class ProteinSynthesisRateLi2014Dataset(ExperimentDataset):
         interned_env.close()
         if index != EXPECTED_RECORDS:
             raise RuntimeError(f"{index} records, not {EXPECTED_RECORDS}")
-        self._write_reports(by_medium, reconciliation, index)
+        self._write_reports(by_medium, index)
         log.info(
             "Li2014 synthesis rates: %d records, keys %s",
             index,
@@ -795,10 +738,7 @@ class ProteinSynthesisRateLi2014Dataset(ExperimentDataset):
         )
 
     def _write_reports(
-        self,
-        by_medium: Mapping[str, MediumValues],
-        reconciliation: LocusTagReconciliation,
-        kept_records: int,
+        self, by_medium: Mapping[str, MediumValues], kept_records: int
     ) -> None:
         """Write the per-cell refusal ledger and the build accounting."""
         with open(
@@ -825,7 +765,6 @@ class ProteinSynthesisRateLi2014Dataset(ExperimentDataset):
                 k: sum(1 for rate in v.synthesis_rate.values() if rate == 0.0)
                 for k, v in by_medium.items()
             },
-            reconciliation=reconciliation,
         )
         accounting.check()
         with open(
@@ -959,23 +898,47 @@ def _l3_quotes_are_verbatim(data_root: str | None) -> LevelResult:
     )
 
 
-def _l4_keys_are_loci(
+#: Resolver outcomes that place a released identifier on one locus of the annotation.
+PLACED_STATUSES = frozenset(
+    {GeneNameStatus.CURRENT, GeneNameStatus.RENAMED, GeneNameStatus.NON_GENE_FEATURE}
+)
+
+
+def _l4_keys_against_the_assembly(
     records: Sequence[Mapping[str, Any]], genome: EcoliK12Genome
 ) -> LevelResult:
-    """L4: every stored protein key is a locus of the pinned assembly."""
-    loci = set(genome.genbank.loci)
-    keys = {
-        key
-        for record in records
-        for key in record["experiment"]["phenotype"]["synthesis_rate"]
-    }
-    outside = sorted(keys - loci)
+    """L4 FINDING, never a gate: how many released gene names the pinned MG1655
+    annotation places on one locus (read through the genome's resolver here, in the
+    verifier, and nowhere in the build), and how many names share a locus.
+    """
+    keys = sorted(
+        {
+            key
+            for record in records
+            for key in record["experiment"]["phenotype"]["synthesis_rate"]
+        }
+    )
+    placed: dict[str, str] = {}
+    for key in keys:
+        resolution = genome.resolve_gene_name(key)
+        if resolution.status in PLACED_STATUSES and resolution.systematic_name:
+            placed[key] = resolution.systematic_name
+    unplaced = [key for key in keys if key not in placed]
+    shared = Counter(placed.values())
+    on_shared_locus = sorted(k for k, locus in placed.items() if shared[locus] > 1)
     return LevelResult(
         level=Level.L4,
         name="stored_protein_keys_are_loci_of_the_pinned_assembly",
-        passed=bool(keys) and not outside,
-        message=f"{len(keys)} distinct keys; {len(outside)} outside the assembly",
-        details={"n_keys": len(keys), "outside": outside[:20]},
+        passed=True,
+        message=f"{len(placed)} of {len(keys)} released gene names resolve to an "
+        f"MG1655 locus; {len(unplaced)} do not and {len(on_shared_locus)} share a "
+        "locus with another released name (a finding, not a gate)",
+        details={
+            "n_keys": len(keys),
+            "n_placed": len(placed),
+            "unplaced": unplaced[:50],
+            "on_shared_locus": on_shared_locus[:50],
+        },
     )
 
 
@@ -990,8 +953,8 @@ def verify_build(
 
     L0 validates every record against the schema union; L1 checks the record count and
     each medium's pinned key count; L2 checks the rates are finite and non-negative and
-    the generation times are the SI's; L3 checks the assembly pin; L4 contains every
-    stored key in the pinned assembly's loci.
+    the generation times are the SI's; L3 checks the assembly pin; L4 reports how the
+    released gene names land on the pinned assembly, as a finding.
     """
     from pydantic import TypeAdapter
 
@@ -1011,8 +974,9 @@ def verify_build(
             citation_key=CITATION_KEY,
             sha256=TABLE_S1_SHA256,
             method=(
-                "Table S1 plain integer cells, one ProteinSynthesisRateExperiment per "
-                "medium, molecules per generation; [n] cells refused"
+                "Table S1 plain integer cells keyed by the released gene name, one "
+                "ProteinSynthesisRateExperiment per medium, molecules per generation; "
+                "[n] cells refused"
             ),
             page=f"sheet {TABLE_S1_SHEET}",
             retrieved=RAW_RETRIEVED_AT,
@@ -1030,7 +994,7 @@ def verify_build(
     report.add(_l2_generation_time(records))
     report.add(_l3_assembly_pin(records))
     report.add(_l3_quotes_are_verbatim(data_root))
-    report.add(_l4_keys_are_loci(records, genome))
+    report.add(_l4_keys_against_the_assembly(records, genome))
     preprocess = osp.join(dataset_root, "preprocess")
     os.makedirs(preprocess, exist_ok=True)
     with open(osp.join(preprocess, "verification_report.json"), "w") as handle:

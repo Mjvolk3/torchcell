@@ -451,6 +451,14 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">_promoter_activity_phenotype_node</span><span class="p">,</span>
             <span class="p">),</span>
             <span class="p">(</span>
+                <span class="s2">"pooled sort seq expression phenotype (chunked)"</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_pooled_sort_seq_expression_phenotype_node</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="p">(</span>
+                <span class="s2">"biosensor fluorescence phenotype (chunked)"</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_biosensor_fluorescence_phenotype_node</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="p">(</span>
                 <span class="s2">"bacterial morphology phenotype (chunked)"</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_bacterial_morphology_phenotype_node</span><span class="p">,</span>
             <span class="p">),</span>
@@ -553,6 +561,14 @@
             <span class="p">(</span>
                 <span class="s2">"promoter activity phenotype reference"</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_get_promoter_activity_phenotype_reference_nodes</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="p">(</span>
+                <span class="s2">"pooled sort seq expression phenotype reference"</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_get_pooled_sort_seq_expression_phenotype_reference_nodes</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="p">(</span>
+                <span class="s2">"biosensor fluorescence phenotype reference"</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_get_biosensor_fluorescence_phenotype_reference_nodes</span><span class="p">,</span>
             <span class="p">),</span>
             <span class="p">(</span>
                 <span class="s2">"bacterial morphology phenotype reference"</span><span class="p">,</span>
@@ -3130,6 +3146,148 @@
                 <span class="p">)</span>
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">nodes</span>
+
+    <span class="c1"># --- begin #991: the pooled sort-seq expression family ---</span>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_pooled_sort_seq_expression_properties</span><span class="p">(</span><span class="n">phenotype</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Node properties of a ``PooledSortSeqExpressionPhenotype``.</span>
+
+<span class="sd">        Every value is a scalar: one record is one library sequence's estimate, so this</span>
+<span class="sd">        family has no dict-valued field. ``sequence_id`` is the identity key a pooled</span>
+<span class="sd">        assay carries in place of the sibling's ``well_id``; the sequence itself stays on</span>
+<span class="sd">        the genotype's perturbation node, so it is not duplicated here.</span>
+<span class="sd">        """</span>
+        <span class="n">uncertainty_type</span> <span class="o">=</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">expression_level_uncertainty_type</span>
+        <span class="n">sample_unit</span> <span class="o">=</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">sample_unit</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">"graph_level"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">graph_level</span><span class="p">,</span>
+            <span class="s2">"label_name"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">label_name</span><span class="p">,</span>
+            <span class="s2">"label_statistic_name"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">label_statistic_name</span><span class="p">,</span>
+            <span class="s2">"expression_level"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">expression_level</span><span class="p">,</span>
+            <span class="s2">"expression_level_se"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">expression_level_se</span><span class="p">,</span>
+            <span class="s2">"expression_level_uncertainty"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">expression_level_uncertainty</span><span class="p">,</span>
+            <span class="s2">"expression_level_uncertainty_type"</span><span class="p">:</span> <span class="p">(</span>
+                <span class="n">uncertainty_type</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="n">uncertainty_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="p">),</span>
+            <span class="s2">"n_samples"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">n_samples</span><span class="p">,</span>
+            <span class="s2">"sample_unit"</span><span class="p">:</span> <span class="n">sample_unit</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="n">sample_unit</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s2">"sequence_id"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">sequence_id</span><span class="p">,</span>
+            <span class="s2">"library_id"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">library_id</span><span class="p">,</span>
+            <span class="s2">"read_count"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">read_count</span><span class="p">,</span>
+            <span class="s2">"readout"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">readout</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="s2">"reporter_gene"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">reporter_gene</span><span class="p">,</span>
+            <span class="s2">"expression_units"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">expression_units</span><span class="p">,</span>
+        <span class="p">}</span>
+
+    <span class="nd">@data_chunker</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_pooled_sort_seq_expression_phenotype_node</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">method_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BioCypherNode</span><span class="p">:</span>
+        <span class="n">phenotype</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype</span>
+        <span class="n">phenotype_id</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">model_dump</span><span class="p">())</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">BioCypherNode</span><span class="p">(</span>
+            <span class="n">node_id</span><span class="o">=</span><span class="n">phenotype_id</span><span class="p">,</span>
+            <span class="n">preferred_id</span><span class="o">=</span><span class="sa">f</span><span class="s2">"phenotype_</span><span class="si">{</span><span class="n">phenotype_id</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="n">node_label</span><span class="o">=</span><span class="s2">"pooled sort seq expression phenotype"</span><span class="p">,</span>
+            <span class="n">properties</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_pooled_sort_seq_expression_properties</span><span class="p">(</span><span class="n">phenotype</span><span class="p">),</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_pooled_sort_seq_expression_phenotype_reference_nodes</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BioCypherNode</span><span class="p">]:</span>
+        <span class="n">nodes</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">seen_node_ids</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">experiment_reference_index</span><span class="p">):</span>
+            <span class="n">phenotype</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">reference</span><span class="o">.</span><span class="n">phenotype_reference</span>
+            <span class="n">phenotype_id</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span>
+                <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">model_dump</span><span class="p">())</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">phenotype_id</span> <span class="ow">in</span> <span class="n">seen_node_ids</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">seen_node_ids</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">phenotype_id</span><span class="p">)</span>
+            <span class="n">nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">BioCypherNode</span><span class="p">(</span>
+                    <span class="n">node_id</span><span class="o">=</span><span class="n">phenotype_id</span><span class="p">,</span>
+                    <span class="n">preferred_id</span><span class="o">=</span><span class="s2">"pooled sort seq expression phenotype"</span><span class="p">,</span>
+                    <span class="n">node_label</span><span class="o">=</span><span class="s2">"pooled sort seq expression phenotype"</span><span class="p">,</span>
+                    <span class="n">properties</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_pooled_sort_seq_expression_properties</span><span class="p">(</span><span class="n">phenotype</span><span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">nodes</span>
+
+    <span class="c1"># --- end #991 ---</span>
+
+    <span class="c1"># --- begin #990: the biosensor fluorescence family ---</span>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_biosensor_fluorescence_properties</span><span class="p">(</span><span class="n">phenotype</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Node properties of a ``BiosensorFluorescencePhenotype``.</span>
+
+<span class="sd">        ``sensed_metabolite`` projects the typed ``Compound``'s name, the spelling the</span>
+<span class="sd">        environment lane's compounds carry, so the sensed metabolite joins the compound</span>
+<span class="sd">        layer; the compound's own identifiers travel in the serialized record.</span>
+<span class="sd">        """</span>
+        <span class="n">uncertainty_type</span> <span class="o">=</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">biosensor_signal_uncertainty_type</span>
+        <span class="n">sample_unit</span> <span class="o">=</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">sample_unit</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">"graph_level"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">graph_level</span><span class="p">,</span>
+            <span class="s2">"label_name"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">label_name</span><span class="p">,</span>
+            <span class="s2">"label_statistic_name"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">label_statistic_name</span><span class="p">,</span>
+            <span class="s2">"biosensor_signal"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">biosensor_signal</span><span class="p">,</span>
+            <span class="s2">"biosensor_signal_se"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">biosensor_signal_se</span><span class="p">,</span>
+            <span class="s2">"biosensor_signal_uncertainty"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">biosensor_signal_uncertainty</span><span class="p">,</span>
+            <span class="s2">"biosensor_signal_uncertainty_type"</span><span class="p">:</span> <span class="p">(</span>
+                <span class="n">uncertainty_type</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="n">uncertainty_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="p">),</span>
+            <span class="s2">"n_samples"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">n_samples</span><span class="p">,</span>
+            <span class="s2">"sample_unit"</span><span class="p">:</span> <span class="n">sample_unit</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="n">sample_unit</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s2">"sensed_metabolite"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">sensed_metabolite</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="s2">"sensor_name"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">sensor_name</span><span class="p">,</span>
+            <span class="s2">"reporter_gene"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">reporter_gene</span><span class="p">,</span>
+            <span class="s2">"readout"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">readout</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="s2">"signal_units"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">signal_units</span><span class="p">,</span>
+        <span class="p">}</span>
+
+    <span class="nd">@data_chunker</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_biosensor_fluorescence_phenotype_node</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">method_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BioCypherNode</span><span class="p">:</span>
+        <span class="n">phenotype</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype</span>
+        <span class="n">phenotype_id</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">model_dump</span><span class="p">())</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">BioCypherNode</span><span class="p">(</span>
+            <span class="n">node_id</span><span class="o">=</span><span class="n">phenotype_id</span><span class="p">,</span>
+            <span class="n">preferred_id</span><span class="o">=</span><span class="sa">f</span><span class="s2">"phenotype_</span><span class="si">{</span><span class="n">phenotype_id</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="n">node_label</span><span class="o">=</span><span class="s2">"biosensor fluorescence phenotype"</span><span class="p">,</span>
+            <span class="n">properties</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_biosensor_fluorescence_properties</span><span class="p">(</span><span class="n">phenotype</span><span class="p">),</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_biosensor_fluorescence_phenotype_reference_nodes</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BioCypherNode</span><span class="p">]:</span>
+        <span class="n">nodes</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">seen_node_ids</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">experiment_reference_index</span><span class="p">):</span>
+            <span class="n">phenotype</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">reference</span><span class="o">.</span><span class="n">phenotype_reference</span>
+            <span class="n">phenotype_id</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span>
+                <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">model_dump</span><span class="p">())</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">phenotype_id</span> <span class="ow">in</span> <span class="n">seen_node_ids</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">seen_node_ids</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">phenotype_id</span><span class="p">)</span>
+            <span class="n">nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">BioCypherNode</span><span class="p">(</span>
+                    <span class="n">node_id</span><span class="o">=</span><span class="n">phenotype_id</span><span class="p">,</span>
+                    <span class="n">preferred_id</span><span class="o">=</span><span class="s2">"biosensor fluorescence phenotype"</span><span class="p">,</span>
+                    <span class="n">node_label</span><span class="o">=</span><span class="s2">"biosensor fluorescence phenotype"</span><span class="p">,</span>
+                    <span class="n">properties</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_biosensor_fluorescence_properties</span><span class="p">(</span><span class="n">phenotype</span><span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">nodes</span>
+
+    <span class="c1"># --- end #990 ---</span>
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_bacterial_morphology_properties</span><span class="p">(</span><span class="n">phenotype</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>

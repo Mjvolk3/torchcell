@@ -59,8 +59,8 @@ VIEW_TAG = "040-mixture"
 # Pinned after the first `save_as_new_view()`; None creates the view and prints its id.
 VIEW_ID: str | None = "n94xqhmif86"
 X = "epoch"
-# every panel draws up to this many runs or groups; the W&B default is 10
-MAX_SHOWN = 100
+# every panel draws up to this many runs or groups; the W&B default is 10 and the user wants every run visible
+MAX_SHOWN = 1000
 # r1_mix_<arm>, r2_mix_<arm>, r3_<arm>, r3w2_<arm>, r4_<arm>; smokes are skipped by name
 SWEEP = re.compile(r"^r\d+(w\d+)?_\w+$")
 KEY = re.compile(r"^fold(\d+)_seed(\d+)/(\w+)$")

@@ -550,7 +550,7 @@ def test_deposit_records_the_by_hand_dryad_files_as_manual_browser(
         [*m.raw_relpaths().values()]
         + [f"code/{p}" for p in m.CODE_FILES]
         + [f"data/dryad/{m.DRYAD_METADATA}", f"data/dryad/{m.DRYAD_LISTING}"]
-        + [archive, m.BY4742_REL]
+        + [archive, m.BY4742_REL, m.LIFTED_TABLE_REL]
     )
     reference = by_path[m.BY4742_REL]
     assert reference.retrieval is not None
@@ -564,6 +564,19 @@ def test_deposit_records_the_by_hand_dryad_files_as_manual_browser(
     assert reference.retrieval.params["commit"] == m.BBQTL_COMMIT
     assert reference.sha256 == m.BY4742_SHA256
     assert (mirror / m.BY4742_REL).read_text() == ">chr01\nACGT\n"
+    derived = by_path[m.LIFTED_TABLE_REL]
+    assert derived.retrieval is None and derived.processing is not None
+    assert (derived.sha256, derived.bytes) == (m.LIFTED_TABLE_SHA256, 2537055)
+    assert derived.processing.version == m.LIFT_COMMIT
+    assert derived.processing.processor.startswith(m.LIFT_SCRIPT)
+    assert derived.processing.params["flanks"] == [25, 50, 100, 200]
+    assert derived.processing.input_sha256 == [
+        m.DRYAD_FILES[m.SNP_LIST_NAME].sha256,
+        m.BY4742_SHA256,
+        m.S288C_FSA_SHA256,
+    ]
+    assert not (mirror / m.LIFTED_TABLE_REL).exists()
+    assert m.LIFTED_TABLE_NAME not in m.raw_relpaths()
     geno = by_path[f"data/dryad/{m.GENO_NAME}"]
     assert geno.retrieval is not None
     assert geno.retrieval.method == RetrievalMethod.manual_browser
@@ -644,6 +657,26 @@ def test_deposit_refuses_a_by4742_reference_off_its_pin(
             bbqtl_dir=bbqtl,
             retrieved_at="2026-10-11",
             data_root=str(tmp_path / "root"),
+        )
+
+
+def test_deposit_refuses_a_lifted_table_off_its_pin(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The table is the lift script's; deposit only records it and checks its bytes."""
+    release, code, meta, bbqtl = _deposit_inputs(tmp_path, monkeypatch)
+    data_root = tmp_path / "root"
+    table = data_root / m.RAW_DIR_REL / m.LIFTED_TABLE_REL
+    table.parent.mkdir(parents=True)
+    rel.lifted_table(table)
+    with pytest.raises(RuntimeError, match="exists with a different sha256"):
+        m.deposit_raw_mirror(
+            release_dir=release,
+            code_dir=code,
+            dryad_metadata_dir=meta,
+            bbqtl_dir=bbqtl,
+            retrieved_at="2026-10-11",
+            data_root=str(data_root),
         )
 
 
@@ -748,28 +781,31 @@ def test_every_quote_names_its_pinned_file() -> None:
         m.DRYAD_METADATA_REL,
     }
     assert m.sourced_values() == list(m.SOURCED.values())
-    spec = m.VERIFICATION_SPEC
+    spec = runners.SEGREGANT_EXPRESSION_DATASETS["nguessan2025"]
     assert spec["expected_count"] == m.N_SEGREGANTS == 2951
     assert spec["root"] == "data/torchcell/nguessan2025"
     assert spec["provenance"].sha256 == m.PAPER_MD_SHA256
     assert spec["provenance"].citation_key == m.CITATION_KEY
 
 
-def test_the_store_is_held_out_of_the_registry_the_runner_and_the_map() -> None:
-    """Not registered, verified by run_all or served until #1050 is fixed.
-
-    The store builds and fails L4 marker_reference and mat_fixation: the deposited SNP
-    positions are on BY4742_fixed.fasta, not on the S288C reference the records name.
-    Lifting the hold means registering the class, moving ``VERIFICATION_SPEC`` into the
-    runner registry and mapping the adapter, which this test then refuses until it is
-    rewritten.
-    """
+def test_the_class_is_registered_mapped_and_in_the_runner_registry() -> None:
+    """Served as released (#1050): the genome reference does not gate the data."""
+    from torchcell.adapters import Nguessan2025Adapter
     from torchcell.datasets.dataset_registry import dataset_registry
     from torchcell.knowledge_graphs.dataset_adapter_map import dataset_adapter_map
 
-    assert "Nguessan2025Dataset" not in dataset_registry
-    assert "nguessan2025" not in runners.SEGREGANT_EXPRESSION_DATASETS
-    assert m.Nguessan2025Dataset not in dataset_adapter_map
+    assert dataset_registry["Nguessan2025Dataset"] is m.Nguessan2025Dataset
+    assert dataset_adapter_map[m.Nguessan2025Dataset] is Nguessan2025Adapter
+    spec = runners.SEGREGANT_EXPRESSION_DATASETS["nguessan2025"]
+    assert spec["verify_build_module"] == m.__name__
+
+
+def test_every_record_states_the_coordinate_finding() -> None:
+    """The released positions are kept; the call method says what they are."""
+    assert "S288C_reference_genome_R64-3-1_20210421" in m.CALL_METHOD
+    assert "at all 41,594 positions" in m.CALL_METHOD
+    assert "27,221 (0.654)" in m.CALL_METHOD
+    assert m.LIFTED_TABLE_REL in m.CALL_METHOD
 
 
 def test_the_class_declares_its_organism() -> None:
@@ -821,7 +857,7 @@ def test_verify_build_reads_its_runner_entry(
     monkeypatch.setattr(runners, "_sgd_gene_set", lambda _: set(rel.GENES))
     monkeypatch.setattr(panel, "verify_reference_panel_expression_streaming", capture)
     assert m.verify_build(dataset.root, data_root=str(data_root)) == "report"
-    spec = m.VERIFICATION_SPEC
+    spec = runners.SEGREGANT_EXPRESSION_DATASETS["nguessan2025"]
     assert captured["records"] == 3
     assert (captured["dataset_name"], captured["expected_count"]) == (
         "nguessan2025",

@@ -53,6 +53,20 @@ first 4,489 rows of its panel); on the deposit those are ``Number`` 0 to 4,488 i
 order, and L4 ``cis_concordance`` tests the map against a permutation null rather than
 assuming it.
 
+**The released SNP positions are BY4742_fixed coordinates, and the records keep them**
+(#1050). Measured over all 41,594 SNPs: the BY allele is the base of
+``BY4742_fixed.fasta`` (the reference the BB-QTL genotyping code indexes,
+``arturrc/bbqtl_inference`` @ ``2b1c89d6``) at every released position and the S288C
+R64-4-1 base at 27,221 (0.654), although the Dryad README names R64-3-1. The owner's
+rule (2026-10-12) is that the data is stored as released and the reference genome
+does not gate it, so the blocks carry the released positions, ``CALL_METHOD`` states
+the finding on every record, and L4 ``marker_reference`` and ``mat_fixation`` report
+it as a finding about the release. ``BY4742_fixed.fasta`` is deposited in the raw
+mirror, and a lift of every SNP to S288C R64-4-1 by the unique exact match of its
+flanks (``lift_snps``; 41,587 lifted, 7 without a match) is the derived table
+``LIFTED_TABLE_REL``, recorded with its processing provenance, for modeling to use; the
+stored records do not read it.
+
 PHENOTYPE (``SingleCellExpressionPhenotype``, the single-cell UMI-count leaf shared with
 Boocock 2025 and Jackson 2020, #1016): UMI counts over the 6,240 released genes, summed
 over the segregant's cells, with each summed cell's barcode, library and UMI total. The
@@ -126,6 +140,7 @@ from torchcell.datamodels.schema import (
     SegregantParent,
     SingleCellExpressionPhenotype,
 )
+from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.datasets.scerevisiae.bloom2019 import (
     PARENT_PETER_ID,
     Marker,
@@ -140,10 +155,12 @@ from torchcell.literature.manifest import (
     ROLE_RAW_DATA,
     ArtifactRecord,
     Manifest,
+    ProcessingRecord,
     RetrievalMethod,
     RetrievalRecord,
 )
 from torchcell.sequence import GeneSet
+from torchcell.sequence.genome.registry import SGD_S288C_R64
 from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import (
@@ -297,6 +314,19 @@ S288C_FSA = "S288C_reference_sequence_R64-4-1_20230830.fsa"
 #: nguessan2025_snp_liftover.py``.
 LIFTED_TABLE_NAME = "SNP_list_lifted_S288C_R64-4-1.tsv"
 LIFTED_TABLE_REL = f"derived/{LIFTED_TABLE_NAME}"
+LIFT_SCRIPT = (
+    "experiments/036-dataset-fixes-before-kg-build/scripts/nguessan2025_snp_liftover.py"
+)
+#: The commit the lift ran at (a clean checkout) and what it wrote: 41,587 of 41,594
+#: SNPs lifted (all on the plus strand, none to another chromosome), 7 ``no_match``;
+#: the S288C base at the lifted position is the BY allele for 41,578 of the 41,587
+#: (the other 9 read the RM allele, sites where BY4742 and S288C differ). The table is
+#: for modeling: the stored records keep the released positions (owner, 2026-10-12).
+LIFT_COMMIT = "2a6c9bcfbad791377496443fd23a9527c37191e5"
+LIFTED_TABLE_SHA256 = "18c768d365f7086874f13fa02ffa8ea5c277e71a1ef59ead04b1c3dfb83be211"
+LIFTED_TABLE_BYTES = 2537055
+#: sha256 of the S288C R64-4-1 FASTA the lift read (the genomes-tier manifest's pin).
+S288C_FSA_SHA256 = "dbf065ffc3f5bbaa7554ef53c6861399eecc597fe058df5f81ba557944e3f86b"
 
 #: Grid levels per unit posterior (20 for a step of 0.05); levels run 10..20.
 _LEVELS_PER_UNIT = round(1 / POSTERIOR_STEP)
@@ -345,7 +375,13 @@ CALL_METHOD = (
     f"({ASSIGNMENT_TABLE} significant_best_match, a 0-based index into batch 1; expected "
     "distance plus a permutation test against random batches), encoded as runs of "
     "constant called parent (P(RM) > 0.5 calls RM) and constant P(called parent) on a "
-    f"{POSTERIOR_STEP} grid; an exact 0.5 is written as parent 1 at 0.5"
+    f"{POSTERIOR_STEP} grid; an exact 0.5 is written as parent 1 at 0.5. Block "
+    f"coordinates are the released SNP positions ({SNP_LIST_NAME}), whose Dryad README "
+    "names S288C_reference_genome_R64-3-1_20210421; measured (#1050, "
+    "nguessan2025_snp_coordinate_audit.py): the BY allele is the base of "
+    f"{BY4742_NAME} ({BBQTL_REPO} @ {BBQTL_COMMIT[:8]}) at all 41,594 positions and "
+    "the S288C R64-4-1 base at 27,221 (0.654), so they are BY4742_fixed coordinates; "
+    f"a lift to S288C R64-4-1 is the derived table {LIFTED_TABLE_REL} in the raw mirror"
 )
 CROSS = "BBQTL_BYxRM"
 
@@ -1246,7 +1282,10 @@ def deposit_raw_mirror(
     zip must hold exactly the four members (:func:`check_dryad_archive`).
     ``BY4742_fixed.fasta`` (#1050) is copied from ``bbqtl_dir`` as a ``direct_url``
     retrieval of ``arturrc/bbqtl_inference`` at ``BBQTL_COMMIT``, dated
-    ``BY4742_RETRIEVED_AT``, and must hash to ``BY4742_SHA256``.
+    ``BY4742_RETRIEVED_AT``, and must hash to ``BY4742_SHA256``. The lifted SNP table is
+    a derived artifact ``LIFT_SCRIPT`` writes into the mirror: it is recorded with its
+    ``ProcessingRecord`` (the script, its commit, the lift parameters, the three inputs'
+    digests) and pinned to ``LIFTED_TABLE_SHA256``, never written here.
     """
     root = raw_mirror_dir(data_root)
     rel = raw_relpaths()
@@ -1397,6 +1436,37 @@ def deposit_raw_mirror(
                 retrieval=retrieval,
             )
         )
+    lifted = root / LIFTED_TABLE_REL
+    if lifted.exists() and _sha256(lifted) != LIFTED_TABLE_SHA256:
+        raise RuntimeError(f"{lifted} exists with a different sha256; refusing")
+    files.append(
+        ArtifactRecord(
+            path=LIFTED_TABLE_REL,
+            role=ROLE_RAW_DATA,
+            bytes=LIFTED_TABLE_BYTES,
+            sha256=LIFTED_TABLE_SHA256,
+            source=(
+                f"derived from data/dryad/{SNP_LIST_NAME}, {BY4742_REL} and genomes "
+                f"tier {SGD_S288C_R64}/{S288C_FSA} by {LIFT_SCRIPT}"
+            ),
+            processing=ProcessingRecord(
+                processor=f"{LIFT_SCRIPT} ({__name__}.lift_snps)",
+                tool="exact flank match, both strands",
+                version=LIFT_COMMIT,
+                params={
+                    "flanks": list(LIFT_FLANKS),
+                    "seed": LIFT_SEED,
+                    "source": BY4742_REL,
+                    "target": f"{SGD_S288C_R64}/{S288C_FSA}",
+                },
+                input_sha256=[
+                    DRYAD_FILES[SNP_LIST_NAME].sha256,
+                    BY4742_SHA256,
+                    S288C_FSA_SHA256,
+                ],
+            ),
+        )
+    )
     manifest = Manifest(
         citation_key=CITATION_KEY,
         doi=PAPER_DOI,
@@ -1425,7 +1495,9 @@ def deposit_raw_mirror(
             "reference the released SNP positions sit on (#1050), the source side of "
             "their lift to S288C R64-4-1",
         ],
-        provenance_complete=all((root / relpath).exists() for relpath in sources),
+        provenance_complete=all(
+            (root / relpath).exists() for relpath in [*sources, LIFTED_TABLE_REL]
+        ),
         created_at=datetime.now(UTC).isoformat(),
     )
     (root / "manifest.json").write_text(manifest.model_dump_json(indent=2))
@@ -1529,13 +1601,7 @@ def pseudobulk(
 # --------------------------------------------------------------------------- #
 # Dataset
 # --------------------------------------------------------------------------- #
-# Deliberately NOT ``@register_dataset`` (#1050): the store builds and fails L4
-# ``marker_reference`` and ``mat_fixation``, because the deposited SNP positions are on
-# ``BY4742_fixed.fasta``, not on the S288C reference the records name. A registered
-# class must also be mapped (``test_dataset_organism``: the registry is the adapter maps
-# plus YeastPhenome), and a mapped store that fails verification would fail the KG
-# build's freshness check. The candidate verdict is admissible; registration, the map
-# entry and the runner entry (``VERIFICATION_SPEC``) follow the fix.
+@register_dataset
 class Nguessan2025Dataset(ExperimentDataset):
     """N'Guessan 2025: 2,951 BB-QTL batch-1 segregants, their cells summed."""
 
@@ -1798,41 +1864,15 @@ def sourced_values() -> list[SourcedValue]:
     return list(SOURCED.values())
 
 
-#: The verification spec, in the shape of a ``runners.SEGREGANT_EXPRESSION_DATASETS``
-#: entry. It is NOT in that registry, nor this dataset in the dataset-to-adapter map:
-#: the store builds (2,951 records, slurm job 4199) but fails L4 ``marker_reference``
-#: and ``mat_fixation``, because the deposited SNP positions are on the BB-QTL
-#: pipeline's ``BY4742_fixed.fasta``, not on the S288C reference the records name
-#: (#1050). A mapped store that fails verification would fail the KG build's
-#: freshness check, and its blocks would name S288C coordinates they do not have.
-VERIFICATION_SPEC: dict[str, Any] = {
-    "root": "data/torchcell/nguessan2025",
-    "verify_build_module": "torchcell.datasets.scerevisiae.nguessan2025",
-    "library": "torchcell-library",
-    "assembly_index": "1011Assemblies.tar.gz.member_index.tsv",
-    "expected_count": N_SEGREGANTS,
-    "provenance": Provenance(
-        source_uri=f"https://doi.org/{PAPER_DOI}",
-        citation_key=CITATION_KEY,
-        method=(
-            "one-pot 10x single-cell RNA-seq of batch 1 (4,489 strains) of the Nguyen Ba "
-            "2022 BB-QTL BY4741 x RM11-1a panel grown in YPD to log phase; per batch-1 "
-            f"strain with a significant cell match ({CODE_REPO} @ {CODE_COMMIT[:8]} "
-            "barcode-to-strain table), its cells' UMI counts summed and the panel's "
-            f"posterior P(RM) at 41,594 SNPs (Dryad {DRYAD_DOI} {GENO_NAME}, deposited "
-            f"by hand, #{DRYAD_ISSUE}) encoded as blocks on a {POSTERIOR_STEP} grid; raw "
-            f"mirror {RAW_DIR_REL} with manifest.json"
-        ),
-        page="eLife 2025; Methods 'Yeast strains and segregants', 'Yeast growth and "
-        "single-cell RNA-sequencing protocol', 'Assigning single cells to the reference "
-        "panel strains'; Table 1",
-        sha256=PAPER_MD_SHA256,
-    ),
-}
-
-
 def verify_build(dataset_root: str, *, data_root: str | None = None) -> Any:
-    """L0-L4 report for a built store (``segregant_expression_reference_panel``)."""
+    """L0-L4 report for a built store (``segregant_expression_reference_panel``).
+
+    The spec is this dataset's entry in ``runners.SEGREGANT_EXPRESSION_DATASETS``. Its
+    L4 ``marker_reference`` and ``mat_fixation`` read the released SNP positions against
+    S288C and fail on them (#1050): those positions are ``BY4742_fixed`` coordinates.
+    The owner's rule (2026-10-12) is that the reference genome does not gate the data,
+    so those two results are findings about the release, not a failed store.
+    """
     import json
 
     from torchcell.sequence.genome.registry import PETER2018_1011, resolve
@@ -1843,7 +1883,7 @@ def verify_build(dataset_root: str, *, data_root: str | None = None) -> Any:
     )
 
     root = data_root or _data_root()
-    spec = VERIFICATION_SPEC
+    spec = runners.SEGREGANT_EXPRESSION_DATASETS["nguessan2025"]
     genome = SCerevisiaeGenome(
         genome_root=osp.join(root, "data/sgd/genome"),
         go_root=osp.join(root, "data/go"),

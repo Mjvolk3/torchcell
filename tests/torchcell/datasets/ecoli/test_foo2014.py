@@ -481,9 +481,9 @@ def test_the_culture_format_types_the_two_fields_the_source_never_states() -> No
 
 
 def test_a_tolerance_gene_is_an_extra_copy_of_a_native_gene() -> None:
-    """The case the leaf names explicitly: a real locus tag, not a heterologous symbol."""
-    perturbation = foo.overexpression_perturbation("metR", "b3828", "pBbS5k-metR")
-    assert perturbation.systematic_gene_name == "b3828"
+    """The case the leaf names explicitly: a native gene under its released symbol."""
+    perturbation = foo.overexpression_perturbation("metR", "pBbS5k-metR")
+    assert perturbation.systematic_gene_name == "metR"
     assert perturbation.perturbed_gene_name == "metR"
     assert perturbation.gene_namespace == foo.NAMESPACE
     assert perturbation.source_organism == foo.HOST_SPECIES
@@ -497,11 +497,11 @@ def test_a_tolerance_gene_is_an_extra_copy_of_a_native_gene() -> None:
 
 def test_the_rfp_control_carries_a_typed_organism_gap() -> None:
     """The reporter's origin is never stated, so it is a typed gap (#915)."""
-    perturbation = foo.overexpression_perturbation("rfp", "rfp", "pBbS5k-rfp")
+    perturbation = foo.overexpression_perturbation("rfp", "pBbS5k-rfp")
     assert perturbation.source_organism is None
     assert perturbation.gapped_fields() == {"source_organism"}
     assert perturbation.provenance_gaps[0].note == foo.REPORTER_ORGANISM_GAP_NOTE
-    tolerance = foo.overexpression_perturbation("metR", "b3828", "pBbS5k-metR")
+    tolerance = foo.overexpression_perturbation("metR", "pBbS5k-metR")
     assert tolerance.provenance_gaps == []
     assert perturbation.is_heterologous is True
     assert perturbation.pathway_name == foo.PATHWAY_REPORTER
@@ -509,9 +509,9 @@ def test_the_rfp_control_carries_a_typed_organism_gap() -> None:
 
 def test_the_genotype_is_one_perturbation_on_the_shared_chassis() -> None:
     """What distinguishes a record is the single pBbS5k-borne gene."""
-    genotype = foo.genotype("fpr", "b3924", "pBbS5k-fpr")
+    genotype = foo.genotype("fpr", "pBbS5k-fpr")
     assert len(genotype.perturbations) == 1
-    assert genotype.perturbations[0].systematic_gene_name == "b3924"
+    assert genotype.perturbations[0].systematic_gene_name == "fpr"
 
 
 def test_the_chassis_background_carries_the_plasmids_and_no_invented_alleles() -> None:
@@ -812,9 +812,7 @@ def built_store(
     foo.deposit_raw_mirror(table_s3_path=source)
     _write_library(data_root, _synthetic_paper_md(), monkeypatch)
     root = str(data_root / foo.DEV_TREE_RELPATH)
-    dataset = foo.IsopentenolTiterFoo2014Dataset(
-        root=root, ecoli_genome=synthetic_mg1655
-    )
+    dataset = foo.IsopentenolTiterFoo2014Dataset(root=root)
     assert len(dataset) == foo.EXPECTED_RECORDS
     dataset.close_lmdb()
     return root
@@ -832,8 +830,8 @@ def test_the_built_store_holds_one_record_per_released_titer(built_store: str) -
         "Table 1 footnote b": 1,
     }
     assert set(ledger["uncertainty_type"]) == {"not_released"}
-    assert sorted(ledger["locus_tag"]) == sorted(
-        [tag for tag, _, _ in LOCUS_SPECS] + ["rfp"]
+    assert sorted(ledger["systematic_gene_name"]) == sorted(
+        [*foo.TOLERANCE_GENES, "rfp"]
     )
     for record in records:
         experiment = ProductTiterExperiment.model_validate(record["experiment"])
@@ -891,27 +889,6 @@ def test_the_module_entry_point_builds_and_verifies(
     out = capsys.readouterr().out
     assert f"len = {foo.EXPECTED_RECORDS}" in out
     assert "PASS" in out
-
-
-def test_the_injected_genome_wins_and_the_tier_is_the_fallback(
-    synthetic_mg1655: Any, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """The MG1655 genome is injected by the build, or opened from the genomes tier."""
-    opened: list[tuple[str, str]] = []
-
-    def record(host: str, strain: str) -> Any:
-        opened.append((host, strain))
-        return synthetic_mg1655
-
-    monkeypatch.setattr(foo, "bacterial_genome", record)
-    shell = foo.IsopentenolTiterFoo2014Dataset.__new__(
-        foo.IsopentenolTiterFoo2014Dataset
-    )
-    shell.ecoli_genome = None
-    assert shell._genome() is synthetic_mg1655
-    assert opened == [("ecoli", foo.REFERENCE_STRAIN)]
-    assert shell._genome() is synthetic_mg1655
-    assert len(opened) == 1
 
 
 def test_the_loader_declares_its_schema_classes_and_its_one_raw_file() -> None:

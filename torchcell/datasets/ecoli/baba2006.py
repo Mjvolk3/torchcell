@@ -30,19 +30,27 @@ by a suppressor). process() refuses a release where any of that stops holding. W
 ``is_essential=True`` means here is a CONSTRUCTION outcome on selection plates, a
 "candidate" in the paper's own word, not a growth measurement.
 
-ROWS WITH NO CALL. Table 3's 90 ``N.A.`` rows are ORFs the paper did not target
-(insertion-sequence genes, the ``ldr`` toxins, the araBAD/lacZ/rhaBAD genes BW25113
-already lacks, re-annotated ORFs); no construction was attempted, so they have no call
-and no record (``not_targeted``).
+ROWS WITH NO CALL ARE STILL ROWS. Table 3's 90 ``N.A.`` rows are ORFs the paper did
+not target (insertion-sequence genes, the ``ldr`` toxins, the araBAD/lacZ/rhaBAD genes
+BW25113 already lacks, re-annotated ORFs); no construction was attempted, so the
+release states no outcome. They are stored as released: ``is_essential=None`` beside a
+typed ``ProvenanceGap`` on the field whose note carries the cell verbatim.
 
-STRAIN AND IDENTIFIERS. BW25113 (``SOURCED_VALUES["background_strain"]``). Each ORF's
-identity is its Keio JW id, which the pinned BW25113 GenBank file carries as a
-``gene_synonym``; it goes through ``reconcile_locus_tags`` and the record stores the
-derived ``jw_synonym`` mapping. A JW id that is not on exactly one BW25113 locus is
-dropped (``jw_id_not_on_one_bw25113_locus``, measured 172: 125 the annotation does not
-carry, 47 sharing a locus with another JW id). No b-number crosswalk is used.
+STRAIN AND IDENTIFIERS, STORED AS RELEASED (owner rule of 2026-10-12: the data is the
+data, and the genome never gates a record). BW25113
+(``SOURCED_VALUES["background_strain"]``). Each ORF's identity is its Keio JW id, which
+is what the record stores: ``BacterialReleasedStrainPerturbation`` with the JW id as
+``systematic_gene_name`` and ``strain_label``, the released gene name as
+``perturbed_gene_name`` (the JW id itself where Table 3 prints ``none``),
+``identifier_kind`` "Keio JW id" and ``released_kind`` deletion. No annotation is read
+in the build: no JW id is resolved to a BW25113 locus, no row is dropped because the
+annotation lacks its id or because two ids share a locus, and the ECK accession and
+b-number of each row stay released columns of ``preprocess/calls.csv``. The join of a JW
+id to a BW25113 ``gene_synonym`` is a downstream act over the gene set; the verifier's
+L4 row reports how many JW ids the pinned annotation places and gates on none of it.
+All 4,378 Table 3 rows are records: 3,985 obtained, 303 not obtained, 90 not targeted.
 
-GENOTYPE. One ``BacterialDeletionPerturbation`` per record, cassette "kanamycin
+GENOTYPE. One ``BacterialReleasedStrainPerturbation`` per record, cassette "kanamycin
 cassette". ``collection`` is "Keio collection" only for an obtained deletion: a deletion
 that was never obtained is in no collection, and a record claiming one would name a
 strain that does not exist.
@@ -66,14 +74,14 @@ EVIDENCE (#924). Every phenotype carries a ``GeneEssentialityEvidence`` of type
 ``construction_outcome`` (class ``mutant_recovery``): the scoring rule, the paper's
 "candidates for essential genes" as the call's definition, its own caveat on population
 methods, the definitions of the colony counts, and the record's Table 3 PCR counts
-(verified, tested, percent). The reference carries the same evidence without counts.
-``preprocess/calls.csv`` keeps the per-row table, untargeted and dropped rows included.
+(verified, tested, percent). The reference and the 90 untargeted rows carry the same
+evidence without counts: no construction was attempted. ``preprocess/calls.csv`` keeps
+the per-row table.
 """
 
 from __future__ import annotations
 
 import argparse
-import json
 import logging
 import os
 import os.path as osp
@@ -98,14 +106,12 @@ from torchcell.data import (
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import LB_LENNOX
 from torchcell.datamodels.schema import (
-    BACTERIAL_ASSEMBLY_SETS,
     AssemblyReferenceGenome,
-    BacterialDeletionPerturbation,
     BacterialGeneEssentialityExperiment,
     BacterialGeneEssentialityExperimentReference,
+    BacterialReleasedStrainPerturbation,
     Concentration,
     ConcentrationUnit,
-    DerivedIdentifierMapping,
     Environment,
     EssentialityEvidenceClass,
     EssentialityEvidenceType,
@@ -120,19 +126,17 @@ from torchcell.datamodels.schema import (
     MediaComponent,
     MediaComponentRole,
     Publication,
+    ReleasedStrainKind,
     Temperature,
 )
 from torchcell.datasets.bacteria_common import (
-    LOCUS_TAG_PATTERNS,
     STRAIN_GENE_NAMESPACES,
-    LocusTagReconciliation,
     assembly_reference,
     bacterial_genome,
-    reconcile_locus_tags,
 )
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.literature.manifest import Manifest
-from torchcell.sequence.genome.base import GeneNameResolution
+from torchcell.sequence.genome.base import GeneNameStatus
 from torchcell.sequence.genome.ecoli.k12 import EcoliK12Genome, EcoliK12StrainName
 from torchcell.verification.levels import l0_structural, l1_count
 from torchcell.verification.report import (
@@ -344,10 +348,11 @@ EVIDENCE_STATEMENTS: tuple[EssentialityStatement, ...] = (
         provenance=PERCENT_COLUMN_STATEMENT,
     ),
 )
-#: Below this fraction of distinct JW ids resolving to one BW25113 locus the build stops
-#: (checklist item 4). The annotation carries 4,334 JW synonyms; measured 4,163 of 4,288
-#: resolve (0.9708), 47 of them onto a locus another JW id also reaches.
-MIN_RESOLVED_FRACTION = 0.95
+#: What ``systematic_gene_name`` is on every record: the Keio JW id of Table 3, verbatim.
+IDENTIFIER_KIND = "Keio JW id"
+#: Every Table 3 row is a record (the owner rule of 2026-10-12): 4,288 targeted ORFs
+#: (3,985 obtained + 303 not obtained) plus the 90 the paper did not target.
+EXPECTED_RECORDS = 4378
 
 _PAPER_LOOKED_IN = Provenance(
     source_uri=PAPER_TEXT_REL,
@@ -361,6 +366,15 @@ SELECTION_DURATION_GAP = ProvenanceGap(
     looked_in=_PAPER_LOOKED_IN,
     note="the transformants were spread 'to select KmR transformants at 37°C'; no "
     "incubation time is stated for the selection plates",
+)
+#: The 90 rows Table 3 prints ``N.A.`` for: the paper did not target the ORF, so the
+#: release states no construction outcome and the boolean is a typed absence.
+NOT_TARGETED_CALL_GAP = ProvenanceGap(
+    field="is_essential",
+    reason=ProvenanceGapReason.not_reported_by_primary,
+    looked_in=_PAPER_LOOKED_IN,
+    note="Table 3 prints 'N.A.' in the verified, colonies-tested and percent columns: "
+    "the paper did not target the ORF, so no construction outcome is released",
 )
 
 PUBLICATION = Publication(
@@ -407,10 +421,6 @@ class TableFormatError(ValueError):
 
 class ScoringRuleError(ValueError):
     """The scoring rule no longer reproduces the paper's counts or Table 6."""
-
-
-class DuplicateRecordError(ValueError):
-    """Two kept rows on the same BW25113 locus."""
 
 
 TABLE_S3_TITLE = (
@@ -596,156 +606,60 @@ def require_scoring(check: ScoringCheck) -> None:
 
 
 # --------------------------------------------------------------------------- #
-# Identifiers and the retention ledger
+# The retention ledger: every released row is a record
 # --------------------------------------------------------------------------- #
-DropRuleName = Literal["not_targeted", "jw_id_not_on_one_bw25113_locus"]
-DROP_RULE_DESCRIPTIONS: dict[DropRuleName, str] = {
-    "not_targeted": "Table 3 gives 'N.A.' for the verification columns: the paper did "
-    "not target the ORF, so there is no construction outcome to store",
-    "jw_id_not_on_one_bw25113_locus": "the row's Keio JW id is not a gene_synonym of "
-    "exactly one BW25113 GenBank locus (retired, or shared with another JW id), so no "
-    "locus tag of the pinned namespace names the deletion; each item gives the JW id, "
-    "gene, b-number and whether a mutant was obtained",
-}
-
-
-class RowOutcome(BaseModel):
-    """What happened to one Table 3 row: its locus and record, or the rule that dropped it."""
-
-    model_config = ConfigDict(extra="forbid", frozen=True)
-
-    keio: KeioRow
-    locus_tag: str | None
-    symbol: str | None
-    drop_rule: DropRuleName | None
-    reason: str | None
-
-
 class DropRule(BaseModel):
-    """One retention rule, the rows it removed, and why."""
+    """One retention rule, the rows it removed, and why (none apply; the shape is kept
+    so every bacterial ``dropped_records.json`` reads alike).
+    """
 
-    rule: DropRuleName
+    rule: str
     description: str
     n_records: int
     items: list[str] = []
 
 
 class DropLog(BaseModel):
-    """Every retention rule applied to a build, in the order they were applied."""
+    """The retention ledger of one build: every Table 3 row is a record."""
 
     dataset: str
     source_rows: int
     kept_records: int
     kept_essential: int
     kept_non_essential: int
+    kept_not_targeted: int
     dropped_records: int
     rules: list[DropRule]
+    notes: list[str]
 
 
-class IdentifierLedger(BaseModel):
-    """The JW reconciliation report, plus the stop threshold."""
-
-    reconciliation: LocusTagReconciliation
-    min_resolved_fraction: float
-
-
-def canonical_symbol(genome: EcoliK12Genome, tag: str) -> str:
-    """The annotation's own symbol of ``tag`` when it resolves back to ``tag``, else the
-    tag, so the stored pair always round-trips through the resolver.
-    """
-    symbol = genome.genbank.loci[tag].symbol
-    if symbol is None:
-        return tag
-    return symbol if genome.resolve_gene_name(symbol).systematic_name == tag else tag
-
-
-def resolve_rows(
-    genome: EcoliK12Genome, rows: Sequence[KeioRow], *, label: str
-) -> tuple[list[RowOutcome], LocusTagReconciliation]:
-    """Reconcile every targeted row's JW id on ``genome`` and decide each row's outcome.
-
-    Untargeted rows are ``not_targeted``. Stops (``LocusTagResolutionError``) below
-    ``MIN_RESOLVED_FRACTION``. A JW id the reconciler keeps as given is off the BW25113
-    namespace and its row is dropped with the reason.
-    """
+def build_drop_log(dataset_name: str, rows: Sequence[KeioRow]) -> DropLog:
+    """The ledger of one build, with the three call classes counted."""
     targeted = [r for r in rows if r.targeted]
-    stored, report = reconcile_locus_tags(
-        genome, pd.Series([r.jw_id for r in targeted], dtype=object), label=label
-    )
-    report.require_resolved(MIN_RESOLVED_FRACTION)
-    pattern = LOCUS_TAG_PATTERNS[report.gene_namespace]
-    tag_of = dict(zip((r.jw_id for r in targeted), stored.tolist(), strict=True))
-    outcomes: list[RowOutcome] = []
-    for row in rows:
-        if not row.targeted:
-            outcomes.append(
-                RowOutcome(
-                    keio=row,
-                    locus_tag=None,
-                    symbol=None,
-                    drop_rule="not_targeted",
-                    reason=f"{row.gene} {row.jw_id}",
-                )
-            )
-            continue
-        tag = str(tag_of[row.jw_id])
-        if pattern.match(tag) is None:
-            why = (
-                "shares its locus with another JW id"
-                if row.jw_id in report.kept_on_collision
-                else "not carried by the annotation"
-            )
-            outcomes.append(
-                RowOutcome(
-                    keio=row,
-                    locus_tag=None,
-                    symbol=None,
-                    drop_rule="jw_id_not_on_one_bw25113_locus",
-                    reason=f"{row.jw_id} ({row.gene}, {row.b_number}): {why}; "
-                    f"obtained {row.obtained}",
-                )
-            )
-            continue
-        outcomes.append(
-            RowOutcome(
-                keio=row,
-                locus_tag=tag,
-                symbol=canonical_symbol(genome, tag),
-                drop_rule=None,
-                reason=None,
-            )
-        )
-    held = Counter(o.locus_tag for o in outcomes if o.drop_rule is None)
-    repeated = sorted(str(t) for t, n in held.items() if n > 1)
-    if repeated:
-        raise DuplicateRecordError(f"two kept rows on {repeated[:5]}")
-    return outcomes, report
-
-
-def build_drop_log(dataset_name: str, outcomes: Sequence[RowOutcome]) -> DropLog:
-    """The retention ledger of one build, refusing rules that miss a dropped row."""
-    rules = [
-        DropRule(
-            rule=name,
-            description=description,
-            n_records=sum(1 for o in outcomes if o.drop_rule == name),
-            items=[str(o.reason) for o in outcomes if o.drop_rule == name],
-        )
-        for name, description in DROP_RULE_DESCRIPTIONS.items()
-    ]
-    kept = [o for o in outcomes if o.drop_rule is None]
-    log_ = DropLog(
+    obtained = sum(1 for r in targeted if r.obtained)
+    not_obtained = len(targeted) - obtained
+    not_targeted = len(rows) - len(targeted)
+    return DropLog(
         dataset=dataset_name,
-        source_rows=len(outcomes),
-        kept_records=len(kept),
-        kept_essential=sum(1 for o in kept if not o.keio.obtained),
-        kept_non_essential=sum(1 for o in kept if o.keio.obtained),
-        dropped_records=len(outcomes) - len(kept),
-        rules=rules,
+        source_rows=len(rows),
+        kept_records=len(rows),
+        kept_essential=not_obtained,
+        kept_non_essential=obtained,
+        kept_not_targeted=not_targeted,
+        dropped_records=0,
+        rules=[],
+        notes=[
+            "every Table 3 row is a record under its Keio JW id, verbatim "
+            "(BacterialReleasedStrainPerturbation); no annotation is read and no row "
+            "is dropped for an identifier the BW25113 GenBank file does not carry",
+            f"{not_obtained} not-obtained ORFs store is_essential True, {obtained} "
+            "obtained ORFs store False (the paper's own scoring rule), and "
+            f"{not_targeted} N.A. rows store is_essential None beside a typed "
+            "ProvenanceGap whose note carries the 'N.A.' cell",
+            "the ECK accession and the b-number of each row are released columns of "
+            "calls.csv, not record fields",
+        ],
     )
-    if sum(r.n_records for r in rules) != log_.dropped_records:
-        raise RuntimeError("drop rules do not account for every dropped row")
-    return log_
 
 
 # --------------------------------------------------------------------------- #
@@ -812,20 +726,25 @@ def environment(*, kanamycin: bool = True) -> Environment:
     )
 
 
-def deletion_genotype(outcome: RowOutcome) -> Genotype:
-    """The designed in-frame deletion; ``collection`` only when a mutant was obtained."""
-    if outcome.locus_tag is None or outcome.symbol is None:
-        raise ValueError(f"{outcome.keio.jw_id} was dropped; it has no genotype")
-    obtained = outcome.keio.obtained
+def released_gene_name(row: KeioRow) -> str:
+    """The gene name Table 3 prints, or the JW id itself where it prints ``none``."""
+    return row.gene if row.gene and row.gene != "none" else row.jw_id
+
+
+def deletion_genotype(row: KeioRow) -> Genotype:
+    """The designed in-frame deletion under its Keio JW id, exactly as released;
+    ``collection`` only when a mutant was obtained.
+    """
+    obtained = row.targeted and row.obtained
     return Genotype(
         perturbations=[
-            BacterialDeletionPerturbation(
-                systematic_gene_name=outcome.locus_tag,
-                perturbed_gene_name=outcome.symbol,
+            BacterialReleasedStrainPerturbation(
+                systematic_gene_name=row.jw_id,
+                perturbed_gene_name=released_gene_name(row),
                 gene_namespace=STRAIN_GENE_NAMESPACES[BACKGROUND_STRAIN],
-                identifier_mapping=DerivedIdentifierMapping(
-                    source_identifier=outcome.keio.jw_id, route="jw_synonym"
-                ),
+                strain_label=row.jw_id,
+                identifier_kind=IDENTIFIER_KIND,
+                released_kind=ReleasedStrainKind.deletion,
                 collection=KEIO_COLLECTION if obtained else None,
                 cassette=KEIO_CASSETTE,
             )
@@ -836,13 +755,11 @@ def deletion_genotype(outcome: RowOutcome) -> Genotype:
 def evidence(row: KeioRow | None = None) -> GeneEssentialityEvidence:
     """The construction-outcome evidence (#924), with ``row``'s PCR counts when given.
 
-    The reference (``row`` None) carries the type, rule, definition and caveat only: no
-    construction was attempted on the parent.
+    The reference (``row`` None) and an untargeted row (Table 3 prints ``N.A.``) carry
+    the type, rule, definition and caveat only: no construction was attempted.
     """
     counts: dict[str, Any] = {}
-    if row is not None:
-        if not row.targeted:
-            raise ValueError(f"{row.jw_id} was not targeted; it has no PCR counts")
+    if row is not None and row.targeted:
         counts = {
             "colonies_verified": row.verified,
             "colonies_tested": row.tested,
@@ -856,19 +773,31 @@ def evidence(row: KeioRow | None = None) -> GeneEssentialityEvidence:
     )
 
 
+def essentiality_phenotype(row: KeioRow) -> GeneEssentialityPhenotype:
+    """The call: True when no mutant was obtained, False when one was, and a typed
+    absence (the verbatim ``N.A.`` in the gap's note) for an ORF the paper did not
+    target; every one with the construction-outcome evidence.
+    """
+    if not row.targeted:
+        return GeneEssentialityPhenotype(
+            is_essential=None,
+            evidence=evidence(row),
+            provenance_gaps=[NOT_TARGETED_CALL_GAP],
+        )
+    return GeneEssentialityPhenotype(
+        is_essential=not row.obtained, evidence=evidence(row)
+    )
+
+
 def build_experiment(
-    dataset_name: str, outcome: RowOutcome, env: Environment
+    dataset_name: str, row: KeioRow, env: Environment
 ) -> BacterialGeneEssentialityExperiment:
-    """One targeted ORF: ``is_essential`` is True when no mutant was obtained."""
-    if outcome.drop_rule is not None:
-        raise ValueError(f"{outcome.keio.jw_id} was dropped; it has no record")
+    """One Table 3 row, targeted or not."""
     return BacterialGeneEssentialityExperiment(
         dataset_name=dataset_name,
-        genotype=deletion_genotype(outcome),
+        genotype=deletion_genotype(row),
         environment=env,
-        phenotype=GeneEssentialityPhenotype(
-            is_essential=not outcome.keio.obtained, evidence=evidence(outcome.keio)
-        ),
+        phenotype=essentiality_phenotype(row),
     )
 
 
@@ -903,11 +832,9 @@ class GeneEssentialityBaba2006Dataset(ExperimentDataset):
         io_workers: int = 0,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
-        ecoli_genome: EcoliK12Genome | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize; ``ecoli_genome`` is injected by the build entry points."""
-        self.ecoli_genome = ecoli_genome
+        """Initialize; no genome is read, the released JW ids are stored."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -943,20 +870,6 @@ class GeneEssentialityBaba2006Dataset(ExperimentDataset):
     def _raw(self, name: str) -> str:
         return osp.join(self.raw_dir, name)
 
-    def _genome(self) -> EcoliK12Genome:
-        """The injected genome, or the reference strain's default cache; another
-        assembly set is refused.
-        """
-        if self.ecoli_genome is None:
-            self.ecoli_genome = bacterial_genome("ecoli", self.REFERENCE_STRAIN)
-        expected = BACTERIAL_ASSEMBLY_SETS[self.REFERENCE_STRAIN]
-        if self.ecoli_genome.ASSEMBLY_SET != expected:
-            raise ValueError(
-                f"{type(self).__name__} needs the {expected} genome, got "
-                f"{self.ecoli_genome.ASSEMBLY_SET}"
-            )
-        return self.ecoli_genome
-
     @post_process
     def process(self) -> None:
         """Score Table 3, check it against Tables 2 and 6, resolve, write the LMDB."""
@@ -968,21 +881,24 @@ class GeneEssentialityBaba2006Dataset(ExperimentDataset):
             read_jw_ids(self._raw(TABLE_S6), title=TABLE_S6_TITLE, header_row=3),
         )
         require_scoring(check)
-        outcomes, report = resolve_rows(
-            self._genome(), rows, label=f"{self.name} Table 3 JW ids"
-        )
-        drop_log = build_drop_log(self.name, outcomes)
-        kept = [o for o in outcomes if o.drop_rule is None]
+        drop_log = build_drop_log(self.name, rows)
+        if drop_log.kept_records != EXPECTED_RECORDS:
+            raise TableFormatError(
+                f"Table 3 holds {drop_log.kept_records} rows, the module declares "
+                f"{EXPECTED_RECORDS}"
+            )
         log.info(
-            "Baba 2006: %d Table 3 rows -> %d records (%d essential); dropped %s",
+            "Baba 2006: %d Table 3 rows -> %d records (%d essential, %d not, %d not "
+            "targeted); nothing dropped",
             drop_log.source_rows,
             drop_log.kept_records,
             drop_log.kept_essential,
-            {r.rule: r.n_records for r in drop_log.rules},
+            drop_log.kept_non_essential,
+            drop_log.kept_not_targeted,
         )
         os.makedirs(self.preprocess_dir, exist_ok=True)
         os.makedirs(self.processed_dir, exist_ok=True)
-        self._write_ledgers(drop_log, report, check, outcomes)
+        self._write_ledgers(drop_log, check, rows)
 
         env = environment()
         reference = build_reference(
@@ -992,59 +908,43 @@ class GeneEssentialityBaba2006Dataset(ExperimentDataset):
             osp.join(self.processed_dir, "lmdb")
         )
         with env_out.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
-            for idx, outcome in enumerate(tqdm(kept, desc="baba2006")):
-                experiment = build_experiment(self.name, outcome, env)
+            for idx, row in enumerate(tqdm(rows, desc="baba2006")):
+                experiment = build_experiment(self.name, row, env)
                 txn.put(
                     f"{idx}".encode(),
                     self._intern_record(experiment, reference, PUBLICATION, itxn),
                 )
         env_out.close()
         interned_env.close()
-        log.info("Wrote %d Baba 2006 records to LMDB", len(kept))
+        log.info("Wrote %d Baba 2006 records to LMDB", len(rows))
 
     def _write_ledgers(
-        self,
-        drop_log: DropLog,
-        report: LocusTagReconciliation,
-        check: ScoringCheck,
-        outcomes: Sequence[RowOutcome],
+        self, drop_log: DropLog, check: ScoringCheck, rows: Sequence[KeioRow]
     ) -> None:
-        """The drop log, identifier ledger, scoring check, and the per-row table (with
-        each kept row's LMDB index; its PCR counts are also on the record's evidence).
+        """The drop log, the scoring check, and the per-row table (every released
+        column, each row's LMDB index, the stored call, and the PCR counts that have
+        no field).
         """
         out = Path(self.preprocess_dir)
         (out / "dropped_records.json").write_text(drop_log.model_dump_json(indent=2))
-        (out / "identifier_reconciliation.json").write_text(
-            IdentifierLedger(
-                reconciliation=report, min_resolved_fraction=MIN_RESOLVED_FRACTION
-            ).model_dump_json(indent=2)
-        )
         (out / "scoring_check.json").write_text(check.model_dump_json(indent=2))
-        rows: list[dict[str, Any]] = []
-        n_kept = 0
-        for o in outcomes:
-            record: int | None = None
-            if o.drop_rule is None:
-                record = n_kept
-                n_kept += 1
-            rows.append(
-                {
-                    "row": o.keio.row,
-                    "eck": o.keio.eck,
-                    "gene": o.keio.gene,
-                    "jw_id": o.keio.jw_id,
-                    "b_number": o.keio.b_number,
-                    "verified": o.keio.verified,
-                    "tested": o.keio.tested,
-                    "percent": o.keio.percent,
-                    "obtained": o.keio.obtained if o.keio.targeted else None,
-                    "locus_tag": o.locus_tag,
-                    "symbol": o.symbol,
-                    "drop_rule": o.drop_rule,
-                    "record": record,
-                }
-            )
-        pd.DataFrame(rows).astype(
+        table = [
+            {
+                "row": row.row,
+                "eck": row.eck,
+                "gene": row.gene,
+                "jw_id": row.jw_id,
+                "b_number": row.b_number,
+                "verified": row.verified,
+                "tested": row.tested,
+                "percent": row.percent,
+                "obtained": row.obtained if row.targeted else None,
+                "is_essential": (not row.obtained) if row.targeted else None,
+                "record": index,
+            }
+            for index, row in enumerate(rows)
+        ]
+        pd.DataFrame(table).astype(
             {"record": "Int64", "verified": "Int64", "tested": "Int64"}
         ).to_csv(out / "calls.csv", index=False)
 
@@ -1072,6 +972,10 @@ VERIFIER_PROVENANCE = Provenance(
 )
 
 Record = Mapping[str, Any]
+#: Resolver outcomes that place a released identifier on one locus of the annotation.
+PLACED_STATUSES = frozenset(
+    {GeneNameStatus.CURRENT, GeneNameStatus.RENAMED, GeneNameStatus.NON_GENE_FEATURE}
+)
 
 
 def _validate_record(record: Record) -> None:
@@ -1089,53 +993,59 @@ def _perturbation(record: Record) -> Mapping[str, Any]:
     return perturbations[0]
 
 
-def _l1_one_record_per_locus(records: Sequence[Record]) -> LevelResult:
-    loci = Counter(_perturbation(r)["systematic_gene_name"] for r in records)
-    repeated = sorted(f"{g} x{n}" for g, n in loci.items() if n > 1)
+def _l1_one_record_per_jw_id(records: Sequence[Record]) -> LevelResult:
+    ids = Counter(_perturbation(r)["systematic_gene_name"] for r in records)
+    repeated = sorted(f"{g} x{n}" for g, n in ids.items() if n > 1)
     return LevelResult(
         level=Level.L1,
-        name="one_record_per_bw25113_locus",
+        name="one_record_per_jw_id",
         passed=not repeated,
-        message=f"{len(loci)} loci, one single-deletion record each"
+        message=f"{len(ids)} Keio JW ids, one record each"
         if not repeated
-        else f"{len(repeated)} loci repeat",
+        else f"{len(repeated)} JW ids repeat",
         details={"repeated": repeated[:20]},
     )
 
 
 def _l2_calls_match_table_s3(
-    records: Sequence[Record],
-    rows: Sequence[KeioRow],
-    resolve: Callable[[str], GeneNameResolution],
+    records: Sequence[Record], rows: Sequence[KeioRow]
 ) -> LevelResult:
     """L2, independent of the build path: each record's JW id finds its Table 3 row,
-    the stored call is that row's scoring outcome, ``collection`` is set exactly on an
-    obtained deletion, and the JW id resolves to the stored locus.
+    the stored call is that row's scoring outcome (or the typed absence of an N.A.
+    row, with the verbatim token), and ``collection`` is set exactly on an obtained
+    deletion.
     """
     by_jw = {r.jw_id: r for r in rows}
     problems: list[str] = []
     for record in records:
         p = _perturbation(record)
-        jw_id = p["identifier_mapping"]["source_identifier"]
+        jw_id = p["systematic_gene_name"]
         row = by_jw.get(jw_id)
-        if row is None or not row.targeted:
-            problems.append(f"{jw_id}: no targeted Table 3 row")
+        if row is None:
+            problems.append(f"{jw_id}: no Table 3 row")
             continue
-        stored = record["experiment"]["phenotype"]["is_essential"]
-        if stored != (not row.obtained):
-            problems.append(f"{jw_id}: stored {stored}, verified {row.verified}")
-        ev = record["experiment"]["phenotype"]["evidence"]
+        phenotype = record["experiment"]["phenotype"]
+        stored = phenotype["is_essential"]
+        gapped = {gap["field"] for gap in phenotype["provenance_gaps"]}
+        ev = phenotype["evidence"]
         counts = (
             ev["colonies_verified"],
             ev["colonies_tested"],
             ev["percent_verified"],
         )
-        if counts != (row.verified, row.tested, row.percent):
-            problems.append(f"{jw_id}: evidence counts {counts}")
-        if (p["collection"] == KEIO_COLLECTION) != row.obtained:
+        if not row.targeted:
+            if stored is not None or "is_essential" not in gapped:
+                problems.append(f"{jw_id}: N.A. row stored {stored!r}")
+            if counts != (None, None, None):
+                problems.append(f"{jw_id}: N.A. row carries evidence counts {counts}")
+        else:
+            if stored != (not row.obtained):
+                problems.append(f"{jw_id}: stored {stored}, verified {row.verified}")
+            if counts != (row.verified, row.tested, row.percent):
+                problems.append(f"{jw_id}: evidence counts {counts}")
+        obtained = row.targeted and row.obtained
+        if (p["collection"] == KEIO_COLLECTION) != obtained:
             problems.append(f"{jw_id}: collection {p['collection']!r}")
-        if resolve(jw_id).systematic_name != p["systematic_gene_name"]:
-            problems.append(f"{jw_id}: does not resolve to {p['systematic_gene_name']}")
     return LevelResult(
         level=Level.L2,
         name="calls_match_table_s3",
@@ -1215,19 +1125,36 @@ def _l3_evidence_is_construction_outcome(records: Sequence[Record]) -> LevelResu
     )
 
 
-def _l4_containment(records: Sequence[Record], universe: set[str]) -> LevelResult:
-    deleted = {_perturbation(r)["systematic_gene_name"] for r in records}
-    missing = sorted(deleted - universe)
+def _l4_jw_ids_against_the_annotation(
+    records: Sequence[Record], genome: EcoliK12Genome
+) -> LevelResult:
+    """L4 FINDING, never a gate: how many released JW ids the pinned BW25113 GenBank
+    annotation carries as a ``gene_synonym`` (read through the genome's resolver here,
+    in the verifier, and nowhere in the build), and how many land on a locus another
+    JW id also lands on. A JW id the annotation lacks is still a released construction
+    outcome of the Keio screen.
+    """
+    ids = sorted({_perturbation(r)["systematic_gene_name"] for r in records})
+    placed: dict[str, str] = {}
+    for jw_id in ids:
+        resolution = genome.resolve_gene_name(jw_id)
+        if resolution.status in PLACED_STATUSES and resolution.systematic_name:
+            placed[jw_id] = resolution.systematic_name
+    unplaced = [jw_id for jw_id in ids if jw_id not in placed]
+    shared = Counter(placed.values())
+    on_shared_locus = sorted(jw for jw, locus in placed.items() if shared[locus] > 1)
     return LevelResult(
         level=Level.L4,
-        name="gene_containment_bw25113_locus_tags",
-        passed=bool(deleted) and not missing,
-        message=f"{len(deleted) - len(missing)} of {len(deleted)} deleted loci are "
-        "BW25113 GenBank gene rows",
+        name="gene_containment_bw25113_jw_synonyms",
+        passed=True,
+        message=f"{len(placed)} of {len(ids)} released JW ids are a gene_synonym of a "
+        f"BW25113 locus; {len(unplaced)} are not and {len(on_shared_locus)} share a "
+        "locus with another JW id (a finding, not a gate)",
         details={
-            "n_deleted": len(deleted),
-            "n_universe": len(universe),
-            "missing_examples": missing[:20],
+            "n_jw_ids": len(ids),
+            "n_placed": len(placed),
+            "unplaced": unplaced[:50],
+            "on_shared_locus": on_shared_locus[:50],
         },
     )
 
@@ -1237,13 +1164,12 @@ def verify_records(
     *,
     rows: Sequence[KeioRow],
     check: ScoringCheck,
-    resolve: Callable[[str], GeneNameResolution],
-    universe: set[str],
+    genome: EcoliK12Genome,
     expected_count: int,
     dataset_name: str = "gene_essentiality_baba2006",
 ) -> VerificationReport:
-    """The L0-L4 gate over built records, given the re-read Table 3, its scoring check,
-    the BW25113 resolver and the BW25113 gene universe.
+    """The L0-L3 gate over built records plus the L4 finding, given the re-read Table 3,
+    its scoring check and the BW25113 genome (read for the finding only).
     """
     from torchcell.verification.common import shared_rule_results
 
@@ -1252,14 +1178,14 @@ def verify_records(
     )
     report.add(l0_structural(records, _validate_record))
     report.add(l1_count(len(records), expected_count))
-    report.add(_l1_one_record_per_locus(records))
-    report.add(_l2_calls_match_table_s3(records, rows, resolve))
+    report.add(_l1_one_record_per_jw_id(records))
+    report.add(_l2_calls_match_table_s3(records, rows))
     report.add(_l3_scoring_rule(check))
     report.add(_l3_reference_is_the_parent_off_selection(records))
     report.add(_l3_evidence_is_construction_outcome(records))
     for result in shared_rule_results(records):
         report.add(result)
-    report.add(_l4_containment(records, universe))
+    report.add(_l4_jw_ids_against_the_annotation(records, genome))
     return report
 
 
@@ -1267,11 +1193,7 @@ def run_verification(data_root: str | None = None) -> VerificationReport:
     """Verify the built dev-tree LMDB (L0-L4) plus the provenance audit of every
     ``SOURCED_VALUES`` entry, and write ``preprocess/verification_report.json``.
     """
-    from torchcell.verification.runners import (
-        _gene_set_for_reference,
-        _write_report,
-        load_records,
-    )
+    from torchcell.verification.runners import _write_report, load_records
 
     base = data_root or _data_root()
     abs_root = osp.join(base, DATASET_ROOT_REL)
@@ -1287,18 +1209,11 @@ def run_verification(data_root: str | None = None) -> VerificationReport:
         read_jw_ids(osp.join(raw, TABLE_S6), title=TABLE_S6_TITLE, header_row=3),
     )
     genome = bacterial_genome("ecoli", "BW25113", base)
-    references = {
-        json.dumps(r["reference"]["genome_reference"], sort_keys=True) for r in records
-    }
-    universe: set[str] = set()
-    for ref in references:
-        universe |= _gene_set_for_reference(json.loads(ref), base)
     report = verify_records(
         records,
         rows=rows,
         check=check,
-        resolve=genome.resolve_gene_name,
-        universe=universe,
+        genome=genome,
         expected_count=drops.kept_records,
     )
     mirror = Path(base) / "torchcell-raw"

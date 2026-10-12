@@ -74,17 +74,20 @@ What each record then carries is the one thing that distinguishes it: the pBbS5k
 gene, as a ``HeterologousPathwayPerturbation`` on the chassis. For the eight tolerance
 genes that is an extra copy of a NATIVE gene -- the case the leaf's docstring names --
 sourced to "Gene candidates to be tested for improving isopentenol tolerance were PCR
-amplified using E. coli MG1655 genomic DNA", with the MG1655 b-number as
-``systematic_gene_name``. For PS+RFP it is the reporter, whose origin the paper never
-states, so ``source_organism`` is ``None`` beside a typed ``ProvenanceGap``
+amplified using E. coli MG1655 genomic DNA", with the gene symbol the paper releases
+(``mdlB``, ``soxS``, ...) stored verbatim as ``systematic_gene_name``: the loader reads
+no annotation, and the join of a released symbol to an MG1655 b-number is a downstream
+act over the gene set, never a record field (owner rule of 2026-10-12, the data is the
+data). For PS+RFP it is the reporter, whose origin the paper never states, so
+``source_organism`` is ``None`` beside a typed ``ProvenanceGap``
 (:func:`reporter_organism_gap`, #915).
 
 DH1's OWN LESIONS ARE NOT STATED, AND ARE NOT INVENTED. The paper names the host once,
 "For growth assays and isopentenol production, E. coli DH1 (ATCC 33849) was used", and
 never writes its K-12 marker genotype. ``alleles`` is therefore empty: that is the
 source's silence, not a claim that DH1 equals MG1655. MG1655 is the assembly pin because
-it is the genome the overexpressed genes were amplified from and the namespace their
-b-numbers belong to.
+it is the genome the overexpressed genes were amplified from and the namespace the
+released symbols are written against.
 
 THE GEO SERIES IS OUT OF SCOPE FOR THIS CLASS. GSE53138 (GSM1282891 to GSM1282896,
 platform GPL14649) holds six arrays of the MevT* strain, three with and three without
@@ -162,11 +165,7 @@ from torchcell.datamodels.schema import (
     SmallMoleculePerturbation,
     Temperature,
 )
-from torchcell.datasets.bacteria_common import (
-    assembly_reference,
-    bacterial_genome,
-    reconcile_locus_tags,
-)
+from torchcell.datasets.bacteria_common import assembly_reference
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.literature.manifest import (
     ROLE_SI_DATA,
@@ -175,7 +174,6 @@ from torchcell.literature.manifest import (
     RetrievalMethod,
     RetrievalRecord,
 )
-from torchcell.sequence.genome.ecoli.k12 import EcoliK12Genome
 from torchcell.verification.levels import (
     l0_structural,
     l1_count,
@@ -967,8 +965,8 @@ def chassis_background(composition: str) -> BacterialStrainBackground:
 
     ``alleles`` is empty because the paper states DH1 only by name and ATCC number and
     never writes its K-12 marker genotype; MG1655 is the pin because it is the genome
-    the overexpressed genes were amplified from and the namespace their b-numbers
-    belong to.
+    the overexpressed genes were amplified from and the namespace the released symbols
+    are written against.
     """
     return BacterialStrainBackground(
         name=CHASSIS_STRAIN,
@@ -997,20 +995,20 @@ def chassis_reference(
 
 
 def overexpression_perturbation(
-    gene: str, locus_tag: str, plasmid: str
+    gene: str, plasmid: str
 ) -> HeterologousPathwayPerturbation:
     """The one pBbS5k-borne gene that distinguishes a production strain.
 
     For the eight tolerance genes this is an extra copy of a NATIVE gene, the case
     ``HeterologousPathwayPerturbation`` names explicitly, so ``systematic_gene_name`` is
-    the MG1655 b-number and ``source_organism`` is the host. For the rfp control the
-    reporter's origin is never stated, so it is ``None`` beside a typed gap
-    (:func:`reporter_organism_gap`). ``copy_number`` is the leaf's default 1.0: Table
-    S3 calls pBbS5k "a low-copy plasmid" and no number is released.
+    the gene symbol the paper releases, verbatim, and ``source_organism`` is the host.
+    For the rfp control the reporter's origin is never stated, so it is ``None`` beside
+    a typed gap (:func:`reporter_organism_gap`). ``copy_number`` is the leaf's default
+    1.0: Table S3 calls pBbS5k "a low-copy plasmid" and no number is released.
     """
     is_control = gene == CONTROL_GENE
     return HeterologousPathwayPerturbation(
-        systematic_gene_name=locus_tag,
+        systematic_gene_name=gene,
         perturbed_gene_name=gene,
         gene_namespace=NAMESPACE,
         pathway_name=PATHWAY_REPORTER if is_control else PATHWAY_TOLERANCE,
@@ -1039,11 +1037,9 @@ def reporter_organism_gap() -> ProvenanceGap:
     )
 
 
-def genotype(gene: str, locus_tag: str, plasmid: str) -> Genotype:
+def genotype(gene: str, plasmid: str) -> Genotype:
     """The genotype of one production strain: the chassis plus one overexpressed gene."""
-    return Genotype(
-        perturbations=[overexpression_perturbation(gene, locus_tag, plasmid)]
-    )
+    return Genotype(perturbations=[overexpression_perturbation(gene, plasmid)])
 
 
 def _culture_format() -> CultureFormat:
@@ -1201,22 +1197,15 @@ class IsopentenolTiterFoo2014Dataset(ExperimentDataset):
     #: CLASS); the module-level ``REFERENCE_STRAIN`` is the same value for the records.
     REFERENCE_STRAIN: ClassVar[Literal["MG1655"]] = REFERENCE_STRAIN
 
-    #: Every b-number this campaign names must resolve to a locus of the pinned MG1655
-    #: assembly. Measured on the pinned bytes: 8 of 8, so anything below 1.0 means the
-    #: annotation or the released symbols moved and the build stops.
-    MIN_RESOLVED_FRACTION: ClassVar[float] = 1.0
-
     def __init__(
         self,
         root: str = DEV_TREE_RELPATH,
         io_workers: int = 0,
-        ecoli_genome: EcoliK12Genome | None = None,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize; the MG1655 genome resolves the eight overexpressed symbols."""
-        self.ecoli_genome = ecoli_genome
+        """Initialize; no genome is read, the released symbols are stored as released."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -1241,12 +1230,6 @@ class IsopentenolTiterFoo2014Dataset(ExperimentDataset):
         )
         log.info("Foo 2014 Table S3 linked into %s", self.raw_dir)
 
-    def _genome(self) -> EcoliK12Genome:
-        """The injected MG1655 genome, or one opened from the genomes tier."""
-        if self.ecoli_genome is None:
-            self.ecoli_genome = bacterial_genome("ecoli", REFERENCE_STRAIN)
-        return self.ecoli_genome
-
     @post_process
     def process(self) -> None:
         """Build one titer record per released production strain; write LMDB."""
@@ -1258,18 +1241,6 @@ class IsopentenolTiterFoo2014Dataset(ExperimentDataset):
         self._assert_table_s3_agrees_with_table1(
             strains, composition, read_production_plasmids(si_path)
         )
-
-        genome = self._genome()
-        stored, report = reconcile_locus_tags(
-            genome, pd.Series(list(TOLERANCE_GENES)), label=self.name
-        )
-        report.require_resolved(self.MIN_RESOLVED_FRACTION)
-        if report.outside_namespace:
-            raise RuntimeError(
-                f"{self.name}: locus tags outside {NAMESPACE}: "
-                f"{report.outside_namespace}"
-            )
-        locus_tags = dict(zip(TOLERANCE_GENES, stored))
 
         titers = {row.gene: row for row in TABLE1_ROWS}
         shared_environment = environment()
@@ -1292,7 +1263,7 @@ class IsopentenolTiterFoo2014Dataset(ExperimentDataset):
                     "composition": strain.composition,
                     "plasmid": strain.plasmid,
                     "gene": gene,
-                    "locus_tag": locus_tags.get(gene, gene),
+                    "systematic_gene_name": gene,
                     "source": "Table 1 footnote b" if is_control else "Table 1",
                     "titer_mg_per_l": (
                         float(CONTROL_TITER_MG_PER_L.value)
@@ -1323,9 +1294,7 @@ class IsopentenolTiterFoo2014Dataset(ExperimentDataset):
                 experiment = ProductTiterExperiment(
                     dataset_name=self.name,
                     genotype=genotype(
-                        str(ledger_row["gene"]),
-                        str(ledger_row["locus_tag"]),
-                        str(ledger_row["plasmid"]),
+                        str(ledger_row["gene"]), str(ledger_row["plasmid"])
                     ),
                     environment=shared_environment,
                     phenotype=titer_phenotype(float(ledger_row["titer_mg_per_l"])),
@@ -1350,6 +1319,9 @@ class IsopentenolTiterFoo2014Dataset(ExperimentDataset):
             notes=[
                 "nothing is dropped: every released isopentenol titer in the mirror is "
                 "a record, the eight of Table 1 and the control of its footnote b",
+                "every record's systematic_gene_name is the gene symbol the paper "
+                "releases, verbatim; no annotation is read and no b-number is derived "
+                "(the join to MG1655 loci is a downstream act over the gene set)",
                 "PS+RFP is both a record and the reference phenotype, which is what "
                 "the source does: its 834 mg/L is the denominator of every "
                 "'Improvement in titer (%)' value",
@@ -1368,10 +1340,9 @@ class IsopentenolTiterFoo2014Dataset(ExperimentDataset):
         ) as handle:
             handle.write(accounting.model_dump_json(indent=2))
         log.info(
-            "Foo2014 titer: %d records over %d resolved loci; reference PS+RFP "
-            "%.1f ug/mL",
+            "Foo2014 titer: %d records under their released gene symbols; reference "
+            "PS+RFP %.1f ug/mL",
             idx,
-            len(locus_tags),
             float(CONTROL_TITER_MG_PER_L.value),
         )
 

@@ -332,3 +332,20 @@ Report `verification_report.json` (written 2026-10-11 08:32 UTC):
 | L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
 | L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
 | L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+
+## 2026.10.12 - Every released row stored under its released identifier (genome-gate reversal)
+
+Owner rule of 2026-10-12: the data is the data, and the genome never gates a record. The loader no longer calls `reconcile_locus_tags`, drops no row for an identifier the pinned annotation lacks, and writes no resolver output onto a record; the join of a released identifier to a locus is a downstream act over the gene set, and the verifier's L4 genome row is a finding (`passed=True`, with counts), never a gate. The sweep that found the gates is [[database.genome-gating-sweep.2026.10.12]].
+
+### What changed
+
+| before (dev store built 2026-10-11) | after |
+|---|---|
+| 46 records on `BacterialDeletionPerturbation` under the BW25113 locus tag the strain name resolved to; the Table S2 Keio number stored as `construction.strain_accession` only for the 41 that named the same locus | 46 records on `BacterialReleasedStrainPerturbation`: `systematic_gene_name` and `perturbed_gene_name` = the gene symbol of the Table S3 label, `strain_label` = the whole label (`BWΔacrA`), `construction.strain_accession` = the Table S2 number verbatim for all 46, `JJW0452` and the five numbers the release itself contradicts included |
+| `strain_name_not_on_a_bw25113_locus` (0 rows), `MIN_RESOLVED_FRACTION` build stop, `identifier_reconciliation.json` | removed |
+
+The five Table S2 numbers that disagree with the strain's own name on the annotation (`acrA`/`acrB` and `emrK`/`emrY` swapped, `mdtD` carrying `JW2077`) and the paper's own Table S4 evidence are findings for this note, not a reason to alter a record. `table_s3.csv` keeps `record, strain, mdt_family, keio_token` plus the OD600 columns. Nothing dropped.
+
+### L0-L4 after the rebuild
+
+(L0-L4 table filled in after the rebuild)

@@ -71,3 +71,15 @@ Resolved fraction 0.990 (4,167 of 4,209 distinct single Blattner ids; threshold 
 
 - Loader `torchcell/datasets/ecoli/gerdes2003.py`; tests `tests/torchcell/datasets/ecoli/test_gerdes2003.py`
 - Adapter `torchcell/adapters/gerdes2003_adapter.py`, conf `torchcell/adapters/conf/gene_essentiality_gerdes2003_adapter.yaml`
+
+## 2026.10.12 - Every released row stored under its released identifier (genome-gate reversal)
+
+Owner rule of 2026-10-12: the data is the data, and the genome never gates a record. The loader no longer calls `reconcile_locus_tags`, drops no row for an identifier the pinned annotation lacks, and writes no resolver output onto a record; the join of a released identifier to a locus is a downstream act over the gene set, and the verifier's L4 genome row is a finding (`passed=True`, with counts), never a gate. The sweep that found the gates is [[database.genome-gating-sweep.2026.10.12]].
+
+### What changed
+
+(filled in with the Gerdes 2003 reversal: every Table S1 row a record; the 4,208 rows with a well-formed b-number no other row carries on `TransposonInsertionPerturbation` under the b-number verbatim; the 83 others (64 with no Blattner ID, `b0018.1`, the 18 rows of 9 duplicated b-numbers) on the released-transposon leaf under their ERGO id; X and ? calls stored with `is_essential=None`, a typed gap and `released_call`)
+
+### L0-L4 after the rebuild
+
+(L0-L4 table filled in after the rebuild)

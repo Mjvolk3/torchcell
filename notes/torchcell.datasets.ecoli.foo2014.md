@@ -174,3 +174,15 @@ Built with `build_dataset_lmdb --retire-existing --verify` in slurm array 4475 a
 | L4 | `construct_against_deposited_table_s3` | gate | pass | 9 overlapping entities agree within 0.0 |
 | L4 | `perturbed_gene_containment_assembly` | report | pass | 1.000 of 8 measured genes are loci of ecoli_K12_MG1655_ASM584v2 (>= 1.0) |
 | L4 | `titer_against_released_improvement_percent` | gate | pass | 9 overlapping entities agree within 0.0 |
+
+## 2026.10.12 - Every released row stored under its released identifier (genome-gate reversal)
+
+Owner rule of 2026-10-12: the data is the data, and the genome never gates a record. The loader no longer calls `reconcile_locus_tags`, drops no row for an identifier the pinned annotation lacks, and writes no resolver output onto a record; the join of a released identifier to a locus is a downstream act over the gene set, and the verifier's L4 genome row is a finding (`passed=True`, with counts), never a gate. The sweep that found the gates is [[database.genome-gating-sweep.2026.10.12]].
+
+### What changed
+
+The eight tolerance genes are stored under the gene symbol the paper releases (`mdlB`, `soxS`, ...) as `HeterologousPathwayPerturbation.systematic_gene_name`, where the loader used to resolve each symbol to its MG1655 b-number through `reconcile_locus_tags` (8 of 8 resolved; 0 dropped). `titer_rows.csv` carries `systematic_gene_name` in place of `locus_tag`. Nine records, as before.
+
+### L0-L4 after the rebuild
+
+(L0-L4 table filled in after the rebuild)

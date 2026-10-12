@@ -8,19 +8,22 @@ of Tables S2 to S4 and build over the real ``EcoliK12BW25113Genome`` on the synt
 BW25113 assembly of ``tests/torchcell/sequence/genome/_bacterial_fixtures.py`` (JW4367 on
 BW25113_0001 thrL, JW0001 on BW25113_0002 thrA, hokC on BW25113_4412), served through a
 stubbed ``resolve`` with the network refused. ``pdftotext`` itself is never run there.
-The synthetic strains, sorted by gene name:
+The synthetic strains, sorted by gene name; every one is a record under its released
+gene symbol, with its Table S2 number stored verbatim as the strain accession:
 
     strain    Table S2 number  family  OD600 no / with   result
     BW25113   (parent)                 8.00 / 4.00       reference, ratio 0.5
-    hokC      JW4367           OMP     8.00 / 6.00       BW25113_4412; JW4367 is thrL's
-                                                         locus, a disagreement; log2 1.5
-    thrA      JW0001           ABC     8.00 / 2.00       BW25113_0002, JW0001 stored; -1
-    thrL      JJW4367          RND     5.00 / 2.50       BW25113_0001; malformed number,
-                                                         a disagreement; 0
-    yaaQ      JW9999           MFS     4.00 / 2.00       name not on the genome, dropped
+    hokC      JW4367           OMP     8.00 / 6.00       log2 1.5 (JW4367 is thrL's
+                                                         number on the annotation: a
+                                                         finding, stored as released)
+    thrA      JW0001           ABC     8.00 / 2.00       -1
+    thrL      JJW4367          RND     5.00 / 2.50       0; the malformed number is
+                                                         stored verbatim
+    yaaQ      JW9999           MFS     4.00 / 2.00       -1; the name is in no
+                                                         annotation and is a record
 
-Three of four names resolve (0.75 < 0.95), so the success path lowers
-``MIN_RESOLVED_FRACTION`` to 0.5 and a separate test shows the default stops the build.
+No genome is read in the build (owner rule of 2026-10-12: the data is the data); the
+L4 row of the verifier reports which symbols the synthetic annotation places.
 
 Data-gated tests (``@pytest.mark.data``) read the real raw mirror, the literature mirror
 and the built dev-tree LMDB under ``$DATA_ROOT`` (they never build it): the pins, every
@@ -67,9 +70,7 @@ from torchcell.datamodels.schema import (
     SampleUnit,
     SmallMoleculePerturbation,
 )
-from torchcell.datasets.bacteria_common import LocusTagResolutionError
 from torchcell.literature.manifest import RetrievalMethod, RetrievalRecord
-from torchcell.sequence.genome.base import GeneNameStatus
 from torchcell.sequence.genome.ecoli.k12 import BW25113_ASSEMBLY, EcoliK12BW25113Genome
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import SourcedValue, audit_sourced_value
@@ -408,40 +409,45 @@ def test_the_recorded_inchikey_is_the_rdkit_key_of_the_smiles() -> None:
     assert inchikey_from_smiles(m.ISOPRENOL_SMILES) == m.ISOPRENOL_INCHIKEY
 
 
-def _identity(accession: str | None) -> m.StrainIdentity:
+def _identity(token: str = "JW0001") -> m.StrainIdentity:
     return m.StrainIdentity(
-        row=_row(f"BW{D}thrA", 8.0, 2.0),
-        locus_tag="BW25113_0002",
-        symbol="thrA",
-        keio_token="JW0001",
-        mdt_family="ABC",
-        keio_accession=accession,
+        row=_row(f"BW{D}thrA", 8.0, 2.0), keio_token=token, mdt_family="ABC"
     )
 
 
-def test_deletion_genotype_stores_the_keio_number_only_when_it_agrees() -> None:
-    (with_number,) = m.deletion_genotype(_identity("JW0001")).perturbations
-    assert with_number.model_dump()["construction"]["strain_accession"] == "JW0001"
-    dumped = with_number.model_dump()
+def test_deletion_genotype_stores_the_released_symbol_and_keio_number() -> None:
+    (p,) = m.deletion_genotype(_identity("JW0001")).perturbations
+    dumped = p.model_dump()
+    assert dumped["construction"]["strain_accession"] == "JW0001"
     assert (
+        dumped["perturbation_type"],
         dumped["systematic_gene_name"],
+        dumped["perturbed_gene_name"],
+        dumped["strain_label"],
+        dumped["identifier_kind"],
+        dumped["released_kind"],
         dumped["gene_namespace"],
         dumped["collection"],
         dumped["cassette"],
     ) == (
-        "BW25113_0002",
+        "bacterial_released_strain",
+        "thrA",
+        "thrA",
+        f"BW{D}thrA",
+        m.IDENTIFIER_KIND,
+        "deletion",
         "ecoli_k12_bw25113_locus_tag",
         "Keio collection",
         "kanamycin cassette flanked by FLP recognition target sites",
     )
-    (without,) = m.deletion_genotype(_identity(None)).perturbations
-    assert without.model_dump()["construction"] is None
+    (malformed,) = m.deletion_genotype(_identity("JJW4367")).perturbations
+    assert malformed.model_dump()["construction"]["strain_accession"] == "JJW4367"
 
 
 def test_build_experiment_and_reference_round_trip() -> None:
     env = m.environment()
     parent = _row("BW25113", 8.0, 4.0)
-    experiment = m.build_experiment("ds", _identity("JW0001"), parent, env)
+    experiment = m.build_experiment("ds", _identity(), parent, env)
     assert experiment.phenotype.environment_response == -1.0
     reference = m.build_reference("ds", REFERENCE, env)
     dumped = reference.model_dump()
@@ -453,94 +459,37 @@ def test_build_experiment_and_reference_round_trip() -> None:
 
 
 # --------------------------------------------------------------------------- #
-# Identifiers on the synthetic genome
-# --------------------------------------------------------------------------- #
-def _synthetic_inputs() -> tuple[list[m.TableS3Row], dict[str, m.TableS2Entry]]:
-    _, mutants = m.split_parent(m.parse_table_s3(SECTION_S3))
-    return mutants, m.keio_entries_for(mutants, m.parse_table_s2(SECTION_S2))
-
-
-def test_resolve_strains_places_by_name_and_ledgers_the_numbers(
-    monkeypatch: pytest.MonkeyPatch,
-    bw25113: EcoliK12BW25113Genome,
-    synthetic_constants: None,
-) -> None:
-    monkeypatch.setattr(m, "MIN_RESOLVED_FRACTION", 0.5)
-    monkeypatch.setattr(m, "IDENTITY_EVIDENCE", {"hokC": ("evidence_key",)})
-    mutants, keio = _synthetic_inputs()
-    kept, rule, ledger = m.resolve_strains(bw25113, mutants, keio, label="t")
-    assert [
-        (k.row.gene_name, k.locus_tag, k.symbol, k.keio_accession) for k in kept
-    ] == [
-        ("hokC", "BW25113_4412", "hokC", None),
-        ("thrA", "BW25113_0002", "thrA", "JW0001"),
-        ("thrL", "BW25113_0001", "thrL", None),
-    ]
-    assert (rule.rule, rule.items) == (
-        "strain_name_not_on_a_bw25113_locus",
-        [f"BW{D}yaaQ (Table S2 JW9999): retired yaaQ"],
-    )
-    assert ledger.n_keio_agree == 1
-    assert [d.model_dump() for d in ledger.keio_disagreements] == [
-        {
-            "gene_name": "hokC",
-            "name_locus": "BW25113_4412",
-            "keio_token": "JW4367",
-            "keio_resolution": "renamed BW25113_0001",
-            "keio_locus_symbol": "thrL",
-            "evidence": ["evidence_key"],
-        },
-        {
-            "gene_name": "thrL",
-            "name_locus": "BW25113_0001",
-            "keio_token": "JJW4367",
-            "keio_resolution": "retired JJW4367",
-            "keio_locus_symbol": None,
-            "evidence": [],
-        },
-    ]
-    assert ledger.names.status_histogram[GeneNameStatus.RENAMED] == 3
-    assert ledger.keio_numbers.retired_kept == ("JJW4367", "JW9999")
-
-
-def test_resolve_strains_stops_below_the_threshold(
-    bw25113: EcoliK12BW25113Genome, synthetic_constants: None
-) -> None:
-    mutants, keio = _synthetic_inputs()
-    with pytest.raises(LocusTagResolutionError, match=r"3 of 4 names \(0\.750\)"):
-        m.resolve_strains(bw25113, mutants, keio, label="t")
-
-
-# --------------------------------------------------------------------------- #
 # The hermetic build
 # --------------------------------------------------------------------------- #
-def test_build_three_records_with_the_parent_reference_and_ledgers(
+def test_build_four_records_with_the_parent_reference_and_ledgers(
     synthetic: Path,
     monkeypatch: pytest.MonkeyPatch,
-    bw25113: EcoliK12BW25113Genome,
     presence_only_pins: list[Mapping[str, str]],
 ) -> None:
-    monkeypatch.setattr(m, "MIN_RESOLVED_FRACTION", 0.5)
-    dataset = m.EnvChemgenWang2015Dataset(root=str(synthetic), ecoli_genome=bw25113)
+    dataset = m.EnvChemgenWang2015Dataset(root=str(synthetic))
     assert presence_only_pins == [m.DATA_SHA256]
-    assert len(dataset) == 3
+    assert len(dataset) == 4
     assert dataset.experiment_class is BacterialEnvironmentResponseExperiment
     assert dataset.reference_class is BacterialEnvironmentResponseExperimentReference
 
     values = []
-    for idx in range(3):
+    for idx in range(4):
         experiment = dataset[idx]["experiment"]
         (perturbation,) = experiment["genotype"]["perturbations"]
         values.append(
             (
                 perturbation["systematic_gene_name"],
-                (perturbation["construction"] or {}).get("strain_accession"),
+                perturbation["construction"]["strain_accession"],
                 experiment["phenotype"]["environment_response"],
             )
         )
-    assert values[0][:2] == ("BW25113_4412", None)
+    assert values[0][:2] == ("hokC", "JW4367")
     assert values[0][2] == pytest.approx(LOG2_1_5, abs=1e-15)
-    assert values[1:] == [("BW25113_0002", "JW0001", -1.0), ("BW25113_0001", None, 0.0)]
+    assert values[1:] == [
+        ("thrA", "JW0001", -1.0),
+        ("thrL", "JJW4367", 0.0),
+        ("yaaQ", "JW9999", 0.0),
+    ]
     first = dataset[0]
     assert first["experiment"]["environment"] == m.environment().model_dump()
     assert first["reference"]["genome_reference"] == REFERENCE.model_dump()
@@ -554,55 +503,36 @@ def test_build_three_records_with_the_parent_reference_and_ledgers(
         drops["source_records"],
         drops["kept_records"],
         drops["dropped_records"],
-    ) == (5, 4, 3, 1)
-    ledger = json.loads((preprocess / "identifier_reconciliation.json").read_text())
-    assert [d["gene_name"] for d in ledger["keio_disagreements"]] == ["hokC", "thrL"]
+        drops["rules"],
+    ) == (5, 4, 4, 0, [])
+    assert not (preprocess / "identifier_reconciliation.json").exists()
     extraction = json.loads((preprocess / "extraction.json").read_text())
     assert extraction["table_s3_sha256"] == SYNTHETIC_DIGEST
     assert extraction["pdftotext"] == "pdftotext version test"
     assert extraction["parent_growth_inhibition_pct"] == 50.0
     table = (preprocess / "table_s3.csv").read_text(encoding="utf-8").splitlines()
-    assert table[0].startswith("record,strain,mdt_family,keio_token,keio_accession")
+    assert table[0].startswith("record,strain,mdt_family,keio_token,od600_without")
     assert table[1].startswith(",BW25113,")
-    assert table[3] == (
-        f"1,BW{D}thrA,ABC,JW0001,JW0001,BW25113_0002,thrA,8.0,0.05,2.0,0.04,75.0,-1.0"
-    )
+    assert table[3] == f"1,BW{D}thrA,ABC,JW0001,8.0,0.05,2.0,0.04,75.0,-1.0"
 
 
 def test_build_refuses_a_digest_other_than_the_pin(
-    synthetic: Path, monkeypatch: pytest.MonkeyPatch, bw25113: EcoliK12BW25113Genome
+    synthetic: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setattr(m, "TABLE_S3_SHA256", "0" * 64)
     with pytest.raises(m.TableExtractionError, match=f"sha256 {SYNTHETIC_DIGEST}"):
-        m.EnvChemgenWang2015Dataset(root=str(synthetic), ecoli_genome=bw25113)
-
-
-def test_build_stops_below_the_resolution_threshold(
-    synthetic: Path, bw25113: EcoliK12BW25113Genome
-) -> None:
-    with pytest.raises(LocusTagResolutionError, match=r"3 of 4 names \(0\.750\)"):
-        m.EnvChemgenWang2015Dataset(root=str(synthetic), ecoli_genome=bw25113)
-
-
-def test_build_refuses_a_genome_of_another_strain(
-    synthetic: Path, monkeypatch: pytest.MonkeyPatch, bw25113: EcoliK12BW25113Genome
-) -> None:
-    monkeypatch.setattr(
-        type(bw25113), "ASSEMBLY_SET", "ecoli_K12_MG1655_ASM584v2", raising=False
-    )
-    with pytest.raises(ValueError, match="needs the ecoli_K12_BW25113_ASM75055v1"):
-        m.EnvChemgenWang2015Dataset(root=str(synthetic), ecoli_genome=bw25113)
+        m.EnvChemgenWang2015Dataset(root=str(synthetic))
 
 
 def test_process_verifies_the_real_pin(
-    synthetic: Path, monkeypatch: pytest.MonkeyPatch, bw25113: EcoliK12BW25113Genome
+    synthetic: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """With the real check back, the stand-in PDF is refused by its pin."""
     from torchcell.data import verify_raw_files
 
     monkeypatch.setattr(m, "verify_raw_files", verify_raw_files)
     with pytest.raises(RawSha256MismatchError, match=f"expected {m.SI_PDF_SHA256}"):
-        m.EnvChemgenWang2015Dataset(root=str(synthetic), ecoli_genome=bw25113)
+        m.EnvChemgenWang2015Dataset(root=str(synthetic))
 
 
 def test_run_verification_passes_on_the_synthetic_build(
@@ -613,14 +543,8 @@ def test_run_verification_passes_on_the_synthetic_build(
 ) -> None:
     import torchcell.verification.runners as runners
 
-    monkeypatch.setattr(m, "MIN_RESOLVED_FRACTION", 0.5)
-    m.EnvChemgenWang2015Dataset(root=str(synthetic), ecoli_genome=bw25113)
+    m.EnvChemgenWang2015Dataset(root=str(synthetic))
     monkeypatch.setattr(runners, "_genome_for_reference", lambda ref, base: bw25113)
-    monkeypatch.setattr(
-        runners,
-        "_gene_set_for_reference",
-        lambda ref, base: {locus.tag for locus in BW25113_LOCI},
-    )
     paper = tmp_path / "torchcell-library" / "key" / "paper.md"
     paper.parent.mkdir(parents=True)
     paper.write_text("the strain was grown at 30 C.", encoding="utf-8")
@@ -642,9 +566,16 @@ def test_run_verification_passes_on_the_synthetic_build(
         "reference_zero",
         "environment_perturbed",
         "canonical_gene_names",
-        "gene_containment_bw25113_locus_tags",
+        "gene_containment_bw25113_released_symbols",
         "provenance_audit",
     } <= names
+    finding = next(
+        r
+        for r in report.results
+        if r.name == "gene_containment_bw25113_released_symbols"
+    )
+    assert finding.passed and finding.details["unplaced"] == ["yaaQ"]
+    assert finding.details["n_placed"] == 3
     assert (synthetic / "preprocess" / "verification_report.json").exists()
 
 
@@ -904,41 +835,6 @@ def test_real_text_layer_agrees_with_the_independent_ocr() -> None:
 
 
 @pytest.mark.data
-def test_real_keio_list_confirms_the_five_table_s2_disagreements() -> None:
-    """The Keio strain list Fuhrer 2017 publishes (Table EV1A, in its raw mirror) agrees
-    with the BW25113 annotation: Table S2's number for each of the five strains is
-    another gene's strain (or no strain), and the strain's own gene has another number.
-    """
-    import torchcell.datasets.ecoli.fuhrer2017 as fuhrer
-
-    path = fuhrer.raw_mirror_dir(_real_data_root()) / "data" / fuhrer.TABLE_EV1
-    keio = fuhrer.read_table_ev1a(path)
-    gene_of = {e.jw_id: e.gene_name for e in keio}
-    number_of = {e.gene_name: e.jw_id for e in keio}
-    ledger = json.loads(
-        Path(_built_root(), "preprocess", "identifier_reconciliation.json").read_text()
-    )
-    observed = {
-        d["gene_name"]: (d["keio_token"], gene_of.get(d["keio_token"]))
-        for d in ledger["keio_disagreements"]
-    }
-    assert observed == {
-        "acrA": ("JW0451", "acrB"),
-        "acrB": ("JJW0452", None),
-        "emrK": ("JW2364", "emrY"),
-        "emrY": ("JW2365", "emrK"),
-        "mdtD": ("JW2077", "gatB"),
-    }
-    assert {g: number_of[g] for g in observed} == {
-        "acrA": "JW0452",
-        "acrB": "JW0451",
-        "emrK": "JW2365",
-        "emrY": "JW2364",
-        "mdtD": "JW2062",
-    }
-
-
-@pytest.mark.data
 def test_real_build_counts_and_the_acra_record() -> None:
     """46 records, none dropped; acrA by hand from Table S3:
     log2((6.26 / 8.13) / (4.12 / 8.30)).
@@ -948,13 +844,11 @@ def test_real_build_counts_and_the_acra_record() -> None:
     drops = json.loads(
         Path(_built_root(), "preprocess", "dropped_records.json").read_text()
     )
-    assert (drops["source_records"], drops["kept_records"]) == (46, 46)
-    ledger = json.loads(
-        Path(_built_root(), "preprocess", "identifier_reconciliation.json").read_text()
+    assert (drops["source_records"], drops["kept_records"], drops["rules"]) == (
+        46,
+        46,
+        [],
     )
-    assert ledger["n_keio_agree"] == 41
-    assert ledger["names"]["layer_histogram"]["gene symbol"] == 44
-    assert ledger["names"]["layer_histogram"]["gene synonym"] == 2
     records = load_records(_built_root())
     assert len(records) == 46
     by_gene = {
@@ -963,24 +857,25 @@ def test_real_build_counts_and_the_acra_record() -> None:
     }
     acra = by_gene["acrA"]["experiment"]
     (perturbation,) = acra["genotype"]["perturbations"]
-    assert perturbation["systematic_gene_name"] == "BW25113_0463"
-    assert perturbation["construction"] is None
+    assert perturbation["systematic_gene_name"] == "acrA"
+    assert perturbation["strain_label"] == f"BW{D}acrA"
     assert acra["phenotype"]["environment_response"] == pytest.approx(
         math.log2((6.26 / 8.13) / (4.12 / 8.30)), abs=1e-15
     )
     accessions = {
-        gene: (
-            r["experiment"]["genotype"]["perturbations"][0]["construction"] or {}
-        ).get("strain_accession")
+        gene: r["experiment"]["genotype"]["perturbations"][0]["construction"][
+            "strain_accession"
+        ]
         for gene, r in by_gene.items()
     }
-    assert sorted(g for g, a in accessions.items() if a is None) == [
-        "acrA",
-        "acrB",
-        "emrK",
-        "emrY",
-        "mdtD",
-    ]
+    # the five Table S2 numbers the release itself contradicts, stored verbatim
+    assert {g: accessions[g] for g in ("acrA", "acrB", "emrK", "emrY", "mdtD")} == {
+        "acrA": "JW0451",
+        "acrB": "JJW0452",
+        "emrK": "JW2364",
+        "emrY": "JW2365",
+        "mdtD": "JW2077",
+    }
     assert accessions["tolC"] == "JW5503"
     assert accessions["mdfA"] == "JW0826"
     responses = [r["experiment"]["phenotype"]["environment_response"] for r in records]

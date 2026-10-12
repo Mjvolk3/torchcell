@@ -214,3 +214,11 @@ MrnaFractionBalakrishnan2022Dataset --issue 854 --write` rewrote
 `database/candidates/balakrishnanPrinciplesGeneRegulation2022.json`: still
 **admissible**, G1 to G5 pass. G3 now reads 11 raw files and 36,351 worksheet rows, all
 intact (it read 2 files and 8,735 rows before the deposit).
+
+## 2026.10.12 - Every released row is a key, under its released identifier
+
+The owner's rule of 2026-10-12 ([[database.genome-gating-sweep.2026.10.12]], row 64): the loader reads no annotation and stores every released row. `select_genes`, the four `REFUSE_*` rules, `check_gene_symbols` (a genome lookup of the three edit targets) and the `ecoli_genome` constructor parameter are gone; `gene_keys` keys each of the 4,342 rows by its released `locus` b-number, or by its released `gene` cell for the 18 rows whose locus is `0` (`insAB-1` to `insAB-6`, `insCD-1` to `insCD-6`, `insEF-1` to `insEF-5`, `insJK`; `0` identifies nothing and cannot key 18 values, and the gene cells are distinct across the sheet), refusing a repeated key. The 148 b-numbers the genome's resolver used to refuse (74 pseudogene loci, 69 split-fragment synonyms, 5 retired) are keys like any other; the L4 containment row reports what the pinned gene set makes of the 4,342 keys (#1069). `EXPECTED_GENE_KEYS` 4,176 -> 4,342; `dropped_records.json` carries `keyed_by_released_gene_cell` (n = 18) in place of `refused_rows`, and `gene_keys.csv` replaces `refused_rows.csv`.
+
+Still loader-declared, flagged for follow-up: the three strain edits name their targets by symbol in Table S1 (`Pu-ptsG`, `∆gdhA`, `PLlac-01-gltBD`) and the loader stores them on the placed leaves under b-numbers it declares (`b1101`, `b1761`, `b3212`), a symbol-to-b-number mapping the release does not state.
+
+Released vs stored: 4,342 released rows, 4,342 keys on every one of the 28 records (29 released columns minus the duplicated `a4_1` header); 0 dropped.

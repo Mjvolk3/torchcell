@@ -37,16 +37,23 @@ twice and the data cannot be shown to belong to another sample: its log10 Pearso
 against ``a4`` is 0.9888 and against ``a3`` 0.9882, measured on the pinned bytes, so the
 header stands.)
 
-THE GENE KEYS. 4,342 released rows = 4,176 stored keys + 148 refused b-numbers + 18
-rows whose released locus is ``0`` (the IS-element rows ``insAB-*``, ``insCD-*``,
-``insEF-*``, ``insJK``). The 148 are released b-numbers that name no gene of the pinned
-MG1655 assembly's gene set, measured through the genome's own resolver in three groups:
-74 are locus tags of a non-gene feature (pseudogene loci), 69 are released
-split-fragment rows (``arpB_1``, ``gapC_2``, ...) whose b-number is a synonym of such a
-feature, and 5 are retired b-numbers (``b3036``, ``b3776``, ``b4223``, ``b4274``,
-``b4590``). Every stored record carries all 4,176 keys; a released ``0.0`` is stored as
-``0.0``, because the column sums to 1 over its zero rows too (it is a library with no
-reads on that gene, not a missing value).
+THE GENE KEYS. 4,342 released rows = 4,342 stored keys, every row under the
+identifier the release gives it and no annotation read (the owner's rule of
+2026-10-12: the data is the data, and the genome is a separate layer joined at
+modeling time). 4,324 rows carry a b-number in the ``locus`` column, each distinct,
+and are keyed by it. 18 rows release the locus ``0`` (the IS-element rows ``insAB-1``
+to ``insAB-6``, ``insCD-1`` to ``insCD-6``, ``insEF-1`` to ``insEF-5`` and ``insJK``);
+``0`` is not an identifier of anything and cannot key 18 values, so those rows are
+keyed by the released ``gene`` cell, which is distinct across them and across the
+whole sheet (:func:`gene_keys` refuses a repeated key). Before the rule, 148
+b-numbers were refused through the genome's own resolver (74 pseudogene loci, 69
+split-fragment rows such as ``arpB_1`` and ``gapC_2`` whose b-number is a synonym of
+such a feature, 5 retired b-numbers ``b3036``, ``b3776``, ``b4223``, ``b4274`` and
+``b4590``) and the 18 locus-``0`` rows were dropped; the L4 gene-containment row now
+reports what the pinned gene set makes of the 4,342 keys (#1069). Every stored record
+carries all 4,342 keys; a released ``0.0`` is stored as ``0.0``, because the column
+sums to 1 over its zero rows too (it is a library with no reads on that gene, not a
+missing value).
 
 STRAINS AND GENOTYPES. Every record is written against the MG1655 GenBank assembly
 with an ``NCM3722`` background (no NCM3722 assembly is in the genomes tier; the Gupta
@@ -160,11 +167,7 @@ from torchcell.datamodels.schema import (
     SmallMoleculePerturbation,
     Temperature,
 )
-from torchcell.datasets.bacteria_common import (
-    BACTERIAL_ASSEMBLY_SETS,
-    assembly_reference,
-    bacterial_genome,
-)
+from torchcell.datasets.bacteria_common import assembly_reference, bacterial_genome
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.datasets.ecoli import mori2021
 from torchcell.literature.manifest import (
@@ -642,9 +645,8 @@ DESCRIPTION_HEADER = (
 #: Measured: every released column sums to 1 within this absolute tolerance.
 NORMALIZATION_ATOL = 1e-7
 EXPECTED_SOURCE_ROWS = 4342
-EXPECTED_GENE_KEYS = 4176
+EXPECTED_GENE_KEYS = 4342
 EXPECTED_ZERO_LOCUS_ROWS = 18
-EXPECTED_REFUSED_B_NUMBERS = 148
 #: The released nitrogen cells that are a spreadsheet fill-series, verbatim.
 NITROGEN_FILL_SERIES: dict[str, str] = {
     "a2_1": "11.34 mM (NH4)2SO5",
@@ -838,14 +840,6 @@ def strain_genotype(strain: str) -> Genotype:
             perturbations=[_deletion(GDHA), _promoter(GLTB, NQ393_PROMOTER, None)]
         )
     raise ValueError(f"{strain!r} is not a strain this release names")
-
-
-def check_gene_symbols(genome: EcoliK12Genome) -> None:
-    """The typed edit targets resolve to the declared b-numbers."""
-    for symbol, tag in (PTSG, GLTB, GDHA):
-        resolved = genome.resolve_gene_name(symbol).systematic_name
-        if resolved != tag:
-            raise RuntimeError(f"{symbol} resolves to {resolved}, declared {tag}")
 
 
 # --------------------------------------------------------------------------- #
@@ -1091,69 +1085,67 @@ def read_fractions(path: str) -> tuple[list[FractionRow], dict[str, Any]]:
     }
 
 
-class RefusedRow(BaseModel):
-    """One released row that is not a stored gene key, with why."""
+ZERO_LOCUS = "0"
+
+
+class KeyedRow(BaseModel):
+    """One released row with the key its fractions are stored under."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    gene: str
-    locus: str
-    rule: str
+    row: FractionRow
+    key: str
+
+    @property
+    def keyed_by_gene(self) -> bool:
+        """True when the release wrote locus ``0`` and the gene cell is the key."""
+        return self.row.locus == ZERO_LOCUS
 
 
-REFUSE_ZERO_LOCUS = "release_writes_locus_0"
-REFUSE_NON_GENE_LOCUS = "b_number_is_a_non_gene_feature_locus"
-REFUSE_FRAGMENT_SYNONYM = "b_number_names_no_locus_only_a_feature_synonym"
-REFUSE_RETIRED = "b_number_is_retired_in_the_pinned_assembly"
+def gene_keys(rows: Sequence[FractionRow]) -> list[KeyedRow]:
+    """Every released row under its released identifier; nothing is looked up.
 
-
-def select_genes(
-    rows: Sequence[FractionRow], genome: EcoliK12Genome
-) -> tuple[list[FractionRow], list[RefusedRow]]:
-    """Keep the rows whose released b-number is a gene of the pinned gene set."""
-    genes = set(genome.gene_set)
-    loci = set(genome.genbank.loci)
-    kept: list[FractionRow] = []
-    refused: list[RefusedRow] = []
-    for row in rows:
-        if row.locus == "0":
-            rule = REFUSE_ZERO_LOCUS
-        elif row.locus in genes:
-            kept.append(row)
-            continue
-        elif row.locus in loci:
-            rule = REFUSE_NON_GENE_LOCUS
-        elif genome.resolve_gene_name(row.locus).status.value == "retired":
-            rule = REFUSE_RETIRED
-        else:
-            rule = REFUSE_FRAGMENT_SYNONYM
-        refused.append(RefusedRow(gene=row.gene, locus=row.locus, rule=rule))
-    if len({row.locus for row in kept}) != len(kept):
-        raise RuntimeError("two kept rows share one b-number")
-    return kept, refused
+    The key is the ``locus`` b-number, or the ``gene`` cell for the rows whose released
+    locus is ``0`` (:data:`ZERO_LOCUS`), which identifies nothing. A key that repeats
+    refuses the build: two rows cannot share one entry of a per-gene map.
+    """
+    keyed = [
+        KeyedRow(row=row, key=row.gene if row.locus == ZERO_LOCUS else row.locus)
+        for row in rows
+    ]
+    seen: dict[str, int] = {}
+    for item in keyed:
+        if item.key in seen:
+            raise RuntimeError(
+                f"rows {seen[item.key]} and {item.row.row_number} share the key "
+                f"{item.key!r}"
+            )
+        seen[item.key] = item.row.row_number
+    return keyed
 
 
 # --------------------------------------------------------------------------- #
 # Phenotypes and the publication
 # --------------------------------------------------------------------------- #
 def build_phenotype(
-    rows: Sequence[FractionRow], sample: str
+    rows: Sequence[KeyedRow], sample: str
 ) -> MrnaNumberFractionPhenotype:
-    """One released column, verbatim, over the kept genes."""
+    """One released column, verbatim, over every released row."""
     return MrnaNumberFractionPhenotype(
-        mrna_number_fraction={row.locus: row.values[sample] for row in rows},
+        mrna_number_fraction={item.key: item.row.values[sample] for item in rows},
         n_libraries=1,
         measurement_type=MEASUREMENT_TYPE,
     )
 
 
 def build_reference_phenotype(
-    rows: Sequence[FractionRow], samples: Sequence[str]
+    rows: Sequence[KeyedRow], samples: Sequence[str]
 ) -> MrnaNumberFractionPhenotype:
     """The per-gene mean of a medium's wild-type reference libraries."""
     return MrnaNumberFractionPhenotype(
         mrna_number_fraction={
-            row.locus: statistics.fmean(row.values[s] for s in samples) for row in rows
+            item.key: statistics.fmean(item.row.values[s] for s in samples)
+            for item in rows
         },
         n_libraries=len(samples),
         measurement_type=MEASUREMENT_TYPE,
@@ -1355,11 +1347,9 @@ class MrnaFractionBalakrishnan2022Dataset(ExperimentDataset):
         io_workers: int = 0,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
-        ecoli_genome: EcoliK12Genome | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize; ``ecoli_genome`` is injected by the build entry points."""
-        self.ecoli_genome = ecoli_genome
+        """Initialize. No genome parameter: the loader reads no annotation."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -1420,17 +1410,6 @@ class MrnaFractionBalakrishnan2022Dataset(ExperimentDataset):
         self.close_lmdb()
         return genes
 
-    def _genome(self) -> EcoliK12Genome:
-        if self.ecoli_genome is None:
-            self.ecoli_genome = bacterial_genome("ecoli", self.REFERENCE_STRAIN)
-        expected = BACTERIAL_ASSEMBLY_SETS[self.REFERENCE_STRAIN]
-        if self.ecoli_genome.ASSEMBLY_SET != expected:
-            raise ValueError(
-                f"{type(self).__name__} needs the {expected} genome, got "
-                f"{self.ecoli_genome.ASSEMBLY_SET}"
-            )
-        return self.ecoli_genome
-
     @post_process
     def process(self) -> None:
         """Build one record per loaded sample column and write the LMDB."""
@@ -1441,19 +1420,10 @@ class MrnaFractionBalakrishnan2022Dataset(ExperimentDataset):
         rows, sheet_check = read_fractions(paths[TABLE_S3])
         if len(rows) != EXPECTED_SOURCE_ROWS:
             raise RuntimeError(f"{len(rows)} rows, declared {EXPECTED_SOURCE_ROWS}")
-        genome = self._genome()
-        check_gene_symbols(genome)
-        kept, refused = select_genes(rows, genome)
-        n_zero_locus = sum(1 for r in refused if r.rule == REFUSE_ZERO_LOCUS)
-        if (len(kept), n_zero_locus, len(refused) - n_zero_locus) != (
-            EXPECTED_GENE_KEYS,
-            EXPECTED_ZERO_LOCUS_ROWS,
-            EXPECTED_REFUSED_B_NUMBERS,
-        ):
-            raise RuntimeError(
-                f"{len(kept)} kept, {n_zero_locus} locus-0, "
-                f"{len(refused) - n_zero_locus} refused b-numbers"
-            )
+        kept = gene_keys(rows)
+        n_zero_locus = sum(1 for item in kept if item.keyed_by_gene)
+        if (len(kept), n_zero_locus) != (EXPECTED_GENE_KEYS, EXPECTED_ZERO_LOCUS_ROWS):
+            raise RuntimeError(f"{len(kept)} keys, {n_zero_locus} keyed by gene")
         if len(LOADED) != EXPECTED_RECORDS:
             raise RuntimeError(f"{len(LOADED)} records, declared {EXPECTED_RECORDS}")
 
@@ -1502,25 +1472,20 @@ class MrnaFractionBalakrishnan2022Dataset(ExperimentDataset):
                 )
         env.close()
         interned_env.close()
-        self._write_ledgers(
-            rows, kept, refused, sample_rows, quotes, metadata, sheet_check
-        )
+        self._write_ledgers(rows, kept, sample_rows, quotes, metadata, sheet_check)
 
     def _write_ledgers(
         self,
         rows: Sequence[FractionRow],
-        kept: Sequence[FractionRow],
-        refused: Sequence[RefusedRow],
+        kept: Sequence[KeyedRow],
         sample_rows: Sequence[Mapping[str, Any]],
         quotes: Mapping[str, Any],
         metadata: Mapping[str, Any],
         sheet_check: Mapping[str, Any],
     ) -> None:
-        """The drop log, the sourcing table, the sample and refused-row tables."""
+        """The drop log, the sourcing table, the sample and gene-key tables."""
         out = Path(self.preprocess_dir)
-        by_rule: dict[str, list[str]] = {}
-        for row in refused:
-            by_rule.setdefault(row.rule, []).append(f"{row.gene} ({row.locus})")
+        by_gene = [item for item in kept if item.keyed_by_gene]
         ledger = {
             "dataset": self.name,
             "described_samples": len(SAMPLES),
@@ -1538,21 +1503,24 @@ class MrnaFractionBalakrishnan2022Dataset(ExperimentDataset):
             },
             "released_rows": len(rows),
             "stored_gene_keys": len(kept),
-            "refused_rows": {
-                rule: {"n": len(v), "items": v} for rule, v in by_rule.items()
+            "keyed_by_released_gene_cell": {
+                "n": len(by_gene),
+                "reason": "the release writes locus 0 for these rows, which "
+                "identifies nothing, so the released gene cell is the key",
+                "items": [item.key for item in by_gene],
             },
             "untyped_edits": UNTYPED_EDITS,
             "nitrogen_fill_series": NITROGEN_FILL_SERIES,
             "notes": [
                 f"{len(RELEASED_HEADERS)} released columns - 1 duplicate = "
                 f"{len(sample_rows)} records; a3_1 is described and unreleased",
-                f"{len(rows)} released rows = {len(kept)} stored keys + "
-                + " + ".join(f"{len(v)} ({k})" for k, v in by_rule.items()),
+                f"{len(rows)} released rows = {len(kept)} stored keys, "
+                f"{len(by_gene)} of them keyed by the released gene cell",
                 "Environment has no growth-rate slot, so the released growth rate is in "
                 "samples.csv and not on a record",
             ],
         }
-        if len(kept) + len(refused) != len(rows):
+        if len(kept) != len(rows):
             raise RuntimeError("the row ledger does not add up")
         (out / "dropped_records.json").write_text(json.dumps(ledger, indent=2))
         (out / "released_statistics_check.json").write_text(
@@ -1573,9 +1541,18 @@ class MrnaFractionBalakrishnan2022Dataset(ExperimentDataset):
             )
         )
         pd.DataFrame(list(sample_rows)).to_csv(out / "samples.csv", index=False)
-        pd.DataFrame([r.model_dump() for r in refused]).to_csv(
-            out / "refused_rows.csv", index=False
-        )
+        pd.DataFrame(
+            [
+                {
+                    "row_number": item.row.row_number,
+                    "gene": item.row.gene,
+                    "locus": item.row.locus,
+                    "key": item.key,
+                    "keyed_by_gene": item.keyed_by_gene,
+                }
+                for item in kept
+            ]
+        ).to_csv(out / "gene_keys.csv", index=False)
 
     def preprocess_raw(self, df: Any, preprocess: dict[str, Any] | None = None) -> Any:
         """Preprocessing is handled inside process() for this dataset."""

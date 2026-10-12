@@ -52,20 +52,11 @@ def test_load_store_and_rows(tmp_path: Path) -> None:
 
 
 def test_grandfathered_is_sorted_and_counted() -> None:
-    """131 classes: the 134 of main ecbd943ac less the three unregistered 2026-10-11.
-
-    ``GeneEssentialitySgdDataset`` and the two SynLethDB classes stopped being
-    registered when their sources were settled as provenance records (no source states
-    a growth medium), and the list can only shrink.
-    """
-    assert len(store.GRANDFATHERED) == 131
+    """134 classes, sorted, unique, as derived from the registry at main ecbd943ac."""
+    assert len(store.GRANDFATHERED) == 134
     assert list(store.GRANDFATHERED) == sorted(set(store.GRANDFATHERED))
     assert store.GRANDFATHERED[0] == "AminoAcidCooper2010Dataset"
-    assert not {
-        "GeneEssentialitySgdDataset",
-        "SynthLethalityYeastSynthLethDbDataset",
-        "SynthRescueYeastSynthLethDbDataset",
-    } & set(store.GRANDFATHERED)
+    assert "SynthLethalityYeastSynthLethDbDataset" in store.GRANDFATHERED
 
 
 @pytest.fixture

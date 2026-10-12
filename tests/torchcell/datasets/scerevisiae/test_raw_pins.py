@@ -150,6 +150,10 @@ def _pins_from_constants(
             spec["filename"]: spec["sha256"] for spec in m._ACID_SPECS
         },
         "AminoAcidMulleder2016Dataset": lambda: {m.DATA_FILENAME: m.DATA_SHA256},
+        "SynthLethalityYeastSynthLethDbDataset": lambda: {
+            m.SL_CSV_NAME: m.SL_CSV_SHA256
+        },
+        "SynthRescueYeastSynthLethDbDataset": lambda: {m.SR_CSV_NAME: m.SR_CSV_SHA256},
         "NadalRibellesPerturbSeq2025Dataset": lambda: {
             name: m.SHA256_EXPECTED[name] for name in m.RAW_FILES
         },
@@ -346,12 +350,11 @@ def test_process_verifies_every_raw_file_against_its_pin_before_reading(
 UNPINNED_LOADERS = frozenset(
     {"costanzo2016", "kemmeren2014", "kuzmin2018", "kuzmin2020", "sameith2015"}
 )
-#: Modules that pin a release and define no ``process()``: provenance records of a
-#: source this ontology does not admit, not loaders. ``sgd`` pins the SGD per-gene API
-#: dump by ``SGD_GENES_DIGEST`` and ``synth_leth_db`` pins both SynLethDB CSVs; neither
-#: source states a growth medium, which ``Environment.media`` requires (owner,
-#: 2026-10-11), so both register no dataset while keeping their pins and measurements.
-PROVENANCE_RECORD_MODULES = frozenset({"sgd", "synth_leth_db"})
+#: Loaders whose source is not a file in ``raw/`` but a pinned directory under
+#: ``$DATA_ROOT``, verified by its own digest before any file is read: ``sgd`` reads the
+#: SGD per-gene API dump and refuses bytes off ``SGD_GENES_DIGEST`` (#901,
+#: ``verify_sgd_dump``; pinned by ``test_bytes_off_the_pin_and_a_missing_dump_refuse_the_build``).
+DIGEST_PINNED_LOADERS = frozenset({"sgd"})
 
 
 def _module_trees() -> dict[str, ast.Module]:
@@ -400,28 +403,29 @@ def _pin_evidence(tree: ast.Module) -> list[str]:
 def test_every_loader_is_pinned_or_on_the_debt_list(
     pinned_loaders: tuple[str, ...],
 ) -> None:
-    """(A) Every module defining a ``process()`` either calls ``verify_raw_files`` (and
-    so is in ``PINNED_LOADERS``) or is on ``UNPINNED_LOADERS``: a new loader with no
-    call, or a pinned loader losing its call, changes the difference. (B) No module
-    outside ``PINNED_LOADERS`` and ``PROVENANCE_RECORD_MODULES`` carries a pin (a
-    ``sha256``-named identifier or attribute, or a 64-hex string constant, by AST, so
-    comments do not count): a debt-list module that gains a pin without the build-time
-    call fails here. (C) Every provenance-record module still carries its pin and still
-    defines no ``process()``, so a record cannot quietly become a loader again.
+    """(A) Every module defining a ``process()`` either calls ``verify_raw_files`` (and so
+    is in ``PINNED_LOADERS``), is on ``UNPINNED_LOADERS``, or is digest-pinned
+    (``DIGEST_PINNED_LOADERS``): a new loader with no call, or a pinned loader losing
+    its call, changes the difference. (B) No module outside ``PINNED_LOADERS`` and
+    ``DIGEST_PINNED_LOADERS`` carries a pin (a ``sha256``-named identifier or
+    attribute, or a 64-hex string constant, by AST, so comments do not count): a
+    debt-list module that gains a pin without the build-time call fails here, and a
+    digest-pinned module that loses its pin fails too.
     """
     trees = _module_trees()
     with_process = {name for name, tree in trees.items() if _defines_process(tree)}
-    assert with_process - set(pinned_loaders) == UNPINNED_LOADERS
-    assert not with_process & PROVENANCE_RECORD_MODULES
+    assert (
+        with_process - set(pinned_loaders) == UNPINNED_LOADERS | DIGEST_PINNED_LOADERS
+    )
     carrying = {
         name: _pin_evidence(tree)
         for name, tree in trees.items()
         if name not in pinned_loaders
-        and name not in PROVENANCE_RECORD_MODULES
+        and name not in DIGEST_PINNED_LOADERS
         and _pin_evidence(tree)
     }
     assert carrying == {}
-    assert all(_pin_evidence(trees[name]) for name in PROVENANCE_RECORD_MODULES)
+    assert all(_pin_evidence(trees[name]) for name in DIGEST_PINNED_LOADERS)
 
 
 class _Node:

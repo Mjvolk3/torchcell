@@ -36,9 +36,11 @@ from __future__ import annotations
 import gzip
 import importlib
 import itertools
+import json
 import os
 import os.path as osp
 import pickle
+from collections import Counter
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import Any, NamedTuple, cast
@@ -68,6 +70,11 @@ from torchcell.verification.expression import (
 from torchcell.verification.fitness import (
     verify_fitness_dataset,
     verify_fitness_dataset_streaming,
+)
+from torchcell.verification.gene_essentiality import (
+    essential_gene_set,
+    essential_without_viable_deletion_result,
+    verify_gene_essentiality_dataset,
 )
 from torchcell.verification.gene_interaction import (
     ReleasedComparison,
@@ -99,6 +106,8 @@ from torchcell.verification.released import (
     ReleasedFile,
     drifted_files,
     interaction_values_from_table,
+    sgd_inviable_null_annotations,
+    sgd_json_digest,
 )
 from torchcell.verification.report import (
     Level,
@@ -112,6 +121,13 @@ from torchcell.verification.segregant_growth import (
     verify_segregant_growth_streaming,
 )
 from torchcell.verification.sourced import SourcedValue, audit_sourced_value
+from torchcell.verification.synthetic_lethality import (
+    SYNTHETIC_LETHALITY,
+    SYNTHETIC_RESCUE,
+    ReleasedPairs,
+    pair_row_key,
+    verify_synthetic_pair_dataset,
+)
 from torchcell.verification.visual_score import (
     verify_visual_score_dataset,
     visual_score_gene_set,
@@ -3669,6 +3685,362 @@ def run_gene_interaction(data_root: str) -> bool:
     return all_passed
 
 
+GENE_ESSENTIALITY_DATASETS: dict[str, dict[str, Any]] = {
+    "gene_essentiality_sgd": {
+        "root": "data/torchcell/gene_essentiality_sgd",
+        # the 1,329 inviable null S288C annotations of the SGD per-gene JSON release
+        # less the 42 whose allele is not the whole-gene deletion, which the loader
+        # ledgers in preprocess/dropped_records.json (#901)
+        "expected_count": 1287,
+        "sgd_genes_dir": "data/sgd/genome/genes",
+        # sha256 over the sorted "<file> <sha256>" lines of the 6,607 gene JSONs
+        "sgd_genes_digest": (
+            "1cb4ed59556b1534e28eb79ad21135cdb5a149f78dca8df4924f473e39eef409"
+        ),
+        # the viable full-deletion strains an essential gene must not have
+        "viable_deletion_store": "smf_costanzo2016",
+        "provenance": Provenance(
+            source_uri="$DATA_ROOT/data/sgd/genome/genes/<systematic name>.json (SGD API)",
+            citation_key="cherrySGDSaccharomycesGenome1998",
+            method=(
+                "one record per SGD phenotype annotation with mutant_type 'null', "
+                "strain 'S288C' and phenotype 'inviable' whose allele is the "
+                "whole-gene deletion '<gene>-Δ' (others ledgered): a single-gene "
+                "deletion, is_essential True, viable reference, the annotation's "
+                "condition carried and an unstated medium or temperature a typed gap; "
+                "the publication is the annotation's own PubMed reference"
+            ),
+            page="SGD locus phenotype_details",
+        ),
+    }
+}
+
+#: The perturbation types of a FULL gene deletion in an SGA strain collection.
+_FULL_DELETION_TYPES = frozenset({"sga_kanmx_deletion", "sga_natmx_deletion"})
+
+
+def viable_deletion_genes(abs_root: str) -> dict[str, str]:
+    """``gene -> strain id`` of every full-deletion single mutant a fitness store grew."""
+    viable: dict[str, str] = {}
+    for record in stream_records(abs_root):
+        perturbations = record["experiment"]["genotype"]["perturbations"]
+        fitness = record["experiment"]["phenotype"]["fitness"]
+        if len(perturbations) != 1 or fitness is None or not fitness > 0:
+            continue
+        perturbation = perturbations[0]
+        if perturbation["perturbation_type"] in _FULL_DELETION_TYPES:
+            viable.setdefault(
+                str(perturbation["systematic_gene_name"]),
+                str(perturbation.get("strain_id")),
+            )
+    return viable
+
+
+def run_gene_essentiality(data_root: str) -> bool:
+    """Verify the gene-essentiality stores (L0-L4) and write reports. True if all pass."""
+    hosts: dict[tuple[str, ...], _Host] = {}
+    all_passed = True
+    for name, spec in GENE_ESSENTIALITY_DATASETS.items():
+        abs_root = osp.join(data_root, spec["root"])
+        records = load_records(abs_root)
+        host = _host_for_dataset(
+            name,
+            _dataset_assembly_sets(records),
+            records[0]["reference"]["genome_reference"],
+            data_root,
+            hosts,
+        )
+        genes_dir = osp.join(data_root, spec["sgd_genes_dir"])
+        observed = sgd_json_digest(genes_dir)
+        released = (
+            sgd_inviable_null_annotations(genes_dir)
+            if observed == spec["sgd_genes_digest"]
+            else None
+        )
+        with open(
+            osp.join(abs_root, "preprocess", "dropped_records.json"), encoding="utf-8"
+        ) as handle:
+            ledger = json.load(handle)
+        ledgered = Counter(
+            (str(row["systematic_name"]), str(row["pubmed_id"]))
+            for row in ledger["rows"]
+        )
+        viable_store = spec["viable_deletion_store"]
+        cross = essential_without_viable_deletion_result(
+            essential_gene_set(records, unconditional_only=True),
+            viable_deletion_genes(osp.join(data_root, "data/torchcell", viable_store)),
+            viable_store=viable_store,
+            scope="unconditionally essential",
+        )
+        report = verify_gene_essentiality_dataset(
+            records,
+            dataset_name=name,
+            provenance=spec["provenance"],
+            expected_count=spec["expected_count"],
+            released=released,
+            pinned_digest=spec["sgd_genes_digest"],
+            observed_digest=observed,
+            ledgered=ledgered,
+            extra_results=[cross],
+            resolve_gene_name=host.resolve_gene_name,
+            sgd_genes=host.universe,
+            gene_universe_label=host.label,
+            min_containment=MIN_RNASEQ_GENE_CONTAINMENT,
+        )
+        out = _write_report(report, osp.join(abs_root, "preprocess"))
+        print(report.summary())
+        print(f"  -> wrote {out}\n")
+        all_passed = all_passed and report.passed
+    return all_passed
+
+
+SYNTHETIC_PAIR_DATASETS: dict[str, dict[str, Any]] = {
+    "syn_leth_db_yeast": {
+        "root": "data/torchcell/syn_leth_db_yeast",
+        # 14,000 released rows minus the 4 the loader ledger drops
+        "expected_count": 13996,
+        "kind": SYNTHETIC_LETHALITY,
+        "released_file": ReleasedFile(
+            name="Yeast_SL.csv",
+            sha256="091e04dbab80044324970feea4a5fc933df0ab7c887042fd87419173129c56ca",
+        ),
+        "score_definition": "the normalized confidence score of an SL pair",
+        "stated_count": SourcedValue(
+            value=14000,
+            provenance=_SYNLETHDB_PAPER,
+            quote="14 000 of Saccharomyces cerevisiae",
+            note="the yeast SL pairs SynLethDB 2.0 holds",
+        ),
+        "quotes": [
+            SourcedValue(
+                value="the statistic score is a normalized confidence score",
+                provenance=_SYNLETHDB_PAPER,
+                quote=(
+                    "we integrated the scores of different types of sources into a "
+                    "normalized confdence score for every SL pair"
+                ),
+                note="OCR drops the 'fi' ligature ('confdence'); kept verbatim",
+            )
+        ],
+        "provenance": Provenance(
+            source_uri="$DATA_ROOT/data/torchcell/syn_leth_db_yeast/raw/Yeast_SL.csv",
+            citation_key="wangSynLethDB20Webbased2022",
+            sha256="091e04dbab80044324970feea4a5fc933df0ab7c887042fd87419173129c56ca",
+            method=(
+                "one record per kept row of the SynLethDB 2.0 yeast SL file: both "
+                "sides resolved by Entrez id through the pinned NCBI GFF, "
+                "is_synthetic_lethal True, r.statistic_score, r.pubmed_id; drops in "
+                "preprocess/dropped_records.json"
+            ),
+            page="Nucleic Acids Res 51:D1 (SynLethDB 2.0), Yeast_SL.csv",
+        ),
+    },
+    "syn_rescue_db_yeast": {
+        "root": "data/torchcell/syn_rescue_db_yeast",
+        # 6,948 released rows minus the 6 the loader ledger drops
+        "expected_count": 6942,
+        "kind": SYNTHETIC_RESCUE,
+        "released_file": ReleasedFile(
+            name="Yeast_SR.csv",
+            sha256="d84fba780cfa55d59f4844324f5c203f85f09bcfe50bfff6de06169ade2a18f4",
+        ),
+        "stated_count": None,
+        # SynLethDB 2.0 defines its confidence score for SL pairs only; the SR file's
+        # scores (74 rows, all from BioGRID, -1.0 to -0.2) have no sourced definition,
+        # so the loader stores each as a typed gap (#903) and released_rows compares
+        # the released score as None
+        "score_definition": None,
+        "quotes": [],
+        "provenance": Provenance(
+            source_uri="$DATA_ROOT/data/torchcell/syn_rescue_db_yeast/raw/Yeast_SR.csv",
+            citation_key="wangSynLethDB20Webbased2022",
+            sha256="d84fba780cfa55d59f4844324f5c203f85f09bcfe50bfff6de06169ade2a18f4",
+            method=(
+                "one record per kept row of the SynLethDB yeast SR file: both sides "
+                "resolved by Entrez id through the pinned NCBI GFF, "
+                "is_synthetic_rescue True, no score (the 74 released r.statistic_score "
+                "values are typed gaps, #903), "
+                "r.pubmed_id; drops in preprocess/dropped_records.json"
+            ),
+            page="SynLethDB 2.0 download, Yeast_SR.csv",
+        ),
+    },
+}
+
+
+def released_synlethdb_pairs(
+    csv_path: str,
+    ledger: Mapping[str, Any],
+    entrez_to_orf: Mapping[int, str],
+    *,
+    keep_scores: bool = True,
+) -> tuple[Counter[Any], int]:
+    """The kept rows of a SynLethDB file as (ORF pair, score, PubMed id), and its row count.
+
+    Each side resolves by its Entrez id alone; a row the loader's ledger drops is skipped
+    by its source row number, so the comparison covers exactly the rows the loader kept.
+    With ``keep_scores`` False (a file the source defines no score for, the SR file)
+    every released score reads None, which is what ``score_defined_by_source`` asks of
+    the store (#903).
+    """
+    import pandas as pd
+
+    frame = pd.read_csv(
+        csv_path,
+        dtype={
+            "r.pubmed_id": "str",
+            "n1.identifier": "int64",
+            "n2.identifier": "int64",
+        },
+    )
+    dropped = {row["source_row"] for rule in ledger["rules"] for row in rule["rows"]}
+    rows: Counter[Any] = Counter()
+    for index, entrez_1, entrez_2, score, pubmed_id in zip(
+        frame.index,
+        frame["n1.identifier"],
+        frame["n2.identifier"],
+        frame["r.statistic_score"],
+        frame["r.pubmed_id"],
+        strict=True,
+    ):
+        if index in dropped:
+            continue
+        rows[
+            pair_row_key(
+                entrez_to_orf[int(entrez_1)],
+                entrez_to_orf[int(entrez_2)],
+                None if pd.isna(score) or not keep_scores else float(score),
+                str(pubmed_id),
+            )
+        ] += 1
+    return rows, int(frame.shape[0])
+
+
+def drop_ledger_result(
+    csv_path: str, ledger: Mapping[str, Any], entrez_to_orf: Mapping[int, str]
+) -> LevelResult:
+    """L3 ``drop_ledger``: every ledgered drop meets its stated rule on the released row.
+
+    ``entrez_id_not_in_ncbi_gff``: an Entrez id of the row is absent from the pinned GFF;
+    ``same_gene_on_both_sides``: both ids resolve to one ORF;
+    ``gene_name_disagrees_with_entrez_id`` needs the genome's name resolver and is
+    checked only for its count (the ledger records 0 such rows in both files).
+    """
+    import pandas as pd
+
+    frame = pd.read_csv(
+        csv_path, dtype={"n1.identifier": "int64", "n2.identifier": "int64"}
+    )
+    wrong: list[str] = []
+    unchecked = 0
+    for rule in ledger["rules"]:
+        for row in rule["rows"]:
+            released = frame.loc[row["source_row"]]
+            ids = (int(released["n1.identifier"]), int(released["n2.identifier"]))
+            if ids != (row["n1_entrez"], row["n2_entrez"]):
+                wrong.append(f"row {row['source_row']}: ledger ids {ids} differ")
+            elif rule["rule"] == "entrez_id_not_in_ncbi_gff":
+                if all(entrez in entrez_to_orf for entrez in ids):
+                    wrong.append(f"row {row['source_row']}: both ids are in the GFF")
+            elif rule["rule"] == "same_gene_on_both_sides":
+                if entrez_to_orf.get(ids[0]) != entrez_to_orf.get(ids[1]):
+                    wrong.append(f"row {row['source_row']}: two different genes")
+            else:
+                unchecked += 1
+    n_drops = sum(len(rule["rows"]) for rule in ledger["rules"])
+    accounted = n_drops == ledger["dropped_records"]
+    return LevelResult(
+        level=Level.L3,
+        name="drop_ledger",
+        passed=accounted and not wrong,
+        message=(
+            f"each of the {n_drops} ledgered drops meets its rule on the released row"
+            + (f" ({unchecked} checked by count only)" if unchecked else "")
+            if accounted and not wrong
+            else f"{len(wrong)} ledgered drops do not meet their rule; ledger lists "
+            f"{n_drops} rows against dropped_records {ledger['dropped_records']}"
+        ),
+        details={
+            "n_drops": n_drops,
+            "dropped_records": ledger["dropped_records"],
+            "n_checked_by_count_only": unchecked,
+            "wrong": wrong[:20],
+        },
+    )
+
+
+def run_synthetic_pairs(data_root: str) -> bool:
+    """Verify the SynLethDB stores (L0-L4) and write reports. True if all pass."""
+    from torchcell.datasets.scerevisiae.synth_leth_db import (
+        NCBI_GFF_RELPATH,
+        load_entrez_to_orf,
+    )
+
+    entrez_to_orf = load_entrez_to_orf(
+        osp.join(data_root, "data/sgd/genome", NCBI_GFF_RELPATH)
+    )
+    hosts: dict[tuple[str, ...], _Host] = {}
+    all_passed = True
+    for name, spec in SYNTHETIC_PAIR_DATASETS.items():
+        abs_root = osp.join(data_root, spec["root"])
+        records = load_records(abs_root)
+        host = _host_for_dataset(
+            name,
+            _dataset_assembly_sets(records),
+            records[0]["reference"]["genome_reference"],
+            data_root,
+            hosts,
+        )
+        file = spec["released_file"]
+        csv_path = osp.join(abs_root, "raw", file.name)
+        with open(
+            osp.join(abs_root, "preprocess", "dropped_records.json"), encoding="utf-8"
+        ) as handle:
+            ledger = json.load(handle)
+        drift = drifted_files(osp.join(abs_root, "raw"), [file])
+        rows, n_rows = (
+            (None, None)
+            if drift
+            else released_synlethdb_pairs(
+                csv_path,
+                ledger,
+                entrez_to_orf,
+                keep_scores=spec["score_definition"] is not None,
+            )
+        )
+        stated: SourcedValue | None = spec["stated_count"]
+        released = ReleasedPairs(
+            files=[file.name],
+            drift=drift,
+            rows=rows,
+            n_released_rows=n_rows,
+            n_dropped=ledger["dropped_records"],
+            stated_count=None if stated is None else int(stated.value),
+            stated_count_quote=None if stated is None else stated.quote,
+        )
+        extra = [] if drift else [drop_ledger_result(csv_path, ledger, entrez_to_orf)]
+        quotes = list(spec["quotes"]) + ([] if stated is None else [stated])
+        report = verify_synthetic_pair_dataset(
+            records,
+            kind=spec["kind"],
+            dataset_name=name,
+            provenance=spec["provenance"],
+            expected_count=spec["expected_count"],
+            released=released,
+            score_definition=spec["score_definition"],
+            extra_results=extra + _audit_quotes(quotes, data_root),
+            resolve_gene_name=host.resolve_gene_name,
+            sgd_genes=host.universe,
+            gene_universe_label=host.label,
+            min_containment=MIN_RNASEQ_GENE_CONTAINMENT,
+        )
+        out = _write_report(report, osp.join(abs_root, "preprocess"))
+        print(report.summary())
+        print(f"  -> wrote {out}\n")
+        all_passed = all_passed and report.passed
+    return all_passed
+
+
 # --------------------------------------------------------------------------- #
 # Product titer and bacterial protein abundance (the bioproduction families)
 #
@@ -4380,6 +4752,8 @@ def run_all(data_root: str) -> bool:
     environment_ok = run_environment_response(data_root)
     fitness_ok = run_fitness(data_root)
     interaction_ok = run_gene_interaction(data_root)
+    essentiality_ok = run_gene_essentiality(data_root)
+    synthetic_pairs_ok = run_synthetic_pairs(data_root)
     segregant_ok = run_segregant_growth(data_root)
     natural_isolate_ok = run_natural_isolate_response(data_root)
     segregant_expression_ok = run_segregant_expression(data_root)
@@ -4404,6 +4778,8 @@ def run_all(data_root: str) -> bool:
         and environment_ok
         and fitness_ok
         and interaction_ok
+        and essentiality_ok
+        and synthetic_pairs_ok
         and segregant_ok
         and natural_isolate_ok
         and segregant_expression_ok

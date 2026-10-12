@@ -41,7 +41,11 @@ from torchcell.datasets.scerevisiae import (
     synth_leth_db,
     yoshida2012,
 )
-from torchcell.verification.sourced import SourcedValue, audit_sourced_value
+from torchcell.verification.sourced import (
+    ProvenanceGapReason,
+    SourcedValue,
+    audit_sourced_value,
+)
 
 #: (loader medium, the library object it restates, the loader's own statements).
 _RESTATED: list[tuple[str, Media, Media, list[SourcedValue]]] = [
@@ -162,18 +166,30 @@ def test_da_silveira_ypd_is_its_own_printed_recipe() -> None:
     ]
 
 
-def test_synlethdb_states_no_medium_so_it_emits_no_environment() -> None:
-    """The #622 stand-in medium is gone, and so is the loader it stood in for.
-
-    ``Environment.media`` is required (owner, 2026-10-11): a source that states no
-    medium produces no record, so SynLethDB is a provenance record with no
-    ``Environment`` at all rather than a loader with a medium nobody stated.
+def test_synlethdb_environment_carries_no_invented_medium_or_temperature() -> None:
+    """The old ``YEPD`` solid at 30 C was a default no SynLethDB field states; since
+    #902/#903 the temperature is a gap on the environment and the medium is a ``Media``
+    whose name, state and class are gaps quoting the paper's list of what an SL entry
+    stores (2026.10.12: ``Environment.media`` stays required).
     """
-    assert not hasattr(synth_leth_db, "SYNLETHDB_ENVIRONMENT")
-    assert not hasattr(synth_leth_db, "SYNLETHDB_MEDIUM_NOT_CARRIED")
-    assert synth_leth_db.SYNLETHDB_ENTRY_FIELDS_QUOTE in {
-        value.quote for value in synth_leth_db.SYNLETHDB_SOURCED_QUOTES
-    }
+    env = synth_leth_db.SYNLETHDB_ENVIRONMENT
+    assert env.temperature is None
+    assert [(g.field, g.reason) for g in env.provenance_gaps] == [
+        ("temperature", ProvenanceGapReason.not_carried_by_curation)
+    ]
+    media = env.media
+    assert (media.name, media.state, media.is_synthetic) == (None, None, None)
+    assert (media.base_medium, media.components, media.dropouts) == (None, [], [])
+    assert [(g.field, g.reason) for g in media.provenance_gaps] == [
+        ("name", ProvenanceGapReason.not_carried_by_curation),
+        ("state", ProvenanceGapReason.not_carried_by_curation),
+        ("is_synthetic", ProvenanceGapReason.not_carried_by_curation),
+    ]
+    for medium_gap in media.provenance_gaps:
+        assert medium_gap.looked_in is not None
+        assert medium_gap.looked_in.citation_key == synth_leth_db.SYNLETHDB_CITATION_KEY
+        assert medium_gap.note == synth_leth_db.SYNLETHDB_MEDIUM_SILENCE
+        assert synth_leth_db.SYNLETHDB_ENTRY_FIELDS_QUOTE in str(medium_gap.note)
 
 
 def _all_loader_media() -> list[tuple[str, Media]]:

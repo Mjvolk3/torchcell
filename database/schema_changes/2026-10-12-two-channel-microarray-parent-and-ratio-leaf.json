@@ -4,7 +4,7 @@
   "date": "2026-10-12",
   "pr": 1051,
   "author_kind": "agent",
-  "base_commit": "464c5cfc3d83fc6212e8b6a3d91da89e847d4b34",
+  "base_commit": "232e5d17882b668d27ccfe3bdb5e97dbcafd8a04",
   "python_version": "3.13.0",
   "symbols": [
     {
@@ -13,8 +13,8 @@
       "kinds": [
         "enum_member_added"
       ],
-      "fingerprint_before": "4aed17de23e781b9b0e29febf5998ae80436766acf05f6f0653ef1681953dde4",
-      "fingerprint_after": "e88c81f796d81985985944ab36655f3390f885f4849407287cdfbf2e0be58746",
+      "fingerprint_before": "6328849fbe6e527f581f6aad633ebb1da11938d497ea2c7d898719f41387aa79",
+      "fingerprint_after": "cd749f629f9a8cbf8afa4a783696c9d39940b01fee76b83451e0be3ea819c6e1",
       "impact": "stale",
       "reasons": [
         "gained members [\"'microarray_expression_ratio': MicroarrayExpressionRatioExperimentReference\"]"
@@ -26,8 +26,8 @@
       "kinds": [
         "enum_member_added"
       ],
-      "fingerprint_before": "1f03bad63e2bf27bdcefcb27bf82ba5456bca5193d59adc196a32b501ad0b6df",
-      "fingerprint_after": "08689c803c60247f43922010a9529b5b4285477aff8914dac9444a8f518d282d",
+      "fingerprint_before": "b55a962ffabea8aa717febe5b1da5e9619018aced64bb5e799441c910d158ed7",
+      "fingerprint_after": "1ac87a2856f7370f9878d88e34fb4331168cb53db5e6bff5684fc78b49ebf172",
       "impact": "stale",
       "reasons": [
         "gained members [\"'microarray_expression_ratio': MicroarrayExpressionRatioExperiment\"]"
@@ -39,8 +39,8 @@
       "kinds": [
         "enum_member_added"
       ],
-      "fingerprint_before": "30879d544129dc3d2bcf3cd6d12da8de05bde847a8963f658b61d565f41cd588",
-      "fingerprint_after": "d7d6dd3bc67cf18df3b78b9b99ef54b4cb32fc03c7bbdd7f17ab2a28eaf9d4fb",
+      "fingerprint_before": "f1a60c21f4bb7caddbecf5a58f4ea0fe0e86a2ee1ccc7a72f76cd1b027c5ba21",
+      "fingerprint_after": "ce896f320baf046e0819d19989039c22a91485c1e7fdb32ed483afb9cc8200db",
       "impact": "stale",
       "reasons": [
         "gained members ['MicroarrayExpressionRatioExperimentReference']"
@@ -52,8 +52,8 @@
       "kinds": [
         "enum_member_added"
       ],
-      "fingerprint_before": "a7044ea3512cb05556e56d95356f09cfdbd9c5828b128c17440eabf8afee9d10",
-      "fingerprint_after": "bea74711bcc832ad7b9b03325db8bc99321a8e2b20462ec15d8a509cb65e5a00",
+      "fingerprint_before": "aecfd8a8a37c9d8efcb24084a9d2d854cc3f778e5bd6d2bc4268ace3e4887a59",
+      "fingerprint_after": "19af1610cd26119e45271bb9685cff83962d2576a4229232d39dc14d38ca8680",
       "impact": "stale",
       "reasons": [
         "gained members ['MicroarrayExpressionRatioExperiment']"
@@ -143,8 +143,8 @@
       "kinds": [
         "enum_member_added"
       ],
-      "fingerprint_before": "54c9d19ae5648759e45ac776b7b177a404054c325e991af3b7038e1d8db98682",
-      "fingerprint_after": "c1bec76302fa52175ce224f73fa8ed12ad3bfe61aedde163837fbed1167fc47b",
+      "fingerprint_before": "7298b18961dec8093a260a78342ba008abc7f96975cd06c421347932974d5dfd",
+      "fingerprint_after": "4d67acb660bcec94071b56942be535a530b12dfcde9395bbbebfbc57424c3cc6",
       "impact": "stale",
       "reasons": [
         "gained members ['MicroarrayExpressionRatioPhenotype']"

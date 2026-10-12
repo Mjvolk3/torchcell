@@ -10,9 +10,11 @@ all ten members and re-derive the annotation finding off the deposited bytes, so
 member that changes, or a parser that starts accepting a flat file with no ``locus_tag``,
 fails by name.
 
-Gate 2 (the paper) is blocked: one data-gated test asserts the paper is still in neither
-mirror. It is a TRIPWIRE and it is meant to fail the day the paper is curated, with the
-message naming the work that then becomes possible.
+Gate 2 (the paper) is half open: the owner's SI deposit is in the raw mirror and is
+recorded and measured here (hermetically on a synthetic Table S4, and on the deposited
+bytes behind ``--data``), while the paper text is not yet in the library mirror. One
+data-gated test is a TRIPWIRE that fails the night ``lit_sync`` mirrors the filed paper,
+with the message naming the work that then becomes possible.
 """
 
 import gzip
@@ -21,6 +23,7 @@ import os.path as osp
 import re
 from pathlib import Path
 
+import openpyxl
 import pytest
 from Bio import SeqIO
 from Bio.Seq import Seq
@@ -29,6 +32,7 @@ from Bio.SeqRecord import SeqRecord
 
 from torchcell.datamodels.schema import ASSEMBLY_SET_ACCESSIONS, BACTERIAL_ASSEMBLY_SETS
 from torchcell.datasets.ecoli import teteneva2024 as te
+from torchcell.literature.manual_deposit import verify_deposit
 from torchcell.sequence.genome.registry import (
     ECOLI_K12_W3110,
     resolve,
@@ -158,9 +162,90 @@ def test_the_module_registers_no_dataset_and_lists_the_work_in_order() -> None:
         for name in dir(te)
         if name.endswith("Dataset") and isinstance(getattr(te, name), type)
     ]
-    assert len(te.EDITS_NEEDED) == 8
-    assert te.EDITS_NEEDED[0].startswith("file the paper in Zotero")
+    assert len(te.EDITS_NEEDED) == 7
+    assert te.EDITS_NEEDED[0].startswith(
+        "let scripts/lit_sync.py mirror the filed paper"
+    )
+    assert "gene symbols only" in te.EDITS_NEEDED[1]
     assert te.EDITS_NEEDED[-1].startswith("the loader itself")
+
+
+def test_the_si_deposit_is_five_files_each_equal_to_a_listed_bucket_object() -> None:
+    """Every deposited file names the PMC object it was measured equal to."""
+    deposit = te.SI_DEPOSIT
+    assert (deposit.citation_key, deposit.doi, deposit.issues) == (
+        te.EXPECTED_CITATION_KEY,
+        te.PAPER_DOI,
+        (910,),
+    )
+    listed = {f.key for f in te.PMC_OA_DEPOSIT}
+    assert deposit.directories() == ("si",)
+    assert len(deposit.files) == 5
+    for f in deposit.files:
+        assert f.scripted_equivalent is not None
+        assert f.scripted_equivalent.params["key"] == f"PMC11188689.1/{f.name}"
+        assert f.scripted_equivalent.params["key"] in listed
+    assert {f.path for f in deposit.files} >= {te.TABLE_S3_RELPATH, te.TABLE_S4_RELPATH}
+    assert sum(te.TABLE_S4_ROWS_PER_WATER_SAMPLE.values()) == (
+        te.TABLE_S4_GENE_BY_SAMPLE_ROWS
+    )
+    assert te.TABLE_S4_FITNESS_VALUES == 6 * te.TABLE_S4_GENE_BY_SAMPLE_ROWS
+    assert te.TABLE_S4_FITNESS_VALUES == te.SCHEDULE_FITNESS_VALUES
+    for counts in te.SYMBOL_ROUTES.values():
+        assert sum(counts.values()) == te.TABLE_S4_DISTINCT_SYMBOLS
+
+
+def _table_s4(path: Path, *, symbol: str | None = "thrL") -> None:
+    book = openpyxl.Workbook()
+    sheet = book.active
+    assert sheet is not None
+    sheet.title = "DATA"
+    sheet.append(
+        ["Lake water sample", "gene fitness values", None, None, None, None, None]
+        + ["Gene name", "Principal component", None, "Euclidean distance"]
+        + ["Protein description"]
+    )
+    sheet.append([None, "filtered", None, None, "non-filtered"])
+    sheet.append(
+        [None, "day 2", "day 4", "day 8", "day 2", "day 4", "day 8", None, 1, 2]
+    )
+    sheet.append([1, 0.1, 0.2, 0.3, 0.4, 0.5, None, symbol, 1.0, 2.0, 0.5, "p"])
+    sheet.append([2, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, "thrA", 1.0, 2.0, 0.5, "p"])
+    sheet.append([2, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, "thrL", 1.0, 2.0, 0.5, "p"])
+    book.save(path)
+
+
+def test_table_s4_inventory_names_the_columns_and_counts_values_and_symbols(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "s4.xlsx"
+    _table_s4(path)
+    inventory = te.table_s4_inventory(path)
+    assert inventory.gene_by_sample_rows == 3
+    assert inventory.rows_per_water_sample == {1: 1, 2: 2}
+    assert inventory.fitness_columns == te.TABLE_S4_FITNESS_COLUMNS
+    assert inventory.fitness_values == 17
+    assert inventory.identifier_column == "Gene name"
+    assert inventory.distinct_symbols == ("thrA", "thrL")
+    assert inventory.other_columns == (
+        "Principal component",
+        "Euclidean distance",
+        "Protein description",
+    )
+
+
+def test_table_s4_inventory_refuses_another_layout_and_a_row_without_a_symbol(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "s4.xlsx"
+    _table_s4(path, symbol=None)
+    with pytest.raises(ValueError, match="no gene symbol"):
+        te.table_s4_inventory(path)
+    book = openpyxl.load_workbook(path)
+    book["DATA"]["H1"] = "Locus tag"
+    book.save(path)
+    with pytest.raises(ValueError, match="Table S4 header"):
+        te.table_s4_inventory(path)
 
 
 # --------------------------------------------------------------------------------------
@@ -229,9 +314,11 @@ def test_the_two_assembly_reports_disagree_about_the_refseq_release() -> None:
 @pytest.mark.data
 @requires_mirrors
 def test_the_paper_is_still_in_neither_mirror_so_the_loader_stays_blocked() -> None:
-    """A TRIPWIRE: it fails the day the paper is curated, which is the signal to build.
+    """A TRIPWIRE: it fails the night lit_sync mirrors the paper filed on 2026-10-12.
 
-    When this fails, the row is unblocked: follow ``EDITS_NEEDED`` from item 2.
+    The raw mirror holds the owner's SI deposit (one key, this paper's); the library
+    mirror holds nothing until lit_sync runs. When this fails, the Methods are
+    readable: follow ``EDITS_NEEDED`` from item 2.
     """
     found = {
         root: sorted(
@@ -241,12 +328,31 @@ def test_the_paper_is_still_in_neither_mirror_so_the_loader_stays_blocked() -> N
         )
         for root in ("torchcell-library", "torchcell-raw")
     }
-    assert found == {"torchcell-library": [], "torchcell-raw": []}, (
-        "the Teteneva 2024 paper is now mirrored, so the loader is no longer blocked: "
-        f"{found}; follow torchcell.datasets.ecoli.teteneva2024.EDITS_NEEDED"
+    assert found == {
+        "torchcell-library": [],
+        "torchcell-raw": [te.EXPECTED_CITATION_KEY],
+    }, (
+        "the Teteneva 2024 paper is now in the library mirror, so its Methods can be "
+        f"read: {found}; follow torchcell.datasets.ecoli.teteneva2024.EDITS_NEEDED"
     )
     assert te.LIBRARY_MIRROR_KEYS_MATCHING_TETENEVA == 0
-    assert te.RAW_MIRROR_KEYS_MATCHING_TETENEVA == 0
+    assert te.RAW_MIRROR_KEYS_MATCHING_TETENEVA == 1
+
+
+@pytest.mark.data
+@requires_mirrors
+@requires_tier
+def test_the_deposited_table_s4_and_its_symbol_routes_are_the_measured_ones() -> None:
+    """Re-derive the inventory and the per-member symbol landing off the pinned bytes."""
+    key_root = Path(DATA_ROOT) / "torchcell-raw" / te.EXPECTED_CITATION_KEY
+    verify_deposit(te.SI_DEPOSIT, key_root)
+    inventory = te.table_s4_inventory(key_root / te.TABLE_S4_RELPATH)
+    assert inventory.gene_by_sample_rows == te.TABLE_S4_GENE_BY_SAMPLE_ROWS
+    assert inventory.rows_per_water_sample == te.TABLE_S4_ROWS_PER_WATER_SAMPLE
+    assert inventory.fitness_values == te.TABLE_S4_FITNESS_VALUES
+    assert inventory.fitness_columns == te.TABLE_S4_FITNESS_COLUMNS
+    assert len(inventory.distinct_symbols) == te.TABLE_S4_DISTINCT_SYMBOLS
+    assert te.symbol_routes(inventory.distinct_symbols) == te.SYMBOL_ROUTES
 
 
 # --------------------------------------------------------------------------------------
@@ -331,6 +437,24 @@ def test_annotation_routes_refuses_the_untagged_member_and_parses_the_tagged_one
     assert refseq.read_genbank_error is None
     assert refseq.loci == 1
     assert refseq.replicon == "XX000001.1"
+
+
+def test_symbol_routes_count_unique_ambiguous_and_absent_symbols(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """ThrL is on one feature of each member; an unknown symbol lands on none."""
+    members = {
+        te.GENBANK_MEMBER: tmp_path / "gca.gbff.gz",
+        te.REFSEQ_MEMBER: tmp_path / "gcf.gbff.gz",
+    }
+    _write_gbff(members[te.GENBANK_MEMBER], tagged=False)
+    _write_gbff(members[te.REFSEQ_MEMBER], tagged=True)
+    _serve(monkeypatch, members)
+    assert te.symbol_index(te.REFSEQ_MEMBER) == {"thrL": {"Y75_RS00005"}}
+    assert te.symbol_routes(("thrL", "zzzZ")) == {
+        te.GENBANK_MEMBER: {"unique": 1, "ambiguous": 0, "none": 1},
+        te.REFSEQ_MEMBER: {"unique": 1, "ambiguous": 0, "none": 1},
+    }
 
 
 def test_eck_jw_b_notes_reads_only_the_crosswalk_notes(

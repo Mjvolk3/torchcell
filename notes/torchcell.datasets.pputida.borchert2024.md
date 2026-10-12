@@ -445,3 +445,21 @@ library in wild-type KT2440, so the correction rescopes **0 samples and 0 values
 Whether to record the correction on these records anyway is the owner's decision (#986);
 this note gives the facts only. Details in
 [[experiments.036-dataset-fixes-before-kg-build.scripts.manual_deposits_2026_10_12]].
+
+## 2026.10.12 - Thompson 2019 lysine attributed its four samples (#908)
+
+Owner decision relayed 2026-10-12 (#908, option 1a): the four compendium samples Thompson 2019 lysine measured carry that study as their `SourceStudy`. Branch `feat/fitness-browser-decomposition` (PR #1049).
+
+| sample | Table S1 column | max abs difference (39 loci) | nearest wrong sample |
+|---|---|---|---|
+| set7IT062 | D-Lysine | 0.0460 | set7IT056 (2.14) |
+| set7IT055 | L-Lysine | 0.0194 | set12IT023 (3.22) |
+| set7IT044 | 5-AVA | 0.0207 | set7IT057 (1.43) |
+| set6IT057 | Glucose | 0.0082 | set8IT058 (0.58) |
+
+Measured by `thompsonMassivelyParallelFitness2019_release_inventory.py` ([[experiments.036-dataset-fixes-before-kg-build.scripts.thompsonMassivelyParallelFitness2019_release_inventory]]).
+
+- `SOURCE_STUDIES["thompson2019_lysine"]`: doi `10.1128/mBio.02577-18` (the raw mirror manifest's casing, the same DOI the Fitness Browser Putida loader writes for `Thompson18`), key `thompsonMassivelyParallelFitness2019`, rank 54 (`build_bacteria_candidate_datasets_table.ranked()` today).
+- `attribute_sample` gives the four the new basis `source_release_content_match`, with the Methods' four conditions ("diluted 1:50 into 10 ml MOPS minimal medium supplemented with 10 mM glucose or 5AVA or d-lysine or l-lysine", with the source's U+2009 thin spaces) and Table S1's header (`gene,gene,desc,D-Lysine,L-Lysine,5-AVA,Glucose`) as evidence, each a `SourcedValue` on the raw mirror's pinned files (paper text sha256 `aedb5fb0...`, Table S1 sha256 `b4718373...`). 4 x 4,732 = 18,928 records change publication.
+- The Fitness Browser's `pubId` names three more set7 samples `Thompson18` (set7IT042, set7IT056, set7IT057). Table S1 matches none of them, so they stay with the compendium attribution here; the browser loader attributes all seven by `pubId`.
+- **set6IT057's vessel: not stored, and nothing stored contradicts the SI.** `Environment` has no vessel field for any bacterial record (vessel and shaking are dropped for every sample, as the 2026.10.07 section says), so neither the paper's "Cells were grown in 50-ml culture tubes" nor the release's "48 well microplate; Tecan Infinite F200" is on a record. The paper's sentence is pinned as `SOURCED_VALUES["thompson_lysine_vessel"]`. Storing a vessel needs `BacterialEnvironmentResponseExperiment.environment` narrowed to `CultureEnvironment` (whose `culture_format.vessel` is verbatim), the route the chemogenomic classes take; that re-fingerprints every served bacterial environment-response closure, so it is a schema-change record and an owner decision, not part of this change.

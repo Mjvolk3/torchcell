@@ -1,17 +1,13 @@
 # tests/torchcell/datasets/scerevisiae/test_lopez2024.py
 # [[tests.torchcell.datasets.scerevisiae.test_lopez2024]]
 # https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/datasets/scerevisiae/test_lopez2024.py
-"""Montaño López 2024 loaders: Table S2 aggregation, Table S3 two-block read, resolver rules.
+"""Montaño López 2024 loaders: Table S2 row records, Table S3 two-block read, released names.
 
 The supplementary workbook is written synthetically with openpyxl into ``<root>/raw/`` so
-PyG never calls ``download()``; ``process()`` runs for real against a duck-typed genome stub
-(``gene_attribute_table`` with ``ID``/``gene`` columns and ``alias_to_systematic``), which
-is everything the two loaders read from a genome. The stub is the authority for every
-name-to-ORF mapping asserted here.
-
-Stub genome: current ORFs YAL001C (TFC3), YBR001C (NTH2), YCR001W (no standard name),
-YDR001C (NTH1); old names YAL002W -> YAL001C, YBR002C -> YBR001C, YDR002W -> YDR001C,
-YER001W -> YER999W (a target that is not a current ORF).
+PyG never calls ``download()``; ``process()`` runs for real. No genome is consulted
+(#1045): every row is a record under its released ORF (upper-cased), which is also its
+``perturbed_gene_name``; a name that is not ORF-shaped (``ABC1``) is counted under the
+leaf deferral rule in ``preprocess/dropped_records.json``.
 """
 
 from __future__ import annotations
@@ -20,7 +16,6 @@ import hashlib
 import json
 import math
 import socket
-import statistics
 import subprocess
 from pathlib import Path
 from typing import Any, cast
@@ -43,34 +38,10 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.scerevisiae import lopez2024 as m
-from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
-
-class _StubGenome:
-    """The two genome attributes the loaders read: the ID/gene table and the alias map."""
-
-    gene_attribute_table = pd.DataFrame(
-        {
-            "ID": ["YAL001C", "YBR001C", "YCR001W", "YDR001C"],
-            "gene": ["TFC3", "NTH2", None, "NTH1"],
-        }
-    )
-    alias_to_systematic: dict[str, list[str]] = {
-        "YAL002W": ["YAL001C"],
-        "YBR002C": ["YBR001C"],
-        "YDR002W": ["YDR001C"],
-        "YER001W": ["YER999W"],
-    }
-
-
-def _genome() -> SCerevisiaeGenome:
-    return cast(SCerevisiaeGenome, _StubGenome())
-
-
-# Table S2 rows (Gene-knockout strain, Fold change). Two rows for YAL001C (one lowercase),
-# one alias whose target is directly present (YBR002C -> YBR001C, must be DROPPED, not
-# merged), one alias that resolves (YDR002W -> YDR001C), one alias to a non-current target
-# (YER001W), one systematic name with no alias entry (YFR001W), one non-systematic token.
+# Table S2 rows (Gene-knockout strain, Fold change). Two rows for YAL001C (one lowercase:
+# two plate measurements, two records), six other ORF-shaped names each stored as released
+# whatever the annotation says of them, and one token that is not ORF-shaped (ABC1).
 _SCREEN_ROWS: list[tuple[str, float]] = [
     ("yal001c", 1.5),
     ("YAL001C", 2.5),
@@ -84,8 +55,8 @@ _SCREEN_ROWS: list[tuple[str, float]] = [
 ]
 
 # Table S3 UP block (FC>=2) and DOWN block (FC<=0.5): (gene, FC average, STD). YBL071W-A is
-# in both blocks and is dropped before resolution; the DOWN block is one row longer so the
-# UP block's trailing gene cell is blank (exercises the dropna on the gene column).
+# in both blocks and both rows are stored; the DOWN block is one row longer so the UP
+# block's trailing gene cell is blank (exercises the dropna on the gene column).
 _UP_ROWS: list[tuple[str, float, float]] = [
     ("YAL001C", 3.0, 0.3),
     ("YBL071W-A", 3.469, 0.1),
@@ -155,13 +126,13 @@ def _root(
 @pytest.fixture
 def screen(tmp_path: Path) -> m.IsobutanolScreenLopez2024Dataset:
     root = _root(tmp_path, "isobutanol_screen_lopez2024")
-    return m.IsobutanolScreenLopez2024Dataset(root=str(root), genome=_genome())
+    return m.IsobutanolScreenLopez2024Dataset(root=str(root))
 
 
 @pytest.fixture
 def validated(tmp_path: Path) -> m.IsobutanolValidatedLopez2024Dataset:
     root = _root(tmp_path, "isobutanol_validated_lopez2024")
-    return m.IsobutanolValidatedLopez2024Dataset(root=str(root), genome=_genome())
+    return m.IsobutanolValidatedLopez2024Dataset(root=str(root))
 
 
 _ENVIRONMENT = Environment(
@@ -237,52 +208,68 @@ def _records(
     return out
 
 
-def test_screen_aggregates_rows_per_resolved_orf_and_drops_by_rule(
+def test_screen_stores_one_record_per_released_row(
     screen: m.IsobutanolScreenLopez2024Dataset,
 ) -> None:
-    """Nine Table S2 rows become four records in first-sighting ORF order.
+    """Nine Table S2 rows become eight records in row order, each n = 1 with no SE.
 
-    YAL001C: rows 1.5 and 2.5 (one typed lowercase) -> mean 2.0, n = 2, SE = sample SD /
-    sqrt(2) = sqrt(0.5) / sqrt(2) = 0.5. YBR001C 0.5, YCR001W 4.0 (unnamed, so the
-    perturbed name is the ORF) and YDR002W -> YDR001C (NTH1) 0.25 are single rows with
-    SE None. Dropped: YBR002C (its alias target YBR001C is directly present, so it is not
-    merged into YBR001C, which keeps n = 1), YER001W (alias target is not a current ORF),
-    YFR001W (systematic form, no alias entry), ABC1 (not systematic).
+    YAL001C appears twice (rows 1.5 and 2.5, one typed lowercase): two records of one
+    deletion, not an average. YBR002C, YDR002W, YER001W and YFR001W are stored under
+    their released names whatever the annotation makes of them. ABC1 is not ORF-shaped
+    and is counted under the leaf deferral rule, the only row without a record.
     """
-    assert len(screen) == 4
+    assert len(screen) == 8
     assert _records(screen) == [
-        ("YAL001C", "TFC3", 2.0, statistics.stdev([1.5, 2.5]) / math.sqrt(2), 2),
-        ("YBR001C", "NTH2", 0.5, None, 1),
+        ("YAL001C", "YAL001C", 1.5, None, 1),
+        ("YAL001C", "YAL001C", 2.5, None, 1),
+        ("YBR001C", "YBR001C", 0.5, None, 1),
         ("YCR001W", "YCR001W", 4.0, None, 1),
-        ("YDR001C", "NTH1", 0.25, None, 1),
+        ("YBR002C", "YBR002C", 0.8, None, 1),
+        ("YDR002W", "YDR002W", 0.25, None, 1),
+        ("YER001W", "YER001W", 9.0, None, 1),
+        ("YFR001W", "YFR001W", 1.1, None, 1),
     ]
-    assert statistics.stdev([1.5, 2.5]) / math.sqrt(2) == 0.5
     assert screen[0]["experiment"] == _experiment(
-        "IsobutanolScreenLopez2024Dataset", "YAL001C", "TFC3", 2.0, 0.5, 2
+        "IsobutanolScreenLopez2024Dataset", "YAL001C", "YAL001C", 1.5, None, 1
     )
     assert screen[0]["publication"] == _PUBLICATION.model_dump()
+    log = json.loads(
+        (Path(screen.root) / "preprocess" / "dropped_records.json").read_text()
+    )
+    assert log == {
+        "dataset": "IsobutanolScreenLopez2024Dataset",
+        "source_records": 9,
+        "kept_records": 8,
+        "dropped_records": 1,
+        "rules": [
+            {
+                "rule": m.DEFERRED_RULE,
+                "description": m.DEFERRED_DESCRIPTION,
+                "n_records": 1,
+                "items": ["ABC1"],
+            }
+        ],
+    }
 
 
-def test_screen_reference_replicate_count_mirrors_each_record(
+def test_screen_reference_is_one_shared_wt_control_with_n_one(
     screen: m.IsobutanolScreenLopez2024Dataset,
 ) -> None:
-    """Finding: the WT reference is rebuilt per record with ``n_replicates`` = that record's
-    row count, so the screen carries one reference per distinct n rather than one shared
-    WT reference. Here record 0 (n = 2) and records 1-3 (n = 1) give two entries in
-    ``experiment_reference_index.json`` with member indices [0] and [1, 2, 3]; both have
-    FC 1.0, SE None, BY4741, and the SC liquid 30 C aerobic environment.
+    """Every record is one measurement, so the WT reference (FC 1.0, n = 1, SE None,
+    BY4741, SC liquid 30 C aerobic) is one shared entry in
+    ``experiment_reference_index.json`` over all eight records.
     """
-    assert screen[0]["reference"] == _reference("IsobutanolScreenLopez2024Dataset", 2)
-    assert screen[3]["reference"] == _reference("IsobutanolScreenLopez2024Dataset", 1)
+    assert screen[0]["reference"] == _reference("IsobutanolScreenLopez2024Dataset", 1)
+    assert screen[7]["reference"] == _reference("IsobutanolScreenLopez2024Dataset", 1)
     index = json.loads(
         (
             Path(screen.root) / "preprocess" / "experiment_reference_index.json"
         ).read_text()
     )
-    assert [entry["member_indices"] for entry in index] == [[0], [1, 2, 3]]
-    assert [
-        entry["reference"]["phenotype_reference"]["n_replicates"] for entry in index
-    ] == [{"isobutanol": 2}, {"isobutanol": 1}]
+    assert [entry["member_indices"] for entry in index] == [list(range(8))]
+    assert index[0]["reference"]["phenotype_reference"]["n_replicates"] == {
+        "isobutanol": 1
+    }
     assert index[0]["reference"]["genome_reference"] == {
         "species": "Saccharomyces cerevisiae",
         "strain": "BY4741",
@@ -293,20 +280,24 @@ def test_screen_reference_replicate_count_mirrors_each_record(
 def test_screen_writes_gene_set_and_build_manifest(
     screen: m.IsobutanolScreenLopez2024Dataset,
 ) -> None:
-    """``preprocess/gene_set.json`` is the four resolved ORFs sorted; the build manifest
+    """``preprocess/gene_set.json`` is the seven released ORFs sorted; the build manifest
     names the root slug, the loader class/module, this host, and the worktree HEAD.
 
     The HEAD comparison shells out to ``git rev-parse HEAD`` in the loader's directory,
     so this test fails in a non-git checkout, where ``torchcell_commit`` is None by design.
     """
     preprocess = Path(screen.root) / "preprocess"
-    assert json.loads((preprocess / "gene_set.json").read_text()) == [
+    released = [
         "YAL001C",
         "YBR001C",
+        "YBR002C",
         "YCR001W",
-        "YDR001C",
+        "YDR002W",
+        "YER001W",
+        "YFR001W",
     ]
-    assert screen.gene_set == {"YAL001C", "YBR001C", "YCR001W", "YDR001C"}
+    assert json.loads((preprocess / "gene_set.json").read_text()) == released
+    assert screen.gene_set == set(released)
     assert screen.experiment_class is MetaboliteExperiment
     assert screen.reference_class is MetaboliteExperimentReference
     manifest = json.loads((preprocess / "build_manifest.json").read_text())
@@ -327,84 +318,82 @@ def test_screen_writes_gene_set_and_build_manifest(
     )
 
 
-def test_validated_reads_both_blocks_and_drops_the_contradictory_strain(
+def test_validated_reads_both_blocks_and_stores_every_row(
     validated: m.IsobutanolValidatedLopez2024Dataset,
 ) -> None:
-    """UP rows then DOWN rows, each a triplicate record with SE = STD / sqrt(3).
-
-    YAL001C 3.0 (SE 0.3 / sqrt(3) = 0.1732), YDR002W -> YDR001C 2.2 (0.6 / sqrt(3)),
-    ybr001c -> YBR001C 0.25 (0.06 / sqrt(3)), YCR001W 0.4 (0.09 / sqrt(3)); YBL071W-A is
-    dropped from both blocks and YER001W is unresolved, so 7 source rows give 4 records.
-    The reference is one shared object with n = 3, so the index has one entry [0, 1, 2, 3].
+    """UP rows then DOWN rows, each a triplicate record with SE = STD / sqrt(3), under
+    the released ORF: YAL001C 3.0, YBL071W-A 3.469, YDR002W 2.2, ybr001c -> YBR001C
+    (upper-cased) 0.25, YBL071W-A 0.0757, YCR001W 0.4, YER001W 0.3. Both YBL071W-A rows
+    are stored; 7 source rows give 7 records. The reference is one shared object with
+    n = 3, so the index has one entry over all seven.
     """
-    assert len(validated) == 4
+    assert len(validated) == 7
     assert _records(validated) == [
-        ("YAL001C", "TFC3", 3.0, 0.3 / math.sqrt(3), 3),
-        ("YDR001C", "NTH1", 2.2, 0.6 / math.sqrt(3), 3),
-        ("YBR001C", "NTH2", 0.25, 0.06 / math.sqrt(3), 3),
+        ("YAL001C", "YAL001C", 3.0, 0.3 / math.sqrt(3), 3),
+        ("YBL071W-A", "YBL071W-A", 3.469, 0.1 / math.sqrt(3), 3),
+        ("YDR002W", "YDR002W", 2.2, 0.6 / math.sqrt(3), 3),
+        ("YBR001C", "YBR001C", 0.25, 0.06 / math.sqrt(3), 3),
+        ("YBL071W-A", "YBL071W-A", 0.0757, 0.01 / math.sqrt(3), 3),
         ("YCR001W", "YCR001W", 0.4, 0.09 / math.sqrt(3), 3),
+        ("YER001W", "YER001W", 0.3, 0.05 / math.sqrt(3), 3),
     ]
-    assert validated[1]["experiment"] == _experiment(
+    assert validated[2]["experiment"] == _experiment(
         "IsobutanolValidatedLopez2024Dataset",
-        "YDR001C",
-        "NTH1",
+        "YDR002W",
+        "YDR002W",
         2.2,
         0.6 / math.sqrt(3),
         3,
     )
-    assert validated[2]["reference"] == _reference(
+    assert validated[3]["reference"] == _reference(
         "IsobutanolValidatedLopez2024Dataset", 3
     )
-    assert validated[2]["publication"] == _PUBLICATION.model_dump()
+    assert validated[3]["publication"] == _PUBLICATION.model_dump()
     index = json.loads(
         (
             Path(validated.root) / "preprocess" / "experiment_reference_index.json"
         ).read_text()
     )
-    assert [entry["member_indices"] for entry in index] == [[0, 1, 2, 3]]
+    assert [entry["member_indices"] for entry in index] == [list(range(7))]
     assert json.loads(
         (Path(validated.root) / "preprocess" / "gene_set.json").read_text()
-    ) == ["YAL001C", "YBR001C", "YCR001W", "YDR001C"]
+    ) == ["YAL001C", "YBL071W-A", "YBR001C", "YCR001W", "YDR002W", "YER001W"]
     manifest = json.loads(
         (Path(validated.root) / "preprocess" / "build_manifest.json").read_text()
     )
     assert manifest["dataset_name"] == "isobutanol_validated_lopez2024"
     assert manifest["loader_class"] == "IsobutanolValidatedLopez2024Dataset"
+    log = json.loads(
+        (Path(validated.root) / "preprocess" / "dropped_records.json").read_text()
+    )
+    assert (log["source_records"], log["kept_records"], log["dropped_records"]) == (
+        7,
+        7,
+        0,
+    )
 
 
-def test_validated_raises_when_an_orf_repeats_after_resolution(tmp_path: Path) -> None:
-    """YAL001C in the UP block and again in the DOWN block is a second contradictory strain
-    and raises rather than overwriting; the message names the ORF and the source name.
+def test_validated_defers_a_name_that_is_not_orf_shaped(tmp_path: Path) -> None:
+    """A Table S3 name with no ORF form is counted under the leaf deferral rule, never
+    resolved and never silently dropped; the ORF-shaped rows beside it are stored.
     """
     root = _root(
         tmp_path,
-        "dup",
-        up_rows=[("YAL001C", 3.0, 0.3)],
-        down_rows=[("YAL001C", 0.25, 0.06)],
+        "deferred",
+        up_rows=[("YAL001C", 3.0, 0.3), ("YLR287-A", 2.5, 0.2)],
+        down_rows=[("YCR001W", 0.4, 0.09)],
     )
-    with pytest.raises(
-        RuntimeError,
-        match=r"ORF YAL001C \(from YAL001C\) appears twice after resolution",
-    ):
-        m.IsobutanolValidatedLopez2024Dataset(root=str(root), genome=_genome())
-
-
-def test_both_loaders_require_an_injected_genome(tmp_path: Path) -> None:
-    """With the raw workbook present and ``genome=None`` the first resolver call raises;
-    the message names the loader class.
-    """
-    with pytest.raises(
-        RuntimeError,
-        match="IsobutanolScreenLopez2024Dataset requires an injected SCerevisiaeGenome",
-    ):
-        m.IsobutanolScreenLopez2024Dataset(root=str(_root(tmp_path, "s")), genome=None)
-    with pytest.raises(
-        RuntimeError,
-        match="IsobutanolValidatedLopez2024Dataset requires an injected SCerevisiaeGenome",
-    ):
-        m.IsobutanolValidatedLopez2024Dataset(
-            root=str(_root(tmp_path, "v")), genome=None
-        )
+    dataset = m.IsobutanolValidatedLopez2024Dataset(root=str(root))
+    assert len(dataset) == 2
+    log = json.loads((root / "preprocess" / "dropped_records.json").read_text())
+    assert log["rules"] == [
+        {
+            "rule": m.DEFERRED_RULE,
+            "description": m.DEFERRED_DESCRIPTION,
+            "n_records": 1,
+            "items": ["YLR287-A"],
+        }
+    ]
 
 
 def test_download_reads_the_library_mirror_and_verifies_sha256(
@@ -422,13 +411,13 @@ def test_download_reads_the_library_mirror_and_verifies_sha256(
     with pytest.raises(
         RuntimeError, match=f"library mirror data file not found: {mirror}"
     ):
-        m.IsobutanolScreenLopez2024Dataset(root=str(tmp_path / "a"), genome=_genome())
+        m.IsobutanolScreenLopez2024Dataset(root=str(tmp_path / "a"))
     mirror.mkdir(parents=True)
     (mirror / m._XLSX_FILENAME).write_bytes(b"not the real workbook")
     digest = hashlib.sha256(b"not the real workbook").hexdigest()
     assert digest.startswith("55b4751d")
     with pytest.raises(RawSha256MismatchError) as err:
-        m.IsobutanolScreenLopez2024Dataset(root=str(tmp_path / "b"), genome=_genome())
+        m.IsobutanolScreenLopez2024Dataset(root=str(tmp_path / "b"))
     assert str(err.value) == (
         f"sha256 mismatch for {mirror / m._XLSX_FILENAME}: expected "
         f"{m._XLSX_SHA256}, observed {digest}"
@@ -452,7 +441,7 @@ def test_a_raw_file_off_the_pin_is_refused_at_build_time(
     staged = off_pin_raw(m, [m._XLSX_FILENAME])
     raw = staged.root / "raw" / m._XLSX_FILENAME
     with pytest.raises(RawSha256MismatchError) as err:
-        dataset_cls(root=str(staged.root), genome=_genome())
+        dataset_cls(root=str(staged.root))
     assert str(err.value) == (
         f"sha256 mismatch for {raw}: expected {m._XLSX_SHA256}, "
         f"observed {staged.observed}"

@@ -43,8 +43,7 @@ import hashlib
 import logging
 import os
 from pathlib import Path
-from types import SimpleNamespace
-from typing import Any, cast
+from typing import Any
 
 import pandas as pd
 import pytest
@@ -55,16 +54,13 @@ from tests.torchcell.datasets.scerevisiae.test_nadal_ribelles2025_synthetic impo
     _NACL,
     _deg,
     _experiment,
-    _genome,
     _reference,
-    _StubGenome,
     _write_files,
 )
 from torchcell.data import RawSha256MismatchError
 from torchcell.data.experiment_dataset import verify_raw_files
 from torchcell.datamodels.schema import MarkerDeletionPerturbation
 from torchcell.datasets.scerevisiae import nadal_ribelles2025 as m
-from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 
 _FCS = {
     "DEG_Control_bc_YAL012W.csv": _deg(["MET14", "MUP1"], [1.0, -0.5]),
@@ -114,9 +110,7 @@ def _build(
 ) -> m.NadalRibellesPerturbSeq2025Dataset:
     monkeypatch.setenv("DATA_ROOT", str(tmp_path / "data_root"))
     _write(tmp_path / "nadal" / "raw", fcs, ptbs)
-    return m.NadalRibellesPerturbSeq2025Dataset(
-        root=str(tmp_path / "nadal"), genome=_genome()
-    )
+    return m.NadalRibellesPerturbSeq2025Dataset(root=str(tmp_path / "nadal"))
 
 
 def test_a_label_repeated_within_a_condition_is_refused(
@@ -146,20 +140,18 @@ def test_ptbs_lookup_is_by_label_not_row_position(
     assert len(dataset) == 2
     assert dataset[0]["experiment"] == _experiment(
         "YAL012W",
-        "CYS3",
+        "YAL012W",
         "bc_YAL012W",
         _CONTROL,
-        {"YKL001C": 1.0, "YGR055W": -0.5},
+        {"MET14": 1.0, "MUP1": -0.5},
         1.5,
         60,
     )
-    assert dataset[0]["reference"] == _reference(
-        _CONTROL, ["YKL001C", "YGR055W"], 1.0, 300
-    )
+    assert dataset[0]["reference"] == _reference(_CONTROL, ["MET14", "MUP1"], 1.0, 300)
     assert dataset[1]["experiment"] == _experiment(
-        "YAL012W", "CYS3", "bc_YAL012W", _NACL, {"YKL001C": 2.0}, 0.8, 45
+        "YAL012W", "YAL012W", "bc_YAL012W", _NACL, {"MET14": 2.0}, 0.8, 45
     )
-    assert dataset[1]["reference"] == _reference(_NACL, ["YKL001C"], 1.05, 250)
+    assert dataset[1]["reference"] == _reference(_NACL, ["MET14"], 1.05, 250)
 
 
 def test_an_unknown_condition_is_refused_before_any_store(
@@ -178,57 +170,24 @@ def test_an_unknown_condition_is_refused_before_any_store(
     assert list((tmp_path / "nadal" / "processed").iterdir()) == []
 
 
-class _AliasGenome(_StubGenome):
-    """The synthetic stub plus two aliases whose candidate is not a genome ID."""
-
-    alias_to_systematic: dict[str, list[str]] = {
-        **_StubGenome.alias_to_systematic,
-        "YPL998W": ["YZZ000W"],
-        "RETIRED": ["YZZ000W"],
-    }
-
-
-def test_resolver_uppercases_and_drops_aliases_that_leave_the_genome() -> None:
-    """Each branch of ``resolve`` (lines 246-261): an ID in any case, the Alias column,
-    and the two alias-map lookups that reject a candidate outside the genome.
-    """
-    holder = SimpleNamespace(genome=cast(SCerevisiaeGenome, _AliasGenome()))
-    resolve, sys_to_common = m.NadalRibellesPerturbSeq2025Dataset._resolvers(
-        cast(m.NadalRibellesPerturbSeq2025Dataset, holder)
-    )
-    tokens = ["yal012w", "str1", "YPL999W", "oldsym", "YPL998W", "RETIRED", "YPL997W"]
-    assert [resolve(t) for t in tokens] == [
-        "YAL012W",
-        "YAL012W",
-        "YKL001C",
-        "YGR055W",
-        None,
-        None,
-        None,
-    ]
-    assert sys_to_common["YKL001C"] == "MET14"
-
-
 def test_build_logs_the_gene_ledger_and_every_skipped_table(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
-    """On the synthetic tables: 4 records, 7 genes kept, 2 dropped, 1 collision, 1
-    unparsed label, with the unparseable label and the all-unresolvable table named.
+    """On the synthetic tables: 5 records, 12 gene values under their released names,
+    1 genotype label deferred (named).
     """
     monkeypatch.setenv("DATA_ROOT", str(tmp_path / "data_root"))
     _write_files(tmp_path / "nadal" / "raw")
     with caplog.at_level(logging.INFO, logger=m.log.name):
-        m.NadalRibellesPerturbSeq2025Dataset(
-            root=str(tmp_path / "nadal"), genome=_genome()
-        )
+        m.NadalRibellesPerturbSeq2025Dataset(root=str(tmp_path / "nadal"))
     messages = [r.getMessage() for r in caplog.records if r.name == m.log.name]
     assert messages == [
         "Loading FC_genotype.Rdata (426 MB; ~6 min) ...",
-        "Dropping record with unparseable ORF label: NOTANORF",
-        "Record Control/YGR055W has no resolvable genes; skipping",
-        "Resolved 4 records; genes kept=7 dropped=2 (unresolvable), collisions=1, "
-        "ORF-labels unparsed=1",
-        "Wrote 4 pseudobulk records to LMDB",
+        "Record Control/NOTANORF: genotype label is not ORF-shaped; deferred to the "
+        "released-gene-name leaf",
+        "Read 5 records as released; 10 gene values under their released names; 1 "
+        "genotype labels deferred to the released-gene-name leaf",
+        "Wrote 5 pseudobulk records to LMDB",
     ]
 
 
@@ -262,9 +221,7 @@ def test_a_stale_raw_file_is_refused_at_build_time_though_the_mirror_verifies(
     rdata.write_rda(str(raw / m.PTB_NAME), {"ptbs": stale})
     stale_bytes = (raw / m.PTB_NAME).read_bytes()
     with pytest.raises(RawSha256MismatchError) as err:
-        m.NadalRibellesPerturbSeq2025Dataset(
-            root=str(tmp_path / "nadal"), genome=_genome()
-        )
+        m.NadalRibellesPerturbSeq2025Dataset(root=str(tmp_path / "nadal"))
     assert str(err.value) == (
         f"sha256 mismatch for {raw / m.PTB_NAME}: expected "
         f"{hashlib.sha256(files[m.PTB_NAME]).hexdigest()}, "
@@ -279,52 +236,34 @@ def test_a_stale_raw_file_is_refused_at_build_time_though_the_mirror_verifies(
     assert list((tmp_path / "nadal" / "processed").iterdir()) == []
 
 
-def test_main_builds_under_data_root_with_a_read_only_genome(
+def test_main_builds_under_data_root_and_prints_record_zero(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """``main`` opens the genome at ``$DATA_ROOT/data/sgd/genome`` with ``overwrite=False``,
-    builds the dataset under ``data/torchcell/nadal_ribelles_perturbseq2025`` and prints
-    the length and record 0 (3 genes, dispersion 1.25, 120 cells, control environment),
-    after the base class's streaming line from the build.
+    """``main`` builds the dataset under ``data/torchcell/nadal_ribelles_perturbseq2025``
+    with no genome and prints the length and record 0 (5 released gene names,
+    dispersion 1.25, 120 cells, control environment), after the base class's streaming
+    line from the build.
     """
     monkeypatch.setenv("DATA_ROOT", str(tmp_path))
     monkeypatch.setattr("dotenv.load_dotenv", lambda *a, **k: False)
-    genome_calls: list[dict[str, Any]] = []
-
-    def genome(**kwargs: Any) -> SCerevisiaeGenome:
-        genome_calls.append(kwargs)
-        return _genome()
-
-    monkeypatch.setattr(m, "SCerevisiaeGenome", genome)
     root = tmp_path / "data" / "torchcell" / "nadal_ribelles_perturbseq2025"
     _write_files(root / "raw")
     m.main()
-    assert genome_calls == [
-        {
-            "genome_root": f"{tmp_path}/data/sgd/genome",
-            "go_root": f"{tmp_path}/data/go",
-            "overwrite": False,
-        }
-    ]
     perturbation = MarkerDeletionPerturbation(
         systematic_gene_name="YAL012W",
-        perturbed_gene_name="CYS3",
+        perturbed_gene_name="YAL012W",
         marker="URA3",
         strain_id="bc_YAL012W",
     ).model_dump()
     assert capsys.readouterr().out == (
         # printed by the base class's reference-index pass during the build
         "Computing experiment_reference_index (streaming)...\n"
-        "len = 4\n"
+        "len = 5\n"
         f"record[0] perturbations: {[perturbation]}\n"
-        "record[0] n phenotype genes: 3\n"
+        "record[0] n phenotype genes: 5\n"
         "record[0] dispersion: 1.25 n_cells: 120\n"
         f"record[0] environment: {_CONTROL.model_dump()}\n"
     )
-    assert (root / "processed" / "lmdb" / "data.mdb").is_file()
-
-
-# Phase 24: the chunked sha256 helper
 
 
 def test_sha256_reads_in_chunks_and_matches_the_one_shot_digest(tmp_path: Path) -> None:

@@ -18,8 +18,9 @@ RECORD = one (pool x guide x drug-condition) ``EnvironmentResponseExperiment``:
   effector ``dCas9-Mxi1``, the 18/20 nt ``Specificity_sequence`` spacer (joined from
   Additional file 4 by guide name) and the screen ``library_pool``. The spacer keeps
   sibling guides of one gene distinct; the pool keeps the SAME spacer's two independent
-  pool measurements distinct. The common name is the GENOME's own standard name for the
-  resolved ORF, so one gene carries one spelling across datasets.
+  pool measurements distinct. The target is stored AS RELEASED: ``systematic_gene_name``
+  is the row's ``ORF`` cell and ``perturbed_gene_name`` its ``Gene`` cell (the ORF where
+  that is blank); no genome is consulted (#1045, owner rule 2026-10-12).
 - ENVIRONMENT: the shared ``media.SC_URA`` object (the paper's "SCM-Ura"; Smith releases
   no SCM-Ura recipe, so the shipped library gaps are the honest state) carrying the row's
   drug at its released concentration as a ``SmallMoleculePerturbation``, 30 C, aerobic,
@@ -68,15 +69,20 @@ screening. These concentrations were selected to inhibit growth of a wild-type s
 member and adding one changes a class in all 36 served dataset closures, so the rule is
 recorded here and in the dendron note instead of in ``Concentration.basis``.
 
-RECORDS DROPPED (rule + counts in ``preprocess/dropped_records.json``): 7,410 of 14,463
-(51.2%) whose drug is a vendor catalog code -- 1181-0519, 4130-1276 and 0KPI-0099
-(ChemDiv), 9121982, 9125678, 7312221, CBF-666774, 6630449 and 9150499 (ChemBridge),
-ST016598 (TimTec). The primary released no structure, SMILES or CAS for any of them, so
-``resolve_compound_identity`` returns ``PROPRIETARY`` with no InChIKey, ChEBI id or CID
-and the compound entity cannot be encoded or joined. Per the Hoepfner precedent those
-records are dropped, not served under a bare name. Kept: 7,053. The tenth public compound,
-``NSC-180973``, resolves through the pinned identity table's synonym for tamoxifen -- the
-alias the paper's own Additional file 8 releases -- so its 456 records are kept.
+RECORDS (``preprocess/dropped_records.json`` is the accounting): every released row is a
+record. The 7,410 rows (51.2%) whose drug is a vendor catalog code -- 1181-0519, 4130-1276
+and 0KPI-0099 (ChemDiv), 9121982, 9125678, 7312221, CBF-666774, 6630449 and 9150499
+(ChemBridge), ST016598 (TimTec) -- are stored under the released label with a typed
+``inchikey`` gap on the ``Compound`` (``resolved_compound`` attaches
+``not_reported_by_primary`` to a label the pinned identity table marks PROPRIETARY: the
+primary released no structure, SMILES or CAS). They are listed under
+``compound_identity_gaps`` with their record counts (2026.10.12, #1045; the previous
+build dropped them). The tenth public compound, ``NSC-180973``, resolves through the
+pinned identity table's synonym for tamoxifen, the alias the paper's own Additional file
+8 releases. The two rules that can still leave a row without a record are a row with no
+``A`` or ``var(A)`` and a guide with no spacer in Additional file 4; both are 0 on the
+pinned files. An ``ORF`` cell that is not ORF-shaped is counted under
+``deferred_to_released_gene_name_leaf`` (0 of 14,463 rows) until that leaf lands.
 
 DUPLICATE-BY-POOL: 272 (guide, drug, concentration) triples appear twice, always the pool
 pair (``broad_tiling``, ``gene_tiling_20bp``) sharing a 20 bp perfect-match spacer. Fitness
@@ -119,10 +125,7 @@ from torchcell.data import (
     verify_raw_files,
     verify_sha256,
 )
-from torchcell.datamodels.compound_identity import (
-    resolve_compound_identity,
-    resolved_compound,
-)
+from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import SC_URA
 from torchcell.datamodels.schema import (
     AssayType,
@@ -146,7 +149,6 @@ from torchcell.datamodels.schema import (
     UncertaintyType,
 )
 from torchcell.datasets.dataset_registry import register_dataset
-from torchcell.datasets.scerevisiae.smith2006 import canonical_common_names
 from torchcell.literature.manifest import (
     ROLE_SI_DATA,
     ArtifactRecord,
@@ -154,7 +156,6 @@ from torchcell.literature.manifest import (
     RetrievalMethod,
     RetrievalRecord,
 )
-from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import (
     ProvenanceGap,
@@ -176,6 +177,8 @@ _ESM_BASE = (
 )
 EFFECT_FILENAME = "13059_2016_900_MOESM10_ESM.xlsx"
 EFFECT_REL = f"si/si_data/{EFFECT_FILENAME}"
+_SYSTEMATIC_RE = re.compile(r"^(Y[A-P][LR]\d{3}[WC](-[A-Z])?|Q\d{4})$")
+
 EFFECT_SHEET = "Fitness and Effect Data"
 EFFECT_SHA256 = "02962e51e492b0505e8595fc1c80fab5fca8a8c8f05e05969dbff18ddff71cd0"
 GUIDE_FILENAME = "13059_2016_900_MOESM4_ESM.xlsx"
@@ -429,14 +432,29 @@ class DropRule(BaseModel):
     items: list[str] = []
 
 
+class GappedCompound(BaseModel):
+    """A drug stored under its released label with a typed identity gap; not a drop."""
+
+    drug: str
+    compound_name: str
+    gap_field: str
+    gap_reason: ProvenanceGapReason
+    n_records: int
+
+
 class DropLog(BaseModel):
-    """Every retention rule applied to a build, in the order they were applied."""
+    """Every retention rule applied to a build, in order, plus the gapped compounds.
+
+    ``compound_identity_gaps`` are not drops: those rows are stored, each compound
+    carrying its typed gap.
+    """
 
     dataset: str
     source_records: int
     kept_records: int
     dropped_records: int
     rules: list[DropRule]
+    compound_identity_gaps: list[GappedCompound] = []
 
 
 @register_dataset
@@ -449,13 +467,11 @@ class CrispriChemgenSmith2016Dataset(ExperimentDataset):
         self,
         root: str = "data/torchcell/crispri_chemgen_smith2016",
         io_workers: int = 0,
-        genome: SCerevisiaeGenome | None = None,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize; a genome is REQUIRED for target-ORF -> current-R64 resolution."""
-        self.genome = genome
+        """Initialize the dataset (no genome: every target is stored as released)."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -496,23 +512,19 @@ class CrispriChemgenSmith2016Dataset(ExperimentDataset):
             "Smith 2016 SI workbooks linked into %s (sha256 verified)", self.raw_dir
         )
 
-    def _resolver(self) -> Callable[[str], str | None]:
-        """Target ORF -> current-R64 ORF via the SHARED genome resolver."""
-        if self.genome is None:
-            raise RuntimeError(
-                "CrispriChemgenSmith2016Dataset requires a genome; "
-                "inject SCerevisiaeGenome(...)"
-            )
-        genome = self.genome
-        gene_set = {gene.upper() for gene in genome.gene_set}
+    @staticmethod
+    def _released_target(orf_cell: Any, gene_cell: Any) -> tuple[str, str] | None:
+        """``(systematic_gene_name, perturbed_gene_name)`` from the row's released cells.
 
-        def resolve(name: str) -> str | None:
-            resolution = genome.resolve_gene_name(str(name).strip())
-            if resolution.is_current_gene and resolution.systematic_name in gene_set:
-                return resolution.systematic_name
+        The ``ORF`` cell (stripped) is the systematic name and the ``Gene`` cell the
+        perturbed name, the ORF again where it is blank. No genome is consulted. A cell
+        that is not ORF-shaped returns None and is counted under the leaf deferral rule.
+        """
+        orf = str(orf_cell).strip()
+        if not _SYSTEMATIC_RE.match(orf):
             return None
-
-        return resolve
+        gene = "" if pd.isna(gene_cell) else str(gene_cell).strip()
+        return orf, gene if gene else orf
 
     def _spacer_map(self) -> dict[str, str]:
         """Guide name -> ``Specificity_sequence`` spacer (unique per name; 0 conflicts)."""
@@ -571,20 +583,11 @@ class CrispriChemgenSmith2016Dataset(ExperimentDataset):
         )
         df["A"] = pd.to_numeric(df["A"], errors="coerce")
         df["var(A)"] = pd.to_numeric(df["var(A)"], errors="coerce")
-        resolve = self._resolver()
-        assert self.genome is not None
-        canonical = canonical_common_names(self.genome)
         spacer_map = self._spacer_map()
         publication = Publication(doi=DOI, doi_url=f"https://doi.org/{DOI}")
 
         source_records = len(df)
-        drugs = sorted({str(v) for v in df["Drug"]})
-        unidentified = sorted(
-            drug
-            for drug in drugs
-            if not resolve_compound_identity(name=drug).identified
-        )
-        unidentified_set = set(unidentified)
+        gapped_records: dict[str, int] = {}
 
         env_cache: dict[tuple[str, str], dict[str, Any]] = {}
 
@@ -602,8 +605,8 @@ class CrispriChemgenSmith2016Dataset(ExperimentDataset):
         os.makedirs(self.processed_dir, exist_ok=True)
         env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
         idx = 0
-        n_nan = n_unresolved = n_no_spacer = n_unidentified = 0
-        unresolved_genes: set[str] = set()
+        n_nan = n_deferred = n_no_spacer = 0
+        deferred_targets: set[str] = set()
         no_spacer_guides: set[str] = set()
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for _, row in tqdm(df.iterrows(), total=len(df), desc="smith2016"):
@@ -612,14 +615,12 @@ class CrispriChemgenSmith2016Dataset(ExperimentDataset):
                     n_nan += 1
                     continue
                 drug = str(row["Drug"])
-                if drug in unidentified_set:
-                    n_unidentified += 1
+                target = self._released_target(row["ORF"], row["Gene"])
+                if target is None:
+                    n_deferred += 1
+                    deferred_targets.add(str(row["ORF"]).strip())
                     continue
-                orf = resolve(row["ORF"])
-                if orf is None:
-                    n_unresolved += 1
-                    unresolved_genes.add(str(row["ORF"]))
-                    continue
+                orf, gene = target
                 guide_name = str(row["Guide"])
                 spacer = spacer_map.get(guide_name)
                 if spacer is None:
@@ -627,13 +628,16 @@ class CrispriChemgenSmith2016Dataset(ExperimentDataset):
                     no_spacer_guides.add(guide_name)
                     continue
                 item = prepared(drug, row["Concentration"])
+                compound = item["environment"].perturbations[0].compound
+                if compound.provenance_gaps:
+                    gapped_records[drug] = gapped_records.get(drug, 0) + 1
                 experiment = EnvironmentResponseExperiment(
                     dataset_name=self.name,
                     genotype=Genotype(
                         perturbations=[
                             CrisprInterferencePerturbation(
                                 systematic_gene_name=orf,
-                                perturbed_gene_name=canonical.get(orf, orf),
+                                perturbed_gene_name=gene,
                                 crispr=CrisprConstruct(
                                     effector=EFFECTOR.value,
                                     guide_sequence=spacer,
@@ -667,18 +671,6 @@ class CrispriChemgenSmith2016Dataset(ExperimentDataset):
 
         rules = [
             DropRule(
-                rule="drug_is_a_vendor_catalog_code_with_no_released_structure",
-                scope="compound",
-                description=(
-                    "the Drug label is a ChemDiv / ChemBridge / TimTec catalog id and the "
-                    "primary released no structure, SMILES or CAS for it, so "
-                    "resolve_compound_identity returns PROPRIETARY with no InChIKey, ChEBI "
-                    "id or PubChem CID and the compound entity cannot be encoded or joined"
-                ),
-                n_records=n_unidentified,
-                items=unidentified,
-            ),
-            DropRule(
                 rule="row_has_no_A_or_var_A",
                 scope="row",
                 description=(
@@ -689,14 +681,16 @@ class CrispriChemgenSmith2016Dataset(ExperimentDataset):
                 items=[],
             ),
             DropRule(
-                rule="target_orf_is_not_a_current_genome_gene",
+                rule="deferred_to_released_gene_name_leaf",
                 scope="row",
                 description=(
-                    "the target ORF does not resolve to a gene of the current R64 "
-                    "annotation (0 today; all 20 targets are current)"
+                    "the ORF cell is not ORF-shaped, so it cannot be stored on "
+                    "CrisprInterferencePerturbation, whose systematic_gene_name is "
+                    "validated against the ORF pattern; stored once the released-gene-name "
+                    "leaf lands (0 today; all 20 released targets are ORF-shaped)"
                 ),
-                n_records=n_unresolved,
-                items=sorted(unresolved_genes),
+                n_records=n_deferred,
+                items=sorted(deferred_targets),
             ),
             DropRule(
                 rule="guide_has_no_released_spacer",
@@ -709,12 +703,30 @@ class CrispriChemgenSmith2016Dataset(ExperimentDataset):
                 items=sorted(no_spacer_guides),
             ),
         ]
+        compound_identity_gaps = []
+        for drug, count in sorted(gapped_records.items()):
+            compound = (
+                env_cache[next(k for k in env_cache if k[0] == drug)]["environment"]
+                .perturbations[0]
+                .compound
+            )
+            (gap,) = compound.provenance_gaps
+            compound_identity_gaps.append(
+                GappedCompound(
+                    drug=drug,
+                    compound_name=compound.name,
+                    gap_field=gap.field,
+                    gap_reason=gap.reason,
+                    n_records=count,
+                )
+            )
         drop_log = DropLog(
             dataset=self.name,
             source_records=source_records,
             kept_records=idx,
             dropped_records=source_records - idx,
             rules=rules,
+            compound_identity_gaps=compound_identity_gaps,
         )
         with open(osp.join(self.preprocess_dir, "dropped_records.json"), "w") as handle:
             handle.write(drop_log.model_dump_json(indent=2))
@@ -725,14 +737,15 @@ class CrispriChemgenSmith2016Dataset(ExperimentDataset):
                 f"{drop_log.dropped_records} records missing from the build"
             )
         log.info(
-            "Smith2016: wrote %d of %d rows; dropped %d on %d unidentified vendor-code "
-            "drugs, %d with no A/var(A), %d unresolved targets, %d guides with no spacer",
+            "Smith2016: wrote %d of %d rows (%d under a typed compound-identity gap on "
+            "%d vendor-code drugs); %d with no A/var(A), %d targets deferred to the "
+            "released-gene-name leaf, %d guides with no spacer",
             idx,
             source_records,
-            n_unidentified,
-            len(unidentified),
+            sum(gapped_records.values()),
+            len(gapped_records),
             n_nan,
-            n_unresolved,
+            n_deferred,
             n_no_spacer,
         )
 
@@ -751,13 +764,8 @@ def main() -> None:
 
     load_dotenv()
     data_root = os.environ["DATA_ROOT"]
-    genome = SCerevisiaeGenome(
-        genome_root=osp.join(data_root, "data/sgd/genome"),
-        go_root=osp.join(data_root, "data/go"),
-        overwrite=False,
-    )
     root = osp.join(data_root, "data/torchcell/crispri_chemgen_smith2016")
-    dataset = CrispriChemgenSmith2016Dataset(root=root, genome=genome)
+    dataset = CrispriChemgenSmith2016Dataset(root=root)
     print(f"len = {len(dataset)}")
     print(dataset[0])
     print(

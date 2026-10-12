@@ -33,10 +33,15 @@ single-cell object is NOT used):
 RAGGED gene sets: each mutant-vs-WT DE first drops genes with 0 counts, so the tested gene
 set differs per genotype (min 4223, max 6313, median ~5837 genes; union 6796, all 6188
 tables distinct). A gene not tested for a genotype is KEY-ABSENT (no key), NEVER 0 -- the same
-honest convention the RNA-seq expression family uses for genome-absent genes. Gene common
-names (``MET14``/``MUP1``) are mapped to current-R64 systematic ORFs via the genome alias
-table; unresolvable names (~6.5%: ncRNAs/retired symbols such as ``15S-RRNA``/``SNR*``) are
-dropped and logged.
+honest convention the RNA-seq expression family uses for genome-absent genes. The keys of
+``expression_log2_ratio`` are the gene names AS RELEASED in each DEG table (``MET14``,
+``MUP1``, ``15S_RRNA``, ``SNR17A``, an ORF where the release names one), stripped and
+otherwise verbatim: no genome is consulted (#1045, owner rule 2026-10-12), so the ~1.13M
+values under names the R64 alias table does not place (ncRNAs, retired symbols) and the
+~15.7k values under a second name for one ORF, both of which the previous build dropped,
+are stored. Reconciling a released name to an ORF is a modeling-time step. The deleted
+gene is the ORF in the genotype label (``bc_YAL012W``), stored as both
+``systematic_gene_name`` and ``perturbed_gene_name`` (the release carries no common name).
 
 SOURCED VALUES (paper Methods; OCR ``paper.md`` in the library mirror):
   - Environment: profiled cells grown in YPD to mid-exponential (OD660 0.6-0.8); osmostress =
@@ -66,6 +71,7 @@ DATA SOURCE + PROVENANCE (Zenodo 10.5281/zenodo.14062629; raw mirror
 from __future__ import annotations
 
 import hashlib
+import json
 import logging
 import os
 import os.path as osp
@@ -104,7 +110,6 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
-from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import SourcedValue
 
@@ -183,6 +188,10 @@ class UnknownConditionError(ValueError):
     """A table names a condition other than the paper's control and 0.4 M NaCl."""
 
 
+class RepeatedGeneNameError(ValueError):
+    """A DEG table lists one released gene name on two rows."""
+
+
 def _sha256(path: str, chunk_size: int = 1 << 20) -> str:
     """Return the hex sha256 of a file, read in chunks."""
     digest = hashlib.sha256()
@@ -228,13 +237,11 @@ class NadalRibellesPerturbSeq2025Dataset(ExperimentDataset):
         self,
         root: str = "data/torchcell/nadal_ribelles_perturbseq2025",
         io_workers: int = 0,
-        genome: SCerevisiaeGenome | None = None,
         transform: Any | None = None,
         pre_transform: Any | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize the dataset; a genome is REQUIRED for common-name -> ORF mapping."""
-        self.genome = genome
+        """Initialize the dataset (no genome: every name is stored as released)."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -275,40 +282,6 @@ class NadalRibellesPerturbSeq2025Dataset(ExperimentDataset):
         log.info(
             "Nadal-Ribelles raw files linked into %s (sha256 verified)", self.raw_dir
         )
-
-    def _resolvers(self) -> tuple[Any, dict[str, str]]:
-        """Build (common-name -> R64 ORF) resolver + (ORF -> common name) map from genome."""
-        if self.genome is None:
-            raise RuntimeError(
-                "NadalRibellesPerturbSeq2025Dataset requires a genome for gene-name "
-                "resolution; inject SCerevisiaeGenome(...)"
-            )
-        genome = self.genome
-        df = genome.gene_attribute_table
-        ids = set(df["ID"].astype(str))
-        alias_map = genome.alias_to_systematic
-        gene_col = dict(zip(df["gene"].astype(str), df["ID"].astype(str)))
-        alias_col = dict(zip(df["Alias"].astype(str), df["ID"].astype(str)))
-        sys_to_common = dict(zip(df["ID"].astype(str), df["gene"].astype(str)))
-
-        def resolve(token: str) -> str | None:
-            gene = str(token).upper()
-            if gene in ids:
-                return gene
-            if _SYSTEMATIC_RE.match(gene):
-                cand = alias_map.get(gene, [])
-                if cand and cand[0] in ids:
-                    return cand[0]
-            if gene in gene_col:
-                return gene_col[gene]
-            if gene in alias_col:
-                return alias_col[gene]
-            cand = alias_map.get(gene, [])
-            if cand and cand[0] in ids:
-                return cand[0]
-            return None
-
-        return resolve, sys_to_common
 
     def _load_ptbs(self, data_root: str) -> dict[str, pd.DataFrame]:
         """Load ptb_summary -> {condition: DataFrame indexed by normalized genotype label}.
@@ -355,7 +328,6 @@ class NadalRibellesPerturbSeq2025Dataset(ExperimentDataset):
         data_root = self._data_root()
         os.makedirs(self.preprocess_dir, exist_ok=True)
 
-        resolve, sys_to_common = self._resolvers()
         ptbs = self._load_ptbs(data_root)
         # ptbs condition keys are lower-case ('control'/'nacl'); fcs uses 'Control'/'NaCl'.
         ptb_by_cond = {k.lower(): v for k, v in ptbs.items()}
@@ -363,39 +335,36 @@ class NadalRibellesPerturbSeq2025Dataset(ExperimentDataset):
         log.info("Loading %s (426 MB; ~6 min) ...", FC_NAME)
         fcs = rdata.read_rda(osp.join(self.raw_dir, FC_NAME))["fcs"]
 
-        # ---- Pass 1: resolve every record's logFC vector; accumulate per-condition union.
+        # ---- Pass 1: read every record's logFC vector as released; accumulate the
+        # per-condition union of released gene names.
         records: list[dict[str, Any]] = []
         cond_union: dict[str, dict[str, float]] = {}
-        n_gene_dropped = 0
-        n_gene_kept = 0
-        n_collision = 0
-        n_orf_unresolved = 0
-        for key in tqdm(fcs.keys(), desc="resolving pseudobulk records"):
+        n_gene_values = 0
+        deferred_labels: list[str] = []
+        for key in tqdm(fcs.keys(), desc="reading pseudobulk records"):
             cond, raw_orf = _parse_fc_key(str(key))
             sys_name = _deletion_systematic(raw_orf)
             if sys_name is None:
-                n_orf_unresolved += 1
-                log.warning("Dropping record with unparseable ORF label: %s", raw_orf)
-                continue
-            table = fcs[key]
-            names = [str(x) for x in table["names"]]
-            lfcs = [float(x) for x in table["logfoldchanges"]]
-            expr: dict[str, float] = {}
-            for name, lfc in zip(names, lfcs):
-                orf = resolve(name)
-                if orf is None:
-                    n_gene_dropped += 1
-                    continue
-                if orf in expr:
-                    n_collision += 1
-                    continue  # keep first common-name mapping to this ORF
-                expr[orf] = lfc
-                n_gene_kept += 1
-            if not expr:
+                deferred_labels.append(raw_orf)
                 log.warning(
-                    "Record %s/%s has no resolvable genes; skipping", cond, raw_orf
+                    "Record %s/%s: genotype label is not ORF-shaped; deferred to the "
+                    "released-gene-name leaf",
+                    cond,
+                    raw_orf,
                 )
                 continue
+            table = fcs[key]
+            names = [str(x).strip() for x in table["names"]]
+            lfcs = [float(x) for x in table["logfoldchanges"]]
+            expr: dict[str, float] = {}
+            for name, lfc in zip(names, lfcs, strict=True):
+                if name in expr:
+                    raise RepeatedGeneNameError(
+                        f"DEG table {key!r} lists gene name {name!r} twice; one released "
+                        "name is one value, refusing to keep the first"
+                    )
+                expr[name] = lfc
+            n_gene_values += len(expr)
             cond_union.setdefault(cond.lower(), {}).update({g: 0.0 for g in expr})
             strain_label = f"bc_{raw_orf}"
             dispersion, n_cells = self._ptb_scalars(
@@ -405,7 +374,7 @@ class NadalRibellesPerturbSeq2025Dataset(ExperimentDataset):
                 {
                     "condition": cond.lower(),
                     "systematic_gene_name": sys_name,
-                    "perturbed_gene_name": sys_to_common.get(sys_name) or sys_name,
+                    "perturbed_gene_name": sys_name,
                     "strain_id": strain_label,
                     "expression_log2_ratio": expr,
                     "dispersion": dispersion,
@@ -413,14 +382,37 @@ class NadalRibellesPerturbSeq2025Dataset(ExperimentDataset):
                 }
             )
         log.info(
-            "Resolved %d records; genes kept=%d dropped=%d (unresolvable), "
-            "collisions=%d, ORF-labels unparsed=%d",
+            "Read %d records as released; %d gene values under their released names; "
+            "%d genotype labels deferred to the released-gene-name leaf",
             len(records),
-            n_gene_kept,
-            n_gene_dropped,
-            n_collision,
-            n_orf_unresolved,
+            n_gene_values,
+            len(deferred_labels),
         )
+        with open(osp.join(self.preprocess_dir, "dropped_records.json"), "w") as fh:
+            json.dump(
+                {
+                    "dataset": self.name,
+                    "source_records": len(fcs),
+                    "kept_records": len(records),
+                    "dropped_records": len(deferred_labels),
+                    "rules": [
+                        {
+                            "rule": "deferred_to_released_gene_name_leaf",
+                            "description": (
+                                "the fcs genotype label is not ORF-shaped, so the deleted "
+                                "gene cannot be stored on MarkerDeletionPerturbation, whose "
+                                "systematic_gene_name is validated against the ORF pattern; "
+                                "stored once the released-gene-name leaf lands (0 of 6188 "
+                                "released tables)"
+                            ),
+                            "n_records": len(deferred_labels),
+                            "items": sorted(deferred_labels),
+                        }
+                    ],
+                },
+                fh,
+                indent=2,
+            )
 
         # ---- Per-condition WT reference (logFC 0 over the condition union; WT dispersion/n).
         self._references = {
@@ -568,13 +560,8 @@ def main() -> None:
 
     load_dotenv()
     data_root = os.environ["DATA_ROOT"]
-    genome = SCerevisiaeGenome(
-        genome_root=osp.join(data_root, "data/sgd/genome"),
-        go_root=osp.join(data_root, "data/go"),
-        overwrite=False,
-    )
     root = osp.join(data_root, "data/torchcell/nadal_ribelles_perturbseq2025")
-    dataset = NadalRibellesPerturbSeq2025Dataset(root=root, genome=genome)
+    dataset = NadalRibellesPerturbSeq2025Dataset(root=root)
     print(f"len = {len(dataset)}")
     record = dataset[0]
     exp = record["experiment"]

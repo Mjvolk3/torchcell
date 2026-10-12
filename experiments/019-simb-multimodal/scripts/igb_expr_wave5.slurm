@@ -586,6 +586,31 @@ case "$STAGE" in
           JOBS_EXPLICIT=1
           RUNS_PER_GPU=1; STAGE_CONFIG=cgt_morph_v24
           EXTRA_OV="trainer.max_epochs=1200 data_module.batch_size=128 +data_module.materialize=true data_module.persistent_workers=true" ;;
+  # THE INDUCTIVE ROUND v25 (2026-10-11, project torchcell_019_morph_v25): the genotype-only
+  # morphology grid on fig3_core. Readout {M_cls, M_pool, M_zs, M_xattn} x lr {3e-4, 1e-3,
+  # 3e-3} x split seeds 0 to 3 (48 tasks, init seed 0), then the plateau-escape replicates
+  # of M_cls (init seeds 1 and 2 at every lr and split, 24 tasks), then M_cls at lr 3e-3
+  # with a 100-epoch warmup and cosine decay (4 tasks). 76 one-card tasks, no dependencies;
+  # the split caches for seeds 0 to 3 are on the IGB mirror. Split seed 0 of every cell
+  # comes first so each arm fails fast.
+  #   sbatch -J 019-morph2w1-inductive -p cabbi --gres=gpu:1 --cpus-per-task=5 --mem=60g \
+  #       --time=0-16:00:00 --array=0-75%8 --export=ALL,W5_STAGE=morph_v25,... igb_expr_wave5.slurm
+  morph_v25) JOBS=(); SWEEP_OV=()
+          for s in 0 1 2 3; do for lr in 3e-4 1e-3 3e-3; do for arm in M_cls M_pool M_zs M_xattn; do
+            JOBS+=("${arm}_s${s}:0")
+            SWEEP_OV+=("regression_task.optimizer.lr=${lr} wandb.tags=[v25,${arm},lr${lr},split${s},init0]")
+          done; done; done
+          for s in 0 1 2 3; do for lr in 3e-4 1e-3 3e-3; do for init in 1 2; do
+            JOBS+=("M_cls_s${s}:${init}")
+            SWEEP_OV+=("regression_task.optimizer.lr=${lr} wandb.tags=[v25,M_cls,lr${lr},split${s},init${init}]")
+          done; done; done
+          for s in 0 1 2 3; do
+            JOBS+=("M_cls_s${s}:0")
+            SWEEP_OV+=("regression_task.optimizer.lr=3e-3 regression_task.lr_scheduler.type=CosineAnnealingWarmupRestarts regression_task.lr_scheduler.first_cycle_steps=1200 regression_task.lr_scheduler.warmup_steps=100 regression_task.lr_scheduler.max_lr=3e-3 regression_task.lr_scheduler.min_lr=1e-5 wandb.tags=[v25,M_cls,lr3e-3,warmup100,split${s},init0]")
+          done
+          JOBS_EXPLICIT=1
+          RUNS_PER_GPU=1; STAGE_CONFIG=cgt_morph_v24
+          EXTRA_OV="trainer.max_epochs=1200 data_module.batch_size=128 +data_module.materialize=true data_module.persistent_workers=true wandb.project=torchcell_019_morph_v25" ;;
   scale_n) JOBS=(); SWEEP_OV=()
           for wl in 45:6e-4 90:3e-4 180:1.5e-4 360:7.5e-5; do for s in 0 1 2; do
             JOBS+=("S_mask_s${s}:0")

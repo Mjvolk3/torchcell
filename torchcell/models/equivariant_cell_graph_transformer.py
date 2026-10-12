@@ -1478,8 +1478,9 @@ class GlobalHead(nn.Module):
         use_gene_pool: bool = True,
         dropout: float = 0.1,
         param_dim: int = 1,
+        use_pert_summary: bool = False,
     ):
-        """Build the MLP mapping [h_CLS (|| GlobalPool(H_genes_pert))] to output_dim.
+        """Build the MLP mapping [h_CLS (|| GlobalPool(H_genes_pert)) (|| z_S)] to output_dim.
 
         Args:
             hidden_dim: Model hidden dimension.
@@ -1491,14 +1492,21 @@ class GlobalHead(nn.Module):
             param_dim: Distributional params PER FEATURE (1 point, 2 gaussian, K quantile).
                 The output Linear widens to ``output_dim * param_dim`` and the forward
                 reshapes to ``[batch, output_dim, param_dim]`` when > 1.
+            use_pert_summary: Concatenate ``z_S``, the pool over the strain's PERTURBED gene
+                tokens (``pooled_perturbed``), with h_CLS. ``[h_CLS || z_S]`` is the input
+                of :class:`PerturbationHead`, the configuration behind the
+                trigenic-interaction result; for a single deletion z_S is the deleted
+                gene's own perturbed token, so the head reads the gene the ridge baseline
+                reads, plus its graph context, instead of a mean diluted over every gene.
         """
         super().__init__()
         self.hidden_dim = hidden_dim
         self.output_dim = output_dim
         self.use_gene_pool = use_gene_pool
+        self.use_pert_summary = use_pert_summary
         self.param_dim = param_dim
 
-        in_dim = hidden_dim * 2 if use_gene_pool else hidden_dim
+        in_dim = hidden_dim * (1 + int(use_gene_pool) + int(use_pert_summary))
         self.mlp = nn.Sequential(
             nn.Linear(in_dim, hidden_dim),
             nn.ReLU(),
@@ -1506,13 +1514,20 @@ class GlobalHead(nn.Module):
             nn.Linear(hidden_dim, output_dim * param_dim),
         )
 
-    def forward(self, h_CLS: torch.Tensor, H_genes_pert: torch.Tensor) -> torch.Tensor:
+    def forward(
+        self,
+        h_CLS: torch.Tensor,
+        H_genes_pert: torch.Tensor,
+        z_S: torch.Tensor | None = None,
+    ) -> torch.Tensor:
         """Forward pass of the global head.
 
         Args:
             h_CLS: [d] the shared wild-type CLS, or [batch, d] the perturbed CLS
                 (``CellGraphTransformer.perturb_cls``).
             H_genes_pert: [batch, N, d] equivariant perturbed gene embeddings.
+            z_S: [batch, d] the pool over each strain's perturbed gene tokens; required
+                when ``use_pert_summary`` is set and ignored otherwise.
 
         Returns:
             predictions: [batch_size, output_dim] global phenotype predictions, or
@@ -1525,6 +1540,10 @@ class GlobalHead(nn.Module):
         if self.use_gene_pool:
             pooled = H_genes_pert.mean(dim=1)  # [batch, d]
             h = torch.cat([h, pooled], dim=-1)  # [batch, 2d]
+        if self.use_pert_summary:
+            if z_S is None:
+                raise ValueError("GlobalHead(use_pert_summary=True) needs z_S")
+            h = torch.cat([h, z_S], dim=-1)
         out = self.mlp(h)  # [batch, output_dim * param_dim]
         if self.param_dim > 1:
             out = out.view(batch_size, self.output_dim, self.param_dim)
@@ -2508,6 +2527,7 @@ class CellGraphTransformer(nn.Module):
                     use_gene_pool=g_cfg.get("use_gene_pool", True),
                     dropout=g_cfg.get("dropout", dropout),
                     param_dim=g_param_dim,
+                    use_pert_summary=bool(g_cfg.get("use_pert_summary", False)),
                 )
             elif g_decoder == "s3_xattn":
                 self.global_head = CrossAttnHead(
@@ -3218,10 +3238,24 @@ class CellGraphTransformer(nn.Module):
         #    empty and nothing here runs.
         head_outputs: dict[str, torch.Tensor] = {}
         if self.global_head is not None:
-            # The perturbed CLS when the operator produced one, else the shared one.
-            head_outputs["global"] = self.global_head(
-                h_CLS_pert if h_CLS_pert is not None else h_CLS, H_genes_pert
-            )
+            # The perturbed CLS when the operator produced one, else the shared one. The
+            # S1 head with ``use_pert_summary`` also reads z_S, the pool over the strain's
+            # perturbed gene tokens (the PerturbationHead input).
+            if getattr(self.global_head, "use_pert_summary", False):
+                head_outputs["global"] = self.global_head(
+                    h_CLS_pert if h_CLS_pert is not None else h_CLS,
+                    H_genes_pert,
+                    pooled_perturbed(
+                        H_genes_pert,
+                        batch["gene"].perturbation_indices,
+                        batch["gene"].perturbation_indices_batch,
+                        self.pert_pooling,
+                    ),
+                )
+            else:
+                head_outputs["global"] = self.global_head(
+                    h_CLS_pert if h_CLS_pert is not None else h_CLS, H_genes_pert
+                )
         if self.per_gene_head is not None:
             if self.per_gene_concat_context:
                 # [h_pert ; h_i ; c] -- h_i is the strain-INVARIANT encoder output, c the

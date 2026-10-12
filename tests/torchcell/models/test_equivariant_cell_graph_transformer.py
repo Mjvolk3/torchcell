@@ -15,6 +15,7 @@ from torch_geometric.data import HeteroData
 
 from torchcell.models.equivariant_cell_graph_transformer import (
     CellGraphTransformer,
+    GlobalHead,
     MaskedMultitaskLoss,
 )
 
@@ -350,6 +351,31 @@ def test_fused_attention_on_unregularized_layers_matches_manual_everywhere() -> 
     assert torch.allclose(
         fused["head_outputs"]["per_gene"], manual["head_outputs"]["per_gene"], atol=1e-5
     )
+
+
+def test_global_head_pert_summary_reads_the_perturbed_gene_tokens() -> None:
+    """With ``use_pert_summary`` the global head concatenates z_S, the pool over the
+    strain's perturbed gene tokens, so its output differs by strain even with the shared
+    CLS and no gene pool; the head refuses to run without z_S.
+    """
+    heads = {
+        "global": {"output_dim": 7, "use_gene_pool": False, "use_pert_summary": True}
+    }
+    model = _make_model(heads, seed=5)
+    model.eval()
+    cg, batch = _make_cell_graph(), _make_batch()
+    with torch.no_grad():
+        _, reps = model(cg, batch)
+    g = reps["head_outputs"]["global"]
+    assert g.shape == (BATCH_SIZE, 7)
+    assert not torch.allclose(g[0], g[1])
+    head = model.global_head
+    assert isinstance(head, GlobalHead)
+    first = head.mlp[0]
+    assert isinstance(first, torch.nn.Linear)
+    assert first.in_features == 2 * HIDDEN
+    with pytest.raises(ValueError):
+        head(reps["h_CLS"], reps["H_genes_pert"])
 
 
 def test_perturb_cls_makes_the_global_readout_strain_specific() -> None:

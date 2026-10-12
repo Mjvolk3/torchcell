@@ -730,6 +730,19 @@ case "$ARM" in
   M_pool_s[0-9]|M_pool_s1[01])
                      OVERRIDES=(multitask.heads.global.use_gene_pool=true data_module.split_seed="${ARM##*_s}")
                      ARM_TAGS=(morph-pool genotype-only "split${ARM##*_s}" morphology stage-morph round-morph) ;;
+  # THE INDUCTIVE ROUND v25 (2026-10-11): 21 of 23 v24 genotype-only runs never fit the
+  # training set (train Pearson 0.04 to 0.12 for 1,200 epochs) and the two that escaped
+  # the plateau hold the best genotype-only scores on file, so v25 varies the READOUT and
+  # the learning rate (the lr comes in through SWEEP_OV of the launcher stage). M_zs reads
+  # [h_CLS_pert || z_S], z_S the sum over the strain's perturbed gene tokens, the
+  # PerturbationHead input behind the trigenic result; M_xattn is the S3 cross-attention
+  # decoder, one learned query per morphology feature over the full token set.
+  M_zs_s[0-9]|M_zs_s1[01])
+                     OVERRIDES=(+multitask.heads.global.use_pert_summary=true data_module.split_seed="${ARM##*_s}")
+                     ARM_TAGS=(morph-zs genotype-only "split${ARM##*_s}" morphology stage-morph round-morph) ;;
+  M_xattn_s[0-9]|M_xattn_s1[01])
+                     OVERRIDES=(multitask.decoder=s3_xattn data_module.split_seed="${ARM##*_s}")
+                     ARM_TAGS=(morph-xattn genotype-only "split${ARM##*_s}" morphology stage-morph round-morph) ;;
   CM_expr_s[0-9]|CM_expr_s1[01])
                      OVERRIDES=("multitask.active_heads=[per_gene,global]" multitask.condition_head=per_gene
                                 "cell_dataset.require_modalities=[expression_log2_ratio,calmorph]"

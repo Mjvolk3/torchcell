@@ -26,3 +26,7 @@ This verifier exists because `ProteinAbundancePhenotype` datasets (WS9 Zelezniak
 ## 2026.10.12 - An S288C-derived column in a natural-isolate store (#1045 row 18)
 
 `natural_isolate_of(record)`: the shared `strain_id` of the perturbations, or, for a record with no perturbation off S288C, the background its own reference genome names (Muenzner 2024's FY4); None when neither says. `strain_uniqueness` (through `rnaseq._l1_strain_uniqueness(strain_of=...)`), `genotype_strain_consistency` (which counts such records as `n_s288c_derived`) and the Caudal overlap read isolates through it. A record with no perturbation on the S288C reference still fails.
+
+## 2026.10.12 - Genome-reference rows report, never gate
+
+`gene_containment_sgd` (the deletion and isolate proteomes) compare the data with OUR genome reference (an allele, a position or an id against the R64 annotation or a genomes-tier assembly), so they are `report`-class rules ([[torchcell.verification.report]], owner 2026-10-12: "the genome is separate.. it doesn't gate anything"). Their computation is unchanged; the report lists them under the verdict with their statistic and the store's verdict reads only its gate rows.

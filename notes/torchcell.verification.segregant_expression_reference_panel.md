@@ -18,3 +18,7 @@ What is new relative to the Boocock verifier is that the genotype and the expres
 The other rules mirror the Boocock verifier: L0 structural, L1 count and uniqueness plus the shared rules, L2 value fidelity against the summed cells (the stage partition must be a typed gap), the mosaic round trip within half the 0.05 grid (an exact 0.5 posterior is a tie), the reference pseudobulk, L3 Table 1 numbers and the quotes of both mirrors (`audit_sourced_value` against `torchcell-library` for paper quotes and `torchcell-raw` for release quotes), L4 parents, marker reference and gene containment.
 
 On the synthetic release of `tests/torchcell/datasets/scerevisiae/_nguessan2025_release.py` every rule passes but `cis_concordance` (three strains cannot power it, and the test asserts that it reports rather than passes). No real store exists yet (#1014).
+
+## 2026.10.12 - Genome-reference rows report, never gate
+
+`marker_reference`, `mat_fixation`, `cis_concordance`, `parents_pinned`, `gene_containment_sgd` compare the data with OUR genome reference (an allele, a position or an id against the R64 annotation or a genomes-tier assembly), so they are `report`-class rules ([[torchcell.verification.report]], owner 2026-10-12: "the genome is separate.. it doesn't gate anything"). Their computation is unchanged; the report lists them under the verdict with their statistic and the store's verdict reads only its gate rows.

@@ -21,3 +21,7 @@ A record is the summed UMI counts of one barcoded strain in one culture, so the 
 A raw header that no longer undoes to the bulk header raises (`FeatureMapError`) rather than reporting a row: the feature map every other rule depends on cannot be built.
 
 Tests: `tests/torchcell/verification/test_pseudobulk_umi_count.py` builds the miniature Jackson store (`tests/torchcell/datasets/scerevisiae/_jackson2020_release.py`), passes every row, then catches an edited count, a reversed per-cell list, a dropped and a repeated record, a wrong barcode and a wrong gene, an edited environment, a reordered reference, a stray key, a second measurement type, a low containment floor and a missing quote; `tests/torchcell/verification/test_runners.py` pins the runner wiring.
+
+## 2026.10.12 - Genome-reference rows report, never gate
+
+`feature_containment` compare the data with OUR genome reference (an allele, a position or an id against the R64 annotation or a genomes-tier assembly), so they are `report`-class rules ([[torchcell.verification.report]], owner 2026-10-12: "the genome is separate.. it doesn't gate anything"). Their computation is unchanged; the report lists them under the verdict with their statistic and the store's verdict reads only its gate rows.

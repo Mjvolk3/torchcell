@@ -270,6 +270,19 @@ replicate/colony/screen counts, the uncertainty TYPE (sample SD vs bootstrap SE)
 units, thresholds -- MUST be sourced from the paper/SI, recorded with a verbatim
 quote + `sha256` + section/line, and never guessed.
 
+**The genome never gates a record.** Owner, 2026-10-12: "the data is the data!!!! it is
+what they reported ... we don't drop raw data unless they themselves pull it! ... the
+genome is separate.. it doesn't gate anything... we do that at modeling time if it is an
+issue." A loader stores every released record under the names and positions the release
+gives, and never drops, refuses or remaps one because the name is retired, merged,
+ambiguous or unknown in our annotation; `gene_alias_resolution` is a downstream utility
+(adapter or modeling time), not a load-time gate. Every verification rule that compares
+a released name or position with the genome reference (containment, name currency,
+canonical spellings, locus resolution, marker alleles, assembly pins) is `report`-class
+(`FindingClass` in `torchcell/verification/report.py`): it is listed under the store's
+verdict with its statistic, never fails it, and never retires a build manifest. The
+one allowed drop is a sample the authors themselves withdrew, quoted.
+
 - **Do not conclude "not in the SI" on a first pass.** If a value isn't obvious,
   RETRY and comb through thoroughly: read the full Methods/SI (not a summary),
   check the data-file COLUMN DESCRIPTIONS, and search for every synonym

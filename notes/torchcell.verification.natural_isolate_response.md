@@ -19,3 +19,7 @@ A natural isolate's genotype is ~5,000 perturbations off S288C shared by every c
 - L4 splits containment: S288C-keyed names against R64-4-1 (floor `MIN_PETER_S288C_CONTAINMENT = 0.999`), accessory ORFs against the pangenome, and the release md5 against the host's `md5.txt`.
 
 `SharedRecordRules` sees the full genotype on the first record of each isolate and an empty perturbation list on the other 34, so the census and spelling rules run once per isolate instead of 35 times. Tests: `tests/torchcell/datasets/scerevisiae/test_peter2018_synthetic.py` (a two-isolate store, every row passing, then a changed release cell, a wrong tarball pin and a missing gene each caught), `tests/torchcell/verification/test_runners.py` (runner wiring).
+
+## 2026.10.12 - Genome-reference rows report, never gate
+
+`s288c_gene_containment`, `pangenome_orf_containment` compare the data with OUR genome reference (an allele, a position or an id against the R64 annotation or a genomes-tier assembly), so they are `report`-class rules ([[torchcell.verification.report]], owner 2026-10-12: "the genome is separate.. it doesn't gate anything"). Their computation is unchanged; the report lists them under the verdict with their statistic and the store's verdict reads only its gate rows.

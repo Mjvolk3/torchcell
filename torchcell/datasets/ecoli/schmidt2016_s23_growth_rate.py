@@ -35,8 +35,8 @@ touches none of their records. The pinned artifact, the media objects, the condi
 table and the environment helpers are imported FROM ``schmidt2016`` instead, so there is
 one copy of each.
 
-THE 11 DROPPED ROWS, each by a measured rule and not a preference. 26 released rows
-minus 15 records:
+THE 10 DROPPED ROWS, each by a measured rule and not a preference. 26 released rows
+minus 16 records:
 
 * 4 rows are the two non-BW25113 strains. ``BacterialReferenceStrain`` is
   ``MG1655 | BW25113 | KT2440 | REL606`` and the genomes tier deposits an assembly set
@@ -48,17 +48,20 @@ minus 15 records:
   typo-corrected MG1655 records: "2 records duplicate an earlier (study, strain,
   condition) triple; 15 unique triples" -- LB and Glucose collide across strains. The
   multi-strain rows are blocked on the uniqueness key, independently of the vocabulary.
-* 7 rows carry the proteome loader's own structural drop rules, imported from
-  ``schmidt2016`` rather than restated: ``Glycerol + AA`` on
-  ``medium_has_no_media_library_entry``, the two stationary-phase rows on
-  ``growth_phase_not_representable``, and the four chemostat rows on
-  ``culture_not_batch``. The collapse those last two rules describe was re-measured here
-  on records rather than on environments: a 19-record build with the chemostat rows in
-  fails L1 with "3 records duplicate an earlier (study, strain, condition) triple; 16
-  unique triples", and also fails L2 ``uncertainty_sanity`` with "4/19 labeled
-  uncertainties are a sample dispersion of exactly 0", because the chemostat ``Stdev``
-  is literally ``0`` in all four rows: it is the dilution-rate set-point, not a measured
-  spread.
+* 2 rows carry the proteome loader's own structural drop rule, imported from
+  ``schmidt2016`` rather than restated: the two stationary-phase rows on
+  ``growth_phase_not_representable``.
+* 4 rows are the chemostat arms, on :data:`DROP_SET_POINT_RULE`. Their environments are
+  distinct since #1045 row 21 (``Environment.dilution_rate_per_hour``), and the proteome
+  and SRM stores keep them, but the growth rate this table releases for them IS that
+  dilution rate: at steady state the specific growth rate equals the dilution rate the
+  experimenter set, and the released ``Stdev`` is literally ``0`` in all four rows (L2
+  ``uncertainty_sanity`` refuses "4/19 labeled uncertainties are a sample dispersion of
+  exactly 0"). A record would state the environment's own control variable as a
+  measured phenotype, so the rule is a correctness one, not a missing carrier.
+
+``Glycerol + AA`` was dropped on ``medium_has_no_media_library_entry`` until #1045 row 17
+gave it ``M9_AA_SCHMIDT2016``; it is a record now (1.27 h-1).
 
 THE STDEV, AND THE ONE INFERENTIAL STEP. The released ``Stdev`` is stored as
 ``environment_response_uncertainty`` with ``UncertaintyType.sample_sd``, and
@@ -191,7 +194,7 @@ EXPECTED_STRAIN_ROWS: dict[str, int] = {
     STRAIN_MG1665: 2,
     STRAIN_NCM3722: 2,
 }
-EXPECTED_RECORDS = 15
+EXPECTED_RECORDS = 16
 #: What L3 ``environment_perturbed`` must observe: 0 records with no environmental edit
 #: at all. An edit is a perturbation, a non-baseline temperature OR a non-baseline
 #: medium, which is what covers the one record below.
@@ -425,15 +428,19 @@ class DropLedger(BaseModel):
 #: The rule that drops the two non-BW25113 strains. The four rows fail on the uniqueness
 #: key whatever the vocabulary says, which is why one rule covers both spellings.
 DROP_STRAIN_RULE = "strain_not_distinguishable_from_bw25113"
+#: The rule that drops the chemostat rows (#1045 row 21): their released growth rate is
+#: the dilution rate their environment already states, with a released Stdev of 0.
+DROP_SET_POINT_RULE = "growth_rate_is_the_dilution_rate_set_point"
 
 
 def partition(rows: Sequence[S23Row]) -> tuple[list[S23Row], DropLedger]:
     """Split the released rows into the records and the ledger of what dropped.
 
-    Two rules, in this order: a row of either non-BW25113 strain goes under
-    ``DROP_STRAIN_RULE``, and a BW25113 row whose ``schmidt2016`` condition carries a
-    ``DropReason`` goes under that reason's own ``rule`` name. Both rules are the
-    proteome loader's or the verifier's, never a preference of this module.
+    Three rules, in this order: a row of either non-BW25113 strain goes under
+    ``DROP_STRAIN_RULE``, a BW25113 row whose ``schmidt2016`` condition carries a
+    ``DropReason`` goes under that reason's own ``rule`` name, and a chemostat row goes
+    under ``DROP_SET_POINT_RULE`` because the rate it releases is its environment's
+    dilution rate, not a measurement.
     """
     kept: list[S23Row] = []
     dropped: dict[str, list[str]] = {}
@@ -442,9 +449,12 @@ def partition(rows: Sequence[S23Row]) -> tuple[list[S23Row], DropLedger]:
         if row.strain != STRAIN_BW25113:
             dropped.setdefault(DROP_STRAIN_RULE, []).append(key)
             continue
-        drop = _condition_spec(row.condition).drop
-        if drop is not None:
-            dropped.setdefault(drop.rule, []).append(key)
+        spec = _condition_spec(row.condition)
+        if spec.drop is not None:
+            dropped.setdefault(spec.drop.rule, []).append(key)
+            continue
+        if spec.dilution_rate_per_hour is not None:
+            dropped.setdefault(DROP_SET_POINT_RULE, []).append(key)
             continue
         kept.append(row)
     ledger = DropLedger(source_rows=len(rows), kept_records=len(kept), dropped=dropped)
@@ -642,6 +652,14 @@ class GrowthRateS23Schmidt2016Dataset(ExperimentDataset):
                 for spec in sm.CONDITIONS
                 if spec.drop is not None
             },
+            DROP_SET_POINT_RULE: (
+                "a chemostat row: at steady state the specific growth rate is the "
+                "dilution rate the experimenter set, which the environment already "
+                "states (Environment.dilution_rate_per_hour, #1045 row 21), and the "
+                "released Stdev is exactly 0, the set point rather than a measured "
+                "spread; a record would restate the environment's control variable as "
+                "a measured phenotype"
+            ),
         }
         (out / "dropped_records.json").write_text(
             json.dumps(
@@ -661,7 +679,7 @@ class GrowthRateS23Schmidt2016Dataset(ExperimentDataset):
                         "the four chemostat rows release a Stdev of exactly 0, the "
                         "dilution-rate set-point rather than a measured spread, which L2 "
                         "uncertainty_sanity refuses on its own; they are dropped on "
-                        "culture_not_batch before that rule is reached",
+                        f"{DROP_SET_POINT_RULE} before that rule is reached",
                         "Table S28 restates the two stationary-phase conditions' growth "
                         "rate as 0 where Table S23 releases -0.01; both rows are dropped "
                         "on growth_phase_not_representable, so the inconsistency is "

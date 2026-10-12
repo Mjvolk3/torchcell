@@ -581,16 +581,14 @@ def test_select_arm_partitions_the_conditions_by_the_shared_drop_rules(
         "P00002": "BW25113_4014",
         "P00003": "BW25113_4013",
     }
+    # the chemostat arms are loaded since #1045 row 21 (they carry a dilution rate)
     assert selection.dropped == {
         "condition_not_described_by_the_source": [srm.UNDESCRIBED_CONDITION],
-        "culture_not_batch": [
-            "chemostat µ=0.12",
-            "chemostat µ=0.20",
-            "chemostat µ=0.35",
-            "chemostat µ=0.5",
-        ],
         "growth_phase_not_representable": ["stationary 1 day", "stationary 3 days"],
     }
+    assert {
+        column for column in selection.loaded_columns if column.startswith("Chemostat")
+    } == {"Chemostat µ=0.5", "Chemostat µ=0.35", "Chemostat µ=0.20", "Chemostat µ=0.12"}
     # the loaded columns keep the release's own column order, reference included
     assert selection.loaded_columns[0] == sm.REFERENCE_CONDITION
     assert (
@@ -642,8 +640,8 @@ def test_phenotype_divides_the_released_sd_by_the_root_of_the_replicate_count(
 @pytest.mark.parametrize(
     ("arm", "accessions", "records"),
     [
-        (srm.ProteomeSrmSet1Schmidt2016Dataset, SET1_ACCESSIONS, 11),
-        (srm.ProteomeSrmSet2Schmidt2016Dataset, SET2_ACCESSIONS, 14),
+        (srm.ProteomeSrmSet1Schmidt2016Dataset, SET1_ACCESSIONS, 15),
+        (srm.ProteomeSrmSet2Schmidt2016Dataset, SET2_ACCESSIONS, 19),
     ],
     ids=["set1", "set2"],
 )
@@ -694,12 +692,12 @@ def test_process_builds_one_record_per_loaded_condition(
     assert ledger["kept_records"] == records
     assert ledger["kept_protein_keys"] == len(accessions)
     rules = {rule["rule"]: rule["n_items"] for rule in ledger["rules"]}
-    assert rules["culture_not_batch"] == 4
+    # since #1045 rows 17 and 21 the chemostat and glycerol + AA arms are records
+    assert "culture_not_batch" not in rules
+    assert "medium_has_no_media_library_entry" not in rules
     assert rules["growth_phase_not_representable"] == 2
     if arm.IS_SET1:
         assert rules["condition_not_described_by_the_source"] == 1
-    else:
-        assert rules["medium_has_no_media_library_entry"] == 1
     checks = json.loads((preprocess / "released_statistics_check.json").read_text())
     assert checks["not_the_stored_block"]["n_agreeing_to_rtol"] == 0
     assert checks["dataset_arm"]["undescribed_condition_present"] is arm.IS_SET1

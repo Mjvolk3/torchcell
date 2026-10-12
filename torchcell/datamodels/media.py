@@ -3368,6 +3368,113 @@ M9_SCHMIDT2016 = Media(
 """Schmidt 2016's M9 base for the proteome map's minimal-medium conditions (row 32)."""
 
 
+# --- begin #1045 row 17: Schmidt 2016's glycerol + amino acid medium ------------ #
+# The 'Glycerol + AA' condition of the proteome map: M9_SCHMIDT2016 plus twenty amino
+# acids, adenine and uracil, each at the mg/L the Methods state (the parenthesized mM
+# corroborate it; the OCR garbles a few, so the mg/L is the stored value). The glycerol
+# (2.2 g/L) is the condition's carbon factor, exactly as in the plain 'Glycerol' arm, so
+# the two arms differ by the supplement alone. The source names the amino acids without a
+# stereodescriptor; they are recorded as the proteinogenic L-amino acids, the reading the
+# identity table already gives 'arginine', 'leucine', 'methionine', 'phenylalanine',
+# 'threonine', 'tyrosine' and 'glutamate'. mg/L is stored as ug/mL (1 mg/L = 1 ug/mL).
+# --------------------------------------------------------------------------- #
+_Q_SCHMIDT16_GLYCEROL_AA = (
+    "The glycerol $^ +$ amino acid medium was made by supplementing the media with "
+    "glycerol to a concentration of $2 . 2 \\ \\mathrm { g / L }$ individual amino acids: "
+    "alanine, asparagine, cysteine, glutamate, glycine, proline and serine to final "
+    "concentrations of alanine $1 . 0 \\mathrm { m g / L }$ ${ 0 . 0 } \\mathrm { m M } )$ "
+    ", adenine $1 0 . 2 \\mathrm { m g / L ( 0 . 1 m M ) }$ , arginine $5 1 . 1 \\mathrm "
+    "{ m g / L } \\left( 0 . 3 \\mathrm { m M } \\right)$ , asparagine $\\mathrm { 1 . 6 m "
+    "g / L ( 0 . 0 1 m M ) }$ , aspartic acid $8 1 . 8 ~ \\mathrm { m g / L }$ $\\mathrm "
+    "{ { 0 . 6 ~ m M } }$ , cysteine $1 . 2 ~ \\mathrm { m g / L }$ $( 0 . 0 1 \\ \\mathrm "
+    "{ m M } )$ , glutamate $1 5 . 2 ~ \\mathrm { m g / L }$ $0 . 1 \\mathrm { \\ m M }$ , "
+    "glutamine $1 3 . 9 ~ \\mathrm { m g / L }$ $\\mathrm { { ( 0 . 1 ~ m M } }$ , glycine "
+    "$0 . 4 ~ \\mathrm { m g / L }$ $\\mathrm { { ( 0 . 0 1 m M ) } }$ , histidine $2 0 . "
+    "5 \\mathrm { m g / L ( 0 . 1 m M ) }$ , isoleucine $5 1 . 1 \\mathrm { m g / L } "
+    "\\left( 0 . 4 \\mathrm { m M } \\right)$ leucine $1 0 2 . 3 ~ \\mathrm { m g / L }$ $( "
+    "0 . 8 \\ \\mathrm { m M } )$ , lysine $5 1 . 1 ~ \\mathrm { m g / L }$ $\\mathrm { 0 . "
+    "4 ~ m M }$ , methionine $2 0 . 5 ~ \\mathrm { m g / L }$ $( 0 . 1 4 \\mathrm { m M } "
+    ")$ , phenylalanine $5 1 . 1 \\mathrm { m g / L }$ $0 . 3 \\mathrm { m M }$ , proline "
+    "$5 . 2 \\mathrm { m g / L }$ $( 0 . 0 5 \\mathrm { m M } )$ , serine $9 . 2 ~ "
+    "\\mathrm { m g / L }$ $( 0 . 1 \\mathrm { \\ m M }$ , threonine $1 0 2 . 3 ~ \\mathrm "
+    "{ m g / L }$ $\\langle 0 . 9 \\mathrm { ~ m M } \\rangle$ , tryptophan $5 1 . 1 "
+    "\\mathrm { m g / L }$ (0.3 mM), tyrosine $5 1 . 1 \\mathrm { m g / L }$ $\\left( 0 . "
+    "3 \\mathrm { m M } \\right)$ , valine $1 4 3 . 2 \\mathrm { m g / L } \\left( 1 . 2 "
+    "\\mathrm { m M } \\right)$ and uracil $2 0 . 5 \\mathrm { m g / L }$ (0.2 mM)."
+)
+_MG_PER_L_NOTE = "the source states mg/L, stored as ug/mL (1 mg/L = 1 ug/mL)"
+_SOURCE_NAME_NOTE = (
+    "the source writes '{label}' without a stereodescriptor; recorded as the "
+    "proteinogenic L form"
+)
+
+
+def _schmidt_aa(
+    name: str,
+    label: str,
+    mg_per_l: float,
+    role: MediaComponentRole = MediaComponentRole.amino_acid,
+) -> MediaComponent:
+    """One Glycerol + AA supplement at its stated mg/L."""
+    stereo = name.startswith("L-")
+    return _stated(
+        name,
+        role,
+        mg_per_l,
+        _UGML,
+        _cite(_SCHMIDT2016, f"{label} {mg_per_l} mg/L", _Q_SCHMIDT16_GLYCEROL_AA),
+        note=_MG_PER_L_NOTE
+        + ("; " + _SOURCE_NAME_NOTE.format(label=label) if stereo else ""),
+    )
+
+
+M9_AA_SCHMIDT2016 = Media(
+    name="M9 minimal medium with twenty amino acids, adenine and uracil, no carbon "
+    "source (Schmidt 2016 'Glycerol + AA')",
+    state="liquid",
+    is_synthetic=True,
+    base_medium="M9",
+    components=[
+        *M9_SCHMIDT2016.components,
+        _schmidt_aa("L-alanine", "alanine", 1.0),
+        _schmidt_aa("adenine", "adenine", 10.2, MediaComponentRole.nucleobase),
+        _schmidt_aa("L-arginine", "arginine", 51.1),
+        _schmidt_aa("L-asparagine", "asparagine", 1.6),
+        _schmidt_aa("L-aspartic acid", "aspartic acid", 81.8),
+        _schmidt_aa("L-cysteine", "cysteine", 1.2),
+        _schmidt_aa("L-glutamic acid", "glutamate", 15.2),
+        _schmidt_aa("L-glutamine", "glutamine", 13.9),
+        _schmidt_aa("glycine", "glycine", 0.4),
+        _schmidt_aa("L-histidine", "histidine", 20.5),
+        _schmidt_aa("L-isoleucine", "isoleucine", 51.1),
+        _schmidt_aa("L-leucine", "leucine", 102.3),
+        _schmidt_aa("L-lysine", "lysine", 51.1),
+        _schmidt_aa("L-methionine", "methionine", 20.5),
+        _schmidt_aa("L-phenylalanine", "phenylalanine", 51.1),
+        _schmidt_aa("L-proline", "proline", 5.2),
+        _schmidt_aa("L-serine", "serine", 9.2),
+        _schmidt_aa("L-threonine", "threonine", 102.3),
+        _schmidt_aa("L-tryptophan", "tryptophan", 51.1),
+        _schmidt_aa("L-tyrosine", "tyrosine", 51.1),
+        _schmidt_aa("L-valine", "valine", 143.2),
+        _schmidt_aa("uracil", "uracil", 20.5, MediaComponentRole.nucleobase),
+    ],
+    dropouts=list(M9_SCHMIDT2016.dropouts),
+    provenance=[
+        _cite(
+            _SCHMIDT2016,
+            "glycerol + amino acid medium",
+            _Q_SCHMIDT16_GLYCEROL_AA,
+            note="M9_SCHMIDT2016 (the same carbon-free M9 every minimal condition uses) "
+            "plus 22 supplements; the 2.2 g/L glycerol the same sentence states is the "
+            "condition's carbon factor, as in the Glycerol arm",
+        )
+    ],
+)
+"""Schmidt 2016's 'Glycerol + AA' medium, carbon-free like its base (row 32)."""
+# --- end #1045 row 17 ------------------------------------------------------------ #
+
+
 # --------------------------------------------------------------------------- #
 # The P. putida "M9" of the JBEI / NREL isoprenol campaigns: ammonium sulfate as the
 # nitrogen salt and a commercial trace-metal solution. Menasalvas 2025 names it ("NREL M9"
@@ -4905,6 +5012,10 @@ BACTERIAL_MEDIA_USES: dict[str, tuple[str, ...]] = {
     "M9_NONITROGEN_PRICE2018": ("21 Price 2018: 32 Keio nitrogen-source experiments",),
     "M9_GLUCOSE_CASEIN_FUHRER2017": ("1 Fuhrer 2017: the metabolome screen",),
     "M9_SCHMIDT2016": ("32 Schmidt 2016: the minimal-medium proteome conditions",),
+    "M9_AA_SCHMIDT2016": (
+        "32 Schmidt 2016: the 'Glycerol + AA' condition of the proteome map, the SRM "
+        "data set 2 arm and the growth-rate tables",
+    ),
     "M9_NREL_DESIQUEIRA2025": ("14 de Siqueira 2025: tolerization and phenotyping",),
     "M9_NREL_LIM2025": ("16 Lim 2025: growth and TALE cultures",),
     "M9_NREL_LIM2022": (
@@ -5440,6 +5551,7 @@ MEDIA_LIBRARY: dict[str, Media] = {
     **JACKSON2020_MEDIA,  # jackson2020: Supplementary file 1, Table 4
     "RCH2_DEFINED_NOCARBON_PRICE2018": RCH2_DEFINED_NOCARBON_PRICE2018,
     "MOPS_RICH_DEFINED_NOCARBON_PRICE2018": MOPS_RICH_DEFINED_NOCARBON_PRICE2018,
+    "M9_AA_SCHMIDT2016": M9_AA_SCHMIDT2016,
 } | {
     _hm_key(compound, partial): HILLENMEYER_DROPOUT_MEDIA[label]
     for label, compound, partial in _HILLENMEYER_DROPOUTS
@@ -5506,6 +5618,9 @@ CARBON_FREE_MEDIA: dict[str, str] = {
     "RCH2_DEFINED_NOCARBON_PRICE2018": "the carbon source is the variable of the "
     "RB-TnSeq carbon-source experiments (Borchert 2024: glucose, potassium acetate, "
     "levulinic acid, 4-hydroxyvalerate, vanillin or p-coumaric acid)",
+    "M9_AA_SCHMIDT2016": "the 2.2 g/L glycerol of the 'Glycerol + AA' condition is its "
+    "carbon factor, as in the Glycerol arm; the amino acids and nucleobases are "
+    "supplements the Methods state",
     "MOPS_RICH_DEFINED_NOCARBON_PRICE2018": "no component is the carbon source: the "
     "carbon source is each sample's Condition_1 (D-galacturonic acid or D-glucose), "
     "carried as a carbon_source factor; the amino acids and nucleobases are "

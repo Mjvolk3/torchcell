@@ -85,14 +85,14 @@ recorded in the dendron note.
 THE RECORD GRAIN, AND THE DROPS. One ``BacterialProteinAbundanceExperiment`` per loaded
 growth condition, keyed by BW25113 locus tag, which is the grain the stored Table S6
 block uses. Each arm's glucose condition is the ``phenotype_reference`` rather than a
-record, as it is there. The same three structural condition rules apply, for the same
-measured reasons (``schmidt2016.py``'s ``DropReason`` objects are reused verbatim, so
-there is one statement of each): the glycerol + amino acid medium has no
-``MEDIA_LIBRARY`` entry, the four chemostat arms differ only in a dilution rate
-``Environment`` cannot state, and the two stationary-phase arms collapse onto the
-exponential glucose environment. Set 1: 19 - 1 anaerobic - 4 chemostat - 2 stationary -
-1 reference = **11 records**. Set 2: 22 - 1 glycerol + AA - 4 chemostat - 2 stationary -
-1 reference = **14 records**.
+record, as it is there. The same structural condition rule applies, for the same
+measured reason (``schmidt2016.py``'s ``DropReason`` is reused verbatim, so there is one
+statement of it): the two stationary-phase arms collapse onto the exponential glucose
+environment. Set 1: 19 - 1 anaerobic - 2 stationary - 1 reference = **15 records**. Set
+2: 22 - 2 stationary - 1 reference = **19 records**. Before #1045 rows 17 and 21 the
+glycerol + amino acid arm (set 2) and the four chemostat arms (both sets) were dropped
+too (11 and 14 records); they now carry ``M9_AA_SCHMIDT2016`` and
+``Environment.dilution_rate_per_hour``.
 
 IDENTIFIERS. Each released ``Gene`` symbol is resolved against the pinned BW25113
 GenBank annotation through ``reconcile_locus_tags``, the same derived route the stored
@@ -1090,8 +1090,6 @@ class _SrmSchmidt2016Dataset(ExperimentDataset):
         labels = sorted({cell.condition for cell in cells})
         reasons = {
             DROP_CONDITION_UNDESCRIBED.rule: DROP_CONDITION_UNDESCRIBED,
-            sm.DROP_MEDIUM_NOT_IN_LIBRARY.rule: sm.DROP_MEDIUM_NOT_IN_LIBRARY,
-            sm.DROP_CULTURE_NOT_BATCH.rule: sm.DROP_CULTURE_NOT_BATCH,
             sm.DROP_GROWTH_PHASE.rule: sm.DROP_GROWTH_PHASE,
         }
         dropped = sum(len(items) for items in selection.dropped.values())
@@ -1201,7 +1199,7 @@ class ProteomeSrmSet1Schmidt2016Dataset(_SrmSchmidt2016Dataset):
     IS_SET1: ClassVar[bool] = True
     EXPECTED_ROWS: ClassVar[int] = 779
     EXPECTED_PROTEIN_KEYS: ClassVar[int] = 41
-    EXPECTED_RECORDS: ClassVar[int] = 11
+    EXPECTED_RECORDS: ClassVar[int] = 15
 
     def __init__(
         self,
@@ -1238,7 +1236,7 @@ class ProteomeSrmSet2Schmidt2016Dataset(_SrmSchmidt2016Dataset):
     IS_SET1: ClassVar[bool] = False
     EXPECTED_ROWS: ClassVar[int] = 682
     EXPECTED_PROTEIN_KEYS: ClassVar[int] = 31
-    EXPECTED_RECORDS: ClassVar[int] = 14
+    EXPECTED_RECORDS: ClassVar[int] = 19
 
     def __init__(
         self,

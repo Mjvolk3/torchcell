@@ -32,6 +32,7 @@ import pytest
 
 import torchcell.datasets.ecoli.schmidt2016 as sm
 from torchcell.data import file_sha256
+from torchcell.datamodels.media import M9_AA_SCHMIDT2016
 from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
     BacterialAssemblySet,
@@ -195,21 +196,31 @@ def workbook(tmp_path: Path) -> Path:
 def test_condition_table_shape() -> None:
     assert len(sm.CONDITIONS) == 22
     loaded = [c for c in sm.CONDITIONS if c.drop is None]
-    assert len(loaded) == 15
-    assert len([c for c in loaded if not c.is_reference]) == sm.EXPECTED_RECORDS
+    assert len(loaded) == 20
+    assert len([c for c in loaded if not c.is_reference]) == sm.EXPECTED_RECORDS == 19
     assert [c.s6_column for c in sm.CONDITIONS if c.is_reference] == [
         sm.REFERENCE_CONDITION
     ]
     dropped = {c.s6_column: c.drop.rule for c in sm.CONDITIONS if c.drop is not None}
     assert dropped == {
-        "Glycerol + AA": "medium_has_no_media_library_entry",
-        "Chemostat µ=0.5": "culture_not_batch",
-        "Chemostat µ=0.35": "culture_not_batch",
-        "Chemostat µ=0.20": "culture_not_batch",
-        "Chemostat µ=0.12": "culture_not_batch",
         "Stationary phase 1 day": "growth_phase_not_representable",
         "Stationary phase 3 days": "growth_phase_not_representable",
     }
+    # #1045 rows 17 and 21: the glycerol + amino acid arm has its medium and the four
+    # chemostat arms state their dilution rate, so both are loaded
+    assert sm.CONDITIONS_BY_COLUMN["Glycerol + AA"].media is M9_AA_SCHMIDT2016
+    rates = {
+        c.s6_column: c.dilution_rate_per_hour
+        for c in sm.CONDITIONS
+        if c.dilution_rate_per_hour is not None
+    }
+    assert rates == {
+        "Chemostat µ=0.5": 0.5,
+        "Chemostat µ=0.35": 0.35,
+        "Chemostat µ=0.20": 0.2,
+        "Chemostat µ=0.12": 0.12,
+    }
+    assert rates == sm.SOURCED_VALUES["chemostat_dilution_rates_per_hour"].value
     assert len({c.s25_files for c in sm.CONDITIONS}) == len(sm.CONDITIONS)
 
 
@@ -525,20 +536,34 @@ def test_every_loaded_environment_is_distinct_and_a_repeat_is_refused() -> None:
     loaded = [c for c in sm.CONDITIONS if c.drop is None]
     environments = {c.s6_column: sm.build_environment(c) for c in loaded}
     sm.check_environments_distinct(environments)
-    assert len(environments) == 15
+    assert len(environments) == 20
     environments["copy"] = sm.build_environment(sm.CONDITIONS_BY_COLUMN["Glucose"])
     with pytest.raises(RuntimeError, match="serialize to one environment"):
         sm.check_environments_distinct(environments)
 
 
-def test_dropped_chemostat_and_stationary_arms_would_not_be_distinguishable() -> None:
-    """The two structural drop rules, stated as the collision they avoid."""
-    chemostats = {
-        c.s6_column: sm.build_environment(c)
-        for c in sm.CONDITIONS
-        if c.drop is sm.DROP_CULTURE_NOT_BATCH
+def test_chemostat_arms_differ_by_dilution_rate_and_stationary_arms_collapse() -> None:
+    """The chemostats differ only by the rate #1045 row 21 stores; stationary collapses.
+
+    Without the rate the four chemostat environments are one; with it they are four.
+    The stationary arms still collapse onto glucose, which is why they stay dropped.
+    """
+    chemostats = [c for c in sm.CONDITIONS if c.dilution_rate_per_hour is not None]
+    with_rate = {sm.build_environment(c).model_dump_json() for c in chemostats}
+    assert len(with_rate) == 4
+    without_rate = {
+        sm.build_environment(
+            c.model_copy(update={"dilution_rate_per_hour": None})
+        ).model_dump_json()
+        for c in chemostats
     }
-    assert len({e.model_dump_json() for e in chemostats.values()}) == 1
+    assert len(without_rate) == 1
+    environment = sm.build_environment(sm.CONDITIONS_BY_COLUMN["Chemostat µ=0.12"])
+    assert environment.dilution_rate_per_hour == 0.12
+    assert (
+        sm.build_environment(sm.CONDITIONS_BY_COLUMN["Glucose"]).dilution_rate_per_hour
+        is None
+    )
     stationary_and_glucose = {
         c.s6_column: sm.build_environment(c)
         for c in sm.CONDITIONS
@@ -708,12 +733,13 @@ def test_process_builds_one_record_per_loaded_condition(
         )
         for key, value in reference.phenotype_reference.protein_abundance.items():
             assert value == pytest.approx(_copies(key, "Glucose"))
-    # The three conditions dataset 1 did not cover carry one key fewer.
+    # The four conditions dataset 1 did not cover carry one key fewer (Glycerol + AA is
+    # the fourth since #1045 row 17 loaded it).
     by_keys = {len(i["experiment"].phenotype.protein_abundance) for i in items}
     assert by_keys == {1, 2}
     assert (
         len([i for i in items if len(i["experiment"].phenotype.protein_abundance) == 1])
-        == 3
+        == 4
     )
     # Every environment is distinct, which is the record identity here.
     assert len({i["experiment"].environment.model_dump_json() for i in items}) == len(
@@ -725,7 +751,7 @@ def test_process_builds_one_record_per_loaded_condition(
     ledger = json.loads((preprocess / "dropped_records.json").read_text())
     assert ledger["source_conditions"] == 22
     assert ledger["kept_records"] == sm.EXPECTED_RECORDS
-    assert ledger["dropped_records"] == 7
+    assert ledger["dropped_records"] == 2
     assert ledger["source_protein_rows"] == len(ROWS)
     assert ledger["kept_protein_keys"] == len(KEPT_GENES)
     assert ledger["dropped_protein_rows"] == len(ROWS) - len(KEPT_GENES)

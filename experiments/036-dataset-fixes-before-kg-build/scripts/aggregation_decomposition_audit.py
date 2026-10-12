@@ -77,6 +77,7 @@ from torchcell.datasets.ecoli import lamoureux2023 as p1k
 from torchcell.datasets.ecoli import price2018, wetmore2015
 from torchcell.datasets.pputida import borchert2023 as b23
 from torchcell.datasets.pputida import borchert2024 as b24
+from torchcell.datasets.pputida import fitness_browser_putida as fbp
 from torchcell.datasets.pputida import lim2022
 from torchcell.literature.manifest import MANIFEST_FILENAME, Manifest, sha256_file
 
@@ -991,8 +992,10 @@ def audit_borchert(
                 own_release_url=FEBA_URL,
                 own_release_access=access_of(probes[FEBA_URL]),
                 mirrored=key is not None,
-                loaded_as_own_dataset=False,
-                own_dataset_class=None,
+                loaded_as_own_dataset=pub in fbp.STORED_PUB_IDS,
+                own_dataset_class=(
+                    fbp.DATASET_CLASS_NAME if pub in fbp.STORED_PUB_IDS else None
+                ),
                 cross_check=check,
                 note=f"Fitness Browser pubId {pub}; the compendium attributes these "
                 f"samples {dict(own_attr[label])}; browser genes per sample "
@@ -1566,6 +1569,63 @@ def audit_lamoureux(
 # --------------------------------------------------------------------------- #
 # Counting
 # --------------------------------------------------------------------------- #
+def mark_fitness_browser_loaded(result: AuditResult) -> AuditResult:
+    """The audit with Borchert 2024's browser sources marked loaded where the browser loader stores them.
+
+    A Borchert 2024 source whose note names a Fitness Browser ``pubId`` in
+    ``fitness_browser_putida.STORED_PUB_IDS`` is loaded as ``FitnessBrowserPutidaDataset``
+    (the same rule ``audit_borchert`` applies on a full run); every other field and every
+    other compendium is carried unchanged, and the Borchert counts are recomputed.
+    """
+    pattern = re.compile(r"^Fitness Browser pubId (\S+);")
+    decompositions = []
+    for record in result.decompositions:
+        if record.citation_key != b24.CITATION_KEY:
+            decompositions.append(record)
+            continue
+        sources = []
+        for source in record.sources:
+            match = pattern.match(source.note or "")
+            pub = match.group(1) if match else None
+            loaded = pub in fbp.STORED_PUB_IDS
+            sources.append(
+                source.model_copy(
+                    update={
+                        "loaded_as_own_dataset": loaded or source.loaded_as_own_dataset,
+                        "own_dataset_class": (
+                            fbp.DATASET_CLASS_NAME
+                            if loaded
+                            else source.own_dataset_class
+                        ),
+                    }
+                )
+            )
+        decompositions.append(
+            DecompositionRecord(
+                citation_key=record.citation_key, sources=tuple(sources)
+            )
+        )
+    audits = tuple(
+        audit.model_copy(
+            update={
+                "counts": study_counts(
+                    next(
+                        d
+                        for d in decompositions
+                        if d.citation_key == audit.citation_key
+                    ).sources
+                )
+            }
+        )
+        if audit.citation_key == b24.CITATION_KEY
+        else audit
+        for audit in result.audit
+    )
+    return result.model_copy(
+        update={"decompositions": tuple(decompositions), "audit": audits}
+    )
+
+
 def study_counts(entries: Sequence[SourceDecomposition]) -> dict[str, int]:
     """Counts over distinct studies (a study in two classes counts once)."""
     studies: dict[str, SourceDecomposition] = {}
@@ -1821,6 +1881,13 @@ def main(argv: list[str] | None = None) -> None:
         action="store_true",
         help="only re-render the markdown tables from the committed results JSON",
     )
+    parser.add_argument(
+        "--mark-fitness-browser-loaded",
+        action="store_true",
+        help="re-derive only the Borchert 2024 Fitness Browser sources' loaded fields "
+        "off fitness_browser_putida.STORED_PUB_IDS in the committed results JSON (the "
+        "full audit needs the 10 GB snapshot and re-measures every compendium)",
+    )
     parser.add_argument("--network", action="store_true")
     parser.add_argument(
         "--reprobe-failed",
@@ -1842,6 +1909,14 @@ def main(argv: list[str] | None = None) -> None:
         result = AuditResult.model_validate_json(AUDIT_JSON.read_text())
         TABLES_MD.write_text(markdown_tables(result))
         print(f"wrote {TABLES_MD}")
+        return
+    if args.mark_fitness_browser_loaded:
+        result = mark_fitness_browser_loaded(
+            AuditResult.model_validate_json(AUDIT_JSON.read_text())
+        )
+        AUDIT_JSON.write_text(result.model_dump_json(indent=2) + "\n")
+        TABLES_MD.write_text(markdown_tables(result))
+        print(f"wrote {AUDIT_JSON} and {TABLES_MD}")
         return
     if args.feba_db is None:
         parser.error("--feba-db is required unless --tables-only or --yeast-only")

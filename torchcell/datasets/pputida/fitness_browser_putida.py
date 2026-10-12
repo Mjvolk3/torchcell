@@ -230,6 +230,26 @@ SOURCE_STUDIES: Final[dict[str, fb.SourceStudy]] = {
     ),
 }
 
+#: The publications whose samples this loader stores, measured on the 2026-10-12 deposit
+#: (``decide`` over its 314 experiments; ``test_the_deposit_putida_fates`` re-measures it).
+#: The decomposition audit reads it to mark these studies loaded.
+STORED_PUB_IDS: Final = frozenset(
+    {
+        "Garber20",
+        "Incha20",
+        "Pearson24",
+        "Price18b",
+        "Price21b",
+        "Rand17",
+        "Schmidt22",
+        "Thompson18",
+        "Thompson19",
+        "Thompson20",
+    }
+)
+DATASET_CLASS_NAME: Final = "FitnessBrowserPutidaDataset"
+
+
 # --------------------------------------------------------------------------- #
 # Environment
 # --------------------------------------------------------------------------- #

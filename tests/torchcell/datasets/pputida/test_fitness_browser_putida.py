@@ -107,6 +107,8 @@ def test_decide_takes_the_first_rule_that_applies(
 
 def test_the_module_key_is_the_deposit_mirror_key() -> None:
     assert fp.CITATION_KEY == fb.DEPOSIT_CITATION_KEY
+    assert fp.DATASET_CLASS_NAME == fp.FitnessBrowserPutidaDataset.__name__
+    assert set(fp.SOURCE_STUDIES) - fp.STORED_PUB_IDS == {"VillalobosEscobedo23"}
 
 
 def test_decide_refuses_an_unknown_publication() -> None:
@@ -385,6 +387,7 @@ def test_the_deposit_putida_fates() -> None:
     decisions = [fp.decide(e) for e in feba.experiments(fp.ORG_ID)]
     feba.close()
     counts = fb.fate_counts(decisions)
+    assert {d.pub_id for d in decisions if d.fate == "stored"} == fp.STORED_PUB_IDS
     assert counts == {
         "stored": fp.EXPECTED_SAMPLES,
         "unattributed_release": 34,

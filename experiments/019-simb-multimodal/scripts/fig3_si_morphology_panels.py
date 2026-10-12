@@ -195,8 +195,9 @@ def panel_target_reliability() -> None:
     ax.axvline(0.5, color="black", lw=0.6, ls="--")
     ax.set_xlabel("replicate reliability per CalMorph feature")
     ax.set_ylabel("features (n)")
-    ax.text(0.98, 0.95, f"ceiling, moving set: {ctx['ceiling_moving_mean']:.3f}\nall 278: {ctx['ceiling_all_mean']:.3f}", transform=ax.transAxes, ha="right", va="top", fontsize=6)
-    ax.legend(loc="upper left", **LEGEND)
+    ax.set_ylim(0, 34)
+    ax.text(0.03, 0.96, f"ceiling (sqrt reliability), mean:\nmoving set {ctx['ceiling_moving_mean']:.3f}, all 278 {ctx['ceiling_all_mean']:.3f}", transform=ax.transAxes, ha="left", va="top", fontsize=6)
+    ax.legend(loc="upper right", **LEGEND)
     _box(ax)
     fig.subplots_adjust(left=0.16, right=0.98, bottom=0.2, top=0.95)
     _save(fig, "target_reliability")
@@ -237,6 +238,7 @@ def panel_measured_input() -> None:
     em = _load("expression_morphology_covariation.json")["expression_to_morphology"]
     pm = _load("proteome_morphology_covariation.json")["proteome_to_morphology"]
     fig, axes = _figure("half", ncols=2, sharey=True)
+    short = {"CMP_expr": "own", "CMP_exprperm": "another\nstrain's", "CM_prot": "own", "CM_protperm": "another\nstrain's", "MP_cls": "genotype\nonly"}
     groups = [
         (axes[0], "expression as input", [("CMP_expr", MEASURED), ("CMP_exprperm", CONTROL)], em["moving_features"]["median"], None),
         (axes[1], "proteome as input", [("CM_prot", MEASURED), ("CM_protperm", CONTROL), ("MP_cls", SEQUENCE)], pm["moving_features"]["median"], pm["growth_axis_removed_moving"]["median"]),
@@ -246,7 +248,7 @@ def panel_measured_input() -> None:
         for i, (arm, color) in enumerate(arms):
             runs = _runs(ro, arm)
             _bar(ax, i, [r["window_mean"] for r in runs], color)
-            labels.append(f"{ARM_LABEL[arm].replace(' as input', '').replace(' ', chr(10), 1)}\n(n = {len(runs)})")
+            labels.append(f"{short[arm]}\n(n = {len(runs)})")
         ax.axhline(ridge, color="black", lw=0.6, ls="--")
         if ridge_growth is not None:
             ax.axhline(ridge_growth, color="black", lw=0.6, ls=":")
@@ -258,14 +260,14 @@ def panel_measured_input() -> None:
         _box(ax)
     axes[0].set_ylabel(SCORE_LABEL)
     handles = [
-        Patch(facecolor=MEASURED, edgecolor="black", label="the strain's own measurement (transductive)"),
+        Patch(facecolor=MEASURED, edgecolor="black", label="own measurement as input (transductive)"),
         Patch(facecolor=CONTROL, edgecolor="black", label="another strain's measurement (control)"),
         Patch(facecolor=SEQUENCE, edgecolor="black", label="genotype only, same strains"),
-        Line2D([0], [0], color="black", lw=0.6, ls="--", label="ridge from the same measurement"),
+        Line2D([0], [0], color="black", lw=0.6, ls="--", label="ridge from the measurement"),
         Line2D([0], [0], color="black", lw=0.6, ls=":", label="ridge, growth axis removed"),
     ]
-    fig.legend(handles=handles, loc="upper center", bbox_to_anchor=(0.55, 1.0), ncol=2, columnspacing=1.0, handletextpad=0.5, **LEGEND)
-    fig.subplots_adjust(left=0.1, right=0.98, bottom=0.26, top=0.68, wspace=0.08)
+    fig.legend(handles=handles, loc="upper center", bbox_to_anchor=(0.54, 1.0), ncol=2, columnspacing=0.8, handletextpad=0.4, **LEGEND)
+    fig.subplots_adjust(left=0.1, right=0.98, bottom=0.2, top=0.66, wspace=0.08)
     _save(fig, "measured_input")
 
 
@@ -297,7 +299,7 @@ def panel_paired_difference() -> None:
 
 def panel_fit_diagnostic() -> None:
     ro = _load("morph_v24_readout.json")
-    fig, ax = _figure("third")
+    fig, ax = _figure("third", height_mm=64.0)
     markers = {"M_cls": "o", "MP_cls": "s", "M_pool": "D", "CMP_expr": "o", "CM_prot": "s", "CMP_exprperm": "o", "CM_protperm": "s"}
     for arm, m in markers.items():
         runs = _runs(ro, arm)
@@ -311,15 +313,15 @@ def panel_fit_diagnostic() -> None:
     ax.set_ylim(0, 0.35)
     _grid(ax, 0.1, 0.05)
     _grid(ax, 0.2, 0.1, axis="x")
-    ax.legend(loc="upper left", bbox_to_anchor=(0.0, 1.0), **LEGEND)
+    fig.legend(handles=ax.get_legend_handles_labels()[0], loc="upper left", bbox_to_anchor=(0.02, 1.0), ncol=1, handletextpad=0.4, labelspacing=0.25, **LEGEND)
     _box(ax)
-    fig.subplots_adjust(left=0.18, right=0.98, bottom=0.2, top=0.95)
+    fig.subplots_adjust(left=0.18, right=0.98, bottom=0.15, top=0.6)
     _save(fig, "fit_diagnostic")
 
 
 def panel_ladder() -> None:
     ro = _load("morph_v24_readout.json")
-    fig, ax = _figure("third")
+    fig, ax = _figure("third", height_mm=64.0)
     styles = {"M_cls": ("-", SEQUENCE), "MP_cls": ("--", SEQUENCE), "CMP_expr": ("-", MEASURED), "CM_prot": ("--", MEASURED), "CMP_exprperm": ("-", CONTROL), "CM_protperm": ("--", CONTROL)}
     for arm, (ls, color) in styles.items():
         runs = _runs(ro, arm)
@@ -330,11 +332,11 @@ def panel_ladder() -> None:
         ax.plot(epochs, mean, ls=ls, color=color, lw=0.9, marker="o", ms=2, label=f"{ARM_LABEL[arm]} (n = {len(runs)})")
     ax.set_xlabel("epoch")
     ax.set_ylabel("val Pearson per feature, mean over seeds")
-    ax.set_ylim(0, 0.2)
+    ax.set_ylim(0, 0.25)
     _grid(ax, 0.1, 0.05)
-    ax.legend(loc="upper left", **LEGEND)
+    fig.legend(handles=ax.get_legend_handles_labels()[0], loc="upper left", bbox_to_anchor=(0.02, 1.0), ncol=1, handletextpad=0.4, labelspacing=0.25, **LEGEND)
     _box(ax)
-    fig.subplots_adjust(left=0.18, right=0.98, bottom=0.2, top=0.95)
+    fig.subplots_adjust(left=0.18, right=0.98, bottom=0.15, top=0.62)
     _save(fig, "ladder")
 
 

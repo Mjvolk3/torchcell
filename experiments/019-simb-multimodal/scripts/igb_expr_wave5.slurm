@@ -611,6 +611,35 @@ case "$STAGE" in
           JOBS_EXPLICIT=1
           RUNS_PER_GPU=1; STAGE_CONFIG=cgt_morph_v24
           EXTRA_OV="trainer.max_epochs=1200 data_module.batch_size=128 +data_module.materialize=true data_module.persistent_workers=true wandb.project=torchcell_019_morph_v25" ;;
+  # v25b (2026-10-11, same project): the levers the betaxanthin, trigenic and environment
+  # campaigns found, transplanted. Loss: the 19-quantile pinball (the default) against MSE
+  # (`dist=point`) on M_cls and M_zs at two lrs. Graph prior: the hard mask at layer 1
+  # replaced by the KL graph regularization at lambda 1e-2 and 1 (010, 025 and 035 did not
+  # train without it). Schedule: lr 1e-4 as the low control, and warm restarts (peak 1e-3,
+  # 50-epoch warmup, 300-epoch cycles). A stacked cell: MSE + KL 1e-2 + lr 1e-3 on M_zs.
+  # 36 one-card tasks, split seeds 0 to 3, init seed 0.
+  #   sbatch -J 019-morph2w2-levers -p cabbi --gres=gpu:1 --cpus-per-task=5 --mem=60g \
+  #       --time=0-16:00:00 --array=0-35%8 --export=ALL,W5_STAGE=morph_v25b,... igb_expr_wave5.slurm
+  morph_v25b) JOBS=(); SWEEP_OV=()
+          for s in 0 1 2 3; do for arm in M_cls M_zs; do for lr in 3e-4 1e-3; do
+            JOBS+=("${arm}_s${s}:0")
+            SWEEP_OV+=("multitask.dist=point regression_task.optimizer.lr=${lr} wandb.tags=[v25b,${arm},mse,lr${lr},split${s},init0]")
+          done; done; done
+          for s in 0 1 2 3; do for lam in 1e-2 1; do
+            JOBS+=("M_cls_s${s}:0")
+            SWEEP_OV+=("model.attention_mask.enabled=false model.graph_regularization.graph_reg_lambda=${lam} wandb.tags=[v25b,M_cls,graphkl${lam},lr3e-4,split${s},init0]")
+          done; done
+          for s in 0 1 2 3; do
+            JOBS+=("M_cls_s${s}:0")
+            SWEEP_OV+=("regression_task.optimizer.lr=1e-4 wandb.tags=[v25b,M_cls,lr1e-4,split${s},init0]")
+            JOBS+=("M_cls_s${s}:0")
+            SWEEP_OV+=("regression_task.optimizer.lr=1e-3 regression_task.lr_scheduler.type=CosineAnnealingWarmupRestarts regression_task.lr_scheduler.first_cycle_steps=300 regression_task.lr_scheduler.cycle_mult=1.0 regression_task.lr_scheduler.warmup_steps=50 regression_task.lr_scheduler.max_lr=1e-3 regression_task.lr_scheduler.min_lr=1e-5 wandb.tags=[v25b,M_cls,restarts300,lr1e-3,split${s},init0]")
+            JOBS+=("M_zs_s${s}:0")
+            SWEEP_OV+=("multitask.dist=point model.attention_mask.enabled=false model.graph_regularization.graph_reg_lambda=1e-2 regression_task.optimizer.lr=1e-3 wandb.tags=[v25b,M_zs,stack,mse,graphkl1e-2,lr1e-3,split${s},init0]")
+          done
+          JOBS_EXPLICIT=1
+          RUNS_PER_GPU=1; STAGE_CONFIG=cgt_morph_v24
+          EXTRA_OV="trainer.max_epochs=1200 data_module.batch_size=128 +data_module.materialize=true data_module.persistent_workers=true wandb.project=torchcell_019_morph_v25" ;;
   scale_n) JOBS=(); SWEEP_OV=()
           for wl in 45:6e-4 90:3e-4 180:1.5e-4 360:7.5e-5; do for s in 0 1 2; do
             JOBS+=("S_mask_s${s}:0")

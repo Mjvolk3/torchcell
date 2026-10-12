@@ -1010,8 +1010,13 @@ def test_cli_build_and_verify(
     monkeypatch.setattr(runners, "_gene_set_for_reference", lambda ref, base: UNIVERSE)
     assert m.main(["verify"]) == 0
     assert "gene_essentiality_goodall2018: PASS" in capsys.readouterr().out
+    # an empty gene universe fails the containment row, which is a genome-reference
+    # finding: reported under the verdict, never gating it (owner, 2026-10-12)
     monkeypatch.setattr(runners, "_gene_set_for_reference", lambda ref, base: set())
-    assert m.main(["verify"]) == 1
+    assert m.main(["verify"]) == 0
+    out = capsys.readouterr().out
+    assert "gene_essentiality_goodall2018: PASS (1 genome finding(s) reported" in out
+    assert "  [rp] L4 gene_containment_bw25113_locus_tags:" in out
 
 
 # --------------------------------------------------------------------------- #

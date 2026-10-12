@@ -153,7 +153,9 @@
     <span class="n">BacterialDegronPerturbation</span><span class="p">,</span>
     <span class="n">BacterialDeletionPerturbation</span><span class="p">,</span>
     <span class="n">BacterialMarkedAllelePerturbation</span><span class="p">,</span>
+    <span class="n">BacterialReleasedCrisprPerturbation</span><span class="p">,</span>
     <span class="n">BacterialReleasedStrainPerturbation</span><span class="p">,</span>
+    <span class="n">BacterialReleasedTransposonPerturbation</span><span class="p">,</span>
     <span class="n">BacterialSequenceVariantPerturbation</span><span class="p">,</span>
     <span class="n">BacterialSiteVariantPerturbation</span><span class="p">,</span>
     <span class="n">BacterialSpanDeletionPerturbation</span><span class="p">,</span>
@@ -207,6 +209,12 @@
     <span class="c1"># strain_label, released_kind, identifier_kind, cassette and collection travel in the</span>
     <span class="c1"># serialized record, as the round-2 leaves' own fields do.</span>
     <span class="n">BacterialReleasedStrainPerturbation</span><span class="p">,</span>
+    <span class="c1"># #691 round 2: a CRISPR guide and a transposon insertion against a released</span>
+    <span class="c1"># identifier. The same five properties; crispr, expression_direction, barcode,</span>
+    <span class="c1"># insertion_position, insertion_strand, transposon and library_pool travel in the</span>
+    <span class="c1"># serialized record, as they do on the placed leaves of each technology.</span>
+    <span class="n">BacterialReleasedCrisprPerturbation</span><span class="p">,</span>
+    <span class="n">BacterialReleasedTransposonPerturbation</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="sd">"""The gene-perturbation leaves written as ``bacterial perturbation`` nodes.</span>
 

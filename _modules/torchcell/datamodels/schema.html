@@ -4658,6 +4658,232 @@
 <span class="c1"># --------------------------------------------------------------------------- #</span>
 
 
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># ADDITIVE (#691, round 2: the CRISPR and transposon screens): a construct stored under</span>
+<span class="c1"># the identifier its source released, with no lookup against any assembly. Two leaves;</span>
+<span class="c1"># nothing above this line changes.</span>
+<span class="c1">#</span>
+<span class="c1"># BacterialReleasedStrainPerturbation carries a released strain identifier but no</span>
+<span class="c1"># construct, so a guide record (Cui 2018, Rousset 2018, Hawkins 2020, Fang 2025, Niu</span>
+<span class="c1"># 2019) or a transposon record (Goodall 2018) whose identity is the construct plus the</span>
+<span class="c1"># released gene label still had to resolve the label to a locus tag before it could be</span>
+<span class="c1"># stored, and the placed leaves refuse a label the pinned annotation retires, shares or</span>
+<span class="c1"># cannot place. Measured in those loaders' retention ledgers: Cui 2018 drops 925 guides</span>
+<span class="c1"># (1,850 measurements) under its three gene_* rules, Rousset 2018 643 records under its</span>
+<span class="c1"># three symbol rules, Hawkins 2020 37 (sokE, retired in ASM584v2), Fang 2025 3, Goodall</span>
+<span class="c1"># 2018 106 (the 9 multi-copy insertion-sequence symbols, both tables) and Niu 2019 the</span>
+<span class="c1"># 2 operon labels and the 1 combination strain naming them. Each leaf below stores the</span>
+<span class="c1"># construct as the placed leaf of its technology does and the gene as the strain leaf</span>
+<span class="c1"># does: the released identifier verbatim, never a locus tag of any namespace.</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_validate_released_identifier</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return ``value`` if it is a released identifier verbatim and not a locus tag.</span>
+
+<span class="sd">    The released leaves' counterpart of ``_validate_bacterial_locus_tag``: the identifier</span>
+<span class="sd">    is whatever the source wrote, so the only checks are that it is non-empty, carries</span>
+<span class="sd">    no surrounding whitespace, and is not a locus tag of a pinned namespace, which the</span>
+<span class="sd">    placed leaves own.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span> <span class="ow">or</span> <span class="n">value</span> <span class="o">!=</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"systematic_gene_name must be the released identifier verbatim, got "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2">"</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">_namespace_of_locus_tag</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2"> is a bacterial locus tag; a released tag of a pinned assembly "</span>
+            <span class="s2">"is stored on the placed bacterial leaves"</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">value</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_released_labels</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="s2">"GenePerturbation"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Raise unless ``strain_label`` and ``identifier_kind`` are verbatim, non-empty."""</span>
+    <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"strain_label"</span><span class="p">,</span> <span class="s2">"identifier_kind"</span><span class="p">):</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">field</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span> <span class="ow">or</span> <span class="n">value</span> <span class="o">!=</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2"> must be a non-empty verbatim string"</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BacterialReleasedCrisprPerturbation</span><span class="p">(</span><span class="n">GenePerturbation</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A guide-directed dead-Cas construct against a gene named only as released.</span>
+
+<span class="sd">    The released-identifier counterpart of ``BacterialCrisprInterferencePerturbation``</span>
+<span class="sd">    and ``BacterialCrisprActivationPerturbation``, one leaf for both directions because</span>
+<span class="sd">    the construct is the same material entity and the direction is a released fact of</span>
+<span class="sd">    the effector, so ``expression_direction`` is REQUIRED with no default rather than</span>
+<span class="sd">    fixed per class. ``systematic_gene_name`` is the source's own target identifier,</span>
+<span class="sd">    verbatim (a symbol such as ``sokE``, an operon label such as ``sufBCDS``, an</span>
+<span class="sd">    accession), ``perturbed_gene_name`` the released name, and ``strain_label`` the</span>
+<span class="sd">    release's whole identifier of the guide or of the strain carrying it, which keeps</span>
+<span class="sd">    two guides against one target apart when the spacer alone does not. Nothing is</span>
+<span class="sd">    looked up: no assembly decides whether the record exists, no derived locus tag is</span>
+<span class="sd">    stored, and a crosswalk to an annotation is a separate, later act.</span>
+
+<span class="sd">    ``crispr`` is the shared ``CrisprConstruct`` the placed CRISPR leaves carry (the</span>
+<span class="sd">    effector, the spacer, the guide count and the library pool), so the guide payload is</span>
+<span class="sd">    described once for the placed and the released families. The mechanism is the guide</span>
+<span class="sd">    itself, SO:0001998 ``sgRNA``, as on the expression axis; the leaf is a sibling of the</span>
+<span class="sd">    placed bacterial leaves and of ``BacterialReleasedStrainPerturbation`` under</span>
+<span class="sd">    ``GenePerturbation``, and it refuses a locus tag of any bacterial namespace, so a</span>
+<span class="sd">    guide against a placed tag stays on the placed leaves and one kind of record never</span>
+<span class="sd">    sits in two classes.</span>
+<span class="sd">    """</span>
+
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">"Guide-directed dead-Cas perturbation of a bacterial gene identified by the "</span>
+        <span class="s2">"source's own released label, not placed on an assembly"</span>
+    <span class="p">)</span>
+    <span class="n">perturbation_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"bacterial_released_crispr"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">"bacterial_released_crispr"</span>
+    <span class="p">)</span>
+    <span class="n">gene_namespace</span><span class="p">:</span> <span class="n">BacterialGeneNamespace</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the host namespace the study writes its strains against; the "</span>
+        <span class="s2">"released identifier is not a tag of it"</span>
+    <span class="p">)</span>
+    <span class="n">strain_label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the source's whole released identifier of the guide or of the "</span>
+        <span class="s2">"strain carrying it, verbatim (a row label, a guide id)"</span>
+    <span class="p">)</span>
+    <span class="n">identifier_kind</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"what systematic_gene_name is, as the source writes it (e.g. 'gene "</span>
+        <span class="s2">"symbol', 'operon label')"</span>
+    <span class="p">)</span>
+    <span class="n">expression_direction</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"'decreased' for a dead-Cas repressor (CRISPRi), 'increased' for a "</span>
+        <span class="s2">"dead-Cas activator (CRISPRa), as the source states the effector"</span>
+    <span class="p">)</span>
+    <span class="n">crispr</span><span class="p">:</span> <span class="n">CrisprConstruct</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the guide + dead-Cas effector introduced to modulate expression"</span>
+    <span class="p">)</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"systematic_gene_name"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_sys_gene_name</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The released identifier verbatim, and never a locus tag of a namespace."""</span>
+        <span class="k">return</span> <span class="n">_validate_released_identifier</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"expression_direction"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_expression_direction</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Direction is increased (activation) or decreased (interference)."""</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">"increased"</span><span class="p">,</span> <span class="s2">"decreased"</span><span class="p">}:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"expression_direction must be 'increased' or 'decreased', got </span><span class="si">{</span><span class="n">v</span><span class="si">!r}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_label</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"BacterialReleasedCrisprPerturbation"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The strain label and identifier kind are verbatim, non-empty strings."""</span>
+        <span class="n">_check_released_labels</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mechanism_so</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""(SO id, SO name): the guide itself, as on the expression axis."""</span>
+        <span class="k">return</span> <span class="p">(</span><span class="s2">"SO:0001998"</span><span class="p">,</span> <span class="s2">"sgRNA"</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BacterialReleasedTransposonPerturbation</span><span class="p">(</span><span class="n">GenePerturbation</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A transposon insertion disrupting a gene named only as released.</span>
+
+<span class="sd">    The released-identifier counterpart of ``TransposonInsertionPerturbation``: the</span>
+<span class="sd">    same mapped-insertion fields (``barcode``, ``insertion_position``,</span>
+<span class="sd">    ``insertion_strand``, ``transposon``, ``library_pool``), each verbatim from the</span>
+<span class="sd">    release and ``None`` when the source releases only gene-level calls (Goodall 2018),</span>
+<span class="sd">    and the gene as ``BacterialReleasedStrainPerturbation`` stores it:</span>
+<span class="sd">    ``systematic_gene_name`` is the source's own identifier verbatim (Goodall 2018: the</span>
+<span class="sd">    ``Gene`` symbol, including the nine multi-copy insertion-sequence symbols no single</span>
+<span class="sd">    BW25113 locus carries), ``perturbed_gene_name`` the released name and</span>
+<span class="sd">    ``strain_label`` the release's whole row label. ``insertion_position`` is the</span>
+<span class="sd">    coordinate AS RELEASED, on whatever reference the source mapped against, since no</span>
+<span class="sd">    assembly is consulted here; the placed leaf is where a position on the pinned</span>
+<span class="sd">    assembly lives.</span>
+
+<span class="sd">    The mechanism is SO:0001218 ``transgenic_insertion``, as on the placed leaf. A</span>
+<span class="sd">    sibling of the placed bacterial leaves and of the released-strain leaf under</span>
+<span class="sd">    ``GenePerturbation``; it refuses a locus tag of any bacterial namespace, so an</span>
+<span class="sd">    insertion in a placed tag stays on ``TransposonInsertionPerturbation``.</span>
+<span class="sd">    """</span>
+
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">"Transposon insertion disrupting a bacterial gene identified by the source's "</span>
+        <span class="s2">"own released label, not placed on an assembly"</span>
+    <span class="p">)</span>
+    <span class="n">perturbation_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"bacterial_released_transposon"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">"bacterial_released_transposon"</span>
+    <span class="p">)</span>
+    <span class="n">gene_namespace</span><span class="p">:</span> <span class="n">BacterialGeneNamespace</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the host namespace the study writes its strains against; the "</span>
+        <span class="s2">"released identifier is not a tag of it"</span>
+    <span class="p">)</span>
+    <span class="n">strain_label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the source's whole released identifier of the insertion mutant, "</span>
+        <span class="s2">"verbatim (a row label, a strain or barcode id)"</span>
+    <span class="p">)</span>
+    <span class="n">identifier_kind</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"what systematic_gene_name is, as the source writes it (e.g. 'gene "</span>
+        <span class="s2">"symbol')"</span>
+    <span class="p">)</span>
+    <span class="n">barcode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the random barcode the strain is counted by in a pooled assay; "</span>
+        <span class="s2">"None when the source released no per-strain tag"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">insertion_position</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"1-based position of the insertion as released, on the reference "</span>
+        <span class="s2">"the source mapped against; None when only gene-level calls were released"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">insertion_strand</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"+"</span><span class="p">,</span> <span class="s2">"-"</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"orientation of the inserted element as released; None when "</span>
+        <span class="s2">"unreleased"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">transposon</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the transposon / delivery vector, verbatim (e.g. 'mariner Himar1', "</span>
+        <span class="s2">"'Tn5'); None when unsourced"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">library_pool</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the mutant library sub-pool this strain was screened in, when a "</span>
+        <span class="s2">"study runs several; a pooled measurement is pool-relative, so the pool joins "</span>
+        <span class="s2">"the strain identity"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"systematic_gene_name"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_sys_gene_name</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The released identifier verbatim, and never a locus tag of a namespace."""</span>
+        <span class="k">return</span> <span class="n">_validate_released_identifier</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"insertion_position"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_position</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""A released position is 1-based, so it is at least 1."""</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">v</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"insertion_position is 1-based, got </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_label</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"BacterialReleasedTransposonPerturbation"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The strain label and identifier kind are verbatim, non-empty strings."""</span>
+        <span class="n">_check_released_labels</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mechanism_so</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""(SO id, SO name): a transgenic insertion, as on the placed leaf."""</span>
+        <span class="k">return</span> <span class="p">(</span><span class="s2">"SO:0001218"</span><span class="p">,</span> <span class="s2">"transgenic_insertion"</span><span class="p">)</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># End ADDITIVE (#691, round 2).</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+
+
 <span class="n">SgaPerturbationType</span> <span class="o">=</span> <span class="p">(</span>
     <span class="n">SgaKanMxDeletionPerturbation</span>
     <span class="o">|</span> <span class="n">SgaNatMxDeletionPerturbation</span>
@@ -4704,6 +4930,9 @@
     <span class="o">|</span> <span class="n">BacterialCrisprActivationPerturbation</span>
     <span class="c1"># a strain stored under its released identifier (#691)</span>
     <span class="o">|</span> <span class="n">BacterialReleasedStrainPerturbation</span>
+    <span class="c1"># a CRISPR guide and a transposon insertion against a released identifier (#691)</span>
+    <span class="o">|</span> <span class="n">BacterialReleasedCrisprPerturbation</span>
+    <span class="o">|</span> <span class="n">BacterialReleasedTransposonPerturbation</span>
 <span class="p">)</span>
 
 
@@ -4930,9 +5159,17 @@
     <span class="c1"># alternative nitrogen source at growth yield limiting concentrations (30 mg N</span>
     <span class="c1"># l-1)"). Converting it to a compound mass needs the compound's nitrogen content,</span>
     <span class="c1"># which the source does not do, so the dose is stored on the basis it was set on.</span>
-    <span class="n">mg_nitrogen_per_l</span> <span class="o">=</span> <span class="s2">"mg_N/L"</span></div>
-
+    <span class="n">mg_nitrogen_per_l</span> <span class="o">=</span> <span class="s2">"mg_N/L"</span>
     <span class="c1"># --- end De Chiara 2022 ------------------------------------------------------- #</span>
+    <span class="c1"># --- begin Niu 2019: a dimensionless ratio to a reference ---------------------- #</span>
+    <span class="c1"># A product quantity released only as a FOLD CHANGE over the source's own reference</span>
+    <span class="c1"># (Niu 2019: 40 pinene cells, "the ratio of pinene titer with CRISPRa and without",</span>
+    <span class="c1"># no absolute titer anywhere in that arm). The number is dimensionless, so no</span>
+    <span class="c1"># concentration unit is true of it and a molar conversion does not exist; it is</span>
+    <span class="c1"># stored on the scale the source set it on, with the reference at 1.0.</span>
+    <span class="n">fold_change</span> <span class="o">=</span> <span class="s2">"fold_change"</span></div>
+
+    <span class="c1"># --- end Niu 2019 ------------------------------------------------------------- #</span>
 
 
 <div class="viewcode-block" id="DoseBasis">

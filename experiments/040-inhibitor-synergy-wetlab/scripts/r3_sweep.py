@@ -502,6 +502,32 @@ def round7_arms() -> list[dict[str, object]]:
     return out
 
 
+def round8_arms() -> list[dict[str, object]]:
+    """Round 8: the round-5 questions re-asked under the cell readout, since every old
+    readout job was cancelled (2026-10-12). Host side: the anchors-only arm is the
+    zero-shot test of the shared head (it never sees a titration well), the fine-tune
+    arm moves the shared head and tokens on the titration alone after the anchors. The
+    partition arms (fold seeds 1 and 2) give the noise floor of the cell readout. Source
+    side: the 96-condition auxiliary batch and the auxiliary weight 3 on the two-source
+    cell arm, the two levers the gene readout never resolved.
+    """
+    return [
+        arm("van_e150_cell_anchors", "van", 150, readout="cell", host_train="anchors"),
+        arm(
+            "van_e150_cell_ft",
+            "van",
+            150,
+            readout="cell",
+            host_train="finetune_ex21",
+            finetune_scope="host_head+env_encoder",
+        ),
+        arm("van_e150_cell_fs1", "van", 150, readout="cell", fold_seed=1),
+        arm("van_e150_cell_fs2", "van", 150, readout="cell", fold_seed=2),
+        arm("vanhop_e150_cell_cb96", "vanhop", 150, readout="cell", cond_batch=96),
+        arm("vanhop_e150_cell_aw3", "vanhop", 150, readout="cell", aux_weight=3.0),
+    ]
+
+
 def configs(spec: dict[str, object], folds: list[int]) -> list[dict[str, object]]:
     """One config per fold of ``spec``."""
     out = []
@@ -564,19 +590,27 @@ def main() -> None:
         "--wave",
         type=int,
         default=1,
-        choices=(1, 2, 3, 4, 5, 6, 7),
+        choices=(1, 2, 3, 4, 5, 6, 7, 8),
         help=(
             "1 writes the r3_* screen, 2 the r3w2_* second wave, 3 the r4_* seed"
             " ensemble, 4 the r5_* Delta round, 5 the r5b_* convergence follow-up,"
-            " 6 the r6_* graph regularization, 7 the r7_* cell readout"
+            " 6 the r6_* graph regularization, 7 the r7_* cell readout, 8 the r8_*"
+            " round-5 questions under the cell readout"
         ),
     )
     args = parser.parse_args()
     os.makedirs(args.out_dir, exist_ok=True)
     os.makedirs(RESULTS, exist_ok=True)
-    prefix = {1: "r3", 2: "r3w2", 3: "r4", 4: "r5", 5: "r5b", 6: "r6", 7: "r7"}[
-        args.wave
-    ]
+    prefix = {
+        1: "r3",
+        2: "r3w2",
+        3: "r4",
+        4: "r5",
+        5: "r5b",
+        6: "r6",
+        7: "r7",
+        8: "r8",
+    }[args.wave]
     waves = {
         1: arms,
         2: wave2_arms,
@@ -585,6 +619,7 @@ def main() -> None:
         5: round5b_arms,
         6: round6_arms,
         7: round7_arms,
+        8: round8_arms,
     }
     specs = waves[args.wave]()
     label = {
@@ -595,6 +630,7 @@ def main() -> None:
         5: "ROUND 5B",
         6: "ROUND 6",
         7: "ROUND 7",
+        8: "ROUND 8",
     }[args.wave]
 
     rows, lines = [], []

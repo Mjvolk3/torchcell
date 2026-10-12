@@ -1,0 +1,7 @@
+job,sweep,arm,sources,n_sources,epochs,split,aux_holdout,fold_seed,folds,configs,estimated_hours,time_limit_hours,overrides
+1,r8_van_e150_cell_anchors,van_e150_cell_anchors,vanacloig,1,150,compound,none,0,0 1 2,3,3.3,12,"readout=cell, host_train=anchors"
+2,r8_van_e150_cell_ft,van_e150_cell_ft,vanacloig,1,150,compound,none,0,0 1 2,3,3.3,12,"readout=cell, host_train=finetune_ex21, finetune_scope=host_head+env_encoder"
+3,r8_van_e150_cell_fs1,van_e150_cell_fs1,vanacloig,1,150,compound,none,1,0 1 2,3,3.3,12,readout=cell
+4,r8_van_e150_cell_fs2,van_e150_cell_fs2,vanacloig,1,150,compound,none,2,0 1 2,3,3.3,12,readout=cell
+5,r8_vanhop_e150_cell_cb96,vanhop_e150_cell_cb96,vanacloig hoepfner_hop,2,150,compound,compound,0,0 1 2,3,10.08,12,"readout=cell, cond_batch=96"
+6,r8_vanhop_e150_cell_aw3,vanhop_e150_cell_aw3,vanacloig hoepfner_hop,2,150,compound,compound,0,0 1 2,3,6.3,12,"readout=cell, aux_weight=3.0"

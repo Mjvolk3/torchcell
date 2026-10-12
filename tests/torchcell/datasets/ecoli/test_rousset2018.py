@@ -22,7 +22,6 @@ table.
 from __future__ import annotations
 
 import hashlib
-import inspect
 import os
 import os.path as osp
 from collections import Counter
@@ -59,15 +58,11 @@ from torchcell.datamodels.schema import (
     MediaComponentRole,
     PhagePerturbation,
     SampleUnit,
+    SmallMoleculePerturbation,
 )
 from torchcell.datasets.bacteria_common import BacterialGenomeInjector
 from torchcell.datasets.dataset_registry import dataset_registry
-from torchcell.literature.manifest import (
-    ROLE_RAW_DATA,
-    ArtifactRecord,
-    Manifest,
-    RetrievalMethod,
-)
+from torchcell.literature.manifest import Manifest, RetrievalMethod
 from torchcell.sequence.genome.ecoli.k12 import MG1655_ASSEMBLY, EcoliK12MG1655Genome
 from torchcell.verification.report import Level
 from torchcell.verification.sourced import (
@@ -151,68 +146,22 @@ def _write(tmp_path: Path, filename: str, frame: pd.DataFrame) -> Path:
     return path
 
 
-def _cui_table(spacers: tuple[str, ...]) -> pd.DataFrame:
-    """A Supplementary-Data-5-shaped table carrying exactly ``spacers``."""
-    n = len(spacers)
-    return pd.DataFrame(
-        {
-            "guide": list(spacers),
-            "gene": ["thrL"] * n,
-            "essential": [False] * n,
-            "pos": list(range(100, 100 + n)),
-            "ori": ["+"] * n,
-            "coding": [True] * n,
-            "fit18": [-0.5] * n,
-            "fit75": [-1.5] * n,
-            "ntargets": [1] * n,
-            "seq": [None] * n,
-        }
-    )
-
-
-def _deposit_cui(data_root: Path, frame: pd.DataFrame) -> str:
-    """Write a stand-in Cui 2018 raw mirror and return the table's sha256."""
-    mirror = data_root / r.CUI2018_RAW_DIR_REL
-    (mirror / "data").mkdir(parents=True, exist_ok=True)
-    path = mirror / r.table_rel(r.CUI2018_SCREEN_FILENAME)
-    frame.to_csv(path, index=False)
-    digest = hashlib.sha256(path.read_bytes()).hexdigest()
-    manifest = Manifest(
-        citation_key=r.CUI2018_KEY,
-        files=[
-            ArtifactRecord(
-                path=r.table_rel(r.CUI2018_SCREEN_FILENAME),
-                role=ROLE_RAW_DATA,
-                bytes=path.stat().st_size,
-                sha256=digest,
-            )
-        ],
-    )
-    (mirror / "manifest.json").write_text(manifest.model_dump_json(indent=2))
-    return digest
-
-
 # --------------------------------------------------------------------------- #
-# The four stored screens
+# The five stored screens
 # --------------------------------------------------------------------------- #
-def test_the_four_stored_screens_name_their_table_column_strain_and_phage() -> None:
-    """The growth screen is absent, and every stored screen names a phage.
-
-    The release carries five screens; the growth one is Cui 2018's, so ``CONDITIONS``
-    holds the four phage-derived screens and ``phage`` is no longer optional.
-    """
+def test_the_five_stored_screens_name_their_table_column_strain_and_phage() -> None:
+    """#905: the growth screen (S1 Table, LC-E75) is stored beside the four phage ones."""
     assert [
         (c.screen_id, c.table, c.column, c.strain, c.phage) for c in r.CONDITIONS
     ] == [
+        ("growth_LC-E75", r.GROWTH_TABLE, "log2FC", "LC-E75", None),
         ("phage_lambda", r.PHAGE_TABLE, "log2FC_lambda", "FR-E01", "lambda"),
         ("phage_T4", r.PHAGE_TABLE, "log2FC_T4", "FR-E01", "T4"),
         ("phage_186cIts", r.PHAGE_TABLE, "log2FC_186", "FR-E01", "186cIts"),
         ("lambda_transduction", r.TRANSDUCTION_TABLE, "log2FC", "FR-E01", "lambda"),
     ]
-    assert len({c.screen_id for c in r.CONDITIONS}) == 4
-    assert r.GROWTH_TABLE not in {c.table for c in r.CONDITIONS}
     assert r.TABLE_COLUMNS == {
-        r.GROWTH_TABLE: ("log2FC",),
+        r.GROWTH_TABLE: ("log2FC", "padj"),
         r.PHAGE_TABLE: ("log2FC_lambda", "log2FC_T4", "log2FC_186"),
         r.TRANSDUCTION_TABLE: ("log2FC",),
     }
@@ -241,60 +190,63 @@ def test_only_the_transduction_arm_is_not_a_pooled_barcode_growth_assay() -> Non
 # 141,542 records, on 16,979 spacers both libraries carry.
 # --------------------------------------------------------------------------- #
 def test_the_two_loaders_screen_vocabularies_are_disjoint() -> None:
-    """No (spacer, screen_id) key can be written by both loaders.
-
-    A record's measurement identity is its spacer plus its screen. The two libraries
-    DO share spacers (16,979 of them in the dev stores, since both screened the same
-    guide library), so disjoint screen ids are what makes the pair non-duplicative.
+    """Rousset's growth screen and Cui's LC-E75 screen are two releases of one screen's
+    reads (#878); since #905 both are stored, each under its own publication and screen
+    id, so a (spacer, screen_id) key names one release.
     """
     rousset_screens = {c.screen_id for c in r.CONDITIONS}
     cui_screens = {screen_id for screen_id, _ in cui.SCREENS}
-    assert rousset_screens == {
-        "phage_lambda",
-        "phage_T4",
-        "phage_186cIts",
-        "lambda_transduction",
-    }
     assert cui_screens == {"LC-E18", "LC-E75"}
     assert rousset_screens.isdisjoint(cui_screens)
 
 
-def test_the_growth_screen_rule_names_a_dataset_and_screen_cui_really_serves() -> None:
-    """``served_by`` is attributable: the class, the slug and the screen all exist.
-
-    A drop rule that names a dataset nobody serves is a disappearance rather than an
-    attribution, so the three strings are checked against the Cui module itself.
-    """
-    assert r.CUI2018_DATASET_CLASS == cui.CrispriKnockdownCui2018Dataset.__name__
-    default_root = (
-        inspect.signature(cui.CrispriKnockdownCui2018Dataset.__init__)
-        .parameters["root"]
-        .default
-    )
-    assert r.CUI2018_DATASET == osp.basename(default_root)
-    assert r.CUI2018_SCREEN_ID in {screen_id for screen_id, _ in cui.SCREENS}
-    column = dict(cui.SCREENS)[r.CUI2018_SCREEN_ID]
-    assert column == "fit75"
-    assert column in cui.SCREEN_COLUMNS
-
-
 def test_the_growth_screen_deferral_quote_names_cui_as_the_source() -> None:
-    """The decision rests on Rousset's own sentence, read from the pinned OCR."""
     deferral = r.GROWTH_SCREEN_DEFERRAL
-    assert deferral.provenance.citation_key == r.CITATION_KEY
     assert deferral.provenance.sha256 == r.PAPER_MD_SHA256
     assert (
         "The data for the screen performed with strain LC-E75 grown in rich medium was "
         "obtained from our previous study [26]"
     ) in deferral.quote
-    assert deferral.note is not None
-    assert "Cui 2018" in deferral.note
+    assert "Cui 2018" in str(deferral.note)
+    assert r.GROWTH_SCREEN_REPLICATES.value == 3
+    assert "in triplicates" in r.GROWTH_SCREEN_REPLICATES.quote
+
+
+def test_the_growth_screen_runs_in_cui_2018s_culture_and_host() -> None:
+    growth = r.CONDITIONS[0]
+    assert r.environment(growth) == cui.screen_environment()
+    assert r.BACKGROUNDS["LC-E75"] == cui.strain_background("LC-E75")
+
+
+def test_a_growth_phenotype_carries_its_padj_and_the_deseq2_correction() -> None:
+    growth = r.phenotype(-2.0, r.CONDITIONS[0], 0.004)
+    assert growth.environment_response_p_value_adjusted == 0.004
+    assert growth.p_value_adjustment_method == "benjamini_hochberg"
+    assert growth.environment_response_p_value is None
+    assert growth.n_samples == 3
+    assert r.PADJ_CORRECTION.provenance.sha256 == r.DESEQ2_REFERENCE_SHA256
+    assert "Benjamini and Hochberg" in r.PADJ_CORRECTION.quote
+    phage = r.phenotype(-2.0, r.CONDITIONS[1])
+    assert phage.environment_response_p_value_adjusted is None
+    assert phage.p_value_adjustment_method is None
+
+
+def test_a_growth_record_names_s1_as_its_identifier_source() -> None:
+    stored = r.StoredGuide(
+        spacer="A" * 20,
+        reported_symbol="thrL",
+        identifier_kind=r.GROWTH_IDENTIFIER_KIND,
+    )
+    (perturbation,) = r.genotype(stored).perturbations
+    assert perturbation.identifier_kind == r.GROWTH_IDENTIFIER_KIND
+    assert "S1" in r.GROWTH_IDENTIFIER_KIND
+    default = r.StoredGuide(spacer="A" * 20, reported_symbol="thrL")
+    assert r.genotype(default).perturbations[0].identifier_kind == r.IDENTIFIER_KIND
 
 
 def test_the_synthetic_build_stores_no_cui_screen_id(
     tmp_path: Path, mirrored: Path
 ) -> None:
-    """End to end: every stored screen is one of the four, and none is Cui's."""
     dataset = r.CrispriScreenRousset2018Dataset(root=str(tmp_path / "dataset"))
     stored = {
         dataset[index]["experiment"]["phenotype"]["screen_id"]
@@ -388,7 +340,7 @@ def test_the_atc_inducer_is_a_medium_component_at_its_stated_dose() -> None:
 
 
 def test_a_phage_environment_carries_exactly_its_phage_at_moi_one() -> None:
-    environment = r.environment(r.CONDITIONS[1])
+    environment = r.environment(r.CONDITIONS[2])
     assert environment.media is r.ROUSSET2018_LB_MALTOSE_CACL2
     assert environment.temperature is not None
     assert environment.temperature.value == 37.0
@@ -417,34 +369,26 @@ def test_the_two_lambda_screens_share_an_environment_and_split_on_screen_id() ->
     assert r.phenotype(0.1, transduction).screen_id == "lambda_transduction"
 
 
-def test_a_phage_is_the_only_environment_perturbation_any_screen_carries() -> None:
-    """The conf rule the adapter depends on, stated as a property of the records.
-
-    Enabling `phage perturbation` and `environment perturbation` in one conf would emit
-    each phage twice under two labels on one content id, so the environment axis must
-    hold phages and nothing else.
-    """
+def test_each_screen_carries_exactly_one_environment_perturbation() -> None:
+    """A phage on every phage screen; Cui's aTc on the growth screen (#905)."""
     for condition in r.CONDITIONS:
         (perturbation,) = r.environment(condition).perturbations
-        assert isinstance(perturbation, PhagePerturbation)
+        if condition.phage is None:
+            assert isinstance(perturbation, SmallMoleculePerturbation)
+            assert perturbation.compound.name == "anhydrotetracycline"
+        else:
+            assert isinstance(perturbation, PhagePerturbation)
 
 
 def test_every_stored_record_is_environment_perturbed() -> None:
-    """Why L3 ``environment_perturbed`` has no base-medium clause to fall back on.
-
-    While the growth screen was stored, its 23,209 perturbation-free records passed that
-    rule only because their medium was not the dataset's modal one. The growth screen is
-    Cui 2018's, so every record now carries a phage and the rule passes on the
-    perturbation itself.
-    """
     assert set(r.EXPECTED_SCREEN_CENSUS) == {c.screen_id for c in r.CONDITIONS}
-    assert sum(r.EXPECTED_SCREEN_CENSUS.values()) == 4 * 17220 == 68880
+    assert sum(r.EXPECTED_SCREEN_CENSUS.values()) == 23372 + 4 * 17220 == 92252
     for condition in r.CONDITIONS:
         assert len(r.environment(condition).perturbations) == 1
 
 
 def test_a_phenotype_is_a_signed_log2_ratio_over_three_biological_replicates() -> None:
-    phenotype = r.phenotype(-9.0, r.CONDITIONS[1])
+    phenotype = r.phenotype(-9.0, r.CONDITIONS[2])
     assert phenotype.measurement_type is MeasurementType.log2_ratio
     assert phenotype.assay_type is AssayType.pooled_competitive_growth_barcode
     assert phenotype.environment_response == -9.0
@@ -503,9 +447,9 @@ def test_two_guides_on_one_gene_are_two_strains_and_one_gene() -> None:
     assert first.crispr.guide_sequence != second.crispr.guide_sequence
 
 
-def test_the_one_stored_host_strain_is_a_background_on_the_mg1655_assembly() -> None:
-    """Only FR-E01 has a background: LC-E75 ran the growth screen Cui 2018 serves."""
-    assert set(r.BACKGROUNDS) == {"FR-E01"}
+def test_the_two_host_strains_are_backgrounds_on_the_mg1655_assembly() -> None:
+    """FR-E01 for the phage screens; LC-E75, Cui 2018's own record, for growth."""
+    assert set(r.BACKGROUNDS) == {"FR-E01", "LC-E75"}
     for label, background in r.BACKGROUNDS.items():
         assert background.name == label
         assert background.reference_strain == "MG1655"
@@ -515,9 +459,8 @@ def test_the_one_stored_host_strain_is_a_background_on_the_mg1655_assembly() -> 
         assert background.provenance
         assert background.gapped_fields() == set()
     assert "HK022" in str(r.FR_E01_BACKGROUND.construction)
-    assert not hasattr(r, "LC_E75_BACKGROUND")
     assert r.LC_E75_CASSETTE.value == "LC-E75"
-    assert "SUBSUMED" in str(r.LC_E75_CASSETTE.note)
+    assert "Cui 2018" in str(r.LC_E75_CASSETTE.note)
 
 
 # --------------------------------------------------------------------------- #
@@ -734,7 +677,6 @@ def test_the_loader_is_registered_and_receives_the_mg1655_genome(
         r.GROWTH_TABLE,
         r.PHAGE_TABLE,
         r.TRANSDUCTION_TABLE,
-        r.CUI2018_SCREEN_FILENAME,
     ]
 
 
@@ -751,6 +693,7 @@ def _records(census: dict[str, int]) -> list[dict[str, Any]]:
 
 def test_the_screen_census_pins_the_per_screen_split() -> None:
     release = {
+        "growth_LC-E75": 23372,
         "phage_lambda": 17220,
         "phage_T4": 17220,
         "phage_186cIts": 17220,
@@ -776,35 +719,45 @@ def _test_record(**experiment_fields: Any) -> dict[str, Any]:
     }
 
 
-def test_released_test_absent_passes_when_no_record_carries_a_p_value() -> None:
-    result = r.released_test_absent([_test_record(), _test_record()])
-    assert result.passed
-    assert result.level == Level.L2
-    assert result.details == {"n_records": 2, "carrying": {}}
-    assert result.message == (
-        "SUPPLEMENTARY: 0 of 2 records carry a p-value; S4 and S6 Tables release "
-        "none and no S1 row is stored"
-    )
-
-
-def test_released_test_absent_counts_every_record_that_carries_one() -> None:
-    carrying = _test_record(
+def test_released_test_where_released_passes_on_the_released_pattern() -> None:
+    growth = _test_record(
+        screen_id="growth_LC-E75",
         environment_response_p_value_adjusted=0.01,
         p_value_adjustment_method="benjamini_hochberg",
     )
-    result = r.released_test_absent([_test_record(), carrying, carrying])
+    phage = _test_record(screen_id="phage_T4")
+    result = r.released_test_where_released([growth, phage, phage])
+    assert result.passed
+    assert result.level == Level.L2
+    assert result.details == {"n_records": 3, "n_growth": 1, "wrong": {}}
+
+
+def test_released_test_where_released_counts_every_departure() -> None:
+    bare_growth = _test_record(screen_id="growth_LC-E75")
+    carrying_phage = _test_record(
+        screen_id="phage_T4",
+        environment_response_p_value_adjusted=0.01,
+        p_value_adjustment_method="benjamini_hochberg",
+    )
+    wrong_method = _test_record(
+        screen_id="growth_LC-E75",
+        environment_response_p_value_adjusted=0.01,
+        p_value_adjustment_method="bonferroni",
+    )
+    result = r.released_test_where_released([bare_growth, carrying_phage, wrong_method])
     assert not result.passed
-    assert result.details["carrying"] == {
+    assert result.details["wrong"] == {
         "experiment.environment_response_p_value_adjusted": 2,
         "experiment.p_value_adjustment_method": 2,
+        "experiment.p_value_adjustment_method_value": 2,
     }
 
 
-def test_the_released_test_fields_exist_on_the_phenotype_and_are_unset() -> None:
+def test_the_released_test_fields_exist_on_the_phenotype() -> None:
     fields = EnvironmentResponsePhenotype.model_fields
     assert set(r.RELEASED_TEST_FIELDS) <= set(fields)
-    condition = r.CONDITIONS[0]
-    for built in (r.phenotype(-1.5, condition), r.reference_phenotype(condition)):
+    for condition in r.CONDITIONS:
+        built = r.reference_phenotype(condition)
         assert {name: getattr(built, name) for name in r.RELEASED_TEST_FIELDS} == (
             dict.fromkeys(r.RELEASED_TEST_FIELDS)
         )
@@ -814,7 +767,6 @@ def test_only_the_growth_table_releases_a_test_column() -> None:
     assert [table for table, header in r.TABLE_HEADERS.items() if "padj" in header] == [
         r.GROWTH_TABLE
     ]
-    assert all(condition.table != r.GROWTH_TABLE for condition in r.CONDITIONS)
 
 
 # --------------------------------------------------------------------------- #
@@ -837,16 +789,6 @@ _SYNTHETIC_GROWTH: tuple[tuple[str, str | None, str], ...] = (
 )
 #: The synthetic phage/transduction library: two storable genes and the retired symbol.
 _SYNTHETIC_PHAGE_GENES = ("thrL", "thrW", "nope")
-
-#: The synthetic Cui 2018 guide set: five of the seven storable S1 spacers, so the
-#: de-duplication rule splits them 5 served-by-Cui and 2 below the read floor.
-_SYNTHETIC_CUI_SPACERS: tuple[str, ...] = (
-    "A" * 20,
-    "G" * 20,
-    "T" * 20,
-    "AC" * 10,
-    "CT" * 10,
-)
 
 
 def _pin(
@@ -887,8 +829,6 @@ def mirrored(
     )
     data_root = tmp_path / "data_root"
     r.deposit_raw_mirror(table_paths=paths, data_root=str(data_root))
-    digest = _deposit_cui(data_root, _cui_table(_SYNTHETIC_CUI_SPACERS))
-    monkeypatch.setattr(r, "CUI2018_SCREEN_SHA256", digest)
     monkeypatch.setenv("DATA_ROOT", str(data_root))
     monkeypatch.delenv("TC_DATA_URL", raising=False)
     monkeypatch.setattr(
@@ -903,18 +843,28 @@ def test_the_loader_builds_the_synthetic_release_end_to_end(
 ) -> None:
     root = tmp_path / "dataset"
     dataset = r.CrispriScreenRousset2018Dataset(root=str(root))
-    # 3 released guides x 3 phage columns + 3 transduction records; no growth record.
-    # "nope" is on no locus of the synthetic annotation and is stored as released.
-    assert len(dataset) == 12
-    assert sorted(dataset.gene_set) == ["nope", "thrL", "thrW"]
+    # 7 coding-strand in-gene S1 guides (#905) + 3 released guides x 3 phage columns
+    # + 3 transduction records. "nope" is on no locus of the synthetic annotation and
+    # is stored as released.
+    assert len(dataset) == 19
+    assert sorted(dataset.gene_set) == [
+        "PRO2",
+        "nope",
+        "thrA",
+        "thrA1",
+        "thrL",
+        "thrW",
+        "yaaP",
+    ]
     references = dataset.experiment_reference_index
     assert references is not None
-    assert len(references) == 4
+    assert len(references) == 5
     census: dict[str, int] = {}
     for index in range(len(dataset)):
         screen = dataset[index]["experiment"]["phenotype"]["screen_id"]
         census[screen] = census.get(screen, 0) + 1
     assert census == {
+        "growth_LC-E75": 7,
         "phage_lambda": 3,
         "phage_T4": 3,
         "phage_186cIts": 3,
@@ -923,9 +873,16 @@ def test_the_loader_builds_the_synthetic_release_end_to_end(
     first = dataset[0]["experiment"]
     assert first["genotype"]["perturbations"][0]["systematic_gene_name"] == "thrL"
     assert first["genotype"]["perturbations"][0]["crispr"]["guide_sequence"] == "A" * 20
-    assert first["phenotype"]["screen_id"] == "phage_lambda"
+    assert first["phenotype"]["screen_id"] == "growth_LC-E75"
+    # The S1 row's released padj (1e-3 / (0 + 1)) and its DESeq2 correction.
+    assert first["phenotype"]["environment_response_p_value_adjusted"] == 1e-3
+    assert first["phenotype"]["p_value_adjustment_method"] == "benjamini_hochberg"
+    assert (
+        first["genotype"]["perturbations"][0]["identifier_kind"]
+        == r.GROWTH_IDENTIFIER_KIND
+    )
     assert (root / "raw" / r.GROWTH_TABLE).is_file()
-    assert (root / "raw" / r.CUI2018_SCREEN_FILENAME).is_file()
+    assert not (root / "raw" / "41467_2018_4209_MOESM8_ESM.csv").exists()
     assert (root / "preprocess" / "build_manifest.json").is_file()
 
 
@@ -941,33 +898,19 @@ def test_the_build_accounts_for_every_dropped_synthetic_record(
         drops["source_records"],
         drops["kept_records"],
         drops["dropped_records"],
-    ) == (21, 12, 9)
+    ) == (21, 19, 2)
     assert {
         rule["rule"]: (rule["n_records"], rule["items"]) for rule in drops["rules"]
     } == {
         "guide_targets_no_gene": (1, []),
         "guide_targets_the_template_strand": (1, []),
-        "growth_screen_measurement_is_served_by_cui2018": (5, []),
-        "growth_screen_guide_is_below_cui2018_read_floor": (2, []),
     }
-    # The S1 Table is accounted for whole, and the Cui attribution names its dataset.
-    growth_rules = {
-        rule["rule"]: rule for rule in drops["rules"] if rule["scope"] == "guide"
-    }
-    assert sum(rule["n_records"] for rule in growth_rules.values()) == 9
-    served = growth_rules["growth_screen_measurement_is_served_by_cui2018"]["served_by"]
-    assert served == (
-        f"{r.CUI2018_DATASET_CLASS} ({r.CUI2018_DATASET}), "
-        f"screen_id {r.CUI2018_SCREEN_ID}"
-    )
-    assert (
-        growth_rules["growth_screen_guide_is_below_cui2018_read_floor"]["served_by"]
-        is None
-    )
+    # No rule names another dataset: the S1 rows are not cross-referenced (#905).
+    assert all(rule["served_by"] is None for rule in drops["rules"])
     report = _json.loads(
         (root / "preprocess" / "identifier_reconciliation.json").read_text()
     )
-    assert (report["released_symbols"], report["stored_symbols"]) == (3, 3)
+    assert (report["released_symbols"], report["stored_symbols"]) == (7, 7)
 
 
 def test_the_two_screens_of_one_guide_are_two_records_on_one_strain(
@@ -990,8 +933,9 @@ def test_the_two_screens_of_one_guide_are_two_records_on_one_strain(
     assert challenge["phenotype"]["environment_response"] == 0.4
     assert transduction["phenotype"]["environment_response"] == -0.3
     assert set(by_screen) == {c.screen_id for c in r.CONDITIONS}
-    for record in by_screen.values():
-        assert record["reference"]["genome_reference"]["strain"] == "FR-E01"
+    for screen, record in by_screen.items():
+        strain = "LC-E75" if screen == "growth_LC-E75" else "FR-E01"
+        assert record["reference"]["genome_reference"]["strain"] == strain
 
 
 def test_download_refuses_a_mirror_whose_file_is_gone(
@@ -1032,13 +976,14 @@ def test_verify_build_passes_on_the_synthetic_release(
         r,
         "EXPECTED_SCREEN_CENSUS",
         {
+            "growth_LC-E75": 7,
             "phage_lambda": 3,
             "phage_T4": 3,
             "phage_186cIts": 3,
             "lambda_transduction": 3,
         },
     )
-    report = r.verify_build(str(root), data_root=str(mirrored), expected_count=12)
+    report = r.verify_build(str(root), data_root=str(mirrored), expected_count=19)
     verdicts = {result.name: result.passed for result in report.results}
     assert verdicts["structural"] and verdicts["count"]
     assert verdicts["pair_uniqueness"] is True
@@ -1046,7 +991,7 @@ def test_verify_build_passes_on_the_synthetic_release(
     assert verdicts["reference_zero"] is True
     assert verdicts["environment_perturbed"] is True
     assert verdicts["screen_census"] is True
-    assert verdicts["released_test_absent"] is True
+    assert verdicts["released_test_where_released"] is True
     # "nope" is on no locus of the synthetic annotation: the genome-reference rows
     # report it and the verdict stands (#1069)
     assert verdicts["current_genome_genes"] is False
@@ -1121,14 +1066,28 @@ def _data_root() -> str:
 def test_every_sourced_value_is_backed_by_its_verbatim_quote() -> None:
     root = osp.join(_data_root(), "torchcell-library")
     values = [v for v in vars(r).values() if isinstance(v, SourcedValue)]
-    assert len(values) == len(r.SOURCED_VALUES) == 26
-    assert {v.provenance.citation_key for v in values} == {
-        r.CITATION_KEY,
-        r.CUI2018_KEY,
-    }
-    for value in values:
+    deseq2 = [v for v in values if v.provenance.sha256 == r.DESEQ2_REFERENCE_SHA256]
+    assert deseq2 == [r.PADJ_CORRECTION]
+    paper = [v for v in values if v is not r.PADJ_CORRECTION]
+    assert len(paper) == len(r.SOURCED_VALUES) == 26
+    assert {v.provenance.citation_key for v in paper} == {r.CITATION_KEY}
+    for value in paper:
         result = audit_sourced_value(value, root)
         assert result.passed, f"{value.value!r}: {result.message}"
+
+
+@pytest.mark.data
+def test_the_padj_correction_is_verbatim_in_the_deposited_deseq2_reference() -> None:
+    """#905: the BH sentence, re-read from the hash-pinned raw-mirror bytes."""
+    path = Path(_data_root()) / r.RAW_DIR_REL / r.DESEQ2_REFERENCE_REL
+    payload = path.read_bytes()
+    assert hashlib.sha256(payload).hexdigest() == r.DESEQ2_REFERENCE_SHA256
+    assert r.PADJ_CORRECTION.quote in payload.decode()
+    manifest = r.load_manifest(_data_root())
+    (record,) = [f for f in manifest.files if f.path == r.DESEQ2_REFERENCE_REL]
+    assert record.retrieval is not None
+    assert record.retrieval.method is RetrievalMethod.pmc_cloud
+    assert record.retrieval.params == {"key": r.DESEQ2_REFERENCE_KEY}
 
 
 @pytest.mark.data
@@ -1157,61 +1116,12 @@ def test_the_release_has_the_measured_shape_and_sign_distribution() -> None:
 
 
 @pytest.mark.data
-def test_the_growth_screen_is_cui_2018s_screen_to_released_precision() -> None:
-    """The de-duplication measurement, re-run on both pinned mirrors (issue #760).
-
-    Rousset defers the growth screen to Cui 2018, and the two releases carry the same
-    numbers for every spacer they share. That is why no growth-screen record is stored.
-    """
-    import numpy as np
-
+def test_s1_padj_is_numeric_on_every_row_with_no_unadjusted_p_value() -> None:
     mirror = osp.join(_data_root(), r.RAW_DIR_REL)
     growth = r.read_table(osp.join(mirror, r.table_rel(r.GROWTH_TABLE)), r.GROWTH_TABLE)
-    cui = pd.read_csv(
-        osp.join(
-            _data_root(), r.CUI2018_RAW_DIR_REL, r.table_rel(r.CUI2018_SCREEN_FILENAME)
-        )
-    ).drop_duplicates("guide")
-    assert list(cui.columns) == list(r.CUI2018_SCREEN_HEADER)
-    assert len(cui) == 78137
-    joined = growth.merge(cui, left_on="target", right_on="guide", how="inner")
-    assert len(joined) == 54326
-    diff = (joined["log2FC"] - joined["fit75"]).abs()
-    assert round(float(diff.median()), 4) == 0.0
-    assert round(float(diff.max()), 4) == 0.0066
-    assert round(float(np.corrcoef(joined["log2FC"], joined["fit75"])[0, 1]), 4) == 1.0
-    # Not a reprint (issue #878): both tables print about 15 significant digits, and
-    # only 426 shared values are bit-identical, so S1 is Rousset's own DESeq2 run.
-    assert int((diff == 0).sum()) == 426
-    assert int((diff > 1e-9).sum()) == 53868
-    # S1's padj is numeric on every row and has no unadjusted p-value beside it.
     assert int(growth["padj"].notna().sum()) == len(growth) == 59246
     assert 0.0 <= float(growth["padj"].min()) <= float(growth["padj"].max()) < 1.0
     assert not {"pvalue", "p_value", "pval"} & set(growth.columns)
-    other = (joined["log2FC"] - joined["fit18"]).abs()
-    assert round(float(other.median()), 4) == 0.4151
-    assert round(float(np.corrcoef(joined["log2FC"], joined["fit18"])[0, 1]), 4) == (
-        0.8018
-    )
-    # Neither release is a subset of the other, and the remainder is the abundance tail.
-    spacers = r.cui2018_spacers(
-        osp.join(
-            _data_root(), r.CUI2018_RAW_DIR_REL, r.table_rel(r.CUI2018_SCREEN_FILENAME)
-        )
-    )
-    absent = growth[~growth["target"].isin(spacers)]
-    assert len(absent) == 4920
-    assert len(set(cui["guide"]) - set(growth["target"])) == 23811
-    phage = set(
-        r.read_table(osp.join(mirror, r.table_rel(r.PHAGE_TABLE)), r.PHAGE_TABLE)[
-            "target"
-        ]
-    )
-    shared = growth[growth["target"].isin(spacers)]
-    coding_absent = absent[absent["coding"] == True]  # noqa: E712
-    coding_shared = shared[shared["coding"] == True]  # noqa: E712
-    assert round(float(coding_absent["target"].isin(phage).mean()), 3) == 0.066
-    assert round(float(coding_shared["target"].isin(phage).mean()), 3) == 0.789
 
 
 @pytest.mark.data
@@ -1223,7 +1133,7 @@ def test_the_release_resolves_to_the_measured_identifier_counts() -> None:
         filename: r.read_table(osp.join(mirror, r.table_rel(filename)), filename)
         for filename in r.TABLE_SHA256
     }
-    record_tables = {c.table for c in r.CONDITIONS}
+    record_tables = {r.PHAGE_TABLE, r.TRANSDUCTION_TABLE}
     symbols = sorted(
         {
             str(name)
@@ -1235,7 +1145,7 @@ def test_the_release_resolves_to_the_measured_identifier_counts() -> None:
     assert len(symbols) == 3708
     genome = bacterial_genome("ecoli", "MG1655")
     assert isinstance(genome, EcoliK12MG1655Genome)
-    assert len(set(symbols)) == r.EXPECTED_GENES == 3708
+    assert len(set(symbols)) == 3708
     # every released symbol is a stored identifier; what the pinned annotation makes of
     # it is a genome-reference finding, measured here read-only
     statuses: dict[str, int] = {}
@@ -1258,30 +1168,13 @@ def test_the_built_store_matches_the_retention_arithmetic() -> None:
     with open(osp.join(preprocess, "dropped_records.json")) as handle:
         log = json.load(handle)
     assert log["source_records"] == 128126
-    assert log["kept_records"] == r.EXPECTED_RECORDS == 68436
-    assert log["dropped_records"] == 59690
+    assert log["kept_records"] == r.EXPECTED_RECORDS == 92252
+    assert log["dropped_records"] == 35874
     assert {rule["rule"]: rule["n_records"] for rule in log["rules"]} == {
         "guide_targets_no_gene": 5063,
         "guide_targets_the_template_strand": 30811,
-        "growth_screen_measurement_is_served_by_cui2018": 21685,
-        "growth_screen_guide_is_below_cui2018_read_floor": 1687,
-        "gene_symbol_is_not_in_the_mg1655_annotation": 232,
-        "gene_symbol_collides_with_another_symbol_on_one_mg1655_locus": 200,
-        "gene_symbol_is_ambiguous_in_mg1655": 12,
     }
-    # The S1 Table is accounted for whole, and the Cui share is attributed to Cui.
-    by_rule = {rule["rule"]: rule for rule in log["rules"]}
-    assert (
-        by_rule["guide_targets_no_gene"]["n_records"]
-        + by_rule["guide_targets_the_template_strand"]["n_records"]
-        + by_rule["growth_screen_measurement_is_served_by_cui2018"]["n_records"]
-        + by_rule["growth_screen_guide_is_below_cui2018_read_floor"]["n_records"]
-        == 59246
-    )
-    assert by_rule["growth_screen_measurement_is_served_by_cui2018"]["served_by"] == (
-        f"{r.CUI2018_DATASET_CLASS} ({r.CUI2018_DATASET}), "
-        f"screen_id {r.CUI2018_SCREEN_ID}"
-    )
+    assert all(rule["served_by"] is None for rule in log["rules"])
     with open(osp.join(preprocess, "gene_set.json")) as handle:
         assert len(json.load(handle)) == r.EXPECTED_GENES
 
@@ -1310,6 +1203,11 @@ def test_the_stored_records_carry_the_measured_sign_distribution() -> None:
         negative[screen] += value < 0
         minimum[screen] = min(minimum.get(screen, value), value)
     assert dict(total) == r.EXPECTED_SCREEN_CENSUS
+    growth_negative = negative.pop("growth_LC-E75")
+    growth_total = total.pop("growth_LC-E75")
+    minimum.pop("growth_LC-E75")
+    assert growth_total == 23372
+    assert round(growth_negative / growth_total, 4) == 0.9249
     assert dict(negative) == {
         "phage_lambda": 4740,
         "phage_T4": 14359,

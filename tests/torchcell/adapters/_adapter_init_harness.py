@@ -293,11 +293,10 @@ def expected_methods(
         "temperature (chunked)",
         "temperature reference",
     ]
-    if shape.env_perturbation and shape.phage:
-        raise ValueError(
-            "a conf enables `environment perturbation` or `phage perturbation`, never "
-            "both: the served environment-perturbation method does not filter phages out"
-        )
+    # Since #756 the two lanes partition ``environment.perturbations`` (phages to
+    # `phage perturbation`, everything else to `environment perturbation`), so a conf may
+    # enable both; Rousset 2018 does (#905), for its phage screens and its aTc-induced
+    # growth screen.
     if shape.env_perturbation:
         nodes += [
             "environment perturbation (chunked)",

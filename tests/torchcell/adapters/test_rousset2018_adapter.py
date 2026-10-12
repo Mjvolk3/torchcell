@@ -7,10 +7,9 @@ and (``--data``) the graph it emits from its dev-tree LMDB.
 Rousset 2018 CRISPR-dCas9 screens: BacterialEnvironmentResponseExperiment. One
 BacterialCrisprInterferencePerturbation per record, served as `bacterial perturbation`
 with its spacer on a `crispr construct` node. The four phage-derived screens carry
-exactly one PhagePerturbation each, so this is the one bacterial conf that enables `phage
-perturbation`; it does NOT enable `environment perturbation`, because the served
-`_environment_perturbation_node` does not filter phages out. The aTc inducer is a
-component of the two media rather than an environment perturbation.
+exactly one PhagePerturbation each (`phage perturbation`); the growth screen (#905)
+carries Cui 2018's 1 nM aTc (`environment perturbation`). The two lanes partition the
+leaves since #756, so the conf enables both.
 """
 
 from __future__ import annotations
@@ -53,16 +52,12 @@ def test_kg_manifest_resolves_the_dataset_to_its_own_module_and_conf() -> None:
     assert_gate_resolves_own_files(CASE)
 
 
-def test_the_conf_serves_a_phage_and_not_an_environment_perturbation() -> None:
-    """The one bacterial conf whose environment edit is a phage.
-
-    The two classes are mutually exclusive because the served
-    ``_environment_perturbation_node`` emits a phage under the ``environment
-    perturbation`` label, so a conf enabling both would write each phage twice, once
-    under each label, on one content id.
+def test_the_conf_serves_both_partitioned_environment_lanes() -> None:
+    """Phages on `phage perturbation`, the growth screen's aTc on `environment
+    perturbation` (#905); since #756 the two lanes partition the leaves.
     """
     assert CASE.case.shape.phage is True
-    assert CASE.case.shape.env_perturbation is False
+    assert CASE.case.shape.env_perturbation is True
     assert CASE.case.shape.crispr is True
 
 

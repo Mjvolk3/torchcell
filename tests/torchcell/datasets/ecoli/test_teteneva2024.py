@@ -176,7 +176,7 @@ def test_the_paper_text_retrieval_is_the_pmc_bucket_object() -> None:
 def test_every_paper_quote_cites_the_pinned_paper_text() -> None:
     """Each sourced value carries the citation key and the sha256 of its file."""
     values = [v for v in vars(te).values() if isinstance(v, SourcedValue)]
-    assert len(values) == 32
+    assert len(values) == 33
     pins = {
         te.PAPER_TEXT_RELPATH: te.PAPER_TEXT_SHA256,
         te.WORKBOOK_TEXT_RELPATH: te.WORKBOOK_TEXT_SHA256,
@@ -554,18 +554,24 @@ def test_a_record_is_keyed_by_the_released_symbol_with_no_lookup() -> None:
         include={
             "systematic_gene_name",
             "perturbed_gene_name",
+            "perturbation_type",
             "gene_namespace",
+            "strain_label",
             "identifier_kind",
-            "identifier_mapping",
-            "transposon",
+            "released_kind",
+            "cassette",
+            "collection",
         }
     ) == {
         "systematic_gene_name": "yeiE",
         "perturbed_gene_name": "yeiE",
+        "perturbation_type": "bacterial_released_strain",
         "gene_namespace": "ecoli_k12_w3110_refseq_locus_tag",
-        "identifier_kind": "gene_symbol",
-        "identifier_mapping": None,
-        "transposon": "Tn5",
+        "strain_label": "yeiE",
+        "identifier_kind": "Gene name",
+        "released_kind": "transposon_insertion",
+        "cassette": "kanamycin",
+        "collection": None,
     }
 
 
@@ -613,9 +619,9 @@ def test_the_loader_stores_every_released_value_end_to_end(
         "technical_replicate",
     )
     leaf = first["experiment"]["genotype"]["perturbations"][0]
-    assert (leaf["systematic_gene_name"], leaf["identifier_kind"]) == (
+    assert (leaf["systematic_gene_name"], leaf["released_kind"]) == (
         "tolA",
-        "gene_symbol",
+        "transposon_insertion",
     )
     assert first["reference"]["genome_reference"]["assembly_accession"] == (
         "GCF_000010245.2"
@@ -669,7 +675,9 @@ def test_the_supplementary_rows_fail_on_a_changed_value_or_symbol(
             screen_id=c.screen_id,
             symbol=r.symbol,
             perturbed_gene_name=r.symbol,
-            identifier_kind="gene_symbol",
+            perturbation_type="bacterial_released_strain",
+            identifier_kind=te.IDENTIFIER_KIND,
+            strain_label=r.symbol,
             gene_namespace=te.GENE_NAMESPACE,
             value=r.fitness[c.column],
             n_samples=c.n_technical_replicates,

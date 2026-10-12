@@ -1501,6 +1501,32 @@ def test_the_w3110_namespace_owns_its_refseq_tags_and_no_other_namespace_does() 
         assert not re.match(pattern, tag), tag
 
 
+def test_a_pooled_tn_gene_call_is_a_released_strain_of_the_transposon_kind() -> None:
+    """``transposon_insertion`` (#910) carries the SO pair the placed Tn leaf pins, and a
+    W3110 symbol stored as released round-trips through a genotype.
+    """
+    kind = s.ReleasedStrainKind.transposon_insertion
+    assert s.RELEASED_STRAIN_KIND_SO[kind] == ("SO:0001218", "transgenic_insertion")
+    placed = s.TransposonInsertionPerturbation.model_fields["mechanism_so_id"].default
+    assert s.RELEASED_STRAIN_KIND_SO[kind][0] == placed
+    leaf = s.BacterialReleasedStrainPerturbation(
+        systematic_gene_name="rhoL",
+        perturbed_gene_name="rhoL",
+        gene_namespace="ecoli_k12_w3110_refseq_locus_tag",
+        strain_label="rhoL",
+        identifier_kind="Gene name",
+        released_kind=kind,
+        cassette="kanamycin",
+    )
+    assert leaf.mechanism_so == ("SO:0001218", "transgenic_insertion")
+    genotype = s.Genotype(perturbations=[leaf])
+    assert s.Genotype.model_validate(genotype.model_dump()) == genotype
+    with pytest.raises(ValidationError, match="is a bacterial locus tag"):
+        leaf.model_validate(
+            {**leaf.model_dump(), "systematic_gene_name": "Y75_RS00005"}
+        )
+
+
 def test_a_w3110_reference_names_the_refseq_accession_of_its_set() -> None:
     """The W3110 set's pair is GCA_000010245.1 / GCF_000010245.2; another is refused."""
     reference = s.AssemblyReferenceGenome(

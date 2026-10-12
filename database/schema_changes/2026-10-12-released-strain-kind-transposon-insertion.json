@@ -1,0 +1,98 @@
+{
+  "record_version": 1,
+  "slug": "released-strain-kind-transposon-insertion",
+  "date": "2026-10-12",
+  "pr": null,
+  "author_kind": "agent",
+  "base_commit": "464c5cfc3d83fc6212e8b6a3d91da89e847d4b34",
+  "python_version": "3.13.0",
+  "symbols": [
+    {
+      "symbol": "RELEASED_STRAIN_KIND_SO",
+      "status": "modified",
+      "kinds": [
+        "enum_member_added"
+      ],
+      "fingerprint_before": "235a70ad2e439636dbdebc5f90bf6fbba6674ae9de92793c4063739a8565ff05",
+      "fingerprint_after": "ed3e4301521f6edadd88854742909e167cf71f6e1d4fbde7b47b2aeaeb9d7a8b",
+      "impact": "stale",
+      "reasons": [
+        "gained members [\"ReleasedStrainKind.transposon_insertion: ('SO:0001218', 'transgenic_insertion')\"]"
+      ]
+    },
+    {
+      "symbol": "ReleasedStrainKind",
+      "status": "modified",
+      "kinds": [
+        "enum_member_added"
+      ],
+      "fingerprint_before": "e0385440b1df5a07ecea6576b84779331754ab176ee48f1c6d0a8fc712a4643a",
+      "fingerprint_after": "b67190d3b3912717cfee27bc4d3f778d7ab65aea82baf078a903e05983c239f0",
+      "impact": "stale",
+      "reasons": [
+        "added member/const 'transposon_insertion'"
+      ]
+    }
+  ],
+  "correctness_argument": "Teteneva 2024 Supplementary Table S4 releases one gene fitness per (water sample, gene) for a pooled, randomly barcoded Tn5 library of E. coli K-12 W3110 RpoS+, and names each gene by its symbol only (column 'Gene name'). Stored as released (owner, 2026-10-12: the data is the data; no annotation route in the loader), each record is a BacterialReleasedStrainPerturbation (#691), whose released_kind states what the strain is. None of the six kinds is a transposon insertion: a Tn5 insertion disrupting the gene is not a deletion, a tag, a degron, a linked marker, a designed sequence allele or a truncation. The paper states the class of every row (quote below), so the kind gains transposon_insertion, with the Sequence Ontology pair the placed TransposonInsertionPerturbation already pins (SO:0001218 transgenic_insertion), so the released and the placed Tn records share one SO mechanism. Purely additive: no member, field or validator changes; the leaf and its kind are in no served closure yet (Nichols 2011 introduced them in #1067 for the KG 4.0 build), and the re-staled importers are the released-strain loaders.",
+  "measurement_type_decision": false,
+  "source_quotes": [
+    {
+      "value": "transposon_insertion",
+      "provenance": {
+        "source_uri": "paper/PMC11188689.1.txt",
+        "citation_key": "tetenevaGenomewideScreenGenetic2024",
+        "sha256": "422bd7926fbeebfd6877e15f213e18914291b1f259a7086d66d66d0249353b2f",
+        "method": "the article's full text as the PMC Article Datasets bucket serves it (PMC11188689.1/PMC11188689.1.txt), mirrored verbatim in torchcell-raw",
+        "page": "Results, 'Experimental setup to test the growth and survival of E. coli in lake water'",
+        "retrieved": null
+      },
+      "quote": "For the sake of simplicity, only insertions in the coding gene regions, which were assumed to inactivate the respective gene function, were considered for the assessment of the gene fitness effects.",
+      "note": "every Table S4 row is a gene-level call over the gene's coding-region Tn5 insertions"
+    }
+  ],
+  "alternatives_rejected": [
+    {
+      "alternative": "Store the rows on TransposonInsertionPerturbation with a new identifier_kind field that admits a symbol",
+      "why_rejected": "it widens what systematic_gene_name means on a placed leaf (a field_meaning change needing sign-off), while the released-identifier leaf of #691 already states a record keyed by what the source released"
+    },
+    {
+      "alternative": "Reuse ReleasedStrainKind.deletion",
+      "why_rejected": "a transposon insertion inserts DNA into the gene; calling it a deletion misstates the edit and its SO term"
+    }
+  ],
+  "served_release": "2026.10.06-4b293d34",
+  "affected_loaders": [
+    {
+      "loader": "torchcell/datasets/ecoli/nichols2011.py",
+      "dataset_classes": [
+        "EnvChemgenNichols2011Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "RELEASED_STRAIN_KIND_SO",
+        "ReleasedStrainKind"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/teteneva2024.py",
+      "dataset_classes": [
+        "RbTnseqTeteneva2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "RELEASED_STRAIN_KIND_SO",
+        "ReleasedStrainKind"
+      ]
+    }
+  ],
+  "served_datasets": [],
+  "rebuild_scope": "dev_stores",
+  "owner_sign_off": {
+    "signed": false,
+    "quote": null,
+    "url": null
+  }
+}

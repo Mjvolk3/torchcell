@@ -24,9 +24,11 @@ filtration, sampling day), the value as an ``EnvironmentResponsePhenotype``:
 * ``n_samples`` is the number of technical replicates behind the mean: three, except two
   for lake water #1, filtered, day 4, whose replicate ``sample_10`` failed sequencing QC
   and was omitted (Table S3, :data:`QC_OMITTED`, :func:`read_table_s3`);
-* genotype: one ``TransposonInsertionPerturbation`` (Tn5) per gene, keyed by the gene
-  symbol EXACTLY as Table S4's 'Gene name' gives it (``identifier_kind`` 'gene_symbol'),
-  with the W3110 host namespace. The data is the data (owner, 2026-10-12): no symbol is
+* genotype: one ``BacterialReleasedStrainPerturbation`` per gene (the released-identifier
+  leaf of #691), keyed by the gene symbol EXACTLY as Table S4's 'Gene name' gives it
+  (``identifier_kind`` 'Gene name', the symbol also the strain label), its kind
+  ``transposon_insertion`` and its cassette kanamycin as the Methods state them, with the
+  W3110 host namespace. The data is the data (owner, 2026-10-12): no symbol is
   looked up in, resolved to or checked against any annotation. How the symbols land on
   the W3110 annotations is a separate, downstream artifact,
   ``experiments/database/scripts/teteneva2024_symbol_annotation.py``;
@@ -84,6 +86,7 @@ from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
     BacterialEnvironmentResponseExperiment,
     BacterialEnvironmentResponseExperimentReference,
+    BacterialReleasedStrainPerturbation,
     BacterialStrainBackground,
     Environment,
     EnvironmentResponsePhenotype,
@@ -93,8 +96,8 @@ from torchcell.datamodels.schema import (
     MeasurementType,
     Media,
     Publication,
+    ReleasedStrainKind,
     SampleUnit,
-    TransposonInsertionPerturbation,
 )
 from torchcell.datasets.bacteria_common import (
     STRAIN_GENE_NAMESPACES,
@@ -864,6 +867,14 @@ TRANSPOSON = _paper(
     page=f"{_METHODS}, 'Construction and characterization of the transposon mutant "
     "library'",
 )
+CASSETTE = _paper(
+    "kanamycin",
+    "It consists of the set of plasmids carrying the transposase, the kanamycin "
+    "resistance cassette, and the random 20-bp DNA barcodes [11].",
+    page=f"{_METHODS}, 'Construction and characterization of the transposon mutant "
+    "library'",
+    note="the selectable marker the Tn5 carries into every insertion mutant",
+)
 REFERENCE_SEQUENCE = _paper(
     "NC_007779.1",
     "The reads containing the confirmed barcodes were then aligned to the E. coli "
@@ -1530,11 +1541,13 @@ UNITS_REFERENCE: Final = (
     "centred on zero by the normalization)"
 )
 DESCRIPTION: Final = (
-    "Tn5 transposon insertion in a coding region, gene-level call over the gene's "
-    "barcoded insertions (no per-strain barcode or mapped site released). Keyed by the "
-    "gene symbol Supplementary Table S4 releases, verbatim (identifier_kind "
-    "'gene_symbol'): the release names no locus tag and no annotation lookup is made"
+    "Randomly barcoded Tn5 insertion in a coding region, a gene-level call over the "
+    "gene's barcoded insertion mutants (no per-strain barcode or mapped site released). "
+    "Keyed by the gene symbol Supplementary Table S4 releases, verbatim: the release "
+    "names no locus tag and no annotation lookup is made"
 )
+#: What ``systematic_gene_name`` is, as the source writes it: Table S4's column header.
+IDENTIFIER_KIND: Final = "Gene name"
 
 
 def publication() -> Publication:
@@ -1548,16 +1561,21 @@ def publication() -> Publication:
 
 
 def build_genotype(symbol: str) -> Genotype:
-    """A Tn5 insertion in the gene Table S4 names, keyed by its released symbol."""
+    """A Tn5 insertion in the gene Table S4 names, stored as released: the symbol is the
+    identifier, the gene name and the strain label (a pooled release labels its row by
+    the gene alone), the kind and cassette are the Methods'.
+    """
     return Genotype(
         perturbations=[
-            TransposonInsertionPerturbation(
+            BacterialReleasedStrainPerturbation(
                 systematic_gene_name=symbol,
                 perturbed_gene_name=symbol,
                 gene_namespace=GENE_NAMESPACE,
-                identifier_kind="gene_symbol",
+                strain_label=symbol,
+                identifier_kind=IDENTIFIER_KIND,
+                released_kind=ReleasedStrainKind.transposon_insertion,
+                cassette=str(CASSETTE.value),
                 description=DESCRIPTION,
-                transposon=str(TRANSPOSON.value),
             )
         ]
     )
@@ -1875,7 +1893,9 @@ class StoredValue(BaseModel):
     screen_id: str
     symbol: str
     perturbed_gene_name: str
+    perturbation_type: str
     identifier_kind: str
+    strain_label: str
     gene_namespace: str
     value: float
     n_samples: int | None
@@ -1895,7 +1915,9 @@ def stored_values(records: Iterable[Mapping[str, Any]]) -> list[StoredValue]:
                 screen_id=str(phenotype["screen_id"]),
                 symbol=str(leaf["systematic_gene_name"]),
                 perturbed_gene_name=str(leaf["perturbed_gene_name"]),
+                perturbation_type=str(leaf["perturbation_type"]),
                 identifier_kind=str(leaf["identifier_kind"]),
+                strain_label=str(leaf["strain_label"]),
                 gene_namespace=str(leaf["gene_namespace"]),
                 value=float(phenotype["environment_response"]),
                 n_samples=phenotype["n_samples"],
@@ -1909,9 +1931,10 @@ def stored_symbols_are_released(
 ) -> LevelResult:
     """SUPPLEMENTARY L1: every stored gene identifier is a Table S4 symbol, verbatim.
 
-    Each record is keyed by the symbol as released (``identifier_kind`` gene_symbol, the
-    same string as ``perturbed_gene_name``, the W3110 host namespace), and the stored
-    symbols are exactly the release's.
+    Each record is a released-strain leaf keyed by the symbol as released (the same
+    string as its ``perturbed_gene_name`` and ``strain_label``, ``identifier_kind``
+    'Gene name', the W3110 host namespace), and the stored symbols are exactly the
+    release's.
     """
     released = {r.symbol for r in rows}
     stored = {v.symbol for v in values}
@@ -1919,7 +1942,9 @@ def stored_symbols_are_released(
         {
             v.symbol
             for v in values
-            if v.identifier_kind != "gene_symbol"
+            if v.perturbation_type != "bacterial_released_strain"
+            or v.identifier_kind != IDENTIFIER_KIND
+            or v.strain_label != v.symbol
             or v.perturbed_gene_name != v.symbol
             or v.gene_namespace != GENE_NAMESPACE
         }

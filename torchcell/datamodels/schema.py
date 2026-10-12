@@ -4007,6 +4007,11 @@ class ReleasedStrainKind(StrEnum):
     - ``sequence_allele``: a designed allele the label states as a change (a point
       substitution, an in-frame deletion or a duplication; ``- Allele``).
     - ``truncation``: a truncated gene (``- Truncation``).
+    - ``transposon_insertion``: a transposon inserted in the gene's coding region, one
+      gene-level call over a pooled library's insertion mutants (Teteneva 2024: "only
+      insertions in the coding gene regions, which were assumed to inactivate the
+      respective gene function, were considered"; #910). The paper's Methods state the
+      class, since a pooled release labels each row by its gene alone.
     """
 
     deletion = "deletion"
@@ -4015,6 +4020,9 @@ class ReleasedStrainKind(StrEnum):
     linked_marker = "linked_marker"
     sequence_allele = "sequence_allele"
     truncation = "truncation"
+    # --- begin #910: a pooled Tn library's gene-level call ---------------------- #
+    transposon_insertion = "transposon_insertion"
+    # --- end #910 ---------------------------------------------------------------- #
 
 
 RELEASED_STRAIN_KIND_SO: dict[ReleasedStrainKind, tuple[str, str]] = {
@@ -4024,6 +4032,9 @@ RELEASED_STRAIN_KIND_SO: dict[ReleasedStrainKind, tuple[str, str]] = {
     ReleasedStrainKind.linked_marker: ("SO:0001218", "transgenic_insertion"),
     ReleasedStrainKind.sequence_allele: ("SO:0001060", "sequence_variant"),
     ReleasedStrainKind.truncation: ("SO:0000159", "deletion"),
+    # --- begin #910: the pair TransposonInsertionPerturbation pins -------------- #
+    ReleasedStrainKind.transposon_insertion: ("SO:0001218", "transgenic_insertion"),
+    # --- end #910 ---------------------------------------------------------------- #
 }
 """Sequence Ontology mechanism of each released kind, every pair one the schema
 already pins: the deletion leaves' ``deletion``, the marked-allele and degron leaves'

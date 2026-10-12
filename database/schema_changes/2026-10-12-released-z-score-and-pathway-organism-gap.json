@@ -4,7 +4,7 @@
   "date": "2026-10-12",
   "pr": null,
   "author_kind": "agent",
-  "base_commit": "7a068d41a8d409dba02c290ad9578e3d7fd217ab",
+  "base_commit": "464c5cfc3d83fc6212e8b6a3d91da89e847d4b34",
   "python_version": "3.13.0",
   "symbols": [
     {
@@ -248,6 +248,17 @@
       "loader": "torchcell/datasets/ecoli/mutalik2020.py",
       "dataset_classes": [
         "PhageRbTnseqMutalik2020Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "EnvironmentResponsePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/nichols2011.py",
+      "dataset_classes": [
+        "EnvChemgenNichols2011Dataset"
       ],
       "served_classes": [],
       "impact": "stale",

@@ -46,3 +46,19 @@ d genome-wide read with the training counts read from the split file, e misrank,
 enrichment with its class names moved inside the axes. Every panel legend uses "GCN, GO
 input"; the top color key names the nine graphs once. Render:
 `essentiality_gate_sheet_2026-10-12-07-53-32.svg`.
+
+## 2026.10.12 - Figure 1's yeast cells, real arrows, the key moved into the document
+
+Review of the 2 x 3 sheet: the status key belongs in the document above the figure, not
+inside it; panel a should use the yeast cell drawing of manuscript Figure 1 rather than a
+drawn oval, three of them; the arrows must be real arrows; "CGT layer-free" is opaque
+(it is CGT reading the metabolic solve in its kept, layer-free form); the published
+comparators carry error bars because their released per-gene predictions were rescored
+on the 195 with the same gene bootstrap, which the labels now say. The three cells are
+written out of `Fig1-torchcell-overview.drawio.svg` by `fig1_yeast_cells.py` (orange,
+rose, sand) and placed with `imshow`; they are raster in Figure 1 too, which is the one
+`make check` warning. Legends name the families by what they read: "CGT + metabolic
+solve" and "GCN, GO input"; the top color key names the nine graphs once. Columns are
+three of 58 mm, all titles on the panel line, 5 pt tick labels on the bar panels. The
+`\statuskey` macro of the root tex prints the key above the sheet. Render:
+`essentiality_gate_sheet_2026-10-12-08-12-52.svg`.

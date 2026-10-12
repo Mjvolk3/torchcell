@@ -7,75 +7,67 @@
 \label{sec:mockups}
 
 Result files are under \file{experiments/028-gene-essentiality/results/}. The proposed
-main-text sheet is Figure~\ref{fig:sheet}, re-laid out from the summary figure's readers
-of \file{028-gene-essentiality} so every number is the same committed file; the two
-original summary sheets follow it for the panels it leaves out. The statistic is the
-AUROC on the \gnHeldOut{} held-out genes under the fold protocol (five models trained on
-five cross-validation files, logits averaged on the held-out genes) unless the caption
-says otherwise; intervals are gene bootstraps. One name per model family everywhere: CGT
-is the cell graph transformer; GCN is two-layer graph convolution over the union of the
-nine gene graphs (physical, regulatory, TFLink and the six STRING channels), named with
-the node input it reads, the GO multi-hot or the transformer's three inputs (ProtT5, the
-pathway multi-hot and the FBA ratios); their average is the equal-weight average of
-standardized logits. A gene's misrank under a model is the share of the other class
-scored on the wrong side of it: for an essential gene, the fraction of nonessential genes
-scored above it. The symbols after each panel
-letter are the panel's section status (not reviewed) and figure status (on file), the
-key at the sheet's foot.
+main-text sheet is Figure~\ref{fig:sheet}, two rows of three, drawn from the summary
+figure's readers of \file{028-gene-essentiality} so every number is the same committed
+file; the two original summary sheets follow it for the panels it leaves out. The
+held-out set everywhere is the FCL held-out set: the \gnHeldOut{} genes Merzbacher 2025
+held out of its own training that the cell graph scores, \gnEssentialHeldOut{} of them
+essential; the statistic is the AUROC on those genes under the fold protocol (five
+models trained on five cross-validation files, logits averaged on the held-out genes)
+unless the caption says otherwise, and intervals are gene bootstraps. Two learned
+families carry the figure, named by what they read. CGT is the cell graph transformer:
+attention over the perturbed cell graph, reading ProtT5 and the pathway multi-hot of
+every gene and, in the form kept, the metabolic solve (a pFBA solve done offline, its
+log(1+|v|) flux vector through a zero-initialized affine on the logit). GCN is two-layer
+graph convolution over the union of the nine gene graphs (physical, regulatory, TFLink
+and the six STRING channels), reading the GO multi-hot. They differ in both the
+message-passing form and the inputs, which is why they misrank different genes and why
+their equal-weight average of standardized logits is the best row. A gene's misrank
+under a model is the share of the other class scored on the wrong side of it: for an
+essential gene, the fraction of nonessential genes scored above it. The two marks after
+each panel letter are the panel's section status and figure status, keyed below.
 
 \clearpage
-\tcfig{\figSheet}{\textbf{The sheet proposed for the main text, two rows of three: the
-label, the held-out score against the published comparators, the repeated splits, the
-genome-wide read, and the genes still missed.} The held-out set everywhere is the FCL
-held-out set: the \gnHeldOut{} genes Merzbacher 2025 held out of its own training that
-the cell graph scores, \gnEssentialHeldOut{} of them essential. Color is the model family:
-gray a comparator with nothing learned here, blue a learned model reading no metabolic
-column and no graph, orange CGT reading the metabolic solve, red GCN over the nine gene
-graphs, purple their equal-weight average; a hatch marks a linear program solved inside
-the training loop. The status key is the first line of the sheet and every panel's
-legend sits above it. Written by \texttt{essentiality\_gate\_sheet.py}, GilaHyper,
-2026-10-12. The panel-by-panel reading is under the figure.}{fig:sheet}
+\tcfigkeyed{\figSheet}{\textbf{Gene essentiality: the label, what ranks the held-out genes
+best, and the genes still missed.} \textbf{a}, The label. One open reading frame is
+deleted from the genome and the deletion strain is grown on YPD: a strain that grows
+marks its gene nonessential, one that cannot marks it essential. The cells are the three
+of manuscript Figure 1. \textbf{b}, Every method on the FCL held-out \gnHeldOut{} genes,
+best first. Learned models are five-fold ensembles; the two published comparators are
+the authors' released per-gene predictions rescored on these \gnHeldOut{} genes with the
+same gene bootstrap, Flux Cone Learning at \gfclAuroc{} and FBA at \gfbaAuroc{}; the best
+average reads \gbestAverage{} [\gbestAverageLo{}, \gbestAverageHi{}]. \textbf{c}, The
+three models fixed in advance on \gnResplits{} other held-out fifths of the labeled genes,
+sorted by the average; each point is one method on one split, the seed-mean standardized
+logit of three seeds scored once on that split's held-out fifth; the average beats the
+better single model on \gresplitDiffaverageMinusthebettersinglemodelUp{} of
+\gresplitDiffaverageMinusthebettersinglemodelOf{} splits. \textbf{d}, The same families
+trained on the \ggenomeLabeled{} FCL-labeled genes outside the held-out set and read
+once on the \ggenomeN{} genome-wide genes the FCL file never labeled, none of which
+carries a yeast-GEM reaction: the metabolic solve has no call there, so only the graphs
+and sequence transfer, and the untrained physical degree reads \ggengcnDegree{}.
+\textbf{e}, Every one of the \gnEssentialHeldOut{} essential held-out genes, worst first
+by the two families' mean misrank; a name is bold where FBA's knockout growth ratio on
+YPD is 1.0, the deletions FBA cannot see. \textbf{f}, What the misranked genes share:
+per class, the chance that a gene carrying the feature is misranked worse than one
+without it, 0.5 (dashed) no association, filled where the Benjamini-Hochberg $q$ within
+the family is under 0.1. Color is the family: gray a comparator with nothing learned
+here, blue a learned model reading no metabolic column and no graph, orange CGT reading
+the metabolic solve, red GCN over the nine gene graphs, purple their equal-weight
+average; a hatch marks a linear program solved inside the training loop. Written by
+\texttt{essentiality\_gate\_sheet.py}, GilaHyper, 2026-10-12.}{fig:sheet}
 
-\noindent\textbf{What each panel of Figure~\ref{fig:sheet} reports.}
-\textbf{a}, The label. One open reading frame is deleted from the genome and the
-deletion strain is grown on YPD: a strain that grows marks its gene nonessential, one
-that cannot marks it essential. Drawn by the sheet script, no data.
-\status{todo}\,\fstat{file}
-\textbf{b}, Every method on the FCL held-out \gnHeldOut{} genes, best first: the top
-rows are averages of GCN with GO input and a form of CGT (the best at \gbestAverage{}
-[\gbestAverageLo{}, \gbestAverageHi{}]), then the CGT forms, GCN with GO input
-(\gfamgoGcn{}), the learned models with no metabolic column, the DCell-style hierarchy
-under the same fold protocol (\gdcellEnsemble{}), the random forest, and the two published
-comparators, Flux Cone Learning at \gfclAuroc{} and FBA at \gfbaAuroc{}. Learned models
-are five-fold ensembles, the random forest is one fit on the split file, and intervals
-are gene bootstraps. \status{todo}\,\fstat{file}
-\textbf{c}, The three models fixed in advance on \gnResplits{} other held-out fifths of
-the labeled genes, sorted by the average's AUROC. Each point is one method on one split:
-the seed-mean standardized logit of three seeds, scored once on that split's held-out
-fifth, so a point is a three-seed family score and not one run. CGT with the layer-free
-solve (mean \gresplitMeanlayerfree{}), GCN with GO input (\gresplitMeangoconvolution{})
-and their average (\gresplitMeanaverage{}), which beats the better single model on
-\gresplitDiffaverageMinusthebettersinglemodelUp{} of
-\gresplitDiffaverageMinusthebettersinglemodelOf{} splits. \status{todo}\,\fstat{file}
-\textbf{d}, The genome-wide read. Every model here is trained on the \ggenomeLabeled{}
-FCL-labeled genes outside the FCL held-out set (\ggenomeTrain{} train, \ggenomeVal{}
-validation), never on the held-out \gnHeldOut{}, and read once on the \ggenomeN{}
-genome-wide genes the FCL file never labeled (\ggenomeEssential{} essential by SGD
-annotation), pooled over seeds with a gene bootstrap; the dashed line is chance. Every
-bar names its graph and its input. None of the \ggenomeN{} carries a yeast-GEM reaction,
-so the metabolic columns read a constant row here, and CGT with the solve reads
-\ggenlayerFree{} where GCN over the nine graphs with ProtT5 input reads \ggengcnProt{}
-and the physical degree alone, nothing trained, \ggengcnDegree{}. \status{todo}\,\fstat{file}
-\textbf{e}, Every one of the \gnEssentialHeldOut{} essential genes in the FCL held-out
-set, worst first by the two families' mean misrank; the vertical axis is the misrank
-itself, the fraction of nonessential held-out genes each family scores above the gene,
-so 0 is a gene ranked above every nonessential gene. A gene's name is bold where FBA
-calls its deletion viable on YPD, the feature panel f tests. \status{todo}\,\fstat{file}
-\textbf{f}, What the misranked genes of the FCL held-out \gnHeldOut{} share, per class:
-the chance that a gene carrying the annotation is misranked worse than one without it,
-0.5 (dashed) being no association, for CGT with the layer-free solve (circles) and GCN
-with GO input (squares), filled where the Benjamini-Hochberg $q$ within the family is
-under 0.1. \status{todo}\,\fstat{file}
+\pfstep{What each panel decides} Panel b is the claim: on the genes the published
+method held out, the average of the two families reads above Flux Cone Learning and
+above FBA, with the comparators rescored on exactly these genes. Panel c is the
+guard against that number being a post hoc choice: the three were fixed before the
+repeated splits ran, and the average wins on nine of ten. Panel d is the reach of the
+metabolic column: it helps on the metabolic genes and has nothing to say off them, where
+the gene graphs alone read \ggengcnDegree{} with nothing trained. Panels e and f are
+the open question the figure hands the reader: the essential genes every model still
+misses, by name, and the one feature they share across both families, a deletion FBA
+calls viable, which is where a model of the cell is still missing something a yeast
+needs.
 
 \pfstep{What the sheet leaves to the supplement} The module forms on one backbone and
 their cost (Figure~\ref{fig:goal2}a and b), the store's scale (c), the forms by media and

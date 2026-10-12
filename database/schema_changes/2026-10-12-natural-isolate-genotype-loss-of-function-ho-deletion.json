@@ -74,19 +74,6 @@
       ]
     },
     {
-      "symbol": "LossOfFunctionAlleleStatus",
-      "status": "added",
-      "kinds": [
-        "additive_leaf"
-      ],
-      "fingerprint_before": null,
-      "fingerprint_after": "a161e3e3da809ba5e688650399f36105c03827a6dcd942c4d231d13d03862976",
-      "impact": "stale",
-      "reasons": [
-        "new symbol"
-      ]
-    },
-    {
       "symbol": "NaturalIsolateDescriptor",
       "status": "added",
       "kinds": [
@@ -106,7 +93,7 @@
         "additive_leaf"
       ],
       "fingerprint_before": null,
-      "fingerprint_after": "61a370d8dd2102e897856ea4950c06f5af947a0a1e73a706a45c85ad834c3fd9",
+      "fingerprint_after": "36e275cc35bf356f52b8cd5500f44f22809fd0f0add524cc786e720f699653a3",
       "impact": "stale",
       "reasons": [
         "new symbol"
@@ -119,14 +106,14 @@
         "additive_leaf"
       ],
       "fingerprint_before": null,
-      "fingerprint_after": "47ce34b863c85e09c798748b768deeaf559e678720605df3938a09edc650e13f",
+      "fingerprint_after": "6431be36bc2ea602ae752ee3c6e24c012a645ce314cac9ec93fde1bbe3397326",
       "impact": "stale",
       "reasons": [
         "new symbol"
       ]
     }
   ],
-  "correctness_argument": "Issues #987 and #988 (and #1001 for the karyotype): a natural isolate of the Peter 2018 panel is built as a perturbation set off S288C, and three things the release states about it had no slot. (1) The two loss-of-function matrices call an isolate's allele of a gene a loss of function: 231,339 calls on 4,069 genes and 141,453 homozygous frameshift calls over the 971 phenotyped isolates, reproduced exactly by the builder (tests/torchcell/sequence/test_natural_isolate.py). NaturalLossOfFunctionPerturbation is a new leaf beside SequenceVariantPerturbation under SequencePerturbation, one perturbation per released call with its matrix pinned (call_ref), its row keyed as the release keys it, and what the inferred-allele release says about the same allele (allele_status: 204,038 on a variant, 26,510 with no inferred allele, 791 on an allele equal to S288C). (2) Supplementary Table 1 marks 124 isolates (122 phenotyped) HO-deleted and the paper calls them 'non-natural haploid with the HO gene deleted'; the deletion is engineered, so it is stored as a DeletionPerturbation of YDL227C, and for the 49 of them whose presence matrix marks HO absent (47 of the 122 phenotyped) it replaces the natural absence those genotypes carried, mislabeled natural. DeletionPerturbation was an abstract parent; it becomes a GenePerturbationType member because each of its children asserts a cassette Table S1 does not name, so it is the one deletion class that claims nothing unstated. Its fields and fingerprint do not change. (3) Ploidy, genome zygosity and whole-chromosome aneuploidy are not gene-keyed, so they go on Genotype.natural_isolate, an optional NaturalIsolateDescriptor whose every element is Table S1's value or a typed ProvenanceGap ('Xn' ploidy, the one empty 'Aneuploidies' cell, and the manipulation of isolates Table S1 does not mark, since the paper also says 93 external isolates were 'genetically manipulated and made homozygous' without naming them). The field is excluded from the dump when None, so every genotype that is not a natural isolate serializes to the same bytes and keeps its content id; a rebuild of the other stores re-writes identical records. Calls and the HO deletion name their gene by the systematic name in perturbed_gene_name, as the natural absences do, so a gene keeps one spelling within a store. The union gains two members, which re-stales every store whose closure holds Genotype (rule 7, accepted for a correct member).",
+  "correctness_argument": "Issues #987 and #988 (and #1001 for the karyotype): a natural isolate of the Peter 2018 panel is built as the release's own perturbation set off S288C, and three things the release states about it had no slot. Each is stored as released, keyed as the release keys it, and nothing is looked up in another file or in the S288C annotation to admit, drop, re-key or annotate it (owner rule, 2026-10-12: 'the data is the data'). (1) The two loss-of-function matrices call an isolate's gene a loss of function: 231,339 calls on 4,069 genes in 1011LossOfFunction.xls.gz and 141,453 homozygous frameshift calls (8,625 of them on the 533 rows released without a pangenome code) over the 971 phenotyped isolates, every one stored (tests/torchcell/sequence/test_natural_isolate.py). NaturalLossOfFunctionPerturbation is a new leaf beside SequenceVariantPerturbation under SequencePerturbation: a call is a matrix's statement about a gene, not an allele, so it is never counted as a variant. It carries its matrix (call_ref) and the row's own keys: CODE, the loss-of-function matrix's NAME, the row's Gene and its R64-1-1 coordinates. Its gene key is NAME in the loss-of-function matrix, the pangenome ORF name the release gives the code in the frameshift matrix, and Gene verbatim on a code-less frameshift row; the yeast systematic-name pattern is relaxed on this leaf, as on NaturalGenePresencePerturbation, because some of those Gene values are standard names. The cause enum names the two matrices as the release's README describes them: nonsense_or_sift (one folded bit) and homozygous_frameshift. (2) Supplementary Table 1 marks 124 isolates (122 phenotyped) HO-deleted and the paper calls them 'non-natural haploid with the HO gene deleted'; the deletion is engineered, so it is stored as a DeletionPerturbation of YDL227C beside whatever the presence matrix states about HO (both released statements are kept). DeletionPerturbation was an abstract parent; it becomes a GenePerturbationType member because each of its children asserts a cassette Table S1 does not name, so it is the one deletion class that claims nothing unstated. Its fields and fingerprint do not change. (3) Ploidy, genome zygosity and whole-chromosome aneuploidy are not gene-keyed, so they go on Genotype.natural_isolate, an optional NaturalIsolateDescriptor whose every element is Table S1's value or a typed ProvenanceGap ('Xn' ploidy, the one empty 'Aneuploidies' cell, and the manipulation of isolates Table S1 does not mark, since the paper also says 93 external isolates were 'genetically manipulated and made homozygous' without naming them). The field is excluded from the dump when None, so every genotype that is not a natural isolate serializes to the same bytes and keeps its content id. The union gains two members, which re-stales every store whose closure holds Genotype (rule 7, accepted for a correct member).",
   "measurement_type_decision": false,
   "source_quotes": [
     {
@@ -156,7 +143,7 @@
       "note": "124 HO deletions plus 93 external isolates"
     },
     {
-      "value": "nonsense_sift_or_frameshift",
+      "value": "nonsense_or_sift",
       "provenance": {
         "source_uri": "paper.md",
         "citation_key": "peterGenomeEvolution10112018",
@@ -166,7 +153,20 @@
         "retrieved": null
       },
       "quote": "Non-synonymous SNPs predicted as deleterious by SIFT $( \\mathrm { v } . 5 . 2 . 2 ) ^ { 1 7 }$ as well as nonsense mutations were considered as deleterious for protein function.",
-      "note": "the class 1011LossOfFunction.xls.gz holds; the file also holds every homozygous frameshift call of genesMatrix_Frameshift.tab.gz on its genes (measured, see the ledger)"
+      "note": "the Methods' definition of the two predictions the release's README names for 1011LossOfFunction.xls.gz"
+    },
+    {
+      "value": "nonsense_or_sift",
+      "provenance": {
+        "source_uri": "data/README.txt",
+        "citation_key": "peterGenomeEvolution10112018",
+        "sha256": "f48e32771b44d38e88b9c8833f6f47e1a30eb6634ffccf55be42b117dd24f025",
+        "method": null,
+        "page": "README.txt line 14 (raw mirror torchcell-raw/peterGenomeEvolution10112018)",
+        "retrieved": null
+      },
+      "quote": "1011LossOfFunction.xls.gz: loss of function predicted for all genes in the 1011 dataset (nonsense mutation + SIFT predictions)",
+      "note": "the release host's own description of the file, retrieved 2026-10-12 with curl -sSL -O http://1002genomes.u-strasbg.fr/files/README.txt"
     },
     {
       "value": "homozygous_frameshift",
@@ -198,23 +198,27 @@
   "alternatives_rejected": [
     {
       "alternative": "An optional consequence field on SequenceVariantPerturbation",
-      "why_rejected": "26,510 calls sit on genes with no inferred allele and 791 on alleles equal to S288C, so there is no variant to annotate; it would also change what a served class's records mean."
+      "why_rejected": "A call is a matrix's statement about a gene, made whether or not the inferred-allele release has an allele for it; attaching it to a variant would drop or re-key every call without one, and would change what a served class's records mean."
     },
     {
       "alternative": "NaturalLossOfFunctionPerturbation as a subclass of SequenceVariantPerturbation (the issue's leaf)",
-      "why_rejected": "isinstance(p, SequenceVariantPerturbation) would count every call as a variant, and a call without an allele is not one."
+      "why_rejected": "isinstance(p, SequenceVariantPerturbation) would count every call as a variant, and a call is not an allele."
     },
     {
-      "alternative": "Drop the calls with no inferred allele, or decide the 791 disagreements in favor of one release",
-      "why_rejected": "Each is a released call; the release does not say which matrix is right, so both statements are kept with the disagreement named in allele_status and gene_present_in_isolate."
+      "alternative": "Annotate each call with what the inferred-allele release or the presence matrix says about the same gene, or name the code-less frameshift rows through the S288C annotation",
+      "why_rejected": "Owner rule (2026-10-12): the data is the data. A call is stored as its matrix releases it; a cross-reference computed at load time is an annotation the release does not make, and resolving names through the annotation re-keys or drops rows (it refused AAD16 and DDI3)."
     },
     {
-      "alternative": "Two cause members, nonsense and SIFT",
-      "why_rejected": "The release folds them into one bit and does not say which applied; the bit also holds every homozygous frameshift call on its genes (measured), so the member is nonsense_sift_or_frameshift."
+      "alternative": "Two cause members, nonsense and SIFT, or one member that also names frameshift",
+      "why_rejected": "The release's README describes the file as 'nonsense mutation + SIFT predictions' in one bit and does not say which applied; the member names the matrix as released."
     },
     {
       "alternative": "KanMxDeletionPerturbation or MarkerDeletionPerturbation for the HO deletion",
       "why_rejected": "Table S1 and the paper name no marker; KanMX would be an invented cassette and MarkerDeletionPerturbation requires one."
+    },
+    {
+      "alternative": "Replace the presence matrix's natural absence of HO with the deletion in HO-deleted isolates",
+      "why_rejected": "Both are released statements; replacing one with the other is a cross-reference decision the release does not make, so both are stored."
     },
     {
       "alternative": "A ChromosomeCopyNumberPerturbation in the gene-perturbation union (#1001's first proposal)",
@@ -1300,7 +1304,6 @@
         "GenomeZygosity",
         "Genotype",
         "IsolateManipulation",
-        "LossOfFunctionAlleleStatus",
         "NaturalIsolateDescriptor",
         "NaturalLossOfFunctionCause",
         "NaturalLossOfFunctionPerturbation"
@@ -1399,7 +1402,6 @@
         "GenomeZygosity",
         "Genotype",
         "IsolateManipulation",
-        "LossOfFunctionAlleleStatus",
         "NaturalIsolateDescriptor",
         "NaturalLossOfFunctionCause",
         "NaturalLossOfFunctionPerturbation"
@@ -1700,7 +1702,6 @@
         "GenomeZygosity",
         "Genotype",
         "IsolateManipulation",
-        "LossOfFunctionAlleleStatus",
         "NaturalIsolateDescriptor",
         "NaturalLossOfFunctionCause",
         "NaturalLossOfFunctionPerturbation"
@@ -1877,7 +1878,6 @@
         "GenomeZygosity",
         "Genotype",
         "IsolateManipulation",
-        "LossOfFunctionAlleleStatus",
         "NaturalIsolateDescriptor",
         "NaturalLossOfFunctionCause",
         "NaturalLossOfFunctionPerturbation"

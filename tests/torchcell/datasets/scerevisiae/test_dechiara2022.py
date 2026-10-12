@@ -42,7 +42,6 @@ import pytest
 
 from tests.torchcell.conftest import REAL_VERIFY_RAW_FILES
 from tests.torchcell.datasets.scerevisiae import test_caudal2024_synthetic as caudal
-from tests.torchcell.sequence._peter_tier import gff
 from torchcell.data import RawSha256MismatchError
 from torchcell.datamodels.media import PBS, SPORULATION_KAC, YPD_AGAR
 from torchcell.datamodels.schema import (
@@ -187,7 +186,6 @@ def _write_tiers(data_root: Path) -> None:
         SGD_S288C_R64,
         {
             SGD_FSA_NAME: caudal._SGD_FSA.encode(),
-            ni.SGD_GFF_NAME: gff([]),
             "orf_coding_all_R64-4-1_20230830.fasta": ORF_FASTA.encode(),
             "rna_coding_R64-4-1_20230830.fasta": b">YNCA0001W tA\nA\n",
         },

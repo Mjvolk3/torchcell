@@ -52,7 +52,8 @@ Sources (hash-pinned, local library mirror):
     that ``natural_isolate.GENOTYPE_FILES`` names (the reference-gene tarball, the
     presence and copy-number matrices, the two loss-of-function matrices and the
     Supplementary Tables workbook), each sha256-verified against the tier manifest.
-  - S288C reference: SGD R64-4-1 chromosomes and GFF from the SGD genomes tier.
+  - S288C reference: SGD R64-4-1 chromosomes from the SGD genomes tier (the slices
+    the inferred alleles are diffed against).
 """
 
 from __future__ import annotations

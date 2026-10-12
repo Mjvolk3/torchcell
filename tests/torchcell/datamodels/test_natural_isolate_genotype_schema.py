@@ -29,7 +29,6 @@ from torchcell.datamodels.schema import (
     Genotype,
     IsolateManipulation,
     KanMxDeletionPerturbation,
-    LossOfFunctionAlleleStatus,
     NaturalIsolateDescriptor,
     NaturalLossOfFunctionCause,
     NaturalLossOfFunctionPerturbation,
@@ -39,13 +38,6 @@ from torchcell.datamodels.schema import (
 from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
 
 _ADAPTER: TypeAdapter[Any] = TypeAdapter(GenePerturbationType)
-_ALLELE = ArtifactRef(
-    tier="genomes",
-    key="peter2018_1011_assemblies",
-    path="allReferenceGenesWithSNPsAndIndelsInferred.tar.gz",
-    member="YAL001C.fasta#AAB_YAL001C_TFC3",
-    sha256="a" * 64,
-)
 _MATRIX = ArtifactRef(
     tier="genomes",
     key="peter2018_1011_assemblies",
@@ -63,22 +55,34 @@ _WORKBOOK = ArtifactRef(
 
 
 def _call(**overrides: Any) -> NaturalLossOfFunctionPerturbation:
+    """A loss-of-function matrix call, keyed as that matrix keys its row."""
     fields: dict[str, Any] = dict(
         systematic_gene_name="YAL001C",
-        perturbed_gene_name="TFC3",
+        perturbed_gene_name="YAL001C",
         strain_id="AAB",
-        cause=NaturalLossOfFunctionCause.nonsense_sift_or_frameshift,
-        allele_status=LossOfFunctionAlleleStatus.sequence_variant,
-        sequence_source="peterGenomeEvolution10112018",
-        sequence_ref=_ALLELE,
+        cause=NaturalLossOfFunctionCause.nonsense_or_sift,
         call_ref=_MATRIX,
         release_code=1768,
-        release_gene_name="YAL001C",
+        release_name="YAL001C",
+        release_gene_name="TFC3",
         release_span=_SPAN,
-        gene_present_in_isolate=True,
     )
     fields.update(overrides)
     return NaturalLossOfFunctionPerturbation(**fields)
+
+
+def _frameshift(**overrides: Any) -> NaturalLossOfFunctionPerturbation:
+    """A frameshift call released without a code: keyed by its Gene, verbatim."""
+    fields: dict[str, Any] = dict(
+        systematic_gene_name="PAU8",
+        perturbed_gene_name="PAU8",
+        cause=NaturalLossOfFunctionCause.homozygous_frameshift,
+        release_code=None,
+        release_name=None,
+        release_gene_name="PAU8",
+    )
+    fields.update(overrides)
+    return _call(**fields)
 
 
 def _gap(field: str) -> ProvenanceGap:
@@ -143,57 +147,65 @@ def test_the_descriptor_is_not_a_gene_perturbation() -> None:
 
 
 # --------------------------------------------------------------------------- #
-# The call's own rules
+# The call's own rules: keyed as its matrix keys the row, nothing else
 # --------------------------------------------------------------------------- #
 @pytest.mark.parametrize(
     ("overrides", "message"),
     [
+        ({"release_code": None}, "a loss-of-function matrix row carries its CODE"),
+        ({"release_name": None}, "a loss-of-function matrix row carries its CODE"),
         (
-            {"allele_status": LossOfFunctionAlleleStatus.allele_equals_reference},
-            "sequence_ref is set exactly when allele_status is sequence_variant",
+            {"systematic_gene_name": "TFC3", "perturbed_gene_name": "TFC3"},
+            "a loss-of-function call is keyed by the row's NAME",
         ),
-        (
-            {"sequence_ref": None, "sequence_source": None},
-            "sequence_ref is set exactly when allele_status is sequence_variant",
-        ),
-        ({"sequence_source": None}, "sequence_source is set exactly when"),
-        (
-            {"release_code": None, "gene_present_in_isolate": None},
-            "only a frameshift row is released without a pangenome code",
-        ),
-        (
-            {
-                "release_code": None,
-                "cause": NaturalLossOfFunctionCause.homozygous_frameshift,
-            },
-            "a row without a pangenome code has no presence-matrix cell",
-        ),
-        (
-            {"gene_present_in_isolate": None},
-            "a row with a pangenome code carries its presence-matrix cell",
-        ),
+        ({"perturbed_gene_name": "TFC3"}, "perturbed_gene_name is the release's"),
         ({"provenance": "engineered"}, "has provenance 'natural'"),
-        ({"systematic_gene_name": "1-EC1118_1F14_0012g"}, "Invalid systematic gene"),
+        ({"systematic_gene_name": "", "perturbed_gene_name": ""}, "non-empty"),
     ],
 )
-def test_a_call_that_misstates_its_evidence_is_refused(
+def test_a_call_keyed_unlike_its_row_is_refused(
     overrides: dict[str, Any], message: str
 ) -> None:
     with pytest.raises(ValidationError, match=message):
         _call(**overrides)
 
 
-def test_a_codeless_frameshift_call_with_no_allele_is_valid() -> None:
-    call = _call(
-        cause=NaturalLossOfFunctionCause.homozygous_frameshift,
-        allele_status=LossOfFunctionAlleleStatus.no_inferred_allele,
-        sequence_ref=None,
-        sequence_source=None,
-        release_code=None,
-        release_gene_name="PAU8",
-        gene_present_in_isolate=None,
+@pytest.mark.parametrize(
+    ("overrides", "message"),
+    [
+        ({"release_name": "PAU8"}, "the frameshift matrix has no NAME column"),
+        (
+            {"systematic_gene_name": "YAL068C", "perturbed_gene_name": "YAL068C"},
+            "a frameshift row without a code is keyed by its Gene, verbatim",
+        ),
+    ],
+)
+def test_a_frameshift_call_keyed_unlike_its_row_is_refused(
+    overrides: dict[str, Any], message: str
+) -> None:
+    with pytest.raises(ValidationError, match=message):
+        _frameshift(**overrides)
+
+
+def test_a_codeless_frameshift_call_keeps_the_release_gene_name_as_its_key() -> None:
+    """A row the release gives no code is stored under its ``Gene``, a standard name
+    here, which the yeast systematic-name pattern would refuse elsewhere.
+    """
+    call = _frameshift()
+    assert (call.systematic_gene_name, call.release_code, call.release_name) == (
+        "PAU8",
+        None,
+        None,
     )
-    assert (call.release_code, call.gene_present_in_isolate) == (None, None)
+    coded = _frameshift(
+        systematic_gene_name="YAL001C",
+        perturbed_gene_name="YAL001C",
+        release_code=1768,
+        release_gene_name="TFC3",
+    )
+    assert (coded.systematic_gene_name, coded.release_gene_name) == ("YAL001C", "TFC3")
+    with pytest.raises(ValidationError, match="Invalid systematic gene"):
+        KanMxDeletionPerturbation(systematic_gene_name="PAU8", perturbed_gene_name="P")
 
 
 # --------------------------------------------------------------------------- #
@@ -268,6 +280,8 @@ def test_a_descriptor_refuses_a_perturbation_of_another_isolate() -> None:
     ho = DeletionPerturbation(
         systematic_gene_name="YDL227C", perturbed_gene_name="HO", description="d"
     )
-    assert Genotype(perturbations=[_call(), ho], natural_isolate=_descriptor())
+    assert Genotype(
+        perturbations=[_call(), _frameshift(), ho], natural_isolate=_descriptor()
+    )
     with pytest.raises(ValidationError, match=r"carries perturbations of \['ZZZ'\]"):
         Genotype(perturbations=[_call(strain_id="ZZZ")], natural_isolate=_descriptor())

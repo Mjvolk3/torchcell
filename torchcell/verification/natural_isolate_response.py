@@ -32,7 +32,8 @@ genotype rules with ones that hold for an isolate:
   the loader's condition, each Table 2 row re-read from the mirrored workbook), and
   ``sourced_values`` (every quote still in its sha256-pinned source).
 - L4 ``s288c_gene_containment`` (variant, absence, deletion and loss-of-function names
-  are S288C genes),
+  are S288C genes; a frameshift call released without a pangenome code is keyed by the
+  release's ``Gene``, not an S288C name, and is counted apart),
   ``pangenome_orf_containment`` (present accessory ORFs are pangenome ORFs) and
   ``published_md5`` (the release's md5 equals the host's ``md5.txt``).
 """
@@ -70,6 +71,7 @@ from torchcell.verification.sourced import SourcedValue, audit_sourced_value
 Record = dict[str, Any]
 
 NATURAL_PRESENCE = "natural_gene_presence"
+LOSS_OF_FUNCTION = "natural_loss_of_function"
 
 
 def _result(
@@ -98,14 +100,19 @@ class _GenotypeCensus:
         self.type_counts: Counter[str] = Counter()
         self.s288c_names: Counter[str] = Counter()
         self.pangenome_ids: Counter[str] = Counter()
+        self.release_gene_keys: Counter[str] = Counter()
 
     def add(self, perturbations: list[dict[str, Any]]) -> None:
-        """Count one genotype's names: pangenome ids of presences, S288C names else."""
+        """Count one genotype's names: pangenome ids of presences, the release's
+        ``Gene`` of a code-less frameshift call, S288C names else.
+        """
         for pert in perturbations:
             kind = str(pert["perturbation_type"])
             self.type_counts[kind] += 1
             if kind == NATURAL_PRESENCE:
                 self.pangenome_ids[str(pert["pangenome_orf_id"])] += 1
+            elif kind == LOSS_OF_FUNCTION and pert["release_code"] is None:
+                self.release_gene_keys[str(pert["systematic_gene_name"])] += 1
             else:
                 self.s288c_names[str(pert["systematic_gene_name"])] += 1
 
@@ -490,6 +497,8 @@ def verify_natural_isolate_response_streaming(
             overlap=overlap,
             missing_examples=missing[:20],
             perturbation_types=dict(census.type_counts),
+            n_release_gene_keyed_calls=sum(census.release_gene_keys.values()),
+            n_release_gene_keys=len(census.release_gene_keys),
         )
     )
     pangenome_set = set(pangenome.orf_ids)

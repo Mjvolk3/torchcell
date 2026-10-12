@@ -48,7 +48,6 @@ from tests.torchcell.sequence._peter_tier import (
     LofRow,
     TableS1Row,
     frameshift_matrix,
-    gff,
     lof_matrix,
     tables_workbook,
 )
@@ -218,9 +217,7 @@ def data_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     monkeypatch.setattr(p, "PAPER_MEASUREMENTS", 72)
     monkeypatch.setattr(p, "PHENO_PUBLISHED_MD5", _RELEASE_MD5)
     monkeypatch.setattr(p, "PHENO_SHA256", hashlib.sha256(_RELEASE).hexdigest())
-    _write_tier(
-        root, SGD_S288C_R64, {SGD_FSA_NAME: _SGD_FSA.encode(), ni.SGD_GFF_NAME: gff([])}
-    )
+    _write_tier(root, SGD_S288C_R64, {SGD_FSA_NAME: _SGD_FSA.encode()})
     _write_tier(
         root,
         PETER2018_1011,
@@ -704,7 +701,7 @@ def test_verifier_passes_every_level_on_the_synthetic_store(
     )
     assert results["isolate_descriptor_matches_table_s1"].details["n_ho_deleted"] == 1
     assert results["loss_of_function_calls_match_release"].details["totals"] == {
-        "nonsense_sift_or_frameshift": 1,
+        "nonsense_or_sift": 1,
         "homozygous_frameshift": 0,
     }
     assert results["release_fidelity"].details["n_cells"] == 70

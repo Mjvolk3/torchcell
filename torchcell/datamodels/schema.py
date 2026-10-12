@@ -2267,143 +2267,109 @@ class SequenceVariantPerturbation(SequencePerturbation, ModelStrict):
 class NaturalLossOfFunctionCause(StrEnum):
     """Which Peter 2018 release matrix called an isolate's allele a loss of function.
 
-    - ``nonsense_sift_or_frameshift``: a 1 in ``1011LossOfFunction.xls.gz``. The paper
-      defines the class: "Non-synonymous SNPs predicted as deleterious by SIFT
-      (v.5.2.2) as well as nonsense mutations were considered as deleterious for
-      protein function." The file also holds every homozygous frameshift call of
-      ``genesMatrix_Frameshift.tab.gz`` on the genes it lists (measured: none of that
-      matrix's calls on those genes is missing from it), so the one bit folds nonsense,
-      SIFT-deleterious and frameshift alleles and the release does not say which
-      applied. It is one member because the release folds it into one bit.
-    - ``homozygous_frameshift``: a 1 in ``genesMatrix_Frameshift.tab.gz``, "the presence
-      or absence ... of homozygous frameshift ... in each gene, based on the number of
-      bases affected by indels".
+    Each member names one matrix as the release describes it (the host's
+    ``README.txt``, sha256 ``f48e32771b44d38e88b9c8833f6f47e1a30eb6634ffccf55be42b117dd24f025``):
+
+    - ``nonsense_or_sift``: a 1 in ``1011LossOfFunction.xls.gz``, "loss of function
+      predicted for all genes in the 1011 dataset (nonsense mutation + SIFT
+      predictions)". The release folds the two predictions into one bit and does not
+      say which applied, so it is one member.
+    - ``homozygous_frameshift``: a 1 in ``genesMatrix_Frameshift.tab.gz``, "for each
+      isolate, the presence or absence (indicated by 1 or 0, respectively) of
+      homozygous frameshift is reported in each gene, based on the number of bases
+      affected by indels."
 
     A gene called by both matrices carries two perturbations, one per call.
     """
 
-    nonsense_sift_or_frameshift = "nonsense_sift_or_frameshift"
+    nonsense_or_sift = "nonsense_or_sift"
     homozygous_frameshift = "homozygous_frameshift"
 
 
-class LossOfFunctionAlleleStatus(StrEnum):
-    """What the inferred-allele release says about the allele a call is made on.
-
-    Read from ``allReferenceGenesWithSNPsAndIndelsInferred.tar.gz``, the release the
-    isolate's ``SequenceVariantPerturbation`` set is built from:
-
-    - ``sequence_variant``: the isolate's inferred allele differs from the S288C R64
-      slice, so the genotype carries a ``SequenceVariantPerturbation`` of the gene and
-      the call's ``sequence_ref`` points at the same allele.
-    - ``allele_equals_reference``: the isolate's inferred allele equals the S288C slice.
-      The two releases disagree, and both statements are kept as the release makes
-      them.
-    - ``no_inferred_allele``: the tarball has no file for the gene, so there is no
-      allele to annotate; the call stands on its matrix alone.
-    """
-
-    sequence_variant = "sequence_variant"
-    allele_equals_reference = "allele_equals_reference"
-    no_inferred_allele = "no_inferred_allele"
-
-
 class NaturalLossOfFunctionPerturbation(SequencePerturbation, ModelStrict):
-    """A natural isolate's allele of a native gene, called a loss of function.
+    """One released loss-of-function call on a natural isolate's gene, as released.
 
     NATURAL-variation leaf, a SIBLING of ``SequenceVariantPerturbation`` under
     ``SequencePerturbation`` (AXIS 3, the allelic axis), not a child of it: a call is a
-    statement ABOUT an allele, and 26,510 of the calls on the 971 phenotyped Peter 2018
-    isolates sit on a gene with no inferred allele at all, so making every call a
-    ``SequenceVariantPerturbation`` would invent variants. A gene whose allele is both a
-    variant and a loss of function carries both leaves.
+    statement a release matrix makes about the isolate's gene, not an allele, so it is
+    never counted as a variant. It is stored whatever any other file says about the same
+    gene; nothing is looked up to admit, drop or annotate it.
 
-    One perturbation per released call: ``cause`` names the matrix, ``call_ref`` pins
-    its bytes, and the row is keyed as the release keys it (``release_code``, the
-    pangenome ORF number, or for the 533 frameshift rows without one, the release's
-    gene name and R64-1-1 coordinates in ``release_gene_name`` / ``release_span``).
-    ``perturbed_gene_name`` is the systematic name, as the natural absences of the same
-    genotype write it, so one gene keeps one spelling across a store.
-    ``allele_status`` says what the inferred-allele release says about the same allele,
-    and ``gene_present_in_isolate`` is the presence matrix's cell for the row's ORF
-    (``None`` for a row with no pangenome code). Neither is used to drop a call: a call
-    on an allele equal to S288C, or on an ORF the presence matrix marks absent, is a
-    disagreement between two releases and is kept with both sides named.
+    One perturbation per released call: ``cause`` names the matrix and ``call_ref`` pins
+    its bytes, and the row is keyed as that matrix keys it. ``release_code`` is the
+    row's pangenome ORF number (``CODE``), ``release_name`` the loss-of-function
+    matrix's ``NAME`` (the frameshift matrix has no such column), ``release_gene_name``
+    the row's ``Gene`` and ``release_span`` its ``CH``/``START``/``STOP`` on the
+    reference the release was called against. ``systematic_gene_name`` is the gene key
+    the release gives the row: ``NAME`` for a loss-of-function row, the pangenome ORF
+    name the release gives the code for a coded frameshift row, and ``Gene`` verbatim
+    for a frameshift row released without a code (a standard name on some rows, so the
+    yeast systematic-name pattern is not enforced here). ``perturbed_gene_name`` is the
+    same key.
 
     The SO mechanism is ``loss_of_function_variant`` (SO:0002054, "A sequence variant
     whereby the gene product has diminished or abolished function.").
     """
 
     description: str = (
-        "Natural predicted loss of function of a native gene in an isolate vs S288C, "
-        "as one released matrix calls it"
+        "Natural predicted loss of function of a gene in an isolate, as one released "
+        "matrix calls it"
     )
     perturbation_type: Literal["natural_loss_of_function"] = "natural_loss_of_function"
     provenance: str = "natural"
     mechanism_so_id: str = "SO:0002054"
     mechanism_so_name: str = "loss_of_function_variant"
-    strain_id: str = Field(description="isolate id whose allele is called, e.g. 'AAB'")
+    strain_id: str = Field(description="isolate id whose gene is called, e.g. 'AAB'")
     cause: NaturalLossOfFunctionCause = Field(
         description="the release matrix that made the call"
-    )
-    allele_status: LossOfFunctionAlleleStatus = Field(
-        description="what the inferred-allele release says about the same allele"
-    )
-    sequence_source: str | None = Field(
-        default=None,
-        description="off-graph gene-keyed store key / citation of the allele, e.g. "
-        "'peterGenomeEvolution10112018'; set with sequence_ref",
-    )
-    sequence_ref: ArtifactRef | None = Field(
-        default=None,
-        description="the isolate's allele in the reference-gene tarball (the member the "
-        "gene's SequenceVariantPerturbation points at); set iff allele_status is "
-        "sequence_variant",
     )
     call_ref: ArtifactRef = Field(
         description="the sha256-pinned release matrix the call is read from"
     )
     release_code: int | None = Field(
-        description="the release row's pangenome ORF number (CODE); None only for a "
-        "frameshift row the release gives no code"
+        description="the row's pangenome ORF number (CODE); None for a frameshift row "
+        "the release gives no code"
     )
-    release_gene_name: str = Field(
-        description="the release row's gene name, verbatim (NAME of the loss-of-function "
-        "matrix, Gene of the frameshift matrix)"
+    release_name: str | None = Field(
+        description="the loss-of-function matrix's NAME, verbatim; None for a "
+        "frameshift row (that matrix has no NAME column)"
     )
+    release_gene_name: str = Field(description="the row's Gene, verbatim")
     release_span: GenomicSpan = Field(
-        description="the release row's coordinates (CH, START, STOP) on the reference "
-        "the release was called against"
+        description="the row's coordinates (CH, START, STOP) on the reference the "
+        "release was called against"
     )
-    gene_present_in_isolate: bool | None = Field(
-        description="the presence matrix's cell for the row's pangenome ORF in this "
-        "isolate; None when the row has no pangenome code"
-    )
+
+    @field_validator("systematic_gene_name", mode="after")
+    @classmethod
+    def validate_sys_gene_name(cls, v: str) -> str:
+        """Relax: the release's key, which is a standard name on some frameshift rows."""
+        if not v:
+            raise ValueError("systematic_gene_name must be non-empty")
+        return v
 
     @model_validator(mode="after")
     def _check_call(self) -> "NaturalLossOfFunctionPerturbation":
-        """A natural call; the allele pointer and the row key fit the evidence."""
+        """A natural call, keyed the way its matrix keys its rows."""
         if self.provenance != "natural":
             raise ValueError("a natural loss-of-function call has provenance 'natural'")
-        has_allele = self.allele_status is LossOfFunctionAlleleStatus.sequence_variant
-        if has_allele != (self.sequence_ref is not None):
-            raise ValueError(
-                "sequence_ref is set exactly when allele_status is sequence_variant "
-                f"(allele_status={self.allele_status.value})"
-            )
-        if (self.sequence_ref is None) != (self.sequence_source is None):
-            raise ValueError("sequence_source is set exactly when sequence_ref is")
-        if self.release_code is None:
-            if self.cause is not NaturalLossOfFunctionCause.homozygous_frameshift:
+        if self.perturbed_gene_name != self.systematic_gene_name:
+            raise ValueError("perturbed_gene_name is the release's gene key")
+        if self.cause is NaturalLossOfFunctionCause.nonsense_or_sift:
+            if self.release_code is None or self.release_name is None:
                 raise ValueError(
-                    "only a frameshift row is released without a pangenome code"
+                    "a loss-of-function matrix row carries its CODE and NAME"
                 )
-            if self.gene_present_in_isolate is not None:
-                raise ValueError(
-                    "a row without a pangenome code has no presence-matrix cell"
-                )
-        elif self.gene_present_in_isolate is None:
+            if self.systematic_gene_name != self.release_name:
+                raise ValueError("a loss-of-function call is keyed by the row's NAME")
+            return self
+        if self.release_name is not None:
+            raise ValueError("the frameshift matrix has no NAME column")
+        if self.release_code is None and (
+            self.systematic_gene_name != self.release_gene_name
+        ):
             raise ValueError(
-                "a row with a pangenome code carries its presence-matrix cell"
+                "a frameshift row without a code is keyed by its Gene, verbatim"
             )
         return self
 

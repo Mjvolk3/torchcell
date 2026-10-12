@@ -62,7 +62,6 @@ import pytest
 from tests.torchcell.sequence._peter_tier import (
     TableS1Row,
     genotype_files,
-    gff,
     tables_workbook,
 )
 from torchcell.data import RawSha256MismatchError
@@ -235,11 +234,7 @@ def _write_tier(data_root: Path, assembly_set: str, files: dict[str, bytes]) -> 
 
 
 def _write_sgd_tier(data_root: Path) -> None:
-    _write_tier(
-        data_root,
-        SGD_S288C_R64,
-        {ni.SGD_FSA_NAME: _SGD_FSA.encode(), ni.SGD_GFF_NAME: gff([])},
-    )
+    _write_tier(data_root, SGD_S288C_R64, {ni.SGD_FSA_NAME: _SGD_FSA.encode()})
 
 
 def _write_raw(raw: Path) -> None:
@@ -527,7 +522,6 @@ def test_side_files_gene_set_reference_index_and_strain_list(
         "HashableProvenanceGapMixin",
         "INCHIKEY_PATTERN",
         "IsolateManipulation",
-        "LossOfFunctionAlleleStatus",
         "Media",
         "MediaComponent",
         "MediaComponentRole",

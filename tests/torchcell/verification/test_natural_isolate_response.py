@@ -25,6 +25,9 @@ from torchcell.verification.report import Level
 
 
 def test_the_census_keys_presences_by_pangenome_id_and_the_rest_by_name() -> None:
+    """A frameshift call released without a code is keyed by the release's Gene, not
+    an S288C name, so it is counted apart from the S288C-keyed names.
+    """
     census = _GenotypeCensus()
     census.add(
         [
@@ -41,6 +44,12 @@ def test_the_census_keys_presences_by_pangenome_id_and_the_rest_by_name() -> Non
             {
                 "perturbation_type": "natural_loss_of_function",
                 "systematic_gene_name": "YAL001C",
+                "release_code": 1768,
+            },
+            {
+                "perturbation_type": "natural_loss_of_function",
+                "systematic_gene_name": "PAU8",
+                "release_code": None,
             },
         ]
     )
@@ -48,10 +57,11 @@ def test_the_census_keys_presences_by_pangenome_id_and_the_rest_by_name() -> Non
         "sequence_variant": 1,
         "natural_gene_presence": 1,
         "deletion": 1,
-        "natural_loss_of_function": 1,
+        "natural_loss_of_function": 2,
     }
     assert census.s288c_names == Counter({"YAL001C": 2, "YDL227C": 1})
     assert census.pangenome_ids == Counter({"2-acc": 1})
+    assert census.release_gene_keys == Counter({"PAU8": 1})
 
 
 def test_conditions_documented_fails_on_a_drifted_workbook(tmp_path: Path) -> None:

@@ -19,13 +19,10 @@ no / 3 / (empty) / heterozygous.
 Loss-of-function matrix (code, NAME, Gene -> calls): 1 YAL001C TFC3 -> AAA, BBB;
 4 YBR001W NTH2 -> AAA, CCC; 3 YDL227C HO -> CCC.
 
-Frameshift matrix: coded 1 TFC3 -> AAA; coded 3 HO -> none; and seven rows with no code:
-YAL002W (live id) -> DDD; PAU8 (standard name of YAL068C) -> SACE_YAU; SLM6 (standard
-name of YBR266C, alias of YPR164W: resolved by the pin) -> BBB; AAD16 (in no GFF row)
--> AAA, refused; DDI3 (standard name of YFL061W on chrVI, alias of YNL335W, the row's
-chrXIV span) -> CCC, refused unpinned; LTO1 (YNL260C, whose R64-4-1 span ends at
-157347, the release's at 157455) -> DDD; MOVED (alias of YCR001W on chrIII, the row on
-chrI) -> AAA, refused for not overlapping.
+Frameshift matrix: coded 1 TFC3 -> AAA; coded 3 HO -> none; and seven rows with no code,
+each stored under its ``Gene`` exactly as released (no name lookup admits, drops or
+re-keys one): YAL002W -> DDD; PAU8 -> SACE_YAU; SLM6 -> BBB; AAD16 -> AAA; DDI3 -> CCC;
+LTO1 -> DDD; MOVED -> AAA.
 """
 
 from __future__ import annotations
@@ -45,15 +42,15 @@ import pytest
 
 from tests.torchcell.sequence._peter_tier import (
     FrameshiftRow,
-    GffGene,
     LofRow,
     TableS1Row,
+    frameshift_matrix,
     genotype_files,
-    gff,
     lof_matrix,
     tables_workbook,
     write_tier,
 )
+from torchcell.data.experiment_dataset import RawSha256MismatchError
 from torchcell.datamodels.schema import (
     ArtifactRef,
     ChromosomeCopyChange,
@@ -62,13 +59,13 @@ from torchcell.datamodels.schema import (
     GenomicSpan,
     Genotype,
     IsolateManipulation,
-    LossOfFunctionAlleleStatus,
     NaturalGeneAbsencePerturbation,
     NaturalGenePresencePerturbation,
     NaturalLossOfFunctionCause,
     NaturalLossOfFunctionPerturbation,
     SequenceVariantPerturbation,
 )
+from torchcell.literature.manifest import Manifest
 from torchcell.sequence import natural_isolate as ni
 from torchcell.sequence.genome.registry import (
     PETER2018_1011,
@@ -140,18 +137,6 @@ _TABLE_S1 = [
     TableS1Row(isolate="SACE_YAU", ploidy="Xn", aneuploidies="aneu;+1*9;-1*3;"),
     TableS1Row(isolate="DDD", ploidy=3, aneuploidies=None, zygosity="heterozygous"),
 ]
-_GFF = [
-    GffGene(id="YAL001C", chrom="chrI", start=1, end=8, standard="TFC3"),
-    GffGene(id="YAL002W", chrom="chrI", start=10, end=12, standard="VPS8"),
-    GffGene(id="YAL068C", chrom="chrI", start=13, end=16, standard="PAU8"),
-    GffGene(id="YBR266C", chrom="chrII", start=739936, end=740388, standard="SLM6", aliases=("SLM6",)),
-    GffGene(id="YPR164W", chrom="chrXVI", start=870703, end=874926, standard="MMS1", aliases=("MMS1", "RTT108", "SLM6")),
-    GffGene(id="YNL335W", chrom="chrXIV", start=11452, end=12129, standard="DDI2", aliases=("DDI2", "DDI3")),
-    GffGene(id="YFL061W", chrom="chrVI", start=9545, end=10222, standard="DDI3", aliases=("DDI3", "DDI2")),
-    GffGene(id="YNL260C", chrom="chrXIV", start=156859, end=157347, standard="LTO1", aliases=("LTO1",)),
-    GffGene(id="YCR001W", chrom="chrIII", start=100, end=200, aliases=("MOVED",)),
-    GffGene(id="YDL227C", chrom="chrIV", start=1, end=4, standard="HO"),
-]  # fmt: skip
 
 
 def _matrix_gz(rows: dict[str, list[str]]) -> bytes:
@@ -189,11 +174,7 @@ def _peter_files() -> dict[str, bytes]:
 def data_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     root = tmp_path / "data_root"
     monkeypatch.setenv("DATA_ROOT", str(root))
-    write_tier(
-        root,
-        SGD_S288C_R64,
-        {ni.SGD_FSA_NAME: _SGD_FSA.encode(), ni.SGD_GFF_NAME: gff(_GFF)},
-    )
+    write_tier(root, SGD_S288C_R64, {ni.SGD_FSA_NAME: _SGD_FSA.encode()})
     write_tier(root, PETER2018_1011, _peter_files())
     return root
 
@@ -227,16 +208,42 @@ def _span(chrom: str, start: int, end: int) -> GenomicSpan:
 # --------------------------------------------------------------------------- #
 # One isolate end to end
 # --------------------------------------------------------------------------- #
+def _call(
+    isolate: str,
+    key: str,
+    ref: ArtifactRef,
+    *,
+    code: int | None,
+    name: str | None,
+    gene: str,
+    span: GenomicSpan,
+) -> NaturalLossOfFunctionPerturbation:
+    return NaturalLossOfFunctionPerturbation(
+        systematic_gene_name=key,
+        perturbed_gene_name=key,
+        strain_id=isolate,
+        cause=NaturalLossOfFunctionCause.nonsense_or_sift
+        if name is not None
+        else NaturalLossOfFunctionCause.homozygous_frameshift,
+        call_ref=ref,
+        release_code=code,
+        release_name=name,
+        release_gene_name=gene,
+        release_span=span,
+    )
+
+
 def test_ccc_is_its_variants_absence_ho_deletion_calls_and_descriptor(
     genotypes: ni.NaturalIsolateGenotypes, data_root: Path
 ) -> None:
     """CCC: an HO allele that differs (a variant), YBR001W absent, HO deleted per
-    Table S1 (present in the matrix, so nothing is replaced), two loss-of-function calls
-    (YBR001W with no inferred allele and an absent ORF; HO on its variant allele) and
-    the DDI3 frameshift call refused upstream.
+    Table S1, and three released calls stored as released: YBR001W and HO from the
+    loss-of-function matrix (by NAME), and the code-less DDI3 frameshift row under its
+    Gene, although the R64-4-1 annotation now gives that name to another ORF.
     """
     tar = _ref(data_root, ni.REFGENE_TAR_NAME)
     lof = _ref(data_root, ni.LOF_NAME)
+    fs = _ref(data_root, ni.FRAMESHIFT_NAME)
     expected = Genotype(
         perturbations=[
             SequenceVariantPerturbation(
@@ -260,33 +267,32 @@ def test_ccc_is_its_variants_absence_ho_deletion_calls_and_descriptor(
                 perturbed_gene_name="YDL227C",
                 description=ni.HO_DELETION_DESCRIPTION,
             ),
-            NaturalLossOfFunctionPerturbation(
-                systematic_gene_name="YBR001W",
-                perturbed_gene_name="YBR001W",
-                strain_id="CCC",
-                cause=NaturalLossOfFunctionCause.nonsense_sift_or_frameshift,
-                allele_status=LossOfFunctionAlleleStatus.no_inferred_allele,
-                call_ref=lof,
-                release_code=4,
-                release_gene_name="YBR001W",
-                release_span=_span("chrII", 2, 9),
-                gene_present_in_isolate=False,
+            _call(
+                "CCC",
+                "YBR001W",
+                lof,
+                code=4,
+                name="YBR001W",
+                gene="NTH2",
+                span=_span("chrII", 2, 9),
             ),
-            NaturalLossOfFunctionPerturbation(
-                systematic_gene_name="YDL227C",
-                perturbed_gene_name="YDL227C",
-                strain_id="CCC",
-                cause=NaturalLossOfFunctionCause.nonsense_sift_or_frameshift,
-                allele_status=LossOfFunctionAlleleStatus.sequence_variant,
-                sequence_source=ni.SEQUENCE_SOURCE,
-                sequence_ref=tar.model_copy(
-                    update={"member": "YDL227C.fasta#CCC_YDL227C_HO"}
-                ),
-                call_ref=lof,
-                release_code=3,
-                release_gene_name="YDL227C",
-                release_span=_span("chrIV", 1, 4),
-                gene_present_in_isolate=True,
+            _call(
+                "CCC",
+                "YDL227C",
+                lof,
+                code=3,
+                name="YDL227C",
+                gene="HO",
+                span=_span("chrIV", 1, 4),
+            ),
+            _call(
+                "CCC",
+                "DDI3",
+                fs,
+                code=None,
+                name=None,
+                gene="DDI3",
+                span=_span("chrXIV", 11452, 12129),
             ),
         ],
         natural_isolate=genotypes.descriptors["CCC"],
@@ -308,46 +314,42 @@ def test_ccc_is_its_variants_absence_ho_deletion_calls_and_descriptor(
     )
 
 
-def test_ho_deletion_replaces_the_natural_absence_the_matrix_implies(
+def test_ho_deletion_sits_beside_the_natural_absence_the_matrix_states(
     genotypes: ni.NaturalIsolateGenotypes,
 ) -> None:
-    """BBB: the presence matrix marks HO absent and Table S1 marks it deleted, so the
-    genotype carries the engineered deletion and no natural absence of HO;
-    ``base_perturbations`` (the pre-#988 genotype) still carries the natural absence.
+    """BBB: the presence matrix marks HO absent and Table S1 marks it deleted; both
+    released statements are stored, and the base perturbations (the pre-#988 genotype)
+    are untouched. Its two calls stand on their matrices alone: YAL001C, whose inferred
+    allele equals S288C, and the code-less SLM6 row under its Gene.
     """
     perts = genotypes.genotype("BBB").perturbations
     assert [(p.perturbation_type, p.systematic_gene_name) for p in perts] == [
+        ("natural_loss_of_function", "SLM6"),
         ("natural_loss_of_function", "YAL001C"),
-        ("natural_loss_of_function", "YBR266C"),
         ("deletion", "YDL227C"),
+        ("natural_gene_absence", "YDL227C"),
     ]
-    assert [
-        (p.perturbation_type, p.systematic_gene_name)
-        for p in genotypes.base_perturbations("BBB")
-    ] == [("natural_gene_absence", "YDL227C")]
-    calls = {
-        p.systematic_gene_name: p
-        for p in perts
-        if p.perturbation_type == "natural_loss_of_function"
-    }
-    assert (
-        calls["YAL001C"].allele_status
-        is LossOfFunctionAlleleStatus.allele_equals_reference
+    base = genotypes.base_perturbations("BBB")
+    assert [(p.perturbation_type, p.systematic_gene_name) for p in base] == [
+        ("natural_gene_absence", "YDL227C")
+    ]
+    assert base[0] in perts
+    slm6 = perts[0]
+    assert isinstance(slm6, NaturalLossOfFunctionPerturbation)
+    assert (slm6.release_code, slm6.release_name, slm6.release_gene_name) == (
+        None,
+        None,
+        "SLM6",
     )
-    assert calls["YAL001C"].sequence_ref is None
-    slm6 = calls["YBR266C"]
-    assert (
-        slm6.release_code,
-        slm6.release_gene_name,
-        slm6.gene_present_in_isolate,
-    ) == (None, "SLM6", None)
-    assert slm6.cause is NaturalLossOfFunctionCause.homozygous_frameshift
+    assert slm6.release_span == _span("chrII", 739936, 740388)
 
 
 def test_every_isolate_built_with_its_calls_and_descriptor(
     genotypes: ni.NaturalIsolateGenotypes,
 ) -> None:
-    """Each isolate's perturbations by (type, gene, cause), sorted as ``Genotype`` sorts.
+    """Each isolate's perturbations by (type, gene key, cause), sorted as ``Genotype``
+    sorts. Every released call is stored: the coded frameshift row under its code's ORF
+    name, each code-less row under its Gene, and no call is dropped.
 
     Two calls on one gene tie on ``Genotype``'s sort key (gene, type, name), so they keep
     the builder's order: by cause value, frameshift before nonsense/SIFT.
@@ -359,10 +361,12 @@ def test_every_isolate_built_with_its_calls_and_descriptor(
             for p in genotypes.genotype(isolate).perturbations
         ]
 
-    lof = "nonsense_sift_or_frameshift"
+    lof = "nonsense_or_sift"
     fs = "homozygous_frameshift"
     assert summary("AAA") == [
         ("natural_gene_presence", "2-EC1118_1F14_0012g", None),
+        ("natural_loss_of_function", "AAD16", fs),
+        ("natural_loss_of_function", "MOVED", fs),
         ("natural_loss_of_function", "YAL001C", fs),
         ("natural_loss_of_function", "YAL001C", lof),
         ("sequence_variant", "YAL001C", None),
@@ -370,12 +374,22 @@ def test_every_isolate_built_with_its_calls_and_descriptor(
     ]
     assert summary("SACE_YAU") == [
         ("natural_gene_presence", "2-EC1118_1F14_0012g", None),
+        ("natural_loss_of_function", "PAU8", fs),
         ("sequence_variant", "YAL001C", None),
-        ("natural_loss_of_function", "YAL068C", fs),
     ]
     assert summary("DDD") == [
+        ("natural_loss_of_function", "LTO1", fs),
         ("natural_loss_of_function", "YAL002W", fs),
-        ("natural_loss_of_function", "YNL260C", fs),
+    ]
+    coded = [
+        p
+        for p in genotypes.genotype("AAA").perturbations
+        if isinstance(p, NaturalLossOfFunctionPerturbation)
+        and p.cause is NaturalLossOfFunctionCause.homozygous_frameshift
+        and p.release_code is not None
+    ]
+    assert [(p.systematic_gene_name, p.release_gene_name) for p in coded] == [
+        ("YAL001C", "TFC3")
     ]
     presence = genotypes.genotype("SACE_YAU").perturbations[0]
     assert isinstance(presence, NaturalGenePresencePerturbation)
@@ -409,7 +423,7 @@ def test_descriptor_gaps_for_xn_empty_aneuploidy_and_unstated_manipulation(
     ]
 
 
-def test_ledger_counts_every_call_status_and_refusal(
+def test_ledger_counts_what_the_genotypes_carry(
     genotypes: ni.NaturalIsolateGenotypes, tmp_path: Path
 ) -> None:
     ledger = genotypes.write_ledger(tmp_path / "ledger.json")
@@ -425,11 +439,7 @@ def test_ledger_counts_every_call_status_and_refusal(
         ledger.n_natural_presences,
         ledger.n_natural_absences,
     ) == (5, 3, 2, 2)
-    assert (
-        ledger.ho_deleted,
-        ledger.ho_deleted_absent_in_matrix,
-        ledger.ho_deleted_with_ho_sequence_variant,
-    ) == (["BBB", "CCC"], ["BBB"], ["CCC"])
+    assert ledger.ho_deleted == ["BBB", "CCC"]
     assert ledger.ploidy == {"1": 2, "2": 1, "3": 1, "Xn": 1}
     assert ledger.zygosity == {"heterozygous": 2, "homozygous": 3}
     assert (
@@ -439,48 +449,13 @@ def test_ledger_counts_every_call_status_and_refusal(
         ledger.n_manipulation_not_stated,
     ) == (1, 3, 1, 3)
     assert ledger.loss_of_function == {
-        "nonsense_sift_or_frameshift": ni.LossOfFunctionTally(
-            n_calls=5,
-            n_genes=3,
-            by_allele_status={
-                "allele_equals_reference": 1,
-                "no_inferred_allele": 2,
-                "sequence_variant": 2,
-            },
-            n_on_gene_absent_in_isolate=1,
-            n_without_pangenome_code=0,
+        "nonsense_or_sift": ni.LossOfFunctionTally(
+            n_calls=5, n_genes=3, n_without_pangenome_code=0
         ),
         "homozygous_frameshift": ni.LossOfFunctionTally(
-            n_calls=5,
-            n_genes=5,
-            by_allele_status={"no_inferred_allele": 4, "sequence_variant": 1},
-            n_on_gene_absent_in_isolate=0,
-            n_without_pangenome_code=4,
+            n_calls=8, n_genes=8, n_without_pangenome_code=7
         ),
     }
-    assert ledger.lof_frameshift_containment == {
-        "frameshift_calls": 1,
-        "also_called_by_lof": 1,
-    }
-    assert ledger.codeless_frameshift_rows == ni.CodelessResolution(
-        n_rows=7,
-        by_systematic_name=1,
-        by_alias={"PAU8": "YAL068C", "SLM6": "YBR266C", "LTO1": "YNL260C"},
-        spans_matching_r64_4_1=3,
-        spans_differing_from_r64_4_1={
-            "LTO1": "YNL260C chrXIV:156859-157347 (R64-4-1) vs chrXIV:156859-157455 "
-            "(R64-1-1)"
-        },
-        refused=["AAD16", "DDI3", "MOVED"],
-    )
-    assert [
-        (r.release_gene_name, r.n_calls_in_built_isolates, r.reason.split(":")[0])
-        for r in ledger.refused_rows
-    ] == [
-        ("AAD16", 1, "not_in_genome"),
-        ("DDI3", 1, "ambiguous_alias_unpinned"),
-        ("MOVED", 1, "resolves to YCR001W at chrIII"),
-    ]
 
 
 def test_genotype_isolate_reads_the_descriptor(
@@ -576,35 +551,56 @@ def test_table_s1_refuses_a_repeated_isolate(tmp_path: Path) -> None:
         ni.read_table_s1(path)
 
 
-def test_lof_name_must_match_its_code(genotypes: ni.NaturalIsolateGenotypes) -> None:
-    bad = [LofRow(code=1, name="YAL002W", gene="X", ch=1, start=1, stop=8)]
-    frame = pd.read_csv(
-        io.StringIO(
-            gzip.decompress(lof_matrix(ISOLATES, bad)).decode().replace("\r", "\n")
+def _frame(data: bytes) -> pd.DataFrame:
+    text = gzip.decompress(data).decode().replace("\r", "\n")
+    return pd.read_csv(io.StringIO(text), sep="\t")
+
+
+def test_a_lof_row_is_keyed_by_its_name_whatever_the_code_names() -> None:
+    """The loss-of-function matrix's NAME is the call's key, as released; it is not
+    checked against the name another file gives the same code.
+    """
+    rows, matrix, columns = ni.lof_rows(
+        _frame(
+            lof_matrix(
+                ISOLATES,
+                [LofRow(code=1, name="YAL002W", gene="X", ch=1, start=1, stop=8)],
+            )
         ),
-        sep="\t",
+        set(ISOLATES),
     )
-    with pytest.raises(ValueError, match="CODE 1 names YAL001C, NAME YAL002W"):
-        ni.lof_rows(frame, genotypes.pangenome)
+    assert [(r.systematic_gene_name, r.release_code, r.release_name) for r in rows] == [
+        ("YAL002W", 1, "YAL002W")
+    ]
+    assert (matrix.shape, columns) == ((1, 5), ISOLATES)
 
 
-def test_a_matrix_must_index_the_panel_with_zeros_and_ones(
+def test_a_lof_row_without_a_code_or_a_name_is_refused() -> None:
+    frame = _frame(lof_matrix(ISOLATES, _LOF[:1]))
+    frame.loc[0, "NAME"] = None
+    with pytest.raises(ValueError, match="a row without a CODE or a NAME"):
+        ni.lof_rows(frame, set(ISOLATES))
+
+
+def test_a_coded_frameshift_row_must_name_a_reference_orf(
     genotypes: ni.NaturalIsolateGenotypes,
 ) -> None:
-    frame = pd.read_csv(
-        io.StringIO(gzip.decompress(lof_matrix(ISOLATES[:-1], [])).decode()), sep="\t"
+    frame = _frame(
+        frameshift_matrix(
+            ISOLATES, [FrameshiftRow(code=2, gene="X", ch=1, start=1, stop=8)]
+        )
     )
+    with pytest.raises(ValueError, match="CODE 2 is not a reference ORF"):
+        ni.frameshift_rows(frame, genotypes.pangenome)
+
+
+def test_a_matrix_must_index_the_panel_with_zeros_and_ones() -> None:
     with pytest.raises(ValueError, match="does not index the 1,011 isolates"):
-        ni.lof_rows(frame, genotypes.pangenome)
-    frame = pd.read_csv(
-        io.StringIO(
-            gzip.decompress(lof_matrix(ISOLATES, _LOF[:1])).decode().replace("\r", "\n")
-        ),
-        sep="\t",
-    )
+        ni.lof_rows(_frame(lof_matrix(ISOLATES[:-1], [])), set(ISOLATES))
+    frame = _frame(lof_matrix(ISOLATES, _LOF[:1]))
     frame.loc[0, "AAA"] = 2
     with pytest.raises(ValueError, match="a value other than 0 or 1"):
-        ni.lof_rows(frame, genotypes.pangenome)
+        ni.lof_rows(frame, set(ISOLATES))
 
 
 def test_parse_aneuploidy_reads_the_legend_and_refuses_other_text() -> None:
@@ -655,15 +651,46 @@ def test_register_supplementary_tables_copies_and_records_once(
     assert (tier / "manifest.json").read_text() == before
 
 
-def test_the_slm6_pin_holds_against_the_r64_index(tmp_path: Path) -> None:
-    from torchcell.datasets.gene_alias_resolution import check_pin
-
-    path = tmp_path / "r64.gff"
-    path.write_bytes(gff(_GFF))
-    index = ni.read_r64_gene_index(path)
-    (pin,) = ni.codeless_frameshift_pins()
-    assert check_pin(index, pin) == "YBR266C"
-    assert index.spans["YBR266C"] == ("chrII", 739936, 740388)
+def test_register_release_readme_copies_and_records_once(
+    data_root: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The host's README is verified, copied into the raw mirror and appended to its
+    manifest with a direct_url retrieval; a second call finds it listed.
+    """
+    mirror = data_root / "torchcell-raw" / ni.CITATION_KEY
+    mirror.mkdir(parents=True)
+    (mirror / "data").mkdir()
+    (mirror / "manifest.json").write_text(
+        Manifest(citation_key=ni.CITATION_KEY, files=[]).model_dump_json()
+    )
+    readme = tmp_path / "README.txt"
+    readme.write_bytes(b"- " + ni.LOF_README_QUOTE.encode() + b" \r\n")
+    sha = hashlib.sha256(readme.read_bytes()).hexdigest()
+    monkeypatch.setattr(ni, "README_SHA256", sha)
+    path = ni.register_release_readme(readme, str(data_root))
+    manifest = Manifest.model_validate_json(path.read_text())
+    (record,) = manifest.files
+    assert (record.path, record.sha256, record.source, record.role) == (
+        ni.README_REL,
+        sha,
+        ni.RELEASE_HOST + ni.README_NAME,
+        "raw_data",
+    )
+    assert record.retrieval is not None
+    assert record.retrieval.method.value == "direct_url"
+    assert (mirror / ni.README_REL).read_bytes() == readme.read_bytes()
+    before = path.read_text()
+    assert ni.register_release_readme(readme, str(data_root)) == path
+    assert path.read_text() == before
+    wrong = tmp_path / "other.txt"
+    wrong.write_bytes(b"other")
+    (mirror / "manifest.json").write_text(
+        Manifest(citation_key=ni.CITATION_KEY, files=[]).model_dump_json()
+    )
+    with pytest.raises(RawSha256MismatchError, match="sha256 mismatch"):
+        ni.register_release_readme(wrong, str(data_root))
+    # the refusal leaves the mirror's copy as it was
+    assert (mirror / ni.README_REL).read_bytes() == readme.read_bytes()
 
 
 # --------------------------------------------------------------------------- #
@@ -720,6 +747,10 @@ def test_every_sourced_value_is_verbatim_in_its_pinned_source() -> None:
     for key, sv in ni.SOURCED_VALUES.items():
         audit = audit_sourced_value(sv, _REAL_LIBRARY)
         assert audit.passed, (key, audit.message)
+    raw_root = osp.join(_real_data_root(), "torchcell-raw")
+    for key, sv in ni.RELEASE_SOURCED_VALUES.items():
+        audit = audit_sourced_value(sv, raw_root)
+        assert audit.passed, (key, audit.message)
     sheet = pd.read_excel(
         osp.join(_REAL_LIBRARY, ni.CITATION_KEY, ni.LIBRARY_TABLES_REL),
         sheet_name=ni.TABLE_S1_SHEET,
@@ -740,22 +771,14 @@ def test_every_sourced_value_is_verbatim_in_its_pinned_source() -> None:
 @pytest.mark.data
 @pytest.mark.skipif(not osp.isfile(_PHENO), reason="Peter 2018 mirrors not on disk")
 def test_the_971_isolate_ledger_reproduces_the_issue_inventory(tmp_path: Path) -> None:
-    """#987's inventory over the 971 phenotyped isolates, through the builder."""
+    """#987's inventory over the 971 phenotyped isolates: every released call."""
     raw = tmp_path / "raw"
     raw.mkdir()
     ni.link_genotype_files(str(raw))
     phenotyped = set(pd.read_csv(_PHENO, sep="\t", index_col=0).index.astype(str))
     ledger: Any = ni.NaturalIsolateGenotypes(raw, tmp_path, phenotyped).ledger()
-    lof = ledger.loss_of_function["nonsense_sift_or_frameshift"]
-    assert (lof.n_calls, lof.n_genes) == (231339, 4069)
-    assert lof.by_allele_status == {
-        "sequence_variant": 204038,
-        "no_inferred_allele": 26510,
-        "allele_equals_reference": 791,
-    }
+    lof = ledger.loss_of_function["nonsense_or_sift"]
+    assert (lof.n_calls, lof.n_genes, lof.n_without_pangenome_code) == (231339, 4069, 0)
     fs = ledger.loss_of_function["homozygous_frameshift"]
-    refused = sum(r.n_calls_in_built_isolates for r in ledger.refused_rows)
-    assert fs.n_calls + refused == 141453
-    assert fs.n_without_pangenome_code + refused == 8625
+    assert (fs.n_calls, fs.n_without_pangenome_code) == (141453, 8625)
     assert len(ledger.ho_deleted) == 122
-    assert len(ledger.ho_deleted_absent_in_matrix) == 47

@@ -59,7 +59,6 @@ from torchcell.datamodels.schema import (
     HeterozygousDeletionPerturbation,
     InduciblePromoterInsertionPerturbation,
     KanMxDeletionPerturbation,
-    LossOfFunctionAlleleStatus,
     MarkerDeletionPerturbation,
     MeanDeletionPerturbation,
     NatMxDeletionPerturbation,
@@ -299,13 +298,12 @@ FACTORY: dict[type[GenePerturbation], dict[str, Any]] = {
     SequenceVariantPerturbation: {**_SYS, "strain_id": "AAB", **_URI},
     # #988: the parent deletion is stored where the source names no cassette.
     DeletionPerturbation: {**_SYS, "description": "a deletion, marker not stated"},
-    # #987: one released loss-of-function call on the isolate's variant allele.
+    # #987: one released loss-of-function call, keyed as its matrix keys the row.
     NaturalLossOfFunctionPerturbation: dict(
-        **_SYS,
+        systematic_gene_name="YAL001C",
+        perturbed_gene_name="YAL001C",
         strain_id="AAB",
-        cause=NaturalLossOfFunctionCause.nonsense_sift_or_frameshift,
-        allele_status=LossOfFunctionAlleleStatus.sequence_variant,
-        sequence_source="peterGenomeEvolution10112018",
+        cause=NaturalLossOfFunctionCause.nonsense_or_sift,
         call_ref=ArtifactRef(
             tier="genomes",
             key="peter2018_1011_assemblies",
@@ -313,12 +311,11 @@ FACTORY: dict[type[GenePerturbation], dict[str, Any]] = {
             sha256="b" * 64,
         ),
         release_code=1768,
-        release_gene_name="YAL001C",
+        release_name="YAL001C",
+        release_gene_name="TFC3",
         release_span=GenomicSpan(
             chromosome="chrI", start=147594, end=151166, assembly="R64-1-1"
         ),
-        gene_present_in_isolate=True,
-        **_URI,
     ),
     CopyNumberVariantPerturbation: dict(
         systematic_gene_name="pangenome1011:orf1",
@@ -693,7 +690,6 @@ def test_sequence_ref_round_trips_through_its_string_form(
         NaturalGeneAbsencePerturbation,
         NaturalGenePresencePerturbation,
         SequenceVariantPerturbation,
-        NaturalLossOfFunctionPerturbation,
     ],
 )
 def test_sequence_pointer_is_one_ref_field(cls: type[GenePerturbation]) -> None:
@@ -704,6 +700,18 @@ def test_sequence_pointer_is_one_ref_field(cls: type[GenePerturbation]) -> None:
     assert "sequence_source" in fields
     assert "sequence_uri" not in fields
     assert "sequence_sha256" not in fields
+
+
+def test_a_loss_of_function_call_points_at_its_matrix_never_a_sequence() -> None:
+    """#987: a call is a release matrix's statement, stored as released; it carries the
+    matrix (``call_ref``) and the row's own keys, and no allele or presence lookup.
+    """
+    fields = NaturalLossOfFunctionPerturbation.model_fields
+    assert fields["call_ref"].is_required()
+    assert {"sequence_ref", "sequence_source", "allele_status"}.isdisjoint(fields)
+    assert {"release_code", "release_name", "release_gene_name", "release_span"} <= (
+        set(fields)
+    )
 
 
 # --------------------------------------------------------------------------- #

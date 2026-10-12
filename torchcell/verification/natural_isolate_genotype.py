@@ -19,8 +19,10 @@ its results:
   from the LIBRARY mirror's copy of the workbook (``si/si3.xls``), not the tier copy the
   build read.
 - L4 ``loss_of_function_calls_match_release``: per isolate and cause, the stored
-  loss-of-function perturbations number the 1s of the release matrix, re-read here with
-  pandas and not through the builder's row logic, less the calls on refused rows.
+  loss-of-function calls are exactly the rows with a 1 in that isolate's column of the
+  release matrix, each named by the matrix's own row key (``NAME`` in
+  ``1011LossOfFunction.xls.gz``, ``Gene`` in ``genesMatrix_Frameshift.tab.gz``),
+  re-read here with pandas and not through the builder's row logic.
 """
 
 from __future__ import annotations
@@ -30,14 +32,11 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
-import numpy as np
-
 from torchcell.datamodels.schema import NaturalLossOfFunctionCause
 from torchcell.sequence import natural_isolate as ni
 from torchcell.verification.report import Level, LevelResult, sha256_file
 
 DELETION = "deletion"
-NATURAL_ABSENCE = "natural_gene_absence"
 LOSS_OF_FUNCTION = "natural_loss_of_function"
 
 
@@ -67,8 +66,7 @@ class IsolateGenotypeAudit:
         self.round_trip_failures: list[str] = []
         self.descriptors: dict[str, dict[str, Any]] = {}
         self.ho_deleted: set[str] = set()
-        self.ho_natural_absence: set[str] = set()
-        self.lof_counts: Counter[tuple[str, str]] = Counter()
+        self.lof_keys: dict[tuple[str, str], Counter[str]] = {}
 
     def add(self, genotype: Mapping[str, Any]) -> str | None:
         """Check one stored genotype dump; return its isolate (None if it names none)."""
@@ -87,16 +85,17 @@ class IsolateGenotypeAudit:
         for p in perturbations:
             kind = p["perturbation_type"]
             if kind == LOSS_OF_FUNCTION:
-                self.lof_counts[(isolate, str(p["cause"]))] += 1
+                cause = str(p["cause"])
+                key = (
+                    p["release_name"]
+                    if cause == NaturalLossOfFunctionCause.nonsense_or_sift.value
+                    else p["release_gene_name"]
+                )
+                self.lof_keys.setdefault((isolate, cause), Counter())[str(key)] += 1
             elif (
                 kind == DELETION and p["systematic_gene_name"] == ni.HO_SYSTEMATIC_NAME
             ):
                 self.ho_deleted.add(isolate)
-            elif (
-                kind == NATURAL_ABSENCE
-                and p["systematic_gene_name"] == ni.HO_SYSTEMATIC_NAME
-            ):
-                self.ho_natural_absence.add(isolate)
         self.descriptors[isolate] = dict(genotype["natural_isolate"])
         if isolate not in self.genotypes.isolates:
             self.round_trip_failures.append(f"{isolate}: not an isolate of the build")
@@ -186,8 +185,6 @@ class IsolateGenotypeAudit:
                     problems.append(f"{isolate}: {observed} != Table S1 {expected}")
                 if ho != (isolate in self.ho_deleted):
                     problems.append(f"{isolate}: HO deletion {ho} in Table S1")
-                if isolate in self.ho_deleted and isolate in self.ho_natural_absence:
-                    problems.append(f"{isolate}: HO deleted AND naturally absent")
         passed = integrity and not problems
         return _result(
             Level.L4,
@@ -206,43 +203,42 @@ class IsolateGenotypeAudit:
     def _loss_of_function_vs_release(self) -> LevelResult:
         raw = self.genotypes.raw_dir
         isolates = sorted(self.descriptors)
-        lof = ni.read_lof_matrix(raw / ni.LOF_NAME)
-        frameshift = ni.read_frameshift_matrix(raw / ni.FRAMESHIFT_NAME)
-        refused = {row.release_gene_name for row in self.genotypes.refused}
-        coded_or_kept = ~(
-            frameshift["CODE"].isna() & frameshift["Gene"].astype(str).isin(refused)
-        )
-        expected: dict[str, np.ndarray[Any, Any]] = {
-            NaturalLossOfFunctionCause.nonsense_sift_or_frameshift.value: lof[isolates]
-            .to_numpy()
-            .sum(axis=0),
-            NaturalLossOfFunctionCause.homozygous_frameshift.value: frameshift.loc[
-                coded_or_kept, isolates
-            ]
-            .to_numpy()
-            .sum(axis=0),
+        matrices = {
+            NaturalLossOfFunctionCause.nonsense_or_sift.value: (
+                ni.read_lof_matrix(raw / ni.LOF_NAME),
+                "NAME",
+            ),
+            NaturalLossOfFunctionCause.homozygous_frameshift.value: (
+                ni.read_frameshift_matrix(raw / ni.FRAMESHIFT_NAME),
+                "Gene",
+            ),
         }
         differ: list[str] = []
         totals: dict[str, int] = {}
-        for cause, per_isolate in expected.items():
-            totals[cause] = int(per_isolate.sum())
-            for isolate, n in zip(isolates, per_isolate.tolist(), strict=True):
-                if self.lof_counts[(isolate, cause)] != int(n):
+        for cause, (frame, key_column) in matrices.items():
+            keys = frame[key_column].astype(str)
+            totals[cause] = 0
+            for isolate in isolates:
+                expected = Counter(keys[frame[isolate] == 1])
+                stored = self.lof_keys.get((isolate, cause), Counter())
+                totals[cause] += sum(stored.values())
+                if stored != expected:
+                    extra = sorted((stored - expected).elements())
+                    lacking = sorted((expected - stored).elements())
                     differ.append(
-                        f"{isolate}/{cause}: stored "
-                        f"{self.lof_counts[(isolate, cause)]}, release {n}"
+                        f"{isolate}/{cause}: stored {sum(stored.values())}, release "
+                        f"{sum(expected.values())}; extra {extra[:3]}, "
+                        f"missing {lacking[:3]}"
                     )
         passed = not differ and bool(isolates)
         return _result(
             Level.L4,
             "loss_of_function_calls_match_release",
             passed,
-            f"stored loss-of-function calls equal the release's 1s over {len(isolates)} "
-            f"isolates: {totals}"
-            + (f" (frameshift rows refused: {sorted(refused)})" if refused else "")
+            f"stored loss-of-function calls are the release's 1s, row for row by the "
+            f"matrix's own key, over {len(isolates)} isolates: {totals}"
             if passed
-            else f"{len(differ)} (isolate, cause) counts differ from the release",
+            else f"{len(differ)} (isolate, cause) call sets differ from the release",
             totals=totals,
-            refused_rows=sorted(refused),
             differ=differ[:20],
         )

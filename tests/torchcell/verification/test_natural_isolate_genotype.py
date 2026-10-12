@@ -18,14 +18,8 @@ from typing import Any
 
 import pytest
 
-from tests.torchcell.sequence._peter_tier import (
-    TableS1Row,
-    gff,
-    tables_workbook,
-    write_tier,
-)
+from tests.torchcell.sequence._peter_tier import TableS1Row, tables_workbook, write_tier
 from tests.torchcell.sequence.test_natural_isolate import (
-    _GFF,
     _SGD_FSA,
     _TABLE_S1,
     ISOLATES,
@@ -42,11 +36,7 @@ def audit(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> IsolateGenotypeAud
     data_root = tmp_path / "data_root"
     monkeypatch.setenv("DATA_ROOT", str(data_root))
     files = _peter_files()
-    write_tier(
-        data_root,
-        SGD_S288C_R64,
-        {ni.SGD_FSA_NAME: _SGD_FSA.encode(), ni.SGD_GFF_NAME: gff(_GFF)},
-    )
+    write_tier(data_root, SGD_S288C_R64, {ni.SGD_FSA_NAME: _SGD_FSA.encode()})
     write_tier(data_root, PETER2018_1011, files)
     library = tmp_path / "library"
     tables = library / ni.CITATION_KEY / ni.LIBRARY_TABLES_REL
@@ -90,14 +80,13 @@ def test_the_built_genotypes_pass_all_four_rules(audit: IsolateGenotypeAudit) ->
     ]
     assert results["isolate_descriptor_matches_table_s1"].details["n_ho_deleted"] == 2
     assert results["loss_of_function_calls_match_release"].details == {
-        "totals": {"nonsense_sift_or_frameshift": 5, "homozygous_frameshift": 5},
-        "refused_rows": ["AAD16", "DDI3", "MOVED"],
+        "totals": {"nonsense_or_sift": 5, "homozygous_frameshift": 8},
         "differ": [],
     }
     assert results["loss_of_function_calls_match_release"].message == (
-        "stored loss-of-function calls equal the release's 1s over 5 isolates: "
-        "{'nonsense_sift_or_frameshift': 5, 'homozygous_frameshift': 5} (frameshift "
-        "rows refused: ['AAD16', 'DDI3', 'MOVED'])"
+        "stored loss-of-function calls are the release's 1s, row for row by the "
+        "matrix's own key, over 5 isolates: "
+        "{'nonsense_or_sift': 5, 'homozygous_frameshift': 8}"
     )
 
 
@@ -122,7 +111,7 @@ def test_identity_names_a_missing_descriptor_a_foreign_strain_and_a_repeat(
     assert result.details["missing"] == ["AAA", "DDD", "SACE_YAU"]
 
 
-def test_round_trip_and_release_counts_catch_a_dropped_call(
+def test_round_trip_and_release_keys_catch_a_dropped_or_rekeyed_call(
     audit: IsolateGenotypeAudit,
 ) -> None:
     dumps = _dumps(audit)
@@ -135,14 +124,21 @@ def test_round_trip_and_release_counts_catch_a_dropped_call(
             and q["systematic_gene_name"] == "YBR001W"
         )
     ]
+    rekeyed = json.loads(json.dumps(dumps["DDD"], default=str))
+    for q in rekeyed["perturbations"]:
+        if q["release_gene_name"] == "LTO1":
+            q["release_gene_name"] = q["systematic_gene_name"] = "YNL260C"
     for isolate, dump in dumps.items():
-        audit.add(dropped if isolate == "AAA" else dump)
+        audit.add({"AAA": dropped, "DDD": rekeyed}.get(isolate, dump))
     results = _by_name(audit)
     assert results["isolate_genotype_round_trip"].details["failures"] == [
-        "AAA: differs from the rebuild"
+        "AAA: differs from the rebuild",
+        "DDD: differs from the rebuild",
     ]
     assert results["loss_of_function_calls_match_release"].details["differ"] == [
-        "AAA/nonsense_sift_or_frameshift: stored 1, release 2"
+        "AAA/nonsense_or_sift: stored 1, release 2; extra [], missing ['YBR001W']",
+        "DDD/homozygous_frameshift: stored 2, release 2; extra ['YNL260C'], "
+        "missing ['LTO1']",
     ]
 
 

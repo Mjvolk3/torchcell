@@ -11,7 +11,8 @@ every store, and a change to what an isolate genotype carries reaches every stor
 (issue #988). Before this module the construction lived inside the Caudal 2024 loader and
 the other three imported its private helpers and static methods.
 
-A genotype is a perturbation set off S288C R64 plus one descriptor:
+A genotype is the release's own description of the isolate, stored as released: a
+perturbation set off S288C R64 plus one descriptor.
 
 - ``SequenceVariantPerturbation`` per reference gene whose inferred allele
   (``allReferenceGenesWithSNPsAndIndelsInferred.tar.gz``) differs from the S288C slice
@@ -20,36 +21,30 @@ A genotype is a perturbation set off S288C R64 plus one descriptor:
   carries and ``NaturalGeneAbsencePerturbation`` per reference ORF it lacks
   (``genesMatrix_PresenceAbsence.tab.gz``, copy number from
   ``genesMatrix_CopyNumber.tab.gz``).
-- ``DeletionPerturbation`` of HO (YDL227C) where Supplementary Table 1 reads 'yes' in
-  'HO deletion' (#988). That deletion is engineered, so where the presence matrix marks
-  HO absent the natural absence it used to carry is replaced, not duplicated.
-
-Every content edit and call names its gene by the systematic name in
-``perturbed_gene_name`` (as the natural absences always have), so a gene has one spelling
-across a store: two isolates lack HO naturally, and an ``HO`` deletion beside their
-``YDL227C`` absences would split it. The release's own gene name is ``release_gene_name``;
-only ``SequenceVariantPerturbation`` keeps the tarball header's symbol, an allele
-designation the shared ``canonical_gene_names`` rule exempts.
+- ``DeletionPerturbation`` of HO (YDL227C, the gene the presence matrix names
+  ``X2672.YDL227C``) where Supplementary Table 1 reads 'yes' in 'HO deletion' (#988).
+  Every other perturbation stands as its own file states it, including a natural
+  absence of the same gene in an HO-deleted isolate: two released statements, both kept.
 - ``NaturalLossOfFunctionPerturbation`` per released call of the two loss-of-function
-  matrices (#987): ``1011LossOfFunction.xls.gz`` (nonsense, SIFT-deleterious or
-  frameshift, folded into one bit) and ``genesMatrix_Frameshift.tab.gz`` (homozygous
-  frameshift). A call is kept whatever the other releases say about the same allele;
-  ``allele_status`` and ``gene_present_in_isolate`` name the disagreement instead.
+  matrices (#987), ``1011LossOfFunction.xls.gz`` ("nonsense mutation + SIFT
+  predictions", one bit) and ``genesMatrix_Frameshift.tab.gz`` (homozygous
+  frameshift), keyed as each matrix keys its rows: by ``NAME`` (and ``CODE``) in the
+  first, by the code's pangenome ORF name or, on the 533 rows the release gives no
+  code, by ``Gene`` verbatim in the second. No call is dropped, re-keyed or annotated
+  by a lookup in any other file or in the S288C annotation.
 - ``Genotype.natural_isolate``: ploidy, genome zygosity, whole-chromosome aneuploidy and
   the manipulation Table S1 marks, each the table's value or a typed gap.
 
-Every input is a sha256-pinned file of the genomes-tier set ``peter2018_1011_assemblies``
-(``GENOTYPE_FILES``) or of ``sgd_S288C_R64-4-1_20230830`` (the R64 chromosomes and GFF).
-Supplementary Table 1 is the paper's Supplementary Tables workbook, registered into the
-Peter tier by ``register_supplementary_tables`` with its PMC retrieval record.
+Every content edit and call names its gene in ``perturbed_gene_name`` by the same key as
+``systematic_gene_name`` (as the natural absences always have); only
+``SequenceVariantPerturbation`` keeps the tarball header's symbol, an allele designation
+the shared ``canonical_gene_names`` rule exempts.
 
-Resolution of the 533 frameshift rows the release gives without a pangenome code: the
-row's ``Gene`` is a live R64-4-1 systematic name, or a name ``gene_alias_resolution``
-resolves to exactly one live ORF (one ambiguous name, SLM6, by a pinned standard-name
-rule), and the ORF must overlap the row's R64-1-1 span. A row that fails is refused and
-counted in the ledger, never mapped by coordinates alone: ``AAD16`` (YFL057C in R64-1-1,
-now an alias of the YFL056C pseudogene) and ``DDI3`` (its row is YNL335W, whose R64-4-1
-standard name is DDI2, while DDI3 now names YFL061W).
+Every input is a sha256-pinned file of the genomes-tier set ``peter2018_1011_assemblies``
+(``GENOTYPE_FILES``) or of ``sgd_S288C_R64-4-1_20230830`` (the R64 chromosomes the
+inferred alleles are diffed against). Supplementary Table 1 is the paper's Supplementary
+Tables workbook, registered into the Peter tier by ``register_supplementary_tables`` with
+its PMC retrieval record.
 """
 
 from __future__ import annotations
@@ -61,7 +56,6 @@ import logging
 import os.path as osp
 import re
 import tarfile
-import urllib.parse
 from collections import Counter
 from collections.abc import Iterable, Mapping
 from pathlib import Path
@@ -82,7 +76,6 @@ from torchcell.datamodels.schema import (
     GenomicSpan,
     Genotype,
     IsolateManipulation,
-    LossOfFunctionAlleleStatus,
     NaturalGeneAbsencePerturbation,
     NaturalGenePresencePerturbation,
     NaturalIsolateDescriptor,
@@ -91,7 +84,9 @@ from torchcell.datamodels.schema import (
     SequenceVariantPerturbation,
 )
 from torchcell.literature.manifest import (
+    ROLE_RAW_DATA,
     ArtifactRecord,
+    Manifest,
     RetrievalMethod,
     RetrievalRecord,
     sha256_file,
@@ -128,7 +123,6 @@ FRAMESHIFT_NAME = "genesMatrix_Frameshift.tab.gz"
 #: The paper's Supplementary Tables workbook (Tables S1 to S21), publisher file name.
 SUPPLEMENTARY_TABLES_NAME = "41586_2018_30_MOESM3_ESM.xls"
 SGD_FSA_NAME = "S288C_reference_sequence_R64-4-1_20230830.fsa"
-SGD_GFF_NAME = "saccharomyces_cerevisiae_R64-4-1_20230830.gff"
 
 #: Every class an isolate genotype holds. Each natural-isolate loader names the same
 #: tuple from its own imports (the schema-impact closure reads a loader's imports only).
@@ -169,6 +163,13 @@ TABLE_S1_COLUMNS = [
     "Aneuploidies",
     "Zygosity",
 ]
+
+#: The release host's own description of its files, deposited in the raw mirror.
+RELEASE_HOST = "http://1002genomes.u-strasbg.fr/files/"
+README_NAME = "README.txt"
+README_REL = f"data/{README_NAME}"
+README_SHA256 = "f48e32771b44d38e88b9c8833f6f47e1a30eb6634ffccf55be42b117dd24f025"
+README_RETRIEVED_AT = "2026-10-12T14:45:03Z"
 
 PAPER_MD = "paper.md"
 PAPER_MD_SHA256 = "21c49934d546f162b43025c85254bcd1cedcb80ab9a691935301b5962a6a12da"
@@ -230,6 +231,11 @@ FRAMESHIFT_QUOTE = (
     "(indicated by 1 or 0, respectively) of homozygous frameshift is reported in each "
     "gene, based on the number of bases affected by indels."
 )
+#: ``README.txt`` line 14, the release's description of ``1011LossOfFunction.xls.gz``.
+LOF_README_QUOTE = (
+    "1011LossOfFunction.xls.gz: loss of function predicted for all genes in the 1011 "
+    "dataset (nonsense mutation + SIFT predictions)"
+)
 REFERENCE_VERSION_QUOTE = "the reads were mapped to the S. cerevisiae S288C reference genome (version R64-1-1)"
 #: Table S1, sheet row 2, column A: the 'Aneuploidies' notation.
 ANEUPLOIDY_LEGEND = (
@@ -252,13 +258,12 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         36,
         "124 HO deletions plus 93 external isolates",
     ),
-    "nonsense_sift_or_frameshift": _paper_sv(
-        NaturalLossOfFunctionCause.nonsense_sift_or_frameshift.value,
+    "nonsense_or_sift_methods": _paper_sv(
+        NaturalLossOfFunctionCause.nonsense_or_sift.value,
         LOF_DEFINITION_QUOTE,
         202,
-        "the class 1011LossOfFunction.xls.gz holds; the file also holds every "
-        "homozygous frameshift call of genesMatrix_Frameshift.tab.gz on its genes "
-        "(measured, see the ledger)",
+        "the Methods' definition of the two predictions the release's README names for "
+        "1011LossOfFunction.xls.gz (RELEASE_SOURCED_VALUES)",
     ),
     "homozygous_frameshift": _paper_sv(
         NaturalLossOfFunctionCause.homozygous_frameshift.value,
@@ -272,6 +277,23 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         180,
         "the coordinates of both loss-of-function matrices are read on this reference",
     ),
+}
+
+
+#: Statements the release host makes about its files, audited against the raw mirror
+#: (``$DATA_ROOT/torchcell-raw``), not the library.
+RELEASE_SOURCED_VALUES: dict[str, SourcedValue] = {
+    "nonsense_or_sift": SourcedValue(
+        value=NaturalLossOfFunctionCause.nonsense_or_sift.value,
+        provenance=Provenance(
+            source_uri=README_REL,
+            citation_key=CITATION_KEY,
+            sha256=README_SHA256,
+            page="README.txt line 14",
+        ),
+        quote=LOF_README_QUOTE,
+        note="the release folds the two predictions into one bit per gene and isolate",
+    )
 }
 
 
@@ -505,6 +527,48 @@ def register_supplementary_tables(data_root: str | None = None) -> str:
         ),
     )
     return extend_assembly_set(PETER2018_1011, [record], data_root)
+
+
+def register_release_readme(
+    source_path: str | Path, data_root: str | None = None
+) -> Path:
+    """Copy the release host's ``README.txt`` into the Peter 2018 raw mirror.
+
+    The bytes were fetched with ``curl -sSL -O http://1002genomes.u-strasbg.fr/files/README.txt``
+    on ``README_RETRIEVED_AT`` and are verified against ``README_SHA256`` before
+    anything is written; the file is appended to the mirror's ``manifest.json`` with a
+    ``direct_url`` record. It is the release's own description of its files, the source
+    of ``NaturalLossOfFunctionCause.nonsense_or_sift``. Idempotent: a README the
+    manifest already lists is left alone.
+    """
+    tier = Path(assembly_set_dir(PETER2018_1011, data_root))
+    # $DATA_ROOT/torchcell-genomes/<set> -> $DATA_ROOT/torchcell-raw/<key>
+    mirror = tier.parents[1] / "torchcell-raw" / CITATION_KEY
+    manifest_path = mirror / "manifest.json"
+    manifest = Manifest.model_validate_json(manifest_path.read_text())
+    if README_REL in {rec.path for rec in manifest.files}:
+        return manifest_path
+    copy_verified(source_path, mirror / README_REL, README_SHA256)
+    url = RELEASE_HOST + README_NAME
+    manifest.files.append(
+        ArtifactRecord(
+            path=README_REL,
+            role=ROLE_RAW_DATA,
+            bytes=(mirror / README_REL).stat().st_size,
+            sha256=README_SHA256,
+            source=url,
+            retrieval=RetrievalRecord(
+                method=RetrievalMethod.direct_url,
+                source_url=url,
+                retriever="torchcell.literature.retrieve.direct_url",
+                params={"url": url},
+                sha256=README_SHA256,
+                retrieved_at=README_RETRIEVED_AT,
+            ),
+        )
+    )
+    manifest_path.write_text(manifest.model_dump_json(indent=2))
+    return manifest_path
 
 
 # --------------------------------------------------------------------------- #
@@ -868,108 +932,6 @@ def isolate_descriptor(
 
 
 # --------------------------------------------------------------------------- #
-# R64-4-1 gene names, for the frameshift rows released without a pangenome code
-# --------------------------------------------------------------------------- #
-_GENE_FEATURE_TYPES = frozenset(
-    {
-        "gene",
-        "pseudogene",
-        "transposable_element_gene",
-        "blocked_reading_frame",
-        "ncRNA_gene",
-        "tRNA_gene",
-        "snoRNA_gene",
-        "snRNA_gene",
-        "rRNA_gene",
-        "telomerase_RNA_gene",
-    }
-)
-
-
-class R64GeneIndex(BaseModel):
-    """The three lookups ``gene_alias_resolution`` reads, plus coordinates, from the GFF.
-
-    Satisfies ``GenomeNameIndex``: ``gene_set`` (live locus ids), ``alias_to_systematic``
-    (upper-case GFF ``Alias`` -> ids) and ``feature_index['standard_to_ids']``
-    (upper-case GFF ``gene=`` standard name -> ids).
-    """
-
-    model_config = ConfigDict(extra="forbid", frozen=True)
-
-    gene_set: frozenset[str]
-    alias_to_systematic: dict[str, list[str]]
-    feature_index: dict[str, dict[str, list[str]]]
-    spans: dict[str, tuple[str, int, int]]
-
-
-def read_r64_gene_index(gff_path: str | Path) -> R64GeneIndex:
-    """Gene-level features of the R64-4-1 GFF (ids, standard names, aliases, spans)."""
-    alias: dict[str, set[str]] = {}
-    standard: dict[str, set[str]] = {}
-    spans: dict[str, tuple[str, int, int]] = {}
-    with open(gff_path) as handle:
-        for line in handle:
-            if line.startswith("##FASTA"):
-                break
-            if line.startswith("#"):
-                continue
-            fields = line.rstrip("\n").split("\t")
-            if len(fields) < 9 or fields[2] not in _GENE_FEATURE_TYPES:
-                continue
-            attrs = dict(kv.split("=", 1) for kv in fields[8].split(";") if "=" in kv)
-            gid = attrs["ID"]
-            spans[gid] = (fields[0], int(fields[3]), int(fields[4]))
-            if "gene" in attrs:
-                standard.setdefault(
-                    urllib.parse.unquote(attrs["gene"]).upper(), set()
-                ).add(gid)
-            for name in urllib.parse.unquote(attrs.get("Alias", "")).split(","):
-                if name:
-                    alias.setdefault(name.upper(), set()).add(gid)
-    return R64GeneIndex(
-        gene_set=frozenset(spans),
-        alias_to_systematic={k: sorted(v) for k, v in alias.items()},
-        feature_index={"standard_to_ids": {k: sorted(v) for k, v in standard.items()}},
-        spans=spans,
-    )
-
-
-#: The GFF row of YBR266C, which names SLM6 its standard name (``gene=SLM6``).
-SLM6_GFF_ROW = (
-    "chrII\tSGD\tgene\t739936\t740388\t.\t-\t.\tID=YBR266C;Name=YBR266C;gene=SLM6;"
-    "Alias=SLM6"
-)
-
-
-def codeless_frameshift_pins() -> list[Any]:
-    """Pins for the ambiguous names of the frameshift rows released without a code.
-
-    ``SLM6`` is the standard name of YBR266C and an alias of YPR164W (MMS1); the R64-4-1
-    GFF gives the standard name to YBR266C alone and the release's span
-    (chrII:739936-740388) is YBR266C's, so the ``SGD_STANDARD_NAME`` rule holds and is
-    re-checked on every build. ``DDI3`` is NOT pinned: its row sits at
-    chrXIV:11452-12129, YNL335W, whose R64-4-1 standard name is now DDI2, while the
-    standard name DDI3 belongs to YFL061W on chrVI. No rule ``gene_alias_resolution``
-    admits picks the ORF by the release's coordinates, so the row is refused.
-    """
-    from torchcell.datamodels.strain_background import R64_GFF
-    from torchcell.datasets.gene_alias_resolution import (
-        AliasResolutionRule,
-        PinnedAliasResolution,
-    )
-
-    return [
-        PinnedAliasResolution(
-            alias="SLM6",
-            systematic_name="YBR266C",
-            rule=AliasResolutionRule.SGD_STANDARD_NAME,
-            provenance=R64_GFF,
-            quote=SLM6_GFF_ROW,
-        )
-    ]
-
-
-# --------------------------------------------------------------------------- #
 # The two loss-of-function matrices
 # --------------------------------------------------------------------------- #
 class ReleaseRow(BaseModel):
@@ -978,35 +940,14 @@ class ReleaseRow(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     cause: NaturalLossOfFunctionCause
-    systematic_gene_name: str
+    systematic_gene_name: str = Field(
+        description="the release's gene key for the row (see "
+        "NaturalLossOfFunctionPerturbation)"
+    )
     release_code: int | None
+    release_name: str | None
     release_gene_name: str
     span: GenomicSpan
-
-
-class RefusedRow(BaseModel):
-    """A released row no perturbation is written for, with the measured reason."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    cause: NaturalLossOfFunctionCause
-    release_gene_name: str
-    span: GenomicSpan
-    reason: str
-    n_calls_in_built_isolates: int
-
-
-class CodelessResolution(BaseModel):
-    """How the frameshift rows without a pangenome code were named."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    n_rows: int
-    by_systematic_name: int
-    by_alias: dict[str, str] = Field(description="release name -> resolved ORF")
-    spans_matching_r64_4_1: int
-    spans_differing_from_r64_4_1: dict[str, str]
-    refused: list[str]
 
 
 def _span(ch: Any, start: Any, stop: Any) -> GenomicSpan:
@@ -1045,166 +986,74 @@ def read_frameshift_matrix(path: str | Path) -> pd.DataFrame:
 
 
 def lof_rows(
-    lof: pd.DataFrame, pangenome: PangenomeMatrices
+    lof: pd.DataFrame, panel: set[str]
 ) -> tuple[list[ReleaseRow], np.ndarray[Any, Any], list[str]]:
-    """The loss-of-function matrix's rows, named by their pangenome code.
-
-    Every row carries a code, and ``NAME`` must equal the S288C name the code's
-    presence-matrix column encodes (it does for all 6,031): the genotype names the gene
-    as its natural absence would.
-    """
-    isolates = _matrix_isolates(lof, LOF_META, set(pangenome.row_of))
-    if lof["CODE"].isna().any() or lof["CODE"].duplicated().any():
-        raise ValueError("1011LossOfFunction: a row without a code, or a code twice")
-    rows: list[ReleaseRow] = []
-    for _, r in lof.iterrows():
-        code = int(r["CODE"])
-        name = pangenome.s288c_names[pangenome.column_of_code[code]]
-        if name is None or name != str(r["NAME"]):
-            raise ValueError(
-                f"1011LossOfFunction: CODE {code} names {name}, NAME {r['NAME']}"
-            )
-        rows.append(
-            ReleaseRow(
-                cause=NaturalLossOfFunctionCause.nonsense_sift_or_frameshift,
-                systematic_gene_name=name,
-                release_code=code,
-                release_gene_name=str(r["NAME"]),
-                span=_span(r["CH"], r["START"], r["STOP"]),
-            )
+    """The loss-of-function matrix's rows, keyed by their ``NAME`` (and ``CODE``)."""
+    isolates = _matrix_isolates(lof, LOF_META, panel)
+    if lof["CODE"].isna().any() or lof["NAME"].isna().any():
+        raise ValueError("1011LossOfFunction: a row without a CODE or a NAME")
+    rows = [
+        ReleaseRow(
+            cause=NaturalLossOfFunctionCause.nonsense_or_sift,
+            systematic_gene_name=str(r["NAME"]),
+            release_code=int(r["CODE"]),
+            release_name=str(r["NAME"]),
+            release_gene_name=str(r["Gene"]),
+            span=_span(r["CH"], r["START"], r["STOP"]),
         )
+        for _, r in lof.iterrows()
+    ]
     return rows, lof[isolates].to_numpy(dtype=np.int8), isolates
 
 
 def frameshift_rows(
-    frame: pd.DataFrame, pangenome: PangenomeMatrices, genes: R64GeneIndex
-) -> tuple[
-    list[ReleaseRow | RefusedRow], np.ndarray[Any, Any], list[str], CodelessResolution
-]:
-    """The frameshift matrix's rows: coded rows by their code, the rest by name.
+    frame: pd.DataFrame, pangenome: PangenomeMatrices
+) -> tuple[list[ReleaseRow], np.ndarray[Any, Any], list[str]]:
+    """The frameshift matrix's rows: by the code's ORF name, else by ``Gene``.
 
-    A coded row is named by the S288C name its code's presence-matrix column encodes. A
-    row without a code is named by its ``Gene``: a live R64-4-1 locus id, else the one
-    live ORF ``gene_alias_resolution`` resolves it to (``codeless_frameshift_pins`` for
-    an ambiguous name). A name that resolves to none, or to an ORF that does not overlap
-    the release's R64-1-1 span, is refused (a ``RefusedRow``); whether an overlapping
-    span is identical is recorded, never used to pick the ORF.
+    The matrix has no ``NAME`` column. A coded row is keyed by the name the release's
+    pangenome gives its code (the presence-matrix column ``X<code>.<ORF>``, the same
+    name the natural absences carry); a row released without a code is keyed by its
+    ``Gene``, verbatim.
     """
-    # Imported here, not at module top: ``torchcell.datasets`` imports every loader on
-    # first import, and the natural-isolate loaders import this module.
-    from torchcell.datasets.gene_alias_resolution import (
-        GeneNameRefused,
-        pin_table,
-        resolve_gene_name_strict,
-    )
-
-    pins = pin_table(codeless_frameshift_pins())
-
     isolates = _matrix_isolates(frame, FRAMESHIFT_META, set(pangenome.row_of))
-    coded = frame["CODE"].dropna()
-    if coded.duplicated().any():
-        raise ValueError("genesMatrix_Frameshift: a code appears twice")
-    rows: list[ReleaseRow | RefusedRow] = []
-    by_systematic = 0
-    by_alias: dict[str, str] = {}
-    matching = 0
-    differing: dict[str, str] = {}
-    refused: list[str] = []
-    n_codeless = 0
+    rows: list[ReleaseRow] = []
     for _, r in frame.iterrows():
         span = _span(r["CH"], r["START"], r["STOP"])
         gene = str(r["Gene"])
-        if not pd.isna(r["CODE"]):
-            code = int(r["CODE"])
+        code: int | None = None if pd.isna(r["CODE"]) else int(r["CODE"])
+        if code is None:
+            key = gene
+        else:
             name = pangenome.s288c_names[pangenome.column_of_code[code]]
             if name is None:
                 raise ValueError(
                     f"genesMatrix_Frameshift: CODE {code} is not a reference ORF"
                 )
-            rows.append(
-                ReleaseRow(
-                    cause=NaturalLossOfFunctionCause.homozygous_frameshift,
-                    systematic_gene_name=name,
-                    release_code=code,
-                    release_gene_name=gene,
-                    span=span,
-                )
-            )
-            continue
-        n_codeless += 1
-        try:
-            name = resolve_gene_name_strict(genes, gene, pins)
-        except GeneNameRefused as refusal:
-            refused.append(gene)
-            rows.append(
-                RefusedRow(
-                    cause=NaturalLossOfFunctionCause.homozygous_frameshift,
-                    release_gene_name=gene,
-                    span=span,
-                    reason=f"{refusal.refusal.reason.value}: {refusal.refusal.detail}",
-                    n_calls_in_built_isolates=0,
-                )
-            )
-            continue
-        chrom, start, end = genes.spans[name]
-        if chrom != span.chromosome or end < span.start or start > span.end:
-            refused.append(gene)
-            rows.append(
-                RefusedRow(
-                    cause=NaturalLossOfFunctionCause.homozygous_frameshift,
-                    release_gene_name=gene,
-                    span=span,
-                    reason=f"resolves to {name} at {chrom}:{start}-{end}, which does "
-                    "not overlap the release's span",
-                    n_calls_in_built_isolates=0,
-                )
-            )
-            continue
-        if name == gene.upper():
-            by_systematic += 1
-        else:
-            by_alias[gene] = name
-        if (chrom, start, end) == (span.chromosome, span.start, span.end):
-            matching += 1
-        else:
-            differing[gene] = (
-                f"{name} {chrom}:{start}-{end} (R64-4-1) vs {span.chromosome}:"
-                f"{span.start}-{span.end} ({RELEASE_ASSEMBLY})"
-            )
+            key = name
         rows.append(
             ReleaseRow(
                 cause=NaturalLossOfFunctionCause.homozygous_frameshift,
-                systematic_gene_name=name,
-                release_code=None,
+                systematic_gene_name=key,
+                release_code=code,
+                release_name=None,
                 release_gene_name=gene,
                 span=span,
             )
         )
-    resolution = CodelessResolution(
-        n_rows=n_codeless,
-        by_systematic_name=by_systematic,
-        by_alias=by_alias,
-        spans_matching_r64_4_1=matching,
-        spans_differing_from_r64_4_1=differing,
-        refused=refused,
-    )
-    return rows, frame[isolates].to_numpy(dtype=np.int8), isolates, resolution
+    return rows, frame[isolates].to_numpy(dtype=np.int8), isolates
 
 
 # --------------------------------------------------------------------------- #
 # Ledger
 # --------------------------------------------------------------------------- #
 class LossOfFunctionTally(BaseModel):
-    """Calls of one cause over the built isolates, split by what the other releases say."""
+    """Calls of one cause over the built isolates, as stored."""
 
     model_config = ConfigDict(extra="forbid")
 
     n_calls: int
-    n_genes: int
-    by_allele_status: dict[str, int]
-    n_on_gene_absent_in_isolate: int = Field(
-        description="calls whose pangenome ORF the presence matrix marks absent"
-    )
+    n_genes: int = Field(description="distinct release gene keys called at least once")
     n_without_pangenome_code: int
 
 
@@ -1218,11 +1067,6 @@ class NaturalIsolateGenotypeLedger(BaseModel):
     n_natural_presences: int
     n_natural_absences: int
     ho_deleted: list[str]
-    ho_deleted_absent_in_matrix: list[str] = Field(
-        description="HO-deleted isolates the presence matrix marks HO absent: the "
-        "natural absence they carried before #988 is replaced by the deletion"
-    )
-    ho_deleted_with_ho_sequence_variant: list[str]
     ploidy: dict[str, int] = Field(description="Table S1 'Ploidy' -> isolates")
     zygosity: dict[str, int]
     n_aneuploid: int
@@ -1230,12 +1074,6 @@ class NaturalIsolateGenotypeLedger(BaseModel):
     n_aneuploidy_not_annotated: int
     n_manipulation_not_stated: int
     loss_of_function: dict[str, LossOfFunctionTally]
-    lof_frameshift_containment: dict[str, int] = Field(
-        description="over the built isolates and the genes both matrices code: "
-        "frameshift calls, and how many of them the loss-of-function matrix also calls"
-    )
-    codeless_frameshift_rows: CodelessResolution
-    refused_rows: list[RefusedRow]
 
 
 # --------------------------------------------------------------------------- #
@@ -1246,7 +1084,7 @@ class NaturalIsolateGenotypes:
 
     ``raw_dir`` holds ``GENOTYPE_FILES`` (linked by ``link_genotype_files`` and verified
     by the loader); ``cache_dir`` holds the tarball diff over ``isolates``. The S288C
-    chromosomes and GFF are resolved from the SGD tier (sha256-verified on resolve).
+    chromosomes are resolved from the SGD tier (sha256-verified on resolve).
     """
 
     def __init__(
@@ -1287,114 +1125,53 @@ class NaturalIsolateGenotypes:
         self.descriptors = {
             iso: isolate_descriptor(table[iso], workbook) for iso in self.isolates
         }
-        genes = read_r64_gene_index(
-            resolve(SGD_S288C_R64, SGD_GFF_NAME, data_root=data_root)
-        )
         self._lof_ref = tier_file_ref(LOF_NAME, data_root)
         self._fs_ref = tier_file_ref(FRAMESHIFT_NAME, data_root)
         lof, lof_matrix, lof_iso = lof_rows(
-            read_lof_matrix(raw / LOF_NAME), self.pangenome
+            read_lof_matrix(raw / LOF_NAME), set(self.pangenome.row_of)
         )
-        fs, fs_matrix, fs_iso, self.codeless = frameshift_rows(
-            read_frameshift_matrix(raw / FRAMESHIFT_NAME), self.pangenome, genes
+        fs, fs_matrix, fs_iso = frameshift_rows(
+            read_frameshift_matrix(raw / FRAMESHIFT_NAME), self.pangenome
         )
         self._calls: dict[str, list[ReleaseRow]] = {iso: [] for iso in self.isolates}
-        self.refused: list[RefusedRow] = []
         for rows, matrix, columns in (
             (lof, lof_matrix, lof_iso),
             (fs, fs_matrix, fs_iso),
         ):
             built = [j for j, iso in enumerate(columns) if iso in self.isolates]
             for i, row in enumerate(rows):
-                hits = [columns[j] for j in built if matrix[i, j] == 1]
-                if isinstance(row, RefusedRow):
-                    self.refused.append(
-                        row.model_copy(update={"n_calls_in_built_isolates": len(hits)})
-                    )
-                    continue
-                for iso in hits:
-                    self._calls[iso].append(row)
-        self._containment = self._lof_frameshift_containment(
-            lof, lof_matrix, lof_iso, fs, fs_matrix, fs_iso
-        )
-
-    def _lof_frameshift_containment(
-        self,
-        lof: list[ReleaseRow],
-        lof_matrix: np.ndarray[Any, Any],
-        lof_iso: list[str],
-        fs: list[ReleaseRow | RefusedRow],
-        fs_matrix: np.ndarray[Any, Any],
-        fs_iso: list[str],
-    ) -> dict[str, int]:
-        lof_index = {row.release_code: i for i, row in enumerate(lof)}
-        fs_col = {iso: j for j, iso in enumerate(fs_iso)}
-        cols = [j for j, iso in enumerate(lof_iso) if iso in self.isolates]
-        fs_cols = [fs_col[lof_iso[j]] for j in cols]
-        n_frameshift = 0
-        n_also_lof = 0
-        for i, row in enumerate(fs):
-            if isinstance(row, RefusedRow) or row.release_code not in lof_index:
-                continue
-            f = fs_matrix[i, fs_cols]
-            ell = lof_matrix[lof_index[row.release_code], cols]
-            n_frameshift += int(f.sum())
-            n_also_lof += int(((f == 1) & (ell == 1)).sum())
-        return {"frameshift_calls": n_frameshift, "also_called_by_lof": n_also_lof}
+                for j in built:
+                    if matrix[i, j] == 1:
+                        self._calls[columns[j]].append(row)
 
     # ---- one isolate -----------------------------------------------------------
-    def allele_status(self, isolate: str, gene: str) -> LossOfFunctionAlleleStatus:
-        """What the reference-gene tarball says about ``isolate``'s allele of ``gene``."""
-        if gene not in self.diff.reference_genes:
-            return LossOfFunctionAlleleStatus.no_inferred_allele
-        if (isolate, gene) in self._token:
-            return LossOfFunctionAlleleStatus.sequence_variant
-        return LossOfFunctionAlleleStatus.allele_equals_reference
-
     def _loss_of_function(
         self, isolate: str
     ) -> list[NaturalLossOfFunctionPerturbation]:
-        out: list[NaturalLossOfFunctionPerturbation] = []
-        row_of = self.pangenome.row_of[isolate]
-        for call in sorted(
-            self._calls[isolate],
-            key=lambda c: (
-                c.systematic_gene_name,
-                c.cause.value,
-                -1 if c.release_code is None else c.release_code,
-                c.release_gene_name,
-            ),
-        ):
-            status = self.allele_status(isolate, call.systematic_gene_name)
-            token = self._token.get((isolate, call.systematic_gene_name))
-            present: bool | None = None
-            if call.release_code is not None:
-                column = self.pangenome.column_of_code[call.release_code]
-                present = bool(self.pangenome.presence[row_of, column] == 1)
-            out.append(
-                NaturalLossOfFunctionPerturbation(
-                    systematic_gene_name=call.systematic_gene_name,
-                    perturbed_gene_name=call.systematic_gene_name,
-                    strain_id=isolate,
-                    cause=call.cause,
-                    allele_status=status,
-                    sequence_source=None if token is None else SEQUENCE_SOURCE,
-                    sequence_ref=None
-                    if token is None
-                    else refgene_member_ref(
-                        self.tarball, call.systematic_gene_name, token
-                    ),
-                    call_ref=self._lof_ref
-                    if call.cause
-                    is NaturalLossOfFunctionCause.nonsense_sift_or_frameshift
-                    else self._fs_ref,
-                    release_code=call.release_code,
-                    release_gene_name=call.release_gene_name,
-                    release_span=call.span,
-                    gene_present_in_isolate=present,
-                )
+        return [
+            NaturalLossOfFunctionPerturbation(
+                systematic_gene_name=call.systematic_gene_name,
+                perturbed_gene_name=call.systematic_gene_name,
+                strain_id=isolate,
+                cause=call.cause,
+                call_ref=self._lof_ref
+                if call.cause is NaturalLossOfFunctionCause.nonsense_or_sift
+                else self._fs_ref,
+                release_code=call.release_code,
+                release_name=call.release_name,
+                release_gene_name=call.release_gene_name,
+                release_span=call.span,
             )
-        return out
+            for call in sorted(
+                self._calls[isolate],
+                key=lambda c: (
+                    c.systematic_gene_name,
+                    c.cause.value,
+                    -1 if c.release_code is None else c.release_code,
+                    c.release_gene_name,
+                ),
+            )
+        ]
 
     def base_perturbations(self, isolate: str) -> list[GenePerturbationType]:
         """The genotype as the loaders built it before #987 and #988.
@@ -1414,14 +1191,6 @@ class NaturalIsolateGenotypes:
         descriptor = self.descriptors[isolate]
         perts = self.base_perturbations(isolate)
         if descriptor.genetic_manipulation is IsolateManipulation.ho_deletion:
-            perts = [
-                p
-                for p in perts
-                if not (
-                    isinstance(p, NaturalGeneAbsencePerturbation)
-                    and p.systematic_gene_name == HO_SYSTEMATIC_NAME
-                )
-            ]
             perts.append(
                 DeletionPerturbation(
                     systematic_gene_name=HO_SYSTEMATIC_NAME,
@@ -1435,44 +1204,20 @@ class NaturalIsolateGenotypes:
     # ---- ledger -----------------------------------------------------------------
     def ledger(self) -> NaturalIsolateGenotypeLedger:
         """Counts over every built isolate (one pass over the calls and matrices)."""
-        ho = sorted(
-            iso
-            for iso, d in self.descriptors.items()
-            if d.genetic_manipulation is IsolateManipulation.ho_deletion
-        )
-        ho_cols = [
-            j
-            for j, name in enumerate(self.pangenome.s288c_names)
-            if name == HO_SYSTEMATIC_NAME
-        ]
         tallies: dict[str, LossOfFunctionTally] = {}
         for cause in NaturalLossOfFunctionCause:
-            statuses: Counter[str] = Counter()
-            genes: set[str] = set()
-            absent = 0
-            codeless = 0
-            n = 0
-            for iso in self.isolates:
-                row_of = self.pangenome.row_of[iso]
-                for call in self._calls[iso]:
-                    if call.cause is not cause:
-                        continue
-                    n += 1
-                    genes.add(call.systematic_gene_name)
-                    statuses[
-                        self.allele_status(iso, call.systematic_gene_name).value
-                    ] += 1
-                    if call.release_code is None:
-                        codeless += 1
-                        continue
-                    column = self.pangenome.column_of_code[call.release_code]
-                    absent += int(self.pangenome.presence[row_of, column] == 0)
+            calls = [
+                call
+                for iso in self.isolates
+                for call in self._calls[iso]
+                if call.cause is cause
+            ]
             tallies[cause.value] = LossOfFunctionTally(
-                n_calls=n,
-                n_genes=len(genes),
-                by_allele_status=dict(sorted(statuses.items())),
-                n_on_gene_absent_in_isolate=absent,
-                n_without_pangenome_code=codeless,
+                n_calls=len(calls),
+                n_genes=len({call.systematic_gene_name for call in calls}),
+                n_without_pangenome_code=sum(
+                    1 for call in calls if call.release_code is None
+                ),
             )
         descriptors = list(self.descriptors.values())
         n_absences = 0
@@ -1486,18 +1231,11 @@ class NaturalIsolateGenotypes:
             n_sequence_variants=len(self.diff.variants),
             n_natural_presences=n_presences,
             n_natural_absences=n_absences,
-            ho_deleted=ho,
-            ho_deleted_absent_in_matrix=[
+            ho_deleted=sorted(
                 iso
-                for iso in ho
-                if any(
-                    self.pangenome.presence[self.pangenome.row_of[iso], j] == 0
-                    for j in ho_cols
-                )
-            ],
-            ho_deleted_with_ho_sequence_variant=[
-                iso for iso in ho if (iso, HO_SYSTEMATIC_NAME) in self._token
-            ],
+                for iso, d in self.descriptors.items()
+                if d.genetic_manipulation is IsolateManipulation.ho_deletion
+            ),
             ploidy=dict(
                 sorted(
                     Counter(
@@ -1517,9 +1255,6 @@ class NaturalIsolateGenotypes:
                 1 for d in descriptors if d.genetic_manipulation is None
             ),
             loss_of_function=tallies,
-            lof_frameshift_containment=self._containment,
-            codeless_frameshift_rows=self.codeless,
-            refused_rows=self.refused,
         )
 
     def write_ledger(self, path: str | Path) -> NaturalIsolateGenotypeLedger:

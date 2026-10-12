@@ -1616,12 +1616,17 @@ def thompson_record(store: ServedCompendium) -> tuple[PutidaRecord, pd.DataFrame
     )
 
 
+#: Kept equal to ``manual_deposits_2026_10_12.THOMPSON_SI_EXPECTED``: the owner's SI and
+#: correction deposit of 2026-10-12 extended this key's manifest, so a re-run here must
+#: not put back the statement that nothing is deposited.
 THOMPSON_SI_EXPECTED: Final = [
-    "Thompson 2020 released no per-gene data file: its supplemental material is one "
-    "figure PDF (SUPPLEMENTAL FILE 1, PDF file, 3 MB) and its fitness data are "
-    "published only on the Fitness Browser, which is probed rather than mirrored. The "
-    "bytes that carry this paper's values are the Borchert 2024 compendium release, "
-    "under that key's own raw mirror, so nothing is deposited here"
+    "Thompson 2020 released no per-gene data file: its fitness data are published only "
+    "on the Fitness Browser, which is probed rather than mirrored, and the values are "
+    "served through the Borchert 2024 compendium. Its Supplemental File 1 (Figs. S1 to "
+    "S8) and its 2021 correction (PMC8091123, DOI 10.1128/AEM.00177-21) were DEPOSITED "
+    "2026-10-12 by the owner (manual_browser, issues #699 and #986). The correction "
+    "rescopes the PP_2675 deletion mutant (it also removed the first 14 codons of "
+    "PP_2676) and the JBEI registry link; it touches no RB-TnSeq fitness value"
 ]
 
 

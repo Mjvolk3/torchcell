@@ -72,6 +72,13 @@ GO_RELEASE_20260805 = "go_release_2026-08-05"
 #: their second parent to (``torchcell/datasets/scerevisiae/hale2024.py``).
 HALE2024_3S_VARIANTS = "hale2024_322134S_variants"
 
+#: CEN.PK113-7D, NCBI GenBank assembly ASM257140v2 (GCA_002571405.2): the reference the
+#: CEN.PK-derived engineering strains are written against (#990, Zhang 2020). Its locus
+#: tags are the ``SCEN_*`` namespace, which is a different identifier space from S288C's
+#: systematic names, and no GO release is keyed to it, so the set carries no GO file.
+#: Deposited by ``scripts/provision_yeast_genomes.py``.
+SCEREVISIAE_CENPK113_7D = "scerevisiae_CENPK113-7D_ASM257140v2"
+
 #: Roles a file in an assembly set can play (explicit per file; never inferred).
 ROLE_CONTAINER = "container"  # the archive the release was fetched as
 ROLE_SEQUENCE = "sequence"  # FASTA of chromosomes, ORFs, proteins, assemblies

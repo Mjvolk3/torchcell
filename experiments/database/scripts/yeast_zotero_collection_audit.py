@@ -779,8 +779,11 @@ AUDIT: Final[tuple[AuditEntry, ...]] = (
             text="CEN.PK2-1C platform strain",
         ),
         hosts=(HostSpec(label="CEN.PK2-1C", token="CEN.PK"),),
-        phenotype_class="MetabolitePhenotype",
-        g5_gap="no yeast perturbation states which promoter drives a gene, and no class fits a biosensor-proxy readout without an environmental edit",
+        # Both G5 gaps are closed by PR #1055: PromoterDrivenGeneIntegrationPerturbation
+        # states which promoter drives each re-integrated gene, and
+        # BiosensorFluorescencePhenotype holds a sensor's signal with the sensed
+        # metabolite named, so the gate evaluates the class instead of a composed gap.
+        phenotype_class="BiosensorFluorescencePhenotype",
         issue=990,
         records=341,
         records_unit="promoter-combination strain records (GFP synthesis rate) + 6 HPLC titers",

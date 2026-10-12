@@ -90,6 +90,7 @@ from torchcell.sequence.genome.registry import (
     HALE2024_3S_VARIANTS,
     PETER2018_1011,
     PPUTIDA_KT2440,
+    SCEREVISIAE_CENPK113_7D,
     SGD_S288C_R64,
     assembly_set_dir,
     load_genome_manifest,
@@ -453,8 +454,14 @@ HOSTS: Final[tuple[HostToken, ...]] = (
         pattern=r"\b1,?011\b",
         assembly_set=PETER2018_1011,
     ),
+    # Every CEN.PK-derived strain is written against the CEN.PK113-7D reference
+    # (#990): the set holds that assembly and `CenPk1137DGenome` reads it, keyed by its
+    # own SCEN_* locus tags.
     HostToken(
-        name="CEN.PK", organism="S. cerevisiae", pattern=r"\bCEN\.PK", assembly_set=None
+        name="CEN.PK",
+        organism="S. cerevisiae",
+        pattern=r"\bCEN\.PK",
+        assembly_set=SCEREVISIAE_CENPK113_7D,
     ),
     HostToken(
         name="W303", organism="S. cerevisiae", pattern=r"\bW303\b", assembly_set=None
@@ -502,6 +509,8 @@ READABLE_ASSEMBLY_SETS: Final[frozenset[str]] = frozenset(
         # Read by hale2024.build_parents (every BYx3S mosaic pins its 3S parent to it)
         # and re-read row by row by the segregant-perturbation verifier against R64-4-1.
         HALE2024_3S_VARIANTS,
+        # Read by CenPk1137DGenome (torchcell/sequence/genome/scerevisiae/ncbi.py).
+        SCEREVISIAE_CENPK113_7D,
     )
 )
 

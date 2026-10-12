@@ -1,16 +1,13 @@
 # Rousset 2018 CRISPR-dCas9 screens: BacterialEnvironmentResponseExperiment.
 # One BacterialCrisprInterferencePerturbation per record, served as `bacterial
-# perturbation` with its 20-nt spacer on a `crispr construct` node. The environment of
-# each of the four stored phage-derived screens carries exactly one PhagePerturbation, so
-# `phage perturbation` is enabled and `environment perturbation` is not: no record carries
-# a non-phage environment perturbation, so that lane would emit nothing. Since issue #756
-# the two lanes partition the environment's perturbations, so enabling both is permitted
-# and writes no content id twice. The aTc inducer is a component of the medium, where the
-# paper's own recipes put it beside the maltose and the CaCl2 (see the loader), which is
-# what leaves the phage as the only environment perturbation. The released growth screen is
-# Cui 2018's and is not stored, so no record is phage-free. The phage nodes are linked by
-# `environment perturbation to environment`, whose graph class declares both
-# `environment perturbation` and `phage perturbation` as sources.
+# perturbation` with its 20-nt spacer on a `crispr construct` node. Each of the four
+# phage-derived screens carries exactly one PhagePerturbation (`phage perturbation`);
+# the growth screen (S1 Table, LC-E75, stored since #905) runs in Cui 2018's culture,
+# whose 1 nM aTc is a SmallMoleculePerturbation (`environment perturbation`). Since
+# issue #756 the two lanes partition the environment's perturbations, so both are
+# enabled and no content id is written twice. The phage screens' 1 uM aTc is a component
+# of their medium, where the paper's own recipes put it. Both node kinds are linked by
+# `environment perturbation to environment`, whose graph class declares both sources.
 cell_adapter:
   node_methods:
     - method_name: "experiment reference"
@@ -32,6 +29,9 @@ cell_adapter:
     - method_name: "temperature (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "temperature reference"
+    - method_name: "environment perturbation (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment perturbation reference"
     - method_name: "phage perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "phage perturbation reference"

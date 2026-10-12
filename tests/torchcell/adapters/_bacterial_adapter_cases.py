@@ -754,7 +754,6 @@ BACTERIAL: list[Bacterial] = [
         CrispriScreenRousset2018Dataset,
         RESPONSE,
         crispr=True,
-        env_perturbation=False,
         phage=True,
     ),
     _case(

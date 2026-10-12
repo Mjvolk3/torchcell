@@ -11,21 +11,23 @@ stubbed ``resolve`` with the network refused. The synthetic replicon is the fixt
 that sequence whose spacer-plus-NGG-PAM reading is real, so the spacer check runs on
 genuine arithmetic rather than on a stub.
 
-Three synthetic loci plus one unresolvable b-number, laid out to trip every retention
-rule exactly once:
+Three synthetic loci plus one b-number on no locus, laid out to trip every retention
+rule exactly once and to show that the loader reads no annotation (a window off its
+locus, a released strand opposite the locus's and a b-number on no locus are all
+stored as released; the verifier reports them as genome findings):
 
     gene   b-number  locus span  strand  guide window  what it exercises
     thrL   b0001     1-30        +       15-37         a kept guide (log2 1 under CCCP)
     thrL   b0001     1-30        +       24-46         a second guide of one gene
-    thrL   b0001     1-30        +       5-27          absent from Table S6 -> rule 4
+    thrL   b0001     1-30        +       5-27          absent from Table S6 -> rule 1
     thrA   b0002     41-85       -       43-65         a kept guide
-    thrA   b0002     41-85       -       55-77         released strand + -> rule 3
-    thrA   b0002     41-85       -       48-70         zero LB control -> rule 5
-    thrA   b0002     41-85       -       60-82         zero novobiocin -> rule 6
+    thrA   b0002     41-85       -       55-77         released strand +, stored
+    thrA   b0002     41-85       -       48-70         zero LB control -> rule 2
+    thrA   b0002     41-85       -       60-82         zero novobiocin -> rule 3
     yaaP   b0003     86-100      + (ps)  70-92         a kept pseudogene guide, and the
                                                        only zero-library guide
-    yaaP   b0003     86-100      + (ps)  32-54         window misses the locus -> rule 2
-    zzzA   b9999     (none)              25-47         b-number not on the genome -> 1
+    yaaP   b0003     86-100      + (ps)  32-54         window off the locus, stored
+    zzzA   b9999     (none)              25-47         b-number on no locus, stored
 
 Data-gated tests (``@pytest.mark.data``) read the real raw mirror, the literature mirror
 and the built dev-tree LMDB under ``$DATA_ROOT`` (they never build it): the pinned
@@ -69,7 +71,6 @@ from torchcell.datamodels.schema import (
     MediaComponentRole,
     SmallMoleculePerturbation,
 )
-from torchcell.datasets.bacteria_common import LocusTagResolutionError
 from torchcell.literature.manifest import Manifest, RetrievalMethod
 from torchcell.sequence.genome.ecoli.k12 import MG1655_ASSEMBLY, EcoliK12MG1655Genome
 
@@ -333,9 +334,8 @@ def frames(tables: Mapping[str, Path]) -> dict[str, pd.DataFrame]:
 
 @pytest.fixture
 def synthetic_constants(monkeypatch: pytest.MonkeyPatch) -> None:
-    """The counts and threshold of the synthetic tables, not the release's."""
+    """The counts of the synthetic tables, not the release's."""
     monkeypatch.setattr(m, "REPORTED_LIBRARY_COVERAGE", len(SYNTHETIC_ROWS) - 1)
-    monkeypatch.setattr(m, "MIN_RESOLVED_FRACTION", 0.5)
 
 
 @pytest.fixture
@@ -613,58 +613,37 @@ def test_check_library_coverage_refuses_a_mismatch(
 # --------------------------------------------------------------------------- #
 # Identifiers
 # --------------------------------------------------------------------------- #
-def test_canonical_symbol_prefers_the_annotation_and_falls_back_to_the_tag(
-    mg1655: EcoliK12MG1655Genome,
-) -> None:
-    assert m.canonical_symbol(mg1655, "b0001") == "thrL"
-    assert m.canonical_symbol(mg1655, "b0003") == "yaaP"
-
-
-def test_canonical_symbol_uses_the_tag_when_the_locus_has_no_symbol(
-    mg1655: EcoliK12MG1655Genome, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    locus = mg1655.genbank.loci["b0001"]
-    monkeypatch.setitem(
-        mg1655.genbank.loci, "b0001", locus.model_copy(update={"symbol": None})
-    )
-    assert m.canonical_symbol(mg1655, "b0001") == "b0001"
-
-
-def test_canonical_symbol_uses_the_tag_when_the_symbol_resolves_elsewhere(
-    mg1655: EcoliK12MG1655Genome, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    monkeypatch.setattr(
-        mg1655,
-        "resolve_gene_name",
-        lambda name: SimpleNamespace(systematic_name="b0002", status=None),
-    )
-    assert m.canonical_symbol(mg1655, "b0001") == "b0001"
-
-
-def test_resolve_genes_places_each_gene_and_lists_the_unresolvable(
+def test_gene_identities_store_the_released_b_number_and_symbol(
     frames: Mapping[str, pd.DataFrame],
-    mg1655: EcoliK12MG1655Genome,
-    synthetic_constants: None,
 ) -> None:
-    identities, unresolved, report = m.resolve_genes(
-        frames["s2"], mg1655, label="synthetic"
-    )
-    assert unresolved == ("zzzA",)
-    assert set(identities) == {"thrL", "thrA", "yaaP"}
+    identities = m.gene_identities(frames["s2"])
+    assert set(identities) == {"thrL", "thrA", "yaaP", "zzzA"}
     thra = identities["thrA"]
-    assert thra.locus_tag == "b0002"
-    assert thra.symbol == "thrA"
-    assert (thra.start, thra.end, thra.strand) == (41, 85, "-")
+    assert (thra.released_symbol, thra.b_number) == ("thrA", "b0002")
     assert thra.released_guide_count == 4
-    assert report.unique_names == 4
-    assert report.resolved == 3
+    # a b-number on no locus of any annotation is an identity like any other
+    assert identities["zzzA"].b_number == "b9999"
 
 
-def test_resolve_genes_stops_below_the_resolved_threshold(
-    frames: Mapping[str, pd.DataFrame], mg1655: EcoliK12MG1655Genome
+def test_gene_identities_refuse_a_cell_that_is_not_a_b_number(
+    frames: Mapping[str, pd.DataFrame],
 ) -> None:
-    with pytest.raises(LocusTagResolutionError, match="below 0.99"):
-        m.resolve_genes(frames["s2"], mg1655, label="synthetic")
+    s2 = frames["s2"].copy()
+    s2.loc[0, "b number"] = "thrL"
+    with pytest.raises(m.TableLayoutError, match="not a b-number in form"):
+        m.gene_identities(s2)
+
+
+def test_the_loader_reads_no_annotation() -> None:
+    import inspect
+
+    assert (
+        "ecoli_genome"
+        not in inspect.signature(m.CrispriChemgenChoe2025Dataset.__init__).parameters
+    )
+    assert not hasattr(m, "resolve_genes")
+    assert not hasattr(m, "canonical_symbol")
+    assert not hasattr(m, "reconcile_locus_tags")
 
 
 # --------------------------------------------------------------------------- #
@@ -672,31 +651,29 @@ def test_resolve_genes_stops_below_the_resolved_threshold(
 # --------------------------------------------------------------------------- #
 @pytest.fixture
 def retention(
-    frames: Mapping[str, pd.DataFrame],
-    mg1655: EcoliK12MG1655Genome,
-    synthetic_constants: None,
+    frames: Mapping[str, pd.DataFrame], synthetic_constants: None
 ) -> m.RetentionResult:
-    identities, unresolved, _ = m.resolve_genes(frames["s2"], mg1655, label="synthetic")
     return m.select_guides(
-        frames["s1"], m.spacer_by_window(frames["s6"]), identities, unresolved
+        frames["s1"], m.spacer_by_window(frames["s6"]), m.gene_identities(frames["s2"])
     )
 
 
 def test_select_guides_applies_every_rule_exactly_once(
     retention: m.RetentionResult,
 ) -> None:
-    assert retention.unresolved_b_number == ["zzzA:25-47"]
-    assert retention.outside_locus == ["yaaP:32-54"]
-    assert retention.strand_disagreement == ["thrA:55-77"]
     assert retention.missing_spacer == ["thrL:5-27"]
     assert retention.zero_control == 1
     assert retention.zero_antibiotic_cells == 1
-    assert [guide.locus_tag for guide in retention.kept] == [
-        "b0001",
-        "b0001",
-        "b0002",
-        "b0002",
-        "b0003",
+    # the strand-disagreeing, off-locus and no-locus guides are stored as released
+    assert [(guide.b_number, guide.released_symbol) for guide in retention.kept] == [
+        ("b0001", "thrL"),
+        ("b0001", "thrL"),
+        ("b0002", "thrA"),
+        ("b0002", "thrA"),
+        ("b0002", "thrA"),
+        ("b0003", "yaaP"),
+        ("b0003", "yaaP"),
+        ("b9999", "zzzA"),
     ]
 
 
@@ -708,8 +685,8 @@ def test_select_guides_carries_the_spacer_and_the_gene_guide_count(
     assert first.n_guides == 3  # thrL has three Table S1 rows
     assert first.control_abundance == 50.0
     assert set(first.antibiotic_abundance) == {c.s1_label for c in m.CONDITIONS}
-    zero_novobiocin = retention.kept[3]
-    assert zero_novobiocin.locus_tag == "b0002"
+    zero_novobiocin = retention.kept[4]
+    assert zero_novobiocin.b_number == "b0002"
     assert NOVOBIOCIN not in zero_novobiocin.antibiotic_abundance
 
 
@@ -725,16 +702,19 @@ def test_drop_log_accounts_for_every_dropped_record(
     ledger = m.drop_log("synthetic", len(SYNTHETIC_ROWS), retention)
     assert ledger.antibiotics == 12
     assert ledger.source_records == len(SYNTHETIC_ROWS) * 12
-    assert ledger.kept_guides == 5
-    assert ledger.kept_records == 5 * 12 - 1
+    assert ledger.kept_guides == 8
+    assert ledger.kept_records == 8 * 12 - 1
     assert ledger.dropped_records == ledger.source_records - ledger.kept_records
     assert sum(rule.n_records for rule in ledger.rules) == ledger.dropped_records
     by_rule = {rule.rule: rule for rule in ledger.rules}
+    assert list(by_rule) == [
+        "guide_has_no_spacer_in_table_s6",
+        "abundance_is_zero_in_the_untreated_lb_control",
+        "abundance_is_zero_in_the_antibiotic",
+    ]
     assert by_rule["abundance_is_zero_in_the_antibiotic"].scope == "cell"
     assert by_rule["abundance_is_zero_in_the_antibiotic"].n_records == 1
-    assert by_rule["guide_window_does_not_overlap_the_resolved_locus"].items == [
-        "yaaP:32-54"
-    ]
+    assert by_rule["guide_has_no_spacer_in_table_s6"].items == ["thrL:5-27"]
 
 
 def test_drop_log_refuses_an_unaccounted_record(retention: m.RetentionResult) -> None:
@@ -847,7 +827,7 @@ def test_two_guides_of_one_gene_are_distinct_genotypes(
     retention: m.RetentionResult,
 ) -> None:
     first, second = retention.kept[0], retention.kept[1]
-    assert first.locus_tag == second.locus_tag
+    assert first.b_number == second.b_number
     assert m.knockdown_genotype(first) != m.knockdown_genotype(second)
 
 
@@ -991,22 +971,18 @@ def test_mirror_paths_sit_under_the_given_data_root(tmp_path: Path) -> None:
 # End to end over the synthetic workbooks
 # --------------------------------------------------------------------------- #
 @pytest.fixture
-def built(
-    synthetic_root: Path, mg1655: EcoliK12MG1655Genome
-) -> m.CrispriChemgenChoe2025Dataset:
-    return m.CrispriChemgenChoe2025Dataset(
-        root=str(synthetic_root), ecoli_genome=mg1655
-    )
+def built(synthetic_root: Path) -> m.CrispriChemgenChoe2025Dataset:
+    return m.CrispriChemgenChoe2025Dataset(root=str(synthetic_root))
 
 
 def test_process_writes_one_record_per_kept_guide_and_antibiotic(
     built: m.CrispriChemgenChoe2025Dataset,
 ) -> None:
-    assert len(built) == 5 * 12 - 1
+    assert len(built) == 8 * 12 - 1
     assert built.experiment_class is BacterialEnvironmentResponseExperiment
     assert built.reference_class is BacterialEnvironmentResponseExperimentReference
     assert built.raw_file_names == [m.TABLE_S1_FILE, m.TABLE_S2_FILE, m.TABLE_S6_FILE]
-    assert set(built.gene_set) == {"b0001", "b0002", "b0003"}
+    assert set(built.gene_set) == {"b0001", "b0002", "b0003", "b9999"}
 
 
 def test_process_records_carry_the_expected_response(
@@ -1023,10 +999,10 @@ def test_process_records_carry_the_expected_response(
         )
         assert record["reference"]["phenotype_reference"]["environment_response"] == 0.0
         assert perturbation["crispr"]["effector"] == "dCas9"
-    assert len(responses["CCCP"]) == 5
+    assert len(responses["CCCP"]) == 8
     assert all(value == pytest.approx(1.0) for value in responses["CCCP"])
     assert all(value == pytest.approx(0.0) for value in responses["novobiocin"])
-    assert len(responses["novobiocin"]) == 4  # the zero-novobiocin cell is dropped
+    assert len(responses["novobiocin"]) == 7  # the zero-novobiocin cell is dropped
 
 
 def test_process_writes_the_three_ledgers(
@@ -1038,34 +1014,50 @@ def test_process_writes_the_three_ledgers(
     assert ledger.guide_rows == len(SYNTHETIC_ROWS)
     identifiers = json.loads((out / "identifier_reconciliation.json").read_text())
     assert identifiers["released_genes"] == 4
-    assert identifiers["resolved_genes"] == 3
-    assert identifiers["kept_genes"] == 3
-    assert identifiers["released_symbol_differs_from_annotation"] == {}
+    assert identifiers["stored_genes"] == 4
+    assert "reconciliation" not in identifiers
     extraction = json.loads((out / "extraction.json").read_text())
     assert extraction["raw_sha256"] == m.DATA_SHA256
     assert extraction["library_coverage"]["n_absent_from_library"] == 1
     assert extraction["enrichment_ratio"]["excluded_genes"] == ["yaaP"]
-    assert extraction["spacer_window"]["n_neither"] == 0
+    assert "spacer_window" not in extraction
+    windows = pd.read_csv(out / "guide_windows.csv")
+    assert len(windows) == len(SYNTHETIC_ROWS)
+    assert list(windows.columns) == ["gene", "b_number", "start", "end", "strand"]
+    assert windows.loc[windows["gene"] == "zzzA", "b_number"].tolist() == ["b9999"]
 
 
 def test_process_refuses_disagreeing_gene_sets(
-    synthetic_root: Path, mg1655: EcoliK12MG1655Genome, tmp_path: Path
+    synthetic_root: Path, tmp_path: Path
 ) -> None:
     rows = _rows()
     rows[0]["gene"] = "notAGene"
     write_table_s1(synthetic_root / "raw" / m.TABLE_S1_FILE, rows)
     with pytest.raises(m.TableLayoutError, match="are not Table S2's"):
-        m.CrispriChemgenChoe2025Dataset(root=str(synthetic_root), ecoli_genome=mg1655)
+        m.CrispriChemgenChoe2025Dataset(root=str(synthetic_root))
 
 
-def test_the_dataset_refuses_a_genome_of_another_assembly(
-    synthetic_root: Path, monkeypatch: pytest.MonkeyPatch
+def test_spacers_match_their_released_windows_on_the_built_store(
+    built: m.CrispriChemgenChoe2025Dataset,
+    mg1655: EcoliK12MG1655Genome,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    wrong = SimpleNamespace(ASSEMBLY_SET="ecoli_K12_BW25113_ASM75055v1")
-    dataset = m.CrispriChemgenChoe2025Dataset.__new__(m.CrispriChemgenChoe2025Dataset)
-    dataset.ecoli_genome = wrong  # type: ignore[assignment]
-    with pytest.raises(ValueError, match="needs the ecoli_K12_MG1655"):
-        dataset._genome()
+    """The sequence check is a verification finding over the build's window ledger."""
+    built.close_lmdb()
+    result = m.spacers_match_their_released_windows(built.root, mg1655)
+    assert result.passed
+    assert result.name == "spacer_matches_the_released_window_on_the_pinned_sequence"
+    assert result.details["n_joined"] == len(SYNTHETIC_ROWS) - 1
+    assert result.details["n_neither"] == 0
+    # a spacer that is not its window's 20 nt is reported, never a refused record
+    real = m.spacer_by_window
+    monkeypatch.setattr(
+        m, "spacer_by_window", lambda s6: {**real(s6), (15, 37): "A" * 20}
+    )
+    broken = m.spacers_match_their_released_windows(built.root, mg1655)
+    assert not broken.passed
+    assert broken.details["n_neither"] == -1
+    assert "15-37" in broken.details["examples"][0]
 
 
 def test_create_experiment_is_not_the_entry_point(
@@ -1081,7 +1073,7 @@ def test_the_reference_strain_is_the_screen_host() -> None:
     assert m.CrispriChemgenChoe2025Dataset.REFERENCE_STRAIN == "MG1655"
     assert m.SOURCED_VALUES["host_strain"].value == "MG1655"
     assert m.GENE_NAMESPACE == "ecoli_k12_mg1655_bnumber"
-    assert m.EXPECTED_RECORDS == 466569
+    assert m.EXPECTED_RECORDS == 470502
 
 
 def test_main_dispatches_each_subcommand(
@@ -1195,15 +1187,23 @@ def test_the_built_store_holds_the_expected_records() -> None:
     ledger = m.DropLog.model_validate_json(
         (preprocess / "dropped_records.json").read_text()
     )
-    assert ledger.kept_records == m.EXPECTED_RECORDS
+    assert ledger.kept_records == m.EXPECTED_RECORDS == 470502
     assert ledger.guide_rows == 39580
-    assert ledger.kept_guides == 38966
+    assert ledger.kept_guides == 39294
+    assert {rule.rule: rule.n_records for rule in ledger.rules} == {
+        "guide_has_no_spacer_in_table_s6": 36,
+        "abundance_is_zero_in_the_untreated_lb_control": 3396,
+        "abundance_is_zero_in_the_antibiotic": 1026,
+    }
     gene_set = json.loads((preprocess / "gene_set.json").read_text())
-    assert len(gene_set) == 4156
+    assert len(gene_set) == 4198
     extraction = json.loads((preprocess / "extraction.json").read_text())
-    assert extraction["spacer_window"]["n_neither"] == 0
-    assert extraction["spacer_window"]["n_both"] == 0
     assert extraction["enrichment_ratio"]["max_abs_difference"] < m.ER_TOLERANCE
+    report = json.loads((preprocess / "verification_report.json").read_text())
+    rows = {row["name"]: row for row in report["results"]}
+    spacer = rows["spacer_matches_the_released_window_on_the_pinned_sequence"]
+    assert spacer["details"]["n_neither"] == 0
+    assert spacer["details"]["n_both"] == 0
 
 
 # --------------------------------------------------------------------------- #

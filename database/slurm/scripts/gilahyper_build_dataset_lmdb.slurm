@@ -18,7 +18,9 @@
 # e.g. a worktree; it is put on PYTHONPATH ahead of the installed package. DATA_ROOT comes
 # from that checkout's .env (the dev tree, torchcell-scratch), never the build tree.
 # A pre-existing processed/lmdb makes the build REFUSE (the loader would silently reuse
-# it); retire it with scripts/deprecate.sh first.
+# it); retire it with scripts/deprecate.sh first, or pass
+# BUILD_FLAGS="--retire-existing --verify" to retire it as a *.superseded.<timestamp>
+# sibling and verify the rebuilt store in the same task (the array script's flags).
 # Sizing: Nadal-Ribelles 2025 (6188 pseudobulk records, 426 MB R object) peaked at
 # 45.6 G RSS and took 10.6 min (job 1688), so 64 G is the floor for that family.
 
@@ -35,6 +37,9 @@ cd "$TORCHCELL_SRC"
 echo "source: $TORCHCELL_SRC ($(git rev-parse --short HEAD 2>/dev/null || echo not-a-git-repo))"
 echo "dataset: $DATASET_CLASS"
 
+BUILD_FLAGS="${BUILD_FLAGS:-}"
+echo "flags: ${BUILD_FLAGS:-(none)}"
+# shellcheck disable=SC2086  # BUILD_FLAGS is a space-separated flag list by design
 PYTHONPATH="$TORCHCELL_SRC" python -m torchcell.database.build_dataset_lmdb \
-    --dataset "$DATASET_CLASS" --io-workers "$SLURM_CPUS_PER_TASK"
+    --dataset "$DATASET_CLASS" --io-workers "$SLURM_CPUS_PER_TASK" $BUILD_FLAGS
 echo "DONE at $(date)"

@@ -60,6 +60,7 @@ def test_the_registry_is_exactly_the_reclassified_rules() -> None:
         "promoter_gene_is_a_locus",
         "promoter_genes_in_the_host_gene_universe",
         "s288c_gene_containment",
+        "spacer_matches_the_released_window_on_the_pinned_sequence",
         "stored_loci_are_bw25113_loci_derived_from_the_released_b_number",
         "stored_protein_keys_are_loci_of_the_pinned_assembly",
         "stored_tags_are_loci",

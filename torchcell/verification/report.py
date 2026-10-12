@@ -181,6 +181,9 @@ GENOME_REFERENCE_RULES: Final[frozenset[str]] = frozenset(
         "stored_targets_are_loci_of_the_pinned_assembly",
         "stored_protein_keys_are_loci_of_the_pinned_assembly",
         "stored_loci_are_bw25113_loci_derived_from_the_released_b_number",
+        # Choe 2025: the released spacer against the released window read off OUR
+        # pinned MG1655 sequence
+        "spacer_matches_the_released_window_on_the_pinned_sequence",
     }
 )
 

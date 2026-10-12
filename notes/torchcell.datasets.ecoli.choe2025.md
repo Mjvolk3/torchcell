@@ -378,3 +378,15 @@ Report `verification_report.json` (written 2026-10-11 06:58 UTC):
 | L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
 | L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
 | L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+
+## 2026.10.12 - Every released b-number keys a record; the genome rules become findings
+
+The owner's rule of 2026-10-12 ([[database.genome-gating-sweep.2026.10.12]], rows 69, 129 and 141): the loader reads no annotation. Each record's `BacterialCrisprInterferencePerturbation` is keyed by the Table S2 b-number with the released symbol, both verbatim; `resolve_genes`, `canonical_symbol`, `MIN_RESOLVED_FRACTION`, the `ecoli_genome` constructor parameter and the three genome drop rules (`b_number_is_not_in_the_mg1655_annotation` 204 records, `guide_window_does_not_overlap_the_resolved_locus` 3,612, `guide_strand_disagrees_with_the_resolved_locus` 144) are gone. What the pinned annotation makes of the stored names is now a finding, not a gate:
+
+- 4 released b-numbers resolve to no single locus of GCA_000005845.2 (b0017 insL1, b4590 ybfK, b4694 yagP retired; b4659 yabP ambiguous over b0056 and b0057); the L4 `stored_tags_are_loci_of_the_pinned_assembly` and `gene_containment` rows report them (#1069).
+- 301 guides' released Start-End windows lie outside the span of the locus their b-number resolves to (the IS families under `insC1` and `insH1`, and the Qin prophage cluster b1548-b1578 where the released symbol-to-b-number column and the coordinate columns disagree by a shift), and 12 guides (9 `lomR`, 3 `insO`) carry the opposite strand. These are a modeling-time matter: the released gene, b-number, Start, End and Strand of every Table S1 row are written verbatim to `preprocess/guide_windows.csv` beside the stored key, so a consumer joining the genome can read them.
+- The spacer-against-window check moved from the build to `run_verification` as the `spacer_matches_the_released_window_on_the_pinned_sequence` row (registered as a genome-reference rule in `torchcell.verification.report`): it compares the release with OUR pinned MG1655 sequence, so it reports and never refuses a record. The two build-time checks that remain (`enrichment_ratio_reproduced`, `library_coverage_reproduced`) read no genome.
+
+Measured on the pinned bytes: 39,580 Table S1 guides, 3 with no Table S6 spacer (`ypjA` 2778354-2778376 and two `insL1` guides the genome rules used to remove first), 283 with a zero untreated-LB control, 1,026 (guide, antibiotic) cells with a zero antibiotic abundance (three more than before, on guides the genome rules used to remove first); 39,294 guides kept, `EXPECTED_RECORDS` 466,569 -> 470,502 over all 4,198 released b-numbers (gene set 4,156 -> 4,198).
+
+Released vs stored: 474,960 released (guide, antibiotic) cells = 470,502 records + 36 on spacerless guides + 3,396 on zero-control guides + 1,026 zero-antibiotic cells (negative infinity, never a pseudocount).

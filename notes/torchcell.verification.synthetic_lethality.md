@@ -15,3 +15,7 @@ One battery for both SynLethDB stores; `PairLabelKind` carries the class and fie
 `Environment.media` stays required (owner, [[torchcell.datamodels.schema]]) and no SynLethDB field states a growth condition, so both SynLethDB classes left the served graph and their source is a provenance record ([[torchcell.datasets.scerevisiae.synth_leth_db]]). There are no synthetic-pair stores left to verify: `torchcell/verification/synthetic_lethality.py` and `runners.run_synthetic_pairs` are removed, with `SYNTHETIC_PAIR_DATASETS`, `released_synlethdb_pairs` and their tests. `run_all` no longer calls the family.
 
 What the verifier checked moved to the provenance record: the release inventory (0 condition columns, `r.cell_line` empty on all 20,948 rows), the per-source decomposition (1,741 SL and 1,918 SR source PubMed ids) and the score measurement (every SL score is a function of the evidence label; the 74 SR scores have no sourced definition) are measured functions pinned against the two released files' sha256.
+
+## 2026.10.12 - The verifier is back with its datasets
+
+Both SynLethDB classes stay (owner decision, [[torchcell.datasets.scerevisiae.synth_leth_db]]), so this module and `run_synthetic_pairs` are restored unchanged. The medium of every record is now a `Media` whose name, state and class are typed gaps, which L3 `media_membership` counts as gapped ([[torchcell.verification.common]]).

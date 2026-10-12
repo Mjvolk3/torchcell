@@ -235,3 +235,62 @@ Both release pins and the paper pin with its four audited quotes; the release in
 - **One supported query loses a block and is reported, not rewritten**: `torchcell/knowledge_graphs/queries/solid_growth_025.cql`, whose `SynthLethalityYeastSynthLethDbDataset` block converts SL calls to fitness downstream (it also loses its `GeneEssentialitySgdDataset` block).
 - The SynLethDB arm of `experiments/036-dataset-fixes-before-kg-build/scripts/{media_stubs_seven_loaders,synth_leth_db_entrez_resolution}.py` now raises `SynLethDbLoaderRemoved` with the reason; their committed results stand as the record of what they measured while the loaders existed.
 - The dev stores `$DATA_ROOT/data/torchcell/syn_{leth,rescue}_db_yeast` are orphaned (no loader builds them) and read stale. Deprecating them is an owner decision; nothing here deletes them.
+
+## 2026.10.12 - Loaded again: a typed gap on Media, both classes kept (owner decision)
+
+The owner reversed the removal of the section above, verbatim: "we are fine with irreversible updates to schema, as long as you are convinced it is correct ... why would you get rid of old classes?" `SynthLethalityYeastSynthLethDbDataset` and `SynthRescueYeastSynthLethDbDataset` are back in the registry, the KG mapping (their two KG confs and their entries in `scerevisiae_global_kg.yaml`, `scerevisiae_small_global_kg.yaml` and `dataset_adapter_map`), their adapter, and the verifiers (`run_synthetic_pairs`), restored from the loader of the 2026.10.11 typed-gap section: resolution by Entrez id, the 74 undefined SR scores as `deferred_pending_source_review` gaps, the pubmed dtype spelled as a string for CI's pandas stubs. What changed is where the unstated medium lives: `Environment.media` stays a required `Media`, and `SYNLETHDB_MEDIUM` is a `Media` whose `name`, `state` and `is_synthetic` are each `None` beside a `ProvenanceGap(reason=not_carried_by_curation, looked_in=paper.md)`. The note of each gap is `SYNLETHDB_MEDIUM_SILENCE`, which quotes line 49 verbatim ("The species, references to PubMed, supporting evidence, cell lines and other relevant information about an SL entry are stored as properties of the edge"), names the released header, and states that `r.cell_line` is empty on every row (`n_cell_line_stated` 0 of 14,000 SL and 0 of 6,948 SR in `results/sgd_synlethdb_findings.json`). The temperature stays a gap on the environment; no YPD and no 30 °C is stated anywhere.
+
+### The rebuilt dev stores (slurm 4184_2 and 4184_3, verified by 4194)
+
+Built from `86c7ae573` with `--retire-existing --verify` (the main-code builds of job 3953 moved aside): **13,996 SL records** (14,000 released less 4 ledgered drops, 3,547 genes) and **6,942 SR records** (6,948 less 6, 2,980 genes). The store served today holds 14,000 and 6,948 under the old loader. Verified by the family runner through `kg4_pre_build_verification_sweep.py` (slurm 4194, HEAD `86c7ae573`, reports `$DATA_ROOT/data/torchcell/{syn_leth_db_yeast,syn_rescue_db_yeast}/preprocess/verification_report.json`); `--list-stale --include-private` names neither.
+
+`syn_leth_db_yeast`, PASS on all 21 rules:
+
+| Level | Rule | Verdict | Message |
+|---|---|---|---|
+| L0 | `structural` | PASS | 13996 records validated as SyntheticLethalityExperiment |
+| L0 | `reference_structural` | PASS | 13996 records validated as SyntheticLethalityExperimentReference |
+| L1 | `count` | PASS | observed 13996, expected 13996 |
+| L1 | `two_distinct_genes` | PASS | all 13996 records perturb two distinct named genes at graph level 'edge' |
+| L1 | `unordered_pair_uniqueness` | PASS | 13996 unordered gene pairs, one record each |
+| L2 | `positive_label` | PASS | all 13996 experiments say is_synthetic_lethal True |
+| L2 | `score_in_unit_interval` | PASS | 13996 stated scores lie in [0, 1] (0 records state none) |
+| L2 | `released_rows` | PASS | the 13996 stored (gene pair, score, PubMed id) rows are the release's kept rows, each side resolved by its Entrez id |
+| L2 | `release_accounting` | PASS | 14000 released rows = 13996 stored + 4 ledgered drops; the release paper states 14000 |
+| L3 | `reference_negative` | PASS | every one of the 13996 references says is_synthetic_lethal False with no score, in its experiment's own environment |
+| L3 | `drop_ledger` | PASS | each of the 4 ledgered drops meets its rule on the released row |
+| L3 | `provenance_audit` (x2) | PASS | value backed by verbatim quote in paper.md |
+| L1 | `provenance_gaps` | PASS | 55984 documented provenance gaps over 13996/13996 records; 0 deferred field(s) |
+| L1 | `canonical_gene_names` | PASS | 3547 systematic names, one canonical spelling each, each current in the genome; 1 common names the resolver cannot place |
+| L2 | `uncertainty_sanity` | PASS | 0 labeled uncertainties, none a zero dispersion |
+| L3 | `compound_identity` | PASS | environment edits: 0 compound references; 0 declare a typed gap |
+| L3 | `media_compound_identity` | PASS | medium components: 0 compound references; 0 declare a typed gap |
+| L3 | `media_membership` | PASS | 0 records on a shared MEDIA_LIBRARY medium, 0 on a medium deriving from one (0 distinct media), 13996 on a medium the source does not name, as a typed gap (not_carried_by_curation x13996) |
+| L4 | `gene_containment_sgd` | PASS | 1.000 of 3547 measured genes are S288C reference genes (>= 0.9) |
+| L4 | `current_genome_genes` | PASS | every one of the 3547 measured systematic names is a gene of the current genome |
+
+`syn_rescue_db_yeast`, PASS on all 19 rules:
+
+| Level | Rule | Verdict | Message |
+|---|---|---|---|
+| L0 | `structural` | PASS | 6942 records validated as SyntheticRescueExperiment |
+| L0 | `reference_structural` | PASS | 6942 records validated as SyntheticRescueExperimentReference |
+| L1 | `count` | PASS | observed 6942, expected 6942 |
+| L1 | `two_distinct_genes` | PASS | all 6942 records perturb two distinct named genes at graph level 'edge' |
+| L1 | `unordered_pair_uniqueness` | PASS | 6942 unordered gene pairs, one record each |
+| L2 | `positive_label` | PASS | all 6942 experiments say is_synthetic_rescue True |
+| L2 | `score_defined_by_source` | PASS | no record states a score (6942 records), and the source defines none |
+| L2 | `released_rows` | PASS | the 6942 stored (gene pair, score, PubMed id) rows are the release's kept rows, each side resolved by its Entrez id |
+| L2 | `release_accounting` | PASS | 6948 released rows = 6942 stored + 6 ledgered drops; the release paper states no count for this file |
+| L3 | `reference_negative` | PASS | every one of the 6942 references says is_synthetic_rescue False with no score, in its experiment's own environment |
+| L3 | `drop_ledger` | PASS | each of the 6 ledgered drops meets its rule on the released row |
+| L1 | `provenance_gaps` | PASS | 27842 documented provenance gaps over 6942/6942 records; 1 deferred field(s): ['synthetic_rescue_statistic_score'] |
+| L1 | `canonical_gene_names` | PASS | 2980 systematic names, one canonical spelling each, each current in the genome; 1 common names the resolver cannot place |
+| L2 | `uncertainty_sanity` | PASS | 0 labeled uncertainties, none a zero dispersion |
+| L3 | `compound_identity` | PASS | environment edits: 0 compound references; 0 declare a typed gap |
+| L3 | `media_compound_identity` | PASS | medium components: 0 compound references; 0 declare a typed gap |
+| L3 | `media_membership` | PASS | 0 records on a shared MEDIA_LIBRARY medium, 0 on a medium deriving from one (0 distinct media), 6942 on a medium the source does not name, as a typed gap (not_carried_by_curation x6942) |
+| L4 | `gene_containment_sgd` | PASS | 1.000 of 2980 measured genes are S288C reference genes (>= 0.9) |
+| L4 | `current_genome_genes` | PASS | every one of the 2980 measured systematic names is a gene of the current genome |
+
+The gap counts check by hand: four gaps per record (three on the medium, one on the temperature), so 13,996 x 4 = 55,984 for SL and 6,942 x 4 = 27,768 plus the 74 SR score gaps = 27,842 for SR. Both #902 and #903 failures pass now: `media_membership` on both stores, and `score_defined_by_source` on SR (the 74 released scores are gaps, not stored values).

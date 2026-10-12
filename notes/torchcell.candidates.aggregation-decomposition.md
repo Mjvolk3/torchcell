@@ -451,3 +451,17 @@ What the inventory establishes:
 - The other 70 browser organisms (5,225 experiments in the 32 Price 2018 organisms besides Keio, and the rest): no loader; the inventory JSON lists every experiment.
 - Keio and Putida unattributed releases (owner decision, #931) and `VillalobosEscobedo23` (the text-extract route above).
 - Lim 2022 (#941 to #952) and PRECISE-1K (#953 to #976) sources: not Fitness Browser studies; untouched here.
+
+## 2026.10.12 - Revision: the browser loaders store genes as the deposit names them, and #908
+
+Owner rule, 2026-10-12: "the data is the data ... the genome is separate.. it doesn't gate anything". Both Fitness Browser loaders now store every locus under the deposit's own `Gene.sysName` with no assembly consulted: Keio as MG1655 b-numbers (the 21 loci the ECK crosswalk could not place onto BW25113 are now stored, 22,608 -> 22,734 records), KT2440 as its `PP_` tags (1,118,052 records, unchanged in count; the common names now come from the deposit's `Gene.gene`, not the genome). The genome is not read to build either store, and the verifiers take the deposit's own gene table as their gene universe.
+
+#908 is folded in: Borchert 2024's four samples Thompson 2019 lysine measured (set7IT062, set7IT055, set7IT044, set6IT057; 18,928 records) carry `thompson2019_lysine` as their `SourceStudy` ([[torchcell.datasets.pputida.borchert2024]], 2026.10.12). A vessel is not stored for any bacterial record (no `Environment` field), so set6IT057's vessel is pinned as a quote and the storage question is a schema decision.
+
+Still not stored by the browser loaders, each for a reason that is not the genome:
+
+| samples | organism | why | what would store them |
+|---|---|---|---|
+| 19 (no `pubId`) | Keio | no `SourceType` member for a data release with no paper; `SDM_noCarbon` and `M63_no_sulfur` have no MEDIA_LIBRARY row and their recipes exist only in the SQLite deposit; a sulfur source has no `PhysicalFactor` member | a `SourceType` member and a `sulfur_source` factor (schema records), two media rows quoted from a pinned text extract of the deposit's `MediaComponents` |
+| 34 (no `pubId`) | Putida | the same `SourceType` gap; 22 are bioreactor samples whose dissolved-oxygen set point, feed regime and solvent overlay have no `Environment` field | the `SourceType` member; for the 22, process fields (schema) |
+| 46 (`VillalobosEscobedo23`) | Putida | `R2A` has no MEDIA_LIBRARY row; 6 samples add a Trichoderma culture supernatant, which no perturbation type represents, and 8 add Vogel's fungal medium (a mixture) | an R2A row quoted from Price 2018 Table S18 (it prints the recipe as "Reasoner's 2A media"); a typed carrier for a conditioned medium |

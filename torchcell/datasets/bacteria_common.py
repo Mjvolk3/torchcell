@@ -40,6 +40,7 @@ import os.path as osp
 import re
 from collections import Counter
 from collections.abc import Iterable
+from enum import StrEnum
 from pathlib import Path
 from typing import Any, Final, Literal, overload
 
@@ -664,6 +665,174 @@ def canonical_symbol(genome: EcoliK12Genome, tag: str) -> str:
     if symbol is None:
         return tag
     return symbol if genome.resolve_gene_name(symbol).systematic_name == tag else tag
+
+
+class ReleasedIdentifierResolution(StrEnum):
+    """How a released bacterial identifier is stored when it is not a tag of its own.
+
+    The owner rule of 2026-10-12: a released row is stored under its released
+    identifier, and the annotation's verdict on it is a status, never a refusal; the
+    genome is checked at modeling time. A record carries the status in its perturbation
+    ``description`` (the leaves have no typed status slot), and the loader writes the
+    typed ledger (:class:`ReleasedIdentifierStatus`) beside the store.
+
+    - ``locus_tag_synonym``: stored under the one locus that carries the released tag as
+      a ``/gene_synonym``, with a ``locus_tag_synonym`` mapping on the perturbation.
+    - ``locus_tag_synonym_shared_locus``: the same, where another released identifier
+      reaches the same locus (two strains on one locus, told apart by the mapping's
+      ``source_identifier``).
+    - ``not_in_annotation``: stored as released; the pinned annotation does not carry it
+      (a retired or never-annotated tag).
+    - ``ambiguous_in_annotation``: stored as released; the annotation resolves it to
+      more than one locus, so no single locus can be named.
+    - ``annotation_remap_without_route``: stored as released; the annotation relates it
+      to a different locus, but not as a ``/gene_synonym`` of exactly one locus, which
+      is the only remap a ``DerivedIdentifierRoute`` member names.
+    - ``no_one_to_one_eck_pair``: stored as released in the release's own MG1655
+      namespace, because no one-to-one ECK pair places it on the host strain's locus.
+    - ``symbol_not_in_annotation``: a released gene symbol stored as released, because
+      the annotation resolves it to no locus.
+    """
+
+    locus_tag_synonym = "locus_tag_synonym"
+    locus_tag_synonym_shared_locus = "locus_tag_synonym_shared_locus"
+    not_in_annotation = "not_in_annotation"
+    ambiguous_in_annotation = "ambiguous_in_annotation"
+    annotation_remap_without_route = "annotation_remap_without_route"
+    no_one_to_one_eck_pair = "no_one_to_one_eck_pair"
+    symbol_not_in_annotation = "symbol_not_in_annotation"
+
+
+class ReleasedIdentifierStatus(BaseModel):
+    """One released identifier, what it is stored as, and why (the typed ledger row)."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    released: str
+    stored_as: str
+    gene_namespace: str
+    resolution: ReleasedIdentifierResolution
+    note: str = ""
+
+
+def status_description(base: str, status: ReleasedIdentifierStatus) -> str:
+    """A perturbation description that states the released identifier's status."""
+    return (
+        f"{base}. Released identifier {status.released!r} stored as "
+        f"{status.stored_as!r} ({status.resolution.value}"
+        + (f": {status.note}" if status.note else "")
+        + ")"
+    )
+
+
+class ReleasedIdentifierPlan(BaseModel):
+    """Where each released identifier of a release is stored, under the owner rule.
+
+    ``stored_as`` covers every id a bacterial leaf can hold (it has the namespace's
+    locus-tag FORM, or is synonym-routed onto a tag): a tag of its own maps to itself
+    with no status; every other holdable id carries a :class:`ReleasedIdentifierStatus`.
+    ``unholdable`` is what the leaf's name validator refuses outright (a Keio JW id, a
+    sub-numbered ``b0033.1``, a symbol): storing those needs a schema carrier, which is
+    an owner decision, not a loader's.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    stored_as: dict[str, str]
+    statuses: dict[str, ReleasedIdentifierStatus]
+    unholdable: tuple[str, ...]
+
+    def mapping(self, released: str) -> DerivedIdentifierMapping | None:
+        """The ``locus_tag_synonym`` mapping of a routed id, else None."""
+        if self.stored_as[released] == released:
+            return None
+        return DerivedIdentifierMapping(
+            source_identifier=released, route="locus_tag_synonym"
+        )
+
+    def status(self, released: str) -> ReleasedIdentifierStatus | None:
+        """The id's status, or None for a tag of the pinned annotation in its own right."""
+        return self.statuses.get(released)
+
+    @property
+    def stored_as_released(self) -> frozenset[str]:
+        """Ids stored under themselves that the pinned annotation does not resolve."""
+        return frozenset(
+            name for name, status in self.statuses.items() if status.stored_as == name
+        )
+
+
+def plan_released_identifiers(
+    genome: EcoliK12Genome,
+    names: Iterable[str],
+    *,
+    pattern: re.Pattern[str],
+    namespace: str,
+    collision: Iterable[str],
+) -> ReleasedIdentifierPlan:
+    """Plan every released id: a tag of its own, a synonym route, or stored as released.
+
+    The owner rule of 2026-10-12 (#1057): the genome does not gate a released row. An id
+    the annotation carries as a locus of its own is stored there; one it carries as a
+    ``/gene_synonym`` of exactly one locus is stored on that locus with a
+    ``locus_tag_synonym`` mapping (``locus_tag_synonym_shared_locus`` when another
+    released id in ``collision`` reaches the same locus); every other id of the
+    namespace's FORM is stored as released with the annotation's verdict as its status.
+    Only an id the leaf validator cannot hold is left in ``unholdable``.
+    """
+    shared = set(collision)
+    stored_as: dict[str, str] = {}
+    statuses: dict[str, ReleasedIdentifierStatus] = {}
+    unholdable: list[str] = []
+    for name in sorted(set(names)):
+        resolved = genome.resolve_gene_name(name)
+        unresolved = resolved.status in (
+            GeneNameStatus.RETIRED,
+            GeneNameStatus.AMBIGUOUS,
+        )
+        # a retired name resolves to itself "as given", so the status decides first
+        target = None if unresolved else resolved.systematic_name
+        if target == name:
+            stored_as[name] = name
+            continue
+        if (
+            target is not None
+            and locus_tag_synonym_mapping(genome, name, str(target), pattern)
+            is not None
+        ):
+            stored_as[name] = str(target)
+            statuses[name] = ReleasedIdentifierStatus(
+                released=name,
+                stored_as=str(target),
+                gene_namespace=namespace,
+                resolution=ReleasedIdentifierResolution.locus_tag_synonym_shared_locus
+                if name in shared
+                else ReleasedIdentifierResolution.locus_tag_synonym,
+                note=resolved.note or "",
+            )
+            continue
+        if pattern.match(name) is None:
+            unholdable.append(name)
+            continue
+        resolution = (
+            ReleasedIdentifierResolution.ambiguous_in_annotation
+            if resolved.status is GeneNameStatus.AMBIGUOUS
+            else ReleasedIdentifierResolution.not_in_annotation
+            if resolved.status is GeneNameStatus.RETIRED
+            else ReleasedIdentifierResolution.annotation_remap_without_route
+        )
+        stored_as[name] = name
+        statuses[name] = ReleasedIdentifierStatus(
+            released=name,
+            stored_as=name,
+            gene_namespace=namespace,
+            resolution=resolution,
+            note=resolved.note
+            or (f"the annotation resolves it to {target}" if target else ""),
+        )
+    return ReleasedIdentifierPlan(
+        stored_as=stored_as, statuses=statuses, unholdable=tuple(unholdable)
+    )
 
 
 # --- end #1045 row 20 ------------------------------------------------------------ #

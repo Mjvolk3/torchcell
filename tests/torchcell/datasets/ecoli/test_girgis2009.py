@@ -21,13 +21,14 @@ reference sets, so the combination rule's answer is that value:
     b0004   yaaP, pseudogene      +1.0/-1.0   0.0       0
     b0005   proB, current         +0.0005  0.0          0    (the rounded-to-zero path)
     b0010   /gene_synonym of b0006  +5.0    5.0         5.0  -> stored under b0006 (#1045)
-    b0099   on no locus           -5.0     -5.0         -5.0 -> dropped, retired
+    b0099   on no locus           -5.0     -5.0         -5.0 -> stored as released (#1057)
 
 Five of the six distinct names resolve (0.833 < 0.98), so the build fixture lowers
-``MIN_RESOLVED_FRACTION`` and a separate test shows the default stops the build. 84
+``MIN_RESOLVED_FRACTION`` and a separate test shows the default stops the build. 101
 records: four locus-tag loci x 17 drugs minus the one ``ND`` cell, plus ``b0010``'s 17
 cells, stored under ``b0006`` on a ``locus_tag_synonym`` route since #1045 row 20
-(``b0006`` is not released itself, so no other released id reaches it).
+(``b0006`` is not released itself, so no other released id reaches it), plus ``b0099``'s
+17 cells, stored as released with a ``not_in_annotation`` status since #1057.
 
 Data-gated tests (``--data``) read the real raw mirror and the built dev-tree LMDB under
 ``$DATA_ROOT`` (they never build it): the manifest pins, the provenance audit of every
@@ -40,6 +41,7 @@ from __future__ import annotations
 import json
 import os
 import os.path as osp
+from collections import Counter
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
@@ -103,7 +105,16 @@ LQ_CELL = ("b0002", "amk")
 SYNTHETIC_RECORDS = len(KEPT_LOCI) * len(m.DRUGS) - 1
 #: #1045 row 20: the build also keeps b0010, a /gene_synonym of the unreleased b0006.
 ROUTES = {"b0010": "b0006"}
-BUILT_RECORDS = SYNTHETIC_RECORDS + len(ROUTES) * len(m.DRUGS)
+#: #1057: and b0099, which the annotation does not carry, stored as released.
+AS_RELEASED = ("b0099",)
+BUILT_RECORDS = SYNTHETIC_RECORDS + (len(ROUTES) + len(AS_RELEASED)) * len(m.DRUGS)
+#: The shared verifier's genome-reference rules. Under the owner rule (#1057) a b-number
+#: stored as released is not a gene of the pinned annotation, so these read it as a
+#: failure until the verifier learns the status (that change is a separate branch); the
+#: tests accept them failing, and nothing else.
+GENOME_REFERENCE_RULES = frozenset(
+    {"canonical_gene_names", "gene_containment_sgd", "current_genome_genes"}
+)
 
 
 def _significant(code: str, value: float) -> Any:
@@ -643,23 +654,30 @@ def test_check_thresholds_refuses_a_no_data_disagreement(raw_dir: Path) -> None:
 # --------------------------------------------------------------------------- #
 # Identifiers
 # --------------------------------------------------------------------------- #
-def test_resolve_b_numbers_keeps_only_locus_tags_of_the_pinned_annotation(
+def test_resolve_b_numbers_keeps_every_b_number_with_its_status(
     mg1655: EcoliK12MG1655Genome, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setattr(m, "MIN_RESOLVED_FRACTION", 0.8)
     kept, ledger = m.resolve_b_numbers(
         mg1655, [row[0] for row in SYNTHETIC_ROWS], label="synthetic"
     )
-    assert sorted(kept) == sorted([*KEPT_LOCI, *ROUTES])
+    assert sorted(kept) == sorted([*KEPT_LOCI, *ROUTES, *AS_RELEASED])
     assert kept["b0001"] == "thrL"
     assert kept["b0004"] == "yaaP"
     # the routed b-number carries the symbol of the locus it is stored under
     assert kept["b0010"] == m.canonical_symbol(mg1655, "b0006")
+    # an unannotated b-number has no annotation symbol, so it carries itself
+    assert kept["b0099"] == "b0099"
     assert ledger.n_locus_tags == 4
     assert ledger.locus_tag_synonym_routes == ROUTES
-    assert ledger.shares_a_locus == {}
-    assert sorted(ledger.not_a_locus_tag) == ["b0099"]
-    assert ledger.not_a_locus_tag["b0099"].startswith("retired:")
+    statuses = {
+        status.released: (status.stored_as, status.resolution.value)
+        for status in ledger.identifier_statuses
+    }
+    assert statuses == {
+        "b0010": ("b0006", "locus_tag_synonym"),
+        "b0099": ("b0099", "not_in_annotation"),
+    }
     assert ledger.reconciliation.gene_namespace == "ecoli_k12_mg1655_bnumber"
     assert ledger.min_resolved_fraction == 0.8
 
@@ -694,33 +712,33 @@ def test_build_drop_log_accounts_for_every_cell(raw_dir: Path) -> None:
     assert log.kept_records == SYNTHETIC_RECORDS
     assert log.dropped_records == 6 * 17 - SYNTHETIC_RECORDS
     rules = {rule.rule: rule for rule in log.rules}
+    # a b-number absent from ``kept`` is one the build could not hold; since #1057 the
+    # resolver keeps every b-number, so only a caller-side subset reaches this rule
     assert rules["b_number_is_not_a_locus_tag_of_the_pinned_annotation"].n_records == 34
     assert rules["b_number_is_not_a_locus_tag_of_the_pinned_annotation"].items == [
         "b0010",
         "b0099",
     ]
-    shared = rules["released_id_shares_its_locus_with_another_released_id"]
-    assert (shared.n_records, shared.items) == (0, [])
+    assert set(rules) == {
+        "b_number_is_not_a_locus_tag_of_the_pinned_annotation",
+        "no_combined_score_released",
+    }
     assert rules["no_combined_score_released"].items == [f"b0001 {ND_DRUG}"]
 
 
-def test_build_drop_log_types_a_contested_synonym_as_a_shared_locus(
-    raw_dir: Path,
+def test_build_drop_log_drops_nothing_on_identifiers_after_the_resolver(
+    raw_dir: Path, mg1655: EcoliK12MG1655Genome, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """#1045 row 20: a synonym whose locus another released id reaches is its own rule."""
+    """#1057: the resolver's ``kept`` covers every released b-number."""
+    monkeypatch.setattr(m, "MIN_RESOLVED_FRACTION", 0.8)
     frames = _frames(raw_dir)
-    log = m.build_drop_log(
-        "girgis",
-        frames[m.DATASET_S5],
-        [row[0] for row in SYNTHETIC_ROWS],
-        {tag: tag for tag in KEPT_LOCI},
-        shares_a_locus=["b0010"],
-    )
+    b_numbers = [row[0] for row in SYNTHETIC_ROWS]
+    kept, _ = m.resolve_b_numbers(mg1655, b_numbers, label="synthetic")
+    log = m.build_drop_log("girgis", frames[m.DATASET_S5], b_numbers, kept)
     rules = {rule.rule: rule for rule in log.rules}
     not_a_tag = rules["b_number_is_not_a_locus_tag_of_the_pinned_annotation"]
-    assert (not_a_tag.n_records, not_a_tag.items) == (17, ["b0099"])
-    shared = rules["released_id_shares_its_locus_with_another_released_id"]
-    assert (shared.n_records, shared.items) == (17, ["b0010"])
+    assert (not_a_tag.n_records, not_a_tag.items) == (0, [])
+    assert log.kept_records == BUILT_RECORDS
     assert sum(rule.n_records for rule in log.rules) == log.dropped_records
 
 
@@ -1007,7 +1025,7 @@ def test_the_built_records_carry_the_released_values(
         r["experiment"]["genotype"]["perturbations"][0]["systematic_gene_name"]
         for r in records
     }
-    assert genes == {*KEPT_LOCI, *ROUTES.values()}
+    assert genes == {*KEPT_LOCI, *ROUTES.values(), *AS_RELEASED}
     routed = [
         r["experiment"]["genotype"]["perturbations"][0]
         for r in records
@@ -1019,6 +1037,15 @@ def test_the_built_records_carry_the_released_values(
         (p["identifier_mapping"]["source_identifier"], p["identifier_mapping"]["route"])
         for p in routed
     } == {("b0010", "locus_tag_synonym")}
+    as_released = [
+        r["experiment"]["genotype"]["perturbations"][0]
+        for r in records
+        if r["experiment"]["genotype"]["perturbations"][0]["systematic_gene_name"]
+        == "b0099"
+    ]
+    assert len(as_released) == 17
+    assert all(p["identifier_mapping"] is None for p in as_released)
+    assert all("(not_in_annotation" in p["description"] for p in as_released)
 
 
 def test_the_build_writes_every_ledger(built: m.EnvChemgenGirgis2009Dataset) -> None:
@@ -1026,7 +1053,9 @@ def test_the_build_writes_every_ledger(built: m.EnvChemgenGirgis2009Dataset) -> 
     log = json.loads((out / "dropped_records.json").read_text())
     assert log["kept_records"] == BUILT_RECORDS
     identifiers = json.loads((out / "identifier_reconciliation.json").read_text())
-    assert sorted(identifiers["not_a_locus_tag"]) == ["b0099"]
+    assert sorted(
+        status["released"] for status in identifiers["identifier_statuses"]
+    ) == ["b0010", "b0099"]
     assert identifiers["locus_tag_synonym_routes"] == ROUTES
     replicates = json.loads((out / "replicate_structure.json").read_text())
     assert replicates["averaged_codes"] == ["PIP", "FOX", "TET", "TRM"]
@@ -1318,19 +1347,19 @@ def test_the_built_store_holds_the_measured_record_count_and_sign_split() -> Non
         Path(_built_root(), "preprocess", "dropped_records.json").read_text()
     )
     assert log["source_loci"] == 3976
-    # 3,821 locus-tag loci plus the 13 synonym-routed ones (#1045 row 20)
-    assert log["kept_loci"] == 3834
+    # every released locus since #1057: 3,821 locus tags, 110 synonym-routed, 45 as
+    # released
+    assert log["kept_loci"] == 3976
     assert log["source_records"] == 67592
-    assert log["kept_records"] == m.EXPECTED_RECORDS == 63981
+    assert log["kept_records"] == m.EXPECTED_RECORDS == 66287
     rules = {rule["rule"]: rule["n_records"] for rule in log["rules"]}
     assert rules == {
-        "b_number_is_not_a_locus_tag_of_the_pinned_annotation": 765,
-        "released_id_shares_its_locus_with_another_released_id": 1649,
-        "no_combined_score_released": 1197,
+        "b_number_is_not_a_locus_tag_of_the_pinned_annotation": 0,
+        "no_combined_score_released": 1305,
     }
-    assert sum(drug["n_positive"] for drug in log["drugs"]) == 9625
-    assert sum(drug["n_negative"] for drug in log["drugs"]) == 11562
-    assert sum(drug["n_zero"] for drug in log["drugs"]) == 42794
+    assert sum(drug["n_positive"] for drug in log["drugs"]) == 9887
+    assert sum(drug["n_negative"] for drug in log["drugs"]) == 12056
+    assert sum(drug["n_zero"] for drug in log["drugs"]) == 44344
 
 
 @pytest.mark.data
@@ -1339,10 +1368,16 @@ def test_the_built_identifier_ledger_records_the_measured_routes() -> None:
         Path(_built_root(), "preprocess", "identifier_reconciliation.json").read_text()
     )
     assert ledger["n_locus_tags"] == 3821
-    # 155 before #1045 row 20: 13 now route, 97 share a locus, 45 are on no locus
-    assert len(ledger["not_a_locus_tag"]) == 45
-    assert len(ledger["locus_tag_synonym_routes"]) == 13
-    assert len(ledger["shares_a_locus"]) == 97
+    # #1057: the 155 non-tags are all stored, 13 + 97 routed and 45 as released
+    resolutions = Counter(
+        status["resolution"] for status in ledger["identifier_statuses"]
+    )
+    assert resolutions == {
+        "locus_tag_synonym": 13,
+        "locus_tag_synonym_shared_locus": 97,
+        "not_in_annotation": 45,
+    }
+    assert len(ledger["locus_tag_synonym_routes"]) == 110
     histogram = ledger["reconciliation"]["status_histogram"]
     assert histogram["current"] == 3758
     assert histogram["renamed"] == 39
@@ -1525,9 +1560,15 @@ def test_cli_build_and_verify(
     monkeypatch.setattr(m, "DRUGS", ())
     monkeypatch.setattr(m, "EXPECTED_RECORDS", BUILT_RECORDS)
     monkeypatch.setattr(m, "bacterial_genome", lambda *a, **k: mg1655)
-    assert m.main(["verify"]) == 0
+    code = m.main(["verify"])
+    report = json.loads(
+        (Path(built.root) / "preprocess" / "verification_report.json").read_text()
+    )
+    failing = {r["name"] for r in report["results"] if not r["passed"]}
+    assert failing <= GENOME_REFERENCE_RULES
     out = capsys.readouterr().out
-    assert "ecoli_env_chemgen_girgis2009: PASS" in out
+    assert code == (1 if failing else 0)
+    assert f"ecoli_env_chemgen_girgis2009: {'FAIL' if failing else 'PASS'}" in out
 
 
 def test_verify_build_fails_on_a_wrong_expected_count(
@@ -1544,4 +1585,6 @@ def test_verify_build_fails_on_a_wrong_expected_count(
         expected_count=1,
     )
     assert not report.passed
-    assert [r.name for r in report.results if not r.passed] == ["count"]
+    failing = {r.name for r in report.results if not r.passed}
+    assert "count" in failing
+    assert failing - {"count"} <= GENOME_REFERENCE_RULES

@@ -37,6 +37,7 @@ from __future__ import annotations
 import json
 import os
 import os.path as osp
+from collections import Counter
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
@@ -102,17 +103,23 @@ SYNTHETIC_PAIRS: tuple[tuple[str, str, str, str, float], ...] = (
     ("b0001", "thrL", "b0006", "proC", -7.0),
     ("b0001", "thrL", "b0010", "newG", 3.5),
     ("b0001", "thrL", "b0099", "ghostG", -4.0),
+    ("b0001", "thrL", "JW0098", "ghostH", -2.0),
     ("b0005", "proB", "b0007", "insZ", 5.5),
     ("b0005", "proB", "b0004", "yaaP", -3.9),
     ("b0005", "proB", "b0004", "yaaP", 4.1),
     ("b0003", "thrW", "b0001", "thrL", 4.5),
 )
-#: The six pairs the retention rules keep, as ``(donor, recipient, score, screen)``.
-#: Two of them carry a hypomorph: ``b0002`` is the synthetic essential-gene donor and
-#: ``b0006`` the synthetic SPA-tagged recipient, both stored as marked alleles (#792).
+#: The eight pairs the retention rules keep, as ``(donor, stored recipient, score,
+#: screen)``. Two of them carry a hypomorph: ``b0002`` is the synthetic essential-gene
+#: donor and ``b0006`` the synthetic SPA-tagged recipient, both stored as marked alleles
+#: (#792). Under the owner rule (#1057) ``b0010`` is stored on ``b0003`` although
+#: ``b0003`` is also its own strain, and the unannotated ``b0099`` is stored as released;
+#: only ``JW0098``, which no bacterial leaf can hold, and the duplicate pair are dropped.
 KEPT_PAIRS: tuple[tuple[str, str, float, str], ...] = (
     ("b0001", "b0003", -5.0, m.SCREEN_THIS_STUDY),
     ("b0001", "b0004", 4.0, m.SCREEN_THIS_STUDY),
+    ("b0001", "b0003", 3.5, m.SCREEN_THIS_STUDY),
+    ("b0001", "b0099", -4.0, m.SCREEN_THIS_STUDY),
     ("b0002", "b0003", -6.0, m.SCREEN_THIS_STUDY),
     ("b0001", "b0006", -7.0, m.SCREEN_THIS_STUDY),
     ("b0005", "b0007", 5.5, m.SCREEN_BUTLAND),
@@ -220,7 +227,7 @@ def synthetic_counts(monkeypatch: pytest.MonkeyPatch) -> None:
     """Point the four asserted release counts at the synthetic release's numbers."""
     monkeypatch.setattr(m, "N_DONORS", len(SYNTHETIC_DONORS))
     monkeypatch.setattr(m, "N_RELEASED_PAIRS", len(SYNTHETIC_PAIRS))
-    monkeypatch.setattr(m, "SIGN_SPLIT", (5, 5))
+    monkeypatch.setattr(m, "SIGN_SPLIT", (6, 5))
     monkeypatch.setattr(m, "N_HYPOMORPHIC_RECIPIENTS", 1)
     monkeypatch.setattr(m, "EXPECTED_HYPOMORPH_RECORDS", len(KEPT_HYPOMORPH_PAIRS))
 
@@ -350,10 +357,11 @@ def test_the_released_counts_are_the_sourced_ones() -> None:
     assert m.N_RELEASED_PAIRS == 42705
     assert m.SIGN_SPLIT == (25239, 17466)
     assert m.N_HYPOMORPHIC_RECIPIENTS == 149
-    # 42,705 released minus 186 + 494 + 4; the hypomorph pairs are stored since #792
-    # and the 33 synonym-routed pairs since #1045 row 20 (527 = 494 + 33)
-    assert m.EXPECTED_RECORDS == 42705 - (186 + 494 + 4)
-    assert m.EXPECTED_HYPOMORPH_RECORDS == 1014 + 2479 - 83
+    # 42,705 released minus 130 + 4; the hypomorph pairs are stored since #792 and
+    # the 583 pairs on a statused id since #1057 (33 + 494 routed, 56 retired)
+    assert m.EXPECTED_RECORDS == 42705 - (130 + 4)
+    assert m.EXPECTED_RECORDS == 41988 + 33 + 494 + 56
+    assert m.EXPECTED_HYPOMORPH_RECORDS == 1023 + 2479 - 83
 
 
 # --------------------------------------------------------------------------- #
@@ -642,22 +650,23 @@ def test_the_build_ledgers_account_for_every_dropped_row(
     assert ledger["kept_records"] == len(KEPT_PAIRS)
     assert ledger["dropped_records"] == len(SYNTHETIC_PAIRS) - len(KEPT_PAIRS)
     counts = {rule["rule"]: rule["n_records"] for rule in ledger["rules"]}
-    # b0010 reaches b0003, which the release also names as its own strain, so the
-    # synonym route does not apply: two strains on one locus stay dropped (#1045 row 20)
-    assert counts == {
-        m.RULE_NOT_A_TAG: 1,
-        m.RULE_LOCUS_SHARED: 1,
-        m.RULE_REMAPPED: 0,
-        m.RULE_DUPLICATE: 2,
-    }
+    # #1057: b0010 reaches b0003, which the release also names as its own strain; both
+    # are stored, told apart by the mapping. b0099 is stored as released.
+    assert counts == {m.RULE_NOT_A_TAG: 1, m.RULE_DUPLICATE: 2}
     items = {rule["rule"]: rule["items"] for rule in ledger["rules"]}
-    assert items[m.RULE_NOT_A_TAG] == ["b0099"]
-    assert items[m.RULE_LOCUS_SHARED] == ["b0010 -> b0003"]
-    assert items[m.RULE_REMAPPED] == []
-    assert ledger["locus_tag_synonym_routes"] == {}
-    assert ledger["n_aggravating"] == 3
-    assert ledger["n_alleviating"] == 3
-    assert ledger["screen_id_counts"] == {m.SCREEN_THIS_STUDY: 5, m.SCREEN_BUTLAND: 1}
+    assert items[m.RULE_NOT_A_TAG] == ["JW0098"]
+    assert ledger["locus_tag_synonym_routes"] == {"b0010": "b0003"}
+    statuses = {
+        status["released"]: (status["stored_as"], status["resolution"])
+        for status in ledger["identifier_statuses"]
+    }
+    assert statuses == {
+        "b0010": ("b0003", "locus_tag_synonym_shared_locus"),
+        "b0099": ("b0099", "not_in_annotation"),
+    }
+    assert ledger["n_aggravating"] == 4
+    assert ledger["n_alleviating"] == 4
+    assert ledger["screen_id_counts"] == {m.SCREEN_THIS_STUDY: 7, m.SCREEN_BUTLAND: 1}
 
 
 def test_the_build_records_the_reciprocal_pair_and_its_sign_disagreement(
@@ -683,7 +692,7 @@ def test_the_build_writes_the_identifier_and_not_loaded_ledgers(
     )
     assert identifiers["assembly_set"] == "ecoli_K12_MG1655_ASM584v2"
     assert identifiers["gene_namespace"] == m.MG1655_NAMESPACE
-    assert identifiers["unique_names"] == 9
+    assert identifiers["unique_names"] == 10
     not_loaded = json.loads((preprocess / "files_not_loaded.json").read_text())
     assert not_loaded == list(m.NOT_LOADED)
     assert (preprocess / "replicate_structure.json").exists()
@@ -754,7 +763,7 @@ def test_a_synonym_of_a_locus_no_other_id_reaches_is_stored_with_its_route(
     assert retention.drop_log.kept_records == 2
     assert retention.drop_log.locus_tag_synonym_routes == {"b0010": "b0003"}
     counts = {rule.rule: rule.n_records for rule in retention.drop_log.rules}
-    assert counts[m.RULE_LOCUS_SHARED] == counts[m.RULE_REMAPPED] == 0
+    assert counts == {m.RULE_NOT_A_TAG: 0, m.RULE_DUPLICATE: 0}
     rows = list(m.stored_rows(retention.kept))
     routed = rows[0]
     assert (routed.recipient_tag, routed.recipient_released) == ("b0003", "b0010")
@@ -764,6 +773,10 @@ def test_a_synonym_of_a_locus_no_other_id_reaches_is_stored_with_its_route(
     assert mapping is not None
     assert (mapping.source_identifier, mapping.route) == ("b0010", "locus_tag_synonym")
     assert rows[1].mapping("recipient") is None
+    status = routed.status("recipient")
+    assert status is not None
+    assert (status.stored_as, status.resolution.value) == ("b0003", "locus_tag_synonym")
+    assert routed.status("donor") is None
     experiment = m.build_experiment(
         "t",
         routed.donor_tag,
@@ -776,14 +789,56 @@ def test_a_synonym_of_a_locus_no_other_id_reaches_is_stored_with_its_route(
         recipient_is_hypomorph=False,
         donor_mapping=routed.mapping("donor"),
         recipient_mapping=routed.mapping("recipient"),
+        donor_status=routed.status("donor"),
+        recipient_status=routed.status("recipient"),
     )
     genotype = experiment.genotype
     assert isinstance(genotype, Genotype)
     donor, recipient = genotype.perturbations
     assert isinstance(recipient, BacterialDeletionPerturbation)
     assert recipient.identifier_mapping == mapping
+    assert "Released identifier 'b0010' stored as 'b0003'" in recipient.description
+    assert donor.description == m.DELETION_DESCRIPTION
     assert m.released_id(recipient.model_dump()) == "b0010"
     assert m.released_id(donor.model_dump()) == "b0001"
+
+
+def test_a_retired_b_number_is_stored_as_released_with_its_status(
+    built: m.GeneInteractionBabu2014Dataset,
+) -> None:
+    """#1057: the genome does not gate a released row; ``b0099`` is not annotated."""
+    items = [built[i] for i in range(len(built))]
+    built.close_lmdb()
+    sides = [
+        p
+        for item in items
+        for p in item["experiment"]["genotype"]["perturbations"]
+        if p["systematic_gene_name"] == "b0099"
+    ]
+    assert len(sides) == 1
+    assert sides[0]["identifier_mapping"] is None
+    assert "(not_in_annotation" in sides[0]["description"]
+
+
+def test_a_synonym_of_a_locus_released_as_its_own_strain_is_stored_beside_it(
+    built: m.GeneInteractionBabu2014Dataset,
+) -> None:
+    """#1057: two strains on one locus are both stored, told apart by the mapping."""
+    items = [built[i] for i in range(len(built))]
+    built.close_lmdb()
+    on_b0003 = sorted(
+        (
+            p["identifier_mapping"]["source_identifier"]
+            if p["identifier_mapping"]
+            else "",
+            item["experiment"]["phenotype"]["gene_interaction"],
+        )
+        for item in items
+        for p in item["experiment"]["genotype"]["perturbations"]
+        if p["systematic_gene_name"] == "b0003"
+        and p["cassette"] == m.RECIPIENT_CASSETTE
+    )
+    assert on_b0003 == sorted([("", -5.0), ("", -6.0), ("b0010", 3.5)])
 
 
 # --------------------------------------------------------------------------- #
@@ -805,10 +860,23 @@ def test_the_l0_to_l4_gate_passes_on_the_synthetic_build(
         hypomorphic_donors=frozenset({"b0002"}),
         hypomorphic_recipients=frozenset({"b0006"}),
         expected_hypomorph_records=len(KEPT_HYPOMORPH_PAIRS),
+        stored_as_released=frozenset({"b0099"}),
     )
     failures = [result.name for result in report.results if not result.passed]
     assert failures == []
     assert report.passed
+    undeclared = m.verify_records(
+        records,
+        released=released,
+        universe=set(mg1655.genbank.loci),
+        expected_count=len(KEPT_PAIRS),
+        hypomorphic_donors=frozenset({"b0002"}),
+        hypomorphic_recipients=frozenset({"b0006"}),
+        expected_hypomorph_records=len(KEPT_HYPOMORPH_PAIRS),
+    )
+    assert [r.name for r in undeclared.results if not r.passed] == [
+        "gene_containment_mg1655_locus_tags"
+    ]
 
 
 def test_released_scores_excludes_the_contradictory_duplicate(
@@ -913,25 +981,27 @@ def test_the_dev_store_ledgers_state_the_measured_build() -> None:
     assert ledger["source_records"] == m.N_RELEASED_PAIRS
     assert ledger["kept_records"] == m.EXPECTED_RECORDS
     assert {rule["rule"]: rule["n_records"] for rule in ledger["rules"]} == {
-        m.RULE_NOT_A_TAG: 186,
-        m.RULE_LOCUS_SHARED: 494,
-        m.RULE_REMAPPED: 0,
+        m.RULE_NOT_A_TAG: 130,
         m.RULE_DUPLICATE: 4,
     }
-    # #1045 row 20: the 5 b-numbers on an uncontested locus_tag_synonym route
-    assert ledger["locus_tag_synonym_routes"] == {
-        "b0500": "b0501",
-        "b0625": "b4581",
-        "b1371": "b4570",
-        "b4103": "b4583",
-        "b4338": "b4584",
+    # #1045 row 20 and #1057: 52 b-numbers on a locus_tag_synonym route, 47 of them
+    # onto a locus another released id reaches, plus 6 retired ids stored as released
+    resolutions = Counter(
+        status["resolution"] for status in ledger["identifier_statuses"]
+    )
+    assert resolutions == {
+        "locus_tag_synonym": 5,
+        "locus_tag_synonym_shared_locus": 47,
+        "not_in_annotation": 6,
     }
-    assert (ledger["n_aggravating"], ledger["n_alleviating"]) == (24840, 17181)
+    assert len(ledger["locus_tag_synonym_routes"]) == 52
+    assert ledger["locus_tag_synonym_routes"]["b2654"] == "b4462"
+    assert (ledger["n_aggravating"], ledger["n_alleviating"]) == (25149, 17422)
     assert ledger["kept_donors"] == 163
-    assert ledger["kept_recipients"] == 3812
+    assert ledger["kept_recipients"] == 3865
     assert ledger["screen_id_counts"] == {
-        m.SCREEN_THIS_STUDY: 40896,
-        m.SCREEN_BUTLAND: 1125,
+        m.SCREEN_THIS_STUDY: 41442,
+        m.SCREEN_BUTLAND: 1129,
     }
     report = json.loads((preprocess / "verification_report.json").read_text())
     assert all(result["passed"] for result in report["results"])

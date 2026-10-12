@@ -95,33 +95,30 @@ the neighbourhood (``SOURCED_VALUES["gene_level"]``).
 IDENTIFIERS. ``UNIQID`` holds 2009-vintage MG1655 b-numbers, every one a lowercase b
 followed by four digits (:data:`B_NUMBER_PATTERN`).
 Against the pinned GCA_000005845.2 annotation 3,821 of the 3,976 ARE locus tags (3,758
-current genes, 63 pseudogene loci) and are stored as released. Since #1045 row 20, 13
-more are stored under the one locus that carries them as a ``/gene_synonym`` and that no
-other released b-number reaches, with a ``locus_tag_synonym``
-``DerivedIdentifierMapping`` on the perturbation and the annotation's own symbol (the
-Rapp 2026 route, ``locus_tag_synonym_mapping``). The other 142 are dropped (see
-RETENTION).
+current genes, 63 pseudogene loci) and are stored as released. Since #1057 (the owner
+rule of 2026-10-12: the genome does not gate a released row) the other 155 are stored
+too, each with a status (``identifier_statuses`` in
+``preprocess/identifier_reconciliation.json``, and the status sentence in the
+perturbation's ``description``):
+
+- 13 b-numbers that are a ``/gene_synonym`` of exactly one locus no other released
+  b-number reaches are stored on that locus with a ``locus_tag_synonym``
+  ``DerivedIdentifierMapping`` and the annotation's own symbol (215 records).
+- 97 b-numbers that are such a synonym of a locus ANOTHER released b-number also reaches
+  are stored the same way, the mutants told apart by the mapping's
+  ``source_identifier`` (1,591 records, status ``locus_tag_synonym_shared_locus``).
+- 45 b-numbers the current annotation does not carry at all are stored as released,
+  with the b-number as their symbol (715 records, status ``not_in_annotation``).
 
 RETENTION (rules, counts and items in ``preprocess/dropped_records.json``).
 
-1. ``b_number_is_not_a_locus_tag_of_the_pinned_annotation`` -- 45 loci x 17 drugs = 765
-   cells: b-numbers the current annotation does not carry at all, so storing the released
-   tag would put a record on a locus the assembly does not have; each is ledgered with the
-   annotation's own resolution note.
-2. ``released_id_shares_its_locus_with_another_released_id`` -- 97 loci x 17 drugs = 1,649
-   cells: b-numbers the annotation carries as a ``/gene_synonym`` of a locus another
-   released b-number also reaches (the locus is released as itself, or a second fragment
-   maps to it). Storing them there would put two different insertion mutants on one gene,
-   so they stay dropped under the collision rule Gerdes 2003 and Tong 2020 apply; whether
-   both may be stored is the owner decision of the removals audit's rows 3 and 27 (#1045).
-   Before #1045 row 20 these 97, the 13 now stored and the 45 of rule 1 were one rule of
-   155 loci (2,635 cells).
-3. ``no_combined_score_released`` -- 1,197 cells of the kept loci whose Dataset S5 entry is
-   ``ND``, which the sheet defines as fewer than two usable repetitions, so the paper
-   assigned no score (1,191 before the 13 synonym-routed loci were kept).
+1. ``b_number_is_not_a_locus_tag_of_the_pinned_annotation`` -- 0 cells: an id that is
+   not a b-number in FORM, which no bacterial leaf can hold. Every UNIQID is one.
+2. ``no_combined_score_released`` -- 1,305 cells whose Dataset S5 entry is ``ND``, which
+   the sheet defines as fewer than two usable repetitions, so the paper assigned no
+   score.
 
-765 + 1,649 + 1,197 = 3,611 dropped; 67,592 - 3,611 = 63,981 records (63,766 before
-#1045 row 20).
+1,305 dropped; 67,592 - 1,305 = 66,287 records (63,766 on main before #1045).
 
 TABLE 1 DISAGREEMENT. Table 1 prints "# Samples" 3 for streptomycin and 2 for
 sulfamonomethoxine, and the released data says the opposite. Datasets S2 to S4 carry two STR
@@ -169,7 +166,7 @@ import os.path as osp
 import re
 import shutil
 from collections import Counter
-from collections.abc import Callable, Collection, Iterator, Mapping, Sequence
+from collections.abc import Callable, Iterator, Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, ClassVar, Final
@@ -221,11 +218,13 @@ from torchcell.datasets.bacteria_common import (
     LOCUS_TAG_PATTERNS,
     STRAIN_GENE_NAMESPACES,
     LocusTagReconciliation,
+    ReleasedIdentifierStatus,
     assembly_reference,
     bacterial_genome,
-    locus_tag_synonym_mapping,
+    plan_released_identifiers,
     reconcile_locus_tags,
     resolution_layer,
+    status_description,
 )
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.literature.manifest import (
@@ -1537,19 +1536,11 @@ def check_sheets_align(frames: Mapping[str, pd.DataFrame]) -> list[str]:
 # --------------------------------------------------------------------------- #
 #: The retention rules, in application order.
 DROP_RULE_DESCRIPTIONS: dict[str, str] = {
-    "b_number_is_not_a_locus_tag_of_the_pinned_annotation": "the released b-number is "
-    "not a locus tag of GCA_000005845.2 and no DerivedIdentifierRoute reaches one: the "
-    "annotation does not carry it, or carries it in a way the locus_tag_synonym route "
-    "does not name. Storing the released tag would place a record on a locus the "
-    "assembly does not have, so every one of the drug's cells for that gene is "
-    "dropped; each item gives the annotation's own resolution note",
-    "released_id_shares_its_locus_with_another_released_id": "the released b-number is "
-    "a /gene_synonym of a locus another released b-number also reaches (the locus is "
-    "released as itself, or a second fragment maps to it). Storing it there would put "
-    "two different insertion mutants on one gene, so only the member that IS a locus "
-    "tag keeps the locus (the Gerdes 2003 and Tong 2020 rule); whether both may be "
-    "stored, told apart by identifier_mapping, is the owner decision of #1045 rows 3 "
-    "and 27",
+    "b_number_is_not_a_locus_tag_of_the_pinned_annotation": "a released id that is not "
+    "an MG1655 b-number in FORM, which the transposon leaf's name validator cannot hold. "
+    "None on this release: every UNIQID is a b-number, and since #1057 a b-number the "
+    "annotation does not carry as its own locus is stored on its synonym locus or as "
+    "released, with its status in identifier_reconciliation.json",
     "no_combined_score_released": "Dataset S5 gives the cell as 'ND', which the sheet "
     "defines as fewer than two usable repetitions, so the paper assigned no combined "
     "z-score and there is no measurement to store",
@@ -1595,16 +1586,16 @@ class DropLog(BaseModel):
 class IdentifierLedger(BaseModel):
     """The reconciliation of every released b-number, plus the stop threshold.
 
-    ``not_a_locus_tag`` lists each dropped b-number with the resolution note the
-    annotation gave it, which is what names the merge or the retirement.
+    ``identifier_statuses`` lists every released b-number that is not a locus tag of the
+    pinned annotation in its own right, with where it is stored and the annotation's own
+    resolution note, which is what names the merge or the retirement (#1057).
     """
 
     reconciliation: LocusTagReconciliation
     min_resolved_fraction: float
     n_locus_tags: int
-    not_a_locus_tag: dict[str, str]
     locus_tag_synonym_routes: dict[str, str] = {}
-    shares_a_locus: dict[str, str] = {}
+    identifier_statuses: list[ReleasedIdentifierStatus] = []
 
 
 class ReplicateStructure(BaseModel):
@@ -1630,60 +1621,58 @@ def canonical_symbol(genome: EcoliK12Genome, tag: str) -> str:
 def resolve_b_numbers(
     genome: EcoliK12Genome, b_numbers: Sequence[str], *, label: str
 ) -> tuple[dict[str, str], IdentifierLedger]:
-    """The kept b-numbers mapped to the annotation's symbol, plus the ledger.
+    """Every released b-number mapped to its stored symbol, plus the ledger.
 
-    A b-number is kept when it IS a locus tag of the pinned annotation (a current gene
-    or a pseudogene locus), which is the only case in which the record's stored tag is
-    the one the source released and no ``DerivedIdentifierMapping`` is needed. Stops
-    (``LocusTagResolutionError``) below :data:`MIN_RESOLVED_FRACTION`.
+    The owner rule of 2026-10-12 (#1057): the annotation does not gate a released row.
+    A b-number that IS a locus tag of the pinned annotation is stored as released; one
+    it carries as a ``/gene_synonym`` of exactly one locus is stored on that locus with a
+    ``locus_tag_synonym`` mapping and the annotation's own symbol (shared with another
+    released b-number or not); any other is stored as released with its status, and
+    carries the b-number as its symbol because the annotation names no gene for it.
+    Stops (``LocusTagResolutionError``) below :data:`MIN_RESOLVED_FRACTION`, and on an
+    id that is not a b-number in form, which this release does not print.
     """
-    stored, report = reconcile_locus_tags(
+    _, report = reconcile_locus_tags(
         genome, pd.Series(list(b_numbers), dtype=object), label=label
     )
     report.require_resolved(MIN_RESOLVED_FRACTION)
     pattern = LOCUS_TAG_PATTERNS[report.gene_namespace]
-    collision = set(report.kept_on_collision)
-    kept: dict[str, str] = {}
-    unplaced: dict[str, str] = {}
-    routed: dict[str, str] = {}
-    shared: dict[str, str] = {}
     for b_number in dict.fromkeys(b_numbers):
         resolution = genome.resolve_gene_name(b_number)
-        if resolution_layer(genome, resolution) == LAYER_LOCUS_TAG:
-            if pattern.match(b_number) is None:
-                raise SheetFormatError(
-                    f"{b_number} is a locus of {report.assembly_set} but not a "
-                    f"{report.gene_namespace} tag"
-                )
-            kept[b_number] = canonical_symbol(genome, b_number)
-            continue
-        # #1045 row 20: a /gene_synonym of exactly one locus that no other released
-        # b-number reaches is stored there with a locus_tag_synonym mapping.
-        target = resolution.systematic_name
-        if target is not None and target != b_number and b_number in collision:
-            shared[b_number] = str(target)
-            continue
-        if (
-            target is not None
-            and target != b_number
-            and locus_tag_synonym_mapping(genome, b_number, str(target), pattern)
-            is not None
-        ):
-            routed[b_number] = str(target)
-            kept[b_number] = canonical_symbol(genome, str(target))
-            continue
-        unplaced[b_number] = (
-            f"{resolution.status.value}: {resolution.note or 'no note'}"
+        is_tag = resolution_layer(genome, resolution) == LAYER_LOCUS_TAG
+        if is_tag and pattern.match(b_number) is None:
+            raise SheetFormatError(
+                f"{b_number} is a locus of {report.assembly_set} but not a "
+                f"{report.gene_namespace} tag"
+            )
+    plan = plan_released_identifiers(
+        genome,
+        b_numbers,
+        pattern=pattern,
+        namespace=report.gene_namespace,
+        collision=report.kept_on_collision,
+    )
+    if plan.unholdable:
+        raise SheetFormatError(
+            f"{label}: {list(plan.unholdable)[:5]} are not {report.gene_namespace} "
+            "b-numbers in form, which UNIQID never prints"
         )
+    loci = genome.genbank.loci
+    kept = {
+        released: canonical_symbol(genome, stored) if stored in loci else released
+        for released, stored in plan.stored_as.items()
+    }
     ledger = IdentifierLedger(
         reconciliation=report,
         min_resolved_fraction=MIN_RESOLVED_FRACTION,
-        n_locus_tags=len(kept) - len(routed),
-        not_a_locus_tag=unplaced,
-        locus_tag_synonym_routes=routed,
-        shares_a_locus=shared,
+        n_locus_tags=len(plan.stored_as) - len(plan.statuses),
+        locus_tag_synonym_routes={
+            released: stored
+            for released, stored in plan.stored_as.items()
+            if released != stored
+        },
+        identifier_statuses=[plan.statuses[name] for name in sorted(plan.statuses)],
     )
-    del stored
     return kept, ledger
 
 
@@ -1796,10 +1785,23 @@ def environment(spec: DrugSpec) -> Environment:
     )
 
 
+#: The transposon leaf's own default description, which a status note extends (#1057).
+INSERTION_DESCRIPTION: str = TransposonInsertionPerturbation.model_fields[
+    "description"
+].default
+
+
 def insertion_genotype(
-    locus_tag: str, symbol: str, mapping: DerivedIdentifierMapping | None = None
+    locus_tag: str,
+    symbol: str,
+    mapping: DerivedIdentifierMapping | None = None,
+    status: ReleasedIdentifierStatus | None = None,
 ) -> Genotype:
-    """The gene-level transposon disruption of one MG1655 locus."""
+    """The gene-level transposon disruption of one MG1655 locus.
+
+    A released b-number that is not a locus tag of its own carries its status in the
+    leaf's ``description`` (the leaf has no typed status slot).
+    """
     return Genotype(
         perturbations=[
             TransposonInsertionPerturbation(
@@ -1807,6 +1809,9 @@ def insertion_genotype(
                 perturbed_gene_name=symbol,
                 gene_namespace=MG1655_NAMESPACE,
                 identifier_mapping=mapping,
+                description=INSERTION_DESCRIPTION
+                if status is None
+                else status_description(INSERTION_DESCRIPTION, status),
             )
         ]
     )
@@ -1892,11 +1897,12 @@ def build_experiment(
     spec: DrugSpec,
     env: Environment,
     mapping: DerivedIdentifierMapping | None = None,
+    status: ReleasedIdentifierStatus | None = None,
 ) -> BacterialEnvironmentResponseExperiment:
     """The record of one (gene, drug) cell of Dataset S5."""
     return BacterialEnvironmentResponseExperiment(
         dataset_name=dataset_name,
-        genotype=insertion_genotype(locus_tag, symbol, mapping),
+        genotype=insertion_genotype(locus_tag, symbol, mapping, status),
         environment=env,
         phenotype=phenotype(value, spec),
     )
@@ -1939,12 +1945,10 @@ def build_drop_log(
     s5: pd.DataFrame,
     b_numbers: Sequence[str],
     kept: Mapping[str, str],
-    shares_a_locus: Collection[str] = (),
 ) -> DropLog:
     """The retention ledger of one build, refusing rules that miss a dropped cell."""
     columns = {spec.code: s5[spec.code].tolist() for spec in DRUGS}
-    shared = sorted(set(shares_a_locus))
-    dropped_identifier = sorted(set(b_numbers) - set(kept) - set(shared))
+    dropped_identifier = sorted(set(b_numbers) - set(kept))
     no_data: list[str] = []
     drugs: list[DrugLedger] = []
     for spec in DRUGS:
@@ -1981,14 +1985,6 @@ def build_drop_log(
             ],
             n_records=len(dropped_identifier) * len(DRUGS),
             items=dropped_identifier,
-        ),
-        DropRule(
-            rule="released_id_shares_its_locus_with_another_released_id",
-            description=DROP_RULE_DESCRIPTIONS[
-                "released_id_shares_its_locus_with_another_released_id"
-            ],
-            n_records=len(shared) * len(DRUGS),
-            items=shared,
         ),
         DropRule(
             rule="no_combined_score_released",
@@ -2113,13 +2109,7 @@ class EnvChemgenGirgis2009Dataset(ExperimentDataset):
         kept, identifiers = resolve_b_numbers(
             genome, b_numbers, label=f"{self.name} Dataset S5 UNIQID"
         )
-        drop_log = build_drop_log(
-            self.name,
-            frames[DATASET_S5],
-            b_numbers,
-            kept,
-            shares_a_locus=identifiers.shares_a_locus,
-        )
+        drop_log = build_drop_log(self.name, frames[DATASET_S5], b_numbers, kept)
         log.info(
             "Girgis 2009: %d loci x %d drugs = %d cells -> %d records; dropped %s",
             drop_log.source_loci,
@@ -2147,6 +2137,9 @@ class EnvChemgenGirgis2009Dataset(ExperimentDataset):
         index = 0
         with env_out.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             routes = identifiers.locus_tag_synonym_routes
+            statuses = {
+                status.released: status for status in identifiers.identifier_statuses
+            }
             for released, symbol, spec, value in tqdm(
                 stored_cells(frames[DATASET_S5], b_numbers, kept),
                 total=drop_log.kept_records,
@@ -2164,6 +2157,7 @@ class EnvChemgenGirgis2009Dataset(ExperimentDataset):
                     )
                     if released in routes
                     else None,
+                    statuses.get(released),
                 )
                 txn.put(
                     f"{index}".encode(),
@@ -2234,10 +2228,9 @@ class EnvChemgenGirgis2009Dataset(ExperimentDataset):
 # Verification (L0-L4) of a built tree
 # --------------------------------------------------------------------------- #
 DATASET_ROOT_REL = "data/torchcell/ecoli_env_chemgen_girgis2009"
-#: Records of the full build: 3,834 kept loci x 17 drugs, minus 1,197 ND cells (3,821
-#: loci and 1,191 ND cells, 63,766 records, before #1045 row 20 kept the 13 loci a
-#: ``locus_tag_synonym`` route reaches uncontested).
-EXPECTED_RECORDS = 63981
+#: Records of the full build: all 3,976 released loci x 17 drugs, minus 1,305 ND cells.
+#: 2,521 of them stand on a statused b-number since #1057 (63,766 on main before #1045).
+EXPECTED_RECORDS = 66287
 
 
 def verify_build(

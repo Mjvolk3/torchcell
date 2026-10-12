@@ -39,17 +39,19 @@ Structure sourced from the paper (STAR Methods, OCR'd mirror):
 - **Duplicate strains kept per-instance.** 145 ORFs have >1 deletion strain "of
   different origins" (141 duplicated, 4 triplicated); the paper analyses each strain
   independently, so we emit one experiment per KO SAMPLE (4,699 records), not per ORF.
-- **UniProt -> systematic ORF.** Protein ids are UniProt accessions; we map them to
-  systematic ORFs (authoritatively, via the SGD S288C GFF ``protein_id=UniProtKB:``
-  cross-refs) so this proteome is joinable with the ORF-keyed Zelezniak2018 proteome.
-  All 1,850 map (incl. the mito-encoded ``P00410`` -> ``Q0250``/COX2); an unmapped id
-  raises rather than being silently dropped.
-- **Gene names from SGD, not the filename (issue #485).** ``systematic_gene_name`` is
-  the metadata ``ORF`` (uppercased) and stays the join key. ``perturbed_gene_name`` is
-  that ORF's ``gene=`` standard name in the same SGD GFF, else the uppercase ORF (no
-  standard name, or the ORF is no GFF feature ID in that release). The token after
-  the ORF in the sample Filename is never read: on real filenames it is sometimes a
-  number (``10_9_hpr57_ko_YBL007C_2824_0.49`` is SLA1) or a lowercase ORF.
+- **Protein keys are the released UniProt accessions.** ``protein_abundance`` is keyed
+  by the matrix's ``Protein.Group`` accession verbatim (``P00410``, the mito-encoded
+  COX2, included). No annotation is consulted (#1045, 2026.10.12): the previous build
+  lifted every accession to its ORF through the SGD GFF ``protein_id=UniProtKB:``
+  cross-references; joining an accession to a gene is a modeling-time step, kept out of
+  the stored record.
+- **Gene names are the released ORF.** ``systematic_gene_name`` and
+  ``perturbed_gene_name`` are both the metadata ``ORF`` (uppercased); no standard name
+  is looked up in the GFF (the previous build read one for 3,780 of 4,699 records). The
+  token after the ORF in the sample Filename is never read: on real filenames it is
+  sometimes a number (``10_9_hpr57_ko_YBL007C_2824_0.49``) or a lowercase ORF. A
+  metadata ORF with no ORF form is counted under ``deferred_to_released_gene_name_leaf``
+  (0 of 4,699).
 
 The value is a LINEAR (not log2) batch-corrected MaxLFQ quantity
 (``measurement_type = "swath_ms_maxlfq_batch_corrected_quantity"``); log2 is applied
@@ -149,6 +151,9 @@ def _sgd_gff_path(data_root: str | None = None) -> str:
 
 def build_uniprot_to_orf_map(data_root: str | None = None) -> dict[str, str]:
     """Map UniProt accession -> systematic ORF from the SGD S288C GFF.
+
+    A downstream utility, not loader logic: this loader stores the released accessions
+    (#1045). Kept for ``messner2021``, which still calls it.
 
     Authoritative source: the ``protein_id=UniProtKB:<acc>`` cross-references in the
     SGD reference GFF (see :func:`_sgd_gff_path`). The first ORF token on a line
@@ -274,20 +279,13 @@ class ProteomeMessner2023Dataset(ExperimentDataset):
         id_col = matrix.columns[0]  # "Protein.Group" (UniProt accession)
         matrix = matrix.set_index(id_col)
 
-        # UniProt -> systematic ORF; every measured protein must map (fail loud).
-        up2orf = build_uniprot_to_orf_map()
-        unmapped = [p for p in matrix.index.astype(str) if p not in up2orf]
-        if unmapped:
+        # Protein keys are the released UniProt accessions, verbatim (#1045).
+        matrix.index = matrix.index.astype(str)
+        repeated = matrix.index[matrix.index.duplicated()].tolist()
+        if repeated:
             raise RuntimeError(
-                f"{len(unmapped)} Messner proteins have no UniProt->ORF mapping "
-                f"(e.g. {unmapped[:5]}); refusing to silently drop."
+                f"Messner matrix lists {len(repeated)} accession(s) twice: {repeated[:5]}"
             )
-        matrix.index = matrix.index.astype(str).map(up2orf)
-        # Gene names come from SGD by systematic name (issue #485), never from the
-        # sample Filename: 156 real filenames carry a plate-position number where the
-        # name would be (``10_9_hpr57_ko_YBL007C_2824_0.49`` is SLA1) and 1,182 a
-        # lowercase ORF. Rule: the GFF ``gene=`` standard name, else the uppercase ORF.
-        orf2name = build_orf_to_gene_name_map()
 
         meta = pd.read_csv(osp.join(self.raw_dir, METADATA_FILENAME))
         by_filename = meta.set_index("Filename")
@@ -319,15 +317,14 @@ class ProteomeMessner2023Dataset(ExperimentDataset):
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
         rows: list[dict[str, Any]] = []
-        n_bad_orf = 0
-        not_in_gff: set[str] = set()
-        n_not_in_gff_rows = 0
+        deferred: list[str] = []
         for filename in ko_cols:
             # Metadata ORF casing is inconsistent (e.g. "YML009c", "YAL043C-a");
             # systematic names are uppercase -- normalize, never drop on case alone.
             deletion_orf = str(by_filename.loc[filename, "ORF"]).upper()
             if not _NUCLEAR_ORF_RE.match(deletion_orf):
-                n_bad_orf += 1
+                # no ORF form: waits for the released-gene-name leaf (0 of 4,699)
+                deferred.append(deletion_orf)
                 continue
             series = matrix[filename].dropna()  # measured proteins only (noimpute)
             abundance = {str(o): float(v) for o, v in series.items()}
@@ -338,31 +335,20 @@ class ProteomeMessner2023Dataset(ExperimentDataset):
                     f"{len(no_wt)} protein(s) no WT sample measured (e.g. {no_wt[:5]}); "
                     "the reference has no value for them"
                 )
-            if deletion_orf not in orf2name:
-                # Rule "ORF not an SGD GFF feature ID": no standard name to read, so
-                # the name is the uppercase ORF (counted in the build log below).
-                not_in_gff.add(deletion_orf)
-                n_not_in_gff_rows += 1
             rows.append(
                 {
                     "filename": filename,
                     "orf": deletion_orf,
-                    "gene": orf2name.get(deletion_orf, deletion_orf),
+                    "gene": deletion_orf,
                     "abundance": abundance,
                 }
             )
         log.info(
-            "Messner: %d KO strains, WT reference with %d proteins, %d non-systematic "
-            "KO ORF skipped",
+            "Messner: %d KO strains, WT reference with %d proteins, %d KO ORFs "
+            "deferred to the released-gene-name leaf",
             len(rows),
             len(self._reference["abundance"]),
-            n_bad_orf,
-        )
-        log.info(
-            "Messner: %d KO strains (%d ORFs) whose ORF is no SGD GFF feature ID; "
-            "perturbed_gene_name = the ORF for them",
-            n_not_in_gff_rows,
-            len(not_in_gff),
+            len(deferred),
         )
         pd.DataFrame(
             [

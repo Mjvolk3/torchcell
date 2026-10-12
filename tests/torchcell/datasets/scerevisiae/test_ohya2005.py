@@ -3,10 +3,9 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/datasets/scerevisiae/test_ohya2005.py
 """Hermetic build of the Ohya 2005 CalMorph loader on two synthetic SCMD matrices.
 
-Both TSVs are written into ``<root>/raw/`` so PyG never calls ``download()``. The genome
-stub implements only ``resolve_gene_name``, returning real ``GeneNameResolution`` objects:
-YAL001C, YDR001C, YER001W, YFR001W are current; YBR002C is renamed to YBR001C; YER002W is
-renamed to YER001W (which is also a strain, so both keep their names); YCR001W is retired.
+Both TSVs are written into ``<root>/raw/`` so PyG never calls ``download()``. No genome
+is consulted (#1045): every ORF is stored as released (stripped, upper-cased), whatever
+the annotation says of it.
 
 Features (4 of the 501): base ``A101_A``, ``C103_A1B``; CV ``ACV103_A1B``, ``CCV103_A1B``.
 
@@ -15,7 +14,7 @@ Features (4 of the 501): base ``A101_A``, ``C103_A1B``; CV ``ACV103_A1B``, ``CCV
     YAL001C  1.0   2.0   0.5    0.25
     YBR002C  3.0   4.0   0.25   0.5
     YCR001W  5.0   6.0   0.125  0.75
-    YDR001C  7.0   8.0   (blank) 1.0     missing value -> dropped whole
+    YDR001C  7.0   8.0   (blank) 1.0     stored; the blank ACV103_A1B is key-absent
     YER001W  9.0   10.0  0.75   1.25
     YER002W  11.0  12.0  0.875  1.5
     yfr001w  13.0  14.0  1.0    1.75     stripped and uppercased
@@ -67,7 +66,7 @@ import logging
 import pickle
 import re
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import lmdb
 import pandas as pd
@@ -89,11 +88,6 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.scerevisiae import ohya2005 as m
-from torchcell.sequence.genome.scerevisiae.s288c import (
-    GeneNameResolution,
-    GeneNameStatus,
-    SCerevisiaeGenome,
-)
 
 
 @pytest.fixture(autouse=True)
@@ -119,30 +113,6 @@ _WT_ROWS = [
     ["wt2", "3.0", "5.0", "0.75", "1.0"],
     ["wt3", "5.0", "7.0", "n.d.", "1.5"],
 ]
-_CURRENT = {"YAL001C", "YDR001C", "YER001W", "YFR001W"}
-_RENAMED = {"YBR002C": "YBR001C", "YER002W": "YER001W"}
-
-
-class _StubGenome:
-    def resolve_gene_name(self, name: str) -> GeneNameResolution:
-        upper = name.strip().upper()
-        if upper in _CURRENT:
-            return GeneNameResolution(
-                input_name=name, status=GeneNameStatus.CURRENT, systematic_name=upper
-            )
-        if upper in _RENAMED:
-            return GeneNameResolution(
-                input_name=name,
-                status=GeneNameStatus.RENAMED,
-                systematic_name=_RENAMED[upper],
-            )
-        return GeneNameResolution(
-            input_name=name, status=GeneNameStatus.RETIRED, systematic_name=upper
-        )
-
-
-def _genome() -> SCerevisiaeGenome:
-    return cast(SCerevisiaeGenome, _StubGenome())
 
 
 def _write_tsv(path: Path, header: list[str], rows: list[list[str]]) -> None:
@@ -159,7 +129,7 @@ def _root(tmp_path: Path, slug: str = "scmd_ohya2005") -> Path:
 
 @pytest.fixture
 def dataset(tmp_path: Path) -> m.ScmdOhya2005Dataset:
-    return m.ScmdOhya2005Dataset(root=str(_root(tmp_path)), genome=_genome())
+    return m.ScmdOhya2005Dataset(root=str(_root(tmp_path)))
 
 
 _ENVIRONMENT = Environment(media=m.OHYA_YPD, temperature=Temperature(value=25))
@@ -183,7 +153,13 @@ _PUBLICATION = Publication(
 ).model_dump()
 
 
-def _experiment(orf: str, values: list[float]) -> dict[str, Any]:
+def _experiment(orf: str, values: list[float | None]) -> dict[str, Any]:
+    """A blank (None) cell is key-absent in the stored record."""
+    cv = {
+        key: value
+        for key, value in zip(("ACV103_A1B", "CCV103_A1B"), values[2:], strict=True)
+        if value is not None
+    }
     return CalMorphExperiment(
         dataset_name="ScmdOhya2005Dataset",
         genotype=Genotype(
@@ -195,28 +171,30 @@ def _experiment(orf: str, values: list[float]) -> dict[str, Any]:
         ),
         environment=_ENVIRONMENT,
         phenotype=CalMorphPhenotype(
-            calmorph={"A101_A": values[0], "C103_A1B": values[1]},
-            calmorph_coefficient_of_variation={
-                "ACV103_A1B": values[2],
-                "CCV103_A1B": values[3],
+            calmorph={
+                key: value
+                for key, value in zip(("A101_A", "C103_A1B"), values[:2], strict=True)
+                if value is not None
             },
+            calmorph_coefficient_of_variation=cv,
         ),
     ).model_dump()
 
 
-def test_six_records_retain_every_name_and_drop_the_incomplete_row(
+def test_seven_records_retain_every_released_name_and_the_blank_cell_row(
     dataset: m.ScmdOhya2005Dataset,
 ) -> None:
-    """YDR001C (blank ACV103_A1B) is the only drop. YBR002C is stored under YBR001C;
-    YER002W keeps its legacy name because remapping it to YER001W would collide with
-    that strain; YCR001W (retired) and yfr001w (uppercased) pass through. Base and CV
-    traits are split by prefix into the two phenotype dicts.
+    """Every row is a record under its released name: YBR002C and YER002W (R64 renames)
+    and YCR001W (retired) keep their names, yfr001w is upper-cased, and YDR001C (blank
+    ACV103_A1B) is stored with that one cell key-absent. Base and CV traits are split
+    by prefix into the two phenotype dicts.
     """
-    assert len(dataset) == 6
-    expected = [
+    assert len(dataset) == 7
+    expected: list[tuple[str, list[float | None]]] = [
         ("YAL001C", [1.0, 2.0, 0.5, 0.25]),
-        ("YBR001C", [3.0, 4.0, 0.25, 0.5]),
+        ("YBR002C", [3.0, 4.0, 0.25, 0.5]),
         ("YCR001W", [5.0, 6.0, 0.125, 0.75]),
+        ("YDR001C", [7.0, 8.0, None, 1.0]),
         ("YER001W", [9.0, 10.0, 0.75, 1.25]),
         ("YER002W", [11.0, 12.0, 0.875, 1.5]),
         ("YFR001W", [13.0, 14.0, 1.0, 1.75]),
@@ -230,7 +208,7 @@ def test_six_records_retain_every_name_and_drop_the_incomplete_row(
 def test_reference_is_the_wt_mean_with_non_numeric_cells_skipped(
     dataset: m.ScmdOhya2005Dataset,
 ) -> None:
-    """One shared reference (index entry [0..5]) whose ACV103_A1B mean is 0.5 over the two
+    """One shared reference (index entry [0..6]) whose ACV103_A1B mean is 0.5 over the two
     numeric WT cells, the ``n.d.`` cell having been coerced to NaN.
     """
     index = json.loads(
@@ -238,29 +216,31 @@ def test_reference_is_the_wt_mean_with_non_numeric_cells_skipped(
             Path(dataset.root) / "preprocess" / "experiment_reference_index.json"
         ).read_text()
     )
-    assert [entry["member_indices"] for entry in index] == [[0, 1, 2, 3, 4, 5]]
+    assert [entry["member_indices"] for entry in index] == [list(range(7))]
     assert index[0]["reference"]["phenotype_reference"] == _WT_PHENOTYPE.model_dump()
 
 
 def test_side_files(dataset: m.ScmdOhya2005Dataset) -> None:
-    """``data.csv`` is the retained mutant matrix with the source ORF spelling kept and
-    the two resolved-name columns appended; the gene set is the six stored names.
+    """``data.csv`` is the whole mutant matrix with the source ORF spelling kept and
+    the two released-name columns appended; the gene set is the seven released names.
     """
     preprocess = Path(dataset.root) / "preprocess"
     assert (preprocess / "data.csv").read_text() == (
         "ORF,A101_A,C103_A1B,ACV103_A1B,CCV103_A1B,systematic_gene_name,"
         "perturbed_gene_name\n"
         "YAL001C,1.0,2.0,0.5,0.25,YAL001C,YAL001C\n"
-        "YBR002C,3.0,4.0,0.25,0.5,YBR001C,YBR001C\n"
+        "YBR002C,3.0,4.0,0.25,0.5,YBR002C,YBR002C\n"
         "YCR001W,5.0,6.0,0.125,0.75,YCR001W,YCR001W\n"
+        "YDR001C,7.0,8.0,,1.0,YDR001C,YDR001C\n"
         "YER001W,9.0,10.0,0.75,1.25,YER001W,YER001W\n"
         "YER002W,11.0,12.0,0.875,1.5,YER002W,YER002W\n"
         "yfr001w,13.0,14.0,1.0,1.75,YFR001W,YFR001W\n"
     )
     assert json.loads((preprocess / "gene_set.json").read_text()) == [
         "YAL001C",
-        "YBR001C",
+        "YBR002C",
         "YCR001W",
+        "YDR001C",
         "YER001W",
         "YER002W",
         "YFR001W",
@@ -282,7 +262,7 @@ def test_build_refuses_present_files_off_the_pin_and_download_needs_the_mirror(
     mirror path under ``$DATA_ROOT``.
     """
     monkeypatch.setenv("DATA_ROOT", str(tmp_path / "data_root"))
-    dataset = m.ScmdOhya2005Dataset(root=str(_root(tmp_path)), genome=_genome())
+    dataset = m.ScmdOhya2005Dataset(root=str(_root(tmp_path)))
     dest = Path(dataset.root) / "raw" / "mt4718data.tsv"
     digest = hashlib.sha256(dest.read_bytes()).hexdigest()
     monkeypatch.setattr(m, "verify_raw_files", verify_raw_files)
@@ -301,7 +281,7 @@ def test_build_refuses_present_files_off_the_pin_and_download_needs_the_mirror(
             "(sha256 verified)."
         ),
     ):
-        m.ScmdOhya2005Dataset(root=str(tmp_path / "empty"), genome=_genome())
+        m.ScmdOhya2005Dataset(root=str(tmp_path / "empty"))
 
 
 def test_items_retype_through_the_calmorph_classes(
@@ -311,7 +291,7 @@ def test_items_retype_through_the_calmorph_classes(
     149 to 157), dumping back to exactly the stored dictionaries. A fitness class would
     drop the ``calmorph`` traits and fail the round trip.
     """
-    for index in range(6):
+    for index in range(7):
         item = dataset[index]
         typed = dataset.transform_item(item)
         assert type(typed["experiment"]) is CalMorphExperiment
@@ -365,48 +345,54 @@ def test_publication_is_ohya_2005_although_the_matrix_is_the_suzuki_reanalysis(
 def test_drop_ledger_is_logged_before_the_strain_count(
     tmp_path: Path, caplog: pytest.LogCaptureFixture
 ) -> None:
-    """The incomplete YDR001C row is named as a warning, then the six kept strains, then
-    the processing line.
+    """The YDR001C blank cell is named as a warning, then the seven strains, then the
+    processing line.
     """
     with caplog.at_level(logging.INFO, logger=m.log.name):
-        m.ScmdOhya2005Dataset(root=str(_root(tmp_path)), genome=_genome())
+        m.ScmdOhya2005Dataset(root=str(_root(tmp_path)))
     assert [
         (r.levelname, r.getMessage()) for r in caplog.records if r.name == m.log.name
     ] == [
         (
             "WARNING",
-            "Ohya 2005: dropping 1 mutant row(s) with missing CalMorph values: "
-            "['YDR001C']",
+            "Ohya 2005: 1 blank CalMorph cell(s) in 1 row(s) are key-absent in their "
+            "records",
         ),
-        ("INFO", "Ohya 2005: 6 non-essential deletion strains (0 dropped for naming)"),
+        ("INFO", "Ohya 2005: 7 non-essential deletion strains (0 dropped for naming)"),
         ("INFO", "Processing Ohya 2005 CalMorph morphology data..."),
     ]
 
 
-def test_drop_warning_counts_every_incomplete_row_but_lists_the_first_20(
+def test_a_row_with_every_trait_blank_is_refused_by_the_validator(
     tmp_path: Path, caplog: pytest.LogCaptureFixture
 ) -> None:
-    """21 incomplete rows (Y00..Y20, blank A101_A) and one complete row: the warning says
-    21 and names Y00 to Y19 only (``tolist()[:20]``, line 263); one strain is kept.
+    """21 rows with every trait blank (YAL002W..YAL022W, blank A101_A) and one complete
+    row: the warning counts 21 blank cells in 21 rows, and the 21 records with no
+    measured trait are refused by the phenotype validator ("calmorph measurements
+    cannot be empty") before the store is opened.
     """
     root = tmp_path / "many_blank"
     (root / "raw").mkdir(parents=True)
-    rows = [[f"Y{k:02d}", ""] for k in range(21)] + [["YAL001C", "1.0"]]
+    rows = [[f"YAL{k:03d}W", ""] for k in range(2, 23)] + [["YAL001C", "1.0"]]
     _write_tsv(root / "raw" / "mt4718data.tsv", ["ORF", "A101_A"], rows)
     _write_tsv(root / "raw" / "wt122data.tsv", ["NAME", "A101_A"], [["wt1", "2.0"]])
-    with caplog.at_level(logging.INFO, logger=m.log.name):
-        dataset = m.ScmdOhya2005Dataset(root=str(root), genome=_genome())
+    with (
+        caplog.at_level(logging.INFO, logger=m.log.name),
+        pytest.raises(
+            pydantic.ValidationError, match="calmorph measurements cannot be empty"
+        ),
+    ):
+        m.ScmdOhya2005Dataset(root=str(root))
     warnings = [
         r.getMessage()
         for r in caplog.records
         if r.name == m.log.name and r.levelname == "WARNING"
     ]
     assert warnings == [
-        "Ohya 2005: dropping 21 mutant row(s) with missing CalMorph values: "
-        f"{[f'Y{k:02d}' for k in range(20)]}"
+        "Ohya 2005: 21 blank CalMorph cell(s) in 21 row(s) are key-absent in their "
+        "records"
     ]
-    assert len(dataset) == 1
-    dataset.close_lmdb()
+    assert not (root / "processed" / "lmdb").exists()
 
 
 def test_clean_matrix_logs_no_drop_and_shares_the_wt_mean_reference(
@@ -428,7 +414,7 @@ def test_clean_matrix_logs_no_drop_and_shares_the_wt_mean_reference(
         [["w1", "1.0", "0.3"], ["w2", "3.0", "0.5"]],
     )
     with caplog.at_level(logging.INFO, logger=m.log.name):
-        dataset = m.ScmdOhya2005Dataset(root=str(root), genome=_genome())
+        dataset = m.ScmdOhya2005Dataset(root=str(root))
     assert [r.getMessage() for r in caplog.records if r.name == m.log.name] == [
         "Ohya 2005: 2 non-essential deletion strains (0 dropped for naming)",
         "Processing Ohya 2005 CalMorph morphology data...",
@@ -486,7 +472,7 @@ def test_two_spellings_of_one_strain_are_refused_before_the_store_opens(
     _write_tsv(root / "raw" / "wt122data.tsv", ["NAME", "A101_A"], [["w1", "1.0"]])
     for _ in range(2):
         with pytest.raises(RuntimeError) as info:
-            m.ScmdOhya2005Dataset(root=str(root), genome=_genome())
+            m.ScmdOhya2005Dataset(root=str(root))
         assert str(info.value) == (
             "Ohya 2005: the same strain is listed more than once (ORF stripped and "
             "uppercased): ['YAL001C', ' yal001c']"
@@ -511,7 +497,7 @@ def test_blank_orf_rows_are_dropped_with_a_counted_warning(
     )
     _write_tsv(root / "raw" / "wt122data.tsv", ["NAME", "A101_A"], [["w1", "1.0"]])
     with caplog.at_level(logging.INFO, logger=m.log.name):
-        dataset = m.ScmdOhya2005Dataset(root=str(root), genome=_genome())
+        dataset = m.ScmdOhya2005Dataset(root=str(root))
     assert [
         (r.levelname, r.getMessage()) for r in caplog.records if r.name == m.log.name
     ] == [
@@ -546,7 +532,7 @@ def test_a_tcv_column_is_a_base_parameter_and_refused_by_the_schema(
         [["w1", "1.0", "0.3"]],
     )
     with pytest.raises(pydantic.ValidationError) as info:
-        m.ScmdOhya2005Dataset(root=str(root), genome=_genome())
+        m.ScmdOhya2005Dataset(root=str(root))
     assert [(e["loc"], e["msg"]) for e in info.value.errors()] == [
         (
             ("calmorph",),
@@ -575,39 +561,16 @@ def test_non_numeric_mutant_cell_refuses_before_the_store_opens(tmp_path: Path) 
         with pytest.raises(
             ValueError, match=r"^could not convert string to float: 'x'$"
         ):
-            m.ScmdOhya2005Dataset(root=str(root), genome=_genome())
+            m.ScmdOhya2005Dataset(root=str(root))
         assert not (root / "processed" / "lmdb").exists()
         assert not (root / "preprocess" / "data.csv").exists()
-
-
-def test_missing_genome_is_built_once_by_default_genome(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """With ``genome=None`` the build calls ``default_genome()`` exactly once (line 268)
-    and reconciles with what it returns, so the records match the stubbed build.
-    """
-    stub: object = _StubGenome()
-    calls: list[None] = []
-
-    def fake_default_genome() -> object:
-        calls.append(None)
-        return stub
-
-    monkeypatch.setattr(m, "default_genome", fake_default_genome)
-    dataset = m.ScmdOhya2005Dataset(root=str(_root(tmp_path)))
-    assert calls == [None]
-    assert dataset.genome is stub
-    assert [
-        dataset[i]["experiment"]["genotype"]["perturbations"][0]["systematic_gene_name"]
-        for i in range(len(dataset))
-    ] == ["YAL001C", "YBR001C", "YCR001W", "YER001W", "YER002W", "YFR001W"]
 
 
 def test_download_copies_both_pinned_matrices_then_reverifies_in_place(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """With ``_RAW_FILES`` pinned to the synthetic matrices, an empty root copies both
-    from ``$DATA_ROOT/<_MIRROR_DIR>`` byte for byte and builds six records; a second
+    from ``$DATA_ROOT/<_MIRROR_DIR>`` byte for byte and builds seven records; a second
     ``download`` with the mirror removed only re-hashes the raw copies.
     """
     source = _root(tmp_path, "source") / "raw"
@@ -631,10 +594,10 @@ def test_download_copies_both_pinned_matrices_then_reverifies_in_place(
     )
     monkeypatch.setenv("DATA_ROOT", str(data_root))
     monkeypatch.delenv("TC_DATA_URL", raising=False)
-    dataset = m.ScmdOhya2005Dataset(root=str(tmp_path / "fresh"), genome=_genome())
+    dataset = m.ScmdOhya2005Dataset(root=str(tmp_path / "fresh"))
     raw = tmp_path / "fresh" / "raw"
     assert {name: (raw / name).read_bytes() for name in content} == content
-    assert len(dataset) == 6
+    assert len(dataset) == 7
     for name in content:
         (mirror / name).unlink()
     dataset.download()
@@ -671,9 +634,7 @@ def test_the_interned_store_resolves_to_exactly_the_inline_records(
     components, five SourcedValues) instead of a name-only stub, so it crosses the
     interning threshold; before, it stayed inline.
     """
-    interned = m.ScmdOhya2005Dataset(
-        root=str(_root(tmp_path, "interned")), genome=_genome()
-    )
+    interned = m.ScmdOhya2005Dataset(root=str(_root(tmp_path, "interned")))
 
     def inline_record(
         self: m.ScmdOhya2005Dataset,
@@ -692,11 +653,9 @@ def test_the_interned_store_resolves_to_exactly_the_inline_records(
 
     with monkeypatch.context() as patch:
         patch.setattr(m.ScmdOhya2005Dataset, "_intern_record", inline_record)
-        inline = m.ScmdOhya2005Dataset(
-            root=str(_root(tmp_path, "inline")), genome=_genome()
-        )
-    assert len(interned) == len(inline) == 6
-    assert [interned[i] for i in range(6)] == [inline[i] for i in range(6)]
+        inline = m.ScmdOhya2005Dataset(root=str(_root(tmp_path, "inline")))
+    assert len(interned) == len(inline) == 7
+    assert [interned[i] for i in range(7)] == [inline[i] for i in range(7)]
     interned.close_lmdb()
     inline.close_lmdb()
 
@@ -711,14 +670,14 @@ def test_the_interned_store_resolves_to_exactly_the_inline_records(
     stored = _raw_records(tmp_path / "interned" / "processed")
     assert [r["reference"] for r in stored] == [
         {"$ref": digest, "name": "ScmdOhya2005Dataset"}
-    ] * 6
-    assert [r["publication"] for r in stored] == [_PUBLICATION] * 6
+    ] * 7
+    assert [r["publication"] for r in stored] == [_PUBLICATION] * 7
     env_digest = hashlib.sha256(
         json.dumps(_ENVIRONMENT.model_dump(mode="json"), sort_keys=True).encode()
     ).hexdigest()
     assert [r["experiment"]["environment"] for r in stored] == [
         {"$ref": env_digest, "name": m.OHYA_YPD.name}
-    ] * 6
+    ] * 7
     ienv = lmdb.open(
         str(tmp_path / "interned" / "processed" / "interned"), readonly=True, lock=False
     )

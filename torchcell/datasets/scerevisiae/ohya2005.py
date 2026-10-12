@@ -43,19 +43,15 @@ by Suzuki 2018 (which reuses this data, "grown at 25 C") and by the same-lab Ohn
 25 C here follows the deferral convention (defer method detail to the cited/related mirrored
 paper); FLAG: pin the verbatim Ohya-2005 temperature once that paper is mirrored.
 
-ORFs are 2005-annotation SGD systematic names, reconciled to the current R64-4-1 annotation
-by the shared genome resolver (:meth:`SCerevisiaeGenome.resolve_gene_name`). Every strain is
-a real measured perturbation, so NO record is dropped for a naming reason: a name that
-resolves to a current R64 identifier (a live gene, an SGD rename, or a valid non-"gene"
-feature such as a ``blocked_reading_frame`` pseudogene) is remapped to that id; a name that
-SGD retired entirely, or whose remap would collide with another strain's record (an SGD
-merge of two distinct 2005 ORFs), is retained verbatim with its legacy 2005 systematic name.
-Rows with any missing CalMorph value are dropped whole -- values are NEVER imputed. Net
-built records: 4718 (0 dropped for naming; ~17 remapped to current ids, the rest kept as
-current or legacy systematic names). Historical note: an earlier build dropped 23
-non-R64 names (4695 records) with a hand-authored rename table; the resolver supersedes that,
-retaining all 4718 and correctly remapping 20 renames + non-gene features the manual table
-missed.
+ORFs are 2005-annotation SGD systematic names and are stored AS RELEASED (stripped and
+upper-cased), as both ``systematic_gene_name`` and ``perturbed_gene_name``; no genome is
+consulted (#1045, owner rule 2026-10-12: the genome and the experiment are loaded
+separately and meet through their gene sets at modeling time). A 2005 name the current
+annotation renames (17 strains, e.g. yal043c-a, which R64-4-1 lists as YAL042C-A),
+merges, or has retired keeps its released name and its record; the previous build
+remapped the 17 to the current id. A strain with a blank CalMorph cell keeps every
+measured trait and the blank one is key-absent, never imputed (0 of 4718 rows). Net built
+records: 4718, 0 dropped.
 """
 
 # torchcell/datasets/scerevisiae/ohya2005
@@ -95,11 +91,6 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
-from torchcell.datasets.scerevisiae.gene_name_reconcile import (
-    default_genome,
-    reconcile_systematic_names,
-)
-from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import SourcedValue
 
@@ -200,15 +191,9 @@ class ScmdOhya2005Dataset(ExperimentDataset):
         io_workers: int = 0,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
-        genome: SCerevisiaeGenome | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize the dataset; an optional genome resolves 2005 ORF names to R64.
-
-        If ``genome`` is not supplied one is constructed from ``DATA_ROOT`` during
-        processing (used only to reconcile source ORF names to the current annotation).
-        """
-        self.genome = genome
+        """Initialize the dataset (no genome: every strain is stored as released)."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -297,15 +282,11 @@ class ScmdOhya2005Dataset(ExperimentDataset):
         return df
 
     def preprocess_calmorph_data(self, df_mutant: pd.DataFrame) -> pd.DataFrame:
-        """Clean the mutant matrix, drop incomplete rows, and reconcile ORF names to R64.
+        """Clean the mutant matrix and name every strain as released.
 
-        Names are reconciled to the current R64-4-1 annotation with the genome's layered
-        resolver (:meth:`SCerevisiaeGenome.resolve_gene_name`). NO record is dropped for a
-        naming reason -- every strain is a real measured perturbation. A resolved current
-        identifier (live gene, SGD rename, or valid non-"gene" feature) replaces the legacy
-        2005 name UNLESS doing so would collide with another strain's record (an SGD merge
-        of two distinct 2005 ORFs), in which case the original 2005 systematic name is kept
-        so the two strains stay distinct. Retired/ambiguous names are kept verbatim.
+        No genome is consulted (#1045): the stripped, upper-cased ``ORF`` cell is both
+        the systematic and the perturbed gene name. A blank ORF row names no strain and is
+        dropped with a counted warning; two rows naming one strain are refused.
         """
         df_mutant = df_mutant.copy()
         # The ORF column carries the systematic gene name; there is no common-name column.
@@ -329,28 +310,22 @@ class ScmdOhya2005Dataset(ExperimentDataset):
                 f"{df_mutant.loc[duplicated, 'ORF'].tolist()}"
             )
 
-        # Drop any strain with a missing CalMorph value -- CalMorph completeness requires
-        # the full 501-trait vocabulary per record; values are NEVER imputed (drop whole).
+        df_mutant = df_mutant.reset_index(drop=True)
+        # A blank CalMorph cell is key-absent in the record, never imputed and never a
+        # reason to drop the strain's other traits (0 blank cells in the pinned matrix).
         feature_cols = [
             c
             for c in df_mutant.columns
             if c not in ("ORF", "systematic_gene_name", "perturbed_gene_name")
         ]
-        has_all = df_mutant[feature_cols].notna().all(axis=1)
-        n_nan = int((~has_all).sum())
-        if n_nan:
+        n_blank_cells = int(df_mutant[feature_cols].isna().sum().sum())
+        if n_blank_cells:
             log.warning(
-                "Ohya 2005: dropping %d mutant row(s) with missing CalMorph values: %s",
-                n_nan,
-                df_mutant.loc[~has_all, "systematic_gene_name"].tolist()[:20],
+                "Ohya 2005: %d blank CalMorph cell(s) in %d row(s) are key-absent in "
+                "their records",
+                n_blank_cells,
+                int(df_mutant[feature_cols].isna().any(axis=1).sum()),
             )
-        df_mutant = df_mutant[has_all].reset_index(drop=True)
-
-        if self.genome is None:
-            self.genome = default_genome()
-        df_mutant["systematic_gene_name"] = reconcile_systematic_names(
-            self.genome, df_mutant["systematic_gene_name"], label="Ohya 2005"
-        )
         df_mutant["perturbed_gene_name"] = df_mutant["systematic_gene_name"]
 
         log.info(
@@ -400,13 +375,13 @@ class ScmdOhya2005Dataset(ExperimentDataset):
         environment = Environment(media=OHYA_YPD, temperature=Temperature(value=25))
         environment_reference = environment.model_copy()
 
-        # Extract morphology measurements and separate base from CV parameters. Rows are
-        # guaranteed complete + finite (incomplete rows dropped in preprocessing).
+        # Extract morphology measurements and separate base from CV parameters. A blank
+        # cell is key-absent (never imputed).
         info_columns = {"ORF", "systematic_gene_name", "perturbed_gene_name"}
         base_measurements: dict[str, float] = {}
         cv_measurements: dict[str, float] = {}
         for col in row.index:
-            if col in info_columns:
+            if col in info_columns or pd.isna(row[col]):
                 continue
             float_value = float(row[col])
             if col.startswith(_CV_PREFIXES):

@@ -5,26 +5,25 @@
 
 The Dataset S2 text file is written into ``<root>/raw/`` so PyG never calls
 ``download()``. The loader's row-count self-checksum demands exactly 1312 data rows, so
-the five hand-made rows are padded with 1307 ``FILLER<k>`` rows that resolve to nothing and
-are dropped. The genome stub carries ``gene_attribute_table`` (IDs YAL001C, YBR001C,
-YCR001W) and ``alias_to_systematic`` (YBR002C -> YBR001C; YER001W -> YER999W, a target
-that is not an ID).
+the five hand-made rows are padded with 1307 ``YAR<k>W``/``YBR<k>W`` filler rows (each an ORF-shaped
+name) that are stored like any other row. No genome is consulted (#1045): every row is a
+record under its released ORF (upper-cased) and released commonName.
 
 Rows (orf, commonName, log2relT, similarity), after a leading ``#`` comment line:
 
     YAL001C  TFC3     1.0   0.1     fitness 2^-1.0 = 0.5
-    ybr002c  NTH2     -1.0  0.2     alias -> YBR001C; fitness 2^1.0 = 2.0
+    ybr002c  NTH2     -1.0  0.2     stored under YBR002C; fitness 2^1.0 = 2.0
     YCR001W  YCR001W  0.0   0.3     fitness 1.0
-    YZZ999W  GHOST    0.5   0.4     unresolved -> dropped
-    YER001W  OLD      0.25  0.5     alias target not an ID -> dropped
+    YOL999W  GHOST    0.5   0.4     stored (whatever the annotation says of it)
+    YER001W  OLD      0.25  0.5     stored
 
 Every record: n_samples = 2 (biological replicates), no uncertainty, SC liquid 30 C,
 BY4741 reference at fitness 1.0.
 
 2026.09.30 (Phase 16): the same five rows, plus
 
-- the ledger line (line 316): "Wrote 3 ODuibhir2014 fitness experiments to LMDB (1309
-  ORFs dropped: ...)", 1309 = 1307 fillers + YZZ999W + YER001W, the raw tokens sorted.
+- the ledger line: "Wrote 1312 ODuibhir2014 fitness experiments to LMDB (every released
+  row, under its released ORF)".
 - ``transform_item`` round trips through ``FitnessExperiment`` and
   ``FitnessExperimentReference`` (a gene-interaction class would drop ``fitness``).
 - a duplicate and edge matrix (padded to 1312): YAL001C at log2relT 1.0, again at 0.5
@@ -54,7 +53,7 @@ import json
 import logging
 import re
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import pandas as pd
 import pytest
@@ -75,7 +74,6 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.scerevisiae import oduibhir2014 as m
-from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 
 @pytest.fixture(autouse=True)
@@ -90,22 +88,10 @@ _ROWS = [
     ["YAL001C", "TFC3", "1.0", "0.1"],
     ["ybr002c", "NTH2", "-1.0", "0.2"],
     ["YCR001W", "YCR001W", "0.0", "0.3"],
-    ["YZZ999W", "GHOST", "0.5", "0.4"],
+    ["YOL999W", "GHOST", "0.5", "0.4"],
     ["YER001W", "OLD", "0.25", "0.5"],
 ]
 _HEADER = ["", "commonName", "log2relT", "similarity"]
-
-
-class _StubGenome:
-    gene_attribute_table = pd.DataFrame({"ID": ["YAL001C", "YBR001C", "YCR001W"]})
-    alias_to_systematic: dict[str, list[str]] = {
-        "YBR002C": ["YBR001C"],
-        "YER001W": ["YER999W"],
-    }
-
-
-def _genome() -> SCerevisiaeGenome:
-    return cast(SCerevisiaeGenome, _StubGenome())
 
 
 def _write_s2(
@@ -113,7 +99,7 @@ def _write_s2(
 ) -> None:
     filler = (
         [
-            [f"FILLER{k:04d}", "x", "0.0", "0.0"]
+            [f"Y{'ABCDEFGHIJKLMNOP'[k // 1000]}R{k % 1000:03d}W", "x", "0.0", "0.0"]
             for k in range(m._EXPECTED_ROWS - len(rows))
         ]
         if pad
@@ -136,7 +122,7 @@ def _root(tmp_path: Path, slug: str = "smf_oduibhir2014", **kwargs: Any) -> Path
 
 @pytest.fixture
 def dataset(tmp_path: Path) -> m.SmfODuibhir2014Dataset:
-    return m.SmfODuibhir2014Dataset(root=str(_root(tmp_path)), genome=_genome())
+    return m.SmfODuibhir2014Dataset(root=str(_root(tmp_path)))
 
 
 _ENVIRONMENT = Environment(media=SC, temperature=Temperature(value=30))
@@ -175,18 +161,21 @@ def _experiment(orf: str, common: str, fitness: float) -> dict[str, Any]:
     ).model_dump()
 
 
-def test_three_records_with_fitness_two_to_the_minus_log2relt(
+def test_every_row_is_a_record_with_fitness_two_to_the_minus_log2relt(
     dataset: m.SmfODuibhir2014Dataset,
 ) -> None:
-    """1312 rows give three records: a slow grower (log2relT 1.0 -> 0.5), a fast grower
-    reached through an alias (-1.0 -> 2.0) and a neutral one (0.0 -> 1.0). The two
-    unresolvable ORFs and the 1307 filler rows are dropped. All uncertainty fields stay
-    None; the reference is BY4741 at fitness 1.0 with the same n = 2.
+    """1312 rows give 1312 records: a slow grower (log2relT 1.0 -> 0.5), a fast grower
+    under its released lowercase name upper-cased (-1.0 -> 2.0), a neutral one (0.0 ->
+    1.0), two ORFs the annotation does not know (stored anyway) and the 1307 fillers.
+    All uncertainty fields stay None; the reference is BY4741 at fitness 1.0 with the
+    same n = 2.
     """
-    assert len(dataset) == 3
+    assert len(dataset) == 1312
     assert dataset[0]["experiment"] == _experiment("YAL001C", "TFC3", 0.5)
-    assert dataset[1]["experiment"] == _experiment("YBR001C", "NTH2", 2.0)
+    assert dataset[1]["experiment"] == _experiment("YBR002C", "NTH2", 2.0)
     assert dataset[2]["experiment"] == _experiment("YCR001W", "YCR001W", 1.0)
+    assert dataset[3]["experiment"] == _experiment("YOL999W", "GHOST", 2.0**-0.5)
+    assert dataset[4]["experiment"] == _experiment("YER001W", "OLD", 2.0**-0.25)
     assert dataset[0]["reference"] == _REFERENCE
     assert dataset[0]["publication"] == _PUBLICATION
     phenotype = dataset[0]["experiment"]["phenotype"]
@@ -195,35 +184,22 @@ def test_three_records_with_fitness_two_to_the_minus_log2relt(
 
 
 def test_side_files(dataset: m.SmfODuibhir2014Dataset) -> None:
-    """No ``data.csv`` is written by this loader; the gene set is the three resolved ORFs
-    and one reference covers every record.
+    """No ``data.csv`` is written by this loader; the gene set is the 1312 released
+    ORFs and one reference covers every record.
     """
     preprocess = Path(dataset.root) / "preprocess"
     assert not (preprocess / "data.csv").exists()
-    assert json.loads((preprocess / "gene_set.json").read_text()) == [
-        "YAL001C",
-        "YBR001C",
-        "YCR001W",
-    ]
+    gene_set = json.loads((preprocess / "gene_set.json").read_text())
+    assert len(gene_set) == 1312
+    assert {"YAL001C", "YBR002C", "YCR001W", "YER001W", "YOL999W"} <= set(gene_set)
+    assert gene_set == sorted(gene_set)
     index = json.loads((preprocess / "experiment_reference_index.json").read_text())
-    assert [entry["member_indices"] for entry in index] == [[0, 1, 2]]
+    assert [entry["member_indices"] for entry in index] == [list(range(1312))]
     manifest = json.loads((preprocess / "build_manifest.json").read_text())
     assert manifest["dataset_name"] == "smf_oduibhir2014"
     assert manifest["loader_class"] == "SmfODuibhir2014Dataset"
     assert manifest["loader_module"] == "torchcell.datasets.scerevisiae.oduibhir2014"
     assert {"FitnessExperiment", "FitnessPhenotype"} <= set(manifest["closure"])
-
-
-def test_requires_a_genome_before_reading_the_file(tmp_path: Path) -> None:
-    """The genome check runs before the file is read, so even a valid file raises."""
-    with pytest.raises(
-        RuntimeError,
-        match=re.escape(
-            "SmfODuibhir2014Dataset requires a genome for ORF resolution; "
-            "inject SCerevisiaeGenome(...)"
-        ),
-    ):
-        m.SmfODuibhir2014Dataset(root=str(_root(tmp_path)), genome=None)
 
 
 def test_unexpected_columns_raise_before_the_row_count(tmp_path: Path) -> None:
@@ -236,7 +212,7 @@ def test_unexpected_columns_raise_before_the_row_count(tmp_path: Path) -> None:
             "'similarity', 'extra'] != ['orf', 'commonName', 'log2relT', 'similarity']"
         ),
     ):
-        m.SmfODuibhir2014Dataset(root=str(root), genome=_genome())
+        m.SmfODuibhir2014Dataset(root=str(root))
 
 
 def test_row_count_self_checksum(tmp_path: Path) -> None:
@@ -245,7 +221,7 @@ def test_row_count_self_checksum(tmp_path: Path) -> None:
     with pytest.raises(
         RuntimeError, match="Dataset S2 row-count self-checksum failed: 5 != 1312"
     ):
-        m.SmfODuibhir2014Dataset(root=str(root), genome=_genome())
+        m.SmfODuibhir2014Dataset(root=str(root))
 
 
 def test_download_leaves_a_present_file_to_the_build_check_and_needs_the_mirror(
@@ -255,7 +231,7 @@ def test_download_leaves_a_present_file_to_the_build_check_and_needs_the_mirror(
     time); with no raw file and no mirror the constructor names the missing mirror path.
     """
     monkeypatch.setenv("DATA_ROOT", str(tmp_path / "data_root"))
-    dataset = m.SmfODuibhir2014Dataset(root=str(_root(tmp_path)), genome=_genome())
+    dataset = m.SmfODuibhir2014Dataset(root=str(_root(tmp_path)))
     dest = Path(dataset.root) / "raw" / m._RAW_FILENAME
     before = dest.read_bytes()
     dataset.download()
@@ -275,7 +251,7 @@ def test_download_leaves_a_present_file_to_the_build_check_and_needs_the_mirror(
             "sha256-pinned Supplementary Dataset S2 in the torchcell-library mirror."
         ),
     ):
-        m.SmfODuibhir2014Dataset(root=str(tmp_path / "empty"), genome=_genome())
+        m.SmfODuibhir2014Dataset(root=str(tmp_path / "empty"))
 
 
 def test_items_retype_through_the_fitness_classes(
@@ -310,32 +286,46 @@ def test_inline_build_leaves_the_generic_hooks_inert(
     assert str(info.value) == ""
 
 
-def test_drop_ledger_names_every_unresolved_raw_token(
+def test_ledger_counts_every_released_row(
     tmp_path: Path, caplog: pytest.LogCaptureFixture
 ) -> None:
-    """The ledger line counts the three written records and the 1309 dropped rows (1307
-    fillers plus YZZ999W and YER001W, whose alias target YER999W is not an ID), listing
-    the raw tokens in sorted order.
-    """
+    """The ledger line counts all 1312 written records; nothing is dropped."""
     with caplog.at_level(logging.INFO, logger=m.log.name):
-        m.SmfODuibhir2014Dataset(root=str(_root(tmp_path)), genome=_genome())
-    fillers = [f"FILLER{k:04d}" for k in range(1307)]
+        m.SmfODuibhir2014Dataset(root=str(_root(tmp_path)))
     wrote = [
         r.getMessage()
         for r in caplog.records
         if r.name == m.log.name and r.getMessage().startswith("Wrote")
     ]
     assert wrote == [
-        "Wrote 3 ODuibhir2014 fitness experiments to LMDB (1309 ORFs dropped: "
-        f"{[*fillers, 'YER001W', 'YZZ999W']})"
+        "Wrote 1312 ODuibhir2014 fitness experiments to LMDB (every released row, "
+        "under its released ORF)"
     ]
+
+
+def test_a_name_that_is_not_orf_shaped_is_refused_before_the_store_opens(
+    tmp_path: Path,
+) -> None:
+    """A row id with no ORF form cannot sit on KanMxDeletionPerturbation and needs the
+    released-gene-name leaf; it is refused by name, never resolved and never dropped.
+    """
+    root = _edge_root(
+        tmp_path,
+        "shape",
+        [["YAL001C", "TFC3", "1.0", "0.1"], ["ABC1", "X", "0.5", "0.4"]],
+    )
+    _refused_twice(
+        root,
+        "Dataset S2 row 'ABC1' is not an ORF-shaped identifier; a released name with "
+        "no ORF form needs the released-gene-name leaf",
+    )
 
 
 def _refused_twice(root: Path, message: str) -> None:
     """Two constructors on ``root`` both raise ``message`` and leave no store behind."""
     for _ in range(2):
         with pytest.raises(RuntimeError) as info:
-            m.SmfODuibhir2014Dataset(root=str(root), genome=_genome())
+            m.SmfODuibhir2014Dataset(root=str(root))
         assert str(info.value) == message
         assert not (root / "processed" / "lmdb").exists()
         assert not (root / "preprocess" / "gene_set.json").exists()
@@ -421,7 +411,7 @@ def test_download_copies_the_pinned_mirror_file_then_verifies_in_place(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
     """With the pin set to the synthetic file's digest, an empty root copies the mirror
-    file byte for byte, logs "Verified <dest> (sha256 <pin>)" and builds three records
+    file byte for byte, logs "Verified <dest> (sha256 <pin>)" and builds 1312 records
     under the real build-time check; a second ``download`` with the mirror removed finds
     the raw copy present and neither copies nor logs.
     """
@@ -431,12 +421,10 @@ def test_download_copies_the_pinned_mirror_file_then_verifies_in_place(
     src = _mirror(tmp_path, monkeypatch, content)
     monkeypatch.setattr(m, "_DATASET_S2_SHA256", digest)
     with caplog.at_level(logging.INFO, logger=m.log.name):
-        dataset = m.SmfODuibhir2014Dataset(
-            root=str(tmp_path / "fresh"), genome=_genome()
-        )
+        dataset = m.SmfODuibhir2014Dataset(root=str(tmp_path / "fresh"))
     dest = tmp_path / "fresh" / "raw" / m._RAW_FILENAME
     assert dest.read_bytes() == content
-    assert len(dataset) == 3
+    assert len(dataset) == 1312
     assert [r.getMessage() for r in caplog.records if r.name == m.log.name][0] == (
         f"Verified {dest} (sha256 {digest})"
     )
@@ -462,7 +450,7 @@ def test_a_mirror_file_off_the_pin_is_refused_and_nothing_lands_in_raw(
     root = tmp_path / "unverified"
     for _ in range(2):
         with pytest.raises(RawSha256MismatchError) as err:
-            m.SmfODuibhir2014Dataset(root=str(root), genome=_genome())
+            m.SmfODuibhir2014Dataset(root=str(root))
         assert str(err.value) == (
             f"sha256 mismatch for {src}: expected {m._DATASET_S2_SHA256}, "
             f"observed {digest}"
@@ -482,7 +470,7 @@ def test_a_raw_file_off_the_pin_is_refused_at_build_time(
     staged = off_pin_raw(m, [m._RAW_FILENAME])
     raw = staged.root / "raw" / m._RAW_FILENAME
     with pytest.raises(RawSha256MismatchError) as err:
-        m.SmfODuibhir2014Dataset(root=str(staged.root), genome=_genome())
+        m.SmfODuibhir2014Dataset(root=str(staged.root))
     assert str(err.value) == (
         f"sha256 mismatch for {raw}: expected "
         "37ef19ee249c64c0557c84870e59b2fd7a8bbaf14371fd355775e650f2a39f1c, "
@@ -493,24 +481,19 @@ def test_a_raw_file_off_the_pin_is_refused_at_build_time(
     assert hashlib.sha256(raw.read_bytes()).hexdigest() == staged.observed
 
 
-def test_main_builds_genome_and_dataset_under_data_root(
+def test_main_builds_the_dataset_under_data_root(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """``main`` builds the genome from ``$DATA_ROOT/data/sgd/genome`` and ``data/go`` with
-    ``overwrite=False``, then the dataset at ``$DATA_ROOT/data/torchcell/smf_oduibhir2014``
-    with that genome, and prints its length and first item. Both classes are recorders.
+    """``main`` builds the dataset at ``$DATA_ROOT/data/torchcell/smf_oduibhir2014`` with
+    no genome and prints its length and first item. The dataset class is a recorder.
     """
     monkeypatch.setenv("DATA_ROOT", str(tmp_path))
     monkeypatch.setattr("dotenv.load_dotenv", lambda *a, **k: False)
-    calls: list[tuple[str, dict[str, Any]]] = []
-
-    class _Genome:
-        def __init__(self, **kwargs: Any) -> None:
-            calls.append(("genome", kwargs))
+    calls: list[dict[str, Any]] = []
 
     class _Dataset:
         def __init__(self, **kwargs: Any) -> None:
-            calls.append(("dataset", kwargs))
+            calls.append(kwargs)
 
         def __len__(self) -> int:
             return 4
@@ -518,16 +501,7 @@ def test_main_builds_genome_and_dataset_under_data_root(
         def __getitem__(self, index: int) -> str:
             return f"item[{index}]"
 
-    monkeypatch.setattr(m, "SCerevisiaeGenome", _Genome)
     monkeypatch.setattr(m, "SmfODuibhir2014Dataset", _Dataset)
     m.main()
-    assert [name for name, _ in calls] == ["genome", "dataset"]
-    assert calls[0][1] == {
-        "genome_root": f"{tmp_path}/data/sgd/genome",
-        "go_root": f"{tmp_path}/data/go",
-        "overwrite": False,
-    }
-    assert list(calls[1][1]) == ["root", "genome"]
-    assert calls[1][1]["root"] == f"{tmp_path}/data/torchcell/smf_oduibhir2014"
-    assert type(calls[1][1]["genome"]) is _Genome
+    assert calls == [{"root": f"{tmp_path}/data/torchcell/smf_oduibhir2014"}]
     assert capsys.readouterr().out == "len = 4\nitem[0]\n"

@@ -48,21 +48,34 @@ def _deleted_genes(experiment: dict[str, Any]) -> list[str]:
     ]
 
 
-def _l1_orf_uniqueness(records: Sequence[Record]) -> LevelResult:
-    """L1: exactly one record per deleted ORF (no duplicate strains)."""
+def _l1_orf_uniqueness(
+    records: Sequence[Record], *, allow_duplicate_orfs: bool = False
+) -> LevelResult:
+    """L1: exactly one record per deleted ORF (no duplicate strains).
+
+    With ``allow_duplicate_orfs`` a release that scores one ORF on more than one plate
+    (Ozaydin 2013: 130 ORFs on two plates) stores one record per released row, so the
+    rule reports the duplicated ORFs and holds.
+    """
     seen: dict[str, int] = {}
     for rec in records:
         for g in _deleted_genes(rec["experiment"]):
             seen[g] = seen.get(g, 0) + 1
     dups = {g: n for g, n in seen.items() if n > 1}
+    passed = allow_duplicate_orfs or not dups
     return LevelResult(
         level=Level.L1,
         name="orf_uniqueness",
-        passed=not dups,
+        passed=passed,
         message=(
             f"{len(seen)} unique deleted ORFs, one record each"
             if not dups
             else f"{len(dups)} ORFs appear in multiple records"
+            + (
+                " (one record per released row, allowed)"
+                if allow_duplicate_orfs
+                else ""
+            )
         ),
         details={"n_orfs": len(seen), "n_duplicated": len(dups)},
     )
@@ -115,6 +128,7 @@ def verify_visual_score_dataset(
     dataset_name: str,
     provenance: Provenance,
     expected_count: int,
+    allow_duplicate_orfs: bool = False,
 ) -> VerificationReport:
     """Run the L0-L3 record-level gate for a visual-score dataset.
 
@@ -130,7 +144,7 @@ def verify_visual_score_dataset(
     report = VerificationReport(dataset_name=dataset_name, provenance=provenance)
     report.add(l0_structural((rec["experiment"] for rec in records), validate))
     report.add(l1_count(len(records), expected_count))
-    report.add(_l1_orf_uniqueness(records))
+    report.add(_l1_orf_uniqueness(records, allow_duplicate_orfs=allow_duplicate_orfs))
 
     scores = [float(rec["experiment"]["phenotype"]["visual_score"]) for rec in records]
     report.add(l2_value_fidelity(scores, allow_nan=False))

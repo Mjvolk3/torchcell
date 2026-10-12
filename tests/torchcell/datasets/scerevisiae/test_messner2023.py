@@ -4,10 +4,11 @@
 """Hermetic build tests for the Messner 2023 genome-wide KO proteome loader.
 
 The loader reads two raw CSVs (a proteins x samples matrix keyed by UniProt accession
-and a per-sample metadata table) and maps accessions to systematic ORFs through the
-SGD GFF found under ``$DATA_ROOT/data/sgd/genome/*/saccharomyces_cerevisiae_*.gff``.
-Every test points ``DATA_ROOT`` at ``tmp_path`` and writes a five-line fake GFF, three
-of whose lines carry ``protein_id=UniProtKB:<acc>`` in the ninth column; no mirror, no
+and a per-sample metadata table) and stores both as released (#1045): the protein keys
+are the accessions and the deleted gene is the metadata ORF, upper-cased; no annotation
+is consulted. The GFF helpers (``build_uniprot_to_orf_map``,
+``build_orf_to_gene_name_map``) stay in the module as downstream utilities for the
+Messner 2021 loader and are tested on a fake GFF under ``tmp_path``; no mirror, no
 network.
 
 Fixture (``yeast5k_noimpute_wide.csv``, blank cell = not measured):
@@ -17,17 +18,14 @@ Fixture (``yeast5k_noimpute_wide.csv``, blank cell = not measured):
     P00002         4           (blank)                          5.0                        1     1
     P00410         2     2     3                                                           1     1
 
-GFF: P00001 -> YBR001C, P00002 -> YCR002W, P00410 -> Q0250 (mitochondrial COX2);
-gene names: YAL059W ``gene=ECM1`` (plus its ``YAL059W_mRNA`` child line), YBL007C
-``gene=SLA1``, YDR003W with no ``gene=``; YML009C is no feature ID (so its name is the
-ORF, logged).
 Metadata: ``wt_a``/``wt_b`` are ``HIS3`` (WT); the two ``ko`` samples delete YAL059W
 and ``YML009c`` (lowercase in metadata, uppercased by the loader); ``qc_1`` is ``qc``
-(ignored); ``bad_ko`` is a ``ko`` sample whose ORF ``YOR202W-not`` fails the nuclear
-regex (skipped); ``absent_ko`` is a ``ko`` row with no matrix column (ignored).
+(ignored); ``bad_ko`` is a ``ko`` sample whose ORF ``YOR202W-not`` has no ORF form
+(deferred to the released-gene-name leaf, counted); ``absent_ko`` is a ``ko`` row with
+no matrix column (ignored).
 
-WT reference (mean, sample SD / sqrt(n), n over non-blank WT cells):
-    YBR001C: 11.0, 1.0, 2      YCR002W: 4.0, NaN, 1      Q0250: 2.0, 0.0, 2
+WT reference (mean, sample SD / sqrt(n), n over non-blank WT cells), keyed by accession:
+    P00001: 11.0, 1.0, 2      P00002: 4.0, NaN, 1      P00410: 2.0, 0.0, 2
 
 2026.09.30 (Phase 14): a second build (``_numeric_root``) on one protein (P00001 ->
 YBR001C) with two WT samples (1 and 1001) and two KO samples of the same ORF YBL007C
@@ -35,12 +33,12 @@ whose filenames are the real shapes ``10_9_hpr1_ko_YBL007C_SLA1_0.47`` and
 ``10_9_hpr57_ko_YBL007C_2824_0.49`` (the second is quoted in
 [[datasets.showcase-verification.2026.09.29]], C19), with KO values 393221 and 0.0313
 (the released matrix's max and min). Expected: two records (one per strain, not per
-ORF), gene names ``SLA1`` and ``2824`` before issue #485 and both ``SLA1`` since; the
-values stored verbatim (linear, no log2);
+ORF), both named by the released ORF ``YBL007C`` (never the filename token, never a
+GFF name); the values stored verbatim (linear, no log2);
 the one shared reference is the arithmetic WT mean (1 + 1001) / 2 = 501.0 (a
 geometric or log2 mean would give 31.64 or 4.98), SE = sqrt(((1 - 501)^2 + (1001 -
 501)^2) / 1) / sqrt(2) = 500.0, n 2; the index is [[0, 1]]. Also pinned: the
-drop summary log line on the first fixture (2 strains, 3 reference proteins, 1 skipped
+summary log line on the first fixture (2 strains, 3 reference proteins, 1 deferred
 ORF), a KO protein that no WT sample measured (refused by name since 2026.10.01), a GFF
 line whose ninth column has no ORF token and a line with two accessions, the three
 ``download`` outcomes against a mirror under ``tmp_path`` (missing, off the pin, copied)
@@ -260,18 +258,19 @@ def test_build_orf_to_gene_name_map_missing_gff_raises(tmp_path: Path) -> None:
 def test_len_data_csv_and_side_files(
     dataset: tuple[ProteomeMessner2023Dataset, Path],
 ) -> None:
-    """Two KO records: ``bad_ko`` (non-systematic ORF) and ``absent_ko`` (no column) drop.
+    """Two KO records: ``bad_ko`` (no ORF form) is deferred and ``absent_ko`` (no
+    column) is ignored.
 
-    ``preprocess/data.csv`` lists filename, ORF (uppercased), gene (SGD ``ECM1``; the
-    uppercase ORF for YML009C, which is no feature ID in the fixture GFF), and the count
-    of measured proteins (2 for KO_A, 1 for KO_B). The gene set is the two deletion ORFs;
-    the manifest records this loader's module and class.
+    ``preprocess/data.csv`` lists filename, ORF (uppercased), gene (the ORF again: no
+    name is looked up), and the count of measured proteins (2 for KO_A, 1 for KO_B).
+    The gene set is the two deletion ORFs; the manifest records this loader's module and
+    class.
     """
     ds, root = dataset
     assert len(ds) == 2
     assert (root / "preprocess" / "data.csv").read_text() == (
         "filename,orf,gene,n_proteins\n"
-        f"{KO_A},YAL059W,ECM1,2\n"
+        f"{KO_A},YAL059W,YAL059W,2\n"
         f"{KO_B},YML009C,YML009C,1\n"
     )
     pre = root / "preprocess"
@@ -294,10 +293,10 @@ def test_len_data_csv_and_side_files(
 def test_record_0_single_replicate_ko_with_restricted_wt_reference(
     dataset: tuple[ProteomeMessner2023Dataset, Path],
 ) -> None:
-    """Record 0 = KO_A (YAL059W/ECM1): abundances YBR001C 8.0 and Q0250 3.0, n = 1, SE None.
+    """Record 0 = KO_A (YAL059W): abundances P00001 8.0 and P00410 3.0, n = 1, SE None.
 
     The blank P00002 cell is dropped (no imputation), so the reference is the WT
-    aggregate restricted to {YBR001C, Q0250}: means 11.0 / 2.0, SEs 1.0 / 0.0 (SD of
+    aggregate restricted to {P00001, P00410}: means 11.0 / 2.0, SEs 1.0 / 0.0 (SD of
     (10, 12) is sqrt(2), / sqrt(2) = 1.0; SD of (2, 2) is 0), n 2 / 2. Environment is the
     fully specified ``SM`` medium at 30 C; background BY4741.
     """
@@ -308,15 +307,15 @@ def test_record_0_single_replicate_ko_with_restricted_wt_reference(
         genotype=Genotype(
             perturbations=[
                 KanMxDeletionPerturbation(
-                    systematic_gene_name="YAL059W", perturbed_gene_name="ECM1"
+                    systematic_gene_name="YAL059W", perturbed_gene_name="YAL059W"
                 )
             ]
         ),
         environment=ENVIRONMENT,
         phenotype=ProteinAbundancePhenotype(
-            protein_abundance={"YBR001C": 8.0, "Q0250": 3.0},
+            protein_abundance={"P00001": 8.0, "P00410": 3.0},
             protein_abundance_se=None,
-            n_replicates={"YBR001C": 1, "Q0250": 1},
+            n_replicates={"P00001": 1, "P00410": 1},
             measurement_type=MEASUREMENT_TYPE,
         ),
     )
@@ -325,9 +324,9 @@ def test_record_0_single_replicate_ko_with_restricted_wt_reference(
         genome_reference=BY4741,
         environment_reference=ENVIRONMENT,
         phenotype_reference=ProteinAbundancePhenotype(
-            protein_abundance={"YBR001C": 11.0, "Q0250": 2.0},
-            protein_abundance_se={"YBR001C": 1.0, "Q0250": 0.0},
-            n_replicates={"YBR001C": 2, "Q0250": 2},
+            protein_abundance={"P00001": 11.0, "P00410": 2.0},
+            protein_abundance_se={"P00001": 1.0, "P00410": 0.0},
+            n_replicates={"P00001": 2, "P00410": 2},
             measurement_type=MEASUREMENT_TYPE,
         ),
     )
@@ -343,11 +342,10 @@ def test_record_0_single_replicate_ko_with_restricted_wt_reference(
 def test_record_1_lowercase_orf_uppercased_and_single_wt_measurement_nan_se(
     dataset: tuple[ProteomeMessner2023Dataset, Path],
 ) -> None:
-    """Record 1 = KO_B: metadata ``YML009c`` becomes ``YML009C``; gene ``YML009C``
-    (not the filename's ``yml009c``: the ORF is no feature ID in the fixture GFF).
+    """Record 1 = KO_B: metadata ``YML009c`` becomes ``YML009C``, as both names.
 
-    Only P00002 -> YCR002W is measured (5.0). WT measured YCR002W once (4.0), so the
-    restricted reference carries n = 1 and a NaN SE for that protein.
+    Only P00002 is measured (5.0). WT measured P00002 once (4.0), so the restricted
+    reference carries n = 1 and a NaN SE for that protein.
     """
     ds, _ = dataset
     record = ds[1]
@@ -355,14 +353,14 @@ def test_record_1_lowercase_orf_uppercased_and_single_wt_measurement_nan_se(
     assert perturbation["systematic_gene_name"] == "YML009C"
     assert perturbation["perturbed_gene_name"] == "YML009C"
     phenotype = record["experiment"]["phenotype"]
-    assert phenotype["protein_abundance"] == {"YCR002W": 5.0}
+    assert phenotype["protein_abundance"] == {"P00002": 5.0}
     assert phenotype["protein_abundance_se"] is None
-    assert phenotype["n_replicates"] == {"YCR002W": 1}
+    assert phenotype["n_replicates"] == {"P00002": 1}
     reference = record["reference"]["phenotype_reference"]
-    assert reference["protein_abundance"] == {"YCR002W": 4.0}
-    assert reference["n_replicates"] == {"YCR002W": 1}
-    assert list(reference["protein_abundance_se"]) == ["YCR002W"]
-    assert math.isnan(reference["protein_abundance_se"]["YCR002W"])
+    assert reference["protein_abundance"] == {"P00002": 4.0}
+    assert reference["n_replicates"] == {"P00002": 1}
+    assert list(reference["protein_abundance_se"]) == ["P00002"]
+    assert math.isnan(reference["protein_abundance_se"]["P00002"])
 
 
 def test_reference_index_splits_on_restricted_reference(
@@ -377,29 +375,10 @@ def test_reference_index_splits_on_restricted_reference(
     assert [
         sorted(e["reference"]["phenotype_reference"]["protein_abundance"])
         for e in index
-    ] == [["Q0250", "YBR001C"], ["YCR002W"]]
+    ] == [["P00001", "P00410"], ["P00002"]]
     loaded = ds.experiment_reference_index
     assert loaded is not None
     assert [eri.member_indices for eri in loaded] == [[0], [1]]
-
-
-def test_unmapped_uniprot_accession_raises(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """A matrix row whose accession is absent from the GFF aborts the build.
-
-    ``P99999`` appears only on the short (7-column) GFF line, which the parser skips,
-    so it is unmapped; the message counts it and lists it.
-    """
-    monkeypatch.setenv("DATA_ROOT", str(tmp_path))
-    _write_gff(tmp_path)
-    rows = [*MATRIX_ROWS, ["P99999", "1", "1", "1", "1", "1", "1"]]
-    root = _root(tmp_path, matrix_rows=rows)
-    with pytest.raises(
-        RuntimeError,
-        match=r"1 Messner proteins have no UniProt->ORF mapping \(e.g. \['P99999'\]\)",
-    ):
-        ProteomeMessner2023Dataset(root=str(root))
 
 
 def test_missing_wt_columns_raises(
@@ -411,19 +390,6 @@ def test_missing_wt_columns_raises(
     metadata = [r for r in METADATA_ROWS if r[1] != "HIS3"]
     root = _root(tmp_path, metadata_rows=metadata)
     with pytest.raises(RuntimeError, match="missing the HIS3 \\(WT\\) control columns"):
-        ProteomeMessner2023Dataset(root=str(root))
-
-
-def test_missing_gff_raises(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    """Without the SGD GFF under ``$DATA_ROOT`` the build fails with FileNotFoundError.
-
-    Only the exception type and message are asserted. That ``process()`` reads the matrix
-    (source line 217), then the GFF map (222), then the metadata (231) is read from the
-    source, not observed by this test.
-    """
-    monkeypatch.setenv("DATA_ROOT", str(tmp_path))
-    root = _root(tmp_path)
-    with pytest.raises(FileNotFoundError, match="SGD GFF not found under"):
         ProteomeMessner2023Dataset(root=str(root))
 
 
@@ -474,9 +440,9 @@ def _shared_reference() -> dict[str, object]:
         genome_reference=BY4741,
         environment_reference=ENVIRONMENT,
         phenotype_reference=ProteinAbundancePhenotype(
-            protein_abundance={"YBR001C": 501.0},
-            protein_abundance_se={"YBR001C": 500.0},
-            n_replicates={"YBR001C": 2},
+            protein_abundance={"P00001": 501.0},
+            protein_abundance_se={"P00001": 500.0},
+            n_replicates={"P00001": 2},
             measurement_type=MEASUREMENT_TYPE,
         ),
     ).model_dump()
@@ -485,25 +451,24 @@ def _shared_reference() -> dict[str, object]:
 def test_numeric_filename_token_is_not_the_gene_name_issue_485(
     numeric: ProteomeMessner2023Dataset,
 ) -> None:
-    """Contract (issue #485): ``10_9_hpr57_ko_YBL007C_2824_0.49`` stores SLA1's deletion
-    with ``perturbed_gene_name`` "SLA1" from the SGD GFF (it was "2824", the filename
-    token), the same spelling as the second strain of the ORF. The whole record is
-    pinned, value 0.0313 stored verbatim.
+    """``10_9_hpr57_ko_YBL007C_2824_0.49`` stores the deletion of the released ORF
+    YBL007C as both names (never "2824", the filename token, and never a GFF name).
+    The whole record is pinned, value 0.0313 stored verbatim.
     """
     expected = ProteinAbundanceExperiment(
         dataset_name="ProteomeMessner2023Dataset",
         genotype=Genotype(
             perturbations=[
                 KanMxDeletionPerturbation(
-                    systematic_gene_name="YBL007C", perturbed_gene_name="SLA1"
+                    systematic_gene_name="YBL007C", perturbed_gene_name="YBL007C"
                 )
             ]
         ),
         environment=ENVIRONMENT,
         phenotype=ProteinAbundancePhenotype(
-            protein_abundance={"YBR001C": 0.0313},
+            protein_abundance={"P00001": 0.0313},
             protein_abundance_se=None,
-            n_replicates={"YBR001C": 1},
+            n_replicates={"P00001": 1},
             measurement_type=MEASUREMENT_TYPE,
         ),
     )
@@ -512,7 +477,7 @@ def test_numeric_filename_token_is_not_the_gene_name_issue_485(
     first = numeric[0]["experiment"]["genotype"]["perturbations"][0]
     assert (first["systematic_gene_name"], first["perturbed_gene_name"]) == (
         "YBL007C",
-        "SLA1",
+        "YBL007C",
     )
 
 
@@ -522,9 +487,8 @@ KO_LOWER = "10_9_hpr10_ko_YBR174C_YBR174c_0.23"
 def test_lowercase_orf_filename_token_is_not_the_gene_name_issue_485(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Contract (issue #485): the real filename ``10_9_hpr10_ko_YBR174C_YBR174c_0.23``
-    used to store ``perturbed_gene_name`` "YBR174c"; YBR174C has no ``gene=`` in the SGD
-    GFF (as in R64-4-1, a dubious ORF), so the name is the uppercase ORF "YBR174C".
+    """The real filename ``10_9_hpr10_ko_YBR174C_YBR174c_0.23`` used to store
+    ``perturbed_gene_name`` "YBR174c"; the name is the uppercase released ORF "YBR174C".
     """
     monkeypatch.setenv("DATA_ROOT", str(tmp_path))
     _write_gff(
@@ -562,7 +526,7 @@ def test_values_are_linear_and_the_reference_is_the_arithmetic_wt_mean(
     """
     assert len(numeric) == 2
     assert numeric[0]["experiment"]["phenotype"]["protein_abundance"] == {
-        "YBR001C": 393221.0
+        "P00001": 393221.0
     }
     assert numeric[0]["reference"] == _shared_reference()
     index = numeric.experiment_reference_index
@@ -572,8 +536,8 @@ def test_values_are_linear_and_the_reference_is_the_arithmetic_wt_mean(
     assert json.loads((pre / "gene_set.json").read_text()) == ["YBL007C"]
     assert (pre / "data.csv").read_text() == (
         "filename,orf,gene,n_proteins\n"
-        f"{KO_SLA1},YBL007C,SLA1,1\n"
-        f"{KO_NUM},YBL007C,SLA1,1\n"
+        f"{KO_SLA1},YBL007C,YBL007C,1\n"
+        f"{KO_NUM},YBL007C,YBL007C,1\n"
     )
 
 
@@ -605,7 +569,7 @@ def test_a_ko_protein_no_wt_sample_measured_is_refused_by_name(
         ProteomeMessner2023Dataset(root=str(root))
     assert str(excinfo.value) == (
         f"Messner: KO sample {KO_SLA1} (YBL007C) measured 1 protein(s) no WT sample "
-        "measured (e.g. ['YBR001C']); the reference has no value for them"
+        "measured (e.g. ['P00001']); the reference has no value for them"
     )
     assert not (root / "processed" / "lmdb").exists()
 
@@ -613,7 +577,7 @@ def test_a_ko_protein_no_wt_sample_measured_is_refused_by_name(
 def test_the_build_summary_is_logged_exactly(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
-    """First fixture: 2 KO strains, 3 WT proteins, 1 skipped ORF (``bad_ko``; the
+    """First fixture: 2 KO strains, 3 WT proteins, 1 deferred ORF (``bad_ko``; the
     ``absent_ko`` row has no matrix column and is not counted).
     """
     monkeypatch.setenv("DATA_ROOT", str(tmp_path))
@@ -623,10 +587,8 @@ def test_the_build_summary_is_logged_exactly(
         ProteomeMessner2023Dataset(root=str(root))
     messages = [r.getMessage() for r in caplog.records if r.name == m.log.name]
     assert messages == [
-        "Messner: 2 KO strains, WT reference with 3 proteins, 1 non-systematic "
-        "KO ORF skipped",
-        "Messner: 1 KO strains (1 ORFs) whose ORF is no SGD GFF feature ID; "
-        "perturbed_gene_name = the ORF for them",
+        "Messner: 2 KO strains, WT reference with 3 proteins, 1 KO ORFs deferred to "
+        "the released-gene-name leaf",
         "Wrote 2 Messner proteome experiments to LMDB",
     ]
 

@@ -308,20 +308,23 @@ class AminoAcidMulleder2016Dataset(ExperimentDataset):
             raise RuntimeError(f"summary sheet missing amino acids: {ref_missing}")
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
-        n_bad_orf = 0
-        n_collision_rows = 0
+        deferred: list[str] = []
         seen: set[str] = set()
-        collisions: set[str] = set()
         rows: list[dict[str, Any]] = []
         for _, row in conc.iterrows():
             orf = str(row["ORF"]).strip()
             if not _SYSTEMATIC_RE.match(orf):
-                n_bad_orf += 1
+                # A released identifier with no ORF form cannot sit on
+                # KanMxDeletionPerturbation; it is counted, never dropped for good, until
+                # the released-gene-name leaf lands (0 of 4,678 released rows).
+                deferred.append(orf)
                 continue
             if orf in seen:
-                n_collision_rows += 1
-                collisions.add(orf)
-                continue
+                raise RuntimeError(
+                    f"Mulleder Table S3: released ORF {orf} is on two rows of the "
+                    "concentration sheet; one strain is one row, refusing to keep the "
+                    "first (0 of 4,678 released rows)"
+                )
             seen.add(orf)
             rows.append(
                 {
@@ -332,12 +335,11 @@ class AminoAcidMulleder2016Dataset(ExperimentDataset):
                 }
             )
         log.info(
-            "Mulleder: %d usable ORFs, %d non-systematic ORF names skipped, "
-            "%d repeated-ORF rows dropped (%d ORFs kept at their first row)",
+            "Mulleder: %d released ORFs stored, %d rows deferred to the "
+            "released-gene-name leaf%s",
             len(rows),
-            n_bad_orf,
-            n_collision_rows,
-            len(collisions),
+            len(deferred),
+            f" ({sorted(deferred)})" if deferred else "",
         )
         # Reference n: the strains the population robust mean summarizes (issue #489).
         self._n_reference_strains = len(rows)

@@ -24,12 +24,14 @@ Sheet ``Color scores of all deletions`` (ORF name, Strain, Color, Comment):
 Sheet ``Names and Functions of TOP200`` lists YAL001C (TFC3, "TFIIIC subunit",
 "transcription") and YCR001W (no gene name, no function, "unknown").
 
-Derived per ORF (first-sighting order): YAL001C scores [3, 1] -> visual_score = max = 3.0,
-visual_score_min = 1.0, n = 2; YBR001C [-1] + text "pet" -> -1.0, min None, n = 1, strain
-BY4730; YCR001W [-2] -> strain blank -> BY4741; YDR001C [0] + text "tiny"; YER001W [5]
-with strain W303, which ``create_experiment`` maps to BY4741 (only BY4741/BY4730 are kept).
-The reference is the same WT-with-plasmid score 0.0 for every record, so the reference
-index splits only on the background strain: BY4741 -> records [0, 2, 3, 4], BY4730 -> [1].
+One record per released scored row, in row order (2026.10.12, #1045): YAL001C 3.0
+(slow grower), YAL001C 1.0 (the lowercase spelling, a second plate), YBR001C -1.0 on
+BY4730 (petite), YCR001W -2.0 (strain blank -> BY4741), YDR001C 0.0, YER001W 5.0 on W303
+(the row's own strain, stored as released). The text rows (``pet``, ``tiny``, ``_``) are
+in ``dropped_records.json`` with their text; YLR287-A is deferred to the
+released-gene-name leaf; the blank-ORF row is counted. The reference is the same
+WT-with-plasmid score 0.0 for every record, so the reference index splits only on the
+strain: BY4741 -> records [0, 1, 3, 4], BY4730 -> [2], W303 -> [5].
 """
 
 from __future__ import annotations
@@ -196,30 +198,33 @@ def test_parse_comment_flags_every_pattern_case_insensitively() -> None:
     assert m._parse_comment(float("nan")) == _NO_FLAGS
 
 
-def test_five_records_in_first_sighting_orf_order(
+def test_six_records_one_per_released_scored_row(
     dataset: m.CarotenoidOzaydin2013Dataset,
 ) -> None:
-    """Eleven SI rows give five records; YFR001W (text-only), YLR287-A (malformed) and
-    the blank-ORF row are excluded. Record 0 merges the two YAL001C spellings: max 3.0,
-    min 1.0, n 2, slow-growth flag from the first row's comment. Record 3 stores the
-    text-only replicate as ``score_text`` next to its numeric score.
+    """Eleven SI rows give six records in row order; YFR001W, the ``pet`` and ``tiny``
+    rows (text-only) are in the ledger, YLR287-A is deferred and the blank-ORF row is
+    counted. Each record carries its own row's score, flag and strain, n = 1, no
+    minimum and no text.
     """
-    assert len(dataset) == 5
+    assert len(dataset) == 6
     assert dataset[0]["experiment"] == _experiment(
         "YAL001C",
-        _phenotype(3.0, 1.0, 2, None, {**_NO_FLAGS, "flag_slow_growth": True}),
+        _phenotype(3.0, None, 1, None, {**_NO_FLAGS, "flag_slow_growth": True}),
     )
     assert dataset[1]["experiment"] == _experiment(
-        "YBR001C", _phenotype(-1.0, None, 1, "pet", {**_NO_FLAGS, "flag_petite": True})
+        "YAL001C", _phenotype(1.0, None, 1, None, _NO_FLAGS)
     )
     assert dataset[2]["experiment"] == _experiment(
+        "YBR001C", _phenotype(-1.0, None, 1, None, {**_NO_FLAGS, "flag_petite": True})
+    )
+    assert dataset[3]["experiment"] == _experiment(
         "YCR001W",
         _phenotype(-2.0, None, 1, None, {**_NO_FLAGS, "flag_unusual_color": True}),
     )
-    assert dataset[3]["experiment"] == _experiment(
-        "YDR001C", _phenotype(0.0, None, 1, "tiny", _NO_FLAGS)
-    )
     assert dataset[4]["experiment"] == _experiment(
+        "YDR001C", _phenotype(0.0, None, 1, None, _NO_FLAGS)
+    )
+    assert dataset[5]["experiment"] == _experiment(
         "YER001W",
         _phenotype(
             5.0,
@@ -235,34 +240,48 @@ def test_five_records_in_first_sighting_orf_order(
         ),
     )
     assert dataset[0]["publication"] == _PUBLICATION.model_dump()
+    ledger = json.loads(
+        (Path(dataset.root) / "preprocess" / "dropped_records.json").read_text()
+    )
+    assert [(r["rule"], r["n_records"]) for r in ledger["rules"]] == [
+        ("orf_cell_is_blank", 1),
+        ("deferred_to_released_gene_name_leaf", 1),
+        ("color_cell_is_text_not_a_score", 3),
+    ]
+    assert ledger["rules"][2]["items"] == [
+        {"orf": "YBR001C", "strain": "BY4730", "text": "pet"},
+        {"orf": "YDR001C", "strain": "BY4741", "text": "tiny"},
+        {"orf": "YFR001W", "strain": "BY4741", "text": "_"},
+    ]
 
 
-def test_reference_strain_follows_the_si_strain_column_for_by4730_only(
+def test_reference_strain_is_the_released_strain_cell(
     dataset: m.CarotenoidOzaydin2013Dataset,
 ) -> None:
-    """Finding: ``create_experiment`` keeps the SI strain only when it is BY4741 or
-    BY4730; record 4's ``W303`` becomes BY4741 in the reference while ``data.csv`` still
-    says W303. The reference index therefore has two entries, BY4741 for [0, 2, 3, 4]
-    and BY4730 for [1]; every reference phenotype is the WT-with-plasmid score 0.0.
+    """The reference strain is the row's own ``Strain`` cell as released (BY4741 where
+    the cell is blank), so record 5 is referenced to W303. The reference index has
+    three entries: BY4741 for [0, 1, 3, 4], BY4730 for [2] and W303 for [5]; every
+    reference phenotype is the WT-with-plasmid score 0.0.
     """
-    assert dataset[1]["reference"] == _reference("BY4730")
-    assert dataset[4]["reference"] == _reference("BY4741")
+    assert dataset[2]["reference"] == _reference("BY4730")
+    assert dataset[5]["reference"] == _reference("W303")
     index = json.loads(
         (
             Path(dataset.root) / "preprocess" / "experiment_reference_index.json"
         ).read_text()
     )
-    assert [entry["member_indices"] for entry in index] == [[0, 2, 3, 4], [1]]
+    assert [entry["member_indices"] for entry in index] == [[0, 1, 3, 4], [2], [5]]
     assert [entry["reference"]["genome_reference"]["strain"] for entry in index] == [
         "BY4741",
         "BY4730",
+        "W303",
     ]
 
 
 def test_data_csv_gene_set_and_build_manifest(
     dataset: m.CarotenoidOzaydin2013Dataset,
 ) -> None:
-    """``preprocess/data.csv`` is the per-ORF aggregate without the flag dict: the
+    """``preprocess/data.csv`` is one row per record without the flag dict: the
     TOP200 metadata columns are filled for YAL001C and YCR001W (whose gene name and
     function cells are blank) and empty elsewhere.
 
@@ -277,10 +296,11 @@ def test_data_csv_gene_set_and_build_manifest(
     assert (preprocess / "data.csv").read_text() == (
         "orf,strain,visual_score,visual_score_min,n_replicates,score_text,in_top200,"
         "gene_name,gene_function,assigned_category\n"
-        "YAL001C,BY4741,3.0,1.0,2,,True,TFC3,TFIIIC subunit,transcription\n"
-        "YBR001C,BY4730,-1.0,,1,pet,False,,,\n"
+        "YAL001C,BY4741,3.0,,1,,True,TFC3,TFIIIC subunit,transcription\n"
+        "YAL001C,BY4741,1.0,,1,,True,TFC3,TFIIIC subunit,transcription\n"
+        "YBR001C,BY4730,-1.0,,1,,False,,,\n"
         "YCR001W,BY4741,-2.0,,1,,True,,,unknown\n"
-        "YDR001C,BY4741,0.0,,1,tiny,False,,,\n"
+        "YDR001C,BY4741,0.0,,1,,False,,,\n"
         "YER001W,W303,5.0,,1,,False,,,\n"
     )
     assert json.loads((preprocess / "gene_set.json").read_text()) == [

@@ -3,9 +3,8 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/datasets/scerevisiae/test_ohnuki2022.py
 """Hermetic build of the Ohnuki 2022 quadruple-deletion CalMorph loader.
 
-Both TSVs are written into ``<root>/raw/`` so PyG never calls ``download()``. The genome
-stub implements only ``resolve_gene_name``: YAL001C, YBR001C and the background gene
-YGL013C are current; YDR012W is renamed to the background gene YDR011W; YCR001W is retired.
+Both TSVs are written into ``<root>/raw/`` so PyG never calls ``download()``. No genome
+is consulted (#1045): every target ORF is stored as released (stripped, upper-cased).
 
 Features (4 of the 501): base ``A101_A``, ``C103_A1B``; CV ``ACV103_A1B``, ``CCV103_A1B``
 (split by membership in ``CALMORPH_STATISTICS``, not by prefix).
@@ -13,9 +12,9 @@ Features (4 of the 501): base ``A101_A``, ``C103_A1B``; CV ``ACV103_A1B``, ``CCV
 ``quad1982data.tsv`` (ORF, A101_A, C103_A1B, ACV103_A1B, CCV103_A1B):
 
     YAL001C    1.0  2.0    0.5    0.25
-    ygl013c    2.0  3.0    0.5    0.5      PDR1, already deleted in 3Delta -> dropped
-    YDR012W    2.0  3.0    0.5    0.5      alias of SNQ2 (YDR011W) -> dropped after reconciliation
-    YBR001C    3.0  (blank) 0.25  0.5      missing value -> dropped
+    ygl013c    2.0  3.0    0.5    0.5      PDR1, also deleted in 3Delta: stored as released
+    YDR012W    2.0  3.0    0.5    0.5      an R64 synonym of SNQ2: stored under YDR012W
+    YBR001C    3.0  (blank) 0.25  0.5      stored; the blank C103_A1B is key-absent
     YCR001W    5.0  6.0    0.125  0.75     retired name kept verbatim
 
 ``wt749data.tsv`` (NAME + the same features): 1.0 3.0 0.25 0.5 and 3.0 5.0 0.75 1.0 ->
@@ -56,7 +55,7 @@ import logging
 import re
 import shutil
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import pandas as pd
 import pytest
@@ -78,11 +77,6 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.scerevisiae import ohnuki2022 as m
-from torchcell.sequence.genome.scerevisiae.s288c import (
-    GeneNameResolution,
-    GeneNameStatus,
-    SCerevisiaeGenome,
-)
 
 _FEATURES = ["A101_A", "C103_A1B", "ACV103_A1B", "CCV103_A1B"]
 _MUTANT_ROWS = [
@@ -93,30 +87,6 @@ _MUTANT_ROWS = [
     ["YCR001W", "5.0", "6.0", "0.125", "0.75"],
 ]
 _WT_ROWS = [["wt1", "1.0", "3.0", "0.25", "0.5"], ["wt2", "3.0", "5.0", "0.75", "1.0"]]
-_CURRENT = {"YAL001C", "YBR001C", "YGL013C"}
-_RENAMED = {"YDR012W": "YDR011W"}
-
-
-class _StubGenome:
-    def resolve_gene_name(self, name: str) -> GeneNameResolution:
-        upper = name.strip().upper()
-        if upper in _CURRENT:
-            return GeneNameResolution(
-                input_name=name, status=GeneNameStatus.CURRENT, systematic_name=upper
-            )
-        if upper in _RENAMED:
-            return GeneNameResolution(
-                input_name=name,
-                status=GeneNameStatus.RENAMED,
-                systematic_name=_RENAMED[upper],
-            )
-        return GeneNameResolution(
-            input_name=name, status=GeneNameStatus.RETIRED, systematic_name=upper
-        )
-
-
-def _genome() -> SCerevisiaeGenome:
-    return cast(SCerevisiaeGenome, _StubGenome())
 
 
 def _write_tsv(path: Path, header: list[str], rows: list[list[str]]) -> None:
@@ -133,7 +103,7 @@ def _root(tmp_path: Path, slug: str = "scmd_ohnuki2022") -> Path:
 
 @pytest.fixture
 def dataset(tmp_path: Path) -> m.ScmdOhnuki2022Dataset:
-    return m.ScmdOhnuki2022Dataset(root=str(_root(tmp_path)), genome=_genome())
+    return m.ScmdOhnuki2022Dataset(root=str(_root(tmp_path)))
 
 
 _ENVIRONMENT = Environment(
@@ -160,7 +130,13 @@ _PUBLICATION = Publication(
 ).model_dump()
 
 
-def _experiment(orf: str, values: list[float]) -> dict[str, Any]:
+def _experiment(orf: str, values: list[float | None]) -> dict[str, Any]:
+    """A blank (None) cell is key-absent in the stored record."""
+    base = {
+        key: value
+        for key, value in zip(("A101_A", "C103_A1B"), values[:2], strict=True)
+        if value is not None
+    }
     return CalMorphExperiment(
         dataset_name="ScmdOhnuki2022Dataset",
         genotype=Genotype(
@@ -185,26 +161,33 @@ def _experiment(orf: str, values: list[float]) -> dict[str, Any]:
         ),
         environment=_ENVIRONMENT,
         phenotype=CalMorphPhenotype(
-            calmorph={"A101_A": values[0], "C103_A1B": values[1]},
+            calmorph=base,
             calmorph_coefficient_of_variation={
-                "ACV103_A1B": values[2],
-                "CCV103_A1B": values[3],
+                key: value
+                for key, value in zip(
+                    ("ACV103_A1B", "CCV103_A1B"), values[2:], strict=True
+                )
+                if value is not None
             },
         ),
     ).model_dump()
 
 
-def test_two_quadruple_deletion_records(dataset: m.ScmdOhnuki2022Dataset) -> None:
-    """Five rows give two records; three rows drop: the two 3Delta-background targets
-    (one caught only after alias reconciliation) and the incomplete row. Each genotype is the target
+def test_five_quadruple_deletion_records(dataset: m.ScmdOhnuki2022Dataset) -> None:
+    """Five rows give five records, each under its released target ORF: the two
+    3Delta-background targets (YGL013C, YDR012W) and the row with a blank cell
+    (YBR001C, C103_A1B key-absent) are stored as released. Each genotype is the target
     KanMX deletion plus the constant PDR1/PDR3/SNQ2 background; the reference genome is
     the BY4741 placeholder with the 3Delta parent's measured means as phenotype.
     """
-    assert len(dataset) == 2
+    assert len(dataset) == 5
     assert dataset[0]["experiment"] == _experiment("YAL001C", [1.0, 2.0, 0.5, 0.25])
-    assert dataset[1]["experiment"] == _experiment("YCR001W", [5.0, 6.0, 0.125, 0.75])
+    assert dataset[1]["experiment"] == _experiment("YGL013C", [2.0, 3.0, 0.5, 0.5])
+    assert dataset[2]["experiment"] == _experiment("YDR012W", [2.0, 3.0, 0.5, 0.5])
+    assert dataset[3]["experiment"] == _experiment("YBR001C", [3.0, None, 0.25, 0.5])
+    assert dataset[4]["experiment"] == _experiment("YCR001W", [5.0, 6.0, 0.125, 0.75])
     assert dataset[0]["reference"] == _REFERENCE
-    assert dataset[1]["reference"] == _REFERENCE
+    assert dataset[4]["reference"] == _REFERENCE
     assert dataset[0]["publication"] == _PUBLICATION
     genotype = dataset[0]["experiment"]["genotype"]["perturbations"]
     assert [p["perturbation_type"] for p in genotype] == [
@@ -216,28 +199,33 @@ def test_two_quadruple_deletion_records(dataset: m.ScmdOhnuki2022Dataset) -> Non
 
 
 def test_side_files(dataset: m.ScmdOhnuki2022Dataset) -> None:
-    """``data.csv`` is the retained matrix (ORF column already stripped and uppercased)
-    with ``systematic_gene_name`` appended; one reference covers both records.
+    """``data.csv`` is the whole matrix (ORF column already stripped and uppercased)
+    with ``systematic_gene_name`` appended; one reference covers every record.
 
-    Finding: the gene set includes the three background genes YBL005W, YDR011W and
-    YGL013C next to the two targets, because ``compute_gene_set`` reads every
-    perturbation of the genotype.
+    The gene set includes the three background genes YBL005W, YDR011W and YGL013C
+    next to the five targets, because ``compute_gene_set`` reads every perturbation of
+    the genotype.
     """
     preprocess = Path(dataset.root) / "preprocess"
     assert (preprocess / "data.csv").read_text() == (
         "ORF,A101_A,C103_A1B,ACV103_A1B,CCV103_A1B,systematic_gene_name\n"
         "YAL001C,1.0,2.0,0.5,0.25,YAL001C\n"
+        "YGL013C,2.0,3.0,0.5,0.5,YGL013C\n"
+        "YDR012W,2.0,3.0,0.5,0.5,YDR012W\n"
+        "YBR001C,3.0,,0.25,0.5,YBR001C\n"
         "YCR001W,5.0,6.0,0.125,0.75,YCR001W\n"
     )
     assert json.loads((preprocess / "gene_set.json").read_text()) == [
         "YAL001C",
         "YBL005W",
+        "YBR001C",
         "YCR001W",
         "YDR011W",
+        "YDR012W",
         "YGL013C",
     ]
     index = json.loads((preprocess / "experiment_reference_index.json").read_text())
-    assert [entry["member_indices"] for entry in index] == [[0, 1]]
+    assert [entry["member_indices"] for entry in index] == [[0, 1, 2, 3, 4]]
     assert index[0]["reference"]["phenotype_reference"] == _WT_PHENOTYPE.model_dump()
     manifest = json.loads((preprocess / "build_manifest.json").read_text())
     assert manifest["dataset_name"] == "scmd_ohnuki2022"
@@ -258,7 +246,7 @@ def test_download_checks_raw_then_mirror_hashes(
     monkeypatch.setenv("DATA_ROOT", str(data_root))
     monkeypatch.delenv("TC_DATA_URL", raising=False)
     monkeypatch.setattr("dotenv.load_dotenv", lambda *a, **k: False)
-    dataset = m.ScmdOhnuki2022Dataset(root=str(_root(tmp_path)), genome=_genome())
+    dataset = m.ScmdOhnuki2022Dataset(root=str(_root(tmp_path)))
     dest = Path(dataset.root) / "raw" / m.MUTANT_FILE
     digest = hashlib.sha256(dest.read_bytes()).hexdigest()
     monkeypatch.setattr(m, "verify_raw_files", verify_raw_files)
@@ -271,13 +259,13 @@ def test_download_checks_raw_then_mirror_hashes(
     with pytest.raises(
         RuntimeError, match=re.escape(f"mirror file missing: {mirror / m.MUTANT_FILE}")
     ):
-        m.ScmdOhnuki2022Dataset(root=str(tmp_path / "empty"), genome=_genome())
+        m.ScmdOhnuki2022Dataset(root=str(tmp_path / "empty"))
     mirror.mkdir(parents=True)
     (mirror / m.MUTANT_FILE).write_bytes(b"not the matrix")
     bad = hashlib.sha256(b"not the matrix").hexdigest()
     assert bad.startswith("35fe305f")
     with pytest.raises(RawSha256MismatchError) as err:
-        m.ScmdOhnuki2022Dataset(root=str(tmp_path / "empty2"), genome=_genome())
+        m.ScmdOhnuki2022Dataset(root=str(tmp_path / "empty2"))
     assert str(err.value) == (
         f"sha256 mismatch for {mirror / m.MUTANT_FILE}: expected {m.MUTANT_SHA256}, "
         f"observed {bad}"
@@ -307,7 +295,7 @@ def test_items_retype_through_the_calmorph_classes(
     back to exactly the stored dictionaries. A fitness class here would drop the
     ``calmorph`` traits and fail the round trip.
     """
-    for index in range(2):
+    for index in range(5):
         item = dataset[index]
         typed = dataset.transform_item(item)
         assert type(typed["experiment"]) is CalMorphExperiment
@@ -335,17 +323,19 @@ def test_inline_build_leaves_the_generic_hooks_inert(
 def test_drop_ledger_is_logged_in_file_order(
     tmp_path: Path, caplog: pytest.LogCaptureFixture
 ) -> None:
-    """The five-row matrix logs one incomplete row and two background collisions, named
-    by their reconciled systematic names in file order, then the retained count.
+    """The five-row matrix logs the row with a blank cell and the one target that is
+    also a background gene (YGL013C; YDR012W is stored under its released name and is
+    not YDR011W), then the count of all five strains.
     """
     with caplog.at_level(logging.INFO, logger=m.log.name):
-        m.ScmdOhnuki2022Dataset(root=str(_root(tmp_path)), genome=_genome())
+        m.ScmdOhnuki2022Dataset(root=str(_root(tmp_path)))
     messages = [r.getMessage() for r in caplog.records if r.name == m.log.name]
     assert messages == [
-        "Ohnuki: dropping 1 mutant row(s) with missing CalMorph values: ['YBR001C']",
-        "Ohnuki: dropping 2 target row(s) colliding with the 3Delta background: "
-        "['YGL013C', 'YDR011W']",
-        "Processing Ohnuki 2022 CalMorph morphology (2 strains)...",
+        "Ohnuki: 1 mutant row(s) with blank CalMorph cell(s), stored with the blank "
+        "cells key-absent: ['YBR001C']",
+        "Ohnuki: 1 target row(s) also deleted in the 3Delta background, stored as "
+        "released: ['YGL013C']",
+        "Processing Ohnuki 2022 CalMorph morphology (5 strains)...",
     ]
 
 
@@ -372,7 +362,7 @@ def test_clean_base_only_matrix(
         [["wt1", "1.0", "3.0"], ["wt2", "3.0", "5.0"]],
     )
     with caplog.at_level(logging.INFO, logger=m.log.name):
-        dataset = m.ScmdOhnuki2022Dataset(root=str(root), genome=_genome())
+        dataset = m.ScmdOhnuki2022Dataset(root=str(root))
     messages = [r.getMessage() for r in caplog.records if r.name == m.log.name]
     assert messages == ["Processing Ohnuki 2022 CalMorph morphology (1 strains)..."]
     assert len(dataset) == 1
@@ -412,9 +402,9 @@ def test_clean_base_only_matrix(
 
 
 def test_repeated_target_orf_refuses(tmp_path: Path) -> None:
-    """YAL001C listed twice (once as " yal001c", equal after strip, uppercase and
-    reconciliation) is refused by name instead of giving two records of one genotype;
-    no LMDB store is written.
+    """YAL001C listed twice (once as " yal001c", equal after strip and uppercase) is
+    refused by name instead of giving two records of one genotype; no LMDB store is
+    written.
     """
     root = _base_only_root(
         tmp_path,
@@ -422,10 +412,9 @@ def test_repeated_target_orf_refuses(tmp_path: Path) -> None:
         [["wt1", "1.0", "3.0"], ["wt2", "3.0", "5.0"]],
     )
     with pytest.raises(ValueError) as info:
-        m.ScmdOhnuki2022Dataset(root=str(root), genome=_genome())
+        m.ScmdOhnuki2022Dataset(root=str(root))
     assert str(info.value) == (
-        "Ohnuki 2022 quad1982data.tsv lists 1 target ORF(s) more than once after name "
-        "reconciliation: ['YAL001C']"
+        "Ohnuki 2022 quad1982data.tsv lists 1 target ORF(s) more than once: ['YAL001C']"
     )
     assert not (root / "processed" / "lmdb").exists()
 
@@ -441,7 +430,7 @@ def test_blank_reference_cell_refuses(tmp_path: Path) -> None:
         [["wt1", "1.0", ""], ["wt2", "3.0", "5.0"]],
     )
     with pytest.raises(ValueError) as info:
-        m.ScmdOhnuki2022Dataset(root=str(root), genome=_genome())
+        m.ScmdOhnuki2022Dataset(root=str(root))
     assert str(info.value) == (
         "Ohnuki 2022 wt749data.tsv has blank reference cell(s) {'C103_A1B': 1}; the "
         "3Delta reference mean is never imputed"
@@ -460,30 +449,7 @@ def test_non_numeric_reference_cell_refuses(tmp_path: Path) -> None:
         root / "raw" / m.WT_FILE, ["NAME", "A101_A"], [["wt1", "1.0"], ["wt2", "x"]]
     )
     with pytest.raises(ValueError, match=r'^Unable to parse string "x" at position 1$'):
-        m.ScmdOhnuki2022Dataset(root=str(root), genome=_genome())
-
-
-def test_missing_genome_is_built_once_by_default_genome(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """With ``genome=None`` the build calls ``default_genome()`` exactly once and uses
-    what it returns to reconcile the targets, so the records match the stubbed build.
-    """
-    stub: object = _StubGenome()
-    calls: list[None] = []
-
-    def fake_default_genome() -> object:
-        calls.append(None)
-        return stub
-
-    monkeypatch.setattr(m, "default_genome", fake_default_genome)
-    dataset = m.ScmdOhnuki2022Dataset(root=str(_root(tmp_path)))
-    assert calls == [None]
-    assert dataset.genome is stub
-    assert [dataset[i]["experiment"] for i in range(len(dataset))] == [
-        _experiment("YAL001C", [1.0, 2.0, 0.5, 0.25]),
-        _experiment("YCR001W", [5.0, 6.0, 0.125, 0.75]),
-    ]
+        m.ScmdOhnuki2022Dataset(root=str(root))
 
 
 def _pinned_to_synthetic(
@@ -512,14 +478,12 @@ def test_download_copies_verified_mirror_files_then_skips_verified_raw(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
     """An empty root copies both tables from the mirror (logging each byte count), the
-    build then reads them (2 records), and a second ``download`` with the mirror removed
+    build then reads them (5 records), and a second ``download`` with the mirror removed
     returns without error because both raw files already match their pins.
     """
     _, mirror, content = _pinned_to_synthetic(tmp_path, monkeypatch)
     with caplog.at_level(logging.INFO, logger=m.log.name):
-        dataset = m.ScmdOhnuki2022Dataset(
-            root=str(tmp_path / "fresh"), genome=_genome()
-        )
+        dataset = m.ScmdOhnuki2022Dataset(root=str(tmp_path / "fresh"))
     raw = Path(dataset.raw_dir)
     assert {name: (raw / name).read_bytes() for name in content} == content
     copied = [
@@ -533,7 +497,7 @@ def test_download_copies_verified_mirror_files_then_skips_verified_raw(
         f"Copied {m.WT_FILE} from mirror ({len(content[m.WT_FILE])} bytes, "
         "sha256 verified)",
     ]
-    assert len(dataset) == 2
+    assert len(dataset) == 5
     shutil.rmtree(mirror)
     dataset.download()
     assert {name: (raw / name).read_bytes() for name in content} == content
@@ -555,7 +519,7 @@ def test_build_refuses_a_copy_that_lands_different_bytes(
     monkeypatch.setattr(shutil, "copyfile", torn_copy)
     torn = hashlib.sha256(b"torn").hexdigest()
     with pytest.raises(RawSha256MismatchError) as err:
-        m.ScmdOhnuki2022Dataset(root=str(tmp_path / "torn"), genome=_genome())
+        m.ScmdOhnuki2022Dataset(root=str(tmp_path / "torn"))
     assert str(err.value) == (
         f"sha256 mismatch for {tmp_path / 'torn' / 'raw' / m.MUTANT_FILE}: "
         f"expected {m.MUTANT_SHA256}, observed {torn}"

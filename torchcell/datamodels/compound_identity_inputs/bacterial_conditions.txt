@@ -95,7 +95,9 @@ N-Acetyl-D-Glucosamine | query=7512-17-6
 Nalidixic acid sodium salt | canonical
 Nickel (II) chloride hexahydrate | canonical
 Phosphomycin disodium salt | canonical
-Potassium acetate | canonical
+# also De Chiara 2022's lowercase 'potassium acetate' (SPORULATION_KAC, #1008), so the key
+# is spelled two ways and the canonical spelling is lowercase
+potassium acetate | canonical
 Putrescine Dihydrochloride | canonical
 Sodium Chlorite | canonical
 # the name index does not read 'D,L'; Table S2's CAS for this row, 50-21-5, is lactic acid

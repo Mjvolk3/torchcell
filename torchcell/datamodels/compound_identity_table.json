@@ -74050,13 +74050,13 @@
     {
       "chebi_id": "CHEBI:32029",
       "inchikey": "SCVFZCLFOSHCOH-UHFFFAOYSA-M",
-      "name": "Potassium acetate",
+      "name": "potassium acetate",
       "pubchem_cid": 517044,
       "resolution_status": "RESOLVED",
       "retrieval_method": "pubchem_api",
       "retrieved_at": "2026-10-11",
       "smiles": "CC(=O)[O-].[K+]",
-      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/Potassium%20acetate/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/potassium%20acetate/property/Title,InChIKey,ConnectivitySMILES/JSON",
       "synonyms": [],
       "unresolved_reason": null
     },

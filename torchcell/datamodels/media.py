@@ -2107,7 +2107,8 @@ SPORULATION_KAC = Media(
 )
 """Potassium acetate sporulation medium: nitrogen starvation on a respiratory carbon
 source, the laboratory trigger of meiosis. De Chiara 2022 states 2% KAc and nothing more;
-potassium acetate is not yet in the pinned compound table, so it carries a typed gap."""
+potassium acetate resolves through the compound table's row from the #726 curator pass
+(PubChem CID 517044), so it carries an InChIKey rather than a typed gap (#1008)."""
 
 PBS = Media(
     name="PBS (phosphate-buffered saline)",

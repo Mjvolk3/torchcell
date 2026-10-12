@@ -1,15 +1,15 @@
 {
   "old": {
-    "path": "/scratch/projects/torchcell-scratch/tmp/compound_identity_table_5a476def_before_726.json",
-    "sha256": "5a476defa3b109b373c7957001cb186c37668485e35afcf66ce058e739a85921",
-    "records": 5533,
-    "keys": 10829
+    "path": "/scratch/projects/torchcell-scratch/tmp/compound_identity_table_2771b19b_before_726_rebase.json",
+    "sha256": "2771b19b3ccf4f1af73a87595f82e8ec3b2bec62afba86335b1a89a8f512301f",
+    "records": 5578,
+    "keys": 10899
   },
   "new": {
     "path": "torchcell/datamodels/compound_identity_table.json",
-    "sha256": "d45d3ded9f090919addac2ded7bb077da1a0ef0181ca5e67d74d4a41b73ccbaa",
-    "records": 5679,
-    "keys": 11007
+    "sha256": "77fbc85b392e33622713db65f0ec6013c5ba1d268c919e9c5bdc6b3ad6d54c39",
+    "records": 5723,
+    "keys": 11076
   },
   "keys_added": [
     "1,2-propanediol",
@@ -90,7 +90,6 @@
     "dl-2-aminobutyric acid",
     "dl-3-aminoisobutyric acid",
     "doxycycline",
-    "doxycycline hyclate",
     "dpd",
     "e-amino-n-caproic acid",
     "et2da",
@@ -201,7 +200,7 @@
     "no_key_renames_a_node": true,
     "nothing_lost": true,
     "no_key_removed": true,
-    "keys_added": 178,
+    "keys_added": 177,
     "newly_resolved": 0,
     "identifier_changes": 0
   }

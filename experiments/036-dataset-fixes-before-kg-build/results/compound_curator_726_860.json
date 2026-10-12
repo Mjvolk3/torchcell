@@ -1,19 +1,19 @@
 {
   "summary": {
     "input_list": "torchcell/datamodels/compound_identity_inputs/bacterial_conditions.txt",
-    "input_list_sha256": "190b5b142f46527497c26620b078a85e06dafb0fe2ff10b84fabea2c042cb5ce",
-    "pubchem_cache": "/scratch/projects/torchcell-scratch/tmp/pubchem_curator_cache_726_860_2026-10-10.json",
-    "pubchem_cache_sha256": "1119efcc0538e82d5671d3467f7acd969c0c6f4ae536664cf68e1a6856dca4e9",
-    "pubchem_cache_responses": 434,
+    "input_list_sha256": "a9262d8566d29d8c0c524382a2f2ceba1667a392351d4ca3d8e8be6a889e31cd",
+    "pubchem_cache": "/scratch/projects/torchcell-scratch/tmp/pubchem_curator_cache_726_860_2026-10-11.json",
+    "pubchem_cache_sha256": "6baf585f874e305d0a91ff749e6845e0a477ae29f2e0c4412536dfb242ae185e",
+    "pubchem_cache_responses": 437,
     "price2018_si3": "torchcell-library/priceMutantPhenotypesThousands2018/si/si3.xlsx",
     "price2018_si3_sha256": "e5dbf3d5c97cfc12f49d7fd83f84bc95c16cbe963309a561fff20f442788b879",
     "table_before": {
-      "sha256": "5a476defa3b109b373c7957001cb186c37668485e35afcf66ce058e739a85921",
-      "records": 5533
+      "sha256": "2771b19b3ccf4f1af73a87595f82e8ec3b2bec62afba86335b1a89a8f512301f",
+      "records": 5578
     },
     "table_after": {
-      "sha256": "d45d3ded9f090919addac2ded7bb077da1a0ef0181ca5e67d74d4a41b73ccbaa",
-      "records": 5679
+      "sha256": "77fbc85b392e33622713db65f0ec6013c5ba1d268c919e9c5bdc6b3ad6d54c39",
+      "records": 5723
     },
     "table_written": true,
     "labels": 178,
@@ -24,8 +24,8 @@
       "UNRESOLVED_PUBLIC": 5
     },
     "labels_with_an_inchikey": 166,
-    "rows_added": 146,
-    "labels_folded_into_existing_rows": 26,
+    "rows_added": 145,
+    "labels_folded_into_existing_rows": 27,
     "folds": [
       {
         "labels": [
@@ -169,6 +169,15 @@
         "synonyms_gained": [
           "D-Xylose"
         ]
+      },
+      {
+        "labels": [
+          "doxycycline hyclate"
+        ],
+        "into": "doxycycline hyclate",
+        "pubchem_cid": 54705095,
+        "inchikey": "DWBSXBGBGHKWOT-WBYAVNBMSA-N",
+        "synonyms_gained": []
       },
       {
         "labels": [
@@ -494,6 +503,14 @@
         ]
       },
       {
+        "spelling": "Potassium acetate",
+        "now": "potassium acetate",
+        "case_only": true,
+        "stores": [
+          "RbTnseqPrice2018EcoliDataset"
+        ]
+      },
+      {
         "spelling": "Sodium pyruvate",
         "now": "sodium pyruvate",
         "case_only": true,
@@ -738,6 +755,13 @@
         "adopted_cid": 18950,
         "cas": {
           "3458-28-4": 161658
+        }
+      },
+      {
+        "label": "doxycycline hyclate",
+        "adopted_cid": 54705095,
+        "cas": {
+          "24390-14-5": 54686183
         }
       },
       {
@@ -1889,7 +1913,7 @@
         "EnvChemgenGirgis2009Dataset",
         "RbTnseqPrice2018EcoliDataset"
       ],
-      "directive": "canonical",
+      "directive": "cid=54705095",
       "resolution_status": "RESOLVED",
       "row_name": "doxycycline hyclate",
       "record_spellings": {
@@ -1900,14 +1924,14 @@
           "EnvChemgenGirgis2009Dataset"
         ]
       },
-      "folded_into_existing_row": null,
-      "inchikey": "UHHHTIKWXBRCLT-VDBOFHIQSA-N",
-      "pubchem_cid": 54686183,
+      "folded_into_existing_row": "doxycycline hyclate",
+      "inchikey": "DWBSXBGBGHKWOT-WBYAVNBMSA-N",
+      "pubchem_cid": 54705095,
       "chebi_id": null,
-      "endpoint": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/doxycycline%20hyclate/property/Title,InChIKey,ConnectivitySMILES/JSON",
-      "pubchem_title": "Doryx",
-      "pubchem_record_cid": 54686183,
-      "pubchem_smiles": "CCO.CC1C2C(C3C(C(=O)C(=C(C3(C(=O)C2=C(C4=C1C=CC=C4O)O)O)O)C(=O)N)N(C)C)O.CC1C2C(C3C(C(=O)C(=C(C3(C(=O)C2=C(C4=C1C=CC=C4O)O)O)O)C(=O)N)N(C)C)O.O.Cl.Cl",
+      "endpoint": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/54705095/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "pubchem_title": "Doxycycline hyclate",
+      "pubchem_record_cid": 54705095,
+      "pubchem_smiles": "CCO.CC1C2C(C3C(C(=O)C(=C(C3(C(=O)C2=C(C4=C1C=CC=C4O)O)O)O)C(=O)N)N(C)C)O.O.Cl",
       "price2018_cas": [
         "24390-14-5"
       ],
@@ -1917,7 +1941,7 @@
       "price2018_cas_cid": {
         "24390-14-5": 54686183
       },
-      "cas_agrees": true,
+      "cas_agrees": false,
       "unresolved_reason": null
     },
     {
@@ -2323,14 +2347,14 @@
       "unresolved_reason": null
     },
     {
-      "label": "Potassium acetate",
+      "label": "potassium acetate",
       "stores": [
         "RbTnseqBorchert2024Dataset (RCH2 samples set1IT084-087)",
         "RbTnseqPrice2018EcoliDataset"
       ],
       "directive": "canonical",
       "resolution_status": "RESOLVED",
-      "row_name": "Potassium acetate",
+      "row_name": "potassium acetate",
       "record_spellings": {
         "Potassium acetate": [
           "RbTnseqPrice2018EcoliDataset"
@@ -2340,7 +2364,7 @@
       "inchikey": "SCVFZCLFOSHCOH-UHFFFAOYSA-M",
       "pubchem_cid": 517044,
       "chebi_id": "CHEBI:32029",
-      "endpoint": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/Potassium%20acetate/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "endpoint": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/potassium%20acetate/property/Title,InChIKey,ConnectivitySMILES/JSON",
       "pubchem_title": "Potassium Acetate",
       "pubchem_record_cid": 517044,
       "pubchem_smiles": "CC(=O)[O-].[K+]",

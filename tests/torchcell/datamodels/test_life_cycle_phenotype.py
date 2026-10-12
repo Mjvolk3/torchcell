@@ -175,7 +175,14 @@ def test_the_sporulation_and_starvation_media_are_library_members() -> None:
             s.Concentration(value=2.0, unit=s.ConcentrationUnit.percent_w_v),
         )
     ]
-    assert [g.field for g in kac.components[0].compound.provenance_gaps] == ["inchikey"]
+    # resolves since the #726 curator pass (#1008): PubChem CID 517044, CHEBI:32029
+    acetate = kac.components[0].compound
+    assert (acetate.inchikey, acetate.pubchem_cid, acetate.chebi_id) == (
+        "SCVFZCLFOSHCOH-UHFFFAOYSA-M",
+        517044,
+        "CHEBI:32029",
+    )
+    assert acetate.provenance_gaps == []
     assert (kac.state, kac.base_medium) == ("liquid", "SPORULATION_KAC")
     pbs = MEDIA_LIBRARY["PBS"]
     assert (pbs.components, pbs.base_medium) == ([], "PBS")

@@ -1,21 +1,21 @@
-  ... 50/170 name lookups
-  ... 100/170 name lookups
-  ... 150/170 name lookups
+  ... 50/169 name lookups
+  ... 100/169 name lookups
+  ... 150/169 name lookups
 {
   "input_list": "torchcell/datamodels/compound_identity_inputs/bacterial_conditions.txt",
-  "input_list_sha256": "190b5b142f46527497c26620b078a85e06dafb0fe2ff10b84fabea2c042cb5ce",
-  "pubchem_cache": "/scratch/projects/torchcell-scratch/tmp/pubchem_curator_cache_726_860_2026-10-10.json",
-  "pubchem_cache_sha256": "1119efcc0538e82d5671d3467f7acd969c0c6f4ae536664cf68e1a6856dca4e9",
-  "pubchem_cache_responses": 434,
+  "input_list_sha256": "a9262d8566d29d8c0c524382a2f2ceba1667a392351d4ca3d8e8be6a889e31cd",
+  "pubchem_cache": "/scratch/projects/torchcell-scratch/tmp/pubchem_curator_cache_726_860_2026-10-11.json",
+  "pubchem_cache_sha256": "6baf585f874e305d0a91ff749e6845e0a477ae29f2e0c4412536dfb242ae185e",
+  "pubchem_cache_responses": 437,
   "price2018_si3": "torchcell-library/priceMutantPhenotypesThousands2018/si/si3.xlsx",
   "price2018_si3_sha256": "e5dbf3d5c97cfc12f49d7fd83f84bc95c16cbe963309a561fff20f442788b879",
   "table_before": {
-    "sha256": "5a476defa3b109b373c7957001cb186c37668485e35afcf66ce058e739a85921",
-    "records": 5533
+    "sha256": "2771b19b3ccf4f1af73a87595f82e8ec3b2bec62afba86335b1a89a8f512301f",
+    "records": 5578
   },
   "table_after": {
-    "sha256": "d45d3ded9f090919addac2ded7bb077da1a0ef0181ca5e67d74d4a41b73ccbaa",
-    "records": 5679
+    "sha256": "77fbc85b392e33622713db65f0ec6013c5ba1d268c919e9c5bdc6b3ad6d54c39",
+    "records": 5723
   },
   "table_written": true,
   "labels": 178,
@@ -26,8 +26,8 @@
     "UNRESOLVED_PUBLIC": 5
   },
   "labels_with_an_inchikey": 166,
-  "rows_added": 146,
-  "labels_folded_into_existing_rows": 26,
+  "rows_added": 145,
+  "labels_folded_into_existing_rows": 27,
   "cas_checked": 63,
   "cas_disagreements": [
     {
@@ -70,6 +70,13 @@
       "adopted_cid": 18950,
       "cas": {
         "3458-28-4": 161658
+      }
+    },
+    {
+      "label": "doxycycline hyclate",
+      "adopted_cid": 54705095,
+      "cas": {
+        "24390-14-5": 54686183
       }
     },
     {
@@ -157,7 +164,7 @@
     }
   ]
 }
-folds (26):
+folds (27):
   ["2,2'-Dipyridyl"] -> "2,2'-bipyridine" (CID 1474)
   ['3-methyl-3-butenol'] -> 'isoprenol' (CID 12988)
   ['doxycycline'] -> '4-(dimethylamino)-1,5,10,11,12a-pentahydroxy-6-methyl-3,12-dioxo-3,4,4a,5,5a,6,12,12a-octahydrotetracene-2-carboximidic acid' (CID 54671203)
@@ -171,6 +178,7 @@ folds (26):
   ['D-Galactose'] -> 'galactose' (CID 6036)
   ['D-Mannose'] -> 'mannose' (CID 18950)
   ['D-Xylose'] -> 'xylose' (CID 135191)
+  ['doxycycline hyclate'] -> 'doxycycline hyclate' (CID 54705095)
   ['2-Furfuraldehyde'] -> 'furfural' (CID 7362)
   ['arginine'] -> 'L-arginine' (CID 6322)
   ['L-Aspartate'] -> 'L-aspartic acid' (CID 5960)
@@ -184,7 +192,7 @@ folds (26):
   ['D-Sorbitol'] -> 'sorbitol' (CID 5780)
   ['thiamin'] -> 'thiamine' (CID 1130)
   ['Na-citrate'] -> 'sodium citrate' (CID 6224)
-renames (47):
+renames (48):
   '2-Furfuraldehyde' -> 'furfural' in ['RbTnseqPrice2018EcoliDataset']
   '5-Hydroxymethylfurfural' -> '5-(hydroxymethyl)furfural' in ['RbTnseqPrice2018EcoliDataset']
   'Chloramphenicol' -> 'chloramphenicol' (case only) in ['RbTnseqPrice2018EcoliDataset']
@@ -207,6 +215,7 @@ renames (47):
   'Glycolic acid' -> 'glycolic acid' (case only) in ['RbTnseqBorchert2023Dataset', 'RbTnseqBorchert2024Dataset']
   'Fucose' -> 'L-Fucose' in ['CarbonSourceTong2020Dataset']
   'N-Acetyl-D-Glucosamine' -> 'N-acetylglucosamine' in ['RbTnseqPrice2018EcoliDataset']
+  'Potassium acetate' -> 'potassium acetate' (case only) in ['RbTnseqPrice2018EcoliDataset']
   'Sodium pyruvate' -> 'sodium pyruvate' (case only) in ['RbTnseqPrice2018EcoliDataset']
   'Sodium succinate dibasic hexahydrate' -> 'disodium succinate hexahydrate' in ['RbTnseqBorchert2024Dataset', 'RbTnseqPrice2018EcoliDataset']
   'Gluconate' -> 'gluconate' (case only) in ['CarbonSourceTong2020Dataset']
@@ -232,4 +241,4 @@ renames (47):
   'e-Amino-N-Caproic Acid' -> '6-aminohexanoic acid' in ['RbTnseqBorchert2024Dataset']
   'L-Aspartate' -> 'L-aspartic acid' in ['RbTnseqBorchert2024Dataset']
   'Nicotinic Acid' -> 'niacin' in ['RbTnseqBorchert2024Dataset']
-table sha256 = d45d3ded9f090919addac2ded7bb077da1a0ef0181ca5e67d74d4a41b73ccbaa
+table sha256 = 77fbc85b392e33622713db65f0ec6013c5ba1d268c919e9c5bdc6b3ad6d54c39

@@ -349,21 +349,27 @@ def test_condition_table_is_table_s2_in_order() -> None:
     assert doses["YPDETOH"] == ("ethanol", 15.0, ConcentrationUnit.percent)
     assert doses["YPDKCL2M"] == ("potassium chloride", 2.0, ConcentrationUnit.molar)
     kcl = conditions["YPDKCL2M"].perturbations[0].compound
-    assert [(g.field, g.reason.value) for g in kcl.provenance_gaps] == [
-        ("inchikey", "deferred_pending_source_review")
-    ]
+    # resolves through the #726 curator pass's row (the RCH2 medium's salt)
+    assert (kcl.inchikey, kcl.pubchem_cid, kcl.provenance_gaps) == (
+        "WCUXLLCKKVVCTQ-UHFFFAOYSA-M",
+        4873,
+        [],
+    )
     assert all(
         [g.field for g in s.perturbations[0].provenance_gaps] == ["solvent"]
         for s in conditions.values()
         if s.perturbations
     )
     ribose = conditions["YPRIBOSE"].media
+    # bare "ribose" is PubChem's D-ribose, the row the #726 pass folded Tong 2020's
+    # "Ribose" into (CID 10975657)
     assert [c.compound.name for c in ribose.components] == [
         "yeast extract",
         "peptone",
-        "ribose",
+        "D-ribose",
         "agar",
     ]
+    assert ribose.components[2].compound.inchikey == "SRBFZHDQGSBBOR-SOOFDHNKSA-N"
     assert ribose.name == "YP + 2% ribose, 2% agar (Peter 2018 Table S2)"
 
 

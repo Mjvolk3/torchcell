@@ -98,7 +98,9 @@ PRE_EXISTING_MEDIA_DIGESTS: dict[str, str] = {
     "SM_AGAR": "28eee7363aae21f4b077cf85163132709db49ab24d9208d7d397fc187fadd212",
     "SM_DEFERRED": "70273303dd7a8f5d112a45f7852c75801617b2f4ad56b6afeca51c9a83657568",
     # De Chiara 2022: the KAc sporulation medium, a new key pinned when it was added
-    "SPORULATION_KAC": "d81369e41094d391ca52aba4816ed3b2d869d34e7dcb5b0c8b53615a59995722",
+    # (d81369e4... then); re-pinned when the #726 curator pass gave its potassium
+    # acetate an InChIKey (#1008), the one pinned key whose node moves with that pass
+    "SPORULATION_KAC": "1bf484664669b8b7c167e94ecb1d9a88f5779b39d55b263655dd3186add23654",
     "SYNBASE": "0d98c0290f1a6c0072179abf52844eee8e5d2c561933414d760493925aeaeef2",
     "SYNH3_MINUS": "83e630b702a97c4b21b4babb59156a3e7ab865e1ae12dd928ca8b8ba2340254f",
     "YNB": "672d96a8c8909c79b88fd590ffe4d275a66c2943435c49c401947b03a4a69fc5",

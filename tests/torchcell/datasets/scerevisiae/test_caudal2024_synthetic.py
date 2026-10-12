@@ -3,12 +3,16 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/datasets/scerevisiae/test_caudal2024_synthetic.py
 """Caudal 2024 pan-transcriptome loader built end to end on synthetic raw files.
 
-The four ``raw_file_names`` are written under ``<root>/raw/`` so PyG never calls
-``download()``. ``process()`` also reads the SGD S288C chromosome FASTA through the
-genomes registry (``resolve(SGD_S288C_R64, SGD_FSA_NAME)``). ``DATA_ROOT`` is pointed
-into ``tmp_path`` and a real ``GenomeManifest`` is written for that tier rather than
-monkeypatching ``resolve``: the registry is cheap to satisfy, and doing so keeps its
-sha256 verification on the path the build takes.
+The seven ``raw_file_names`` are written under ``<root>/raw/`` so PyG never calls
+``download()``. ``process()`` also reads the SGD S288C chromosome FASTA and GFF through
+the genomes registry. ``DATA_ROOT`` is pointed into ``tmp_path`` and a real
+``GenomeManifest`` is written for each tier rather than monkeypatching ``resolve``: the
+registry is cheap to satisfy, and doing so keeps its sha256 verification on the path the
+build takes. The genotype is built by ``torchcell.sequence.natural_isolate``; the two
+loss-of-function matrices here carry no row and Table S1 lists the five Peter isolates
+with ``HO deletion`` no, ploidy 2, euploid, homozygous (``tests/torchcell/sequence/
+_peter_tier.py``), so each genotype carries the descriptor and no call; the calls and
+the HO deletion are tested in ``tests/torchcell/sequence/test_natural_isolate.py``.
 
 SGD FASTA: chromosome I ``AAAACCCCGGGGTTTT`` (two lines), II ``ACCCTTTGGA``, the
 mitochondrion ``TTAACCGG``, and a plasmid entry with neither tag (ignored).
@@ -55,6 +59,12 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
+from tests.torchcell.sequence._peter_tier import (
+    TableS1Row,
+    genotype_files,
+    gff,
+    tables_workbook,
+)
 from torchcell.data import RawSha256MismatchError
 from torchcell.datamodels.schema import (
     ArtifactRef,
@@ -63,6 +73,7 @@ from torchcell.datamodels.schema import (
     Genotype,
     NaturalGeneAbsencePerturbation,
     NaturalGenePresencePerturbation,
+    NaturalIsolateDescriptor,
     Publication,
     ReferenceGenome,
     RNASeqExpressionExperiment,
@@ -73,6 +84,7 @@ from torchcell.datamodels.schema import (
 )
 from torchcell.datasets.scerevisiae import caudal2024 as m
 from torchcell.literature.manifest import ArtifactRecord
+from torchcell.sequence import natural_isolate as ni
 from torchcell.sequence.genome.registry import (
     PETER2018_1011,
     SGD_S288C_R64,
@@ -188,9 +200,10 @@ def _caudal_zip() -> bytes:
 def _raw_bytes() -> dict[str, bytes]:
     return {
         m.CAUDAL_ZIP_BASENAME: _caudal_zip(),
-        m.REFGENE_TAR_NAME: _refgene_tar(),
-        m.PRESENCE_NAME: _matrix_gz(_PRESENCE, _COLUMNS),
-        m.COPYNUMBER_NAME: _matrix_gz(_reversed(_COPYNUMBER), _COLUMNS[::-1]),
+        ni.REFGENE_TAR_NAME: _refgene_tar(),
+        ni.PRESENCE_NAME: _matrix_gz(_PRESENCE, _COLUMNS),
+        ni.COPYNUMBER_NAME: _matrix_gz(_reversed(_COPYNUMBER), _COLUMNS[::-1]),
+        **genotype_files(list(_PRESENCE)),
     }
 
 
@@ -222,7 +235,11 @@ def _write_tier(data_root: Path, assembly_set: str, files: dict[str, bytes]) -> 
 
 
 def _write_sgd_tier(data_root: Path) -> None:
-    _write_tier(data_root, SGD_S288C_R64, {m.SGD_FSA_NAME: _SGD_FSA.encode()})
+    _write_tier(
+        data_root,
+        SGD_S288C_R64,
+        {ni.SGD_FSA_NAME: _SGD_FSA.encode(), ni.SGD_GFF_NAME: gff([])},
+    )
 
 
 def _write_raw(raw: Path) -> None:
@@ -232,15 +249,10 @@ def _write_raw(raw: Path) -> None:
 
 
 def _write_peter_tier(data_root: Path) -> None:
-    """The Peter tier listing the synthetic tarball and matrices (their build-time pins)."""
+    """The Peter tier listing the six synthetic genotype files (their build-time pins)."""
     raw = _raw_bytes()
     _write_tier(
-        data_root,
-        PETER2018_1011,
-        {
-            name: raw[name]
-            for name in (m.REFGENE_TAR_NAME, m.PRESENCE_NAME, m.COPYNUMBER_NAME)
-        },
+        data_root, PETER2018_1011, {name: raw[name] for name in ni.GENOTYPE_FILES}
     )
 
 
@@ -272,10 +284,31 @@ _REFERENCE_PHENOTYPE = RNASeqExpressionPhenotype(
 _TARBALL_REF = ArtifactRef(
     tier="genomes",
     key=PETER2018_1011,
-    path=m.REFGENE_TAR_NAME,
+    path=ni.REFGENE_TAR_NAME,
     sha256=hashlib.sha256(_refgene_tar()).hexdigest(),
     bytes=len(_refgene_tar()),
 )
+_WORKBOOK = tables_workbook([TableS1Row(isolate=i) for i in _PRESENCE])
+_WORKBOOK_REF = ArtifactRef(
+    tier="genomes",
+    key=PETER2018_1011,
+    path=ni.SUPPLEMENTARY_TABLES_NAME,
+    sha256=hashlib.sha256(_WORKBOOK).hexdigest(),
+    bytes=len(_WORKBOOK),
+)
+
+
+def _descriptor(isolate: str) -> NaturalIsolateDescriptor:
+    """The descriptor of a default Table S1 row (its sheet row from the panel order)."""
+    row = ni.IsolateAnnotationRow(
+        isolate=isolate,
+        sheet_row=list(_PRESENCE).index(isolate) + 5,
+        ho_deletion="no",
+        ploidy="2",
+        aneuploidies="euploid",
+        zygosity="homozygous",
+    )
+    return ni.isolate_descriptor(row, _WORKBOOK_REF)
 
 
 def _variant(
@@ -289,7 +322,7 @@ def _variant(
         sequence_ref=ArtifactRef(
             tier="genomes",
             key=PETER2018_1011,
-            path=m.REFGENE_TAR_NAME,
+            path=ni.REFGENE_TAR_NAME,
             member=f"{sys_name}.fasta#{token}",
             sha256=_TARBALL_REF.sha256,
             bytes=_TARBALL_REF.bytes,
@@ -322,13 +355,16 @@ def _absent(strain: str, name: str, orf: str) -> NaturalGeneAbsencePerturbation:
 
 
 def _experiment(
+    isolate: str,
     perturbations: list[GenePerturbationType],
     tpm: dict[str, float],
     count: dict[str, int],
 ) -> RNASeqExpressionExperiment:
     return RNASeqExpressionExperiment(
         dataset_name=_DATASET,
-        genotype=Genotype(perturbations=perturbations),
+        genotype=Genotype(
+            perturbations=perturbations, natural_isolate=_descriptor(isolate)
+        ),
         environment=_ENVIRONMENT,
         phenotype=RNASeqExpressionPhenotype(
             expression_tpm=tpm,
@@ -350,6 +386,7 @@ _REFERENCE = RNASeqExpressionExperimentReference(
 
 _EXPECTED = [
     _experiment(
+        "AAA",
         [
             _variant("AAA", "Q0010", "COX1", "AAA_Q0010_COX1"),
             _present("AAA", "2-EC1118_1F14_0012g", 2.5),
@@ -359,6 +396,7 @@ _EXPECTED = [
         {"YAL001C": 15, "YBR001W": 20},
     ),
     _experiment(
+        "SACE_YAU",
         [
             _variant("SACE_YAU", "YAL001C", "TFC3", "SACE_YAU_YAL001C_TFC3"),
             _variant("SACE_YAU", "YBR001W", "YBR001W", "SACE_YAU_YBR001W_"),
@@ -470,10 +508,12 @@ def test_side_files_gene_set_reference_index_and_strain_list(
         "ArtifactRef",
         "ArtifactTier",
         "CHEBI_ID_PATTERN",
+        "ChromosomeCopyChange",
         "ComponentDefinition",
         "Compound",
         "Concentration",
         "ConcentrationUnit",
+        "DeletionPerturbation",
         "DoseBasis",
         "Environment",
         "EnvironmentPerturbationType",
@@ -481,14 +521,22 @@ def test_side_files_gene_set_reference_index_and_strain_list(
         "ExperimentReference",
         "GenePerturbation",
         "GenePerturbationType",
+        "GenomeZygosity",
+        "GenomicSpan",
         "Genotype",
+        "HashableProvenanceGapMixin",
         "INCHIKEY_PATTERN",
+        "IsolateManipulation",
+        "LossOfFunctionAlleleStatus",
         "Media",
         "MediaComponent",
         "MediaComponentRole",
         "ModelStrict",
         "NaturalGeneAbsencePerturbation",
         "NaturalGenePresencePerturbation",
+        "NaturalIsolateDescriptor",
+        "NaturalLossOfFunctionCause",
+        "NaturalLossOfFunctionPerturbation",
         "Phenotype",
         "PresenceAbsencePerturbation",
         "ProvenanceGapMixin",
@@ -516,24 +564,55 @@ def test_side_files_gene_set_reference_index_and_strain_list(
         "allReferenceGenesWithSNPsAndIndelsInferred.tar.gz",
         "genesMatrix_PresenceAbsence.tab.gz",
         "genesMatrix_CopyNumber.tab.gz",
+        "1011LossOfFunction.xls.gz",
+        "genesMatrix_Frameshift.tab.gz",
+        "41586_2018_30_MOESM3_ESM.xls",
     ]
+    ledger = ni.NaturalIsolateGenotypeLedger.model_validate_json(
+        (preprocess / m.GENOTYPE_LEDGER).read_text()
+    )
+    assert (ledger.n_isolates, ledger.n_sequence_variants, ledger.ho_deleted) == (
+        2,
+        3,
+        [],
+    )
+    assert m.GENOTYPE_CLASSES == ni.ISOLATE_GENOTYPE_CLASSES
     frame = pd.DataFrame({"a": [1]})
     assert dataset.preprocess_raw(frame) is frame
 
 
-def test_rebuild_reads_the_cached_variant_table_not_the_tarball(root: Path) -> None:
-    """With ``processed/`` removed and the tarball replaced by bytes that are not a
-    tarball, the rebuild still yields the same two records: ``_sequence_variants``
-    loads ``preprocess/sequence_variants.parquet`` and never opens the tar.
+def test_rebuild_reads_the_cached_variant_table_not_the_tarball(
+    root: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """With ``processed/`` removed, the rebuild reads ``preprocess/
+    sequence_variants.parquet`` (its sidecar names the same tarball and isolates) and
+    yields the same two records without diffing the tarball again.
     """
     first = m.CaudalPanTranscriptome2024Dataset(root=str(root))
     first.close_lmdb()
     shutil.rmtree(root / "processed")
-    (root / "raw" / m.REFGENE_TAR_NAME).write_bytes(b"not a tarball")
+
+    def refuse(*args: object) -> None:
+        raise AssertionError("the tarball was diffed again")
+
+    monkeypatch.setattr(ni, "diff_reference_genes", refuse)
     rebuilt = m.CaudalPanTranscriptome2024Dataset(root=str(root))
     assert [rebuilt[i]["experiment"] for i in range(len(rebuilt))] == [
         e.model_dump() for e in _EXPECTED
     ]
+
+
+def test_a_cache_written_for_other_tarball_bytes_is_not_reused(root: Path) -> None:
+    """The sidecar pins the tarball's sha256: replace the tarball with bytes that are
+    not a tarball and the rebuild re-diffs (and fails on the bytes) instead of serving
+    the variants of a tarball it no longer holds.
+    """
+    first = m.CaudalPanTranscriptome2024Dataset(root=str(root))
+    first.close_lmdb()
+    shutil.rmtree(root / "processed")
+    (root / "raw" / ni.REFGENE_TAR_NAME).write_bytes(b"not a tarball")
+    with pytest.raises(tarfile.ReadError):
+        m.CaudalPanTranscriptome2024Dataset(root=str(root))
 
 
 def test_a_matched_isolate_missing_from_every_gene_header_raises(
@@ -549,7 +628,7 @@ def test_a_matched_isolate_missing_from_every_gene_header_raises(
     raw = tmp_path / "caudal" / "raw"
     _write_raw(raw)
     presence = {**_PRESENCE, "BBB": ["1"] * 6}
-    (raw / m.PRESENCE_NAME).write_bytes(_matrix_gz(presence, _COLUMNS))
+    (raw / ni.PRESENCE_NAME).write_bytes(_matrix_gz(presence, _COLUMNS))
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w") as archive:
         archive.writestr("t.tab", _CAUDAL_CSV + "BBB,YAL001C,TFC3,1,1.0\n")
@@ -568,7 +647,7 @@ def test_reference_slice_rejects_a_header_without_coordinates() -> None:
     with pytest.raises(
         ValueError, match=r"unparseable coordinate header: 'AAA_YAL001C_TFC3 nowhere'"
     ):
-        m._reference_slice("AAA_YAL001C_TFC3 nowhere", {"I": "ACGT"})
+        ni.reference_slice("AAA_YAL001C_TFC3 nowhere", {"I": "ACGT"})
 
 
 def test_sgd_chromosomes_keys_roman_numerals_and_the_mitochondrion(
@@ -577,7 +656,7 @@ def test_sgd_chromosomes_keys_roman_numerals_and_the_mitochondrion(
     """Multi-line records are joined and upper-cased; the untagged plasmid is dropped."""
     path = tmp_path / "sgd.fsa"
     path.write_text(_SGD_FSA.replace("TTAACCGG", "ttaaccgg"))
-    assert m._sgd_chromosomes(str(path)) == {
+    assert ni.sgd_chromosomes(str(path)) == {
         "I": "AAAACCCCGGGGTTTT",
         "II": "ACCCTTTGGA",
         "MT": "TTAACCGG",
@@ -653,14 +732,51 @@ def test_download_symlinks_every_file_then_builds(
     }
     assert links == {
         m.CAUDAL_ZIP_BASENAME: str(data_root / m.CAUDAL_ZIP_REL),
-        m.REFGENE_TAR_NAME: str(tier / m.REFGENE_TAR_NAME),
-        m.PRESENCE_NAME: str(tier / m.PRESENCE_NAME),
-        m.COPYNUMBER_NAME: str(tier / m.COPYNUMBER_NAME),
+        **{name: str(tier / name) for name in ni.GENOTYPE_FILES},
     }
     assert len(dataset) == 2
-    pinned = hashlib.sha256(raw[m.REFGENE_TAR_NAME]).hexdigest()
+    pinned = hashlib.sha256(raw[ni.REFGENE_TAR_NAME]).hexdigest()
     assert [
         p["sequence_ref"]["sha256"]
         for p in dataset[1]["experiment"]["genotype"]["perturbations"]
         if p["perturbation_type"] == "sequence_variant"
     ] == [pinned, pinned]
+
+
+def test_verify_build_adds_the_isolate_genotype_rules(
+    dataset: m.CaudalPanTranscriptome2024Dataset,
+    root: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """``verify_build`` runs the RNA-seq family rules and, because the registry entry
+    is marked ``natural_isolates``, the four shared isolate-genotype rules over the
+    store's ``data.csv`` isolates (Table S1 re-read from a library copy of the tier's
+    workbook).
+    """
+    from torchcell.verification import runners
+
+    data_root = Path(os.environ["DATA_ROOT"])
+    tables = data_root / "torchcell-library" / ni.CITATION_KEY / ni.LIBRARY_TABLES_REL
+    tables.parent.mkdir(parents=True)
+    tables.write_bytes(_WORKBOOK)
+    monkeypatch.setattr(ni, "TABLES_SHA256", hashlib.sha256(_WORKBOOK).hexdigest())
+    monkeypatch.setattr(
+        runners, "_sgd_gene_set", lambda root: {"YAL001C", "YBR001W", "Q0010"}
+    )
+    monkeypatch.setitem(
+        runners.RNASEQ_DATASETS["caudal_pantranscriptome2024"], "expected_count", 2
+    )
+    dataset.close_lmdb()
+    report = m.verify_build(str(root), data_root=str(data_root))
+    results = {r.name: r for r in report.results}
+    assert [r.name for r in report.results][-4:] == [
+        "isolate_genotype_identity",
+        "isolate_genotype_round_trip",
+        "isolate_descriptor_matches_table_s1",
+        "loss_of_function_calls_match_release",
+    ]
+    assert [name for name, r in results.items() if not r.passed] == []
+    assert results["isolate_genotype_round_trip"].message == (
+        "2 stored genotypes equal their re-derivation from the pinned Peter 2018 "
+        "releases"
+    )

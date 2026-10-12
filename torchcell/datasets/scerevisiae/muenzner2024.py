@@ -20,30 +20,33 @@ for 55 of them. Two dataset classes, one per released measurement:
   doubling time or dilution rate correction", so the rate is total replacement
   (degradation plus dilution by growth), named in ``measurement_type``.
 
-GENOTYPE. Each isolate is a perturbation set off S288C built EXACTLY as
-``caudal2024`` builds it (its helpers are imported, not copied): sequence variants from
-Peter's reference-gene tarball, natural presence of non-reference pangenome ORFs and
-natural absence of reference ORFs from Peter's matrices. The release spells the 93
-``SACE_`` codes of the Peter panel with a dot (``SACE.YAB``); ``peter_code`` maps them
-back, and every one of the 67 such proteome isolates carries the same alternative strain
-name in SI Table 1 as in Peter's Table S1 (checked in the dendron note). One isolate with
-no Peter genome is still refused and counted in the ledger: ``XTRA.DGU`` (KS11, SI Table 1
-ploidy 3). Stored the way FY4 is, it would need its own reference genome, and
-``ReferenceGenome.ploidy`` admits only haploid and diploid, so a triploid has no honest
-carrier without a schema change (an owner decision, #1045).
+GENOTYPE. Each isolate is a perturbation set off S288C built by
+``torchcell.sequence.natural_isolate`` (``NaturalIsolateGenotypes``), the module every
+natural-isolate loader on the Peter panel shares, so an isolate here is the same
+``Genotype`` as in the Caudal 2024, Peter 2018 and De Chiara 2022 stores: sequence
+variants from Peter's reference-gene tarball, natural presence of non-reference pangenome
+ORFs and natural absence of reference ORFs from Peter's matrices, the HO deletion Peter's
+Table S1 marks (#988), the natural loss-of-function calls of Peter's two matrices (#987),
+and ``Genotype.natural_isolate``, which carries the ploidy, zygosity and whole-chromosome
+aneuploidy of Peter's Table S1 (#1001). The release spells the 93 ``SACE_`` codes of the
+Peter panel with a dot (``SACE.YAB``); ``peter_code`` maps them back, and every one of the
+67 such proteome isolates carries the same alternative strain name in SI Table 1 as in
+Peter's Table S1 (checked in the dendron note). One isolate with no Peter genome is still
+refused and counted in the ledger: ``XTRA.DGU`` (KS11, SI Table 1 ploidy 3). Stored the
+way FY4 is, it would need its own reference genome, and ``ReferenceGenome.ploidy`` admits
+only haploid and diploid, so a triploid has no honest carrier without a schema change (an
+owner decision, #1045). The ledger also keeps each isolate's SI Table 1 karyotype with the
+paper's SI Table 5 / 6 / 7 flags.
 
 FY4 (2026.10.12, #1045 row 18). The release's ``Reference`` column (SI Table 1: FY4,
 ploidy 1) is the S288C-derived laboratory strain, resolved the way the other S288C-derived
 backgrounds are (BY4741/BY4742 in the deletion loaders): its record's reference names the
 strain (``ReferenceGenome(strain="FY4")``) on the S288C R64 coordinate system, and its
-genotype carries no perturbation off S288C. The release names the column ``Reference``
-and its Methods infer every strain "on the basis of the reference genome of the S288c
-strain" and take "the proteome for the reference strain S288c" from UniProt. That FY4
-descends from S288C (Winston 1995) is not mirrored; the ledger says so.
-Whole-chromosome aneuploidy and basal ploidy (SI Table 1) are genomic content the schema
-cannot carry: every perturbation is gene-keyed, and ``ReferenceGenome.ploidy`` is
-haploid/diploid only. Each isolate's karyotype is written to the ledger instead, and the
-gap is filed as a schema issue with these counts.
+genotype carries no perturbation off S288C and no ``natural_isolate`` descriptor (FY4 is
+not an isolate of the Peter panel). The release names the column ``Reference`` and its
+Methods infer every strain "on the basis of the reference genome of the S288c strain" and
+take "the proteome for the reference strain S288c" from UniProt. That FY4 descends from
+S288C (Winston 1995) is not mirrored; the ledger says so.
 
 REFERENCE. The paper's own: "the median mRNA or protein expression value of the respective
 gene across all euploid strains" (Methods). The proteome reference is the per-protein
@@ -65,11 +68,10 @@ import logging
 import os
 import os.path as osp
 import pickle
-import re
 from collections.abc import Iterator
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import lmdb
 import numpy as np
@@ -90,49 +92,47 @@ from torchcell.data import (
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import SM
 from torchcell.datamodels.schema import (
-    ArtifactRef,
+    ChromosomeCopyChange,
     Concentration,
     ConcentrationUnit,
+    DeletionPerturbation,
     Environment,
     Experiment,
     ExperimentReference,
-    GenePerturbationType,
-    Genotype,
     Media,
     MediaComponent,
     MediaComponentRole,
+    NaturalGeneAbsencePerturbation,
+    NaturalGenePresencePerturbation,
+    NaturalIsolateDescriptor,
+    NaturalLossOfFunctionPerturbation,
     ProteinAbundanceExperiment,
     ProteinAbundanceExperimentReference,
     ProteinAbundancePhenotype,
     ProteinTurnoverPhenotype,
     Publication,
     ReferenceGenome,
+    SequenceVariantPerturbation,
     Temperature,
     YeastProteinTurnoverExperiment,
     YeastProteinTurnoverExperimentReference,
 )
 from torchcell.datasets.dataset_registry import register_dataset
-from torchcell.datasets.scerevisiae.caudal2024 import COPYNUMBER_NAME as COPYNUMBER_NAME
-from torchcell.datasets.scerevisiae.caudal2024 import PRESENCE_NAME as PRESENCE_NAME
-from torchcell.datasets.scerevisiae.caudal2024 import (
-    REFGENE_TAR_NAME as REFGENE_TAR_NAME,
-)
-from torchcell.datasets.scerevisiae.caudal2024 import (
-    CaudalPanTranscriptome2024Dataset,
-    refgene_tarball_ref,
-)
-from torchcell.datasets.scerevisiae.caudal2024 import _demangle_orf as _demangle_orf
-from torchcell.datasets.scerevisiae.caudal2024 import _orf_to_s288c as _orf_to_s288c
 from torchcell.literature.manifest import (
     ArtifactRecord,
     Manifest,
     RetrievalMethod,
     RetrievalRecord,
 )
-from torchcell.sequence.genome.registry import (
-    PETER2018_1011,
-    load_genome_manifest,
-    resolve,
+from torchcell.sequence.genome.registry import PETER2018_1011, load_genome_manifest
+from torchcell.sequence.natural_isolate import (
+    GENOTYPE_FILES,
+    PRESENCE_NAME,
+    NaturalIsolateGenotypes,
+    genotype_isolate,
+    link_genotype_files,
+    panel_isolates,
+    parse_aneuploidy,
 )
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import SourcedValue
@@ -169,7 +169,21 @@ MASSIVE_ACCESSION = "MSV000090435"
 PRIDE_DISOMES = "PXD044526"
 PRIDE_TURNOVER = "PXD048219"
 
-RAW_FILES = [SI_TABLES_FILENAME, REFGENE_TAR_NAME, PRESENCE_NAME, COPYNUMBER_NAME]
+#: The SI workbook plus the six Peter-tier files an isolate genotype is built from.
+RAW_FILES = [SI_TABLES_FILENAME, *GENOTYPE_FILES]
+#: What the isolate genotypes of this build carry, counted (``natural_isolate``).
+GENOTYPE_LEDGER = "natural_isolate_genotype_ledger.json"
+#: The classes an isolate genotype holds, built in ``torchcell.sequence.natural_isolate``.
+#: Named here because the schema-impact closure of this loader is read from this file's
+#: own imports: a change to any of them must re-stale this store.
+GENOTYPE_CLASSES = (
+    SequenceVariantPerturbation,
+    NaturalGenePresencePerturbation,
+    NaturalGeneAbsencePerturbation,
+    DeletionPerturbation,
+    NaturalLossOfFunctionPerturbation,
+    NaturalIsolateDescriptor,
+)
 
 PROTEOME_MEASUREMENT_TYPE = "swath_ms_maxlfq_precursor_batch_corrected_quantity"
 TURNOVER_MEASUREMENT_TYPE = "dynamic_silac_lys8_kdp_per_hour_no_dilution_correction"
@@ -603,37 +617,6 @@ def peter_code(release_code: str) -> str:
     return release_code.replace(".", "_")
 
 
-_ANEU_RE = re.compile(r"^aneu;(?:[+-]\d+\*\d+;)+$")
-_CHANGE_RE = re.compile(r"([+-])(\d+)\*(\d+);")
-
-
-class ChromosomeCopyChange(BaseModel):
-    """One aberrant chromosome of an ``aneu;+/-X*Y`` annotation (SI Table 1 legend)."""
-
-    model_config = ConfigDict(frozen=True)
-
-    chromosome: int = Field(ge=1, le=16)
-    change: int = Field(description="signed number of aberrant copies, e.g. +1, -1")
-
-
-def parse_aneuploidies(text: str) -> list[ChromosomeCopyChange]:
-    """Parse an SI Table 1 ``Aneuploidies`` cell; ``euploid`` is the empty list.
-
-    The legend: "aneu;+/-X*Y", where +/- indicates chromosome gain or loss, X the number
-    of aberrant copies and Y the affected chromosome. Any other text raises.
-    """
-    if text == EUPLOID:
-        return []
-    if not _ANEU_RE.match(text):
-        raise ValueError(f"unparseable aneuploidy annotation {text!r}")
-    return [
-        ChromosomeCopyChange(
-            chromosome=int(chrom), change=int(copies) * (1 if sign == "+" else -1)
-        )
-        for sign, copies, chrom in _CHANGE_RE.findall(text)
-    ]
-
-
 class IsolateKaryotype(BaseModel):
     """The released karyotype of one built isolate: what the genotype cannot carry."""
 
@@ -767,64 +750,12 @@ def karyotypes(
                 release_code=code,
                 ploidy=str(rows.loc[code, "Ploidy"]),
                 aneuploidies=aneu,
-                copy_changes=parse_aneuploidies(aneu),
+                copy_changes=parse_aneuploidy(aneu),
                 integrated=code in integrated,
                 excluded_by=excluded,
             )
         )
     return out
-
-
-# --------------------------------------------------------------------------- #
-# Genotype: the Caudal 2024 construction, applied to this release's isolates
-# --------------------------------------------------------------------------- #
-class PeterIsolateGenotypes:
-    """Peter's presence/absence and copy-number matrices, ready for ``caudal2024``.
-
-    Holds exactly what ``CaudalPanTranscriptome2024Dataset.process`` derives from the two
-    matrices (pangenome ids, their S288C names, the reference-membership mask, the
-    numeric rows) and hands them to Caudal's own ``_content_perturbations`` and
-    ``_sequence_perturbations``, so a natural isolate here is the same perturbation set it
-    is in the Caudal store.
-    """
-
-    def __init__(self, raw_dir: str) -> None:
-        """Read the two matrices from ``raw_dir`` (already sha256-verified)."""
-        presence = pd.read_csv(osp.join(raw_dir, PRESENCE_NAME), sep="\t", index_col=0)
-        copynumber = pd.read_csv(
-            osp.join(raw_dir, COPYNUMBER_NAME), sep="\t", index_col=0
-        ).reindex(columns=presence.columns)
-        self.orf_ids = [_demangle_orf(c) for c in presence.columns]
-        self.s288c_names = [_orf_to_s288c(o) for o in self.orf_ids]
-        self.s288c_mask = np.array(
-            [n is not None for n in self.s288c_names], dtype=bool
-        )
-        self.presence = presence.to_numpy(dtype=float)
-        self.copynumber = copynumber.to_numpy(dtype=float)
-        self.row = {str(s): i for i, s in enumerate(presence.index.astype(str))}
-
-    @property
-    def isolates(self) -> set[str]:
-        """The 1,011 Peter isolate codes."""
-        return set(self.row)
-
-    def perturbations(
-        self, strain: str, variants: list[tuple[str, str, str]], tarball: ArtifactRef
-    ) -> list[GenePerturbationType]:
-        """The isolate's genotype, in Caudal's order: variants, presences, absences."""
-        r = self.row[strain]
-        presence, absence = CaudalPanTranscriptome2024Dataset._content_perturbations(
-            strain,
-            self.presence[r],
-            self.copynumber[r],
-            self.s288c_mask,
-            self.orf_ids,
-            self.s288c_names,
-        )
-        seq = CaudalPanTranscriptome2024Dataset._sequence_perturbations(
-            strain, variants, tarball
-        )
-        return [*seq, *presence, *absence]
 
 
 # --------------------------------------------------------------------------- #
@@ -986,14 +917,14 @@ class _MuenznerIsolateDataset(ExperimentDataset):
 
     @property
     def raw_file_names(self) -> list[str]:
-        """The SI workbook and Peter's three genotype files."""
+        """The SI workbook and Peter's six genotype files."""
         return RAW_FILES
 
     def download(self) -> None:
         """Link the workbook (raw mirror) and Peter's files (genomes tier) into ``raw/``.
 
-        The workbook's manifest record must equal the module pin; the Peter files are
-        verified by the genomes tier on ``resolve``. ``process`` re-verifies all four.
+        The workbook's manifest record must equal the module pin; each Peter file is
+        verified against the genomes tier's manifest. ``process`` re-verifies all seven.
         """
         data_root = self._data_root()
         os.makedirs(self.raw_dir, exist_ok=True)
@@ -1006,37 +937,27 @@ class _MuenznerIsolateDataset(ExperimentDataset):
             osp.join(self.raw_dir, SI_TABLES_FILENAME),
             SI_TABLES_SHA256,
         )
-        for name in (REFGENE_TAR_NAME, PRESENCE_NAME, COPYNUMBER_NAME):
-            dest = osp.join(self.raw_dir, name)
-            if not osp.lexists(dest):
-                os.symlink(resolve(PETER2018_1011, name, data_root=data_root), dest)
+        link_genotype_files(self.raw_dir, data_root)
         log.info("Muenzner 2024 raw files linked into %s", self.raw_dir)
 
     def _verify_raw(self, data_root: str) -> None:
-        """Verify all four raw files before any is read."""
+        """Verify all seven raw files before any is read."""
         peter = load_genome_manifest(PETER2018_1011, data_root)
         verify_raw_files(
             self.raw_dir,
             {
                 SI_TABLES_FILENAME: SI_TABLES_SHA256,
-                REFGENE_TAR_NAME: peter.record(REFGENE_TAR_NAME).sha256,
-                PRESENCE_NAME: peter.record(PRESENCE_NAME).sha256,
-                COPYNUMBER_NAME: peter.record(COPYNUMBER_NAME).sha256,
+                **{name: peter.record(name).sha256 for name in GENOTYPE_FILES},
             },
         )
 
-    def _variants(
-        self, data_root: str, strains: set[str]
-    ) -> dict[str, list[tuple[str, str, str]]]:
-        """Caudal's sequence-variant diff for ``strains`` (cached in ``preprocess/``).
-
-        ``_sequence_variants`` reads only ``raw_dir`` and ``preprocess_dir`` off its
-        instance, both of which this dataset has, and raises if any built isolate never
-        appears in a reference-gene FASTA header.
-        """
-        return CaudalPanTranscriptome2024Dataset._sequence_variants(
-            cast(Any, self), data_root, strains
+    def _genotypes(self, data_root: str, strains: list[str]) -> NaturalIsolateGenotypes:
+        """The isolate genotypes of ``strains``; their ledger goes to ``preprocess/``."""
+        genotypes = NaturalIsolateGenotypes(
+            self.raw_dir, self.preprocess_dir, strains, data_root
         )
+        genotypes.write_ledger(osp.join(self.preprocess_dir, GENOTYPE_LEDGER))
+        return genotypes
 
     def _write_records(
         self,
@@ -1171,9 +1092,8 @@ class ProteomeMuenzner2024Dataset(_MuenznerIsolateDataset):
         )
         values = proteome_matrix(tables[T3.name])
         release_codes = [str(c) for c in values.columns]
-        genotypes = PeterIsolateGenotypes(self.raw_dir)
         matched, s288c, refused = match_isolates(
-            release_codes, genotypes.isolates, tables[T1.name]
+            release_codes, panel_isolates(self.raw_dir), tables[T1.name]
         )
         integrated, table5, table6 = _flags(tables)
         t7 = tables[T7.name]
@@ -1234,8 +1154,7 @@ class ProteomeMuenzner2024Dataset(_MuenznerIsolateDataset):
         )
         by_peter = {p: c for c, p in matched.items()}
         strains = sorted(by_peter)
-        variants = self._variants(data_root, set(strains))
-        tarball = refgene_tarball_ref(data_root)
+        genotypes = self._genotypes(data_root, strains)
         pd.DataFrame(
             {"strain_id": [*strains, *(isolate.strain for isolate in s288c)]}
         ).to_csv(osp.join(self.preprocess_dir, "data.csv"), index=False)
@@ -1254,11 +1173,7 @@ class ProteomeMuenzner2024Dataset(_MuenznerIsolateDataset):
             for strain in strains:
                 experiment = ProteinAbundanceExperiment(
                     dataset_name=self.name,
-                    genotype=Genotype(
-                        perturbations=genotypes.perturbations(
-                            strain, variants.get(strain, []), tarball
-                        )
-                    ),
+                    genotype=genotypes.genotype(strain),
                     environment=environment,
                     phenotype=phenotype_of(by_peter[strain]),
                 )
@@ -1363,9 +1278,8 @@ class ProteinTurnoverMuenzner2024Dataset(_MuenznerIsolateDataset):
         annotations = tables[T1.name]
         check_annotation_agreement(frame, annotations)
         release_codes = sorted(frame["strain"].unique())
-        genotypes = PeterIsolateGenotypes(self.raw_dir)
         matched, s288c, refused = match_isolates(
-            release_codes, genotypes.isolates, annotations
+            release_codes, panel_isolates(self.raw_dir), annotations
         )
         if s288c:
             raise RuntimeError(
@@ -1428,8 +1342,7 @@ class ProteinTurnoverMuenzner2024Dataset(_MuenznerIsolateDataset):
         )
         by_peter = {p: c for c, p in matched.items()}
         strains = sorted(by_peter)
-        variants = self._variants(data_root, set(strains))
-        tarball = refgene_tarball_ref(data_root)
+        genotypes = self._genotypes(data_root, strains)
         pd.DataFrame({"strain_id": strains}).to_csv(
             osp.join(self.preprocess_dir, "data.csv"), index=False
         )
@@ -1441,11 +1354,7 @@ class ProteinTurnoverMuenzner2024Dataset(_MuenznerIsolateDataset):
                 keys = sub["systematic_name"].tolist()
                 experiment = YeastProteinTurnoverExperiment(
                     dataset_name=self.name,
-                    genotype=Genotype(
-                        perturbations=genotypes.perturbations(
-                            strain, variants.get(strain, []), tarball
-                        )
-                    ),
+                    genotype=genotypes.genotype(strain),
                     environment=environment,
                     phenotype=ProteinTurnoverPhenotype(
                         degradation_rate=dict(
@@ -1476,6 +1385,7 @@ CAUDAL_ROOT = "data/torchcell/caudal_pantranscriptome2024"
 
 def verify_build(dataset_root: str, *, data_root: str | None = None) -> Any:
     """Run the L0-L4 gate for whichever Muenzner store ``dataset_root`` is."""
+    from torchcell.verification.natural_isolate_genotype import IsolateGenotypeAudit
     from torchcell.verification.protein import (
         natural_isolate_of,
         verify_natural_isolate_proteome,
@@ -1494,12 +1404,30 @@ def verify_build(dataset_root: str, *, data_root: str | None = None) -> Any:
         sha256=SI_TABLES_SHA256,
         method=(
             "SI Table 3 non-imputed MaxLFQ quantities per natural isolate; genotype "
-            "vs S288C from Peter 2018 by the Caudal 2024 construction"
+            "vs S288C from Peter 2018 by torchcell.sequence.natural_isolate"
             if name == "proteome_muenzner2024"
             else "SI Table 17 dynamic-SILAC kdp (1/h) and HL (h) per natural isolate"
         ),
         page=T3.name if name == "proteome_muenzner2024" else T17.name,
         retrieved=RAW_RETRIEVED_AT,
+    )
+    # The isolates of the Peter panel the store's genotypes name; FY4, an S288C-derived
+    # background with no descriptor, is not one of them (#1045).
+    isolates = sorted(
+        {
+            isolate
+            for r in records
+            if (isolate := genotype_isolate(r["experiment"]["genotype"])) is not None
+        }
+    )
+    audit = IsolateGenotypeAudit(
+        NaturalIsolateGenotypes(
+            osp.join(dataset_root, "raw"),
+            osp.join(dataset_root, "preprocess"),
+            isolates,
+            data_root,
+        ),
+        osp.join(data_root, "torchcell-library"),
     )
     if name == "proteome_muenzner2024":
         caudal_order = caudal_strain_order(data_root)
@@ -1517,6 +1445,7 @@ def verify_build(dataset_root: str, *, data_root: str | None = None) -> Any:
             caudal_genotypes=caudal_genotype_sample(
                 data_root, caudal_order, built & set(caudal_order)
             ),
+            genotype_audit=audit,
         )
     ledger = TurnoverLedger.model_validate_json(
         Path(dataset_root, "preprocess", "muenzner2024_ledger.json").read_text()
@@ -1528,7 +1457,14 @@ def verify_build(dataset_root: str, *, data_root: str | None = None) -> Any:
         expected_count=EXPECTED_TURNOVER_RECORDS,
         sgd_genes=_sgd_genes(data_root),
         expected_rows_without_reference=ledger.n_rows_without_reference,
+        genotype_audit=audit,
     )
+
+
+def store_isolates(dataset_root: str) -> list[str]:
+    """The isolates a built Muenzner store holds (its ``preprocess/data.csv``)."""
+    path = osp.join(dataset_root, "preprocess", "data.csv")
+    return pd.read_csv(path)["strain_id"].astype(str).tolist()
 
 
 def caudal_strain_order(data_root: str) -> list[str]:
@@ -1542,15 +1478,15 @@ def caudal_strain_order(data_root: str) -> list[str]:
 
 
 def caudal_genotype_sample(
-    data_root: str, order: list[str], overlap: set[str]
-) -> dict[str, list[dict[str, Any]]]:
-    """Perturbation dumps of a fixed sample of shared isolates, read from Caudal's LMDB.
+    data_root: str, order: list[str], overlap: set[str | None]
+) -> dict[str, dict[str, Any]]:
+    """Genotype dumps of a fixed sample of shared isolates, read from Caudal's LMDB.
 
     The sample is the first, middle and last shared isolate by code plus the first
     ``SACE_`` one (the spelling the release changes), so the dot-to-underscore mapping is
     always among the compared genotypes.
     """
-    ordered = sorted(overlap)
+    ordered = sorted(s for s in overlap if s is not None)
     sace = [s for s in ordered if s.startswith("SACE_")]
     picks = sorted({ordered[0], ordered[len(ordered) // 2], ordered[-1], *sace[:1]})
     env = lmdb.open(
@@ -1559,19 +1495,19 @@ def caudal_genotype_sample(
         lock=False,
         readahead=False,
     )
-    out: dict[str, list[dict[str, Any]]] = {}
+    out: dict[str, dict[str, Any]] = {}
     with env.begin() as txn:
         for strain in picks:
             raw = txn.get(str(order.index(strain)).encode())
             if raw is None:
                 raise KeyError(f"Caudal store has no record for {strain}")
-            perts = pickle.loads(raw)["experiment"]["genotype"]["perturbations"]
-            if str(perts[0]["strain_id"]) != strain:
+            genotype = pickle.loads(raw)["experiment"]["genotype"]
+            if genotype_isolate(genotype) != strain:
                 raise ValueError(
                     f"Caudal record {order.index(strain)} is "
-                    f"{perts[0]['strain_id']}, not {strain}"
+                    f"{genotype_isolate(genotype)}, not {strain}"
                 )
-            out[strain] = perts
+            out[strain] = genotype
     env.close()
     return out
 

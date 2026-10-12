@@ -37,6 +37,7 @@ import pandas as pd
 from dotenv import load_dotenv
 
 from torchcell.datasets.scerevisiae import caudal2024 as m
+from torchcell.sequence import natural_isolate as ni
 from torchcell.sequence.genome.registry import PETER2018_1011, resolve
 
 RESULTS = "experiments/036-dataset-fixes-before-kg-build/results"
@@ -71,7 +72,7 @@ def _homolog_rule_check(
     s2_map = dict(zip(table_s2["Annotation_Name"], table_s2["systematic_name"]))
     homolog_orfs = set(
         served_blank.loc[
-            served_blank["gene_id"].astype(str).str.match(m._S288C_RE), "gene_id"
+            served_blank["gene_id"].astype(str).str.match(ni.S288C_RE), "gene_id"
         ]
     )
     annotations = pd.read_csv(
@@ -89,7 +90,7 @@ def _homolog_rule_check(
         strains = served_blank.loc[served_blank["gene_id"] == orf, "Strain"]
         number = str(ann).split("-", 1)[0]
         ref_cols = [
-            c for c in presence.columns if m._orf_to_s288c(m._demangle_orf(c)) == orf
+            c for c in presence.columns if ni.orf_to_s288c(ni.demangle_orf(c)) == orf
         ]
         acc_cols = [c for c in presence.columns if c.startswith(f"X{number}.")]
         out[str(orf)] = {
@@ -118,7 +119,7 @@ def main() -> None:
     os.makedirs(RESULTS, exist_ok=True)
 
     presence = pd.read_csv(
-        resolve(PETER2018_1011, m.PRESENCE_NAME), sep="\t", index_col=0
+        resolve(PETER2018_1011, ni.PRESENCE_NAME), sep="\t", index_col=0
     )
     presence.index = presence.index.astype(str)
     raw = m.read_caudal_table(caudal_zip)
@@ -146,7 +147,7 @@ def main() -> None:
 
     # Served blank ids: isolates, median TPM, and the Peter presence of the pangenome
     # column a pangenome id names ('X' + demangled column == served id).
-    peter_cols = {"X" + m._demangle_orf(c): c for c in presence.columns}
+    peter_cols = {"X" + ni.demangle_orf(c): c for c in presence.columns}
     served_profile: dict[str, dict[str, Any]] = {}
     for gene_id, sub in served_blank.groupby("gene_id"):
         entry: dict[str, Any] = {
@@ -165,7 +166,7 @@ def main() -> None:
     table_s2 = pd.read_excel(osp.join(key_dir, m.SI_TABLES_XLSX), sheet_name="Table S2")
     homolog_check = _homolog_rule_check(served_blank, presence, table_s2, caudal_zip)
     s2_names = set(table_s2["systematic_name"].astype(str))
-    pangenome_ids = sorted(g for g in served_profile if not m._S288C_RE.match(g))
+    pangenome_ids = sorted(g for g in served_profile if not ni.S288C_RE.match(g))
 
     # Per-isolate phenotype keys: new (named + served blank) vs the pre-fix dev store.
     new_keys = kept.groupby("Strain")["gene_id"].nunique()
@@ -175,13 +176,13 @@ def main() -> None:
         data_root, "data/torchcell/caudal_pantranscriptome2024/processed/lmdb"
     )
     dev_counts = _dev_store_key_counts(dev_lmdb) if osp.isdir(dev_lmdb) else {}
-    named_acc = named[~named["systematic_name"].astype(str).str.match(m._S288C_RE)]
+    named_acc = named[~named["systematic_name"].astype(str).str.match(ni.S288C_RE)]
 
     summary = {
         "inputs": {
             "caudal_zip": m.CAUDAL_ZIP_REL,
             "caudal_zip_sha256": m.CAUDAL_ZIP_SHA256,
-            "peter_presence": m.PRESENCE_NAME,
+            "peter_presence": ni.PRESENCE_NAME,
             "table_s2": m.SI_TABLES_XLSX,
             "table_s2_sha256": m.SI_TABLES_XLSX_SHA256,
             "dev_lmdb": dev_lmdb if dev_counts else None,
@@ -225,7 +226,7 @@ def main() -> None:
         "named_accessory_keys_equal_X_plus_demangled_orf": bool(
             (
                 named_acc["systematic_name"]
-                == "X" + named_acc["ORF"].map(m._demangle_orf)
+                == "X" + named_acc["ORF"].map(ni.demangle_orf)
             ).all()
         ),
         "named_pan_absence_counts": ledger.named_pan_absence_counts,

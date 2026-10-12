@@ -42,6 +42,7 @@ import pytest
 
 from tests.torchcell.conftest import REAL_VERIFY_RAW_FILES
 from tests.torchcell.datasets.scerevisiae import test_caudal2024_synthetic as caudal
+from tests.torchcell.sequence._peter_tier import gff
 from torchcell.data import RawSha256MismatchError
 from torchcell.datamodels.media import PBS, SPORULATION_KAC, YPD_AGAR
 from torchcell.datamodels.schema import (
@@ -55,14 +56,10 @@ from torchcell.datamodels.schema import (
     SampleUnit,
 )
 from torchcell.datasets.scerevisiae import dechiara2022 as m
-from torchcell.datasets.scerevisiae.caudal2024 import (
-    COPYNUMBER_NAME,
-    PRESENCE_NAME,
-    REFGENE_TAR_NAME,
-    SGD_FSA_NAME,
-)
 from torchcell.literature.manifest import Manifest
+from torchcell.sequence import natural_isolate as ni
 from torchcell.sequence.genome.registry import PETER2018_1011, SGD_S288C_R64
+from torchcell.sequence.natural_isolate import SGD_FSA_NAME
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import SourcedValue
 
@@ -190,17 +187,13 @@ def _write_tiers(data_root: Path) -> None:
         SGD_S288C_R64,
         {
             SGD_FSA_NAME: caudal._SGD_FSA.encode(),
+            ni.SGD_GFF_NAME: gff([]),
             "orf_coding_all_R64-4-1_20230830.fasta": ORF_FASTA.encode(),
             "rna_coding_R64-4-1_20230830.fasta": b">YNCA0001W tA\nA\n",
         },
     )
     caudal._write_tier(
-        data_root,
-        PETER2018_1011,
-        {
-            name: raw[name]
-            for name in (REFGENE_TAR_NAME, PRESENCE_NAME, COPYNUMBER_NAME)
-        },
+        data_root, PETER2018_1011, {name: raw[name] for name in ni.GENOTYPE_FILES}
     )
 
 
@@ -605,6 +598,13 @@ def _audited_library(data_root: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         ),
     )
     monkeypatch.setattr(m, "SOURCED_VALUES", (sourced,))
+    # the isolate-genotype audit re-reads Peter's Table S1 from the library mirror
+    tables = data_root / "torchcell-library" / ni.CITATION_KEY / ni.LIBRARY_TABLES_REL
+    tables.parent.mkdir(parents=True)
+    tables.write_bytes(caudal._WORKBOOK)
+    monkeypatch.setattr(
+        ni, "TABLES_SHA256", hashlib.sha256(caudal._WORKBOOK).hexdigest()
+    )
 
 
 def test_verify_build_passes_the_synthetic_life_cycle_store(
@@ -624,6 +624,10 @@ def test_verify_build_passes_the_synthetic_life_cycle_store(
     assert results["count"].details == {"observed": 9, "expected": 9}
     assert results["viability_above_100"].details == {"observed": 1, "declared": 1}
     assert results["sequence_variant_genes_are_s288c_genes"].details["n_genes"] == 3
+    assert results["isolate_genotype_round_trip"].message == (
+        "2 stored genotypes equal their re-derivation from the pinned Peter 2018 "
+        "releases"
+    )
     wrong = m.verify_build(
         life_cycle.root, data_root=str(data_root), expected_viability_above_100=0
     )

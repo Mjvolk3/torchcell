@@ -28,18 +28,19 @@ from dotenv import load_dotenv
 from pydantic import BaseModel, ConfigDict
 
 from torchcell.datasets.scerevisiae import peter2018 as p
-from torchcell.datasets.scerevisiae.caudal2024 import (
-    COPYNUMBER_NAME,
-    PRESENCE_NAME,
-    REFGENE_TAR_NAME,
-    SGD_FSA_NAME,
-)
 from torchcell.literature.manifest import sha256_file
+from torchcell.sequence import natural_isolate as ni
 from torchcell.sequence.genome.registry import (
     PETER2018_1011,
     SGD_S288C_R64,
     load_genome_manifest,
     resolve,
+)
+from torchcell.sequence.natural_isolate import (
+    COPYNUMBER_NAME,
+    PRESENCE_NAME,
+    REFGENE_TAR_NAME,
+    SGD_FSA_NAME,
 )
 
 RESULTS = osp.join(
@@ -161,13 +162,13 @@ def main() -> None:
     data_root = os.environ["DATA_ROOT"]
     release, frame = _release(data_root)
     isolates = set(frame.index)
-    pangenome = p.read_pangenome(
+    pangenome = ni.read_pangenome(
         resolve(PETER2018_1011, PRESENCE_NAME), resolve(PETER2018_1011, COPYNUMBER_NAME)
     )
     tar_path = resolve(PETER2018_1011, REFGENE_TAR_NAME)
-    variants = p.diff_reference_genes(
+    variants = ni.diff_reference_genes(
         tar_path, resolve(SGD_S288C_R64, SGD_FSA_NAME), set(pangenome.row_of)
-    )
+    ).variants
     caudal_strains, caudal_variants = _caudal(data_root)
     key = ["strain_id", "systematic_gene_name", "symbol", "header_token"]
     mine = variants[variants["strain_id"].isin(caudal_strains)]
@@ -225,7 +226,7 @@ def main() -> None:
 
     with tarfile.open(tar_path, "r:gz") as tf:
         tar_genes = {m.name.replace(".fasta", "") for m in tf if m.isfile()}
-    raw = gzip.open(resolve(PETER2018_1011, p.LOF_NAME)).read().decode("latin-1")
+    raw = gzip.open(resolve(PETER2018_1011, ni.LOF_NAME)).read().decode("latin-1")
     lof = pd.read_csv(io.StringIO(raw.replace("\r", "\n")), sep="\t", low_memory=False)
     lof_matrix = lof.set_index("NAME")[sorted(isolates)]
     calls = {
@@ -238,7 +239,7 @@ def main() -> None:
     )
     off_tar = {c for c in calls if c[1] not in tar_genes}
     frameshift = pd.read_csv(
-        resolve(PETER2018_1011, p.FRAMESHIFT_NAME), sep="\t", low_memory=False
+        resolve(PETER2018_1011, ni.FRAMESHIFT_NAME), sep="\t", low_memory=False
     )
     fs_values = frameshift[sorted(isolates)].to_numpy()
     no_code = frameshift["CODE"].isna().to_numpy()

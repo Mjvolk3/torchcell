@@ -37,10 +37,7 @@ import httpx
 from dotenv import load_dotenv
 
 from torchcell.artifacts import ArtifactIntegrityError, TcDataSource, check, resolve
-from torchcell.datasets.scerevisiae.caudal2024 import (
-    refgene_member_ref,
-    refgene_tarball_ref,
-)
+from torchcell.sequence.natural_isolate import refgene_member_ref, refgene_tarball_ref
 
 RESULTS = Path(__file__).resolve().parents[1] / "results" / "artifact_tier_e2e.json"
 SLICE = (

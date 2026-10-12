@@ -808,7 +808,14 @@ def test_real_schema_genotype_backbone_edge_is_never_drawn_bold(
     from_genotype = re.findall(
         r'<path class="(compose[^"]*)" data-src="Genotype" data-dst="([^"]+)"', document
     )
-    assert sorted(dst for _, dst in from_genotype) == sorted(concrete)
+    # Genotype's other composed field (#988): the natural-isolate descriptor.
+    descriptor = [
+        e.target
+        for e in real_graph.composition_edges
+        if (e.source, e.field_name) == ("Genotype", "natural_isolate")
+    ]
+    assert descriptor == ["NaturalIsolateDescriptor"]
+    assert sorted(dst for _, dst in from_genotype) == sorted(concrete + descriptor)
     assert {cls for cls, _ in from_genotype} == {"compose"}
 
 

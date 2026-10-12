@@ -65,6 +65,10 @@ LANE_ROOTS: dict[str, tuple[str, ...]] = {
         # perturbation's gene identity, not because it is provenance of the record as a
         # whole: a crosswalk use is a property of the edit that names the gene.
         "DerivedIdentifierMapping",
+        # A natural isolate's genome-wide annotation on its genotype (#988): ploidy,
+        # zygosity, whole-chromosome copy changes, manipulation.
+        "NaturalIsolateDescriptor",
+        "ChromosomeCopyChange",
     ),
     "environment": (
         "Environment",

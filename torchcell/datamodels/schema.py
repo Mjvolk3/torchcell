@@ -1649,7 +1649,16 @@ class ConstructedOrf(HashableProvenanceGapMixin):
 # AXIS 1 -- presence/absence leaves.
 # --------------------------------------------------------------------------- #
 class DeletionPerturbation(PresenceAbsencePerturbation, ModelStrict):
-    """Gene deletion via KanMX or NatMX gene replacement (engineered absence)."""
+    """Gene deletion via KanMX or NatMX gene replacement (engineered absence).
+
+    The parent of every marker-specific deletion leaf. It is stored ITSELF (a
+    ``GenePerturbationType`` member since #988) only where a source states an engineered
+    deletion and not the cassette that made it: each child asserts a marker, so it is the
+    one deletion class that claims nothing the source does not say. Such a record sets
+    ``description`` to say what the source states, since the class default names KanMX
+    and NatMX. First case: the HO deletion Peter 2018 Supplementary Table 1 marks on 124
+    natural isolates without naming the marker.
+    """
 
     description: str = "Deletion via KanMX or NatMX gene replacement"
     perturbation_type: Literal["deletion"] = "deletion"
@@ -2245,6 +2254,268 @@ class SequenceVariantPerturbation(SequencePerturbation, ModelStrict):
             "None until a store holds it"
         ),
     )
+
+
+# --------------------------------------------------------------------------- #
+# begin #987 / #988: the natural-isolate genotype of the Peter 2018 panel.
+# A natural loss-of-function call (a sibling of SequenceVariantPerturbation
+# under SequencePerturbation) and the isolate descriptor ``Genotype`` carries
+# beside its perturbations (ploidy, genome zygosity, aneuploidy, manipulation).
+# Built for every natural-isolate loader by
+# ``torchcell.datasets.scerevisiae.peter2018_genotype``.
+# --------------------------------------------------------------------------- #
+class NaturalLossOfFunctionCause(StrEnum):
+    """Which Peter 2018 release matrix called an isolate's allele a loss of function.
+
+    - ``nonsense_sift_or_frameshift``: a 1 in ``1011LossOfFunction.xls.gz``. The paper
+      defines the class: "Non-synonymous SNPs predicted as deleterious by SIFT
+      (v.5.2.2) as well as nonsense mutations were considered as deleterious for
+      protein function." The file also holds every homozygous frameshift call of
+      ``genesMatrix_Frameshift.tab.gz`` on the genes it lists (measured: none of that
+      matrix's calls on those genes is missing from it), so the one bit folds nonsense,
+      SIFT-deleterious and frameshift alleles and the release does not say which
+      applied. It is one member because the release folds it into one bit.
+    - ``homozygous_frameshift``: a 1 in ``genesMatrix_Frameshift.tab.gz``, "the presence
+      or absence ... of homozygous frameshift ... in each gene, based on the number of
+      bases affected by indels".
+
+    A gene called by both matrices carries two perturbations, one per call.
+    """
+
+    nonsense_sift_or_frameshift = "nonsense_sift_or_frameshift"
+    homozygous_frameshift = "homozygous_frameshift"
+
+
+class LossOfFunctionAlleleStatus(StrEnum):
+    """What the inferred-allele release says about the allele a call is made on.
+
+    Read from ``allReferenceGenesWithSNPsAndIndelsInferred.tar.gz``, the release the
+    isolate's ``SequenceVariantPerturbation`` set is built from:
+
+    - ``sequence_variant``: the isolate's inferred allele differs from the S288C R64
+      slice, so the genotype carries a ``SequenceVariantPerturbation`` of the gene and
+      the call's ``sequence_ref`` points at the same allele.
+    - ``allele_equals_reference``: the isolate's inferred allele equals the S288C slice.
+      The two releases disagree, and both statements are kept as the release makes
+      them.
+    - ``no_inferred_allele``: the tarball has no file for the gene, so there is no
+      allele to annotate; the call stands on its matrix alone.
+    """
+
+    sequence_variant = "sequence_variant"
+    allele_equals_reference = "allele_equals_reference"
+    no_inferred_allele = "no_inferred_allele"
+
+
+class NaturalLossOfFunctionPerturbation(SequencePerturbation, ModelStrict):
+    """A natural isolate's allele of a native gene, called a loss of function.
+
+    NATURAL-variation leaf, a SIBLING of ``SequenceVariantPerturbation`` under
+    ``SequencePerturbation`` (AXIS 3, the allelic axis), not a child of it: a call is a
+    statement ABOUT an allele, and 26,510 of the calls on the 971 phenotyped Peter 2018
+    isolates sit on a gene with no inferred allele at all, so making every call a
+    ``SequenceVariantPerturbation`` would invent variants. A gene whose allele is both a
+    variant and a loss of function carries both leaves.
+
+    One perturbation per released call: ``cause`` names the matrix, ``call_ref`` pins
+    its bytes, and the row is keyed as the release keys it (``release_code``, the
+    pangenome ORF number, or for the 533 frameshift rows without one, the release's
+    gene name and R64-1-1 coordinates in ``release_gene_name`` / ``release_span``).
+    ``perturbed_gene_name`` is the systematic name, as the natural absences of the same
+    genotype write it, so one gene keeps one spelling across a store.
+    ``allele_status`` says what the inferred-allele release says about the same allele,
+    and ``gene_present_in_isolate`` is the presence matrix's cell for the row's ORF
+    (``None`` for a row with no pangenome code). Neither is used to drop a call: a call
+    on an allele equal to S288C, or on an ORF the presence matrix marks absent, is a
+    disagreement between two releases and is kept with both sides named.
+
+    The SO mechanism is ``loss_of_function_variant`` (SO:0002054, "A sequence variant
+    whereby the gene product has diminished or abolished function.").
+    """
+
+    description: str = (
+        "Natural predicted loss of function of a native gene in an isolate vs S288C, "
+        "as one released matrix calls it"
+    )
+    perturbation_type: Literal["natural_loss_of_function"] = "natural_loss_of_function"
+    provenance: str = "natural"
+    mechanism_so_id: str = "SO:0002054"
+    mechanism_so_name: str = "loss_of_function_variant"
+    strain_id: str = Field(description="isolate id whose allele is called, e.g. 'AAB'")
+    cause: NaturalLossOfFunctionCause = Field(
+        description="the release matrix that made the call"
+    )
+    allele_status: LossOfFunctionAlleleStatus = Field(
+        description="what the inferred-allele release says about the same allele"
+    )
+    sequence_source: str | None = Field(
+        default=None,
+        description="off-graph gene-keyed store key / citation of the allele, e.g. "
+        "'peterGenomeEvolution10112018'; set with sequence_ref",
+    )
+    sequence_ref: ArtifactRef | None = Field(
+        default=None,
+        description="the isolate's allele in the reference-gene tarball (the member the "
+        "gene's SequenceVariantPerturbation points at); set iff allele_status is "
+        "sequence_variant",
+    )
+    call_ref: ArtifactRef = Field(
+        description="the sha256-pinned release matrix the call is read from"
+    )
+    release_code: int | None = Field(
+        description="the release row's pangenome ORF number (CODE); None only for a "
+        "frameshift row the release gives no code"
+    )
+    release_gene_name: str = Field(
+        description="the release row's gene name, verbatim (NAME of the loss-of-function "
+        "matrix, Gene of the frameshift matrix)"
+    )
+    release_span: GenomicSpan = Field(
+        description="the release row's coordinates (CH, START, STOP) on the reference "
+        "the release was called against"
+    )
+    gene_present_in_isolate: bool | None = Field(
+        description="the presence matrix's cell for the row's pangenome ORF in this "
+        "isolate; None when the row has no pangenome code"
+    )
+
+    @model_validator(mode="after")
+    def _check_call(self) -> "NaturalLossOfFunctionPerturbation":
+        """A natural call; the allele pointer and the row key fit the evidence."""
+        if self.provenance != "natural":
+            raise ValueError("a natural loss-of-function call has provenance 'natural'")
+        has_allele = self.allele_status is LossOfFunctionAlleleStatus.sequence_variant
+        if has_allele != (self.sequence_ref is not None):
+            raise ValueError(
+                "sequence_ref is set exactly when allele_status is sequence_variant "
+                f"(allele_status={self.allele_status.value})"
+            )
+        if (self.sequence_ref is None) != (self.sequence_source is None):
+            raise ValueError("sequence_source is set exactly when sequence_ref is")
+        if self.release_code is None:
+            if self.cause is not NaturalLossOfFunctionCause.homozygous_frameshift:
+                raise ValueError(
+                    "only a frameshift row is released without a pangenome code"
+                )
+            if self.gene_present_in_isolate is not None:
+                raise ValueError(
+                    "a row without a pangenome code has no presence-matrix cell"
+                )
+        elif self.gene_present_in_isolate is None:
+            raise ValueError(
+                "a row with a pangenome code carries its presence-matrix cell"
+            )
+        return self
+
+
+class GenomeZygosity(StrEnum):
+    """A natural isolate's genome-wide zygosity, as Peter 2018 Table S1 classes it.
+
+    Distinct from ``Zygosity`` (how many chromosome copies of a BACKGROUND carry one
+    allele): this is a property of the whole genome, whether it carries heterozygous
+    sites, written in Table S1's own two words.
+    """
+
+    homozygous = "homozygous"
+    heterozygous = "heterozygous"
+
+
+class IsolateManipulation(StrEnum):
+    """A genetic manipulation a natural isolate's own annotation marks.
+
+    - ``ho_deletion``: Peter 2018 Table S1 reads 'yes' in 'HO deletion' ("124 were
+      non-natural haploid with the HO gene deleted"). The deletion itself is a
+      ``DeletionPerturbation`` of HO (YDL227C) on the genotype.
+    """
+
+    ho_deletion = "ho_deletion"
+
+
+class ChromosomeCopyChange(ModelStrict):
+    """One aberrant chromosome of a whole-chromosome aneuploidy annotation.
+
+    Peter 2018 Table S1 writes aneuploidy as "aneu;+/-X*Y" "with +/- the gain or loss
+    of chromosome, X the number of supernumerary copies and Y the concerned
+    chromosome"; ``aneu;+1*9;`` is one extra copy of chromosome IX over the isolate's
+    basal ploidy.
+    """
+
+    chromosome: int = Field(ge=1, le=16, description="chromosome number, 1 to 16")
+    change: int = Field(
+        description="signed copies gained (+) or lost (-) relative to the basal ploidy"
+    )
+
+    @field_validator("change", mode="after")
+    @classmethod
+    def _nonzero(cls, v: int) -> int:
+        """A copy change of zero is not an aneuploidy."""
+        if v == 0:
+            raise ValueError("a chromosome copy change cannot be 0")
+        return v
+
+
+class NaturalIsolateDescriptor(HashableProvenanceGapMixin):
+    """What a natural isolate's own annotation says about its whole genome.
+
+    Carried on ``Genotype.natural_isolate`` beside the gene-keyed perturbations, because
+    none of it is gene-keyed: the basal ploidy (1n to 5n), the genome-wide zygosity,
+    the whole-chromosome copy changes, and whether the isolate was genetically
+    manipulated before sequencing. Read from one row of Peter 2018 Supplementary Table 1
+    (``annotation_ref``), so every loader on the 1,011-genome panel describes an isolate
+    identically.
+
+    Every element is the table's value or a typed gap, never a guess:
+
+    - ``ploidy`` is ``None`` only with a gap (the one isolate Table S1 writes ``Xn``).
+    - ``chromosome_copy_changes`` is ``[]`` for a euploid isolate and ``None`` only with
+      a gap (an empty 'Aneuploidies' cell).
+    - ``genetic_manipulation`` is ``ho_deletion`` where Table S1 marks one; otherwise it
+      is ``None`` with a gap, because the paper also says "the 93 external isolates were
+      genetically manipulated and made homozygous before sequencing" and Table S1 does
+      not mark which isolates those are.
+
+    These are the isolate's genome as SEQUENCED. For a manipulated isolate the paper
+    says the ploidy is not the natural one ("217 strains were genetically manipulated
+    and no longer in their natural ploidy states").
+    """
+
+    isolate: str = Field(description="the isolate's standardized name, e.g. 'AAB'")
+    annotation_ref: ArtifactRef = Field(
+        description="the sha256-pinned workbook holding the isolate's annotation row "
+        "(member: the sheet)"
+    )
+    genetic_manipulation: IsolateManipulation | None = Field(
+        description="a manipulation the annotation marks; None only with a gap"
+    )
+    ploidy: int | None = Field(
+        ge=1, description="basal ploidy as annotated; None only with a gap"
+    )
+    zygosity: GenomeZygosity = Field(description="genome-wide zygosity as annotated")
+    chromosome_copy_changes: list[ChromosomeCopyChange] | None = Field(
+        description="whole-chromosome gains and losses, [] for a euploid isolate; None "
+        "only with a gap"
+    )
+
+    @model_validator(mode="after")
+    def _sourced_or_gapped(self) -> "NaturalIsolateDescriptor":
+        """Each optional element is set or gapped, and the copy changes are canonical."""
+        gapped = self.gapped_fields()
+        for name in ("genetic_manipulation", "ploidy", "chromosome_copy_changes"):
+            if getattr(self, name) is None and name not in gapped:
+                raise ValueError(
+                    f"NaturalIsolateDescriptor.{name} is None and carries no "
+                    "ProvenanceGap"
+                )
+        changes = self.chromosome_copy_changes or []
+        chromosomes = [c.chromosome for c in changes]
+        if len(set(chromosomes)) != len(chromosomes):
+            raise ValueError("a chromosome appears twice in chromosome_copy_changes")
+        return self
+
+
+# --------------------------------------------------------------------------- #
+# end #987 / #988
+# --------------------------------------------------------------------------- #
 
 
 class CopyNumberVariantPerturbation(GenePerturbation, ModelStrict):
@@ -4096,6 +4367,7 @@ GenePerturbationType = (
     SgaPerturbationType
     | MeanDeletionPerturbation
     | MarkerDeletionPerturbation
+    | DeletionPerturbation  # #988: a deletion whose marker the source does not state
     | KanMxDeletionPerturbation
     | BarcodedKanMxDeletionPerturbation
     | HeterozygousDeletionPerturbation
@@ -4106,6 +4378,7 @@ GenePerturbationType = (
     | NaturalGeneAbsencePerturbation
     | NaturalGenePresencePerturbation
     | SequenceVariantPerturbation
+    | NaturalLossOfFunctionPerturbation  # #987
     | CopyNumberVariantPerturbation
     | EngineeredCopyNumberPerturbation
     | CrisprActivationPerturbation
@@ -4131,9 +4404,41 @@ GenePerturbationType = (
 
 
 class Genotype(ModelStrict):
-    """Collection of gene perturbations defining a strain's genotype."""
+    """Collection of gene perturbations defining a strain's genotype.
+
+    ``natural_isolate`` (#988) describes a natural isolate's whole genome where the
+    perturbations cannot: its ploidy, zygosity, aneuploidy and manipulation. It is
+    ``None`` for every other genotype and is then left out of the dump, so a genotype
+    without it serializes exactly as it did before the field existed.
+    """
 
     perturbations: list[GenePerturbationType] = Field(description="Gene perturbation")
+    natural_isolate: NaturalIsolateDescriptor | None = Field(
+        default=None,
+        exclude_if=lambda v: v is None,
+        description="the natural isolate's genome-wide annotation (ploidy, zygosity, "
+        "aneuploidy, manipulation); None for a genotype that is not a natural isolate",
+    )
+
+    @model_validator(mode="after")
+    def _one_isolate(self) -> "Genotype":
+        """A natural isolate's perturbations that name a strain all name that isolate."""
+        if self.natural_isolate is None:
+            return self
+        isolate = self.natural_isolate.isolate
+        others = sorted(
+            {
+                str(strain)
+                for p in self.perturbations
+                if (strain := getattr(p, "strain_id", None)) is not None
+                and strain != isolate
+            }
+        )
+        if others:
+            raise ValueError(
+                f"natural isolate {isolate!r} carries perturbations of {others}"
+            )
+        return self
 
     @field_validator("perturbations", mode="after")
     @classmethod
@@ -4184,7 +4489,10 @@ class Genotype(ModelStrict):
         if not isinstance(other, Genotype):
             return NotImplemented
 
-        return set(self.perturbations) == set(other.perturbations)
+        return (
+            set(self.perturbations) == set(other.perturbations)
+            and self.natural_isolate == other.natural_isolate
+        )
 
 
 def heterozygous_deletion_functional_copies(

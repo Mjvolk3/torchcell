@@ -22,7 +22,7 @@ from __future__ import annotations
 import json
 import math
 from collections.abc import Callable, Mapping, Sequence
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from torchcell.verification.levels import l0_structural, l1_count, l2_value_fidelity
 from torchcell.verification.report import (
@@ -31,6 +31,9 @@ from torchcell.verification.report import (
     Provenance,
     VerificationReport,
 )
+
+if TYPE_CHECKING:
+    from torchcell.verification.natural_isolate_genotype import IsolateGenotypeAudit
 
 Record = dict[str, Any]
 
@@ -224,38 +227,51 @@ def _validate_by_type_tag(experiment: dict[str, Any]) -> object:
 def natural_isolate_of(rec: Record) -> str | None:
     """The isolate a natural-isolate record measures.
 
-    The one ``strain_id`` its perturbations share; for an S288C-derived laboratory
-    strain stored with no perturbation off S288C (Muenzner 2024's FY4, #1045), the
-    background its own reference genome names. None when neither says.
+    The isolate its genotype's ``natural_isolate`` descriptor names; for an S288C-derived
+    laboratory strain stored with no perturbation off S288C and no descriptor (Muenzner
+    2024's FY4, #1045), the background its own reference genome names. None when neither
+    says.
     """
-    perturbations = rec["experiment"]["genotype"]["perturbations"]
-    if perturbations:
-        strain = perturbations[0].get("strain_id")
-        return None if strain is None else str(strain)
+    from torchcell.sequence.natural_isolate import genotype_isolate
+
+    genotype = rec["experiment"]["genotype"]
+    isolate = genotype_isolate(genotype)
+    if isolate is not None:
+        return isolate
+    if genotype["perturbations"]:
+        return None
     background = str(rec["reference"]["genome_reference"]["strain"])
     return None if background == "S288C" else background
 
 
 def _l1_genotype_strain_consistency(records: Sequence[Record]) -> LevelResult:
-    """L1: every perturbation of a record names the same isolate (one ``strain_id``).
+    """L1: every record's genotype names ONE isolate.
 
-    A natural isolate is ONE perturbation set off S288C; a record mixing two isolates'
-    perturbations is a join error that the one-strain-per-record rule cannot see, since
-    that rule reads only the first perturbation. A record with no perturbation passes
-    only when its reference genome names an S288C-derived background (FY4), and is
-    counted apart.
+    A natural isolate is ONE perturbation set off S288C, named by its
+    ``natural_isolate`` descriptor; every perturbation that carries a ``strain_id``
+    must name that isolate (the engineered HO deletion carries none). A record mixing
+    two isolates' perturbations is a join error the one-strain-per-record rule cannot
+    see, since that rule reads only the first perturbation that names a strain. A record
+    with no perturbation and no descriptor passes only when its reference genome names
+    an S288C-derived background (FY4), and is counted apart.
     """
+    from torchcell.sequence.natural_isolate import genotype_isolate
+
     mixed = []
     n_background = 0
     for i, rec in enumerate(records):
-        perturbations = rec["experiment"]["genotype"]["perturbations"]
-        if not perturbations:
+        genotype = rec["experiment"]["genotype"]
+        if not genotype["perturbations"] and genotype_isolate(genotype) is None:
             if natural_isolate_of(rec) is None:
                 mixed.append(i)
             else:
                 n_background += 1
             continue
-        strains = {p.get("strain_id") for p in perturbations}
+        strains = {
+            p.get("strain_id")
+            for p in genotype["perturbations"]
+            if p.get("strain_id") is not None
+        } | {genotype_isolate(genotype)}
         if len(strains) != 1 or None in strains:
             mixed.append(i)
     return LevelResult(
@@ -366,19 +382,22 @@ def _strains(records: Sequence[Record]) -> set[str]:
 
 
 def _l4_caudal_genotype_agreement(
-    records: Sequence[Record], caudal_genotypes: Mapping[str, list[dict[str, Any]]]
+    records: Sequence[Record], caudal_genotypes: Mapping[str, Mapping[str, Any]]
 ) -> LevelResult:
-    """L4: an isolate's perturbation set here equals its set in the Caudal 2024 store."""
-    by_strain = {}
+    """L4: an isolate's genotype here equals its genotype in the Caudal 2024 store."""
+    from torchcell.sequence.natural_isolate import genotype_isolate
+
+    by_strain: dict[str, Mapping[str, Any]] = {}
     for rec in records:
-        perts = rec["experiment"]["genotype"]["perturbations"]
-        if perts:
-            by_strain[str(perts[0]["strain_id"])] = perts
+        genotype = rec["experiment"]["genotype"]
+        isolate = genotype_isolate(genotype)
+        if isolate is not None:
+            by_strain[isolate] = genotype
     absent = sorted(set(caudal_genotypes) - set(by_strain))
     differ = sorted(
         s
-        for s, perts in caudal_genotypes.items()
-        if s in by_strain and by_strain[s] != perts
+        for s, genotype in caudal_genotypes.items()
+        if s in by_strain and dict(by_strain[s]) != dict(genotype)
     )
     compared = len(caudal_genotypes) - len(absent)
     passed = bool(caudal_genotypes) and not absent and not differ
@@ -396,7 +415,9 @@ def _l4_caudal_genotype_agreement(
             "compared": sorted(caudal_genotypes),
             "differ": differ,
             "absent": absent,
-            "n_perturbations": {s: len(p) for s, p in caudal_genotypes.items()},
+            "n_perturbations": {
+                s: len(g["perturbations"]) for s, g in caudal_genotypes.items()
+            },
         },
     )
 
@@ -410,7 +431,8 @@ def verify_natural_isolate_proteome(
     sgd_genes: set[str],
     caudal_isolates: set[str],
     expected_caudal_overlap: int,
-    caudal_genotypes: Mapping[str, list[dict[str, Any]]],
+    caudal_genotypes: Mapping[str, Mapping[str, Any]],
+    genotype_audit: IsolateGenotypeAudit,
     min_containment: float = 0.99,
 ) -> VerificationReport:
     """L0-L4 for a natural-isolate proteome (Muenzner 2024).
@@ -422,8 +444,10 @@ def verify_natural_isolate_proteome(
     reference that covers every measured key, one measurement_type. L4: protein keys are
     S288C names, and the isolates overlap the built Caudal 2024 transcriptome store in
     exactly ``expected_caudal_overlap`` isolates (the pairing the dataset is built for),
-    and each isolate of ``caudal_genotypes`` (perturbation dumps read from that store)
+    and each isolate of ``caudal_genotypes`` (genotype dumps read from that store)
     carries the identical genotype here, since both are built by one construction.
+    ``genotype_audit`` adds the four isolate-genotype rules every natural-isolate store
+    shares (``natural_isolate_genotype``).
     """
     from torchcell.verification.levels import l3_convention
     from torchcell.verification.rnaseq import _l1_strain_uniqueness
@@ -488,6 +512,7 @@ def verify_natural_isolate_proteome(
         )
     )
     report.add(_l4_caudal_genotype_agreement(records, caudal_genotypes))
+    _add_genotype_audit(report, records, genotype_audit)
     return report
 
 
@@ -499,6 +524,7 @@ def verify_natural_isolate_turnover(
     expected_count: int,
     sgd_genes: set[str],
     expected_rows_without_reference: int,
+    genotype_audit: IsolateGenotypeAudit,
     min_containment: float = 0.99,
 ) -> VerificationReport:
     """L0-L4 for a natural-isolate turnover store (Muenzner 2024 SI Table 17).
@@ -506,7 +532,8 @@ def verify_natural_isolate_turnover(
     L2: rates and half-lives finite and > 0. L3: ``half_life`` equals ln 2 over the rate
     within ``HALF_LIFE_IDENTITY_RTOL`` (the Methods' definition), one shared reference,
     and the cells without a reference key number exactly what the build ledger counted.
-    L4: protein keys are S288C names.
+    L4: protein keys are S288C names. ``genotype_audit`` adds the four isolate-genotype
+    rules every natural-isolate store shares.
     """
     from torchcell.verification.levels import l3_convention
     from torchcell.verification.rnaseq import _l1_strain_uniqueness
@@ -561,7 +588,29 @@ def verify_natural_isolate_turnover(
             "gene_containment_sgd",
         )
     )
+    _add_genotype_audit(report, records, genotype_audit)
     return report
+
+
+def _add_genotype_audit(
+    report: VerificationReport, records: Sequence[Record], audit: IsolateGenotypeAudit
+) -> None:
+    """Feed each natural-isolate genotype (one per isolate here) to ``audit``; add its
+    rules. A record with no perturbation and no descriptor whose reference names an
+    S288C-derived background (FY4) is not an isolate of the Peter panel and is not fed;
+    ``genotype_strain_consistency`` counts it apart.
+    """
+    for rec in records:
+        genotype = rec["experiment"]["genotype"]
+        if (
+            not genotype["perturbations"]
+            and genotype.get("natural_isolate") is None
+            and natural_isolate_of(rec) is not None
+        ):
+            continue
+        audit.add(genotype)
+    for result in audit.results():
+        report.add(result)
 
 
 __all__ = [

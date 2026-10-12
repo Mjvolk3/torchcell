@@ -17,27 +17,28 @@ genotype rules with ones that hold for an isolate:
   isolate's genotype (one interned object shared by its records) is validated once and
   spliced into each of its records, so every record's own bytes are still validated.
 - L1 ``count``, ``isolate_condition_uniqueness`` (one record per (isolate, condition)),
-  ``isolate_genotype_identity`` (one ``strain_id`` per genotype, one genotype per
-  isolate, every isolate on every condition), plus the shared census, canonical
-  spellings, uncertainty, compound and media rules of
-  :class:`~torchcell.verification.common.SharedRecordRules`.
+  ``isolate_condition_coverage`` (one genotype object per isolate, every isolate on
+  every condition), plus the shared census, canonical spellings, uncertainty, compound
+  and media rules of :class:`~torchcell.verification.common.SharedRecordRules`.
 - L2 ``value_fidelity`` (finite and non-negative), ``release_fidelity`` (every stored
-  ratio equals its released cell bit for bit, every released cell stored once),
-  ``genotype_round_trip`` (each isolate's present accessory ORFs, absent reference ORFs
-  and their copy numbers re-derived from Peter's matrices; every variant's pointer names
-  the pinned tarball and its own isolate).
+  ratio equals its released cell bit for bit, every released cell stored once).
+- The four isolate-genotype rules every natural-isolate store shares
+  (:class:`~torchcell.verification.natural_isolate_genotype.IsolateGenotypeAudit`): L1
+  ``isolate_genotype_identity``, L2 ``isolate_genotype_round_trip`` (every stored
+  genotype equals its re-derivation from the pinned releases), L4
+  ``isolate_descriptor_matches_table_s1`` and ``loss_of_function_calls_match_release``.
 - L3 ``measurement_type_consistent``, ``reference_zero`` (the ratio branch: 1.0),
   ``environment_perturbed``, ``conditions_documented`` (35 distinct environments, each
   the loader's condition, each Table 2 row re-read from the mirrored workbook), and
   ``sourced_values`` (every quote still in its sha256-pinned source).
-- L4 ``s288c_gene_containment`` (variant and absence names are S288C genes),
+- L4 ``s288c_gene_containment`` (variant, absence, deletion and loss-of-function names
+  are S288C genes),
   ``pangenome_orf_containment`` (present accessory ORFs are pangenome ORFs) and
   ``published_md5`` (the release's md5 equals the host's ``md5.txt``).
 """
 
 from __future__ import annotations
 
-import math
 from collections import Counter
 from collections.abc import Callable, Iterable
 from pathlib import Path
@@ -46,7 +47,7 @@ from typing import Any
 import pandas as pd
 
 from torchcell.datasets.scerevisiae import peter2018 as p
-from torchcell.datasets.scerevisiae.caudal2024 import COPYNUMBER_NAME, PRESENCE_NAME
+from torchcell.sequence import natural_isolate as ni
 from torchcell.verification.common import SharedRecordRules
 from torchcell.verification.environment_response import (
     _condition_signature,
@@ -56,6 +57,7 @@ from torchcell.verification.environment_response import (
     _value_problem,
     _value_result,
 )
+from torchcell.verification.natural_isolate_genotype import IsolateGenotypeAudit
 from torchcell.verification.report import (
     Level,
     LevelResult,
@@ -67,9 +69,7 @@ from torchcell.verification.sourced import SourcedValue, audit_sourced_value
 
 Record = dict[str, Any]
 
-SEQUENCE_VARIANT = "sequence_variant"
 NATURAL_PRESENCE = "natural_gene_presence"
-NATURAL_ABSENCE = "natural_gene_absence"
 
 
 def _result(
@@ -91,92 +91,23 @@ def expected_condition_signatures(
     return out
 
 
-def _genotype_strain(perturbations: list[dict[str, Any]]) -> set[str]:
-    return {str(pert.get("strain_id")) for pert in perturbations}
+class _GenotypeCensus:
+    """Names the stored genotypes carry, for the two L4 containment rules."""
 
-
-class _GenotypeChecks:
-    """Per-isolate genotype rules, run once per distinct genotype object."""
-
-    def __init__(self, pangenome: p.PangenomeMatrices, tarball_sha256: str) -> None:
-        self.pangenome = pangenome
-        self.tarball_sha256 = tarball_sha256
-        self.n_genotypes = 0
-        self.multi_strain: list[str] = []
-        self.round_trip_failures: list[str] = []
-        self.pointer_failures: list[str] = []
+    def __init__(self) -> None:
         self.type_counts: Counter[str] = Counter()
         self.s288c_names: Counter[str] = Counter()
         self.pangenome_ids: Counter[str] = Counter()
 
-    def add(self, perturbations: list[dict[str, Any]]) -> str:
-        """Check one genotype; return its isolate code."""
-        self.n_genotypes += 1
-        strains = _genotype_strain(perturbations)
-        strain = sorted(strains)[0]
-        if len(strains) != 1:
-            self.multi_strain.append(",".join(sorted(strains)))
-        present: dict[str, float] = {}
-        absent: set[str] = set()
+    def add(self, perturbations: list[dict[str, Any]]) -> None:
+        """Count one genotype's names: pangenome ids of presences, S288C names else."""
         for pert in perturbations:
             kind = str(pert["perturbation_type"])
             self.type_counts[kind] += 1
             if kind == NATURAL_PRESENCE:
-                present[str(pert["pangenome_orf_id"])] = float(pert["copy_number"])
                 self.pangenome_ids[str(pert["pangenome_orf_id"])] += 1
-            elif kind == NATURAL_ABSENCE:
-                absent.add(str(pert["systematic_gene_name"]))
-                self.s288c_names[str(pert["systematic_gene_name"])] += 1
-            elif kind == SEQUENCE_VARIANT:
-                self.s288c_names[str(pert["systematic_gene_name"])] += 1
-                self._check_pointer(strain, pert)
             else:
-                self.round_trip_failures.append(f"{strain}: unexpected {kind}")
-        self._round_trip(strain, present, absent)
-        return strain
-
-    def _check_pointer(self, strain: str, pert: dict[str, Any]) -> None:
-        ref = pert.get("sequence_ref") or {}
-        gene = pert["systematic_gene_name"]
-        member = str(ref.get("member") or "")
-        if (
-            ref.get("sha256") != self.tarball_sha256
-            or not member.startswith(f"{gene}.fasta#{strain}_{gene}_")
-            or pert.get("strain_id") != strain
-        ):
-            if len(self.pointer_failures) < 20:
-                self.pointer_failures.append(f"{strain}/{gene}: {member!r}")
-            else:
-                self.pointer_failures.append("...")
-
-    def _round_trip(
-        self, strain: str, present: dict[str, float], absent: set[str]
-    ) -> None:
-        pg = self.pangenome
-        row = pg.row_of.get(strain)
-        if row is None:
-            self.round_trip_failures.append(f"{strain}: not in the presence matrix")
-            return
-        expected_present: dict[str, float] = {}
-        expected_absent: set[str] = set()
-        for j, orf in enumerate(pg.orf_ids):
-            if pg.presence[row, j] == 1 and not pg.s288c_mask[j]:
-                cn = pg.copy_number[row, j]
-                expected_present[orf] = (
-                    float(cn) if math.isfinite(cn) and cn > 0 else 1.0
-                )
-            elif pg.presence[row, j] == 0 and pg.s288c_mask[j]:
-                expected_absent.add(pg.s288c_names[j] or orf)
-        if present != expected_present:
-            self.round_trip_failures.append(
-                f"{strain}: {len(present)} present accessory ORFs stored, "
-                f"{len(expected_present)} in the matrix"
-            )
-        if absent != expected_absent:
-            self.round_trip_failures.append(
-                f"{strain}: {len(absent)} absent reference ORFs stored, "
-                f"{len(expected_absent)} in the matrix"
-            )
+                self.s288c_names[str(pert["systematic_gene_name"])] += 1
 
 
 def _l3_conditions_documented(
@@ -335,11 +266,15 @@ def verify_natural_isolate_response_streaming(
     raw_dir: str | Path,
     raw_mirror: str | Path,
     library_root: str | Path,
-    tarball_sha256: str,
+    genotypes: ni.NaturalIsolateGenotypes,
     sgd_genes: set[str],
     min_s288c_containment: float,
 ) -> VerificationReport:
-    """Single streaming pass over the store plus the raw re-derivations (see module)."""
+    """Single streaming pass over the store plus the raw re-derivations (see module).
+
+    ``genotypes`` re-derives each isolate's genotype from the pinned releases (built over
+    the release's isolates, reading the store's own allele-diff cache).
+    """
     from pydantic import TypeAdapter
 
     from torchcell.datamodels.schema import ExperimentType, Genotype
@@ -350,8 +285,11 @@ def verify_natural_isolate_response_streaming(
     signatures = expected_condition_signatures(conditions)
     release = p.read_release(raw_dir / p.PHENO_NAME, conditions)
     released_cells = {code: release[code].to_dict() for code in conditions}
-    pangenome = p.read_pangenome(raw_dir / PRESENCE_NAME, raw_dir / COPYNUMBER_NAME)
-    genotype_checks = _GenotypeChecks(pangenome, tarball_sha256)
+    pangenome = ni.read_pangenome(
+        raw_dir / ni.PRESENCE_NAME, raw_dir / ni.COPYNUMBER_NAME
+    )
+    census = _GenotypeCensus()
+    audit = IsolateGenotypeAudit(genotypes, library_root)
     shared = SharedRecordRules()
     ratio_reference = _ratio_reference_accumulator()
 
@@ -381,7 +319,8 @@ def verify_natural_isolate_response_streaming(
         first_of_isolate = key not in validated
         if first_of_isolate:
             validated[key] = Genotype.model_validate(genotype)
-            strain_of[key] = genotype_checks.add(genotype["perturbations"])
+            census.add(genotype["perturbations"])
+            strain_of[key] = str(audit.add(genotype))
         strain = strain_of[key]
         genotypes_of_isolate.setdefault(strain, set()).add(key)
         try:
@@ -465,22 +404,20 @@ def verify_natural_isolate_response_streaming(
         s for s, keys in genotypes_of_isolate.items() if len(keys) > 1
     )
     uneven = sorted(s for s, n in per_isolate.items() if n != len(conditions))
-    identity_ok = not (genotype_checks.multi_strain or split_isolates or uneven) and (
+    coverage_ok = not (split_isolates or uneven) and (
         len(per_isolate) == p.N_ISOLATES == len(release.index)
     )
     report.add(
         _result(
             Level.L1,
-            "isolate_genotype_identity",
-            identity_ok,
-            f"{len(per_isolate)} isolates, one genotype and one strain_id each, "
+            "isolate_condition_coverage",
+            coverage_ok,
+            f"{len(per_isolate)} isolates, one genotype object each, "
             f"{len(conditions)} records each"
-            if identity_ok
-            else f"{len(genotype_checks.multi_strain)} genotypes mix strain_ids; "
-            f"{len(split_isolates)} isolates carry two genotypes; {len(uneven)} isolates "
-            f"lack a condition; {len(per_isolate)} isolates",
+            if coverage_ok
+            else f"{len(split_isolates)} isolates carry two genotype objects; "
+            f"{len(uneven)} isolates lack a condition; {len(per_isolate)} isolates",
             n_isolates=len(per_isolate),
-            multi_strain=genotype_checks.multi_strain[:10],
             split_isolates=split_isolates[:10],
             uneven_isolates=uneven[:10],
         )
@@ -502,25 +439,8 @@ def verify_natural_isolate_response_streaming(
             mismatches=release_mismatches,
         )
     )
-    round_trip_ok = not (
-        genotype_checks.round_trip_failures or genotype_checks.pointer_failures
-    )
-    report.add(
-        _result(
-            Level.L2,
-            "genotype_round_trip",
-            round_trip_ok,
-            f"{genotype_checks.n_genotypes} genotypes re-derived from the presence and "
-            "copy-number matrices; every variant pointer names the pinned tarball and its "
-            "own isolate"
-            if round_trip_ok
-            else f"{len(genotype_checks.round_trip_failures)} matrix round-trip failures; "
-            f"{len(genotype_checks.pointer_failures)} variant pointers wrong",
-            perturbation_types=dict(genotype_checks.type_counts),
-            round_trip_failures=genotype_checks.round_trip_failures[:20],
-            pointer_failures=genotype_checks.pointer_failures[:20],
-        )
-    )
+    for result in audit.results():
+        report.add(result)
     report.add(_measurement_type_result(measurement_types))
     report.add(ratio_reference.result())
     baseline_temp = temp_counts.most_common(1)[0][0] if temp_counts else None
@@ -553,7 +473,7 @@ def verify_natural_isolate_response_streaming(
     for result in shared.results():
         report.add(result)
 
-    measured = set(genotype_checks.s288c_names)
+    measured = set(census.s288c_names)
     missing = sorted(measured - sgd_genes)
     overlap = len(measured & sgd_genes) / len(measured) if measured else 0.0
     report.add(
@@ -561,7 +481,7 @@ def verify_natural_isolate_response_streaming(
             Level.L4,
             "s288c_gene_containment",
             bool(measured) and overlap >= min_s288c_containment,
-            f"{overlap:.4f} of {len(measured)} sequence-variant and absence names are "
+            f"{overlap:.4f} of {len(measured)} S288C-keyed perturbation names are "
             f"S288C genes (>= {min_s288c_containment}); {len(missing)} are not"
             if measured
             else "no S288C-keyed perturbation",
@@ -569,20 +489,21 @@ def verify_natural_isolate_response_streaming(
             n_missing=len(missing),
             overlap=overlap,
             missing_examples=missing[:20],
+            perturbation_types=dict(census.type_counts),
         )
     )
     pangenome_set = set(pangenome.orf_ids)
-    stray = sorted(set(genotype_checks.pangenome_ids) - pangenome_set)
+    stray = sorted(set(census.pangenome_ids) - pangenome_set)
     report.add(
         _result(
             Level.L4,
             "pangenome_orf_containment",
-            not stray and bool(genotype_checks.pangenome_ids),
-            f"all {len(genotype_checks.pangenome_ids)} present accessory ORFs are "
+            not stray and bool(census.pangenome_ids),
+            f"all {len(census.pangenome_ids)} present accessory ORFs are "
             "pangenome ORFs of the presence matrix"
             if not stray
             else f"{len(stray)} present ORFs are not pangenome ORFs",
-            n_orfs=len(genotype_checks.pangenome_ids),
+            n_orfs=len(census.pangenome_ids),
             stray=stray[:20],
         )
     )

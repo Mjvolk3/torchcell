@@ -10,23 +10,18 @@ panel), each mapped to its OWN genome. We model every isolate as a PERTURBATION 
 the S288C reference: its genotype is the full set of sequence/copy-number differences from
 S288C, and its phenotype is the absolute per-gene expression (TPM + raw counts).
 
-GENOTYPE (three natural-variation perturbation families, all off-graph pointers):
-  - ``SequenceVariantPerturbation`` -- a native S288C gene whose isolate allele differs
-    from the S288C reference sequence. The reference allele is reconstructed EXACTLY in
-    Peter's representation: the coordinate in a gene's first FASTA header
-    (``chromosomeN:start-end +/-``) slices the SGD R64 chromosome (reverse-complemented on
-    the minus strand); an isolate has a variant iff its sequence != that slice. Source =
-    Peter et al. 2018 ``allReferenceGenesWithSNPsAndIndelsInferred`` (gene-keyed store).
-  - ``NaturalGenePresencePerturbation`` for an ACCESSORY (non-reference) pangenome ORF that
-    is PRESENT in the isolate (AXIS-1 state=present, natural insertion; ``copy_number`` from
-    the copy-number matrix, default 1.0).
-  - ``NaturalGeneAbsencePerturbation`` for a CORE (reference) ORF that is ABSENT in the
-    isolate (AXIS-1 state=absent, natural deletion). EVERY absence is recorded -- an ORF
-    with no S288C systematic name is kept by its pangenome id, never dropped (a dropped
-    absence would wrongly reconstruct the gene as present).
-These are NATURAL genome-content edits off S288C, distinct from engineered CNV (true dosage
-of a PRESENT gene stays on the copy-number axis). Core vs accessory is Peter's
-presence/absence matrix over the 1011 isolates: an ORF present in >= 99% of isolates is core.
+GENOTYPE. Each isolate is a perturbation set off S288C built by
+``torchcell.sequence.natural_isolate`` (``NaturalIsolateGenotypes``), the one module every
+natural-isolate loader on the Peter 2018 panel shares, so an isolate is the same
+``Genotype`` here as in the Peter 2018, Muenzner 2024 and De Chiara 2022 stores:
+``SequenceVariantPerturbation`` per reference gene whose inferred allele differs from the
+S288C R64 slice, ``NaturalGenePresencePerturbation`` per non-reference pangenome ORF the
+isolate carries (with its copy number), ``NaturalGeneAbsencePerturbation`` per reference
+ORF it lacks, ``DeletionPerturbation`` of HO where Peter's Supplementary Table 1 marks an
+HO deletion (#988), ``NaturalLossOfFunctionPerturbation`` per call of Peter's two
+loss-of-function matrices (#987), and ``Genotype.natural_isolate`` (ploidy, zygosity,
+aneuploidy and manipulation from Table S1). Presence vs absence is reference MEMBERSHIP
+(does the pangenome column map to an S288C name), not population frequency.
 
 PHENOTYPE (``RNASeqExpressionPhenotype``): per-isolate ``expression_tpm`` +
 ``expression_count`` for the genes that isolate carries (a gene absent from an isolate is
@@ -53,27 +48,24 @@ Sources (hash-pinned, local library mirror):
   - Caudal expression: ``caudalPantranscriptomeRevealsLarge2024/data/
     final_data_annotated_merged_04052022.tab.zip`` (comma-delimited, latin-1;
     sha256 8b55ccd76e1d19476d8f5f718e9e061cb9e4693e343965114dd4cd65d5f8d26b).
-  - Peter genome: the genomes tier set ``peter2018_1011_assemblies`` (resolved and
-    sha256-verified through ``torchcell.sequence.genome.registry``) --
-    ``allReferenceGenesWithSNPsAndIndelsInferred.tar.gz`` (sha256 b5400b89...),
-    ``genesMatrix_PresenceAbsence.tab.gz``, ``genesMatrix_CopyNumber.tab.gz``.
-  - S288C reference: SGD R64-4-1 ``S288C_reference_sequence_R64-4-1_20230830.fsa``.
+  - Peter genome: the six files of the genomes tier set ``peter2018_1011_assemblies``
+    that ``natural_isolate.GENOTYPE_FILES`` names (the reference-gene tarball, the
+    presence and copy-number matrices, the two loss-of-function matrices and the
+    Supplementary Tables workbook), each sha256-verified against the tier manifest.
+  - S288C reference: SGD R64-4-1 chromosomes and GFF from the SGD genomes tier.
 """
 
 from __future__ import annotations
 
-import hashlib
 import logging
 import os
 import os.path as osp
 import pickle
 import re
-import tarfile
 from enum import StrEnum
 from typing import Any, Literal
 
 import lmdb
-import numpy as np
 import pandas as pd
 from pydantic import BaseModel, ConfigDict, model_validator
 from tqdm import tqdm
@@ -87,7 +79,7 @@ from torchcell.data import (
 )
 from torchcell.datamodels.media import SC, restated
 from torchcell.datamodels.schema import (
-    ArtifactRef,
+    DeletionPerturbation,
     Environment,
     Experiment,
     ExperimentReference,
@@ -95,6 +87,8 @@ from torchcell.datamodels.schema import (
     Media,
     NaturalGeneAbsencePerturbation,
     NaturalGenePresencePerturbation,
+    NaturalIsolateDescriptor,
+    NaturalLossOfFunctionPerturbation,
     Publication,
     ReferenceGenome,
     RNASeqExpressionExperiment,
@@ -104,11 +98,14 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
-from torchcell.sequence.genome.registry import (
-    PETER2018_1011,
-    SGD_S288C_R64,
-    load_genome_manifest,
-    resolve,
+from torchcell.sequence.genome.registry import PETER2018_1011, load_genome_manifest
+from torchcell.sequence.natural_isolate import (
+    GENOTYPE_FILES,
+    S288C_RE,
+    NaturalIsolateGenotypes,
+    demangle_orf,
+    link_genotype_files,
+    panel_isolates,
 )
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import (
@@ -121,91 +118,38 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 MEASUREMENT_TYPE = "rnaseq_tpm"
-SEQUENCE_SOURCE = "peterGenomeEvolution10112018"
-CORE_PRESENCE_THRESHOLD = 0.99  # ORF present in >= 99% of the 1011 isolates -> core
 
-# Library-mirror-relative paths (under $DATA_ROOT). The stored artifact + sha256 is
-# canonical; these are referenced (symlinked) in-place, never re-downloaded/copied.
+# Library-mirror-relative path (under $DATA_ROOT). The stored artifact + sha256 is
+# canonical; it is referenced (symlinked) in place, never re-downloaded/copied.
 CAUDAL_ZIP_REL = (
     "torchcell-library/caudalPantranscriptomeRevealsLarge2024/data/"
     "final_data_annotated_merged_04052022.tab.zip"
 )
 CAUDAL_ZIP_SHA256 = "8b55ccd76e1d19476d8f5f718e9e061cb9e4693e343965114dd4cd65d5f8d26b"
-# The tarball's sha256 and size are pinned by the genomes tier's manifest
-# (``$DATA_ROOT/torchcell-genomes/peter2018_1011_assemblies/manifest.json``), read through
-# ``refgene_tarball_ref``; the loader never restates a hash that manifest already pins.
-REFGENE_TAR_NAME = "allReferenceGenesWithSNPsAndIndelsInferred.tar.gz"
-PRESENCE_NAME = "genesMatrix_PresenceAbsence.tab.gz"
-COPYNUMBER_NAME = "genesMatrix_CopyNumber.tab.gz"
-SGD_FSA_NAME = "S288C_reference_sequence_R64-4-1_20230830.fsa"
-
 CAUDAL_ZIP_BASENAME = "final_data_annotated_merged_04052022.tab.zip"
-RAW_FILES = [CAUDAL_ZIP_BASENAME, REFGENE_TAR_NAME, PRESENCE_NAME, COPYNUMBER_NAME]
+#: The Caudal release plus the six Peter-tier files an isolate genotype is built from.
+RAW_FILES = [CAUDAL_ZIP_BASENAME, *GENOTYPE_FILES]
+#: What the isolate genotypes of this build carry, counted (``natural_isolate``).
+GENOTYPE_LEDGER = "natural_isolate_genotype_ledger.json"
+#: The classes an isolate genotype holds, built in ``torchcell.sequence.natural_isolate``.
+#: Named here because the schema-impact closure of this loader is read from this file's
+#: own imports: a change to any of them must re-stale this store.
+GENOTYPE_CLASSES = (
+    SequenceVariantPerturbation,
+    NaturalGenePresencePerturbation,
+    NaturalGeneAbsencePerturbation,
+    DeletionPerturbation,
+    NaturalLossOfFunctionPerturbation,
+    NaturalIsolateDescriptor,
+)
 
-
-def refgene_tarball_ref(data_root: str | None = None) -> ArtifactRef:
-    """The file-level ``ArtifactRef`` of the Peter reference-gene tarball.
-
-    ``tier="genomes"``, ``key=PETER2018_1011``, ``path=REFGENE_TAR_NAME``, with the sha256
-    and byte count read from that assembly set's manifest (no member: each perturbation
-    narrows it to ``<gene>.fasta#<token>`` with ``refgene_member_ref``). Raises
-    ``FileNotFoundError`` when the genomes tier holds no manifest for the set, and the
-    manifest's own error when it does not list the tarball.
-    """
-    record = load_genome_manifest(PETER2018_1011, data_root).record(REFGENE_TAR_NAME)
-    return ArtifactRef(
-        tier="genomes",
-        key=PETER2018_1011,
-        path=record.path,
-        sha256=record.sha256,
-        bytes=record.bytes,
-    )
-
-
-def refgene_member_ref(tarball: ArtifactRef, sys_name: str, token: str) -> ArtifactRef:
-    """``tarball`` narrowed to one variant allele: member ``<sys_name>.fasta#<token>``."""
-    return ArtifactRef(
-        tier=tarball.tier,
-        key=tarball.key,
-        path=tarball.path,
-        member=f"{sys_name}.fasta#{token}",
-        sha256=tarball.sha256,
-        bytes=tarball.bytes,
-        media_type=tarball.media_type,
-    )
-
-
-_ROMAN = [
-    "I",
-    "II",
-    "III",
-    "IV",
-    "V",
-    "VI",
-    "VII",
-    "VIII",
-    "IX",
-    "X",
-    "XI",
-    "XII",
-    "XIII",
-    "XIV",
-    "XV",
-    "XVI",
-]
-_S288C_RE = re.compile(r"^(Y[A-P][LR]\d{3}[WC](-[A-Z])?|Q\d{4}|YNC[A-Q]\d{4}[WC])$")
 _EXCLUDED_STRAIN_RE = re.compile(r"^XTRA_")
 # A Datafile 1 ``ORF`` value naming a non-reference pangenome ORF (R ``make.names`` form).
 _PANGENOME_ORF_RE = re.compile(r"^X\d+\.")
-_COMPLEMENT = str.maketrans("ACGTNacgtn", "TGCANtgcan")
 
 
 class MissingTabMemberError(ValueError):
     """The Caudal expression zip does not hold exactly one ``.tab`` member."""
-
-
-class UnextractableMemberError(RuntimeError):
-    """A regular file in the reference-gene tarball could not be opened for reading."""
 
 
 def _tab_member(zip_path: str, names: list[str]) -> str:
@@ -221,125 +165,6 @@ def _tab_member(zip_path: str, names: list[str]) -> str:
             f"members: {names}"
         )
     return tabs[0]
-
-
-def _reverse_complement(seq: str) -> str:
-    """Return the reverse complement of a DNA string (A/C/G/T/N, case-preserving)."""
-    return seq.translate(_COMPLEMENT)[::-1]
-
-
-def _sgd_chromosomes(fsa_path: str) -> dict[str, str]:
-    """Map each SGD chromosome id (roman I..XVI, ``MT``) to its uppercase sequence."""
-    chrom: dict[str, str] = {}
-    key: str | None = None
-    buf: list[str] = []
-    with open(fsa_path) as handle:
-        for line in handle:
-            if line.startswith(">"):
-                if key is not None:
-                    chrom[key] = "".join(buf).upper()
-                match = re.search(r"\[chromosome=([IVX]+)\]", line)
-                if match:
-                    key = match.group(1)
-                elif "[location=mitochondrion]" in line:
-                    key = "MT"
-                else:
-                    key = None
-                buf = []
-            else:
-                buf.append(line.strip())
-    if key is not None:
-        chrom[key] = "".join(buf).upper()
-    return chrom
-
-
-def _reference_slice(header: str, chrom: dict[str, str]) -> str:
-    """Reconstruct the S288C reference allele from a Peter gene-file header coordinate."""
-    match = re.search(r"chromosome(\d+):(\d+)-(\d+)\s+([+-])", header)
-    if match is None:
-        raise ValueError(f"unparseable coordinate header: {header!r}")
-    chrom_n = int(match.group(1))
-    start = int(match.group(2))
-    end = int(match.group(3))
-    strand = match.group(4)
-    key = "MT" if chrom_n == 17 else _ROMAN[chrom_n - 1]
-    seq = chrom[key][start - 1 : end]
-    if strand == "-":
-        seq = _reverse_complement(seq)
-    return seq.upper()
-
-
-def _isolate_and_symbol(token: str, sys_name: str) -> tuple[str, str]:
-    """Split a Peter gene-FASTA header token into ``(isolate_code, gene_symbol)``.
-
-    A token is ``<isolate>_<systematic_name>_<symbol>`` and the isolate code appears
-    VERBATIM, in either of two forms: ``AEE_YAL001C_TFC3`` and
-    ``SACE_YAU_YAL001C_TFC3``. ``SACE_YAU`` is that isolate's own code, NOT a species
-    prefix on ``YAU``: 93 of the 1011 codes indexing
-    ``genesMatrix_PresenceAbsence.tab.gz`` carry it (``SACE_GAL`` ... ``SACE_YDO``), and
-    so do 78 of the 943 Caudal ``Strain`` codes we build. Stripping the prefix (the fix
-    proposed in issue 73) leaves those 78 isolates unmatchable and silently discards
-    469,170 of the 5,672,145 gene records, so the prefix is KEPT. Verified by an
-    exhaustive scan of all 6015 gene files / 6,081,165 headers.
-
-    Raises on a token that does not carry ``_<sys_name>_`` or that names an empty
-    isolate; no header is ever skipped silently (zero such headers exist in the pinned
-    tarball).
-    """
-    split_key = f"_{sys_name}_"
-    if split_key not in token:
-        raise ValueError(f"header token {token!r} carries no {split_key!r} gene key")
-    iso, symbol = token.split(split_key, 1)
-    if not iso:
-        raise ValueError(f"header token {token!r} names an empty isolate")
-    return iso, symbol
-
-
-def _assert_all_isolates_seen(matched: set[str], seen: set[str]) -> None:
-    """Fail loudly when a built isolate never appeared in a Peter gene-FASTA header.
-
-    An isolate absent from every header would be assembled with zero sequence variants
-    and so reconstruct as a perfect S288C match, which is the maximally misleading
-    failure: the strain and its phenotype are present, its genotype is silently empty.
-    """
-    missing = sorted(matched - seen)
-    if missing:
-        raise ValueError(
-            f"{len(missing)} of {len(matched)} matched isolates never appeared in a "
-            f"Peter gene-FASTA header, so their genotype would be silently empty: "
-            f"{missing}"
-        )
-
-
-def _demangle_orf(col: str) -> str:
-    """Reverse R ``make.names`` on a pangenome-ORF matrix column -> the raw ORF id.
-
-    ``X1834.YAL063C`` -> ``1834-YAL063C``; ``X1.EC1118_1F14_0012g`` ->
-    ``1-EC1118_1F14_0012g`` (leading ``X`` dropped; the first ``.`` was the ``-`` after the
-    ORF number).
-    """
-    stem = col[1:] if col.startswith("X") else col
-    return stem.replace(".", "-", 1)
-
-
-def _orf_to_s288c(orf_id: str) -> str | None:
-    """Return the S288C systematic name a pangenome ORF id encodes, else None.
-
-    A pangenome ORF id is ``<number>-<name>``; ``<name>`` is an S288C systematic name for
-    reference ORFs (``1834-YAL063C`` -> ``YAL063C``) and an assembly id otherwise
-    (``1-EC1118_1F14_0012g`` -> None). Residual ``.`` (from mangled ``-B`` suffixes) is
-    restored before the pattern test.
-
-    A ``_NumOfGenes_N`` suffix marks a pangenome ORF that collapses N paralogous copies
-    of a gene into one cluster (``1771-YAL005C_NumOfGenes_3`` -> ``YAL005C``). These ARE
-    reference genes -- 793 of them -- so we strip the suffix and map the cluster to its
-    S288C name. This conflates paralogs for the presence/absence question (the cluster is
-    present iff any copy is), which is the right granularity here; every reference name
-    maps from exactly one pangenome column, so no de-duplication is needed.
-    """
-    suffix = re.sub(r"^\d+-", "", orf_id).replace(".", "-")
-    suffix = re.sub(r"_NumOfGenes_\d+$", "", suffix)
-    return suffix if _S288C_RE.match(suffix) else None
 
 
 # --------------------------------------------------------------------------- #
@@ -536,7 +361,7 @@ BLANK_ROW_RULES: dict[BlankRowClass, BlankRowRule] = {
         pan_absence="present",
         action="served",
         id_rule=(
-            "serve under 'X' + _demangle_orf(ORF) (ORF 'X37.augustus_masked.2."
+            "serve under 'X' + demangle_orf(ORF) (ORF 'X37.augustus_masked.2."
             "CGIPLA_MA' -> 'X37-augustus_masked.2.CGIPLA_MA'), the form Datafile 1 "
             "gives every named accessory ORF as its systematic_name; refused unless "
             "ORF is a pangenome id 'X<number>.<name>' and the id is no served "
@@ -690,7 +515,7 @@ def resolve_gene_ids(df: pd.DataFrame) -> tuple[pd.DataFrame, BlankNameLedger]:
     orf = blank["ORF"].astype(str)
     homolog = (
         (blank["pan_absence"] == "present")
-        & orf.str.match(_S288C_RE)
+        & orf.str.match(S288C_RE)
         & (orf == blank["Ortholog_in_SGD_2010"].astype(str))
         & orf.isin(served_names)
     )
@@ -707,7 +532,7 @@ def resolve_gene_ids(df: pd.DataFrame) -> tuple[pd.DataFrame, BlankNameLedger]:
         raise GeneIdCollisionError(
             f"pangenome-id rule refuses ORFs that are no pangenome id: {not_pangenome}"
         )
-    pangenome_ids = "X" + orf[pangenome].map(_demangle_orf)
+    pangenome_ids = "X" + orf[pangenome].map(demangle_orf)
     named_ids = sorted(set(pangenome_ids) & served_names)
     if named_ids:
         raise GeneIdCollisionError(
@@ -787,33 +612,23 @@ class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
         return os.environ["DATA_ROOT"]
 
     def download(self) -> None:
-        """Symlink the hash-pinned mirror files into ``raw_dir`` and verify sha256.
+        """Symlink the Caudal zip and the six Peter-tier genotype files into ``raw_dir``.
 
         Large artifacts are referenced in place (never copied). The Caudal zip is
-        hash-verified here against its module pin; the three Peter files (reference-gene
-        tarball, presence and copy-number matrices) are verified by the genomes tier on
-        ``resolve`` against its manifest.
-        ``process`` re-verifies all four in ``raw/`` before reading them.
+        hash-verified against its module pin; each Peter file against the genomes tier's
+        manifest (``natural_isolate.link_genotype_files``). ``process`` re-verifies all
+        seven in ``raw/`` before reading them.
         """
         data_root = self._data_root()
         os.makedirs(self.raw_dir, exist_ok=True)
-        sources = {
-            CAUDAL_ZIP_BASENAME: osp.join(data_root, CAUDAL_ZIP_REL),
-            # Peter files come from the genomes tier, sha256-verified on resolve.
-            REFGENE_TAR_NAME: resolve(PETER2018_1011, REFGENE_TAR_NAME),
-            PRESENCE_NAME: resolve(PETER2018_1011, PRESENCE_NAME),
-            COPYNUMBER_NAME: resolve(PETER2018_1011, COPYNUMBER_NAME),
-        }
-        sha256_expected = {CAUDAL_ZIP_BASENAME: CAUDAL_ZIP_SHA256}
-        for name, src in sources.items():
-            if not osp.exists(src):
-                raise RuntimeError(f"required raw artifact missing from mirror: {src}")
-            expected = sha256_expected.get(name)
-            if expected is not None:
-                verify_sha256(src, expected)
-            dest = osp.join(self.raw_dir, name)
-            if not osp.exists(dest):
-                os.symlink(src, dest)
+        source = osp.join(data_root, CAUDAL_ZIP_REL)
+        if not osp.exists(source):
+            raise RuntimeError(f"required raw artifact missing from mirror: {source}")
+        verify_sha256(source, CAUDAL_ZIP_SHA256)
+        dest = osp.join(self.raw_dir, CAUDAL_ZIP_BASENAME)
+        if not osp.exists(dest):
+            os.symlink(source, dest)
+        link_genotype_files(self.raw_dir, data_root)
         log.info(
             "Caudal/Peter raw files linked into %s (sha256 verified)", self.raw_dir
         )
@@ -823,9 +638,10 @@ class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
         """Build the 943 per-isolate pan-transcriptome experiments and write LMDB.
 
         Every file in ``raw/`` is verified before a row is read: the Caudal zip against
-        this module's pin, the reference-gene tarball and the presence and copy-number
-        matrices against the genomes tier's manifest (the pins ``resolve`` checks in
-        ``download``). A mismatch raises ``RawSha256MismatchError``.
+        this module's pin, the six Peter files against the genomes tier's manifest. A
+        mismatch raises ``RawSha256MismatchError``. Each isolate's genotype comes from
+        ``NaturalIsolateGenotypes``; what the genotypes carry is counted in
+        ``preprocess/natural_isolate_genotype_ledger.json``.
         """
         data_root = self._data_root()
         peter = load_genome_manifest(PETER2018_1011, data_root)
@@ -833,87 +649,45 @@ class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
             self.raw_dir,
             {
                 CAUDAL_ZIP_BASENAME: CAUDAL_ZIP_SHA256,
-                REFGENE_TAR_NAME: peter.record(REFGENE_TAR_NAME).sha256,
-                PRESENCE_NAME: peter.record(PRESENCE_NAME).sha256,
-                COPYNUMBER_NAME: peter.record(COPYNUMBER_NAME).sha256,
+                **{name: peter.record(name).sha256 for name in GENOTYPE_FILES},
             },
         )
         os.makedirs(self.preprocess_dir, exist_ok=True)
 
-        # 1. Peter presence/absence + copy-number matrices -> core/accessory + ORF maps.
-        presence = pd.read_csv(
-            osp.join(self.raw_dir, PRESENCE_NAME), sep="\t", index_col=0
-        )
-        copynumber = pd.read_csv(
-            osp.join(self.raw_dir, COPYNUMBER_NAME), sep="\t", index_col=0
-        ).reindex(columns=presence.columns)
-        cols = list(presence.columns)
-        orf_ids = [_demangle_orf(c) for c in cols]
-        s288c_names = [_orf_to_s288c(o) for o in orf_ids]
-        s288c_mask = np.array([n is not None for n in s288c_names], dtype=bool)
-        presence_vals = presence.to_numpy(dtype=float)
-        copynumber_vals = copynumber.to_numpy(dtype=float)
-        core_mask = presence_vals.mean(axis=0) >= CORE_PRESENCE_THRESHOLD
-        peter_isolates = set(presence.index.astype(str))
-        log.info(
-            "Peter pangenome: %d ORFs (%d core, %d accessory), %d isolates",
-            len(cols),
-            int(core_mask.sum()),
-            int((~core_mask).sum()),
-            len(peter_isolates),
-        )
-
-        # 2. Caudal expression -> per-(strain, gene) tpm/count, restricted to matched
-        #    strains; population-mean reference over those strains.
-        strains, per_strain, ref_tpm, ref_count = self._load_caudal(
-            data_root, peter_isolates
-        )
+        # 1. Caudal expression -> per-(strain, gene) tpm/count, restricted to the
+        #    isolates with a Peter genome; population-mean reference over those strains.
+        panel = panel_isolates(self.raw_dir)
+        strains, per_strain, ref_tpm, ref_count = self._load_caudal(data_root, panel)
         log.info("Matched isolates (Caudal ∩ Peter): %d", len(strains))
 
-        # 3. Sequence variants vs the S288C reference slice (heavy; resumable parquet).
-        variants_by_strain = self._sequence_variants(data_root, set(strains))
-        tarball = refgene_tarball_ref(data_root)
+        # 2. The isolate genotypes (allele diff cached in preprocess/).
+        genotypes = NaturalIsolateGenotypes(
+            self.raw_dir, self.preprocess_dir, strains, data_root
+        )
+        genotypes.write_ledger(osp.join(self.preprocess_dir, GENOTYPE_LEDGER))
 
-        # 4. Shared population-mean phenotype reference (absolute TPM baseline).
+        # 3. Shared population-mean phenotype reference (absolute TPM baseline).
         self._reference_phenotype = RNASeqExpressionPhenotype(
             expression_tpm=ref_tpm,
             expression_count=ref_count,
             measurement_type=MEASUREMENT_TYPE,
             n_mapped_reads=None,
         )
-
-        # Row index per strain into the numpy presence/copy-number matrices.
-        strain_row = {str(s): i for i, s in enumerate(presence.index.astype(str))}
         pd.DataFrame({"strain_id": strains}).to_csv(
             osp.join(self.preprocess_dir, "data.csv"), index=False
         )
 
         env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(2e11))
-        n_seq_total = 0
-        n_cnv_acc_total = 0
-        n_cnv_core_total = 0
+        kinds: dict[str, int] = {}
         idx = 0
         with env.begin(write=True) as txn:
             for strain in tqdm(strains, desc="assembling isolates"):
-                row = strain_row[strain]
-                presence_perts, absence_perts = self._content_perturbations(
-                    strain,
-                    presence_vals[row],
-                    copynumber_vals[row],
-                    s288c_mask,
-                    orf_ids,
-                    s288c_names,
-                )
-                seq_perts = self._sequence_perturbations(
-                    strain, variants_by_strain.get(strain, []), tarball
-                )
-                n_seq_total += len(seq_perts)
-                n_cnv_acc_total += len(presence_perts)
-                n_cnv_core_total += len(absence_perts)
+                genotype = genotypes.genotype(strain)
+                for kind in genotype.perturbation_types:
+                    kinds[kind] = kinds.get(kind, 0) + 1
                 experiment, reference, publication = self.create_experiment(
                     {
-                        "strain": strain,
-                        "perturbations": seq_perts + presence_perts + absence_perts,
+                        "genotype": genotype,
                         "expression_tpm": per_strain[strain]["tpm"],
                         "expression_count": per_strain[strain]["count"],
                     }
@@ -932,12 +706,9 @@ class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
         env.close()
         n = max(idx, 1)
         log.info(
-            "Wrote %d isolates. Per-isolate means: sequence_variants=%.1f, "
-            "accessory-present=%.1f, core-absent=%.2f",
+            "Wrote %d isolates. Per-isolate means: %s",
             idx,
-            n_seq_total / n,
-            n_cnv_acc_total / n,
-            n_cnv_core_total / n,
+            {kind: round(count / n, 2) for kind, count in sorted(kinds.items())},
         )
 
     def _load_caudal(
@@ -996,174 +767,6 @@ class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
         strains = sorted(per_strain)
         return strains, per_strain, ref_tpm, ref_count
 
-    def _sequence_variants(
-        self, data_root: str, matched: set[str]
-    ) -> dict[str, list[tuple[str, str, str]]]:
-        """Diff every isolate's allele vs the S288C reference slice, per gene (resumable).
-
-        Returns ``strain_id -> [(systematic_gene_name, symbol, header_token), ...]``. The
-        result is cached to ``preprocess/sequence_variants.parquet`` so re-assembly need not
-        re-diff the ~6015-gene x 1011-isolate store.
-
-        Headers naming a Peter isolate outside ``matched`` (68 isolates Caudal did not
-        sequence) are the only skipped records, and ``_assert_all_isolates_seen`` proves
-        no isolate we DO build was skipped along with them.
-        """
-        cache = osp.join(self.preprocess_dir, "sequence_variants.parquet")
-        if osp.exists(cache):
-            log.info("Loading cached sequence variants from %s", cache)
-            vdf = pd.read_parquet(cache)
-            out: dict[str, list[tuple[str, str, str]]] = {}
-            for strain, sub in vdf.groupby("strain_id", sort=False):
-                out[str(strain)] = list(
-                    zip(sub["systematic_gene_name"], sub["symbol"], sub["header_token"])
-                )
-            return out
-
-        chrom = _sgd_chromosomes(resolve(SGD_S288C_R64, SGD_FSA_NAME))
-        tar_path = osp.join(self.raw_dir, REFGENE_TAR_NAME)
-        strain_col: list[str] = []
-        sys_col: list[str] = []
-        sym_col: list[str] = []
-        tok_col: list[str] = []
-        seen_isolates: set[str] = set()
-        with tarfile.open(tar_path, "r:gz") as tf:
-            for member in tqdm(tf, desc="diffing reference genes"):
-                if not member.isfile():
-                    continue
-                sys_name = member.name.replace(".fasta", "")
-                extracted = tf.extractfile(member)
-                if extracted is None:
-                    # Unreachable for a released archive: all 6,015 members of the
-                    # pinned tarball are regular files and extract (issue #541).
-                    raise UnextractableMemberError(
-                        f"{tar_path}: member {member.name!r} is a regular file but "
-                        "tarfile returned no file object for it; refusing to drop "
-                        "its variants"
-                    )
-                records = _parse_fasta(extracted.read().decode("latin-1"))
-                if not records:
-                    continue
-                ref = _reference_slice(records[0][0], chrom)
-                for header, seq in records:
-                    token = header.split()[0].split("\t")[0]
-                    iso, symbol = _isolate_and_symbol(token, sys_name)
-                    if iso not in matched:
-                        continue
-                    seen_isolates.add(iso)
-                    if seq.upper() != ref:
-                        strain_col.append(iso)
-                        sys_col.append(sys_name)
-                        sym_col.append(symbol)
-                        tok_col.append(token)
-        # Every built isolate must have been read from a header; a missing one would be
-        # assembled with an empty genotype rather than failing.
-        _assert_all_isolates_seen(matched, seen_isolates)
-        vdf = pd.DataFrame(
-            {
-                "strain_id": strain_col,
-                "systematic_gene_name": sys_col,
-                "symbol": sym_col,
-                "header_token": tok_col,
-            }
-        )
-        vdf.to_parquet(cache, index=False)
-        log.info(
-            "Diffed %d sequence variants across %d isolates -> %s",
-            len(vdf),
-            vdf["strain_id"].nunique(),
-            cache,
-        )
-        out = {}
-        for strain, sub in vdf.groupby("strain_id", sort=False):
-            out[str(strain)] = list(
-                zip(sub["systematic_gene_name"], sub["symbol"], sub["header_token"])
-            )
-        return out
-
-    @staticmethod
-    def _sequence_perturbations(
-        strain: str, variants: list[tuple[str, str, str]], tarball: ArtifactRef
-    ) -> list[SequenceVariantPerturbation]:
-        """Build the SequenceVariantPerturbations for one isolate.
-
-        Each carries ``sequence_ref``: ``tarball`` (``refgene_tarball_ref``) narrowed to the
-        allele's member ``<gene>.fasta#<header_token>``.
-        """
-        perts: list[SequenceVariantPerturbation] = []
-        for sys_name, symbol, token in variants:
-            perts.append(
-                SequenceVariantPerturbation(
-                    systematic_gene_name=sys_name,
-                    perturbed_gene_name=symbol or sys_name,
-                    strain_id=strain,
-                    sequence_source=SEQUENCE_SOURCE,
-                    sequence_ref=refgene_member_ref(tarball, sys_name, token),
-                )
-            )
-        return perts
-
-    @staticmethod
-    def _content_perturbations(
-        strain: str,
-        presence_row: np.ndarray[Any, Any],
-        copynumber_row: np.ndarray[Any, Any],
-        s288c_mask: np.ndarray[Any, Any],
-        orf_ids: list[str],
-        s288c_names: list[str | None],
-    ) -> tuple[
-        list[NaturalGenePresencePerturbation], list[NaturalGeneAbsencePerturbation]
-    ]:
-        """AXIS-1 presence/absence edits for one isolate, RELATIVE TO S288C.
-
-        Presence/absence vs S288C is a question of **reference membership** (is this ORF
-        in S288C?), NOT population frequency (is it in >=99% of isolates?). The two sets
-        differ -- a reference ORF can be variable, an accessory ORF can be near-ubiquitous
-        -- so both loops gate on ``s288c_mask`` (does the pangenome column map to an S288C
-        systematic name, paralog clusters included), never on a frequency ``core_mask``:
-
-        * non-reference ORF PRESENT -> a natural PRESENCE (S288C lacks it, the isolate has
-          it), with observed copy number;
-        * reference ORF ABSENT -> a natural ABSENCE (S288C has it, the isolate lost it).
-
-        A reference ORF present and an accessory ORF absent are BOTH no-ops vs S288C. The
-        earlier core/accessory gating silently dropped every *variable* reference ORF that
-        was absent (~133 per isolate), so those isolates reconstructed as if they still
-        carried the gene -- the exact failure the "never dropped" invariant forbids.
-        copy_number != 1 on a present gene is a separate dosage axis, not modelled here.
-        """
-        presence: list[NaturalGenePresencePerturbation] = []
-        for j in np.nonzero((~s288c_mask) & (presence_row == 1))[0]:
-            cn = copynumber_row[j]
-            copy_number = float(cn) if np.isfinite(cn) and cn > 0 else 1.0
-            orf_id = orf_ids[j]
-            presence.append(
-                NaturalGenePresencePerturbation(
-                    systematic_gene_name=orf_id,
-                    perturbed_gene_name=orf_id,
-                    copy_number=copy_number,
-                    strain_id=strain,
-                    pangenome_orf_id=orf_id,
-                    origin=None,
-                    sequence_source=SEQUENCE_SOURCE,
-                )
-            )
-        absence: list[NaturalGeneAbsencePerturbation] = []
-        for j in np.nonzero(s288c_mask & (presence_row == 0))[0]:
-            # s288c_mask guarantees a systematic name here; keep the pangenome-id fallback
-            # defensively so an absence is never dropped.
-            name = s288c_names[j] or orf_ids[j]
-            absence.append(
-                NaturalGeneAbsencePerturbation(
-                    systematic_gene_name=name,
-                    perturbed_gene_name=name,
-                    strain_id=strain,
-                    pangenome_orf_id=orf_ids[j],
-                    sequence_source=SEQUENCE_SOURCE,
-                )
-            )
-        return presence, absence
-
     def preprocess_raw(
         self, df: pd.DataFrame, preprocess: dict[str, Any] | None = None
     ) -> pd.DataFrame:
@@ -1179,7 +782,7 @@ class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae", strain="S288C"
         )
-        genotype = Genotype(perturbations=row["perturbations"])
+        genotype: Genotype = row["genotype"]
         # SC liquid medium, 30 C, harvested at mid-log (OD ~0.3) -- Caudal Methods.
         environment = Environment(media=CAUDAL_SC, temperature=Temperature(value=30))
         phenotype = RNASeqExpressionPhenotype(
@@ -1209,38 +812,30 @@ class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
         return experiment, reference, publication
 
 
-def _parse_fasta(text: str) -> list[tuple[str, str]]:
-    """Parse FASTA text into ``[(header_without_gt, sequence), ...]``."""
-    records: list[tuple[str, str]] = []
-    header: str | None = None
-    seq: list[str] = []
-    for line in text.splitlines():
-        if line.startswith(">"):
-            if header is not None:
-                records.append((header, "".join(seq)))
-            header = line[1:]
-            seq = []
-        else:
-            seq.append(line.strip())
-    if header is not None:
-        records.append((header, "".join(seq)))
-    return records
+def verify_build(dataset_root: str, data_root: str | None = None) -> Any:
+    """L0-L4 report for a built store (``build_dataset_lmdb --verify`` calls this).
 
+    The RNA-seq family rules plus the four isolate-genotype rules every natural-isolate
+    store shares (``runners.verify_rnaseq_store``); the CLI writes the report to
+    ``<dataset_root>/preprocess/verification_report.json``.
+    """
+    from dotenv import load_dotenv
 
-def _sha256(path: str, chunk_size: int = 1 << 20) -> str:
-    """Return the hex sha256 of a file, read in chunks."""
-    digest = hashlib.sha256()
-    with open(path, "rb") as handle:
-        for chunk in iter(lambda: handle.read(chunk_size), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
+    from torchcell.verification import runners
+
+    load_dotenv()
+    return runners.verify_rnaseq_store(
+        "caudal_pantranscriptome2024",
+        data_root or os.environ["DATA_ROOT"],
+        abs_root=dataset_root,
+    )
 
 
 def main() -> None:
     """Build/load the dataset for interactive debugging.
 
-    Loads the existing LMDB if already built. To rebuild, delete ``<root>/processed``
-    (and ``<root>/preprocess/sequence_variants.parquet`` to re-diff) first.
+    Loads the existing LMDB if already built. To rebuild, retire ``<root>/processed``
+    and ``<root>/preprocess`` first (``build_dataset_lmdb --retire-existing``).
     """
     from dotenv import load_dotenv
 

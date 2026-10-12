@@ -133,6 +133,31 @@ EXAMPLES: dict[str, dict[str, Any]] = {
         "sample_id": "SD0863b",
         "sample_accession": "ERS838232",
     },
+    # The generic builder gives the call the first allele status (sequence_variant)
+    # and no sequence_ref, which the #987 leaf refuses; a call with no inferred allele
+    # carries neither pointer.
+    "torchcell.datamodels.schema.NaturalLossOfFunctionPerturbation": {
+        "systematic_gene_name": "YAL001C",
+        "perturbed_gene_name": "YAL001C",
+        "strain_id": "AAB",
+        "cause": "homozygous_frameshift",
+        "allele_status": "no_inferred_allele",
+        "call_ref": {
+            "tier": "genomes",
+            "key": "peter2018_1011_assemblies",
+            "path": "genesMatrix_Frameshift.tab.gz",
+            "sha256": "b" * 64,
+        },
+        "release_code": None,
+        "release_gene_name": "PAU8",
+        "release_span": {
+            "chromosome": "chrI",
+            "start": 1807,
+            "end": 2169,
+            "assembly": "R64-1-1",
+        },
+        "gene_present_in_isolate": None,
+    },
     "torchcell.datamodels.schema.BackgroundAllele": {
         "systematic_gene_name": "YOR202W",
         "gene_name": "HIS3",

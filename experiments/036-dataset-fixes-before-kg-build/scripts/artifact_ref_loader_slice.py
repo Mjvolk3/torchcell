@@ -25,7 +25,7 @@ from dotenv import load_dotenv
 from torchcell.artifacts import check
 from torchcell.datamodels.schema import ArtifactRef
 from torchcell.datasets.scerevisiae import bloom2019 as b
-from torchcell.datasets.scerevisiae import caudal2024 as c
+from torchcell.sequence import natural_isolate as ni
 
 RESULTS = osp.join(
     osp.dirname(osp.dirname(osp.abspath(__file__))),
@@ -59,16 +59,14 @@ def main() -> None:
         )
     )
     strains = sorted(variants["strain_id"].unique())[:2]
-    tarball = c.refgene_tarball_ref(data_root)
+    tarball = ni.refgene_tarball_ref(data_root)
     caudal: dict[str, object] = {}
     for strain in strains:
         sub = variants[variants["strain_id"] == strain]
         rows = list(
             zip(sub["systematic_gene_name"], sub["symbol"], sub["header_token"])
         )
-        perts = c.CaudalPanTranscriptome2024Dataset._sequence_perturbations(
-            strain, rows, tarball
-        )
+        perts = ni.sequence_perturbations(strain, rows, tarball)
         refs = [p.sequence_ref for p in perts if p.sequence_ref is not None]
         caudal[strain] = {
             "n_sequence_variants": len(perts),

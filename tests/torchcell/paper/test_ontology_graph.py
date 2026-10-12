@@ -151,7 +151,11 @@ def test_behavior_mixin_listed_first_is_not_drawn_as_the_parent(graph):
         "ConstructedOrf": ("HashableProvenanceGapMixin", "genotype"),
         "HashableProvenanceGapMixin": ("ProvenanceGapMixin", "provenance"),
     }
-    assert graph.children_of("HashableProvenanceGapMixin") == ["ConstructedOrf"]
+    assert graph.children_of("HashableProvenanceGapMixin") == [
+        "ConstructedOrf",
+        "NaturalIsolateDescriptor",
+    ]
+    assert graph.classes["NaturalIsolateDescriptor"].lane == "genotype"
     assert {
         "BarcodedKanMxDeletionPerturbation",
         "HeterozygousDeletionPerturbation",

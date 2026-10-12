@@ -466,6 +466,11 @@ SO_ALLOWED: dict[str, str] = {
     # removed and the new one put in its place.
     "SO:0001218": "transgenic_insertion",
     "SO:1000032": "delins",
+    # The natural loss-of-function call (#987), read from so-simple.obo of the same
+    # 2026-08-07 release (data-version 2026-08-07, sha256 220a7ed912d837495a4b44b3
+    # 92852576519db47e24a96dff36fddf8e49785863): SO:0002054 loss_of_function_variant "A
+    # sequence variant whereby the gene product has diminished or abolished function."
+    "SO:0002054": "loss_of_function_variant",
 }
 
 

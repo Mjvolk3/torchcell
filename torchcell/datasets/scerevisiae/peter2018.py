@@ -34,12 +34,17 @@ replicates)", which reads as either 4 or 4 x 2 = 8 colonies; the lower count is 
 (CLAUDE.md, resolving a range), and the aggregation statistic and any dispersion are not
 released (typed gap on ``environment_response_se``).
 
-GENOTYPE. Built exactly as ``caudal2024`` builds an isolate off S288C, from its imported
-helpers: ``SequenceVariantPerturbation`` for every reference gene whose isolate allele
-differs from the S288C R64 slice, ``NaturalGenePresencePerturbation`` for every
-non-reference pangenome ORF the isolate carries, ``NaturalGeneAbsencePerturbation`` for
-every reference ORF it lacks. One genotype per isolate, interned once in the LMDB and
-shared by its 35 records. All 971 phenotyped isolates are in the 1,011-genome panel.
+GENOTYPE. Built by ``torchcell.sequence.natural_isolate`` (``NaturalIsolateGenotypes``),
+the module every natural-isolate loader on this panel shares, so an isolate here is the
+same ``Genotype`` as in the Caudal 2024, Muenzner 2024 and De Chiara 2022 stores:
+``SequenceVariantPerturbation`` for every reference gene whose isolate allele differs from
+the S288C R64 slice, ``NaturalGenePresencePerturbation`` for every non-reference pangenome
+ORF the isolate carries, ``NaturalGeneAbsencePerturbation`` for every reference ORF it
+lacks, ``DeletionPerturbation`` of HO on the 122 isolates Supplementary Table 1 marks
+HO-deleted (#988), ``NaturalLossOfFunctionPerturbation`` per call of the two
+loss-of-function matrices (#987), and ``Genotype.natural_isolate`` (Table S1 ploidy,
+zygosity, aneuploidy, manipulation). One genotype per isolate, interned once in the LMDB
+and shared by its 35 records. All 971 phenotyped isolates are in the 1,011-genome panel.
 
 ENVIRONMENT. Media from Supplementary Table 2 (``si/si3.xls`` sheet ``Table S2``): YPD is
 the library ``YPD_AGAR`` restated with Table 2's recipe (2% peptone, 1% yeast extract,
@@ -58,7 +63,8 @@ RAW MIRROR. ``$DATA_ROOT/torchcell-raw/peterGenomeEvolution10112018/`` holds
 ``data/md5.txt`` (retrieved 2026-10-11, ``direct_url``); the release's md5 equals the
 host's published md5. The two loss-of-function matrices the 2026-07-13 retrieval left
 under ``$DATA_ROOT/data/peter2018/`` are registered into the genomes tier set
-(``register_loss_of_function_matrices``); this loader does not consume them.
+(``register_loss_of_function_matrices``), and so is the Supplementary Tables workbook
+(``natural_isolate.register_supplementary_tables``); the genotype reads all three.
 """
 
 from __future__ import annotations
@@ -71,8 +77,6 @@ import os.path as osp
 import pickle
 import re
 import shutil
-import tarfile
-from collections.abc import Iterable
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -99,6 +103,7 @@ from torchcell.datamodels.schema import (
     AssayType,
     Concentration,
     ConcentrationUnit,
+    DeletionPerturbation,
     Environment,
     EnvironmentResponseExperiment,
     EnvironmentResponseExperimentReference,
@@ -110,28 +115,18 @@ from torchcell.datamodels.schema import (
     Media,
     MediaComponent,
     MediaComponentRole,
+    NaturalGeneAbsencePerturbation,
+    NaturalGenePresencePerturbation,
+    NaturalIsolateDescriptor,
+    NaturalLossOfFunctionPerturbation,
     Publication,
     ReferenceGenome,
     SampleUnit,
+    SequenceVariantPerturbation,
     SmallMoleculePerturbation,
     Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
-from torchcell.datasets.scerevisiae.caudal2024 import (
-    COPYNUMBER_NAME,
-    PRESENCE_NAME,
-    REFGENE_TAR_NAME,
-    SGD_FSA_NAME,
-    CaudalPanTranscriptome2024Dataset,
-    _assert_all_isolates_seen,
-    _demangle_orf,
-    _isolate_and_symbol,
-    _orf_to_s288c,
-    _parse_fasta,
-    _reference_slice,
-    _sgd_chromosomes,
-    refgene_tarball_ref,
-)
 from torchcell.literature.manifest import (
     ROLE_RAW_DATA,
     ArtifactRecord,
@@ -144,11 +139,16 @@ from torchcell.sequence import GeneSet
 from torchcell.sequence.genome.registry import (
     PETER2018_1011,
     ROLE_MATRIX,
-    SGD_S288C_R64,
     assembly_set_dir,
     extend_assembly_set,
     load_genome_manifest,
-    resolve,
+)
+from torchcell.sequence.natural_isolate import (
+    FRAMESHIFT_NAME,
+    GENOTYPE_FILES,
+    LOF_NAME,
+    NaturalIsolateGenotypes,
+    link_genotype_files,
 )
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import (
@@ -198,13 +198,25 @@ EXPECTED_RECORDS = N_ISOLATES * N_CONDITIONS
 #: included. The release carries the 35 ratios; the control is their denominator.
 PAPER_MEASUREMENTS = 34956
 
+#: What the isolate genotypes of this build carry, counted (``natural_isolate``).
+GENOTYPE_LEDGER = "natural_isolate_genotype_ledger.json"
+#: The classes an isolate genotype holds, built in ``torchcell.sequence.natural_isolate``.
+#: Named here because the schema-impact closure of this loader is read from this file's
+#: own imports: a change to any of them must re-stale this store.
+GENOTYPE_CLASSES = (
+    SequenceVariantPerturbation,
+    NaturalGenePresencePerturbation,
+    NaturalGeneAbsencePerturbation,
+    DeletionPerturbation,
+    NaturalLossOfFunctionPerturbation,
+    NaturalIsolateDescriptor,
+)
+
 N_SAMPLES = 4
 INCUBATION_HOURS = 40.0
 CONTROL_TEMPERATURE_C = 30.0
 #: The loss-of-function matrices of the 2026-07-13 retrieval (issue #66), legacy path.
 LEGACY_PETER_DIR_REL = "data/peter2018"
-LOF_NAME = "1011LossOfFunction.xls.gz"
-FRAMESHIFT_NAME = "genesMatrix_Frameshift.tab.gz"
 LOF_PUBLISHED_MD5 = {
     LOF_NAME: "f3c4f2db7a5b2a9bf28039dbdd82e2b1",
     FRAMESHIFT_NAME: "6f8ec446283817be303e20f5661550b0",
@@ -714,111 +726,6 @@ def read_release(
 
 
 # --------------------------------------------------------------------------- #
-# Genotypes (caudal2024's construction, over the phenotyped isolates)
-# --------------------------------------------------------------------------- #
-def diff_reference_genes(
-    tar_path: str | Path, sgd_fsa_path: str | Path, matched: set[str]
-) -> pd.DataFrame:
-    """Every (isolate, gene) whose allele differs from the S288C reference slice.
-
-    The loop of ``CaudalPanTranscriptome2024Dataset._sequence_variants`` over a
-    different isolate set, composed from the same module-level helpers so the two
-    datasets build identical genotypes for a shared isolate. Columns: ``strain_id``,
-    ``systematic_gene_name``, ``symbol``, ``header_token``.
-    """
-    chrom = _sgd_chromosomes(str(sgd_fsa_path))
-    rows: dict[str, list[str]] = {
-        "strain_id": [],
-        "systematic_gene_name": [],
-        "symbol": [],
-        "header_token": [],
-    }
-    seen: set[str] = set()
-    with tarfile.open(tar_path, "r:gz") as tf:
-        for member in tqdm(tf, desc="diffing reference genes"):
-            if not member.isfile():
-                continue
-            sys_name = member.name.replace(".fasta", "")
-            extracted = tf.extractfile(member)
-            if extracted is None:
-                raise RuntimeError(
-                    f"{tar_path}: member {member.name!r} did not extract"
-                )
-            records = _parse_fasta(extracted.read().decode("latin-1"))
-            if not records:
-                continue
-            ref = _reference_slice(records[0][0], chrom)
-            for header, seq in records:
-                token = header.split()[0].split("\t")[0]
-                iso, symbol = _isolate_and_symbol(token, sys_name)
-                if iso not in matched:
-                    continue
-                seen.add(iso)
-                if seq.upper() != ref:
-                    rows["strain_id"].append(iso)
-                    rows["systematic_gene_name"].append(sys_name)
-                    rows["symbol"].append(symbol)
-                    rows["header_token"].append(token)
-    _assert_all_isolates_seen(matched, seen)
-    return pd.DataFrame(rows)
-
-
-class PangenomeMatrices(BaseModel):
-    """Peter's presence and copy-number matrices, decoded once for all isolates."""
-
-    model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
-
-    orf_ids: list[str]
-    s288c_names: list[str | None]
-    s288c_mask: np.ndarray[Any, Any]
-    presence: np.ndarray[Any, Any]
-    copy_number: np.ndarray[Any, Any]
-    row_of: dict[str, int]
-
-
-def read_pangenome(
-    presence_path: str | Path, copynumber_path: str | Path
-) -> PangenomeMatrices:
-    """Decode the two matrices exactly as ``caudal2024`` does."""
-    presence = pd.read_csv(presence_path, sep="\t", index_col=0)
-    copynumber = pd.read_csv(copynumber_path, sep="\t", index_col=0).reindex(
-        columns=presence.columns
-    )
-    orf_ids = [_demangle_orf(c) for c in presence.columns]
-    s288c_names = [_orf_to_s288c(o) for o in orf_ids]
-    return PangenomeMatrices(
-        orf_ids=orf_ids,
-        s288c_names=s288c_names,
-        s288c_mask=np.array([n is not None for n in s288c_names], dtype=bool),
-        presence=presence.to_numpy(dtype=float),
-        copy_number=copynumber.to_numpy(dtype=float),
-        row_of={str(s): i for i, s in enumerate(presence.index.astype(str))},
-    )
-
-
-def isolate_genotype(
-    strain: str,
-    variants: Iterable[tuple[str, str, str]],
-    pangenome: PangenomeMatrices,
-    tarball: Any,
-) -> Genotype:
-    """One isolate's genotype off S288C through ``caudal2024``'s own builders."""
-    row = pangenome.row_of[strain]
-    presence, absence = CaudalPanTranscriptome2024Dataset._content_perturbations(
-        strain,
-        pangenome.presence[row],
-        pangenome.copy_number[row],
-        pangenome.s288c_mask,
-        pangenome.orf_ids,
-        pangenome.s288c_names,
-    )
-    sequence = CaudalPanTranscriptome2024Dataset._sequence_perturbations(
-        strain, list(variants), tarball
-    )
-    return Genotype(perturbations=[*sequence, *presence, *absence])
-
-
-# --------------------------------------------------------------------------- #
 # Ledger
 # --------------------------------------------------------------------------- #
 class ReleaseLedger(BaseModel):
@@ -981,14 +888,14 @@ class IsolateGrowthPeter2018Dataset(ExperimentDataset):
 
     @property
     def raw_file_names(self) -> list[str]:
-        """The release plus the three genomes-tier files the genotypes are built from."""
-        return [PHENO_NAME, REFGENE_TAR_NAME, PRESENCE_NAME, COPYNUMBER_NAME]
+        """The release plus the six genomes-tier files the genotypes are built from."""
+        return [PHENO_NAME, *GENOTYPE_FILES]
 
     def download(self) -> None:
         """Link the release and the genomes-tier files, each sha256-verified.
 
         The release is checked against ``PHENO_SHA256`` and the raw-mirror manifest must
-        record that same digest (``ManifestPinMismatchError`` otherwise); the three tier
+        record that same digest (``ManifestPinMismatchError`` otherwise); the six tier
         files against the tier manifest.
         """
         data_root = _data_root()
@@ -1002,13 +909,7 @@ class IsolateGrowthPeter2018Dataset(ExperimentDataset):
             osp.join(self.raw_dir, PHENO_NAME),
             PHENO_SHA256,
         )
-        peter = load_genome_manifest(PETER2018_1011, data_root)
-        for name in (REFGENE_TAR_NAME, PRESENCE_NAME, COPYNUMBER_NAME):
-            link_verified(
-                resolve(PETER2018_1011, name, verify=False, data_root=data_root),
-                osp.join(self.raw_dir, name),
-                peter.record(name).sha256,
-            )
+        link_genotype_files(self.raw_dir, data_root)
         log.info("Peter 2018 raw files linked into %s (sha256 verified)", self.raw_dir)
 
     # ---- build ---------------------------------------------------------------
@@ -1021,25 +922,16 @@ class IsolateGrowthPeter2018Dataset(ExperimentDataset):
             self.raw_dir,
             {
                 PHENO_NAME: PHENO_SHA256,
-                REFGENE_TAR_NAME: peter.record(REFGENE_TAR_NAME).sha256,
-                PRESENCE_NAME: peter.record(PRESENCE_NAME).sha256,
-                COPYNUMBER_NAME: peter.record(COPYNUMBER_NAME).sha256,
+                **{name: peter.record(name).sha256 for name in GENOTYPE_FILES},
             },
         )
         os.makedirs(self.preprocess_dir, exist_ok=True)
         release = read_release(osp.join(self.raw_dir, PHENO_NAME), self.conditions)
         isolates = sorted(release.index)
-        pangenome = read_pangenome(
-            osp.join(self.raw_dir, PRESENCE_NAME),
-            osp.join(self.raw_dir, COPYNUMBER_NAME),
+        genotypes = NaturalIsolateGenotypes(
+            self.raw_dir, self.preprocess_dir, isolates, data_root
         )
-        outside = sorted(set(isolates) - set(pangenome.row_of))
-        if outside:
-            raise ValueError(
-                f"{len(outside)} phenotyped isolates have no genome: {outside}"
-            )
-        variants = self._variants(set(isolates))
-        tarball = refgene_tarball_ref(data_root)
+        genotypes.write_ledger(osp.join(self.preprocess_dir, GENOTYPE_LEDGER))
 
         reference = shared_reference(self.name)
         pub = publication()
@@ -1053,9 +945,7 @@ class IsolateGrowthPeter2018Dataset(ExperimentDataset):
         gene_names: set[str] = set()
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for strain in tqdm(isolates, desc="isolates"):
-                genotype = isolate_genotype(
-                    strain, variants.get(strain, []), pangenome, tarball
-                )
+                genotype = genotypes.genotype(strain)
                 gene_names.update(genotype.systematic_gene_names)
                 pointer = self._intern_genotype(genotype, strain, itxn)
                 for code in self.conditions:
@@ -1080,27 +970,6 @@ class IsolateGrowthPeter2018Dataset(ExperimentDataset):
             osp.join(self.preprocess_dir, "data.csv"), index=False
         )
         log.info("Wrote %d Peter 2018 records over %d isolates", idx, len(isolates))
-
-    def _variants(self, matched: set[str]) -> dict[str, list[tuple[str, str, str]]]:
-        """Sequence variants per isolate, cached to ``preprocess/sequence_variants.parquet``."""
-        cache = osp.join(self.preprocess_dir, "sequence_variants.parquet")
-        if osp.exists(cache):
-            frame = pd.read_parquet(cache)
-        else:
-            frame = diff_reference_genes(
-                osp.join(self.raw_dir, REFGENE_TAR_NAME),
-                resolve(SGD_S288C_R64, SGD_FSA_NAME),
-                matched,
-            )
-            frame.to_parquet(cache, index=False)
-        if set(frame["strain_id"]) - matched:
-            raise ValueError("the cached variants name an isolate outside the release")
-        out: dict[str, list[tuple[str, str, str]]] = {}
-        for strain, sub in frame.groupby("strain_id", sort=False):
-            out[str(strain)] = list(
-                zip(sub["systematic_gene_name"], sub["symbol"], sub["header_token"])
-            )
-        return out
 
     @staticmethod
     def _intern_genotype(genotype: Genotype, strain: str, itxn: Any) -> dict[str, str]:

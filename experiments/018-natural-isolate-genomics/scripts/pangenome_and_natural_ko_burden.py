@@ -92,7 +92,8 @@ def _orf_col_to_systematic(col: str) -> str | None:
     conflate paralogs -- so we count and report how many reference ORFs are recovered
     this way rather than folding them in silently.
     """
-    from torchcell.datasets.scerevisiae.caudal2024 import _demangle_orf, _orf_to_s288c
+    from torchcell.sequence.natural_isolate import demangle_orf as _demangle_orf
+    from torchcell.sequence.natural_isolate import orf_to_s288c as _orf_to_s288c
 
     raw = _demangle_orf(col)
     hit = _orf_to_s288c(raw)

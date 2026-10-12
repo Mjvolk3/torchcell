@@ -32,7 +32,6 @@ from __future__ import annotations
 
 import hashlib
 import io
-import json
 import math
 import os
 import os.path as osp
@@ -47,7 +46,9 @@ import pandas as pd
 import pytest
 
 from tests.torchcell.datasets.scerevisiae.test_caudal2024_synthetic import (
+    _WORKBOOK,
     _absent,
+    _descriptor,
     _present,
     _raw_bytes,
     _variant,
@@ -56,6 +57,7 @@ from tests.torchcell.datasets.scerevisiae.test_caudal2024_synthetic import (
 )
 from torchcell.data import RawSha256MismatchError
 from torchcell.datamodels.schema import (
+    ChromosomeCopyChange,
     ConcentrationUnit,
     Environment,
     GenePerturbationType,
@@ -69,8 +71,9 @@ from torchcell.datamodels.schema import (
     YeastProteinTurnoverExperiment,
     YeastProteinTurnoverExperimentReference,
 )
-from torchcell.datasets.scerevisiae import caudal2024 as caudal
 from torchcell.datasets.scerevisiae import muenzner2024 as m
+from torchcell.sequence import natural_isolate as ni
+from torchcell.verification.natural_isolate_genotype import IsolateGenotypeAudit
 from torchcell.verification.protein import (
     verify_natural_isolate_proteome,
     verify_natural_isolate_turnover,
@@ -174,7 +177,7 @@ def _write_raw(raw: Path, sheets: dict[str, list[list[Any]]] | None = None) -> N
     raw.mkdir(parents=True)
     (raw / m.SI_TABLES_FILENAME).write_bytes(_workbook(sheets or _release_sheets()))
     peter = _raw_bytes()
-    for name in (m.REFGENE_TAR_NAME, m.PRESENCE_NAME, m.COPYNUMBER_NAME):
+    for name in ni.GENOTYPE_FILES:
         (raw / name).write_bytes(peter[name])
 
 
@@ -219,6 +222,15 @@ _GENOTYPES: dict[str, list[GenePerturbationType]] = {
         _absent("ZZZ", "YBR001W", "4-YBR001W"),
     ],
 }
+
+
+def _genotype(strain: str) -> Genotype:
+    """The isolate's genotype as ``natural_isolate`` builds it on the Caudal fixture."""
+    return Genotype(
+        perturbations=_GENOTYPES[strain], natural_isolate=_descriptor(strain)
+    )
+
+
 _PROTEOME_ENV = Environment(media=m.MUENZNER_SM, temperature=Temperature(value=30))
 _TURNOVER_ENV = Environment(media=m.MUENZNER_SM_LYS8, temperature=Temperature(value=30))
 _S288C = ReferenceGenome(species="Saccharomyces cerevisiae", strain="S288C")
@@ -227,7 +239,7 @@ _S288C = ReferenceGenome(species="Saccharomyces cerevisiae", strain="S288C")
 def _abundance(strain: str, values: dict[str, float]) -> ProteinAbundanceExperiment:
     return ProteinAbundanceExperiment(
         dataset_name="ProteomeMuenzner2024Dataset",
-        genotype=Genotype(perturbations=_GENOTYPES[strain]),
+        genotype=_genotype(strain),
         environment=_PROTEOME_ENV,
         phenotype=ProteinAbundancePhenotype(
             protein_abundance=values,
@@ -241,7 +253,7 @@ def _abundance(strain: str, values: dict[str, float]) -> ProteinAbundanceExperim
 def _turnover(strain: str, rates: dict[str, float]) -> YeastProteinTurnoverExperiment:
     return YeastProteinTurnoverExperiment(
         dataset_name="ProteinTurnoverMuenzner2024Dataset",
-        genotype=Genotype(perturbations=_GENOTYPES[strain]),
+        genotype=_genotype(strain),
         environment=_TURNOVER_ENV,
         phenotype=ProteinTurnoverPhenotype(
             degradation_rate=rates,
@@ -377,7 +389,7 @@ def test_proteome_ledger_accounts_for_every_column_and_cell(
         ("ZZZ", "ZZZ", "2", "euploid", True, None),
     ]
     assert ledger.karyotypes[1].copy_changes == [
-        m.ChromosomeCopyChange(chromosome=1, change=1)
+        ChromosomeCopyChange(chromosome=1, change=1)
     ]
     assert (preprocess / "data.csv").read_text() == (
         "strain_id\nAAA\nSACE_YAU\nZZZ\nFY4\n"
@@ -461,7 +473,7 @@ def test_both_builds_verify_their_four_raw_files_before_reading(
     assert sorted(pins) == sorted(m.RAW_FILES)
     assert pins[m.SI_TABLES_FILENAME] == m.SI_TABLES_SHA256
     tier = load_genome_manifest(PETER2018_1011, str(data_root))
-    for name in (m.REFGENE_TAR_NAME, m.PRESENCE_NAME, m.COPYNUMBER_NAME):
+    for name in ni.GENOTYPE_FILES:
         assert pins[name] == tier.record(name).sha256
 
 
@@ -575,18 +587,18 @@ def test_median_reference_skips_unmeasured_cells_and_rows() -> None:
 def test_parse_aneuploidies_reads_the_legend(
     text: str, expected: list[tuple[int, int]]
 ) -> None:
-    assert [(c.chromosome, c.change) for c in m.parse_aneuploidies(text)] == expected
+    assert [(c.chromosome, c.change) for c in ni.parse_aneuploidy(text)] == expected
 
 
 @pytest.mark.parametrize("text", ["NA", "aneu;", "aneu;+1*3", "trisomy 3"])
 def test_parse_aneuploidies_refuses_other_text(text: str) -> None:
     with pytest.raises(ValueError, match="unparseable aneuploidy annotation"):
-        m.parse_aneuploidies(text)
+        ni.parse_aneuploidy(text)
 
 
 def test_parse_aneuploidies_refuses_a_seventeenth_chromosome() -> None:
     with pytest.raises(ValueError, match="less than or equal to 16"):
-        m.parse_aneuploidies("aneu;+1*17;")
+        ni.parse_aneuploidy("aneu;+1*17;")
 
 
 def test_peter_code_restores_the_underscore_prefixes() -> None:
@@ -712,7 +724,7 @@ def test_download_links_the_mirror_workbook_and_the_peter_files(
     assert sorted(p.name for p in raw.iterdir()) == sorted(m.RAW_FILES)
     assert (raw / m.SI_TABLES_FILENAME).read_bytes() == workbook
     tier = data_root / "torchcell-genomes" / "peter2018_1011_assemblies"
-    assert os.readlink(raw / m.PRESENCE_NAME) == str(tier / m.PRESENCE_NAME)
+    assert os.readlink(raw / ni.PRESENCE_NAME) == str(tier / ni.PRESENCE_NAME)
 
 
 # --------------------------------------------------------------------------- #
@@ -722,8 +734,35 @@ def _names(report: Any) -> list[str]:
     return [r.name for r in report.results]
 
 
+def _audit(
+    dataset: Any, data_root: Path, monkeypatch: pytest.MonkeyPatch
+) -> IsolateGenotypeAudit:
+    """The shared genotype audit over the store's isolates, with Table S1 mirrored."""
+    library = data_root / "torchcell-library"
+    _library_tables(library, monkeypatch)
+    return IsolateGenotypeAudit(
+        ni.NaturalIsolateGenotypes(
+            dataset.raw_dir,
+            dataset.preprocess_dir,
+            ["AAA", "SACE_YAU", "ZZZ"],
+            str(data_root),
+        ),
+        library,
+    )
+
+
+def _library_tables(library: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """The library mirror's copy of the Peter workbook, pinned at its own digest."""
+    path = library / ni.CITATION_KEY / ni.LIBRARY_TABLES_REL
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(_WORKBOOK)
+    monkeypatch.setattr(ni, "TABLES_SHA256", hashlib.sha256(_WORKBOOK).hexdigest())
+
+
 def test_proteome_gate_passes_the_synthetic_store(
     proteome: m.ProteomeMuenzner2024Dataset,
+    data_root: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     records = [proteome[i] for i in range(len(proteome))]
     report = verify_natural_isolate_proteome(
@@ -734,12 +773,8 @@ def test_proteome_gate_passes_the_synthetic_store(
         sgd_genes={"YAL001C", "YBR001W", "Q0010"},
         caudal_isolates={"AAA", "ZZZ", "OTHER"},
         expected_caudal_overlap=2,
-        caudal_genotypes={
-            "AAA": [
-                p.model_dump()
-                for p in Genotype(perturbations=_GENOTYPES["AAA"]).perturbations
-            ]
-        },
+        caudal_genotypes={"AAA": _genotype("AAA").model_dump()},
+        genotype_audit=_audit(proteome, data_root, monkeypatch),
     )
     assert _names(report) == [
         "structural",
@@ -754,12 +789,16 @@ def test_proteome_gate_passes_the_synthetic_store(
         "gene_containment_sgd",
         "caudal_isolate_overlap",
         "caudal_genotype_agreement",
+        "isolate_genotype_identity",
+        "isolate_genotype_round_trip",
+        "isolate_descriptor_matches_table_s1",
+        "loss_of_function_calls_match_release",
     ]
     assert [r.name for r in report.results if not r.passed] == []
     consistency = report.results[3]
     assert consistency.details["n_s288c_derived"] == 1
     assert report.results[2].details["n_strains"] == 4
-    agreement = report.results[-1]
+    agreement = report.results[11]
     assert agreement.message == (
         "1 isolates compared with the Caudal 2024 store: 1 identical genotypes"
     )
@@ -767,6 +806,8 @@ def test_proteome_gate_passes_the_synthetic_store(
 
 def test_proteome_gate_fails_a_changed_genotype_and_a_wrong_overlap(
     proteome: m.ProteomeMuenzner2024Dataset,
+    data_root: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     records = [proteome[i] for i in range(len(proteome))]
     report = verify_natural_isolate_proteome(
@@ -777,7 +818,8 @@ def test_proteome_gate_fails_a_changed_genotype_and_a_wrong_overlap(
         sgd_genes={"YAL001C"},
         caudal_isolates={"AAA"},
         expected_caudal_overlap=2,
-        caudal_genotypes={"AAA": [], "NOPE": []},
+        caudal_genotypes={"AAA": {"perturbations": []}, "NOPE": {"perturbations": []}},
+        genotype_audit=_audit(proteome, data_root, monkeypatch),
     )
     failed = {r.name: r for r in report.results if not r.passed}
     assert sorted(failed) == [
@@ -792,6 +834,8 @@ def test_proteome_gate_fails_a_changed_genotype_and_a_wrong_overlap(
 
 def test_turnover_gate_counts_uncovered_cells_against_the_ledger(
     turnover: m.ProteinTurnoverMuenzner2024Dataset,
+    data_root: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     records = [turnover[i] for i in range(len(turnover))]
     kwargs: dict[str, Any] = {
@@ -801,12 +845,18 @@ def test_turnover_gate_counts_uncovered_cells_against_the_ledger(
         "sgd_genes": {"YAL001C", "YBR001W", "Q0010", "R0040C"},
     }
     passing = verify_natural_isolate_turnover(
-        records, expected_rows_without_reference=1, **kwargs
+        records,
+        expected_rows_without_reference=1,
+        genotype_audit=_audit(turnover, data_root, monkeypatch),
+        **kwargs,
     )
     assert [r.name for r in passing.results if not r.passed] == []
     assert "half_life_is_ln2_over_rate" in _names(passing)
     failing = verify_natural_isolate_turnover(
-        records, expected_rows_without_reference=0, **kwargs
+        records,
+        expected_rows_without_reference=0,
+        genotype_audit=_audit(turnover, data_root, monkeypatch),
+        **kwargs,
     )
     [bad] = [r for r in failing.results if not r.passed]
     assert bad.name == "uncovered_cells_match_ledger"
@@ -819,10 +869,7 @@ def _caudal_store(data_root: Path, records: list[dict[str, Any]]) -> None:
     """A Caudal 2024 store holding ``records`` (sorted strain order) and its data.csv."""
     root = data_root / m.CAUDAL_ROOT
     (root / "preprocess").mkdir(parents=True)
-    strains = [
-        str(r["experiment"]["genotype"]["perturbations"][0]["strain_id"])
-        for r in records
-    ]
+    strains = [ni.genotype_isolate(r["experiment"]["genotype"]) for r in records]
     pd.DataFrame({"strain_id": strains}).to_csv(
         root / "preprocess" / "data.csv", index=False
     )
@@ -845,6 +892,7 @@ def test_verify_build_dispatches_by_store_and_reads_the_caudal_store(
     from that store's LMDB in ``data.csv`` order (first, middle, last, first SACE_).
     """
     _caudal_store(data_root, [proteome[0], proteome[1]])
+    _library_tables(data_root / "torchcell-library", monkeypatch)
     # verify_build reopens each store's LMDB; an env this process already holds
     # (the fixtures read records) is refused by lmdb, so release both first.
     proteome.close_lmdb()
@@ -917,11 +965,9 @@ def test_the_deposited_workbook_parses_to_the_measured_counts() -> None:
     assert m.half_life_identity_error(frame) < 1e-14
 
 
-def test_caudal_helpers_the_loader_reuses_are_the_caudal_module_objects() -> None:
-    """The genotype is Caudal's construction, imported rather than copied."""
-    assert m._demangle_orf is caudal._demangle_orf
-    assert m._orf_to_s288c is caudal._orf_to_s288c
-    assert m.REFGENE_TAR_NAME == caudal.REFGENE_TAR_NAME
-    assert json.dumps(m.RAW_FILES[1:]) == json.dumps(
-        [caudal.REFGENE_TAR_NAME, caudal.PRESENCE_NAME, caudal.COPYNUMBER_NAME]
-    )
+def test_the_loader_names_the_shared_genotype_files_and_classes() -> None:
+    """The genotype is ``natural_isolate``'s, and the loader's own imports name every
+    class it holds (the schema-impact closure reads them).
+    """
+    assert m.RAW_FILES[1:] == list(ni.GENOTYPE_FILES)
+    assert m.GENOTYPE_CLASSES == ni.ISOLATE_GENOTYPE_CLASSES

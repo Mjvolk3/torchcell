@@ -1117,6 +1117,8 @@ RNASEQ_DATASETS: dict[str, dict[str, Any]] = {
     "caudal_pantranscriptome2024": {
         "root": "data/torchcell/caudal_pantranscriptome2024",
         "expected_count": 943,
+        # every record is one Peter 2018 isolate (torchcell.sequence.natural_isolate)
+        "natural_isolates": True,
         "provenance": Provenance(
             source_uri="http://1002genomes.u-strasbg.fr/files/",
             citation_key="caudalPantranscriptomeRevealsLarge2024",
@@ -1652,44 +1654,89 @@ def _l4_rnaseq_gene_containment(sgd_genes: set[str], measured: set[str]) -> Leve
     )
 
 
+def verify_rnaseq_store(
+    name: str,
+    data_root: str,
+    abs_root: str | None = None,
+    sgd_genes: Callable[[], set[str]] | None = None,
+) -> VerificationReport:
+    """One RNASEQ_DATASETS entry's report (written by the caller).
+
+    The L4 universe is the genome a dataset's own records name -- the S288C ORF + RNA
+    set for a yeast dataset, the pinned strain's locus-tag set for an assembly-pinned
+    one; ``sgd_genes`` supplies the S288C set and is called only for a yeast dataset
+    (``_sgd_gene_set`` of ``data_root`` by default). An entry marked
+    ``natural_isolates`` (Caudal 2024) also gets the four
+    isolate-genotype rules every natural-isolate store shares, over the isolates of its
+    ``preprocess/data.csv``.
+    """
+    spec = RNASEQ_DATASETS[name]
+    abs_root = abs_root or osp.join(data_root, spec["root"])
+    records = load_records(abs_root)
+    report = verify_rnaseq_dataset(
+        records,
+        dataset_name=name,
+        provenance=spec["provenance"],
+        expected_count=spec.get("expected_count", len(records)),
+        replicate_aware=spec.get("replicate_aware", False),
+    )
+    assembly_sets = _dataset_assembly_sets(records)
+    if assembly_sets != (SGD_S288C_R64,):
+        universe, _ = _dataset_gene_universe(records, data_root)
+        report.add(
+            _l4_assembly_gene_containment(
+                universe,
+                assembly_sets,
+                rnaseq_gene_set(records),
+                min_containment=spec.get(
+                    "min_containment", MIN_RNASEQ_GENE_CONTAINMENT
+                ),
+            )
+        )
+    else:
+        genes = sgd_genes() if sgd_genes is not None else _sgd_gene_set(data_root)
+        report.add(_l4_rnaseq_gene_containment(genes, rnaseq_gene_set(records)))
+    if spec.get("natural_isolates"):
+        import pandas as pd
+
+        from torchcell.sequence.natural_isolate import NaturalIsolateGenotypes
+        from torchcell.verification.natural_isolate_genotype import IsolateGenotypeAudit
+
+        strains = pd.read_csv(osp.join(abs_root, "preprocess", "data.csv"))
+        audit = IsolateGenotypeAudit(
+            NaturalIsolateGenotypes(
+                osp.join(abs_root, "raw"),
+                osp.join(abs_root, "preprocess"),
+                strains["strain_id"].astype(str).tolist(),
+                data_root,
+            ),
+            osp.join(data_root, "torchcell-library"),
+        )
+        for record in records:
+            audit.add(record["experiment"]["genotype"])
+        for result in audit.results():
+            report.add(result)
+    return report
+
+
 def run_rnaseq(data_root: str) -> bool:
     """Verify RNA-seq expression datasets (L0-L4) and write reports. True if pass.
 
-    Two per-dataset selections, both read off the records rather than configured twice:
     ``replicate_aware`` picks the L1 rule (one record per library, for the bacterial
-    compendia), and the L4 universe is the genome a dataset's own records name -- the
-    S288C ORF + RNA set for a yeast dataset, the pinned strain's locus-tag set for an
-    assembly-pinned one. The yeast gene set is read only if a yeast dataset is present.
+    compendia); ``verify_rnaseq_store`` picks the L4 universe from the records. The
+    yeast gene set is read only if a yeast dataset is present, and then once.
     """
-    sgd_genes: set[str] | None = None
+    cache: dict[str, set[str]] = {}
+
+    def sgd_genes() -> set[str]:
+        if "sgd" not in cache:
+            cache["sgd"] = _sgd_gene_set(data_root)
+        return cache["sgd"]
+
     all_passed = True
     for name, spec in RNASEQ_DATASETS.items():
         abs_root = osp.join(data_root, spec["root"])
-        records = load_records(abs_root)
-        report = verify_rnaseq_dataset(
-            records,
-            dataset_name=name,
-            provenance=spec["provenance"],
-            expected_count=spec.get("expected_count", len(records)),
-            replicate_aware=spec.get("replicate_aware", False),
-        )
-        assembly_sets = _dataset_assembly_sets(records)
-        if assembly_sets != (SGD_S288C_R64,):
-            universe, _ = _dataset_gene_universe(records, data_root)
-            report.add(
-                _l4_assembly_gene_containment(
-                    universe,
-                    assembly_sets,
-                    rnaseq_gene_set(records),
-                    min_containment=spec.get(
-                        "min_containment", MIN_RNASEQ_GENE_CONTAINMENT
-                    ),
-                )
-            )
-        else:
-            if sgd_genes is None:
-                sgd_genes = _sgd_gene_set(data_root)
-            report.add(_l4_rnaseq_gene_containment(sgd_genes, rnaseq_gene_set(records)))
+        report = verify_rnaseq_store(name, data_root, abs_root, sgd_genes)
         out = _write_report(report, osp.join(abs_root, "preprocess"))
         print(report.summary())
         print(f"  -> wrote {out}\n")
@@ -2958,8 +3005,6 @@ NATURAL_ISOLATE_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
     "isolate_growth_peter2018": {
         "root": "data/torchcell/isolate_growth_peter2018",
         "raw_mirror": "torchcell-raw/peterGenomeEvolution10112018",
-        # the reference-gene tarball every SequenceVariantPerturbation points into
-        "tarball": "allReferenceGenesWithSNPsAndIndelsInferred.tar.gz",
         # 971 phenotyped isolates x 35 released conditions; the YPD 30 C control is the
         # ratio's denominator and is not released as a value.
         "expected_count": 33985,
@@ -2978,8 +3023,8 @@ NATURAL_ISOLATE_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
                 "growth ratio of 971 natural isolates on 35 solid-medium conditions over "
                 "the same isolate on YPD 30 C (end-point colony size, Gitter, 40 h); "
                 "conditions from Supplementary Table 2 (si/si3.xls sha256 b11de13b...); "
-                "genotype per isolate off S288C exactly as caudal2024 builds it from the "
-                "genomes-tier set peter2018_1011_assemblies"
+                "genotype per isolate off S288C built by torchcell.sequence.natural_isolate "
+                "from the genomes-tier set peter2018_1011_assemblies"
             ),
             page=(
                 "Nature 556:339 (doi:10.1038/s41586-018-0030-5); Methods 'Phenotyping'; "
@@ -2998,21 +3043,26 @@ def verify_natural_isolate_dataset(
     ``abs_root`` defaults to the registry root under ``data_root``; the loader's
     ``verify_build`` passes the store it just built.
     """
-    from torchcell.sequence.genome.registry import load_genome_manifest
+    from torchcell.datasets.scerevisiae import peter2018
+    from torchcell.sequence.natural_isolate import NaturalIsolateGenotypes
 
     spec = NATURAL_ISOLATE_RESPONSE_DATASETS[name]
     root = abs_root or osp.join(data_root, spec["root"])
+    raw_dir = osp.join(root, "raw")
+    release = peter2018.read_release(
+        osp.join(raw_dir, peter2018.PHENO_NAME), peter2018.build_conditions()
+    )
     return verify_natural_isolate_response_streaming(
         stream_records(root),
         dataset_name=name,
         provenance=spec["provenance"],
         expected_count=spec["expected_count"],
-        raw_dir=osp.join(root, "raw"),
+        raw_dir=raw_dir,
         raw_mirror=osp.join(data_root, spec["raw_mirror"]),
         library_root=osp.join(data_root, "torchcell-library"),
-        tarball_sha256=load_genome_manifest(PETER2018_1011, data_root)
-        .record(spec["tarball"])
-        .sha256,
+        genotypes=NaturalIsolateGenotypes(
+            raw_dir, osp.join(root, "preprocess"), sorted(release.index), data_root
+        ),
         sgd_genes=_sgd_gene_set(data_root),
         min_s288c_containment=spec["min_s288c_containment"],
     )

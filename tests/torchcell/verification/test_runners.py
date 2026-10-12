@@ -1892,23 +1892,31 @@ def test_run_segregant_growth_wires_the_streaming_verifier(
 def test_run_natural_isolate_response_wires_the_streaming_verifier(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """The runner streams the store, pins the tarball's sha256 from the genomes-tier
-    manifest, hands over the raw dir, raw mirror, library root, SGD universe and the
-    spec's containment floor, and writes the report into the store's preprocess dir.
+    """The runner streams the store, builds the isolate genotypes over the release's
+    isolates from the store's raw dir and preprocess cache, hands over the raw dir, raw
+    mirror, library root, SGD universe and the spec's containment floor, and writes the
+    report into the store's preprocess dir.
     """
     abs_root = _root(tmp_path, "iso")
     _write_lmdb(abs_root, [{"i": 0}, {"i": 1}])
     sgd_calls = _stub_sgd(monkeypatch, {"YAL001C"})
-    manifest_calls: list[tuple[str, str | None]] = []
+    releases: list[str] = []
 
-    def fake_manifest(assembly_set: str, data_root: str | None = None) -> Any:
-        manifest_calls.append((assembly_set, data_root))
-        return SimpleNamespace(
-            record=lambda name: SimpleNamespace(sha256=f"pin:{name}")
-        )
+    def fake_release(path: str, conditions: Any) -> Any:
+        releases.append(path)
+        return SimpleNamespace(index=["BBB", "AAA"])
+
+    builders: list[tuple[Any, ...]] = []
+
+    def fake_builder(*args: Any) -> str:
+        builders.append(args)
+        return f"genotypes:{len(builders)}"
 
     monkeypatch.setattr(
-        "torchcell.sequence.genome.registry.load_genome_manifest", fake_manifest
+        "torchcell.datasets.scerevisiae.peter2018.read_release", fake_release
+    )
+    monkeypatch.setattr(
+        "torchcell.sequence.natural_isolate.NaturalIsolateGenotypes", fake_builder
     )
     captured: dict[str, Any] = {}
 
@@ -1934,14 +1942,24 @@ def test_run_natural_isolate_response_wires_the_streaming_verifier(
             "iso": _spec(
                 "iso",
                 raw_mirror="torchcell-raw/peterTest2018",
-                tarball="genes.tar.gz",
                 expected_count=7,
                 min_s288c_containment=0.5,
             )
         },
     )
     assert runners.run_natural_isolate_response(str(tmp_path)) is True
-    assert manifest_calls == [(PETER2018_1011, str(tmp_path))]
+    assert releases == [
+        str(abs_root / "raw" / "phenoMatrix_35ConditionsNormalizedByYPD.tab.gz")
+    ]
+    assert builders == [
+        (
+            str(abs_root / "raw"),
+            str(abs_root / "preprocess"),
+            ["AAA", "BBB"],
+            str(tmp_path),
+        )
+    ]
+    assert captured["genotypes"] == "genotypes:1"
     assert sgd_calls == [str(tmp_path)]
     assert captured["records"] == [{"i": 0}, {"i": 1}]
     assert (captured["dataset_name"], captured["expected_count"]) == ("iso", 7)
@@ -1949,7 +1967,6 @@ def test_run_natural_isolate_response_wires_the_streaming_verifier(
     assert captured["raw_dir"] == str(abs_root / "raw")
     assert captured["raw_mirror"] == str(tmp_path / "torchcell-raw" / "peterTest2018")
     assert captured["library_root"] == str(tmp_path / "torchcell-library")
-    assert captured["tarball_sha256"] == "pin:genes.tar.gz"
     assert captured["sgd_genes"] == {"YAL001C"}
     assert captured["min_s288c_containment"] == 0.5
     assert _names(_read_report(abs_root)) == ["count"]

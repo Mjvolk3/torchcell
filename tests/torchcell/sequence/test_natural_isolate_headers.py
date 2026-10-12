@@ -1,3 +1,6 @@
+# tests/torchcell/sequence/test_natural_isolate_headers.py
+# [[tests.torchcell.sequence.test_natural_isolate_headers]]
+# https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/sequence/test_natural_isolate_headers.py
 """Peter gene-FASTA header parsing and the no-silent-drop isolate accounting.
 
 Tripwire for issue 73. Peter 2018 writes two header-token forms and BOTH name the
@@ -9,15 +12,16 @@ of the 943 built isolates) in exactly that form. Stripping the prefix would leav
 these tests pin the verbatim behavior against a well-meant "fix".
 
 The second test pins the loud half: an isolate that never appears in a header must raise,
-never be assembled with an empty genotype.
+never be assembled with an empty genotype. Both helpers moved from ``caudal2024`` to
+``torchcell.sequence.natural_isolate`` with #988, which every natural-isolate loader shares.
 """
 
 import pytest
 
-from torchcell.datasets.scerevisiae.caudal2024 import (
-    _assert_all_isolates_seen,
-    _isolate_and_symbol,
+from torchcell.sequence.natural_isolate import (
+    assert_all_isolates_seen as _assert_all_isolates_seen,
 )
+from torchcell.sequence.natural_isolate import isolate_and_symbol as _isolate_and_symbol
 
 
 def test_plain_header_token_yields_bare_isolate_code() -> None:

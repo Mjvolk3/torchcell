@@ -67,6 +67,7 @@ from torchcell.data import RawSha256MismatchError
 from torchcell.data.experiment_dataset import verify_raw_files
 from torchcell.datamodels.schema import ArtifactRef, ReferenceGenome
 from torchcell.datasets.scerevisiae import caudal2024 as m
+from torchcell.sequence import natural_isolate as ni
 from torchcell.verification.sourced import audit_sourced_value
 
 _RELEASED_HEADER = (
@@ -302,7 +303,7 @@ def test_the_released_table_ledger_matches_issue_598() -> None:
     from torchcell.sequence.genome.registry import PETER2018_1011, resolve
 
     presence = pd.read_csv(
-        resolve(PETER2018_1011, m.PRESENCE_NAME), sep="\t", index_col=0, usecols=[0]
+        resolve(PETER2018_1011, ni.PRESENCE_NAME), sep="\t", index_col=0, usecols=[0]
     )
     built = m.restrict_to_built_isolates(
         m.read_caudal_table(_MIRROR_ZIP), set(presence.index.astype(str))
@@ -316,7 +317,7 @@ def test_the_released_table_ledger_matches_issue_598() -> None:
         m.BlankRowClass.bad_annotation: 16_031,
         m.BlankRowClass.unannotated: 0,
     }
-    served = {g: n for g, n in ledger.served_ids.items() if m._S288C_RE.match(g)}
+    served = {g: n for g, n in ledger.served_ids.items() if ni.S288C_RE.match(g)}
     assert (len(served), sum(served.values())) == (16, 98)
     assert (served["YBR020W"], served["YLR081W"]) == (31, 25)
     pangenome = {g: n for g, n in ledger.served_ids.items() if g not in served}
@@ -382,7 +383,7 @@ def test_sgd_chromosomes_keeps_a_final_chromosome_and_drops_a_middle_plasmid(
         ">ref [location=plasmid]\nTTTT\n"
         ">ref [chromosome=XVI]\nGG\nCC\n"
     )
-    assert m._sgd_chromosomes(str(path)) == {"I": "ACGT", "XVI": "GGCC"}
+    assert ni.sgd_chromosomes(str(path)) == {"I": "ACGT", "XVI": "GGCC"}
 
 
 def test_a_regular_member_that_cannot_be_extracted_is_refused(
@@ -402,10 +403,10 @@ def test_a_regular_member_that_cannot_be_extracted_is_refused(
         return original(self, member)
 
     monkeypatch.setattr(tarfile.TarFile, "extractfile", extractfile)
-    with pytest.raises(m.UnextractableMemberError) as excinfo:
+    with pytest.raises(ni.UnextractableMemberError) as excinfo:
         m.CaudalPanTranscriptome2024Dataset(root=str(root))
     assert str(excinfo.value) == (
-        f"{root / 'raw' / m.REFGENE_TAR_NAME}: member 'YAL001C.fasta' is a regular "
+        f"{root / 'raw' / ni.REFGENE_TAR_NAME}: member 'YAL001C.fasta' is a regular "
         "file but tarfile returned no file object for it; refusing to drop its variants"
     )
     assert not (root / "preprocess" / "sequence_variants.parquet").exists()
@@ -435,15 +436,23 @@ def test_a_stale_raw_matrix_is_refused_at_build_time(
     raw.mkdir(parents=True)
     stale = {**_PRESENCE, "AAA": ["1", "1", "1", "1", "0", "1"]}
     stale_bytes = _matrix_gz(stale, _COLUMNS)
-    (raw / m.PRESENCE_NAME).write_bytes(stale_bytes)
+    (raw / ni.PRESENCE_NAME).write_bytes(stale_bytes)
     with pytest.raises(RawSha256MismatchError) as err:
         m.CaudalPanTranscriptome2024Dataset(root=str(tmp_path / "caudal"))
     assert str(err.value) == (
-        f"sha256 mismatch for {raw / m.PRESENCE_NAME}: expected "
-        f"{hashlib.sha256(raw_bytes[m.PRESENCE_NAME]).hexdigest()}, "
+        f"sha256 mismatch for {raw / ni.PRESENCE_NAME}: expected "
+        f"{hashlib.sha256(raw_bytes[ni.PRESENCE_NAME]).hexdigest()}, "
         f"observed {hashlib.sha256(stale_bytes).hexdigest()}"
     )
-    assert [os.path.islink(raw / n) for n in m.RAW_FILES] == [True, True, False, True]
+    assert [os.path.islink(raw / n) for n in m.RAW_FILES] == [
+        True,
+        True,
+        False,
+        True,
+        True,
+        True,
+        True,
+    ]
     assert list((tmp_path / "caudal" / "processed").iterdir()) == []
 
 
@@ -553,27 +562,6 @@ def test_the_blank_name_ledger_refuses_rows_it_cannot_account_for(
         m.BlankNameLedger(**{**_ledger_fields(), **change})
 
 
-def test_sha256_reads_in_chunks_and_matches_hashlib(tmp_path: Path) -> None:
-    """Finding: ``caudal2024._sha256`` (lines 1189-1195) has no caller in the module
-    (raw-file checks go through ``verify_sha256``). Its contract: the hex sha256 of the
-    whole file whatever the chunk size; 2500 bytes read 1024 at a time (three chunks)
-    and 1 at a time both equal ``hashlib.sha256`` over the bytes, and an empty file
-    gives the empty-input digest e3b0c442.... Pinned until it is used or removed.
-    """
-    payload = bytes(range(250)) * 10
-    path = tmp_path / "blob.bin"
-    path.write_bytes(payload)
-    expected = hashlib.sha256(payload).hexdigest()
-    assert m._sha256(str(path), chunk_size=1024) == expected
-    assert m._sha256(str(path), chunk_size=1) == expected
-    assert m._sha256(str(path)) == expected
-    empty = tmp_path / "empty.bin"
-    empty.write_bytes(b"")
-    assert m._sha256(str(empty)) == (
-        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-    )
-
-
 # --------------------------------------------------------------------------- #
 # 2026.10.07: sequence_ref (ArtifactRef) replaces sequence_uri + sequence_sha256.
 # --------------------------------------------------------------------------- #
@@ -586,8 +574,8 @@ def test_refgene_tarball_ref_reads_sha256_and_bytes_from_the_tier_manifest(
     data_root = tmp_path / "data_root"
     monkeypatch.setenv("DATA_ROOT", str(data_root))
     raw_bytes = _write_mirror(data_root)
-    tar = raw_bytes[m.REFGENE_TAR_NAME]
-    ref = m.refgene_tarball_ref(str(data_root))
+    tar = raw_bytes[ni.REFGENE_TAR_NAME]
+    ref = ni.refgene_tarball_ref(str(data_root))
     assert ref == ArtifactRef(
         tier="genomes",
         key="peter2018_1011_assemblies",
@@ -595,22 +583,23 @@ def test_refgene_tarball_ref_reads_sha256_and_bytes_from_the_tier_manifest(
         sha256=hashlib.sha256(tar).hexdigest(),
         bytes=len(tar),
     )
-    assert m.refgene_tarball_ref() == ref  # DATA_ROOT from the environment
+    assert ni.refgene_tarball_ref() == ref  # DATA_ROOT from the environment
 
 
 def test_a_caudal_sequence_variant_serializes_its_ref_and_round_trips() -> None:
-    """``_sequence_perturbations`` narrows the tarball ref to ``<gene>.fasta#<token>``;
+    """``natural_isolate.sequence_perturbations`` narrows the tarball ref to
+    ``<gene>.fasta#<token>``;
     the dump carries the ref as a nested object, and its tc:// string parses back to the
     same ref given the sha256.
     """
     tarball = ArtifactRef(
         tier="genomes",
         key="peter2018_1011_assemblies",
-        path=m.REFGENE_TAR_NAME,
+        path=ni.REFGENE_TAR_NAME,
         sha256="b" * 64,
         bytes=160_823_369,
     )
-    (pert,) = m.CaudalPanTranscriptome2024Dataset._sequence_perturbations(
+    (pert,) = ni.sequence_perturbations(
         "AAA", [("YAL001C", "TFC3", "AAA_YAL001C_TFC3")], tarball
     )
     ref = pert.sequence_ref
@@ -648,7 +637,7 @@ def test_the_tier_manifest_lists_the_reference_gene_tarball() -> None:
     """The lookup finds the tarball in the real tier at the digest the served Caudal
     records carried as ``sequence_sha256`` before 2026.10.07.
     """
-    ref = m.refgene_tarball_ref()
+    ref = ni.refgene_tarball_ref()
     assert (ref.path, ref.sha256, ref.bytes) == (
         "allReferenceGenesWithSNPsAndIndelsInferred.tar.gz",
         "b5400b89499fe84b1feada51abd7742c29838ae1f28c0cbd208b6622ca533f25",

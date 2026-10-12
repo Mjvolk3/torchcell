@@ -45,6 +45,9 @@ load_dotenv()
 
 DATA_ROOT = os.environ["DATA_ROOT"]
 EXPERIMENT_ROOT = os.environ["EXPERIMENT_ROOT"]
+#: The population-frequency 'core' threshold the Caudal loader gated on before the fix
+#: this audit documents (and logged after it until #988 moved the construction).
+CORE_PRESENCE_THRESHOLD = 0.99
 RESULTS_DIR = osp.join(EXPERIMENT_ROOT, "018-natural-isolate-genomics", "results")
 
 PRESENCE = osp.join(
@@ -56,11 +59,8 @@ PRESENCE = osp.join(
 
 def main() -> None:
     os.makedirs(RESULTS_DIR, exist_ok=True)
-    from torchcell.datasets.scerevisiae.caudal2024 import (
-        CORE_PRESENCE_THRESHOLD,
-        _demangle_orf,
-        _orf_to_s288c,
-    )
+    from torchcell.sequence.natural_isolate import demangle_orf as _demangle_orf
+    from torchcell.sequence.natural_isolate import orf_to_s288c as _orf_to_s288c
 
     with gzip.open(PRESENCE, "rt") as fh:
         pa = pd.read_csv(fh, sep="\t", index_col=0, low_memory=False)

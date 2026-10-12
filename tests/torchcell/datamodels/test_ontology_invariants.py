@@ -54,15 +54,19 @@ from torchcell.datamodels.schema import (
     GeneAdditionPerturbation,
     GenePerturbation,
     GenePerturbationType,
+    GenomicSpan,
     HeterologousPathwayPerturbation,
     HeterozygousDeletionPerturbation,
     InduciblePromoterInsertionPerturbation,
     KanMxDeletionPerturbation,
+    LossOfFunctionAlleleStatus,
     MarkerDeletionPerturbation,
     MeanDeletionPerturbation,
     NatMxDeletionPerturbation,
     NaturalGeneAbsencePerturbation,
     NaturalGenePresencePerturbation,
+    NaturalLossOfFunctionCause,
+    NaturalLossOfFunctionPerturbation,
     PresenceAbsencePerturbation,
     PromoterDrivenGeneIntegrationPerturbation,
     PromoterReplacementPerturbation,
@@ -130,7 +134,6 @@ ABSTRACT: frozenset[type[GenePerturbation]] = frozenset(
         PresenceAbsencePerturbation,
         SequencePerturbation,
         ExpressionModulationPerturbation,
-        DeletionPerturbation,
         DampPerturbation,
         TsAllelePerturbation,
         AllelePerturbation,
@@ -294,6 +297,29 @@ FACTORY: dict[type[GenePerturbation], dict[str, Any]] = {
         **_URI,
     ),
     SequenceVariantPerturbation: {**_SYS, "strain_id": "AAB", **_URI},
+    # #988: the parent deletion is stored where the source names no cassette.
+    DeletionPerturbation: {**_SYS, "description": "a deletion, marker not stated"},
+    # #987: one released loss-of-function call on the isolate's variant allele.
+    NaturalLossOfFunctionPerturbation: dict(
+        **_SYS,
+        strain_id="AAB",
+        cause=NaturalLossOfFunctionCause.nonsense_sift_or_frameshift,
+        allele_status=LossOfFunctionAlleleStatus.sequence_variant,
+        sequence_source="peterGenomeEvolution10112018",
+        call_ref=ArtifactRef(
+            tier="genomes",
+            key="peter2018_1011_assemblies",
+            path="1011LossOfFunction.xls.gz",
+            sha256="b" * 64,
+        ),
+        release_code=1768,
+        release_gene_name="YAL001C",
+        release_span=GenomicSpan(
+            chromosome="chrI", start=147594, end=151166, assembly="R64-1-1"
+        ),
+        gene_present_in_isolate=True,
+        **_URI,
+    ),
     CopyNumberVariantPerturbation: dict(
         systematic_gene_name="pangenome1011:orf1",
         perturbed_gene_name="orf1",
@@ -667,6 +693,7 @@ def test_sequence_ref_round_trips_through_its_string_form(
         NaturalGeneAbsencePerturbation,
         NaturalGenePresencePerturbation,
         SequenceVariantPerturbation,
+        NaturalLossOfFunctionPerturbation,
     ],
 )
 def test_sequence_pointer_is_one_ref_field(cls: type[GenePerturbation]) -> None:

@@ -17,6 +17,14 @@ equal). Presence columns X1.YAL001C, X2.EC1118_1F14_0012g, X3.YBR001W, X4.contig
 AAA = 1 1 1 0 (accessory X2 present, copy number 2.5), SACE_YAU = 1 0 0 1 (YBR001W
 absent, accessory X4 present, copy number NA -> 1.0), ZZZ = 1 0 1 0.
 
+Genotype (``torchcell.sequence.natural_isolate``): Table S1 marks AAA HO-deleted at
+ploidy 1 and lists SACE_YAU and ZZZ with the defaults; the loss-of-function matrix calls
+AAA's YBR001W (code 3, its variant allele) and the frameshift matrix carries no row. So AAA
+carries a ``DeletionPerturbation`` of HO (absent from these matrices, so nothing is
+replaced) and one ``NaturalLossOfFunctionPerturbation`` beside its variant and presence.
+The tier workbook holds both Table S1 and Table S2, as the published one does, and the
+library mirror holds the same bytes.
+
 Release: AAA and SACE_YAU on the 35 conditions; AAA's value on condition k is
 ``0.<k+1>1`` written to three decimals plus ``0.518089736`` on YPACETATE (the real
 file's first cell, so the round-trip parser is exercised), and SACE_YAU's YPDHU is an
@@ -36,6 +44,14 @@ from typing import Any
 import pandas as pd
 import pytest
 
+from tests.torchcell.sequence._peter_tier import (
+    LofRow,
+    TableS1Row,
+    frameshift_matrix,
+    gff,
+    lof_matrix,
+    tables_workbook,
+)
 from torchcell.datamodels.schema import (
     AssayType,
     ConcentrationUnit,
@@ -44,18 +60,19 @@ from torchcell.datamodels.schema import (
     SmallMoleculePerturbation,
 )
 from torchcell.datasets.scerevisiae import peter2018 as p
-from torchcell.datasets.scerevisiae.caudal2024 import (
-    COPYNUMBER_NAME,
-    PRESENCE_NAME,
-    REFGENE_TAR_NAME,
-    SGD_FSA_NAME,
-)
 from torchcell.literature.manifest import ArtifactRecord, Manifest
+from torchcell.sequence import natural_isolate as ni
 from torchcell.sequence.genome.registry import (
     PETER2018_1011,
     SGD_S288C_R64,
     GenomeManifest,
     load_genome_manifest,
+)
+from torchcell.sequence.natural_isolate import (
+    COPYNUMBER_NAME,
+    PRESENCE_NAME,
+    REFGENE_TAR_NAME,
+    SGD_FSA_NAME,
 )
 from torchcell.verification.natural_isolate_response import (
     expected_condition_signatures,
@@ -97,6 +114,31 @@ _COPYNUMBER = {
     "ZZZ": ["1", "0", "1", "0"],
 }
 _CODES = list(p.build_conditions())
+_PANEL = ["AAA", "SACE_YAU", "ZZZ"]
+_LOF = [
+    LofRow(
+        code=3, name="YBR001W", gene="NTH2", ch=2, start=2, stop=5,
+        calls=frozenset({"AAA"}),
+    )
+]  # fmt: skip
+_TABLE_S1 = [
+    TableS1Row(isolate="AAA", ho_deletion="yes", ploidy=1),
+    TableS1Row(isolate="SACE_YAU"),
+    TableS1Row(isolate="ZZZ"),
+]
+
+
+def _table_s2_cells() -> dict[tuple[int, int], str]:
+    """Supplementary Table 2's control row, 35 condition rows and temperature note."""
+    cells = {(p.YPD_ROW, 1): p.CONTROL_CONDITION, (p.YPD_ROW, 2): p.YPD_CELL}
+    for spec in p.build_conditions().values():
+        cells[(spec.table_s2_row, 1)] = spec.table_s2_condition
+        cells[(spec.table_s2_row, 2)] = spec.table_s2_media
+    cells[(42, 1)] = p.TABLE_S2_TEMPERATURE_QUOTE
+    return cells
+
+
+_WORKBOOK = tables_workbook(_TABLE_S1, _table_s2_cells())
 
 
 def _release_text() -> str:
@@ -176,7 +218,9 @@ def data_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     monkeypatch.setattr(p, "PAPER_MEASUREMENTS", 72)
     monkeypatch.setattr(p, "PHENO_PUBLISHED_MD5", _RELEASE_MD5)
     monkeypatch.setattr(p, "PHENO_SHA256", hashlib.sha256(_RELEASE).hexdigest())
-    _write_tier(root, SGD_S288C_R64, {SGD_FSA_NAME: _SGD_FSA.encode()})
+    _write_tier(
+        root, SGD_S288C_R64, {SGD_FSA_NAME: _SGD_FSA.encode(), ni.SGD_GFF_NAME: gff([])}
+    )
     _write_tier(
         root,
         PETER2018_1011,
@@ -184,6 +228,9 @@ def data_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
             REFGENE_TAR_NAME: _tarball(),
             PRESENCE_NAME: _matrix(_PRESENCE),
             COPYNUMBER_NAME: _matrix(_COPYNUMBER),
+            ni.LOF_NAME: lof_matrix(_PANEL, _LOF),
+            ni.FRAMESHIFT_NAME: frameshift_matrix(_PANEL, []),
+            ni.SUPPLEMENTARY_TABLES_NAME: _WORKBOOK,
         },
     )
     retrieved = tmp_path / "retrieved"
@@ -267,9 +314,19 @@ def test_read_published_md5_parses_and_refuses(tmp_path: Path) -> None:
 def test_register_loss_of_function_matrices_appends_to_the_peter_tier(
     data_root: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    # The fixture's tier already lists the two matrices (the genotype reads them);
+    # take them out so the registration is the first to record them.
+    tier = data_root / "torchcell-genomes" / PETER2018_1011
+    listed = json.loads((tier / "manifest.json").read_text())
+    listed["files"] = [
+        f for f in listed["files"] if f["path"] not in {ni.LOF_NAME, ni.FRAMESHIFT_NAME}
+    ]
+    (tier / "manifest.json").write_text(json.dumps(listed))
+    for name in (ni.LOF_NAME, ni.FRAMESHIFT_NAME):
+        (tier / name).unlink()
     src = tmp_path / "lof"
     src.mkdir()
-    payload = {p.LOF_NAME: b"lof\n", p.FRAMESHIFT_NAME: b"frameshift\n"}
+    payload = {ni.LOF_NAME: b"lof\n", ni.FRAMESHIFT_NAME: b"frameshift\n"}
     md5s = {
         n: hashlib.md5(b, usedforsecurity=False).hexdigest() for n, b in payload.items()
     }
@@ -284,7 +341,7 @@ def test_register_loss_of_function_matrices_appends_to_the_peter_tier(
             data_root=str(data_root),
         )
     monkeypatch.setattr(p, "LOF_PUBLISHED_MD5", md5s)
-    (src / p.LOF_NAME).write_bytes(b"lof changed\n")
+    (src / ni.LOF_NAME).write_bytes(b"lof changed\n")
     with pytest.raises(ValueError, match="does not have the published md5"):
         p.register_loss_of_function_matrices(
             source_dir=src,
@@ -292,7 +349,7 @@ def test_register_loss_of_function_matrices_appends_to_the_peter_tier(
             retrieved_at="x",
             data_root=str(data_root),
         )
-    (src / p.LOF_NAME).write_bytes(payload[p.LOF_NAME])
+    (src / ni.LOF_NAME).write_bytes(payload[ni.LOF_NAME])
     path = p.register_loss_of_function_matrices(
         source_dir=src,
         md5_path=src / "md5.txt",
@@ -301,12 +358,12 @@ def test_register_loss_of_function_matrices_appends_to_the_peter_tier(
     )
     manifest = load_genome_manifest(PETER2018_1011, str(data_root))
     assert path.endswith(f"{PETER2018_1011}/manifest.json")
-    assert [r.path for r in manifest.files][-2:] == [p.LOF_NAME, p.FRAMESHIFT_NAME]
-    added = manifest.record(p.LOF_NAME)
+    assert [r.path for r in manifest.files][-2:] == [ni.LOF_NAME, ni.FRAMESHIFT_NAME]
+    added = manifest.record(ni.LOF_NAME)
     assert (added.role, added.bytes, added.source) == (
         "matrix",
         4,
-        p.DATA_HOST + p.LOF_NAME,
+        p.DATA_HOST + ni.LOF_NAME,
     )
     assert added.sha256 == hashlib.sha256(b"lof\n").hexdigest()
 
@@ -453,7 +510,12 @@ def test_build_writes_seventy_isolate_major_records(
     assert len(dataset) == 70
     records = _records(dataset)
     strains = [
-        {pert["strain_id"] for pert in r["experiment"]["genotype"]["perturbations"]}
+        {
+            pert.get("strain_id")
+            for pert in r["experiment"]["genotype"]["perturbations"]
+            if "strain_id" in pert
+        }
+        | {r["experiment"]["genotype"]["natural_isolate"]["isolate"]}
         for r in records
     ]
     assert strains == [{"AAA"}] * 35 + [{"SACE_YAU"}] * 35
@@ -465,7 +527,15 @@ def test_build_writes_seventy_isolate_major_records(
     assert aaa == {
         ("sequence_variant", "YBR001W", None),
         ("natural_gene_presence", "2-EC1118_1F14_0012g", 2.5),
+        ("natural_loss_of_function", "YBR001W", None),
+        ("deletion", "YDL227C", None),
     }
+    descriptor = records[0]["experiment"]["genotype"]["natural_isolate"]
+    assert (
+        descriptor["genetic_manipulation"],
+        descriptor["ploidy"],
+        descriptor["provenance_gaps"],
+    ) == ("ho_deletion", 1, [])
     yau = {
         (q["perturbation_type"], q["systematic_gene_name"], q.get("copy_number"))
         for q in records[35]["experiment"]["genotype"]["perturbations"]
@@ -508,7 +578,7 @@ def test_build_writes_the_ledger_and_reloads_the_gene_set(
         "refused": {}, "n_zero_values": 1, "control_values_not_released": 2,
         "n_isolates_in_caudal2024_store": None,
     }  # fmt: skip
-    expected = {"YAL001C", "YBR001W", "2-EC1118_1F14_0012g", "4-contig_7"}
+    expected = {"YAL001C", "YBR001W", "YDL227C", "2-EC1118_1F14_0012g", "4-contig_7"}
     assert set(dataset.gene_set) == expected
     reloaded = p.IsolateGrowthPeter2018Dataset(root=dataset.root)
     assert set(reloaded.compute_gene_set()) == expected
@@ -549,8 +619,6 @@ def test_ledger_refuses_an_unaccounted_count() -> None:
 # The verifier on the synthetic store, with a synthetic library mirror.
 # --------------------------------------------------------------------------- #
 def _write_library(library_root: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    from openpyxl import Workbook
-
     key = library_root / p.CITATION_KEY
     (key / "si").mkdir(parents=True)
     quotes = [sv.quote for sv in p.PHENOTYPE_SOURCED_VALUES.values()] + [
@@ -560,17 +628,7 @@ def _write_library(library_root: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     ]
     (key / "paper.md").write_text("\n".join(quotes) + "\n", encoding="utf-8")
     (key / "si" / "si2.md").write_text(p.REPLICATION_QUOTE + "\n", encoding="utf-8")
-    workbook = Workbook()
-    sheet = workbook.active
-    assert sheet is not None
-    sheet.title = p.TABLE_S2_SHEET
-    sheet.cell(row=p.YPD_ROW, column=1, value=p.CONTROL_CONDITION)
-    sheet.cell(row=p.YPD_ROW, column=2, value=p.YPD_CELL)
-    for spec in p.build_conditions().values():
-        sheet.cell(row=spec.table_s2_row, column=1, value=spec.table_s2_condition)
-        sheet.cell(row=spec.table_s2_row, column=2, value=spec.table_s2_media)
-    sheet.cell(row=42, column=1, value=p.TABLE_S2_TEMPERATURE_QUOTE)
-    workbook.save(key / p.SI_TABLES_XLS)
+    (key / p.SI_TABLES_XLS).write_bytes(_WORKBOOK)
 
     def sha(rel: str) -> str:
         return hashlib.sha256((key / rel).read_bytes()).hexdigest()
@@ -578,6 +636,7 @@ def _write_library(library_root: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(p, "PAPER_MD_SHA256", sha(p.PAPER_MD))
     monkeypatch.setattr(p, "REPORTING_SUMMARY_MD_SHA256", sha(p.REPORTING_SUMMARY_MD))
     monkeypatch.setattr(p, "SI_TABLES_XLS_SHA256", sha(p.SI_TABLES_XLS))
+    monkeypatch.setattr(ni, "TABLES_SHA256", sha(p.SI_TABLES_XLS))
     monkeypatch.setattr(
         p,
         "PHENOTYPE_SOURCED_VALUES",
@@ -603,11 +662,19 @@ def _verify(
         raw_dir=Path(dataset.raw_dir),
         raw_mirror=data_root / p.RAW_DIR_REL,
         library_root=library_root,
-        tarball_sha256=hashlib.sha256(_tarball()).hexdigest(),
-        sgd_genes={"YAL001C", "YBR001W"},
+        genotypes=_genotypes(dataset, data_root),
+        sgd_genes={"YAL001C", "YBR001W", "YDL227C"},
         min_s288c_containment=1.0,
     )
     return {r.name: r for r in report.results}
+
+
+def _genotypes(
+    dataset: p.IsolateGrowthPeter2018Dataset, data_root: Path
+) -> ni.NaturalIsolateGenotypes:
+    return ni.NaturalIsolateGenotypes(
+        dataset.raw_dir, dataset.preprocess_dir, ["AAA", "SACE_YAU"], str(data_root)
+    )
 
 
 def test_verifier_passes_every_level_on_the_synthetic_store(
@@ -624,18 +691,33 @@ def test_verifier_passes_every_level_on_the_synthetic_store(
     assert results["structural"].message == (
         "70 records validated (2 genotypes validated once each and spliced into their records)"
     )
-    assert results["isolate_genotype_identity"].message == (
-        "2 isolates, one genotype and one strain_id each, 35 records each"
+    assert results["isolate_condition_coverage"].message == (
+        "2 isolates, one genotype object each, 35 records each"
     )
+    assert results["isolate_genotype_identity"].message == (
+        "2 isolates, one genotype each, every strain-carrying perturbation names its "
+        "isolate"
+    )
+    assert results["isolate_genotype_round_trip"].message == (
+        "2 stored genotypes equal their re-derivation from the pinned Peter 2018 "
+        "releases"
+    )
+    assert results["isolate_descriptor_matches_table_s1"].details["n_ho_deleted"] == 1
+    assert results["loss_of_function_calls_match_release"].details["totals"] == {
+        "nonsense_sift_or_frameshift": 1,
+        "homozygous_frameshift": 0,
+    }
     assert results["release_fidelity"].details["n_cells"] == 70
-    assert results["genotype_round_trip"].details["perturbation_types"] == {
+    assert results["s288c_gene_containment"].details["perturbation_types"] == {
         "sequence_variant": 2,
         "natural_gene_presence": 2,
         "natural_gene_absence": 1,
+        "natural_loss_of_function": 1,
+        "deletion": 1,
     }
     assert results["conditions_documented"].details["n_conditions"] == 35
     assert results["s288c_gene_containment"].message == (
-        "1.0000 of 2 sequence-variant and absence names are S288C genes (>= 1.0); 0 are not"
+        "1.0000 of 3 S288C-keyed perturbation names are S288C genes (>= 1.0); 0 are not"
     )
     assert results["reference_zero"].details["rule"] == "ratio_reference"
 
@@ -648,6 +730,8 @@ def test_verifier_catches_a_changed_release_cell_and_a_missing_gene(
 ) -> None:
     library = tmp_path / "library"
     _write_library(library, monkeypatch)
+    genotypes = _genotypes(dataset, data_root)
+    monkeypatch.setattr(ni, "HO_DELETION_DESCRIPTION", "another statement")
     raw = Path(dataset.raw_dir) / p.PHENO_NAME
     raw.unlink()
     raw.write_bytes(_gz(_release_text().replace("0.518089736", "0.518089737")))
@@ -659,7 +743,7 @@ def test_verifier_catches_a_changed_release_cell_and_a_missing_gene(
         raw_dir=Path(dataset.raw_dir),
         raw_mirror=data_root / p.RAW_DIR_REL,
         library_root=library,
-        tarball_sha256="0" * 64,
+        genotypes=genotypes,
         sgd_genes={"YAL001C"},
         min_s288c_containment=1.0,
     )
@@ -667,10 +751,12 @@ def test_verifier_catches_a_changed_release_cell_and_a_missing_gene(
     assert failed == {
         "count": "observed 70, expected 71",
         "release_fidelity": "1 stored ratios differ from the release; 70 of 70 cells stored",
-        "genotype_round_trip": "0 matrix round-trip failures; 2 variant pointers wrong",
+        "isolate_genotype_round_trip": (
+            "1 of 2 genotypes differ from the re-derivation"
+        ),
         "s288c_gene_containment": (
-            "0.5000 of 2 sequence-variant and absence names are S288C genes (>= 1.0); "
-            "1 are not"
+            "0.3333 of 3 S288C-keyed perturbation names are S288C genes (>= 1.0); "
+            "2 are not"
         ),
         "published_md5": failed["published_md5"],
     }

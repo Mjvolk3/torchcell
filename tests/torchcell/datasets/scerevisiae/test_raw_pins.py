@@ -73,9 +73,7 @@ def _pins_from_constants(
         "BetaxanthinCachera2023Dataset": lambda: {m.DATA_FILENAME: m.DATA_SHA256},
         "CaudalPanTranscriptome2024Dataset": lambda: {
             m.CAUDAL_ZIP_BASENAME: m.CAUDAL_ZIP_SHA256,
-            m.REFGENE_TAR_NAME: genome(m.REFGENE_TAR_NAME),
-            m.PRESENCE_NAME: genome(m.PRESENCE_NAME),
-            m.COPYNUMBER_NAME: genome(m.COPYNUMBER_NAME),
+            **{name: genome(name) for name in m.GENOTYPE_FILES},
         },
         "InductionTimecourseHackett2020Dataset": lambda: {
             name: m.RAW_SHA256[name] for name in m.RAW_FILES
@@ -83,9 +81,7 @@ def _pins_from_constants(
         "PooledPromoterExpressionVaishnav2022Dataset": lambda: dict(m.RAW_FILES),
         "IsolateGrowthPeter2018Dataset": lambda: {
             m.PHENO_NAME: m.PHENO_SHA256,
-            m.REFGENE_TAR_NAME: genome(m.REFGENE_TAR_NAME),
-            m.PRESENCE_NAME: genome(m.PRESENCE_NAME),
-            m.COPYNUMBER_NAME: genome(m.COPYNUMBER_NAME),
+            **{name: genome(name) for name in m.GENOTYPE_FILES},
         },
         "GenomeArchitecturePuddu2019Dataset": lambda: {
             m.SI_TABLES_FILENAME: m.SI_TABLES_XLSX_SHA256
@@ -98,9 +94,7 @@ def _pins_from_constants(
         **{
             name: lambda: {
                 m.TABLES_FILENAME: m.TABLES_SHA256,
-                m.REFGENE_TAR_NAME: genome(m.REFGENE_TAR_NAME),
-                m.PRESENCE_NAME: genome(m.PRESENCE_NAME),
-                m.COPYNUMBER_NAME: genome(m.COPYNUMBER_NAME),
+                **{name: genome(name) for name in m.GENOTYPE_FILES},
             }
             for name in DECHIARA_CLASSES
         },
@@ -133,15 +127,11 @@ def _pins_from_constants(
         },
         "ProteomeMuenzner2024Dataset": lambda: {
             m.SI_TABLES_FILENAME: m.SI_TABLES_SHA256,
-            m.REFGENE_TAR_NAME: genome(m.REFGENE_TAR_NAME),
-            m.PRESENCE_NAME: genome(m.PRESENCE_NAME),
-            m.COPYNUMBER_NAME: genome(m.COPYNUMBER_NAME),
+            **{name: genome(name) for name in m.GENOTYPE_FILES},
         },
         "ProteinTurnoverMuenzner2024Dataset": lambda: {
             m.SI_TABLES_FILENAME: m.SI_TABLES_SHA256,
-            m.REFGENE_TAR_NAME: genome(m.REFGENE_TAR_NAME),
-            m.PRESENCE_NAME: genome(m.PRESENCE_NAME),
-            m.COPYNUMBER_NAME: genome(m.COPYNUMBER_NAME),
+            **{name: genome(name) for name in m.GENOTYPE_FILES},
         },
         "CrispriMormino2022Dataset": lambda: {
             m.PDF_FILENAME: m.PDF_SHA256,

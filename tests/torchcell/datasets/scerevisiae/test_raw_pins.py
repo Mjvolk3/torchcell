@@ -189,6 +189,9 @@ def _pins_from_constants(
         "EnvChemgenParsons2006Dataset": lambda: {
             table.filename: table.sha256 for table in m.RAW_TABLES
         },
+        "EnvChemgenYoshikawa2009Dataset": lambda: {
+            m.TABLE_S1.filename: m.TABLE_S1.sha256
+        },
         "YeastPhenomeDataset": lambda: {
             f"{s['pmid']}_{s['stem']}_valuez.txt": s["valuez_sha256"] for s in m.SCREENS
         },

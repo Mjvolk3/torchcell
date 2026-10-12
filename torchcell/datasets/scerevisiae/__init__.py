@@ -90,6 +90,9 @@ from .wildenhain2015 import (
 from .xue2025 import FattyAcidXue2025Dataset as FattyAcidXue2025Dataset
 from .yeastphenome import YeastPhenomeDataset as YeastPhenomeDataset
 from .yoshida2012 import OrganicAcidYoshida2012Dataset as OrganicAcidYoshida2012Dataset
+from .yoshikawa2009 import (
+    EnvChemgenYoshikawa2009Dataset as EnvChemgenYoshikawa2009Dataset,
+)
 from .zelezniak2018 import (
     MetaboliteZelezniak2018Dataset as MetaboliteZelezniak2018Dataset,
 )
@@ -191,6 +194,8 @@ dechiara_datasets = [
 
 hale_datasets = ["CrispriSegregantHale2024Dataset"]
 
+yoshikawa_datasets = ["EnvChemgenYoshikawa2009Dataset"]
+
 __all__ = (
     costanzo_datasets
     + kuzmin_datasets
@@ -234,4 +239,5 @@ __all__ = (
     + baryshnikova_datasets
     + dechiara_datasets
     + hale_datasets
+    + yoshikawa_datasets
 )

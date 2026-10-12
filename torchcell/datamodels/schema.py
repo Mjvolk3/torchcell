@@ -4194,14 +4194,12 @@ class Media(ProvenanceGapMixin):
     """
 
     # --- begin #901/#902/#903: a typed gap on the medium ------------------------ #
-    name: str | None = Field(
-        description="the medium's label as the source states it; None ONLY with a "
-        "ProvenanceGap(field='name') when the source names no medium"
-    )
-    state: str | None = Field(
-        description="solid, liquid or gas; None ONLY with a ProvenanceGap"
-        "(field='state') when the source states no physical state"
-    )
+    # The medium's label as the source states it; None ONLY with a
+    # ProvenanceGap(field='name') when the source names no medium. Required, no default.
+    name: str | None
+    # solid, liquid or gas; None ONLY with a ProvenanceGap(field='state') when the
+    # source states no physical state. Required, no default.
+    state: str | None
     is_synthetic: bool | None = Field(
         description="True = chemically defined by construction (SD/SC/YNB/SGA); "
         "False = natural/complex (YPD, corn steep liquor). Orthogonal to how well "

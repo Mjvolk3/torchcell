@@ -1,0 +1,1452 @@
+{
+  "record_version": 1,
+  "slug": "sgd-synlethdb-typed-media-gap",
+  "date": "2026-10-12",
+  "pr": 985,
+  "author_kind": "agent",
+  "base_commit": "8bee8bb0402fd5e86856f87b9aad967911476b3a",
+  "python_version": "3.13.0",
+  "symbols": [
+    {
+      "symbol": "Media",
+      "status": "modified",
+      "kinds": [
+        "typed_gap"
+      ],
+      "fingerprint_before": "db903b1ee676d8c58edd7482288630e6cb2787ace6fe02f936047cec911e8b91",
+      "fingerprint_after": "928f43b94f8cc70ee5fff42585eae83b1839897283139f0983515450c8cb40b9",
+      "impact": "breaking",
+      "reasons": [
+        "base classes changed: ['ModelStrict'] -> ['ProvenanceGapMixin']",
+        "field 'is_synthetic' type changed: bool -> bool | None",
+        "field 'name' type changed: str -> str | None",
+        "field 'state' type changed: str -> str | None",
+        "validator/serializer changed: ['_stated_or_gapped', 'validate_state']"
+      ]
+    }
+  ],
+  "correctness_argument": "Three served datasets have no growth medium to state. SGD's phenotype annotations (pinned dump, SGD_GENES_DIGEST 1cb4ed59...) carry a phenotype and an allele and, on 1,299 of 1,329 annotations, no condition property at all; of the 30 that carry one, 27 read 'nitrogen starvation' and 1 '2% glucose' (nutrient edits to a base medium they do not name), 1 a temperature, and exactly 1 names a medium ('YPD with 2% glucose') without its physical state. SynLethDB 2.0's release carries no condition field: its paper lists what an SL entry stores ('The species, references to PubMed, supporting evidence, cell lines and other relevant information about an SL entry are stored as properties of the edge', paper.md line 49) and r.cell_line is empty on all 14,000 SL and 6,948 SR rows. Before this change the schema could only express such a record by guessing (the old SGD loader stored YEPD solid at 30 C on every record) or by a free-text stand-in Media (#622's 'growth medium not carried by SynLethDB', which joins no shared medium and failed L3 media_membership on 20,938 records, #902). Media now carries ProvenanceGapMixin: name, state and is_synthetic each stay required and are each stated or None beside a ProvenanceGap naming that field, its reason (not_carried_by_curation) and the pinned artifact it was looked for in, with a note quoting the source's silence. This is strictly more correct than either alternative: a record states exactly what its source states and types exactly what it does not, a partly stated medium gaps only what is missing (SGD's 'YPD with 2% glucose' keeps its name on the YPD base and gaps only state), and Environment.media stays a required Media. It accepts no record the old contract would have refused silently: a None label without a gap naming that field is refused (_stated_or_gapped), and a gap beside a value is refused (the mixin). It changes no stated medium's meaning: every existing Media states all three labels, so it validates unchanged and media_identity, which projects gaps only when a medium carries one, gives every stated medium the id it had (the Ohya MEDIA_ID and ENVIRONMENT_ID pins hold). Measured on the rebuilt dev stores (slurm 4184, verified by the committed kg4_pre_build_verification_sweep.py under slurm 4194): gene_essentiality_sgd 1,287 records, syn_leth_db_yeast 13,996, syn_rescue_db_yeast 6,942, and L3 media_membership passes on all three (1,286 + 13,996 + 6,942 records on a typed medium gap, 1 SGD record derived from YPD). The change is breaking for every served closure, because every Media dump now carries an empty provenance_gaps and every experiment id moves; that is accepted by the owner and lands with the KG 4.0 full rebuild.",
+  "measurement_type_decision": false,
+  "source_quotes": [],
+  "alternatives_rejected": [
+    {
+      "alternative": "Make Environment.media optional (Media | None, None only beside a ProvenanceGap(field='media')), this PR's first draft",
+      "why_rejected": "It loosens a required field to fit a thin source (policy Rule 5). The owner reversed it on 2026-10-11: \"i don't think env / media should be optional... if there are some cell growth under some condition i think we need it ... if we are blocked by the compendia... then we shouldn't use that compendia.\""
+    },
+    {
+      "alternative": "Remove the three dataset classes and keep SGD and SynLethDB as provenance records with no loader, this PR's second draft",
+      "why_rejected": "It throws away 22,277 served records to protect one field (policy Rule 4). The owner reversed it on 2026-10-12: \"we are fine with irreversible updates to schema, as long as you are convinced it is correct ... why would you get rid of old classes?\""
+    },
+    {
+      "alternative": "Keep a stand-in Media with a placeholder name and state (the #622 'growth medium not carried by SynLethDB' object) or the old guessed YEPD solid at 30 C",
+      "why_rejected": "A placeholder reads as a medium somebody stated and joins no shared medium (L3 media_membership failed on 13,996 SL and 6,942 SR records, #902 and #903); a guessed YEPD states a medium no source states (#901). Neither is a typed absence."
+    }
+  ],
+  "served_release": "2026.10.06-4b293d34",
+  "affected_loaders": [
+    {
+      "loader": "torchcell/datasets/ecoli/baba2006.py",
+      "dataset_classes": [
+        "GeneEssentialityBaba2006Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/babu2014.py",
+      "dataset_classes": [
+        "GeneInteractionBabu2014Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/balakrishnan2022.py",
+      "dataset_classes": [
+        "MrnaFractionBalakrishnan2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/brunk2016.py",
+      "dataset_classes": [
+        "_MetaboliteBrunk2016Dataset",
+        "MetabolomeBrunk2016Dataset",
+        "ExometaboliteBrunk2016Dataset",
+        "ProteomeBrunk2016Dataset",
+        "BiofuelTiterBrunk2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/butland2008.py",
+      "dataset_classes": [
+        "GeneInteractionButland2008Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/caglar2017.py",
+      "dataset_classes": [
+        "RnaseqCaglar2017Dataset",
+        "ProteomeCaglar2017Dataset",
+        "ProteinFoldChangeCaglar2017Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/caglar2017_doubling_time.py",
+      "dataset_classes": [
+        "DoublingTimeCaglar2017Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/campos2018.py",
+      "dataset_classes": [
+        "GrowthRateCampos2018Dataset",
+        "MorphologyCampos2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/choe2019_growth_rate.py",
+      "dataset_classes": [
+        "GrowthRateChoe2019Dataset",
+        "TranscriptionFactorKnockoutChoe2019Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/choe2025.py",
+      "dataset_classes": [
+        "CrispriChemgenChoe2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/cui2018.py",
+      "dataset_classes": [
+        "CrispriKnockdownCui2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/fang2025.py",
+      "dataset_classes": [
+        "CrispriGuideFfaEnrichmentFang2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/foo2014.py",
+      "dataset_classes": [
+        "IsopentenolTiterFoo2014Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/fuhrer2017.py",
+      "dataset_classes": [
+        "MetabolomeFuhrer2017Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/gerdes2003.py",
+      "dataset_classes": [
+        "GeneEssentialityGerdes2003Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/girgis2009.py",
+      "dataset_classes": [
+        "EnvChemgenGirgis2009Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/goodall2018.py",
+      "dataset_classes": [
+        "GeneEssentialityGoodall2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/gupta2024.py",
+      "dataset_classes": [
+        "ProteinTurnoverGupta2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/hawkins2020.py",
+      "dataset_classes": [
+        "MismatchCrispriFitnessHawkins2020Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/ishii2007.py",
+      "dataset_classes": [
+        "_Ishii2007Dataset",
+        "MetabolomeIshii2007Dataset",
+        "ProteomeIshii2007Dataset",
+        "FluxIshii2007Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/lamoureux2023.py",
+      "dataset_classes": [
+        "RnaseqLamoureux2023Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/lamoureux2023_growth.py",
+      "dataset_classes": [
+        "GrowthRateLamoureux2023Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/lamoureux2023_public_k12.py",
+      "dataset_classes": [
+        "RnaseqPublicK12Lamoureux2023Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/li2014.py",
+      "dataset_classes": [
+        "ProteinSynthesisRateLi2014Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/mohiuddin2022.py",
+      "dataset_classes": [
+        "PromoterReporterMohiuddin2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/mori2021.py",
+      "dataset_classes": [
+        "ProteomeMori2021Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/mutalik2020.py",
+      "dataset_classes": [
+        "PhageRbTnseqMutalik2020Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/niu2019.py",
+      "dataset_classes": [
+        "CrisprPineneToleranceNiu2019Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/price2018.py",
+      "dataset_classes": [
+        "RbTnseqPrice2018EcoliDataset",
+        "GeneEssentialityPrice2018EcoliDataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/rachwalski2024.py",
+      "dataset_classes": [
+        "CrispriCrossRachwalski2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/rapp2026.py",
+      "dataset_classes": [
+        "MetabolomeRapp2026Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/rapp2026_platforms.py",
+      "dataset_classes": [
+        "_Rapp2026Dataset",
+        "GrowthAucRapp2026Dataset",
+        "_AccumulationDataset",
+        "TargetedMetabolomeRapp2026Dataset",
+        "MetaboliteIntensityRapp2026Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/rousset2018.py",
+      "dataset_classes": [
+        "CrispriScreenRousset2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/schastnaya2021.py",
+      "dataset_classes": [
+        "MetabolomeSchastnaya2021Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/schmidt2016.py",
+      "dataset_classes": [
+        "ProteomeSchmidt2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/schmidt2016_growth_rate.py",
+      "dataset_classes": [
+        "GrowthRateSchmidt2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/schmidt2016_s23_growth_rate.py",
+      "dataset_classes": [
+        "GrowthRateS23Schmidt2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/schmidt2016_srm.py",
+      "dataset_classes": [
+        "_SrmSchmidt2016Dataset",
+        "ProteomeSrmSet1Schmidt2016Dataset",
+        "ProteomeSrmSet2Schmidt2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/shiver2016.py",
+      "dataset_classes": [
+        "EnvChemgenShiver2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/tong2020.py",
+      "dataset_classes": [
+        "CarbonSourceTong2020Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/wang2015.py",
+      "dataset_classes": [
+        "EnvChemgenWang2015Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/wang2015_growth.py",
+      "dataset_classes": [
+        "GrowthWang2015Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/wang2018.py",
+      "dataset_classes": [
+        "CrispriGuideFitnessWang2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/wang2024.py",
+      "dataset_classes": [
+        "EnvChemgenWang2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/wetmore2015.py",
+      "dataset_classes": [
+        "RbTnseqWetmore2015Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/banerjee2025.py",
+      "dataset_classes": [
+        "ProteomeBanerjee2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/borchert2023.py",
+      "dataset_classes": [
+        "RbTnseqBorchert2023Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/borchert2024.py",
+      "dataset_classes": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/carruthers2025.py",
+      "dataset_classes": [
+        "IsoprenolTiterCarruthers2025Dataset",
+        "ProteomeCarruthers2025Dataset",
+        "CampaignProteomeCarruthers2025Dataset",
+        "ProteomeFoldChangeCarruthers2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/desiqueira2025.py",
+      "dataset_classes": [
+        "ProteomeDeSiqueira2025Dataset",
+        "ProteomePercentDeSiqueira2025Dataset",
+        "ProteomeLog10PercentDeSiqueira2025Dataset",
+        "IsoprenolTiterDeSiqueira2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/kang2026.py",
+      "dataset_classes": [
+        "IsoprenylAcetateTiterKang2026Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/lim2022.py",
+      "dataset_classes": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/lim2025.py",
+      "dataset_classes": [
+        "IsoprenolToleranceLim2025Dataset",
+        "ProteomeLim2025Dataset",
+        "ProteomeFoldChangeLim2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/menasalvas2025.py",
+      "dataset_classes": [
+        "IsoprenolSelectionMenasalvas2025Dataset",
+        "ProteomeMenasalvas2025Dataset",
+        "_MetabolitePhaseDataset",
+        "MetaboliteGrowthPhaseMenasalvas2025Dataset",
+        "MetaboliteProductionPhaseMenasalvas2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/royet2025.py",
+      "dataset_classes": [
+        "EnvMetalTnseqRoyet2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/thompson2019_valerolactam.py",
+      "dataset_classes": [
+        "_Thompson2019Dataset",
+        "ValerolactamTiterThompson2019Dataset",
+        "LactamGrowthRateThompson2019Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/yunus2026.py",
+      "dataset_classes": [
+        "_Yunus2026Dataset",
+        "_Yunus2026BenchlingDataset",
+        "CrispriKnockdownYunus2026Dataset",
+        "CrispriArrayYunus2026Dataset",
+        "CrispriDifferentialProteomeYunus2026Dataset",
+        "IsoprenolTiterYunus2026Dataset",
+        "CrispriPanelProteomeYunus2026Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/private_torchcell/volk2021_inhibitor_bioscreen.py",
+      "dataset_classes": [
+        "InhibitorBioscreenVolk2021Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/auesukaree2009.py",
+      "dataset_classes": [
+        "EnvChemgenAuesukaree2009Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenAuesukaree2009Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/baryshnikova2010.py",
+      "dataset_classes": [
+        "SmfBaryshnikova2010Dataset"
+      ],
+      "served_classes": [
+        "SmfBaryshnikova2010Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/bloom2019.py",
+      "dataset_classes": [
+        "Bloom2019Dataset"
+      ],
+      "served_classes": [
+        "Bloom2019Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/boocock2025.py",
+      "dataset_classes": [
+        "Boocock2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/cachera2023.py",
+      "dataset_classes": [
+        "BetaxanthinCachera2023Dataset"
+      ],
+      "served_classes": [
+        "BetaxanthinCachera2023Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/caudal2024.py",
+      "dataset_classes": [
+        "CaudalPanTranscriptome2024Dataset"
+      ],
+      "served_classes": [
+        "CaudalPanTranscriptome2024Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/cooper2010.py",
+      "dataset_classes": [
+        "AminoAcidCooper2010Dataset"
+      ],
+      "served_classes": [
+        "AminoAcidCooper2010Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/costanzo2016.py",
+      "dataset_classes": [
+        "SmfCostanzo2016Dataset",
+        "DmfCostanzo2016Dataset",
+        "DmiCostanzo2016Dataset"
+      ],
+      "served_classes": [
+        "DmfCostanzo2016Dataset",
+        "DmiCostanzo2016Dataset",
+        "SmfCostanzo2016Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/costanzo2021.py",
+      "dataset_classes": [
+        "EnvChemgenCostanzo2021Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenCostanzo2021Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/dasilveira2014.py",
+      "dataset_classes": [
+        "MetaboliteDaSilveira2014Dataset"
+      ],
+      "served_classes": [
+        "MetaboliteDaSilveira2014Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/dechiara2022.py",
+      "dataset_classes": [
+        "_DeChiara2022Dataset",
+        "_GrowthDeChiara2022Dataset",
+        "DoublingTimeDeChiara2022Dataset",
+        "CellYieldDeChiara2022Dataset",
+        "LifeCycleDeChiara2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/hackett2020.py",
+      "dataset_classes": [
+        "InductionTimecourseHackett2020Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/hale2024.py",
+      "dataset_classes": [
+        "CrispriSegregantHale2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/hillenmeyer2008.py",
+      "dataset_classes": [
+        "HetHillenmeyer2008Dataset",
+        "HomHillenmeyer2008Dataset"
+      ],
+      "served_classes": [
+        "HetHillenmeyer2008Dataset",
+        "HomHillenmeyer2008Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/hoepfner2014.py",
+      "dataset_classes": [
+        "EnvChemgenHoepfner2014Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenHoepfner2014Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/hu2007.py",
+      "dataset_classes": [
+        "MicroarrayScoreHu2007Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/jackson2020.py",
+      "dataset_classes": [
+        "TfDeletionPseudobulkJackson2020Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/kemmeren2014.py",
+      "dataset_classes": [
+        "MicroarrayKemmeren2014Dataset"
+      ],
+      "served_classes": [
+        "MicroarrayKemmeren2014Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/kuzmin2018.py",
+      "dataset_classes": [
+        "SmfKuzmin2018Dataset",
+        "DmfKuzmin2018Dataset",
+        "TmfKuzmin2018Dataset",
+        "DmiKuzmin2018Dataset",
+        "TmiKuzmin2018Dataset"
+      ],
+      "served_classes": [
+        "DmfKuzmin2018Dataset",
+        "DmiKuzmin2018Dataset",
+        "SmfKuzmin2018Dataset",
+        "TmfKuzmin2018Dataset",
+        "TmiKuzmin2018Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/kuzmin2020.py",
+      "dataset_classes": [
+        "SmfKuzmin2020Dataset",
+        "DmfKuzmin2020Dataset",
+        "TmfKuzmin2020Dataset",
+        "DmiKuzmin2020Dataset",
+        "TmiKuzmin2020Dataset"
+      ],
+      "served_classes": [
+        "DmfKuzmin2020Dataset",
+        "DmiKuzmin2020Dataset",
+        "SmfKuzmin2020Dataset",
+        "TmfKuzmin2020Dataset",
+        "TmiKuzmin2020Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/lian2019.py",
+      "dataset_classes": [
+        "CrisprMagicLian2019Dataset"
+      ],
+      "served_classes": [
+        "CrisprMagicLian2019Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/lopez2024.py",
+      "dataset_classes": [
+        "IsobutanolScreenLopez2024Dataset",
+        "IsobutanolValidatedLopez2024Dataset"
+      ],
+      "served_classes": [
+        "IsobutanolScreenLopez2024Dataset",
+        "IsobutanolValidatedLopez2024Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/messner2021.py",
+      "dataset_classes": [
+        "ProteomeMessner2021Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/messner2023.py",
+      "dataset_classes": [
+        "ProteomeMessner2023Dataset"
+      ],
+      "served_classes": [
+        "ProteomeMessner2023Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/mormino2022.py",
+      "dataset_classes": [
+        "CrispriMormino2022Dataset"
+      ],
+      "served_classes": [
+        "CrispriMormino2022Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/mota2024.py",
+      "dataset_classes": [
+        "EnvChemgenMota2024Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenMota2024Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/muenzner2024.py",
+      "dataset_classes": [
+        "_MuenznerIsolateDataset",
+        "ProteomeMuenzner2024Dataset",
+        "ProteinTurnoverMuenzner2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/mulleder2016.py",
+      "dataset_classes": [
+        "AminoAcidMulleder2016Dataset"
+      ],
+      "served_classes": [
+        "AminoAcidMulleder2016Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/nadal_ribelles2025.py",
+      "dataset_classes": [
+        "NadalRibellesPerturbSeq2025Dataset"
+      ],
+      "served_classes": [
+        "NadalRibellesPerturbSeq2025Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/nguessan2025.py",
+      "dataset_classes": [
+        "Nguessan2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/oduibhir2014.py",
+      "dataset_classes": [
+        "SmfODuibhir2014Dataset"
+      ],
+      "served_classes": [
+        "SmfODuibhir2014Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/ohnuki2018.py",
+      "dataset_classes": [
+        "ScmdOhnuki2018Dataset"
+      ],
+      "served_classes": [
+        "ScmdOhnuki2018Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/ohnuki2022.py",
+      "dataset_classes": [
+        "ScmdOhnuki2022Dataset"
+      ],
+      "served_classes": [
+        "ScmdOhnuki2022Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/ohya2005.py",
+      "dataset_classes": [
+        "ScmdOhya2005Dataset"
+      ],
+      "served_classes": [
+        "ScmdOhya2005Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/ozaydin2013.py",
+      "dataset_classes": [
+        "CarotenoidOzaydin2013Dataset"
+      ],
+      "served_classes": [
+        "CarotenoidOzaydin2013Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/parsons2006.py",
+      "dataset_classes": [
+        "EnvChemgenParsons2006Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/peter2018.py",
+      "dataset_classes": [
+        "IsolateGrowthPeter2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/piotrowski2017.py",
+      "dataset_classes": [
+        "EnvChemgenPiotrowski2017Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/puddu2019.py",
+      "dataset_classes": [
+        "GenomeArchitecturePuddu2019Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/sameith2015.py",
+      "dataset_classes": [
+        "SmMicroarraySameith2015Dataset",
+        "DmMicroarraySameith2015Dataset"
+      ],
+      "served_classes": [
+        "DmMicroarraySameith2015Dataset",
+        "SmMicroarraySameith2015Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/sgd.py",
+      "dataset_classes": [
+        "GeneEssentialitySgdDataset"
+      ],
+      "served_classes": [
+        "GeneEssentialitySgdDataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/smith2006.py",
+      "dataset_classes": [
+        "FattyAcidSmith2006Dataset"
+      ],
+      "served_classes": [
+        "FattyAcidSmith2006Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/smith2016.py",
+      "dataset_classes": [
+        "CrispriChemgenSmith2016Dataset"
+      ],
+      "served_classes": [
+        "CrispriChemgenSmith2016Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/synth_leth_db.py",
+      "dataset_classes": [
+        "SynthLethalityYeastSynthLethDbDataset",
+        "SynthRescueYeastSynthLethDbDataset"
+      ],
+      "served_classes": [
+        "SynthLethalityYeastSynthLethDbDataset",
+        "SynthRescueYeastSynthLethDbDataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/vanacloig2022.py",
+      "dataset_classes": [
+        "EnvChemgenVanacloig2022Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenVanacloig2022Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/wildenhain2015.py",
+      "dataset_classes": [
+        "EnvChemgenWildenhain2015Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenWildenhain2015Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/xue2025.py",
+      "dataset_classes": [
+        "FattyAcidXue2025Dataset"
+      ],
+      "served_classes": [
+        "FattyAcidXue2025Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/yeastphenome.py",
+      "dataset_classes": [
+        "YeastPhenomeDataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/yoshida2012.py",
+      "dataset_classes": [
+        "OrganicAcidYoshida2012Dataset"
+      ],
+      "served_classes": [
+        "OrganicAcidYoshida2012Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/yoshikawa2009.py",
+      "dataset_classes": [
+        "EnvChemgenYoshikawa2009Dataset"
+      ],
+      "served_classes": [],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/zelezniak2018.py",
+      "dataset_classes": [
+        "ProteomeZelezniak2018Dataset",
+        "MetaboliteZelezniak2018Dataset"
+      ],
+      "served_classes": [
+        "MetaboliteZelezniak2018Dataset",
+        "ProteomeZelezniak2018Dataset"
+      ],
+      "impact": "breaking",
+      "via": [
+        "Media"
+      ]
+    }
+  ],
+  "served_datasets": [
+    "AminoAcidCooper2010Dataset",
+    "AminoAcidMulleder2016Dataset",
+    "BetaxanthinCachera2023Dataset",
+    "Bloom2019Dataset",
+    "CarotenoidOzaydin2013Dataset",
+    "CaudalPanTranscriptome2024Dataset",
+    "CrisprMagicLian2019Dataset",
+    "CrispriChemgenSmith2016Dataset",
+    "CrispriMormino2022Dataset",
+    "DmMicroarraySameith2015Dataset",
+    "DmfCostanzo2016Dataset",
+    "DmfKuzmin2018Dataset",
+    "DmfKuzmin2020Dataset",
+    "DmiCostanzo2016Dataset",
+    "DmiKuzmin2018Dataset",
+    "DmiKuzmin2020Dataset",
+    "EnvChemgenAuesukaree2009Dataset",
+    "EnvChemgenCostanzo2021Dataset",
+    "EnvChemgenHoepfner2014Dataset",
+    "EnvChemgenMota2024Dataset",
+    "EnvChemgenVanacloig2022Dataset",
+    "EnvChemgenWildenhain2015Dataset",
+    "FattyAcidSmith2006Dataset",
+    "FattyAcidXue2025Dataset",
+    "GeneEssentialitySgdDataset",
+    "HetHillenmeyer2008Dataset",
+    "HomHillenmeyer2008Dataset",
+    "IsobutanolScreenLopez2024Dataset",
+    "IsobutanolValidatedLopez2024Dataset",
+    "MetaboliteDaSilveira2014Dataset",
+    "MetaboliteZelezniak2018Dataset",
+    "MicroarrayKemmeren2014Dataset",
+    "NadalRibellesPerturbSeq2025Dataset",
+    "OrganicAcidYoshida2012Dataset",
+    "ProteomeMessner2023Dataset",
+    "ProteomeZelezniak2018Dataset",
+    "ScmdOhnuki2018Dataset",
+    "ScmdOhnuki2022Dataset",
+    "ScmdOhya2005Dataset",
+    "SmMicroarraySameith2015Dataset",
+    "SmfBaryshnikova2010Dataset",
+    "SmfCostanzo2016Dataset",
+    "SmfKuzmin2018Dataset",
+    "SmfKuzmin2020Dataset",
+    "SmfODuibhir2014Dataset",
+    "SynthLethalityYeastSynthLethDbDataset",
+    "SynthRescueYeastSynthLethDbDataset",
+    "TmfKuzmin2018Dataset",
+    "TmfKuzmin2020Dataset",
+    "TmiKuzmin2018Dataset",
+    "TmiKuzmin2020Dataset"
+  ],
+  "rebuild_scope": "full_kg_rebuild",
+  "owner_sign_off": {
+    "signed": true,
+    "quote": "we are fine with irreversible updates to schema, as long as you are convinced it is correct ... why would you get rid of old classes?",
+    "url": null
+  }
+}

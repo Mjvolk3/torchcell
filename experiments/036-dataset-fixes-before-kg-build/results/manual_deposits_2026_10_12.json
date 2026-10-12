@@ -1,0 +1,919 @@
+{
+  "script": "experiments/036-dataset-fixes-before-kg-build/scripts/manual_deposits_2026_10_12.py",
+  "balakrishnan2022": {
+    "table_s3_science_vs_geo": {
+      "same_sheet_names": true,
+      "1 - RNAseq-ss (description)": {
+        "rows": [
+          30,
+          30
+        ],
+        "cells_differing": 0,
+        "float_differences": 0,
+        "max_relative_float_difference": 0.0,
+        "other_differences": []
+      },
+      "2 - RNAseq-ss (fractions)": {
+        "rows": [
+          4344,
+          4344
+        ],
+        "cells_differing": 33,
+        "float_differences": 33,
+        "max_relative_float_difference": 2.2098152215108149e-16,
+        "other_differences": []
+      },
+      "3 - RNAseq-deg (description)": {
+        "rows": [
+          17,
+          17
+        ],
+        "cells_differing": 2,
+        "float_differences": 0,
+        "max_relative_float_difference": 0.0,
+        "other_differences": [
+          {
+            "row": 2,
+            "column": 7,
+            "geo": "10 mM NH4Cl",
+            "science": "11.34 mM (NH4)2SO4"
+          },
+          {
+            "row": 10,
+            "column": 7,
+            "geo": "10 mM NH4Cl",
+            "science": "11.34 mM (NH4)2SO4"
+          }
+        ]
+      },
+      "4 - RNAseq-deg (fractions)": {
+        "rows": [
+          4344,
+          4344
+        ],
+        "cells_differing": 14,
+        "float_differences": 14,
+        "max_relative_float_difference": 1.8863103451174527e-16,
+        "other_differences": []
+      }
+    },
+    "tables_s4_to_s7": {
+      "S4": {
+        "1 - Proteomics (description)": {
+          "nonempty_rows": 30,
+          "columns": 10,
+          "header": [
+            "Sample ID",
+            "Group",
+            "Growth rate (1/h)",
+            "Strain",
+            "Growth medium",
+            "Carbon source",
+            "Nitrogen source",
+            "Supplement",
+            "Description",
+            "SWATH file name"
+          ]
+        },
+        "2 - Proteomics (fractions)": {
+          "nonempty_rows": 4343,
+          "columns": 32,
+          "header": [
+            "gene",
+            "locus",
+            "gene length (nt)",
+            "D7",
+            "F8",
+            "C7",
+            "C6",
+            "D8",
+            "F7",
+            "F6",
+            "C5",
+            "D6",
+            "C4",
+            "F5",
+            "C8",
+            "C3",
+            "F4",
+            "C2",
+            "D1",
+            "D2",
+            "D3",
+            "D4",
+            "F3",
+            "F2",
+            "D5",
+            "E4",
+            "E3",
+            "E2",
+            "E1",
+            "A2",
+            "H1",
+            "H5"
+          ]
+        }
+      },
+      "S5": {
+        "list of fold changes": {
+          "nonempty_rows": 4344,
+          "columns": 11,
+          "header": [
+            "C-limitation",
+            "A-limitation",
+            "R-limitation"
+          ]
+        },
+        "top outliers": {
+          "nonempty_rows": 39,
+          "columns": 6,
+          "header": [
+            "Top outliers: mRNAs whose translation efficiency TEi=\u03c8p,i/\u03c8m,i changes significantly more than 3-fold in at least one growth limitation."
+          ]
+        }
+      },
+      "S6": {
+        "reference condition": {
+          "nonempty_rows": 4343,
+          "columns": 10,
+          "header": [
+            "gene",
+            "locus",
+            "protein concentration [Pi] (1/\u00b5m3)",
+            "mRNA concentration [mRi] (1/\u00b5m3)",
+            "gene concentration [Gi] (1/\u00b5m3)",
+            "translation inititation rate \u03b1pi (1/min)",
+            "mRNA degradation rate, \u03b4i (1/min)",
+            "translational burstiness, bi",
+            "transcriptional initiation rate, \u03b1mi (1/min)",
+            "promoter on-rate, ki (\u00b5m3/min)"
+          ]
+        },
+        "C-limited condition": {
+          "nonempty_rows": 4343,
+          "columns": 10,
+          "header": [
+            "gene",
+            "locus",
+            "protein concentration [Pi] (1/\u00b5m3)",
+            "mRNA concentration [mRi] (1/\u00b5m3)",
+            "gene concentration [Gi] (1/\u00b5m3)",
+            "translation inititation rate \u03b1pi (1/min)",
+            "mRNA degradation rate, \u03b4i (1/min)",
+            "translational burstiness, bi",
+            "transcriptional initiation rate, \u03b1mi (1/min)",
+            "promoter on-rate, ki (\u00b5m3/min)"
+          ]
+        }
+      },
+      "S7": {
+        "1 - description of samples": {
+          "nonempty_rows": 20,
+          "columns": 5,
+          "header": [
+            "Sample ID",
+            "Description",
+            "carbon source",
+            "growth medium",
+            "Proteins detected"
+          ]
+        },
+        "2 - protein variability data": {
+          "nonempty_rows": 1416,
+          "columns": 23,
+          "header": [
+            "gene",
+            "locus",
+            "Lib-01",
+            "Lib-02",
+            "Lib-03",
+            "Lib-04",
+            "Lib-05",
+            "Lib-15",
+            "Lib-19",
+            "Lib-20",
+            "Lib-24",
+            "Lib-26",
+            "Lib-27",
+            "Lib-28",
+            "Lib-29",
+            "Lib-30",
+            "A2",
+            "C2",
+            "C7",
+            "D1",
+            "E4",
+            "Median across samples",
+            "Max fold change"
+          ]
+        }
+      }
+    },
+    "table_s6_parameters": {
+      "reference condition": {
+        "genes": 4342,
+        "distinct_loci": 4325,
+        "reported_per_column": {
+          "protein concentration [Pi] (1/\u00b5m3)": 1922,
+          "mRNA concentration [mRi] (1/\u00b5m3)": 4239,
+          "gene concentration [Gi] (1/\u00b5m3)": 4330,
+          "translation inititation rate \u03b1pi (1/min)": 1921,
+          "mRNA degradation rate, \u03b4i (1/min)": 2696,
+          "translational burstiness, bi": 1846,
+          "transcriptional initiation rate, \u03b1mi (1/min)": 2694,
+          "promoter on-rate, ki (\u00b5m3/min)": 2696
+        }
+      },
+      "C-limited condition": {
+        "genes": 4342,
+        "distinct_loci": 4325,
+        "reported_per_column": {
+          "protein concentration [Pi] (1/\u00b5m3)": 1972,
+          "mRNA concentration [mRi] (1/\u00b5m3)": 4254,
+          "gene concentration [Gi] (1/\u00b5m3)": 4330,
+          "translation inititation rate \u03b1pi (1/min)": 1970,
+          "mRNA degradation rate, \u03b4i (1/min)": 2883,
+          "translational burstiness, bi": 1897,
+          "transcriptional initiation rate, \u03b1mi (1/min)": 2880,
+          "promoter on-rate, ki (\u00b5m3/min)": 2883
+        }
+      }
+    },
+    "table_s4_samples": [
+      "C2",
+      "C3",
+      "C4",
+      "C5",
+      "C6",
+      "C7",
+      "C8",
+      "D6",
+      "D7",
+      "D8",
+      "F4",
+      "F5",
+      "F6",
+      "F7",
+      "F8",
+      "D1",
+      "D2",
+      "D3",
+      "D4",
+      "D5",
+      "F2",
+      "F3",
+      "A2",
+      "H1",
+      "H5",
+      "E1",
+      "E2",
+      "E3",
+      "E4"
+    ],
+    "table_s4_strains": {
+      "NCM3722": 8,
+      "NQ1243": 8,
+      "NQ1390": 6,
+      "NQ393": 7
+    },
+    "table_s4_samples_named_in_mori2021_ev9": [
+      "A2",
+      "C2",
+      "C3",
+      "C4",
+      "C5",
+      "C6",
+      "C7",
+      "C8",
+      "D1",
+      "D2",
+      "D3",
+      "D4",
+      "D5",
+      "D6",
+      "D7",
+      "D8",
+      "E1",
+      "E2",
+      "E3",
+      "E4",
+      "F2",
+      "F3",
+      "F4",
+      "F5",
+      "F6",
+      "F7",
+      "F8",
+      "H1",
+      "H5"
+    ],
+    "table_s4_samples_whose_mori2021_ev9_strain_differs": []
+  },
+  "nichols2011": {
+    "tables": {
+      "mmc1.xls": {
+        "format": "BIFF (Excel 97-2004)",
+        "sheets": {
+          "Sheet1": {
+            "rows": 118,
+            "nonempty_rows": 117,
+            "columns": 6,
+            "title": "Table S1 - Screen List",
+            "header": [
+              "Antibiotic/Condition",
+              "Supplier",
+              "Item No",
+              "Target",
+              "Concentrations Screened",
+              "Screens"
+            ]
+          }
+        }
+      },
+      "mmc2.xls": {
+        "format": "OOXML (zip)",
+        "sheets": {
+          "TableS2-FinalData": {
+            "rows": 3981,
+            "nonempty_rows": 3981,
+            "columns": 325,
+            "title": "Table S2 - Complete Data Set",
+            "header": [
+              "Gene",
+              "SDS0.5%/EDTA0.1 - ",
+              "SDS0.5%/EDTA0.5 - ",
+              "SDS1.0%/EDTA0.5 - ",
+              "16C - ",
+              "18C - ",
+              "20C - ",
+              "40C - ",
+              "42C - ",
+              "43.5C - ",
+              "45C - ",
+              "A22-0.5 - ",
+              "A22-15.0 - ",
+              "A22-2.0 - ",
+              "A22-5.0 - ",
+              "ACTINOMYCIND-10.0 - UNSPECIFIED",
+              "ACTINOMYCIND-15.0 - UNSPECIFIED",
+              "ACTINOMYCIND-2.5 - UNSPECIFIED",
+              "ACTINOMYCIND-5.0 - UNSPECIFIED",
+              "ACETATE - ",
+              "ACRIFLAVINE-10 - UNSPECIFIED",
+              "ACRIFLAVINE-2 - UNSPECIFIED",
+              "AMIKACIN-0.05 - UNSPECIFIED",
+              "AMIKACIN-0.1 - UNSPECIFIED",
+              "AMIKACIN-0.2 - UNSPECIFIED",
+              "AMOXICILLIN-0.25 - UNSPECIFIED",
+              "AMOXICILLIN-0.5 - UNSPECIFIED",
+              "AMOXICILLIN-1.0 - UNSPECIFIED",
+              "AMOXICILLIN-1.5 - UNSPECIFIED",
+              "AMPICILLIN-1.0 - UNSPECIFIED",
+              "AMPICILLIN-2.0 - UNSPECIFIED",
+              "AMPICILLIN-4.0 - UNSPECIFIED",
+              "AMPICILLIN-8.0 - UNSPECIFIED",
+              "ANAEROBIC - UNSPECIFIED",
+              "AZIDOTHYMIDINE-0.5 - UNSPECIFIED",
+              "AZIDOTHYMIDINE-1.0 - UNSPECIFIED",
+              "AZIDOTHYMIDINE-2.5 - UNSPECIFIED",
+              "AZITHROMYCIN-0.02 - UNSPECIFIED",
+              "AZITHROMYCIN-0.1 - UNSPECIFIED",
+              "AZITHROMYCIN-1.0 - UNSPECIFIED",
+              "BENZALKONIUM-1 - UNSPECIFIED",
+              "BENZALKONIUM-10 - UNSPECIFIED",
+              "BENZALKONIUM-25 - UNSPECIFIED",
+              "BICYCLOMYCIN-1 - UNSPECIFIED",
+              "BICYCLOMYCIN-10 - UNSPECIFIED",
+              "BILE-0.1% - UNSPECIFIED",
+              "BILE-0.5% - UNSPECIFIED",
+              "BILE-1.0% - UNSPECIFIED",
+              "BILE-2.0% - UNSPECIFIED",
+              "BLEOMYCIN-0.1 - UNSPECIFIED",
+              "BLEOMYCIN-0.5 - UNSPECIFIED",
+              "BLEOMYCIN-1.0 - UNSPECIFIED",
+              "BLEOMYCIN-2.0 - UNSPECIFIED",
+              "CCCP-0.1 - UNSPECIFIED",
+              "CCCP-0.5 - UNSPECIFIED",
+              "CCCP-2.0 - UNSPECIFIED",
+              "CHIR090-0.02 - UNSPECIFIED",
+              "CHIR090-0.025 - UNSPECIFIED",
+              "CHIR090-0.04 - UNSPECIFIED",
+              "CHIR090-0.05 - UNSPECIFIED",
+              "CHIR090-0.075 - UNSPECIFIED",
+              "CEFOXITIN-0.25 - UNSPECIFIED",
+              "CEFOXITIN-0.5 - UNSPECIFIED",
+              "CEFOXITIN-0.75 - UNSPECIFIED",
+              "CEFOXITIN-1.0 - UNSPECIFIED",
+              "CALCOFLUOR - UNSPECIFIED",
+              "CECROPINB-0.1 - UNSPECIFIED",
+              "CECROPINB-0.3 - UNSPECIFIED",
+              "CEFSULODIN-12.0 - UNSPECIFIED",
+              "CEFSULODIN-18.0 - UNSPECIFIED",
+              "CEFSULODIN-24.0 - UNSPECIFIED",
+              "CEFSULODIN-6.0 - UNSPECIFIED",
+              "CERULENIN-1.0 - UNSPECIFIED",
+              "CERULENIN-2.0 - UNSPECIFIED",
+              "CERULENIN-4.0 - UNSPECIFIED",
+              "CERULENIN-6.0 - UNSPECIFIED",
+              "CHLOROPROMAZINE-12 - UNSPECIFIED",
+              "CHLOROPROMAZINE-24 - UNSPECIFIED",
+              "CHLOROPROMAZINE-3 - UNSPECIFIED",
+              "CHLOROPROMAZINE-6 - UNSPECIFIED",
+              "CHOLATE-0.1% - UNSPECIFIED",
+              "CHOLATE-0.5% - UNSPECIFIED",
+              "CHOLATE-1.0% - UNSPECIFIED",
+              "CHOLATE-2.0% - UNSPECIFIED",
+              "CISPLATIN-100 - UNSPECIFIED",
+              "CISPLATIN-20 - UNSPECIFIED",
+              "CISPLATIN-50 - UNSPECIFIED",
+              "CLARYTHROMYCIN-0.1 - UNSPECIFIED",
+              "CLARYTHROMYCIN-1.0 - UNSPECIFIED",
+              "CLARYTHROMYCIN-10.0 - UNSPECIFIED",
+              "CLARYTHROMYCIN-5.0 - UNSPECIFIED",
+              "HIGHCOBALT-0.1 - UNSPECIFIED",
+              "HIGHCOBALT-0.5 - UNSPECIFIED",
+              "HIGHCOPPER-1.0 - UNSPECIFIED",
+              "HIGHCOPPER-2.0 - UNSPECIFIED",
+              "HIGHCOPPER-4.0 - UNSPECIFIED",
+              "DEOXYCHOLATE-0.1% - UNSPECIFIED",
+              "DEOXYCHOLATE-0.5% - UNSPECIFIED",
+              "DEOXYCHOLATE-2.0% - UNSPECIFIED",
+              "DIBUCAINE-0.4 - UNSPECIFIED",
+              "DIBUCAINE-0.8 - UNSPECIFIED",
+              "DIBUCAINE-1.2 - UNSPECIFIED",
+              "DOXORUBICIN-1.0 - UNSPECIFIED",
+              "DOXORUBICIN-10.0 - UNSPECIFIED",
+              "EDTA-0.1 - UNSPECIFIED",
+              "EDTA-0.5 - UNSPECIFIED",
+              "EDTA-1.0 - UNSPECIFIED",
+              "EGCG-20 - UNSPECIFIED",
+              "EGCG-5 - UNSPECIFIED",
+              "EGCG-50 - UNSPECIFIED",
+              "EPINEPHRINE-1000 - UNSPECIFIED",
+              "EPINEPHRINE-250 - UNSPECIFIED",
+              "EPINEPHRINE-50 - UNSPECIFIED",
+              "ERYTHROMYCIN-0.1 - UNSPECIFIED",
+              "ERYTHROMYCIN-1.0 - UNSPECIFIED",
+              "ERYTHROMYCIN-10.0 - UNSPECIFIED",
+              "ERYTHROMYCIN-5.0 - UNSPECIFIED",
+              "ETHIDIUMBROMIDE-10 - UNSPECIFIED",
+              "ETHIDIUMBROMIDE-2 - UNSPECIFIED",
+              "ETHIDIUMBROMIDE-50 - UNSPECIFIED",
+              "FOSFOMYCIN-1.0 - UNSPECIFIED",
+              "FUSIDICACID-1 - UNSPECIFIED",
+              "FUSIDICACID-20 - UNSPECIFIED",
+              "FUSIDICACID-5 - UNSPECIFIED",
+              "FUSIDICACID-50 - UNSPECIFIED",
+              "N-ACETYLGLUCOSAMINE - UNSPECIFIED",
+              "GLUFOSFOMYCIN-0.05 - UNSPECIFIED",
+              "GLUFOSFOMYCIN-0.2 - UNSPECIFIED",
+              "GLUCOSAMINE - UNSPECIFIED",
+              "GLUCOSE - UNSPECIFIED",
+              "GLYCEROL - UNSPECIFIED",
+              "HYDROXYUREA-1.0 - UNSPECIFIED",
+              "HYDROXYUREA-10.0 - UNSPECIFIED",
+              "HYDROXYUREA-5.0 - UNSPECIFIED",
+              "INDOLICIDIN-0.1 - UNSPECIFIED",
+              "ISONIAZID-0.2 - UNSPECIFIED",
+              "ISONIAZID-1.0 - UNSPECIFIED",
+              "ISONIAZID-1.5 - UNSPECIFIED",
+              "LEVOFLOXACIN-0.002 - UNSPECIFIED",
+              "MMS-0.05% - UNSPECIFIED",
+              "MALTOSE - UNSPECIFIED",
+              "MECILLINAM-0.03 - UNSPECIFIED",
+              "MECILLINAM-0.06 - UNSPECIFIED",
+              "MECILLINAM-0.09 - UNSPECIFIED",
+              "MECILLINAM-0.12 - UNSPECIFIED",
+              "METHOTREXATE-1 - UNSPECIFIED",
+              "METHOTREXATE-25 - UNSPECIFIED",
+              "MINOCYCLINE-0.2 - UNSPECIFIED",
+              "MINOCYCLINE-0.5 - UNSPECIFIED",
+              "MINOCYCLINE-1.0 - UNSPECIFIED",
+              "MITOMYCINC-0.1 - UNSPECIFIED",
+              "NH4CL - UNSPECIFIED",
+              "HIGHNICKEL-0.1 - UNSPECIFIED",
+              "HIGHNICKEL-1.0 - UNSPECIFIED",
+              "NIGERICIN-0.1 - UNSPECIFIED",
+              "NIGERICIN-1.0 - UNSPECIFIED",
+              "NIGERICIN-5.0 - UNSPECIFIED",
+              "NITROFURANTOIN-0.1 - UNSPECIFIED",
+              "NITROFURANTOIN-0.5 - UNSPECIFIED",
+              "NITROFURANTOIN-1.0 - UNSPECIFIED",
+              "NITROFURANTOIN-1.5 - UNSPECIFIED",
+              "NITROFURANTOIN-2.0 - UNSPECIFIED",
+              "NOREPINEPHRINE-100 - UNSPECIFIED",
+              "NOREPINEPHRINE-1000 - UNSPECIFIED",
+              "PROPIDIUMIODIDE-1 - UNSPECIFIED",
+              "PROPIDIUMIODIDE-20 - UNSPECIFIED",
+              "PROPIDIUMIODIDE-50 - UNSPECIFIED",
+              "PMS-0.02 - UNSPECIFIED",
+              "PMS-0.05 - UNSPECIFIED",
+              "PMS-0.1 - UNSPECIFIED",
+              "PARAQUAT-0.2 - UNSPECIFIED",
+              "PARAQUAT-1.0 - UNSPECIFIED",
+              "PARAQUAT-10.0 - UNSPECIFIED",
+              "PARAQUAT-18.0 - UNSPECIFIED",
+              "PARAQUAT-5.0 - UNSPECIFIED",
+              "PEROXIDE-0.1 - UNSPECIFIED",
+              "PEROXIDE-0.5 - UNSPECIFIED",
+              "PEROXIDE-1.0 - UNSPECIFIED",
+              "PEROXIDE-2.0 - UNSPECIFIED",
+              "PHLEOMYCIN-0.2 - UNSPECIFIED",
+              "PHLEOMYCIN-0.5 - UNSPECIFIED",
+              "PHLEOMYCIN-1.0 - UNSPECIFIED",
+              "PROCAINE-1 - UNSPECIFIED",
+              "PROCAINE-10 - UNSPECIFIED",
+              "PROCAINE-30 - UNSPECIFIED",
+              "PROCAINE-5 - UNSPECIFIED",
+              "PUROMYCIN-1 - UNSPECIFIED",
+              "PUROMYCIN-25 - UNSPECIFIED",
+              "PUROMYCIN-5 - UNSPECIFIED",
+              "PYOCYANIN-0.2 - UNSPECIFIED",
+              "PYOCYANIN-1.0 - UNSPECIFIED",
+              "PYOCYANIN-10.0 - UNSPECIFIED",
+              "RADICICOL-1 - UNSPECIFIED",
+              "RADICICOL-10 - UNSPECIFIED",
+              "RADICICOL-5 - UNSPECIFIED",
+              "SDS-0.5% - UNSPECIFIED",
+              "SDS-1.0% - UNSPECIFIED",
+              "SDS-2.0% - UNSPECIFIED",
+              "SDS-3.0% - UNSPECIFIED",
+              "SDS-4.0% - UNSPECIFIED",
+              "STREPTOMYCIN-0.05 - UNSPECIFIED",
+              "STREPTONIGRIN-0.1 - UNSPECIFIED",
+              "STREPTONIGRIN-0.2 - UNSPECIFIED",
+              "STREPTONIGRIN-0.5 - UNSPECIFIED",
+              "SUCCINATE - UNSPECIFIED",
+              "SULFAMONOMETHOXINE-100 - UNSPECIFIED",
+              "SULFAMONOMETHOXINE-50 - UNSPECIFIED",
+              "TAUROCHOLATE-0.1% - UNSPECIFIED",
+              "TAUROCHOLATE-0.5% - UNSPECIFIED",
+              "TAUROCHOLATE-1.0% - UNSPECIFIED",
+              "THEOPHYLLINE-10 - UNSPECIFIED",
+              "THEOPHYLLINE-100 - UNSPECIFIED",
+              "THIOLACTOMYCIN-1 - UNSPECIFIED",
+              "THIOLACTOMYCIN-5 - UNSPECIFIED",
+              "THIOLACTOMYCIN-50 - UNSPECIFIED",
+              "TOBRAMYCIN-0.05 - UNSPECIFIED",
+              "TOBRAMYCIN-0.1 - UNSPECIFIED",
+              "TOBRAMYCIN-0.2 - UNSPECIFIED",
+              "TOBRAMYCIN-0.4 - UNSPECIFIED",
+              "TRICLOSAN-0.05 - UNSPECIFIED",
+              "TRITONX-0.01% - UNSPECIFIED",
+              "TRITONX-0.03% - UNSPECIFIED",
+              "TRITONX-0.2% - UNSPECIFIED",
+              "TUNICAMYCIN-1.0 - UNSPECIFIED",
+              "TUNICAMYCIN-3.0 - UNSPECIFIED",
+              "TUNICAMYCIN-7.5 - UNSPECIFIED",
+              "VANCOMYCIN-10 - UNSPECIFIED",
+              "VANCOMYCIN-20 - UNSPECIFIED",
+              "VANCOMYCIN-50 - UNSPECIFIED",
+              "VERAPAMIL-0.1 - UNSPECIFIED",
+              "VERAPAMIL-0.5 - UNSPECIFIED",
+              "VERAPAMIL-1.0 - UNSPECIFIED",
+              "AZTREONAM-0.02 - UNSPECIFIED",
+              "AZTREONAM-0.04 - UNSPECIFIED",
+              "BACITRACIN-100 - UNSPECIFIED",
+              "BACITRACIN-200 - UNSPECIFIED",
+              "BACITRACIN-300 - UNSPECIFIED",
+              "CARBENICILLIN-0.5 - UNSPECIFIED",
+              "CARBENICILLIN-1.0 - UNSPECIFIED",
+              "CARBENICILLIN-1.5 - UNSPECIFIED",
+              "CEFSULODIN-6.0,MECILLINAM-0.03 - UNSPECIFIED",
+              "CEFACLOR-1.0 - UNSPECIFIED",
+              "CEFACLOR-2.0 - UNSPECIFIED",
+              "CEFACLOR-3.0 - UNSPECIFIED",
+              "CEFTAZIDIME-0.025 - UNSPECIFIED",
+              "CEFTAZIDIME-0.05 - UNSPECIFIED",
+              "CEFTAZIDIME-0.075 - UNSPECIFIED",
+              "CHLORAMPHENICOL-0.5 - UNSPECIFIED",
+              "CHLORAMPHENICOL-1.0 - UNSPECIFIED",
+              "CHLORAMPHENICOL-1.5 - UNSPECIFIED",
+              "CHLORAMPHENICOL-2.0 - UNSPECIFIED",
+              "CIPROFLOXACIN-0.004 - UNSPECIFIED",
+              "CIPROFLOXACIN-0.006 - UNSPECIFIED",
+              "CIPROFLOXACIN-0.008 - UNSPECIFIED",
+              "CYCLOSERINED-16 - UNSPECIFIED",
+              "DOXYCYCLINE-0.25 - UNSPECIFIED",
+              "DOXYCYCLINE-0.5 - UNSPECIFIED",
+              "DOXYCYCLINE-0.75 - UNSPECIFIED",
+              "DOXYCYCLINE-1.0 - UNSPECIFIED",
+              "EGTA-0.1 - UNSPECIFIED",
+              "EGTA-0.5 - UNSPECIFIED",
+              "EGTA-1.0 - UNSPECIFIED",
+              "EGTA-2.0 - UNSPECIFIED",
+              "ETHANOL-2.0 - UNSPECIFIED",
+              "ETHANOL-4.0 - UNSPECIFIED",
+              "ETHANOL-6.0 - UNSPECIFIED",
+              "GENTAMICIN-0.05 - UNSPECIFIED",
+              "GENTAMICIN-0.1 - UNSPECIFIED",
+              "HIGHFE - UNSPECIFIED",
+              "LOWFE - UNSPECIFIED",
+              "NACL-150 - UNSPECIFIED",
+              "NACL-300 - UNSPECIFIED",
+              "NACL-450 - UNSPECIFIED",
+              "NACL-600 - UNSPECIFIED",
+              "NALIDIXICACID-0.5 - UNSPECIFIED",
+              "NALIDIXICACID-1.0 - UNSPECIFIED",
+              "NALIDIXICACID-1.5 - UNSPECIFIED",
+              "NALIDIXICACID-2.0 - UNSPECIFIED",
+              "NORFLOXACIN-0.01 - UNSPECIFIED",
+              "NORFLOXACIN-0.02 - UNSPECIFIED",
+              "NORFLOXACIN-0.04 - UNSPECIFIED",
+              "NOVOBIOCIN-10 - UNSPECIFIED",
+              "NOVOBIOCIN-12 - UNSPECIFIED",
+              "NOVOBIOCIN-30 - UNSPECIFIED",
+              "NOVOBIOCIN-4 - UNSPECIFIED",
+              "NOVOBIOCIN-6 - UNSPECIFIED",
+              "NOVOBIOCIN-8 - UNSPECIFIED",
+              "OXACILLIN-0.5 - UNSPECIFIED",
+              "OXACILLIN-40.0 - UNSPECIFIED",
+              "OXACILLIN-5.0 - UNSPECIFIED",
+              "PH10 - UNSPECIFIED",
+              "PH4 - UNSPECIFIED",
+              "PH4.5 - UNSPECIFIED",
+              "PH5 - UNSPECIFIED",
+              "PH6 - UNSPECIFIED",
+              "PH8 - UNSPECIFIED",
+              "PH9 - UNSPECIFIED",
+              "PH9.5 - UNSPECIFIED",
+              "POLYMYXINB-1.0 - UNSPECIFIED",
+              "POLYMYXINB-2.0 - UNSPECIFIED",
+              "POLYMYXINB-4.0 - UNSPECIFIED",
+              "POLYMYXINB-6.0 - UNSPECIFIED",
+              "RIFAMPICIN-1.0 - UNSPECIFIED",
+              "RIFAMPICIN-2.0 - UNSPECIFIED",
+              "SPECTINOMYCIN-4.0 - UNSPECIFIED",
+              "SPECTINOMYCIN-6.0 - UNSPECIFIED",
+              "SPIRAMYCIN-1 - UNSPECIFIED",
+              "SPIRAMYCIN-20 - UNSPECIFIED",
+              "SPIRAMYCIN-5 - UNSPECIFIED",
+              "SULFAMETHIZOLE-100 - UNSPECIFIED",
+              "SULFAMETHIZOLE-200 - UNSPECIFIED",
+              "SULFAMETHIZOLE-300 - UNSPECIFIED",
+              "TETRACYCLINE-0.25 - UNSPECIFIED",
+              "TETRACYCLINE-0.5 - UNSPECIFIED",
+              "TETRACYCLINE-0.75 - UNSPECIFIED",
+              "TETRACYCLINE-1.0 - UNSPECIFIED",
+              "TRIMETHOPRIM-0.1 - UNSPECIFIED",
+              "TRIMETHOPRIM-0.2 - UNSPECIFIED",
+              "TRIMETHOPRIM-0.3 - UNSPECIFIED",
+              "TRIMETHOPRIM-0.4 - UNSPECIFIED",
+              "TRIMETHOPRIM-0.1,SULFAMETHIZOLE-50 - UNSPECIFIED",
+              "UV-12SEC - UNSPECIFIED",
+              "UV-18SEC - UNSPECIFIED",
+              "UV-24SEC - UNSPECIFIED",
+              "UV-6SEC - UNSPECIFIED"
+            ]
+          }
+        }
+      },
+      "mmc3.xls": {
+        "format": "BIFF (Excel 97-2004)",
+        "sheets": {
+          "Sheet1": {
+            "rows": 95,
+            "nonempty_rows": 95,
+            "columns": 1,
+            "title": "Table S3 - Multi-Stress Responsive Genes",
+            "header": [
+              "ECK0095-B-FTSA(R286W)-KAN"
+            ]
+          }
+        }
+      },
+      "mmc4.xls": {
+        "format": "BIFF (Excel 97-2004)",
+        "sheets": {
+          "Sheet1": {
+            "rows": 118,
+            "nonempty_rows": 118,
+            "columns": 2,
+            "title": "Table S4 - Conditionally-Essential Genes",
+            "header": [
+              "Rich-Media CE",
+              "Auxotrophs"
+            ]
+          }
+        }
+      },
+      "mmc5.xls": {
+        "format": "BIFF (Excel 97-2004)",
+        "sheets": {
+          "Sheet1": {
+            "rows": 833,
+            "nonempty_rows": 833,
+            "columns": 2,
+            "title": "Table S5. Rich-media CE Lethal Events",
+            "header": [
+              "Strain",
+              "Lethal Condition"
+            ]
+          }
+        }
+      },
+      "mmc6.xls": {
+        "format": "BIFF (Excel 97-2004)",
+        "sheets": {
+          "Sheet1": {
+            "rows": 834,
+            "nonempty_rows": 834,
+            "columns": 6,
+            "title": "Table S6 - Highly Correlated Orphan-Annotated Gene Pairs (r \u2265 0.5)",
+            "header": [
+              "Orphan Gene",
+              "Annotated Gene",
+              "Correlation Coefficient",
+              "Annotated Gene Function",
+              "Annotated Gene Function - more detail"
+            ]
+          }
+        }
+      },
+      "mmc7.xls": {
+        "format": "BIFF (Excel 97-2004)",
+        "sheets": {
+          "TableS5-Drug-GO interactions.tx": {
+            "rows": 721,
+            "nonempty_rows": 721,
+            "columns": 3,
+            "title": "Table S7 - Drug-GO Interactions at p<= 10-3",
+            "header": [
+              "GO Biological Process",
+              "Drug",
+              "Drug-GO Score"
+            ]
+          }
+        }
+      }
+    },
+    "table_s2_matrix": {
+      "file": "si/mmc2.xls",
+      "title": "Table S2 - Complete Data Set",
+      "strain_rows": 3979,
+      "distinct_strain_labels": 3967,
+      "labels_on_two_rows": [
+        "ECK0295-YKGO",
+        "ECK1323-YMJC'",
+        "ECK1544-GNSB",
+        "ECK1556-HOKD",
+        "ECK1824-MGRB",
+        "ECK2593-A-YFIO* - Truncation",
+        "ECK2613-SMPA",
+        "ECK3357-YHFL",
+        "ECK3531-DPPA",
+        "ECK4410-YDGU",
+        "ECK4415-YPFM",
+        "ECK4416-RYFB"
+      ],
+      "conditions": 324,
+      "distinct_conditions": 324,
+      "condition_label_suffixes": {
+        "": 15,
+        "UNSPECIFIED": 309
+      },
+      "numeric_values": 1286962,
+      "empty_cells": 2234,
+      "value_min": -44.334877,
+      "value_max": 9.297672,
+      "strain_label_kinds": {
+        "ECK number and symbol": 3678,
+        "ECK number and symbol, primed (')": 112,
+        "ECK number only": 41,
+        "several ECK numbers (a multi-gene deletion)": 4,
+        "other (alleles, truncations, insertions)": 27,
+        "SPA-tagged essential gene (' - SPA')": 117
+      },
+      "first_conditions": [
+        "SDS0.5%/EDTA0.1 - ",
+        "SDS0.5%/EDTA0.5 - ",
+        "SDS1.0%/EDTA0.5 - ",
+        "16C - ",
+        "18C - "
+      ]
+    },
+    "table_s1_screens": {
+      "condition_rows": 115,
+      "screens_column_sum": 648.0
+    },
+    "mmc8_pdf": {
+      "pages": 23,
+      "supplemental_information_starts_on_page": 15,
+      "first_line": "Resource"
+    }
+  },
+  "teteneva2024": {
+    "table_s4": {
+      "header_rows": 3,
+      "gene_by_sample_rows": 11027,
+      "rows_per_water_sample": {
+        "1": 3675,
+        "2": 3679,
+        "3": 3673
+      },
+      "fitness_columns": [
+        "filtered, day 2",
+        "filtered, day 4",
+        "filtered, day 8",
+        "non-filtered, day 2",
+        "non-filtered, day 4",
+        "non-filtered, day 8"
+      ],
+      "fitness_values": 66162,
+      "identifier_column": "Gene name",
+      "other_columns": [
+        "Principal component",
+        "Euclidean distance",
+        "Protein description"
+      ],
+      "distinct_symbols": 3691
+    },
+    "table_s4_symbol_routes": {
+      "GCA_000010245.1_ASM1024v1_genomic.gbff.gz": {
+        "unique": 3036,
+        "ambiguous": 0,
+        "none": 655
+      },
+      "GCF_000010245.2_ASM1024v1_genomic.gbff.gz": {
+        "unique": 3607,
+        "ambiguous": 44,
+        "none": 40
+      }
+    },
+    "table_s3": {
+      "header": [
+        "sample id",
+        "biological replicate",
+        "sampling day",
+        "sample type",
+        "technical replicate",
+        "duplicate reads",
+        "GC content",
+        "coverage (million reads)",
+        "average read length (bp)"
+      ],
+      "samples": 63,
+      "by_sample_type": {
+        "control": 9,
+        "filtered water": 27,
+        "non-filtered water": 27
+      },
+      "by_sampling_day": {
+        "0": 9,
+        "2": 18,
+        "4": 18,
+        "8": 18
+      },
+      "by_water_sample": {
+        "1": 21,
+        "2": 21,
+        "3": 21
+      },
+      "highlighted_red": [
+        "sample_10"
+      ],
+      "legend": [
+        "Supplementary Table S3",
+        "Quality check of the sequencing results. One sample that failed the QC is omitted from the further analysis and is highlighted in red. The table is generated using FastQC and MultiQC software."
+      ]
+    },
+    "table_s2_water_samples": [
+      "9.05.2022 #1 7 13 12.4",
+      "19.06.2022 #2 6.5 29 18.4",
+      "6.07.2022 #3 6.5 17 16.1",
+      "1.06.2023 #4 6.5 17 14.6",
+      "8.10.2023 #5 6.5 16 13.6"
+    ]
+  },
+  "thompson2020": {
+    "correction_sha256": "2c7e387f4b9a47bfa4cb8633f437fedaf471409b487acdf269c54e781b998319",
+    "statements_in_layout_text": {
+      "pp_2675_deletion": true,
+      "registry_link_wrong": true,
+      "registry_link": true,
+      "registry_link_end": true
+    },
+    "statements": {
+      "pp_2675_deletion": "Readers should note that when the authors created the deletion mutant of PP_2675, they deleted the entire region between the gene\u2019s start and stop codons. However, this also deleted the DNA that codes for the first 14 amino acids of the overlapping ORF PP_2676.",
+      "registry_link_wrong": "Furthermore, the originally published URL for the JBEI public strain repository was incor-",
+      "registry_link": "The correct link to all strains and plasmids in this study is https://public-registry.jbei",
+      "registry_link_end": ".org/folders/641."
+    },
+    "borchert2024_thompson_samples": {
+      "samples": 46,
+      "records_at_4732_loci": 217672,
+      "sets": {
+        "set12": 10,
+        "set15": 24,
+        "set16": 12
+      },
+      "mutant_libraries": {
+        "Putida_ML5_JBEI": 46
+      },
+      "exp_groups": {
+        "carbon source": 46
+      },
+      "samples_naming_pp2675_pp2676_pedf_or_a_deletion": []
+    }
+  }
+}

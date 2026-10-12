@@ -22,7 +22,7 @@
     {
       "gate": "G3",
       "outcome": "pass",
-      "reason": "2 file(s) in raw, 8735 worksheet row(s) counted; all intact",
+      "reason": "11 file(s) in raw, 36351 worksheet row(s) counted; all intact",
       "evidence": [],
       "issue": null,
       "blocked_kind": null
@@ -113,6 +113,176 @@
         "zip_ok": null,
         "leading_archive_sha256": null,
         "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "data/science.abk2066_table_s3.xlsx",
+        "role": "raw_data",
+        "bytes": 1752886,
+        "sha256_manifest": "5b9c05f5920a8d7b7c2d8b16e0772383130326d2de2c1ad43d89c345de22aa84",
+        "sha256_disk": "5b9c05f5920a8d7b7c2d8b16e0772383130326d2de2c1ad43d89c345de22aa84",
+        "retrieval_method": "manual_browser",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "1 - RNAseq-ss (description)",
+            "rows": 30
+          },
+          {
+            "sheet": "2 - RNAseq-ss (fractions)",
+            "rows": 4344
+          },
+          {
+            "sheet": "3 - RNAseq-deg (description)",
+            "rows": 17
+          },
+          {
+            "sheet": "4 - RNAseq-deg (fractions)",
+            "rows": 4344
+          }
+        ]
+      },
+      {
+        "tree": "raw",
+        "path": "data/science.abk2066_table_s4.xlsx",
+        "role": "raw_data",
+        "bytes": 989547,
+        "sha256_manifest": "f27a3cba3d347b789d908003f932e896c4c328871bc60c2e2f6d607e43c74905",
+        "sha256_disk": "f27a3cba3d347b789d908003f932e896c4c328871bc60c2e2f6d607e43c74905",
+        "retrieval_method": "manual_browser",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "1 - Proteomics (description)",
+            "rows": 30
+          },
+          {
+            "sheet": "2 - Proteomics (fractions)",
+            "rows": 4344
+          }
+        ]
+      },
+      {
+        "tree": "raw",
+        "path": "data/science.abk2066_table_s5.xlsx",
+        "role": "raw_data",
+        "bytes": 302611,
+        "sha256_manifest": "3b948e49c71cfee11db804448385dcacc7b9938691fd61518957fbbd6b556378",
+        "sha256_disk": "3b948e49c71cfee11db804448385dcacc7b9938691fd61518957fbbd6b556378",
+        "retrieval_method": "manual_browser",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "list of fold changes",
+            "rows": 4344
+          },
+          {
+            "sheet": "top outliers",
+            "rows": 41
+          }
+        ]
+      },
+      {
+        "tree": "raw",
+        "path": "data/science.abk2066_table_s6.xlsx",
+        "role": "raw_data",
+        "bytes": 764426,
+        "sha256_manifest": "b5b51f1a612a3c31dcd097e37fa4d41901180e76025d98d43e868b954d632ae5",
+        "sha256_disk": "b5b51f1a612a3c31dcd097e37fa4d41901180e76025d98d43e868b954d632ae5",
+        "retrieval_method": "manual_browser",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "reference condition",
+            "rows": 4343
+          },
+          {
+            "sheet": "C-limited condition",
+            "rows": 4343
+          }
+        ]
+      },
+      {
+        "tree": "raw",
+        "path": "data/science.abk2066_table_s7.xlsx",
+        "role": "raw_data",
+        "bytes": 346049,
+        "sha256_manifest": "4ca3e38968e6b5f7db5a0acb82215531557af179a6bbaad3080ba2d16b8b243e",
+        "sha256_disk": "4ca3e38968e6b5f7db5a0acb82215531557af179a6bbaad3080ba2d16b8b243e",
+        "retrieval_method": "manual_browser",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "1 - description of samples",
+            "rows": 20
+          },
+          {
+            "sheet": "2 - protein variability data",
+            "rows": 1416
+          }
+        ]
+      },
+      {
+        "tree": "raw",
+        "path": "data/science.abk2066_tables_s3_to_s7.zip",
+        "role": "raw_data",
+        "bytes": 4006966,
+        "sha256_manifest": "f7624ba6bb6e9e54e8e09f290b7da82b9ba6efb9814dbe481807ed44ba522625",
+        "sha256_disk": "f7624ba6bb6e9e54e8e09f290b7da82b9ba6efb9814dbe481807ed44ba522625",
+        "retrieval_method": "manual_browser",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/science.abk2066_mdar_reproducibility_checklist.pdf",
+        "role": "si_pdf",
+        "bytes": 158999,
+        "sha256_manifest": "f6016e8d3915489b2980d756e6d6722f273adfa564aadfd0ec98d8b32df9299e",
+        "sha256_disk": "f6016e8d3915489b2980d756e6d6722f273adfa564aadfd0ec98d8b32df9299e",
+        "retrieval_method": "manual_browser",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/science.abk2066_sm.layout.txt",
+        "role": "si_text",
+        "bytes": 165750,
+        "sha256_manifest": "3ae343b242d0be1bfb50da5dcd2660cb21d6a35b85ffc68c871a57b7fe94b8ce",
+        "sha256_disk": "3ae343b242d0be1bfb50da5dcd2660cb21d6a35b85ffc68c871a57b7fe94b8ce",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/science.abk2066_sm.pdf",
+        "role": "si_pdf",
+        "bytes": 5001449,
+        "sha256_manifest": "e925a839d31051d3b209bf79f2527a2c8497e0d3e37f21b8c9b3d37c6c372e09",
+        "sha256_disk": "e925a839d31051d3b209bf79f2527a2c8497e0d3e37f21b8c9b3d37c6c372e09",
+        "retrieval_method": "manual_browser",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
       }
     ],
     "walls": []
@@ -147,6 +317,6 @@
     "unresolved_compounds": [],
     "proposed_class": "MrnaFractionBalakrishnan2022Dataset"
   },
-  "decided_at": "2026-10-10",
-  "torchcell_commit": "81c1d0ebd753682aa81c34458f8e02fe4673f9a8"
+  "decided_at": "2026-10-12",
+  "torchcell_commit": "462853a59b8126fe818136963c2a81bceb019098"
 }

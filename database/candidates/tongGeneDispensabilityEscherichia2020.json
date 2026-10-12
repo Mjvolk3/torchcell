@@ -1,0 +1,328 @@
+{
+  "citation_key": "tongGeneDispensabilityEscherichia2020",
+  "table": "bacteria",
+  "row_name": "Tong 2020",
+  "gates": [
+    {
+      "gate": "G1",
+      "outcome": "pass",
+      "reason": "primary: status='candidate', klass='Fitness / chemical genomics', no aggregation marker",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G2",
+      "outcome": "pass",
+      "reason": "assembly_set: BW25113 -> ecoli_K12_BW25113_ASM75055v1 resolves and reads",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G3",
+      "outcome": "pass",
+      "reason": "14 file(s) in library+raw, 17478 worksheet row(s) counted; all intact",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G4",
+      "outcome": "pass",
+      "reason": "no key held by another module (0 mention(s)); no PMID check; values not compared (no dev store named)",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G5",
+      "outcome": "pass",
+      "reason": "FitnessPhenotype exists; compounds resolve",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    }
+  ],
+  "zotero_item": "present",
+  "source_kind": "primary",
+  "aggregation": null,
+  "g2": {
+    "branch": "assembly_set",
+    "outcome": "resolvable_readable",
+    "hosts": [
+      {
+        "name": "BW25113",
+        "assembly_set": "ecoli_K12_BW25113_ASM75055v1",
+        "resolvable": true,
+        "readable": true
+      }
+    ]
+  },
+  "g3": {
+    "citation_key": "tongGeneDispensabilityEscherichia2020",
+    "trees_read": [
+      "library",
+      "raw"
+    ],
+    "files": [
+      {
+        "tree": "library",
+        "path": "si/si1.tif",
+        "role": "si_data",
+        "bytes": 443662,
+        "sha256_manifest": "90ec3dd2a1b33b131c5a02dfe4d99644ac13fca656a6a89dea4cf00513836c37",
+        "sha256_disk": "90ec3dd2a1b33b131c5a02dfe4d99644ac13fca656a6a89dea4cf00513836c37",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si2.tif",
+        "role": "si_data",
+        "bytes": 207284,
+        "sha256_manifest": "598d6ce1be199c2e830a21ba0486cfeb3302f158ee90fd57e903f812b968d12a",
+        "sha256_disk": "598d6ce1be199c2e830a21ba0486cfeb3302f158ee90fd57e903f812b968d12a",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si3.tif",
+        "role": "si_data",
+        "bytes": 133708,
+        "sha256_manifest": "9cc6e20518bb23924bfd6693cbf802b6acf99afecc9feb6b43a39baa9ecc84b2",
+        "sha256_disk": "9cc6e20518bb23924bfd6693cbf802b6acf99afecc9feb6b43a39baa9ecc84b2",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si4.xlsx",
+        "role": "si_data",
+        "bytes": 2091607,
+        "sha256_manifest": "d291160d41f65a1a3bd4fc8fe7d58e42bbdd92b4be2ef8c74bb2f284db8e8c84",
+        "sha256_disk": "d291160d41f65a1a3bd4fc8fe7d58e42bbdd92b4be2ef8c74bb2f284db8e8c84",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": "1c3f7b8aea226f90e5bcb237ecf483f62dcac84c63569a57b13307fba54aa166",
+        "sheets": [
+          {
+            "sheet": "S1A - Endpoint Biomass",
+            "rows": 3797
+          },
+          {
+            "sheet": "S1B - Comparison to Keio Data",
+            "rows": 3728
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si5.xlsx",
+        "role": "si_data",
+        "bytes": 18994,
+        "sha256_manifest": "a67ab8bd67407491005f241cc0e60f8e328d9dc238ed64e9f11452a1192ce009",
+        "sha256_disk": "a67ab8bd67407491005f241cc0e60f8e328d9dc238ed64e9f11452a1192ce009",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "S2A - Genes with phenotype",
+            "rows": 343
+          },
+          {
+            "sheet": "S2B - Y-genes with phenotypes",
+            "rows": 52
+          },
+          {
+            "sheet": "S2C - Essential 27 conditions",
+            "rows": 75
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si6.xlsx",
+        "role": "si_data",
+        "bytes": 13965,
+        "sha256_manifest": "274e0878a13b183cafdaaf377ad303bbb893791217eb6edf2efdb3407c68c8e5",
+        "sha256_disk": "274e0878a13b183cafdaaf377ad303bbb893791217eb6edf2efdb3407c68c8e5",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Sheet1",
+            "rows": 343
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si7.tif",
+        "role": "si_data",
+        "bytes": 84136,
+        "sha256_manifest": "52b7910a34ce69f07f5e4a038e84511ff5d7d88589626845ef2b7f1c463251c3",
+        "sha256_disk": "52b7910a34ce69f07f5e4a038e84511ff5d7d88589626845ef2b7f1c463251c3",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si8.xlsx",
+        "role": "si_data",
+        "bytes": 156348,
+        "sha256_manifest": "badc922ff628c028a6dc5bc815e75895ce4885d7a1e12e55a890fbd9bc212761",
+        "sha256_disk": "badc922ff628c028a6dc5bc815e75895ce4885d7a1e12e55a890fbd9bc212761",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Sheet1",
+            "rows": 1403
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si9.xlsx",
+        "role": "si_data",
+        "bytes": 29656,
+        "sha256_manifest": "5daaac5471bd9ad9a706f176dc4e5be861460bb0c6fc6b0fcc2f1771346c08c8",
+        "sha256_disk": "5daaac5471bd9ad9a706f176dc4e5be861460bb0c6fc6b0fcc2f1771346c08c8",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Sheet1",
+            "rows": 199
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si10.xlsx",
+        "role": "si_data",
+        "bytes": 10229,
+        "sha256_manifest": "9b5942c4600de221f1aa24e68605c4f8b0c8e0cec5287b664a37a064925824d2",
+        "sha256_disk": "9b5942c4600de221f1aa24e68605c4f8b0c8e0cec5287b664a37a064925824d2",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Sheet1",
+            "rows": 13
+          }
+        ]
+      },
+      {
+        "tree": "raw",
+        "path": "data/carpe/CarPE.layout.txt",
+        "role": "si_text",
+        "bytes": 3214,
+        "sha256_manifest": "7ce5f26accfb805a63bb952c9131f5b2dda3dc1c7dc56d6c3abfc8996f2fa667",
+        "sha256_disk": "7ce5f26accfb805a63bb952c9131f5b2dda3dc1c7dc56d6c3abfc8996f2fa667",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "data/carpe/CarPE.pdf",
+        "role": "si_pdf",
+        "bytes": 67116,
+        "sha256_manifest": "c0451d1406e75a62590c940ba440aff8dd71f45ef556e33f506197deff9d4c25",
+        "sha256_disk": "c0451d1406e75a62590c940ba440aff8dd71f45ef556e33f506197deff9d4c25",
+        "retrieval_method": "manual_browser",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "data/carpe/carpe_carbon_conditions.csv",
+        "role": "raw_data",
+        "bytes": 1250,
+        "sha256_manifest": "1076c9eae19168ccfb8bae736308552f0fde0bb0765fe12ba64fe7949578e7a3",
+        "sha256_disk": "1076c9eae19168ccfb8bae736308552f0fde0bb0765fe12ba64fe7949578e7a3",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "data/mBio.02259-20-st001.xlsx",
+        "role": "raw_data",
+        "bytes": 2091607,
+        "sha256_manifest": "d291160d41f65a1a3bd4fc8fe7d58e42bbdd92b4be2ef8c74bb2f284db8e8c84",
+        "sha256_disk": "d291160d41f65a1a3bd4fc8fe7d58e42bbdd92b4be2ef8c74bb2f284db8e8c84",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": "1c3f7b8aea226f90e5bcb237ecf483f62dcac84c63569a57b13307fba54aa166",
+        "sheets": [
+          {
+            "sheet": "S1A - Endpoint Biomass",
+            "rows": 3797
+          },
+          {
+            "sheet": "S1B - Comparison to Keio Data",
+            "rows": 3728
+          }
+        ]
+      }
+    ],
+    "walls": []
+  },
+  "g4_key": {
+    "doi": "10.1128/mBio.02259-20",
+    "pmid": null,
+    "accessions": [],
+    "hits": [
+      {
+        "key_kind": "doi",
+        "key": "10.1128/mBio.02259-20",
+        "where": "torchcell/datasets/ecoli/tong2020.py",
+        "relation": "own"
+      }
+    ],
+    "pmid_checked": false
+  },
+  "g4_value": null,
+  "g5": {
+    "phenotype_class": "FitnessPhenotype",
+    "class_exists": true,
+    "unresolved_compounds": [],
+    "proposed_class": "CarbonSourceTong2020Dataset"
+  },
+  "decided_at": "2026-10-12",
+  "torchcell_commit": "462853a59b8126fe818136963c2a81bceb019098"
+}

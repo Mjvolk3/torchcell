@@ -592,3 +592,47 @@ Three additions, built for every natural isolate of the Peter 2018 panel by `tor
 - `Genotype.natural_isolate: NaturalIsolateDescriptor | None` (new optional field, `exclude_if` None). Not a union member: nothing in it is gene-keyed. `NaturalIsolateDescriptor` (`HashableProvenanceGapMixin`) carries `isolate`, `annotation_ref`, `genetic_manipulation` (`IsolateManipulation.ho_deletion` or a typed gap), `ploidy` (or a gap), `zygosity` (`GenomeZygosity`, Table S1's genome-wide class, distinct from the background-allele `Zygosity`) and `chromosome_copy_changes` (`ChromosomeCopyChange`, `[]` for euploid, `None` with a gap). Because the field is left out of the dump when `None`, every genotype that is not a natural isolate serializes to the same bytes and keeps its content id. `Genotype` refuses a strain-carrying perturbation that names another isolate than the descriptor, and its equality now includes the descriptor.
 
 Schema impact against `origin/main` at `007cd23b0` (`scripts/schema_impact_check.py`): 8 symbols changed (6 added, `Genotype` and `GenePerturbationType` modified), 109 loaders and 168 dataset classes stale, 51 of them served, 0 breaking. Every store whose closure holds `Genotype` is stale through the union membership; rebuilding one that is not a natural isolate rewrites identical records. Record: `database/schema_changes/` (`natural-isolate-genotype-loss-of-function-ho-deletion`).
+
+## 2026.10.12 - GeneEssentialityPhenotype carries its evidence (#924)
+
+`GeneEssentialityPhenotype.is_essential` meant five different observations in the five stores that write it, and every `True` phenotype of every store dumped to the same dict, so the graph served one phenotype node for all of them. The class now carries a required `evidence: GeneEssentialityEvidence`; `is_essential` keeps its type, default and meaning.
+
+### The descriptor
+
+- **Two-level type, the DAG.** `EssentialityEvidenceClass` is the physical observation (the parent); `EssentialityEvidenceType` is the readout and rule (the leaf). Each leaf has exactly one parent in `ESSENTIALITY_EVIDENCE_CLASS`, checked on every record.
+
+  | class (parent) | type (leaf) | store |
+  |---|---|---|
+  | `mutant_recovery` | `construction_outcome` | Baba 2006 |
+  | `insertion_depletion` | `genetic_footprinting` | Gerdes 2003 |
+  | `insertion_depletion` | `tradis_insertion_index` | Goodall 2018 |
+  | `insertion_depletion` | `rb_tnseq_coverage_and_fitness` | Price 2018 Table S1 |
+  | `curated_annotation` | `curated_null_phenotype` | SGD |
+
+- **Statements, role-typed.** `statements: list[EssentialityStatement]`, each a `role` (`EssentialityStatementRole`: `scoring_rule`, `call_definition`, `caveat`, `statistic_definition`) and a verbatim `SourcedValue` with sha256 under the one name `provenance` (the ontology-coherence rule that every `SourcedValue` field is called `provenance`). Exactly one `scoring_rule` and one `call_definition` per record; `scoring_rule` and `call_definition` read them back. Only what the source states about its own method goes here.
+- **Per-record statistics, optional by construction.** Each belongs to one type (`ESSENTIALITY_EVIDENCE_FIELDS`) and is refused on any other, so `None` means "this evidence type does not release it":
+
+  | type | fields |
+  |---|---|
+  | `construction_outcome` | `colonies_verified`, `colonies_tested`, `percent_verified` (consistent with each other) |
+  | `genetic_footprinting` | `footprinting_call` (`FootprintingCall` E, N, N*, X, ?), `footprint_insertions_aa`, `assertion_error` + `assertion_error_is_upper_bound` (value or bound, a typed gap on an E call whose cell is `n.d.` or empty) |
+  | `tradis_insertion_index` | `tradis_call` (`TradisCall`), `insertion_index`, `log_likelihood_ratio` |
+  | `rb_tnseq_coverage_and_fitness` | `tnseq_reads`, `normalized_read_density`, `central_insertion_positions`, `normalized_insertion_density`, `gene_gc_fraction`, `false_discovery_rate_lower` / `_upper` |
+  | `curated_null_phenotype` | `curated_experiment_type` |
+
+- A reference phenotype (the unperturbed parent) carries its dataset's type and statements and no statistics, since no call was made on it.
+- **The boolean leaf's own check.** `GeneEssentialityPhenotype._released_call_is_the_boolean` refuses a released call letter that disagrees with `is_essential` (`FOOTPRINTING_CALL_IS_ESSENTIAL`, `TRADIS_CALL_IS_ESSENTIAL`) or has no boolean (footprinting X and ?, TraDIS "unclear"). The descriptor reads no boolean.
+
+### The sibling slot (#909)
+
+The parent of `GeneEssentialityPhenotype` is `Phenotype`; a graded leaf (Royet 2025's HMM states, and the Gerdes X / ? and Goodall "unclear" calls the loaders ledger today) is the sibling slot under it. It can carry `GeneEssentialityEvidence` unchanged as a class: the call-to-boolean mapping and the refusal live only on the boolean leaf. What a graded leaf adds is its own rule as one more `EssentialityEvidenceType` member under `insertion_depletion`, with its entries in `ESSENTIALITY_EVIDENCE_CLASS` and `ESSENTIALITY_EVIDENCE_FIELDS` (an empty tuple if its release carries no per-record statistic beyond the grade, which is the leaf's label, not evidence). Not implemented here.
+
+### Served graph
+
+The adapter serves the whole descriptor as one `evidence` JSON property of `gene essentiality phenotype` (`biocypher/config/torchcell_schema_config.yaml`), under its field name as every nested phenotype field is served, so the node class still matches the pydantic class by its property set (`test_phenotype_classes_and_node_classes_are_in_bijection`). The evidence type is read from that JSON. The two evidence classes draw on the phenotype lane of the ontology figure (`torchcell/paper/ontology_graph.py`).
+
+### Impact and record
+
+`PYTHONPATH=<wt> python scripts/schema_impact_check.py --base origin/main` at `007cd23b0`: 12 changed symbols, 11 added (`EssentialityEvidenceClass`, `EssentialityEvidenceType`, `EssentialityStatement`, `EssentialityStatementRole`, `FootprintingCall`, `GeneEssentialityEvidence`, `TradisCall`, and the bindings `ESSENTIALITY_EVIDENCE_CLASS`, `ESSENTIALITY_EVIDENCE_FIELDS`, `FOOTPRINTING_CALL_IS_ESSENTIAL`, `TRADIS_CALL_IS_ESSENTIAL`) and `GeneEssentialityPhenotype` BREAKING (added required field `evidence`, the new validator); 5 loaders, 6 classes, all breaking: Baba 2006, Gerdes 2003, Goodall 2018, both Price 2018 classes (essentiality and RB-TnSeq share the module) and SGD. Of the `2026.10.06-4b293d34` release only `GeneEssentialitySgdDataset` is served, so the rebuild scope is the full KG rebuild. Record: `database/schema_changes/2026-10-12-gene-essentiality-evidence.json` (PR #1066; `additive_leaf` for the 11 new symbols, `contract_tightened` for the phenotype; measurement-type decision with eight verbatim source quotes; four alternatives rejected: a leaf per evidence type, an optional or free-text evidence, loosening `is_essential` to hold X / ? / unclear, and leaving the evidence in `preprocess/`).
+
+Tests: `tests/torchcell/datamodels/test_gene_essentiality_evidence.py` (the DAG and field map, each type's round trip, every refusal, the role counts, the released-call agreement), the evidence tests of the five loaders, the SGD verifier's `evidence` row, and the adapter's projected properties.

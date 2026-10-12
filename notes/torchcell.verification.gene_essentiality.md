@@ -23,3 +23,7 @@ The checks the verifier made are not lost, they moved to where the evidence now 
 ## 2026.10.12 - The cross-release contradiction reports, never gates
 
 `no_viable_deletion_in_<store>` judges this store's essentiality annotations against another paper's deletion strains through the shared gene key, which is a gene-set judgment across releases and not this store's fidelity to its own bytes, so it is `report`-class ([[torchcell.verification.report]], owner 2026-10-12: "the genome is separate.. it doesn't gate anything"). Its computation is unchanged. On the dev tree's current report it does not hold for `gene_essentiality_sgd`: 7 of 1,119 unconditionally essential genes are viable full-deletion strains of `smf_costanzo2016` (YHR072W-A, YHR099W, YJL012C, YLR293C, YNL138W-A, YOR167C, YOR182C); the store's verdict now reads its gate rows. `released_annotations` stays a gate.
+
+## 2026.10.12 - An `evidence` row (#924)
+
+`GeneEssentialityPhenotype` carries a required `GeneEssentialityEvidence` ([[torchcell.datamodels.schema]]), so the family gains one L3 row, `evidence` (`evidence_result`), placed after `reference_viable`: every experiment and its reference carry one evidence type, the same on both; a `curated_null_phenotype` experiment states its SGD experiment type (`curated_experiment_type`), and a reference never does, since no call was made on it. Its details count the (experiment, reference) type pairs and the experiment types. The rule reads only the stored dicts, so it holds for any store of the family; SGD is its one member today.

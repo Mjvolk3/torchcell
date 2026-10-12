@@ -148,3 +148,7 @@ left-off check now run UNEXEMPTED: before the fix that check had to skip
 ## 2026.10.11 - life cycle phenotype node
 
 `_life_cycle_phenotype_node` and `_get_life_cycle_phenotype_reference_nodes` emit `life cycle phenotype` (De Chiara 2022); the keyed time course is a JSON string and the assay, sample counts and cells per sample stay typed properties.
+
+## 2026.10.12 - `gene essentiality phenotype` serves its evidence (#924)
+
+`_gene_essentiality_properties` builds the node properties of a `GeneEssentialityPhenotype`, experiment or reference: `graph_level`, `label_name`, `is_essential`, and `evidence`, the whole `GeneEssentialityEvidence` as JSON (evidence class and type, the role-typed statements with their quotes and sha256, the per-record statistics). The property is named after the field, as every nested phenotype field is served, so the node class and the pydantic class stay in bijection by property set. Because the evidence and its statistics are part of the phenotype dump, the phenotype node id (the sha256 of the dump) now separates stores and records that used to share the single `is_essential=True` node.

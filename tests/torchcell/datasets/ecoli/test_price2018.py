@@ -241,9 +241,9 @@ def test_the_pins_are_the_ones_the_wetmore_record_uses() -> None:
 
 
 def test_expected_records_is_kept_samples_times_mapped_genes() -> None:
-    # #1057: every released gene, the 21 no ECK pair places stored as released
-    assert (p.EXPECTED_SAMPLES, p.EXPECTED_GENES) == (151, 3789)
-    assert p.EXPECTED_RECORDS == 151 * 3789
+    # #1057: every released gene under its b-number; the 7 motility samples are kept
+    assert (p.EXPECTED_SAMPLES, p.EXPECTED_GENES) == (158, 3789)
+    assert p.EXPECTED_RECORDS == 158 * 3789
 
 
 # --------------------------------------------------------------------------- #
@@ -255,7 +255,7 @@ def test_each_sample_gets_one_rule_and_its_source_paper() -> None:
         "set1IT003": None,
         "set1IT007": p.DROP_DISREGARDED,
         "set1IT067": None,
-        "set6IT068": p.DROP_MOTILITY,
+        "set6IT068": None,
         "set2IT026": None,
         "set2IT045": None,
         "set1IT071": None,
@@ -575,27 +575,39 @@ def test_the_eck_route_places_one_to_one_pairs_and_names_every_miss() -> None:
 # --------------------------------------------------------------------------- #
 # Records
 # --------------------------------------------------------------------------- #
-def _mapping(b: str, tag: str, name: str) -> p.GeneMapping:
-    return p.GeneMapping(
-        b_number=b,
-        eck=f"ECK{b[1:]}",
-        locus_tag=tag,
-        perturbed_gene_name=name,
-        numerics_agree=b[1:] == tag.removeprefix("BW25113_"),
-    )
-
-
-def test_the_genotype_is_a_derived_gene_level_tn5_insertion() -> None:
-    genotype = p.build_genotype(_mapping("b0002", "BW25113_0002", "thrA"))
+def test_the_genotype_is_a_gene_level_tn5_insertion_under_the_released_b_number() -> (
+    None
+):
+    genotype = p.build_genotype(p.StoredGene(b_number="b0002", name="b0002"))
     (perturbation,) = genotype.perturbations
     assert isinstance(perturbation, TransposonInsertionPerturbation)
-    assert perturbation.systematic_gene_name == "BW25113_0002"
-    assert perturbation.perturbed_gene_name == "thrA"
-    assert perturbation.gene_namespace == "ecoli_k12_bw25113_locus_tag"
+    # #1057: the released sysName is the stored key; no ECK pair is consulted
+    assert perturbation.systematic_gene_name == "b0002"
+    assert perturbation.perturbed_gene_name == "b0002"
+    assert perturbation.gene_namespace == "ecoli_k12_mg1655_bnumber"
     assert (perturbation.transposon, perturbation.library_pool) == ("Tn5", "KEIO_ML9")
     assert (perturbation.barcode, perturbation.insertion_position) == (None, None)
-    assert "Locus tag DERIVED" in perturbation.description
-    assert "one-to-one ECK pair" in perturbation.description
+    assert "Locus tag AS RELEASED" in perturbation.description
+
+
+def test_released_genes_keeps_release_order_and_refuses_a_non_b_number() -> None:
+    genes = p.released_genes(["b0003", "b0001"], {"b0003": "thrB", "b0001": " "})
+    assert list(genes) == ["b0003", "b0001"]
+    assert [g.name for g in genes.values()] == ["thrB", "b0001"]
+    with pytest.raises(ValueError, match="'BW25113_0001' is not an MG1655 b-number"):
+        p.released_genes(["BW25113_0001"])
+    with pytest.raises(ValueError, match="names b0001 twice"):
+        p.released_genes(["b0001", "b0001"])
+
+
+def test_a_motility_sample_carries_its_released_agar_dose() -> None:
+    environment = p.build_environment(_specs()["set6IT068"], SOLVENTS)
+    (agar,) = environment.perturbations
+    assert agar.perturbation_type == "small_molecule"
+    assert getattr(agar, "compound").name == "agar"
+    assert getattr(agar, "concentration").value == 3.0
+    assert agar.description == p.MOTILITY_DESCRIPTION
+    assert environment.temperature is not None and environment.temperature.value == 30.0
 
 
 def test_the_phenotype_stores_the_standard_error_and_gaps_the_strain_count() -> None:
@@ -646,11 +658,8 @@ def test_records_run_sample_by_sample_with_each_samples_publication() -> None:
         )
         for spec in kept
     ]
-    mapping = {
-        "b0001": _mapping("b0001", "BW25113_0001", "thrL"),
-        "b0003": _mapping("b0003", "BW25113_0003", "thrB"),
-    }
-    records = list(p.iter_records("D", samples, release, mapping))
+    genes = p.released_genes(release.b_numbers)
+    records = list(p.iter_records("D", samples, release, genes))
     seen = []
     for experiment, _, publication in records:
         assert isinstance(experiment.genotype, Genotype)
@@ -670,11 +679,14 @@ def test_records_run_sample_by_sample_with_each_samples_publication() -> None:
         assert phenotype.environment_response_t_statistic == pytest.approx(
             response / math.sqrt(0.1**2 + se**2)
         )
+    # #1057: every released gene is a record, b0002 included
     assert seen == [
-        ("BW25113_0001", -1.0, 0.3, "Keio:set1IT003", "10.1128/mBio.00306-15"),
-        ("BW25113_0003", 3.0, 0.7, "Keio:set1IT003", "10.1128/mBio.00306-15"),
-        ("BW25113_0001", -2.0, 0.4, "Keio:set2IT026", "10.1038/s41586-018-0124-0"),
-        ("BW25113_0003", -0.125, 0.6, "Keio:set2IT026", "10.1038/s41586-018-0124-0"),
+        ("b0001", -1.0, 0.3, "Keio:set1IT003", "10.1128/mBio.00306-15"),
+        ("b0002", 0.5, 0.1, "Keio:set1IT003", "10.1128/mBio.00306-15"),
+        ("b0003", 3.0, 0.7, "Keio:set1IT003", "10.1128/mBio.00306-15"),
+        ("b0001", -2.0, 0.4, "Keio:set2IT026", "10.1038/s41586-018-0124-0"),
+        ("b0002", 0.25, 0.3, "Keio:set2IT026", "10.1038/s41586-018-0124-0"),
+        ("b0003", -0.125, 0.6, "Keio:set2IT026", "10.1038/s41586-018-0124-0"),
     ]
     reference = records[0][1]
     assert reference.phenotype_reference.environment_response == 0.0
@@ -685,27 +697,7 @@ def test_records_run_sample_by_sample_with_each_samples_publication() -> None:
 
 def test_the_inventory_counts_samples_genes_and_records_by_rule() -> None:
     specs = tuple(_specs().values())
-    identifiers = p.IdentifierReport(
-        n_source_genes=10,
-        n_mapped=8,
-        mapped_fraction=0.8,
-        min_fraction=0.99,
-        numeric_disagreements=(),
-        unmapped=(
-            p.UnmappedGene(
-                b_number="b0500", reason="b_number_not_in_mg1655_annotation", eck=()
-            ),
-            p.UnmappedGene(
-                b_number="b1172", reason="eck_absent_from_bw25113", eck=("ECK1159",)
-            ),
-        ),
-        unmapped_by_reason={},
-        reconcile_status_histogram={},
-        reconcile_layer_histogram={},
-        n_symbol_names=8,
-        n_tag_names=0,
-    )
-    counts = p.inventory(specs, identifiers, SOLVENTS)
+    counts = p.inventory(specs, 10, SOLVENTS)
     assert counts.table_s5_samples == 9
     assert counts.samples_by_source == {
         p.SampleSource.wetmore2015.value: 4,
@@ -713,13 +705,13 @@ def test_the_inventory_counts_samples_genes_and_records_by_rule() -> None:
     }
     assert counts.kept_samples_by_source == {
         p.SampleSource.wetmore2015.value: 3,
-        p.SampleSource.price2018.value: 4,
+        p.SampleSource.price2018.value: 5,
     }
-    # #1057: a gene no ECK pair places is stored as released, so no gene is dropped
-    assert (counts.source_records, counts.kept_records) == (90, 70)
+    # #1057: every released gene is stored, and the motility sample is kept; the author
+    # withdrawal is the only drop
+    assert (counts.source_records, counts.kept_records) == (90, 80)
     assert [(d.rule, d.items, d.n_records) for d in counts.drops] == [
-        (p.DROP_DISREGARDED, ("set1IT007",), 10),
-        (p.DROP_MOTILITY, ("set6IT068",), 10),
+        (p.DROP_DISREGARDED, ("set1IT007",), 10)
     ]
     assert counts.source_records == counts.kept_records + sum(
         d.n_records for d in counts.drops
@@ -971,14 +963,8 @@ def test_map_genes_on_the_synthetic_k12_pair(
         "b0006": ("b0006", "proC", "ecoli_k12_mg1655_bnumber"),
         "b0099": ("b0099", "b0099", "ecoli_k12_mg1655_bnumber"),
     }
+    # the crosswalk is a derived artifact (#1057): the records never read it
     assert report.released_as == ("b0005", "b0006", "b0099")
-    genotype = p.build_genotype(mapping["b0006"])
-    leaf = genotype.perturbations[0]
-    assert isinstance(leaf, TransposonInsertionPerturbation)
-    assert leaf.description == p.DESCRIPTION_AS_RELEASED
-    assert p.build_genotype(mapping["b0001"]).perturbations[0].description == (
-        p.DESCRIPTION
-    )
     assert report.numeric_disagreements == (("b0003", "BW25113_4412", "ECK0003"),)
     assert [(u.b_number, u.reason, u.eck) for u in report.unmapped] == [
         ("b0005", "eck_not_one_to_one", ("ECK0005",)),
@@ -1056,7 +1042,7 @@ def _release_frames(samples: list[str]) -> dict[str, pd.DataFrame]:
 
 
 #: set1IT003 (Wetmore, glucose), set2IT026 (Price, stress), set1IT007 (Wetmore,
-#: withdrawn), set6IT068 (Price, motility): two kept samples.
+#: withdrawn), set6IT068 (Price, motility): three kept samples since #1057.
 SYNTHETIC_TABLE = pd.DataFrame([ROWS[0], ROWS[4], ROWS[1], ROWS[3]])
 SYNTHETIC_SAMPLES = ["set1IT003", "set2IT026", "set1IT007", "set6IT068"]
 
@@ -1251,19 +1237,13 @@ def _dataset_root(data_root: Path) -> Path:
 def test_the_loader_builds_the_synthetic_release_end_to_end(mirrored: Path) -> None:
     root = _dataset_root(mirrored)
     dataset = p.RbTnseqPrice2018EcoliDataset(root=str(root))
-    assert len(dataset) == 14
-    assert sorted(dataset.gene_set) == [
-        "BW25113_0001",
-        "BW25113_0002",
-        "BW25113_0004",
-        "BW25113_4412",
-        "b0005",
-        "b0006",
-        "b0099",
-    ]
+    # #1057: 3 kept samples (the motility one included) x 7 genes, each gene under its
+    # released b-number
+    assert len(dataset) == 21
+    assert sorted(dataset.gene_set) == sorted(SYNTHETIC_GENES)
     references = dataset.experiment_reference_index
     assert references is not None
-    assert len(references) == 2
+    assert len(references) == 3
     first = dataset[0]
     phenotype = first["experiment"]["phenotype"]
     assert phenotype["screen_id"] == "Keio:set1IT003"
@@ -1271,19 +1251,15 @@ def test_the_loader_builds_the_synthetic_release_end_to_end(mirrored: Path) -> N
     assert phenotype["environment_response_se"] == pytest.approx(0.3)
     assert first["experiment"]["genotype"]["perturbations"][0][
         "systematic_gene_name"
-    ] == ("BW25113_0001")
+    ] == ("b0001")
     assert first["publication"]["doi"] == "10.1128/mBio.00306-15"
     drops = json.loads((root / "preprocess" / "dropped_records.json").read_text())
-    assert (drops["source_records"], drops["kept_records"]) == (28, 14)
+    assert (drops["source_records"], drops["kept_records"]) == (28, 21)
     assert [(d["rule"], d["items"], d["n_records"]) for d in drops["drops"]] == [
-        (p.DROP_DISREGARDED, ["set1IT007"], 7),
-        (p.DROP_MOTILITY, ["set6IT068"], 7),
+        (p.DROP_DISREGARDED, ["set1IT007"], 7)
     ]
-    identifiers = json.loads(
-        (root / "preprocess" / "identifier_mapping.json").read_text()
-    )
-    assert (identifiers["n_source_genes"], identifiers["n_mapped"]) == (7, 4)
-    assert identifiers["released_as"] == ["b0005", "b0006", "b0099"]
+    # the ECK crosswalk is no part of the build (#1057)
+    assert not (root / "preprocess" / "identifier_mapping.json").exists()
     standard_error = json.loads(
         (root / "preprocess" / "standard_error.json").read_text()
     )
@@ -1325,27 +1301,17 @@ def test_verify_runs_the_family_verifier_with_the_bacterial_universe(
     mirrored: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     p.RbTnseqPrice2018EcoliDataset(root=str(_dataset_root(mirrored)))
-    monkeypatch.setattr(p, "EXPECTED_RECORDS", 14)
+    monkeypatch.setattr(p, "EXPECTED_RECORDS", 21)
     report = p.verify(str(mirrored))
     results = {r.name: r.passed for r in report.results}
     assert results["count"] is True
     assert results["pair_uniqueness"] is True
     assert results["compound_identity"] is True
-    # #1057: b0005, b0006 and b0099 are stored as the released MG1655 b-number, which is
-    # no BW25113 locus; only the shared genome-reference rules may read that as a
-    # failure, until the verifier learns the status (a separate branch)
+    # #1057: the released b-numbers are checked against the MG1655 annotation, whose
+    # genome-reference rows report and never gate; b0099 is no MG1655 locus
     failing = {name for name, passed in results.items() if not passed}
     assert failing <= GENOME_REFERENCE_RULES
-    # BW25113_0004 is a pseudogene the collection deleted. The shared row used to FAIL
-    # on it (it required status `current`, which a `/pseudo` locus can never have) and
-    # this loader's supplementary row carried the real check; the shared row now accepts
-    # a non-gene feature that resolves to ITSELF and counts it, and the supplementary
-    # row is the stricter restatement over the BW25113 tags.
-    assert results["stored_tags_are_loci_of_the_pinned_assembly"] is True
-    pseudogene = next(
-        r for r in report.results if r.name == "canonical_gene_names"
-    ).details["self_resolving_non_gene_features"]
-    assert any("BW25113_0004" in entry for entry in pseudogene)
+    assert "stored_tags_are_loci_of_the_pinned_assembly" not in results
     written = json.loads(
         (
             _dataset_root(mirrored) / "preprocess" / "verification_report.json"
@@ -1358,10 +1324,10 @@ def test_report_recomputes_the_notes_numbers_from_the_mirrors(mirrored: Path) ->
     out = p.report(str(mirrored))
     assert out["inventory"]["kept_samples_by_source"] == {
         p.SampleSource.wetmore2015.value: 1,
-        p.SampleSource.price2018.value: 1,
+        p.SampleSource.price2018.value: 2,
     }
-    assert out["inventory"]["kept_records"] == 14
-    assert out["identifiers"]["n_mapped"] == 4
+    assert out["inventory"]["kept_records"] == 21
+    assert out["eck_crosswalk_derived_artifact"]["n_mapped"] == 4
     assert out["standard_error"]["n_values"] == 28
     assert out["set_prefixes"] == ["set1", "set2", "set6"]
 
@@ -1614,44 +1580,20 @@ def test_the_essentiality_environment_is_the_library_selection_condition() -> No
     assert environment != p.build_environment(_specs()["set2IT045"], SOLVENTS)
 
 
-def _essential_identifiers(
-    mapped: int, unmapped: tuple[str, ...]
-) -> p.IdentifierReport:
-    return p.IdentifierReport(
-        n_source_genes=mapped + len(unmapped),
-        n_mapped=mapped,
-        mapped_fraction=mapped / (mapped + len(unmapped)),
-        min_fraction=0.5,
-        numeric_disagreements=(),
-        unmapped=tuple(
-            p.UnmappedGene(b_number=b, reason="eck_absent_from_bw25113", eck=())
-            for b in unmapped
-        ),
-        unmapped_by_reason={"eck_absent_from_bw25113": len(unmapped)},
-        reconcile_status_histogram={},
-        reconcile_layer_histogram={},
-        n_symbol_names=mapped,
-        n_tag_names=0,
-    )
-
-
 def test_the_essentiality_inventory_counts_rows_and_proves_disjointness(
     tmp_path: Path,
 ) -> None:
     genes = p.read_essential_genes(_write_workbook(tmp_path / "si3.xlsx"))
-    counts = p.essentiality_inventory(
-        genes, _essential_identifiers(3, ("b0006", "b0007")), ["b0004", "b0005"]
-    )
-    # #1057: the two genes no ECK pair places are stored as released, not dropped
+    counts = p.essentiality_inventory(genes, ["b0004", "b0005"])
+    # #1057: every Table S1 row is a record under its released b-number
     assert (counts.source_genes, counts.kept_genes) == (5, 5)
-    assert counts.released_as_genes == ("b0006", "b0007")
-    assert counts.released_as_gene_names == ("araC", "rhaD")
-    # the status is tied to the pinned BW25113 genotype, not asserted from memory
-    assert counts.released_as_genes_explained_by_background == {
+    assert counts.rows_without_a_refseq_locus_tag == ("b0006", "b0007")
+    assert counts.rows_without_a_refseq_locus_tag_names == ("araC", "rhaD")
+    # a finding tied to the pinned BW25113 genotype, never a gate
+    assert counts.background_lesions_for_rows_without_a_tag == {
         "araC": "(araBAD)567",
         "rhaD": "(rhaBAD)568",
     }
-    assert counts.rows_without_a_refseq_locus_tag == ("b0006", "b0007")
     assert counts.shared_with_fitness == ()
     assert counts.fitness_genes == 2
     assert counts.gene_class_histogram == {
@@ -1679,19 +1621,15 @@ def test_the_essentiality_inventory_counts_rows_and_proves_disjointness(
     )
 
 
-def test_a_gene_in_both_releases_or_a_lost_mapping_is_refused(tmp_path: Path) -> None:
+def test_a_gene_in_both_releases_is_refused(tmp_path: Path) -> None:
     genes = p.read_essential_genes(_write_workbook(tmp_path / "si3.xlsx"))
     with pytest.raises(ValueError, match="both likely-essential and valued"):
-        p.essentiality_inventory(
-            genes, _essential_identifiers(3, ("b0006", "b0007")), ["b0001", "b0004"]
-        )
-    with pytest.raises(ValueError, match="are not the rows Table S1 leaves without"):
-        p.essentiality_inventory(
-            genes, _essential_identifiers(4, ("b0007",)), ["b0004"]
-        )
+        p.essentiality_inventory(genes, ["b0001", "b0004"])
 
 
-def _essential_gene(b_number: str = "b0001", **coverage: Any) -> p.EssentialGene:
+def _essential_gene(
+    b_number: str = "b0001", name: str = "thrL", **coverage: Any
+) -> p.EssentialGene:
     """A Table S1 Keio row with low coverage (the release's own rule calls it)."""
     values: dict[str, Any] = {
         "gc": 0.52,
@@ -1706,7 +1644,7 @@ def _essential_gene(b_number: str = "b0001", **coverage: Any) -> p.EssentialGene
         locus_id="1",
         b_number=b_number,
         refseq_locus_tag="BW25113_RS00005",
-        name="thrL",
+        name=name,
         desc="d",
         gene_class="Arole",
         **values,
@@ -1714,23 +1652,23 @@ def _essential_gene(b_number: str = "b0001", **coverage: Any) -> p.EssentialGene
 
 
 def test_an_essentiality_record_carries_the_label_caveat() -> None:
-    mapping = _mapping("b0001", "BW25113_0001", "thrL")
+    gene = _essential_gene("b0001", "thrL")
     environment = p.essentiality_environment()
-    experiment = p.build_essentiality_experiment(
-        "D", mapping, environment, _essential_gene()
-    )
+    experiment = p.build_essentiality_experiment("D", gene, environment)
     assert experiment.phenotype.is_essential is True
     assert experiment.phenotype.label_name == "is_essential"
     assert isinstance(experiment.genotype, Genotype)
     (perturbation,) = experiment.genotype.perturbations
     assert isinstance(perturbation, TransposonInsertionPerturbation)
-    assert perturbation.systematic_gene_name == "BW25113_0001"
+    # #1057: Table S1's sysName and name, verbatim
+    assert perturbation.systematic_gene_name == "b0001"
     assert perturbation.perturbed_gene_name == "thrL"
+    assert perturbation.gene_namespace == "ecoli_k12_mg1655_bnumber"
     assert (perturbation.transposon, perturbation.library_pool) == ("Tn5", "KEIO_ML9")
     assert perturbation.barcode is None
     assert "nearly essential" in perturbation.description
     assert "6% to 16%" in perturbation.description
-    assert "DERIVED" in perturbation.description
+    assert "AS RELEASED" in perturbation.description
     reference = p.build_essentiality_reference("D", _pin(), environment)
     assert reference.phenotype_reference.is_essential is False
     assert reference.environment_reference == environment
@@ -1767,21 +1705,12 @@ def test_an_essentiality_record_carries_the_label_caveat() -> None:
     assert reference_evidence.statements == evidence.statements
 
 
-def test_an_essentiality_record_refuses_another_genes_coverage() -> None:
-    mapping = _mapping("b0001", "BW25113_0001", "thrL")
-    with pytest.raises(ValueError, match="b0002 is not the mapped b0001"):
-        p.build_essentiality_experiment(
-            "D", mapping, p.essentiality_environment(), _essential_gene("b0002")
-        )
-
-
 def test_the_evidence_row_checks_coverage_threshold_and_statements() -> None:
-    mapping = _mapping("b0001", "BW25113_0001", "thrL")
     environment = p.essentiality_environment()
     gene = _essential_gene()
     record = {
         "experiment": p.build_essentiality_experiment(
-            "D", mapping, environment, gene
+            "D", gene, environment
         ).model_dump(),
         "reference": p.build_essentiality_reference(
             "D", _pin(), environment
@@ -1858,20 +1787,13 @@ def _essentiality_root(data_root: Path) -> Path:
 
 
 def test_the_essentiality_loader_builds_the_synthetic_table_end_to_end(
-    essentiality_mirrored: Path, monkeypatch: pytest.MonkeyPatch
+    essentiality_mirrored: Path,
 ) -> None:
-    monkeypatch.setattr(p, "MIN_ESSENTIAL_ECK_ROUTE_FRACTION", 0.5)
     root = _essentiality_root(essentiality_mirrored)
     dataset = p.GeneEssentialityPrice2018EcoliDataset(root=str(root))
     assert len(dataset) == 5
-    # #1057: the two genes BW25113 deletes are stored as the released b-number
-    assert sorted(dataset.gene_set) == [
-        "BW25113_0001",
-        "BW25113_0002",
-        "BW25113_4412",
-        "b0006",
-        "b0007",
-    ]
+    # #1057: every Table S1 row under its released b-number
+    assert sorted(dataset.gene_set) == [b for b, *_ in SYNTHETIC_ESSENTIAL_ROWS]
     references = dataset.experiment_reference_index
     assert references is not None
     assert len(references) == 1
@@ -1882,7 +1804,7 @@ def test_the_essentiality_loader_builds_the_synthetic_table_end_to_end(
     assert first["experiment"]["environment"]["media"]["state"] == "solid"
     drops = json.loads((root / "preprocess" / "dropped_records.json").read_text())
     assert (drops["source_genes"], drops["kept_genes"]) == (5, 5)
-    assert drops["released_as_genes"] == ["b0006", "b0007"]
+    assert drops["rows_without_a_refseq_locus_tag"] == ["b0006", "b0007"]
     assert drops["shared_with_fitness"] == []
     label = json.loads((root / "preprocess" / "essentiality_label.json").read_text())
     assert sorted(label) == sorted(p.ESSENTIALITY_LABEL_VALUES)
@@ -1891,27 +1813,14 @@ def test_the_essentiality_loader_builds_the_synthetic_table_end_to_end(
     rows = pd.read_csv(root / "preprocess" / "essential_genes.csv")
     assert list(rows["b_number"]) == [b for b, *_ in SYNTHETIC_ESSENTIAL_ROWS]
     assert list(rows["record"].astype("Int64")) == [0, 1, 2, 3, 4]
-    assert list(rows["locus_tag"]) == [
-        "BW25113_0001",
-        "BW25113_0002",
-        "BW25113_4412",
-        "b0006",
-        "b0007",
-    ]
-    assert list(rows["gene_namespace"]) == [
-        "ecoli_k12_bw25113_locus_tag",
-        "ecoli_k12_bw25113_locus_tag",
-        "ecoli_k12_bw25113_locus_tag",
-        "ecoli_k12_mg1655_bnumber",
-        "ecoli_k12_mg1655_bnumber",
-    ]
+    assert list(rows["stored_tag"]) == [b for b, *_ in SYNTHETIC_ESSENTIAL_ROWS]
+    assert set(rows["gene_namespace"]) == {"ecoli_k12_mg1655_bnumber"}
     assert (root / "preprocess" / "build_manifest.json").is_file()
 
 
 def test_the_essentiality_build_refuses_an_overlap_with_the_fitness_genes(
     essentiality_mirrored: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr(p, "MIN_ESSENTIAL_ECK_ROUTE_FRACTION", 0.5)
     source = p.source_path("fit_logratios_good.tab")
     pd.DataFrame({"locusId": [101], "sysName": ["b0001"], "set1IT003 x": [0.0]}).to_csv(
         source, sep="\t", index=False
@@ -1926,15 +1835,6 @@ def test_the_essentiality_build_refuses_an_overlap_with_the_fitness_genes(
         ),
     )
     with pytest.raises(ValueError, match="both likely-essential and valued"):
-        p.GeneEssentialityPrice2018EcoliDataset(
-            root=str(_essentiality_root(essentiality_mirrored))
-        )
-
-
-def test_the_essentiality_route_floor_stops_a_wrong_annotation(
-    essentiality_mirrored: Path,
-) -> None:
-    with pytest.raises(LocusTagResolutionError, match="places 3 of 5 genes"):
         p.GeneEssentialityPrice2018EcoliDataset(
             root=str(_essentiality_root(essentiality_mirrored))
         )
@@ -1959,7 +1859,6 @@ def test_an_essentiality_genome_of_the_wrong_strain_is_refused(
 def test_verify_essentiality_runs_every_row_over_the_built_store(
     essentiality_mirrored: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr(p, "MIN_ESSENTIAL_ECK_ROUTE_FRACTION", 0.5)
     p.GeneEssentialityPrice2018EcoliDataset(
         root=str(_essentiality_root(essentiality_mirrored))
     )
@@ -1974,10 +1873,12 @@ def test_verify_essentiality_runs_every_row_over_the_built_store(
     assert results["media_membership"] is True
     # the shared containment row keeps its name and names the universe in its message
     containment = next(r for r in report.results if r.name == "gene_containment_sgd")
-    assert "BW25113 genes" in containment.message
-    assert results["stored_tags_are_loci_of_the_pinned_assembly"] is True
-    # #1057: b0006 and b0007 are stored as the released MG1655 b-number, which is no
-    # BW25113 locus; only the shared genome-reference rules may read that as a failure
+    assert "MG1655 (the namespace of the released b-numbers) genes" in (
+        containment.message
+    )
+    assert "stored_tags_are_loci_of_the_pinned_assembly" not in results
+    # #1057: the released b-numbers against the MG1655 annotation; its genome-reference
+    # rows report and never gate
     assert {r.name for r in report.results if not r.passed} <= GENOME_REFERENCE_RULES
     written = json.loads(
         (
@@ -1990,11 +1891,9 @@ def test_verify_essentiality_runs_every_row_over_the_built_store(
 
 
 def test_the_essentiality_rows_fail_on_a_record_that_misstates_the_call() -> None:
-    mapping = _mapping("b0001", "BW25113_0001", "thrL")
+    gene = _essential_gene("b0001", "thrL")
     environment = p.essentiality_environment()
-    experiment = p.build_essentiality_experiment(
-        "D", mapping, environment, _essential_gene()
-    )
+    experiment = p.build_essentiality_experiment("D", gene, environment)
     reference = p.build_essentiality_reference("D", _pin(), environment)
     record = {
         "experiment": experiment.model_dump(),
@@ -2013,11 +1912,9 @@ def test_the_essentiality_rows_fail_on_a_record_that_misstates_the_call() -> Non
 
 
 def test_the_call_row_names_a_multi_perturbation_or_a_live_reference() -> None:
-    mapping = _mapping("b0001", "BW25113_0001", "thrL")
+    gene = _essential_gene("b0001", "thrL")
     environment = p.essentiality_environment()
-    experiment = p.build_essentiality_experiment(
-        "D", mapping, environment, _essential_gene()
-    )
+    experiment = p.build_essentiality_experiment("D", gene, environment)
     reference = p.build_essentiality_reference("D", _pin(), environment)
     record = {
         "experiment": experiment.model_dump(),
@@ -2051,7 +1948,15 @@ def test_the_refseq_route_reports_a_tag_that_names_another_locus() -> None:
         n_pos_central=0,
         dens=0.0,
     )
-    mapping = {"b0001": _mapping("b0001", "BW25113_0001", "thrL")}
+    mapping = {
+        "b0001": p.GeneMapping(
+            b_number="b0001",
+            eck="ECK0001",
+            locus_tag="BW25113_0001",
+            perturbed_gene_name="thrL",
+            numerics_agree=True,
+        )
+    }
     elsewhere = _resolution("BW25113_RS00005", GeneNameStatus.RENAMED, "BW25113_9999")
     out = p.refseq_route_agreement([gene], mapping, lambda name: elsewhere)
     assert out["n_agree"] == 0
@@ -2131,11 +2036,8 @@ def test_the_sample_inventory_by_source_and_rule(
     for spec in real_specs:
         by_rule.setdefault(spec.drop_rule, []).append(spec.name)
     assert len(real_specs) == 162
-    assert {k: len(v) for k, v in by_rule.items()} == {
-        None: 151,
-        p.DROP_DISREGARDED: 4,
-        p.DROP_MOTILITY: 7,
-    }
+    # #1057: the 7 motility samples are kept; the author withdrawal is the only drop
+    assert {k: len(v) for k, v in by_rule.items()} == {None: 158, p.DROP_DISREGARDED: 4}
     assert by_rule[p.DROP_DISREGARDED] == [
         "set1IT007",
         "set1IT008",
@@ -2148,7 +2050,7 @@ def test_the_sample_inventory_by_source_and_rule(
     assert sum(s.source is p.SampleSource.wetmore2015 for s in real_specs) == 92
     kept = [s for s in real_specs if s.drop_rule is None]
     assert sum(s.source is p.SampleSource.wetmore2015 for s in kept) == 88
-    assert sum(s.source is p.SampleSource.price2018 for s in kept) == 63
+    assert sum(s.source is p.SampleSource.price2018 for s in kept) == 70
     assert sorted({s.name.split("IT")[0] for s in real_specs}) == [
         "set1",
         "set2",
@@ -2253,7 +2155,8 @@ def test_the_dev_build_holds_every_expected_record() -> None:
     assert experiment["experiment_type"] == "bacterial_environment_response"
     perturbation = experiment["genotype"]["perturbations"][0]
     assert perturbation["perturbation_type"] == "transposon_insertion"
-    assert perturbation["gene_namespace"] == "ecoli_k12_bw25113_locus_tag"
+    # #1057: the released sysName in the MG1655 namespace
+    assert perturbation["gene_namespace"] == "ecoli_k12_mg1655_bnumber"
     assert experiment["phenotype"]["screen_id"] == "Keio:set1IT003"
 
 
@@ -2312,10 +2215,21 @@ def test_table_s1s_keio_rows_and_their_disjointness_from_the_fitness_genes() -> 
     )
     assert (report.n_source_genes, report.n_mapped) == (324, 320)
     assert report.unmapped_by_reason == {"eck_absent_from_bw25113": 4}
-    counts = p.essentiality_inventory(genes, report, b_numbers)
+    counts = p.essentiality_inventory(genes, b_numbers)
     assert counts.kept_genes == p.ESSENTIAL_EXPECTED_RECORDS
-    assert sorted(counts.released_as_genes) == sorted(p.DELETED_OPERON_B_NUMBERS)
-    assert sorted(counts.released_as_gene_names) == ["araA", "araB", "rhaA", "rhaB"]
+    # the rows Table S1 leaves without a BW25113 locus_tag ARE the ECK route's misses
+    assert sorted(counts.rows_without_a_refseq_locus_tag) == sorted(
+        p.DELETED_OPERON_B_NUMBERS
+    )
+    assert sorted(u.b_number for u in report.unmapped) == sorted(
+        p.DELETED_OPERON_B_NUMBERS
+    )
+    assert sorted(counts.rows_without_a_refseq_locus_tag_names) == [
+        "araA",
+        "araB",
+        "rhaA",
+        "rhaB",
+    ]
     assert sorted(
         mapping[b].perturbed_gene_name for b in p.DELETED_OPERON_B_NUMBERS
     ) == ["araA", "araB", "rhaA", "rhaB"]
@@ -2354,13 +2268,14 @@ def test_the_essentiality_dev_build_holds_every_expected_record() -> None:
     assert experiment["phenotype"]["is_essential"] is True
 
 
-def test_a_gene_bw25113_lacks_for_an_unstated_reason_is_refused(tmp_path: Path) -> None:
-    """A drop the pinned background genotype cannot account for stops the build.
+def test_a_row_bw25113_lacks_for_an_unstated_reason_is_a_finding(
+    tmp_path: Path,
+) -> None:
+    """A row without a BW25113 locus_tag that no background lesion names is a finding.
 
-    The four real drops are araA, araB, rhaA and rhaB, which ``(araBAD)567`` and
-    ``(rhaBAD)568`` of ``BW25113_BACKGROUND_LESIONS`` explain. A fifth gene the ECK route
-    could not place would mean something else is wrong with the mapping, so it raises
-    rather than being dropped quietly.
+    The four real rows are araA, araB, rhaA and rhaB, which ``(araBAD)567`` and
+    ``(rhaBAD)568`` of ``BW25113_BACKGROUND_LESIONS`` name. A fifth is listed without a
+    lesion and stored all the same (#1057: the genome gates nothing).
     """
     rows = [
         *SYNTHETIC_ESSENTIAL_ROWS,
@@ -2395,7 +2310,7 @@ def test_a_gene_bw25113_lacks_for_an_unstated_reason_is_refused(tmp_path: Path) 
     path = tmp_path / "extra.xlsx"
     book.save(path)
     genes = p.read_essential_genes(path)
-    with pytest.raises(ValueError, match=r"\['proB'\] are absent from BW25113"):
-        p.essentiality_inventory(
-            genes, _essential_identifiers(3, ("b0005", "b0006", "b0007")), ["b0004"]
-        )
+    counts = p.essentiality_inventory(genes, ["b0004"])
+    assert counts.kept_genes == len(genes)
+    assert "proB" in counts.rows_without_a_refseq_locus_tag_names
+    assert "proB" not in counts.background_lesions_for_rows_without_a_tag

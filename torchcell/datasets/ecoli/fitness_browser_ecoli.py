@@ -101,16 +101,11 @@ from torchcell.datasets import fitness_browser as fb
 from torchcell.datasets.bacteria_common import (
     STRAIN_GENE_NAMESPACES,
     assembly_reference,
-    bacterial_genome,
 )
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.datasets.ecoli import price2018
 from torchcell.datasets.ecoli import wetmore2015 as wetmore
-from torchcell.sequence.genome.ecoli.k12 import (
-    EcoliK12BW25113Genome,
-    EcoliK12MG1655Genome,
-    EcoliK12StrainName,
-)
+from torchcell.sequence.genome.ecoli.k12 import EcoliK12StrainName
 from torchcell.verification.report import Level, LevelResult, VerificationReport
 from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
 
@@ -579,32 +574,19 @@ WETMORE_STORE_REL: Final = wetmore.DATASET_ROOT_REL
 IDENTITY_MIN_PEARSON_R: Final = 0.999999
 
 
-def deposit_fitness(
-    feba: fb.Feba,
-    names: Sequence[str],
-    mg1655: EcoliK12MG1655Genome,
-    bw25113: EcoliK12BW25113Genome,
-) -> dict[str, dict[str, float]]:
-    """The deposit's fitness of ``names``, keyed the way the served stores key genes.
+def deposit_fitness(feba: fb.Feba, names: Sequence[str]) -> dict[str, dict[str, float]]:
+    """The deposit's fitness of ``names``, keyed by the released ``Gene.sysName``.
 
-    MEASUREMENT ONLY: these are samples this loader does not store (G4). The served Price
-    2018 and Wetmore 2015 stores key a gene by the BW25113 tag their loaders placed it on
-    through the ECK crosswalk (``price2018.map_genes``), so the same placement aligns the
-    deposit's b-numbers to compare values; a b-number it cannot place is left out of the
-    comparison. Nothing here decides what this loader stores.
+    MEASUREMENT ONLY: these are samples this loader does not store (G4). The Price 2018
+    and Wetmore 2015 stores key a gene by the b-number their release gives (#1057), as
+    this deposit does, so the values align on the released tag with no crosswalk.
+    Nothing here decides what this loader stores.
     """
     values = feba.values(ORG_ID, names)
     genes = fb.released_genes(values.loci, feba.genes(ORG_ID))
-    mapping, _ = price2018.map_genes(
-        [g.tag for g in genes], mg1655, bw25113, label="L4 alignment"
-    )
     out: dict[str, dict[str, float]] = {}
     for j, name in enumerate(values.experiments):
-        out[name] = {
-            mapping[g.tag].locus_tag: float(values.fitness[i, j])
-            for i, g in enumerate(genes)
-            if g.tag in mapping
-        }
+        out[name] = {g.tag: float(values.fitness[i, j]) for i, g in enumerate(genes)}
     return out
 
 
@@ -675,12 +657,6 @@ def verify_build(
         min_containment=1.0,
     )
     report.add(stored_publications_match(dataset_root))
-    genome = bacterial_genome("ecoli", REFERENCE_STRAIN, root)
-    mg1655 = bacterial_genome("ecoli", "MG1655", root)
-    if not isinstance(genome, EcoliK12BW25113Genome) or not isinstance(
-        mg1655, EcoliK12MG1655Genome
-    ):
-        raise TypeError("the K-12 genomes resolved to the wrong classes")
     experiments = {e.exp_name for e in feba.experiments(ORG_ID)}
     checks: dict[str, fb.CompendiumCheck] = {}
     for rel, bar, name in (
@@ -697,11 +673,7 @@ def verify_build(
         served = fb.stored_fitness(stream_records(store), ORG_ID)
         shared = [n for n in served if n in experiments]
         check = fb.compendium_check(
-            deposit_fitness(feba, shared, mg1655, genome),
-            served,
-            {},
-            against=rel,
-            min_pearson_r=bar,
+            deposit_fitness(feba, shared), served, {}, against=rel, min_pearson_r=bar
         )
         checks[name] = check
         report.add(fb.compendium_check_result(check, name))

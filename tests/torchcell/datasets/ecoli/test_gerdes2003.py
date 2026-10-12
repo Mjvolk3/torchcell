@@ -651,8 +651,14 @@ def test_run_verification_and_cli(
     assert m.main(["build"]) == 0
     assert capsys.readouterr().out.strip().endswith("len = 5")
     assert m.main(["verify"]) == 0
+    # an empty gene universe fails the containment row, a genome-reference finding:
+    # reported under the verdict, never gating it (owner, 2026-10-12)
+    capsys.readouterr()
     monkeypatch.setattr(runners, "_gene_set_for_reference", lambda ref, base: set())
-    assert m.main(["verify"]) == 1
+    assert m.main(["verify"]) == 0
+    out = capsys.readouterr().out
+    assert "gene_essentiality_gerdes2003: PASS (1 genome finding(s) reported" in out
+    assert "  [rp] L4 gene_containment_mg1655_locus_tags:" in out
 
 
 def test_download_links_the_mirror_and_checks_the_manifest(

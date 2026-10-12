@@ -1243,6 +1243,7 @@ def train_seed(
                     for name in aux_pred
                 },
                 "host_loss": float(host_loss.detach()),
+                "total_loss": float(total.detach()),
                 "grad_norm": float(grad_norm),
                 "lr": float(scheduler.get_last_lr()[0]),
                 "val_centered_mean": val,

@@ -66,6 +66,10 @@ SWEEP = re.compile(r"^r\d+(w\d+)?_\w+$")
 KEY = re.compile(r"^fold(\d+)_seed(\d+)/(\w+)$")
 
 CURVES = {
+    # the stepped objective: gene loss (the target plus aux_weight times the auxiliary
+    # sources) plus lambda_host times the host loss; logged by the trainer since round
+    # 5b, derived from gene_loss and host_loss for earlier runs
+    "curve/total_loss": "total_loss",
     "curve/held_out_centered_spearman": "test_centered_mean",
     "curve/validation_centered_spearman": "val_centered_mean",
     "curve/gene_loss_standardized_mse": "gene_loss",
@@ -162,6 +166,11 @@ SECTIONS: list[tuple[str, list[tuple[str, list[str]]]]] = [
         "3 loss",
         [
             (
+                "TOTAL loss, the stepped objective (gene + aux_weight x auxiliary + "
+                "lambda_host x host), by epoch",
+                ["curve/total_loss"],
+            ),
+            (
                 "gene loss, by epoch (masked MSE on the standardized response)",
                 ["curve/gene_loss_standardized_mse"],
             ),
@@ -216,8 +225,22 @@ def arm_of(name: str) -> str:
     return re.sub(r"_s\d+$", "", name)
 
 
-def curves(history: pd.DataFrame) -> pd.DataFrame:
-    """Per-epoch means over the run's seeds, under the shared key names."""
+def curves(history: pd.DataFrame, lambda_host: float = 1.0) -> pd.DataFrame:
+    """Per-epoch means over the run's seeds, under the shared key names.
+
+    A run that predates the ``total_loss`` column gets it as the gene loss plus
+    ``lambda_host`` times the host loss, which is the objective the trainer stepped on
+    (``cgt_lambda`` was zero in every round).
+    """
+    history = history.copy()
+    for column in list(history.columns):
+        m = KEY.match(column)
+        if m and m.group(3) == "gene_loss":
+            prefix = column[: -len("gene_loss")]
+            if f"{prefix}total_loss" not in history and f"{prefix}host_loss" in history:
+                history[f"{prefix}total_loss"] = (
+                    history[column] + lambda_host * history[f"{prefix}host_loss"]
+                )
     rows = []
     for column in history.columns:
         m = KEY.match(column)
@@ -254,7 +277,7 @@ def label_and_relog(api: wandb.Api) -> dict[str, dict[str, object]]:
         rnd = sweep.split("_")[0]
         if not run.config.get("curves_relogged"):
             history = run.history(samples=100000, pandas=True)
-            curve = curves(history)
+            curve = curves(history, float(run.config.get("lambda_host", 1.0)))
             live = wandb.init(
                 entity=ENTITY,
                 project=PROJECT,
@@ -380,6 +403,11 @@ def main() -> None:
         help="rewrite the saved view's panels without touching the runs",
     )
     parser.add_argument(
+        "--add-total",
+        action="store_true",
+        help="log curve/total_loss to every re-logged run that lacks it, then stop",
+    )
+    parser.add_argument(
         "--relabel-only",
         action="store_true",
         help="rewrite every run's group and config keys (machine, arm) and stop",
@@ -387,6 +415,37 @@ def main() -> None:
     args = parser.parse_args()
     if args.view_only:
         print(populate_view())
+        return
+    if args.add_total:
+        api = wandb.Api()
+        n = 0
+        for run in api.runs(f"{ENTITY}/{PROJECT}", filters={"config.view": VIEW_TAG}):
+            if run.config.get("total_relogged"):
+                continue
+            history = run.history(samples=100000, pandas=True)
+            curve = curves(history, float(run.config.get("lambda_host", 1.0)))
+            if "curve/total_loss" not in curve:
+                continue
+            live = wandb.init(
+                entity=ENTITY,
+                project=PROJECT,
+                id=run.id,
+                resume="must",
+                dir=osp.join(
+                    DATA_ROOT, "wandb-experiments", "040-inhibitor-synergy-wetlab"
+                ),
+                settings=wandb.Settings(silent=True),
+            )
+            live.define_metric(X)
+            live.define_metric("curve/*", step_metric=X)
+            for epoch, value in curve["curve/total_loss"].items():
+                if pd.notna(value):
+                    live.log({X: int(epoch), "curve/total_loss": float(value)})
+            live.config.update({"total_relogged": True}, allow_val_change=True)
+            live.finish()
+            n += 1
+            print(f"total loss -> {run.name} {run.id}", flush=True)
+        print(f"added curve/total_loss to {n} runs")
         return
     if args.relabel_only:
         api = wandb.Api()

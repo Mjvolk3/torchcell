@@ -80,6 +80,7 @@ from torchcell.adapters import (
     EnvChemgenWang2024Adapter,
     EnvMetalTnseqRoyet2025Adapter,
     ExometaboliteBrunk2016Adapter,
+    FitnessContrastBorchert2023Adapter,
     FluxIshii2007Adapter,
     FluxLi2021Adapter,
     GeneEssentialityBaba2006Adapter,
@@ -265,6 +266,9 @@ from torchcell.datasets.ecoli.wetmore2015 import RbTnseqWetmore2015Dataset
 from torchcell.datasets.pputida.banerjee2024 import IsoprenolTiterBanerjee2024Dataset
 from torchcell.datasets.pputida.banerjee2025 import ProteomeBanerjee2025Dataset
 from torchcell.datasets.pputida.borchert2023 import RbTnseqBorchert2023Dataset
+from torchcell.datasets.pputida.borchert2023_contrast import (
+    FitnessContrastBorchert2023Dataset,
+)
 from torchcell.datasets.pputida.borchert2024 import RbTnseqBorchert2024Dataset
 from torchcell.datasets.pputida.carruthers2025 import (
     CampaignProteomeCarruthers2025Dataset,
@@ -376,6 +380,8 @@ METABOLITE = "metabolite phenotype"
 MRNA_FRACTION = "mrna number fraction phenotype"
 # #921: a site-level proteome measurement, the sibling of protein abundance.
 PHOSPHOSITE = "phosphosite intensity phenotype"
+# #913: the two-arm significance test of a gene's fitness.
+FITNESS_CONTRAST = "fitness contrast phenotype"
 
 # The shape of each dataset's records, measured on its dev-tree LMDB on 2026-10-07 (and,
 # for the two RB-TnSeq stores rebuilding at the time, read off `build_genotype` /
@@ -895,6 +901,15 @@ BACTERIAL: list[Bacterial] = [
         "rbtnseq_borchert2023",
         RbTnseqBorchert2023Dataset,
         RESPONSE,
+    ),
+    # Borchert 2023's two-arm contrasts (#913): one Tn5 insertion per record; both arms
+    # carry the glucose carbon source and the stressed arm its stressor.
+    _case(
+        FitnessContrastBorchert2023Adapter,
+        "borchert2023_contrast",
+        "fitness_contrast_borchert2023",
+        FitnessContrastBorchert2023Dataset,
+        FITNESS_CONTRAST,
     ),
     _case(
         ProteomeBanerjee2025Adapter,

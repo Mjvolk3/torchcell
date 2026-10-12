@@ -44,6 +44,7 @@ def test_every_registered_bacterial_dataset_is_mapped_to_its_adapter() -> None:
     # + 1 (row 39, Banerjee 2024 isoprenol titers),
     # + 1 (#910, Teteneva 2024's lake-water RB-TnSeq, the first W3110 dataset),
     # + 1 (#964, Guzman 2018's own GEO release, owner policy 2026-10-10),
+    # + 1 (#913, Borchert 2023's two-arm fitness contrasts),
     # re-derived from the merged conf and map.
     # + 1 (#879, Wang 2018 Supplementary Data 5 gene-level calls).
     # organism keyed by publication) + 2 (#800 Li 2021's released 13C-MFA maps,
@@ -79,6 +80,7 @@ def test_every_registered_bacterial_dataset_is_mapped_to_its_adapter() -> None:
         + 1
         + 2
         + 1  # #879 Wang 2018 Supplementary Data 5 gene-level calls
+        + 1
     )
     assert registered_bacterial_classes() == set(expected)
     mapped = {
@@ -119,6 +121,7 @@ def test_each_adapter_has_its_own_module() -> None:
         + 1
         + 2
         + 1  # #879 Wang 2018 Supplementary Data 5 gene-level calls
+        + 1
     )
     assert modules == [f"torchcell.adapters.{b.module}" for b in BACTERIAL]
 
@@ -162,6 +165,7 @@ def test_kg_bacteria_names_exactly_the_registered_bacterial_datasets() -> None:
         + 1
         + 2
         + 1  # #879 Wang 2018 Supplementary Data 5 gene-level calls
+        + 1
     )
     classes = [dataset_registry[name] for name in names]
     assert all(cls in dataset_adapter_map for cls in classes)

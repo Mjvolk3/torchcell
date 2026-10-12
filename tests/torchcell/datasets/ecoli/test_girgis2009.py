@@ -20,12 +20,14 @@ reference sets, so the combination rule's answer is that value:
                                                         drugs, 0 on the other 13
     b0004   yaaP, pseudogene      +1.0/-1.0   0.0       0
     b0005   proB, current         +0.0005  0.0          0    (the rounded-to-zero path)
-    b0010   /gene_synonym of b0006  +5.0    5.0         5.0  -> dropped, issue #753
+    b0010   /gene_synonym of b0006  +5.0    5.0         5.0  -> stored under b0006 (#1045)
     b0099   on no locus           -5.0     -5.0         -5.0 -> dropped, retired
 
 Five of the six distinct names resolve (0.833 < 0.98), so the build fixture lowers
-``MIN_RESOLVED_FRACTION`` and a separate test shows the default stops the build. 67
-records: four kept loci x 17 drugs minus the one ``ND`` cell.
+``MIN_RESOLVED_FRACTION`` and a separate test shows the default stops the build. 84
+records: four locus-tag loci x 17 drugs minus the one ``ND`` cell, plus ``b0010``'s 17
+cells, stored under ``b0006`` on a ``locus_tag_synonym`` route since #1045 row 20
+(``b0006`` is not released itself, so no other released id reaches it).
 
 Data-gated tests (``--data``) read the real raw mirror and the built dev-tree LMDB under
 ``$DATA_ROOT`` (they never build it): the manifest pins, the provenance audit of every
@@ -99,6 +101,9 @@ ND_DRUG = "fus"
 #: The one hybridization released as LQ (b0002, amk, Dataset S3, first array).
 LQ_CELL = ("b0002", "amk")
 SYNTHETIC_RECORDS = len(KEPT_LOCI) * len(m.DRUGS) - 1
+#: #1045 row 20: the build also keeps b0010, a /gene_synonym of the unreleased b0006.
+ROUTES = {"b0010": "b0006"}
+BUILT_RECORDS = SYNTHETIC_RECORDS + len(ROUTES) * len(m.DRUGS)
 
 
 def _significant(code: str, value: float) -> Any:
@@ -645,12 +650,15 @@ def test_resolve_b_numbers_keeps_only_locus_tags_of_the_pinned_annotation(
     kept, ledger = m.resolve_b_numbers(
         mg1655, [row[0] for row in SYNTHETIC_ROWS], label="synthetic"
     )
-    assert sorted(kept) == list(KEPT_LOCI)
+    assert sorted(kept) == sorted([*KEPT_LOCI, *ROUTES])
     assert kept["b0001"] == "thrL"
     assert kept["b0004"] == "yaaP"
+    # the routed b-number carries the symbol of the locus it is stored under
+    assert kept["b0010"] == m.canonical_symbol(mg1655, "b0006")
     assert ledger.n_locus_tags == 4
-    assert sorted(ledger.not_a_locus_tag) == ["b0010", "b0099"]
-    assert ledger.not_a_locus_tag["b0010"].startswith("renamed: gene synonym of")
+    assert ledger.locus_tag_synonym_routes == ROUTES
+    assert ledger.shares_a_locus == {}
+    assert sorted(ledger.not_a_locus_tag) == ["b0099"]
     assert ledger.not_a_locus_tag["b0099"].startswith("retired:")
     assert ledger.reconciliation.gene_namespace == "ecoli_k12_mg1655_bnumber"
     assert ledger.min_resolved_fraction == 0.8
@@ -691,7 +699,29 @@ def test_build_drop_log_accounts_for_every_cell(raw_dir: Path) -> None:
         "b0010",
         "b0099",
     ]
+    shared = rules["released_id_shares_its_locus_with_another_released_id"]
+    assert (shared.n_records, shared.items) == (0, [])
     assert rules["no_combined_score_released"].items == [f"b0001 {ND_DRUG}"]
+
+
+def test_build_drop_log_types_a_contested_synonym_as_a_shared_locus(
+    raw_dir: Path,
+) -> None:
+    """#1045 row 20: a synonym whose locus another released id reaches is its own rule."""
+    frames = _frames(raw_dir)
+    log = m.build_drop_log(
+        "girgis",
+        frames[m.DATASET_S5],
+        [row[0] for row in SYNTHETIC_ROWS],
+        {tag: tag for tag in KEPT_LOCI},
+        shares_a_locus=["b0010"],
+    )
+    rules = {rule.rule: rule for rule in log.rules}
+    not_a_tag = rules["b_number_is_not_a_locus_tag_of_the_pinned_annotation"]
+    assert (not_a_tag.n_records, not_a_tag.items) == (17, ["b0099"])
+    shared = rules["released_id_shares_its_locus_with_another_released_id"]
+    assert (shared.n_records, shared.items) == (17, ["b0010"])
+    assert sum(rule.n_records for rule in log.rules) == log.dropped_records
 
 
 def test_build_drop_log_sign_split_is_per_drug(raw_dir: Path) -> None:
@@ -941,7 +971,7 @@ def test_build_experiment_and_reference_validate_as_the_assembly_pinned_pair() -
 def test_the_build_stores_one_record_per_kept_cell(
     built: m.EnvChemgenGirgis2009Dataset,
 ) -> None:
-    assert len(built) == SYNTHETIC_RECORDS
+    assert len(built) == BUILT_RECORDS
 
 
 def test_the_build_checks_every_pinned_raw_file(
@@ -972,19 +1002,32 @@ def test_the_built_records_carry_the_released_values(
     assert values.count(0.0) == 34
     assert values.count(3.0) == 16
     assert values.count(-1.8) == 17
+    assert values.count(5.0) == 17
     genes = {
         r["experiment"]["genotype"]["perturbations"][0]["systematic_gene_name"]
         for r in records
     }
-    assert genes == set(KEPT_LOCI)
+    assert genes == {*KEPT_LOCI, *ROUTES.values()}
+    routed = [
+        r["experiment"]["genotype"]["perturbations"][0]
+        for r in records
+        if r["experiment"]["genotype"]["perturbations"][0]["systematic_gene_name"]
+        == "b0006"
+    ]
+    assert len(routed) == 17
+    assert {
+        (p["identifier_mapping"]["source_identifier"], p["identifier_mapping"]["route"])
+        for p in routed
+    } == {("b0010", "locus_tag_synonym")}
 
 
 def test_the_build_writes_every_ledger(built: m.EnvChemgenGirgis2009Dataset) -> None:
     out = Path(built.preprocess_dir)
     log = json.loads((out / "dropped_records.json").read_text())
-    assert log["kept_records"] == SYNTHETIC_RECORDS
+    assert log["kept_records"] == BUILT_RECORDS
     identifiers = json.loads((out / "identifier_reconciliation.json").read_text())
-    assert sorted(identifiers["not_a_locus_tag"]) == ["b0010", "b0099"]
+    assert sorted(identifiers["not_a_locus_tag"]) == ["b0099"]
+    assert identifiers["locus_tag_synonym_routes"] == ROUTES
     replicates = json.loads((out / "replicate_structure.json").read_text())
     assert replicates["averaged_codes"] == ["PIP", "FOX", "TET", "TRM"]
     assert sorted(
@@ -1275,17 +1318,19 @@ def test_the_built_store_holds_the_measured_record_count_and_sign_split() -> Non
         Path(_built_root(), "preprocess", "dropped_records.json").read_text()
     )
     assert log["source_loci"] == 3976
-    assert log["kept_loci"] == 3821
+    # 3,821 locus-tag loci plus the 13 synonym-routed ones (#1045 row 20)
+    assert log["kept_loci"] == 3834
     assert log["source_records"] == 67592
-    assert log["kept_records"] == m.EXPECTED_RECORDS == 63766
+    assert log["kept_records"] == m.EXPECTED_RECORDS == 63981
     rules = {rule["rule"]: rule["n_records"] for rule in log["rules"]}
     assert rules == {
-        "b_number_is_not_a_locus_tag_of_the_pinned_annotation": 2635,
-        "no_combined_score_released": 1191,
+        "b_number_is_not_a_locus_tag_of_the_pinned_annotation": 765,
+        "released_id_shares_its_locus_with_another_released_id": 1649,
+        "no_combined_score_released": 1197,
     }
-    assert sum(drug["n_positive"] for drug in log["drugs"]) == 9600
-    assert sum(drug["n_negative"] for drug in log["drugs"]) == 11523
-    assert sum(drug["n_zero"] for drug in log["drugs"]) == 42643
+    assert sum(drug["n_positive"] for drug in log["drugs"]) == 9625
+    assert sum(drug["n_negative"] for drug in log["drugs"]) == 11562
+    assert sum(drug["n_zero"] for drug in log["drugs"]) == 42794
 
 
 @pytest.mark.data
@@ -1294,7 +1339,10 @@ def test_the_built_identifier_ledger_records_the_measured_routes() -> None:
         Path(_built_root(), "preprocess", "identifier_reconciliation.json").read_text()
     )
     assert ledger["n_locus_tags"] == 3821
-    assert len(ledger["not_a_locus_tag"]) == 155
+    # 155 before #1045 row 20: 13 now route, 97 share a locus, 45 are on no locus
+    assert len(ledger["not_a_locus_tag"]) == 45
+    assert len(ledger["locus_tag_synonym_routes"]) == 13
+    assert len(ledger["shares_a_locus"]) == 97
     histogram = ledger["reconciliation"]["status_histogram"]
     assert histogram["current"] == 3758
     assert histogram["renamed"] == 39
@@ -1471,11 +1519,11 @@ def test_cli_build_and_verify(
     """
     monkeypatch.setenv("DATA_ROOT", str(tmp_path))
     assert m.main(["build"]) == 0
-    assert capsys.readouterr().out.strip().endswith(f"len = {SYNTHETIC_RECORDS}")
+    assert capsys.readouterr().out.strip().endswith(f"len = {BUILT_RECORDS}")
 
     monkeypatch.setattr(m, "SOURCED_VALUES", {})
     monkeypatch.setattr(m, "DRUGS", ())
-    monkeypatch.setattr(m, "EXPECTED_RECORDS", SYNTHETIC_RECORDS)
+    monkeypatch.setattr(m, "EXPECTED_RECORDS", BUILT_RECORDS)
     monkeypatch.setattr(m, "bacterial_genome", lambda *a, **k: mg1655)
     assert m.main(["verify"]) == 0
     out = capsys.readouterr().out

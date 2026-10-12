@@ -19,7 +19,7 @@ The synthetic release is a 2 x 9 matrix, and every cell exercises one outcome:
     b0001 Isolate 2  non-essential      kept +2.5     dropped: all-zero colonies, S 0.0
     b0003 Isolate 1  non-essential      kept -3.0     kept +1.5
     b0004 Isolate 1  non-essential      kept -1.0     kept  0.0 (a released zero)
-    b0010 Isolate 1  non-essential      dropped: b0010 is a synonym of b0003 (#753)
+    b0010 Isolate 1  non-essential      dropped: b0010 is a synonym of b0003, released
     b0099 Isolate 1  non-essential      dropped: on no locus of the annotation
     b0007 Isolate 1  non-essential      kept -2.0     dropped: self pair
     b0006 SPA-tag    SPA-tag essential  kept -7.0     dropped: served
@@ -853,9 +853,12 @@ def test_the_build_ledgers_account_for_every_released_cell(
     assert drops["kept_records"] == len(KEPT_CELLS)
     assert drops["dropped_records"] == drops["source_records"] - len(KEPT_CELLS)
     by_rule = {rule["rule"]: rule["n_records"] for rule in drops["rules"]}
+    # b0010 reaches b0003, which the array also carries as its own strain, so the
+    # locus_tag_synonym route does not apply (#1045 row 20): two strains, one locus
     assert by_rule == {
         m.RULE_NOT_A_TAG: 2,
-        m.RULE_REMAPPED: 2,
+        m.RULE_LOCUS_SHARED: 2,
+        m.RULE_REMAPPED: 0,
         m.RULE_SELF_PAIR: 1,
         m.RULE_CONTRADICTION: 1,
         m.RULE_SERVED: 2,
@@ -873,6 +876,10 @@ def test_the_build_ledgers_account_for_every_released_cell(
         1,
     )
     items = {rule["rule"]: rule["items"] for rule in drops["rules"]}
+    assert items[m.RULE_LOCUS_SHARED] == [
+        "b0005 -> b0010 (Isolate 1)",
+        "b0007 -> b0010 (Isolate 1)",
+    ]
     assert items[m.RULE_SELF_PAIR] == ["b0007 -> b0007 (Isolate 1)"]
     assert items[m.RULE_SERVED] == [
         "b0005 -> b0002 (Isolate 1)",
@@ -1327,25 +1334,29 @@ def test_the_dev_store_ledgers_state_the_measured_build() -> None:
         pytest.skip("the dev store is not built")
     drops = json.loads((preprocess / "dropped_records.json").read_text())
     assert drops["source_records"] == 314847
-    assert drops["kept_records"] == m.EXPECTED_RECORDS == 301803
+    # 301,803 before #1045 row 20 stored the 442 synonym-routed cells; the other 26
+    # of the 4,407 formerly remapped cells that are routable reach the contradiction
+    # rule, and 3,939 sit on a locus another released id also reaches
+    assert drops["kept_records"] == m.EXPECTED_RECORDS == 302245
     assert {rule["rule"]: rule["n_records"] for rule in drops["rules"]} == {
         m.RULE_NOT_A_TAG: 6318,
-        m.RULE_REMAPPED: 4407,
+        m.RULE_LOCUS_SHARED: 3939,
+        m.RULE_REMAPPED: 0,
         m.RULE_SELF_PAIR: 78,
-        m.RULE_CONTRADICTION: 395,
+        m.RULE_CONTRADICTION: 421,
         m.RULE_SERVED: 1846,
     }
     assert (drops["n_aggravating"], drops["n_alleviating"], drops["n_zero"]) == (
-        146121,
-        147747,
-        7935,
+        146330,
+        147965,
+        7950,
     )
     assert drops["kept_queries"] == 39
-    assert drops["kept_recipients"] == 3978
+    assert drops["kept_recipients"] == 3984
     assert drops["kept_hypomorph_records"] == 5413
     assert drops["kept_strain_versions"] == {
-        "Isolate 1": 148408,
-        "Isolate 2": 147982,
+        "Isolate 1": 148642,
+        "Isolate 2": 148190,
         m.LABEL_SPA_TAG: 5413,
     }
 
@@ -1653,3 +1664,64 @@ def test_deposit_refuses_a_hash_mismatch(tmp_path: Path) -> None:
         m.deposit_raw_mirror(
             sources=dict(sources_map(sources)), data_root=str(tmp_path)
         )
+
+
+def test_a_synonym_routed_cell_carries_its_released_recipient() -> None:
+    """#1045 row 20: a cell stored under a merged locus keeps the released b-number.
+
+    The mapping rides on the recipient leaf, and both the served-pair key and the L2 key
+    read the released id back off it, so the partition against Babu 2014 and the matrix
+    check meet the same id the release printed.
+    """
+    cell = m.StoredCell(
+        query_tag="b0005",
+        query_gene="proB",
+        recipient_tag="b0003",
+        recipient_released="b0010",
+        recipient_gene="thrW",
+        version="Isolate 1",
+        recipient_is_hypomorph=False,
+        score=-1.5,
+        n_samples=4,
+        replicate_screens=2,
+    )
+    mapping = cell.recipient_mapping()
+    assert mapping is not None
+    assert (mapping.source_identifier, mapping.route) == ("b0010", "locus_tag_synonym")
+    assert cell.model_copy(
+        update={"recipient_released": "b0003"}
+    ).recipient_mapping() is (None)
+    experiment = m.build_experiment(
+        "t",
+        cell.query_tag,
+        cell.query_gene,
+        cell.recipient_tag,
+        cell.recipient_gene,
+        cell.version,
+        cell.score,
+        cell.n_samples,
+        recipient_mapping=mapping,
+    )
+    leaves = {
+        leaf["cassette"]: leaf
+        for leaf in experiment.model_dump()["genotype"]["perturbations"]
+    }
+    query, recipient = leaves[m.QUERY_CASSETTE], leaves[m.RECIPIENT_CASSETTE]
+    assert recipient["systematic_gene_name"] == "b0003"
+    assert m.released_id(recipient) == "b0010"
+    assert m.released_id(query) == "b0005"
+    hypomorph = m.pair_genotype(
+        "b0005",
+        "proB",
+        "b0003",
+        "thrW",
+        m.LABEL_SPA_TAG,
+        recipient_is_hypomorph=True,
+        recipient_mapping=mapping,
+    )
+    (marked,) = [
+        leaf
+        for leaf in hypomorph.perturbations
+        if isinstance(leaf, BacterialMarkedAllelePerturbation)
+    ]
+    assert marked.identifier_mapping == mapping

@@ -893,9 +893,67 @@ def test_verify_runs_the_modules_run_verification_and_keeps_the_manifest(
     out = capsys.readouterr().out.splitlines()
     assert calls == [str(tmp_path)]
     assert f"verifying {toy.__name__} with tc_toy_rv.run_verification" in out
-    assert "verification PASSED: 1 report(s) by tc_toy_rv.run_verification" in out
+    assert (
+        "verification PASSED: 1 report(s) by tc_toy_rv.run_verification; "
+        "0 genome-reference finding(s) reported, not gated"
+    ) in out
     manifest = tmp_path / "data/torchcell/toy_rv/preprocess/build_manifest.json"
     assert manifest.is_file()
+
+
+@pytest.mark.parametrize(
+    ("genome_rule", "level"),
+    [
+        ("current_genome_genes", Level.L4),
+        ("canonical_gene_names", Level.L1),
+        ("gene_containment_mg1655_locus_tags", Level.L4),
+        ("assembly_pin", Level.L3),
+    ],
+)
+def test_verify_keeps_the_manifest_when_only_a_genome_rule_fails(
+    tmp_path: Path,
+    cli: list[str],
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    genome_rule: str,
+    level: Level,
+) -> None:
+    """A genome-reference finding is reported and never retires a manifest (owner,
+    2026-10-12: "the genome is separate.. it doesn't gate anything").
+
+    The report's gate row passes and its one genome row does not hold: the build exits
+    0, the summary lists the row under the findings header with ``[rp]``, the PASS line
+    counts it, and ``build_manifest.json`` stays where it is.
+    """
+
+    def run_verification(data_root: str | None = None) -> VerificationReport:
+        report = _report("toy_gf", passed=True)
+        report.add(
+            LevelResult(level=level, name=genome_rule, passed=False, message="off")
+        )
+        return report
+
+    toy = _toy_in_module(
+        monkeypatch, tmp_path, "toy_gf", "tc_toy_gf", run_verification=run_verification
+    )
+    assert (
+        m.main(["--dataset", toy.__name__, "--data-root", str(tmp_path), "--verify"])
+        == 0
+    )
+    out = capsys.readouterr().out.splitlines()
+    start = out.index("toy_gf: PASS (1 genome finding(s) reported, not gated)")
+    assert out[start + 1 : start + 4] == [
+        "  [ok] L0 structural: toy",
+        "  genome-reference findings (reported, never gated):",
+        f"  [rp] {level.name} {genome_rule}: off",
+    ]
+    assert (
+        "verification PASSED: 1 report(s) by tc_toy_gf.run_verification; "
+        "1 genome-reference finding(s) reported, not gated"
+    ) in out
+    preprocess = tmp_path / "data" / "torchcell" / "toy_gf" / "preprocess"
+    assert (preprocess / "build_manifest.json").is_file()
+    assert [p.name for p in preprocess.iterdir() if ".unverified." in p.name] == []
 
 
 def test_verify_writes_the_report_a_verify_build_entry_point_returns(

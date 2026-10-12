@@ -7,16 +7,25 @@ These are pure data models describing WHERE a dataset came from (``Provenance``)
 and WHETHER it passed the universal L0-L4 record-level gate (``VerificationReport``
 of ``LevelResult``). The level-check building blocks that produce ``LevelResult``s
 live in ``torchcell.verification.levels``.
+
+Every rule result carries a typed :class:`FindingClass`. A ``gate`` rule tests the
+data's fidelity to its release and decides the verdict; a ``report`` rule compares the
+data with OUR genome reference and is listed under the verdict with its statistic,
+never failing a store. The class is a property of the rule, read from one registry
+(:data:`GENOME_REFERENCE_RULES`, :data:`GENOME_REFERENCE_RULE_PREFIXES`) by
+:func:`finding_class_of`, so a rule rendered by any verifier, a family runner or a
+loader's own gate is classified the same way.
 """
 
 from __future__ import annotations
 
 import hashlib
+from collections.abc import Mapping
 from enum import IntEnum, StrEnum
 from pathlib import Path
-from typing import Any
+from typing import Any, Final
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 
 
 class Level(IntEnum):
@@ -121,8 +130,89 @@ class StatDerivation(BaseModel):
         return self
 
 
+class FindingClass(StrEnum):
+    """What a rule's outcome does to the store's verdict (owner, 2026-10-12).
+
+    The owner's rule, verbatim: "the data is the data!!!! it is what they reported ...
+    we don't drop raw data unless they themselves pull it! ... the genome is separate..
+    it doesn't gate anything... we do that at modeling time if it is an issue."
+    """
+
+    #: The data's fidelity to its release: L0 structure, L1 counts and uniqueness, L2
+    #: value fidelity to the released bytes and uncertainty sanity, L3 vocabulary,
+    #: reference, compound and media membership, L4 agreement with another release.
+    #: Every gate rule must hold for the store to PASS.
+    gate = "gate"
+    #: The data compared with OUR genome reference: a released name or position
+    #: against the annotation (containment, name currency, canonical spellings, locus
+    #: resolution, reference alleles at markers, MAT and cis positions, assembly and
+    #: parent pins). Reported with its statistic under the verdict; never a FAIL, and
+    #: never a reason to retire a store's build manifest.
+    report = "report"
+
+
+#: Rules whose subject is the genome reference rather than the data's fidelity to its
+#: release, by exact name. Each one keeps its computation; only what it gates changes.
+GENOME_REFERENCE_RULES: Final[frozenset[str]] = frozenset(
+    {
+        # verification.common (every family that passes a resolver or a gene universe);
+        # its ``measured_genes_present`` row reads no annotation (it asks whether any
+        # record carries a gene perturbation at all), so it stays a gate
+        "canonical_gene_names",
+        "current_genome_genes",
+        # yeast family verifiers: alleles, markers and positions on the R64 annotation,
+        # parent assemblies in the genomes tier, ids against the annotation's gene set
+        "marker_reference",
+        "mat_fixation",
+        "mat_orientation",
+        "cis_concordance",
+        "variant_reference",
+        "parents_pinned",
+        "induced_gene_containment",
+        "s288c_gene_containment",
+        "pangenome_orf_containment",
+        "feature_containment",
+        "deleted_gene_containment_sgd",
+        "promoter_gene_is_a_locus",
+        # bacterial loaders' own gates: stored identifiers against the pinned assembly
+        "promoter_genes_in_the_host_gene_universe",
+        "stored_tags_are_loci",
+        "stored_tags_are_loci_of_the_pinned_assembly",
+        "stored_targets_are_loci_of_the_pinned_assembly",
+        "stored_protein_keys_are_loci_of_the_pinned_assembly",
+        "stored_loci_are_bw25113_loci_derived_from_the_released_b_number",
+    }
+)
+
+#: Rule families one helper renders under several names: ``gene_containment_<universe>``
+#: (S288C, an assembly, a strain's locus tags, another store's deletion set keyed by
+#: resolved names), the protein and perturbed-locus containment rows, and every
+#: ``assembly_pin*`` row (the record's pinned assembly is the genome reference itself).
+GENOME_REFERENCE_RULE_PREFIXES: Final[tuple[str, ...]] = (
+    "gene_containment_",
+    "perturbed_gene_containment_",
+    "protein_and_perturbed_locus_containment_",
+    "assembly_pin",
+)
+
+
+def finding_class_of(rule_name: str) -> FindingClass:
+    """``report`` for a genome-reference rule, ``gate`` for every other rule."""
+    if rule_name in GENOME_REFERENCE_RULES or rule_name.startswith(
+        GENOME_REFERENCE_RULE_PREFIXES
+    ):
+        return FindingClass.report
+    return FindingClass.gate
+
+
 class LevelResult(BaseModel):
-    """The outcome of a single L-level check."""
+    """The outcome of a single L-level check.
+
+    ``passed`` is the rule's own outcome (does the rule hold). What that outcome DOES is
+    :attr:`finding_class`, derived from the rule's name, so a renamed result
+    (``model_copy(update={"name": ...})``, which skips validation) is reclassified with
+    it and no caller can pass a genome rule off as a gate.
+    """
 
     model_config = ConfigDict(extra="forbid")
 
@@ -131,6 +221,36 @@ class LevelResult(BaseModel):
     passed: bool
     message: str
     details: dict[str, Any] = Field(default_factory=dict)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _read_serialized_finding_class(cls, data: Any) -> Any:
+        """Accept the ``finding_class`` a written report carries, if it is the rule's.
+
+        A report serialized under a different classification is stale against this
+        registry and is refused rather than silently reclassified.
+        """
+        if not isinstance(data, Mapping) or "finding_class" not in data:
+            return data
+        stated = FindingClass(data["finding_class"])
+        derived = finding_class_of(str(data["name"]))
+        if stated is not derived:
+            raise ValueError(
+                f"rule {data['name']!r} was written as {stated.value}, but the registry "
+                f"classifies it {derived.value}; regenerate the report"
+            )
+        return {key: value for key, value in data.items() if key != "finding_class"}
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def finding_class(self) -> FindingClass:
+        """``gate`` or ``report``, from the rule's name (:func:`finding_class_of`)."""
+        return finding_class_of(self.name)
+
+    @property
+    def is_open_finding(self) -> bool:
+        """A report-class rule that does not hold: listed under the verdict, not failed."""
+        return self.finding_class is FindingClass.report and not self.passed
 
 
 class VerificationReport(BaseModel):
@@ -143,9 +263,29 @@ class VerificationReport(BaseModel):
     results: list[LevelResult] = Field(default_factory=list)
 
     @property
+    def gate_results(self) -> list[LevelResult]:
+        """The results that decide the verdict (``finding_class`` ``gate``)."""
+        return [r for r in self.results if r.finding_class is FindingClass.gate]
+
+    @property
+    def findings(self) -> list[LevelResult]:
+        """The genome-reference results (``finding_class`` ``report``), held or not."""
+        return [r for r in self.results if r.finding_class is FindingClass.report]
+
+    @property
+    def open_findings(self) -> list[LevelResult]:
+        """The genome-reference results that do not hold, listed under the verdict."""
+        return [r for r in self.results if r.is_open_finding]
+
+    @property
     def passed(self) -> bool:
-        """True only if every recorded level passed (empty report is NOT passed)."""
-        return bool(self.results) and all(r.passed for r in self.results)
+        """True only if every GATE result passed; a report without one is NOT passed.
+
+        A genome-reference finding never enters the verdict, whatever it says: a store
+        whose only failing rows are ``report`` rows passes, with those rows listed.
+        """
+        gates = self.gate_results
+        return bool(gates) and all(r.passed for r in gates)
 
     @property
     def levels_covered(self) -> set[Level]:
@@ -158,12 +298,27 @@ class VerificationReport(BaseModel):
         return self
 
     def summary(self) -> str:
-        """One-line-per-level human-readable summary of the report."""
-        head = f"{self.dataset_name}: {'PASS' if self.passed else 'FAIL'}"
+        """The verdict, one line per gate rule, then the genome findings under it.
+
+        A gate row is ``[ok]`` or ``[XX]``; a genome-reference row is ``[ok]`` when the
+        reference agrees and ``[rp]`` (reported) when it does not.
+        """
+        open_findings = self.open_findings
+        head = f"{self.dataset_name}: {'PASS' if self.passed else 'FAIL'}" + (
+            f" ({len(open_findings)} genome finding(s) reported, not gated)"
+            if open_findings
+            else ""
+        )
         lines = [head]
-        for r in sorted(self.results, key=lambda x: x.level):
+        for r in sorted(self.gate_results, key=lambda x: x.level):
             mark = "ok" if r.passed else "XX"
             lines.append(f"  [{mark}] {r.level.name} {r.name}: {r.message}")
+        findings = sorted(self.findings, key=lambda x: x.level)
+        if findings:
+            lines.append("  genome-reference findings (reported, never gated):")
+            for r in findings:
+                mark = "ok" if r.passed else "rp"
+                lines.append(f"  [{mark}] {r.level.name} {r.name}: {r.message}")
         return "\n".join(lines)
 
 

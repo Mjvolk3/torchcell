@@ -272,9 +272,11 @@ def test_passing_release_rows_and_result_order() -> None:
 
 
 def test_summary_is_sorted_by_level_with_a_mark_per_row() -> None:
-    """``summary()`` heads with the dataset and verdict, then one line per result
-    sorted by level (stable within a level). With the count oracle set to 4 the report
-    fails and the count line carries ``XX``.
+    """``summary()`` heads with the dataset and verdict, then one line per GATE result
+    sorted by level (stable within a level), then the genome-reference findings under
+    their own header. With the count oracle set to 4 the report fails and the count line
+    carries ``XX``; the three gene rules are ``report``-class and sit under the header
+    with ``[ok]``, since the reference agrees with every stored name.
     """
     eager, _ = _both(_release(), expected_count=4)
     lines = eager.summary().split("\n")
@@ -285,13 +287,12 @@ def test_summary_is_sorted_by_level_with_a_mark_per_row() -> None:
         "  [ok] L1 pair_uniqueness: 3 unique (study, strain, condition) records, "
         "one each",
     ]
-    assert len(lines) == 18
-    assert [line.split("] ")[1].split(" ")[0] for line in lines[1:]] == [
+    assert len(lines) == 19
+    assert [line.split("] ")[1].split(" ")[0] for line in lines[1:15]] == [
         "L0",
         "L1",
         "L1",
         "L1",
-        "L1",
         "L2",
         "L2",
         "L2",
@@ -302,8 +303,12 @@ def test_summary_is_sorted_by_level_with_a_mark_per_row() -> None:
         "L3",
         "L3",
         "L3",
-        "L4",
-        "L4",
+    ]
+    assert lines[15] == "  genome-reference findings (reported, never gated):"
+    assert [line.split(": ")[0] for line in lines[16:]] == [
+        "  [ok] L1 canonical_gene_names",
+        "  [ok] L4 gene_containment_sgd",
+        "  [ok] L4 current_genome_genes",
     ]
 
 

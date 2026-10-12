@@ -655,6 +655,7 @@ def test_write_report_creates_the_dir_and_writes_indent2_json(tmp_path: Path) ->
                 "passed": True,
                 "message": "m",
                 "details": {"n": 1},
+                "finding_class": "gate",
             }
         ],
     }
@@ -1203,13 +1204,16 @@ def test_run_morphology_ohnuki_uses_sgd_containment(
     sgd_calls = _stub_sgd(monkeypatch, {"YAL001C", "YBR085W"})
     monkeypatch.setattr(runners, "OHNUKI_EXPECTED_COUNT", 3)
 
-    assert runners.run_morphology_ohnuki(str(tmp_path)) is False
+    # genome-reference rows are reported, never gated (owner, 2026-10-12)
+    assert runners.run_morphology_ohnuki(str(tmp_path)) is True
     assert sgd_calls == [str(tmp_path)]
     report = _read_report(tmp_path / runners.OHNUKI_REPORT_ROOT)
     assert report["dataset_name"] == "scmd_ohnuki2018"
     assert _names(report) == MORPHOLOGY_NAMES + ["gene_containment_sgd"]
     expected = runners._l4_rnaseq_gene_containment({"YAL001C", "YBR085W"}, set(GENES))
     assert _result(report, "gene_containment_sgd") == expected.model_dump(mode="json")
+    assert _result(report, "gene_containment_sgd")["passed"] is False
+    assert _result(report, "gene_containment_sgd")["finding_class"] == "report"
     assert [r["passed"] for r in report["results"][:-1]] == [True] * 7
 
 
@@ -1229,11 +1233,13 @@ def test_run_ohnuki_morphology_adds_ohya_containment_only_when_ohya_is_built(
     _write_lmdb(
         tmp_path / runners.OHYA_SOURCE_ROOT, [_morphology_record(g) for g in GENES]
     )
-    assert runners.run_ohnuki_morphology(str(tmp_path)) is False
+    # genome-reference rows are reported, never gated (owner, 2026-10-12)
+    assert runners.run_ohnuki_morphology(str(tmp_path)) is True
     with_ohya = _read_report(tmp_path / runners.OHNUKI2022_REPORT_ROOT)
     assert _names(with_ohya) == MORPHOLOGY_NAMES + ["gene_containment_scmd_ohnuki2022"]
     l4 = _result(with_ohya, "gene_containment_scmd_ohnuki2022")
     assert l4["passed"] is False
+    assert l4["finding_class"] == "report"
     assert l4["details"]["n_other"] == 2
     assert l4["details"]["n_in_ohya"] == 1
     assert l4["details"]["overlap"] == 0.5
@@ -1270,9 +1276,11 @@ def test_run_visual_score_count_oracle_is_the_record_count_and_labels_l4_as_ohya
     _write_lmdb(
         tmp_path / runners.OHYA_SOURCE_ROOT, [_morphology_record(g) for g in GENES[:2]]
     )
-    assert runners.run_visual_score(str(tmp_path)) is False
+    # genome-reference rows are reported, never gated (owner, 2026-10-12)
+    assert runners.run_visual_score(str(tmp_path)) is True
     with_ohya = _read_report(_root(tmp_path, "vis"))
     l4 = _result(with_ohya, "gene_containment_scmd_ohya2005")
+    assert (l4["passed"], l4["finding_class"]) == (False, "report")
     assert l4["message"] == (
         "0.667 of scmd_ohya2005's 3 deletion genes are in Ohya (>= 0.9)"
     )
@@ -1427,7 +1435,8 @@ def test_run_rnaseq_appends_sgd_containment_after_the_family_gate(
         runners, "RNASEQ_DATASETS", {"rna": _spec("rna", expected_count=2)}
     )
 
-    assert runners.run_rnaseq(str(tmp_path)) is False
+    # genome-reference rows are reported, never gated (owner, 2026-10-12)
+    assert runners.run_rnaseq(str(tmp_path)) is True
     assert sgd_calls == [str(tmp_path)]
     report = _read_report(_root(tmp_path, "rna"))
     assert _names(report) == [
@@ -1442,6 +1451,7 @@ def test_run_rnaseq_appends_sgd_containment_after_the_family_gate(
     ]
     l4 = _result(report, "gene_containment_sgd")
     assert l4["passed"] is False
+    assert l4["finding_class"] == "report"
     assert l4["details"]["n_measured"] == 3
     assert l4["details"]["n_in_sgd"] == 2
     assert l4["details"]["missing_examples"] == ["YCR001W"]
@@ -1792,12 +1802,14 @@ def test_run_fitness_forwards_the_rnaseq_containment_floor(
         runners, "FITNESS_DATASETS", {"fit": _spec("fit", expected_count=3)}
     )
 
-    assert runners.run_fitness(str(tmp_path)) is False
+    # genome-reference rows are reported, never gated (owner, 2026-10-12)
+    assert runners.run_fitness(str(tmp_path)) is True
     assert genome_calls == [str(tmp_path)]
     report = _read_report(_root(tmp_path, "fit"))
     assert _names(report)[-2:] == ["gene_containment_sgd", "current_genome_genes"]
     containment = _result(report, "gene_containment_sgd")
     assert containment["passed"] is False
+    assert containment["finding_class"] == "report"
     assert containment["message"] == (
         "0.667 of 3 measured genes are S288C reference genes (>= 0.9)"
     )
@@ -2802,10 +2814,14 @@ def test_run_product_titer_appends_the_host_containment_to_each_loader_report(
     )
 
 
-def test_run_product_titer_refuses_a_perturbed_locus_off_the_pin(
+def test_run_product_titer_reports_a_perturbed_locus_off_the_pin(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Containment is 1.0, not a floor with headroom: one stray tag fails the family."""
+    """Containment is 1.0, not a floor with headroom: one stray tag is a finding.
+
+    The row is ``report``-class (owner, 2026-10-12), so the family passes on its gate
+    rules and the stray tag is listed under the verdict.
+    """
     _write_lmdb(_root(tmp_path, "titer_a"), [_titer_record(["PP_5003", "PP_9999"])])
     monkeypatch.setattr(
         runners,
@@ -2818,11 +2834,12 @@ def test_run_product_titer_refuses_a_perturbed_locus_off_the_pin(
         },
     )
     _stub_bacterial_universe(monkeypatch, {"PP_5003"})
-    assert runners.run_product_titer(str(tmp_path)) is False
+    assert runners.run_product_titer(str(tmp_path)) is True
     containment = _result(
         _read_report(_root(tmp_path, "titer_a")), "perturbed_gene_containment_assembly"
     )
     assert containment["passed"] is False
+    assert containment["finding_class"] == "report"
     assert containment["details"]["missing_examples"] == ["PP_9999"]
 
 

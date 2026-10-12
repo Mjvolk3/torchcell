@@ -35,12 +35,16 @@ from torchcell.verification.morphology import (
     verify_morphology_dataset,
 )
 from torchcell.verification.report import (
+    GENOME_REFERENCE_RULE_PREFIXES,
+    GENOME_REFERENCE_RULES,
     DerivationMethod,
+    FindingClass,
     Level,
     LevelResult,
     Provenance,
     StatDerivation,
     VerificationReport,
+    finding_class_of,
     sha256_file,
 )
 from torchcell.verification.sourced import (
@@ -64,6 +68,10 @@ __all__ = [
     "SharedRecordRules",
     "shared_rule_results",
     "DerivationMethod",
+    "FindingClass",
+    "GENOME_REFERENCE_RULES",
+    "GENOME_REFERENCE_RULE_PREFIXES",
+    "finding_class_of",
     "Level",
     "LevelResult",
     "Provenance",

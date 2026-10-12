@@ -202,6 +202,11 @@ sourcing layer.
   2026-10-10 although the Price 2018 compendium above re-analyzes the same samples; the
   compendium is its L4 cross-check, and the module still holds the record of which
   compendium samples this paper first reported.
+- ``fitness_browser_ecoli`` -- ``FitnessBrowserEcoliDataset``: the Fitness Browser's own
+  Keio experiments keyed by publication (the Price 2018 decomposition, #931). Stores the
+  samples whose study is not already loaded from its own release (``Price21b``, 6 samples
+  on ``RCH2_defined_noCarbon``); the browser's ``Wetmore15`` and ``Price18`` samples are
+  served by the two loaders above, and its verifier measures the browser against both.
 - ``teteneva2024`` -- the lake-water RB-TnSeq record: the host gate is closed and the
   loader is blocked. W3110 now has its own assembly set in the genomes tier
   (``ecoli_K12_W3110_ASM1024v1``, ten members deposited 2026-10-09), but its GenBank
@@ -256,6 +261,9 @@ from .choe2025 import CrispriChemgenChoe2025Dataset as CrispriChemgenChoe2025Dat
 from .cui2018 import CrispriKnockdownCui2018Dataset as CrispriKnockdownCui2018Dataset
 from .fang2025 import (
     CrispriGuideFfaEnrichmentFang2025Dataset as CrispriGuideFfaEnrichmentFang2025Dataset,
+)
+from .fitness_browser_ecoli import (
+    FitnessBrowserEcoliDataset as FitnessBrowserEcoliDataset,
 )
 from .foo2014 import IsopentenolTiterFoo2014Dataset as IsopentenolTiterFoo2014Dataset
 from .fuhrer2017 import MetabolomeFuhrer2017Dataset as MetabolomeFuhrer2017Dataset

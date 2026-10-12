@@ -107,6 +107,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -371,6 +372,8 @@ def check_fitness_range(
 @register_dataset
 class GrowthWang2015Dataset(ExperimentDataset):
     """Plain-medium growth of 46 Keio transporter deletions (Wang 2015, Table S3)."""
+
+    organism = Organism.ecoli
 
     REFERENCE_STRAIN: ClassVar[EcoliK12StrainName] = "BW25113"
 

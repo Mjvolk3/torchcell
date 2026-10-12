@@ -185,6 +185,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -1479,6 +1480,8 @@ def manifest_sha256(manifest: Manifest, relpath: str) -> str:
 @register_dataset
 class ProteomeMori2021Dataset(ExperimentDataset):
     """Absolute MG1655 proteome mass fractions, one record per loaded sample."""
+
+    organism = Organism.ecoli
 
     REFERENCE_STRAIN: ClassVar[EcoliK12StrainName] = MORI_REFERENCE_STRAIN
 

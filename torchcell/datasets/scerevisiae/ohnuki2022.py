@@ -68,6 +68,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     copy_verified,
     post_process,
     verify_raw_files,
@@ -149,6 +150,8 @@ def _background_perturbations() -> list[Any]:
 @register_dataset
 class ScmdOhnuki2022Dataset(ExperimentDataset):
     """CalMorph morphology for 1979 quadruple (target + 3Delta) deletion strains."""
+
+    organism = Organism.scerevisiae
 
     def __init__(
         self,

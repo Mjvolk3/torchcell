@@ -15,7 +15,7 @@ import pandas as pd
 from torch_geometric.data import download_url
 from tqdm import tqdm
 
-from torchcell.data import ExperimentDataset, post_process
+from torchcell.data import ExperimentDataset, Organism, post_process
 from torchcell.datamodels.media import SGA_TM_SELECTION
 from torchcell.datamodels.schema import (
     Environment,
@@ -203,6 +203,8 @@ def _query_pair_perturbations(row: pd.Series) -> list[GenePerturbationType]:
 @register_dataset
 class SmfKuzmin2018Dataset(ExperimentDataset):
     """Single-mutant fitness experiments from Kuzmin 2018."""
+
+    organism = Organism.scerevisiae
 
     url = "https://raw.githubusercontent.com/Mjvolk3/torchcell/main/data/host/kuzmin2018/aao1729_data_s1.zip"
 
@@ -454,6 +456,8 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
     measures ("Query single/double mutant fitness"), one record per distinct strain.
     """
 
+    organism = Organism.scerevisiae
+
     url = "https://raw.githubusercontent.com/Mjvolk3/torchcell/main/data/host/kuzmin2018/aao1729_data_s1.zip"
 
     def __init__(
@@ -702,6 +706,8 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
 class TmfKuzmin2018Dataset(ExperimentDataset):
     """Triple-mutant fitness experiments from Kuzmin 2018."""
 
+    organism = Organism.scerevisiae
+
     url = "https://raw.githubusercontent.com/Mjvolk3/torchcell/main/data/host/kuzmin2018/aao1729_data_s1.zip"
 
     def __init__(
@@ -937,6 +943,8 @@ class TmfKuzmin2018Dataset(ExperimentDataset):
 class DmiKuzmin2018Dataset(ExperimentDataset):
     """Double-mutant genetic-interaction experiments from Kuzmin 2018."""
 
+    organism = Organism.scerevisiae
+
     url = "https://raw.githubusercontent.com/Mjvolk3/torchcell/main/data/host/kuzmin2018/aao1729_data_s1.zip"
 
     def __init__(
@@ -1151,6 +1159,8 @@ class DmiKuzmin2018Dataset(ExperimentDataset):
 @register_dataset
 class TmiKuzmin2018Dataset(ExperimentDataset):
     """Triple-mutant genetic-interaction experiments from Kuzmin 2018."""
+
+    organism = Organism.scerevisiae
 
     url = "https://raw.githubusercontent.com/Mjvolk3/torchcell/main/data/host/kuzmin2018/aao1729_data_s1.zip"
 

@@ -171,6 +171,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -1813,6 +1814,8 @@ def build_reference(
 @register_dataset
 class CrispriChemgenChoe2025Dataset(ExperimentDataset):
     """Choe 2025 per-guide CRISPRi abundance response to twelve antibiotics."""
+
+    organism = Organism.ecoli
 
     REFERENCE_STRAIN: ClassVar[EcoliK12StrainName] = "MG1655"
 

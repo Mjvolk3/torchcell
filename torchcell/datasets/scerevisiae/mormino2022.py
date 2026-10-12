@@ -89,6 +89,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -502,6 +503,8 @@ class DropLog(BaseModel):
 @register_dataset
 class CrispriMormino2022Dataset(ExperimentDataset):
     """Mormino 2022 CRISPRi acetic-acid biosensor screen (12 isolated strains)."""
+
+    organism = Organism.scerevisiae
 
     def __init__(
         self,

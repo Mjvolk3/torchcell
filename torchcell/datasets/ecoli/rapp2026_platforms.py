@@ -99,6 +99,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -1578,6 +1579,8 @@ class _Rapp2026Dataset(ExperimentDataset):
 class GrowthAucRapp2026Dataset(_Rapp2026Dataset):
     """Growth of Rapp 2026's CRISPRi library, as the paper's AUC over the controls."""
 
+    organism = Organism.ecoli
+
     CONSUMED_FILES: ClassVar[tuple[str, ...]] = (TABLE_S1, TABLE_S2)
 
     def __init__(
@@ -1897,6 +1900,8 @@ class _AccumulationDataset(_Rapp2026Dataset):
 class TargetedMetabolomeRapp2026Dataset(_AccumulationDataset):
     """Targeted LC-MS/MS of Rapp 2026's accumulating strain-metabolite pairs."""
 
+    organism = Organism.ecoli
+
     CONSUMED_FILES: ClassVar[tuple[str, ...]] = (
         TABLE_S1,
         TABLE_S3,
@@ -1948,6 +1953,8 @@ class TargetedMetabolomeRapp2026Dataset(_AccumulationDataset):
 @register_dataset
 class MetaboliteIntensityRapp2026Dataset(_AccumulationDataset):
     """Absolute FI-MS intensity of Rapp 2026's accumulating annotated features."""
+
+    organism = Organism.ecoli
 
     CONSUMED_FILES: ClassVar[tuple[str, ...]] = (TABLE_S1, TABLE_S3, TABLE_S5, TABLE_S9)
     MEASUREMENT_TYPE: ClassVar[str] = INTENSITY_MEASUREMENT_TYPE

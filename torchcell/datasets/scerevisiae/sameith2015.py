@@ -21,7 +21,7 @@ import pandas as pd
 from sortedcontainers import SortedDict
 from tqdm import tqdm
 
-from torchcell.data import ExperimentDataset, post_process
+from torchcell.data import ExperimentDataset, Organism, post_process
 from torchcell.datamodels.schema import (
     Environment,
     Experiment,
@@ -170,6 +170,8 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
     Paper: Sameith et al. (2015) BMC Biology
     DOI: 10.1186/s12915-015-0222-5
     """
+
+    organism = Organism.scerevisiae
 
     geo_accession = "GSE42536"
 
@@ -939,6 +941,8 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
     Paper: Sameith et al. (2015) BMC Biology
     DOI: 10.1186/s12915-015-0222-5
     """
+
+    organism = Organism.scerevisiae
 
     # GEO accession for double mutant microarray expression dataset
     geo_accession = "GSE42536"

@@ -162,6 +162,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -1898,6 +1899,8 @@ class MetabolomeIshii2007Dataset(_Ishii2007Dataset):
     24 Keio disruptants at 0.2 h-1 plus the wild type at 0.1, 0.4, 0.5 and 0.7 h-1.
     """
 
+    organism = Organism.ecoli
+
     SLUG: ClassVar[str] = "metabolome_ishii2007"
 
     def __init__(
@@ -2083,6 +2086,8 @@ class ProteomeIshii2007Dataset(_Ishii2007Dataset):
 
     24 Keio disruptants at 0.2 h-1 plus the wild type at 0.1, 0.4, 0.5 and 0.7 h-1.
     """
+
+    organism = Organism.ecoli
 
     SLUG: ClassVar[str] = "proteome_ishii2007"
 
@@ -2299,6 +2304,8 @@ class FluxIshii2007Dataset(_Ishii2007Dataset):
     reaction ids; ``target_reaction_ids`` is therefore ``None`` and the constraint-based
     mapping is deferred rather than invented.
     """
+
+    organism = Organism.ecoli
 
     SLUG: ClassVar[str] = "flux_ishii2007"
 

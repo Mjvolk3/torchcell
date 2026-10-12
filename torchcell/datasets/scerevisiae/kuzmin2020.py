@@ -15,7 +15,7 @@ import pandas as pd
 from torch_geometric.data import download_url
 from tqdm import tqdm
 
-from torchcell.data import ExperimentDataset, post_process
+from torchcell.data import ExperimentDataset, Organism, post_process
 from torchcell.datamodels.media import SGA_TM_SELECTION
 from torchcell.datamodels.schema import (
     Environment,
@@ -371,6 +371,8 @@ def _double_mutant_query_strain_rows(
 class SmfKuzmin2020Dataset(ExperimentDataset):
     """Single-mutant fitness experiments from Kuzmin et al. 2020."""
 
+    organism = Organism.scerevisiae
+
     # original that doesn't work. Think Science blocks.
     # url = https://www.science.org/doi/suppl/10.1126/science.aaz5667/suppl_file/aaz5667-tables_s1_to_s13.zip
     url = "https://uofi.box.com/shared/static/464ogx5kpafav7i3zv7gesb9lcn0dm94.zip"
@@ -525,6 +527,8 @@ class DmfKuzmin2020Dataset(ExperimentDataset):
     double-mutant QUERY strains of the trigenic screens, whose own fitness and SD
     Table S5 reports, one record per distinct strain.
     """
+
+    organism = Organism.scerevisiae
 
     url = "https://uofi.box.com/shared/static/464ogx5kpafav7i3zv7gesb9lcn0dm94.zip"
 
@@ -824,6 +828,8 @@ class DmfKuzmin2020Dataset(ExperimentDataset):
 class TmfKuzmin2020Dataset(ExperimentDataset):
     """Triple-mutant fitness experiments from Kuzmin et al. 2020."""
 
+    organism = Organism.scerevisiae
+
     url = "https://uofi.box.com/shared/static/464ogx5kpafav7i3zv7gesb9lcn0dm94.zip"
 
     def __init__(
@@ -1073,6 +1079,8 @@ class TmfKuzmin2020Dataset(ExperimentDataset):
 class DmiKuzmin2020Dataset(ExperimentDataset):
     """Digenic interaction experiments from Kuzmin et al. 2020."""
 
+    organism = Organism.scerevisiae
+
     url = "https://uofi.box.com/shared/static/464ogx5kpafav7i3zv7gesb9lcn0dm94.zip"
 
     def __init__(
@@ -1302,6 +1310,8 @@ class DmiKuzmin2020Dataset(ExperimentDataset):
 @register_dataset
 class TmiKuzmin2020Dataset(ExperimentDataset):
     """Trigenic interaction experiments from Kuzmin et al. 2020."""
+
+    organism = Organism.scerevisiae
 
     url = "https://uofi.box.com/shared/static/464ogx5kpafav7i3zv7gesb9lcn0dm94.zip"
 

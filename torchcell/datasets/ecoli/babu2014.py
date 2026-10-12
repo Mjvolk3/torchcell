@@ -190,6 +190,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -1800,6 +1801,8 @@ EXPECTED_HYPOMORPH_RECORDS = 3409
 @register_dataset
 class GeneInteractionBabu2014Dataset(ExperimentDataset):
     """eSGA interaction scores of E. coli K-12 double deletion mutants (Table S2)."""
+
+    organism = Organism.ecoli
 
     REFERENCE_STRAIN: ClassVar[EcoliK12StrainName] = REFERENCE_STRAIN_NAME
 

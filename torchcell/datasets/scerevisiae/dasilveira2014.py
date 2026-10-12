@@ -99,6 +99,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     copy_verified,
     post_process,
     verify_raw_files,
@@ -321,6 +322,8 @@ _N_BIOLOGICAL_REPLICATES = 2
 @register_dataset
 class MetaboliteDaSilveira2014Dataset(ExperimentDataset):
     """MS lipidome of the yeast kinase/phosphatase deletion collection (127 mutants)."""
+
+    organism = Organism.scerevisiae
 
     def __init__(
         self,

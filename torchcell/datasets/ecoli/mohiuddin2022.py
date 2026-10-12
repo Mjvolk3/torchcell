@@ -183,6 +183,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -1185,6 +1186,8 @@ def build_reference(
 @register_dataset
 class PromoterReporterMohiuddin2022Dataset(ExperimentDataset):
     """Mohiuddin 2022 hourly promoter-GFP readings under three antibiotics."""
+
+    organism = Organism.ecoli
 
     REFERENCE_STRAIN: ClassVar[EcoliK12StrainName] = "MG1655"
 

@@ -135,6 +135,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -1189,6 +1190,8 @@ class _SrmSchmidt2016Dataset(ExperimentDataset):
 class ProteomeSrmSet1Schmidt2016Dataset(_SrmSchmidt2016Dataset):
     """Table S2: the OGE-fractionated arm's SRM absolute abundances, 11 records."""
 
+    organism = Organism.ecoli
+
     SHEET: ClassVar[str] = SHEET_S2
     SD_HEADER: ClassVar[str] = SRM_SD_TECHNICAL
     MEASUREMENT_TYPE: ClassVar[str] = MEASUREMENT_TYPES[
@@ -1223,6 +1226,8 @@ class ProteomeSrmSet1Schmidt2016Dataset(_SrmSchmidt2016Dataset):
 @register_dataset
 class ProteomeSrmSet2Schmidt2016Dataset(_SrmSchmidt2016Dataset):
     """Table S3: the unfractionated arm's SRM absolute abundances, 14 records."""
+
+    organism = Organism.ecoli
 
     SHEET: ClassVar[str] = SHEET_S3
     SD_HEADER: ClassVar[str] = SRM_SD_BIOLOGICAL

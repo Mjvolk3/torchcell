@@ -246,6 +246,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -1926,6 +1927,8 @@ class DropLog(BaseModel):
 @register_dataset
 class EnvChemgenShiver2016Dataset(ExperimentDataset):
     """Shiver 2016 KEIO deletion fitness-scores across 57 chemical-genomic conditions."""
+
+    organism = Organism.ecoli
 
     #: The strain whose genome the build entry points inject as ``ecoli_genome``: the
     #: KEIO deletion library's background, and the assembly every record pins.

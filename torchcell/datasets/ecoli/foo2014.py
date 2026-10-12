@@ -131,6 +131,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     link_verified,
     post_process,
     verify_raw_files,
@@ -1176,6 +1177,8 @@ def _link_mirror_files(raw_dir: str, pins: Iterable[tuple[str, str, str]]) -> No
 @register_dataset
 class IsopentenolTiterFoo2014Dataset(ExperimentDataset):
     """Foo 2014 isopentenol titers: the eight tolerance strains and the RFP control."""
+
+    organism = Organism.ecoli
 
     #: The strain the genome injector resolves (``declared_reference_strain`` reads the
     #: CLASS); the module-level ``REFERENCE_STRAIN`` is the same value for the records.

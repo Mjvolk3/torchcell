@@ -264,6 +264,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -3112,6 +3113,8 @@ class _Yunus2026BenchlingDataset(_Yunus2026Dataset):
 class CrispriKnockdownYunus2026Dataset(_Yunus2026Dataset):
     """Yunus 2026 per-strain relative expression of its own CRISPRi target (Table S3)."""
 
+    organism = Organism.pputida
+
     def __init__(
         self,
         root: str = KNOCKDOWN_ROOT_REL,
@@ -3259,6 +3262,8 @@ class CrispriKnockdownYunus2026Dataset(_Yunus2026Dataset):
 @register_dataset
 class CrispriArrayYunus2026Dataset(_Yunus2026Dataset):
     """Yunus 2026 multiplexed-array relative expression panels (Tables S8-S12)."""
+
+    organism = Organism.pputida
 
     def __init__(
         self,
@@ -3454,6 +3459,8 @@ class CrispriDifferentialProteomeYunus2026Dataset(_Yunus2026Dataset):
     record is one profile of 305 proteins rather than one strain's own target, so pooling
     them would put two meanings of "the measured protein set" in one store.
     """
+
+    organism = Organism.pputida
 
     #: The MEASURED keys here are DIA-NN protein names, not screened locus tags, so the
     #: base class's 1.0 does not apply. Measured on the pinned docx: 305 of 338 (0.9024)
@@ -3664,6 +3671,8 @@ class IsoprenolTiterYunus2026Dataset(_Yunus2026BenchlingDataset):
     replicate range; both decisions are in :func:`isoprenol_titer_phenotype`.
     """
 
+    organism = Organism.pputida
+
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
@@ -3845,6 +3854,8 @@ class CrispriPanelProteomeYunus2026Dataset(_Yunus2026BenchlingDataset):
     accessions that reach no locus or several are dropped from every profile by two
     named rules and listed in ``preprocess/dropped_accessions.csv``.
     """
+
+    organism = Organism.pputida
 
     #: The MEASURED keys here are UniProt accessions, not screened locus tags, so the
     #: base class's 1.0 does not apply to them (it still does to the screened targets,

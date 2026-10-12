@@ -181,6 +181,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -1679,6 +1680,8 @@ class ProteomeBanerjee2025Dataset(ExperimentDataset):
     parental sample; ``measurement_type`` is one string for the whole dataset, which is
     what the shared ``verify_protein_dataset`` requires.
     """
+
+    organism = Organism.pputida
 
     REFERENCE_STRAIN: ClassVar[Literal["KT2440"]] = "KT2440"
 

@@ -153,6 +153,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -659,6 +660,8 @@ class DropLog(BaseModel):
 @register_dataset
 class CrisprMagicLian2019Dataset(ExperimentDataset):
     """Lian 2019 MAGIC per-guide CRISPRa/i/d furfural-enrichment env x geno dataset."""
+
+    organism = Organism.scerevisiae
 
     def __init__(
         self,

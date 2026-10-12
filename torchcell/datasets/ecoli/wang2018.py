@@ -134,6 +134,7 @@ import pandas as pd
 from pydantic import BaseModel, ConfigDict
 from tqdm import tqdm
 
+from torchcell.data import Organism
 from torchcell.data.experiment_dataset import (
     ExperimentDataset,
     check_manifest_pin,
@@ -1600,6 +1601,8 @@ DROP_RULES: list[str] = [
 @register_dataset
 class CrispriGuideFitnessWang2018Dataset(ExperimentDataset):
     """Wang 2018 per-guide CRISPRi fitness across the paper's five pooled screens."""
+
+    organism = Organism.ecoli
 
     REFERENCE_STRAIN: ClassVar[Literal["MG1655"]] = "MG1655"
     #: Measured on the pinned bytes: 4,313 of the 4,317 cluster-member b-numbers resolve

@@ -107,6 +107,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -1371,6 +1372,8 @@ def legacy_orf_strain(
 @register_dataset
 class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
     """Anaerobic chemical-genomic env x geno -> log2(inhibitor/control) response screen."""
+
+    organism = Organism.scerevisiae
 
     def __init__(
         self,

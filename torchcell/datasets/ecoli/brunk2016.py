@@ -155,6 +155,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     link_verified,
     post_process,
     verify_raw_files,
@@ -2170,6 +2171,8 @@ class _MetaboliteBrunk2016Dataset(ExperimentDataset):
 class MetabolomeBrunk2016Dataset(_MetaboliteBrunk2016Dataset):
     """The 51 LC-MS columns the workbook labels ``(uM)``, one record per sample."""
 
+    organism = Organism.ecoli
+
     COLUMN_SET: ClassVar[Literal["micromolar", "grams_per_litre"]] = "micromolar"
     MEASUREMENT_TYPE: ClassVar[str] = MEASUREMENT_TYPE_METABOLITE
     EXPECTED_RECORDS: ClassVar[int] = EXPECTED_METABOLOME_RECORDS
@@ -2191,6 +2194,8 @@ class MetabolomeBrunk2016Dataset(_MetaboliteBrunk2016Dataset):
 @register_dataset
 class ExometaboliteBrunk2016Dataset(_MetaboliteBrunk2016Dataset):
     """The six HPLC columns the workbook labels ``g/L``: glucose and five acids."""
+
+    organism = Organism.ecoli
 
     COLUMN_SET: ClassVar[Literal["micromolar", "grams_per_litre"]] = "grams_per_litre"
     MEASUREMENT_TYPE: ClassVar[str] = MEASUREMENT_TYPE_EXOMETABOLITE
@@ -2216,6 +2221,8 @@ class ExometaboliteBrunk2016Dataset(_MetaboliteBrunk2016Dataset):
 @register_dataset
 class ProteomeBrunk2016Dataset(ExperimentDataset):
     """Brunk 2016 SRM peak areas: nine strains at nine hours, host proteins only."""
+
+    organism = Organism.ecoli
 
     REFERENCE_STRAIN: ClassVar[Literal["MG1655"]] = REFERENCE_STRAIN
     #: Host proteins keyed to one locus: 65 of 68, measured 2026-10-10 (issue #872). The
@@ -2485,6 +2492,8 @@ class ProteomeBrunk2016Dataset(ExperimentDataset):
 @register_dataset
 class BiofuelTiterBrunk2016Dataset(ExperimentDataset):
     """Brunk 2016 isopentenol, limonene and bisabolene titers over the time course."""
+
+    organism = Organism.ecoli
 
     REFERENCE_STRAIN: ClassVar[Literal["MG1655"]] = REFERENCE_STRAIN
 

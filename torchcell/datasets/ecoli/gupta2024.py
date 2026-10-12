@@ -194,6 +194,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -2156,6 +2157,8 @@ class BuildAccounting(BaseModel):
 @register_dataset
 class ProteinTurnoverGupta2024Dataset(ExperimentDataset):
     """Gupta 2024 per-protein total turnover in 13 NCM3722 growth conditions."""
+
+    organism = Organism.ecoli
 
     REFERENCE_STRAIN: ClassVar[Literal["MG1655"]] = MG1655_STRAIN
 

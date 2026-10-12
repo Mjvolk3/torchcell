@@ -101,6 +101,7 @@ from pydantic import BaseModel, ConfigDict
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -1242,6 +1243,8 @@ def metadata_row(frame: pd.DataFrame, sample: str) -> dict[str, str]:
 @register_dataset
 class RnaseqLamoureux2023Dataset(ExperimentDataset):
     """PRECISE-1K: one record per MG1655 RNA-seq library (wild type or deletions)."""
+
+    organism = Organism.ecoli
 
     REFERENCE_STRAIN: ClassVar[EcoliK12StrainName] = REFERENCE_STRAIN_NAME
 

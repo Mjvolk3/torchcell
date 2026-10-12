@@ -118,6 +118,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -1286,6 +1287,8 @@ BATCH_SIZE = 500_000
 @register_dataset
 class EnvChemgenPiotrowski2017Dataset(ExperimentDataset):
     """MOSAIC diagnostic-pool chemical genetics: env x geno -> CG interaction z-score."""
+
+    organism = Organism.scerevisiae
 
     def __init__(
         self,

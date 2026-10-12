@@ -198,6 +198,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -2222,6 +2223,8 @@ class ProteomeDeSiqueira2025Dataset(ExperimentDataset):
     and the ``measurement_type`` it stores) and its own dev-tree ``root`` default.
     """
 
+    organism = Organism.pputida
+
     REFERENCE_STRAIN: ClassVar[Literal["KT2440"]] = "KT2440"
     #: The released normalization this class stores. One per class, because the shared
     #: ``verify_protein_dataset`` asserts a single ``measurement_type`` per dataset.
@@ -2551,6 +2554,8 @@ class ProteomePercentDeSiqueira2025Dataset(ProteomeDeSiqueira2025Dataset):
     signature of a replicate-wise mean of per-replicate percentages.
     """
 
+    organism = Organism.pputida
+
     NORMALIZATION: ClassVar[ProteomeNormalization] = PROTEOME_NORMALIZATIONS[1]
 
     def __init__(
@@ -2580,6 +2585,8 @@ class ProteomeLog10PercentDeSiqueira2025Dataset(ProteomeDeSiqueira2025Dataset):
     (34,496 of 34,600 cells disagree), so neither column is recoverable from a stored
     sibling.
     """
+
+    organism = Organism.pputida
 
     NORMALIZATION: ClassVar[ProteomeNormalization] = PROTEOME_NORMALIZATIONS[2]
 
@@ -2619,6 +2626,8 @@ if {cls.NORMALIZATION.measurement_type for cls in PROTEOME_CLASSES.values()} != 
 @register_dataset
 class IsoprenolTiterDeSiqueira2025Dataset(ExperimentDataset):
     """de Siqueira 2025 maximum isoprenol titer of PT carrying pIY670."""
+
+    organism = Organism.pputida
 
     REFERENCE_STRAIN: ClassVar[Literal["KT2440"]] = "KT2440"
 

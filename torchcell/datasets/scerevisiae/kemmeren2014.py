@@ -22,7 +22,7 @@ from dotenv import load_dotenv
 from sortedcontainers import SortedDict
 from tqdm import tqdm
 
-from torchcell.data import ExperimentDataset, post_process
+from torchcell.data import ExperimentDataset, Organism, post_process
 from torchcell.datamodels.schema import (
     Environment,
     Experiment,
@@ -123,6 +123,8 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
     Data source: GEO accessions GSE42527, GSE42526, and wildtype references.
     Paper: Kemmeren et al. (2014) Cell.
     """
+
+    organism = Organism.scerevisiae
 
     # GEO accessions for the dataset
     geo_accession_responsive = "GSE42527"  # Responsive mutants

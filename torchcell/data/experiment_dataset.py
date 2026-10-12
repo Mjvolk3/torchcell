@@ -13,7 +13,7 @@ import os.path as osp
 import pickle
 import shutil
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from enum import StrEnum
 from functools import wraps
 from pathlib import Path
@@ -365,6 +365,82 @@ class Visibility(StrEnum):
     private = "private"
 
 
+class Organism(StrEnum):
+    """The host organism every record of a dataset describes.
+
+    Declared on each loader class (``organism = Organism.ecoli``), never derived from
+    anything at run time: the knowledge-graph build selects its datasets by it
+    (``--organisms``, the ``KG_ORGANISMS`` switch of the live rebuild), and
+    ``tests/torchcell/datasets/test_dataset_organism.py`` holds each declaration to the
+    package the loader lives in (``torchcell.datasets.<organism>``; the in-house
+    ``private_torchcell`` loaders are yeast). Members are in the order a build lists
+    them, yeast first and then the bacteria, which is the order
+    :func:`format_organisms` writes.
+    """
+
+    scerevisiae = "scerevisiae"
+    ecoli = "ecoli"
+    pputida = "pputida"
+
+
+#: Every organism: the organism set of a build that names none.
+ALL_ORGANISMS: frozenset[Organism] = frozenset(Organism)
+
+
+class OrganismUndeclared(TypeError):
+    """A dataset class reached an organism gate without declaring ``organism``."""
+
+
+def dataset_organism(dataset_class: type) -> Organism:
+    """The ``organism`` a dataset class declares, or :class:`OrganismUndeclared`.
+
+    ``ExperimentDataset`` annotates the ClassVar without a value, so a loader that
+    forgot it has none to inherit and is refused here by name rather than being filed
+    under some organism.
+    """
+    organism = getattr(dataset_class, "organism", None)
+    if not isinstance(organism, Organism):
+        raise OrganismUndeclared(
+            f"{dataset_class.__name__} declares no organism; set "
+            "`organism = Organism.<scerevisiae|ecoli|pputida>` on the class"
+        )
+    return organism
+
+
+def ordered_organisms(organisms: Iterable[Organism]) -> list[Organism]:
+    """``organisms`` in ``Organism`` order, each once."""
+    chosen = set(organisms)
+    return [organism for organism in Organism if organism in chosen]
+
+
+def format_organisms(organisms: Iterable[Organism]) -> str:
+    """The canonical spelling of an organism set: comma-joined in ``Organism`` order."""
+    return ",".join(organism.value for organism in ordered_organisms(organisms))
+
+
+def parse_organisms(text: str) -> frozenset[Organism]:
+    """``"scerevisiae,ecoli"`` -> that organism set.
+
+    The spelling ``--organisms`` and ``KG_ORGANISMS`` take. An empty name, an unknown
+    name, or a name given twice raises ``ValueError`` naming it, so a typo stops the
+    build instead of quietly narrowing it.
+    """
+    names = [name.strip() for name in text.split(",")]
+    if any(not name for name in names):
+        raise ValueError(f"empty organism name in {text!r}")
+    known = {organism.value for organism in Organism}
+    unknown = sorted({name for name in names if name not in known})
+    if unknown:
+        raise ValueError(
+            f"unknown organism(s) {', '.join(unknown)} in {text!r}; known: "
+            f"{format_organisms(ALL_ORGANISMS)}"
+        )
+    repeated = sorted({name for name in names if names.count(name) > 1})
+    if repeated:
+        raise ValueError(f"organism(s) {', '.join(repeated)} given twice in {text!r}")
+    return frozenset(Organism(name) for name in names)
+
+
 #: ``perturbation_type`` of the called-variant leaf whose identifier is a genomic SITE
 #: rather than a locus tag (``BacterialSequenceVariantPerturbation``'s sibling, issue
 #: #731). Stated as a string, not imported as a class, because this module is the
@@ -379,6 +455,12 @@ class ExperimentDataset(Dataset, ABC):  # type: ignore[misc]  # Dataset is untyp
     #: ClassVar, not a field: it is a property of the LOADER, decided once in code, and
     #: the build and release gates read it off the class without instantiating it.
     visibility: ClassVar[Visibility] = Visibility.public
+
+    #: The host organism every record describes. Annotated here WITHOUT a value: each
+    #: loader declares its own, the build's organism switch reads it off the class
+    #: (``dataset_organism``), and a loader that forgot it is refused by name instead of
+    #: inheriting an organism it may not have.
+    organism: ClassVar[Organism]
 
     #: Whether the records carry gene-keyed perturbations. True for every screen of
     #: edited strains, where an empty gene set after a build is a broken build and the

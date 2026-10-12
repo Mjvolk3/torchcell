@@ -80,6 +80,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     copy_verified,
     post_process,
     verify_raw_files,
@@ -305,6 +306,8 @@ class _IsobutanolLopez2024Base(ExperimentDataset):
 class IsobutanolScreenLopez2024Dataset(_IsobutanolLopez2024Base):
     """Montaño López 2024 FIRST genome-wide isobutanol-biosensor YKO screen (Table S2, n=1)."""
 
+    organism = Organism.scerevisiae
+
     def __init__(
         self,
         root: str = "data/torchcell/isobutanol_screen_lopez2024",
@@ -403,6 +406,8 @@ class IsobutanolScreenLopez2024Dataset(_IsobutanolLopez2024Base):
 @register_dataset
 class IsobutanolValidatedLopez2024Dataset(_IsobutanolLopez2024Base):
     """Montaño López 2024 VALIDATED isobutanol-biosensor re-screen (Table S3, triplicate)."""
+
+    organism = Organism.scerevisiae
 
     def __init__(
         self,

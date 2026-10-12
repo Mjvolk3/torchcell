@@ -72,6 +72,7 @@ from pydantic import BaseModel, ConfigDict
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     Visibility,
     check_manifest_pin,
     link_verified,
@@ -483,6 +484,7 @@ def dropped_wells(
 class InhibitorBioscreenVolk2021Dataset(ExperimentDataset):
     """bAID in YPD with dosed inhibitors: relative growth rate per Bioscreen C well."""
 
+    organism = Organism.scerevisiae
     visibility = Visibility.private
     #: Every record is the unedited bAID host; the gene set is legitimately empty.
     has_gene_perturbations = False

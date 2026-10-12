@@ -74,6 +74,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     file_sha256,
     link_verified,
@@ -659,6 +660,8 @@ class BuildAccounting(BaseModel):
 @register_dataset
 class ProteinSynthesisRateLi2014Dataset(ExperimentDataset):
     """Li 2014 absolute protein synthesis rates of MG1655 in three MOPS media."""
+
+    organism = Organism.ecoli
 
     REFERENCE_STRAIN: ClassVar[Literal["MG1655"]] = MG1655_STRAIN
     #: Every record is the wild type: the three records differ by medium only.

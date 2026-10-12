@@ -75,6 +75,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     copy_verified,
     post_process,
     verify_raw_files,
@@ -202,6 +203,8 @@ def build_orf_to_gene_name_map(data_root: str | None = None) -> dict[str, str]:
 @register_dataset
 class ProteomeMessner2023Dataset(ExperimentDataset):
     """Microflow-SWATH-MS proteome of the yeast gene-KO collection (4,699 strains)."""
+
+    organism = Organism.scerevisiae
 
     def __init__(
         self,

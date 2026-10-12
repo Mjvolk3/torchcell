@@ -115,6 +115,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     link_verified,
     post_process,
     verify_raw_files,
@@ -607,6 +608,8 @@ def deposit_raw_mirror(
 @register_dataset
 class EnvChemgenCostanzo2021Dataset(ExperimentDataset):
     """Costanzo 2021 condition-SGA: env x (deletion | ts-allele) -> differential fitness."""
+
+    organism = Organism.scerevisiae
 
     def __init__(
         self,

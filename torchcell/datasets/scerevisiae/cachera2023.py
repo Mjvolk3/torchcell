@@ -45,6 +45,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     post_process,
     verify_raw_files,
     write_verified,
@@ -264,6 +265,8 @@ _COUNT = "corrected_mean_intensity.24_count"
 @register_dataset
 class BetaxanthinCachera2023Dataset(ExperimentDataset):
     """Genome-wide betaxanthin CRI-SPA product-proxy screen of the YKO collection."""
+
+    organism = Organism.scerevisiae
 
     def __init__(
         self,

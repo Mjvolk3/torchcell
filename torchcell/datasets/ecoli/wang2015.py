@@ -107,6 +107,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -1206,6 +1207,8 @@ def build_reference(
 @register_dataset
 class EnvChemgenWang2015Dataset(ExperimentDataset):
     """Isoprenol tolerance of 46 Keio transporter deletions (Wang 2015, Table S3)."""
+
+    organism = Organism.ecoli
 
     REFERENCE_STRAIN: ClassVar[EcoliK12StrainName] = "BW25113"
 

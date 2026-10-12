@@ -63,6 +63,7 @@ import lmdb
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     post_process,
     verify_raw_files,
     write_verified,
@@ -499,6 +500,8 @@ def _parse_media(media_field: str | None, phenotype: str) -> Media | None:
 @register_dataset
 class YeastPhenomeDataset(ExperimentDataset):
     """Curated YeastPhenome growth-phenome env x geno -> NPV z-score screens."""
+
+    organism = Organism.scerevisiae
 
     def __init__(
         self,

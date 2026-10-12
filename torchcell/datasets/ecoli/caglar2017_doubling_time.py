@@ -116,7 +116,7 @@ import pandas as pd
 from pydantic import BaseModel, ConfigDict
 from tqdm import tqdm
 
-from torchcell.data import ExperimentDataset, post_process, verify_raw_files
+from torchcell.data import ExperimentDataset, Organism, post_process, verify_raw_files
 from torchcell.datamodels.media import DAVIS_MINIMAL, DM500
 from torchcell.datamodels.schema import (
     AssayType,
@@ -570,6 +570,8 @@ def _accounting(
 @register_dataset
 class DoublingTimeCaglar2017Dataset(ExperimentDataset):
     """Caglar 2017 Table S5: 55 absolute doubling times, one per replicate curve."""
+
+    organism = Organism.ecoli
 
     REFERENCE_STRAIN: ClassVar[Literal["REL606"]] = "REL606"
     #: Every record is wild-type REL606, so the gene set is legitimately empty.

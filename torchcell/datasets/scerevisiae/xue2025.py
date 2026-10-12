@@ -98,6 +98,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     copy_verified,
     post_process,
     verify_raw_files,
@@ -199,6 +200,8 @@ _GENOTYPE_RE = re.compile(r"^(?P<letters>[A-Z](?:-[A-Z])*)\s+(?P<n>\d+)$")
 @register_dataset
 class FattyAcidXue2025Dataset(ExperimentDataset):
     """Xue 2025 in-house FFA combinatorial-deletion titer dataset (5 FFAs/strain)."""
+
+    organism = Organism.scerevisiae
 
     def __init__(
         self,

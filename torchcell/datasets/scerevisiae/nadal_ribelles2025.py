@@ -79,6 +79,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     link_verified,
     post_process,
     verify_raw_files,
@@ -220,6 +221,8 @@ def _deletion_systematic(raw_orf: str) -> str | None:
 @register_dataset
 class NadalRibellesPerturbSeq2025Dataset(ExperimentDataset):
     """Nadal-Ribelles 2025 pseudobulk Perturb-seq: one record per (genotype, condition)."""
+
+    organism = Organism.scerevisiae
 
     def __init__(
         self,

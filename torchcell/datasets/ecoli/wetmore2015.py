@@ -95,6 +95,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -2443,6 +2444,8 @@ def inventory(specs: Sequence[SampleSpec], identifiers: IdentifierReport) -> Inv
 @register_dataset
 class RbTnseqWetmore2015Dataset(ExperimentDataset):
     """Wetmore 2015, E. coli BW25113 KEIO_ML9: gene fitness per successful sample."""
+
+    organism = Organism.ecoli
 
     REFERENCE_STRAIN: ClassVar[EcoliK12StrainName] = "BW25113"
 

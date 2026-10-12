@@ -74,6 +74,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     copy_verified,
     post_process,
     verify_raw_files,
@@ -1785,6 +1786,8 @@ class _GrowthDeChiara2022Dataset(_DeChiara2022Dataset):
 class DoublingTimeDeChiara2022Dataset(_GrowthDeChiara2022Dataset):
     """Colony population doubling time (h) of 1,011 isolates in 43 environments."""
 
+    organism = Organism.scerevisiae
+
     trait = GrowthTrait.doubling_time
     measurement_type = MeasurementType.growth_rate
     units = (
@@ -1813,6 +1816,8 @@ class DoublingTimeDeChiara2022Dataset(_GrowthDeChiara2022Dataset):
 class CellYieldDeChiara2022Dataset(_GrowthDeChiara2022Dataset):
     """Colony cell yield (cells) of 1,011 isolates in 43 environments."""
 
+    organism = Organism.scerevisiae
+
     trait = GrowthTrait.cell_yield
     measurement_type = MeasurementType.cell_yield
     units = (
@@ -1840,6 +1845,8 @@ class CellYieldDeChiara2022Dataset(_GrowthDeChiara2022Dataset):
 @register_dataset
 class LifeCycleDeChiara2022Dataset(_DeChiara2022Dataset):
     """Sporulation and stationary-phase survival time courses of 1,011 isolates."""
+
+    organism = Organism.scerevisiae
 
     def __init__(
         self,

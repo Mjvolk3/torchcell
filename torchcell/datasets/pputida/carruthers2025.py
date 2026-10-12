@@ -166,6 +166,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -3615,6 +3616,8 @@ def build_panel_titer_plan(
 class IsoprenolTiterCarruthers2025Dataset(ExperimentDataset):
     """Carruthers 2025 per-strain isoprenol titer across six DBTL cycles."""
 
+    organism = Organism.pputida
+
     REFERENCE_STRAIN: ClassVar[Literal["KT2440"]] = "KT2440"
     #: Every guide target must resolve to a locus of the pinned assembly. Measured on
     #: the pinned workbook: 121 of 121 are current standard locus tags, so a value
@@ -4029,6 +4032,8 @@ class IsoprenolTiterCarruthers2025Dataset(ExperimentDataset):
 @register_dataset
 class ProteomeCarruthers2025Dataset(ExperimentDataset):
     """Carruthers 2025 Top3 proteome of the PP_0815 off-target-study strains."""
+
+    organism = Organism.pputida
 
     REFERENCE_STRAIN: ClassVar[Literal["KT2440"]] = "KT2440"
     #: Measured on the pinned workbook: 1,425 of 1,501 protein keys (0.9494) resolve to
@@ -4762,6 +4767,8 @@ class CampaignProteomeCarruthers2025Dataset(ExperimentDataset):
     different background and a different scale.
     """
 
+    organism = Organism.pputida
+
     REFERENCE_STRAIN: ClassVar[Literal["KT2440"]] = "KT2440"
     #: 1,842 of 2,187 released accessions (0.8422) reach exactly one KT2440 locus
     #: through the GOA proteome crosswalk, measured 2026-10-09. The 345 that do not are
@@ -5173,6 +5180,8 @@ class ProteomeFoldChangeCarruthers2025Dataset(ExperimentDataset):
     experiment over reference reproduces the released number exactly. Nothing is
     imputed, and no absolute control level is invented.
     """
+
+    organism = Organism.pputida
 
     REFERENCE_STRAIN: ClassVar[Literal["KT2440"]] = "KT2440"
     #: Measured on the pinned workbook over the UNION of both sheets' row keys: 1,395 of

@@ -133,6 +133,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -990,6 +991,8 @@ def genotype(strain: StrainRecord) -> Genotype:
 @register_dataset
 class CarbonSourceTong2020Dataset(ExperimentDataset):
     """Tong 2020 Keio and sRNA/small protein deletion growth on 30 carbon sources."""
+
+    organism = Organism.ecoli
 
     #: The strain whose genome the build entry points inject as ``ecoli_genome``. The
     #: MG1655 genome the library strains and the crosswalk also need is opened in

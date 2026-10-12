@@ -153,6 +153,7 @@ from tqdm import tqdm
 import torchcell.datasets.ecoli.wetmore2015 as wetmore
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -2006,6 +2007,8 @@ def inventory(
 class RbTnseqPrice2018EcoliDataset(ExperimentDataset):
     """Price 2018 compendium, E. coli BW25113 KEIO_ML9: gene fitness per sample."""
 
+    organism = Organism.ecoli
+
     REFERENCE_STRAIN: ClassVar[EcoliK12StrainName] = "BW25113"
 
     def __init__(
@@ -2603,6 +2606,8 @@ def build_essentiality_reference(
 @register_dataset
 class GeneEssentialityPrice2018EcoliDataset(ExperimentDataset):
     """Price 2018 Supplementary Table 1: E. coli BW25113 likely-essential genes."""
+
+    organism = Organism.ecoli
 
     REFERENCE_STRAIN: ClassVar[EcoliK12StrainName] = "BW25113"
 

@@ -114,6 +114,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -1002,6 +1003,8 @@ def load_manifest(data_root: str | None = None) -> Manifest:
 @register_dataset
 class MrnaFractionBalakrishnan2022Dataset(ExperimentDataset):
     """NCM3722-family mRNA number fractions, one record per released sample column."""
+
+    organism = Organism.ecoli
 
     REFERENCE_STRAIN: ClassVar[EcoliK12StrainName] = REFERENCE_STRAIN
 

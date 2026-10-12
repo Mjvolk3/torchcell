@@ -247,6 +247,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -2788,6 +2789,8 @@ def genotype_gaps() -> list[GenotypeGap]:
 class IsoprenolToleranceLim2025Dataset(ExperimentDataset):
     """Isoprenol tolerance of IPL300, IPL400 and KT2440 dPP_3024 (Lim 2025)."""
 
+    organism = Organism.pputida
+
     REFERENCE_STRAIN: ClassVar[str] = "KT2440"
 
     def __init__(
@@ -3205,6 +3208,8 @@ class ProteomeLim2025Dataset(ExperimentDataset):
     referenced to its OWN unstressed arm. The two evolved isolates carry their called
     variants as #731 perturbations on top of their parent IPL400's designed deletions.
     """
+
+    organism = Organism.pputida
 
     REFERENCE_STRAIN: ClassVar[str] = "KT2440"
     PARENT_STRAIN: ClassVar[str] = "IPL400"
@@ -3714,6 +3719,8 @@ class ProteomeFoldChangeLim2025Dataset(ExperimentDataset):
     isoprenol but not in the unstressed arm are NOT dropped here, because a contrast needs
     no key-matched second arm: both of its arms are columns of one sheet.
     """
+
+    organism = Organism.pputida
 
     REFERENCE_STRAIN: ClassVar[str] = "KT2440"
     PARENT_STRAIN: ClassVar[str] = EVOLVED_ISOLATE_PARENT

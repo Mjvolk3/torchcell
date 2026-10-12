@@ -149,6 +149,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     link_verified,
     post_process,
     verify_raw_files,
@@ -2187,6 +2188,8 @@ class _Hillenmeyer2008Base(ExperimentDataset):
 class HetHillenmeyer2008Dataset(_Hillenmeyer2008Base):
     """FitDb HIP (heterozygous kanMX4 allele replacement) fitness-defect log2-ratio."""
 
+    organism = Organism.scerevisiae
+
     _matrix_key = "het"
 
     def __init__(
@@ -2205,6 +2208,8 @@ class HetHillenmeyer2008Dataset(_Hillenmeyer2008Base):
 @register_dataset
 class HomHillenmeyer2008Dataset(_Hillenmeyer2008Base):
     """FitDb HOP (homozygous barcoded kanMX4 deletion) fitness-defect z-score dataset."""
+
+    organism = Organism.scerevisiae
 
     _matrix_key = "hom"
 

@@ -107,6 +107,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -577,6 +578,8 @@ def manifest_sha256(manifest: Manifest, relpath: str) -> str:
 @register_dataset
 class SmfBaryshnikova2010Dataset(ExperimentDataset):
     """Baryshnikova 2010 genome-scale single-mutant fitness dataset (6023 alleles)."""
+
+    organism = Organism.scerevisiae
 
     def __init__(
         self,

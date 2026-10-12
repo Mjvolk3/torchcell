@@ -239,6 +239,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     RawSha256MismatchError,
     link_verified,
     post_process,
@@ -1565,6 +1566,8 @@ class _BuildCounts:
 @register_dataset
 class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
     """Hoepfner 2014 HIP-HOP atlas: env x (het | hom kanMX4 deletion) -> sensitivity score."""
+
+    organism = Organism.scerevisiae
 
     def __init__(
         self,

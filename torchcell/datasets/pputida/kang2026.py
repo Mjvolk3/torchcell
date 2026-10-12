@@ -151,6 +151,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -2536,6 +2537,8 @@ TABLE1_REFERENCE: dict[str, str] = {
 @register_dataset
 class IsoprenylAcetateTiterKang2026Dataset(ExperimentDataset):
     """Kang 2026 isoprenyl acetate titers: Table 1, Table S4 and the Table S9 fed-batch."""
+
+    organism = Organism.pputida
 
     REFERENCE_STRAIN: ClassVar[Literal["KT2440"]] = "KT2440"
     #: Every locus tag this campaign names must resolve to a locus of the pinned

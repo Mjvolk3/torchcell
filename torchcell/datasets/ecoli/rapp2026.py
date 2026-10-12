@@ -96,6 +96,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -1947,6 +1948,8 @@ def build_reference(
 @register_dataset
 class MetabolomeRapp2026Dataset(ExperimentDataset):
     """FI-MS metabolome of a CRISPRi library covering every iML1515 gene of E. coli."""
+
+    organism = Organism.ecoli
 
     REFERENCE_STRAIN: ClassVar[EcoliK12StrainName] = "MG1655"
 

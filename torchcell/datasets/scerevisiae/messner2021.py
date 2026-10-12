@@ -98,6 +98,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -784,6 +785,8 @@ def report_is_the_drug_screen(info_text: str) -> bool:
 @register_dataset
 class ProteomeMessner2021Dataset(ExperimentDataset):
     """Scanning SWATH proteomes of wild-type yeast under 18 compounds vs DMSO (70 runs)."""
+
+    organism = Organism.scerevisiae
 
     #: Every record is the reference strain itself (the perturbation is the compound),
     #: so the gene set is legitimately empty.

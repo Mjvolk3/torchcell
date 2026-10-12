@@ -110,6 +110,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -693,6 +694,8 @@ def resolve_deletions(
 @register_dataset
 class GrowthRateSchmidt2016Dataset(ExperimentDataset):
     """Schmidt 2016 Table S24: rim-deletion growth rates as WT-relative fitness."""
+
+    organism = Organism.ecoli
 
     REFERENCE_STRAIN: ClassVar[EcoliK12StrainName] = SCHMIDT_REFERENCE_STRAIN
 

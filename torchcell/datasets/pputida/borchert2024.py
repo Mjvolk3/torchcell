@@ -82,6 +82,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     file_sha256,
     link_verified,
@@ -1680,6 +1681,8 @@ def check_identity_floor(release: Release) -> int:
 @register_dataset
 class RbTnseqBorchert2024Dataset(ExperimentDataset):
     """KT2440 RB-TnSeq gene fitness, 4,732 genes x the kept samples of 332."""
+
+    organism = Organism.pputida
 
     REFERENCE_STRAIN: ClassVar[Literal["KT2440"]] = "KT2440"
 

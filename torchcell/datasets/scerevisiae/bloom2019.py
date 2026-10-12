@@ -91,6 +91,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     link_verified,
     post_process,
     verify_raw_files,
@@ -866,6 +867,8 @@ def build_parent(
 @register_dataset
 class Bloom2019Dataset(ExperimentDataset):
     """Bloom 2019: one record per (segregant, condition), 530,100 records."""
+
+    organism = Organism.scerevisiae
 
     def __init__(
         self,

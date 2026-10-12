@@ -83,6 +83,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     copy_verified,
     post_process,
     verify_raw_files,
@@ -131,6 +132,8 @@ _EXPECTED_ROWS = 1312
 @register_dataset
 class SmfODuibhir2014Dataset(ExperimentDataset):
     """O'Duibhir 2014 single-deletion relative-growth-rate -> fitness dataset."""
+
+    organism = Organism.scerevisiae
 
     def __init__(
         self,

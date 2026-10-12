@@ -165,6 +165,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -1342,6 +1343,8 @@ RELEASED_NUMERIC_CELLS = 94
 @register_dataset
 class CrisprPineneToleranceNiu2019Dataset(ExperimentDataset):
     """Niu 2019 CRISPRa/CRISPRi growth ratios under 0.5% pinene in BW25113(PT5-dxs)."""
+
+    organism = Organism.ecoli
 
     REFERENCE_STRAIN: ClassVar[EcoliK12StrainName] = REFERENCE_STRAIN_NAME
 

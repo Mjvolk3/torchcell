@@ -106,6 +106,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     copy_verified,
     post_process,
     verify_raw_files,
@@ -539,6 +540,8 @@ class DropLog(BaseModel):
 @register_dataset
 class EnvChemgenAuesukaree2009Dataset(ExperimentDataset):
     """Auesukaree 2009 six-stress env x geno -> categorical sensitivity dataset."""
+
+    organism = Organism.scerevisiae
 
     def __init__(
         self,

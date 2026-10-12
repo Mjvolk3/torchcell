@@ -83,6 +83,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -809,6 +810,8 @@ def build_reference(
 @register_dataset
 class GeneEssentialityBaba2006Dataset(ExperimentDataset):
     """Keio construction outcomes of 4,288 targeted E. coli BW25113 ORFs."""
+
+    organism = Organism.ecoli
 
     REFERENCE_STRAIN: ClassVar[EcoliK12StrainName] = "BW25113"
 

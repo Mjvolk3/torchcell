@@ -171,6 +171,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -1967,6 +1968,8 @@ def build_drop_log(
 @register_dataset
 class EnvChemgenGirgis2009Dataset(ExperimentDataset):
     """Combined z-scores of MG1655 transposon mutants in 17 antibiotics."""
+
+    organism = Organism.ecoli
 
     REFERENCE_STRAIN: ClassVar[EcoliK12StrainName] = REFERENCE_STRAIN_NAME
 

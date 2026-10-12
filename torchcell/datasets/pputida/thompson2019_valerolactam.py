@@ -97,6 +97,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -1580,6 +1581,8 @@ class _Thompson2019Dataset(ExperimentDataset):
 class ValerolactamTiterThompson2019Dataset(_Thompson2019Dataset):
     """Thompson 2019 valerolactam titers: the four-strain ladder at 24 and 48 h."""
 
+    organism = Organism.pputida
+
     def __init__(
         self,
         root: str = "data/torchcell/valerolactam_titer_thompson2019",
@@ -1702,6 +1705,8 @@ class ValerolactamTiterThompson2019Dataset(_Thompson2019Dataset):
 @register_dataset
 class LactamGrowthRateThompson2019Dataset(_Thompson2019Dataset):
     """Thompson 2019 Table S1: maximal growth rates on three carbon sources."""
+
+    organism = Organism.pputida
 
     RAW_PATHS: ClassVar[tuple[str, ...]] = (PAPER_TEXT.relpath, SI_TEXT.relpath)
 

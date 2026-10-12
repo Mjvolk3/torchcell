@@ -6,6 +6,7 @@ from .deduplicate import Deduplicator
 from .experiment_dataset import (
     ExperimentDataset,
     ManifestPinMismatchError,
+    Organism,
     RawSha256MismatchError,
     Visibility,
     check_manifest_pin,
@@ -36,6 +37,7 @@ from .neo4j_cell import Neo4jCellDataset  # FLAG
 __all__ = [
     "ExperimentReferenceIndex",
     "Visibility",
+    "Organism",
     "ReferenceIndex",
     "compute_sha256_hash",
     "Deduplicator",

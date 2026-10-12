@@ -174,6 +174,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -1761,6 +1762,8 @@ EXPECTED_CROSSED_RECORDS = EXPECTED_WRITABLE_WELLS * 6 + EXPECTED_WRITABLE_KEIO_
 @register_dataset
 class CrispriCrossRachwalski2024Dataset(ExperimentDataset):
     """Rachwalski 2024 normalized colony growth of CRISPRi knockdown by deletion crosses."""
+
+    organism = Organism.ecoli
 
     #: The host of every screen and the background of the Keio collection.
     REFERENCE_STRAIN: ClassVar[EcoliK12StrainName] = BW25113_STRAIN

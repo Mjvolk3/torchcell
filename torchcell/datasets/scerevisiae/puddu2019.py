@@ -126,6 +126,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -1247,6 +1248,8 @@ class ReleaseLedger(BaseModel):
 @register_dataset
 class GenomeArchitecturePuddu2019Dataset(ExperimentDataset):
     """Puddu 2019: one record per sequenced knockout colony, 8,826 records."""
+
+    organism = Organism.scerevisiae
 
     def __init__(
         self,

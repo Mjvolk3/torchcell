@@ -116,6 +116,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -504,6 +505,8 @@ def reference_row(rows: Sequence[S23Row]) -> S23Row:
 @register_dataset
 class GrowthRateS23Schmidt2016Dataset(ExperimentDataset):
     """Schmidt 2016 Table S23: 15 absolute per-condition growth rates of BW25113."""
+
+    organism = Organism.ecoli
 
     REFERENCE_STRAIN: ClassVar[EcoliK12StrainName] = sm.SCHMIDT_REFERENCE_STRAIN
     #: Every released row is wild type, so the gene set is legitimately empty.

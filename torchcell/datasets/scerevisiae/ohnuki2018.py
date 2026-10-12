@@ -63,6 +63,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     copy_verified,
     post_process,
     verify_raw_files,
@@ -169,6 +170,8 @@ class ScmdOhnuki2018Dataset(ExperimentDataset):
     genes, phenotyped in liquid YPD at 25 C; the diploid essential-gene counterpart of the
     haploid Ohya 2005 full-deletion CalMorph screen.
     """
+
+    organism = Organism.scerevisiae
 
     def __init__(
         self,

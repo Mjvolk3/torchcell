@@ -80,6 +80,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -1212,6 +1213,8 @@ def build_reference(
 @register_dataset
 class MetabolomeFuhrer2017Dataset(ExperimentDataset):
     """Genome-wide FIA-TOF-MS ion metabolome of the E. coli Keio deletion collection."""
+
+    organism = Organism.ecoli
 
     REFERENCE_STRAIN: ClassVar[EcoliK12StrainName] = "BW25113"
 

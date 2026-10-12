@@ -195,6 +195,7 @@ from openpyxl import load_workbook
 from pydantic import BaseModel, ConfigDict, Field
 from tqdm import tqdm
 
+from torchcell.data import Organism
 from torchcell.data.experiment_dataset import (
     ExperimentDataset,
     check_manifest_pin,
@@ -2100,6 +2101,8 @@ def _standard_names(genome: PPutidaKT2440Genome, tags: Iterable[str]) -> dict[st
 class IsoprenolSelectionMenasalvas2025Dataset(ExperimentDataset):
     """Menasalvas 2025 enriched CRISPRi knockdowns from the growth-coupled selection."""
 
+    organism = Organism.pputida
+
     REFERENCE_STRAIN: ClassVar[Literal["KT2440"]] = "KT2440"
     #: Every selected target must resolve to a locus of the pinned assembly. Measured
     #: on the pinned markdown: 60 of 60 are current standard locus tags, so a value
@@ -3401,6 +3404,8 @@ class ProteomeMenasalvas2025Dataset(ExperimentDataset):
     record costs and is cheaper than dropping two samples.
     """
 
+    organism = Organism.pputida
+
     REFERENCE_STRAIN: ClassVar[Literal["KT2440"]] = "KT2440"
     #: Host protein keys reaching a locus of the pinned assembly: 2,092 of 2,178,
     #: measured 2026-10-09. The floor sits just below it; the 86 that do not are listed
@@ -3889,6 +3894,8 @@ class _MetabolitePhaseDataset(ExperimentDataset):
 class MetaboliteGrowthPhaseMenasalvas2025Dataset(_MetabolitePhaseDataset):
     """data S1-1's growth-phase (``GP``) absolute metabolite concentrations."""
 
+    organism = Organism.pputida
+
     PHASE: ClassVar[Phase] = "growth"
 
     def __init__(
@@ -3908,6 +3915,8 @@ class MetaboliteGrowthPhaseMenasalvas2025Dataset(_MetabolitePhaseDataset):
 @register_dataset
 class MetaboliteProductionPhaseMenasalvas2025Dataset(_MetabolitePhaseDataset):
     """data S1-1's production-phase (``PP``) absolute metabolite concentrations."""
+
+    organism = Organism.pputida
 
     PHASE: ClassVar[Phase] = "production"
 

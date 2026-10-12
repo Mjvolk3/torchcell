@@ -85,6 +85,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     compute_sha256_hash,
     link_verified,
@@ -953,6 +954,8 @@ def publication() -> Publication:
 @register_dataset
 class IsolateGrowthPeter2018Dataset(ExperimentDataset):
     """Peter 2018: one record per (isolate, condition), 33,985 records."""
+
+    organism = Organism.scerevisiae
 
     def __init__(
         self,

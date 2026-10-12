@@ -99,6 +99,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -934,6 +935,8 @@ def _canonical_common_names(genome: SCerevisiaeGenome) -> dict[str, str]:
 @register_dataset
 class EnvChemgenWildenhain2015Dataset(ExperimentDataset):
     """Wildenhain 2015 chemical-genetic matrix: env x geno -> growth-inhibition z-score."""
+
+    organism = Organism.scerevisiae
 
     def __init__(
         self,

@@ -134,6 +134,7 @@ from pydantic import BaseModel, ConfigDict
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -1147,6 +1148,8 @@ def _optional(cell: str) -> str | None:
 @register_dataset
 class RnaseqPublicK12Lamoureux2023Dataset(ExperimentDataset):
     """Public K-12: one record per reprocessed public MG1655 RNA-seq library."""
+
+    organism = Organism.ecoli
 
     REFERENCE_STRAIN: ClassVar[EcoliK12StrainName] = REFERENCE_STRAIN_NAME
 

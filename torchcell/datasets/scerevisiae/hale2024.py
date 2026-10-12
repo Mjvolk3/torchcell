@@ -108,6 +108,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     compute_sha256_hash,
     link_verified,
@@ -1087,6 +1088,8 @@ class DropRule(BaseModel):
 @register_dataset
 class CrispriSegregantHale2024Dataset(ExperimentDataset):
     """Hale 2024: one record per (double-barcode lineage, assay), 8,692,635 records."""
+
+    organism = Organism.scerevisiae
 
     def __init__(
         self,

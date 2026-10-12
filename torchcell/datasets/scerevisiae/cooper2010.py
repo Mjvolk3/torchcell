@@ -129,6 +129,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     link_verified,
     post_process,
     verify_raw_files,
@@ -1037,6 +1038,8 @@ def retain_rows(
 @register_dataset
 class AminoAcidCooper2010Dataset(ExperimentDataset):
     """Cooper 2010 CE-LIF amino-acid pools of the deletion collection (ratio to plate)."""
+
+    organism = Organism.scerevisiae
 
     def __init__(
         self,

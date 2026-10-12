@@ -162,6 +162,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -1355,6 +1356,8 @@ def _write_accounting(accounting: BuildAccounting, preprocess_dir: str) -> None:
 @register_dataset
 class MismatchCrispriFitnessHawkins2020Dataset(ExperimentDataset):
     """Hawkins 2020 per-sgRNA relative fitness of E. coli essential-gene knockdowns."""
+
+    organism = Organism.ecoli
 
     REFERENCE_STRAIN: ClassVar[Literal["BW25113"]] = "BW25113"
     #: Measured on the pinned bytes: 317 of the 318 released b-numbers reach a BW25113

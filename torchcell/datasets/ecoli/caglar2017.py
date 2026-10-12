@@ -146,6 +146,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -2523,6 +2524,8 @@ def _record_samples(
 class RnaseqCaglar2017Dataset(ExperimentDataset):
     """Caglar 2017 RNA-seq: one record per REL606 library (Table S2 sample)."""
 
+    organism = Organism.ecoli
+
     REFERENCE_STRAIN: ClassVar[Literal["REL606"]] = "REL606"
 
     def __init__(
@@ -2701,6 +2704,8 @@ class RnaseqCaglar2017Dataset(ExperimentDataset):
 @register_dataset
 class ProteomeCaglar2017Dataset(ExperimentDataset):
     """Caglar 2017 proteome: one record per REL606 LC-MS/MS sample (Table S3)."""
+
+    organism = Organism.ecoli
 
     REFERENCE_STRAIN: ClassVar[Literal["REL606"]] = "REL606"
 
@@ -3501,6 +3506,8 @@ class ProteinFoldChangeCaglar2017Dataset(ExperimentDataset):
     single dose. The gene-level arm, the doubling-time control model and the two
     pooled-dose salt levels are refused in ``build_accounting.json``.
     """
+
+    organism = Organism.ecoli
 
     REFERENCE_STRAIN: ClassVar[Literal["REL606"]] = "REL606"
 

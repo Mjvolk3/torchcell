@@ -91,6 +91,7 @@ from tqdm import tqdm
 import torchcell.datasets.pputida.borchert2024 as b24
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     file_sha256,
     link_verified,
@@ -1532,6 +1533,8 @@ SERVED_ROOT_REL = "data/torchcell/rbtnseq_borchert2024"
 @register_dataset
 class RbTnseqBorchert2023Dataset(ExperimentDataset):
     """Borchert 2023 KT2440 RB-TnSeq fitness for the 271 loci the compendium dropped."""
+
+    organism = Organism.pputida
 
     REFERENCE_STRAIN: ClassVar[Literal["KT2440"]] = "KT2440"
 

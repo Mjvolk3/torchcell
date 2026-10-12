@@ -71,6 +71,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     post_process,
     verify_raw_files,
     write_verified,
@@ -237,6 +238,8 @@ def _raw_counts(raw_counts: pd.DataFrame, orf: str) -> dict[str, int]:
 @register_dataset
 class AminoAcidMulleder2016Dataset(ExperimentDataset):
     """Genome-wide intracellular amino-acid metabolome of the yeast deletion collection."""
+
+    organism = Organism.scerevisiae
 
     def __init__(
         self,

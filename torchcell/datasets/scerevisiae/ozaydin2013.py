@@ -38,6 +38,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     post_process,
     verify_raw_files,
     write_verified,
@@ -232,6 +233,8 @@ def _parse_comment(comment: Any) -> dict[str, bool]:
 @register_dataset
 class CarotenoidOzaydin2013Dataset(ExperimentDataset):
     """Beta-carotene colony-color visual screen of the yeast deletion collection."""
+
+    organism = Organism.scerevisiae
 
     si_url = "https://ars.els-cdn.com/content/image/1-s2.0-S109671761200081X-mmc1.xlsx"
     si_filename = "1-s2.0-S109671761200081X-mmc1.xlsx"

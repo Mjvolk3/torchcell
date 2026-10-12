@@ -170,6 +170,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -1572,6 +1573,8 @@ def manifest_sha256(manifest: Manifest, relpath: str) -> str:
 @register_dataset
 class ProteomeSchmidt2016Dataset(ExperimentDataset):
     """Absolute BW25113 proteome, one record per loaded growth condition."""
+
+    organism = Organism.ecoli
 
     REFERENCE_STRAIN: ClassVar[EcoliK12StrainName] = SCHMIDT_REFERENCE_STRAIN
 

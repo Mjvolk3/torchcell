@@ -74,6 +74,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     copy_verified,
     post_process,
     verify_raw_files,
@@ -190,6 +191,8 @@ class ScmdOhya2005Dataset(ExperimentDataset):
     SCMD CalMorph family (Ohnuki 2018 = diploid essential-gene heterozygotes; Ohnuki 2022 =
     drug-hypersensitive quadruple deletions).
     """
+
+    organism = Organism.scerevisiae
 
     def __init__(
         self,

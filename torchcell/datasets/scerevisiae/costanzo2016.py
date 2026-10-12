@@ -18,7 +18,7 @@ import pandas as pd
 from torch_geometric.data import download_url
 from tqdm import tqdm
 
-from torchcell.data import ExperimentDataset, post_process
+from torchcell.data import ExperimentDataset, Organism, post_process
 from torchcell.datamodels import (
     Environment,
     FitnessExperiment,
@@ -151,6 +151,8 @@ def _reference_std_at(temperature: Any, std_26: Any, std_30: Any, strain: str) -
 @register_dataset
 class SmfCostanzo2016Dataset(ExperimentDataset):
     """Single-mutant fitness dataset from Costanzo et al. 2016."""
+
+    organism = Organism.scerevisiae
 
     url = (
         "https://thecellmap.org/costanzo2016/data_files/"
@@ -477,6 +479,8 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
 @register_dataset
 class DmfCostanzo2016Dataset(ExperimentDataset):
     """Double-mutant fitness dataset from Costanzo et al. 2016."""
+
+    organism = Organism.scerevisiae
 
     url = (
         "https://thecellmap.org/costanzo2016/data_files/"
@@ -868,6 +872,8 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
 @register_dataset
 class DmiCostanzo2016Dataset(ExperimentDataset):
     """Double-mutant genetic interaction dataset from Costanzo et al. 2016."""
+
+    organism = Organism.scerevisiae
 
     url = (
         "https://thecellmap.org/costanzo2016/data_files/"

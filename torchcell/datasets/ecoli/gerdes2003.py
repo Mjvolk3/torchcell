@@ -85,6 +85,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -871,6 +872,8 @@ def build_reference(
 @register_dataset
 class GeneEssentialityGerdes2003Dataset(ExperimentDataset):
     """Genetic-footprinting essentiality calls of E. coli MG1655 genes (Table S1)."""
+
+    organism = Organism.ecoli
 
     REFERENCE_STRAIN: ClassVar[EcoliK12StrainName] = "MG1655"
 

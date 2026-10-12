@@ -262,6 +262,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -1638,6 +1639,8 @@ EXPECTED_RECORDS = 3664
 class GrowthRateCampos2018Dataset(ExperimentDataset):
     """Campos 2018 Keio maximal-growth-rate fitness in M9 casamino-acid glucose."""
 
+    organism = Organism.ecoli
+
     #: The strain whose genome the build entry points inject as ``ecoli_genome``: the
     #: Keio collection's background, and the assembly every record pins.
     REFERENCE_STRAIN: ClassVar[EcoliK12StrainName] = "BW25113"
@@ -1845,6 +1848,8 @@ class MorphologyCampos2018Dataset(ExperimentDataset):
     ``n_samples``. Nothing else of Dataset EV1 is read: its feature columns are the
     uncorrected siblings of EV2's.
     """
+
+    organism = Organism.ecoli
 
     #: The strain whose genome the build entry points inject as ``ecoli_genome``.
     REFERENCE_STRAIN: ClassVar[EcoliK12StrainName] = "BW25113"

@@ -67,6 +67,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     post_process,
     verify_raw_files,
     write_verified,
@@ -295,6 +296,8 @@ METABOLITE_DATA_SHA256 = (
 @register_dataset
 class ProteomeZelezniak2018Dataset(ExperimentDataset):
     """SWATH-MS proteome of the yeast kinase-knockout collection (97 strains)."""
+
+    organism = Organism.scerevisiae
 
     def __init__(
         self,
@@ -554,6 +557,8 @@ class MetaboliteZelezniak2018Dataset(ExperimentDataset):
     """LC-SRM targeted metabolome of the kinase-knockout collection, one record per
     (strain, protocol); each record and its WT reference share one protocol.
     """
+
+    organism = Organism.scerevisiae
 
     def __init__(
         self,

@@ -210,6 +210,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -1391,6 +1392,8 @@ class IdentifierReport(BaseModel):
 @register_dataset
 class CrispriScreenRousset2018Dataset(ExperimentDataset):
     """Rousset 2018 per-sgRNA log2FC: growth, three phage challenges, transduction."""
+
+    organism = Organism.ecoli
 
     #: Both host strains (LC-E75, FR-E01) are MG1655 derivatives and every released
     #: identifier is an MG1655 gene symbol, so one assembly serves the whole dataset.

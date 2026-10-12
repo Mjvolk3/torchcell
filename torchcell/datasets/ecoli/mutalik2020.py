@@ -113,6 +113,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -2160,6 +2161,8 @@ def kept_assays(
 @register_dataset
 class PhageRbTnseqMutalik2020Dataset(ExperimentDataset):
     """Mutalik 2020 per-(gene, experiment) phage-challenge RB-TnSeq gene fitness."""
+
+    organism = Organism.ecoli
 
     #: The library is BW25113's KEIO_ML9; the released b-numbers are MG1655's and are
     #: remapped through the ECK join (see the module docstring's identifier finding).

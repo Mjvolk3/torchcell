@@ -108,6 +108,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -1227,6 +1228,8 @@ class DropLog(BaseModel):
 @register_dataset
 class EnvChemgenParsons2006Dataset(ExperimentDataset):
     """Parsons 2006 chemical-genetic compendium: env x geno -> log2(control/treated)."""
+
+    organism = Organism.scerevisiae
 
     def __init__(
         self,

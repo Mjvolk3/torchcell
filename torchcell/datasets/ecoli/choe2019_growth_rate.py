@@ -162,6 +162,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -1255,6 +1256,8 @@ def _link_raw(raw_dir: str, names: Sequence[str]) -> None:
 class GrowthRateChoe2019Dataset(ExperimentDataset):
     """Choe 2019 Fig. 2c: the two MS56 designed deletions, as parent-relative fitness."""
 
+    organism = Organism.ecoli
+
     REFERENCE_STRAIN: ClassVar[EcoliK12StrainName] = MG1655
 
     def __init__(
@@ -1572,6 +1575,8 @@ class GrowthRateChoe2019Dataset(ExperimentDataset):
 @register_dataset
 class TranscriptionFactorKnockoutChoe2019Dataset(ExperimentDataset):
     """Choe 2019 Supplementary Fig. 6: the two Keio deletions that carry a number."""
+
+    organism = Organism.ecoli
 
     REFERENCE_STRAIN: ClassVar[EcoliK12StrainName] = BW25113
 

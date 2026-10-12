@@ -109,6 +109,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     copy_verified,
     post_process,
     verify_raw_files,
@@ -493,6 +494,8 @@ class DropLog(BaseModel):
 @register_dataset
 class EnvChemgenMota2024Dataset(ExperimentDataset):
     """Acetic/butyric/octanoic acid chemogenomic env x geno -> ordinal susceptibility."""
+
+    organism = Organism.scerevisiae
 
     def __init__(
         self,

@@ -79,6 +79,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -1452,6 +1453,8 @@ def drop_log(rows: Sequence[SampleRecord]) -> DropLog:
 @register_dataset
 class PutidaPrecise321Lim2022Dataset(ExperimentDataset):
     """putidaPRECISE321: per-sample absolute KT2440 transcriptomes (TPM + counts)."""
+
+    organism = Organism.pputida
 
     REFERENCE_STRAIN: ClassVar[Literal["KT2440"]] = "KT2440"
 

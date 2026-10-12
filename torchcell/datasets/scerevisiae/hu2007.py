@@ -97,6 +97,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -911,6 +912,8 @@ def environment() -> Environment:
 @register_dataset
 class MicroarrayScoreHu2007Dataset(ExperimentDataset):
     """Hu 2007 TF-deletion transcriptomes as released: error-model X scores + p."""
+
+    organism = Organism.scerevisiae
 
     def __init__(
         self,

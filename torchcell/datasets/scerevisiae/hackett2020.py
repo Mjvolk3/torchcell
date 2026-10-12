@@ -77,6 +77,7 @@ from pydantic import BaseModel, ConfigDict, model_validator
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     compute_sha256_hash,
     link_verified,
@@ -1512,6 +1513,8 @@ def manifest_sha256(manifest: Manifest, relpath: str) -> str:
 @register_dataset
 class InductionTimecourseHackett2020Dataset(ExperimentDataset):
     """Hackett 2020 IDEA: one record per (time course, time point), 1,752 records."""
+
+    organism = Organism.scerevisiae
 
     def __init__(
         self,

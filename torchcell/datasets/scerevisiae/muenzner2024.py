@@ -68,6 +68,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     copy_verified,
     link_verified,
@@ -1044,6 +1045,8 @@ def median_reference(
 class ProteomeMuenzner2024Dataset(_MuenznerIsolateDataset):
     """796 natural-isolate SWATH-MS proteomes (SI Table 3), 794 with a Peter genome."""
 
+    organism = Organism.scerevisiae
+
     def __init__(
         self,
         root: str = "data/torchcell/proteome_muenzner2024",
@@ -1210,6 +1213,8 @@ def check_annotation_agreement(frame: pd.DataFrame, annotations: pd.DataFrame) -
 @register_dataset
 class ProteinTurnoverMuenzner2024Dataset(_MuenznerIsolateDataset):
     """Dynamic-SILAC turnover rates for 55 natural isolates (SI Table 17)."""
+
+    organism = Organism.scerevisiae
 
     def __init__(
         self,

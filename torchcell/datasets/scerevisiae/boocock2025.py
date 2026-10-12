@@ -99,6 +99,7 @@ import pandas as pd
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     link_verified,
     post_process,
     verify_raw_files,
@@ -979,6 +980,8 @@ def counts_phenotype(
 @register_dataset
 class Boocock2025Dataset(ExperimentDataset):
     """Boocock 2025: 393 pooled segregants plus 79,123 de novo segregant cells."""
+
+    organism = Organism.scerevisiae
 
     def __init__(
         self,

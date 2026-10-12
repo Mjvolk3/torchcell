@@ -98,6 +98,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -530,6 +531,8 @@ def resolve_strains(df: pd.DataFrame, genome: SCerevisiaeGenome) -> ResolvedStra
 @register_dataset
 class FattyAcidSmith2006Dataset(ExperimentDataset):
     """Smith 2006 fatty-acid clear-zone env x geno -> ordinal response dataset."""
+
+    organism = Organism.scerevisiae
 
     def __init__(
         self,

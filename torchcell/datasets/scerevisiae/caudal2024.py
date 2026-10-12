@@ -80,6 +80,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     post_process,
     verify_raw_files,
     verify_sha256,
@@ -749,6 +750,8 @@ def resolve_gene_ids(df: pd.DataFrame) -> tuple[pd.DataFrame, BlankNameLedger]:
 @register_dataset
 class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
     """Natural-isolate pan-transcriptome: each isolate a perturbation set off S288C."""
+
+    organism = Organism.scerevisiae
 
     def __init__(
         self,

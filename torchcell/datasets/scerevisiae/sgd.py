@@ -19,7 +19,7 @@ import pandas as pd
 from Bio import Entrez
 from tqdm import tqdm
 
-from torchcell.data import ExperimentDataset, post_process
+from torchcell.data import ExperimentDataset, Organism, post_process
 from torchcell.datamodels.schema import (
     Environment,
     GeneEssentialityExperiment,
@@ -111,6 +111,8 @@ def get_publication_info(pubmed_id: str) -> dict[str, str | None] | None:
 @register_dataset
 class GeneEssentialitySgdDataset(ExperimentDataset):
     """Gene essentiality experiments built from SGD inviable null phenotypes."""
+
+    organism = Organism.scerevisiae
 
     def __init__(
         self,

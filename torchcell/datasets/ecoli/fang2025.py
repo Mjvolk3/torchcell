@@ -136,6 +136,7 @@ import pandas as pd
 from pydantic import BaseModel, ConfigDict, TypeAdapter
 from tqdm import tqdm
 
+from torchcell.data import Organism
 from torchcell.data.experiment_dataset import (
     ExperimentDataset,
     check_manifest_pin,
@@ -1142,6 +1143,8 @@ class BuildAccounting(BaseModel):
 @register_dataset
 class CrispriGuideFfaEnrichmentFang2025Dataset(ExperimentDataset):
     """Fang 2025 per-guide CRISPRi-FACS enrichment across the paper's two rounds."""
+
+    organism = Organism.ecoli
 
     REFERENCE_STRAIN: ClassVar[Literal["MG1655"]] = "MG1655"
     #: Measured on the pinned bytes: 4,313 of the 4,317 cluster-member b-numbers resolve

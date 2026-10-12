@@ -57,6 +57,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     copy_verified,
     post_process,
     verify_raw_files,
@@ -354,6 +355,8 @@ def _row_analytes(row: list[tuple[float, float]]) -> dict[str, tuple[float, floa
 @register_dataset
 class OrganicAcidYoshida2012Dataset(ExperimentDataset):
     """HPLC organic-acid titers of 17 yeast deletion mutants (Yoshida 2012, Table 3)."""
+
+    organism = Organism.scerevisiae
 
     def __init__(
         self,

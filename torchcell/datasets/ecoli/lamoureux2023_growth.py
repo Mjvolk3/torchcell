@@ -109,6 +109,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -568,6 +569,8 @@ def deletion_tags(
 @register_dataset
 class GrowthRateLamoureux2023Dataset(ExperimentDataset):
     """PRECISE-1K's released per-sample growth rate: 89 absolute rates in 1/hr."""
+
+    organism = Organism.ecoli
 
     REFERENCE_STRAIN: ClassVar[EcoliK12StrainName] = lm.REFERENCE_STRAIN_NAME
 

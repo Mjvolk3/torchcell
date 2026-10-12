@@ -113,6 +113,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
+    Organism,
     check_manifest_pin,
     link_verified,
     post_process,
@@ -1063,6 +1064,8 @@ DATASET_ROOT_REL = "data/torchcell/pputida_env_metal_tnseq_royet2025"
 @register_dataset
 class EnvMetalTnseqRoyet2025Dataset(ExperimentDataset):
     """KT2440 mariner Tn-seq log2FC of every gene in cobalt, copper, zinc and cadmium."""
+
+    organism = Organism.pputida
 
     REFERENCE_STRAIN: ClassVar[Literal["KT2440"]] = "KT2440"
 

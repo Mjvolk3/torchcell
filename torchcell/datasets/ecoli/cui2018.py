@@ -106,6 +106,7 @@ import pandas as pd
 from pydantic import BaseModel
 from tqdm import tqdm
 
+from torchcell.data import Organism
 from torchcell.data.experiment_dataset import (
     ExperimentDataset,
     check_manifest_pin,
@@ -1143,6 +1144,8 @@ def annotation_symbols(genome: EcoliK12Genome, tags: Iterable[str]) -> dict[str,
 @register_dataset
 class CrispriKnockdownCui2018Dataset(ExperimentDataset):
     """Cui 2018 per-guide dCas9 knockdown log2 fold changes in two MG1655 strains."""
+
+    organism = Organism.ecoli
 
     REFERENCE_STRAIN: ClassVar[Literal["MG1655"]] = "MG1655"
     #: Measured on the pinned bytes: 4,286 of the 4,360 released gene symbols resolve to

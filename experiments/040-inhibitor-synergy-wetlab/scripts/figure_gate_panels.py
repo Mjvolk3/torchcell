@@ -2149,7 +2149,7 @@ def draw_isoboles(ax: Any, R: Reads) -> None:
 
 def fig_main(R: Reads) -> dict[str, str]:
     """The four-by-three sheet of the plan, a to l."""
-    fig = new_sheet(214)
+    fig = new_sheet(170)
     fig.get_layout_engine().set(rect=(0, 0.012, 1, 0.962))
     axes = rows(fig, 4, 3)
     draw_molecules(axes[0], R)

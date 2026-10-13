@@ -19,7 +19,7 @@ AUROC over the \hydnCombinations{} combinations and the fitness Spearman over th
 \hydnGrewServed{} that grew under the served call. \colorkey{}
 
 \clearpage
-\tcfigfit[0.98]{\figConcept}{\textbf{The task, the data and the evaluation.} Three
+\tcfig{\figConcept}{\textbf{The task, the data and the evaluation.} Three
 blocks, each a layout rather than a drawn result; a dashed box is proposed and not run.
 \textbf{The task} \status{todo}\,\fstat{idea}: a compound and its molar dose enter the
 cell graph transformer as one token placed in front of the gene tokens, which attend to
@@ -59,8 +59,16 @@ block is marked idea even though its counts are on file. \\
 \end{tabular}}
 
 \clearpage
-\tcfigfit[0.56]{\figMain}{\textbf{The sheet proposed for the main text, the
-four-by-three of the experiment note.}
+%% TRUE SIZE (\tcfig, no scaling): the sheet is authored at Nature's full width and
+%% its height cap, 179 by 170 mm, so it sits here exactly as it would print. The
+%% panel-by-panel text is too long to share a page with the sheet as a caption, so
+%% the caption is the headline and the panels are described in the paragraph after.
+\tcfig{\figMain}{\textbf{The sheet proposed for the main text, the four-by-three of
+the experiment note.} Columns: the task and the data (left), the public screens
+(middle), the private wet-lab readout (right). Each panel is described in the
+paragraph after the figure, with its status.}{fig:main}
+
+\textbf{Panels of \cref{fig:main}.}
 \textbf{a}, The six inhibitors as skeletal structures from their curated SMILES, in the
 two families a dilute-acid hydrolysate carries, with the host's half-maximal dose from
 its titration fit under each. \status{todo}\,\fstat{file}
@@ -132,7 +140,7 @@ with growth islands and flagged. Dotted, the model's front after the monotone cl
 it sits at the grid's edge on every run, because a head that predicts the same fitness
 at every dose calls every cell alive; the closure drops
 \hydisoboleExTwoSixModelIslands{} cells on the furfural grid and none on the other two.
-\status{todo}\,\fstat{file}}{fig:main}
+\status{todo}\,\fstat{file}
 
 %% The float is flushed before its source table is set: a deferred float
 %% otherwise lands on the page AFTER the table that describes it.
@@ -182,7 +190,7 @@ model front. Status: on file. \\
 \end{tabular}}
 
 \clearpage
-\tcfigfit[0.98]{\figSiOne}{\textbf{Supplement one: the public benchmark in full.}
+\tcfig{\figSiOne}{\textbf{Supplement one: the public benchmark in full.}
 \textbf{a}, Every ladder arm, median centered Spearman per encoder and kernel,
 \hydladderCells{} fitted cells over \hydladderEncoders{} encoders. Fingerprint counts
 lead every kernel they are defined for. \status{todo}\,\fstat{file}
@@ -216,7 +224,7 @@ file. \\
 \end{tabular}}
 
 \clearpage
-\tcfigfit[0.98]{\figSiTwo}{\textbf{Supplement two: the single agents and the growth
+\tcfig{\figSiTwo}{\textbf{Supplement two: the single agents and the growth
 call.}
 \textbf{a}, Every single-agent fit, \hydnFitsAll{} of them over the titration run and the
 three isobole axes, under both no-growth conventions: the darker bar keeps no-growth
@@ -254,7 +262,7 @@ d & \file{mixture_combinations.csv} (the extrapolation flags),
 \end{tabular}}
 
 \clearpage
-\tcfigfit[0.98]{\figSiThree}{\textbf{Supplement three: how profiles compose, and what the
+\tcfig{\figSiThree}{\textbf{Supplement three: how profiles compose, and what the
 predicted ones carry.}
 \textbf{a}, Emergent and masked gene rates of each public pair against how alike its two
 singles are, with the control-matched null beside them. The median emergent fraction is
@@ -303,7 +311,7 @@ Status: on file. \\
 \end{tabular}}
 
 \clearpage
-\tcfigfit[0.98]{\figSiFour}{\textbf{Supplement four: what the mixture rounds say, read
+\tcfig{\figSiFour}{\textbf{Supplement four: what the mixture rounds say, read
 over both machines.} Rounds three and four of the mixture trainer, every run on fold
 seed 0 unless a panel says otherwise; a run is one seed on one fold on one machine, and
 an arm run on both machines contributes both copies.
@@ -364,7 +372,7 @@ three-source arm on fold seeds 1 and 2 is running. \\
 \end{tabular}}
 
 \clearpage
-\tcfigfit[0.98]{\figSiFive}{\textbf{Supplement five: is the trainer converged, per
+\tcfig{\figSiFive}{\textbf{Supplement five: is the trainer converged, per
 source.} Mean curves over every round-3 and round-4 run on both machines of the
 one-, two- and three-source arms and two three-source variants; the learning rate is zero
 at epoch 150 on every arm. \textbf{a}, The training loss per source, one step per
@@ -396,7 +404,7 @@ a to c & every \file{results/mixture/r3*/*_history.csv} and \file{r4*} on GilaHy
 \end{tabular}}
 
 \clearpage
-\tcfigfit[0.98]{\figSiSix}{\textbf{Supplement six: every scored arm of rounds one to
+\tcfig{\figSiSix}{\textbf{Supplement six: every scored arm of rounds one to
 four, both machines.} One row per arm, every run a point (one seed on one fold on one
 machine) and the arm's mean a bar, sorted by the public score; rounds one and two
 (pool-and-last, 50 epochs) sit on the same axis as rounds three and four (the held-out

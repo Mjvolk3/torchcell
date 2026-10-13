@@ -1,0 +1,348 @@
+{
+  "manifest": {
+    "run_id": "8fuwsk48",
+    "wandb_run_url": "https://wandb.ai/zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/runs/8fuwsk48",
+    "config_name": "cgt_s3_r_kl_fit_031",
+    "overrides": [
+      "+seed=2",
+      "trainer.max_epochs=50",
+      "data_module.num_workers=14"
+    ],
+    "igb_job_id": "2409672",
+    "igb_code_worktree": "/home/a-m/mjvolk3/projects/torchcell.worktrees/025-fitness-joint-head-h",
+    "selection": "best val/gene_interaction/Pearson (ModelCheckpoint save_top_k=1, mode=max): epoch 43, 0.5009",
+    "checkpoint": {
+      "file": "8fuwsk48-best-pearson-epoch=43-val_gene_interaction_Pearson=0.5009.ckpt",
+      "sha256": "497793babccbffc28a0cf2a48814472afec1662dbcd14620b68e15072e2bddc7",
+      "bytes": 97547451,
+      "source_host": "biologin.igb.illinois.edu",
+      "source_path": "/home/a-m/mjvolk3/scratch/torchcell/models/checkpoints/compute-5-7-2409672_a77a071b1a74dc1d22b715e4511723a11f8fa52109d7888315078137d4319e2e/8fuwsk48-best-pearson-epoch=43-val/gene_interaction/Pearson=0.5009.ckpt",
+      "retrieval_command": "rsync -av mjvolk3@biologin.igb.illinois.edu:<source_dir>/ <dest>/"
+    },
+    "config": {
+      "file": "wandb_config_resolved.yaml",
+      "sha256": "ab6288f37bd0eb7e56c6c92cb9d59634e01cf2a02ac3415c76f5294b90d4f7d3",
+      "source": "wandb.Api().run('zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer/8fuwsk48').config"
+    },
+    "retrieved_at": "2026-10-13T12:18:15"
+  },
+  "load_check": {
+    "n_tensors": 160,
+    "edge_counts": {
+      "physical_interaction": 144211,
+      "regulatory_interaction": 44310,
+      "string12_0_coexpression": 1002806,
+      "string12_0_cooccurence": 17692,
+      "string12_0_database": 79224,
+      "string12_0_experimental": 828701,
+      "string12_0_fusion": 18394,
+      "string12_0_neighborhood": 153320,
+      "tflink": 207250
+    },
+    "val_n": 37673,
+    "val_pearson_recomputed": 0.5007212514743843,
+    "val_pearson_recorded": 0.5009,
+    "abs_diff": 0.00017874852561572396
+  },
+  "n_genes": 6607,
+  "clustering": {
+    "input": "centered matrix -> PCA",
+    "n_pcs": 50,
+    "graph": "kNN k=15, Euclidean in PCA space, symmetrized union, unweighted",
+    "algorithm": "Leiden (python-igraph community_leiden), modularity",
+    "resolution": 1.0,
+    "seed": 0,
+    "display": "UMAP n_neighbors=15 min_dist=0.3 random_state=0 on the PCA space",
+    "silhouette_space": "PCA-50, Euclidean"
+  },
+  "go": {
+    "source": "SGD GFF Ontology_term per gene (genome[g].go), is_a ancestors via goatools",
+    "obo": "/scratch/projects/torchcell-scratch/data/go/go.obo",
+    "term_size_window": [
+      10,
+      500
+    ],
+    "test": "one-sided hypergeometric per cluster per term",
+    "correction": "Benjamini-Hochberg over all cluster x term tests of a representation",
+    "q_threshold": 0.05,
+    "genes_with_any_term": 6607,
+    "direct_annotations": 37957,
+    "terms_skipped_not_in_dag_or_obsolete": 48,
+    "terms_after_propagation": 7227,
+    "terms_tested": 2118
+  },
+  "representations": [
+    {
+      "name": "encoder",
+      "dim": 180,
+      "n_clusters": 12,
+      "modularity": 0.5603742808103908,
+      "silhouette": 0.06738427071948282,
+      "n_enriched_clusters": 9,
+      "n_genes_in_enriched_clusters": 6165,
+      "n_significant_tests": 942,
+      "clusters": [
+        {
+          "cluster": 0,
+          "size": 1699,
+          "go_id": "GO:1990904",
+          "go_name": "ribonucleoprotein complex",
+          "namespace": "cellular_component",
+          "k": 345,
+          "K": 476,
+          "fold": 2.8185326514360893,
+          "p": 2.7458172669431775e-110,
+          "q": 6.97876916566278e-106,
+          "n_in_train_triple": 916
+        },
+        {
+          "cluster": 1,
+          "size": 1315,
+          "go_id": "GO:0043436",
+          "go_name": "oxoacid metabolic process",
+          "namespace": "biological_process",
+          "k": 92,
+          "K": 276,
+          "fold": 1.6747782002534857,
+          "p": 5.72889861374134e-8,
+          "q": 5.453396523102993e-6,
+          "n_in_train_triple": 1192
+        },
+        {
+          "cluster": 2,
+          "size": 981,
+          "go_id": "GO:0000322",
+          "go_name": "storage vacuole",
+          "namespace": "cellular_component",
+          "k": 67,
+          "K": 276,
+          "fold": 1.6349369912393446,
+          "p": 0.0000170144495716868,
+          "q": 0.000920653295652622,
+          "n_in_train_triple": 657
+        },
+        {
+          "cluster": 3,
+          "size": 722,
+          "go_id": "GO:0071944",
+          "go_name": "cell periphery",
+          "namespace": "cellular_component",
+          "k": 61,
+          "K": 273,
+          "fold": 2.0447221292096636,
+          "p": 2.1398486019686005e-8,
+          "q": 2.304508138459066e-6,
+          "n_in_train_triple": 544
+        },
+        {
+          "cluster": 4,
+          "size": 534,
+          "go_id": "GO:0015036",
+          "go_name": "disulfide oxidoreductase activity",
+          "namespace": "molecular_function",
+          "k": 9,
+          "K": 25,
+          "fold": 4.454157303370786,
+          "p": 0.00008658890201356033,
+          "q": 0.0038874039132157623,
+          "n_in_train_triple": 465
+        },
+        {
+          "cluster": 5,
+          "size": 316,
+          "go_id": "GO:1990904",
+          "go_name": "ribonucleoprotein complex",
+          "namespace": "cellular_component",
+          "k": 55,
+          "K": 476,
+          "fold": 2.4158666631209447,
+          "p": 3.5751464129932557e-10,
+          "q": 5.609007483496086e-8,
+          "n_in_train_triple": 9
+        },
+        {
+          "cluster": 6,
+          "size": 300,
+          "go_id": "GO:0055085",
+          "go_name": "transmembrane transport",
+          "namespace": "biological_process",
+          "k": 29,
+          "K": 246,
+          "fold": 2.5962466124661248,
+          "p": 1.7882138639160342e-6,
+          "q": 0.0001208756477800264,
+          "n_in_train_triple": 283
+        },
+        {
+          "cluster": 7,
+          "size": 194,
+          "go_id": "GO:1903047",
+          "go_name": "mitotic cell cycle process",
+          "namespace": "biological_process",
+          "k": 40,
+          "K": 233,
+          "fold": 5.8466439538073525,
+          "p": 1.4394001883689727e-20,
+          "q": 8.507859345950188e-18,
+          "n_in_train_triple": 189
+        },
+        {
+          "cluster": 8,
+          "size": 182,
+          "go_id": "GO:0004129",
+          "go_name": "cytochrome-c oxidase activity",
+          "namespace": "molecular_function",
+          "k": 3,
+          "K": 12,
+          "fold": 9.07554945054945,
+          "p": 0.0037650304109954793,
+          "q": 0.08968323610671144,
+          "n_in_train_triple": 0
+        },
+        {
+          "cluster": 9,
+          "size": 139,
+          "go_id": "GO:0000372",
+          "go_name": "Group I intron splicing",
+          "namespace": "biological_process",
+          "k": 1,
+          "K": 10,
+          "fold": 4.753237410071942,
+          "p": 0.19166121955742946,
+          "q": 1.0,
+          "n_in_train_triple": 0
+        },
+        {
+          "cluster": 10,
+          "size": 121,
+          "go_id": "GO:0005750",
+          "go_name": "mitochondrial respiratory chain complex III",
+          "namespace": "cellular_component",
+          "k": 1,
+          "K": 10,
+          "fold": 5.460330578512397,
+          "p": 0.168865826583756,
+          "q": 1.0,
+          "n_in_train_triple": 2
+        },
+        {
+          "cluster": 11,
+          "size": 104,
+          "go_id": "GO:0048193",
+          "go_name": "Golgi vesicle transport",
+          "namespace": "biological_process",
+          "k": 39,
+          "K": 178,
+          "fold": 13.919241573033707,
+          "p": 1.1918419783374852e-35,
+          "q": 2.1637039801018232e-32,
+          "n_in_train_triple": 95
+        }
+      ]
+    },
+    {
+      "name": "table",
+      "dim": 180,
+      "n_clusters": 7,
+      "modularity": 0.46262769034247786,
+      "silhouette": 0.0006762485817901994,
+      "n_enriched_clusters": 6,
+      "n_genes_in_enriched_clusters": 5430,
+      "n_significant_tests": 1907,
+      "clusters": [
+        {
+          "cluster": 0,
+          "size": 1633,
+          "go_id": "GO:1990904",
+          "go_name": "ribonucleoprotein complex",
+          "namespace": "cellular_component",
+          "k": 367,
+          "K": 476,
+          "fold": 3.1194442872066155,
+          "p": 2.5932822179494674e-139,
+          "q": 1.92240010816594e-135,
+          "n_in_train_triple": 1011
+        },
+        {
+          "cluster": 1,
+          "size": 1626,
+          "go_id": "GO:0071944",
+          "go_name": "cell periphery",
+          "namespace": "cellular_component",
+          "k": 155,
+          "K": 273,
+          "fold": 2.3070277406070763,
+          "p": 4.062240504344068e-31,
+          "q": 5.191963596328031e-29,
+          "n_in_train_triple": 1379
+        },
+        {
+          "cluster": 2,
+          "size": 1549,
+          "go_id": "GO:0006082",
+          "go_name": "organic acid metabolic process",
+          "namespace": "biological_process",
+          "k": 244,
+          "K": 277,
+          "fold": 3.7571881707774666,
+          "p": 9.926647311045395e-122,
+          "q": 2.943449460671181e-118,
+          "n_in_train_triple": 1201
+        },
+        {
+          "cluster": 3,
+          "size": 1177,
+          "go_id": "GO:0004129",
+          "go_name": "cytochrome-c oxidase activity",
+          "namespace": "molecular_function",
+          "k": 3,
+          "K": 12,
+          "fold": 1.403355989804588,
+          "p": 0.363552026221928,
+          "q": 1.0,
+          "n_in_train_triple": 463
+        },
+        {
+          "cluster": 4,
+          "size": 555,
+          "go_id": "GO:0098798",
+          "go_name": "mitochondrial protein-containing complex",
+          "namespace": "cellular_component",
+          "k": 163,
+          "K": 203,
+          "fold": 9.558789331203124,
+          "p": 3.364236895277574e-145,
+          "q": 4.987817620938531e-141,
+          "n_in_train_triple": 255
+        },
+        {
+          "cluster": 5,
+          "size": 43,
+          "go_id": "GO:0006457",
+          "go_name": "protein folding",
+          "namespace": "biological_process",
+          "k": 20,
+          "K": 95,
+          "fold": 32.34761321909424,
+          "p": 1.274611030095502e-26,
+          "q": 1.1960369071010072e-24,
+          "n_in_train_triple": 32
+        },
+        {
+          "cluster": 6,
+          "size": 24,
+          "go_id": "GO:0000322",
+          "go_name": "storage vacuole",
+          "namespace": "cellular_component",
+          "k": 10,
+          "K": 276,
+          "fold": 9.97433574879227,
+          "p": 1.6074110372326012e-8,
+          "q": 3.0949968880533176e-7,
+          "n_in_train_triple": 11
+        }
+      ]
+    }
+  ],
+  "ari_table_vs_encoder": 0.14068428085268525
+}

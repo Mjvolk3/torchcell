@@ -3,7 +3,7 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/025-solid-growth/scripts/fig2_gene_interactions
 """Figure 2, gene-gene interactions, as one full-width sheet in the figure-gate style.
 
-Twelve panels, four by three, no frames, every panel letter followed by the section
+Sixteen panels, four by four, no frames, every panel letter followed by the section
 mark (a red cross: not yet reviewed by the author) and the figure mark (a full circle:
 every number comes from a committed result file; a half circle: partial; an open circle:
 idea only). Every number is read from a result file written by a committed script; the
@@ -29,6 +29,12 @@ fig2_gene_interactions.{svg,png} at PANEL_WIDTHS_MM["full"].
   j  edge recall at degree against each arm's own target, epoch 29
   k  sixty epochs: no penalty keeps declining, the prior holds
   l  the composite sequence embedding trains only with the prior
+  m  the encoder's wild-type gene representations in 2-D, colored by Leiden cluster
+     (025 results: wt_gene_embeddings/cluster_assignments.csv, go_enrichment.csv,
+     summary.json, from wt_gene_embedding_clusters.py on the S3 closure checkpoint)
+  n  the best Gene Ontology term of every cluster
+  o  the same map colored by whether a gene appears in any training triple
+  p  the raw learnable gene table clustered the same way, as the control
 
 Palette, primaries only: gray no graphs or a no-interaction null; red the cell graph
 transformer with its soft prior (TorchCell); orange the hard mask; purple degree-matched
@@ -149,7 +155,7 @@ def letters_status(fig: Figure, axes: list[Axes], statuses: list[str]) -> None:
     inv = fig.transFigure.inverted()
     tops = {id(ax): ax.get_tightbbox(renderer).y1 for ax in axes}
     near = 0.06 * fig.bbox.height
-    for ax, ch, status in zip(axes, "abcdefghijkl", statuses):
+    for ax, ch, status in zip(axes, "abcdefghijklmnop", statuses):
         box = ax.get_tightbbox(renderer)
         same = [tops[id(o)] for o in axes if abs(tops[id(o)] - tops[id(ax)]) < near]
         x0, y1 = inv.transform((box.x0, max(same)))
@@ -461,13 +467,91 @@ def panel_l(ax: Axes, hist: pd.DataFrame) -> None:
     strip(ax)
 
 
+# ------------------------------------------------------- row 4: the wild-type genes
+WT = osp.join(R025, "wt_gene_embeddings")
+CLUSTER_COLORS = [ORANGE, RED, PURPLE, YELLOW, BLUE]  # the five best-enriched clusters
+
+
+def wt_data() -> tuple[pd.DataFrame, pd.DataFrame, dict[str, Any]]:
+    assign = pd.read_csv(osp.join(WT, "cluster_assignments.csv"))
+    enr = pd.read_csv(osp.join(WT, "go_enrichment.csv"))
+    summary = json.load(open(osp.join(WT, "summary.json")))
+    return assign, enr, summary
+
+
+def best_terms(enr: pd.DataFrame, rep: str) -> pd.DataFrame:
+    """One row per cluster: its best term by q, ordered by q."""
+    sub = enr[enr.representation == rep].sort_values("q")
+    return sub.groupby("cluster", as_index=False).first().sort_values("q")
+
+
+def umap_by_cluster(ax: Axes, assign: pd.DataFrame, enr: pd.DataFrame, rep: str, title: str) -> None:
+    best = best_terms(enr, rep)
+    top = [int(c) for c in best[best.q < 0.05].cluster.head(len(CLUSTER_COLORS))]
+    color_of = {c: CLUSTER_COLORS[i] for i, c in enumerate(top)}
+    x, y, lab = assign[f"{rep}_umap_1"], assign[f"{rep}_umap_2"], assign[f"{rep}_cluster"]
+    other = ~lab.isin(top)
+    ax.scatter(x[other], y[other], s=1.2, color="#C8C8C8", linewidths=0, rasterized=True, zorder=2)
+    for c in top:
+        m = lab == c
+        ax.scatter(x[m], y[m], s=1.2, color=color_of[c], linewidths=0, rasterized=True, zorder=3)
+        ax.text(x[m].median(), y[m].median(), str(c), fontsize=6, fontweight="bold", ha="center", va="center", zorder=5)
+    ax.set_xticks([])
+    ax.set_yticks([])
+    for sp in ax.spines.values():
+        sp.set_visible(False)
+    ax.set_title(title)
+    ax.text(0.0, 0.0, "UMAP of 6,607 genes", transform=ax.transAxes, fontsize=5, color=LIGHT, ha="left", va="bottom")
+
+
+def panel_m(ax: Axes, assign: pd.DataFrame, enr: pd.DataFrame, summary: dict[str, Any]) -> None:
+    rep = next(r for r in summary["representations"] if r["name"] == "encoder")
+    umap_by_cluster(ax, assign, enr, "encoder", f"encoder: {rep['n_clusters']} clusters, {rep['n_enriched_clusters']} GO-enriched")
+
+
+def panel_n(ax: Axes, enr: pd.DataFrame) -> None:
+    best = best_terms(enr, "encoder")
+    top = [int(c) for c in best[best.q < 0.05].cluster.head(len(CLUSTER_COLORS))]
+    color_of = {c: CLUSTER_COLORS[i] for i, c in enumerate(top)}
+    ys = np.arange(len(best))[::-1]
+    for yy, (_, r) in zip(ys, best.iterrows()):
+        c = int(r.cluster)
+        ax.barh(yy, -np.log10(max(r.q, 1e-300)), color=color_of.get(c, "#C8C8C8"), edgecolor="black", linewidth=0.4, height=0.7, zorder=3)
+    name = [f"{int(r.cluster)} {r.go_name[:17]}{'\u2026' if len(r.go_name) > 17 else ''}" for _, r in best.iterrows()]
+    ax.set_yticks(ys)
+    ax.set_yticklabels(name, fontsize=5)
+    ax.axvline(-np.log10(0.05), color="black", lw=0.5, ls="--")
+    ax.set_xlabel("best GO term per cluster, \u2212log10 q (BH)")
+    ax.set_title("9 of 12 clusters carry a term at q < 0.05")
+    strip(ax, grid="x")
+
+
+def panel_o(ax: Axes, assign: pd.DataFrame) -> None:
+    x, y, it = assign.encoder_umap_1, assign.encoder_umap_2, assign.in_train_triple.astype(bool)
+    ax.scatter(x[~it], y[~it], s=1.2, color="#C8C8C8", linewidths=0, rasterized=True, zorder=2)
+    ax.scatter(x[it], y[it], s=1.2, color=RED, linewidths=0, rasterized=True, zorder=3)
+    ax.set_xticks([])
+    ax.set_yticks([])
+    for sp in ax.spines.values():
+        sp.set_visible(False)
+    n_in = int(it.sum())
+    ax.set_title("the arc: genes in no training triple")
+    ax.text(0.0, 0.0, f"red: in a training triple, {n_in:,} genes; gray: never, {len(it) - n_in:,}", transform=ax.transAxes, fontsize=5, color=LIGHT, ha="left", va="bottom")
+
+
+def panel_p(ax: Axes, assign: pd.DataFrame, enr: pd.DataFrame, summary: dict[str, Any]) -> None:
+    rep = next(r for r in summary["representations"] if r["name"] == "table")
+    umap_by_cluster(ax, assign, enr, "table", f"raw table: {rep['n_clusters']} clusters, {rep['n_enriched_clusters']} enriched")
+
+
 # ----------------------------------------------------------------------------- sheet
 
 
 def main() -> None:
     done, hist, summary = sweep()
-    fig, axes = plt.subplots(3, 4, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(160)))
-    fig.subplots_adjust(left=0.05, right=0.99, bottom=0.1, top=0.955, wspace=0.42, hspace=0.8)
+    assign, enr, wt = wt_data()
+    fig, axes = plt.subplots(4, 4, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(205)))
+    fig.subplots_adjust(left=0.05, right=0.99, bottom=0.08, top=0.965, wspace=0.42, hspace=0.8)
     ax = axes.ravel()
     panel_a(ax[0])
     panel_b(ax[1])
@@ -481,7 +565,11 @@ def main() -> None:
     panel_j(ax[9], done)
     panel_k(ax[10], hist)
     panel_l(ax[11], hist)
-    letters_status(fig, list(ax), ["partial", "ready", "ready", "ready", "ready", "ready", "ready", "ready", "ready", "ready", "ready", "ready"])
+    panel_m(ax[12], assign, enr, wt)
+    panel_n(ax[13], enr)
+    panel_o(ax[14], assign)
+    panel_p(ax[15], assign, enr, wt)
+    letters_status(fig, list(ax), ["partial"] + ["ready"] * 15)
     keys(fig)
     os.makedirs(IMG_DIR, exist_ok=True)
     stem = osp.join(IMG_DIR, "fig2_gene_interactions")

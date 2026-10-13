@@ -1,0 +1,20 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/041-scaling-laws/scripts/expression_record.py, reading experiments/019-simb-multimodal/results/expression_ceiling_all.json and morphology_noise_ceiling.json
+\begin{table}[htbp]
+\centering\footnotesize
+\caption{The replicate ceiling of each 019 panel, the bound on $E$ in Pearson units. Reliability is the per-feature fraction of across-strain variance that is signal (test-retest: the correlation of two independent measurements across strains; decomposition: one minus replicate variance over total variance), averaged over features; the ceiling is the mean of its square root, the best across-strain Pearson a perfect predictor of the signal can reach against a single noisy measurement. Two estimators are given where both exist because they disagree where few pairs determine either.}
+\label{tab:floors}
+\begin{tabular}{llrr}
+\toprule
+panel & estimator & reliability & ceiling, mean Pearson per feature \\
+\midrule
+Kemmeren 2014, expression & test-retest, 82 paired deletions & 0.611 & 0.775 \\
+ & decomposition & -- & 0.862 \\
+Caudal 2024, expression & test-retest, 29 re-cultured isolates & 0.405 & 0.604 \\
+ & decomposition & 0.235 & 0.459 \\
+Messner 2023, proteome & test-retest, 146 duplicated-origin ORFs & 0.200 & 0.405 \\
+ & decomposition, 388 wild-type replicates & 0.501 & 0.696 \\
+Ohya 2005, morphology & decomposition, 122 wild-type replicates & 0.444 & 0.611 \\
+\bottomrule
+\end{tabular}
+\end{table}

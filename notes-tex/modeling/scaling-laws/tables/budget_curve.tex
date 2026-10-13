@@ -1,0 +1,23 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/041-scaling-laws/scripts/expression_record.py, reading experiments/019-simb-multimodal/results/short_budget_spread.json (W&B torchcell_019_expr_v9)
+\begin{table}[htbp]
+\centering\footnotesize
+\caption{The compute axis as the 019 campaign measured it: the same eight long-budget arms of the v9 round rescored on the prefix of their own curves at each budget (the maximum of a centered five-epoch rolling mean of the validation Pearson per feature over epochs up to the budget). Mean and sd over the eight arms; the spread is an arm spread plus nondeterminism, so it bounds the replicate spread from above. The statistic is Pearson, not the loss, for the reason given in the text.}
+\label{tab:budget-curve}
+\begin{tabular}{rrrrrr}
+\toprule
+epochs & arms & mean Pearson per feature & sd & min & max \\
+\midrule
+350 & 8 & 0.1198 & 0.0096 & 0.1029 & 0.1317 \\
+500 & 8 & 0.1223 & 0.0058 & 0.1130 & 0.1317 \\
+700 & 8 & 0.1411 & 0.0166 & 0.1207 & 0.1606 \\
+1,000 & 8 & 0.1609 & 0.0099 & 0.1485 & 0.1780 \\
+1,500 & 8 & 0.1670 & 0.0117 & 0.1536 & 0.1839 \\
+2,000 & 8 & 0.1745 & 0.0151 & 0.1547 & 0.1950 \\
+2,800 & 8 & 0.1821 & 0.0175 & 0.1629 & 0.2085 \\
+4,000 & 8 & 0.1883 & 0.0171 & 0.1663 & 0.2145 \\
+6,000 & 8 & 0.1917 & 0.0177 & 0.1663 & 0.2222 \\
+9,900 & 8 & 0.1965 & 0.0222 & 0.1663 & 0.2382 \\
+\bottomrule
+\end{tabular}
+\end{table}

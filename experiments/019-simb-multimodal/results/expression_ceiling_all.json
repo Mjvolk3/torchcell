@@ -1,0 +1,140 @@
+{
+ "generated_by": "experiments/019-simb-multimodal/scripts/expression_ceiling_all.py",
+ "definition": "ceiling_g = sqrt(rel_g); test-retest rel_g = r_g between two independent measurements across strains; decomposition rel_g = 1 - noise_var_g / total_var_g; panel ceiling = mean_g sqrt(rel_g) over genes with rel clipped to [0, 1]",
+ "reported": {
+  "kemmeren2014": {
+   "key": "kemmerenLargeScaleGeneticPerturbations2014",
+   "line": "130",
+   "quote": "Each mutant strain (Table S1) was grown twice, from two independently inoculated cultures. Cultures were harvested early during exponential growth in SC medium with 2% glucose. Each culture was expression-profiled in technical replicate to yield four measurements for each profiling mutant.",
+   "summary": "four measurements per mutant (two cultures, dye swap); no replicate correlation reported"
+  },
+  "sameith2015": {
+   "key": "sameithHighresolutionGeneExpression2015",
+   "line": "119",
+   "quote": "Single mutants differing from WT as well as all double mutants were profiled another two times from an independently inoculated culture. The reported FC is then the average of four replicate mutant expression profiles versus the average of all WTs.",
+   "summary": "four replicate profiles per mutant; no replicate correlation reported for expression"
+  },
+  "caudal2024": {
+   "key": "caudalPantranscriptomeRevealsLarge2024",
+   "line": "25",
+   "quote": "We performed independent culture replicates for 29 samples (Supplementary Fig. 1b). The data are highly reproducible, with an average correlation of 0.94 between replicates (Supplementary Fig. 1c) and robust to different sample batches (Supplementary Fig. 1d).",
+   "summary": "29 isolates re-cultured; average replicate correlation 0.94 (per sample, across genes)"
+  },
+  "messner2023": {
+   "key": "messnerProteomicLandscapeGenomewide2023",
+   "line": "579",
+   "quote": "Strains were not measured in replicates. However, for 145 ORFs, more than one strain exists in the library (these strains have different origins). 141 gene deletions are duplicated and 4 triplicated.",
+   "summary": "one proteome per strain; median protein CV 8.1% technical, 11.3% across 388 WT replicates, 16.2% across knockouts (paper.md line 81)"
+  },
+  "zelezniak2018": {
+   "key": "zelezniakMachineLearningPredicts2018",
+   "line": "78",
+   "quote": "The coefficient of variation (CV) of enzymes at whole-process technical and biological levels. Cyan dots indicate CVs of a standardized proteome digest (quality control [QC] sample) that was used to monitor instrument performance over a 4-month acquisition period.",
+   "summary": "three biological replicates per kinase deletion against a 12-replicate wild type; CVs shown as a figure, no number in the text"
+  },
+  "nadal2025": {
+   "key": "nadal-ribellesSinglecellResolvedGenotypephenotype2025",
+   "line": "27",
+   "quote": "Despite substantial methodological differences, our dataset showed a consistent correlation between the number of differentially expressed genes per genotype in both studies (Supplementary Fig. 1i).",
+   "summary": "no genotype-level replicate correlation reported; validation is the count of differentially expressed genes against Kemmeren"
+  }
+ },
+ "kemmeren2014": {
+  "source": "results/expression_ceiling_replicate.json",
+  "n_paired_deletions": 82,
+  "n_genes": 6169,
+  "test_retest_r_per_gene_mean": 0.6110432525511217,
+  "test_retest_r_per_strain_mean": 0.6655069906255285,
+  "ceiling_test_retest": 0.7746269669017283,
+  "ceiling_decomposition": 0.8623435897414371
+ },
+ "sameith2015": {
+  "source": "the same 82-deletion pair as kemmeren2014 (results/expression_ceiling_replicate.json)",
+  "ceiling_test_retest": 0.7746269669017283
+ },
+ "caudal2024": {
+  "n_isolates_in_lmdb": 943,
+  "n_replicate_samples": 60,
+  "n_replicate_pairs": 29,
+  "n_genes_in_replicate_table": 6456,
+  "per_sample_r_mean": 0.9467732583095942,
+  "per_sample_r_median": 0.9518327558049202,
+  "test_retest": {
+   "n_genes": 6043,
+   "mean_rel": 0.40471112150320954,
+   "median_rel": 0.4187654357871925,
+   "ceiling_mean_sqrt": 0.6041904053484858,
+   "ceiling_median": 0.6471208818970321,
+   "ceiling_p25": 0.5114330829030858,
+   "ceiling_p75": 0.7459676142561888,
+   "frac_rel_below_0": 0.042363064702962104
+  },
+  "decomposition": {
+   "n_genes": 6044,
+   "mean_rel": 0.23470025592678528,
+   "median_rel": 0.2739962911067768,
+   "ceiling_mean_sqrt": 0.45948556300407517,
+   "ceiling_median": 0.5234465498579055,
+   "ceiling_p25": 0.30297901668110927,
+   "ceiling_p75": 0.6607597266030037,
+   "frac_rel_below_0": 0.171740569159497
+  }
+ },
+ "messner2023": {
+  "test_retest_duplicate_origin_strains": {
+   "source": "028 results/proteome_messner_replicates.json",
+   "n_duplicated_orfs": 146,
+   "n_proteins": 1830,
+   "r_per_protein_mean": 0.19972082991920403,
+   "r_per_protein_median": 0.17991414109710285,
+   "r_per_strain_median": 0.0365226879230815,
+   "ceiling": 0.4049039659991601
+  },
+  "decomposition_wt_replicates": {
+   "n_genes": 1850,
+   "mean_rel": 0.5008178044161072,
+   "median_rel": 0.4876079306127832,
+   "ceiling_mean_sqrt": 0.6957309141374525,
+   "ceiling_median": 0.6982892726084597,
+   "ceiling_p25": 0.6100328320869218,
+   "ceiling_p75": 0.79417195954422,
+   "frac_rel_below_0": 0.0005405405405405405,
+   "n_strains": 4476,
+   "wt_replicates": 388,
+   "paper_cv_check": {
+    "cv_wt": 0.113,
+    "cv_ko": 0.162,
+    "rel": 0.5134506934918457,
+    "ceiling": 0.7165547386570308
+   }
+  }
+ },
+ "zelezniak2018": {
+  "n_genes": 726,
+  "mean_rel": 0.8453367720877074,
+  "median_rel": 0.8953527476767524,
+  "ceiling_mean_sqrt": 0.915518375848838,
+  "ceiling_median": 0.9462308109547442,
+  "ceiling_p25": 0.8947232317051828,
+  "ceiling_p75": 0.9671375798893331,
+  "frac_rel_below_0": 0.0,
+  "n_strains": 97,
+  "n_replicates_per_strain": [
+   2,
+   3,
+   4,
+   6,
+   7
+  ]
+ },
+ "nadal2025": {
+  "source": "028 results/nadal_replication_coverage.json",
+  "cross_batch_same_genotype_median_r": 0.042952087697173,
+  "cross_batch_null_median_r": 0.02182038514491705,
+  "split_half_median_r": 0.0796059354328969,
+  "split_half_null_median_r": 0.0514164231374667,
+  "n_cross_batch_pairs": 17554,
+  "ceiling_sqrt_cross_batch_r": 0.20724885451353645,
+  "ceiling_sqrt_null": 0.1477172472831695
+ }
+}

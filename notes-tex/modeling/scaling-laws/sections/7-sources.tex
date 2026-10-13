@@ -1,0 +1,40 @@
+%% notes-tex/modeling/scaling-laws/sections/7-sources.tex
+
+\section{Sources\secstatus{todo}}
+\label{sec:sources}
+
+The first three works below are in the mirror as of 2026-10-11, under the
+citation keys given, so their numbers carry no external flag. The last two are
+not, and are flagged where their claims are used. The document has no Zotero
+collection yet, so every work is named in prose; once a collection exists, the
+mirrored keys become \texttt{\textbackslash cite} keys.
+
+\begin{itemize}
+\item Kaplan et al., 2020, \emph{Scaling Laws for Neural Language Models},
+arXiv:2001.08361.\newline
+Mirror key \texttt{kaplanScalingLawsNeural2020}.\newline
+The single-axis forms of Equation~\ref{eq:kaplan}, the
+non-embedding parameter count, and the $6ND$ rule.
+\item Hoffmann et al., 2022, \emph{Training Compute-Optimal Large Language
+Models}, arXiv:2203.15556.\newline
+Mirror key \texttt{hoffmannTrainingComputeOptimalLarge2022}.\newline
+The joint form with a floor, the three fitting
+approaches (its appendix covers all three, including the Huber residual), the
+IsoFLOP construction, and the Approach~3 constants.
+\item Besiroglu et al., 2024, \emph{Chinchilla Scaling: A Replication Attempt},
+arXiv:2404.10102.\newline
+Mirror key \texttt{besirogluChinchillaScalingReplication2024}.\newline
+The refit of the Approach~3 data and the second set of
+constants in Table~\ref{tab:constants}.
+\item Yang et al., 2022, \emph{Tensor Programs V: Tuning Large Neural Networks
+via Zero-Shot Hyperparameter Transfer}, arXiv:2203.03466. $\mu$P, the
+parametrization under which the learning-rate optimum transfers across widths.
+\item Muennighoff et al., 2023, \emph{Scaling Data-Constrained Language Models},
+arXiv:2305.16264. The effective-data form for repeated epochs.
+\end{itemize}
+
+Within the repository: the 025 additive-baselines document
+(\file{notes-tex/multimodal/025-additive-baselines/}) for the record count, the
+splits and the leakage measurement quoted in Section~\ref{sec:counting}, and
+\file{notes/torchcell.datasets.scerevisiae.costanzo2016.noise-computation.md} for
+the replicate structure behind the floor estimate.

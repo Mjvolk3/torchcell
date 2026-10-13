@@ -215,3 +215,24 @@ Owner rule, 2026-10-12: the data is the data; the genome and the experiment are 
 Before: the ORF token of each allele id went through the genome's ID table and alias table; 30 alleles whose token resolved to no current gene were dropped (`_UNRESOLVABLE`, frozen: 29 deletions and `YIL171W_damp`) and 42 whose token is an R64 synonym were stored under the current ORF (31 of those onto a locus whose own strain the release also carries, told apart only by `strain_id`).
 
 Now: the ORF token (upper-cased) is both names; `strain_id` keeps the raw id verbatim. `EXPECTED_RECORDS = _EXPECTED_ROWS = 6023` (was 5,993). The ledger reads `RETENTION_RULE` with `n_dropped` 0. `_UNRESOLVABLE` and `_resolver` are gone.
+
+### L0-L4 from the rebuilt stores (slurm arrays 4457 and 4604, family verifiers job 4658)
+
+**smf_baryshnikova2010**: verdict PASS (/scratch/projects/torchcell-scratch/data/torchcell/smf_baryshnikova2010/preprocess/verification_report.json)
+
+| level | rule | class | outcome | message |
+|---|---|---|---|---|
+| L0 | `structural` | gate | ok | 6023 records validated |
+| L1 | `count` | gate | ok | observed 6023, expected 6023 |
+| L1 | `pair_uniqueness` | gate | ok | 6023 unique (strain, environment) records, one each |
+| L2 | `value_fidelity` | gate | ok | 6023 values checked |
+| L2 | `se_nonnegative` | gate | ok | 6023 values checked |
+| L3 | `reference_one` | gate | ok | reference fitness == 1.0 for all 6023 records |
+| L1 | `provenance_gaps` | gate | ok | 7411 documented provenance gaps over 6023/6023 records; 0 deferred field(s): []; 198759 undeclared None values over 10 carrier fields (top: Compound.inchi x72276, Compound.chebi_id x54207, Compound.smiles x18069, Compound.inchikey x12046, Compound.pubchem_cid x12046) |
+| L1 | `canonical_gene_names` | report | finding | 0 genes carry conflicting common-name spellings (0 records; 0 case-only); 53 systematic names are not the genome's current name; 41 common names resolve to another gene |
+| L2 | `uncertainty_sanity` | gate | ok | 6023 labeled uncertainties, none a zero dispersion; 0 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | gate | ok | environment edits: 0 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | gate | ok | medium components: 42161 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | gate | ok | 6023 records on a shared MEDIA_LIBRARY medium, 0 on a medium deriving from one (1 distinct media) |
+| L4 | `gene_containment_sgd` | report | ok | 0.990 of 5497 measured genes are S288C reference genes (>= 0.9) |
+| L4 | `current_genome_genes` | report | finding | 53 systematic names are absent from the current genome over 53 records: YAL043C-A x1, YAL058C-A x1, YAR037W x1, YAR040C x1, YAR043C x1, YAR044W x1, YAR062W x1, YBR075W x1, YBR090C-A x1, YBR100W x1 |

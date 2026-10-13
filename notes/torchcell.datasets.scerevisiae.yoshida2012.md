@@ -54,3 +54,18 @@ Measured by `experiments/036-dataset-fixes-before-kg-build/scripts/media_stubs_s
 ## 2026.10.12 - Every released name stored as released on the released-gene-name leaf (#1045, PR #1085)
 
 The loader no longer takes a genome. Each of the 17 Table 3 strains is stored under the name the table gives: the 16 common names on `ReleasedGeneNamePerturbation` (kind `deletion`, marker KanMX) and `YDR379C-A` on `KanMxDeletionPerturbation` with the ORF as both names. `preprocess/data.csv` lists `gene,leaf`. The only refusal left is a NaN mean or SD cell. The count stays 17; the L0-L4 table from the rebuild follows below once job 4606 finishes.
+
+### L0-L4 from the rebuilt stores (slurm arrays 4457 and 4604, family verifiers job 4658)
+
+**organic_acid_yoshida2012**: verdict PASS (/scratch/projects/torchcell-scratch/data/torchcell/organic_acid_yoshida2012/preprocess/verification_report.json)
+
+| level | rule | class | outcome | message |
+|---|---|---|---|---|
+| L0 | `structural` | gate | ok | 17 records validated |
+| L1 | `count` | gate | ok | observed 17, expected 17 |
+| L1 | `genotype_uniqueness` | gate | ok | 17 unique strains (deletion sets), one record each |
+| L2 | `value_fidelity` | gate | ok | 102 values checked |
+| L2 | `se_nonnegative` | gate | ok | 102 values checked |
+| L3 | `reference_finite` | gate | ok | reference level finite + key-subset for all 102 values |
+| L3 | `measurement_type_consistent` | gate | ok | single measurement_type: 'hplc_organic_acid_titer_mM' |
+| L4 | `gene_containment_scmd_ohya2005` | report | finding | 0.000 of scmd_ohya2005's 17 deletion genes are in Ohya (>= 0.9) |

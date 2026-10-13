@@ -351,3 +351,18 @@ The loader no longer takes a genome. Every row of `GA1_2_4_6.csv` that names a g
 Measured on the pinned file (4,788 rows, slurm array 4604 task 1): 4,759 records, 1,167 under a systematic name and 3,592 under a released symbol; 28 rows whose gene cell is `0` or blank or whose level is blank and the one `WT` control row carry no record and are listed in `preprocess/dropped_records.json` under `gene_cell_is_0_or_blank_or_level_is_blank` and `control_row`. Before this change the resolver stored 4,719 records (11 names dropped, 30 collisions merged). The served count goes from 4,735 to 4,759.
 
 The L0-L4 table from the `--verify` rebuild (slurm array 4604, family verifier job 4606) follows below once the job finishes.
+
+### L0-L4 from the rebuilt stores (slurm arrays 4457 and 4604, family verifiers job 4658)
+
+**betaxanthin_cachera2023**: verdict PASS (/scratch/projects/torchcell-scratch/data/torchcell/betaxanthin_cachera2023/preprocess/verification_report.json)
+
+| level | rule | class | outcome | message |
+|---|---|---|---|---|
+| L0 | `structural` | gate | ok | 4759 records validated |
+| L1 | `count` | gate | ok | observed 4759, expected 4759 |
+| L1 | `genotype_uniqueness` | gate | ok | 4759 unique strains (deletion sets), one record each |
+| L2 | `value_fidelity` | gate | ok | 4759 values checked |
+| L2 | `se_nonnegative` | gate | ok | 4720 values checked |
+| L3 | `reference_zero` | gate | ok | reference metabolite level == 0 for all 4759 values |
+| L3 | `measurement_type_consistent` | gate | ok | single measurement_type: 'cri_spa_corrected_hsv_yellowness_24h' |
+| L4 | `gene_containment_scmd_ohya2005` | report | finding | 0.237 of scmd_ohya2005's 4759 deletion genes are in Ohya (>= 0.9) |

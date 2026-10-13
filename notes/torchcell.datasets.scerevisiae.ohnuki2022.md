@@ -60,3 +60,18 @@ Now: the released target ORF (stripped, upper-cased) is both names; the HRD1 row
 ### Family verification (job 4606): the count pin and the one incomplete record
 
 The morphology runner still pinned the pre-#1045 count 1979 and the `calmorph_completeness` gate refused the HRD1 record whose two blank cells are key-absent. The pin is 1982 and the runner declares that one record (`OHNUKI2022_EXPECTED_INCOMPLETE`), which the rule reads as the loader's own count; verified again by job 4658.
+
+### L0-L4 from the rebuilt stores (slurm arrays 4457 and 4604, family verifiers job 4658)
+
+**data/torchcell/scmd_ohnuki2022**: verdict PASS (/scratch/projects/torchcell-scratch/data/torchcell/scmd_ohnuki2022/preprocess/verification_report.json)
+
+| level | rule | class | outcome | message |
+|---|---|---|---|---|
+| L0 | `structural` | gate | ok | 1982 records validated |
+| L1 | `count` | gate | ok | observed 1982, expected 1982 |
+| L1 | `calmorph_completeness` | gate | ok | 1/1982 records missing CalMorph parameters (1 declared by the loader) |
+| L1 | `reference_populated` | gate | ok | WT reference carries the full 281+220 vocabulary in all 1982 records |
+| L2 | `value_fidelity` | gate | ok | 556942 values checked |
+| L2 | `cv_nonnegative` | gate | ok | 436038 values checked |
+| L3 | `vocabulary_parity` | gate | ok | CALMORPH_LABELS(281) + CALMORPH_STATISTICS(220) == CALMORPH_PARAMETERS(501), disjoint=True |
+| L4 | `gene_containment_scmd_ohnuki2022` | report | ok | 1.000 of scmd_ohnuki2022's 1983 deletion genes are in Ohya (>= 0.9) |

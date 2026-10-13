@@ -149,3 +149,27 @@ Now: every row is a record. The vendor-code drugs are stored under the released 
 ## 2026.10.12 - The deferred name is a record on the released-gene-name leaf (#1045, PR #1085)
 
 A target whose ORF cell is not ORF-shaped goes on `ReleasedGeneNamePerturbation` with kind `crispr_interference` and its construct (0 of the 20 released targets); the ledger rule `deferred_to_released_gene_name_leaf` is renamed `stored_on_released_gene_name_leaf` with `n_records` 0. The count stays 14,463.
+
+### L0-L4 from the rebuilt stores (slurm arrays 4457 and 4604, family verifiers job 4658)
+
+**crispri_chemgen_smith2016**: verdict PASS (/scratch/projects/torchcell-scratch/data/torchcell/crispri_chemgen_smith2016/preprocess/verification_report.json)
+
+| level | rule | class | outcome | message |
+|---|---|---|---|---|
+| L0 | `structural` | gate | ok | 14463 records validated |
+| L1 | `count` | gate | ok | observed 14463, expected 14463 |
+| L1 | `pair_uniqueness` | gate | ok | 14463 unique (study, strain, condition) records, one each |
+| L2 | `value_fidelity` | gate | ok | 14463 values checked |
+| L2 | `se_nonnegative` | gate | ok | 14463 values checked |
+| L2 | `interval_orientation` | gate | ok | 0 of 0 stored intervals do not bracket their value, as declared |
+| L3 | `measurement_type_consistent` | gate | ok | single measurement_type: 'log2_ratio' |
+| L3 | `reference_zero` | gate | ok | numeric rule: reference response == 0 for all 14463 records |
+| L3 | `environment_perturbed` | gate | ok | all 14463 experiments carry an environmental edit (perturbation, non-baseline temperature, or non-baseline media; baseline temp=30.0, media='SC-Ura (synthetic complete minus uracil; URA3 plasmid selection)') |
+| L1 | `provenance_gaps` | gate | ok | 21873 documented provenance gaps over 14463/14463 records; 0 deferred field(s): []; 1064460 undeclared None values over 17 carrier fields (top: Compound.inchi x477279, Compound.chebi_id x384342, Environment.dilution_rate_per_hour x14463, EnvironmentResponsePhenotype.category x14463, EnvironmentResponsePhenotype.category_label x14463) |
+| L1 | `canonical_gene_names` | report | ok | 20 systematic names, one canonical spelling each, each current in the genome |
+| L2 | `uncertainty_sanity` | gate | ok | 14463 labeled uncertainties, none a zero dispersion; 0 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | gate | ok | environment edits: 7053 compound references carry a structure identifier; 7410 declare a typed gap (10 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | gate | ok | medium components: 448353 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | gate | ok | 14463 records on a shared MEDIA_LIBRARY medium, 0 on a medium deriving from one (1 distinct media) |
+| L4 | `gene_containment_sgd` | report | ok | 1.000 of 20 measured genes are S288C reference genes (>= 0.9) |
+| L4 | `current_genome_genes` | report | ok | every one of the 20 measured systematic names is a gene of the current genome |

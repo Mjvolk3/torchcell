@@ -101,3 +101,17 @@ Now: the keys of `expression_log2_ratio` are the released names, stripped and ot
 ## 2026.10.12 - The deferred name is a record on the released-gene-name leaf (#1045, PR #1085)
 
 A genotype label with no ORF form is stored on `ReleasedGeneNamePerturbation` under the label, upper-cased, with the URA3 marker and its strain id (0 of 6,188 released tables); the ledger rule is `stored_on_released_gene_name_leaf`. The count stays 6,188.
+
+### L0-L4 from the rebuilt stores (slurm arrays 4457 and 4604, family verifiers job 4658)
+
+**nadal_ribelles_perturbseq2025**: verdict PASS (/scratch/projects/torchcell-scratch/data/torchcell/nadal_ribelles_perturbseq2025/preprocess/verification_report.json)
+
+| level | rule | class | outcome | message |
+|---|---|---|---|---|
+| L0 | `structural` | gate | ok | 6188 records validated |
+| L1 | `count` | gate | ok | observed 6188, expected 6188 |
+| L1 | `strain_uniqueness` | gate | ok | 6188 unique (strain, condition) records over 3150 strains |
+| L2 | `log2_ratio_value_fidelity` | gate | ok | 36352922 values checked |
+| L3 | `measurement_type_consistent` | gate | ok | single measurement_type: 'pseudobulk_scrnaseq_log2fc' |
+| L3 | `reference_finite` | gate | ok | reference expression finite for all 41970137 values |
+| L4 | `gene_containment_sgd` | report | finding | 0.220 of 6796 measured genes are S288C reference genes (>= 0.9) |

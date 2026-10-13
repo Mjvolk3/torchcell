@@ -210,3 +210,31 @@ Now: such a strain id is counted as deferred to the released-gene-name leaf (0 o
 ## 2026.10.12 - The deferred name is a record on the released-gene-name leaf (#1045, PR #1085)
 
 A proteome `KO_ORF` with no ORF form goes on `ReleasedGeneNamePerturbation` with the released `KO_gene_name` as its perturbed name (0 of 97 strains). The counts stay 97 and 129.
+
+### L0-L4 from the rebuilt stores (slurm arrays 4457 and 4604, family verifiers job 4658)
+
+**proteome_zelezniak2018**: verdict PASS (/scratch/projects/torchcell-scratch/data/torchcell/proteome_zelezniak2018/preprocess/verification_report.json)
+
+| level | rule | class | outcome | message |
+|---|---|---|---|---|
+| L0 | `structural` | gate | ok | 97 records validated |
+| L1 | `count` | gate | ok | observed 97, expected 97 |
+| L1 | `orf_uniqueness` | gate | ok | 97 unique knocked-out ORFs, one record each |
+| L2 | `value_fidelity` | gate | ok | 70422 values checked |
+| L2 | `se_nonnegative` | gate | ok | 70422 values checked |
+| L3 | `reference_finite` | gate | ok | reference abundance finite + key-matched for all 70422 values |
+| L3 | `measurement_type_consistent` | gate | ok | single measurement_type: 'swath_ms_label_free_log_signal_sva' |
+| L4 | `gene_containment_scmd_ohya2005` | report | ok | 0.979 of scmd_ohya2005's 97 deletion genes are in Ohya (>= 0.9) |
+
+**metabolite_zelezniak2018**: verdict PASS (/scratch/projects/torchcell-scratch/data/torchcell/metabolite_zelezniak2018/preprocess/verification_report.json)
+
+| level | rule | class | outcome | message |
+|---|---|---|---|---|
+| L0 | `structural` | gate | ok | 129 records validated |
+| L1 | `count` | gate | ok | observed 129, expected 129 |
+| L1 | `genotype_uniqueness` | gate | ok | 129 unique (strain, protocol) pairs, one record each |
+| L2 | `value_fidelity` | gate | ok | 2187 values checked |
+| L2 | `se_nonnegative` | gate | ok | 660 values checked |
+| L3 | `reference_finite` | gate | ok | reference level finite + key-subset for all 1946 values |
+| L3 | `measurement_type_consistent` | gate | ok | 3 declared protocol measurement_types, each record's reference on its own protocol |
+| L4 | `gene_containment_scmd_ohya2005` | report | ok | 0.979 of scmd_ohya2005's 95 deletion genes are in Ohya (>= 0.9) |

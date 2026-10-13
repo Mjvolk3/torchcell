@@ -218,3 +218,27 @@ Issue #546. The OCR `ProcessingRecord` written by `deposit_raw_mirror` named `to
 ## 2026.10.12 - Every released name stored as released on the released-gene-name leaf (#1045, PR #1085)
 
 The loader no longer takes a genome. Each of the 12 Table 1 targets is stored under the name the table gives on `ReleasedGeneNamePerturbation` with kind `crispr_interference` and the same construct as before (`dCas9-Mxi1`, one guide, no spacer); a systematic name, had the table used one, would go on `CrisprInterferencePerturbation`. The count stays 12; the L0-L4 table from the rebuild follows below once job 4606 finishes.
+
+### L0-L4 from the rebuilt stores (slurm arrays 4457 and 4604, family verifiers job 4658)
+
+**crispri_mormino2022**: verdict PASS (/scratch/projects/torchcell-scratch/data/torchcell/crispri_mormino2022/preprocess/verification_report.json)
+
+| level | rule | class | outcome | message |
+|---|---|---|---|---|
+| L0 | `structural` | gate | ok | 12 records validated |
+| L1 | `count` | gate | ok | observed 12, expected 12 |
+| L1 | `pair_uniqueness` | gate | ok | 12 unique (study, strain, condition) records, one each |
+| L2 | `value_fidelity` | gate | ok | 0 values checked |
+| L2 | `se_nonnegative` | gate | ok | 0 values checked |
+| L2 | `interval_orientation` | gate | ok | 0 of 0 stored intervals do not bracket their value, as declared |
+| L3 | `measurement_type_consistent` | gate | ok | single measurement_type: 'categorical' |
+| L3 | `reference_zero` | gate | ok | categorical rule: all 12 references carry the baseline category 'no_change', which no experiment record reports |
+| L3 | `environment_perturbed` | gate | ok | all 12 experiments carry an environmental edit (perturbation, non-baseline temperature, or non-baseline media; baseline temp=30.0, media='SC (synthetic complete: YNB + 20 amino acids + uracil + adenine + glucose)') |
+| L1 | `provenance_gaps` | gate | ok | 0 documented provenance gaps over 0/12 records; 0 deferred field(s): []; 1020 undeclared None values over 25 carrier fields (top: Compound.inchi x420, Compound.chebi_id x324, Environment.dilution_rate_per_hour x12, Environment.duration_generations x12, Environment.duration_hours x12) |
+| L1 | `canonical_gene_names` | report | finding | 0 genes carry conflicting common-name spellings (0 records; 0 case-only); 12 systematic names are not the genome's current name; 12 common names resolve to another gene |
+| L2 | `uncertainty_sanity` | gate | ok | 0 labeled uncertainties, none a zero dispersion; 12 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | gate | ok | environment edits: 36 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | gate | ok | medium components: 384 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | gate | ok | 12 records on a shared MEDIA_LIBRARY medium, 0 on a medium deriving from one (1 distinct media) |
+| L4 | `gene_containment_sgd` | report | finding | 0.000 of 12 measured genes are S288C reference genes (>= 0.9) |
+| L4 | `current_genome_genes` | report | finding | 12 systematic names are absent from the current genome over 12 records: CBP2 x1, COX10 x1, HSH49 x1, LCB1 x1, MSN5 x1, NDC1 x1, PAP1 x1, QCR8 x1, RPS30B x1, TIF34 x1 |

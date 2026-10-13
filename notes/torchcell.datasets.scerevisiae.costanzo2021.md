@@ -182,3 +182,27 @@ Owner rule, 2026-10-12: the data is the data; the genome and the experiment are 
 Before: every `Systematic Name` went through `SCerevisiaeGenome.resolve_gene_name`; a strain whose name resolved RETIRED or NON_GENE_FEATURE was dropped (15 strains, 210 records: YAR037W, YAR040C, YAR043C retired; YDR134C, YER108C, YER109C, YFL056C, YIL167W, YIL168W, YIL170W, YIR043C, YLL016W, YLL017W, YOL153C, YOR031W blocked reading frames or pseudogenes), and a RENAMED name was stored under the current id (18 strains, 252 records, e.g. YAR044W stored as YAR042W).
 
 Now: the `Systematic Name` cell (stripped) is the stored `systematic_gene_name` and, for an unnamed strain, the `perturbed_gene_name`; the genome is not injected. All 4,429 strains x 14 conditions minus the 366 blank cells = 61,640 records (was 61,430). `dropped_records.json` records `RETENTION_RULE` (nothing dropped) and `n_blank_cells`. The two merged-feature strains YPR089W (dma5081) and YPR090W (dma5080) stay two records under their two released names, as before.
+
+### L0-L4 from the rebuilt stores (slurm arrays 4457 and 4604, family verifiers job 4658)
+
+**env_chemgen_costanzo2021**: verdict PASS (/scratch/projects/torchcell-scratch/data/torchcell/env_chemgen_costanzo2021/preprocess/verification_report.json)
+
+| level | rule | class | outcome | message |
+|---|---|---|---|---|
+| L0 | `structural` | gate | ok | 61640 records validated |
+| L1 | `count` | gate | ok | observed 61640, expected 61640 |
+| L1 | `pair_uniqueness` | gate | ok | 61640 unique (study, strain, condition) records, one each |
+| L2 | `value_fidelity` | gate | ok | 61640 values checked |
+| L2 | `se_nonnegative` | gate | ok | 0 values checked |
+| L2 | `interval_orientation` | gate | ok | 0 of 0 stored intervals do not bracket their value, as declared |
+| L3 | `measurement_type_consistent` | gate | ok | single measurement_type: 'differential_fitness' |
+| L3 | `reference_zero` | gate | ok | numeric rule: reference response == 0 for all 61640 records |
+| L3 | `environment_perturbed` | gate | ok | all 61640 experiments carry an environmental edit (perturbation, non-baseline temperature, or non-baseline media; baseline temp=26.0, media='SGA double-mutant selection (SD-MSG, -His/Arg/Lys, +canavanine/thialysine/G418/clonNAT)') |
+| L1 | `provenance_gaps` | gate | ok | 127693 documented provenance gaps over 61640/61640 records; 1 deferred field(s): ['duration_hours']; 2844269 undeclared None values over 22 carrier fields (top: Compound.inchi x796914, Compound.chebi_id x563575, Compound.smiles x189333, Compound.pubchem_cid x127693, Compound.inchikey x123280) |
+| L1 | `canonical_gene_names` | report | finding | 0 genes carry conflicting common-name spellings (0 records; 0 case-only); 23 systematic names are not the genome's current name; 18 common names resolve to another gene |
+| L2 | `uncertainty_sanity` | gate | ok | 0 labeled uncertainties, none a zero dispersion; 61640 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | gate | ok | environment edits: 57234 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | gate | ok | medium components: 431480 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | gate | ok | 61640 records on a shared MEDIA_LIBRARY medium, 0 on a medium deriving from one (2 distinct media) |
+| L4 | `gene_containment_sgd` | report | ok | 0.995 of 4191 measured genes are S288C reference genes (>= 0.9) |
+| L4 | `current_genome_genes` | report | finding | 23 systematic names are absent from the current genome over 322 records: YAR037W x14, YAR040C x14, YAR043C x14, YAR044W x14, YBR075W x14, YBR100W x14, YDL038C x14, YDR474C x14, YER108C x14, YFL006W x14 |

@@ -166,3 +166,27 @@ Review follow-up (same day): both refusals used to fire inside the write transac
 The loader no longer takes a genome. Every scored row of the three acid tables is one record under the token its `Gene/ORF name` cell releases (whitespace and a trailing non-breaking space stripped, nothing else): a systematic name on `KanMxDeletionPerturbation`, any other token on `ReleasedGeneNamePerturbation` (kind `deletion`, marker KanMX). EFG1 and YGR272C, one gene since SGD merged the ORFs, are two records in every table they share; the six tokens the resolver called retired (REF1, RLM2, SBR2, ILM2, VPS236, SIW15) are records; RNR4, which every table lists twice, is two records per table, with its two different octanoic grades both stored. The ledger beside `processed/` lists each repeated token with its grades, and the runner spec declares the three repeated (strain, condition) pairs through `expected_duplicated_pairs`, which the environment-response verifier's `pair_uniqueness` row now takes (it passes on exactly the declared count).
 
 Measured: acetic 377, butyric 422, octanoic 490 = 1,289 records (115 under a systematic name), against 1,270 before. The L0-L4 table from the rebuild follows below once job 4606 finishes.
+
+### L0-L4 from the rebuilt stores (slurm arrays 4457 and 4604, family verifiers job 4658)
+
+**env_chemgen_mota2024**: verdict PASS (/scratch/projects/torchcell-scratch/data/torchcell/env_chemgen_mota2024/preprocess/verification_report.json)
+
+| level | rule | class | outcome | message |
+|---|---|---|---|---|
+| L0 | `structural` | gate | ok | 1289 records validated |
+| L1 | `count` | gate | ok | observed 1289, expected 1289 |
+| L1 | `pair_uniqueness` | gate | ok | 3 records duplicate an earlier (study, strain, condition) triple (3 declared by the loader); 1286 unique triples |
+| L2 | `value_fidelity` | gate | ok | 1289 values checked |
+| L2 | `se_nonnegative` | gate | ok | 0 values checked |
+| L2 | `interval_orientation` | gate | ok | 0 of 0 stored intervals do not bracket their value, as declared |
+| L3 | `measurement_type_consistent` | gate | ok | single measurement_type: 'ordinal' |
+| L3 | `reference_zero` | gate | ok | numeric rule: reference response == 0 for all 1289 records |
+| L3 | `environment_perturbed` | gate | ok | all 1289 experiments carry an environmental edit (perturbation, non-baseline temperature, or non-baseline media; baseline temp=30.0, media='YPD (solid, 2% agar)') |
+| L1 | `provenance_gaps` | gate | ok | 3867 documented provenance gaps over 1289/1289 records; 0 deferred field(s): []; 47540 undeclared None values over 25 carrier fields (top: Compound.inchi x7734, Compound.chebi_id x5578, Compound.smiles x3867, Compound.inchikey x2578, Compound.pubchem_cid x2578) |
+| L1 | `canonical_gene_names` | report | finding | 0 genes carry conflicting common-name spellings (0 records; 0 case-only); 553 systematic names are not the genome's current name; 547 common names resolve to another gene |
+| L2 | `uncertainty_sanity` | gate | ok | 0 labeled uncertainties, none a zero dispersion; 0 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | gate | ok | environment edits: 2578 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | gate | ok | medium components: 2578 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | gate | ok | 1289 records on a shared MEDIA_LIBRARY medium, 0 on a medium deriving from one (1 distinct media) |
+| L4 | `gene_containment_sgd` | report | finding | 0.089 of 607 measured genes are S288C reference genes (>= 0.9) |
+| L4 | `current_genome_genes` | report | finding | 553 systematic names are absent from the current genome over 1181 records: ADA2 x1, ADE8 x1, ADH1 x3, ADK1 x3, AEP2 x1, AFG3 x3, AGE1 x2, AGP2 x3, AIM10 x3, AIM22 x3 |

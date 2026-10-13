@@ -67,3 +67,18 @@ Owner rule, 2026-10-12: the data is the data; the genome and the experiment are 
 Before: `reconcile_systematic_names` ran over every ORF (0 of 1,112 changed), and `create_calmorph_experiment` wrote a blank cell as `0.0` (0 blank cells in the pinned matrix, so nothing was fabricated).
 
 Now: the `ORF` cell (stripped, upper-cased) is both names with no genome; a blank cell is key-absent in the record. 1,112 records, unchanged values.
+
+### L0-L4 from the rebuilt stores (slurm arrays 4457 and 4604, family verifiers job 4658)
+
+**data/torchcell/scmd_ohnuki2018**: verdict PASS (/scratch/projects/torchcell-scratch/data/torchcell/scmd_ohnuki2018/preprocess/verification_report.json)
+
+| level | rule | class | outcome | message |
+|---|---|---|---|---|
+| L0 | `structural` | gate | ok | 1112 records validated |
+| L1 | `count` | gate | ok | observed 1112, expected 1112 |
+| L1 | `calmorph_completeness` | gate | ok | all 1112 records carry the full 281 base + 220 CV parameters |
+| L1 | `reference_populated` | gate | ok | WT reference carries the full 281+220 vocabulary in all 1112 records |
+| L2 | `value_fidelity` | gate | ok | 312472 values checked |
+| L2 | `cv_nonnegative` | gate | ok | 244640 values checked |
+| L3 | `vocabulary_parity` | gate | ok | CALMORPH_LABELS(281) + CALMORPH_STATISTICS(220) == CALMORPH_PARAMETERS(501), disjoint=True |
+| L4 | `gene_containment_sgd` | report | ok | 1.000 of 1112 measured genes are S288C reference genes (>= 0.9) |

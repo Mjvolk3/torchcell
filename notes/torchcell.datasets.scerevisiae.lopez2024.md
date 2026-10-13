@@ -58,3 +58,31 @@ The one Table S2 strain name with no ORF form, `YLR287-A`, is stored on `Release
 ### Family verification (job 4606): the released replicate rows
 
 The metabolite verifier's `genotype_uniqueness` gate refused the 190 strains the screen table reports on two plates and the two `YBL071W-A` rows of Table S3, which the loader stores as separate released records. Both runner specs now declare `allow_duplicate_strains`, the rule the Ozaydin store already uses, so the rule reports the repeated strains as a finding; verified again by job 4658.
+
+### L0-L4 from the rebuilt stores (slurm arrays 4457 and 4604, family verifiers job 4658)
+
+**isobutanol_screen_lopez2024**: verdict PASS (/scratch/projects/torchcell-scratch/data/torchcell/isobutanol_screen_lopez2024/preprocess/verification_report.json)
+
+| level | rule | class | outcome | message |
+|---|---|---|---|---|
+| L0 | `structural` | gate | ok | 4805 records validated |
+| L1 | `count` | gate | ok | observed 4805, expected 4805 |
+| L1 | `genotype_uniqueness` | gate | ok | 190 deletion sets appear in multiple records (released replicate rows with no strain key; reported, not refused) |
+| L2 | `value_fidelity` | gate | ok | 4805 values checked |
+| L2 | `se_nonnegative` | gate | ok | 0 values checked |
+| L3 | `reference_finite` | gate | ok | reference level finite + key-subset for all 4805 values |
+| L3 | `measurement_type_consistent` | gate | ok | single measurement_type: 'biosensor_gfp_fluorescence_fold_change' |
+| L4 | `gene_containment_scmd_ohya2005` | report | ok | 0.946 of scmd_ohya2005's 4607 deletion genes are in Ohya (>= 0.9) |
+
+**isobutanol_validated_lopez2024**: verdict PASS (/scratch/projects/torchcell-scratch/data/torchcell/isobutanol_validated_lopez2024/preprocess/verification_report.json)
+
+| level | rule | class | outcome | message |
+|---|---|---|---|---|
+| L0 | `structural` | gate | ok | 227 records validated |
+| L1 | `count` | gate | ok | observed 227, expected 227 |
+| L1 | `genotype_uniqueness` | gate | ok | 1 deletion sets appear in multiple records (released replicate rows with no strain key; reported, not refused) |
+| L2 | `value_fidelity` | gate | ok | 227 values checked |
+| L2 | `se_nonnegative` | gate | ok | 227 values checked |
+| L3 | `reference_finite` | gate | ok | reference level finite + key-subset for all 227 values |
+| L3 | `measurement_type_consistent` | gate | ok | single measurement_type: 'biosensor_gfp_fluorescence_fold_change' |
+| L4 | `gene_containment_scmd_ohya2005` | report | ok | 0.973 of scmd_ohya2005's 226 deletion genes are in Ohya (>= 0.9) |

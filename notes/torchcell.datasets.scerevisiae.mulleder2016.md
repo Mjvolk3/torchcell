@@ -185,3 +185,18 @@ Now: a row with no ORF form is counted in the build log as deferred to the relea
 ## 2026.10.12 - The deferred name is a record on the released-gene-name leaf (#1045, PR #1085)
 
 A released identifier with no ORF form goes on `ReleasedGeneNamePerturbation` (0 of 4,678 rows). The two concentration-sheet rows that name no deletion strain, the blank ORF cell and the `WT` background row, are listed by name in the log rather than counted as deferred. The count stays 4,678.
+
+### L0-L4 from the rebuilt stores (slurm arrays 4457 and 4604, family verifiers job 4658)
+
+**amino_acid_mulleder2016**: verdict PASS (/scratch/projects/torchcell-scratch/data/torchcell/amino_acid_mulleder2016/preprocess/verification_report.json)
+
+| level | rule | class | outcome | message |
+|---|---|---|---|---|
+| L0 | `structural` | gate | ok | 4678 records validated |
+| L1 | `count` | gate | ok | observed 4678, expected 4678 |
+| L1 | `genotype_uniqueness` | gate | ok | 4678 unique strains (deletion sets), one record each |
+| L2 | `value_fidelity` | gate | ok | 88882 values checked |
+| L2 | `se_nonnegative` | gate | ok | 0 values checked |
+| L3 | `reference_finite` | gate | ok | reference level finite + key-subset for all 88882 values |
+| L3 | `measurement_type_consistent` | gate | ok | single measurement_type: 'intracellular_concentration_mM' |
+| L4 | `gene_containment_scmd_ohya2005` | report | ok | 0.950 of scmd_ohya2005's 4678 deletion genes are in Ohya (>= 0.9) |

@@ -203,3 +203,17 @@ Now: one record per released scored row, `n_replicates = 1`, `visual_score_min` 
 ## 2026.10.12 - The deferred name is a record on the released-gene-name leaf (#1045, PR #1085)
 
 The one ORF cell that is not ORF-shaped, `YLR287-A`, is stored on `ReleasedGeneNamePerturbation` (kind `deletion`, marker KanMX); the ledger rule is `stored_on_released_gene_name_leaf` with `n_records` 0 and the name listed. The count goes from 4,606 to 4,607.
+
+### L0-L4 from the rebuilt stores (slurm arrays 4457 and 4604, family verifiers job 4658)
+
+**carotenoid_ozaydin2013**: verdict PASS (/scratch/projects/torchcell-scratch/data/torchcell/carotenoid_ozaydin2013/preprocess/verification_report.json)
+
+| level | rule | class | outcome | message |
+|---|---|---|---|---|
+| L0 | `structural` | gate | ok | 4607 records validated |
+| L1 | `count` | gate | ok | observed 4607, expected 4607 |
+| L1 | `orf_uniqueness` | gate | ok | 130 ORFs appear in multiple records (one record per released row, allowed) |
+| L2 | `value_fidelity` | gate | ok | 4607 values checked |
+| L3 | `reference_zero` | gate | ok | reference visual_score == 0 for all 4607 records |
+| L3 | `target_product_set` | gate | ok | every record names a target_product |
+| L4 | `gene_containment_scmd_ohya2005` | report | ok | 0.946 of scmd_ohya2005's 4475 deletion genes are in Ohya (>= 0.9) |

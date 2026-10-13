@@ -237,3 +237,28 @@ The served count goes from 1,287 to 1,329. The L0-L4 table from the rebuild foll
 ### Family verification (job 4606): the allele joins the identity
 
 The essentiality verifier keys `one_record_per_gene_and_publication` on the fitness family's genotype signature, which did not carry `allele_name`, so the 42 named-allele records collided with their gene's whole-gene deletion (7 keys, 21 extra records). The signature now carries `allele_name` and `released_gene_id`, so two alleles of one gene are two strains there as well; verified again by job 4658.
+
+### L0-L4 from the rebuilt stores (slurm arrays 4457 and 4604, family verifiers job 4658)
+
+**gene_essentiality_sgd**: verdict PASS (/scratch/projects/torchcell-scratch/data/torchcell/gene_essentiality_sgd/preprocess/verification_report.json)
+
+| level | rule | class | outcome | message |
+|---|---|---|---|---|
+| L0 | `structural` | gate | ok | 1329 records validated as GeneEssentialityExperiment |
+| L0 | `reference_structural` | gate | ok | 1329 records validated as GeneEssentialityExperimentReference |
+| L1 | `count` | gate | ok | observed 1329, expected 1329 |
+| L1 | `single_gene` | gate | ok | all 1329 records perturb exactly one named gene |
+| L1 | `one_record_per_gene_and_publication` | gate | ok | 1329 (gene, environment, publication) keys, one record each |
+| L2 | `essential_label` | gate | ok | all 1329 experiments say is_essential True |
+| L2 | `released_annotations` | gate | ok | the 1329 stored (gene, PubMed id) records are the 1329 inviable null S288C annotations SGD releases |
+| L3 | `reference_viable` | gate | ok | every one of the 1329 references is viable (is_essential False) in its experiment's own environment |
+| L3 | `evidence` | gate | ok | all 1329 experiments and references carry curated_null_phenotype evidence |
+| L4 | `no_viable_deletion_in_smf_costanzo2016` | report | finding | 8 of 1121 unconditionally essential genes are viable full-deletion strains of smf_costanzo2016: YHR072W-A (YHR072W-A_sn4180), YHR099W (YHR099W_sn2005), YJL012C (YJL012C_dma2460), YLR293C (YLR293C_sn2067), YNL031C (YNL031C_dma3953), YNL138W-A (YNL138W-A_sn4590), YOR167C (YOR167C_dma4583), YOR182C (YOR182C_dma4575) |
+| L1 | `provenance_gaps` | gate | ok | 5313 documented provenance gaps over 1329/1329 records; 0 deferred field(s): []; 29293 undeclared None values over 26 carrier fields (top: Environment.dilution_rate_per_hour x1329, Environment.duration_generations x1329, Environment.duration_hours x1329, GeneEssentialityEvidence.assertion_error x1329, GeneEssentialityEvidence.assertion_error_is_upper_bound x1329) |
+| L1 | `canonical_gene_names` | report | ok | 1140 systematic names, one canonical spelling each, each current in the genome |
+| L2 | `uncertainty_sanity` | gate | ok | 0 labeled uncertainties, none a zero dispersion; 0 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | gate | ok | environment edits: 1 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | gate | ok | medium components: 0 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | gate | ok | 0 records on a shared MEDIA_LIBRARY medium, 1 on a medium deriving from one (1 distinct media), 1328 on a medium the source does not name, as a typed gap (not_carried_by_curation x1328) |
+| L4 | `gene_containment_sgd` | report | ok | 1.000 of 1140 measured genes are S288C reference genes (>= 0.9) |
+| L4 | `current_genome_genes` | report | ok | every one of the 1140 measured systematic names is a gene of the current genome |

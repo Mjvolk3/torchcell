@@ -162,3 +162,27 @@ Review follow-up (same day): the "stress table not found" refusal and every `_re
 The loader no longer takes a genome. Every listed token of the six stress tables is one record under the token verbatim: a systematic name on `KanMxDeletionPerturbation`, any other on `ReleasedGeneNamePerturbation` (kind `deletion`, marker KanMX). PPA1 and FEN1, aliases of two current genes each, are stored as the symbols the paper wrote; the evidence-based adjudication of 2026.10.01 (above) is retired, and a token a table lists twice would refuse the build (`RepeatedTokenError`; 0 in the pinned PDF). Records follow the listed order within each stress.
 
 Measured: 525 listed tokens, 525 records, none dropped, as before; the count is unchanged and the identities are now the released symbols. The L0-L4 table from the rebuild follows below once job 4606 finishes.
+
+### L0-L4 from the rebuilt stores (slurm arrays 4457 and 4604, family verifiers job 4658)
+
+**env_chemgen_auesukaree2009**: verdict PASS (/scratch/projects/torchcell-scratch/data/torchcell/env_chemgen_auesukaree2009/preprocess/verification_report.json)
+
+| level | rule | class | outcome | message |
+|---|---|---|---|---|
+| L0 | `structural` | gate | ok | 525 records validated |
+| L1 | `count` | gate | ok | observed 525, expected 525 |
+| L1 | `pair_uniqueness` | gate | ok | 525 unique (study, strain, condition) records, one each |
+| L2 | `value_fidelity` | gate | ok | 0 values checked |
+| L2 | `se_nonnegative` | gate | ok | 0 values checked |
+| L2 | `interval_orientation` | gate | ok | 0 of 0 stored intervals do not bracket their value, as declared |
+| L3 | `measurement_type_consistent` | gate | ok | single measurement_type: 'categorical' |
+| L3 | `reference_zero` | gate | ok | categorical rule: all 525 references carry the baseline category 'no_change', which no experiment record reports |
+| L3 | `environment_perturbed` | gate | ok | all 525 experiments carry an environmental edit (perturbation, non-baseline temperature, or non-baseline media; baseline temp=30.0, media='YPD (solid, 2% agar)') |
+| L1 | `provenance_gaps` | gate | ok | 525 documented provenance gaps over 525/525 records; 0 deferred field(s): []; 18544 undeclared None values over 26 carrier fields (top: Compound.inchi x2447, Compound.chebi_id x1575, Compound.smiles x1575, Compound.inchikey x1050, Compound.pubchem_cid x1050) |
+| L1 | `canonical_gene_names` | report | finding | 0 genes carry conflicting common-name spellings (0 records; 0 case-only); 333 systematic names are not the genome's current name; 331 common names resolve to another gene |
+| L2 | `uncertainty_sanity` | gate | ok | 0 labeled uncertainties, none a zero dispersion; 525 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | gate | ok | environment edits: 347 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | gate | ok | medium components: 1050 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | gate | ok | 525 records on a shared MEDIA_LIBRARY medium, 0 on a medium deriving from one (1 distinct media) |
+| L4 | `gene_containment_sgd` | report | finding | 0.000 of 333 measured genes are S288C reference genes (>= 0.9) |
+| L4 | `current_genome_genes` | report | finding | 333 systematic names are absent from the current genome over 525 records: ADH1 x1, ADK1 x1, AFT1 x5, AFT2 x1, AKR1 x3, ALD6 x1, ALF1 x1, ALG3 x1, ANP1 x2, ARD1 x2 |

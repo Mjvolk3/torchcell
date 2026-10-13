@@ -240,3 +240,27 @@ Owner rule, 2026-10-12: the data is the data; the genome and the experiment are 
 Before: `resolve_strains` dropped three classes of released strains: 472 flagged NG, LG or NG/CONT on the YEPD growth control (1,416 records), 26 whose 2005-era systematic name is no current R64 gene and no alias (78), and 23 whose name R64 lists as a synonym of another released ORF (69, e.g. YOR240W beside YOR239W); 19 kept strains were renamed to the current ORF and the common name was the genome's standard name.
 
 Now: `released_strains` keeps every row. `systematic_gene_name` is the `Systematic Name` cell (stripped, upper-cased), `perturbed_gene_name` the `Standard Name` cell (the ORF where blank). 4,770 strains x 3 conditions = 14,310 records (was 12,747). The YEPD flag has no slot on `EnvironmentResponsePhenotype`; the ledger carries it under `carried` (`strain_flagged_on_the_yepd_growth_control`, 472 ORFs, 1,416 records) with the measurement the old docstring made (among NG strains 98.1 / 98.9 / 96.2 percent take the lowest oleate / myristate / acetate value against 2.0 / 2.2 / 0.3 percent of unflagged strains), for modeling time. A `Systematic Name` that is not ORF-shaped raises `ReleasedNameNotSystematicError` (0 of 4,770) and a second row for one ORF raises `RepeatedStrainRowError` (0). `canonical_common_names` stays in the module as a downstream utility for the loaders that still import it.
+
+### L0-L4 from the rebuilt stores (slurm arrays 4457 and 4604, family verifiers job 4658)
+
+**env_chemgen_smith2006**: verdict PASS (/scratch/projects/torchcell-scratch/data/torchcell/env_chemgen_smith2006/preprocess/verification_report.json)
+
+| level | rule | class | outcome | message |
+|---|---|---|---|---|
+| L0 | `structural` | gate | ok | 14310 records validated |
+| L1 | `count` | gate | ok | observed 14310, expected 14310 |
+| L1 | `pair_uniqueness` | gate | ok | 14310 unique (study, strain, condition) records, one each |
+| L2 | `value_fidelity` | gate | ok | 14310 values checked |
+| L2 | `se_nonnegative` | gate | ok | 0 values checked |
+| L2 | `interval_orientation` | gate | ok | 0 of 0 stored intervals do not bracket their value, as declared |
+| L3 | `measurement_type_consistent` | gate | ok | single measurement_type: 'ordinal' |
+| L3 | `reference_zero` | gate | ok | categorical rule: all 14310 references carry the baseline category 'no_change', which no experiment record reports |
+| L3 | `environment_perturbed` | gate | ok | all 14310 experiments carry an environmental edit (perturbation, non-baseline temperature, or non-baseline media; baseline temp=30.0, media='YPBO (YPB + 0.2% Tween 40 + 0.1% oleic acid, solid)') |
+| L1 | `provenance_gaps` | gate | ok | 14310 documented provenance gaps over 14310/14310 records; 0 deferred field(s): []; 519930 undeclared None values over 19 carrier fields (top: Compound.inchi x95400, Compound.smiles x66780, Compound.chebi_id x52470, Compound.inchikey x52470, Compound.pubchem_cid x52470) |
+| L1 | `canonical_gene_names` | report | finding | 0 genes carry conflicting common-name spellings (0 records; 0 case-only); 59 systematic names are not the genome's current name; 51 common names resolve to another gene |
+| L2 | `uncertainty_sanity` | gate | ok | 0 labeled uncertainties, none a zero dispersion; 14310 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | gate | ok | environment edits: 14310 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | gate | ok | medium components: 28620 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | gate | ok | 14310 records on a shared MEDIA_LIBRARY medium, 0 on a medium deriving from one (3 distinct media) |
+| L4 | `gene_containment_sgd` | report | ok | 0.988 of 4770 measured genes are S288C reference genes (>= 0.9) |
+| L4 | `current_genome_genes` | report | finding | 59 systematic names are absent from the current genome over 177 records: YAL043C-A x3, YAL058C-A x3, YAR037W x3, YAR040C x3, YAR043C-A x3, YAR044W x3, YBR075W x3, YBR090C-A x3, YBR100W x3, YCL003W x3 |

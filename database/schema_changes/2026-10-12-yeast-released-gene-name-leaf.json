@@ -1,0 +1,1900 @@
+{
+  "record_version": 1,
+  "slug": "yeast-released-gene-name-leaf",
+  "date": "2026-10-12",
+  "pr": null,
+  "author_kind": "agent",
+  "base_commit": "db632f2b0f7450c597f700c63a2543e57a0dbf16",
+  "python_version": "3.13.0",
+  "symbols": [
+    {
+      "symbol": "GenePerturbation",
+      "status": "modified",
+      "kinds": [
+        "equivalent_refactor"
+      ],
+      "fingerprint_before": "e4ab28ad7d08d82edadf3f560fcd72e3b01f6ffcdd7fe32462af0f58d9cf5194",
+      "fingerprint_after": "3b77998d09b10010824e88b06f00e5e5ec5212cc8f107947bb3525a61766ed67",
+      "impact": "stale",
+      "reasons": [
+        "validator/serializer changed: ['validate_sys_gene_name']"
+      ]
+    },
+    {
+      "symbol": "GenePerturbationType",
+      "status": "modified",
+      "kinds": [
+        "enum_member_added"
+      ],
+      "fingerprint_before": "0581afe7f747a5bff606d7b96a6b47004f6460f58a2aa04d8e1f3aad50a3bd26",
+      "fingerprint_after": "9fddb9b2c095de777300645cc129d00b3225584ed2c6872dc99dfb4fad2909e9",
+      "impact": "stale",
+      "reasons": [
+        "gained members ['NamedAllelePerturbation', 'ReleasedGeneNamePerturbation']"
+      ]
+    },
+    {
+      "symbol": "NamedAllelePerturbation",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "fa2fb2de976f9d03e8cfc94979957743fc6759f9c7d47e736a203b34cd8b2e8e",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "RELEASED_GENE_KIND_SO",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "e68f6c087495ff519085d3e3213343d659ce673e62aa6ec9d50bb88a28de4285",
+      "impact": "stale",
+      "reasons": [
+        "new module-level binding"
+      ]
+    },
+    {
+      "symbol": "ReleasedGeneIdNamespace",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "b917a2f906c478de7cccdcbeb7e7a8c1e9c2fbd7d2d3c353110a7965504bb8a3",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "ReleasedGeneKind",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "334e3657cf4b915d35d0becdc254139f26077c9e0deebb9dc1b8d03082384fe3",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "ReleasedGeneNamePerturbation",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "72bdc2bc376208bba42ccd403933c5dd97286fd7347a9cc82b47c6f5e27ae327",
+      "impact": "stale",
+      "reasons": [
+        "new symbol"
+      ]
+    },
+    {
+      "symbol": "_SYSTEMATIC_GENE_NAME_RE",
+      "status": "added",
+      "kinds": [
+        "additive_leaf"
+      ],
+      "fingerprint_before": null,
+      "fingerprint_after": "ef70f8d43cc1c91d56457773f7bea25053fb7125278aeb623c53af181efc4bab",
+      "impact": "stale",
+      "reasons": [
+        "new module-level binding"
+      ]
+    }
+  ],
+  "correctness_argument": "Every yeast gene-perturbation leaf before this change requires systematic_gene_name to match the S288C systematic-name regex of GenePerturbation.validate_sys_gene_name, so a loader whose source releases a gene by its symbol alone had to resolve the symbol through a genome annotation before it could store a record, and the annotation then decided which records exist: a symbol the annotation lacks, a retired or ambiguous alias, two symbols that resolve to one ORF, or an allele the schema has no carrier for were dropped or merged. The owner rule of 2026-10-12 is that the data is the data: ingestion stores what the source released, only an author withdrawal drops a record, and the genome joins at modeling time (#1045, #1065). Measured on the released files: Cachera 2023 GA1_2_4_6.csv (sha256 71f55609...) releases 4,788 rows under a 'gene' column of which 1,167 are systematic names and 3,616 are symbols (plus 'WT' and '0' controls), with no token repeated; SynLethDB Yeast_SL.csv (sha256 091e04db...) releases both genes of each of its 14,000 pairs as a symbol and an NCBI Entrez id, of which 1 pair's id is in no R64 GFF; the pinned SGD dump (digest 1cb4ed59...) holds 42 inviable null annotations on a named allele that is not the whole-gene deletion (cdc24p-\u2206CH, rsc3-C14G, gcd11-K250A), which the loader ledgers and never stores. ReleasedGeneNamePerturbation stores one gene exactly as released: the source's symbol verbatim in systematic_gene_name and released_gene_name, the source's gene id verbatim with its namespace when one is released (SynLethDB's Entrez id), and the kind the source states (ReleasedGeneKind, each with an SO pair the schema already pins); a CRISPR interference record carries its CrisprConstruct. NamedAllelePerturbation stores an allele under the name its source gives, on the gene's systematic name, with the generic sequence_variant mechanism of the axis root because the source states no sequence change. Both are strictly additive: no existing leaf, field or validator changes its accepted set; the systematic-name regex of GenePerturbation is hoisted to a module constant (_SYSTEMATIC_GENE_NAME_RE) that the base validator and the new leaf share, which moves the fingerprint and accepts exactly the same strings. The new leaf stores the released identifier IN systematic_gene_name rather than gapping it, as the bacterial released leaves do (#691): the root field stays required and its meaning on the placed leaves is untouched, the ontology's Liskov invariant holds (a child cannot loosen a parent field), and a released symbol and a released systematic name never sit in one class because the leaf refuses the systematic form and the placed leaves refuse everything else. A loader places each released token by its form: a systematic name on the placed leaf it used before, a symbol on ReleasedGeneNamePerturbation. DAG placement: ReleasedGeneNamePerturbation is a direct child of GenePerturbation beside the bacterial released leaves (BacterialReleasedStrainPerturbation, BacterialReleasedCrisprPerturbation, BacterialReleasedTransposonPerturbation), not under PresenceAbsencePerturbation or ExpressionModulationPerturbation, because the axis is a property of the released kind; NamedAllelePerturbation is a child of SequencePerturbation beside ConditionalAllelePerturbation and SequenceVariantPerturbation. The union widening re-stales every store whose closure holds GenePerturbationType; the served stores whose records change content are BetaxanthinCachera2023Dataset, EnvChemgenMota2024Dataset, SynthLethalityYeastSynthLethDbDataset, SynthRescueYeastSynthLethDbDataset, EnvChemgenAuesukaree2009Dataset, OrganicAcidYoshida2012Dataset, FattyAcidXue2025Dataset, CrispriMormino2022Dataset and GeneEssentialitySgdDataset, and they are rebuilt in the full KG rebuild.",
+  "measurement_type_decision": false,
+  "source_quotes": [
+    {
+      "value": "gene",
+      "provenance": {
+        "source_uri": "https://raw.githubusercontent.com/pc2912/CRI-SPA_repo/main/GA1_2_4_6.csv",
+        "citation_key": "cacheraCRISPAHighthroughputMethod2023",
+        "sha256": "71f55609067301e1430a1ab3226618c46428488753c6412603e8f0c21bbcac8a",
+        "method": "released CSV, header line (role si_data in the library manifest)",
+        "page": "GA1_2_4_6.csv line 1",
+        "retrieved": null
+      },
+      "quote": ",Unnamed: 0,gene,area.24_mean,area.24_std,area.24_count,mean_intensity.24_mean,mean_intensity.24_std,mean_intensity.24_count",
+      "note": "the one gene column; 1,167 of its 4,788 rows are systematic names, 3,616 are symbols (AAC1, AAC3, AAD3), one is 'WT' and four are '0', measured with the loader's regex on the pinned file"
+    },
+    {
+      "value": [
+        "n1.name",
+        "n1.identifier",
+        "n2.name",
+        "n2.identifier"
+      ],
+      "provenance": {
+        "source_uri": "https://drive.google.com/uc?export=download&id=1_56ebyBatapNml8S5HlJW7Dz1l0DZZIq",
+        "citation_key": "wangSynLethDB20Webbased2022",
+        "sha256": "091e04dbab80044324970feea4a5fc933df0ab7c887042fd87419173129c56ca",
+        "method": "released CSV, header and first row",
+        "page": "Yeast_SL.csv lines 1-2",
+        "retrieved": null
+      },
+      "quote": "n1.name,n1.identifier,n2.name,n2.identifier,r.cell_line,r.pubmed_id,r.source,r.statistic_score\nACS2,850846,GCN5,853167,null,18676811,High Throughput|Low Throughput,0.9",
+      "note": "each gene is released as a symbol and an NCBI Entrez Gene id; the leaf stores both verbatim (released_gene_id_namespace ncbi_entrez_gene) and no systematic name"
+    },
+    {
+      "value": [
+        "cdc24p-\u2206CH",
+        "cdc24p-\u2206DH",
+        "rpo21-(rpb1-pN15-A)",
+        "rsc3-C14G",
+        "rsc3-(1-360)",
+        "gcd11-K250A"
+      ],
+      "provenance": {
+        "source_uri": "data/sgd/genome/genes",
+        "citation_key": "engelNewDataCollaborations2022",
+        "sha256": "1cb4ed59556b1534e28eb79ad21135cdb5a149f78dca8df4924f473e39eef409",
+        "method": "the pinned SGD per-gene JSON dump (SGD_GENES_DIGEST over the 6,607 files); the first six of the 42 allele names the loader ledgers under allele_not_whole_gene_deletion",
+        "page": "preprocess/dropped_records.json of the gene_essentiality_sgd dev store",
+        "retrieved": null
+      },
+      "quote": "cdc24p-\u2206CH",
+      "note": "an inviable null annotation on a named allele that is not the whole-gene deletion; NamedAllelePerturbation carries the name verbatim"
+    }
+  ],
+  "alternatives_rejected": [
+    {
+      "alternative": "Keep resolving released symbols through SCerevisiaeGenome.resolve_gene_name and store the current R64 ORF on KanMxDeletionPerturbation, ledgering what does not resolve (every symbol-only loader before this change)",
+      "why_rejected": "The genome gates records: retired aliases, ambiguous symbols and symbols the annotation lacks are dropped, and two released symbols that resolve to one ORF are merged into one record. The owner rejected it (#1045: the data is the data; no synonym route, no resolution status, no cross-reference)."
+    },
+    {
+      "alternative": "Loosen GenePerturbation.systematic_gene_name to accept any string, or make it Optional with a typed gap on a child",
+      "why_rejected": "The first weakens a required contract on every served leaf (schema rule 3) and puts placed and released records in one class; the second breaks the ontology's field-level Liskov invariant (a child cannot loosen a parent field, PR #762) and would gap a field the source did state, just in another form."
+    },
+    {
+      "alternative": "Two released-name leaves, one under DeletionPerturbation and one under ExpressionModulationPerturbation",
+      "why_rejected": "The axis is a property of the kind the source states, and one leaf with a typed ReleasedGeneKind and its SO pair carries deletion, heterozygous deletion and CRISPR interference without a second copy of the identity contract, as the bacterial precedent does."
+    },
+    {
+      "alternative": "Store SGD's 42 named alleles on ConditionalAllelePerturbation with allele_class gapped",
+      "why_rejected": "That leaf asserts a conditional allele of an essential gene with a class that reduces function; SGD states an inviable null phenotype on a named allele and nothing about how it acts, so the record would claim what the source does not say."
+    }
+  ],
+  "served_release": "2026.10.06-4b293d34",
+  "affected_loaders": [
+    {
+      "loader": "torchcell/datasets/ecoli/baba2006.py",
+      "dataset_classes": [
+        "GeneEssentialityBaba2006Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/baba2006_growth.py",
+      "dataset_classes": [
+        "GrowthYieldBaba2006Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/babu2014.py",
+      "dataset_classes": [
+        "GeneInteractionBabu2014Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/balakrishnan2022.py",
+      "dataset_classes": [
+        "MrnaFractionBalakrishnan2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/brunk2016.py",
+      "dataset_classes": [
+        "_MetaboliteBrunk2016Dataset",
+        "MetabolomeBrunk2016Dataset",
+        "ExometaboliteBrunk2016Dataset",
+        "ProteomeBrunk2016Dataset",
+        "BiofuelTiterBrunk2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/butland2008.py",
+      "dataset_classes": [
+        "GeneInteractionButland2008Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/caglar2017.py",
+      "dataset_classes": [
+        "RnaseqCaglar2017Dataset",
+        "ProteomeCaglar2017Dataset",
+        "ProteinFoldChangeCaglar2017Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/caglar2017_doubling_time.py",
+      "dataset_classes": [
+        "DoublingTimeCaglar2017Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/campos2018.py",
+      "dataset_classes": [
+        "GrowthRateCampos2018Dataset",
+        "MorphologyCampos2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/choe2019_growth_rate.py",
+      "dataset_classes": [
+        "GrowthRateChoe2019Dataset",
+        "TranscriptionFactorKnockoutChoe2019Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/choe2025.py",
+      "dataset_classes": [
+        "CrispriChemgenChoe2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/cui2018.py",
+      "dataset_classes": [
+        "CrispriKnockdownCui2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/fang2025.py",
+      "dataset_classes": [
+        "CrispriGuideFfaEnrichmentFang2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/fitness_browser_ecoli.py",
+      "dataset_classes": [
+        "FitnessBrowserEcoliDataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/foo2014.py",
+      "dataset_classes": [
+        "IsopentenolTiterFoo2014Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/fuhrer2017.py",
+      "dataset_classes": [
+        "MetabolomeFuhrer2017Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/gerdes2003.py",
+      "dataset_classes": [
+        "GeneEssentialityGerdes2003Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/girgis2009.py",
+      "dataset_classes": [
+        "EnvChemgenGirgis2009Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/goodall2018.py",
+      "dataset_classes": [
+        "GeneEssentialityGoodall2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/gupta2024.py",
+      "dataset_classes": [
+        "ProteinTurnoverGupta2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/hawkins2020.py",
+      "dataset_classes": [
+        "MismatchCrispriFitnessHawkins2020Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/ishii2007.py",
+      "dataset_classes": [
+        "_Ishii2007Dataset",
+        "MetabolomeIshii2007Dataset",
+        "ProteomeIshii2007Dataset",
+        "FluxIshii2007Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/lamoureux2023.py",
+      "dataset_classes": [
+        "RnaseqLamoureux2023Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/lamoureux2023_growth.py",
+      "dataset_classes": [
+        "GrowthRateLamoureux2023Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/lamoureux2023_public_k12.py",
+      "dataset_classes": [
+        "RnaseqPublicK12Lamoureux2023Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/li2014.py",
+      "dataset_classes": [
+        "ProteinSynthesisRateLi2014Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/li2021.py",
+      "dataset_classes": [
+        "FluxLi2021Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/mohiuddin2022.py",
+      "dataset_classes": [
+        "PromoterReporterMohiuddin2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/mori2021.py",
+      "dataset_classes": [
+        "ProteomeMori2021Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/mutalik2020.py",
+      "dataset_classes": [
+        "PhageRbTnseqMutalik2020Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/nichols2011.py",
+      "dataset_classes": [
+        "EnvChemgenNichols2011Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/niu2019.py",
+      "dataset_classes": [
+        "CrisprPineneToleranceNiu2019Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/potel2018.py",
+      "dataset_classes": [
+        "PhosphositeIntensityPotel2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/price2018.py",
+      "dataset_classes": [
+        "RbTnseqPrice2018EcoliDataset",
+        "GeneEssentialityPrice2018EcoliDataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/rachwalski2024.py",
+      "dataset_classes": [
+        "CrispriCrossRachwalski2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/rapp2026.py",
+      "dataset_classes": [
+        "MetabolomeRapp2026Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/rapp2026_platforms.py",
+      "dataset_classes": [
+        "_Rapp2026Dataset",
+        "GrowthAucRapp2026Dataset",
+        "_AccumulationDataset",
+        "TargetedMetabolomeRapp2026Dataset",
+        "MetaboliteIntensityRapp2026Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/rousset2018.py",
+      "dataset_classes": [
+        "CrispriScreenRousset2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/schastnaya2021.py",
+      "dataset_classes": [
+        "MetabolomeSchastnaya2021Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/schmidt2016.py",
+      "dataset_classes": [
+        "ProteomeSchmidt2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/schmidt2016_growth_rate.py",
+      "dataset_classes": [
+        "GrowthRateSchmidt2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/schmidt2016_s23_growth_rate.py",
+      "dataset_classes": [
+        "GrowthRateS23Schmidt2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/schmidt2016_srm.py",
+      "dataset_classes": [
+        "_SrmSchmidt2016Dataset",
+        "ProteomeSrmSet1Schmidt2016Dataset",
+        "ProteomeSrmSet2Schmidt2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/shiver2016.py",
+      "dataset_classes": [
+        "EnvChemgenShiver2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/teteneva2024.py",
+      "dataset_classes": [
+        "RbTnseqTeteneva2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/tong2020.py",
+      "dataset_classes": [
+        "CarbonSourceTong2020Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/wang2015.py",
+      "dataset_classes": [
+        "EnvChemgenWang2015Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/wang2015_growth.py",
+      "dataset_classes": [
+        "GrowthWang2015Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/wang2018.py",
+      "dataset_classes": [
+        "CrispriGuideFitnessWang2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/wang2024.py",
+      "dataset_classes": [
+        "EnvChemgenWang2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/wetmore2015.py",
+      "dataset_classes": [
+        "RbTnseqWetmore2015Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/banerjee2024.py",
+      "dataset_classes": [
+        "IsoprenolTiterBanerjee2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/banerjee2025.py",
+      "dataset_classes": [
+        "ProteomeBanerjee2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/borchert2023.py",
+      "dataset_classes": [
+        "RbTnseqBorchert2023Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/borchert2024.py",
+      "dataset_classes": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/carruthers2025.py",
+      "dataset_classes": [
+        "IsoprenolTiterCarruthers2025Dataset",
+        "ProteomeCarruthers2025Dataset",
+        "CampaignProteomeCarruthers2025Dataset",
+        "ProteomeFoldChangeCarruthers2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/desiqueira2025.py",
+      "dataset_classes": [
+        "ProteomeDeSiqueira2025Dataset",
+        "ProteomePercentDeSiqueira2025Dataset",
+        "ProteomeLog10PercentDeSiqueira2025Dataset",
+        "IsoprenolTiterDeSiqueira2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/fitness_browser_putida.py",
+      "dataset_classes": [
+        "FitnessBrowserPutidaDataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/kang2026.py",
+      "dataset_classes": [
+        "IsoprenylAcetateTiterKang2026Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/lim2022.py",
+      "dataset_classes": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/lim2025.py",
+      "dataset_classes": [
+        "IsoprenolToleranceLim2025Dataset",
+        "ProteomeLim2025Dataset",
+        "ProteomeFoldChangeLim2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/menasalvas2025.py",
+      "dataset_classes": [
+        "IsoprenolSelectionMenasalvas2025Dataset",
+        "ProteomeMenasalvas2025Dataset",
+        "_MetabolitePhaseDataset",
+        "MetaboliteGrowthPhaseMenasalvas2025Dataset",
+        "MetaboliteProductionPhaseMenasalvas2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/royet2025.py",
+      "dataset_classes": [
+        "EnvMetalTnseqRoyet2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/thompson2019_valerolactam.py",
+      "dataset_classes": [
+        "_Thompson2019Dataset",
+        "ValerolactamTiterThompson2019Dataset",
+        "LactamGrowthRateThompson2019Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/yunus2026.py",
+      "dataset_classes": [
+        "_Yunus2026Dataset",
+        "_Yunus2026BenchlingDataset",
+        "CrispriKnockdownYunus2026Dataset",
+        "CrispriArrayYunus2026Dataset",
+        "CrispriDifferentialProteomeYunus2026Dataset",
+        "IsoprenolTiterYunus2026Dataset",
+        "CrispriPanelProteomeYunus2026Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/private_torchcell/volk2021_inhibitor_bioscreen.py",
+      "dataset_classes": [
+        "InhibitorBioscreenVolk2021Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/auesukaree2009.py",
+      "dataset_classes": [
+        "EnvChemgenAuesukaree2009Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenAuesukaree2009Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/baryshnikova2010.py",
+      "dataset_classes": [
+        "SmfBaryshnikova2010Dataset"
+      ],
+      "served_classes": [
+        "SmfBaryshnikova2010Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/bloom2019.py",
+      "dataset_classes": [
+        "Bloom2019Dataset"
+      ],
+      "served_classes": [
+        "Bloom2019Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/boocock2025.py",
+      "dataset_classes": [
+        "Boocock2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/cachera2023.py",
+      "dataset_classes": [
+        "BetaxanthinCachera2023Dataset"
+      ],
+      "served_classes": [
+        "BetaxanthinCachera2023Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/caudal2024.py",
+      "dataset_classes": [
+        "CaudalPanTranscriptome2024Dataset"
+      ],
+      "served_classes": [
+        "CaudalPanTranscriptome2024Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/cooper2010.py",
+      "dataset_classes": [
+        "AminoAcidCooper2010Dataset"
+      ],
+      "served_classes": [
+        "AminoAcidCooper2010Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/costanzo2016.py",
+      "dataset_classes": [
+        "SmfCostanzo2016Dataset",
+        "DmfCostanzo2016Dataset",
+        "DmiCostanzo2016Dataset"
+      ],
+      "served_classes": [
+        "DmfCostanzo2016Dataset",
+        "DmiCostanzo2016Dataset",
+        "SmfCostanzo2016Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/costanzo2021.py",
+      "dataset_classes": [
+        "EnvChemgenCostanzo2021Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenCostanzo2021Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/dasilveira2014.py",
+      "dataset_classes": [
+        "MetaboliteDaSilveira2014Dataset"
+      ],
+      "served_classes": [
+        "MetaboliteDaSilveira2014Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/dechiara2022.py",
+      "dataset_classes": [
+        "_DeChiara2022Dataset",
+        "_GrowthDeChiara2022Dataset",
+        "DoublingTimeDeChiara2022Dataset",
+        "CellYieldDeChiara2022Dataset",
+        "LifeCycleDeChiara2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/hackett2020.py",
+      "dataset_classes": [
+        "InductionTimecourseHackett2020Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/hale2024.py",
+      "dataset_classes": [
+        "CrispriSegregantHale2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/hillenmeyer2008.py",
+      "dataset_classes": [
+        "HetHillenmeyer2008Dataset",
+        "HomHillenmeyer2008Dataset"
+      ],
+      "served_classes": [
+        "HetHillenmeyer2008Dataset",
+        "HomHillenmeyer2008Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/hoepfner2014.py",
+      "dataset_classes": [
+        "EnvChemgenHoepfner2014Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenHoepfner2014Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/hu2007.py",
+      "dataset_classes": [
+        "MicroarrayScoreHu2007Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/jackson2020.py",
+      "dataset_classes": [
+        "TfDeletionPseudobulkJackson2020Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/kemmeren2014.py",
+      "dataset_classes": [
+        "MicroarrayKemmeren2014Dataset"
+      ],
+      "served_classes": [
+        "MicroarrayKemmeren2014Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/kuzmin2018.py",
+      "dataset_classes": [
+        "SmfKuzmin2018Dataset",
+        "DmfKuzmin2018Dataset",
+        "TmfKuzmin2018Dataset",
+        "DmiKuzmin2018Dataset",
+        "TmiKuzmin2018Dataset"
+      ],
+      "served_classes": [
+        "DmfKuzmin2018Dataset",
+        "DmiKuzmin2018Dataset",
+        "SmfKuzmin2018Dataset",
+        "TmfKuzmin2018Dataset",
+        "TmiKuzmin2018Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/kuzmin2020.py",
+      "dataset_classes": [
+        "SmfKuzmin2020Dataset",
+        "DmfKuzmin2020Dataset",
+        "TmfKuzmin2020Dataset",
+        "DmiKuzmin2020Dataset",
+        "TmiKuzmin2020Dataset"
+      ],
+      "served_classes": [
+        "DmfKuzmin2020Dataset",
+        "DmiKuzmin2020Dataset",
+        "SmfKuzmin2020Dataset",
+        "TmfKuzmin2020Dataset",
+        "TmiKuzmin2020Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/lian2019.py",
+      "dataset_classes": [
+        "CrisprMagicLian2019Dataset"
+      ],
+      "served_classes": [
+        "CrisprMagicLian2019Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/lopez2024.py",
+      "dataset_classes": [
+        "IsobutanolScreenLopez2024Dataset",
+        "IsobutanolValidatedLopez2024Dataset"
+      ],
+      "served_classes": [
+        "IsobutanolScreenLopez2024Dataset",
+        "IsobutanolValidatedLopez2024Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/messner2021.py",
+      "dataset_classes": [
+        "ProteomeMessner2021Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/messner2023.py",
+      "dataset_classes": [
+        "ProteomeMessner2023Dataset"
+      ],
+      "served_classes": [
+        "ProteomeMessner2023Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/mormino2022.py",
+      "dataset_classes": [
+        "CrispriMormino2022Dataset"
+      ],
+      "served_classes": [
+        "CrispriMormino2022Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/mota2024.py",
+      "dataset_classes": [
+        "EnvChemgenMota2024Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenMota2024Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/muenzner2024.py",
+      "dataset_classes": [
+        "_MuenznerIsolateDataset",
+        "ProteomeMuenzner2024Dataset",
+        "ProteinTurnoverMuenzner2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/mulleder2016.py",
+      "dataset_classes": [
+        "AminoAcidMulleder2016Dataset"
+      ],
+      "served_classes": [
+        "AminoAcidMulleder2016Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/nadal_ribelles2025.py",
+      "dataset_classes": [
+        "NadalRibellesPerturbSeq2025Dataset"
+      ],
+      "served_classes": [
+        "NadalRibellesPerturbSeq2025Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/nguessan2025.py",
+      "dataset_classes": [
+        "Nguessan2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbationType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/oduibhir2014.py",
+      "dataset_classes": [
+        "SmfODuibhir2014Dataset"
+      ],
+      "served_classes": [
+        "SmfODuibhir2014Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/ohnuki2018.py",
+      "dataset_classes": [
+        "ScmdOhnuki2018Dataset"
+      ],
+      "served_classes": [
+        "ScmdOhnuki2018Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/ohnuki2022.py",
+      "dataset_classes": [
+        "ScmdOhnuki2022Dataset"
+      ],
+      "served_classes": [
+        "ScmdOhnuki2022Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/ohya2005.py",
+      "dataset_classes": [
+        "ScmdOhya2005Dataset"
+      ],
+      "served_classes": [
+        "ScmdOhya2005Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/ozaydin2013.py",
+      "dataset_classes": [
+        "CarotenoidOzaydin2013Dataset"
+      ],
+      "served_classes": [
+        "CarotenoidOzaydin2013Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/parsons2006.py",
+      "dataset_classes": [
+        "EnvChemgenParsons2006Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/peter2018.py",
+      "dataset_classes": [
+        "IsolateGrowthPeter2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/piotrowski2017.py",
+      "dataset_classes": [
+        "EnvChemgenPiotrowski2017Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/puddu2019.py",
+      "dataset_classes": [
+        "GenomeArchitecturePuddu2019Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/sameith2015.py",
+      "dataset_classes": [
+        "SmMicroarraySameith2015Dataset",
+        "DmMicroarraySameith2015Dataset"
+      ],
+      "served_classes": [
+        "DmMicroarraySameith2015Dataset",
+        "SmMicroarraySameith2015Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/sgd.py",
+      "dataset_classes": [
+        "GeneEssentialitySgdDataset"
+      ],
+      "served_classes": [
+        "GeneEssentialitySgdDataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/smith2006.py",
+      "dataset_classes": [
+        "FattyAcidSmith2006Dataset"
+      ],
+      "served_classes": [
+        "FattyAcidSmith2006Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/smith2016.py",
+      "dataset_classes": [
+        "CrispriChemgenSmith2016Dataset"
+      ],
+      "served_classes": [
+        "CrispriChemgenSmith2016Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/synth_leth_db.py",
+      "dataset_classes": [
+        "SynthLethalityYeastSynthLethDbDataset",
+        "SynthRescueYeastSynthLethDbDataset"
+      ],
+      "served_classes": [
+        "SynthLethalityYeastSynthLethDbDataset",
+        "SynthRescueYeastSynthLethDbDataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/vaishnav2022.py",
+      "dataset_classes": [
+        "PooledPromoterExpressionVaishnav2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/vanacloig2022.py",
+      "dataset_classes": [
+        "EnvChemgenVanacloig2022Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenVanacloig2022Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/wildenhain2015.py",
+      "dataset_classes": [
+        "EnvChemgenWildenhain2015Dataset"
+      ],
+      "served_classes": [
+        "EnvChemgenWildenhain2015Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/xue2025.py",
+      "dataset_classes": [
+        "FattyAcidXue2025Dataset"
+      ],
+      "served_classes": [
+        "FattyAcidXue2025Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/yeastphenome.py",
+      "dataset_classes": [
+        "YeastPhenomeDataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/yoshida2012.py",
+      "dataset_classes": [
+        "OrganicAcidYoshida2012Dataset"
+      ],
+      "served_classes": [
+        "OrganicAcidYoshida2012Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/yoshikawa2009.py",
+      "dataset_classes": [
+        "EnvChemgenYoshikawa2009Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/zelezniak2018.py",
+      "dataset_classes": [
+        "ProteomeZelezniak2018Dataset",
+        "MetaboliteZelezniak2018Dataset"
+      ],
+      "served_classes": [
+        "MetaboliteZelezniak2018Dataset",
+        "ProteomeZelezniak2018Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "GenePerturbation",
+        "GenePerturbationType",
+        "_SYSTEMATIC_GENE_NAME_RE"
+      ]
+    }
+  ],
+  "served_datasets": [
+    "AminoAcidCooper2010Dataset",
+    "AminoAcidMulleder2016Dataset",
+    "BetaxanthinCachera2023Dataset",
+    "Bloom2019Dataset",
+    "CarotenoidOzaydin2013Dataset",
+    "CaudalPanTranscriptome2024Dataset",
+    "CrisprMagicLian2019Dataset",
+    "CrispriChemgenSmith2016Dataset",
+    "CrispriMormino2022Dataset",
+    "DmMicroarraySameith2015Dataset",
+    "DmfCostanzo2016Dataset",
+    "DmfKuzmin2018Dataset",
+    "DmfKuzmin2020Dataset",
+    "DmiCostanzo2016Dataset",
+    "DmiKuzmin2018Dataset",
+    "DmiKuzmin2020Dataset",
+    "EnvChemgenAuesukaree2009Dataset",
+    "EnvChemgenCostanzo2021Dataset",
+    "EnvChemgenHoepfner2014Dataset",
+    "EnvChemgenMota2024Dataset",
+    "EnvChemgenVanacloig2022Dataset",
+    "EnvChemgenWildenhain2015Dataset",
+    "FattyAcidSmith2006Dataset",
+    "FattyAcidXue2025Dataset",
+    "GeneEssentialitySgdDataset",
+    "HetHillenmeyer2008Dataset",
+    "HomHillenmeyer2008Dataset",
+    "IsobutanolScreenLopez2024Dataset",
+    "IsobutanolValidatedLopez2024Dataset",
+    "MetaboliteDaSilveira2014Dataset",
+    "MetaboliteZelezniak2018Dataset",
+    "MicroarrayKemmeren2014Dataset",
+    "NadalRibellesPerturbSeq2025Dataset",
+    "OrganicAcidYoshida2012Dataset",
+    "ProteomeMessner2023Dataset",
+    "ProteomeZelezniak2018Dataset",
+    "ScmdOhnuki2018Dataset",
+    "ScmdOhnuki2022Dataset",
+    "ScmdOhya2005Dataset",
+    "SmMicroarraySameith2015Dataset",
+    "SmfBaryshnikova2010Dataset",
+    "SmfCostanzo2016Dataset",
+    "SmfKuzmin2018Dataset",
+    "SmfKuzmin2020Dataset",
+    "SmfODuibhir2014Dataset",
+    "SynthLethalityYeastSynthLethDbDataset",
+    "SynthRescueYeastSynthLethDbDataset",
+    "TmfKuzmin2018Dataset",
+    "TmfKuzmin2020Dataset",
+    "TmiKuzmin2018Dataset",
+    "TmiKuzmin2020Dataset"
+  ],
+  "rebuild_scope": "full_kg_rebuild",
+  "owner_sign_off": {
+    "signed": false,
+    "quote": null,
+    "url": null
+  }
+}

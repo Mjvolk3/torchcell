@@ -63,6 +63,7 @@ from torchcell.datamodels.schema import (
     KanMxDeletionPerturbation,
     MarkerDeletionPerturbation,
     MeanDeletionPerturbation,
+    NamedAllelePerturbation,
     NatMxDeletionPerturbation,
     NaturalGeneAbsencePerturbation,
     NaturalGenePresencePerturbation,
@@ -71,6 +72,8 @@ from torchcell.datamodels.schema import (
     PresenceAbsencePerturbation,
     PromoterDrivenGeneIntegrationPerturbation,
     PromoterReplacementPerturbation,
+    ReleasedGeneKind,
+    ReleasedGeneNamePerturbation,
     ReleasedStrainKind,
     SequencePerturbation,
     SequenceVariantPerturbation,
@@ -236,6 +239,8 @@ _RELEASED_LEAVES: frozenset[type[GenePerturbation]] = frozenset(
         BacterialReleasedStrainPerturbation,
         BacterialReleasedCrisprPerturbation,
         BacterialReleasedTransposonPerturbation,
+        # #1045: the yeast gene under the name its source released.
+        ReleasedGeneNamePerturbation,
     }
 )
 
@@ -252,6 +257,15 @@ FACTORY: dict[type[GenePerturbation], dict[str, Any]] = {
         "allele_class": "temperature_sensitive",
         "allele_name": "tfc3-1",
     },
+    # #1045: a gene under its released name, and an allele under its released name.
+    ReleasedGeneNamePerturbation: {
+        "systematic_gene_name": "ADE2",
+        "perturbed_gene_name": "ADE2",
+        "released_gene_name": "ADE2",
+        "released_kind": ReleasedGeneKind.deletion,
+        "marker": "KanMX",
+    },
+    NamedAllelePerturbation: {**_SYS, "allele_name": "tfc3-1"},
     NatMxDeletionPerturbation: {**_SYS},
     MeanDeletionPerturbation: {**_SYS, "num_duplicates": 2},
     MarkerDeletionPerturbation: {**_SYS, "marker": "KlURA3"},

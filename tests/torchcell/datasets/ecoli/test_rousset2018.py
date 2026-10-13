@@ -35,10 +35,7 @@ import pytest
 
 import torchcell.datasets.ecoli.cui2018 as cui
 import torchcell.datasets.ecoli.rousset2018 as r
-from tests.torchcell.datasets._genome_injection_fakes import (
-    FakeMG1655Genome,
-    install_bacterial_fakes,
-)
+from tests.torchcell.datasets._genome_injection_fakes import install_bacterial_fakes
 from tests.torchcell.sequence.genome._bacterial_fixtures import (
     MG1655_GAF,
     MG1655_LOCI,
@@ -52,9 +49,9 @@ from torchcell.datamodels.schema import (
     BACTERIAL_ASSEMBLY_SETS,
     AssayType,
     AssemblyReferenceGenome,
-    BacterialCrisprInterferencePerturbation,
     BacterialEnvironmentResponseExperiment,
     BacterialEnvironmentResponseExperimentReference,
+    BacterialReleasedCrisprPerturbation,
     ComponentDefinition,
     ConcentrationUnit,
     EnvironmentResponsePhenotype,
@@ -63,10 +60,7 @@ from torchcell.datamodels.schema import (
     PhagePerturbation,
     SampleUnit,
 )
-from torchcell.datasets.bacteria_common import (
-    BacterialGenomeInjector,
-    LocusTagResolutionError,
-)
+from torchcell.datasets.bacteria_common import BacterialGenomeInjector
 from torchcell.datasets.dataset_registry import dataset_registry
 from torchcell.literature.manifest import (
     ROLE_RAW_DATA,
@@ -444,7 +438,7 @@ def test_every_stored_record_is_environment_perturbed() -> None:
     perturbation itself.
     """
     assert set(r.EXPECTED_SCREEN_CENSUS) == {c.screen_id for c in r.CONDITIONS}
-    assert sum(r.EXPECTED_SCREEN_CENSUS.values()) == 4 * 17109 == 68436
+    assert sum(r.EXPECTED_SCREEN_CENSUS.values()) == 4 * 17220 == 68880
     for condition in r.CONDITIONS:
         assert len(r.environment(condition).perturbations) == 1
 
@@ -476,45 +470,35 @@ def test_the_reference_response_is_zero_for_every_screen() -> None:
         assert reference.screen_id == condition.screen_id
 
 
-def test_a_genotype_is_crispri_of_its_locus_by_the_reported_spacer() -> None:
-    stored = r.StoredGuide(
-        spacer="ACCACGCACTCTGACCATCT",
-        reported_symbol="sucA",
-        systematic_gene_name="b0726",
-        perturbed_gene_name="sucA",
-    )
+def test_a_genotype_is_crispri_of_its_released_symbol_by_the_reported_spacer() -> None:
+    stored = r.StoredGuide(spacer="ACCACGCACTCTGACCATCT", reported_symbol="sucA")
     (perturbation,) = r.genotype(stored).perturbations
-    assert isinstance(perturbation, BacterialCrisprInterferencePerturbation)
-    assert perturbation.perturbation_type == "bacterial_crispr_interference"
-    assert perturbation.systematic_gene_name == "b0726"
+    assert isinstance(perturbation, BacterialReleasedCrisprPerturbation)
+    assert perturbation.perturbation_type == "bacterial_released_crispr"
+    assert perturbation.systematic_gene_name == "sucA"
     assert perturbation.perturbed_gene_name == "sucA"
     assert perturbation.gene_namespace == "ecoli_k12_mg1655_bnumber"
     assert perturbation.expression_direction == "decreased"
-    assert perturbation.state == "present"
+    assert perturbation.strain_label == "ACCACGCACTCTGACCATCT"
+    assert perturbation.identifier_kind == r.IDENTIFIER_KIND
     assert perturbation.crispr.effector == "dCas9"
     assert perturbation.crispr.guide_sequence == "ACCACGCACTCTGACCATCT"
     assert perturbation.crispr.n_guides == 1
-    assert perturbation.identifier_mapping is not None
-    assert perturbation.identifier_mapping.source_identifier == "sucA"
-    assert perturbation.identifier_mapping.route == "gene_symbol"
+    assert not hasattr(r, "resolve_symbols")
+    assert not hasattr(r, "canonical_symbol")
 
 
 def test_two_guides_on_one_gene_are_two_strains_and_one_gene() -> None:
     guides = [
-        r.genotype(
-            r.StoredGuide(
-                spacer=spacer,
-                reported_symbol="sucA",
-                systematic_gene_name="b0726",
-                perturbed_gene_name="sucA",
-            )
-        ).perturbations[0]
+        r.genotype(r.StoredGuide(spacer=spacer, reported_symbol="sucA")).perturbations[
+            0
+        ]
         for spacer in ("A" * 20, "C" * 20)
     ]
-    assert all(isinstance(g, BacterialCrisprInterferencePerturbation) for g in guides)
+    assert all(isinstance(g, BacterialReleasedCrisprPerturbation) for g in guides)
     first, second = guides
-    assert isinstance(first, BacterialCrisprInterferencePerturbation)
-    assert isinstance(second, BacterialCrisprInterferencePerturbation)
+    assert isinstance(first, BacterialReleasedCrisprPerturbation)
+    assert isinstance(second, BacterialReleasedCrisprPerturbation)
     assert first.systematic_gene_name == second.systematic_gene_name
     assert first.crispr.guide_sequence != second.crispr.guide_sequence
 
@@ -626,39 +610,6 @@ def mg1655(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> EcoliK12MG1655Gen
     return EcoliK12MG1655Genome(genome_root=str(tmp_path / "mg1655"), overwrite=True)
 
 
-def test_resolve_symbols_stores_b_numbers_and_names_every_unstorable_symbol(
-    mg1655: EcoliK12MG1655Genome, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    # 5 of the 7 synthetic symbols resolve (nope is retired, PRO2 ambiguous): 0.714,
-    # under the release threshold of 0.95, which the next test exercises.
-    monkeypatch.setattr(r, "MIN_RESOLVED_FRACTION", 0.7)
-    resolution = r.resolve_symbols(
-        ["thrL", "thrA", "thrA1", "thrW", "yaaP", "PRO2", "nope"],
-        mg1655,
-        label="synthetic",
-    )
-    assert resolution.stored == {"thrL": "b0001", "thrW": "b0003", "yaaP": "b0004"}
-    assert resolution.retired == ("nope",)
-    assert resolution.collided == ("thrA", "thrA1")
-    assert resolution.ambiguous == ("PRO2",)
-    assert resolution.unstorable == frozenset({"nope", "thrA", "thrA1", "PRO2"})
-    assert resolution.report.ambiguous_kept == {"PRO2": ("b0005", "b0006")}
-
-
-def test_resolve_symbols_stops_below_the_resolution_threshold(
-    mg1655: EcoliK12MG1655Genome,
-) -> None:
-    with pytest.raises(LocusTagResolutionError, match=r"1 of 3 names \(0\.333\)"):
-        r.resolve_symbols(["thrL", "nope", "PRO2"], mg1655, label="threshold")
-
-
-def test_canonical_symbol_reads_the_annotation_not_the_release(
-    mg1655: EcoliK12MG1655Genome,
-) -> None:
-    assert r.canonical_symbol(mg1655, "b0002") == "thrA"
-    assert r.canonical_symbol(mg1655, "b0004") == "yaaP"
-
-
 class _Locus:
     def __init__(self, symbol: str | None) -> None:
         self.symbol = symbol
@@ -679,15 +630,6 @@ class _SymbolGenome:
 
     def resolve_gene_name(self, name: str) -> _Resolution:
         return _Resolution("b0012" if name == "dup" else None)
-
-
-def test_canonical_symbol_falls_back_to_the_tag_when_the_symbol_resolves_elsewhere() -> (
-    None
-):
-    genome: Any = _SymbolGenome()
-    assert r.canonical_symbol(genome, "b0010") == "b0010"
-    assert r.canonical_symbol(genome, "b0011") == "b0011"
-    assert r.canonical_symbol(genome, "b0012") == "dup"
 
 
 # --------------------------------------------------------------------------- #
@@ -780,9 +722,9 @@ def test_the_loader_is_registered_and_receives_the_mg1655_genome(
     kwargs = BacterialGenomeInjector("/dr").genome_kwargs(
         r.CrispriScreenRousset2018Dataset
     )
-    assert set(kwargs) == {"ecoli_genome"}
-    assert isinstance(kwargs["ecoli_genome"], FakeMG1655Genome)
-    assert [name for name, _ in log] == ["FakeMG1655Genome"]
+    # the loader declares no genome parameter, so the injector fills nothing
+    assert kwargs == {}
+    assert [name for name, _ in log] == []
     dataset = r.CrispriScreenRousset2018Dataset.__new__(
         r.CrispriScreenRousset2018Dataset
     )
@@ -794,17 +736,6 @@ def test_the_loader_is_registered_and_receives_the_mg1655_genome(
         r.TRANSDUCTION_TABLE,
         r.CUI2018_SCREEN_FILENAME,
     ]
-
-
-def test_the_loader_refuses_a_genome_of_another_strain(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    dataset = r.CrispriScreenRousset2018Dataset.__new__(
-        r.CrispriScreenRousset2018Dataset
-    )
-    dataset.ecoli_genome = object()  # type: ignore[assignment]
-    with pytest.raises(TypeError, match="needs the MG1655 genome"):
-        dataset._genome()
 
 
 # --------------------------------------------------------------------------- #
@@ -820,10 +751,10 @@ def _records(census: dict[str, int]) -> list[dict[str, Any]]:
 
 def test_the_screen_census_pins_the_per_screen_split() -> None:
     release = {
-        "phage_lambda": 17109,
-        "phage_T4": 17109,
-        "phage_186cIts": 17109,
-        "lambda_transduction": 17109,
+        "phage_lambda": 17220,
+        "phage_T4": 17220,
+        "phage_186cIts": 17220,
+        "lambda_transduction": 17220,
     }
     passed = r.screen_census(_records(release))
     assert passed.passed
@@ -960,7 +891,6 @@ def mirrored(
     monkeypatch.setattr(r, "CUI2018_SCREEN_SHA256", digest)
     monkeypatch.setenv("DATA_ROOT", str(data_root))
     monkeypatch.delenv("TC_DATA_URL", raising=False)
-    monkeypatch.setattr(r, "MIN_RESOLVED_FRACTION", 0.5)
     monkeypatch.setattr(
         r, "bacterial_genome", lambda host, strain, data_root=None: mg1655
     )
@@ -973,9 +903,10 @@ def test_the_loader_builds_the_synthetic_release_end_to_end(
 ) -> None:
     root = tmp_path / "dataset"
     dataset = r.CrispriScreenRousset2018Dataset(root=str(root))
-    # 2 storable guides x 3 phage columns + 2 transduction records; no growth record
-    assert len(dataset) == 8
-    assert sorted(dataset.gene_set) == ["b0001", "b0003"]
+    # 3 released guides x 3 phage columns + 3 transduction records; no growth record.
+    # "nope" is on no locus of the synthetic annotation and is stored as released.
+    assert len(dataset) == 12
+    assert sorted(dataset.gene_set) == ["nope", "thrL", "thrW"]
     references = dataset.experiment_reference_index
     assert references is not None
     assert len(references) == 4
@@ -984,13 +915,13 @@ def test_the_loader_builds_the_synthetic_release_end_to_end(
         screen = dataset[index]["experiment"]["phenotype"]["screen_id"]
         census[screen] = census.get(screen, 0) + 1
     assert census == {
-        "phage_lambda": 2,
-        "phage_T4": 2,
-        "phage_186cIts": 2,
-        "lambda_transduction": 2,
+        "phage_lambda": 3,
+        "phage_T4": 3,
+        "phage_186cIts": 3,
+        "lambda_transduction": 3,
     }
     first = dataset[0]["experiment"]
-    assert first["genotype"]["perturbations"][0]["systematic_gene_name"] == "b0001"
+    assert first["genotype"]["perturbations"][0]["systematic_gene_name"] == "thrL"
     assert first["genotype"]["perturbations"][0]["crispr"]["guide_sequence"] == "A" * 20
     assert first["phenotype"]["screen_id"] == "phage_lambda"
     assert (root / "raw" / r.GROWTH_TABLE).is_file()
@@ -1010,7 +941,7 @@ def test_the_build_accounts_for_every_dropped_synthetic_record(
         drops["source_records"],
         drops["kept_records"],
         drops["dropped_records"],
-    ) == (21, 8, 13)
+    ) == (21, 12, 9)
     assert {
         rule["rule"]: (rule["n_records"], rule["items"]) for rule in drops["rules"]
     } == {
@@ -1018,9 +949,6 @@ def test_the_build_accounts_for_every_dropped_synthetic_record(
         "guide_targets_the_template_strand": (1, []),
         "growth_screen_measurement_is_served_by_cui2018": (5, []),
         "growth_screen_guide_is_below_cui2018_read_floor": (2, []),
-        "gene_symbol_is_not_in_the_mg1655_annotation": (4, ["nope"]),
-        "gene_symbol_collides_with_another_symbol_on_one_mg1655_locus": (0, []),
-        "gene_symbol_is_ambiguous_in_mg1655": (0, []),
     }
     # The S1 Table is accounted for whole, and the Cui attribution names its dataset.
     growth_rules = {
@@ -1039,11 +967,7 @@ def test_the_build_accounts_for_every_dropped_synthetic_record(
     report = _json.loads(
         (root / "preprocess" / "identifier_reconciliation.json").read_text()
     )
-    assert (report["released_symbols"], report["stored_symbols"]) == (3, 2)
-    assert report["stored_b_numbers"] == 2
-    assert report["ambiguous"] == {}
-    assert report["retired"] == ["nope"]
-    assert report["collided"] == []
+    assert (report["released_symbols"], report["stored_symbols"]) == (3, 3)
 
 
 def test_the_two_screens_of_one_guide_are_two_records_on_one_strain(
@@ -1068,17 +992,6 @@ def test_the_two_screens_of_one_guide_are_two_records_on_one_strain(
     assert set(by_screen) == {c.screen_id for c in r.CONDITIONS}
     for record in by_screen.values():
         assert record["reference"]["genome_reference"]["strain"] == "FR-E01"
-
-
-def test_a_direct_run_opens_the_mg1655_genome_itself(
-    tmp_path: Path, mirrored: Path, mg1655: EcoliK12MG1655Genome
-) -> None:
-    dataset = r.CrispriScreenRousset2018Dataset.__new__(
-        r.CrispriScreenRousset2018Dataset
-    )
-    dataset.ecoli_genome = None
-    assert dataset._genome() is mg1655
-    assert dataset.ecoli_genome is mg1655
 
 
 def test_download_refuses_a_mirror_whose_file_is_gone(
@@ -1119,13 +1032,13 @@ def test_verify_build_passes_on_the_synthetic_release(
         r,
         "EXPECTED_SCREEN_CENSUS",
         {
-            "phage_lambda": 2,
-            "phage_T4": 2,
-            "phage_186cIts": 2,
-            "lambda_transduction": 2,
+            "phage_lambda": 3,
+            "phage_T4": 3,
+            "phage_186cIts": 3,
+            "lambda_transduction": 3,
         },
     )
-    report = r.verify_build(str(root), data_root=str(mirrored), expected_count=8)
+    report = r.verify_build(str(root), data_root=str(mirrored), expected_count=12)
     verdicts = {result.name: result.passed for result in report.results}
     assert verdicts["structural"] and verdicts["count"]
     assert verdicts["pair_uniqueness"] is True
@@ -1134,7 +1047,14 @@ def test_verify_build_passes_on_the_synthetic_release(
     assert verdicts["environment_perturbed"] is True
     assert verdicts["screen_census"] is True
     assert verdicts["released_test_absent"] is True
-    assert verdicts["current_genome_genes"] is True
+    # "nope" is on no locus of the synthetic annotation: the genome-reference rows
+    # report it and the verdict stands (#1069)
+    assert verdicts["current_genome_genes"] is False
+    assert all(
+        result.finding_class.value == "report"
+        for result in report.results
+        if not result.passed
+    )
     assert report.passed
     assert (root / "preprocess" / "verification_report.json").is_file()
 
@@ -1315,31 +1235,17 @@ def test_the_release_resolves_to_the_measured_identifier_counts() -> None:
     assert len(symbols) == 3708
     genome = bacterial_genome("ecoli", "MG1655")
     assert isinstance(genome, EcoliK12MG1655Genome)
-    resolution = r.resolve_symbols(symbols, genome, label="release")
-    assert len(resolution.stored) == r.EXPECTED_GENES == 3671
-    assert len(set(resolution.stored.values())) == r.EXPECTED_GENES
-    assert (
-        len(resolution.retired),
-        len(resolution.collided),
-        resolution.ambiguous,
-    ) == (28, 8, ("rffT",))
-    assert {
-        status.value: n for status, n in resolution.report.status_histogram.items()
-    } == {
-        "current": 0,
-        "renamed": 3636,
-        "non_gene_feature": 43,
-        "retired": 28,
-        "ambiguous": 1,
-    }
-    assert resolution.report.layer_histogram == {
-        "locus tag": 0,
-        "old locus tag": 0,
-        "RefSeq locus tag": 0,
-        "gene symbol": 3509,
-        "gene synonym": 171,
-        "not found": 28,
-    }
+    assert len(set(symbols)) == r.EXPECTED_GENES == 3708
+    # every released symbol is a stored identifier; what the pinned annotation makes of
+    # it is a genome-reference finding, measured here read-only
+    statuses: dict[str, int] = {}
+    for symbol in symbols:
+        statuses[genome.resolve_gene_name(symbol).status.value] = (
+            statuses.get(genome.resolve_gene_name(symbol).status.value, 0) + 1
+        )
+    assert sum(statuses.values()) == 3708
+    assert statuses["retired"] == 28
+    assert statuses["ambiguous"] == 1
 
 
 @pytest.mark.data

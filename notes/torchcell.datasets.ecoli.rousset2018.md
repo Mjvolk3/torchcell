@@ -590,3 +590,13 @@ Benjamini-Hochberg adjustment. Not recorded as a sourced value because no record
 `scripts/schema_impact_check.py`: no schema contract changes against the #880 tip (this
 branch touches no schema). The record content changed only in the uncertainty gap's
 note text, which is why the dev store was rebuilt.
+
+## 2026.10.12 - The four phage-derived screens key every released gene symbol
+
+The owner's rule of 2026-10-12 ([[database.genome-gating-sweep.2026.10.12]], rows 124, 130, 212 and 385): the loader reads no annotation. Each record is a `BacterialReleasedCrisprPerturbation` (#1077) keyed by the gene SYMBOL the release names, with the 20-nt spacer as both `crispr.guide_sequence` and `strain_label`, `identifier_kind` "gene symbol, as the released S4 and S6 gene column writes it" and `expression_direction="decreased"`. `resolve_symbols`, `SymbolResolution`, `canonical_symbol`, `MIN_RESOLVED_FRACTION`, the `ecoli_genome` constructor parameter and the three symbol drop rules are gone; `identifier_reconciliation.json` keeps only the released and stored symbol counts.
+
+Measured on the pinned tables, not stated: the three symbol rules removed **444 records over 111 symbols** (`gene_symbol_is_not_in_the_mg1655_annotation` 232, `gene_symbol_collides_with_another_symbol_on_one_mg1655_locus` 200, `gene_symbol_is_ambiguous_in_mg1655` 12), which is 111 x 4 screens. Every coding-strand in-gene row of the four stored tables is now a record: 17,220 per screen, `EXPECTED_RECORDS` 68,436 -> 68,880, `EXPECTED_GENES` 3,671 b-numbers -> 3,708 released symbols. Read-only against the pinned MG1655 annotation, those 3,708 symbols resolve as 3,679 placed, 28 retired and 1 ambiguous, which the L1 and L4 genome-reference rows report (#1069).
+
+The four growth-screen rules are untouched and are NOT genome-ground: `guide_targets_no_gene` (5,063), `guide_targets_the_template_strand` (30,811), `growth_screen_measurement_is_served_by_cui2018` (21,685) and `growth_screen_guide_is_below_cui2018_read_floor` (1,687). The `padj` column is batch A's in #1072 and is not touched here.
+
+Released vs stored: 128,126 released (guide, screen) cells = 68,880 records + the S1 Table's 59,246, which the four growth rules account for whole.

@@ -2318,7 +2318,10 @@ def _l2_released_cells(
 
 
 def verify_pinene_build(
-    dataset_root: str, data_root: str | None = None
+    dataset_root: str,
+    data_root: str | None = None,
+    *,
+    expected_count: int = PINENE_EXPECTED_RECORDS,
 ) -> VerificationReport:
     """Run the product-titer family gate plus this release's own cell-level L2.
 
@@ -2347,7 +2350,7 @@ def verify_pinene_build(
             page="Suppl. Tables 1, 3 and 4 (mmc1.docx); Tables 3 and 4",
             retrieved=RAW_RETRIEVED_AT,
         ),
-        expected_count=PINENE_EXPECTED_RECORDS,
+        expected_count=expected_count,
         titer_unit=ConcentrationUnit.fold_change.value,
         titer_unit_detail=PINENE_TITER_UNIT_DETAIL,
         se_tol=1e-12,
@@ -2369,17 +2372,18 @@ def verify_pinene_build(
             "a typed gap rather than a number",
         )
     )
+    statements = {
+        (record["reference"]["genome_reference"]["background"] or {}).get(
+            "genotype_statement"
+        )
+        for record in records
+    }
     report.add(
         l3_convention(
             "the_pathway_plasmid_is_background_not_a_perturbation",
-            all(
-                record["reference"]["genome_reference"]["background"][
-                    "genotype_statement"
-                ]
-                == NIU2019_PRODUCTION_BACKGROUND.genotype_statement
-                for record in records
-            ),
-            detail="pMEVIGPS and pBbB2K-dCas9*-MCPSoxS are in every stored strain AND "
+            statements == {NIU2019_PRODUCTION_BACKGROUND.genotype_statement},
+            detail=f"stored background statements {sorted(map(str, statements))}; "
+            "pMEVIGPS and pBbB2K-dCas9*-MCPSoxS are in every stored strain AND "
             "in the control, so they are the background; the guide plasmid pTargetA-X "
             "is the only part that differs and is the perturbation",
         )
@@ -2417,7 +2421,9 @@ def main(argv: list[str] | None = None) -> int:
         print(f"len = {len(pinene)}")
         return 0
     if args.command == "verify-pinene":
-        pinene_report = verify_pinene_build(pinene_root, data_root)
+        pinene_report = verify_pinene_build(
+            pinene_root, data_root, expected_count=PINENE_EXPECTED_RECORDS
+        )
         print(pinene_report.summary())
         return 0 if pinene_report.passed else 1
     report = verify_build(root, data_root=data_root)

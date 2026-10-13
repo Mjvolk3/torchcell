@@ -119,4 +119,26 @@ Owner rule of 2026-10-12, applied through the genome-gating sweep ([[database.ge
 
 - `REFUSED_ACCESSIONS` is replaced by `ACCESSIONS_WITHOUT_ORF`: P03872, the 2-micron plasmid protein REP2 that no feature of the S288C R64 GFF names, is a key of every record and reference that quantified it, under the accession itself. Any other kept accession the GFF carries no ORF for is keyed the same way instead of stopping the build; the ledger field `refused_accessions` becomes `accessions_stored_as_released` (accession to reason). Every other accession keeps its ORF key from the GFF cross-references.
 - Records: 70, unchanged; the kept protein count becomes 2,200 keys (was 2,199 ORFs). The L4 `gene_containment_sgd` row reports P03872 outside S288C; under PR #1069 that rule is a finding, not a gate, and the synthetic verify test asserts exactly that row.
-- The dev store is rebuilt under slurm with `--retire-existing --verify` from a `git clone --shared` snapshot of the branch rebased onto `main` at `f85df69af5` (#1069 landed: genome rules report, never gate), slurm array 4451; the L0-L4 table is appended below when the job finishes.
+- The dev store was rebuilt under slurm with `--retire-existing --verify` from a `git clone --shared` snapshot of the branch at `44fb73b80` (the module is byte-identical to the head rebased onto `main` at `c6e6b6714`), slurm array 4451 task 2: 70 records in 9 s, `verification PASSED` by `messner2021.verify_build`, 0 genome-reference findings gated.
+
+| level | rule | result |
+|---|---|---|
+| L0 | structural | 70 records validated |
+| L1 | count | observed 70, expected 70 |
+| L1 | orf_uniqueness | 0 unique knocked-out ORFs, one record each |
+| L1 | wild_type_genotype | 70/70 records carry no perturbation |
+| L1 | runs_per_compound | 18 compounds, 4 runs each (fluvastatin sodium 3, pemetrexed 3 after the outlier) |
+| L1 | release_layout | 102 runs (95 plate, 7 QC), absent injection [2], outlier 5_plate_2_wt_101_Pemetrexed_NA, 24 DMSO reference runs |
+| L2 | value_fidelity | 138,701 values checked |
+| L2 | se_nonnegative | 0 values (no SE stored) |
+| L2 | values_match_report | 138,701/138,701 stored quantities equal the report's |
+| L2 | reference_matches_report | 138,701/138,701 reference means re-derived from the 24 DMSO runs |
+| L3 | reference_finite | reference finite and key-matched for all 138,701 values |
+| L3 | measurement_type_consistent | one type, `swath_ms_diann_maxlfq_proteotypic_quantity` |
+| L3 | sourced_quotes_verbatim | 32/32 quotes verbatim in the mirror |
+| L4 | paper_mean_identifications | 1976.4 per run after rules 1-2 over 102 injections rounds to the paper's 1980 (rule 1 alone 2279.3) |
+| L4 | paper_biological_sample_count | 62 records of the 16 Table S4 drugs; Supplementary Fig. 4b states n=62 |
+| L4 | messner2023_reference_agreement | Pearson r 0.813 of log2 DMSO vs Messner 2023 WT over 1,581 shared ORFs (>= 0.6) |
+| L4 (finding) | gene_containment_sgd | 0.9995 of 2,200 protein keys are S288C systematic names; outside: P03872 (reported, never gated) |
+
+The 138,701 stored values are 2,200 keys over the 70 drug runs less the cells the report leaves empty; P03872 is in every record and reference that quantified it.

@@ -32,7 +32,9 @@ workbook, turn one into the other without an assumption:
 2. ``cv_<group>`` equals ``100 * stdev / mean`` of those same three columns, with the
    99.9th percentile of the relative deviation at 5.6e-8 (the export carries ten
    significant digits). The only cells above 1e-6 are the 23 belonging to ``P63284``,
-   which Table S6 files on two rows and this loader drops.
+   which Table S8 files on two rows, so its replicate cells cannot be attributed to
+   either of the two Table S6 ``clpB`` rows that carry it (both are stored, #1045 part 2,
+   with the SE that needs those cells left ``nan``).
 3. Within one condition the stored copies/cell is a per-protein multiple of that
    protein's ``medianNormInt``: ``copies[i, c] / copies[i, glucose]`` equals
    ``medianNormInt[i, c] / medianNormInt[i, glucose]`` for all 2,057 shared proteins and
@@ -80,45 +82,39 @@ Since #1045 rows 17 and 21, two earlier drops are records:
 That the 20 loaded environments are pairwise distinct is asserted at build time by
 comparing their serialized bytes, so the rule is checked rather than claimed.
 
-THE IDENTIFIER ROUTE IS DERIVED, SINGLE, AND THE RELEASED B-NUMBER IS NOT IT. The
-records are BW25113 and the release's ``Bnumber`` column is an MG1655 identifier:
-measured against the deposited annotations, 2,285 of 2,285 released b-numbers are
-MG1655 locus tags and 0 of 2,285 are BW25113 locus tags. Keying on them would write
-MG1655 identities onto BW25113 records, and ``ygbT``'s row shows the hazard directly --
-it carries ``b2755`` while being an *Erwinia amylovora* protein. The stored key is
-instead the released ``Gene`` symbol resolved against the pinned BW25113 GenBank
-annotation through :func:`reconcile_locus_tags`: 2,336 of 2,347 unique host symbols
-resolve (0.9953), 2,259 through the gene-symbol layer and 77 through a gene synonym,
-with no ambiguity and no collision. Each b-number is kept in
-``preprocess/protein_identifiers.csv`` as the source's cross-reference.
+THE STORED KEY IS THE RELEASED ``Gene`` SYMBOL, VERBATIM (#1045 part 2). The loader
+reads no annotation: no symbol is resolved to a BW25113 locus tag (until #1045 part 2,
+2,329 of the 2,340 keys were such a resolution), and a crosswalk from a symbol to a
+locus is a modeling-time join. The release's ``Bnumber`` column is NOT the key: the
+records are BW25113 and it is an MG1655 identifier (2,285 of 2,285 released b-numbers
+are MG1655 locus tags and 0 are BW25113 ones), and ``ygbT``'s row carries ``b2755``
+while being an *Erwinia amylovora* protein. Each row's released symbol, released
+b-number and stored key are in ``preprocess/protein_identifiers.csv``.
 
-THE RETENTION LEDGER, WITH ITS ARITHMETIC. 2,359 released rows become 2,340 protein
-keys: 2,359 - 5 - 14 = 2,340.
+EVERY RELEASED ROW IS A KEY: 2,359 rows, 2,359 keys (2,340 until #1045 part 2).
 
-- 5 rows are not *E. coli* proteins. The search database was built that way -- "The
-  database consists of 4,431 E. coli proteins as well as known contaminants" -- and the
-  released ``Description`` names each row's organism in its ``OS=`` token: *Bacillus
-  subtilis* (``addB``), *Erwinia amylovora* (``ygbT``), *Vibrio harveyi* (``cgtA``),
-  *Peptoniphilus sp.* (``cas1``) and *Methylobacter tundripaludum*
-  (``MettuDRAFT_4149``). Dropping them first is what leaves ``obgE`` a clean unique
-  resolution, since four of the five share an E. coli gene synonym.
-- 14 rows carry one of 7 gene symbols that the release files on two rows each
-  (``nrdA``, ``rmlA``, ``mrcB``, ``rpmE``, ``clpB``, ``bioD``, ``glsA``). One symbol
-  cannot name two protein groups. The release does state a preference for dataset 2
-  that would pick a row for four of the seven, and it is NOT taken: ``rmlA`` and
-  ``glsA`` are two distinct paralogs under one symbol in BOTH rows, so a uniform drop
-  is the only rule that never mis-attributes a measurement.
-- 11 symbols resolve to no BW25113 locus: ``JW58``, ``NA``, ``adeP``, ``coaB``,
-  ``comR``, ``ghxP``, ``insC``, ``insH``, ``trmB``, ``trpG`` and ``zapE``. They were
-  dropped until #1057 (the owner rule of 2026-10-12: the data is the data, and the
-  genome does not gate a released row); each is now stored under its released symbol as
-  given (``protein_identifiers.csv`` gives each row's released symbol, released b-number
-  and stored key).
+- 14 rows carry one of 7 gene symbols the release files on two rows each (``nrdA``,
+  ``rmlA``, ``mrcB``, ``rpmE``, ``clpB``, ``bioD``, ``glsA``). One symbol cannot key two
+  protein groups, so each of those rows is keyed by its symbol and its Table S6 row
+  (``nrdA | Table S6 row 91``, :data:`TWICE_FILED_SEPARATOR`): both are stored, told
+  apart by the row the release prints them on, and no row is preferred over the other.
+  The two ``clpB`` rows share the accession ``P63284``, which Table S8 also files twice,
+  so their replicate cells cannot be attributed and their SE is ``nan`` beside
+  ``n_replicates = 3`` (``replicate_cells_attributable`` in
+  ``protein_identifiers.csv``; the L2 replicate rule reads it).
+- 5 rows are proteins of another organism. The search database was built that way --
+  "The database consists of 4,431 E. coli proteins as well as known contaminants" --
+  and the released ``Description`` names each row's organism in its ``OS=`` token:
+  *Bacillus subtilis* (``addB``), *Erwinia amylovora* (``ygbT``), *Vibrio harveyi*
+  (``cgtA``), *Peptoniphilus sp.* (``cas1``) and *Methylobacter tundripaludum*
+  (``MettuDRAFT_4149``). They were measured in the samples and are stored under their
+  released symbol; none is also a host row's symbol, measured, and the organism is in
+  ``protein_identifiers.csv``.
 
-Three records carry 2,043 keys rather than 2,340: ``Xylose``, ``Mannose`` and
-``Fructose`` are the conditions dataset 1 did not cover, so the 297 kept dataset-1
-proteins are released as ``NA`` there and are dropped from those records. Every
-record's reference is key-matched to that record.
+Three records carry 2,058 keys rather than 2,359: ``Xylose``, ``Mannose`` and
+``Fructose`` are the conditions dataset 1 did not cover, so its 301 proteins are
+released as ``NA`` there and are not in those records. Every record's reference is
+key-matched to that record.
 
 A HEADER FAULT IN THE RELEASED TABLE, FOUND BY MEASUREMENT AND NOT CONSUMED. Table S6's
 CV block holds LB's coefficient of variation under the header ``Glucose`` and glucose's
@@ -204,10 +200,8 @@ from torchcell.datamodels.schema import (
 )
 from torchcell.datasets.bacteria_common import (
     BACTERIAL_ASSEMBLY_SETS,
-    LocusTagReconciliation,
     assembly_reference,
     bacterial_genome,
-    reconcile_locus_tags,
 )
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.literature.manifest import (
@@ -566,10 +560,9 @@ N_REPLICATES_DATASET2 = 3
 N_REPLICATES_DATASET1 = 1
 #: Relative tolerance of the two build-time identities against the released bytes.
 IDENTITY_RTOL = 1e-6
-#: Measured on the pinned workbook: 2,336 of 2,347 unique host gene symbols resolve to a
-#: BW25113 locus (0.9953). The floor sits just below, so a real change in the release's
-#: keying stops the build instead of silently shrinking the abundance map.
-MIN_RESOLVED_FRACTION = 0.99
+#: A key the release files under one symbol on two Table S6 rows: the symbol and the
+#: row (``nrdA | Table S6 row 91``), so both rows are stored and told apart (#1045 part 2).
+TWICE_FILED_SEPARATOR = " | Table S6 row "
 
 _GL = ConcentrationUnit.g_per_l
 _MM = ConcentrationUnit.millimolar
@@ -842,9 +835,10 @@ REFERENCE_CONDITION = "Glucose"
 #: and 21 kept the glycerol + amino acid arm and the four chemostat arms).
 EXPECTED_RECORDS = 19
 #: Protein keys on a record of a condition both LC-MS experiments covered, and on one of
-#: the three conditions only dataset 2 covered.
-EXPECTED_PROTEIN_KEYS = 2340
-EXPECTED_PROTEIN_KEYS_DATASET2_ONLY = 2043
+#: the three conditions only dataset 2 covered: every released row since #1045 part 2
+#: (2,340 and 2,043 before).
+EXPECTED_PROTEIN_KEYS = 2359
+EXPECTED_PROTEIN_KEYS_DATASET2_ONLY = 2058
 #: The second BW25113 glucose triplicate (``Glucose.2``, Table S25 A14-07088..90), which
 #: Table S6 does not combine: it is the reproducibility arm of Supplementary Figure 7.
 GLUCOSE_REPRODUCIBILITY_FILES = ("A14-07088", "A14-07089", "A14-07090")
@@ -1152,7 +1146,10 @@ class DropLog(BaseModel):
     kept_protein_keys: int
     dropped_protein_rows: int
     rules: list[DropRule]
-    reconciliation: LocusTagReconciliation
+    #: Rows stored under a symbol-and-row key, and rows of another organism stored under
+    #: their released symbol (#1045 part 2): stored, listed for the reader.
+    twice_filed_rows: list[str]
+    other_organism_rows: list[str]
     notes: list[str]
 
     def check(self) -> None:
@@ -1180,91 +1177,61 @@ class DropLog(BaseModel):
 
 
 class ProteinSelection(BaseModel):
-    """The kept protein rows, their stored locus tags, and every drop that got there."""
+    """Every released protein row and the key it is stored under (#1045 part 2)."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     kept: list[ProteinRow]
-    locus_tag: dict[str, str] = Field(
-        description="uniprot accession -> locus tag, or the released symbol as given "
-        "where the annotation resolves it to no locus (#1057)"
+    key: dict[int, str] = Field(
+        description="Table S6 row number -> stored key: the released Gene symbol "
+        "verbatim, or, for a symbol the release files on two rows, the symbol and the "
+        "row (TWICE_FILED_SEPARATOR)"
     )
-    reconciliation: LocusTagReconciliation
-    rules: list[DropRule]
+    twice_filed: list[str]
+    other_organism: list[str]
+    rules: list[DropRule] = Field(default_factory=list)
 
     @property
     def dropped_rows(self) -> int:
-        """Released rows removed by the row-scoped rules."""
+        """Released rows removed by the row-scoped rules: none since #1045 part 2."""
         return sum(rule.n_items for rule in self.rules if rule.scope == "protein_row")
 
 
-def select_proteins(
-    rows: Sequence[ProteinRow], genome: EcoliK12Genome, *, label: str
-) -> ProteinSelection:
-    """Apply the two protein-row rules, then reconcile the surviving gene symbols.
+def select_proteins(rows: Sequence[ProteinRow], *, label: str) -> ProteinSelection:
+    """Key every released row by its released ``Gene`` symbol, verbatim.
 
-    A symbol the annotation resolves to no locus is NOT dropped (#1057, the owner rule of
-    2026-10-12: the genome does not gate a released row): the row is stored under its
-    released symbol as given.
-
-    Order matters and is not arbitrary: the non-host rows go first, because four of the
-    five share an E. coli gene synonym with a host row and would otherwise make that
-    host row's symbol collide and be kept as given.
+    No annotation is read and no row is dropped (#1045 part 2; the owner rule of
+    2026-10-12: the data is the data). A symbol the release files on two rows keys each
+    row by the symbol and its Table S6 row, so neither is preferred; a row of another
+    organism is keyed by its released symbol, which no host row shares (refused if one
+    ever does, since two rows would then share a key).
     """
-    non_host = [row for row in rows if not row.is_host]
-    host = [row for row in rows if row.is_host]
-
     counts: dict[str, int] = {}
-    for row in host:
+    for row in rows:
         counts[row.gene] = counts.get(row.gene, 0) + 1
-    repeated = {gene for gene, count in counts.items() if count > 1}
-    duplicated = [row for row in host if row.gene in repeated]
-    unique = [row for row in host if row.gene not in repeated]
-
-    stored, report = reconcile_locus_tags(
-        genome, pd.Series([row.gene for row in unique]), label=label
-    )
-    report.require_resolved(MIN_RESOLVED_FRACTION)
-    # #1057: a symbol the annotation resolves to no locus is stored as released (the
-    # reconciler keeps it as given), not dropped
-    kept = list(unique)
-    locus_tag = {row.uniprot: str(tag) for row, tag in zip(unique, stored, strict=True)}
-    if len({*locus_tag.values()}) != len(kept):
-        raise RuntimeError(f"{label}: two kept rows share one locus tag")
-
-    rules = [
-        DropRule(
-            rule="source_organism_is_not_escherichia_coli",
-            scope="protein_row",
-            description=(
-                "the released UniProt description names another organism in its OS= "
-                "token; the search database was built to carry contaminants (the "
-                "search_database sourced value quotes the Methods), so the row is no "
-                "E. coli protein and has no gene to key an abundance to"
-            ),
-            n_items=len(non_host),
-            items=[f"{row.gene} ({row.uniprot}, {row.organism})" for row in non_host],
-        ),
-        DropRule(
-            rule="gene_symbol_filed_on_two_released_rows",
-            scope="protein_row",
-            description=(
-                "the release files this gene symbol on two rows with different UniProt "
-                "accessions or isoforms, so one key would name two protein groups. The "
-                "release does state a dataset-2 preference that would pick a row for "
-                "four of the seven symbols, and it is deliberately not applied: rmlA "
-                "and glsA are two distinct paralogs under one symbol in both of their "
-                "rows, so only a uniform drop never mis-attributes a measurement"
-            ),
-            n_items=len(duplicated),
-            items=[
-                f"{row.gene} ({row.uniprot}, dataset {row.dataset}, row {row.row_number})"
-                for row in duplicated
-            ],
-        ),
-    ]
+    key = {
+        row.row_number: (
+            f"{row.gene}{TWICE_FILED_SEPARATOR}{row.row_number}"
+            if counts[row.gene] > 1
+            else row.gene
+        )
+        for row in rows
+    }
+    if len(set(key.values())) != len(rows):
+        raise RuntimeError(f"{label}: two released rows share one stored key")
     return ProteinSelection(
-        kept=kept, locus_tag=locus_tag, reconciliation=report, rules=rules
+        kept=list(rows),
+        key=key,
+        twice_filed=[
+            f"{row.gene} ({row.uniprot}, dataset {row.dataset}, row {row.row_number})"
+            for row in rows
+            if counts[row.gene] > 1
+        ],
+        other_organism=[
+            f"{row.gene} ({row.uniprot}, {row.organism})"
+            for row in rows
+            if not row.is_host
+        ],
     )
 
 
@@ -1326,7 +1293,7 @@ def check_environments_distinct(environments: Mapping[str, Environment]) -> None
 
 def build_phenotype(
     rows: Sequence[ProteinRow],
-    locus_tag: Mapping[str, str],
+    key: Mapping[int, str],
     cells: Mapping[str, Mapping[str, ReplicateCell]],
     column: str,
 ) -> ProteinAbundancePhenotype:
@@ -1343,7 +1310,7 @@ def build_phenotype(
         copies = row.copies[column]
         if copies is None:
             continue
-        tag = locus_tag[row.uniprot]
+        tag = key[row.row_number]
         abundance[tag] = copies
         n_replicates[tag] = row.n_replicates
         cell = cells.get(row.uniprot, {}).get(column)
@@ -1579,11 +1546,9 @@ class ProteomeSchmidt2016Dataset(ExperimentDataset):
         io_workers: int = 0,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
-        ecoli_genome: EcoliK12Genome | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize; ``ecoli_genome`` is injected by the build entry points."""
-        self.ecoli_genome = ecoli_genome
+        """Initialize; the loader reads no annotation (#1045 part 2)."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -1618,7 +1583,7 @@ class ProteomeSchmidt2016Dataset(ExperimentDataset):
         log.info("Schmidt 2016 raw file linked into %s (sha256 verified)", self.raw_dir)
 
     def compute_gene_set(self) -> GeneSet:
-        """The BW25113 loci the stored abundance profiles are keyed by.
+        """The released gene symbols the stored abundance profiles are keyed by.
 
         Every record is wild type, so no genotype names a gene and the base class's
         genotype scan would return the empty set it refuses. The dataset's genes are the
@@ -1635,18 +1600,6 @@ class ProteomeSchmidt2016Dataset(ExperimentDataset):
         self.close_lmdb()
         return genes
 
-    def _genome(self) -> EcoliK12Genome:
-        """The injected genome, or the reference strain's default cache."""
-        if self.ecoli_genome is None:
-            self.ecoli_genome = bacterial_genome("ecoli", self.REFERENCE_STRAIN)
-        expected = BACTERIAL_ASSEMBLY_SETS[self.REFERENCE_STRAIN]
-        if self.ecoli_genome.ASSEMBLY_SET != expected:
-            raise ValueError(
-                f"{type(self).__name__} needs the {expected} genome, got "
-                f"{self.ecoli_genome.ASSEMBLY_SET}"
-            )
-        return self.ecoli_genome
-
     @post_process
     def process(self) -> None:
         """Build one abundance record per loaded condition and write the LMDB."""
@@ -1654,8 +1607,7 @@ class ProteomeSchmidt2016Dataset(ExperimentDataset):
         path = osp.join(self.raw_dir, SI2)
         rows, cv_pairs = read_table_s6(path)
         check_sample_map(read_table_s25(path))
-        genome = self._genome()
-        selection = select_proteins(rows, genome, label=f"{self.name} gene symbols")
+        selection = select_proteins(rows, label=f"{self.name} gene symbols")
 
         loaded = [spec for spec in CONDITIONS if spec.drop is None]
         cells, repeated = read_table_s8(path, [spec.s6_column for spec in loaded])
@@ -1666,7 +1618,7 @@ class ProteomeSchmidt2016Dataset(ExperimentDataset):
 
         phenotypes = {
             spec.s6_column: build_phenotype(
-                selection.kept, selection.locus_tag, cells, spec.s6_column
+                selection.kept, selection.key, cells, spec.s6_column
             )
             for spec in loaded
         }
@@ -1787,14 +1739,15 @@ class ProteomeSchmidt2016Dataset(ExperimentDataset):
             kept_protein_keys=kept_keys,
             dropped_protein_rows=selection.dropped_rows,
             rules=[*condition_rules, *selection.rules],
-            reconciliation=selection.reconciliation,
+            twice_filed_rows=selection.twice_filed,
+            other_organism_rows=selection.other_organism,
             notes=[
-                f"{len(rows)} released rows - "
-                + " - ".join(
-                    f"{rule.n_items} ({rule.rule})" for rule in selection.rules
-                ),
-                f"= {kept_keys} protein keys on every record of a condition both LC-MS "
-                "experiments covered",
+                f"{len(rows)} released rows = {kept_keys} protein keys on every record "
+                "of a condition both LC-MS experiments covered: no row is dropped "
+                f"(#1045 part 2); the {len(selection.twice_filed)} rows of a symbol the "
+                "release files on two rows are keyed by symbol and row, and the "
+                f"{len(selection.other_organism)} rows of another organism by their "
+                "released symbol",
                 f"{EXPECTED_PROTEIN_KEYS_DATASET2_ONLY} keys on the Xylose, Mannose and "
                 "Fructose records: dataset 1 did not cover those three conditions, so "
                 "its kept proteins are released as NA there",
@@ -1836,8 +1789,11 @@ class ProteomeSchmidt2016Dataset(ExperimentDataset):
                     "uniprot": row.uniprot,
                     "released_gene": row.gene,
                     "released_bnumber": row.bnumber,
-                    "stored_locus_tag": selection.locus_tag[row.uniprot],
+                    "organism": row.organism,
+                    "stored_key": selection.key[row.row_number],
+                    "table_s6_row": row.row_number,
                     "dataset": row.dataset,
+                    "replicate_cells_attributable": row.uniprot not in set(repeated),
                     "n_replicates": row.n_replicates,
                     "molecular_weight_da": row.molecular_weight_da,
                     "peptides_used": row.peptides_used,
@@ -1903,11 +1859,16 @@ def environment_uniqueness_rule(records: Sequence[Mapping[str, Any]]) -> Any:
     )
 
 
-def replicate_rule(records: Sequence[Mapping[str, Any]]) -> Any:
+def replicate_rule(
+    records: Sequence[Mapping[str, Any]], unattributable: frozenset[str] = frozenset()
+) -> Any:
     """SUPPLEMENTARY L2: a protein has an SE exactly when it has three replicates.
 
     Dataset 2 ran in biological triplicates and dataset 1 ran once, so a finite SE must
     accompany ``n_replicates == 3`` and ``nan`` must accompany ``n_replicates == 1``.
+    ``unattributable`` names the keys whose replicate cells the release files twice
+    (the two ``clpB`` rows of ``P63284``; #1045 part 2): three replicates and an SE that
+    the release does not let anyone compute, so ``nan`` is what they must carry.
     """
     from torchcell.verification.report import Level, LevelResult
 
@@ -1919,7 +1880,8 @@ def replicate_rule(records: Sequence[Mapping[str, Any]]) -> Any:
         for key, n in phenotype["n_replicates"].items():
             counts[int(n)] = counts.get(int(n), 0) + 1
             finite = not math.isnan(float(errors[key]))
-            if finite != (int(n) == N_REPLICATES_DATASET2):
+            expected = int(n) == N_REPLICATES_DATASET2 and key not in unattributable
+            if finite != expected:
                 bad += 1
     return LevelResult(
         level=Level.L2,
@@ -1927,10 +1889,25 @@ def replicate_rule(records: Sequence[Mapping[str, Any]]) -> Any:
         passed=bad == 0,
         message=(
             f"SUPPLEMENTARY: {bad} of {sum(counts.values())} values disagree with their "
-            "replicate count"
+            f"replicate count ({len(unattributable)} keys whose replicate cells the "
+            "release files twice carry nan by rule)"
         ),
-        details={"n_bad": bad, "n_by_replicates": counts},
+        details={
+            "n_bad": bad,
+            "n_by_replicates": counts,
+            "unattributable": sorted(unattributable),
+        },
     )
+
+
+def unattributable_keys(dataset_root: str) -> frozenset[str]:
+    """The stored keys whose replicate cells Table S8 files on two rows."""
+    frame = pd.read_csv(
+        osp.join(dataset_root, "preprocess", "protein_identifiers.csv"),
+        keep_default_na=False,
+    )
+    flags = frame["replicate_cells_attributable"].astype(str)
+    return frozenset(frame.loc[flags == "False", "stored_key"].astype(str))
 
 
 def gene_containment_rule(
@@ -2004,7 +1981,7 @@ def verify_build(
         expected_count=expected_count,
     )
     report.add(environment_uniqueness_rule(records))
-    report.add(replicate_rule(records))
+    report.add(replicate_rule(records, unattributable_keys(dataset_root)))
     report.add(assembly_pin_rule(records))
     report.add(gene_containment_rule(records, set(genome.genbank.loci)))
     out = osp.join(dataset_root, "preprocess", "verification_report.json")

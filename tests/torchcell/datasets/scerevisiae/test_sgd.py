@@ -55,6 +55,7 @@ from torchcell.datamodels.schema import (
     GeneEssentialityPhenotype,
     Genotype,
     Media,
+    NamedAllelePerturbation,
     PhysicalFactor,
     Publication,
     ReferenceGenome,
@@ -290,18 +291,24 @@ _HOT_ENVIRONMENT = Environment(
 )
 
 
-def _experiment(gene: str, locus: str, environment: Environment) -> dict[str, Any]:
+def _experiment(
+    gene: str, locus: str, environment: Environment, allele: str | None = None
+) -> dict[str, Any]:
+    perturbation: SgaKanMxDeletionPerturbation | NamedAllelePerturbation
+    if allele is None:
+        perturbation = SgaKanMxDeletionPerturbation(
+            systematic_gene_name=gene, perturbed_gene_name=locus, strain_id="S288C"
+        )
+    else:
+        perturbation = NamedAllelePerturbation(
+            systematic_gene_name=gene,
+            perturbed_gene_name=locus,
+            allele_name=allele,
+            strain_id="S288C",
+        )
     return GeneEssentialityExperiment(
         dataset_name="GeneEssentialitySgdDataset",
-        genotype=Genotype(
-            perturbations=[
-                SgaKanMxDeletionPerturbation(
-                    systematic_gene_name=gene,
-                    perturbed_gene_name=locus,
-                    strain_id="S288C",
-                )
-            ]
-        ),
+        genotype=Genotype(perturbations=[perturbation]),
         environment=environment,
         phenotype=GeneEssentialityPhenotype(
             is_essential=True, evidence=m.sgd_evidence("classical genetics")
@@ -320,27 +327,42 @@ def _reference(environment: Environment) -> dict[str, Any]:
     ).model_dump()
 
 
-def test_one_record_per_whole_gene_deletion_annotation_in_file_order(
+def test_one_record_per_annotation_in_file_order(
     dataset: m.GeneEssentialitySgdDataset,
 ) -> None:
-    """Five records, files in sorted order and annotations in SGD's order: TFC3 once (its
-    other three entries fail the null / S288C / inviable filter), YCR001W twice, ATG9 once
-    (two of its three annotations name another allele) and YEL001C once. Each record's
-    environment is the one its condition property states; the reference is viable in
-    that same environment.
+    """Seven records, files in sorted order and annotations in SGD's order: TFC3 once
+    (its other three entries fail the null / S288C / inviable filter), YCR001W twice,
+    ATG9 three times (the whole-gene deletion and, since #1045, its two named alleles
+    ``atg9-K12A`` and ``atg9Δ10-20`` on ``NamedAllelePerturbation``) and YEL001C once.
+    Each record's environment is the one its condition property states; the reference
+    is viable in that same environment.
     """
-    assert len(dataset) == 5
-    expected = [
-        ("YAL001C", "TFC3", _NO_CONDITION_ENVIRONMENT),
-        ("YCR001W", "YCR001W", _NO_CONDITION_ENVIRONMENT),
-        ("YCR001W", "YCR001W", _NO_CONDITION_ENVIRONMENT),
-        ("YDR001C", "ATG9", _NITROGEN_ENVIRONMENT),
-        ("YEL001C", "YEL001C", _HOT_ENVIRONMENT),
+    assert len(dataset) == 7
+    expected: list[tuple[str, str, Environment, str | None]] = [
+        ("YAL001C", "TFC3", _NO_CONDITION_ENVIRONMENT, None),
+        ("YCR001W", "YCR001W", _NO_CONDITION_ENVIRONMENT, None),
+        ("YCR001W", "YCR001W", _NO_CONDITION_ENVIRONMENT, None),
+        ("YDR001C", "ATG9", _NITROGEN_ENVIRONMENT, None),
+        ("YDR001C", "ATG9", _NITROGEN_ENVIRONMENT, "atg9-K12A"),
+        ("YDR001C", "ATG9", _NITROGEN_ENVIRONMENT, "atg9Δ10-20"),
+        ("YEL001C", "YEL001C", _HOT_ENVIRONMENT, None),
     ]
-    for index, (gene, locus, environment) in enumerate(expected):
-        assert dataset[index]["experiment"] == _experiment(gene, locus, environment)
+    for index, (gene, locus, environment, allele) in enumerate(expected):
+        assert dataset[index]["experiment"] == _experiment(
+            gene, locus, environment, allele
+        )
         assert dataset[index]["reference"] == _reference(environment)
-    assert [dataset[i]["publication"] for i in range(5)] == [
+    named = dataset[4]["experiment"]["genotype"]["perturbations"][0]
+    assert (named["perturbation_type"], named["allele_name"], named["strain_id"]) == (
+        "named_allele",
+        "atg9-K12A",
+        "S288C",
+    )
+    assert (named["mechanism_so_id"], named["mechanism_so_name"]) == (
+        "SO:0001060",
+        "sequence_variant",
+    )
+    assert [dataset[i]["publication"] for i in (0, 1, 2, 3, 6)] == [
         Publication(
             pubmed_id="111",
             pubmed_url="https://pubmed.ncbi.nlm.nih.gov/111/",
@@ -393,7 +415,7 @@ def test_no_record_carries_a_guessed_medium_or_temperature(
             assert gap["reason"] == "not_carried_by_curation"
             assert gap["looked_in"]["sha256"] == _PIN
         gaps = {gap["field"]: gap for gap in environment["provenance_gaps"]}
-        if index == 4:
+        if index == 6:
             assert environment["temperature"] == {"value": 37.0, "unit": "Celsius"}
             assert "temperature" not in gaps
         else:
@@ -401,30 +423,27 @@ def test_no_record_carries_a_guessed_medium_or_temperature(
             assert gaps["temperature"]["reason"] == "not_carried_by_curation"
 
 
-def test_other_alleles_are_ledgered_verbatim_not_stored(
+def test_the_ledger_accounts_for_every_annotation_and_drops_none(
     dataset: m.GeneEssentialitySgdDataset,
 ) -> None:
-    """``atg9-K12A`` and ``atg9Δ10-20`` are ledgered with their SGD id, PubMed id,
-    condition and note; the ledger accounts for every inviable null S288C annotation.
+    """Seven annotations, seven records: five whole-gene deletions and two named
+    alleles; no rule drops a row (#1045).
     """
     ledger = m.SgdDropLog.model_validate_json(
         (Path(dataset.preprocess_dir) / "dropped_records.json").read_text()
     )
-    assert (ledger.source_annotations, ledger.kept_records, ledger.dropped_records) == (
-        7,
-        5,
-        2,
+    assert ledger == m.SgdDropLog(
+        dataset="GeneEssentialitySgdDataset",
+        source_annotations=7,
+        kept_records=7,
+        dropped_records=0,
+        n_whole_gene_deletion=5,
+        n_named_allele=2,
+        sgd_genes_digest=m.SGD_GENES_DIGEST,
+        rule="none",
+        description=m._RULE_DESCRIPTION,
+        rows=[],
     )
-    assert ledger.rule == "allele_not_whole_gene_deletion"
-    assert ledger.sgd_genes_digest == m.SGD_GENES_DIGEST
-    assert [
-        (r.systematic_name, r.allele, r.pubmed_id, r.conditions, r.note)
-        for r in ledger.rows
-    ] == [
-        ("YDR001C", "atg9-K12A", "444", ["media: nitrogen starvation"], None),
-        ("YDR001C", "atg9Δ10-20", "444", ["media: nitrogen starvation"], "n"),
-    ]
-    assert len({r.sgd_annotation_id for r in ledger.rows}) == 2
 
 
 def test_side_files(dataset: m.GeneEssentialitySgdDataset) -> None:
@@ -441,7 +460,11 @@ def test_side_files(dataset: m.GeneEssentialitySgdDataset) -> None:
         "YEL001C",
     ]
     index = json.loads((preprocess / "experiment_reference_index.json").read_text())
-    assert sorted(entry["member_indices"] for entry in index) == [[0, 1, 2], [3], [4]]
+    assert sorted(entry["member_indices"] for entry in index) == [
+        [0, 1, 2],
+        [3, 4, 5],
+        [6],
+    ]
     manifest = json.loads((preprocess / "build_manifest.json").read_text())
     assert manifest["dataset_name"] == "gene_essentiality_sgd"
     assert manifest["loader_class"] == "GeneEssentialitySgdDataset"
@@ -449,6 +472,7 @@ def test_side_files(dataset: m.GeneEssentialitySgdDataset) -> None:
     assert {
         "GeneEssentialityExperiment",
         "SgaKanMxDeletionPerturbation",
+        "NamedAllelePerturbation",
         "Environment",
     } <= set(manifest["closure"])
 
@@ -548,7 +572,9 @@ def test_an_unknown_condition_refuses_the_build(
 def test_two_kept_annotations_of_one_record_refuse_the_build(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """The whole-gene allele twice for one gene, condition and paper is one fact twice."""
+    """The whole-gene allele twice for one gene, condition and paper is one fact twice;
+    two alleles of one gene (``cdc42-111`` beside ``cdc42-Δ``) are two records.
+    """
     dump = dict(_DUMP)
     dump["YCR001W"] = [
         _annotation("222", "YCR001W", "ycr001w-Δ"),
@@ -556,6 +582,21 @@ def test_two_kept_annotations_of_one_record_refuse_the_build(
     ]
     with pytest.raises(m.DuplicateSgdAnnotationError, match="YCR001W"):
         _build(tmp_path, monkeypatch, dump)
+    m.refuse_duplicate_annotations(
+        [
+            m.SgdAnnotation(
+                sgd_annotation_id=1,
+                systematic_name="YLR229C",
+                locus_display_name="CDC42",
+                allele=allele,
+                pubmed_id="1",
+                experiment="classical genetics",
+                conditions=(),
+                note=None,
+            )
+            for allele in ("cdc42-Δ", "cdc42-111")
+        ]
+    )
 
 
 def test_an_annotation_without_one_allele_refuses_the_build(
@@ -701,8 +742,9 @@ def test_publication_is_outside_the_content_hash_so_repeat_annotations_collapse(
 ) -> None:
     """The KG node id of an experiment is the sha256 of its JSON dump, and the stored
     experiment carries no publication. The two YCR001W records differ only in their
-    publication (PubMed 222 and 333), so they map to one node id; the nitrogen-starved
-    ATG9 record and the 37 C record are their own nodes.
+    publication (PubMed 222 and 333), so they map to one node id; the three ATG9
+    records (the deletion and two named alleles) and the 37 C record are their own
+    nodes.
     """
     ids = [
         hashlib.sha256(
@@ -713,7 +755,7 @@ def test_publication_is_outside_the_content_hash_so_repeat_annotations_collapse(
         for i in range(len(dataset))
     ]
     assert ids[1] == ids[2]
-    assert len(set(ids)) == 4
+    assert len(set(ids)) == 6
 
 
 def test_unset_data_root_refuses_the_build(
@@ -774,10 +816,11 @@ def test_main_builds_the_dataset_under_data_root(
 
 @pytest.mark.data
 def test_the_pinned_dump_holds_the_issue_counts() -> None:
-    """On the real ``$DATA_ROOT/data/sgd/genome/genes`` (#901): the digest is the pin;
-    1,329 inviable null S288C annotations; 1,287 name the whole-gene deletion and 42
-    another allele; the kept ones repeat no (gene, condition, PubMed id) key; 21 carry
-    a condition (18 nitrogen starvation, one each of the other three pairs).
+    """On the real ``$DATA_ROOT/data/sgd/genome/genes`` (#901, #1045): the digest is the
+    pin; 1,329 inviable null S288C annotations; 1,287 name the whole-gene deletion and
+    42 another allele, every one a record; no (gene, allele, condition, PubMed id) key
+    repeats; 21 whole-gene deletions carry a condition (18 nitrogen starvation, one
+    each of the other three pairs).
     """
     import os
     import os.path as osp
@@ -790,7 +833,10 @@ def test_the_pinned_dump_holds_the_issue_counts() -> None:
     annotations = m.inviable_null_annotations(genes_dir)
     kept, dropped = m.split_by_allele(annotations)
     assert (len(annotations), len(kept), len(dropped)) == (1329, 1287, 42)
-    m.refuse_duplicate_annotations(kept)
+    m.refuse_duplicate_annotations(annotations)
+    assert {type(m.sgd_perturbation(a)).__name__ for a in dropped} == {
+        "NamedAllelePerturbation"
+    }
     assert Counter(a.conditions for a in kept if a.conditions) == {
         (("media", "nitrogen starvation"),): 18,
         (("media", "2% glucose"),): 1,

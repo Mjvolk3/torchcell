@@ -3,50 +3,46 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/datasets/scerevisiae/test_cachera2023.py
 """Cachera 2023 betaxanthin CRI-SPA loader.
 
-The last two tests build from the sha256-pinned library-mirror CSV with a real
-``SCerevisiaeGenome`` and are data-gated (``--data --slow``). Everything above them is
-hermetic.
+The last two tests build from the sha256-pinned library-mirror CSV and are data-gated
+(``--data --slow``). Everything above them is hermetic.
 
-2026.09.30 (Phase 14): a synthetic ``GA1_2_4_6.csv`` under ``tmp_path`` in the released
-27-column layout (a blank index header, ``Unnamed: 0``, ``gene``, then the 24
-``<metric>.<24|48>_<mean|std|count>`` columns; only the three
-``corrected_mean_intensity.24_*`` columns are consumed, every other cell is 9.0), and
-a stub genome (``_StubGenome``: a hand-written resolution table, every unknown name
-RETIRED, and ``feature_index["standard_to_ids"]`` listing AAC1, APL2, AAD3, SDH7 and
-FLO8). Twelve rows, with (level, std, count):
+A synthetic ``GA1_2_4_6.csv`` under ``tmp_path`` in the released 27-column layout (a
+blank index header, ``Unnamed: 0``, ``gene``, then the 24 ``<metric>.<24|48>_<mean|std|
+count>`` columns; only the three ``corrected_mean_intensity.24_*`` columns are consumed,
+every other cell is 9.0). No genome: every row is stored under the name its ``gene``
+cell releases (#1045). Thirteen rows, with (level, std, count):
 
-0. ``0`` (-0.22, 1.2, 87) -> control, dropped
-1. AAC1 (0.13, 1.2, 16) -> record 0, YMR056C / AAC1, SE 1.2 / sqrt(16) = 0.3, n 16
-2. APL2 (0.25, blank, 1) -> record 1, YKL135C / APL2, SE NaN (count 1), n 1
-3. BUD16 (blank, blank, 0) -> NaN level, dropped
-4. WT (0.35, 0.68, 12) -> RETIRED, unresolved
-5. ACN9 (0.5, 0.8, 4) -> RENAMED to YDR511W, record 2 stored as SDH7 (the genome's
-   standard name, not the source spelling); SE 0.8 / 2 = 0.4, n 4
-6. FLO8 (-0.4, 1.6, 64) -> NON_GENE_FEATURE YER109C, record 3; FLO8 is not a current
-   gene so the canonical map has no entry and the id is stored twice; SE 1.6 / 8 = 0.2
-7. SDH7 (0.9, 0.1, 4) -> CURRENT YDR511W, an ORF collision with row 5, dropped
-8. blank gene (0.9, 0.1, 4) -> ``str(nan)`` is ``"nan"``, a control, dropped
-9. AMB (0.7, 0.2, 4) -> AMBIGUOUS, unresolved
-10. `` AAD3 `` (0.0, 0.5, blank) -> stripped to AAD3, record 4, YCR107W; a blank count
-    reads as 1, so SE is NaN and n 1 even though a std is given; 0.0 is a value
+0. ``0`` (-0.22, 1.2, 87) -> an empty plate position, no record
+1. AAC1 (0.13, 1.2, 16) -> record 0 on the released-gene-name leaf, SE 0.3, n 16
+2. APL2 (0.25, blank, 1) -> record 1, SE NaN (count 1), n 1
+3. BUD16 (blank, blank, 0) -> blank level, no record
+4. WT (0.35, 0.68, 12) -> the control row, no record
+5. ACN9 (0.5, 0.8, 4) -> record 2 under ``ACN9`` as released (never renamed to SDH7)
+6. FLO8 (-0.4, 1.6, 64) -> record 3 under ``FLO8``; SE 1.6 / 8 = 0.2
+7. SDH7 (0.9, 0.1, 4) -> record 4 under ``SDH7``, a record of its own beside ACN9
+8. blank gene (0.9, 0.1, 4) -> ``str(nan)`` is ``"nan"``, no record
+9. AMB (0.7, 0.2, 4) -> record 5 under ``AMB`` (an ambiguous alias is still a name)
+10. `` AAD3 `` (0.0, 0.5, blank) -> stripped to AAD3, record 6; a blank count reads as
+    1, so SE is NaN and n 1 even though a std is given; 0.0 is a value
+11. XYZ9 (0.1, 0.1, 4) -> record 7 under ``XYZ9`` (a name no annotation carries)
+12. YBR001C (0.3, 1.2, 16) -> record 8 on ``KanMxDeletionPerturbation``, both names
+    the ORF, SE 0.3
 
-11. XYZ9 (0.1, 0.1, 4) -> RETIRED, unresolved
-
-So 5 records, 3 control/NaN rows (0, 3, 8), 3 unresolved names (AMB, WT, XYZ9) and 1
-collision (YDR511W). Every record shares one reference (the Btx
-background at level 0.0), so the index is [[0, 1, 2, 3, 4]]; the gene set holds the five
-varying ORFs plus the four cassette identifiers ``CYP76AD1``, ``DOD``, ``YBR249C``,
-``YPR060C`` (nine names, sorted).
+So 9 records (8 under a released symbol, 1 under a systematic name), 3 rows without a
+gene or a level (0, 3, 8) and 1 control row (WT), ledgered in
+``preprocess/dropped_records.json``. Every record shares one reference (the Btx
+background at level 0.0), so the index is [[0..8]]; the gene set holds the nine varying
+names plus the four cassette identifiers.
 
 Issue #509 (fixed 2026.10.02): every record and its reference store the paper's final
 screen plate, ``CACHERA_YPD_G418`` (library YPD root + 2% agar + 200 ug/ml G418, each
 quoted from the mirror OCR), ``temperature=None`` with a typed
 ``not_reported_by_primary`` gap, and ``measurement_type``
 ``cri_spa_corrected_hsv_yellowness_24h`` (the score is an HSV colony-color value, line 58
-of ``paper.md``). Formerly ``Media(name="SC", is_synthetic=True)`` at 30 C with a
-fluorescence ``measurement_type``. Findings still pinned: a blank count reads as one colony (line 256), so a released std is
-discarded. The dataset gene set carries the non-S288C names ``CYP76AD1`` and ``DOD``
-(the cassette additions, ``extract_systematic_gene_names`` takes every perturbation).
+of ``paper.md``). Findings still pinned: a blank count reads as one colony, so a released
+std is discarded. The dataset gene set carries the non-S288C names ``CYP76AD1`` and
+``DOD`` (the cassette additions, ``extract_systematic_gene_names`` takes every
+perturbation).
 
 The sha256 contract (issue #528, fixed): ``process`` verifies the CSV in ``raw/`` against
 ``DATA_SHA256`` before reading a row, so a file placed there by hand is refused; the
@@ -66,12 +62,11 @@ import shutil
 import urllib.request
 from collections import Counter
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import pandas as pd
 import pytest
 
-from tests.torchcell.conftest import require_trusted_genome_database
 from torchcell.data import RawSha256MismatchError
 from torchcell.datamodels.schema import (
     Environment,
@@ -83,61 +78,10 @@ from torchcell.datamodels.schema import (
     MetabolitePhenotype,
     Publication,
     ReferenceGenome,
+    ReleasedGeneKind,
+    ReleasedGeneNamePerturbation,
 )
 from torchcell.datasets.scerevisiae import cachera2023 as c
-from torchcell.sequence.genome.scerevisiae.s288c import (
-    GeneNameResolution,
-    GeneNameStatus,
-    SCerevisiaeGenome,
-)
-
-_CURRENT = {"AAC1": "YMR056C", "APL2": "YKL135C", "AAD3": "YCR107W", "SDH7": "YDR511W"}
-_RENAME = {"ACN9": "YDR511W"}
-_NON_GENE = {"FLO8": ("YER109C", "blocked_reading_frame")}
-_AMBIGUOUS = {"AMB": ["YAL001C", "YAL002W"]}
-
-
-class _StubGenome:
-    """The two things the loader asks a genome for, with a hand-written answer table."""
-
-    feature_index: dict[str, dict[str, list[str]]] = {
-        "standard_to_ids": {
-            name: [] for name in ["AAC1", "APL2", "AAD3", "SDH7", "FLO8"]
-        }
-    }
-
-    def resolve_gene_name(self, name: str) -> GeneNameResolution:
-        if name in _CURRENT:
-            return GeneNameResolution(
-                input_name=name,
-                status=GeneNameStatus.CURRENT,
-                systematic_name=_CURRENT[name],
-            )
-        if name in _RENAME:
-            return GeneNameResolution(
-                input_name=name,
-                status=GeneNameStatus.RENAMED,
-                systematic_name=_RENAME[name],
-            )
-        if name in _NON_GENE:
-            systematic, feature = _NON_GENE[name]
-            return GeneNameResolution(
-                input_name=name,
-                status=GeneNameStatus.NON_GENE_FEATURE,
-                systematic_name=systematic,
-                feature_type=feature,
-            )
-        if name in _AMBIGUOUS:
-            return GeneNameResolution(
-                input_name=name,
-                status=GeneNameStatus.AMBIGUOUS,
-                systematic_name=None,
-                candidates=_AMBIGUOUS[name],
-            )
-        return GeneNameResolution(
-            input_name=name, status=GeneNameStatus.RETIRED, systematic_name=name
-        )
-
 
 # The released header of GA1_2_4_6.csv, verbatim (27 columns, the first one blank).
 _HEADER = (
@@ -166,6 +110,7 @@ _ROWS: list[tuple[str | None, float | None, float | None, float | None]] = [
     ("AMB", 0.7, 0.2, 4.0),
     (" AAD3 ", 0.0, 0.5, None),
     ("XYZ9", 0.1, 0.1, 4.0),
+    ("YBR001C", 0.3, 1.2, 16.0),
 ]
 
 
@@ -173,12 +118,15 @@ def _cell(value: float | str | None) -> str:
     return "" if value is None else str(value)
 
 
-def _write_csv(path: Path) -> None:
+def _write_csv(
+    path: Path,
+    rows: list[tuple[str | None, float | None, float | None, float | None]] = _ROWS,
+) -> None:
     """The released layout, written by hand so blank cells stay blank."""
     # the loader reads these three by name; they sit at the released positions 18-20
     assert _HEADER.index(c._LEVEL) == 18 and _HEADER.index(c._COUNT) == 20
     lines = [",".join(_HEADER)]
-    for i, (gene, level, std, count) in enumerate(_ROWS):
+    for i, (gene, level, std, count) in enumerate(rows):
         cells: dict[str, str] = {name: "9.0" for name in _HEADER[3:]}
         cells[c._LEVEL] = _cell(level)
         cells[c._STD] = _cell(std)
@@ -193,13 +141,11 @@ def _write_csv(path: Path) -> None:
 def built(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> c.BetaxanthinCachera2023Dataset:
-    """The twelve-row CSV of the module docstring, built end to end under ``tmp_path``."""
+    """The thirteen-row CSV of the module docstring, built end to end under ``tmp_path``."""
     monkeypatch.delenv("TC_DATA_URL", raising=False)
     (tmp_path / "raw").mkdir()
     _write_csv(tmp_path / "raw" / c.DATA_FILENAME)
-    return c.BetaxanthinCachera2023Dataset(
-        root=str(tmp_path), genome=cast(SCerevisiaeGenome, _StubGenome())
-    )
+    return c.BetaxanthinCachera2023Dataset(root=str(tmp_path))
 
 
 def _cassette() -> list[GeneAdditionPerturbation]:
@@ -229,19 +175,24 @@ def _environment() -> Environment:
     )
 
 
-def _experiment(
-    orf: str, name: str, level: float, se: float, n: int
-) -> MetaboliteExperiment:
+def _deletion(gene: str) -> KanMxDeletionPerturbation | ReleasedGeneNamePerturbation:
+    if gene.startswith("Y"):
+        return KanMxDeletionPerturbation(
+            systematic_gene_name=gene, perturbed_gene_name=gene
+        )
+    return ReleasedGeneNamePerturbation(
+        systematic_gene_name=gene,
+        perturbed_gene_name=gene,
+        released_gene_name=gene,
+        released_kind=ReleasedGeneKind.deletion,
+        marker="KanMX",
+    )
+
+
+def _experiment(gene: str, level: float, se: float, n: int) -> MetaboliteExperiment:
     return MetaboliteExperiment(
         dataset_name="BetaxanthinCachera2023Dataset",
-        genotype=Genotype(
-            perturbations=[
-                KanMxDeletionPerturbation(
-                    systematic_gene_name=orf, perturbed_gene_name=name
-                ),
-                *_cassette(),
-            ]
-        ),
+        genotype=Genotype(perturbations=[_deletion(gene), *_cassette()]),
         environment=_environment(),
         phenotype=MetabolitePhenotype(
             metabolite_level={"betaxanthin": level},
@@ -284,21 +235,22 @@ def _without_se(experiment: dict[str, Any]) -> tuple[float, dict[str, Any]]:
     return float(se), rest
 
 
-def test_build_keeps_five_orfs_in_row_order_with_genome_spellings(
+def test_build_keeps_every_named_row_in_row_order_as_released(
     built: c.BetaxanthinCachera2023Dataset,
 ) -> None:
-    """Rows 1, 2, 5, 6, 10 kept; ACN9 is stored as SDH7, FLO8's id is stored twice."""
+    """Nine records under the released names, ACN9 and SDH7 both kept, never renamed."""
     got = []
     for i in range(len(built)):
         experiment = built[i]["experiment"]
         (deletion,) = [
             p
             for p in experiment["genotype"]["perturbations"]
-            if p["perturbation_type"] == "kanmx_deletion"
+            if p["perturbation_type"] in ("kanmx_deletion", "released_gene_name")
         ]
         phenotype = experiment["phenotype"]
         got.append(
             (
+                deletion["perturbation_type"],
                 deletion["systematic_gene_name"],
                 deletion["perturbed_gene_name"],
                 phenotype["metabolite_level"]["betaxanthin"],
@@ -306,39 +258,56 @@ def test_build_keeps_five_orfs_in_row_order_with_genome_spellings(
             )
         )
     assert got == [
-        ("YMR056C", "AAC1", 0.13, 16),
-        ("YKL135C", "APL2", 0.25, 1),
-        ("YDR511W", "SDH7", 0.5, 4),
-        ("YER109C", "YER109C", -0.4, 64),
-        ("YCR107W", "AAD3", 0.0, 1),
+        ("released_gene_name", "AAC1", "AAC1", 0.13, 16),
+        ("released_gene_name", "APL2", "APL2", 0.25, 1),
+        ("released_gene_name", "ACN9", "ACN9", 0.5, 4),
+        ("released_gene_name", "FLO8", "FLO8", -0.4, 64),
+        ("released_gene_name", "SDH7", "SDH7", 0.9, 4),
+        ("released_gene_name", "AMB", "AMB", 0.7, 4),
+        ("released_gene_name", "AAD3", "AAD3", 0.0, 1),
+        ("released_gene_name", "XYZ9", "XYZ9", 0.1, 4),
+        ("kanmx_deletion", "YBR001C", "YBR001C", 0.3, 16),
     ]
 
 
 def test_full_row_record_equals_the_hand_built_experiment(
     built: c.BetaxanthinCachera2023Dataset,
 ) -> None:
-    """Record 0 (AAC1): SE = 1.2 / sqrt(16) = 0.3; experiment, reference, publication."""
+    """Record 0 (AAC1): SE = 1.2 / sqrt(16) = 0.3; experiment, reference, publication.
+
+    The varying deletion is ``ReleasedGeneNamePerturbation``: the symbol verbatim in
+    ``systematic_gene_name`` and ``released_gene_name``, kind deletion, marker KanMX, no
+    released id.
+    """
     record = built[0]
-    assert (
-        record["experiment"]
-        == _experiment("YMR056C", "AAC1", 0.13, 0.3, 16).model_dump()
-    )
+    assert record["experiment"] == _experiment("AAC1", 0.13, 0.3, 16).model_dump()
     assert record["reference"] == _reference()
     assert record["publication"] == _PUBLICATION
+    (deletion,) = [
+        p
+        for p in record["experiment"]["genotype"]["perturbations"]
+        if p["perturbation_type"] == "released_gene_name"
+    ]
+    assert (
+        deletion["released_gene_name"],
+        deletion["released_kind"],
+        deletion["marker"],
+        deletion["released_gene_id"],
+    ) == ("AAC1", "deletion", "KanMX", None)
 
 
-def test_renamed_and_non_gene_records_carry_their_exact_se(
+def test_renamed_and_non_gene_names_are_stored_as_released(
     built: c.BetaxanthinCachera2023Dataset,
 ) -> None:
-    """ACN9 -> YDR511W / SDH7 with SE 0.8 / 2 = 0.4; FLO8 -> YER109C with 1.6 / 8 = 0.2."""
-    assert (
-        built[2]["experiment"]
-        == _experiment("YDR511W", "SDH7", 0.5, 0.4, 4).model_dump()
-    )
-    assert (
-        built[3]["experiment"]
-        == _experiment("YER109C", "YER109C", -0.4, 0.2, 64).model_dump()
-    )
+    """ACN9 (SGD has since renamed it SDH7) and FLO8 (a blocked reading frame) are
+    stored under the names the file gives, with SE 0.8 / 2 = 0.4 and 1.6 / 8 = 0.2;
+    the file's own SDH7 row is a fourth record beside ACN9, and the systematic-named
+    row goes on the placed KanMX leaf.
+    """
+    assert built[2]["experiment"] == _experiment("ACN9", 0.5, 0.4, 4).model_dump()
+    assert built[3]["experiment"] == _experiment("FLO8", -0.4, 0.2, 64).model_dump()
+    assert built[4]["experiment"] == _experiment("SDH7", 0.9, 0.05, 4).model_dump()
+    assert built[8]["experiment"] == _experiment("YBR001C", 0.3, 0.3, 16).model_dump()
 
 
 def test_one_colony_record_has_a_nan_se_and_n_one(
@@ -347,25 +316,21 @@ def test_one_colony_record_has_a_nan_se_and_n_one(
     """Record 1 (APL2, count 1, blank std): SE is NaN, never 0, and ``n_replicates`` 1."""
     se, rest = _without_se(built[1]["experiment"])
     assert math.isnan(se)
-    _, expected = _without_se(
-        _experiment("YKL135C", "APL2", 0.25, float("nan"), 1).model_dump()
-    )
+    _, expected = _without_se(_experiment("APL2", 0.25, float("nan"), 1).model_dump())
     assert rest == expected
 
 
 def test_a_blank_count_discards_the_released_std(
     built: c.BetaxanthinCachera2023Dataset,
 ) -> None:
-    """Finding: row 10 has std 0.5 and a blank count; the count reads as 1 (line 256),
-    so the SE is NaN and the std is thrown away rather than the row being refused. The
-    padded gene cell `` AAD3 `` is stripped and resolves, and a level of 0.0 is kept as
-    a value. Pinned until a blank count is refused or recorded as a provenance gap.
+    """Finding: row 10 has std 0.5 and a blank count; the count reads as 1, so the SE is
+    NaN and the std is thrown away rather than the row being refused. The padded gene
+    cell `` AAD3 `` is stripped, and a level of 0.0 is kept as a value. Pinned until a
+    blank count is refused or recorded as a provenance gap.
     """
-    se, rest = _without_se(built[4]["experiment"])
+    se, rest = _without_se(built[6]["experiment"])
     assert math.isnan(se)
-    _, expected = _without_se(
-        _experiment("YCR107W", "AAD3", 0.0, float("nan"), 1).model_dump()
-    )
+    _, expected = _without_se(_experiment("AAD3", 0.0, float("nan"), 1).model_dump())
     assert rest == expected
 
 
@@ -434,75 +399,102 @@ def test_every_record_shares_one_reference_and_the_gene_set_has_the_cassette(
     index = built.experiment_reference_index
     assert index is not None
     (entry,) = index
-    assert entry.member_indices == [0, 1, 2, 3, 4]
+    assert entry.member_indices == list(range(9))
     assert entry.reference.model_dump() == _reference()
     preprocess = Path(built.preprocess_dir)
     assert json.loads((preprocess / "gene_set.json").read_text()) == [
+        "AAC1",
+        "AAD3",
+        "ACN9",
+        "AMB",
+        "APL2",
         "CYP76AD1",
         "DOD",
+        "FLO8",
+        "SDH7",
+        "XYZ9",
+        "YBR001C",
         "YBR249C",
-        "YCR107W",
-        "YDR511W",
-        "YER109C",
-        "YKL135C",
-        "YMR056C",
         "YPR060C",
     ]
     stored = json.loads((preprocess / "experiment_reference_index.json").read_text())
-    assert [e["member_indices"] for e in stored] == [[0, 1, 2, 3, 4]]
+    assert [e["member_indices"] for e in stored] == [list(range(9))]
 
 
 def test_preprocess_csv_holds_the_kept_rows_exactly(
     built: c.BetaxanthinCachera2023Dataset,
 ) -> None:
-    """``preprocess/data.csv``: orf, common, level, se, n; a NaN SE is a blank cell."""
+    """``preprocess/data.csv``: gene, level, se, n; a NaN SE is a blank cell."""
     text = (Path(built.preprocess_dir) / "data.csv").read_text()
     assert text.splitlines() == [
-        "orf,common,level,se,n",
-        "YMR056C,AAC1,0.13,0.3,16",
-        "YKL135C,APL2,0.25,,1",
-        "YDR511W,SDH7,0.5,0.4,4",
-        "YER109C,YER109C,-0.4,0.2,64",
-        "YCR107W,AAD3,0.0,,1",
+        "gene,level,se,n",
+        "AAC1,0.13,0.3,16",
+        "APL2,0.25,,1",
+        "ACN9,0.5,0.4,4",
+        "FLO8,-0.4,0.2,64",
+        "SDH7,0.9,0.05,4",
+        "AMB,0.7,0.1,4",
+        "AAD3,0.0,,1",
+        "XYZ9,0.1,0.05,4",
+        "YBR001C,0.3,0.3,16",
     ]
 
 
-def test_the_drop_summary_is_logged_exactly(
+def test_the_ledger_and_the_log_account_for_every_released_row(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
-    """Rows 0, 3, 8 are control/NaN; AMB, WT, XYZ9 unresolved; SDH7 collides with ACN9.
-
-    ``XYZ9`` and ``WT`` are RETIRED and ``AMB`` is AMBIGUOUS: only CURRENT, RENAMED and
-    NON_GENE_FEATURE are kept (lines 212-222). The list is logged sorted.
+    """Rows 0, 3, 8 name no gene or carry no level and row 4 is the WT control; the
+    ledger lists them verbatim with their rule, and every other row is a record.
     """
     monkeypatch.delenv("TC_DATA_URL", raising=False)
     (tmp_path / "raw").mkdir()
     _write_csv(tmp_path / "raw" / c.DATA_FILENAME)
     with caplog.at_level(logging.INFO, logger=c.log.name):
-        dataset = c.BetaxanthinCachera2023Dataset(
-            root=str(tmp_path), genome=cast(SCerevisiaeGenome, _StubGenome())
-        )
-    assert len(dataset) == 5
+        dataset = c.BetaxanthinCachera2023Dataset(root=str(tmp_path))
+    assert len(dataset) == 9
     messages = [r.getMessage() for r in caplog.records if r.name == c.log.name]
     assert (
-        "Cachera: 5 usable ORFs, 3 control/NaN rows, 3 unresolved names dropped "
-        "['AMB', 'WT', 'XYZ9'], 1 ORF collisions deduped"
+        "Cachera: 9 records (1 under a systematic name, 8 under a released symbol), "
+        "3 rows without a gene or a level, 1 control rows ['WT']"
     ) in messages
-    assert "Wrote 5 Cachera betaxanthin experiments to LMDB" in messages
+    assert "Wrote 9 Cachera betaxanthin experiments to LMDB" in messages
+    ledger = c.DropLog.model_validate_json(
+        (Path(dataset.preprocess_dir) / "dropped_records.json").read_text()
+    )
+    assert ledger == c.DropLog(
+        dataset="BetaxanthinCachera2023Dataset",
+        source_records=13,
+        kept_records=9,
+        kept_under_systematic_name=1,
+        kept_under_released_symbol=8,
+        dropped_records=4,
+        rules=[
+            c.DropRule(
+                rule="gene_cell_is_0_or_blank_or_level_is_blank",
+                description=c._RULE_DESCRIPTIONS[c.RULE_NO_GENE_OR_LEVEL],
+                n_records=3,
+                items=["0", "BUD16", "nan"],
+            ),
+            c.DropRule(
+                rule="control_row",
+                description=c._RULE_DESCRIPTIONS[c.RULE_CONTROL_ROW],
+                n_records=1,
+                items=["WT"],
+            ),
+        ],
+    )
 
 
-def test_process_refuses_without_a_genome(
+def test_a_repeated_gene_token_refuses_the_build(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """Two rows naming AAC1 are two claims on one strain: refused by name, no store."""
     monkeypatch.delenv("TC_DATA_URL", raising=False)
     (tmp_path / "raw").mkdir()
-    _write_csv(tmp_path / "raw" / c.DATA_FILENAME)
-    with pytest.raises(RuntimeError) as excinfo:
+    _write_csv(tmp_path / "raw" / c.DATA_FILENAME, _ROWS + [("AAC1", 0.2, 0.2, 4.0)])
+    with pytest.raises(c.RepeatedGeneError, match="names 'AAC1' on two rows"):
         c.BetaxanthinCachera2023Dataset(root=str(tmp_path))
-    assert str(excinfo.value) == (
-        "Cachera2023 requires an injected SCerevisiaeGenome to resolve common "
-        "gene names to systematic ORF ids (source uses common names)."
-    )
+    assert not (tmp_path / "processed" / "lmdb").exists()
 
 
 def test_a_raw_file_off_the_pin_is_refused_at_build_time(
@@ -517,9 +509,7 @@ def test_a_raw_file_off_the_pin_is_refused_at_build_time(
     staged = off_pin_raw(c, [c.DATA_FILENAME])
     raw = staged.root / "raw" / c.DATA_FILENAME
     with pytest.raises(RawSha256MismatchError) as excinfo:
-        c.BetaxanthinCachera2023Dataset(
-            root=str(staged.root), genome=cast(SCerevisiaeGenome, _StubGenome())
-        )
+        c.BetaxanthinCachera2023Dataset(root=str(staged.root))
     assert str(excinfo.value) == (
         f"sha256 mismatch for {raw}: expected {c.DATA_SHA256}, "
         f"observed {staged.observed}"
@@ -625,43 +615,26 @@ def test_items_retype_through_the_metabolite_classes_and_the_hooks_are_inert(
     assert built.preprocess_raw(frame) is frame
 
 
-def test_main_builds_under_data_root_with_the_genome_it_constructs(
+def test_main_builds_under_data_root_without_a_genome(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """``main`` builds ``$DATA_ROOT/data/torchcell/betaxanthin_cachera2023`` with a genome
-    read from ``$DATA_ROOT/data/sgd/genome`` and ``data/go`` (``overwrite=False``), then
-    prints the length and record 0.
+    """``main`` builds ``$DATA_ROOT/data/torchcell/betaxanthin_cachera2023`` with no
+    genome, then prints the length and record 0.
     """
     monkeypatch.delenv("TC_DATA_URL", raising=False)
     monkeypatch.setenv("DATA_ROOT", str(tmp_path))
     monkeypatch.setattr("dotenv.load_dotenv", lambda *a, **k: False)
-    genome_kwargs: list[dict[str, Any]] = []
-
-    class _MainGenome(_StubGenome):
-        def __init__(self, **kwargs: Any) -> None:
-            genome_kwargs.append(kwargs)
-
-    monkeypatch.setattr(c, "SCerevisiaeGenome", _MainGenome)
     root = tmp_path / "data" / "torchcell" / "betaxanthin_cachera2023"
     (root / "raw").mkdir(parents=True)
     _write_csv(root / "raw" / c.DATA_FILENAME)
     c.main()
-    assert genome_kwargs == [
-        {
-            "genome_root": osp.join(str(tmp_path), "data/sgd/genome"),
-            "go_root": osp.join(str(tmp_path), "data/go"),
-            "overwrite": False,
-        }
-    ]
     lines = capsys.readouterr().out.splitlines()
-    assert lines[-2] == "len = 5"
-    rebuilt = c.BetaxanthinCachera2023Dataset(
-        root=str(root), genome=cast(SCerevisiaeGenome, _StubGenome())
-    )
+    assert lines[-2] == "len = 9"
+    rebuilt = c.BetaxanthinCachera2023Dataset(root=str(root))
     assert lines[-1] == str(rebuilt[0])
 
 
-# --- data-gated: the real mirror CSV and the real SGD genome -----------------------
+# --- data-gated: the real mirror CSV ------------------------------------------------
 
 _DATA_ROOT = os.environ["DATA_ROOT"]
 _MIRROR_CSV = osp.join(
@@ -669,128 +642,74 @@ _MIRROR_CSV = osp.join(
     "torchcell-library/cacheraCRISPAHighthroughputMethod2023/si",
     "GA1_2_4_6.csv",
 )
-_GENOME_DIR = osp.join(_DATA_ROOT, "data/sgd/genome")
-_GO_DIR = osp.join(_DATA_ROOT, "data/go")
 _needs_mirror = pytest.mark.skipif(
-    not (osp.exists(_MIRROR_CSV) and osp.isdir(_GENOME_DIR) and osp.isdir(_GO_DIR)),
-    reason="requires Cachera CSV mirror + SGD genome at $DATA_ROOT (absent in CI)",
+    not osp.exists(_MIRROR_CSV),
+    reason="requires the Cachera CSV mirror at $DATA_ROOT (absent in CI)",
 )
 
 
 @pytest.mark.data
 @pytest.mark.slow
 @_needs_mirror
-def test_cachera_build_smoke(tmp_path: Path) -> None:
-    """Cachera dataset builds from the mirror + genome and yields schema-valid records."""
-    root = tmp_path / "betaxanthin_cachera2023"
-    (root / "raw").mkdir(parents=True)
-    shutil.copy(_MIRROR_CSV, root / "raw" / "GA1_2_4_6.csv")
-
-    require_trusted_genome_database(_GENOME_DIR)
-    genome = SCerevisiaeGenome(
-        genome_root=_GENOME_DIR, go_root=_GO_DIR, overwrite=False
-    )
-    dataset = c.BetaxanthinCachera2023Dataset(root=str(root), genome=genome)
-    # 4,788 raw rows minus 28 control/NaN rows, 11 unresolvable names (2 ambiguous, 9
-    # retired) and 30 ORF collisions. The earlier 4735 predated the layered resolver.
-    assert len(dataset) == 4719
-
-    # dataset[i] returns the stored dicts; validating through the schema IS the
-    # round-trip test (the stale on-disk LMDB failed exactly here on media.is_synthetic).
-    record = dataset[0]
-    exp = MetaboliteExperiment.model_validate(record["experiment"])
-    dumped = exp.model_dump()
-    assert type(exp).model_validate(dumped).model_dump() == dumped
-
-    # genotype: one KO deletion + the 4-gene Btx-cassette (natMX marker omitted)
-    assert isinstance(exp.genotype, Genotype)
-    ptypes = Counter(p.perturbation_type for p in exp.genotype.perturbations)
-    assert ptypes == {"kanmx_deletion": 1, "gene_addition": 4}
-
-    # complex YPD + G418 screen plate (issue #509; formerly synthetic SC)
-    assert exp.environment.media.is_synthetic is False
-    assert exp.environment.temperature is None
-
-    assert record["publication"]["pubmed_id"] == "37572348"
-
-
-@pytest.mark.data
-@pytest.mark.slow
-@_needs_mirror
-def test_cachera_varying_deletion_carries_the_canonical_common_name(
-    tmp_path: Path,
-) -> None:
-    """The varying KO stores a common name, not a second copy of the ORF id.
-
-    Issue #195: the CRI-SPA file is common-named, the resolver turns those names into
-    systematic ids, and the loader used to store the id in both fields. It now stores the
-    genome's own standard name (the L1 ``canonical_gene_names`` spelling shared with the
-    Smith, Mormino and Lian loaders), falling back to the id for an ORF with no
-    round-tripping standard name. The nine genes a pre-resolver build dropped are the
-    check that both halves are present.
+def test_cachera_build_stores_every_named_row_as_released(tmp_path: Path) -> None:
+    """The pinned file (4,788 rows) builds to 4,760 records with no genome: 1,169 under
+    a systematic name on the KanMX leaf (two of them released in mixed case, YAL043C-a
+    and YML009c, upper-cased) and 3,591 under a released symbol on the
+    released-gene-name leaf; 27 rows name no gene or carry no level and one is the WT
+    control. ACN9 and AIM1 stay as written (SGD has since renamed them), and the
+    strand-less ``YLR287-A`` is a released symbol, not a malformed id.
     """
     root = tmp_path / "betaxanthin_cachera2023"
     (root / "raw").mkdir(parents=True)
     shutil.copy(_MIRROR_CSV, root / "raw" / "GA1_2_4_6.csv")
+    dataset = c.BetaxanthinCachera2023Dataset(root=str(root))
+    assert len(dataset) == 4760
 
-    require_trusted_genome_database(_GENOME_DIR)
-    genome = SCerevisiaeGenome(
-        genome_root=_GENOME_DIR, go_root=_GO_DIR, overwrite=False
+    record = dataset[0]
+    exp = MetaboliteExperiment.model_validate(record["experiment"])
+    dumped = exp.model_dump()
+    assert type(exp).model_validate(dumped).model_dump() == dumped
+    assert isinstance(exp.genotype, Genotype)
+    ptypes = Counter(p.perturbation_type for p in exp.genotype.perturbations)
+    assert ptypes in (
+        {"kanmx_deletion": 1, "gene_addition": 4},
+        {"released_gene_name": 1, "gene_addition": 4},
     )
-    dataset = c.BetaxanthinCachera2023Dataset(root=str(root), genome=genome)
+    assert exp.environment.media.is_synthetic is False
+    assert exp.environment.temperature is None
+    assert record["publication"]["pubmed_id"] == "37572348"
 
-    # (systematic id -> stored common name) for the varying deletion of every record.
-    ko_names: dict[str, str] = {}
+    names: dict[str, str] = {}
     for i in range(len(dataset)):
-        exp = MetaboliteExperiment.model_validate(dataset[i]["experiment"])
-        assert isinstance(exp.genotype, Genotype)
-        kos = [
+        (deletion,) = [
             p
-            for p in exp.genotype.perturbations
-            if p.perturbation_type == "kanmx_deletion"
+            for p in dataset[i]["experiment"]["genotype"]["perturbations"]
+            if p["perturbation_type"] != "gene_addition"
         ]
-        assert len(kos) == 1
-        ko_names[kos[0].systematic_gene_name] = kos[0].perturbed_gene_name
-
-    # The nine genes the pre-resolver build dropped, with the common name the file gives.
-    for systematic, common in {
-        "YEL024W": "RIP1",
-        "YHL011C": "PRS3",
-        "YKL148C": "SDH1",
-        "YML022W": "APT1",
-        "YML100W": "TSL1",
-        "YMR205C": "PFK2",
-        "YNL129W": "NRK1",
-        "YPR047W": "MSF1",
-        "YPR128C": "ANT1",
-    }.items():
-        assert ko_names[systematic] == common
-
-    # Most ORFs have a standard name, so most records must differ between the two fields;
-    # an ORF with no round-tripping standard name legitimately stores the id in both.
-    n_common = sum(1 for sysn, name in ko_names.items() if name != sysn)
-    assert n_common == 3930
-    assert len(ko_names) - n_common == 789
-
-    # The spelling comes from the genome, not from the 2023-era source column, so a name
-    # SGD has since superseded is stored under its current standard name.
-    assert ko_names["YDR511W"] == "SDH7"  # source column says ACN9
-    assert ko_names["YAL046C"] == "BOL3"  # source column says AIM1
-
-    # Every (systematic, perturbed) pair stays unique, so the L1 ORF-uniqueness check
-    # cannot be collapsed by two source spellings mapping onto one standard name.
-    assert len({(s, n) for s, n in ko_names.items()}) == len(dataset)
-
-    # The fixed Btx-cassette keeps the same convention (ARO4 at YBR249C, ARO7 at YPR060C).
-    exp0 = MetaboliteExperiment.model_validate(dataset[0]["experiment"])
-    assert isinstance(exp0.genotype, Genotype)
-    additions = {
-        p.systematic_gene_name: p.perturbed_gene_name
-        for p in exp0.genotype.perturbations
-        if p.perturbation_type == "gene_addition"
+        names[deletion["systematic_gene_name"]] = deletion["perturbation_type"]
+    assert len(names) == 4760
+    assert Counter(names.values()) == {
+        "released_gene_name": 3591,
+        "kanmx_deletion": 1169,
     }
-    assert additions["YBR249C"] == "ARO4"
-    assert additions["YPR060C"] == "ARO7"
+    assert names["YAL043C-A"] == "kanmx_deletion"
+    assert names["ACN9"] == "released_gene_name"
+    assert names["AIM1"] == "released_gene_name"
+    assert names["YLR287-A"] == "released_gene_name"
+    assert "SDH7" not in names and "BOL3" not in names
+
+    ledger = c.DropLog.model_validate_json(
+        (Path(dataset.preprocess_dir) / "dropped_records.json").read_text()
+    )
+    assert (ledger.source_records, ledger.kept_records, ledger.dropped_records) == (
+        4788,
+        4760,
+        28,
+    )
+    assert [(r.rule, r.n_records) for r in ledger.rules] == [
+        ("gene_cell_is_0_or_blank_or_level_is_blank", 27),
+        ("control_row", 1),
+    ]
 
 
 _PAPER_MD = osp.join(_DATA_ROOT, "torchcell-library", c.CITATION_KEY, c.PAPER_MD)

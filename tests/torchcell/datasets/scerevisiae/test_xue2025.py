@@ -4,11 +4,9 @@
 """Xue 2025 FFA loader: genotype decoding, per-FFA replicate statistics, the WT reference.
 
 ``Supplementary Data 1_Raw titers.xlsx`` is written synthetically with openpyxl into
-``<root>/raw/`` so PyG never calls ``download()``; ``process()`` runs for real against a
-duck-typed genome stub carrying ``gene_set`` and ``alias_to_systematic``, the two
-attributes ``_resolve_systematic`` reads. The stub is the authority for the ORF of every
-common name used here (the ORFs are the SGD ones for these genes, but nothing in the test
-depends on that).
+``<root>/raw/`` so PyG never calls ``download()``; ``process()`` runs for real with no
+genome: every gene is stored under the common name the release gives, on
+``ReleasedGeneNamePerturbation`` (#1045).
 
 Titer sheet fixture (col 0 = label, then 5 FFAs x 3 replicate columns in the module's
 order C14:0, C16:0, C18:0, C16:1, C18:1); the WT row is placed second to show the
@@ -47,52 +45,11 @@ from torchcell.datamodels.schema import (
     MetabolitePhenotype,
     Publication,
     ReferenceGenome,
+    ReleasedGeneKind,
+    ReleasedGeneNamePerturbation,
     Temperature,
 )
-from torchcell.datasets.gene_alias_resolution import (
-    GeneNameRefusalReason,
-    GeneNameRefused,
-)
 from torchcell.datasets.scerevisiae import xue2025 as m
-from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-
-_ORF = {
-    "POX1": "YGL205W",
-    "FAA1": "YOR317W",
-    "FAA4": "YMR246W",
-    "FKH1": "YIL131C",
-    "GCN5": "YGR252W",
-    "MED4": "YOR174W",
-    "OPI1": "YHL020C",
-    "RFX1": "YLR176C",
-    "RGR1": "YLR071C",
-    "RPD3": "YNL330C",
-    "SPT3": "YDR392W",
-    "YAP6": "YDR259C",
-    "TFC7": "YOR110W",
-}
-
-
-class _StubGenome:
-    """``gene_set`` (current ORFs), ``alias_to_systematic`` (common name -> [ORF]) and the
-    ``feature_index`` standard-name map. ``TFC7`` is shaped as in R64 (#886): the
-    standard name of YOR110W and an alias of YNL039W (BDP1), which the alias table
-    lists FIRST, so a first-candidate resolver would store YNL039W.
-    """
-
-    gene_set = {*_ORF.values(), "YNL039W"}
-    alias_to_systematic: dict[str, list[str]] = {
-        **{k: [v] for k, v in _ORF.items()},
-        "TFC7": ["YNL039W", "YOR110W"],
-    }
-    feature_index: dict[str, Any] = {
-        "standard_to_ids": {k: [v] for k, v in _ORF.items()}
-    }
-
-
-def _genome() -> SCerevisiaeGenome:
-    return cast(SCerevisiaeGenome, _StubGenome())
-
 
 _ABBREVIATIONS: list[tuple[str, str]] = [
     (gene, code) for code, gene in m._EXPECTED_CODE_TO_GENE.items()
@@ -149,7 +106,7 @@ def _root(
 @pytest.fixture
 def built(tmp_path: Path) -> m.FattyAcidXue2025Dataset:
     root = _root(tmp_path, "ffa_xue2025")
-    return m.FattyAcidXue2025Dataset(root=str(root), genome=_genome())
+    return m.FattyAcidXue2025Dataset(root=str(root))
 
 
 _FFAS = ["C14:0", "C16:0", "C18:0", "C16:1", "C18:1"]
@@ -179,8 +136,12 @@ def _phenotype(levels: list[float], ses: list[float], n: int) -> MetabolitePheno
 def _genotype(genes: list[str]) -> Genotype:
     return Genotype(
         perturbations=[
-            KanMxDeletionPerturbation(
-                systematic_gene_name=_ORF[g], perturbed_gene_name=g
+            ReleasedGeneNamePerturbation(
+                systematic_gene_name=g,
+                perturbed_gene_name=g,
+                released_gene_name=g,
+                released_kind=ReleasedGeneKind.deletion,
+                marker="KanMX",
             )
             for g in genes
         ]
@@ -188,7 +149,7 @@ def _genotype(genes: list[str]) -> Genotype:
 
 
 def _pairs(record: dict[str, object]) -> list[tuple[str, str]]:
-    """(ORF, perturbed name) per perturbation, in stored (systematic-name) order."""
+    """(released name, perturbed name) per perturbation, in stored (name) order."""
     genotype = cast(dict[str, list[dict[str, str]]], record["genotype"])
     return [
         (p["systematic_gene_name"], p["perturbed_gene_name"])
@@ -200,37 +161,38 @@ def test_one_record_per_non_wt_row_in_sheet_order(
     built: m.FattyAcidXue2025Dataset,
 ) -> None:
     """Five sheet rows give four records (the WT row is skipped) in sheet order, each with
-    the three chassis deletions plus the decoded TF letters, perturbations sorted by ORF.
+    the three chassis deletions plus the decoded TF letters, perturbations sorted by
+    their released name (no ORF is resolved, #1045).
 
     ``+ve Ctrl`` is the chassis alone: means 110, 200, 51, 10, 310 with SE 10/sqrt(3),
     0, 1/sqrt(3), 2/sqrt(3), 10/sqrt(3) (sample SD over three replicates), n = 3. Its
-    perturbations sort YGL205W (POX1), YMR246W (FAA4), YOR317W (FAA1).
+    perturbations sort FAA1, FAA4, POX1.
     """
     assert len(built) == 4
     assert [_pairs(built[i]["experiment"]) for i in range(4)] == [
-        [("YGL205W", "POX1"), ("YMR246W", "FAA4"), ("YOR317W", "FAA1")],
+        [("FAA1", "FAA1"), ("FAA4", "FAA4"), ("POX1", "POX1")],
         [
-            ("YGL205W", "POX1"),
-            ("YGR252W", "GCN5"),
-            ("YIL131C", "FKH1"),
-            ("YMR246W", "FAA4"),
-            ("YOR317W", "FAA1"),
+            ("FAA1", "FAA1"),
+            ("FAA4", "FAA4"),
+            ("FKH1", "FKH1"),
+            ("GCN5", "GCN5"),
+            ("POX1", "POX1"),
         ],
         [
-            ("YDR259C", "YAP6"),
-            ("YDR392W", "SPT3"),
-            ("YGL205W", "POX1"),
-            ("YMR246W", "FAA4"),
-            ("YNL330C", "RPD3"),
-            ("YOR317W", "FAA1"),
+            ("FAA1", "FAA1"),
+            ("FAA4", "FAA4"),
+            ("POX1", "POX1"),
+            ("RPD3", "RPD3"),
+            ("SPT3", "SPT3"),
+            ("YAP6", "YAP6"),
         ],
-        [
-            ("YGL205W", "POX1"),
-            ("YMR246W", "FAA4"),
-            ("YOR110W", "TFC7"),
-            ("YOR317W", "FAA1"),
-        ],
+        [("FAA1", "FAA1"), ("FAA4", "FAA4"), ("POX1", "POX1"), ("TFC7", "TFC7")],
     ]
+    assert {
+        p["perturbation_type"]
+        for i in range(4)
+        for p in built[i]["experiment"]["genotype"]["perturbations"]
+    } == {"released_gene_name"}
     root3 = math.sqrt(3)
     assert (
         built[0]["experiment"]
@@ -324,95 +286,55 @@ def test_summary_csv_gene_set_and_build_manifest(
     built: m.FattyAcidXue2025Dataset,
 ) -> None:
     """``preprocess/data.csv`` lists each record's label, deletion count and ``;``-joined
-    sorted ORFs; ``gene_set.json`` is the nine ORFs sorted; the manifest names the slug,
-    the loader and this host.
+    sorted released names; ``gene_set.json`` is the nine names sorted; the manifest
+    names the slug, the loader and this host.
     """
     preprocess = Path(built.root) / "preprocess"
     summary = pd.read_csv(preprocess / "data.csv")
-    assert summary.columns.tolist() == ["genotype", "n_deletions", "orfs"]
+    assert summary.columns.tolist() == ["genotype", "n_deletions", "genes"]
     assert summary.values.tolist() == [
-        ["+ve Ctrl", 3, "YGL205W;YMR246W;YOR317W"],
-        ["F-G 5d", 5, "YGL205W;YGR252W;YIL131C;YMR246W;YOR317W"],
-        ["P-S-Y 6dΔ", 6, "YDR259C;YDR392W;YGL205W;YMR246W;YNL330C;YOR317W"],
-        ["T 4d", 4, "YGL205W;YMR246W;YOR110W;YOR317W"],
+        ["+ve Ctrl", 3, "FAA1;FAA4;POX1"],
+        ["F-G 5d", 5, "FAA1;FAA4;FKH1;GCN5;POX1"],
+        ["P-S-Y 6dΔ", 6, "FAA1;FAA4;POX1;RPD3;SPT3;YAP6"],
+        ["T 4d", 4, "FAA1;FAA4;POX1;TFC7"],
     ]
     assert built.df is not None
     assert built.df.shape == (4, 3)
     assert json.loads((preprocess / "gene_set.json").read_text()) == [
-        "YDR259C",
-        "YDR392W",
-        "YGL205W",
-        "YGR252W",
-        "YIL131C",
-        "YMR246W",
-        "YNL330C",
-        "YOR110W",
-        "YOR317W",
+        "FAA1",
+        "FAA4",
+        "FKH1",
+        "GCN5",
+        "POX1",
+        "RPD3",
+        "SPT3",
+        "TFC7",
+        "YAP6",
     ]
     manifest = json.loads((preprocess / "build_manifest.json").read_text())
     assert manifest["dataset_name"] == "ffa_xue2025"
     assert manifest["loader_class"] == "FattyAcidXue2025Dataset"
     assert manifest["loader_module"] == "torchcell.datasets.scerevisiae.xue2025"
     assert manifest["hostname"] == socket.gethostname()
-    assert {"MetaboliteExperiment", "KanMxDeletionPerturbation"} <= set(
+    assert {"MetaboliteExperiment", "ReleasedGeneNamePerturbation"} <= set(
         manifest["closure"]
     )
 
 
-def test_resolve_systematic_prefers_gene_set_then_alias_then_raises(
-    built: m.FattyAcidXue2025Dataset,
-) -> None:
-    """A name already in ``gene_set`` returns itself, in any case (#886 retired the
-    case-sensitive membership test); a common name with one candidate follows the alias
-    table (``pox1`` -> YGL205W); ``TFC7`` resolves through its pin to YOR110W, not to the
-    alias table's first candidate; an unknown name raises a typed refusal.
+def test_a_systematic_name_would_go_on_the_placed_leaf_and_tfc7_is_as_released() -> (
+    None
+):
+    """``_released_deletion`` places by form: a systematic name on the KanMX leaf, a
+    symbol on the released-gene-name leaf. TFC7, an alias of two ORFs, is stored as the
+    symbol the release wrote; no pin table remains (#886 retired by #1045).
     """
-    assert built.experiment_class is MetaboliteExperiment
-    assert built.reference_class is MetaboliteExperimentReference
-    assert built._resolve_systematic(" YGL205W ") == "YGL205W"
-    assert built._resolve_systematic("ygl205w") == "YGL205W"
-    assert built._resolve_systematic("pox1") == "YGL205W"
-    assert built._resolve_systematic("TFC7") == "YOR110W"
-    with pytest.raises(GeneNameRefused) as info:
-        built._resolve_systematic("NOPE")
-    assert info.value.refusal.reason is GeneNameRefusalReason.NOT_IN_GENOME
-    assert str(info.value) == (
-        "gene name 'NOPE' refused (not_in_genome): no live gene, alias or standard "
-        "name matches; candidates []"
-    )
-
-
-def test_tfc7_pin_is_the_r64_standard_name_and_is_rechecked(tmp_path: Path) -> None:
-    """#886: the one pin is TFC7 -> YOR110W under the SGD standard-name rule, quoting
-    the start of YOR110W's gene row in the R64-4-1 GFF. When the injected genome names a
-    different standard-name owner, the build refuses before writing anything.
-    """
-    assert {
-        alias: (pin.systematic_name, pin.rule.value, pin.quote, pin.provenance.sha256)
-        for alias, pin in m.AMBIGUOUS_ALIAS_PINS.items()
-    } == {
-        "TFC7": (
-            "YOR110W",
-            "sgd_standard_name",
-            "ID=YOR110W;Name=YOR110W;gene=TFC7;",
-            "64f61e3153083a8ef6d853721c9e83e4469cdc120883ec281e51a0df4ba390fa",
-        )
-    }
-
-    class _Contradicting(_StubGenome):
-        feature_index: dict[str, Any] = {
-            "standard_to_ids": {**_StubGenome.feature_index["standard_to_ids"]}
-            | {"TFC7": ["YNL039W"]}
-        }
-
-    root = _root(tmp_path, "contradicted")
-    with pytest.raises(GeneNameRefused) as info:
-        m.FattyAcidXue2025Dataset(
-            root=str(root), genome=cast(SCerevisiaeGenome, _Contradicting())
-        )
-    assert info.value.refusal.reason is GeneNameRefusalReason.PIN_RULE_CONTRADICTED
-    assert info.value.refusal.candidates == ["YNL039W", "YOR110W"]
-    assert not (root / "processed" / "lmdb").exists()
+    placed = m._released_deletion("YGL205W")
+    assert isinstance(placed, KanMxDeletionPerturbation)
+    assert placed.systematic_gene_name == "YGL205W"
+    released = m._released_deletion("TFC7")
+    assert isinstance(released, ReleasedGeneNamePerturbation)
+    assert (released.released_gene_name, released.marker) == ("TFC7", "KanMX")
+    assert not hasattr(m, "AMBIGUOUS_ALIAS_PINS")
 
 
 def test_decode_genotype_labels_and_its_two_error_paths(
@@ -461,17 +383,13 @@ def test_wt_row_count_must_be_exactly_one(tmp_path: Path) -> None:
     with pytest.raises(
         RuntimeError, match=r"expected exactly 1 wild-type row, found 0"
     ):
-        m.FattyAcidXue2025Dataset(
-            root=str(_root(tmp_path, "none", no_wt)), genome=_genome()
-        )
+        m.FattyAcidXue2025Dataset(root=str(_root(tmp_path, "none", no_wt)))
     two_wt = [*_ROWS, ("BY4741", _ROWS[1][1])]
     with pytest.raises(
         RuntimeError,
         match=r"expected exactly 1 wild-type row, found 2: \['wt BY4741', 'BY4741'\]",
     ):
-        m.FattyAcidXue2025Dataset(
-            root=str(_root(tmp_path, "two", two_wt)), genome=_genome()
-        )
+        m.FattyAcidXue2025Dataset(root=str(_root(tmp_path, "two", two_wt)))
 
 
 def test_abbreviation_sheet_must_match_the_expected_code_map(tmp_path: Path) -> None:
@@ -486,7 +404,7 @@ def test_abbreviation_sheet_must_match_the_expected_code_map(tmp_path: Path) -> 
         + r"\{'F': 'FKH1', 'G': 'GCN5', 'M': 'MED4', 'O': 'OPI1', 'X': 'RFX1', 'R': 'RGR1', "
         + r"'P': 'RPD3', 'S': 'SPT3', 'Y': 'YAP6'\}",
     ):
-        m.FattyAcidXue2025Dataset(root=str(root), genome=_genome())
+        m.FattyAcidXue2025Dataset(root=str(root))
 
 
 def test_ffa_with_no_replicate_values_raises(tmp_path: Path) -> None:
@@ -514,20 +432,7 @@ def test_ffa_with_no_replicate_values_raises(tmp_path: Path) -> None:
     with pytest.raises(
         RuntimeError, match="FFA C18:1 has no replicate values in row 'M 4d'"
     ):
-        m.FattyAcidXue2025Dataset(
-            root=str(_root(tmp_path, "blank", rows)), genome=_genome()
-        )
-
-
-def test_genome_is_required(tmp_path: Path) -> None:
-    """With the raw workbook present and ``genome=None``, ``process()`` raises before
-    reading the sheets.
-    """
-    with pytest.raises(
-        RuntimeError,
-        match="FattyAcidXue2025Dataset requires an injected SCerevisiaeGenome",
-    ):
-        m.FattyAcidXue2025Dataset(root=str(_root(tmp_path, "nogenome")), genome=None)
+        m.FattyAcidXue2025Dataset(root=str(_root(tmp_path, "blank", rows)))
 
 
 def test_download_reads_the_library_mirror_and_verifies_sha256(
@@ -545,13 +450,13 @@ def test_download_reads_the_library_mirror_and_verifies_sha256(
     with pytest.raises(
         RuntimeError, match=f"library mirror data file not found: {mirror}"
     ):
-        m.FattyAcidXue2025Dataset(root=str(tmp_path / "a"), genome=_genome())
+        m.FattyAcidXue2025Dataset(root=str(tmp_path / "a"))
     mirror.mkdir(parents=True)
     (mirror / m.DATA_FILENAME).write_bytes(b"not the real workbook")
     digest = hashlib.sha256(b"not the real workbook").hexdigest()
     assert digest.startswith("55b4751d")
     with pytest.raises(RawSha256MismatchError) as err:
-        m.FattyAcidXue2025Dataset(root=str(tmp_path / "b"), genome=_genome())
+        m.FattyAcidXue2025Dataset(root=str(tmp_path / "b"))
     assert str(err.value) == (
         f"sha256 mismatch for {mirror / m.DATA_FILENAME}: expected {m.DATA_SHA256}, "
         f"observed {digest}"
@@ -571,7 +476,7 @@ def test_a_raw_file_off_the_pin_is_refused_at_build_time(
     staged = off_pin_raw(m, [m.DATA_FILENAME])
     raw = staged.root / "raw" / m.DATA_FILENAME
     with pytest.raises(RawSha256MismatchError) as err:
-        m.FattyAcidXue2025Dataset(root=str(staged.root), genome=_genome())
+        m.FattyAcidXue2025Dataset(root=str(staged.root))
     assert str(err.value) == (
         f"sha256 mismatch for {raw}: expected {m.DATA_SHA256}, "
         f"observed {staged.observed}"
@@ -631,18 +536,19 @@ def test_generic_hooks_pass_the_frame_through_and_refuse_create_experiment() -> 
 # #887: RGR1, MED4 and TFC7 are stated as deletions, and the records are kept.
 # --------------------------------------------------------------------------------------
 
-#: The three TFs of #887 and the ORF stored for each (TFC7 since #886).
+#: The three TFs of #887, stored under their released names (#1045); the SGD ORF of
+#: each is a modeling-time join, listed here as a reading aid only.
 _ESSENTIAL_IN_SGD = {"RGR1": "YLR071C", "MED4": "YOR174W", "TFC7": "YOR110W"}
 
 
 def _stated_deletions(record: dict[str, Any]) -> list[tuple[str, str, str, str]]:
-    """(ORF, name, perturbation_type, state) of each #887 gene in one stored record."""
+    """(name, name, perturbation_type, released kind) of each #887 gene in one record."""
     return [
         (
             p["systematic_gene_name"],
             p["perturbed_gene_name"],
             p["perturbation_type"],
-            p["state"],
+            p["released_kind"],
         )
         for p in record["experiment"]["genotype"]["perturbations"]
         if p["perturbed_gene_name"] in _ESSENTIAL_IN_SGD
@@ -654,8 +560,9 @@ def test_essential_gene_strains_are_kept_as_the_release_states_them(
 ) -> None:
     """``R 4d`` (RGR1), ``M-R-T 6d`` (MED4, RGR1, TFC7) and ``M 4d`` (MED4) are stored,
     one record each beside the chassis-only control, every one of the three genes a
-    ``kanmx_deletion`` with ``state = "absent"``: the release states a deletion count
-    (``4Δ``, ``6Δ``) and nothing else about these alleles (#887). No row is dropped.
+    ``released_gene_name`` record of kind ``deletion``: the release states a deletion
+    count (``4Δ``, ``6Δ``) and nothing else about these alleles (#887). No row is
+    dropped.
     """
     values: list[float | None] = [float(v) for v in range(1, 16)]
     rows: list[Row] = [
@@ -666,17 +573,17 @@ def test_essential_gene_strains_are_kept_as_the_release_states_them(
         ("M 4d", values),
     ]
     root = _root(tmp_path, "essential", rows)
-    built = m.FattyAcidXue2025Dataset(root=str(root), genome=_genome())
+    built = m.FattyAcidXue2025Dataset(root=str(root))
     assert len(built) == 4
     assert [_stated_deletions(built[i]) for i in range(4)] == [
         [],
-        [("YLR071C", "RGR1", "kanmx_deletion", "absent")],
+        [("RGR1", "RGR1", "released_gene_name", "deletion")],
         [
-            ("YLR071C", "RGR1", "kanmx_deletion", "absent"),
-            ("YOR110W", "TFC7", "kanmx_deletion", "absent"),
-            ("YOR174W", "MED4", "kanmx_deletion", "absent"),
+            ("MED4", "MED4", "released_gene_name", "deletion"),
+            ("RGR1", "RGR1", "released_gene_name", "deletion"),
+            ("TFC7", "TFC7", "released_gene_name", "deletion"),
         ],
-        [("YOR174W", "MED4", "kanmx_deletion", "absent")],
+        [("MED4", "MED4", "released_gene_name", "deletion")],
     ]
     assert [
         len(built[i]["experiment"]["genotype"]["perturbations"]) for i in range(4)
@@ -705,7 +612,7 @@ def test_the_released_workbook_keeps_all_176_records_and_the_112(
     root = tmp_path / "ffa_xue2025"
     (root / "raw").mkdir(parents=True)
     shutil.copyfile(_MIRROR_WORKBOOK, root / "raw" / m.DATA_FILENAME)
-    built = m.FattyAcidXue2025Dataset(root=str(root), genome=_genome())
+    built = m.FattyAcidXue2025Dataset(root=str(root))
     assert len(built) == 176
     stated = [_stated_deletions(built[i]) for i in range(len(built))]
     names = [{name for _, name, _, _ in record} for record in stated]
@@ -716,9 +623,9 @@ def test_the_released_workbook_keeps_all_176_records_and_the_112(
     assert sum(1 for record in names if record & {"RGR1", "MED4"}) == 83
     flat = [p for record in stated for p in record]
     assert len(flat) == 138
-    assert {(orf, name) for orf, name, _, _ in flat} == {
-        (orf, name) for name, orf in _ESSENTIAL_IN_SGD.items()
+    assert {(stored, name) for stored, name, _, _ in flat} == {
+        (name, name) for name in _ESSENTIAL_IN_SGD
     }
-    assert {(kind, state) for _, _, kind, state in flat} == {
-        ("kanmx_deletion", "absent")
+    assert {(leaf, kind) for _, _, leaf, kind in flat} == {
+        ("released_gene_name", "deletion")
     }

@@ -1,19 +1,19 @@
 """SynLethDB-derived yeast synthetic lethality and synthetic rescue datasets.
 
-Gene resolution (issue #597). Every row of ``Yeast_SL.csv`` and ``Yeast_SR.csv`` names
-both genes twice: a gene name (``n1.name``, ``n2.name``) and an NCBI Entrez Gene id
-(``n1.identifier``, ``n2.identifier``). Each side is resolved by its Entrez id through the
-RefSeq R64 annotation ``ncbi_genomic.gff`` (``GeneID`` -> ``locus_tag``), pinned by
-sha256 and read from ``<genome_root>/S288C_reference_genome_R64-4-1_20230830/``. The gene
-name is a cross-check: ``SCerevisiaeGenome.resolve_gene_name`` (standard name before
-alias, the prime of ``IMP2'`` kept) must give the same current gene, or the row is
-dropped under a named rule in ``preprocess/dropped_records.json``. A row naming one gene
-on both sides is dropped too, since the release does not say what such a pair means.
-After resolution no unordered ORF pair may repeat (``DuplicateOrfPairError``).
+Gene identity (#1045). Every row of ``Yeast_SL.csv`` and ``Yeast_SR.csv`` names both
+genes twice: a gene name (``n1.name``, ``n2.name``) and an NCBI Entrez Gene id
+(``n1.identifier``, ``n2.identifier``). Each side is stored exactly as released on
+``ReleasedGeneNamePerturbation``: the name verbatim in ``systematic_gene_name`` and
+``released_gene_name``, the Entrez id verbatim in ``released_gene_id`` (namespace
+``ncbi_entrez_gene``), and ``released_kind`` a typed gap, because SynLethDB states the
+pair and its source, not the perturbation that made it. No genome or GFF is consulted;
+a row naming one gene on both sides is stored as released (the pair's two sides are
+one perturbation), and the verifier is told how many such rows the file holds. The
+only refusals are a blank PMID and a repeated unordered (name, id) pair, neither of
+which the pinned files carry. Every released row is a record: 14,000 SL and 6,948 SR.
 
-The old resolution (a name -> ORF dict in which a later gene's alias overwrote an
-earlier gene's standard name, and ``rstrip("'")`` turned ``IMP2'`` into ``IMP2``) stored
-872 of 14,000 SL and 119 of 6,948 SR records under the wrong ORF.
+Before #1045 the loader resolved each side by its Entrez id through the pinned NCBI GFF
+and dropped 4 SL and 6 SR rows under named rules (an id the GFF lacks, a self pair).
 """
 
 # torchcell/datasets/scerevisiae/synth_leth_db
@@ -26,7 +26,7 @@ import os
 import os.path as osp
 import pickle
 from collections import Counter
-from collections.abc import Callable, Mapping
+from collections.abc import Callable
 from typing import Any
 
 import lmdb
@@ -48,7 +48,8 @@ from torchcell.datamodels.schema import (
     Media,
     Publication,
     ReferenceGenome,
-    SgaKanMxDeletionPerturbation,
+    ReleasedGeneIdNamespace,
+    ReleasedGeneNamePerturbation,
     SyntheticLethalityExperiment,
     SyntheticLethalityExperimentReference,
     SyntheticLethalityPhenotype,
@@ -243,28 +244,34 @@ def sr_score_gap(score: float, source: str, pubmed_id: str) -> ProvenanceGap:
 #: GFF feature types whose ``Dbxref`` ``GeneID`` names a locus (``locus_tag``).
 _NCBI_LOCUS_TYPES = frozenset({"gene", "pseudogene"})
 
-#: Drop rules, in the order a row is tested against them.
-RULE_ENTREZ_NOT_IN_GFF = "entrez_id_not_in_ncbi_gff"
-RULE_NAME_DISAGREES = "gene_name_disagrees_with_entrez_id"
-RULE_SELF_PAIR = "same_gene_on_both_sides"
+#: Retention rule (#1045): every released row is a record.
+RETENTION_RULE = (
+    "one record per released row, each side stored on ReleasedGeneNamePerturbation "
+    "under its released name and Entrez id verbatim; no genome or GFF is consulted and "
+    "no row is dropped, a row naming one gene on both sides included"
+)
 
-_RULE_DESCRIPTIONS = {
-    RULE_ENTREZ_NOT_IN_GFF: (
-        "an Entrez id on the row has no gene or pseudogene feature in the pinned "
-        "ncbi_genomic.gff, so the side cannot be resolved by its id; the name alone is "
-        "not used in its place"
+#: What the release says about the perturbation behind a pair: nothing. The paper
+#: lists what an SL entry stores (``SYNLETHDB_ENTRY_FIELDS_QUOTE``) and the released
+#: header carries the two genes, the cell line, the PubMed id, the source and the
+#: score; how either gene was perturbed in the cited study is not a field.
+SYNLETHDB_KIND_GAP = ProvenanceGap(
+    field="released_kind",
+    reason=ProvenanceGapReason.not_reported_by_primary,
+    looked_in=Provenance(
+        source_uri="paper.md",
+        citation_key=SYNLETHDB_CITATION_KEY,
+        sha256=SYNLETHDB_PAPER_SHA256,
     ),
-    RULE_NAME_DISAGREES: (
-        "the gene name on the row does not resolve (standard name before alias, through "
-        "SCerevisiaeGenome.resolve_gene_name) to the current gene its Entrez id maps to, "
-        "so the two identifiers the release gives for one side contradict each other"
+    note=(
+        "SynLethDB names the two genes of a pair (n1.name, n1.identifier, n2.name, "
+        "n2.identifier) and the pair's source, PubMed id and score; it does not say "
+        "how either gene was perturbed in the cited study ('"
+        + SYNLETHDB_ENTRY_FIELDS_QUOTE
+        + "'). The perturbation, if stated, is in each record's own "
+        "Publication.pubmed_id"
     ),
-    RULE_SELF_PAIR: (
-        "both sides resolve to one gene (the release gives the same name and the same "
-        "Entrez id on both sides); the release does not say what a gene paired with "
-        "itself means, so no meaning is assigned and the row is not stored"
-    ),
-}
+)
 
 
 class BlankPubmedIdError(ValueError):
@@ -280,48 +287,29 @@ class EntrezGeneIdConflictError(ValueError):
     """One ``GeneID`` in the NCBI GFF carries two different ``locus_tag`` values."""
 
 
-class DuplicateOrfPairError(ValueError):
-    """Two kept rows resolve to the same unordered ORF pair.
+class DuplicatePairError(ValueError):
+    """Two released rows name one unordered (name, Entrez id) pair.
 
-    With Entrez resolution the pinned files have none; the nine the old name map
-    stored (7 SL, 2 SR) were all artifacts of its alias overwrite.
+    The pinned files have none; the nine the old name map stored (7 SL, 2 SR) were
+    all artifacts of its alias overwrite.
     """
 
 
-class MissingGenomeError(ValueError):
-    """A build was started without the genome the gene cross-check needs."""
-
-
-class DroppedRow(BaseModel):
-    """One source row a drop rule removed, with both sides as the release gives them."""
-
-    source_row: int
-    n1_name: str
-    n1_entrez: int
-    n2_name: str
-    n2_entrez: int
-    detail: str
-
-
-class DropRule(BaseModel):
-    """One drop rule and the source rows it removed."""
-
-    rule: str
-    description: str
-    n_records: int
-    rows: list[DroppedRow]
-
-
 class DropLog(BaseModel):
-    """Every drop rule applied to a build, and the files the resolution read."""
+    """The build's accounting: every released row is a record, so nothing is dropped.
+
+    ``rules`` is empty and kept for the verifier, which reads the ledger's drop rules
+    to compare the store with the release; ``n_self_pairs`` counts the rows that name
+    one gene on both sides, which the verifier is told to expect.
+    """
 
     dataset: str
     source_records: int
     kept_records: int
     dropped_records: int
-    entrez_source_path: str
-    entrez_source_sha256: str
-    rules: list[DropRule]
+    rule: str
+    n_self_pairs: int
+    rules: list[dict[str, Any]]
 
 
 def _read_synlethdb_csv(path: str) -> pd.DataFrame:
@@ -351,6 +339,8 @@ def _read_synlethdb_csv(path: str) -> pd.DataFrame:
     return df
 
 
+# --- retained utilities: the Entrez -> ORF map of the pinned NCBI GFF, which the
+# loader no longer consults (#1045) and experiments/036 still reads ------------------ #
 def ncbi_gff_path(genome: SCerevisiaeGenome) -> str:
     """Where the genome's directory keeps the pinned ``ncbi_genomic.gff``."""
     return osp.join(genome.genome_root, NCBI_GFF_RELPATH)
@@ -393,143 +383,78 @@ def load_entrez_to_orf(gff_path: str) -> dict[int, str]:
     return mapping
 
 
-def _resolve_side(
-    name: str, entrez: int, genome: SCerevisiaeGenome, entrez_to_orf: Mapping[int, str]
-) -> tuple[str | None, str | None, str]:
-    """``(orf, None, detail)`` when the side resolves, else ``(None, rule, detail)``."""
-    orf = entrez_to_orf.get(entrez)
-    if orf is None:
-        return None, RULE_ENTREZ_NOT_IN_GFF, f"{name} (Entrez {entrez}): not in the GFF"
-    resolution = genome.resolve_gene_name(name)
-    if resolution.is_current_gene and resolution.systematic_name == orf:
-        return orf, None, f"{name} (Entrez {entrez}) -> {orf}"
-    return (
-        None,
-        RULE_NAME_DISAGREES,
-        f"{name} (Entrez {entrez}) -> {orf} by id, but the name resolves "
-        f"{resolution.status.value} to {resolution.systematic_name} "
-        f"(candidates {resolution.candidates})",
+def released_side(name: str, entrez: int) -> ReleasedGeneNamePerturbation:
+    """One side of a pair, exactly as the release names it (#1045)."""
+    return ReleasedGeneNamePerturbation(
+        systematic_gene_name=name,
+        perturbed_gene_name=name,
+        released_gene_name=name,
+        released_gene_id=str(entrez),
+        released_gene_id_namespace=ReleasedGeneIdNamespace.ncbi_entrez_gene,
+        released_kind=None,
+        provenance_gaps=[SYNLETHDB_KIND_GAP],
     )
 
 
-def resolve_pairs(
-    df: pd.DataFrame, genome: SCerevisiaeGenome, entrez_to_orf: Mapping[int, str]
-) -> pd.DataFrame:
-    """Add ``n{1,2}.systematic_name``, ``drop_rule`` and ``drop_detail`` to every row.
-
-    A side resolves to the ORF its Entrez id maps to, and only when its gene name
-    resolves to that same current gene. A row is dropped by the first rule it meets:
-    a side's Entrez id absent from the GFF, a side's name disagreeing with its id
-    (``n1`` is tested before ``n2``), then both sides being one gene. Kept rows have
-    ``drop_rule`` None.
-    """
-    n1_orfs: list[str | None] = []
-    n2_orfs: list[str | None] = []
-    rules: list[str | None] = []
-    details: list[str] = []
-    for n1, e1, n2, e2 in zip(
-        df["n1.name"],
-        df["n1.identifier"],
-        df["n2.name"],
-        df["n2.identifier"],
-        strict=True,
-    ):
-        orf1, rule1, detail1 = _resolve_side(n1, int(e1), genome, entrez_to_orf)
-        orf2, rule2, detail2 = _resolve_side(n2, int(e2), genome, entrez_to_orf)
-        rule = rule1 or rule2
-        if rule is None and orf1 == orf2:
-            rule = RULE_SELF_PAIR
-        n1_orfs.append(orf1)
-        n2_orfs.append(orf2)
-        rules.append(rule)
-        details.append(f"n1 {detail1}; n2 {detail2}")
-    out = df.copy()
-    out["n1.systematic_name"] = n1_orfs
-    out["n2.systematic_name"] = n2_orfs
-    out["drop_rule"] = rules
-    out["drop_detail"] = details
-    return out
-
-
-def drop_log(dataset_name: str, resolved: pd.DataFrame, gff_path: str) -> DropLog:
-    """Build the ledger of a resolved frame (from :func:`resolve_pairs`)."""
-    rules = []
-    for rule in (RULE_ENTREZ_NOT_IN_GFF, RULE_NAME_DISAGREES, RULE_SELF_PAIR):
-        hit = resolved[resolved["drop_rule"] == rule]
-        rules.append(
-            DropRule(
-                rule=rule,
-                description=_RULE_DESCRIPTIONS[rule],
-                n_records=len(hit),
-                rows=[
-                    DroppedRow(
-                        source_row=source_row,
-                        n1_name=str(row["n1.name"]),
-                        n1_entrez=int(row["n1.identifier"]),
-                        n2_name=str(row["n2.name"]),
-                        n2_entrez=int(row["n2.identifier"]),
-                        detail=str(row["drop_detail"]),
-                    )
-                    for source_row, row in zip(
-                        hit.index.tolist(), hit.to_dict("records"), strict=True
-                    )
-                ],
-            )
-        )
-    kept = int(resolved["drop_rule"].isna().sum())
-    return DropLog(
-        dataset=dataset_name,
-        source_records=len(resolved),
-        kept_records=kept,
-        dropped_records=len(resolved) - kept,
-        entrez_source_path=gff_path,
-        entrez_source_sha256=NCBI_GFF_SHA256,
-        rules=rules,
-    )
-
-
-def refuse_duplicate_pairs(kept: pd.DataFrame) -> None:
-    """Raise ``DuplicateOrfPairError`` when two kept rows name one unordered ORF pair."""
-    pairs = [
-        frozenset((a, b))
-        for a, b in zip(
-            kept["n1.systematic_name"], kept["n2.systematic_name"], strict=True
+def pair_keys(df: pd.DataFrame) -> list[frozenset[tuple[str, int]]]:
+    """The unordered (name, Entrez id) pair of every row, in row order."""
+    return [
+        frozenset(((str(n1), int(e1)), (str(n2), int(e2))))
+        for n1, e1, n2, e2 in zip(
+            df["n1.name"],
+            df["n1.identifier"],
+            df["n2.name"],
+            df["n2.identifier"],
+            strict=True,
         )
     ]
+
+
+def refuse_duplicate_pairs(df: pd.DataFrame) -> None:
+    """Raise ``DuplicatePairError`` when two rows name one unordered (name, id) pair."""
+    pairs = pair_keys(df)
     repeated = {pair for pair, n in Counter(pairs).items() if n > 1}
     if repeated:
         rows = [
             int(index)
-            for index, pair in zip(kept.index, pairs, strict=True)
+            for index, pair in zip(df.index, pairs, strict=True)
             if pair in repeated
         ]
-        raise DuplicateOrfPairError(
-            f"{len(repeated)} ORF pair(s) repeat across kept rows {rows}: "
+        raise DuplicatePairError(
+            f"{len(repeated)} released pair(s) repeat across rows {rows}: "
             f"{sorted(sorted(p) for p in repeated)}"
         )
+
+
+def drop_log(dataset_name: str, df: pd.DataFrame) -> DropLog:
+    """The ledger of a build: every row a record, the self pairs counted."""
+    return DropLog(
+        dataset=dataset_name,
+        source_records=int(len(df)),
+        kept_records=int(len(df)),
+        dropped_records=0,
+        rule=RETENTION_RULE,
+        n_self_pairs=sum(1 for pair in pair_keys(df) if len(pair) == 1),
+        rules=[],
+    )
 
 
 def _write_synlethdb_lmdb(
     dataset: "SynthLethalityYeastSynthLethDbDataset | SynthRescueYeastSynthLethDbDataset",
     csv_path: str,
 ) -> None:
-    """Resolve, ledger and write one SynLethDB file (shared by both datasets)."""
-    genome = _require_genome(dataset.genome)
-    df = _read_synlethdb_csv(csv_path)
-    resolved = dataset.preprocess_raw(df)
+    """Read, ledger and write one SynLethDB file (shared by both datasets)."""
+    df = dataset.preprocess_raw(_read_synlethdb_csv(csv_path))
+    refuse_duplicate_pairs(df)
     os.makedirs(dataset.processed_dir, exist_ok=True)
     os.makedirs(dataset.preprocess_dir, exist_ok=True)
-    ledger = drop_log(dataset.name, resolved, ncbi_gff_path(genome))
+    ledger = drop_log(dataset.name, df)
     with open(osp.join(dataset.preprocess_dir, "dropped_records.json"), "w") as f:
         f.write(ledger.model_dump_json(indent=2))
-    kept = resolved[resolved["drop_rule"].isna()]
-    refuse_duplicate_pairs(kept)
-    if sum(rule.n_records for rule in ledger.rules) != ledger.dropped_records:
-        raise RuntimeError("SynLethDB drop accounting does not add up")
 
     env = lmdb.open(osp.join(dataset.processed_dir, "lmdb"), map_size=int(1e12))
     with env.begin(write=True) as txn:
-        for key, (_, row) in enumerate(tqdm(kept.iterrows(), total=len(kept))):
+        for key, (_, row) in enumerate(tqdm(df.iterrows(), total=len(df))):
             experiment, reference, publication = dataset.create_experiment(
                 dataset.name, row
             )
@@ -543,26 +468,11 @@ def _write_synlethdb_lmdb(
             txn.put(f"{key}".encode(), serialized_data)
     env.close()
     log.info(
-        "%s: wrote %d of %d rows (%s)",
+        "%s: wrote %d of %d rows as released (%d name one gene on both sides)",
         dataset.name,
         ledger.kept_records,
         ledger.source_records,
-        ", ".join(f"{r.rule} {r.n_records}" for r in ledger.rules),
-    )
-
-
-def _require_genome(genome: SCerevisiaeGenome | None) -> SCerevisiaeGenome:
-    if genome is None:
-        raise MissingGenomeError(
-            "SynLethDB gene resolution needs the SCerevisiaeGenome passed as genome="
-        )
-    return genome
-
-
-def _preprocess(genome: SCerevisiaeGenome | None, df: pd.DataFrame) -> pd.DataFrame:
-    resolved_genome = _require_genome(genome)
-    return resolve_pairs(
-        df, resolved_genome, load_entrez_to_orf(ncbi_gff_path(resolved_genome))
+        ledger.n_self_pairs,
     )
 
 
@@ -575,15 +485,12 @@ class SynthLethalityYeastSynthLethDbDataset(ExperimentDataset):
     def __init__(
         self,
         root: str = "data/torchcell/syn_leth_db_yeast",
-        genome: SCerevisiaeGenome | None = None,
         io_workers: int = 0,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
     ) -> None:
-        """Keep the genome for a build, then release it once the dataset is ready."""
-        self.genome = genome
+        """Initialize the dataset; every released row is stored as released."""
         super().__init__(root, io_workers, transform, pre_transform)
-        del self.genome
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -631,12 +538,12 @@ class SynthLethalityYeastSynthLethDbDataset(ExperimentDataset):
     def preprocess_raw(
         self, df: pd.DataFrame, preprocess: dict[str, Any] | None = None
     ) -> pd.DataFrame:
-        """Resolve both sides of every row by Entrez id (see :func:`resolve_pairs`)."""
-        return _preprocess(self.genome, df)
+        """Return the released rows unchanged; nothing is resolved (#1045)."""
+        return df
 
     @post_process
     def process(self) -> None:
-        """Verify the raw CSV, resolve and ledger its rows, and write the LMDB."""
+        """Verify the raw CSV, ledger its rows, and write the LMDB."""
         verify_raw_files(self.raw_dir, {SL_CSV_NAME: SL_CSV_SHA256})
         log.info("Processing Synthetic Lethality Yeast Data...")
         _write_synlethdb_lmdb(self, osp.join(self.raw_dir, SL_CSV_NAME))
@@ -654,16 +561,8 @@ class SynthLethalityYeastSynthLethDbDataset(ExperimentDataset):
 
         genotype = Genotype(
             perturbations=[
-                SgaKanMxDeletionPerturbation(
-                    systematic_gene_name=row["n1.systematic_name"],
-                    perturbed_gene_name=row["n1.name"],
-                    strain_id="S288C",
-                ),
-                SgaKanMxDeletionPerturbation(
-                    systematic_gene_name=row["n2.systematic_name"],
-                    perturbed_gene_name=row["n2.name"],
-                    strain_id="S288C",
-                ),
+                released_side(str(row["n1.name"]), int(row["n1.identifier"])),
+                released_side(str(row["n2.name"]), int(row["n2.identifier"])),
             ]
         )
 
@@ -710,15 +609,12 @@ class SynthRescueYeastSynthLethDbDataset(ExperimentDataset):
     def __init__(
         self,
         root: str = "data/torchcell/syn_rescue_db_yeast",
-        genome: SCerevisiaeGenome | None = None,
         io_workers: int = 0,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
     ) -> None:
-        """Keep the genome for a build, then release it once the dataset is ready."""
-        self.genome = genome
+        """Initialize the dataset; every released row is stored as released."""
         super().__init__(root, io_workers, transform, pre_transform)
-        del self.genome
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -766,12 +662,12 @@ class SynthRescueYeastSynthLethDbDataset(ExperimentDataset):
     def preprocess_raw(
         self, df: pd.DataFrame, preprocess: dict[str, Any] | None = None
     ) -> pd.DataFrame:
-        """Resolve both sides of every row by Entrez id (see :func:`resolve_pairs`)."""
-        return _preprocess(self.genome, df)
+        """Return the released rows unchanged; nothing is resolved (#1045)."""
+        return df
 
     @post_process
     def process(self) -> None:
-        """Verify the raw CSV, resolve and ledger its rows, and write the LMDB."""
+        """Verify the raw CSV, ledger its rows, and write the LMDB."""
         verify_raw_files(self.raw_dir, {SR_CSV_NAME: SR_CSV_SHA256})
         log.info("Processing Synthetic Rescue Yeast Data...")
         _write_synlethdb_lmdb(self, osp.join(self.raw_dir, SR_CSV_NAME))
@@ -789,16 +685,8 @@ class SynthRescueYeastSynthLethDbDataset(ExperimentDataset):
 
         genotype = Genotype(
             perturbations=[
-                SgaKanMxDeletionPerturbation(
-                    systematic_gene_name=row["n1.systematic_name"],
-                    perturbed_gene_name=row["n1.name"],
-                    strain_id="S288C",
-                ),
-                SgaKanMxDeletionPerturbation(
-                    systematic_gene_name=row["n2.systematic_name"],
-                    perturbed_gene_name=row["n2.name"],
-                    strain_id="S288C",
-                ),
+                released_side(str(row["n1.name"]), int(row["n1.identifier"])),
+                released_side(str(row["n2.name"]), int(row["n2.identifier"])),
             ]
         )
 
@@ -860,21 +748,13 @@ def main() -> None:
     load_dotenv()
     DATA_ROOT = os.environ["DATA_ROOT"]
 
-    genome = SCerevisiaeGenome(
-        genome_root=osp.join(DATA_ROOT, "data/sgd/genome"),
-        go_root=osp.join(DATA_ROOT, "data/go"),
-        overwrite=False,
-    )
-
     lethality_dataset = SynthLethalityYeastSynthLethDbDataset(
-        root=osp.join(DATA_ROOT, "data/torchcell/synth_lethality_yeast_synth_leth_db"),
-        genome=genome,
+        root=osp.join(DATA_ROOT, "data/torchcell/synth_lethality_yeast_synth_leth_db")
     )
     print(lethality_dataset)
 
     rescue_dataset = SynthRescueYeastSynthLethDbDataset(
-        root=osp.join(DATA_ROOT, "data/torchcell/synth_rescue_yeast_synth_leth_db"),
-        genome=genome,
+        root=osp.join(DATA_ROOT, "data/torchcell/synth_rescue_yeast_synth_leth_db")
     )
     print(rescue_dataset)
 

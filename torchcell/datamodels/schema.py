@@ -1400,7 +1400,7 @@ class SOTerm(ModelStrict):
 #: An S288C systematic feature name: protein-coding genes, pseudogenes and
 #: transposable-element genes (``YAL001C``, ``YAL001C-A``), mitochondrial genes
 #: (``Q0010``) and the non-coding ``YNC`` names. The identity form of every placed yeast
-#: leaf, and what :class:`ReleasedGeneNamePerturbation` refuses.
+#: leaf.
 _SYSTEMATIC_GENE_NAME_RE = re.compile(
     r"^(Y[A-P][LR]\d{3}[WC](-[A-Z])?|Q\d{4}|YNC[A-Q]\d{4}[WC])$"
 )
@@ -4608,7 +4608,9 @@ RELEASED_GENE_KIND_SO: dict[ReleasedGeneKind, tuple[str, str]] = {
 pins: the deletion leaves' ``deletion`` and the expression-modulation leaves' ``sgRNA``."""
 
 
-class ReleasedGeneNamePerturbation(GenePerturbation, ModelStrict):
+class ReleasedGeneNamePerturbation(
+    HashableProvenanceGapMixin, GenePerturbation, ModelStrict
+):
     """One yeast gene identified only by the name its source released.
 
     ``systematic_gene_name`` is the released gene name verbatim (Cachera 2023: the
@@ -4618,15 +4620,19 @@ class ReleasedGeneNamePerturbation(GenePerturbation, ModelStrict):
     annotation decides whether the record exists, no systematic name is derived, so the
     record says exactly what the release says and the join to a genome is a separate,
     later act. A source that also releases a gene id stores it verbatim in
-    ``released_gene_id`` with its namespace (SynLethDB: the NCBI Entrez id). ``released_kind``
-    is what the source says it did to the gene; a CRISPR interference record carries its
-    construct in ``crispr`` and every other kind leaves it None.
+    ``released_gene_id`` with its namespace (SynLethDB: the NCBI Entrez id).
+    ``released_kind`` is what the source says it did to the gene, set or a typed gap
+    (SynLethDB names the gene pair and not the perturbation that made it); a CRISPR
+    interference record carries its construct in ``crispr`` and every other kind leaves
+    it None.
 
     It is NOT placed under the presence/absence or expression axis classes, because the
     axis is a property of the kind; ``mechanism_so`` gives the Sequence Ontology pair of
-    the kind, from :data:`RELEASED_GENE_KIND_SO`. It refuses a systematic name: a
-    released ORF name is stored on the placed leaves, so one kind of record never sits
-    in two classes.
+    the kind, from :data:`RELEASED_GENE_KIND_SO`. A loader places a released name by
+    its form and by what the source states: a systematic name whose kind the source
+    states goes on the placed leaf of that kind, and every other released name (a
+    symbol, or any name whose kind is a gap, as SynLethDB's are) comes here. The leaf
+    refuses a bacterial locus tag, which the placed bacterial leaves carry.
     """
 
     description: str = (
@@ -4646,8 +4652,8 @@ class ReleasedGeneNamePerturbation(GenePerturbation, ModelStrict):
         default=None,
         description="the identifier space of released_gene_id; set exactly when it is",
     )
-    released_kind: ReleasedGeneKind = Field(
-        description="what the source says it did to the gene"
+    released_kind: ReleasedGeneKind | None = Field(
+        description="what the source says it did to the gene; None only with a gap"
     )
     crispr: CrisprConstruct | None = Field(
         default=None,
@@ -4673,16 +4679,11 @@ class ReleasedGeneNamePerturbation(GenePerturbation, ModelStrict):
     @field_validator("systematic_gene_name", mode="after")
     @classmethod
     def validate_sys_gene_name(cls, v: str) -> str:
-        """The released name verbatim, and never a systematic name or a locus tag."""
+        """The released name verbatim, and never a bacterial locus tag."""
         if not v or v != v.strip():
             raise ValueError(
                 f"systematic_gene_name must be the released gene name verbatim, got "
                 f"{v!r}"
-            )
-        if _SYSTEMATIC_GENE_NAME_RE.match(v):
-            raise ValueError(
-                f"{v!r} is a systematic gene name; a released systematic name is stored "
-                "on the placed yeast leaves"
             )
         if _namespace_of_locus_tag(v) is not None:
             raise ValueError(
@@ -4693,7 +4694,10 @@ class ReleasedGeneNamePerturbation(GenePerturbation, ModelStrict):
 
     @model_validator(mode="after")
     def _check_released(self) -> "ReleasedGeneNamePerturbation":
-        """The name is stated once; an id travels with its namespace; CRISPRi has a construct."""
+        """The name is stated once; an id travels with its namespace; the kind is set or
+        gapped; CRISPRi has a construct.
+        """
+        _require_value_or_gap(self, ("released_kind",))
         if self.released_gene_name != self.systematic_gene_name:
             raise ValueError(
                 f"released_gene_name {self.released_gene_name!r} must equal "
@@ -4720,8 +4724,10 @@ class ReleasedGeneNamePerturbation(GenePerturbation, ModelStrict):
         return self
 
     @property
-    def mechanism_so(self) -> tuple[str, str]:
-        """(SO id, SO name) of this perturbation's released kind."""
+    def mechanism_so(self) -> tuple[str, str] | None:
+        """(SO id, SO name) of this perturbation's released kind; None when gapped."""
+        if self.released_kind is None:
+            return None
         return RELEASED_GENE_KIND_SO[self.released_kind]
 
 

@@ -64,6 +64,8 @@ from torchcell.datamodels.schema import (
     MediaComponentRole,
     Publication,
     ReferenceGenome,
+    ReleasedGeneKind,
+    ReleasedGeneNamePerturbation,
     Temperature,
     VisualScoreExperiment,
     VisualScoreExperimentReference,
@@ -194,6 +196,27 @@ def _carotenogenic_cassette() -> list[GeneAdditionPerturbation]:
 # Valid S. cerevisiae systematic ORF name (optional trailing -A/-B for sub-features).
 _SYSTEMATIC_RE = re.compile(r"^Y[A-P][LR]\d{3}[WC](-[A-Z])?$")
 
+
+def _released_deletion(
+    orf: str,
+) -> KanMxDeletionPerturbation | ReleasedGeneNamePerturbation:
+    """The deletion under the released identifier (#1045): an ORF-shaped one on the
+    placed KanMX leaf with both names the ORF, any other on the released-gene-name leaf
+    verbatim (kind deletion, marker KanMX).
+    """
+    if _SYSTEMATIC_RE.match(orf):
+        return KanMxDeletionPerturbation(
+            systematic_gene_name=orf, perturbed_gene_name=orf
+        )
+    return ReleasedGeneNamePerturbation(
+        systematic_gene_name=orf,
+        perturbed_gene_name=orf,
+        released_gene_name=orf,
+        released_kind=ReleasedGeneKind.deletion,
+        marker="KanMX",
+    )
+
+
 # QC / phenotype flags parsed from the free-text Comment column (case-insensitive).
 _FLAG_PATTERNS: dict[str, str] = {
     "flag_petite": r"petite|\bpet\b",
@@ -305,7 +328,7 @@ class CarotenoidOzaydin2013Dataset(ExperimentDataset):
         }
 
         rows: list[dict[str, Any]] = []
-        deferred: list[str] = []
+        released_names: list[str] = []
         text_rows: list[dict[str, Any]] = []
         n_blank_orf = 0
         for _, row in df.iterrows():
@@ -315,8 +338,7 @@ class CarotenoidOzaydin2013Dataset(ExperimentDataset):
                 continue
             orf = str(orf).strip().upper()
             if not _SYSTEMATIC_RE.match(orf):
-                deferred.append(orf)
-                continue
+                released_names.append(orf)
             num, text = _parse_color(row.get("Color"))
             strain = (
                 str(row["Strain"]).strip() if pd.notna(row.get("Strain")) else "BY4741"
@@ -349,15 +371,16 @@ class CarotenoidOzaydin2013Dataset(ExperimentDataset):
                     "n_records": n_blank_orf,
                 },
                 {
-                    "rule": "deferred_to_released_gene_name_leaf",
+                    "rule": "stored_on_released_gene_name_leaf",
                     "description": (
                         "the released ORF cell is not ORF-shaped (YLR287-A: the release "
-                        "dropped the strand letter), so it cannot sit on "
-                        "KanMxDeletionPerturbation; stored once the released-gene-name "
-                        "leaf lands, never resolved against the genome"
+                        "dropped the strand letter), so its rows are stored on "
+                        "ReleasedGeneNamePerturbation under that name verbatim, never "
+                        "resolved against the genome and never dropped (#1045); listed "
+                        "here, not removed"
                     ),
-                    "n_records": len(deferred),
-                    "items": sorted(deferred),
+                    "n_records": 0,
+                    "items": sorted(released_names),
                 },
                 {
                     "rule": "color_cell_is_text_not_a_score",
@@ -381,11 +404,11 @@ class CarotenoidOzaydin2013Dataset(ExperimentDataset):
         usable, accounting = self._released_rows()
         log.info(
             "Ozaydin: %d released rows, %d records (one per scored row); %d text-only "
-            "rows and %d rows deferred to the released-gene-name leaf listed in the ledger",
+            "rows listed in the ledger, %d names on the released-gene-name leaf",
             accounting["source_rows"],
             len(usable),
             accounting["rules"][2]["n_records"],
-            accounting["rules"][1]["n_records"],
+            len(accounting["rules"][1]["items"]),
         )
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
@@ -429,12 +452,7 @@ class CarotenoidOzaydin2013Dataset(ExperimentDataset):
             species="Saccharomyces cerevisiae", strain=str(row["strain"])
         )
         genotype = Genotype(
-            perturbations=[
-                KanMxDeletionPerturbation(
-                    systematic_gene_name=row["orf"], perturbed_gene_name=row["orf"]
-                ),
-                *_carotenogenic_cassette(),
-            ]
+            perturbations=[_released_deletion(row["orf"]), *_carotenogenic_cassette()]
         )
         # Screen scored on SC-URA agar (URA-selective plasmid), 30 C.
         environment = Environment(

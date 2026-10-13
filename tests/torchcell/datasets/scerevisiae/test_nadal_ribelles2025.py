@@ -173,8 +173,8 @@ def test_an_unknown_condition_is_refused_before_any_store(
 def test_build_logs_the_gene_ledger_and_every_skipped_table(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
-    """On the synthetic tables: 5 records, 12 gene values under their released names,
-    1 genotype label deferred (named).
+    """On the synthetic tables: 6 records, 11 gene values under their released names,
+    1 genotype label on the released-gene-name leaf (named).
     """
     monkeypatch.setenv("DATA_ROOT", str(tmp_path / "data_root"))
     _write_files(tmp_path / "nadal" / "raw")
@@ -183,11 +183,11 @@ def test_build_logs_the_gene_ledger_and_every_skipped_table(
     messages = [r.getMessage() for r in caplog.records if r.name == m.log.name]
     assert messages == [
         "Loading FC_genotype.Rdata (426 MB; ~6 min) ...",
-        "Record Control/NOTANORF: genotype label is not ORF-shaped; deferred to the "
+        "Record Control/NOTANORF: genotype label is not ORF-shaped; stored on the "
         "released-gene-name leaf",
-        "Read 5 records as released; 10 gene values under their released names; 1 "
-        "genotype labels deferred to the released-gene-name leaf",
-        "Wrote 5 pseudobulk records to LMDB",
+        "Read 6 records as released; 11 gene values under their released names; 1 "
+        "genotype labels on the released-gene-name leaf",
+        "Wrote 6 pseudobulk records to LMDB",
     ]
 
 
@@ -258,7 +258,7 @@ def test_main_builds_under_data_root_and_prints_record_zero(
     assert capsys.readouterr().out == (
         # printed by the base class's reference-index pass during the build
         "Computing experiment_reference_index (streaming)...\n"
-        "len = 5\n"
+        "len = 6\n"
         f"record[0] perturbations: {[perturbation]}\n"
         "record[0] n phenotype genes: 5\n"
         "record[0] dispersion: 1.25 n_cells: 120\n"

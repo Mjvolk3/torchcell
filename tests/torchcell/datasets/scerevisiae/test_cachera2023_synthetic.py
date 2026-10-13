@@ -3,27 +3,25 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/datasets/scerevisiae/test_cachera2023_synthetic.py
 """Hermetic build of the Cachera 2023 CRI-SPA betaxanthin loader on a synthetic CSV.
 
-``GA1_2_4_6.csv`` is written into ``<root>/raw/`` so PyG never calls ``download()``. The
-genome stub implements ``resolve_gene_name`` (real ``GeneNameResolution`` objects) and
-``feature_index["standard_to_ids"]``, which ``canonical_common_names`` reads: current ORFs
-YAL001C (TFC3), YBR001C (NTH2), YCR001W (no standard name), YDR001C (NTH1); aliases
-OLDNAME -> YDR001C and TFC3ALIAS -> YAL001C (renamed); FLO8X -> YER109C as a
-``blocked_reading_frame`` non-gene feature; anything else retired.
+``GA1_2_4_6.csv`` is written into ``<root>/raw/`` so PyG never calls ``download()``. No
+genome is read (#1045): every row that names a gene and carries a level is a record
+under the token the ``gene`` cell releases, upper-cased; a systematic name goes on
+``KanMxDeletionPerturbation`` and any other name on ``ReleasedGeneNamePerturbation``.
 
 Rows (gene, 24 h mean, std, count):
 
-    TFC3       1.5    0.3   4      -> YAL001C, TFC3, SE 0.3 / sqrt(4) = 0.15, n 4
-    YBR001C    0.5    0.1   1      -> NTH2 from the genome; count 1 -> SE NaN, n 1
-    ycr001w    -0.25  (blank) (blank) -> no standard name -> stores the ORF; n = 1, SE NaN
-    OLDNAME    2.0    0.6   3      -> YDR001C, NTH1, SE 0.6 / sqrt(3), n 3
-    FLO8X      0.75   0.2   2      -> YER109C kept (non-gene feature), SE 0.2 / sqrt(2)
-    WT         0.0    0.1   4      -> retired -> unresolved, dropped
-    0          1.0    0.1   4      -> control row
-    (blank)    1.0    0.1   4      -> gene NaN -> control row
-    NTH2       (blank) 0.1  4      -> level NaN -> control row
-    TFC3ALIAS  9.0    0.1   4      -> resolves to YAL001C, already seen -> collision
+    TFC3       1.5    0.3   4      -> released symbol, SE 0.3 / sqrt(4) = 0.15, n 4
+    YBR001C    0.5    0.1   1      -> placed leaf; count 1 -> SE NaN, n 1
+    ycr001w    -0.25  (blank) (blank) -> YCR001W on the placed leaf; n = 1, SE NaN
+    OLDNAME    2.0    0.6   3      -> released symbol as written, SE 0.6 / sqrt(3), n 3
+    FLO8X      0.75   0.2   2      -> released symbol, SE 0.2 / sqrt(2)
+    WT         0.0    0.1   4      -> the control row, no record
+    0          1.0    0.1   4      -> no gene named, no record
+    (blank)    1.0    0.1   4      -> gene NaN, no record
+    NTH2       (blank) 0.1  4      -> level NaN, no record
+    TFC3ALIAS  9.0    0.1   4      -> released symbol, a record of its own beside TFC3
 
-Five records; the reference is the population-centered 0.0 for every record.
+Six records; the reference is the population-centered 0.0 for every record.
 """
 
 from __future__ import annotations
@@ -31,7 +29,6 @@ from __future__ import annotations
 import hashlib
 import json
 import math
-import re
 from pathlib import Path
 from typing import Any, cast
 
@@ -42,7 +39,6 @@ from torchcell.data.experiment_dataset import verify_raw_files
 from torchcell.datamodels.schema import (
     Environment,
     Genotype,
-    KanMxDeletionPerturbation,
     MetaboliteExperiment,
     MetaboliteExperimentReference,
     MetabolitePhenotype,
@@ -50,11 +46,6 @@ from torchcell.datamodels.schema import (
     ReferenceGenome,
 )
 from torchcell.datasets.scerevisiae import cachera2023 as m
-from torchcell.sequence.genome.scerevisiae.s288c import (
-    GeneNameResolution,
-    GeneNameStatus,
-    SCerevisiaeGenome,
-)
 
 _CSV_ROWS = [
     ["TFC3", "1.5", "0.3", "4"],
@@ -68,46 +59,6 @@ _CSV_ROWS = [
     ["NTH2", "", "0.1", "4"],
     ["TFC3ALIAS", "9.0", "0.1", "4"],
 ]
-_CURRENT = {"YAL001C", "YBR001C", "YCR001W", "YDR001C"}
-_STANDARD = {"TFC3": ["YAL001C"], "NTH2": ["YBR001C"], "NTH1": ["YDR001C"]}
-_ALIASES = {"OLDNAME": "YDR001C", "TFC3ALIAS": "YAL001C"}
-
-
-class _StubGenome:
-    feature_index = {"standard_to_ids": _STANDARD}
-
-    def resolve_gene_name(self, name: str) -> GeneNameResolution:
-        upper = name.strip().upper()
-        if upper in _CURRENT:
-            return GeneNameResolution(
-                input_name=name, status=GeneNameStatus.CURRENT, systematic_name=upper
-            )
-        if upper in _STANDARD:
-            return GeneNameResolution(
-                input_name=name,
-                status=GeneNameStatus.RENAMED,
-                systematic_name=_STANDARD[upper][0],
-            )
-        if upper in _ALIASES:
-            return GeneNameResolution(
-                input_name=name,
-                status=GeneNameStatus.RENAMED,
-                systematic_name=_ALIASES[upper],
-            )
-        if upper == "FLO8X":
-            return GeneNameResolution(
-                input_name=name,
-                status=GeneNameStatus.NON_GENE_FEATURE,
-                systematic_name="YER109C",
-                feature_type="blocked_reading_frame",
-            )
-        return GeneNameResolution(
-            input_name=name, status=GeneNameStatus.RETIRED, systematic_name=upper
-        )
-
-
-def _genome() -> SCerevisiaeGenome:
-    return cast(SCerevisiaeGenome, _StubGenome())
 
 
 def _root(tmp_path: Path, slug: str = "betaxanthin_cachera2023") -> Path:
@@ -122,7 +73,7 @@ def _root(tmp_path: Path, slug: str = "betaxanthin_cachera2023") -> Path:
 
 @pytest.fixture
 def dataset(tmp_path: Path) -> m.BetaxanthinCachera2023Dataset:
-    return m.BetaxanthinCachera2023Dataset(root=str(_root(tmp_path)), genome=_genome())
+    return m.BetaxanthinCachera2023Dataset(root=str(_root(tmp_path)))
 
 
 _ENVIRONMENT = Environment(
@@ -149,18 +100,11 @@ _PUBLICATION = Publication(
 ).model_dump()
 
 
-def _experiment(
-    orf: str, common: str, level: float, se: float, n: int
-) -> dict[str, Any]:
+def _experiment(gene: str, level: float, se: float, n: int) -> dict[str, Any]:
     return MetaboliteExperiment(
         dataset_name="BetaxanthinCachera2023Dataset",
         genotype=Genotype(
-            perturbations=[
-                KanMxDeletionPerturbation(
-                    systematic_gene_name=orf, perturbed_gene_name=common
-                ),
-                *m._betaxanthin_cassette(),
-            ]
+            perturbations=[m._released_deletion(gene), *m._betaxanthin_cassette()]
         ),
         environment=_ENVIRONMENT,
         phenotype=MetabolitePhenotype(
@@ -180,23 +124,37 @@ def _pop_se(experiment: dict[str, Any]) -> float:
     return cast(float, se["betaxanthin"])
 
 
-def test_five_records_with_genome_standard_names_and_se_from_std_over_sqrt_count(
+def test_six_records_under_released_names_with_se_from_std_over_sqrt_count(
     dataset: m.BetaxanthinCachera2023Dataset,
 ) -> None:
-    """Ten rows give five records in source order; the three control/NaN rows, ``WT``
-    (unresolved) and ``TFC3ALIAS`` (ORF collision) are dropped. The stored common name
-    is the genome's standard name (TFC3, NTH2, NTH1), or the ORF when none exists.
+    """Ten rows give six records in source order; the three rows naming no gene or
+    carrying no level and the ``WT`` control have none. A symbol is stored as written
+    (OLDNAME, TFC3ALIAS: no annotation is asked whether they alias another gene), a
+    systematic name on the placed leaf.
     """
-    assert len(dataset) == 5
-    assert dataset[0]["experiment"] == _experiment("YAL001C", "TFC3", 1.5, 0.15, 4)
+    assert len(dataset) == 6
+    assert dataset[0]["experiment"] == _experiment("TFC3", 1.5, 0.15, 4)
     assert dataset[3]["experiment"] == _experiment(
-        "YDR001C", "NTH1", 2.0, 0.6 / math.sqrt(3), 3
+        "OLDNAME", 2.0, 0.6 / math.sqrt(3), 3
     )
-    assert dataset[4]["experiment"] == _experiment(
-        "YER109C", "YER109C", 0.75, 0.2 / math.sqrt(2), 2
-    )
+    assert dataset[4]["experiment"] == _experiment("FLO8X", 0.75, 0.2 / math.sqrt(2), 2)
+    assert dataset[5]["experiment"] == _experiment("TFC3ALIAS", 9.0, 0.05, 4)
     assert dataset[0]["reference"] == _REFERENCE
     assert dataset[0]["publication"] == _PUBLICATION
+    kinds = {
+        p["systematic_gene_name"]: p["perturbation_type"]
+        for i in range(6)
+        for p in dataset[i]["experiment"]["genotype"]["perturbations"]
+        if p["perturbation_type"] != "gene_addition"
+    }
+    assert kinds == {
+        "TFC3": "released_gene_name",
+        "YBR001C": "kanmx_deletion",
+        "YCR001W": "kanmx_deletion",
+        "OLDNAME": "released_gene_name",
+        "FLO8X": "released_gene_name",
+        "TFC3ALIAS": "released_gene_name",
+    }
 
 
 def test_single_count_rows_store_nan_se_and_n_one(
@@ -204,21 +162,20 @@ def test_single_count_rows_store_nan_se_and_n_one(
 ) -> None:
     """Finding: with count 1 (YBR001C) or a blank count (ycr001w -> count 1) the SE is
     stored as ``nan`` inside the dict rather than ``None``, so these records carry a
-    non-comparable SE; every other field matches the hand-built record.
+    non-comparable SE; every other field matches the hand-built record. The lower-case
+    ``ycr001w`` is upper-cased to its systematic name.
     """
-    for i, (orf, common, level) in enumerate(
-        [("YBR001C", "NTH2", 0.5), ("YCR001W", "YCR001W", -0.25)], start=1
-    ):
+    for i, (gene, level) in enumerate([("YBR001C", 0.5), ("YCR001W", -0.25)], start=1):
         actual = dataset[i]["experiment"]
         assert math.isnan(_pop_se(actual))
-        expected = _experiment(orf, common, level, 0.0, 1)
+        expected = _experiment(gene, level, 0.0, 1)
         _pop_se(expected)
         assert actual == expected
 
 
 def test_side_files(dataset: m.BetaxanthinCachera2023Dataset) -> None:
-    """``data.csv`` carries orf, common, level, se (blank for NaN) and n; one shared
-    reference covers all five records.
+    """``data.csv`` carries gene, level, se (blank for NaN) and n; one shared reference
+    covers all six records; the ledger names the four rows without a record.
 
     Finding: the gene set includes the cassette's ``CYP76AD1`` and ``DOD`` symbols plus
     ``YBR249C``/``YPR060C`` because ``compute_gene_set`` reads every perturbation.
@@ -227,41 +184,40 @@ def test_side_files(dataset: m.BetaxanthinCachera2023Dataset) -> None:
     assert dataset.reference_class is MetaboliteExperimentReference
     preprocess = Path(dataset.root) / "preprocess"
     assert (preprocess / "data.csv").read_text() == (
-        "orf,common,level,se,n\n"
-        "YAL001C,TFC3,1.5,0.15,4\n"
-        "YBR001C,NTH2,0.5,,1\n"
-        "YCR001W,YCR001W,-0.25,,1\n"
-        f"YDR001C,NTH1,2.0,{0.6 / math.sqrt(3)},3\n"
-        f"YER109C,YER109C,0.75,{0.2 / math.sqrt(2)},2\n"
+        "gene,level,se,n\n"
+        "TFC3,1.5,0.15,4\n"
+        "YBR001C,0.5,,1\n"
+        "YCR001W,-0.25,,1\n"
+        f"OLDNAME,2.0,{0.6 / math.sqrt(3)},3\n"
+        f"FLO8X,0.75,{0.2 / math.sqrt(2)},2\n"
+        "TFC3ALIAS,9.0,0.05,4\n"
     )
     assert json.loads((preprocess / "gene_set.json").read_text()) == [
         "CYP76AD1",
         "DOD",
-        "YAL001C",
+        "FLO8X",
+        "OLDNAME",
+        "TFC3",
+        "TFC3ALIAS",
         "YBR001C",
         "YBR249C",
         "YCR001W",
-        "YDR001C",
-        "YER109C",
         "YPR060C",
     ]
     index = json.loads((preprocess / "experiment_reference_index.json").read_text())
-    assert [entry["member_indices"] for entry in index] == [[0, 1, 2, 3, 4]]
+    assert [entry["member_indices"] for entry in index] == [[0, 1, 2, 3, 4, 5]]
     manifest = json.loads((preprocess / "build_manifest.json").read_text())
     assert manifest["dataset_name"] == "betaxanthin_cachera2023"
     assert manifest["loader_class"] == "BetaxanthinCachera2023Dataset"
     assert manifest["loader_module"] == "torchcell.datasets.scerevisiae.cachera2023"
-
-
-def test_requires_an_injected_genome(tmp_path: Path) -> None:
-    with pytest.raises(
-        RuntimeError,
-        match=re.escape(
-            "Cachera2023 requires an injected SCerevisiaeGenome to resolve common gene "
-            "names to systematic ORF ids (source uses common names)."
-        ),
-    ):
-        m.BetaxanthinCachera2023Dataset(root=str(_root(tmp_path)), genome=None)
+    ledger = m.DropLog.model_validate_json(
+        (preprocess / "dropped_records.json").read_text()
+    )
+    assert (ledger.kept_records, ledger.dropped_records) == (6, 4)
+    assert [(r.rule, r.items) for r in ledger.rules] == [
+        (m.RULE_NO_GENE_OR_LEVEL, ["0", "nan", "NTH2"]),
+        (m.RULE_CONTROL_ROW, ["WT"]),
+    ]
 
 
 def test_process_rejects_a_present_file_with_the_wrong_sha256(

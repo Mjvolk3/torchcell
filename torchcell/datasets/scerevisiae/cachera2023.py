@@ -22,12 +22,18 @@ corrected+filtered dataset combining screen replicates 1/2/4/6 -- using the 24 h
 `corrected_mean_intensity` (mean/std/count) as the betaxanthin level + SE + n.
 
 Maps to `MetabolitePhenotype` (WS4): `metabolite_level = {"betaxanthin": score}` with
-`measurement_type = "cri_spa_corrected_hsv_yellowness_24h"`. Gene names in the
-source are COMMON names, so a genome is required to resolve them to systematic ORF ids
-(same pattern as Sameith); unresolved names + control/NaN rows are excluded and logged.
-The varying deletion stores the genome's own standard name as `perturbed_gene_name`
-(`canonical_common_names`, shared with the Smith/Mormino/Lian loaders), so one gene keeps
-one spelling across datasets; an ORF with no round-tripping standard name stores the id.
+`measurement_type = "cri_spa_corrected_hsv_yellowness_24h"`.
+
+Every row that names a gene and carries a 24 h level is one record under the name the
+``gene`` column releases, verbatim (#1045): a systematic name goes on
+``KanMxDeletionPerturbation`` (both names the ORF), any other name on
+``ReleasedGeneNamePerturbation`` (the released symbol, kind ``deletion``, marker KanMX).
+The token is upper-cased (two systematic names are released in mixed case) and
+otherwise verbatim. No genome is consulted and nothing is renamed or merged; the pinned
+file (4,788 rows) repeats no gene token. The rows without a record are the 27 whose gene cell is ``0`` or
+blank or whose level is blank and the one ``WT`` control, listed in
+``preprocess/dropped_records.json``. Before #1045 the loader resolved every symbol
+through a genome (4,719 records), dropping 11 names and merging 30 collisions.
 """
 
 import logging
@@ -35,12 +41,14 @@ import math
 import os
 import os.path as osp
 import pickle
+import re
 import urllib.request
 from collections.abc import Callable
-from typing import Any, cast
+from typing import Any
 
 import lmdb
 import pandas as pd
+from pydantic import BaseModel
 from tqdm import tqdm
 
 from torchcell.data import (
@@ -69,10 +77,10 @@ from torchcell.datamodels.schema import (
     MetabolitePhenotype,
     Publication,
     ReferenceGenome,
+    ReleasedGeneKind,
+    ReleasedGeneNamePerturbation,
 )
 from torchcell.datasets.dataset_registry import register_dataset
-from torchcell.datasets.scerevisiae.smith2006 import canonical_common_names
-from torchcell.sequence.genome.scerevisiae import GeneNameStatus, SCerevisiaeGenome
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import (
     ProvenanceGap,
@@ -261,6 +269,72 @@ _LEVEL = "corrected_mean_intensity.24_mean"
 _STD = "corrected_mean_intensity.24_std"
 _COUNT = "corrected_mean_intensity.24_count"
 
+#: An S288C systematic name, the form that goes on the placed deletion leaf.
+_SYSTEMATIC_RE = re.compile(
+    r"^(Y[A-P][LR]\d{3}[WC](-[A-Z])?|Q\d{4}|YNC[A-Q]\d{4}[WC])$"
+)
+
+#: The two kinds of released row that are not a record (#1045), by name.
+RULE_NO_GENE_OR_LEVEL = "gene_cell_is_0_or_blank_or_level_is_blank"
+RULE_CONTROL_ROW = "control_row"
+_RULE_DESCRIPTIONS = {
+    RULE_NO_GENE_OR_LEVEL: (
+        "the gene cell is '0' or blank (an empty plate position) or the 24 h corrected "
+        "level is blank, so the row names no deletion strain with a measurement"
+    ),
+    RULE_CONTROL_ROW: (
+        "the gene cell is 'WT', the unperturbed CRI-SPA Donor background, which is the "
+        "reference and not a deletion strain"
+    ),
+}
+_CONTROL_TOKENS = frozenset({"WT"})
+
+
+def _released_deletion(
+    gene: str,
+) -> KanMxDeletionPerturbation | ReleasedGeneNamePerturbation:
+    """The varying deletion under the name the ``gene`` column releases (#1045).
+
+    A systematic name goes on the placed KanMX leaf with both names the ORF; any other
+    name goes on the released-gene-name leaf as the symbol the source wrote.
+    """
+    if _SYSTEMATIC_RE.match(gene):
+        return KanMxDeletionPerturbation(
+            systematic_gene_name=gene, perturbed_gene_name=gene
+        )
+    return ReleasedGeneNamePerturbation(
+        systematic_gene_name=gene,
+        perturbed_gene_name=gene,
+        released_gene_name=gene,
+        released_kind=ReleasedGeneKind.deletion,
+        marker="KanMX",
+    )
+
+
+class RepeatedGeneError(ValueError):
+    """Two released rows carry one gene token; one strain is one record."""
+
+
+class DropRule(BaseModel):
+    """One rule and the released rows it left without a record."""
+
+    rule: str
+    description: str
+    n_records: int
+    items: list[str]
+
+
+class DropLog(BaseModel):
+    """The build's accounting: every released row is a record or listed here."""
+
+    dataset: str
+    source_records: int
+    kept_records: int
+    kept_under_systematic_name: int
+    kept_under_released_symbol: int
+    dropped_records: int
+    rules: list[DropRule]
+
 
 @register_dataset
 class BetaxanthinCachera2023Dataset(ExperimentDataset):
@@ -272,13 +346,11 @@ class BetaxanthinCachera2023Dataset(ExperimentDataset):
         self,
         root: str = "data/torchcell/betaxanthin_cachera2023",
         io_workers: int = 0,
-        genome: SCerevisiaeGenome | None = None,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize the dataset; a genome is required to resolve common gene names."""
-        self.genome = genome
+        """Initialize the dataset; every row is stored under its released gene name."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -317,62 +389,34 @@ class BetaxanthinCachera2023Dataset(ExperimentDataset):
         write_verified(data, dest, DATA_SHA256, DATA_URL)
         log.info("Wrote %s (%d bytes, sha256 verified)", dest, len(data))
 
-    def _resolve_systematic(self, gene: str) -> str | None:
-        """Resolve a source gene name (common or systematic) to an R64 identifier.
-
-        Uses the genome's layered resolver. Returns the current R64 identifier for a live
-        gene, an SGD rename, or a valid non-"gene" feature (e.g. a ``blocked_reading_frame``
-        pseudogene such as ``YER109C``/FLO8 or ``YFL056C``/AAD6 -- REAL loci that are
-        retained, not dropped). Returns None only when the name is not a recognisable R64
-        feature (a control like ``WT`` or a malformed id), which the caller drops.
-        """
-        genome = cast(SCerevisiaeGenome, self.genome)
-        res = genome.resolve_gene_name(gene)
-        if (
-            res.status
-            in (
-                GeneNameStatus.CURRENT,
-                GeneNameStatus.RENAMED,
-                GeneNameStatus.NON_GENE_FEATURE,
-            )
-            and res.systematic_name is not None
-        ):
-            return res.systematic_name
-        return None
-
     @post_process
     def process(self) -> None:
-        """Parse the CRI-SPA dataset into per-ORF Metabolite experiments and write LMDB."""
+        """Store every released deletion row as a Metabolite experiment; write LMDB."""
         verify_raw_files(self.raw_dir, {DATA_FILENAME: DATA_SHA256})
-        if self.genome is None:
-            raise RuntimeError(
-                "Cachera2023 requires an injected SCerevisiaeGenome to resolve common "
-                "gene names to systematic ORF ids (source uses common names)."
-            )
         df = pd.read_csv(osp.join(self.raw_dir, DATA_FILENAME))
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
-        canonical = canonical_common_names(self.genome)
-        n_control_or_nan = 0
-        unresolved: set[str] = set()
+        no_gene_or_level: list[str] = []
+        control: list[str] = []
         seen: set[str] = set()
-        collisions: set[str] = set()
         rows: list[dict[str, Any]] = []
         for _, row in df.iterrows():
             gene = str(row["gene"]).strip()
             level = row[_LEVEL]
             if gene in ("0", "nan", "") or pd.isna(level):
-                n_control_or_nan += 1
+                no_gene_or_level.append(gene)
                 continue
-            systematic = self._resolve_systematic(gene)
-            if systematic is None:
-                unresolved.add(gene)
+            if gene in _CONTROL_TOKENS:
+                control.append(gene)
                 continue
-            # Distinct source names can alias to the same ORF; keep the first, log rest.
-            if systematic in seen:
-                collisions.add(systematic)
-                continue
-            seen.add(systematic)
+            # two systematic names are released in mixed case (YAL043C-a, YML009c);
+            # a systematic name is case-insensitive, so the token is upper-cased
+            gene = gene.upper()
+            if gene in seen:
+                raise RepeatedGeneError(
+                    f"GA1_2_4_6.csv names {gene!r} on two rows; one strain is one record"
+                )
+            seen.add(gene)
             count = int(row[_COUNT]) if pd.notna(row[_COUNT]) else 1
             std = row[_STD]
             se = (
@@ -380,37 +424,43 @@ class BetaxanthinCachera2023Dataset(ExperimentDataset):
                 if pd.notna(std) and count > 1
                 else float("nan")
             )
-            # `common` is the genome's own standard name for the resolved ORF, so
-            # `perturbed_gene_name` carries the same spelling this gene gets in every
-            # other loader (the L1 `canonical_gene_names` rule), with the systematic id
-            # kept for the 789 ORFs that have no round-tripping standard name. Taking it
-            # from the genome rather than from the source column is what normalizes the
-            # 408 rows whose 2023-era spelling has since been superseded (ACN9 -> SDH7,
-            # AIM1 -> BOL3). Storing `systematic` twice, as this loader did before issue
-            # #195, threw a name the source supplied for 3,930 of 4,719 records.
             rows.append(
-                {
-                    "orf": systematic,
-                    "common": canonical.get(systematic, systematic),
-                    "level": float(level),
-                    "se": se,
-                    "n": max(count, 1),
-                }
+                {"gene": gene, "level": float(level), "se": se, "n": max(count, 1)}
             )
-        # Unresolved names are dropped by design (never guessed into an ORF): 'WT' is a
-        # control and 'YLR287-A' is a malformed id. Names that resolve to a valid non-"gene"
-        # R64 feature (AAD6/CRS5/FLO8 -> YFL056C/YOR031W/YER109C, blocked_reading_frame
-        # pseudogenes) are now RETAINED via the genome resolver rather than dropped -- they
-        # are real loci with a real perturbation. Log the full unresolved list (only a
-        # handful) so the drop stays auditable.
+        n_systematic = sum(1 for r in rows if _SYSTEMATIC_RE.match(r["gene"]))
+        drop_log = DropLog(
+            dataset=self.name,
+            source_records=int(len(df)),
+            kept_records=len(rows),
+            kept_under_systematic_name=n_systematic,
+            kept_under_released_symbol=len(rows) - n_systematic,
+            dropped_records=len(no_gene_or_level) + len(control),
+            rules=[
+                DropRule(
+                    rule=RULE_NO_GENE_OR_LEVEL,
+                    description=_RULE_DESCRIPTIONS[RULE_NO_GENE_OR_LEVEL],
+                    n_records=len(no_gene_or_level),
+                    items=no_gene_or_level,
+                ),
+                DropRule(
+                    rule=RULE_CONTROL_ROW,
+                    description=_RULE_DESCRIPTIONS[RULE_CONTROL_ROW],
+                    n_records=len(control),
+                    items=control,
+                ),
+            ],
+        )
+        with open(osp.join(self.preprocess_dir, "dropped_records.json"), "w") as fh:
+            fh.write(drop_log.model_dump_json(indent=2))
         log.info(
-            "Cachera: %d usable ORFs, %d control/NaN rows, %d unresolved names dropped %s, "
-            "%d ORF collisions deduped",
+            "Cachera: %d records (%d under a systematic name, %d under a released "
+            "symbol), %d rows without a gene or a level, %d control rows %s",
             len(rows),
-            n_control_or_nan,
-            len(unresolved),
-            sorted(unresolved),
-            len(collisions),
+            n_systematic,
+            len(rows) - n_systematic,
+            len(no_gene_or_level),
+            len(control),
+            sorted(control),
         )
         pd.DataFrame(rows).to_csv(
             osp.join(self.preprocess_dir, "data.csv"), index=False
@@ -444,17 +494,12 @@ class BetaxanthinCachera2023Dataset(ExperimentDataset):
     def create_experiment(  # type: ignore[override]
         self, row: dict[str, Any]
     ) -> tuple[MetaboliteExperiment, MetaboliteExperimentReference, Publication]:
-        """Build the Metabolite experiment/reference/publication for one ORF."""
+        """Build the Metabolite experiment/reference/publication for one released row."""
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae", strain="BY4741"
         )
         genotype = Genotype(
-            perturbations=[
-                KanMxDeletionPerturbation(
-                    systematic_gene_name=row["orf"], perturbed_gene_name=row["common"]
-                ),
-                *_betaxanthin_cassette(),
-            ]
+            perturbations=[_released_deletion(row["gene"]), *_betaxanthin_cassette()]
         )
         # Issue #509: YPD + G418 screen plate (line 117), no stated temperature.
         environment = Environment(
@@ -499,21 +544,16 @@ class BetaxanthinCachera2023Dataset(ExperimentDataset):
 def main() -> None:
     """Build/load the dataset for interactive debugging.
 
-    A genome is REQUIRED (the source uses common gene names). Loads the existing LMDB
-    if already built; to step through ``process()``/``create_experiment`` under a
-    debugger, delete ``<root>/processed`` first so the build re-runs.
+    Loads the existing LMDB if already built; to step through ``process()`` /
+    ``create_experiment`` under a debugger, delete ``<root>/processed`` first so the
+    build re-runs.
     """
     from dotenv import load_dotenv
 
     load_dotenv()
     data_root = os.environ["DATA_ROOT"]
-    genome = SCerevisiaeGenome(
-        genome_root=osp.join(data_root, "data/sgd/genome"),
-        go_root=osp.join(data_root, "data/go"),
-        overwrite=False,
-    )
     root = osp.join(data_root, "data/torchcell/betaxanthin_cachera2023")
-    dataset = BetaxanthinCachera2023Dataset(root=root, genome=genome)
+    dataset = BetaxanthinCachera2023Dataset(root=root)
     print(f"len = {len(dataset)}")
     print(dataset[0])
 

@@ -106,6 +106,8 @@ from torchcell.datamodels.schema import (
     PseudobulkExpressionPhenotype,
     Publication,
     ReferenceGenome,
+    ReleasedGeneKind,
+    ReleasedGeneNamePerturbation,
     SmallMoleculePerturbation,
     Temperature,
 )
@@ -340,19 +342,21 @@ class NadalRibellesPerturbSeq2025Dataset(ExperimentDataset):
         records: list[dict[str, Any]] = []
         cond_union: dict[str, dict[str, float]] = {}
         n_gene_values = 0
-        deferred_labels: list[str] = []
+        released_labels: list[str] = []
         for key in tqdm(fcs.keys(), desc="reading pseudobulk records"):
             cond, raw_orf = _parse_fc_key(str(key))
             sys_name = _deletion_systematic(raw_orf)
             if sys_name is None:
-                deferred_labels.append(raw_orf)
-                log.warning(
-                    "Record %s/%s: genotype label is not ORF-shaped; deferred to the "
+                # the label names no ORF: stored on the released-gene-name leaf verbatim
+                # (#1045), upper-cased as every label is
+                sys_name = raw_orf.upper()
+                released_labels.append(sys_name)
+                log.info(
+                    "Record %s/%s: genotype label is not ORF-shaped; stored on the "
                     "released-gene-name leaf",
                     cond,
                     raw_orf,
                 )
-                continue
             table = fcs[key]
             names = [str(x).strip() for x in table["names"]]
             lfcs = [float(x) for x in table["logfoldchanges"]]
@@ -383,10 +387,10 @@ class NadalRibellesPerturbSeq2025Dataset(ExperimentDataset):
             )
         log.info(
             "Read %d records as released; %d gene values under their released names; "
-            "%d genotype labels deferred to the released-gene-name leaf",
+            "%d genotype labels on the released-gene-name leaf",
             len(records),
             n_gene_values,
-            len(deferred_labels),
+            len(released_labels),
         )
         with open(osp.join(self.preprocess_dir, "dropped_records.json"), "w") as fh:
             json.dump(
@@ -394,19 +398,19 @@ class NadalRibellesPerturbSeq2025Dataset(ExperimentDataset):
                     "dataset": self.name,
                     "source_records": len(fcs),
                     "kept_records": len(records),
-                    "dropped_records": len(deferred_labels),
+                    "dropped_records": len(fcs) - len(records),
                     "rules": [
                         {
-                            "rule": "deferred_to_released_gene_name_leaf",
+                            "rule": "stored_on_released_gene_name_leaf",
                             "description": (
                                 "the fcs genotype label is not ORF-shaped, so the deleted "
-                                "gene cannot be stored on MarkerDeletionPerturbation, whose "
-                                "systematic_gene_name is validated against the ORF pattern; "
-                                "stored once the released-gene-name leaf lands (0 of 6188 "
-                                "released tables)"
+                                "gene is stored on ReleasedGeneNamePerturbation under the "
+                                "label verbatim with the URA3 marker and its strain id "
+                                "(#1045), never dropped; listed here (0 of 6188 released "
+                                "tables)"
                             ),
-                            "n_records": len(deferred_labels),
-                            "items": sorted(deferred_labels),
+                            "n_records": 0,
+                            "items": sorted(released_labels),
                         }
                     ],
                 },
@@ -526,16 +530,24 @@ class NadalRibellesPerturbSeq2025Dataset(ExperimentDataset):
         Publication,
     ]:
         """Build the pseudobulk experiment/reference/publication for one record."""
-        genotype = Genotype(
-            perturbations=[
-                MarkerDeletionPerturbation(
-                    systematic_gene_name=row["systematic_gene_name"],
-                    perturbed_gene_name=row["perturbed_gene_name"],
-                    marker=DELETION_MARKER,
-                    strain_id=row["strain_id"],
-                )
-            ]
-        )
+        perturbation: MarkerDeletionPerturbation | ReleasedGeneNamePerturbation
+        if _SYSTEMATIC_RE.match(row["systematic_gene_name"]):
+            perturbation = MarkerDeletionPerturbation(
+                systematic_gene_name=row["systematic_gene_name"],
+                perturbed_gene_name=row["perturbed_gene_name"],
+                marker=DELETION_MARKER,
+                strain_id=row["strain_id"],
+            )
+        else:
+            perturbation = ReleasedGeneNamePerturbation(
+                systematic_gene_name=row["systematic_gene_name"],
+                perturbed_gene_name=row["perturbed_gene_name"],
+                released_gene_name=row["systematic_gene_name"],
+                released_kind=ReleasedGeneKind.deletion,
+                marker=DELETION_MARKER,
+                strain_id=row["strain_id"],
+            )
+        genotype = Genotype(perturbations=[perturbation])
         environment = self._environment(row["condition"])
         phenotype = PseudobulkExpressionPhenotype(
             expression_log2_ratio=row["expression_log2_ratio"],

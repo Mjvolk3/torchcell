@@ -477,6 +477,7 @@ def test_het_side_files_gene_set_reference_index_and_manifest(
         "UncertaintyType",
         "Zygosity",
         "_ARTIFACT_SHA256",
+        "_SYSTEMATIC_GENE_NAME_RE",
         "_Z95",
         "_require_value_or_gap",
         "_validate_so_id",

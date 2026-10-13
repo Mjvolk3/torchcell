@@ -7,7 +7,7 @@ The loader's data is the module literal ``TABLE_1`` (12 isolated strains); the r
 are only the article PDF (never read by ``process()``) and ``paper.md``, which the build
 audits every Table 1 row against verbatim. Both are written under ``<root>/raw/`` so PyG
 never calls ``download()``: the PDF as stub bytes, ``paper.md`` as one HTML row per
-``table_1_row_fragment``. ``process()`` runs once against a duck-typed genome stub
+``table_1_row_fragment``. ``process()`` runs once with no genome (#1045)
 carrying ``resolve_gene_name`` and ``feature_index["standard_to_ids"]``; the stub is the
 authority for every mapping (QCR8 YJL166W, TIF34 YMR146C, MSN5 YDR335W, NDC1 YML031W,
 PAP1 YKR002W, CBP2 YHL038C, COX10 YPL172C, TRA1 YHR099W, UBA2 YDR390C, RPS30B YOR182C,
@@ -32,7 +32,7 @@ import socket
 import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import lmdb
 import pytest
@@ -45,7 +45,6 @@ from torchcell.datamodels.schema import (
     Concentration,
     ConcentrationUnit,
     CrisprConstruct,
-    CrisprInterferencePerturbation,
     Environment,
     EnvironmentPhysicalPerturbation,
     EnvironmentResponseExperiment,
@@ -56,6 +55,8 @@ from torchcell.datamodels.schema import (
     PhysicalFactor,
     Publication,
     ReferenceGenome,
+    ReleasedGeneKind,
+    ReleasedGeneNamePerturbation,
     ResponseCategory,
     SampleUnit,
     SmallMoleculePerturbation,
@@ -72,7 +73,6 @@ from torchcell.literature.manifest import (
     RetrievalMethod,
     RetrievalRecord,
 )
-from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 
 _ORF = {
     "QCR8": "YJL166W",
@@ -88,41 +88,6 @@ _ORF = {
     "HSH49": "YOR319W",
     "LCB1": "YMR296C",
 }
-
-
-class _Resolution:
-    """The two attributes and the one property the loader reads from a resolution."""
-
-    def __init__(self, status: str, systematic: str | None) -> None:
-        self.status = status
-        self.systematic_name = systematic
-
-    @property
-    def is_current_gene(self) -> bool:
-        return self.status in ("current", "renamed")
-
-
-class _StubGenome:
-    """A genome whose standard names are ``standard``; everything else is retired."""
-
-    def __init__(self, standard: dict[str, str]) -> None:
-        self.standard = standard
-        self.gene_set = set(standard.values())
-        self.feature_index = {
-            "standard_to_ids": {name: [orf] for name, orf in standard.items()}
-        }
-
-    def resolve_gene_name(self, name: str) -> _Resolution:
-        upper = name.strip().upper()
-        if upper in self.gene_set:
-            return _Resolution("current", upper)
-        if upper in self.standard:
-            return _Resolution("renamed", self.standard[upper])
-        return _Resolution("retired", upper)
-
-
-def _genome(standard: dict[str, str] = _ORF) -> SCerevisiaeGenome:
-    return cast(SCerevisiaeGenome, _StubGenome(standard))
 
 
 def _paper_md(rows: list[tuple[str, str, str, str]] = mo.TABLE_1) -> str:
@@ -146,7 +111,7 @@ def _root(tmp_path: Path, slug: str = "crispri_mormino2022") -> Path:
 
 @pytest.fixture
 def dataset(tmp_path: Path) -> mo.CrispriMormino2022Dataset:
-    return mo.CrispriMormino2022Dataset(root=str(_root(tmp_path)), genome=_genome())
+    return mo.CrispriMormino2022Dataset(root=str(_root(tmp_path)))
 
 
 _PUBLICATION = Publication(
@@ -184,9 +149,11 @@ def _experiment(common: str, rfp: str) -> EnvironmentResponseExperiment:
         dataset_name="CrispriMormino2022Dataset",
         genotype=Genotype(
             perturbations=[
-                CrisprInterferencePerturbation(
-                    systematic_gene_name=_ORF[common],
+                ReleasedGeneNamePerturbation(
+                    systematic_gene_name=common,
                     perturbed_gene_name=common,
+                    released_gene_name=common,
+                    released_kind=ReleasedGeneKind.crispr_interference,
                     crispr=CrisprConstruct(
                         effector="dCas9-Mxi1", guide_sequence=None, n_guides=1
                     ),
@@ -245,8 +212,9 @@ def test_build_writes_the_twelve_table_1_strains_as_categorical_records(
     ``+`` rows (#3 QCR8, #8 TIF34, #13 MSN5, #17 PAP1, #33 COX10, #35 TRA1) store
     ``enhanced`` / ``+``, ``=`` rows (#15 NDC1, #32 CBP2, #37 UBA2, #43 RPS30B, #46 HSH49,
     #49 LCB1) store ``no_change`` / ``=``; ``environment_response`` is None on every
-    record, the perturbed name is the genome's standard name, and the two cassette
-    additions ride in every genotype. The publication carries PMID 36284296 and the DOI.
+    record, the target is stored under the name Table 1 releases on the
+    released-gene-name leaf (#1045), and the two cassette additions ride in every
+    genotype. The publication carries PMID 36284296 and the DOI.
     """
     assert len(dataset) == 12
     assert [dataset[i]["experiment"] for i in range(12)] == [
@@ -279,7 +247,7 @@ def test_build_writes_the_twelve_table_1_strains_as_categorical_records(
         for p in genotype
     ] == [
         ("BM3R1-HAA1-mTurquoise2", "BM3R1-HAA1-mTurquoise2", "gene_addition"),
-        ("YJL166W", "QCR8", "crispr_interference"),
+        ("QCR8", "QCR8", "released_gene_name"),
         ("sfpHluorin", "sfpHluorin", "gene_addition"),
     ]
     assert dataset[0]["publication"] == _PUBLICATION.model_dump()
@@ -307,23 +275,10 @@ def test_one_cbl_reference_and_the_gene_set_carries_the_cassette_slots(
     assert [dataset[i]["reference"] for i in range(12)] == [
         _REFERENCE.model_dump()
     ] * 12
-    assert json.loads((preprocess / "gene_set.json").read_text()) == [
-        "BM3R1-HAA1-mTurquoise2",
-        "YDR335W",
-        "YDR390C",
-        "YHL038C",
-        "YHR099W",
-        "YJL166W",
-        "YKR002W",
-        "YML031W",
-        "YMR146C",
-        "YMR296C",
-        "YOR182C",
-        "YOR319W",
-        "YPL172C",
-        "sfpHluorin",
-    ]
-    assert dataset.gene_set == set(_ORF.values()) | mo.BACKGROUND_GENES
+    assert json.loads((preprocess / "gene_set.json").read_text()) == sorted(
+        [*_ORF, *mo.BACKGROUND_GENES]
+    )
+    assert dataset.gene_set == set(_ORF) | mo.BACKGROUND_GENES
     assert dataset.experiment_class is EnvironmentResponseExperiment
     assert dataset.reference_class is EnvironmentResponseExperimentReference
     manifest = json.loads((preprocess / "build_manifest.json").read_text())
@@ -340,7 +295,7 @@ def test_one_cbl_reference_and_the_gene_set_carries_the_cassette_slots(
     assert manifest["hostname"] == socket.gethostname()
     assert manifest["torchcell_commit"] == head
     assert {
-        "CrisprInterferencePerturbation",
+        "ReleasedGeneNamePerturbation",
         "GeneAdditionPerturbation",
         "EnvironmentPhysicalPerturbation",
     } <= set(manifest["closure"])
@@ -366,8 +321,8 @@ def test_drop_log_records_the_single_no_op_rule(
                 "description": (
                     "no retention rule removes a Mormino record: acetic acid, "
                     "anhydrotetracycline and DMSO all resolve to a structure identifier, "
-                    "all 12 targets resolve to current R64 genes, and every Table 1 row "
-                    "is verified verbatim against the OCR table"
+                    "all 12 targets are stored under the names Table 1 releases (#1045), "
+                    "and every Table 1 row is verified verbatim against the OCR table"
                 ),
                 "n_records": 0,
                 "items": [],
@@ -381,7 +336,7 @@ def test_store_reopens_without_a_genome_and_serves_the_getters(
     dataset: mo.CrispriMormino2022Dataset,
 ) -> None:
     """With ``processed/lmdb`` present a second instance on the same root skips both
-    ``download()`` and ``process()`` (no genome, raw files deleted): twelve equal records,
+    ``download()`` and ``process()`` (raw files deleted): twelve equal records,
     ``get([0, 11])`` as a list, ``dataset[[0, 11]]`` as PyG's two-item subset,
     ``transform_item`` rebuilding the typed LCB1 record, ``repr``
     ``CrispriMormino2022Dataset(12)``, and the inline hooks.
@@ -390,7 +345,7 @@ def test_store_reopens_without_a_genome_and_serves_the_getters(
     dataset.close_lmdb()
     for name in (mo.PDF_FILENAME, mo.PAPER_MD):
         (Path(dataset.root) / "raw" / name).unlink()
-    reopened = mo.CrispriMormino2022Dataset(root=dataset.root, genome=None)
+    reopened = mo.CrispriMormino2022Dataset(root=dataset.root)
     assert len(reopened) == 12
     assert [reopened[i] for i in range(12)] == records
     assert reopened.get([0, 11]) == [records[0], records[11]]
@@ -406,65 +361,12 @@ def test_store_reopens_without_a_genome_and_serves_the_getters(
         "publication": _PUBLICATION,
     }
     assert repr(reopened) == "CrispriMormino2022Dataset(12)"
-    assert reopened.gene_set == set(_ORF.values()) | mo.BACKGROUND_GENES
+    assert reopened.gene_set == set(_ORF) | mo.BACKGROUND_GENES
     with pytest.raises(NotImplementedError):
         reopened.create_experiment()
     sentinel = object()
     assert reopened.preprocess_raw(sentinel) is sentinel
     reopened.close_lmdb()
-
-
-def test_genome_none_fails_on_the_bare_assert_not_the_resolver_message(
-    tmp_path: Path, dataset: mo.CrispriMormino2022Dataset
-) -> None:
-    """Finding: ``process()`` asserts ``self.genome is not None`` (mormino2022.py 620)
-    before the first ``_resolve`` call (637), so a build with ``genome=None`` raises a
-    bare ``AssertionError`` with an empty message and the loader's own "requires a
-    genome; inject SCerevisiaeGenome(...)" message (552-554) is unreachable from a build.
-    Called directly on a built instance whose genome is cleared, ``_resolve`` raises it.
-    No ``processed/lmdb`` is left behind by the failed build.
-    """
-    root = _root(tmp_path, "no_genome")
-    with pytest.raises(AssertionError) as excinfo:
-        mo.CrispriMormino2022Dataset(root=str(root), genome=None)
-    assert str(excinfo.value) == ""
-    assert not (root / "processed" / "lmdb").exists()
-    dataset.genome = None
-    with pytest.raises(
-        RuntimeError,
-        match=re.escape(
-            "CrispriMormino2022Dataset requires a genome; inject SCerevisiaeGenome(...)"
-        ),
-    ):
-        dataset._resolve("QCR8")
-
-
-def test_unresolved_table_1_gene_raises_and_leaves_a_store_a_retry_serves_empty(
-    tmp_path: Path,
-) -> None:
-    """Finding: a Table 1 gene the genome does not resolve raises the loader's message
-    naming the gene and the resolver status, but the write env was already opened at
-    mormino2022.py 633, so the failed build leaves an empty ``processed/lmdb`` (the
-    aborted transaction wrote nothing) and no ``dropped_records.json``; a retry on the
-    same root, even with a complete genome, finds the store present, skips ``process()``
-    and serves 0 records. The root has to be cleared by hand before a rebuild.
-    """
-    root = _root(tmp_path, "partial")
-    incomplete = {name: orf for name, orf in _ORF.items() if name != "LCB1"}
-    with pytest.raises(
-        RuntimeError,
-        match=re.escape(
-            "Mormino2022: gene 'LCB1' did not resolve to a current R64 gene (retired)"
-        ),
-    ):
-        mo.CrispriMormino2022Dataset(root=str(root), genome=_genome(incomplete))
-    assert (root / "processed" / "lmdb").is_dir()
-    assert not (root / "preprocess" / "dropped_records.json").exists()
-    assert not (root / "preprocess" / "gene_set.json").exists()
-    retry = mo.CrispriMormino2022Dataset(root=str(root), genome=_genome())
-    assert len(retry) == 0
-    assert not (root / "preprocess" / "dropped_records.json").exists()
-    retry.close_lmdb()
 
 
 def test_audit_failure_raises_before_the_store_is_opened_so_a_retry_rebuilds(
@@ -485,10 +387,10 @@ def test_audit_failure_raises_before_the_store_is_opened_so_a_retry_rebuilds(
             f"1 Table 1 rows are not present verbatim in paper.md: ['{fragment}']"
         ),
     ):
-        mo.CrispriMormino2022Dataset(root=str(root), genome=_genome())
+        mo.CrispriMormino2022Dataset(root=str(root))
     assert not (root / "processed" / "lmdb").exists()
     (root / "raw" / mo.PAPER_MD).write_text(_paper_md(), encoding="utf-8")
-    retry = mo.CrispriMormino2022Dataset(root=str(root), genome=_genome())
+    retry = mo.CrispriMormino2022Dataset(root=str(root))
     assert len(retry) == 12
     assert retry[11]["experiment"] == _EXPECTED[11].model_dump()
     retry.close_lmdb()
@@ -640,7 +542,7 @@ def test_download_links_the_verified_mirror_and_refuses_drift_or_absence(
     monkeypatch.setenv("DATA_ROOT", str(data_root))
     manifest_path = data_root / "torchcell-raw" / mo.CITATION_KEY / "manifest.json"
     with pytest.raises(FileNotFoundError, match=re.escape(str(manifest_path))):
-        mo.CrispriMormino2022Dataset(root=str(tmp_path / "a"), genome=_genome())
+        mo.CrispriMormino2022Dataset(root=str(tmp_path / "a"))
 
     staging, pdf_sha, md_sha = _staged_raw(tmp_path, "staging")
     monkeypatch.setattr(mo, "PDF_SHA256", pdf_sha)
@@ -651,7 +553,7 @@ def test_download_links_the_verified_mirror_and_refuses_drift_or_absence(
     root = tmp_path / "b"
     (root / "raw").mkdir(parents=True)
     os.symlink(mirror / "paper.pdf", root / "raw" / mo.PDF_FILENAME)
-    built = mo.CrispriMormino2022Dataset(root=str(root), genome=_genome())
+    built = mo.CrispriMormino2022Dataset(root=str(root))
     assert (root / "raw" / mo.PDF_FILENAME).is_symlink()
     assert (root / "raw" / mo.PDF_FILENAME).resolve() == (
         mirror / "paper.pdf"
@@ -666,7 +568,7 @@ def test_download_links_the_verified_mirror_and_refuses_drift_or_absence(
     (mirror / "paper.md").write_text("drifted upstream", encoding="utf-8")
     drifted = _sha256(mirror / "paper.md")
     with pytest.raises(RawSha256MismatchError) as err:
-        mo.CrispriMormino2022Dataset(root=str(tmp_path / "c"), genome=_genome())
+        mo.CrispriMormino2022Dataset(root=str(tmp_path / "c"))
     assert str(err.value) == (
         f"sha256 mismatch for {mirror / 'paper.md'}: expected {md_sha}, "
         f"observed {drifted}"
@@ -679,7 +581,7 @@ def test_download_links_the_verified_mirror_and_refuses_drift_or_absence(
             f"required raw artifact missing from mirror: {mirror / 'paper.md'}"
         ),
     ):
-        mo.CrispriMormino2022Dataset(root=str(tmp_path / "d"), genome=_genome())
+        mo.CrispriMormino2022Dataset(root=str(tmp_path / "d"))
 
 
 def test_a_raw_file_off_the_pin_is_refused_at_build_time(
@@ -694,7 +596,7 @@ def test_a_raw_file_off_the_pin_is_refused_at_build_time(
     staged = off_pin_raw(mo, [mo.PDF_FILENAME, mo.PAPER_MD])
     raw = staged.root / "raw" / mo.PDF_FILENAME
     with pytest.raises(RawSha256MismatchError) as err:
-        mo.CrispriMormino2022Dataset(root=str(staged.root), genome=_genome())
+        mo.CrispriMormino2022Dataset(root=str(staged.root))
     assert str(err.value) == (
         f"sha256 mismatch for {raw}: expected "
         "388f8e922b0b94fba3a41965035eeee0f6180a110869073a426df96b5e63746a, "

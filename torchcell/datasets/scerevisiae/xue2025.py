@@ -41,16 +41,15 @@ baseline of THREE deletions (POX1, FAA1, FAA4). The genotype string is
 ``N`` = 3 + (number of TF letters). ``wt BY4741`` -> no deletions (true WT, the
 reference); ``+ve Ctrl`` -> the baseline only; e.g. ``P-S-Y 6d`` ->
 [POX1, FAA1, FAA4, RPD3, SPT3, YAP6]. We ASSERT ``len(TF letters) + 3 == N`` for every
-parsed row. All 13 genes (baseline + 10 TFs) resolve to current R64 systematic ORFs.
+parsed row. All 13 genes (baseline + 10 TFs) are stored under their released names.
 
-AMBIGUOUS NAME (#886): ``TFC7`` is the standard name of ``YOR110W`` (TFIIIC subunit tau 55)
-and a secondary alias of ``YNL039W`` (BDP1). Names resolve through
-``gene_alias_resolution.resolve_gene_name_strict``: a name with one candidate ORF resolves
-to it, an ambiguous name only through a pin in ``AMBIGUOUS_ALIAS_PINS`` whose rule is
-re-checked against the injected genome, and anything else is refused. The release names
-only the common name, so the rule for ``TFC7`` is the SGD standard name in the R64 GFF.
-Before this fix the loader took the first alias-table candidate and stored ``YNL039W`` in
-46 of 176 records. Every other name of the 13 has exactly one candidate ORF.
+GENE IDENTITY (#1045): the release names every gene by its common name only, and each
+is stored under that name verbatim on ``ReleasedGeneNamePerturbation`` (kind
+``deletion``, marker KanMX); a systematic name, had the release used one, would go on
+``KanMxDeletionPerturbation``. No genome is consulted, so ``TFC7`` (the standard name of
+YOR110W and an alias of YNL039W) is stored as the symbol the release wrote, and the join
+to R64 is a modeling-time act. Before #1045 the loader resolved every name through
+``resolve_gene_name_strict`` with a pin for TFC7 (#886).
 
 REPLICATE STRUCTURE: 3 GC replicate columns per FFA. Some strains released fewer than 3
 replicates (an entire replicate column is blank across all FFAs -- 10 strains have 2, one
@@ -105,7 +104,7 @@ import os.path as osp
 import pickle
 import re
 from collections.abc import Callable
-from typing import Any, cast
+from typing import Any
 
 import lmdb
 import pandas as pd
@@ -131,18 +130,11 @@ from torchcell.datamodels.schema import (
     MetabolitePhenotype,
     Publication,
     ReferenceGenome,
+    ReleasedGeneKind,
+    ReleasedGeneNamePerturbation,
     Temperature,
 )
-from torchcell.datamodels.strain_background import R64_GFF
 from torchcell.datasets.dataset_registry import register_dataset
-from torchcell.datasets.gene_alias_resolution import (
-    AliasResolutionRule,
-    PinnedAliasResolution,
-    check_ambiguous_aliases,
-    pin_table,
-    resolve_gene_name_strict,
-)
-from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -174,21 +166,28 @@ _EXPECTED_CODE_TO_GENE = {
     "T": "TFC7",
 }
 
-# Ambiguous gene names of the release, each with the ORF stored for it and its source (#886).
-# ``TFC7`` has two candidate ORFs (YNL039W lists it as an alias; YOR110W owns it as its
-# standard name). The release gives no ORF, so the SGD standard name decides: the quote is
-# the verbatim start of YOR110W's gene row in the R64-4-1 GFF.
-AMBIGUOUS_ALIAS_PINS = pin_table(
-    [
-        PinnedAliasResolution(
-            alias="TFC7",
-            systematic_name="YOR110W",
-            rule=AliasResolutionRule.SGD_STANDARD_NAME,
-            provenance=R64_GFF,
-            quote="ID=YOR110W;Name=YOR110W;gene=TFC7;",
-        )
-    ]
+#: An S288C systematic name, the form that goes on the placed deletion leaf.
+_SYSTEMATIC_RE = re.compile(
+    r"^(Y[A-P][LR]\d{3}[WC](-[A-Z])?|Q\d{4}|YNC[A-Q]\d{4}[WC])$"
 )
+
+
+def _released_deletion(
+    gene: str,
+) -> KanMxDeletionPerturbation | ReleasedGeneNamePerturbation:
+    """The deletion under the name the release gives (#1045)."""
+    if _SYSTEMATIC_RE.match(gene):
+        return KanMxDeletionPerturbation(
+            systematic_gene_name=gene, perturbed_gene_name=gene
+        )
+    return ReleasedGeneNamePerturbation(
+        systematic_gene_name=gene,
+        perturbed_gene_name=gene,
+        released_gene_name=gene,
+        released_kind=ReleasedGeneKind.deletion,
+        marker="KanMX",
+    )
+
 
 # 5 FFAs x 3 replicate columns (0-based positions in the titer sheet; col0 = genotype).
 _FFA_COLUMNS: dict[str, list[int]] = {
@@ -222,13 +221,11 @@ class FattyAcidXue2025Dataset(ExperimentDataset):
         self,
         root: str = "data/torchcell/ffa_xue2025",
         io_workers: int = 0,
-        genome: SCerevisiaeGenome | None = None,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize the dataset; a genome is REQUIRED to resolve gene names to R64 ORFs."""
-        self.genome = genome
+        """Initialize the dataset; every gene is stored under its released name."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -280,11 +277,6 @@ class FattyAcidXue2025Dataset(ExperimentDataset):
                 f"got {code_to_gene}, expected {_EXPECTED_CODE_TO_GENE}"
             )
         return code_to_gene
-
-    def _resolve_systematic(self, name: str) -> str:
-        """Resolve a gene name to one R64 ORF; an ambiguous name needs its pin (#886)."""
-        genome = cast(SCerevisiaeGenome, self.genome)
-        return resolve_gene_name_strict(genome, name, AMBIGUOUS_ALIAS_PINS)
 
     def _decode_genotype(
         self, label: str, code_to_gene: dict[str, str]
@@ -353,27 +345,18 @@ class FattyAcidXue2025Dataset(ExperimentDataset):
             aerobicity="aerobic",
         )
 
-    def _genotype(self, deleted_genes: list[str]) -> Genotype:
-        """Build a Genotype: one KanMX-representative deletion per deleted gene."""
-        perturbations: list[GenePerturbationType] = []
-        for common in deleted_genes:
-            orf = self._resolve_systematic(common)
-            perturbations.append(
-                KanMxDeletionPerturbation(
-                    systematic_gene_name=orf, perturbed_gene_name=common
-                )
-            )
+    @staticmethod
+    def _genotype(deleted_genes: list[str]) -> Genotype:
+        """Build a Genotype: one deletion per deleted gene, under its released name."""
+        perturbations: list[GenePerturbationType] = [
+            _released_deletion(common) for common in deleted_genes
+        ]
         return Genotype(perturbations=perturbations)
 
     @post_process
     def process(self) -> None:
         """Parse the raw-titer sheet into per-strain Metabolite experiments; write LMDB."""
         verify_raw_files(self.raw_dir, {DATA_FILENAME: DATA_SHA256})
-        if self.genome is None:
-            raise RuntimeError(
-                "FattyAcidXue2025Dataset requires an injected SCerevisiaeGenome to resolve "
-                "gene names against R64."
-            )
         code_to_gene = self._code_to_gene()
         path = osp.join(self.raw_dir, DATA_FILENAME)
         raw = pd.read_excel(path, sheet_name=_TITER_SHEET, header=None)
@@ -407,10 +390,8 @@ class FattyAcidXue2025Dataset(ExperimentDataset):
         ref_dump = reference.model_dump()
         pub_dump = publication.model_dump()
 
-        # Every record is built, and the ambiguous-name check run over every stored
-        # (name, ORF) pair, BEFORE anything is written (#886).
+        # Every record is built BEFORE anything is written.
         experiments: list[MetaboliteExperiment] = []
-        genotypes: list[Genotype] = []
         summary: list[dict[str, Any]] = []
         for _, row in df.iterrows():
             label = str(row[0]).strip()
@@ -418,7 +399,6 @@ class FattyAcidXue2025Dataset(ExperimentDataset):
             if not deleted:  # true WT -> reference only, not an experiment record
                 continue
             genotype = self._genotype(deleted)
-            genotypes.append(genotype)
             experiments.append(
                 MetaboliteExperiment(
                     dataset_name=self.name,
@@ -431,23 +411,9 @@ class FattyAcidXue2025Dataset(ExperimentDataset):
                 {
                     "genotype": label,
                     "n_deletions": len(deleted),
-                    "orfs": ";".join(genotype.systematic_gene_names),
+                    "genes": ";".join(genotype.systematic_gene_names),
                 }
             )
-        audit = check_ambiguous_aliases(
-            self.genome,
-            (
-                (p.perturbed_gene_name, p.systematic_gene_name)
-                for genotype in genotypes
-                for p in genotype.perturbations
-            ),
-            AMBIGUOUS_ALIAS_PINS,
-        )
-        log.info(
-            "Xue2025 ambiguous-name check: %d (name, ORF) pairs, pinned names %s",
-            audit.n_pairs,
-            audit.ambiguous,
-        )
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
         os.makedirs(self.processed_dir, exist_ok=True)
@@ -487,18 +453,13 @@ class FattyAcidXue2025Dataset(ExperimentDataset):
 
 
 def main() -> None:
-    """Build/load the dataset for interactive debugging (a genome is REQUIRED)."""
+    """Build/load the dataset for interactive debugging."""
     from dotenv import load_dotenv
 
     load_dotenv()
     data_root = os.environ["DATA_ROOT"]
-    genome = SCerevisiaeGenome(
-        genome_root=osp.join(data_root, "data/sgd/genome"),
-        go_root=osp.join(data_root, "data/go"),
-        overwrite=False,
-    )
     root = osp.join(data_root, "data/torchcell/ffa_xue2025")
-    dataset = FattyAcidXue2025Dataset(root=root, genome=genome)
+    dataset = FattyAcidXue2025Dataset(root=root)
     print(f"len = {len(dataset)}")
     print(dataset[0])
 

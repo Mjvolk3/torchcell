@@ -282,7 +282,31 @@ def test_a_repeated_pair_and_a_non_pair_fail_their_l1_rows() -> None:
         "n_repeated": 1,
         "examples": ["YAL001C+YBR085W"],
     }
-    assert _result(report, "two_distinct_genes").details["n_bad"] == 3
+    distinct = _result(report, "two_distinct_genes")
+    assert distinct.passed is False
+    assert distinct.details["n_bad"] == 2
+    assert distinct.details["n_self_pairs"] == 1
+    assert distinct.details["expected_self_pairs"] == 0
+
+
+def test_a_declared_self_pair_passes_two_distinct_genes_only_on_its_count() -> None:
+    """#1045: a loader that stores a release's self pairs declares how many; the row
+    passes on exactly that count and fails on any other.
+    """
+    records = [*_records(), _record(("YAL001C", "YAL001C"), 0.9, "14")]
+    report = _verify(
+        records, released=_released(n_rows=3, stated=None), expected_self_pairs=1
+    )
+    distinct = _result(report, "two_distinct_genes")
+    assert distinct.passed is True
+    assert distinct.message == (
+        "all 2 records perturb two distinct named genes at graph level 'edge' and 1 "
+        "name one gene on both sides, as the loader declares"
+    )
+    off = _verify(
+        records, released=_released(n_rows=3, stated=None), expected_self_pairs=2
+    )
+    assert _result(off, "two_distinct_genes").passed is False
 
 
 def test_release_accounting_and_rows_fail_on_drift_and_on_counts() -> None:

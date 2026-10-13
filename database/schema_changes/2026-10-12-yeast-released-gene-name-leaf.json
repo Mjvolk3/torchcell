@@ -2,7 +2,7 @@
   "record_version": 1,
   "slug": "yeast-released-gene-name-leaf",
   "date": "2026-10-12",
-  "pr": null,
+  "pr": 1085,
   "author_kind": "agent",
   "base_commit": "db632f2b0f7450c597f700c63a2543e57a0dbf16",
   "python_version": "3.13.0",
@@ -92,7 +92,7 @@
         "additive_leaf"
       ],
       "fingerprint_before": null,
-      "fingerprint_after": "72bdc2bc376208bba42ccd403933c5dd97286fd7347a9cc82b47c6f5e27ae327",
+      "fingerprint_after": "d72f280b69207d8ef1f1138c51099b81b29cc09d5dc6202f0999e20b64f56ffb",
       "impact": "stale",
       "reasons": [
         "new symbol"
@@ -112,7 +112,7 @@
       ]
     }
   ],
-  "correctness_argument": "Every yeast gene-perturbation leaf before this change requires systematic_gene_name to match the S288C systematic-name regex of GenePerturbation.validate_sys_gene_name, so a loader whose source releases a gene by its symbol alone had to resolve the symbol through a genome annotation before it could store a record, and the annotation then decided which records exist: a symbol the annotation lacks, a retired or ambiguous alias, two symbols that resolve to one ORF, or an allele the schema has no carrier for were dropped or merged. The owner rule of 2026-10-12 is that the data is the data: ingestion stores what the source released, only an author withdrawal drops a record, and the genome joins at modeling time (#1045, #1065). Measured on the released files: Cachera 2023 GA1_2_4_6.csv (sha256 71f55609...) releases 4,788 rows under a 'gene' column of which 1,167 are systematic names and 3,616 are symbols (plus 'WT' and '0' controls), with no token repeated; SynLethDB Yeast_SL.csv (sha256 091e04db...) releases both genes of each of its 14,000 pairs as a symbol and an NCBI Entrez id, of which 1 pair's id is in no R64 GFF; the pinned SGD dump (digest 1cb4ed59...) holds 42 inviable null annotations on a named allele that is not the whole-gene deletion (cdc24p-\u2206CH, rsc3-C14G, gcd11-K250A), which the loader ledgers and never stores. ReleasedGeneNamePerturbation stores one gene exactly as released: the source's symbol verbatim in systematic_gene_name and released_gene_name, the source's gene id verbatim with its namespace when one is released (SynLethDB's Entrez id), and the kind the source states (ReleasedGeneKind, each with an SO pair the schema already pins); a CRISPR interference record carries its CrisprConstruct. NamedAllelePerturbation stores an allele under the name its source gives, on the gene's systematic name, with the generic sequence_variant mechanism of the axis root because the source states no sequence change. Both are strictly additive: no existing leaf, field or validator changes its accepted set; the systematic-name regex of GenePerturbation is hoisted to a module constant (_SYSTEMATIC_GENE_NAME_RE) that the base validator and the new leaf share, which moves the fingerprint and accepts exactly the same strings. The new leaf stores the released identifier IN systematic_gene_name rather than gapping it, as the bacterial released leaves do (#691): the root field stays required and its meaning on the placed leaves is untouched, the ontology's Liskov invariant holds (a child cannot loosen a parent field), and a released symbol and a released systematic name never sit in one class because the leaf refuses the systematic form and the placed leaves refuse everything else. A loader places each released token by its form: a systematic name on the placed leaf it used before, a symbol on ReleasedGeneNamePerturbation. DAG placement: ReleasedGeneNamePerturbation is a direct child of GenePerturbation beside the bacterial released leaves (BacterialReleasedStrainPerturbation, BacterialReleasedCrisprPerturbation, BacterialReleasedTransposonPerturbation), not under PresenceAbsencePerturbation or ExpressionModulationPerturbation, because the axis is a property of the released kind; NamedAllelePerturbation is a child of SequencePerturbation beside ConditionalAllelePerturbation and SequenceVariantPerturbation. The union widening re-stales every store whose closure holds GenePerturbationType; the served stores whose records change content are BetaxanthinCachera2023Dataset, EnvChemgenMota2024Dataset, SynthLethalityYeastSynthLethDbDataset, SynthRescueYeastSynthLethDbDataset, EnvChemgenAuesukaree2009Dataset, OrganicAcidYoshida2012Dataset, FattyAcidXue2025Dataset, CrispriMormino2022Dataset and GeneEssentialitySgdDataset, and they are rebuilt in the full KG rebuild.",
+  "correctness_argument": "Every yeast gene-perturbation leaf before this change requires systematic_gene_name to match the S288C systematic-name regex of GenePerturbation.validate_sys_gene_name, so a loader whose source releases a gene by its symbol alone had to resolve the symbol through a genome annotation before it could store a record, and the annotation then decided which records exist: a symbol the annotation lacks, a retired or ambiguous alias, two symbols that resolve to one ORF, or an allele the schema has no carrier for were dropped or merged. The owner rule of 2026-10-12 is that the data is the data: ingestion stores what the source released, only an author withdrawal drops a record, and the genome joins at modeling time (#1045, #1065). Measured on the released files: Cachera 2023 GA1_2_4_6.csv (sha256 71f55609...) releases 4,788 rows under a 'gene' column of which 1,167 are systematic names and 3,616 are symbols (plus 'WT' and '0' controls), with no token repeated; SynLethDB Yeast_SL.csv (sha256 091e04db...) releases both genes of each of its 14,000 pairs as a symbol and an NCBI Entrez id, of which 1 pair's id is in no R64 GFF; the pinned SGD dump (digest 1cb4ed59...) holds 42 inviable null annotations on a named allele that is not the whole-gene deletion (cdc24p-\u2206CH, rsc3-C14G, gcd11-K250A), which the loader ledgers and never stores. ReleasedGeneNamePerturbation stores one gene exactly as released: the source's symbol verbatim in systematic_gene_name and released_gene_name, the source's gene id verbatim with its namespace when one is released (SynLethDB's Entrez id), and the kind the source states (ReleasedGeneKind, each with an SO pair the schema already pins); a CRISPR interference record carries its CrisprConstruct. NamedAllelePerturbation stores an allele under the name its source gives, on the gene's systematic name, with the generic sequence_variant mechanism of the axis root because the source states no sequence change. Both are strictly additive: no existing leaf, field or validator changes its accepted set; the systematic-name regex of GenePerturbation is hoisted to a module constant (_SYSTEMATIC_GENE_NAME_RE) that the base validator and the new leaf share, which moves the fingerprint and accepts exactly the same strings. The new leaf stores the released identifier IN systematic_gene_name rather than gapping it, as the bacterial released leaves do (#691): the root field stays required and its meaning on the placed leaves is untouched, the ontology's Liskov invariant holds (a child cannot loosen a parent field), and the placed leaves refuse everything but a systematic name, and a loader places each released token by its form and by what the source states: a systematic name whose kind the source states on the placed leaf it used before, every other released name (a symbol, or a name whose kind is a gap, as SynLethDB's are) on ReleasedGeneNamePerturbation; the leaf refuses only a bacterial locus tag. DAG placement: ReleasedGeneNamePerturbation is a direct child of GenePerturbation beside the bacterial released leaves (BacterialReleasedStrainPerturbation, BacterialReleasedCrisprPerturbation, BacterialReleasedTransposonPerturbation), not under PresenceAbsencePerturbation or ExpressionModulationPerturbation, because the axis is a property of the released kind; NamedAllelePerturbation is a child of SequencePerturbation beside ConditionalAllelePerturbation and SequenceVariantPerturbation. The union widening re-stales every store whose closure holds GenePerturbationType; the served stores whose records change content are BetaxanthinCachera2023Dataset, EnvChemgenMota2024Dataset, SynthLethalityYeastSynthLethDbDataset, SynthRescueYeastSynthLethDbDataset, EnvChemgenAuesukaree2009Dataset, OrganicAcidYoshida2012Dataset, FattyAcidXue2025Dataset, CrispriMormino2022Dataset and GeneEssentialitySgdDataset, and they are rebuilt in the full KG rebuild.",
   "measurement_type_decision": false,
   "source_quotes": [
     {
@@ -1073,6 +1073,10 @@
       "via": [
         "GenePerturbation",
         "GenePerturbationType",
+        "RELEASED_GENE_KIND_SO",
+        "ReleasedGeneIdNamespace",
+        "ReleasedGeneKind",
+        "ReleasedGeneNamePerturbation",
         "_SYSTEMATIC_GENE_NAME_RE"
       ]
     },
@@ -1127,6 +1131,10 @@
       "via": [
         "GenePerturbation",
         "GenePerturbationType",
+        "RELEASED_GENE_KIND_SO",
+        "ReleasedGeneIdNamespace",
+        "ReleasedGeneKind",
+        "ReleasedGeneNamePerturbation",
         "_SYSTEMATIC_GENE_NAME_RE"
       ]
     },
@@ -1400,6 +1408,10 @@
       "via": [
         "GenePerturbation",
         "GenePerturbationType",
+        "RELEASED_GENE_KIND_SO",
+        "ReleasedGeneIdNamespace",
+        "ReleasedGeneKind",
+        "ReleasedGeneNamePerturbation",
         "_SYSTEMATIC_GENE_NAME_RE"
       ]
     },
@@ -1426,6 +1438,10 @@
       "via": [
         "GenePerturbation",
         "GenePerturbationType",
+        "RELEASED_GENE_KIND_SO",
+        "ReleasedGeneIdNamespace",
+        "ReleasedGeneKind",
+        "ReleasedGeneNamePerturbation",
         "_SYSTEMATIC_GENE_NAME_RE"
       ]
     },
@@ -1441,6 +1457,10 @@
       "via": [
         "GenePerturbation",
         "GenePerturbationType",
+        "RELEASED_GENE_KIND_SO",
+        "ReleasedGeneIdNamespace",
+        "ReleasedGeneKind",
+        "ReleasedGeneNamePerturbation",
         "_SYSTEMATIC_GENE_NAME_RE"
       ]
     },
@@ -1456,6 +1476,10 @@
       "via": [
         "GenePerturbation",
         "GenePerturbationType",
+        "RELEASED_GENE_KIND_SO",
+        "ReleasedGeneIdNamespace",
+        "ReleasedGeneKind",
+        "ReleasedGeneNamePerturbation",
         "_SYSTEMATIC_GENE_NAME_RE"
       ]
     },
@@ -1486,6 +1510,10 @@
       "via": [
         "GenePerturbation",
         "GenePerturbationType",
+        "RELEASED_GENE_KIND_SO",
+        "ReleasedGeneIdNamespace",
+        "ReleasedGeneKind",
+        "ReleasedGeneNamePerturbation",
         "_SYSTEMATIC_GENE_NAME_RE"
       ]
     },
@@ -1501,6 +1529,10 @@
       "via": [
         "GenePerturbation",
         "GenePerturbationType",
+        "RELEASED_GENE_KIND_SO",
+        "ReleasedGeneIdNamespace",
+        "ReleasedGeneKind",
+        "ReleasedGeneNamePerturbation",
         "_SYSTEMATIC_GENE_NAME_RE"
       ]
     },
@@ -1527,6 +1559,10 @@
       "via": [
         "GenePerturbation",
         "GenePerturbationType",
+        "RELEASED_GENE_KIND_SO",
+        "ReleasedGeneIdNamespace",
+        "ReleasedGeneKind",
+        "ReleasedGeneNamePerturbation",
         "_SYSTEMATIC_GENE_NAME_RE"
       ]
     },
@@ -1587,6 +1623,10 @@
       "via": [
         "GenePerturbation",
         "GenePerturbationType",
+        "RELEASED_GENE_KIND_SO",
+        "ReleasedGeneIdNamespace",
+        "ReleasedGeneKind",
+        "ReleasedGeneNamePerturbation",
         "_SYSTEMATIC_GENE_NAME_RE"
       ]
     },
@@ -1671,6 +1711,7 @@
       "via": [
         "GenePerturbation",
         "GenePerturbationType",
+        "NamedAllelePerturbation",
         "_SYSTEMATIC_GENE_NAME_RE"
       ]
     },
@@ -1701,6 +1742,10 @@
       "via": [
         "GenePerturbation",
         "GenePerturbationType",
+        "RELEASED_GENE_KIND_SO",
+        "ReleasedGeneIdNamespace",
+        "ReleasedGeneKind",
+        "ReleasedGeneNamePerturbation",
         "_SYSTEMATIC_GENE_NAME_RE"
       ]
     },
@@ -1718,6 +1763,10 @@
       "via": [
         "GenePerturbation",
         "GenePerturbationType",
+        "RELEASED_GENE_KIND_SO",
+        "ReleasedGeneIdNamespace",
+        "ReleasedGeneKind",
+        "ReleasedGeneNamePerturbation",
         "_SYSTEMATIC_GENE_NAME_RE"
       ]
     },
@@ -1776,6 +1825,10 @@
       "via": [
         "GenePerturbation",
         "GenePerturbationType",
+        "RELEASED_GENE_KIND_SO",
+        "ReleasedGeneIdNamespace",
+        "ReleasedGeneKind",
+        "ReleasedGeneNamePerturbation",
         "_SYSTEMATIC_GENE_NAME_RE"
       ]
     },
@@ -1789,6 +1842,10 @@
       "via": [
         "GenePerturbation",
         "GenePerturbationType",
+        "RELEASED_GENE_KIND_SO",
+        "ReleasedGeneIdNamespace",
+        "ReleasedGeneKind",
+        "ReleasedGeneNamePerturbation",
         "_SYSTEMATIC_GENE_NAME_RE"
       ]
     },
@@ -1804,6 +1861,10 @@
       "via": [
         "GenePerturbation",
         "GenePerturbationType",
+        "RELEASED_GENE_KIND_SO",
+        "ReleasedGeneIdNamespace",
+        "ReleasedGeneKind",
+        "ReleasedGeneNamePerturbation",
         "_SYSTEMATIC_GENE_NAME_RE"
       ]
     },
@@ -1834,6 +1895,10 @@
       "via": [
         "GenePerturbation",
         "GenePerturbationType",
+        "RELEASED_GENE_KIND_SO",
+        "ReleasedGeneIdNamespace",
+        "ReleasedGeneKind",
+        "ReleasedGeneNamePerturbation",
         "_SYSTEMATIC_GENE_NAME_RE"
       ]
     }

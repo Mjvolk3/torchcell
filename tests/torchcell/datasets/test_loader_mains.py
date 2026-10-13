@@ -106,7 +106,7 @@ MAINS: list[tuple[str, list[tuple[str, str]], bool, str | None]] = [
         False,
         "preprocess/dropped_records.json",
     ),
-    ("xue2025", [("FattyAcidXue2025Dataset", "ffa_xue2025")], True, None),
+    ("xue2025", [("FattyAcidXue2025Dataset", "ffa_xue2025")], False, None),
     (
         "costanzo2021",
         [("EnvChemgenCostanzo2021Dataset", "env_chemgen_costanzo2021")],
@@ -143,7 +143,7 @@ MAINS: list[tuple[str, list[tuple[str, str]], bool, str | None]] = [
     (
         "auesukaree2009",
         [("EnvChemgenAuesukaree2009Dataset", "env_chemgen_auesukaree2009")],
-        True,
+        False,  # stored as released, no genome (#1045)
         None,
     ),
     (
@@ -152,8 +152,13 @@ MAINS: list[tuple[str, list[tuple[str, str]], bool, str | None]] = [
         True,
         "preprocess/dropped_records.json",
     ),
-    ("mormino2022", [("CrispriMormino2022Dataset", "crispri_mormino2022")], True, None),
-    ("mota2024", [("EnvChemgenMota2024Dataset", "env_chemgen_mota2024")], True, None),
+    (
+        "mormino2022",
+        [("CrispriMormino2022Dataset", "crispri_mormino2022")],
+        False,
+        None,
+    ),
+    ("mota2024", [("EnvChemgenMota2024Dataset", "env_chemgen_mota2024")], False, None),
     (
         "wildenhain2015",
         [("EnvChemgenWildenhain2015Dataset", "env_chemgen_wildenhain2015")],

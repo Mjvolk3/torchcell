@@ -14,7 +14,10 @@ sensitive to acetic acid. Table 1 reports the 12 individually isolated strains.
 
 RECORD = one isolated strain as an ``EnvironmentResponseExperiment``:
 
-- GENOTYPE: one ``CrisprInterferencePerturbation`` (target gene, effector ``dCas9-Mxi1``,
+- GENOTYPE: one CRISPRi target under the name Table 1 releases, verbatim (#1045): a
+  common name (all 12) on ``ReleasedGeneNamePerturbation`` with kind
+  ``crispr_interference``, a systematic name on ``CrisprInterferencePerturbation``; no
+  genome is consulted. The construct (effector ``dCas9-Mxi1``,
   ``n_guides=1`` -- an isolated strain carries exactly one gRNA; the "1-16 gRNAs each" in
   the paper is a per-GENE property of the library, not of a strain). ``guide_sequence``
   stays None: Mormino releases no per-strain spacer, the guides live upstream in the
@@ -78,6 +81,7 @@ import json
 import logging
 import os
 import os.path as osp
+import re
 import shutil
 from collections.abc import Callable
 from datetime import UTC, datetime
@@ -117,6 +121,8 @@ from torchcell.datamodels.schema import (
     PhysicalFactor,
     Publication,
     ReferenceGenome,
+    ReleasedGeneKind,
+    ReleasedGeneNamePerturbation,
     ResponseCategory,
     SampleUnit,
     SmallMoleculePerturbation,
@@ -124,7 +130,6 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
-from torchcell.datasets.scerevisiae.smith2006 import canonical_common_names
 from torchcell.literature.manifest import (
     ROLE_PAPER_OCR,
     ROLE_PAPER_PDF,
@@ -134,7 +139,6 @@ from torchcell.literature.manifest import (
     RetrievalMethod,
     RetrievalRecord,
 )
-from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import SourcedValue
 
@@ -500,6 +504,12 @@ class DropLog(BaseModel):
     rules: list[dict[str, Any]]
 
 
+#: An S288C systematic name, the form that goes on the placed CRISPRi leaf.
+_SYSTEMATIC_RE = re.compile(
+    r"^(Y[A-P][LR]\d{3}[WC](-[A-Z])?|Q\d{4}|YNC[A-Q]\d{4}[WC])$"
+)
+
+
 @register_dataset
 class CrispriMormino2022Dataset(ExperimentDataset):
     """Mormino 2022 CRISPRi acetic-acid biosensor screen (12 isolated strains)."""
@@ -510,13 +520,11 @@ class CrispriMormino2022Dataset(ExperimentDataset):
         self,
         root: str = "data/torchcell/crispri_mormino2022",
         io_workers: int = 0,
-        genome: SCerevisiaeGenome | None = None,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize; a genome is REQUIRED for common-name -> current-R64-ORF resolution."""
-        self.genome = genome
+        """Initialize; every target is stored under the name Table 1 releases."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -557,19 +565,30 @@ class CrispriMormino2022Dataset(ExperimentDataset):
             "Mormino 2022 artifacts linked into %s (sha256 verified)", self.raw_dir
         )
 
-    def _resolve(self, common: str) -> str:
-        """Common gene name -> current-R64 ORF via the SHARED genome resolver."""
-        if self.genome is None:
-            raise RuntimeError(
-                "CrispriMormino2022Dataset requires a genome; inject SCerevisiaeGenome(...)"
+    @staticmethod
+    def _released_target(
+        common: str,
+    ) -> CrisprInterferencePerturbation | ReleasedGeneNamePerturbation:
+        """The CRISPRi target under the name Table 1 releases (#1045).
+
+        A systematic name goes on ``CrisprInterferencePerturbation``; a common name (all
+        12 of Table 1) on ``ReleasedGeneNamePerturbation`` with kind
+        ``crispr_interference`` and the same construct. No genome is consulted.
+        """
+        construct = CrisprConstruct(effector=EFFECTOR, guide_sequence=None, n_guides=1)
+        if _SYSTEMATIC_RE.match(common):
+            return CrisprInterferencePerturbation(
+                systematic_gene_name=common,
+                perturbed_gene_name=common,
+                crispr=construct,
             )
-        resolution = self.genome.resolve_gene_name(common)
-        if not resolution.is_current_gene or resolution.systematic_name is None:
-            raise RuntimeError(
-                f"Mormino2022: gene {common!r} did not resolve to a current R64 gene "
-                f"({resolution.status})"
-            )
-        return resolution.systematic_name
+        return ReleasedGeneNamePerturbation(
+            systematic_gene_name=common,
+            perturbed_gene_name=common,
+            released_gene_name=common,
+            released_kind=ReleasedGeneKind.crispr_interference,
+            crispr=construct,
+        )
 
     def _environment(self) -> Environment:
         """SC at pH 3.5 with 50 mM acetic acid and 2 ug/mL ATc, 30 C, aerobic."""
@@ -631,8 +650,6 @@ class CrispriMormino2022Dataset(ExperimentDataset):
         )
         paper_md = Path(osp.join(self.raw_dir, PAPER_MD)).read_text(encoding="utf-8")
         audit_table_1(paper_md)
-        assert self.genome is not None
-        canonical = canonical_common_names(self.genome)
         publication = Publication(
             pubmed_id=PMID,
             pubmed_url=f"https://pubmed.ncbi.nlm.nih.gov/{PMID}/",
@@ -648,19 +665,12 @@ class CrispriMormino2022Dataset(ExperimentDataset):
         idx = 0
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for _strain, rfp, _growth, common in tqdm(TABLE_1, desc="mormino2022"):
-                orf = self._resolve(common)
                 category, label = RFP_CATEGORY[rfp]
                 experiment = EnvironmentResponseExperiment(
                     dataset_name=self.name,
                     genotype=Genotype(
                         perturbations=[
-                            CrisprInterferencePerturbation(
-                                systematic_gene_name=orf,
-                                perturbed_gene_name=canonical.get(orf, orf),
-                                crispr=CrisprConstruct(
-                                    effector=EFFECTOR, guide_sequence=None, n_guides=1
-                                ),
-                            ),
+                            self._released_target(common),
                             *biosensor_cassette(),
                         ]
                     ),
@@ -695,8 +705,9 @@ class CrispriMormino2022Dataset(ExperimentDataset):
                     "description": (
                         "no retention rule removes a Mormino record: acetic acid, "
                         "anhydrotetracycline and DMSO all resolve to a structure "
-                        "identifier, all 12 targets resolve to current R64 genes, and "
-                        "every Table 1 row is verified verbatim against the OCR table"
+                        "identifier, all 12 targets are stored under the names Table 1 "
+                        "releases (#1045), and every Table 1 row is verified verbatim "
+                        "against the OCR table"
                     ),
                     "n_records": 0,
                     "items": [],
@@ -722,13 +733,8 @@ def main() -> None:
 
     load_dotenv()
     data_root = os.environ["DATA_ROOT"]
-    genome = SCerevisiaeGenome(
-        genome_root=osp.join(data_root, "data/sgd/genome"),
-        go_root=osp.join(data_root, "data/go"),
-        overwrite=False,
-    )
     root = osp.join(data_root, "data/torchcell/crispri_mormino2022")
-    dataset = CrispriMormino2022Dataset(root=root, genome=genome)
+    dataset = CrispriMormino2022Dataset(root=root)
     print(f"len = {len(dataset)}")
     print(json.dumps(dataset[0]["experiment"], indent=2, default=str)[:3000])
 

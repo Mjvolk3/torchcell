@@ -19,7 +19,7 @@ count, SE = SD / sqrt(n)):
     YDR003W  YBR002C 6, 6          -> mean 6.0,  SD 0.0,     SE 0.0, n 2
     YER004W  YAL001C 1, 3          -> mean 2.0,  SD sqrt(2), SE 1.0, n 2
     YER004W  YBR002C 20, 24        -> mean 22.0, SD sqrt(8), SE 2.0, n 2
-    bad_ko   YAL001C 99            -> KO_ORF fails the nuclear-ORF regex: skipped
+    bad_ko   YAL001C 99            -> KO_ORF has no ORF form: the released-gene-name leaf
 
 Metabolome fixture (``metabolites_dataset.data_prep.tsv``; one record per (protocol,
 strain), aggregated over that protocol's rows only, issue #595):
@@ -238,20 +238,29 @@ def _proteome_reference() -> ProteinAbundanceExperimentReference:
 def test_proteome_len_and_gene_set_skip_non_systematic_ko(
     proteome: tuple[ProteomeZelezniak2018Dataset, Path],
 ) -> None:
-    """Two knockout strains survive: the ``bad_ko`` strain is skipped, not raised.
+    """Three knockout strains: the ``bad_ko`` strain is stored on the released-gene-name
+    leaf (#1045), not skipped and not raised.
 
     ``KO_ORF`` values are grouped alphabetically (``groupby`` sorts), so YDR003W is
-    record 0 and YER004W is record 1; the WT rows are the reference and never a record.
-    Finding: a non-systematic KO_ORF is silently dropped (counted in a log line) while a
-    non-systematic protein ORF raises; the fixture pins both sides of that asymmetry.
-    ``preprocess/data.csv`` carries the two kept strains with their gene names.
+    record 0, YER004W record 1 and ``bad_ko`` record 2; the WT rows are the reference
+    and never a record. A non-systematic protein ORF still raises (the protein axis
+    keys the matrix). ``preprocess/data.csv`` carries the three strains with their
+    gene names.
     """
     ds, root = proteome
-    assert len(ds) == 2
+    assert len(ds) == 3
     assert (root / "preprocess" / "data.csv").read_text() == (
-        "orf,gene\nYDR003W,KIN3\nYER004W,KIN4\n"
+        "orf,gene\nYDR003W,KIN3\nYER004W,KIN4\nbad_ko,BAD\n"
     )
-    _assert_side_files(root, ProteomeZelezniak2018Dataset, ["YDR003W", "YER004W"])
+    (released,) = ds[2]["experiment"]["genotype"]["perturbations"]
+    assert (
+        released["perturbation_type"],
+        released["systematic_gene_name"],
+        released["perturbed_gene_name"],
+    ) == ("released_gene_name", "bad_ko", "BAD")
+    _assert_side_files(
+        root, ProteomeZelezniak2018Dataset, ["YDR003W", "YER004W", "bad_ko"]
+    )
 
 
 def test_proteome_record_0_is_ydr003w_with_hand_computed_se(
@@ -317,18 +326,18 @@ def test_proteome_record_1_is_yer004w(
 def test_proteome_reference_index_has_one_shared_reference(
     proteome: tuple[ProteomeZelezniak2018Dataset, Path],
 ) -> None:
-    """Both strains share the single WT reference -> one index entry covering [0, 1]."""
+    """All three strains share the single WT reference -> one index entry, [0, 1, 2]."""
     ds, root = proteome
     index = json.loads(
         (root / "preprocess" / "experiment_reference_index.json").read_text()
     )
     assert len(index) == 1
-    assert index[0]["member_indices"] == [0, 1]
+    assert index[0]["member_indices"] == [0, 1, 2]
     assert index[0]["reference"]["dataset_name"] == "ProteomeZelezniak2018Dataset"
     assert index[0]["reference"]["experiment_reference_type"] == "protein_abundance"
     loaded = ds.experiment_reference_index
     assert loaded is not None
-    assert [eri.member_indices for eri in loaded] == [[0, 1]]
+    assert [eri.member_indices for eri in loaded] == [[0, 1, 2]]
 
 
 def test_proteome_single_replicate_protein_gets_nan_se(tmp_path: Path) -> None:
@@ -948,7 +957,7 @@ def test_proteome_build_without_raw_downloads_then_builds(
     ds = ProteomeZelezniak2018Dataset(root=str(root))
     assert len(calls) == 1
     assert (root / "raw" / PROTEOME_FILENAME).read_bytes() == payload
-    assert len(ds) == 2
+    assert len(ds) == 3
     assert ds[1]["experiment"]["phenotype"]["protein_abundance"] == {
         "YAL001C": 2.0,
         "YBR002C": 22.0,

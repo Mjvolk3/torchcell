@@ -82,7 +82,7 @@ pinned identity table's synonym for tamoxifen, the alias the paper's own Additio
 8 releases. The two rules that can still leave a row without a record are a row with no
 ``A`` or ``var(A)`` and a guide with no spacer in Additional file 4; both are 0 on the
 pinned files. An ``ORF`` cell that is not ORF-shaped is counted under
-``deferred_to_released_gene_name_leaf`` (0 of 14,463 rows) until that leaf lands.
+``stored_on_released_gene_name_leaf`` (0 of 14,463 rows) as released (#1045).
 
 DUPLICATE-BY-POOL: 272 (guide, drug, concentration) triples appear twice, always the pool
 pair (``broad_tiling``, ``gene_tiling_20bp``) sharing a 20 bp perfect-match spacer. Fitness
@@ -143,6 +143,8 @@ from torchcell.datamodels.schema import (
     MeasurementType,
     Publication,
     ReferenceGenome,
+    ReleasedGeneKind,
+    ReleasedGeneNamePerturbation,
     SampleUnit,
     SmallMoleculePerturbation,
     Temperature,
@@ -513,18 +515,17 @@ class CrispriChemgenSmith2016Dataset(ExperimentDataset):
         )
 
     @staticmethod
-    def _released_target(orf_cell: Any, gene_cell: Any) -> tuple[str, str] | None:
-        """``(systematic_gene_name, perturbed_gene_name)`` from the row's released cells.
+    def _released_target(orf_cell: Any, gene_cell: Any) -> tuple[str, str, bool]:
+        """``(systematic_gene_name, perturbed_gene_name, placed)`` from the row's cells.
 
         The ``ORF`` cell (stripped) is the systematic name and the ``Gene`` cell the
-        perturbed name, the ORF again where it is blank. No genome is consulted. A cell
-        that is not ORF-shaped returns None and is counted under the leaf deferral rule.
+        perturbed name, the ORF again where it is blank. No genome is consulted.
+        ``placed`` is False for a cell that is not ORF-shaped, which goes on the
+        released-gene-name leaf (#1045; 0 of the 20 released targets).
         """
         orf = str(orf_cell).strip()
-        if not _SYSTEMATIC_RE.match(orf):
-            return None
         gene = "" if pd.isna(gene_cell) else str(gene_cell).strip()
-        return orf, gene if gene else orf
+        return orf, gene if gene else orf, bool(_SYSTEMATIC_RE.match(orf))
 
     def _spacer_map(self) -> dict[str, str]:
         """Guide name -> ``Specificity_sequence`` spacer (unique per name; 0 conflicts)."""
@@ -605,8 +606,8 @@ class CrispriChemgenSmith2016Dataset(ExperimentDataset):
         os.makedirs(self.processed_dir, exist_ok=True)
         env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
         idx = 0
-        n_nan = n_deferred = n_no_spacer = 0
-        deferred_targets: set[str] = set()
+        n_nan = n_no_spacer = 0
+        released_targets: set[str] = set()
         no_spacer_guides: set[str] = set()
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for _, row in tqdm(df.iterrows(), total=len(df), desc="smith2016"):
@@ -615,12 +616,9 @@ class CrispriChemgenSmith2016Dataset(ExperimentDataset):
                     n_nan += 1
                     continue
                 drug = str(row["Drug"])
-                target = self._released_target(row["ORF"], row["Gene"])
-                if target is None:
-                    n_deferred += 1
-                    deferred_targets.add(str(row["ORF"]).strip())
-                    continue
-                orf, gene = target
+                orf, gene, placed = self._released_target(row["ORF"], row["Gene"])
+                if not placed:
+                    released_targets.add(orf)
                 guide_name = str(row["Guide"])
                 spacer = spacer_map.get(guide_name)
                 if spacer is None:
@@ -631,22 +629,30 @@ class CrispriChemgenSmith2016Dataset(ExperimentDataset):
                 compound = item["environment"].perturbations[0].compound
                 if compound.provenance_gaps:
                     gapped_records[drug] = gapped_records.get(drug, 0) + 1
+                construct = CrisprConstruct(
+                    effector=EFFECTOR.value,
+                    guide_sequence=spacer,
+                    n_guides=1,
+                    library_pool=str(row["#Pool"]),
+                )
+                target: CrisprInterferencePerturbation | ReleasedGeneNamePerturbation
+                if placed:
+                    target = CrisprInterferencePerturbation(
+                        systematic_gene_name=orf,
+                        perturbed_gene_name=gene,
+                        crispr=construct,
+                    )
+                else:
+                    target = ReleasedGeneNamePerturbation(
+                        systematic_gene_name=orf,
+                        perturbed_gene_name=gene,
+                        released_gene_name=orf,
+                        released_kind=ReleasedGeneKind.crispr_interference,
+                        crispr=construct,
+                    )
                 experiment = EnvironmentResponseExperiment(
                     dataset_name=self.name,
-                    genotype=Genotype(
-                        perturbations=[
-                            CrisprInterferencePerturbation(
-                                systematic_gene_name=orf,
-                                perturbed_gene_name=gene,
-                                crispr=CrisprConstruct(
-                                    effector=EFFECTOR.value,
-                                    guide_sequence=spacer,
-                                    n_guides=1,
-                                    library_pool=str(row["#Pool"]),
-                                ),
-                            )
-                        ]
-                    ),
+                    genotype=Genotype(perturbations=[target]),
                     environment=item["environment"],
                     phenotype=EnvironmentResponsePhenotype(
                         measurement_type=MeasurementType.log2_ratio,
@@ -681,16 +687,16 @@ class CrispriChemgenSmith2016Dataset(ExperimentDataset):
                 items=[],
             ),
             DropRule(
-                rule="deferred_to_released_gene_name_leaf",
+                rule="stored_on_released_gene_name_leaf",
                 scope="row",
                 description=(
-                    "the ORF cell is not ORF-shaped, so it cannot be stored on "
-                    "CrisprInterferencePerturbation, whose systematic_gene_name is "
-                    "validated against the ORF pattern; stored once the released-gene-name "
-                    "leaf lands (0 today; all 20 released targets are ORF-shaped)"
+                    "the ORF cell is not ORF-shaped, so the target is stored on "
+                    "ReleasedGeneNamePerturbation verbatim with its construct (#1045), "
+                    "never dropped; listed here (0 today; all 20 released targets are "
+                    "ORF-shaped)"
                 ),
-                n_records=n_deferred,
-                items=sorted(deferred_targets),
+                n_records=0,
+                items=sorted(released_targets),
             ),
             DropRule(
                 rule="guide_has_no_released_spacer",
@@ -738,14 +744,14 @@ class CrispriChemgenSmith2016Dataset(ExperimentDataset):
             )
         log.info(
             "Smith2016: wrote %d of %d rows (%d under a typed compound-identity gap on "
-            "%d vendor-code drugs); %d with no A/var(A), %d targets deferred to the "
+            "%d vendor-code drugs); %d with no A/var(A), %d targets on the "
             "released-gene-name leaf, %d guides with no spacer",
             idx,
             source_records,
             sum(gapped_records.values()),
             len(gapped_records),
             n_nan,
-            n_deferred,
+            len(released_targets),
             n_no_spacer,
         )
 

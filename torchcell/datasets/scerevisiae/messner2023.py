@@ -94,6 +94,8 @@ from torchcell.datamodels.schema import (
     ProteinAbundancePhenotype,
     Publication,
     ReferenceGenome,
+    ReleasedGeneKind,
+    ReleasedGeneNamePerturbation,
     Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
@@ -120,6 +122,28 @@ _WT = "HIS3"
 # Systematic ORF: nuclear (Y..) for KO deletions; protein ids also include mito
 # (Q\d{4}, e.g. COX2 = Q0250) after UniProt->ORF mapping.
 _NUCLEAR_ORF_RE = re.compile(r"^Y[A-P][LR]\d{3}[WC](?:-[A-Z])?$")
+
+
+def _released_deletion(
+    orf: str,
+) -> KanMxDeletionPerturbation | ReleasedGeneNamePerturbation:
+    """The deletion under the released identifier (#1045): an ORF-shaped one on the
+    placed KanMX leaf with both names the ORF, any other on the released-gene-name leaf
+    verbatim (kind deletion, marker KanMX).
+    """
+    if _NUCLEAR_ORF_RE.match(orf):
+        return KanMxDeletionPerturbation(
+            systematic_gene_name=orf, perturbed_gene_name=orf
+        )
+    return ReleasedGeneNamePerturbation(
+        systematic_gene_name=orf,
+        perturbed_gene_name=orf,
+        released_gene_name=orf,
+        released_kind=ReleasedGeneKind.deletion,
+        marker="KanMX",
+    )
+
+
 _ORF_RE = re.compile(r"(?:Y[A-P][LR]\d{3}[WC](?:-[A-Z])?|Q\d{4})")
 _UNIPROT_RE = re.compile(r"UniProtKB:([A-Z0-9]+)")
 
@@ -317,15 +341,14 @@ class ProteomeMessner2023Dataset(ExperimentDataset):
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
         rows: list[dict[str, Any]] = []
-        deferred: list[str] = []
+        released_names: list[str] = []
         for filename in ko_cols:
             # Metadata ORF casing is inconsistent (e.g. "YML009c", "YAL043C-a");
             # systematic names are uppercase -- normalize, never drop on case alone.
             deletion_orf = str(by_filename.loc[filename, "ORF"]).upper()
             if not _NUCLEAR_ORF_RE.match(deletion_orf):
-                # no ORF form: waits for the released-gene-name leaf (0 of 4,699)
-                deferred.append(deletion_orf)
-                continue
+                # no ORF form: the released-gene-name leaf, verbatim (0 of 4,699)
+                released_names.append(deletion_orf)
             series = matrix[filename].dropna()  # measured proteins only (noimpute)
             abundance = {str(o): float(v) for o, v in series.items()}
             no_wt = sorted(set(abundance) - set(self._reference["abundance"]))
@@ -344,11 +367,11 @@ class ProteomeMessner2023Dataset(ExperimentDataset):
                 }
             )
         log.info(
-            "Messner: %d KO strains, WT reference with %d proteins, %d KO ORFs "
-            "deferred to the released-gene-name leaf",
+            "Messner: %d KO strains, WT reference with %d proteins, %d KO ORFs on the "
+            "released-gene-name leaf",
             len(rows),
             len(self._reference["abundance"]),
-            len(deferred),
+            len(released_names),
         )
         pd.DataFrame(
             [
@@ -399,13 +422,7 @@ class ProteomeMessner2023Dataset(ExperimentDataset):
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae", strain="BY4741"
         )
-        genotype = Genotype(
-            perturbations=[
-                KanMxDeletionPerturbation(
-                    systematic_gene_name=row["orf"], perturbed_gene_name=row["gene"]
-                )
-            ]
-        )
+        genotype = Genotype(perturbations=[_released_deletion(row["orf"])])
         # Grown in synthetic minimal (SM) liquid medium at 30 C: 6.7 g/L YNB without
         # amino acids + 2% glucose, restated by this paper and deferred by it to
         # Mulleder 2016 (its ref 15), both quoted on ``SM``.

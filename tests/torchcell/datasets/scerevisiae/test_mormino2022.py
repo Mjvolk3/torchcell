@@ -20,6 +20,7 @@ from torchcell.datamodels.schema import (
     EnvironmentPhysicalPerturbation,
     GeneAdditionPerturbation,
     PhysicalFactor,
+    ReleasedGeneNamePerturbation,
     ResponseCategory,
     SmallMoleculePerturbation,
 )
@@ -95,6 +96,29 @@ def test_the_biosensor_cassette_is_a_constant_background_in_the_genotype() -> No
         assert perturbation.integration_locus == "HO"
         assert perturbation.construct_name == "pMM4_14L"
     assert "integrated into the HO locus" in m.BIOSENSOR_CASSETTE.quote
+
+
+def test_every_target_is_stored_under_the_name_table_1_releases() -> None:
+    """The 12 targets are common names, so each is a ``ReleasedGeneNamePerturbation``
+    of kind ``crispr_interference`` carrying the dCas9-Mxi1 construct (one guide, no
+    spacer); a systematic name would go on the placed CRISPRi leaf (#1045).
+    """
+    targets = [m.CrispriMormino2022Dataset._released_target(c) for *_, c in m.TABLE_1]
+    assert {type(t).__name__ for t in targets} == {"ReleasedGeneNamePerturbation"}
+    assert [t.systematic_gene_name for t in targets] == [c for *_, c in m.TABLE_1]
+    first = targets[0]
+    assert isinstance(first, ReleasedGeneNamePerturbation)
+    assert first.released_kind == "crispr_interference"
+    assert first.mechanism_so == ("SO:0001998", "sgRNA")
+    assert first.crispr is not None
+    assert (
+        first.crispr.effector,
+        first.crispr.guide_sequence,
+        first.crispr.n_guides,
+    ) == (m.EFFECTOR, None, 1)
+    placed = m.CrispriMormino2022Dataset._released_target("YAL001C")
+    assert type(placed).__name__ == "CrisprInterferencePerturbation"
+    assert placed.crispr == first.crispr
 
 
 def test_the_replicate_count_and_assay_are_sourced() -> None:

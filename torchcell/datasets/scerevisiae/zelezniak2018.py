@@ -87,6 +87,8 @@ from torchcell.datamodels.schema import (
     ProteinAbundancePhenotype,
     Publication,
     ReferenceGenome,
+    ReleasedGeneKind,
+    ReleasedGeneNamePerturbation,
     Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
@@ -103,6 +105,28 @@ log = logging.getLogger(__name__)
 
 MEASUREMENT_TYPE = "swath_ms_label_free_log_signal_sva"
 _SYSTEMATIC_RE = re.compile(r"^Y[A-P][LR]\d{3}[WC](-[A-Z])?$")
+
+
+def _released_deletion(
+    orf: str, gene: str
+) -> KanMxDeletionPerturbation | ReleasedGeneNamePerturbation:
+    """The deletion under the released identifier (#1045): an ORF-shaped one on the
+    placed KanMX leaf with the released KO_gene_name as the perturbed name, any other
+    on the released-gene-name leaf verbatim (kind deletion, marker KanMX).
+    """
+    if _SYSTEMATIC_RE.match(orf):
+        return KanMxDeletionPerturbation(
+            systematic_gene_name=orf, perturbed_gene_name=gene
+        )
+    return ReleasedGeneNamePerturbation(
+        systematic_gene_name=orf,
+        perturbed_gene_name=gene,
+        released_gene_name=orf,
+        released_kind=ReleasedGeneKind.deletion,
+        marker="KanMX",
+    )
+
+
 _WT = "WT"
 
 # Zenodo record 1320289 -> proteins_dataset.data_prep.tsv (direct, pinned).
@@ -399,14 +423,13 @@ class ProteomeZelezniak2018Dataset(ExperimentDataset):
         self._reference = self._aggregate(wt_rows, _WT)
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
-        deferred: list[str] = []
+        released_names: list[str] = []
         rows: list[dict[str, Any]] = []
         for ko_orf, sub in df[df["KO_ORF"] != _WT].groupby("KO_ORF"):
             if not _SYSTEMATIC_RE.match(str(ko_orf)):
-                # a released strain id with no ORF form waits for the released-gene-name
-                # leaf; counted, never dropped for good (0 of 97 released strains)
-                deferred.append(str(ko_orf))
-                continue
+                # a released strain id with no ORF form goes on the released-gene-name
+                # leaf verbatim (#1045; 0 of 97 released strains)
+                released_names.append(str(ko_orf))
             gene = str(sub["KO_gene_name"].iloc[0])
             rows.append(
                 {
@@ -417,10 +440,10 @@ class ProteomeZelezniak2018Dataset(ExperimentDataset):
             )
         log.info(
             "Zelezniak: %d knockout strains, WT reference with %d proteins, "
-            "%d strain ids deferred to the released-gene-name leaf",
+            "%d strain ids on the released-gene-name leaf",
             len(rows),
             len(self._reference["abundance"]),
-            len(deferred),
+            len(released_names),
         )
         pd.DataFrame([{"orf": r["orf"], "gene": r["gene"]} for r in rows]).to_csv(
             osp.join(self.preprocess_dir, "data.csv"), index=False
@@ -462,13 +485,7 @@ class ProteomeZelezniak2018Dataset(ExperimentDataset):
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae", strain="BY4741"
         )
-        genotype = Genotype(
-            perturbations=[
-                KanMxDeletionPerturbation(
-                    systematic_gene_name=row["orf"], perturbed_gene_name=row["gene"]
-                )
-            ]
-        )
+        genotype = Genotype(perturbations=[_released_deletion(row["orf"], row["gene"])])
         # SWATH-MS on cells in synthetic minimal (SM) liquid medium, 30 C. The
         # paper states NO recipe for that medium and sources both the strains and the
         # cultivation to Mulleder 2012, which is not mirrored, so ``SM_DEFERRED`` carries

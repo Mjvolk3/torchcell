@@ -115,6 +115,8 @@ from torchcell.datamodels.schema import (
     Media,
     Publication,
     ReferenceGenome,
+    ReleasedGeneKind,
+    ReleasedGeneNamePerturbation,
     SmallMoleculePerturbation,
     Temperature,
 )
@@ -700,7 +702,7 @@ class YeastPhenomeDataset(ExperimentDataset):
         Each data COLUMN of a screen is one (phenotype x condition). Every growth column
         whose condition the schema can carry is stored; a column whose condition has an
         unrepresentable component, a non-growth column and a malformed header are
-        counted, never guessed. A row id that is not ORF-shaped raises.
+        counted, never guessed. A row id that is not ORF-shaped is stored as released.
         """
         verify_raw_files(
             self.raw_dir,
@@ -716,7 +718,7 @@ class YeastPhenomeDataset(ExperimentDataset):
         n_env_kept = 0
         drops: Counter[str] = Counter()
         not_representable: list[dict[str, Any]] = []
-        deferred_rows: set[str] = set()
+        released_rows: set[str] = set()
         with env.begin(write=True) as txn:
             for s in SCREENS:
                 header, rows = self._read_screen(s)
@@ -779,11 +781,9 @@ class YeastPhenomeDataset(ExperimentDataset):
                             continue
                         orf = cells[0].strip()
                         if not _SYSTEMATIC_RE.match(orf):
-                            # a row id with no ORF form waits for the released-gene-name
-                            # leaf; counted, never dropped for good (0 today)
-                            drops["deferred_to_released_gene_name_leaf"] += 1
-                            deferred_rows.add(orf)
-                            continue
+                            # a row id with no ORF form goes on the released-gene-name
+                            # leaf verbatim (#1045; 0 today), listed in the ledger
+                            released_rows.add(orf)
                         experiment = self._experiment(
                             orf, float(cells[col]), environment, units, zygosity
                         )
@@ -813,7 +813,7 @@ class YeastPhenomeDataset(ExperimentDataset):
                     "kept_environments": n_env_kept,
                     "columns_not_stored": dict(drops),
                     "condition_not_representable": not_representable,
-                    "deferred_to_released_gene_name_leaf": sorted(deferred_rows),
+                    "stored_on_released_gene_name_leaf": sorted(released_rows),
                 },
                 fh,
                 indent=2,
@@ -864,10 +864,24 @@ class YeastPhenomeDataset(ExperimentDataset):
         A haploid or homozygous-diploid deletion is total absence, the
         ``KanMxDeletionPerturbation``; a heterozygous-diploid column (``het``) is one copy
         dropped 2 -> 1, the ``EngineeredCopyNumberPerturbation``. Curation gives only the
-        ORF, so ``perturbed_gene_name`` is the ORF (no common name carried).
+        ORF, so ``perturbed_gene_name`` is the ORF (no common name carried). A row id
+        with no ORF form goes on ``ReleasedGeneNamePerturbation`` verbatim (#1045), kind
+        ``heterozygous_deletion`` for a ``het`` column and ``deletion`` otherwise.
         """
         perturbation: GenePerturbationType
-        if zygosity == "het":
+        if not _SYSTEMATIC_RE.match(orf):
+            perturbation = ReleasedGeneNamePerturbation(
+                systematic_gene_name=orf,
+                perturbed_gene_name=orf,
+                released_gene_name=orf,
+                released_kind=(
+                    ReleasedGeneKind.heterozygous_deletion
+                    if zygosity == "het"
+                    else ReleasedGeneKind.deletion
+                ),
+                marker="KanMX",
+            )
+        elif zygosity == "het":
             perturbation = EngineeredCopyNumberPerturbation(
                 systematic_gene_name=orf,
                 perturbed_gene_name=orf,

@@ -14,13 +14,16 @@ built from them, and refuses bytes off the pin.
 One record per SGD annotation with ``mutant_type`` "null", strain "S288C" and phenotype
 "inviable" (1,329 in the pinned dump), under two rules (#901):
 
-- **Allele.** Every annotation names one allele. A record is stored only when that allele
-  is the whole-gene deletion SGD writes ``<gene>-Δ``: the genotype is a deletion of the
-  gene. The other 42 annotations name a point, truncation or internal-deletion allele
-  (``cdc42-111``, ``sac1Δ114-503``, ``hht2-L61P``); the schema has no leaf that carries a
-  named allele verbatim (#984), and storing them as a whole-gene deletion is what made
-  24 records exact duplicates of a sibling. They are ledgered in
-  ``preprocess/dropped_records.json`` (:class:`SgdDropLog`), never stored.
+- **Allele.** Every annotation names one allele and every annotation is a record
+  (#1045). When the allele is the whole-gene deletion SGD writes ``<gene>-Δ`` the
+  genotype is a deletion of the gene (``SgaKanMxDeletionPerturbation``); the other 42
+  annotations name a point, truncation or internal-deletion allele (``cdc42-111``,
+  ``sac1Δ114-503``, ``hht2-L61P``) and are stored on ``NamedAllelePerturbation`` with
+  the allele name verbatim, which is what keeps two alleles of one gene two records.
+  Before #1045 those 42 were ledgered and never stored, because storing them as a
+  whole-gene deletion made 24 records exact duplicates of a sibling. The ledger
+  ``preprocess/dropped_records.json`` (:class:`SgdDropLog`) now records a build that
+  drops nothing.
 - **Condition.** An annotation's condition properties are carried, never dropped: the
   pinned dump holds four (class, text) pairs, each mapped by :data:`SGD_CONDITIONS` and
   any other refused by name. "nitrogen starvation" and "2% glucose" are nutrient edits
@@ -79,6 +82,7 @@ from torchcell.datamodels.schema import (
     GeneEssentialityPhenotype,
     Genotype,
     Media,
+    NamedAllelePerturbation,
     PhysicalFactor,
     Publication,
     ReferenceGenome,
@@ -327,13 +331,12 @@ SGD_CONDITIONS: dict[tuple[str, str], Environment] = {
     ),
 }
 
-#: The one drop rule of this dataset.
-RULE_NOT_WHOLE_GENE_DELETION = "allele_not_whole_gene_deletion"
+#: The retention rule of this dataset (#1045): nothing is dropped.
+RULE_NONE = "none"
 _RULE_DESCRIPTION = (
-    "the annotation's allele is not the whole-gene deletion '<gene>-Δ' (a point, "
-    "truncation or internal-deletion allele); the schema has no leaf that carries a "
-    "named allele verbatim, and storing it as a deletion of the whole gene duplicated "
-    "the gene's other records, so it is ledgered, not stored"
+    "every inviable null S288C annotation is a record: the whole-gene deletion "
+    "'<gene>-Δ' on SgaKanMxDeletionPerturbation, any other allele (a point, truncation "
+    "or internal-deletion allele) on NamedAllelePerturbation under its name verbatim"
 )
 
 
@@ -350,7 +353,7 @@ class SgdAlleleError(ValueError):
 
 
 class DuplicateSgdAnnotationError(ValueError):
-    """Two kept annotations are one (gene, condition, PubMed id) record."""
+    """Two annotations are one (gene, allele, condition, PubMed id) record."""
 
 
 class SgdAnnotation(BaseModel):
@@ -383,7 +386,11 @@ class SgdDroppedAnnotation(BaseModel):
 
 
 class SgdDropLog(BaseModel):
-    """The ledger of a build: what the dump holds, what was kept, and every drop."""
+    """The ledger of a build: what the dump holds, what was stored on which leaf.
+
+    ``rows`` lists what a rule dropped and is empty since #1045; the verifier reads it
+    to compare the store with the release, less the ledgered annotations.
+    """
 
     model_config = ConfigDict(extra="forbid")
 
@@ -391,6 +398,8 @@ class SgdDropLog(BaseModel):
     source_annotations: int
     kept_records: int
     dropped_records: int
+    n_whole_gene_deletion: int
+    n_named_allele: int
     sgd_genes_digest: str
     rule: str
     description: str
@@ -503,54 +512,70 @@ def condition_environment(annotation: SgdAnnotation) -> Environment:
 def split_by_allele(
     annotations: Iterable[SgdAnnotation],
 ) -> tuple[list[SgdAnnotation], list[SgdAnnotation]]:
-    """``(kept, dropped)``: whole-gene deletion alleles first, every other allele second."""
-    kept: list[SgdAnnotation] = []
-    dropped: list[SgdAnnotation] = []
+    """``(whole-gene deletions, named alleles)``; both halves are stored (#1045)."""
+    whole: list[SgdAnnotation] = []
+    named: list[SgdAnnotation] = []
     for annotation in annotations:
         if is_whole_gene_deletion(annotation.allele, annotation.locus_display_name):
-            kept.append(annotation)
+            whole.append(annotation)
         else:
-            dropped.append(annotation)
-    return kept, dropped
+            named.append(annotation)
+    return whole, named
 
 
-def refuse_duplicate_annotations(kept: Iterable[SgdAnnotation]) -> None:
-    """Raise when two kept annotations share gene, condition and PubMed id."""
-    keys = Counter((a.systematic_name, a.conditions, a.pubmed_id) for a in kept)
+def refuse_duplicate_annotations(annotations: Iterable[SgdAnnotation]) -> None:
+    """Raise when two annotations share gene, allele, condition and PubMed id."""
+    keys = Counter(
+        (a.systematic_name, a.allele, a.conditions, a.pubmed_id) for a in annotations
+    )
     repeated = sorted(str(key) for key, n in keys.items() if n > 1)
     if repeated:
         raise DuplicateSgdAnnotationError(
-            f"{len(repeated)} (gene, conditions, PubMed id) keys repeat: {repeated}"
+            f"{len(repeated)} (gene, allele, conditions, PubMed id) keys repeat: "
+            f"{repeated}"
         )
 
 
 def drop_log(
     dataset_name: str,
     n_source: int,
-    kept: list[SgdAnnotation],
-    dropped: list[SgdAnnotation],
+    whole: list[SgdAnnotation],
+    named: list[SgdAnnotation],
 ) -> SgdDropLog:
-    """The ledger of one build."""
+    """The ledger of one build: every annotation a record, none dropped."""
     return SgdDropLog(
         dataset=dataset_name,
         source_annotations=n_source,
-        kept_records=len(kept),
-        dropped_records=len(dropped),
+        kept_records=len(whole) + len(named),
+        dropped_records=0,
+        n_whole_gene_deletion=len(whole),
+        n_named_allele=len(named),
         sgd_genes_digest=SGD_GENES_DIGEST,
-        rule=RULE_NOT_WHOLE_GENE_DELETION,
+        rule=RULE_NONE,
         description=_RULE_DESCRIPTION,
-        rows=[
-            SgdDroppedAnnotation(
-                sgd_annotation_id=a.sgd_annotation_id,
-                systematic_name=a.systematic_name,
-                locus_display_name=a.locus_display_name,
-                allele=a.allele,
-                pubmed_id=a.pubmed_id,
-                conditions=[f"{kind}: {text}" for kind, text in a.conditions],
-                note=a.note,
-            )
-            for a in dropped
-        ],
+        rows=[],
+    )
+
+
+def sgd_perturbation(
+    annotation: SgdAnnotation,
+) -> SgaKanMxDeletionPerturbation | NamedAllelePerturbation:
+    """The perturbation an annotation states (#1045).
+
+    The whole-gene deletion ``<gene>-Δ`` is the deletion of the gene; any other allele
+    is stored under its name, verbatim, on the gene's systematic name.
+    """
+    if is_whole_gene_deletion(annotation.allele, annotation.locus_display_name):
+        return SgaKanMxDeletionPerturbation(
+            systematic_gene_name=annotation.systematic_name,
+            perturbed_gene_name=annotation.locus_display_name,
+            strain_id="S288C",
+        )
+    return NamedAllelePerturbation(
+        systematic_gene_name=annotation.systematic_name,
+        perturbed_gene_name=annotation.locus_display_name,
+        allele_name=annotation.allele,
+        strain_id="S288C",
     )
 
 
@@ -671,20 +696,20 @@ class GeneEssentialitySgdDataset(ExperimentDataset):
         genes_dir = osp.join(data_root(), SGD_GENES_RELPATH)
         verify_sgd_dump(genes_dir)
         annotations = inviable_null_annotations(genes_dir)
-        kept, dropped = split_by_allele(annotations)
-        refuse_duplicate_annotations(kept)
-        environments = [condition_environment(a) for a in kept]
+        whole, named = split_by_allele(annotations)
+        refuse_duplicate_annotations(annotations)
+        environments = [condition_environment(a) for a in annotations]
 
         os.makedirs(self.processed_dir, exist_ok=True)
         os.makedirs(self.preprocess_dir, exist_ok=True)
-        ledger = drop_log(self.name, len(annotations), kept, dropped)
+        ledger = drop_log(self.name, len(annotations), whole, named)
         with open(osp.join(self.preprocess_dir, "dropped_records.json"), "w") as f:
             f.write(ledger.model_dump_json(indent=2))
 
         env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(1e12))
         with env.begin(write=True) as txn:
             for index, (annotation, environment) in enumerate(
-                zip(kept, environments, strict=True)
+                zip(annotations, environments, strict=True)
             ):
                 experiment, reference, publication = self.create_experiment(
                     self.name, annotation, environment
@@ -699,12 +724,14 @@ class GeneEssentialitySgdDataset(ExperimentDataset):
                 txn.put(f"{index}".encode(), serialized_data)
         env.close()
         log.info(
-            "%s: %d of %d annotations stored, %d ledgered (%s)",
+            "%s: %d of %d annotations stored (%d whole-gene deletions, %d named "
+            "alleles), %d ledgered",
             self.name,
             ledger.kept_records,
             ledger.source_annotations,
+            ledger.n_whole_gene_deletion,
+            ledger.n_named_allele,
             ledger.dropped_records,
-            RULE_NOT_WHOLE_GENE_DELETION,
         )
 
     @staticmethod
@@ -713,20 +740,12 @@ class GeneEssentialitySgdDataset(ExperimentDataset):
     ) -> tuple[
         GeneEssentialityExperiment, GeneEssentialityExperimentReference, Publication
     ]:
-        """Build the experiment, reference, and publication for one kept annotation."""
+        """Build the experiment, reference, and publication for one annotation."""
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae", strain="S288C"
         )
 
-        genotype = Genotype(
-            perturbations=[
-                SgaKanMxDeletionPerturbation(
-                    systematic_gene_name=annotation.systematic_name,
-                    perturbed_gene_name=annotation.locus_display_name,
-                    strain_id="S288C",
-                )
-            ]
-        )
+        genotype = Genotype(perturbations=[sgd_perturbation(annotation)])
 
         phenotype = GeneEssentialityPhenotype(
             is_essential=True, evidence=sgd_evidence(annotation.experiment)

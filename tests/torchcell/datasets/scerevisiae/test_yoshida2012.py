@@ -58,7 +58,7 @@ import logging
 import math
 import re
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import pandas as pd
 import pydantic
@@ -75,10 +75,11 @@ from torchcell.datamodels.schema import (
     MetabolitePhenotype,
     Publication,
     ReferenceGenome,
+    ReleasedGeneKind,
+    ReleasedGeneNamePerturbation,
     Temperature,
 )
 from torchcell.datasets.scerevisiae import yoshida2012 as m
-from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 
 @pytest.fixture(autouse=True)
@@ -116,14 +117,18 @@ _S_IDS = {
 }
 
 
-class _StubGenome:
-    def __init__(self, names: dict[str, str]) -> None:
-        self.alias_to_systematic = {k: [v] for k, v in names.items()}
-        self.gene_set = {*_ORF_BY_NAME.values(), "YDR379C-A"}
-
-
-def _genome(names: dict[str, str] = _ORF_BY_NAME) -> SCerevisiaeGenome:
-    return cast(SCerevisiaeGenome, _StubGenome(names))
+def _deletion(gene: str) -> KanMxDeletionPerturbation | ReleasedGeneNamePerturbation:
+    if gene.startswith("Y"):
+        return KanMxDeletionPerturbation(
+            systematic_gene_name=gene, perturbed_gene_name=gene
+        )
+    return ReleasedGeneNamePerturbation(
+        systematic_gene_name=gene,
+        perturbed_gene_name=gene,
+        released_gene_name=gene,
+        released_kind=ReleasedGeneKind.deletion,
+        marker="KanMX",
+    )
 
 
 @pytest.fixture
@@ -149,7 +154,7 @@ def _root(tmp_path: Path, slug: str = "organic_acid_yoshida2012") -> Path:
 def dataset(
     tmp_path: Path, s_id_calls: list[dict[str, str]]
 ) -> m.OrganicAcidYoshida2012Dataset:
-    return m.OrganicAcidYoshida2012Dataset(root=str(_root(tmp_path)), genome=_genome())
+    return m.OrganicAcidYoshida2012Dataset(root=str(_root(tmp_path)))
 
 
 _ENVIRONMENT = Environment(media=m.YOSHIDA_YPD, temperature=Temperature(value=25))
@@ -200,13 +205,7 @@ def test_record_0_is_asm4_with_se_from_sd_over_sqrt_3(
         dataset[0]["experiment"]
         == MetaboliteExperiment(
             dataset_name="OrganicAcidYoshida2012Dataset",
-            genotype=Genotype(
-                perturbations=[
-                    KanMxDeletionPerturbation(
-                        systematic_gene_name="YDL088C", perturbed_gene_name="ASM4"
-                    )
-                ]
-            ),
+            genotype=Genotype(perturbations=[_deletion("ASM4")]),
             environment=_ENVIRONMENT,
             phenotype=_phenotype(
                 [4.02, 0.10, 0.15, 0.13, 1.31, 0.78],
@@ -224,13 +223,17 @@ def test_record_0_is_asm4_with_se_from_sd_over_sqrt_3(
 def test_seventeen_records_in_table_order_with_one_shared_reference(
     dataset: m.OrganicAcidYoshida2012Dataset,
 ) -> None:
-    """Records follow ``TABLE_3`` order minus WT; the last is YDR379C-A, resolved by the
-    regex rather than the alias table, with the ORF as its perturbed name. Every strain
-    measures all six analytes, so the WT reference is shared: one index entry.
+    """Records follow ``TABLE_3`` order minus WT, each under the name the table gives
+    (#1045): the 16 common names on the released-gene-name leaf and the last, YDR379C-A,
+    on the placed KanMX leaf with the ORF as both names. Every strain measures all six
+    analytes, so the WT reference is shared: one index entry.
     """
     genes = [g for g in m.TABLE_3 if g != "WT"]
     stored = [
         (
+            dataset[i]["experiment"]["genotype"]["perturbations"][0][
+                "perturbation_type"
+            ],
             dataset[i]["experiment"]["genotype"]["perturbations"][0][
                 "systematic_gene_name"
             ],
@@ -240,45 +243,33 @@ def test_seventeen_records_in_table_order_with_one_shared_reference(
         )
         for i in range(17)
     ]
-    assert stored == [(_ORF_BY_NAME.get(g, g), g) for g in genes]
-    assert stored[-1] == ("YDR379C-A", "YDR379C-A")
+    assert stored == [
+        ("kanmx_deletion" if g.startswith("Y") else "released_gene_name", g, g)
+        for g in genes
+    ]
+    assert stored[-1] == ("kanmx_deletion", "YDR379C-A", "YDR379C-A")
+    assert (
+        dataset[0]["experiment"]["genotype"]["perturbations"][0]["released_gene_name"]
+        == "ASM4"
+    )
     preprocess = Path(dataset.root) / "preprocess"
     index = json.loads((preprocess / "experiment_reference_index.json").read_text())
     assert [entry["member_indices"] for entry in index] == [list(range(17))]
-    assert (preprocess / "data.csv").read_text() == "orf,gene\n" + "".join(
-        f"{_ORF_BY_NAME.get(g, g)},{g}\n" for g in genes
+    assert (preprocess / "data.csv").read_text() == "gene,leaf\n" + "".join(
+        f"{g},{'kanmx_deletion' if g.startswith('Y') else 'released_gene_name'}\n"
+        for g in genes
     )
-    assert json.loads((preprocess / "gene_set.json").read_text()) == sorted(
-        [*_ORF_BY_NAME.values(), "YDR379C-A"]
-    )
+    assert json.loads((preprocess / "gene_set.json").read_text()) == sorted(genes)
     manifest = json.loads((preprocess / "build_manifest.json").read_text())
     assert manifest["dataset_name"] == "organic_acid_yoshida2012"
     assert manifest["loader_class"] == "OrganicAcidYoshida2012Dataset"
     assert manifest["loader_module"] == "torchcell.datasets.scerevisiae.yoshida2012"
 
 
-def test_unresolvable_common_name_raises(
-    tmp_path: Path, s_id_calls: list[dict[str, str]]
-) -> None:
-    names = {k: v for k, v in _ORF_BY_NAME.items() if k != "ASM4"}
-    with pytest.raises(
-        RuntimeError, match="Yoshida2012: could not resolve gene name 'ASM4'"
-    ):
-        m.OrganicAcidYoshida2012Dataset(
-            root=str(_root(tmp_path)), genome=_genome(names)
-        )
-
-
-def test_requires_an_injected_genome(tmp_path: Path) -> None:
-    """The genome check precedes the Yeast9 mapper call, so no stub is needed here."""
-    with pytest.raises(
-        RuntimeError,
-        match=re.escape(
-            "OrganicAcidYoshida2012Dataset requires an injected SCerevisiaeGenome to "
-            "resolve common gene names to systematic ORF ids (Table 3 uses names)."
-        ),
-    ):
-        m.OrganicAcidYoshida2012Dataset(root=str(_root(tmp_path)), genome=None)
+def test_every_table_name_is_a_released_name_never_resolved() -> None:
+    """The 16 common names are stored as written; nothing in the module resolves."""
+    assert not hasattr(m, "_resolve_systematic")
+    assert {g for g in m.TABLE_3 if g != "WT"} == {*_ORF_BY_NAME, "YDR379C-A"}
 
 
 def test_download_stages_the_mirror_pdf_only_after_verifying_it(
@@ -297,20 +288,18 @@ def test_download_stages_the_mirror_pdf_only_after_verifying_it(
     with pytest.raises(
         RuntimeError, match=re.escape(f"Yoshida2012 mirror PDF not found: {mirror}")
     ):
-        m.OrganicAcidYoshida2012Dataset(root=str(tmp_path / "empty"), genome=_genome())
+        m.OrganicAcidYoshida2012Dataset(root=str(tmp_path / "empty"))
     mirror.parent.mkdir(parents=True)
     mirror.write_bytes(b"wrong pdf")
     digest = hashlib.sha256(b"wrong pdf").hexdigest()
     assert digest.startswith("43d5ed94")
     with pytest.raises(RawSha256MismatchError) as err:
-        m.OrganicAcidYoshida2012Dataset(root=str(tmp_path / "empty2"), genome=_genome())
+        m.OrganicAcidYoshida2012Dataset(root=str(tmp_path / "empty2"))
     assert str(err.value) == (
         f"sha256 mismatch for {mirror}: expected {m.PDF_SHA256}, observed {digest}"
     )
     assert list((tmp_path / "empty2" / "raw").iterdir()) == []
-    dataset = m.OrganicAcidYoshida2012Dataset(
-        root=str(_root(tmp_path)), genome=_genome()
-    )
+    dataset = m.OrganicAcidYoshida2012Dataset(root=str(_root(tmp_path)))
     dest = Path(dataset.root) / "raw" / m.PDF_FILENAME
     placeholder = hashlib.sha256(dest.read_bytes()).hexdigest()
     assert placeholder != m.PDF_SHA256
@@ -349,7 +338,7 @@ def test_build_logs_the_strain_analyte_and_mapping_counts(
     then the written count.
     """
     with caplog.at_level(logging.INFO, logger=m.log.name):
-        m.OrganicAcidYoshida2012Dataset(root=str(_root(tmp_path)), genome=_genome())
+        m.OrganicAcidYoshida2012Dataset(root=str(_root(tmp_path)))
     assert [r.getMessage() for r in caplog.records if r.name == m.log.name] == [
         "Yoshida2012: 17 deletion strains, WT reference over 6 analytes, "
         "5 organic acids mapped to Yeast9 s_NNNN",
@@ -421,65 +410,23 @@ _OTHER = _row(
 )
 
 
-@pytest.mark.parametrize(
-    ("table", "aliases", "message"),
-    [
-        (
-            {"ASM4": "ASM4", "YDL088C": "ASM4"},
-            {},
-            "Yoshida2012: Table 3 rows 'ASM4' and 'YDL088C' both resolve to YDL088C",
-        ),
-        (
-            {"yal999w": "OTHER"},
-            {},
-            "Yoshida2012: systematic name 'YAL999W' is not a gene of the genome",
-        ),
-        (
-            {"AMB": "OTHER"},
-            {"AMB": ["YBR001C", "YCR001W"]},
-            "Yoshida2012: gene name 'AMB' is an alias of 2 ORFs ['YBR001C', 'YCR001W']",
-        ),
-        (
-            {"ASM4": "NAN_CITRATE"},
-            {},
-            "Yoshida2012: Table 3 row 'ASM4' has a NaN citrate cell (nan, nan)",
-        ),
-    ],
-    ids=["duplicate_orf", "orf_not_in_genome", "ambiguous_alias", "nan_cell"],
-)
 def test_a_bad_table_row_is_refused_before_anything_is_written(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-    s_id_calls: list[dict[str, str]],
-    table: dict[str, str],
-    aliases: dict[str, list[str]],
-    message: str,
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, s_id_calls: list[dict[str, str]]
 ) -> None:
-    """Contract (issue #537): beside the released WT row, a table with ASM4 twice (as
-    ``ASM4`` and as its ORF ``YDL088C``), a systematic-shaped ``yal999w`` the genome does
-    not have, an alias ``AMB`` of two ORFs, or a citrate (nan, nan) cell is refused with
-    a named message. Nothing is written: no ``data.csv``, no ``processed/lmdb``, and a
-    second constructor on the same root refuses again.
+    """Contract (issue #537): beside the released WT row, a citrate (nan, nan) cell is
+    refused with a named message. Nothing is written: no ``data.csv``, no
+    ``processed/lmdb``, and a second constructor on the same root refuses again. A
+    name is never a reason to refuse: ``yal999w``, an alias of two ORFs and a gene
+    written both as its symbol and its ORF are all stored as released (#1045).
     """
     asm4 = m.TABLE_3["ASM4"]
-    rows = {
-        "ASM4": asm4,
-        "OTHER": _OTHER,
-        "NAN_CITRATE": [asm4[0], asm4[1], (math.nan, math.nan), *asm4[3:]],
-    }
-    monkeypatch.setattr(
-        m,
-        "TABLE_3",
-        {"WT": m.TABLE_3["WT"], **{key: rows[row] for key, row in table.items()}},
-    )
-    genome = _StubGenome(_ORF_BY_NAME)
-    genome.alias_to_systematic.update(aliases)
+    nan_citrate = [asm4[0], asm4[1], (math.nan, math.nan), *asm4[3:]]
+    monkeypatch.setattr(m, "TABLE_3", {"WT": m.TABLE_3["WT"], "ASM4": nan_citrate})
+    message = "Yoshida2012: Table 3 row 'ASM4' has a NaN citrate cell (nan, nan)"
     root = _root(tmp_path, "refused")
     for _ in range(2):
         with pytest.raises(RuntimeError) as info:
-            m.OrganicAcidYoshida2012Dataset(
-                root=str(root), genome=cast(SCerevisiaeGenome, genome)
-            )
+            m.OrganicAcidYoshida2012Dataset(root=str(root))
         assert str(info.value) == message
         assert not (root / "preprocess" / "data.csv").exists()
         assert not (root / "processed" / "lmdb").exists()
@@ -501,7 +448,7 @@ def test_negative_sd_is_refused_by_the_phenotype_validator(
     root = _root(tmp_path, "negative")
     for _ in range(2):
         with pytest.raises(pydantic.ValidationError) as info:
-            m.OrganicAcidYoshida2012Dataset(root=str(root), genome=_genome())
+            m.OrganicAcidYoshida2012Dataset(root=str(root))
         assert [e["msg"] for e in info.value.errors()] == [
             "Value error, SE for acetate must be non-negative"
         ]
@@ -527,9 +474,7 @@ def test_download_copies_a_verified_mirror_pdf(
     monkeypatch.delenv("TC_DATA_URL", raising=False)
     monkeypatch.setattr(m, "PDF_SHA256", hashlib.sha256(content).hexdigest())
     with caplog.at_level(logging.INFO, logger=m.log.name):
-        dataset = m.OrganicAcidYoshida2012Dataset(
-            root=str(tmp_path / "fresh"), genome=_genome()
-        )
+        dataset = m.OrganicAcidYoshida2012Dataset(root=str(tmp_path / "fresh"))
     dest = tmp_path / "fresh" / "raw" / m.PDF_FILENAME
     assert dest.read_bytes() == content
     staged = [
@@ -541,21 +486,15 @@ def test_download_copies_a_verified_mirror_pdf(
     assert len(dataset) == 17
 
 
-def test_main_builds_genome_and_dataset_under_data_root(
+def test_main_builds_the_dataset_under_data_root(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """``main`` builds the genome from ``$DATA_ROOT/data/sgd/genome`` and ``data/go`` with
-    ``overwrite=False``, then the dataset at
-    ``$DATA_ROOT/data/torchcell/organic_acid_yoshida2012`` with that genome, and prints
-    its length and first item. Both classes are recorders.
+    """``main`` builds the dataset at ``$DATA_ROOT/data/torchcell/organic_acid_yoshida2012``
+    with no genome and prints its length and first item. The class is a recorder.
     """
     monkeypatch.setenv("DATA_ROOT", str(tmp_path))
     monkeypatch.setattr("dotenv.load_dotenv", lambda *a, **k: False)
     calls: list[tuple[str, dict[str, Any]]] = []
-
-    class _Genome:
-        def __init__(self, **kwargs: Any) -> None:
-            calls.append(("genome", kwargs))
 
     class _Dataset:
         def __init__(self, **kwargs: Any) -> None:
@@ -567,16 +506,9 @@ def test_main_builds_genome_and_dataset_under_data_root(
         def __getitem__(self, index: int) -> str:
             return f"item[{index}]"
 
-    monkeypatch.setattr(m, "SCerevisiaeGenome", _Genome)
     monkeypatch.setattr(m, "OrganicAcidYoshida2012Dataset", _Dataset)
     m.main()
-    assert [name for name, _ in calls] == ["genome", "dataset"]
-    assert calls[0][1] == {
-        "genome_root": f"{tmp_path}/data/sgd/genome",
-        "go_root": f"{tmp_path}/data/go",
-        "overwrite": False,
-    }
-    assert list(calls[1][1]) == ["root", "genome"]
-    assert calls[1][1]["root"] == f"{tmp_path}/data/torchcell/organic_acid_yoshida2012"
-    assert type(calls[1][1]["genome"]) is _Genome
+    assert [name for name, _ in calls] == ["dataset"]
+    assert list(calls[0][1]) == ["root"]
+    assert calls[0][1]["root"] == f"{tmp_path}/data/torchcell/organic_acid_yoshida2012"
     assert capsys.readouterr().out == "len = 17\nitem[0]\n"

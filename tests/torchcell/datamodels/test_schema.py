@@ -4097,10 +4097,29 @@ def test_released_gene_name_leaf_crispr_interference_carries_its_construct() -> 
         s.ReleasedGeneNamePerturbation(**_RELEASED_NAME, crispr=construct)
 
 
-@pytest.mark.parametrize(
-    "identifier", ["YAL001C", "YAL001C-A", "Q0010", "YNCA0001W", "b0002", " ADE2", ""]
-)
-def test_released_gene_name_leaf_refuses_a_systematic_name_or_a_tag(
+def test_released_gene_name_leaf_carries_a_systematic_name_whose_kind_is_a_gap() -> (
+    None
+):
+    """SynLethDB releases names like YPR108W-A with no stated kind: the released leaf
+    carries them, since no placed leaf claims a kind the source does not state.
+    """
+    gap = ProvenanceGap(
+        field="released_kind", reason=ProvenanceGapReason.not_reported_by_primary
+    )
+    leaf = s.ReleasedGeneNamePerturbation(
+        systematic_gene_name="YPR108W-A",
+        perturbed_gene_name="YPR108W-A",
+        released_gene_name="YPR108W-A",
+        released_gene_id="1466522",
+        released_gene_id_namespace=s.ReleasedGeneIdNamespace.ncbi_entrez_gene,
+        released_kind=None,
+        provenance_gaps=[gap],
+    )
+    assert leaf.systematic_gene_name == "YPR108W-A"
+
+
+@pytest.mark.parametrize("identifier", ["b0002", "PP_0001", " ADE2", ""])
+def test_released_gene_name_leaf_refuses_a_locus_tag_or_a_non_verbatim_name(
     identifier: str,
 ) -> None:
     with pytest.raises(ValueError):
@@ -4111,6 +4130,23 @@ def test_released_gene_name_leaf_refuses_a_systematic_name_or_a_tag(
                 "released_gene_name": identifier,
             }
         )
+
+
+def test_released_gene_name_leaf_kind_is_set_or_a_typed_gap() -> None:
+    gap = ProvenanceGap(
+        field="released_kind", reason=ProvenanceGapReason.not_reported_by_primary
+    )
+    leaf = s.ReleasedGeneNamePerturbation(
+        **{**_RELEASED_NAME, "released_kind": None}, provenance_gaps=[gap]
+    )
+    assert leaf.mechanism_so is None and leaf.gapped_fields() == {"released_kind"}
+    assert hash(leaf) == hash(leaf.model_copy())
+    back = s.Genotype.model_validate(
+        s.Genotype(perturbations=[leaf]).model_dump()
+    ).perturbations[0]
+    assert back == leaf and type(back) is s.ReleasedGeneNamePerturbation
+    with pytest.raises(ValueError, match="released_kind is unset and carries no"):
+        s.ReleasedGeneNamePerturbation(**{**_RELEASED_NAME, "released_kind": None})
 
 
 def test_released_gene_name_leaf_states_the_name_once() -> None:

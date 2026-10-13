@@ -103,6 +103,8 @@ from torchcell.datamodels.schema import (
     KanMxDeletionPerturbation,
     Publication,
     ReferenceGenome,
+    ReleasedGeneKind,
+    ReleasedGeneNamePerturbation,
     SampleUnit,
     Temperature,
 )
@@ -130,6 +132,26 @@ _N_SAMPLES = 2
 # Row count declared in the file's header comment ("... 1312 deletion strains ...").
 _EXPECTED_ROWS = 1312
 _SYSTEMATIC_RE = re.compile(r"^(Y[A-P][LR]\d{3}[WC](-[A-Z])?|Q\d{4})$")
+
+
+def _released_deletion(
+    orf: str, common_name: str
+) -> KanMxDeletionPerturbation | ReleasedGeneNamePerturbation:
+    """The deletion under the released identifier (#1045): an ORF-shaped one on the
+    placed KanMX leaf with the released commonName as the perturbed name, any other
+    on the released-gene-name leaf verbatim (kind deletion, marker KanMX).
+    """
+    if _SYSTEMATIC_RE.match(orf):
+        return KanMxDeletionPerturbation(
+            systematic_gene_name=orf, perturbed_gene_name=common_name
+        )
+    return ReleasedGeneNamePerturbation(
+        systematic_gene_name=orf,
+        perturbed_gene_name=common_name,
+        released_gene_name=orf,
+        released_kind=ReleasedGeneKind.deletion,
+        marker="KanMX",
+    )
 
 
 @register_dataset
@@ -211,13 +233,7 @@ class SmfODuibhir2014Dataset(ExperimentDataset):
         # slow growers (log2relT > 0) land < 1, matching the stored Costanzo SMF convention.
         fitness = float(2.0 ** (-log2relt))
 
-        genotype = Genotype(
-            perturbations=[
-                KanMxDeletionPerturbation(
-                    systematic_gene_name=orf, perturbed_gene_name=common_name
-                )
-            ]
-        )
+        genotype = Genotype(perturbations=[_released_deletion(orf, common_name)])
         # The shared library SC (liquid, defined) rather than a name-only medium: a
         # free-text "SC" would be its own media node in the graph and join nothing.
         environment = Environment(media=SC, temperature=Temperature(value=30))
@@ -261,9 +277,9 @@ class SmfODuibhir2014Dataset(ExperimentDataset):
         Every record is built and every refusal raised BEFORE the store is opened, so a
         refused file leaves no ``processed/lmdb`` behind for a retry to serve as empty.
         Every row is a record under its released ORF (upper-cased; no genome is
-        consulted, #1045). Refusals (each 0 of the 1312 rows of the pinned file): a blank
-        ``commonName`` or ``log2relT``, two rows naming one ORF, and an ORF cell that is
-        not ORF-shaped (which would need the released-gene-name leaf, never a drop).
+        consulted, #1045); a cell that is not ORF-shaped goes on the released-gene-name
+        leaf verbatim (0 of 1312). Refusals (each 0 of the 1312 rows of the pinned
+        file): a blank ``commonName`` or ``log2relT`` and two rows naming one ORF.
         """
         verify_raw_files(self.raw_dir, {_RAW_FILENAME: _DATASET_S2_SHA256})
         df = self._read_dataset_s2()
@@ -275,11 +291,6 @@ class SmfODuibhir2014Dataset(ExperimentDataset):
         for _, row in df.iterrows():
             token = str(row["orf"])
             orf = token.strip().upper()
-            if not _SYSTEMATIC_RE.match(orf):
-                raise RuntimeError(
-                    f"Dataset S2 row {token!r} is not an ORF-shaped identifier; a "
-                    "released name with no ORF form needs the released-gene-name leaf"
-                )
             if orf in first_row:
                 raise RuntimeError(
                     f"Dataset S2 lists {orf} twice (rows {first_row[orf]!r} and "

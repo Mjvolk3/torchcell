@@ -303,22 +303,27 @@ def test_ledger_counts_every_released_row(
     ]
 
 
-def test_a_name_that_is_not_orf_shaped_is_refused_before_the_store_opens(
+def test_a_name_that_is_not_orf_shaped_is_stored_on_the_released_leaf(
     tmp_path: Path,
 ) -> None:
-    """A row id with no ORF form cannot sit on KanMxDeletionPerturbation and needs the
-    released-gene-name leaf; it is refused by name, never resolved and never dropped.
+    """A row id with no ORF form goes on ``ReleasedGeneNamePerturbation`` verbatim with
+    the released commonName as its perturbed name (#1045); never resolved, never dropped.
     """
     root = _edge_root(
         tmp_path,
         "shape",
         [["YAL001C", "TFC3", "1.0", "0.1"], ["ABC1", "X", "0.5", "0.4"]],
     )
-    _refused_twice(
-        root,
-        "Dataset S2 row 'ABC1' is not an ORF-shaped identifier; a released name with "
-        "no ORF form needs the released-gene-name leaf",
-    )
+    dataset = m.SmfODuibhir2014Dataset(root=str(root))
+    assert len(dataset) == m._EXPECTED_ROWS
+    (released,) = dataset[1]["experiment"]["genotype"]["perturbations"]
+    assert (
+        released["perturbation_type"],
+        released["systematic_gene_name"],
+        released["perturbed_gene_name"],
+        released["released_gene_name"],
+        released["released_kind"],
+    ) == ("released_gene_name", "ABC1", "X", "ABC1", "deletion")
 
 
 def _refused_twice(root: Path, message: str) -> None:

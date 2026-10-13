@@ -100,3 +100,39 @@ Rebuilt from this branch under slurm (job 4455, `build_dataset_lmdb --retire-exi
 | L1-L3 | shared rules (gap census 17,725 gaps over 4,291 records, canonical spellings, uncertainty, compound identity, media membership) | pass |
 | L4 (finding) | `gene_containment_mg1655_locus_tags` | 4,084 of 4,208 released b-numbers are MG1655 GenBank gene rows; 124 are not; 83 records are keyed by ERGO id; reported, not gated |
 | L3 | provenance audit of every sourced value | pass, 27 of 27 quotes verbatim |
+
+## 2026.10.13 - Rebased onto main: X and ? rows are ledger rows on the boolean leaf
+
+Rebased onto main `6982d2437`, which landed PR #1083 (the graded essentiality sibling) and PR #1072 (typed gaps on released Z scores and pathway organisms). Main's `torchcell/datamodels/schema.py` is kept whole, so this branch carries no schema change and no schema-change record: `GeneEssentialityPhenotype.is_essential` stays a `bool`, there is no `released_call`, `BacterialReleasedStrainPerturbation` has no `construction` slot, and the record `2026-10-12-essentiality-released-call-gap-and-released-strain-construction.json` named in the 2026.10.12 section is gone. `python -m torchcell.provenance.schema_change check` passes, and the ontology figures and browser seed regenerate byte-identical to main's.
+
+### What changed from the 2026.10.12 section
+
+Main keeps `is_essential` a `bool`, its validator refuses a footprinting `X` or `?` on the boolean leaf, and a call with no boolean belongs on `GradedGeneEssentialityPhenotype` (PR #1083), so the 331 `X` ("the gene was not covered") and 221 `?` ("ambiguous") rows are ledgered under the named rules `not_covered_call` and `ambiguous_call` in `preprocess/dropped_records.json` (items `row <n> <identifier> <gene>`), with every released cell in `preprocess/calls.csv` (`drop_rule`, an empty `record`). A graded store for them is a follow-up under #909; this PR builds no graded dataset class. The identifier a row is keyed by is still decided over all 4,291 released rows, so a row's key does not depend on which rows are stored. L2 refuses a record under an X or ? row's identifier.
+
+| store | dev store 2026-10-11 (main's loader) | 2026.10.12 section (gapped None) | after this rebase |
+|---|---:|---:|---:|
+| `gene_essentiality_gerdes2003` | 3,618 | 4,291 | 3,739 |
+
+Count arithmetic: 4,291 Table S1 rows = 3,739 records (619 E, 3,114 N, 6 N*; 3,681 under a b-number no other row carries, 58 under an ERGO id) + 331 `not_covered_call` + 221 `ambiguous_call`. Of the 83 ERGO-keyed rows, 25 are X or ? (12 and 13). Main's loader ledgered 306 X and 189 ? because its identifier rules ran first; with no identifier rule left, every X and ? row is under its call rule. 3,739 >= 3,618, the store's count before this PR.
+
+### L0-L4 after the rebuild
+
+Rebuilt from this branch at `487bc2982` under slurm array 4675 (`gilahyper_build_dataset_lmdbs_array.slurm`, `build_dataset_lmdb --dataset <Class> --retire-existing --verify`, 8 CPUs / 32 G per task, `%4`), task 2; `run_verification`: PASS. A `report` row is a genome-reference finding, listed under the verdict and never gated.
+
+| level | rule | kind | verdict | message |
+|---|---|---|---|---|
+| L0 | `structural` | gate | pass | 3,739 records validated |
+| L1 | `count` | gate | pass | observed 3,739, expected 3,739 |
+| L1 | `one_record_per_released_identifier` | gate | pass | 3,739 released identifiers, one record each |
+| L1 | `provenance_gaps` | gate | pass | 14,965 documented gaps over 3,739 records |
+| L2 | `calls_match_table_s1` | gate | pass | 3,739 records equal their Table S1 row's call and identifier, with its letter, insertions and assertion error |
+| L2 | `uncertainty_sanity` | gate | pass | 0 labeled uncertainties |
+| L3 | `table_s1_call_histogram_is_pinned` | gate | pass | Table S1 619 E, 3,114 N, 6 N*, 331 X, 221 ?; the abstract states 620 / 3,126 and the overview 3,746 unambiguous (the table holds 3,739) |
+| L3 | `reference_is_the_viable_parent_without_kanamycin` | gate | pass | 3,739 of 3,739 |
+| L3 | `evidence_is_genetic_footprinting` | gate | pass | 3,739 of 3,739; 9 E calls gap their assertion error |
+| L3 | `compound_identity`, `media_compound_identity`, `media_membership` | gate | pass | 71,041 medium compound references identified, 14,956 typed gaps (4 compounds); 1 distinct medium |
+| L3 | `provenance_audit` | gate | pass | 27 of 27 quotes verbatim |
+| L1 | `canonical_gene_names` | report | pass | 3,739 systematic names, one spelling each |
+| L4 | `gene_containment_mg1655_locus_tags` | report | pass | 3,595 of 3,681 released b-numbers are MG1655 GenBank gene rows; 86 are not; 58 records are keyed by ERGO id |
+
+The real-data tests (`-m data --data`) pass against this store.

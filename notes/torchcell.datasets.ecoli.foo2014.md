@@ -195,3 +195,29 @@ Rebuilt from this branch under slurm (job 4450, `build_dataset_lmdb --retire-exi
 | L3 | unit stored verbatim (mg/L as ug/mL); uncertainties typed gaps; canonical isoprenol entity; reference is the released PS+RFP titer | pass |
 | L4 | titer against the released improvement percent; construct against the deposited Table S3 | pass, 9 of 9 each |
 | L4 (finding) | `perturbed_gene_containment_assembly` | 0 of 8 released symbols are locus tags of the MG1655 assembly (they are gene symbols, not b-numbers); reported, not gated |
+
+## 2026.10.13 - Rebased onto main: the released symbols beside main's typed organism gap
+
+Rebased onto main `6982d2437`, which landed PR #1083 (the graded essentiality sibling) and PR #1072 (typed gaps on released Z scores and pathway organisms). Main's `torchcell/datamodels/schema.py` is kept whole, so this branch carries no schema change and no schema-change record: `GeneEssentialityPhenotype.is_essential` stays a `bool`, there is no `released_call`, `BacterialReleasedStrainPerturbation` has no `construction` slot, and the record `2026-10-12-essentiality-released-call-gap-and-released-strain-construction.json` named in the 2026.10.12 section is gone. `python -m torchcell.provenance.schema_change check` passes, and the ontology figures and browser seed regenerate byte-identical to main's.
+
+### What changed from the two 2026.10.12 sections
+
+Both are kept. The eight tolerance genes are stored under the gene symbol the paper releases (this branch), and the PS+RFP control's rfp gene carries main's `source_organism=None` with the typed `not_reported_by_primary` gap of `reporter_organism_gap()` (PR #1072), which supersedes the `unreported` sentinel the reversal section was written against. `overexpression_perturbation(gene, plasmid)` takes no b-number: the symbol is what is stored. 9 records, as before.
+
+### L0-L4 after the rebuild
+
+Rebuilt from this branch at `487bc2982` under slurm array 4675 (`gilahyper_build_dataset_lmdbs_array.slurm`, `build_dataset_lmdb --dataset <Class> --retire-existing --verify`, 8 CPUs / 32 G per task, `%4`), task 7; the product-titer family runner: PASS. A `report` row is a genome-reference finding, listed under the verdict and never gated.
+
+| level | rule | kind | verdict | message |
+|---|---|---|---|---|
+| L0 | `structural` | gate | pass | 9 records validated |
+| L1 | `count` | gate | pass | observed 9, expected 9 |
+| L2 | `value_fidelity`, `cross_method` | gate | pass | 9 values; 9 pairs agree within 0.0 |
+| L3 | `titer_unit_is_the_sources_mg_per_l_as_ug_per_ml` | gate | pass | 1 mg/L == 1 ug/mL exactly |
+| L3 | `every_uncertainty_is_a_typed_gap_not_a_guess` | gate | pass | n=3 sourced; the kind of the plus-minus numbers is stated nowhere |
+| L3 | `the_product_is_the_canonical_isoprenol_entity` | gate | pass | resolved through the paper's own '3-methyl-3-buten-1-ol' |
+| L3 | `the_reference_is_the_released_PS_RFP_control_titer` | gate | pass | every record against the 834.0 ug/mL PS+RFP control |
+| L4 | `titer_against_released_improvement_percent`, `construct_against_deposited_table_s3` | gate | pass | 9 of 9 each |
+| L4 | `perturbed_gene_containment_assembly` | report | not met | 0 of 8 released symbols are locus tags of the MG1655 assembly (they are gene symbols, not b-numbers); reported, not gated |
+
+The real-data tests (`-m data --data`) pass against this store.

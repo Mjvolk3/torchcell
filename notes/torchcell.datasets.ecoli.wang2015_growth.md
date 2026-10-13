@@ -171,3 +171,29 @@ Rebuilt from this branch under slurm (job 4449, `build_dataset_lmdb --retire-exi
 | L3 | reference fitness 1.0; compound identity; media membership | pass |
 | L4 (finding) | `gene_containment_bw25113_released_symbols` | 46 of 46 released gene symbols resolve to a BW25113 locus; reported, not gated |
 | L3 | provenance audit of every sourced value | pass |
+
+## 2026.10.13 - Rebased onto main: the Keio number lives in the strain table
+
+Rebased onto main `6982d2437`, which landed PR #1083 (the graded essentiality sibling) and PR #1072 (typed gaps on released Z scores and pathway organisms). Main's `torchcell/datamodels/schema.py` is kept whole, so this branch carries no schema change and no schema-change record: `GeneEssentialityPhenotype.is_essential` stays a `bool`, there is no `released_call`, `BacterialReleasedStrainPerturbation` has no `construction` slot, and the record `2026-10-12-essentiality-released-call-gap-and-released-strain-construction.json` named in the 2026.10.12 section is gone. `python -m torchcell.provenance.schema_change check` passes, and the ontology figures and browser seed regenerate byte-identical to main's.
+
+### What changed from the 2026.10.12 section
+
+The same change as [[torchcell.datasets.ecoli.wang2015]]: the 46 fitness records carry the released gene symbol and the Table S3 label on `BacterialReleasedStrainPerturbation`, which has no accession slot on main, and the Table S2 Keio number stays verbatim in `preprocess/no_isoprenol.csv` (`keio_token`). 46 records, as before.
+
+### L0-L4 after the rebuild
+
+Rebuilt from this branch at `487bc2982` under slurm array 4675 (`gilahyper_build_dataset_lmdbs_array.slurm`, `build_dataset_lmdb --dataset <Class> --retire-existing --verify`, 8 CPUs / 32 G per task, `%4`), task 6; `verify_build`: PASS.
+
+| level | rule | kind | verdict | message |
+|---|---|---|---|---|
+| L0 | `structural` | gate | pass | 46 records validated |
+| L1 | `count`, `pair_uniqueness` | gate | pass | 46 of 46; 46 unique (strain, environment) records |
+| L1 | `provenance_gaps` | gate | pass | 46 documented gaps over 46 records |
+| L2 | `value_fidelity`, `se_nonnegative`, `uncertainty_sanity`, `se_is_not_the_conditioned_derivation` | gate | pass | 46 values and 46 SEs; every stored SE at least the parent-conditioned derivation |
+| L3 | `reference_one` | gate | pass | reference fitness 1.0 for all 46 |
+| L3 | `compound_identity`, `media_compound_identity`, `media_membership` | gate | pass | 46 medium compound references identified; 46 records on a shared medium |
+| L3 | `provenance_audit` | gate | pass | 15 of 15 quotes verbatim |
+| L1 | `canonical_gene_names` | report | pass | 46 systematic names, one spelling each |
+| L4 | `gene_containment_bw25113_released_symbols` | report | pass | 46 of 46 released gene symbols resolve to a BW25113 locus |
+
+The real-data tests (`-m data --data`) pass against this store.

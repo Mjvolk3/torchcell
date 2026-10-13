@@ -227,3 +227,28 @@ Rebuilt from this branch under slurm (job 4446, `build_dataset_lmdb --retire-exi
 | L3 | reference finite and key-matched; one measurement type | pass |
 | L4 (finding) | `gene_containment_bw25113_jw_synonyms` | 3,783 of 3,830 released identifiers (JW ids over the 3,806 columns, pooled ones counted once each) resolve to a BW25113 locus; 47 do not; reported, not gated |
 | L3 | provenance audit of every sourced value | pass |
+
+## 2026.10.13 - Rebased onto main: no schema change, the store rebuilt
+
+Rebased onto main `6982d2437`, which landed PR #1083 (the graded essentiality sibling) and PR #1072 (typed gaps on released Z scores and pathway organisms). Main's `torchcell/datamodels/schema.py` is kept whole, so this branch carries no schema change and no schema-change record: `GeneEssentialityPhenotype.is_essential` stays a `bool`, there is no `released_call`, `BacterialReleasedStrainPerturbation` has no `construction` slot, and the record `2026-10-12-essentiality-released-call-gap-and-released-strain-construction.json` named in the 2026.10.12 section is gone. `python -m torchcell.provenance.schema_change check` passes, and the ontology figures and browser seed regenerate byte-identical to main's.
+
+### What changed from the 2026.10.12 section
+
+Nothing in the loader. The records serialize without the `construction` key the branch's leaf slot used to add (always `None` here: the JW id is the record's identifier). 3,806 records, as in the 2026.10.12 section; 3,735 before this PR.
+
+### L0-L4 after the rebuild
+
+Rebuilt from this branch at `487bc2982` under slurm array 4675 (`gilahyper_build_dataset_lmdbs_array.slurm`, `build_dataset_lmdb --dataset <Class> --retire-existing --verify`, 8 CPUs / 32 G per task, `%4`), task 3; `run_verification`: PASS.
+
+| level | rule | kind | verdict | message |
+|---|---|---|---|---|
+| L0 | `structural` | gate | pass | 3,806 records validated |
+| L1 | `count` | gate | pass | observed 3,806, expected 3,806 |
+| L1 | `genotype_uniqueness` | gate | pass | 3,806 unique deletion sets, one record each |
+| L2 | `value_fidelity` | gate | pass | 28,674,404 values checked |
+| L2 | `se_nonnegative` | gate | pass | 0 values (no SE released) |
+| L3 | `reference_finite`, `measurement_type_consistent` | gate | pass | 28,674,404 reference values finite and key-matched; one measurement type |
+| L3 | `provenance_audit` | gate | pass | 18 of 18 quotes verbatim |
+| L4 | `gene_containment_bw25113_jw_synonyms` | report | pass | 3,783 of 3,830 released identifiers resolve to a BW25113 locus; 47 do not |
+
+The real-data tests (`-m data --data`) pass against this store.

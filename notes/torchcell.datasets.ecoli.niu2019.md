@@ -354,7 +354,7 @@ the deposited `mmc1.docx` bytes and the main-table cells) and
 | L3 | `product_is_the_declared_one` | pass -- `pinene` |
 | L3 | `the_reference_is_the_empty_vector_control_at_one` | pass |
 | L3 | `the_pathway_plasmid_is_background_not_a_perturbation` | pass |
-| L4 | `perturbed_gene_containment_assembly` | reported, never gated (#1069): two released labels, `flgFGH` and `sufBCDS`, are operons |
+| L4 | `perturbed_gene_containment_assembly` | reported, never gated (#1069): 0.000 of 38 measured labels are loci of `ecoli_K12_BW25113_ASM75055v1`, since the release keys every row by a gene symbol (two of them, `flgFGH` and `sufBCDS`, by an operon label) and not by a locus tag |
 
 Candidate verdict: `admissible_with_gaps`, the one gap being the compound `pinene`
 itself, whose row stays UNRESOLVED_PUBLIC for the reason the 2026.10.11 section records
@@ -363,3 +363,10 @@ itself, whose row stays UNRESOLVED_PUBLIC for the reason the 2026.10.11 section 
 **Released vs stored for this store:** 40 released numeric pinene cells, 40 records, 0
 dropped; 39 dashed pinene cells counted as censored and stored nowhere; the 54 growth
 cells belong to the sibling store.
+
+**Built under slurm** with `--retire-existing --verify`: job 4613 wrote 40 records,
+gene_set 38, 1 reference, `pinene_fold_change_niu2019: PASS (1 genome finding reported,
+not gated)`. The sibling store was rebuilt in job 4614 because this change rewrote its
+ledger's rule description (its 40 pinene cells are now stored by this dataset rather
+than dropped for want of a unit): 54 records and 64 censored dashes unchanged,
+`crispr_pinene_tolerance_niu2019: PASS (3 genome findings reported, not gated)`.

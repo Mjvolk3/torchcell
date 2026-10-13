@@ -1172,12 +1172,15 @@ RNASEQ_DATASETS: dict[str, dict[str, Any]] = {
     # released b-numbers (b3036, b4223, b4590) are not in ASM584v2 and are kept as given.
     "rnaseq_lamoureux2023": {
         "root": "data/torchcell/rnaseq_lamoureux2023",
-        # 1,035 released samples - 318 dropped by the genotype and environment rules;
-        # since #1057 the evolved isolates, the other strains (on a background named as
-        # released, on the MG1655 coordinates the release aligned them to), the rpoB and
-        # crp alleles (on the released-strain leaf) and the non-batch cultures (a typed
-        # gap on the rate) are stored, not dropped.
-        "expected_count": 717,
+        # 1,035 released samples - 176 whose oxygen regime the release does not state
+        # (Environment.aerobicity cannot be a typed gap); since #1057 the evolved
+        # isolates, the other strains (on a background named as released, on the MG1655
+        # coordinates the release aligned them to), the rpoB and crp alleles (on the
+        # released-strain leaf) and the non-batch cultures (a typed gap on the rate) are
+        # stored, and since #1045 part 2 the pColi and +aldA constructs (a background
+        # named as released), the media no library carries (stored as released) and the
+        # two-compound supplement label too.
+        "expected_count": 859,
         "replicate_aware": True,
         "min_containment": 0.99,
         "provenance": Provenance(
@@ -1198,12 +1201,15 @@ RNASEQ_DATASETS: dict[str, dict[str, Any]] = {
     },
     "rnaseq_public_k12_lamoureux2023": {
         "root": "data/torchcell/rnaseq_public_k12_lamoureux2023",
-        # 1,675 curated public samples - 886 dropped by the genotype and environment
-        # rules; since #1057 the other K-12 substrains, the evolved isolates and the
+        # 1,675 curated public samples - 317 whose oxygen regime Environment.aerobicity
+        # cannot hold (250 blank, 15 aerobic-anaerobic transition, 52 a dissolved-oxygen
+        # setpoint); since #1057 the other K-12 substrains, the evolved isolates and the
         # undefined background labels are stored on a background named as released
         # (MG1655 coordinates), the substitutions and the unresolved deletions on the
-        # released-strain leaf, and a non-batch culture with a typed gap on the rate.
-        "expected_count": 789,
+        # released-strain leaf, and a non-batch culture with a typed gap on the rate;
+        # since #1045 part 2 the plasmid, phage and prose-allele samples (a background
+        # named as released), the media no library carries and a blank temperature too.
+        "expected_count": 1358,
         "replicate_aware": True,
         "min_containment": 0.99,
         "provenance": Provenance(

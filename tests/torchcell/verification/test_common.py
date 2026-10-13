@@ -774,6 +774,39 @@ def test_media_membership_passes_a_typed_medium_gap_and_counts_it() -> None:
     assert failing.details["n_gapped_records"] == 1
 
 
+def test_media_membership_passes_a_released_label_whose_class_is_a_typed_gap() -> None:
+    """#1045 part 2: a medium the source labels but no library carries, stored under
+    its label with ``is_synthetic`` a typed gap, declares that it joins nothing; it
+    passes and is counted by label. The same label with no gap is free text.
+    """
+    released = {
+        "name": "NM3",
+        "state": None,
+        "is_synthetic": None,
+        "base_medium": None,
+        "provenance_gaps": [
+            {"field": "is_synthetic", "reason": "not_reported_by_primary"},
+            {"field": "state", "reason": "not_reported_by_primary"},
+        ],
+    }
+    passing = _run(
+        [
+            _record(environment={"media": released}),
+            _record(environment={"media": released}),
+        ]
+    )["media_membership"]
+    assert passing.passed is True
+    assert passing.message == (
+        "0 records on a shared MEDIA_LIBRARY medium, 0 on a medium deriving from one "
+        "(0 distinct media), 2 on 1 media the source labels with no library recipe, "
+        "stored as released with a typed gap on is_synthetic"
+    )
+    assert passing.details["released_media"] == {"NM3": 2}
+    ungapped = {**released, "provenance_gaps": []}
+    failing = _run([_record(environment={"media": ungapped})])["media_membership"]
+    assert failing.passed is False
+
+
 # --------------------------------------------------------------------------- #
 # L4 gene containment + result order
 # --------------------------------------------------------------------------- #

@@ -220,6 +220,12 @@ def test_a_strain_or_label_sample_is_stored_on_its_released_name() -> None:
         _row(**{L.COL_STRAIN: "W3110", L.COL_DESCRIPTION: "W3110 pBR322"})
     )
     assert (plasmid.kept, plasmid.rule) == (False, G.plasmid_borne_construct)
+    # #1045 part 2: the dispatch stores it on a background named as released
+    stored = P.settle_public_sample_genotype(
+        _row(**{L.COL_STRAIN: "W3110", L.COL_DESCRIPTION: "W3110 pBR322"})
+    )
+    assert stored.kept and stored.untyped_edits
+    assert stored.background is not None and stored.background.name == "W3110 pBR322"
     evolved = P.settle_public_background(
         _row(**{L.COL_DESCRIPTION: "MG1655 CHL evolved"})
     )
@@ -229,12 +235,9 @@ def test_a_strain_or_label_sample_is_stored_on_its_released_name() -> None:
 @pytest.mark.parametrize(
     "cells,rule",
     [
-        ({L.COL_MEDIA: "NM3"}, E.medium_not_in_library),
-        ({L.COL_MEDIA: ""}, E.medium_not_in_library),
         ({P.COL_AEROBICITY: ""}, E.oxygen_regime_not_stated),
         ({P.COL_AEROBICITY: "transition"}, E.oxygen_regime_transition),
         ({P.COL_AEROBICITY: "aerobic(30% DO)"}, E.oxygen_setpoint_not_expressible),
-        ({L.COL_TEMPERATURE: ""}, E.temperature_not_stated),
     ],
 )
 def test_every_environment_rule_drops_its_own_cells(
@@ -243,6 +246,53 @@ def test_every_environment_rule_drops_its_own_cells(
     verdict = P.settle_public_environment(_row(**cells))
     assert verdict.rule is rule
     assert verdict.spec is None
+
+
+@pytest.mark.parametrize(
+    "cells,gaps",
+    [
+        ({L.COL_MEDIA: "NM3"}, ["is_synthetic", "state"]),
+        ({L.COL_MEDIA: ""}, ["name", "is_synthetic", "state"]),
+    ],
+)
+def test_a_medium_no_library_carries_is_stored_as_released(
+    cells: dict[str, str], gaps: list[str]
+) -> None:
+    """#1045 part 2: the label names the medium; what it does not state is a gap."""
+    verdict = P.settle_public_environment(_row(**cells))
+    assert verdict.rule is None and verdict.spec is not None
+    media = P.build_public_environment(verdict.spec).media
+    assert [g.field for g in media.provenance_gaps] == gaps
+    assert (media.is_synthetic, media.base_medium) == (None, None)
+
+
+def test_a_blank_temperature_is_a_typed_gap() -> None:
+    """#1045 part 2: never refused; the environment says the cell is blank."""
+    verdict = P.settle_public_environment(_row(**{L.COL_TEMPERATURE: ""}))
+    assert verdict.rule is None and verdict.spec is not None
+    environment = P.build_public_environment(verdict.spec)
+    assert environment.temperature is None
+    (gap,) = [g for g in environment.provenance_gaps if g.field == "temperature"]
+    assert gap.looked_in is not None
+    assert gap.looked_in.source_uri.endswith("k12_modulome/metadata_qc.csv")
+
+
+def test_a_cell_with_a_parenthesized_name_and_the_public_units_parse() -> None:
+    """The cells of the media stored since #1045 part 2, verbatim from the release."""
+    sulfate = L.parse_amount(
+        "(NH4)2SO4(3.8g/L)",
+        default_unit=ConcentrationUnit.g_per_l,
+        extra_units=P.EXTRA_UNIT_TOKENS,
+    )
+    assert (sulfate.name, sulfate.value, sulfate.unit) == (
+        "ammonium sulfate",
+        3.8,
+        ConcentrationUnit.g_per_l,
+    )
+    (thiamine,) = P.parse_public_supplements("thiamine(500ug/L)")
+    assert (thiamine.value, thiamine.unit) == (0.5, ConcentrationUnit.ug_per_ml)
+    (dpta,) = P.parse_public_supplements("DPTA(250µM)")
+    assert (dpta.value, dpta.unit) == (250.0, ConcentrationUnit.micromolar)
 
 
 def test_a_blank_ph_or_minimal_source_is_a_gap_and_mops_derives_from_its_key() -> None:
@@ -540,20 +590,33 @@ def _public_rows() -> dict[str, dict[str, str]]:
                 L.COL_FULL_NAME: "bw:del_thrA",
             },
         ),
-        "SRX000006": row("SRX000006", 6, **{L.COL_DESCRIPTION: "MG1655 pBR322"}),
+        "SRX000006": row(
+            "SRX000006",
+            6,
+            **{L.COL_DESCRIPTION: "MG1655 pBR322", L.COL_FULL_NAME: "pbr:wt"},
+        ),
         "SRX000007": row(
             "SRX000007",
             7,
             **{L.COL_DESCRIPTION: "MG1655 fusAA608E", L.COL_FULL_NAME: "fusA:a608e"},
         ),
-        "SRX000008": row("SRX000008", 8, **{L.COL_DESCRIPTION: "MG1655 infect_T7"}),
+        "SRX000008": row(
+            "SRX000008",
+            8,
+            **{L.COL_DESCRIPTION: "MG1655 infect_T7", L.COL_FULL_NAME: "t7:infect"},
+        ),
         "SRX000009": row(
             "SRX000009",
             9,
             **{L.COL_DESCRIPTION: "MG1655 CHL evolved", L.COL_FULL_NAME: "chl:ale"},
         ),
         "SRX000010": row(
-            "SRX000010", 10, **{L.COL_DESCRIPTION: "MG1655 with inactive relA"}
+            "SRX000010",
+            10,
+            **{
+                L.COL_DESCRIPTION: "MG1655 with inactive relA",
+                L.COL_FULL_NAME: "rela:inactive",
+            },
         ),
         "SRX000011": row(
             "SRX000011",
@@ -586,6 +649,8 @@ def _public_rows() -> dict[str, dict[str, str]]:
         "SRX000017": row("SRX000017", 17, **{P.COL_AEROBICITY: ""}),
         "SRX000018": row("SRX000018", 18, **{P.COL_AEROBICITY: "transition"}),
         "SRX000019": row("SRX000019", 19, **{P.COL_AEROBICITY: "aerobic(30% DO)"}),
+        # #1045 part 2: kept with a gapped temperature, in the group of SRX000001 and
+        # SRX000002, from whose rows it differs in that one cell
         "SRX000020": row("SRX000020", 20, **{L.COL_TEMPERATURE: ""}),
         # #1045 row 24: kept, with the blank pH a gapped factor
         "SRX000021": row("SRX000021", 21, **{L.COL_PH: "", L.COL_FULL_NAME: "noph:wt"}),
@@ -839,48 +904,37 @@ def _json(dataset: P.RnaseqPublicK12Lamoureux2023Dataset, name: str) -> Any:
     return json.loads(Path(dataset.preprocess_dir, name).read_text())
 
 
+#: The synthetic accessions the build stores: every one but the three oxygen regimes.
+KEPT = [f"SRX{k:06d}" for k in (*range(1, 17), 20, 21, 22)]
+
+
 def test_the_build_keeps_wild_type_and_deletions_and_counts_every_drop(
     built: P.RnaseqPublicK12Lamoureux2023Dataset,
 ) -> None:
     # SRX000021 (blank pH) and SRX000022 (blank nitrogen source on M9) are kept since
     # #1045 row 24, each with a gapped factor; since #1057 the BW25113 strain, the
-    # evolved isolate, the undefined label and the bioreactor culture are stored too
-    kept = [
-        "SRX000001",
-        "SRX000002",
-        "SRX000003",
-        "SRX000004",
-        "SRX000005",
-        "SRX000007",
-        "SRX000009",
-        "SRX000011",
-        "SRX000012",
-        "SRX000013",
-        "SRX000014",
-        "SRX000016",
-        "SRX000021",
-        "SRX000022",
-    ]
-    assert len(built) == len(kept)
-    assert _json(built, "record_samples.json") == kept
+    # evolved isolate, the undefined label and the bioreactor culture are stored too;
+    # since #1045 part 2 the plasmid, the phage, the prose allele, the NM3 medium and
+    # the blank temperature as well, so only the three oxygen regimes the schema cannot
+    # hold are dropped
+    assert len(built) == len(KEPT)
+    assert _json(built, "record_samples.json") == KEPT
     drops = _json(built, "dropped_records.json")
     assert drops["source_records"] == 22
-    assert drops["kept_records"] == 14
-    assert drops["dropped_records"] == 8
+    assert drops["kept_records"] == 19
+    assert drops["dropped_records"] == 3
     assert {r["rule"]: r["n_records"] for r in drops["rules"]} == {
-        "plasmid_borne_construct": 1,
-        "phage_infected": 1,
-        "allele_described_in_prose": 1,
-        "medium_not_in_library": 1,
         "oxygen_regime_not_stated": 1,
         "oxygen_regime_transition": 1,
         "oxygen_setpoint_not_expressible": 1,
-        "temperature_not_stated": 1,
     }
-    assert {r["stage"] for r in drops["rules"]} == {"genotype", "environment"}
+    assert {r["stage"] for r in drops["rules"]} == {"environment"}
     assert drops["kept_by_genotype_class"] == {
+        "background_allele_described_in_prose": 1,
         "background_background_label_undefined": 1,
         "background_evolved_isolate": 1,
+        "background_phage_infected": 1,
+        "background_plasmid_borne_construct": 1,
         "background_strain_not_mg1655": 1,
         "deletion_1": 1,
         "deletion_2": 1,
@@ -888,14 +942,14 @@ def test_the_build_keeps_wild_type_and_deletions_and_counts_every_drop(
         "released_allele_deletion_symbol_unresolved": 1,
         "released_allele_partial_gene_edit": 1,
         "released_allele_point_mutation_allele": 1,
-        "wild_type": 5,
+        "wild_type": 7,
     }
-    assert drops["kept_by_base_media"] == {"LB": 12, "M9": 2}
+    assert drops["kept_by_base_media"] == {"LB": 16, "M9": 2, "NM3": 1}
     released = {
         built[i]["experiment"]["genotype"]["perturbations"][0][
             "systematic_gene_name"
         ]: (built[i]["experiment"]["genotype"]["perturbations"][0]["released_kind"])
-        for i in (5, 7, 8, 10)
+        for i in (6, 10, 11, 13)
     }
     assert released == {
         "fusA": "sequence_allele",
@@ -903,12 +957,21 @@ def test_the_build_keeps_wild_type_and_deletions_and_counts_every_drop(
         "crp": "sequence_allele",
         "ihf": "deletion",
     }
-    strains = [built[i]["reference"]["genome_reference"]["strain"] for i in range(14)]
-    assert [strains[i] for i in (4, 6, 9)] == [
+    strains = [built[i]["reference"]["genome_reference"]["strain"] for i in range(19)]
+    assert [strains[i] for i in (4, 5, 7, 8, 9, 12)] == [
         "BW25113",
+        "MG1655 pBR322",
+        "MG1655 infect_T7",
         "MG1655 CHL evolved",
+        "MG1655 with inactive relA",
         "MG1655 Z1 del_thrA",
     ]
+    for i in (5, 7, 9):
+        assert built[i]["experiment"]["genotype"]["perturbations"] == []
+        background = built[i]["reference"]["genome_reference"]["background"]
+        assert [g["field"] for g in background["provenance_gaps"]] == [
+            "genotype_statement"
+        ]
 
 
 def test_the_accession_ledger_is_the_deduplication_evidence(
@@ -927,22 +990,7 @@ def test_the_accession_ledger_is_the_deduplication_evidence(
     assert ledger["identical_count_profiles_against_precise1k"] == 0
     assert ledger["distinct_pmids"] == 1
     assert ledger["distinct_geo_series"] == 1
-    assert [r["experiment_accession"] for r in ledger["records"]] == [
-        "SRX000001",
-        "SRX000002",
-        "SRX000003",
-        "SRX000004",
-        "SRX000005",
-        "SRX000007",
-        "SRX000009",
-        "SRX000011",
-        "SRX000012",
-        "SRX000013",
-        "SRX000014",
-        "SRX000016",
-        "SRX000021",
-        "SRX000022",
-    ]
+    assert [r["experiment_accession"] for r in ledger["records"]] == KEPT
     assert ledger["records"][2] == {
         "experiment_accession": "SRX000003",
         "run_accession": "SRR000003",
@@ -1044,34 +1092,49 @@ def test_the_replicate_groups_pin_the_conditions_and_their_accessions(
         "fusA:a608e",
         "ihf:del",
         "m9:no_nitrogen",
+        "nm3:wt",
         "noph:wt",
+        "pbr:wt",
         "pro:double",
+        "rela:inactive",
         "rpoB:wt",
         "rrn:del7",
+        "t7:infect",
         "thrA:del_thrA",
         "z1:del_thrA",
     ]
     by_name = {g["full_name"]: g for g in groups}
-    assert by_name["rpoB:wt"]["experiment_accessions"] == ["SRX000001", "SRX000002"]
-    assert by_name["rpoB:wt"]["record_indices"] == [0, 1]
+    assert by_name["rpoB:wt"]["experiment_accessions"] == [
+        "SRX000001",
+        "SRX000002",
+        "SRX000020",
+    ]
+    assert by_name["rpoB:wt"]["record_indices"] == [0, 1, 16]
     assert set(by_name["rpoB:wt"]["condition_cells"]) == set(P.CONDITION_COLUMNS)
+    # #1045 part 2: a replicate whose row differs is reported, never refused
+    assert by_name["rpoB:wt"]["differing_cells"] == {
+        "SRX000020": {L.COL_TEMPERATURE: ""}
+    }
+    assert all(
+        g["differing_cells"] == {} for name, g in by_name.items() if name != "rpoB:wt"
+    )
 
 
-def test_the_deleted_genes_are_written_on_the_genomes_own_symbols(
+def test_the_deleted_genes_are_written_as_released(
     built: P.RnaseqPublicK12Lamoureux2023Dataset,
 ) -> None:
-    # the released-strain leaves add their released gene identifiers verbatim (#1057)
-    assert built.gene_set == {"7prrn", "b0002", "b0005", "b0006", "crp", "fusA", "ihf"}
-    reconciliation = _json(built, "locus_tag_reconciliation.json")
-    assert reconciliation["deleted_symbol_to_locus"] == {
-        "proB": ["b0005", "proB"],
-        "proC": ["b0006", "proC"],
-        "thrA": ["b0002", "thrA"],
-    }
-    assert reconciliation["expression_genes"]["unique_names"] == len(GENES)
+    """#1045 part 2: every deletion keys the symbol its token releases; no crosswalk."""
+    assert built.gene_set == {"7prrn", "crp", "fusA", "ihf", "proB", "proC", "thrA"}
+    assert not Path(built.preprocess_dir, "locus_tag_reconciliation.json").exists()
+    (thra,) = built[2]["experiment"]["genotype"]["perturbations"]
+    assert (thra["perturbation_type"], thra["released_kind"]) == (
+        "bacterial_released_strain",
+        "deletion",
+    )
+    assert thra["strain_label"] == "MG1655 del_thrA"
 
 
-def test_a_divergence_count_off_its_pin_refuses_the_build(
+def test_a_divergence_count_off_its_pin_does_not_refuse_the_build(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.delenv("TC_DATA_URL", raising=False)
@@ -1086,8 +1149,10 @@ def test_a_divergence_count_off_its_pin_refuses_the_build(
     _pin(monkeypatch, files)
     monkeypatch.setattr(P, "GENE_LENGTH_DIVERGENCE_N", 7)
     monkeypatch.setattr(P, "assembly_reference", _pinned)
-    with pytest.raises(RuntimeError, match="released gene spans differ"):
-        P.RnaseqPublicK12Lamoureux2023Dataset(root=str(root), ecoli_genome=genome)
+    # #1045 part 2: the span comparison is a derived finding; the genome gates nothing
+    dataset = P.RnaseqPublicK12Lamoureux2023Dataset(root=str(root), ecoli_genome=genome)
+    assert len(dataset) == len(KEPT)
+    assert len(_json(dataset, "gene_length_divergence.json")) == 1
 
 
 def test_a_count_total_off_the_multiqc_assigned_total_refuses_the_build(
@@ -1181,35 +1246,59 @@ def test_the_dev_store_pins_the_measured_build() -> None:
     drops = json.loads((root / "preprocess/dropped_records.json").read_text())
     assert drops["source_records"] == 1675
     # #1057: the other substrains, evolved isolates, undefined labels and non-batch
-    # cultures are stored on a background named as released (240 before)
-    assert drops["kept_records"] == 789
+    # cultures are stored on a background named as released (240 before); #1045 part 2
+    # stores the plasmid, phage and prose-allele samples, the media no library carries
+    # and the blank temperatures (789 before), leaving the oxygen regimes
+    # Environment.aerobicity cannot hold
+    assert drops["kept_records"] == 1358
     assert drops["kept_by_genotype_class"] == {
-        "background_background_label_undefined": 4,
+        "background_allele_described_in_prose": 27,
+        "background_background_label_undefined": 7,
         "background_evolved_isolate": 29,
+        "background_phage_infected": 5,
+        "background_plasmid_borne_construct": 151,
         "background_point_mutation_allele": 6,
-        "background_strain_not_mg1655": 211,
-        "deletion_1": 130,
-        "deletion_2": 16,
+        "background_strain_not_mg1655": 462,
+        "deletion_1": 149,
+        "deletion_2": 20,
+        "released_allele_allele_described_in_prose": 9,
         "released_allele_deletion_symbol_unresolved": 6,
-        "released_allele_point_mutation_allele": 30,
-        "wild_type": 357,
+        "released_allele_partial_gene_edit": 3,
+        "released_allele_point_mutation_allele": 35,
+        "wild_type": 449,
     }
     assert drops["kept_by_base_media"] == {
+        "": 23,
+        "2xYT": 9,
+        "Gutnick": 12,
+        "Gutnick media": 4,
+        "Kornberg": 30,
         "L-broth": 15,
-        "LB": 313,
+        "LB": 378,
+        "LB,MOPS": 12,
         "LB-Miller": 2,
-        "M9": 394,
-        "MOPS": 59,
+        "LBK": 25,
+        "LBKmal": 32,
+        "Lennox LB": 23,
+        "M4 minimal": 8,
+        "M9": 431,
+        "M9 (solid)": 42,
+        "M9 RDM": 10,
+        "MHBII": 18,
+        "MOPS": 68,
+        "MOPS EZ Rich": 36,
         "MOPS w/o KH2PO4": 6,
+        "NM3": 30,
+        "PBS": 6,
+        "Tryptone broth": 12,
+        "isosensitest broth": 56,
+        "other_defined_media": 59,
+        "tryptone broth": 11,
     }
     assert {r["rule"]: r["n_records"] for r in drops["rules"]} == {
-        "plasmid_borne_construct": 175,
-        "allele_described_in_prose": 9,
-        "phage_infected": 20,
-        "medium_not_in_library": 548,
-        "oxygen_regime_not_stated": 63,
+        "oxygen_regime_not_stated": 250,
+        "oxygen_regime_transition": 15,
         "oxygen_setpoint_not_expressible": 52,
-        "temperature_not_stated": 19,
     }
 
 
@@ -1234,30 +1323,18 @@ def test_the_dev_store_pins_the_deduplication_measurement() -> None:
     assert ledger["distinct_bioprojects"] == 89
     assert ledger["distinct_pmids"] == 38
     assert ledger["distinct_geo_series"] == 30
-    assert len(ledger["records"]) == 240
+    assert len(ledger["records"]) == 1358
 
 
 @pytest.mark.data
-def test_the_dev_store_pins_the_gene_resolution_and_the_span_divergence() -> None:
+def test_the_dev_store_pins_the_released_keys_and_the_span_divergence() -> None:
     root = _built_root()
-    reconciliation = json.loads(
-        (root / "preprocess/locus_tag_reconciliation.json").read_text()
-    )
-    genes = reconciliation["expression_genes"]
-    assert genes["unique_names"] == 4355
-    assert genes["status_histogram"] == {
-        "current": 4238,
-        "renamed": 0,
-        "non_gene_feature": 114,
-        "retired": 3,
-        "ambiguous": 0,
-    }
-    assert genes["retired_kept"] == ["b3036", "b4223", "b4590"]
-    assert genes["outside_namespace"] == []
+    # #1045 part 2: the keys are the release's own row ids; no crosswalk is written
+    assert not (root / "preprocess/locus_tag_reconciliation.json").exists()
     divergence = json.loads(
         (root / "preprocess/gene_length_divergence.json").read_text()
     )
-    assert len(divergence) == P.GENE_LENGTH_DIVERGENCE_N == 39
+    assert len(divergence) == P.GENE_LENGTH_DIVERGENCE_N == 38
     assert sorted(
         d["released_name"]
         for d in divergence

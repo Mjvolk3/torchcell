@@ -1519,12 +1519,24 @@ def unlisted_medium(label: str, state: str) -> Media:
 
     The label is the name and the release's ``Liquid v. solid`` column the state; what
     the medium is (``is_synthetic``) and its composition are not stated, so
-    ``is_synthetic`` is a typed gap and ``components`` is empty.
+    ``is_synthetic`` is a typed gap and the one component is the label itself, a
+    ``composition_deferred`` line: ``media_identity`` drops the name, so that line is
+    what keeps two released labels from sharing one medium identity.
     """
     return Media(
         name=label,
         state=state,
         is_synthetic=None,
+        components=[
+            MediaComponent(
+                compound=Compound(name=label),
+                role=MediaComponentRole.other,
+                concentration=None,
+                definition=ComponentDefinition.composition_deferred,
+                note="the release's per-experiment Media label, verbatim; the release "
+                "states no recipe for it",
+            )
+        ],
         provenance_gaps=[
             ProvenanceGap(
                 field="is_synthetic",

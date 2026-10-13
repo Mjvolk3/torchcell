@@ -3378,7 +3378,9 @@
         <span class="k">return</span> <span class="bp">self</span>
 
 
-<span class="k">class</span><span class="w"> </span><span class="nc">HeterologousPathwayPerturbation</span><span class="p">(</span><span class="n">GeneAdditionPerturbation</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">HeterologousPathwayPerturbation</span><span class="p">(</span>
+    <span class="n">HashableProvenanceGapMixin</span><span class="p">,</span> <span class="n">GeneAdditionPerturbation</span><span class="p">,</span> <span class="n">ModelStrict</span>
+<span class="p">):</span>
 <span class="w">    </span><span class="sd">"""One heterologous gene of an expressed pathway, with its cassette and copy context.</span>
 
 <span class="sd">    The engineered-chassis production rows. It inherits the gene-addition axis whole</span>
@@ -3393,12 +3395,33 @@
 <span class="sd">    symbol). That is the one place the field means the host rather than the identifier's</span>
 <span class="sd">    own space, and it is checked only when the identifier IS a host locus tag -- which</span>
 <span class="sd">    it legitimately is for an extra copy of a NATIVE gene in the same pathway.</span>
+
+<span class="sd">    ``source_organism`` is stated or a typed ``ProvenanceGap`` (#915). A production</span>
+<span class="sd">    paper can name a pathway part by its token alone (Menasalvas 2025's pIY670 writes</span>
+<span class="sd">    ``mvaS``, ``mvaE``, ``MKmm``, ``PMDHKQ`` and ``aphA`` and never says which organism</span>
+<span class="sd">    each came from), and the leaf previously forced a sentinel string such as</span>
+<span class="sd">    ``"unreported"`` into the field, which reads as an organism name. The field stays</span>
+<span class="sd">    required with no default, as ``Media.name`` does: ``None`` only beside a gap naming</span>
+<span class="sd">    ``source_organism``, its reason and where the source was searched. The widening is</span>
+<span class="sd">    on this leaf alone, as ``PromoterReplacementPerturbation`` re-declares ``crispr``:</span>
+<span class="sd">    the yeast ``GeneAdditionPerturbation`` loaders state every organism, and their</span>
+<span class="sd">    closures do not move.</span>
 <span class="sd">    """</span>
 
     <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="p">(</span>
         <span class="s2">"Heterologous pathway gene added on a cassette, with its copy context"</span>
     <span class="p">)</span>
     <span class="n">perturbation_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"heterologous_pathway"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"heterologous_pathway"</span>  <span class="c1"># type: ignore[assignment]</span>
+    <span class="c1"># --- begin #915: a typed gap on the source organism ------------------------- #</span>
+    <span class="c1"># The organism the added gene is from, as the source states it; None ONLY with a</span>
+    <span class="c1"># ProvenanceGap(field='source_organism') when the source names none. Required, no</span>
+    <span class="c1"># default.</span>
+    <span class="n">source_organism</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>  <span class="c1"># type: ignore[assignment]</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"organism the added gene is from, e.g. 'Staphylococcus aureus'; "</span>
+        <span class="s2">"None ONLY with a ProvenanceGap(field='source_organism') when the source "</span>
+        <span class="s2">"names no organism for this part"</span>
+    <span class="p">)</span>
+    <span class="c1"># --- end #915 ---------------------------------------------------------------- #</span>
     <span class="n">gene_namespace</span><span class="p">:</span> <span class="n">BacterialGeneNamespace</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">"the HOST genome the construct was built in (not the namespace of "</span>
         <span class="s2">"systematic_gene_name, which is usually a heterologous symbol)"</span>
@@ -3438,6 +3461,18 @@
 <span class="w">        </span><span class="sd">"""When the identifier is a host locus tag it must be this host's."""</span>
         <span class="n">_check_gene_namespace</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="c1"># --- begin #915: a typed gap on the source organism ------------------------- #</span>
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_source_organism_stated_or_gapped</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"HeterologousPathwayPerturbation"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""``source_organism`` is stated or a typed gap; never a silent ``None``.</span>
+
+<span class="sd">        The mixin enforces the converse (a gapped field must be ``None``).</span>
+<span class="sd">        """</span>
+        <span class="n">_require_value_or_gap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">(</span><span class="s2">"source_organism"</span><span class="p">,))</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="c1"># --- end #915 ---------------------------------------------------------------- #</span>
 
 
 <span class="c1"># --------------------------------------------------------------------------- #</span>
@@ -10173,6 +10208,24 @@
     <span class="c1"># ----------------------------------------------------------------------- #</span>
     <span class="c1"># end ADDITIVE (Wetmore 2015 own release)</span>
     <span class="c1"># ----------------------------------------------------------------------- #</span>
+    <span class="c1"># ----------------------------------------------------------------------- #</span>
+    <span class="c1"># ADDITIVE (#879): the released Z score of the response. Like the t</span>
+    <span class="c1"># statistic above it is stored because the release states it, and it never</span>
+    <span class="c1"># feeds environment_response_uncertainty or the derived SE. Nothing above</span>
+    <span class="c1"># this block changes.</span>
+    <span class="c1"># ----------------------------------------------------------------------- #</span>
+    <span class="n">environment_response_z_score</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the Z score the source released for this response, verbatim. "</span>
+        <span class="s2">"Its definition is the source's, named in `units` or the dataset's "</span>
+        <span class="s2">"provenance; for Wang 2018 it is equation (4), the response divided by the "</span>
+        <span class="s2">"standard deviation of a normal fitted to the non-targeting guides' fitness, "</span>
+        <span class="s2">"one constant per screen, so it is a released rescaling of the response and "</span>
+        <span class="s2">"not a dispersion of it. None when the source releases no Z score."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># ----------------------------------------------------------------------- #</span>
+    <span class="c1"># end ADDITIVE (#879)</span>
+    <span class="c1"># ----------------------------------------------------------------------- #</span>
 
 <div class="viewcode-block" id="EnvironmentResponsePhenotype.validate_response">
 <a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.EnvironmentResponsePhenotype.html#torchcell.datamodels.schema.EnvironmentResponsePhenotype.validate_response">[docs]</a>
@@ -10321,6 +10374,24 @@
                 <span class="p">)</span>
         <span class="c1"># ------------------------------------------------------------------- #</span>
         <span class="c1"># end ADDITIVE (Wetmore 2015 own release)</span>
+        <span class="c1"># ------------------------------------------------------------------- #</span>
+        <span class="c1"># ------------------------------------------------------------------- #</span>
+        <span class="c1"># ADDITIVE (#879): a released Z score is a finite number and scores a</span>
+        <span class="c1"># numeric response.</span>
+        <span class="c1"># ------------------------------------------------------------------- #</span>
+        <span class="n">z_score</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">environment_response_z_score</span>
+        <span class="k">if</span> <span class="n">z_score</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">z_score</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"environment_response_z_score must be finite, got </span><span class="si">{</span><span class="n">z_score</span><span class="si">}</span><span class="s2">"</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">environment_response</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">"environment_response_z_score scores a numeric response; set "</span>
+                    <span class="s2">"environment_response"</span>
+                <span class="p">)</span>
+        <span class="c1"># ------------------------------------------------------------------- #</span>
+        <span class="c1"># end ADDITIVE (#879)</span>
         <span class="c1"># ------------------------------------------------------------------- #</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 

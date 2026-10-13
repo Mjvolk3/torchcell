@@ -379,3 +379,41 @@ Keyed by the measurement table's released symbol.
 | L1 | `environment_uniqueness` | pass | SUPPLEMENTARY: 19 distinct environments over 19 records |
 | L3 | `assembly_pin` | pass | SUPPLEMENTARY: assembly pins ["('ecoli_K12_BW25113_ASM75055v1', 'GCA_000750555.1')"] |
 | L4 | `gene_containment_bw25113` | pass | 31 measured protein keys; 31 are released symbols outside the ecoli_K12_BW25113_ASM75055v1 locus universe, stored as released |
+
+## 2026.10.13 - #1045 part 3: the oxygen, growth-phase and released-strain samples stored
+
+The schema gained a typed gap on Environment.aerobicity, the regime 'transition', Environment.growth_phase and PhysicalFactor.dissolved_oxygen (record 2026-10-13-environment-aerobicity-gap-transition-growth-phase-dissolved-oxygen), so no released sample of these loaders is dropped. Rebuilt from the part-3 branch (`c61b1310a`) with `--retire-existing --verify` (slurm arrays 4640 and 4643; the stores with no per-dataset verifier entry point verified by job 4641).
+
+### `proteome_srm_set1_schmidt2016`: 15 -> 18 records
+
+The two stationary arms, and Table S2's 'anaerobic' sample: aerobicity 'anaerobic' from its label, the medium's name, state and synthetic flag, the temperature and the BW25113 background's genotype statement typed gaps quoting that the pinned paper and SI never describe it.
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 18 records validated |
+| L1 | `count` | pass | observed 18, expected 18 |
+| L1 | `orf_uniqueness` | pass | 0 unique knocked-out ORFs, one record each |
+| L2 | `value_fidelity` | pass | 738 values checked |
+| L2 | `se_nonnegative` | pass | 738 values checked |
+| L3 | `reference_finite` | pass | reference abundance finite + key-matched for all 738 values |
+| L3 | `measurement_type_consistent` | pass | single measurement_type: 'absolute_protein_copies_per_cell_srm_sid_dataset1_technical_sd' |
+| L1 | `environment_uniqueness` | pass | SUPPLEMENTARY: 18 distinct environments over 18 records |
+| L3 | `assembly_pin` | pass | SUPPLEMENTARY: assembly pins ["('ecoli_K12_BW25113_ASM75055v1', 'GCA_000750555.1')"] |
+| L4 | `gene_containment_bw25113` | pass | 41 measured protein keys; 41 are released symbols outside the ecoli_K12_BW25113_ASM75055v1 locus universe, stored as released |
+
+### `proteome_srm_set2_schmidt2016`: 19 -> 21 records
+
+The two stationary arms.
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 21 records validated |
+| L1 | `count` | pass | observed 21, expected 21 |
+| L1 | `orf_uniqueness` | pass | 0 unique knocked-out ORFs, one record each |
+| L2 | `value_fidelity` | pass | 651 values checked |
+| L2 | `se_nonnegative` | pass | 651 values checked |
+| L3 | `reference_finite` | pass | reference abundance finite + key-matched for all 651 values |
+| L3 | `measurement_type_consistent` | pass | single measurement_type: 'absolute_protein_copies_per_cell_srm_sid_dataset2_biological_sd' |
+| L1 | `environment_uniqueness` | pass | SUPPLEMENTARY: 21 distinct environments over 21 records |
+| L3 | `assembly_pin` | pass | SUPPLEMENTARY: assembly pins ["('ecoli_K12_BW25113_ASM75055v1', 'GCA_000750555.1')"] |
+| L4 | `gene_containment_bw25113` | pass | 31 measured protein keys; 31 are released symbols outside the ecoli_K12_BW25113_ASM75055v1 locus universe, stored as released |

@@ -298,3 +298,29 @@ The two Keio deletions under their released symbol.
 | L3 | `media_membership` | pass | 0 records on a shared MEDIA_LIBRARY medium, 2 on a medium deriving from one (1 distinct media) |
 | L4 | `gene_containment_sgd` | finding (genome reference; reports, does not gate) | 0.000 of 2 measured genes are BW25113 (ecoli_K12_BW25113_ASM75055v1) genes (>= 0.9) |
 | L4 | `current_genome_genes` | finding (genome reference; reports, does not gate) | 2 systematic names are absent from the current genome over 2 records: abgR x1, ydaS x1 |
+
+## 2026.10.13 - #1045 part 3: the oxygen, growth-phase and released-strain samples stored
+
+The schema gained a typed gap on Environment.aerobicity, the regime 'transition', Environment.growth_phase and PhysicalFactor.dissolved_oxygen (record 2026-10-13-environment-aerobicity-gap-transition-growth-phase-dissolved-oxygen), so no released sample of these loaders is dropped. Rebuilt from the part-3 branch (`c61b1310a`) with `--retire-existing --verify` (slurm arrays 4640 and 4643; the stores with no per-dataset verifier entry point verified by job 4641).
+
+### `growth_rate_choe2019`: 5 -> 8 records
+
+MS56 over MG1655 on MS56's named background, and eMS57 over MS56 from the Fig. 2c rates and from the Fig. 2f released ratios (screen_id Fig2c and Fig2f; the panels disagree by 2.013), on a background named eMS57 whose genotype statement is its Supplementary Table 3 row; the fitness verifier's L1 strain key now names the reference background.
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 8 records validated |
+| L1 | `count` | pass | observed 8, expected 8 |
+| L1 | `pair_uniqueness` | pass | 8 unique (strain, environment) records, one each |
+| L2 | `value_fidelity` | pass | 8 values checked |
+| L2 | `se_nonnegative` | pass | 8 values checked |
+| L3 | `reference_one` | pass | reference fitness == 1.0 for all 8 records |
+| L1 | `provenance_gaps` | pass | 8 documented provenance gaps over 8/8 records; 0 deferred field(s): []; 102 undeclared None values over 7 carrier fields (top: Compound.inchi x56, Compound.chebi_id x8, Environm... |
+| L1 | `canonical_gene_names` | finding (genome reference; reports, does not gate) | 0 genes carry conflicting common-name spellings (0 records; 0 case-only); 24 systematic names are not the genome's current name; 21 common names resolve to another gene |
+| L2 | `uncertainty_sanity` | pass | 8 labeled uncertainties, none a zero dispersion; 0 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | pass | environment edits: 0 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | pass | medium components: 56 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | pass | 0 records on a shared MEDIA_LIBRARY medium, 8 on a medium deriving from one (1 distinct media) |
+| L4 | `gene_containment_sgd` | finding (genome reference; reports, does not gate) | 0.000 of 24 measured genes are MG1655 (ecoli_K12_MG1655_ASM584v2) genes (>= 0.9) |
+| L4 | `current_genome_genes` | finding (genome reference; reports, does not gate) | 24 systematic names are absent from the current genome over 5 records: cspC x1, fhlA x1, hycA x1, hycB x1, hycC x1, hycD x1, hycE x1, hypA x1, hypB x1, hypC x1 |
+| L4 | `deleted_symbols_are_one_contiguous_run_of_the_pinned_assembly` | pass | the 21 released deletion symbols are one contiguous run of ecoli_K12_MG1655_ASM584v2 with no unlisted gene inside |

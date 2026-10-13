@@ -265,3 +265,22 @@ The pColi and +aldA constructs on a background named by the Strain Description (
 | L3 | `measurement_type_consistent` | pass | single measurement_type: 'rnaseq_tpm' |
 | L3 | `reference_finite` | pass | reference expression finite for all 3656763 values |
 | L4 | `gene_containment_assembly` | pass | 0.999 of 4257 measured genes are loci of ecoli_K12_MG1655_ASM584v2 (>= 0.99) |
+
+## 2026.10.13 - #1045 part 3: the oxygen, growth-phase and released-strain samples stored
+
+The schema gained a typed gap on Environment.aerobicity, the regime 'transition', Environment.growth_phase and PhysicalFactor.dissolved_oxygen (record 2026-10-13-environment-aerobicity-gap-transition-growth-phase-dissolved-oxygen), so no released sample of these loaders is dropped. Rebuilt from the part-3 branch (`c61b1310a`) with `--retire-existing --verify` (slurm arrays 4640 and 4643; the stores with no per-dataset verifier entry point verified by job 4641).
+
+### `rnaseq_lamoureux2023`: 859 -> 1,035 records
+
+A blank Electron Acceptor cell stores Environment.aerobicity None beside a ProvenanceGap(field='aerobicity') naming the pinned metadata column, and an M9 row with no released carbon or nitrogen source gaps them instead of raising; oxygen_regime_not_stated is retired in place.
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 1035 records validated |
+| L1 | `count` | pass | observed 1035, expected 1035 |
+| L1 | `replicate_groups` | pass | 1035 records with distinct profiles over 214 (genotype, environment) groups, each measuring one gene set |
+| L2 | `tpm_value_fidelity` | pass | 4405995 values checked |
+| L2 | `count_value_fidelity` | pass | 4405995 counts are non-negative integers |
+| L3 | `measurement_type_consistent` | pass | single measurement_type: 'rnaseq_tpm' |
+| L3 | `reference_finite` | pass | reference expression finite for all 4405995 values |
+| L4 | `gene_containment_assembly` | pass | 0.999 of 4257 measured genes are loci of ecoli_K12_MG1655_ASM584v2 (>= 0.99) |

@@ -172,3 +172,30 @@ Row 17 Glycerol + AA; MG1665 and NCM3722 on backgrounds named as released; the f
 | L3 | `media_compound_identity` | pass | medium components: 277 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
 | L3 | `media_membership` | pass | 24 records on a shared MEDIA_LIBRARY medium, 0 on a medium deriving from one (3 distinct media) |
 | L4 | `assembly_pin_resolves` | pass | all 24 records pin their strain's deposited assembly: BW25113 ecoli_K12_BW25113_ASM75055v1 / GCA_000750555.1; MG1665 ecoli_K12_MG1655_ASM584v2 / GCA_000005845.2; NCM3722 ecoli_K... |
+
+## 2026.10.13 - #1045 part 3: the oxygen, growth-phase and released-strain samples stored
+
+The schema gained a typed gap on Environment.aerobicity, the regime 'transition', Environment.growth_phase and PhysicalFactor.dissolved_oxygen (record 2026-10-13-environment-aerobicity-gap-transition-growth-phase-dissolved-oxygen), so no released sample of these loaders is dropped. Rebuilt from the part-3 branch (`c61b1310a`) with `--retire-existing --verify` (slurm arrays 4640 and 4643; the stores with no per-dataset verifier entry point verified by job 4641).
+
+### `growth_rate_s23_schmidt2016`: 24 -> 26 records
+
+The two stationary arms.
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 26 records validated |
+| L1 | `count` | pass | observed 26, expected 26 |
+| L1 | `pair_uniqueness` | pass | 26 unique (study, strain, condition) records, one each |
+| L2 | `value_fidelity` | pass | 26 values checked |
+| L2 | `se_nonnegative` | pass | 22 values checked |
+| L2 | `interval_orientation` | pass | 0 of 0 stored intervals do not bracket their value, as declared |
+| L3 | `measurement_type_consistent` | pass | single measurement_type: 'growth_rate' |
+| L3 | `reference_zero` | pass | absolute rule: reference value finite and on the record's own scale for all 26 records (['growth_rate']) |
+| L3 | `environment_perturbed` | pass | all 26 experiments carry an environmental edit (perturbation, non-baseline temperature, or non-baseline media; baseline temp=37.0, media='M9 minimal medium, no carbon source (Sc... |
+| L1 | `provenance_gaps` | pass | 30 documented provenance gaps over 26/26 records; 0 deferred field(s): []; 790 undeclared None values over 23 carrier fields (top: Compound.inchi x355, Compound.chebi_id x68, En... |
+| L1 | `canonical_gene_names` | pass | no gene perturbations to check |
+| L2 | `uncertainty_sanity` | pass | 22 labeled uncertainties, none a zero dispersion; 0 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | pass | environment edits: 25 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | pass | medium components: 301 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | pass | 26 records on a shared MEDIA_LIBRARY medium, 0 on a medium deriving from one (3 distinct media) |
+| L4 | `assembly_pin_resolves` | pass | all 26 records pin their strain's deposited assembly: BW25113 ecoli_K12_BW25113_ASM75055v1 / GCA_000750555.1; MG1665 ecoli_K12_MG1655_ASM584v2 / GCA_000005845.2; NCM3722 ecoli_K... |

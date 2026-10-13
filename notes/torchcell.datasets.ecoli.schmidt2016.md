@@ -527,3 +527,25 @@ Every Table S6 row a key under its released Gene symbol (2,340 -> 2,359 keys): t
 | L2 | `se_matches_replicate_count` | pass | SUPPLEMENTARY: 0 of 43617 values disagree with their replicate count (2 keys whose replicate cells the release files twice carry nan by rule) |
 | L3 | `assembly_pin` | pass | SUPPLEMENTARY: assembly pins ["('ecoli_K12_BW25113_ASM75055v1', 'GCA_000750555.1')"] |
 | L4 | `gene_containment_bw25113` | pass | 2359 measured protein keys; 2359 are released symbols outside the ecoli_K12_BW25113_ASM75055v1 locus universe, stored as released |
+
+## 2026.10.13 - #1045 part 3: the oxygen, growth-phase and released-strain samples stored
+
+The schema gained a typed gap on Environment.aerobicity, the regime 'transition', Environment.growth_phase and PhysicalFactor.dissolved_oxygen (record 2026-10-13-environment-aerobicity-gap-transition-growth-phase-dissolved-oxygen), so no released sample of these loaders is dropped. Rebuilt from the part-3 branch (`c61b1310a`) with `--retire-existing --verify` (slurm arrays 4640 and 4643; the stores with no per-dataset verifier entry point verified by job 4641).
+
+### `proteome_schmidt2016`: 19 -> 21 records
+
+'Stationary phase 1 day' and 'Stationary phase 3 days' store as Environment.growth_phase stationary with duration_hours 24 and 72, from the Methods' 'for either 1 or 3 d'; growth_phase_not_representable is retired in place.
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 21 records validated |
+| L1 | `count` | pass | observed 21, expected 21 |
+| L1 | `orf_uniqueness` | pass | 0 unique knocked-out ORFs, one record each |
+| L2 | `value_fidelity` | pass | 48335 values checked |
+| L2 | `se_nonnegative` | pass | 43176 values checked |
+| L3 | `reference_finite` | pass | reference abundance finite + key-matched for all 48335 values |
+| L3 | `measurement_type_consistent` | pass | single measurement_type: 'absolute_protein_copies_per_cell_label_free_sid_anchored' |
+| L1 | `environment_uniqueness` | pass | SUPPLEMENTARY: 21 distinct environments over 21 records |
+| L2 | `se_matches_replicate_count` | pass | SUPPLEMENTARY: 0 of 48335 values disagree with their replicate count (2 keys whose replicate cells the release files twice carry nan by rule) |
+| L3 | `assembly_pin` | pass | SUPPLEMENTARY: assembly pins ["('ecoli_K12_BW25113_ASM75055v1', 'GCA_000750555.1')"] |
+| L4 | `gene_containment_bw25113` | pass | 2359 measured protein keys; 2359 are released symbols outside the ecoli_K12_BW25113_ASM75055v1 locus universe, stored as released |

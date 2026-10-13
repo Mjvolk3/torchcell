@@ -238,3 +238,22 @@ ALE:IL_PP5350 on a background named KT2440 PP_5350' whose genotype_statement is 
 | L3 | `measurement_type_consistent` | pass | single measurement_type: 'rnaseq_tpm' |
 | L3 | `reference_finite` | pass | reference expression finite for all 1073852 values |
 | L4 | `gene_containment_assembly` | pass | 1.000 of 5564 measured genes are loci of pputida_KT2440_ASM756v2 (>= 1.0) |
+
+## 2026.10.13 - #1045 part 3: the oxygen, growth-phase and released-strain samples stored
+
+The schema gained a typed gap on Environment.aerobicity, the regime 'transition', Environment.growth_phase and PhysicalFactor.dissolved_oxygen (record 2026-10-13-environment-aerobicity-gap-transition-growth-phase-dissolved-oxygen), so no released sample of these loaders is dropped. Rebuilt from the part-3 branch (`c61b1310a`) with `--retire-existing --verify` (slurm arrays 4640 and 4643; the stores with no per-dataset verifier entry point verified by job 4641).
+
+### `putida_precise321_lim2022`: 193 -> 321 records
+
+All 128 derivative samples dropped until now, each on a BacterialStrainBackground named as released: Muconate strain codes (genotype a not_carried_by_curation gap), KT2440 TA8_F83_I1 and TA9_F60_I1 ('evolved'), the Galactose and Xylose strains (the paper's 'engineered P. putida KT2440 strains with heterologous gene expression'), UWC1 (gap; both Mobile_gene projects' references carry it), WT_pCAR1 (gap, with the turA, turB and pmr deletions by released symbol) and the multicopy wspR strain ('wild type with multicopy wspR').
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 321 records validated |
+| L1 | `count` | pass | observed 321, expected 321 |
+| L1 | `replicate_groups` | pass | 321 records with distinct profiles over 118 (genotype, environment) groups, each measuring one gene set |
+| L2 | `tpm_value_fidelity` | pass | 1786044 values checked |
+| L2 | `count_value_fidelity` | pass | 1786044 counts are non-negative integers |
+| L3 | `measurement_type_consistent` | pass | single measurement_type: 'rnaseq_tpm' |
+| L3 | `reference_finite` | pass | reference expression finite for all 1786044 values |
+| L4 | `gene_containment_assembly` | pass | 1.000 of 5564 measured genes are loci of pputida_KT2440_ASM756v2 (>= 1.0) |

@@ -351,3 +351,22 @@ Plasmid, phage and 'inactive relA' samples on a background named as released, 18
 | L3 | `measurement_type_consistent` | pass | single measurement_type: 'rnaseq_tpm_from_released_counts' |
 | L3 | `reference_finite` | pass | reference expression finite for all 5914090 values |
 | L4 | `gene_containment_assembly` | pass | 0.999 of 4355 measured genes are loci of ecoli_K12_MG1655_ASM584v2 (>= 0.99) |
+
+## 2026.10.13 - #1045 part 3: the oxygen, growth-phase and released-strain samples stored
+
+The schema gained a typed gap on Environment.aerobicity, the regime 'transition', Environment.growth_phase and PhysicalFactor.dissolved_oxygen (record 2026-10-13-environment-aerobicity-gap-transition-growth-phase-dissolved-oxygen), so no released sample of these loaders is dropped. Rebuilt from the part-3 branch (`c61b1310a`) with `--retire-existing --verify` (slurm arrays 4640 and 4643; the stores with no per-dataset verifier entry point verified by job 4641).
+
+### `rnaseq_public_k12_lamoureux2023`: 1,358 -> 1,675 records
+
+The 250 blank aerobicity cells store a typed gap, the 15 'transition' cells store aerobicity 'transition', and the 52 'aerobic(30% DO)' cells store 'aerobic' plus an EnvironmentPhysicalPerturbation of PhysicalFactor.dissolved_oxygen, Concentration(30, percent), its agent a typed gap; the newly reachable dose cells parse '(NH4)2SO4(9g/L)', 'ug/L', 'uM' and the unitless 'halicin(0.25x)'.
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 1675 records validated |
+| L1 | `count` | pass | observed 1675, expected 1675 |
+| L1 | `replicate_groups` | pass | 1675 records with distinct profiles over 282 (genotype, environment) groups, each measuring one gene set |
+| L2 | `tpm_value_fidelity` | pass | 7294625 values checked |
+| L2 | `count_value_fidelity` | pass | 7294625 counts are non-negative integers |
+| L3 | `measurement_type_consistent` | pass | single measurement_type: 'rnaseq_tpm_from_released_counts' |
+| L3 | `reference_finite` | pass | reference expression finite for all 7294625 values |
+| L4 | `gene_containment_assembly` | pass | 0.999 of 4355 measured genes are loci of ecoli_K12_MG1655_ASM584v2 (>= 0.99) |

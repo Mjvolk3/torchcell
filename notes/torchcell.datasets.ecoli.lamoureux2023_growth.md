@@ -235,3 +235,29 @@ The 94 pColi construct samples, on the expression loader's dispatch.
 | L3 | `compound_identity` | pass | environment edits: 740 compound references carry a structure identifier; 128 declare a typed gap (7 distinct compounds, unencodable) |
 | L3 | `media_compound_identity` | pass | medium components: 51 compound references carry a structure identifier; 94 declare a typed gap (1 distinct compounds, unencodable) |
 | L3 | `media_membership` | pass | 0 records on a shared MEDIA_LIBRARY medium, 354 on a medium deriving from one (11 distinct media) |
+
+## 2026.10.13 - #1045 part 3: the oxygen, growth-phase and released-strain samples stored
+
+The schema gained a typed gap on Environment.aerobicity, the regime 'transition', Environment.growth_phase and PhysicalFactor.dissolved_oxygen (record 2026-10-13-environment-aerobicity-gap-transition-growth-phase-dissolved-oxygen), so no released sample of these loaders is dropped. Rebuilt from the part-3 branch (`c61b1310a`) with `--retire-existing --verify` (slurm arrays 4640 and 4643; the stores with no per-dataset verifier entry point verified by job 4641).
+
+### `growth_rate_lamoureux2023`: 354 -> 354 records
+
+Rebuilt because the Lamoureux environment builder it shares changed.
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 354 records validated |
+| L1 | `count` | pass | observed 354, expected 354 |
+| L1 | `pair_uniqueness` | pass | 354 unique (study, strain, condition) records, one each |
+| L2 | `value_fidelity` | pass | 354 values checked |
+| L2 | `se_nonnegative` | pass | 0 values checked |
+| L2 | `interval_orientation` | pass | 0 of 0 stored intervals do not bracket their value, as declared |
+| L3 | `measurement_type_consistent` | pass | single measurement_type: 'growth_rate' |
+| L3 | `reference_zero` | pass | absolute rule: reference value finite and on the record's own scale for all 354 records (['growth_rate']) |
+| L3 | `environment_perturbed` | pass | all 354 experiments carry an environmental edit (perturbation, non-baseline temperature, or non-baseline media; baseline temp=37.0, media='M9 (PRECISE-1K; recipe not stated) + s... |
+| L1 | `provenance_gaps` | pass | 2700 documented provenance gaps over 354/354 records; 1 deferred field(s): ['inchikey']; 9420 undeclared None values over 18 carrier fields (top: Compound.inchi x1601, Compound.... |
+| L1 | `canonical_gene_names` | finding (genome reference; reports, does not gate) | 0 genes carry conflicting common-name spellings (0 records; 0 case-only); 19 systematic names are not the genome's current name; 19 common names resolve to another gene |
+| L2 | `uncertainty_sanity` | pass | 0 labeled uncertainties, none a zero dispersion; 0 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | pass | environment edits: 740 compound references carry a structure identifier; 128 declare a typed gap (7 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | pass | medium components: 51 compound references carry a structure identifier; 94 declare a typed gap (1 distinct compounds, unencodable) |
+| L3 | `media_membership` | pass | 0 records on a shared MEDIA_LIBRARY medium, 354 on a medium deriving from one (11 distinct media) |

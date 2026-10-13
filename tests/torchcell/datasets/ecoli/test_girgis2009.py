@@ -1500,8 +1500,10 @@ def test_cli_build_and_verify(
     failing = {r["name"] for r in report["results"] if not r["passed"]}
     assert failing <= GENOME_REFERENCE_RULES
     out = capsys.readouterr().out
-    assert code == (1 if failing else 0)
-    assert f"ecoli_env_chemgen_girgis2009: {'FAIL' if failing else 'PASS'}" in out
+    # Genome-reference rules report under the verdict and never fail it (#1069), so
+    # a store whose only findings are genome-reference findings verifies PASS.
+    assert code == 0
+    assert "ecoli_env_chemgen_girgis2009: PASS" in out
 
 
 def test_verify_build_fails_on_a_wrong_expected_count(

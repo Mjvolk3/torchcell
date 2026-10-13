@@ -782,9 +782,11 @@ def test_real_build_counts_and_the_thra_record() -> None:
     )
     records = load_records(_built_root())
     assert len(records) == 3806
+    # 25 pooled names: 20 over two or three loci, dcuC over two JW ids of one locus,
+    # and 4 that list one JW id twice (one perturbation each)
     assert (
         sum(1 for r in records if len(r["experiment"]["genotype"]["perturbations"]) > 1)
-        == 20
+        == 21
     )
     (thra,) = [
         r

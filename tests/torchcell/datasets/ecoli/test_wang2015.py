@@ -877,7 +877,8 @@ def test_real_build_counts_and_the_acra_record() -> None:
         "mdtD": "JW2077",
     }
     assert accessions["tolC"] == "JW5503"
-    assert accessions["mdfA"] == "JW0826"
+    # the paper labels the mdfA strain by the synonym cmr; the released label is stored
+    assert accessions["cmr"] == "JW0826"
     responses = [r["experiment"]["phenotype"]["environment_response"] for r in records]
     assert sum(v < 0 for v in responses) == 25
 

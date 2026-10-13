@@ -1260,9 +1260,11 @@ RNASEQ_DATASETS: dict[str, dict[str, Any]] = {
     },
     "putida_precise321_lim2022": {
         "root": "data/torchcell/putida_precise321_lim2022",
-        # 321 compendium samples - 141 dropped (engineered, evolved, plasmid-bearing,
-        # unresolved deletion symbols) = 180 on the KT2440 reference strain.
-        "expected_count": 180,
+        # 321 compendium samples - 128 dropped (engineered strain codes, evolved
+        # isolates, the UWC1 background, plasmid-bearing) = 193: since #1045 part 2 the
+        # 11 samples whose deletion symbols the annotation does not resolve and the 2
+        # ALE:IL_PP5350 samples (a background named as released) are stored too.
+        "expected_count": 193,
         "replicate_aware": True,
         "min_containment": 1.0,
         "provenance": Provenance(

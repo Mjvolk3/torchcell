@@ -33,12 +33,26 @@ with an in-house ``SBRG_*`` column, and for 16 of those (the ionic-liquid ALE sa
 same-named SRX column exists but does NOT reproduce the published values.
 
 GENOTYPE. A wild-type sample has an empty genotype on the KT2440 reference. A sample whose
-condition names a single-gene deletion is a ``BacterialDeletionPerturbation`` with the
-``PP_`` tag ``reconcile_locus_tags`` resolves the symbol to. Every other derivative is
-dropped with a counted reason (``DropReason``): engineered strains named only by a strain
-code, evolved isolates, the engineered xylose and galactose strains, a 9 bp allele no
-bacterial leaf expresses, the UWC1 background, plasmid-borne content, and deletions whose
-gene symbol no layer of the pinned annotation resolves.
+condition names a gene deletion carries a ``BacterialReleasedStrainPerturbation`` of
+``released_kind=deletion`` per deleted gene, keyed by the symbol the condition label
+releases (``Crc:Del_crcZ_crcY`` -> ``crcZ``, ``crcY``), the condition label as the strain
+label (#1045 part 2): the loader resolves no symbol, so the 11 samples whose symbols the
+pinned annotation does not resolve (``crc``, ``crcZ``, ``crcY``, ``finR``, ``turA``,
+``turB``) are stored too, and a symbol-to-``PP_`` crosswalk is a modeling-time join.
+
+``ALE:IL_PP5350`` (2 samples) is stored on a ``BacterialStrainBackground`` named as the
+sample sheet's ``biosample_strain`` writes it (``KT2440 PP_5350'``), whose
+``genotype_statement`` is its ``biosample_genotype`` cell verbatim ("9bp deletion in its
+PP_5350") (#1045 part 2). ``PP_5350`` is a released locus tag, so the released-strain leaf
+refuses it by design (a tag of the pinned assembly belongs on a placed leaf), and the
+placed leaves cannot hold the edit: a whole-gene ``BacterialDeletionPerturbation`` would
+misstate a 9 bp in-frame deletion, and ``BacterialSequenceVariantPerturbation`` needs a
+``BacterialVariantCall`` with replicon coordinates the release does not give. The
+background states the edit as released and types nothing it does not say.
+
+Every other derivative is dropped with a counted reason (``DropReason``): engineered
+strains named only by a strain code, evolved isolates, the engineered xylose and galactose
+strains, the UWC1 background, and plasmid-borne content.
 
 ENVIRONMENT. The compendium carries no medium or temperature for any sample (the sample
 sheet has no such column). Each condition's environment is therefore a
@@ -75,7 +89,7 @@ from xml.etree import ElementTree
 import lmdb
 import numpy as np
 import pandas as pd
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
 
 from torchcell.data import (
     ExperimentDataset,
@@ -89,9 +103,11 @@ from torchcell.data.experiment_dataset import file_sha256
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
-    BacterialDeletionPerturbation,
+    BacterialAssemblySet,
+    BacterialReleasedStrainPerturbation,
     BacterialRNASeqExpressionExperiment,
     BacterialRNASeqExpressionExperimentReference,
+    BacterialStrainBackground,
     ComponentDefinition,
     Compound,
     Concentration,
@@ -106,9 +122,11 @@ from torchcell.datamodels.schema import (
     MediaComponentRole,
     PhysicalFactor,
     Publication,
+    ReleasedStrainKind,
     RNASeqExpressionPhenotype,
 )
 from torchcell.datasets.bacteria_common import (
+    BACTERIAL_ASSEMBLY_SETS,
     LOCUS_TAG_PATTERNS,
     LocusTagReconciliation,
     assembly_reference,
@@ -917,6 +935,9 @@ class StrainKind(StrEnum):
 
     reference = "reference"
     deletion = "deletion"
+    #: a strain the sample sheet names and states, on a background named as released
+    #: (#1045 part 2: ``ALE:IL_PP5350``)
+    released_background = "released_background"
     dropped = "dropped"
 
 
@@ -940,15 +961,15 @@ DROP_REASON_TEXT: dict[DropReason, str] = {
     "genotype 'evolved'); its mutations are not in the compendium",
     DropReason.engineered_evolved_sugar_strain: "an engineered, evolved xylose or "
     "galactose strain with heterologous genes (Lim 2021, not mirrored)",
-    DropReason.sequence_variant_allele: "a 9 bp in-frame deletion inside PP_5350; no "
-    "bacterial perturbation leaf expresses an allele, and a whole-gene deletion would "
-    "misstate it",
+    DropReason.sequence_variant_allele: "no longer applied (#1045 part 2): the 9 bp "
+    "in-frame deletion inside PP_5350 is stored on a background named as released, its "
+    "biosample_genotype cell the genotype statement",
     DropReason.non_reference_background: "the UWC1 background (biosample strain), whose "
     "content beyond KT2440 the compendium does not state",
     DropReason.plasmid_content: "plasmid-borne content (pCAR1, or a multicopy wspR "
     "plasmid) that cannot be written against the KT2440 chromosome",
-    DropReason.deleted_gene_unresolved: "the deleted gene is named only by a symbol no "
-    "layer of the pinned KT2440 annotation (nor the release's gene table) resolves",
+    DropReason.deleted_gene_unresolved: "no longer applied (#1045 part 2): every "
+    "deletion is keyed by the symbol the condition label releases, resolved or not",
 }
 
 
@@ -960,6 +981,11 @@ class StrainCall(BaseModel):
     kind: StrainKind
     deleted_symbols: tuple[str, ...] = ()
     drop_reason: DropReason | None = None
+    #: The sample sheet's ``biosample_strain`` and ``biosample_genotype`` cells of a
+    #: ``released_background`` call, verbatim; the build refuses a sample whose cells
+    #: differ, so the call is the release's, not this module's.
+    background_name: str | None = None
+    genotype_statement: str | None = None
 
 
 _REF = StrainCall(kind=StrainKind.reference)
@@ -1006,7 +1032,11 @@ NON_REFERENCE_CONDITIONS: dict[str, StrainCall] = {
             "XyloseA4",
         )
     },
-    "ALE:IL_PP5350": _drop(DropReason.sequence_variant_allele),
+    "ALE:IL_PP5350": StrainCall(
+        kind=StrainKind.released_background,
+        background_name="KT2440 PP_5350'",
+        genotype_statement="9bp deletion in its PP_5350",
+    ),
     **{
         name: _drop(DropReason.non_reference_background)
         for name in (
@@ -1109,6 +1139,48 @@ REFERENCE_CONDITIONS: frozenset[str] = frozenset(
 
 class UnclassifiedConditionError(KeyError):
     """A compendium condition has no strain call."""
+
+
+def released_deletion(
+    symbol: str, strain_label: str
+) -> BacterialReleasedStrainPerturbation:
+    """One deleted gene, keyed by the symbol the condition label releases (#1045 part 2)."""
+    return BacterialReleasedStrainPerturbation(
+        systematic_gene_name=symbol,
+        perturbed_gene_name=symbol,
+        gene_namespace=GENE_NAMESPACE,
+        strain_label=strain_label,
+        identifier_kind="gene symbol",
+        released_kind=ReleasedStrainKind.deletion,
+    )
+
+
+def released_background(call: StrainCall) -> BacterialStrainBackground:
+    """The strain of a ``released_background`` call, named and stated as released."""
+    if call.background_name is None or call.genotype_statement is None:
+        raise ValueError(f"{call.kind.value} call names no strain or genotype")
+    return BacterialStrainBackground(
+        name=call.background_name,
+        reference_strain="KT2440",
+        assembly_set=TypeAdapter(BacterialAssemblySet).validate_python(
+            BACTERIAL_ASSEMBLY_SETS["KT2440"]
+        ),
+        genotype_statement=call.genotype_statement,
+        provenance=[
+            SourcedValue(
+                value=call.background_name,
+                quote=call.background_name,
+                provenance=_SAMPLE_SHEET_PROVENANCE,
+                note="the biosample_strain cell",
+            ),
+            SourcedValue(
+                value=call.genotype_statement,
+                quote=call.genotype_statement,
+                provenance=_SAMPLE_SHEET_PROVENANCE,
+                note="the biosample_genotype cell",
+            ),
+        ],
+    )
 
 
 def strain_call(full_name: str) -> StrainCall:
@@ -1417,8 +1489,10 @@ class BuildReport(BaseModel):
     aggregation: AggregationSummary
     stored_aggregation: AggregationSummary
     expression_genes: LocusTagReconciliation
-    deleted_genes: LocusTagReconciliation
-    deletion_loci: dict[str, str] = Field(description="resolved symbol -> locus tag")
+    deleted_symbols: list[str] = Field(
+        description="every deleted gene symbol the stored condition labels release, "
+        "stored as released (#1045 part 2)"
+    )
     count_pairing: CountPairing
     drops: DropLog
     replicates_per_condition: dict[str, int] = Field(
@@ -1553,21 +1627,13 @@ class PutidaPrecise321Lim2022Dataset(ExperimentDataset):
             exclude=length_disagreements(genome_lengths, release_lengths),
         )
 
-        # Strains: the call of every condition, and the loci of the deleted symbols.
+        # Strains: the call of every condition; deletions keep their released symbols.
         calls = {fn: strain_call(fn) for fn in compendium["full_name"].unique()}
         symbols = sorted({s for c in calls.values() for s in c.deleted_symbols})
-        stored_symbols, deletion_report = reconcile_locus_tags(
-            genome, pd.Series(symbols), label=f"{self.name} deleted genes"
-        )
-        deletion_loci = {
-            symbol: tag
-            for symbol, tag in zip(symbols, stored_symbols, strict=True)
-            if KT2440_LOCUS_TAG.match(tag)
-        }
 
         reference = assembly_reference(self.REFERENCE_STRAIN)
         rows, records = self._assemble(
-            compendium, log_tpm, tpm, counts, pairing, calls, deletion_loci, reference
+            compendium, log_tpm, tpm, counts, pairing, calls, reference
         )
         self._write_lmdb(records)
 
@@ -1579,8 +1645,7 @@ class PutidaPrecise321Lim2022Dataset(ExperimentDataset):
             aggregation=aggregation_summary(compendium),
             stored_aggregation=aggregation_summary(stored),
             expression_genes=gene_report,
-            deleted_genes=deletion_report,
-            deletion_loci=deletion_loci,
+            deleted_symbols=symbols,
             count_pairing=pairing,
             drops=drop_log(rows),
             replicates_per_condition={str(k): v for k, v in sorted(replicates.items())},
@@ -1607,7 +1672,6 @@ class PutidaPrecise321Lim2022Dataset(ExperimentDataset):
         counts: pd.DataFrame,
         pairing: CountPairing,
         calls: Mapping[str, StrainCall],
-        deletion_loci: Mapping[str, str],
         reference: AssemblyReferenceGenome,
     ) -> tuple[list[SampleRecord], list[dict[str, Any]]]:
         """The ledger rows of every compendium sample and the records of the stored ones."""
@@ -1636,21 +1700,33 @@ class PutidaPrecise321Lim2022Dataset(ExperimentDataset):
             call = calls[full_name]
             source = sources[sample]
             drop_reason = call.drop_reason
-            deleted = [deletion_loci.get(s) for s in call.deleted_symbols]
-            if call.kind is StrainKind.deletion and any(t is None for t in deleted):
-                drop_reason = DropReason.deleted_gene_unresolved
             publication = record_publication(source)
             index: int | None = None
             if drop_reason is None:
                 index = len(records)
                 perturbations = [
-                    BacterialDeletionPerturbation(
-                        systematic_gene_name=str(tag),
-                        perturbed_gene_name=symbol,
-                        gene_namespace=GENE_NAMESPACE,
-                    )
-                    for symbol, tag in zip(call.deleted_symbols, deleted, strict=True)
+                    released_deletion(symbol, full_name)
+                    for symbol in call.deleted_symbols
                 ]
+                record_reference = references[str(row["project"])]
+                if call.kind is StrainKind.released_background:
+                    cells = (
+                        _cell(row["biosample_strain"]),
+                        _cell(row["biosample_genotype"]),
+                    )
+                    if cells != (call.background_name, call.genotype_statement):
+                        raise ValueError(
+                            f"{sample}: biosample cells {cells} are not the call's "
+                            f"{(call.background_name, call.genotype_statement)}"
+                        )
+                    record_reference = record_reference.model_copy(
+                        update={
+                            "genome_reference": assembly_reference(
+                                self.REFERENCE_STRAIN,
+                                background=released_background(call),
+                            )
+                        }
+                    )
                 column = pairing.pairs[sample]
                 experiment = self.create_experiment(
                     perturbations=perturbations,
@@ -1661,7 +1737,7 @@ class PutidaPrecise321Lim2022Dataset(ExperimentDataset):
                 records.append(
                     {
                         "experiment": experiment.model_dump(),
-                        "reference": references[str(row["project"])].model_dump(),
+                        "reference": record_reference.model_dump(),
                         "publication": publication.model_dump(),
                     }
                 )
@@ -1681,7 +1757,7 @@ class PutidaPrecise321Lim2022Dataset(ExperimentDataset):
                     publication=publication,
                     count_column=pairing.pairs[sample],
                     strain=call.kind if drop_reason is None else StrainKind.dropped,
-                    deleted_genes=[t for t in deleted if t is not None],
+                    deleted_genes=list(call.deleted_symbols),
                     drop_reason=drop_reason,
                 )
             )
@@ -1690,7 +1766,7 @@ class PutidaPrecise321Lim2022Dataset(ExperimentDataset):
     def create_experiment(  # type: ignore[override]
         self,
         *,
-        perturbations: Sequence[BacterialDeletionPerturbation],
+        perturbations: Sequence[BacterialReleasedStrainPerturbation],
         environment: Environment,
         tpm: Mapping[str, float],
         counts: Mapping[str, int],

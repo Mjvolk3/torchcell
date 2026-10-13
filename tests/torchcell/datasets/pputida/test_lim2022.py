@@ -10,8 +10,9 @@ absent; build it with ``python -m torchcell.database.build_dataset_lmdb --datase
 PutidaPrecise321Lim2022Dataset``).
 
 Expected values of the data tests are the build's measured counts: 321 compendium
-samples, 180 stored, 141 dropped under seven reasons; 291 count columns paired by name
-and 30 by an in-house ``SBRG_*`` name.
+samples, 193 stored (180 until #1045 part 2 stored the 11 deletion samples whose symbols
+the annotation does not resolve and the 2 ``ALE:IL_PP5350`` samples), 128 dropped under
+five reasons; 291 count columns paired by name and 30 by an in-house ``SBRG_*`` name.
 """
 
 import json
@@ -26,6 +27,7 @@ from typing import Any
 import lmdb
 import pandas as pd
 import pytest
+from pydantic import ValidationError
 
 from torchcell.data.experiment_dataset import file_sha256
 from torchcell.datamodels.schema import (
@@ -35,6 +37,7 @@ from torchcell.datamodels.schema import (
     EnvironmentPhysicalPerturbation,
     Genotype,
     PhysicalFactor,
+    ReleasedStrainKind,
 )
 from torchcell.datasets.pputida import lim2022 as m
 from torchcell.verification.sourced import ProvenanceGapReason, audit_sourced_value
@@ -181,14 +184,46 @@ def test_every_condition_has_exactly_one_strain_call() -> None:
 
 
 def test_dropped_calls_carry_a_reason_and_deletions_carry_symbols() -> None:
-    """A dropped call has a reason and no symbols; a deletion has symbols and no reason."""
+    """A dropped call has a reason and no symbols; a deletion has symbols and no reason;
+    the one released background names its strain and genotype as the sheet writes them.
+    """
     for call in m.NON_REFERENCE_CONDITIONS.values():
         if call.kind is m.StrainKind.dropped:
             assert call.drop_reason is not None and not call.deleted_symbols
+        elif call.kind is m.StrainKind.released_background:
+            assert call.drop_reason is None and not call.deleted_symbols
+            assert (call.background_name, call.genotype_statement) == (
+                "KT2440 PP_5350'",
+                "9bp deletion in its PP_5350",
+            )
         else:
             assert call.kind is m.StrainKind.deletion
             assert call.drop_reason is None and call.deleted_symbols
     assert set(m.DROP_REASON_TEXT) == set(m.DropReason)
+
+
+def test_a_deletion_keys_the_released_symbol_and_pp5350_sits_on_its_background() -> (
+    None
+):
+    """#1045 part 2: no symbol is resolved, and the released tag is not misplaced."""
+    deletion = m.released_deletion("crcZ", "Crc:Del_crcZ_crcY")
+    assert (deletion.systematic_gene_name, deletion.strain_label) == (
+        "crcZ",
+        "Crc:Del_crcZ_crcY",
+    )
+    assert deletion.released_kind is ReleasedStrainKind.deletion
+    background = m.released_background(m.strain_call("ALE:IL_PP5350"))
+    assert background.name == "KT2440 PP_5350'"
+    assert background.genotype_statement == "9bp deletion in its PP_5350"
+    assert background.reference_strain == "KT2440"
+    assert background.provenance is not None
+    assert [v.quote for v in background.provenance] == [
+        "KT2440 PP_5350'",
+        "9bp deletion in its PP_5350",
+    ]
+    # the released-strain leaf refuses a locus tag of the pinned assembly by design
+    with pytest.raises(ValidationError, match="is a bacterial locus tag"):
+        m.released_deletion("PP_5350", "ALE:IL_PP5350")
 
 
 # --------------------------------------------------------------------------- #
@@ -537,21 +572,28 @@ def test_build_report_states_the_measured_aggregation_and_drops() -> None:
     ) == (321, 96, 225)
     drops = {r["reason"]: r["n_samples"] for r in report["drops"]["rules"]}
     assert drops == {
-        "deleted_gene_unresolved": 11,
         "engineered_evolved_sugar_strain": 14,
         "engineered_strain_code": 71,
         "evolved_isolate": 4,
         "non_reference_background": 24,
         "plasmid_content": 15,
-        "sequence_variant_allele": 2,
     }
-    assert report["drops"]["n_stored"] == 180
+    assert report["drops"]["n_stored"] == 193
     pairing = report["count_pairing"]
     assert (pairing["n_same_name"], len(pairing["renamed"])) == (291, 30)
     assert len(pairing["same_name_rejected"]) == 16
     assert pairing["excluded_genes"] == ["PP_1495"]
     assert pairing["max_deviation"] < m.PAIRING_TOLERANCE
-    assert report["deletion_loci"] == {"fleQ": "PP_4373", "relA": "PP_1656"}
+    assert report["deleted_symbols"] == [
+        "crc",
+        "crcY",
+        "crcZ",
+        "finR",
+        "fleQ",
+        "relA",
+        "turA",
+        "turB",
+    ]
     genes = report["expression_genes"]
     assert genes["unique_names"] == 5564
     assert genes["status_histogram"]["current"] == 5564
@@ -559,18 +601,18 @@ def test_build_report_states_the_measured_aggregation_and_drops() -> None:
 
 @pytest.mark.data
 def test_built_records_pass_the_gate_and_carry_their_sources() -> None:
-    """180 records pass L0-L4; ledger indices, publications and deletions agree."""
+    """193 records pass L0-L4; ledger indices, publications and deletions agree."""
     from torchcell.verification.runners import _gene_set_for_reference, load_records
 
     records = load_records(_build_root())
     universe = _gene_set_for_reference(
         records[0]["reference"]["genome_reference"], os.environ["DATA_ROOT"]
     )
-    report = m.verify_records(records, expected_count=180, gene_universe=universe)
+    report = m.verify_records(records, expected_count=193, gene_universe=universe)
     assert report.passed, report.summary()
 
     ledger = [row for row in _ledger("sample_ledger.json") if row["index"] is not None]
-    assert sorted(row["index"] for row in ledger) == list(range(180))
+    assert sorted(row["index"] for row in ledger) == list(range(193))
     by_index = {row["index"]: row for row in ledger}
     deletions: dict[str, int] = {}
     env = lmdb.open(
@@ -579,7 +621,7 @@ def test_built_records_pass_the_gate_and_carry_their_sources() -> None:
     with env.begin() as txn:
         by_key = {int(key): pickle.loads(value) for key, value in txn.cursor()}
     env.close()
-    assert sorted(by_key) == list(range(180))
+    assert sorted(by_key) == list(range(193))
     for index, record in by_key.items():
         row = by_index[index]
         assert record["publication"] == row["publication"]
@@ -592,4 +634,19 @@ def test_built_records_pass_the_gate_and_carry_their_sources() -> None:
             deletions[tag] = deletions.get(tag, 0) + 1
         total = sum(record["experiment"]["phenotype"]["expression_tpm"].values())
         assert math.isclose(total, 1e6, rel_tol=1e-6)
-    assert deletions == {"PP_1656": 6, "PP_4373": 3}
+    assert deletions == {
+        "relA": 6,
+        "finR": 3,
+        "fleQ": 3,
+        "turB": 2,
+        "turA": 2,
+        "crc": 2,
+        "crcZ": 2,
+        "crcY": 2,
+    }
+    backgrounds = [
+        r["reference"]["genome_reference"]["background"]
+        for r in by_key.values()
+        if r["reference"]["genome_reference"].get("background")
+    ]
+    assert [b["name"] for b in backgrounds] == ["KT2440 PP_5350'"] * 2

@@ -329,6 +329,10 @@ def label_and_relog(api: wandb.Api) -> dict[str, dict[str, object]]:
         run.config["round"] = rnd
         run.config["host_train_"] = run.config.get("host_train")
         run.config["dose_"] = run.config.get("dose")
+        # rounds 7 to 9: the readout (gene head and host head, or every record a cell
+        # through one head) and how a medium's compound tokens are pooled
+        run.config["readout_"] = run.config.get("readout", "gene")
+        run.config["compound_pool_"] = run.config.get("compound_pool", "mean")
         run.config["fold"] = int(run.config.get("folds", [0])[0])
         run.config["fold_seed_"] = int(run.config.get("fold_seed", 0))
         run.config["view"] = VIEW_TAG

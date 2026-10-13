@@ -57,17 +57,20 @@ EVERY LOADED CONDITION IS WILD-TYPE BW25113: NONE IS A DELETION STRAIN. The thre
 deletion strains in the paper (``rimI``, ``rimJ``, ``rimL``) appear only in the
 N-alpha-acetylation tables (Supplementary Tables 20, 21 and 24) and carry no per-protein
 abundance at all, so no abundance record has a genotype perturbation. ``Genotype`` is
-therefore empty for all 19 records and the varying axis is entirely the environment,
+therefore empty for all 21 records and the varying axis is entirely the environment,
 which is why the glucose arm is the ``phenotype_reference`` rather than a record: the
 release defines every fold change against "BW25113 grown in minimal medium (glucose)".
 
-NINETEEN RECORDS FROM TWENTY-TWO RELEASED CONDITIONS. Two of Table S6's 22 conditions
-are not loaded and one more is the reference:
+TWENTY-ONE RECORDS FROM TWENTY-TWO RELEASED CONDITIONS: every condition is a record but
+the ``Glucose`` reference.
 
-- ``Stationary phase 1 day`` and ``Stationary phase 3 days`` share medium, carbon
-  source, temperature and oxygen regime with the exponential ``Glucose`` arm, and
-  ``Environment`` has no growth-phase slot, so all three would collapse onto one
-  environment.
+- ``Stationary phase 1 day`` and ``Stationary phase 3 days`` (dropped until #1045 part 3
+  as ``growth_phase_not_representable``) share medium, carbon source, temperature and
+  oxygen regime with the exponential ``Glucose`` arm. They are records with
+  ``Environment.growth_phase = stationary`` and ``Environment.duration_hours`` 24 and 72,
+  from the Methods: "Starved cells were continuously shaken after reaching stationary
+  phase for either 1 or 3 d". The phase and the starvation time are what differ, so they
+  are what tells the three environments apart.
 
 Since #1045 rows 17 and 21, two earlier drops are records:
 
@@ -185,6 +188,7 @@ from torchcell.datamodels.schema import (
     BacterialProteinAbundanceExperimentReference,
     Concentration,
     ConcentrationUnit,
+    CultureGrowthPhase,
     Environment,
     EnvironmentPerturbationType,
     EnvironmentPhysicalPerturbation,
@@ -357,6 +361,12 @@ _Q_STATIONARY = (
     "Starved cells were continuously shaken after reaching stationary "
     "phase for either 1 or $^ 3 \\mathrm { d }$ ."
 )
+#: Hours a starved arm was held in stationary phase, from "for either 1 or 3 d"
+#: (#1045 part 3).
+STATIONARY_HOURS: dict[str, float] = {
+    "Stationary phase 1 day": 24.0,
+    "Stationary phase 3 days": 72.0,
+}
 _Q_CHEMOSTAT = (
     "Cells grown in a chemostat were inoculated from a preculture to an "
     "OD of 0.1 and allowed to grow in batch mode to an OD of around 0.8 "
@@ -503,6 +513,13 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         _Q_SEARCH_DATABASE,
         note="why five released rows are proteins of other organisms",
     ),
+    # #1045 part 3: how long each starved arm was held in stationary phase
+    "stationary_hours": _paper(
+        dict(STATIONARY_HOURS),
+        _Q_STATIONARY,
+        note="stored as Environment.duration_hours beside Environment.growth_phase "
+        "stationary; 1 d is 24 h and 3 d is 72 h",
+    ),
     # #1045 row 21: the chemostat arms' dilution rates, now an Environment field
     "chemostat_dilution_rates_per_hour": _paper(
         {
@@ -582,12 +599,12 @@ class DropReason(BaseModel):
 DROP_GROWTH_PHASE = DropReason(
     rule="growth_phase_not_representable",
     description=(
-        "the culture was harvested 1 or 3 days into stationary phase; Environment has no "
-        "growth-phase slot, and the medium, carbon source, temperature and oxygen regime "
-        "are those of the exponential Glucose arm, so the two stationary arms and the "
-        "Glucose arm would collapse onto one environment"
+        "no longer applied (#1045 part 3): the culture was held 1 or 3 days in "
+        "stationary phase, and Environment.growth_phase (stationary) with "
+        "Environment.duration_hours (24, 72) now states it, so the two stationary arms "
+        "are records distinct from the exponential Glucose arm"
     ),
-    needed_addition="a growth-phase slot on Environment (closure-changing)",
+    needed_addition=None,
 )
 
 
@@ -614,6 +631,10 @@ class ConditionSpec(BaseModel):
     )
     is_reference: bool = False
     drop: DropReason | None = None
+    #: The phase the culture is held in as the condition, and for how long (#1045 part
+    #: 3): the two starved arms only.
+    growth_phase: CultureGrowthPhase | None = None
+    duration_hours: float | None = None
 
 
 def _m9(
@@ -750,7 +771,8 @@ CONDITIONS: tuple[ConditionSpec, ...] = (
         ("A14-07080", "A14-07081", "A14-07082"),
         "glucose",
         5.0,
-        drop=DROP_GROWTH_PHASE,
+        growth_phase=CultureGrowthPhase.stationary,
+        duration_hours=STATIONARY_HOURS["Stationary phase 1 day"],
     ),
     _m9(
         "Stationary phase 3 days",
@@ -759,7 +781,8 @@ CONDITIONS: tuple[ConditionSpec, ...] = (
         ("A14-07084", "A14-07085", "A14-07086"),
         "glucose",
         5.0,
-        drop=DROP_GROWTH_PHASE,
+        growth_phase=CultureGrowthPhase.stationary,
+        duration_hours=STATIONARY_HOURS["Stationary phase 3 days"],
     ),
     _m9(
         "Osmotic-stress glucose",
@@ -831,9 +854,10 @@ CONDITIONS: tuple[ConditionSpec, ...] = (
 )
 CONDITIONS_BY_COLUMN: dict[str, ConditionSpec] = {c.s6_column: c for c in CONDITIONS}
 REFERENCE_CONDITION = "Glucose"
-#: 22 released conditions - 1 reference - 2 stationary arms = 19 (14 before #1045 rows 17
+#: 22 released conditions - 1 reference = 21 (19 before #1045 part 3 stored the two
+#: stationary arms; 14 before #1045 rows 17
 #: and 21 kept the glycerol + amino acid arm and the four chemostat arms).
-EXPECTED_RECORDS = 19
+EXPECTED_RECORDS = 21
 #: Protein keys on a record of a condition both LC-MS experiments covered, and on one of
 #: the three conditions only dataset 2 covered: every released row since #1045 part 2
 #: (2,340 and 2,043 before).
@@ -1270,6 +1294,8 @@ def build_environment(spec: ConditionSpec) -> Environment:
         perturbations=perturbations,
         aerobicity=str(SOURCED_VALUES["aerobicity"].value),
         dilution_rate_per_hour=spec.dilution_rate_per_hour,
+        growth_phase=spec.growth_phase,
+        duration_hours=spec.duration_hours,
     )
 
 

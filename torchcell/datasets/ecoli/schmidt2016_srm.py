@@ -68,11 +68,14 @@ A RELEASED CONDITION THE PAPER NEVER DESCRIBES. Table S2's 19th condition is lab
 ``anaerobic``, and the string "anaerob" appears NOWHERE in the pinned ``paper.md`` or in
 the Supplementary ``si1.md`` -- no medium, no cultivation protocol, no oxygen regime.
 It is in no other released table either: not Table S6's 22 columns, not Table S23's
-experimental details, not Table S25's sample-name map. There is nothing to build an
-``Environment`` from and ``aerobicity="aerobic"``, which every other condition of this
-paper carries, would be flatly wrong for it, so the condition is dropped under
-``condition_not_described_by_the_source`` and ledgered. It is a real 19th data-set-1
-sample, which is why it is recorded rather than ignored.
+experimental details, not Table S25's sample-name map. It was dropped until #1045 part
+3; it is a record now, with what the release does and does not state typed: the
+``anaerobic`` label is its oxygen regime, and its medium (name, state, class), its
+temperature and its strain's genotype are typed ``ProvenanceGap``s that say the release
+states none (:func:`undescribed_environment`, :func:`undescribed_background`). The
+strain is pinned to BW25113, the strain the paper names for the compendium ("We grew E.
+coli BW25113 (ref. 19) under 22 different growth conditions"), on a background whose
+statement and provenance are the gaps.
 
 A RELEASED STANDARD DEVIATION OF EXACTLY ZERO, KEPT VERBATIM. 98 of Table S2's 779 rows
 carry a standard deviation of exactly 0, across 13 of its 41 proteins; four of them
@@ -88,8 +91,10 @@ key the stored Table S6 block uses. Each arm's glucose condition is the ``phenot
 record, as it is there. The same structural condition rule applies, for the same
 measured reason (``schmidt2016.py``'s ``DropReason`` is reused verbatim, so there is one
 statement of it): the two stationary-phase arms collapse onto the exponential glucose
-environment. Set 1: 19 - 1 anaerobic - 2 stationary - 1 reference = **15 records**. Set
-2: 22 - 2 stationary - 1 reference = **19 records**. Before #1045 rows 17 and 21 the
+environment. Since #1045 part 3 the two stationary arms are records too (``schmidt2016``'s
+``Environment.growth_phase`` and ``duration_hours``), and so is the anaerobic sample. Set
+1: 19 - 1 reference = **18 records**. Set 2: 22 - 1 reference = **21 records** (15 and 19
+before #1045 part 3). Before #1045 rows 17 and 21 the
 glycerol + amino acid arm (set 2) and the four chemostat arms (both sets) were dropped
 too (11 and 14 records); they now carry ``M9_AA_SCHMIDT2016`` and
 ``Environment.dilution_rate_per_hour``.
@@ -130,7 +135,7 @@ from typing import Any, ClassVar
 
 import openpyxl
 import pandas as pd
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
 from tqdm import tqdm
 
 from torchcell.data import (
@@ -142,21 +147,33 @@ from torchcell.data import (
     verify_raw_files,
 )
 from torchcell.datamodels.schema import (
+    BacterialAssemblySet,
     BacterialProteinAbundanceExperiment,
     BacterialProteinAbundanceExperimentReference,
+    BacterialStrainBackground,
+    Environment,
     Experiment,
     ExperimentReference,
     Genotype,
+    Media,
     ProteinAbundancePhenotype,
     Publication,
 )
-from torchcell.datasets.bacteria_common import assembly_reference, bacterial_genome
+from torchcell.datasets.bacteria_common import (
+    BACTERIAL_ASSEMBLY_SETS,
+    assembly_reference,
+    bacterial_genome,
+)
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.datasets.ecoli import schmidt2016 as sm
 from torchcell.sequence import GeneSet
 from torchcell.sequence.genome.ecoli.k12 import EcoliK12Genome, EcoliK12StrainName
 from torchcell.verification.report import Provenance, VerificationReport
-from torchcell.verification.sourced import SourcedValue
+from torchcell.verification.sourced import (
+    ProvenanceGap,
+    ProvenanceGapReason,
+    SourcedValue,
+)
 
 log = logging.getLogger(__name__)
 
@@ -722,15 +739,64 @@ def check_not_the_stored_block(
 DROP_CONDITION_UNDESCRIBED = sm.DropReason(
     rule="condition_not_described_by_the_source",
     description=(
-        "Table S2 releases a 19th growth condition labelled 'anaerobic', and the string "
-        "'anaerob' appears nowhere in the pinned paper.md or si1.md: no medium, no "
-        "cultivation protocol and no oxygen regime is stated for it, and it is absent "
-        "from Table S6's 22 columns, from Table S23's experimental details and from "
-        "Table S25's sample map. There is nothing to build an Environment from, and the "
-        "aerobic regime every described condition carries would be wrong for it"
+        "no longer applied (#1045 part 3): Table S2's 19th condition, labelled "
+        "'anaerobic', is a record with the anaerobic regime its label states and typed "
+        "gaps on its medium, temperature and strain genotype, which neither paper.md nor "
+        "si1.md describes"
     ),
     needed_addition=None,
 )
+
+#: What the release leaves unstated about the ``anaerobic`` sample, said once.
+UNDESCRIBED_NOTE = (
+    "Table S2 releases a sample labelled 'anaerobic'; the string 'anaerob' appears "
+    "nowhere in the pinned paper.md or si1.md, and the sample is absent from Table S6, "
+    "Table S23 and Table S25, so the release states none of this"
+)
+
+
+def _undescribed_gap(field: str) -> ProvenanceGap:
+    return ProvenanceGap(
+        field=field,
+        reason=ProvenanceGapReason.not_reported_by_primary,
+        looked_in=sm.PAPER,
+        note=UNDESCRIBED_NOTE,
+    )
+
+
+def undescribed_environment() -> Environment:
+    """The ``anaerobic`` sample's environment: its label's regime, the rest gapped."""
+    return Environment(
+        media=Media(
+            name=None,
+            state=None,
+            is_synthetic=None,
+            provenance_gaps=[
+                _undescribed_gap(field) for field in ("name", "state", "is_synthetic")
+            ],
+        ),
+        temperature=None,
+        aerobicity="anaerobic",
+        provenance_gaps=[_undescribed_gap("temperature")],
+    )
+
+
+def undescribed_background() -> BacterialStrainBackground:
+    """The ``anaerobic`` sample's strain: BW25113 by the paper, its genotype a gap."""
+    return BacterialStrainBackground(
+        name=SCHMIDT_REFERENCE_STRAIN,
+        reference_strain=SCHMIDT_REFERENCE_STRAIN,
+        assembly_set=TypeAdapter(BacterialAssemblySet).validate_python(
+            BACTERIAL_ASSEMBLY_SETS[SCHMIDT_REFERENCE_STRAIN]
+        ),
+        genotype_statement=None,
+        provenance=None,
+        provenance_gaps=[
+            _undescribed_gap("genotype_statement"),
+            _undescribed_gap("provenance"),
+        ],
+    )
+
 
 #: ``{dataset class name: measurement_type}``, so the separability check can see both.
 MEASUREMENT_TYPES: dict[str, str] = {
@@ -778,9 +844,11 @@ def select_arm(cells: Sequence[SrmCell], *, label: str) -> ArmSelection:
     labels = sorted({cell.condition for cell in cells})
     dropped: dict[str, list[str]] = {}
     loaded: list[str] = []
+    undescribed: list[str] = []
     for released in labels:
         if released == UNDESCRIBED_CONDITION:
-            dropped.setdefault(DROP_CONDITION_UNDESCRIBED.rule, []).append(released)
+            # #1045 part 3: a record with typed gaps, under its released label
+            undescribed.append(released)
             continue
         column = CONDITION_LABELS[released]
         reason = sm.CONDITIONS_BY_COLUMN[column].drop
@@ -791,9 +859,16 @@ def select_arm(cells: Sequence[SrmCell], *, label: str) -> ArmSelection:
     order = [spec.s6_column for spec in sm.CONDITIONS]
     return ArmSelection(
         key=key,
-        loaded_columns=sorted(loaded, key=order.index),
+        loaded_columns=[*sorted(loaded, key=order.index), *undescribed],
         dropped={rule: sorted(items) for rule, items in dropped.items()},
     )
+
+
+def column_of(cell: SrmCell) -> str:
+    """A cell's record column: its Table S6 column, or the undescribed label itself."""
+    if cell.condition == UNDESCRIBED_CONDITION:
+        return UNDESCRIBED_CONDITION
+    return CONDITION_LABELS[cell.condition]
 
 
 def build_phenotype(
@@ -815,12 +890,9 @@ def build_phenotype(
     standard_error: dict[str, float] = {}
     replicates: dict[str, int] = {}
     for cell in cells:
-        # The undescribed condition has no Table S6 column and no environment, so it is
-        # never a record's column; ``check_dataset_arm`` has already refused any OTHER
-        # unmapped label, so a KeyError here would be a real defect.
-        if cell.condition == UNDESCRIBED_CONDITION:
-            continue
-        if CONDITION_LABELS[cell.condition] != column:
+        # ``check_dataset_arm`` has already refused any unmapped label but the
+        # undescribed one, which is its own column (#1045 part 3)
+        if column_of(cell) != column:
             continue
         tag = key[cell.uniprot]
         abundance[tag] = cell.copies_per_cell
@@ -954,7 +1026,9 @@ class _SrmSchmidt2016Dataset(ExperimentDataset):
 
         selection = select_arm(cells, label=f"{self.name} gene symbols")
         environments = {
-            column: sm.build_environment(sm.CONDITIONS_BY_COLUMN[column])
+            column: undescribed_environment()
+            if column == UNDESCRIBED_CONDITION
+            else sm.build_environment(sm.CONDITIONS_BY_COLUMN[column])
             for column in selection.loaded_columns
         }
         sm.check_environments_distinct(environments)
@@ -1004,18 +1078,36 @@ class _SrmSchmidt2016Dataset(ExperimentDataset):
                     environment=environments[column],
                     phenotype=phenotype,
                 )
+                # #1045 part 3: the undescribed sample's strain is BW25113 by the paper,
+                # its genotype a typed gap on its own background
+                record_reference = (
+                    reference.model_copy(
+                        update={
+                            "genome_reference": assembly_reference(
+                                self.REFERENCE_STRAIN,
+                                background=undescribed_background(),
+                            )
+                        }
+                    )
+                    if column == UNDESCRIBED_CONDITION
+                    else reference
+                )
                 txn.put(
                     f"{index}".encode(),
-                    self._intern_record(experiment, reference, pub, itxn),
+                    self._intern_record(experiment, record_reference, pub, itxn),
                 )
-                spec = sm.CONDITIONS_BY_COLUMN[column]
+                spec = (
+                    None
+                    if column == UNDESCRIBED_CONDITION
+                    else sm.CONDITIONS_BY_COLUMN[column]
+                )
                 rows.append(
                     {
                         "s6_column": column,
-                        "media": spec.media.name,
-                        "carbon_source": spec.carbon_source,
-                        "carbon_g_per_l": spec.carbon_g_per_l,
-                        "temperature_c": spec.temperature_c,
+                        "media": None if spec is None else spec.media.name,
+                        "carbon_source": None if spec is None else spec.carbon_source,
+                        "carbon_g_per_l": None if spec is None else spec.carbon_g_per_l,
+                        "temperature_c": None if spec is None else spec.temperature_c,
                         "n_protein_keys": len(phenotype.protein_abundance),
                         "n_with_zero_se": sum(
                             1
@@ -1171,7 +1263,7 @@ class ProteomeSrmSet1Schmidt2016Dataset(_SrmSchmidt2016Dataset):
     IS_SET1: ClassVar[bool] = True
     EXPECTED_ROWS: ClassVar[int] = 779
     EXPECTED_PROTEIN_KEYS: ClassVar[int] = 41
-    EXPECTED_RECORDS: ClassVar[int] = 15
+    EXPECTED_RECORDS: ClassVar[int] = 18
 
     def __init__(
         self,
@@ -1200,7 +1292,7 @@ class ProteomeSrmSet2Schmidt2016Dataset(_SrmSchmidt2016Dataset):
     IS_SET1: ClassVar[bool] = False
     EXPECTED_ROWS: ClassVar[int] = 682
     EXPECTED_PROTEIN_KEYS: ClassVar[int] = 31
-    EXPECTED_RECORDS: ClassVar[int] = 19
+    EXPECTED_RECORDS: ClassVar[int] = 21
 
     def __init__(
         self,

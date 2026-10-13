@@ -40,6 +40,7 @@ from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
     BacterialAssemblySet,
     BacterialStrainBackground,
+    CultureGrowthPhase,
     MeasurementType,
     SampleUnit,
     UncertaintyType,
@@ -84,10 +85,9 @@ RELEASED: tuple[tuple[str, str, float, float], ...] = (
 STATIONARY: tuple[str, ...] = ("Stationary phase 1 day", "Stationary phase 3 days")
 
 #: The 24 released (condition, strain) rows that become records, in sheet order.
+#: Every released row is a record since #1045 part 3 (the stationary rows included).
 KEPT_ROWS: tuple[tuple[str, str], ...] = tuple(
-    (condition, strain)
-    for condition, strain, _, _ in RELEASED
-    if condition not in STATIONARY
+    (condition, strain) for condition, strain, _, _ in RELEASED
 )
 
 #: The 20 released condition labels the kept rows carry (LB and Glucose thrice).
@@ -149,11 +149,11 @@ def _pinned(
 # --------------------------------------------------------------------------- #
 # The declared module constants
 # --------------------------------------------------------------------------- #
-def test_declared_shape_is_26_released_rows_and_24_records() -> None:
+def test_declared_shape_is_26_released_rows_and_26_records() -> None:
     assert s23.EXPECTED_SOURCE_ROWS == 26
     assert sum(s23.EXPECTED_STRAIN_ROWS.values()) == s23.EXPECTED_SOURCE_ROWS
     assert s23.EXPECTED_STRAIN_ROWS == {"BW25113": 22, "MG1665": 2, "NCM3722": 2}
-    assert s23.EXPECTED_RECORDS == 24
+    assert s23.EXPECTED_RECORDS == 26
     assert s23.EXPECTED_UNPERTURBED == 0
     assert s23.EXPECTED_MEDIA_ONLY_EDIT == ("LB", "LB", "LB")
     assert s23.N_SAMPLES == 3
@@ -267,21 +267,16 @@ def test_read_table_s23_refuses_a_changed_per_strain_count(tmp_path: Path) -> No
 # --------------------------------------------------------------------------- #
 # The partition, the environments and the phenotype
 # --------------------------------------------------------------------------- #
-def test_partition_keeps_24_rows_and_drops_only_the_stationary_phase(
-    workbook: Path,
-) -> None:
+def test_partition_keeps_all_26_rows(workbook: Path) -> None:
     kept, ledger = s23.partition(s23.read_table_s23(workbook))
     assert [(row.condition, row.strain) for row in kept] == list(KEPT_ROWS)
     assert ledger.source_rows == 26
-    assert ledger.kept_records == 24
-    assert ledger.dropped_rows == 2
-    # #1057: the MG1665 / NCM3722 rows and the chemostat rows are records now
-    assert ledger.dropped == {
-        "growth_phase_not_representable": [
-            "Stationary phase 1 day/BW25113",
-            "Stationary phase 3 days/BW25113",
-        ]
-    }
+    assert ledger.kept_records == 26
+    assert ledger.dropped_rows == 0
+    # #1057: the MG1665 / NCM3722 rows and the chemostat rows are records; #1045 part
+    # 3: the two stationary-phase rows are too
+    assert ledger.dropped == {}
+    assert {row.condition for row in kept} >= set(STATIONARY)
     assert {row.strain for row in kept} == {"BW25113", "MG1665", "NCM3722"}
 
 
@@ -291,7 +286,12 @@ def test_build_environments_are_distinct_and_only_lb_has_no_perturbation(
     kept, _ = s23.partition(s23.read_table_s23(workbook))
     environments = s23.build_environments(kept)
     assert tuple(environments) == KEPT_CONDITIONS
-    assert len({env.model_dump_json() for env in environments.values()}) == 20
+    assert len({env.model_dump_json() for env in environments.values()}) == 22
+    starved = environments["Stationary phase 1 day"]
+    assert (starved.growth_phase, starved.duration_hours) == (
+        CultureGrowthPhase.stationary,
+        24.0,
+    )
     assert tuple(
         label for label, env in environments.items() if not env.perturbations
     ) == ("LB",)
@@ -422,7 +422,7 @@ def built(
     return s23.GrowthRateS23Schmidt2016Dataset(root=str(root))
 
 
-def test_process_builds_24_records_each_against_its_strains_glucose_row(
+def test_process_builds_26_records_each_against_its_strains_glucose_row(
     built: s23.GrowthRateS23Schmidt2016Dataset,
 ) -> None:
     assert len(built) == s23.EXPECTED_RECORDS
@@ -442,13 +442,11 @@ def test_process_builds_24_records_each_against_its_strains_glucose_row(
         "NCM3722": (1.03, MG1655_ACCESSION),
     }
     assert sorted(i["experiment"].phenotype.environment_response for i in items) == (
-        sorted(
-            rate for condition, _, rate, _ in RELEASED if condition not in STATIONARY
-        )
+        sorted(rate for _, _, rate, _ in RELEASED)
     )
-    # 20 conditions; LB and Glucose are shared by the three strains, told apart by
+    # 22 conditions; LB and Glucose are shared by the three strains, told apart by
     # the reference's strain
-    assert len({i["experiment"].environment.model_dump_json() for i in items}) == 20
+    assert len({i["experiment"].environment.model_dump_json() for i in items}) == 22
     built.close_lmdb()
 
 
@@ -458,11 +456,9 @@ def test_process_writes_the_three_declared_ledgers(
     preprocess = Path(built.preprocess_dir)
     built.close_lmdb()
     ledger = json.loads((preprocess / "dropped_records.json").read_text())
-    assert (ledger["source_rows"], ledger["kept_records"]) == (26, 24)
-    assert ledger["dropped_records"] == 2
-    assert [rule["rule"] for rule in ledger["rules"]] == [
-        "growth_phase_not_representable"
-    ]
+    assert (ledger["source_rows"], ledger["kept_records"]) == (26, 26)
+    assert ledger["dropped_records"] == 0
+    assert ledger["rules"] == []
     assert any("Table S28" in note for note in ledger["notes"])
     not_stored = json.loads((preprocess / "not_stored.json").read_text())
     assert not_stored["issue"] == 826
@@ -472,7 +468,7 @@ def test_process_writes_the_three_declared_ledgers(
     sourced = json.loads((preprocess / "sourced_values.json").read_text())
     assert sourced["n_samples"]["value"] == 3
     frame = pd.read_csv(preprocess / "growth_rates.csv")
-    assert len(frame) == 24
+    assert len(frame) == 26
     assert frame["is_reference"].sum() == 3
     assert set(frame["strain"]) == {"BW25113", "MG1665", "NCM3722"}
     # the four chemostat rows carry no replicate count: their Stdev is a typed gap

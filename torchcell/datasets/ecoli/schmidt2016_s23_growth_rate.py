@@ -35,12 +35,13 @@ touches none of their records. The pinned artifact, the media objects, the condi
 table and the environment helpers are imported FROM ``schmidt2016`` instead, so there is
 one copy of each.
 
-THE 2 DROPPED ROWS. 26 released rows minus 24 records. Since #1057 (the owner rule of
-2026-10-12: "the data is the data", and the genome does not gate a released row) every
-row is stored as released but the two stationary-phase rows, which carry the proteome
-loader's own structural drop rule, imported from ``schmidt2016`` rather than restated
-(``growth_phase_not_representable``: Environment has no growth-phase slot, so they would
-collapse onto the Glucose arm).
+NO DROPPED ROW: 26 released rows, 26 records. Since #1057 (the owner rule of 2026-10-12:
+"the data is the data", and the genome does not gate a released row) every row is
+stored as released, and since #1045 part 3 the two stationary-phase rows are too: they
+take ``schmidt2016``'s condition table, whose starved arms carry
+``Environment.growth_phase = stationary`` and ``duration_hours`` 24 and 72 (they were
+``growth_phase_not_representable``, which would have collapsed them onto the Glucose
+arm). Their released growth rate is -0.01 h-1 and is stored as released.
 
 * The 4 rows of the two non-BW25113 strains are stored, each on a
   ``BacterialStrainBackground`` named as Table S23 writes it (``MG1665`` verbatim, the
@@ -194,7 +195,7 @@ EXPECTED_STRAIN_ROWS: dict[str, int] = {
     STRAIN_MG1665: 2,
     STRAIN_NCM3722: 2,
 }
-EXPECTED_RECORDS = 24
+EXPECTED_RECORDS = 26
 #: What L3 ``environment_perturbed`` must observe: 0 records with no environmental edit
 #: at all. An edit is a perturbation, a non-baseline temperature OR a non-baseline
 #: medium, which is what covers the one record below.
@@ -717,9 +718,9 @@ class GrowthRateS23Schmidt2016Dataset(ExperimentDataset):
                         "background named as released and referenced to its own Glucose "
                         "row",
                         "Table S28 restates the two stationary-phase conditions' growth "
-                        "rate as 0 where Table S23 releases -0.01; both rows are dropped "
-                        "on growth_phase_not_representable, so the inconsistency is "
-                        "recorded and not acted on",
+                        "rate as 0 where Table S23 releases -0.01; since #1045 part 3 "
+                        "both rows are records storing Table S23's -0.01 as released, "
+                        "and the inconsistency is recorded, not acted on",
                     ],
                 },
                 indent=2,

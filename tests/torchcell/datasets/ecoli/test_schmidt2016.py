@@ -13,7 +13,7 @@ in-test objects, so nothing reads ``$DATA_ROOT``; the loader itself reads no ann
 
 The ``@pytest.mark.data`` tests read the real mirrors and the dev-tree LMDB and pin the
 numbers the dendron note states: 2,359 released rows and 2,359 protein keys (every row
-stored since #1045 part 2), 19 records, the 5 rows of another organism, the 7
+stored since #1045 part 2), 21 records (the two starved arms since #1045 part 3), the 5 rows of another organism, the 7
 twice-filed symbols, and that Table S6's first two CV headers are swapped.
 """
 
@@ -38,6 +38,7 @@ from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
     BacterialAssemblySet,
     BacterialGeneNamespace,
+    CultureGrowthPhase,
     EnvironmentPhysicalPerturbation,
     SmallMoleculePerturbation,
 )
@@ -206,16 +207,22 @@ def workbook(tmp_path: Path) -> Path:
 def test_condition_table_shape() -> None:
     assert len(sm.CONDITIONS) == 22
     loaded = [c for c in sm.CONDITIONS if c.drop is None]
-    assert len(loaded) == 20
-    assert len([c for c in loaded if not c.is_reference]) == sm.EXPECTED_RECORDS == 19
+    assert len(loaded) == 22
+    assert len([c for c in loaded if not c.is_reference]) == sm.EXPECTED_RECORDS == 21
     assert [c.s6_column for c in sm.CONDITIONS if c.is_reference] == [
         sm.REFERENCE_CONDITION
     ]
-    dropped = {c.s6_column: c.drop.rule for c in sm.CONDITIONS if c.drop is not None}
-    assert dropped == {
-        "Stationary phase 1 day": "growth_phase_not_representable",
-        "Stationary phase 3 days": "growth_phase_not_representable",
+    # #1045 part 3: the two starved arms are records, held in stationary phase
+    assert {c.s6_column: c.drop for c in sm.CONDITIONS if c.drop is not None} == {}
+    assert {
+        c.s6_column: (c.growth_phase, c.duration_hours)
+        for c in sm.CONDITIONS
+        if c.growth_phase is not None
+    } == {
+        "Stationary phase 1 day": (CultureGrowthPhase.stationary, 24.0),
+        "Stationary phase 3 days": (CultureGrowthPhase.stationary, 72.0),
     }
+    assert sm.SOURCED_VALUES["stationary_hours"].value == sm.STATIONARY_HOURS
     # #1045 rows 17 and 21: the glycerol + amino acid arm has its medium and the four
     # chemostat arms state their dilution rate, so both are loaded
     assert sm.CONDITIONS_BY_COLUMN["Glycerol + AA"].media is M9_AA_SCHMIDT2016
@@ -518,17 +525,19 @@ def test_every_loaded_environment_is_distinct_and_a_repeat_is_refused() -> None:
     loaded = [c for c in sm.CONDITIONS if c.drop is None]
     environments = {c.s6_column: sm.build_environment(c) for c in loaded}
     sm.check_environments_distinct(environments)
-    assert len(environments) == 20
+    assert len(environments) == 22
     environments["copy"] = sm.build_environment(sm.CONDITIONS_BY_COLUMN["Glucose"])
     with pytest.raises(RuntimeError, match="serialize to one environment"):
         sm.check_environments_distinct(environments)
 
 
-def test_chemostat_arms_differ_by_dilution_rate_and_stationary_arms_collapse() -> None:
-    """The chemostats differ only by the rate #1045 row 21 stores; stationary collapses.
+def test_chemostat_arms_differ_by_dilution_rate_and_stationary_arms_by_phase() -> None:
+    """The chemostats differ only by the rate #1045 row 21 stores; the stationary arms
+    only by the phase and starvation time #1045 part 3 stores.
 
     Without the rate the four chemostat environments are one; with it they are four.
-    The stationary arms still collapse onto glucose, which is why they stay dropped.
+    Without the phase and time the two stationary arms collapse onto glucose; with them
+    the three are distinct.
     """
     chemostats = [c for c in sm.CONDITIONS if c.dilution_rate_per_hour is not None]
     with_rate = {sm.build_environment(c).model_dump_json() for c in chemostats}
@@ -546,13 +555,26 @@ def test_chemostat_arms_differ_by_dilution_rate_and_stationary_arms_collapse() -
         sm.build_environment(sm.CONDITIONS_BY_COLUMN["Glucose"]).dilution_rate_per_hour
         is None
     )
-    stationary_and_glucose = {
-        c.s6_column: sm.build_environment(c)
+    stationary_and_glucose = [
+        c
         for c in sm.CONDITIONS
-        if c.drop is sm.DROP_GROWTH_PHASE or c.s6_column == "Glucose"
-    }
+        if c.growth_phase is not None or c.s6_column == "Glucose"
+    ]
     assert len(stationary_and_glucose) == 3
-    assert len({e.model_dump_json() for e in stationary_and_glucose.values()}) == 1
+    with_phase = [sm.build_environment(c) for c in stationary_and_glucose]
+    assert len({e.model_dump_json() for e in with_phase}) == 3
+    without_phase = {
+        sm.build_environment(
+            c.model_copy(update={"growth_phase": None, "duration_hours": None})
+        ).model_dump_json()
+        for c in stationary_and_glucose
+    }
+    assert len(without_phase) == 1
+    starved = sm.build_environment(sm.CONDITIONS_BY_COLUMN["Stationary phase 3 days"])
+    assert (starved.growth_phase, starved.duration_hours) == (
+        CultureGrowthPhase.stationary,
+        72.0,
+    )
 
 
 def test_phenotype_skips_na_and_matches_se_to_the_replicate_count(
@@ -726,7 +748,7 @@ def test_process_builds_one_record_per_loaded_condition(
     ledger = json.loads((preprocess / "dropped_records.json").read_text())
     assert ledger["source_conditions"] == 22
     assert ledger["kept_records"] == sm.EXPECTED_RECORDS
-    assert ledger["dropped_records"] == 2
+    assert ledger["dropped_records"] == 0  # #1045 part 3: the starved arms are records
     assert ledger["source_protein_rows"] == len(ROWS)
     assert ledger["kept_protein_keys"] == len(STORED_KEYS)
     assert ledger["dropped_protein_rows"] == 0

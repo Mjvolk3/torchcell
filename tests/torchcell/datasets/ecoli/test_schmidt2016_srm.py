@@ -44,6 +44,7 @@ from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
     BacterialAssemblySet,
     BacterialGeneNamespace,
+    BacterialStrainBackground,
 )
 
 ASSEMBLY_SET: BacterialAssemblySet = "ecoli_K12_BW25113_ASM75055v1"
@@ -540,6 +541,17 @@ def _reference_genome() -> AssemblyReferenceGenome:
     )
 
 
+def _pinned(
+    strain: str, *, background: BacterialStrainBackground | None = None
+) -> AssemblyReferenceGenome:
+    """The BW25113 pin, on a background when one is given (#1045 part 3)."""
+    if background is None:
+        return _reference_genome()
+    return _reference_genome().model_copy(
+        update={"strain": background.name, "background": background}
+    )
+
+
 def test_select_arm_partitions_the_conditions_by_the_shared_drop_rules(
     workbook: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -550,11 +562,13 @@ def test_select_arm_partitions_the_conditions_by_the_shared_drop_rules(
         accession: next(c.gene for c in cells if c.uniprot == accession)
         for accession in ("P00001", "P00002", "P00003")
     }
-    # the chemostat arms are loaded since #1045 row 21 (they carry a dilution rate)
-    assert selection.dropped == {
-        "condition_not_described_by_the_source": [srm.UNDESCRIBED_CONDITION],
-        "growth_phase_not_representable": ["stationary 1 day", "stationary 3 days"],
-    }
+    # the chemostat arms are loaded since #1045 row 21 (they carry a dilution rate),
+    # and since #1045 part 3 the stationary arms and the undescribed sample too
+    assert selection.dropped == {}
+    assert selection.loaded_columns[-1] == srm.UNDESCRIBED_CONDITION
+    assert {"Stationary phase 1 day", "Stationary phase 3 days"} <= set(
+        selection.loaded_columns
+    )
     assert {
         column for column in selection.loaded_columns if column.startswith("Chemostat")
     } == {"Chemostat µ=0.5", "Chemostat µ=0.35", "Chemostat µ=0.20", "Chemostat µ=0.12"}
@@ -607,8 +621,8 @@ def test_phenotype_divides_the_released_sd_by_the_root_of_the_replicate_count(
 @pytest.mark.parametrize(
     ("arm", "accessions", "records"),
     [
-        (srm.ProteomeSrmSet1Schmidt2016Dataset, SET1_ACCESSIONS, 15),
-        (srm.ProteomeSrmSet2Schmidt2016Dataset, SET2_ACCESSIONS, 19),
+        (srm.ProteomeSrmSet1Schmidt2016Dataset, SET1_ACCESSIONS, 18),
+        (srm.ProteomeSrmSet2Schmidt2016Dataset, SET2_ACCESSIONS, 21),
     ],
     ids=["set1", "set2"],
 )
@@ -626,7 +640,7 @@ def test_process_builds_one_record_per_loaded_condition(
     path = write_workbook(raw / sm.SI2)
     conditions = len(SET1_LABELS) + 1 if arm.IS_SET1 else len(sm.CONDITIONS)
     monkeypatch.setattr(sm, "DATA_SHA256", {sm.SI2: file_sha256(path)})
-    monkeypatch.setattr(srm, "assembly_reference", lambda strain: _reference_genome())
+    monkeypatch.setattr(srm, "assembly_reference", _pinned)
     monkeypatch.setattr(arm, "EXPECTED_ROWS", len(accessions) * conditions)
     monkeypatch.setattr(arm, "EXPECTED_PROTEIN_KEYS", len(accessions))
 
@@ -665,9 +679,26 @@ def test_process_builds_one_record_per_loaded_condition(
     # since #1045 rows 17 and 21 the chemostat and glycerol + AA arms are records
     assert "culture_not_batch" not in rules
     assert "medium_has_no_media_library_entry" not in rules
-    assert rules["growth_phase_not_representable"] == 2
+    # #1045 part 3: nothing is dropped; the undescribed sample is a record with gaps
+    assert rules == {}
     if arm.IS_SET1:
-        assert rules["condition_not_described_by_the_source"] == 1
+        (undescribed,) = [
+            i for i in items if i["experiment"].environment.media.name is None
+        ]
+        environment = undescribed["experiment"].environment
+        assert (environment.aerobicity, environment.temperature) == ("anaerobic", None)
+        assert {g.field for g in environment.provenance_gaps} == {"temperature"}
+        assert {g.field for g in environment.media.provenance_gaps} == {
+            "name",
+            "state",
+            "is_synthetic",
+        }
+        background = undescribed["reference"].genome_reference.background
+        assert background is not None and background.name == "BW25113"
+        assert {g.field for g in background.provenance_gaps} == {
+            "genotype_statement",
+            "provenance",
+        }
     checks = json.loads((preprocess / "released_statistics_check.json").read_text())
     assert checks["not_the_stored_block"]["n_agreeing_to_rtol"] == 0
     assert checks["dataset_arm"]["undescribed_condition_present"] is arm.IS_SET1

@@ -16,17 +16,18 @@ The synthetic release is a 2 x 10 matrix, and every cell exercises one outcome:
 
     recipient row                       query b0005   query b0007
     b0001 Isolate 1  non-essential      kept -5.0     kept +4.0
-    b0001 Isolate 2  non-essential      kept +2.5     dropped: all-zero colonies, S 0.0
+    b0001 Isolate 2  non-essential      kept +2.5     kept: all-zero colonies, S 0.0
     b0003 Isolate 1  non-essential      kept -3.0     kept +1.5
     b0004 Isolate 1  non-essential      kept -1.0     kept  0.0 (a released zero)
     b0010 Isolate 1  non-essential      kept +3.3     kept -3.4 (as released, #1057)
     b0099 Isolate 1  non-essential      kept +3.5     kept -3.6 (as released, #1057)
     b0007 Isolate 1  non-essential      kept -2.0     dropped: self pair
-    b0006 SPA-tag    SPA-tag essential  kept -7.0     dropped: served
-    b0002 Isolate 1  non-essential      dropped: served  kept +3.5
+    b0006 SPA-tag    SPA-tag essential  kept -7.0     kept +1.2: also in Babu 2014
+    b0002 Isolate 1  non-essential      kept -8.0: also in Babu 2014  kept +3.5
     JW0098 Isolate 1 non-essential      kept +4.4     kept -4.5 (released-strain leaf)
 
-Sixteen records survive four drops; ``b0010`` (a /gene_synonym of ``b0003``) and
+Nineteen records survive the one drop left (#1057: the all-zero cell and the two cells
+the Babu store also holds are stored); ``b0010`` (a /gene_synonym of ``b0003``) and
 ``b0099`` (on no locus) are stored under their released b-numbers since #1057; the ``b0006`` row is the hypomorph case, stored on
 ``BacterialMarkedAllelePerturbation`` since issue #792. Data-gated tests (``--data``)
 read the real raw mirror
@@ -128,7 +129,7 @@ SYNTHETIC_RAW: tuple[tuple[str, str], ...] = (
     (_FOUR, _FOUR),
     (_FOUR, _FOUR),
 )
-#: ``(query tag, recipient tag, strain version, score)`` of the nine kept cells.
+#: ``(query tag, recipient tag, strain version, score)`` of the nineteen kept cells.
 KEPT_CELLS: tuple[tuple[str, str, str, float], ...] = (
     ("b0005", "b0001", "Isolate 1", -5.0),
     ("b0007", "b0001", "Isolate 1", 4.0),
@@ -146,6 +147,11 @@ KEPT_CELLS: tuple[tuple[str, str, str, float], ...] = (
     ("b0007", "b0099", "Isolate 1", -3.6),
     ("b0005", "JW0098", "Isolate 1", 4.4),
     ("b0007", "JW0098", "Isolate 1", -4.5),
+    # #1057: the released 0.0 over all-zero colonies, and the two cells the Babu store
+    # also holds
+    ("b0007", "b0001", "Isolate 2", 0.0),
+    ("b0007", "b0006", m.LABEL_SPA_TAG, 1.2),
+    ("b0005", "b0002", "Isolate 1", -8.0),
 )
 #: The one kept cell whose recipient row is SPA-tag essential, so its recipient leaf is
 #: a marked allele rather than a deletion and its "version" is the label.
@@ -863,27 +869,27 @@ def test_the_build_ledgers_account_for_every_released_cell(
     assert drops["kept_records"] == len(KEPT_CELLS)
     assert drops["dropped_records"] == drops["source_records"] - len(KEPT_CELLS)
     by_rule = {rule["rule"]: rule["n_records"] for rule in drops["rules"]}
-    # #1057: b0010, b0099 and JW0098 are stored as released
-    assert by_rule == {m.RULE_SELF_PAIR: 1, m.RULE_CONTRADICTION: 1, m.RULE_SERVED: 2}
+    # #1057: only the self pair drops; the zero-score cell and the Babu overlap are kept
+    assert by_rule == {m.RULE_SELF_PAIR: 1}
     assert sum(by_rule.values()) == drops["dropped_records"]
     assert drops["kept_strain_versions"] == {
-        "Isolate 1": 14,
-        "Isolate 2": 1,
-        m.LABEL_SPA_TAG: 1,
+        "Isolate 1": 15,
+        "Isolate 2": 2,
+        m.LABEL_SPA_TAG: 2,
     }
-    assert drops["kept_hypomorph_records"] == 1
+    assert drops["kept_hypomorph_records"] == 2
     assert (drops["n_aggravating"], drops["n_alleviating"], drops["n_zero"]) == (
+        9,
         8,
-        7,
-        1,
+        2,
     )
     items = {rule["rule"]: rule["items"] for rule in drops["rules"]}
     assert items[m.RULE_SELF_PAIR] == ["b0007 -> b0007 (Isolate 1)"]
-    assert items[m.RULE_SERVED] == [
+    assert drops["republished_by_babu2014"] == [
         "b0005 -> b0002 (Isolate 1)",
         "b0007 -> b0006 (SPA-tag essential)",
     ]
-    assert items[m.RULE_CONTRADICTION] == ["b0007 -> b0001 (Isolate 2)"]
+    assert drops["released_zero_with_no_colonies"] == ["b0007 -> b0001 (Isolate 2)"]
 
 
 def test_the_build_measures_the_replicate_design_rather_than_asserting_it(
@@ -894,10 +900,11 @@ def test_the_build_measures_the_replicate_design_rather_than_asserting_it(
     )
     assert structure["sample_unit"] == "colony"
     assert structure["documented_n_samples"] == 4
-    assert structure["measured_n_samples_counts"] == {"4": 15, "8": 1}
-    assert structure["measured_replicate_screen_counts"] == {"2": 16}
+    # #1057: the all-zero cell is stored too, and its raw colony cell still names 4
+    assert structure["measured_n_samples_counts"] == {"4": 18, "8": 1}
+    assert structure["measured_replicate_screen_counts"] == {"2": 19}
     assert structure["modal_n_samples"] == 4
-    assert structure["records_at_modal_n_samples"] == 15
+    assert structure["records_at_modal_n_samples"] == 18
     assert structure["sha256"] == m.DATA_SHA256[m.TABLE_S4]
     assert "#793" in structure["note"]
 
@@ -907,8 +914,8 @@ def test_every_built_record_stores_its_own_measured_colony_count(
 ) -> None:
     """The ledger's measured distribution and the records' ``n_samples`` agree exactly.
 
-    The synthetic release holds 15 cells at 4 colonies and 1 at 8, so the two views must
-    be the same histogram; a builder that defaulted to 4 would read 16 at 4 and 0 at 8.
+    The synthetic release stores 18 cells at 4 colonies and 1 at 8, so the two views must
+    be the same histogram; a builder that defaulted to 4 would read 19 at 4 and 0 at 8.
     """
     structure = json.loads(
         Path(built.preprocess_dir, "replicate_structure.json").read_text()
@@ -950,9 +957,10 @@ def test_the_build_proves_the_partition_against_the_served_store(
     partition = json.loads(
         Path(built.preprocess_dir, "served_partition.json").read_text()
     )
-    assert partition["shared_pairs"] == 0
-    assert partition["overlap_pairs_dropped"] == 2
-    assert partition["overlap_cells_dropped"] == 2
+    # #1057: the overlap is stored here too, so the shared pairs ARE the overlap
+    assert partition["shared_pairs"] == 2
+    assert partition["overlap_pairs"] == 2
+    assert partition["overlap_cells"] == 2
     assert partition["served_butland_pairs"] == 3
     assert partition["overlap_pairs_on_a_keio_recipient"] == 1
     assert partition["served_pairs_on_a_spa_tag_recipient"] == 1
@@ -1039,7 +1047,7 @@ STUB_OVERLAP_PAIRS: tuple[tuple[str, str], ...] = (
 
 def _partition(
     *,
-    stored_pairs: Sequence[tuple[str, str]] = (),
+    stored_pairs: Sequence[tuple[str, str]] = STUB_OVERLAP_PAIRS,
     released_pairs: Sequence[tuple[str, str]] = STUB_RELEASED_PAIRS,
     spa_tag_pairs: Sequence[tuple[str, str]] = STUB_SPA_TAG_PAIRS,
     overlap_pairs: Sequence[tuple[str, str]] = STUB_OVERLAP_PAIRS,
@@ -1066,7 +1074,7 @@ def test_the_partition_accounts_for_every_served_pair_of_this_screen() -> None:
     """The three groups of the reverse proof sum to the served record count."""
     partition = _partition()
     assert partition.served_butland_records == partition.served_butland_pairs == 3
-    assert partition.overlap_pairs_dropped == 2
+    assert partition.overlap_pairs == partition.shared_pairs == 2
     assert partition.overlap_pairs_on_a_keio_recipient == 1
     assert partition.served_pairs_on_a_spa_tag_recipient == 1
     assert partition.served_pairs_not_in_this_release == ["b0005 -> b4486"]
@@ -1077,14 +1085,16 @@ def test_the_partition_accounts_for_every_served_pair_of_this_screen() -> None:
     )
     assert groups == partition.served_butland_records
     assert (
-        partition.overlap_pairs_dropped
+        partition.overlap_pairs
         == partition.overlap_pairs_on_a_keio_recipient
         + partition.served_pairs_on_a_spa_tag_recipient
     )
 
 
-def test_the_partition_refuses_a_stored_pair_the_served_store_holds() -> None:
-    with pytest.raises(RuntimeError, match="already served by Babu 2014"):
+@pytest.mark.usefixtures("synthetic_counts")
+def test_the_partition_refuses_an_overlap_pair_this_build_did_not_store() -> None:
+    """#1057: every overlap pair is stored here too, so a missing one is refused."""
+    with pytest.raises(RuntimeError, match="are not the overlap"):
         _partition(stored_pairs=[("b0005", "b0002")], stored_records=1)
 
 
@@ -1152,7 +1162,7 @@ def test_the_partition_refuses_a_spa_tag_pair_the_served_rule_did_not_remove(
     fires rather than the count.
     """
     monkeypatch.setattr(m, "SERVED_OVERLAP_PAIRS", 1)
-    with pytest.raises(RuntimeError, match="were NOT removed as served"):
+    with pytest.raises(RuntimeError, match="are NOT in the recorded overlap"):
         _partition(overlap_pairs=[("b0005", "b0002")], overlap_cells=1)
 
 
@@ -1169,7 +1179,7 @@ def test_the_partition_refuses_a_served_pair_no_group_accounts_for(
     monkeypatch.setattr(m, "SERVED_PAIRS_ON_A_SPA_TAG_RECIPIENT", 0)
     monkeypatch.setattr(m, "SERVED_OVERLAP_PAIRS", 1)
     monkeypatch.setattr(m, "SERVED_OVERLAP_PAIRS_ON_A_KEIO_RECIPIENT", 1)
-    with pytest.raises(RuntimeError, match="the served rule does not remove"):
+    with pytest.raises(RuntimeError, match="the overlap does not record"):
         _partition(
             spa_tag_pairs=(), overlap_pairs=[("b0005", "b0002")], overlap_cells=1
         )
@@ -1203,6 +1213,35 @@ def test_reading_the_served_store_refuses_two_records_of_one_oriented_pair(
         m.read_served_babu("stubbed")
 
 
+def test_reading_the_served_store_keeps_a_twice_released_this_study_pair(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """#1057: Babu stores both rows of a pair it releases twice, under row-named
+    This Study screen ids; the partition reads only the Butland set, so both count.
+    """
+
+    def twice_released(root: str) -> Iterator[dict[str, Any]]:
+        leaves = [
+            {"cassette": "cat", "systematic_gene_name": "b1396"},
+            {"cassette": "kan", "systematic_gene_name": "b2863"},
+        ]
+        for row in (14491, 14492):
+            yield {
+                "experiment": {
+                    "genotype": {"perturbations": leaves},
+                    "phenotype": {
+                        "screen_id": f"This Study | Table S2 data row {row}",
+                        "gene_interaction": -1.0,
+                    },
+                }
+            }
+
+    monkeypatch.setattr("torchcell.verification.runners.stream_records", twice_released)
+    pairs, records = m.read_served_babu("stubbed")
+    assert records == 2
+    assert pairs == {("b1396", "b2863"): "This Study | Table S2 data row 14491"}
+
+
 # --------------------------------------------------------------------------- #
 # Verification
 # --------------------------------------------------------------------------- #
@@ -1227,19 +1266,18 @@ def test_the_l0_to_l4_gate_passes_on_the_synthetic_build(
         "missing_examples"
     ] == ["JW0098", "b0010", "b0099"]
     assert by_name["recipient_leaf_states_its_array_row"].details["versions"] == {
-        "Isolate 1": 14,
-        "Isolate 2": 1,
-        m.LABEL_SPA_TAG: 1,
+        "Isolate 1": 15,
+        "Isolate 2": 2,
+        m.LABEL_SPA_TAG: 2,
     }
     assert (
         by_name["signed_unclamped_interaction_score_with_zero_reference"].details[
             "n_zero"
         ]
-        == 1
+        == 2
     )
-    assert (
-        by_name["partitioned_from_the_served_babu2014_store"].details["n_shared"] == 0
-    )
+    # #1057: the two cells the Babu store also tags are stored, and counted
+    assert by_name["overlap_with_the_babu2014_store"].details["n_shared"] == 2
 
 
 def test_released_scores_is_keyed_on_the_isolate(synthetic: Path) -> None:
@@ -1336,51 +1374,48 @@ def test_the_dev_store_ledgers_state_the_measured_build() -> None:
         pytest.skip("the dev store is not built")
     drops = json.loads((preprocess / "dropped_records.json").read_text())
     assert drops["source_records"] == 314847
-    # #1057: every released id is stored as released (301,803 before)
-    assert drops["kept_records"] == m.EXPECTED_RECORDS == 312427
+    # #1057: every released cell but the 78 self pairs (301,803 before)
+    assert drops["kept_records"] == m.EXPECTED_RECORDS == 314769
     assert {rule["rule"]: rule["n_records"] for rule in drops["rules"]} == {
-        m.RULE_SELF_PAIR: 78,
-        m.RULE_CONTRADICTION: 488,
-        m.RULE_SERVED: 1854,
+        m.RULE_SELF_PAIR: 78
     }
-    assert (drops["n_aggravating"], drops["n_alleviating"], drops["n_zero"]) == (
-        151282,
-        152931,
-        8214,
+    assert len(drops["released_zero_with_no_colonies"]) == 488
+    assert len(drops["republished_by_babu2014"]) == 1854
+    assert drops["n_aggravating"] + drops["n_alleviating"] + drops["n_zero"] == (
+        m.EXPECTED_RECORDS
     )
+    # the 488 stored 0.0 cells are among the zeros
+    assert drops["n_zero"] >= 488
     assert drops["kept_queries"] == 39
-    assert drops["kept_recipients"] == 4117
-    assert drops["kept_hypomorph_records"] == 5413
-    assert drops["kept_strain_versions"] == {
-        "Isolate 1": 153791,
-        "Isolate 2": 153223,
-        m.LABEL_SPA_TAG: 5413,
-    }
+    assert drops["kept_hypomorph_records"] == 5811
+    assert drops["kept_strain_versions"][m.LABEL_SPA_TAG] == 5811
+    assert sum(drops["kept_strain_versions"].values()) == m.EXPECTED_RECORDS
 
 
 @pytest.mark.data
 def test_the_dev_store_partition_is_the_measured_0_36_percent() -> None:
     """The partition as rebuilt once BOTH loaders store the SPA-tagged hypomorphs.
 
-    Babu's own store grew from 38,579 to 41,988 records with PR #837 and to 42,571 with
-    #1057, which put 4 more records of this screen on the served side (1,129). The
-    overlap is 1,127 pairs over 1,854 cells, split 729 Keio and 398 SPA-tag, and 2 pairs
-    this release does not name under Babu's ids.
+    Babu's own store grew from 38,579 to 41,988 records with PR #837, to 42,571 with
+    #1057 part 1 (4 more records of this screen, 1,129) and to 42,705 with part 2 (every
+    released row). The overlap is 1,127 pairs over 1,854 cells, split 729 Keio and 398
+    SPA-tag, all stored in both stores since #1057, and 2 pairs this release does not
+    name under Babu's ids.
     """
     preprocess = Path(_data_root(), m.DATASET_ROOT_REL, "preprocess")
     if not preprocess.is_dir():
         pytest.skip("the dev store is not built")
     partition = json.loads((preprocess / "served_partition.json").read_text())
-    assert partition["served_records"] == 42571
+    assert partition["served_records"] == 42705
     assert partition["served_butland_records"] == m.SERVED_BUTLAND_RECORDS == 1129
     assert partition["served_butland_pairs"] == m.SERVED_BUTLAND_PAIRS == 1129
     assert partition["served_fraction_of_this_release"] == pytest.approx(
         1129 / 314847, rel=1e-9
     )
     assert round(partition["served_fraction_of_this_release"] * 100, 2) == 0.36
-    assert partition["shared_pairs"] == 0
-    assert partition["overlap_pairs_dropped"] == m.SERVED_OVERLAP_PAIRS == 1127
-    assert partition["overlap_cells_dropped"] == m.SERVED_OVERLAP_CELLS == 1854
+    assert partition["shared_pairs"] == 1127
+    assert partition["overlap_pairs"] == m.SERVED_OVERLAP_PAIRS == 1127
+    assert partition["overlap_cells"] == m.SERVED_OVERLAP_CELLS == 1854
     assert (
         partition["overlap_pairs_on_a_keio_recipient"]
         == m.SERVED_OVERLAP_PAIRS_ON_A_KEIO_RECIPIENT

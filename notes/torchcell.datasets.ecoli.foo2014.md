@@ -150,3 +150,27 @@ from the deposited Table S3 bytes. The containment counts 8, not 9, because `rfp
 ## 2026.10.12 - The rfp reporter's organism is a typed gap (#915)
 
 `HeterologousPathwayPerturbation.source_organism` is now stated or a typed `ProvenanceGap` (schema record `2026-10-12-released-z-score-and-pathway-organism-gap`). The PS+RFP control's rfp gene, whose organism neither the article nor Table S3 names, stores `source_organism=None` with a `not_reported_by_primary` gap that names the deposited Table S3 as searched, instead of the string `unreported`. The 9 records are otherwise unchanged.
+
+## 2026.10.12 - Rebuilt stores and their L0-L4 tables (slurm 4475, PR #1072)
+
+Built with `build_dataset_lmdb --retire-existing --verify` in slurm array 4475 at commit `00e419661`; counts and tables from `experiments/036-dataset-fixes-before-kg-build/scripts/bacteria_released_columns_store_report.py` (`results/bacteria_released_columns_store_report.json`). A `report` row is a genome-reference finding, reported and never gated.
+
+| store | records before | records after |
+|---|---|---|
+| `IsopentenolTiterFoo2014Dataset` | 9 | 9 |
+
+### IsopentenolTiterFoo2014Dataset
+
+| level | rule | kind | verdict | message |
+|---|---|---|---|---|
+| L0 | `structural` | gate | pass | 9 records validated |
+| L1 | `count` | gate | pass | observed 9, expected 9 |
+| L2 | `cross_method` | gate | pass | 9 pairs agree within 0.0 |
+| L2 | `value_fidelity` | gate | pass | 9 values checked |
+| L3 | `every_uncertainty_is_a_typed_gap_not_a_guess` | gate | pass | the replicate design is sourced (n=3 biological replicates) and the plus-minus numbers are released, but their KIND is stated nowhere in the mirror and the back-solve does not discriminate |
+| L3 | `the_product_is_the_canonical_isoprenol_entity` | gate | pass | resolved through the paper's own '3-methyl-3-buten-1-ol', so these titers join every other isoprenol record |
+| L3 | `the_reference_is_the_released_PS_RFP_control_titer` | gate | pass | every record is an edit of PS on GCA_000005845.2 against the 834.0 ug/mL PS+RFP control Table 1 footnote b releases |
+| L3 | `titer_unit_is_the_sources_mg_per_l_as_ug_per_ml` | gate | pass | 1 mg/L == 1 ug/mL exactly, so the released number is stored verbatim |
+| L4 | `construct_against_deposited_table_s3` | gate | pass | 9 overlapping entities agree within 0.0 |
+| L4 | `perturbed_gene_containment_assembly` | report | pass | 1.000 of 8 measured genes are loci of ecoli_K12_MG1655_ASM584v2 (>= 1.0) |
+| L4 | `titer_against_released_improvement_percent` | gate | pass | 9 overlapping entities agree within 0.0 |

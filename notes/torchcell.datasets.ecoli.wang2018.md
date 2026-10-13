@@ -380,3 +380,59 @@ The genotype is every member of the gene's BLASTN cluster, keyed by Supplementar
 Supplementary Data 5 (MOESM8) is deposited in the raw mirror by the recorded `pmc_cloud` route, sha256 `528d16763dc7ae88a9b530243c63851bd4350d432407ab333c0a472b8cff7503`, the same bytes as the library mirror's `si/si8.xlsx`. The guide records (`CrispriGuideFitnessWang2018Dataset`, 240,481) now carry their released Z score too. Candidate verdict: `admissible_with_gaps` (G5: ampicillin, #1063), from `experiments/database/scripts/wang2018_gene_fitness_candidate_verdict.py`.
 
 Not changed here and raised for the owner: the guide level still drops 55 rows whose only target is a retired b-number and 4,880 `Quality == "Bad"` rows.
+
+## 2026.10.12 - Rebuilt stores and their L0-L4 tables (slurm 4475, PR #1072)
+
+Built with `build_dataset_lmdb --retire-existing --verify` in slurm array 4475 at commit `00e419661`; counts and tables from `experiments/036-dataset-fixes-before-kg-build/scripts/bacteria_released_columns_store_report.py` (`results/bacteria_released_columns_store_report.json`). A `report` row is a genome-reference finding, reported and never gated.
+
+| store | records before | records after |
+|---|---|---|
+| `CrispriGuideFitnessWang2018Dataset` | 240,481 | 240,481 |
+| `CrispriGeneFitnessWang2018Dataset` | not built | 20,158 |
+
+### CrispriGuideFitnessWang2018Dataset
+
+| level | rule | kind | verdict | message |
+|---|---|---|---|---|
+| L0 | `structural` | gate | pass | 240481 records validated |
+| L1 | `canonical_gene_names` | report | pass | 4218 systematic names, one canonical spelling each, each current in the genome |
+| L1 | `count` | gate | pass | observed 240481, expected 240481 |
+| L1 | `every_knockdown_carries_its_20mer_spacer` | gate | pass | SUPPLEMENTARY: 242294 knockdowns, 0 without a 20-mer spacer; effectors {'dCas9': 242294} |
+| L1 | `every_screen_at_its_measured_record_count` | gate | pass | SUPPLEMENTARY: 5 screens, records {'auxotrophy': 46207, 'essentiality': 52245, 'furfural_tolerance': 47911, 'isobutanol_tolerance': 47911, 'trp_biosynthesis': 46207} |
+| L1 | `pair_uniqueness` | gate | pass | 240481 unique (study, strain, condition) records, one each |
+| L1 | `provenance_gaps` | gate | pass | 1057746 documented provenance gaps over 240481/240481 records; 1 deferred field(s): ['inchikey']; 7729523 undeclared None values over 17 carrier fields (top: Compound.inchi x3415030, Compound.chebi_id x1008131, Environme |
+| L2 | `interval_orientation` | gate | pass | 0 of 0 stored intervals do not bracket their value, as declared |
+| L2 | `se_nonnegative` | gate | pass | 0 values checked |
+| L2 | `uncertainty_sanity` | gate | pass | 0 labeled uncertainties, none a zero dispersion; 240481 records report n_samples >= 2 with no uncertainty |
+| L2 | `value_fidelity` | gate | pass | 240481 values checked |
+| L3 | `assembly_pin_is_mg1655_genbank_with_no_asserted_background` | report | pass | SUPPLEMENTARY: 1 distinct assembly pin(s): [('ecoli_K12_MG1655_ASM584v2', 'GCA_000005845.2', 'None')] |
+| L3 | `compound_identity` | gate | pass | environment edits: 336303 compound references carry a structure identifier; 52245 declare a typed gap (1 distinct compounds, unencodable) |
+| L3 | `environment_perturbed` | gate | pass | all 240481 experiments carry an environmental edit (perturbation, non-baseline temperature, or non-baseline media; baseline temp=37.0, media='MOPS minimal medium, no carbon source (Neidhardt 1974 formulation as tabulated |
+| L3 | `measurement_type_consistent` | gate | pass | single measurement_type: 'log2_ratio' |
+| L3 | `media_compound_identity` | gate | pass | medium components: 2875785 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | gate | pass | 240481 records on a shared MEDIA_LIBRARY medium, 0 on a medium deriving from one (3 distinct media) |
+| L3 | `reference_zero` | gate | pass | numeric rule: reference response == 0 for all 240481 records |
+| L4 | `current_genome_genes` | report | pass | every one of the 4218 measured systematic names is a gene of the current genome |
+| L4 | `gene_containment_sgd` | report | pass | 1.000 of 4218 measured genes are reference genes (>= 0.9) |
+
+### CrispriGeneFitnessWang2018Dataset
+
+| level | rule | kind | verdict | message |
+|---|---|---|---|---|
+| L0 | `structural` | gate | pass | 20158 records validated |
+| L1 | `canonical_gene_names` | report | pass | 4223 systematic names, one canonical spelling each (no resolver supplied: spelling checked, annotation not) |
+| L1 | `count` | gate | pass | observed 20158, expected 20158 |
+| L1 | `pair_uniqueness` | gate | pass | 20158 unique (study, strain, condition) records, one each |
+| L1 | `provenance_gaps` | gate | pass | 88640 documented provenance gaps over 20158/20158 records; 1 deferred field(s): ['inchikey']; 588310 undeclared None values over 14 carrier fields (top: Compound.inchi x288978, Compound.chebi_id x84636, Environment.dilut |
+| L2 | `interval_orientation` | gate | pass | 0 of 0 stored intervals do not bracket their value, as declared |
+| L2 | `se_nonnegative` | gate | pass | 0 values checked |
+| L2 | `uncertainty_sanity` | gate | pass | 0 labeled uncertainties, none a zero dispersion; 20158 records report n_samples >= 2 with no uncertainty |
+| L2 | `value_fidelity` | gate | pass | 20158 values checked |
+| L3 | `compound_identity` | gate | pass | environment edits: 28166 compound references carry a structure identifier; 4142 declare a typed gap (1 distinct compounds, unencodable) |
+| L3 | `environment_perturbed` | gate | pass | all 20158 experiments carry an environmental edit (perturbation, non-baseline temperature, or non-baseline media; baseline temp=37.0, media='MOPS minimal medium, no carbon source (Neidhardt 1974 formulation as tabulated  |
+| L3 | `measurement_type_consistent` | gate | pass | single measurement_type: 'log2_ratio' |
+| L3 | `media_compound_identity` | gate | pass | medium components: 244382 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | gate | pass | 20158 records on a shared MEDIA_LIBRARY medium, 0 on a medium deriving from one (3 distinct media) |
+| L3 | `reference_zero` | gate | pass | numeric rule: reference response == 0 for all 20158 records |
+| L4 | `current_genome_genes` | report | FAIL | 2 systematic names are absent from the current genome over 10 records: b4590 x5, b4700 x5 |
+| L4 | `gene_containment_sgd` | report | pass | 1.000 of 4223 measured genes are reference genes (>= 0.9) |

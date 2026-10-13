@@ -9,7 +9,7 @@ dicts from ``model_dump()``; an optional sibling ``processed/interned`` env hold
 content-addressed sub-objects that the record points at with ``{"$ref": key}``. The data
 root is ``tmp_path``; a runner's dataset registry is monkeypatched down to the datasets
 built here (as ``scripts/verify_datasets.py`` narrows it), and the count oracles that are
-module constants (Ohya 4718, Ohnuki 2018 1112, Ohnuki 2022 1979) are monkeypatched to
+module constants (Ohya 4718, Ohnuki 2018 1112, Ohnuki 2022 1982) are monkeypatched to
 the built record count where a pass is wanted. ``_genome`` and ``_sgd_gene_set`` are
 stubbed; nothing here loads the genome or reads the real data root.
 
@@ -1222,6 +1222,7 @@ def test_run_ohnuki_morphology_adds_ohya_containment_only_when_ohya_is_built(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setattr(runners, "OHNUKI2022_EXPECTED_COUNT", 2)
+    monkeypatch.setattr(runners, "OHNUKI2022_EXPECTED_INCOMPLETE", 0)
     _write_lmdb(
         tmp_path / runners.OHNUKI2022_SOURCE_ROOT,
         [_morphology_record(g) for g in ["YAL001C", "YDR001C"]],
@@ -2122,7 +2123,8 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         "microarray_kemmeren2014": 1484,
     }
     assert (runners.OHYA_EXPECTED_COUNT, runners.OHNUKI_EXPECTED_COUNT) == (4718, 1112)
-    assert runners.OHNUKI2022_EXPECTED_COUNT == 1979
+    assert runners.OHNUKI2022_EXPECTED_COUNT == 1982
+    assert runners.OHNUKI2022_EXPECTED_INCOMPLETE == 1
     assert _oracles(runners.VISUAL_SCORE_DATASETS) == {"carotenoid_ozaydin2013": None}
     assert _oracles(runners.METABOLITE_DATASETS) == {
         "betaxanthin_cachera2023": None,

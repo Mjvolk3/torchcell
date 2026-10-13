@@ -535,6 +535,7 @@ def test_verify_build_passes_the_absolute_gate_and_writes_its_report(
     assert by_name["pair_uniqueness"].details == {
         "n_pairs": dt.EXPECTED_RECORDS,
         "n_duplicated": 0,
+        "expected_duplicated": 0,
     }
     interval = by_name["interval_orientation"].details
     assert (interval["n_intervals"], interval["n_non_bracketing"]) == (

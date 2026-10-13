@@ -262,27 +262,35 @@ def test_parse_media_rich_synthetic_state_prefix_and_gaps() -> None:
     ``SC - Ura`` is synthetic by prefix; ``LB`` has no table row and no classifying
     prefix, so it is stored with ``is_synthetic`` a typed gap; a None field (4-field
     header) stores a ``Media`` with name, state and synthetic flag all typed gaps.
+    Every named medium joins the shared family its leading word or prefix names in
+    ``MEDIA_LIBRARY`` through ``base_medium`` (#1045: the released name stays as
+    written and no library object is substituted).
     """
     assert _parse_media("YPD", "growth (colony size)") == Media(
-        name="YPD", state="solid", is_synthetic=False
+        name="YPD", state="solid", is_synthetic=False, base_medium="YPD"
     )
     assert _parse_media("SC + EtOH", "growth (pooled barseq)") == Media(
-        name="SC", state="liquid", is_synthetic=True
+        name="SC", state="liquid", is_synthetic=True, base_medium="SC"
     )
     assert _parse_media("YPD", "growth (spot assay)") == Media(
-        name="YPD", state="solid", is_synthetic=False
+        name="YPD", state="solid", is_synthetic=False, base_medium="YPD"
     )
     assert _parse_media("SD", "growth (killing zone)") == Media(
-        name="SD", state="solid", is_synthetic=True
+        name="SD", state="solid", is_synthetic=True, base_medium="SD"
     )
     assert _parse_media("SC - Ura", "growth (culture turbidity)") == Media(
-        name="SC - Ura", state="liquid", is_synthetic=True
+        name="SC - Ura", state="liquid", is_synthetic=True, base_medium="SC"
     )
     assert _parse_media("YPG [3%]", "growth (colony size)") == Media(
-        name="YPG [3%]", state="solid", is_synthetic=False
+        name="YPG [3%]", state="solid", is_synthetic=False, base_medium="YP"
     )
     lb = _parse_media("LB", "growth (colony size)")
-    assert (lb.name, lb.state, lb.is_synthetic) == ("LB", "solid", None)
+    assert (lb.name, lb.state, lb.is_synthetic, lb.base_medium) == (
+        "LB",
+        "solid",
+        None,
+        "LB",
+    )
     assert [(g.field, g.reason) for g in lb.provenance_gaps] == [
         ("is_synthetic", ProvenanceGapReason.not_carried_by_curation)
     ]
@@ -430,7 +438,9 @@ def test_hom_colony_size_records(dataset: tuple[YeastPhenomeDataset, Path]) -> N
     """
     ds, _ = dataset
     env = _environment(
-        Media(name="YPD", state="solid", is_synthetic=False), FURFURAL, 10.0
+        Media(name="YPD", state="solid", is_synthetic=False, base_medium="YPD"),
+        FURFURAL,
+        10.0,
     )
     for idx, orf, npv in [
         (0, "YAL001C", 1.5),
@@ -469,7 +479,9 @@ def test_hap_a_turbidity_records_skip_blank_cell(
     """
     ds, _ = dataset
     env = _environment(
-        Media(name="SD", state="liquid", is_synthetic=True), QUININE_UNRESOLVED, 2.0
+        Media(name="SD", state="liquid", is_synthetic=True, base_medium="SD"),
+        QUININE_UNRESOLVED,
+        2.0,
     )
     for idx, orf, npv in [(4, "YAL001C", -2.25), (6, "Q0250", 0.125)]:
         record = ds[idx]
@@ -492,7 +504,9 @@ def test_het_column_is_a_copy_number_drop_in_by4743(
     """
     ds, _ = dataset
     env = _environment(
-        Media(name="YPD", state="solid", is_synthetic=False), FURFURAL, 10.0
+        Media(name="YPD", state="solid", is_synthetic=False, base_medium="YPD"),
+        FURFURAL,
+        10.0,
     )
     perturbation = EngineeredCopyNumberPerturbation(
         systematic_gene_name="YAL001C",
@@ -565,7 +579,9 @@ def test_second_screen_hap_alpha_record_and_publication(
     """Record 17 is screen B: SC (from ``SC + EtOH``) liquid, BY4742 haploid, PMID 99999902."""
     ds, _ = dataset
     env = _environment(
-        Media(name="SC", state="liquid", is_synthetic=True), FURFURAL, 10.0
+        Media(name="SC", state="liquid", is_synthetic=True, base_medium="SC"),
+        FURFURAL,
+        10.0,
     )
     record = ds[23]
     assert record["experiment"] == (

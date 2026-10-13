@@ -95,6 +95,7 @@ from torchcell.data import (
     write_verified,
 )
 from torchcell.datamodels.compound_identity import resolved_compound
+from torchcell.datamodels.media import MEDIA_LIBRARY
 from torchcell.datamodels.schema import (
     BiologicAgentClass,
     BiologicPerturbation,
@@ -583,6 +584,24 @@ def _media_gap(field: str, looked_in_note: str) -> ProvenanceGap:
     )
 
 
+def _base_medium(base: str) -> str | None:
+    """The ``MEDIA_LIBRARY`` key a released medium token joins at, else None.
+
+    The token's leading word (``SC`` of ``SC - Ade``, ``YPD`` of ``YPD``) when it is a
+    library key; else the rich or synthetic prefix the token starts with when that
+    prefix is one (``YP`` of ``YPG [3%]``). The released name stays ``name``; the key
+    is what makes the medium a derived member of the shared family rather than free
+    text. No library object is substituted for the released token.
+    """
+    head = re.split(r"[\s,\-(\[]", base, maxsplit=1)[0]
+    if head in MEDIA_LIBRARY:
+        return head
+    for prefix in (*_RICH_PREFIXES, *_SYNTHETIC_PREFIXES):
+        if base.startswith(prefix) and prefix in MEDIA_LIBRARY:
+            return prefix
+    return None
+
+
 def _parse_media(media_field: str | None, phenotype: str) -> Media:
     """The curated media token (``YPD + EtOH``) as a ``Media``, stored as released.
 
@@ -605,14 +624,16 @@ def _parse_media(media_field: str | None, phenotype: str) -> Media:
     base = media_field.split("+")[0].strip()
     p = phenotype.lower()
     state = "solid" if ("colony" in p or "spot" in p or "killing" in p) else "liquid"
+    anchor = _base_medium(base)
     if base in _RICH_MEDIA or base.startswith(_RICH_PREFIXES):
-        return Media(name=base, state=state, is_synthetic=False)
+        return Media(name=base, state=state, is_synthetic=False, base_medium=anchor)
     if base in _SYNTHETIC_MEDIA or base.startswith(_SYNTHETIC_PREFIXES):
-        return Media(name=base, state=state, is_synthetic=True)
+        return Media(name=base, state=state, is_synthetic=True, base_medium=anchor)
     return Media(
         name=base,
         state=state,
         is_synthetic=None,
+        base_medium=anchor,
         provenance_gaps=[
             _media_gap(
                 "is_synthetic",

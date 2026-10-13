@@ -30,7 +30,7 @@ Every row that names a gene and carries a 24 h level is one record under the nam
 ``ReleasedGeneNamePerturbation`` (the released symbol, kind ``deletion``, marker KanMX).
 The token is upper-cased (two systematic names are released in mixed case) and
 otherwise verbatim. No genome is consulted and nothing is renamed or merged; the pinned
-file (4,788 rows) repeats no gene token. The rows without a record are the 27 whose gene cell is ``0`` or
+file (4,788 rows) repeats no gene token. The rows without a record are the 28 whose gene cell is ``0`` or
 blank or whose level is blank and the one ``WT`` control, listed in
 ``preprocess/dropped_records.json``. Before #1045 the loader resolved every symbol
 through a genome (4,719 records), dropping 11 names and merging 30 collisions.

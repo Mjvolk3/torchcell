@@ -54,3 +54,7 @@ Now: one record per released row under the released ORF (upper-cased), `n_replic
 ## 2026.10.12 - The deferred name is a record on the released-gene-name leaf (#1045, PR #1085)
 
 The one Table S2 strain name with no ORF form, `YLR287-A`, is stored on `ReleasedGeneNamePerturbation` (kind `deletion`, marker KanMX); `preprocess/dropped_records.json` lists it under the retention rule `none` and drops nothing. The S2 count goes from 4,804 to 4,805.
+
+### Family verification (job 4606): the released replicate rows
+
+The metabolite verifier's `genotype_uniqueness` gate refused the 190 strains the screen table reports on two plates and the two `YBL071W-A` rows of Table S3, which the loader stores as separate released records. Both runner specs now declare `allow_duplicate_strains`, the rule the Ozaydin store already uses, so the rule reports the repeated strains as a finding; verified again by job 4658.
